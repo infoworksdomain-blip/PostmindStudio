@@ -57,3 +57,6 @@ scratch/
 
 # Claude Code session state (per-session, not shared)
 .claude/
+
+# Demo build output (regenerate with node scripts/demo/build.mjs)
+demo/dist/
