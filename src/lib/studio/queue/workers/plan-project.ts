@@ -6,8 +6,11 @@ import {
   IDEATION_SCHEMA,
   IDEATION_SYSTEM_PROMPT,
   parseIdeationResult,
+  type IdeationContext,
   type IdeationResult,
 } from '../../pipeline/ideation';
+
+type IdeationHints = IdeationContext['hints'];
 import {
   currentRunId,
   failProject,
@@ -188,6 +191,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
         rawInput,
         businessName: project.name,
         targetPlatforms: formats.map((f) => f.platform),
+        hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
         brand: brandKit
           ? {
               toneKeywords: brandKit.toneKeywords,

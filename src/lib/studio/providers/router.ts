@@ -44,6 +44,8 @@ export interface RouteInput {
   /** Latest acceptable completion time; providers slower than this are skipped. */
   deadline?: Date;
   /** Used for per-candidate cost estimates in the budget check. */
+  /** Try this provider first if it is already a candidate for this need and tier. */
+  preferredProviderId?: string;
   /** Required: every candidate's cost is estimated from it for the budget check. */
   request: ProviderRequest;
 }
@@ -191,6 +193,11 @@ async function skipReason(
 export async function routeProvider(input: RouteInput, deps: RouterDeps): Promise<RouteDecision> {
   const now = (deps.now ?? Date.now)();
   const plan = planCandidates(input.need, input.planTier);
+  const preferred = input.preferredProviderId;
+  if (preferred && plan.providerIds.includes(preferred)) {
+    // Reorder only: a preference never adds a provider outside the tier's candidate list.
+    plan.providerIds = [preferred, ...plan.providerIds.filter((id) => id !== preferred)];
+  }
   const candidates: CandidateOutcome[] = [];
 
   for (const providerId of plan.providerIds) {

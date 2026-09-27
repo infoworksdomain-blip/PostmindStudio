@@ -15,6 +15,8 @@ export interface IdeationContext {
     restrictedTopics: string[];
   };
   targetPlatforms: string[];
+  /** Optional steer from the create-project form (spec 8.2 brief.targetAudience / callToAction). */
+  hints?: { targetAudience?: string | null; callToAction?: string | null };
 }
 
 export const IDEATION_SCHEMA = {
@@ -91,6 +93,9 @@ export function buildIdeationPrompt(ctx: IdeationContext): string {
       lines.push(`Restricted topics (never mention): ${ctx.brand.restrictedTopics.join(', ')}`);
     }
   }
+  if (ctx.hints?.targetAudience)
+    lines.push(`Owner's intended audience: ${ctx.hints.targetAudience}`);
+  if (ctx.hints?.callToAction) lines.push(`Owner's call to action: ${ctx.hints.callToAction}`);
   lines.push('', 'Owner request:', '"""', ctx.rawInput.trim(), '"""');
   return lines.join('\n');
 }
