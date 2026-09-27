@@ -14,14 +14,21 @@ export const ALLOWED_TRANSITIONS: Readonly<
   ASSETS_GENERATING: ['RENDERING', 'FAILED'],
   RENDERING: ['QUALITY_CHECKING', 'FAILED'],
   QUALITY_CHECKING: ['READY_FOR_REVIEW', 'QUALITY_FAILED', 'FAILED'],
-  QUALITY_FAILED: ['APPROVED', 'QUEUED', 'REJECTED', 'ARCHIVED'],
-  READY_FOR_REVIEW: ['APPROVED', 'REJECTED', 'QUEUED', 'ARCHIVED'],
+  QUALITY_FAILED: [
+    'READY_FOR_REVIEW',
+    'APPROVED',
+    'QUEUED',
+    'ASSETS_QUEUED',
+    'REJECTED',
+    'ARCHIVED',
+  ],
+  READY_FOR_REVIEW: ['APPROVED', 'REJECTED', 'QUEUED', 'ASSETS_QUEUED', 'ARCHIVED'],
   APPROVED: ['PUBLISHING', 'ARCHIVED'],
   PUBLISHING: ['PUBLISHED', 'PARTIALLY_PUBLISHED', 'FAILED'],
   PUBLISHED: ['ARCHIVED'],
   PARTIALLY_PUBLISHED: ['PUBLISHING', 'ARCHIVED'],
-  REJECTED: ['QUEUED', 'ARCHIVED'],
-  FAILED: ['QUEUED', 'ARCHIVED'],
+  REJECTED: ['QUEUED', 'ASSETS_QUEUED', 'ARCHIVED'],
+  FAILED: ['QUEUED', 'ASSETS_QUEUED', 'ARCHIVED'],
   ARCHIVED: [],
 };
 
@@ -99,18 +106,38 @@ export async function failProject(
   });
 }
 
-/** Merge keys into project.metadata without touching other keys. */
+type RawClient = Pick<PrismaClient, '$executeRaw'>;
+
+/**
+ * Merge top-level keys into project.metadata for one run, atomically in SQL (JSONB `||`), so
+ * concurrent writers never lose each other's keys and a superseded run can never write.
+ * Returns false when the project has moved on to another run.
+ */
 export async function mergeProjectMetadata(
-  db: ProjectClient,
-  projectId: string,
-  patch: Record<string, unknown>,
-): Promise<void> {
-  const project = await db.videoProject.findUniqueOrThrow({
-    where: { id: projectId },
-    select: { metadata: true },
-  });
-  await db.videoProject.update({
-    where: { id: projectId },
-    data: { metadata: { ...projectMetadata(project.metadata), ...patch } as Prisma.InputJsonValue },
-  });
+  db: RawClient,
+  input: { projectId: string; runId: string; patch: Record<string, unknown> },
+): Promise<boolean> {
+  const count = await db.$executeRaw`
+    UPDATE "studio"."video_projects"
+    SET "metadata" = COALESCE("metadata", '{}'::jsonb) || ${JSON.stringify(input.patch)}::jsonb,
+        "updatedAt" = now()
+    WHERE "id" = ${input.projectId} AND "metadata"->>'runId' = ${input.runId}`;
+  return count === 1;
+}
+
+/** Record metadata.renders[scriptId] = renderId for one run, atomically. */
+export async function recordRunRender(
+  db: RawClient,
+  input: { projectId: string; runId: string; scriptId: string; renderId: string },
+): Promise<boolean> {
+  const count = await db.$executeRaw`
+    UPDATE "studio"."video_projects"
+    SET "metadata" = jsonb_set(
+          COALESCE("metadata", '{}'::jsonb),
+          '{renders}',
+          COALESCE("metadata"->'renders', '{}'::jsonb) || jsonb_build_object(${input.scriptId}::text, ${input.renderId}::text)
+        ),
+        "updatedAt" = now()
+    WHERE "id" = ${input.projectId} AND "metadata"->>'runId' = ${input.runId}`;
+  return count === 1;
 }

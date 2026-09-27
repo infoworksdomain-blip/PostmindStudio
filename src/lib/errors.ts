@@ -31,6 +31,12 @@ export class NotFoundError extends StudioError {
   readonly code = 'not_found';
 }
 
+/** The request conflicts with the resource's current state (e.g. generating an active project). */
+export class ConflictError extends StudioError {
+  readonly status = 409;
+  readonly code = 'conflict';
+}
+
 export class ValidationError extends StudioError {
   readonly status = 400;
   readonly code = 'validation_error';

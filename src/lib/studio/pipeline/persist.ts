@@ -12,6 +12,36 @@ export interface CopiedObject extends StoredObject {
   contentType: string;
 }
 
+/** Read a response body, aborting as soon as it exceeds MAX_COPY_BYTES (no full buffering first). */
+async function readCapped(res: Response, providerId: string): Promise<Uint8Array> {
+  if (!res.body) return new Uint8Array(await res.arrayBuffer());
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_COPY_BYTES) {
+      await reader.cancel();
+      throw new ProviderError(
+        providerId,
+        'invalid_request',
+        `Output exceeds ${MAX_COPY_BYTES} bytes`,
+        false,
+      );
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
 export async function copyUrlToStorage(
   storage: AssetStorage,
   input: {
@@ -53,16 +83,9 @@ export async function copyUrlToStorage(
       false,
     );
   }
-  const body = new Uint8Array(await res.arrayBuffer());
-  if (body.byteLength === 0)
+  const body = await readCapped(res, input.providerId);
+  if (body.byteLength === 0) {
     throw new ProviderError(input.providerId, 'unknown', 'Downloaded output is empty', true);
-  if (body.byteLength > MAX_COPY_BYTES) {
-    throw new ProviderError(
-      input.providerId,
-      'invalid_request',
-      `Output too large (${body.byteLength} bytes)`,
-      false,
-    );
   }
   const contentType =
     res.headers.get('content-type')?.split(';')[0]?.trim() || input.fallbackContentType;

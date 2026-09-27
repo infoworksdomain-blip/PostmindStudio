@@ -82,26 +82,47 @@ async function recordAsset(
     select: { costPence: true },
   });
   const model = typeof metadata.model === 'string' ? `:${metadata.model}` : '';
-  const asset = await deps.db.videoAsset.create({
-    data: {
-      organisationId,
-      projectId: shot.script.projectId,
-      shotId: shot.id,
-      kind,
-      source: `${run.decision.providerId}${model}`,
-      s3Bucket: bucket,
-      s3Key: key,
-      durationSec: kind === 'IMAGE' ? null : shot.durationSec,
-      fileSizeBytes:
-        bytes === undefined
-          ? typeof metadata.bytes === 'number'
-            ? BigInt(metadata.bytes)
-            : null
-          : BigInt(bytes),
-      providerJobId: run.providerJobRowId,
-      costPence: job?.costPence ?? 0,
-      metadata: metadata as Prisma.InputJsonValue,
-    },
+  const pointer = kind === 'AUDIO_VOICE' ? 'voiceAssetId' : 'assetId';
+  const routingKey = kind === 'AUDIO_VOICE' ? 'voice' : 'visual';
+  // The asset row and the shot's pointer to it commit together, so a retry after a crash never
+  // regenerates (and re-pays for) an asset that was already recorded.
+  const asset = await deps.db.$transaction(async (tx) => {
+    const created = await tx.videoAsset.create({
+      data: {
+        organisationId,
+        projectId: shot.script.projectId,
+        shotId: shot.id,
+        kind,
+        source: `${run.decision.providerId}${model}`,
+        s3Bucket: bucket,
+        s3Key: key,
+        durationSec: kind === 'IMAGE' ? null : shot.durationSec,
+        fileSizeBytes:
+          bytes === undefined
+            ? typeof metadata.bytes === 'number'
+              ? BigInt(metadata.bytes)
+              : null
+            : BigInt(bytes),
+        providerJobId: run.providerJobRowId,
+        costPence: job?.costPence ?? 0,
+        metadata: metadata as Prisma.InputJsonValue,
+      },
+    });
+    const current = await tx.videoShot.findUniqueOrThrow({
+      where: { id: shot.id },
+      select: { providerRouting: true },
+    });
+    await tx.videoShot.update({
+      where: { id: shot.id },
+      data: {
+        [pointer]: created.id,
+        providerRouting: {
+          ...((current.providerRouting as Record<string, unknown> | null) ?? {}),
+          [routingKey]: routingSnapshot(run),
+        } as Prisma.InputJsonValue,
+      },
+    });
+    return created;
   });
   return { assetId: asset.id, routing: routingSnapshot(run) };
 }
@@ -262,29 +283,10 @@ export async function generateAsset(data: GenerateAssetJobData, deps: PipelineDe
     data: { state: 'GENERATING', errorReason: null },
   });
 
-  const routing: Record<string, unknown> =
-    (shot.providerRouting as Record<string, unknown> | null) ?? {};
   // A retry keeps an already-generated visual rather than paying for it twice.
-  if (!shot.assetId) {
-    const visual = await generateVisual(deps, shot, data);
-    if (visual) {
-      routing.visual = visual.routing;
-      await deps.db.videoShot.update({
-        where: { id: shot.id },
-        data: { assetId: visual.assetId, providerRouting: routing as Prisma.InputJsonValue },
-      });
-    }
-  }
-  if (!shot.voiceAssetId) {
-    const voice = await generateVoice(deps, shot, data);
-    if (voice) {
-      routing.voice = voice.routing;
-      await deps.db.videoShot.update({
-        where: { id: shot.id },
-        data: { voiceAssetId: voice.assetId, providerRouting: routing as Prisma.InputJsonValue },
-      });
-    }
-  }
+  // Each generator records its asset and the shot pointer atomically (see recordAsset).
+  if (!shot.assetId) await generateVisual(deps, shot, data);
+  if (!shot.voiceAssetId) await generateVoice(deps, shot, data);
 
   await deps.db.videoShot.update({ where: { id: shot.id }, data: { state: 'READY' } });
   await enqueueComposeIfReady(deps, data);

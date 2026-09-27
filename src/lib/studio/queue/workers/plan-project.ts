@@ -211,8 +211,10 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       to: 'DRAFT',
       data: { errorReason: 'brief_too_vague: choose one of the suggested directions' },
     });
-    await mergeProjectMetadata(deps.db, project.id, {
-      directionOptions: brief.directionOptions.slice(0, 3),
+    await mergeProjectMetadata(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      patch: { directionOptions: brief.directionOptions.slice(0, 3) },
     });
     return log.info('brief too vague; returned direction options to the user');
   }
@@ -226,8 +228,10 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       to: 'DRAFT',
       data: { errorReason: 'restricted_topics: user confirmation required (spec 13.3)' },
     });
-    await mergeProjectMetadata(deps.db, project.id, {
-      pendingRestrictedTopics: brief.restrictedTopicsMentioned,
+    await mergeProjectMetadata(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      patch: { pendingRestrictedTopics: brief.restrictedTopicsMentioned },
     });
     return log.info(
       { topics: brief.restrictedTopicsMentioned },
@@ -277,7 +281,11 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     deps,
   );
   const safety = parseScriptSafety(jsonOutput(safetyRun.output));
-  await mergeProjectMetadata(deps.db, project.id, { scriptSafety: safety });
+  await mergeProjectMetadata(deps.db, {
+    projectId: project.id,
+    runId: data.runId,
+    patch: { scriptSafety: safety },
+  });
   if (blocksGeneration(safety)) {
     await failProject(deps.db, {
       projectId: project.id,

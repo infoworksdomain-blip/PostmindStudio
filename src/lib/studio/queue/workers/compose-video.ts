@@ -1,5 +1,11 @@
-import type { Prisma } from '@prisma/client';
-import { NotFoundError, ProviderError } from '../../../errors';
+import { ConflictError, NotFoundError, ProviderError } from '../../../errors';
+
+/** Thrown inside the render transaction to roll it back when the run was superseded. */
+class StaleRunError extends ConflictError {
+  constructor() {
+    super('Run superseded');
+  }
+}
 import type { AspectRatio } from '../../providers/interface';
 import { providerOutputKey } from '../../storage';
 import type { PipelineDeps } from '../../pipeline/deps';
@@ -9,6 +15,7 @@ import {
   currentRunId,
   failProject,
   mergeProjectMetadata,
+  recordRunRender,
   projectMetadata,
   transitionProject,
 } from '../../pipeline/project-state';
@@ -63,8 +70,10 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   // honestly instead of pretending a track was added.
   const musicProviders = deps.registry.getAdaptersByCapability('music');
   if (musicProviders.length === 0) {
-    await mergeProjectMetadata(deps.db, project.id, {
-      music: { skipped: 'no music provider configured' },
+    await mergeProjectMetadata(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      patch: { music: { skipped: 'no music provider configured' } },
     });
   }
 
@@ -97,7 +106,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     ? (kit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
     : [];
 
-  await Promise.all(
+  const outcome = await Promise.all(
     project.scripts
       .filter((script) => !renders[script.id])
       .map(async (script) => {
@@ -171,29 +180,42 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           select: { costPence: true },
         });
         const metadata = (run.output.metadata ?? {}) as { renderId?: string };
-        const render = await deps.db.videoRender.create({
-          data: {
+        // The render row and its pointer in metadata.renders commit together: a retry after a
+        // crash either sees the pointer (skips this script) or finds neither.
+        const render = await deps.db.$transaction(async (tx) => {
+          const created = await tx.videoRender.create({
+            data: {
+              projectId: project.id,
+              scriptId: script.id,
+              targetPlatform: script.targetPlatform,
+              aspectRatio,
+              resolution: `${probe.width}x${probe.height}`,
+              durationSec: probe.durationSec,
+              fps: Math.round(probe.fps),
+              bitrateKbps: probe.bitRateKbps,
+              s3Bucket: stored.bucket,
+              s3Key: stored.key,
+              composerJobId: metadata.renderId ?? null,
+              qualityCheckState: 'PENDING',
+              costPence: job?.costPence ?? 0,
+            },
+          });
+          const recorded = await recordRunRender(tx, {
             projectId: project.id,
+            runId: data.runId,
             scriptId: script.id,
-            targetPlatform: script.targetPlatform,
-            aspectRatio,
-            resolution: `${probe.width}x${probe.height}`,
-            durationSec: probe.durationSec,
-            fps: Math.round(probe.fps),
-            bitrateKbps: probe.bitRateKbps,
-            s3Bucket: stored.bucket,
-            s3Key: stored.key,
-            composerJobId: metadata.renderId ?? null,
-            qualityCheckState: 'PENDING',
-            costPence: job?.costPence ?? 0,
-          },
+            renderId: created.id,
+          });
+          if (!recorded) throw new StaleRunError();
+          return created;
         });
         renders[script.id] = render.id;
-        await mergeProjectMetadata(deps.db, project.id, { renders: { ...renders } });
       }),
-  );
-
-  await mergeProjectMetadata(deps.db, project.id, { renders: renders as Prisma.InputJsonValue });
+  ).catch((err: unknown) => {
+    if (err instanceof StaleRunError) return 'stale';
+    throw err;
+  });
+  if (outcome === 'stale') return log.info('run superseded during composition; renders discarded');
   await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,
