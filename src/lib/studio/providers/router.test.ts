@@ -27,6 +27,14 @@ const aiClip = (planTier: RouteInput['planTier'], extra: Partial<RouteInput> = {
   planTier,
   organisationId: 'org-1',
   projectId: 'proj-1',
+  request: {
+    capability: 'text_to_video',
+    organisationId: 'org-1',
+    projectId: 'proj-1',
+    prompt: 'p',
+    durationSec: 8,
+    aspectRatio: '9:16',
+  },
   ...extra,
 });
 
@@ -204,6 +212,18 @@ describe('routeProvider', () => {
     });
   });
 
+  it('fails closed on providers that cannot estimate cost', async () => {
+    const runway = new StubAdapter('runway', ['text_to_video']);
+    Object.defineProperty(runway, 'estimateCostPence', { value: undefined });
+    const err = (await routeProvider(aiClip('STANDARD'), deps([runway])).catch(
+      (e: unknown) => e,
+    )) as NoProviderAvailableError;
+    expect(err.details?.candidates).toContainEqual({
+      providerId: 'runway',
+      skipped: 'no_cost_estimate',
+    });
+  });
+
   it('records the decision time for providerRouting snapshots', async () => {
     const anthropic = new StubAdapter('anthropic', ['text_generation']);
     const decision = await routeProvider(
@@ -211,6 +231,7 @@ describe('routeProvider', () => {
         need: { kind: 'capability', capability: 'text_generation' },
         planTier: 'BASIC',
         organisationId: 'o',
+        request: { capability: 'text_generation', organisationId: 'o', system: 's', prompt: 'p' },
       },
       deps([anthropic], { now: () => Date.parse('2026-09-27T12:00:00Z') }),
     );

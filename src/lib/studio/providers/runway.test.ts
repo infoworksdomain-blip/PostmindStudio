@@ -140,6 +140,21 @@ describe('RunwayAdapter.poll', () => {
     });
   });
 
+  it('reports credits billed for a failed task', async () => {
+    const { runway } = adapter(
+      json({
+        id: 't',
+        status: 'FAILED',
+        failure: 'Moderation',
+        failureCode: 'SAFETY.INPUT.TEXT',
+        cost: { credits: 60 },
+      }),
+    );
+    await expect(runway.poll('t')).resolves.toMatchObject({
+      output: { metadata: { credits: 60, costPence: 45 } },
+    });
+  });
+
   it('reports a missing task as retryable result_expired', async () => {
     const { runway } = adapter(json({ error: 'Not found' }, 404));
     await expect(runway.poll('gone')).resolves.toMatchObject({

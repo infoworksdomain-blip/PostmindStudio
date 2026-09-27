@@ -5,16 +5,17 @@ import {
   ProviderError,
   ValidationError,
 } from '../../errors';
-import { createCircuitBreaker } from './circuit-breaker';
-import type { ProviderJobRecord, ProviderJobRepository } from './job-repository';
+import { createCircuitBreaker, OPEN_DURATION_MS } from './circuit-breaker';
+import type { ProviderJobRecord, ProviderJobRepository, UsageDelta } from './job-repository';
 import { StubAdapter } from './test-adapter';
-import { cancelTracked, pollTracked, submitTracked } from './tracked';
+import { cancelTracked, pollTracked, redactUrls, submitTracked } from './tracked';
 
 const T0 = Date.parse('2026-09-27T12:00:00Z');
+const scope = { organisationId: 'org-1' };
 
 function memoryRepo() {
   const rows = new Map<string, ProviderJobRecord & Record<string, unknown>>();
-  const usage: Array<Parameters<ProviderJobRepository['recordUsage']>[0]> = [];
+  const usage: UsageDelta[] = [];
   let seq = 0;
   const repo: ProviderJobRepository = {
     async create(job) {
@@ -49,21 +50,41 @@ function memoryRepo() {
       usage.push(u);
     },
   };
-  return { repo, rows, usage };
+  /** Net effect of all deltas, as provider_usage / costActualPence would hold it. */
+  const totals = () =>
+    usage.reduce(
+      (t, u) => ({
+        jobs: t.jobs + u.jobs,
+        succeeded: t.succeeded + u.succeeded,
+        failed: t.failed + u.failed,
+        costPence: t.costPence + u.costDeltaPence,
+      }),
+      { jobs: 0, succeeded: 0, failed: 0, costPence: 0 },
+    );
+  return { repo, rows, usage, totals };
 }
 
 function setup(killed = false) {
-  const { repo, rows, usage } = memoryRepo();
-  const breaker = createCircuitBreaker(() => T0);
+  const { repo, rows, usage, totals } = memoryRepo();
+  let now = T0;
+  const breaker = createCircuitBreaker(() => now);
   const killSwitch = {
     assertNotKilled: vi.fn(async () => {
       if (killed) throw new KillSwitchTriggeredError('global', 'stopped');
     }),
   };
   const adapter = new StubAdapter('runway', ['text_to_video'], { costPence: 45 });
-  let now = T0;
   const d = { repo, killSwitch, breaker, now: () => now };
-  return { adapter, d, rows, usage, breaker, killSwitch, advance: (ms: number) => (now += ms) };
+  return {
+    adapter,
+    d,
+    rows,
+    usage,
+    totals,
+    breaker,
+    killSwitch,
+    advance: (ms: number) => (now += ms),
+  };
 }
 
 const request = {
@@ -74,6 +95,12 @@ const request = {
   durationSec: 5,
   aspectRatio: '9:16' as const,
 };
+
+function openBreaker(ctx: ReturnType<typeof setup>) {
+  for (let i = 0; i < 5; i += 1) ctx.breaker.recordFailure('runway');
+  ctx.advance(OPEN_DURATION_MS);
+  expect(ctx.breaker.tryAcquire('runway')).toBe(true); // router claims the half-open trial
+}
 
 describe('submitTracked', () => {
   it('checks the kill switch with provider scope, then writes a RUNNING provider_jobs row', async () => {
@@ -93,6 +120,23 @@ describe('submitTracked', () => {
     });
   });
 
+  it('reserves the estimated cost at submit so an unpolled job still counts against caps', async () => {
+    const { adapter, d, usage } = setup();
+    await submitTracked(adapter, request, d);
+    expect(usage).toEqual([
+      {
+        organisationId: 'org-1',
+        provider: 'runway',
+        day: new Date(T0),
+        jobs: 1,
+        succeeded: 0,
+        failed: 0,
+        costDeltaPence: 45,
+        projectId: 'proj-1',
+      },
+    ]);
+  });
+
   it('does not call the provider or write a row when the kill switch is on', async () => {
     const { adapter, d, rows } = setup(true);
     await expect(submitTracked(adapter, request, d)).rejects.toBeInstanceOf(
@@ -102,8 +146,15 @@ describe('submitTracked', () => {
     expect(rows.size).toBe(0);
   });
 
-  it('records provider-side submit failures, usage and a breaker failure, then rethrows', async () => {
-    const { adapter, d, rows, usage, breaker } = setup();
+  it('releases a claimed half-open trial when the kill switch aborts the submit', async () => {
+    const ctx = setup(true);
+    openBreaker(ctx);
+    await submitTracked(ctx.adapter, request, ctx.d).catch(() => undefined);
+    expect(ctx.breaker.tryAcquire('runway')).toBe(true);
+  });
+
+  it('records provider-side submit failures with no cost, feeds the breaker, rethrows', async () => {
+    const { adapter, d, rows, totals, breaker } = setup();
     adapter.nextSubmit = async () => {
       throw new ProviderError('runway', 'provider_unavailable', 'down', true);
     };
@@ -115,17 +166,22 @@ describe('submitTracked', () => {
         (r) => r.state === 'FAILED' && r.errorClass === 'provider_unavailable',
       ),
     ).toBe(true);
-    expect(usage.every((u) => !u.succeeded && u.costPence === 0)).toBe(true);
+    expect(totals()).toEqual({ jobs: 5, succeeded: 0, failed: 5, costPence: 0 });
     expect(breaker.state('runway')).toBe('open');
   });
 
-  it('does not count client-side errors against provider health', async () => {
-    const { adapter, d, breaker } = setup();
-    adapter.nextSubmit = async () => {
+  it('does not count client-side errors against provider health and frees a trial', async () => {
+    const ctx = setup();
+    ctx.adapter.nextSubmit = async () => {
       throw new ProviderError('runway', 'invalid_request', 'bad ratio', false);
     };
-    for (let i = 0; i < 6; i += 1) await submitTracked(adapter, request, d).catch(() => undefined);
-    expect(breaker.state('runway')).toBe('closed');
+    for (let i = 0; i < 6; i += 1)
+      await submitTracked(ctx.adapter, request, ctx.d).catch(() => undefined);
+    expect(ctx.breaker.state('runway')).toBe('closed');
+
+    openBreaker(ctx);
+    await submitTracked(ctx.adapter, request, ctx.d).catch(() => undefined);
+    expect(ctx.breaker.tryAcquire('runway')).toBe(true);
   });
 
   it('marks timeouts TIMED_OUT and unknown throws as FAILED/unknown', async () => {
@@ -150,91 +206,128 @@ describe('pollTracked', () => {
     const { adapter, d, rows } = setup();
     const { jobId } = await submitTracked(adapter, request, d);
     adapter.nextPoll = async () => ({ state: 'running' });
-    await expect(pollTracked(adapter, jobId, d)).resolves.toEqual({ state: 'running' });
+    await expect(pollTracked(adapter, jobId, scope, d)).resolves.toEqual({ state: 'running' });
     expect(rows.get(jobId)?.state).toBe('RUNNING');
   });
 
-  it('completes the job with actual cost, rolls up usage and closes the breaker', async () => {
-    const { adapter, d, rows, usage, breaker, advance } = setup();
+  it('settles the reservation to the actual cost and closes the breaker', async () => {
+    const { adapter, d, rows, totals, breaker, advance } = setup();
     const { jobId } = await submitTracked(adapter, request, d);
     advance(90_000);
     adapter.nextPoll = async () => ({
       state: 'succeeded',
-      output: { url: 'https://out', metadata: { costPence: 40 } },
+      output: {
+        url: 'https://signed.example/x?X-Amz-Signature=abc',
+        metadata: { costPence: 40, s3Key: 'k' },
+      },
     });
     breaker.recordFailure('runway');
-    await pollTracked(adapter, jobId, d);
+    const result = await pollTracked(adapter, jobId, scope, d);
+    expect(result.output?.url).toContain('X-Amz-Signature'); // caller still gets the URL
     expect(rows.get(jobId)).toMatchObject({
       state: 'SUCCEEDED',
       costPence: 40,
       durationMs: 90_000,
+      responseBody: { url: '[redacted: temporary URL]', metadata: { costPence: 40, s3Key: 'k' } },
     });
-    expect(usage.at(-1)).toMatchObject({
-      organisationId: 'org-1',
-      provider: 'runway',
-      succeeded: true,
-      costPence: 40,
-      projectId: 'proj-1',
-    });
+    expect(totals()).toEqual({ jobs: 1, succeeded: 1, failed: 0, costPence: 40 });
     expect(breaker.snapshot().runway).toBe('closed');
   });
 
-  it('keeps the submit estimate when the provider reports no actual cost', async () => {
-    const { adapter, d, rows } = setup();
+  it('keeps the reserved estimate when the provider reports no actual cost', async () => {
+    const { adapter, d, rows, totals } = setup();
     const { jobId } = await submitTracked(adapter, request, d);
     adapter.nextPoll = async () => ({
       state: 'succeeded',
       output: { metadata: { costPence: -1 } },
     });
-    await pollTracked(adapter, jobId, d);
+    await pollTracked(adapter, jobId, scope, d);
     expect(rows.get(jobId)?.costPence).toBe(45);
+    expect(totals().costPence).toBe(45);
   });
 
-  it('records provider failures and feeds the breaker', async () => {
-    const { adapter, d, rows, usage } = setup();
+  it('releases the reservation on failure and feeds the breaker', async () => {
+    const { adapter, d, rows, totals } = setup();
     const { jobId } = await submitTracked(adapter, request, d);
     adapter.nextPoll = async () => ({
       state: 'failed',
       error: { class: 'provider_unavailable', message: 'INTERNAL', retryable: true },
     });
-    const result = await pollTracked(adapter, jobId, d);
+    const result = await pollTracked(adapter, jobId, scope, d);
     expect(result.state).toBe('failed');
     expect(rows.get(jobId)).toMatchObject({
       state: 'FAILED',
       errorClass: 'provider_unavailable',
       errorMessage: 'INTERNAL',
+      costPence: 0,
     });
-    expect(usage.at(-1)).toMatchObject({ succeeded: false, costPence: 0 });
+    expect(totals()).toEqual({ jobs: 1, succeeded: 0, failed: 1, costPence: 0 });
   });
 
-  it('rejects unknown, foreign or non-running jobs', async () => {
-    const { adapter, d } = setup();
-    await expect(pollTracked(adapter, 'nope', d)).rejects.toBeInstanceOf(NotFoundError);
+  it('keeps what the provider billed for a failed job', async () => {
+    const { adapter, d, rows, totals } = setup();
     const { jobId } = await submitTracked(adapter, request, d);
+    adapter.nextPoll = async () => ({
+      state: 'failed',
+      error: { class: 'content_policy', message: 'SAFETY.INPUT.TEXT', retryable: false },
+      output: { metadata: { costPence: 45 } },
+    });
+    await pollTracked(adapter, jobId, scope, d);
+    expect(rows.get(jobId)?.costPence).toBe(45);
+    expect(totals().costPence).toBe(45);
+  });
+
+  it('hides other organisations’ jobs and rejects foreign or non-running jobs', async () => {
+    const { adapter, d } = setup();
+    await expect(pollTracked(adapter, 'nope', scope, d)).rejects.toBeInstanceOf(NotFoundError);
+    const { jobId } = await submitTracked(adapter, request, d);
+    await expect(
+      pollTracked(adapter, jobId, { organisationId: 'org-2' }, d),
+    ).rejects.toBeInstanceOf(NotFoundError);
     const other = new StubAdapter('luma', ['text_to_video']);
-    await expect(pollTracked(other, jobId, d)).rejects.toBeInstanceOf(ValidationError);
-    await pollTracked(adapter, jobId, d);
-    await expect(pollTracked(adapter, jobId, d)).rejects.toThrow(/SUCCEEDED, not RUNNING/);
+    await expect(pollTracked(other, jobId, scope, d)).rejects.toBeInstanceOf(ValidationError);
+    await pollTracked(adapter, jobId, scope, d);
+    await expect(pollTracked(adapter, jobId, scope, d)).rejects.toThrow(/SUCCEEDED, not RUNNING/);
   });
 });
 
 describe('cancelTracked', () => {
-  it('cancels at the provider and marks the row CANCELLED', async () => {
-    const { adapter, d, rows } = setup();
+  it('cancels at the provider, marks CANCELLED and releases the reservation', async () => {
+    const { adapter, d, rows, totals } = setup();
     const cancel = vi.spyOn(adapter, 'cancel');
     const { jobId, providerJobId } = await submitTracked(adapter, request, d);
-    await cancelTracked(adapter, jobId, d);
+    await cancelTracked(adapter, jobId, scope, d);
     expect(cancel).toHaveBeenCalledWith(providerJobId);
     expect(rows.get(jobId)).toMatchObject({ state: 'CANCELLED', errorClass: 'cancelled' });
+    expect(totals()).toEqual({ jobs: 1, succeeded: 0, failed: 1, costPence: 0 });
   });
 
-  it('is a no-op for finished jobs and 404s unknown ones', async () => {
+  it('is a no-op for finished jobs and 404s unknown or foreign ones', async () => {
     const { adapter, d } = setup();
     const cancel = vi.spyOn(adapter, 'cancel');
     const { jobId } = await submitTracked(adapter, request, d);
-    await pollTracked(adapter, jobId, d);
-    await cancelTracked(adapter, jobId, d);
+    await expect(
+      cancelTracked(adapter, jobId, { organisationId: 'org-2' }, d),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    await pollTracked(adapter, jobId, scope, d);
+    await cancelTracked(adapter, jobId, scope, d);
     expect(cancel).not.toHaveBeenCalled();
-    await expect(cancelTracked(adapter, 'nope', d)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(cancelTracked(adapter, 'nope', scope, d)).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe('redactUrls', () => {
+  it('replaces every http(s) string, recursively', () => {
+    expect(
+      redactUrls({
+        url: 'https://a/b?sig=1',
+        nested: [{ poster: 'http://p' }, 'text', 3],
+        s3Key: 'orgs/o/x',
+      }),
+    ).toEqual({
+      url: '[redacted: temporary URL]',
+      nested: [{ poster: '[redacted: temporary URL]' }, 'text', 3],
+      s3Key: 'orgs/o/x',
+    });
   });
 });

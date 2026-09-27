@@ -171,6 +171,20 @@ describe('AnthropicAdapter', () => {
     expect(err).toMatchObject({ providerId: 'anthropic', errorClass, retryable });
   });
 
+  it('estimates an upper-bound cost for the router budget check', () => {
+    const adapter = new AnthropicAdapter({ client: client(vi.fn()), usdToGbpRate: 0.75 });
+    // system+prompt = 64 chars → 16 input tokens; 16000 output tokens at $10/M = $0.16 → 13p
+    expect(adapter.estimateCostPence({ ...request, maxTokens: 16000 })).toBe(13);
+    expect(
+      adapter.estimateCostPence({
+        capability: 'tts',
+        organisationId: 'o',
+        text: 't',
+        voiceId: 'v',
+      }),
+    ).toBe(0);
+  });
+
   it('rejects unsupported capabilities', async () => {
     const adapter = new AnthropicAdapter({ client: client(vi.fn()), usdToGbpRate: 0.75 });
     await expect(

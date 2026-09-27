@@ -54,7 +54,12 @@ export async function runTrackedJob(
   out(`  provider_jobs   : ${submitted.jobId}`);
 
   for (;;) {
-    const result = await pollTracked(adapter, submitted.jobId, deps);
+    const result = await pollTracked(
+      adapter,
+      submitted.jobId,
+      { organisationId: request.organisationId },
+      deps,
+    );
     if (result.state !== 'running') return { jobId: submitted.jobId, result };
     if (Date.now() > deadline) throw new Error(`Timed out waiting for ${adapter.providerId}`);
     out(`  … still running (${new Date().toISOString()})`);

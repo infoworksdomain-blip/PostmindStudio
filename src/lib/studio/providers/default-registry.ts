@@ -10,6 +10,11 @@ import { createProviderRegistry, type ProviderRegistry } from './registry';
 import { RunwayAdapter } from './runway';
 import { ShotstackAdapter } from './shotstack';
 
+// Explicit SDK timeouts (the SDK default is 10 minutes). OpenAI's image guide says complex
+// prompts "may take up to 2 minutes", hence the longer OpenAI budget.
+const ANTHROPIC_TIMEOUT_MS = 120_000;
+const OPENAI_TIMEOUT_MS = 180_000;
+
 // Builds the registry from environment. A provider is registered only when its API key is
 // set, so an unconfigured provider is simply "not_configured" to the router.
 
@@ -26,7 +31,7 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
   if (anthropicKey) {
     adapters.push(
       new AnthropicAdapter({
-        client: new Anthropic({ apiKey: anthropicKey }),
+        client: new Anthropic({ apiKey: anthropicKey, timeout: ANTHROPIC_TIMEOUT_MS }),
         model: envValue('ANTHROPIC_MODEL'),
         usdToGbpRate,
       }),
@@ -37,7 +42,7 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
   if (openaiKey) {
     adapters.push(
       new OpenAIAdapter({
-        client: new OpenAI({ apiKey: openaiKey }),
+        client: new OpenAI({ apiKey: openaiKey, timeout: OPENAI_TIMEOUT_MS }),
         storage: getAssetStorage(),
         bucket: assetsBucket(),
         imageModel: envValue('OPENAI_IMAGE_MODEL'),

@@ -1,6 +1,6 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ConfigurationError } from '../errors';
+import { ConfigurationError, ValidationError } from '../errors';
 import { assetsBucket, createS3Storage, providerOutputKey } from './storage';
 
 afterEach(() => vi.unstubAllEnvs());
@@ -55,5 +55,41 @@ describe('assetsBucket', () => {
     expect(() => assetsBucket()).toThrow(ConfigurationError);
     vi.stubEnv('S3_BUCKET_ASSETS', 'studio-assets-dev');
     expect(assetsBucket()).toBe('studio-assets-dev');
+  });
+});
+
+describe('providerOutputKey safety', () => {
+  it.each([
+    { organisationId: '../other-org' },
+    { organisationId: 'org/../../x' },
+    { projectId: '..' },
+    { projectId: '.hidden' },
+    { providerId: 'a b' },
+    { extension: 'png/x' },
+    { id: '' },
+  ])('rejects unsafe segment %o', (patch) => {
+    expect(() =>
+      providerOutputKey({
+        organisationId: 'o',
+        providerId: 'openai',
+        extension: 'png',
+        id: 'x',
+        ...patch,
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it('accepts cuid, uuid and provider ids', () => {
+    expect(
+      providerOutputKey({
+        organisationId: 'clx9k2b3c0000abcd',
+        projectId: '6f1c2d3e-4b5a-4c6d-8e9f-0a1b2c3d4e5f',
+        providerId: 'd-id',
+        extension: 'mp3',
+        id: 'x',
+      }),
+    ).toBe(
+      'orgs/clx9k2b3c0000abcd/projects/6f1c2d3e-4b5a-4c6d-8e9f-0a1b2c3d4e5f/providers/d-id/x.mp3',
+    );
   });
 });

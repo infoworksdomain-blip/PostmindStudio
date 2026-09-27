@@ -211,9 +211,16 @@ export class RunwayAdapter implements ProviderAdapter {
       }
       case 'FAILED': {
         const classified = classifyFailureCode(task.failureCode);
+        const credits = task.cost?.credits;
         return {
           state: 'failed',
           error: { ...classified, message: `${task.failureCode ?? 'FAILED'}: ${task.failure}` },
+          // Runway bills some failures (e.g. SAFETY.INPUT.* is not refunded); report it.
+          ...(credits !== undefined && {
+            output: {
+              metadata: { taskId: task.id, credits, costPence: this.creditsToPence(credits) },
+            },
+          }),
         };
       }
       case 'CANCELLED':

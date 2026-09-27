@@ -101,8 +101,10 @@ describe('Prisma provider job repository', () => {
       organisationId: 'o',
       provider: 'runway',
       day: new Date('2026-09-27T15:00:00Z'),
-      succeeded: true,
-      costPence: 40,
+      jobs: 1,
+      succeeded: 1,
+      failed: 0,
+      costDeltaPence: 40,
       projectId: 'p',
     });
     expect(calls[0]).toEqual([
@@ -138,14 +140,39 @@ describe('Prisma provider job repository', () => {
     ]);
   });
 
-  it('skips the project update for failures with no cost', async () => {
+  it('applies negative deltas when a reservation is released', async () => {
+    const { db, calls } = fakeDb();
+    await createPrismaProviderJobRepository(db).recordUsage({
+      organisationId: 'o',
+      provider: 'runway',
+      day: new Date('2026-09-27T15:00:00Z'),
+      jobs: 0,
+      succeeded: 0,
+      failed: 1,
+      costDeltaPence: -45,
+      projectId: 'p',
+    });
+    expect((calls[0]?.[1] as { update: unknown }).update).toMatchObject({
+      jobCount: { increment: 0 },
+      failedCount: { increment: 1 },
+      costPence: { increment: -45 },
+    });
+    expect(calls[1]).toEqual([
+      'videoProject.update',
+      { where: { id: 'p' }, data: { costActualPence: { increment: -45 } } },
+    ]);
+  });
+
+  it('skips the project update when the cost delta is zero', async () => {
     const { db, calls } = fakeDb();
     await createPrismaProviderJobRepository(db).recordUsage({
       organisationId: 'o',
       provider: 'runway',
       day: new Date(),
-      succeeded: false,
-      costPence: 0,
+      jobs: 1,
+      succeeded: 0,
+      failed: 1,
+      costDeltaPence: 0,
       projectId: 'p',
     });
     expect(calls.map(([n]) => n)).toEqual(['providerUsage.upsert']);

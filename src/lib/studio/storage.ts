@@ -2,12 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { requireEnv } from '../env';
+import { ValidationError } from '../errors';
 
 // Object storage for provider outputs that arrive as bytes (OpenAI GPT image models return
 // base64 only; ElevenLabs returns raw audio). Buckets per CLAUDE.md: studio-assets,
 // studio-renders, studio-thumbnails, studio-library-assets.
 
 export const SIGNED_URL_TTL_SEC = 24 * 60 * 60;
+const SAFE_KEY_SEGMENT = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
 
 export interface StoredObject {
   bucket: string;
@@ -35,6 +37,12 @@ export function providerOutputKey(input: {
 }): string {
   const project = input.projectId ?? 'no-project';
   const id = input.id ?? randomUUID();
+  // Tenant-isolation choke point: no segment may contain '/', '..' or anything unusual.
+  for (const [name, value] of Object.entries({ ...input, projectId: project, id })) {
+    if (!SAFE_KEY_SEGMENT.test(value)) {
+      throw new ValidationError(`Unsafe S3 key segment ${name}: ${JSON.stringify(value)}`);
+    }
+  }
   return `orgs/${input.organisationId}/projects/${project}/providers/${input.providerId}/${id}.${input.extension}`;
 }
 

@@ -64,7 +64,7 @@ describe.skipIf(!hasDb)('provider job tracking on real Postgres', () => {
         state: 'succeeded',
         output: { metadata: { costPence: cost } },
       });
-      await pollTracked(adapter, jobId, deps);
+      await pollTracked(adapter, jobId, { organisationId }, deps);
     }
 
     const jobs = await prisma.providerJob.findMany({

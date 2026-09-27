@@ -44,7 +44,8 @@ export interface RouteInput {
   /** Latest acceptable completion time; providers slower than this are skipped. */
   deadline?: Date;
   /** Used for per-candidate cost estimates in the budget check. */
-  request?: ProviderRequest;
+  /** Required: every candidate's cost is estimated from it for the budget check. */
+  request: ProviderRequest;
 }
 
 export type SkipReason =
@@ -53,6 +54,7 @@ export type SkipReason =
   | 'provider_disabled'
   | 'over_budget'
   | 'too_slow'
+  | 'no_cost_estimate'
   | 'circuit_open';
 
 export interface CandidateOutcome {
@@ -166,8 +168,9 @@ async function skipReason(
   });
   if (kill.killed && kill.level === 'provider') return 'provider_disabled';
 
-  const estimatedCostPence =
-    input.request && adapter.estimateCostPence ? adapter.estimateCostPence(input.request) : 0;
+  // Fail closed: a provider that cannot estimate cost cannot be budget-checked.
+  if (!adapter.estimateCostPence) return 'no_cost_estimate';
+  const estimatedCostPence = adapter.estimateCostPence(input.request);
   const withinBudget = await deps.budget.hasBudget({
     organisationId: input.organisationId,
     projectId: input.projectId,

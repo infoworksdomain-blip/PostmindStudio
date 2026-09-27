@@ -19,6 +19,16 @@ One line per completed backlog item. Newest at the top.
 [2026-09-27] [2.3] registry.ts + default-registry.ts: adapters registered only when their API key is set.
 [2026-09-27] [2.1–2.2] interface.ts: ProviderAdapter (spec 8.9), capability + request union, ProviderErrorClass.
 
+**Phase 2 security review (independent agent) — all findings fixed:**
+- HIGH: cost reserved at submit (estimate → provider_usage + costActualPence), settled to actual at completion, released on failure/cancel. Spend by synchronous providers is visible to caps even if the job is never polled.
+- HIGH: router requires `request`; providers without a cost estimator are skipped (`no_cost_estimate`) instead of estimating 0.
+- HIGH: half-open trial slot released when the kill switch / DB aborts a submit or the error is client-side; abandoned trials expire after 15 min.
+- MEDIUM: pollTracked/cancelTracked take the caller's organisationId; other orgs' jobs return 404.
+- MEDIUM: temporary / presigned URLs are redacted before responses are stored in provider_jobs.
+- MEDIUM: S3 key segments validated (no '/', '..', leading '.').
+- LOW: explicit Anthropic (120s) and OpenAI (180s) SDK timeouts.
+- Runway FAILED tasks now report billed credits so charged failures stay counted.
+
 **GATE 2 review list:**
 - SPEC DRIFT — DALL-E 3 was removed from OpenAI's API on 2026-05-12. Using `gpt-image-2` (OpenAI's named replacement; `OPENAI_IMAGE_MODEL` to change).
 - SPEC DRIFT — Runway "Gen-4 Turbo" is image-to-video only; "Gen-4 Alpha" no longer exists. Text-only clips use `gen4.5` (12 credits/s vs 5); frame-seeded clips use `gen4_turbo`. Runway's API also hosts `veo3.1` (the spec's "Veo 3" for PLUS/ENTERPRISE is only reachable this way or via Vertex AI; `veo3` is gone).

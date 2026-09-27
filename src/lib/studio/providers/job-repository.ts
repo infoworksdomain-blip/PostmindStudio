@@ -40,17 +40,29 @@ export interface ProviderJobRepository {
       errorMessage: string;
       completedAt: Date;
       durationMs: number;
+      /** Amount the provider actually billed for the failed work, when known. */
+      costPence?: number;
       state?: 'FAILED' | 'TIMED_OUT' | 'CANCELLED';
     },
   ): Promise<void>;
-  recordUsage(usage: {
-    organisationId: string;
-    provider: string;
-    day: Date;
-    succeeded: boolean;
-    costPence: number;
-    projectId?: string | null;
-  }): Promise<void>;
+  /**
+   * Apply a usage delta to provider_usage (and the project tally when costDeltaPence ≠ 0).
+   * Deltas let submit RESERVE the estimate immediately and completion SETTLE the difference,
+   * so spend is visible to budget caps even if the job is never polled.
+   */
+  recordUsage(usage: UsageDelta): Promise<void>;
+}
+
+export interface UsageDelta {
+  organisationId: string;
+  provider: string;
+  /** UTC day the job started; reservation and settlement land on the same row. */
+  day: Date;
+  jobs: 0 | 1;
+  succeeded: 0 | 1;
+  failed: 0 | 1;
+  costDeltaPence: number;
+  projectId?: string | null;
 }
 
 /** Keep stored JSON bounded. Oversized payloads are replaced with a marker, not cut mid-JSON. */
@@ -119,16 +131,17 @@ export function createPrismaProviderJobRepository(db: ProviderJobClient): Provid
           errorMessage: outcome.errorMessage.slice(0, 2_000),
           completedAt: outcome.completedAt,
           durationMs: outcome.durationMs,
+          ...(outcome.costPence !== undefined && { costPence: outcome.costPence }),
         },
       });
     },
     async recordUsage(usage) {
       const day = utcDay(usage.day);
       const counters = {
-        jobCount: 1,
-        succeededCount: usage.succeeded ? 1 : 0,
-        failedCount: usage.succeeded ? 0 : 1,
-        costPence: usage.costPence,
+        jobCount: usage.jobs,
+        succeededCount: usage.succeeded,
+        failedCount: usage.failed,
+        costPence: usage.costDeltaPence,
       };
       await db.$transaction([
         db.providerUsage.upsert({
@@ -152,11 +165,11 @@ export function createPrismaProviderJobRepository(db: ProviderJobClient): Provid
             costPence: { increment: counters.costPence },
           },
         }),
-        ...(usage.projectId && usage.costPence > 0
+        ...(usage.projectId && usage.costDeltaPence !== 0
           ? [
               db.videoProject.update({
                 where: { id: usage.projectId },
-                data: { costActualPence: { increment: usage.costPence } },
+                data: { costActualPence: { increment: usage.costDeltaPence } },
               }),
             ]
           : []),

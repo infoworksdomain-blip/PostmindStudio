@@ -98,6 +98,21 @@ export class AnthropicAdapter implements ProviderAdapter {
     this.results = new SyncJobStore(PROVIDER_ID, this.now);
   }
 
+  /**
+   * Upper-bound estimate for the router's budget check: prompt at ~4 chars/token plus the full
+   * max_tokens of output. Actual cost (from usage) replaces it at settlement.
+   */
+  estimateCostPence(request: ProviderRequest): number {
+    if (request.capability !== 'text_generation') return 0;
+    const price = MODEL_PRICING_USD_PER_MTOK[this.model] ?? { input: 0, output: 0 };
+    const inputTokens = Math.ceil((request.system.length + request.prompt.length) / 4);
+    const outputTokens = request.maxTokens ?? DEFAULT_MAX_TOKENS;
+    return usdToPence(
+      (inputTokens * price.input + outputTokens * price.output) / 1_000_000,
+      this.usdToGbpRate,
+    );
+  }
+
   async submit(request: ProviderRequest): Promise<ProviderSubmitResult> {
     if (request.capability !== 'text_generation') {
       throw providerError(

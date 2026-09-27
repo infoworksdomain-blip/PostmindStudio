@@ -4,6 +4,7 @@ import {
   FAILURE_THRESHOLD,
   FAILURE_WINDOW_MS,
   OPEN_DURATION_MS,
+  TRIAL_TIMEOUT_MS,
 } from './circuit-breaker';
 
 function clock(start = 0) {
@@ -85,5 +86,32 @@ describe('circuit breaker (spec 11.4: 5 failures in 60s → open 5 min)', () => 
     failTimes(breaker, 'runway', 7);
     breaker.recordSuccess('luma');
     expect(breaker.snapshot()).toEqual({ runway: 'open', luma: 'closed' });
+  });
+});
+
+describe('half-open trial slot hygiene', () => {
+  it('releaseTrial frees a claimed slot without changing state', () => {
+    let t = 0;
+    const breaker = createCircuitBreaker(() => t);
+    for (let i = 0; i < 5; i += 1) breaker.recordFailure('runway');
+    t = OPEN_DURATION_MS;
+    expect(breaker.tryAcquire('runway')).toBe(true);
+    expect(breaker.tryAcquire('runway')).toBe(false);
+    breaker.releaseTrial('runway');
+    expect(breaker.state('runway')).toBe('half_open');
+    expect(breaker.tryAcquire('runway')).toBe(true);
+    breaker.releaseTrial('unknown-provider');
+  });
+
+  it('expires an abandoned trial after TRIAL_TIMEOUT_MS', () => {
+    let t = 0;
+    const breaker = createCircuitBreaker(() => t);
+    for (let i = 0; i < 5; i += 1) breaker.recordFailure('runway');
+    t = OPEN_DURATION_MS;
+    breaker.tryAcquire('runway');
+    t += TRIAL_TIMEOUT_MS - 1;
+    expect(breaker.tryAcquire('runway')).toBe(false);
+    t += 1;
+    expect(breaker.tryAcquire('runway')).toBe(true);
   });
 });

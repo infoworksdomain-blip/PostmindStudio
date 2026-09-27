@@ -49,6 +49,13 @@ main(async () => {
       need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 5 },
       planTier: 'STANDARD',
       organisationId: SMOKE_ORG_ID,
+      request: {
+        capability: 'text_to_video',
+        organisationId: SMOKE_ORG_ID,
+        prompt: 'router smoke test (never submitted)',
+        durationSec: 5,
+        aspectRatio: '9:16',
+      },
     };
 
     const first = await routeProvider(input, deps);
