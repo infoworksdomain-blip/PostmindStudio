@@ -52,6 +52,7 @@ npm run dev                      # http://localhost:3010
 | `npm run db:reset` | Drop and re-apply all migrations on the local DB (destructive) |
 | `npm run db:studio` | Prisma Studio GUI |
 | `npm run db:down` | Stop the local containers (data volumes kept) |
+| `npm run gate2:anthropic` / `:runway` / `:elevenlabs` / `:shotstack` / `:router` | GATE 2 live smoke tests against staging keys (write `provider_jobs` rows; Runway costs real credits) |
 
 Prisma CLI commands read `.env.local` via `dotenv-cli`; Next.js loads `.env.local` automatically.
 CI (`.github/workflows/ci.yml`) runs validate, typecheck, lint, format check and tests on every push.
