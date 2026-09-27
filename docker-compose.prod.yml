@@ -1,0 +1,72 @@
+# PostMind Studio — production topology (BACKLOG 12.6). Single-host reference / staging layout;
+# the same services map 1:1 onto ECS or Kubernetes deployments (playbook 7.3 sizing).
+#
+# Postgres (studio schema + pgvector) and Redis (DB 3) are MANAGED services shared with PostMind
+# Core — they are deliberately not defined here. Secrets come from the secret manager, rendered to
+# the env file below at deploy time (never committed; see runbooks/deploy.md).
+#
+#   IMAGE_TAG=<git-sha> docker compose -f docker-compose.prod.yml run --rm migrate
+#   IMAGE_TAG=<git-sha> docker compose -f docker-compose.prod.yml up -d --no-deps web worker-orchestration ...
+
+x-studio: &studio
+  image: ${STUDIO_IMAGE:-ghcr.io/infoworksdomain-blip/postmind-studio}:${IMAGE_TAG:?set IMAGE_TAG to the git SHA being deployed}
+  env_file: ${STUDIO_ENV_FILE:-.env.production}
+  restart: unless-stopped
+  stop_grace_period: 120s # workers finish in-flight jobs on SIGTERM (scripts/worker.ts)
+  logging:
+    driver: json-file
+    options: { max-size: '50m', max-file: '5' }
+
+x-worker: &worker
+  <<: *studio
+  healthcheck:
+    disable: true # no HTTP listener; liveness = BullMQ stalled-job detection + /metrics scrape
+
+services:
+  # One-shot: apply committed migrations (forward-only, expand/contract — runbooks/rollback.md)
+  # then the idempotent seed (system_flags, presets, templates, taxonomy).
+  migrate:
+    <<: *studio
+    restart: 'no'
+    command: ['sh', '-c', 'npx prisma migrate deploy && npx prisma db seed']
+    profiles: ['migrate']
+
+  web:
+    <<: *studio
+    command: ['npx', 'next', 'start', '-p', '3010']
+    # Fronted by the load balancer (TLS, studio.postmind.ai); health: /api/health, ready: /api/health/ready.
+    expose: ['3010']
+    deploy:
+      replicas: 3
+
+  # Queue-per-service so each scales independently (spec 11.3; playbook 7.3 pod counts).
+  worker-orchestration:
+    <<: *worker
+    command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-orchestration']
+    deploy: { replicas: 3 }
+
+  worker-assets:
+    <<: *worker
+    command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-assets']
+    deploy: { replicas: 5 }
+
+  worker-publish:
+    <<: *worker
+    command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-publish']
+    deploy: { replicas: 3 }
+
+  worker-scheduled:
+    <<: *worker
+    command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-scheduled']
+    deploy: { replicas: 2 }
+
+  worker-analytics:
+    <<: *worker
+    command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-analytics']
+    deploy: { replicas: 2 }
+
+  # Feature A corpus ingestion — staff-triggered batches, isolated from customer queues.
+  worker-library:
+    <<: *worker
+    command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-library']
+    deploy: { replicas: 1 }

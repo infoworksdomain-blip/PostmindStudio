@@ -166,17 +166,17 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 10 — Frontend (create/review/manage screens) (target: week 8-14, parallel with backend)
 
-- [ ] **10.1** Set up Tailwind, shadcn/ui, match PostMind design system tokens.
-- [ ] **10.2** Auth wrapper — read JWT from PostMind session cookie or bearer header.
-- [ ] **10.3** New Project screen (Create) — the "one text box, one button" experience per Addendum A14.1.
-- [ ] **10.4** Review screen with per-variant preview, shot strip, quality panel.
-- [ ] **10.5** Manage — projects list, publications list, calendar.
-- [ ] **10.6** Analytics dashboard.
-- [ ] **10.7** Library browse + detail (Feature A).
-- [ ] **10.8** Slideshow builder.
-- [ ] **10.9** Business profile + image library screens.
-- [ ] **10.10** Overlay editor (highest complexity — see design prototype in `/docs`).
-- [ ] **10.11** Admin Centre integration.
+- [x] **10.1** Set up Tailwind, shadcn/ui, match PostMind design system tokens.
+- [x] **10.2** Auth wrapper — read JWT from PostMind session cookie or bearer header.
+- [x] **10.3** New Project screen (Create) — the "one text box, one button" experience per Addendum A14.1.
+- [x] **10.4** Review screen with per-variant preview, shot strip, quality panel.
+- [x] **10.5** Manage — projects list, publications list, calendar.
+- [x] **10.6** Analytics dashboard.
+- [x] **10.7** Library browse + detail (Feature A).
+- [x] **10.8** Slideshow builder.
+- [x] **10.9** Business profile + image library screens.
+- [x] **10.10** Overlay editor (highest complexity — see design prototype in `/docs`).
+- [x] **10.11** Admin Centre integration.
 
 ---
 
@@ -194,11 +194,11 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 12 — Hardening + launch prep (target: week 14-16)
 
-- [ ] **12.1** Load testing (k6 scripts per Engagement pattern).
-- [ ] **12.2** Kill switch rehearsals — all 4 levels, timed against SLO.
-- [ ] **12.3** Rollback rehearsal.
-- [ ] **12.4** All runbooks written per playbook Section 11.
+- [x] **12.1** Load testing (k6 scripts per Engagement pattern).
+- [ ] **12.2** Kill switch rehearsals — all 4 levels, timed against SLO. _(tooling + procedure built; timed rehearsal pending on staging)_
+- [ ] **12.3** Rollback rehearsal. _(procedure built; timed rehearsal pending on staging)_
+- [x] **12.4** All runbooks written per playbook Section 11.
 - [ ] **12.5** Beta customer onboarding (5-10 friendlies).
-- [ ] **12.6** Production deployment configs (Dockerfile, docker-compose.prod.yml, deploy runbooks).
-- [ ] **12.7** Full end-to-end regression: every user journey in playbook Workstream H golden-path list.
+- [x] **12.6** Production deployment configs (Dockerfile, docker-compose.prod.yml, deploy runbooks).
+- [x] **12.7** Full end-to-end regression: every user journey in playbook Workstream H golden-path list.
 - [ ] **[GATE 12]** Go / No-Go decision per playbook Section 14 → v1.0 GA.

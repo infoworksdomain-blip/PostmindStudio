@@ -46,6 +46,8 @@ export interface PublicationMetadata {
   title?: string;
   rawCaption?: string;
   options?: Record<string, unknown>;
+  /** Set just before the platform upload and cleared once its outcome is known (publish-video). */
+  uploadStartedAt?: string;
   [key: string]: unknown;
 }
 

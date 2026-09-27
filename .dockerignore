@@ -1,0 +1,16 @@
+# Keep the build context small and secret-free (BACKLOG 12.6).
+node_modules
+.next
+coverage
+.git
+.github
+.claude
+*.log
+*.tsbuildinfo
+tmp
+temp
+scratch
+# Env files are never baked into the image; secrets come from the orchestrator's secret manager.
+.env
+.env.*
+!.env.example

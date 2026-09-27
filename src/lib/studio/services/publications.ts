@@ -309,7 +309,14 @@ export async function retryPublication(
   });
   const moved = await deps.db.videoPublication.updateMany({
     where: { id, organisationId: tenant.organisationId, state: 'FAILED' },
-    data: { state: 'SCHEDULED', errorReason: null, errorCode: null },
+    // An explicit retry is the person confirming the post is not live: clear the upload marker
+    // that publish-video uses to refuse re-uploading after an unknown outcome.
+    data: {
+      state: 'SCHEDULED',
+      errorReason: null,
+      errorCode: null,
+      metadata: withoutUploadMarker(publication.metadata),
+    },
   });
   if (moved.count === 0) throw new ConflictError('Publication changed concurrently');
   await deps.db.videoProject.updateMany({
@@ -325,6 +332,12 @@ export async function retryPublication(
     jobId: jobIds.publishVideo(data, publication.retryCount),
   });
   return findPublication(deps.db, tenant.organisationId, id);
+}
+
+function withoutUploadMarker(metadata: Prisma.JsonValue | null): Prisma.InputJsonValue {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return {};
+  const { uploadStartedAt: _marker, ...rest } = metadata as Record<string, Prisma.JsonValue>;
+  return rest as Prisma.InputJsonValue;
 }
 
 function takedownMessage(platform: string, errorClass: string): string {
