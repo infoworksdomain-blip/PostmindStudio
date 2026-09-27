@@ -1,0 +1,3 @@
+/* Demo build stylesheet: the app's own design tokens and Tailwind layers, plus the demo sources. */
+@import '../src/app/globals.css';
+@source '../demo';

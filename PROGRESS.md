@@ -6,6 +6,8 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-28] [DEMO] Clickable demo of the whole build: demo/ bundles the real screens (src/components/studio) into one self-contained HTML page (`node scripts/demo/build.mjs` → demo/dist/postmind-studio-demo.html; preview with `node scripts/demo/serve.mjs`). next/link and next/navigation are shimmed with a hash router; /api/studio is served in the browser by stateful sample handlers (demo/api/handlers) that mirror the real response shapes, with timed simulations for generation, publishing, scans and ingestion; sample images are canvas-drawn and sample videos are canvas clips recorded with MediaRecorder. Extra pages: #/tour (screen index + guided workflows), #/tour/system (features with no screen, from the real code), #/tour/not-built (47 not-built items with blocker and completion plan; data in demo/tour/not-built-data.ts). Every route verified to render with no uncovered API calls.
+
 ## Operator decisions
 
 [2026-09-27] [OPS-confirm] Operator confirmations (decisions 1 and 6): the auto-approve "trusted" rules (≥ 10 human-approved projects, clean run, never ENTERPRISE) and the owner/admin role for REQUIRE_APPROVAL_FROM_ROLE are CONFIRMED as built. The Core context contract (`GET /api/internal/context/:userId`) and the Engagement attribution path (`/api/engagement/internal/publications/attribute`) are CONFIRMED.

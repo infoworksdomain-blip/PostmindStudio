@@ -1,0 +1,423 @@
+// Seed rows for the Leeds Sourdough image library: pictures read from the website by the last
+// scan (SCRAPED), stock photos found from the profile's search queries (STOCK), generated images
+// (GENERATED) and uploads (UPLOAD). Pixels come from demo/media.ts sceneImage at read time.
+import type { SceneKind } from '../../media';
+
+export type Source = 'SCRAPED' | 'STOCK' | 'GENERATED' | 'UPLOAD';
+
+export interface ImageSeed {
+  source: Source;
+  scene: SceneKind;
+  tags: string[];
+  alt: string;
+  /** Website path (SCRAPED), stock provider id (STOCK) or prompt (GENERATED). */
+  ref?: string;
+  w?: number;
+  h?: number;
+  uses?: number;
+}
+
+const SITE = 'https://leedssourdough.co.uk';
+
+export const SCRAPED: ImageSeed[] = [
+  {
+    source: 'SCRAPED',
+    scene: 'storefront',
+    tags: ['shopfront', 'chapel allerton', 'exterior'],
+    alt: 'Leeds Sourdough shopfront on Harrogate Road in the morning',
+    ref: '/about',
+    w: 2400,
+    h: 1600,
+    uses: 6,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'sourdough',
+    tags: ['sourdough', 'loaf', 'crust', 'bread'],
+    alt: 'Country sourdough loaf with an open ear',
+    ref: '/shop/country-sourdough',
+    w: 1800,
+    h: 1800,
+    uses: 11,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'croissant',
+    tags: ['croissant', 'pastry', 'laminated'],
+    alt: 'Tray of butter croissants fresh from the oven',
+    ref: '/shop/pastries',
+    w: 2000,
+    h: 1500,
+    uses: 4,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'baker',
+    tags: ['baker', 'team', 'shaping'],
+    alt: 'Head baker shaping loaves at the bench',
+    ref: '/about',
+    w: 1600,
+    h: 2000,
+    uses: 3,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'coffee',
+    tags: ['coffee', 'flat white', 'cafe'],
+    alt: 'Flat white with latte art on the counter',
+    ref: '/cafe',
+    w: 1500,
+    h: 1500,
+    uses: 2,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'flatlay',
+    tags: ['flat lay', 'bread', 'pastry', 'table'],
+    alt: 'Weekend bread and pastry spread on a linen cloth',
+    ref: '/',
+    w: 2400,
+    h: 1600,
+    uses: 5,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'cake',
+    tags: ['cake', 'celebration', 'order'],
+    alt: 'Raspberry and pistachio celebration cake',
+    ref: '/cakes',
+    w: 1600,
+    h: 1600,
+    uses: 1,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'kitchen',
+    tags: ['bakehouse', 'oven', 'kitchen'],
+    alt: 'Deck oven and proving racks in the bakehouse',
+    ref: '/wholesale',
+    w: 2400,
+    h: 1350,
+    uses: 2,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'logo',
+    tags: ['logo', 'brand'],
+    alt: 'Leeds Sourdough wordmark',
+    ref: '/',
+    w: 1200,
+    h: 1200,
+    uses: 9,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'market',
+    tags: ['market', 'stall', 'kirkgate'],
+    alt: 'Saturday stall at Kirkgate Market',
+    ref: '/find-us',
+    w: 2000,
+    h: 1333,
+    uses: 1,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'sourdough',
+    tags: ['rye', 'seeded', 'bread'],
+    alt: 'Seeded rye loaf, sliced',
+    ref: '/shop/seeded-rye',
+    w: 1500,
+    h: 1875,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'croissant',
+    tags: ['cardamom bun', 'pastry', 'limited'],
+    alt: 'Cardamom buns cooling on a rack',
+    ref: '/shop/cardamom-bun',
+    w: 1800,
+    h: 1800,
+    uses: 3,
+  },
+];
+
+export const STOCK: ImageSeed[] = [
+  {
+    source: 'STOCK',
+    scene: 'sourdough',
+    tags: ['artisan bread', 'rustic', 'bakery'],
+    alt: 'Rustic loaves on a wooden board',
+    ref: 'pexels:5946720',
+    w: 4000,
+    h: 2667,
+    uses: 2,
+  },
+  {
+    source: 'STOCK',
+    scene: 'coffee',
+    tags: ['coffee', 'morning', 'cosy'],
+    alt: 'Morning coffee by a café window',
+    ref: 'pexels:302899',
+    w: 3840,
+    h: 2560,
+    uses: 1,
+  },
+  {
+    source: 'STOCK',
+    scene: 'street',
+    tags: ['leeds', 'street', 'city'],
+    alt: 'Leeds street scene at dawn',
+    ref: 'storyblocks:SBI-300912',
+    w: 5000,
+    h: 3333,
+    uses: 1,
+  },
+  {
+    source: 'STOCK',
+    scene: 'kitchen',
+    tags: ['flour', 'dough', 'hands'],
+    alt: 'Hands kneading dough on a floured bench',
+    ref: 'pexels:4686818',
+    w: 3600,
+    h: 2400,
+    uses: 4,
+  },
+  {
+    source: 'STOCK',
+    scene: 'croissant',
+    tags: ['pastry', 'breakfast', 'butter'],
+    alt: 'Croissant and jam breakfast',
+    ref: 'pexels:2135',
+    w: 3000,
+    h: 2000,
+  },
+  {
+    source: 'STOCK',
+    scene: 'market',
+    tags: ['farmers market', 'local', 'produce'],
+    alt: 'Local produce at a farmers market',
+    ref: 'storyblocks:SBI-118273',
+    w: 4500,
+    h: 3000,
+  },
+  {
+    source: 'STOCK',
+    scene: 'cake',
+    tags: ['cake', 'dessert', 'slice'],
+    alt: 'Slice of layered cake',
+    ref: 'pexels:291528',
+    w: 3200,
+    h: 3200,
+  },
+  {
+    source: 'STOCK',
+    scene: 'baker',
+    tags: ['baker', 'apron', 'portrait'],
+    alt: 'Baker in an apron dusted with flour',
+    ref: 'pexels:3814446',
+    w: 2800,
+    h: 4200,
+    uses: 1,
+  },
+  {
+    source: 'STOCK',
+    scene: 'flatlay',
+    tags: ['ingredients', 'flour', 'flat lay'],
+    alt: 'Flour, salt and starter jar from above',
+    ref: 'storyblocks:SBI-221904',
+    w: 4000,
+    h: 4000,
+  },
+  {
+    source: 'STOCK',
+    scene: 'storefront',
+    tags: ['independent shop', 'high street', 'exterior'],
+    alt: 'Independent shops on a northern high street',
+    ref: 'pexels:1797428',
+    w: 5184,
+    h: 3456,
+  },
+];
+
+export const GENERATED: ImageSeed[] = [
+  {
+    source: 'GENERATED',
+    scene: 'sourdough',
+    tags: ['sourdough', 'autumn', 'moody'],
+    alt: 'Moody autumn still life with a sourdough loaf',
+    ref: 'A sourdough loaf on slate with autumn leaves, low warm light, editorial food photography',
+    w: 1024,
+    h: 1024,
+    uses: 2,
+  },
+  {
+    source: 'GENERATED',
+    scene: 'croissant',
+    tags: ['croissant', 'close-up', 'texture'],
+    alt: 'Extreme close-up of croissant layers',
+    ref: 'Macro shot of croissant lamination, golden, crisp flakes, shallow depth of field',
+    w: 1024,
+    h: 1792,
+  },
+  {
+    source: 'GENERATED',
+    scene: 'studio',
+    tags: ['title card', 'brand', 'dark'],
+    alt: 'Dark branded title card background',
+    ref: 'Minimal dark background with a warm orange accent line, space for a headline',
+    w: 1792,
+    h: 1024,
+    uses: 5,
+  },
+  {
+    source: 'GENERATED',
+    scene: 'cake',
+    tags: ['christmas', 'cake', 'festive'],
+    alt: 'Festive stollen and mince pies',
+    ref: 'Christmas stollen and mince pies on a bakery counter, fairy lights, cosy',
+    w: 1024,
+    h: 1024,
+    uses: 1,
+  },
+  {
+    source: 'GENERATED',
+    scene: 'street',
+    tags: ['leeds', 'illustration', 'map'],
+    alt: 'Illustrated Leeds delivery route',
+    ref: 'Flat illustration of a bakery van route across Leeds at sunrise',
+    w: 1792,
+    h: 1024,
+  },
+  {
+    source: 'GENERATED',
+    scene: 'coffee',
+    tags: ['coffee', 'bun', 'pairing'],
+    alt: 'Coffee and cardamom bun pairing',
+    ref: 'Flat white next to a cardamom bun, Scandinavian styling, soft daylight',
+    w: 1024,
+    h: 1024,
+  },
+];
+
+export const UPLOAD: ImageSeed[] = [
+  {
+    source: 'UPLOAD',
+    scene: 'baker',
+    tags: ['team', 'amara', 'founder'],
+    alt: 'Amara, founder, at the counter',
+    w: 3024,
+    h: 4032,
+    uses: 3,
+  },
+  {
+    source: 'UPLOAD',
+    scene: 'storefront',
+    tags: ['window display', 'christmas'],
+    alt: 'Christmas window display',
+    w: 4032,
+    h: 3024,
+  },
+  {
+    source: 'UPLOAD',
+    scene: 'flatlay',
+    tags: ['wholesale', 'delivery', 'crates'],
+    alt: 'Wholesale crates ready for delivery',
+    w: 4032,
+    h: 3024,
+    uses: 2,
+  },
+  {
+    source: 'UPLOAD',
+    scene: 'kitchen',
+    tags: ['class', 'students', 'workshop'],
+    alt: 'Sourdough class students shaping dough',
+    w: 4032,
+    h: 3024,
+    uses: 4,
+  },
+  {
+    source: 'UPLOAD',
+    scene: 'market',
+    tags: ['event', 'food festival'],
+    alt: 'Our stand at Leeds Indie Food festival',
+    w: 4032,
+    h: 3024,
+  },
+];
+
+/** Stock photos a "Refresh stock" run adds a few seconds later. */
+export const REFRESH_STOCK: ImageSeed[] = [
+  {
+    source: 'STOCK',
+    scene: 'sourdough',
+    tags: ['sourdough', 'scoring', 'bread'],
+    alt: 'Scoring a loaf before baking',
+    ref: 'pexels:6605307',
+    w: 4000,
+    h: 2667,
+  },
+  {
+    source: 'STOCK',
+    scene: 'coffee',
+    tags: ['latte', 'café', 'counter'],
+    alt: 'Latte on a marble café counter',
+    ref: 'storyblocks:SBI-409112',
+    w: 3600,
+    h: 2400,
+  },
+  {
+    source: 'STOCK',
+    scene: 'croissant',
+    tags: ['pain au chocolat', 'pastry'],
+    alt: 'Pain au chocolat on a cooling rack',
+    ref: 'pexels:3892469',
+    w: 3000,
+    h: 3000,
+  },
+];
+
+/** Pages a new website scan reads, and a few fresh images it finds there. */
+export const SCAN_PAGES = [
+  '/',
+  '/about',
+  '/shop',
+  '/shop/country-sourdough',
+  '/shop/pastries',
+  '/cafe',
+  '/cakes',
+  '/wholesale',
+  '/classes',
+  '/find-us',
+  '/journal',
+];
+export const SCAN_FINDS: ImageSeed[] = [
+  {
+    source: 'SCRAPED',
+    scene: 'croissant',
+    tags: ['pastel de nata', 'pastry', 'new'],
+    alt: 'Pastel de nata, fresh this week',
+    ref: '/journal/natas',
+    w: 1600,
+    h: 1600,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'kitchen',
+    tags: ['class', 'bakehouse', 'workshop'],
+    alt: 'Class bench set up with bannetons',
+    ref: '/classes',
+    w: 2000,
+    h: 1333,
+  },
+  {
+    source: 'SCRAPED',
+    scene: 'sourdough',
+    tags: ['pumpkin', 'autumn', 'loaf'],
+    alt: 'Pumpkin and sage loaf',
+    ref: '/journal/autumn',
+    w: 1800,
+    h: 1800,
+  },
+];
+
+export { SITE };
