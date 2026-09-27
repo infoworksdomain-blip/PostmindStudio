@@ -6,6 +6,8 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 4] Passed on automated evidence (autonomous build mode): every route integration-tested on real Postgres; CI green on PR #5. Live curl walkthrough (README) pending a Core-issued JWT.
+
 **Phase 4 status: API built; every route integration-tested through the real wrapper on real Postgres (happy/401/403/404/validation/conflict).**
 
 [2026-09-27] [4.10] test/api: 27 route integration tests (projects, scripts, shots, renders, force-approve, idempotency, tenant isolation).

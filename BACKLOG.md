@@ -86,7 +86,7 @@ Work items in the order Claude Code should execute them. Each item names its acc
 - [x] **4.8** Implement `POST /api/studio/projects/[id]/reject` — halt, require note.
 - [x] **4.9** Implement script/shot endpoints: GET script, PATCH shot, POST shot regenerate.
 - [x] **4.10** Integration tests for each route: happy path + 401 + 403 + 404 + validation error.
-- [ ] **[GATE 4]** Operator can POST a project via curl and receive a rendered video URL via GET.
+- [x] **[GATE 4]** Operator can POST a project via curl and receive a rendered video URL via GET.
 
 ---
 
