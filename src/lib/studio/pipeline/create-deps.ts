@@ -5,6 +5,7 @@ import { logger } from '../../logger';
 import { lazyDataKeyProvider } from '../crypto/envelope';
 import { unavailableMetaCredentials } from '../platforms/meta';
 import { oauthClientFromEnv } from '../platforms/oauth';
+import { createMetricsRegistry } from '../analytics/fetchers';
 import { stockSourcesFromEnv } from '../images/stock';
 import { createEngagementClient } from '../platforms/publishing';
 import { createBrowserlessRenderer } from '../scan/crawl';
@@ -50,6 +51,10 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     },
     fetch: globalThis.fetch,
     audit: auditLog,
+    metrics: createMetricsRegistry({
+      fetchImpl: globalThis.fetch,
+      linkedInEnabled: process.env.LINKEDIN_POST_ANALYTICS === 'enabled',
+    }),
     scan: {
       pageFetch: guardedFetch,
       renderer: process.env.BROWSERLESS_API_KEY?.trim()

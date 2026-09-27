@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ForbiddenError } from './errors';
-import { capabilityMatches, hasCapability, requireCapability, StudioCapability } from './rbac';
+import {
+  capabilityMatches,
+  hasCapability,
+  requireCapability,
+  requirePlatformStaff,
+  StudioCapability,
+} from './rbac';
 
 describe('capabilityMatches', () => {
   it('matches exact grants', () => {
@@ -42,5 +48,66 @@ describe('requireCapability', () => {
 
   it('denies everything when no capabilities are granted', () => {
     expect(hasCapability({ capabilities: [] }, StudioCapability.ProjectRead)).toBe(false);
+  });
+});
+
+describe('requirePlatformStaff', () => {
+  const ctx = { organisationId: 'org-postmind' };
+
+  it('allows any organisation outside production when STUDIO_PLATFORM_ORG_IDS is unset', () => {
+    expect(() => requirePlatformStaff(ctx, {})).not.toThrow();
+    expect(() => requirePlatformStaff(ctx, { NODE_ENV: 'development' })).not.toThrow();
+    expect(() => requirePlatformStaff(ctx, { NODE_ENV: 'test' })).not.toThrow();
+  });
+
+  it('refuses every organisation in production when STUDIO_PLATFORM_ORG_IDS is unset', () => {
+    expect(() => requirePlatformStaff(ctx, { NODE_ENV: 'production' })).toThrow(ForbiddenError);
+  });
+
+  it('refuses in production even when STUDIO_PLATFORM_ORG_IDS is only whitespace/empty entries', () => {
+    expect(() =>
+      requirePlatformStaff(ctx, { NODE_ENV: 'production', STUDIO_PLATFORM_ORG_IDS: ' , ,' }),
+    ).toThrow(ForbiddenError);
+  });
+
+  it('allows an organisation listed in STUDIO_PLATFORM_ORG_IDS', () => {
+    expect(() =>
+      requirePlatformStaff(ctx, {
+        NODE_ENV: 'production',
+        STUDIO_PLATFORM_ORG_IDS: 'org-a,org-postmind,org-b',
+      }),
+    ).not.toThrow();
+  });
+
+  it('trims whitespace around listed organisation ids', () => {
+    expect(() =>
+      requirePlatformStaff(ctx, { STUDIO_PLATFORM_ORG_IDS: ' org-a , org-postmind , org-b ' }),
+    ).not.toThrow();
+  });
+
+  it('refuses an organisation not in the list', () => {
+    expect(() => requirePlatformStaff(ctx, { STUDIO_PLATFORM_ORG_IDS: 'org-a,org-b' })).toThrow(
+      ForbiddenError,
+    );
+  });
+
+  it('refuses a non-listed organisation regardless of NODE_ENV', () => {
+    expect(() =>
+      requirePlatformStaff(ctx, {
+        NODE_ENV: 'development',
+        STUDIO_PLATFORM_ORG_IDS: 'org-a,org-b',
+      }),
+    ).toThrow(ForbiddenError);
+  });
+
+  it('defaults to process.env when no env override is given', () => {
+    const original = process.env.STUDIO_PLATFORM_ORG_IDS;
+    process.env.STUDIO_PLATFORM_ORG_IDS = 'org-postmind';
+    try {
+      expect(() => requirePlatformStaff(ctx)).not.toThrow();
+    } finally {
+      if (original === undefined) delete process.env.STUDIO_PLATFORM_ORG_IDS;
+      else process.env.STUDIO_PLATFORM_ORG_IDS = original;
+    }
   });
 });

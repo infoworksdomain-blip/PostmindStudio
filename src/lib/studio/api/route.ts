@@ -1,3 +1,5 @@
+import { reportError } from '../observability/errors';
+import { getMetrics, routeLabel } from '../observability/metrics';
 import type { z } from 'zod';
 import { ConflictError, StudioError, toErrorResponse, ValidationError } from '../../errors';
 import { getCorrelationId, withContext } from '../../logger';
@@ -60,7 +62,7 @@ function flattenParams(params: Record<string, string | string[]>): Record<string
 }
 
 export function withStudioRoute(capability: StudioCapability, handler: Handler) {
-  return async function route(req: Request, next: NextRouteContext): Promise<Response> {
+  const handle = async function handle(req: Request, next: NextRouteContext): Promise<Response> {
     const correlationId = getCorrelationId(req);
     const headers = { 'x-correlation-id': correlationId };
     let log = withContext({ correlationId });
@@ -144,8 +146,10 @@ export function withStudioRoute(capability: StudioCapability, handler: Handler) 
       }
     } catch (err) {
       const response = toErrorResponse(err);
-      if (response.status >= 500) log.error({ err }, 'studio api error');
-      else
+      if (response.status >= 500) {
+        log.error({ err }, 'studio api error');
+        reportError(err, { correlationId, route: new URL(req.url).pathname });
+      } else
         log.info(
           { status: response.status, err: (err as Error).message },
           'studio api request rejected',
@@ -153,6 +157,19 @@ export function withStudioRoute(capability: StudioCapability, handler: Handler) 
       response.headers.set('x-correlation-id', correlationId);
       return response;
     }
+  };
+  return async function route(req: Request, next: NextRouteContext): Promise<Response> {
+    const started = performance.now();
+    const response = await handle(req, next);
+    getMetrics().httpDuration.observe(
+      {
+        method: req.method,
+        route: routeLabel(new URL(req.url).pathname, (await next?.params) ?? {}),
+        status: String(response.status),
+      },
+      (performance.now() - started) / 1000,
+    );
+    return response;
   };
 }
 

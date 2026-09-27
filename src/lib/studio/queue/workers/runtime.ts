@@ -1,3 +1,5 @@
+import { reportError } from '../../observability/errors';
+import { getMetrics } from '../../observability/metrics';
 import { UnrecoverableError } from 'bullmq';
 import {
   ConfigurationError,
@@ -23,6 +25,12 @@ import {
   publishVideo,
 } from './publish-video';
 import { ingestLibraryVideoJob, onIngestLibraryVideoFailed } from './ingest-library-video';
+import {
+  onPollPublicationAnalyticsFailed,
+  onRollUpAnalyticsFailed,
+  pollPublicationAnalytics,
+  rollUpAnalyticsJob,
+} from './poll-analytics';
 import { onPopulateSlideshowFailed, populateSlideshowJob } from './populate-slideshow';
 import { onRunQualityGateFailed, runQualityGate } from './run-quality-gate';
 import {
@@ -57,6 +65,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'scan-website': scanWebsite,
   'populate-slideshow': populateSlideshowJob,
   'ingest-library-video': ingestLibraryVideoJob,
+  'poll-publication-analytics': pollPublicationAnalytics,
+  'roll-up-analytics': rollUpAnalyticsJob,
   'refresh-image-library': refreshImageLibrary,
 };
 
@@ -70,6 +80,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'scan-website': onScanWebsiteFailed,
   'populate-slideshow': onPopulateSlideshowFailed,
   'ingest-library-video': onIngestLibraryVideoFailed,
+  'poll-publication-analytics': onPollPublicationAnalyticsFailed,
+  'roll-up-analytics': onRollUpAnalyticsFailed,
   'refresh-image-library': onRefreshImageLibraryFailed,
 };
 
@@ -115,17 +127,26 @@ export async function executeJob<N extends JobName>(
     organisationId: data.organisationId,
     runId: data.runId,
   });
+  const started = performance.now();
+  const metrics = getMetrics();
+  const record = (outcome: 'succeeded' | 'retrying' | 'failed') => {
+    metrics.jobs.inc({ job: name, outcome });
+    metrics.jobDuration.observe({ job: name, outcome }, (performance.now() - started) / 1000);
+  };
   try {
     await deps.killSwitch.assertNotKilled({
       organisationId: data.organisationId,
       projectId: data.projectId,
     });
     await PROCESSORS[name](data, deps);
+    record('succeeded');
   } catch (err) {
     const retryable = isRetryable(err);
     const final = !retryable || attempt.attemptsMade + 1 >= attempt.maxAttempts;
+    record(final ? 'failed' : 'retrying');
     log.warn({ err, retryable, final, attempt: attempt.attemptsMade + 1 }, 'job attempt failed');
     if (final) {
+      reportError(err, { job: name, projectId: data.projectId, runId: data.runId });
       try {
         await FAILURE_HANDLERS[name](data, deps, describeError(err), err);
       } catch (handlerErr) {

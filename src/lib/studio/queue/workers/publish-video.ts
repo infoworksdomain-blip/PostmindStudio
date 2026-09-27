@@ -102,6 +102,12 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
     platformPostId: result.platformPostId,
   });
   await rollUpProject(deps, publication.projectId, data.organisationId);
+  // Spec 15.2: metrics polling starts 30 s after publish.
+  const poll = { ...data, pollNumber: 0 };
+  await deps.queue.add('poll-publication-analytics', poll, {
+    jobId: jobIds.pollAnalytics(poll),
+    delayMs: 30_000,
+  });
   log.info({ platform, platformPostId: result.platformPostId }, 'published');
 }
 

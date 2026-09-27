@@ -43,6 +43,8 @@ export interface OAuthConfig {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  /** LinkedIn only: request r_member_postAnalytics (Community Management API, vetted). */
+  postAnalytics?: boolean;
 }
 
 /** RFC 7636 S256: base64url(sha256(verifier)). */
@@ -127,7 +129,8 @@ export function createTikTokOAuth(config: OAuthConfig, deps: Deps): OAuthClient 
     authorizeUrl({ state }) {
       const url = new URL('https://www.tiktok.com/v2/auth/authorize/');
       url.searchParams.set('client_key', config.clientId);
-      url.searchParams.set('scope', 'user.info.basic,video.publish');
+      // video.list: read the post's metrics (analytics polling, Phase 11).
+      url.searchParams.set('scope', 'user.info.basic,video.publish,video.list');
       url.searchParams.set('response_type', 'code');
       url.searchParams.set('redirect_uri', config.redirectUri);
       url.searchParams.set('state', state);
@@ -193,7 +196,11 @@ export function createYouTubeOAuth(config: OAuthConfig, deps: Deps): OAuthClient
       url.searchParams.set('redirect_uri', config.redirectUri);
       url.searchParams.set('response_type', 'code');
       // force-ssl covers videos.insert, videos.list and videos.delete (takedown).
-      url.searchParams.set('scope', 'https://www.googleapis.com/auth/youtube.force-ssl');
+      // yt-analytics.readonly: watch time and average view % (analytics polling, Phase 11).
+      url.searchParams.set(
+        'scope',
+        'https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/yt-analytics.readonly',
+      );
       url.searchParams.set('access_type', 'offline');
       url.searchParams.set('include_granted_scopes', 'true');
       // A refresh token is only issued on first authorisation; consent re-issues it on reconnect.
@@ -326,7 +333,10 @@ export function createLinkedInOAuth(config: OAuthConfig, deps: Deps): OAuthClien
       url.searchParams.set('response_type', 'code');
       url.searchParams.set('client_id', config.clientId);
       url.searchParams.set('redirect_uri', config.redirectUri);
-      url.searchParams.set('scope', 'openid profile w_member_social');
+      url.searchParams.set(
+        'scope',
+        `openid profile w_member_social${config.postAnalytics ? ' r_member_postAnalytics' : ''}`,
+      );
       url.searchParams.set('state', state);
       return url.toString();
     },
@@ -388,6 +398,7 @@ export function oauthClientFromEnv(
       clientId: requireEnv(id),
       clientSecret: requireEnv(secret),
       redirectUri: requireEnv(redirect),
+      postAnalytics: platform === 'linkedin' && process.env.LINKEDIN_POST_ANALYTICS === 'enabled',
     },
     deps,
   );

@@ -6,6 +6,30 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [ORDER] Phase 11 built before Phase 10: the frontend's analytics and admin screens need the Phase 11 endpoints; everything else in Phase 10 depends only on phases already merged.
+
+**Phase 11 status: analytics polling, roll-ups, analytics + cost endpoints, Prometheus metrics, Sentry and readiness built.**
+
+[2026-09-27] [11.7] GET /api/health/ready: Postgres (SELECT 1) + Redis (PING), parallel, 2 s timeout each, 200/503 with up/down + latency only (no connection details). GET /api/health stays liveness.
+[2026-09-27] [11.6] Sentry: src/instrumentation.ts (Next 15 hook) initialises @sentry/nextjs 10.75 only when SENTRY_DSN is set (11.0 was 4 days old; 10.x supports Next 15), onRequestError = captureRequestError; the worker initialises @sentry/node; reportError() sends API 5xx and final job failures. sendDefaultPii off. No withSentryConfig wrapper (source-map upload needs org/project credentials).
+[2026-09-27] [11.5] Prometheus (prom-client 15.1.3; its successor @prometheus-io/client needs Node 22): http request duration by method/normalised route/status, job attempts + durations by job/outcome, BullMQ depths per queue/state (sampled at scrape, 2 s cap), circuit-breaker state per provider, default process metrics. GET /api/metrics and the worker's :WORKER_METRICS_PORT/metrics need Bearer METRICS_TOKEN (404 when unset).
+[2026-09-27] [11.4] Cost: GET /analytics/cost (org: by provider, project, day from the provider-job ledger) and GET /admin/cost (Admin Centre: per org/provider/day from provider_usage; studio:admin:providers).
+[2026-09-27] [11.3] Endpoints (spec 8.7): GET /analytics/overview?days=7|30|90, /analytics/publications/:id (latest totals, hourly + daily series, retention/demographics when a platform provides them), /analytics/timeseries?days&metric=views|watchTime|engagement|likes|comments|shares (daily deltas), /analytics/leaderboard. All org-scoped.
+[2026-09-27] [11.2] Nightly roll-up (BullMQ job scheduler, 02:15 UTC on studio-analytics): each day's last hourly snapshot → day bucket; retention per spec 17.4 (hourly 30 days, daily 24 months); provider_usage (DERIVED) filled from provider_jobs per org/provider/day.
+[2026-09-27] [11.1] Analytics polling (spec 15.2 cadence: 30 s → 5 min → 15 min → hourly → daily → weekly, stop at 12 months), first poll 30 s after publish, one BullMQ delayed job per poll. Snapshots are cumulative lifetime totals per hour/day bucket. Readers built from each platform's docs: TikTok /v2/video/query (views, likes, comments, shares; publish id resolved to the post id), YouTube Data API statistics + YouTube Analytics (watch time, average view %, shares), X /2/tweets public (+ non-public within 30 days) metrics, LinkedIn memberCreatorPostAnalytics behind LINKEDIN_POST_ANALYTICS=enabled. A failed poll keeps the schedule (spec 17.3 backfill); platforms without a reader are marked unavailable instead of polled forever.
+
+**Phase 11 security review — fixed:** unbounded metric label cardinality (HIGH: route labels came from an "id-looking" heuristic, so arbitrary URL segments — even on unauthenticated 401s — created new time series until the process ran out of memory); labels now come from the matched route's own parameters (routeLabel), bounded by the route templates. Admin endpoints (cost, kill switch, library admin) additionally require the caller's organisation to be in STUDIO_PLATFORM_ORG_IDS (MEDIUM, defence in depth against Core granting studio:admin:* outside PostMind staff; refused in production when unset). /api/metrics answers 404 for a wrong token too (LOW).
+
+**Phase 11 review list:**
+- New OAuth scopes: TikTok video.list and YouTube yt-analytics.readonly are now requested; connections made before this change must reconnect to get metrics (YouTube still returns public counters without it).
+- TikTok watch time/completion exist only in the TikTok API for Business (separate app and account type) — not available with Login Kit tokens.
+- LinkedIn metrics need the vetted Community Management API (r_member_postAnalytics); off until LINKEDIN_POST_ANALYTICS=enabled.
+- X API is now pay-per-use (post reads billed per call): the polling cadence directly drives X cost. Consider a slower X-specific schedule.
+- Instagram/Facebook metrics blocked with publishing (no Engagement Meta token endpoint).
+- Style-memory feedback from retention (spec 15.3) is not built: only YouTube reports average watch %, and comment sentiment needs Engagement's classifier API.
+- Demographics and retention curves: none of the readers fetch them yet (YouTube Analytics could, with more reports).
+- Metrics are per process; the worker process serves its own endpoint. Breaker state is per process (as the breaker itself is).
+
 [2026-09-27] [GATE 9] Partially passed on automated evidence (autonomous build mode): reference videos ingested end to end (scene detection → keyframes → transcript → Claude analysis → embedding), searched, and used for a TEMPLATE project whose shots matched the reference blueprint (count, durations, transitions, overlay styles) and an INSPIRE project. NOT done: 9.2/9.3 need the 50k corpus in studio-library-assets (precondition not met); 9.8 admin UI is frontend (Phase 10).
 
 **Phase 9 status: video library backend built; corpus ingestion and the admin UI are outstanding.**
