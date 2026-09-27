@@ -1,0 +1,128 @@
+'use client';
+
+import type { Publication } from '@/lib/client/types';
+import { cn } from '@/lib/utils';
+import { CalendarEvent } from './calendar-event';
+import { dayKey, type MonthRef } from './month';
+
+// Desktop: a seven-column month grid. Phones: the same month as an agenda of days that have
+// something on them (a 7-column grid is unreadable at 375px).
+
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const MAX_PER_CELL = 3;
+
+export function MonthGrid({
+  days,
+  month,
+  byDay,
+  today,
+}: {
+  days: Date[];
+  month: MonthRef;
+  byDay: Map<string, Publication[]>;
+  today: string;
+}) {
+  return (
+    <div className="hidden overflow-hidden rounded-xl border border-border md:block">
+      <div className="grid grid-cols-7 border-b border-border bg-secondary/40">
+        {WEEKDAYS.map((d) => (
+          <div
+            key={d}
+            className="px-2 py-2 text-[0.65rem] font-semibold tracking-[0.18em] text-muted-foreground uppercase"
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+      <ol className="grid grid-cols-7" aria-label="Days of the month">
+        {days.map((day) => {
+          const key = dayKey(day);
+          const events = byDay.get(key) ?? [];
+          const inMonth = day.getMonth() === month.month;
+          const isToday = key === today;
+          return (
+            <li
+              key={key}
+              className={cn(
+                'flex min-h-28 min-w-0 flex-col gap-1 border-r border-b border-border/70 p-1.5 [&:nth-child(7n)]:border-r-0',
+                !inMonth && 'bg-muted/30',
+              )}
+            >
+              <span className="sr-only">
+                {day.toLocaleDateString('en-GB', { dateStyle: 'full' })}
+              </span>
+              <span
+                aria-hidden
+                className={cn(
+                  'tabular grid size-6 place-items-center self-end rounded-full text-xs',
+                  inMonth ? 'text-foreground' : 'text-muted-foreground/60',
+                  isToday && 'bg-primary font-semibold text-primary-foreground',
+                )}
+              >
+                {day.getDate()}
+              </span>
+              {events.slice(0, MAX_PER_CELL).map((p) => (
+                <CalendarEvent key={p.id} publication={p} compact />
+              ))}
+              {events.length > MAX_PER_CELL && (
+                <span className="px-1.5 text-[0.7rem] text-muted-foreground">
+                  +{events.length - MAX_PER_CELL} more
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+export function AgendaList({
+  days,
+  month,
+  byDay,
+  today,
+}: {
+  days: Date[];
+  month: MonthRef;
+  byDay: Map<string, Publication[]>;
+  today: string;
+}) {
+  const busy = days.filter((d) => d.getMonth() === month.month && byDay.has(dayKey(d)));
+  if (busy.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground md:hidden">
+        Nothing scheduled or published this month.
+      </p>
+    );
+  }
+  return (
+    <ol className="flex flex-col gap-5 md:hidden" aria-label="Agenda">
+      {busy.map((day) => {
+        const key = dayKey(day);
+        return (
+          <li key={key} className="grid grid-cols-[3rem_1fr] gap-3">
+            <div className="text-center">
+              <p className="text-[0.65rem] tracking-[0.18em] text-muted-foreground uppercase">
+                {day.toLocaleDateString('en-GB', { weekday: 'short' })}
+              </p>
+              <p
+                className={cn(
+                  'tabular font-display text-3xl leading-none',
+                  key === today && 'text-primary',
+                )}
+              >
+                {day.getDate()}
+              </p>
+            </div>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              {(byDay.get(key) ?? []).map((p) => (
+                <CalendarEvent key={p.id} publication={p} />
+              ))}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

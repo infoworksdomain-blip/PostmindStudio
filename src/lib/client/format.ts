@@ -47,6 +47,21 @@ export function formatDate(iso: string | null | undefined): string {
   );
 }
 
+/**
+ * Only `http(s)://` URLs are safe to render as an `href`/`src` from API data (platform
+ * permalinks, signed asset URLs). Rejects `javascript:`, `data:` and other schemes that would
+ * execute in the browser if a link like this is ever clicked.
+ */
+export function safeHttpUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export type Tone = 'neutral' | 'live' | 'good' | 'warn' | 'bad';
 
 /** Project states (spec 7.x) → label + tone. "live" = work in progress (the record light). */

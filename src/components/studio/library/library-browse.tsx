@@ -1,0 +1,130 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { Library } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useApi } from '@/lib/client/api';
+import { EmptyState, ErrorState, PageHeader } from '../primitives';
+import { EMPTY_FILTERS, LibraryFilters, type LibraryFilterState } from './library-filters';
+import { DURATION_FILTERS, flattenCategories, parseTags } from './library-utils';
+import { RecommendedShelf } from './recommended-shelf';
+import type { CategoryNode, LibraryVideoSummary, ListResponse } from './types';
+import { VideoCard } from './video-card';
+
+// BACKLOG 10.7 / Addendum A3.1 — browse the reference library: recommended shelf, taxonomy
+// filters, a grid of previews with cursor pagination.
+
+const PAGE_SIZE = 24;
+
+function matchesSearch(video: LibraryVideoSummary, search: string): boolean {
+  const needle = search.trim().toLowerCase();
+  if (!needle) return true;
+  return [video.title, video.description ?? '', ...video.tags].some((s) =>
+    s.toLowerCase().includes(needle),
+  );
+}
+
+export function LibraryBrowse() {
+  const [filters, setFilters] = useState<LibraryFilterState>(EMPTY_FILTERS);
+  const [cursors, setCursors] = useState<string[]>([]);
+  const categories = useApi<ListResponse<CategoryNode>>('/library/categories');
+  const categoryOptions = useMemo(
+    () => flattenCategories(categories.data?.data ?? []),
+    [categories.data],
+  );
+
+  const duration = DURATION_FILTERS.find((d) => d.key === filters.duration);
+  const tags = parseTags(filters.tags);
+  const { data, error, isLoading, mutate } = useApi<ListResponse<LibraryVideoSummary>>(
+    '/library/videos',
+    {
+      category: filters.category || undefined,
+      tags: tags.length ? tags.join(',') : undefined,
+      mood: filters.mood || undefined,
+      durationMin: duration?.min,
+      durationMax: duration?.max,
+      cursor: cursors.at(-1),
+      limit: PAGE_SIZE,
+    },
+  );
+  const visible = (data?.data ?? []).filter((v) => matchesSearch(v, filters.search));
+
+  const applyFilters = (next: LibraryFilterState) => {
+    setFilters(next);
+    setCursors([]);
+  };
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Make"
+        title="Reference library"
+        description="Short-form videos analysed shot by shot. Pick one and Studio makes yours in its image — or just borrows the vibe."
+      />
+
+      <RecommendedShelf category={filters.category} />
+
+      <section aria-labelledby="library-browse" className="min-w-0">
+        <h2 id="library-browse" className="mb-3 font-display text-2xl">
+          Browse
+        </h2>
+        <LibraryFilters value={filters} categories={categoryOptions} onChange={applyFilters} />
+
+        <div className="mt-6">
+          {error && <ErrorState error={error} onRetry={() => void mutate()} />}
+          {isLoading && (
+            <div
+              aria-label="Loading library"
+              className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            >
+              {Array.from({ length: 10 }, (_, i) => (
+                <Skeleton key={i} className="aspect-[9/14] rounded-xl" />
+              ))}
+            </div>
+          )}
+          {data && visible.length === 0 && (
+            <EmptyState
+              icon={<Library className="size-8" strokeWidth={1.5} />}
+              title="No references match"
+              description={
+                filters.search
+                  ? 'Nothing on this page matches your search. Try another page or clear the search.'
+                  : 'Try a broader category or fewer tags.'
+              }
+            />
+          )}
+          {data && visible.length > 0 && (
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {visible.map((v) => (
+                <li key={v.id} className="min-w-0">
+                  <VideoCard video={v} />
+                </li>
+              ))}
+            </ul>
+          )}
+          {data && (cursors.length > 0 || data.nextCursor) && (
+            <div className="mt-8 flex justify-between">
+              <Button
+                variant="ghost"
+                disabled={cursors.length === 0}
+                onClick={() => setCursors((c) => c.slice(0, -1))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={!data.nextCursor}
+                onClick={() =>
+                  data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
+                }
+              >
+                More references
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
