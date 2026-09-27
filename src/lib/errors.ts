@@ -79,6 +79,12 @@ export class ProviderError extends StudioError {
   }
 }
 
+/** Spec 6.4 NO_PROVIDER_AVAILABLE: every routing candidate was skipped. */
+export class NoProviderAvailableError extends StudioError {
+  readonly status = 503;
+  readonly code = 'no_provider_available';
+}
+
 /** A PostMind Core / Engagement dependency failed or returned an unexpected shape. */
 export class UpstreamServiceError extends StudioError {
   readonly status = 502;

@@ -1,0 +1,233 @@
+import { ConfigurationError, ProviderError } from '../../errors';
+import { providerOutputKey, type AssetStorage } from '../storage';
+import type {
+  ProviderAdapter,
+  ProviderCapability,
+  ProviderPollResult,
+  ProviderRequest,
+  ProviderSubmitResult,
+  TtsRequest,
+} from './interface';
+import { usdToPence } from './pricing';
+import {
+  classifyHttpStatus,
+  classifyNetworkError,
+  providerError,
+  type ErrorClassification,
+} from './provider-errors';
+import { SyncJobStore } from './sync-jobs';
+
+// BACKLOG 2.7 — ElevenLabs TTS (Layer 4, spec 5.5). Contract from
+// elevenlabs.io/docs/api-reference/text-to-speech/convert (read 2026-09-27):
+//   POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}?output_format=mp3_44100_128
+//   header xi-api-key; body { text, model_id, language_code? }; response = raw audio bytes;
+//   response header `character-cost` = characters billed.
+// Synchronous: submit() stores the audio in S3 and parks the result for poll().
+
+export const PROVIDER_ID = 'elevenlabs';
+export const BASE_URL = 'https://api.elevenlabs.io';
+export const DEFAULT_MODEL = 'eleven_multilingual_v2';
+const OUTPUT_FORMAT = 'mp3_44100_128';
+const REQUEST_TIMEOUT_MS = 120_000;
+
+/** Max characters per request (elevenlabs.io/docs/models). */
+const MAX_CHARS: Readonly<Record<string, number>> = {
+  eleven_v3: 5_000,
+  eleven_multilingual_v2: 10_000,
+  eleven_flash_v2_5: 40_000,
+  eleven_flash_v2: 30_000,
+};
+
+// USD per 1,000 characters (elevenlabs.io/pricing/api). Flash $0.05 and v3 $0.10 are listed
+// explicitly. eleven_multilingual_v2 is priced at the "Multilingual" $0.10 rate: CONFIRM at
+// GATE 2 against the account's actual plan.
+const USD_PER_1K_CHARS: Readonly<Record<string, number>> = {
+  eleven_v3: 0.1,
+  eleven_multilingual_v2: 0.1,
+  eleven_flash_v2_5: 0.05,
+  eleven_flash_v2: 0.05,
+};
+
+export interface ElevenLabsAdapterOptions {
+  apiKey: string;
+  storage: AssetStorage;
+  bucket: string;
+  usdToGbpRate: number;
+  model?: string;
+  fetchImpl?: typeof fetch;
+  now?: () => number;
+}
+
+interface ElevenLabsErrorBody {
+  detail?: { code?: string; status?: string; message?: string } | string;
+}
+
+async function classifyResponse(
+  res: Response,
+): Promise<{ classification: ErrorClassification; message: string }> {
+  const body = (await res.json().catch(() => ({}))) as ElevenLabsErrorBody;
+  const detail = typeof body.detail === 'object' ? body.detail : undefined;
+  const code = detail?.code ?? detail?.status;
+  const message =
+    detail?.message ?? (typeof body.detail === 'string' ? body.detail : res.statusText);
+  // Docs disagree on quota errors (402 insufficient_credits vs older 401 quota_exceeded).
+  if (code === 'insufficient_credits' || code === 'quota_exceeded') {
+    return { classification: { errorClass: 'insufficient_credits', retryable: false }, message };
+  }
+  return {
+    classification: classifyHttpStatus(res.status),
+    message: `${code ?? res.status}: ${message}`,
+  };
+}
+
+export class ElevenLabsAdapter implements ProviderAdapter {
+  readonly providerId = PROVIDER_ID;
+  readonly capabilities: readonly ProviderCapability[] = ['tts'];
+  readonly typicalLatencySec = 20; // spec 5.1: 5–20s per shot
+
+  private readonly model: string;
+  private readonly fetchImpl: typeof fetch;
+  private readonly now: () => number;
+  private readonly results: SyncJobStore;
+
+  constructor(private readonly options: ElevenLabsAdapterOptions) {
+    this.model = options.model ?? DEFAULT_MODEL;
+    if (!USD_PER_1K_CHARS[this.model] || !MAX_CHARS[this.model]) {
+      throw new ConfigurationError(`Unsupported ElevenLabs model ${this.model}`);
+    }
+    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.now = options.now ?? Date.now;
+    this.results = new SyncJobStore(PROVIDER_ID, this.now);
+  }
+
+  costPenceForChars(chars: number): number {
+    return usdToPence(
+      ((USD_PER_1K_CHARS[this.model] ?? 0) * chars) / 1000,
+      this.options.usdToGbpRate,
+    );
+  }
+
+  estimateCostPence(request: ProviderRequest): number {
+    return request.capability === 'tts' ? this.costPenceForChars(request.text.length) : 0;
+  }
+
+  async submit(request: ProviderRequest): Promise<ProviderSubmitResult> {
+    if (request.capability !== 'tts') {
+      throw providerError(
+        PROVIDER_ID,
+        { errorClass: 'invalid_request', retryable: false },
+        `ElevenLabs adapter does not support ${request.capability}`,
+      );
+    }
+    const result = await this.synthesise(request);
+    const costPence = (result.output?.metadata as { costPence: number }).costPence;
+    return {
+      providerJobId: this.results.put(result),
+      estimatedCostPence: costPence,
+      estimatedReadyAt: new Date(this.now()),
+    };
+  }
+
+  async poll(providerJobId: string): Promise<ProviderPollResult> {
+    return this.results.get(providerJobId);
+  }
+
+  async cancel(providerJobId: string): Promise<void> {
+    this.results.delete(providerJobId);
+  }
+
+  async healthCheck(): Promise<{ healthy: boolean; reason?: string }> {
+    try {
+      const res = await this.fetchImpl(`${BASE_URL}/v1/user/subscription`, {
+        headers: { 'xi-api-key': this.options.apiKey },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (res.ok) return { healthy: true };
+      const { classification, message } = await classifyResponse(res);
+      return { healthy: false, reason: `${classification.errorClass}: ${message}` };
+    } catch (err) {
+      return {
+        healthy: false,
+        reason: `${classifyNetworkError(err).errorClass}: ${(err as Error).message}`,
+      };
+    }
+  }
+
+  private async synthesise(request: TtsRequest): Promise<ProviderPollResult> {
+    const maxChars = MAX_CHARS[this.model] ?? 0;
+    if (request.text.length === 0 || request.text.length > maxChars) {
+      throw providerError(
+        PROVIDER_ID,
+        { errorClass: 'invalid_request', retryable: false },
+        `Text must be 1–${maxChars} characters for ${this.model}`,
+      );
+    }
+    const url = `${BASE_URL}/v1/text-to-speech/${encodeURIComponent(request.voiceId)}?output_format=${OUTPUT_FORMAT}`;
+    let res: Response;
+    try {
+      res = await this.fetchImpl(url, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': this.options.apiKey,
+          'Content-Type': 'application/json',
+          Accept: 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text: request.text,
+          model_id: this.model,
+          ...(request.languageCode && { language_code: request.languageCode }),
+        }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch (err) {
+      throw providerError(PROVIDER_ID, classifyNetworkError(err), (err as Error).message);
+    }
+    if (!res.ok) {
+      const { classification, message } = await classifyResponse(res);
+      throw providerError(PROVIDER_ID, classification, message, { status: res.status });
+    }
+
+    const audio = new Uint8Array(await res.arrayBuffer());
+    if (audio.byteLength === 0) {
+      throw providerError(
+        PROVIDER_ID,
+        { errorClass: 'unknown', retryable: true },
+        'Empty audio response',
+      );
+    }
+    const billedChars = Number(res.headers.get('character-cost'));
+    const chars =
+      Number.isFinite(billedChars) && billedChars > 0 ? billedChars : request.text.length;
+    const costPence = this.costPenceForChars(chars);
+    const stored = await this.options.storage.put({
+      bucket: this.options.bucket,
+      key: providerOutputKey({
+        organisationId: request.organisationId,
+        projectId: request.projectId,
+        providerId: PROVIDER_ID,
+        extension: 'mp3',
+      }),
+      body: audio,
+      contentType: 'audio/mpeg',
+    });
+    return {
+      state: 'succeeded',
+      output: {
+        url: stored.url,
+        metadata: {
+          model: this.model,
+          voiceId: request.voiceId,
+          outputFormat: OUTPUT_FORMAT,
+          s3Bucket: stored.bucket,
+          s3Key: stored.key,
+          bytes: audio.byteLength,
+          characters: chars,
+          requestId: res.headers.get('request-id'),
+          costPence,
+        },
+      },
+    };
+  }
+}
+
+export { ProviderError };
