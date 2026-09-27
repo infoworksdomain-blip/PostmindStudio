@@ -282,7 +282,7 @@ export async function trackUnsplashUse(
 /** Configured stock sources in priority order (A6.3: Pexels + Storyblocks primary, Unsplash fallback). */
 export function stockSourcesFromEnv(
   deps: Deps,
-  env: NodeJS.ProcessEnv = process.env,
+  env: Record<string, string | undefined> = process.env,
 ): { primary: StockImageSource[]; fallback: StockImageSource[] } {
   const primary: StockImageSource[] = [];
   if (env.PEXELS_API_KEY) primary.push(createPexelsSource(env.PEXELS_API_KEY, deps));

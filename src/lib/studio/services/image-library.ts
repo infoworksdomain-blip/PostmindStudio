@@ -1,6 +1,6 @@
 import type { ImageLibraryItem, ImageSource, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { NotFoundError, ValidationError } from '../../errors';
+import { NotFoundError, RateLimitError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { ingestImage, MAX_IMAGE_BYTES, type IngestOutcome } from '../images/ingest';
 import {
@@ -11,7 +11,7 @@ import {
 } from '../images/library';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
-import { assertBusinessAvailable, businessIdParam } from './businesses';
+import { businessIdParam, parseBusinessId } from './businesses';
 import { toPlanTier } from './catalog';
 
 // BACKLOG 6.6 / Addendum A6.8 — image library endpoints: list, get, upload, generate, search,
@@ -106,12 +106,11 @@ async function outcomeToImage(
 
 /** POST /image-library (multipart): fields businessId, file, tags? (comma separated). */
 export async function uploadImage(deps: LibraryDeps, tenant: TenantContext, form: FormData) {
-  const businessId = businessIdParam.parse(form.get('businessId'));
+  const businessId = parseBusinessId(form.get('businessId'));
   const file = form.get('file');
   if (!(file instanceof Blob))
     throw new ValidationError('file is required (multipart field "file")');
   if (file.size > MAX_IMAGE_BYTES) throw new ValidationError('Image is larger than 15 MB');
-  await assertBusinessAvailable(deps.db, tenant.organisationId, businessId);
   const tagsField = form.get('tags');
   const tags = typeof tagsField === 'string' ? tagsField.split(',') : [];
   const altField = form.get('altText');
@@ -140,7 +139,6 @@ export async function generateImage(
   tenant: TenantContext,
   input: z.infer<typeof generateImageInput>,
 ) {
-  await assertBusinessAvailable(deps.db, tenant.organisationId, input.businessId);
   const outcome = await generateLibraryImage(
     deps,
     {
@@ -195,12 +193,21 @@ export const refreshLibraryInput = z.object({
   queries: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
 });
 
+const MAX_REFRESH_QUERIES_PER_ORG_PER_HOUR = 100;
+
+async function orgBusinessIds(db: PrismaClient, organisationId: string): Promise<string[]> {
+  const rows = await db.businessProfile.findMany({
+    where: { organisationId },
+    select: { businessId: true },
+  });
+  return rows.map((r) => r.businessId);
+}
+
 export async function requestLibraryRefresh(
   deps: { db: PrismaClient; queue: JobQueue; now: () => number },
   tenant: TenantContext,
   input: z.infer<typeof refreshLibraryInput>,
 ) {
-  await assertBusinessAvailable(deps.db, tenant.organisationId, input.businessId);
   const profile = await deps.db.businessProfile.findFirst({
     where: { businessId: input.businessId, organisationId: tenant.organisationId },
     select: { imageSearchQueries: true },
@@ -208,6 +215,15 @@ export async function requestLibraryRefresh(
   if (!input.queries?.length && !profile?.imageSearchQueries.length) {
     throw new ValidationError('No search queries: scan the website first or pass queries');
   }
+  // Stock quotas are shared across tenants: cap refreshes per organisation per hour.
+  const recent = await deps.db.imageLibraryQuery.count({
+    where: {
+      businessId: { in: await orgBusinessIds(deps.db, tenant.organisationId) },
+      lastRunAt: { gte: new Date(deps.now() - 60 * 60 * 1000) },
+    },
+  });
+  if (recent >= MAX_REFRESH_QUERIES_PER_ORG_PER_HOUR)
+    throw new RateLimitError('Too many image-library refreshes this hour; try again later', 900);
   // One refresh per business per minute (jobId dedupes clicks).
   const runId = String(Math.floor(deps.now() / 60_000));
   const data = {

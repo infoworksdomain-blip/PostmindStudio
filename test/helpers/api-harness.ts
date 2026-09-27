@@ -147,16 +147,32 @@ export async function rawCall(
 ): Promise<Response> {
   const headers: Record<string, string> = { ...options.headers };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
-  if (options.body !== undefined) headers['content-type'] = 'application/json';
+  if (options.body !== undefined && !headers['content-type'])
+    headers['content-type'] = 'application/json';
   const req = new Request(`${APP_URL}${options.path ?? '/api/studio/test'}`, {
     method: options.method ?? 'GET',
     headers,
     body:
       options.body === undefined
         ? undefined
-        : typeof options.body === 'string'
-          ? options.body
+        : typeof options.body === 'string' || options.body instanceof Uint8Array
+          ? (options.body as BodyInit)
           : JSON.stringify(options.body),
   });
   return handler(req, { params: Promise.resolve(options.params ?? {}) });
+}
+
+/** Encode a FormData as a multipart body with explicit content-type and content-length. */
+export async function multipart(
+  form: FormData,
+): Promise<{ body: Uint8Array; headers: Record<string, string> }> {
+  const req = new Request('http://multipart.local', { method: 'POST', body: form });
+  const body = new Uint8Array(await req.arrayBuffer());
+  return {
+    body,
+    headers: {
+      'content-type': req.headers.get('content-type') ?? '',
+      'content-length': String(body.byteLength),
+    },
+  };
 }

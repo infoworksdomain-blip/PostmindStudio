@@ -77,7 +77,7 @@ export function stability(before: Set<string>, after: Set<string>): number {
 
 export async function crawlSite(
   startUrl: string,
-  deps: { fetcher: PoliteFetcher; renderer?: PageRenderer },
+  deps: { fetcher: Pick<PoliteFetcher, 'fetchPage' | 'sitemaps'>; renderer?: PageRenderer },
 ): Promise<CrawlResult> {
   const result: CrawlResult = {
     pages: [],

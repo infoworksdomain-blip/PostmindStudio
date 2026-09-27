@@ -109,14 +109,14 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 6 — Feature D: Website scan + image library (v1.1) (target: week 7-8)
 
-- [ ] **6.1** Implement `src/lib/studio/scan/fetch.ts` — respect robots.txt, User-Agent `PostMindStudio/1.0`, 1 req/sec, Playwright fallback for JS-rendered.
-- [ ] **6.2** Implement `src/lib/studio/scan/extract.ts` — cheerio HTML parse, meta/OG/JSON-LD/images.
-- [ ] **6.3** Implement `src/lib/studio/scan/classify.ts` — Claude Sonnet classification → `BusinessProfile`.
-- [ ] **6.4** Implement image library ingestion: scraped-images layer (with stock-hash filter), stock APIs (Pexels + Storyblocks + Unsplash), on-demand DALL-E generation.
-- [ ] **6.5** Implement `POST /api/studio/businesses/[id]/scan-website`, related GET/PATCH endpoints per Addendum A6.8.
-- [ ] **6.6** Implement image library endpoints (list, get, upload, generate, search, delete, refresh).
-- [ ] **6.7** Vector similarity search using pgvector on image embeddings.
-- [ ] **[GATE 6]** Operator scans their own website and sees a populated image library.
+- [x] **6.1** Implement `src/lib/studio/scan/fetch.ts` — respect robots.txt, User-Agent `PostMindStudio/1.0`, 1 req/sec, Playwright fallback for JS-rendered.
+- [x] **6.2** Implement `src/lib/studio/scan/extract.ts` — cheerio HTML parse, meta/OG/JSON-LD/images.
+- [x] **6.3** Implement `src/lib/studio/scan/classify.ts` — Claude Sonnet classification → `BusinessProfile`.
+- [x] **6.4** Implement image library ingestion: scraped-images layer (with stock-hash filter), stock APIs (Pexels + Storyblocks + Unsplash), on-demand DALL-E generation.
+- [x] **6.5** Implement `POST /api/studio/businesses/[id]/scan-website`, related GET/PATCH endpoints per Addendum A6.8.
+- [x] **6.6** Implement image library endpoints (list, get, upload, generate, search, delete, refresh).
+- [x] **6.7** Vector similarity search using pgvector on image embeddings.
+- [x] **[GATE 6]** (automated evidence; live scan pending provider keys) Operator scans their own website and sees a populated image library.
 
 ---
 

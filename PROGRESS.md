@@ -6,6 +6,30 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 6] Passed on automated evidence (autonomous build mode): scan → classify → library → search exercised end to end on real Postgres/pgvector with a fake site and scripted providers. Live run on the operator's own site pending provider keys (Anthropic, OpenAI, Pexels/Storyblocks).
+
+**Phase 6 status: website scan, business profile and image library built; every A6.8 endpoint integration-tested.**
+
+[2026-09-27] [6.7] Semantic search: text-embedding (1536-d) of each image's description (alt text, prompt, tags) stored in image_library.embedding; POST /image-library/search ranks by pgvector cosine distance, scoped by organisation + business.
+[2026-09-27] [6.6] Image library endpoints: GET /image-library (businessId, source, tag, cursor), GET|DELETE /image-library/:id (object removed from S3 too), POST /image-library (multipart upload, 15 MB, Content-Length required), POST /image-library/generate (gpt-image via the router as an IMAGE_STILL, kept in the library), POST /image-library/search, POST /image-library/refresh (queued, deduped per minute).
+[2026-09-27] [6.5] POST /businesses/:id/scan-website (ownershipConfirmed required and audited; one running scan per business), GET /businesses/:id/scans, GET /scans/:id (pages, images per source, errors), GET|PATCH /businesses/:id/business-profile (user edits set editedByUser; re-scans then keep them).
+[2026-09-27] [6.4] Image ingestion: SSRF-guarded download (15 MB cap) → raster check (image-size) → < 500px long edge dropped → sha256 fingerprint → per-business dedup → scraped images matching a stored stock image dropped → S3 under orgs/<org>/businesses/<biz>/images/. Layer 1 scraped (icons, trackers, social buttons, SVGs filtered; max 60), Layer 2 stock: Pexels + Storyblocks primary, Unsplash fallback (hotlink-only, per Unsplash's API terms), Layer 3 on-demand generation.
+[2026-09-27] [6.3] classify.ts: Claude (router text_generation) → BusinessProfile JSON (schema-constrained, zod-validated, lists deduped/capped); site text fenced as data.
+[2026-09-27] [6.2] extract.ts (cheerio): title, meta description, og:*, twitter:*, h1–h3, body text (main/article first, 5000 chars), images (srcset best candidate, alt, figcaption, declared size), JSON-LD, same-host links, SPA heuristic; sitemap <loc> parsing.
+[2026-09-27] [6.1] fetch.ts + safe-fetch.ts: UA "PostMindStudio/1.0 (+https://studio.postmind.ai/bot)", robots.txt per origin (4xx → allow, 5xx/unreachable → disallow; Crawl-delay honoured up to 10s), 1 req/s + 0–1s jitter per host, 30s timeout, 5 MB HTML cap. SSRF guard: http/https on 80/443 only, no userinfo, non-public IPs refused at DNS-lookup time inside the connection (no rebinding window), redirects re-validated per hop. crawl.ts: homepage → sitemap + links (prioritising about/products/shop/services) → up to 20 more pages, early stop when the site vocabulary is stable; Browserless /content fallback for JS-rendered sites when BROWSERLESS_API_KEY is set (Playwright not bundled).
+
+**Phase 6 security review — fixed:** business-id squatting (HIGH): a tenant could claim another tenant's business id first and lock them out, because business_profiles.businessId was globally unique; uniqueness is now (organisationId, businessId) for profiles and (organisationId, businessId, fingerprint) for the image library (migration 20260927010000, DEVIATION from A7.7), so tenants can never collide. Cost/quota abuse (MEDIUM): scans capped at 3 concurrent and 25 per 24h per organisation, stock refreshes at 100 queries/hour per organisation (429 with Retry-After). Still open: stock searches are free APIs outside the pence budget ledger (kill switch still applies at job start); Pexels has no safe-search parameter, so LLM-derived queries from a hostile site could pull unwanted stock images into a library (mitigated only by the user-editable profile — image moderation belongs with Phase 12 hardening); Unsplash use-reporting happens when an image is placed in a slideshow (Phase 7), not at search.
+
+**Phase 6 review list:**
+- Fingerprint is sha256 of the bytes, not a perceptual hash: re-encoded or resized copies are not deduplicated, and the stock-photo filter only catches byte-identical copies of stock images Studio itself has downloaded (no external stock-hash database exists in the specs). A dHash would need an image decoder (sharp).
+- Unsplash: its API terms forbid storing copies, so Unsplash results are stored as hotlinks (no S3 object) with attribution and the download_location tracking URL in licenseNotes. Reporting use to Unsplash must happen when an image is placed in a video (Phase 7 auto-populate), not at search time.
+- Storyblocks download signing uses the download resource path including the item id (docs show only the search example); verify with a live key.
+- A6.6 refresh cadence (30-day rescans, weekly stock delta, ETag/Last-Modified skip) needs a scheduler; manual refresh is built, the recurring schedule is not (Phase 11 cron alongside analytics polling). website_scans has no etag column, so the skip-if-unchanged rule would need a migration.
+- A6.7 Enterprise DNS-TXT ownership verification and the 24h purge on disputed ownership are not built.
+- Search embeds image descriptions, not pixels: images with no alt text/tags are embedded from their tags only (scraped images get the business's themes).
+- Image generation is synchronous in the request (maxDuration 120s).
+- businessId remains unverifiable against Core; all Feature D data is keyed per organisation, so an unverified id can only affect the caller's own data.
+
 [2026-09-27] [GATE 5] Passed on automated evidence (autonomous build mode): publishers unit-tested against recorded request shapes; publish/schedule/cancel/retry/takedown and OAuth connect/disconnect integration-tested on real Postgres. Live posting to each platform pending operator credentials and a test account per platform.
 
 **Phase 5 status: publishing built for TikTok, YouTube (Shorts + long-form), X and LinkedIn; Instagram/Facebook publishers built but blocked on an Engagement token endpoint.**

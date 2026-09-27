@@ -128,7 +128,13 @@ export async function ingestImage(deps: IngestDeps, input: IngestInput): Promise
 
   const fingerprint = fingerprintOf(bytes);
   const existing = await deps.db.imageLibraryItem.findUnique({
-    where: { businessId_fingerprint: { businessId: input.businessId, fingerprint } },
+    where: {
+      organisationId_businessId_fingerprint: {
+        organisationId: input.organisationId,
+        businessId: input.businessId,
+        fingerprint,
+      },
+    },
     select: { id: true },
   });
   if (existing) return { status: 'duplicate', id: existing.id };
@@ -161,7 +167,7 @@ export async function ingestImage(deps: IngestDeps, input: IngestInput): Promise
         heightPx: info.height,
         fileSizeBytes: bytes.byteLength,
         tags: normaliseTags(input.tags ?? []),
-        altText: input.altText?.slice(0, 1_000) ?? null,
+        altText: input.altText?.trim().slice(0, 1_000) || null,
         fingerprint,
         generatedFromPrompt: input.generatedFromPrompt ?? null,
         licenseNotes: input.licenseNotes ?? null,
@@ -173,7 +179,13 @@ export async function ingestImage(deps: IngestDeps, input: IngestInput): Promise
     // A concurrent ingest of the same bytes won the unique (businessId, fingerprint) race.
     if ((err as { code?: string }).code === 'P2002') {
       const winner = await deps.db.imageLibraryItem.findUniqueOrThrow({
-        where: { businessId_fingerprint: { businessId: input.businessId, fingerprint } },
+        where: {
+          organisationId_businessId_fingerprint: {
+            organisationId: input.organisationId,
+            businessId: input.businessId,
+            fingerprint,
+          },
+        },
         select: { id: true },
       });
       return { status: 'duplicate', id: winner.id };
@@ -203,7 +215,13 @@ export async function recordHotlinkedImage(
     return { status: 'skipped', reason: 'too_small' };
   const fingerprint = `${input.provider}:${input.providerImageId}`;
   const row = await db.imageLibraryItem.upsert({
-    where: { businessId_fingerprint: { businessId: input.businessId, fingerprint } },
+    where: {
+      organisationId_businessId_fingerprint: {
+        organisationId: input.organisationId,
+        businessId: input.businessId,
+        fingerprint,
+      },
+    },
     create: {
       organisationId: input.organisationId,
       businessId: input.businessId,

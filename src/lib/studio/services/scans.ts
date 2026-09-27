@@ -1,11 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { ConflictError, NotFoundError, ValidationError } from '../../errors';
+import { ConflictError, NotFoundError, RateLimitError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import type { JobQueue } from '../queue/enqueue';
 import { jobIds } from '../queue/enqueue';
 import { assertFetchableUrl } from '../scan/safe-fetch';
-import { assertBusinessAvailable } from './businesses';
 import { toPlanTier } from './catalog';
 
 // BACKLOG 6.5 / Addendum A6.8 — scan-website, scan history, scan detail, business profile.
@@ -18,16 +17,37 @@ export const scanWebsiteInput = z.object({
   }),
 });
 
+/**
+ * Each scan crawls up to 21 pages, calls Claude and makes dozens of image/stock requests, and
+ * business ids are unverifiable, so scans are capped per organisation (not only per business).
+ */
+export const MAX_ACTIVE_SCANS_PER_ORG = 3;
+export const MAX_SCANS_PER_ORG_PER_DAY = 25;
+
+async function assertScanQuota(db: PrismaClient, organisationId: string, now: number) {
+  const [active, today] = await Promise.all([
+    db.websiteScan.count({ where: { organisationId, state: { in: ['QUEUED', 'RUNNING'] } } }),
+    db.websiteScan.count({
+      where: { organisationId, startedAt: { gte: new Date(now - 24 * 60 * 60 * 1000) } },
+    }),
+  ]);
+  if (active >= MAX_ACTIVE_SCANS_PER_ORG)
+    throw new RateLimitError(`At most ${MAX_ACTIVE_SCANS_PER_ORG} scans can run at once`, 60);
+  if (today >= MAX_SCANS_PER_ORG_PER_DAY)
+    throw new RateLimitError(`At most ${MAX_SCANS_PER_ORG_PER_DAY} scans per 24 hours`, 3_600);
+}
+
 export async function startScan(
-  deps: { db: PrismaClient; queue: JobQueue },
+  deps: { db: PrismaClient; queue: JobQueue; now: () => number },
   tenant: TenantContext,
   businessId: string,
   input: z.infer<typeof scanWebsiteInput>,
 ) {
-  const raw = /^https?:\/\//i.test(input.url) ? input.url : `https://${input.url}`;
+  // Bare domains get https://; any other explicit scheme is kept (and refused if not http/s).
+  const raw = /^[a-z][a-z0-9+.-]*:/i.test(input.url) ? input.url : `https://${input.url}`;
   const url = assertFetchableUrl(raw);
   url.hash = '';
-  await assertBusinessAvailable(deps.db, tenant.organisationId, businessId);
+  await assertScanQuota(deps.db, tenant.organisationId, deps.now());
   const running = await deps.db.websiteScan.findFirst({
     where: {
       organisationId: tenant.organisationId,

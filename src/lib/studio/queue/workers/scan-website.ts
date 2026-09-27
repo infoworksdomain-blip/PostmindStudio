@@ -34,7 +34,12 @@ async function saveProfile(
   model: string,
 ) {
   const existing = await deps.db.businessProfile.findUnique({
-    where: { businessId: data.businessId },
+    where: {
+      organisationId_businessId: {
+        organisationId: data.organisationId,
+        businessId: data.businessId,
+      },
+    },
   });
   const fields = {
     industry: profile.industry,
@@ -57,9 +62,6 @@ async function saveProfile(
     });
   }
   // A user-edited profile is the user's: a refresh records the new classification time only.
-  if (existing.organisationId !== data.organisationId) {
-    throw new NotFoundError('Business profile belongs to another organisation');
-  }
   return deps.db.businessProfile.update({
     where: { id: existing.id },
     data: existing.editedByUser

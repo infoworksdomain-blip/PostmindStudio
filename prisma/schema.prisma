@@ -854,7 +854,7 @@ model SlideshowTemplate {
 model BusinessProfile {
   id                 String   @id @default(cuid())
   organisationId     String
-  businessId         String   @unique
+  businessId         String
   industry           String
   subNiche           String
   products           String[]
@@ -871,6 +871,9 @@ model BusinessProfile {
   lastRefreshedAt    DateTime @default(now())
   editedByUser       Boolean  @default(false)
 
+  // DEVIATION (A7.7 has businessId @unique): Core cannot verify business ids, so uniqueness is
+  // per organisation — one tenant can never claim or block another tenant's business id.
+  @@unique([organisationId, businessId])
   @@map("business_profiles")
   @@schema("studio")
 }
@@ -932,7 +935,8 @@ model ImageLibraryItem {
   useCount            Int                          @default(0)
   createdAt           DateTime                     @default(now())
 
-  @@unique([businessId, fingerprint])
+  // DEVIATION (A7.7: businessId + fingerprint): scoped per organisation, see business_profiles.
+  @@unique([organisationId, businessId, fingerprint])
   @@index([businessId, source])
   @@index([tags], type: Gin)
   @@map("image_library")
