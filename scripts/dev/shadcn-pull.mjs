@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- CLI script output */
 // Pulls shadcn/ui components from the official registry (ui.shadcn.com/r/styles/<style>) into
 // src/components/ui — what `npx shadcn add` does. The CLI can't be used here: it runs
 // `npm install --allow-scripts`, which npm 12 rejects in project-scoped installs.
@@ -56,7 +57,12 @@ async function pull(name) {
     console.log('wrote', `${folder}/${base}`);
   }
   for (const dep of item.registryDependencies ?? []) {
-    await pull(dep.split('/').at(-1).replace(/\.json$/, ''));
+    await pull(
+      dep
+        .split('/')
+        .at(-1)
+        .replace(/\.json$/, ''),
+    );
   }
 }
 
