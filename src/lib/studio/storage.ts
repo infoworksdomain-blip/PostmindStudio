@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -34,6 +35,8 @@ export interface AssetStorage {
   size(bucket: string, key: string): Promise<number>;
   /** Bytes [start, endInclusive] of an object (for chunked platform uploads). */
   readRange(bucket: string, key: string, start: number, endInclusive: number): Promise<Uint8Array>;
+  /** Remove an object (idempotent: deleting a missing key succeeds). */
+  delete(bucket: string, key: string): Promise<void>;
 }
 
 /** Deterministic, tenant-scoped key layout for provider outputs. */
@@ -87,6 +90,9 @@ export function createS3Storage(client: S3Client): AssetStorage {
         );
       }
       return bytes;
+    },
+    async delete(bucket, key) {
+      await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
     },
   };
 }

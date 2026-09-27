@@ -34,6 +34,24 @@ export interface PublishJobData extends ProjectJobData {
   publicationId: string;
 }
 
+/** Business-level work (Feature D) that belongs to no project. runId = the scan / refresh id. */
+export interface BusinessJobData {
+  organisationId: string;
+  businessId: string;
+  runId: string;
+  planTier: PlanTier;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
+export interface ScanJobData extends BusinessJobData {
+  scanId: string;
+}
+
+export interface LibraryRefreshJobData extends BusinessJobData {
+  queries?: string[];
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
@@ -41,6 +59,8 @@ export interface JobDataMap {
   'run-quality-gate': ProjectJobData;
   'publish-video': PublishJobData;
   'fire-scheduled-publication': PublishJobData;
+  'scan-website': ScanJobData;
+  'refresh-image-library': LibraryRefreshJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -52,6 +72,8 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'run-quality-gate': QUEUES.orchestration,
   'publish-video': QUEUES.publish,
   'fire-scheduled-publication': QUEUES.scheduled,
+  'scan-website': QUEUES.assets,
+  'refresh-image-library': QUEUES.assets,
 };
 
 export const MAX_RETRIES = 5;

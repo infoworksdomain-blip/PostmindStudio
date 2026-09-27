@@ -5,7 +5,10 @@ import { logger } from '../../logger';
 import { lazyDataKeyProvider } from '../crypto/envelope';
 import { unavailableMetaCredentials } from '../platforms/meta';
 import { oauthClientFromEnv } from '../platforms/oauth';
+import { stockSourcesFromEnv } from '../images/stock';
 import { createEngagementClient } from '../platforms/publishing';
+import { createBrowserlessRenderer } from '../scan/crawl';
+import { guardedFetch } from '../scan/safe-fetch';
 import { createPublisherRegistry } from '../platforms/registry';
 import { createKillSwitch, createPrismaFlagStore } from '../kill-switch';
 import { createPrismaBudgetChecker, orgProviderDailyCapFromEnv } from '../providers/budget';
@@ -45,6 +48,16 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     },
     fetch: globalThis.fetch,
     audit: auditLog,
+    scan: {
+      pageFetch: guardedFetch,
+      renderer: process.env.BROWSERLESS_API_KEY?.trim()
+        ? createBrowserlessRenderer({
+            token: process.env.BROWSERLESS_API_KEY.trim(),
+            fetchImpl: globalThis.fetch,
+          })
+        : undefined,
+      stock: () => stockSourcesFromEnv({ fetchImpl: globalThis.fetch, now: Date.now }),
+    },
     publishing: {
       db: input.db,
       publishers: createPublisherRegistry({

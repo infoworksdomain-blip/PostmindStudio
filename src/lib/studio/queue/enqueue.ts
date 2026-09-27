@@ -31,6 +31,9 @@ export const jobIds = {
     `publish-video__${d.publicationId}__${attempt}`,
   fireScheduled: (d: JobDataMap['fire-scheduled-publication']) =>
     `fire-scheduled__${d.publicationId}`,
+  scanWebsite: (d: JobDataMap['scan-website']) => `scan-website__${d.scanId}`,
+  refreshImageLibrary: (d: JobDataMap['refresh-image-library']) =>
+    `refresh-image-library__${d.businessId}__${d.runId}`,
   runQualityGate: (d: JobDataMap['run-quality-gate']) =>
     `run-quality-gate__${d.projectId}__${d.runId}`,
 };

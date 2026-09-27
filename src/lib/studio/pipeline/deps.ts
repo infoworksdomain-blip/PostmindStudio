@@ -6,7 +6,9 @@ import type { ProviderRegistry } from '../providers/registry';
 import type { BudgetChecker } from '../providers/router';
 import type { TrackingDeps } from '../providers/tracked';
 import type { AuditEntry } from '../../audit';
+import type { StockImageSource } from '../images/stock';
 import type { PublishingDeps } from '../platforms/publishing';
+import type { PageRenderer } from '../scan/crawl';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import type { MediaInspector } from './media-probe';
@@ -37,6 +39,8 @@ export interface PipelineDeps {
   media: MediaInspector;
   logger: Logger;
   config: PipelineConfig;
+  /** Feature D (Phase 6): website scans and the image library. */
+  scan: ScanDeps;
   /** Social publishing (Phase 5): publishers, credentials, Engagement attribution. */
   publishing: PublishingDeps;
   /** Audit entries for significant mutations (publications). */
@@ -45,6 +49,16 @@ export interface PipelineDeps {
   fetch: typeof fetch;
   now: () => number;
   sleep: (ms: number) => Promise<void>;
+}
+
+export interface ScanDeps {
+  /** fetch for attacker-supplied URLs: must refuse non-public addresses (scan/safe-fetch.ts). */
+  pageFetch: typeof fetch;
+  /** JS-rendering fallback for SPA sites (Browserless), when configured. */
+  renderer?: PageRenderer;
+  /** Stock image sources, resolved lazily so a missing key only fails the stock layer. */
+  stock: () => { primary: StockImageSource[]; fallback: StockImageSource[] };
+  random?: () => number;
 }
 
 export const DEFAULT_PIPELINE_TIMING = {

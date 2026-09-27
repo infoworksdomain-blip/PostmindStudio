@@ -17,6 +17,8 @@ import { createLocalKeyProvider } from '../../src/lib/studio/crypto/envelope';
 import type { MetaCredentialSource } from '../../src/lib/studio/platforms/meta';
 import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
 import type { EngagementClient } from '../../src/lib/studio/platforms/publishing';
+import type { StockImageSource } from '../../src/lib/studio/images/stock';
+import type { PageRenderer } from '../../src/lib/studio/scan/crawl';
 import { fakePublisherRegistry } from './fake-publishers';
 import { memoryStorage } from './memory-storage';
 import { ScriptedAdapter } from './scripted-adapter';
@@ -86,6 +88,10 @@ export interface HarnessOptions {
   probe?: Partial<MediaProbe>;
   loudness?: number | null;
   hiveMaxScores?: Record<string, number>;
+  /** Feature D: fetch used for website pages and images (defaults to the media fetch mock). */
+  pageFetch?: typeof fetch;
+  renderer?: PageRenderer;
+  stockSources?: StockImageSource[];
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -202,6 +208,12 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     },
     fetch: fetchImpl as unknown as typeof fetch,
     audit: (entry) => audits.push(entry),
+    scan: {
+      pageFetch: options.pageFetch ?? (fetchImpl as unknown as typeof fetch),
+      renderer: options.renderer,
+      stock: () => ({ primary: options.stockSources ?? [], fallback: [] }),
+      random: () => 0,
+    },
     publishing: {
       db,
       publishers,

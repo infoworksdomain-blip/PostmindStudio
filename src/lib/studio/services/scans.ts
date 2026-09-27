@@ -1,0 +1,134 @@
+import type { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
+import { ConflictError, NotFoundError, ValidationError } from '../../errors';
+import type { TenantContext } from '../../tenant';
+import type { JobQueue } from '../queue/enqueue';
+import { jobIds } from '../queue/enqueue';
+import { assertFetchableUrl } from '../scan/safe-fetch';
+import { assertBusinessAvailable } from './businesses';
+import { toPlanTier } from './catalog';
+
+// BACKLOG 6.5 / Addendum A6.8 — scan-website, scan history, scan detail, business profile.
+
+export const scanWebsiteInput = z.object({
+  url: z.string().trim().min(1).max(2_000),
+  /** A6.7: the user warrants they own or may represent the site (and its images). */
+  ownershipConfirmed: z.literal(true, {
+    error: 'ownershipConfirmed must be true: confirm you own or represent this website',
+  }),
+});
+
+export async function startScan(
+  deps: { db: PrismaClient; queue: JobQueue },
+  tenant: TenantContext,
+  businessId: string,
+  input: z.infer<typeof scanWebsiteInput>,
+) {
+  const raw = /^https?:\/\//i.test(input.url) ? input.url : `https://${input.url}`;
+  const url = assertFetchableUrl(raw);
+  url.hash = '';
+  await assertBusinessAvailable(deps.db, tenant.organisationId, businessId);
+  const running = await deps.db.websiteScan.findFirst({
+    where: {
+      organisationId: tenant.organisationId,
+      businessId,
+      state: { in: ['QUEUED', 'RUNNING'] },
+    },
+    select: { id: true },
+  });
+  if (running)
+    throw new ConflictError('A scan for this business is already in progress', {
+      scanId: running.id,
+    });
+  const scan = await deps.db.websiteScan.create({
+    data: {
+      organisationId: tenant.organisationId,
+      businessId,
+      url: url.toString(),
+      state: 'QUEUED',
+    },
+  });
+  const data = {
+    scanId: scan.id,
+    organisationId: tenant.organisationId,
+    businessId,
+    runId: scan.id,
+    planTier: toPlanTier(tenant.organisation.planTier),
+  };
+  await deps.queue.add('scan-website', data, { jobId: jobIds.scanWebsite(data) });
+  return scan;
+}
+
+export function listScans(db: PrismaClient, organisationId: string, businessId: string) {
+  return db.websiteScan.findMany({
+    where: { organisationId, businessId },
+    orderBy: { startedAt: 'desc' },
+    take: 50,
+  });
+}
+
+export async function getScan(db: PrismaClient, organisationId: string, id: string) {
+  const scan = await db.websiteScan.findFirst({ where: { id, organisationId } });
+  if (!scan) throw new NotFoundError('Scan not found');
+  const images = await db.imageLibraryItem.groupBy({
+    by: ['source'],
+    where: { organisationId, businessId: scan.businessId },
+    _count: { _all: true },
+  });
+  return {
+    ...scan,
+    errors: scan.errorReason ? scan.errorReason.split('\n') : [],
+    library: Object.fromEntries(images.map((g) => [g.source, g._count._all])),
+  };
+}
+
+export async function getBusinessProfile(
+  db: PrismaClient,
+  organisationId: string,
+  businessId: string,
+) {
+  const profile = await db.businessProfile.findFirst({ where: { businessId, organisationId } });
+  if (!profile) throw new NotFoundError('No business profile yet: run a website scan first');
+  return profile;
+}
+
+const editableList = (max: number) =>
+  z
+    .array(z.string().trim().min(1).max(120))
+    .max(max)
+    .transform((items) => [...new Set(items)]);
+
+/** A6.8: user edits of the classification. Edited profiles are not overwritten by re-scans. */
+export const patchBusinessProfileInput = z
+  .object({
+    industry: z.string().trim().min(1).max(200),
+    subNiche: z.string().trim().min(1).max(200),
+    products: editableList(30),
+    services: editableList(30),
+    audienceKeywords: editableList(20),
+    toneIndicators: editableList(10),
+    regions: editableList(10),
+    imageThemes: editableList(20),
+    imageSearchQueries: editableList(10),
+    restrictedTopics: editableList(20),
+    brandVoiceSummary: z.string().trim().max(1_000).nullable(),
+  })
+  .partial()
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
+
+export async function patchBusinessProfile(
+  db: PrismaClient,
+  organisationId: string,
+  businessId: string,
+  input: z.infer<typeof patchBusinessProfileInput>,
+) {
+  const profile = await getBusinessProfile(db, organisationId, businessId);
+  if (input.imageSearchQueries && input.imageSearchQueries.length === 0) {
+    throw new ValidationError('imageSearchQueries needs at least one query');
+  }
+  return db.businessProfile.update({
+    where: { id: profile.id },
+    data: { ...input, editedByUser: true },
+  });
+}

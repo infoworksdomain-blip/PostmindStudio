@@ -23,6 +23,12 @@ import {
   publishVideo,
 } from './publish-video';
 import { onRunQualityGateFailed, runQualityGate } from './run-quality-gate';
+import {
+  onRefreshImageLibraryFailed,
+  onScanWebsiteFailed,
+  refreshImageLibrary,
+  scanWebsite,
+} from './scan-website';
 
 // BACKLOG 3.8 / 3.9 — the wrapper every job runs through, on BullMQ or inline:
 //   - kill switch checked on job start (global / workspace / project)
@@ -46,6 +52,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'run-quality-gate': runQualityGate,
   'publish-video': publishVideo,
   'fire-scheduled-publication': fireScheduledPublication,
+  'scan-website': scanWebsite,
+  'refresh-image-library': refreshImageLibrary,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -55,6 +63,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'run-quality-gate': onRunQualityGateFailed,
   'publish-video': onPublishVideoFailed,
   'fire-scheduled-publication': onFireScheduledFailed,
+  'scan-website': onScanWebsiteFailed,
+  'refresh-image-library': onRefreshImageLibraryFailed,
 };
 
 export function isRetryable(err: unknown): boolean {

@@ -20,6 +20,9 @@ export function memoryStorage() {
       if (!object) throw new Error(`missing ${bucket}/${key}`);
       return object.body.slice(start, endInclusive + 1);
     },
+    async delete(bucket, key) {
+      objects.delete(`${bucket}/${key}`);
+    },
   };
   return { storage, objects };
 }

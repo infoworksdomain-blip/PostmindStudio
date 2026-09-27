@@ -11,7 +11,10 @@ import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
 import { createMemoryOAuthStateStore } from '../../src/lib/studio/platforms/oauth-state';
 import type { PublishingDeps } from '../../src/lib/studio/platforms/publishing';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
+import { libraryDepsFrom } from '../../src/lib/studio/images/library';
+import type { PipelineDeps } from '../../src/lib/studio/pipeline/deps';
 import { fakePublisherRegistry } from './fake-publishers';
+import { createHarness } from './pipeline-harness';
 import { InlineJobQueue } from '../../src/lib/studio/queue/enqueue';
 import type { TenantContext } from '../../src/lib/tenant';
 import { memoryStorage } from './memory-storage';
@@ -51,6 +54,8 @@ export interface InstallOptions {
   queue?: InlineJobQueue;
   /** Share a pipeline harness's publishing deps (publishers, keys, storage). */
   publishing?: PublishingDeps;
+  /** Pipeline deps backing the image library (provider router, storage, stock sources). */
+  pipeline?: PipelineDeps;
 }
 
 export function installApi(
@@ -95,6 +100,7 @@ export function installApi(
     idempotency: createMemoryIdempotencyStore(),
     publishing,
     oauthState,
+    library: libraryDepsFrom(options.pipeline ?? createHarness(db).deps),
     appUrl: APP_URL,
     logger: pino({ level: 'silent' }),
     now: Date.now,
