@@ -27,6 +27,8 @@ export interface PipelineConfig {
   providerTimeoutMs: number;
   /** Where overlay fonts are hosted as <FamilyNoSpaces>.ttf (Shotstack has no system fonts). */
   fontsBaseUrl?: string;
+  /** Video library corpus bucket (S3_BUCKET_LIBRARY); Feature A ingestion only. */
+  libraryBucket?: string;
 }
 
 export interface PipelineDeps {

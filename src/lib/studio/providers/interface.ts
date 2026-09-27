@@ -58,6 +58,8 @@ export interface TextGenerationRequest extends ProviderRequestBase {
   maxTokens?: number;
   /** JSON Schema; when set the provider must return JSON matching it. */
   outputSchema?: Record<string, unknown>;
+  /** Images sent with the prompt (e.g. library keyframes), base64-encoded. */
+  images?: Array<{ mediaType: 'image/jpeg' | 'image/png' | 'image/webp'; data: string }>;
 }
 
 export interface EmbeddingRequest extends ProviderRequestBase {
@@ -103,6 +105,14 @@ export interface CompositionRequest extends ProviderRequestBase {
   outputDurationSec: number;
 }
 
+export interface TranscriptionRequest extends ProviderRequestBase {
+  capability: 'transcription';
+  /** Publicly fetchable (e.g. presigned) URL of the audio or video file. */
+  mediaUrl: string;
+  /** For cost estimation. */
+  durationSec: number;
+}
+
 export interface ContentSafetyRequest extends ProviderRequestBase {
   capability: 'content_safety';
   /** Publicly fetchable (e.g. presigned) URL of the rendered video. */
@@ -118,6 +128,7 @@ export type ProviderRequest =
   | ImageToVideoRequest
   | TtsRequest
   | CompositionRequest
+  | TranscriptionRequest
   | ContentSafetyRequest;
 
 export interface ProviderSubmitResult {

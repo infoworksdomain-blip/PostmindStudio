@@ -1,4 +1,7 @@
 import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { ConfigurationError, ValidationError } from '../../errors';
 
 // Media inspection for Layer 7 (render metadata) and Layer 8 auto-checks (spec 13.1), via the
@@ -29,6 +32,12 @@ export interface MediaInspector {
   blackIntervals(url: string, minDurationSec: number): Promise<BlackInterval[]>;
   /** Integrated loudness in LUFS (ffmpeg ebur128), or null when there is no audio stream. */
   integratedLoudness(url: string): Promise<number | null>;
+  /** Scene-change timestamps in seconds (select=gt(scene,t) + showinfo), ascending, excl. 0. */
+  sceneChanges(url: string, threshold: number): Promise<number[]>;
+  /** One JPEG frame at `atSec`, scaled to at most `maxWidth` wide. */
+  frameJpeg(url: string, atSec: number, maxWidth: number): Promise<Uint8Array>;
+  /** Low-resolution, muted, length-capped H.264 rendition (library in-picker previews). */
+  previewClip(url: string, maxWidth: number, maxSec: number): Promise<Uint8Array>;
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60_000;
@@ -138,6 +147,20 @@ export function parseIntegratedLoudness(stderr: string): number | null {
   return Number(m[1]);
 }
 
+/** pts_time values from showinfo lines (ffmpeg-filters: showinfo prints key:value pairs). */
+export function parseSceneChanges(stderr: string): number[] {
+  const times = new Set<number>();
+  for (const line of stderr.split(/\r?\n/)) {
+    if (!line.includes('showinfo')) continue;
+    const match = line.match(/pts_time:\s*([0-9]+(?:\.[0-9]+)?)/);
+    if (match) {
+      const t = Math.round(Number(match[1]) * 1000) / 1000;
+      if (t > 0) times.add(t);
+    }
+  }
+  return [...times].sort((a, b) => a - b);
+}
+
 export function createFfmpegInspector(
   options: { ffmpegPath?: string; ffprobePath?: string; timeoutMs?: number } = {},
 ): MediaInspector {
@@ -203,6 +226,98 @@ export function createFfmpegInspector(
         throw new ValidationError(`ffmpeg ebur128 failed: ${r.stderr.slice(-500)}`);
       }
       return parseIntegratedLoudness(r.stderr);
+    },
+    async sceneChanges(url, threshold) {
+      const r = await run(
+        ffmpeg,
+        [
+          '-hide_banner',
+          '-nostdin',
+          '-i',
+          url,
+          '-an',
+          '-sn',
+          '-dn',
+          '-vf',
+          `select='gt(scene,${threshold})',showinfo`,
+          '-f',
+          'null',
+          '-',
+        ],
+        timeoutMs,
+      );
+      if (r.code !== 0)
+        throw new ValidationError(`ffmpeg scene detection failed: ${r.stderr.slice(-500)}`);
+      return parseSceneChanges(r.stderr);
+    },
+    async frameJpeg(url, atSec, maxWidth) {
+      const dir = await mkdtemp(join(tmpdir(), 'studio-frame-'));
+      try {
+        const r = await run(
+          ffmpeg,
+          [
+            '-hide_banner',
+            '-nostdin',
+            '-ss',
+            atSec.toFixed(3),
+            '-i',
+            url,
+            '-frames:v',
+            '1',
+            '-vf',
+            `scale='min(${Math.round(maxWidth)},iw)':-2`,
+            '-q:v',
+            '3',
+            '-y',
+            'frame.jpg',
+          ],
+          timeoutMs,
+          dir,
+        );
+        if (r.code !== 0)
+          throw new ValidationError(`ffmpeg frame grab failed: ${r.stderr.slice(-500)}`);
+        return new Uint8Array(await readFile(join(dir, 'frame.jpg')));
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    },
+    async previewClip(url, maxWidth, maxSec) {
+      const dir = await mkdtemp(join(tmpdir(), 'studio-preview-'));
+      try {
+        const r = await run(
+          ffmpeg,
+          [
+            '-hide_banner',
+            '-nostdin',
+            '-i',
+            url,
+            '-t',
+            maxSec.toFixed(3),
+            '-an',
+            '-vf',
+            `scale='min(${Math.round(maxWidth)},iw)':-2,fps=15`,
+            '-c:v',
+            'libx264',
+            '-preset',
+            'veryfast',
+            '-crf',
+            '32',
+            '-pix_fmt',
+            'yuv420p',
+            '-movflags',
+            '+faststart',
+            '-y',
+            'preview.mp4',
+          ],
+          timeoutMs,
+          dir,
+        );
+        if (r.code !== 0)
+          throw new ValidationError(`ffmpeg preview failed: ${r.stderr.slice(-500)}`);
+        return new Uint8Array(await readFile(join(dir, 'preview.mp4')));
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
     },
   };
 }

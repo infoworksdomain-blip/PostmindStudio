@@ -14,6 +14,7 @@ import type { ProviderRegistry } from '../providers/registry';
 import { cancelTracked } from '../providers/tracked';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { ProjectJobData } from '../queue/queues';
+import { assertModeAllowed } from '../library/blueprint';
 import { slideshowInput } from '../slideshow/planner';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
 import { insertSlides, planSlideshowSlides } from './slideshows';
@@ -45,7 +46,12 @@ const briefInput = z.object({
 const projectFields = z.object({
   name: z.string().trim().min(1).max(200),
   businessId: z.string().trim().min(1).max(128),
-  sourceType: z.enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW']).default('BRIEF'),
+  sourceType: z
+    .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE'])
+    .default('BRIEF'),
+  /** LIBRARY_REFERENCE (A3.9): the reference video and how it is used. */
+  referenceVideoId: z.string().trim().min(1).max(64).optional(),
+  referenceMode: z.enum(['TEMPLATE', 'INSPIRE']).optional(),
   sourceRef: z.string().max(200).optional(),
   /** Required for BRIEF / POSTMIND_CONTENT. */
   brief: briefInput.optional(),
@@ -68,6 +74,12 @@ export const createProjectInput = projectFields.superRefine((v, ctx) => {
       code: 'custom',
       path: ['slideshow'],
       message: 'slideshow is required for SLIDESHOW projects',
+    });
+  if (v.sourceType === 'LIBRARY_REFERENCE' && !(v.referenceVideoId && v.referenceMode))
+    ctx.addIssue({
+      code: 'custom',
+      path: ['referenceVideoId'],
+      message: 'referenceVideoId and referenceMode are required for LIBRARY_REFERENCE',
     });
   if (v.sourceType !== 'SLIDESHOW' && !v.brief)
     ctx.addIssue({ code: 'custom', path: ['brief'], message: 'brief is required' });
@@ -145,6 +157,15 @@ export async function createProject(
   input: z.infer<typeof createProjectInput>,
 ) {
   await assertBrandKit(db, tenant.organisationId, input.brandKitId);
+  if (input.sourceType === 'LIBRARY_REFERENCE' && input.referenceVideoId && input.referenceMode) {
+    const reference = await db.videoLibraryItem.findFirst({
+      where: { id: input.referenceVideoId, retiredAt: null },
+      include: { license: true, analysis: { select: { id: true } } },
+    });
+    if (!reference?.analysis)
+      throw new ValidationError('referenceVideoId is not an available library video');
+    assertModeAllowed(input.referenceMode, reference.license, Date.now());
+  }
   const slideshow =
     input.sourceType === 'SLIDESHOW' && input.slideshow
       ? await planSlideshowSlides(
@@ -164,6 +185,10 @@ export async function createProject(
         state: 'DRAFT',
         sourceType: input.sourceType,
         sourceRef: input.sourceRef ?? null,
+        ...(input.sourceType === 'LIBRARY_REFERENCE' && {
+          referenceVideoId: input.referenceVideoId ?? null,
+          referenceMode: input.referenceMode ?? null,
+        }),
         targetFormats: toStoredFormats(input.targetFormats),
         brandKitId: input.brandKitId ?? null,
         templateId: input.templateId ?? null,

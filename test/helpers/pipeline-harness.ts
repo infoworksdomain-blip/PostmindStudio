@@ -86,6 +86,43 @@ export const SLIDESHOW_TEXT_JSON = {
   ],
 };
 
+export const ANALYSIS_JSON = {
+  title: 'Bakery morning routine',
+  description: 'A baker shows the dawn bake, ending on a subscribe card.',
+  tags: ['bakery', 'Behind the scenes', 'bakery'],
+  categorySlugs: ['community/behind-the-scenes/production', 'lifestyle/food/baking'],
+  hookPattern: 'bold question on screen',
+  structurePattern: 'hook-process-cta',
+  ctaPattern: 'subscribe card',
+  paceTag: 'fast-cut',
+  moodTag: 'upbeat-confident',
+  genreTag: 'behind-the-scenes',
+  musicMoodTag: 'lofi-hip-hop',
+  shots: [
+    {
+      type: 'HOOK_TEXT_ON_STILL',
+      description: 'loaf close-up',
+      onScreenText: 'Ever wondered?',
+      overlayStyle: 'bold-centre',
+      voiceoverPresent: true,
+    },
+    {
+      type: 'B_ROLL',
+      description: 'baker shaping dough',
+      onScreenText: '',
+      overlayStyle: 'subtitle-lower',
+      voiceoverPresent: true,
+    },
+    {
+      type: 'CTA_CARD',
+      description: 'subscribe card',
+      onScreenText: 'Subscribe',
+      overlayStyle: 'bold-bottom',
+      voiceoverPresent: false,
+    },
+  ],
+};
+
 export const PROFILE_JSON = {
   industry: 'Food and drink — bakery',
   subNiche: 'artisan sourdough subscriptions',
@@ -116,6 +153,10 @@ export interface HarnessOptions {
   loudness?: number | null;
   hiveMaxScores?: Record<string, number>;
   profile?: unknown;
+  analysis?: unknown;
+  /** Omit the scripted AssemblyAI adapter (no transcription provider configured). */
+  noTranscription?: boolean;
+  sceneChanges?: number[];
   slideshowText?: unknown;
   /** Feature D: fetch used for website pages and images (defaults to the media fetch mock). */
   pageFetch?: typeof fetch;
@@ -132,6 +173,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.script ?? SCRIPT_JSON);
     if (request.system.includes('social-media slideshow'))
       return textResult(options.slideshowText ?? SLIDESHOW_TEXT_JSON);
+    if (request.system.includes('analyse short-form marketing videos'))
+      return textResult(options.analysis ?? ANALYSIS_JSON);
     if (request.system.includes('business-classification'))
       return textResult(options.profile ?? PROFILE_JSON);
     return textResult(options.safety ?? SAFETY_ALLOW);
@@ -183,6 +226,16 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
   }));
 
   const { storage, objects } = memoryStorage();
+  const assemblyai = new ScriptedAdapter('assemblyai', ['transcription'], () => ({
+    state: 'succeeded',
+    output: {
+      metadata: {
+        text: 'Ever wondered how our bread is made? Subscribe for more.',
+        words: [{ text: 'Ever', startSec: 0.1, endSec: 0.4 }],
+        costPence: 1,
+      },
+    },
+  }));
   let generated = 0;
   const openai = new ScriptedAdapter('openai', ['embedding', 'text_to_image'], async (request) => {
     if (request.capability === 'embedding') {
@@ -235,6 +288,9 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     integratedLoudness: vi.fn(async () =>
       options.loudness === undefined ? -14 : options.loudness,
     ),
+    sceneChanges: vi.fn(async () => options.sceneChanges ?? [2.5, 6]),
+    frameJpeg: vi.fn(async () => new Uint8Array([0xff, 0xd8, 0xff, 0xd9])),
+    previewClip: vi.fn(async () => new Uint8Array([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70])),
   };
   const fetchImpl = vi.fn(
     async () =>
@@ -254,7 +310,15 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
   };
   const deps: PipelineDeps = {
     db,
-    registry: createProviderRegistry([anthropic, runway, elevenlabs, shotstack, hive, openai]),
+    registry: createProviderRegistry([
+      anthropic,
+      runway,
+      elevenlabs,
+      shotstack,
+      hive,
+      openai,
+      ...(options.noTranscription ? [] : [assemblyai]),
+    ]),
     breaker,
     killSwitch,
     budget: createPrismaBudgetChecker(db),
@@ -270,6 +334,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       providerPollIntervalMs: 0,
       providerTimeoutMs: 60_000,
       fontsBaseUrl: 'https://fonts.test',
+      libraryBucket: 'library',
     },
     fetch: fetchImpl as unknown as typeof fetch,
     audit: (entry) => audits.push(entry),
@@ -306,7 +371,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     attributions,
     oauthClients,
     meta,
-    adapters: { anthropic, runway, elevenlabs, shotstack, hive, openai },
+    adapters: { anthropic, runway, elevenlabs, shotstack, hive, openai, assemblyai },
     objects,
     media,
     fetchImpl,

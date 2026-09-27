@@ -171,6 +171,50 @@ describe('AnthropicAdapter', () => {
     expect(err).toMatchObject({ providerId: 'anthropic', errorClass, retryable });
   });
 
+  it('sends image content blocks before the text prompt when images are given', async () => {
+    const create = vi.fn(async () => recordedMessage());
+    const adapter = new AnthropicAdapter({ client: client(create), usdToGbpRate: 0.75 });
+    await adapter.submit({
+      ...request,
+      images: [
+        { mediaType: 'image/jpeg', data: 'base64-frame-1' },
+        { mediaType: 'image/jpeg', data: 'base64-frame-2' },
+      ],
+    });
+    expect(create).toHaveBeenCalledWith({
+      model: 'claude-sonnet-5',
+      max_tokens: 16000,
+      system: request.system,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: 'image/jpeg', data: 'base64-frame-1' },
+            },
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: 'image/jpeg', data: 'base64-frame-2' },
+            },
+            { type: 'text', text: request.prompt },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('adds an upper-bound image token cost per image to the estimate', () => {
+    const adapter = new AnthropicAdapter({ client: client(vi.fn()), usdToGbpRate: 0.75 });
+    const withoutImages = adapter.estimateCostPence({ ...request, maxTokens: 100 });
+    const withFiveImages = adapter.estimateCostPence({
+      ...request,
+      maxTokens: 100,
+      images: Array.from({ length: 5 }, () => ({ mediaType: 'image/jpeg' as const, data: 'x' })),
+    });
+    expect(withFiveImages).toBeGreaterThan(withoutImages);
+  });
+
   it('estimates an upper-bound cost for the router budget check', () => {
     const adapter = new AnthropicAdapter({ client: client(vi.fn()), usdToGbpRate: 0.75 });
     // system+prompt = 64 chars → 16 input tokens; 16000 output tokens at $10/M = $0.16 → 13p

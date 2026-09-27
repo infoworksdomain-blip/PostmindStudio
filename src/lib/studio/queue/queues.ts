@@ -10,6 +10,8 @@ export const QUEUES = {
   publish: 'studio-publish',
   scheduled: 'studio-scheduled',
   analytics: 'studio-analytics',
+  /** Feature A corpus ingestion: isolated so staff batches never crowd out customer jobs. */
+  library: 'studio-library',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -52,6 +54,25 @@ export interface LibraryRefreshJobData extends BusinessJobData {
   queries?: string[];
 }
 
+/** Video library ingestion (Feature A): platform-level, no project. runId = source hash. */
+export interface LibraryIngestJobData {
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  projectId?: undefined;
+  batch?: boolean;
+  item: {
+    sourceUrl: string;
+    licenseScenario: 'LICENSED' | 'OWNED' | 'SCRAPED';
+    licenseSource?: string;
+    licenseExpires?: string;
+    category?: string;
+    tags: string[];
+    title?: string;
+    sourcePlatform?: string;
+  };
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
@@ -61,6 +82,7 @@ export interface JobDataMap {
   'fire-scheduled-publication': PublishJobData;
   'scan-website': ScanJobData;
   'populate-slideshow': ProjectJobData;
+  'ingest-library-video': LibraryIngestJobData;
   'refresh-image-library': LibraryRefreshJobData;
 }
 
@@ -75,6 +97,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
+  'ingest-library-video': QUEUES.library,
   'refresh-image-library': QUEUES.assets,
 };
 

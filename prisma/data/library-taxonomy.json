@@ -1,0 +1,700 @@
+{
+  "$comment": "BACKLOG 9.7 / Addendum A3.4 — video library category tree. Editable: names become slugs (lowercase, hyphenated) joined by '/'. Users cannot add top-level categories. Re-seeding upserts by slug and never deletes.",
+  "categories": [
+    {
+      "name": "Business",
+      "children": [
+        {
+          "name": "E-commerce",
+          "children": [
+            {
+              "name": "Fashion"
+            },
+            {
+              "name": "Beauty products"
+            },
+            {
+              "name": "Home goods"
+            },
+            {
+              "name": "Electronics"
+            },
+            {
+              "name": "Food and drink"
+            },
+            {
+              "name": "Handmade"
+            },
+            {
+              "name": "Subscription boxes"
+            }
+          ]
+        },
+        {
+          "name": "Services",
+          "children": [
+            {
+              "name": "Trades"
+            },
+            {
+              "name": "Cleaning"
+            },
+            {
+              "name": "Legal"
+            },
+            {
+              "name": "Financial"
+            },
+            {
+              "name": "Health and wellness"
+            },
+            {
+              "name": "Events"
+            },
+            {
+              "name": "Photography"
+            }
+          ]
+        },
+        {
+          "name": "SaaS",
+          "children": [
+            {
+              "name": "Productivity"
+            },
+            {
+              "name": "Marketing tools"
+            },
+            {
+              "name": "Developer tools"
+            },
+            {
+              "name": "Finance tools"
+            },
+            {
+              "name": "HR tools"
+            },
+            {
+              "name": "E-commerce platforms"
+            },
+            {
+              "name": "Customer support tools"
+            }
+          ]
+        },
+        {
+          "name": "Local business",
+          "children": [
+            {
+              "name": "Restaurants"
+            },
+            {
+              "name": "Cafes"
+            },
+            {
+              "name": "Bakeries"
+            },
+            {
+              "name": "Salons"
+            },
+            {
+              "name": "Gyms"
+            },
+            {
+              "name": "Retail shops"
+            },
+            {
+              "name": "Real estate"
+            }
+          ]
+        },
+        {
+          "name": "Agency",
+          "children": [
+            {
+              "name": "Marketing agency"
+            },
+            {
+              "name": "Design agency"
+            },
+            {
+              "name": "Recruitment"
+            },
+            {
+              "name": "Web development"
+            },
+            {
+              "name": "PR"
+            },
+            {
+              "name": "Social media management"
+            }
+          ]
+        },
+        {
+          "name": "Consulting",
+          "children": [
+            {
+              "name": "Strategy"
+            },
+            {
+              "name": "Operations"
+            },
+            {
+              "name": "Technology"
+            },
+            {
+              "name": "Finance"
+            },
+            {
+              "name": "Sustainability"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lifestyle",
+      "children": [
+        {
+          "name": "Fitness",
+          "children": [
+            {
+              "name": "Running"
+            },
+            {
+              "name": "Strength training"
+            },
+            {
+              "name": "Yoga"
+            },
+            {
+              "name": "Home workouts"
+            },
+            {
+              "name": "Cycling"
+            },
+            {
+              "name": "Pilates"
+            },
+            {
+              "name": "Nutrition"
+            },
+            {
+              "name": "Martial arts"
+            }
+          ]
+        },
+        {
+          "name": "Beauty",
+          "children": [
+            {
+              "name": "Makeup"
+            },
+            {
+              "name": "Skincare"
+            },
+            {
+              "name": "Hair"
+            },
+            {
+              "name": "Nails"
+            },
+            {
+              "name": "Fragrance"
+            },
+            {
+              "name": "Barbering"
+            }
+          ]
+        },
+        {
+          "name": "Fashion",
+          "children": [
+            {
+              "name": "Outfit ideas"
+            },
+            {
+              "name": "Hauls"
+            },
+            {
+              "name": "Styling tips"
+            },
+            {
+              "name": "Sustainable fashion"
+            }
+          ]
+        },
+        {
+          "name": "Home",
+          "children": [
+            {
+              "name": "Interior design"
+            },
+            {
+              "name": "DIY"
+            },
+            {
+              "name": "Organisation"
+            },
+            {
+              "name": "Gardening"
+            },
+            {
+              "name": "Renovation"
+            },
+            {
+              "name": "Cleaning hacks"
+            }
+          ]
+        },
+        {
+          "name": "Travel",
+          "children": [
+            {
+              "name": "City guides"
+            },
+            {
+              "name": "Budget travel"
+            },
+            {
+              "name": "Luxury travel"
+            },
+            {
+              "name": "Hotels"
+            },
+            {
+              "name": "Travel hacks"
+            },
+            {
+              "name": "Outdoor adventure"
+            }
+          ]
+        },
+        {
+          "name": "Food",
+          "children": [
+            {
+              "name": "Recipes"
+            },
+            {
+              "name": "Restaurant reviews"
+            },
+            {
+              "name": "Baking"
+            },
+            {
+              "name": "Healthy eating"
+            },
+            {
+              "name": "Street food"
+            }
+          ]
+        },
+        {
+          "name": "Parenting",
+          "children": [
+            {
+              "name": "Babies"
+            },
+            {
+              "name": "Toddlers"
+            },
+            {
+              "name": "School age"
+            },
+            {
+              "name": "Teens"
+            },
+            {
+              "name": "Family activities"
+            }
+          ]
+        },
+        {
+          "name": "Pets",
+          "children": [
+            {
+              "name": "Dogs"
+            },
+            {
+              "name": "Cats"
+            },
+            {
+              "name": "Pet care"
+            },
+            {
+              "name": "Pet training"
+            },
+            {
+              "name": "Exotic pets"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Education",
+      "children": [
+        {
+          "name": "Teaching",
+          "children": [
+            {
+              "name": "Languages"
+            },
+            {
+              "name": "Maths"
+            },
+            {
+              "name": "Science"
+            },
+            {
+              "name": "History"
+            },
+            {
+              "name": "Coding"
+            },
+            {
+              "name": "Music lessons"
+            },
+            {
+              "name": "Art lessons"
+            }
+          ]
+        },
+        {
+          "name": "Tutorials",
+          "children": [
+            {
+              "name": "Software how-to"
+            },
+            {
+              "name": "Craft how-to"
+            },
+            {
+              "name": "Cooking how-to"
+            },
+            {
+              "name": "Beauty how-to"
+            }
+          ]
+        },
+        {
+          "name": "Explainers",
+          "children": [
+            {
+              "name": "Money explained"
+            },
+            {
+              "name": "Tech explained"
+            },
+            {
+              "name": "Science explained"
+            },
+            {
+              "name": "History explained"
+            },
+            {
+              "name": "Health explained"
+            }
+          ]
+        },
+        {
+          "name": "Book review"
+        },
+        {
+          "name": "Study",
+          "children": [
+            {
+              "name": "Study tips"
+            },
+            {
+              "name": "Exam prep"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Entertainment",
+      "children": [
+        {
+          "name": "Comedy",
+          "children": [
+            {
+              "name": "Sketches"
+            },
+            {
+              "name": "Stand-up clips"
+            },
+            {
+              "name": "Parody"
+            }
+          ]
+        },
+        {
+          "name": "Skits",
+          "children": [
+            {
+              "name": "Workplace skits"
+            },
+            {
+              "name": "Customer skits"
+            },
+            {
+              "name": "POV skits"
+            }
+          ]
+        },
+        {
+          "name": "Reactions",
+          "children": [
+            {
+              "name": "Product reactions"
+            },
+            {
+              "name": "Trend reactions"
+            }
+          ]
+        },
+        {
+          "name": "Storytelling",
+          "children": [
+            {
+              "name": "Story time"
+            },
+            {
+              "name": "Day in the life"
+            },
+            {
+              "name": "Mini documentary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "News and commentary",
+      "children": [
+        {
+          "name": "Analysis",
+          "children": [
+            {
+              "name": "Industry news"
+            },
+            {
+              "name": "Market updates"
+            },
+            {
+              "name": "Tech news"
+            },
+            {
+              "name": "Local news"
+            }
+          ]
+        },
+        {
+          "name": "Debate",
+          "children": [
+            {
+              "name": "Two-sides debate"
+            },
+            {
+              "name": "Street interviews"
+            }
+          ]
+        },
+        {
+          "name": "Opinion",
+          "children": [
+            {
+              "name": "Hot takes"
+            },
+            {
+              "name": "Myth busting"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Personal brand",
+      "children": [
+        {
+          "name": "Founder-led",
+          "children": [
+            {
+              "name": "Building in public"
+            },
+            {
+              "name": "Founder story"
+            },
+            {
+              "name": "Lessons learned"
+            }
+          ]
+        },
+        {
+          "name": "Coach",
+          "children": [
+            {
+              "name": "Business coaching"
+            },
+            {
+              "name": "Life coaching"
+            },
+            {
+              "name": "Fitness coaching"
+            }
+          ]
+        },
+        {
+          "name": "Speaker",
+          "children": [
+            {
+              "name": "Keynote clips"
+            },
+            {
+              "name": "Podcast clips"
+            }
+          ]
+        },
+        {
+          "name": "Author",
+          "children": [
+            {
+              "name": "Book launch"
+            },
+            {
+              "name": "Writing process"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Product marketing",
+      "children": [
+        {
+          "name": "Launch",
+          "children": [
+            {
+              "name": "Teaser"
+            },
+            {
+              "name": "Countdown"
+            },
+            {
+              "name": "Launch day"
+            }
+          ]
+        },
+        {
+          "name": "Feature demo",
+          "children": [
+            {
+              "name": "Screen recording"
+            },
+            {
+              "name": "Hands-on demo"
+            }
+          ]
+        },
+        {
+          "name": "Testimonial",
+          "children": [
+            {
+              "name": "Customer interview"
+            },
+            {
+              "name": "Review montage"
+            },
+            {
+              "name": "Case study"
+            }
+          ]
+        },
+        {
+          "name": "Comparison",
+          "children": [
+            {
+              "name": "Versus"
+            },
+            {
+              "name": "Before and after"
+            }
+          ]
+        },
+        {
+          "name": "Unboxing",
+          "children": [
+            {
+              "name": "First impressions"
+            },
+            {
+              "name": "ASMR unboxing"
+            }
+          ]
+        },
+        {
+          "name": "Offers",
+          "children": [
+            {
+              "name": "Sale announcement"
+            },
+            {
+              "name": "Limited drop"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Community",
+      "children": [
+        {
+          "name": "Behind-the-scenes",
+          "children": [
+            {
+              "name": "Production"
+            },
+            {
+              "name": "Packing orders"
+            },
+            {
+              "name": "Studio tour"
+            }
+          ]
+        },
+        {
+          "name": "Team",
+          "children": [
+            {
+              "name": "Meet the team"
+            },
+            {
+              "name": "Hiring"
+            }
+          ]
+        },
+        {
+          "name": "Culture",
+          "children": [
+            {
+              "name": "Values"
+            },
+            {
+              "name": "Events and socials"
+            },
+            {
+              "name": "Charity and giving"
+            },
+            {
+              "name": "Customer community"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
