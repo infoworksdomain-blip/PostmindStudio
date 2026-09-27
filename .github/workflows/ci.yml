@@ -24,7 +24,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
-      - run: npm run test:coverage
+      - run: npm test
 
   database:
     # Applies the committed migrations to real Postgres 15 + pgvector, seeds system_flags,
@@ -42,7 +42,14 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U studio -d postmind"
           --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
+      REDIS_URL: redis://localhost:6379/3
       DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio
       SHADOW_DATABASE_URL: postgresql://studio:studio@localhost:5432/shadow?schema=studio
     steps:
@@ -62,8 +69,11 @@ jobs:
             "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
           echo "studio tables: $count"
           test "$count" -eq 33
-      - name: Prisma persistence against real Postgres
-        run: npx vitest run test/db
+      - name: Install ffmpeg (Ubuntu repository)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
+        # Coverage is enforced here, where the DB/queue/media suites run too.
+        run: npm run test:coverage
       - name: Schema matches migrations (drift check)
         run: |
           PGPASSWORD=studio psql -h localhost -U studio -d postmind -c 'CREATE DATABASE shadow'

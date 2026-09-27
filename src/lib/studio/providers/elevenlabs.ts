@@ -120,7 +120,8 @@ export class ElevenLabsAdapter implements ProviderAdapter {
       );
     }
     const result = await this.synthesise(request);
-    const costPence = (result.output?.metadata as { costPence: number }).costPence;
+    const costPence =
+      (result.output?.metadata as { costPence?: number } | undefined)?.costPence ?? 0;
     return {
       providerJobId: this.results.put(result),
       estimatedCostPence: costPence,

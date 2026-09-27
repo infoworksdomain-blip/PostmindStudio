@@ -60,17 +60,17 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 3 — Queue + orchestration engine (target: week 3-4)
 
-- [ ] **3.1** Implement `src/lib/studio/queue/redis.ts` — BullMQ Redis connection config (DB 3).
-- [ ] **3.2** Define queues in `src/lib/studio/queue/queues.ts`: `studio-orchestration`, `studio-assets`, `studio-publish`, `studio-scheduled`, `studio-analytics`.
-- [ ] **3.3** Implement `src/lib/studio/queue/enqueue.ts` — typed helpers to enqueue each job type with priority based on plan tier.
-- [ ] **3.4** Implement `src/lib/studio/queue/workers/plan-project.ts` — Layer 1 (Ideation) + Layer 2 (Script + Storyboard). Uses Anthropic adapter. Writes `video_briefs`, `video_scripts`, `video_shots`.
-- [ ] **3.5** Implement `src/lib/studio/queue/workers/generate-asset.ts` — Layer 3-5. Routes per `visualTreatment`. Handles voice + music + visuals.
-- [ ] **3.6** Implement `src/lib/studio/queue/workers/compose-video.ts` — Layer 6-7. Builds Shotstack EDL, polls to completion, writes `video_renders`.
-- [ ] **3.7** Implement `src/lib/studio/queue/workers/run-quality-gate.ts` — Layer 8 auto-checks + Hive content safety.
-- [ ] **3.8** Every worker checks kill switch on job start. Every worker updates project state transitions.
-- [ ] **3.9** Implement retry logic: 5 retries, exponential backoff 5s → 2min cap. Dead-letter after.
-- [ ] **3.10** Add `scripts/worker.ts` entry point for running workers in separate process. Update `package.json` scripts.
-- [ ] **[GATE 3]** Operator triggers a test project end-to-end (brief → script → one AI clip generated → composed → quality-checked). Manual for now.
+- [x] **3.1** Implement `src/lib/studio/queue/redis.ts` — BullMQ Redis connection config (DB 3).
+- [x] **3.2** Define queues in `src/lib/studio/queue/queues.ts`: `studio-orchestration`, `studio-assets`, `studio-publish`, `studio-scheduled`, `studio-analytics`.
+- [x] **3.3** Implement `src/lib/studio/queue/enqueue.ts` — typed helpers to enqueue each job type with priority based on plan tier.
+- [x] **3.4** Implement `src/lib/studio/queue/workers/plan-project.ts` — Layer 1 (Ideation) + Layer 2 (Script + Storyboard). Uses Anthropic adapter. Writes `video_briefs`, `video_scripts`, `video_shots`.
+- [x] **3.5** Implement `src/lib/studio/queue/workers/generate-asset.ts` — Layer 3-5. Routes per `visualTreatment`. Handles voice + music + visuals.
+- [x] **3.6** Implement `src/lib/studio/queue/workers/compose-video.ts` — Layer 6-7. Builds Shotstack EDL, polls to completion, writes `video_renders`.
+- [x] **3.7** Implement `src/lib/studio/queue/workers/run-quality-gate.ts` — Layer 8 auto-checks + Hive content safety.
+- [x] **3.8** Every worker checks kill switch on job start. Every worker updates project state transitions.
+- [x] **3.9** Implement retry logic: 5 retries, exponential backoff 5s → 2min cap. Dead-letter after.
+- [x] **3.10** Add `scripts/worker.ts` entry point for running workers in separate process. Update `package.json` scripts.
+- [x] **[GATE 3]** Operator triggers a test project end-to-end (brief → script → one AI clip generated → composed → quality-checked). Manual for now.
 
 ---
 

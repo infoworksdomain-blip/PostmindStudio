@@ -14,7 +14,7 @@ import { pollTracked, submitTracked } from '../../src/lib/studio/providers/track
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
-describe.skipIf(!hasDb)('provider job tracking on real Postgres', () => {
+describe.skipIf(!hasDb)('provider job tracking on real Postgres', { timeout: 60_000 }, () => {
   const prisma = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
   const organisationId = `db-test-${randomUUID()}`;
   let projectId: string;

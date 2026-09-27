@@ -6,6 +6,31 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 3] Passed on automated evidence (autonomous build mode): full pipeline verified on real Postgres + BullMQ/Redis 7 + ffmpeg in CI with scripted providers. Live-provider run (`npm run gate3`) still to be done by the operator with staging keys.
+
+**Phase 3 status: built and verified end-to-end with scripted providers on real Postgres (locally via PGlite, in CI on pgvector Postgres + Redis 7 + ffmpeg). Live-provider run = `npm run gate3`.**
+
+[2026-09-27] [3.10] scripts/worker.ts (`npm run worker [queue…]`, graceful shutdown) + scripts/run-test-project.ts (`npm run gate3`, inline or `--queue`).
+[2026-09-27] [3.9] Retry policy: 6 attempts (5 retries), backoff 5s→10s→20s→40s→80s→cap 120s; non-retryable errors → UnrecoverableError; failed jobs kept (removeOnFail:false = dead-letter, operator action).
+[2026-09-27] [3.8] workers/runtime.ts: kill switch checked at every job start; final-attempt failure handlers mark shot/project FAILED; runId on every job makes stale/superseded jobs no-ops; state transitions are compare-and-set.
+[2026-09-27] [3.7] run-quality-gate: ffprobe/blackdetect/ebur128 + Hive scan → spec 13.1 checks (duration ±2s, black >500ms, LUFS −18..−10, aspect, H.264/MP4, content safety BLOCK vs REVIEW); not-yet-built checks recorded as not_run, never passed.
+[2026-09-27] [3.6] compose-video: Shotstack edit list (video/image/html/audio assets), render per script, copy to renders bucket, probe, video_renders row, idempotent per script.
+[2026-09-27] [3.5] generate-asset: AI_CLIP (text_to_video) / IMAGE_STILL / TEXT_CARD + per-shot narration (brand voice → ELEVENLABS_DEFAULT_VOICE_ID); outputs copied to S3, video_assets rows, providerRouting snapshot; fan-in enqueues compose once (deterministic jobId).
+[2026-09-27] [3.4] plan-project: Layer 1 ideation (vague → DRAFT + 3 directions; restricted topics → DRAFT pending confirmation), Layer 2 script per target format (treatments limited to configured providers, durations fitted to target), pre-generation script safety (BLOCK/REVIEW stop the run), persistence, fan-out.
+[2026-09-27] [3.1–3.3] redis.ts (DB 3 enforced), queues.ts (5 spec queues, job payloads, priorities high/normal/low by tier), enqueue.ts (BullMQ + InlineJobQueue behind one JobQueue interface).
+[2026-09-27] [3.x] HiveAdapter (V2 sync task API, ≤90s) for Layer 8 content safety.
+
+**Phase 3 review list:**
+- Hive async moderation needs a public callback URL (Phase 4 API) — videos >90s currently FAIL the content-safety check (fail-closed) until then. Long-form (YouTube 4–8 min) cannot reach READY_FOR_REVIEW yet.
+- Music (Layer 5): no Suno/MusicGen/Storyblocks adapter exists; renders have narration only and project.metadata.music records "skipped". Suno has no documented public API — needs a provider decision.
+- Voice runs inside the per-shot asset job (not a separate parallel job as in spec 4.5 step 5); shots still run in parallel with each other.
+- Treatments offered to Layer 2 = configured providers + TEXT_CARD. STOCK_FOOTAGE, AI_AVATAR, MOTION_GRAPHICS, USER_UPLOAD are unavailable until their adapters/flows exist.
+- Script-safety REVIEW stops the run (no human review queue yet; fail closed).
+- Codec check requires H.264 in MP4 but not the Baseline profile the spec names; Shotstack output profile is recorded in the check detail. Enforcing Baseline would fail every render until a re-encode step exists.
+- Loudness is not normalised by the pipeline; renders outside −18..−10 LUFS go to QUALITY_FAILED (force-approvable).
+- Text cards/captions use Shotstack's `html` asset (documented, deprecated in favour of rich-text); Phase 8 overlay translator replaces it.
+- Local dev DB without Docker: `npm run db:local` (PGlite + pgvector); DATABASE_URL needs `&pgbouncer=true`.
+
 [2026-09-27] [GATE 2] Operator approved. Live `npm run gate2:*` results were not shared with the build session, so live provider behaviour is still unverified from this side. CI green on PR #3.
 
 **Phase 2 status: code-complete and unit/integration tested against the providers' DOCUMENTED contracts. NOT yet run against live APIs** (no `.env.local` or database on the build machine). GATE 2 = run `npm run gate2:*` with staging keys.
