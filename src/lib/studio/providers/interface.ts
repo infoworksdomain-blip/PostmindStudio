@@ -97,6 +97,14 @@ export interface TtsRequest extends ProviderRequestBase {
   languageCode?: string;
 }
 
+export interface MusicRequest extends ProviderRequestBase {
+  capability: 'music';
+  /** Plain-language style prompt built by pipeline/music-prompt.ts (no lyrics, no artists). */
+  prompt: string;
+  /** Requested track length; adapters clamp or reject outside their documented range. */
+  durationSec: number;
+}
+
 export interface CompositionRequest extends ProviderRequestBase {
   capability: 'composition';
   /** Provider-native edit decision list (e.g. a Shotstack Edit), built by Layer 6. */
@@ -127,6 +135,7 @@ export type ProviderRequest =
   | TextToVideoRequest
   | ImageToVideoRequest
   | TtsRequest
+  | MusicRequest
   | CompositionRequest
   | TranscriptionRequest
   | ContentSafetyRequest;

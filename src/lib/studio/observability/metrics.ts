@@ -21,7 +21,7 @@ export interface StudioMetrics {
 /** Every (scope, threshold) a cost alert can have (cost/caps.ts thresholds per scope). */
 export const COST_ALERT_SERIES: ReadonlyArray<{ scope: string; threshold: string }> = [
   ...['80', '90', '100'].map((threshold) => ({ scope: 'project', threshold })),
-  ...['org_daily', 'org_provider_daily', 'global_daily'].flatMap((scope) =>
+  ...['org_daily', 'org_monthly', 'org_provider_daily', 'global_daily'].flatMap((scope) =>
     ['80', '100'].map((threshold) => ({ scope, threshold })),
   ),
 ];
@@ -66,7 +66,7 @@ function build(): StudioMetrics {
     }),
     costAlerts: new Counter({
       name: 'studio_cost_alerts_total',
-      help: 'Cost alerts raised by scope (project | org_daily | org_provider_daily | global_daily) and threshold percent',
+      help: 'Cost alerts raised by scope (project | org_daily | org_monthly | org_provider_daily | global_daily) and threshold percent',
       labelNames: ['scope', 'threshold'],
       registers: [registry],
     }),

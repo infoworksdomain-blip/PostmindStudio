@@ -17,6 +17,7 @@ import type { ProjectJobData } from '../queue/queues';
 import { assertModeAllowed } from '../library/blueprint';
 import { slideshowInput } from '../slideshow/planner';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
+import { budgetFormatsFromJson, defaultProjectBudgetPence } from '../cost/project-budget';
 import { insertSlides, planSlideshowSlides } from './slideshows';
 import { applyTemplate } from './templates';
 import { assertMayApprove, recordApproval, requiredRoleFor } from '../automation/approval';
@@ -241,7 +242,8 @@ export async function createProject(
         targetFormats: toStoredFormats(formats),
         brandKitId: template?.brandKitId ?? input.brandKitId ?? null,
         templateId: input.templateId ?? null,
-        costBudgetPence: input.costBudgetPence ?? null,
+        // Operator decision 2: no explicit budget → the short/long-form default.
+        costBudgetPence: input.costBudgetPence ?? defaultProjectBudgetPence(formats),
         reviewPolicy: template ? template.reviewPolicy : input.reviewPolicy,
         publishPolicy: template ? template.publishPolicy : input.publishPolicy,
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
@@ -425,7 +427,9 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
       targetFormats: source.targetFormats as Prisma.InputJsonValue,
       brandKitId: source.brandKitId,
       templateId: source.templateId,
-      costBudgetPence: source.costBudgetPence,
+      costBudgetPence:
+        source.costBudgetPence ??
+        defaultProjectBudgetPence(budgetFormatsFromJson(source.targetFormats)),
       reviewPolicy: source.reviewPolicy,
       publishPolicy: source.publishPolicy,
       metadata: {

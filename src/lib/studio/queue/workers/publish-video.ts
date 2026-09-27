@@ -2,7 +2,12 @@ import type { Prisma } from '@prisma/client';
 import { NotFoundError, PlatformError } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { notifyPublicationFailed } from '../../notifications/events';
-import { publicationMetadata, resolveCredentials, videoSource } from '../../platforms/publishing';
+import {
+  noteCredentialFailure,
+  publicationMetadata,
+  resolveCredentials,
+  videoSource,
+} from '../../platforms/publishing';
 import type { Platform } from '../../services/catalog';
 import { jobIds } from '../enqueue';
 import type { PublishJobData } from '../queues';
@@ -128,6 +133,7 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
     // The platform answered with a definite rejection: nothing was posted, a retry is safe.
     // Timeouts and unclassified failures keep the marker (the upload may have gone through).
     if (definitelyNotPosted(err)) await setMetadata(meta);
+    await noteCredentialFailure(deps.publishing, publication, err);
     throw err;
   }
 

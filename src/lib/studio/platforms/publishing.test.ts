@@ -16,6 +16,7 @@ import type { OAuthClient, OAuthPlatform } from './oauth';
 import { sealTokens } from './tokens';
 import {
   createEngagementClient,
+  noteCredentialFailure,
   publicationMetadata,
   resolveCredentials,
   videoSource,
@@ -88,7 +89,7 @@ describe('publicationMetadata', () => {
 });
 
 describe('resolveCredentials', () => {
-  it('fetches Meta credentials for a platform routed through Engagement', async () => {
+  it('fetches Meta credentials for a Core-registered Instagram channel', async () => {
     const meta: MetaCredentialSource = {
       getCredentials: vi.fn(async () => ({
         accessToken: 'meta-access-token',
@@ -310,5 +311,47 @@ describe('createEngagementClient', () => {
       expect.objectContaining({ err: expect.any(Error) }),
       expect.stringContaining('attribution failed'),
     );
+  });
+});
+
+describe('noteCredentialFailure', () => {
+  const reconnect = new PlatformError('instagram', 'needs_reconnect', 'Session has expired', false);
+
+  function metaWithReport() {
+    const reportTokenRejected = vi.fn(async () => undefined);
+    const meta: MetaCredentialSource = { getCredentials: vi.fn(), reportTokenRejected };
+    return { meta, reportTokenRejected, logger: fakeLogger() };
+  }
+
+  it('marks the Meta channel needs_reconnect when Meta refused the token', async () => {
+    const deps = metaWithReport();
+    const publication = makePublication({ platform: 'facebook', platformAccountId: '1001' });
+    await noteCredentialFailure(deps, publication, reconnect);
+    expect(deps.reportTokenRejected).toHaveBeenCalledWith({
+      organisationId: 'org-1',
+      platform: 'facebook',
+      platformAccountId: '1001',
+    });
+  });
+
+  it('ignores other errors and Studio-OAuth platforms', async () => {
+    const deps = metaWithReport();
+    await noteCredentialFailure(
+      deps,
+      makePublication({ platform: 'instagram_reel' }),
+      new PlatformError('instagram', 'rate_limited', 'slow down', true),
+    );
+    await noteCredentialFailure(deps, makePublication({ platform: 'tiktok' }), reconnect);
+    await noteCredentialFailure(deps, makePublication({ platform: 'instagram_reel' }), 'boom');
+    expect(deps.reportTokenRejected).not.toHaveBeenCalled();
+  });
+
+  it('logs (never throws) when marking fails', async () => {
+    const deps = metaWithReport();
+    deps.reportTokenRejected.mockRejectedValueOnce(new NotFoundError('db down'));
+    await expect(
+      noteCredentialFailure(deps, makePublication({ platform: 'instagram_reel' }), reconnect),
+    ).resolves.toBeUndefined();
+    expect(deps.logger.warn).toHaveBeenCalled();
   });
 });

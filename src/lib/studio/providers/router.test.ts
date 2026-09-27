@@ -105,7 +105,7 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
     ['text_generation', ['anthropic', 'openai']],
     ['tts', ['elevenlabs', 'azure-speech']],
-    ['music', ['suno', 'replicate', 'storyblocks']],
+    ['music', ['elevenlabs-music', 'replicate', 'storyblocks']],
     ['composition', ['shotstack', 'creatomate']],
     ['content_safety', ['hive', 'sightengine']],
   ] as const)('capability %s tries %o', (capability, ids) => {

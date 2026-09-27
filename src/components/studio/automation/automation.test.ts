@@ -59,9 +59,19 @@ describe('automation helpers', () => {
     expect(connectionsFor('instagram_reel', list, 'biz')).toEqual([]);
   });
 
-  it('builds targets only for chosen accounts on supported platforms', () => {
+  it('offers org-wide Meta channels (businessId null) registered by PostMind', () => {
+    const list = [
+      conn({ id: 'ig', platform: 'instagram', businessId: null }),
+      conn({ id: 'fb-other', platform: 'facebook', businessId: 'other' }),
+    ];
+    expect(connectionsFor('instagram_reel', list, 'biz').map((c) => c.id)).toEqual(['ig']);
+    expect(connectionsFor('facebook', list, 'biz')).toEqual([]);
+  });
+
+  it('builds targets only for chosen accounts', () => {
     expect(buildTargets(['tiktok', 'x', 'facebook'], { tiktok: 'a', facebook: 'f' })).toEqual([
       { platform: 'tiktok', connectionId: 'a' },
+      { platform: 'facebook', connectionId: 'f' },
     ]);
     expect(templatePlatforms(undefined)).toEqual([]);
   });

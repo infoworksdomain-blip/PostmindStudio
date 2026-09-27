@@ -57,7 +57,7 @@ export function publicationMetadata(p: Pick<VideoPublication, 'metadata'>): Publ
     : {};
 }
 
-/** Access token + account for a publication, from Studio connections or Engagement (Meta). */
+/** Access token + account for a publication: Studio OAuth connections, or Core-registered Meta channels. */
 export async function resolveCredentials(
   deps: PublishingDeps,
   publication: VideoPublication,
@@ -90,6 +90,34 @@ export async function resolveCredentials(
     connection,
   );
   return { accessToken, accountId: connection.platformAccountId };
+}
+
+/**
+ * After a platform call failed: a Meta token refusal (Graph error 190 → needs_reconnect) marks
+ * the Core-registered connection needs_reconnect, so the UI shows it and later jobs fail fast.
+ * Studio-OAuth connections are marked by getAccessToken when their refresh is refused.
+ */
+export async function noteCredentialFailure(
+  deps: Pick<PublishingDeps, 'meta' | 'logger'>,
+  publication: Pick<VideoPublication, 'organisationId' | 'platform' | 'platformAccountId'>,
+  err: unknown,
+): Promise<void> {
+  if (!(err instanceof PlatformError) || err.errorClass !== 'needs_reconnect') return;
+  const rules = PLATFORM_RULES[publication.platform as Platform];
+  if (rules?.credentials !== 'meta' || !deps.meta.reportTokenRejected) return;
+  try {
+    await deps.meta.reportTokenRejected({
+      organisationId: publication.organisationId,
+      platform: rules.connectionPlatform as 'instagram' | 'facebook',
+      platformAccountId: publication.platformAccountId,
+    });
+  } catch (markErr) {
+    // The original platform error is what the caller reports; this is best effort.
+    deps.logger.warn(
+      { err: markErr, organisationId: publication.organisationId },
+      'could not mark Meta connection needs_reconnect',
+    );
+  }
 }
 
 /** Lazily-read render bytes for chunked uploads. */

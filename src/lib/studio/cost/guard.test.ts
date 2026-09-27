@@ -31,10 +31,21 @@ interface Usage {
   organisationId: string;
   provider: string;
   costPence: number;
+  /** UTC day (defaults to NOW's day). */
+  day?: Date;
 }
+type DayFilter = Date | { gte: Date; lt: Date } | undefined;
 type AlertRow = { scope: string; scopeId: string; period: string; threshold: number };
 
 const NOW = Date.parse('2026-09-27T12:00:00Z');
+const TODAY = new Date('2026-09-27T00:00:00Z');
+
+function inDay(row: Usage, filter: DayFilter): boolean {
+  const day = (row.day ?? TODAY).getTime();
+  if (filter === undefined) return true;
+  if (filter instanceof Date) return day === filter.getTime();
+  return day >= filter.gte.getTime() && day < filter.lt.getTime();
+}
 
 function fakeDb(projects: Project[], usage: Usage[]) {
   const alerts: Array<AlertRow & Record<string, unknown>> = [];
@@ -46,13 +57,16 @@ function fakeDb(projects: Project[], usage: Usage[]) {
       ),
     },
     providerUsage: {
-      aggregate: vi.fn(async ({ where }: { where: { organisationId?: string } }) => ({
-        _sum: {
-          costPence: usage
-            .filter((u) => !where.organisationId || u.organisationId === where.organisationId)
-            .reduce((sum, u) => sum + u.costPence, 0),
-        },
-      })),
+      aggregate: vi.fn(
+        async ({ where }: { where: { organisationId?: string; day?: DayFilter } }) => ({
+          _sum: {
+            costPence: usage
+              .filter((u) => !where.organisationId || u.organisationId === where.organisationId)
+              .filter((u) => inDay(u, where.day))
+              .reduce((sum, u) => sum + u.costPence, 0),
+          },
+        }),
+      ),
       findUnique: vi.fn(
         async ({
           where,
@@ -293,6 +307,96 @@ describe('createCostGuard — daily caps', () => {
     const t = setup({ projects: [project()] });
     t.db.videoProject.findUnique.mockRejectedValue(new Error('db down'));
     await expect(t.guard.assertNotPaused(scope)).rejects.toThrow('db down');
+  });
+});
+
+describe('createCostGuard — monthly organisation cap (operator decision 2)', () => {
+  const earlier = new Date('2026-09-03T00:00:00Z');
+  const lastMonth = new Date('2026-08-31T00:00:00Z');
+
+  it('sums the calendar month (UTC) and ignores last month', async () => {
+    const t = setup({
+      usage: [
+        { organisationId: 'org-1', provider: 'runway', costPence: 700, day: earlier },
+        { organisationId: 'org-1', provider: 'runway', costPence: 50 },
+        { organisationId: 'org-1', provider: 'runway', costPence: 9_999, day: lastMonth },
+        { organisationId: 'org-2', provider: 'runway', costPence: 9_999, day: earlier },
+      ],
+      caps: {
+        orgDailyPenceByTier: { STANDARD: 3_000 },
+        orgMonthlyPenceByTier: { STANDARD: 1_000 },
+      },
+    });
+    const usage = await t.guard.usage({ organisationId: 'org-1', planTier: 'STANDARD' });
+    expect(usage.find((u) => u.scope === 'ORG_MONTHLY')).toMatchObject({
+      scopeId: 'org-1',
+      period: '2026-09',
+      capPence: 1_000,
+      spentPence: 750,
+    });
+    expect(t.db.providerUsage.aggregate).toHaveBeenCalledWith({
+      where: {
+        organisationId: 'org-1',
+        day: { gte: new Date('2026-09-01T00:00:00Z'), lt: new Date('2026-10-01T00:00:00Z') },
+      },
+      _sum: { costPence: true },
+    });
+    // 75%: nothing yet.
+    await t.guard.assertNotPaused({ organisationId: 'org-1', planTier: 'STANDARD' });
+    expect(t.alerts).toHaveLength(0);
+  });
+
+  it('alerts once at 80%, then pauses at 100% even though today is under the daily cap', async () => {
+    const usage: Usage[] = [
+      { organisationId: 'org-1', provider: 'runway', costPence: 800, day: earlier },
+    ];
+    const t = setup({
+      usage,
+      caps: { orgDailyPenceByTier: { BASIC: 1_000 }, orgMonthlyPenceByTier: { BASIC: 1_000 } },
+    });
+    const basic = { organisationId: 'org-1', planTier: 'BASIC' as const };
+    await t.guard.assertNotPaused(basic);
+    await t.guard.recordSpend({ ...basic, providerId: 'runway' });
+    expect(t.alerts.map((a) => [a.scope, a.threshold, a.period])).toEqual([
+      ['ORG_MONTHLY', 80, '2026-09'],
+    ]);
+    expect(t.notified).toEqual([
+      expect.objectContaining({
+        kind: 'cost_alert',
+        title: '80% of this month’s generation budget used',
+        organisationId: 'org-1',
+        userId: null,
+        dedupeKey: 'cost:ORG_MONTHLY|org-1|2026-09|80',
+      }),
+    ]);
+
+    usage.push({ organisationId: 'org-1', provider: 'luma', costPence: 200 }); // today: 200 of 1000
+    const err = await t.guard.assertNotPaused(basic).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(CostCapPausedError);
+    expect(err).toMatchObject({
+      scope: 'org_monthly',
+      details: { spentPence: 1_000, capPence: 1_000 },
+    });
+    expect((err as Error).message).toContain('monthly cost cap reached (£10.00 of £10.00');
+    expect(t.alerts.map((a) => [a.scope, a.threshold])).toEqual([
+      ['ORG_MONTHLY', 80],
+      ['ORG_MONTHLY', 100],
+    ]);
+    const paused = t.notified.find((n) => n.kind === 'cost_paused');
+    expect(paused?.title).toBe('Generation paused: this month’s generation budget is spent');
+    expect(paused?.body).toContain('publishing is not affected');
+    expect(await t.count('org_monthly', '100')).toBe(1);
+  });
+
+  it('applies only the calling tier’s monthly cap; no cap for a missing tier', async () => {
+    const t = setup({
+      usage: [{ organisationId: 'org-1', provider: 'runway', costPence: 5_000, day: earlier }],
+      caps: { orgDailyPenceByTier: {}, orgMonthlyPenceByTier: { BASIC: 4_000 } },
+    });
+    await t.guard.assertNotPaused({ organisationId: 'org-1', planTier: 'PLUS' });
+    await expect(
+      t.guard.assertNotPaused({ organisationId: 'org-1', planTier: 'BASIC' }),
+    ).rejects.toMatchObject({ scope: 'org_monthly' });
   });
 });
 

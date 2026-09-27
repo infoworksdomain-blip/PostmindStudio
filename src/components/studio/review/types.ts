@@ -44,11 +44,13 @@ export const PUBLISHABLE = new Set(['APPROVED', 'PUBLISHING', 'PUBLISHED', 'PART
 /** Render quality states a publication accepts. */
 export const RENDER_PUBLISHABLE = new Set(['PASSED', 'FORCE_APPROVED']);
 
-/** Render platform → Studio connection platform (platforms/rules.ts, credentials 'studio'). */
+/** Render platform → connection platform (platforms/rules.ts connectionPlatform). */
 export const RENDER_CONNECTION: Record<string, string> = {
   tiktok: 'tiktok',
   youtube_short: 'youtube',
   youtube: 'youtube',
   linkedin_video: 'linkedin',
   x: 'x',
+  instagram_reel: 'instagram',
+  facebook: 'facebook',
 };

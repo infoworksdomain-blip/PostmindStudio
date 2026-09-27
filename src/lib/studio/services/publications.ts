@@ -4,6 +4,7 @@ import { ConflictError, NotFoundError, PlatformError, ValidationError } from '..
 import type { TenantContext } from '../../tenant';
 import { composeCaption } from '../platforms/captions';
 import {
+  noteCredentialFailure,
   publicationMetadata,
   resolveCredentials,
   type PublishingDeps,
@@ -30,9 +31,9 @@ const MAX_SCHEDULE_AHEAD_MS = 180 * 24 * 60 * 60 * 1000;
 export const createPublicationInput = z.object({
   renderId: z.string().min(1).max(64),
   platform: z.enum(PLATFORMS),
-  /** Studio platform connection (TikTok, YouTube, X, LinkedIn). */
+  /** platform_connections id (any platform; Instagram / Facebook rows are registered by Core). */
   connectionId: z.string().min(1).max(64).optional(),
-  /** Engagement channel account id (Instagram / Facebook), spec 9.3. */
+  /** Instagram / Facebook: the Meta account id of a Core-registered channel (alternative). */
   platformAccountId: z.string().min(1).max(128).optional(),
   caption: z.string().max(70_000).default(''),
   hashtags: z.array(z.string().max(100)).max(40).default([]),
@@ -185,26 +186,33 @@ export async function createPublication(
   });
 
   const rules = PLATFORM_RULES[input.platform];
-  let platformAccountId: string;
-  let connectionId: string | undefined;
-  if (rules.credentials === 'studio') {
-    if (!input.connectionId) throw new ValidationError(`${input.platform} needs a connectionId`);
-    const connection = await db.platformConnection.findFirst({
-      where: { id: input.connectionId, organisationId: orgId, platform: rules.connectionPlatform },
-    });
-    if (!connection)
-      throw new ValidationError(
-        `connectionId is not a ${rules.connectionPlatform} connection in this organisation`,
-      );
-    if (connection.state !== 'active')
-      throw new ConflictError(`The ${rules.connectionPlatform} connection needs reconnecting`);
-    platformAccountId = connection.platformAccountId;
-    connectionId = connection.id;
-  } else {
-    if (!input.platformAccountId)
-      throw new ValidationError(`${input.platform} needs the Engagement platformAccountId`);
-    platformAccountId = input.platformAccountId;
-  }
+  // Studio OAuth platforms name the connection; Instagram / Facebook may name it or give the
+  // Meta account id of a channel PostMind Core registered (/api/studio/internal/channels).
+  if (!input.connectionId && !(rules.credentials === 'meta' && input.platformAccountId))
+    throw new ValidationError(
+      rules.credentials === 'meta'
+        ? `${input.platform} needs a connectionId or platformAccountId`
+        : `${input.platform} needs a connectionId`,
+    );
+  const connection = await db.platformConnection.findFirst({
+    where: {
+      organisationId: orgId,
+      platform: rules.connectionPlatform,
+      ...(input.connectionId
+        ? { id: input.connectionId }
+        : { platformAccountId: input.platformAccountId }),
+    },
+  });
+  if (!connection)
+    throw new ValidationError(
+      input.connectionId
+        ? `connectionId is not a ${rules.connectionPlatform} connection in this organisation`
+        : `platformAccountId is not a connected ${rules.connectionPlatform} account in this organisation`,
+    );
+  if (connection.state !== 'active')
+    throw new ConflictError(`The ${rules.connectionPlatform} connection needs reconnecting`);
+  const platformAccountId = connection.platformAccountId;
+  const connectionId = connection.id;
 
   let scheduledFor: Date | null = null;
   if (input.scheduledFor) {
@@ -244,7 +252,7 @@ export async function createPublication(
         caption: composed.text,
         hashtags: composed.hashtags,
         metadata: {
-          connectionId: connectionId ?? null,
+          connectionId,
           title: composed.title ?? null,
           rawCaption: input.caption,
           options: input.options ?? {},
@@ -404,6 +412,7 @@ export async function takedownPublication(
       platformPostId: publication.platformPostId,
     });
   } catch (err) {
+    await noteCredentialFailure(deps, publication, err);
     if (err instanceof PlatformError) {
       // The platform's own error text stays in the server log; callers get a curated message.
       deps.logger.warn({ err, publicationId: id }, 'takedown refused by platform');

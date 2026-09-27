@@ -22,6 +22,7 @@
 
 ## GAP
 
-The 50k-video corpus is not ingested yet (BACKLOG 9.2 and 9.3 are blocked on the licence
-register). CLIP/CLAP embeddings and the weekly grading tool don't exist either. This runbook
+The 50k-video corpus is not ingested yet. BACKLOG 9.2 and 9.3 are no longer blocked: the
+operator decided on 2026-09-27 that no licence is required. The tooling is ready
+(corpus-ingestion.md), and the runs are the operator's. CLIP/CLAP embeddings and the weekly grading tool don't exist either. This runbook
 becomes live when Feature A launches.

@@ -138,6 +138,7 @@ export function LibraryEditDialog({
                 <option value="LICENSED">Licensed</option>
                 <option value="OWNED">Owned</option>
                 <option value="SCRAPED">Scraped (Inspire only)</option>
+                <option value="NOT_REQUIRED">Not required (operator-owned)</option>
               </select>
             </div>
             <div className="grid gap-1.5">

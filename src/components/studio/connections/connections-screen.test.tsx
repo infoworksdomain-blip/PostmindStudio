@@ -75,6 +75,41 @@ describe('ConnectionsScreen', () => {
     expect(screen.getByRole('button', { name: 'Connect X' })).toBeInTheDocument();
   });
 
+  it('lists Instagram / Facebook accounts registered by PostMind read-only, with guidance', async () => {
+    mockFetch(() =>
+      ok({
+        data: [
+          conn({
+            id: 'con_ig',
+            businessId: null,
+            platform: 'instagram',
+            platformAccountId: '17841400000000001',
+            platformAccountName: '@bakery.ig',
+          }),
+          conn({
+            id: 'con_fb',
+            businessId: null,
+            platform: 'facebook',
+            platformAccountId: '100000000000001',
+            platformAccountName: 'Bakery Page',
+            state: 'needs_reconnect',
+          }),
+        ],
+      }),
+    );
+    renderScreen(<ConnectionsScreen />);
+    const instagram = await screen.findByRole('region', { name: 'Instagram' });
+    expect(within(instagram).getByText('@bakery.ig')).toBeInTheDocument();
+    expect(within(instagram).getByText('Connected')).toBeInTheDocument();
+    expect(within(instagram).queryByRole('button')).not.toBeInTheDocument();
+    expect(
+      within(instagram).getByText('Connect Instagram and Facebook in PostMind settings.'),
+    ).toBeInTheDocument();
+    const facebook = screen.getByRole('region', { name: 'Facebook' });
+    expect(within(facebook).getByText('Needs reconnecting')).toBeInTheDocument();
+    expect(within(facebook).queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('starts OAuth and sends the browser to the authorize URL', async () => {
     const api = mockFetch((req) =>
       req.method === 'POST'

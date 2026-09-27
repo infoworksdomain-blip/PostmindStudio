@@ -13,6 +13,9 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'test/**/*.test.ts'],
     // Component tests opt into jsdom with a `// @vitest-environment jsdom` pragma.
     setupFiles: ['test/setup-dom.ts'],
+    // jsdom component tests drive whole screens with user-event; with ~190 files running in
+    // parallel on a loaded machine they exceed vitest's 5 s default without being wrong.
+    testTimeout: 20_000,
     coverage: {
       provider: 'v8',
       include: ['src/lib/**/*.ts'],

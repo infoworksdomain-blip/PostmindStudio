@@ -21,7 +21,10 @@ import { SaveTemplate } from './save-template';
 function accountName(target: AutoPublishTarget, connections: PlatformConnection[] | undefined) {
   if (target.connectionId)
     return connections?.find((c) => c.id === target.connectionId)?.platformAccountName ?? 'account';
-  return target.platformAccountId ? 'Engagement account' : 'account';
+  const meta = target.platformAccountId
+    ? connections?.find((c) => c.platformAccountId === target.platformAccountId)
+    : undefined;
+  return meta?.platformAccountName ?? 'account';
 }
 
 function ResultLine({ result }: { result: AutoPublishTargetResult | undefined }) {

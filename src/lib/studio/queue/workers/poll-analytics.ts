@@ -3,7 +3,11 @@ import { NotImplementedError, PlatformError } from '../../../errors';
 import { nextPollDelayMs } from '../../analytics/schedule';
 import { recordSnapshot, rollUpAnalytics, rollUpProviderUsage } from '../../analytics/store';
 import type { PipelineDeps } from '../../pipeline/deps';
-import { publicationMetadata, resolveCredentials } from '../../platforms/publishing';
+import {
+  noteCredentialFailure,
+  publicationMetadata,
+  resolveCredentials,
+} from '../../platforms/publishing';
 import type { Platform } from '../../services/catalog';
 import { jobIds } from '../enqueue';
 import type { PollAnalyticsJobData, RollUpJobData } from '../queues';
@@ -80,6 +84,7 @@ export async function pollPublicationAnalytics(
       });
     }
   } catch (err) {
+    await noteCredentialFailure(deps.publishing, publication, err);
     if (
       err instanceof NotImplementedError ||
       (err instanceof PlatformError && err.errorClass === 'needs_reconnect')

@@ -44,6 +44,6 @@ describe('studio_cost_alerts_total', () => {
         new RegExp(`studio_cost_alerts_total\\{scope="${scope}",threshold="${threshold}"`),
       );
     }
-    expect(COST_ALERT_SERIES).toHaveLength(9);
+    expect(COST_ALERT_SERIES).toHaveLength(11);
   });
 });

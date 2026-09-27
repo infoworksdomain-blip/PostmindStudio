@@ -16,6 +16,7 @@ import {
   type IngestOutcome,
 } from './ingest';
 import type { StockHit, StockImageSource } from './stock';
+import { vectorSql } from '../vector-sql';
 
 // BACKLOG 6.4 / 6.7 — image-library operations shared by the scan worker and the API:
 // stock layer (A6.3 Layer 2), on-demand generation (Layer 3), embeddings and similarity search.
@@ -203,8 +204,9 @@ export async function embedMissing(
     for (const [index, row] of batch.entries()) {
       const vector = vectors.embeddings[index];
       if (!vector) continue;
+      const v = await vectorSql(deps.db);
       await deps.db.$executeRaw`UPDATE studio.image_library
-        SET embedding = ${vectorLiteral(vector)}::vector
+        SET embedding = ${vectorLiteral(vector)}${v.cast}
         WHERE id = ${row.id} AND "organisationId" = ${scope.organisationId}`;
       embedded += 1;
     }
@@ -258,12 +260,13 @@ export async function searchLibrary(
   if (!text) throw new ValidationError('query must not be empty');
   const { embeddings } = await embed(deps, scope, [text]);
   const vector = vectorLiteral(embeddings[0] as number[]);
+  const v = await vectorSql(deps.db);
   const rows = await deps.db.$queryRaw<Array<{ id: string; distance: number }>>`
-    SELECT id, (embedding <=> ${vector}::vector)::float8 AS distance
+    SELECT id, (embedding ${v.distance} ${vector}${v.cast})::float8 AS distance
     FROM studio.image_library
     WHERE "businessId" = ${scope.businessId} AND "organisationId" = ${scope.organisationId}
       AND embedding IS NOT NULL
-    ORDER BY embedding <=> ${vector}::vector
+    ORDER BY embedding ${v.distance} ${vector}${v.cast}
     LIMIT ${limit}`;
   return rows.map((r) => ({ id: r.id, similarity: Number((1 - r.distance).toFixed(4)) }));
 }

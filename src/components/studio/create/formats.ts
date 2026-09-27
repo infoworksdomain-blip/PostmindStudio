@@ -1,4 +1,5 @@
 import type { PlatformConnection } from '@/lib/client/types';
+import { belongsToBusiness } from '../connections/platforms';
 
 // Create screen defaults (spec 14.1): platforms map to a format the platform accepts
 // (platforms/rules.ts), and "Short / Long" maps to seconds per platform.
@@ -44,6 +45,8 @@ export const CONNECTION_PLATFORMS: Record<string, string[]> = {
   youtube: ['youtube_short'],
   linkedin: ['linkedin_video'],
   x: ['x'],
+  instagram: ['instagram_reel'],
+  facebook: ['facebook'],
 };
 
 /** Pre-select platforms the business has connected; TikTok when nothing is connected yet. */
@@ -52,7 +55,7 @@ export function defaultPlatforms(
   businessId: string | null,
 ): string[] {
   const connected = (connections ?? [])
-    .filter((c) => c.state === 'active' && (!businessId || c.businessId === businessId))
+    .filter((c) => c.state === 'active' && belongsToBusiness(c, businessId))
     .flatMap((c) => CONNECTION_PLATFORMS[c.platform] ?? []);
   const unique = [...new Set(connected)];
   return unique.length ? unique : ['tiktok'];

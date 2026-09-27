@@ -1,13 +1,28 @@
 import { createHash } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { NotFoundError, ValidationError } from '../../errors';
+import { ConfigurationError, NotFoundError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
-import { allowedModes, ingestItemInput, PLATFORM_ORG, previewKey } from '../library/ingest';
+import {
+  allowedModes,
+  ingestItemInput,
+  LICENSE_SCENARIOS,
+  licenseSourceFor,
+  PLATFORM_ORG,
+  previewKey,
+} from '../library/ingest';
+import {
+  existingRuns,
+  ingestStatus,
+  markQueued,
+  submitDecision,
+  type IngestStatusQuery,
+} from '../library/ingest-runs';
 import { buildBlueprint, styleSignature } from '../library/blueprint';
 import { recommendedVideos, similarVideos } from '../library/similarity';
 import { categoryTree } from '../library/taxonomy';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
+import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import { parseBusinessId } from './businesses';
@@ -190,26 +205,72 @@ export async function libraryBlueprint(db: Db, id: string) {
 
 export const adminIngestInput = z.object({ items: z.array(ingestItemInput).min(1).max(100) });
 
+const PLAN_TIERS: readonly PlanTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
+
+/**
+ * Plan tier corpus jobs run under (provider routing, queue priority and the platform org's cost
+ * caps). STUDIO_LIBRARY_PLAN_TIER, default STANDARD; see runbooks/corpus-ingestion.md.
+ */
+export function libraryPlanTier(env: Record<string, string | undefined> = process.env): PlanTier {
+  const raw = env.STUDIO_LIBRARY_PLAN_TIER?.trim().toUpperCase();
+  if (!raw) return 'STANDARD';
+  const tier = PLAN_TIERS.find((t) => t === raw);
+  if (!tier)
+    throw new ConfigurationError(
+      `STUDIO_LIBRARY_PLAN_TIER must be one of ${PLAN_TIERS.join(', ')} (got "${raw}")`,
+    );
+  return tier;
+}
+
+/** Stable id of a source's ingest run (and job): the first 32 hex chars of sha256(sourceUrl). */
+export function ingestRunId(sourceUrl: string): string {
+  return createHash('sha256').update(sourceUrl).digest('hex').slice(0, 32);
+}
+
 export async function adminIngest(
-  deps: { queue: JobQueue },
+  deps: { queue: JobQueue; db: Pick<Db, 'videoLibraryIngestRun' | 'videoLibraryItem'> },
   input: z.infer<typeof adminIngestInput>,
+  env: Record<string, string | undefined> = process.env,
 ) {
+  const planTier = libraryPlanTier(env);
   const batch = input.items.length > 1;
+  const runIds = input.items.map((item) => ingestRunId(item.sourceUrl));
+  const existing = await existingRuns(deps.db, runIds);
   const queued = [];
-  for (const item of input.items) {
-    const runId = createHash('sha256').update(item.sourceUrl).digest('hex').slice(0, 32);
-    const data = {
-      organisationId: PLATFORM_ORG,
+  const skipped = [];
+  for (const [index, item] of input.items.entries()) {
+    const runId = runIds[index] as string;
+    const decision = submitDecision(existing.get(runId) ?? null);
+    if (decision.action === 'skip') {
+      skipped.push({
+        sourceUrl: item.sourceUrl,
+        runId,
+        state: decision.state,
+        libraryItemId: decision.libraryItemId,
+      });
+      continue;
+    }
+    const data = { organisationId: PLATFORM_ORG, runId, planTier, batch, item };
+    const jobId = `${jobIds.ingestLibraryVideo(data)}${decision.jobSuffix}`;
+    await markQueued(deps.db, {
       runId,
-      planTier: 'STANDARD' as const,
-      batch,
-      item,
-    };
-    const jobId = jobIds.ingestLibraryVideo(data);
+      sourceUrl: item.sourceUrl,
+      sourceRef: item.sourceRef,
+      language: item.language,
+    });
     await deps.queue.add('ingest-library-video', data, { jobId });
-    queued.push({ sourceUrl: item.sourceUrl, jobId });
+    queued.push({ sourceUrl: item.sourceUrl, jobId, runId });
   }
-  return { queued };
+  return { queued, skipped };
+}
+
+/** GET /admin/library/ingest/status — counts by state over a window, recent failures. */
+export function adminIngestStatus(
+  db: Pick<Db, 'videoLibraryIngestRun' | 'videoLibraryItem'>,
+  query: IngestStatusQuery,
+  now: number,
+) {
+  return ingestStatus(db, query, now);
 }
 
 export const adminPatchInput = z
@@ -218,7 +279,7 @@ export const adminPatchInput = z
     description: z.string().trim().max(2_000).nullable(),
     category: z.string().trim().min(1).max(200),
     tags: z.array(z.string().trim().min(1).max(60)).max(30),
-    licenseScenario: z.enum(['LICENSED', 'OWNED', 'SCRAPED']),
+    licenseScenario: z.enum(LICENSE_SCENARIOS),
     licenseExpires: z.iso.datetime().nullable(),
     licenseSource: z.string().trim().max(500).nullable(),
   })
@@ -255,13 +316,21 @@ export async function adminPatchLibraryVideo(
       input.licenseSource !== undefined
     ) {
       const scenario = input.licenseScenario ?? item.license?.scenario ?? 'LICENSED';
+      // NOT_REQUIRED keeps an audit trail: without an explicit source, the existing one stays,
+      // or the operator-decision default is recorded.
+      const source =
+        input.licenseSource !== undefined
+          ? licenseSourceFor(scenario, input.licenseSource)
+          : scenario === 'NOT_REQUIRED'
+            ? licenseSourceFor(scenario, item.license?.licenseSource)
+            : undefined;
       const data = {
         scenario,
         allowedModes: allowedModes(scenario),
         ...(input.licenseExpires !== undefined && {
           licenseExpires: input.licenseExpires ? new Date(input.licenseExpires) : null,
         }),
-        ...(input.licenseSource !== undefined && { licenseSource: input.licenseSource }),
+        ...(source !== undefined && { licenseSource: source }),
       };
       await tx.videoLibraryLicense.upsert({
         where: { libraryItemId: id },

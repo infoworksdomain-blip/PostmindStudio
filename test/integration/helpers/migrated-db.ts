@@ -8,8 +8,14 @@ import { vector } from '@electric-sql/pglite-pgvector';
 
 const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'prisma', 'migrations');
 
-export async function createMigratedDb(): Promise<PGlite> {
+export async function createMigratedDb(
+  options: { preinstallVectorIn?: 'public' } = {},
+): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } });
+  // Simulates the shared cluster where PostMind Core installed pgvector before Studio arrived.
+  if (options.preinstallVectorIn) {
+    await db.exec(`CREATE EXTENSION vector SCHEMA ${options.preinstallVectorIn};`);
+  }
   await db.exec('CREATE SCHEMA IF NOT EXISTS studio; SET search_path TO studio;');
   const migrations = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())

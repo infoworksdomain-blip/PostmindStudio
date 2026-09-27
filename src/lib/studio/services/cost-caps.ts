@@ -1,16 +1,21 @@
 import type { PrismaClient } from '@prisma/client';
 import {
   DAILY_THRESHOLDS,
+  MONTHLY_THRESHOLDS,
   PLAN_TIERS,
   PROJECT_PAUSE_PERCENT,
   PROJECT_THRESHOLDS,
   percentOf,
   utcDayKey,
+  utcMonthKey,
+  utcMonthRange,
+  type CapSource,
   type CostCaps,
 } from '../cost/caps';
 import { utcDay } from '../providers/job-repository';
 
-// GET /api/studio/admin/cost/caps (spec 12.5 / 16.4): today's spend against every configured cap
+// GET /api/studio/admin/cost/caps (spec 12.5 / 16.4): today's and this month's spend against
+// every configured cap, where each cap value comes from (code default, env override, disabled)
 // and the recent cost alerts. An organisation's plan tier comes from PostMind Core per request
 // and is not stored by Studio, so organisations are listed with today's spend and every tier
 // cap is shown; the org-daily alerts say which cap an organisation actually hit.
@@ -27,11 +32,20 @@ export async function adminCostCaps(db: Db, caps: CostCaps, now: number) {
   const today = new Date(now);
   const day = utcDay(today);
   const since = new Date(now - RECENT_MS);
-  const [usage, projects, alerts] = await Promise.all([
+  const month = utcMonthRange(today);
+  const [usage, monthly, projects, alerts] = await Promise.all([
     db.providerUsage.findMany({
       where: { day },
       select: { organisationId: true, provider: true, costPence: true },
       take: USAGE_ROWS_LIMIT,
+    }),
+    // Month-to-date per organisation (provider_usage(organisationId, day) index), top spenders.
+    db.providerUsage.groupBy({
+      by: ['organisationId'],
+      where: { day: { gte: month.start, lt: month.end } },
+      _sum: { costPence: true },
+      orderBy: { _sum: { costPence: 'desc' } },
+      take: TOP_ORGANISATIONS,
     }),
     // Projects at or above the first alert threshold: costActual * 100 >= budget * 80 cannot be
     // expressed in Prisma, so recent budgeted projects are filtered here (bounded).
@@ -66,9 +80,11 @@ export async function adminCostCaps(db: Db, caps: CostCaps, now: number) {
     orgs.set(row.organisationId, org);
   }
   const providerCap = caps.orgProviderDailyPence;
+  const source = (s: CapSource | undefined): CapSource | 'custom' => s ?? 'custom';
 
   return {
     day: utcDayKey(today),
+    month: utcMonthKey(today),
     caps: {
       globalDaily: {
         capPence: caps.globalDailyPence ?? null,
@@ -81,11 +97,29 @@ export async function adminCostCaps(db: Db, caps: CostCaps, now: number) {
       orgDailyByTier: Object.fromEntries(
         PLAN_TIERS.map((tier) => [tier, caps.orgDailyPenceByTier[tier] ?? null]),
       ),
+      orgMonthlyByTier: Object.fromEntries(
+        PLAN_TIERS.map((tier) => [tier, caps.orgMonthlyPenceByTier?.[tier] ?? null]),
+      ),
       orgProviderDaily: providerCap ?? null,
+      /** default = operator decision in code, env = STUDIO_* override, disabled = env "none". */
+      sources: {
+        globalDaily: source(caps.sources?.globalDaily),
+        orgDailyByTier: Object.fromEntries(
+          PLAN_TIERS.map((tier) => [tier, source(caps.sources?.orgDailyByTier[tier])]),
+        ),
+        orgMonthlyByTier: Object.fromEntries(
+          PLAN_TIERS.map((tier) => [tier, source(caps.sources?.orgMonthlyByTier[tier])]),
+        ),
+      },
       projectPausePercent: PROJECT_PAUSE_PERCENT,
       projectThresholds: PROJECT_THRESHOLDS,
       dailyThresholds: DAILY_THRESHOLDS,
+      monthlyThresholds: MONTHLY_THRESHOLDS,
     },
+    organisationsThisMonth: monthly.map((row) => ({
+      organisationId: row.organisationId,
+      spentPence: row._sum?.costPence ?? 0,
+    })),
     organisations: [...orgs.entries()]
       .map(([organisationId, o]) => ({
         organisationId,

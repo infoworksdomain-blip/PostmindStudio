@@ -16,6 +16,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [content-safety-miss.md](content-safety-miss.md) | Priority risk 3: unsafe content published | Any true miss |
 | [review-publish-automation.md](review-publish-automation.md) | Auto-approve for trusted creators, auto-publish on approval, templates | Any auto-approved takedown |
 | [platform-api-change.md](platform-api-change.md) | Priority risk 4: publishing API breaking change | 1+ adapter test failing |
+| [corpus-ingestion.md](corpus-ingestion.md) | Library corpus: sample run → operator review → full 50k run, monitoring, failures, throughput and cost (9.2 / 9.3) | >5% failures over 1 h |
 | [corpus-search-quality.md](corpus-search-quality.md) | Priority risk 5: library search degradation | <80% relevant top-5 |
 | [scan-blocked.md](scan-blocked.md) | Priority risk 6: website scan blocked by anti-bot measures | >10% failures on a customer |
 | [platform-account-revocation.md](platform-account-revocation.md) | Priority risk 7: platform account revoked | Any account in warning state |
@@ -29,7 +30,8 @@ format: **trigger metric → threshold → escalation → steps → verification
     default; capability `studio:admin:redrive`)
   - `GET /api/studio/admin/cost`
   - `GET /api/studio/admin/cost/caps` (today's spend against every cap + cost alerts, 7 days)
-  - `/api/studio/admin/library/**`
+  - `/api/studio/admin/library/**` (incl. `GET …/library/ingest/status`; corpus tool
+    `scripts/ops/ingest-corpus.ts`, see corpus-ingestion.md)
 
   The Admin Centre UI is at `/admin`.
 - **Metrics** (Prometheus, private ingress, `Authorization: Bearer $METRICS_TOKEN`):

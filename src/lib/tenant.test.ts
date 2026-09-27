@@ -135,6 +135,26 @@ describe('requireTenantContext (resolver)', () => {
     await expect(resolve(request(`${header}.${body}.`))).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
+  it('rejects a token signed with an algorithm other than RS256 (even with a trusted key)', async () => {
+    const ec = await generateKeyPair('ES256');
+    const ecJwk = { ...(await exportJWK(ec.publicKey)), kid: 'ec1', alg: 'ES256' };
+    const resolve = createTenantResolver({
+      jwks: createLocalJWKSet({ keys: [ecJwk] }),
+      issuer: ISSUER,
+      audience: AUDIENCE,
+      fetchContext: vi.fn(async () => context),
+      now: () => NOW,
+    });
+    const token = await new SignJWT({ userId: 'user-1', organisationId: 'org-1' })
+      .setProtectedHeader({ alg: 'ES256', kid: 'ec1' })
+      .setIssuer(ISSUER)
+      .setAudience(AUDIENCE)
+      .setIssuedAt(NOW / 1000)
+      .setExpirationTime(NOW / 1000 + 900)
+      .sign(ec.privateKey);
+    await expect(resolve(request(token))).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
   it('rejects a token without any user identifier with 401', async () => {
     const { resolve } = makeResolver();
     const token = await sign({ claims: { userId: undefined } });

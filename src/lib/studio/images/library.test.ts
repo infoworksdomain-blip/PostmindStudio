@@ -18,6 +18,11 @@ import {
 } from './library';
 
 vi.mock('../pipeline/provider-run', () => ({ runProvider: vi.fn() }));
+// Unit tests use a fake $queryRaw: resolve pgvector to the "studio" schema without a lookup.
+vi.mock('../vector-sql', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../vector-sql')>();
+  return { ...actual, vectorSql: async () => actual.vectorSqlFor('studio') };
+});
 import { runProvider } from '../pipeline/provider-run';
 
 const runProviderMock = runProvider as unknown as ReturnType<typeof vi.fn>;

@@ -19,11 +19,11 @@ import { copyUrlToStorage } from '../../pipeline/persist';
 import {
   currentRunId,
   failProject,
-  mergeProjectMetadata,
   recordRunRender,
   projectMetadata,
   transitionProject,
 } from '../../pipeline/project-state';
+import { produceMusic } from '../../pipeline/music';
 import { runProvider } from '../../pipeline/provider-run';
 import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../overlays/compose';
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
@@ -31,7 +31,7 @@ import { resolveSlides } from '../../slideshow/resolve';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
 
-// BACKLOG 3.6 — Layers 5–7 (spec 4.5 step 6): optional music, Shotstack edit list per script,
+// BACKLOG 3.6 — Layers 5–7 (spec 4.5 step 6): music (ElevenLabs Music, pipeline/music.ts), Shotstack edit list per script,
 // render, copy the MP4 into the renders bucket, probe it, record video_renders, then hand off to
 // the quality gate. Renders completed by an earlier attempt are reused (metadata.renders).
 
@@ -72,17 +72,6 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       to: 'RENDERING',
     });
     if (!moved) return log.info({ state: project.state }, 'project not ready to render; skipped');
-  }
-
-  // Layer 5 — music. No music adapter (Suno/MusicGen/Storyblocks) exists yet: record that
-  // honestly instead of pretending a track was added.
-  const musicProviders = deps.registry.getAdaptersByCapability('music');
-  if (musicProviders.length === 0) {
-    await mergeProjectMetadata(deps.db, {
-      projectId: project.id,
-      runId: data.runId,
-      patch: { music: { skipped: 'no music provider configured' } },
-    });
   }
 
   const assetIds = project.scripts
@@ -130,6 +119,25 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     fontFamily: kit?.fontPrimary ?? undefined,
   };
 
+  // Layer 5 — one music track for the run, sized to the longest variant (pipeline/music.ts).
+  // Non-fatal: without a track the video renders with narration only.
+  const longestSec = slides
+    ? slideshowDuration(slides)
+    : Math.max(0, ...project.scripts.map((s) => s.shots.reduce((t, x) => t + x.durationSec, 0)));
+  const track = await produceMusic(deps, {
+    project,
+    runId: data.runId,
+    planTier: data.planTier,
+    videoSec: longestSec,
+    kit,
+  });
+  const music = track
+    ? {
+        musicSrc: await deps.storage.signedUrl(track.bucket, track.key),
+        musicDurationSec: track.durationSec,
+      }
+    : {};
+
   const shotEdit = async (
     scriptShots: (typeof project.scripts)[number]['shots'],
     aspectRatio: AspectRatio,
@@ -158,7 +166,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       return shot.overlays.map((row) => ({ row, offsetSec: at }));
     });
     return {
-      edit: buildShotstackEdit({ aspectRatio, shots, brand }),
+      edit: buildShotstackEdit({ aspectRatio, shots, brand, ...music }),
       outputDurationSec: totalDuration(shots),
       placed,
     };
@@ -203,7 +211,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
         const aspectRatio = script.targetAspectRatio as AspectRatio;
         const built = slides
           ? {
-              edit: buildSlideshowEdit({ aspectRatio, slides, brand }),
+              edit: buildSlideshowEdit({ aspectRatio, slides, brand, ...music }),
               outputDurationSec: slideshowDuration(slides),
               placed: [] as PlacedOverlay[],
             }

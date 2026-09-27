@@ -422,7 +422,15 @@ describe('createMetricsRegistry', () => {
     const registry = createMetricsRegistry({ fetchImpl: fakeFetch().fetch, linkedInEnabled: true });
 
     expect(Object.keys(registry).sort()).toEqual(
-      ['tiktok', 'youtube', 'youtube_short', 'x', 'linkedin_video'].sort(),
+      [
+        'tiktok',
+        'youtube',
+        'youtube_short',
+        'x',
+        'linkedin_video',
+        'instagram_reel',
+        'facebook',
+      ].sort(),
     );
   });
 

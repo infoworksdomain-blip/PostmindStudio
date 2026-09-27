@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NotImplementedError } from '../../errors';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import {
   DEFAULT_GRAPH_VERSION,
@@ -7,7 +6,6 @@ import {
   GRAPH_HOST,
   InstagramReelPublisher,
   RUPLOAD_HOST,
-  unavailableMetaCredentials,
 } from './meta';
 import type { PublishRequest } from './interface';
 
@@ -38,18 +36,6 @@ function baseRequest(overrides: Partial<PublishRequest> = {}): PublishRequest {
     ...overrides,
   };
 }
-
-describe('unavailableMetaCredentials', () => {
-  it('throws NotImplementedError instead of returning fake credentials', async () => {
-    await expect(
-      unavailableMetaCredentials.getCredentials({
-        organisationId: 'org-1',
-        platform: 'instagram',
-        platformAccountId: 'acct-1',
-      }),
-    ).rejects.toBeInstanceOf(NotImplementedError);
-  });
-});
 
 describe('InstagramReelPublisher', () => {
   it('creates a container, polls until FINISHED, publishes, and fetches the permalink', async () => {
@@ -138,6 +124,17 @@ describe('InstagramReelPublisher', () => {
     const publisher = new InstagramReelPublisher(deps(fetchImpl));
     await expect(publisher.publish(baseRequest())).rejects.toMatchObject({
       platform: 'instagram',
+      errorClass: 'needs_reconnect',
+      retryable: false,
+    });
+  });
+
+  it('classifies code 190 as needs_reconnect even when Meta sends a subcode (463 expired)', async () => {
+    const { fetch: fetchImpl } = fakeFetch(
+      json({ error: { message: 'Session has expired', code: 190, error_subcode: 463 } }, 400),
+    );
+    const publisher = new InstagramReelPublisher(deps(fetchImpl));
+    await expect(publisher.publish(baseRequest())).rejects.toMatchObject({
       errorClass: 'needs_reconnect',
       retryable: false,
     });

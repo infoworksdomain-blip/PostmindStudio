@@ -1,6 +1,8 @@
 import type { SlideType } from '@prisma/client';
 import {
   escapeHtml,
+  MUSIC_ALONE_VOLUME,
+  musicClips,
   OUTPUT_FPS,
   OUTPUT_RESOLUTION,
   outputDimensions,
@@ -32,6 +34,8 @@ export interface SlideshowEdlInput {
   aspectRatio: AspectRatio;
   slides: ResolvedSlide[];
   musicSrc?: string;
+  /** Length of the music file; a shorter track is looped (pipeline/edl.ts musicClips). */
+  musicDurationSec?: number;
   brand?: { backgroundColour?: string; textColour?: string; fontFamily?: string };
 }
 
@@ -247,14 +251,14 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
   if (text.length) tracks.push({ clips: text });
   tracks.push({ clips: visual });
   if (input.musicSrc) {
+    // Slideshows have no narration, so the music is the only audio.
     tracks.push({
-      clips: [
-        {
-          asset: { type: 'audio', src: input.musicSrc, volume: 1 },
-          start: 0,
-          length: roundSec(start),
-        },
-      ],
+      clips: musicClips({
+        src: input.musicSrc,
+        trackSec: input.musicDurationSec,
+        videoSec: roundSec(start),
+        volume: MUSIC_ALONE_VOLUME,
+      }),
     });
   }
   return {

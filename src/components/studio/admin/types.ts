@@ -115,7 +115,29 @@ export interface AdminCostResponse {
   data: AdminCostRow[];
 }
 
-export type LicenseScenario = 'LICENSED' | 'OWNED' | 'SCRAPED';
+export type LicenseScenario = 'LICENSED' | 'OWNED' | 'SCRAPED' | 'NOT_REQUIRED';
+
+export type IngestRunState = 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'DUPLICATE' | 'FAILED';
+
+/** GET /admin/library/ingest/status (corpus ingestion monitoring). */
+export interface IngestStatusResponse {
+  ok: true;
+  windowHours: number;
+  since: string;
+  counts: Record<IngestRunState, number>;
+  total: number;
+  completedPerHour: number;
+  backlog: { queued: number; running: number };
+  liveLibraryItems: number;
+  recentFailures: Array<{
+    runId: string;
+    sourceUrl: string;
+    sourceRef: string | null;
+    errorReason: string | null;
+    attempts: number;
+    finishedAt: string | null;
+  }>;
+}
 
 export interface IngestItem {
   sourceUrl: string;

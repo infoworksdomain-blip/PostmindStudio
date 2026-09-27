@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { PLATFORM_LABEL } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
 import { AUTO_PUBLISH_CONNECTION, connectionsFor } from '../automation/automation';
+import { isMetaPlatform, META_CONNECT_GUIDANCE } from '../connections/platforms';
 import { Field, NativeSelect } from '../review/field';
 
 // "Auto-publish when approved" (publishPolicy AUTO_ON_APPROVAL): one connected account per
-// platform. Instagram and Facebook publish through Engagement's accounts, which Studio cannot
-// list yet, so they are shown as unavailable rather than silently skipped.
+// platform. Instagram and Facebook accounts are the ones PostMind Core registered with Studio;
+// they are connected in PostMind settings, not here.
 
 export function AutoPublishOption({
   enabled,
@@ -49,12 +50,6 @@ export function AutoPublishOption({
         <div className="grid gap-3 sm:grid-cols-2">
           {platforms.map((platform) => {
             const label = PLATFORM_LABEL[platform] ?? platform;
-            if (!AUTO_PUBLISH_CONNECTION[platform])
-              return (
-                <p key={platform} className="text-xs text-muted-foreground">
-                  {label}: not available for auto-publish yet — publish it from the review screen.
-                </p>
-              );
             const options = connectionsFor(platform, connections, businessId);
             const id = `auto-publish-${platform}`;
             return (
@@ -63,7 +58,10 @@ export function AutoPublishOption({
                 id={id}
                 label={`${label} account`}
                 hint={
-                  options.length === 0 ? (
+                  options.length === 0 &&
+                  isMetaPlatform(AUTO_PUBLISH_CONNECTION[platform] ?? '') ? (
+                    <>No connected account. {META_CONNECT_GUIDANCE}</>
+                  ) : options.length === 0 ? (
                     <>
                       No connected account.{' '}
                       <Link href="/connections" className="underline">

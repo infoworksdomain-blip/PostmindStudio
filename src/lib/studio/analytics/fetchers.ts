@@ -1,6 +1,7 @@
 import { NotImplementedError, PlatformError } from '../../errors';
 import { platformRequest } from '../platforms/http';
 import { LINKEDIN_VERSION } from '../platforms/linkedin';
+import { DEFAULT_GRAPH_VERSION, GRAPH_HOST } from '../platforms/meta';
 import type { Platform } from '../services/catalog';
 import type { MetricSnapshot } from './store';
 
@@ -13,7 +14,8 @@ import type { MetricSnapshot } from './store';
 //  X        GET /2/tweets/:id?tweet.fields=public_metrics[,non_public_metrics] (own posts, 30d).
 //  LinkedIn GET /rest/memberCreatorPostAnalytics (r_member_postAnalytics — Community
 //           Management API, vetted access; enabled only with LINKEDIN_POST_ANALYTICS=enabled).
-//  Instagram/Facebook: blocked on Engagement's Meta credentials (Phase 5 review list).
+//  Instagram GET graph.facebook.com/{v}/{ig-media-id}/insights · Facebook GET /{video-id}/video_insights
+//           (sections below cite the reference pages; tokens are the Core-registered channels').
 
 export interface FetchMetricsRequest {
   accessToken: string;
@@ -300,9 +302,187 @@ export function createLinkedInMetrics(deps: Deps & { enabled: boolean }): Metric
   };
 }
 
+// ---------------------------------------------------------------- Meta (Instagram / Facebook)
+
+/** One InsightsResult node (Graph API): lifetime metrics carry values[0].value. */
+interface InsightsNode {
+  name?: string;
+  period?: string;
+  values?: Array<{ value?: unknown }>;
+  total_value?: { value?: unknown };
+}
+
+/** name → value for the metrics Meta returned (a metric absent from `data` is left out). */
+export function readInsights(data: InsightsNode[] | undefined): Map<string, unknown> {
+  const out = new Map<string, unknown>();
+  for (const node of data ?? []) {
+    if (!node.name) continue;
+    const value = node.values?.[0]?.value ?? node.total_value?.value;
+    if (value !== undefined && value !== null) out.set(node.name, value);
+  }
+  return out;
+}
+
+const asCount = (v: unknown): number | undefined =>
+  typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+
+/** A number, or the sum of a { type: count } object (by-reaction-type style metrics). */
+export function countOrSum(v: unknown): number | undefined {
+  const n = asCount(v);
+  if (n !== undefined) return n;
+  if (v && typeof v === 'object' && !Array.isArray(v)) {
+    const parts = Object.values(v as Record<string, unknown>).map(asCount);
+    if (parts.length > 0 && parts.every((p) => p !== undefined))
+      return parts.reduce<number>((t, p) => t + (p ?? 0), 0);
+  }
+  return undefined;
+}
+
+interface MetaDeps extends Deps {
+  graphVersion?: string;
+}
+
+function metaInsights(
+  deps: MetaDeps,
+  platform: 'instagram' | 'facebook',
+  path: string,
+  metrics: readonly string[],
+  token: string,
+) {
+  const params = new URLSearchParams({ metric: metrics.join(','), access_token: token });
+  return platformRequest<{ data?: InsightsNode[] }>(
+    `${GRAPH_HOST}/${deps.graphVersion ?? DEFAULT_GRAPH_VERSION}${path}?${params}`,
+    { method: 'GET' },
+    {
+      platform,
+      fetchImpl: deps.fetchImpl,
+      describe: (body) => {
+        const e = (body as { error?: { message?: string; code?: number } } | undefined)?.error;
+        return { message: e?.message, code: e?.code ? String(e.code) : undefined };
+      },
+      // Graph error 190 = invalid/expired token (reconnect); 4/17/32/613 = rate limits.
+      // https://developers.facebook.com/docs/graph-api/guides/error-handling
+      refine: (_status, code) => {
+        if (code === '190') return { errorClass: 'needs_reconnect', retryable: false };
+        if (code === '4' || code === '17' || code === '32' || code === '613')
+          return { errorClass: 'rate_limited', retryable: true };
+        return undefined;
+      },
+    },
+  );
+}
+
+/**
+ * Instagram Reels: GET /{ig-media-id}/insights (read 2026-09-27)
+ * https://developers.facebook.com/docs/instagram-platform/reference/instagram-media/insights
+ * REELS support views, reach, likes, comments, shares, saved, total_interactions,
+ * ig_reels_avg_watch_time and ig_reels_video_view_total_time. Needs instagram_manage_insights
+ * (Facebook Login) or instagram_business_manage_insights (Instagram Login). "If insights data you
+ * are requesting does not exist or is currently unavailable, the API returns an empty data set
+ * instead of 0"; data "can be delayed up to 48 hours". A missing metric is listed in
+ * `unavailable` for that poll (recorded as 0 like TikTok's not-public-yet case; later polls
+ * overwrite the cumulative snapshot).
+ * Watch time is NOT read: the reference does not state the unit of the ig_reels_* time metrics,
+ * and Studio does not guess (CLAUDE.md rule 2), so it is reported unavailable.
+ */
+export const INSTAGRAM_REEL_METRICS = [
+  'views',
+  'reach',
+  'likes',
+  'comments',
+  'shares',
+  'saved',
+] as const;
+
+export function createInstagramMetrics(deps: MetaDeps): MetricsFetcher {
+  return {
+    platform: 'instagram_reel',
+    async fetch(req) {
+      const { body } = await metaInsights(
+        deps,
+        'instagram',
+        `/${encodeURIComponent(req.platformPostId)}/insights`,
+        INSTAGRAM_REEL_METRICS,
+        req.accessToken,
+      );
+      const m = readInsights(body.data);
+      const unavailable = ['watch_time', 'avg_watch_pct'];
+      for (const name of INSTAGRAM_REEL_METRICS) if (!m.has(name)) unavailable.push(name);
+      return {
+        snapshot: {
+          views: asCount(m.get('views')) ?? 0,
+          uniqueViewers: asCount(m.get('reach')) ?? null,
+          likes: asCount(m.get('likes')) ?? 0,
+          comments: asCount(m.get('comments')) ?? 0,
+          shares: asCount(m.get('shares')) ?? 0,
+          saves: asCount(m.get('saved')) ?? 0,
+        },
+        unavailable,
+      };
+    },
+  };
+}
+
+/**
+ * Facebook Reels: GET /{video-id}/video_insights (read 2026-09-27)
+ * https://developers.facebook.com/docs/graph-api/reference/video/video_insights/
+ * Reels metrics (lifetime): fb_reels_total_plays (times the reel starts to play, replays
+ * included), post_impressions_unique (people who saw the reel at least once),
+ * post_video_view_time ("total number of milliseconds your reel played"),
+ * post_video_likes_by_reaction_type (likes on the reel). post_video_social_actions is comments
+ * and shares as ONE combined figure, so neither can be split from it: both are unavailable.
+ * Needs read_insights and a Page access token of someone who can perform ANALYZE on the Page.
+ * The reference shows no sample values, so a by-type object is summed and anything non-numeric
+ * is reported unavailable.
+ */
+export const FACEBOOK_REEL_METRICS = [
+  'fb_reels_total_plays',
+  'post_impressions_unique',
+  'post_video_view_time',
+  'post_video_likes_by_reaction_type',
+] as const;
+
+export function createFacebookMetrics(deps: MetaDeps): MetricsFetcher {
+  return {
+    platform: 'facebook',
+    async fetch(req) {
+      const { body } = await metaInsights(
+        deps,
+        'facebook',
+        `/${encodeURIComponent(req.platformPostId)}/video_insights`,
+        FACEBOOK_REEL_METRICS,
+        req.accessToken,
+      );
+      const m = readInsights(body.data);
+      const views = asCount(m.get('fb_reels_total_plays'));
+      const reach = asCount(m.get('post_impressions_unique'));
+      const viewTimeMs = asCount(m.get('post_video_view_time'));
+      const likes = countOrSum(m.get('post_video_likes_by_reaction_type'));
+      const unavailable = ['avg_watch_pct', 'comments', 'shares'];
+      if (views === undefined) unavailable.push('views');
+      if (reach === undefined) unavailable.push('unique_viewers');
+      if (viewTimeMs === undefined) unavailable.push('watch_time');
+      if (likes === undefined) unavailable.push('likes');
+      return {
+        snapshot: {
+          views: views ?? 0,
+          uniqueViewers: reach ?? null,
+          ...(viewTimeMs !== undefined && { watchTimeSec: Math.round(viewTimeMs / 1000) }),
+          likes: likes ?? 0,
+          comments: 0,
+          shares: 0,
+        },
+        unavailable,
+      };
+    },
+  };
+}
+
 export type MetricsRegistry = Partial<Record<Platform, MetricsFetcher>>;
 
-export function createMetricsRegistry(deps: Deps & { linkedInEnabled: boolean }): MetricsRegistry {
+export function createMetricsRegistry(
+  deps: MetaDeps & { linkedInEnabled: boolean },
+): MetricsRegistry {
   const youtube = createYouTubeMetrics(deps);
   return {
     tiktok: createTikTokMetrics(deps),
@@ -310,5 +490,7 @@ export function createMetricsRegistry(deps: Deps & { linkedInEnabled: boolean })
     youtube: { ...youtube, platform: 'youtube' },
     x: createXMetrics(deps),
     linkedin_video: createLinkedInMetrics({ ...deps, enabled: deps.linkedInEnabled }),
+    instagram_reel: createInstagramMetrics(deps),
+    facebook: createFacebookMetrics(deps),
   };
 }

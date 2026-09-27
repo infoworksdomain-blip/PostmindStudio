@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { AnthropicAdapter } from './anthropic';
 import { ElevenLabsAdapter } from './elevenlabs';
+import { ElevenLabsMusicAdapter } from './elevenlabs-music';
 import { HiveAdapter } from './hive';
 import type { ProviderAdapter } from './interface';
 import { OpenAIAdapter } from './openai';
@@ -75,6 +76,17 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
         storage: getAssetStorage(),
         bucket: assetsBucket(),
         model: envValue('ELEVENLABS_MODEL'),
+        usdToGbpRate,
+      }),
+    );
+    // Layer 5 music uses the same ElevenLabs key (the Music API needs a paid plan). A separate
+    // provider id so it has its own breaker, kill switch and cost lines.
+    adapters.push(
+      new ElevenLabsMusicAdapter({
+        apiKey: elevenKey,
+        storage: getAssetStorage(),
+        bucket: assetsBucket(),
+        model: envValue('ELEVENLABS_MUSIC_MODEL'),
         usdToGbpRate,
       }),
     );

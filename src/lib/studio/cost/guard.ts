@@ -9,9 +9,12 @@ import type { PlanTier } from '../providers/router';
 import {
   crossedThresholds,
   DAILY_THRESHOLDS,
+  MONTHLY_THRESHOLDS,
   PROJECT_PAUSE_PERCENT,
   PROJECT_THRESHOLDS,
   utcDayKey,
+  utcMonthKey,
+  utcMonthRange,
   type CostCaps,
 } from './caps';
 import { formatGbp } from './format';
@@ -21,6 +24,7 @@ import { formatGbp } from './format';
 //   assertNotPaused — before routing any provider call: throws CostCapPausedError when
 //     · the project has spent ≥ 90% of costBudgetPence, or
 //     · the organisation's daily total (all providers) has reached its plan tier's cap, or
+//     · the organisation's calendar-month (UTC) total has reached its tier's monthly cap, or
 //     · the platform's daily total has reached STUDIO_GLOBAL_DAILY_CAP_PENCE.
 //   recordSpend — after spend is reserved or settled: raises the alerts it crossed.
 // Both raise alerts, so a threshold crossed by the last call before a quiet period is still
@@ -74,6 +78,7 @@ const FIRED_CACHE_MAX = 10_000;
 const SCOPE_LABEL: Record<CostAlertScope, string> = {
   PROJECT: 'project',
   ORG_DAILY: 'org_daily',
+  ORG_MONTHLY: 'org_monthly',
   ORG_PROVIDER_DAILY: 'org_provider_daily',
   GLOBAL_DAILY: 'global_daily',
 };
@@ -106,7 +111,7 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
         return {
           kind: 'cost_paused',
           title: `Generation paused: “${name}” reached 90% of its budget`,
-          body: `${spent} spent. Raise the project's budget, then regenerate to continue.`,
+          body: `${spent} spent. Open the project, raise its budget (Raise budget), then press Generate again.`,
           link,
         };
       return {
@@ -114,7 +119,7 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
         title: `“${name}” has used ${threshold}% of its budget`,
         body:
           threshold < PROJECT_PAUSE_PERCENT
-            ? `${spent} spent. Generation pauses at 90%; raise the budget to keep going.`
+            ? `${spent} spent. Generation pauses at 90% of the budget; it can then be raised on the project page.`
             : `${spent} spent. Generation is paused until the budget is raised.`,
         link,
       };
@@ -128,6 +133,17 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
         body: pause
           ? `${spent} spent today (UTC). New generation resumes after midnight UTC; publishing is not affected.`
           : `${spent} spent today (UTC). Generation pauses at 100% until midnight UTC; publishing is not affected.`,
+        link: '/analytics',
+      };
+    case 'ORG_MONTHLY':
+      return {
+        kind: pause ? 'cost_paused' : 'cost_alert',
+        title: pause
+          ? 'Generation paused: this month’s generation budget is spent'
+          : `${threshold}% of this month’s generation budget used`,
+        body: pause
+          ? `${spent} spent this month (UTC). New generation resumes on the 1st (UTC) or when your plan's monthly cap is raised; publishing is not affected.`
+          : `${spent} spent this month (UTC). Generation pauses at 100% until the 1st (UTC); publishing is not affected.`,
         link: '/analytics',
       };
     case 'ORG_PROVIDER_DAILY':
@@ -206,6 +222,24 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
         capPence: orgCap,
         spentPence: sum._sum.costPence ?? 0,
         thresholds: DAILY_THRESHOLDS,
+      });
+    }
+    const monthlyCap = deps.caps.orgMonthlyPenceByTier?.[scope.planTier];
+    if (monthlyCap !== undefined) {
+      // Served by the provider_usage(organisationId, day) index: one org, one month of days.
+      const { start, end } = utcMonthRange(today);
+      const sum = await deps.db.providerUsage.aggregate({
+        where: { organisationId: scope.organisationId, day: { gte: start, lt: end } },
+        _sum: { costPence: true },
+      });
+      out.push({
+        scope: 'ORG_MONTHLY',
+        scopeId: scope.organisationId,
+        organisationId: scope.organisationId,
+        period: utcMonthKey(today),
+        capPence: monthlyCap,
+        spentPence: sum._sum.costPence ?? 0,
+        thresholds: MONTHLY_THRESHOLDS,
       });
     }
     const providerCap = deps.caps.orgProviderDailyPence;
@@ -336,7 +370,14 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
       if (paused.scope === 'PROJECT') {
         throw new CostCapPausedError(
           'project',
-          `project reached ${PROJECT_PAUSE_PERCENT}% of its budget (${spent}); raise costBudgetPence and regenerate`,
+          `project reached ${PROJECT_PAUSE_PERCENT}% of its budget (${spent}). Raise the budget on the project page (or PATCH costBudgetPence), then generate again`,
+          { spentPence: paused.spentPence, capPence: paused.capPence },
+        );
+      }
+      if (paused.scope === 'ORG_MONTHLY') {
+        throw new CostCapPausedError(
+          'org_monthly',
+          `organisation monthly cost cap reached (${spent} this month, ${scope.planTier} tier); generation resumes on the 1st (UTC)`,
           { spentPence: paused.spentPence, capPence: paused.capPence },
         );
       }

@@ -10,9 +10,12 @@ import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
 import type { PlatformConnection } from '@/lib/client/types';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
+import { MetaPlatformCard } from './meta-platform-card';
 import { PlatformCard } from './platform-card';
 import {
+  belongsToBusiness,
   callbackErrorMessage,
+  META_PLATFORMS,
   OAUTH_PLATFORMS,
   platformLabel,
   type OAuthPlatform,
@@ -20,7 +23,8 @@ import {
 
 // Connections (spec 8.6, 14.5): connect TikTok / YouTube / X / LinkedIn for the selected
 // business. Connect → POST oauth-init → browser goes to the platform → the OAuth callback
-// redirects back here with ?connected=<platform> or ?connection_error=<code>.
+// redirects back here with ?connected=<platform> or ?connection_error=<code>. Instagram and
+// Facebook accounts are connected in PostMind settings and listed here read-only.
 
 type Notice = { tone: 'good' | 'bad'; text: string };
 
@@ -97,9 +101,10 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
     }
   }
 
-  // The list endpoint is organisation-wide; show this business's live (non-revoked) accounts.
+  // The list endpoint is organisation-wide; show this business's live (non-revoked) accounts
+  // (Meta channels registered without a business apply to every business).
   const mine = (data?.data ?? []).filter(
-    (c) => c.businessId === businessId && c.state !== 'revoked',
+    (c) => belongsToBusiness(c, businessId) && c.state !== 'revoked',
   );
 
   return (
@@ -107,7 +112,7 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
       <PageHeader
         eyebrow="Set up"
         title="Connections"
-        description="The accounts Studio publishes to. Instagram and Facebook use your PostMind Engagement connection."
+        description="The accounts Studio publishes to. Instagram and Facebook are connected in PostMind settings."
       />
       {notice && (
         <div
@@ -154,6 +159,13 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
               connecting={connecting === p.id}
               onConnect={() => void connect(p.id)}
               onDisconnect={disconnect}
+            />
+          ))}
+          {META_PLATFORMS.map((p) => (
+            <MetaPlatformCard
+              key={p.id}
+              platform={p}
+              connections={mine.filter((c) => c.platform === p.id)}
             />
           ))}
         </div>

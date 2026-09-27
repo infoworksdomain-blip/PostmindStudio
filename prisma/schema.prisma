@@ -410,6 +410,7 @@ model ProviderUsage {
   @@unique([organisationId, provider, day])
   @@index([provider, day])
   @@index([day]) // Phase 12: global daily cap (spec 12.5) sums one day across all orgs
+  @@index([organisationId, day]) // monthly org cap: one org's month-to-date sum
   @@map("provider_usage")
   @@schema("studio")
 }
@@ -540,8 +541,8 @@ enum ScheduleState {
 model PlatformConnection {
   id                    String    @id @default(cuid())
   organisationId        String
-  businessId            String
-  platform              String // 'tiktok', 'youtube', ...
+  businessId            String? // NULL: org-wide (Meta channels registered by PostMind Core)
+  platform              String // 'tiktok', 'youtube', 'x', 'linkedin', 'instagram', 'facebook'
   platformAccountId     String
   platformAccountName   String
   encryptedAccessToken  String // envelope-encrypted
@@ -727,6 +728,42 @@ enum LicenseScenario {
   LICENSED
   OWNED
   SCRAPED
+  // Operator decision 2026-09-27: operator-owned corpus content that needs no licence.
+  // TEMPLATE + INSPIRE; licenseSource records the decision (who/when) as the audit trail.
+  NOT_REQUIRED
+
+  @@schema("studio")
+}
+
+// Corpus ingestion tracking (BACKLOG 9.2/9.3 monitoring): one row per source URL (runId = the
+// ingest job's source hash). No FK to video_library so item cleanup never blocks on history.
+model VideoLibraryIngestRun {
+  id            String             @id @default(cuid())
+  runId         String             @unique
+  sourceUrl     String
+  sourceRef     String?
+  language      String?
+  state         LibraryIngestState @default(QUEUED)
+  attempts      Int                @default(0)
+  libraryItemId String?
+  errorReason   String?
+  queuedAt      DateTime           @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  updatedAt     DateTime           @updatedAt
+
+  @@index([state, updatedAt])
+  @@index([updatedAt])
+  @@map("video_library_ingest_runs")
+  @@schema("studio")
+}
+
+enum LibraryIngestState {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  DUPLICATE
+  FAILED
 
   @@schema("studio")
 }
@@ -1002,6 +1039,7 @@ model CostAlert {
 enum CostAlertScope {
   PROJECT
   ORG_DAILY
+  ORG_MONTHLY
   ORG_PROVIDER_DAILY
   GLOBAL_DAILY
 

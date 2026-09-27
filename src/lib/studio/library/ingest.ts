@@ -7,6 +7,8 @@ import type { PipelineDeps } from '../pipeline/deps';
 import { jsonOutput, runProvider } from '../pipeline/provider-run';
 import type { PlanTier } from '../providers/router';
 import { safeGet } from '../scan/safe-fetch';
+import { assertAllowedS3Source, isS3Url, isSupportedSourceUrl, parseS3Url } from './corpus-source';
+import { vectorSql } from '../vector-sql';
 import {
   ANALYSIS_SCHEMA,
   ANALYSIS_SYSTEM_PROMPT,
@@ -43,22 +45,79 @@ export const SCENE_THRESHOLD = 0.3;
 const KEYFRAME_WIDTH = 480;
 const PLATFORM_ORG = 'postmind-platform';
 
+/**
+ * A3.2 scenarios: LICENSED (1), OWNED (2), SCRAPED (3), plus NOT_REQUIRED — operator decision
+ * 2026-09-27: the 50k corpus is operator-owned content that needs no licence.
+ */
+export const LICENSE_SCENARIOS = ['LICENSED', 'OWNED', 'SCRAPED', 'NOT_REQUIRED'] as const;
+
+/** Recorded as licenseSource when a NOT_REQUIRED item arrives without one (audit trail). */
+export const NOT_REQUIRED_DEFAULT_SOURCE =
+  'Operator decision 2026-09-27: no licence required for the PostMind corpus';
+
 export const ingestItemInput = z.object({
-  sourceUrl: z.string().url().max(2_000),
-  /** A3.2 scenarios: LICENSED (1), OWNED (2), SCRAPED (3). */
-  licenseScenario: z.enum(['LICENSED', 'OWNED', 'SCRAPED']),
+  /** https:// (SSRF-guarded download) or s3://bucket/key in STUDIO_CORPUS_S3_BUCKETS. */
+  sourceUrl: z
+    .string()
+    .trim()
+    .max(2_000)
+    .refine(isSupportedSourceUrl, { message: 'sourceUrl must be an http(s):// or s3:// URL' }),
+  licenseScenario: z.enum(LICENSE_SCENARIOS),
   licenseSource: z.string().trim().max(500).optional(),
   licenseExpires: z.iso.datetime().optional(),
   category: z.string().trim().max(200).optional(),
   tags: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
   title: z.string().trim().max(200).optional(),
   sourcePlatform: z.string().trim().max(40).optional(),
+  /** The corpus manifest's own id for the row (tracking only; see video_library_ingest_runs). */
+  sourceRef: z.string().trim().max(200).optional(),
+  /** BCP 47-ish language tag of the video's speech/text (tracking only). */
+  language: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/, 'language must be a code such as en or pt-BR')
+    .optional(),
 });
 export type IngestItem = z.infer<typeof ingestItemInput>;
 
-/** A3.1: TEMPLATE mode is disabled under scenario 3 (SCRAPED). */
+/**
+ * A3.1: TEMPLATE mode is disabled under scenario 3 (SCRAPED). LICENSED, OWNED and NOT_REQUIRED
+ * allow both modes (expiry is still enforced by blueprint.assertModeAllowed).
+ */
 export function allowedModes(scenario: LicenseScenario): string[] {
   return scenario === 'SCRAPED' ? ['INSPIRE'] : ['TEMPLATE', 'INSPIRE'];
+}
+
+/** licenseSource to store: NOT_REQUIRED always records who decided and when. */
+export function licenseSourceFor(
+  scenario: LicenseScenario,
+  licenseSource: string | null | undefined,
+): string | null {
+  if (licenseSource) return licenseSource;
+  return scenario === 'NOT_REQUIRED' ? NOT_REQUIRED_DEFAULT_SOURCE : null;
+}
+
+/** Downloaded (or read) source bytes, capped at MAX_SOURCE_BYTES. */
+export async function readSource(deps: PipelineDeps, sourceUrl: string): Promise<Uint8Array> {
+  if (isS3Url(sourceUrl)) {
+    // Allow-listed corpus bucket only, read with Studio's storage client (no HTTP fetch).
+    const source = parseS3Url(sourceUrl);
+    assertAllowedS3Source(source, deps.config.corpusS3Buckets ?? []);
+    const size = await deps.storage.size(source.bucket, source.key);
+    if (size > MAX_SOURCE_BYTES) throw new ValidationError('Source video is larger than 200 MB');
+    if (size <= 0) throw new ValidationError('Source object is empty');
+    return deps.storage.readRange(source.bucket, source.key, 0, size - 1);
+  }
+  const res = await safeGet(sourceUrl, {
+    fetchImpl: deps.scan.pageFetch,
+    userAgent: 'PostMindStudio/1.0 (+https://studio.postmind.ai/bot)',
+    timeoutMs: 10 * 60_000,
+    maxBytes: MAX_SOURCE_BYTES + 1,
+    accept: 'video/*',
+  });
+  if (res.status >= 400) throw new ValidationError(`Source returned HTTP ${res.status}`);
+  if (res.truncated) throw new ValidationError('Source video is larger than 200 MB');
+  return res.body;
 }
 
 export function embeddingDocument(input: {
@@ -148,20 +207,12 @@ export async function ingestLibraryVideo(
   if (!bucket) throw new ConfigurationError('S3_BUCKET_LIBRARY is required for library ingestion');
 
   // 1 — store the source
-  const res = await safeGet(item.sourceUrl, {
-    fetchImpl: deps.scan.pageFetch,
-    userAgent: 'PostMindStudio/1.0 (+https://studio.postmind.ai/bot)',
-    timeoutMs: 10 * 60_000,
-    maxBytes: MAX_SOURCE_BYTES + 1,
-    accept: 'video/*',
-  });
-  if (res.status >= 400) throw new ValidationError(`Source returned HTTP ${res.status}`);
-  if (res.truncated) throw new ValidationError('Source video is larger than 200 MB');
-  const hash = createHash('sha256').update(res.body).digest('hex');
+  const body = await readSource(deps, item.sourceUrl);
+  const hash = createHash('sha256').update(body).digest('hex');
   const s3Key = `library/${hash}.mp4`;
   const existing = await deps.db.videoLibraryItem.findFirst({ where: { s3Bucket: bucket, s3Key } });
   if (existing) return { libraryItemId: existing.id, created: false };
-  await deps.storage.put({ bucket, key: s3Key, body: res.body, contentType: 'video/mp4' });
+  await deps.storage.put({ bucket, key: s3Key, body, contentType: 'video/mp4' });
   const url = await deps.storage.signedUrl(bucket, s3Key, 6 * 60 * 60);
 
   // 2 — visual structure
@@ -288,7 +339,7 @@ export async function ingestLibraryVideo(
       data: {
         libraryItemId: created.id,
         scenario: item.licenseScenario,
-        licenseSource: item.licenseSource ?? null,
+        licenseSource: licenseSourceFor(item.licenseScenario, item.licenseSource),
         licenseExpires: item.licenseExpires ? new Date(item.licenseExpires) : null,
         allowedModes: allowedModes(item.licenseScenario),
       },
@@ -327,9 +378,10 @@ export async function ingestLibraryVideo(
   );
   const vector = (embed.output.metadata as { embeddings?: number[][] }).embeddings?.[0];
   if (!vector || vector.length !== 1536) throw new ValidationError('Embedding had the wrong shape');
+  const v = await vectorSql(deps.db);
   await deps.db.$executeRaw`INSERT INTO studio.video_library_embeddings
     (id, "libraryItemId", embedding, "embeddingModel")
-    VALUES (${randomUUID()}, ${libraryItemId}, ${vectorLiteral(vector)}::vector, ${`${embed.decision.adapter.providerId}:text-embedding`})`;
+    VALUES (${randomUUID()}, ${libraryItemId}, ${vectorLiteral(vector)}${v.cast}, ${`${embed.decision.adapter.providerId}:text-embedding`})`;
   return { libraryItemId, created: true };
 }
 

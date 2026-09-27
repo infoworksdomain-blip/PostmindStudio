@@ -25,12 +25,25 @@ const CONCURRENCY_ENV: Record<QueueName, string> = {
   [QUEUES.library]: 'WORKER_CONCURRENCY_LIBRARY',
 };
 
+/** Corpus ingestion throughput knob (runbooks/corpus-ingestion.md); wins over the legacy name. */
+export const LIBRARY_CONCURRENCY_ENV = 'STUDIO_LIBRARY_CONCURRENCY';
+/** Each library job buffers up to 200 MB of source: refuse absurd values. */
+export const MAX_LIBRARY_CONCURRENCY = 32;
+
+function positiveInt(raw: string | undefined): number | undefined {
+  const n = Number(raw);
+  return raw?.trim() && Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
 export function concurrencyFor(
   queue: QueueName,
   env: Record<string, string | undefined> = process.env,
 ): number {
-  const raw = Number(env[CONCURRENCY_ENV[queue]]);
-  return Number.isInteger(raw) && raw > 0 ? raw : DEFAULT_CONCURRENCY[queue];
+  if (queue === QUEUES.library) {
+    const n = positiveInt(env[LIBRARY_CONCURRENCY_ENV]) ?? positiveInt(env[CONCURRENCY_ENV[queue]]);
+    return n ? Math.min(n, MAX_LIBRARY_CONCURRENCY) : DEFAULT_CONCURRENCY[queue];
+  }
+  return positiveInt(env[CONCURRENCY_ENV[queue]]) ?? DEFAULT_CONCURRENCY[queue];
 }
 
 /** Every queue has processors (analytics since Phase 11). */
