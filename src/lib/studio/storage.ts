@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { requireEnv } from '../env';
 import { ValidationError } from '../errors';
@@ -25,6 +30,10 @@ export interface AssetStorage {
     contentType: string;
   }): Promise<StoredObject>;
   signedUrl(bucket: string, key: string, expiresInSec?: number): Promise<string>;
+  /** Object size in bytes. */
+  size(bucket: string, key: string): Promise<number>;
+  /** Bytes [start, endInclusive] of an object (for chunked platform uploads). */
+  readRange(bucket: string, key: string, start: number, endInclusive: number): Promise<Uint8Array>;
 }
 
 /** Deterministic, tenant-scoped key layout for provider outputs. */
@@ -60,6 +69,25 @@ export function createS3Storage(client: S3Client): AssetStorage {
       return { bucket, key, url: await signedUrl(bucket, key) };
     },
     signedUrl,
+    async size(bucket, key) {
+      const head = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+      if (head.ContentLength === undefined)
+        throw new ValidationError(`No size for s3://${bucket}/${key}`);
+      return head.ContentLength;
+    },
+    async readRange(bucket, key, start, endInclusive) {
+      const out = await client.send(
+        new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=${start}-${endInclusive}` }),
+      );
+      if (!out.Body) throw new ValidationError(`Empty range read for s3://${bucket}/${key}`);
+      const bytes = await out.Body.transformToByteArray();
+      if (bytes.byteLength !== endInclusive - start + 1) {
+        throw new ValidationError(
+          `Short range read (${bytes.byteLength} bytes) for s3://${bucket}/${key}`,
+        );
+      }
+      return bytes;
+    },
   };
 }
 

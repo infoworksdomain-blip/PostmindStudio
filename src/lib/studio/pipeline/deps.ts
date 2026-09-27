@@ -5,6 +5,8 @@ import type { CircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderRegistry } from '../providers/registry';
 import type { BudgetChecker } from '../providers/router';
 import type { TrackingDeps } from '../providers/tracked';
+import type { AuditEntry } from '../../audit';
+import type { PublishingDeps } from '../platforms/publishing';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import type { MediaInspector } from './media-probe';
@@ -35,6 +37,10 @@ export interface PipelineDeps {
   media: MediaInspector;
   logger: Logger;
   config: PipelineConfig;
+  /** Social publishing (Phase 5): publishers, credentials, Engagement attribution. */
+  publishing: PublishingDeps;
+  /** Audit entries for significant mutations (publications). */
+  audit: (entry: AuditEntry) => void;
   /** HTTP client for downloading provider outputs. */
   fetch: typeof fetch;
   now: () => number;

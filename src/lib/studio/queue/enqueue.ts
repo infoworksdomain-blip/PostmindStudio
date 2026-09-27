@@ -27,6 +27,10 @@ export const jobIds = {
   planProject: (d: JobDataMap['plan-project']) => `plan-project__${d.projectId}__${d.runId}`,
   generateAsset: (d: JobDataMap['generate-asset']) => `generate-asset__${d.shotId}__${d.runId}`,
   composeVideo: (d: JobDataMap['compose-video']) => `compose-video__${d.projectId}__${d.runId}`,
+  publishVideo: (d: JobDataMap['publish-video'], attempt = 0) =>
+    `publish-video__${d.publicationId}__${attempt}`,
+  fireScheduled: (d: JobDataMap['fire-scheduled-publication']) =>
+    `fire-scheduled__${d.publicationId}`,
   runQualityGate: (d: JobDataMap['run-quality-gate']) =>
     `run-quality-gate__${d.projectId}__${d.runId}`,
 };

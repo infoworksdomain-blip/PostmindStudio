@@ -10,6 +10,10 @@ export const StudioCapability = {
   /** Approve / reject for publication — separate from editing so creators can't self-approve. */
   ProjectApprove: 'studio:project:approve',
   RenderDownload: 'studio:render:download', // spec 8.4
+  /** Publish to / take down from connected social accounts. */
+  PublicationWrite: 'studio:publication:write',
+  /** Connect / disconnect TikTok, YouTube, X, LinkedIn accounts. */
+  ConnectionsManage: 'studio:connections:manage',
   RenderForceApprove: 'studio:render:force-approve', // spec 13.5
   AdminKillSwitchRead: 'studio:admin:kill-switch:read',
   AdminKillSwitchWrite: 'studio:admin:kill-switch:write',

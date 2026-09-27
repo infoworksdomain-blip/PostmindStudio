@@ -82,8 +82,16 @@ describe('queue policy (spec 11)', () => {
   });
 
   it('builds deterministic, BullMQ-safe job ids', () => {
-    const data = { projectId: 'p', organisationId: 'o', runId: 'r', planTier: 'BASIC' as const };
+    const data = {
+      projectId: 'p',
+      organisationId: 'o',
+      runId: 'r',
+      planTier: 'BASIC' as const,
+      publicationId: 'pub',
+    };
     expect(jobIds.planProject(data)).toBe('plan-project__p__r');
+    expect(jobIds.publishVideo(data, 2)).toBe('publish-video__pub__2');
+    expect(jobIds.fireScheduled(data)).toBe('fire-scheduled__pub');
     expect(jobIds.generateAsset({ ...data, shotId: 's' })).toBe('generate-asset__s__r');
     expect(Object.values(jobIds).every((f) => !f({ ...data, shotId: 's' }).includes(':'))).toBe(
       true,
@@ -153,7 +161,12 @@ describe('job runtime (BACKLOG 3.8 / 3.9)', () => {
       executeJob('compose-video', data, deps(true), { attemptsMade: 0, maxAttempts: 6 }),
     ).rejects.toBeInstanceOf(UnrecoverableError);
     expect(processor).not.toHaveBeenCalled();
-    expect(handler).toHaveBeenCalledWith(data, expect.anything(), 'kill_switch_global: stopped');
+    expect(handler).toHaveBeenCalledWith(
+      data,
+      expect.anything(),
+      'kill_switch_global: stopped',
+      expect.any(KillSwitchTriggeredError),
+    );
   });
 
   it('rethrows retryable errors without the failure handler until the last attempt', async () => {
