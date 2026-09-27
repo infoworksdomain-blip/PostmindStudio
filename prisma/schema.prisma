@@ -1,9 +1,14 @@
 // PostMind Studio — Prisma schema.
-// multiSchema is GA since Prisma 6.13, so `schemas` needs no preview flag.
 // Every Studio table lives in the `studio` Postgres schema of the shared PostMind cluster.
 // Never add models to any other schema: PostMind Core's schema is off-limits (CLAUDE.md rule 1).
+// multiSchema is GA since Prisma 6.13, so `schemas` needs no preview flag.
 //
-// Models are added in BACKLOG item 1.7 (v1.0 spec Section 7 + Addendum A7).
+// Sources: v1.0 spec Section 7 (19 tables) + Addendum v1.1 Section A7 (14 tables, 3 changes).
+// Models are transcribed from the spec. Annotations:
+//   DERIVED   — the spec names the table but gives no model; fields inferred from its prose.
+//   DEVIATION — intentional difference from the spec model, with the reason.
+// Cross-schema references (organisationId, userId, businessId) are plain Strings, no SQL FK
+// (spec 7.1 / 7.14).
 
 generator client {
   provider        = "prisma-client-js"
@@ -15,4 +20,944 @@ datasource db {
   url        = env("DATABASE_URL")
   schemas    = ["studio"]
   extensions = [vector]
+}
+
+// =============================================================================
+// v1.0 — spec Section 7
+// =============================================================================
+
+// 7.3 + A7.2 (referenceVideoId, referenceMode, extended enums)
+model VideoProject {
+  id               String            @id @default(cuid())
+  organisationId   String // ref PostMind Core
+  businessId       String // ref PostMind Core
+  createdByUserId  String // ref PostMind Core
+  name             String
+  description      String?
+  state            VideoProjectState
+  sourceType       VideoSourceType
+  sourceRef        String? // e.g. postmind post id
+  referenceVideoId String? // A7.2 — ref VideoLibraryItem
+  referenceMode    ReferenceMode? // A7.2
+  targetFormats    Json // [{ platform, aspectRatio, duration }]
+  brandKitId       String? // ref BrandKit
+  templateId       String? // ref Template
+  costBudgetPence  Int? // hard cap for this project
+  costActualPence  Int               @default(0)
+  costCurrency     String            @default("GBP")
+  reviewPolicy     ReviewPolicy      @default(REQUIRE_APPROVAL)
+  publishPolicy    PublishPolicy     @default(MANUAL)
+  scheduledStartAt DateTime?
+  completedAt      DateTime?
+  errorReason      String?
+  metadata         Json?
+
+  brief        VideoBrief?
+  scripts      VideoScript[]
+  renders      VideoRender[]
+  publications VideoPublication[]
+  approvals    ApprovalTask[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([organisationId, state])
+  @@index([businessId, createdAt])
+  @@map("video_projects")
+  @@schema("studio")
+}
+
+enum VideoProjectState {
+  DRAFT
+  QUEUED
+  SCANNING // A7.2 — slideshow auto-populate
+  PLANNING
+  ASSETS_QUEUED
+  ASSETS_GENERATING
+  RENDERING
+  QUALITY_CHECKING
+  QUALITY_FAILED
+  READY_FOR_REVIEW
+  APPROVED
+  PUBLISHING
+  PUBLISHED
+  PARTIALLY_PUBLISHED
+  REJECTED
+  FAILED
+  ARCHIVED
+
+  @@schema("studio")
+}
+
+enum VideoSourceType {
+  BRIEF
+  POSTMIND_CONTENT
+  TEMPLATE
+  UPLOAD
+  LIBRARY_REFERENCE // A7.2
+  SLIDESHOW // A7.2
+
+  @@schema("studio")
+}
+
+enum ReferenceMode {
+  TEMPLATE
+  INSPIRE
+
+  @@schema("studio")
+}
+
+enum ReviewPolicy {
+  AUTO_APPROVE
+  REQUIRE_APPROVAL
+  REQUIRE_APPROVAL_FROM_ROLE
+
+  @@schema("studio")
+}
+
+enum PublishPolicy {
+  MANUAL
+  SCHEDULED
+  AUTO_ON_APPROVAL
+
+  @@schema("studio")
+}
+
+// 7.4
+model VideoBrief {
+  id             String       @id @default(cuid())
+  projectId      String       @unique
+  project        VideoProject @relation(fields: [projectId], references: [id])
+  rawInput       String // user's original words
+  hook           String
+  keyMessage     String
+  targetAudience String
+  tone           String
+  callToAction   String?
+  keywords       Json // [String]
+  ideationModel  String // e.g. 'anthropic:claude-sonnet-4-5'
+  createdAt      DateTime     @default(now())
+
+  @@map("video_briefs")
+  @@schema("studio")
+}
+
+// 7.5
+model VideoScript {
+  id                String       @id @default(cuid())
+  projectId         String
+  project           VideoProject @relation(fields: [projectId], references: [id])
+  targetPlatform    String // 'tiktok' | 'instagram_reel' | ...
+  targetAspectRatio String // '9:16' | '16:9' | '1:1' | '4:5'
+  targetDurationSec Int
+  language          String       @default("en-GB")
+  fullText          String // whole voiceover as one blob
+  shots             VideoShot[]
+  scriptModel       String
+  version           Int          @default(1)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([projectId])
+  @@map("video_scripts")
+  @@schema("studio")
+}
+
+// 7.5 + A7.2 (shot → overlays is 1-to-many via text_overlays.shotId)
+model VideoShot {
+  id               String          @id @default(cuid())
+  scriptId         String
+  script           VideoScript     @relation(fields: [scriptId], references: [id])
+  sortOrder        Int
+  durationSec      Float
+  visualTreatment  VisualTreatment
+  sceneDescription String // prompt for generation
+  cameraDirection  String?
+  voiceoverText    String?
+  onScreenText     String?
+  transitionOut    String? // 'cut' | 'fade' | 'whoosh' | ...
+  providerRouting  Json? // routing decision snapshot
+  assetId          String? // resolved asset id once generated
+  voiceAssetId     String?
+  state            ShotState
+  errorReason      String?
+  overlays         TextOverlay[]
+
+  @@index([scriptId, sortOrder])
+  @@map("video_shots")
+  @@schema("studio")
+}
+
+enum VisualTreatment {
+  AI_CLIP
+  AI_AVATAR
+  STOCK_FOOTAGE
+  IMAGE_STILL
+  MOTION_GRAPHICS
+  USER_UPLOAD
+  TEXT_CARD
+  TRANSITION
+
+  @@schema("studio")
+}
+
+enum ShotState {
+  PLANNED
+  QUEUED
+  GENERATING
+  READY
+  FAILED
+  SKIPPED
+
+  @@schema("studio")
+}
+
+// 7.6
+model VideoAsset {
+  id             String    @id @default(cuid())
+  organisationId String
+  projectId      String
+  shotId         String? // null for music/sfx not tied to a shot
+  kind           AssetKind
+  source         String // e.g. 'runway:gen-4-turbo', 'elevenlabs:v2'
+  s3Bucket       String
+  s3Key          String
+  publicUrl      String? // signed CDN URL
+  durationSec    Float?
+  widthPx        Int?
+  heightPx       Int?
+  fileSizeBytes  BigInt?
+  fingerprint    String? // perceptual hash for reuse
+  providerJobId  String? // ref ProviderJob
+  costPence      Int       @default(0)
+  metadata       Json? // provider-specific
+  createdAt      DateTime  @default(now())
+
+  @@index([organisationId, fingerprint])
+  @@index([projectId])
+  @@index([shotId])
+  @@map("video_assets")
+  @@schema("studio")
+}
+
+enum AssetKind {
+  VIDEO_CLIP
+  IMAGE
+  AUDIO_VOICE
+  AUDIO_MUSIC
+  AUDIO_SFX
+
+  @@schema("studio")
+}
+
+// 7.7
+model VideoRender {
+  id                String             @id @default(cuid())
+  projectId         String
+  project           VideoProject       @relation(fields: [projectId], references: [id])
+  scriptId          String // which script produced this render
+  targetPlatform    String
+  aspectRatio       String
+  resolution        String // '1920x1080'
+  durationSec       Float
+  fps               Int
+  bitrateKbps       Int
+  s3Bucket          String
+  s3Key             String
+  publicUrl         String?
+  thumbnailS3Key    String?
+  captionsSrtS3Key  String?
+  composerJobId     String? // shotstack render id
+  qualityCheckState QualityCheckState
+  qualityIssues     Json? // [{code, severity, detail}]
+  costPence         Int                @default(0)
+  createdAt         DateTime           @default(now())
+  publications      VideoPublication[]
+
+  @@index([projectId])
+  @@map("video_renders")
+  @@schema("studio")
+}
+
+enum QualityCheckState {
+  PENDING
+  PASSED
+  FAILED
+  FORCE_APPROVED
+
+  @@schema("studio")
+}
+
+// 7.8
+model VideoPublication {
+  id                String           @id @default(cuid())
+  organisationId    String
+  projectId         String
+  project           VideoProject     @relation(fields: [projectId], references: [id])
+  renderId          String
+  render            VideoRender      @relation(fields: [renderId], references: [id])
+  platform          String // 'tiktok' | 'instagram_reel' | ...
+  platformAccountId String // channel identifier
+  scheduledFor      DateTime?
+  publishedAt       DateTime?
+  platformPostId    String? // the platform's ID for the post
+  platformUrl       String?
+  state             PublicationState
+  caption           String?
+  hashtags          String[]
+  errorReason       String?
+  errorCode         String?
+  retryCount        Int              @default(0)
+  metadata          Json? // per-platform extras
+  analytics         VideoAnalytic[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([platform, platformPostId])
+  @@index([organisationId, publishedAt])
+  @@index([state, scheduledFor])
+  @@map("video_publications")
+  @@schema("studio")
+}
+
+enum PublicationState {
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+  TAKEN_DOWN
+
+  @@schema("studio")
+}
+
+// 7.9
+model VideoAnalytic {
+  id              String           @id @default(cuid())
+  publicationId   String
+  publication     VideoPublication @relation(fields: [publicationId], references: [id])
+  bucketAt        DateTime // aligned to hour/day
+  bucketSize      String // 'hour' | 'day'
+  views           Int              @default(0)
+  uniqueViewers   Int?
+  watchTimeSec    Int              @default(0)
+  avgWatchTimePct Float? // 0-1
+  likes           Int              @default(0)
+  comments        Int              @default(0)
+  shares          Int              @default(0)
+  saves           Int              @default(0)
+  clicks          Int              @default(0)
+  retentionCurve  Json? // [{sec, retention}]
+  demographics    Json?
+
+  @@unique([publicationId, bucketAt, bucketSize])
+  @@index([publicationId, bucketAt])
+  @@map("video_analytics")
+  @@schema("studio")
+}
+
+// 7.10
+model ProviderJob {
+  id             String           @id @default(cuid())
+  organisationId String
+  projectId      String?
+  provider       String // 'runway', 'elevenlabs', ...
+  providerJobId  String? // provider's own id
+  operation      String // 'text_to_video', 'tts', ...
+  requestBody    Json // truncated for size
+  responseBody   Json?
+  state          ProviderJobState
+  startedAt      DateTime         @default(now())
+  completedAt    DateTime?
+  durationMs     Int?
+  costPence      Int              @default(0)
+  errorClass     String?
+  errorMessage   String?
+  retryCount     Int              @default(0)
+
+  @@index([organisationId, provider, startedAt])
+  @@index([provider, state])
+  @@map("provider_jobs")
+  @@schema("studio")
+}
+
+enum ProviderJobState {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  TIMED_OUT
+  CANCELLED
+
+  @@schema("studio")
+}
+
+// DERIVED — spec 7.2 "Rolled-up cost per (org, provider, day)"; written on every provider
+// call (spec 6.7 "Cost meter wired to studio.provider_usage"), read by cost caps (12.5).
+model ProviderUsage {
+  id             String   @id @default(cuid())
+  organisationId String
+  provider       String
+  day            DateTime @db.Date
+  jobCount       Int      @default(0)
+  succeededCount Int      @default(0)
+  failedCount    Int      @default(0)
+  costPence      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organisationId, provider, day])
+  @@index([provider, day])
+  @@map("provider_usage")
+  @@schema("studio")
+}
+
+// 7.11 + A7.2 (businessProfileId)
+model BrandKit {
+  id                String   @id @default(cuid())
+  organisationId    String
+  businessId        String // ref PostMind Core
+  businessProfileId String? // A7.2 — ref BusinessProfile
+  name              String
+  isDefault         Boolean  @default(false)
+  logoAssetId       String?
+  watermarkAssetId  String?
+  colourPalette     Json // hex colour array
+  fontPrimary       String?
+  fontSecondary     String?
+  toneKeywords      String[]
+  audienceProfile   String?
+  ctaTemplates      Json // [{ label, template }]
+  introCardAssetId  String?
+  outroCardAssetId  String?
+  voiceProfileId    String?
+  restrictedTopics  String[] // never mention
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([organisationId, businessId])
+  @@map("brand_kits")
+  @@schema("studio")
+}
+
+// 7.11
+model VoiceProfile {
+  id                 String   @id @default(cuid())
+  organisationId     String
+  businessId         String?
+  name               String
+  provider           String // 'elevenlabs'
+  providerVoiceId    String
+  cloneSourceAssetId String?
+  languagesSupported String[]
+  isDefault          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  @@map("voice_profiles")
+  @@schema("studio")
+}
+
+// DERIVED — spec 7.2 "Feedback-informed generation preferences, 1–5 per business" and 10.3/10.4.
+// One row per signal category (shot pace, treatment mix, provider preference, script structure,
+// posting time — the five 10.3 lists), which gives the "1–5 per business" row count.
+// `reason` backs the 10.4 transparency requirement: users can inspect and delete each signal.
+model StyleMemory {
+  id             String          @id @default(cuid())
+  organisationId String
+  businessId     String
+  signalType     StyleSignalType
+  value          Json // e.g. { preferredShotCount: 3, hookWithinSec: 1.2 }
+  weight         Float           @default(0)
+  evidenceCount  Int             @default(0)
+  reason         String // human-readable explanation shown at /brand-memory
+  lastEvidenceAt DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  @@unique([organisationId, businessId, signalType])
+  @@map("style_memories")
+  @@schema("studio")
+}
+
+enum StyleSignalType {
+  SHOT_PACE
+  TREATMENT_MIX
+  PROVIDER_PREFERENCE
+  SCRIPT_STRUCTURE
+  POSTING_TIME
+
+  @@schema("studio")
+}
+
+// 7.12
+model Template {
+  id             String   @id @default(cuid())
+  organisationId String? // null = built-in
+  name           String
+  category       String
+  targetFormats  Json
+  scriptTemplate String // Handlebars-style with {{vars}}
+  shotBlueprint  Json
+  brandKitHints  Json?
+  isPublic       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@map("templates")
+  @@schema("studio")
+}
+
+// 7.12
+model ScheduledPublication {
+  id            String        @id @default(cuid())
+  publicationId String        @unique // pre-created publication row
+  scheduledFor  DateTime
+  state         ScheduleState
+  jobId         String? // bullmq job id
+
+  @@index([scheduledFor, state])
+  @@map("scheduled_publications")
+  @@schema("studio")
+}
+
+enum ScheduleState {
+  PENDING
+  FIRED
+  CANCELLED
+
+  @@schema("studio")
+}
+
+// 7.12
+model PlatformConnection {
+  id                    String    @id @default(cuid())
+  organisationId        String
+  businessId            String
+  platform              String // 'tiktok', 'youtube', ...
+  platformAccountId     String
+  platformAccountName   String
+  encryptedAccessToken  String // envelope-encrypted
+  encryptedRefreshToken String?
+  accessTokenExpiresAt  DateTime?
+  scopes                String[]
+  state                 String // 'active' | 'needs_reconnect' | 'revoked'
+  connectedByUserId     String
+  connectedAt           DateTime  @default(now())
+
+  @@unique([organisationId, platform, platformAccountId])
+  @@map("platform_connections")
+  @@schema("studio")
+}
+
+// 7.13
+model ApprovalWorkflow {
+  id             String   @id @default(cuid())
+  organisationId String
+  name           String
+  steps          Json // ordered [{ role, minApprovers }]
+  appliesTo      Json // {platforms, businessIds, tags}
+  createdAt      DateTime @default(now())
+
+  @@map("approval_workflows")
+  @@schema("studio")
+}
+
+// 7.13
+model ApprovalTask {
+  id               String            @id @default(cuid())
+  projectId        String
+  project          VideoProject      @relation(fields: [projectId], references: [id])
+  workflowId       String?
+  stepIndex        Int
+  requiredRole     String
+  state            ApprovalTaskState
+  resolvedByUserId String?
+  note             String?
+  createdAt        DateTime          @default(now())
+  resolvedAt       DateTime?
+
+  @@index([projectId, stepIndex])
+  @@map("approval_tasks")
+  @@schema("studio")
+}
+
+enum ApprovalTaskState {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+
+  @@schema("studio")
+}
+
+// Kill switch + feature flags. Model copied from the Engagement handover 6.4.1.
+// Keys are listed in src/lib/studio/system-flags.ts.
+model SystemFlag {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_flags")
+  @@schema("studio")
+}
+
+// =============================================================================
+// v1.1 — Addendum Section A7
+// =============================================================================
+
+// A7.3 — Feature A
+model VideoLibraryItem {
+  id             String                 @id @default(cuid())
+  title          String
+  description    String?
+  categoryId     String
+  category       VideoLibraryCategory   @relation(fields: [categoryId], references: [id])
+  tags           String[]
+  sourceUrl      String?
+  sourcePlatform String? // 'tiktok','instagram','user_upload'
+  s3Bucket       String
+  s3Key          String
+  thumbnailS3Key String
+  durationSec    Float
+  aspectRatio    String
+  ingestedAt     DateTime               @default(now())
+  analysis       VideoLibraryAnalysis?
+  embedding      VideoLibraryEmbedding?
+  license        VideoLibraryLicense?
+  retiredAt      DateTime? // hidden from search
+
+  @@index([categoryId, retiredAt])
+  @@index([tags], type: Gin)
+  @@map("video_library")
+  @@schema("studio")
+}
+
+// DERIVED — A3.2 "Hierarchical category tree … ~200 rows across 3-4 levels", A3.4 seed taxonomy.
+model VideoLibraryCategory {
+  id        String                 @id @default(cuid())
+  slug      String                 @unique // e.g. 'business/e-commerce/fashion'
+  name      String
+  parentId  String?
+  parent    VideoLibraryCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  VideoLibraryCategory[] @relation("CategoryTree")
+  depth     Int // 0 = top level
+  sortOrder Int                    @default(0)
+  items     VideoLibraryItem[]
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@index([parentId, sortOrder])
+  @@map("video_library_categories")
+  @@schema("studio")
+}
+
+// DERIVED — A3.2 "Free-form tags … ~5,000 unique tags". Items keep their tags in
+// VideoLibraryItem.tags (as A7.3 specifies); this is the tag dictionary used for
+// autocomplete and admin curation.
+model VideoLibraryTag {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@map("video_library_tags")
+  @@schema("studio")
+}
+
+// A7.4
+model VideoLibraryAnalysis {
+  id               String           @id @default(cuid())
+  libraryItemId    String           @unique
+  libraryItem      VideoLibraryItem @relation(fields: [libraryItemId], references: [id])
+  shotCount        Int
+  shots            Json // [{startSec, endSec, type, overlayStyle, ...}]
+  transcript       Json // AssemblyAI output with timestamps
+  overlayTimeline  Json // [{startSec, endSec, text, boxRect, style}]
+  musicEnvelope    Json // {bpm, key, energy, mood, genre}
+  hookPattern      String
+  structurePattern String
+  ctaPattern       String?
+  paceTag          String
+  moodTag          String
+  analysisVersion  Int              @default(1)
+
+  @@map("video_library_analysis")
+  @@schema("studio")
+}
+
+// A7.4 — vector column written and searched with raw SQL (Prisma models it as Unsupported).
+model VideoLibraryEmbedding {
+  id             String                      @id @default(cuid())
+  libraryItemId  String                      @unique
+  libraryItem    VideoLibraryItem            @relation(fields: [libraryItemId], references: [id])
+  embedding      Unsupported("vector(1536)")
+  embeddingModel String // 'openai:text-embedding-3-large'
+  visualWeight   Float                       @default(0.4)
+  audioWeight    Float                       @default(0.3)
+  textWeight     Float                       @default(0.3)
+
+  @@map("video_library_embeddings")
+  @@schema("studio")
+}
+
+// A7.4
+model VideoLibraryLicense {
+  id             String           @id @default(cuid())
+  libraryItemId  String           @unique
+  libraryItem    VideoLibraryItem @relation(fields: [libraryItemId], references: [id])
+  scenario       LicenseScenario
+  licenseSource  String?
+  licenseExpires DateTime?
+  allowedModes   String[] // ['TEMPLATE','INSPIRE'] or ['INSPIRE']
+  notes          String?
+
+  @@map("video_library_licenses")
+  @@schema("studio")
+}
+
+enum LicenseScenario {
+  LICENSED
+  OWNED
+  SCRAPED
+
+  @@schema("studio")
+}
+
+// A7.5 — Feature B
+model TextOverlay {
+  id                  String     @id @default(cuid())
+  shotId              String?
+  shot                VideoShot? @relation(fields: [shotId], references: [id]) // A7.2
+  renderId            String? // for whole-video overlays
+  presetId            String?
+  sortOrder           Int        @default(0)
+  text                String
+  lang                String     @default("en-GB")
+  startAtSec          Float
+  endAtSec            Float
+  animationInMs       Int        @default(400)
+  animationOutMs      Int        @default(400)
+  animationIn         String // fadeIn, slideInLeft, ...
+  animationOut        String
+  easing              String     @default("easeInOut")
+  fontFamily          String
+  fontWeight          Int        @default(700)
+  fontSizePct         Float // % of frame height
+  fontItalic          Boolean    @default(false)
+  letterSpacing       Float?
+  lineHeight          Float?
+  fillColor           String // hex+alpha
+  strokeColor         String?
+  strokeWidthPx       Float?
+  shadowColor         String?
+  shadowBlurPx        Float?
+  shadowOffsetXPx     Float?
+  shadowOffsetYPx     Float?
+  backgroundType      String     @default("none") // none|box|rounded_box|gradient|blur
+  backgroundColor     String?
+  backgroundPaddingPx Float?
+  backgroundRadiusPx  Float?
+  anchorX             Float // 0.0-1.0
+  anchorY             Float
+  alignment           String     @default("center")
+  rotationDeg         Float      @default(0)
+  effect              Json? // wave/glitch/karaoke
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([shotId])
+  @@index([renderId])
+  @@map("text_overlays")
+  @@schema("studio")
+}
+
+// A7.5
+model OverlayPreset {
+  id                String      @id @default(cuid())
+  scope             PresetScope
+  organisationId    String?
+  businessId        String?
+  name              String
+  group             String // 'hook','subtitle','cta',...
+  parameters        Json // full overlay parameter set
+  brandSubstitution Boolean     @default(true)
+  isPublic          Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+
+  @@index([scope, group])
+  @@index([organisationId])
+  @@map("overlay_presets")
+  @@schema("studio")
+}
+
+enum PresetScope {
+  BUILT_IN
+  ORG
+  BUSINESS
+
+  @@schema("studio")
+}
+
+// A7.6 — Feature C
+model SlideshowSlide {
+  id              String    @id @default(cuid())
+  projectId       String // ref VideoProject
+  sortOrder       Int
+  slideType       SlideType
+  imageAssetId    String? // ref ImageLibraryItem
+  videoAssetId    String? // ref VideoAsset
+  backgroundColor String? // for TEXT_CARD
+  durationSec     Float     @default(2.5)
+  transitionIn    String?
+  transitionOut   String?
+  kenBurnsSpec    Json? // {startZoom,endZoom,startPan,endPan}
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([projectId, sortOrder])
+  @@map("slideshow_slides")
+  @@schema("studio")
+}
+
+enum SlideType {
+  IMAGE_STILL
+  IMAGE_KENBURNS
+  VIDEO_CLIP
+  TEXT_CARD
+  BEFORE_AFTER
+  QUOTE
+  STATISTIC
+  PRODUCT
+
+  @@schema("studio")
+}
+
+// A7.6
+model SlideshowTemplate {
+  id                      String   @id @default(cuid())
+  organisationId          String? // null = built-in
+  name                    String
+  category                String // 'photo_dump','listicle_5','before_after',...
+  slidePlan               Json // ordered slide blueprints
+  musicMood               String?
+  defaultDurationPerSlide Float    @default(2.5)
+  overlayDefaults         Json?
+  createdAt               DateTime @default(now())
+
+  @@map("slideshow_templates")
+  @@schema("studio")
+}
+
+// A7.7 — Feature D
+model BusinessProfile {
+  id                 String   @id @default(cuid())
+  organisationId     String
+  businessId         String   @unique
+  industry           String
+  subNiche           String
+  products           String[]
+  services           String[]
+  audienceKeywords   String[]
+  toneIndicators     String[]
+  regions            String[]
+  imageThemes        String[]
+  imageSearchQueries String[] // seeded queries for stock APIs
+  restrictedTopics   String[]
+  brandVoiceSummary  String?
+  classifierModel    String
+  classifierVersion  Int      @default(1)
+  lastRefreshedAt    DateTime @default(now())
+  editedByUser       Boolean  @default(false)
+
+  @@map("business_profiles")
+  @@schema("studio")
+}
+
+// A7.7
+model WebsiteScan {
+  id             String    @id @default(cuid())
+  organisationId String
+  businessId     String
+  url            String
+  state          ScanState
+  pagesCrawled   Int       @default(0)
+  imagesIngested Int       @default(0)
+  errorReason    String?
+  robotsBlocked  Boolean   @default(false)
+  usedJsRender   Boolean   @default(false)
+  costPence      Int       @default(0)
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  @@index([businessId, startedAt])
+  @@map("website_scans")
+  @@schema("studio")
+}
+
+enum ScanState {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+
+  @@schema("studio")
+}
+
+// A7.7
+// DEVIATION — `embedding` is optional here (spec: required). Images are ingested before
+// their embedding is computed, and a required Unsupported column removes Prisma's create()
+// for the model entirely. Rows without an embedding are excluded from similarity search.
+model ImageLibraryItem {
+  id                  String                       @id @default(cuid())
+  organisationId      String
+  businessId          String
+  source              ImageSource
+  sourceUrl           String?
+  sourceProvider      String? // 'pexels','storyblocks','dalle-3'
+  s3Bucket            String
+  s3Key               String
+  publicUrl           String?
+  widthPx             Int
+  heightPx            Int
+  fileSizeBytes       Int
+  tags                String[]
+  altText             String?
+  fingerprint         String // perceptual hash, dedup
+  generatedFromPrompt String?
+  embedding           Unsupported("vector(1536)")?
+  licenseNotes        String?
+  lastUsedAt          DateTime?
+  useCount            Int                          @default(0)
+  createdAt           DateTime                     @default(now())
+
+  @@unique([businessId, fingerprint])
+  @@index([businessId, source])
+  @@index([tags], type: Gin)
+  @@map("image_library")
+  @@schema("studio")
+}
+
+enum ImageSource {
+  SCRAPED
+  STOCK
+  GENERATED
+  UPLOAD
+
+  @@schema("studio")
+}
+
+// A7.7
+model ImageLibraryQuery {
+  id          String   @id @default(cuid())
+  businessId  String
+  query       String
+  provider    String
+  resultCount Int
+  lastRunAt   DateTime @default(now())
+
+  @@unique([businessId, provider, query])
+  @@map("image_library_queries")
+  @@schema("studio")
 }

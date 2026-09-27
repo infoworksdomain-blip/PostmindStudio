@@ -1,7 +1,7 @@
 import { Writable } from 'node:stream';
 import pino from 'pino';
 import { describe, expect, it } from 'vitest';
-import { createLogger, getCorrelationId, withContext } from './logger';
+import { createLogger, getCorrelationId, REDACT_PATHS, withContext } from './logger';
 
 function captureLogger() {
   const lines: Record<string, unknown>[] = [];
@@ -36,13 +36,16 @@ describe('logger', () => {
         done();
       },
     });
-    const log = pino(
-      { redact: { paths: ['headers.authorization', '*.accessToken'], censor: '[REDACTED]' } },
-      stream,
+    const log = pino({ redact: { paths: REDACT_PATHS, censor: '[REDACTED]' } }, stream);
+    log.info(
+      {
+        headers: { authorization: 'Bearer abc' },
+        conn: { accessToken: 'tok-access', refreshToken: 'tok-refresh', apiKey: 'key-1' },
+      },
+      'x',
     );
-    log.info({ headers: { authorization: 'Bearer abc' }, conn: { accessToken: 'tok' } }, 'x');
-    expect(lines[0]).not.toContain('Bearer abc');
-    expect(lines[0]).not.toContain('tok"');
+    expect(lines[0]).not.toMatch(/Bearer abc|tok-access|tok-refresh|key-1/);
+    expect(lines[0]).toContain('[REDACTED]');
   });
 });
 

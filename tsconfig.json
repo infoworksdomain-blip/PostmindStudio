@@ -29,6 +29,7 @@
     "src/**/*.tsx",
     "test/**/*.ts",
     "scripts/**/*.ts",
+    "prisma/**/*.ts",
     "vitest.config.ts",
     "next.config.ts",
     ".next/types/**/*.ts"

@@ -6,7 +6,7 @@ import pino, { type Logger } from 'pino';
 
 export const CORRELATION_ID_HEADER = 'x-correlation-id';
 
-const REDACT_PATHS = [
+export const REDACT_PATHS = [
   'authorization',
   'headers.authorization',
   'req.headers.authorization',

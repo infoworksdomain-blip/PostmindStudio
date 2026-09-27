@@ -24,4 +24,49 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
-      - run: npm test
+      - run: npm run test:coverage
+
+  database:
+    # Applies the committed migrations to real Postgres 15 + pgvector, seeds system_flags,
+    # and fails if prisma/schema.prisma has drifted from prisma/migrations.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: postmind
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U studio -d postmind"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio
+      SHADOW_DATABASE_URL: postgresql://studio:studio@localhost:5432/shadow?schema=studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx prisma db seed
+      - name: Seed is idempotent
+        run: npx prisma db seed
+      - name: All tables are in the studio schema
+        run: |
+          count=$(PGPASSWORD=studio psql -h localhost -U studio -d postmind -tAc \
+            "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
+          echo "studio tables: $count"
+          test "$count" -eq 33
+      - name: Schema matches migrations (drift check)
+        run: |
+          PGPASSWORD=studio psql -h localhost -U studio -d postmind -c 'CREATE DATABASE shadow'
+          npx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "$SHADOW_DATABASE_URL" \
+            --exit-code

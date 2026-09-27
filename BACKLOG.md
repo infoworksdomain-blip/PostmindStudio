@@ -27,16 +27,16 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 1 — Integration points + schema (target: week 1-2)
 
-- [ ] **1.1** Implement `src/lib/prisma.ts` — singleton PrismaClient with dev/prod logging.
-- [ ] **1.2** Implement `src/lib/errors.ts` — custom error classes (`UnauthorizedError`, `ForbiddenError`, `NotFoundError`, `ValidationError`, `ProviderError`, `KillSwitchTriggeredError`, `RateLimitError`).
-- [ ] **1.3** Implement `src/lib/logger.ts` — pino structured logger with correlationId support.
-- [ ] **1.4** Implement `src/lib/tenant.ts` — JWKS-verified JWT parsing, PostMind Core context fetch, 5-min cache. Unit tests for happy path, expired token, missing token, wrong audience.
-- [ ] **1.5** Implement `src/lib/rbac.ts` — `requireCapability(context, capability)`. Enum of all Studio capabilities (`studio:project:read`, `studio:project:write`, `studio:render:download`, `studio:render:force-approve`, `studio:admin:*`).
-- [ ] **1.6** Implement `src/lib/audit.ts` — fire-and-forget POST to PostMind audit service. Never throws.
-- [ ] **1.7** Write the full `prisma/schema.prisma` — all v1.0 tables (19) + all v1.1 tables (14 new + 3 modifications). Verify against spec Section 7 and Addendum A7.
-- [ ] **1.8** Run `prisma migrate dev --name init_studio_schema`. Verify all tables land in `studio` schema.
-- [ ] **1.9** Add `system_flags` seed data (kill switch off, all providers enabled).
-- [ ] **1.10** Implement `src/lib/studio/kill-switch.ts` — DB-backed check with 30s in-memory cache. Unit tests for all four levels.
+- [x] **1.1** Implement `src/lib/prisma.ts` — singleton PrismaClient with dev/prod logging.
+- [x] **1.2** Implement `src/lib/errors.ts` — custom error classes (`UnauthorizedError`, `ForbiddenError`, `NotFoundError`, `ValidationError`, `ProviderError`, `KillSwitchTriggeredError`, `RateLimitError`).
+- [x] **1.3** Implement `src/lib/logger.ts` — pino structured logger with correlationId support.
+- [x] **1.4** Implement `src/lib/tenant.ts` — JWKS-verified JWT parsing, PostMind Core context fetch, 5-min cache. Unit tests for happy path, expired token, missing token, wrong audience.
+- [x] **1.5** Implement `src/lib/rbac.ts` — `requireCapability(context, capability)`. Enum of all Studio capabilities (`studio:project:read`, `studio:project:write`, `studio:render:download`, `studio:render:force-approve`, `studio:admin:*`).
+- [x] **1.6** Implement `src/lib/audit.ts` — fire-and-forget POST to PostMind audit service. Never throws.
+- [x] **1.7** Write the full `prisma/schema.prisma` — all v1.0 tables (19) + all v1.1 tables (14 new + 3 modifications). Verify against spec Section 7 and Addendum A7.
+- [x] **1.8** Run `prisma migrate dev --name init_studio_schema`. Verify all tables land in `studio` schema.
+- [x] **1.9** Add `system_flags` seed data (kill switch off, all providers enabled).
+- [x] **1.10** Implement `src/lib/studio/kill-switch.ts` — DB-backed check with 30s in-memory cache. Unit tests for all four levels.
 - [ ] **[GATE 1]** Operator reviews schema, confirms it matches spec.
 
 ---
