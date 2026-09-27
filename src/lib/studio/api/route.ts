@@ -75,6 +75,11 @@ export function withStudioRoute(capability: StudioCapability, handler: Handler) 
         deps.logger,
       );
       requireCapability(tenant, capability);
+      await deps.rateLimiter?.check({
+        organisationId: tenant.organisationId,
+        userId: tenant.userId,
+        method: req.method,
+      });
 
       const path = new URL(req.url).pathname;
       const idemKey = MUTATING.has(req.method) ? req.headers.get('idempotency-key') : null;

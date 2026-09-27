@@ -102,6 +102,34 @@ describe('kill switch — four levels', () => {
   });
 });
 
+describe('kill switch — platform level (publishing)', () => {
+  it('halts a publish scope for the killed platform only', async () => {
+    const { store } = memoryStore({ [flagKeys.platform('tiktok')]: 'true' });
+    const ks = createKillSwitch({ store });
+    const tiktok = { organisationId: 'org-1', projectId: 'proj-1', platform: 'tiktok' };
+    await expect(ks.check(tiktok)).resolves.toEqual({
+      killed: true,
+      level: 'platform',
+      key: flagKeys.platform('tiktok'),
+    });
+    await expect(ks.check({ ...tiktok, platform: 'youtube_short' })).resolves.toEqual({
+      killed: false,
+    });
+    const err = (await ks
+      .assertNotKilled(tiktok)
+      .catch((e: unknown) => e)) as KillSwitchTriggeredError;
+    expect(err).toBeInstanceOf(KillSwitchTriggeredError);
+    expect(err.level).toBe('platform');
+    expect(err.details).toMatchObject({ platform: 'tiktok', level: 'platform' });
+  });
+
+  it('does not affect generation scopes (no platform in the scope)', async () => {
+    const { store, getFlags } = memoryStore({ [flagKeys.platform('tiktok')]: 'true' });
+    await expect(createKillSwitch({ store }).check(scope)).resolves.toEqual({ killed: false });
+    expect(getFlags.mock.calls[0]?.[0]).not.toContain(flagKeys.platform('tiktok'));
+  });
+});
+
 describe('kill switch — safety', () => {
   it('fails closed on unrecognised flag values', async () => {
     const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);

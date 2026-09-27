@@ -2,7 +2,7 @@
 // Every StudioError maps to an HTTP status and the Engagement error envelope
 // `{ ok: false, error, details? }` (Engagement handover Section 14.1).
 
-export type KillSwitchLevel = 'global' | 'workspace' | 'project' | 'provider';
+export type KillSwitchLevel = 'global' | 'workspace' | 'project' | 'provider' | 'platform';
 
 export abstract class StudioError extends Error {
   abstract readonly status: number;
@@ -124,6 +124,24 @@ export class PlatformError extends StudioError {
 export class NoProviderAvailableError extends StudioError {
   readonly status = 503;
   readonly code = 'no_provider_available';
+}
+
+export type CostCapScope = 'project' | 'org_daily' | 'global_daily';
+
+/**
+ * Spec 12.5 — generation is paused by a cost cap: the project reached 90% of costBudgetPence,
+ * or the organisation's / platform's daily cap is spent. Not retryable: the cap has to be
+ * raised (or the day roll over) and the project regenerated.
+ */
+export class CostCapPausedError extends StudioError {
+  readonly status = 409;
+  readonly code = 'cost_cap_paused';
+  readonly scope: CostCapScope;
+
+  constructor(scope: CostCapScope, message: string, details?: Record<string, unknown>) {
+    super(message, { ...details, scope });
+    this.scope = scope;
+  }
 }
 
 /** A PostMind Core / Engagement dependency failed or returned an unexpected shape. */

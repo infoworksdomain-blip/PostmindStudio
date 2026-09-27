@@ -14,6 +14,7 @@ const LEVEL_NOUN: Record<SetKillSwitchBody['level'], string> = {
   workspace: 'Workspace freeze',
   project: 'Project kill',
   provider: 'Provider disable',
+  platform: 'Platform publishing halt',
 };
 
 export function describeChange(body: SetKillSwitchBody): string {

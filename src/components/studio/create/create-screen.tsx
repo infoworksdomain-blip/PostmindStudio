@@ -12,9 +12,13 @@ import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
 import { TemplatePicker } from '../slideshow/template-picker';
+import type { ProjectTemplate } from '../automation/automation';
+import { AutoPublishOption } from './auto-publish-option';
 import {
   BRIEF_MAX,
   buildCreateBody,
+  publishPlatforms,
+  usesTemplate,
   validateCreate,
   type CreateSource,
   type CreateState,
@@ -22,6 +26,7 @@ import {
 } from './body';
 import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './create-options';
 import { defaultPlatforms } from './formats';
+import { ProjectTemplatePicker } from './project-template-picker';
 import { ReferenceBanner } from './reference-banner';
 
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
@@ -36,6 +41,9 @@ const INITIAL: Omit<CreateState, 'platforms' | 'brandKitId'> = {
   callToAction: '',
   budgetPounds: '',
   reviewPolicy: '',
+  projectTemplate: null,
+  autoPublish: false,
+  autoPublishAccounts: {},
 };
 
 const SOURCES: Array<{ key: CreateSource; label: string; icon: typeof Clapperboard }> = [
@@ -57,6 +65,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
 
   const kits = useApi<{ data: BrandKit[] }>(businessId ? '/brand-kits' : null, { businessId });
   const connections = useApi<{ data: PlatformConnection[] }>('/platform-connections');
+  const templates = useApi<{ data: ProjectTemplate[] }>('/templates');
 
   const state: CreateState = {
     ...form,
@@ -127,6 +136,15 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   }
 
   const isSlideshow = form.source === 'SLIDESHOW';
+  const templated = usesTemplate(state, reference);
+  const chooseTemplate = (id: string | null) => {
+    const t = templates.data?.data.find((x) => x.id === id);
+    patch({
+      projectTemplate: t
+        ? { id: t.id, name: t.name, platforms: t.targetFormats.map((f) => f.platform) }
+        : null,
+    });
+  };
   return (
     <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 pt-4 md:pt-10">
       <div>
@@ -167,8 +185,12 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             onClick={() => setShowOptions((v) => !v)}
             className="rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {state.platforms.length} platform{state.platforms.length === 1 ? '' : 's'} ·{' '}
-            {form.length === 'short' ? 'Short' : 'Long'}
+            {templated && form.projectTemplate
+              ? `${form.projectTemplate.name} template`
+              : `${state.platforms.length} platform${state.platforms.length === 1 ? '' : 's'} · ${
+                  form.length === 'short' ? 'Short' : 'Long'
+                }`}
+            {form.autoPublish ? ' · auto-publish' : ''}
             {state.brandKitId ? ' · brand kit on' : ''} · <span className="underline">Options</span>
           </button>
           <Button type="submit" size="lg" disabled={submitting || !ready} className="px-4">
@@ -211,11 +233,42 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
               onChange={(templateId) => patch({ templateId })}
             />
           )}
-          <PlatformChips value={state.platforms} onChange={patch} />
+          {!isSlideshow && !reference && (
+            <ProjectTemplatePicker
+              templates={templates.data?.data}
+              error={templates.error}
+              onRetry={() => void templates.mutate()}
+              value={form.projectTemplate?.id ?? null}
+              onChange={chooseTemplate}
+            />
+          )}
+          {templated ? (
+            <p className="text-xs text-muted-foreground">
+              Platforms and length come from the template. Your text above is optional — it adds
+              specifics to the template’s outline.
+            </p>
+          ) : (
+            <PlatformChips value={state.platforms} onChange={patch} />
+          )}
           <div className="grid gap-5 sm:grid-cols-2">
-            <LengthToggle value={form.length} onChange={patch} />
+            {!templated && <LengthToggle value={form.length} onChange={patch} />}
             <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />
           </div>
+          {!isSlideshow && (
+            <AutoPublishOption
+              enabled={form.autoPublish}
+              onToggle={(autoPublish) => patch({ autoPublish })}
+              platforms={publishPlatforms(state)}
+              accounts={form.autoPublishAccounts}
+              onAccount={(platform, connectionId) =>
+                patch({
+                  autoPublishAccounts: { ...form.autoPublishAccounts, [platform]: connectionId },
+                })
+              }
+              connections={connections.data?.data}
+              businessId={businessId}
+            />
+          )}
           <AdvancedOptions
             state={state}
             onChange={patch}

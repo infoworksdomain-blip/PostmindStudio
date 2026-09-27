@@ -72,6 +72,12 @@ export interface RouteDecision {
   decidedAt: string;
 }
 
+export interface SpendScope {
+  organisationId: string;
+  projectId?: string;
+  planTier: PlanTier;
+}
+
 export interface BudgetChecker {
   hasBudget(input: {
     organisationId: string;
@@ -79,6 +85,13 @@ export interface BudgetChecker {
     providerId: string;
     estimatedCostPence: number;
   }): Promise<boolean>;
+  /**
+   * Spec 12.5 pause (cost/guard.ts): throws CostCapPausedError when a project, organisation or
+   * global cap pauses generation. Checked once per routing, before any candidate.
+   */
+  assertNotPaused?(scope: SpendScope): Promise<void>;
+  /** Raise the cost alerts crossed after spend was reserved or settled. Never throws. */
+  recordSpend?(scope: SpendScope & { providerId: string }): Promise<void>;
 }
 
 /** Optional adapter extensions the router uses when present. */
@@ -193,6 +206,11 @@ async function skipReason(
 export async function routeProvider(input: RouteInput, deps: RouterDeps): Promise<RouteDecision> {
   const now = (deps.now ?? Date.now)();
   const plan = planCandidates(input.need, input.planTier);
+  await deps.budget.assertNotPaused?.({
+    organisationId: input.organisationId,
+    projectId: input.projectId,
+    planTier: input.planTier,
+  });
   const preferred = input.preferredProviderId;
   if (preferred && plan.providerIds.includes(preferred)) {
     // Reorder only: a preference never adds a provider outside the tier's candidate list.

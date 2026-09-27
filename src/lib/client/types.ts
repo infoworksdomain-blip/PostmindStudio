@@ -114,7 +114,14 @@ export interface ProjectDetail extends Project {
   scripts: Array<Omit<Script, 'shots'> & { shots: ShotSummary[] }>;
   renders: Render[];
   publications: Publication[];
-  approvals: Array<{ id: string; state: string; note: string | null; createdAt: string }>;
+  approvals: Array<{
+    id: string;
+    state: string;
+    note: string | null;
+    createdAt: string;
+    /** "system:auto-approve" for automatic approvals (automation/approval.ts). */
+    resolvedByUserId?: string | null;
+  }>;
 }
 
 export interface PlatformConnection {

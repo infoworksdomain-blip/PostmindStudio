@@ -8,6 +8,7 @@ import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { CostReportPanel } from './cost-report-panel';
 import { KillSwitchPanel } from './kill-switch-panel';
 import { LibraryAdminPanel } from './library-admin-panel';
+import { RedrivePanel } from './redrive-panel';
 import { isForbidden, type KillSwitchState } from './types';
 
 // BACKLOG 10.11 / spec 16.4 — Admin Centre (PostMind staff only). Every /admin route calls
@@ -62,11 +63,15 @@ export function AdminCentre() {
       <Tabs defaultValue="kill-switch" className="min-w-0 gap-6">
         <TabsList className="max-w-full overflow-x-auto">
           <TabsTrigger value="kill-switch">Kill switch</TabsTrigger>
+          <TabsTrigger value="redrive">Re-drive</TabsTrigger>
           <TabsTrigger value="library">Library</TabsTrigger>
           <TabsTrigger value="cost">Cost report</TabsTrigger>
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />
+        </TabsContent>
+        <TabsContent value="redrive">
+          <RedrivePanel />
         </TabsContent>
         <TabsContent value="library">
           <LibraryAdminPanel />

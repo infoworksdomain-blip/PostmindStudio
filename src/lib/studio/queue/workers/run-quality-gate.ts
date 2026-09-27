@@ -19,6 +19,8 @@ import {
   type QualityInputs,
 } from '../../pipeline/quality-checks';
 import type { ProjectJobData } from '../queues';
+import { autoApproveIfTrusted } from '../../automation/auto-approve';
+import { notifyGenerationComplete } from '../../notifications/events';
 
 // BACKLOG 3.7 — Layer 8 (spec 5.9 / 13.1). Every render of the run is measured with ffprobe /
 // ffmpeg, scanned for content safety, and evaluated fail-closed. All pass → READY_FOR_REVIEW;
@@ -140,7 +142,7 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
 
   const allPassed = results.every((r) => qualityPassed(r.checks));
   const blocked = results.some((r) => hasContentSafetyBlock(r.checks));
-  await transitionProject(deps.db, {
+  const moved = await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,
     from: ['QUALITY_CHECKING'],
@@ -156,6 +158,10 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
         },
   });
   log.info({ allPassed, blocked }, 'quality gate complete');
+  // Spec 5.9 review checkpoint: AUTO_APPROVE projects of trusted creators skip the human step.
+  if (moved && allPassed) await autoApproveIfTrusted(deps, data);
+  // Spec 14.4 "Generation complete" (after auto-approval, so the wording matches the state).
+  if (moved && allPassed) await notifyGenerationComplete(deps, data);
 }
 
 export async function onRunQualityGateFailed(

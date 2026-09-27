@@ -8,6 +8,7 @@ describe('flagKeys', () => {
     expect(flagKeys.workspace('org-1')).toBe('studio.frozenWorkspace.org-1');
     expect(flagKeys.project('p-1')).toBe('studio.killedProject.p-1');
     expect(flagKeys.provider('runway')).toBe('studio.disabledProvider.runway');
+    expect(flagKeys.platform('tiktok')).toBe('studio.kill_switch.platform.tiktok');
   });
 });
 

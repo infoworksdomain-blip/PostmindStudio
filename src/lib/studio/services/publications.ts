@@ -12,6 +12,7 @@ import { checkFormat, PLATFORM_RULES } from '../platforms/rules';
 import { currentRunId } from '../pipeline/project-state';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { PublishJobData } from '../queue/queues';
+import type { PlanTier } from '../providers/router';
 import { PLATFORMS, toPlanTier } from './catalog';
 
 // Publications (spec 8.4, BACKLOG 5.10–5.11): schedule or publish now, read, cancel, retry,
@@ -118,17 +119,30 @@ export async function getPublication(db: PrismaClient, organisationId: string, i
   return findPublication(db, organisationId, id);
 }
 
+/** Who a publish job runs for: the organisation and its plan tier (queue priority only). */
+export interface PublishScope {
+  organisationId: string;
+  planTier: PlanTier;
+}
+
+function scopeOf(tenant: TenantContext): PublishScope {
+  return {
+    organisationId: tenant.organisationId,
+    planTier: toPlanTier(tenant.organisation.planTier),
+  };
+}
+
 function jobData(
-  tenant: TenantContext,
+  scope: PublishScope,
   publication: { id: string; projectId: string },
   runId: string,
 ): PublishJobData {
   return {
     publicationId: publication.id,
     projectId: publication.projectId,
-    organisationId: tenant.organisationId,
+    organisationId: scope.organisationId,
     runId,
-    planTier: toPlanTier(tenant.organisation.planTier),
+    planTier: scope.planTier,
   };
 }
 
@@ -254,7 +268,7 @@ export async function createPublication(
     return created;
   });
 
-  const data = jobData(tenant, publication, currentRunId(render.project) ?? 'publish');
+  const data = jobData(scopeOf(tenant), publication, currentRunId(render.project) ?? 'publish');
   if (scheduledFor) {
     const jobId = jobIds.fireScheduled(data);
     await deps.queue.add('fire-scheduled-publication', data, {
@@ -301,14 +315,26 @@ export async function retryPublication(
   tenant: TenantContext,
   id: string,
 ) {
-  const publication = await findPublication(deps.db, tenant.organisationId, id);
+  return retryPublicationFor(deps, scopeOf(tenant), id);
+}
+
+/**
+ * Tenant-free core of retryPublication, shared with the operator re-drive (services/redrive.ts),
+ * which acts on another organisation's publication without that organisation's Core context.
+ */
+export async function retryPublicationFor(
+  deps: { db: PrismaClient; queue: JobQueue },
+  scope: PublishScope,
+  id: string,
+) {
+  const publication = await findPublication(deps.db, scope.organisationId, id);
   if (publication.state !== 'FAILED')
     throw new ConflictError(`Only FAILED publications can be retried (is ${publication.state})`);
   const project = await deps.db.videoProject.findFirstOrThrow({
-    where: { id: publication.projectId, organisationId: tenant.organisationId },
+    where: { id: publication.projectId, organisationId: scope.organisationId },
   });
   const moved = await deps.db.videoPublication.updateMany({
-    where: { id, organisationId: tenant.organisationId, state: 'FAILED' },
+    where: { id, organisationId: scope.organisationId, state: 'FAILED' },
     // An explicit retry is the person confirming the post is not live: clear the upload marker
     // that publish-video uses to refuse re-uploading after an unknown outcome.
     data: {
@@ -322,16 +348,16 @@ export async function retryPublication(
   await deps.db.videoProject.updateMany({
     where: {
       id: publication.projectId,
-      organisationId: tenant.organisationId,
+      organisationId: scope.organisationId,
       state: { in: ['PUBLISHED', 'PARTIALLY_PUBLISHED'] },
     },
     data: { state: 'PUBLISHING' },
   });
-  const data = jobData(tenant, publication, currentRunId(project) ?? 'publish');
+  const data = jobData(scope, publication, currentRunId(project) ?? 'publish');
   await deps.queue.add('publish-video', data, {
     jobId: jobIds.publishVideo(data, publication.retryCount),
   });
-  return findPublication(deps.db, tenant.organisationId, id);
+  return findPublication(deps.db, scope.organisationId, id);
 }
 
 function withoutUploadMarker(metadata: Prisma.JsonValue | null): Prisma.InputJsonValue {

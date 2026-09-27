@@ -409,6 +409,7 @@ model ProviderUsage {
 
   @@unique([organisationId, provider, day])
   @@index([provider, day])
+  @@index([day]) // Phase 12: global daily cap (spec 12.5) sums one day across all orgs
   @@map("provider_usage")
   @@schema("studio")
 }
@@ -493,17 +494,23 @@ enum StyleSignalType {
 
 // 7.12
 model Template {
-  id             String   @id @default(cuid())
-  organisationId String? // null = built-in
-  name           String
-  category       String
-  targetFormats  Json
-  scriptTemplate String // Handlebars-style with {{vars}}
-  shotBlueprint  Json
-  brandKitHints  Json?
-  isPublic       Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  id              String   @id @default(cuid())
+  organisationId  String? // null = built-in
+  name            String
+  category        String
+  targetFormats   Json
+  scriptTemplate  String // Handlebars-style with {{vars}}
+  shotBlueprint   Json
+  brandKitHints   Json?
+  // DERIVED (Phase 12 automation): spec 3 "auto-publish (on approval per template)" names the
+  // behaviour but no field. { publishPolicy, reviewPolicy?, targets: [{ platform, connectionId? |
+  // platformAccountId?, caption?, hashtags?, scheduleOffsetMinutes? }] } — applied to projects
+  // created from the template (src/lib/studio/automation/auto-publish.ts validates it).
+  publishDefaults Json?
+  isPublic        Boolean  @default(false)
+  createdAt       DateTime @default(now())
 
+  @@index([organisationId, category])
   @@map("templates")
   @@schema("studio")
 }
@@ -963,5 +970,62 @@ model ImageLibraryQuery {
 
   @@unique([businessId, provider, query])
   @@map("image_library_queries")
+  @@schema("studio")
+}
+
+// =============================================================================
+// Phase 12 — cost caps, alerting and notifications
+// =============================================================================
+
+// DERIVED — spec 12.5 "alert on 80% / 100% of any cap" (and the 90% project pause). One row per
+// alert raised; the unique key makes each (scope, scopeId, period, threshold) fire exactly once.
+// period: the UTC day (YYYY-MM-DD) for daily caps; `budget:<costBudgetPence>` for a project, so
+// raising a project's budget re-arms its alerts.
+model CostAlert {
+  id             String         @id @default(cuid())
+  scope          CostAlertScope
+  scopeId        String // projectId | organisationId | organisationId/provider | 'global'
+  organisationId String? // null for the global cap
+  period         String
+  threshold      Int // percent of the cap: 80 | 90 (project pause) | 100
+  capPence       Int
+  spentPence     Int
+  createdAt      DateTime       @default(now())
+
+  @@unique([scope, scopeId, period, threshold])
+  @@index([createdAt])
+  @@index([organisationId, createdAt])
+  @@map("cost_alerts")
+  @@schema("studio")
+}
+
+enum CostAlertScope {
+  PROJECT
+  ORG_DAILY
+  ORG_PROVIDER_DAILY
+  GLOBAL_DAILY
+
+  @@schema("studio")
+}
+
+// DERIVED — spec 14.4 notifications (in-app store; no PostMind Core notification API is
+// documented). userId null = every member of the organisation. dedupeKey makes an event notify
+// once (e.g. approval_pending:<projectId>:<runId>).
+model Notification {
+  id             String    @id @default(cuid())
+  organisationId String
+  userId         String?
+  kind           String // cost_alert | cost_paused | publication_failed | generation_complete | approval_pending
+  title          String
+  body           String
+  link           String?
+  dedupeKey      String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@unique([organisationId, dedupeKey])
+  @@index([organisationId, createdAt])
+  @@index([organisationId, userId, readAt])
+  @@map("notifications")
   @@schema("studio")
 }

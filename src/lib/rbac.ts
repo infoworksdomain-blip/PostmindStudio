@@ -20,6 +20,8 @@ export const StudioCapability = {
   AdminProviders: 'studio:admin:providers',
   AdminLibrary: 'studio:admin:library',
   AdminModeration: 'studio:admin:moderation',
+  /** Bulk re-drive of kill-switched / stuck work (POST /admin/redrive). Spends provider money. */
+  AdminRedrive: 'studio:admin:redrive',
 } as const;
 
 export type StudioCapability = (typeof StudioCapability)[keyof typeof StudioCapability];

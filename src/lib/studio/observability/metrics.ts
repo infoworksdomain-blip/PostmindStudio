@@ -12,13 +12,25 @@ export interface StudioMetrics {
   jobs: Counter<'job' | 'outcome'>;
   queueDepth: Gauge<'queue' | 'state'>;
   breakerState: Gauge<'provider'>;
+  /** Spec 12.5: cost alerts raised (each (scope, id, period, threshold) once — cost/alerts.ts). */
+  costAlerts: Counter<'scope' | 'threshold'>;
+  /** Kill-switch flags engaged per level (sampled from system_flags at scrape time). */
+  killSwitchEngaged: Gauge<'level'>;
 }
+
+/** Every (scope, threshold) a cost alert can have (cost/caps.ts thresholds per scope). */
+export const COST_ALERT_SERIES: ReadonlyArray<{ scope: string; threshold: string }> = [
+  ...['80', '90', '100'].map((threshold) => ({ scope: 'project', threshold })),
+  ...['org_daily', 'org_provider_daily', 'global_daily'].flatMap((scope) =>
+    ['80', '100'].map((threshold) => ({ scope, threshold })),
+  ),
+];
 
 function build(): StudioMetrics {
   const registry = new Registry();
   registry.setDefaultLabels({ service: 'postmind-studio' });
   collectDefaultMetrics({ register: registry, prefix: 'studio_' });
-  return {
+  const metrics = {
     registry,
     httpDuration: new Histogram({
       name: 'studio_http_request_duration_seconds',
@@ -52,7 +64,23 @@ function build(): StudioMetrics {
       labelNames: ['provider'],
       registers: [registry],
     }),
+    costAlerts: new Counter({
+      name: 'studio_cost_alerts_total',
+      help: 'Cost alerts raised by scope (project | org_daily | org_provider_daily | global_daily) and threshold percent',
+      labelNames: ['scope', 'threshold'],
+      registers: [registry],
+    }),
+    killSwitchEngaged: new Gauge({
+      name: 'studio_kill_switch_engaged',
+      help: 'Kill-switch flags currently engaged per level (sampled from system_flags at scrape)',
+      labelNames: ['level'],
+      registers: [registry],
+    }),
   };
+  // Pre-create the cost-alert series at 0: Prometheus' increase() cannot see the first increment
+  // of a series that appears already at 1 (ops/prometheus/studio-alerts.yml relies on this).
+  for (const labels of COST_ALERT_SERIES) metrics.costAlerts.inc(labels, 0);
+  return metrics;
 }
 
 const globalForMetrics = globalThis as unknown as { studioMetrics?: StudioMetrics };

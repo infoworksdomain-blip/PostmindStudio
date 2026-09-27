@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { NotFoundError, PlatformError } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
+import { notifyPublicationFailed } from '../../notifications/events';
 import { publicationMetadata, resolveCredentials, videoSource } from '../../platforms/publishing';
 import type { Platform } from '../../services/catalog';
 import { jobIds } from '../enqueue';
@@ -50,6 +51,19 @@ export async function rollUpProject(
   });
 }
 
+/** Throws KillSwitchTriggeredError (level 'platform') while publishing to `platform` is halted. */
+async function assertPlatformNotKilled(
+  deps: PipelineDeps,
+  data: PublishJobData,
+  platform: string,
+): Promise<void> {
+  await deps.killSwitch.assertNotKilled({
+    organisationId: data.organisationId,
+    projectId: data.projectId,
+    platform,
+  });
+}
+
 export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Promise<void> {
   const log = deps.logger.child({
     publicationId: data.publicationId,
@@ -63,6 +77,9 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
   if (publication.state !== 'SCHEDULED' && publication.state !== 'PUBLISHING') {
     return log.info({ state: publication.state }, 'publication no longer pending; skipped');
   }
+  // Per-platform kill switch, checked before the upload marker is set or anything is claimed:
+  // a halted publication fails as kill_switch_platform and is safe to re-drive later.
+  await assertPlatformNotKilled(deps, data, publication.platform);
   // CAS SCHEDULED → PUBLISHING (a BullMQ retry of this same job finds it already PUBLISHING).
   if (publication.state === 'SCHEDULED') {
     const moved = await deps.db.videoPublication.updateMany({
@@ -185,6 +202,13 @@ export async function onPublishVideoFailed(
       resource: { type: 'video_publication', id: data.publicationId },
       metadata: { errorCode, reason: reason.slice(0, 500) },
     });
+    // Spec 14.4: "Publication failed — notify immediately with retry link".
+    await notifyPublicationFailed(deps, {
+      publicationId: data.publicationId,
+      organisationId: data.organisationId,
+      projectId: data.projectId,
+      reason,
+    });
   }
   await rollUpProject(deps, data.projectId, data.organisationId);
 }
@@ -194,6 +218,12 @@ export async function fireScheduledPublication(
   data: PublishJobData,
   deps: PipelineDeps,
 ): Promise<void> {
+  const target = await deps.db.videoPublication.findFirst({
+    where: { id: data.publicationId, organisationId: data.organisationId },
+    select: { platform: true },
+  });
+  // Halted platform: fail before the schedule is consumed (nothing is handed to publish-video).
+  if (target) await assertPlatformNotKilled(deps, data, target.platform);
   const fired = await deps.db.scheduledPublication.updateMany({
     where: { publicationId: data.publicationId, state: 'PENDING' },
     data: { state: 'FIRED' },

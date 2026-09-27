@@ -68,7 +68,8 @@ jobs:
           count=$(PGPASSWORD=studio psql -h localhost -U studio -d postmind -tAc \
             "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
           echo "studio tables: $count"
-          test "$count" -eq 33
+          # 33 (spec 7 + A7) + cost_alerts + notifications (Phase 12 cost caps / alerting)
+          test "$count" -eq 35
       - name: Install ffmpeg (Ubuntu repository)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
@@ -82,6 +83,33 @@ jobs:
             --to-schema-datamodel prisma/schema.prisma \
             --shadow-database-url "$SHADOW_DATABASE_URL" \
             --exit-code
+
+  ops-config:
+    # Phase 12 alerting: Prometheus rules parse and behave (promtool unit tests), and the
+    # Alertmanager routing is valid and sends each severity to the right receiver.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: promtool check rules
+        run: >-
+          docker run --rm -v "$PWD/ops:/ops" --entrypoint promtool prom/prometheus:v2.55.1
+          check rules /ops/prometheus/studio-alerts.yml
+      - name: promtool test rules
+        run: >-
+          docker run --rm -v "$PWD/ops:/ops" --entrypoint promtool prom/prometheus:v2.55.1
+          test rules /ops/prometheus/tests/studio-alerts.test.yml
+      - name: amtool check-config
+        run: >-
+          docker run --rm -v "$PWD/ops:/ops" --entrypoint amtool prom/alertmanager:v0.28.1
+          check-config /ops/alertmanager/alertmanager.yml
+      - name: Routing sends page → PagerDuty, ticket → Slack
+        run: |
+          for pair in "severity=page:studio-page" "severity=ticket:studio-ticket"; do
+            docker run --rm -v "$PWD/ops:/ops" --entrypoint amtool prom/alertmanager:v0.28.1 \
+              config routes test --config.file=/ops/alertmanager/alertmanager.yml \
+              --verify.receivers="${pair#*:}" alertname=CiRoutingCheck "${pair%%:*}"
+          done
 
   docker:
     # BACKLOG 12.6 — the production image builds, runs as non-root with ffmpeg present, serves

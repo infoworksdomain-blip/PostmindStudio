@@ -11,6 +11,7 @@ import { sampleBreakers } from '../src/lib/studio/observability/sample';
 import { getCircuitBreaker } from '../src/lib/studio/providers/circuit-breaker';
 import { PIPELINE_QUEUES, startWorkers } from '../src/lib/studio/queue/worker-host';
 import { queuePrefix } from '../src/lib/studio/queue/redis';
+import { APPROVAL_CHECK_SCHEDULE } from '../src/lib/studio/queue/workers/check-approvals';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -49,6 +50,15 @@ async function main(): Promise<void> {
     {
       name: 'roll-up-analytics',
       data: { organisationId: 'postmind-platform', runId: 'daily', planTier: 'STANDARD' },
+    },
+  );
+  // Spec 14.4 — "approval required" reminders for projects waiting > 2 h (every 15 minutes).
+  await analytics.upsertJobScheduler(
+    'check-pending-approvals',
+    { pattern: APPROVAL_CHECK_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'check-pending-approvals',
+      data: { organisationId: 'postmind-platform', runId: 'approvals', planTier: 'STANDARD' },
     },
   );
 

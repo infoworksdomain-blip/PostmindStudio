@@ -100,6 +100,8 @@ export interface JobDataMap {
   'poll-publication-analytics': PollAnalyticsJobData;
   'roll-up-analytics': RollUpJobData;
   'refresh-image-library': LibraryRefreshJobData;
+  /** Spec 14.4 "approval required — pending > 2h": platform-level, every 15 minutes. */
+  'check-pending-approvals': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -117,6 +119,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'poll-publication-analytics': QUEUES.analytics,
   'roll-up-analytics': QUEUES.analytics,
   'refresh-image-library': QUEUES.assets,
+  'check-pending-approvals': QUEUES.analytics,
 };
 
 export const MAX_RETRIES = 5;

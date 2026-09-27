@@ -1,0 +1,217 @@
+'use client';
+
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
+import { Section } from '../primitives';
+import { selectClass } from '../library/library-filters';
+import { ConfirmDialog } from './confirm-dialog';
+import { RedriveResults } from './redrive-results';
+import type { KillLevel, RedriveBody, RedriveResponse } from './types';
+
+// Phase 12 — bulk re-drive (POST /admin/redrive). Preview is a dry run; Apply repeats the exact
+// same filters with dryRun: false after a confirmation. Apply is only offered for the filters
+// that were previewed, so the operator always sees what will run first.
+
+const LEVELS: KillLevel[] = ['global', 'workspace', 'project', 'provider', 'platform'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** `<input type="datetime-local">` value for a time, in the browser's zone. */
+export function toLocalInput(ms: number): string {
+  const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60_000);
+  return d.toISOString().slice(0, 16);
+}
+
+interface Filters {
+  scope: RedriveBody['scope'];
+  level: KillLevel | '';
+  since: string;
+  stuckMinutes: string;
+  organisationId: string;
+  limit: string;
+}
+
+export function buildBody(f: Filters, dryRun: boolean): RedriveBody {
+  const org = f.organisationId.trim();
+  const common = { dryRun, limit: Number(f.limit), ...(org && { organisationId: org }) };
+  return f.scope === 'stuck'
+    ? { scope: 'stuck', stuckMinutes: Number(f.stuckMinutes), ...common }
+    : {
+        scope: 'kill_switch',
+        since: new Date(f.since).toISOString(),
+        ...(f.level && { level: f.level }),
+        ...common,
+      };
+}
+
+function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+export function RedrivePanel() {
+  const [filters, setFilters] = useState<Filters>(() => ({
+    scope: 'kill_switch',
+    level: '',
+    since: toLocalInput(Date.now() - DAY_MS),
+    stuckMinutes: '30',
+    organisationId: '',
+    limit: '100',
+  }));
+  const [result, setResult] = useState<RedriveResponse | null>(null);
+  const [previewed, setPreviewed] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const set = (patch: Partial<Filters>) => setFilters((f) => ({ ...f, ...patch }));
+  const validSince = filters.scope === 'stuck' || !Number.isNaN(Date.parse(filters.since));
+  const key = JSON.stringify(filters);
+  const canApply =
+    previewed === key && result?.dryRun === true && (result?.counts.redriven ?? 0) > 0;
+
+  const send = async (dryRun: boolean): Promise<boolean> => {
+    setPending(true);
+    try {
+      const res = await api<RedriveResponse>('/admin/redrive', {
+        method: 'POST',
+        body: buildBody(filters, dryRun),
+        idempotencyKey: newIdempotencyKey(),
+      });
+      setResult(res);
+      setPreviewed(dryRun ? key : null);
+      if (!dryRun) toast.success(`Re-drove ${res.counts.redriven} item(s)`);
+      return true;
+    } catch (err) {
+      toast.error(errorMessage(err));
+      return false;
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const preview = (e: FormEvent) => {
+    e.preventDefault();
+    if (validSince && !pending) void send(true);
+  };
+
+  return (
+    <div className="grid gap-6">
+      <Section
+        title="Re-drive halted or stuck work"
+        description="Kill-switched projects resume from the stage that was stopped, reusing finished shots and renders; halted publications are retried. Stuck projects get their current stage re-enqueued (after a Redis loss). Preview first — nothing changes until you apply."
+      >
+        <form
+          onSubmit={preview}
+          aria-label="Re-drive filters"
+          className="grid gap-3 md:grid-cols-3 lg:grid-cols-6 md:items-end"
+        >
+          <Field id="redrive-scope" label="Scope">
+            <select
+              id="redrive-scope"
+              className={selectClass}
+              value={filters.scope}
+              onChange={(e) => set({ scope: e.target.value as Filters['scope'] })}
+            >
+              <option value="kill_switch">Kill-switched work</option>
+              <option value="stuck">Stuck projects</option>
+            </select>
+          </Field>
+          {filters.scope === 'kill_switch' ? (
+            <>
+              <Field id="redrive-level" label="Level">
+                <select
+                  id="redrive-level"
+                  className={selectClass}
+                  value={filters.level}
+                  onChange={(e) => set({ level: e.target.value as Filters['level'] })}
+                >
+                  <option value="">Any level</option>
+                  {LEVELS.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field id="redrive-since" label="Failed since">
+                <Input
+                  id="redrive-since"
+                  type="datetime-local"
+                  value={filters.since}
+                  onChange={(e) => set({ since: e.target.value })}
+                />
+              </Field>
+            </>
+          ) : (
+            <Field id="redrive-stuck" label="Idle for (minutes)">
+              <Input
+                id="redrive-stuck"
+                type="number"
+                min={10}
+                value={filters.stuckMinutes}
+                onChange={(e) => set({ stuckMinutes: e.target.value })}
+              />
+            </Field>
+          )}
+          <Field id="redrive-org" label="Organisation">
+            <Input
+              id="redrive-org"
+              value={filters.organisationId}
+              onChange={(e) => set({ organisationId: e.target.value })}
+              placeholder="All organisations"
+              className="font-mono"
+              autoComplete="off"
+            />
+          </Field>
+          <Field id="redrive-limit" label="Limit">
+            <Input
+              id="redrive-limit"
+              type="number"
+              min={1}
+              max={500}
+              value={filters.limit}
+              onChange={(e) => set({ limit: e.target.value })}
+            />
+          </Field>
+          <div className="flex gap-2">
+            <Button type="submit" variant="outline" disabled={!validSince || pending}>
+              {pending && <Loader2 className="animate-spin" />}
+              Preview
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!canApply || pending}
+              onClick={() => setConfirming(true)}
+            >
+              Apply
+            </Button>
+          </div>
+        </form>
+        {previewed !== null && previewed !== key && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Filters changed since the preview — preview again before applying.
+          </p>
+        )}
+      </Section>
+
+      {result && <RedriveResults result={result} />}
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={`Re-drive ${result?.counts.redriven ?? 0} item(s)?`}
+        description="Jobs are queued for other organisations' projects and publications. Resumed work may call paid providers for the parts that never ran, and retried publications post to the customer's accounts."
+        confirmLabel="Re-drive"
+        onConfirm={() => send(false)}
+      />
+    </div>
+  );
+}

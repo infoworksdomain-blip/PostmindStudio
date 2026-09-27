@@ -12,7 +12,8 @@ import { ScopedKillForm } from './scoped-kill-form';
 import type { KillLevel, KillSwitchEntry, SetKillSwitchBody } from './types';
 import { useKillSwitch } from './use-kill-switch';
 
-// Spec 12 / 16.4 — the four kill-switch levels: global, workspace freeze, project, provider.
+// Spec 12 / 16.4 — the four kill-switch levels: global, workspace freeze, project, provider —
+// plus the per-platform publishing halt (Phase 12).
 // Engaging the global switch halts every Studio job on the platform, so it needs a typed
 // confirmation as well as a reason.
 
@@ -25,7 +26,7 @@ type Pending =
 
 const SCOPED: Array<{
   level: Exclude<KillLevel, 'global'>;
-  key: 'frozenWorkspaces' | 'killedProjects' | 'disabledProviders';
+  key: 'frozenWorkspaces' | 'killedProjects' | 'disabledProviders' | 'disabledPlatforms';
   title: string;
   empty: string;
 }> = [
@@ -46,6 +47,12 @@ const SCOPED: Array<{
     key: 'disabledProviders',
     title: 'Disabled providers',
     empty: 'Every provider is enabled.',
+  },
+  {
+    level: 'platform',
+    key: 'disabledPlatforms',
+    title: 'Halted platforms',
+    empty: 'Publishing is on for every platform.',
   },
 ];
 
@@ -134,11 +141,15 @@ export function KillSwitchPanel() {
         </Button>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {SCOPED.map((s) => (
-          <Section key={s.level} title={s.title} description={`${data[s.key].length} active`}>
+          <Section
+            key={s.level}
+            title={s.title}
+            description={`${(data[s.key] ?? []).length} active`}
+          >
             <EntryList
-              entries={data[s.key]}
+              entries={data[s.key] ?? []}
               empty={s.empty}
               onRelease={(target) => setPending({ kind: 'release', level: s.level, target })}
             />
@@ -161,7 +172,7 @@ export function KillSwitchPanel() {
         description={
           pending?.kind === 'global' && pending.enabled
             ? 'Every organisation’s Studio jobs stop at their next step: generation, rendering and publishing. In-flight provider calls are not cancelled.'
-            : 'Work resumes on the next job start.'
+            : 'New jobs start normally again. Work that failed while it was engaged does not resume on its own — use the Re-drive tab.'
         }
         confirmLabel={pending?.kind === 'global' && pending.enabled ? 'Halt Studio' : 'Release'}
         confirmPhrase={
