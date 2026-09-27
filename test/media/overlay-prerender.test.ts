@@ -56,12 +56,9 @@ describe.skipIf(!ready)('overlay pre-render with real ffmpeg', { timeout: 120_00
       ) as {
         streams: Array<{ codec_name: string; pix_fmt: string; width: number; height: number }>;
       };
-      expect(probe.streams[0]).toMatchObject({
-        codec_name: 'prores',
-        pix_fmt: 'yuva444p10le',
-        width: 540,
-        height: 960,
-      });
+      expect(probe.streams[0]).toMatchObject({ codec_name: 'prores', width: 540, height: 960 });
+      // The ProRes decoder reports 4444 as yuva444p10le or yuva444p12le: either way, alpha.
+      expect(probe.streams[0]?.pix_fmt).toMatch(/^yuva444p1[02]le$/);
     });
   }
 });
