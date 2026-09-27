@@ -18,6 +18,10 @@ export async function GET(): Promise<Response> {
     lazyConnect: true,
     maxRetriesPerRequest: 1,
   });
+  // Connection errors surface as a failed check; don't let ioredis report them as unhandled.
+  if (redis.listenerCount('error') === 0) {
+    redis.on('error', (err: Error) => logger.debug({ err }, 'readiness redis connection error'));
+  }
   const client = redis;
   const report = await runReadiness(
     [

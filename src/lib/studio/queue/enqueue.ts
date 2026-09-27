@@ -87,6 +87,9 @@ export interface InlineJob<N extends JobName = JobName> {
 export class InlineJobQueue implements JobQueue {
   readonly pending: InlineJob[] = [];
   readonly history: InlineJob[] = [];
+  /** Jobs of these names are held in `deferred` instead of running (e.g. recurring polls). */
+  readonly defer = new Set<JobName>();
+  readonly deferred: InlineJob[] = [];
   private readonly seen = new Set<string>();
 
   async add<N extends JobName>(
@@ -99,8 +102,23 @@ export class InlineJobQueue implements JobQueue {
       this.seen.add(options.jobId);
     }
     const job = { name, data, jobId: options.jobId } as InlineJob;
-    this.pending.push(job);
+    if (this.defer.has(name)) this.deferred.push(job);
+    else this.pending.push(job);
     this.history.push(job);
+  }
+
+  /** Move held jobs into the pending queue (runs them on the next drain). */
+  release(name?: JobName): number {
+    const keep: InlineJob[] = [];
+    let moved = 0;
+    for (const job of this.deferred.splice(0)) {
+      if (!name || job.name === name) {
+        this.pending.push(job);
+        moved += 1;
+      } else keep.push(job);
+    }
+    this.deferred.push(...keep);
+    return moved;
   }
 
   take(): InlineJob | undefined {

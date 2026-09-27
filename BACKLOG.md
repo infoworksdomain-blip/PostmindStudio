@@ -182,13 +182,13 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 11 — Analytics + observability (target: week 12-14)
 
-- [ ] **11.1** Analytics polling per platform (30s → 5min → 1hr → daily schedule).
-- [ ] **11.2** Analytics rollup jobs.
-- [ ] **11.3** Analytics endpoints.
-- [ ] **11.4** Cost tracking dashboards.
-- [ ] **11.5** Prometheus metrics endpoint.
-- [ ] **11.6** Sentry integration.
-- [ ] **11.7** Health endpoints (`/api/health`, `/api/health/ready`).
+- [x] **11.1** Analytics polling per platform (30s → 5min → 1hr → daily schedule).
+- [x] **11.2** Analytics rollup jobs.
+- [x] **11.3** Analytics endpoints.
+- [x] **11.4** Cost tracking dashboards.
+- [x] **11.5** Prometheus metrics endpoint.
+- [x] **11.6** Sentry integration.
+- [x] **11.7** Health endpoints (`/api/health`, `/api/health/ready`).
 
 ---
 
