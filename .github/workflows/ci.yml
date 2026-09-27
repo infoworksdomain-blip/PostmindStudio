@@ -62,6 +62,8 @@ jobs:
             "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
           echo "studio tables: $count"
           test "$count" -eq 33
+      - name: Prisma persistence against real Postgres
+        run: npx vitest run test/db
       - name: Schema matches migrations (drift check)
         run: |
           PGPASSWORD=studio psql -h localhost -U studio -d postmind -c 'CREATE DATABASE shadow'

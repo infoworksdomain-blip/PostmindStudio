@@ -43,18 +43,18 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 2 — Provider adapter interface + first providers (target: week 2-3)
 
-- [ ] **2.1** Define `src/lib/studio/providers/interface.ts` — the `ProviderAdapter` interface exactly as spec Section 8.9.
-- [ ] **2.2** Define `ProviderRequest`, `ProviderCapability`, `ProviderError` types.
-- [ ] **2.3** Implement `src/lib/studio/providers/registry.ts` — registers all adapters, exposes `getAdapter(providerId)` and `getAdaptersByCapability(cap)`.
-- [ ] **2.4** Implement `src/lib/studio/providers/anthropic.ts` — Claude adapter for ideation and script capabilities. Use real API. Tests using recorded responses.
-- [ ] **2.5** Implement `src/lib/studio/providers/openai.ts` — DALL-E 3 for images + text-embedding-3-large for embeddings.
-- [ ] **2.6** Implement `src/lib/studio/providers/runway.ts` — Gen-4 text-to-video. Use real API against staging key.
-- [ ] **2.7** Implement `src/lib/studio/providers/elevenlabs.ts` — voice synthesis with brand voice support.
-- [ ] **2.8** Implement `src/lib/studio/providers/shotstack.ts` — composition (edit-decision-list POST).
-- [ ] **2.9** Implement `src/lib/studio/providers/router.ts` — routing logic per spec Section 6.4. Considers plan tier, health, budget, latency.
-- [ ] **2.10** Implement `src/lib/studio/providers/circuit-breaker.ts` — 5 failures in 60s opens for 5 min.
-- [ ] **2.11** Add ProviderJob DB writes on every submit/poll/complete. Cost tracking to `provider_usage`.
-- [ ] **[GATE 2]** Operator confirms one end-to-end provider call works (submit a Runway generation, poll, retrieve URL).
+- [x] **2.1** Define `src/lib/studio/providers/interface.ts` — the `ProviderAdapter` interface exactly as spec Section 8.9.
+- [x] **2.2** Define `ProviderRequest`, `ProviderCapability`, `ProviderError` types.
+- [x] **2.3** Implement `src/lib/studio/providers/registry.ts` — registers all adapters, exposes `getAdapter(providerId)` and `getAdaptersByCapability(cap)`.
+- [x] **2.4** Implement `src/lib/studio/providers/anthropic.ts` — Claude adapter for ideation and script capabilities. Use real API. Tests using recorded responses.
+- [x] **2.5** Implement `src/lib/studio/providers/openai.ts` — DALL-E 3 for images + text-embedding-3-large for embeddings.
+- [x] **2.6** Implement `src/lib/studio/providers/runway.ts` — Gen-4 text-to-video. Use real API against staging key.
+- [x] **2.7** Implement `src/lib/studio/providers/elevenlabs.ts` — voice synthesis with brand voice support.
+- [x] **2.8** Implement `src/lib/studio/providers/shotstack.ts` — composition (edit-decision-list POST).
+- [x] **2.9** Implement `src/lib/studio/providers/router.ts` — routing logic per spec Section 6.4. Considers plan tier, health, budget, latency.
+- [x] **2.10** Implement `src/lib/studio/providers/circuit-breaker.ts` — 5 failures in 60s opens for 5 min.
+- [x] **2.11** Add ProviderJob DB writes on every submit/poll/complete. Cost tracking to `provider_usage`.
+- [x] **[GATE 2]** Operator confirms one end-to-end provider call works (submit a Runway generation, poll, retrieve URL).
 
 ---
 

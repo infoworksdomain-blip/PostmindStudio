@@ -6,6 +6,40 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 2] Operator approved. Live `npm run gate2:*` results were not shared with the build session, so live provider behaviour is still unverified from this side. CI green on PR #3.
+
+**Phase 2 status: code-complete and unit/integration tested against the providers' DOCUMENTED contracts. NOT yet run against live APIs** (no `.env.local` or database on the build machine). GATE 2 = run `npm run gate2:*` with staging keys.
+
+[2026-09-27] [2.11] tracked.ts: submitTracked/pollTracked/cancelTracked. Kill switch (provider scope) before every submit; provider_jobs PENDING→RUNNING→SUCCEEDED/FAILED/TIMED_OUT/CANCELLED; provider_usage daily upsert; video_projects.costActualPence tally; breaker fed (client-side errors excluded). CI runs test/db against real Postgres.
+[2026-09-27] [2.10] circuit-breaker.ts: 5 failures / 60s → open 5 min → half-open single trial. Per-process (Redis-backed state planned with 3.1).
+[2026-09-27] [2.9] router.ts: spec 6.4 AI_CLIP/AI_AVATAR lists + 6.5 primary/fallback pairs; skips not_configured / capability_unsupported / provider_disabled / over_budget / too_slow / circuit_open; returns decision snapshot for video_shots.providerRouting; NO_PROVIDER_AVAILABLE with reasons. budget.ts: project hard cap + optional org×provider daily cap.
+[2026-09-27] [2.8] shotstack.ts: POST /render, GET /render/{id}; stage|v1 environments. Shotstack documents no cancel endpoint (cancel is a logged no-op) and no per-second price (spec £0.02/s used).
+[2026-09-27] [2.7] elevenlabs.ts: POST /v1/text-to-speech/{voice_id}, MP3 to S3 (storage.ts), cost from `character-cost` header.
+[2026-09-27] [2.6] runway.ts: gen4.5 text-to-video, gen4_turbo image-to-video, X-Runway-Version 2024-11-06, failureCode classification, cost from task credits.
+[2026-09-27] [2.5] openai.ts: gpt-image-2 (b64 → S3) + text-embedding-3-large @ 1536 dims.
+[2026-09-27] [2.4] anthropic.ts: claude-sonnet-5 via @anthropic-ai/sdk, structured JSON via output_config.format, exact token cost, refusal/max_tokens handling.
+[2026-09-27] [2.3] registry.ts + default-registry.ts: adapters registered only when their API key is set.
+[2026-09-27] [2.1–2.2] interface.ts: ProviderAdapter (spec 8.9), capability + request union, ProviderErrorClass.
+
+**Phase 2 security review (independent agent) — all findings fixed:**
+- HIGH: cost reserved at submit (estimate → provider_usage + costActualPence), settled to actual at completion, released on failure/cancel. Spend by synchronous providers is visible to caps even if the job is never polled.
+- HIGH: router requires `request`; providers without a cost estimator are skipped (`no_cost_estimate`) instead of estimating 0.
+- HIGH: half-open trial slot released when the kill switch / DB aborts a submit or the error is client-side; abandoned trials expire after 15 min.
+- MEDIUM: pollTracked/cancelTracked take the caller's organisationId; other orgs' jobs return 404.
+- MEDIUM: temporary / presigned URLs are redacted before responses are stored in provider_jobs.
+- MEDIUM: S3 key segments validated (no '/', '..', leading '.').
+- LOW: explicit Anthropic (120s) and OpenAI (180s) SDK timeouts.
+- Runway FAILED tasks now report billed credits so charged failures stay counted.
+
+**GATE 2 review list:**
+- SPEC DRIFT — DALL-E 3 was removed from OpenAI's API on 2026-05-12. Using `gpt-image-2` (OpenAI's named replacement; `OPENAI_IMAGE_MODEL` to change).
+- SPEC DRIFT — Runway "Gen-4 Turbo" is image-to-video only; "Gen-4 Alpha" no longer exists. Text-only clips use `gen4.5` (12 credits/s vs 5); frame-seeded clips use `gen4_turbo`. Runway's API also hosts `veo3.1` (the spec's "Veo 3" for PLUS/ENTERPRISE is only reachable this way or via Vertex AI; `veo3` is gone).
+- DEVIATION — ProviderAdapter `output.url` is optional (text/embedding results have no file). Adapters may add optional `estimateCostPence()` / `typicalLatencySec` for the router.
+- DECISION — BASIC-plan AI_CLIP shots over 5s use the cheap list (spec 6.4 defines only ≤5s); AI_AVATAR gets D-ID↔HeyGen fallbacks (spec 6.1 "always at least one fallback").
+- PRICING TO CONFIRM — ElevenLabs `eleven_multilingual_v2` priced at $0.10/1k chars; FX rate `STUDIO_USD_TO_GBP_RATE` is operator config (placeholder 0.75).
+- Anthropic model default changed from `claude-sonnet-4-5` (starter .env.example) to `claude-sonnet-5`, the current Sonnet.
+- Only Runway is configured for AI_CLIP today, so after 5 simulated Runway failures the router correctly returns NO_PROVIDER_AVAILABLE for STANDARD shots. A real fallback needs a Luma or Kling adapter (not in the Phase 2 backlog).
+
 [2026-09-27] [GATE 1] Operator approved; the review-list decisions below stand as proposed. JWT alg still unpinned and the pgvector-in-public question is still open for ops. CI green on PR #2.
 [2026-09-27] [1.10] kill-switch.ts: four levels (global, workspace, project, provider) from system_flags, 30s per-key cache, fail-closed on unknown values, store errors propagate. Unit + PGlite integration tests (incl. cross-process toggle within the cache window).
 [2026-09-27] [1.9] prisma/seed.ts + seedSystemFlags(): kill switch off, 24 providers enabled. Uses createMany skipDuplicates so a re-seed never switches an active kill switch off. `npm run db:seed`.
