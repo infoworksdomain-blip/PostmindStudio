@@ -26,6 +26,7 @@ One line per completed backlog item. Newest at the top.
 - Kill-switch storage: Engagement keeps workspace freezes on Core's `Organisation`; Studio can't modify Core, so all four levels are system_flags keys (`studio.killSwitch`, `studio.frozenWorkspace.<org>`, `studio.killedProject.<id>`, `studio.disabledProvider.<id>`).
 - Core context contract ASSUMED: `GET /api/internal/context/:userId` → `{ organisation: {id, name?, planTier?}, memberships: [{organisationId, role}], capabilities: string[] }`. Validated with zod; any other shape returns 502. JWT user id read from `userId` claim, falling back to `sub`.
 - Admin capability names (`studio:admin:kill-switch:read|write`, `:providers`, `:library`, `:moderation`) are Studio-side proposals under the backlog's `studio:admin:*`; Core must grant them.
+- tenant.ts KNOWN RISK (security review): capability/membership changes within one org take up to 5 min to apply (spec 16.1 cache). Org switches are re-read from Core immediately. No explicit JWT `algorithms` allow-list yet: please confirm which alg Core signs with (e.g. RS256) and it will be pinned.
 - Embeddings are `vector(1536)` per spec; text-embedding-3-large must be called with `dimensions: 1536` (its native size is 3072). Phase 2.5.
 
 [2026-09-27] [GATE 0] Operator approved. CI green on PR #1.

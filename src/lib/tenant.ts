@@ -2,6 +2,7 @@ import { createRemoteJWKSet, errors as joseErrors, jwtVerify, type JWTVerifyGetK
 import { z } from 'zod';
 import { requireEnv } from './env';
 import { ForbiddenError, UnauthorizedError, UpstreamServiceError } from './errors';
+import { logger } from './logger';
 
 // Integration point 2 (Engagement handover 7.3, Studio spec 16.1). The security boundary of
 // every /api/studio/* endpoint — it must never fail open:
@@ -74,9 +75,9 @@ export function createTenantResolver(deps: TenantResolverDeps): TenantResolver {
   const now = deps.now ?? Date.now;
   const cache = new Map<string, { context: CoreContext; expiresAt: number }>();
 
-  async function getContext(userId: string): Promise<CoreContext> {
+  async function getContext(userId: string, options: { fresh?: boolean } = {}) {
     const cached = cache.get(userId);
-    if (cached && cached.expiresAt > now()) return cached.context;
+    if (!options.fresh && cached && cached.expiresAt > now()) return cached.context;
     const context = await deps.fetchContext(userId);
     cache.delete(userId);
     if (cache.size >= CONTEXT_CACHE_MAX_ENTRIES) {
@@ -111,7 +112,14 @@ export function createTenantResolver(deps: TenantResolverDeps): TenantResolver {
     const claims = await verify(extractBearerToken(req));
     // Verified above that at least one of userId / sub is present.
     const userId = (claims.userId ?? claims.sub) as string;
-    const context = await getContext(userId);
+    let context = await getContext(userId);
+    // The token names an org the cached context doesn't: the user may have switched org in
+    // Core within the cache window. Re-read from Core before deciding, never trust stale org.
+    if (claims.organisationId && claims.organisationId !== context.organisation.id) {
+      context = await getContext(userId, { fresh: true });
+    }
+    // KNOWN RISK (accepted by spec 16.1's 5-minute cache): capability or membership changes
+    // for the same org take up to 5 minutes to apply here.
     const organisationId = claims.organisationId ?? context.organisation.id;
 
     if (organisationId !== context.organisation.id) {
@@ -148,7 +156,9 @@ export async function fetchCoreContext(
   }
   if (res.status === 404) throw new ForbiddenError('User is unknown to PostMind Core');
   if (!res.ok) {
-    throw new UpstreamServiceError('PostMind Core context lookup failed', { status: res.status });
+    // Upstream status stays in our logs; it is not echoed to API callers.
+    logger.warn({ status: res.status }, '[tenant] PostMind Core context lookup failed');
+    throw new UpstreamServiceError('PostMind Core context lookup failed');
   }
   const parsed = coreContextSchema.safeParse(await res.json().catch(() => undefined));
   if (!parsed.success) {

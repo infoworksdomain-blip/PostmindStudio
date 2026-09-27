@@ -159,6 +159,29 @@ describe('requireTenantContext (resolver)', () => {
     expect(fetchContext).toHaveBeenCalledTimes(2);
   });
 
+  it('re-reads Core when the token names a different org than the cached context', async () => {
+    const org2: CoreContext = {
+      organisation: { id: 'org-2' },
+      memberships: [{ organisationId: 'org-2', role: 'member' }],
+      capabilities: [],
+    };
+    const fetchContext = vi.fn(async (): Promise<CoreContext> => context);
+    const { resolve } = makeResolver(fetchContext);
+    await resolve(request(await sign())); // caches org-1
+    fetchContext.mockResolvedValueOnce(org2); // user switched org in Core
+    const tenant = await resolve(request(await sign({ claims: { organisationId: 'org-2' } })));
+    expect(fetchContext).toHaveBeenCalledTimes(2);
+    expect(tenant).toMatchObject({ organisationId: 'org-2', capabilities: [] });
+  });
+
+  it('still returns 403 when a fresh read confirms the org mismatch', async () => {
+    const fetchContext = vi.fn(async (): Promise<CoreContext> => context);
+    const { resolve } = makeResolver(fetchContext);
+    const token = await sign({ claims: { organisationId: 'org-2' } });
+    await expect(resolve(request(token))).rejects.toBeInstanceOf(ForbiddenError);
+    expect(fetchContext).toHaveBeenCalledTimes(2);
+  });
+
   it('propagates upstream failures instead of failing open', async () => {
     const failing = vi.fn(async (): Promise<CoreContext> => {
       throw new UpstreamServiceError('down');
@@ -192,7 +215,10 @@ describe('fetchCoreContext', () => {
   it('maps other non-2xx responses to an upstream error', async () => {
     stubCoreEnv();
     const fetchImpl = vi.fn(async () => new Response(null, { status: 500 }));
-    await expect(fetchCoreContext('u', fetchImpl)).rejects.toBeInstanceOf(UpstreamServiceError);
+    const err = await fetchCoreContext('u', fetchImpl).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UpstreamServiceError);
+    // The upstream status must not reach API callers.
+    expect((err as UpstreamServiceError).details).toBeUndefined();
   });
 
   it('rejects an unexpected response shape', async () => {
