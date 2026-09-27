@@ -6,6 +6,28 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 8] Passed on automated evidence (autonomous build mode): a styled hook overlay was added to an existing (generated) project, previewed, and the project re-rendered with it and a whole-video watermark; the Shotstack edit carried rich-text overlay clips and their fonts. FFmpeg pre-render verified in CI against real ffmpeg. Live run pending provider keys and hosted fonts.
+
+**Phase 8 status: overlay engine built (backend). The overlay editor UI is Phase 10.**
+
+[2026-09-27] [8.7] POST /overlays/:id/preview: ≤3s, preview-resolution Shotstack render of the overlay's shot with just that overlay (documented output.range + resolution "preview"), copied to storage, 1h signed URL.
+[2026-09-27] [8.6] Endpoints (A4.8): GET|POST /overlay-presets (?group, ?businessId), PATCH|DELETE /overlay-presets/:id (org/business presets only), GET|POST /shots/:id/overlays, PATCH|DELETE /overlays/:id, POST /renders/:id/overlays/bulk (whole-video or per listed shot), plus POST /renders/:id/rerender, which A4.8 references ("a subsequent /rerender call"): re-composes with current overlays, no Layer 1–4 spend. Overlays are editable only when the project is reviewable; timing must sit inside the shot/render.
+[2026-09-27] [8.5] Auto-suggestion (A4.5): Layer 2 persistence turns each shot's onScreenText into an overlay — first shot Hook (TikTok Native), last shot CTA (Pulse Button), others Subtitle (Box Background) — with brand-kit colour/font substitution. Shots with overlays no longer get the plain html caption.
+[2026-09-27] [8.4] overlays/prerender.ts: glitch (RGB-split jitter), karaoke (word-by-word highlight, evenly timed) and counter (count-up via FFmpeg %{eif}) rendered by FFmpeg to ProRes 4444 with alpha (Shotstack composites MOV alpha; WEBM alpha is reported unsupported), cached per content hash, placed as video clips. User text reaches FFmpeg only via textfile (argv, no shell, private temp dir).
+[2026-09-27] [8.3] overlays/shotstack.ts: TextOverlay → Shotstack clip using `rich-text` (Shotstack's reference marks the `text` asset A4.6 shows as deprecated): font/weight/italic/colour+alpha, letter spacing, line height, stroke, shadow, box/rounded background, alignment, anchor → offset (y up), rotation, fade/slide transitions with Fast/Slow by duration, scale tweens for scaleIn/popIn, offset tweens for wave, typewriter animation. Overlapping overlays are packed onto separate top tracks; timeline.fonts lists every family used.
+[2026-09-27] [8.2] 28 built-in presets across the seven A4.3 groups (hook 5, subtitle 4, CTA 4, quote 4, statistic 4, story 4, brand 3), seeded idempotently by db:seed.
+[2026-09-27] [8.1] Models already in the Phase 1 schema; overlays/params.ts is the shared zod schema for the A4.2 parameters (strict, bounded; colours #RRGGBB[AA], font names restricted).
+
+**Phase 8 security review — fixed:** bulk overlays bypassed the 12-per-shot cap (HIGH: unbounded overlays → hours of FFmpeg pre-render per compose); the bulk endpoint now applies the same per-shot cap and at most 6 whole-video overlays per project. Preview renders (MEDIUM: billed, unlimited, callable with read access) now need studio:project:write, a reviewable project, and are capped at 30 composer renders per project per hour. Counter values bounded to ±1e9. Verified not exploitable: FFmpeg filtergraph/argv injection, %{…} expansion from user text, font-path traversal, cross-tenant presets/overlays.
+
+**Phase 8 review list:**
+- Fonts: Shotstack has no system fonts, so STUDIO_FONTS_BASE_URL must host each family as <FamilyWithoutSpaces>.ttf; composing a video with overlays fails with a configuration error otherwise. Shotstack's reference and its conventions page disagree on whether font.family is the embedded family name or the file name — verify with the first live render.
+- Animation fidelity: blurIn falls back to a fade (no documented blur tween); slide directions follow Shotstack's travel-direction naming (slideInLeft → "slideRight") — confirm visually. Transition speed is Shotstack's fixed normal/Fast/Slow, not the exact animationInMs.
+- Karaoke timing is evenly spread across the overlay: word-level voice timing needs a transcription provider (AssemblyAI, not built).
+- Slideshow slides use their built-in text rendering; per-slide text overlays need a slide→overlay link that the A7 schema doesn't have (overlays attach to shots or renders). Whole-video overlays work for slideshows.
+- Whole-video overlays attach to a render and are carried to later renders of the same platform.
+- Template overlayDefaults (Phase 7) name presets by intent; they are not yet applied to slides.
+
 [2026-09-27] [GATE 7] Passed on automated evidence (autonomous build mode): a Listicle 5 slideshow was built from a topic, auto-populated from a real image library (library matches + generated gaps), edited, generated and composed end to end on real Postgres with scripted providers. Live run pending provider keys.
 
 **Phase 7 status: slideshow mode built — templates, slides API, auto-populate, slideshow composition.**

@@ -25,6 +25,8 @@ export interface PipelineConfig {
   providerPollIntervalMs: number;
   /** Give up on a single provider job after this long. */
   providerTimeoutMs: number;
+  /** Where overlay fonts are hosted as <FamilyNoSpaces>.ttf (Shotstack has no system fonts). */
+  fontsBaseUrl?: string;
 }
 
 export interface PipelineDeps {

@@ -38,6 +38,8 @@ import {
 } from '../../pipeline/scripting';
 import { jobIds } from '../enqueue';
 import { planSlideshow } from './plan-slideshow';
+import { suggestionRows, suggestOverlays } from '../../overlays/suggest';
+import { BUILT_IN_PRESETS } from '../../overlays/presets';
 import type { ProjectJobData } from '../queues';
 
 // BACKLOG 3.4 — Layers 1 (ideation) and 2 (script + storyboard), then pre-generation script
@@ -110,6 +112,7 @@ async function persistPlan(
   brief: IdeationResult,
   ideationModel: string,
   scripts: Array<{ format: TargetFormat; plan: PlannedScript; model: string }>,
+  brandKit: BrandKit | null,
 ): Promise<void> {
   const briefData = {
     rawInput: project.description ?? '',
@@ -144,6 +147,32 @@ async function persistPlan(
         },
       });
     }
+    // Layer 2 also proposes styled overlays for every shot's on-screen text (A4.5).
+    const shots = await tx.videoShot.findMany({ where: { script: { projectId: project.id } } });
+    const presets = await tx.overlayPreset.findMany({
+      where: { scope: 'BUILT_IN', name: { in: BUILT_IN_PRESETS.map((p) => p.name) } },
+      select: { id: true, name: true },
+    });
+    const palette = Array.isArray(brandKit?.colourPalette)
+      ? (brandKit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
+      : [];
+    const brand = brandKit
+      ? {
+          primary: palette[0],
+          secondary: palette[1],
+          fontFamily: brandKit.fontPrimary ?? undefined,
+        }
+      : null;
+    const rows = [...new Set(shots.map((s) => s.scriptId))].flatMap((scriptId) =>
+      suggestionRows(
+        suggestOverlays(
+          shots.filter((s) => s.scriptId === scriptId),
+          brand,
+        ),
+        new Map(presets.map((p) => [p.name, p.id])),
+      ),
+    );
+    if (rows.length) await tx.textOverlay.createMany({ data: rows });
   });
 }
 
@@ -305,7 +334,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     return log.warn({ safety }, 'script safety stopped the run');
   }
 
-  await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts);
+  await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit);
   await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,

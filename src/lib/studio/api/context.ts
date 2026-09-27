@@ -27,6 +27,8 @@ export interface ApiDeps {
   oauthState: OAuthStateStore;
   /** Feature D: image library (ingest, generation, embeddings, search). */
   library: LibraryDeps;
+  /** Overlay fonts (<FamilyNoSpaces>.ttf) for previews; STUDIO_FONTS_BASE_URL. */
+  fontsBaseUrl?: string;
   /** Public origin of Studio (OAuth return URLs must stay on it). */
   appUrl: string;
   logger: Logger;
@@ -77,6 +79,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),
+    fontsBaseUrl: pipeline.config.fontsBaseUrl,
     appUrl: env.requireEnv('APP_URL'),
     logger,
     now: Date.now,

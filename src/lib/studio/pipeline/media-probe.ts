@@ -33,15 +33,25 @@ export interface MediaInspector {
 
 const DEFAULT_TIMEOUT_MS = 5 * 60_000;
 
-interface RunResult {
+export interface RunResult {
   code: number | null;
   stdout: string;
   stderr: string;
 }
 
-function run(binary: string, args: string[], timeoutMs: number): Promise<RunResult> {
+/** Run ffmpeg/ffprobe with an argv array (no shell). Also used by the overlay pre-renderer. */
+export function run(
+  binary: string,
+  args: string[],
+  timeoutMs: number,
+  cwd?: string,
+): Promise<RunResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    const child = spawn(binary, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      ...(cwd && { cwd }),
+    });
     let stdout = '';
     let stderr = '';
     const timer = setTimeout(() => child.kill('SIGKILL'), timeoutMs);
