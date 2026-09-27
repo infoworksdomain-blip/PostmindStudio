@@ -24,7 +24,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
-      - run: npm run test:coverage
+      - run: npm test
 
   database:
     # Applies the committed migrations to real Postgres 15 + pgvector, seeds system_flags,
@@ -71,8 +71,9 @@ jobs:
           test "$count" -eq 33
       - name: Install ffmpeg (Ubuntu repository)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-      - name: Pipeline on real Postgres, BullMQ (Redis 7) and ffmpeg
-        run: npx vitest run test/db test/queue test/media
+      - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
+        # Coverage is enforced here, where the DB/queue/media suites run too.
+        run: npm run test:coverage
       - name: Schema matches migrations (drift check)
         run: |
           PGPASSWORD=studio psql -h localhost -U studio -d postmind -c 'CREATE DATABASE shadow'
