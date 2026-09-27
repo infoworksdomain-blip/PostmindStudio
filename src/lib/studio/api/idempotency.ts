@@ -1,11 +1,18 @@
-import { Redis } from 'ioredis';
+import { createHash } from 'node:crypto';
 import type { ConnectionOptions } from 'bullmq';
+import { Redis } from 'ioredis';
 
-// Idempotency-Key support for mutating endpoints (spec 8.1, Engagement 14.1): a repeated request
-// with the same key (per organisation, user, method and path) replays the first response for 24h.
-// Only successful (2xx) responses are stored, so a failed request can be retried with the key.
+// Idempotency-Key support for mutating endpoints (spec 8.1, Engagement 14.1).
+//
+// Reserve-then-execute: the key is claimed atomically (SET NX) BEFORE the handler runs, so two
+// concurrent requests with the same key can never both execute. The reservation stores a hash
+// of the request body; reusing a key with a different body is rejected. On success the final
+// response replaces the reservation for 24h; on failure the reservation is released so the
+// client can retry.
 
 export const IDEMPOTENCY_TTL_SEC = 24 * 60 * 60;
+/** A reservation outlives any sane request; if a server dies mid-request it frees itself. */
+export const RESERVATION_TTL_SEC = 5 * 60;
 const KEY_PATTERN = /^[A-Za-z0-9_-]{8,128}$/;
 
 export interface StoredResponse {
@@ -13,13 +20,24 @@ export interface StoredResponse {
   body: unknown;
 }
 
+export type IdempotencyEntry =
+  | { state: 'processing'; bodyHash: string }
+  | { state: 'complete'; bodyHash: string; response: StoredResponse };
+
+export type ReserveResult = { reserved: true } | { reserved: false; existing: IdempotencyEntry };
+
 export interface IdempotencyStore {
-  get(key: string): Promise<StoredResponse | null>;
-  set(key: string, response: StoredResponse): Promise<void>;
+  reserve(key: string, bodyHash: string): Promise<ReserveResult>;
+  complete(key: string, bodyHash: string, response: StoredResponse): Promise<void>;
+  release(key: string): Promise<void>;
 }
 
 export function isValidIdempotencyKey(key: string): boolean {
   return KEY_PATTERN.test(key);
+}
+
+export function hashBody(raw: string): string {
+  return createHash('sha256').update(raw).digest('hex');
 }
 
 export function idempotencyScope(input: {
@@ -33,15 +51,31 @@ export function idempotencyScope(input: {
 }
 
 export function createMemoryIdempotencyStore(now: () => number = Date.now): IdempotencyStore {
-  const entries = new Map<string, { response: StoredResponse; expiresAt: number }>();
+  const entries = new Map<string, { entry: IdempotencyEntry; expiresAt: number }>();
+  const live = (key: string) => {
+    const hit = entries.get(key);
+    if (hit && hit.expiresAt > now()) return hit.entry;
+    entries.delete(key);
+    return undefined;
+  };
   return {
-    async get(key) {
-      const entry = entries.get(key);
-      if (!entry || entry.expiresAt <= now()) return null;
-      return entry.response;
+    async reserve(key, bodyHash) {
+      const existing = live(key);
+      if (existing) return { reserved: false, existing };
+      entries.set(key, {
+        entry: { state: 'processing', bodyHash },
+        expiresAt: now() + RESERVATION_TTL_SEC * 1000,
+      });
+      return { reserved: true };
     },
-    async set(key, response) {
-      entries.set(key, { response, expiresAt: now() + IDEMPOTENCY_TTL_SEC * 1000 });
+    async complete(key, bodyHash, response) {
+      entries.set(key, {
+        entry: { state: 'complete', bodyHash, response },
+        expiresAt: now() + IDEMPOTENCY_TTL_SEC * 1000,
+      });
+    },
+    async release(key) {
+      entries.delete(key);
     },
   };
 }
@@ -53,13 +87,21 @@ export function createRedisIdempotencyStore(connection: ConnectionOptions): Idem
     lazyConnect: true,
   });
   return {
-    async get(key) {
+    async reserve(key, bodyHash) {
+      const placeholder: IdempotencyEntry = { state: 'processing', bodyHash };
+      const ok = await redis.set(key, JSON.stringify(placeholder), 'EX', RESERVATION_TTL_SEC, 'NX');
+      if (ok === 'OK') return { reserved: true };
       const raw = await redis.get(key);
-      return raw ? (JSON.parse(raw) as StoredResponse) : null;
+      // Expired between SET and GET: treat as a fresh reservation attempt by the caller.
+      if (!raw) return this.reserve(key, bodyHash);
+      return { reserved: false, existing: JSON.parse(raw) as IdempotencyEntry };
     },
-    async set(key, response) {
-      // NX: the first stored response wins if two identical requests race.
-      await redis.set(key, JSON.stringify(response), 'EX', IDEMPOTENCY_TTL_SEC, 'NX');
+    async complete(key, bodyHash, response) {
+      const entry: IdempotencyEntry = { state: 'complete', bodyHash, response };
+      await redis.set(key, JSON.stringify(entry), 'EX', IDEMPOTENCY_TTL_SEC);
+    },
+    async release(key) {
+      await redis.del(key);
     },
   };
 }

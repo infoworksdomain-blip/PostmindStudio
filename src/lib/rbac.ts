@@ -7,6 +7,8 @@ import type { TenantContext } from './tenant';
 export const StudioCapability = {
   ProjectRead: 'studio:project:read',
   ProjectWrite: 'studio:project:write',
+  /** Approve / reject for publication — separate from editing so creators can't self-approve. */
+  ProjectApprove: 'studio:project:approve',
   RenderDownload: 'studio:render:download', // spec 8.4
   RenderForceApprove: 'studio:render:force-approve', // spec 13.5
   AdminKillSwitchRead: 'studio:admin:kill-switch:read',

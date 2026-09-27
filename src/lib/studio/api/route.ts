@@ -1,10 +1,16 @@
 import type { z } from 'zod';
-import { toErrorResponse, ValidationError } from '../../errors';
+import { ConflictError, StudioError, toErrorResponse, ValidationError } from '../../errors';
 import { getCorrelationId, withContext } from '../../logger';
 import { requireCapability, type StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
-import { idempotencyScope, isValidIdempotencyKey } from './idempotency';
+import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
+
+/** 422: an Idempotency-Key reused with a different body (the client has a bug). */
+class IdempotencyMismatchError extends StudioError {
+  readonly status = 422;
+  readonly code = 'idempotency_key_mismatch';
+}
 
 // Every /api/studio route runs through withStudioRoute (CLAUDE.md "API routes"):
 //   requireTenantContext → requireCapability → handler, with a correlation id, structured
@@ -70,49 +76,72 @@ export function withStudioRoute(capability: StudioCapability, handler: Handler) 
 
       const path = new URL(req.url).pathname;
       const idemKey = MUTATING.has(req.method) ? req.headers.get('idempotency-key') : null;
-      let scope: string | undefined;
+      let idem: { scope: string; bodyHash: string } | undefined;
       if (idemKey) {
-        if (!isValidIdempotencyKey(idemKey))
+        if (!isValidIdempotencyKey(idemKey)) {
           throw new ValidationError('Idempotency-Key must be 8–128 URL-safe characters');
-        scope = idempotencyScope({
+        }
+        const scope = idempotencyScope({
           organisationId: tenant.organisationId,
           userId: tenant.userId,
           method: req.method,
           path,
           key: idemKey,
         });
-        const replay = await deps.idempotency.get(scope);
-        if (replay) {
-          return jsonResponse(replay.body, {
-            status: replay.status,
+        const bodyHash = hashBody(await req.clone().text());
+        const claim = await deps.idempotency.reserve(scope, bodyHash);
+        if (!claim.reserved) {
+          const { existing } = claim;
+          if (existing.bodyHash !== bodyHash) {
+            throw new IdempotencyMismatchError(
+              'Idempotency-Key was already used with a different request body',
+            );
+          }
+          if (existing.state === 'processing') {
+            throw new ConflictError('A request with this Idempotency-Key is still in progress');
+          }
+          return jsonResponse(existing.response.body, {
+            status: existing.response.status,
             headers: { ...headers, 'idempotent-replayed': 'true' },
           });
         }
+        idem = { scope, bodyHash };
       }
 
-      const params = flattenParams((await next?.params) ?? {});
-      const result = await handler({
-        req,
-        tenant,
-        deps,
-        params,
-        correlationId,
-        audit: (action, resource, metadata) =>
-          deps.audit({
-            actorUserId: tenant.userId,
-            organisationId: tenant.organisationId,
-            action,
-            resource,
-            metadata: { ...metadata, correlationId },
-          }),
-      });
-      const status = result.status ?? 200;
-      const body = { ok: true, ...result.body };
-      const safeBody = JSON.parse(
-        JSON.stringify(body, (_k, v: unknown) => (typeof v === 'bigint' ? v.toString() : v)),
-      ) as Record<string, unknown>;
-      if (scope && status < 300) await deps.idempotency.set(scope, { status, body: safeBody });
-      return jsonResponse(safeBody, { status, headers });
+      try {
+        const params = flattenParams((await next?.params) ?? {});
+        const result = await handler({
+          req,
+          tenant,
+          deps,
+          params,
+          correlationId,
+          audit: (action, resource, metadata) =>
+            deps.audit({
+              actorUserId: tenant.userId,
+              organisationId: tenant.organisationId,
+              action,
+              resource,
+              metadata: { ...metadata, correlationId },
+            }),
+        });
+        const status = result.status ?? 200;
+        const safeBody = JSON.parse(
+          JSON.stringify({ ok: true, ...result.body }, (_k, v: unknown) =>
+            typeof v === 'bigint' ? v.toString() : v,
+          ),
+        ) as Record<string, unknown>;
+        if (idem) {
+          if (status < 300)
+            await deps.idempotency.complete(idem.scope, idem.bodyHash, { status, body: safeBody });
+          else await deps.idempotency.release(idem.scope);
+        }
+        return jsonResponse(safeBody, { status, headers });
+      } catch (err) {
+        // A failed request must not pin the key: the client is expected to retry with it.
+        if (idem) await deps.idempotency.release(idem.scope).catch(() => undefined);
+        throw err;
+      }
     } catch (err) {
       const response = toErrorResponse(err);
       if (response.status >= 500) log.error({ err }, 'studio api error');

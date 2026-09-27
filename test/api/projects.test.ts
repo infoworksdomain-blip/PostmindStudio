@@ -23,6 +23,7 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
   const tokens = {
     owner: tenant(org),
     reader: tenant(org, ['studio:project:read']),
+    editor: tenant(org, ['studio:project:read', 'studio:project:write']),
     stranger: tenant(otherOrg),
     nomember: 'forbidden' as const,
   };
@@ -158,6 +159,14 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       });
       expect(second.headers.get('idempotent-replayed')).toBe('true');
       expect(second.json).toEqual(first.json);
+      const mismatch = await call(projectsRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { ...createBody, name: 'Different' },
+        headers,
+      });
+      expect(mismatch.status).toBe(422);
+      expect(mismatch.json.error).toBe('idempotency_key_mismatch');
       const bad = await call(projectsRoute.POST, {
         method: 'POST',
         token: 'owner',
@@ -166,6 +175,35 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       });
       expect(bad.status).toBe(400);
     });
+  });
+
+  it('never executes twice for concurrent requests with the same Idempotency-Key', async () => {
+    const headers = { 'idempotency-key': `race-${randomUUID()}` };
+    const before = await db.videoProject.count({ where: { organisationId: org } });
+    const results = await Promise.all(
+      [1, 2, 3].map(() =>
+        call(projectsRoute.POST, { method: 'POST', token: 'owner', body: createBody, headers }),
+      ),
+    );
+    const created = results.filter(
+      (r) => r.status === 201 && r.headers.get('idempotent-replayed') !== 'true',
+    );
+    expect(created).toHaveLength(1);
+    expect(results.every((r) => r.status === 201 || r.status === 409)).toBe(true);
+    expect(await db.videoProject.count({ where: { organisationId: org } })).toBe(before + 1);
+  });
+
+  it('releases the key when the request fails so it can be retried', async () => {
+    const headers = { 'idempotency-key': `retry-${randomUUID()}` };
+    const bad = { ...createBody, brandKitId: 'missing' };
+    expect(
+      (await call(projectsRoute.POST, { method: 'POST', token: 'owner', body: bad, headers }))
+        .status,
+    ).toBe(400);
+    expect(
+      (await call(projectsRoute.POST, { method: 'POST', token: 'owner', body: bad, headers }))
+        .status,
+    ).toBe(400);
   });
 
   describe('GET /projects and /projects/:id', () => {
@@ -408,6 +446,10 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       ).toBe(409);
       expect(
         (await call(approveRoute.POST, { method: 'POST', token: 'reader', params: { id } })).status,
+      ).toBe(403);
+      // Editors without studio:project:approve cannot self-approve.
+      expect(
+        (await call(approveRoute.POST, { method: 'POST', token: 'editor', params: { id } })).status,
       ).toBe(403);
     });
 

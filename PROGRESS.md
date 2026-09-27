@@ -18,6 +18,8 @@ One line per completed backlog item. Newest at the top.
 [2026-09-27] [4.x] Renders: GET /projects/:id/renders, GET /renders/:id, /preview (signed 1h), /download (signed 15m, studio:render:download, audited), POST /renders/:id/force-approve (spec 13.5; content-safety BLOCK refused). GET /api/health (liveness).
 [2026-09-27] [4.x] withStudioRoute: tenant → capability → handler; correlation id; Engagement error envelope; Idempotency-Key replay (Redis, 24h); BigInt-safe JSON; audit on every mutation.
 
+**Phase 4 security review — fixed:** Idempotency-Key now reserve-then-execute (SET NX before the handler; concurrent duplicates get 409, never a second execution; key released on failure) and bound to a request-body hash (422 on reuse with a different body); archive write scoped by organisationId; approve/reject moved to a new `studio:project:approve` capability so editors can't self-approve (Core must grant it to reviewers).
+
 **Phase 4 review list:**
 - businessId is accepted as given: Core's context contract (assumed) carries no business list, so Studio cannot verify the business belongs to the organisation (spec 7.14 expects Core-side validation).
 - Plan tier comes from Core context `organisation.planTier`; unknown/missing → BASIC routing.

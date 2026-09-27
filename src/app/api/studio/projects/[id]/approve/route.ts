@@ -4,7 +4,7 @@ import { approveInput, approveProject } from '@/lib/studio/services/projects';
 
 // POST /api/studio/projects/:id/approve — approve renders for publication
 export const POST = withStudioRoute(
-  StudioCapability.ProjectWrite,
+  StudioCapability.ProjectApprove,
   async ({ req, tenant, deps, params, audit }) => {
     const { note } = await parseBody(req, approveInput);
     const project = await approveProject(deps.db, tenant, params.id ?? '', note, deps.now());

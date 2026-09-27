@@ -4,7 +4,7 @@ import { rejectInput, rejectProject } from '@/lib/studio/services/projects';
 
 // POST /api/studio/projects/:id/reject — halt publication; a note is required
 export const POST = withStudioRoute(
-  StudioCapability.ProjectWrite,
+  StudioCapability.ProjectApprove,
   async ({ req, tenant, deps, params, audit }) => {
     const { note } = await parseBody(req, rejectInput);
     const project = await rejectProject(deps.db, tenant, params.id ?? '', note, deps.now());

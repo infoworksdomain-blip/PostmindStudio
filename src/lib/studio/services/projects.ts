@@ -260,10 +260,12 @@ export async function archiveProject(db: Db, organisationId: string, id: string,
   if (ACTIVE_PIPELINE_STATES.includes(project.state)) {
     throw new ConflictError('Cancel generation before archiving');
   }
-  await db.videoProject.update({
-    where: { id },
+  const archived = await db.videoProject.updateMany({
+    where: { id, organisationId, state: project.state },
     data: { state: 'ARCHIVED', deletedAt: new Date(now) },
   });
+  if (archived.count === 0)
+    throw new ConflictError('Project changed concurrently; reload and retry');
 }
 
 export async function duplicateProject(db: Db, tenant: TenantContext, id: string) {

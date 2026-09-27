@@ -17,6 +17,7 @@ import { ScriptedAdapter } from './scripted-adapter';
 export const ALL_CAPABILITIES = [
   'studio:project:read',
   'studio:project:write',
+  'studio:project:approve',
   'studio:render:download',
   'studio:render:force-approve',
 ];

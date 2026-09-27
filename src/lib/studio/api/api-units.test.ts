@@ -9,6 +9,7 @@ import { StubAdapter } from '../providers/test-adapter';
 import { toPlanTier, toStoredFormats } from '../services/catalog';
 import {
   createMemoryIdempotencyStore,
+  hashBody,
   idempotencyScope,
   isValidIdempotencyKey,
 } from './idempotency';
@@ -39,13 +40,28 @@ describe('idempotency', () => {
     ).toBe('studio:idem:o:u:POST:/p:k');
   });
 
-  it('memory store expires entries after 24h', async () => {
+  it('reserves before execution, replays completed responses, and releases on failure', async () => {
     let now = 0;
     const store = createMemoryIdempotencyStore(() => now);
-    await store.set('k', { status: 201, body: { ok: true } });
-    expect(await store.get('k')).toEqual({ status: 201, body: { ok: true } });
+    expect(await store.reserve('k', 'h1')).toEqual({ reserved: true });
+    expect(await store.reserve('k', 'h1')).toEqual({
+      reserved: false,
+      existing: { state: 'processing', bodyHash: 'h1' },
+    });
+    await store.complete('k', 'h1', { status: 201, body: { ok: true } });
+    expect(await store.reserve('k', 'h1')).toMatchObject({
+      reserved: false,
+      existing: { state: 'complete', response: { status: 201 } },
+    });
     now = 24 * 60 * 60 * 1000;
-    expect(await store.get('k')).toBeNull();
+    expect(await store.reserve('k', 'h1')).toEqual({ reserved: true });
+    await store.release('k');
+    expect(await store.reserve('k', 'h2')).toEqual({ reserved: true });
+  });
+
+  it('hashes request bodies deterministically', () => {
+    expect(hashBody('{"a":1}')).toBe(hashBody('{"a":1}'));
+    expect(hashBody('{"a":1}')).not.toBe(hashBody('{"a":2}'));
   });
 });
 
