@@ -16,6 +16,8 @@ import { IMAGE_SLIDE_TYPES, OPTIONAL_IMAGE_SLIDE_TYPES } from './templates';
 
 export const MIN_SIMILARITY = 0.3;
 export const MAX_GENERATIONS_PER_RUN = 5;
+/** Defence in depth against add/populate/delete cycling: generated images per org per 24h. */
+export const MAX_GENERATIONS_PER_ORG_PER_DAY = 100;
 const SEARCH_CANDIDATES = 8;
 
 export const SLIDESHOW_TEXT_SCHEMA = {
@@ -176,6 +178,18 @@ export async function populateSlideshow(
   });
   const fallbackQuery = input.topic ?? profile?.imageThemes.slice(0, 3).join(' ') ?? '';
 
+  const generatedToday = await deps.db.imageLibraryItem.count({
+    where: {
+      organisationId: scope.organisationId,
+      source: 'GENERATED',
+      createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    },
+  });
+  const generationBudget = Math.max(
+    0,
+    Math.min(MAX_GENERATIONS_PER_RUN, MAX_GENERATIONS_PER_ORG_PER_DAY - generatedToday),
+  );
+
   for (const slide of slides.filter(needsImage)) {
     const query = slide.content.imageQuery ?? slide.content.text ?? fallbackQuery;
     let chosen: string | undefined;
@@ -185,7 +199,7 @@ export async function populateSlideshow(
       if (chosen) result.imagesMatched += 1;
     }
     const required = IMAGE_SLIDE_TYPES.has(slide.slideType as never);
-    if (!chosen && required && query && result.imagesGenerated < MAX_GENERATIONS_PER_RUN) {
+    if (!chosen && required && query && result.imagesGenerated < generationBudget) {
       const outcome = await generateLibraryImage(deps.library, scope, {
         prompt: query,
         aspectRatio: input.aspectRatio,

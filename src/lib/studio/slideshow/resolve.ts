@@ -8,6 +8,32 @@ import { kenBurnsSpec, parseSlideContent } from './planner';
 // images (or the hotlink for hotlink-only stock) and video assets, scoped to the project's
 // organisation and business.
 
+/**
+ * Video clips usable in this business's slideshows: same organisation AND produced by a project
+ * of the same business (clips carry projectId, not businessId).
+ */
+export async function businessVideoAssets(
+  db: Pick<PrismaClient, 'videoAsset' | 'videoProject'>,
+  scope: { organisationId: string; businessId: string },
+  ids: string[],
+) {
+  if (ids.length === 0) return [];
+  const assets = await db.videoAsset.findMany({
+    where: { id: { in: ids }, organisationId: scope.organisationId, kind: 'VIDEO_CLIP' },
+  });
+  const projects = await db.videoProject.findMany({
+    where: {
+      id: { in: [...new Set(assets.map((a) => a.projectId))] },
+      organisationId: scope.organisationId,
+      businessId: scope.businessId,
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  const allowed = new Set(projects.map((p) => p.id));
+  return assets.filter((a) => allowed.has(a.projectId));
+}
+
 export async function resolveSlides(
   deps: { db: PrismaClient; storage: AssetStorage },
   project: { id: string; organisationId: string; businessId: string },
@@ -32,9 +58,7 @@ export async function resolveSlides(
         businessId: project.businessId,
       },
     }),
-    deps.db.videoAsset.findMany({
-      where: { id: { in: videoIds }, organisationId: project.organisationId },
-    }),
+    businessVideoAssets(deps.db, project, videoIds),
   ]);
   const imageUrl = new Map<string, string>();
   for (const item of images) {

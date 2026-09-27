@@ -16,6 +16,7 @@ import {
   type SlideDraft,
   type SlideshowInput,
 } from '../slideshow/planner';
+import { businessVideoAssets } from '../slideshow/resolve';
 import { clampDuration, slidePlan, type SlideBlueprint } from '../slideshow/templates';
 import { toPlanTier } from './catalog';
 
@@ -146,14 +147,9 @@ async function assertAssets(
       throw new ValidationError('An image id is not in this business’s image library');
   }
   if (videoIds.size) {
-    const found = await db.videoAsset.count({
-      where: {
-        id: { in: [...videoIds] },
-        organisationId: scope.organisationId,
-        kind: 'VIDEO_CLIP',
-      },
-    });
-    if (found !== videoIds.size) throw new ValidationError('A video asset id was not found');
+    const found = await businessVideoAssets(db, scope, [...videoIds]);
+    if (found.length !== videoIds.size)
+      throw new ValidationError('A video asset id is not a clip of this business');
   }
 }
 
@@ -224,6 +220,7 @@ export async function addSlide(
 ) {
   return db.$transaction(async (tx) => {
     const project = await slideshowProject(tx, organisationId, projectId);
+    await lockProject(tx, project.id);
     assertEditable(project.state);
     const count = await tx.slideshowSlide.count({ where: { projectId } });
     if (count >= MAX_SLIDES) throw new ValidationError(`At most ${MAX_SLIDES} slides`);
@@ -236,6 +233,14 @@ export async function addSlide(
     });
     return present(await tx.slideshowSlide.create({ data: toCreate(projectId, draft) }));
   });
+}
+
+/**
+ * Serialise slide mutations per project: sortOrder has no unique constraint, so concurrent
+ * add/delete/reorder would otherwise both read the same order and write duplicates.
+ */
+async function lockProject(tx: Tx, projectId: string) {
+  await tx.$queryRaw`SELECT id FROM studio.video_projects WHERE id = ${projectId} FOR UPDATE`;
 }
 
 async function slideWithProject(db: Db | Tx, organisationId: string, slideId: string) {
@@ -261,7 +266,10 @@ export async function updateSlide(
   input: z.infer<typeof updateSlideInput>,
 ) {
   return db.$transaction(async (tx) => {
-    const { slide, project } = await slideWithProject(tx, organisationId, slideId);
+    const { slide: found, project } = await slideWithProject(tx, organisationId, slideId);
+    await lockProject(tx, project.id);
+    // Re-read after the lock: a concurrent mutation may have moved this slide.
+    const slide = await tx.slideshowSlide.findUniqueOrThrow({ where: { id: found.id } });
     assertEditable(project.state);
     const slideType = input.slideType ?? slide.slideType;
     const content: SlideContent = {
@@ -298,7 +306,10 @@ export async function updateSlide(
 
 export async function deleteSlide(db: Db, organisationId: string, slideId: string) {
   await db.$transaction(async (tx) => {
-    const { slide, project } = await slideWithProject(tx, organisationId, slideId);
+    const { slide: found, project } = await slideWithProject(tx, organisationId, slideId);
+    await lockProject(tx, project.id);
+    // Re-read after the lock: a concurrent mutation may have moved this slide.
+    const slide = await tx.slideshowSlide.findUniqueOrThrow({ where: { id: found.id } });
     assertEditable(project.state);
     await tx.slideshowSlide.delete({ where: { id: slideId } });
     await tx.slideshowSlide.updateMany({
@@ -317,7 +328,10 @@ export async function reorderSlide(
   newSortOrder: number,
 ) {
   return db.$transaction(async (tx) => {
-    const { slide, project } = await slideWithProject(tx, organisationId, slideId);
+    const { slide: found, project } = await slideWithProject(tx, organisationId, slideId);
+    await lockProject(tx, project.id);
+    // Re-read after the lock: a concurrent mutation may have moved this slide.
+    const slide = await tx.slideshowSlide.findUniqueOrThrow({ where: { id: found.id } });
     assertEditable(project.state);
     const count = await tx.slideshowSlide.count({ where: { projectId: slide.projectId } });
     const target = Math.min(newSortOrder, count - 1);

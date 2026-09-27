@@ -74,6 +74,18 @@ export const SCRIPT_JSON = {
 
 export const SAFETY_ALLOW = { verdict: 'ALLOW', categories: [], reason: 'ordinary marketing' };
 
+export const SLIDESHOW_TEXT_JSON = {
+  hook: '5 reasons Leeds loves our sourdough',
+  cta: 'Order your first loaf today',
+  items: [
+    'Slow 48-hour ferment',
+    'Baked at dawn',
+    'Local organic flour',
+    'Crackling crust',
+    'Delivered weekly',
+  ],
+};
+
 export const PROFILE_JSON = {
   industry: 'Food and drink — bakery',
   subNiche: 'artisan sourdough subscriptions',
@@ -104,6 +116,7 @@ export interface HarnessOptions {
   loudness?: number | null;
   hiveMaxScores?: Record<string, number>;
   profile?: unknown;
+  slideshowText?: unknown;
   /** Feature D: fetch used for website pages and images (defaults to the media fetch mock). */
   pageFetch?: typeof fetch;
   renderer?: PageRenderer;
@@ -117,6 +130,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.ideation ?? IDEATION_JSON);
     if (request.system.includes('script and storyboard'))
       return textResult(options.script ?? SCRIPT_JSON);
+    if (request.system.includes('social-media slideshow'))
+      return textResult(options.slideshowText ?? SLIDESHOW_TEXT_JSON);
     if (request.system.includes('business-classification'))
       return textResult(options.profile ?? PROFILE_JSON);
     return textResult(options.safety ?? SAFETY_ALLOW);
