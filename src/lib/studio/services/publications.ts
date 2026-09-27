@@ -143,21 +143,23 @@ export async function createPublication(
     }
   }
 
-  const duplicate = await db.videoPublication.findFirst({
-    where: {
-      renderId: render.id,
-      platform: input.platform,
-      platformAccountId,
-      state: { in: ['SCHEDULED', 'PUBLISHING', 'PUBLISHED'] },
-    },
-    select: { id: true },
-  });
-  if (duplicate)
-    throw new ConflictError('This render is already scheduled or published to that account', {
-      publicationId: duplicate.id,
-    });
-
   const publication = await db.$transaction(async (tx) => {
+    // Serialise concurrent requests for the same (render, platform, account): without the lock,
+    // two requests could both pass the duplicate check and post the video twice.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`publication:${render.id}:${input.platform}:${platformAccountId}`}, 0))`;
+    const duplicate = await tx.videoPublication.findFirst({
+      where: {
+        renderId: render.id,
+        platform: input.platform,
+        platformAccountId,
+        state: { in: ['SCHEDULED', 'PUBLISHING', 'PUBLISHED'] },
+      },
+      select: { id: true },
+    });
+    if (duplicate)
+      throw new ConflictError('This render is already scheduled or published to that account', {
+        publicationId: duplicate.id,
+      });
     const created = await tx.videoPublication.create({
       data: {
         organisationId: orgId,
@@ -267,6 +269,20 @@ export async function retryPublication(
   return findPublication(deps.db, tenant.organisationId, id);
 }
 
+function takedownMessage(platform: string, errorClass: string): string {
+  switch (errorClass) {
+    case 'needs_reconnect':
+      return `Takedown failed: the ${platform} connection needs reconnecting`;
+    case 'rate_limited':
+    case 'quota_exceeded':
+      return `Takedown failed: ${platform} is rate limiting requests; try again shortly`;
+    case 'invalid_request':
+      return `Takedown failed: ${platform} rejected the delete request for this post`;
+    default:
+      return `Takedown failed: ${platform} refused the request (${errorClass})`;
+  }
+}
+
 /** Spec 8.4: "Not all platforms support programmatic delete; will fail cleanly with reason." */
 export async function takedownPublication(
   deps: PublishingDeps,
@@ -291,8 +307,13 @@ export async function takedownPublication(
       platformPostId: publication.platformPostId,
     });
   } catch (err) {
-    if (err instanceof PlatformError)
-      throw new ConflictError(`Takedown failed: ${err.message}`, { errorClass: err.errorClass });
+    if (err instanceof PlatformError) {
+      // The platform's own error text stays in the server log; callers get a curated message.
+      deps.logger.warn({ err, publicationId: id }, 'takedown refused by platform');
+      throw new ConflictError(takedownMessage(publication.platform, err.errorClass), {
+        errorClass: err.errorClass,
+      });
+    }
     throw err;
   }
   await deps.db.videoPublication.update({

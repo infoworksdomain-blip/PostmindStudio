@@ -13,7 +13,11 @@ import { getAccessToken } from './tokens';
 
 // Shared by the publish worker and the publications API (takedown).
 
-export const PUBLISH_URL_TTL_SEC = 24 * 60 * 60;
+/**
+ * Pull-upload URL lifetime. Meta fetches the file while the container/upload is created, so a
+ * short-lived bearer URL limits exposure if it leaks from a platform log.
+ */
+export const PUBLISH_URL_TTL_SEC = 60 * 60;
 
 export interface EngagementClient {
   /** Spec 16.3: tell Engagement a publication exists so comments on it are attributed. */

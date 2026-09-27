@@ -6,6 +6,32 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 5] Passed on automated evidence (autonomous build mode): publishers unit-tested against recorded request shapes; publish/schedule/cancel/retry/takedown and OAuth connect/disconnect integration-tested on real Postgres. Live posting to each platform pending operator credentials and a test account per platform.
+
+**Phase 5 status: publishing built for TikTok, YouTube (Shorts + long-form), X and LinkedIn; Instagram/Facebook publishers built but blocked on an Engagement token endpoint.**
+
+[2026-09-27] [5.11] Scheduled publishing: ScheduledPublication row + BullMQ delayed `fire-scheduled-publication` job (jobId stored); PENDING→FIRED CAS makes the fire idempotent; cancel flips PENDING→CANCELLED so a fired job is a no-op. Schedule window 1 min–180 days.
+[2026-09-27] [5.10] POST /publications (202; validates project approved, render QC PASSED/FORCE_APPROVED, platform aspect/duration/size, caption and hashtag limits, connection active, no duplicate to the same account), GET /publications/:id, POST /publications/:id/{cancel,retry,takedown}. New capability `studio:publication:write`.
+[2026-09-27] [5.9] publish-video worker: SCHEDULED→PUBLISHING CAS, credentials (Studio connection or Engagement/Meta), 24h signed source URL + ranged reads for chunked uploads, PUBLISHED + audit + Engagement attribution (best effort, POST /api/engagement/internal/publications/attribute), project roll-up to PUBLISHED / PARTIALLY_PUBLISHED; failures record errorCode (PlatformError class) and retryCount.
+[2026-09-27] [5.8] OAuth: POST /platform-connections/oauth-init (server-side single-use state, 10 min TTL, PKCE S256 for X, same-origin returnTo), GET /oauth-callback (state-authenticated, no JWT), GET /platform-connections (no token fields), DELETE /platform-connections/:id (tokens wiped). Tokens stored AES-256-GCM envelope-encrypted (KMS data key; local master key outside production) with org/platform/kind AAD; refresh 5 min before expiry with a CAS write; refused refresh → needs_reconnect. New capability `studio:connections:manage`.
+[2026-09-27] [5.7] FacebookReelPublisher: /video_reels start → rupload (file_url) → finish(PUBLISHED) → status poll; takedown via DELETE.
+[2026-09-27] [5.6] LinkedIn: Linkedin-Version 202609; /rest/videos initializeUpload → part PUTs (ETags) → finalizeUpload → status poll → /rest/posts; little-text escaping; hashtags via the hashtag template; takedown via DELETE.
+[2026-09-27] [5.5] X: v2 media upload initialize/append (5 MB chunks)/finalize/status → POST /2/tweets; takedown DELETE /2/tweets/:id.
+[2026-09-27] [5.4] YouTube: resumable upload (8 MiB chunks, 308 handling), containsSyntheticMedia=true, videos.list processing poll; Shorts get #Shorts; takedown DELETE videos.
+[2026-09-27] [5.3] InstagramReelPublisher: REELS container (video_url) → status_code poll every 60s → media_publish → permalink; takedown DELETE. Credentials: MetaCredentialSource, currently NotImplemented (see review list).
+[2026-09-27] [5.2] TikTok Content Posting API: creator_info → video/init FILE_UPLOAD (is_aigc=true, privacy from creator_info options) → chunked PUT → status fetch poll; fail_reason classification. No takedown (no documented delete API).
+[2026-09-27] [5.1] platforms/interface.ts: PlatformPublisher {publish, takedown?} over a VideoSource (size, signed URL, ranged reader); per-platform rules (aspect ratios, durations, size, caption/hashtag/title limits) and caption composition (spec 9.8).
+
+**Phase 5 security review — fixed:** duplicate-publish race (two concurrent POSTs could both pass the duplicate check and post twice) closed with a transaction-scoped advisory lock on (render, platform, account) around check + insert; takedown errors no longer relay the platform's raw error text (curated message per error class, raw text logged server-side); pull-upload signed URL lifetime cut from 24h to 1h. Not changed: businessId on OAuth init is unverified free text (same Core-contract gap as Phase 4).
+
+**Phase 5 review list:**
+- BLOCKER (Instagram/Facebook): CLAUDE.md says reuse Engagement's Meta tokens, but the Engagement handover documents no internal endpoint that returns a channel token. `unavailableMetaCredentials` throws NotImplementedError, so these publications FAIL with a clear reason instead of pretending. Needs an Engagement endpoint (e.g. GET /api/engagement/internal/channels/:id/token) agreed with that team.
+- Engagement attribution endpoint path `/api/engagement/internal/publications/attribute` is ASSUMED (backlog names `/internal/publications/attribute-conversation`); confirm with the Engagement team.
+- platformUrl is null for TikTok, YouTube and X unless the API returns a URL: public URL formats are not in the API docs, so none are constructed.
+- TikTok has no delete API: takedown returns 409 with a clear message.
+- API versions pinned from current docs: Graph v26.0, Linkedin-Version 202609. Both deprecate on a schedule; bump via env/constant.
+- No per-platform analytics polling yet (Phase 11).
+
 [2026-09-27] [GATE 4] Passed on automated evidence (autonomous build mode): every route integration-tested on real Postgres; CI green on PR #5. Live curl walkthrough (README) pending a Core-issued JWT.
 
 **Phase 4 status: API built; every route integration-tested through the real wrapper on real Postgres (happy/401/403/404/validation/conflict).**

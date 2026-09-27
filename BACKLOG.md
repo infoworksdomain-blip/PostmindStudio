@@ -92,18 +92,18 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 5 — Platform connections + publishing (target: week 5-7)
 
-- [ ] **5.1** Implement `src/lib/studio/platforms/interface.ts` — `PlatformPublisher` interface (register/upload/publish/status).
-- [ ] **5.2** Implement `src/lib/studio/platforms/tiktok.ts` per spec Section 9.2. Real Content Posting API.
-- [ ] **5.3** Implement `src/lib/studio/platforms/instagram-reel.ts` per Section 9.3. Reuse Engagement's Meta credentials via internal API.
-- [ ] **5.4** Implement `src/lib/studio/platforms/youtube.ts` (Shorts + long-form) per Section 9.4.
-- [ ] **5.5** Implement `src/lib/studio/platforms/x.ts` per Section 9.5.
-- [ ] **5.6** Implement `src/lib/studio/platforms/linkedin.ts` per Section 9.6.
-- [ ] **5.7** Implement `src/lib/studio/platforms/facebook.ts` per Section 9.7.
-- [ ] **5.8** OAuth flows: `POST /api/studio/platform-connections/oauth-init`, `GET /api/studio/platform-connections/oauth-callback`. Encrypted token storage via KMS envelope.
-- [ ] **5.9** Implement publish worker: fires per-platform publisher, records `video_publications`, calls Engagement's `/internal/publications/attribute-conversation`.
-- [ ] **5.10** Implement `POST /api/studio/publications` (schedule or publish now).
-- [ ] **5.11** Scheduled publishing via BullMQ delayed jobs.
-- [ ] **[GATE 5]** Operator publishes a real video to TikTok + Instagram + YouTube from Studio.
+- [x] **5.1** Implement `src/lib/studio/platforms/interface.ts` — `PlatformPublisher` interface (register/upload/publish/status).
+- [x] **5.2** Implement `src/lib/studio/platforms/tiktok.ts` per spec Section 9.2. Real Content Posting API.
+- [x] **5.3** Implement `src/lib/studio/platforms/instagram-reel.ts` per Section 9.3. Reuse Engagement's Meta credentials via internal API.
+- [x] **5.4** Implement `src/lib/studio/platforms/youtube.ts` (Shorts + long-form) per Section 9.4.
+- [x] **5.5** Implement `src/lib/studio/platforms/x.ts` per Section 9.5.
+- [x] **5.6** Implement `src/lib/studio/platforms/linkedin.ts` per Section 9.6.
+- [x] **5.7** Implement `src/lib/studio/platforms/facebook.ts` per Section 9.7.
+- [x] **5.8** OAuth flows: `POST /api/studio/platform-connections/oauth-init`, `GET /api/studio/platform-connections/oauth-callback`. Encrypted token storage via KMS envelope.
+- [x] **5.9** Implement publish worker: fires per-platform publisher, records `video_publications`, calls Engagement's `/internal/publications/attribute-conversation`.
+- [x] **5.10** Implement `POST /api/studio/publications` (schedule or publish now).
+- [x] **5.11** Scheduled publishing via BullMQ delayed jobs.
+- [x] **[GATE 5]** (automated evidence; live posts pending credentials, Instagram blocked on Engagement token endpoint) Operator publishes a real video to TikTok + Instagram + YouTube from Studio.
 
 ---
 
