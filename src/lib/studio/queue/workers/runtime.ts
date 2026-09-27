@@ -23,6 +23,12 @@ import {
   publishVideo,
 } from './publish-video';
 import { ingestLibraryVideoJob, onIngestLibraryVideoFailed } from './ingest-library-video';
+import {
+  onPollPublicationAnalyticsFailed,
+  onRollUpAnalyticsFailed,
+  pollPublicationAnalytics,
+  rollUpAnalyticsJob,
+} from './poll-analytics';
 import { onPopulateSlideshowFailed, populateSlideshowJob } from './populate-slideshow';
 import { onRunQualityGateFailed, runQualityGate } from './run-quality-gate';
 import {
@@ -57,6 +63,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'scan-website': scanWebsite,
   'populate-slideshow': populateSlideshowJob,
   'ingest-library-video': ingestLibraryVideoJob,
+  'poll-publication-analytics': pollPublicationAnalytics,
+  'roll-up-analytics': rollUpAnalyticsJob,
   'refresh-image-library': refreshImageLibrary,
 };
 
@@ -70,6 +78,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'scan-website': onScanWebsiteFailed,
   'populate-slideshow': onPopulateSlideshowFailed,
   'ingest-library-video': onIngestLibraryVideoFailed,
+  'poll-publication-analytics': onPollPublicationAnalyticsFailed,
+  'roll-up-analytics': onRollUpAnalyticsFailed,
   'refresh-image-library': onRefreshImageLibraryFailed,
 };
 

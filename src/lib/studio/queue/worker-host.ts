@@ -33,13 +33,14 @@ export function concurrencyFor(
   return Number.isInteger(raw) && raw > 0 ? raw : DEFAULT_CONCURRENCY[queue];
 }
 
-/** Queues with processors today; the analytics worker arrives in Phase 11. */
+/** Every queue has processors (analytics since Phase 11). */
 export const PIPELINE_QUEUES: QueueName[] = [
   QUEUES.orchestration,
   QUEUES.assets,
   QUEUES.publish,
   QUEUES.scheduled,
   QUEUES.library,
+  QUEUES.analytics,
 ];
 
 export function startWorkers(input: {

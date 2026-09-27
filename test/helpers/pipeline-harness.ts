@@ -17,6 +17,7 @@ import { createLocalKeyProvider } from '../../src/lib/studio/crypto/envelope';
 import type { MetaCredentialSource } from '../../src/lib/studio/platforms/meta';
 import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
 import type { EngagementClient } from '../../src/lib/studio/platforms/publishing';
+import type { MetricsRegistry } from '../../src/lib/studio/analytics/fetchers';
 import type { StockImageSource } from '../../src/lib/studio/images/stock';
 import type { PageRenderer } from '../../src/lib/studio/scan/crawl';
 import { fakePublisherRegistry } from './fake-publishers';
@@ -153,6 +154,7 @@ export interface HarnessOptions {
   loudness?: number | null;
   hiveMaxScores?: Record<string, number>;
   profile?: unknown;
+  metrics?: MetricsRegistry;
   analysis?: unknown;
   /** Omit the scripted AssemblyAI adapter (no transcription provider configured). */
   noTranscription?: boolean;
@@ -338,6 +340,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     },
     fetch: fetchImpl as unknown as typeof fetch,
     audit: (entry) => audits.push(entry),
+    metrics: options.metrics ?? {},
     scan: {
       pageFetch: options.pageFetch ?? (fetchImpl as unknown as typeof fetch),
       renderer: options.renderer,

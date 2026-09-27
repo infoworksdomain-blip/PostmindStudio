@@ -45,7 +45,7 @@ describe('createTikTokOAuth', () => {
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('redirect_uri')).toBe(config.redirectUri);
     expect(url.searchParams.get('state')).toBe('state-1');
-    expect(url.searchParams.get('scope')).toBe('user.info.basic,video.publish');
+    expect(url.searchParams.get('scope')).toBe('user.info.basic,video.publish,video.list');
     expect(client.usesPkce).toBe(false);
   });
 
@@ -136,7 +136,9 @@ describe('createYouTubeOAuth', () => {
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
     expect(url.searchParams.get('access_type')).toBe('offline');
     expect(url.searchParams.get('prompt')).toBe('consent');
-    expect(url.searchParams.get('scope')).toBe('https://www.googleapis.com/auth/youtube.force-ssl');
+    expect(url.searchParams.get('scope')).toBe(
+      'https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/yt-analytics.readonly',
+    );
     expect(client.usesPkce).toBe(false);
   });
 

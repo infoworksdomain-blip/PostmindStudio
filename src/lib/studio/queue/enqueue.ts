@@ -33,6 +33,9 @@ export const jobIds = {
     `fire-scheduled__${d.publicationId}`,
   scanWebsite: (d: JobDataMap['scan-website']) => `scan-website__${d.scanId}`,
   ingestLibraryVideo: (d: JobDataMap['ingest-library-video']) => `ingest-library-video__${d.runId}`,
+  pollAnalytics: (d: JobDataMap['poll-publication-analytics']) =>
+    `poll-analytics__${d.publicationId}__${d.pollNumber}`,
+  rollUpAnalytics: (d: JobDataMap['roll-up-analytics']) => `roll-up-analytics__${d.runId}`,
   populateSlideshow: (d: JobDataMap['populate-slideshow']) =>
     `populate-slideshow__${d.projectId}__${d.runId}`,
   refreshImageLibrary: (d: JobDataMap['refresh-image-library']) =>

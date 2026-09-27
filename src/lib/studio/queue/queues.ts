@@ -73,6 +73,20 @@ export interface LibraryIngestJobData {
   };
 }
 
+/** Analytics polling (spec 15.2): one job per poll; pollNumber keeps job ids unique. */
+export interface PollAnalyticsJobData extends PublishJobData {
+  pollNumber: number;
+}
+
+/** Nightly roll-ups (platform-level). runId = the UTC day being rolled up. */
+export interface RollUpJobData {
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
@@ -83,6 +97,8 @@ export interface JobDataMap {
   'scan-website': ScanJobData;
   'populate-slideshow': ProjectJobData;
   'ingest-library-video': LibraryIngestJobData;
+  'poll-publication-analytics': PollAnalyticsJobData;
+  'roll-up-analytics': RollUpJobData;
   'refresh-image-library': LibraryRefreshJobData;
 }
 
@@ -98,6 +114,8 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
   'ingest-library-video': QUEUES.library,
+  'poll-publication-analytics': QUEUES.analytics,
+  'roll-up-analytics': QUEUES.analytics,
   'refresh-image-library': QUEUES.assets,
 };
 

@@ -6,6 +6,7 @@ import type { ProviderRegistry } from '../providers/registry';
 import type { BudgetChecker } from '../providers/router';
 import type { TrackingDeps } from '../providers/tracked';
 import type { AuditEntry } from '../../audit';
+import type { MetricsRegistry } from '../analytics/fetchers';
 import type { StockImageSource } from '../images/stock';
 import type { PublishingDeps } from '../platforms/publishing';
 import type { PageRenderer } from '../scan/crawl';
@@ -45,6 +46,8 @@ export interface PipelineDeps {
   config: PipelineConfig;
   /** Feature D (Phase 6): website scans and the image library. */
   scan: ScanDeps;
+  /** Per-platform metrics readers for analytics polling (Phase 11). */
+  metrics: MetricsRegistry;
   /** Social publishing (Phase 5): publishers, credentials, Engagement attribution. */
   publishing: PublishingDeps;
   /** Audit entries for significant mutations (publications). */
