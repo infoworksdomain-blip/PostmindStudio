@@ -102,6 +102,7 @@ export function installApi(
     oauthState,
     library: libraryDepsFrom(options.pipeline ?? createHarness(db).deps),
     appUrl: APP_URL,
+    fontsBaseUrl: 'https://fonts.test',
     logger: pino({ level: 'silent' }),
     now: Date.now,
   };

@@ -44,6 +44,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       assetsBucket: assetsBucket(),
       rendersBucket: requireEnv('S3_BUCKET_RENDERS'),
       defaultVoiceId: process.env.ELEVENLABS_DEFAULT_VOICE_ID?.trim() || undefined,
+      fontsBaseUrl: process.env.STUDIO_FONTS_BASE_URL?.trim() || undefined,
       ...DEFAULT_PIPELINE_TIMING,
     },
     fetch: globalThis.fetch,

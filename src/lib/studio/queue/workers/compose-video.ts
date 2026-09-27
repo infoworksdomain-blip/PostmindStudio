@@ -9,7 +9,12 @@ class StaleRunError extends ConflictError {
 import type { AspectRatio } from '../../providers/interface';
 import { providerOutputKey } from '../../storage';
 import type { PipelineDeps } from '../../pipeline/deps';
-import { buildShotstackEdit, totalDuration, type EdlShot } from '../../pipeline/edl';
+import {
+  buildShotstackEdit,
+  outputDimensions,
+  totalDuration,
+  type EdlShot,
+} from '../../pipeline/edl';
 import { copyUrlToStorage } from '../../pipeline/persist';
 import {
   currentRunId,
@@ -20,6 +25,7 @@ import {
   transitionProject,
 } from '../../pipeline/project-state';
 import { runProvider } from '../../pipeline/provider-run';
+import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../overlays/compose';
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
 import { resolveSlides } from '../../slideshow/resolve';
 import { jobIds } from '../enqueue';
@@ -39,7 +45,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     where: { id: data.projectId },
     include: {
       scripts: {
-        include: { shots: { orderBy: { sortOrder: 'asc' } } },
+        include: { shots: { orderBy: { sortOrder: 'asc' }, include: { overlays: true } } },
         orderBy: { createdAt: 'asc' },
       },
     },
@@ -131,16 +137,56 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           visualSrc: visual?.url,
           visualKind: visual?.kind === 'IMAGE' ? ('image' as const) : ('video' as const),
           voiceSrc: voice?.url,
-          onScreenText: shot.onScreenText,
+          // Styled overlays (Feature B) replace the plain caption when the shot has any.
+          onScreenText: shot.overlays.length ? null : shot.onScreenText,
           transitionOut: shot.transitionOut,
           cardText: shot.onScreenText ?? shot.voiceoverText,
         };
       }),
     );
+    let offset = 0;
+    const placed: PlacedOverlay[] = scriptShots.flatMap((shot) => {
+      const at = offset;
+      offset += shot.durationSec;
+      return shot.overlays.map((row) => ({ row, offsetSec: at }));
+    });
     return {
       edit: buildShotstackEdit({ aspectRatio, shots, brand }),
       outputDurationSec: totalDuration(shots),
+      placed,
     };
+  };
+
+  // Whole-video overlays (e.g. a watermark) attached to an earlier render of the same platform.
+  const earlierRenders = await deps.db.videoRender.findMany({
+    where: { projectId: project.id },
+    select: { id: true, targetPlatform: true },
+  });
+  const renderOverlays = await deps.db.textOverlay.findMany({
+    where: { renderId: { in: earlierRenders.map((r) => r.id) } },
+  });
+  const platformOf = new Map(earlierRenders.map((r) => [r.id, r.targetPlatform]));
+
+  /** Put the overlay tracks on top of the edit (tracks[0] is the top layer). */
+  const withOverlays = async (
+    edit: Record<string, unknown>,
+    placed: PlacedOverlay[],
+    aspectRatio: AspectRatio,
+  ) => {
+    if (placed.length === 0) return edit;
+    const track = await buildOverlayTrack(placed, {
+      frame: outputDimensions(aspectRatio),
+      organisationId: project.organisationId,
+      preRender: {
+        storage: deps.storage,
+        bucket: deps.config.rendersBucket,
+        fetchImpl: deps.fetch,
+        fontsBaseUrl: deps.config.fontsBaseUrl,
+      },
+    });
+    if (track.skipped.length)
+      log.warn({ overlayIds: track.skipped }, 'overlays with an invalid style were skipped');
+    return mergeOverlayTrack(edit, track);
   };
 
   const outcome = await Promise.all(
@@ -148,12 +194,18 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       .filter((script) => !renders[script.id])
       .map(async (script) => {
         const aspectRatio = script.targetAspectRatio as AspectRatio;
-        const { edit, outputDurationSec } = slides
+        const built = slides
           ? {
               edit: buildSlideshowEdit({ aspectRatio, slides, brand }),
               outputDurationSec: slideshowDuration(slides),
+              placed: [] as PlacedOverlay[],
             }
           : await shotEdit(script.shots, aspectRatio);
+        const wholeVideo = renderOverlays
+          .filter((row) => row.renderId && platformOf.get(row.renderId) === script.targetPlatform)
+          .map((row) => ({ row, offsetSec: 0 }));
+        const outputDurationSec = built.outputDurationSec;
+        const edit = await withOverlays(built.edit, [...built.placed, ...wholeVideo], aspectRatio);
         const run = await runProvider(
           {
             need: { kind: 'capability', capability: 'composition' },

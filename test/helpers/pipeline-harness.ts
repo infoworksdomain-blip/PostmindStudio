@@ -269,6 +269,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       defaultVoiceId: 'voice-default',
       providerPollIntervalMs: 0,
       providerTimeoutMs: 60_000,
+      fontsBaseUrl: 'https://fonts.test',
     },
     fetch: fetchImpl as unknown as typeof fetch,
     audit: (entry) => audits.push(entry),
