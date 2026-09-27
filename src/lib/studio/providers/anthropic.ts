@@ -16,6 +16,9 @@ import { SyncJobStore } from './sync-jobs';
 // The Messages API is synchronous, so submit() makes the one Claude call and poll() returns
 // the parked result. Cost is exact: computed from the response's token usage.
 
+/** Vision input costs about (w/28)×(h/28) tokens; 1600 bounds a ≤1120×1120 image. */
+const IMAGE_TOKENS_UPPER_BOUND = 1_600;
+
 export const PROVIDER_ID = 'anthropic';
 export const DEFAULT_MODEL = 'claude-sonnet-5';
 const DEFAULT_MAX_TOKENS = 16_000;
@@ -105,7 +108,9 @@ export class AnthropicAdapter implements ProviderAdapter {
   estimateCostPence(request: ProviderRequest): number {
     if (request.capability !== 'text_generation') return 0;
     const price = MODEL_PRICING_USD_PER_MTOK[this.model] ?? { input: 0, output: 0 };
-    const inputTokens = Math.ceil((request.system.length + request.prompt.length) / 4);
+    const inputTokens =
+      Math.ceil((request.system.length + request.prompt.length) / 4) +
+      (request.images?.length ?? 0) * IMAGE_TOKENS_UPPER_BOUND;
     const outputTokens = request.maxTokens ?? DEFAULT_MAX_TOKENS;
     return usdToPence(
       (inputTokens * price.input + outputTokens * price.output) / 1_000_000,
@@ -156,7 +161,24 @@ export class AnthropicAdapter implements ProviderAdapter {
         model: this.model,
         max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
         system: request.system,
-        messages: [{ role: 'user', content: request.prompt }],
+        messages: [
+          {
+            role: 'user',
+            content: request.images?.length
+              ? [
+                  ...request.images.map((image) => ({
+                    type: 'image' as const,
+                    source: {
+                      type: 'base64' as const,
+                      media_type: image.mediaType,
+                      data: image.data,
+                    },
+                  })),
+                  { type: 'text' as const, text: request.prompt },
+                ]
+              : request.prompt,
+          },
+        ],
         ...(request.outputSchema && {
           output_config: { format: { type: 'json_schema', schema: request.outputSchema } },
         }),

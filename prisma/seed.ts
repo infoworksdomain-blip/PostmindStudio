@@ -1,10 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../src/lib/logger';
 import { seedSystemFlags } from '../src/lib/studio/seed-system-flags';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { seedTaxonomy } from '../src/lib/studio/library/taxonomy';
 import { seedOverlayPresets } from '../src/lib/studio/overlays/seed-presets';
 import { seedSlideshowTemplates } from '../src/lib/studio/slideshow/seed-templates';
 
-// BACKLOG 1.9 + 7.4 + 8.2. Idempotent and safe to re-run against a live database: existing flags are
+// BACKLOG 1.9 + 7.4 + 8.2 + 9.7. Idempotent and safe to re-run against a live database: existing flags are
 // never overwritten, so a re-seed cannot silently switch off an active kill switch.
 
 async function main(): Promise<void> {
@@ -16,6 +19,11 @@ async function main(): Promise<void> {
     logger.info({ created: templates }, '[seed] slideshow templates seeded');
     const presets = await seedOverlayPresets(prisma);
     logger.info({ created: presets }, '[seed] overlay presets seeded');
+    const taxonomy = await seedTaxonomy(
+      prisma,
+      JSON.parse(readFileSync(join(__dirname, 'data', 'library-taxonomy.json'), 'utf8')) as unknown,
+    );
+    logger.info(taxonomy, '[seed] library categories seeded');
   } finally {
     await prisma.$disconnect();
   }

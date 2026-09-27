@@ -116,6 +116,7 @@ export interface HarnessOptions {
   loudness?: number | null;
   hiveMaxScores?: Record<string, number>;
   profile?: unknown;
+  sceneChanges?: number[];
   slideshowText?: unknown;
   /** Feature D: fetch used for website pages and images (defaults to the media fetch mock). */
   pageFetch?: typeof fetch;
@@ -235,6 +236,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     integratedLoudness: vi.fn(async () =>
       options.loudness === undefined ? -14 : options.loudness,
     ),
+    sceneChanges: vi.fn(async () => options.sceneChanges ?? [2.5, 6]),
+    frameJpeg: vi.fn(async () => new Uint8Array([0xff, 0xd8, 0xff, 0xd9])),
   };
   const fetchImpl = vi.fn(
     async () =>
@@ -270,6 +273,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       providerPollIntervalMs: 0,
       providerTimeoutMs: 60_000,
       fontsBaseUrl: 'https://fonts.test',
+      libraryBucket: 'library',
     },
     fetch: fetchImpl as unknown as typeof fetch,
     audit: (entry) => audits.push(entry),

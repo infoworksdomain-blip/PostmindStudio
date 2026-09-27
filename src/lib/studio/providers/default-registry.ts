@@ -8,6 +8,7 @@ import type { ProviderAdapter } from './interface';
 import { OpenAIAdapter } from './openai';
 import { usdToGbpRateFromEnv } from './pricing';
 import { createProviderRegistry, type ProviderRegistry } from './registry';
+import { AssemblyAiAdapter } from './assemblyai';
 import { RunwayAdapter } from './runway';
 import { ShotstackAdapter } from './shotstack';
 
@@ -48,6 +49,17 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
         bucket: assetsBucket(),
         imageModel: envValue('OPENAI_IMAGE_MODEL'),
         usdToGbpRate,
+      }),
+    );
+  }
+
+  const assemblyKey = envValue('ASSEMBLYAI_API_KEY');
+  if (assemblyKey) {
+    adapters.push(
+      new AssemblyAiAdapter({
+        apiKey: assemblyKey,
+        usdToGbpRate,
+        region: envValue('ASSEMBLYAI_REGION') === 'eu' ? 'eu' : 'us',
       }),
     );
   }
