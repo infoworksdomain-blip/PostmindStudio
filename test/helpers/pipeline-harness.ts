@@ -11,6 +11,13 @@ import type { ProviderPollResult, ProviderRequest } from '../../src/lib/studio/p
 import { createPrismaProviderJobRepository } from '../../src/lib/studio/providers/job-repository';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
 import { InlineJobQueue } from '../../src/lib/studio/queue/enqueue';
+import { randomBytes } from 'node:crypto';
+import type { AuditEntry } from '../../src/lib/audit';
+import { createLocalKeyProvider } from '../../src/lib/studio/crypto/envelope';
+import type { MetaCredentialSource } from '../../src/lib/studio/platforms/meta';
+import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
+import type { EngagementClient } from '../../src/lib/studio/platforms/publishing';
+import { fakePublisherRegistry } from './fake-publishers';
 import { memoryStorage } from './memory-storage';
 import { ScriptedAdapter } from './scripted-adapter';
 
@@ -164,6 +171,17 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       new Response(new Uint8Array([1, 2, 3]), { headers: { 'content-type': 'video/mp4' } }),
   );
 
+  const publishers = fakePublisherRegistry();
+  const keys = createLocalKeyProvider(randomBytes(32).toString('base64'), 'test');
+  const audits: AuditEntry[] = [];
+  const attributions: Array<Parameters<EngagementClient['attributePublication']>[0]> = [];
+  const oauthClients = new Map<string, OAuthClient>();
+  const meta: MetaCredentialSource = {
+    getCredentials: vi.fn(async ({ platformAccountId }) => ({
+      accessToken: 'meta-token',
+      accountId: platformAccountId,
+    })),
+  };
   const deps: PipelineDeps = {
     db,
     registry: createProviderRegistry([anthropic, runway, elevenlabs, shotstack, hive]),
@@ -183,12 +201,34 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       providerTimeoutMs: 60_000,
     },
     fetch: fetchImpl as unknown as typeof fetch,
+    audit: (entry) => audits.push(entry),
+    publishing: {
+      db,
+      publishers,
+      meta,
+      keys,
+      oauth: (platform) => {
+        const client = oauthClients.get(platform);
+        if (!client) throw new Error(`no fake oauth client for ${platform}`);
+        return client;
+      },
+      storage,
+      engagement: { attributePublication: async (body) => void attributions.push(body) },
+      logger: pino({ level: 'silent' }),
+      now: Date.now,
+    },
     now: Date.now,
     sleep: async () => undefined,
   };
   return {
     deps,
     queue,
+    publishers,
+    keys,
+    audits,
+    attributions,
+    oauthClients,
+    meta,
     adapters: { anthropic, runway, elevenlabs, shotstack, hive },
     objects,
     media,

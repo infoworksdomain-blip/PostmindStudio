@@ -29,11 +29,18 @@ export interface GenerateAssetJobData extends ProjectJobData {
   shotId: string;
 }
 
+/** Publishing is per publication; runId is the project run that produced the render (logging). */
+export interface PublishJobData extends ProjectJobData {
+  publicationId: string;
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
   'compose-video': ProjectJobData;
   'run-quality-gate': ProjectJobData;
+  'publish-video': PublishJobData;
+  'fire-scheduled-publication': PublishJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -43,6 +50,8 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'generate-asset': QUEUES.assets,
   'compose-video': QUEUES.orchestration,
   'run-quality-gate': QUEUES.orchestration,
+  'publish-video': QUEUES.publish,
+  'fire-scheduled-publication': QUEUES.scheduled,
 };
 
 export const MAX_RETRIES = 5;

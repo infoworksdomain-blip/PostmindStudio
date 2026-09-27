@@ -85,6 +85,39 @@ export class ProviderError extends StudioError {
   }
 }
 
+export type PlatformErrorClass =
+  | 'needs_reconnect' // credentials revoked/expired and refresh failed: user must reconnect
+  | 'rate_limited'
+  | 'quota_exceeded'
+  | 'content_policy'
+  | 'invalid_media' // format/duration/aspect rejected: re-render, don't retry as-is
+  | 'invalid_request'
+  | 'unavailable'
+  | 'timeout'
+  | 'unknown';
+
+/** A social platform (TikTok, YouTube, X, LinkedIn, Instagram, Facebook) rejected or failed a call. */
+export class PlatformError extends StudioError {
+  readonly status = 502;
+  readonly code = 'platform_error';
+  readonly platform: string;
+  readonly errorClass: PlatformErrorClass;
+  readonly retryable: boolean;
+
+  constructor(
+    platform: string,
+    errorClass: PlatformErrorClass,
+    message: string,
+    retryable: boolean,
+    details?: Record<string, unknown>,
+  ) {
+    super(message, { ...details, platform, errorClass, retryable });
+    this.platform = platform;
+    this.errorClass = errorClass;
+    this.retryable = retryable;
+  }
+}
+
 /** Spec 6.4 NO_PROVIDER_AVAILABLE: every routing candidate was skipped. */
 export class NoProviderAvailableError extends StudioError {
   readonly status = 503;

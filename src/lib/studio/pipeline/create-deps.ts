@@ -1,6 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
 import { requireEnv } from '../../env';
+import { auditLog } from '../../audit';
 import { logger } from '../../logger';
+import { lazyDataKeyProvider } from '../crypto/envelope';
+import { unavailableMetaCredentials } from '../platforms/meta';
+import { oauthClientFromEnv } from '../platforms/oauth';
+import { createEngagementClient } from '../platforms/publishing';
+import { createPublisherRegistry } from '../platforms/registry';
 import { createKillSwitch, createPrismaFlagStore } from '../kill-switch';
 import { createPrismaBudgetChecker, orgProviderDailyCapFromEnv } from '../providers/budget';
 import { getCircuitBreaker } from '../providers/circuit-breaker';
@@ -15,6 +21,8 @@ import { createFfmpegInspector } from './media-probe';
 
 export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue }): PipelineDeps {
   const breaker = getCircuitBreaker();
+  const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  const storage = getAssetStorage();
   const killSwitch = createKillSwitch({ store: createPrismaFlagStore(input.db) });
   return {
     db: input.db,
@@ -26,7 +34,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     }),
     tracking: { repo: createPrismaProviderJobRepository(input.db), killSwitch, breaker },
     queue: input.queue,
-    storage: getAssetStorage(),
+    storage,
     media: createFfmpegInspector(),
     logger,
     config: {
@@ -36,7 +44,29 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       ...DEFAULT_PIPELINE_TIMING,
     },
     fetch: globalThis.fetch,
+    audit: auditLog,
+    publishing: {
+      db: input.db,
+      publishers: createPublisherRegistry({
+        fetchImpl: globalThis.fetch,
+        sleep,
+        now: Date.now,
+        graphVersion: process.env.META_GRAPH_API_VERSION?.trim() || undefined,
+      }),
+      meta: unavailableMetaCredentials,
+      keys: lazyDataKeyProvider(),
+      oauth: (platform) => oauthClientFromEnv(platform),
+      storage,
+      engagement: createEngagementClient({
+        baseUrl: process.env.ENGAGEMENT_INTERNAL_URL,
+        serviceToken: process.env.POSTMIND_SERVICE_TOKEN,
+        fetchImpl: globalThis.fetch,
+        logger,
+      }),
+      logger,
+      now: Date.now,
+    },
     now: Date.now,
-    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    sleep,
   };
 }

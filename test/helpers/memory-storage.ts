@@ -10,6 +10,16 @@ export function memoryStorage() {
     async signedUrl(bucket, key) {
       return `https://signed.example/${bucket}/${key}`;
     },
+    async size(bucket, key) {
+      const object = objects.get(`${bucket}/${key}`);
+      if (!object) throw new Error(`missing ${bucket}/${key}`);
+      return object.body.byteLength;
+    },
+    async readRange(bucket, key, start, endInclusive) {
+      const object = objects.get(`${bucket}/${key}`);
+      if (!object) throw new Error(`missing ${bucket}/${key}`);
+      return object.body.slice(start, endInclusive + 1);
+    },
   };
   return { storage, objects };
 }

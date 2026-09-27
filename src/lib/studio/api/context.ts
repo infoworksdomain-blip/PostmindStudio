@@ -3,6 +3,8 @@ import type { Logger } from 'pino';
 import { auditLog, type AuditEntry } from '../../audit';
 import { logger } from '../../logger';
 import type { TenantResolver } from '../../tenant';
+import type { OAuthStateStore } from '../platforms/oauth-state';
+import type { PublishingDeps } from '../platforms/publishing';
 import type { ProviderRegistry } from '../providers/registry';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
@@ -19,6 +21,11 @@ export interface ApiDeps {
   resolveTenant: TenantResolver;
   audit: (entry: AuditEntry) => void;
   idempotency: IdempotencyStore;
+  /** Social publishing: publishers, credentials (takedown uses them synchronously). */
+  publishing: PublishingDeps;
+  oauthState: OAuthStateStore;
+  /** Public origin of Studio (OAuth return URLs must stay on it). */
+  appUrl: string;
   logger: Logger;
   now: () => number;
 }
@@ -27,7 +34,18 @@ let deps: ApiDeps | undefined;
 let building: Promise<ApiDeps> | undefined;
 
 async function buildFromEnv(): Promise<ApiDeps> {
-  const [{ prisma }, tenant, enqueue, redis, storage, registry, idempotency] = await Promise.all([
+  const [
+    { prisma },
+    tenant,
+    enqueue,
+    redis,
+    storage,
+    registry,
+    idempotency,
+    env,
+    createDeps,
+    oauthState,
+  ] = await Promise.all([
     import('../../prisma'),
     import('../../tenant'),
     import('../queue/enqueue'),
@@ -35,16 +53,25 @@ async function buildFromEnv(): Promise<ApiDeps> {
     import('../storage'),
     import('../providers/default-registry'),
     import('./idempotency'),
+    import('../../env'),
+    import('../pipeline/create-deps'),
+    import('../platforms/oauth-state'),
   ]);
   const connection = redis.redisConnectionFromEnv();
+  const queue = enqueue.createBullJobQueue(connection);
+  // Reuse the worker wiring for publishing so API takedowns and workers share one code path.
+  const pipeline = createDeps.createPipelineDeps({ db: prisma, queue });
   return {
     db: prisma,
-    queue: enqueue.createBullJobQueue(connection),
+    queue,
     storage: storage.getAssetStorage(),
     registry: registry.getProviderRegistry(),
     resolveTenant: tenant.requireTenantContext,
     audit: auditLog,
     idempotency: idempotency.createRedisIdempotencyStore(connection),
+    publishing: pipeline.publishing,
+    oauthState: oauthState.createRedisOAuthStateStore(connection),
+    appUrl: env.requireEnv('APP_URL'),
     logger,
     now: Date.now,
   };

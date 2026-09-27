@@ -31,8 +31,13 @@ export function concurrencyFor(
   return Number.isInteger(raw) && raw > 0 ? raw : DEFAULT_CONCURRENCY[queue];
 }
 
-/** Queues with processors today; publish/scheduled/analytics workers arrive in Phases 5 and 11. */
-export const PIPELINE_QUEUES: QueueName[] = [QUEUES.orchestration, QUEUES.assets];
+/** Queues with processors today; the analytics worker arrives in Phase 11. */
+export const PIPELINE_QUEUES: QueueName[] = [
+  QUEUES.orchestration,
+  QUEUES.assets,
+  QUEUES.publish,
+  QUEUES.scheduled,
+];
 
 export function startWorkers(input: {
   connection: ConnectionOptions;

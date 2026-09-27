@@ -5,6 +5,7 @@ import {
   NoProviderAvailableError,
   NotFoundError,
   NotImplementedError,
+  PlatformError,
   ProviderError,
   StudioError,
   ValidationError,
@@ -15,6 +16,12 @@ import type { InlineJobQueue } from '../enqueue';
 import { composeVideo, onComposeVideoFailed } from './compose-video';
 import { generateAsset, onGenerateAssetFailed } from './generate-asset';
 import { onPlanProjectFailed, planProject } from './plan-project';
+import {
+  fireScheduledPublication,
+  onFireScheduledFailed,
+  onPublishVideoFailed,
+  publishVideo,
+} from './publish-video';
 import { onRunQualityGateFailed, runQualityGate } from './run-quality-gate';
 
 // BACKLOG 3.8 / 3.9 — the wrapper every job runs through, on BullMQ or inline:
@@ -29,6 +36,7 @@ type FailureHandler<N extends JobName> = (
   data: JobDataMap[N],
   deps: PipelineDeps,
   reason: string,
+  err?: unknown,
 ) => Promise<void>;
 
 export const PROCESSORS: { [N in JobName]: Processor<N> } = {
@@ -36,6 +44,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'generate-asset': generateAsset,
   'compose-video': composeVideo,
   'run-quality-gate': runQualityGate,
+  'publish-video': publishVideo,
+  'fire-scheduled-publication': fireScheduledPublication,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -43,10 +53,12 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'generate-asset': onGenerateAssetFailed,
   'compose-video': onComposeVideoFailed,
   'run-quality-gate': onRunQualityGateFailed,
+  'publish-video': onPublishVideoFailed,
+  'fire-scheduled-publication': onFireScheduledFailed,
 };
 
 export function isRetryable(err: unknown): boolean {
-  if (err instanceof ProviderError) return err.retryable;
+  if (err instanceof ProviderError || err instanceof PlatformError) return err.retryable;
   // Breakers close and budgets reset; routing again later may succeed.
   if (err instanceof NoProviderAvailableError) return true;
   if (
@@ -65,6 +77,7 @@ export function isRetryable(err: unknown): boolean {
 export function describeError(err: unknown): string {
   if (err instanceof KillSwitchTriggeredError) return `kill_switch_${err.level}: ${err.message}`;
   if (err instanceof ProviderError) return `${err.providerId}/${err.errorClass}: ${err.message}`;
+  if (err instanceof PlatformError) return `${err.platform}/${err.errorClass}: ${err.message}`;
   return err instanceof Error ? err.message : String(err);
 }
 
@@ -98,7 +111,7 @@ export async function executeJob<N extends JobName>(
     log.warn({ err, retryable, final, attempt: attempt.attemptsMade + 1 }, 'job attempt failed');
     if (final) {
       try {
-        await FAILURE_HANDLERS[name](data, deps, describeError(err));
+        await FAILURE_HANDLERS[name](data, deps, describeError(err), err);
       } catch (handlerErr) {
         log.error({ err: handlerErr }, 'failure handler itself failed');
       }

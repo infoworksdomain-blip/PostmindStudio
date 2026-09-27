@@ -82,8 +82,16 @@ describe('queue policy (spec 11)', () => {
   });
 
   it('builds deterministic, BullMQ-safe job ids', () => {
-    const data = { projectId: 'p', organisationId: 'o', runId: 'r', planTier: 'BASIC' as const };
+    const data = {
+      projectId: 'p',
+      organisationId: 'o',
+      runId: 'r',
+      planTier: 'BASIC' as const,
+      publicationId: 'pub',
+    };
     expect(jobIds.planProject(data)).toBe('plan-project__p__r');
+    expect(jobIds.publishVideo(data, 2)).toBe('publish-video__pub__2');
+    expect(jobIds.fireScheduled(data)).toBe('fire-scheduled__pub');
     expect(jobIds.generateAsset({ ...data, shotId: 's' })).toBe('generate-asset__s__r');
     expect(Object.values(jobIds).every((f) => !f({ ...data, shotId: 's' }).includes(':'))).toBe(
       true,

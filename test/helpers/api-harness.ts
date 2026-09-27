@@ -5,7 +5,13 @@ import { ForbiddenError, UnauthorizedError } from '../../src/lib/errors';
 import type { AuditEntry } from '../../src/lib/audit';
 import { setApiDeps, type ApiDeps } from '../../src/lib/studio/api/context';
 import { createMemoryIdempotencyStore } from '../../src/lib/studio/api/idempotency';
+import { randomBytes } from 'node:crypto';
+import { createLocalKeyProvider } from '../../src/lib/studio/crypto/envelope';
+import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
+import { createMemoryOAuthStateStore } from '../../src/lib/studio/platforms/oauth-state';
+import type { PublishingDeps } from '../../src/lib/studio/platforms/publishing';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
+import { fakePublisherRegistry } from './fake-publishers';
 import { InlineJobQueue } from '../../src/lib/studio/queue/enqueue';
 import type { TenantContext } from '../../src/lib/tenant';
 import { memoryStorage } from './memory-storage';
@@ -20,6 +26,8 @@ export const ALL_CAPABILITIES = [
   'studio:project:approve',
   'studio:render:download',
   'studio:render:force-approve',
+  'studio:publication:write',
+  'studio:connections:manage',
 ];
 
 export function tenant(
@@ -36,9 +44,39 @@ export function tenant(
   };
 }
 
-export function installApi(db: PrismaClient, tokens: Record<string, TenantContext | 'forbidden'>) {
-  const queue = new InlineJobQueue();
-  const { storage } = memoryStorage();
+export const APP_URL = 'http://studio.test';
+
+export interface InstallOptions {
+  /** Share a pipeline harness's queue so tests can drain jobs the API enqueued. */
+  queue?: InlineJobQueue;
+  /** Share a pipeline harness's publishing deps (publishers, keys, storage). */
+  publishing?: PublishingDeps;
+}
+
+export function installApi(
+  db: PrismaClient,
+  tokens: Record<string, TenantContext | 'forbidden'>,
+  options: InstallOptions = {},
+) {
+  const queue = options.queue ?? new InlineJobQueue();
+  const storage = options.publishing?.storage ?? memoryStorage().storage;
+  const oauthClients = new Map<string, OAuthClient>();
+  const publishing: PublishingDeps = options.publishing ?? {
+    db,
+    publishers: fakePublisherRegistry(),
+    meta: { getCredentials: vi.fn(async () => ({ accessToken: 'meta', accountId: 'meta' })) },
+    keys: createLocalKeyProvider(randomBytes(32).toString('base64'), 'test'),
+    oauth: (platform) => {
+      const client = oauthClients.get(platform);
+      if (!client) throw new Error(`no fake oauth client for ${platform}`);
+      return client;
+    },
+    storage,
+    engagement: { attributePublication: async () => undefined },
+    logger: pino({ level: 'silent' }),
+    now: Date.now,
+  };
+  const oauthState = createMemoryOAuthStateStore();
   const audits: AuditEntry[] = [];
   const runway = new ScriptedAdapter('runway', ['text_to_video'], () => ({ state: 'running' }));
   const deps: ApiDeps = {
@@ -55,11 +93,14 @@ export function installApi(db: PrismaClient, tokens: Record<string, TenantContex
     }),
     audit: (entry) => audits.push(entry),
     idempotency: createMemoryIdempotencyStore(),
+    publishing,
+    oauthState,
+    appUrl: APP_URL,
     logger: pino({ level: 'silent' }),
     now: Date.now,
   };
   setApiDeps(deps);
-  return { deps, queue, audits, storage, runway };
+  return { deps, queue, audits, storage, runway, publishing, oauthState, oauthClients };
 }
 
 type Handler = (
@@ -78,10 +119,30 @@ export async function call(
     headers?: Record<string, string>;
   } = {},
 ): Promise<{ status: number; json: Record<string, unknown>; headers: Headers }> {
+  const res = await rawCall(handler, options);
+  const text = await res.text();
+  return {
+    status: res.status,
+    json: (text ? JSON.parse(text) : {}) as Record<string, unknown>,
+    headers: res.headers,
+  };
+}
+
+export async function rawCall(
+  handler: Handler,
+  options: {
+    method?: string;
+    path?: string;
+    token?: string;
+    body?: unknown;
+    params?: Record<string, string>;
+    headers?: Record<string, string>;
+  } = {},
+): Promise<Response> {
   const headers: Record<string, string> = { ...options.headers };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
   if (options.body !== undefined) headers['content-type'] = 'application/json';
-  const req = new Request(`http://studio.test${options.path ?? '/api/studio/test'}`, {
+  const req = new Request(`${APP_URL}${options.path ?? '/api/studio/test'}`, {
     method: options.method ?? 'GET',
     headers,
     body:
@@ -91,10 +152,5 @@ export async function call(
           ? options.body
           : JSON.stringify(options.body),
   });
-  const res = await handler(req, { params: Promise.resolve(options.params ?? {}) });
-  return {
-    status: res.status,
-    json: (await res.json()) as Record<string, unknown>,
-    headers: res.headers,
-  };
+  return handler(req, { params: Promise.resolve(options.params ?? {}) });
 }
