@@ -1,9 +1,6 @@
-// Studio is API-first. The create/review/manage screens arrive in BACKLOG Phase 10.
-export default function Home() {
-  return (
-    <main>
-      <h1>PostMind Studio</h1>
-      <p>Service is running. The Studio API lives under /api/studio.</p>
-    </main>
-  );
+import { redirect } from 'next/navigation';
+
+// studio.postmind.ai opens on the projects list (spec 14.3 manage surface).
+export default function Home(): never {
+  redirect('/projects');
 }

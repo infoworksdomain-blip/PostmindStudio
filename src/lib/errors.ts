@@ -94,6 +94,8 @@ export type PlatformErrorClass =
   | 'invalid_request'
   | 'unavailable'
   | 'timeout'
+  /** A previous upload started but its result was never recorded: it may be live. */
+  | 'outcome_unknown'
   | 'unknown';
 
 /** A social platform (TikTok, YouTube, X, LinkedIn, Instagram, Facebook) rejected or failed a call. */

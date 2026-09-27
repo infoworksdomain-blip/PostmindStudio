@@ -105,11 +105,18 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   const renders: Record<string, string> = {
     ...((projectMetadata(project.metadata).renders as Record<string, string>) ?? {}),
   };
+  // Same resolution as ideation/overlays/voice: the project's kit, else the business default.
   const kit = project.brandKitId
     ? await deps.db.brandKit.findFirst({
         where: { id: project.brandKitId, organisationId: project.organisationId },
       })
-    : null;
+    : await deps.db.brandKit.findFirst({
+        where: {
+          organisationId: project.organisationId,
+          businessId: project.businessId,
+          isDefault: true,
+        },
+      });
   const palette = Array.isArray(kit?.colourPalette)
     ? (kit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
     : [];

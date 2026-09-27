@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { PLATFORMS, type Platform } from '../../src/lib/studio/services/catalog';
 import type {
   PlatformPublisher,
@@ -8,7 +9,8 @@ import type {
 import type { PublisherRegistry } from '../../src/lib/studio/platforms/registry';
 
 // Recording publishers for pipeline/API tests. Ids are prefixed "fake_" so they can never be
-// mistaken for real platform ids.
+// mistaken for real platform ids, and carry a random suffix: platform post ids are unique in the
+// database, and suites share one database.
 
 export class FakePublisher implements PlatformPublisher {
   readonly published: PublishRequest[] = [];
@@ -20,7 +22,7 @@ export class FakePublisher implements PlatformPublisher {
     readonly supportsTakedown = true,
   ) {
     this.behaviour = () => ({
-      platformPostId: `fake_${platform}_${this.published.length}`,
+      platformPostId: `fake_${platform}_${this.published.length}_${randomUUID().slice(0, 8)}`,
       platformUrl: `https://fake.invalid/${platform}/${this.published.length}`,
       metadata: { fake: true },
     });

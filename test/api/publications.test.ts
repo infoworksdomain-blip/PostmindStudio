@@ -147,12 +147,15 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
     const got = await call(publicationRoute.GET, { token: 'owner', params: { id: created.id } });
     const publication = got.json.publication as Record<string, unknown>;
     expect(publication.state).toBe('PUBLISHED');
-    expect(publication.platformPostId).toBe('fake_tiktok_1');
+    expect(publication.platformPostId).toMatch(/^fake_tiktok_1_/);
     expect((await db.videoProject.findUnique({ where: { id: project.id } }))?.state).toBe(
       'PUBLISHED',
     );
     expect(h.attributions).toEqual([
-      expect.objectContaining({ publicationId: created.id, platformPostId: 'fake_tiktok_1' }),
+      expect.objectContaining({
+        publicationId: created.id,
+        platformPostId: publication.platformPostId,
+      }),
     ]);
     expect(h.audits.map((a) => a.action)).toContain('studio.publication.published');
   });
@@ -326,6 +329,67 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
     expect(notFailed.status).toBe(409);
   });
 
+  it('never uploads twice after an ambiguous failure; an explicit retry is the confirmation', async () => {
+    const { render } = await approvedRender();
+    const conn = await connection('youtube');
+    // A timeout mid-upload: the video may be live. BullMQ retries, but the next attempt must
+    // refuse to upload again and fail as outcome_unknown for a person to check.
+    h.publishers.youtube_short.behaviour = () => {
+      throw new PlatformError('youtube_short', 'timeout', 'Upload timed out', true);
+    };
+    const res = await publish({
+      renderId: render.id,
+      platform: 'youtube_short',
+      connectionId: conn.id,
+      caption: 'Bread',
+    });
+    const id = (res.json.publication as { id: string }).id;
+    await drainInline(h.queue, h.deps);
+
+    expect(h.publishers.youtube_short.published).toHaveLength(1);
+    const failed = await db.videoPublication.findUniqueOrThrow({ where: { id } });
+    expect(failed.state).toBe('FAILED');
+    expect(failed.errorCode).toBe('outcome_unknown');
+    expect(failed.errorReason).toMatch(/not published twice/);
+
+    h.publishers.youtube_short.behaviour = () => ({
+      platformPostId: 'yt-after-check',
+      platformUrl: null,
+      metadata: {},
+    });
+    const retried = await call(retryRoute.POST, { method: 'POST', token: 'owner', params: { id } });
+    expect(retried.status).toBe(202);
+    await drainInline(h.queue, h.deps);
+    const ok = await db.videoPublication.findUniqueOrThrow({ where: { id } });
+    expect(ok.state).toBe('PUBLISHED');
+    expect(h.publishers.youtube_short.published).toHaveLength(2);
+    expect((ok.metadata as Record<string, unknown>).uploadStartedAt).toBeUndefined();
+  });
+
+  it('retries a definite platform refusal automatically (nothing was posted)', async () => {
+    const { render } = await approvedRender();
+    const conn = await connection('youtube');
+    let calls = 0;
+    h.publishers.youtube_short.behaviour = () => {
+      calls += 1;
+      if (calls === 1) {
+        throw new PlatformError('youtube_short', 'rate_limited', 'Slow down', true);
+      }
+      return { platformPostId: `yt-${randomUUID()}`, platformUrl: null, metadata: {} };
+    };
+    const res = await publish({
+      renderId: render.id,
+      platform: 'youtube_short',
+      connectionId: conn.id,
+      caption: 'Bread',
+    });
+    const id = (res.json.publication as { id: string }).id;
+    await drainInline(h.queue, h.deps);
+    const ok = await db.videoPublication.findUniqueOrThrow({ where: { id } });
+    expect(ok.state).toBe('PUBLISHED');
+    expect(calls).toBe(2);
+  });
+
   it('takes down where the platform allows it and refuses cleanly where it does not', async () => {
     const yt = await approvedRender();
     const ytConn = await connection('youtube');
@@ -368,5 +432,81 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
       params: { id: ttId },
     });
     expect(strangers.status).toBe(404);
+  });
+
+  it('lists publications filtered by platform and state, and paginates with a cursor', async () => {
+    const tiktokConn = await connection('tiktok');
+    const ytConn = await connection('youtube');
+    const a = await approvedRender();
+    const b = await approvedRender();
+    const c = await approvedRender();
+
+    const pubA = await publish({
+      renderId: a.render.id,
+      platform: 'tiktok',
+      connectionId: tiktokConn.id,
+    });
+    const pubB = await publish({
+      renderId: b.render.id,
+      platform: 'tiktok',
+      connectionId: tiktokConn.id,
+    });
+    const pubC = await publish({
+      renderId: c.render.id,
+      platform: 'youtube_short',
+      connectionId: ytConn.id,
+      title: 'Sourdough shorts',
+    });
+    const ids = [pubA, pubB, pubC].map((r) => (r.json.publication as { id: string }).id);
+
+    const byPlatform = await call(publicationsRoute.GET, {
+      token: 'owner',
+      path: '/api/studio/publications?platform=tiktok',
+    });
+    expect(byPlatform.status).toBe(200);
+    const platformIds = (byPlatform.json.data as Array<{ id: string }>).map((p) => p.id);
+    expect(platformIds).toEqual(expect.arrayContaining([ids[0], ids[1]]));
+    expect(platformIds).not.toContain(ids[2]);
+
+    const byState = await call(publicationsRoute.GET, {
+      token: 'owner',
+      path: '/api/studio/publications?state=SCHEDULED',
+    });
+    expect(byState.status).toBe(200);
+    expect((byState.json.data as unknown[]).length).toBeGreaterThanOrEqual(3);
+
+    const badState = await call(publicationsRoute.GET, {
+      token: 'owner',
+      path: '/api/studio/publications?state=NOT_A_STATE',
+    });
+    expect(badState.status).toBe(400);
+
+    const page1 = await call(publicationsRoute.GET, {
+      token: 'owner',
+      path: '/api/studio/publications?limit=1',
+    });
+    expect(page1.status).toBe(200);
+    expect((page1.json.data as unknown[]).length).toBe(1);
+    const cursor = page1.json.nextCursor as string;
+    expect(cursor).toBeTruthy();
+
+    const page2 = await call(publicationsRoute.GET, {
+      token: 'owner',
+      path: `/api/studio/publications?limit=1&cursor=${cursor}`,
+    });
+    expect(page2.status).toBe(200);
+    const firstId = (page1.json.data as Array<{ id: string }>)[0]?.id;
+    const secondId = (page2.json.data as Array<{ id: string }>)[0]?.id;
+    expect(secondId).not.toBe(firstId);
+  });
+
+  it('list is scoped to the caller organisation: another org sees none of these', async () => {
+    const conn = await connection('tiktok');
+    const render = await approvedRender();
+    await publish({ renderId: render.render.id, platform: 'tiktok', connectionId: conn.id });
+
+    const strangers = await call(publicationsRoute.GET, { token: 'stranger' });
+    expect(strangers.status).toBe(200);
+    expect(strangers.json.data).toEqual([]);
   });
 });

@@ -82,3 +82,30 @@ jobs:
             --to-schema-datamodel prisma/schema.prisma \
             --shadow-database-url "$SHADOW_DATABASE_URL" \
             --exit-code
+
+  docker:
+    # BACKLOG 12.6 — the production image builds, runs as non-root with ffmpeg present, serves
+    # /api/health, and docker-compose.prod.yml is valid.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t postmind-studio:ci .
+      - name: Image has ffmpeg, runs as node
+        run: |
+          docker run --rm --entrypoint sh postmind-studio:ci -c 'ffmpeg -version | head -1 && ffprobe -version | head -1 && test "$(id -un)" = node'
+      - name: Liveness responds
+        run: |
+          docker run -d --name studio -p 3010:3010 postmind-studio:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3010/api/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs studio
+          exit 1
+      - name: Compose file is valid
+        run: |
+          touch .env.production
+          IMAGE_TAG=ci docker compose -f docker-compose.prod.yml config --quiet
+          IMAGE_TAG=ci docker compose -f docker-compose.prod.yml --profile migrate config --quiet

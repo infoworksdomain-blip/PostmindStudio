@@ -50,6 +50,64 @@ export const createPublicationInput = z.object({
 
 export type CreatePublicationInput = z.infer<typeof createPublicationInput>;
 
+export const listPublicationsQuery = z.object({
+  /** Comma-separated states. */
+  state: z
+    .string()
+    .max(200)
+    .refine(
+      (v) =>
+        v
+          .split(',')
+          .every((s) =>
+            ['SCHEDULED', 'PUBLISHING', 'PUBLISHED', 'FAILED', 'CANCELLED', 'TAKEN_DOWN'].includes(
+              s,
+            ),
+          ),
+      { message: 'Unknown publication state' },
+    )
+    .optional(),
+  platform: z.enum(PLATFORMS).optional(),
+  projectId: z.string().max(64).optional(),
+  /** Calendar window on scheduledFor/publishedAt (spec 14.3). */
+  from: z.iso.datetime().optional(),
+  to: z.iso.datetime().optional(),
+  cursor: z.string().max(64).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+/** GET /publications (spec 8.4): the manage list and calendar. */
+export async function listPublications(
+  db: PrismaClient,
+  organisationId: string,
+  query: z.infer<typeof listPublicationsQuery>,
+) {
+  const window =
+    query.from || query.to
+      ? {
+          ...(query.from && { gte: new Date(query.from) }),
+          ...(query.to && { lt: new Date(query.to) }),
+        }
+      : undefined;
+  const rows = await db.videoPublication.findMany({
+    where: {
+      organisationId,
+      ...(query.state && {
+        state: { in: query.state.split(',') as Prisma.EnumPublicationStateFilter['in'] },
+      }),
+      ...(query.platform && { platform: query.platform }),
+      ...(query.projectId && { projectId: query.projectId }),
+      ...(window && { OR: [{ scheduledFor: window }, { publishedAt: window }] }),
+    },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: query.limit + 1,
+    ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),
+    include: { project: { select: { id: true, name: true } } },
+  });
+  const page = rows.slice(0, query.limit);
+  return { data: page, nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null };
+}
+
 async function findPublication(db: PrismaClient, organisationId: string, id: string) {
   const publication = await db.videoPublication.findFirst({ where: { id, organisationId } });
   if (!publication) throw new NotFoundError('Publication not found');
@@ -251,7 +309,14 @@ export async function retryPublication(
   });
   const moved = await deps.db.videoPublication.updateMany({
     where: { id, organisationId: tenant.organisationId, state: 'FAILED' },
-    data: { state: 'SCHEDULED', errorReason: null, errorCode: null },
+    // An explicit retry is the person confirming the post is not live: clear the upload marker
+    // that publish-video uses to refuse re-uploading after an unknown outcome.
+    data: {
+      state: 'SCHEDULED',
+      errorReason: null,
+      errorCode: null,
+      metadata: withoutUploadMarker(publication.metadata),
+    },
   });
   if (moved.count === 0) throw new ConflictError('Publication changed concurrently');
   await deps.db.videoProject.updateMany({
@@ -267,6 +332,12 @@ export async function retryPublication(
     jobId: jobIds.publishVideo(data, publication.retryCount),
   });
   return findPublication(deps.db, tenant.organisationId, id);
+}
+
+function withoutUploadMarker(metadata: Prisma.JsonValue | null): Prisma.InputJsonValue {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return {};
+  const { uploadStartedAt: _marker, ...rest } = metadata as Record<string, Prisma.JsonValue>;
+  return rest as Prisma.InputJsonValue;
 }
 
 function takedownMessage(platform: string, errorClass: string): string {

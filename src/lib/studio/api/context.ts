@@ -9,6 +9,7 @@ import type { PublishingDeps } from '../platforms/publishing';
 import type { ProviderRegistry } from '../providers/registry';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
+import { devTenantFromEnv } from './dev-tenant';
 import type { IdempotencyStore } from './idempotency';
 
 // Dependencies for /api/studio route handlers. Built lazily from env in production; tests
@@ -64,6 +65,13 @@ async function buildFromEnv(): Promise<ApiDeps> {
     import('../platforms/oauth-state'),
     import('../images/library'),
   ]);
+  const devTenant = devTenantFromEnv();
+  if (devTenant) {
+    logger.warn(
+      { organisationId: devTenant.organisationId },
+      'STUDIO_DEV_TENANT active: JWT verification is bypassed (next dev only)',
+    );
+  }
   const connection = redis.redisConnectionFromEnv();
   const queue = enqueue.createBullJobQueue(connection);
   // Reuse the worker wiring for publishing so API takedowns and workers share one code path.
@@ -73,7 +81,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     queue,
     storage: storage.getAssetStorage(),
     registry: registry.getProviderRegistry(),
-    resolveTenant: tenant.requireTenantContext,
+    resolveTenant: devTenant ? async () => devTenant : tenant.requireTenantContext,
     audit: auditLog,
     idempotency: idempotency.createRedisIdempotencyStore(connection),
     publishing: pipeline.publishing,

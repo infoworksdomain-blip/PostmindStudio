@@ -6,6 +6,45 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+**Phase 12 status: everything that can be done from the repository is built. Rehearsals, the k6 run and beta onboarding need staging and people, and are listed for GATE 12.**
+
+[2026-09-27] [12.7] Golden-path regression (test/golden, GP-01…GP-15): brief→publish, scheduled publish/cancel, multi-format, quality failure→force-approve, reject→regenerate shot, slideshow, library TEMPLATE/INSPIRE, overlays→re-render, website scan→image library, default brand kit, publish failure→retry, takedown, workspace freeze isolation, analytics polling, budget cap. Real routes + real workers on the inline queue + Postgres. Found and fixed: the composer ignored the business's default brand kit (end card and fonts came out unbranded).
+[2026-09-27] [12.7] FIX (publishing): a retry after an ambiguous failure could post the same video twice. publish-video now records `uploadStartedAt` before calling the platform and clears it only on a definite refusal. A retry that finds the marker fails as `outcome_unknown` ("check the platform before retrying") instead of uploading again; an explicit retry by a person clears it. The post id is logged when the result can't be recorded.
+[2026-09-27] [12.6] Dockerfile (one image, web + worker roles; non-root, ffmpeg, tini, healthcheck), .dockerignore (no env files in images), docker-compose.prod.yml (web ×3, one worker service per queue per playbook 7.3, migrate one-shot), CI `docker` job (build, ffmpeg + non-root check, /api/health probe, compose validation). runbooks/deploy.md.
+[2026-09-27] [12.4] runbooks/: kill switch, rollback, deploy, backup/recovery and the eight playbook 11.3 priority risks, each with metric → threshold → escalation → steps and explicit GAPs.
+[2026-09-27] [12.3 — procedure only] runbooks/rollback.md: redeploy the previous SHA; forward-only expand/contract migrations so N runs on N+1's schema; timed rehearsal procedure (SLO 5 min).
+[2026-09-27] [12.2 — tooling only] scripts/ops/rehearse-kill-switch.ts + src/lib/studio/ops/rehearsal.ts: engages a level through the Admin API, times the drain from the `studio_queue_jobs{state="active"}` gauge (two consecutive zero samples), reports PASS/FAIL against the 60 s SLO, always releases the switch.
+[2026-09-27] [12.1] load-test/k6/studio-api.js (Engagement pattern): smoke (5 VUs, 50 s) and full (ramp / steady / 3× spike / recover) profiles over the read APIs; optional draft-only writes (never /generate, so no provider spend). Thresholds: p95 < 300 ms (spec 17.1), p99 < 2 s, errors < 0.1%.
+
+**GATE 12 review list (Go / No-Go, playbook §14):**
+- NOT RUN (needs staging): kill-switch rehearsals at all four levels, rollback rehearsal, k6 smoke + full, the queue-throughput target (spec 17.2), a PITR restore drill. The tooling and procedures are in the repo; record the timings here.
+- NOT DONE (people): beta onboarding of 5–10 friendly customers (12.5), on-call rota, Trust & Safety audit process.
+- DECISION NEEDED — review/publish policies: projects store `reviewPolicy` (AUTO_APPROVE…) and `publishPolicy` (AUTO_ON_APPROVAL…), but nothing acts on them; every video waits for a human approval. The spec says "default ON for the first 10 videos of any new user, then per-org policy (auto-approve for trusted accounts)" and auto-publish "per template" (templates are not built). Define "trusted" and the auto-publish targets before this is built.
+- GAPS from the runbooks: no alert rules/paging committed; no 80%/90% cost alert or pause automation; no per-platform publishing kill switch; no bulk re-drive for kill-switched or Redis-lost work; S3 lifecycle rules live outside this repo; no daily platform adapter canary.
+- Still blocked from earlier phases: Meta credentials (Instagram/Facebook publishing + metrics), music provider, the 50k corpus (licence register), BPM/CLIP/CLAP.
+
+**Phase 10 status: all eleven items built. Every screen uses real endpoints; features without a backend endpoint show an honest "not available yet" state.**
+
+[2026-09-27] [10.11] /admin: platform staff only (403 → "PostMind staff only"). Kill switch (four levels, reason required, global needs typed confirmation), library ingest/edit/retire, cost report. Queue health, provider health and the safety review queue have no admin API yet (footnoted).
+[2026-09-27] [10.10] Overlay editor: preset picker, per-shot overlays, live layout frame at the variant's aspect ratio, draggable/keyboard timeline (←/→ 0.1 s, Shift 0.5 s, Alt = end), style form, preview render, save-as-preset, bulk apply to a render + re-render. Font families validated before loading from Google Fonts.
+[2026-09-27] [10.9] /business: profile (PATCH of changed fields), website scan (ownership confirmation, 3 s polling, follows an already-running scan on 409), brand kits CRUD + default, image library (filter, semantic search, upload, generate, refresh, delete).
+[2026-09-27] [10.8] Slideshow builder on the review screen: templates, per-type slide editor, add/reorder/delete, auto-populate (polls while SCANNING), save as template.
+[2026-09-27] [10.7] /library browse (taxonomy/length/mood/tag filters, recommended shelf, hover preview) and /library/[id] (blueprint timeline, similar, "Use as reference" → /new?reference&mode; modes the licence forbids are locked).
+[2026-09-27] [10.6] /analytics: 7/30/90-day overview, daily series (hand-built accessible SVG chart: keyboard readout + data table), per-platform and top-publication breakdowns, spend by day/provider/project.
+[2026-09-27] [10.5] /projects (state filters, cursor paging), /publications (state/platform filters, retry/cancel/takedown with confirmation), /calendar (month grid; agenda list on phones; bounded fetch of 5 pages). New GET /publications list endpoint.
+[2026-09-27] [10.4] /projects/[id] review: 4 s polling while active, pipeline strip, variant players (signed preview URLs), shot strip with regenerate/edit, quality panel with force-approve, approve/reject, publish now/schedule per variant, publication cancel/retry, script view.
+[2026-09-27] [10.3] /new: one text box, one button (Ctrl/Cmd+Enter) → POST /projects + /generate; options (platforms pre-selected from connections, length, brand kit, audience/CTA/budget/approval policy); library reference banner with TEMPLATE/INSPIRE.
+[2026-09-27] [10.2] Auth: tenant.ts accepts `Authorization: Bearer` or the PostMind session cookie (POSTMIND_SESSION_COOKIE); cookie-authenticated writes must pass an Origin / Sec-Fetch-Site same-origin check (CSRF). Local UI work: STUDIO_DEV_TENANT="org:user", honoured only under NODE_ENV=development (.env.development, no secrets).
+[2026-09-27] [10.1] Tailwind 4 + shadcn/ui (radix-nova; 24 components pulled from the registry by scripts/dev/shadcn-pull.mjs because the shadcn CLI fails under npm 12's allowScripts policy). Studio tokens (paper/ink, vermilion primary, teal charts, light + dark), self-hosted Inter Variable + Instrument Serif (fontsource), app shell with business switcher. New APIs: brand kits CRUD + set-default, admin kill switch GET/PUT.
+
+**Phase 10 security review (independent agent):** no CRITICAL or HIGH findings. MEDIUM fixed: platform post URLs are passed through `safeHttpUrl()` (http/https only) before being rendered as links. The dev tenant is unreachable in built images (NODE_ENV=production in the Dockerfile and in next build/start). The admin staff-org allow-list fails open only outside production (unchanged; defence-in-depth on top of Core-issued admin capabilities).
+
+**Phase 10 review list:**
+- DESIGN — no design-system tokens were available from PostMind Core, so Studio defines its own (globals.css). Swap in Core's tokens when they are published.
+- NOT BUILT (no endpoint): free-text library search (the box filters the loaded page and says so), calendar drag-to-reschedule, whole-video overlay listing, Instagram/Facebook publishing from Studio (needs Engagement account lookup), shot asset swap/delete, business picker (no list-businesses endpoint in Core), admin queue/provider health and safety review queue, per-project views.
+- UI SIMPLIFICATIONS: no overlay resize handles (sliders instead), no undo history, native colour input (no alpha), no platform safe-area guides, overlay presets cannot be edited.
+- Timeline pointer drag has no automated test (jsdom has no pointer geometry); the keyboard path is tested.
+
 [2026-09-27] [ORDER] Phase 11 built before Phase 10: the frontend's analytics and admin screens need the Phase 11 endpoints; everything else in Phase 10 depends only on phases already merged.
 
 **Phase 11 status: analytics polling, roll-ups, analytics + cost endpoints, Prometheus metrics, Sentry and readiness built.**

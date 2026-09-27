@@ -12,6 +12,16 @@ import type { PublishJobData } from '../queues';
 
 const PENDING_STATES = ['SCHEDULED', 'PUBLISHING'] as const;
 
+/** Platform errors that mean the upload was refused outright (so nothing can be live). */
+function definitelyNotPosted(err: unknown): boolean {
+  return (
+    err instanceof PlatformError &&
+    err.errorClass !== 'timeout' &&
+    err.errorClass !== 'unknown' &&
+    err.errorClass !== 'outcome_unknown'
+  );
+}
+
 /** Project roll-up: PUBLISHED if every non-cancelled publication succeeded, else PARTIALLY_PUBLISHED. */
 export async function rollUpProject(
   deps: Pick<PipelineDeps, 'db'>,
@@ -63,31 +73,67 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
   }
 
   const platform = publication.platform as Platform;
-  const meta = publicationMetadata(publication);
+  const { uploadStartedAt, ...meta } = publicationMetadata(publication);
+  // Never post twice: an earlier attempt reached the platform but its result was never recorded
+  // (crash, DB failure after upload, ambiguous timeout). The post may be live, so stop and let a
+  // person check the platform; an explicit retry (retryPublication) clears the marker.
+  if (uploadStartedAt) {
+    throw new PlatformError(
+      platform,
+      'outcome_unknown',
+      `An upload started at ${uploadStartedAt} did not record its result. Check ${platform} for the post before retrying, so it is not published twice.`,
+      false,
+    );
+  }
   const { accessToken, accountId } = await resolveCredentials(deps.publishing, publication);
   const video = await videoSource(deps.publishing, publication.render);
-  const result = await deps.publishing.publishers[platform].publish({
-    video,
-    text: publication.caption ?? '',
-    caption: meta.rawCaption ?? publication.caption ?? '',
-    hashtags: publication.hashtags,
-    title: meta.title,
-    accessToken,
-    accountId,
-    aiGenerated: true,
-    options: meta.options,
-  });
+  const setMetadata = (value: Record<string, unknown>) =>
+    deps.db.videoPublication.update({
+      where: { id: publication.id },
+      data: { metadata: value as Prisma.InputJsonValue },
+    });
+  await setMetadata({ ...meta, uploadStartedAt: new Date(deps.now()).toISOString() });
 
-  await deps.db.videoPublication.update({
-    where: { id: publication.id },
-    data: {
-      state: 'PUBLISHED',
-      platformPostId: result.platformPostId,
-      platformUrl: result.platformUrl,
-      publishedAt: new Date(deps.now()),
-      metadata: { ...meta, result: result.metadata } as Prisma.InputJsonValue,
-    },
-  });
+  let result: Awaited<ReturnType<(typeof deps.publishing.publishers)[Platform]['publish']>>;
+  try {
+    result = await deps.publishing.publishers[platform].publish({
+      video,
+      text: publication.caption ?? '',
+      caption: meta.rawCaption ?? publication.caption ?? '',
+      hashtags: publication.hashtags,
+      title: meta.title,
+      accessToken,
+      accountId,
+      aiGenerated: true,
+      options: meta.options,
+    });
+  } catch (err) {
+    // The platform answered with a definite rejection: nothing was posted, a retry is safe.
+    // Timeouts and unclassified failures keep the marker (the upload may have gone through).
+    if (definitelyNotPosted(err)) await setMetadata(meta);
+    throw err;
+  }
+
+  try {
+    await deps.db.videoPublication.update({
+      where: { id: publication.id },
+      data: {
+        state: 'PUBLISHED',
+        platformPostId: result.platformPostId,
+        platformUrl: result.platformUrl,
+        publishedAt: new Date(deps.now()),
+        metadata: { ...meta, result: result.metadata } as Prisma.InputJsonValue,
+      },
+    });
+  } catch (err) {
+    // The post is live but unrecorded. The marker stays, so retries fail as outcome_unknown
+    // instead of uploading again; log the post id for reconciliation.
+    log.error(
+      { err, platform, platformPostId: result.platformPostId, platformUrl: result.platformUrl },
+      'published but the result could not be recorded',
+    );
+    throw err;
+  }
   deps.audit({
     actorUserId: 'system:studio-publisher',
     organisationId: data.organisationId,

@@ -1,7 +1,13 @@
 import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTVerifyGetKey } from 'jose';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, UnauthorizedError, UpstreamServiceError } from './errors';
-import { createTenantResolver, fetchCoreContext, type CoreContext } from './tenant';
+import {
+  createTenantResolver,
+  extractToken,
+  fetchCoreContext,
+  readCookie,
+  type CoreContext,
+} from './tenant';
 
 const ISSUER = 'postmind-core';
 const AUDIENCE = 'postmind-studio';
@@ -233,5 +239,139 @@ describe('fetchCoreContext', () => {
       throw new TypeError('fetch failed');
     });
     await expect(fetchCoreContext('u', fetchImpl)).rejects.toBeInstanceOf(UpstreamServiceError);
+  });
+});
+
+describe('readCookie', () => {
+  it('returns undefined when the header is null', () => {
+    expect(readCookie(null, 'session')).toBeUndefined();
+  });
+
+  it('returns undefined when the cookie is absent', () => {
+    expect(readCookie('a=1; b=2', 'session')).toBeUndefined();
+  });
+
+  it('finds the named cookie among several', () => {
+    expect(readCookie('a=1; session=abc123; b=2', 'session')).toBe('abc123');
+  });
+
+  it('decodes a URL-encoded value', () => {
+    expect(readCookie('session=abc%20123', 'session')).toBe('abc 123');
+  });
+
+  it('falls back to the raw value when decoding fails', () => {
+    expect(readCookie('session=%E0%A4%A', 'session')).toBe('%E0%A4%A');
+  });
+
+  it('treats an empty value as absent', () => {
+    expect(readCookie('session=', 'session')).toBeUndefined();
+  });
+
+  it('does not match a cookie name that is only a suffix of another', () => {
+    expect(readCookie('other_session=abc', 'session')).toBeUndefined();
+  });
+});
+
+describe('extractToken', () => {
+  function req(init: { headers?: Record<string, string>; method?: string } = {}) {
+    return new Request('http://studio.test/api/studio/projects', {
+      method: init.method ?? 'GET',
+      headers: init.headers,
+    });
+  }
+
+  it('prefers the Authorization bearer header over any cookie', () => {
+    const token = extractToken(
+      req({
+        headers: { authorization: 'Bearer header-token', cookie: 'studio_session=cookie-token' },
+      }),
+      { sessionCookie: 'studio_session' },
+    );
+    expect(token).toBe('header-token');
+  });
+
+  it('throws Unauthorized when there is no header and no sessionCookie configured', () => {
+    expect(() => extractToken(req())).toThrow('Missing bearer token');
+  });
+
+  it('falls back to the session cookie on a safe GET request', () => {
+    const token = extractToken(req({ headers: { cookie: 'studio_session=cookie-token' } }), {
+      sessionCookie: 'studio_session',
+    });
+    expect(token).toBe('cookie-token');
+  });
+
+  it('throws Unauthorized when the configured cookie is missing', () => {
+    expect(() =>
+      extractToken(req({ headers: { cookie: 'other=1' } }), { sessionCookie: 'studio_session' }),
+    ).toThrow('Missing bearer token');
+  });
+
+  it('allows a cookie-authenticated mutation when Origin matches appOrigin', () => {
+    const token = extractToken(
+      req({
+        method: 'POST',
+        headers: { cookie: 'studio_session=cookie-token', origin: 'https://studio.example' },
+      }),
+      { sessionCookie: 'studio_session', appOrigin: 'https://studio.example' },
+    );
+    expect(token).toBe('cookie-token');
+  });
+
+  it('refuses a cookie-authenticated mutation when Origin does not match appOrigin', () => {
+    expect(() =>
+      extractToken(
+        req({
+          method: 'POST',
+          headers: { cookie: 'studio_session=cookie-token', origin: 'https://evil.example' },
+        }),
+        { sessionCookie: 'studio_session', appOrigin: 'https://studio.example' },
+      ),
+    ).toThrow('Cross-site request refused');
+  });
+
+  it('falls back to Sec-Fetch-Site when Origin is absent on a mutation', () => {
+    const token = extractToken(
+      req({
+        method: 'POST',
+        headers: { cookie: 'studio_session=cookie-token', 'sec-fetch-site': 'same-origin' },
+      }),
+      { sessionCookie: 'studio_session', appOrigin: 'https://studio.example' },
+    );
+    expect(token).toBe('cookie-token');
+  });
+
+  it('refuses a mutation with no Origin and a cross-site Sec-Fetch-Site', () => {
+    expect(() =>
+      extractToken(
+        req({
+          method: 'POST',
+          headers: { cookie: 'studio_session=cookie-token', 'sec-fetch-site': 'cross-site' },
+        }),
+        { sessionCookie: 'studio_session', appOrigin: 'https://studio.example' },
+      ),
+    ).toThrow('Cross-site request refused');
+  });
+
+  it('refuses a mutation with no Origin, no Sec-Fetch-Site header at all', () => {
+    expect(() =>
+      extractToken(req({ method: 'POST', headers: { cookie: 'studio_session=cookie-token' } }), {
+        sessionCookie: 'studio_session',
+        appOrigin: 'https://studio.example',
+      }),
+    ).toThrow('Cross-site request refused');
+  });
+
+  it('does not require the CSRF check for safe methods (GET/HEAD/OPTIONS)', () => {
+    for (const method of ['GET', 'HEAD', 'OPTIONS']) {
+      const token = extractToken(
+        req({
+          method,
+          headers: { cookie: 'studio_session=cookie-token', origin: 'https://evil.example' },
+        }),
+        { sessionCookie: 'studio_session', appOrigin: 'https://studio.example' },
+      );
+      expect(token).toBe('cookie-token');
+    }
   });
 });
