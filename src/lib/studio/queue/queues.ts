@@ -10,6 +10,8 @@ export const QUEUES = {
   publish: 'studio-publish',
   scheduled: 'studio-scheduled',
   analytics: 'studio-analytics',
+  /** Feature A corpus ingestion: isolated so staff batches never crowd out customer jobs. */
+  library: 'studio-library',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -95,7 +97,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
-  'ingest-library-video': QUEUES.assets,
+  'ingest-library-video': QUEUES.library,
   'refresh-image-library': QUEUES.assets,
 };
 

@@ -36,6 +36,8 @@ export interface MediaInspector {
   sceneChanges(url: string, threshold: number): Promise<number[]>;
   /** One JPEG frame at `atSec`, scaled to at most `maxWidth` wide. */
   frameJpeg(url: string, atSec: number, maxWidth: number): Promise<Uint8Array>;
+  /** Low-resolution, muted, length-capped H.264 rendition (library in-picker previews). */
+  previewClip(url: string, maxWidth: number, maxSec: number): Promise<Uint8Array>;
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60_000;
@@ -275,6 +277,44 @@ export function createFfmpegInspector(
         if (r.code !== 0)
           throw new ValidationError(`ffmpeg frame grab failed: ${r.stderr.slice(-500)}`);
         return new Uint8Array(await readFile(join(dir, 'frame.jpg')));
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+    },
+    async previewClip(url, maxWidth, maxSec) {
+      const dir = await mkdtemp(join(tmpdir(), 'studio-preview-'));
+      try {
+        const r = await run(
+          ffmpeg,
+          [
+            '-hide_banner',
+            '-nostdin',
+            '-i',
+            url,
+            '-t',
+            maxSec.toFixed(3),
+            '-an',
+            '-vf',
+            `scale='min(${Math.round(maxWidth)},iw)':-2,fps=15`,
+            '-c:v',
+            'libx264',
+            '-preset',
+            'veryfast',
+            '-crf',
+            '32',
+            '-pix_fmt',
+            'yuv420p',
+            '-movflags',
+            '+faststart',
+            '-y',
+            'preview.mp4',
+          ],
+          timeoutMs,
+          dir,
+        );
+        if (r.code !== 0)
+          throw new ValidationError(`ffmpeg preview failed: ${r.stderr.slice(-500)}`);
+        return new Uint8Array(await readFile(join(dir, 'preview.mp4')));
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

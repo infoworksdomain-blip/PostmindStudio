@@ -6,6 +6,28 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 9] Partially passed on automated evidence (autonomous build mode): reference videos ingested end to end (scene detection → keyframes → transcript → Claude analysis → embedding), searched, and used for a TEMPLATE project whose shots matched the reference blueprint (count, durations, transitions, overlay styles) and an INSPIRE project. NOT done: 9.2/9.3 need the 50k corpus in studio-library-assets (precondition not met); 9.8 admin UI is frontend (Phase 10).
+
+**Phase 9 status: video library backend built; corpus ingestion and the admin UI are outstanding.**
+
+[2026-09-27] [9.8] Admin library management: API built (POST /admin/library/ingest, PATCH /admin/library/videos/:id incl. category + licence, POST /admin/library/videos/:id/retire; capability studio:admin:library). The staff UI is Phase 10.
+[2026-09-27] [9.7] Category taxonomy (A3.4): prisma/data/library-taxonomy.json, 201 nodes under the 8 A3.4 top levels (3 levels deep), seeded idempotently by slug; GET /library/categories returns the tree.
+[2026-09-27] [9.6] Library endpoints (A3.9): GET /library/videos (?category prefix, ?tags, ?durationMin/Max, ?mood, cursor), GET /library/videos/:id (analysis, thumbnail, 10-minute preview URL; source URL and storage keys never exposed — A3.10), POST /library/videos/:id/similar, GET /library/recommended?businessId, GET /library/categories, GET /library/blueprint/:id, plus POST /projects with sourceType LIBRARY_REFERENCE (referenceVideoId + referenceMode).
+[2026-09-27] [9.5] blueprint.ts + reference.ts: TEMPLATE mode turns the analysis into a blueprint (shot count, durations scaled to the target, shot roles → treatments, overlay styles → Phase 8 presets, transitions) that constrains Layer 2 and is enforced on its output (wrong shot count → retry); INSPIRE adds only the style signature (pace, mood, structure, music vibe) to Layers 1–2. Licence checked at creation and again at planning: TEMPLATE refused for scenario 3 (SCRAPED) and expired licences.
+[2026-09-27] [9.4] similarity.ts: pgvector cosine nearest neighbours ("more like this") and business-to-video relevance from the Feature D business profile, with category-prefix filtering; retired items excluded.
+[2026-09-27] [9.1] ingest.ts + ingest-library-video worker: SSRF-guarded download (200 MB cap) → library bucket keyed by content hash (idempotent re-ingest) → ffprobe → FFmpeg scene detection (select=gt(scene,0.3), showinfo) → shots (slivers merged, ≤ 40) → up to 12 keyframes + thumbnail → AssemblyAI transcript with word timings (new adapter; indexing proceeds without speech if no transcription provider is configured) → Claude analysis with the keyframes as images (shot roles, on-screen text = OCR, hook/structure/CTA/pace/mood/genre/music tags, 1–3 categories from the taxonomy) → loudness energy → text embedding (the A7.4 schema's single 1536-d vector) → licence row (scenario 3 → INSPIRE only) → tags.
+
+**Phase 9 security review — fixed:** reference-video "preview" was a signed URL to the full source (HIGH: any user could download it, against A3.10); ingestion now renders a separate 360px, muted, 30-second, 15 fps preview and only that is ever signed for users. Second-hop prompt injection (MEDIUM): analysis descriptors reused in other tenants' prompts are flattened, stripped of < > { }, length-capped and fenced in <reference_style> as data. Ingestion isolation (MEDIUM): corpus jobs run on their own studio-library queue (concurrency 2, WORKER_CONCURRENCY_LIBRARY) and sources are capped at 200 MB. Open: the source is still buffered in memory (≤ 200 MB × concurrency) rather than streamed to S3; per-job wall-clock is bounded only by per-ffmpeg-call timeouts.
+
+**Phase 9 review list:**
+- Precondition not met: the 50k corpus isn't delivered. 9.2 (sample run of 100 with operator review) and 9.3 (full ingestion) are operator tasks: POST /admin/library/ingest in batches of ≤ 100 with licence metadata. At ~£0.02–£0.05 per video in provider calls (Claude vision + transcription + embedding).
+- Not built (no provider in the stack): BPM/key detection (librosa/Essentia — Python), CLIP visual and CLAP audio embeddings. musicEnvelope carries energy from loudness plus Claude's mood/genre; bpm and key are null. The visual/audio/text weights on each embedding row are informational: similarity is one cosine distance over the analysed description (which does include what Claude saw in the keyframes).
+- OCR is Claude reading one keyframe per shot, not Google Cloud Vision/Tesseract per frame: text shown briefly between keyframes is missed.
+- Transitions: scene detection only finds hard cuts; every blueprint transition is "cut".
+- A3.6 step 3 ("prefer providers rated stylistically similar") and step 5 (Suno music from the envelope) need provider ratings and a music provider — not built.
+- Auto-categorisation places each video in one category (schema has a single categoryId), chosen by Claude from the taxonomy; the 5% human spot-check is the admin's PATCH.
+- Library previews are 10-minute signed links to the low-res muted 30-second rendition; a user could still save that rendition (not the source).
+
 [2026-09-27] [GATE 8] Passed on automated evidence (autonomous build mode): a styled hook overlay was added to an existing (generated) project, previewed, and the project re-rendered with it and a whole-video watermark; the Shotstack edit carried rich-text overlay clips and their fonts. FFmpeg pre-render verified in CI against real ffmpeg. Live run pending provider keys and hosted fonts.
 
 **Phase 8 status: overlay engine built (backend). The overlay editor UI is Phase 10.**

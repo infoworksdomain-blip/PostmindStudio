@@ -29,7 +29,15 @@ import {
 // Not built (no provider in the stack): BPM/key detection (librosa/Essentia) and visual/audio
 // embeddings (CLIP/CLAP) — see the Phase 9 review list.
 
-export const MAX_SOURCE_BYTES = 500 * 1024 * 1024;
+export const MAX_SOURCE_BYTES = 200 * 1024 * 1024;
+/** A3.10: users only ever see this rendition (low-res, muted, 30s), never the source. */
+export const PREVIEW_WIDTH = 360;
+export const PREVIEW_MAX_SEC = 30;
+
+/** Key of an item's preview rendition, derived from its source key. */
+export function previewKey(s3Key: string): string {
+  return s3Key.replace(/\.mp4$/, '-preview.mp4');
+}
 export const MAX_KEYFRAMES = 12;
 export const SCENE_THRESHOLD = 0.3;
 const KEYFRAME_WIDTH = 480;
@@ -148,7 +156,7 @@ export async function ingestLibraryVideo(
     accept: 'video/*',
   });
   if (res.status >= 400) throw new ValidationError(`Source returned HTTP ${res.status}`);
-  if (res.truncated) throw new ValidationError('Source video is larger than 500 MB');
+  if (res.truncated) throw new ValidationError('Source video is larger than 200 MB');
   const hash = createHash('sha256').update(res.body).digest('hex');
   const s3Key = `library/${hash}.mp4`;
   const existing = await deps.db.videoLibraryItem.findFirst({ where: { s3Bucket: bucket, s3Key } });
@@ -176,6 +184,12 @@ export async function ingestLibraryVideo(
     key: thumbnailS3Key,
     body: thumbnail,
     contentType: 'image/jpeg',
+  });
+  await deps.storage.put({
+    bucket,
+    key: previewKey(s3Key),
+    body: await deps.media.previewClip(url, PREVIEW_WIDTH, PREVIEW_MAX_SEC),
+    contentType: 'video/mp4',
   });
 
   // 3 — audio

@@ -3,7 +3,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { NotFoundError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
-import { allowedModes, ingestItemInput, PLATFORM_ORG } from '../library/ingest';
+import { allowedModes, ingestItemInput, PLATFORM_ORG, previewKey } from '../library/ingest';
 import { buildBlueprint, styleSignature } from '../library/blueprint';
 import { recommendedVideos, similarVideos } from '../library/similarity';
 import { categoryTree } from '../library/taxonomy';
@@ -108,7 +108,8 @@ export async function getLibraryVideo(deps: { db: Db; storage: AssetStorage }, i
     ...rest,
     allowedModes: license?.allowedModes ?? [],
     thumbnailUrl: await deps.storage.signedUrl(s3Bucket, thumbnailS3Key, THUMB_TTL_SEC),
-    previewUrl: await deps.storage.signedUrl(s3Bucket, s3Key, PREVIEW_TTL_SEC),
+    // Only the low-res muted preview rendition is ever signed for users (A3.10).
+    previewUrl: await deps.storage.signedUrl(s3Bucket, previewKey(s3Key), PREVIEW_TTL_SEC),
     previewExpiresInSec: PREVIEW_TTL_SEC,
   };
 }

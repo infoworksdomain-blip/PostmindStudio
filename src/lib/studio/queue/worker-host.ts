@@ -13,6 +13,7 @@ export const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QUEUES.publish]: 5,
   [QUEUES.scheduled]: 3,
   [QUEUES.analytics]: 5,
+  [QUEUES.library]: 2,
 };
 
 const CONCURRENCY_ENV: Record<QueueName, string> = {
@@ -21,6 +22,7 @@ const CONCURRENCY_ENV: Record<QueueName, string> = {
   [QUEUES.publish]: 'WORKER_CONCURRENCY_PUBLISH',
   [QUEUES.scheduled]: 'WORKER_CONCURRENCY_SCHEDULED',
   [QUEUES.analytics]: 'WORKER_CONCURRENCY_ANALYTICS',
+  [QUEUES.library]: 'WORKER_CONCURRENCY_LIBRARY',
 };
 
 export function concurrencyFor(
@@ -37,6 +39,7 @@ export const PIPELINE_QUEUES: QueueName[] = [
   QUEUES.assets,
   QUEUES.publish,
   QUEUES.scheduled,
+  QUEUES.library,
 ];
 
 export function startWorkers(input: {

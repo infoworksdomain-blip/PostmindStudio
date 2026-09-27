@@ -152,14 +152,14 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 **Precondition**: 50k video corpus delivered to `studio-library-assets` S3 bucket with per-item licence metadata.
 
-- [ ] **9.1** Implement `src/lib/studio/library/ingest.ts` — the full ingestion pipeline per Addendum A3.3 (FFmpeg scene detection, transcription, OCR, LLM structural analysis, embedding).
-- [ ] **9.2** Run ingestion on 100 sample videos. Operator reviews output. Iterate.
-- [ ] **9.3** Full ingestion of 50k videos (parallel workers, monitored).
-- [ ] **9.4** Implement `src/lib/studio/library/similarity.ts` — pgvector nearest-neighbour.
-- [ ] **9.5** Implement `src/lib/studio/library/blueprint.ts` — TEMPLATE mode blueprint extraction + application.
-- [ ] **9.6** All library endpoints per Addendum A8.1.
-- [ ] **9.7** Category taxonomy seed data (200 nodes).
-- [ ] **9.8** Admin library management UI (staff-only).
+- [x] **9.1** Implement `src/lib/studio/library/ingest.ts` — the full ingestion pipeline per Addendum A3.3 (FFmpeg scene detection, transcription, OCR, LLM structural analysis, embedding).
+- [ ] **9.2** (blocked: corpus not delivered) Run ingestion on 100 sample videos. Operator reviews output. Iterate.
+- [ ] **9.3** (blocked: corpus not delivered) Full ingestion of 50k videos (parallel workers, monitored).
+- [x] **9.4** Implement `src/lib/studio/library/similarity.ts` — pgvector nearest-neighbour.
+- [x] **9.5** Implement `src/lib/studio/library/blueprint.ts` — TEMPLATE mode blueprint extraction + application.
+- [x] **9.6** All library endpoints per Addendum A8.1.
+- [x] **9.7** Category taxonomy seed data (200 nodes).
+- [~] **9.8** (API done; UI in Phase 10) Admin library management UI (staff-only).
 - [ ] **[GATE 9]** Operator searches library, picks a reference video, generates a new project in TEMPLATE mode, and the output structurally matches the reference.
 
 ---

@@ -6,7 +6,12 @@ import { createProviderRegistry } from '../providers/registry';
 import { StubAdapter } from '../providers/test-adapter';
 import { buildShotstackEdit, escapeHtml, outputDimensions, totalDuration } from './edl';
 import { buildIdeationPrompt, parseIdeationResult } from './ideation';
-import { parseBlackdetect, parseFfprobe, parseIntegratedLoudness } from './media-probe';
+import {
+  parseBlackdetect,
+  parseFfprobe,
+  parseIntegratedLoudness,
+  parseSceneChanges,
+} from './media-probe';
 import { copyUrlToStorage } from './persist';
 import { ALLOWED_TRANSITIONS, canTransition, currentRunId, projectMetadata } from './project-state';
 import { jsonOutput } from './provider-run';
@@ -321,6 +326,21 @@ describe('media probe parsers', () => {
     expect(parseIntegratedLoudness(summary)).toBe(-14.3);
     expect(parseIntegratedLoudness('Integrated loudness:\n I: -inf LUFS')).toBeNull();
     expect(parseIntegratedLoudness('no summary')).toBeNull();
+  });
+
+  it('parses scene-change timestamps only from showinfo lines, dedupes, excludes 0, and sorts', () => {
+    const stderr = [
+      '[Parsed_select_0 @ 0x1] some other filter line pts_time:99.000000',
+      '[Parsed_showinfo_1 @ 0x1] n:1 pts_time:0.000000 pos:0',
+      '[Parsed_showinfo_1 @ 0x1] n:2 pts_time:4.500000 pos:1',
+      '[Parsed_showinfo_1 @ 0x1] n:3 pts_time:2.100000 pos:2',
+      '[Parsed_showinfo_1 @ 0x1] n:4 pts_time:2.100000 pos:2', // duplicate
+    ].join('\r\n');
+    expect(parseSceneChanges(stderr)).toEqual([2.1, 4.5]);
+  });
+
+  it('returns an empty array when there are no showinfo lines', () => {
+    expect(parseSceneChanges('nothing relevant here')).toEqual([]);
   });
 });
 
