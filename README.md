@@ -29,6 +29,37 @@ postmind-studio/
 └── docker-compose.yml     ← Local Postgres + Redis (Claude Code will create)
 ```
 
+## Local development (quick reference)
+
+Requires Node.js 20 LTS or newer, npm 10+, and Docker.
+
+```bash
+npm install                      # also runs `prisma generate`
+cp .env.example .env.local       # then fill in real values (never commit .env.local)
+npm run db:up                    # Postgres 15 + pgvector on :5432, Redis 7 on :6379
+npm run db:migrate               # applies prisma/migrations to the `studio` schema
+npm run dev                      # http://localhost:3010
+```
+
+| Script | What it does |
+|--------|--------------|
+| `npm run typecheck` | `tsc --noEmit` in strict mode |
+| `npm run lint` | ESLint (Next.js + TypeScript rules), zero warnings allowed |
+| `npm run format` / `format:check` | Prettier write / verify |
+| `npm test` / `test:watch` / `test:coverage` | Vitest (coverage threshold 80% on `src/lib`) |
+| `npm run build` | Production Next.js build |
+| `npm run db:validate` | Validate `prisma/schema.prisma` |
+| `npm run db:reset` | Drop and re-apply all migrations on the local DB (destructive) |
+| `npm run db:studio` | Prisma Studio GUI |
+| `npm run db:down` | Stop the local containers (data volumes kept) |
+
+Prisma CLI commands read `.env.local` via `dotenv-cli`; Next.js loads `.env.local` automatically.
+CI (`.github/workflows/ci.yml`) runs validate, typecheck, lint, format check and tests on every push.
+
+> npm 11+ blocks dependency install scripts unless approved. The `allowScripts` field in
+> `package.json` approves exactly the ones Studio needs (Prisma engines, esbuild, unrs-resolver).
+> After upgrading one of those packages, run `npm install-scripts approve <pkg>`.
+
 ## Setup — do this once before starting Claude Code
 
 ### 1. Install Claude Code

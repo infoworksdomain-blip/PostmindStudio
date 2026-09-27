@@ -12,15 +12,15 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 0 — Foundations (target: week 1)
 
-- [ ] **0.1** Initialize Next.js 15 (App Router) + TypeScript strict + Prettier + ESLint. Set up `package.json`, `tsconfig.json`, `next.config.ts`. Match the Engagement service's TypeScript config.
-- [ ] **0.2** Install core dependencies: `@prisma/client prisma bullmq ioredis zod pino @anthropic-ai/sdk`. Dev: `vitest @vitest/ui @types/node tsx`.
-- [ ] **0.3** Set up Prisma with `schema.prisma`, `multiSchema` preview feature enabled, `schemas = ["studio"]`.
-- [ ] **0.4** Add `pgvector` extension to schema (raw SQL migration).
-- [ ] **0.5** Create `.env.example` covering every variable in v1.0 spec Section 8 (DB, Redis, PostMind integration, Meta, Anthropic, providers, queue, observability).
-- [ ] **0.6** Set up Vitest with a passing hello-world test.
-- [ ] **0.7** Add `docker-compose.yml` for local Postgres 15 with pgvector + Redis 7. Include a `db:reset` npm script.
-- [ ] **0.8** Add basic CI (`.github/workflows/ci.yml`): typecheck, lint, test on push.
-- [ ] **0.9** Add `README.md` with setup steps (install, env, migrate, dev, test).
+- [x] **0.1** Initialize Next.js 15 (App Router) + TypeScript strict + Prettier + ESLint. Set up `package.json`, `tsconfig.json`, `next.config.ts`. Match the Engagement service's TypeScript config.
+- [x] **0.2** Install core dependencies: `@prisma/client prisma bullmq ioredis zod pino @anthropic-ai/sdk`. Dev: `vitest @vitest/ui @types/node tsx`.
+- [x] **0.3** Set up Prisma with `schema.prisma`, `multiSchema` preview feature enabled, `schemas = ["studio"]`.
+- [x] **0.4** Add `pgvector` extension to schema (raw SQL migration).
+- [x] **0.5** Create `.env.example` covering every variable in v1.0 spec Section 8 (DB, Redis, PostMind integration, Meta, Anthropic, providers, queue, observability).
+- [x] **0.6** Set up Vitest with a passing hello-world test.
+- [x] **0.7** Add `docker-compose.yml` for local Postgres 15 with pgvector + Redis 7. Include a `db:reset` npm script.
+- [x] **0.8** Add basic CI (`.github/workflows/ci.yml`): typecheck, lint, test on push.
+- [x] **0.9** Add `README.md` with setup steps (install, env, migrate, dev, test).
 - [ ] **[GATE 0]** Operator confirms local dev environment runs, tests pass, CI green.
 
 ---

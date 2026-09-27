@@ -1,0 +1,18 @@
+// PostMind Studio — Prisma schema.
+// multiSchema is GA since Prisma 6.13, so `schemas` needs no preview flag.
+// Every Studio table lives in the `studio` Postgres schema of the shared PostMind cluster.
+// Never add models to any other schema: PostMind Core's schema is off-limits (CLAUDE.md rule 1).
+//
+// Models are added in BACKLOG item 1.7 (v1.0 spec Section 7 + Addendum A7).
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  schemas    = ["studio"]
+  extensions = [vector]
+}
