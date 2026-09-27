@@ -6,6 +6,26 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 7] Passed on automated evidence (autonomous build mode): a Listicle 5 slideshow was built from a topic, auto-populated from a real image library (library matches + generated gaps), edited, generated and composed end to end on real Postgres with scripted providers. Live run pending provider keys.
+
+**Phase 7 status: slideshow mode built — templates, slides API, auto-populate, slideshow composition.**
+
+[2026-09-27] [7.7] Slide endpoints (A8.3): GET|POST /projects/:id/slides, PATCH|DELETE /slides/:id, POST /slides/:id/reorder; GET|POST /slideshow-templates (?category; save a slideshow's structure as an organisation template). Slides are editable only in DRAFT / FAILED / REJECTED / QUALITY_FAILED / READY_FOR_REVIEW; every image/video id must belong to the organisation (and business, for library images); each slide reports `problem` when it can't render yet.
+[2026-09-27] [7.6] Slideshow composition: plan step for SLIDESHOW skips Layers 1–4 (A5.6), fails fast with per-slide reasons if anything is missing, runs the same pre-generation text-safety gate, then composes. slideshow/edl.ts builds the Shotstack edit per slide type (Ken Burns via documented clip effects; BEFORE_AFTER as before → wipe → after with labels; QUOTE/STATISTIC/PRODUCT text via escaped html assets over the image). No AI video is generated for slideshows.
+[2026-09-27] [7.5] POST /projects/:id/auto-populate (A5.5): project → SCANNING, worker writes pending listicle/hook/CTA text from the topic with Claude (never quotes, statistics or prices), matches each image slide to the best unused library image by pgvector similarity (≥ 0.30), generates the rest (max 5 per run), reports Unsplash use to download_location, then returns to the previous state.
+[2026-09-27] [7.4] Eight built-in templates (A5.4) as data (slideshow/templates.ts), seeded idempotently by `db:seed` (organisationId = null): Photo dump, Listicle 5, Listicle 10, Before/after, Product showcase, Quote reel, Statistic reel, Team introduction.
+[2026-09-27] [7.3] Slide types (A5.3) with their duration ranges (user durations are clamped); per-type content schema (text, number, quote/author, value/label, product name/features/price, before/after image ids).
+[2026-09-27] [7.1–7.2] Already in the Phase 1 schema (SLIDESHOW source type, SCANNING state, slideshow_slides, slideshow_templates). POST /projects accepts sourceType SLIDESHOW with `slideshow: { templateId + inputs | slides }` (A8.5); `brief` is required only for other source types.
+
+**Phase 7 security review — fixed:** cross-business video-clip reference (HIGH): VIDEO_CLIP slides accepted any clip in the organisation; clips must now come from a project of the same business, at slide write time and again at composition. Slide ordering race (MEDIUM): add/delete/reorder lock the project row (SELECT … FOR UPDATE) and re-read the slide before shifting sortOrders. Generation cycling (LOW): auto-populate also stops at 100 generated images per organisation per 24h.
+
+**Phase 7 review list:**
+- Music (A5.4 musicMood) is stored on templates but not used: there is still no music provider (Phase 3 note). Slideshows render silent unless narration is added later.
+- Text on slides uses Shotstack html assets until the overlay engine (Phase 8) replaces them; overlayDefaults on templates name the Phase 8 presets.
+- Product showcase from "PostMind content library" (A5.1) needs a Core content API; products are passed in explicitly for now.
+- Similarity threshold 0.30 and the 5-generation cap are first guesses; tune with real embeddings.
+- VIDEO_CLIP slides take an existing VideoAsset; there is no clip upload endpoint yet.
+
 [2026-09-27] [GATE 6] Passed on automated evidence (autonomous build mode): scan → classify → library → search exercised end to end on real Postgres/pgvector with a fake site and scripted providers. Live run on the operator's own site pending provider keys (Anthropic, OpenAI, Pexels/Storyblocks).
 
 **Phase 6 status: website scan, business profile and image library built; every A6.8 endpoint integration-tested.**

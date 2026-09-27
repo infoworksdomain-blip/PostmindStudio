@@ -20,6 +20,8 @@ import {
   transitionProject,
 } from '../../pipeline/project-state';
 import { runProvider } from '../../pipeline/provider-run';
+import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
+import { resolveSlides } from '../../slideshow/resolve';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
 
@@ -106,36 +108,52 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     ? (kit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
     : [];
 
+  // Slideshows (A5) compose from their slides; scripted videos from their shots.
+  const slides =
+    project.sourceType === 'SLIDESHOW' ? await resolveSlides(deps, project) : undefined;
+  const brand = {
+    backgroundColour: palette[0],
+    textColour: palette[1],
+    fontFamily: kit?.fontPrimary ?? undefined,
+  };
+
+  const shotEdit = async (
+    scriptShots: (typeof project.scripts)[number]['shots'],
+    aspectRatio: AspectRatio,
+  ) => {
+    const shots: EdlShot[] = await Promise.all(
+      scriptShots.map(async (shot) => {
+        const visual = await signed(shot.assetId);
+        const voice = await signed(shot.voiceAssetId);
+        return {
+          durationSec: shot.durationSec,
+          visualTreatment: shot.visualTreatment,
+          visualSrc: visual?.url,
+          visualKind: visual?.kind === 'IMAGE' ? ('image' as const) : ('video' as const),
+          voiceSrc: voice?.url,
+          onScreenText: shot.onScreenText,
+          transitionOut: shot.transitionOut,
+          cardText: shot.onScreenText ?? shot.voiceoverText,
+        };
+      }),
+    );
+    return {
+      edit: buildShotstackEdit({ aspectRatio, shots, brand }),
+      outputDurationSec: totalDuration(shots),
+    };
+  };
+
   const outcome = await Promise.all(
     project.scripts
       .filter((script) => !renders[script.id])
       .map(async (script) => {
-        const shots: EdlShot[] = await Promise.all(
-          script.shots.map(async (shot) => {
-            const visual = await signed(shot.assetId);
-            const voice = await signed(shot.voiceAssetId);
-            return {
-              durationSec: shot.durationSec,
-              visualTreatment: shot.visualTreatment,
-              visualSrc: visual?.url,
-              visualKind: visual?.kind === 'IMAGE' ? ('image' as const) : ('video' as const),
-              voiceSrc: voice?.url,
-              onScreenText: shot.onScreenText,
-              transitionOut: shot.transitionOut,
-              cardText: shot.onScreenText ?? shot.voiceoverText,
-            };
-          }),
-        );
         const aspectRatio = script.targetAspectRatio as AspectRatio;
-        const edit = buildShotstackEdit({
-          aspectRatio,
-          shots,
-          brand: {
-            backgroundColour: palette[0],
-            textColour: palette[1],
-            fontFamily: kit?.fontPrimary ?? undefined,
-          },
-        });
+        const { edit, outputDurationSec } = slides
+          ? {
+              edit: buildSlideshowEdit({ aspectRatio, slides, brand }),
+              outputDurationSec: slideshowDuration(slides),
+            }
+          : await shotEdit(script.shots, aspectRatio);
         const run = await runProvider(
           {
             need: { kind: 'capability', capability: 'composition' },
@@ -145,7 +163,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
               organisationId: data.organisationId,
               projectId: data.projectId,
               edit,
-              outputDurationSec: totalDuration(shots),
+              outputDurationSec,
             },
           },
           deps,

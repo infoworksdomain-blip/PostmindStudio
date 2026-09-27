@@ -32,6 +32,8 @@ export const jobIds = {
   fireScheduled: (d: JobDataMap['fire-scheduled-publication']) =>
     `fire-scheduled__${d.publicationId}`,
   scanWebsite: (d: JobDataMap['scan-website']) => `scan-website__${d.scanId}`,
+  populateSlideshow: (d: JobDataMap['populate-slideshow']) =>
+    `populate-slideshow__${d.projectId}__${d.runId}`,
   refreshImageLibrary: (d: JobDataMap['refresh-image-library']) =>
     `refresh-image-library__${d.businessId}__${d.runId}`,
   runQualityGate: (d: JobDataMap['run-quality-gate']) =>

@@ -122,14 +122,14 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 7 — Feature C: Slideshow mode (v1.1) (target: week 8-9)
 
-- [ ] **7.1** Extend `VideoProject.sourceType` to include SLIDESHOW. Migration.
-- [ ] **7.2** Implement `slideshow_slides` and `slideshow_templates` models (should already exist from Phase 1).
-- [ ] **7.3** Implement slide types per Addendum A5.3: IMAGE_STILL, IMAGE_KENBURNS, VIDEO_CLIP, TEXT_CARD, BEFORE_AFTER, QUOTE, STATISTIC, PRODUCT.
-- [ ] **7.4** Implement 8 built-in slideshow templates per Addendum A5.4.
-- [ ] **7.5** Implement `POST /api/studio/projects/[id]/auto-populate` — pulls from image library.
-- [ ] **7.6** Slideshow-specific composition (Shotstack Ken Burns effect, image sequencing).
-- [ ] **7.7** All slide CRUD endpoints per Addendum A8.3.
-- [ ] **[GATE 7]** Operator creates a listicle slideshow end-to-end from their own image library.
+- [x] **7.1** Extend `VideoProject.sourceType` to include SLIDESHOW. Migration.
+- [x] **7.2** Implement `slideshow_slides` and `slideshow_templates` models (should already exist from Phase 1).
+- [x] **7.3** Implement slide types per Addendum A5.3: IMAGE_STILL, IMAGE_KENBURNS, VIDEO_CLIP, TEXT_CARD, BEFORE_AFTER, QUOTE, STATISTIC, PRODUCT.
+- [x] **7.4** Implement 8 built-in slideshow templates per Addendum A5.4.
+- [x] **7.5** Implement `POST /api/studio/projects/[id]/auto-populate` — pulls from image library.
+- [x] **7.6** Slideshow-specific composition (Shotstack Ken Burns effect, image sequencing).
+- [x] **7.7** All slide CRUD endpoints per Addendum A8.3.
+- [x] **[GATE 7]** (automated evidence; live run pending provider keys) Operator creates a listicle slideshow end-to-end from their own image library.
 
 ---
 

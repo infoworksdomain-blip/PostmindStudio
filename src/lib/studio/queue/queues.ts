@@ -60,6 +60,7 @@ export interface JobDataMap {
   'publish-video': PublishJobData;
   'fire-scheduled-publication': PublishJobData;
   'scan-website': ScanJobData;
+  'populate-slideshow': ProjectJobData;
   'refresh-image-library': LibraryRefreshJobData;
 }
 
@@ -73,6 +74,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'publish-video': QUEUES.publish,
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
+  'populate-slideshow': QUEUES.orchestration,
   'refresh-image-library': QUEUES.assets,
 };
 

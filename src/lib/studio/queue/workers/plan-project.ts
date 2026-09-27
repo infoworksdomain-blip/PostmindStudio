@@ -37,6 +37,7 @@ import {
   type TargetFormat,
 } from '../../pipeline/scripting';
 import { jobIds } from '../enqueue';
+import { planSlideshow } from './plan-slideshow';
 import type { ProjectJobData } from '../queues';
 
 // BACKLOG 3.4 — Layers 1 (ideation) and 2 (script + storyboard), then pre-generation script
@@ -158,6 +159,10 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   if (currentRunId(project) !== data.runId) return log.info('stale plan-project job ignored');
 
   // Resume: plan already persisted by an earlier attempt; only the fan-out may be missing.
+  if (project.state === 'ASSETS_QUEUED' && project.sourceType === 'SLIDESHOW') {
+    await deps.queue.add('compose-video', data, { jobId: jobIds.composeVideo(data) });
+    return log.info('slideshow already planned; composition re-enqueued');
+  }
   if (project.state === 'ASSETS_QUEUED') {
     const count = await enqueueShots(deps, data);
     return log.info({ shots: count }, 'plan already persisted; shots re-enqueued');
@@ -172,6 +177,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     if (!moved) return log.info({ state: project.state }, 'project not plannable; skipped');
   }
 
+  if (project.sourceType === 'SLIDESHOW') return planSlideshow(data, deps, project, log);
   if (!SUPPORTED_SOURCES.has(project.sourceType)) {
     throw new NotImplementedError(`Planning for sourceType ${project.sourceType} is not built yet`);
   }

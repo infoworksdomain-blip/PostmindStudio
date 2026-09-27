@@ -14,7 +14,9 @@ import type { ProviderRegistry } from '../providers/registry';
 import { cancelTracked } from '../providers/tracked';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { ProjectJobData } from '../queue/queues';
+import { slideshowInput } from '../slideshow/planner';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
+import { insertSlides, planSlideshowSlides } from './slideshows';
 
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
@@ -34,16 +36,21 @@ const EDITABLE_STATES: VideoProjectState[] = [
   'READY_FOR_REVIEW',
 ];
 
-export const createProjectInput = z.object({
+const briefInput = z.object({
+  rawInput: z.string().trim().min(1).max(4_000),
+  targetAudience: z.string().max(500).optional(),
+  callToAction: z.string().max(200).optional(),
+});
+
+const projectFields = z.object({
   name: z.string().trim().min(1).max(200),
   businessId: z.string().trim().min(1).max(128),
-  sourceType: z.enum(['BRIEF', 'POSTMIND_CONTENT']).default('BRIEF'),
+  sourceType: z.enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW']).default('BRIEF'),
   sourceRef: z.string().max(200).optional(),
-  brief: z.object({
-    rawInput: z.string().trim().min(1).max(4_000),
-    targetAudience: z.string().max(500).optional(),
-    callToAction: z.string().max(200).optional(),
-  }),
+  /** Required for BRIEF / POSTMIND_CONTENT. */
+  brief: briefInput.optional(),
+  /** Required for SLIDESHOW (A8.5): templateId + inputs, or explicit slides. */
+  slideshow: slideshowInput.optional(),
   targetFormats: z.array(targetFormatInput).min(1).max(10),
   brandKitId: z.string().max(64).optional(),
   templateId: z.string().max(64).optional(),
@@ -55,7 +62,18 @@ export const createProjectInput = z.object({
   scheduledStartAt: z.iso.datetime().optional(),
 });
 
-export const updateProjectInput = createProjectInput
+export const createProjectInput = projectFields.superRefine((v, ctx) => {
+  if (v.sourceType === 'SLIDESHOW' && !v.slideshow)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['slideshow'],
+      message: 'slideshow is required for SLIDESHOW projects',
+    });
+  if (v.sourceType !== 'SLIDESHOW' && !v.brief)
+    ctx.addIssue({ code: 'custom', path: ['brief'], message: 'brief is required' });
+});
+
+export const updateProjectInput = projectFields
   .pick({
     name: true,
     targetFormats: true,
@@ -65,7 +83,7 @@ export const updateProjectInput = createProjectInput
   })
   .partial()
   .extend({
-    brief: createProjectInput.shape.brief.partial().optional(),
+    brief: briefInput.partial().optional(),
     brandKitId: z.string().max(64).nullable().optional(),
     scheduledStartAt: z.iso.datetime().nullable().optional(),
   })
@@ -127,30 +145,48 @@ export async function createProject(
   input: z.infer<typeof createProjectInput>,
 ) {
   await assertBrandKit(db, tenant.organisationId, input.brandKitId);
-  return db.videoProject.create({
-    data: {
-      organisationId: tenant.organisationId,
-      businessId: input.businessId,
-      createdByUserId: tenant.userId,
-      name: input.name,
-      description: input.brief.rawInput,
-      state: 'DRAFT',
-      sourceType: input.sourceType,
-      sourceRef: input.sourceRef ?? null,
-      targetFormats: toStoredFormats(input.targetFormats),
-      brandKitId: input.brandKitId ?? null,
-      templateId: input.templateId ?? null,
-      costBudgetPence: input.costBudgetPence ?? null,
-      reviewPolicy: input.reviewPolicy,
-      publishPolicy: input.publishPolicy,
-      scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
-      metadata: {
-        briefHints: {
-          targetAudience: input.brief.targetAudience ?? null,
-          callToAction: input.brief.callToAction ?? null,
+  const slideshow =
+    input.sourceType === 'SLIDESHOW' && input.slideshow
+      ? await planSlideshowSlides(
+          db,
+          { organisationId: tenant.organisationId, businessId: input.businessId },
+          input.slideshow,
+        )
+      : undefined;
+  return db.$transaction(async (tx) => {
+    const project = await tx.videoProject.create({
+      data: {
+        organisationId: tenant.organisationId,
+        businessId: input.businessId,
+        createdByUserId: tenant.userId,
+        name: input.name,
+        description: input.brief?.rawInput ?? input.slideshow?.topic ?? null,
+        state: 'DRAFT',
+        sourceType: input.sourceType,
+        sourceRef: input.sourceRef ?? null,
+        targetFormats: toStoredFormats(input.targetFormats),
+        brandKitId: input.brandKitId ?? null,
+        templateId: input.templateId ?? null,
+        costBudgetPence: input.costBudgetPence ?? null,
+        reviewPolicy: input.reviewPolicy,
+        publishPolicy: input.publishPolicy,
+        scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
+        metadata: {
+          briefHints: {
+            targetAudience: input.brief?.targetAudience ?? null,
+            callToAction: input.brief?.callToAction ?? null,
+          },
+          ...(slideshow && {
+            slideshow: {
+              templateId: slideshow.templateId,
+              topic: input.slideshow?.topic ?? null,
+            },
+          }),
         },
       },
-    },
+    });
+    if (slideshow) await insertSlides(tx, project.id, slideshow.drafts);
+    return project;
   });
 }
 
