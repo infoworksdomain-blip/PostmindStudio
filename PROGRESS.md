@@ -6,6 +6,7 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 0] Operator approved. CI green on PR #1.
 [2026-09-27] [0.9] README: local-development quick reference (install, env, db:up, migrate, dev, test) and script table.
 [2026-09-27] [0.8] CI workflow (.github/workflows/ci.yml): npm ci, prisma validate, typecheck, lint, format check, test on Node 20.
 [2026-09-27] [0.7] docker-compose.yml: pgvector/pgvector:pg15 + redis:7-alpine with healthchecks; init.sql creates `studio` schema + vector ext; db:reset script.

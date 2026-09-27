@@ -21,7 +21,7 @@ Work items in the order Claude Code should execute them. Each item names its acc
 - [x] **0.7** Add `docker-compose.yml` for local Postgres 15 with pgvector + Redis 7. Include a `db:reset` npm script.
 - [x] **0.8** Add basic CI (`.github/workflows/ci.yml`): typecheck, lint, test on push.
 - [x] **0.9** Add `README.md` with setup steps (install, env, migrate, dev, test).
-- [ ] **[GATE 0]** Operator confirms local dev environment runs, tests pass, CI green.
+- [x] **[GATE 0]** Operator confirms local dev environment runs, tests pass, CI green.
 
 ---
 
