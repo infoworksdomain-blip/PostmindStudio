@@ -202,3 +202,60 @@ Work items in the order Claude Code should execute them. Each item names its acc
 - [x] **12.6** Production deployment configs (Dockerfile, docker-compose.prod.yml, deploy runbooks).
 - [x] **12.7** Full end-to-end regression: every user journey in playbook Workstream H golden-path list.
 - [ ] **[GATE 12]** Go / No-Go decision per playbook Section 14 → v1.0 GA.
+
+## Phase 13 — Close the "Not built yet" register
+
+Plan, endpoint contracts and sample requests/responses: `plans/phase-13.md`. Wave A items ship fully implemented. Wave B items ship their contract and return an honest 501 until their outside dependency lands. Wave C is staging and people work.
+
+**Wave A1 — Create and review**
+- [ ] **13.1** Script edit + regenerate (PATCH /scripts/:id, POST /scripts/:id/regenerate).
+- [ ] **13.2** Shot swap + delete (PATCH /shots/:id asset swap, DELETE /shots/:id).
+- [ ] **13.3** Whole-video overlay listing (GET /renders/:id/overlays).
+- [ ] **13.4** Per-slide overlays (text_overlays.slideId; GET|POST /slides/:id/overlays).
+- [ ] **13.5** Upload source + clip upload (POST /uploads, /uploads/:id/complete, UPLOAD pipeline path).
+- [ ] **13.6** Word-level caption timing (AssemblyAI in the pipeline).
+- [ ] **13.7** Overlay editor polish (resize, undo, alpha, safe areas, editable presets).
+
+**Wave A2 — Library, manage and business set-up**
+- [ ] **13.8** Free-text library search (POST /library/search).
+- [ ] **13.9** Calendar reschedule (PATCH /publications/:id scheduledFor + drag UI).
+- [ ] **13.10** Scheduled rescans + stock refresh (etag, job schedulers, schedule endpoint).
+- [ ] **13.11** DNS TXT domain verification + disputed-ownership purge.
+- [ ] **13.12** Perceptual image de-duplication (dHash).
+- [ ] **13.13** Voice profiles (ElevenLabs voice cloning with consent).
+- [ ] **13.14** Onboarding first-run flow + brand-kit palette extraction.
+- [ ] **13.15** Corpus ingestion: streaming to S3 + resubmit failures.
+
+**Wave A3 — Admin, automation and cost**
+- [ ] **13.16** Queue + provider health (Redis-backed circuit breaker; GET /admin/queues, /admin/providers).
+- [ ] **13.17** Content-safety review queue (REVIEW pauses instead of failing; decision endpoint).
+- [ ] **13.18** Per-organisation policy (org_policies; GET|PUT /admin/organisations/:id/policy).
+- [ ] **13.19** Per-organisation cost cap overrides (org_cost_caps).
+- [ ] **13.20** Auto-resume of cap-paused projects at rollover.
+- [ ] **13.21** Auto-publish outbox + retry.
+- [ ] **13.22** Internal organisation purge endpoint.
+- [ ] **13.23** Milestone notifications.
+- [ ] **13.24** Notification preferences.
+
+**Wave A4 — Pipeline, media and analytics**
+- [ ] **13.25** Hive async moderation (> 90 s) + callback webhook.
+- [ ] **13.26** Loudness normalisation + compatibility re-encode.
+- [ ] **13.27** Sound effects (Storyblocks audio).
+- [ ] **13.28** Deeper analytics (YouTube retention + demographics).
+- [ ] **13.29** Style memory from available signals (GET|DELETE style-memory).
+- [ ] **13.30** CDN signed URLs (CloudFront signer when configured).
+- [ ] **13.31** Weekly cost regression + daily platform canary (scheduled CI).
+
+**Wave A5 — Fallback providers with active accounts**
+- [ ] **13.32** Luma (AI_CLIP) and HeyGen (AI_AVATAR) adapters.
+
+**Wave B — contracts now, 501 until unblocked**
+- [ ] **13.33** Email delivery (Core email API or Studio-sent email decision).
+- [ ] **13.34** Business list (Core list-businesses).
+- [ ] **13.35** Meta channel reconciliation (Core list-channels).
+- [ ] **13.36** BPM/key + CLIP/CLAP (inference host).
+- [ ] **13.37** Browser-render scan fallback (headless Chromium host).
+- [ ] **13.38** Remaining fallback providers (accounts + keys).
+- [ ] **13.39** Sentiment signal for style memory (Engagement classifier API).
+
+**Wave C — staging and people** (closes 9.2, 9.3, 12.2, 12.3, 12.5, GATE 12): Core Meta wiring → alerting deployment → live provider/posting runs → rehearsals → k6 → PITR drill → corpus sample + full run → S3 lifecycle → beta onboarding, on-call rota, Trust & Safety audit.
