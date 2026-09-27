@@ -6,6 +6,8 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 2] Operator approved. Live `npm run gate2:*` results were not shared with the build session, so live provider behaviour is still unverified from this side. CI green on PR #3.
+
 **Phase 2 status: code-complete and unit/integration tested against the providers' DOCUMENTED contracts. NOT yet run against live APIs** (no `.env.local` or database on the build machine). GATE 2 = run `npm run gate2:*` with staging keys.
 
 [2026-09-27] [2.11] tracked.ts: submitTracked/pollTracked/cancelTracked. Kill switch (provider scope) before every submit; provider_jobs PENDING→RUNNING→SUCCEEDED/FAILED/TIMED_OUT/CANCELLED; provider_usage daily upsert; video_projects.costActualPence tally; breaker fed (client-side errors excluded). CI runs test/db against real Postgres.

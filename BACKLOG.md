@@ -54,7 +54,7 @@ Work items in the order Claude Code should execute them. Each item names its acc
 - [x] **2.9** Implement `src/lib/studio/providers/router.ts` — routing logic per spec Section 6.4. Considers plan tier, health, budget, latency.
 - [x] **2.10** Implement `src/lib/studio/providers/circuit-breaker.ts` — 5 failures in 60s opens for 5 min.
 - [x] **2.11** Add ProviderJob DB writes on every submit/poll/complete. Cost tracking to `provider_usage`.
-- [ ] **[GATE 2]** Operator confirms one end-to-end provider call works (submit a Runway generation, poll, retrieve URL).
+- [x] **[GATE 2]** Operator confirms one end-to-end provider call works (submit a Runway generation, poll, retrieve URL).
 
 ---
 
