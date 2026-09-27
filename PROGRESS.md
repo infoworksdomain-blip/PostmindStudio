@@ -6,6 +6,8 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 3] Passed on automated evidence (autonomous build mode): full pipeline verified on real Postgres + BullMQ/Redis 7 + ffmpeg in CI with scripted providers. Live-provider run (`npm run gate3`) still to be done by the operator with staging keys.
+
 **Phase 3 status: built and verified end-to-end with scripted providers on real Postgres (locally via PGlite, in CI on pgvector Postgres + Redis 7 + ffmpeg). Live-provider run = `npm run gate3`.**
 
 [2026-09-27] [3.10] scripts/worker.ts (`npm run worker [queue…]`, graceful shutdown) + scripts/run-test-project.ts (`npm run gate3`, inline or `--queue`).

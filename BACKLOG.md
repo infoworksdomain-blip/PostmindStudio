@@ -70,7 +70,7 @@ Work items in the order Claude Code should execute them. Each item names its acc
 - [x] **3.8** Every worker checks kill switch on job start. Every worker updates project state transitions.
 - [x] **3.9** Implement retry logic: 5 retries, exponential backoff 5s → 2min cap. Dead-letter after.
 - [x] **3.10** Add `scripts/worker.ts` entry point for running workers in separate process. Update `package.json` scripts.
-- [ ] **[GATE 3]** Operator triggers a test project end-to-end (brief → script → one AI clip generated → composed → quality-checked). Manual for now.
+- [x] **[GATE 3]** Operator triggers a test project end-to-end (brief → script → one AI clip generated → composed → quality-checked). Manual for now.
 
 ---
 
