@@ -127,6 +127,12 @@ async function recordAsset(
   return { assetId: asset.id, routing: routingSnapshot(run) };
 }
 
+/** Provider requested via POST /api/studio/shots/:id/regenerate, if any. */
+function preferredProvider(shot: ShotWithScript): string | undefined {
+  const routing = shot.providerRouting as { preferredProviderId?: unknown } | null;
+  return typeof routing?.preferredProviderId === 'string' ? routing.preferredProviderId : undefined;
+}
+
 async function generateVisual(
   deps: PipelineDeps,
   shot: ShotWithScript,
@@ -143,6 +149,7 @@ async function generateVisual(
         {
           need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: shot.durationSec },
           planTier: data.planTier,
+          preferredProviderId: preferredProvider(shot),
           request: {
             ...base,
             capability: 'text_to_video',
@@ -163,6 +170,7 @@ async function generateVisual(
         {
           need: { kind: 'shot', visualTreatment: 'IMAGE_STILL', durationSec: shot.durationSec },
           planTier: data.planTier,
+          preferredProviderId: preferredProvider(shot),
           request: { ...base, capability: 'text_to_image', prompt, aspectRatio },
         },
         deps,

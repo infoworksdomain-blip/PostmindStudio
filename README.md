@@ -61,6 +61,17 @@ CI (`.github/workflows/ci.yml`) runs validate, typecheck, lint, format check and
 > `package.json` approves exactly the ones Studio needs (Prisma engines, esbuild, unrs-resolver).
 > After upgrading one of those packages, run `npm install-scripts approve <pkg>`.
 
+### GATE 4 walkthrough (curl)
+
+With `npm run dev` (API on :3010) and `npm run worker` running, and a PostMind-issued JWT in `$TOKEN`:
+
+```bash
+curl -s -X POST localhost:3010/api/studio/projects -H "authorization: Bearer $TOKEN" -H "content-type: application/json"   -d '{"name":"Launch","businessId":"biz_1","brief":{"rawInput":"15s TikTok for our sourdough subscription"},"targetFormats":[{"platform":"tiktok","aspectRatio":"9:16","durationSec":15}]}'
+curl -s -X POST localhost:3010/api/studio/projects/$ID/generate -H "authorization: Bearer $TOKEN"
+curl -s localhost:3010/api/studio/projects/$ID -H "authorization: Bearer $TOKEN"          # poll state
+curl -s localhost:3010/api/studio/renders/$RENDER_ID/preview -H "authorization: Bearer $TOKEN"  # signed MP4 URL
+```
+
 ## Setup — do this once before starting Claude Code
 
 ### 1. Install Claude Code

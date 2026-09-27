@@ -76,17 +76,17 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 4 — Project + script + shot APIs (target: week 4-5)
 
-- [ ] **4.1** Implement `POST /api/studio/projects` — create project, validate against spec Section 8.2. Zod schema for body. Auth + capability + audit.
-- [ ] **4.2** Implement `GET /api/studio/projects` — list with cursor pagination, filter by state/business/days.
-- [ ] **4.3** Implement `GET /api/studio/projects/[id]` — read one with scripts/renders/publications summary.
-- [ ] **4.4** Implement `PATCH /api/studio/projects/[id]` — update editable fields.
-- [ ] **4.5** Implement `POST /api/studio/projects/[id]/generate` — enqueue `plan-project`.
-- [ ] **4.6** Implement `POST /api/studio/projects/[id]/cancel` — cancel in-flight, mark project failed with cost incurred.
-- [ ] **4.7** Implement `POST /api/studio/projects/[id]/approve` — advance state, enqueue publish jobs.
-- [ ] **4.8** Implement `POST /api/studio/projects/[id]/reject` — halt, require note.
-- [ ] **4.9** Implement script/shot endpoints: GET script, PATCH shot, POST shot regenerate.
-- [ ] **4.10** Integration tests for each route: happy path + 401 + 403 + 404 + validation error.
-- [ ] **[GATE 4]** Operator can POST a project via curl and receive a rendered video URL via GET.
+- [x] **4.1** Implement `POST /api/studio/projects` — create project, validate against spec Section 8.2. Zod schema for body. Auth + capability + audit.
+- [x] **4.2** Implement `GET /api/studio/projects` — list with cursor pagination, filter by state/business/days.
+- [x] **4.3** Implement `GET /api/studio/projects/[id]` — read one with scripts/renders/publications summary.
+- [x] **4.4** Implement `PATCH /api/studio/projects/[id]` — update editable fields.
+- [x] **4.5** Implement `POST /api/studio/projects/[id]/generate` — enqueue `plan-project`.
+- [x] **4.6** Implement `POST /api/studio/projects/[id]/cancel` — cancel in-flight, mark project failed with cost incurred.
+- [x] **4.7** Implement `POST /api/studio/projects/[id]/approve` — advance state, enqueue publish jobs.
+- [x] **4.8** Implement `POST /api/studio/projects/[id]/reject` — halt, require note.
+- [x] **4.9** Implement script/shot endpoints: GET script, PATCH shot, POST shot regenerate.
+- [x] **4.10** Integration tests for each route: happy path + 401 + 403 + 404 + validation error.
+- [x] **[GATE 4]** Operator can POST a project via curl and receive a rendered video URL via GET.
 
 ---
 

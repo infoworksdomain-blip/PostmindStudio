@@ -25,7 +25,13 @@ export type ProviderRunDeps = Pick<
 >;
 
 export async function runProvider(
-  input: { need: RouteNeed; request: ProviderRequest; planTier: PlanTier; deadline?: Date },
+  input: {
+    need: RouteNeed;
+    request: ProviderRequest;
+    planTier: PlanTier;
+    deadline?: Date;
+    preferredProviderId?: string;
+  },
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
   const decision = await routeProvider(
@@ -35,6 +41,7 @@ export async function runProvider(
       organisationId: input.request.organisationId,
       projectId: input.request.projectId,
       deadline: input.deadline,
+      preferredProviderId: input.preferredProviderId,
       request: input.request,
     },
     {

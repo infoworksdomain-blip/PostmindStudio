@@ -6,6 +6,30 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 4] Passed on automated evidence (autonomous build mode): every route integration-tested on real Postgres; CI green on PR #5. Live curl walkthrough (README) pending a Core-issued JWT.
+
+**Phase 4 status: API built; every route integration-tested through the real wrapper on real Postgres (happy/401/403/404/validation/conflict).**
+
+[2026-09-27] [4.10] test/api: 27 route integration tests (projects, scripts, shots, renders, force-approve, idempotency, tenant isolation).
+[2026-09-27] [4.9] GET /projects/:id/scripts, GET /scripts/:id, GET|PATCH /shots/:id (narration edit → voice-only regeneration), POST /shots/:id/regenerate (prompt + preferred provider, tier-gated).
+[2026-09-27] [4.8] POST /projects/:id/reject (note required; ApprovalTask REJECTED).
+[2026-09-27] [4.7] POST /projects/:id/approve (READY_FOR_REVIEW → APPROVED; ApprovalTask APPROVED). Publish enqueue arrives with Phase 5.
+[2026-09-27] [4.6] POST /projects/:id/cancel: run superseded, RUNNING provider jobs cancelled, cost incurred reported.
+[2026-09-27] [4.5] POST /projects/:id/generate: new runId, QUEUED, plan-project enqueued at the tenant's plan-tier priority.
+[2026-09-27] [4.1–4.4] POST/GET /projects (cursor pagination, state/business/days filters), GET/PATCH/DELETE /projects/:id, POST /projects/:id/duplicate.
+[2026-09-27] [4.x] Renders: GET /projects/:id/renders, GET /renders/:id, /preview (signed 1h), /download (signed 15m, studio:render:download, audited), POST /renders/:id/force-approve (spec 13.5; content-safety BLOCK refused). GET /api/health (liveness).
+[2026-09-27] [4.x] withStudioRoute: tenant → capability → handler; correlation id; Engagement error envelope; Idempotency-Key replay (Redis, 24h); BigInt-safe JSON; audit on every mutation.
+
+**Phase 4 security review — fixed:** Idempotency-Key now reserve-then-execute (SET NX before the handler; concurrent duplicates get 409, never a second execution; key released on failure) and bound to a request-body hash (422 on reuse with a different body); archive write scoped by organisationId; approve/reject moved to a new `studio:project:approve` capability so editors can't self-approve (Core must grant it to reviewers).
+
+**Phase 4 review list:**
+- businessId is accepted as given: Core's context contract (assumed) carries no business list, so Studio cannot verify the business belongs to the organisation (spec 7.14 expects Core-side validation).
+- Plan tier comes from Core context `organisation.planTier`; unknown/missing → BASIC routing.
+- REQUIRE_APPROVAL_FROM_ROLE and multi-step approval workflows are stored but not enforced yet (single-step approve/reject recorded as ApprovalTask).
+- Preview/download URLs are S3 presigned URLs; CloudFront signed URLs (CDN_URL) not wired yet.
+- No request rate limiting yet (planned with hardening, Phase 12).
+- Script PATCH / script regenerate / render rerender (spec 8.3–8.4) not built: shot-level edit/regenerate covers the backlog items.
+
 [2026-09-27] [GATE 3] Passed on automated evidence (autonomous build mode): full pipeline verified on real Postgres + BullMQ/Redis 7 + ffmpeg in CI with scripted providers. Live-provider run (`npm run gate3`) still to be done by the operator with staging keys.
 
 **Phase 3 status: built and verified end-to-end with scripted providers on real Postgres (locally via PGlite, in CI on pgvector Postgres + Redis 7 + ffmpeg). Live-provider run = `npm run gate3`.**
