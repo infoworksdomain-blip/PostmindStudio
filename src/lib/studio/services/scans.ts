@@ -66,6 +66,9 @@ export async function startScan(
       businessId,
       url: url.toString(),
       state: 'QUEUED',
+      trigger: 'manual',
+      // Scheduled rescans (13.10) run at the tier of the last scan a person started.
+      planTier: toPlanTier(tenant.organisation.planTier),
     },
   });
   const data = {

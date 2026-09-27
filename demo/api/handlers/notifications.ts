@@ -58,6 +58,26 @@ const rows: DemoNotification[] = [
     createdAt: ago(5 * HOUR),
   },
   {
+    // 13.23 milestone (analytics poller, once per publication per threshold).
+    id: 'ntf-class-10k',
+    kind: 'milestone',
+    title: `“${PROJECTS.sourdoughClass.name}” reached 10,000 views on TikTok`,
+    body: 'Now at 10,482 views. Open the project to see its publications and analytics.',
+    link: `/projects/${PROJECTS.sourdoughClass.id}`,
+    readAt: null,
+    createdAt: ago(35 * MIN),
+  },
+  {
+    // 13.17 content-safety review opened (the run is paused, not failed).
+    id: 'ntf-bread-knife-review',
+    kind: 'safety_review',
+    title: '“How we slice a country loaf” is waiting for a content-safety review',
+    body: 'PostMind’s Trust & Safety team is checking it. Generation continues if it is allowed.',
+    link: '/projects/prj-bread-knife',
+    readAt: null,
+    createdAt: ago(40 * MIN),
+  },
+  {
     id: 'ntf-ritual-auto',
     kind: 'generation_complete',
     title: `“${PROJECTS.morningRitual.name}” is generated and was auto-approved`,

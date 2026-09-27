@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { api, errorMessage, useApi } from '@/lib/client/api';
 import { relativeTime } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
+import { NotificationPreferencesButton } from './notification-preferences';
 
 // Spec 14.4 — in-app notifications (GET /notifications): generation complete, approval
 // pending > 2 h, publication failed, cost 80% / 100% / paused. Polls every minute.
@@ -21,6 +22,8 @@ export interface StudioNotification {
   link: string | null;
   readAt: string | null;
   createdAt: string;
+  /** 13.33: null = no email requested; pending_setup until an email sender exists. */
+  emailStatus?: 'pending_setup' | 'sent' | 'failed' | null;
 }
 
 export interface NotificationsResponse {
@@ -68,6 +71,11 @@ function Item({ n, onRead }: { n: StudioNotification; onRead: (id: string) => Pr
             <p className="font-medium">{n.title}</p>
           )}
           <p className="text-xs text-muted-foreground">{n.body}</p>
+          {n.emailStatus === 'pending_setup' && (
+            <p className="text-[0.7rem] text-muted-foreground italic">
+              Email pending setup: email delivery is not connected yet.
+            </p>
+          )}
           <div className="flex items-center justify-between gap-2">
             <time dateTime={n.createdAt} className="text-[0.7rem] text-muted-foreground">
               {relativeTime(n.createdAt)}
@@ -138,9 +146,18 @@ export function NotificationsBell() {
       <PopoverContent align="end" className="w-80 max-w-[calc(100vw-2rem)] p-0">
         <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
           <h2 className="text-sm font-semibold">Notifications</h2>
-          <Button variant="ghost" size="sm" disabled={unread === 0} onClick={() => void markAll()}>
-            <CheckCheck /> Mark all read
-          </Button>
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={unread === 0}
+              onClick={() => void markAll()}
+            >
+              <CheckCheck /> Mark all read
+            </Button>
+            {/* 13.24 per-kind in-app / email preferences */}
+            <NotificationPreferencesButton />
+          </div>
         </div>
         <div className="max-h-96 overflow-y-auto p-1">
           {error && (

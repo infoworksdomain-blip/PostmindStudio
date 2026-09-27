@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 import { DURATION_FILTERS, type CategoryOption } from './library-utils';
 
 // Taxonomy filters for /library. Category, duration, mood and tags are server-side filters
-// (GET /library/videos); "search" narrows the loaded page by title/description/tags because the
-// API has no free-text search endpoint yet.
+// (GET /library/videos); "search" is a free-text search of the whole library (POST
+// /library/search, BACKLOG 13.8), within the chosen category.
 
 export interface LibraryFilterState {
   category: string;
@@ -106,13 +106,13 @@ export function LibraryFilters({
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="library-search">Search this page</Label>
+        <Label htmlFor="library-search">Search the library</Label>
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             id="library-search"
             type="search"
-            placeholder="Title, description, tag"
+            placeholder="e.g. moody 5am bakery POV"
             value={draft.search}
             onChange={(e) => setDraft({ ...draft, search: e.target.value })}
             className="pl-8"

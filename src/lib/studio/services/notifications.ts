@@ -1,12 +1,13 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { NotFoundError } from '../../errors';
+import { mutedKinds } from '../notifications/preferences';
 
 // Spec 14.4 in-app notifications behind /api/studio/notifications. A user sees their own
 // notifications and the organisation-wide ones (userId null). Read state is per row, so an
 // organisation-wide notification marked read is read for every member (no per-user receipts).
 
-type Db = Pick<PrismaClient, 'notification'>;
+type Db = Pick<PrismaClient, 'notification' | 'notificationPreference'>;
 
 export const listNotificationsQuery = z.object({
   unread: z.enum(['true', 'false']).optional(),
@@ -34,6 +35,8 @@ const PUBLIC_FIELDS = {
   link: true,
   readAt: true,
   createdAt: true,
+  /** 13.33: null | pending_setup | sent | failed. */
+  emailStatus: true,
 } as const;
 
 export async function listNotifications(
@@ -41,8 +44,12 @@ export async function listNotifications(
   reader: Reader,
   query: z.infer<typeof listNotificationsQuery>,
 ) {
+  // 13.24: kinds the reader turned off in-app are hidden (organisation-wide rows included).
+  const muted = await mutedKinds(db, reader);
+  const hidden: Prisma.NotificationWhereInput = muted.length ? { kind: { notIn: muted } } : {};
   const where: Prisma.NotificationWhereInput = {
     ...visibleTo(reader),
+    ...hidden,
     ...(query.unread === 'true' && { readAt: null }),
     ...(query.unread === 'false' && { readAt: { not: null } }),
   };
@@ -54,7 +61,7 @@ export async function listNotifications(
       take: query.limit + 1,
       ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),
     }),
-    db.notification.count({ where: { ...visibleTo(reader), readAt: null } }),
+    db.notification.count({ where: { ...visibleTo(reader), ...hidden, readAt: null } }),
   ]);
   const hasMore = rows.length > query.limit;
   const data = hasMore ? rows.slice(0, query.limit) : rows;

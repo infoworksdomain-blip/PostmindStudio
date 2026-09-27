@@ -34,6 +34,8 @@ export interface GenerateAssetJobData extends ProjectJobData {
 /** Publishing is per publication; runId is the project run that produced the render (logging). */
 export interface PublishJobData extends ProjectJobData {
   publicationId: string;
+  /** fire-scheduled-publication only: the ISO time this job was scheduled for (13.9). */
+  scheduledFor?: string;
 }
 
 /** Business-level work (Feature D) that belongs to no project. runId = the scan / refresh id. */
@@ -101,9 +103,27 @@ export interface JobDataMap {
   'ingest-library-video': LibraryIngestJobData;
   'poll-publication-analytics': PollAnalyticsJobData;
   'roll-up-analytics': RollUpJobData;
+  /** BACKLOG 13.29: nightly style-memory build (platform-level, 03:15 UTC). */
+  'build-style-memory': RollUpJobData;
   'refresh-image-library': LibraryRefreshJobData;
   /** Spec 14.4 "approval required — pending > 2h": platform-level, every 15 minutes. */
   'check-pending-approvals': RollUpJobData;
+  /** BACKLOG 13.20: rollover auto-resume of cost-cap paused projects (00:05 UTC daily). */
+  'auto-resume-paused': RollUpJobData;
+  /** BACKLOG 13.21: auto-publish outbox dispatcher (every minute). */
+  'dispatch-auto-publish': RollUpJobData;
+  /** BACKLOG 13.35: daily Core ↔ Studio Meta channel reconciliation (skipped until Core ships). */
+  'reconcile-channels': RollUpJobData;
+  /** BACKLOG 13.10: daily sweep for 30-day website rescans (platform-level). */
+  'sweep-website-rescans': RollUpJobData;
+  /** BACKLOG 13.10: one scheduled rescan (scanId = the business's last successful scan). */
+  'rescan-website': ScanJobData;
+  /** BACKLOG 13.10: weekly stock refresh sweep (platform-level). */
+  'sweep-stock-refresh': RollUpJobData;
+  /** BACKLOG 13.11: DNS TXT verification poll (platform-level, every 10 minutes). */
+  'poll-domain-verifications': RollUpJobData;
+  /** BACKLOG 13.11: purge scraped content after an ownership dispute (runId = verification id). */
+  'purge-disputed-domain': BusinessJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -120,8 +140,17 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'ingest-library-video': QUEUES.library,
   'poll-publication-analytics': QUEUES.analytics,
   'roll-up-analytics': QUEUES.analytics,
+  'build-style-memory': QUEUES.analytics,
   'refresh-image-library': QUEUES.assets,
   'check-pending-approvals': QUEUES.analytics,
+  'auto-resume-paused': QUEUES.orchestration,
+  'dispatch-auto-publish': QUEUES.publish,
+  'reconcile-channels': QUEUES.analytics,
+  'sweep-website-rescans': QUEUES.assets,
+  'rescan-website': QUEUES.assets,
+  'sweep-stock-refresh': QUEUES.assets,
+  'poll-domain-verifications': QUEUES.assets,
+  'purge-disputed-domain': QUEUES.assets,
 };
 
 export const MAX_RETRIES = 5;

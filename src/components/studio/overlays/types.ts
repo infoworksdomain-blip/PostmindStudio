@@ -87,6 +87,8 @@ export interface Overlay extends EditableStyle {
   id: string;
   shotId: string | null;
   renderId: string | null;
+  /** 13.4: set for per-slide overlays. */
+  slideId?: string | null;
   presetId: string | null;
   sortOrder: number;
   text: string;

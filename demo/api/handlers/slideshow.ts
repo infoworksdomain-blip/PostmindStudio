@@ -135,6 +135,10 @@ route('PATCH', '/slides/:id', ({ params, body }) => {
     ...(b.imageAssetId !== undefined && {
       imageAssetId: typeof b.imageAssetId === 'string' ? b.imageAssetId : null,
     }),
+    // 13.5: a VIDEO_CLIP slide's uploaded clip (POST /uploads kind slide_clip).
+    ...(b.videoAssetId !== undefined && {
+      videoAssetId: typeof b.videoAssetId === 'string' ? b.videoAssetId : null,
+    }),
     ...(b.backgroundColor !== undefined && {
       backgroundColor: typeof b.backgroundColor === 'string' ? b.backgroundColor : null,
     }),

@@ -45,8 +45,11 @@ org; overlay previews 30 per project per hour.
 2. If it is a legitimate customer hitting their own cap: nothing to do — generation resumes
    after midnight UTC (daily), on the 1st UTC (monthly), or when the project's budget is raised
    ("Raise budget" on the project page) and the project generated again. If Commercial agrees
-   to lift a customer's monthly cap early, raise `STUDIO_ORG_MONTHLY_CAP_PENCE_<TIER>` (applies
-   to the whole tier) and redeploy — there is no per-organisation override.
+   to lift (or lower) one customer's cap, use Admin Centre → **Organisations** → Cost caps (or
+   `PUT /api/studio/admin/organisations/<orgId>/cost-caps { dailyPence?, monthlyPence?, reason }`,
+   BACKLOG 13.19). The override wins over env and the tier default, needs a reason, is audited
+   (`studio.admin.cost_caps.override`) and reaches every worker within 30 s; `null` clears it. The
+   Cost report lists overrides with source `org_override`.
 3. Stop runaway spend now:
    - For one org, **freeze the workspace**:
      `{"level":"workspace","target":"<orgId>","enabled":true}`.
@@ -59,8 +62,14 @@ org; overlay previews 30 per project per hour.
    - Look for a pricing error: a wrong `STUDIO_USD_TO_GBP_RATE`, or an estimate that doesn't
      match the provider invoice.
 5. Fix, unfreeze, and record the incident. Finance reconciles against the provider invoices.
-6. Resume paused work: projects paused by a cap are FAILED with `cost_cap_paused`; the owner
-   (or support) regenerates them once the cap allows it.
+6. Resume paused work: projects paused by an organisation's daily or monthly cap resume on their
+   own (BACKLOG 13.20): the `auto-resume-paused` job runs at 00:05 UTC every day (the 1st covers
+   monthly pauses) and continues each paused run from the stage that paused, reusing paid-for work
+   (audit `studio.project.auto_resume`, a notification to the creator). It skips projects whose
+   owner turned "Resume automatically" off (`metadata.autoResume = false`), kill-switched ones,
+   and runs with other failures. Project-budget pauses still need "Raise budget" + Generate, and
+   global-cap pauses are resumed by staff (regenerate, or `redrive`). To resume early after
+   raising an override, regenerate from the project page.
 
 ## Global cap
 
@@ -75,13 +84,19 @@ org; overlay previews 30 per project per hour.
 
 - **Cap values:** decided (operator decision 2, 2026-09-27) and in code as defaults; see the
   table above.
-- **Per-organisation overrides:** caps are per plan tier; there is no per-organisation
-  exception list.
+- **Per-organisation overrides:** built (13.19). An override can raise or lower a cap but never
+  disables one.
 - **Email:** spec 14.4 asks for email ("Cost 80% of monthly cap — email"). The monthly cap and
   its 80% alert exist, but no PostMind Core notification or email API is documented, so the
   alert is in-app plus the optional signed webhook for ops to bridge to email/Slack.
-- **Paused jobs are failed, not delayed:** a paused project fails with `cost_cap_paused` and has
-  to be regenerated; it does not resume on its own at midnight.
+- **Paused jobs are failed, then resumed:** a paused project fails with `cost_cap_paused`; the
+  rollover job resumes org daily / monthly pauses (13.20). Project-budget and global pauses are
+  not resumed automatically.
 - **Tier visibility:** Studio does not store an organisation's plan tier, so the admin report
   shows every tier's cap next to the org's spend; the org-daily alerts show which one fired.
-- The weekly cost regression test (spec 17.5) is still to be scheduled.
+- **Cost regression (spec 17.5):** built (13.31). `.github/workflows/cost-regression.yml` runs
+  every Monday 06:00 UTC (and in every CI build) and fails when a golden journey's cost at the
+  adapters' own prices moves more than 10 % from `test/cost/cost-baseline.json`. A failure after an
+  intended price/pipeline change: update the baseline in the same PR (the failure message prints
+  the new totals). An unintended one: find the price table or request that changed
+  (`test/cost/journeys.ts` lists every priced call) before it reaches customers' budgets.

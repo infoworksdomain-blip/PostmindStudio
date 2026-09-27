@@ -31,6 +31,42 @@ export interface FetchedPage {
   truncated: boolean;
 }
 
+export interface ConditionalCheck {
+  status: number;
+  unchanged: boolean;
+  etag: string | null;
+  lastModified: string | null;
+}
+
+/**
+ * Unchanged when the server answers 304 Not Modified (RFC 9110 §15.4.5), or a 200 carries the
+ * same strong ETag or the same Last-Modified as before. With no validators to compare, the page
+ * counts as changed (a rescan runs).
+ */
+export function unchangedFrom(
+  status: number,
+  headers: Headers,
+  previous: { etag: string | null; lastModified: string | null },
+): ConditionalCheck {
+  const etag = headers.get('etag');
+  const lastModified = headers.get('last-modified');
+  const sameEtag =
+    previous.etag !== null && etag !== null && !etag.startsWith('W/') && etag === previous.etag;
+  const sameDate =
+    previous.lastModified !== null &&
+    lastModified !== null &&
+    lastModified === previous.lastModified;
+  const hadValidators = previous.etag !== null || previous.lastModified !== null;
+  const unchanged =
+    (status === 304 && hadValidators) || (status >= 200 && status < 300 && (sameEtag || sameDate));
+  return {
+    status,
+    unchanged,
+    etag: etag ?? previous.etag,
+    lastModified: lastModified ?? previous.lastModified,
+  };
+}
+
 interface RobotsRules {
   isAllowed(url: string): boolean;
   sitemaps: string[];
@@ -132,6 +168,34 @@ export class PoliteFetcher {
         accept,
       }),
     );
+  }
+
+  /**
+   * A6.6 skip-if-unchanged: a conditional GET of a page (If-None-Match / If-Modified-Since),
+   * under the same robots, rate-limit and SSRF rules. Only the headers matter, so at most a few
+   * bytes of the body are read. null when robots disallows the page.
+   */
+  async checkUnchanged(
+    rawUrl: string,
+    validators: { etag: string | null; lastModified: string | null },
+  ): Promise<ConditionalCheck | null> {
+    const url = new URL(rawUrl);
+    const rules = await this.rulesFor(url);
+    if (!rules.isAllowed(url.toString())) return null;
+    const res = await this.throttled(url.origin, rules.crawlDelayMs, () =>
+      safeGet(url.toString(), {
+        fetchImpl: this.deps.fetchImpl,
+        userAgent: SCAN_USER_AGENT,
+        timeoutMs: PAGE_TIMEOUT_MS,
+        maxBytes: 1,
+        accept: 'text/html,application/xhtml+xml',
+        conditional: {
+          ifNoneMatch: validators.etag ?? undefined,
+          ifModifiedSince: validators.lastModified ?? undefined,
+        },
+      }),
+    );
+    return unchangedFrom(res.status, res.headers, validators);
   }
 
   /** Fetch one page if robots allows it; null when disallowed. */

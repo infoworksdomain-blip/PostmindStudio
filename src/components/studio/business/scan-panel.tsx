@@ -12,10 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, ApiError, apiPath, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
 import { formatDate, relativeTime, type Tone } from '@/lib/client/format';
 import { ErrorState, Section, StateBadge } from '../primitives';
+import { DomainVerificationCard } from './domain-verification';
+import { ScanScheduleLine } from './scan-schedule';
 import { ACTIVE_SCAN_STATES, type ScanDetail, type ScanState, type WebsiteScan } from './types';
 
 // A6.1 / A6.8 — scan the business website: start a scan (with the A6.7 ownership warranty),
-// poll the running scan, and show scan history.
+// poll the running scan, and show scan history. 13.10: the automatic rescan schedule line;
+// 13.11: DNS ownership verification (Enterprise) and "I don't own this site".
 
 export const SCAN_POLL_MS = 3_000;
 
@@ -193,15 +196,19 @@ export function ScanPanel({ businessId }: { businessId: string }) {
           title="Scan your website"
           description="Studio reads your site, works out your niche and builds an image library from your pages, stock photos and generated images."
         >
-          <ScanForm
-            businessId={businessId}
-            onStarted={(id) => {
-              setStarted(id);
-              void mutate();
-            }}
-          />
+          <div className="grid gap-4">
+            <ScanForm
+              businessId={businessId}
+              onStarted={(id) => {
+                setStarted(id);
+                void mutate();
+              }}
+            />
+            <ScanScheduleLine businessId={businessId} />
+          </div>
         </Section>
         {focusId && <ScanProgress key={focusId} scanId={focusId} onSettled={onSettled} />}
+        <DomainVerificationCard businessId={businessId} />
       </div>
       <Section title="Scan history">
         {error && <ErrorState error={error} onRetry={() => void mutate()} />}

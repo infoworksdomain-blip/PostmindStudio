@@ -39,8 +39,9 @@ export const listImagesQuery = z.object({
 
 /** Public shape: storage coordinates are replaced by a short-lived preview URL. */
 async function present(storage: AssetStorage, item: ImageLibraryItem) {
-  const { s3Bucket, s3Key, fingerprint, ...rest } = item;
+  const { s3Bucket, s3Key, fingerprint, phash, ...rest } = item;
   void fingerprint;
+  void phash;
   return {
     ...rest,
     hotlinked: !s3Key,

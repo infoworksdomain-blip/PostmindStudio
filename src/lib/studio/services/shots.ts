@@ -154,6 +154,9 @@ export async function regenerateShot(
   input: z.infer<typeof regenerateShotInput>,
 ) {
   const shot = await loadShot(deps.db, tenant.organisationId, id);
+  // Uploaded / swapped-in clips have no generator to re-run (13.2 / 13.5).
+  if (shot.visualTreatment === 'USER_UPLOAD')
+    throw new ConflictError('This shot shows an uploaded clip; swap it instead of regenerating');
   const routing = (shot.providerRouting as Record<string, unknown> | null) ?? {};
   const runId = await startShotRun(deps, tenant, id, shot.script.projectId, {
     assetId: null,

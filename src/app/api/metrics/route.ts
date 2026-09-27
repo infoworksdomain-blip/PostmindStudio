@@ -19,11 +19,11 @@ export async function GET(req: Request): Promise<Response> {
     return new Response('Not found', { status: 404 });
   }
   const metrics = getMetrics();
-  const [{ redisConnectionFromEnv }, { getCircuitBreaker }] = await Promise.all([
+  const [{ redisConnectionFromEnv }, { getSharedCircuitBreaker }] = await Promise.all([
     import('@/lib/studio/queue/redis'),
-    import('@/lib/studio/providers/circuit-breaker'),
+    import('@/lib/studio/providers/circuit-breaker-redis'),
   ]);
-  sampleBreakers(metrics, getCircuitBreaker());
+  await sampleBreakers(metrics, getSharedCircuitBreaker());
   await sampleQueueDepths(metrics, redisConnectionFromEnv()).catch((err: unknown) =>
     logger.warn({ err }, 'queue depth sampling failed'),
   );

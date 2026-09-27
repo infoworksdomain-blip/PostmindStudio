@@ -21,6 +21,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [scan-blocked.md](scan-blocked.md) | Priority risk 6: website scan blocked by anti-bot measures | >10% failures on a customer |
 | [platform-account-revocation.md](platform-account-revocation.md) | Priority risk 7: platform account revoked | Any account in warning state |
 | [storage-cost.md](storage-cost.md) | Priority risk 8: storage cost balloon | >125% of forecast |
+| [notifications-email.md](notifications-email.md) | Notification email delivery status and the pending Core-vs-Studio sending decision (13.33) | Any `failed` once live |
 
 ## Shared tools
 
@@ -84,5 +85,5 @@ cost 80% / 100% / paused, generation complete, approval pending > 2 h and public
   service / Slack channel. Nothing here has paged a human yet.
 - **Thresholds are starting points:** the 500-job backlog and 5% failure rate need tuning after
   the k6 run (BACKLOG 12.1) and the first weeks of real traffic.
-- **Email** notifications are not built (no PostMind Core notification/email API is documented);
-  the webhook is the bridge.
+- **Email** delivery waits for an operator decision (notifications-email.md). Opted-in email is
+  recorded as `pending_setup`; the webhook is the bridge until then.

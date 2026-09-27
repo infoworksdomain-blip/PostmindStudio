@@ -18,6 +18,8 @@ export interface AreaChartProps {
   height?: number;
   /** Smallest axis ceiling (e.g. 100 pence so an idle spend chart reads £1.00, not £0.01). */
   minMax?: number;
+  /** What each point is, for the keyboard hint and the screen-reader table (default "day"). */
+  pointName?: string;
 }
 
 export function AreaChart({
@@ -27,6 +29,7 @@ export function AreaChart({
   color = 'var(--chart-1)',
   height = 200,
   minMax = 1,
+  pointName = 'day',
 }: AreaChartProps) {
   const gradientId = useId();
   const plotRef = useRef<HTMLDivElement>(null);
@@ -75,7 +78,7 @@ export function AreaChart({
           ref={plotRef}
           role="img"
           tabIndex={0}
-          aria-label={`${label}. Use arrow keys to read each day.`}
+          aria-label={`${label}. Use arrow keys to read each ${pointName}.`}
           onPointerMove={onPointer}
           onPointerLeave={() => setActive(null)}
           onKeyDown={onKey}
@@ -165,7 +168,7 @@ export function AreaChart({
         <caption>{label}</caption>
         <thead>
           <tr>
-            <th scope="col">Day</th>
+            <th scope="col">{pointName.charAt(0).toUpperCase() + pointName.slice(1)}</th>
             <th scope="col">Value</th>
           </tr>
         </thead>

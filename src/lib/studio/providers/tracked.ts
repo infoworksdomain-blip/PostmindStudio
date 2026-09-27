@@ -69,9 +69,13 @@ export function redactUrls(value: unknown): unknown {
 }
 
 /** Health signal for the breaker; a request that says nothing about health frees a trial. */
-function reportOutcome(breaker: CircuitBreaker, providerId: string, errorClass: string): void {
-  if (affectsProviderHealth(errorClass)) breaker.recordFailure(providerId);
-  else breaker.releaseTrial(providerId);
+async function reportOutcome(
+  breaker: CircuitBreaker,
+  providerId: string,
+  errorClass: string,
+): Promise<void> {
+  if (affectsProviderHealth(errorClass)) await breaker.recordFailure(providerId);
+  else await breaker.releaseTrial(providerId);
 }
 
 export async function submitTracked(
@@ -96,7 +100,7 @@ export async function submitTracked(
     });
   } catch (err) {
     // Nothing reached the provider: give back a half-open trial slot if the router claimed one.
-    deps.breaker.releaseTrial(adapter.providerId);
+    await deps.breaker.releaseTrial(adapter.providerId);
     throw err;
   }
 
@@ -123,7 +127,7 @@ export async function submitTracked(
       costDeltaPence: 0,
       projectId: request.projectId,
     });
-    reportOutcome(deps.breaker, adapter.providerId, errorClass);
+    await reportOutcome(deps.breaker, adapter.providerId, errorClass);
     throw err;
   }
 
@@ -199,7 +203,7 @@ export async function pollTracked(
       failed: 0,
       costDeltaPence: costPence - reserved,
     });
-    deps.breaker.recordSuccess(adapter.providerId);
+    await deps.breaker.recordSuccess(adapter.providerId);
     return result;
   }
 
@@ -220,7 +224,7 @@ export async function pollTracked(
     failed: 1,
     costDeltaPence: chargedPence - reserved,
   });
-  reportOutcome(deps.breaker, adapter.providerId, errorClass);
+  await reportOutcome(deps.breaker, adapter.providerId, errorClass);
   return result;
 }
 

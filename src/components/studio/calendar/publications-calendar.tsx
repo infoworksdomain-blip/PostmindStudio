@@ -13,13 +13,17 @@ import {
   groupByDay,
   monthGrid,
   monthOf,
+  moveToDay,
   shiftMonth,
 } from './month';
-import { AgendaList, MonthGrid } from './month-views';
+import { AgendaList, MonthGrid, type MoveHandlers } from './month-views';
+import { MoveToDialog, useReschedule } from './reschedule';
+import type { Publication } from '@/lib/client/types';
 import { MAX_PAGES, PAGE_LIMIT, useCalendarPublications } from './use-calendar-publications';
 
 // BACKLOG 10.5 — Manage: calendar of scheduled and published videos (spec 14.3), from
 // GET /publications with a from/to window. Month grid on desktop, agenda list on phones.
+// Scheduled posts can be dragged to another day or moved with the move dialog (13.9).
 
 export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   const [month, setMonth] = useState(() => monthOf(initialDate ?? new Date()));
@@ -32,6 +36,18 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   );
   const byDay = useMemo(() => groupByDay(data?.publications ?? []), [data]);
   const title = formatMonth(month);
+  const [moving, setMoving] = useState<Publication | null>(null);
+  const { move, pending } = useReschedule(() => void mutate());
+  const moveHandlers: MoveHandlers = {
+    onMove: setMoving,
+    pendingId: pending,
+    onDropOnDay: (id, day) => {
+      const publication = data?.publications.find((p) => p.id === id);
+      if (!publication?.scheduledFor) return;
+      const to = moveToDay(publication.scheduledFor, day);
+      if (to.getTime() !== new Date(publication.scheduledFor).getTime()) void move(publication, to);
+    },
+  };
 
   return (
     <>
@@ -96,11 +112,18 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
               .
             </p>
           )}
-          <MonthGrid days={days} month={month} byDay={byDay} today={today} />
-          <AgendaList days={days} month={month} byDay={byDay} today={today} />
+          <MonthGrid days={days} month={month} byDay={byDay} today={today} move={moveHandlers} />
+          <AgendaList days={days} month={month} byDay={byDay} today={today} move={moveHandlers} />
           <p className="mt-4 text-xs text-muted-foreground">
-            To reschedule, cancel the scheduled post and schedule it again from its project.
+            Drag a scheduled post to another day to move it (same time of day), or use its move
+            button to pick any date and time.
           </p>
+          <MoveToDialog
+            key={moving?.id ?? 'none'}
+            publication={moving}
+            onClose={() => setMoving(null)}
+            onMove={move}
+          />
         </>
       )}
     </>

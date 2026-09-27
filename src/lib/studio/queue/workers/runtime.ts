@@ -15,9 +15,14 @@ import {
 } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject } from '../../pipeline/project-state';
+import { recordCostPause } from '../../services/auto-resume';
 import { retryDelayMs, type JobDataMap, type JobName } from '../queues';
 import type { InlineJobQueue } from '../enqueue';
 import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-approvals';
+import { buildStyleMemoryJob, onBuildStyleMemoryFailed } from './build-style-memory';
+import { autoResumePaused, onAutoResumePausedFailed } from './auto-resume';
+import { dispatchAutoPublish, onDispatchAutoPublishFailed } from './dispatch-auto-publish';
+import { onReconcileChannelsFailed, reconcileChannels } from './reconcile-channels';
 import { composeVideo, onComposeVideoFailed } from './compose-video';
 import { generateAsset, onGenerateAssetFailed } from './generate-asset';
 import { onPlanProjectFailed, planProject } from './plan-project';
@@ -42,6 +47,18 @@ import {
   refreshImageLibrary,
   scanWebsite,
 } from './scan-website';
+import {
+  onDomainJobFailed,
+  pollDomainVerifications,
+  purgeDisputedDomainJob,
+} from './domain-verification';
+import {
+  onRescanWebsiteFailed,
+  onSweepFailed,
+  rescanWebsite,
+  sweepStockRefresh,
+  sweepWebsiteRescans,
+} from './scheduled-rescans';
 
 // BACKLOG 3.8 / 3.9 — the wrapper every job runs through, on BullMQ or inline:
 //   - kill switch checked on job start (global / workspace / project)
@@ -70,8 +87,17 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'ingest-library-video': ingestLibraryVideoJob,
   'poll-publication-analytics': pollPublicationAnalytics,
   'roll-up-analytics': rollUpAnalyticsJob,
+  'build-style-memory': buildStyleMemoryJob,
   'refresh-image-library': refreshImageLibrary,
   'check-pending-approvals': checkPendingApprovals,
+  'auto-resume-paused': autoResumePaused,
+  'dispatch-auto-publish': dispatchAutoPublish,
+  'reconcile-channels': reconcileChannels,
+  'sweep-website-rescans': sweepWebsiteRescans,
+  'rescan-website': rescanWebsite,
+  'sweep-stock-refresh': sweepStockRefresh,
+  'poll-domain-verifications': pollDomainVerifications,
+  'purge-disputed-domain': purgeDisputedDomainJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -86,8 +112,17 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'ingest-library-video': onIngestLibraryVideoFailed,
   'poll-publication-analytics': onPollPublicationAnalyticsFailed,
   'roll-up-analytics': onRollUpAnalyticsFailed,
+  'build-style-memory': onBuildStyleMemoryFailed,
   'refresh-image-library': onRefreshImageLibraryFailed,
   'check-pending-approvals': onCheckPendingApprovalsFailed,
+  'auto-resume-paused': onAutoResumePausedFailed,
+  'dispatch-auto-publish': onDispatchAutoPublishFailed,
+  'reconcile-channels': onReconcileChannelsFailed,
+  'sweep-website-rescans': onSweepFailed,
+  'rescan-website': onRescanWebsiteFailed,
+  'sweep-stock-refresh': onSweepFailed,
+  'poll-domain-verifications': onDomainJobFailed,
+  'purge-disputed-domain': onDomainJobFailed,
 };
 
 export function isRetryable(err: unknown): boolean {
@@ -160,9 +195,12 @@ export async function executeJob<N extends JobName>(
           projectId: data.projectId,
           runId: data.runId,
           reason: describeError(err),
-        }).catch((pauseErr: unknown) =>
-          log.error({ err: pauseErr }, 'could not record the cost-cap pause'),
-        );
+        })
+          // 13.20: which cap and stage paused the run, for the rollover auto-resume.
+          .then(() => recordCostPause(deps, data, name, err))
+          .catch((pauseErr: unknown) =>
+            log.error({ err: pauseErr }, 'could not record the cost-cap pause'),
+          );
       }
       try {
         await FAILURE_HANDLERS[name](data, deps, describeError(err), err);

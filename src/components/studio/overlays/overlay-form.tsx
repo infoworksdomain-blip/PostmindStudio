@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, NativeSelect } from '../review/field';
+import { ColourField } from './colour-field';
 import { snapAnchor } from './overlay-math';
 import {
   ALIGNMENTS,
@@ -14,14 +15,10 @@ import {
 } from './types';
 
 // The style panel for one overlay (A4.1): text, timing, typography, colour, background,
-// position and animation. Every change is a local draft; the parent saves it.
+// position and animation. Every change is a local draft; the parent saves it. Colours carry an
+// opacity (13.7).
 
 const WEIGHTS = [300, 400, 500, 600, 700, 800, 900];
-
-/** <input type="color"> only takes #rrggbb; keep an alpha suffix aside. */
-function rgbOf(colour: string | null, fallback: string): string {
-  return colour && /^#[0-9a-fA-F]{6}/.test(colour) ? colour.slice(0, 7) : fallback;
-}
 
 function num(value: string, fallback: number): number {
   const n = Number(value);
@@ -108,12 +105,11 @@ export function OverlayForm({
         />
       </Field>
       <Field id={id('fill')} label="Text colour">
-        <input
+        <ColourField
           id={id('fill')}
-          type="color"
-          value={rgbOf(overlay.fillColor, '#ffffff')}
-          onChange={(e) => onDraft({ fillColor: e.target.value })}
-          className="h-8 w-full cursor-pointer rounded-lg border border-input bg-transparent"
+          value={overlay.fillColor}
+          fallback="#ffffff"
+          onChange={(fillColor) => onDraft({ fillColor })}
         />
       </Field>
       <Field id={id('bg')} label="Background">
@@ -136,13 +132,12 @@ export function OverlayForm({
         </NativeSelect>
       </Field>
       <Field id={id('bgc')} label="Background colour">
-        <input
+        <ColourField
           id={id('bgc')}
-          type="color"
+          value={overlay.backgroundColor}
+          fallback="#000000"
           disabled={overlay.backgroundType === 'none'}
-          value={rgbOf(overlay.backgroundColor, '#000000')}
-          onChange={(e) => onDraft({ backgroundColor: e.target.value })}
-          className="h-8 w-full cursor-pointer rounded-lg border border-input bg-transparent disabled:opacity-40"
+          onChange={(backgroundColor) => onDraft({ backgroundColor })}
         />
       </Field>
       <Field id={id('x')} label="Horizontal position">

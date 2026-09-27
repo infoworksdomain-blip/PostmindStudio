@@ -10,20 +10,14 @@ import { EMPTY_FILTERS, LibraryFilters, type LibraryFilterState } from './librar
 import { DURATION_FILTERS, flattenCategories, parseTags } from './library-utils';
 import { RecommendedShelf } from './recommended-shelf';
 import type { CategoryNode, LibraryVideoSummary, ListResponse } from './types';
+import { useLibrarySearch } from './use-library-search';
 import { VideoCard } from './video-card';
 
 // BACKLOG 10.7 / Addendum A3.1 — browse the reference library: recommended shelf, taxonomy
-// filters, a grid of previews with cursor pagination.
+// filters, a grid of previews with cursor pagination. A search (13.8) queries the whole library
+// on the server (POST /library/search: meaning, plus title/tag words), within the category.
 
 const PAGE_SIZE = 24;
-
-function matchesSearch(video: LibraryVideoSummary, search: string): boolean {
-  const needle = search.trim().toLowerCase();
-  if (!needle) return true;
-  return [video.title, video.description ?? '', ...video.tags].some((s) =>
-    s.toLowerCase().includes(needle),
-  );
-}
 
 export function LibraryBrowse() {
   const [filters, setFilters] = useState<LibraryFilterState>(EMPTY_FILTERS);
@@ -36,19 +30,29 @@ export function LibraryBrowse() {
 
   const duration = DURATION_FILTERS.find((d) => d.key === filters.duration);
   const tags = parseTags(filters.tags);
-  const { data, error, isLoading, mutate } = useApi<ListResponse<LibraryVideoSummary>>(
-    '/library/videos',
-    {
-      category: filters.category || undefined,
-      tags: tags.length ? tags.join(',') : undefined,
-      mood: filters.mood || undefined,
-      durationMin: duration?.min,
-      durationMax: duration?.max,
-      cursor: cursors.at(-1),
-      limit: PAGE_SIZE,
-    },
+  const query = filters.search.trim();
+  const searching = query !== '';
+  const list = useApi<ListResponse<LibraryVideoSummary>>(searching ? null : '/library/videos', {
+    category: filters.category || undefined,
+    tags: tags.length ? tags.join(',') : undefined,
+    mood: filters.mood || undefined,
+    durationMin: duration?.min,
+    durationMax: duration?.max,
+    cursor: cursors.at(-1),
+    limit: PAGE_SIZE,
+  });
+  const search = useLibrarySearch(
+    searching
+      ? {
+          q: query,
+          categorySlug: filters.category || undefined,
+          cursor: cursors.at(-1),
+          limit: PAGE_SIZE,
+        }
+      : null,
   );
-  const visible = (data?.data ?? []).filter((v) => matchesSearch(v, filters.search));
+  const { data, error, isLoading, mutate } = searching ? search : list;
+  const visible: LibraryVideoSummary[] = data?.data ?? [];
 
   const applyFilters = (next: LibraryFilterState) => {
     setFilters(next);
@@ -71,6 +75,13 @@ export function LibraryBrowse() {
         </h2>
         <LibraryFilters value={filters} categories={categoryOptions} onChange={applyFilters} />
 
+        {searching && (
+          <p className="mt-3 text-sm text-muted-foreground" role="status">
+            Results for “{query}” across the whole library
+            {filters.category ? ' in this category' : ''}, best match first. Length, mood and tag
+            filters don’t apply to a search.
+          </p>
+        )}
         <div className="mt-6">
           {error && <ErrorState error={error} onRetry={() => void mutate()} />}
           {isLoading && (
@@ -88,8 +99,8 @@ export function LibraryBrowse() {
               icon={<Library className="size-8" strokeWidth={1.5} />}
               title="No references match"
               description={
-                filters.search
-                  ? 'Nothing on this page matches your search. Try another page or clear the search.'
+                searching
+                  ? 'Nothing in the library matches that search. Try other words or clear the search.'
                   : 'Try a broader category or fewer tags.'
               }
             />

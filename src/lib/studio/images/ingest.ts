@@ -4,15 +4,17 @@ import { imageSize } from 'image-size';
 import type { AssetStorage } from '../storage';
 import { safeGet } from '../scan/safe-fetch';
 import { SCAN_USER_AGENT } from '../scan/fetch';
+import { nearestWithin, tryDHash } from './phash';
 
 // BACKLOG 6.4 / Addendum A6.3 — put one image into a business's library:
 // download (SSRF-guarded, capped) → check it is a real raster image → drop small ones
 // (< 500px long edge) → fingerprint (sha256 of the bytes) → dedup per business →
 // for scraped images, drop any whose bytes match a known stock image → store in S3 → row.
 //
-// Fingerprint note: the spec asks for a perceptual hash. An exact sha256 is used for now — it
-// catches byte-identical copies (the common case for stock photos re-hosted unchanged) but not
-// resized or re-encoded ones. See the Phase 6 review list.
+// Fingerprints: an exact sha256 of the bytes (unique per business; byte-identical copies and the
+// known-stock filter) plus, since 13.12, a perceptual dHash (images/phash.ts). A new image within
+// Hamming distance 6 of one already in the business's library is a near-duplicate (a resized or
+// re-encoded copy) and is not stored again. Images sharp cannot decode keep the sha256 check only.
 
 export const MIN_LONG_EDGE_PX = 500;
 export const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
@@ -42,7 +44,7 @@ const SOCIAL_OR_TRACKER_HOSTS = [
 
 export type IngestOutcome =
   | { status: 'created'; id: string }
-  | { status: 'duplicate'; id: string }
+  | { status: 'duplicate'; id: string; near?: { distance: number } }
   | {
       status: 'skipped';
       reason: 'too_small' | 'not_image' | 'too_large' | 'stock_match' | 'filtered';
@@ -138,6 +140,11 @@ export async function ingestImage(deps: IngestDeps, input: IngestInput): Promise
     select: { id: true },
   });
   if (existing) return { status: 'duplicate', id: existing.id };
+  const phash = await tryDHash(bytes);
+  if (phash) {
+    const near = await findNearDuplicate(deps.db, input, phash);
+    if (near) return { status: 'duplicate', id: near.id, near: { distance: near.distance } };
+  }
   if (input.source === 'SCRAPED') {
     const stock = await deps.db.imageLibraryItem.findFirst({
       where: { fingerprint, source: 'STOCK' },
@@ -169,6 +176,7 @@ export async function ingestImage(deps: IngestDeps, input: IngestInput): Promise
         tags: normaliseTags(input.tags ?? []),
         altText: input.altText?.trim().slice(0, 1_000) || null,
         fingerprint,
+        phash,
         generatedFromPrompt: input.generatedFromPrompt ?? null,
         licenseNotes: input.licenseNotes ?? null,
       },
@@ -192,6 +200,29 @@ export async function ingestImage(deps: IngestDeps, input: IngestInput): Promise
     }
     throw err;
   }
+}
+
+/** Cap on the hashes compared per ingest (a business library is hundreds of images). */
+const MAX_PHASH_CANDIDATES = 20_000;
+
+/** An existing image of the business perceptually equal to `phash` (13.12), or null. */
+async function findNearDuplicate(
+  db: PrismaClient,
+  scope: { organisationId: string; businessId: string },
+  phash: string,
+): Promise<{ id: string; distance: number } | null> {
+  const candidates = await db.imageLibraryItem.findMany({
+    where: {
+      organisationId: scope.organisationId,
+      businessId: scope.businessId,
+      phash: { not: null },
+    },
+    select: { id: true, phash: true },
+    orderBy: { createdAt: 'desc' },
+    take: MAX_PHASH_CANDIDATES,
+  });
+  const hit = nearestWithin(phash, candidates);
+  return hit ? { id: hit.item.id, distance: hit.distance } : null;
 }
 
 /** Unsplash-style hotlinked stock: no copy is stored, only metadata and the hotlink URL. */

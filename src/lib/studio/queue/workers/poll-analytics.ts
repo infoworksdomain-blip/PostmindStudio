@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { NotImplementedError, PlatformError } from '../../../errors';
 import { nextPollDelayMs } from '../../analytics/schedule';
 import { recordSnapshot, rollUpAnalytics, rollUpProviderUsage } from '../../analytics/store';
+import { notifyMilestones } from '../../notifications/milestones';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
   noteCredentialFailure,
@@ -77,6 +78,8 @@ export async function pollPublicationAnalytics(
       now: deps.now(),
     });
     await recordSnapshot(deps.db, publication.id, result.snapshot, new Date(deps.now()));
+    // 13.23 spec 14.4 milestones (10k views, 100 comments): once per publication per threshold.
+    await notifyMilestones(deps, publication, result.snapshot);
     if (result.platformPostId && result.platformPostId !== publication.platformPostId) {
       await deps.db.videoPublication.update({
         where: { id: publication.id },

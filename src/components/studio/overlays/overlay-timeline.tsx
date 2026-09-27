@@ -27,6 +27,7 @@ export function OverlayTimeline({
   onTiming,
   onSeek,
   disabled,
+  unit = 'shot',
 }: {
   overlays: Overlay[];
   duration: number;
@@ -36,6 +37,8 @@ export function OverlayTimeline({
   onTiming: (id: string, timing: Timing) => void;
   onSeek: (sec: number) => void;
   disabled?: boolean;
+  /** What the timeline spans ("shot", "slide", "video"), for the empty state. */
+  unit?: string;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
@@ -115,7 +118,7 @@ export function OverlayTimeline({
           style={{ left: pct(playhead) }}
         />
         {overlays.length === 0 && (
-          <p className="py-2 text-xs text-muted-foreground">No overlays on this shot yet.</p>
+          <p className="py-2 text-xs text-muted-foreground">No overlays on this {unit} yet.</p>
         )}
         {overlays.map((o) => {
           const selected = o.id === selectedId;

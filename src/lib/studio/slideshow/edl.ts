@@ -28,6 +28,8 @@ export interface ResolvedSlide {
   backgroundColor: string | null;
   kenBurnsEffect?: string;
   content: SlideContent;
+  /** 13.4: the slide has styled overlays, which replace an image slide's plain caption band. */
+  hasOverlays?: boolean;
 }
 
 export interface SlideshowEdlInput {
@@ -240,7 +242,7 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
         }
         const label = [c.number ? `${c.number}.` : null, c.name, c.text].filter(Boolean).join(' ');
         const caption = c.caption ?? (label || null);
-        if (caption) overlay(escapeHtml(caption), Math.round(height * 0.035));
+        if (caption && !slide.hasOverlays) overlay(escapeHtml(caption), Math.round(height * 0.035));
         break;
       }
     }

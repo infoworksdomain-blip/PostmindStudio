@@ -19,6 +19,7 @@ import {
   type IngestStatusQuery,
 } from '../library/ingest-runs';
 import { buildBlueprint, styleSignature } from '../library/blueprint';
+import { searchLibrary } from '../library/search';
 import { recommendedVideos, similarVideos } from '../library/similarity';
 import { categoryTree } from '../library/taxonomy';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
@@ -181,6 +182,37 @@ export async function recommendedLibraryVideos(
   return { data: await hydrate(deps, hits) };
 }
 
+export const searchLibraryInput = z
+  .object({
+    q: z.string().trim().min(1).max(200),
+    categorySlug: z.string().trim().max(200).optional(),
+    limit: z.number().int().min(1).max(50).default(24),
+    cursor: z.string().max(8).nullable().optional(),
+  })
+  .strict();
+
+/** POST /library/search (BACKLOG 13.8): embedding + pgvector + keyword boost, offset cursor. */
+export async function searchLibraryVideos(
+  deps: { db: Db; storage: AssetStorage; providers: ProviderRunDeps },
+  tenant: TenantContext,
+  input: z.infer<typeof searchLibraryInput>,
+) {
+  const page = await searchLibrary(
+    deps,
+    {
+      organisationId: tenant.organisationId,
+      planTier: toPlanTier(tenant.organisation.planTier),
+    },
+    input,
+  );
+  const items = await hydrate(deps, page.hits);
+  const scores = new Map(page.hits.map((h) => [h.id, h.score]));
+  return {
+    data: items.map((item) => ({ ...item, score: scores.get(item.id) ?? item.similarity })),
+    nextCursor: page.nextCursor,
+  };
+}
+
 export function libraryCategories(db: Db) {
   return categoryTree(db);
 }
@@ -257,6 +289,7 @@ export async function adminIngest(
       sourceUrl: item.sourceUrl,
       sourceRef: item.sourceRef,
       language: item.language,
+      item,
     });
     await deps.queue.add('ingest-library-video', data, { jobId });
     queued.push({ sourceUrl: item.sourceUrl, jobId, runId });

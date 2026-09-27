@@ -7,7 +7,7 @@ import { queuePrefix } from '../queue/redis';
 import { BREAKER_VALUE, type StudioMetrics } from './metrics';
 
 // Scrape-time samples for gauges: BullMQ depths (spec 16.4 "Queue health") and this process's
-// circuit-breaker states (spec 16.4 "Provider health").
+// circuit-breaker states (spec 16.4 "Provider health"; shared through Redis since 13.16).
 
 const QUEUE_STATES = ['waiting', 'active', 'delayed', 'failed', 'prioritized'] as const;
 
@@ -44,8 +44,11 @@ export async function sampleQueueDepths(
   }
 }
 
-export function sampleBreakers(metrics: StudioMetrics, breaker: CircuitBreaker): void {
-  for (const [provider, state] of Object.entries(breaker.snapshot())) {
+export async function sampleBreakers(
+  metrics: StudioMetrics,
+  breaker: CircuitBreaker,
+): Promise<void> {
+  for (const [provider, state] of Object.entries(await breaker.snapshot())) {
     metrics.breakerState.set({ provider }, BREAKER_VALUE[state] ?? 0);
   }
 }

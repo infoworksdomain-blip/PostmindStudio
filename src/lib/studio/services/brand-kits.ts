@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { NotFoundError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { businessIdParam } from './businesses';
+import { assertLinkableVoice } from './voice-profiles';
 
 // Spec 8.5 / 10 — brand kits: palette, fonts, tone, audience, CTA templates and restricted
 // topics that Layers 1–2, the overlay presets (brand substitution) and composition read.
@@ -37,6 +38,10 @@ export const createBrandKitInput = kitFields.partial().extend({
 });
 
 export const updateBrandKitInput = kitFields
+  .extend({
+    /** 13.13: the brand voice (a READY voice profile of this organisation), or null for stock. */
+    voiceProfileId: z.string().min(1).max(64).nullable(),
+  })
   .partial()
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
@@ -97,7 +102,9 @@ export async function updateBrandKit(
   id: string,
   input: z.infer<typeof updateBrandKitInput>,
 ) {
-  await getBrandKit(db, organisationId, id);
+  const kit = await getBrandKit(db, organisationId, id);
+  if (input.voiceProfileId)
+    await assertLinkableVoice(db, organisationId, kit.businessId, input.voiceProfileId);
   return db.brandKit.update({
     where: { id },
     data: {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { ArrowRight, Building2, Clapperboard, Layers, Loader2 } from 'lucide-react';
+import { ArrowRight, Building2, Clapperboard, Layers, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
 import type { BrandKit, PlatformConnection, Project } from '@/lib/client/types';
@@ -28,6 +28,7 @@ import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './
 import { defaultPlatforms } from './formats';
 import { ProjectTemplatePicker } from './project-template-picker';
 import { ReferenceBanner } from './reference-banner';
+import { VideoUploadField } from '../uploads/video-upload-field';
 
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
 // business's connections and default brand kit; options sit behind progressive disclosure.
@@ -44,11 +45,13 @@ const INITIAL: Omit<CreateState, 'platforms' | 'brandKitId'> = {
   projectTemplate: null,
   autoPublish: false,
   autoPublishAccounts: {},
+  upload: null,
 };
 
 const SOURCES: Array<{ key: CreateSource; label: string; icon: typeof Clapperboard }> = [
   { key: 'BRIEF', label: 'Video', icon: Clapperboard },
   { key: 'SLIDESHOW', label: 'Slideshow', icon: Layers },
+  { key: 'UPLOAD', label: 'Upload a video', icon: Upload },
 ];
 
 export function CreateScreen({ initialReference }: { initialReference: Reference | null }) {
@@ -123,7 +126,11 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             body: {},
             idempotencyKey: newIdempotencyKey(),
           });
-          toast.success('Generating — Studio is writing the script.');
+          toast.success(
+            body.sourceType === 'UPLOAD'
+              ? 'Generating — Studio is captioning your video.'
+              : 'Generating — Studio is writing the script.',
+          );
         } catch (err) {
           toast.error(`Saved as a draft, but generation didn’t start: ${errorMessage(err)}`);
         }
@@ -136,6 +143,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   }
 
   const isSlideshow = form.source === 'SLIDESHOW';
+  const isUpload = form.source === 'UPLOAD';
   const templated = usesTemplate(state, reference);
   const chooseTemplate = (id: string | null) => {
     const t = templates.data?.data.find((x) => x.id === id);
@@ -152,10 +160,31 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
           Create
         </p>
         <label htmlFor="create-brief" className="font-display text-4xl leading-tight md:text-6xl">
-          {isSlideshow ? 'What’s the slideshow about?' : 'What’s the video about?'}
+          {isSlideshow
+            ? 'What’s the slideshow about?'
+            : isUpload
+              ? 'Upload your video'
+              : 'What’s the video about?'}
         </label>
       </div>
-      {reference && !isSlideshow && (
+      {isUpload && businessId && (
+        <div className="flex flex-col gap-1">
+          <VideoUploadField
+            id="create-upload"
+            label={form.upload ? 'Replace the video' : 'Choose a video'}
+            kind="source_video"
+            businessId={businessId}
+            onUploaded={(result) =>
+              patch({ upload: { id: result.upload.id, fileName: result.upload.fileName } })
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            Studio adds captions from what’s said, your overlays and every platform format. Notes
+            below are optional.
+          </p>
+        </div>
+      )}
+      {reference && !isSlideshow && !isUpload && (
         <ReferenceBanner
           reference={reference}
           onModeChange={(mode) => setReference({ ...reference, mode })}
@@ -233,7 +262,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
               onChange={(templateId) => patch({ templateId })}
             />
           )}
-          {!isSlideshow && !reference && (
+          {!isSlideshow && !isUpload && !reference && (
             <ProjectTemplatePicker
               templates={templates.data?.data}
               error={templates.error}

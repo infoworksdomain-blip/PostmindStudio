@@ -128,7 +128,11 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     now: deps.now,
     random: deps.scan.random,
   });
-  const crawl = await crawlSite(scan.url, { fetcher, renderer: deps.scan.renderer });
+  const crawl = await crawlSite(scan.url, {
+    fetcher,
+    renderer: deps.scan.renderer,
+    headless: deps.scan.headless,
+  });
   if (crawl.robotsBlocked || crawl.pages.length === 0) {
     await deps.db.websiteScan.update({
       where: { id: scan.id },
@@ -190,6 +194,9 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     where: { id: scan.id },
     data: {
       state: 'SUCCEEDED',
+      // A6.6: homepage validators for the next scheduled rescan's conditional request.
+      etag: crawl.etag?.slice(0, 500) ?? null,
+      lastModified: crawl.lastModified?.slice(0, 100) ?? null,
       imagesIngested: scraped.created + stock.created,
       costPence: (metadata.costPence ?? 0) + embedded.costPence,
       errorReason: errors.length ? errors.slice(0, 20).join('\n').slice(0, 4_000) : null,

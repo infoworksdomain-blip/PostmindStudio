@@ -25,6 +25,12 @@ licences are refused.
 - `POST /api/studio/admin/library/ingest` takes batches of 100 or fewer. Resubmitting a source
   that is already ingested returns it under `skipped`. A failed source is re-enqueued under a
   fresh job id.
+- `POST /api/studio/admin/library/ingest/resubmit { "failedOnly": true }` (13.15) re-enqueues
+  every FAILED run with the item it was submitted with; pass `runIds` to pick runs, or
+  `"failedOnly": false` to also re-enqueue QUEUED/RUNNING runs stuck for an hour or more (a lost
+  job). The admin **Library** tab has a "Resubmit failures" button for the first case. Runs
+  submitted before 13.15 have no stored item and are skipped with that reason: resubmit them
+  with the tool.
 
 ### Manifest
 
@@ -130,8 +136,9 @@ SSRF guard.
      row.
    - *Provider / cost-cap paused*: see provider-outage.md and cost-runaway.md. The job retries.
      After a cost-cap pause, resubmit after midnight UTC.
-   - To re-run failures, run the tool again: the server re-enqueues FAILED sources under a fresh
-     job id. `scripts/ops/redrive.ts` is for projects, not library jobs.
+   - To re-run failures, press "Resubmit failures" in the admin Library tab (or POST
+     `/admin/library/ingest/resubmit`), or run the tool again: either way FAILED sources are
+     re-enqueued under a fresh job id. `scripts/ops/redrive.ts` is for projects, not library jobs.
    - To stop the run:
      - Engage the `provider` or `global` kill switch (kill-switch.md). Library jobs check it at
        start.
@@ -156,9 +163,12 @@ SSRF guard.
 | 16 (2 × 8) | 320 | ~156 h (~6.5 days) |
 | 32 (4 × 8) | 640 | ~78 h (~3.3 days) |
 
-- **Memory:** each job buffers its source in memory, up to 200 MB. Allow about
-  `concurrency × 200 MB` plus FFmpeg per worker process. At a concurrency of 8, give each library
-  worker 3 GB or more.
+- **Memory:** since 13.15 each job streams its source to S3 with a multipart upload (8 MiB
+  parts, hashed on the way, staged under `library/staging/` then copied to
+  `library/<sha256>.mp4`), so a job holds about one part in memory. Budget FFmpeg per slot
+  (about 300 MB) rather than the source size. A failed upload is aborted (no orphaned parts);
+  a crashed worker can leave a `library/staging/` object behind, which the S3 lifecycle rule
+  should expire after a day (storage-cost.md).
 - **Providers:** each video makes about 1 Claude vision call (up to 12 keyframes), 1 AssemblyAI
   transcription and 1 embedding. 640 per hour is about 11 per minute: check your account's rate
   limits before going above 16 slots.
@@ -190,5 +200,4 @@ SSRF guard.
 ## GAP
 
 - The per-video minutes figure is an assumption until the sample run measures it.
-- The source is buffered in memory, not streamed (Phase 9 review list).
 - A job's wall-clock time is bounded only by the per-FFmpeg-call timeouts.

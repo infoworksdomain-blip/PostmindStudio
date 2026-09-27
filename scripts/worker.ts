@@ -8,10 +8,16 @@ import { createServer } from 'node:http';
 import { Queue } from 'bullmq';
 import { getMetrics, metricsAuthorised } from '../src/lib/studio/observability/metrics';
 import { sampleBreakers } from '../src/lib/studio/observability/sample';
-import { getCircuitBreaker } from '../src/lib/studio/providers/circuit-breaker';
+import { getSharedCircuitBreaker } from '../src/lib/studio/providers/circuit-breaker-redis';
 import { PIPELINE_QUEUES, startWorkers } from '../src/lib/studio/queue/worker-host';
 import { queuePrefix } from '../src/lib/studio/queue/redis';
 import { APPROVAL_CHECK_SCHEDULE } from '../src/lib/studio/queue/workers/check-approvals';
+import { STYLE_MEMORY_SCHEDULE } from '../src/lib/studio/queue/workers/build-style-memory';
+import { CHANNEL_RECONCILE_SCHEDULE } from '../src/lib/studio/queue/workers/reconcile-channels';
+import { RESCAN_SWEEP_PATTERN, STOCK_REFRESH_PATTERN } from '../src/lib/studio/scan/schedule';
+import { DOMAIN_POLL_PATTERN } from '../src/lib/studio/scan/domain-verification';
+import { OUTBOX_DISPATCH_SCHEDULE } from '../src/lib/studio/automation/outbox';
+import { AUTO_RESUME_SCHEDULE } from '../src/lib/studio/services/auto-resume';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -52,6 +58,15 @@ async function main(): Promise<void> {
       data: { organisationId: 'postmind-platform', runId: 'daily', planTier: 'STANDARD' },
     },
   );
+  // BACKLOG 13.29 — nightly style memory, after the roll-up so retention is fresh.
+  await analytics.upsertJobScheduler(
+    'build-style-memory-daily',
+    { pattern: STYLE_MEMORY_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'build-style-memory',
+      data: { organisationId: 'postmind-platform', runId: 'style-memory', planTier: 'STANDARD' },
+    },
+  );
   // Spec 14.4 — "approval required" reminders for projects waiting > 2 h (every 15 minutes).
   await analytics.upsertJobScheduler(
     'check-pending-approvals',
@@ -59,6 +74,66 @@ async function main(): Promise<void> {
     {
       name: 'check-pending-approvals',
       data: { organisationId: 'postmind-platform', runId: 'approvals', planTier: 'STANDARD' },
+    },
+  );
+  // BACKLOG 13.35 — daily Core ↔ Studio Meta channel reconciliation (skipped until Core ships
+  // its list-channels endpoint).
+  await analytics.upsertJobScheduler(
+    'reconcile-channels-daily',
+    { pattern: CHANNEL_RECONCILE_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'reconcile-channels',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'reconcile-channels',
+        planTier: 'STANDARD',
+      },
+    },
+  );
+
+  // BACKLOG 13.10 / 13.11 (Addendum A6.6 / A6.7) — scheduled rescans, weekly stock refresh and
+  // the DNS TXT verification poll, on studio-assets.
+  const assets = new Queue(QUEUES.assets, { connection, prefix: queuePrefix() });
+  const platformJob = (runId: string) => ({
+    organisationId: 'postmind-platform',
+    runId,
+    planTier: 'STANDARD' as const,
+  });
+  await assets.upsertJobScheduler(
+    'sweep-website-rescans-daily',
+    { pattern: RESCAN_SWEEP_PATTERN, tz: 'UTC' },
+    { name: 'sweep-website-rescans', data: platformJob('rescans') },
+  );
+  await assets.upsertJobScheduler(
+    'sweep-stock-refresh-weekly',
+    { pattern: STOCK_REFRESH_PATTERN, tz: 'UTC' },
+    { name: 'sweep-stock-refresh', data: platformJob('stock-refresh') },
+  );
+  await assets.upsertJobScheduler(
+    'poll-domain-verifications',
+    { pattern: DOMAIN_POLL_PATTERN, tz: 'UTC' },
+    { name: 'poll-domain-verifications', data: platformJob('domain-verifications') },
+  );
+
+  // BACKLOG 13.20 / 13.21 (track A3) — rollover auto-resume of cost-cap paused projects
+  // (00:05 UTC daily; the 1st of the month resumes monthly pauses) and the auto-publish outbox
+  // dispatcher (every minute).
+  const orchestration = new Queue(QUEUES.orchestration, { connection, prefix: queuePrefix() });
+  const publish = new Queue(QUEUES.publish, { connection, prefix: queuePrefix() });
+  await orchestration.upsertJobScheduler(
+    'auto-resume-paused-daily',
+    { pattern: AUTO_RESUME_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'auto-resume-paused',
+      data: { organisationId: 'postmind-platform', runId: 'auto-resume', planTier: 'STANDARD' },
+    },
+  );
+  await publish.upsertJobScheduler(
+    'dispatch-auto-publish',
+    { pattern: OUTBOX_DISPATCH_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'dispatch-auto-publish',
+      data: { organisationId: 'postmind-platform', runId: 'auto-publish', planTier: 'STANDARD' },
     },
   );
 
@@ -74,10 +149,11 @@ async function main(): Promise<void> {
           return;
         }
         const metrics = getMetrics();
-        sampleBreakers(metrics, getCircuitBreaker());
-        void metrics.registry.metrics().then((body) => {
-          res.writeHead(200, { 'content-type': metrics.registry.contentType }).end(body);
-        });
+        void sampleBreakers(metrics, getSharedCircuitBreaker())
+          .then(() => metrics.registry.metrics())
+          .then((body) => {
+            res.writeHead(200, { 'content-type': metrics.registry.contentType }).end(body);
+          });
       }).listen(Number(process.env.WORKER_METRICS_PORT) || 9464)
     : undefined;
 
@@ -88,6 +164,9 @@ async function main(): Promise<void> {
     logger.info({ signal }, 'stopping workers (finishing in-flight jobs)');
     await Promise.all(workers.map((w) => w.close()));
     await analytics.close();
+    await assets.close();
+    await orchestration.close();
+    await publish.close();
     metricsServer?.close();
     await queue.close();
     await db.$disconnect();

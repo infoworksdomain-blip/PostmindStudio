@@ -1,6 +1,7 @@
 'use client';
 
 import { ShieldAlert } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApi } from '@/lib/client/api';
@@ -9,6 +10,9 @@ import { CostReportPanel } from './cost-report-panel';
 import { KillSwitchPanel } from './kill-switch-panel';
 import { LibraryAdminPanel } from './library-admin-panel';
 import { RedrivePanel } from './redrive-panel';
+import { ProvidersPanel, QueuesPanel } from './health-panels';
+import { OrganisationPanel } from './organisation-panel';
+import { SafetyReviewPanel } from './safety-review-panel';
 import { isForbidden, type KillSwitchState } from './types';
 
 // BACKLOG 10.11 / spec 16.4 — Admin Centre (PostMind staff only). Every /admin route calls
@@ -25,8 +29,22 @@ export function StaffOnly() {
   );
 }
 
+const TABS = [
+  'kill-switch',
+  'redrive',
+  'library',
+  'cost',
+  'queues',
+  'providers',
+  'safety',
+  'organisations',
+] as const;
+
 export function AdminCentre() {
   const probe = useApi<KillSwitchState>('/admin/kill-switch');
+  // ?tab= opens a tab directly (the safety-review notification links to ?tab=safety).
+  const requested = useSearchParams()?.get('tab') ?? '';
+  const initialTab = (TABS as readonly string[]).includes(requested) ? requested : 'kill-switch';
   const header = (
     <PageHeader
       eyebrow="PostMind staff"
@@ -60,12 +78,16 @@ export function AdminCentre() {
   return (
     <>
       {header}
-      <Tabs defaultValue="kill-switch" className="min-w-0 gap-6">
+      <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
         <TabsList className="max-w-full overflow-x-auto">
           <TabsTrigger value="kill-switch">Kill switch</TabsTrigger>
           <TabsTrigger value="redrive">Re-drive</TabsTrigger>
           <TabsTrigger value="library">Library</TabsTrigger>
           <TabsTrigger value="cost">Cost report</TabsTrigger>
+          <TabsTrigger value="queues">Queues</TabsTrigger>
+          <TabsTrigger value="providers">Providers</TabsTrigger>
+          <TabsTrigger value="safety">Safety review</TabsTrigger>
+          <TabsTrigger value="organisations">Organisations</TabsTrigger>
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />
@@ -79,11 +101,19 @@ export function AdminCentre() {
         <TabsContent value="cost">
           <CostReportPanel />
         </TabsContent>
+        <TabsContent value="queues">
+          <QueuesPanel />
+        </TabsContent>
+        <TabsContent value="providers">
+          <ProvidersPanel />
+        </TabsContent>
+        <TabsContent value="safety">
+          <SafetyReviewPanel />
+        </TabsContent>
+        <TabsContent value="organisations">
+          <OrganisationPanel />
+        </TabsContent>
       </Tabs>
-      <p className="mt-10 text-xs text-muted-foreground">
-        Not available yet (no admin API): queue health, provider health and the content-safety
-        review queue from spec 16.4.
-      </p>
     </>
   );
 }

@@ -12,6 +12,7 @@ import {
   type AutoPublishTarget,
   type AutoPublishTargetResult,
 } from '../automation/automation';
+import { AutoPublishOutbox } from './auto-publish-outbox';
 import { SaveTemplate } from './save-template';
 
 // Review screen: how this project is approved and published automatically — "Approved
@@ -109,6 +110,7 @@ export function AutomationPanel({ project }: { project: ProjectDetail }) {
         </p>
       )}
       {autoPublish && <Targets project={project} />}
+      {autoPublish && <AutoPublishOutbox projectId={project.id} />}
       {canSave && (
         <div>
           <SaveTemplate projectId={project.id} defaultName={project.name} />

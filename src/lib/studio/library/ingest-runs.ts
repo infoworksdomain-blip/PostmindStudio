@@ -1,4 +1,4 @@
-import type { LibraryIngestState, PrismaClient } from '@prisma/client';
+import type { LibraryIngestState, Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
 // Corpus ingestion tracking (BACKLOG 9.2/9.3): one video_library_ingest_runs row per source,
@@ -23,6 +23,8 @@ export interface RunIdentity {
   sourceUrl: string;
   sourceRef?: string;
   language?: string;
+  /** 13.15: the submitted item, kept so a failure can be resubmitted from the admin UI. */
+  item?: Prisma.InputJsonValue;
 }
 
 export type SubmitDecision =
@@ -59,6 +61,7 @@ export async function markQueued(db: Db, run: RunIdentity): Promise<void> {
     sourceUrl: run.sourceUrl,
     sourceRef: run.sourceRef ?? null,
     language: run.language ?? null,
+    ...(run.item !== undefined && { item: run.item }),
   };
   await db.videoLibraryIngestRun.upsert({
     where: { runId: run.runId },

@@ -19,11 +19,16 @@ import { copyUrlToStorage } from '../../pipeline/persist';
 import {
   currentRunId,
   failProject,
+  mergeProjectMetadata,
   recordRunRender,
   projectMetadata,
   transitionProject,
 } from '../../pipeline/project-state';
 import { produceMusic } from '../../pipeline/music';
+import { masterStoredRender, type MasteringReport } from '../../pipeline/mastering';
+import { produceSfx, type SfxClip } from '../../pipeline/sfx';
+import { spokenWordsOf } from '../../pipeline/word-timing';
+import { slideOverlayPlacements } from '../../slideshow/slide-overlays';
 import { runProvider } from '../../pipeline/provider-run';
 import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../overlays/compose';
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
@@ -111,8 +116,16 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     : [];
 
   // Slideshows (A5) compose from their slides; scripted videos from their shots.
+  const slideOverlays =
+    project.sourceType === 'SLIDESHOW' ? await slideOverlayPlacements(deps.db, project.id) : [];
   const slides =
-    project.sourceType === 'SLIDESHOW' ? await resolveSlides(deps, project) : undefined;
+    project.sourceType === 'SLIDESHOW'
+      ? (await resolveSlides(deps, project)).map((slide, i) => ({
+          ...slide,
+          // 13.4: a slide's styled overlays replace its plain caption band.
+          hasOverlays: (slideOverlays[i]?.length ?? 0) > 0,
+        }))
+      : undefined;
   const brand = {
     backgroundColour: palette[0],
     textColour: palette[1],
@@ -124,20 +137,44 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   const longestSec = slides
     ? slideshowDuration(slides)
     : Math.max(0, ...project.scripts.map((s) => s.shots.reduce((t, x) => t + x.durationSec, 0)));
-  const track = await produceMusic(deps, {
-    project,
-    runId: data.runId,
-    planTier: data.planTier,
-    videoSec: longestSec,
-    kit,
-  });
+  // 13.5: an uploaded video keeps its own soundtrack, so no music bed is generated for it.
+  const track =
+    project.sourceType === 'UPLOAD'
+      ? null
+      : await produceMusic(deps, {
+          project,
+          runId: data.runId,
+          planTier: data.planTier,
+          videoSec: longestSec,
+          kit,
+        });
   const music = track
     ? {
         musicSrc: await deps.storage.signedUrl(track.bucket, track.key),
         musicDurationSec: track.durationSec,
       }
     : {};
+  // 13.27 — Layer 5 sound effects from the Layer 2 cues (pipeline/sfx.ts). Non-fatal.
+  const sfxClips = slides
+    ? new Map<string, SfxClip>()
+    : await produceSfx(deps, {
+        project,
+        runId: data.runId,
+        planTier: data.planTier,
+        shots: project.scripts.flatMap((s) => s.shots),
+      });
+  const sfxUrls = new Map<string, string>();
+  for (const clip of new Set(sfxClips.values())) {
+    sfxUrls.set(`${clip.bucket}/${clip.key}`, await deps.storage.signedUrl(clip.bucket, clip.key));
+  }
 
+  const sfxFor = (shotId: string) => {
+    const clip = sfxClips.get(shotId);
+    const url = clip && sfxUrls.get(`${clip.bucket}/${clip.key}`);
+    return url ? { sfxSrc: url, sfxDurationSec: clip.durationSec } : {};
+  };
+
+  const masteringReports: Record<string, MasteringReport> = {};
   const shotEdit = async (
     scriptShots: (typeof project.scripts)[number]['shots'],
     aspectRatio: AspectRatio,
@@ -152,10 +189,13 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           visualSrc: visual?.url,
           visualKind: visual?.kind === 'IMAGE' ? ('image' as const) : ('video' as const),
           voiceSrc: voice?.url,
+          // 13.5: an uploaded clip carries its own audio (no narration is generated for it).
+          keepSourceAudio: shot.visualTreatment === 'USER_UPLOAD' && !shot.voiceAssetId,
           // Styled overlays (Feature B) replace the plain caption when the shot has any.
           onScreenText: shot.overlays.length ? null : shot.onScreenText,
           transitionOut: shot.transitionOut,
           cardText: shot.onScreenText ?? shot.voiceoverText,
+          ...sfxFor(shot.id),
         };
       }),
     );
@@ -163,7 +203,14 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     const placed: PlacedOverlay[] = scriptShots.flatMap((shot) => {
       const at = offset;
       offset += shot.durationSec;
-      return shot.overlays.map((row) => ({ row, offsetSec: at }));
+      // 13.6: karaoke follows the narration's spoken words (or an uploaded clip's own speech).
+      const spokenFrom = shot.voiceAssetId
+        ? assets.get(shot.voiceAssetId)
+        : shot.visualTreatment === 'USER_UPLOAD' && shot.assetId
+          ? assets.get(shot.assetId)
+          : undefined;
+      const words = spokenFrom ? spokenWordsOf(spokenFrom.metadata) : [];
+      return shot.overlays.map((row) => ({ row, offsetSec: at, words }));
     });
     return {
       edit: buildShotstackEdit({ aspectRatio, shots, brand, ...music }),
@@ -213,7 +260,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           ? {
               edit: buildSlideshowEdit({ aspectRatio, slides, brand, ...music }),
               outputDurationSec: slideshowDuration(slides),
-              placed: [] as PlacedOverlay[],
+              placed: slideOverlays.flat(),
             }
           : await shotEdit(script.shots, aspectRatio);
         const wholeVideo = renderOverlays
@@ -259,7 +306,15 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           },
           deps.fetch,
         );
-        const probe = await deps.media.probe(stored.url);
+        // 13.26: loudness normalisation / H.264 re-encode when the gate would fail the render.
+        const mastered = await masterStoredRender(deps, {
+          stored,
+          probe: await deps.media.probe(stored.url),
+          organisationId: data.organisationId,
+          projectId: data.projectId,
+        });
+        masteringReports[script.id] = mastered.report;
+        const probe = mastered.probe;
         const job = await deps.db.providerJob.findUnique({
           where: { id: run.providerJobRowId },
           select: { costPence: true },
@@ -278,8 +333,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
               durationSec: probe.durationSec,
               fps: Math.round(probe.fps),
               bitrateKbps: probe.bitRateKbps,
-              s3Bucket: stored.bucket,
-              s3Key: stored.key,
+              s3Bucket: mastered.stored.bucket,
+              s3Key: mastered.stored.key,
               composerJobId: metadata.renderId ?? null,
               qualityCheckState: 'PENDING',
               costPence: job?.costPence ?? 0,
@@ -301,6 +356,19 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     throw err;
   });
   if (outcome === 'stale') return log.info('run superseded during composition; renders discarded');
+  if (Object.keys(masteringReports).length > 0) {
+    await mergeProjectMetadata(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      patch: { mastering: masteringReports },
+    });
+  }
+  // 13.1 / 13.2: the new renders reflect every script and shot edit made so far.
+  await mergeProjectMetadata(deps.db, {
+    projectId: project.id,
+    runId: data.runId,
+    patch: { staleRenders: [] },
+  });
   await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,

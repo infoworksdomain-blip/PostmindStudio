@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { ErrorState, Section, Stat } from '../primitives';
 import { selectClass } from '../library/library-filters';
+import { ResubmitFailures } from './resubmit-failures';
 import type { IngestRunState, IngestStatusResponse } from './types';
 
 // Corpus ingestion monitor (BACKLOG 9.2/9.3, runbooks/corpus-ingestion.md): counts by state over
@@ -56,6 +57,7 @@ export function IngestStatus() {
               </option>
             ))}
           </select>
+          <ResubmitFailures failed={data?.counts.FAILED ?? 0} onDone={() => void mutate()} />
           <Button
             size="sm"
             variant="ghost"

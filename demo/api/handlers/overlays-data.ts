@@ -193,7 +193,7 @@ export function resolveStyle(
 
 let seq = 0;
 export function makeOverlay(
-  target: { shotId: string | null; renderId: string | null },
+  target: { shotId: string | null; renderId: string | null; slideId?: string | null },
   input: {
     text: string;
     startAtSec: number;
@@ -208,6 +208,7 @@ export function makeOverlay(
     id: `ovl-${Date.now().toString(36)}${seq}`,
     shotId: target.shotId,
     renderId: target.renderId,
+    ...(target.slideId && { slideId: target.slideId }),
     presetId: input.presetId ?? null,
     sortOrder: input.sortOrder ?? 0,
     text: input.text,
@@ -220,6 +221,8 @@ export function makeOverlay(
 
 export const shotOverlays = new Map<string, Overlay[]>();
 export const videoOverlays = new Map<string, Overlay[]>();
+/** 13.4: per-slide overlays, keyed by slide id. */
+export const slideOverlays = new Map<string, Overlay[]>();
 
 /** Overlays of a shot, seeded from its on-screen text on first use. */
 export function overlaysFor(shot: ShotRec, index: number): Overlay[] {
@@ -264,10 +267,11 @@ export function overlaysFor(shot: ShotRec, index: number): Overlay[] {
 
 export function findOverlay(
   id: string,
-): { list: Overlay[]; overlay: Overlay; key: string; kind: 'shot' | 'video' } | null {
+): { list: Overlay[]; overlay: Overlay; key: string; kind: 'shot' | 'video' | 'slide' } | null {
   for (const [kind, map] of [
     ['shot', shotOverlays],
     ['video', videoOverlays],
+    ['slide', slideOverlays],
   ] as const)
     for (const [key, list] of map) {
       const overlay = list.find((o) => o.id === id);

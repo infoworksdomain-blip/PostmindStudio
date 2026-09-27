@@ -15,6 +15,11 @@ import type { ProviderRegistry } from './registry';
 //   - BASIC plan AI_CLIP shots over 5s: 6.4 defines no list, so they use the cheap-tier list.
 //   - AI_AVATAR: 6.1 requires a fallback for every shot type, so D-ID and HeyGen back each
 //     other up (except a brand's custom HeyGen avatar, which cannot move provider).
+//   - AI_CLIP on PLUS/ENTERPRISE (BACKLOG 13.32): Luma is added after Runway. 6.4 lists
+//     [Veo, Runway, Kling], but 6.1 requires a working fallback and the playbook names Luma
+//     the "text-to-video fallback" ("toggle Runway off; verify router fails over to Luma").
+//     Veo and Kling have no adapters yet, so without Luma an open Runway breaker would leave
+//     PLUS clips with no provider. STANDARD keeps the spec's Luma-first order.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -122,16 +127,21 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
   // 6.5 Music. SPEC DRIFT: Suno (no public API) replaced by ElevenLabs Music; MusicGen via
   // Replicate and a Storyblocks pick stay as the spec's (not yet built) fallbacks.
   music: ['elevenlabs-music', 'replicate', 'storyblocks'],
+  // BACKLOG 13.27: Storyblocks audio catalogue, content_type=sfx (providers/storyblocks-audio.ts).
+  sfx: ['storyblocks-audio'],
   composition: ['shotstack', 'creatomate'], // 6.5 Composition
   transcription: ['assemblyai'], // 6.5 Captions (self-hosted Whisper is not a provider)
   content_safety: ['hive', 'sightengine'], // 6.5 Content safety
+  // 13.36: no inference host is chosen, so nothing is ever routed here; the media-analysis
+  // adapter (providers/media-analysis.ts) reports unhealthy and is not registered.
+  media_analysis: [],
 };
 
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
   if (tier === 'STANDARD') return ['luma', 'runway', 'kling'];
-  return ['veo', 'runway', 'kling'];
+  return ['veo', 'runway', 'luma', 'kling'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
@@ -201,7 +211,7 @@ async function skipReason(
   }
 
   // Last, because in half-open state this claims the single trial request.
-  if (!deps.breaker.tryAcquire(adapter.providerId)) return 'circuit_open';
+  if (!(await deps.breaker.tryAcquire(adapter.providerId))) return 'circuit_open';
   return undefined;
 }
 

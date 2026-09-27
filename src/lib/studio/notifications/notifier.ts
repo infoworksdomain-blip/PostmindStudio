@@ -1,10 +1,20 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
+import { NotImplementedError } from '../../errors';
+import {
+  emailSenderFromEnv,
+  type EmailPreferenceLookup,
+  type EmailSender,
+  type EmailStatus,
+} from './email';
 import { bestEffort, notificationSenderFromEnv, type NotificationSender } from './sender';
+import { createPreferenceLookup, type PreferenceLookup } from './preference-lookup';
 
 // Spec 14.4 — in-app notifications (studio.notifications) plus the optional outbound webhook.
-// Email delivery is not built: no PostMind Core notification/email API is documented (see
-// PROGRESS.md). Every notification is stored first; the webhook is best effort.
+// Email (BACKLOG 13.33, email.ts): for users who enabled email for the kind, the notifier hands
+// the notification to the configured EmailSender and records notifications.emailStatus; with no
+// sender (or Core's email API not published yet) that is "pending_setup". Every notification is
+// stored first; the webhook and email are best effort.
 
 export const NOTIFICATION_KINDS = [
   'cost_alert',
@@ -12,6 +22,10 @@ export const NOTIFICATION_KINDS = [
   'publication_failed',
   'generation_complete',
   'approval_pending',
+  // Phase 13 (A3): 13.17 content-safety review, 13.21 auto-publish gave up, 13.23 milestones.
+  'safety_review',
+  'auto_publish_failed',
+  'milestone',
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
@@ -32,12 +46,25 @@ export type StaffNotificationInput = Omit<NotificationInput, 'organisationId' | 
 
 export interface Notifier {
   /** Store (and send) one notification. created=false when the dedupeKey already exists. */
-  notify(input: NotificationInput): Promise<{ created: boolean; id?: string }>;
+  notify(
+    input: NotificationInput,
+  ): Promise<{ created: boolean; id?: string; emailStatus?: EmailStatus }>;
   /** PostMind staff: one org-wide row per STUDIO_PLATFORM_ORG_IDS organisation, plus the webhook. */
   notifyStaff(input: StaffNotificationInput): Promise<number>;
 }
 
 type NotificationClient = Pick<PrismaClient, 'notification'>;
+
+interface StoredRow {
+  id: string;
+  organisationId: string;
+  userId: string | null;
+  kind: string;
+  title: string;
+  body: string;
+  link: string | null;
+  createdAt: Date;
+}
 
 const TITLE_MAX = 200;
 const BODY_MAX = 2_000;
@@ -58,9 +85,79 @@ export function createNotifier(deps: {
   logger: Logger;
   sender?: NotificationSender;
   staffOrgIds?: () => string[];
+  /** Who opted in to email per kind (notification preferences, 13.24). Absent = no email. */
+  emailPreferences?: EmailPreferenceLookup;
+  /** 13.24: users' in-app choices; a kind turned off in-app is not stored for that user. */
+  preferences?: Pick<PreferenceLookup, 'inAppEnabled' | 'emailRecipients'>;
+  /** null = no email sender; undefined = from STUDIO_EMAIL_PROVIDER. */
+  email?: EmailSender | null;
+  appUrl?: string;
 }): Notifier {
   const sender = bestEffort(deps.sender ?? notificationSenderFromEnv(), deps.logger);
   const staffOrgIds = deps.staffOrgIds ?? (() => staffOrganisationIds());
+  const emailSender = deps.email === undefined ? emailSenderFromEnv() : deps.email;
+  const appUrl = (deps.appUrl ?? process.env.APP_URL)?.trim().replace(/\/+$/, '') || undefined;
+
+  async function sendEmail(row: StoredRow, recipientUserIds: string[]): Promise<EmailStatus> {
+    if (!emailSender) return 'pending_setup';
+    try {
+      await emailSender.send({
+        notificationId: row.id,
+        organisationId: row.organisationId,
+        recipientUserIds,
+        kind: row.kind as NotificationKind,
+        subject: row.title,
+        text: row.body,
+        link: row.link && appUrl ? `${appUrl}${row.link}` : row.link,
+      });
+      return 'sent';
+    } catch (err) {
+      if (err instanceof NotImplementedError) return 'pending_setup';
+      deps.logger.error({ err, notificationId: row.id }, 'notification email failed');
+      return 'failed';
+    }
+  }
+
+  /** Email for opted-in users; never throws (the in-app row is the record). */
+  async function deliverEmail(row: StoredRow): Promise<EmailStatus | undefined> {
+    if (!deps.emailPreferences) return undefined;
+    try {
+      const recipients = await deps.emailPreferences.emailRecipients({
+        organisationId: row.organisationId,
+        userId: row.userId,
+        kind: row.kind as NotificationKind,
+      });
+      if (recipients.length === 0) return undefined;
+      const emailStatus = await sendEmail(row, recipients);
+      await deps.db.notification.update({ where: { id: row.id }, data: { emailStatus } });
+      if (emailStatus === 'pending_setup') {
+        deps.logger.info(
+          { notificationId: row.id, kind: row.kind, recipients: recipients.length },
+          'notification email pending setup',
+        );
+      }
+      return emailStatus;
+    } catch (err) {
+      deps.logger.error({ err, notificationId: row.id }, 'notification email step failed');
+      return undefined;
+    }
+  }
+
+  /** 13.24: the target user turned this kind off in-app and did not ask for its email. */
+  async function suppressed(input: NotificationInput): Promise<boolean> {
+    const prefs = deps.preferences;
+    if (!prefs || !input.userId) return false;
+    try {
+      const target = { organisationId: input.organisationId, userId: input.userId };
+      if (await prefs.inAppEnabled({ ...target, kind: input.kind })) return false;
+      const email = await prefs.emailRecipients({ ...target, kind: input.kind });
+      return email.length === 0;
+    } catch (err) {
+      // Preferences are a filter: when they cannot be read, deliver rather than drop.
+      deps.logger.warn({ err, kind: input.kind }, 'notification preferences unavailable');
+      return false;
+    }
+  }
 
   async function store(input: NotificationInput) {
     const data = {
@@ -88,10 +185,12 @@ export function createNotifier(deps: {
 
   return {
     async notify(input) {
+      if (await suppressed(input)) return { created: false };
       const row = await store(input);
       if (!row) return { created: false };
       await sender.send({ ...row, audience: 'organisation' });
-      return { created: true, id: row.id };
+      const emailStatus = await deliverEmail(row);
+      return { created: true, id: row.id, ...(emailStatus && { emailStatus }) };
     },
     async notifyStaff(input) {
       const orgs = staffOrgIds();
@@ -138,7 +237,13 @@ export function notifierFor(host: NotifierHost): Notifier {
   if (host.notifier) return host.notifier;
   let notifier = notifiers.get(host);
   if (!notifier) {
-    notifier = createNotifier({ db: host.db, logger: host.logger });
+    const preferences = createPreferenceLookup(host.db);
+    notifier = createNotifier({
+      db: host.db,
+      logger: host.logger,
+      preferences,
+      emailPreferences: preferences,
+    });
     notifiers.set(host, notifier);
   }
   return notifier;

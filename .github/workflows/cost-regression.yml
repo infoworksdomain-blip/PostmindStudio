@@ -1,0 +1,28 @@
+name: Weekly cost regression
+
+# BACKLOG 13.31 / spec 17.5 — prices the golden journeys with the adapters' cost estimators and
+# fails on > 10 % drift from test/cost/cost-baseline.json. Also runs in every CI build (it is part
+# of `npm test`); this schedule catches drift on a quiet week and alerts the channel via the
+# failed-workflow notification. See runbooks/cost-runaway.md "Cost regression".
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cost-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Golden-journey cost vs baseline (fails on > 10 % drift)
+        run: npx vitest run test/cost/cost-regression.test.ts

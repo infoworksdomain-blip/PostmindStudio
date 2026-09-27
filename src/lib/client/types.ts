@@ -149,4 +149,6 @@ export interface BrandKit {
   audienceProfile: string | null;
   ctaTemplates: Array<{ label: string; template: string }>;
   restrictedTopics: string[];
+  /** 13.13: the kit's cloned narration voice (null/absent = stock voice). */
+  voiceProfileId?: string | null;
 }

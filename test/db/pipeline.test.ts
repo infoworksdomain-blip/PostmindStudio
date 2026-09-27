@@ -116,7 +116,8 @@ describe.skipIf(!hasDb)('generation pipeline on real Postgres', { timeout: 60_00
     const jobs = await db.providerJob.findMany({ where: { projectId: project.id } });
     expect(jobs.every((j) => j.state === 'SUCCEEDED')).toBe(true);
     expect(new Set(jobs.map((j) => j.provider))).toEqual(
-      new Set(['anthropic', 'runway', 'elevenlabs', 'shotstack', 'hive']),
+      // assemblyai: narration is transcribed for word-level caption timing (13.6).
+      new Set(['anthropic', 'runway', 'elevenlabs', 'assemblyai', 'shotstack', 'hive']),
     );
     expect(project.costActualPence).toBe(jobs.reduce((sum, j) => sum + j.costPence, 0));
   });

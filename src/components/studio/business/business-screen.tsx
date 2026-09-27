@@ -9,6 +9,8 @@ import { BrandKitsPanel } from './brand-kits-panel';
 import { ImageLibraryPanel } from './image-library-panel';
 import { ProfilePanel } from './profile-panel';
 import { ScanPanel } from './scan-panel';
+import { StyleMemoryPanel } from './style-memory-panel';
+import { VoiceProfilesPanel } from './voice-profiles-panel';
 
 // BACKLOG 10.9 — the selected business: what Studio thinks it does (profile), the website scan
 // that works that out, brand kits, and the image library built from all of it.
@@ -18,6 +20,7 @@ export const BUSINESS_TABS = [
   { value: 'scan', label: 'Website scan' },
   { value: 'brand', label: 'Brand kits' },
   { value: 'images', label: 'Image library' },
+  { value: 'learned', label: 'What Studio has learned' },
 ] as const;
 
 type TabValue = (typeof BUSINESS_TABS)[number]['value'];
@@ -57,11 +60,15 @@ export function BusinessScreen() {
           <TabsContent value="scan">
             <ScanPanel businessId={businessId} />
           </TabsContent>
-          <TabsContent value="brand">
+          <TabsContent value="brand" className="grid gap-12">
             <BrandKitsPanel businessId={businessId} />
+            <VoiceProfilesPanel businessId={businessId} />
           </TabsContent>
           <TabsContent value="images">
             <ImageLibraryPanel businessId={businessId} />
+          </TabsContent>
+          <TabsContent value="learned">
+            <StyleMemoryPanel businessId={businessId} />
           </TabsContent>
         </Tabs>
       )}

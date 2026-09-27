@@ -343,11 +343,61 @@ describe('ingestImage', () => {
         tags: ['bread'],
         altText: 'fresh bread',
         fingerprint,
+        phash: null, // header-only fake PNG: not decodable, so no perceptual hash
         generatedFromPrompt: null,
         licenseNotes: 'owned',
       },
       select: { id: true },
     });
+  });
+
+  it('13.12: skips a near-duplicate (resized, re-encoded copy) of an image the business has', async () => {
+    const sharp = (await import('sharp')).default;
+    const { dHash } = await import('./phash');
+    const width = 900;
+    const height = 700;
+    const raw = Buffer.alloc(width * height * 3);
+    for (let i = 0; i < width * height; i += 1) {
+      const x = i % width;
+      const y = Math.floor(i / width);
+      raw[i * 3] = (x * 255) / width;
+      raw[i * 3 + 1] = (y * 255) / height;
+      raw[i * 3 + 2] = x > 300 && x < 600 && y > 200 && y < 400 ? 255 : 40;
+    }
+    const original = await sharp(raw, { raw: { width, height, channels: 3 } })
+      .png()
+      .toBuffer();
+    const copy = await sharp(original).resize(700).jpeg({ quality: 75 }).toBuffer();
+    const { db, imageLibraryItem } = fakeDb();
+    const existing = { id: 'img-original', phash: await dHash(original) };
+    const findMany = vi.fn(async () => [existing]);
+    Object.assign(imageLibraryItem, { findMany });
+    const { storage, objects } = memoryStorage();
+    const outcome = await ingestImage(
+      { db, storage, bucket: 'b', fetchImpl: vi.fn() as unknown as typeof fetch },
+      { organisationId: 'org-1', businessId: 'biz-1', source: 'SCRAPED', bytes: copy },
+    );
+    expect(outcome).toMatchObject({ status: 'duplicate', id: 'img-original' });
+    expect((outcome as { near?: { distance: number } }).near?.distance).toBeLessThanOrEqual(6);
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organisationId: 'org-1', businessId: 'biz-1', phash: { not: null } },
+      }),
+    );
+    expect(imageLibraryItem.create).not.toHaveBeenCalled();
+    expect(objects.size).toBe(0);
+
+    // A different picture is stored, with its hash.
+    findMany.mockResolvedValueOnce([{ id: 'other', phash: 'ffffffffffffffff' }]);
+    const stored = await ingestImage(
+      { db, storage, bucket: 'b', fetchImpl: vi.fn() as unknown as typeof fetch },
+      { organisationId: 'org-1', businessId: 'biz-1', source: 'UPLOAD', bytes: original },
+    );
+    expect(stored).toEqual({ status: 'created', id: 'row-1' });
+    const data = (
+      imageLibraryItem.create.mock.calls[0] as unknown as [{ data: { phash: string } }]
+    )[0].data;
+    expect(data.phash).toBe(existing.phash);
   });
 
   it('encodes the businessId in the storage key', async () => {

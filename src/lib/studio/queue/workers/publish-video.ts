@@ -219,6 +219,9 @@ export async function onPublishVideoFailed(
   await rollUpProject(deps, data.projectId, data.organisationId);
 }
 
+/** Early-fire allowance for a scheduled publication's delayed job (clock skew). */
+export const SCHEDULE_FIRE_TOLERANCE_MS = 5_000;
+
 /** BACKLOG 5.11 — a scheduled publication's delayed job fired: hand it to the publish queue. */
 export async function fireScheduledPublication(
   data: PublishJobData,
@@ -230,11 +233,21 @@ export async function fireScheduledPublication(
   });
   // Halted platform: fail before the schedule is consumed (nothing is handed to publish-video).
   if (target) await assertPlatformNotKilled(deps, data, target.platform);
+  // BACKLOG 13.9: a rescheduled publication may still have its old delayed job queued. A job
+  // carries the time it was scheduled for and fires only while the row still has that time; a
+  // job from before 13.9 (no time) fires only once the row's time has come
+  // (SCHEDULE_FIRE_TOLERANCE_MS absorbs clock skew between API and worker hosts).
   const fired = await deps.db.scheduledPublication.updateMany({
-    where: { publicationId: data.publicationId, state: 'PENDING' },
+    where: {
+      publicationId: data.publicationId,
+      state: 'PENDING',
+      scheduledFor: data.scheduledFor
+        ? new Date(data.scheduledFor)
+        : { lte: new Date(deps.now() + SCHEDULE_FIRE_TOLERANCE_MS) },
+    },
     data: { state: 'FIRED' },
   });
-  if (fired.count === 0) return; // cancelled, or already fired
+  if (fired.count === 0) return; // cancelled, already fired, or moved later (stale job)
   const publication = await deps.db.videoPublication.findFirst({
     where: { id: data.publicationId, organisationId: data.organisationId, state: 'SCHEDULED' },
     select: { retryCount: true },

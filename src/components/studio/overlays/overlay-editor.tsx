@@ -9,10 +9,12 @@ import { ScriptSelect } from '../review/shots-tab';
 import { ShotStrip } from '../review/shot-strip';
 import { BulkApply } from './bulk-apply';
 import { ShotOverlays } from './shot-overlays';
+import { WholeVideoOverlays } from './whole-video-overlays';
 import { OVERLAY_EDITABLE, type OverlayPreset } from './types';
 
 // BACKLOG 10.10 — overlay editor (Addendum A4): pick a variant and a shot, then add, style and
-// time its overlays; bulk-apply across the video; re-render with the current overlays.
+// time its overlays; a "Whole video" lane for render-wide overlays (13.3); bulk-apply across
+// the video; re-render with the current overlays.
 
 export function OverlayEditor({
   project,
@@ -73,6 +75,7 @@ export function OverlayEditor({
           shotId={shot.id}
           duration={shot.durationSec}
           aspectRatio={script.targetAspectRatio}
+          platform={script.targetPlatform}
           editable={editable}
           presets={presetList}
           businessId={businessId}
@@ -81,6 +84,18 @@ export function OverlayEditor({
       ) : (
         <p className="text-sm text-muted-foreground">Select a shot above.</p>
       )}
+      <Section
+        title="Whole video"
+        description="Overlays that run across the whole variant, such as a watermark or handle."
+      >
+        <WholeVideoOverlays
+          project={project}
+          editable={editable}
+          presets={presetList}
+          businessId={businessId}
+          onPresetsChanged={() => void presets.mutate()}
+        />
+      </Section>
       <Section
         title="Across the whole video"
         description="Watermarks, handles and repeated captions."

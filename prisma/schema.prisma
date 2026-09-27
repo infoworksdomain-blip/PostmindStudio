@@ -177,6 +177,9 @@ model VideoShot {
   voiceoverText    String?
   onScreenText     String?
   transitionOut    String? // 'cut' | 'fade' | 'whoosh' | ...
+  // BACKLOG 13.27: Layer 2 sound-effect cue ("whoosh", "cash register ding"), played at the
+  // shot's start (the cut into it). Null = no SFX. Resolved to an AUDIO_SFX asset in compose.
+  sfxCue           String?
   providerRouting  Json? // routing decision snapshot
   assetId          String? // resolved asset id once generated
   voiceAssetId     String?
@@ -289,6 +292,46 @@ enum QualityCheckState {
   @@schema("studio")
 }
 
+// BACKLOG 13.25 — Hive async moderation for renders longer than Hive's 90 s sync limit. One row
+// per (render, run). Hive documents no callback signature, so each task carries an unguessable
+// per-task callback token (only its SHA-256 is stored) in the callback URL. `result` holds the
+// callback body (Hive's task object) until the quality gate settles it.
+model ContentSafetyTask {
+  id                String                 @id @default(cuid())
+  organisationId    String
+  projectId         String
+  runId             String
+  renderId          String
+  planTier          String // job data to resume run-quality-gate on callback
+  providerId        String // 'hive'
+  providerJobRowId  String? // studio.provider_jobs.id (cost + breaker tracking)
+  providerTaskId    String? // Hive task id
+  callbackTokenHash String                 @unique
+  state             ContentSafetyTaskState @default(SUBMITTED)
+  result            Json?
+  errorReason       String?
+  submittedAt       DateTime               @default(now())
+  callbackAt        DateTime?
+  expiresAt         DateTime
+  updatedAt         DateTime               @updatedAt
+
+  @@unique([renderId, runId])
+  @@index([providerTaskId])
+  @@index([projectId, runId])
+  @@map("content_safety_tasks")
+  @@schema("studio")
+}
+
+enum ContentSafetyTaskState {
+  SUBMITTED
+  CALLBACK_RECEIVED
+  SETTLED
+  FAILED
+  EXPIRED
+
+  @@schema("studio")
+}
+
 // 7.8
 model VideoPublication {
   id                String           @id @default(cuid())
@@ -378,6 +421,7 @@ model ProviderJob {
 
   @@index([organisationId, provider, startedAt])
   @@index([provider, state])
+  @@index([startedAt]) // 13.16 admin provider health (last hour, all providers)
   @@map("provider_jobs")
   @@schema("studio")
 }
@@ -445,18 +489,52 @@ model BrandKit {
 
 // 7.11
 model VoiceProfile {
-  id                 String   @id @default(cuid())
-  organisationId     String
-  businessId         String?
-  name               String
-  provider           String // 'elevenlabs'
-  providerVoiceId    String
-  cloneSourceAssetId String?
-  languagesSupported String[]
-  isDefault          Boolean  @default(false)
-  createdAt          DateTime @default(now())
+  id                   String    @id @default(cuid())
+  organisationId       String
+  businessId           String?
+  name                 String
+  provider             String // 'elevenlabs'
+  providerVoiceId      String
+  cloneSourceAssetId   String?
+  languagesSupported   String[]
+  isDefault            Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  // Phase 13.13 (spec 10.2 / 13.4): cloning needs recorded consent. READY | REQUIRES_VERIFICATION
+  // (ElevenLabs asked for voice verification) | DELETED (revoked at the provider; the row stays
+  // as the consent audit record).
+  state                String    @default("READY")
+  speakerName          String?
+  consentStatement     String?
+  consentGivenByUserId String?
+  consentGivenAt       DateTime?
+  consentS3Bucket      String?
+  consentS3Key         String?
+  sampleCount          Int       @default(0)
+  sampleSeconds        Float?
+  deletedAt            DateTime?
+  deletedByUserId      String?
+  updatedAt            DateTime  @default(now()) @updatedAt
 
+  @@index([organisationId, businessId])
   @@map("voice_profiles")
+  @@schema("studio")
+}
+
+// DERIVED — spec 14.5 onboarding first-run (Phase 13.14): one row per (organisation, user).
+// step = where the /welcome wizard resumes; completed = the steps done so far.
+model OnboardingState {
+  id                  String    @id @default(cuid())
+  organisationId      String
+  userId              String
+  step                String    @default("connect") // connect | brand_kit | first_video | celebrate | done
+  completed           String[]
+  firstVideoProjectId String?
+  dismissedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([organisationId, userId])
+  @@map("onboarding_states")
   @@schema("studio")
 }
 
@@ -744,6 +822,10 @@ model VideoLibraryIngestRun {
   sourceRef     String?
   language      String?
   state         LibraryIngestState @default(QUEUED)
+  /**
+   * Phase 13.15: the submitted ingest item, so failures can be resubmitted from the admin UI.
+   */
+  item          Json?
   attempts      Int                @default(0)
   libraryItemId String?
   errorReason   String?
@@ -770,25 +852,28 @@ enum LibraryIngestState {
 
 // A7.5 — Feature B
 model TextOverlay {
-  id                  String     @id @default(cuid())
+  id                  String          @id @default(cuid())
   shotId              String?
-  shot                VideoShot? @relation(fields: [shotId], references: [id]) // A7.2
+  shot                VideoShot?      @relation(fields: [shotId], references: [id]) // A7.2
   renderId            String? // for whole-video overlays
+  // Phase 13.4 — per-slide overlays (slideshows). Deleting the slide deletes its overlays.
+  slideId             String?
+  slide               SlideshowSlide? @relation(fields: [slideId], references: [id], onDelete: Cascade)
   presetId            String?
-  sortOrder           Int        @default(0)
+  sortOrder           Int             @default(0)
   text                String
-  lang                String     @default("en-GB")
+  lang                String          @default("en-GB")
   startAtSec          Float
   endAtSec            Float
-  animationInMs       Int        @default(400)
-  animationOutMs      Int        @default(400)
+  animationInMs       Int             @default(400)
+  animationOutMs      Int             @default(400)
   animationIn         String // fadeIn, slideInLeft, ...
   animationOut        String
-  easing              String     @default("easeInOut")
+  easing              String          @default("easeInOut")
   fontFamily          String
-  fontWeight          Int        @default(700)
+  fontWeight          Int             @default(700)
   fontSizePct         Float // % of frame height
-  fontItalic          Boolean    @default(false)
+  fontItalic          Boolean         @default(false)
   letterSpacing       Float?
   lineHeight          Float?
   fillColor           String // hex+alpha
@@ -798,20 +883,21 @@ model TextOverlay {
   shadowBlurPx        Float?
   shadowOffsetXPx     Float?
   shadowOffsetYPx     Float?
-  backgroundType      String     @default("none") // none|box|rounded_box|gradient|blur
+  backgroundType      String          @default("none") // none|box|rounded_box|gradient|blur
   backgroundColor     String?
   backgroundPaddingPx Float?
   backgroundRadiusPx  Float?
   anchorX             Float // 0.0-1.0
   anchorY             Float
-  alignment           String     @default("center")
-  rotationDeg         Float      @default(0)
+  alignment           String          @default("center")
+  rotationDeg         Float           @default(0)
   effect              Json? // wave/glitch/karaoke
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   @@index([shotId])
   @@index([renderId])
+  @@index([slideId])
   @@map("text_overlays")
   @@schema("studio")
 }
@@ -845,20 +931,21 @@ enum PresetScope {
 
 // A7.6 — Feature C
 model SlideshowSlide {
-  id              String    @id @default(cuid())
+  id              String        @id @default(cuid())
   projectId       String // ref VideoProject
   sortOrder       Int
   slideType       SlideType
   imageAssetId    String? // ref ImageLibraryItem
   videoAssetId    String? // ref VideoAsset
   backgroundColor String? // for TEXT_CARD
-  durationSec     Float     @default(2.5)
+  durationSec     Float         @default(2.5)
   transitionIn    String?
   transitionOut   String?
   kenBurnsSpec    Json? // {startZoom,endZoom,startPan,endPan}
   metadata        Json?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  overlays        TextOverlay[] // Phase 13.4
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([projectId, sortOrder])
   @@map("slideshow_slides")
@@ -924,21 +1011,30 @@ model BusinessProfile {
 
 // A7.7
 model WebsiteScan {
-  id             String    @id @default(cuid())
-  organisationId String
-  businessId     String
-  url            String
-  state          ScanState
-  pagesCrawled   Int       @default(0)
-  imagesIngested Int       @default(0)
-  errorReason    String?
-  robotsBlocked  Boolean   @default(false)
-  usedJsRender   Boolean   @default(false)
-  costPence      Int       @default(0)
-  startedAt      DateTime  @default(now())
-  completedAt    DateTime?
+  id                 String    @id @default(cuid())
+  organisationId     String
+  businessId         String
+  url                String
+  state              ScanState
+  pagesCrawled       Int       @default(0)
+  imagesIngested     Int       @default(0)
+  errorReason        String?
+  robotsBlocked      Boolean   @default(false)
+  usedJsRender       Boolean   @default(false)
+  costPence          Int       @default(0)
+  startedAt          DateTime  @default(now())
+  completedAt        DateTime?
+  // A6.6 skip-if-unchanged (Phase 13.10): the homepage validators seen by this scan, the last
+  // time a scheduled conditional request found the site unchanged, and the plan tier the scan
+  // was started at (scheduled rescans run at it; Core's tier is only known on a request).
+  etag               String?
+  lastModified       String?
+  checkedUnchangedAt DateTime?
+  planTier           String?
+  trigger            String    @default("manual") // manual | scheduled
 
   @@index([businessId, startedAt])
+  @@index([state, completedAt])
   @@map("website_scans")
   @@schema("studio")
 }
@@ -948,6 +1044,51 @@ enum ScanState {
   RUNNING
   SUCCEEDED
   FAILED
+
+  @@schema("studio")
+}
+
+// DERIVED — Addendum A6.7 / A11.2 "Verification (Enterprise): a DNS TXT record … to confirm
+// ownership" and "if the user later reports they did not own the site, all scraped content is
+// purged within 24 hours" (Phase 13.11). One row per verification attempt; the newest row of a
+// business is its current state.
+model DomainVerification {
+  id                String                  @id @default(cuid())
+  organisationId    String
+  businessId        String
+  domain            String
+  /**
+   * Random token; the TXT value is `pm-studio-verify=<token>`.
+   */
+  token             String
+  state             DomainVerificationState @default(PENDING)
+  requestedByUserId String
+  checkAttempts     Int                     @default(0)
+  lastCheckedAt     DateTime?
+  lastError         String?
+  verifiedAt        DateTime?
+  expiresAt         DateTime // PENDING rows stop being polled (→ EXPIRED) after this
+  disputedAt        DateTime?
+  disputedByUserId  String?
+  disputeReason     String?
+  purgeDueAt        DateTime? // disputedAt + 24 h (A6.7)
+  purgedAt          DateTime?
+  purgeSummary      Json?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@index([organisationId, businessId, createdAt])
+  @@index([state, lastCheckedAt])
+  @@map("domain_verifications")
+  @@schema("studio")
+}
+
+enum DomainVerificationState {
+  PENDING
+  VERIFIED
+  EXPIRED
+  DISPUTED
+  PURGED
 
   @@schema("studio")
 }
@@ -971,7 +1112,10 @@ model ImageLibraryItem {
   fileSizeBytes       Int
   tags                String[]
   altText             String?
-  fingerprint         String // perceptual hash, dedup
+  fingerprint         String // sha256 of the bytes (exact dedup); hotlinked stock: provider:id
+  // Phase 13.12: 64-bit dHash (16 hex chars) of the decoded image; near-duplicates within a
+  // business (Hamming distance <= 6) are skipped at ingest. Null for hotlinked stock.
+  phash               String?
   generatedFromPrompt String?
   embedding           Unsupported("vector(1536)")?
   licenseNotes        String?
@@ -1060,10 +1204,202 @@ model Notification {
   dedupeKey      String?
   readAt         DateTime?
   createdAt      DateTime  @default(now())
+  /// BACKLOG 13.33: null = no email requested; pending_setup | sent | failed (notifications/email.ts).
+  emailStatus    String?
 
   @@unique([organisationId, dedupeKey])
   @@index([organisationId, createdAt])
   @@index([organisationId, userId, readAt])
   @@map("notifications")
+  @@schema("studio")
+}
+
+// =============================================================================
+// Phase 13 track A3 — admin, automation and cost (migration 20260929030000_admin_automation)
+// =============================================================================
+
+// DERIVED — 13.17 / spec 16.4 content-safety review queue. A script-safety REVIEW verdict or a
+// review-level content-safety result pauses the run (the project keeps its pipeline state) and
+// opens one row per (project, run, kind); staff ALLOW resumes the run, BLOCK fails it.
+model SafetyReview {
+  id              String            @id @default(cuid())
+  organisationId  String
+  projectId       String
+  runId           String
+  kind            String // 'script' | 'content'
+  state           SafetyReviewState @default(PENDING)
+  reason          String
+  details         Json? // script: { verdict, categories }; content: [{ renderId, platform, detail }]
+  renderIds       String[]
+  planTier        String
+  decidedByUserId String?
+  decisionNote    String?
+  decidedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([projectId, runId, kind])
+  @@index([state, createdAt])
+  @@index([organisationId, createdAt])
+  @@map("safety_reviews")
+  @@schema("studio")
+}
+
+enum SafetyReviewState {
+  PENDING
+  ALLOWED
+  BLOCKED
+
+  @@schema("studio")
+}
+
+// DERIVED — 13.18 per-organisation review policy set by PostMind staff. No row = the platform
+// defaults (REQUIRE_APPROVAL for new projects, auto-approve allowed, env trust threshold).
+model OrgPolicy {
+  organisationId            String        @id
+  defaultReviewPolicy       ReviewPolicy?
+  autoApproveAllowed        Boolean       @default(true)
+  autoApproveTrustThreshold Int?
+  updatedByUserId           String
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+
+  @@map("org_policies")
+  @@schema("studio")
+}
+
+// DERIVED — 13.19 per-organisation cost cap overrides (pence of provider spend). A null column
+// means "no override" (the env / code default for the plan tier applies).
+model OrgCostCap {
+  organisationId  String   @id
+  dailyPence      Int?
+  monthlyPence    Int?
+  reason          String
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("org_cost_caps")
+  @@schema("studio")
+}
+
+// DERIVED — 13.21 auto-publish outbox: one row per target, written in the approval transaction
+// and sent by the dispatcher with retry, so an approval can never be lost between two steps.
+model AutoPublishOutbox {
+  id             String                 @id @default(cuid())
+  organisationId String
+  projectId      String
+  approvalTaskId String
+  targetIndex    Int
+  target         Json
+  planTier       String
+  trigger        String // 'human' | 'auto'
+  state          AutoPublishOutboxState @default(PENDING)
+  attempts       Int                    @default(0)
+  nextAttemptAt  DateTime               @default(now())
+  lockedAt       DateTime?
+  lastError      String?
+  publicationId  String?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@unique([approvalTaskId, targetIndex])
+  @@index([state, nextAttemptAt])
+  @@index([projectId, createdAt])
+  @@map("auto_publish_outbox")
+  @@schema("studio")
+}
+
+enum AutoPublishOutboxState {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+
+  @@schema("studio")
+}
+
+// DERIVED — 13.22 organisation purge (spec 8.x internal API, Engagement 14.13): tokens wiped at
+// once, Studio data soft-deleted, hard deletion due after graceUntil (30 days).
+model OrganisationPurge {
+  organisationId        String    @id
+  requestedAt           DateTime  @default(now())
+  graceUntil            DateTime
+  channelsWiped         Int
+  projectsDeleted       Int
+  publicationsCancelled Int
+  state                 String // 'soft_deleted' (hard deletion after grace is not built yet)
+  hardDeletedAt         DateTime?
+
+  @@index([graceUntil])
+  @@map("organisation_purges")
+  @@schema("studio")
+}
+
+// DERIVED — 13.24 notification preferences per user and kind. No row = defaults (in-app on,
+// email off). Email is stored but not delivered until an email channel exists (Wave B 13.33).
+model NotificationPreference {
+  organisationId String
+  userId         String
+  kind           String
+  inApp          Boolean  @default(true)
+  email          Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+
+  @@id([organisationId, userId, kind])
+  @@map("notification_preferences")
+  @@schema("studio")
+}
+
+// =============================================================================
+// Phase 13 track A1 — create and review (migration 20260929010000_create_review)
+// =============================================================================
+
+// DERIVED — 13.5 user uploads (sourceType UPLOAD source videos and slideshow VIDEO_CLIP slides).
+// The browser PUTs the file straight to S3 with a presigned URL; /complete checks its size and
+// probes it (ffprobe). A source video's video_assets row is created with its project (the
+// column needs a project id); a slide clip's asset is created at /complete.
+model VideoUpload {
+  id              String      @id @default(cuid())
+  organisationId  String
+  businessId      String?
+  createdByUserId String
+  kind            UploadKind
+  projectId       String? // SLIDE_CLIP: the slideshow; SOURCE_VIDEO: set when a project uses it
+  fileName        String
+  contentType     String
+  declaredBytes   BigInt
+  s3Bucket        String
+  s3Key           String
+  state           UploadState @default(PENDING)
+  assetId         String? // ref VideoAsset once one exists
+  durationSec     Float?
+  widthPx         Int?
+  heightPx        Int?
+  sizeBytes       BigInt?
+  errorReason     String?
+  expiresAt       DateTime // presigned PUT expiry
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([organisationId, createdAt])
+  @@index([projectId])
+  @@map("video_uploads")
+  @@schema("studio")
+}
+
+enum UploadKind {
+  SOURCE_VIDEO
+  SLIDE_CLIP
+
+  @@schema("studio")
+}
+
+enum UploadState {
+  PENDING
+  READY
+  FAILED
+
   @@schema("studio")
 }

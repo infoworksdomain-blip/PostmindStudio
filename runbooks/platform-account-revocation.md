@@ -58,10 +58,32 @@ way it does to Engagement (handover 9.5 / 9.6 / 14.13). All three calls carry
    publication is retried once; ones whose connection still needs reconnecting fail again with
    `needs_reconnect` and are handled by support.
 
+## Organisation deleted (BACKLOG 13.22)
+
+Core calls `POST /api/studio/internal/organisations/<orgId>/purge` (X-Service-Token), as it calls
+Engagement's purge. Studio then, in one transaction: revokes every platform connection of the
+organisation and wipes its tokens (Meta channels and Studio's own TikTok / YouTube / X / LinkedIn
+connections), engages the workspace kill switch (running work stops), cancels scheduled posts,
+soft-deletes projects and style memory, and records `studio.organisation_purges.graceUntil`
+(+30 days). The call is idempotent; audit `studio.organisation.purge`. Already-published posts
+stay on the platforms (Studio can no longer act for the account; takedowns are the customer's).
+To undo within the grace period (organisation restored): release the workspace kill switch and
+clear `deletedAt` on the projects; channels must be registered again by Core.
+
 ## GAPs
 
+- Hard deletion after the 30-day purge grace (rows and S3 objects) is not built. It is
+  destructive and should be an operator-run, audited sweep over `studio.organisation_purges`
+  past `graceUntil`, dry run first.
 - The daily account-status check job is not built.
 - No Core-side retry or alert exists yet for failed internal calls. That code is Core's, owned
   by the Core team.
-- There is no reconciliation job comparing Core's Meta connections with Studio's. A missed
-  DELETE leaves a channel active until Meta refuses its token.
+- Reconciliation between Core's Meta channels and Studio's is built (BACKLOG 13.35) but cannot
+  run until Core publishes list-channels. The daily `reconcile-channels` job logs "channel
+  reconciliation skipped", and `GET /api/studio/admin/channels/reconciliation` answers 501. Until
+  then, a missed DELETE leaves a channel active until Meta refuses its token. Once Core ships the
+  endpoint:
+  - the job disconnects channels Core no longer lists (audit
+    `studio.connection.meta_reconcile_disconnect`);
+  - it holds a run that would disconnect every channel of an organisation;
+  - it reports channels Core must re-register.

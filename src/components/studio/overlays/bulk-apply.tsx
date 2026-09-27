@@ -184,8 +184,8 @@ export function BulkApply({
             {pending === 'bulk' ? <Loader2 className="animate-spin" /> : <Layers />} Apply overlay
           </Button>
           <p className="text-xs text-muted-foreground">
-            Whole-video overlays can’t be listed or edited here yet — they appear in the next
-            render.
+            Whole-video overlays are listed and edited in the Whole video lane above — they appear
+            in the next render.
           </p>
         </div>
       </form>

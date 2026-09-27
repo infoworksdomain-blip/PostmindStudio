@@ -190,7 +190,10 @@ describe('createYouTubeMetrics', () => {
     );
     const fetcher = createYouTubeMetrics({ fetchImpl: fake.fetch });
 
-    const result = await fetcher.fetch(baseRequest({ platformPostId: 'yt-vid-1' }));
+    // Published an hour ago: too early for retention / demographics (13.28).
+    const result = await fetcher.fetch(
+      baseRequest({ platformPostId: 'yt-vid-1', publishedAt: new Date(NOW - 3_600_000) }),
+    );
 
     expect(fake.requests[0]).toMatchObject({
       url: 'https://www.googleapis.com/youtube/v3/videos?part=statistics&id=yt-vid-1',
@@ -221,7 +224,9 @@ describe('createYouTubeMetrics', () => {
     );
     const fetcher = createYouTubeMetrics({ fetchImpl: fake.fetch });
 
-    const result = await fetcher.fetch(baseRequest({ platformPostId: 'yt-vid-2' }));
+    const result = await fetcher.fetch(
+      baseRequest({ platformPostId: 'yt-vid-2', publishedAt: new Date(NOW - 3_600_000) }),
+    );
 
     expect(result.snapshot).toEqual({ views: 9, likes: 1, comments: 0, shares: 0 });
     expect(result.unavailable).toEqual(['watch_time', 'avg_watch_pct', 'shares']);

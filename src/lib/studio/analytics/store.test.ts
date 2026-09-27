@@ -124,16 +124,16 @@ describe('recordSnapshot', () => {
       likes: 0,
       comments: 0,
       shares: 0,
-      retentionCurve: [{ sec: 1, retention: 0.9 }],
-      demographics: { age: { '18-24': 0.5 } },
+      retentionCurve: [{ atPct: 0.5, watchingPct: 0.9 }],
+      demographics: [{ ageGroup: '18-24', gender: 'female', pct: 50 }],
     };
 
     await recordSnapshot(db, 'pub-1', metrics, new Date('2026-03-15T13:47:00Z'));
 
     const create = videoAnalytic.upsert.mock.calls[0]?.[0].create;
     expect(create).toMatchObject({
-      retentionCurve: [{ sec: 1, retention: 0.9 }],
-      demographics: { age: { '18-24': 0.5 } },
+      retentionCurve: [{ atPct: 0.5, watchingPct: 0.9 }],
+      demographics: [{ ageGroup: '18-24', gender: 'female', pct: 50 }],
     });
   });
 

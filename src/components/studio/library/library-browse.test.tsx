@@ -96,27 +96,36 @@ describe('LibraryBrowse', () => {
     });
   });
 
-  it('narrows the loaded page with the search box', async () => {
+  it('searches the whole library on the server (POST /library/search)', async () => {
     const user = userEvent.setup();
-    mockFetch([
+    const { calls } = mockFetch([
       { match: '/library/categories', body: categories },
       {
         match: '/library/videos',
+        body: { ok: true, data: [summary()], nextCursor: null },
+      },
+      {
+        match: '/library/search',
+        method: 'POST',
         body: {
           ok: true,
-          data: [summary(), summary({ id: 'lib_2', title: 'Gym hype', tags: ['fitness'] })],
+          data: [summary({ id: 'lib_2', title: 'Gym hype', tags: ['fitness'], similarity: 0.83 })],
           nextCursor: null,
         },
       },
     ]);
     renderWithSWR(<LibraryBrowse />);
-    await screen.findByRole('link', { name: /Gym hype/ });
-    await user.type(screen.getByLabelText('Search this page'), 'fitness');
+    await screen.findByRole('link', { name: /Morning coffee/ });
+    await user.selectOptions(screen.getByLabelText('Category'), 'food');
+    await user.type(screen.getByLabelText('Search the library'), 'moody gym');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
-    await waitFor(() =>
-      expect(screen.queryByRole('link', { name: /Morning coffee/ })).not.toBeInTheDocument(),
-    );
-    expect(screen.getByRole('link', { name: /Gym hype/ })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /Gym hype/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Morning coffee/ })).not.toBeInTheDocument();
+    expect(screen.getByText('83% match')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Results for “moody gym”');
+    const post = calls.find((c) => c.url.includes('/library/search'));
+    expect(post?.method).toBe('POST');
+    expect(post?.body).toEqual({ q: 'moody gym', categorySlug: 'food', limit: 24, cursor: null });
   });
 
   it('pages with the cursor', async () => {

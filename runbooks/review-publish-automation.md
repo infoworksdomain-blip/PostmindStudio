@@ -48,10 +48,20 @@
    (`POST /api/studio/publications/<id>/takedown`), then follow
    [content-safety-miss.md](content-safety-miss.md). The approval row
    (`resolvedByUserId = 'system:auto-approve'`) and `metadata.review` show why it qualified.
-4. **Auto-publish failed for a target:** read `metadata.autoPublishResult.results[i].error`
-   (the same messages as `POST /publications`: connection needs reconnecting, render doesn't fit
-   the platform, already published…). Fix the cause and publish from the Review screen; auto-publish
-   does not retry by itself.
+4. **Auto-publish failed for a target:** targets go through the auto-publish outbox (BACKLOG
+   13.21): rows are written in the approval transaction and sent by the approving request, then by
+   the `dispatch-auto-publish` job every minute. Retryable failures (e.g. the connection needs
+   reconnecting) retry after 1 min, 5 min, 25 min and 2 h; after 5 attempts the row is FAILED and
+   the creator is notified. `GET /api/studio/projects/<id>/auto-publish` shows each target's state,
+   attempts and last error (the Review screen's "Auto-publish status"). Fix the cause, then
+   **Retry auto-publish** on the Review screen (`POST /projects/<id>/auto-publish/retry`, re-arms the
+   FAILED rows). Rows stuck `SENDING` for over 10 minutes (a sender died) are re-claimed; a target
+   that was in fact already published is recognised by the duplicate guard and marked SENT.
+5. **Organisation policy (13.18):** Admin Centre → **Organisations** → Review policy sets, per
+   organisation, the default review policy for new projects, whether automatic approval is
+   allowed at all, and its own trust threshold (instead of `STUDIO_AUTO_APPROVE_TRUST_THRESHOLD`).
+   "Needs review: your organisation's policy turns automatic approval off" means the org has it
+   off.
 
 ## Verification
 
@@ -59,7 +69,7 @@
   — system approvals are visible and separable from human ones.
 - Golden journeys `test/golden/automation.test.ts` (GA-01…GA-05).
 
-**GAP:** approval and auto-publish are two steps without an outbox: if the process dies between
-them, the project is `APPROVED` with no `autoPublishResult` and nothing is posted — publish it
-from the Review screen. **GAP:** no per-organisation auto-approve policy in the Admin Centre
-(the spec's "per-org policy" is the project's `reviewPolicy`, set at creation or by a template).
+Approval and auto-publish share one transaction through the outbox (13.21), and the
+per-organisation policy exists (13.18). **GAP:** a publication created by the outbox whose
+`publish-video` job was lost (the process died between the commit and the enqueue) stays
+SCHEDULED; re-drive it with the stuck scope (runbooks/kill-switch.md).

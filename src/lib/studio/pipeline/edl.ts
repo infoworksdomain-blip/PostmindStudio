@@ -49,11 +49,25 @@ export interface EdlShot {
   visualSrc?: string;
   visualKind?: 'video' | 'image';
   voiceSrc?: string;
+  /** 13.5: play the clip's own audio (uploaded videos); otherwise the clip is muted. */
+  keepSourceAudio?: boolean;
   onScreenText?: string | null;
   transitionOut?: string | null;
   /** For TEXT_CARD shots: the card text (falls back to onScreenText). */
   cardText?: string | null;
+  /** 13.27: signed URL of the shot's sound effect, played from the shot's start (the cut in). */
+  sfxSrc?: string;
+  /** Length of the SFX file, when known; the clip is capped at SFX_MAX_SEC and the shot. */
+  sfxDurationSec?: number | null;
 }
+
+/** 13.27 SFX level under narration (Shotstack AudioAsset volume 0–1; ≈ −6 dB). */
+export const SFX_VOLUME = 0.5;
+/** Longest effect laid on the timeline (pipeline/sfx.ts asks Storyblocks for ≤ 3 s clips). */
+export const SFX_MAX_SEC = 3;
+
+/** Level of an uploaded clip's own soundtrack (Shotstack VideoAsset volume 0–1). */
+export const SOURCE_AUDIO_VOLUME = 1;
 
 export interface EdlInput {
   aspectRatio: AspectRatio;
@@ -133,6 +147,7 @@ export function buildShotstackEdit(input: EdlInput): Record<string, unknown> {
   const visual: Record<string, unknown>[] = [];
   const captions: Record<string, unknown>[] = [];
   const voice: Record<string, unknown>[] = [];
+  const sfx: Record<string, unknown>[] = [];
 
   let start = 0;
   for (const shot of input.shots) {
@@ -167,7 +182,12 @@ export function buildShotstackEdit(input: EdlInput): Record<string, unknown> {
       });
     } else {
       visual.push({
-        asset: { type: 'video', src: shot.visualSrc, volume: 0 }, // narration + music carry audio
+        // Narration + music carry the audio, except for an uploaded clip's own soundtrack.
+        asset: {
+          type: 'video',
+          src: shot.visualSrc,
+          volume: shot.keepSourceAudio ? SOURCE_AUDIO_VOLUME : 0,
+        },
         start: roundSec(start),
         length,
         fit: 'cover',
@@ -191,6 +211,19 @@ export function buildShotstackEdit(input: EdlInput): Record<string, unknown> {
       });
     }
 
+    if (shot.sfxSrc) {
+      const sfxLength = Math.min(
+        SFX_MAX_SEC,
+        shot.durationSec,
+        shot.sfxDurationSec && shot.sfxDurationSec > 0 ? shot.sfxDurationSec : SFX_MAX_SEC,
+      );
+      sfx.push({
+        asset: { type: 'audio', src: shot.sfxSrc, volume: SFX_VOLUME },
+        start: roundSec(start),
+        length: roundSec(sfxLength),
+      });
+    }
+
     if (shot.voiceSrc) {
       voice.push({
         asset: { type: 'audio', src: shot.voiceSrc, volume: VOICE_VOLUME },
@@ -205,6 +238,8 @@ export function buildShotstackEdit(input: EdlInput): Record<string, unknown> {
   if (captions.length) tracks.push({ clips: captions });
   tracks.push({ clips: visual });
   if (voice.length) tracks.push({ clips: voice });
+  // 13.27: effects sit under the narration and above the music bed.
+  if (sfx.length) tracks.push({ clips: sfx });
   if (input.musicSrc) {
     tracks.push({
       clips: musicClips({

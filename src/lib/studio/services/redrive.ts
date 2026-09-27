@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { ConflictError, ValidationError, type KillSwitchLevel } from '../../errors';
 import { createKillSwitch, createPrismaFlagStore, type KillSwitch } from '../kill-switch';
 import { ACTIVE_PIPELINE_STATES, currentRunId, projectMetadata } from '../pipeline/project-state';
+import { pendingSafetyReview } from '../pipeline/safety-review';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { ProjectJobData } from '../queue/queues';
@@ -77,12 +78,12 @@ export interface RedriveDeps {
   killSwitch?: KillSwitch;
 }
 
-type ShotRow = Pick<VideoShot, 'id' | 'state' | 'errorReason'>;
-type ProjectRow = VideoProject & { scripts: Array<{ shots: ShotRow[] }> };
+export type ShotRow = Pick<VideoShot, 'id' | 'state' | 'errorReason'>;
+export type ProjectRow = VideoProject & { scripts: Array<{ shots: ShotRow[] }> };
 
 /** `kill_switch_<level>` anywhere in a failure reason (failure handlers prefix their stage). */
 const KILL_REASON = /kill_switch_(global|workspace|project|provider|platform)\b/;
-const TERMINAL_SHOT_STATES = ['READY', 'SKIPPED', 'FAILED'];
+export const TERMINAL_SHOT_STATES = ['READY', 'SKIPPED', 'FAILED'];
 
 export function killLevelOf(reason: string | null): KillSwitchLevel | undefined {
   return reason?.match(KILL_REASON)?.[1] as KillSwitchLevel | undefined;
@@ -107,7 +108,7 @@ export function isKilledPublication(reason: string | null): boolean {
   return Boolean(reason && /^(scheduling failed: )?kill_switch_/.test(reason));
 }
 
-function recordedPlanTier(project: Pick<VideoProject, 'metadata'>): PlanTier | undefined {
+export function recordedPlanTier(project: Pick<VideoProject, 'metadata'>): PlanTier | undefined {
   const value = projectMetadata(project.metadata).planTier;
   return typeof value === 'string' ? toPlanTier(value) : undefined;
 }
@@ -158,7 +159,7 @@ export async function redrive(deps: RedriveDeps, input: RedriveInput): Promise<R
 
 type Ctx = RedriveDeps & { killSwitch: KillSwitch };
 
-const withShots = {
+export const withShots = {
   scripts: { select: { shots: { select: { id: true, state: true, errorReason: true } } } },
 } as const;
 
@@ -266,10 +267,12 @@ async function resumeKilledProject(
  * The assets resume keeps metadata.renders (compose skips scripts already rendered) and resets
  * only the kill-switched shots; their recorded assets stay, so generate-asset won't re-pay.
  */
-async function startResumeRun(
+export async function startResumeRun(
   db: PrismaClient,
   project: ProjectRow,
   stage: 'planning' | 'assets',
+  /** Extra metadata keys for the new run (13.20 auto-resume records why it resumed). */
+  patch: Record<string, unknown> = {},
 ): Promise<string | undefined> {
   const runId = randomUUID();
   const metadata = projectMetadata(project.metadata);
@@ -290,6 +293,7 @@ async function startResumeRun(
           runId,
           ...(stage === 'planning' && { renders: {} }),
           redrivenFrom: metadata.runId ?? null,
+          ...patch,
         } as Prisma.InputJsonValue,
       },
     });
@@ -304,7 +308,7 @@ async function startResumeRun(
   });
 }
 
-async function enqueueStage(
+export async function enqueueStage(
   queue: JobQueue,
   data: ProjectJobData,
   stage: 'plan' | 'assets' | 'scan' | 'render' | 'quality',
@@ -423,6 +427,9 @@ async function reenqueueStuck(
 ): Promise<RedriveItem> {
   const stage = STAGE_BY_STATE[project.state];
   if (!stage) return skip('project', project, `state ${project.state} is not re-drivable`);
+  // 13.17: a run paused for a content-safety review is waiting for staff, not stuck.
+  if (pendingSafetyReview(project.metadata))
+    return skip('project', project, 'waiting for a content-safety review');
   const blocked = await stillKilled(ctx, {
     organisationId: project.organisationId,
     projectId: project.id,

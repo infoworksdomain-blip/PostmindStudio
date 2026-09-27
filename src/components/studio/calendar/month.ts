@@ -70,3 +70,30 @@ export function formatMonth(ref: MonthRef): string {
     new Date(ref.year, ref.month, 1),
   );
 }
+
+/** 13.9 drag-to-reschedule: the same local time of day, on another day. */
+export function moveToDay(iso: string, day: Date): Date {
+  const from = new Date(iso);
+  return new Date(
+    day.getFullYear(),
+    day.getMonth(),
+    day.getDate(),
+    from.getHours(),
+    from.getMinutes(),
+    from.getSeconds(),
+  );
+}
+
+/** ISO → the value of an <input type="datetime-local"> (local time, minutes). */
+export function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** <input type="datetime-local"> value → Date (local time); null when empty or invalid. */
+export function fromLocalInput(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}

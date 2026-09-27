@@ -7,6 +7,7 @@ import { DEMO_BUSINESS_ID, DEMO_USER_ID, LIBRARY_VIDEOS } from '../ids';
 import { resumeRendering, startFullRun, stopRun } from './pipeline-sim';
 import { startPublicationSync } from './projects-publish';
 import { seedProjects } from './projects-seed';
+import { claimUpload } from './p13-a1-uploads';
 import {
   allProjects,
   baseProject,
@@ -94,8 +95,10 @@ route('POST', '/projects', ({ body }) => {
     throw new DemoHttpError(404, 'not_found', 'Template not found');
   if (sourceType === 'SLIDESHOW' && !str(slideshow.templateId))
     throw bad('slideshow is required for SLIDESHOW projects');
-  if (sourceType !== 'SLIDESHOW' && sourceType !== 'TEMPLATE' && !rawInput)
+  if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(sourceType) && !rawInput)
     throw bad('brief is required');
+  // 13.5: an UPLOAD project claims a completed source-video upload (p13-a1-uploads.ts).
+  const upload = sourceType === 'UPLOAD' ? claimUpload(str(b.uploadId)) : null;
   const referenceVideoId = str(b.referenceVideoId) ?? null;
   if (sourceType === 'LIBRARY_REFERENCE' && !LIBRARY_VIDEOS.some((v) => v.id === referenceVideoId))
     throw bad('referenceVideoId is not an available library video');
@@ -113,7 +116,8 @@ route('POST', '/projects', ({ body }) => {
   const id = newId('prj');
   const project = baseProject(id, name, {
     state: 'DRAFT',
-    scene: sourceType === 'SLIDESHOW' ? 'cake' : 'sourdough',
+    scene:
+      sourceType === 'SLIDESHOW' ? 'cake' : sourceType === 'UPLOAD' ? 'storefront' : 'sourdough',
     sourceType,
     businessId: str(b.businessId) ?? DEMO_BUSINESS_ID,
     description: template
@@ -143,6 +147,9 @@ route('POST', '/projects', ({ body }) => {
       }),
       ...(targets.length > 0 && { autoPublish: { targets } }),
       ...(template && { template: { id: template.id } }),
+      ...(upload && {
+        upload: { id: upload.id, fileName: upload.fileName, durationSec: upload.durationSec },
+      }),
       ...(referenceVideoId &&
         sourceType === 'LIBRARY_REFERENCE' && {
           reference: { videoId: referenceVideoId, mode: str(b.referenceMode) },
@@ -150,6 +157,7 @@ route('POST', '/projects', ({ body }) => {
     },
   });
   putProject(project);
+  if (upload) upload.projectId = id;
   if (sourceType === 'SLIDESHOW')
     slidesByProject.set(
       id,
@@ -192,10 +200,15 @@ route('GET', '/projects/:id/scripts', ({ params }) => ({
 
 route('PATCH', '/projects/:id', ({ params, body }) => {
   const p = getProject(params.id ?? '');
-  if (!EDITABLE.has(p.state))
-    throw new DemoHttpError(409, 'conflict', `Project cannot be edited while ${p.state}`);
   const b = obj(body);
+  // 13.20 (track A3): the auto-resume opt-out alone may change in any state.
+  const onlyAutoResume =
+    Object.keys(b).length > 0 && Object.keys(b).every((k) => k === 'autoResume');
+  if (!onlyAutoResume && !EDITABLE.has(p.state))
+    throw new DemoHttpError(409, 'conflict', `Project cannot be edited while ${p.state}`);
   if (Object.keys(b).length === 0) throw bad('Nothing to update');
+  if (typeof b.autoResume === 'boolean')
+    p.metadata = { ...(p.metadata ?? {}), autoResume: b.autoResume };
   if (b.costBudgetPence !== undefined) {
     const pence = Number(b.costBudgetPence);
     if (!Number.isInteger(pence) || pence < 0 || pence > 10_000_000)

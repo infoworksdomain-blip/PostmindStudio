@@ -8,24 +8,31 @@ import { Textarea } from '@/components/ui/textarea';
 import { useApi } from '@/lib/client/api';
 import { formatDuration } from '@/lib/client/format';
 import { ErrorState } from '../primitives';
+import { ShotSwapDelete } from './shot-swap-delete';
 import { treatmentLabel } from './shot-strip';
 import { SHOT_EDITABLE, type ShotDetail } from './types';
 import { useAction } from './use-action';
 
 // One shot: its scene, narration and caption; regenerate just this shot with an optional prompt
 // override (POST /shots/:id/regenerate) or edit narration / caption, which re-voices only
-// (PATCH /shots/:id).
+// (PATCH /shots/:id). 13.2: swap its visual from the library or delete it (shot-swap-delete.tsx).
 
 export function ShotPanel({
   shotId,
   index,
   projectState,
   onChanged,
+  businessId = null,
+  isLastShot = false,
+  onDeleted = () => undefined,
 }: {
   shotId: string;
   index: number;
   projectState: string;
   onChanged: () => void;
+  businessId?: string | null;
+  isLastShot?: boolean;
+  onDeleted?: () => void;
 }) {
   const { data, error, isLoading, mutate } = useApi<{ shot: ShotDetail }>(`/shots/${shotId}`);
   const { pending, run, busy } = useAction();
@@ -95,7 +102,16 @@ export function ShotPanel({
             onChange={(e) => setPrompt(e.target.value)}
           />
           <div>
-            <Button variant="outline" onClick={regenerate} disabled={!editable || busy}>
+            <Button
+              variant="outline"
+              onClick={regenerate}
+              disabled={!editable || busy || shot.visualTreatment === 'USER_UPLOAD'}
+              title={
+                shot.visualTreatment === 'USER_UPLOAD'
+                  ? 'Uploaded clips are swapped, not regenerated'
+                  : undefined
+              }
+            >
               {pending === 'regenerate' ? <Loader2 className="animate-spin" /> : <RotateCw />}
               Regenerate this shot
             </Button>
@@ -133,6 +149,18 @@ export function ShotPanel({
           </Button>
         </div>
       </div>
+      <ShotSwapDelete
+        shotId={shotId}
+        index={index}
+        businessId={businessId}
+        editable={editable}
+        isLastShot={isLastShot}
+        onChanged={() => {
+          void mutate();
+          onChanged();
+        }}
+        onDeleted={onDeleted}
+      />
       {!editable && (
         <p className="text-xs text-muted-foreground lg:col-span-2">
           Shots can be changed once the video is ready for review, rejected or failed.

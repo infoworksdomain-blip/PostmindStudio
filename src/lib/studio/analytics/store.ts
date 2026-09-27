@@ -16,8 +16,24 @@ export interface MetricSnapshot {
   shares: number;
   saves?: number;
   clicks?: number;
-  retentionCurve?: Array<{ sec: number; retention: number }> | null;
-  demographics?: Record<string, unknown> | null;
+  /** 13.28: YouTube audienceWatchRatio by elapsedVideoTimeRatio (0–1 of the video). */
+  retentionCurve?: RetentionPoint[] | null;
+  /** 13.28: YouTube viewerPercentage by ageGroup × gender. */
+  demographics?: DemographicSlice[] | null;
+}
+
+export interface RetentionPoint {
+  /** Share of the video elapsed (elapsedVideoTimeRatio, 0–1). */
+  atPct: number;
+  /** audienceWatchRatio: views of this moment ÷ views of the video (can exceed 1 on rewatch). */
+  watchingPct: number;
+}
+
+export interface DemographicSlice {
+  ageGroup: string;
+  gender: string;
+  /** viewerPercentage (0–100). */
+  pct: number;
 }
 
 const HOURLY_RETENTION_DAYS = 30;
@@ -35,8 +51,10 @@ function columns(m: MetricSnapshot) {
     shares: int(m.shares),
     saves: int(m.saves),
     clicks: int(m.clicks),
-    ...(m.retentionCurve && { retentionCurve: m.retentionCurve as Prisma.InputJsonValue }),
-    ...(m.demographics && { demographics: m.demographics as Prisma.InputJsonValue }),
+    ...(m.retentionCurve && {
+      retentionCurve: m.retentionCurve as unknown as Prisma.InputJsonValue,
+    }),
+    ...(m.demographics && { demographics: m.demographics as unknown as Prisma.InputJsonValue }),
   };
 }
 

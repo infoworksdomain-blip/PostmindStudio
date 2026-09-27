@@ -1,7 +1,13 @@
 import type { VideoProject } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { PipelineDeps } from '../../pipeline/deps';
-import { failProject, mergeProjectMetadata, transitionProject } from '../../pipeline/project-state';
+import {
+  failProject,
+  mergeProjectMetadata,
+  projectMetadata,
+  transitionProject,
+} from '../../pipeline/project-state';
+import { applyTemplateOverlayDefaults } from '../../slideshow/slide-overlays';
 import { jsonOutput, runProvider } from '../../pipeline/provider-run';
 import {
   blocksGeneration,
@@ -33,6 +39,34 @@ export function slideText(content: SlideContent): string[] {
     ...(content.features ?? []),
     content.price,
   ].filter((t): t is string => Boolean(t));
+}
+
+/** 13.4: the template's overlayDefaults, applied at the first generation only. */
+async function applyOverlayDefaultsOnce(
+  deps: PipelineDeps,
+  project: VideoProject,
+  runId: string,
+  log: Logger,
+): Promise<void> {
+  const metadata = projectMetadata(project.metadata);
+  if (metadata.slideOverlayDefaultsApplied === true) return;
+  const templateId = (metadata.slideshow as { templateId?: unknown } | undefined)?.templateId;
+  const brandKit = await deps.db.brandKit.findFirst({
+    where: project.brandKitId
+      ? { id: project.brandKitId, organisationId: project.organisationId }
+      : { organisationId: project.organisationId, businessId: project.businessId, isDefault: true },
+  });
+  const created = await applyTemplateOverlayDefaults(deps.db, {
+    projectId: project.id,
+    templateId: typeof templateId === 'string' ? templateId : null,
+    brandKit,
+  });
+  await mergeProjectMetadata(deps.db, {
+    projectId: project.id,
+    runId,
+    patch: { slideOverlayDefaultsApplied: true },
+  });
+  if (created) log.info({ overlays: created }, 'template overlay defaults applied to slides');
 }
 
 export async function planSlideshow(
@@ -98,6 +132,8 @@ export async function planSlideshow(
       return log.warn({ safety }, 'slideshow text safety stopped the run');
     }
   }
+
+  await applyOverlayDefaultsOnce(deps, project, data.runId, log);
 
   const durationSec = Math.max(1, Math.round(slides.reduce((sum, s) => sum + s.durationSec, 0)));
   await deps.db.$transaction(async (tx) => {

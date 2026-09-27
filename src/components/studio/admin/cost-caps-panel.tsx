@@ -32,6 +32,15 @@ export interface CostCapsResponse {
     projectPausePercent: number;
   };
   organisationsThisMonth: Array<{ organisationId: string; spentPence: number }>;
+  /** 13.19 per-organisation overrides (source org_override); absent in older responses. */
+  orgOverrides?: Array<{
+    organisationId: string;
+    dailyPence: number | null;
+    monthlyPence: number | null;
+    source: 'org_override';
+    reason: string;
+    updatedAt: string;
+  }>;
   organisations: Array<{
     organisationId: string;
     spentPence: number;
@@ -243,6 +252,27 @@ export function CostCapsPanel() {
             )}
           </div>
         </div>
+
+        {(data.orgOverrides?.length ?? 0) > 0 && (
+          <div className="grid gap-2">
+            <h3 className="text-sm font-semibold">Organisation overrides</h3>
+            <ul aria-label="Organisation cap overrides" className="grid gap-1.5 text-sm">
+              {data.orgOverrides?.map((o) => (
+                <li key={o.organisationId} className="flex flex-wrap justify-between gap-2">
+                  <span>
+                    <span className="font-mono text-xs">{o.organisationId}</span>
+                    <span className="ml-1.5 rounded bg-primary/10 px-1 py-px text-[10px] tracking-wide text-primary uppercase">
+                      org override
+                    </span>
+                  </span>
+                  <span className="text-muted-foreground">
+                    daily {capText(o.dailyPence)} · monthly {capText(o.monthlyPence)} — “{o.reason}”
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="grid gap-2">
           <h3 className="text-sm font-semibold">Cost alerts, last 7 days</h3>

@@ -89,6 +89,8 @@ export interface SafeFetchOptions {
   maxBytes: number;
   maxRedirects?: number;
   accept?: string;
+  /** Conditional-request validators (13.10 skip-if-unchanged); no other headers can be set. */
+  conditional?: { ifNoneMatch?: string; ifModifiedSince?: string };
 }
 
 export interface SafeResponse {
@@ -100,11 +102,11 @@ export interface SafeResponse {
 }
 
 async function readCapped(
-  res: Response,
+  stream: ReadableStream<Uint8Array> | null,
   maxBytes: number,
 ): Promise<{ body: Uint8Array; truncated: boolean }> {
-  if (!res.body) return { body: new Uint8Array(0), truncated: false };
-  const reader = res.body.getReader();
+  if (!stream) return { body: new Uint8Array(0), truncated: false };
+  const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
   let truncated = false;
@@ -130,8 +132,22 @@ async function readCapped(
   return { body, truncated };
 }
 
-/** GET with manual, re-validated redirects, a hard timeout and a byte cap. */
-export async function safeGet(rawUrl: string, options: SafeFetchOptions): Promise<SafeResponse> {
+export interface OpenedResponse {
+  url: string;
+  status: number;
+  headers: Headers;
+  /** The unread body (the caller must read or cancel it). */
+  body: ReadableStream<Uint8Array> | null;
+}
+
+/**
+ * GET with manual, re-validated redirects and a hard timeout, returning the body unread so large
+ * responses can be streamed (13.15). safeGet is this plus a capped read.
+ */
+export async function safeOpen(
+  rawUrl: string,
+  options: Omit<SafeFetchOptions, 'maxBytes'>,
+): Promise<OpenedResponse> {
   let url = assertFetchableUrl(rawUrl);
   const maxRedirects = options.maxRedirects ?? 5;
   const signal = AbortSignal.timeout(options.timeoutMs);
@@ -143,6 +159,12 @@ export async function safeGet(rawUrl: string, options: SafeFetchOptions): Promis
       headers: {
         'user-agent': options.userAgent,
         accept: options.accept ?? '*/*',
+        ...(options.conditional?.ifNoneMatch && {
+          'if-none-match': options.conditional.ifNoneMatch,
+        }),
+        ...(options.conditional?.ifModifiedSince && {
+          'if-modified-since': options.conditional.ifModifiedSince,
+        }),
       },
     });
     if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
@@ -151,7 +173,13 @@ export async function safeGet(rawUrl: string, options: SafeFetchOptions): Promis
       url = assertFetchableUrl(new URL(res.headers.get('location') as string, url).toString());
       continue;
     }
-    const { body, truncated } = await readCapped(res, options.maxBytes);
-    return { url: url.toString(), status: res.status, headers: res.headers, body, truncated };
+    return { url: url.toString(), status: res.status, headers: res.headers, body: res.body };
   }
+}
+
+/** GET with manual, re-validated redirects, a hard timeout and a byte cap. */
+export async function safeGet(rawUrl: string, options: SafeFetchOptions): Promise<SafeResponse> {
+  const opened = await safeOpen(rawUrl, options);
+  const { body, truncated } = await readCapped(opened.body, options.maxBytes);
+  return { url: opened.url, status: opened.status, headers: opened.headers, body, truncated };
 }

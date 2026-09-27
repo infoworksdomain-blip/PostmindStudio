@@ -3,10 +3,16 @@ import type { Logger } from 'pino';
 import { auditLog, type AuditEntry } from '../../audit';
 import { logger } from '../../logger';
 import type { TenantResolver } from '../../tenant';
+import type { CoreBusinessDirectory } from '../core/business-directory';
+import type { CoreChannelDirectory } from '../core/channel-directory';
 import type { LibraryDeps } from '../images/library';
+import type { VoiceCloningClient } from '../providers/elevenlabs-voices';
 import type { OAuthStateStore } from '../platforms/oauth-state';
 import type { PublishingDeps } from '../platforms/publishing';
+import type { CircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderRegistry } from '../providers/registry';
+import type { InspectableQueue } from '../services/admin-health';
+import type { UploadDeps } from '../uploads/signer';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import { devTenantFromEnv } from './dev-tenant';
@@ -33,10 +39,20 @@ export interface ApiDeps {
   oauthState: OAuthStateStore;
   /** Feature D: image library (ingest, generation, embeddings, search). */
   library: LibraryDeps;
+  /** 13.13 ElevenLabs Instant Voice Cloning; absent (no ELEVENLABS_API_KEY) = 501. */
+  voiceCloning?: VoiceCloningClient;
   /** Overlay fonts (<FamilyNoSpaces>.ttf) for previews; STUDIO_FONTS_BASE_URL. */
   fontsBaseUrl?: string;
   /** Public origin of Studio (OAuth return URLs must stay on it). */
   appUrl: string;
+  /** 13.16: the shared provider circuit breaker (admin provider health); absent = in-memory. */
+  breaker?: CircuitBreaker;
+  /** 13.16: BullMQ queues for GET /admin/queues; absent = built from REDIS_URL on first use. */
+  adminQueues?: () => InspectableQueue[];
+  /** Core directories (13.34 / 13.35); absent = pending (501 until Core ships the endpoints). */
+  core?: { businesses?: CoreBusinessDirectory; channels?: CoreChannelDirectory };
+  /** 13.5: presigned upload URLs + ffprobe; absent = built from env on first use. */
+  uploads?: UploadDeps;
   logger: Logger;
   now: () => number;
 }
@@ -71,6 +87,8 @@ async function buildFromEnv(): Promise<ApiDeps> {
     import('../images/library'),
   ]);
   const rateLimit = await import('./rate-limit');
+  const voices = await import('../providers/elevenlabs-voices');
+  const adminHealth = await import('../services/admin-health');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -103,8 +121,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),
+    voiceCloning: voices.voiceCloningFromEnv(),
     fontsBaseUrl: pipeline.config.fontsBaseUrl,
     appUrl: env.requireEnv('APP_URL'),
+    breaker: pipeline.breaker,
+    adminQueues: () => adminHealth.bullQueuesFor(connection),
     logger,
     now: Date.now,
   };

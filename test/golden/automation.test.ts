@@ -188,11 +188,15 @@ describe.skipIf(!hasDb)('automation journeys (Phase 12, track A)', { timeout: 12
     expect((await getProject(forced, forcedId)).state).toBe('READY_FOR_REVIEW');
     expect(await db.approvalTask.count({ where: { projectId: forcedId } })).toBe(0);
 
-    // Content-safety "review"-level flag → QUALITY_FAILED, no approval.
+    // Content-safety "review"-level flag → paused for a Trust & Safety review (13.17: it used to
+    // be QUALITY_FAILED), no approval.
     const flagged = startJourney(db, 'ga03b', { hiveMaxScores: { general_suggestive: 0.95 } });
     await priorApprovals(flagged, 1);
     const flaggedId = await createProject(flagged, briefBody({ reviewPolicy: 'AUTO_APPROVE' }));
-    expect((await generate(flagged, flaggedId)).state).toBe('QUALITY_FAILED');
+    expect((await generate(flagged, flaggedId)).state).toBe('QUALITY_CHECKING');
+    expect(await db.safetyReview.count({ where: { projectId: flaggedId, state: 'PENDING' } })).toBe(
+      1,
+    );
     expect(await db.approvalTask.count({ where: { projectId: flaggedId } })).toBe(0);
 
     // Script safety WARN passes generation but always goes to a person.

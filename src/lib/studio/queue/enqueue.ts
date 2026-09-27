@@ -20,6 +20,8 @@ export interface EnqueueOptions {
 
 export interface JobQueue {
   add<N extends JobName>(name: N, data: JobDataMap[N], options?: EnqueueOptions): Promise<void>;
+  /** Remove a waiting or delayed job by id (no-op when absent). Optional: best effort only. */
+  remove?(name: JobName, jobId: string): Promise<void>;
 }
 
 /** Deterministic job ids so fan-in / retries can never enqueue the same step twice per run. */
@@ -42,6 +44,10 @@ export const jobIds = {
     `refresh-image-library__${d.businessId}__${d.runId}`,
   runQualityGate: (d: JobDataMap['run-quality-gate']) =>
     `run-quality-gate__${d.projectId}__${d.runId}`,
+  /** One scheduled rescan per last-scan per day (13.10). */
+  rescanWebsite: (d: JobDataMap['rescan-website']) => `rescan-website__${d.scanId}__${d.runId}`,
+  purgeDisputedDomain: (d: JobDataMap['purge-disputed-domain']) =>
+    `purge-disputed-domain__${d.runId}`,
 };
 
 export function createBullJobQueue(
@@ -67,6 +73,10 @@ export function createBullJobQueue(
         ...(options.jobId && { jobId: options.jobId }),
         ...(options.delayMs && { delay: options.delayMs }),
       });
+    },
+    async remove(name, jobId) {
+      // Queue.remove resolves 0 when the job is missing or locked by a worker (bullmq docs).
+      await queueFor(JOB_QUEUE[name]).remove(jobId);
     },
     async close() {
       await Promise.all([...queues.values()].map((q) => q.close()));
@@ -105,6 +115,13 @@ export class InlineJobQueue implements JobQueue {
     if (this.defer.has(name)) this.deferred.push(job);
     else this.pending.push(job);
     this.history.push(job);
+  }
+
+  async remove(_name: JobName, jobId: string): Promise<void> {
+    for (const list of [this.pending, this.deferred]) {
+      const index = list.findIndex((job) => job.jobId === jobId);
+      if (index !== -1) list.splice(index, 1);
+    }
   }
 
   /** Move held jobs into the pending queue (runs them on the next drain). */

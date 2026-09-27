@@ -171,6 +171,9 @@ async function overlayWithProject(db: Db, organisationId: string, id: string) {
       () => ({ shot: null, project: null }),
     );
     if (shot && project) return { overlay, project, maxEndSec: shot.durationSec };
+  } else if (overlay?.slideId) {
+    const found = await slideWithProject(db, organisationId, overlay.slideId).catch(() => null);
+    if (found) return { overlay, project: found.project, maxEndSec: found.slide.durationSec };
   } else if (overlay?.renderId) {
     const render = await db.videoRender.findFirst({
       where: { id: overlay.renderId, project: { organisationId, deletedAt: null } },
@@ -299,6 +302,76 @@ export async function deleteOverlay(db: Db, organisationId: string, id: string) 
   const { project } = await overlayWithProject(db, organisationId, id);
   assertEditable(project.state);
   await db.textOverlay.delete({ where: { id } });
+}
+
+// ---------------------------------------------------------------- whole-video (13.3)
+
+/**
+ * GET /renders/:id/overlays: the whole-video overlays composition applies to this render's
+ * platform — those attached to any render of the project with the same platform
+ * (compose-video.ts), oldest first.
+ */
+export async function listRenderOverlays(db: Db, organisationId: string, renderId: string) {
+  const render = await db.videoRender.findFirst({
+    where: { id: renderId, project: { organisationId, deletedAt: null } },
+    select: { projectId: true, targetPlatform: true },
+  });
+  if (!render) throw new NotFoundError('Render not found');
+  const siblings = await db.videoRender.findMany({
+    where: { projectId: render.projectId, targetPlatform: render.targetPlatform },
+    select: { id: true },
+  });
+  return db.textOverlay.findMany({
+    where: { renderId: { in: siblings.map((r) => r.id) } },
+    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+  });
+}
+
+// ---------------------------------------------------------------- per-slide (13.4)
+
+export const MAX_OVERLAYS_PER_SLIDE = 12;
+
+async function slideWithProject(db: Db, organisationId: string, slideId: string) {
+  const slide = await db.slideshowSlide.findUnique({ where: { id: slideId } });
+  const project = slide
+    ? await db.videoProject.findFirst({
+        where: { id: slide.projectId, organisationId, deletedAt: null },
+      })
+    : null;
+  if (!slide || !project) throw new NotFoundError('Slide not found');
+  return { slide, project };
+}
+
+export async function listSlideOverlays(db: Db, organisationId: string, slideId: string) {
+  await slideWithProject(db, organisationId, slideId);
+  return db.textOverlay.findMany({
+    where: { slideId },
+    orderBy: [{ sortOrder: 'asc' }, { startAtSec: 'asc' }],
+  });
+}
+
+/** Slide overlays default to the whole slide when no timing is given. */
+export const createSlideOverlayInput = createOverlayInput.extend({
+  startAtSec: z.number().min(0).max(3_600).optional(),
+  endAtSec: z.number().min(0).max(3_600).optional(),
+});
+
+export async function createSlideOverlay(
+  db: Db,
+  organisationId: string,
+  slideId: string,
+  input: z.infer<typeof createSlideOverlayInput>,
+): Promise<TextOverlay> {
+  const { slide, project } = await slideWithProject(db, organisationId, slideId);
+  assertEditable(project.state);
+  const startAtSec = input.startAtSec ?? 0;
+  const endAtSec = input.endAtSec ?? slide.durationSec;
+  assertTiming(startAtSec, endAtSec, slide.durationSec);
+  const count = await db.textOverlay.count({ where: { slideId } });
+  if (count >= MAX_OVERLAYS_PER_SLIDE)
+    throw new ValidationError(`At most ${MAX_OVERLAYS_PER_SLIDE} overlays per slide`);
+  const data = await buildOverlayData(db, project, { ...input, startAtSec, endAtSec });
+  return db.textOverlay.create({ data: { ...data, slideId } });
 }
 
 export const bulkOverlayInput = z.object({

@@ -8,10 +8,22 @@
 
 ## Controls that exist
 
-- Every render passes the quality gate's Hive scan before review (spec 13.2).
+- Every render passes the quality gate's Hive scan before review (spec 13.2). Renders over 90 s
+  use Hive's async API (13.25): the project waits in QUALITY_CHECKING for Hive's callback at
+  `POST /api/studio/webhooks/hive?token=…` (per-task token; Hive signs nothing). Fail closed: no
+  `STUDIO_PUBLIC_CALLBACK_BASE_URL`, a failed task, or no callback within
+  `HIVE_ASYNC_TIMEOUT_MIN` (default 120) blocks the render. Stuck long-form? Check
+  `studio.content_safety_tasks` (state, errorReason) and that the public ingress routes
+  `/api/studio/webhooks/hive` to Studio.
 - Block classes are hard-blocked at a score of 0.8 or above, and customers cannot force-approve
   them (spec 13.5).
-- Review-class content requires human approval.
+- Review-class content pauses the run for PostMind Trust & Safety (BACKLOG 13.17): a script-safety
+  REVIEW verdict pauses planning before any asset spend, and a review-level Hive class pauses the
+  quality gate. Admin Centre → **Safety review** (`GET /api/studio/admin/safety-reviews`) shows
+  the flag, a preview or the script; **Allow** (with a note) resumes the run and the video still
+  needs a person's approval, **Block** fails the project with the note (the customer sees it).
+  Decisions need `studio:admin:moderation` and are audited (`studio.safety_review.decide`).
+  Customers can no longer force-approve review-class content.
 - Automatic approval (`AUTO_APPROVE`, trusted creators only) never applies to force-approved,
   flagged or script-`WARN` runs — see [review-publish-automation.md](review-publish-automation.md).
 - Publishing requires an approved render.

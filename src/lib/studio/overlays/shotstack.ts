@@ -16,6 +16,8 @@ export interface OverlayRow extends OverlayStyle {
   text: string;
   startAtSec: number;
   endAtSec: number;
+  /** Karaoke (13.6): highlight time per word, seconds from the overlay start (spoken timing). */
+  wordStartsSec?: number[];
 }
 
 export interface FrameSize {

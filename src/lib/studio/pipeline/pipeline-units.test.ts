@@ -113,6 +113,26 @@ describe('scripting', () => {
     expect(availableTreatments(registry)).toEqual(['AI_CLIP', 'IMAGE_STILL', 'TEXT_CARD']);
   });
 
+  it('offers AI_AVATAR once an avatar provider (HeyGen) is registered (13.32)', () => {
+    const registry = createProviderRegistry([
+      new StubAdapter('luma', ['text_to_video', 'image_to_video']),
+      new StubAdapter('heygen', ['avatar_video']),
+    ]);
+    expect(availableTreatments(registry)).toEqual(['AI_CLIP', 'AI_AVATAR', 'TEXT_CARD']);
+  });
+
+  it('rejects an AI_AVATAR shot with nothing to say, as retryable', () => {
+    const silent = { ...shot(5), visualTreatment: 'AI_AVATAR', voiceoverText: ' ' };
+    expect(() =>
+      normaliseScript({ fullText: 'x', shots: [silent] }, ['AI_AVATAR', 'TEXT_CARD'], 5),
+    ).toThrow(/AI_AVATAR shot without voiceover/);
+    const speaking = { ...shot(5), visualTreatment: 'AI_AVATAR' };
+    expect(
+      normaliseScript({ fullText: 'x', shots: [speaking] }, ['AI_AVATAR', 'TEXT_CARD'], 5).shots[0]
+        ?.visualTreatment,
+    ).toBe('AI_AVATAR');
+  });
+
   it('restricts the schema enum to available treatments', () => {
     const schema = scriptSchema([...treatments]);
     expect(schema.properties.shots.items.properties.visualTreatment.enum).toEqual([

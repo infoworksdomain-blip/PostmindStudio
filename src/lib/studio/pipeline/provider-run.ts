@@ -1,4 +1,4 @@
-import { ProviderError } from '../../errors';
+import { NotImplementedError, ProviderError } from '../../errors';
 import type { ProviderPollResult, ProviderRequest } from '../providers/interface';
 import {
   routeProvider,
@@ -89,8 +89,14 @@ export async function runProvider(
       throw new ProviderError(adapter.providerId, error.class, error.message, error.retryable);
     }
     if (deps.now() >= giveUpAt) {
-      await cancelTracked(adapter, submitted.jobId, scope, deps.tracking);
-      deps.breaker.recordFailure(adapter.providerId);
+      try {
+        await cancelTracked(adapter, submitted.jobId, scope, deps.tracking);
+      } catch (err) {
+        // Providers without a cancel endpoint (Luma, HeyGen) say so; the job keeps its cost
+        // reservation because the provider may still bill it. Anything else is a real failure.
+        if (!(err instanceof NotImplementedError)) throw err;
+      }
+      await deps.breaker.recordFailure(adapter.providerId);
       throw new ProviderError(
         adapter.providerId,
         'timeout',

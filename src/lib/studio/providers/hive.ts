@@ -17,12 +17,23 @@ import { SyncJobStore } from './sync-jobs';
 //   POST https://api.thehive.ai/api/v2/task/sync, header `authorization: token <key>`,
 //   form field `url`; response status[].response.output[] = [{ time, classes:[{class, score}] }]
 //   sampled at 1 frame/second.
-// Only the SYNC endpoint is used: it accepts segments up to 90s. Hive's async API requires a
-// public callback_url (not built yet), so longer videos are rejected here and the quality gate
-// fails closed for them. The adapter reports per-class maxima; policy lives in the pipeline.
+// Media up to 90 s use the SYNC endpoint. Longer renders (BACKLOG 13.25) use the ASYNC
+// endpoint (docs.thehive.ai/reference/submit-a-task-asynchronously and
+// /reference/authentication, read 2026-09-27):
+//   POST https://api.thehive.ai/api/v2/task/async, same header, form fields `url` and
+//   `callback_url`; the response acknowledges the task with its id (`task_id` / `id`) and
+//   "Once the task is completed, Hive will send a POST request to the provided callback_url
+//   containing the completed task's results" — the same task object as the sync response.
+// Hive documents NO signature on that callback, so the pipeline authenticates it with an
+// unguessable per-task token in the callback URL (pipeline/content-safety-async.ts). The
+// callback body is stored by the webhook; poll() reads it through `asyncResults` and reports
+// `running` until it arrives. Hive documents no cancel endpoint: cancel() of an async task is a
+// no-op (the tracked reservation is still released). The adapter reports per-class maxima;
+// policy lives in the pipeline.
 
 export const PROVIDER_ID = 'hive';
 export const SYNC_URL = 'https://api.thehive.ai/api/v2/task/sync';
+export const ASYNC_URL = 'https://api.thehive.ai/api/v2/task/async';
 export const MAX_SYNC_DURATION_SEC = 90;
 /** thehive.ai/models/hive/visual-moderation: "$3.00 / 1000 images" (frames at 1 fps). */
 const USD_PER_FRAME = 0.003;
@@ -48,6 +59,18 @@ export interface HiveAdapterOptions {
   usdToGbpRate: number;
   fetchImpl?: typeof fetch;
   now?: () => number;
+  /**
+   * Reads the stored callback body of an async task by Hive task id; null/undefined while the
+   * callback has not arrived. Without it, async tasks cannot be settled (poll reports failed).
+   */
+  asyncResults?: (hiveTaskId: string) => Promise<unknown>;
+}
+
+interface HiveAsyncAck {
+  id?: string;
+  task_id?: string;
+  task_ids?: string[];
+  message?: string;
 }
 
 export interface ContentSafetyScan {
@@ -76,6 +99,11 @@ export function summariseHiveOutput(body: HiveResponse): ContentSafetyScan {
   };
 }
 
+/** SyncJobStore ids are `hive_<uuid>`; Hive's own task ids (async) never carry that prefix. */
+function isSyncJobId(id: string): boolean {
+  return id.startsWith(`${PROVIDER_ID}_`);
+}
+
 export class HiveAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
   readonly capabilities: readonly ProviderCapability[] = ['content_safety'];
@@ -100,6 +128,7 @@ export class HiveAdapter implements ProviderAdapter {
     if (request.capability !== 'content_safety') {
       throw this.invalid(`Hive adapter does not support ${request.capability}`);
     }
+    if (request.durationSec > MAX_SYNC_DURATION_SEC) return this.submitAsync(request);
     const result = await this.scan(request);
     const costPence =
       (result.output?.metadata as { costPence?: number } | undefined)?.costPence ?? 0;
@@ -111,11 +140,12 @@ export class HiveAdapter implements ProviderAdapter {
   }
 
   async poll(providerJobId: string): Promise<ProviderPollResult> {
-    return this.results.get(providerJobId);
+    if (isSyncJobId(providerJobId)) return this.results.get(providerJobId);
+    return this.pollAsync(providerJobId);
   }
 
   async cancel(providerJobId: string): Promise<void> {
-    this.results.delete(providerJobId);
+    if (isSyncJobId(providerJobId)) this.results.delete(providerJobId);
   }
 
   /** Hive documents no free health endpoint; every task is billed. Report configuration only. */
@@ -146,6 +176,63 @@ export class HiveAdapter implements ProviderAdapter {
             : undefined,
       },
     );
+    return this.fromTaskObject(body);
+  }
+
+  private async submitAsync(request: ContentSafetyRequest): Promise<ProviderSubmitResult> {
+    if (!request.callbackUrl?.startsWith('https://')) {
+      throw this.invalid(
+        `Video is ${request.durationSec}s; Hive sync moderation accepts up to ${MAX_SYNC_DURATION_SEC}s and async needs an https callback URL`,
+      );
+    }
+    const form = new FormData();
+    form.append('url', request.mediaUrl);
+    form.append('callback_url', request.callbackUrl);
+    const { body } = await httpJson<HiveAsyncAck>(
+      ASYNC_URL,
+      { method: 'POST', headers: { authorization: `token ${this.options.apiKey}` }, body: form },
+      {
+        providerId: PROVIDER_ID,
+        fetchImpl: this.fetchImpl,
+        timeoutMs: TIMEOUT_MS,
+        errorMessage: (b) =>
+          typeof b === 'object' && b && 'message' in b
+            ? String((b as { message: unknown }).message)
+            : undefined,
+      },
+    );
+    const taskId = body.task_id ?? body.id ?? body.task_ids?.[0];
+    if (!taskId || isSyncJobId(taskId)) {
+      throw providerError(
+        PROVIDER_ID,
+        { errorClass: 'unknown', retryable: true },
+        'Hive async acknowledgement had no task id',
+      );
+    }
+    return {
+      providerJobId: taskId,
+      estimatedCostPence: this.estimateCostPence(request),
+      estimatedReadyAt: new Date(this.now() + request.durationSec * 1000),
+    };
+  }
+
+  private async pollAsync(taskId: string): Promise<ProviderPollResult> {
+    if (!this.options.asyncResults) {
+      return {
+        state: 'failed',
+        error: {
+          class: 'unknown',
+          message: 'No store for Hive async callbacks is configured',
+          retryable: false,
+        },
+      };
+    }
+    const body = await this.options.asyncResults(taskId);
+    if (body === null || body === undefined) return { state: 'running' };
+    return this.fromTaskObject(body as HiveResponse);
+  }
+
+  private fromTaskObject(body: HiveResponse): ProviderPollResult {
     const taskStatus = body.status?.[0]?.status;
     if (taskStatus?.code && taskStatus.code !== '0') {
       return {

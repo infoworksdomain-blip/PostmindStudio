@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, NativeSelect } from '../review/field';
+import { VideoUploadField } from '../uploads/video-upload-field';
 import { ImagePicker } from './image-picker';
 import {
   SLIDE_TYPE_LABEL,
@@ -17,7 +18,8 @@ import {
 } from './types';
 
 // Edit one slide (PATCH /slides/:id): type, the content fields that type renders, image,
-// duration and transition. Only changed fields are sent.
+// duration and transition; 13.5: a VIDEO_CLIP slide uploads its clip. Only changed fields are
+// sent.
 
 const IMAGE_TYPES = new Set<SlideType>(['IMAGE_STILL', 'IMAGE_KENBURNS', 'PRODUCT']);
 
@@ -27,6 +29,7 @@ export interface SlidePatch {
   transitionIn?: string | null;
   backgroundColor?: string | null;
   imageAssetId?: string | null;
+  videoAssetId?: string | null;
   content?: SlideContent;
 }
 
@@ -36,6 +39,7 @@ interface Form {
   transitionIn: string;
   backgroundColor: string;
   imageAssetId: string | null;
+  videoAssetId: string | null;
   text: string;
   caption: string;
   quote: string;
@@ -55,6 +59,7 @@ function toForm(slide: Slide): Form {
     transitionIn: slide.transitionIn ?? '',
     backgroundColor: slide.backgroundColor ?? '#111111',
     imageAssetId: slide.imageAssetId,
+    videoAssetId: slide.videoAssetId,
     text: c.text ?? '',
     caption: c.caption ?? '',
     quote: c.quote ?? '',
@@ -90,6 +95,7 @@ export function slidePatch(slide: Slide, form: Form): SlidePatch {
   if (form.slideType === 'TEXT_CARD' && form.backgroundColor !== before.backgroundColor)
     patch.backgroundColor = form.backgroundColor;
   if (form.imageAssetId !== before.imageAssetId) patch.imageAssetId = form.imageAssetId;
+  if (form.videoAssetId !== before.videoAssetId) patch.videoAssetId = form.videoAssetId;
   const content: SlideContent = {};
   for (const key of TEXT_KEYS) {
     if (form[key] !== before[key]) content[key] = form[key].trim();
@@ -115,6 +121,7 @@ export function SlideEditor({
   saving: boolean;
   onSave: (patch: SlidePatch) => void;
 }) {
+  const [clipName, setClipName] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(() => toForm(slide));
   const set = (patch: Partial<Form>) => setForm((f) => ({ ...f, ...patch }));
   const id = (name: string) => `slide-${slide.id}-${name}`;
@@ -238,6 +245,24 @@ export function SlideEditor({
             label="Slide image"
             value={form.imageAssetId}
             onChange={(imageAssetId) => set({ imageAssetId })}
+          />
+        </div>
+      )}
+      {type === 'VIDEO_CLIP' && (
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Clip {form.videoAssetId ? (clipName ? `— ${clipName}` : '— chosen') : '— none yet'}
+          </span>
+          <VideoUploadField
+            id={id('clip')}
+            label={form.videoAssetId ? 'Replace the clip' : 'Upload a clip'}
+            kind="slide_clip"
+            projectId={slide.projectId}
+            onUploaded={(result) => {
+              if (!result.asset) return;
+              setClipName(result.upload.fileName);
+              set({ videoAssetId: result.asset.id });
+            }}
           />
         </div>
       )}
