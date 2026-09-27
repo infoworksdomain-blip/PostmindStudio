@@ -34,14 +34,15 @@ export interface SuggestedOverlay {
 export function suggestOverlays(
   shots: SuggestShot[],
   brand: { primary?: string; secondary?: string; fontFamily?: string } | null,
+  /** Preset key per shot index (e.g. from a TEMPLATE reference); null falls back to the role. */
+  presetForShot?: (index: number) => string | null,
 ): SuggestedOverlay[] {
   const ordered = [...shots].sort((a, b) => a.sortOrder - b.sortOrder);
   return ordered.flatMap((shot, index) => {
     const text = shot.onScreenText?.trim();
     if (!text || shot.visualTreatment === 'TEXT_CARD') return [];
-    const preset = BUILT_IN_PRESETS.find(
-      (p) => p.key === ROLE_PRESET[shotRole(index, ordered.length)],
-    );
+    const key = presetForShot?.(index) ?? ROLE_PRESET[shotRole(index, ordered.length)];
+    const preset = BUILT_IN_PRESETS.find((p) => p.key === key);
     if (!preset) return [];
     const base = resolveStyle(preset.parameters);
     return [

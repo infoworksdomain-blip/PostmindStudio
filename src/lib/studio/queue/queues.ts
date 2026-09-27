@@ -52,6 +52,25 @@ export interface LibraryRefreshJobData extends BusinessJobData {
   queries?: string[];
 }
 
+/** Video library ingestion (Feature A): platform-level, no project. runId = source hash. */
+export interface LibraryIngestJobData {
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  projectId?: undefined;
+  batch?: boolean;
+  item: {
+    sourceUrl: string;
+    licenseScenario: 'LICENSED' | 'OWNED' | 'SCRAPED';
+    licenseSource?: string;
+    licenseExpires?: string;
+    category?: string;
+    tags: string[];
+    title?: string;
+    sourcePlatform?: string;
+  };
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
@@ -61,6 +80,7 @@ export interface JobDataMap {
   'fire-scheduled-publication': PublishJobData;
   'scan-website': ScanJobData;
   'populate-slideshow': ProjectJobData;
+  'ingest-library-video': LibraryIngestJobData;
   'refresh-image-library': LibraryRefreshJobData;
 }
 
@@ -75,6 +95,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
+  'ingest-library-video': QUEUES.assets,
   'refresh-image-library': QUEUES.assets,
 };
 

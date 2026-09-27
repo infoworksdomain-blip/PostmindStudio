@@ -244,7 +244,8 @@ export function createFfmpegInspector(
         ],
         timeoutMs,
       );
-      if (r.code !== 0) throw new ValidationError(`ffmpeg scene detection failed: ${r.stderr.slice(-500)}`);
+      if (r.code !== 0)
+        throw new ValidationError(`ffmpeg scene detection failed: ${r.stderr.slice(-500)}`);
       return parseSceneChanges(r.stderr);
     },
     async frameJpeg(url, atSec, maxWidth) {
@@ -271,7 +272,8 @@ export function createFfmpegInspector(
           timeoutMs,
           dir,
         );
-        if (r.code !== 0) throw new ValidationError(`ffmpeg frame grab failed: ${r.stderr.slice(-500)}`);
+        if (r.code !== 0)
+          throw new ValidationError(`ffmpeg frame grab failed: ${r.stderr.slice(-500)}`);
         return new Uint8Array(await readFile(join(dir, 'frame.jpg')));
       } finally {
         await rm(dir, { recursive: true, force: true });

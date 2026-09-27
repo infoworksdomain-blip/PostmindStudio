@@ -38,6 +38,7 @@ import {
 } from '../../pipeline/scripting';
 import { jobIds } from '../enqueue';
 import { planSlideshow } from './plan-slideshow';
+import { loadReferenceGuide, type ReferenceGuide } from '../../library/reference';
 import { suggestionRows, suggestOverlays } from '../../overlays/suggest';
 import { BUILT_IN_PRESETS } from '../../overlays/presets';
 import type { ProjectJobData } from '../queues';
@@ -49,7 +50,7 @@ import type { ProjectJobData } from '../queues';
 const IDEATION_MAX_TOKENS = 4_000;
 const SCRIPT_MAX_TOKENS = 8_000;
 const SAFETY_MAX_TOKENS = 1_000;
-const SUPPORTED_SOURCES = new Set(['BRIEF', 'POSTMIND_CONTENT']);
+const SUPPORTED_SOURCES = new Set(['BRIEF', 'POSTMIND_CONTENT', 'LIBRARY_REFERENCE']);
 
 function modelLabel(run: ProviderRunResult): string {
   const model = (run.output.metadata as { model?: string } | undefined)?.model;
@@ -113,6 +114,7 @@ async function persistPlan(
   ideationModel: string,
   scripts: Array<{ format: TargetFormat; plan: PlannedScript; model: string }>,
   brandKit: BrandKit | null,
+  reference: ReferenceGuide | null = null,
 ): Promise<void> {
   const briefData = {
     rawInput: project.description ?? '',
@@ -168,6 +170,7 @@ async function persistPlan(
         suggestOverlays(
           shots.filter((s) => s.scriptId === scriptId),
           brand,
+          reference ? (index) => reference.presetForShot(index) : undefined,
         ),
         new Map(presets.map((p) => [p.name, p.id])),
       ),
@@ -210,9 +213,14 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   if (!SUPPORTED_SOURCES.has(project.sourceType)) {
     throw new NotImplementedError(`Planning for sourceType ${project.sourceType} is not built yet`);
   }
-  const rawInput =
+  const briefText =
     project.description?.trim() || String(projectMetadata(project.metadata).brief ?? '').trim();
-  if (!rawInput) throw new ValidationError('Project has no brief text (description)');
+  if (!briefText) throw new ValidationError('Project has no brief text (description)');
+  // Feature A: a reference video's blueprint (TEMPLATE) or style (INSPIRE) shapes Layers 1–2.
+  const reference = await loadReferenceGuide(deps.db, project, deps.now());
+  const rawInput = reference?.ideationSupplement
+    ? `${briefText}\n\n${reference.ideationSupplement}`
+    : briefText;
   const formats = parseTargetFormats(project.targetFormats);
   const brandKit = await loadBrandKit(deps, project);
   const restrictedTopics = brandKit?.restrictedTopics ?? [];
@@ -286,7 +294,12 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
         textRequest(
           data,
           SCRIPT_SYSTEM_PROMPT,
-          buildScriptPrompt({ brief, format, treatments, restrictedTopics }),
+          [
+            buildScriptPrompt({ brief, format, treatments, restrictedTopics }),
+            reference?.scriptSupplement(format.durationSec, treatments),
+          ]
+            .filter(Boolean)
+            .join('\n\n'),
           scriptSchema(treatments),
           SCRIPT_MAX_TOKENS,
         ),
@@ -294,7 +307,9 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       );
       return {
         format,
-        plan: normaliseScript(jsonOutput(run.output), treatments, format.durationSec),
+        plan: ((plan) => (reference ? reference.apply(plan, format.durationSec) : plan))(
+          normaliseScript(jsonOutput(run.output), treatments, format.durationSec),
+        ),
         model: modelLabel(run),
       };
     }),
@@ -334,7 +349,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     return log.warn({ safety }, 'script safety stopped the run');
   }
 
-  await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit);
+  await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit, reference);
   await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,
