@@ -135,14 +135,14 @@ Work items in the order Claude Code should execute them. Each item names its acc
 
 ## Phase 8 — Feature B: Text overlay engine (v1.1) (target: week 9-11)
 
-- [ ] **8.1** Implement `text_overlays` and `overlay_presets` models (should exist from Phase 1).
-- [ ] **8.2** Seed 25 built-in overlay presets per Addendum A4.3 (hook, subtitle, CTA, quote, statistic, story, brand).
-- [ ] **8.3** Implement overlay-to-Shotstack translator per Addendum A4.6.
-- [ ] **8.4** Implement custom animation renderer for glitch/karaoke/counter via FFmpeg pre-render.
-- [ ] **8.5** Auto-suggestion at script time (Layer 2 populates default overlays per shot).
-- [ ] **8.6** All overlay CRUD endpoints per Addendum A8.2.
-- [ ] **8.7** `POST /api/studio/overlays/[id]/preview` — 3-second preview render.
-- [ ] **[GATE 8]** Operator adds a styled hook overlay to an existing project and re-renders.
+- [x] **8.1** Implement `text_overlays` and `overlay_presets` models (should exist from Phase 1).
+- [x] **8.2** Seed 25 built-in overlay presets per Addendum A4.3 (hook, subtitle, CTA, quote, statistic, story, brand).
+- [x] **8.3** Implement overlay-to-Shotstack translator per Addendum A4.6.
+- [x] **8.4** Implement custom animation renderer for glitch/karaoke/counter via FFmpeg pre-render.
+- [x] **8.5** Auto-suggestion at script time (Layer 2 populates default overlays per shot).
+- [x] **8.6** All overlay CRUD endpoints per Addendum A8.2.
+- [x] **8.7** `POST /api/studio/overlays/[id]/preview` — 3-second preview render.
+- [x] **[GATE 8]** (automated evidence; live run pending keys + hosted fonts) Operator adds a styled hook overlay to an existing project and re-renders.
 
 **NOTE**: The overlay editor UI is the highest-risk UX in the spec (per playbook Workstream F). The backend is straightforward; the frontend editor needs iteration with real users.
 

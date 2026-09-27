@@ -71,7 +71,8 @@ export const overlayStyle = z
     backgroundType: z.enum(BACKGROUND_TYPES),
     backgroundColor: colour.nullable(),
     backgroundPaddingPx: z.number().min(0).max(200).nullable(),
-    backgroundRadiusPx: z.number().min(0).max(200).nullable(),
+    /** Large values (e.g. 999) make a pill shape. */
+    backgroundRadiusPx: z.number().min(0).max(1_000).nullable(),
     anchorX: z.number().min(0).max(1),
     anchorY: z.number().min(0).max(1),
     alignment: z.enum(ALIGNMENTS),
@@ -82,8 +83,8 @@ export const overlayStyle = z
         typewriterCPS: z.number().min(1).max(100).optional(),
         waveAmplitude: z.number().min(0).max(1).optional(),
         glitchIntensity: z.number().min(0).max(1).optional(),
-        counterFrom: z.number().optional(),
-        counterTo: z.number().optional(),
+        counterFrom: z.number().int().min(-1_000_000_000).max(1_000_000_000).optional(),
+        counterTo: z.number().int().min(-1_000_000_000).max(1_000_000_000).optional(),
       })
       .strict()
       .nullable(),

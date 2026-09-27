@@ -7,7 +7,7 @@ import { toPlanTier } from '@/lib/studio/services/catalog';
 export const maxDuration = 120;
 
 export const POST = withStudioRoute(
-  StudioCapability.ProjectRead,
+  StudioCapability.ProjectWrite,
   async ({ tenant, deps, params }) => ({
     body: {
       preview: await previewOverlay(

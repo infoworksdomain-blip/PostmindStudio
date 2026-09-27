@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { ConflictError, NotFoundError, ProviderError } from '../../errors';
+import { ConflictError, NotFoundError, ProviderError, RateLimitError } from '../../errors';
 import { buildShotstackEdit, outputDimensions } from '../pipeline/edl';
 import { copyUrlToStorage } from '../pipeline/persist';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
@@ -17,6 +17,9 @@ import { buildOverlayTrack, mergeOverlayTrack } from './compose';
 export const PREVIEW_SECONDS = 3;
 const PREVIEW_URL_TTL_SEC = 60 * 60;
 const LEAD_IN_SEC = 0.5;
+/** Each preview is a billed composer render: cap them per project per hour. */
+export const MAX_PREVIEWS_PER_PROJECT_PER_HOUR = 30;
+const PREVIEWABLE_STATES = ['DRAFT', 'FAILED', 'REJECTED', 'QUALITY_FAILED', 'READY_FOR_REVIEW'];
 
 export interface PreviewDeps {
   db: PrismaClient;
@@ -49,12 +52,26 @@ export async function previewOverlay(
           id: overlay.shotId,
           script: { project: { organisationId: scope.organisationId, deletedAt: null } },
         },
-        include: { script: true },
+        include: { script: { include: { project: true } } },
       })
     : null;
   if (!overlay || (!shot && !overlay.renderId)) throw new NotFoundError('Overlay not found');
   if (!shot)
     throw new ConflictError('Whole-video overlays are previewed by re-rendering the video');
+  if (!PREVIEWABLE_STATES.includes(shot.script.project.state))
+    throw new ConflictError(
+      `Previews are not available while the project is ${shot.script.project.state}`,
+    );
+  const recent = await deps.db.providerJob.count({
+    where: {
+      organisationId: scope.organisationId,
+      projectId: shot.script.projectId,
+      operation: 'composition',
+      startedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+    },
+  });
+  if (recent >= MAX_PREVIEWS_PER_PROJECT_PER_HOUR)
+    throw new RateLimitError('Too many preview renders for this project; try again later', 600);
 
   const asset = shot.assetId
     ? await deps.db.videoAsset.findFirst({

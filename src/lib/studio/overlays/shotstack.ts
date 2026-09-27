@@ -28,7 +28,6 @@ const SLOW_MS = 800;
 
 /** Clip transition name with Shotstack's speed variants chosen from the duration. */
 function speed(name: string, ms: number): string {
-  if (name === 'zoom') return name; // zoom has no Slow/Fast variants
   if (ms <= FAST_MS) return `${name}Fast`;
   if (ms >= SLOW_MS) return `${name}Slow`;
   return name;

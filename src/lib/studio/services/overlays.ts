@@ -30,7 +30,9 @@ const OVERLAY_EDITABLE_STATES: VideoProjectState[] = [
   'QUALITY_FAILED',
   'READY_FOR_REVIEW',
 ];
-const MAX_OVERLAYS_PER_SHOT = 12;
+export const MAX_OVERLAYS_PER_SHOT = 12;
+/** Whole-video overlays (watermarks, bugs) across a project's renders. */
+export const MAX_WHOLE_VIDEO_OVERLAYS = 6;
 
 // ---------------------------------------------------------------- presets
 
@@ -321,6 +323,15 @@ export async function bulkOverlays(
   const data = await buildOverlayData(db, render.project, input.overlay);
   if (!input.applyToShotIds) {
     assertTiming(data.startAtSec, data.endAtSec, render.durationSec);
+    const renders = await db.videoRender.findMany({
+      where: { projectId: render.projectId },
+      select: { id: true },
+    });
+    const existing = await db.textOverlay.count({
+      where: { renderId: { in: renders.map((r) => r.id) } },
+    });
+    if (existing >= MAX_WHOLE_VIDEO_OVERLAYS)
+      throw new ValidationError(`At most ${MAX_WHOLE_VIDEO_OVERLAYS} whole-video overlays`);
     return [await db.textOverlay.create({ data: { ...data, renderId } })];
   }
   const shots = await db.videoShot.findMany({
@@ -329,6 +340,14 @@ export async function bulkOverlays(
   if (shots.length !== new Set(input.applyToShotIds).size)
     throw new ValidationError('applyToShotIds must be shots of this render');
   for (const shot of shots) assertTiming(data.startAtSec, data.endAtSec, shot.durationSec);
+  // Same per-shot cap as POST /shots/:id/overlays.
+  const counts = await db.textOverlay.groupBy({
+    by: ['shotId'],
+    where: { shotId: { in: shots.map((s) => s.id) } },
+    _count: { _all: true },
+  });
+  if (counts.some((c) => c._count._all >= MAX_OVERLAYS_PER_SHOT))
+    throw new ValidationError(`At most ${MAX_OVERLAYS_PER_SHOT} overlays per shot`);
   return db.$transaction(
     shots.map((shot) => db.textOverlay.create({ data: { ...data, shotId: shot.id } })),
   );
