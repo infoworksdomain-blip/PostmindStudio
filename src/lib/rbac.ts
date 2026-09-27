@@ -41,6 +41,30 @@ export function hasCapability(
   return context.capabilities.some((granted) => capabilityMatches(granted, capability));
 }
 
+/**
+ * Defence in depth for staff-only (admin) endpoints: besides the studio:admin:* capability from
+ * Core, the caller's organisation must be one of STUDIO_PLATFORM_ORG_IDS (PostMind's own staff
+ * organisations). Unset: allowed outside production, refused in production.
+ */
+export function requirePlatformStaff(
+  context: Pick<TenantContext, 'organisationId'>,
+  env: Record<string, string | undefined> = process.env,
+): void {
+  const allowed = (env.STUDIO_PLATFORM_ORG_IDS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (allowed.length === 0) {
+    if (env.NODE_ENV === 'production') {
+      throw new ForbiddenError('Admin endpoints are disabled: STUDIO_PLATFORM_ORG_IDS is not set');
+    }
+    return;
+  }
+  if (!allowed.includes(context.organisationId)) {
+    throw new ForbiddenError('Admin endpoints are for PostMind staff organisations only');
+  }
+}
+
 export function requireCapability(
   context: Pick<TenantContext, 'capabilities'>,
   capability: StudioCapability,

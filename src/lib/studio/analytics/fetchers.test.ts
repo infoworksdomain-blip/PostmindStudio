@@ -305,6 +305,22 @@ describe('createXMetrics', () => {
     );
   });
 
+  it('defaults every counter to zero when public_metrics fields and non_public_metrics are absent', async () => {
+    const fake = fakeFetch(json({ data: { public_metrics: {} } }));
+    const fetcher = createXMetrics({ fetchImpl: fake.fetch });
+
+    const result = await fetcher.fetch(baseRequest({ platformPostId: 'tweet-empty' }));
+
+    expect(result.snapshot).toEqual({
+      views: 0,
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      saves: 0,
+      clicks: 0,
+    });
+  });
+
   it('throws a PlatformError when public_metrics is missing', async () => {
     const fake = fakeFetch(json({ data: {} }));
     const fetcher = createXMetrics({ fetchImpl: fake.fetch });
@@ -382,6 +398,15 @@ describe('createLinkedInMetrics', () => {
     const result = await fetcher.fetch(baseRequest({ platformPostId: 'urn:li:share:1' }));
 
     expect(result.snapshot).toEqual({ views: 0, likes: 0, comments: 0, shares: 0 });
+  });
+
+  it('treats an element with no count as zero within the sum', async () => {
+    const fake = fakeFetch(json({ elements: [{ count: 4 }, {}] }), json({}), json({}), json({}));
+    const fetcher = createLinkedInMetrics({ fetchImpl: fake.fetch, enabled: true });
+
+    const result = await fetcher.fetch(baseRequest({ platformPostId: 'urn:li:share:2' }));
+
+    expect(result.snapshot.views).toBe(4);
   });
 
   it('has the linkedin_video platform id', () => {

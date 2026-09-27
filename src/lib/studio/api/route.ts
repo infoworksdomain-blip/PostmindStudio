@@ -1,5 +1,5 @@
 import { reportError } from '../observability/errors';
-import { getMetrics, normaliseRoute } from '../observability/metrics';
+import { getMetrics, routeLabel } from '../observability/metrics';
 import type { z } from 'zod';
 import { ConflictError, StudioError, toErrorResponse, ValidationError } from '../../errors';
 import { getCorrelationId, withContext } from '../../logger';
@@ -164,7 +164,7 @@ export function withStudioRoute(capability: StudioCapability, handler: Handler) 
     getMetrics().httpDuration.observe(
       {
         method: req.method,
-        route: normaliseRoute(new URL(req.url).pathname),
+        route: routeLabel(new URL(req.url).pathname, (await next?.params) ?? {}),
         status: String(response.status),
       },
       (performance.now() - started) / 1000,

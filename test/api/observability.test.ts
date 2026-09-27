@@ -33,7 +33,7 @@ describe.skipIf(!hasDb)('health and metrics endpoints', { timeout: 30_000 }, () 
     const wrong = await metrics(
       new Request('http://x/api/metrics', { headers: { authorization: 'Bearer nope' } }),
     );
-    expect(wrong.status).toBe(401);
+    expect(wrong.status).toBe(404);
     getMetrics().httpDuration.observe(
       { method: 'GET', route: '/api/studio/projects', status: '200' },
       0.05,

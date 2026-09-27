@@ -3,15 +3,16 @@ import { getMetrics, metricsAuthorised } from '@/lib/studio/observability/metric
 import { sampleBreakers, sampleQueueDepths } from '@/lib/studio/observability/sample';
 
 // GET /api/metrics — Prometheus scrape endpoint (Engagement 14.14). Bind to private ingress;
-// additionally requires `Authorization: Bearer $METRICS_TOKEN` (404 when no token is set, so
-// an unconfigured deployment never exposes it).
+// additionally requires `Authorization: Bearer $METRICS_TOKEN`. Anything else — no token set,
+// no or wrong bearer — is a 404.
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request): Promise<Response> {
   const token = process.env.METRICS_TOKEN?.trim() || undefined;
   if (!token) return new Response('Not found', { status: 404 });
   if (!metricsAuthorised(req.headers.get('authorization'), token)) {
-    return new Response('Unauthorized', { status: 401 });
+    // Same answer as "disabled": don't reveal whether the endpoint is configured.
+    return new Response('Not found', { status: 404 });
   }
   const metrics = getMetrics();
   const [{ redisConnectionFromEnv }, { getCircuitBreaker }] = await Promise.all([

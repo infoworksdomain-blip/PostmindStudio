@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 
 // BACKLOG 11.5 — Prometheus metrics (prom-client 15: the successor @prometheus-io/client needs
 // Node 22+). One registry per process: the API serves it at /api/metrics, the worker process on
-// its own port. Labels are bounded: routes are normalised (ids → :id), job names are a closed set.
+// its own port. Labels are bounded: routes use the matched template (routeLabel), job names are a closed set.
 
 export interface StudioMetrics {
   registry: Registry;
@@ -63,13 +63,28 @@ export function getMetrics(): StudioMetrics {
   return globalForMetrics.studioMetrics;
 }
 
-const ID_SEGMENT = /^(?:[0-9a-f]{8}-[0-9a-f-]{27}|c[a-z0-9]{20,}|[A-Za-z0-9_-]{24,}|\d+)$/;
-
-/** /api/studio/projects/cmf1…/renders → /api/studio/projects/:id/renders */
-export function normaliseRoute(pathname: string): string {
+/**
+ * Route label from the matched route's parameters: /projects/abc/renders with {id: 'abc'} →
+ * /projects/:id/renders. Only paths Next.js matched to a route reach here, so labels are
+ * bounded by the route templates — never by what a caller puts in the URL.
+ */
+export function routeLabel(pathname: string, params: Record<string, string | string[]>): string {
+  const values = new Map<string, string>();
+  for (const [name, value] of Object.entries(params)) {
+    for (const v of Array.isArray(value) ? value : [value]) values.set(v, name);
+  }
   return pathname
     .split('/')
-    .map((segment) => (ID_SEGMENT.test(segment) ? ':id' : segment))
+    .map((segment) => {
+      let decoded = segment;
+      try {
+        decoded = decodeURIComponent(segment);
+      } catch {
+        // malformed escape: compare raw
+      }
+      const name = values.get(decoded) ?? values.get(segment);
+      return name ? `:${name}` : segment;
+    })
     .join('/');
 }
 
