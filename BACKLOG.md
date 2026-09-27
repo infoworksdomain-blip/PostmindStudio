@@ -37,7 +37,7 @@ Work items in the order Claude Code should execute them. Each item names its acc
 - [x] **1.8** Run `prisma migrate dev --name init_studio_schema`. Verify all tables land in `studio` schema.
 - [x] **1.9** Add `system_flags` seed data (kill switch off, all providers enabled).
 - [x] **1.10** Implement `src/lib/studio/kill-switch.ts` — DB-backed check with 30s in-memory cache. Unit tests for all four levels.
-- [ ] **[GATE 1]** Operator reviews schema, confirms it matches spec.
+- [x] **[GATE 1]** Operator reviews schema, confirms it matches spec.
 
 ---
 

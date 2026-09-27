@@ -6,6 +6,7 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+[2026-09-27] [GATE 1] Operator approved; the review-list decisions below stand as proposed. JWT alg still unpinned and the pgvector-in-public question is still open for ops. CI green on PR #2.
 [2026-09-27] [1.10] kill-switch.ts: four levels (global, workspace, project, provider) from system_flags, 30s per-key cache, fail-closed on unknown values, store errors propagate. Unit + PGlite integration tests (incl. cross-process toggle within the cache window).
 [2026-09-27] [1.9] prisma/seed.ts + seedSystemFlags(): kill switch off, 24 providers enabled. Uses createMany skipDuplicates so a re-seed never switches an active kill switch off. `npm run db:seed`.
 [2026-09-27] [1.8] Init migration 20260927000000_init_studio_schema generated with `prisma migrate diff --from-empty` (no local Docker). Verified by test/integration/schema.test.ts: all 33 tables land in `studio` and nowhere else; pgvector cosine search works. CI `database` job applies migrations to real pgvector Postgres, seeds twice, and fails on schema/migration drift.
