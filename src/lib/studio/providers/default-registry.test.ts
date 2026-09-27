@@ -17,6 +17,7 @@ beforeEach(() => {
   vi.stubEnv('S3_BUCKET_ASSETS', 'studio-assets-dev');
   vi.stubEnv('ANTHROPIC_MODEL', '');
   vi.stubEnv('ELEVENLABS_MODEL', '');
+  vi.stubEnv('ELEVENLABS_MUSIC_MODEL', '');
   vi.stubEnv('SHOTSTACK_ENVIRONMENT', '');
   for (const key of KEYS) vi.stubEnv(key, '');
 });
@@ -35,9 +36,16 @@ describe('buildAdaptersFromEnv', () => {
       'openai',
       'runway',
       'elevenlabs',
+      'elevenlabs-music',
       'shotstack',
       'hive',
     ]);
+  });
+
+  it('rejects an unknown ElevenLabs music model', () => {
+    vi.stubEnv('ELEVENLABS_API_KEY', 'k');
+    vi.stubEnv('ELEVENLABS_MUSIC_MODEL', 'suno_v4');
+    expect(() => buildAdaptersFromEnv()).toThrow(/Unsupported ElevenLabs music model/);
   });
 
   it('requires the FX rate', () => {

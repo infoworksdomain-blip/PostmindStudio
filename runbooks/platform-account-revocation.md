@@ -12,6 +12,38 @@ A refresh failure or a 401 marks the connection `needs_reconnect`. Publishing to
 clear error, and `/connections` shows a Reconnect button. No operator action is needed beyond
 support.
 
+### Instagram and Facebook (tokens pushed by PostMind Core)
+
+Studio does not run the Meta login. PostMind Core does, and pushes the tokens to Studio the same
+way it does to Engagement (handover 9.5 / 9.6 / 14.13). All three calls carry
+`X-Service-Token: <STUDIO_INTERNAL_SERVICE_TOKEN>`:
+
+| Call | When Core makes it |
+| --- | --- |
+| `POST /api/studio/internal/channels` `{ organisationId, platform: instagram\|facebook, platformAccountId, platformAccountName, accessToken, tokenExpiresAt?, scopes[], businessId?, connectedByUserId? }` | After the user connects (or reconnects) an account. Idempotent upsert; returns `channel.id`. |
+| `DELETE /api/studio/internal/channels/:id[?organisationId=]` or `DELETE /api/studio/internal/channels?organisationId=&platform=&platformAccountId=` | The user disconnects the account in PostMind settings. Studio wipes the token. |
+| `POST /api/studio/internal/tokens/refreshed` (one channel, or `{ channels: [...≤100] }`) | Core's nightly job refreshed tokens expiring within 7 days. |
+
+- Meta refusing a token (Graph error 190, any subcode) or a token past `tokenExpiresAt` marks
+  the channel `needs_reconnect`. Publishing and metrics for it stop with a clear reason. The
+  Connections page shows "Needs reconnecting" and points to PostMind settings (there is no
+  Reconnect button in Studio).
+- Recovery: the user reconnects in PostMind settings, and Core calls `POST /internal/channels`
+  again. A successful refresh push also re-activates a `needs_reconnect` channel. A `revoked`
+  (disconnected) channel is only reactivated by a new registration: refresh pushes for it return
+  409 (single) or `revoked` (batch).
+- Then retry the failed publications (Publications → Retry, or the re-drive tool).
+- Scopes Core must request, in addition to Engagement's: `instagram_content_publish` and
+  `instagram_manage_insights` (Instagram), `pages_manage_posts` and `read_insights` (Facebook).
+  Without the insights scopes, publishing works but metrics polling reports the metrics as
+  unavailable.
+- Symptoms on Core's side: `404` on every internal call means `STUDIO_INTERNAL_SERVICE_TOKEN` is
+  unset or shorter than 32 characters in Studio. `401` means the tokens differ. `413` means the
+  body is over 64 KB. `429` means Core exceeded `STUDIO_INTERNAL_RATE_LIMIT_PER_MIN`.
+- Security: `/api/studio/internal/*` must only be reachable from the private network. Check that
+  the ingress denies it publicly. To rotate the token, set the new value in Studio and Core
+  together; calls made in between get 401, and Core retries them.
+
 ## Our app is restricted or revoked (app review, policy strike)
 
 1. Halt publishing to that platform: Admin Centre → **Kill switch** → *Halt publishing to a
@@ -29,4 +61,7 @@ support.
 ## GAPs
 
 - The daily account-status check job is not built.
-- Meta (Instagram and Facebook) publishing is blocked on credentials.
+- No Core-side retry or alert exists yet for failed internal calls. That code is Core's, owned
+  by the Core team.
+- There is no reconciliation job comparing Core's Meta connections with Studio's. A missed
+  DELETE leaves a channel active until Meta refuses its token.

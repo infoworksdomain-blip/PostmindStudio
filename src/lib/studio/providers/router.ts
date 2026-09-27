@@ -119,7 +119,9 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
   text_generation: ['anthropic', 'openai'], // 5.2: Claude Sonnet, GPT-4o fallback
   embedding: ['openai'],
   tts: ['elevenlabs', 'azure-speech'], // 6.5 Voice
-  music: ['suno', 'replicate', 'storyblocks'], // 6.5 Music (MusicGen via Replicate)
+  // 6.5 Music. SPEC DRIFT: Suno (no public API) replaced by ElevenLabs Music; MusicGen via
+  // Replicate and a Storyblocks pick stay as the spec's (not yet built) fallbacks.
+  music: ['elevenlabs-music', 'replicate', 'storyblocks'],
   composition: ['shotstack', 'creatomate'], // 6.5 Composition
   transcription: ['assemblyai'], // 6.5 Captions (self-hosted Whisper is not a provider)
   content_safety: ['hive', 'sightengine'], // 6.5 Content safety

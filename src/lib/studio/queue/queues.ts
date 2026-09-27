@@ -63,13 +63,15 @@ export interface LibraryIngestJobData {
   batch?: boolean;
   item: {
     sourceUrl: string;
-    licenseScenario: 'LICENSED' | 'OWNED' | 'SCRAPED';
+    licenseScenario: 'LICENSED' | 'OWNED' | 'SCRAPED' | 'NOT_REQUIRED';
     licenseSource?: string;
     licenseExpires?: string;
     category?: string;
     tags: string[];
     title?: string;
     sourcePlatform?: string;
+    sourceRef?: string;
+    language?: string;
   };
 }
 

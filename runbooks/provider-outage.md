@@ -13,6 +13,10 @@
 - An open breaker half-opens after 5 minutes and lets probes through.
 - In-flight provider jobs poll to completion or fail. Failed shots retry with backoff through
   BullMQ.
+- Music (`elevenlabs-music`) is non-fatal: when it is down, disabled or refuses a prompt, videos
+  render with narration only and `metadata.music.status` is `failed` (with the reason); nothing
+  retries it for that run. Disabling it with the provider kill switch is safe at any time. A
+  re-render after recovery generates the track (the Review screen shows the music status).
 
 ## Steps
 

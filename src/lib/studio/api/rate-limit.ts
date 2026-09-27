@@ -67,6 +67,17 @@ export function rateLimitsFromEnv(env: Record<string, string | undefined> = proc
   } satisfies RateLimits;
 }
 
+/**
+ * PostMind Core → /api/studio/internal/** (one caller): STUDIO_INTERNAL_RATE_LIMIT_PER_MIN,
+ * default 600 requests a minute. The nightly token refresh batches up to 100 channels a call.
+ */
+export function internalRateLimitsFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): RateLimits {
+  const perMin = positiveInt(env, 'STUDIO_INTERNAL_RATE_LIMIT_PER_MIN', 600);
+  return { readsPerMin: perMin, writesPerMin: perMin, orgPerMin: perMin };
+}
+
 export interface RateLimiter {
   /** Throws RateLimitError (429 + Retry-After) when a limit is exceeded. */
   check(input: { organisationId: string; userId: string; method: string }): Promise<void>;

@@ -17,11 +17,33 @@ const categories = {
   ],
 };
 
+const ingestStatus = {
+  ok: true,
+  windowHours: 24,
+  since: '2026-09-26T12:00:00.000Z',
+  counts: { QUEUED: 40, RUNNING: 2, SUCCEEDED: 55, DUPLICATE: 1, FAILED: 2 },
+  total: 100,
+  completedPerHour: 2.3,
+  backlog: { queued: 40, running: 2 },
+  liveLibraryItems: 56,
+  recentFailures: [
+    {
+      runId: 'r1',
+      sourceUrl: 'https://a.test/broken.mp4',
+      sourceRef: 'ext-9',
+      errorReason: 'Source returned HTTP 404',
+      attempts: 1,
+      finishedAt: '2026-09-27T11:00:00.000Z',
+    },
+  ],
+};
+
 function routes(extra: MockRoute[] = []): MockRoute[] {
   return [
     ...extra,
     { match: '/library/categories', body: categories },
     { match: '/library/videos', body: { ok: true, data: [summary()], nextCursor: null } },
+    { match: '/admin/library/ingest/status', body: ingestStatus },
   ];
 }
 
@@ -148,6 +170,7 @@ describe('LibraryAdminPanel', () => {
         status: 500,
         body: { ok: false, error: 'internal', message: 'Search index offline' },
       },
+      { match: '/admin/library/ingest/status', body: ingestStatus },
     ]);
     renderWithSWR(<LibraryAdminPanel />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Search index offline');
@@ -193,5 +216,34 @@ describe('admin library helpers', () => {
       tags: ['coffee', 'new'],
       licenseSource: 'Deal #4',
     });
+  });
+});
+
+describe('LibraryAdminPanel corpus ingestion', () => {
+  it('shows corpus ingestion status with counts, backlog and recent failures', async () => {
+    const { calls } = mockFetch(routes());
+    renderWithSWR(<LibraryAdminPanel />);
+    const counts = await screen.findByRole('group', { name: 'Ingestion counts' });
+    expect(within(counts).getByText('55')).toBeInTheDocument();
+    expect(within(counts).getByText('Failed')).toBeInTheDocument();
+    expect(screen.getByText(/40 queued · 2 running · 2.3 completed per hour/)).toBeInTheDocument();
+    const failures = screen.getByRole('list', { name: 'Recent ingestion failures' });
+    expect(within(failures).getByText(/Source returned HTTP 404/)).toBeInTheDocument();
+    expect(within(failures).getByText(/ext-9/)).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.selectOptions(screen.getByLabelText('Window'), '1');
+    await waitFor(() =>
+      expect(calls.some((c) => c.url.includes('/admin/library/ingest/status?windowHours=1'))).toBe(
+        true,
+      ),
+    );
+  });
+
+  it('offers the operator-owned NOT_REQUIRED licence for ingestion', async () => {
+    mockFetch(routes());
+    renderWithSWR(<LibraryAdminPanel />);
+    expect(
+      await screen.findByRole('option', { name: /Not required — operator-owned/ }),
+    ).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { NotImplementedError, PlatformError, type PlatformErrorClass } from '../../errors';
+import { PlatformError, type PlatformErrorClass } from '../../errors';
 import { platformRequest, pollUntil } from './http';
 import type {
   PlatformPublisher,
@@ -19,7 +19,7 @@ import type {
 //              POST rupload.facebook.com/video-upload/{v}/{video-id} with header file_url (hosted);
 //              POST /{page-id}/video_reels upload_phase=finish {video_id, video_state=PUBLISHED,
 //              description}; GET /{video-id}?fields=status
-// Spec 9.3: Studio must REUSE Engagement's Meta tokens, never store its own.
+// Tokens: PostMind Core pushes them to /api/studio/internal/channels (see MetaCredentialSource).
 
 export const GRAPH_HOST = 'https://graph.facebook.com';
 export const RUPLOAD_HOST = 'https://rupload.facebook.com';
@@ -33,27 +33,22 @@ export interface MetaCredentials {
 }
 
 /**
- * Where Studio gets Meta tokens for a connected IG account / FB page (spec 9.3, 16.3).
- * Engagement stores them envelope-encrypted and exposes no read endpoint today.
+ * Where Studio gets Meta tokens for a connected IG account / FB page. Operator decision
+ * 2026-09-27: PostMind Core runs the Meta login and pushes the tokens to Studio's internal
+ * endpoints exactly as it does for Engagement (handover 9.5 / 14.13); they are stored envelope-
+ * encrypted in platform_connections (meta-credentials.ts reads them).
  */
 export interface MetaCredentialSource {
-  getCredentials(input: {
-    organisationId: string;
-    platform: 'instagram' | 'facebook';
-    platformAccountId: string;
-  }): Promise<MetaCredentials>;
+  getCredentials(input: MetaAccountRef): Promise<MetaCredentials>;
+  /** Meta refused the token (Graph error 190): mark the connection needs_reconnect. */
+  reportTokenRejected?(input: MetaAccountRef): Promise<void>;
 }
 
-/** Default until Engagement exposes credentials to Studio (see PROGRESS.md Phase 5). */
-export const unavailableMetaCredentials: MetaCredentialSource = {
-  async getCredentials() {
-    throw new NotImplementedError(
-      'Meta publishing needs Engagement to share channel tokens with Studio (e.g. an internal ' +
-        'GET /api/engagement/internal/channels/:id/token authenticated by X-Service-Token, or the ' +
-        'engagement_channels schema + KMS key). Engagement exposes neither today.',
-    );
-  },
-};
+export interface MetaAccountRef {
+  organisationId: string;
+  platform: 'instagram' | 'facebook';
+  platformAccountId: string;
+}
 
 interface GraphError {
   error?: { message?: string; code?: number; error_subcode?: number; is_transient?: boolean };
@@ -77,6 +72,10 @@ const IG_SUBCODES: Record<number, { errorClass: PlatformErrorClass; retryable: b
 
 function describe(body: unknown) {
   const e = (body as GraphError | undefined)?.error;
+  // Code 190 (invalid/expired OAuth token) wins over its subcodes (458 app removed, 460 password
+  // changed, 463 expired, …): every one of them means the connection must be re-authorised.
+  // https://developers.facebook.com/docs/graph-api/guides/error-handling
+  if (e?.code === 190) return { message: e.message, code: '190' };
   return {
     message: e?.message,
     code: e?.error_subcode ? String(e.error_subcode) : e?.code ? String(e.code) : undefined,

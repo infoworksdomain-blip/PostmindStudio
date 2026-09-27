@@ -13,6 +13,7 @@ import { ErrorState, PageHeader, Section, StateBadge } from '../primitives';
 import { OverlayEditor } from '../overlays/overlay-editor';
 import { SlideshowBuilder } from '../slideshow/slideshow-builder';
 import { AutomationPanel } from './automation-panel';
+import { MusicStatus } from './music-status';
 import { PipelineStrip } from './pipeline-strip';
 import { ApprovalBar, ProjectActions } from './project-actions';
 import { PublicationsList } from './publications-list';
@@ -22,6 +23,7 @@ import { ScriptView } from './script-view';
 import { ShotsTab } from './shots-tab';
 import { PUBLISHABLE } from './types';
 import { VariantCard } from './variant-card';
+import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
 
 // BACKLOG 10.4 — Review (spec 14.2): one screen, all variants. Polls every 4 s while the
 // pipeline is working so progress, shots and renders update in place.
@@ -112,8 +114,10 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
               {project.errorReason === 'cancelled_by_user' ? 'Cancelled.' : project.errorReason}
             </p>
           )}
+        {isProjectBudgetPause(project) && <BudgetRaise project={project} onChanged={refresh} />}
         <ApprovalBar project={project} onChanged={refresh} />
         <AutomationPanel project={project} />
+        <MusicStatus project={project} />
         <div>
           <ReviewTabs tabs={tabs} active={active} onChange={setTab} />
           <TabPanel tab={active}>

@@ -23,6 +23,7 @@ const SCENARIOS: Array<{ value: LicenseScenario; label: string }> = [
   { value: 'LICENSED', label: 'Licensed (Template + Inspire)' },
   { value: 'OWNED', label: 'Owned (Template + Inspire)' },
   { value: 'SCRAPED', label: 'Scraped (Inspire only)' },
+  { value: 'NOT_REQUIRED', label: 'Not required — operator-owned (Template + Inspire)' },
 ];
 
 export function parseUrls(text: string): { urls: string[]; invalid: string[] } {

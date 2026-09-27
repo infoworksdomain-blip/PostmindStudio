@@ -7,12 +7,25 @@ import { CostCapsPanel, type CostCapsResponse } from './cost-caps-panel';
 const body: CostCapsResponse = {
   ok: true,
   day: '2026-09-27',
+  month: '2026-09',
   caps: {
     globalDaily: { capPence: 100_000, spentPence: 85_000, percent: 85 },
-    orgDailyByTier: { BASIC: 500, STANDARD: 2_000, PLUS: null, ENTERPRISE: null },
+    orgDailyByTier: { BASIC: 500, STANDARD: 2_000, PLUS: null, ENTERPRISE: 40_000 },
+    orgMonthlyByTier: { BASIC: 4_000, STANDARD: 15_000, PLUS: 45_000, ENTERPRISE: 300_000 },
     orgProviderDaily: null,
+    sources: {
+      globalDaily: 'env',
+      orgDailyByTier: { BASIC: 'env', STANDARD: 'env', PLUS: 'disabled', ENTERPRISE: 'default' },
+      orgMonthlyByTier: {
+        BASIC: 'default',
+        STANDARD: 'default',
+        PLUS: 'default',
+        ENTERPRISE: 'default',
+      },
+    },
     projectPausePercent: 90,
   },
+  organisationsThisMonth: [{ organisationId: 'org_a', spentPence: 12_000 }],
   organisations: [
     { organisationId: 'org_a', spentPence: 1_900, providers: [] },
     { organisationId: 'org_b', spentPence: 100, providers: [] },
@@ -56,7 +69,21 @@ describe('CostCapsPanel', () => {
       'aria-valuenow',
       '85',
     );
-    expect(screen.getByText(/basic £5.00 · standard £20.00 · plus No cap/)).toBeInTheDocument();
+    const tiers = screen.getByRole('table', { name: 'Organisation caps by plan tier' });
+    const basic = within(tiers).getByRole('row', { name: /basic/i });
+    expect(basic).toHaveTextContent('£5.00env override');
+    expect(basic).toHaveTextContent('£40.00default');
+    expect(within(tiers).getByRole('row', { name: /plus/i })).toHaveTextContent(
+      'No capdisabled by env',
+    );
+    expect(within(tiers).getByRole('row', { name: /enterprise/i })).toHaveTextContent(
+      '£3,000.00default',
+    );
+    expect(
+      within(screen.getByRole('list', { name: 'Organisation spend this month' })).getByText(
+        '£120.00',
+      ),
+    ).toBeInTheDocument();
     const projects = screen.getByRole('list', { name: 'Projects near their budget' });
     expect(within(projects).getByRole('link', { name: 'Autumn launch' })).toHaveAttribute(
       'href',
@@ -80,6 +107,7 @@ describe('CostCapsPanel', () => {
           ...body,
           caps: { ...body.caps, globalDaily: { capPence: null, spentPence: 0, percent: null } },
           organisations: [],
+          organisationsThisMonth: [],
           projects: [],
           recentAlerts: [],
         },
@@ -88,6 +116,7 @@ describe('CostCapsPanel', () => {
     renderWithSWR(<CostCapsPanel />);
     expect(await screen.findByText('No cost alerts.')).toBeInTheDocument();
     expect(screen.getByText('No provider spend today.')).toBeInTheDocument();
+    expect(screen.getByText('No provider spend this month.')).toBeInTheDocument();
     expect(screen.getByText('£0.00 / No cap')).toBeInTheDocument();
     expect(screen.queryByRole('meter')).not.toBeInTheDocument();
   });

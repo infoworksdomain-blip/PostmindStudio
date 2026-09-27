@@ -160,17 +160,24 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
     expect(h.audits.map((a) => a.action)).toContain('studio.publication.published');
   });
 
-  it('uses Engagement (Meta) credentials for Instagram with the platformAccountId', async () => {
+  it('uses Core-registered Meta credentials for Instagram with the platformAccountId', async () => {
     const { render } = await approvedRender();
+    const unregistered = await publish({
+      renderId: render.id,
+      platform: 'instagram_reel',
+      platformAccountId: 'ig-unknown',
+    });
+    expect(unregistered.status).toBe(400);
+    const ig = await connection('instagram');
     const res = await publish({
       renderId: render.id,
       platform: 'instagram_reel',
-      platformAccountId: 'ig-123',
+      platformAccountId: ig.platformAccountId,
       caption: 'Reel time',
     });
     expect(res.status).toBe(202);
     await drainInline(h.queue, h.deps);
-    expect(h.publishers.instagram_reel.published[0]?.accountId).toBe('ig-123');
+    expect(h.publishers.instagram_reel.published[0]?.accountId).toBe(ig.platformAccountId);
     expect(h.publishers.instagram_reel.published[0]?.accessToken).toBe('meta-token');
   });
 

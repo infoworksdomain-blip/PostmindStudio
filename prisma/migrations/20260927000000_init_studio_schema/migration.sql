@@ -491,7 +491,6 @@ CREATE TABLE "studio"."video_library_analysis" (
 CREATE TABLE "studio"."video_library_embeddings" (
     "id" TEXT NOT NULL,
     "libraryItemId" TEXT NOT NULL,
-    "embedding" vector(1536) NOT NULL,
     "embeddingModel" TEXT NOT NULL,
     "visualWeight" DOUBLE PRECISION NOT NULL DEFAULT 0.4,
     "audioWeight" DOUBLE PRECISION NOT NULL DEFAULT 0.3,
@@ -669,7 +668,6 @@ CREATE TABLE "studio"."image_library" (
     "altText" TEXT,
     "fingerprint" TEXT NOT NULL,
     "generatedFromPrompt" TEXT,
-    "embedding" vector(1536),
     "licenseNotes" TEXT,
     "lastUsedAt" TIMESTAMP(3),
     "useCount" INTEGER NOT NULL DEFAULT 0,
@@ -860,3 +858,15 @@ ALTER TABLE "studio"."video_library_licenses" ADD CONSTRAINT "video_library_lice
 
 -- AddForeignKey
 ALTER TABLE "studio"."text_overlays" ADD CONSTRAINT "text_overlays_shotId_fkey" FOREIGN KEY ("shotId") REFERENCES "studio"."video_shots"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- pgvector columns. The extension may live in "studio" (installed by 00000000000000_enable_pgvector)
+-- or in another schema such as "public" (installed earlier by PostMind Core on the shared cluster).
+-- search_path is pinned to "studio", so the type is qualified with the schema it actually lives in.
+DO $$
+DECLARE vs text;
+BEGIN
+  SELECT n.nspname INTO vs FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace WHERE e.extname = 'vector';
+  IF vs IS NULL THEN RAISE EXCEPTION 'pgvector extension is not installed'; END IF;
+  EXECUTE format('ALTER TABLE "studio"."video_library_embeddings" ADD COLUMN "embedding" %I.vector(1536) NOT NULL', vs);
+  EXECUTE format('ALTER TABLE "studio"."image_library" ADD COLUMN "embedding" %I.vector(1536)', vs);
+END $$;

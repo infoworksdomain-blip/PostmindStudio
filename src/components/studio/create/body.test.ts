@@ -100,13 +100,19 @@ describe('templates and auto-publish', () => {
         ...base,
         platforms: ['tiktok', 'x', 'facebook'],
         autoPublish: true,
-        autoPublishAccounts: { tiktok: 'conn-1', facebook: 'ignored' },
+        autoPublishAccounts: { tiktok: 'conn-1', facebook: 'conn-fb' },
       },
       'biz',
       null,
     );
     expect(body.publishPolicy).toBe('AUTO_ON_APPROVAL');
-    expect(body.autoPublish).toEqual({ targets: [{ platform: 'tiktok', connectionId: 'conn-1' }] });
+    // X has no account chosen, so it is left out; Facebook uses its Core-registered connection.
+    expect(body.autoPublish).toEqual({
+      targets: [
+        { platform: 'tiktok', connectionId: 'conn-1' },
+        { platform: 'facebook', connectionId: 'conn-fb' },
+      ],
+    });
   });
 
   it('auto-publish needs at least one account', () => {

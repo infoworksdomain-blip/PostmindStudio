@@ -118,12 +118,16 @@ describe('CreateScreen — templates and auto-publish', () => {
     });
   });
 
-  it('explains that Instagram cannot be auto-published yet', async () => {
+  it('offers Instagram auto-publish and points to PostMind settings when none is connected', async () => {
     mockFetch(routes());
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
     await userEvent.click(screen.getByLabelText(/Auto-publish when approved/));
-    expect(screen.getByText(/not available for auto-publish yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/not available for auto-publish/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Instagram Reels account')).toBeDisabled();
+    expect(
+      screen.getByText(/Connect Instagram and Facebook in PostMind settings/),
+    ).toBeInTheDocument();
   });
 });

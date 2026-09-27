@@ -42,6 +42,12 @@ export class ValidationError extends StudioError {
   readonly code = 'validation_error';
 }
 
+/** The request body is larger than the endpoint accepts. */
+export class PayloadTooLargeError extends StudioError {
+  readonly status = 413;
+  readonly code = 'payload_too_large';
+}
+
 export class RateLimitError extends StudioError {
   readonly status = 429;
   readonly code = 'rate_limited';
@@ -126,12 +132,12 @@ export class NoProviderAvailableError extends StudioError {
   readonly code = 'no_provider_available';
 }
 
-export type CostCapScope = 'project' | 'org_daily' | 'global_daily';
+export type CostCapScope = 'project' | 'org_daily' | 'org_monthly' | 'global_daily';
 
 /**
  * Spec 12.5 — generation is paused by a cost cap: the project reached 90% of costBudgetPence,
- * or the organisation's / platform's daily cap is spent. Not retryable: the cap has to be
- * raised (or the day roll over) and the project regenerated.
+ * or the organisation's daily / monthly or the platform's daily cap is spent. Not retryable: the
+ * cap has to be raised (or the day / month roll over) and the project regenerated.
  */
 export class CostCapPausedError extends StudioError {
   readonly status = 409;

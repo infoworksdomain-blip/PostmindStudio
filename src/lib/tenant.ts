@@ -16,6 +16,8 @@ const JWKS_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
 const CONTEXT_CACHE_MAX_ENTRIES = 10_000;
 const UPSTREAM_TIMEOUT_MS = 5_000;
+/** Signing algorithms accepted from PostMind Core (operator-confirmed 2026-09-27). */
+export const JWT_ALGORITHMS = ['RS256'];
 const CLOCK_TOLERANCE_SEC = 5;
 
 // ASSUMED CONTRACT — the specs name the endpoint but not its response body. This schema
@@ -134,6 +136,9 @@ export function createTenantResolver(deps: TenantResolverDeps): TenantResolver {
   async function verify(token: string): Promise<z.infer<typeof claimsSchema>> {
     try {
       const { payload } = await jwtVerify(token, deps.jwks, {
+        // Operator-confirmed: PostMind Core signs with RS256. Anything else (HS*, none, other
+        // asymmetric algs) is rejected before the key is even looked up.
+        algorithms: JWT_ALGORITHMS,
         issuer: deps.issuer,
         audience: deps.audience,
         clockTolerance: CLOCK_TOLERANCE_SEC,

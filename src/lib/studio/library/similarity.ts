@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { NotFoundError, ProviderError } from '../../errors';
 import { vectorLiteral } from '../images/ingest';
+import { vectorSql } from '../vector-sql';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
 import type { PlanTier } from '../providers/router';
@@ -23,13 +24,14 @@ export async function similarVideos(
   libraryItemId: string,
   limit: number,
 ): Promise<SimilarHit[]> {
+  const v = await vectorSql(db);
   const rows = await db.$queryRaw<Array<{ id: string; distance: number }>>`
-    SELECT l.id, (e.embedding <=> src.embedding)::float8 AS distance
+    SELECT l.id, (e.embedding ${v.distance} src.embedding)::float8 AS distance
     FROM studio.video_library_embeddings e
     JOIN studio.video_library l ON l.id = e."libraryItemId"
     JOIN studio.video_library_embeddings src ON src."libraryItemId" = ${libraryItemId}
     WHERE l."retiredAt" IS NULL AND l.id <> ${libraryItemId}
-    ORDER BY e.embedding <=> src.embedding
+    ORDER BY e.embedding ${v.distance} src.embedding
     LIMIT ${limit}`;
   if (rows.length === 0) {
     const exists = await db.videoLibraryItem.findFirst({
@@ -92,13 +94,14 @@ export async function recommendedVideos(
     throw new ProviderError('embedding', 'unknown', 'Embedding had the wrong shape', true);
   const literal = vectorLiteral(vector);
   const prefix = options.categorySlug ? `${options.categorySlug.replace(/[%_\\]/g, '')}%` : '%';
+  const v = await vectorSql(deps.db);
   const rows = await deps.db.$queryRaw<Array<{ id: string; distance: number }>>`
-    SELECT l.id, (e.embedding <=> ${literal}::vector)::float8 AS distance
+    SELECT l.id, (e.embedding ${v.distance} ${literal}${v.cast})::float8 AS distance
     FROM studio.video_library_embeddings e
     JOIN studio.video_library l ON l.id = e."libraryItemId"
     JOIN studio.video_library_categories c ON c.id = l."categoryId"
     WHERE l."retiredAt" IS NULL AND c.slug LIKE ${prefix}
-    ORDER BY e.embedding <=> ${literal}::vector
+    ORDER BY e.embedding ${v.distance} ${literal}${v.cast}
     LIMIT ${options.limit}`;
   return rows.map((r) => ({ id: r.id, similarity: round(r.distance) }));
 }

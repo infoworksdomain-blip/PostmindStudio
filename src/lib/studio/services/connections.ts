@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { NotFoundError, ValidationError } from '../../errors';
+import { ConflictError, NotFoundError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import type { DataKeyProvider } from '../crypto/envelope';
 import {
@@ -10,9 +10,11 @@ import {
   type OAuthPlatform,
 } from '../platforms/oauth';
 import type { OAuthPending, OAuthStateStore } from '../platforms/oauth-state';
+import { META_CHANNEL_PLATFORMS } from '../platforms/meta-credentials';
 import { sealTokens } from '../platforms/tokens';
 
-// Platform connections (spec 8.6, BACKLOG 5.8): OAuth for TikTok, YouTube, X and LinkedIn.
+// Platform connections (spec 8.6, BACKLOG 5.8): OAuth for TikTok, YouTube, X and LinkedIn; the
+// list also includes the Instagram / Facebook channels PostMind Core registered (meta-channels.ts).
 // Tokens are envelope-encrypted before they touch the database and never leave the service.
 
 export const oauthInitInput = z.object({
@@ -139,8 +141,20 @@ export async function completeOAuth(
   };
 }
 
-/** Disconnect: tokens are wiped (not just flagged) so nothing usable remains at rest. */
+/**
+ * Disconnect: tokens are wiped (not just flagged) so nothing usable remains at rest. Instagram /
+ * Facebook channels belong to PostMind Core (it registered them and refreshes their tokens), so
+ * they are disconnected in PostMind settings, which calls DELETE /api/studio/internal/channels.
+ */
 export async function disconnect(db: PrismaClient, organisationId: string, id: string) {
+  const meta = await db.platformConnection.findFirst({
+    where: { id, organisationId, platform: { in: [...META_CHANNEL_PLATFORMS] } },
+    select: { id: true },
+  });
+  if (meta)
+    throw new ConflictError(
+      'Instagram and Facebook accounts are disconnected in PostMind settings, not in Studio',
+    );
   const updated = await db.platformConnection.updateMany({
     where: { id, organisationId },
     data: {

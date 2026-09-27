@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
 import { PLATFORM_LABEL } from '@/lib/client/format';
 import type { PlatformConnection, ProjectDetail, Render } from '@/lib/client/types';
+import { belongsToBusiness, isMetaPlatform, META_CONNECT_GUIDANCE } from '../connections/platforms';
 import { Field, NativeSelect } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
 
@@ -42,10 +43,7 @@ export function connectionsFor(
   const platform = RENDER_CONNECTION[render.targetPlatform];
   if (!platform) return [];
   return connections.filter(
-    (c) =>
-      c.platform === platform &&
-      c.state === 'active' &&
-      (!businessId || c.businessId === businessId),
+    (c) => c.platform === platform && c.state === 'active' && belongsToBusiness(c, businessId),
   );
 }
 
@@ -132,7 +130,7 @@ export function PublishPanel({
           const label = PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform;
           const options = connectionsFor(render, connections, businessId);
           const d = draftFor(render);
-          const studioPlatform = Boolean(RENDER_CONNECTION[render.targetPlatform]);
+          const connectionPlatform = RENDER_CONNECTION[render.targetPlatform] ?? '';
           return (
             <li key={render.id} className="rounded-lg border border-border p-3">
               <label className="flex items-center gap-2 text-sm font-medium">
@@ -144,20 +142,21 @@ export function PublishPanel({
                 />
                 {label}
               </label>
-              {!studioPlatform && (
+              {options.length === 0 && isMetaPlatform(connectionPlatform) && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {label} publishes through PostMind Engagement’s Meta account, which Studio can’t
-                  select yet.
+                  No connected account. {META_CONNECT_GUIDANCE}
                 </p>
               )}
-              {studioPlatform && options.length === 0 && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  No connected account.{' '}
-                  <Link href="/connections" className="underline">
-                    Connect {label}
-                  </Link>
-                </p>
-              )}
+              {options.length === 0 &&
+                connectionPlatform &&
+                !isMetaPlatform(connectionPlatform) && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    No connected account.{' '}
+                    <Link href="/connections" className="underline">
+                      Connect {label}
+                    </Link>
+                  </p>
+                )}
               {options.length > 0 && d.enabled && (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <Field id={`acct-${render.id}`} label="Account">

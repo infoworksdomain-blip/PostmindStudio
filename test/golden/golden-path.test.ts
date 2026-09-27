@@ -226,6 +226,9 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
     const id = await createProject(
       j,
       briefBody({
+        // Three renders cost more than the £3.50 short-form default budget with the harness's
+        // scripted prices; this journey is about formats, not budgets.
+        costBudgetPence: 10_000,
         targetFormats: [
           { platform: 'tiktok', aspectRatio: '9:16', durationSec: 15 },
           { platform: 'youtube_short', aspectRatio: '9:16', durationSec: 15 },
@@ -247,6 +250,8 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
     const byPlatform = new Map(renders.map((r) => [r.targetPlatform, r.id]));
     const tiktok = await connect(j, 'tiktok');
     const youtube = await connect(j, 'youtube');
+    // Instagram: a channel PostMind Core registered (POST /api/studio/internal/channels).
+    const instagram = await connect(j, 'instagram');
     const ids = [
       await publish(j, {
         renderId: byPlatform.get('tiktok'),
@@ -262,14 +267,14 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
       await publish(j, {
         renderId: byPlatform.get('instagram_reel'),
         platform: 'instagram_reel',
-        platformAccountId: 'ig-golden',
+        platformAccountId: instagram.platformAccountId,
         caption: 'Reel time',
       }),
     ];
     await drain(j);
     for (const pubId of ids) expect((await getPublication(j, pubId)).state).toBe('PUBLISHED');
     expect(j.h.publishers.instagram_reel.published[0]).toMatchObject({
-      accountId: 'ig-golden',
+      accountId: instagram.platformAccountId,
       accessToken: 'meta-token',
     });
     expect((await getProject(j, id)).state).toBe('PUBLISHED');

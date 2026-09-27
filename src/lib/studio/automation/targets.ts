@@ -18,9 +18,9 @@ export const MAX_AUTO_PUBLISH_TARGETS = 10;
 export const autoPublishTarget = z
   .object({
     platform: z.enum(PLATFORMS),
-    /** Studio platform connection (TikTok, YouTube, X, LinkedIn). */
+    /** platform_connections id (Instagram / Facebook rows are registered by PostMind Core). */
     connectionId: z.string().trim().min(1).max(64).optional(),
-    /** Engagement channel account id (Instagram / Facebook). */
+    /** Instagram / Facebook alternative: the Meta account id of a Core-registered channel. */
     platformAccountId: z.string().trim().min(1).max(128).optional(),
     caption: z.string().max(2_200).optional(),
     hashtags: z.array(z.string().max(100)).max(30).optional(),
@@ -36,11 +36,11 @@ export const autoPublishTarget = z
         path: ['connectionId'],
         message: `${t.platform} needs a connectionId`,
       });
-    if (rules.credentials === 'meta' && !t.platformAccountId)
+    if (rules.credentials === 'meta' && !t.connectionId && !t.platformAccountId)
       ctx.addIssue({
         code: 'custom',
-        path: ['platformAccountId'],
-        message: `${t.platform} needs the Engagement platformAccountId`,
+        path: ['connectionId'],
+        message: `${t.platform} needs a connectionId or platformAccountId`,
       });
   });
 

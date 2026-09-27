@@ -11,7 +11,13 @@ import type { AspectRatio } from '../providers/interface';
 export const OUTPUT_FPS = 30;
 export const OUTPUT_RESOLUTION = '1080';
 const VOICE_VOLUME = 1;
-const MUSIC_VOLUME = 0.2; // sits under narration (spec 5.6: composition ducks music)
+// Music bed levels (spec 5.6 "composition ducks music"). Shotstack AudioAsset `volume` is 0–1
+// and `effect` is fadeIn | fadeOut | fadeInFadeOut; a clip plays "until the file ends or the
+// Clip length is reached" (https://shotstack.io/docs/api/#tocs_audioasset, read 2026-09-27).
+// 0.2 ≈ −14 dB under narration; 0.7 ≈ −3 dB when music is the only audio (slideshows),
+// keeping the mix inside the quality gate's −18…−10 LUFS window (quality-checks.ts).
+export const MUSIC_UNDER_VOICE_VOLUME = 0.2;
+export const MUSIC_ALONE_VOLUME = 0.7;
 const CAPTION_HEIGHT_RATIO = 0.18;
 
 /** Pixel size of a "1080" render per aspect ratio (Shotstack scales the short side to 1080). */
@@ -53,6 +59,8 @@ export interface EdlInput {
   aspectRatio: AspectRatio;
   shots: EdlShot[];
   musicSrc?: string;
+  /** Length of the music file; a shorter track is looped to cover the video. */
+  musicDurationSec?: number;
   brand?: { backgroundColour?: string; textColour?: string; fontFamily?: string };
 }
 
@@ -86,6 +94,34 @@ export function roundSec(value: number): number {
 
 export function totalDuration(shots: EdlShot[]): number {
   return roundSec(shots.reduce((sum, s) => sum + s.durationSec, 0));
+}
+
+/**
+ * The music track's clips: one clip trimmed to the video when the track is long enough,
+ * otherwise the track repeated back to back (ElevenLabs Music is capped at 5 minutes). The
+ * last clip fades out, so the video never ends on a hard cut of the music.
+ */
+export function musicClips(input: {
+  src: string;
+  trackSec?: number;
+  videoSec: number;
+  volume: number;
+}): Record<string, unknown>[] {
+  const loop = input.trackSec && input.trackSec > 0 ? input.trackSec : input.videoSec;
+  const clips: Record<string, unknown>[] = [];
+  for (let at = 0; at < input.videoSec - 0.001; at += loop) {
+    clips.push({
+      asset: { type: 'audio', src: input.src, volume: input.volume },
+      start: roundSec(at),
+      length: roundSec(Math.min(loop, input.videoSec - at)),
+    });
+  }
+  const last = clips.at(-1);
+  if (last) {
+    const asset = last.asset as Record<string, unknown>;
+    clips[clips.length - 1] = { ...last, asset: { ...asset, effect: 'fadeOut' } };
+  }
+  return clips;
 }
 
 export function buildShotstackEdit(input: EdlInput): Record<string, unknown> {
@@ -171,13 +207,12 @@ export function buildShotstackEdit(input: EdlInput): Record<string, unknown> {
   if (voice.length) tracks.push({ clips: voice });
   if (input.musicSrc) {
     tracks.push({
-      clips: [
-        {
-          asset: { type: 'audio', src: input.musicSrc, volume: MUSIC_VOLUME },
-          start: 0,
-          length: roundSec(start),
-        },
-      ],
+      clips: musicClips({
+        src: input.musicSrc,
+        trackSec: input.musicDurationSec,
+        videoSec: roundSec(start),
+        volume: voice.length ? MUSIC_UNDER_VOICE_VOLUME : MUSIC_ALONE_VOLUME,
+      }),
     });
   }
 

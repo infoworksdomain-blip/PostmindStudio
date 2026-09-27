@@ -125,7 +125,7 @@ groups:
       - alert: StudioCostCapReached
         expr: |
           sum by (scope) (
-            increase(studio_cost_alerts_total{scope=~"project|org_daily|org_provider_daily",threshold=~"90|100"}[15m])
+            increase(studio_cost_alerts_total{scope=~"project|org_daily|org_monthly|org_provider_daily",threshold=~"90|100"}[15m])
           ) > 0
         labels:
           severity: ticket

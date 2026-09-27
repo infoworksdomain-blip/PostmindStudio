@@ -1,4 +1,5 @@
 import type { PlatformConnection } from '@/lib/client/types';
+import { belongsToBusiness } from '../connections/platforms';
 
 // Client view of review/publish automation (services/templates.ts, automation/*.ts). Pure helpers
 // so the Create and Review screens' rules are unit-tested without rendering.
@@ -56,13 +57,15 @@ export interface AutoPublishResult {
   error?: string;
 }
 
-/** Render platforms Studio can auto-publish itself → the connection platform they need. */
+/** Render platforms → the connection platform they publish through (IG/FB: Core-registered). */
 export const AUTO_PUBLISH_CONNECTION: Record<string, string> = {
   tiktok: 'tiktok',
   youtube_short: 'youtube',
   youtube: 'youtube',
   linkedin_video: 'linkedin',
   x: 'x',
+  instagram_reel: 'instagram',
+  facebook: 'facebook',
 };
 
 const record = (v: unknown): Record<string, unknown> | null =>
@@ -107,8 +110,7 @@ export function connectionsFor(
   const needed = AUTO_PUBLISH_CONNECTION[platform];
   if (!needed) return [];
   return (connections ?? []).filter(
-    (c) =>
-      c.platform === needed && c.state === 'active' && (!businessId || c.businessId === businessId),
+    (c) => c.platform === needed && c.state === 'active' && belongsToBusiness(c, businessId),
   );
 }
 

@@ -17,7 +17,7 @@ export interface CreateState {
   templateId: string | null;
   targetAudience: string;
   callToAction: string;
-  /** Pounds as typed; blank = no cap. */
+  /** Pounds as typed; blank = the server's default budget (cost/project-budget.ts). */
   budgetPounds: string;
   reviewPolicy: ReviewPolicy | '';
   /** Project template (spec 8.6): its formats replace the platform/length choice. */

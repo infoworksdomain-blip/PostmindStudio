@@ -3,7 +3,7 @@ import { requireEnv } from '../../env';
 import { auditLog } from '../../audit';
 import { logger } from '../../logger';
 import { lazyDataKeyProvider } from '../crypto/envelope';
-import { unavailableMetaCredentials } from '../platforms/meta';
+import { createStoredMetaCredentials } from '../platforms/meta-credentials';
 import { oauthClientFromEnv } from '../platforms/oauth';
 import { createMetricsRegistry } from '../analytics/fetchers';
 import { stockSourcesFromEnv } from '../images/stock';
@@ -24,6 +24,8 @@ import type { JobQueue } from '../queue/enqueue';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { DEFAULT_PIPELINE_TIMING, type PipelineDeps } from './deps';
 import { createFfmpegInspector } from './media-probe';
+import { parseMusicMinTier } from './music';
+import { parseCorpusBuckets } from '../library/corpus-source';
 
 // Production wiring for pipeline processors (workers and scripts).
 
@@ -31,6 +33,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
   const breaker = getCircuitBreaker();
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   const storage = getAssetStorage();
+  const keys = lazyDataKeyProvider();
   const killSwitch = createKillSwitch({ store: createPrismaFlagStore(input.db) });
   const caps = costCapsFromEnv();
   const notifier = createNotifier({ db: input.db, logger });
@@ -61,7 +64,9 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       rendersBucket: requireEnv('S3_BUCKET_RENDERS'),
       defaultVoiceId: process.env.ELEVENLABS_DEFAULT_VOICE_ID?.trim() || undefined,
       fontsBaseUrl: process.env.STUDIO_FONTS_BASE_URL?.trim() || undefined,
+      musicMinTier: parseMusicMinTier(process.env.STUDIO_MUSIC_MIN_TIER),
       libraryBucket: process.env.S3_BUCKET_LIBRARY?.trim() || undefined,
+      corpusS3Buckets: parseCorpusBuckets(process.env.STUDIO_CORPUS_S3_BUCKETS),
       ...DEFAULT_PIPELINE_TIMING,
     },
     fetch: globalThis.fetch,
@@ -70,6 +75,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     metrics: createMetricsRegistry({
       fetchImpl: globalThis.fetch,
       linkedInEnabled: process.env.LINKEDIN_POST_ANALYTICS === 'enabled',
+      graphVersion: process.env.META_GRAPH_API_VERSION?.trim() || undefined,
     }),
     scan: {
       pageFetch: guardedFetch,
@@ -89,8 +95,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
         now: Date.now,
         graphVersion: process.env.META_GRAPH_API_VERSION?.trim() || undefined,
       }),
-      meta: unavailableMetaCredentials,
-      keys: lazyDataKeyProvider(),
+      meta: createStoredMetaCredentials({ db: input.db, keys, now: Date.now }),
+      keys,
       oauth: (platform) => oauthClientFromEnv(platform),
       storage,
       engagement: createEngagementClient({

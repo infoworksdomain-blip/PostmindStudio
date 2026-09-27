@@ -11,13 +11,16 @@ import {
 const tiktok = { platform: 'tiktok' as const, connectionId: 'conn-tt' };
 
 describe('autoPublishTarget', () => {
-  it('needs a connectionId for Studio platforms and an Engagement account for Meta', () => {
+  it('needs a connectionId for Studio platforms and a connection or account id for Meta', () => {
     expect(autoPublishTarget.safeParse(tiktok).success).toBe(true);
     expect(autoPublishTarget.safeParse({ platform: 'tiktok' }).success).toBe(false);
     expect(autoPublishTarget.safeParse({ platform: 'facebook' }).success).toBe(false);
     expect(
       autoPublishTarget.safeParse({ platform: 'instagram_reel', platformAccountId: 'ig-1' })
         .success,
+    ).toBe(true);
+    expect(
+      autoPublishTarget.safeParse({ platform: 'facebook', connectionId: 'conn-fb' }).success,
     ).toBe(true);
   });
 

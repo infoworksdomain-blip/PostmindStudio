@@ -126,8 +126,9 @@ export interface ProjectDetail extends Project {
 
 export interface PlatformConnection {
   id: string;
-  businessId: string;
-  platform: 'tiktok' | 'youtube' | 'x' | 'linkedin';
+  /** null: an organisation-wide Meta channel registered by PostMind Core. */
+  businessId: string | null;
+  platform: 'tiktok' | 'youtube' | 'x' | 'linkedin' | 'instagram' | 'facebook';
   platformAccountId: string;
   platformAccountName: string;
   accessTokenExpiresAt: string | null;

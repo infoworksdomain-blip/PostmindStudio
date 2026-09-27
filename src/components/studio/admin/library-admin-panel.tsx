@@ -12,6 +12,7 @@ import { selectClass } from '../library/library-filters';
 import { flattenCategories } from '../library/library-utils';
 import type { CategoryNode, LibraryVideoSummary, ListResponse } from '../library/types';
 import { IngestForm } from './ingest-form';
+import { IngestStatus } from './ingest-status';
 import { LibraryEditDialog } from './library-edit-dialog';
 import { ConfirmDialog } from './confirm-dialog';
 
@@ -51,6 +52,7 @@ export function LibraryAdminPanel() {
   return (
     <div className="grid gap-6">
       <IngestForm categories={categories} />
+      <IngestStatus />
       <Section
         title="Live corpus"
         description="Retired items are hidden from search but kept for projects that used them."

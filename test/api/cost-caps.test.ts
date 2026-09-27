@@ -13,9 +13,16 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 
 type Caps = {
   day: string;
+  month: string;
   caps: {
     globalDaily: { capPence: number | null; spentPence: number; percent: number | null };
     orgDailyByTier: Record<string, number | null>;
+    orgMonthlyByTier: Record<string, number | null>;
+    sources: {
+      globalDaily: string;
+      orgDailyByTier: Record<string, string>;
+      orgMonthlyByTier: Record<string, string>;
+    };
     orgProviderDaily: number | null;
     projectPausePercent: number;
   };
@@ -24,6 +31,7 @@ type Caps = {
     spentPence: number;
     providers: Array<{ provider: string; spentPence: number; percentOfCap: number | null }>;
   }>;
+  organisationsThisMonth: Array<{ organisationId: string; spentPence: number }>;
   projects: Array<{ id: string; percent: number; paused: boolean }>;
   recentAlerts: Array<{ scope: string; scopeId: string; threshold: number }>;
 };
@@ -45,6 +53,8 @@ describe.skipIf(!hasDb)('admin cost caps API', { timeout: 60_000 }, () => {
     vi.stubEnv('STUDIO_GLOBAL_DAILY_CAP_PENCE', '100000000');
     vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_BASIC', '500');
     vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_PLUS', '');
+    vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_ENTERPRISE', 'none');
+    vi.stubEnv('STUDIO_ORG_MONTHLY_CAP_PENCE_STANDARD', '20000');
     vi.stubEnv('STUDIO_ORG_PROVIDER_DAILY_CAP_PENCE', '1000');
     const day = utcDay(new Date());
     await db.providerUsage.createMany({
@@ -101,12 +111,36 @@ describe.skipIf(!hasDb)('admin cost caps API', { timeout: 60_000 }, () => {
     expect(res.status).toBe(200);
     const body = res.json as unknown as Caps;
     expect(body.day).toBe(new Date().toISOString().slice(0, 10));
+    expect(body.month).toBe(new Date().toISOString().slice(0, 7));
+    // Env override, code defaults (unset / blank) and an explicit "none".
     expect(body.caps.orgDailyByTier).toEqual({
       BASIC: 500,
-      STANDARD: null,
-      PLUS: null,
+      STANDARD: 3_000,
+      PLUS: 7_500,
       ENTERPRISE: null,
     });
+    expect(body.caps.orgMonthlyByTier).toEqual({
+      BASIC: 4_000,
+      STANDARD: 20_000,
+      PLUS: 45_000,
+      ENTERPRISE: 300_000,
+    });
+    expect(body.caps.sources).toEqual({
+      globalDaily: 'env',
+      orgDailyByTier: {
+        BASIC: 'env',
+        STANDARD: 'default',
+        PLUS: 'default',
+        ENTERPRISE: 'disabled',
+      },
+      orgMonthlyByTier: {
+        BASIC: 'default',
+        STANDARD: 'env',
+        PLUS: 'default',
+        ENTERPRISE: 'default',
+      },
+    });
+    expect(body.organisationsThisMonth).toContainEqual({ organisationId: org, spentPence: 950 });
     expect(body.caps.orgProviderDaily).toBe(1000);
     expect(body.caps.projectPausePercent).toBe(90);
     expect(body.caps.globalDaily.capPence).toBe(100_000_000);

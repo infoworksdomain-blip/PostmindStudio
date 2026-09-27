@@ -2,17 +2,31 @@
 
 import { ChevronDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { PLATFORM_LABEL } from '@/lib/client/format';
+import { formatPence, PLATFORM_LABEL } from '@/lib/client/format';
 import type { BrandKit } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { Field, NativeSelect } from '../review/field';
 import type { CreateState, ReviewPolicy } from './body';
-import { PLATFORM_OPTIONS, type Length } from './formats';
+import {
+  DEFAULT_LONG_FORM_BUDGET_PENCE,
+  DEFAULT_SHORT_FORM_BUDGET_PENCE,
+  defaultProjectBudgetPence,
+} from '@/lib/studio/cost/project-budget';
+import { buildFormats, PLATFORM_OPTIONS, type Length } from './formats';
 
 // The three low-friction defaults (platforms, length, brand kit) plus the collapsed advanced
 // options of spec 14.1. Everything here has a sensible default, so Generate works untouched.
 
 type Patch = (patch: Partial<CreateState>) => void;
+
+/** The budget the server applies when the field is left blank (cost/project-budget.ts). A
+ *  template's formats are only known server-side, so its placeholder names both defaults. */
+function budgetPlaceholder(state: CreateState): string {
+  if (state.projectTemplate) {
+    return `Default ${formatPence(DEFAULT_SHORT_FORM_BUDGET_PENCE)} / ${formatPence(DEFAULT_LONG_FORM_BUDGET_PENCE)}`;
+  }
+  return `Default ${formatPence(defaultProjectBudgetPence(buildFormats(state.platforms, state.length)))}`;
+}
 
 function Chip({
   checked,
@@ -152,13 +166,17 @@ export function AdvancedOptions({
               placeholder="e.g. Book a free consultation"
             />
           </Field>
-          <Field id="create-budget" label="Budget cap (£)" hint="Generation stops at this spend.">
+          <Field
+            id="create-budget"
+            label="Budget cap (£)"
+            hint={`Generation pauses at 90% of this; you can raise it on the project page. Blank = ${formatPence(DEFAULT_SHORT_FORM_BUDGET_PENCE)} for short videos, ${formatPence(DEFAULT_LONG_FORM_BUDGET_PENCE)} for long-form (over 3 minutes, or YouTube over 1 minute).`}
+          >
             <Input
               id="create-budget"
               inputMode="decimal"
               value={state.budgetPounds}
               onChange={(e) => onChange({ budgetPounds: e.target.value })}
-              placeholder="No cap"
+              placeholder={budgetPlaceholder(state)}
             />
           </Field>
           <Field id="create-review" label="Approval">

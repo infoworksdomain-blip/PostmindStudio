@@ -6,7 +6,10 @@ import type { Platform } from '../services/catalog';
 // a clear 400 instead of a failed publish.
 
 export interface PlatformRules {
-  /** Where Studio connects: 'studio' = Studio-owned OAuth (platform_connections); 'meta' = Engagement's Meta tokens. */
+  /**
+   * Where tokens come from: 'studio' = Studio-owned OAuth (refreshed by Studio); 'meta' = Meta
+   * channels PostMind Core registers and refreshes via /api/studio/internal (both in platform_connections).
+   */
   credentials: 'studio' | 'meta';
   /** Connection platform key in platform_connections. */
   connectionPlatform: string;

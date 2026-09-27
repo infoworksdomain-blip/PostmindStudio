@@ -26,6 +26,8 @@ export interface ApiDeps {
   idempotency: IdempotencyStore;
   /** Per-user / per-organisation request limits; absent = unlimited (tests). */
   rateLimiter?: RateLimiter;
+  /** Limit for PostMind Core's calls to /api/studio/internal/**; absent = unlimited (tests). */
+  internalRateLimiter?: RateLimiter;
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
@@ -91,6 +93,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
     rateLimiter: rateLimit.createRateLimiter(
       rateLimit.createRedisRateLimitStore(connection),
       rateLimit.rateLimitsFromEnv(),
+      { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
+    ),
+    internalRateLimiter: rateLimit.createRateLimiter(
+      rateLimit.createRedisRateLimitStore(connection),
+      rateLimit.internalRateLimitsFromEnv(),
       { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
     ),
     publishing: pipeline.publishing,

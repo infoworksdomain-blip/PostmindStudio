@@ -63,7 +63,10 @@ describe('PublishPanel', () => {
     expect(account).toHaveDisplayValue('@cafe');
     expect(screen.queryByText('@other')).not.toBeInTheDocument();
     expect(screen.getByText(/Connect YouTube Shorts/)).toBeInTheDocument();
-    expect(screen.getByText(/PostMind Engagement’s Meta account/)).toBeInTheDocument();
+    // No Instagram account registered: guidance points to PostMind settings, not an OAuth link.
+    expect(
+      screen.getByText(/Connect Instagram and Facebook in PostMind settings/),
+    ).toBeInTheDocument();
     expect(screen.queryByText('X')).not.toBeInTheDocument();
 
     await userEvent.clear(screen.getByLabelText('Caption'));
@@ -81,6 +84,37 @@ describe('PublishPanel', () => {
       hashtags: ['spring', 'food'],
     });
     expect(call?.headers['idempotency-key']).toBeTruthy();
+  });
+
+  it('offers an organisation-wide Instagram account registered by PostMind', async () => {
+    const api = mockFetch([
+      {
+        match: '/platform-connections',
+        body: {
+          ok: true,
+          data: [
+            {
+              id: 'c_ig',
+              businessId: null,
+              platform: 'instagram',
+              platformAccountId: '17841400000000001',
+              platformAccountName: '@cafe.ig',
+              state: 'active',
+            },
+          ],
+        },
+      },
+      { method: 'POST', match: '/publications', status: 202, body: { ok: true } },
+    ]);
+    renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
+    expect(await screen.findByLabelText('Account')).toHaveDisplayValue('@cafe.ig');
+    await userEvent.click(screen.getByRole('button', { name: /Publish now \(1\)/ }));
+    await waitFor(() => expect(api.find('POST', '/publications')).toHaveLength(1));
+    expect(api.find('POST', '/publications')[0]?.body).toMatchObject({
+      renderId: 'ren_3',
+      platform: 'instagram_reel',
+      connectionId: 'c_ig',
+    });
   });
 
   it('schedules when a time is set', async () => {
