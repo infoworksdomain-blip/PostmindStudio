@@ -17,8 +17,11 @@ import { createLocalKeyProvider } from '../../src/lib/studio/crypto/envelope';
 import type { MetaCredentialSource } from '../../src/lib/studio/platforms/meta';
 import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
 import type { EngagementClient } from '../../src/lib/studio/platforms/publishing';
+import type { StockImageSource } from '../../src/lib/studio/images/stock';
+import type { PageRenderer } from '../../src/lib/studio/scan/crawl';
 import { fakePublisherRegistry } from './fake-publishers';
 import { memoryStorage } from './memory-storage';
+import { fakeEmbedding, fakePng } from './png';
 import { ScriptedAdapter } from './scripted-adapter';
 
 // Wires the real pipeline (real Postgres via Prisma, real router/tracking/kill switch/budget)
@@ -71,6 +74,20 @@ export const SCRIPT_JSON = {
 
 export const SAFETY_ALLOW = { verdict: 'ALLOW', categories: [], reason: 'ordinary marketing' };
 
+export const PROFILE_JSON = {
+  industry: 'Food and drink — bakery',
+  subNiche: 'artisan sourdough subscriptions',
+  products: ['sourdough loaves', 'bread subscription'],
+  services: ['weekly delivery'],
+  audienceKeywords: ['Leeds professionals'],
+  toneIndicators: ['warm', 'crafted'],
+  regions: ['UK'],
+  imageThemes: ['bread', 'bakery', 'dough'],
+  searchQueries: ['sourdough bread', 'artisan bakery'],
+  restrictedTopics: [],
+  brandVoiceSummary: 'Warm and proud of the craft.',
+};
+
 function textResult(json: unknown): ProviderPollResult {
   return {
     state: 'succeeded',
@@ -86,6 +103,11 @@ export interface HarnessOptions {
   probe?: Partial<MediaProbe>;
   loudness?: number | null;
   hiveMaxScores?: Record<string, number>;
+  profile?: unknown;
+  /** Feature D: fetch used for website pages and images (defaults to the media fetch mock). */
+  pageFetch?: typeof fetch;
+  renderer?: PageRenderer;
+  stockSources?: StockImageSource[];
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -95,6 +117,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.ideation ?? IDEATION_JSON);
     if (request.system.includes('script and storyboard'))
       return textResult(options.script ?? SCRIPT_JSON);
+    if (request.system.includes('business-classification'))
+      return textResult(options.profile ?? PROFILE_JSON);
     return textResult(options.safety ?? SAFETY_ALLOW);
   });
   const runway = new ScriptedAdapter(
@@ -144,6 +168,37 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
   }));
 
   const { storage, objects } = memoryStorage();
+  let generated = 0;
+  const openai = new ScriptedAdapter('openai', ['embedding', 'text_to_image'], async (request) => {
+    if (request.capability === 'embedding') {
+      return {
+        state: 'succeeded',
+        output: {
+          metadata: { embeddings: request.input.map((t) => fakeEmbedding(t)), costPence: 1 },
+        },
+      };
+    }
+    if (request.capability !== 'text_to_image') throw new Error('unexpected');
+    generated += 1;
+    const stored = await storage.put({
+      bucket: 'assets',
+      key: `orgs/${request.organisationId}/generated-${generated}.png`,
+      body: fakePng(1024, 1024, 9_000 + generated),
+      contentType: 'image/png',
+    });
+    return {
+      state: 'succeeded',
+      output: {
+        url: stored.url,
+        metadata: {
+          s3Bucket: stored.bucket,
+          s3Key: stored.key,
+          model: 'scripted-image',
+          costPence: 4,
+        },
+      },
+    };
+  });
   const breaker = createCircuitBreaker();
   const killSwitch = createKillSwitch({ store: createPrismaFlagStore(db), ttlMs: 0 });
   const queue = new InlineJobQueue();
@@ -184,7 +239,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
   };
   const deps: PipelineDeps = {
     db,
-    registry: createProviderRegistry([anthropic, runway, elevenlabs, shotstack, hive]),
+    registry: createProviderRegistry([anthropic, runway, elevenlabs, shotstack, hive, openai]),
     breaker,
     killSwitch,
     budget: createPrismaBudgetChecker(db),
@@ -202,6 +257,12 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     },
     fetch: fetchImpl as unknown as typeof fetch,
     audit: (entry) => audits.push(entry),
+    scan: {
+      pageFetch: options.pageFetch ?? (fetchImpl as unknown as typeof fetch),
+      renderer: options.renderer,
+      stock: () => ({ primary: options.stockSources ?? [], fallback: [] }),
+      random: () => 0,
+    },
     publishing: {
       db,
       publishers,
@@ -229,7 +290,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     attributions,
     oauthClients,
     meta,
-    adapters: { anthropic, runway, elevenlabs, shotstack, hive },
+    adapters: { anthropic, runway, elevenlabs, shotstack, hive, openai },
     objects,
     media,
     fetchImpl,

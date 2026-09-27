@@ -93,9 +93,18 @@ describe('queue policy (spec 11)', () => {
     expect(jobIds.publishVideo(data, 2)).toBe('publish-video__pub__2');
     expect(jobIds.fireScheduled(data)).toBe('fire-scheduled__pub');
     expect(jobIds.generateAsset({ ...data, shotId: 's' })).toBe('generate-asset__s__r');
-    expect(Object.values(jobIds).every((f) => !f({ ...data, shotId: 's' }).includes(':'))).toBe(
-      true,
-    );
+    const business = {
+      organisationId: 'o',
+      businessId: 'b',
+      runId: 'r2',
+      planTier: 'BASIC' as const,
+    };
+    expect(jobIds.scanWebsite({ ...business, scanId: 'sc' })).toBe('scan-website__sc');
+    expect(jobIds.refreshImageLibrary(business)).toBe('refresh-image-library__b__r2');
+    const all = { ...data, shotId: 's', scanId: 'sc', businessId: 'b' };
+    expect(
+      Object.values(jobIds).every((f) => !(f as (d: typeof all) => string)(all).includes(':')),
+    ).toBe(true);
   });
 
   it('reads worker concurrency from env with spec defaults', () => {

@@ -11,7 +11,10 @@ import type { OAuthClient } from '../../src/lib/studio/platforms/oauth';
 import { createMemoryOAuthStateStore } from '../../src/lib/studio/platforms/oauth-state';
 import type { PublishingDeps } from '../../src/lib/studio/platforms/publishing';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
+import { libraryDepsFrom } from '../../src/lib/studio/images/library';
+import type { PipelineDeps } from '../../src/lib/studio/pipeline/deps';
 import { fakePublisherRegistry } from './fake-publishers';
+import { createHarness } from './pipeline-harness';
 import { InlineJobQueue } from '../../src/lib/studio/queue/enqueue';
 import type { TenantContext } from '../../src/lib/tenant';
 import { memoryStorage } from './memory-storage';
@@ -51,6 +54,8 @@ export interface InstallOptions {
   queue?: InlineJobQueue;
   /** Share a pipeline harness's publishing deps (publishers, keys, storage). */
   publishing?: PublishingDeps;
+  /** Pipeline deps backing the image library (provider router, storage, stock sources). */
+  pipeline?: PipelineDeps;
 }
 
 export function installApi(
@@ -95,6 +100,7 @@ export function installApi(
     idempotency: createMemoryIdempotencyStore(),
     publishing,
     oauthState,
+    library: libraryDepsFrom(options.pipeline ?? createHarness(db).deps),
     appUrl: APP_URL,
     logger: pino({ level: 'silent' }),
     now: Date.now,
@@ -141,16 +147,32 @@ export async function rawCall(
 ): Promise<Response> {
   const headers: Record<string, string> = { ...options.headers };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
-  if (options.body !== undefined) headers['content-type'] = 'application/json';
+  if (options.body !== undefined && !headers['content-type'])
+    headers['content-type'] = 'application/json';
   const req = new Request(`${APP_URL}${options.path ?? '/api/studio/test'}`, {
     method: options.method ?? 'GET',
     headers,
     body:
       options.body === undefined
         ? undefined
-        : typeof options.body === 'string'
-          ? options.body
+        : typeof options.body === 'string' || options.body instanceof Uint8Array
+          ? (options.body as BodyInit)
           : JSON.stringify(options.body),
   });
   return handler(req, { params: Promise.resolve(options.params ?? {}) });
+}
+
+/** Encode a FormData as a multipart body with explicit content-type and content-length. */
+export async function multipart(
+  form: FormData,
+): Promise<{ body: Uint8Array; headers: Record<string, string> }> {
+  const req = new Request('http://multipart.local', { method: 'POST', body: form });
+  const body = new Uint8Array(await req.arrayBuffer());
+  return {
+    body,
+    headers: {
+      'content-type': req.headers.get('content-type') ?? '',
+      'content-length': String(body.byteLength),
+    },
+  };
 }

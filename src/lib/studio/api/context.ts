@@ -3,6 +3,7 @@ import type { Logger } from 'pino';
 import { auditLog, type AuditEntry } from '../../audit';
 import { logger } from '../../logger';
 import type { TenantResolver } from '../../tenant';
+import type { LibraryDeps } from '../images/library';
 import type { OAuthStateStore } from '../platforms/oauth-state';
 import type { PublishingDeps } from '../platforms/publishing';
 import type { ProviderRegistry } from '../providers/registry';
@@ -24,6 +25,8 @@ export interface ApiDeps {
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
+  /** Feature D: image library (ingest, generation, embeddings, search). */
+  library: LibraryDeps;
   /** Public origin of Studio (OAuth return URLs must stay on it). */
   appUrl: string;
   logger: Logger;
@@ -45,6 +48,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     env,
     createDeps,
     oauthState,
+    library,
   ] = await Promise.all([
     import('../../prisma'),
     import('../../tenant'),
@@ -56,6 +60,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     import('../../env'),
     import('../pipeline/create-deps'),
     import('../platforms/oauth-state'),
+    import('../images/library'),
   ]);
   const connection = redis.redisConnectionFromEnv();
   const queue = enqueue.createBullJobQueue(connection);
@@ -71,6 +76,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     idempotency: idempotency.createRedisIdempotencyStore(connection),
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
+    library: library.libraryDepsFrom(pipeline),
     appUrl: env.requireEnv('APP_URL'),
     logger,
     now: Date.now,
