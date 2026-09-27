@@ -259,3 +259,28 @@ Plan, endpoint contracts and sample requests/responses: `plans/phase-13.md`. Wav
 - [x] **13.39** Sentiment signal for style memory (Engagement classifier API). Client contract shipped (NotImplemented); waiting for Engagement.
 
 **Wave C — staging and people** (closes 9.2, 9.3, 12.2, 12.3, 12.5, GATE 12): Core Meta wiring → alerting deployment → live provider/posting runs → rehearsals → k6 → PITR drill → corpus sample + full run → S3 lifecycle → beta onboarding, on-call rota, Trust & Safety audit.
+
+## Phase 14 — Deliver every outstanding item not blocked by a dependency
+
+Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave B (13.33–13.39). Items whose last step is a person's are built, then marked "ready to run" until that step happens.
+
+**Track 1 — data and infrastructure**
+- [ ] **14.1** Organisation purge: hard deletion after the 30-day grace.
+- [ ] **14.2** S3 lifecycle rules as code + apply script (DevOps applies).
+- [ ] **14.3** Prometheus + Alertmanager deployment stack (DevOps supplies keys and runs).
+- [ ] **14.4** Headless render fallback service, owner-confirmed sites only (operator enables).
+
+**Track 2 — staging gate**
+- [ ] **14.5** k6 smoke + full run automation (operator runs on staging).
+- [ ] **14.6** Kill-switch (all five levels) and rollback rehearsal automation (operator runs).
+- [ ] **14.7** Point-in-time restore verification (DevOps restores, then runs the check).
+- [ ] **14.8** Live provider + posting run harness (operator runs with staging keys).
+- [ ] **14.9** Corpus manifest template, pre-flight and review checklist (operator runs 9.2 → 9.3).
+
+**Track 3 — integrations and beta**
+- [ ] **14.10** Core integration kit for the Meta internal endpoints (Core team wires it).
+- [ ] **14.11** Beta programme tooling, Trust & Safety audit sampling, on-call rota config (people run it).
+
+## Phase 15 — Spec coverage gaps
+
+Features in the specs that no earlier phase or register item covered. The list and plan come from a spec-vs-code audit (`plans/phase-15.md`). Dependency-blocked items found by the audit are queued, as in Phase 13 Wave B.
