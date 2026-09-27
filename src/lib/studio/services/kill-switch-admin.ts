@@ -1,27 +1,33 @@
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { FLAG_OFF, FLAG_ON, flagKeys, PROVIDER_IDS } from '../system-flags';
+import { PLATFORMS } from './catalog';
 
 // Spec 12 / 16.4 (Admin Centre "Kill switch" + "Workspace freeze"): read and flip the four
-// kill-switch levels stored in system_flags. Workers read flags with a 30 s cache, so a change
-// takes effect within 30 s everywhere (the admin API's own cache is invalidated immediately).
+// kill-switch levels stored in system_flags, plus the per-platform publishing level (Phase 12).
+// Workers read flags with a 30 s cache, so a change takes effect within 30 s everywhere (the admin
+// API's own cache is invalidated immediately).
 
 export const setKillSwitchInput = z
   .object({
-    level: z.enum(['global', 'workspace', 'project', 'provider']),
-    /** organisationId (workspace), projectId (project) or providerId (provider). */
+    level: z.enum(['global', 'workspace', 'project', 'provider', 'platform']),
+    /** organisationId (workspace), projectId (project), providerId (provider) or platform. */
     target: z.string().trim().min(1).max(128).optional(),
     enabled: z.boolean(),
     reason: z.string().trim().min(3).max(500),
   })
   .refine((v) => v.level === 'global' || Boolean(v.target), {
-    message: 'target is required for workspace, project and provider levels',
+    message: 'target is required for workspace, project, provider and platform levels',
   })
   .refine(
     (v) => v.level !== 'provider' || (PROVIDER_IDS as readonly string[]).includes(v.target ?? ''),
     {
       message: 'Unknown providerId',
     },
+  )
+  .refine(
+    (v) => v.level !== 'platform' || (PLATFORMS as readonly string[]).includes(v.target ?? ''),
+    { message: 'Unknown platform' },
   );
 
 export function flagKeyFor(input: z.infer<typeof setKillSwitchInput>): string {
@@ -34,6 +40,8 @@ export function flagKeyFor(input: z.infer<typeof setKillSwitchInput>): string {
       return flagKeys.project(input.target ?? '');
     case 'provider':
       return flagKeys.provider(input.target ?? '');
+    case 'platform':
+      return flagKeys.platform(input.target ?? '');
   }
 }
 
@@ -57,6 +65,7 @@ export async function killSwitchState(db: PrismaClient) {
     frozenWorkspaces: pick(flagKeys.workspace('')),
     killedProjects: pick(flagKeys.project('')),
     disabledProviders: pick(flagKeys.provider('')),
+    disabledPlatforms: pick(flagKeys.platform('')),
     propagationSec: 30,
   };
 }

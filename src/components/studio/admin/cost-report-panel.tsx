@@ -12,9 +12,10 @@ import { BarList } from '../analytics/bar-list';
 import { shortDay } from '../analytics/chart-utils';
 import { Segmented } from '../analytics/segmented';
 import type { AdminCostResponse, AdminCostRow } from './types';
+import { CostCapsPanel } from './cost-caps-panel';
 
 // Spec 16.4 — platform cost dashboard (GET /admin/cost?days&organisationId): per organisation,
-// per provider and per day, from the provider_usage rollup.
+// per provider and per day, from the provider_usage rollup; caps + alerts above it (12.5).
 
 const WINDOWS = [7, 30, 90] as const;
 
@@ -78,6 +79,7 @@ export function CostReportPanel() {
 
   return (
     <div className="grid gap-6">
+      <CostCapsPanel />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <form
           onSubmit={applyOrg}

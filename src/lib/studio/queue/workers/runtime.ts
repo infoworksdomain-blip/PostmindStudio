@@ -3,6 +3,7 @@ import { getMetrics } from '../../observability/metrics';
 import { UnrecoverableError } from 'bullmq';
 import {
   ConfigurationError,
+  CostCapPausedError,
   KillSwitchTriggeredError,
   NoProviderAvailableError,
   NotFoundError,
@@ -13,8 +14,10 @@ import {
   ValidationError,
 } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
+import { failProject } from '../../pipeline/project-state';
 import { retryDelayMs, type JobDataMap, type JobName } from '../queues';
 import type { InlineJobQueue } from '../enqueue';
+import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-approvals';
 import { composeVideo, onComposeVideoFailed } from './compose-video';
 import { generateAsset, onGenerateAssetFailed } from './generate-asset';
 import { onPlanProjectFailed, planProject } from './plan-project';
@@ -68,6 +71,7 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'poll-publication-analytics': pollPublicationAnalytics,
   'roll-up-analytics': rollUpAnalyticsJob,
   'refresh-image-library': refreshImageLibrary,
+  'check-pending-approvals': checkPendingApprovals,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -83,6 +87,7 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'poll-publication-analytics': onPollPublicationAnalyticsFailed,
   'roll-up-analytics': onRollUpAnalyticsFailed,
   'refresh-image-library': onRefreshImageLibraryFailed,
+  'check-pending-approvals': onCheckPendingApprovalsFailed,
 };
 
 export function isRetryable(err: unknown): boolean {
@@ -104,6 +109,7 @@ export function isRetryable(err: unknown): boolean {
 
 export function describeError(err: unknown): string {
   if (err instanceof KillSwitchTriggeredError) return `kill_switch_${err.level}: ${err.message}`;
+  if (err instanceof CostCapPausedError) return `cost_cap_paused: ${err.message}`;
   if (err instanceof ProviderError) return `${err.providerId}/${err.errorClass}: ${err.message}`;
   if (err instanceof PlatformError) return `${err.platform}/${err.errorClass}: ${err.message}`;
   return err instanceof Error ? err.message : String(err);
@@ -147,6 +153,17 @@ export async function executeJob<N extends JobName>(
     log.warn({ err, retryable, final, attempt: attempt.attemptsMade + 1 }, 'job attempt failed');
     if (final) {
       reportError(err, { job: name, projectId: data.projectId, runId: data.runId });
+      // Spec 12.5 pause: the project fails as cost_cap_paused (not as a step failure) so the UI
+      // and the user see why; raising the cap and regenerating continues it.
+      if (err instanceof CostCapPausedError && data.projectId) {
+        await failProject(deps.db, {
+          projectId: data.projectId,
+          runId: data.runId,
+          reason: describeError(err),
+        }).catch((pauseErr: unknown) =>
+          log.error({ err: pauseErr }, 'could not record the cost-cap pause'),
+        );
+      }
       try {
         await FAILURE_HANDLERS[name](data, deps, describeError(err), err);
       } catch (handlerErr) {

@@ -12,6 +12,9 @@ const base: CreateState = {
   callToAction: '',
   budgetPounds: '',
   reviewPolicy: '',
+  projectTemplate: null,
+  autoPublish: false,
+  autoPublishAccounts: {},
 };
 
 describe('validateCreate', () => {
@@ -58,5 +61,57 @@ describe('parseReference', () => {
     expect(parseReference('lib_1', 'template')).toEqual({ id: 'lib_1', mode: 'TEMPLATE' });
     expect(parseReference('../x', 'TEMPLATE')).toBeNull();
     expect(parseReference(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('templates and auto-publish', () => {
+  const template = {
+    id: 'tpl-1',
+    name: 'Introduce yourself',
+    platforms: ['tiktok', 'instagram_reel'],
+  };
+
+  it('builds a TEMPLATE project without formats; the brief is optional', () => {
+    const body = buildCreateBody({ ...base, brief: '', projectTemplate: template }, 'biz', null);
+    expect(body).toMatchObject({
+      sourceType: 'TEMPLATE',
+      templateId: 'tpl-1',
+      name: 'Introduce yourself',
+    });
+    expect(body.targetFormats).toBeUndefined();
+    expect(body.brief).toBeUndefined();
+    expect(
+      validateCreate({ ...base, brief: '', platforms: [], projectTemplate: template }, 'biz'),
+    ).toEqual([]);
+  });
+
+  it('a library reference wins over a template', () => {
+    const body = buildCreateBody({ ...base, projectTemplate: template }, 'biz', {
+      id: 'lib-1',
+      mode: 'TEMPLATE',
+    });
+    expect(body.sourceType).toBe('LIBRARY_REFERENCE');
+    expect(body.templateId).toBeUndefined();
+  });
+
+  it('auto-publish sends AUTO_ON_APPROVAL and one target per chosen account', () => {
+    const body = buildCreateBody(
+      {
+        ...base,
+        platforms: ['tiktok', 'x', 'facebook'],
+        autoPublish: true,
+        autoPublishAccounts: { tiktok: 'conn-1', facebook: 'ignored' },
+      },
+      'biz',
+      null,
+    );
+    expect(body.publishPolicy).toBe('AUTO_ON_APPROVAL');
+    expect(body.autoPublish).toEqual({ targets: [{ platform: 'tiktok', connectionId: 'conn-1' }] });
+  });
+
+  it('auto-publish needs at least one account', () => {
+    expect(validateCreate({ ...base, autoPublish: true }, 'biz')).toEqual([
+      'Choose at least one account to auto-publish to, or turn auto-publish off.',
+    ]);
   });
 });

@@ -12,6 +12,7 @@ import type { PublishingDeps } from '../platforms/publishing';
 import type { PageRenderer } from '../scan/crawl';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
+import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
 
 // Everything a pipeline processor needs, injected so processors are testable without Redis,
@@ -52,6 +53,8 @@ export interface PipelineDeps {
   publishing: PublishingDeps;
   /** Audit entries for significant mutations (publications). */
   audit: (entry: AuditEntry) => void;
+  /** Spec 14.4 notifications; absent = built from db/logger/env (notifications/notifier.ts). */
+  notifier?: Notifier;
   /** HTTP client for downloading provider outputs. */
   fetch: typeof fetch;
   now: () => number;

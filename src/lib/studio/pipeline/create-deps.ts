@@ -12,7 +12,11 @@ import { createBrowserlessRenderer } from '../scan/crawl';
 import { guardedFetch } from '../scan/safe-fetch';
 import { createPublisherRegistry } from '../platforms/registry';
 import { createKillSwitch, createPrismaFlagStore } from '../kill-switch';
-import { createPrismaBudgetChecker, orgProviderDailyCapFromEnv } from '../providers/budget';
+import { costCapsFromEnv } from '../cost/caps';
+import { createCostGuard } from '../cost/guard';
+import { createNotifier } from '../notifications/notifier';
+import { getMetrics } from '../observability/metrics';
+import { createPrismaBudgetChecker } from '../providers/budget';
 import { getCircuitBreaker } from '../providers/circuit-breaker';
 import { getProviderRegistry } from '../providers/default-registry';
 import { createPrismaProviderJobRepository } from '../providers/job-repository';
@@ -28,13 +32,24 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
   const storage = getAssetStorage();
   const killSwitch = createKillSwitch({ store: createPrismaFlagStore(input.db) });
+  const caps = costCapsFromEnv();
+  const notifier = createNotifier({ db: input.db, logger });
+  const guard = createCostGuard({
+    db: input.db,
+    caps,
+    notifier,
+    audit: auditLog,
+    logger,
+    metrics: getMetrics(),
+  });
   return {
     db: input.db,
     registry: getProviderRegistry(),
     breaker,
     killSwitch,
     budget: createPrismaBudgetChecker(input.db, {
-      orgProviderDailyCapPence: orgProviderDailyCapFromEnv(),
+      orgProviderDailyCapPence: caps.orgProviderDailyPence,
+      guard,
     }),
     tracking: { repo: createPrismaProviderJobRepository(input.db), killSwitch, breaker },
     queue: input.queue,
@@ -51,6 +66,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     },
     fetch: globalThis.fetch,
     audit: auditLog,
+    notifier,
     metrics: createMetricsRegistry({
       fetchImpl: globalThis.fetch,
       linkedInEnabled: process.env.LINKEDIN_POST_ANALYTICS === 'enabled',

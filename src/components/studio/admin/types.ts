@@ -4,7 +4,7 @@ import { ApiError } from '@/lib/client/api';
 // adminCostDashboard, services/library.ts staff endpoints). Kept by hand — the UI never imports
 // server modules.
 
-export type KillLevel = 'global' | 'workspace' | 'project' | 'provider';
+export type KillLevel = 'global' | 'workspace' | 'project' | 'provider' | 'platform';
 
 export interface KillSwitchEntry {
   id: string;
@@ -17,6 +17,8 @@ export interface KillSwitchState {
   frozenWorkspaces: KillSwitchEntry[];
   killedProjects: KillSwitchEntry[];
   disabledProviders: KillSwitchEntry[];
+  /** Publishing platforms halted by the platform level (ids from PUBLISH_PLATFORMS). */
+  disabledPlatforms: KillSwitchEntry[];
   propagationSec: number;
 }
 
@@ -57,6 +59,45 @@ export const PROVIDER_IDS = [
   'hive',
   'sightengine',
 ] as const;
+
+/** Mirror of PLATFORMS in src/lib/studio/services/catalog.ts (the PUT validates against it). */
+export const PUBLISH_PLATFORMS = [
+  'tiktok',
+  'instagram_reel',
+  'youtube_short',
+  'youtube',
+  'linkedin_video',
+  'x',
+  'facebook',
+] as const;
+
+/** POST /admin/redrive body and response (services/redrive.ts). */
+export interface RedriveBody {
+  scope: 'kill_switch' | 'stuck';
+  level?: KillLevel;
+  organisationId?: string;
+  since?: string;
+  stuckMinutes?: number;
+  dryRun: boolean;
+  limit?: number;
+}
+
+export interface RedriveItem {
+  kind: 'project' | 'publication';
+  id: string;
+  organisationId: string;
+  action: 'resume_planning' | 'resume_assets' | 'retry_publication' | 'reenqueue' | 'skipped';
+  jobs?: string[];
+  skippedReason?: string;
+}
+
+export interface RedriveResponse {
+  ok: true;
+  dryRun: boolean;
+  scope: RedriveBody['scope'];
+  counts: { considered: number; redriven: number; skipped: number };
+  items: RedriveItem[];
+}
 
 export interface AdminCostRow {
   day: string;

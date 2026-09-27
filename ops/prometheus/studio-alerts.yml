@@ -1,0 +1,165 @@
+# PostMind Studio — Prometheus alert rules (BACKLOG 12.4 GAP "alerting", spec 12.5 / 17.1,
+# playbook 11.3). Metric names are the ones exported by src/lib/studio/observability/metrics.ts.
+#
+# Assumed scrape jobs (see runbooks/README.md "Alerting"):
+#   studio-web        GET /api/metrics on every web replica   (Bearer METRICS_TOKEN)
+#   studio-worker     :9464/metrics on every worker process   (Bearer METRICS_TOKEN)
+#   studio-readiness  blackbox exporter http_2xx probe of GET /api/health/ready
+#
+# severity: page   → PagerDuty (wake someone up)       — ops/alertmanager/alertmanager.yml
+# severity: ticket → Slack #studio-alerts (next working hours)
+# Validated in CI (ops-config job): promtool check rules + promtool test rules.
+
+groups:
+  - name: studio-availability
+    rules:
+      - alert: StudioTargetDown
+        expr: up{job=~"studio-(web|worker)"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: 'Studio {{ $labels.job }} target {{ $labels.instance }} is down'
+          description: 'Prometheus cannot scrape {{ $labels.instance }} for 2 minutes.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#target-down
+
+      - alert: StudioNotReady
+        expr: probe_success{job="studio-readiness"} == 0
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: 'Studio readiness failing on {{ $labels.instance }}'
+          description: 'GET /api/health/ready has returned non-2xx for 2 minutes (Postgres or Redis down).'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#not-ready
+
+      - alert: StudioApiLatencyP95High
+        # Spec 17.1: API (non-generation) p95 < 300 ms.
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le) (rate(studio_http_request_duration_seconds_bucket{job="studio-web"}[5m]))
+          ) > 0.3
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Studio API p95 latency {{ $value | humanizeDuration }} (SLO 300 ms)'
+          description: 'p95 of studio_http_request_duration_seconds has been above 300 ms for 10 minutes.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#api-latency
+
+  - name: studio-jobs
+    rules:
+      - alert: StudioJobFailureRateHigh
+        # Final failures (after retries) over final outcomes; retries are not failures yet.
+        expr: |
+          sum(rate(studio_jobs_total{outcome="failed"}[10m]))
+            /
+          sum(rate(studio_jobs_total{outcome=~"succeeded|failed"}[10m]))
+          > 0.05
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: 'Studio job failure rate {{ $value | humanizePercentage }} (> 5%)'
+          description: 'More than 5% of queue jobs are failing after retries.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#job-failures
+
+      - alert: StudioQueueBacklog
+        # Every web replica samples the same BullMQ counts: max() de-duplicates them.
+        # 500 is a starting baseline; tune per queue after the k6 run (BACKLOG 12.1).
+        expr: max by (queue) (studio_queue_jobs{state=~"waiting|prioritized"}) > 500
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Studio queue {{ $labels.queue }} backlog {{ $value }}'
+          description: 'More than 500 jobs waiting on {{ $labels.queue }} for 10 minutes.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#queue-backlog
+
+      - alert: StudioDeadLetterGrowing
+        # Failed jobs are never auto-drained (spec 11.5): growth means work needs re-driving.
+        expr: max by (queue) (delta(studio_queue_jobs{state="failed"}[30m])) > 20
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $value }} new dead-letter jobs on {{ $labels.queue }} in 30 minutes'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#dead-letter
+
+  - name: studio-providers
+    rules:
+      - alert: StudioProviderCircuitOpen
+        # Gauge encoding: 0 closed, 1 half-open, 2 open (per process; max across processes).
+        expr: max by (provider) (studio_provider_circuit_state) == 2
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Circuit breaker open for {{ $labels.provider }}'
+          description: 'The router is skipping {{ $labels.provider }} and using fallbacks.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md
+
+      - alert: StudioProviderCircuitsOpenMultiple
+        expr: count(max by (provider) (studio_provider_circuit_state) == 2) >= 2
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: '{{ $value }} provider circuit breakers open'
+          description: 'Several providers are open at once: fallback chains may be exhausted.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md
+
+  - name: studio-cost
+    rules:
+      # studio_cost_alerts_total counts cost alerts raised by the app (each scope/period/threshold
+      # once, deduplicated in studio.cost_alerts). Every series is pre-created at 0, so increase()
+      # sees the first alert. The in-app/staff notification has already been sent by Studio.
+      - alert: StudioCostCapWarning
+        expr: sum by (scope) (increase(studio_cost_alerts_total{threshold="80"}[15m])) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'A {{ $labels.scope }} cost cap crossed 80%'
+          description: 'See Admin Centre → Cost report → Caps today for the organisation / project.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/cost-runaway.md
+
+      - alert: StudioCostCapReached
+        expr: |
+          sum by (scope) (
+            increase(studio_cost_alerts_total{scope=~"project|org_daily|org_provider_daily",threshold=~"90|100"}[15m])
+          ) > 0
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'A {{ $labels.scope }} cost cap was reached (generation paused for it)'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/cost-runaway.md
+
+      - alert: StudioGlobalCostCap
+        # Platform-wide spend: 80% pages so someone can act before everything pauses at 100%.
+        expr: sum by (threshold) (increase(studio_cost_alerts_total{scope="global_daily"}[15m])) > 0
+        labels:
+          severity: page
+        annotations:
+          summary: 'Global daily provider spend crossed {{ $labels.threshold }}% of STUDIO_GLOBAL_DAILY_CAP_PENCE'
+          description: 'At 100% all generation pauses until midnight UTC.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/cost-runaway.md#global-cap
+
+  - name: studio-kill-switch
+    rules:
+      - alert: StudioGlobalKillSwitchEngaged
+        expr: max(studio_kill_switch_engaged{level="global"}) > 0
+        labels:
+          severity: page
+        annotations:
+          summary: 'The Studio global kill switch is engaged: all generation and publishing are halted'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/kill-switch.md
+
+      - alert: StudioKillSwitchLeftEngaged
+        # Scoped switches (workspace / project / provider / platform) still on after 24 h.
+        expr: max by (level) (studio_kill_switch_engaged{level!="global"}) > 0
+        for: 24h
+        labels:
+          severity: ticket
+        annotations:
+          summary: '{{ $value }} {{ $labels.level }} kill switch(es) engaged for over 24 h'
+          description: 'Confirm they are still needed; release the rest (Admin Centre → Kill switch).'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/kill-switch.md#release

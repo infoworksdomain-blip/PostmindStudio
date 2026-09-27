@@ -384,6 +384,7 @@ export async function rerenderProject(
       metadata: {
         ...projectMetadata(project.metadata),
         runId,
+        planTier: toPlanTier(tenant.organisation.planTier),
         renders: {},
         rerenderOf: render.id,
       } as Prisma.InputJsonValue,

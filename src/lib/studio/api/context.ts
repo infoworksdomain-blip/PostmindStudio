@@ -11,6 +11,7 @@ import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import { devTenantFromEnv } from './dev-tenant';
 import type { IdempotencyStore } from './idempotency';
+import type { RateLimiter } from './rate-limit';
 
 // Dependencies for /api/studio route handlers. Built lazily from env in production; tests
 // install their own with setApiDeps().
@@ -23,6 +24,8 @@ export interface ApiDeps {
   resolveTenant: TenantResolver;
   audit: (entry: AuditEntry) => void;
   idempotency: IdempotencyStore;
+  /** Per-user / per-organisation request limits; absent = unlimited (tests). */
+  rateLimiter?: RateLimiter;
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
@@ -65,6 +68,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     import('../platforms/oauth-state'),
     import('../images/library'),
   ]);
+  const rateLimit = await import('./rate-limit');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -84,6 +88,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
     resolveTenant: devTenant ? async () => devTenant : tenant.requireTenantContext,
     audit: auditLog,
     idempotency: idempotency.createRedisIdempotencyStore(connection),
+    rateLimiter: rateLimit.createRateLimiter(
+      rateLimit.createRedisRateLimitStore(connection),
+      rateLimit.rateLimitsFromEnv(),
+      { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
+    ),
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),

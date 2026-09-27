@@ -15,6 +15,7 @@ const running: KillSwitchState = {
   frozenWorkspaces: [{ id: 'org_frozen', since: '2026-09-26T10:00:00.000Z' }],
   killedProjects: [],
   disabledProviders: [{ id: 'runway', since: '2026-09-25T10:00:00.000Z' }],
+  disabledPlatforms: [{ id: 'tiktok', since: '2026-09-27T09:00:00.000Z' }],
   propagationSec: 30,
 };
 
@@ -166,6 +167,51 @@ describe('Kill switch tab', () => {
         target: 'luma',
         enabled: true,
         reason: 'Latency spike',
+      }),
+    );
+  });
+
+  it('lists halted platforms and releases one', async () => {
+    const user = userEvent.setup();
+    const { calls } = mockFetch(routes());
+    renderWithSWR(<AdminCentre />);
+    expect(await screen.findByText('Halted platforms')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Release tiktok' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/Re-drive tab/)).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/Reason/), 'Appeal won');
+    await user.click(within(dialog).getByRole('button', { name: 'Release' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({
+        level: 'platform',
+        target: 'tiktok',
+        enabled: false,
+        reason: 'Appeal won',
+      }),
+    );
+  });
+
+  it('halts publishing to one platform from the scoped form', async () => {
+    const user = userEvent.setup();
+    const { calls } = mockFetch(routes());
+    renderWithSWR(<AdminCentre />);
+    const form = await screen.findByRole('form', { name: 'Engage a scoped kill switch' });
+    await user.selectOptions(within(form).getByLabelText('Level'), 'platform');
+    const target = within(form).getByLabelText('Platform');
+    expect(
+      within(target)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toContain('youtube_short');
+    await user.selectOptions(target, 'x');
+    await user.type(within(form).getByLabelText('Reason'), 'X API outage');
+    await user.click(within(form).getByRole('button', { name: 'Engage' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({
+        level: 'platform',
+        target: 'x',
+        enabled: true,
+        reason: 'X API outage',
       }),
     );
   });

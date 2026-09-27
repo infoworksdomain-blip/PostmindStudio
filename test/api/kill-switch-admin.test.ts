@@ -20,6 +20,8 @@ describe.skipIf(!hasDb)('kill switch admin API', { timeout: 60_000 }, () => {
   const staffOrg = `api-ks-staff-${randomUUID()}`;
   const otherOrg = `api-ks-other-${randomUUID()}`;
   const providerId = 'runway';
+  // A platform no other suite publishes to: the flag is platform-wide while engaged.
+  const platform = 'facebook';
   const tokens = {
     staff: tenant(staffOrg, ADMIN_CAPS),
     staffNoCaps: tenant(staffOrg, []),
@@ -30,7 +32,11 @@ describe.skipIf(!hasDb)('kill switch admin API', { timeout: 60_000 }, () => {
     installApi(db, tokens);
     vi.stubEnv('STUDIO_PLATFORM_ORG_IDS', staffOrg);
     await db.systemFlag.deleteMany({
-      where: { key: { in: [flagKeys.global(), flagKeys.provider(providerId)] } },
+      where: {
+        key: {
+          in: [flagKeys.global(), flagKeys.provider(providerId), flagKeys.platform(platform)],
+        },
+      },
     });
     (await getKillSwitch()).invalidate();
   });
@@ -42,7 +48,11 @@ describe.skipIf(!hasDb)('kill switch admin API', { timeout: 60_000 }, () => {
   afterAll(async () => {
     setApiDeps(undefined);
     await db.systemFlag.deleteMany({
-      where: { key: { in: [flagKeys.global(), flagKeys.provider(providerId)] } },
+      where: {
+        key: {
+          in: [flagKeys.global(), flagKeys.provider(providerId), flagKeys.platform(platform)],
+        },
+      },
     });
     await db.$disconnect();
   });
@@ -56,6 +66,7 @@ describe.skipIf(!hasDb)('kill switch admin API', { timeout: 60_000 }, () => {
     expect(res.status).toBe(200);
     expect(res.json.global).toMatchObject({ enabled: false });
     expect(res.json.disabledProviders).toEqual([]);
+    expect(res.json.disabledPlatforms).toEqual([]);
     expect(res.json.propagationSec).toBe(30);
   });
 
@@ -97,6 +108,29 @@ describe.skipIf(!hasDb)('kill switch admin API', { timeout: 60_000 }, () => {
     expect((after.json.disabledProviders as Array<{ id: string }>).map((p) => p.id)).not.toContain(
       providerId,
     );
+  });
+
+  it('halts and releases publishing to one platform, listed as disabledPlatforms', async () => {
+    const halted = await put({
+      level: 'platform',
+      target: platform,
+      enabled: true,
+      reason: 'Meta app review strike',
+    });
+    expect(halted.status).toBe(200);
+    expect((halted.json.flag as { key: string }).key).toBe(flagKeys.platform(platform));
+    const killSwitch = await getKillSwitch();
+    const scope = { organisationId: 'anyone', projectId: 'p', platform };
+    expect(await killSwitch.check(scope)).toMatchObject({ killed: true, level: 'platform' });
+    expect((await killSwitch.check({ ...scope, platform: 'youtube' })).killed).toBe(false);
+    const state = await get();
+    expect((state.json.disabledPlatforms as Array<{ id: string }>).map((p) => p.id)).toEqual([
+      platform,
+    ]);
+
+    await put({ level: 'platform', target: platform, enabled: false, reason: 'appeal won' });
+    expect((await killSwitch.check(scope)).killed).toBe(false);
+    expect((await get()).json.disabledPlatforms).toEqual([]);
   });
 
   it('freezes a workspace and kills a project by target id', async () => {
@@ -154,6 +188,10 @@ describe.skipIf(!hasDb)('kill switch admin API', { timeout: 60_000 }, () => {
         })
       ).status,
     ).toBe(400);
+    expect(
+      (await put({ level: 'platform', target: 'myspace', enabled: true, reason: 'bad id' })).status,
+    ).toBe(400);
+    expect((await put({ level: 'platform', enabled: true, reason: 'no target' })).status).toBe(400);
     expect((await put({ level: 'global', enabled: true, reason: 'x' })).status).toBe(400);
     expect((await put({ level: 'global', enabled: true })).status).toBe(400);
   });

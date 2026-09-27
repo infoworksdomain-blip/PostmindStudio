@@ -214,6 +214,8 @@ export async function cleanupGolden(db: PrismaClient, since: Date) {
   await db.websiteScan.deleteMany({ where: { organisationId: org } });
   await db.providerJob.deleteMany({ where: { organisationId: org } });
   await db.providerUsage.deleteMany({ where: { organisationId: org } });
+  await db.notification.deleteMany({ where: { organisationId: org } });
+  await db.costAlert.deleteMany({ where: { organisationId: org } });
   await db.systemFlag.deleteMany({ where: { key: { contains: ORG_PREFIX } } });
 
   const items = (

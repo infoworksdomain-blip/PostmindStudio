@@ -1,0 +1,86 @@
+# promtool test rules ops/prometheus/tests/studio-alerts.test.yml (run in CI, ops-config job).
+rule_files:
+  - ../studio-alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # A web replica stops answering scrapes: pages after 2 minutes, not before.
+  - interval: 1m
+    input_series:
+      - series: 'up{job="studio-web", instance="web-1:3010"}'
+        values: '1 1 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: StudioTargetDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: StudioTargetDown
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              job: studio-web
+              instance: web-1:3010
+            exp_annotations:
+              summary: 'Studio studio-web target web-1:3010 is down'
+              description: 'Prometheus cannot scrape web-1:3010 for 2 minutes.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#target-down
+
+  # The first global cost alert of a process (series pre-created at 0 by metrics.ts) pages, and
+  # the alert clears once the 15-minute window has passed.
+  - interval: 1m
+    input_series:
+      - series: 'studio_cost_alerts_total{job="studio-worker", instance="worker-1:9464", scope="global_daily", threshold="80"}'
+        values: '0 0 0 1+0x30'
+      - series: 'studio_cost_alerts_total{job="studio-worker", instance="worker-1:9464", scope="org_daily", threshold="80"}'
+        values: '0+0x33'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: StudioGlobalCostCap
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: StudioGlobalCostCap
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              threshold: '80'
+            exp_annotations:
+              summary: 'Global daily provider spend crossed 80% of STUDIO_GLOBAL_DAILY_CAP_PENCE'
+              description: 'At 100% all generation pauses until midnight UTC.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/cost-runaway.md#global-cap
+      - eval_time: 5m
+        alertname: StudioCostCapWarning
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              scope: global_daily
+            exp_annotations:
+              summary: 'A global_daily cost cap crossed 80%'
+              description: 'See Admin Centre → Cost report → Caps today for the organisation / project.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/cost-runaway.md
+      - eval_time: 30m
+        alertname: StudioGlobalCostCap
+        exp_alerts: []
+
+  # 1 in 4 jobs failing after retries pages once it has lasted 10 minutes.
+  - interval: 1m
+    input_series:
+      - series: 'studio_jobs_total{job="studio-worker", instance="worker-1:9464", exported_job="plan-project", outcome="failed"}'
+        values: '0+1x40'
+      - series: 'studio_jobs_total{job="studio-worker", instance="worker-1:9464", exported_job="plan-project", outcome="succeeded"}'
+        values: '0+3x40'
+      - series: 'studio_jobs_total{job="studio-worker", instance="worker-1:9464", exported_job="plan-project", outcome="retrying"}'
+        values: '0+50x40'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: StudioJobFailureRateHigh
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: StudioJobFailureRateHigh
+        exp_alerts:
+          - exp_labels:
+              severity: page
+            exp_annotations:
+              summary: 'Studio job failure rate 25% (> 5%)'
+              description: 'More than 5% of queue jobs are failing after retries.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#job-failures

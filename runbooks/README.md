@@ -6,13 +6,15 @@ format: **trigger metric → threshold → escalation → steps → verification
 
 | Runbook | Covers | SLO / threshold |
 | --- | --- | --- |
-| [kill-switch.md](kill-switch.md) | All four kill-switch levels, plus the timed rehearsal (12.2) | 60 s to halt |
+| [kill-switch.md](kill-switch.md) | All four kill-switch levels, the per-platform publishing halt, re-drive after release, and the timed rehearsal (12.2) | 60 s to halt |
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
 | [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning, Redis (playbook E-12) | — |
 | [provider-outage.md](provider-outage.md) | Priority risk 1: provider outage mid-generation | 1+ breaker OPEN |
-| [cost-runaway.md](cost-runaway.md) | Priority risk 2: per-org cost runaway | >80% of daily cap |
+| [cost-runaway.md](cost-runaway.md) | Priority risk 2: cost runaway — project / org / provider / global caps, pause, alerts | 80% alert, 90% project pause, 100% daily pause |
+| [service-health.md](service-health.md) | Availability and queue alerts: target down, not ready, job failures, API latency, backlog, dead letter | per alert |
 | [content-safety-miss.md](content-safety-miss.md) | Priority risk 3: unsafe content published | Any true miss |
+| [review-publish-automation.md](review-publish-automation.md) | Auto-approve for trusted creators, auto-publish on approval, templates | Any auto-approved takedown |
 | [platform-api-change.md](platform-api-change.md) | Priority risk 4: publishing API breaking change | 1+ adapter test failing |
 | [corpus-search-quality.md](corpus-search-quality.md) | Priority risk 5: library search degradation | <80% relevant top-5 |
 | [scan-blocked.md](scan-blocked.md) | Priority risk 6: website scan blocked by anti-bot measures | >10% failures on a customer |
@@ -22,8 +24,11 @@ format: **trigger metric → threshold → escalation → steps → verification
 ## Shared tools
 
 - **Admin API** (platform staff token; the organisation must be in `STUDIO_PLATFORM_ORG_IDS`):
-  - `GET|PUT /api/studio/admin/kill-switch`
+  - `GET|PUT /api/studio/admin/kill-switch` (four levels plus the per-platform publishing halt)
+  - `POST /api/studio/admin/redrive` (bulk re-drive of kill-switched or stuck work; dry run by
+    default; capability `studio:admin:redrive`)
   - `GET /api/studio/admin/cost`
+  - `GET /api/studio/admin/cost/caps` (today's spend against every cap + cost alerts, 7 days)
   - `/api/studio/admin/library/**`
 
   The Admin Centre UI is at `/admin`.
@@ -36,6 +41,8 @@ format: **trigger metric → threshold → escalation → steps → verification
     - `studio_job_duration_seconds{job,outcome}`
     - `studio_queue_jobs{queue,state}`
     - `studio_provider_circuit_state{provider}`
+    - `studio_cost_alerts_total{scope,threshold}` (every series pre-created at 0)
+    - `studio_kill_switch_engaged{level}` (web only; sampled from `system_flags` at scrape)
 - **Health checks:**
   - `GET /api/health` is liveness.
   - `GET /api/health/ready` checks Postgres and Redis and returns 503 when either is down.
@@ -44,16 +51,36 @@ format: **trigger metric → threshold → escalation → steps → verification
 - **Load and rehearsal tooling:**
   - `load-test/k6/studio-api.js`
   - `scripts/ops/rehearse-kill-switch.ts`
+  - `scripts/ops/redrive.ts` (re-drive CLI; dry run unless `--apply`)
 
-## GAP: alerting
+## Alerting
 
-The metrics and thresholds above exist, but no Prometheus alert rules or paging integration are
-committed yet. DevOps owns wiring these alert expressions in the ops monitoring stack:
+Alert rules and paging are committed (Phase 12) and validated in CI (`ops-config` job:
+`promtool check rules`, `promtool test rules`, `amtool check-config` and a routing test):
 
-- **Breaker open:** `max by (provider) (studio_provider_circuit_state) > 0`. Check the gauge
-  encoding in `src/lib/studio/observability/metrics.ts`.
-- **Queue backlog:** `sum by (queue) (studio_queue_jobs{state="waiting"})` above the per-queue
-  baseline for 10 minutes.
-- **Job failure rate:** `sum(rate(studio_jobs_total{outcome="failed"}[5m])) / sum(rate(studio_jobs_total[5m])) > 0.05`.
-- **API latency SLO:** `histogram_quantile(0.95, sum by (le) (rate(studio_http_request_duration_seconds_bucket[5m]))) > 0.3`.
-- **Readiness:** the load balancer target marks unhealthy on `/api/health/ready`.
+- `ops/prometheus/studio-alerts.yml` — rule groups availability, jobs, providers, cost and kill
+  switch. Every alert has `severity` (`page` or `ticket`) and a `runbook_url` into this folder.
+- `ops/prometheus/tests/studio-alerts.test.yml` — promtool unit tests (target down, global cost
+  cap incl. the first alert of a process, job failure rate).
+- `ops/alertmanager/alertmanager.yml` — `severity=page` → PagerDuty, `severity=ticket` → Slack
+  `#studio-alerts`. The PagerDuty routing key and Slack webhook URL are read from files
+  (`/etc/alertmanager/secrets/pagerduty-routing-key`, `/etc/alertmanager/secrets/slack-webhook-url`)
+  mounted by the deployment — never committed.
+
+Scrape jobs the rules assume: `studio-web` (`/api/metrics` on each web replica), `studio-worker`
+(`:9464/metrics` on each worker) and `studio-readiness` (a blackbox-exporter `http_2xx` probe of
+`/api/health/ready`). All need `Authorization: Bearer $METRICS_TOKEN` except the blackbox probe.
+
+In-app notifications (spec 14.4) are separate from paging: `GET /api/studio/notifications`
+(bell in the app header) and, optionally, a signed webhook (`STUDIO_NOTIFY_WEBHOOK_URL`) for
+cost 80% / 100% / paused, generation complete, approval pending > 2 h and publication failed.
+
+## GAP: remaining alerting work
+
+- **Not wired in any environment yet:** DevOps must add the scrape jobs above, load the rule file
+  into Prometheus, deploy Alertmanager with the two secret files, and create the PagerDuty
+  service / Slack channel. Nothing here has paged a human yet.
+- **Thresholds are starting points:** the 500-job backlog and 5% failure rate need tuning after
+  the k6 run (BACKLOG 12.1) and the first weeks of real traffic.
+- **Email** notifications are not built (no PostMind Core notification/email API is documented);
+  the webhook is the bridge.

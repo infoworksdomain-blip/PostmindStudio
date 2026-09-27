@@ -105,6 +105,7 @@ async function startShotRun(
         metadata: {
           ...projectMetadata(project.metadata),
           runId,
+          planTier: toPlanTier(tenant.organisation.planTier),
           renders: {},
         } as Prisma.InputJsonValue,
       },

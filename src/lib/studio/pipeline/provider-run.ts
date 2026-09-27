@@ -54,11 +54,21 @@ export async function runProvider(
   );
   const { adapter } = decision;
   const scope = { organisationId: input.request.organisationId };
+  // Spec 12.5 alerts: evaluated after the reservation (submit) and after settlement (terminal).
+  const recordSpend = () =>
+    deps.budget.recordSpend?.({
+      organisationId: input.request.organisationId,
+      projectId: input.request.projectId,
+      planTier: input.planTier,
+      providerId: adapter.providerId,
+    }) ?? Promise.resolve();
   const submitted = await submitTracked(adapter, input.request, deps.tracking);
+  await recordSpend();
   const giveUpAt = deps.now() + deps.config.providerTimeoutMs;
 
   for (;;) {
     const result = await pollTracked(adapter, submitted.jobId, scope, deps.tracking);
+    if (result.state !== 'running') await recordSpend();
     if (result.state === 'succeeded') {
       if (!result.output) {
         throw new ProviderError(

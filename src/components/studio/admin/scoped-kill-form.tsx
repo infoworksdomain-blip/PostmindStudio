@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { MIN_REASON } from './reason-dialog';
-import { PROVIDER_IDS, type KillLevel, type SetKillSwitchBody } from './types';
+import { PROVIDER_IDS, PUBLISH_PLATFORMS, type KillLevel, type SetKillSwitchBody } from './types';
 
-// Engage a level-2..4 switch: freeze a workspace (organisation id), kill a project, or disable
-// a provider. The global level has its own typed-confirmation control above.
+// Engage a scoped switch: freeze a workspace (organisation id), kill a project, disable a
+// provider, or halt publishing to one platform. The global level has its own typed-confirmation
+// control above.
 
 type ScopedLevel = Exclude<KillLevel, 'global'>;
 
@@ -19,7 +20,13 @@ const LEVELS: Array<{ value: ScopedLevel; label: string; target: string }> = [
   { value: 'workspace', label: 'Freeze a workspace', target: 'Organisation id' },
   { value: 'project', label: 'Kill a project', target: 'Project id' },
   { value: 'provider', label: 'Disable a provider', target: 'Provider' },
+  { value: 'platform', label: 'Halt publishing to a platform', target: 'Platform' },
 ];
+
+const TARGET_OPTIONS: Partial<Record<ScopedLevel, { prompt: string; ids: readonly string[] }>> = {
+  provider: { prompt: 'Choose a provider', ids: PROVIDER_IDS },
+  platform: { prompt: 'Choose a platform', ids: PUBLISH_PLATFORMS },
+};
 
 export function ScopedKillForm({
   onSubmit,
@@ -31,6 +38,7 @@ export function ScopedKillForm({
   const [reason, setReason] = useState('');
   const [pending, setPending] = useState(false);
   const meta = LEVELS.find((l) => l.value === level) ?? LEVELS[0];
+  const options = TARGET_OPTIONS[level];
   const valid = target.trim().length > 0 && reason.trim().length >= MIN_REASON;
 
   const submit = async (e: FormEvent) => {
@@ -53,7 +61,7 @@ export function ScopedKillForm({
   return (
     <Section
       title="Engage a scoped switch"
-      description="Stops new jobs for one workspace, project or provider. Nothing else is affected."
+      description="Stops new jobs for one workspace, project or provider, or new uploads to one platform. Nothing else is affected."
     >
       <form
         onSubmit={submit}
@@ -80,15 +88,15 @@ export function ScopedKillForm({
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="kill-target">{meta?.target}</Label>
-          {level === 'provider' ? (
+          {options ? (
             <select
               id="kill-target"
               className={selectClass}
               value={target}
               onChange={(e) => setTarget(e.target.value)}
             >
-              <option value="">Choose a provider</option>
-              {PROVIDER_IDS.map((p) => (
+              <option value="">{options.prompt}</option>
+              {options.ids.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>

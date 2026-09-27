@@ -17,7 +17,10 @@ import {
 
 export interface ReferenceGuide {
   mode: 'TEMPLATE' | 'INSPIRE';
-  referenceVideoId: string;
+  /** Library reference video; null when the structure comes from a project template. */
+  referenceVideoId: string | null;
+  /** Project template (templates/blueprint.ts loadTemplateGuide), when that is the source. */
+  templateId?: string;
   /** Appended to the ideation input (INSPIRE only). */
   ideationSupplement: string | null;
   /** Appended to each Layer 2 prompt. */

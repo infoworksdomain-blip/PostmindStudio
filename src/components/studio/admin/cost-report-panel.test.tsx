@@ -86,6 +86,9 @@ describe('CostReportPanel', () => {
   it('reports a permission error', async () => {
     mockFetch([{ match: '/admin/cost', status: 403, body: forbidden }]);
     renderWithSWR(<CostReportPanel />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('permission');
+    // Both the caps panel and the report show the error.
+    const alerts = await screen.findAllByRole('alert');
+    expect(alerts.length).toBeGreaterThan(0);
+    for (const alert of alerts) expect(alert).toHaveTextContent('permission');
   });
 });

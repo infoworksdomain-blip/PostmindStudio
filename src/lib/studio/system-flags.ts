@@ -13,6 +13,8 @@ export const flagKeys = {
   workspace: (organisationId: string) => `studio.frozenWorkspace.${organisationId}`,
   project: (projectId: string) => `studio.killedProject.${projectId}`,
   provider: (providerId: string) => `studio.disabledProvider.${providerId}`,
+  /** Level 5 (Phase 12): halts publishing to one platform (PLATFORMS in services/catalog.ts). */
+  platform: (platform: string) => `studio.kill_switch.platform.${platform}`,
 } as const;
 
 // Every external provider named in spec Section 6 (and Addendum A6 for Unsplash) that has its

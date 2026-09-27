@@ -2,7 +2,8 @@ import { KillSwitchTriggeredError, type KillSwitchLevel } from '../errors';
 import { logger } from '../logger';
 import { FLAG_OFF, FLAG_ON, flagKeys } from './system-flags';
 
-// Four-level kill switch (spec 4.6 / 12, Engagement handover 12). DB-backed via
+// Four-level kill switch (spec 4.6 / 12, Engagement handover 12), plus a per-platform publishing
+// level (Phase 12). DB-backed via
 // studio.system_flags so it is multi-instance safe; each process caches flag reads for 30s,
 // which bounds the time-to-effect. Every worker calls assertNotKilled() on job start.
 
@@ -12,6 +13,8 @@ export interface KillSwitchScope {
   organisationId: string;
   projectId?: string;
   providerId?: string;
+  /** Publishing platform (level 5): only publish jobs pass it, so generation is unaffected. */
+  platform?: string;
 }
 
 export type KillSwitchStatus =
@@ -41,6 +44,7 @@ function levelKeys(scope: KillSwitchScope): Array<{ level: KillSwitchLevel; key:
   ];
   if (scope.projectId) keys.push({ level: 'project', key: flagKeys.project(scope.projectId) });
   if (scope.providerId) keys.push({ level: 'provider', key: flagKeys.provider(scope.providerId) });
+  if (scope.platform) keys.push({ level: 'platform', key: flagKeys.platform(scope.platform) });
   return keys;
 }
 
@@ -103,6 +107,7 @@ export function createKillSwitch(deps: {
             organisationId: scope.organisationId,
             ...(scope.projectId && { projectId: scope.projectId }),
             ...(scope.providerId && { providerId: scope.providerId }),
+            ...(scope.platform && { platform: scope.platform }),
           },
         );
       }

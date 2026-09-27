@@ -12,6 +12,7 @@ import { useBusiness } from '../business-context';
 import { ErrorState, PageHeader, Section, StateBadge } from '../primitives';
 import { OverlayEditor } from '../overlays/overlay-editor';
 import { SlideshowBuilder } from '../slideshow/slideshow-builder';
+import { AutomationPanel } from './automation-panel';
 import { PipelineStrip } from './pipeline-strip';
 import { ApprovalBar, ProjectActions } from './project-actions';
 import { PublicationsList } from './publications-list';
@@ -32,6 +33,7 @@ const SOURCE_LABEL: Record<string, string> = {
   SLIDESHOW: 'Slideshow',
   LIBRARY_REFERENCE: 'From a reference video',
   POSTMIND_CONTENT: 'From PostMind content',
+  TEMPLATE: 'From a template',
 };
 
 function tabsFor(project: ProjectDetail): TabDef[] {
@@ -111,6 +113,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
             </p>
           )}
         <ApprovalBar project={project} onChanged={refresh} />
+        <AutomationPanel project={project} />
         <div>
           <ReviewTabs tabs={tabs} active={active} onChange={setTab} />
           <TabPanel tab={active}>

@@ -49,5 +49,8 @@ describe.skipIf(!hasDb)('health and metrics endpoints', { timeout: 30_000 }, () 
     expect(text).toContain('studio_http_request_duration_seconds_bucket');
     expect(text).toContain('route="/api/studio/projects"');
     expect(text).toContain('studio_process_cpu_user_seconds_total');
+    // Phase 12: kill-switch levels sampled from system_flags; cost-alert series pre-created at 0.
+    expect(text).toMatch(/studio_kill_switch_engaged\{level="global"[^}]*\} \d/);
+    expect(text).toContain('studio_cost_alerts_total{scope="global_daily",threshold="100"');
   });
 });

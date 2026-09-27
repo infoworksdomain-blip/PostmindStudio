@@ -1,6 +1,10 @@
 import { logger } from '@/lib/logger';
 import { getMetrics, metricsAuthorised } from '@/lib/studio/observability/metrics';
-import { sampleBreakers, sampleQueueDepths } from '@/lib/studio/observability/sample';
+import {
+  sampleBreakers,
+  sampleKillSwitch,
+  sampleQueueDepths,
+} from '@/lib/studio/observability/sample';
 
 // GET /api/metrics — Prometheus scrape endpoint (Engagement 14.14). Bind to private ingress;
 // additionally requires `Authorization: Bearer $METRICS_TOKEN`. Anything else — no token set,
@@ -22,6 +26,10 @@ export async function GET(req: Request): Promise<Response> {
   sampleBreakers(metrics, getCircuitBreaker());
   await sampleQueueDepths(metrics, redisConnectionFromEnv()).catch((err: unknown) =>
     logger.warn({ err }, 'queue depth sampling failed'),
+  );
+  const { prisma } = await import('@/lib/prisma');
+  await sampleKillSwitch(metrics, prisma).catch((err: unknown) =>
+    logger.warn({ err }, 'kill switch sampling failed'),
   );
   return new Response(await metrics.registry.metrics(), {
     headers: { 'content-type': metrics.registry.contentType, 'cache-control': 'no-store' },

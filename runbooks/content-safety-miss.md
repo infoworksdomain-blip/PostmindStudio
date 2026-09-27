@@ -12,6 +12,8 @@
 - Block classes are hard-blocked at a score of 0.8 or above, and customers cannot force-approve
   them (spec 13.5).
 - Review-class content requires human approval.
+- Automatic approval (`AUTO_APPROVE`, trusted creators only) never applies to force-approved,
+  flagged or script-`WARN` runs — see [review-publish-automation.md](review-publish-automation.md).
 - Publishing requires an approved render.
 
 ## Steps

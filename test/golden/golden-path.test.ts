@@ -82,9 +82,8 @@ import { goldenWebsite } from './website-fixture';
 //   GP-14  Analytics polled after publish → per-publication detail and overview
 //   GP-15  Project budget cap stops asset spend before the expensive provider is called
 //
-// Not covered (not implemented in the code): the AUTO_APPROVE review policy and the
-// AUTO_ON_APPROVAL publish policy are stored on the project but nothing acts on them yet, so a
-// generated project always waits for a human approval and never auto-publishes.
+// Auto-approve / auto-publish / templates: test/golden/automation.test.ts. Kill-switch recovery:
+// test/golden/recovery.test.ts. Cost caps: test/golden/cost-caps.test.ts.
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 // Seeding and cleanup touch hundreds of rows; the single-connection local DB is slow under load.

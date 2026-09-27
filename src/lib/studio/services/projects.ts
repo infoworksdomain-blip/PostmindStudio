@@ -18,6 +18,14 @@ import { assertModeAllowed } from '../library/blueprint';
 import { slideshowInput } from '../slideshow/planner';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
 import { insertSlides, planSlideshowSlides } from './slideshows';
+import { applyTemplate } from './templates';
+import { assertMayApprove, recordApproval, requiredRoleFor } from '../automation/approval';
+import {
+  assertMayConfigureTargets,
+  autoPublishTargets,
+  storedTargets,
+  validateTargets,
+} from '../automation/targets';
 
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
@@ -47,7 +55,7 @@ const projectFields = z.object({
   name: z.string().trim().min(1).max(200),
   businessId: z.string().trim().min(1).max(128),
   sourceType: z
-    .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE'])
+    .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE', 'TEMPLATE'])
     .default('BRIEF'),
   /** LIBRARY_REFERENCE (A3.9): the reference video and how it is used. */
   referenceVideoId: z.string().trim().min(1).max(64).optional(),
@@ -57,9 +65,18 @@ const projectFields = z.object({
   brief: briefInput.optional(),
   /** Required for SLIDESHOW (A8.5): templateId + inputs, or explicit slides. */
   slideshow: slideshowInput.optional(),
-  targetFormats: z.array(targetFormatInput).min(1).max(10),
+  /** Required unless sourceType is TEMPLATE (then the template's formats are the default). */
+  targetFormats: z.array(targetFormatInput).min(1).max(10).optional(),
   brandKitId: z.string().max(64).optional(),
+  /** TEMPLATE: the project template (spec 8.6) to build from. */
   templateId: z.string().max(64).optional(),
+  /** TEMPLATE: values for the template's {{variables}}. */
+  templateVariables: z
+    .record(z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,40}$/), z.string().max(500))
+    .refine((v) => Object.keys(v).length <= 20, { message: 'At most 20 template variables' })
+    .optional(),
+  /** publishPolicy AUTO_ON_APPROVAL: where to publish when approved (automation/targets.ts). */
+  autoPublish: z.object({ targets: autoPublishTargets }).strict().optional(),
   costBudgetPence: z.number().int().min(0).max(10_000_000).optional(),
   reviewPolicy: z
     .enum(['AUTO_APPROVE', 'REQUIRE_APPROVAL', 'REQUIRE_APPROVAL_FROM_ROLE'])
@@ -81,8 +98,16 @@ export const createProjectInput = projectFields.superRefine((v, ctx) => {
       path: ['referenceVideoId'],
       message: 'referenceVideoId and referenceMode are required for LIBRARY_REFERENCE',
     });
-  if (v.sourceType !== 'SLIDESHOW' && !v.brief)
+  if (v.sourceType === 'TEMPLATE' && !v.templateId)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['templateId'],
+      message: 'templateId is required for TEMPLATE projects',
+    });
+  if (v.sourceType !== 'SLIDESHOW' && v.sourceType !== 'TEMPLATE' && !v.brief)
     ctx.addIssue({ code: 'custom', path: ['brief'], message: 'brief is required' });
+  if (v.sourceType !== 'TEMPLATE' && !v.targetFormats)
+    ctx.addIssue({ code: 'custom', path: ['targetFormats'], message: 'targetFormats is required' });
 });
 
 export const updateProjectInput = projectFields
@@ -92,6 +117,7 @@ export const updateProjectInput = projectFields
     costBudgetPence: true,
     reviewPolicy: true,
     publishPolicy: true,
+    autoPublish: true,
   })
   .partial()
   .extend({
@@ -166,6 +192,28 @@ export async function createProject(
       throw new ValidationError('referenceVideoId is not an available library video');
     assertModeAllowed(input.referenceMode, reference.license, Date.now());
   }
+  const template =
+    input.sourceType === 'TEMPLATE' && input.templateId
+      ? await applyTemplate(db, tenant.organisationId, input.templateId, {
+          businessId: input.businessId,
+          targetFormats: input.targetFormats,
+          brandKitId: input.brandKitId,
+          reviewPolicy: input.reviewPolicy,
+          publishPolicy: input.publishPolicy,
+          autoPublishTargets: input.autoPublish?.targets,
+          briefText: input.brief?.rawInput,
+          variables: input.templateVariables,
+        })
+      : null;
+  const formats = template?.targetFormats ?? input.targetFormats ?? [];
+  const targets = template?.autoPublishTargets ?? input.autoPublish?.targets ?? [];
+  assertMayConfigureTargets(tenant, targets);
+  await validateTargets(
+    db,
+    tenant.organisationId,
+    targets,
+    formats.map((f) => f.platform),
+  );
   const slideshow =
     input.sourceType === 'SLIDESHOW' && input.slideshow
       ? await planSlideshowSlides(
@@ -181,7 +229,8 @@ export async function createProject(
         businessId: input.businessId,
         createdByUserId: tenant.userId,
         name: input.name,
-        description: input.brief?.rawInput ?? input.slideshow?.topic ?? null,
+        description:
+          template?.description ?? input.brief?.rawInput ?? input.slideshow?.topic ?? null,
         state: 'DRAFT',
         sourceType: input.sourceType,
         sourceRef: input.sourceRef ?? null,
@@ -189,12 +238,12 @@ export async function createProject(
           referenceVideoId: input.referenceVideoId ?? null,
           referenceMode: input.referenceMode ?? null,
         }),
-        targetFormats: toStoredFormats(input.targetFormats),
-        brandKitId: input.brandKitId ?? null,
+        targetFormats: toStoredFormats(formats),
+        brandKitId: template?.brandKitId ?? input.brandKitId ?? null,
         templateId: input.templateId ?? null,
         costBudgetPence: input.costBudgetPence ?? null,
-        reviewPolicy: input.reviewPolicy,
-        publishPolicy: input.publishPolicy,
+        reviewPolicy: template ? template.reviewPolicy : input.reviewPolicy,
+        publishPolicy: template ? template.publishPolicy : input.publishPolicy,
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
         metadata: {
           briefHints: {
@@ -207,7 +256,9 @@ export async function createProject(
               topic: input.slideshow?.topic ?? null,
             },
           }),
-        },
+          ...(targets.length > 0 && { autoPublish: { targets } }),
+          ...(template && { template: { id: template.templateId } }),
+        } as Prisma.InputJsonValue,
       },
     });
     if (slideshow) await insertSlides(tx, project.id, slideshow.drafts);
@@ -269,19 +320,46 @@ export async function getProjectDetail(db: Db, organisationId: string, id: strin
   return project;
 }
 
+function storedPlatforms(targetFormats: Prisma.JsonValue): string[] {
+  return Array.isArray(targetFormats)
+    ? targetFormats.flatMap((f) =>
+        f && typeof f === 'object' && !Array.isArray(f) && typeof f.platform === 'string'
+          ? [f.platform]
+          : [],
+      )
+    : [];
+}
+
 export async function updateProject(
   db: Db,
-  organisationId: string,
+  tenant: Pick<TenantContext, 'organisationId' | 'capabilities'>,
   id: string,
   input: z.infer<typeof updateProjectInput>,
 ) {
+  const { organisationId } = tenant;
   const project = await findProject(db, organisationId, id);
   if (!EDITABLE_STATES.includes(project.state)) {
     throw new ConflictError(`Project cannot be edited while ${project.state}`);
   }
   await assertBrandKit(db, organisationId, input.brandKitId);
+  if (input.autoPublish) {
+    assertMayConfigureTargets(tenant, input.autoPublish.targets);
+    await validateTargets(
+      db,
+      organisationId,
+      input.autoPublish.targets,
+      input.targetFormats?.map((f) => f.platform) ?? storedPlatforms(project.targetFormats),
+    );
+  }
+  // Switching auto-publish on arms targets someone else may have stored: same capability.
+  if (input.publishPolicy === 'AUTO_ON_APPROVAL' && !input.autoPublish)
+    assertMayConfigureTargets(tenant, storedTargets(project.metadata));
   const metadata = projectMetadata(project.metadata);
   const hints = (metadata.briefHints as Record<string, unknown>) ?? {};
+  const hintsChanged = Boolean(
+    input.brief &&
+    (input.brief.targetAudience !== undefined || input.brief.callToAction !== undefined),
+  );
   const result = await db.videoProject.updateMany({
     where: { id, organisationId, state: project.state, updatedAt: project.updatedAt },
     data: {
@@ -295,21 +373,23 @@ export async function updateProject(
       ...(input.scheduledStartAt !== undefined && {
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
       }),
-      ...(input.brief &&
-        (input.brief.targetAudience !== undefined || input.brief.callToAction !== undefined) && {
-          metadata: {
-            ...metadata,
+      ...((hintsChanged || input.autoPublish) && {
+        metadata: {
+          ...metadata,
+          ...(hintsChanged && {
             briefHints: {
               ...hints,
-              ...(input.brief.targetAudience !== undefined && {
+              ...(input.brief?.targetAudience !== undefined && {
                 targetAudience: input.brief.targetAudience,
               }),
-              ...(input.brief.callToAction !== undefined && {
+              ...(input.brief?.callToAction !== undefined && {
                 callToAction: input.brief.callToAction,
               }),
             },
-          } as Prisma.InputJsonValue,
-        }),
+          }),
+          ...(input.autoPublish && { autoPublish: { targets: input.autoPublish.targets } }),
+        } as Prisma.InputJsonValue,
+      }),
     },
   });
   if (result.count === 0) throw new ConflictError('Project changed concurrently; reload and retry');
@@ -368,6 +448,7 @@ export async function generateProject(
     throw new ConflictError(`Project is ${project.state}; cancel it or wait for it to finish`);
   }
   const runId = randomUUID();
+  const planTier = toPlanTier(tenant.organisation.planTier);
   const metadata = projectMetadata(project.metadata);
   const updated = await deps.db.videoProject.updateMany({
     where: {
@@ -384,6 +465,8 @@ export async function generateProject(
       metadata: {
         ...metadata,
         runId,
+        // Recorded so an operator re-drive (services/redrive.ts) can rebuild the job payload.
+        planTier,
         renders: {},
         ...(input.confirmRestrictedTopics && { restrictedTopicsConfirmed: true }),
         directionOptions: undefined,
@@ -392,7 +475,6 @@ export async function generateProject(
   });
   if (updated.count === 0)
     throw new ConflictError('Project changed concurrently; reload and retry');
-  const planTier = toPlanTier(tenant.organisation.planTier);
   const job: ProjectJobData = {
     projectId: id,
     organisationId: tenant.organisationId,
@@ -451,6 +533,10 @@ export async function cancelProject(
   return { costIncurredPence: after.costActualPence, providerJobsCancelled: cancelled.length };
 }
 
+/**
+ * Human approval (spec 5.9). REQUIRE_APPROVAL_FROM_ROLE projects need an owner/admin approver
+ * (automation/approval.ts). Auto-publish on approval is the route's follow-up step.
+ */
 export async function approveProject(
   db: Db,
   tenant: TenantContext,
@@ -464,23 +550,16 @@ export async function approveProject(
       `Only READY_FOR_REVIEW projects can be approved (project is ${project.state})`,
     );
   }
-  await db.$transaction([
-    db.videoProject.updateMany({
-      where: { id, organisationId: tenant.organisationId, state: 'READY_FOR_REVIEW' },
-      data: { state: 'APPROVED' },
-    }),
-    db.approvalTask.create({
-      data: {
-        projectId: id,
-        stepIndex: 0,
-        requiredRole: 'reviewer',
-        state: 'APPROVED',
-        resolvedByUserId: tenant.userId,
-        note: note ?? null,
-        resolvedAt: new Date(now),
-      },
-    }),
-  ]);
+  assertMayApprove(tenant, project);
+  const approved = await recordApproval(db, {
+    projectId: id,
+    organisationId: tenant.organisationId,
+    actorId: tenant.userId,
+    requiredRole: requiredRoleFor(project.reviewPolicy),
+    note: note ?? null,
+    now,
+  });
+  if (!approved) throw new ConflictError('Project changed concurrently; reload and retry');
   return findProject(db, tenant.organisationId, id);
 }
 

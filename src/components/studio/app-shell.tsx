@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useBusiness } from './business-context';
+import { NotificationsBell } from './notifications-bell';
 
 // Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
 
@@ -194,6 +195,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="hidden md:block">
               <BusinessSwitcher />
             </div>
+            <NotificationsBell />
             <ThemeToggle />
           </div>
         </header>

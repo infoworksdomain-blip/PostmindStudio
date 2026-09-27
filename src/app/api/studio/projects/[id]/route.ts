@@ -20,7 +20,7 @@ export const PATCH = withStudioRoute(
   StudioCapability.ProjectWrite,
   async ({ req, tenant, deps, params, audit }) => {
     const input = await parseBody(req, updateProjectInput);
-    const project = await updateProject(deps.db, tenant.organisationId, params.id ?? '', input);
+    const project = await updateProject(deps.db, tenant, params.id ?? '', input);
     audit(
       'studio.project.update',
       { type: 'video_project', id: project.id },

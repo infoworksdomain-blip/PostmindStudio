@@ -377,6 +377,7 @@ export async function requestAutoPopulate(
       state: 'SCANNING',
       metadata: {
         ...projectMetadata(project.metadata),
+        planTier: toPlanTier(tenant.organisation.planTier),
         populate: { id: populateId, returnTo: project.state },
       } as Prisma.InputJsonValue,
     },

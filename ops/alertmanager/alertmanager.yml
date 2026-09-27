@@ -1,0 +1,57 @@
+# PostMind Studio — Alertmanager routing for ops/prometheus/studio-alerts.yml.
+#   severity=page   → PagerDuty (Events API v2)
+#   severity=ticket → Slack #studio-alerts
+# No secrets in this file: the PagerDuty routing key and the Slack webhook URL are read from
+# files mounted by the deployment (e.g. Kubernetes secrets / Docker secrets) at the paths below.
+# Validated in CI (ops-config job): amtool check-config + a routing test per severity.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: studio-ticket
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity="page"
+      receiver: studio-page
+      group_wait: 10s
+      repeat_interval: 1h
+    - matchers:
+        - severity="ticket"
+      receiver: studio-ticket
+
+inhibit_rules:
+  # A target that is down also trips latency / backlog tickets: page only for the root cause.
+  - source_matchers:
+      - alertname="StudioTargetDown"
+    target_matchers:
+      - severity="ticket"
+    equal: [instance]
+  # While the global kill switch is engaged, halted work is expected: silence job/queue noise.
+  - source_matchers:
+      - alertname="StudioGlobalKillSwitchEngaged"
+    target_matchers:
+      - alertname=~"StudioJobFailureRateHigh|StudioQueueBacklog|StudioDeadLetterGrowing"
+
+receivers:
+  - name: studio-page
+    pagerduty_configs:
+      - routing_key_file: /etc/alertmanager/secrets/pagerduty-routing-key
+        send_resolved: true
+        severity: critical
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          runbook: '{{ .CommonAnnotations.runbook_url }}'
+          firing: '{{ .Alerts.Firing | len }}'
+
+  - name: studio-ticket
+    slack_configs:
+      - api_url_file: /etc/alertmanager/secrets/slack-webhook-url
+        channel: '#studio-alerts'
+        send_resolved: true
+        title: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        text: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.runbook_url }}\n{{ end }}"
