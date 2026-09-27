@@ -103,6 +103,13 @@ export interface CompositionRequest extends ProviderRequestBase {
   outputDurationSec: number;
 }
 
+export interface ContentSafetyRequest extends ProviderRequestBase {
+  capability: 'content_safety';
+  /** Publicly fetchable (e.g. presigned) URL of the rendered video. */
+  mediaUrl: string;
+  durationSec: number;
+}
+
 export type ProviderRequest =
   | TextGenerationRequest
   | EmbeddingRequest
@@ -110,7 +117,8 @@ export type ProviderRequest =
   | TextToVideoRequest
   | ImageToVideoRequest
   | TtsRequest
-  | CompositionRequest;
+  | CompositionRequest
+  | ContentSafetyRequest;
 
 export interface ProviderSubmitResult {
   providerJobId: string;

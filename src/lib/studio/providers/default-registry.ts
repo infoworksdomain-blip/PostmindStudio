@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { AnthropicAdapter } from './anthropic';
 import { ElevenLabsAdapter } from './elevenlabs';
+import { HiveAdapter } from './hive';
 import type { ProviderAdapter } from './interface';
 import { OpenAIAdapter } from './openai';
 import { usdToGbpRateFromEnv } from './pricing';
@@ -76,6 +77,9 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
       }),
     );
   }
+
+  const hiveKey = envValue('HIVE_API_KEY');
+  if (hiveKey) adapters.push(new HiveAdapter({ apiKey: hiveKey, usdToGbpRate }));
 
   return adapters;
 }

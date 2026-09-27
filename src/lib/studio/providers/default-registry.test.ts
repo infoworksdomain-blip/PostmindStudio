@@ -8,6 +8,7 @@ const KEYS = [
   'RUNWAY_API_KEY',
   'ELEVENLABS_API_KEY',
   'SHOTSTACK_API_KEY',
+  'HIVE_API_KEY',
 ];
 
 beforeEach(() => {
@@ -35,6 +36,7 @@ describe('buildAdaptersFromEnv', () => {
       'runway',
       'elevenlabs',
       'shotstack',
+      'hive',
     ]);
   });
 
