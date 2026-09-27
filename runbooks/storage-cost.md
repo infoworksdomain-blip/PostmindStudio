@@ -10,7 +10,11 @@
 
 - Intermediate assets are deleted after 30 days when there has been no regeneration.
 - Rendered videos are kept for the lifetime of the publication plus 90 days.
-- CDN caching uses immutable URLs.
+- CDN caching uses immutable URLs. With `CDN_URL` and a CloudFront key pair configured (13.30),
+  objects in `CDN_BUCKET` (default the renders bucket) are served as CloudFront signed URLs with
+  the same 24 h expiry as the S3 presigned URLs; rotate the key pair by adding the new public key
+  to the distribution's key group, then switching `CLOUDFRONT_KEY_PAIR_ID` /
+  `CLOUDFRONT_PRIVATE_KEY`, then removing the old key.
 
 ## Steps
 

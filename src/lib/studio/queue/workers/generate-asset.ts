@@ -6,8 +6,23 @@ import type { PipelineDeps } from '../../pipeline/deps';
 import { copyUrlToStorage } from '../../pipeline/persist';
 import { currentRunId, transitionProject } from '../../pipeline/project-state';
 import { runProvider, type ProviderRunResult } from '../../pipeline/provider-run';
+import { ensureWordTiming } from '../../pipeline/word-timing';
 import { jobIds } from '../enqueue';
 import type { GenerateAssetJobData, ProjectJobData } from '../queues';
+
+/** 13.6: transcribe the shot's narration once for word-level karaoke timing (non-fatal). */
+async function timeNarration(deps: PipelineDeps, shotId: string, data: GenerateAssetJobData) {
+  const current = await deps.db.videoShot.findUnique({
+    where: { id: shotId },
+    select: { voiceAssetId: true },
+  });
+  if (!current?.voiceAssetId) return;
+  await ensureWordTiming(deps, {
+    assetId: current.voiceAssetId,
+    organisationId: data.organisationId,
+    planTier: data.planTier,
+  });
+}
 
 // BACKLOG 3.5 — Layers 3 (visual) and 4 (voice) for one shot (spec 4.5 steps 4–5). Outputs are
 // copied into the Studio assets bucket (provider URLs expire) and recorded as video_assets.
@@ -133,10 +148,49 @@ function preferredProvider(shot: ShotWithScript): string | undefined {
   return typeof routing?.preferredProviderId === 'string' ? routing.preferredProviderId : undefined;
 }
 
+/**
+ * BACKLOG 13.32 — AI_AVATAR: the avatar provider (HeyGen) lip-syncs to the shot's narration, so
+ * the presenter speaks in the brand voice and matches the composer's separate voice track.
+ */
+async function generateAvatar(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+  voiceAssetId: string | null,
+): Promise<StoredAsset> {
+  if (!voiceAssetId) {
+    throw new ValidationError('AI_AVATAR shots need voiceover text for the avatar to speak');
+  }
+  const voice = await deps.db.videoAsset.findFirst({
+    where: { id: voiceAssetId, organisationId: data.organisationId, kind: 'AUDIO_VOICE' },
+    select: { s3Bucket: true, s3Key: true },
+  });
+  if (!voice?.s3Bucket || !voice.s3Key) throw new NotFoundError('Narration asset not found');
+  const run = await runProvider(
+    {
+      need: { kind: 'shot', visualTreatment: 'AI_AVATAR', durationSec: shot.durationSec },
+      planTier: data.planTier,
+      preferredProviderId: preferredProvider(shot),
+      request: {
+        organisationId: data.organisationId,
+        projectId: data.projectId,
+        shotId: shot.id,
+        capability: 'avatar_video',
+        audioUrl: await deps.storage.signedUrl(voice.s3Bucket, voice.s3Key),
+        durationSec: shot.durationSec,
+        aspectRatio: shot.script.targetAspectRatio as AspectRatio,
+      },
+    },
+    deps,
+  );
+  return recordAsset(deps, shot, 'VIDEO_CLIP', run, { extension: 'mp4', contentType: 'video/mp4' });
+}
+
 async function generateVisual(
   deps: PipelineDeps,
   shot: ShotWithScript,
   data: GenerateAssetJobData,
+  voiceAssetId: string | null,
 ): Promise<StoredAsset | null> {
   const base = { organisationId: data.organisationId, projectId: data.projectId, shotId: shot.id };
   const aspectRatio = shot.script.targetAspectRatio as AspectRatio;
@@ -177,6 +231,8 @@ async function generateVisual(
       );
       return recordAsset(deps, shot, 'IMAGE', run, { extension: 'png', contentType: 'image/png' });
     }
+    case 'AI_AVATAR':
+      return generateAvatar(deps, shot, data, voiceAssetId);
     default:
       throw new ValidationError(`No asset generator for ${shot.visualTreatment} shots yet`);
   }
@@ -197,7 +253,13 @@ async function resolveVoiceId(deps: PipelineDeps, shot: ShotWithScript): Promise
       });
   if (kit?.voiceProfileId) {
     const profile = await deps.db.voiceProfile.findFirst({
-      where: { id: kit.voiceProfileId, organisationId: project.organisationId },
+      // 13.13: a deleted or unverified clone is never used (spec 10.2: fall back to default).
+      where: {
+        id: kit.voiceProfileId,
+        organisationId: project.organisationId,
+        state: 'READY',
+        deletedAt: null,
+      },
     });
     if (profile?.provider === 'elevenlabs') return profile.providerVoiceId;
   }
@@ -293,8 +355,15 @@ export async function generateAsset(data: GenerateAssetJobData, deps: PipelineDe
 
   // A retry keeps an already-generated visual rather than paying for it twice.
   // Each generator records its asset and the shot pointer atomically (see recordAsset).
-  if (!shot.assetId) await generateVisual(deps, shot, data);
-  if (!shot.voiceAssetId) await generateVoice(deps, shot, data);
+  // Avatar shots need their narration first: the avatar lip-syncs to it.
+  const voiceFirst = shot.visualTreatment === 'AI_AVATAR';
+  let voiceAssetId = shot.voiceAssetId;
+  if (voiceFirst && !voiceAssetId) {
+    voiceAssetId = (await generateVoice(deps, shot, data))?.assetId ?? null;
+  }
+  if (!shot.assetId) await generateVisual(deps, shot, data, voiceAssetId);
+  if (!voiceFirst && !shot.voiceAssetId) await generateVoice(deps, shot, data);
+  await timeNarration(deps, shot.id, data);
 
   await deps.db.videoShot.update({ where: { id: shot.id }, data: { state: 'READY' } });
   await enqueueComposeIfReady(deps, data);

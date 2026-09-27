@@ -37,9 +37,11 @@ export function ScriptSelect({
 export function ShotsTab({
   project,
   onChanged,
+  businessId = null,
 }: {
   project: ProjectDetail;
   onChanged: () => void;
+  businessId?: string | null;
 }) {
   const [scriptId, setScriptId] = useState(project.scripts[0]?.id ?? '');
   const [shotId, setShotId] = useState<string | null>(null);
@@ -69,6 +71,12 @@ export function ShotsTab({
           index={index}
           projectState={project.state}
           onChanged={onChanged}
+          businessId={businessId}
+          isLastShot={script.shots.length <= 1}
+          onDeleted={() => {
+            setShotId(null);
+            onChanged();
+          }}
         />
       ) : (
         <p className="text-sm text-muted-foreground">

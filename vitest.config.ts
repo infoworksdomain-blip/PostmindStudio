@@ -16,6 +16,9 @@ export default defineConfig({
     // jsdom component tests drive whole screens with user-event; with ~190 files running in
     // parallel on a loaded machine they exceed vitest's 5 s default without being wrong.
     testTimeout: 20_000,
+    // DB suites seed taxonomy/presets in beforeAll; on the single-connection local database under
+    // load that exceeds the 10 s default without anything being wrong.
+    hookTimeout: 60_000,
     coverage: {
       provider: 'v8',
       include: ['src/lib/**/*.ts'],

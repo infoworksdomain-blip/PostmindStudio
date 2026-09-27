@@ -16,6 +16,7 @@ import {
   styleKeys,
   videoOverlays,
 } from './overlays-data';
+import { slidesByProject } from './slideshow-data';
 
 const EDITABLE = new Set(['DRAFT', 'FAILED', 'REJECTED', 'QUALITY_FAILED', 'READY_FOR_REVIEW']);
 const RERENDERABLE = new Set(['READY_FOR_REVIEW', 'QUALITY_FAILED', 'REJECTED']);
@@ -163,6 +164,21 @@ route('POST', '/shots/:id/overlays', ({ params, body }) => {
 function overlayContext(id: string) {
   const found = findOverlay(id);
   if (!found) throw new DemoHttpError(404, 'not_found', 'Overlay not found');
+  if (found.kind === 'slide') {
+    for (const [projectId, slides] of slidesByProject) {
+      const slide = slides.find((x) => x.id === found.key);
+      if (!slide) continue;
+      const project = getProject(projectId);
+      return {
+        ...found,
+        project,
+        maxEnd: slide.durationSec,
+        aspect: project.targetFormats[0]?.aspectRatio ?? '9:16',
+        scene: project.scene,
+      };
+    }
+    throw new DemoHttpError(404, 'not_found', 'Overlay not found');
+  }
   if (found.kind === 'shot') {
     const { project, script, shot } = findShot(found.key);
     return {

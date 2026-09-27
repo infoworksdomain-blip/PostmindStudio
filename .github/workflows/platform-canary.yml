@@ -1,0 +1,51 @@
+name: Daily platform canary
+
+# BACKLOG 13.31 — one live, read-only API call per platform with a sandbox account
+# (src/lib/studio/platforms/canary.ts), to catch token/permission loss and response-shape changes
+# before customers do (runbooks/platform-api-change.md). Platforms without secrets are skipped;
+# with no secrets at all the job skips with a notice.
+
+on:
+  schedule:
+    - cron: '30 5 * * *' # daily 05:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CANARY_YOUTUBE_ACCESS_TOKEN: ${{ secrets.CANARY_YOUTUBE_ACCESS_TOKEN }}
+      CANARY_TIKTOK_ACCESS_TOKEN: ${{ secrets.CANARY_TIKTOK_ACCESS_TOKEN }}
+      CANARY_X_ACCESS_TOKEN: ${{ secrets.CANARY_X_ACCESS_TOKEN }}
+      CANARY_LINKEDIN_ACCESS_TOKEN: ${{ secrets.CANARY_LINKEDIN_ACCESS_TOKEN }}
+      CANARY_INSTAGRAM_ACCESS_TOKEN: ${{ secrets.CANARY_INSTAGRAM_ACCESS_TOKEN }}
+      CANARY_INSTAGRAM_USER_ID: ${{ secrets.CANARY_INSTAGRAM_USER_ID }}
+      CANARY_FACEBOOK_PAGE_TOKEN: ${{ secrets.CANARY_FACEBOOK_PAGE_TOKEN }}
+      CANARY_FACEBOOK_VIDEO_ID: ${{ secrets.CANARY_FACEBOOK_VIDEO_ID }}
+      META_GRAPH_API_VERSION: ${{ vars.META_GRAPH_API_VERSION }}
+    steps:
+      - name: Check for sandbox secrets
+        id: secrets
+        run: |
+          if [ -n "$CANARY_YOUTUBE_ACCESS_TOKEN$CANARY_TIKTOK_ACCESS_TOKEN$CANARY_X_ACCESS_TOKEN$CANARY_LINKEDIN_ACCESS_TOKEN$CANARY_INSTAGRAM_ACCESS_TOKEN$CANARY_FACEBOOK_PAGE_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Platform canary skipped::No CANARY_* sandbox secrets are configured. Add them in Settings → Secrets (runbooks/platform-api-change.md)."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.secrets.outputs.present == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.secrets.outputs.present == 'true'
+      - name: Live read-only canary per configured platform
+        if: steps.secrets.outputs.present == 'true'
+        run: npx vitest run --config vitest.canary.config.ts

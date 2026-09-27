@@ -3,6 +3,7 @@
 import { DEMO_ORG_ID, PROJECTS } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { OTHER_ORGS } from './admin-state';
+import { capOverrides } from './p13-a3-admin';
 import { dayKey, ledger, rollup } from './analytics-cost-data';
 
 const HOUR = 3_600_000;
@@ -203,7 +204,19 @@ route('GET', '/admin/cost/caps', () => {
     },
   ];
 
+  // 13.19 (track A3): per-organisation overrides set in Admin → Organisations.
+  const orgOverrides = [...capOverrides.entries()].map(([organisationId, o]) => ({
+    organisationId,
+    dailyPence: o.dailyPence,
+    monthlyPence: o.monthlyPence,
+    source: 'org_override' as const,
+    reason: o.reason,
+    updatedByUserId: o.updatedByUserId,
+    updatedAt: o.updatedAt,
+  }));
+
   return {
+    orgOverrides,
     day: today,
     month,
     caps: {

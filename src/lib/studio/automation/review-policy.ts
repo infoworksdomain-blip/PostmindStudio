@@ -28,6 +28,7 @@ export type ReviewReasonCode =
   | 'content_safety_flag'
   | 'script_safety_flag'
   | 'not_trusted'
+  | 'org_policy'
   | 'auto_approve_error';
 
 export type ReviewDecision =
@@ -64,6 +65,8 @@ export interface AutoApprovalInput {
   renders: RenderForDecision[];
   /** metadata.scriptSafety.verdict from planning; undefined = not recorded. */
   scriptSafetyVerdict: string | undefined;
+  /** 13.18 organisation policy: false = never auto-approve. Absent = allowed. */
+  orgAllowsAutoApprove?: boolean;
 }
 
 function checksOf(render: RenderForDecision): QualityCheck[] {
@@ -104,6 +107,11 @@ function renderProblem(render: RenderForDecision): ReviewDecision | null {
 export function decideAutoApproval(input: AutoApprovalInput): ReviewDecision {
   if (input.planTier === 'ENTERPRISE')
     return review('enterprise_plan', 'Needs review: enterprise organisations always review videos');
+  if (input.orgAllowsAutoApprove === false)
+    return review(
+      'org_policy',
+      'Needs review: your organisation’s policy turns automatic approval off',
+    );
   if (!input.threshold.ok)
     return review(
       'config_invalid',

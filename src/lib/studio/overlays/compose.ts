@@ -10,6 +10,7 @@ import {
   type FrameSize,
   type OverlayRow,
 } from './shotstack';
+import { alignKaraoke, type SpokenWord } from './word-timing';
 
 // BACKLOG 8.3 — build the overlay track for a Shotstack edit from text_overlays rows: each
 // overlay is placed at (shot start + overlay start); native animations become rich-text clips,
@@ -19,6 +20,15 @@ export interface PlacedOverlay {
   row: TextOverlay;
   /** Seconds from the start of the video to the start of the shot (0 for whole-video). */
   offsetSec: number;
+  /** Spoken words of the shot (times from the shot start) for karaoke timing (13.6). */
+  words?: SpokenWord[];
+}
+
+/** Karaoke overlays get per-word times from the spoken words when they line up. */
+export function withWordTiming(overlay: OverlayRow, words: SpokenWord[] | undefined): OverlayRow {
+  if (overlay.animationIn !== 'karaokeHighlight' || !words?.length) return overlay;
+  const starts = alignKaraoke(overlay.text, words, overlay.startAtSec, overlay.endAtSec);
+  return starts ? { ...overlay, wordStartsSec: starts } : overlay;
 }
 
 export function toOverlayRow(row: TextOverlay): OverlayRow | null {
@@ -55,8 +65,9 @@ export async function buildOverlayTrack(
       a.offsetSec + a.row.startAtSec - (b.offsetSec + b.row.startAtSec) ||
       a.row.sortOrder - b.row.sortOrder,
   );
-  for (const { row, offsetSec } of ordered) {
-    const overlay = toOverlayRow(row);
+  for (const { row, offsetSec, words } of ordered) {
+    const parsed = toOverlayRow(row);
+    const overlay = parsed ? withWordTiming(parsed, words) : null;
     if (!overlay) {
       track.skipped.push(row.id);
       continue;

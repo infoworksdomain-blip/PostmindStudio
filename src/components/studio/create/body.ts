@@ -4,7 +4,7 @@ import { buildFormats, nameFromBrief, type Length, type TargetFormatInput } from
 // Builds the POST /api/studio/projects body (services/projects.ts createProjectInput) from the
 // Create screen's state. Pure, so the rules the API enforces are unit-tested here too.
 
-export type CreateSource = 'BRIEF' | 'SLIDESHOW';
+export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD';
 export type ReferenceMode = 'TEMPLATE' | 'INSPIRE';
 export type ReviewPolicy = 'AUTO_APPROVE' | 'REQUIRE_APPROVAL';
 
@@ -25,6 +25,8 @@ export interface CreateState {
   /** publishPolicy AUTO_ON_APPROVAL with one chosen connection per platform. */
   autoPublish: boolean;
   autoPublishAccounts: Record<string, string>;
+  /** 13.5: the completed source-video upload (POST /uploads → /complete). */
+  upload?: { id: string; fileName: string } | null;
 }
 
 export interface Reference {
@@ -35,7 +37,8 @@ export interface Reference {
 export interface CreateProjectBody {
   name: string;
   businessId: string;
-  sourceType: 'BRIEF' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE';
+  sourceType: 'BRIEF' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE' | 'UPLOAD';
+  uploadId?: string;
   /** Omitted for TEMPLATE projects: the template's formats apply. */
   targetFormats?: TargetFormatInput[];
   templateId?: string;
@@ -57,7 +60,10 @@ export function validateCreate(state: CreateState, businessId: string | null): s
   const problems: string[] = [];
   const templated = usesTemplate(state);
   if (!businessId) problems.push('Choose a business first.');
-  if (!state.brief.trim() && !templated) problems.push('Describe what the video is about.');
+  const uploading = state.source === 'UPLOAD';
+  if (uploading && !state.upload) problems.push('Upload your video first.');
+  if (!state.brief.trim() && !templated && !uploading)
+    problems.push('Describe what the video is about.');
   if (state.brief.length > BRIEF_MAX)
     problems.push(`Keep the brief under ${BRIEF_MAX} characters.`);
   if (state.platforms.length === 0 && !templated) problems.push('Pick at least one platform.');
@@ -101,7 +107,12 @@ export function buildCreateBody(
     sourceType: 'BRIEF',
     ...(!template && { targetFormats: buildFormats(state.platforms, state.length) }),
   };
-  if (state.source === 'SLIDESHOW' && state.templateId) {
+  if (state.source === 'UPLOAD' && state.upload) {
+    body.sourceType = 'UPLOAD';
+    body.uploadId = state.upload.id;
+    if (!rawInput) body.name = nameFromBrief(state.upload.fileName.replace(/.[a-z0-9]+$/i, ''));
+    if (rawInput) body.brief = { rawInput };
+  } else if (state.source === 'SLIDESHOW' && state.templateId) {
     body.sourceType = 'SLIDESHOW';
     body.slideshow = { templateId: state.templateId, topic: rawInput.slice(0, 500) };
   } else if (template) {
@@ -129,7 +140,7 @@ export function buildCreateBody(
   if (state.budgetPounds.trim())
     body.costBudgetPence = Math.round(Number(state.budgetPounds) * 100);
   if (state.reviewPolicy) body.reviewPolicy = state.reviewPolicy;
-  if (state.autoPublish && state.source === 'BRIEF') {
+  if (state.autoPublish && state.source !== 'SLIDESHOW') {
     body.publishPolicy = 'AUTO_ON_APPROVAL';
     body.autoPublish = {
       targets: buildTargets(

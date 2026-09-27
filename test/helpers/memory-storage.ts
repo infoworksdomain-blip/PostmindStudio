@@ -23,6 +23,23 @@ export function memoryStorage() {
     async delete(bucket, key) {
       objects.delete(`${bucket}/${key}`);
     },
+    async putStream({ bucket, key, body, contentType }) {
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of body) chunks.push(chunk);
+      const all = new Uint8Array(chunks.reduce((n, c) => n + c.byteLength, 0));
+      let offset = 0;
+      for (const chunk of chunks) {
+        all.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      objects.set(`${bucket}/${key}`, { body: all, contentType });
+      return { bucket, key, bytes: all.byteLength };
+    },
+    async copy(bucket, fromKey, toKey) {
+      const object = objects.get(`${bucket}/${fromKey}`);
+      if (!object) throw new Error(`missing ${bucket}/${fromKey}`);
+      objects.set(`${bucket}/${toKey}`, object);
+    },
   };
   return { storage, objects };
 }

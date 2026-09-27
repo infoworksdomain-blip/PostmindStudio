@@ -23,6 +23,7 @@ import { ErrorState } from '../primitives';
 import { Field, NativeSelect } from '../review/field';
 import { useAction } from '../review/use-action';
 import { SlideEditor, type SlidePatch } from './slide-editor';
+import { SlideOverlays } from './slide-overlays';
 import { SLIDE_TYPE_LABEL, SLIDE_TYPES, type Slide, type SlideType } from './types';
 
 // BACKLOG 10.8 — slideshow builder (A5): slides in order with what each still needs, edit,
@@ -228,6 +229,16 @@ export function SlideshowBuilder({
                     saving={pending === `save-${slide.id}`}
                     onSave={(patch) => save(slide, patch)}
                   />
+                  <div className="mt-3">
+                    <SlideOverlays
+                      slideId={slide.id}
+                      duration={slide.durationSec}
+                      aspectRatio={project.targetFormats[0]?.aspectRatio ?? '9:16'}
+                      platform={project.targetFormats[0]?.platform}
+                      editable={editable}
+                      businessId={businessId}
+                    />
+                  </div>
                 </div>
               )}
             </li>

@@ -18,22 +18,24 @@ import { utcDay } from '../providers/job-repository';
 // every configured cap, where each cap value comes from (code default, env override, disabled)
 // and the recent cost alerts. An organisation's plan tier comes from PostMind Core per request
 // and is not stored by Studio, so organisations are listed with today's spend and every tier
-// cap is shown; the org-daily alerts say which cap an organisation actually hit.
+// cap is shown; the org-daily alerts say which cap an organisation actually hit. Organisations
+// with a 13.19 override are listed under orgOverrides (source "org_override").
 
-type Db = Pick<PrismaClient, 'providerUsage' | 'videoProject' | 'costAlert'>;
+type Db = Pick<PrismaClient, 'providerUsage' | 'videoProject' | 'costAlert' | 'orgCostCap'>;
 
 const TOP_ORGANISATIONS = 50;
 const PROJECTS_LIMIT = 50;
 const ALERTS_LIMIT = 50;
 const RECENT_MS = 7 * 24 * 60 * 60 * 1000;
 const USAGE_ROWS_LIMIT = 5_000;
+const OVERRIDES_LIMIT = 200;
 
 export async function adminCostCaps(db: Db, caps: CostCaps, now: number) {
   const today = new Date(now);
   const day = utcDay(today);
   const since = new Date(now - RECENT_MS);
   const month = utcMonthRange(today);
-  const [usage, monthly, projects, alerts] = await Promise.all([
+  const [usage, monthly, projects, alerts, overrides] = await Promise.all([
     db.providerUsage.findMany({
       where: { day },
       select: { organisationId: true, provider: true, costPence: true },
@@ -68,6 +70,8 @@ export async function adminCostCaps(db: Db, caps: CostCaps, now: number) {
       orderBy: { createdAt: 'desc' },
       take: ALERTS_LIMIT,
     }),
+    // 13.19 per-organisation overrides (source org_override); a short list by nature.
+    db.orgCostCap.findMany({ orderBy: { updatedAt: 'desc' }, take: OVERRIDES_LIMIT }),
   ]);
 
   const orgs = new Map<string, { spentPence: number; providers: Map<string, number> }>();
@@ -119,6 +123,16 @@ export async function adminCostCaps(db: Db, caps: CostCaps, now: number) {
     organisationsThisMonth: monthly.map((row) => ({
       organisationId: row.organisationId,
       spentPence: row._sum?.costPence ?? 0,
+    })),
+    /** 13.19: organisations whose daily / monthly cap is overridden (source org_override). */
+    orgOverrides: overrides.map((o) => ({
+      organisationId: o.organisationId,
+      dailyPence: o.dailyPence,
+      monthlyPence: o.monthlyPence,
+      source: 'org_override' as const,
+      reason: o.reason,
+      updatedByUserId: o.updatedByUserId,
+      updatedAt: o.updatedAt,
     })),
     organisations: [...orgs.entries()]
       .map(([organisationId, o]) => ({

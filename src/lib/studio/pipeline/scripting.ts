@@ -97,6 +97,12 @@ export function scriptSchema(treatments: VisualTreatment[]) {
             },
             onScreenText: { type: 'string', description: 'short caption overlay, empty if none' },
             transitionOut: { type: 'string', enum: [...TRANSITIONS] },
+            // 13.27: optional, so earlier outputs and models that omit it stay valid.
+            sfxCue: {
+              type: 'string',
+              description:
+                'optional sound effect at the start of this shot, 1–4 plain words (e.g. "whoosh", "cash register"); empty if none',
+            },
           },
         },
       },
@@ -112,6 +118,7 @@ const shotResult = z.object({
   voiceoverText: z.string(),
   onScreenText: z.string(),
   transitionOut: z.enum(TRANSITIONS),
+  sfxCue: z.string().max(200).optional(),
 });
 
 const scriptResult = z.object({ fullText: z.string(), shots: z.array(shotResult).min(1).max(120) });
@@ -125,6 +132,8 @@ export interface PlannedShot {
   voiceoverText: string | null;
   onScreenText: string | null;
   transitionOut: string;
+  /** 13.27: sound-effect cue for the shot's start; null/absent = none. */
+  sfxCue?: string | null;
 }
 
 export interface PlannedScript {
@@ -137,6 +146,8 @@ export const SCRIPT_SYSTEM_PROMPT = [
   'Write one script for the given platform and duration, split into shots that together last exactly the target duration.',
   'Open with the hook in the first shot. Keep one idea per shot. Speak naturally; roughly 2.5 spoken words per second.',
   'AI_CLIP shots must be 2–10 seconds; other shots 1–10 seconds.',
+  'AI_AVATAR shots are a presenter speaking to camera: they must have voiceover text.',
+  'Use sound effects sparingly: at most one short sfxCue on a few key shots (the hook, a reveal, the call to action), otherwise leave it empty.',
   "Scene descriptions are prompts for a video/image generator: describe subject, setting, light and motion; never ask for text, logos or real people's likenesses in frame.",
   'Only use the visual treatments offered. Never invent prices, statistics or claims absent from the brief.',
 ].join('\n');
@@ -192,6 +203,15 @@ export function normaliseScript(
       );
     }
     const treatment = shot.visualTreatment as VisualTreatment;
+    // The avatar lip-syncs to the shot's narration (generate-asset.ts), so it must have some.
+    if (treatment === 'AI_AVATAR' && !shot.voiceoverText.trim()) {
+      throw new ProviderError(
+        'text_generation',
+        'unknown',
+        'Script has an AI_AVATAR shot without voiceover text',
+        true,
+      );
+    }
     const [min, max] = shotDurationBounds(treatment);
     return {
       sortOrder: index,
@@ -202,9 +222,23 @@ export function normaliseScript(
       voiceoverText: shot.voiceoverText.trim() || null,
       onScreenText: shot.onScreenText.trim() || null,
       transitionOut: shot.transitionOut,
+      sfxCue: normaliseSfxCue(shot.sfxCue),
     };
   });
   return { fullText: parsed.data.fullText.trim(), shots: fitDurations(shots, targetSec) };
+}
+
+const MAX_SFX_CUE_CHARS = 60;
+
+/** A short, plain cue or null: cues are search keywords, never free text for other layers. */
+export function normaliseSfxCue(cue: string | undefined): string | null {
+  const cleaned = (cue ?? '')
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_SFX_CUE_CHARS)
+    .trim();
+  return cleaned || null;
 }
 
 export function fitDurations(shots: PlannedShot[], targetSec: number): PlannedShot[] {

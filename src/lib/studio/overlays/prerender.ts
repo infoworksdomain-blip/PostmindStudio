@@ -55,16 +55,21 @@ export function counterTarget(overlay: OverlayRow): { from: number; to: number; 
   return { from: overlay.effect?.counterFrom ?? 0, to, suffix };
 }
 
-/** Per-word highlight times, spread evenly across the overlay (no word-level voice timing yet). */
+/**
+ * Per-word highlight times: the spoken timing when the narration was transcribed (13.6,
+ * overlays/word-timing.ts), otherwise spread evenly across the overlay.
+ */
 export function karaokeSteps(
   text: string,
   durationSec: number,
+  wordStartsSec?: number[],
 ): Array<{ prefix: string; at: number }> {
   const words = text.split(/\s+/).filter(Boolean);
+  const spoken = wordStartsSec && wordStartsSec.length === words.length ? wordStartsSec : null;
   const step = durationSec / Math.max(1, words.length);
   return words.map((_, i) => ({
     prefix: words.slice(0, i + 1).join(' '),
-    at: Math.round(i * step * 1000) / 1000,
+    at: spoken ? (spoken[i] ?? 0) : Math.round(i * step * 1000) / 1000,
   }));
 }
 
@@ -82,7 +87,10 @@ export function preRenderTexts(overlay: OverlayRow): string[] {
     return [`%{eif:trunc(${from}+(${to - from})*min(1,t/${d.toFixed(3)})):d}${escapedSuffix}`];
   }
   if (overlay.animationIn === 'karaokeHighlight') {
-    return [overlay.text, ...karaokeSteps(overlay.text, duration).map((s) => s.prefix)];
+    return [
+      overlay.text,
+      ...karaokeSteps(overlay.text, duration, overlay.wordStartsSec).map((s) => s.prefix),
+    ];
   }
   return [overlay.text];
 }
@@ -131,7 +139,7 @@ export function buildPreRenderArgs(
       }),
     );
   } else if (overlay.animationIn === 'karaokeHighlight') {
-    const steps = karaokeSteps(overlay.text, duration);
+    const steps = karaokeSteps(overlay.text, duration, overlay.wordStartsSec);
     filters.push(
       drawtext({
         ...base,

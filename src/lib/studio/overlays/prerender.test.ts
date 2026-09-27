@@ -99,6 +99,16 @@ describe('karaokeSteps', () => {
       { prefix: 'a b', at: 1 },
     ]);
   });
+
+  it('uses spoken word times when there is one per word (13.6)', () => {
+    expect(karaokeSteps('a b c', 3, [0.2, 0.5, 2.1])).toEqual([
+      { prefix: 'a', at: 0.2 },
+      { prefix: 'a b', at: 0.5 },
+      { prefix: 'a b c', at: 2.1 },
+    ]);
+    // A mismatched count falls back to even spacing.
+    expect(karaokeSteps('a b', 2, [0.3]).map((s) => s.at)).toEqual([0, 1]);
+  });
 });
 
 describe('preRenderTexts', () => {

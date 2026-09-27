@@ -1,6 +1,7 @@
 import type { PrismaClient, ReviewPolicy } from '@prisma/client';
 import { ForbiddenError } from '../../errors';
 import type { TenantContext } from '../../tenant';
+import { writeOutboxRows } from './outbox';
 
 // One way to approve a project (spec 5.9 "user approval checkpoint"), shared by the human route
 // (POST /projects/:id/approve) and the automatic path (automation/auto-approve.ts): the project
@@ -44,7 +45,8 @@ export function assertMayApprove(
 }
 
 /**
- * Compare-and-set READY_FOR_REVIEW → APPROVED plus the approval row, in one transaction.
+ * Compare-and-set READY_FOR_REVIEW → APPROVED plus the approval row (and, 13.21, the auto-publish
+ * outbox rows), in one transaction.
  * Returns false (and records nothing) when the project was no longer awaiting review.
  */
 export async function recordApproval(
@@ -56,6 +58,8 @@ export async function recordApproval(
     requiredRole: string;
     note: string | null;
     now: number;
+    /** 13.21: write the auto-publish outbox rows in the same transaction (AUTO_ON_APPROVAL). */
+    outbox?: { planTier: string; trigger: 'human' | 'auto' };
   },
 ): Promise<boolean> {
   return db.$transaction(async (tx) => {
@@ -68,7 +72,7 @@ export async function recordApproval(
       data: { state: 'APPROVED' },
     });
     if (moved.count === 0) return false;
-    await tx.approvalTask.create({
+    const task = await tx.approvalTask.create({
       data: {
         projectId: input.projectId,
         stepIndex: 0,
@@ -79,6 +83,16 @@ export async function recordApproval(
         resolvedAt: new Date(input.now),
       },
     });
+    if (input.outbox) {
+      await writeOutboxRows(tx, {
+        projectId: input.projectId,
+        organisationId: input.organisationId,
+        approvalTaskId: task.id,
+        planTier: input.outbox.planTier,
+        trigger: input.outbox.trigger,
+        now: input.now,
+      });
+    }
     return true;
   });
 }

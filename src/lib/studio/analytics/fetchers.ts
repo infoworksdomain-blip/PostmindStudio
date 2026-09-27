@@ -3,7 +3,7 @@ import { platformRequest } from '../platforms/http';
 import { LINKEDIN_VERSION } from '../platforms/linkedin';
 import { DEFAULT_GRAPH_VERSION, GRAPH_HOST } from '../platforms/meta';
 import type { Platform } from '../services/catalog';
-import type { MetricSnapshot } from './store';
+import type { DemographicSlice, MetricSnapshot, RetentionPoint } from './store';
 
 // BACKLOG 11.1 / spec 15.1 — per-platform metrics for a published post, using the Studio
 // connection's user token. Shapes from the platforms' docs (read 2026-09-27):
@@ -146,6 +146,95 @@ export function readReport(report: YouTubeReport): Record<string, number> {
 
 const ymd = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
+// 13.28 — YouTube Analytics API v2 reports.query (developers.google.com/youtube/analytics/
+// channel_reports, read 2026-09-27):
+//  "Audience retention": dimensions=elapsedVideoTimeRatio (required), metrics=audienceWatchRatio,
+//    filters=video==<one id> (required; "the value must specify a single video ID").
+//  "Viewer demographics": dimensions=ageGroup,gender, metrics=viewerPercentage, filters
+//    video==<id>. ageGroup values are age13-17 … age65- (dimensions reference).
+// Analytics data lags by about a day, so these are read only once a video is a day old.
+export const YT_DEEP_MIN_AGE_MS = 24 * 60 * 60 * 1000;
+const MAX_RETENTION_POINTS = 100;
+
+/** 'age18-24' → '18-24', 'age65-' → '65+'. */
+export function ageGroupLabel(value: string): string {
+  const m = /^age(\d+)-(\d*)$/.exec(value);
+  if (!m) return value;
+  return m[2] ? `${m[1]}-${m[2]}` : `${m[1]}+`;
+}
+
+export function readRetention(report: YouTubeReport): RetentionPoint[] {
+  const names = (report.columnHeaders ?? []).map((h) => h.name);
+  const at = names.indexOf('elapsedVideoTimeRatio');
+  const ratio = names.indexOf('audienceWatchRatio');
+  if (at === -1 || ratio === -1) return [];
+  return (report.rows ?? [])
+    .map((row) => ({ atPct: Number(row[at]), watchingPct: Number(row[ratio]) }))
+    .filter((p) => Number.isFinite(p.atPct) && Number.isFinite(p.watchingPct))
+    .sort((a, b) => a.atPct - b.atPct)
+    .slice(0, MAX_RETENTION_POINTS);
+}
+
+export function readDemographics(report: YouTubeReport): DemographicSlice[] {
+  const names = (report.columnHeaders ?? []).map((h) => h.name);
+  const age = names.indexOf('ageGroup');
+  const gender = names.indexOf('gender');
+  const pct = names.indexOf('viewerPercentage');
+  if (age === -1 || gender === -1 || pct === -1) return [];
+  return (report.rows ?? [])
+    .map((row) => ({
+      ageGroup: ageGroupLabel(String(row[age])),
+      gender: String(row[gender]),
+      pct: Number(row[pct]),
+    }))
+    .filter((s) => Number.isFinite(s.pct) && s.pct > 0)
+    .sort((a, b) => b.pct - a.pct);
+}
+
+async function youTubeDeepAnalytics(
+  deps: Deps,
+  req: FetchMetricsRequest,
+): Promise<{
+  retentionCurve?: RetentionPoint[];
+  demographics?: DemographicSlice[];
+  unavailable: string[];
+}> {
+  const unavailable: string[] = [];
+  const report = async (dimensions: string, metrics: string) => {
+    const params = new URLSearchParams({
+      ids: 'channel==MINE',
+      startDate: ymd(req.publishedAt.getTime()),
+      endDate: ymd(req.now),
+      dimensions,
+      metrics,
+      filters: `video==${req.platformPostId}`,
+    });
+    const { body } = await platformRequest<YouTubeReport>(
+      `${YT_ANALYTICS}?${params}`,
+      { method: 'GET', headers: auth(req.accessToken) },
+      { platform: 'youtube', fetchImpl: deps.fetchImpl },
+    );
+    return body;
+  };
+  let retentionCurve: RetentionPoint[] | undefined;
+  let demographics: DemographicSlice[] | undefined;
+  try {
+    const points = readRetention(await report('elapsedVideoTimeRatio', 'audienceWatchRatio'));
+    if (points.length) retentionCurve = points;
+  } catch (err) {
+    if (!(err instanceof PlatformError)) throw err;
+    unavailable.push('retention');
+  }
+  try {
+    const slices = readDemographics(await report('ageGroup,gender', 'viewerPercentage'));
+    if (slices.length) demographics = slices;
+  } catch (err) {
+    if (!(err instanceof PlatformError)) throw err;
+    unavailable.push('demographics');
+  }
+  return { retentionCurve, demographics, unavailable };
+}
+
 export function createYouTubeMetrics(deps: Deps): MetricsFetcher {
   return {
     platform: 'youtube_short',
@@ -197,6 +286,13 @@ export function createYouTubeMetrics(deps: Deps): MetricsFetcher {
         // Analytics data yet) still get the public counters.
         if (!(err instanceof PlatformError)) throw err;
         unavailable.push('watch_time', 'avg_watch_pct', 'shares');
+      }
+      // 13.28: retention curve and audience, once the video is old enough to have them.
+      if (req.now - req.publishedAt.getTime() >= YT_DEEP_MIN_AGE_MS) {
+        const deep = await youTubeDeepAnalytics(deps, req);
+        if (deep.retentionCurve) snapshot.retentionCurve = deep.retentionCurve;
+        if (deep.demographics) snapshot.demographics = deep.demographics;
+        unavailable.push(...deep.unavailable);
       }
       return { snapshot, unavailable };
     },

@@ -10,10 +10,13 @@ import type { MetricsRegistry } from '../analytics/fetchers';
 import type { StockImageSource } from '../images/stock';
 import type { PublishingDeps } from '../platforms/publishing';
 import type { PageRenderer } from '../scan/crawl';
+import type { HeadlessRenderer } from '../scan/headless-render';
+import type { CoreChannelDirectory } from '../core/channel-directory';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
+import type { RenderMastering } from './mastering';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
 
 // Everything a pipeline processor needs, injected so processors are testable without Redis,
@@ -36,6 +39,13 @@ export interface PipelineConfig {
   libraryBucket?: string;
   /** STUDIO_CORPUS_S3_BUCKETS: buckets (or bucket/prefix) s3:// corpus sources may come from. */
   corpusS3Buckets?: AllowedCorpusBucket[];
+  /**
+   * 13.25: public https origin Hive posts async moderation results to
+   * (STUDIO_PUBLIC_CALLBACK_BASE_URL). Absent = renders > 90 s fail the content-safety check.
+   */
+  hiveCallbackBaseUrl?: string;
+  /** 13.25: how long to wait for a Hive callback before failing closed (default 2 h). */
+  hiveAsyncTimeoutMs?: number;
 }
 
 export interface PipelineDeps {
@@ -60,6 +70,10 @@ export interface PipelineDeps {
   audit: (entry: AuditEntry) => void;
   /** Spec 14.4 notifications; absent = built from db/logger/env (notifications/notifier.ts). */
   notifier?: Notifier;
+  /** Core's channel list for the daily Meta reconciliation (13.35); absent = pending (skipped). */
+  coreChannels?: CoreChannelDirectory;
+  /** 13.26 loudness normalisation + H.264 re-encode after compose; absent = not mastered. */
+  mastering?: RenderMastering;
   /** HTTP client for downloading provider outputs. */
   fetch: typeof fetch;
   now: () => number;
@@ -71,9 +85,16 @@ export interface ScanDeps {
   pageFetch: typeof fetch;
   /** JS-rendering fallback for SPA sites (Browserless), when configured. */
   renderer?: PageRenderer;
+  /**
+   * 13.37 browser-render fallback for blocked homepages (STUDIO_HEADLESS_RENDER_URL). Absent or
+   * unconfigured = the scan fails as before and the user enters the profile manually.
+   */
+  headless?: HeadlessRenderer;
   /** Stock image sources, resolved lazily so a missing key only fails the stock layer. */
   stock: () => { primary: StockImageSource[]; fallback: StockImageSource[] };
   random?: () => number;
+  /** 13.11 DNS TXT lookups for domain verification; absent = node:dns resolveTxt. */
+  resolveTxt?: (hostname: string) => Promise<string[][]>;
 }
 
 export const DEFAULT_PIPELINE_TIMING = {

@@ -279,7 +279,9 @@ export async function createPublication(
   const data = jobData(scopeOf(tenant), publication, currentRunId(render.project) ?? 'publish');
   if (scheduledFor) {
     const jobId = jobIds.fireScheduled(data);
-    await deps.queue.add('fire-scheduled-publication', data, {
+    // The fire job carries its time: a later reschedule (13.9) turns this job into a no-op.
+    const fireData = { ...data, scheduledFor: scheduledFor.toISOString() };
+    await deps.queue.add('fire-scheduled-publication', fireData, {
       jobId,
       delayMs: scheduledFor.getTime() - deps.now(),
     });

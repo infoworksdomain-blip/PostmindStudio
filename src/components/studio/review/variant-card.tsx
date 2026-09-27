@@ -1,11 +1,11 @@
 'use client';
 
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, useApi } from '@/lib/client/api';
+import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
 import { formatDuration, formatPence, PLATFORM_LABEL, type Tone } from '@/lib/client/format';
 import type { Render } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
@@ -55,8 +55,39 @@ export function VariantPlayer({ render }: { render: Render }) {
   );
 }
 
-export function VariantCard({ render, onChanged }: { render: Render; onChanged: () => void }) {
+/** Project states POST /renders/:id/rerender accepts. */
+const RERENDERABLE = new Set(['READY_FOR_REVIEW', 'QUALITY_FAILED', 'REJECTED']);
+
+export function VariantCard({
+  render,
+  onChanged,
+  stale = false,
+  projectState,
+}: {
+  render: Render;
+  onChanged: () => void;
+  /** 13.1 / 13.2: the script or shots changed after this render was made. */
+  stale?: boolean;
+  projectState?: string;
+}) {
   const [downloading, setDownloading] = useState(false);
+  const [rerendering, setRerendering] = useState(false);
+
+  async function rerender() {
+    setRerendering(true);
+    try {
+      await api(`/renders/${render.id}/rerender`, {
+        method: 'POST',
+        idempotencyKey: newIdempotencyKey(),
+      });
+      toast.success('Re-rendering with your edits.');
+      onChanged();
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setRerendering(false);
+    }
+  }
   const quality = QUALITY[render.qualityCheckState];
 
   async function download() {
@@ -88,8 +119,21 @@ export function VariantCard({ render, onChanged }: { render: Render; onChanged: 
               {formatPence(render.costPence)}
             </p>
           </div>
-          <StateBadge {...quality} />
+          <span className="flex flex-wrap gap-1.5">
+            {stale && <StateBadge label="Out of date" tone="warn" />}
+            <StateBadge {...quality} />
+          </span>
         </div>
+        {stale && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm">
+            <span>The script or shots changed after this variant was rendered.</span>
+            {projectState && RERENDERABLE.has(projectState) && (
+              <Button size="sm" variant="outline" onClick={rerender} disabled={rerendering}>
+                {rerendering ? <Loader2 className="animate-spin" /> : <RefreshCw />} Re-render
+              </Button>
+            )}
+          </div>
+        )}
         <QualityPanel render={render} onChanged={onChanged} />
         <div>
           <Button variant="outline" size="sm" onClick={download} disabled={downloading}>

@@ -123,7 +123,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         title: 'Reference library',
         href: '#/library',
         summary:
-          'Browse proven videos by category, length and mood; a recommended shelf for the business.',
+          'Browse proven videos by category, length and mood, or search the whole library in plain words; a recommended shelf for the business.',
         scene: 'baker',
         links: [
           {
@@ -150,7 +150,8 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
       {
         title: 'Calendar',
         href: '#/calendar',
-        summary: 'Scheduled and published posts on a month grid; an agenda list on phones.',
+        summary:
+          'Scheduled and published posts on a month grid; drag a scheduled post to another day, or use its move button (keyboard and phones).',
         scene: 'market',
       },
       {
@@ -168,13 +169,20 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
     intro: 'Teach Studio about the business once; every video uses it.',
     screens: [
       {
+        title: 'Welcome',
+        href: '#/welcome',
+        summary:
+          'First-run wizard: connect platforms, a brand kit from your logo in three clicks, a first video from the "Introduce yourself" template, then the go-live celebration.',
+        scene: 'storefront',
+      },
+      {
         title: 'Business & images',
         href: '#/business',
         summary: 'Profile, website scan, brand kits and the image library.',
         scene: 'flatlay',
         tryIt: [
           'Profile tab: edit the tone and audience Studio writes with.',
-          'Website scan tab: confirm ownership and scan the bakery’s website (progress polls every 3 s).',
+          'Website scan tab: confirm ownership and scan the bakery’s website (progress polls every 3 s); see the next automatic rescan, verify the domain with a DNS TXT record, or report a site you do not own.',
           'Brand kits tab: the main kit and a Christmas 2026 kit; set the default.',
           'Image library tab: filter by source, semantic search, generate an image.',
         ],

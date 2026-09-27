@@ -1,6 +1,7 @@
 import { ValidationError } from '../../errors';
 import { extractPage, extractSitemapUrls, type ExtractedPage } from './extract';
 import type { PoliteFetcher } from './fetch';
+import type { HeadlessRenderer } from './headless-render';
 
 // Addendum A6.2 steps 1–3: homepage (JS-rendered fallback), sitemap, then up to 20 more pages,
 // prioritising /about, /products, /shop, /services, stopping early once the site's vocabulary is
@@ -77,7 +78,12 @@ export function stability(before: Set<string>, after: Set<string>): number {
 
 export async function crawlSite(
   startUrl: string,
-  deps: { fetcher: Pick<PoliteFetcher, 'fetchPage' | 'sitemaps'>; renderer?: PageRenderer },
+  deps: {
+    fetcher: Pick<PoliteFetcher, 'fetchPage' | 'sitemaps'>;
+    renderer?: PageRenderer;
+    /** 13.37: renders a homepage refused by bot protection; only used when configured. */
+    headless?: HeadlessRenderer;
+  },
 ): Promise<CrawlResult> {
   const result: CrawlResult = {
     pages: [],
@@ -93,13 +99,15 @@ export async function crawlSite(
     result.robotsBlocked = true;
     return result;
   }
+  let homePage: ExtractedPage;
   if (home.status >= 400) {
-    throw new ValidationError(`The website returned HTTP ${home.status} for the homepage`);
+    homePage = await renderBlockedHomepage(home.url, home.status, deps.headless, result);
+  } else {
+    result.etag = home.etag;
+    result.lastModified = home.lastModified;
+    homePage = extractPage(home.html, home.url);
   }
-  result.etag = home.etag;
-  result.lastModified = home.lastModified;
-  let homePage = extractPage(home.html, home.url);
-  if (homePage.looksJsRendered && deps.renderer) {
+  if (homePage.looksJsRendered && !result.usedJsRender && deps.renderer) {
     try {
       homePage = extractPage(await deps.renderer.render(home.url), home.url);
       result.usedJsRender = true;
@@ -150,6 +158,34 @@ export async function crawlSite(
     }
   }
   return result;
+}
+
+/** Homepage statuses that mean "refused by bot protection", worth one browser render (13.37). */
+export function isBlockedStatus(status: number): boolean {
+  return status === 403 || status === 429 || status === 503;
+}
+
+/**
+ * A refused homepage (403/429/503) gets one render through the headless host when configured;
+ * otherwise, or when that fails too, the scan fails as before (manual entry + stock images).
+ */
+async function renderBlockedHomepage(
+  url: string,
+  status: number,
+  headless: HeadlessRenderer | undefined,
+  result: CrawlResult,
+): Promise<ExtractedPage> {
+  const refused = new ValidationError(`The website returned HTTP ${status} for the homepage`);
+  if (!headless?.configured || !isBlockedStatus(status)) throw refused;
+  try {
+    const page = extractPage(await headless.render(url), url);
+    result.usedJsRender = true;
+    return page;
+  } catch (err) {
+    throw new ValidationError(`The website returned HTTP ${status} for the homepage`, {
+      headlessRender: `failed: ${(err as Error).message}`.slice(0, 300),
+    });
+  }
 }
 
 /** Browserless /content (https://docs.browserless.io/rest-apis/content). */

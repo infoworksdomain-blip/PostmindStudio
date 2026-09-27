@@ -2,8 +2,9 @@ import { z } from 'zod';
 import { ProviderError } from '../../errors';
 
 // Pre-generation script safety (spec 13.2). Every Layer 2 script is classified before any
-// Layer 3 spend. BLOCK = never generate; REVIEW = needs a human (no review queue exists yet,
-// so REVIEW also stops the run: fail closed); WARN = proceed and log.
+// Layer 3 spend. BLOCK = never generate; REVIEW = needs a human: since 13.17 the run pauses
+// before any asset spend and a Trust & Safety review is opened (pipeline/safety-review.ts);
+// WARN = proceed and log.
 
 export const SAFETY_CATEGORIES = [
   'explicit_sexual',
@@ -74,7 +75,12 @@ export function parseScriptSafety(json: unknown): ScriptSafetyResult {
   return parsed.data;
 }
 
-/** True when the run must stop before any asset is generated. */
+/** True when the run must stop before any asset is generated (BLOCK fails, REVIEW pauses). */
 export function blocksGeneration(result: ScriptSafetyResult): boolean {
   return result.verdict === 'BLOCK' || result.verdict === 'REVIEW';
+}
+
+/** REVIEW: pause for a human decision (13.17) instead of failing the run. */
+export function needsSafetyReview(result: ScriptSafetyResult): boolean {
+  return result.verdict === 'REVIEW';
 }

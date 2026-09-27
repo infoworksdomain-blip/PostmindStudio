@@ -4,6 +4,7 @@
 // re-runs, re-renders with overlays, slideshow auto-populate and the project budget pause.
 import { CONTENT, contentForBrief, type ProjectContent } from './projects-content';
 import { approve } from './projects-publish';
+import { uploadContent } from './p13-a1-uploads';
 import {
   buildRender,
   buildScripts,
@@ -72,6 +73,7 @@ function spend(p: ProjectRec, pence: number): boolean {
 export function contentFor(p: ProjectRec): ProjectContent {
   if (p.sourceType === 'SLIDESHOW')
     return { scene: p.scene, brief: null, shots: slidesToShots(p.id) };
+  if (p.sourceType === 'UPLOAD') return uploadContent(p);
   return CONTENT[p.id] ?? contentForBrief(p.description ?? p.name);
 }
 
@@ -109,6 +111,8 @@ function finish(p: ProjectRec): void {
     }
   runs.delete(p.id);
   timers.delete(p.id);
+  // 13.1 / 13.2: fresh renders reflect every script and shot edit.
+  setMeta(p, { staleRenders: [] });
   const music = p.metadata?.music as { status?: string } | undefined;
   if (!music || music.status !== 'off_for_plan')
     setMeta(p, {

@@ -67,3 +67,38 @@ export interface SeriesPoint {
   label: string;
   value: number;
 }
+
+/** GET /analytics/publications/:id (BACKLOG 11.3 + 13.28 retention/demographics). */
+export interface PublicationPoint {
+  at: string;
+  views: number;
+  watchTimeSec: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+}
+
+export interface PublicationAnalyticsResponse {
+  ok: true;
+  publication: {
+    id: string;
+    platform: string;
+    platformUrl: string | null;
+    publishedAt: string | null;
+    state: string;
+  };
+  latest:
+    | (PublicationPoint & {
+        uniqueViewers: number | null;
+        avgWatchTimePct: number | null;
+        clicks: number;
+      })
+    | null;
+  hourly: PublicationPoint[];
+  daily: PublicationPoint[];
+  /** audienceWatchRatio by share of the video elapsed (YouTube). */
+  retention: Array<{ atPct: number; watchingPct: number }>;
+  /** viewerPercentage by age group and gender (YouTube). */
+  demographics: Array<{ ageGroup: string; gender: string; pct: number }>;
+}

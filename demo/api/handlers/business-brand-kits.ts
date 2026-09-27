@@ -104,7 +104,7 @@ type KitFields = Partial<
     | 'ctaTemplates'
     | 'restrictedTopics'
   >
->;
+> & { voiceProfileId?: string | null };
 
 const strings = (v: unknown, max: number, len: number) =>
   Array.isArray(v) &&
@@ -147,6 +147,10 @@ function parseFields(input: Record<string, unknown>, allowed: Set<string>): KitF
       if (v !== null && (typeof v !== 'string' || v.length > 1_000))
         problems.push('audienceProfile: at most 1000 characters');
       else out.audienceProfile = typeof v === 'string' ? v.trim() : null;
+    } else if (key === 'voiceProfileId') {
+      if (v !== null && (typeof v !== 'string' || !v.trim() || v.length > 64))
+        problems.push('voiceProfileId: must be a voice profile id or null');
+      else out.voiceProfileId = typeof v === 'string' ? v : null;
     } else if (key === 'ctaTemplates') {
       const ok =
         Array.isArray(v) &&
@@ -203,6 +207,13 @@ export function listBrandKits(businessId?: string): DemoBrandKit[] {
     .map(copy);
 }
 
+/** 13.13: a deleted voice profile leaves its kits on the stock voice; returns how many. */
+export function unlinkVoiceProfile(voiceProfileId: string): number {
+  const linked = kits.filter((k) => k.voiceProfileId === voiceProfileId);
+  for (const k of linked) k.voiceProfileId = null;
+  return linked.length;
+}
+
 route('GET', '/brand-kits', ({ query }) => ({
   data: listBrandKits(query.get('businessId') || undefined),
 }));
@@ -240,7 +251,10 @@ route('POST', '/brand-kits', ({ body }) => {
 
 route('PATCH', '/brand-kits/:id', ({ params, body }) => {
   const current = find(params.id ?? '');
-  const fields = parseFields((body ?? {}) as Record<string, unknown>, new Set(FIELDS));
+  const fields = parseFields(
+    (body ?? {}) as Record<string, unknown>,
+    new Set([...FIELDS, 'voiceProfileId']),
+  );
   if (Object.keys(fields).length === 0) throw bad(['Nothing to update']);
   Object.assign(current, fields, { updatedAt: new Date().toISOString() });
   return { brandKit: copy(current) };

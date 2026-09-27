@@ -18,6 +18,7 @@ import {
   type CostCaps,
 } from './caps';
 import { formatGbp } from './format';
+import type { OrgCapOverrideLookup } from './org-overrides';
 
 // Spec 12.5 cost caps and alerting, spec 11.4 "on exhaustion, jobs pause and a notification is
 // sent", risk register "alerting at 80% / 100%; automated pause".
@@ -68,6 +69,8 @@ export interface CostGuardDeps {
   logger: Logger;
   metrics: Pick<StudioMetrics, 'costAlerts'>;
   now?: () => number;
+  /** 13.19 per-organisation overrides of the daily / monthly caps (cost/org-overrides.ts). */
+  overrides?: OrgCapOverrideLookup;
 }
 
 export const COST_ACTOR = 'system:studio-cost-guard';
@@ -208,7 +211,9 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
       const project = await projectUsage(scope.projectId);
       if (project) out.push(project);
     }
-    const orgCap = deps.caps.orgDailyPenceByTier[scope.planTier];
+    // 13.19: organisation override > env > default (cost/org-overrides.ts).
+    const override = (await deps.overrides?.(scope.organisationId)) ?? null;
+    const orgCap = override?.dailyPence ?? deps.caps.orgDailyPenceByTier[scope.planTier];
     if (orgCap !== undefined) {
       const sum = await deps.db.providerUsage.aggregate({
         where: { organisationId: scope.organisationId, day },
@@ -224,7 +229,7 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
         thresholds: DAILY_THRESHOLDS,
       });
     }
-    const monthlyCap = deps.caps.orgMonthlyPenceByTier?.[scope.planTier];
+    const monthlyCap = override?.monthlyPence ?? deps.caps.orgMonthlyPenceByTier?.[scope.planTier];
     if (monthlyCap !== undefined) {
       // Served by the provider_usage(organisationId, day) index: one org, one month of days.
       const { start, end } = utcMonthRange(today);

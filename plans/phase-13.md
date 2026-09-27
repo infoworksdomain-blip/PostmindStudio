@@ -31,17 +31,23 @@ Envelopes follow the existing API: success is `{ ok: true, ... }`. Errors are
 ```http
 PATCH /api/studio/scripts/:id
 { "fullText": "Friday. Three new small plates…", "shots": [{ "id": "shot_2", "voiceoverText": "…", "onScreenText": "20% off" }] }
-→ 200 { "script": { "id": "scr_1", "fullText": "…", "shots": [ … ] }, "staleRenders": ["rnd_1"] }
+→ 200 { "script": { "id": "scr_1", "fullText": "…", "shots": [ … ] }, "staleRenders": ["rnd_1"], "runId": "run_8" | null, "voiceRegenerated": ["shot_2"] }
 ```
 
 ```http
 POST /api/studio/scripts/:id/regenerate
 { "instruction": "Punchier hook, mention the Saturday class" }
-→ 202 { "project": { "id": "prj_1", "state": "PLANNING" }, "runId": "run_9" }
+→ 202 { "project": { "id": "prj_1", "state": "QUEUED" }, "runId": "run_9", "staleRenders": ["rnd_1"] }
 ```
 
 Editing narration marks the affected shots for voice-only regeneration. Regenerating starts a new
 run from Layer 2, reusing the Layer 1 brief.
+
+As built: `state` is `QUEUED` (the lifecycle graph goes QUEUED → PLANNING; plan-project moves it).
+Text-only edits start no run (`runId: null`); the project's current renders are listed in
+`metadata.staleRenders` until the next composition. A rewrite keeps the other formats' renders.
+409 while the project is not finished, or for SLIDESHOW/UPLOAD projects and projects without a
+stored brief.
 
 **13.2 Shot swap and delete** (spec 14.2)
 
@@ -53,15 +59,22 @@ PATCH /api/studio/shots/:id
 
 ```http
 DELETE /api/studio/shots/:id
-→ 200 { "script": { "id": "scr_1", "targetDurationSec": 26, "shots": [ … ] } }   // 409 if it's the last shot
+→ 200 { "script": { "id": "scr_1", "targetDurationSec": 26, "shots": [ … ] }, "staleRenders": ["rnd_1"] }   // 409 if it's the last shot
 ```
+
+As built: PATCH with `assetId`/`imageLibraryId` is the swap branch of the existing PATCH /shots/:id
+(narration edits keep answering 202). Neither swap nor delete starts a run; re-render applies them.
 
 **13.3 Whole-video overlays**
 
 ```http
 GET /api/studio/renders/:id/overlays
-→ 200 { "data": [{ "id": "ovl_9", "text": "@leedssourdough", "startSec": 0, "endSec": 30, "style": { … } }] }
+→ 200 { "data": [{ "id": "ovl_9", "renderId": "rnd_1", "text": "@leedssourdough", "startAtSec": 0, "endAtSec": 30, … }] }
 ```
+
+As built: overlays are the same text_overlays rows every other overlay endpoint returns (`startAtSec`
+/ `endAtSec` and flat style columns), for every render of the project on the render's platform —
+the set composition applies.
 
 **13.4 Per-slide overlays.** The migration adds `text_overlays.slideId`.
 
@@ -70,21 +83,28 @@ GET  /api/studio/slides/:id/overlays → 200 { "data": [ … ] }
 POST /api/studio/slides/:id/overlays { "presetId": "pre_hook_1", "text": "Bake #3" } → 201 { "overlay": { … } }
 ```
 
+As built: timing is optional (defaults to the whole slide). A slideshow template's `overlayDefaults`
+become slide overlays at the first generation (captioned image slides only).
+
 **13.5 Upload your own video** (sourceType UPLOAD) **and clip upload**
 
 ```http
 POST /api/studio/uploads
 { "kind": "source_video", "contentType": "video/mp4", "sizeBytes": 48211000, "fileName": "shop-tour.mp4" }
-→ 201 { "upload": { "id": "upl_1", "putUrl": "https://…signed", "expiresAt": "…", "maxBytes": 524288000 } }
+→ 201 { "upload": { "id": "upl_1", "putUrl": "https://…signed", "expiresAt": "…", "maxBytes": 524288000, "headers": { "content-type": "video/mp4" }, "state": "PENDING", … } }
 ```
 
 ```http
-POST /api/studio/uploads/:id/complete → 200 { "asset": { "id": "ast_20", "durationSec": 41.2, "width": 1080, "height": 1920 } }
+POST /api/studio/uploads/:id/complete → 200 { "upload": { "id": "upl_1", "state": "READY", "durationSec": 41.2, "width": 1080, "height": 1920, … }, "asset": { "id": "ast_20", "durationSec": 41.2, "width": 1080, "height": 1920 } | null }
 POST /api/studio/projects { "sourceType": "UPLOAD", "uploadId": "upl_1", "targetFormats": [ … ] } → 201
 ```
 
 The pipeline's UPLOAD path skips Layers 1–3 and still runs captions, overlays, multi-format
 output and the quality gate.
+
+As built: `asset` is null for `source_video` (video_assets.projectId is required, so the asset is
+created when POST /projects claims the upload); `slide_clip` uploads (with `projectId`) get their
+asset at /complete. New table `video_uploads`.
 
 **13.6 Word-level caption timing.** There is no endpoint. The pipeline transcribes narration
 with the existing AssemblyAI adapter, stores word timings on the asset, and karaoke overlays use
@@ -103,7 +123,8 @@ POST /api/studio/library/search { "q": "moody 5am bakery pov", "categorySlug": "
 ```
 
 This combines pgvector search on an embedding of the query with a keyword boost on the title and
-tags.
+tags. As built, each hit also carries `score` (similarity + boost, the ranking key) and the
+cursor is an offset (`"24"`, at most 480).
 
 **13.9 Calendar drag-to-reschedule** (spec 14.3)
 
@@ -121,8 +142,10 @@ The delayed job is replaced atomically.
   skipped when the site is unchanged.
 
 ```http
-GET /api/studio/businesses/:id/scans/schedule → 200 { "nextScanAt": "…", "nextStockRefreshAt": "…", "lastSkippedUnchangedAt": null }
+GET /api/studio/businesses/:id/scans/schedule → 200 { "nextScanAt": "…", "nextStockRefreshAt": "…", "lastSkippedUnchangedAt": null, "lastScanAt": "…", "intervalDays": 30 }
 ```
+
+As built, the migration also adds `checkedUnchangedAt`, `planTier` and `trigger` to website_scans.
 
 **13.11 DNS TXT ownership verification** (A6.7, Enterprise)
 
@@ -133,7 +156,12 @@ GET  /api/studio/businesses/:id/domain-verification → 200 { "verification": { 
 ```
 
 A poll job checks the TXT record with DNS lookups. If ownership is disputed, a job purges the
-scanned data after 24 h.
+scanned data within 24 h. As built, the dispute is its own endpoint (any plan):
+
+```http
+POST /api/studio/businesses/:id/domain-verification/dispute { "reason": "…", "confirmNotOwner": true }
+→ 202 { "verification": { "state": "DISPUTED", … } }   // purge job queued; → PURGED
+```
 
 **13.12 Perceptual image de-duplication.** There is no endpoint. Ingest computes a dHash with
 `sharp`, the migration adds `image_library.phash`, and near-duplicates (Hamming distance ≤ 6) are
@@ -142,7 +170,7 @@ skipped.
 **13.13 Voice profiles** (ElevenLabs voice cloning, from their documented API)
 
 ```http
-POST /api/studio/voice-profiles  (multipart: name, consent=true, samples[] audio ≤ 10 MB each)
+POST /api/studio/voice-profiles  (multipart: name, businessId?, speakerName, consentStatement, consent=true, consentRecording, samples ≤ 5 audio ≤ 10 MB each)
 → 201 { "voiceProfile": { "id": "vp_1", "name": "Amara (owner)", "state": "READY", "provider": "elevenlabs" } }
 GET    /api/studio/voice-profiles?businessId= → 200 { "data": [ … ] }
 DELETE /api/studio/voice-profiles/:id → 200 { "deleted": true }   // also deletes the provider voice
@@ -165,7 +193,7 @@ then First video, then Celebrate.
 **13.15 Corpus ingestion follow-ups**
 
 ```http
-POST /api/studio/admin/library/ingest/resubmit { "runIds": ["run_a"], "failedOnly": true } → 202 { "queued": 12, "skipped": 0 }
+POST /api/studio/admin/library/ingest/resubmit { "runIds": ["run_a"], "failedOnly": true } → 202 { "queued": 12, "skipped": 0, "runs": [ … ] }
 ```
 
 Sources are also streamed straight to S3 with a multipart upload instead of being buffered in
@@ -181,6 +209,11 @@ GET /api/studio/admin/queues → 200 { "queues": [{ "name": "studio-assets", "wa
 GET /api/studio/admin/providers → 200 { "providers": [{ "id": "runway", "breaker": "closed", "errorRate1h": 0.02, "spendTodayPence": 1840, "healthy": true }] }
 ```
 
+As built: providers also carry `configured` (registered in this deployment) and
+`jobs1h: { succeeded, failed, running }`; `errorRate1h` is null when no job finished in the hour
+and excludes client-side refusals (as the breaker does). Queues: `waiting` includes prioritised
+jobs; `oldestWaitingSec` is null when nothing waits; 502 when Redis does not answer within 3 s.
+
 **13.17 Content-safety review queue** (spec 16.4). Script-safety and content-safety results of
 REVIEW now pause the run and create a review, instead of failing it.
 
@@ -193,6 +226,13 @@ POST /api/studio/admin/safety-reviews/:id/decision { "decision": "ALLOW", "note"
 This needs `studio:admin:moderation` and a platform staff account. ALLOW resumes the run; BLOCK
 fails it with the note.
 
+As built: list items also carry `organisationId`, `projectName`, `projectState`, `state`,
+`details`, `scripts: [{ platform, excerpt }]` (script reviews), `decisionNote`, `decidedAt`,
+`createdAt`; the list has `pendingCount`, `hasMore`, `nextCursor`. The decision answers
+`{ review: { id, state, decisionNote, decidedAt }, project: { id, state } }` — ALLOW on a script
+review returns `ASSETS_QUEUED` (the run continues), on a content review `READY_FOR_REVIEW` (or
+`QUALITY_FAILED` when another check failed); BLOCK returns `FAILED`. 409 once decided.
+
 **13.18 Per-organisation policy.** The migration adds `org_policies`.
 
 ```http
@@ -200,12 +240,21 @@ GET /api/studio/admin/organisations/:id/policy → 200 { "policy": { "defaultRev
 PUT /api/studio/admin/organisations/:id/policy { "autoApproveAllowed": false } → 200 { … }
 ```
 
+As built: both answer `{ organisationId, policy, source: { <field>: organisation | env | default },
+updatedAt, updatedByUserId }`; PUT is partial and `null` resets a field. `studio:admin:moderation`
++ staff.
+
 **13.19 Per-organisation cost cap overrides.** The migration adds `org_cost_caps`.
 
 ```http
 PUT /api/studio/admin/organisations/:id/cost-caps { "dailyPence": 20000, "monthlyPence": 100000, "reason": "Pilot, agreed with Commercial" }
 → 200 { "caps": { "daily": { "pence": 20000, "source": "org_override" }, "monthly": { … } } }
 ```
+
+As built: GET as well; without an override a period is `{ pence: null, source: "plan_tier",
+byTier: { BASIC: { pence, source: default | env | disabled }, … } }` (Studio does not store an
+organisation's plan tier). The response also has `override: { dailyPence, monthlyPence, reason,
+updatedByUserId, updatedAt } | null`. `null` clears a value. `studio:admin:providers` + staff.
 
 **13.20 Auto-resume paused projects.** A rollover job at 00:05 UTC (and on the 1st of the month)
 re-runs projects paused by the organisation's daily or monthly cap, through the existing re-drive
@@ -223,6 +272,11 @@ GET  /api/studio/projects/:id/auto-publish → 200 { "outbox": [{ "target": { "p
 POST /api/studio/projects/:id/auto-publish/retry → 202 { "requeued": 1 }
 ```
 
+As built: rows of the latest approval, each `{ id, targetIndex, target: { platform, account,
+scheduleOffsetMinutes }, trigger, state: PENDING | SENDING | SENT | FAILED, attempts, maxAttempts,
+nextAttemptAt, lastError, publicationId, createdAt, updatedAt }`; the body also has `projectId`
+and `publishPolicy`. Retry needs `studio:publication:write`.
+
 **13.22 Organisation purge** (internal, mirrors Engagement 14.13)
 
 ```http
@@ -231,6 +285,10 @@ POST /api/studio/internal/organisations/:id/purge   (X-Service-Token)
 ```
 
 Tokens are wiped immediately and the rest of the data is soft-deleted with a 30-day grace period.
+
+As built: the purge also carries `projectsDeleted`, `publicationsCancelled`, `requestedAt` and
+`repeated` (a repeat call keeps the first grace period). Hard deletion after the grace period is
+not built yet (an operator-run sweep).
 
 **13.23 Milestone notifications** (spec 14.4). There is no endpoint. The analytics poller raises
 "10k views" and "100 comments" notifications once per publication per threshold.
@@ -242,14 +300,21 @@ GET   /api/studio/notification-preferences → 200 { "preferences": { "generatio
 PATCH /api/studio/notification-preferences { "publication_failed": { "email": true } } → 200 { … }
 ```
 
+As built: both answer `{ preferences, emailDelivery: "pending_setup" }`.
+
 ### A4 · Pipeline, media and analytics (≈ 20 days)
 
 **13.25 Hive async moderation for videos longer than 90 s**, using Hive's documented async API.
 
 ```http
-POST /api/studio/webhooks/hive   (Hive callback; verified signature or shared secret, per Hive's docs)
+POST /api/studio/webhooks/hive?token=<per-task token>   (Hive callback; no JWT)
 → 200 { "received": true }   // resumes run-quality-gate for that render
+→ 404 unknown/malformed token · 400 body is not that task's object · 413 body > 25 MB
 ```
+
+As built: Hive documents no signature or shared secret on callbacks, so each async task carries an
+unguessable 256-bit token in its callback URL (only its SHA-256 is stored; single-use; the body's
+task id must match). `STUDIO_PUBLIC_CALLBACK_BASE_URL` is the public origin Hive posts to.
 
 **13.26 Loudness normalisation** (−14 LUFS target) **and an H.264 re-encode for compatibility**.
 This is an ffmpeg pass after compose; there is no endpoint.
@@ -262,16 +327,20 @@ clips to the edit decision list. There is no new endpoint; the review response g
 LinkedIn reader behind its existing flag.
 
 ```http
-GET /api/studio/analytics/publications/:id → (existing) + { "retention": [{ "atPct": 0.25, "watchingPct": 0.71 }], "demographics": [{ "ageGroup": "25-34", "pct": 38.2 }] }
+GET /api/studio/analytics/publications/:id → (existing) + { "retention": [{ "atPct": 0.25, "watchingPct": 0.71 }], "demographics": [{ "ageGroup": "25-34", "gender": "female", "pct": 38.2 }] }
 ```
 
 **13.29 Style memory.** A nightly job builds style memory from the signals that exist today
 (YouTube retention, what got approved or rejected, what was regenerated). Sentiment is Wave B.
 
 ```http
-GET    /api/studio/businesses/:id/style-memory → 200 { "data": [{ "id": "sm_1", "signalType": "hook_timing", "value": "hook in first 1.2 s", "reason": "Top 3 videos by retention" }] }
+GET    /api/studio/businesses/:id/style-memory → 200 { "data": [{ "id": "sm_1", "signalType": "script_structure", "value": "hook in the first 1.2 s, about 4 shots", "details": { "hookWithinSec": 1.2 }, "reason": "3 YouTube videos kept viewers over 60% …", "weight": 0.7, "evidenceCount": 4, "lastEvidenceAt": "…", "updatedAt": "…" }] }
 DELETE /api/studio/businesses/:id/style-memory/:memoryId → 200 { "deleted": true }
 ```
+
+As built: `signalType` is the StyleMemory enum in lower case (shot_pace, treatment_mix,
+provider_preference, script_structure, posting_time — the five spec 10.3 lists; hook timing is part
+of script_structure).
 
 **13.30 CDN signed URLs.** A CloudFront signer sits behind the storage interface. It is used when
 `CDN_URL` and the key pair are configured; otherwise S3 presigned URLs are used as now.
@@ -283,7 +352,10 @@ The canary runs only when sandbox secrets are present.
 
 **13.32 Luma adapter** (AI_CLIP fallback for Runway) **and HeyGen adapter** (AI_AVATAR), both
 built from the providers' current documentation. There are no endpoints; the router gains real
-fallbacks.
+fallbacks. As built: Luma uses the Luma Agents API (`ray-3.2`; the Ray 2 Dream Machine API is being
+retired) and HeyGen uses `POST /v3/videos` (v1/v2 retire 2026-10-31), lip-synced to the shot's
+ElevenLabs narration. PLUS/ENTERPRISE AI clips try veo → runway → luma → kling (decision: 6.4
+omits Luma there). Neither provider has a cancel endpoint, so `cancel` throws NotImplementedError.
 
 ---
 
@@ -298,6 +370,88 @@ fallbacks.
 | 13.37 Browser-render scan fallback | headless-render adapter | scan falls back to manual entry, as now | a headless Chromium host |
 | 13.38 Other fallback providers (Kling, Veo, fal, Replicate, D-ID, Pexels, Azure Speech, Creatomate, Sightengine) | one adapter each | not registered (no key) | accounts and keys |
 | 13.39 Sentiment in style memory | Engagement classifier client | `501 waiting for Engagement` | Engagement sentiment API |
+
+### Wave B contracts as shipped (track B)
+
+**13.33 Email.** `EmailSender` (src/lib/studio/notifications/email.ts). `STUDIO_EMAIL_PROVIDER`:
+unset / `none` = no sender; `core` = `CoreEmailSender`, which throws
+`NotImplementedError("waiting for a PostMind Core email API")`; `resend` / `ses` are refused as
+not built. The notifier asks the preferences service (13.24) which users enabled email for the
+kind (`EmailPreferenceLookup.emailRecipients`). When someone did, it records
+`notifications.emailStatus`: `pending_setup` (no sender, or Core's API is missing), `sent` or
+`failed`. GET /notifications returns the field, and the bell shows "Email pending setup".
+Migration `20260929060000_notification_email_status` adds one nullable column; there is no new
+table. **Operator decision:** either Core sends email (Studio passes user ids, and Core owns
+addresses, templates and unsubscribe), or Studio sends it via Resend or SES (Studio then needs
+user addresses from Core, a verified domain, and its own unsubscribe and bounce handling).
+
+**13.34 Business list.** Final contract, currently answering 501:
+
+```http
+GET /api/studio/businesses            (studio:project:read)
+→ 200 { "data": [{ "id": "biz_1", "name": "Leeds Sourdough", "domain": "leedssourdough.co.uk" }] }   // domain omitted when unknown
+→ 501 { "ok": false, "error": "not_implemented", "message": "waiting for Core list-businesses (GET /api/internal/organisations/:id/businesses)" }
+```
+
+Proposed Core contract (src/lib/studio/core/business-directory.ts):
+`GET /api/internal/organisations/:id/businesses` with X-Service-Token, returning
+`200 { businesses: [{ id, name, domain | null }] }` or 404 for an unknown organisation. The
+header switcher (components/studio/business-picker.tsx) becomes a picker once the endpoint
+answers. Until then it keeps the typed id and says why.
+
+**13.35 Meta channel reconciliation.**
+
+```http
+GET /api/studio/admin/channels/reconciliation[?organisationId=]   (studio:admin:providers + staff org)
+→ 200 { "report": { "checkedAt", "applied": false, "organisations": [{ "organisationId", "matched",
+        "findings": [{ "kind": "missing_in_core" | "missing_in_studio" | "revoked_in_studio" | "name_changed", "action", … }] }],
+        "errors": [], "totals": { "organisations", "matched", "findings", "disconnected" } } }
+→ 501 { "ok": false, "error": "not_implemented", "message": "waiting for Core list-channels (GET /api/internal/organisations/:id/channels)" }
+```
+
+A daily job (`reconcile-channels`, 03:30 UTC) applies the fixes. It disconnects channels Core no
+longer lists; a finding that would disconnect every channel of an organisation with more than
+one is held instead. It renames channels whose name changed, and it reports channels only Core
+knows, which Core must re-register. Until Core ships the endpoint the job logs "skipped". The
+proposed Core contract is in src/lib/studio/core/channel-directory.ts.
+
+**13.36 BPM/key, CLIP/CLAP.** The `media_analysis` capability and the `media-analysis` adapter
+(providers/media-analysis.ts): healthCheck reports "no inference host configured", and
+submit / poll / cancel throw NotImplementedError. The adapter is not registered, and the router's
+candidate list for it is empty. No migration yet. Planned: bpm and key go into
+`video_library_analysis.musicEnvelope` (already in the shape), and
+`video_library_embeddings.visualEmbedding` / `audioEmbedding` become vector(512) NULL columns,
+each with a `*Model` column.
+
+**13.37 Browser-render scan fallback.** `HeadlessRenderer` (scan/headless-render.ts), set by
+`STUDIO_HEADLESS_RENDER_URL` (+ `STUDIO_HEADLESS_RENDER_TOKEN`). The host is the open-source
+Browserless image (`POST /content`). A homepage refused with 403, 429 or 503 gets one render.
+robots.txt still applies, and nothing else changes. Unset, the renderer throws
+NotImplementedError and the scanner never calls it: blocked scans fail, and the user enters the
+details manually, as before.
+
+**13.38 Remaining fallback providers.** No adapters until there are accounts and keys. Each one
+implements `ProviderAdapter` + `estimateCostPence` and registers only when its key is set.
+
+| Provider | Router slot (providers/router.ts) | Official docs |
+| --- | --- | --- |
+| Kling | AI_CLIP: STANDARD 3rd, PLUS/ENTERPRISE 4th (`kling`) | https://kling.ai/document-api/guides/get-started/overview |
+| Veo (Gemini API) | AI_CLIP: PLUS/ENTERPRISE 1st (`veo`) | https://ai.google.dev/gemini-api/docs/veo |
+| fal | AI_CLIP: BASIC 1st; IMAGE_STILL 2nd (`fal`) | https://fal.ai/docs/documentation/model-apis/inference/queue |
+| Replicate | AI_CLIP: BASIC 2nd; music 2nd, MusicGen (`replicate`) | https://replicate.com/docs/reference/http |
+| D-ID | AI_AVATAR: BASIC/STANDARD 1st, PLUS/ENTERPRISE 2nd (`d-id`) | https://docs.d-id.com/reference/createtalk |
+| Pexels (video) | STOCK_FOOTAGE 2nd (`pexels`) | https://www.pexels.com/api/documentation/#videos-search |
+| Azure Speech | tts 2nd (`azure-speech`) | https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-text-to-speech |
+| Creatomate | composition 2nd (`creatomate`) | https://creatomate.com/docs/api/reference/create-a-render |
+| Sightengine | content_safety 2nd (`sightengine`) | https://sightengine.com/docs/ (video moderation: https://sightengine.com/video-moderation) |
+
+**13.39 Sentiment.** `EngagementSentimentClient` (analytics/engagement-sentiment.ts):
+`publicationSentiment({ organisationId, publications: [{ platform, platformPostId }] })` →
+`[{ platform, platformPostId, commentCount, positive, neutral, negative, score, classifiedAt }]`.
+Until Engagement ships its classifier API, `engagementSentimentClient()` throws
+`NotImplementedError("waiting for Engagement's classifier API")`. Style memory (13.29, track A4)
+calls it and skips the signal when `isSentimentPending(err)` is true. The proposed Engagement
+endpoint is in the file header.
 
 ## Wave C — staging and people
 

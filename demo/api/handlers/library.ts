@@ -18,7 +18,7 @@ const THUMB_W = 360;
 const THUMB_H = 560;
 const PREVIEW_TTL_SEC = 600;
 
-function present(item: LibraryItem) {
+export function present(item: LibraryItem) {
   const a = item.analysis;
   return {
     id: item.id,

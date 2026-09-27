@@ -146,7 +146,30 @@ export async function publicationAnalytics(db: Db, organisationId: string, id: s
     },
     hourly: hourly.map(point),
     daily: daily.map(point),
+    // 13.28: the newest retention curve / audience reported (only some polls read them).
+    retention: latestJson(rows, 'retentionCurve', retentionPoints),
+    demographics: latestJson(rows, 'demographics', demographicSlices),
   };
+}
+
+const retentionPoints = z.array(z.object({ atPct: z.number(), watchingPct: z.number() }));
+const demographicSlices = z.array(
+  z.object({ ageGroup: z.string(), gender: z.string(), pct: z.number() }),
+);
+
+/** The newest row's JSON column that parses; older shapes (or none) give []. */
+function latestJson<T>(
+  rows: VideoAnalytic[],
+  column: 'retentionCurve' | 'demographics',
+  schema: z.ZodType<T[]>,
+): T[] {
+  for (let i = rows.length - 1; i >= 0; i--) {
+    const value = rows[i]?.[column];
+    if (value === null || value === undefined) continue;
+    const parsed = schema.safeParse(value);
+    if (parsed.success) return parsed.data;
+  }
+  return [];
 }
 
 /** Daily activity across the org: sum over publications of (today's total − previous total). */

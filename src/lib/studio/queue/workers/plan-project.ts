@@ -1,4 +1,4 @@
-import type { BrandKit, Prisma, VideoProject } from '@prisma/client';
+import type { BrandKit, Prisma, VideoProject, VideoShot } from '@prisma/client';
 import { NotFoundError, NotImplementedError, ValidationError } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
@@ -19,9 +19,11 @@ import {
   transitionProject,
 } from '../../pipeline/project-state';
 import { jsonOutput, runProvider, type ProviderRunResult } from '../../pipeline/provider-run';
+import { openSafetyReview, pendingSafetyReview } from '../../pipeline/safety-review';
 import {
   blocksGeneration,
   buildScriptSafetyPrompt,
+  needsSafetyReview,
   parseScriptSafety,
   SCRIPT_SAFETY_SCHEMA,
   SCRIPT_SAFETY_SYSTEM_PROMPT,
@@ -36,8 +38,12 @@ import {
   type PlannedScript,
   type TargetFormat,
 } from '../../pipeline/scripting';
+import { styleMemorySupplement } from '../../services/style-memory';
 import { jobIds } from '../enqueue';
 import { planSlideshow } from './plan-slideshow';
+import { planUpload } from './plan-upload';
+import { regenerateScriptPlan } from './regenerate-script';
+import { scriptRegeneration } from '../../services/scripts';
 import { loadReferenceGuide, type ReferenceGuide } from '../../library/reference';
 import { loadTemplateGuide } from '../../templates/blueprint';
 import { suggestionRows, suggestOverlays } from '../../overlays/suggest';
@@ -53,12 +59,15 @@ const SCRIPT_MAX_TOKENS = 8_000;
 const SAFETY_MAX_TOKENS = 1_000;
 const SUPPORTED_SOURCES = new Set(['BRIEF', 'POSTMIND_CONTENT', 'LIBRARY_REFERENCE', 'TEMPLATE']);
 
-function modelLabel(run: ProviderRunResult): string {
+export function modelLabel(run: ProviderRunResult): string {
   const model = (run.output.metadata as { model?: string } | undefined)?.model;
   return `${run.decision.providerId}:${model ?? 'unknown'}`;
 }
 
-async function loadBrandKit(deps: PipelineDeps, project: VideoProject): Promise<BrandKit | null> {
+export async function loadBrandKit(
+  deps: PipelineDeps,
+  project: VideoProject,
+): Promise<BrandKit | null> {
   if (project.brandKitId) {
     return deps.db.brandKit.findFirst({
       where: { id: project.brandKitId, organisationId: project.organisationId },
@@ -73,7 +82,7 @@ async function loadBrandKit(deps: PipelineDeps, project: VideoProject): Promise<
   });
 }
 
-function textRequest(
+export function textRequest(
   data: ProjectJobData,
   system: string,
   prompt: string,
@@ -95,7 +104,7 @@ function textRequest(
   };
 }
 
-async function enqueueShots(deps: PipelineDeps, data: ProjectJobData): Promise<number> {
+export async function enqueueShots(deps: PipelineDeps, data: ProjectJobData): Promise<number> {
   const shots = await deps.db.videoShot.findMany({
     where: { script: { projectId: data.projectId }, state: { in: ['PLANNED', 'QUEUED'] } },
     select: { id: true },
@@ -152,32 +161,42 @@ async function persistPlan(
     }
     // Layer 2 also proposes styled overlays for every shot's on-screen text (A4.5).
     const shots = await tx.videoShot.findMany({ where: { script: { projectId: project.id } } });
-    const presets = await tx.overlayPreset.findMany({
-      where: { scope: 'BUILT_IN', name: { in: BUILT_IN_PRESETS.map((p) => p.name) } },
-      select: { id: true, name: true },
-    });
-    const palette = Array.isArray(brandKit?.colourPalette)
-      ? (brandKit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
-      : [];
-    const brand = brandKit
-      ? {
-          primary: palette[0],
-          secondary: palette[1],
-          fontFamily: brandKit.fontPrimary ?? undefined,
-        }
-      : null;
-    const rows = [...new Set(shots.map((s) => s.scriptId))].flatMap((scriptId) =>
-      suggestionRows(
-        suggestOverlays(
-          shots.filter((s) => s.scriptId === scriptId),
-          brand,
-          reference ? (index) => reference.presetForShot(index) : undefined,
-        ),
-        new Map(presets.map((p) => [p.name, p.id])),
-      ),
-    );
-    if (rows.length) await tx.textOverlay.createMany({ data: rows });
+    await createSuggestedOverlays(tx, shots, brandKit, reference);
   });
+}
+
+/** Proposed overlays for these shots' on-screen text, grouped per script (A4.5). */
+export async function createSuggestedOverlays(
+  tx: Prisma.TransactionClient,
+  shots: VideoShot[],
+  brandKit: BrandKit | null,
+  reference: ReferenceGuide | null,
+): Promise<void> {
+  const presets = await tx.overlayPreset.findMany({
+    where: { scope: 'BUILT_IN', name: { in: BUILT_IN_PRESETS.map((p) => p.name) } },
+    select: { id: true, name: true },
+  });
+  const palette = Array.isArray(brandKit?.colourPalette)
+    ? (brandKit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
+    : [];
+  const brand = brandKit
+    ? {
+        primary: palette[0],
+        secondary: palette[1],
+        fontFamily: brandKit.fontPrimary ?? undefined,
+      }
+    : null;
+  const rows = [...new Set(shots.map((s) => s.scriptId))].flatMap((scriptId) =>
+    suggestionRows(
+      suggestOverlays(
+        shots.filter((s) => s.scriptId === scriptId),
+        brand,
+        reference ? (index) => reference.presetForShot(index) : undefined,
+      ),
+      new Map(presets.map((p) => [p.name, p.id])),
+    ),
+  );
+  if (rows.length) await tx.textOverlay.createMany({ data: rows });
 }
 
 export async function planProject(data: ProjectJobData, deps: PipelineDeps): Promise<void> {
@@ -190,11 +209,16 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   if (!project || project.organisationId !== data.organisationId)
     throw new NotFoundError('Project not found');
   if (currentRunId(project) !== data.runId) return log.info('stale plan-project job ignored');
+  if (pendingSafetyReview(project.metadata))
+    return log.info('run is waiting for a content-safety review; skipped');
 
   // Resume: plan already persisted by an earlier attempt; only the fan-out may be missing.
-  if (project.state === 'ASSETS_QUEUED' && project.sourceType === 'SLIDESHOW') {
+  if (
+    project.state === 'ASSETS_QUEUED' &&
+    (project.sourceType === 'SLIDESHOW' || project.sourceType === 'UPLOAD')
+  ) {
     await deps.queue.add('compose-video', data, { jobId: jobIds.composeVideo(data) });
-    return log.info('slideshow already planned; composition re-enqueued');
+    return log.info('slideshow/upload already planned; composition re-enqueued');
   }
   if (project.state === 'ASSETS_QUEUED') {
     const count = await enqueueShots(deps, data);
@@ -211,6 +235,11 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   }
 
   if (project.sourceType === 'SLIDESHOW') return planSlideshow(data, deps, project, log);
+  // Phase 13.5: an uploaded video skips Layers 1–3 (plan-upload.ts).
+  if (project.sourceType === 'UPLOAD') return planUpload(data, deps, project, log);
+  // Phase 13.1: POST /scripts/:id/regenerate — Layer 2 only, reusing the stored brief.
+  const regeneration = scriptRegeneration(project.metadata, data.runId);
+  if (regeneration) return regenerateScriptPlan(data, deps, project, regeneration, log);
   if (!SUPPORTED_SOURCES.has(project.sourceType)) {
     throw new NotImplementedError(`Planning for sourceType ${project.sourceType} is not built yet`);
   }
@@ -228,25 +257,36 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   const formats = parseTargetFormats(project.targetFormats);
   const brandKit = await loadBrandKit(deps, project);
   const restrictedTopics = brandKit?.restrictedTopics ?? [];
+  // 13.29: learned preferences (style memory), fenced as data for Layers 1–2.
+  const styleMemory = await styleMemorySupplement(
+    deps.db,
+    project.organisationId,
+    project.businessId,
+  );
 
   // Layer 1 — ideation
   const ideationRun = await runProvider(
     textRequest(
       data,
       IDEATION_SYSTEM_PROMPT,
-      buildIdeationPrompt({
-        rawInput,
-        businessName: project.name,
-        targetPlatforms: formats.map((f) => f.platform),
-        hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
-        brand: brandKit
-          ? {
-              toneKeywords: brandKit.toneKeywords,
-              audienceProfile: brandKit.audienceProfile,
-              restrictedTopics,
-            }
-          : undefined,
-      }),
+      [
+        buildIdeationPrompt({
+          rawInput,
+          businessName: project.name,
+          targetPlatforms: formats.map((f) => f.platform),
+          hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
+          brand: brandKit
+            ? {
+                toneKeywords: brandKit.toneKeywords,
+                audienceProfile: brandKit.audienceProfile,
+                restrictedTopics,
+              }
+            : undefined,
+        }),
+        styleMemory,
+      ]
+        .filter(Boolean)
+        .join('\n\n'),
       IDEATION_SCHEMA,
       IDEATION_MAX_TOKENS,
     ),
@@ -301,6 +341,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
           [
             buildScriptPrompt({ brief, format, treatments, restrictedTopics }),
             reference?.scriptSupplement(format.durationSec, treatments),
+            styleMemory,
           ]
             .filter(Boolean)
             .join('\n\n'),
@@ -344,6 +385,21 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     runId: data.runId,
     patch: { scriptSafety: safety },
   });
+  if (needsSafetyReview(safety)) {
+    // 13.17: pause for a Trust & Safety decision. The plan is stored (no shot is enqueued), so
+    // ALLOW continues from here without paying for ideation and scripting again.
+    await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit, reference);
+    await openSafetyReview(deps, {
+      organisationId: data.organisationId,
+      projectId: project.id,
+      runId: data.runId,
+      planTier: data.planTier,
+      kind: 'script',
+      reason: `Script safety REVIEW${safety.categories.length ? ` (${safety.categories.join(', ')})` : ''}: ${safety.reason}`,
+      details: { verdict: safety.verdict, categories: safety.categories, reason: safety.reason },
+    });
+    return log.warn({ safety }, 'script safety paused the run for review');
+  }
   if (blocksGeneration(safety)) {
     await failProject(deps.db, {
       projectId: project.id,

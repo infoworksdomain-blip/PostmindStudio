@@ -3,10 +3,10 @@ import { projectMetadata } from '../pipeline/project-state';
 import type { ProjectJobData } from '../queue/queues';
 import { AUTO_APPROVE_ACTOR, mergeMetadata, recordApproval, requiredRoleFor } from './approval';
 import { publishOnApproval } from './auto-publish';
+import { autoApprovePolicyFor } from '../services/org-policy';
 import {
   countHumanApprovedProjects,
   decideAutoApproval,
-  trustThreshold,
   type ReviewDecision,
 } from './review-policy';
 
@@ -42,7 +42,9 @@ async function decide(
       excludeProjectId: project.id,
     }),
   ]);
-  const threshold = trustThreshold();
+  // 13.18: the organisation's policy may turn auto-approve off or set its own threshold.
+  const orgPolicy = await autoApprovePolicyFor(deps.db, data.organisationId);
+  const threshold = orgPolicy.threshold;
   const safety = metadata.scriptSafety as { verdict?: unknown } | undefined;
   const decision = decideAutoApproval({
     planTier: data.planTier,
@@ -50,6 +52,7 @@ async function decide(
     humanApprovedCount,
     renders,
     scriptSafetyVerdict: typeof safety?.verdict === 'string' ? safety.verdict : undefined,
+    orgAllowsAutoApprove: orgPolicy.allowed,
   });
   return { decision, humanApprovedCount, threshold: threshold.ok ? threshold.value : null };
 }
@@ -67,6 +70,7 @@ async function approveAutomatically(
     requiredRole: requiredRoleFor(project.reviewPolicy),
     note: `Approved automatically: trusted creator (${humanApprovedCount} videos approved by a person) and every quality check passed`,
     now: deps.now(),
+    outbox: { planTier: data.planTier, trigger: 'auto' },
   });
   if (!approved) return false;
   deps.audit({

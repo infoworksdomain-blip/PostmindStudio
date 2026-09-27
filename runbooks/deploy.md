@@ -26,6 +26,14 @@
   - URLs and access: `APP_URL`, `STUDIO_PLATFORM_ORG_IDS`.
   - Monitoring: `METRICS_TOKEN`, `SENTRY_DSN`.
   - The provider and platform keys.
+- Browser uploads (13.5, "Upload a video" and slideshow clips) PUT straight to the assets bucket
+  with a presigned URL, so `S3_BUCKET_ASSETS` needs a CORS rule allowing `PUT` from the `APP_URL`
+  origin with the `Content-Type` header (the URL signs it). The web role's IAM policy needs
+  `s3:PutObject` there to sign it, plus `s3:GetObject` / `s3:DeleteObject` (probe and reject).
+  Without the CORS rule the upload fails in the browser with a network error and the upload stays
+  PENDING. GAP: abandoned PENDING uploads (`orgs/*/uploads/`, rows in `video_uploads`) are not
+  swept yet. Do NOT add a blanket S3 expiry on that prefix: READY uploads are the footage of
+  UPLOAD projects and slideshow clips.
 - **`STUDIO_DEV_TENANT` must never be set outside local development.** It is ignored unless
   `NODE_ENV=development`, and the image sets `NODE_ENV=production`.
 

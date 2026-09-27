@@ -46,7 +46,7 @@ describe('sampleBreakers', () => {
     const metrics = getMetrics();
     const breaker = { snapshot: () => ({ runway: 'closed' }) } as unknown as CircuitBreaker;
 
-    sampleBreakers(metrics, breaker);
+    await sampleBreakers(metrics, breaker);
 
     const metric = metrics.registry.getSingleMetric('studio_provider_circuit_state');
     await expect(gaugeValue(metric as never, { provider: 'runway' })).resolves.toBe(0);
@@ -56,7 +56,7 @@ describe('sampleBreakers', () => {
     const metrics = getMetrics();
     const breaker = { snapshot: () => ({ luma: 'half_open' }) } as unknown as CircuitBreaker;
 
-    sampleBreakers(metrics, breaker);
+    await sampleBreakers(metrics, breaker);
 
     const metric = metrics.registry.getSingleMetric('studio_provider_circuit_state');
     await expect(gaugeValue(metric as never, { provider: 'luma' })).resolves.toBe(1);
@@ -66,7 +66,7 @@ describe('sampleBreakers', () => {
     const metrics = getMetrics();
     const breaker = { snapshot: () => ({ heygen: 'open' }) } as unknown as CircuitBreaker;
 
-    sampleBreakers(metrics, breaker);
+    await sampleBreakers(metrics, breaker);
 
     const metric = metrics.registry.getSingleMetric('studio_provider_circuit_state');
     await expect(gaugeValue(metric as never, { provider: 'heygen' })).resolves.toBe(2);
@@ -78,7 +78,7 @@ describe('sampleBreakers', () => {
       snapshot: () => ({ runway: 'closed', luma: 'open', elevenlabs: 'half_open' }),
     } as unknown as CircuitBreaker;
 
-    sampleBreakers(metrics, breaker);
+    await sampleBreakers(metrics, breaker);
 
     const metric = metrics.registry.getSingleMetric('studio_provider_circuit_state');
     await expect(gaugeValue(metric as never, { provider: 'runway' })).resolves.toBe(0);
@@ -92,7 +92,7 @@ describe('sampleBreakers', () => {
       snapshot: () => ({ shotstack: 'unknown-state' }),
     } as unknown as CircuitBreaker;
 
-    sampleBreakers(metrics, breaker);
+    await sampleBreakers(metrics, breaker);
 
     const metric = metrics.registry.getSingleMetric('studio_provider_circuit_state');
     await expect(gaugeValue(metric as never, { provider: 'shotstack' })).resolves.toBe(0);

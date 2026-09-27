@@ -19,7 +19,9 @@ import { slideshowInput } from '../slideshow/planner';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
 import { budgetFormatsFromJson, defaultProjectBudgetPence } from '../cost/project-budget';
 import { insertSlides, planSlideshowSlides } from './slideshows';
+import { attachSourceUpload } from './uploads';
 import { applyTemplate } from './templates';
+import { defaultReviewPolicyFor } from './org-policy';
 import { assertMayApprove, recordApproval, requiredRoleFor } from '../automation/approval';
 import {
   assertMayConfigureTargets,
@@ -56,8 +58,10 @@ const projectFields = z.object({
   name: z.string().trim().min(1).max(200),
   businessId: z.string().trim().min(1).max(128),
   sourceType: z
-    .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE', 'TEMPLATE'])
+    .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE', 'TEMPLATE', 'UPLOAD'])
     .default('BRIEF'),
+  /** UPLOAD (13.5): a READY source-video upload (POST /uploads, then /uploads/:id/complete). */
+  uploadId: z.string().trim().min(1).max(64).optional(),
   /** LIBRARY_REFERENCE (A3.9): the reference video and how it is used. */
   referenceVideoId: z.string().trim().min(1).max(64).optional(),
   referenceMode: z.enum(['TEMPLATE', 'INSPIRE']).optional(),
@@ -105,7 +109,13 @@ export const createProjectInput = projectFields.superRefine((v, ctx) => {
       path: ['templateId'],
       message: 'templateId is required for TEMPLATE projects',
     });
-  if (v.sourceType !== 'SLIDESHOW' && v.sourceType !== 'TEMPLATE' && !v.brief)
+  if (v.sourceType === 'UPLOAD' && !v.uploadId)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['uploadId'],
+      message: 'uploadId is required for UPLOAD projects',
+    });
+  if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(v.sourceType) && !v.brief)
     ctx.addIssue({ code: 'custom', path: ['brief'], message: 'brief is required' });
   if (v.sourceType !== 'TEMPLATE' && !v.targetFormats)
     ctx.addIssue({ code: 'custom', path: ['targetFormats'], message: 'targetFormats is required' });
@@ -125,6 +135,8 @@ export const updateProjectInput = projectFields
     brief: briefInput.partial().optional(),
     brandKitId: z.string().max(64).nullable().optional(),
     scheduledStartAt: z.iso.datetime().nullable().optional(),
+    /** 13.20: resume automatically when the org daily/monthly cap rolls over (default on). */
+    autoResume: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
 
@@ -223,6 +235,7 @@ export async function createProject(
           input.slideshow,
         )
       : undefined;
+  const orgReviewPolicy = await defaultReviewPolicyFor(db, tenant.organisationId);
   return db.$transaction(async (tx) => {
     const project = await tx.videoProject.create({
       data: {
@@ -234,7 +247,9 @@ export async function createProject(
           template?.description ?? input.brief?.rawInput ?? input.slideshow?.topic ?? null,
         state: 'DRAFT',
         sourceType: input.sourceType,
-        sourceRef: input.sourceRef ?? null,
+        // UPLOAD: sourceRef is the upload (plan-upload.ts reads its asset from there).
+        sourceRef:
+          input.sourceType === 'UPLOAD' ? (input.uploadId ?? null) : (input.sourceRef ?? null),
         ...(input.sourceType === 'LIBRARY_REFERENCE' && {
           referenceVideoId: input.referenceVideoId ?? null,
           referenceMode: input.referenceMode ?? null,
@@ -244,7 +259,8 @@ export async function createProject(
         templateId: input.templateId ?? null,
         // Operator decision 2: no explicit budget → the short/long-form default.
         costBudgetPence: input.costBudgetPence ?? defaultProjectBudgetPence(formats),
-        reviewPolicy: template ? template.reviewPolicy : input.reviewPolicy,
+        // 13.18: nothing chosen (client or template) → the organisation's default policy.
+        reviewPolicy: (template ? template.reviewPolicy : input.reviewPolicy) ?? orgReviewPolicy,
         publishPolicy: template ? template.publishPolicy : input.publishPolicy,
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
         metadata: {
@@ -264,6 +280,13 @@ export async function createProject(
       },
     });
     if (slideshow) await insertSlides(tx, project.id, slideshow.drafts);
+    if (input.sourceType === 'UPLOAD' && input.uploadId)
+      await attachSourceUpload(tx, {
+        organisationId: tenant.organisationId,
+        businessId: input.businessId,
+        uploadId: input.uploadId,
+        projectId: project.id,
+      });
     return project;
   });
 }
@@ -340,7 +363,9 @@ export async function updateProject(
 ) {
   const { organisationId } = tenant;
   const project = await findProject(db, organisationId, id);
-  if (!EDITABLE_STATES.includes(project.state)) {
+  // 13.20: the auto-resume opt-out alone may change in any state (e.g. while generating).
+  const onlyAutoResume = Object.keys(input).every((k) => k === 'autoResume');
+  if (!onlyAutoResume && !EDITABLE_STATES.includes(project.state)) {
     throw new ConflictError(`Project cannot be edited while ${project.state}`);
   }
   await assertBrandKit(db, organisationId, input.brandKitId);
@@ -375,9 +400,10 @@ export async function updateProject(
       ...(input.scheduledStartAt !== undefined && {
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
       }),
-      ...((hintsChanged || input.autoPublish) && {
+      ...((hintsChanged || input.autoPublish || input.autoResume !== undefined) && {
         metadata: {
           ...metadata,
+          ...(input.autoResume !== undefined && { autoResume: input.autoResume }),
           ...(hintsChanged && {
             briefHints: {
               ...hints,
@@ -562,6 +588,7 @@ export async function approveProject(
     requiredRole: requiredRoleFor(project.reviewPolicy),
     note: note ?? null,
     now,
+    outbox: { planTier: tenant.organisation.planTier ?? '', trigger: 'human' },
   });
   if (!approved) throw new ConflictError('Project changed concurrently; reload and retry');
   return findProject(db, tenant.organisationId, id);

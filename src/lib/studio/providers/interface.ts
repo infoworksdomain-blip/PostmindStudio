@@ -19,9 +19,11 @@ export type ProviderCapability =
   | 'stock_footage' // Layer 3: STOCK_FOOTAGE shots
   | 'tts' // Layer 4
   | 'music' // Layer 5
+  | 'sfx' // Layer 5 sound effects (BACKLOG 13.27)
   | 'composition' // Layers 6–7
   | 'transcription' // Layer 8 captions
-  | 'content_safety'; // Layer 8
+  | 'content_safety' // Layer 8
+  | 'media_analysis'; // 13.36 library: BPM/key, CLIP visual + CLAP audio embeddings (not built)
 
 export type AspectRatio = '9:16' | '16:9' | '1:1' | '4:5';
 
@@ -90,6 +92,20 @@ export interface ImageToVideoRequest extends ProviderRequestBase {
   aspectRatio: AspectRatio;
 }
 
+export interface AvatarVideoRequest extends ProviderRequestBase {
+  capability: 'avatar_video';
+  /**
+   * Publicly fetchable (e.g. presigned) URL of the shot's narration. The avatar lip-syncs to
+   * this audio, so the presenter speaks in the brand voice produced by Layer 4.
+   */
+  audioUrl: string;
+  /** Provider avatar id; when absent the adapter uses its configured stock avatar. */
+  avatarId?: string;
+  /** Expected output length (the narration's length), used for cost estimation. */
+  durationSec: number;
+  aspectRatio: AspectRatio;
+}
+
 export interface TtsRequest extends ProviderRequestBase {
   capability: 'tts';
   text: string;
@@ -126,6 +142,30 @@ export interface ContentSafetyRequest extends ProviderRequestBase {
   /** Publicly fetchable (e.g. presigned) URL of the rendered video. */
   mediaUrl: string;
   durationSec: number;
+  /**
+   * BACKLOG 13.25: where the provider posts the result of an asynchronous scan. Required for
+   * media longer than the provider's synchronous limit (Hive: 90 s); ignored otherwise.
+   */
+  callbackUrl?: string;
+}
+
+export interface SfxRequest extends ProviderRequestBase {
+  capability: 'sfx';
+  /** The Layer 2 cue ("whoosh", "cash register ding"): search keywords, not instructions. */
+  query: string;
+  /** Longest clip wanted, in seconds. */
+  maxDurationSec: number;
+}
+
+/** 13.36: what the (not yet chosen) inference host would compute for one library video. */
+export type MediaAnalysis = 'bpm_key' | 'clip_visual' | 'clap_audio';
+
+export interface MediaAnalysisRequest extends ProviderRequestBase {
+  capability: 'media_analysis';
+  /** Publicly fetchable (e.g. presigned) URL of the video or audio file. */
+  mediaUrl: string;
+  analyses: MediaAnalysis[];
+  durationSec: number;
 }
 
 export type ProviderRequest =
@@ -134,11 +174,14 @@ export type ProviderRequest =
   | TextToImageRequest
   | TextToVideoRequest
   | ImageToVideoRequest
+  | AvatarVideoRequest
   | TtsRequest
   | MusicRequest
   | CompositionRequest
   | TranscriptionRequest
-  | ContentSafetyRequest;
+  | ContentSafetyRequest
+  | SfxRequest
+  | MediaAnalysisRequest;
 
 export interface ProviderSubmitResult {
   providerJobId: string;

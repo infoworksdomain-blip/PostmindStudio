@@ -8,6 +8,7 @@ import { jsonOutput, runProvider } from '../pipeline/provider-run';
 import type { PlanTier } from '../providers/router';
 import { safeGet } from '../scan/safe-fetch';
 import { assertAllowedS3Source, isS3Url, isSupportedSourceUrl, parseS3Url } from './corpus-source';
+import { openSourceStream, tap } from './source-stream';
 import { vectorSql } from '../vector-sql';
 import {
   ANALYSIS_SCHEMA,
@@ -120,6 +121,53 @@ export async function readSource(deps: PipelineDeps, sourceUrl: string): Promise
   return res.body;
 }
 
+/**
+ * Stores the source under its content hash (`library/<sha256>.mp4`). With a streaming-capable
+ * storage (S3: multipart upload, 13.15) the bytes go to a staging key while being hashed, then
+ * are copied to the final key; memory stays at one 8 MiB part. Otherwise they are buffered.
+ * A source whose hash is already in the library is not stored twice.
+ */
+async function storeSource(
+  deps: PipelineDeps,
+  bucket: string,
+  sourceUrl: string,
+): Promise<{ existingId: string } | { hash: string; s3Key: string }> {
+  const findExisting = (s3Key: string) =>
+    deps.db.videoLibraryItem.findFirst({
+      where: { s3Bucket: bucket, s3Key },
+      select: { id: true },
+    });
+  const { putStream, copy } = deps.storage;
+  if (!putStream || !copy) {
+    const body = await readSource(deps, sourceUrl);
+    const hash = createHash('sha256').update(body).digest('hex');
+    const s3Key = `library/${hash}.mp4`;
+    const existing = await findExisting(s3Key);
+    if (existing) return { existingId: existing.id };
+    await deps.storage.put({ bucket, key: s3Key, body, contentType: 'video/mp4' });
+    return { hash, s3Key };
+  }
+  const hasher = createHash('sha256');
+  const staging = `library/staging/${randomUUID()}.mp4`;
+  const source = await openSourceStream(deps, sourceUrl, MAX_SOURCE_BYTES);
+  await putStream.call(deps.storage, {
+    bucket,
+    key: staging,
+    body: tap(source, (chunk) => hasher.update(chunk)),
+    contentType: 'video/mp4',
+  });
+  try {
+    const hash = hasher.digest('hex');
+    const s3Key = `library/${hash}.mp4`;
+    const existing = await findExisting(s3Key);
+    if (existing) return { existingId: existing.id };
+    await copy.call(deps.storage, bucket, staging, s3Key);
+    return { hash, s3Key };
+  } finally {
+    await deps.storage.delete(bucket, staging).catch(() => undefined);
+  }
+}
+
 export function embeddingDocument(input: {
   title: string;
   description: string;
@@ -207,12 +255,9 @@ export async function ingestLibraryVideo(
   if (!bucket) throw new ConfigurationError('S3_BUCKET_LIBRARY is required for library ingestion');
 
   // 1 — store the source
-  const body = await readSource(deps, item.sourceUrl);
-  const hash = createHash('sha256').update(body).digest('hex');
-  const s3Key = `library/${hash}.mp4`;
-  const existing = await deps.db.videoLibraryItem.findFirst({ where: { s3Bucket: bucket, s3Key } });
-  if (existing) return { libraryItemId: existing.id, created: false };
-  await deps.storage.put({ bucket, key: s3Key, body, contentType: 'video/mp4' });
+  const stored = await storeSource(deps, bucket, item.sourceUrl);
+  if ('existingId' in stored) return { libraryItemId: stored.existingId, created: false };
+  const { hash, s3Key } = stored;
   const url = await deps.storage.signedUrl(bucket, s3Key, 6 * 60 * 60);
 
   // 2 — visual structure

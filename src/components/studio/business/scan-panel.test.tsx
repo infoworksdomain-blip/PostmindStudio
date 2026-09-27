@@ -74,6 +74,8 @@ describe('ScanPanel', () => {
       if (req.url.pathname.endsWith('/scans'))
         return ok({ data: [{ ...SCAN, state: polls > 1 ? 'SUCCEEDED' : 'RUNNING' }] });
       if (req.url.pathname.endsWith('/business-profile')) return ok({ profile: {} });
+      // 13.10 / 13.11 panels on the same screen: not part of this test.
+      if (/\/(schedule|domain-verification)$/.test(req.url.pathname)) return fail(404, 'none');
       polls += 1;
       return ok({ scan: detail({ state: polls > 1 ? 'SUCCEEDED' : 'RUNNING', library: {} }) });
     });

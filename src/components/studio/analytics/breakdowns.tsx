@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { ChevronRight, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { formatCount, formatDate, PLATFORM_LABEL, safeHttpUrl } from '@/lib/client/format';
@@ -75,7 +75,15 @@ export function Leaderboard({ days }: { days: number }) {
                     )}
                   </span>
                 </span>
-                <span className="tabular text-sm font-medium">{formatCount(p.value)}</span>
+                {/* 13.28: per-publication analytics (retention, audience). */}
+                <Link
+                  href={`/analytics/publications/${p.id}`}
+                  aria-label={`Analytics for ${p.caption?.trim() || 'untitled post'}`}
+                  className="tabular inline-flex items-center gap-1 text-sm font-medium hover:underline"
+                >
+                  {formatCount(p.value)}
+                  <ChevronRight className="size-3.5 text-muted-foreground" />
+                </Link>
               </li>
             );
           })}

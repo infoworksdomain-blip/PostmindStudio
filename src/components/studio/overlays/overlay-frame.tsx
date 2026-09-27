@@ -1,13 +1,24 @@
 'use client';
 
-import { useEffect, type CSSProperties, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from 'react';
 import { cn } from '@/lib/utils';
 import { GUIDES, isActiveAt, snapAnchor } from './overlay-math';
+import { resizedFontPct, steppedFontPct } from './resize-math';
+import type { SafeArea } from './safe-areas';
 import type { Overlay } from './types';
 
 // WYSIWYG layout preview (A4.7): HTML text over a frame of the variant's aspect ratio, showing
 // the overlays live at the playhead, with rule-of-thirds guides. Clicking the frame places the
 // selected overlay (snapping to the guides). The exact render comes from "Preview render".
+// 13.7: the selected overlay has a corner handle that resizes it (drag, or arrow keys), and the
+// platform's safe area is outlined (safe-areas.ts says which guides are official).
 
 const ASPECT: Record<string, string> = {
   '9:16': '9 / 16',
@@ -64,7 +75,66 @@ export function overlayCss(o: Overlay): CSSProperties {
   };
 }
 
-function OverlayText({ overlay, selected }: { overlay: Overlay; selected: boolean }) {
+function ResizeHandle({
+  overlay,
+  onResize,
+}: {
+  overlay: Overlay;
+  onResize: (fontSizePct: number) => void;
+}) {
+  const start = useRef<{ x: number; y: number; pct: number; height: number } | null>(null);
+
+  function down(e: PointerEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    e.preventDefault();
+    const box = e.currentTarget.parentElement?.getBoundingClientRect();
+    start.current = {
+      x: e.clientX,
+      y: e.clientY,
+      pct: overlay.fontSizePct,
+      height: box?.height ?? 0,
+    };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function move(e: PointerEvent<HTMLButtonElement>) {
+    const s = start.current;
+    if (!s) return;
+    onResize(resizedFontPct(s.pct, s.height, e.clientX - s.x, e.clientY - s.y));
+  }
+  function up(e: PointerEvent<HTMLButtonElement>) {
+    start.current = null;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+  }
+  function key(e: KeyboardEvent<HTMLButtonElement>) {
+    const next = steppedFontPct(overlay.fontSizePct, e.key);
+    if (next === null) return;
+    e.preventDefault();
+    onResize(next);
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={`Resize overlay (${overlay.fontSizePct}% of frame height); arrow keys adjust`}
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={up}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={key}
+      className="pointer-events-auto absolute -right-2 -bottom-2 size-3.5 cursor-nwse-resize rounded-sm border border-background bg-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    />
+  );
+}
+
+function OverlayText({
+  overlay,
+  selected,
+  onResize,
+}: {
+  overlay: Overlay;
+  selected: boolean;
+  onResize?: (fontSizePct: number) => void;
+}) {
   useGoogleFont(overlay.fontFamily);
   return (
     <span
@@ -75,7 +145,30 @@ function OverlayText({ overlay, selected }: { overlay: Overlay; selected: boolea
       style={overlayCss(overlay)}
     >
       {overlay.text}
+      {selected && onResize && <ResizeHandle overlay={overlay} onResize={onResize} />}
     </span>
+  );
+}
+
+const pct = (fraction: number) => `${Math.round(fraction * 10_000) / 100}%`;
+
+function SafeAreaGuide({ area }: { area: SafeArea }) {
+  return (
+    <span
+      aria-hidden
+      title={area.label}
+      data-testid="safe-area"
+      className={cn(
+        'pointer-events-none absolute border',
+        area.official ? 'border-emerald-300/70' : 'border-dashed border-amber-300/70',
+      )}
+      style={{
+        top: pct(area.top),
+        bottom: pct(area.bottom),
+        left: pct(area.left),
+        right: pct(area.right),
+      }}
+    />
   );
 }
 
@@ -85,12 +178,18 @@ export function OverlayFrame({
   playhead,
   selectedId,
   onPlace,
+  onResize,
+  safeArea,
 }: {
   overlays: Overlay[];
   aspectRatio: string;
   playhead: number;
   selectedId: string | null;
   onPlace?: (anchor: { anchorX: number; anchorY: number }) => void;
+  /** 13.7: resize the selected overlay (font size, % of frame height). */
+  onResize?: (fontSizePct: number) => void;
+  /** 13.7: the target platform's safe area. */
+  safeArea?: SafeArea | null;
 }) {
   const visible = overlays.filter((o) => isActiveAt(o, playhead));
 
@@ -132,8 +231,14 @@ export function OverlayFrame({
           style={{ top: `${g * 100}%` }}
         />
       ))}
+      {safeArea && <SafeAreaGuide area={safeArea} />}
       {visible.map((o) => (
-        <OverlayText key={o.id} overlay={o} selected={o.id === selectedId} />
+        <OverlayText
+          key={o.id}
+          overlay={o}
+          selected={o.id === selectedId}
+          onResize={o.id === selectedId ? onResize : undefined}
+        />
       ))}
     </div>
   );

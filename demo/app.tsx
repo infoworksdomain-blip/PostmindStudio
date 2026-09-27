@@ -2,6 +2,7 @@ import { ThemeProvider } from 'next-themes';
 import { useEffect, type ReactNode } from 'react';
 import { AdminCentre } from '@/components/studio/admin/admin-centre';
 import { AnalyticsDashboard } from '@/components/studio/analytics/analytics-dashboard';
+import { PublicationAnalytics } from '@/components/studio/analytics/publication-analytics';
 import { AppShell } from '@/components/studio/app-shell';
 import { BusinessProvider } from '@/components/studio/business-context';
 import { BusinessScreen } from '@/components/studio/business/business-screen';
@@ -11,6 +12,7 @@ import { parseReference } from '@/components/studio/create/body';
 import { CreateScreen } from '@/components/studio/create/create-screen';
 import { LibraryBrowse } from '@/components/studio/library/library-browse';
 import { LibraryDetail } from '@/components/studio/library/library-detail';
+import { WelcomeWizard } from '@/components/studio/onboarding/welcome-wizard';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
 import { PublicationsList } from '@/components/studio/publications/publications-list';
 import { ReviewScreen } from '@/components/studio/review/review-screen';
@@ -53,8 +55,13 @@ const ROUTES: RouteDef[] = [
   { path: '/publications', render: () => <PublicationsList /> },
   { path: '/calendar', render: () => <PublicationsCalendar /> },
   { path: '/analytics', render: () => <AnalyticsDashboard /> },
+  {
+    path: '/analytics/publications/:id',
+    render: (p) => <PublicationAnalytics publicationId={p.id ?? ''} />,
+  },
   { path: '/business', render: () => <BusinessScreen /> },
   { path: '/connections', render: () => <ConnectionsScreen /> },
+  { path: '/welcome', render: () => <WelcomeWizard /> },
   { path: '/admin', render: () => <AdminCentre /> },
 ];
 

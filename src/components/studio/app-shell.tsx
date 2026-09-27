@@ -20,11 +20,11 @@ import {
   Sun,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { useBusiness } from './business-context';
+import { BusinessSwitcher } from './business-picker';
 import { NotificationsBell } from './notifications-bell';
+import { WelcomeLink } from './onboarding/welcome-link';
 
 // Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
 
@@ -56,6 +56,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const groups = [...new Set(NAV.map((n) => n.group))];
   return (
     <nav aria-label="Studio" className="flex flex-col gap-6">
+      <WelcomeLink onNavigate={onNavigate} />
       {groups.map((group) => (
         <div key={group}>
           <p className="mb-2 px-3 text-[0.65rem] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
@@ -112,35 +113,7 @@ function Wordmark() {
   );
 }
 
-export function BusinessSwitcher() {
-  const { businessId, setBusinessId, ready } = useBusiness();
-  const [draft, setDraft] = useState('');
-  if (!ready) return null;
-  return (
-    <form
-      className="flex items-center gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setBusinessId(draft || businessId);
-        setDraft('');
-      }}
-    >
-      <label htmlFor="business-id" className="text-xs whitespace-nowrap text-muted-foreground">
-        Business
-      </label>
-      <Input
-        id="business-id"
-        className="h-8 w-44"
-        placeholder={businessId ?? 'PostMind business id'}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-      />
-      <Button type="submit" size="sm" variant="outline" disabled={!draft}>
-        Switch
-      </Button>
-    </form>
-  );
-}
+export { BusinessSwitcher };
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();

@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { NoProviderAvailableError, ValidationError } from '../../errors';
 import type { KillSwitchStatus } from '../kill-switch';
 import { createCircuitBreaker } from './circuit-breaker';
+import { HeyGenAdapter } from './heygen';
+import { LumaAdapter } from './luma';
+import { RunwayAdapter } from './runway';
 import { createProviderRegistry } from './registry';
 import { planCandidates, routeProvider, type BudgetChecker, type RouteInput } from './router';
 import { StubAdapter } from './test-adapter';
+import type { ProviderAdapter } from './interface';
 
 const allow: BudgetChecker = { hasBudget: async () => true };
 
@@ -42,8 +46,8 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
     ['BASIC', ['fal', 'replicate']],
     ['STANDARD', ['luma', 'runway', 'kling']],
-    ['PLUS', ['veo', 'runway', 'kling']],
-    ['ENTERPRISE', ['veo', 'runway', 'kling']],
+    ['PLUS', ['veo', 'runway', 'luma', 'kling']],
+    ['ENTERPRISE', ['veo', 'runway', 'luma', 'kling']],
   ] as const)('AI_CLIP on %s tries %o', (tier, ids) => {
     expect(
       planCandidates({ kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 4 }, tier),
@@ -240,5 +244,123 @@ describe('routeProvider', () => {
       capability: 'text_generation',
       decidedAt: '2026-09-27T12:00:00.000Z',
     });
+  });
+});
+
+// BACKLOG 13.32 — real Luma / HeyGen adapters behind the router (no network: routing only uses
+// capabilities, cost estimates and latency).
+describe('Luma and HeyGen fallbacks', () => {
+  const noFetch = (() => {
+    throw new Error('routing must not call the provider');
+  }) as unknown as typeof fetch;
+  const runway = () => new RunwayAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
+  const luma = () => new LumaAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
+  const heygen = () =>
+    new HeyGenAdapter({
+      apiKey: 'k',
+      defaultAvatarId: 'look',
+      usdToGbpRate: 0.75,
+      fetchImpl: noFetch,
+    });
+  const real = (adapters: ProviderAdapter[]) => ({
+    ...deps([]),
+    registry: createProviderRegistry(adapters),
+  });
+  const openBreaker = async (d: ReturnType<typeof real>, id: string) => {
+    for (let i = 0; i < 5; i += 1) await d.breaker.recordFailure(id);
+  };
+
+  it.each(['PLUS', 'ENTERPRISE'] as const)(
+    '%s: Runway breaker open → Luma takes the clip',
+    async (tier) => {
+      const d = real([runway(), luma()]);
+      await openBreaker(d, 'runway');
+      const decision = await routeProvider(aiClip(tier), d);
+      expect(decision.providerId).toBe('luma');
+      expect(decision.candidates).toEqual([
+        { providerId: 'veo', skipped: 'not_configured' },
+        { providerId: 'runway', skipped: 'circuit_open' },
+        { providerId: 'luma' },
+      ]);
+    },
+  );
+
+  it('PLUS: Runway healthy stays first; Luma is only the fallback', async () => {
+    const decision = await routeProvider(aiClip('PLUS'), real([runway(), luma()]));
+    expect(decision.providerId).toBe('runway');
+  });
+
+  it('STANDARD: a shot regenerated on Runway falls back to Luma when Runway is broken', async () => {
+    const d = real([runway(), luma()]);
+    await openBreaker(d, 'runway');
+    const decision = await routeProvider(aiClip('STANDARD', { preferredProviderId: 'runway' }), d);
+    expect(decision.providerId).toBe('luma');
+    expect(decision.candidates[0]).toEqual({ providerId: 'runway', skipped: 'circuit_open' });
+  });
+
+  it('playbook rehearsal: Runway disabled by the kill switch → Luma', async () => {
+    const d = {
+      ...real([runway(), luma()]),
+      killSwitch: {
+        check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
+          providerId === 'runway'
+            ? { killed: true, level: 'provider', key: 'studio.disabledProvider.runway' }
+            : { killed: false },
+        ),
+      },
+    };
+    const decision = await routeProvider(aiClip('PLUS'), d);
+    expect(decision.providerId).toBe('luma');
+    expect(decision.candidates[1]).toEqual({ providerId: 'runway', skipped: 'provider_disabled' });
+  });
+
+  it('routes image-to-video clips to Luma too', async () => {
+    const d = real([runway(), luma()]);
+    await openBreaker(d, 'runway');
+    const decision = await routeProvider(
+      aiClip('PLUS', {
+        need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 8, hasSourceImage: true },
+        request: {
+          capability: 'image_to_video',
+          organisationId: 'org-1',
+          prompt: 'p',
+          imageUrl: 'https://cdn.example/f.png',
+          durationSec: 8,
+          aspectRatio: '9:16',
+        },
+      }),
+      d,
+    );
+    expect(decision).toMatchObject({ providerId: 'luma', capability: 'image_to_video' });
+  });
+
+  it('no provider left when both Runway and Luma are broken', async () => {
+    const d = real([runway(), luma()]);
+    await openBreaker(d, 'runway');
+    await openBreaker(d, 'luma');
+    await expect(routeProvider(aiClip('PLUS'), d)).rejects.toBeInstanceOf(NoProviderAvailableError);
+  });
+
+  it.each([
+    ['STANDARD', [{ providerId: 'd-id', skipped: 'not_configured' }, { providerId: 'heygen' }]],
+    ['PLUS', [{ providerId: 'heygen' }]],
+  ] as const)('AI_AVATAR on %s is served by HeyGen', async (tier, candidates) => {
+    const decision = await routeProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'AI_AVATAR', durationSec: 6 },
+        planTier: tier,
+        organisationId: 'org-1',
+        request: {
+          capability: 'avatar_video',
+          organisationId: 'org-1',
+          audioUrl: 'https://assets.example/v.mp3',
+          durationSec: 6,
+          aspectRatio: '9:16',
+        },
+      },
+      real([heygen()]),
+    );
+    expect(decision.providerId).toBe('heygen');
+    expect(decision.candidates).toEqual(candidates);
   });
 });

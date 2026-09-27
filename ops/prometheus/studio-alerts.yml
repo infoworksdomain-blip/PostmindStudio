@@ -88,7 +88,7 @@ groups:
   - name: studio-providers
     rules:
       - alert: StudioProviderCircuitOpen
-        # Gauge encoding: 0 closed, 1 half-open, 2 open (per process; max across processes).
+        # Gauge encoding: 0 closed, 1 half-open, 2 open (shared via Redis since 13.16; max across processes).
         expr: max by (provider) (studio_provider_circuit_state) == 2
         for: 5m
         labels:

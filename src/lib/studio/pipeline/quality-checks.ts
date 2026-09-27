@@ -189,3 +189,13 @@ export function qualityPassed(checks: QualityCheck[]): boolean {
 export function hasContentSafetyBlock(checks: QualityCheck[]): boolean {
   return checks.some((c) => c.status === 'failed' && c.severity === 'block');
 }
+
+/**
+ * The content-safety check flagged a review-level class (not a block). Since 13.17 this pauses
+ * the run for a Trust & Safety decision instead of failing it (pipeline/safety-review.ts).
+ */
+export function contentSafetyReviewCheck(checks: QualityCheck[]): QualityCheck | undefined {
+  return checks.find(
+    (c) => c.code === 'content_safety' && c.status === 'failed' && c.severity === 'error',
+  );
+}

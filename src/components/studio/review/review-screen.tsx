@@ -14,6 +14,7 @@ import { OverlayEditor } from '../overlays/overlay-editor';
 import { SlideshowBuilder } from '../slideshow/slideshow-builder';
 import { AutomationPanel } from './automation-panel';
 import { MusicStatus } from './music-status';
+import { SfxStatus } from './sfx-status';
 import { PipelineStrip } from './pipeline-strip';
 import { ApprovalBar, ProjectActions } from './project-actions';
 import { PublicationsList } from './publications-list';
@@ -24,6 +25,7 @@ import { ShotsTab } from './shots-tab';
 import { PUBLISHABLE } from './types';
 import { VariantCard } from './variant-card';
 import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
+import { AutoResumeNote, SafetyReviewNote } from './paused-notes';
 
 // BACKLOG 10.4 — Review (spec 14.2): one screen, all variants. Polls every 4 s while the
 // pipeline is working so progress, shots and renders update in place.
@@ -36,7 +38,14 @@ const SOURCE_LABEL: Record<string, string> = {
   LIBRARY_REFERENCE: 'From a reference video',
   POSTMIND_CONTENT: 'From PostMind content',
   TEMPLATE: 'From a template',
+  UPLOAD: 'Your video',
 };
+
+/** 13.1 / 13.2: renders made before the latest script or shot edits. */
+export function staleRenderIds(project: ProjectDetail): Set<string> {
+  const list = project.metadata?.staleRenders;
+  return new Set(Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : []);
+}
 
 function tabsFor(project: ProjectDetail): TabDef[] {
   const tabs: TabDef[] = [];
@@ -115,9 +124,12 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
             </p>
           )}
         {isProjectBudgetPause(project) && <BudgetRaise project={project} onChanged={refresh} />}
+        <AutoResumeNote project={project} onChanged={refresh} />
+        <SafetyReviewNote project={project} />
         <ApprovalBar project={project} onChanged={refresh} />
         <AutomationPanel project={project} />
         <MusicStatus project={project} />
+        <SfxStatus project={project} />
         <div>
           <ReviewTabs tabs={tabs} active={active} onChange={setTab} />
           <TabPanel tab={active}>
@@ -134,15 +146,23 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
               ) : (
                 <div className="flex flex-col gap-4">
                   {project.renders.map((r) => (
-                    <VariantCard key={r.id} render={r} onChanged={refresh} />
+                    <VariantCard
+                      key={r.id}
+                      render={r}
+                      stale={staleRenderIds(project).has(r.id)}
+                      projectState={project.state}
+                      onChanged={refresh}
+                    />
                   ))}
                 </div>
               ))}
-            {active === 'shots' && <ShotsTab project={project} onChanged={refresh} />}
+            {active === 'shots' && (
+              <ShotsTab project={project} onChanged={refresh} businessId={businessId} />
+            )}
             {active === 'overlays' && (
               <OverlayEditor project={project} businessId={businessId} onChanged={refresh} />
             )}
-            {active === 'script' && <ScriptView project={project} />}
+            {active === 'script' && <ScriptView project={project} onChanged={refresh} />}
             {active === 'publish' && (
               <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
                 <Section

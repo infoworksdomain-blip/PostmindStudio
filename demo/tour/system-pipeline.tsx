@@ -45,12 +45,12 @@ const LAYERS: Layer[] = [
     providers: [
       b('runway (gen4.5 / gen4_turbo)'),
       b('openai (gpt-image-2)'),
-      planned('luma'),
+      b('luma (ray-3.2)'),
       planned('kling'),
       planned('veo'),
       planned('fal'),
       planned('replicate'),
-      planned('heygen'),
+      b('heygen (avatar v3)'),
       planned('d-id'),
       planned('storyblocks'),
       planned('pexels'),
@@ -65,10 +65,15 @@ const LAYERS: Layer[] = [
   },
   {
     n: 5,
-    name: 'Music',
+    name: 'Music + SFX',
     job: 'compose-video',
-    what: 'One instrumental track per run from a closed mood vocabulary, reused on re-render; STANDARD tier and above.',
-    providers: [b('elevenlabs-music (music_v2_5)'), planned('replicate'), planned('storyblocks')],
+    what: 'One instrumental track per run from a closed mood vocabulary, reused on re-render; sound effects from the script’s cues laid under the narration; STANDARD tier and above.',
+    providers: [
+      b('elevenlabs-music (music_v2_5)'),
+      b('storyblocks-audio (SFX)'),
+      planned('replicate'),
+      planned('storyblocks'),
+    ],
   },
   {
     n: 6,
@@ -81,7 +86,7 @@ const LAYERS: Layer[] = [
     n: 7,
     name: 'Multi-format render',
     job: 'compose-video',
-    what: 'One render per target format (9:16, 16:9, 1:1, 4:5), copied to the renders bucket and probed.',
+    what: 'One render per target format (9:16, 16:9, 1:1, 4:5), copied to the renders bucket, probed, and mastered when needed (loudnorm to −14 LUFS, H.264 Baseline re-encode).',
     providers: [b('shotstack'), b('ffmpeg / ffprobe (local)')],
   },
   {
@@ -89,7 +94,7 @@ const LAYERS: Layer[] = [
     name: 'Quality gate + review',
     job: 'run-quality-gate',
     what: 'Duration ±2 s, black frames > 500 ms, loudness −18…−10 LUFS, aspect, H.264/MP4, content safety; then human or trusted auto-approval.',
-    providers: [b('hive (sync, ≤ 90 s)'), planned('sightengine')],
+    providers: [b('hive (sync ≤ 90 s, async + callback beyond)'), planned('sightengine')],
   },
   {
     n: 9,
@@ -254,7 +259,7 @@ export function PipelineChapters() {
               rows={[
                 ['BASIC', 'fal → replicate'],
                 ['STANDARD', 'luma → runway → kling'],
-                ['PLUS / ENTERPRISE', 'veo → runway → kling'],
+                ['PLUS / ENTERPRISE', 'veo → runway → luma → kling'],
                 ['Avatar (≤ STANDARD)', 'd-id → heygen'],
                 ['Stock footage', 'storyblocks → pexels'],
                 ['Image still', 'openai → fal'],
@@ -276,8 +281,9 @@ export function PipelineChapters() {
               ))}
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Breaker state is per process and exported as studio_provider_circuit_state (0 closed,
-              1 half-open, 2 open).
+              Breaker state is shared by every process through Redis (each process falls back to its
+              own state if Redis is down) and exported as studio_provider_circuit_state (0 closed, 1
+              half-open, 2 open).
             </p>
           </Panel>
           <Code label="sample: routing decision (illustrative values)">{ROUTER_SAMPLE}</Code>

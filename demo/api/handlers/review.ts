@@ -5,6 +5,7 @@ import { sampleVideo, sceneImage, type Aspect } from '../../media';
 import { DemoHttpError, route } from '../registry';
 import { DEMO_USER_ID } from '../ids';
 import { startShotRun } from './pipeline-sim';
+import { swapShotAsset } from './p13-a1-create-review';
 import { findRender, findShot, touch, type ProjectRec } from './projects-store';
 
 const SHOT_EDITABLE = new Set(['READY_FOR_REVIEW', 'QUALITY_FAILED', 'FAILED', 'REJECTED']);
@@ -45,6 +46,9 @@ const text = (v: unknown): string | null | undefined =>
   v === null ? null : typeof v === 'string' ? v.trim() || null : undefined;
 
 route('PATCH', '/shots/:id', ({ params, body }) => {
+  // 13.2: { assetId | imageLibraryId } swaps the shot's visual (p13-a1-create-review.ts).
+  const swap = (body ?? {}) as Record<string, unknown>;
+  if ('assetId' in swap || 'imageLibraryId' in swap) return swapShotAsset(params.id ?? '', swap);
   const { project, script, shot } = findShot(params.id ?? '');
   assertEditable(project);
   const b = (body ?? {}) as Record<string, unknown>;

@@ -7,9 +7,11 @@
 // Failures caused by the request itself (invalid input, content policy) say nothing about
 // provider health and are not counted (see CLIENT_SIDE_ERROR_CLASSES).
 //
-// State is per process. With several worker pods each pod trips independently, which still
-// routes around a failing provider, just slightly later. Moving this state to Redis is
-// planned with the queue work in Phase 3 (BACKLOG 3.1).
+// BACKLOG 13.16: the state lives in Redis (circuit-breaker-redis.ts), so every worker and API
+// process shares one breaker per provider. This in-memory store is kept for tests, for local
+// runs without Redis (STUDIO_CIRCUIT_BREAKER_STORE=memory), and as the fail-safe fallback the
+// Redis store uses while Redis is unreachable. Methods may return promises (Redis store);
+// callers always await them.
 
 export const FAILURE_THRESHOLD = 5;
 export const FAILURE_WINDOW_MS = 60_000;
@@ -26,18 +28,36 @@ interface ProviderBreaker {
   trialStartedAt?: number;
 }
 
+export type Awaitable<T> = T | Promise<T>;
+
 export interface CircuitBreaker {
-  state(providerId: string): BreakerState;
+  state(providerId: string): Awaitable<BreakerState>;
   /** True if a request may be sent now. In half-open, claims the single trial slot. */
+  tryAcquire(providerId: string): Awaitable<boolean>;
+  recordSuccess(providerId: string): Awaitable<void>;
+  recordFailure(providerId: string): Awaitable<void>;
+  /** Free a claimed trial slot whose request was never sent (e.g. aborted by the kill switch). */
+  releaseTrial(providerId: string): Awaitable<void>;
+  snapshot(): Awaitable<Record<string, BreakerState>>;
+}
+
+/** The in-memory store answers synchronously. */
+export interface MemoryCircuitBreaker extends CircuitBreaker {
+  state(providerId: string): BreakerState;
   tryAcquire(providerId: string): boolean;
   recordSuccess(providerId: string): void;
   recordFailure(providerId: string): void;
-  /** Free a claimed trial slot whose request was never sent (e.g. aborted by the kill switch). */
   releaseTrial(providerId: string): void;
   snapshot(): Record<string, BreakerState>;
 }
 
-export function createCircuitBreaker(now: () => number = Date.now): CircuitBreaker {
+/** Breaker state from the time it opened (shared by both stores). */
+export function stateAt(openedAt: number | undefined, now: number): BreakerState {
+  if (openedAt === undefined) return 'closed';
+  return now - openedAt >= OPEN_DURATION_MS ? 'half_open' : 'open';
+}
+
+export function createCircuitBreaker(now: () => number = Date.now): MemoryCircuitBreaker {
   const breakers = new Map<string, ProviderBreaker>();
 
   function get(providerId: string): ProviderBreaker {
@@ -50,9 +70,7 @@ export function createCircuitBreaker(now: () => number = Date.now): CircuitBreak
   }
 
   function state(providerId: string): BreakerState {
-    const breaker = breakers.get(providerId);
-    if (breaker?.openedAt === undefined) return 'closed';
-    return now() - breaker.openedAt >= OPEN_DURATION_MS ? 'half_open' : 'open';
+    return stateAt(breakers.get(providerId)?.openedAt, now());
   }
 
   function open(breaker: ProviderBreaker): void {
@@ -101,7 +119,15 @@ export function createCircuitBreaker(now: () => number = Date.now): CircuitBreak
 
 let processBreaker: CircuitBreaker | undefined;
 
-export function getCircuitBreaker(): CircuitBreaker {
-  processBreaker ??= createCircuitBreaker();
+/** Test hook: install a breaker (pass undefined to reset). */
+export function setCircuitBreaker(next: CircuitBreaker | undefined): void {
+  processBreaker = next;
+}
+
+/** This process's breaker, built once by `factory` (the shared Redis store in production). */
+export function getCircuitBreaker(
+  factory: () => CircuitBreaker = () => createCircuitBreaker(),
+): CircuitBreaker {
+  processBreaker ??= factory();
   return processBreaker;
 }

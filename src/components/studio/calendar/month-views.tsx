@@ -1,9 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import type { Publication } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { CalendarEvent } from './calendar-event';
 import { dayKey, type MonthRef } from './month';
+import { DRAG_TYPE } from './reschedule';
+
+/** Reschedule wiring (13.9); absent = a read-only calendar. */
+export interface MoveHandlers {
+  onMove: (publication: Publication) => void;
+  onDropOnDay: (publicationId: string, day: Date) => void;
+  pendingId: string | null;
+}
 
 // Desktop: a seven-column month grid. Phones: the same month as an agenda of days that have
 // something on them (a 7-column grid is unreadable at 375px).
@@ -16,12 +25,15 @@ export function MonthGrid({
   month,
   byDay,
   today,
+  move,
 }: {
   days: Date[];
   month: MonthRef;
   byDay: Map<string, Publication[]>;
   today: string;
+  move?: MoveHandlers;
 }) {
+  const [over, setOver] = useState<string | null>(null);
   return (
     <div className="hidden overflow-hidden rounded-xl border border-border md:block">
       <div className="grid grid-cols-7 border-b border-border bg-secondary/40">
@@ -43,9 +55,25 @@ export function MonthGrid({
           return (
             <li
               key={key}
+              data-day={key}
+              onDragOver={(e) => {
+                if (!move || !e.dataTransfer.types.includes(DRAG_TYPE)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                setOver(key);
+              }}
+              onDragLeave={() => setOver((k) => (k === key ? null : k))}
+              onDrop={(e) => {
+                setOver(null);
+                const id = e.dataTransfer.getData(DRAG_TYPE);
+                if (!move || !id) return;
+                e.preventDefault();
+                move.onDropOnDay(id, day);
+              }}
               className={cn(
                 'flex min-h-28 min-w-0 flex-col gap-1 border-r border-b border-border/70 p-1.5 [&:nth-child(7n)]:border-r-0',
                 !inMonth && 'bg-muted/30',
+                over === key && 'bg-primary/10 ring-2 ring-primary/40 ring-inset',
               )}
             >
               <span className="sr-only">
@@ -62,7 +90,13 @@ export function MonthGrid({
                 {day.getDate()}
               </span>
               {events.slice(0, MAX_PER_CELL).map((p) => (
-                <CalendarEvent key={p.id} publication={p} compact />
+                <CalendarEvent
+                  key={p.id}
+                  publication={p}
+                  compact
+                  onMove={move?.onMove}
+                  busy={move?.pendingId === p.id}
+                />
               ))}
               {events.length > MAX_PER_CELL && (
                 <span className="px-1.5 text-[0.7rem] text-muted-foreground">
@@ -82,11 +116,13 @@ export function AgendaList({
   month,
   byDay,
   today,
+  move,
 }: {
   days: Date[];
   month: MonthRef;
   byDay: Map<string, Publication[]>;
   today: string;
+  move?: MoveHandlers;
 }) {
   const busy = days.filter((d) => d.getMonth() === month.month && byDay.has(dayKey(d)));
   if (busy.length === 0) {
@@ -117,7 +153,12 @@ export function AgendaList({
             </div>
             <div className="flex min-w-0 flex-col gap-1.5">
               {(byDay.get(key) ?? []).map((p) => (
-                <CalendarEvent key={p.id} publication={p} />
+                <CalendarEvent
+                  key={p.id}
+                  publication={p}
+                  onMove={move?.onMove}
+                  busy={move?.pendingId === p.id}
+                />
               ))}
             </div>
           </li>

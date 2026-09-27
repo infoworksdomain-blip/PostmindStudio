@@ -10,6 +10,7 @@ import type { BrandKit } from '@/lib/client/types';
 import { EmptyState, ErrorState, StateBadge } from '../primitives';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { BrandKitDialog, type BrandKitPayload } from './brand-kit-form';
+import { VoiceKitSelect } from './voice-kit-select';
 
 // Spec 8.5 — brand kits for the selected business: list, create, edit, delete, set default.
 
@@ -36,11 +37,13 @@ function KitCard({
   onEdit,
   onDelete,
   onSetDefault,
+  onVoiceSaved,
 }: {
   kit: BrandKit;
   onEdit: () => void;
   onDelete: () => void;
   onSetDefault: () => void;
+  onVoiceSaved: () => void;
 }) {
   return (
     <li className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
@@ -67,6 +70,7 @@ function KitCard({
       {kit.toneKeywords.length > 0 && (
         <p className="text-sm text-muted-foreground">{kit.toneKeywords.join(' · ')}</p>
       )}
+      <VoiceKitSelect kit={kit} onSaved={onVoiceSaved} />
       <div className="mt-auto flex flex-wrap gap-1">
         <Button variant="outline" size="sm" onClick={onEdit} aria-label={`Edit ${kit.name}`}>
           <Pencil /> Edit
@@ -165,6 +169,7 @@ export function BrandKitsPanel({ businessId }: { businessId: string }) {
               onEdit={() => setEditing({ mode: 'edit', kit })}
               onDelete={() => setDeleting(kit)}
               onSetDefault={() => setDefault(kit)}
+              onVoiceSaved={refresh}
             />
           ))}
         </ul>

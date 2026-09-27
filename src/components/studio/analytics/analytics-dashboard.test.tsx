@@ -96,6 +96,10 @@ describe('AnalyticsDashboard', () => {
       'href',
       'https://tiktok.test/v/1',
     );
+    // 13.28: each row opens that publication's analytics.
+    expect(
+      within(top).getByRole('link', { name: 'Analytics for Latte art in 10s' }),
+    ).toHaveAttribute('href', '/analytics/publications/pub_1');
   });
 
   it('refetches every panel when the date range changes', async () => {

@@ -10,8 +10,10 @@ import {
   transitionProject,
 } from '../../pipeline/project-state';
 import { runProvider } from '../../pipeline/provider-run';
+import { asyncContentSafety } from '../../pipeline/content-safety-async';
 import {
   BLACK_FRAME_MAX_SEC,
+  contentSafetyReviewCheck,
   evaluateQuality,
   hasContentSafetyBlock,
   qualityPassed,
@@ -21,6 +23,7 @@ import {
 import type { ProjectJobData } from '../queues';
 import { autoApproveIfTrusted } from '../../automation/auto-approve';
 import { notifyGenerationComplete } from '../../notifications/events';
+import { openSafetyReview, pendingSafetyReview } from '../../pipeline/safety-review';
 
 // BACKLOG 3.7 — Layer 8 (spec 5.9 / 13.1). Every render of the run is measured with ffprobe /
 // ffmpeg, scanned for content safety, and evaluated fail-closed. All pass → READY_FOR_REVIEW;
@@ -32,11 +35,11 @@ async function scanContentSafety(
   data: ProjectJobData,
   render: VideoRender,
   url: string,
+  asyncOutcome?: QualityInputs['contentSafety'],
 ): Promise<QualityInputs['contentSafety']> {
+  // 13.25: renders over Hive's sync limit were scanned asynchronously before the media checks.
   if (render.durationSec > MAX_SYNC_DURATION_SEC) {
-    return {
-      unavailable: `video is ${Math.round(render.durationSec)}s; only ≤${MAX_SYNC_DURATION_SEC}s can be scanned until async moderation is built`,
-    };
+    return asyncOutcome ?? { unavailable: 'async content-safety scan has no result' };
   }
   try {
     const run = await runProvider(
@@ -69,13 +72,14 @@ async function checkRender(
   data: ProjectJobData,
   render: VideoRender,
   targetDurationSec: number,
+  asyncOutcome?: QualityInputs['contentSafety'],
 ) {
   const url = await deps.storage.signedUrl(render.s3Bucket, render.s3Key);
   const [probe, blackIntervals, loudnessLufs, contentSafety] = await Promise.all([
     deps.media.probe(url),
     deps.media.blackIntervals(url, BLACK_FRAME_MAX_SEC),
     deps.media.integratedLoudness(url),
-    scanContentSafety(deps, data, render, url),
+    scanContentSafety(deps, data, render, url, asyncOutcome),
   ]);
   return evaluateQuality({
     target: { durationSec: targetDurationSec, aspectRatio: render.aspectRatio as AspectRatio },
@@ -86,7 +90,7 @@ async function checkRender(
   });
 }
 
-function summarise(results: Array<{ platform: string; checks: QualityCheck[] }>): string {
+export function summarise(results: Array<{ platform: string; checks: QualityCheck[] }>): string {
   return results
     .flatMap(({ platform, checks }) =>
       checks
@@ -110,6 +114,8 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
   if (currentRunId(project) !== data.runId) return log.info('stale quality-gate job ignored');
   if (project.state !== 'QUALITY_CHECKING')
     return log.info({ state: project.state }, 'not awaiting quality checks; skipped');
+  if (pendingSafetyReview(project.metadata))
+    return log.info('run is waiting for a content-safety review; skipped');
 
   const renderIds = Object.values(
     (projectMetadata(project.metadata).renders as Record<string, string>) ?? {},
@@ -125,10 +131,22 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
     ]),
   );
 
+  // 13.25: long renders go to Hive's async API first. While any scan is outstanding the run
+  // stays QUALITY_CHECKING; the Hive callback (or the timeout job) re-runs this gate.
+  const asyncOutcomes = new Map<string, QualityInputs['contentSafety']>();
+  let awaiting = 0;
+  for (const render of renders.filter((r) => r.durationSec > MAX_SYNC_DURATION_SEC)) {
+    const url = await deps.storage.signedUrl(render.s3Bucket, render.s3Key);
+    const outcome = await asyncContentSafety(deps, data, render, url);
+    if ('pending' in outcome) awaiting += 1;
+    else asyncOutcomes.set(render.id, outcome);
+  }
+  if (awaiting > 0) return log.info({ awaiting }, 'waiting for async content-safety callbacks');
+
   const results = await Promise.all(
     renders.map(async (render) => {
       const target = scripts.get(render.scriptId)?.targetDurationSec ?? render.durationSec;
-      const checks = await checkRender(deps, data, render, target);
+      const checks = await checkRender(deps, data, render, target, asyncOutcomes.get(render.id));
       await deps.db.videoRender.update({
         where: { id: render.id },
         data: {
@@ -136,12 +154,31 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
           qualityIssues: checks as unknown as Prisma.InputJsonValue,
         },
       });
-      return { platform: render.targetPlatform, checks };
+      return { renderId: render.id, platform: render.targetPlatform, checks };
     }),
   );
 
   const allPassed = results.every((r) => qualityPassed(r.checks));
   const blocked = results.some((r) => hasContentSafetyBlock(r.checks));
+  // 13.17: a review-level content-safety flag (and nothing block-level) pauses the run for a
+  // Trust & Safety decision; the project stays QUALITY_CHECKING until staff decide.
+  const flagged = results.flatMap((r) => {
+    const check = contentSafetyReviewCheck(r.checks);
+    return check ? [{ renderId: r.renderId, platform: r.platform, detail: check.detail }] : [];
+  });
+  if (!blocked && flagged.length > 0) {
+    await openSafetyReview(deps, {
+      organisationId: data.organisationId,
+      projectId: project.id,
+      runId: data.runId,
+      planTier: data.planTier,
+      kind: 'content',
+      reason: flagged.map((f) => `${f.platform}: ${f.detail}`).join('; '),
+      details: flagged,
+      renderIds: flagged.map((f) => f.renderId),
+    });
+    return log.warn({ flagged: flagged.length }, 'quality gate paused for a content-safety review');
+  }
   const moved = await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,
