@@ -17,7 +17,10 @@ without `--confirm`.
 - You have a platform staff JWT for staging (`STUDIO_STAFF_TOKEN`) and a JWT for a dedicated
   load-test organisation (`STUDIO_TOKEN`).
 - You have a read-only role on the staging database (`STAGING_DATABASE_URL`). It times the scoped
-  kill-switch levels and is the source for the restore snapshot.
+  kill-switch levels and is the source for the restore snapshot. On Render the database accepts
+  private-network connections only, so run the DB-backed checks (4, 7, 8) from the
+  `studio-web-staging` **Shell**, or add the machine's IP to the database's inbound IP rules for
+  the session and remove it afterwards ([render-deploy.md](render-deploy.md)).
 - `k6` is installed (https://grafana.com/docs/k6/latest/set-up/install-k6/), or `K6_BIN` points
   at it. The workflow installs it for you.
 
@@ -113,6 +116,17 @@ engaged and released but not timed (INCOMPLETE).
 
 - `IMAGE_TAG={tag} docker compose -f docker-compose.prod.yml up -d --no-deps web worker-orchestration …`
 - `./deploy-staging.sh {tag}` for ECS or Kubernetes, which should wait for the rollout.
+- **Render:** `npx tsx scripts/render/deploy.ts {tag}`, where `{tag}` is the git commit SHA.
+  Set `RENDER_API_KEY` (Render **Account settings → API Keys**) and
+  `RENDER_DEPLOY_SERVICE_IDS` (the staging `srv-…` ids, web first, then the six workers). It
+  uses the Render API (`POST /v1/services/{id}/rollback` when a retained build of that commit
+  exists, otherwise `POST /v1/services/{id}/deploys` with `commitId`), deploys the web service
+  first and waits until every service is `live`. The command must wait: on Render the old
+  instances keep answering `/api/health/ready` until the new ones take over, so readiness alone
+  cannot tell that a deploy finished. Neither API call turns auto-deploy off, so set the staging
+  services' **Auto-Deploy** to **Off** for the rehearsal and back to **After CI Checks Pass**
+  afterwards. In GitHub Actions add both as `staging` environment secrets, and set
+  `STAGING_DEPLOY_CMD` to the command above.
 
 The script deploys N+1 and waits for `/api/health/ready` (or `STAGING_READY_URL`) to answer 200
 three times in a row. Then it rolls back to N and times from the start of the rollback to ready,
@@ -123,7 +137,13 @@ the N+1 schema, then redeploy N+1.
 
 1. `--snapshot` records every `studio` table's row count and the latest write, in
    `ops/results/restore-snapshot.json` (or `--snapshot-file`).
-2. DevOps restores to a new instance at the target time (backup-recovery.md).
+2. DevOps restores to a new instance at the target time (backup-recovery.md). On Render: the
+   database → **Recovery → Point-in-Time Recovery** ([render-deploy.md](render-deploy.md) step 11).
+   Render Postgres accepts private-network connections only (`ipAllowList: []`), so run the
+   snapshot and the check from the `studio-web-staging` **Shell**, with the database URL built by
+   the wrapper:
+   `RENDER_POSTGRES_URL=<restored internal URL> sh scripts/render/with-db-url.sh npx tsx scripts/ops/staging-gate.ts --restore-check …`.
+   The GitHub workflow cannot reach it unless you allow-list the runner.
 3. `--restore-check` against the restored `DATABASE_URL` runs these checks:
    - `prisma migrate status` must be up to date.
    - Row counts are compared with the snapshot. A table that was emptied or is missing fails.

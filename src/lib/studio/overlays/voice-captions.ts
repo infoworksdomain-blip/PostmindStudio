@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient, VideoRender } from '@prisma/client';
 import type { Logger } from 'pino';
 import { NotFoundError } from '../../errors';
 import { mergeMetadata } from '../automation/approval';
+import { resolveProjectBrandKit } from '../pipeline/brand-resolve';
 import { projectMetadata } from '../pipeline/project-state';
 import { spokenWordsOf } from '../pipeline/word-timing';
 import type { AssetStorage } from '../storage';
@@ -201,6 +202,8 @@ export async function ensureVoiceCaptions(
       where: { id: input.projectId, organisationId: input.organisationId },
       select: {
         id: true,
+        organisationId: true,
+        businessId: true,
         sourceType: true,
         language: true,
         brandKitId: true,
@@ -213,12 +216,8 @@ export async function ensureVoiceCaptions(
       ...((projectMetadata(project.metadata).voiceCaptions as Record<string, VoiceCaptionRecord>) ??
         {}),
     };
-    const kit = project.brandKitId
-      ? await deps.db.brandKit.findFirst({
-          where: { id: project.brandKitId, organisationId: input.organisationId },
-          select: { colourPalette: true, fontPrimary: true },
-        })
-      : null;
+    // The project's kit, else the business default — the same kit composition uses (15.B1).
+    const kit = await resolveProjectBrandKit(deps.db, project);
     const palette = Array.isArray(kit?.colourPalette)
       ? (kit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
       : [];

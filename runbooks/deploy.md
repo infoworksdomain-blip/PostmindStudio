@@ -1,5 +1,13 @@
 # Deploy (BACKLOG 12.6)
 
+> **On Render** (the operator's chosen host), follow [render-deploy.md](render-deploy.md). The
+> Blueprint `render.yaml` replaces `docker-compose.prod.yml`: the same Dockerfile and commands,
+> the migration runs as the web service's pre-deploy command, secrets live in the
+> `studio-secrets-<env>` environment group, and `DATABASE_URL` is built at start-up by
+> `scripts/render/with-db-url.sh`. The environment requirements and order of operations below
+> still apply. Render builds each service from the commit rather than pulling a registry image, so
+> "the same SHA" means the same commit on staging and production.
+
 ## Artifacts
 
 - **Image:** built from `Dockerfile` and tagged with the git SHA. One image serves both roles:

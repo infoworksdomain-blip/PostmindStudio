@@ -578,10 +578,15 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
       (r as { system?: string }).system?.includes('ideation layer'),
     ) as { prompt: string } | undefined;
     expect(ideation?.prompt).toContain('artisanal');
-    const [hook] = await db.textOverlay.findMany({
+    // The first shot carries the hook overlay and, on TikTok, the narration captions (13.6):
+    // both take the business default kit's font. (Reading "the first row" without an order was
+    // flaky, and hid that captions only used an explicitly chosen kit.)
+    const firstShot = await db.textOverlay.findMany({
       where: { shot: { script: { projectId: id }, sortOrder: 0 } },
+      orderBy: { createdAt: 'asc' },
     });
-    expect(hook?.fontFamily).toBe('Anton');
+    expect(firstShot.length).toBeGreaterThan(0);
+    expect(firstShot.map((o) => o.fontFamily)).toEqual(firstShot.map(() => 'Anton'));
     const edit = lastEdit(j);
     expect(edit.timeline.fonts).toEqual(
       expect.arrayContaining([{ src: 'https://fonts.test/Anton.ttf' }]),

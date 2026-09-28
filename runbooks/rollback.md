@@ -25,6 +25,10 @@ IMAGE_TAG=$PREV docker compose -f docker-compose.prod.yml up -d --no-deps \
 
 On ECS or Kubernetes, point the service or deployment at `:$PREV` and let the rollout finish.
 
+On Render: each service → **Deploys** → last good deploy → **Rollback** (reuses the build), or
+`npx tsx scripts/render/deploy.ts $PREV` with `RENDER_API_KEY` and `RENDER_DEPLOY_SERVICE_IDS`
+([render-deploy.md](render-deploy.md) step 9).
+
 Workers stop gracefully: on SIGTERM they finish in-flight jobs, with a 120 s grace period. BullMQ
 retries any job that is interrupted.
 

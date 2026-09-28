@@ -6,10 +6,10 @@ backups are owned by DevOps. This runbook covers the Studio-specific checks.
 
 | Store | Backup | Studio recovery notes |
 | --- | --- | --- |
-| Postgres (the `studio` schema) | Managed point-in-time recovery (PITR), with at least 7 days of retention | Restore to a new instance at the target time, verify it, then cut over. Migrations are forward-only, so the restored schema matches the image that ran at that time. |
+| Postgres (the `studio` schema) | Managed point-in-time recovery (PITR), with at least 7 days of retention. **Render:** continuous PITR on paid Postgres, 7 days on a Pro workspace (3 on Hobby), plus on-demand logical exports kept 7 days ([Render docs](https://render.com/docs/postgresql-backups)). | Restore to a new instance at the target time, verify it, then cut over. Migrations are forward-only, so the restored schema matches the image that ran at that time. Render cut-over: [render-deploy.md](render-deploy.md) step 11. |
 | S3 buckets (`STORAGE_PROVIDER=s3`) | Versioning enabled, with lifecycle rules for noncurrent versions | Restore objects by version id. Renders are immutable, so restoring overwrites nothing. |
 | R2 buckets (`STORAGE_PROVIDER=r2`) | **No versioning on R2**: a deleted object cannot be restored from R2 itself. A separate backup copy is needed (below). | Copy objects back from the backup bucket. The key is on the row (`s3Key`), so restoring is a copy of the same key into the same bucket. |
-| Redis DB 3 (BullMQ, idempotency keys, OAuth state) | AOF persistence or snapshots | Treat Redis as rebuildable. After a loss, re-enqueue the active projects (see below). Idempotency keys expire anyway. |
+| Redis DB 3 (BullMQ, idempotency keys, OAuth state) | AOF persistence or snapshots (Render Key Value: `persistenceMode: journal-snapshot`, AOF every second plus snapshots) | Treat Redis as rebuildable. After a loss, re-enqueue the active projects (see below). Idempotency keys expire anyway. |
 
 ## R2: recovering deleted objects (no versioning)
 
@@ -66,7 +66,11 @@ Quarterly (the first drill is GATE 12, Phase 14.7):
    `DATABASE_URL=<staging> npx tsx scripts/ops/staging-gate.ts --snapshot`. This writes
    `ops/results/restore-snapshot.json`.
 2. Restore the `studio` schema into a new instance from PITR at the target time. Note when you
-   started.
+   started. On Render: the database → **Recovery → Point-in-Time Recovery → Restore Database**.
+   Render creates a new instance and cannot restore to within 10 minutes of now.
+   Steps 1 and 3 run from the web service **Shell** (the database is private), with
+   `sh scripts/render/with-db-url.sh` in front of the command and `RENDER_POSTGRES_URL` set to the
+   instance to check.
 3. Verify the restored instance:
 
    ```bash
