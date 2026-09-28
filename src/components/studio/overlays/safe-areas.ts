@@ -14,6 +14,10 @@
 //    a 5% title-safe inset.
 // Guides are advisory: nothing blocks placing text outside them.
 
+/** overlays.safeArea.* message key for the guide's caption. */
+export type SafeAreaLabelKey =
+  'instagram_reel' | 'facebook' | 'tiktok' | 'youtube_short' | 'titleSafe';
+
 export interface SafeArea {
   top: number;
   bottom: number;
@@ -21,6 +25,10 @@ export interface SafeArea {
   right: number;
   /** Shown next to the guide so nobody mistakes a conservative margin for a platform rule. */
   label: string;
+  /** The same caption as a message key (the screens show the interface language). */
+  labelKey: SafeAreaLabelKey;
+  /** The render platform the guide belongs to. */
+  platform: string;
   official: boolean;
 }
 
@@ -29,25 +37,55 @@ const VERTICAL_CONSERVATIVE = { top: 0.14, bottom: 0.35, left: 0.06, right: 0.15
 const TITLE_SAFE = { top: 0.05, bottom: 0.05, left: 0.05, right: 0.05 };
 
 export const SAFE_AREAS: Record<string, SafeArea> = {
-  instagram_reel: { ...META_REELS, label: 'Instagram Reels safe zone (Meta)', official: true },
-  facebook: { ...META_REELS, label: 'Facebook Reels safe zone (Meta)', official: true },
+  instagram_reel: {
+    ...META_REELS,
+    label: 'Instagram Reels safe zone (Meta)',
+    labelKey: 'instagram_reel',
+    platform: 'instagram_reel',
+    official: true,
+  },
+  facebook: {
+    ...META_REELS,
+    label: 'Facebook Reels safe zone (Meta)',
+    labelKey: 'facebook',
+    platform: 'facebook',
+    official: true,
+  },
   tiktok: {
     ...VERTICAL_CONSERVATIVE,
     label: 'TikTok — conservative margin (TikTok publishes no fixed numbers)',
+    labelKey: 'tiktok',
+    platform: 'tiktok',
     official: false,
   },
   youtube_short: {
     ...VERTICAL_CONSERVATIVE,
     label: 'YouTube Shorts — conservative margin (no official numbers)',
+    labelKey: 'youtube_short',
+    platform: 'youtube_short',
     official: false,
   },
-  youtube: { ...TITLE_SAFE, label: 'YouTube — 5% title-safe (conservative)', official: false },
+  youtube: {
+    ...TITLE_SAFE,
+    label: 'YouTube — 5% title-safe (conservative)',
+    labelKey: 'titleSafe',
+    platform: 'youtube',
+    official: false,
+  },
   linkedin_video: {
     ...TITLE_SAFE,
     label: 'LinkedIn — 5% title-safe (conservative)',
+    labelKey: 'titleSafe',
+    platform: 'linkedin_video',
     official: false,
   },
-  x: { ...TITLE_SAFE, label: 'X — 5% title-safe (conservative)', official: false },
+  x: {
+    ...TITLE_SAFE,
+    label: 'X — 5% title-safe (conservative)',
+    labelKey: 'titleSafe',
+    platform: 'x',
+    official: false,
+  },
 };
 
 /** The safe area for a platform; landscape formats never use the vertical feed margins. */
@@ -58,6 +96,8 @@ export function safeAreaFor(platform: string, aspectRatio: string): SafeArea | n
     return {
       ...TITLE_SAFE,
       label: `${area.label.split(' —')[0]} — 5% title-safe (conservative)`,
+      labelKey: 'titleSafe',
+      platform,
       official: false,
     };
   return area;

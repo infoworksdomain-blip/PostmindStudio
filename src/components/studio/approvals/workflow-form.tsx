@@ -2,10 +2,11 @@
 
 import { useId, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PLATFORM_LABEL } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import {
   parseList,
@@ -33,18 +34,40 @@ interface Props {
   onCancel: () => void;
 }
 
-export function validateWorkflow(input: WorkflowInput): string | null {
-  if (!input.name.trim()) return 'Give the workflow a name.';
-  if (input.steps.length === 0) return 'Add at least one step.';
+/** A validation problem; the message is `approvals.problems.<code>` in the catalogue. */
+export type WorkflowProblem =
+  | { code: 'name' | 'noSteps' }
+  | { code: 'role' | 'minApprovers'; step: number }
+  | { code: 'maxApprovers'; step: number; max: number };
+
+export function validateWorkflow(input: WorkflowInput): WorkflowProblem | null {
+  if (!input.name.trim()) return { code: 'name' };
+  if (input.steps.length === 0) return { code: 'noSteps' };
   for (const [i, step] of input.steps.entries()) {
-    if (!ROLE.test(step.role))
-      return `Step ${i + 1}: use a membership role name such as admin or client_reviewer.`;
+    if (!ROLE.test(step.role)) return { code: 'role', step: i + 1 };
     if (!Number.isInteger(step.minApprovers) || step.minApprovers < 1)
-      return `Step ${i + 1}: at least one approver is needed.`;
+      return { code: 'minApprovers', step: i + 1 };
     if (step.minApprovers > MAX_APPROVERS)
-      return `Step ${i + 1}: at most ${MAX_APPROVERS} approvers.`;
+      return { code: 'maxApprovers', step: i + 1, max: MAX_APPROVERS };
   }
   return null;
+}
+
+function useProblemMessage(): (problem: WorkflowProblem) => string {
+  const t = useTranslations('approvals.problems');
+  const f = useFormat();
+  return (problem) => {
+    switch (problem.code) {
+      case 'name':
+      case 'noSteps':
+        return t(problem.code);
+      case 'role':
+      case 'minApprovers':
+        return t(problem.code, { step: f.number(problem.step) });
+      case 'maxApprovers':
+        return t('maxApprovers', { step: f.number(problem.step), max: f.number(problem.max) });
+    }
+  };
 }
 
 function move<T>(list: T[], from: number, to: number): T[] {
@@ -70,14 +93,17 @@ function StepRow({
   onMove: (to: number) => void;
   onRemove: () => void;
 }) {
+  const t = useTranslations('approvals.form');
+  const f = useFormat();
   const id = useId();
+  const number = f.number(index + 1);
   return (
     <li className="grid grid-cols-[auto_1fr] items-end gap-x-3 gap-y-2 rounded-lg border border-border bg-background p-3 sm:grid-cols-[auto_1fr_7rem_auto]">
       <span className="font-display row-span-2 self-center text-2xl text-muted-foreground tabular sm:row-span-1">
-        {index + 1}
+        {number}
       </span>
       <div className="flex flex-col gap-1">
-        <Label htmlFor={`${id}-role`}>Role</Label>
+        <Label htmlFor={`${id}-role`}>{t('role')}</Label>
         <Input
           id={`${id}-role`}
           list={`${id}-roles`}
@@ -91,7 +117,7 @@ function StepRow({
         </datalist>
       </div>
       <div className="flex flex-col gap-1">
-        <Label htmlFor={`${id}-min`}>Approvers</Label>
+        <Label htmlFor={`${id}-min`}>{t('approvers')}</Label>
         <Input
           id={`${id}-min`}
           type="number"
@@ -106,7 +132,7 @@ function StepRow({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`Move step ${index + 1} up`}
+          aria-label={t('moveUp', { number })}
           disabled={index === 0}
           onClick={() => onMove(index - 1)}
         >
@@ -116,7 +142,7 @@ function StepRow({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`Move step ${index + 1} down`}
+          aria-label={t('moveDown', { number })}
           disabled={index === count - 1}
           onClick={() => onMove(index + 1)}
         >
@@ -126,7 +152,7 @@ function StepRow({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`Remove step ${index + 1}`}
+          aria-label={t('removeStep', { number })}
           disabled={count === 1}
           onClick={onRemove}
         >
@@ -138,6 +164,10 @@ function StepRow({
 }
 
 export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onCancel }: Props) {
+  const t = useTranslations('approvals.form');
+  const tc = useTranslations('common.actions');
+  const f = useFormat();
+  const problemMessage = useProblemMessage();
   const id = useId();
   const [name, setName] = useState(initial?.name ?? '');
   const [steps, setSteps] = useState<WorkflowStep[]>(
@@ -146,7 +176,7 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
   const [businesses, setBusinesses] = useState(initial?.appliesTo.businessIds.join(', ') ?? '');
   const [tags, setTags] = useState(initial?.appliesTo.tags.join(', ') ?? '');
   const [platforms, setPlatforms] = useState<string[]>(initial?.appliesTo.platforms ?? []);
-  const [problem, setProblem] = useState<string | null>(null);
+  const [problem, setProblem] = useState<WorkflowProblem | null>(null);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -170,27 +200,24 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
   return (
     <form
       onSubmit={submit}
-      aria-label={initial ? `Edit ${initial.name}` : 'New approval workflow'}
+      aria-label={initial ? t('editAria', { name: initial.name }) : t('newAria')}
       className="flex flex-col gap-5"
       noValidate
     >
       <div className="flex flex-col gap-1">
-        <Label htmlFor={`${id}-name`}>Name</Label>
+        <Label htmlFor={`${id}-name`}>{t('name')}</Label>
         <Input
           id={`${id}-name`}
           value={name}
           maxLength={120}
-          placeholder="Client sign-off"
+          placeholder={t('namePlaceholder')}
           onChange={(e) => setName(e.target.value)}
         />
       </div>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Steps, in order</legend>
-        <p className="text-xs text-muted-foreground">
-          Each step waits for this many different people with the role. The video is approved — and
-          can publish — only after the last step.
-        </p>
+        <legend className="mb-1 text-sm font-medium">{t('steps')}</legend>
+        <p className="text-xs text-muted-foreground">{t('stepsHelp')}</p>
         <ol className="flex flex-col gap-2">
           {steps.map((step, index) => (
             <StepRow
@@ -211,18 +238,15 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
           disabled={steps.length >= MAX_STEPS}
           onClick={() => setSteps((cur) => [...cur, { role: 'client_reviewer', minApprovers: 1 }])}
         >
-          <Plus /> Add step
+          <Plus /> {t('addStep')}
         </Button>
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-medium">Applies to</legend>
-        <p className="text-xs text-muted-foreground">
-          Leave everything empty for every project. When several workflows match, the most specific
-          wins (business, then tags, then platforms).
-        </p>
+        <legend className="mb-1 text-sm font-medium">{t('appliesTo')}</legend>
+        <p className="text-xs text-muted-foreground">{t('appliesToHelp')}</p>
         <div className="flex flex-col gap-1">
-          <Label htmlFor={`${id}-biz`}>Business ids (comma-separated)</Label>
+          <Label htmlFor={`${id}-biz`}>{t('businessIds')}</Label>
           <div className="flex gap-2">
             <Input
               id={`${id}-biz`}
@@ -237,14 +261,14 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
                   setBusinesses([...parseList(businesses), currentBusinessId].join(', '))
                 }
               >
-                Add current business
+                {t('addCurrentBusiness')}
               </Button>
             )}
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-sm" id={`${id}-platforms`}>
-            Platforms
+            {t('platforms')}
           </span>
           <div role="group" aria-labelledby={`${id}-platforms`} className="flex flex-wrap gap-1.5">
             {WORKFLOW_PLATFORMS.map((p) => {
@@ -262,29 +286,29 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
                       : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
                   )}
                 >
-                  {PLATFORM_LABEL[p] ?? p}
+                  {f.platform(p)}
                 </button>
               );
             })}
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <Label htmlFor={`${id}-tags`}>Project tags (comma-separated)</Label>
+          <Label htmlFor={`${id}-tags`}>{t('projectTags')}</Label>
           <Input id={`${id}-tags`} value={tags} onChange={(e) => setTags(e.target.value)} />
         </div>
       </fieldset>
 
       {problem && (
         <p role="alert" className="text-sm text-destructive">
-          {problem}
+          {problemMessage(problem)}
         </p>
       )}
       <div className="flex gap-2">
         <Button type="submit" disabled={saving}>
-          {initial ? 'Save workflow' : 'Create workflow'}
+          {initial ? t('save') : t('create')}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
-          Cancel
+          {tc('cancel')}
         </Button>
       </div>
     </form>

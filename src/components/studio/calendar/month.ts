@@ -1,4 +1,5 @@
 import type { Publication } from '@/lib/client/types';
+import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
 
 // Pure date helpers for the calendar: a Monday-first month grid in the viewer's local time and
 // publications bucketed by the day they go (or went) live.
@@ -61,14 +62,26 @@ export function groupByDay(publications: Publication[]): Map<string, Publication
   return byDay;
 }
 
-export function formatTime(iso: string): string {
-  return new Intl.DateTimeFormat('en-GB', { timeStyle: 'short' }).format(new Date(iso));
+export function formatTime(iso: string, locale: string = DEFAULT_LOCALE): string {
+  return new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date(iso));
 }
 
-export function formatMonth(ref: MonthRef): string {
-  return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(
+export function formatMonth(ref: MonthRef, locale: string = DEFAULT_LOCALE): string {
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
     new Date(ref.year, ref.month, 1),
   );
+}
+
+/**
+ * Weekday names in the locale, indexed like Date#getDay() (0 = Sunday). 2026-01-04 is a Sunday;
+ * noon keeps the date stable in every time zone.
+ */
+export function weekdayNames(
+  locale: string = DEFAULT_LOCALE,
+  weekday: 'long' | 'short' = 'long',
+): string[] {
+  const format = new Intl.DateTimeFormat(locale, { weekday });
+  return Array.from({ length: 7 }, (_, i) => format.format(new Date(2026, 0, 4 + i, 12)));
 }
 
 /** 13.9 drag-to-reschedule: the same local time of day, on another day. */

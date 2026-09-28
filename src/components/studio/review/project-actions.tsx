@@ -1,11 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Loader2, Play, RotateCw, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { formatPence } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { CANCELLABLE, GENERATABLE } from './types';
 import { useAction } from './use-action';
@@ -19,13 +20,15 @@ export function ProjectActions({
   project: ProjectDetail;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.actions');
+  const f = useFormat();
   const { pending, run, busy } = useAction();
   const { id, state } = project;
 
   async function generate() {
     const ok = await run('generate', `/projects/${id}/generate`, {
       body: {},
-      success: 'Generation started.',
+      success: t('started'),
     });
     if (ok) onChanged();
   }
@@ -34,7 +37,7 @@ export function ProjectActions({
     const result = await run<{ costIncurredPence: number }>('cancel', `/projects/${id}/cancel`);
     if (result) {
       onChanged();
-      toast.success(`Cancelled — ${formatPence(result.costIncurredPence)} was spent on this run.`);
+      toast.success(t('cancelled', { amount: f.pence(result.costIncurredPence) }));
     }
   }
 
@@ -42,7 +45,7 @@ export function ProjectActions({
     <>
       {CANCELLABLE.has(state) && (
         <Button variant="outline" onClick={cancel} disabled={busy}>
-          {pending === 'cancel' ? <Loader2 className="animate-spin" /> : <Square />} Cancel
+          {pending === 'cancel' ? <Loader2 className="animate-spin" /> : <Square />} {t('cancel')}
         </Button>
       )}
       {GENERATABLE.has(state) && state !== 'READY_FOR_REVIEW' && (
@@ -54,7 +57,7 @@ export function ProjectActions({
           ) : (
             <RotateCw />
           )}
-          {state === 'DRAFT' ? 'Generate' : 'Generate again'}
+          {state === 'DRAFT' ? t('generate') : t('generateAgain')}
         </Button>
       )}
     </>
@@ -68,6 +71,7 @@ export function ApprovalBar({
   project: ProjectDetail;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.approval');
   const { pending, run, busy } = useAction();
   const [mode, setMode] = useState<'approve' | 'reject' | null>(null);
   const [note, setNote] = useState('');
@@ -80,7 +84,7 @@ export function ApprovalBar({
     const trimmed = note.trim();
     const ok = await run(mode, `/projects/${project.id}/${mode}`, {
       body: mode === 'reject' ? { note: trimmed } : trimmed ? { note: trimmed } : {},
-      success: mode === 'approve' ? 'Approved — ready to publish.' : 'Rejected.',
+      success: mode === 'approve' ? t('approved') : t('rejected'),
     });
     if (ok) {
       setMode(null);
@@ -91,15 +95,11 @@ export function ApprovalBar({
 
   return (
     <section
-      aria-label="Approval"
+      aria-label={t('aria')}
       className="flex flex-col gap-3 rounded-xl border border-foreground/15 bg-card p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm">
-          {canApprove
-            ? 'Watch each variant, then approve it for publishing or send it back.'
-            : 'The quality check failed. Force-approve a variant below, or reject the project.'}
-        </p>
+        <p className="text-sm">{canApprove ? t('readyPrompt') : t('qualityFailedPrompt')}</p>
         <div className="flex gap-2">
           {canApprove && (
             <Button
@@ -107,7 +107,7 @@ export function ApprovalBar({
               aria-pressed={mode === 'approve'}
               disabled={busy}
             >
-              <Check /> Approve
+              <Check /> {t('approve')}
             </Button>
           )}
           <Button
@@ -116,14 +116,14 @@ export function ApprovalBar({
             aria-pressed={mode === 'reject'}
             disabled={busy}
           >
-            <X /> Reject
+            <X /> {t('reject')}
           </Button>
         </div>
       </div>
       {mode && (
         <div className="flex flex-col gap-2">
           <label htmlFor="approval-note" className="text-xs font-medium text-muted-foreground">
-            {mode === 'reject' ? 'What needs to change? (required)' : 'Note (optional)'}
+            {mode === 'reject' ? t('rejectNote') : t('approveNote')}
           </label>
           <Textarea
             id="approval-note"
@@ -133,7 +133,7 @@ export function ApprovalBar({
           />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setMode(null)} disabled={busy}>
-              Back
+              {t('back')}
             </Button>
             <Button
               variant={mode === 'reject' ? 'destructive' : 'default'}
@@ -141,7 +141,7 @@ export function ApprovalBar({
               disabled={busy || (mode === 'reject' && !note.trim())}
             >
               {pending && <Loader2 className="animate-spin" />}
-              {mode === 'reject' ? 'Confirm rejection' : 'Confirm approval'}
+              {mode === 'reject' ? t('confirmReject') : t('confirmApprove')}
             </Button>
           </div>
         </div>

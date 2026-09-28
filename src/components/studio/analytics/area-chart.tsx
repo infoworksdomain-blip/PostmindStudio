@@ -1,13 +1,27 @@
 'use client';
 
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { nearestIndex, plot } from './chart-utils';
+import { useCallback, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { nearestIndex, plot, shortDay } from './chart-utils';
 import type { SeriesPoint } from './types';
 
 // Small accessible area chart in plain SVG, coloured with the teal chart tokens. The plot
 // stretches to its container (non-scaling strokes); axis labels are HTML so text never
 // distorts. Keyboard: focus the chart and use ←/→/Home/End to read each point aloud. A hidden
 // data table carries the full series for screen readers.
+//
+// BACKLOG 16.2: the plot runs left to right in every locale (time reads left to right, as in
+// video tools), so the chart grid is pinned to dir="ltr"; its labels come from the catalogue and
+// the caller's locale-aware formatters.
+
+/** '2026-09-27' → the active locale's short day ('27 Sept', 'Sep 27', '9月27日'). */
+export function useShortDay(): (day: string) => string {
+  const locale = useLocale();
+  return useCallback((day: string) => shortDay(day, locale), [locale]);
+}
+
+/** What each point of a series is: a calendar day, or a position through the video. */
+export type ChartPointKind = 'day' | 'position';
 
 export interface AreaChartProps {
   points: SeriesPoint[];
@@ -18,8 +32,8 @@ export interface AreaChartProps {
   height?: number;
   /** Smallest axis ceiling (e.g. 100 pence so an idle spend chart reads £1.00, not £0.01). */
   minMax?: number;
-  /** What each point is, for the keyboard hint and the screen-reader table (default "day"). */
-  pointName?: string;
+  /** What each point is, for the keyboard hint and the screen-reader table (default day). */
+  pointKind?: ChartPointKind;
 }
 
 export function AreaChart({
@@ -29,8 +43,9 @@ export function AreaChart({
   color = 'var(--chart-1)',
   height = 200,
   minMax = 1,
-  pointName = 'day',
+  pointKind = 'day',
 }: AreaChartProps) {
+  const t = useTranslations('analytics.chart');
   const gradientId = useId();
   const plotRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
@@ -64,21 +79,21 @@ export function AreaChart({
 
   return (
     <figure className="m-0">
-      <div className="grid grid-cols-[auto_1fr] gap-x-3">
+      <div dir="ltr" className="grid grid-cols-[auto_1fr] gap-x-3">
         <div
           aria-hidden
-          className="tabular flex flex-col justify-between text-right text-[0.7rem] text-muted-foreground"
+          className="tabular flex flex-col justify-between text-end text-[0.7rem] text-muted-foreground"
           style={{ height }}
         >
           <span>{formatValue(max)}</span>
           <span>{formatValue(max / 2)}</span>
-          <span>0</span>
+          <span>{formatValue(0)}</span>
         </div>
         <div
           ref={plotRef}
           role="img"
           tabIndex={0}
-          aria-label={`${label}. Use arrow keys to read each ${pointName}.`}
+          aria-label={t(`keyboardHint.${pointKind}`, { label })}
           onPointerMove={onPointer}
           onPointerLeave={() => setActive(null)}
           onKeyDown={onKey}
@@ -146,10 +161,15 @@ export function AreaChart({
                 }}
               />
               <span
+                dir="auto"
                 className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-md bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background shadow"
                 style={{ left: `${Math.min(88, Math.max(12, currentCoord.x))}%` }}
               >
-                {current.label}: <strong className="tabular">{formatValue(current.value)}</strong>
+                {t.rich('point', {
+                  label: current.label,
+                  value: formatValue(current.value),
+                  b: (chunks) => <strong className="tabular">{chunks}</strong>,
+                })}
               </span>
             </>
           )}
@@ -162,14 +182,20 @@ export function AreaChart({
         </div>
       </div>
       <p aria-live="polite" className="sr-only">
-        {current ? `${current.label}: ${formatValue(current.value)}` : ''}
+        {current
+          ? t.rich('point', {
+              label: current.label,
+              value: formatValue(current.value),
+              b: (chunks) => chunks,
+            })
+          : ''}
       </p>
       <table className="sr-only">
         <caption>{label}</caption>
         <thead>
           <tr>
-            <th scope="col">{pointName.charAt(0).toUpperCase() + pointName.slice(1)}</th>
-            <th scope="col">Value</th>
+            <th scope="col">{t(`column.${pointKind}`)}</th>
+            <th scope="col">{t('column.value')}</th>
           </tr>
         </thead>
         <tbody>

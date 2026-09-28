@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ApiError, errorMessage, useApi } from '@/lib/client/api';
+import { useTranslations } from 'next-intl';
+import { ApiError, useApi, useErrorMessage } from '@/lib/client/api';
 import { useBusiness } from '../business-context';
 import { VideoRow } from './video-row';
 import type { LibraryVideoSummary, ListResponse } from './types';
@@ -19,6 +20,8 @@ function Note({ children }: { children: ReactNode }) {
 }
 
 export function RecommendedShelf({ category }: { category: string }) {
+  const t = useTranslations('library.recommended');
+  const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
   const { data, error, isLoading } = useApi<ListResponse<LibraryVideoSummary>>(
     businessId ? '/library/recommended' : null,
@@ -27,25 +30,28 @@ export function RecommendedShelf({ category }: { category: string }) {
 
   let body: ReactNode;
   if (!ready) body = null;
-  else if (!businessId)
-    body = <Note>Pick a business in the top bar to see references matched to it.</Note>;
+  else if (!businessId) body = <Note>{t('pickBusiness')}</Note>;
   else if (error instanceof ApiError && error.status === 404)
     body = (
       <Note>
-        No business profile yet — recommendations need a website scan.{' '}
-        <Link href="/business" className="font-medium text-foreground underline">
-          Scan your site
-        </Link>
+        {t.rich('noProfile', {
+          link: (chunks) => (
+            <Link href="/business" className="font-medium text-foreground underline">
+              {chunks}
+            </Link>
+          ),
+        })}
       </Note>
     );
-  else if (error) body = <Note>Recommendations are unavailable: {errorMessage(error)}</Note>;
+  else if (error) body = <Note>{t('unavailable', { error: errorMessage(error) })}</Note>;
   else
     body = (
       <VideoRow
-        label="Recommended for your business"
+        label={t('listAria')}
+        loadingLabel={t('loading')}
         videos={data?.data}
         isLoading={isLoading}
-        empty={<Note>No close matches in this category yet.</Note>}
+        empty={<Note>{t('empty')}</Note>}
       />
     );
 
@@ -53,11 +59,9 @@ export function RecommendedShelf({ category }: { category: string }) {
     <section aria-labelledby="library-recommended" className="mb-10 min-w-0">
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 id="library-recommended" className="font-display text-2xl">
-          Picked for your business
+          {t('heading')}
         </h2>
-        <p className="hidden text-xs text-muted-foreground sm:block">
-          Matched to your business profile
-        </p>
+        <p className="hidden text-xs text-muted-foreground sm:block">{t('subheading')}</p>
       </div>
       {body}
     </section>

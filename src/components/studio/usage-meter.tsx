@@ -1,8 +1,9 @@
 'use client';
 
 import { Gauge } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 
 // Decision P3 — the plan usage meter (GET /api/studio/usage). The app shell shows the banner from
@@ -35,9 +36,8 @@ export interface UsageResponse {
 
 /** The reset day (UTC: quotas are calendar months in UTC) in the reader's locale. */
 function useResetDate(): (iso: string) => string {
-  const locale = useLocale();
-  return (iso) =>
-    new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const f = useFormat();
+  return (iso) => f.date(iso, { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
 export function MeterRow({ label, meter }: { label: string; meter: QuotaMeterView }) {

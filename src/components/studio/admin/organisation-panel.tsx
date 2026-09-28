@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { api, errorMessage, useApi } from '@/lib/client/api';
-import { formatPence, relativeTime } from '@/lib/client/format';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
 
@@ -52,13 +53,21 @@ export interface OrgCostCapsResponse {
   } | null;
 }
 
-const POLICY_LABEL: Record<ReviewPolicy, string> = {
-  REQUIRE_APPROVAL: 'Require approval',
-  REQUIRE_APPROVAL_FROM_ROLE: 'Require approval from an owner or admin',
-  AUTO_APPROVE: 'Auto-approve trusted creators',
-};
+const POLICIES: readonly ReviewPolicy[] = [
+  'REQUIRE_APPROVAL',
+  'REQUIRE_APPROVAL_FROM_ROLE',
+  'AUTO_APPROVE',
+];
+
+const PLAN_TIERS = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const;
+type PlanTier = (typeof PLAN_TIERS)[number];
+const isPlanTier = (tier: string): tier is PlanTier =>
+  (PLAN_TIERS as readonly string[]).includes(tier);
 
 function PolicyForm({ orgId }: { orgId: string }) {
+  const t = useTranslations('admin.organisations.policy');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const res = useApi<OrgPolicyResponse>(`/admin/organisations/${encodeURIComponent(orgId)}/policy`);
   const [draft, setDraft] = useState<OrgPolicyResponse['policy'] | null>(null);
   const [pending, setPending] = useState(false);
@@ -77,7 +86,7 @@ function PolicyForm({ orgId }: { orgId: string }) {
           autoApproveTrustThreshold: draft.autoApproveTrustThreshold,
         },
       });
-      toast.success('Policy saved');
+      toast.success(t('savedToast'));
       await res.mutate();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -87,11 +96,11 @@ function PolicyForm({ orgId }: { orgId: string }) {
   };
 
   if (res.error) return <ErrorState error={res.error} onRetry={() => void res.mutate()} />;
-  if (!res.data || !draft) return <Skeleton aria-label="Loading policy" className="h-40" />;
+  if (!res.data || !draft) return <Skeleton aria-label={t('loadingAria')} className="h-40" />;
   return (
-    <form onSubmit={save} aria-label="Review policy" className="grid gap-4 text-sm">
+    <form onSubmit={save} aria-label={t('formAria')} className="grid gap-4 text-sm">
       <div className="grid gap-1.5">
-        <Label htmlFor="org-default-policy">Default review policy for new projects</Label>
+        <Label htmlFor="org-default-policy">{t('defaultLabel')}</Label>
         <select
           id="org-default-policy"
           className={selectClass}
@@ -100,9 +109,9 @@ function PolicyForm({ orgId }: { orgId: string }) {
             setDraft({ ...draft, defaultReviewPolicy: e.target.value as ReviewPolicy })
           }
         >
-          {(Object.keys(POLICY_LABEL) as ReviewPolicy[]).map((p) => (
+          {POLICIES.map((p) => (
             <option key={p} value={p}>
-              {POLICY_LABEL[p]}
+              {t(`option.${p}`)}
             </option>
           ))}
         </select>
@@ -113,12 +122,10 @@ function PolicyForm({ orgId }: { orgId: string }) {
           checked={draft.autoApproveAllowed}
           onCheckedChange={(checked) => setDraft({ ...draft, autoApproveAllowed: checked })}
         />
-        <Label htmlFor="org-auto-approve">Allow automatic approval</Label>
+        <Label htmlFor="org-auto-approve">{t('autoApprove')}</Label>
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="org-threshold">
-          Trust threshold (videos approved by a person before auto-approval)
-        </Label>
+        <Label htmlFor="org-threshold">{t('threshold')}</Label>
         <Input
           id="org-threshold"
           type="number"
@@ -134,18 +141,17 @@ function PolicyForm({ orgId }: { orgId: string }) {
           }
         />
         <p className="text-xs text-muted-foreground">
-          Empty = the platform setting. Currently from: {res.data.source.autoApproveTrustThreshold}.
-          Enterprise plans are never auto-approved.
+          {t('thresholdHelp', { source: res.data.source.autoApproveTrustThreshold })}
         </p>
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
           {pending && <Loader2 className="animate-spin" />}
-          Save policy
+          {t('save')}
         </Button>
         {res.data.updatedAt && (
           <span className="text-xs text-muted-foreground">
-            Last changed {relativeTime(res.data.updatedAt)}
+            {t('lastChanged', { when: f.relative(res.data.updatedAt) })}
           </span>
         )}
       </div>
@@ -159,32 +165,38 @@ const toPounds = (pence: number | null | undefined) =>
   pence === null || pence === undefined ? '' : String(pence / 100);
 
 function CapLine({ label, cap }: { label: string; cap: OrgCostCapsResponse['caps']['daily'] }) {
+  const t = useTranslations('admin.organisations.caps');
+  const tTier = useTranslations('shell.usage.tiers');
+  const f = useFormat();
+  const tiers = Object.entries(cap.byTier)
+    .map(([tier, c]) =>
+      t('tierCap', {
+        tier: isPlanTier(tier) ? tTier(tier) : tier,
+        amount: c.pence === null ? t('noCap') : f.pence(c.pence),
+      }),
+    )
+    .join(' · ');
   return (
     <p>
-      <span className="text-muted-foreground">{label}: </span>
+      <span className="text-muted-foreground">{label}</span>{' '}
       {cap.source === 'org_override' ? (
         <>
-          {formatPence(cap.pence)}{' '}
+          {f.pence(cap.pence)}{' '}
           <span className="rounded bg-primary/10 px-1 text-[10px] uppercase text-primary">
-            org override
+            {t('orgOverride')}
           </span>
         </>
       ) : (
-        <>
-          plan tier —{' '}
-          {Object.entries(cap.byTier)
-            .map(
-              ([tier, c]) =>
-                `${tier.toLowerCase()} ${c.pence === null ? 'no cap' : formatPence(c.pence)}`,
-            )
-            .join(' · ')}
-        </>
+        t('planTier', { tiers })
       )}
     </p>
   );
 }
 
 function CostCapsForm({ orgId }: { orgId: string }) {
+  const t = useTranslations('admin.organisations.caps');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const path = `/admin/organisations/${encodeURIComponent(orgId)}/cost-caps`;
   const res = useApi<OrgCostCapsResponse>(path);
   const [daily, setDaily] = useState('');
@@ -204,7 +216,7 @@ function CostCapsForm({ orgId }: { orgId: string }) {
         method: 'PUT',
         body: { dailyPence: toPence(daily), monthlyPence: toPence(monthly), reason: reason.trim() },
       });
-      toast.success('Cost caps saved');
+      toast.success(t('savedToast'));
       setReason('');
       await res.mutate();
     } catch (err) {
@@ -215,21 +227,24 @@ function CostCapsForm({ orgId }: { orgId: string }) {
   };
 
   if (res.error) return <ErrorState error={res.error} onRetry={() => void res.mutate()} />;
-  if (!res.data) return <Skeleton aria-label="Loading cost caps" className="h-40" />;
+  if (!res.data) return <Skeleton aria-label={t('loadingAria')} className="h-40" />;
   return (
-    <form onSubmit={save} aria-label="Cost cap overrides" className="grid gap-4 text-sm">
+    <form onSubmit={save} aria-label={t('formAria')} className="grid gap-4 text-sm">
       <div className="grid gap-1">
-        <CapLine label="Daily" cap={res.data.caps.daily} />
-        <CapLine label="Monthly" cap={res.data.caps.monthly} />
+        <CapLine label={t('daily')} cap={res.data.caps.daily} />
+        <CapLine label={t('monthly')} cap={res.data.caps.monthly} />
         {res.data.override && (
           <p className="text-xs text-muted-foreground">
-            “{res.data.override.reason}” — {relativeTime(res.data.override.updatedAt)}
+            {t('overrideReason', {
+              reason: res.data.override.reason,
+              when: f.relative(res.data.override.updatedAt),
+            })}
           </p>
         )}
       </div>
       <div className="flex flex-wrap gap-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="cap-daily">Daily cap override (£)</Label>
+          <Label htmlFor="cap-daily">{t('dailyOverride')}</Label>
           <Input
             id="cap-daily"
             type="number"
@@ -241,7 +256,7 @@ function CostCapsForm({ orgId }: { orgId: string }) {
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="cap-monthly">Monthly cap override (£)</Label>
+          <Label htmlFor="cap-monthly">{t('monthlyOverride')}</Label>
           <Input
             id="cap-monthly"
             type="number"
@@ -253,11 +268,9 @@ function CostCapsForm({ orgId }: { orgId: string }) {
           />
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Empty = no override (the plan tier’s cap). Workers apply a change within 30 seconds.
-      </p>
+      <p className="text-xs text-muted-foreground">{t('overrideHelp')}</p>
       <div className="grid gap-1.5">
-        <Label htmlFor="cap-reason">Reason (recorded in the audit log)</Label>
+        <Label htmlFor="cap-reason">{t('reason')}</Label>
         <Textarea
           id="cap-reason"
           rows={2}
@@ -269,7 +282,7 @@ function CostCapsForm({ orgId }: { orgId: string }) {
       <div>
         <Button type="submit" disabled={pending || reason.trim().length < 3}>
           {pending && <Loader2 className="animate-spin" />}
-          Save cost caps
+          {t('save')}
         </Button>
       </div>
     </form>
@@ -277,6 +290,7 @@ function CostCapsForm({ orgId }: { orgId: string }) {
 }
 
 export function OrganisationPanel() {
+  const t = useTranslations('admin.organisations');
   const [input, setInput] = useState('');
   const [orgId, setOrgId] = useState<string | null>(null);
   return (
@@ -289,32 +303,26 @@ export function OrganisationPanel() {
         }}
       >
         <div className="grid gap-1.5">
-          <Label htmlFor="org-lookup">Organisation id</Label>
+          <Label htmlFor="org-lookup">{t('orgIdLabel')}</Label>
           <Input
             id="org-lookup"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="org_…"
+            placeholder={t('orgIdPlaceholder')}
             className="w-72"
             maxLength={128}
           />
         </div>
         <Button type="submit" variant="outline" disabled={!input.trim()}>
-          Open
+          {t('open')}
         </Button>
       </form>
       {orgId && (
         <div className="grid gap-6 lg:grid-cols-2" key={orgId}>
-          <Section
-            title="Review policy"
-            description="Applies to new projects and to automatic approval in this organisation."
-          >
+          <Section title={t('policy.title')} description={t('policy.description')}>
             <PolicyForm orgId={orgId} />
           </Section>
-          <Section
-            title="Cost caps"
-            description="Overrides the plan tier’s daily and monthly caps for this organisation only."
-          >
+          <Section title={t('caps.title')} description={t('caps.description')}>
             <CostCapsForm orgId={orgId} />
           </Section>
         </div>

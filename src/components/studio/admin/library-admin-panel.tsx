@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDuration, relativeTime } from '@/lib/client/format';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section, StateBadge } from '../primitives';
 import { flattenCategories } from '../library/library-utils';
 import type { CategoryNode, ListResponse } from '../library/types';
@@ -20,8 +21,7 @@ import { LibraryBulkBar } from './library-bulk-bar';
 import { LicenceAudit } from './licence-audit';
 import {
   DEFAULT_FILTERS,
-  LICENCE_BADGE,
-  REVIEW_LABEL,
+  LICENCE_TONE,
   type AdminLibraryFilters,
   type AdminLibraryVideo,
 } from './library-admin-types';
@@ -46,12 +46,21 @@ function CorpusRow({
   onEdit: () => void;
   onRetire: () => void;
 }) {
+  const t = useTranslations('admin.library');
+  const f = useFormat();
+  const meta = [
+    video.category.slug,
+    f.duration(video.durationSec),
+    video.licence.scenario && t(`scenario.${video.licence.scenario}`),
+    video.categoryReview && t(`review.${video.categoryReview}`),
+    video.reanalysedAt && t('row.reanalysed', { when: f.relative(video.reanalysedAt) }),
+  ].filter(Boolean);
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
       <Checkbox
         checked={selected}
         onCheckedChange={(v) => onSelect(v === true)}
-        aria-label={`Select ${video.title}`}
+        aria-label={t('row.selectAria', { title: video.title })}
       />
       <div className="min-w-0 flex-1 basis-60">
         <Link
@@ -60,22 +69,30 @@ function CorpusRow({
         >
           {video.title}
         </Link>
-        <p className="truncate text-xs text-muted-foreground">
-          {video.category.slug} · {formatDuration(video.durationSec)}
-          {video.licence.scenario && ` · ${video.licence.scenario}`}
-          {video.categoryReview && ` · ${REVIEW_LABEL[video.categoryReview]}`}
-          {video.reanalysedAt && ` · re-analysed ${relativeTime(video.reanalysedAt)}`}
-        </p>
+        <p className="truncate text-xs text-muted-foreground">{meta.join(' · ')}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {video.retiredAt && <StateBadge label="Retired" tone="neutral" />}
-        <StateBadge {...LICENCE_BADGE[video.licence.status]} />
-        <Button size="sm" variant="outline" onClick={onEdit}>
-          Edit<span className="sr-only"> {video.title}</span>
+        {video.retiredAt && <StateBadge label={t('row.retired')} tone="neutral" />}
+        <StateBadge
+          label={t(`licenceBadge.${video.licence.status}`)}
+          tone={LICENCE_TONE[video.licence.status]}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onEdit}
+          aria-label={t('row.editAria', { title: video.title })}
+        >
+          {t('row.edit')}
         </Button>
         {!video.retiredAt && (
-          <Button size="sm" variant="destructive" onClick={onRetire}>
-            Retire<span className="sr-only"> {video.title}</span>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={onRetire}
+            aria-label={t('row.retireAria', { title: video.title })}
+          >
+            {t('row.retire')}
           </Button>
         )}
       </div>
@@ -84,6 +101,9 @@ function CorpusRow({
 }
 
 export function LibraryAdminPanel() {
+  const t = useTranslations('admin.library.panel');
+  const tc = useTranslations('common.actions');
+  const errorMessage = useErrorMessage();
   const [filters, setFilters] = useState<AdminLibraryFilters>(DEFAULT_FILTERS);
   const [cursors, setCursors] = useState<string[]>([]);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
@@ -131,7 +151,7 @@ export function LibraryAdminPanel() {
         method: 'POST',
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success(`“${video.title}” retired`);
+      toast.success(t('retiredToast', { title: video.title }));
       refresh();
       return true;
     } catch (err) {
@@ -141,17 +161,14 @@ export function LibraryAdminPanel() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <IngestForm categories={categories} />
       <IngestStatus />
       <LicenceAudit
         onShowMissing={() => applyFilters({ ...DEFAULT_FILTERS, licence: 'missing' })}
       />
-      <Section
-        title="Corpus"
-        description="Every item, including unlicensed and retired ones. Retired items are hidden from users but kept for projects that used them."
-      >
-        <div className="grid gap-4">
+      <Section title={t('corpusTitle')} description={t('corpusDescription')}>
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
           <LibraryAdminFilterBar
             filters={filters}
             categories={categories}
@@ -161,9 +178,9 @@ export function LibraryAdminPanel() {
             <LibraryBulkBar ids={[...selected]} categories={categories} onDone={refresh} />
           )}
           {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-          {isLoading && <Skeleton aria-label="Loading corpus" className="h-48 rounded-lg" />}
+          {isLoading && <Skeleton aria-label={t('loading')} className="h-48 rounded-lg" />}
           {data && data.data.length === 0 && (
-            <p className="py-6 text-sm text-muted-foreground">No items match these filters.</p>
+            <p className="py-6 text-sm text-muted-foreground">{t('empty')}</p>
           )}
           {data && data.data.length > 0 && (
             <div>
@@ -173,11 +190,11 @@ export function LibraryAdminPanel() {
                   onCheckedChange={(v) =>
                     setSelected(v === true ? new Set([...selected, ...pageIds]) : new Set())
                   }
-                  aria-label="Select all on this page"
+                  aria-label={t('selectAllAria')}
                 />
-                Select page
+                {t('selectPage')}
               </label>
-              <ul aria-label="Corpus items" className="divide-y divide-border/70">
+              <ul aria-label={t('listAria')} className="divide-y divide-border/70">
                 {data.data.map((v) => (
                   <CorpusRow
                     key={v.id}
@@ -198,7 +215,7 @@ export function LibraryAdminPanel() {
                 disabled={cursors.length === 0}
                 onClick={() => setCursors((c) => c.slice(0, -1))}
               >
-                Previous
+                {tc('previous')}
               </Button>
               <Button
                 variant="ghost"
@@ -207,7 +224,7 @@ export function LibraryAdminPanel() {
                   data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
                 }
               >
-                Next
+                {tc('next')}
               </Button>
             </div>
           )}
@@ -224,9 +241,9 @@ export function LibraryAdminPanel() {
       <ConfirmDialog
         open={retiring !== null}
         onOpenChange={(open) => !open && setRetiring(null)}
-        title={`Retire “${retiring?.title ?? ''}”?`}
-        description="It disappears from browse, search and recommendations. Projects that already used it keep working."
-        confirmLabel="Retire"
+        title={t('retireTitle', { title: retiring?.title ?? '' })}
+        description={t('retireBody')}
+        confirmLabel={t('retireConfirm')}
         onConfirm={() => (retiring ? retire(retiring) : Promise.resolve(false))}
       />
     </div>

@@ -1,4 +1,7 @@
+'use client';
+
 import { AudioLines } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ProjectDetail } from '@/lib/client/types';
 
 // Review screen: Layer 5 sound effects for the latest run (BACKLOG 13.27; pipeline/sfx.ts writes
@@ -49,34 +52,31 @@ export function readSfx(metadata: unknown): SfxState | null {
   return null; // 'none': the script asked for no effects
 }
 
-function summary(state: SfxState): string {
+type SfxT = ReturnType<typeof useTranslations<'review.sfx'>>;
+
+function summary(state: SfxState, t: SfxT): string {
   switch (state.status) {
     case 'added': {
       const added = state.cues.filter((c) => c.status === 'added').length;
-      return `Sound effects: ${added} of ${state.cues.length} added.`;
+      return t('added', { added, total: state.cues.length });
     }
     case 'failed':
-      return 'Sound effects could not be added; the video plays without them.';
+      return t('failed');
     case 'off_for_plan':
-      return 'No sound effects on this plan.';
+      return t('offForPlan');
     case 'unavailable':
-      return 'Sound effects are not set up yet; the video plays without them.';
+      return t('unavailable');
   }
 }
 
-const CUE_NOTE: Record<SfxCueView['status'], string> = {
-  added: 'added',
-  no_match: 'no matching effect',
-  failed: 'could not be fetched',
-};
-
 export function SfxStatus({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.sfx');
   const state = readSfx(project.metadata);
   if (!state) return null;
   const cues = 'cues' in state ? state.cues : [];
   return (
     <div
-      aria-label="Sound effects"
+      aria-label={t('aria')}
       className="flex items-start gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm"
     >
       <AudioLines
@@ -84,13 +84,14 @@ export function SfxStatus({ project }: { project: ProjectDetail }) {
         strokeWidth={1.5}
       />
       <div className="min-w-0">
-        <p>{summary(state)}</p>
+        <p>{summary(state, t)}</p>
         {cues.length > 0 && (
           <ul className="mt-1 grid gap-0.5 text-xs text-muted-foreground">
             {cues.map((c) => (
               <li key={c.cue}>
-                “{c.cue}”{c.title ? ` → ${c.title}` : ''} · {CUE_NOTE[c.status]}
-                {c.shots > 1 ? ` · ${c.shots} shots` : ''}
+                {t('cueQuoted', { cue: c.cue })}
+                {c.title ? ` → ${c.title}` : ''} · {t(`cue.${c.status}`)}
+                {c.shots > 1 ? ` · ${t('cueShots', { count: c.shots })}` : ''}
               </li>
             ))}
           </ul>

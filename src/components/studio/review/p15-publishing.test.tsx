@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DripQueuePanel } from '../calendar/drip-queue';
 import { PublicationsList, viewsOf } from '../publications/publications-list';
-import { bestTimeLabel, PublishPanel } from './publish-panel';
+import { bestTime, PublishPanel } from './publish-panel';
 import { makeProject, makeRender, mockFetch, renderWithSWR } from './test-helpers';
 import { VariantThumbnail } from './variant-thumbnail';
 import type { Publication } from '@/lib/client/types';
@@ -30,22 +30,22 @@ const connections = {
 
 describe('PublishPanel (15.A6 / 15.A7)', () => {
   it('labels the best time', () => {
-    expect(bestTimeLabel(undefined)).toBeNull();
+    expect(bestTime(undefined)).toBeNull();
     expect(
-      bestTimeLabel({
+      bestTime({
         sufficientData: true,
         bestPerDay: [
           { weekday: 2, hour: 8, score: 1, basis: '4 videos' },
           { weekday: 4, hour: 18, score: 0.5, basis: '1 video' },
         ],
       }),
-    ).toBe('Suggested: Tue 08:00');
+    ).toEqual({ weekday: 2, hour: 8, sufficientData: true });
     expect(
-      bestTimeLabel({
+      bestTime({
         sufficientData: false,
         bestPerDay: [{ weekday: 0, hour: 9, score: 1, basis: 'style memory' }],
       }),
-    ).toBe('Suggested: Sun 09:00 (little data yet)');
+    ).toEqual({ weekday: 0, hour: 9, sufficientData: false });
   });
 
   it('fills captions from per-platform suggestions and shows the suggested time', async () => {

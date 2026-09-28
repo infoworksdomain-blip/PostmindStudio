@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatPence } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section } from '../primitives';
-import { AreaChart } from './area-chart';
+import { AreaChart, useShortDay } from './area-chart';
 import { BarList } from './bar-list';
-import { shortDay } from './chart-utils';
 import type { CostResponse } from './types';
 
 // Spend (GET /analytics/cost?days) — provider-job ledger by day, provider and project.
@@ -39,15 +39,18 @@ export function CostSection({
   isLoading: boolean;
   retry: () => void;
 }) {
+  const t = useTranslations('analytics.cost');
+  const f = useFormat();
+  const shortDay = useShortDay();
   if (error)
     return (
-      <Section title="Spend">
+      <Section title={t('title')}>
         <ErrorState error={error} onRetry={retry} />
       </Section>
     );
   if (isLoading || !data)
     return (
-      <Section title="Spend">
+      <Section title={t('title')}>
         <Skeleton className="h-48 rounded-lg" />
       </Section>
     );
@@ -58,38 +61,40 @@ export function CostSection({
   }));
   return (
     <Section
-      title="Spend"
-      description={`${formatPence(data.totalPence)} on AI providers in the last ${days} days`}
+      title={t('title')}
+      description={t('description', { total: f.pence(data.totalPence), days })}
     >
       <AreaChart
         points={points}
-        label={`Provider spend per day, last ${days} days`}
-        formatValue={formatPence}
+        label={t('chartLabel', { days })}
+        formatValue={f.pence}
         minMax={100}
         color="var(--chart-2)"
         height={140}
       />
       <div className="mt-8 grid gap-8 md:grid-cols-2">
         <div>
-          <h3 className="mb-3 text-xs font-medium text-muted-foreground">By provider</h3>
+          <h3 className="mb-3 text-xs font-medium text-muted-foreground">
+            {t('byProvider.title')}
+          </h3>
           <BarList
-            label="Spend by provider"
-            empty="No provider jobs in this window."
+            label={t('byProvider.listLabel')}
+            empty={t('byProvider.empty')}
             tone="var(--chart-2)"
             rows={data.byProvider.map((p) => ({
               key: p.provider,
               label: p.provider,
               value: p.costPence,
-              display: formatPence(p.costPence),
-              hint: `${p.jobs} job${p.jobs === 1 ? '' : 's'}`,
+              display: f.pence(p.costPence),
+              hint: t('byProvider.jobs', { count: p.jobs }),
             }))}
           />
         </div>
         <div>
-          <h3 className="mb-3 text-xs font-medium text-muted-foreground">By project</h3>
+          <h3 className="mb-3 text-xs font-medium text-muted-foreground">{t('byProject.title')}</h3>
           <BarList
-            label="Spend by project"
-            empty="No project spend in this window."
+            label={t('byProject.listLabel')}
+            empty={t('byProject.empty')}
             tone="var(--chart-1)"
             rows={data.byProject.slice(0, 8).map((p) => ({
               key: p.projectId ?? 'none',
@@ -101,10 +106,10 @@ export function CostSection({
                   {p.projectId}
                 </Link>
               ) : (
-                <span className="text-muted-foreground">Not tied to a project</span>
+                <span className="text-muted-foreground">{t('byProject.none')}</span>
               ),
               value: p.costPence,
-              display: formatPence(p.costPence),
+              display: f.pence(p.costPence),
             }))}
           />
         </div>

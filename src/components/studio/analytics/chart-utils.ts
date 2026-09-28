@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
 import type { SeriesPoint } from './types';
 
 // Pure geometry for the hand-built SVG charts (no chart library, per the Phase 10 brief).
@@ -45,13 +46,19 @@ export function nearestIndex(fraction: number, count: number): number {
   return Math.round(clamped * (count - 1));
 }
 
-/** '2026-09-27' → '27 Sep'. */
-export function shortDay(day: string): string {
+/** Day and short month, in UTC (the analytics days are UTC calendar days). */
+export const SHORT_DAY_OPTIONS: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+};
+
+/**
+ * '2026-09-27' → '27 Sep' (en-GB), 'Sep 27' (en-US), '9月27日' (zh-Hans). Components pass the
+ * active locale (useShortDay in area-chart.tsx); an unparseable day is returned unchanged.
+ */
+export function shortDay(day: string, locale: string = DEFAULT_LOCALE): string {
   const date = new Date(`${day}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return day;
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'UTC',
-  }).format(date);
+  return new Intl.DateTimeFormat(locale, SHORT_DAY_OPTIONS).format(date);
 }

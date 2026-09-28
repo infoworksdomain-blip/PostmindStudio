@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Brain, Check, Loader2, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDate } from '@/lib/client/format';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState } from '../primitives';
 
 // BACKLOG 13.29 / spec 10.4 — "What Studio has learned": every inferred preference with the
@@ -35,22 +36,36 @@ interface StyleMemoryResponse {
   data: StyleMemoryItem[];
 }
 
-export const SIGNAL_LABEL: Record<string, string> = {
-  shot_pace: 'Shot pace',
-  treatment_mix: 'Visual mix',
-  provider_preference: 'Generators that work',
-  script_structure: 'Script structure',
-  posting_time: 'Best time to post',
-};
+/** Signal types with a label (business.memory.signals.*); others show their raw type. */
+export const SIGNAL_TYPES = [
+  'shot_pace',
+  'treatment_mix',
+  'provider_preference',
+  'script_structure',
+  'posting_time',
+] as const;
 
-/** Weight (0–1) as a plain-language confidence. */
-export function confidence(weight: number): string {
-  if (weight >= 0.6) return 'Strong signal';
-  if (weight >= 0.3) return 'Emerging signal';
-  return 'Weak signal (not used in scripts yet)';
+type SignalType = (typeof SIGNAL_TYPES)[number];
+
+function isSignalType(value: string): value is SignalType {
+  return (SIGNAL_TYPES as readonly string[]).includes(value);
+}
+
+export type Confidence = 'strong' | 'emerging' | 'weak';
+
+/** Weight (0–1) as a plain-language confidence (business.memory.confidence.*). */
+export function confidence(weight: number): Confidence {
+  if (weight >= 0.6) return 'strong';
+  if (weight >= 0.3) return 'emerging';
+  return 'weak';
 }
 
 export function StyleMemoryPanel({ businessId }: { businessId: string }) {
+  const t = useTranslations('business.memory');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
+  const labelOf = (signalType: string) =>
+    isSignalType(signalType) ? t(`signals.${signalType}`) : signalType;
   const path = `/businesses/${encodeURIComponent(businessId)}/style-memory`;
   const { data, error, isLoading, mutate } = useApi<StyleMemoryResponse>(path);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -78,7 +93,7 @@ export function StyleMemoryPanel({ businessId }: { businessId: string }) {
         method: 'DELETE',
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success(`${SIGNAL_LABEL[item.signalType] ?? item.signalType} forgotten`);
+      toast.success(t('forgotten', { label: labelOf(item.signalType) }));
       await mutate();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -89,24 +104,24 @@ export function StyleMemoryPanel({ businessId }: { businessId: string }) {
 
   return (
     <div className="grid gap-5">
-      <p className="max-w-2xl text-sm text-muted-foreground">
-        Studio learns from what you approve, reject and regenerate, and from how your published
-        videos perform (last 90 days). Strong signals guide new scripts. Delete anything you
-        disagree with: it is removed straight away and only relearned from newer videos.
-      </p>
+      <p className="max-w-2xl text-sm text-muted-foreground">{t('intro')}</p>
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-      {isLoading && <Skeleton aria-label="Loading style memory" className="h-48 rounded-xl" />}
+      {isLoading && <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />}
       {data && data.data.length === 0 && (
         <EmptyState
           icon={<Brain className="size-8" strokeWidth={1.5} />}
-          title="Nothing learned yet"
-          description="After a few approved or published videos, Studio shows what it has picked up here."
+          title={t('empty.title')}
+          description={t('empty.body')}
         />
       )}
       {data && data.data.length > 0 && (
-        <ul aria-label="What Studio has learned" className="grid gap-3">
+        <ul aria-label={t('listAria')} className="grid gap-3">
           {data.data.map((item) => {
-            const label = SIGNAL_LABEL[item.signalType] ?? item.signalType;
+            const label = labelOf(item.signalType);
+            const evidence = {
+              confidence: t(`confidence.${confidence(item.weight)}`),
+              count: item.evidenceCount,
+            };
             return (
               <li
                 key={item.id}
@@ -121,90 +136,95 @@ export function StyleMemoryPanel({ businessId }: { businessId: string }) {
                       className="mt-1 flex items-center gap-2"
                       onSubmit={(e) => {
                         e.preventDefault();
-                        void patch(item, { value: editing.value }, `${label} updated and pinned`);
+                        void patch(item, { value: editing.value }, t('updatedPinned', { label }));
                       }}
                     >
                       <Input
                         dir="auto"
-                        aria-label={`New value for ${label}`}
+                        aria-label={t('newValueAria', { label })}
                         maxLength={200}
                         value={editing.value}
                         onChange={(e) => setEditing({ id: item.id, value: e.target.value })}
                       />
                       <Button size="sm" type="submit" disabled={!editing.value.trim()}>
-                        <Check /> Save
+                        <Check /> {t('save')}
                       </Button>
                     </form>
                   ) : (
                     <p dir="auto" className="mt-1 font-medium">
                       {item.value}
                       {item.pinned && (
-                        <span className="ml-2 text-xs font-normal text-muted-foreground">
-                          (pinned)
+                        <span className="ms-2 text-xs font-normal text-muted-foreground">
+                          {t('pinned')}
                         </span>
                       )}
                       {item.disabled && (
-                        <span className="ml-2 text-xs font-normal text-muted-foreground">
-                          (not used in scripts)
+                        <span className="ms-2 text-xs font-normal text-muted-foreground">
+                          {t('notUsed')}
                         </span>
                       )}
                     </p>
                   )}
                   <p className="mt-1.5 text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">Why: </span>
-                    {item.reason}
+                    {t.rich('why', {
+                      reason: item.reason,
+                      label: (chunks) => (
+                        <span className="font-medium text-foreground">{chunks}</span>
+                      ),
+                    })}
                   </p>
                   <p className="mt-1.5 text-xs text-muted-foreground">
-                    {confidence(item.weight)} · {item.evidenceCount} pieces of evidence
-                    {item.lastEvidenceAt ? ` · latest ${formatDate(item.lastEvidenceAt)}` : ''}
+                    {item.lastEvidenceAt
+                      ? t('evidenceLatest', { ...evidence, date: f.date(item.lastEvidenceAt) })
+                      : t('evidence', evidence)}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Switch
-                      aria-label={`Use ${label} in scripts`}
+                      aria-label={t('useAria', { label })}
                       checked={!item.disabled}
                       onCheckedChange={(on) =>
                         void patch(
                           item,
                           { disabled: !on },
-                          on ? `${label} turned on` : `${label} turned off`,
+                          on ? t('turnedOn', { label }) : t('turnedOff', { label }),
                         )
                       }
                     />
-                    Use
+                    {t('use')}
                   </label>
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Edit ${label}`}
+                    aria-label={t('editAria', { label })}
                     onClick={() => setEditing({ id: item.id, value: item.value })}
                   >
-                    <Pencil /> Edit
+                    <Pencil /> {t('edit')}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={item.pinned ? `Unpin ${label}` : `Pin ${label}`}
+                    aria-label={item.pinned ? t('unpinAria', { label }) : t('pinAria', { label })}
                     onClick={() =>
                       void patch(
                         item,
                         { pinned: !item.pinned },
-                        item.pinned ? `${label} unpinned` : `${label} pinned`,
+                        item.pinned ? t('unpinnedToast', { label }) : t('pinnedToast', { label }),
                       )
                     }
                   >
-                    {item.pinned ? <PinOff /> : <Pin />} {item.pinned ? 'Unpin' : 'Pin'}
+                    {item.pinned ? <PinOff /> : <Pin />} {item.pinned ? t('unpin') : t('pin')}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    aria-label={`Delete ${label}`}
+                    aria-label={t('deleteAria', { label })}
                     disabled={deleting === item.id}
                     onClick={() => void remove(item)}
                   >
                     {deleting === item.id ? <Loader2 className="animate-spin" /> : <Trash2 />}
-                    Delete
+                    {t('delete')}
                   </Button>
                 </div>
               </li>

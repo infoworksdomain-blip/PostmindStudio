@@ -1,6 +1,7 @@
 'use client';
 
 import { Sparkles, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useApi } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
@@ -15,10 +16,7 @@ interface LibraryVideo {
   durationSec: number;
 }
 
-const MODES: Array<{ mode: ReferenceMode; label: string; hint: string }> = [
-  { mode: 'INSPIRE', label: 'Inspire', hint: 'Borrow the mood and pacing' },
-  { mode: 'TEMPLATE', label: 'Template', hint: 'Follow its structure shot by shot' },
-];
+const MODES: readonly ReferenceMode[] = ['INSPIRE', 'TEMPLATE'];
 
 export function ReferenceBanner({
   reference,
@@ -29,6 +27,7 @@ export function ReferenceBanner({
   onModeChange: (mode: ReferenceMode) => void;
   onClear: () => void;
 }) {
+  const t = useTranslations('create.reference');
   const { data, error } = useApi<{ video: LibraryVideo }>(`/library/videos/${reference.id}`);
   const video = data?.video;
   const allowed = video?.allowedModes;
@@ -37,15 +36,13 @@ export function ReferenceBanner({
     <div className="flex flex-col gap-3 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:flex-row sm:items-center">
       <Sparkles className="size-5 shrink-0 text-primary" strokeWidth={1.5} />
       <div className="min-w-0 flex-1">
-        <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-          From the reference library
-        </p>
+        <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">{t('eyebrow')}</p>
         <p className="truncate text-sm font-medium">
-          {error ? 'Reference video unavailable' : (video?.title ?? 'Loading reference…')}
+          {error ? t('unavailable') : (video?.title ?? t('loading'))}
         </p>
       </div>
-      <div role="radiogroup" aria-label="Reference mode" className="flex gap-1.5">
-        {MODES.map(({ mode, label, hint }) => {
+      <div role="radiogroup" aria-label={t('modesAria')} className="flex gap-1.5">
+        {MODES.map((mode) => {
           const disabled = Boolean(allowed && !allowed.includes(mode));
           return (
             <button
@@ -54,7 +51,7 @@ export function ReferenceBanner({
               role="radio"
               aria-checked={reference.mode === mode}
               disabled={disabled}
-              title={disabled ? 'This video’s licence does not allow this mode' : hint}
+              title={disabled ? t('modeNotAllowed') : t(`modes.${mode}.hint`)}
               onClick={() => onModeChange(mode)}
               className={cn(
                 'rounded-full border px-3 py-1 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40',
@@ -63,12 +60,12 @@ export function ReferenceBanner({
                   : 'border-border text-muted-foreground hover:text-foreground',
               )}
             >
-              {label}
+              {t(`modes.${mode}.label`)}
             </button>
           );
         })}
       </div>
-      <Button variant="ghost" size="icon-sm" aria-label="Don’t use a reference" onClick={onClear}>
+      <Button variant="ghost" size="icon-sm" aria-label={t('clear')} onClick={onClear}>
         <X />
       </Button>
     </div>

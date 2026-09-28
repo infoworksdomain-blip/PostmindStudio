@@ -2,6 +2,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
+import { ALL_MESSAGES } from '@/lib/i18n/all-messages';
 import { mockFetch, renderWithSWR, type MockRoute } from '../library/test-helpers';
 import { AnalyticsDashboard } from './analytics-dashboard';
 import type { CostResponse, LeaderboardResponse, OverviewResponse } from './types';
@@ -181,5 +183,55 @@ describe('AnalyticsDashboard', () => {
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Analytics store unavailable');
     expect(within(alert).getByRole('button', { name: /Retry/ })).toBeInTheDocument();
+  });
+});
+
+describe('AnalyticsDashboard localisation', () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute('dir');
+    document.documentElement.removeAttribute('lang');
+  });
+
+  it('renders Arabic right-to-left, with Arabic plurals and RTL arrow keys', async () => {
+    const user = userEvent.setup();
+    const ar = ALL_MESSAGES.ar.analytics;
+    const { calls } = mockFetch(routes());
+    renderWithSWR(withLocale('ar', <AnalyticsDashboard />));
+    expect(
+      await screen.findByRole('heading', { name: ar.dashboard.title, level: 1 }),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
+    // 7 → the Arabic "few" form; 30 → "many".
+    expect(screen.getByRole('radio', { name: '7 أيام' })).toBeInTheDocument();
+    const thirty = screen.getByRole('radio', { name: '30 يومًا' });
+    expect(thirty).toHaveAttribute('aria-checked', 'true');
+    expect(await screen.findByRole('list', { name: ar.platforms.listLabel })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('list', { name: ar.cost.byProvider.listLabel }),
+    ).toHaveTextContent('4 مهام');
+    // In RTL the next option sits to the left.
+    thirty.focus();
+    await user.keyboard('{ArrowLeft}');
+    await waitFor(() =>
+      expect(
+        calls.some((c) => c.url.includes('/analytics/cost') && c.url.includes('days=90')),
+      ).toBe(true),
+    );
+  });
+
+  it('renders Simplified Chinese', async () => {
+    const zh = ALL_MESSAGES['zh-Hans'].analytics;
+    mockFetch(routes());
+    renderWithSWR(withLocale('zh-Hans', <AnalyticsDashboard />));
+    expect(
+      await screen.findByRole('heading', { name: zh.dashboard.title, level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: '7 天' })).toBeInTheDocument();
+    expect(await screen.findByText('共 3 条发布 · 新建 2 个项目')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('list', { name: zh.cost.byProvider.listLabel }),
+    ).toHaveTextContent('4 个任务');
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('lang', 'zh-Hans'));
+    expect(document.documentElement).toHaveAttribute('dir', 'ltr');
   });
 });

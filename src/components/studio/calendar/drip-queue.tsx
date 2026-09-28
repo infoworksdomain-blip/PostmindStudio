@@ -1,28 +1,20 @@
 'use client';
 
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDate } from '@/lib/client/format';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { useBusiness } from '../business-context';
+import { weekdayNames } from './month';
 
 // 15.A5 — the business's drip queue under the calendar (spec 3.1 "drip queue", 9.9 stagger):
 // weekly posting slots in a time zone; approved SCHEDULED videos without a start time take the
 // next free slot and their platforms are staggered from there.
 // GET/PUT /api/studio/businesses/:id/drip-queue.
-
-export const WEEKDAYS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
 
 export interface DripSlot {
   weekday: number;
@@ -49,6 +41,10 @@ function defaultZone(): string {
 }
 
 export function DripQueuePanel() {
+  const t = useTranslations('calendar.drip');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
+  const weekdays = useMemo(() => weekdayNames(f.locale, 'long'), [f.locale]);
   const { businessId } = useBusiness();
   const path = businessId ? `/businesses/${encodeURIComponent(businessId)}/drip-queue` : null;
   const { data, mutate } = useApi<{ dripQueue: DripQueueView | null }>(path);
@@ -70,7 +66,7 @@ export function DripQueuePanel() {
         idempotencyKey: newIdempotencyKey(),
         body: { slots, platforms: queue?.platforms ?? [], enabled: true },
       });
-      toast.success('Drip queue saved.');
+      toast.success(t('saved'));
       setDraft(null);
       await mutate();
     } catch (err) {
@@ -83,22 +79,25 @@ export function DripQueuePanel() {
   return (
     <section aria-labelledby="drip-heading" className="mt-8 rounded-xl border border-border p-4">
       <h3 id="drip-heading" className="font-display text-xl">
-        Drip queue
+        {t('title')}
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Approved videos set to “Schedule” with no date go out in the next free slot; each platform
-        follows {queue?.staggerMinutes ?? 30} minutes after the last.
+        {t('description', { minutes: queue?.staggerMinutes ?? 30 })}
       </p>
       {queue?.nextSlotAt && (
         <p className="mt-2 text-sm">
-          Next free slot: <strong>{formatDate(queue.nextSlotAt)}</strong> · {queue.queued} queued
+          {t.rich('nextSlot', {
+            date: f.date(queue.nextSlotAt),
+            queued: queue.queued,
+            strong: (chunks) => <strong>{chunks}</strong>,
+          })}
         </p>
       )}
       {queue && queue.upcoming.length > 0 && (
-        <ul aria-label="Drip slots taken" className="mt-2 flex flex-wrap gap-2 text-xs">
+        <ul aria-label={t('takenAria')} className="mt-2 flex flex-wrap gap-2 text-xs">
           {queue.upcoming.map((u) => (
             <li key={`${u.projectId}-${u.slotAt}`} className="rounded bg-muted px-2 py-1">
-              {formatDate(u.slotAt)}
+              {f.date(u.slotAt)}
             </li>
           ))}
         </ul>
@@ -107,19 +106,19 @@ export function DripQueuePanel() {
         {slots.map((slot, i) => (
           <li key={i} className="flex flex-wrap items-center gap-2">
             <select
-              aria-label={`Slot ${i + 1} day`}
+              aria-label={t('slotDay', { n: i + 1 })}
               className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
               value={slot.weekday}
               onChange={(e) => change(i, { weekday: Number(e.target.value) })}
             >
-              {WEEKDAYS.map((d, n) => (
+              {weekdays.map((d, n) => (
                 <option key={d} value={n}>
                   {d}
                 </option>
               ))}
             </select>
             <Input
-              aria-label={`Slot ${i + 1} time`}
+              aria-label={t('slotTime', { n: i + 1 })}
               type="time"
               className="w-32"
               value={slot.time}
@@ -129,7 +128,7 @@ export function DripQueuePanel() {
             <Button
               size="icon"
               variant="ghost"
-              aria-label={`Remove slot ${i + 1}`}
+              aria-label={t('removeSlot', { n: i + 1 })}
               onClick={() => setDraft(slots.filter((_, j) => j !== i))}
             >
               <Trash2 />
@@ -145,11 +144,11 @@ export function DripQueuePanel() {
             setDraft([...slots, { weekday: 1, time: '09:00', timezone: defaultZone() }])
           }
         >
-          <Plus /> Add slot
+          <Plus /> {t('addSlot')}
         </Button>
         {draft && (
           <Button size="sm" onClick={save} disabled={saving || slots.length === 0}>
-            {saving && <Loader2 className="animate-spin" />} Save slots
+            {saving && <Loader2 className="animate-spin" />} {t('saveSlots')}
           </Button>
         )}
       </div>

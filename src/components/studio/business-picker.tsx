@@ -27,7 +27,7 @@ export const BUSINESS_LIST_PENDING_HINT =
   'The business list is waiting for PostMind Core: type the business id.';
 
 const SELECT_CLASS =
-  'h-8 w-48 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
+  'h-8 w-36 lg:w-48 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 function BusinessSelect({ businesses }: { businesses: BusinessSummary[] }) {
   const t = useTranslations('shell.business');
@@ -35,7 +35,10 @@ function BusinessSelect({ businesses }: { businesses: BusinessSummary[] }) {
   const known = businesses.some((b) => b.id === businessId);
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="business-select" className="text-xs whitespace-nowrap text-muted-foreground">
+      <label
+        htmlFor="business-select"
+        className="sr-only text-xs whitespace-nowrap text-muted-foreground xl:not-sr-only"
+      >
         {t('label')}
       </label>
       <select
@@ -72,12 +75,15 @@ function BusinessIdForm({ hint }: { hint?: string }) {
         setDraft('');
       }}
     >
-      <label htmlFor="business-id" className="text-xs whitespace-nowrap text-muted-foreground">
+      <label
+        htmlFor="business-id"
+        className="sr-only text-xs whitespace-nowrap text-muted-foreground xl:not-sr-only"
+      >
         {t('label')}
       </label>
       <Input
         id="business-id"
-        className="h-8 w-44"
+        className="h-8 w-36 lg:w-44"
         placeholder={businessId ?? t('idPlaceholder')}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

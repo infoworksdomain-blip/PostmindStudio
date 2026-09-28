@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Building2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBusiness } from '../business-context';
@@ -15,41 +16,33 @@ import { VoiceProfilesPanel } from './voice-profiles-panel';
 // BACKLOG 10.9 — the selected business: what Studio thinks it does (profile), the website scan
 // that works that out, brand kits, and the image library built from all of it.
 
-export const BUSINESS_TABS = [
-  { value: 'profile', label: 'Profile' },
-  { value: 'scan', label: 'Website scan' },
-  { value: 'brand', label: 'Brand kits' },
-  { value: 'images', label: 'Image library' },
-  { value: 'learned', label: 'What Studio has learned' },
-] as const;
+export const BUSINESS_TABS = ['profile', 'scan', 'brand', 'images', 'learned'] as const;
 
-type TabValue = (typeof BUSINESS_TABS)[number]['value'];
+type TabValue = (typeof BUSINESS_TABS)[number];
 
 export function BusinessScreen() {
+  const t = useTranslations('business.screen');
+  const tn = useTranslations('shell.nav.groups');
   const { businessId, ready } = useBusiness();
   const [tab, setTab] = useState<TabValue>('profile');
 
   return (
     <>
-      <PageHeader
-        eyebrow="Set up"
-        title="Business & images"
-        description="What Studio knows about this business, how it should look, and the pictures it can use."
-      />
+      <PageHeader eyebrow={tn('setup')} title={t('title')} description={t('description')} />
       {ready && !businessId && (
         <EmptyState
           icon={<Building2 className="size-8" strokeWidth={1.5} />}
-          title="Pick a business first"
-          description="Choose the business to set up in the top bar."
+          title={t('pickFirst.title')}
+          description={t('pickFirst.body')}
         />
       )}
       {businessId && (
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabValue)} className="gap-6">
           <div className="max-w-full overflow-x-auto">
             <TabsList variant="line">
-              {BUSINESS_TABS.map((t) => (
-                <TabsTrigger key={t.value} value={t.value} className="px-3">
-                  {t.label}
+              {BUSINESS_TABS.map((value) => (
+                <TabsTrigger key={value} value={value} className="px-3">
+                  {t(`tabs.${value}`)}
                 </TabsTrigger>
               ))}
             </TabsList>

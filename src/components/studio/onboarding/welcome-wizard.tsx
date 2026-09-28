@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Building2, Check, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, useApi } from '@/lib/client/api';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { BrandKitStep } from './brand-kit-step';
@@ -60,6 +61,9 @@ function StepBody({
 }
 
 export function WelcomeWizard() {
+  const t = useTranslations('onboarding.wizard');
+  const tc = useTranslations('common.actions');
+  const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
   const { data, error, mutate } = useApi<OnboardingResponse>(ONBOARDING_PATH);
   // Whether each step's own requirement is met (reported by the step component).
@@ -94,13 +98,13 @@ export function WelcomeWizard() {
 
   const header = (
     <PageHeader
-      eyebrow="Welcome"
-      title="Let’s make your first video"
-      description="Four quick steps: connect an account, set up your brand, make a video, go live."
+      eyebrow={t('eyebrow')}
+      title={t('title')}
+      description={t('description')}
       actions={
         data && !data.onboarding.dismissedAt && data.onboarding.step !== 'done' ? (
           <Button variant="link" disabled={saving} onClick={() => void move({ dismissed: true })}>
-            Skip setup
+            {t('skipSetup')}
           </Button>
         ) : undefined
       }
@@ -118,7 +122,7 @@ export function WelcomeWizard() {
     return (
       <>
         {header}
-        <Skeleton className="h-64 rounded-xl" aria-label="Loading setup" />
+        <Skeleton className="h-64 rounded-xl" aria-label={t('loading')} />
       </>
     );
 
@@ -135,11 +139,11 @@ export function WelcomeWizard() {
       <>
         {header}
         <EmptyState
-          title="Setup skipped"
-          description="You can pick it up again any time."
+          title={t('skipped.title')}
+          description={t('skipped.description')}
           action={
             <Button disabled={saving} onClick={() => void move({ dismissed: false })}>
-              Resume setup
+              {t('skipped.resume')}
             </Button>
           }
         />
@@ -151,11 +155,11 @@ export function WelcomeWizard() {
         {header}
         <EmptyState
           icon={<Building2 className="size-8" strokeWidth={1.5} />}
-          title="Pick a business first"
-          description="Setup is per business. Choose one in the top bar, or add one."
+          title={t('noBusiness.title')}
+          description={t('noBusiness.description')}
           action={
             <Button asChild variant="outline">
-              <Link href="/business">Set up a business</Link>
+              <Link href="/business">{t('noBusiness.action')}</Link>
             </Button>
           }
         />
@@ -173,7 +177,7 @@ export function WelcomeWizard() {
       {header}
       <StepIndicator current={step} completed={onboarding.completed} />
       <section
-        aria-label="Current step"
+        aria-label={t('currentStep')}
         className="rounded-xl border border-border bg-card p-6 md:p-8"
       >
         <StepBody
@@ -191,17 +195,17 @@ export function WelcomeWizard() {
           disabled={saving || step === 'connect'}
           onClick={() => void move({ step: previousStep(step) })}
         >
-          <ArrowLeft /> Back
+          <ArrowLeft className="rtl:-scale-x-100" /> {tc('back')}
         </Button>
         <div className="flex items-center gap-2">
-          {saving && <Loader2 className="size-4 animate-spin" aria-label="Saving" />}
+          {saving && <Loader2 className="size-4 animate-spin" aria-label={t('saving')} />}
           {step !== 'celebrate' && (
             <Button
               variant="outline"
               disabled={saving}
               onClick={() => void move({ step: nextStep(step) })}
             >
-              Skip this step
+              {t('skipStep')}
             </Button>
           )}
           {step === 'celebrate' ? (
@@ -211,7 +215,7 @@ export function WelcomeWizard() {
                 void move({ step: 'done', completed: withCompleted(onboarding.completed, step) })
               }
             >
-              <Check /> Finish
+              <Check /> {t('finish')}
             </Button>
           ) : (
             <Button
@@ -223,7 +227,7 @@ export function WelcomeWizard() {
                 })
               }
             >
-              Continue <ArrowRight />
+              {tc('continue')} <ArrowRight className="rtl:-scale-x-100" />
             </Button>
           )}
         </div>

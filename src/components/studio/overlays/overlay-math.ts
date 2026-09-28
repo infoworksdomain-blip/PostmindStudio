@@ -92,14 +92,20 @@ export function styleOf(overlay: Overlay): Partial<EditableStyle> {
   return out;
 }
 
+/** A draft the API would reject; `code` is the overlays.problems.* message key. */
+export type DraftProblem =
+  | { code: 'textEmpty' }
+  | { code: 'endAfterStart' }
+  | { code: 'endWithin'; duration: number }
+  | { code: 'fontFamily' };
+
 /** Validation the API would otherwise reject with a 400. */
-export function draftProblems(overlay: Overlay, duration: number): string[] {
-  const problems: string[] = [];
-  if (!overlay.text.trim()) problems.push('Text can’t be empty.');
-  if (overlay.endAtSec <= overlay.startAtSec) problems.push('End must be after start.');
-  if (overlay.endAtSec > duration + 1e-6)
-    problems.push(`End must be within the shot’s ${duration}s.`);
+export function draftProblems(overlay: Overlay, duration: number): DraftProblem[] {
+  const problems: DraftProblem[] = [];
+  if (!overlay.text.trim()) problems.push({ code: 'textEmpty' });
+  if (overlay.endAtSec <= overlay.startAtSec) problems.push({ code: 'endAfterStart' });
+  if (overlay.endAtSec > duration + 1e-6) problems.push({ code: 'endWithin', duration });
   if (!/^[A-Za-z0-9 -]{1,64}$/.test(overlay.fontFamily.trim()))
-    problems.push('Font must be a Google Fonts family name.');
+    problems.push({ code: 'fontFamily' });
   return problems;
 }

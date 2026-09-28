@@ -296,6 +296,10 @@ export async function decideSafetyReview(
         input.decision === 'ALLOW' ? 'Generation continues.' : `Trust & Safety note: ${input.note}`,
       link: `/projects/${project.id}`,
       dedupeKey: `safety_review_decided:${review.id}`,
+      message:
+        input.decision === 'ALLOW'
+          ? { key: 'safetyReviewAllowed', params: { name: project.name } }
+          : { key: 'safetyReviewBlocked', params: { name: project.name, note: input.note } },
     });
   }
   const after = await deps.db.videoProject.findUnique({

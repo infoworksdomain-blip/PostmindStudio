@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Loader2, PencilLine, Save, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useApi } from '@/lib/client/api';
-import { formatDuration, PLATFORM_LABEL } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail, Script } from '@/lib/client/types';
 import { ErrorState } from '../primitives';
 import { SHOT_EDITABLE } from './types';
@@ -61,6 +62,8 @@ function ScriptEditor({
   onDone: () => void;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.script.editor');
+  const f = useFormat();
   const { data, error, isLoading, mutate } = useApi<{ script: Script }>(`/scripts/${scriptId}`);
   const { pending, run, busy } = useAction();
   const [fullText, setFullText] = useState('');
@@ -82,7 +85,7 @@ function ScriptEditor({
 
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
   if (isLoading || !script)
-    return <Skeleton className="h-48 rounded-xl" aria-label="Loading script" />;
+    return <Skeleton className="h-48 rounded-xl" aria-label={t('loading')} />;
   const patch = scriptPatch(script, fullText, texts);
   const revoices =
     patch?.shots?.filter((s) => s.voiceoverText !== undefined).map((s) => s.id).length ?? 0;
@@ -92,9 +95,7 @@ function ScriptEditor({
     const ok = await run('save', `/scripts/${scriptId}`, {
       method: 'PATCH',
       body: patch,
-      success: revoices
-        ? `Saved — re-voicing ${revoices} shot${revoices === 1 ? '' : 's'}.`
-        : 'Saved — re-render the variants to apply it.',
+      success: revoices ? t('savedRevoice', { count: revoices }) : t('savedRerender'),
     });
     if (ok) {
       await mutate();
@@ -109,7 +110,7 @@ function ScriptEditor({
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
       <label htmlFor={`full-${scriptId}`} className="text-xs font-medium text-muted-foreground">
-        Voiceover
+        {t('voiceover')}
       </label>
       <Textarea
         id={`full-${scriptId}`}
@@ -122,12 +123,12 @@ function ScriptEditor({
         {script.shots.map((shot, i) => (
           <li key={shot.id} className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2">
             <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase sm:col-span-2">
-              Shot {i + 1} · {formatDuration(shot.durationSec)}
+              {t('shot', { n: i + 1, duration: f.duration(shot.durationSec) })}
             </p>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              Narration
+              {t('narration')}
               <Textarea
-                aria-label={`Shot ${i + 1} narration`}
+                aria-label={t('narrationAria', { n: i + 1 })}
                 value={texts[shot.id]?.voiceoverText ?? ''}
                 maxLength={2_000}
                 rows={2}
@@ -135,9 +136,9 @@ function ScriptEditor({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-              On-screen text
+              {t('onScreen')}
               <Input
-                aria-label={`Shot ${i + 1} on-screen text`}
+                aria-label={t('onScreenAria', { n: i + 1 })}
                 value={texts[shot.id]?.onScreenText ?? ''}
                 maxLength={300}
                 onChange={(e) => set(shot.id, { onScreenText: e.target.value })}
@@ -147,16 +148,14 @@ function ScriptEditor({
         ))}
       </ol>
       <p className="text-xs text-muted-foreground">
-        {revoices
-          ? `Changed narration re-voices ${revoices} shot${revoices === 1 ? '' : 's'}; visuals are kept.`
-          : 'Text changes keep every shot; re-render the variants to see them.'}
+        {revoices ? t('revoiceNote', { count: revoices }) : t('textNote')}
       </p>
       <div className="flex flex-wrap gap-2">
         <Button onClick={save} disabled={!patch || busy}>
-          {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} Save script
+          {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
         </Button>
         <Button variant="ghost" onClick={onDone}>
-          <X /> Cancel
+          <X /> {t('cancel')}
         </Button>
       </div>
     </div>
@@ -172,13 +171,14 @@ function RegenerateScript({
   disabled: boolean;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.script.regenerate');
   const [instruction, setInstruction] = useState('');
   const { pending, run } = useAction();
 
   async function regenerate() {
     const ok = await run('regenerate', `/scripts/${scriptId}/regenerate`, {
       body: instruction.trim() ? { instruction: instruction.trim() } : {},
-      success: 'Rewriting the script from your brief.',
+      success: t('started'),
     });
     if (ok) {
       setInstruction('');
@@ -189,17 +189,17 @@ function RegenerateScript({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-muted-foreground">
-        Instruction for a rewrite (optional)
+        {t('instruction')}
         <Input
           value={instruction}
           maxLength={1_000}
           disabled={disabled}
-          placeholder="Punchier hook, mention the Saturday class"
+          placeholder={t('placeholder')}
           onChange={(e) => setInstruction(e.target.value)}
         />
       </label>
       <Button variant="outline" onClick={regenerate} disabled={disabled || pending !== null}>
-        {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} Regenerate script
+        {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} {t('button')}
       </Button>
     </div>
   );
@@ -212,6 +212,8 @@ export function ScriptView({
   project: ProjectDetail;
   onChanged?: () => void;
 }) {
+  const t = useTranslations('review.script');
+  const f = useFormat();
   const { brief, scripts } = project;
   const [editing, setEditing] = useState<string | null>(null);
   const editable = SHOT_EDITABLE.has(project.state);
@@ -220,43 +222,44 @@ export function ScriptView({
   return (
     <div className="flex flex-col gap-8">
       {brief && (
-        <dl className="grid gap-4 border-l-2 border-primary/60 pl-4 sm:grid-cols-2">
+        <dl className="grid gap-4 border-s-2 border-primary/60 ps-4 sm:grid-cols-2">
           {(
             [
-              ['Hook', brief.hook],
-              ['Key message', brief.keyMessage],
-              ['Audience', brief.targetAudience],
-              ['Tone', brief.tone],
+              ['hook', brief.hook],
+              ['keyMessage', brief.keyMessage],
+              ['audience', brief.targetAudience],
+              ['tone', brief.tone],
             ] as const
           ).map(([term, value]) => (
             <div key={term}>
-              <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">{term}</dt>
-              <dd className="mt-1 text-sm">{value || '—'}</dd>
+              <dt className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
+                {t(`brief.${term}`)}
+              </dt>
+              <dd className="mt-1 text-sm">{value || t('empty')}</dd>
             </div>
           ))}
         </dl>
       )}
-      {scripts.length === 0 && (
-        <p className="text-sm text-muted-foreground">The script hasn’t been written yet.</p>
-      )}
+      {scripts.length === 0 && <p className="text-sm text-muted-foreground">{t('notWritten')}</p>}
       {scripts.map((script) => (
-        <article key={script.id} aria-label={`Script for ${script.targetPlatform}`}>
+        <article
+          key={script.id}
+          aria-label={t('aria', { platform: f.platform(script.targetPlatform) })}
+        >
           <header className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h3 className="font-display text-2xl">
-              {PLATFORM_LABEL[script.targetPlatform] ?? script.targetPlatform}
-            </h3>
+            <h3 className="font-display text-2xl">{f.platform(script.targetPlatform)}</h3>
             <p className="tabular text-xs text-muted-foreground">
-              {script.targetAspectRatio} · {formatDuration(script.targetDurationSec)} ·{' '}
-              {script.shots.length} shots
+              {script.targetAspectRatio} · {f.duration(script.targetDurationSec)} ·{' '}
+              {t('shots', { count: script.shots.length })}
             </p>
             {editable && editing !== script.id && project.sourceType !== 'SLIDESHOW' && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="ml-auto"
+                className="ms-auto"
                 onClick={() => setEditing(script.id)}
               >
-                <PencilLine /> Edit script
+                <PencilLine /> {t('edit')}
               </Button>
             )}
           </header>
@@ -279,9 +282,7 @@ export function ScriptView({
         </article>
       ))}
       {!editable && scripts.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          The script can be edited once the video is ready for review, rejected or failed.
-        </p>
+        <p className="text-xs text-muted-foreground">{t('notEditable')}</p>
       )}
     </div>
   );

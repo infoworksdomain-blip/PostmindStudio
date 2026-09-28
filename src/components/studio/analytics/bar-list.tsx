@@ -38,7 +38,7 @@ export function BarList({
             <span className="tabular shrink-0 font-medium">
               {row.display}
               {row.hint && (
-                <span className="ml-1.5 text-xs font-normal text-muted-foreground">{row.hint}</span>
+                <span className="ms-1.5 text-xs font-normal text-muted-foreground">{row.hint}</span>
               )}
             </span>
           </div>

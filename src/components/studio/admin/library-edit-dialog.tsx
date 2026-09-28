@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -15,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { selectClass } from '../library/library-filters';
 import { parseTags, type CategoryOption } from '../library/library-utils';
 import type { LibraryVideoSummary } from '../library/types';
@@ -58,6 +59,9 @@ export function LibraryEditDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations('admin.library.edit');
+  const tc = useTranslations('common.actions');
+  const errorMessage = useErrorMessage();
   const [form, setForm] = useState({
     title: video.title,
     description: video.description ?? '',
@@ -83,7 +87,7 @@ export function LibraryEditDialog({
         body: patch,
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success('Library video updated');
+      toast.success(t('saved'));
       onSaved();
       onClose();
     } catch (err) {
@@ -103,20 +107,20 @@ export function LibraryEditDialog({
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={submit} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Edit reference</DialogTitle>
+            <DialogTitle>{t('title')}</DialogTitle>
             <DialogDescription className="font-mono text-xs">{video.id}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5">
-            <Label htmlFor="edit-title">Title</Label>
+            <Label htmlFor="edit-title">{t('titleField')}</Label>
             <Input id="edit-title" maxLength={200} {...field('title')} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="edit-description">Description</Label>
+            <Label htmlFor="edit-description">{t('description')}</Label>
             <Textarea id="edit-description" rows={3} maxLength={2000} {...field('description')} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="edit-category">Category</Label>
+              <Label htmlFor="edit-category">{t('category')}</Label>
               <select id="edit-category" className={selectClass} {...field('category')}>
                 {options.map((c) => (
                   <option key={c.slug} value={c.slug}>
@@ -126,38 +130,40 @@ export function LibraryEditDialog({
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="edit-tags">Tags</Label>
+              <Label htmlFor="edit-tags">{t('tags')}</Label>
               <Input id="edit-tags" {...field('tags')} />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="edit-scenario">Licence</Label>
+              <Label htmlFor="edit-scenario">{t('licence')}</Label>
               <select id="edit-scenario" className={selectClass} {...field('scenario')}>
                 <option value="">
-                  Unchanged ({video.allowedModes.join(' + ') || 'no licence'})
+                  {video.allowedModes.length > 0
+                    ? t('unchangedModes', { modes: video.allowedModes.join(' + ') })
+                    : t('unchangedNoLicence')}
                 </option>
-                <option value="LICENSED">Licensed</option>
-                <option value="OWNED">Owned</option>
-                <option value="SCRAPED">Scraped (Inspire only)</option>
-                <option value="NOT_REQUIRED">Not required (operator-owned)</option>
+                <option value="LICENSED">{t('optionLicensed')}</option>
+                <option value="OWNED">{t('optionOwned')}</option>
+                <option value="SCRAPED">{t('optionScraped')}</option>
+                <option value="NOT_REQUIRED">{t('optionNotRequired')}</option>
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="edit-license-source">Licence source</Label>
+              <Label htmlFor="edit-license-source">{t('licenceSource')}</Label>
               <Input
                 id="edit-license-source"
                 maxLength={500}
-                placeholder="Unchanged"
+                placeholder={t('licenceSourcePlaceholder')}
                 {...field('licenseSource')}
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button type="submit" disabled={!dirty || pending}>
               {pending && <Loader2 className="animate-spin" />}
-              Save changes
+              {t('save')}
             </Button>
           </DialogFooter>
         </form>

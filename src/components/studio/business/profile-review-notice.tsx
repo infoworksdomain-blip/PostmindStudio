@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { CircleAlert } from 'lucide-react';
 import { useApi } from '@/lib/client/api';
 import type { BusinessProfile } from './types';
@@ -11,6 +12,7 @@ import type { BusinessProfile } from './types';
 // No profile yet (404) or any error → nothing is shown.
 
 export function ProfileReviewNotice({ businessId }: { businessId: string | null }) {
+  const t = useTranslations('business');
   const { data } = useApi<{ profile: BusinessProfile }>(
     businessId ? `/businesses/${encodeURIComponent(businessId)}/business-profile` : null,
     undefined,
@@ -24,12 +26,13 @@ export function ProfileReviewNotice({ businessId }: { businessId: string | null 
     >
       <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <span>
-        Studio isn’t sure it has understood your business yet. This video will use the current
-        profile —{' '}
-        <Link href="/business" className="font-medium underline">
-          check and confirm it
-        </Link>{' '}
-        for better results.
+        {t.rich('reviewNotice', {
+          link: (chunks) => (
+            <Link href="/business" className="font-medium underline">
+              {chunks}
+            </Link>
+          ),
+        })}
       </span>
     </p>
   );

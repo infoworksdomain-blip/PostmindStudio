@@ -1,7 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { PLATFORM_LABEL } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { Field, NativeSelect } from '../review/field';
 import { OverlaySet } from './overlay-set';
@@ -26,6 +27,8 @@ export function WholeVideoOverlays({
   businessId: string | null;
   onPresetsChanged: () => void;
 }) {
+  const t = useTranslations('overlays.wholeVideo');
+  const f = useFormat();
   // Newest render per platform: that is what a re-render replaces.
   const latest = [...project.renders]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -33,17 +36,12 @@ export function WholeVideoOverlays({
   const [renderId, setRenderId] = useState(latest[0]?.id ?? '');
   const render = latest.find((r) => r.id === renderId) ?? latest[0];
 
-  if (!render)
-    return (
-      <p className="text-sm text-muted-foreground">
-        Whole-video overlays can be added once a variant has rendered.
-      </p>
-    );
+  if (!render) return <p className="text-sm text-muted-foreground">{t('none')}</p>;
 
   return (
     <div className="flex flex-col gap-4">
       {latest.length > 1 && (
-        <Field id="whole-video-render" label="Variant" className="w-full sm:w-64">
+        <Field id="whole-video-render" label={t('variant')} className="w-full sm:w-64">
           <NativeSelect
             id="whole-video-render"
             value={render.id}
@@ -51,7 +49,10 @@ export function WholeVideoOverlays({
           >
             {latest.map((r) => (
               <option key={r.id} value={r.id}>
-                {PLATFORM_LABEL[r.targetPlatform] ?? r.targetPlatform} ({r.aspectRatio})
+                {t('variantOption', {
+                  platform: f.platform(r.targetPlatform),
+                  ratio: r.aspectRatio,
+                })}
               </option>
             ))}
           </NativeSelect>

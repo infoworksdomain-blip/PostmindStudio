@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -43,6 +44,8 @@ export function ReasonDialog({
   const [reason, setReason] = useState('');
   const [typed, setTyped] = useState('');
   const [pending, setPending] = useState(false);
+  const t = useTranslations('admin.dialogs');
+  const tc = useTranslations('common.actions');
   const phraseOk = !confirmPhrase || typed.trim() === confirmPhrase;
   const reasonOk = reason.trim().length >= MIN_REASON;
 
@@ -78,7 +81,7 @@ export function ReasonDialog({
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5">
-            <Label htmlFor="kill-reason">Reason (recorded in the audit log)</Label>
+            <Label htmlFor="kill-reason">{t('reasonLabel')}</Label>
             <Textarea
               id="kill-reason"
               value={reason}
@@ -91,7 +94,10 @@ export function ReasonDialog({
           {confirmPhrase && (
             <div className="grid gap-1.5">
               <Label htmlFor="kill-confirm">
-                Type <span className="font-mono font-semibold">{confirmPhrase}</span> to confirm
+                {t.rich('typeToConfirm', {
+                  phrase: confirmPhrase,
+                  code: (chunks) => <span className="font-mono font-semibold">{chunks}</span>,
+                })}
               </Label>
               <Input
                 id="kill-confirm"
@@ -104,7 +110,7 @@ export function ReasonDialog({
           )}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button
               type="submit"

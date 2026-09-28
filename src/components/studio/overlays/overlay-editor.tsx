@@ -1,8 +1,10 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useSWRConfig } from 'swr';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { ErrorState, Section } from '../primitives';
 import { ScriptSelect } from '../review/shots-tab';
@@ -25,6 +27,8 @@ export function OverlayEditor({
   businessId: string | null;
   onChanged: () => void;
 }) {
+  const t = useTranslations('overlays.editor');
+  const f = useFormat();
   const [scriptId, setScriptId] = useState(project.scripts[0]?.id ?? '');
   const [shotId, setShotId] = useState<string | null>(project.scripts[0]?.shots[0]?.id ?? null);
   const presets = useApi<{ data: OverlayPreset[] }>('/overlay-presets', {
@@ -34,22 +38,20 @@ export function OverlayEditor({
   const script = project.scripts.find((s) => s.id === scriptId) ?? project.scripts[0];
   const editable = OVERLAY_EDITABLE.has(project.state);
 
-  if (!script)
-    return (
-      <p className="text-sm text-muted-foreground">
-        Overlays can be added once the script and its shots exist.
-      </p>
-    );
+  if (!script) return <p className="text-sm text-muted-foreground">{t('noScript')}</p>;
   const shot = script.shots.find((s) => s.id === shotId);
   const presetList = presets.data?.data ?? [];
+  const stateLabel = f.projectState(project.state).label;
 
   return (
     <div className="flex flex-col gap-6">
       {presets.error && <ErrorState error={presets.error} onRetry={() => void presets.mutate()} />}
       {!editable && (
         <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-          Overlays are read-only while the project is{' '}
-          {project.state.toLowerCase().replace(/_/g, ' ')}.
+          {t('readOnly', {
+            // English reads the state mid-sentence ("while the project is published").
+            state: f.locale.startsWith('en') ? stateLabel.toLowerCase() : stateLabel,
+          })}
         </p>
       )}
       <div className="flex flex-col gap-3">
@@ -63,7 +65,7 @@ export function OverlayEditor({
           }}
         />
         <ShotStrip
-          label="Choose a shot to edit its overlays"
+          label={t('shotStripLabel')}
           shots={script.shots}
           selectedId={shotId}
           onSelect={setShotId}
@@ -82,12 +84,9 @@ export function OverlayEditor({
           onPresetsChanged={() => void presets.mutate()}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">Select a shot above.</p>
+        <p className="text-sm text-muted-foreground">{t('selectShot')}</p>
       )}
-      <Section
-        title="Whole video"
-        description="Overlays that run across the whole variant, such as a watermark or handle."
-      >
+      <Section title={t('wholeVideo')} description={t('wholeVideoDescription')}>
         <WholeVideoOverlays
           project={project}
           editable={editable}
@@ -96,10 +95,7 @@ export function OverlayEditor({
           onPresetsChanged={() => void presets.mutate()}
         />
       </Section>
-      <Section
-        title="Across the whole video"
-        description="Watermarks, handles and repeated captions."
-      >
+      <Section title={t('across')} description={t('acrossDescription')}>
         <BulkApply
           project={project}
           presets={presetList}

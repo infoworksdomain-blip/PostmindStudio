@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSWRConfig } from 'swr';
 import { toast } from 'sonner';
 import { Loader2, ScanSearch } from 'lucide-react';
@@ -9,12 +10,25 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, ApiError, apiPath, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDate, relativeTime, type Tone } from '@/lib/client/format';
+import {
+  api,
+  ApiError,
+  apiPath,
+  newIdempotencyKey,
+  useApi,
+  useErrorMessage,
+} from '@/lib/client/api';
+import { useFormat, type Tone } from '@/lib/client/format';
 import { ErrorState, Section, StateBadge } from '../primitives';
 import { DomainVerificationCard } from './domain-verification';
 import { ScanScheduleLine } from './scan-schedule';
-import { ACTIVE_SCAN_STATES, type ScanDetail, type ScanState, type WebsiteScan } from './types';
+import {
+  ACTIVE_SCAN_STATES,
+  type ImageSource,
+  type ScanDetail,
+  type ScanState,
+  type WebsiteScan,
+} from './types';
 
 // A6.1 / A6.8 — scan the business website: start a scan (with the A6.7 ownership warranty),
 // poll the running scan, and show scan history. 13.10: the automatic rescan schedule line;
@@ -23,27 +37,40 @@ import { ACTIVE_SCAN_STATES, type ScanDetail, type ScanState, type WebsiteScan }
 export const SCAN_POLL_MS = 3_000;
 
 /**
- * A6.7 / A11.2 — the ownership warranty. The checkbox shows exactly this text and the scan
- * request sends it (ownershipStatement), so the scan record keeps what the user agreed to.
+ * A6.7 / A11.2 — the ownership warranty. The checkbox shows exactly this text (in the interface
+ * language: business.scan.ownershipStatement) and the scan request sends it
+ * (ownershipStatement), so the scan record keeps what the user agreed to. This constant is the
+ * en-GB wording.
  */
 export const OWNERSHIP_STATEMENT =
   'I own this website or am authorised to represent it, including its images.';
 
-const SCAN_STATE: Record<ScanState, { label: string; tone: Tone }> = {
-  QUEUED: { label: 'Queued', tone: 'live' },
-  RUNNING: { label: 'Scanning your site', tone: 'live' },
-  SUCCEEDED: { label: 'Done', tone: 'good' },
-  FAILED: { label: 'Failed', tone: 'bad' },
+const SCAN_STATE_TONE: Record<ScanState, Tone> = {
+  QUEUED: 'live',
+  RUNNING: 'live',
+  SUCCEEDED: 'good',
+  FAILED: 'bad',
 };
 
-const SOURCE_LABEL: Record<string, string> = {
-  SCRAPED: 'from your site',
-  STOCK: 'stock',
-  GENERATED: 'generated',
-  UPLOAD: 'uploaded',
-};
+const LIBRARY_SOURCES: ReadonlySet<string> = new Set<ImageSource>([
+  'SCRAPED',
+  'STOCK',
+  'GENERATED',
+  'UPLOAD',
+]);
+
+function isImageSource(source: string): source is ImageSource {
+  return LIBRARY_SOURCES.has(source);
+}
+
+function ScanStateBadge({ state }: { state: ScanState }) {
+  const t = useTranslations('business.scan.states');
+  return <StateBadge label={t(state)} tone={SCAN_STATE_TONE[state]} />;
+}
 
 function ScanProgress({ scanId, onSettled }: { scanId: string; onSettled: () => void }) {
+  const t = useTranslations('business.scan');
+  const f = useFormat();
   const { data, error } = useApi<{ scan: ScanDetail }>(`/scans/${scanId}`, undefined, {
     refreshInterval: (latest) =>
       latest && !ACTIVE_SCAN_STATES.has(latest.scan.state) ? 0 : SCAN_POLL_MS,
@@ -64,43 +91,47 @@ function ScanProgress({ scanId, onSettled }: { scanId: string; onSettled: () => 
   }, [state]);
 
   if (error) return <ErrorState error={error} />;
-  if (!data) return <Skeleton aria-label="Loading scan" className="h-28 rounded-xl" />;
+  if (!data) return <Skeleton aria-label={t('loadingScan')} className="h-28 rounded-xl" />;
   const { scan } = data;
   const total = Object.values(scan.library).reduce((a, b) => a + (b ?? 0), 0);
   return (
     <div aria-live="polite" className="rounded-xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="min-w-0 truncate text-sm font-medium">{scan.url}</p>
-        <StateBadge {...SCAN_STATE[scan.state]} />
+        <ScanStateBadge state={scan.state} />
       </div>
       <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div>
-          <dt className="text-xs text-muted-foreground">Pages read</dt>
-          <dd className="tabular font-display text-3xl leading-none">{scan.pagesCrawled}</dd>
+          <dt className="text-xs text-muted-foreground">{t('pagesRead')}</dt>
+          <dd className="tabular font-display text-3xl leading-none">
+            {f.number(scan.pagesCrawled)}
+          </dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Images from your site</dt>
-          <dd className="tabular font-display text-3xl leading-none">{scan.imagesIngested}</dd>
+          <dt className="text-xs text-muted-foreground">{t('imagesFromSite')}</dt>
+          <dd className="tabular font-display text-3xl leading-none">
+            {f.number(scan.imagesIngested)}
+          </dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Image library</dt>
-          <dd className="tabular font-display text-3xl leading-none">{total}</dd>
+          <dt className="text-xs text-muted-foreground">{t('imageLibrary')}</dt>
+          <dd className="tabular font-display text-3xl leading-none">{f.number(total)}</dd>
         </div>
       </dl>
       {!active && total > 0 && (
         <p className="mt-3 text-xs text-muted-foreground">
           {Object.entries(scan.library)
-            .map(([source, n]) => `${n} ${SOURCE_LABEL[source] ?? source.toLowerCase()}`)
+            .map(([source, n]) =>
+              isImageSource(source)
+                ? t(`librarySources.${source}`, { count: n ?? 0 })
+                : `${f.number(n)} ${source.toLowerCase()}`,
+            )
             .join(' · ')}
         </p>
       )}
-      {scan.robotsBlocked && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Your site’s robots.txt asked us not to read some pages, so we skipped them.
-        </p>
-      )}
+      {scan.robotsBlocked && <p className="mt-3 text-xs text-muted-foreground">{t('robots')}</p>}
       {scan.errors.length > 0 && (
-        <ul className="mt-3 list-disc pl-5 text-xs text-destructive">
+        <ul className="mt-3 list-disc ps-5 text-xs text-destructive">
           {scan.errors.map((e) => (
             <li key={e}>{e}</li>
           ))}
@@ -117,6 +148,9 @@ function ScanForm({
   businessId: string;
   onStarted: (id: string) => void;
 }) {
+  const t = useTranslations('business.scan');
+  const errorMessage = useErrorMessage();
+  const ownershipStatement = t('ownershipStatement');
   const [url, setUrl] = useState('');
   const [owner, setOwner] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -131,12 +165,12 @@ function ScanForm({
           body: {
             url: url.trim(),
             ownershipConfirmed: true,
-            ownershipStatement: OWNERSHIP_STATEMENT,
+            ownershipStatement,
           },
           idempotencyKey: newIdempotencyKey(),
         },
       );
-      toast.success('Scan started — this takes 2–5 minutes');
+      toast.success(t('started'));
       onStarted(res.scanId);
     } catch (err) {
       const running = err instanceof ApiError ? err.details?.scanId : undefined;
@@ -156,18 +190,18 @@ function ScanForm({
       }}
     >
       <div className="grid gap-1.5">
-        <Label htmlFor="scan-url">Website address</Label>
+        <Label htmlFor="scan-url">{t('urlLabel')}</Label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id="scan-url"
             inputMode="url"
-            placeholder="yourbusiness.co.uk"
+            placeholder={t('urlPlaceholder')}
             maxLength={2000}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
           <Button type="submit" disabled={!url.trim() || !owner || busy}>
-            {busy ? <Loader2 className="animate-spin" /> : <ScanSearch />} Scan website
+            {busy ? <Loader2 className="animate-spin" /> : <ScanSearch />} {t('submit')}
           </Button>
         </div>
       </div>
@@ -179,21 +213,20 @@ function ScanForm({
           className="mt-0.5"
         />
         <Label htmlFor="scan-owner" className="text-sm leading-snug font-normal">
-          {OWNERSHIP_STATEMENT}
+          {ownershipStatement}
         </Label>
       </div>
       {/* 14.4: the browser-render fallback policy, stated where the confirmation is given. */}
       <p className="text-muted-foreground text-xs leading-snug" data-testid="scan-render-policy">
-        If your site turns our scanner away (for example with a bot check), we may load your
-        homepage once in a browser, and only because you have confirmed it is your site. We never
-        use this to get round another company&apos;s bot protection. If it still fails, fill in your
-        profile by hand or add our scanner to your site&apos;s allow-list.
+        {t('renderPolicy')}
       </p>
     </form>
   );
 }
 
 export function ScanPanel({ businessId }: { businessId: string }) {
+  const t = useTranslations('business.scan');
+  const f = useFormat();
   const scansPath = `/businesses/${encodeURIComponent(businessId)}/scans`;
   const { data, error, isLoading, mutate } = useApi<{ data: WebsiteScan[] }>(scansPath);
   const { mutate: mutateGlobal } = useSWRConfig();
@@ -210,10 +243,7 @@ export function ScanPanel({ businessId }: { businessId: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
       <div className="grid content-start gap-6">
-        <Section
-          title="Scan your website"
-          description="Studio reads your site, works out your niche and builds an image library from your pages, stock photos and generated images."
-        >
+        <Section title={t('title')} description={t('description')}>
           <div className="grid gap-4">
             <ScanForm
               businessId={businessId}
@@ -228,26 +258,27 @@ export function ScanPanel({ businessId }: { businessId: string }) {
         {focusId && <ScanProgress key={focusId} scanId={focusId} onSettled={onSettled} />}
         <DomainVerificationCard businessId={businessId} />
       </div>
-      <Section title="Scan history">
+      <Section title={t('history')}>
         {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-        {isLoading && <Skeleton aria-label="Loading scans" className="h-24" />}
+        {isLoading && <Skeleton aria-label={t('loadingHistory')} className="h-24" />}
         {data && data.data.length === 0 && (
-          <p className="text-sm text-muted-foreground">No scans yet.</p>
+          <p className="text-sm text-muted-foreground">{t('noScans')}</p>
         )}
         {data && data.data.length > 0 && (
-          <ul className="divide-y divide-border/70" aria-label="Scan history">
+          <ul className="divide-y divide-border/70" aria-label={t('history')}>
             {data.data.map((s) => (
               <li key={s.id} className="flex items-center justify-between gap-3 py-2.5">
                 <span className="min-w-0">
                   <span className="block truncate text-sm">{s.url}</span>
-                  <span
-                    className="block text-xs text-muted-foreground"
-                    title={formatDate(s.startedAt)}
-                  >
-                    {relativeTime(s.startedAt)} · {s.pagesCrawled} pages · {s.imagesIngested} images
+                  <span className="block text-xs text-muted-foreground" title={f.date(s.startedAt)}>
+                    {t('historyRow', {
+                      when: f.relative(s.startedAt),
+                      pages: s.pagesCrawled,
+                      images: s.imagesIngested,
+                    })}
                   </span>
                 </span>
-                <StateBadge {...SCAN_STATE[s.state]} />
+                <ScanStateBadge state={s.state} />
               </li>
             ))}
           </ul>

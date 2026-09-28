@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { Search, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +41,8 @@ export function LibraryFilters({
   categories: CategoryOption[];
   onChange: (next: LibraryFilterState) => void;
 }) {
+  const t = useTranslations('library.filters');
+  const tc = useTranslations('common.actions');
   // Text inputs are applied on submit so each keystroke doesn't refetch.
   const [draft, setDraft] = useState({ mood: value.mood, tags: value.tags, search: value.search });
   const active =
@@ -53,18 +56,18 @@ export function LibraryFilters({
   return (
     <form
       onSubmit={submit}
-      aria-label="Filter the library"
+      aria-label={t('formAria')}
       className="grid grid-cols-1 gap-3 border-y border-border/70 py-4 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.4fr_auto] lg:items-end"
     >
       <div className="grid gap-1.5">
-        <Label htmlFor="library-category">Category</Label>
+        <Label htmlFor="library-category">{t('category')}</Label>
         <select
           id="library-category"
           className={selectClass}
           value={value.category}
           onChange={(e) => onChange({ ...value, category: e.target.value })}
         >
-          <option value="">All categories</option>
+          <option value="">{t('allCategories')}</option>
           {categories.map((c) => (
             <option key={c.slug} value={c.slug}>
               {`${'  '.repeat(c.depth)}${c.depth ? '└ ' : ''}${c.label}`}
@@ -73,7 +76,7 @@ export function LibraryFilters({
         </select>
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="library-duration">Length</Label>
+        <Label htmlFor="library-duration">{t('length')}</Label>
         <select
           id="library-duration"
           className={selectClass}
@@ -82,46 +85,46 @@ export function LibraryFilters({
         >
           {DURATION_FILTERS.map((d) => (
             <option key={d.key} value={d.key}>
-              {d.label}
+              {t(`duration.${d.key}`)}
             </option>
           ))}
         </select>
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="library-mood">Mood</Label>
+        <Label htmlFor="library-mood">{t('mood')}</Label>
         <Input
           id="library-mood"
-          placeholder="e.g. upbeat"
+          placeholder={t('moodPlaceholder')}
           value={draft.mood}
           onChange={(e) => setDraft({ ...draft, mood: e.target.value })}
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="library-tags">Tags</Label>
+        <Label htmlFor="library-tags">{t('tags')}</Label>
         <Input
           id="library-tags"
-          placeholder="comma separated"
+          placeholder={t('tagsPlaceholder')}
           value={draft.tags}
           onChange={(e) => setDraft({ ...draft, tags: e.target.value })}
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="library-search">Search the library</Label>
+        <Label htmlFor="library-search">{t('search')}</Label>
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute top-1/2 start-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             id="library-search"
             type="search"
-            placeholder="e.g. moody 5am bakery POV"
+            placeholder={t('searchPlaceholder')}
             value={draft.search}
             onChange={(e) => setDraft({ ...draft, search: e.target.value })}
-            className="pl-8"
+            className="ps-8"
           />
         </div>
       </div>
       <div className={cn('flex gap-2', 'sm:col-span-2 lg:col-span-1')}>
         <Button type="submit" className="flex-1 lg:flex-none">
-          Apply
+          {tc('apply')}
         </Button>
         {active && (
           <Button
@@ -132,7 +135,7 @@ export function LibraryFilters({
               onChange(EMPTY_FILTERS);
             }}
           >
-            <X /> Clear
+            <X /> {t('clear')}
           </Button>
         )}
       </div>

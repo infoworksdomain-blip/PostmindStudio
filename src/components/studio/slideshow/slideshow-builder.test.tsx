@@ -66,7 +66,7 @@ describe('SlideshowBuilder', () => {
     expect(screen.getByLabelText('Loading slides')).toBeInTheDocument();
     expect(await screen.findByText('Five cafe tips')).toBeInTheDocument();
     expect(screen.getByText('needs an image')).toBeInTheDocument();
-    expect(screen.getByText(/1 need attention/)).toBeInTheDocument();
+    expect(screen.getByText(/1 needs attention/)).toBeInTheDocument();
     expect(screen.getByText('Best latte')).toBeInTheDocument();
   });
 
@@ -190,8 +190,10 @@ describe('SlideshowBuilder', () => {
   });
 
   it('summarises slides by type', () => {
-    expect(slideSummary(slide({ content: { value: '3x', label: 'faster' } }))).toBe('3x faster');
-    expect(slideSummary(slide({ content: {} }))).toBe('No text');
+    expect(slideSummary(slide({ content: { value: '3x', label: 'faster' } }))).toEqual({
+      text: '3x faster',
+    });
+    expect(slideSummary(slide({ content: {} }))).toEqual({ key: 'noText' });
   });
 });
 

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Hourglass } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { ReasonDialog } from './reason-dialog';
 import type { PendingGlobalKill } from './types';
 
@@ -29,6 +30,9 @@ export function PendingGlobalKillBanner({
   const [open, setOpen] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const left = minutesLeft(pending.expiresAt);
+  const t = useTranslations('admin.killSwitch.pending');
+  const f = useFormat();
+  const who = (chunks: ReactNode) => <span className="font-mono text-foreground">{chunks}</span>;
 
   return (
     <section
@@ -39,18 +43,20 @@ export function PendingGlobalKillBanner({
         <Hourglass className="mt-1 size-5 shrink-0 text-amber-700 dark:text-amber-400" />
         <div className="min-w-0">
           <h2 id="pending-global-kill" className="font-display text-xl leading-tight">
-            Global kill waiting for a second approver
+            {t('title')}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Requested by{' '}
-            <span className="font-mono text-foreground">
-              {pending.requestedByYou ? 'you' : pending.requestedBy}
-            </span>{' '}
-            at {formatDate(pending.requestedAt)} — expires in {left} min.
+            {pending.requestedByYou
+              ? t.rich('requestedByYou', { who, at: f.date(pending.requestedAt), minutes: left })
+              : t.rich('requestedBy', {
+                  who,
+                  name: pending.requestedBy,
+                  at: f.date(pending.requestedAt),
+                  minutes: left,
+                })}
           </p>
           <p className="mt-2 text-sm">
-            <span className="text-muted-foreground">Reason: </span>
-            {pending.reason}
+            <span className="text-muted-foreground">{t('reasonLabel')}</span> {pending.reason}
           </p>
         </div>
       </div>
@@ -60,7 +66,7 @@ export function PendingGlobalKillBanner({
           disabled={pending.requestedByYou}
           onClick={() => setOpen(true)}
         >
-          Confirm and halt Studio
+          {t('confirm')}
         </Button>
         <Button
           variant="outline"
@@ -71,20 +77,18 @@ export function PendingGlobalKillBanner({
             setWithdrawing(false);
           }}
         >
-          Withdraw request
+          {t('withdraw')}
         </Button>
         {pending.requestedByYou && (
-          <p className="text-sm text-muted-foreground">
-            Another PostMind staff member must confirm your request.
-          </p>
+          <p className="text-sm text-muted-foreground">{t('ownRequest')}</p>
         )}
       </div>
       <ReasonDialog
         open={open}
         onOpenChange={setOpen}
-        title="Confirm the global kill?"
-        description={`Second approval for ${pending.requestedBy}’s request. Every organisation’s Studio jobs stop at their next step.`}
-        confirmLabel="Confirm and halt"
+        title={t('dialogTitle')}
+        description={t('dialogDescription', { name: pending.requestedBy })}
+        confirmLabel={t('dialogConfirm')}
         confirmPhrase={confirmPhrase}
         destructive
         onConfirm={onConfirm}

@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowRight, Clapperboard, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { BrandKit, Project } from '@/lib/client/types';
 import type { ProjectTemplate } from '../automation/automation';
 import type { CreateProjectBody } from '../create/body';
@@ -20,7 +21,7 @@ const INTRO_PREFIX = 'introduce yourself';
 const BRIEF_MAX = 4_000;
 
 export function findIntroTemplate(templates: ProjectTemplate[]): ProjectTemplate | undefined {
-  return templates.find((t) => t.builtIn && t.name.toLowerCase().startsWith(INTRO_PREFIX));
+  return templates.find((tpl) => tpl.builtIn && tpl.name.toLowerCase().startsWith(INTRO_PREFIX));
 }
 
 export function FirstVideoStep({
@@ -32,6 +33,8 @@ export function FirstVideoStep({
   projectId: string | null;
   onCreated: (projectId: string) => Promise<void>;
 }) {
+  const t = useTranslations('onboarding.firstVideo');
+  const errorMessage = useErrorMessage();
   const briefId = useId();
   const templates = useApi<{ data: ProjectTemplate[] }>(projectId ? null : '/templates');
   const kits = useApi<{ data: BrandKit[] }>(projectId ? null : '/brand-kits', { businessId });
@@ -44,15 +47,12 @@ export function FirstVideoStep({
   if (projectId) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="font-display text-3xl">Your first video is on its way</h2>
-        <p className="text-sm text-muted-foreground">
-          Studio is writing the script and gathering shots. Review it when it is ready, then
-          publish.
-        </p>
+        <h2 className="font-display text-3xl">{t('started.title')}</h2>
+        <p className="text-sm text-muted-foreground">{t('started.body')}</p>
         <div>
           <Button asChild variant="outline">
             <Link href={`/projects/${projectId}`}>
-              Open your video <ArrowRight />
+              {t('started.action')} <ArrowRight className="rtl:-scale-x-100" />
             </Link>
           </Button>
         </div>
@@ -83,7 +83,7 @@ export function FirstVideoStep({
         idempotencyKey: newIdempotencyKey(),
       });
     } catch (err) {
-      toast.error(`Saved as a draft, but generation didn’t start: ${errorMessage(err)}`);
+      toast.error(t('generationNotStarted', { reason: errorMessage(err) }));
     }
     return project.id;
   }
@@ -106,26 +106,23 @@ export function FirstVideoStep({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="font-display text-3xl">Make your first video</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Start with a short introduction: who you are and what you do. Studio plans the shots,
-          writes the script and uses your brand kit.
-        </p>
+        <h2 className="font-display text-3xl">{t('title')}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t('description')}</p>
       </div>
       {templates.error && (
         <ErrorState error={templates.error} onRetry={() => void templates.mutate()} />
       )}
       {!templates.data && !templates.error && (
-        <Skeleton className="h-24 rounded-xl" aria-label="Loading templates" />
+        <Skeleton className="h-24 rounded-xl" aria-label={t('loadingTemplates')} />
       )}
       {templates.data && !template && (
         <EmptyState
           icon={<Clapperboard className="size-8" strokeWidth={1.5} />}
-          title="The intro template isn’t available"
-          description="You can still describe your first video on the Create screen."
+          title={t('noTemplate.title')}
+          description={t('noTemplate.description')}
           action={
             <Button asChild variant="outline">
-              <Link href="/new">Open Create</Link>
+              <Link href="/new">{t('noTemplate.action')}</Link>
             </Button>
           }
         />
@@ -134,7 +131,7 @@ export function FirstVideoStep({
         <>
           <div className="flex flex-col gap-2">
             <label htmlFor={briefId} className="text-sm font-medium">
-              Anything to mention? (optional)
+              {t('briefLabel')}
             </label>
             <textarea
               id={briefId}
@@ -142,14 +139,14 @@ export function FirstVideoStep({
               maxLength={BRIEF_MAX}
               rows={3}
               onChange={(e) => setBrief(e.target.value)}
-              placeholder="Family bakery in Leeds since 2009 — sourdough, pastries and Saturday classes."
+              placeholder={t('briefPlaceholder')}
               className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
             />
           </div>
           <div>
             <Button onClick={() => void create()} disabled={creating}>
               {creating ? <Loader2 className="animate-spin" /> : <Clapperboard />}
-              Make my intro video
+              {t('create')}
             </Button>
           </div>
         </>

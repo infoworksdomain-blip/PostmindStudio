@@ -2,6 +2,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
 import { forbidden, mockFetch, renderWithSWR } from '../library/test-helpers';
 import { ProvidersPanel, QueuesPanel } from './health-panels';
 import { OrganisationPanel } from './organisation-panel';
@@ -239,7 +240,7 @@ describe('OrganisationPanel', () => {
     );
 
     const caps = await screen.findByRole('form', { name: 'Cost cap overrides' });
-    expect(within(caps).getByText(/standard £30.00/)).toBeInTheDocument();
+    expect(within(caps).getByText(/Standard £30\.00/)).toBeInTheDocument();
     const save = within(caps).getByRole('button', { name: /Save cost caps/ });
     expect(save).toBeDisabled(); // a reason is required
     await user.type(within(caps).getByLabelText('Daily cap override (£)'), '200');
@@ -252,5 +253,20 @@ describe('OrganisationPanel', () => {
         reason: 'Pilot, agreed with Commercial',
       }),
     );
+  });
+});
+
+describe('OrganisationPanel i18n (BACKLOG 16.1)', () => {
+  it('renders in Arabic, right to left', () => {
+    renderWithSWR(withLocale('ar', <OrganisationPanel />));
+    expect(screen.getByLabelText('معرّف المؤسسة')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'فتح' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+  });
+
+  it('renders in Simplified Chinese', () => {
+    renderWithSWR(withLocale('zh-Hans', <OrganisationPanel />));
+    expect(screen.getByLabelText('组织 ID')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '打开' })).toBeInTheDocument();
   });
 });

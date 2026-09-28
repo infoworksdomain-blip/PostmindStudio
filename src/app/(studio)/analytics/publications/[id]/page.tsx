@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { PublicationAnalytics } from '@/components/studio/analytics/publication-analytics';
 
-export const metadata: Metadata = { title: 'Publication analytics' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('shell.pageTitle');
+  return { title: t('publicationAnalytics') };
+}
 
 export default async function PublicationAnalyticsPage({
   params,

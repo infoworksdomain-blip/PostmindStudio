@@ -179,7 +179,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="lg:hidden">
             <Wordmark />
           </div>
-          <div className="ms-auto flex items-center gap-2">
+          <div className="ms-auto flex min-w-0 items-center gap-2">
             <div className="hidden md:block">
               <BusinessSwitcher />
             </div>

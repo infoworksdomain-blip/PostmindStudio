@@ -30,16 +30,26 @@ export interface UploadResult {
   } | null;
 }
 
+/** Why a file cannot be uploaded (a message key under create.upload.problems). */
+export type UploadProblem =
+  { code: 'type' } | { code: 'empty' } | { code: 'tooLarge'; maxMb: number };
+
+/** English text for the ApiError uploadVideo throws; screens show the localised message. */
+export function uploadProblemText(problem: UploadProblem): string {
+  if (problem.code === 'type') return 'Choose an MP4, MOV or WebM video.';
+  if (problem.code === 'empty') return 'The file is empty.';
+  return `Videos can be at most ${problem.maxMb} MB.`;
+}
+
 /** Why a file cannot be uploaded, or null. Checked before any request is made. */
 export function uploadProblem(
   file: { type: string; size: number },
   kind: UploadKind,
-): string | null {
-  if (!(UPLOAD_TYPES as readonly string[]).includes(file.type))
-    return 'Choose an MP4, MOV or WebM video.';
-  if (file.size <= 0) return 'The file is empty.';
+): UploadProblem | null {
+  if (!(UPLOAD_TYPES as readonly string[]).includes(file.type)) return { code: 'type' };
+  if (file.size <= 0) return { code: 'empty' };
   if (file.size > UPLOAD_MAX_BYTES[kind])
-    return `Videos can be at most ${Math.round(UPLOAD_MAX_BYTES[kind] / 1024 / 1024)} MB.`;
+    return { code: 'tooLarge', maxMb: Math.round(UPLOAD_MAX_BYTES[kind] / 1024 / 1024) };
   return null;
 }
 
@@ -49,7 +59,7 @@ export async function uploadVideo(
   fetchImpl: typeof fetch = fetch,
 ): Promise<UploadResult> {
   const problem = uploadProblem(file, target.kind);
-  if (problem) throw new ApiError(400, 'validation_error', problem);
+  if (problem) throw new ApiError(400, 'validation_error', uploadProblemText(problem));
   const { upload } = await api<{
     upload: { id: string; putUrl: string; headers: Record<string, string> };
   }>('/uploads', {

@@ -1,4 +1,7 @@
+'use client';
+
 import { Music, VolumeX } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ProjectDetail } from '@/lib/client/types';
 
 // Review screen: what happened to Layer 5 music for the latest run (pipeline/music.ts writes
@@ -29,26 +32,34 @@ export function readMusic(metadata: unknown): MusicState | null {
   return null;
 }
 
-function text(state: MusicState): string {
+type MusicT = ReturnType<typeof useTranslations<'review.music'>>;
+
+function text(state: MusicState, t: MusicT): string {
   switch (state.status) {
-    case 'generated':
-      return `Background music generated${state.durationSec ? ` (${Math.round(state.durationSec)} s track)` : ''}${state.reused ? ' — reused from an earlier render' : ''}.`;
+    case 'generated': {
+      if (!state.durationSec) return state.reused ? t('generatedReused') : t('generated');
+      const seconds = Math.round(state.durationSec);
+      return state.reused
+        ? t('generatedTrackReused', { seconds })
+        : t('generatedTrack', { seconds });
+    }
     case 'off_for_plan':
-      return 'No background music on this plan — narration only.';
+      return t('offForPlan');
     case 'failed':
-      return 'Background music could not be made, so this video has narration only.';
+      return t('failed');
     case 'none':
-      return 'Rendered before background music was available — narration only.';
+      return t('none');
   }
 }
 
 export function MusicStatus({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.music');
   const state = readMusic(project.metadata);
   if (!state) return null;
   const Icon = state.status === 'generated' ? Music : VolumeX;
   return (
     <p
-      aria-label="Music"
+      aria-label={t('aria')}
       className="flex items-start gap-2 rounded-lg border border-border/70 px-3 py-2 text-sm"
     >
       <Icon
@@ -56,7 +67,7 @@ export function MusicStatus({ project }: { project: ProjectDetail }) {
         strokeWidth={1.5}
       />
       <span>
-        {text(state)}
+        {text(state, t)}
         {state.status === 'failed' && state.reason && (
           <span className="block text-xs text-muted-foreground">{state.reason}</span>
         )}

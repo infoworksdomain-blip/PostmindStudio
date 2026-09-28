@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { LayoutTemplate, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ export function SaveTemplate({
   projectId: string;
   defaultName: string;
 }) {
+  const t = useTranslations('review.saveTemplate');
   const { pending, run, busy } = useAction();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(defaultName.slice(0, 120));
@@ -28,7 +30,7 @@ export function SaveTemplate({
   async function save() {
     const ok = await run('save', '/templates', {
       body: { projectId, name: name.trim(), category },
-      success: 'Saved as a template — pick it on the Create screen.',
+      success: t('saved'),
     });
     if (ok) setOpen(false);
   }
@@ -36,13 +38,13 @@ export function SaveTemplate({
   if (!open)
     return (
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <LayoutTemplate /> Save as template
+        <LayoutTemplate /> {t('open')}
       </Button>
     );
   return (
-    <div className="flex flex-col gap-3" role="group" aria-label="Save as template">
+    <div className="flex flex-col gap-3" role="group" aria-label={t('aria')}>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field id="template-name" label="Template name">
+        <Field id="template-name" label={t('name')}>
           <Input
             id="template-name"
             value={name}
@@ -52,8 +54,8 @@ export function SaveTemplate({
         </Field>
         <Field
           id="template-category"
-          label="Category"
-          hint={categoryOk ? undefined : 'Lowercase letters, digits and _ only.'}
+          label={t('category')}
+          hint={categoryOk ? undefined : t('categoryHint')}
         >
           <Input
             id="template-category"
@@ -66,10 +68,10 @@ export function SaveTemplate({
       </div>
       <div className="flex justify-end gap-2">
         <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
-          Cancel
+          {t('cancel')}
         </Button>
         <Button onClick={save} disabled={busy || !name.trim() || !categoryOk}>
-          {pending && <Loader2 className="animate-spin" />} Save template
+          {pending && <Loader2 className="animate-spin" />} {t('save')}
         </Button>
       </div>
     </div>

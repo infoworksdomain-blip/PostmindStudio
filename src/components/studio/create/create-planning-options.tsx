@@ -1,7 +1,9 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
-import { LANGUAGES } from '@/lib/studio/languages';
+import { useFormat } from '@/lib/client/format';
+import { LANGUAGES, type StudioLanguage } from '@/lib/studio/languages';
 import { cn } from '@/lib/utils';
 import { Field, NativeSelect } from '../review/field';
 import { tiersAtOrBelow, type CreateState, type QualityTier } from './body';
@@ -11,19 +13,22 @@ import { tiersAtOrBelow, type CreateState, type QualityTier } from './body';
 
 type Patch = (patch: Partial<CreateState>) => void;
 
-const TIER_LABEL: Record<QualityTier, string> = {
-  BASIC: 'Basic',
-  STANDARD: 'Standard',
-  PLUS: 'Plus',
-  ENTERPRISE: 'Enterprise',
-};
-
 export interface WorkflowOption {
   id: string;
   name: string;
 }
 
+/** A content language's name in the interface language (English names in English). */
+function useLanguageName(): (l: StudioLanguage) => string {
+  const { locale } = useFormat();
+  if (locale.startsWith('en')) return (l) => l.name;
+  const names = new Intl.DisplayNames([locale], { type: 'language' });
+  return (l) => names.of(l.code) ?? l.name;
+}
+
 export function LanguageOptions({ state, onChange }: { state: CreateState; onChange: Patch }) {
+  const t = useTranslations('create.planning');
+  const languageName = useLanguageName();
   const primary = state.language ?? 'en-GB';
   const extras = state.extraLanguages ?? [];
   const toggle = (code: string) =>
@@ -32,7 +37,7 @@ export function LanguageOptions({ state, onChange }: { state: CreateState; onCha
     });
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field id="create-language" label="Language">
+      <Field id="create-language" label={t('language')}>
         <NativeSelect
           id="create-language"
           value={primary}
@@ -45,14 +50,16 @@ export function LanguageOptions({ state, onChange }: { state: CreateState; onCha
         >
           {LANGUAGES.map((l) => (
             <option key={l.code} value={l.code}>
-              {l.name === l.nativeName ? l.name : `${l.name} — ${l.nativeName}`}
+              {languageName(l) === l.nativeName
+                ? l.nativeName
+                : t('languageOption', { name: languageName(l), nativeName: l.nativeName })}
             </option>
           ))}
         </NativeSelect>
       </Field>
       <fieldset>
         <legend className="mb-2 text-xs font-medium text-muted-foreground">
-          Also make it in (one version per language)
+          {t('alsoMakeIn')}
         </legend>
         <div className="flex flex-wrap gap-1.5">
           {LANGUAGES.filter((l) => l.code !== primary).map((l) => {
@@ -96,37 +103,32 @@ export function PlanningAdvancedOptions({
   planTier: QualityTier | undefined;
   workflows: WorkflowOption[] | undefined;
 }) {
+  const t = useTranslations('create.planning');
   const isSlideshow = state.source === 'SLIDESHOW';
   return (
     <>
-      <Field
-        id="create-tier"
-        label="Quality tier"
-        hint="A lower tier uses cheaper providers for this video. It can never go above your plan."
-      >
+      <Field id="create-tier" label={t('tier')} hint={t('tierHint')}>
         <NativeSelect
           id="create-tier"
           value={state.qualityTier ?? ''}
           disabled={!planTier || isSlideshow}
           onChange={(e) => onChange({ qualityTier: e.target.value as QualityTier | '' })}
         >
-          <option value="">{planTier ? `Your plan (${TIER_LABEL[planTier]})` : 'Your plan'}</option>
+          <option value="">
+            {planTier ? t('tierPlan', { tier: t(`tiers.${planTier}`) }) : t('tierPlanUnknown')}
+          </option>
           {planTier &&
             tiersAtOrBelow(planTier)
               .filter((t) => t !== planTier)
               .reverse()
-              .map((t) => (
-                <option key={t} value={t}>
-                  {TIER_LABEL[t]}
+              .map((tier) => (
+                <option key={tier} value={tier}>
+                  {t(`tiers.${tier}`)}
                 </option>
               ))}
         </NativeSelect>
       </Field>
-      <Field
-        id="create-schedule"
-        label="Schedule"
-        hint="Publishes to the auto-publish accounts at this time once approved."
-      >
+      <Field id="create-schedule" label={t('schedule')} hint={t('scheduleHint')}>
         <Input
           id="create-schedule"
           type="datetime-local"
@@ -135,7 +137,7 @@ export function PlanningAdvancedOptions({
           onChange={(e) => onChange({ scheduleAt: e.target.value })}
         />
       </Field>
-      <Field id="create-workflow" label="Approval workflow">
+      <Field id="create-workflow" label={t('workflow')}>
         <NativeSelect
           id="create-workflow"
           value={state.approvalWorkflowId ?? ''}
@@ -143,7 +145,7 @@ export function PlanningAdvancedOptions({
           onChange={(e) => onChange({ approvalWorkflowId: e.target.value })}
         >
           <option value="">
-            {workflows && workflows.length === 0 ? 'No workflows set up' : 'Organisation rules'}
+            {workflows && workflows.length === 0 ? t('workflowNone') : t('workflowOrg')}
           </option>
           {workflows?.map((w) => (
             <option key={w.id} value={w.id}>

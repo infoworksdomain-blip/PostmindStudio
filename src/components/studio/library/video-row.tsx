@@ -9,18 +9,21 @@ import type { LibraryVideoSummary } from './types';
 
 export function VideoRow({
   label,
+  loadingLabel,
   videos,
   isLoading,
   empty,
 }: {
   label: string;
+  /** Accessible name of the loading skeleton. */
+  loadingLabel: string;
   videos: LibraryVideoSummary[] | undefined;
   isLoading: boolean;
   empty?: ReactNode;
 }) {
   if (isLoading) {
     return (
-      <div aria-label={`Loading ${label}`} className="flex gap-4 overflow-hidden">
+      <div aria-label={loadingLabel} className="flex gap-4 overflow-hidden">
         {Array.from({ length: 5 }, (_, i) => (
           <Skeleton key={i} className="aspect-[4/5] w-36 shrink-0 rounded-xl sm:w-44" />
         ))}

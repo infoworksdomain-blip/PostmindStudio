@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { parseTags, type CategoryOption } from '../library/library-utils';
@@ -19,12 +20,13 @@ import type { IngestItem, IngestResponse, LicenseScenario } from './types';
 export const MAX_INGEST = 100;
 const MAX_TAGS = 20;
 
-const SCENARIOS: Array<{ value: LicenseScenario; label: string }> = [
-  { value: 'LICENSED', label: 'Licensed (Template + Inspire)' },
-  { value: 'OWNED', label: 'Owned (Template + Inspire)' },
-  { value: 'SCRAPED', label: 'Scraped (Inspire only)' },
-  { value: 'NOT_REQUIRED', label: 'Not required — operator-owned (Template + Inspire)' },
-];
+const MAX_INVALID_SHOWN = 3;
+const SCENARIOS = [
+  { value: 'LICENSED', label: 'scenarioLicensed' },
+  { value: 'OWNED', label: 'scenarioOwned' },
+  { value: 'SCRAPED', label: 'scenarioScraped' },
+  { value: 'NOT_REQUIRED', label: 'scenarioNotRequired' },
+] as const satisfies ReadonlyArray<{ value: LicenseScenario; label: string }>;
 
 export function parseUrls(text: string): { urls: string[]; invalid: string[] } {
   const lines = [
@@ -50,6 +52,8 @@ export function parseUrls(text: string): { urls: string[]; invalid: string[] } {
 }
 
 export function IngestForm({ categories }: { categories: CategoryOption[] }) {
+  const t = useTranslations('admin.library.ingest');
+  const errorMessage = useErrorMessage();
   const [text, setText] = useState('');
   const [scenario, setScenario] = useState<LicenseScenario>('LICENSED');
   const [licenseSource, setLicenseSource] = useState('');
@@ -81,9 +85,7 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
       });
       setQueued(res.queued);
       setText('');
-      toast.success(
-        `${res.queued.length} video${res.queued.length === 1 ? '' : 's'} queued for ingestion`,
-      );
+      toast.success(t('queued', { count: res.queued.length }));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -92,34 +94,35 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
   };
 
   return (
-    <Section
-      title="Add to the corpus"
-      description="One source URL per line (max 100). Each is downloaded, analysed and embedded in the background."
-    >
-      <form onSubmit={submit} aria-label="Ingest library videos" className="grid gap-4">
+    <Section title={t('title')} description={t('description', { max: MAX_INGEST })}>
+      <form onSubmit={submit} aria-label={t('formAria')} className="grid gap-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="ingest-urls">Source URLs</Label>
+          <Label htmlFor="ingest-urls">{t('urls')}</Label>
           <Textarea
             id="ingest-urls"
             rows={5}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="https://…"
+            placeholder={t('urlsPlaceholder')}
             className="font-mono text-xs"
             aria-invalid={invalid.length > 0 || tooMany}
             aria-describedby="ingest-urls-hint"
           />
           <p id="ingest-urls-hint" className="text-xs text-muted-foreground">
             {invalid.length > 0
-              ? `Not a valid http(s) URL: ${invalid.slice(0, 3).join(', ')}${invalid.length > 3 ? '…' : ''}`
+              ? t('invalid', {
+                  urls:
+                    invalid.slice(0, MAX_INVALID_SHOWN).join(', ') +
+                    (invalid.length > MAX_INVALID_SHOWN ? '…' : ''),
+                })
               : tooMany
-                ? `${urls.length} URLs — the limit is ${MAX_INGEST} per batch.`
-                : `${urls.length} URL${urls.length === 1 ? '' : 's'} ready`}
+                ? t('tooMany', { count: urls.length, max: MAX_INGEST })
+                : t('ready', { count: urls.length })}
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="ingest-scenario">Licence</Label>
+            <Label htmlFor="ingest-scenario">{t('licence')}</Label>
             <select
               id="ingest-scenario"
               className={selectClass}
@@ -128,30 +131,30 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
             >
               {SCENARIOS.map((s) => (
                 <option key={s.value} value={s.value}>
-                  {s.label}
+                  {t(s.label)}
                 </option>
               ))}
             </select>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ingest-source">Licence source</Label>
+            <Label htmlFor="ingest-source">{t('source')}</Label>
             <Input
               id="ingest-source"
               value={licenseSource}
               onChange={(e) => setLicenseSource(e.target.value)}
               maxLength={500}
-              placeholder="Agreement / owner"
+              placeholder={t('sourcePlaceholder')}
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ingest-category">Category</Label>
+            <Label htmlFor="ingest-category">{t('category')}</Label>
             <select
               id="ingest-category"
               className={selectClass}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              <option value="">Auto-classify</option>
+              <option value="">{t('autoClassify')}</option>
               {categories.map((c) => (
                 <option key={c.slug} value={c.slug}>
                   {`${'  '.repeat(c.depth)}${c.label}`}
@@ -160,30 +163,30 @@ export function IngestForm({ categories }: { categories: CategoryOption[] }) {
             </select>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ingest-tags">Tags</Label>
+            <Label htmlFor="ingest-tags">{t('tags')}</Label>
             <Input
               id="ingest-tags"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="comma separated"
+              placeholder={t('tagsPlaceholder')}
               aria-invalid={tooManyTags}
             />
             {tooManyTags && (
-              <p className="text-xs text-destructive">At most {MAX_TAGS} tags per video.</p>
+              <p className="text-xs text-destructive">{t('tooManyTags', { max: MAX_TAGS })}</p>
             )}
           </div>
         </div>
         <div>
           <Button type="submit" disabled={!valid || pending}>
             {pending && <Loader2 className="animate-spin" />}
-            Queue {urls.length || ''} for ingestion
+            {t('submit', { count: urls.length })}
           </Button>
         </div>
       </form>
       {queued.length > 0 && (
         <div className="mt-5 border-t border-border/70 pt-4">
-          <h3 className="mb-2 text-xs font-medium text-muted-foreground">Last batch queued</h3>
-          <ul aria-label="Queued ingest jobs" className="grid gap-1 text-xs">
+          <h3 className="mb-2 text-xs font-medium text-muted-foreground">{t('lastBatch')}</h3>
+          <ul aria-label={t('queuedAria')} className="grid gap-1 text-xs">
             {queued.map((q) => (
               <li key={q.jobId} className="flex min-w-0 justify-between gap-3">
                 <span className="truncate font-mono">{q.sourceUrl}</span>

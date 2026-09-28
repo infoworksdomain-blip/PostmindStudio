@@ -70,15 +70,10 @@ export interface LicenceAuditResponse {
   problemsTruncated: boolean;
 }
 
-export const LICENCE_BADGE: Record<LicenceStatus, { label: string; tone: Tone }> = {
-  missing: { label: 'No licence', tone: 'bad' },
-  expired: { label: 'Licence expired', tone: 'bad' },
-  expiring: { label: 'Licence expiring', tone: 'warn' },
-  ok: { label: 'Licensed', tone: 'good' },
-};
-
-export const REVIEW_LABEL: Record<CategoryReview, string> = {
-  ACCEPTED: 'Category accepted',
-  OVERRIDDEN: 'Category overridden',
-  REJECTED: 'Rejected',
+/** Badge tone per licence status; the label is admin.library.licenceBadge.<status>. */
+export const LICENCE_TONE: Record<LicenceStatus, Tone> = {
+  missing: 'bad',
+  expired: 'bad',
+  expiring: 'warn',
+  ok: 'good',
 };

@@ -6,6 +6,8 @@ import { mockFetch, renderWithSWR, summary, type MockRoute } from '../library/te
 import { parseUrls } from './ingest-form';
 import { buildPatch } from './library-edit-dialog';
 import { LibraryAdminPanel } from './library-admin-panel';
+import { ALL_MESSAGES } from '@/lib/i18n/all-messages';
+import { withLocale } from '../../../../test/i18n-wrapper';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -274,5 +276,29 @@ describe('LibraryAdminPanel corpus ingestion', () => {
     expect(
       await screen.findByRole('option', { name: /Not required — operator-owned/ }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('LibraryAdminPanel localisation', () => {
+  it('renders Arabic right-to-left', async () => {
+    mockFetch(routes());
+    renderWithSWR(withLocale('ar', <LibraryAdminPanel />));
+    const ar = ALL_MESSAGES.ar.admin.library;
+    expect(await screen.findByText(ar.panel.corpusTitle)).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: ar.status.countsAria })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', {
+        name: ar.row.editAria.replace('{title}', 'Morning coffee ritual'),
+      }),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
+  });
+
+  it('renders Simplified Chinese', async () => {
+    mockFetch(routes());
+    renderWithSWR(withLocale('zh-Hans', <LibraryAdminPanel />));
+    expect(await screen.findByText('语料库')).toBeInTheDocument();
+    expect(await screen.findByText('许可审计')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '添加到语料库' })).toBeInTheDocument();
   });
 });

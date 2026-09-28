@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { audioFileProblem, formatBytes, MAX_VOICE_SAMPLES } from './voice-types';
+import { MAX_VOICE_SAMPLES, useAudioFileProblem, useFormatBytes } from './voice-types';
 
 // 1–5 voice samples for cloning; each is checked client-side (audio, ≤ 10 MB) before upload.
 
@@ -16,6 +17,9 @@ export function VoiceSamplesInput({
   value: File[];
   onChange: (files: File[]) => void;
 }) {
+  const t = useTranslations('business.voice.samples');
+  const audioFileProblem = useAudioFileProblem();
+  const formatBytes = useFormatBytes();
   const [problem, setProblem] = useState<string | null>(null);
   const totalBytes = value.reduce((sum, f) => sum + f.size, 0);
 
@@ -23,13 +27,13 @@ export function VoiceSamplesInput({
     const bad = files.map(audioFileProblem).find(Boolean) ?? null;
     const good = files.filter((f) => !audioFileProblem(f));
     const room = MAX_VOICE_SAMPLES - value.length;
-    setProblem(bad ?? (good.length > room ? `Use at most ${MAX_VOICE_SAMPLES} samples.` : null));
+    setProblem(bad ?? (good.length > room ? t('tooMany', { max: MAX_VOICE_SAMPLES }) : null));
     onChange([...value, ...good.slice(0, room)]);
   }
 
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor="voice-samples">Voice samples</Label>
+      <Label htmlFor="voice-samples">{t('label')}</Label>
       <Input
         id="voice-samples"
         type="file"
@@ -41,22 +45,19 @@ export function VoiceSamplesInput({
           e.target.value = '';
         }}
       />
-      <p className="text-xs text-muted-foreground">
-        1–5 files, up to 10 MB each. About 1–2 minutes of clean speech in total works best: MP3 at
-        192 kbps or better, no music or background noise.
-      </p>
+      <p className="text-xs text-muted-foreground">{t('hint')}</p>
       {value.length > 0 && (
-        <ul className="grid gap-1 text-xs" aria-label="Selected samples">
-          {value.map((f, i) => (
-            <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2">
+        <ul className="grid gap-1 text-xs" aria-label={t('listAria')}>
+          {value.map((file, i) => (
+            <li key={`${file.name}-${i}`} className="flex items-center justify-between gap-2">
               <span className="truncate">
-                {f.name} · {formatBytes(f.size)}
+                {file.name} · {formatBytes(file.size)}
               </span>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                aria-label={`Remove ${f.name}`}
+                aria-label={t('removeAria', { name: file.name })}
                 onClick={() => onChange(value.filter((_, j) => j !== i))}
               >
                 <X />
@@ -64,7 +65,11 @@ export function VoiceSamplesInput({
             </li>
           ))}
           <li className="text-muted-foreground">
-            {value.length} of {MAX_VOICE_SAMPLES} · {formatBytes(totalBytes)} total
+            {t('total', {
+              count: value.length,
+              max: MAX_VOICE_SAMPLES,
+              size: formatBytes(totalBytes),
+            })}
           </li>
         </ul>
       )}

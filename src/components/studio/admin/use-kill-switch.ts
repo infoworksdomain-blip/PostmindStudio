@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { KillSwitchState, SetKillSwitchBody } from './types';
 
 // GET/PUT /admin/kill-switch. PUT returns { flag }; the state is refetched afterwards so the
@@ -11,25 +12,21 @@ import type { KillSwitchState, SetKillSwitchBody } from './types';
 // member confirms it (POST /admin/kill-switch/global/confirm) or anyone withdraws it
 // (DELETE /admin/kill-switch/global/pending).
 
-const LEVEL_NOUN: Record<SetKillSwitchBody['level'], string> = {
-  global: 'Global kill switch',
-  workspace: 'Workspace freeze',
-  project: 'Project kill',
-  provider: 'Provider disable',
-  platform: 'Platform publishing halt',
-};
-
-export function describeChange(body: SetKillSwitchBody): string {
-  const target = body.target ? ` (${body.target})` : '';
-  return `${LEVEL_NOUN[body.level]}${target} ${body.enabled ? 'engaged' : 'released'}`;
-}
-
-export const PENDING_TOAST =
-  'Global kill requested. A second PostMind staff member must confirm it within 10 minutes.';
-
 export function useKillSwitch() {
   const state = useApi<KillSwitchState>('/admin/kill-switch');
   const { mutate } = state;
+  const t = useTranslations('admin.killSwitch.toast');
+  const errorMessage = useErrorMessage();
+  const describeChange = useCallback(
+    (body: SetKillSwitchBody): string => {
+      if (body.level === 'global') return body.enabled ? t('globalEngaged') : t('globalReleased');
+      const target = body.target ?? '';
+      return body.enabled
+        ? t(`engaged.${body.level}`, { target })
+        : t(`released.${body.level}`, { target });
+    },
+    [t],
+  );
   const run = useCallback(
     async (work: () => Promise<string>): Promise<boolean> => {
       try {
@@ -41,7 +38,7 @@ export function useKillSwitch() {
         return false;
       }
     },
-    [mutate],
+    [mutate, errorMessage],
   );
   const set = useCallback(
     (body: SetKillSwitchBody) =>
@@ -51,9 +48,9 @@ export function useKillSwitch() {
           body,
           idempotencyKey: newIdempotencyKey(),
         });
-        return res?.pending ? PENDING_TOAST : describeChange(body);
+        return res?.pending ? t('pending') : describeChange(body);
       }),
-    [run],
+    [run, t, describeChange],
   );
   const confirmGlobal = useCallback(
     (requestId: string, reason: string) =>
@@ -63,17 +60,17 @@ export function useKillSwitch() {
           body: { requestId, reason },
           idempotencyKey: newIdempotencyKey(),
         });
-        return 'Global kill switch engaged (two-person approval)';
+        return t('confirmed');
       }),
-    [run],
+    [run, t],
   );
   const withdrawGlobal = useCallback(
     () =>
       run(async () => {
         await api('/admin/kill-switch/global/pending', { method: 'DELETE' });
-        return 'Global kill request withdrawn';
+        return t('withdrawn');
       }),
-    [run],
+    [run, t],
   );
   return {
     data: state.data,

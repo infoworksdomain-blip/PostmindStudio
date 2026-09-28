@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Library } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
@@ -20,6 +21,8 @@ import { VideoCard } from './video-card';
 const PAGE_SIZE = 24;
 
 export function LibraryBrowse() {
+  const t = useTranslations('library.browse');
+  const tc = useTranslations('common.actions');
   const [filters, setFilters] = useState<LibraryFilterState>(EMPTY_FILTERS);
   const [cursors, setCursors] = useState<string[]>([]);
   const categories = useApi<ListResponse<CategoryNode>>('/library/categories');
@@ -61,32 +64,28 @@ export function LibraryBrowse() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Make"
-        title="Reference library"
-        description="Short-form videos analysed shot by shot. Pick one and Studio makes yours in its image — or just borrows the vibe."
-      />
+      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
 
       <RecommendedShelf category={filters.category} />
 
       <section aria-labelledby="library-browse" className="min-w-0">
         <h2 id="library-browse" className="mb-3 font-display text-2xl">
-          Browse
+          {t('heading')}
         </h2>
         <LibraryFilters value={filters} categories={categoryOptions} onChange={applyFilters} />
 
         {searching && (
           <p className="mt-3 text-sm text-muted-foreground" role="status">
-            Results for “{query}” across the whole library
-            {filters.category ? ' in this category' : ''}, best match first. Length, mood and tag
-            filters don’t apply to a search.
+            {filters.category
+              ? t('searchStatusInCategory', { query })
+              : t('searchStatus', { query })}
           </p>
         )}
         <div className="mt-6">
           {error && <ErrorState error={error} onRetry={() => void mutate()} />}
           {isLoading && (
             <div
-              aria-label="Loading library"
+              aria-label={t('loading')}
               className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
             >
               {Array.from({ length: 10 }, (_, i) => (
@@ -97,12 +96,8 @@ export function LibraryBrowse() {
           {data && visible.length === 0 && (
             <EmptyState
               icon={<Library className="size-8" strokeWidth={1.5} />}
-              title="No references match"
-              description={
-                searching
-                  ? 'Nothing in the library matches that search. Try other words or clear the search.'
-                  : 'Try a broader category or fewer tags.'
-              }
+              title={t('emptyTitle')}
+              description={searching ? t('emptySearch') : t('emptyFilters')}
             />
           )}
           {data && visible.length > 0 && (
@@ -121,7 +116,7 @@ export function LibraryBrowse() {
                 disabled={cursors.length === 0}
                 onClick={() => setCursors((c) => c.slice(0, -1))}
               >
-                Previous
+                {tc('previous')}
               </Button>
               <Button
                 variant="ghost"
@@ -130,7 +125,7 @@ export function LibraryBrowse() {
                   data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
                 }
               >
-                More references
+                {t('more')}
               </Button>
             </div>
           )}

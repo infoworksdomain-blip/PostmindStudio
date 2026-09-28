@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   onConfirm: () => Promise<boolean>;
 }) {
   const [pending, setPending] = useState(false);
+  const tc = useTranslations('common.actions');
   const confirm = async () => {
     setPending(true);
     const done = await onConfirm();
@@ -45,7 +47,7 @@ export function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            {tc('cancel')}
           </Button>
           <Button variant="destructive" disabled={pending} onClick={() => void confirm()}>
             {pending && <Loader2 className="animate-spin" />}

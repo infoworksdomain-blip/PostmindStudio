@@ -2,19 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
-import {
-  formatCount,
-  formatDate,
-  formatDuration,
-  PLATFORM_LABEL,
-  safeHttpUrl,
-} from '@/lib/client/format';
+import { safeHttpUrl, useFormat, type StudioFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, PageHeader, Section, Stat } from '../primitives';
-import { AreaChart } from './area-chart';
+import { AreaChart, useShortDay } from './area-chart';
 import { BarList } from './bar-list';
-import { shortDay } from './chart-utils';
 import type { PublicationAnalyticsResponse } from './types';
 
 // BACKLOG 13.28 — one publication's analytics: totals, views over time, and, where the platform
@@ -23,7 +17,8 @@ import type { PublicationAnalyticsResponse } from './types';
 
 const YOUTUBE = new Set(['youtube', 'youtube_short']);
 
-const pctText = (v: number) => `${Math.round(v)}%`;
+/** A 0–100 share as a whole percentage in the active locale (63 → '63%', '٦٣٪', '63 %'). */
+const pctText = (f: StudioFormat, v: number) => f.percent(v / 100);
 
 type Slices = PublicationAnalyticsResponse['demographics'];
 
@@ -53,45 +48,40 @@ export function midpointRetention(
   return mid ? mid.watchingPct : null;
 }
 
-const GENDER_LABEL: Record<string, string> = {
-  female: 'Female',
-  male: 'Male',
-  user_specified: 'Self-described',
-};
+const GENDERS = ['female', 'male', 'user_specified'] as const;
+type Gender = (typeof GENDERS)[number];
 
-function platformName(platform: string): string {
-  return PLATFORM_LABEL[platform] ?? platform;
+function isGender(value: string): value is Gender {
+  return (GENDERS as readonly string[]).includes(value);
 }
 
 function RetentionSection({ data }: { data: PublicationAnalyticsResponse }) {
+  const t = useTranslations('analytics.publication.retention');
+  const f = useFormat();
   const youtube = YOUTUBE.has(data.publication.platform);
   const points = data.retention.map((p) => ({
-    label: `${Math.round(p.atPct * 100)}%`,
+    label: f.percent(p.atPct),
     value: Math.round(p.watchingPct * 1000) / 10,
   }));
   const mid = midpointRetention(data.retention);
   return (
     <Section
-      title="Audience retention"
-      description={
-        mid !== null
-          ? `${pctText(mid * 100)} of viewers still watching halfway through`
-          : 'How much of the video people watched'
-      }
+      title={t('title')}
+      description={mid !== null ? t('midpoint', { pct: pctText(f, mid * 100) }) : t('description')}
     >
       {points.length > 0 ? (
         <AreaChart
           points={points}
-          label="Viewers still watching, by how far into the video"
-          formatValue={pctText}
+          label={t('chartLabel')}
+          formatValue={(v) => pctText(f, v)}
           minMax={100}
-          pointName="point in the video"
+          pointKind="position"
         />
       ) : (
         <p className="py-6 text-sm text-muted-foreground">
           {youtube
-            ? 'YouTube reports retention about a day after publishing. Check back tomorrow.'
-            : `${platformName(data.publication.platform)} does not report a retention curve.`}
+            ? t('youtubePending')
+            : t('notReported', { platform: f.platform(data.publication.platform) })}
         </p>
       )}
     </Section>
@@ -99,38 +89,40 @@ function RetentionSection({ data }: { data: PublicationAnalyticsResponse }) {
 }
 
 function AudienceSection({ data }: { data: PublicationAnalyticsResponse }) {
+  const t = useTranslations('analytics.publication.audience');
+  const f = useFormat();
   const ages = ageBreakdown(data.demographics);
   const genders = genderBreakdown(data.demographics);
   const youtube = YOUTUBE.has(data.publication.platform);
   return (
-    <Section title="Audience" description="Share of viewers by age and gender">
+    <Section title={t('title')} description={t('description')}>
       {ages.length === 0 ? (
         <p className="py-6 text-sm text-muted-foreground">
           {youtube
-            ? 'YouTube shows audience data once enough people have watched.'
-            : `${platformName(data.publication.platform)} does not report audience demographics.`}
+            ? t('youtubePending')
+            : t('notReported', { platform: f.platform(data.publication.platform) })}
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-[1.4fr_1fr]">
           <BarList
-            label="Viewers by age group"
-            empty="No age data."
+            label={t('ageListLabel')}
+            empty={t('noAge')}
             rows={ages.map((a) => ({
               key: a.ageGroup,
               label: a.ageGroup,
               value: a.pct,
-              display: pctText(a.pct),
+              display: pctText(f, a.pct),
             }))}
           />
           <BarList
-            label="Viewers by gender"
-            empty="No gender data."
+            label={t('genderListLabel')}
+            empty={t('noGender')}
             tone="var(--chart-4)"
             rows={genders.map((g) => ({
               key: g.gender,
-              label: GENDER_LABEL[g.gender] ?? g.gender,
+              label: isGender(g.gender) ? t(`gender.${g.gender}`) : g.gender,
               value: g.pct,
-              display: pctText(g.pct),
+              display: pctText(f, g.pct),
             }))}
           />
         </div>
@@ -140,10 +132,14 @@ function AudienceSection({ data }: { data: PublicationAnalyticsResponse }) {
 }
 
 export function PublicationAnalytics({ publicationId }: { publicationId: string }) {
+  const t = useTranslations('analytics.publication');
+  const tf = useTranslations('format');
+  const f = useFormat();
+  const shortDay = useShortDay();
   const { data, error, isLoading, mutate } = useApi<PublicationAnalyticsResponse>(
     `/analytics/publications/${encodeURIComponent(publicationId)}`,
   );
-  const platform = data ? platformName(data.publication.platform) : '';
+  const platform = data ? f.platform(data.publication.platform) : '';
   const platformUrl = safeHttpUrl(data?.publication.platformUrl);
   const daily = (data?.daily ?? []).map((d) => ({
     label: shortDay(d.at.slice(0, 10)),
@@ -154,12 +150,12 @@ export function PublicationAnalytics({ publicationId }: { publicationId: string 
   return (
     <>
       <PageHeader
-        eyebrow="Analytics"
-        title={data ? `${platform} post` : 'Publication'}
+        eyebrow={t('eyebrow')}
+        title={data ? t('title', { platform }) : t('titleLoading')}
         description={
           data ? (
             <span className="inline-flex flex-wrap items-center gap-2">
-              Published {formatDate(data.publication.publishedAt)}
+              {t('published', { date: f.date(data.publication.publishedAt) })}
               {platformUrl && (
                 <a
                   href={platformUrl}
@@ -167,7 +163,7 @@ export function PublicationAnalytics({ publicationId }: { publicationId: string 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
                 >
-                  Open on {platform} <ExternalLink className="size-3" />
+                  {t('openOn', { platform })} <ExternalLink className="size-3" />
                 </a>
               )}
             </span>
@@ -178,42 +174,44 @@ export function PublicationAnalytics({ publicationId }: { publicationId: string 
             href="/analytics"
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="size-4" /> All analytics
+            <ArrowLeft className="size-4 rtl:-scale-x-100" /> {t('back')}
           </Link>
         }
       />
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-      {isLoading && (
-        <Skeleton aria-label="Loading publication analytics" className="h-64 rounded-xl" />
-      )}
-      {data && !latest && (
-        <EmptyState
-          title="No numbers yet"
-          description="Studio starts reading this post's metrics a few minutes after it goes live."
-        />
-      )}
+      {isLoading && <Skeleton aria-label={t('loadingAria')} className="h-64 rounded-xl" />}
+      {data && !latest && <EmptyState title={t('empty.title')} description={t('empty.body')} />}
       {data && latest && (
         <div className="grid min-w-0 gap-6">
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-border/70 py-6 sm:grid-cols-5">
-            <Stat label="Views" value={formatCount(latest.views)} />
-            <Stat label="Watch time" value={formatDuration(latest.watchTimeSec)} />
+            <Stat label={t('stats.views')} value={f.count(latest.views)} />
+            <Stat label={t('stats.watchTime')} value={f.duration(latest.watchTimeSec)} />
             <Stat
-              label="Avg. watched"
-              value={latest.avgWatchTimePct !== null ? pctText(latest.avgWatchTimePct * 100) : '—'}
+              label={t('stats.avgWatched')}
+              value={
+                latest.avgWatchTimePct !== null
+                  ? pctText(f, latest.avgWatchTimePct * 100)
+                  : tf('none')
+              }
             />
-            <Stat label="Likes" value={formatCount(latest.likes)} />
+            <Stat label={t('stats.likes')} value={f.count(latest.likes)} />
             <Stat
-              label="Comments · shares"
-              value={`${formatCount(latest.comments)} · ${formatCount(latest.shares)}`}
+              label={t('stats.commentsShares')}
+              value={t('stats.commentsSharesValue', {
+                comments: f.count(latest.comments),
+                shares: f.count(latest.shares),
+              })}
             />
           </div>
-          <Section title="Views over time" description="Total views at the end of each day">
+          <Section title={t('viewsOverTime.title')} description={t('viewsOverTime.description')}>
             {daily.length > 1 ? (
-              <AreaChart points={daily} label="Total views by day" formatValue={formatCount} />
+              <AreaChart
+                points={daily}
+                label={t('viewsOverTime.chartLabel')}
+                formatValue={f.count}
+              />
             ) : (
-              <p className="py-6 text-sm text-muted-foreground">
-                A daily chart appears after the second day.
-              </p>
+              <p className="py-6 text-sm text-muted-foreground">{t('viewsOverTime.tooFew')}</p>
             )}
           </Section>
           <div className="grid min-w-0 gap-6 lg:grid-cols-[1.4fr_1fr]">

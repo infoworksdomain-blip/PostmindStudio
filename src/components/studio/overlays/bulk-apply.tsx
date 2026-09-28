@@ -1,12 +1,13 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Clapperboard, Layers, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PLATFORM_LABEL } from '@/lib/client/format';
-import type { ProjectDetail, Render } from '@/lib/client/types';
+import { useFormat } from '@/lib/client/format';
+import type { ProjectDetail } from '@/lib/client/types';
 import { Field, NativeSelect } from '../review/field';
 import { useAction } from '../review/use-action';
 import { PresetSelect } from './preset-controls';
@@ -14,9 +15,6 @@ import { RERENDERABLE, type OverlayPreset } from './types';
 
 // A4.8 bulk overlays (e.g. a persistent watermark across the whole video, or the same caption on
 // several shots) and "re-render with current overlays" (no generation spend).
-
-const renderLabel = (r: Render) =>
-  `${PLATFORM_LABEL[r.targetPlatform] ?? r.targetPlatform} (${r.aspectRatio})`;
 
 export function BulkApply({
   project,
@@ -31,6 +29,8 @@ export function BulkApply({
   onApplied: () => void;
   onRerendered: () => void;
 }) {
+  const t = useTranslations('overlays.bulk');
+  const f = useFormat();
   const renders = project.renders;
   const [renderId, setRenderId] = useState(renders[0]?.id ?? '');
   const [text, setText] = useState('');
@@ -42,7 +42,7 @@ export function BulkApply({
   const { pending, run, busy } = useAction();
 
   const render = renders.find((r) => r.id === renderId) ?? renders[0];
-  if (!render) return <p className="text-sm text-muted-foreground">No renders yet.</p>;
+  if (!render) return <p className="text-sm text-muted-foreground">{t('noRenders')}</p>;
   const shots = project.scripts.find((s) => s.id === render.scriptId)?.shots ?? [];
   const startSec = Number(start);
   const endSec = Number(end);
@@ -69,7 +69,7 @@ export function BulkApply({
       },
     });
     if (result) {
-      toast.success(`Added ${result.data.length} overlay${result.data.length === 1 ? '' : 's'}.`);
+      toast.success(t('added', { count: result.data.length }));
       setText('');
       onApplied();
     }
@@ -78,7 +78,7 @@ export function BulkApply({
   async function rerender() {
     if (!render) return;
     const ok = await run('rerender', `/renders/${render.id}/rerender`, {
-      success: 'Re-rendering with the current overlays.',
+      success: t('rerendering'),
     });
     if (ok) onRerendered();
   }
@@ -89,7 +89,7 @@ export function BulkApply({
   return (
     <div className="flex flex-col gap-5">
       <form onSubmit={apply} className="grid gap-3 sm:grid-cols-2">
-        <Field id="bulk-render" label="Variant">
+        <Field id="bulk-render" label={t('variant')}>
           <NativeSelect
             id="bulk-render"
             value={render.id}
@@ -100,12 +100,15 @@ export function BulkApply({
           >
             {renders.map((r) => (
               <option key={r.id} value={r.id}>
-                {renderLabel(r)}
+                {t('variantOption', {
+                  platform: f.platform(r.targetPlatform),
+                  ratio: r.aspectRatio,
+                })}
               </option>
             ))}
           </NativeSelect>
         </Field>
-        <Field id="bulk-preset" label="Preset">
+        <Field id="bulk-preset" label={t('preset')}>
           <PresetSelect
             id="bulk-preset"
             presets={presets}
@@ -113,16 +116,16 @@ export function BulkApply({
             onChange={setPresetId}
           />
         </Field>
-        <Field id="bulk-text" label="Text" className="sm:col-span-2">
+        <Field id="bulk-text" label={t('text')} className="sm:col-span-2">
           <Input
             id="bulk-text"
             value={text}
             maxLength={500}
-            placeholder="@yourbrand"
+            placeholder={t('textPlaceholder')}
             onChange={(e) => setText(e.target.value)}
           />
         </Field>
-        <Field id="bulk-start" label="Start (s)">
+        <Field id="bulk-start" label={t('start')}>
           <Input
             id="bulk-start"
             type="number"
@@ -132,7 +135,7 @@ export function BulkApply({
             onChange={(e) => setStart(e.target.value)}
           />
         </Field>
-        <Field id="bulk-end" label="End (s)">
+        <Field id="bulk-end" label={t('end')}>
           <Input
             id="bulk-end"
             type="number"
@@ -143,7 +146,7 @@ export function BulkApply({
           />
         </Field>
         <fieldset className="sm:col-span-2">
-          <legend className="mb-2 text-xs font-medium text-muted-foreground">Apply to</legend>
+          <legend className="mb-2 text-xs font-medium text-muted-foreground">{t('applyTo')}</legend>
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input
@@ -152,7 +155,7 @@ export function BulkApply({
                 checked={target === 'video'}
                 onChange={() => setTarget('video')}
               />
-              Whole video (timing from the start of the video)
+              {t('wholeVideo')}
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -161,7 +164,7 @@ export function BulkApply({
                 checked={target === 'shots'}
                 onChange={() => setTarget('shots')}
               />
-              Selected shots (timing within each shot)
+              {t('selectedShots')}
             </label>
           </div>
           {target === 'shots' && (
@@ -173,7 +176,7 @@ export function BulkApply({
                     checked={shotIds.includes(s.id)}
                     onChange={() => toggleShot(s.id)}
                   />
-                  Shot {i + 1}
+                  {t('shot', { n: i + 1 })}
                 </label>
               ))}
             </div>
@@ -181,30 +184,21 @@ export function BulkApply({
         </fieldset>
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
           <Button type="submit" disabled={!editable || !valid || busy}>
-            {pending === 'bulk' ? <Loader2 className="animate-spin" /> : <Layers />} Apply overlay
+            {pending === 'bulk' ? <Loader2 className="animate-spin" /> : <Layers />} {t('apply')}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Whole-video overlays are listed and edited in the Whole video lane above — they appear
-            in the next render.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('wholeVideoNote')}</p>
         </div>
       </form>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-        <p className="text-sm text-muted-foreground">
-          Overlay edits apply when the video is re-rendered. No new footage is generated.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('rerenderNote')}</p>
         <Button
           variant="outline"
           onClick={rerender}
           disabled={!RERENDERABLE.has(project.state) || busy}
-          title={
-            RERENDERABLE.has(project.state)
-              ? undefined
-              : 'Re-render is available once the video is ready for review'
-          }
+          title={RERENDERABLE.has(project.state) ? undefined : t('rerenderUnavailable')}
         >
           {pending === 'rerender' ? <Loader2 className="animate-spin" /> : <Clapperboard />}
-          Re-render video
+          {t('rerender')}
         </Button>
       </div>
     </div>

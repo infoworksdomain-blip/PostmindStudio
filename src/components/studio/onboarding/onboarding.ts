@@ -28,12 +28,13 @@ export interface OnboardingPatch {
 
 export const ONBOARDING_PATH = '/onboarding';
 
-export const STEP_LABEL: Record<WizardStep, string> = {
-  connect: 'Connect',
-  brand_kit: 'Brand kit',
-  first_video: 'First video',
-  celebrate: 'Celebrate',
-};
+/** Catalogue key (onboarding.steps.<key>) of each step's label. */
+export const STEP_KEY = {
+  connect: 'connect',
+  brand_kit: 'brandKit',
+  first_video: 'firstVideo',
+  celebrate: 'celebrate',
+} as const satisfies Record<WizardStep, string>;
 
 export function stepIndex(step: WizardStep): number {
   return WIZARD_STEPS.indexOf(step);

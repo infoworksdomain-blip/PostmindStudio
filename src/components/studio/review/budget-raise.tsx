@@ -1,10 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatPence } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { useAction } from './use-action';
 
@@ -13,6 +14,12 @@ import { useAction } from './use-action';
 // /projects/:id, allowed on FAILED) and then presses "Generate again" in the header.
 
 const MAX_POUNDS = 100_000;
+
+const WHOLE_POUNDS: Intl.NumberFormatOptions = {
+  style: 'currency',
+  currency: 'GBP',
+  maximumFractionDigits: 0,
+};
 
 export function isProjectBudgetPause(project: Pick<ProjectDetail, 'state' | 'errorReason'>) {
   return (
@@ -34,6 +41,9 @@ export function BudgetRaise({
   project: ProjectDetail;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.budget');
+  const ta = useTranslations('review.actions');
+  const f = useFormat();
   const { run, busy } = useAction();
   const [pounds, setPounds] = useState(() => suggestedPounds(project));
   const value = Number(pounds);
@@ -48,27 +58,28 @@ export function BudgetRaise({
     const ok = await run('budget', `/projects/${project.id}`, {
       method: 'PATCH',
       body: { costBudgetPence: pence },
-      success: `Budget raised to ${formatPence(pence)}. Press “Generate again” to continue.`,
+      success: t('raised', { amount: f.pence(pence), action: ta('generateAgain') }),
     });
     if (ok) onChanged();
   }
 
   return (
     <section
-      aria-label="Raise budget"
+      aria-label={t('aria')}
       className="flex flex-col gap-2 rounded-xl border border-foreground/15 bg-card p-4"
     >
       <p className="text-sm">
-        Generation paused at 90% of this project&apos;s budget (
-        {formatPence(project.costActualPence)} of {formatPence(project.costBudgetPence)} spent).
-        Raise the budget, then generate again. Nothing already made is lost.
+        {t('paused', {
+          spent: f.pence(project.costActualPence),
+          budget: f.pence(project.costBudgetPence),
+        })}
       </p>
       <div className="flex flex-wrap items-end gap-2">
         <label
           htmlFor="raise-budget"
           className="grid gap-1 text-xs font-medium text-muted-foreground"
         >
-          New budget (£)
+          {t('newBudget')}
           <Input
             id="raise-budget"
             inputMode="decimal"
@@ -78,12 +89,15 @@ export function BudgetRaise({
           />
         </label>
         <Button onClick={save} disabled={busy || !valid}>
-          {busy && <Loader2 className="animate-spin" />} Raise budget
+          {busy && <Loader2 className="animate-spin" />} {t('raise')}
         </Button>
       </div>
       {!valid && pounds.trim() !== '' && (
         <p className="text-xs text-destructive">
-          Enter more than {formatPence(project.costBudgetPence)} (up to £100,000).
+          {t('tooLow', {
+            budget: f.pence(project.costBudgetPence),
+            max: f.number(MAX_POUNDS, WHOLE_POUNDS),
+          })}
         </p>
       )}
     </section>

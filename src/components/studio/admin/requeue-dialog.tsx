@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,6 +35,8 @@ export function RequeueDialog({
   const [providerId, setProviderId] = useState('');
   const [reason, setReason] = useState('');
   const [pending, setPending] = useState(false);
+  const t = useTranslations('admin.dialogs');
+  const tc = useTranslations('common.actions');
   const reasonOk = reason.trim().length >= MIN_REASON;
 
   const close = () => {
@@ -59,23 +62,21 @@ export function RequeueDialog({
       <DialogContent>
         <form onSubmit={submit} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Requeue {job?.name}</DialogTitle>
+            <DialogTitle>{t('requeue.title', { name: job?.name ?? '' })}</DialogTitle>
             <DialogDescription>
-              {job?.providerOverride
-                ? 'Adds the job again with fresh attempts. If its project failed at the asset stage, the stage resumes under a new run (assets already paid for are kept).'
-                : 'Adds the job again with fresh attempts and the same data.'}
+              {job?.providerOverride ? t('requeue.descriptionProvider') : t('requeue.description')}
             </DialogDescription>
           </DialogHeader>
           {job?.providerOverride && (
             <div className="grid gap-1.5">
-              <Label htmlFor="requeue-provider">Prefer provider (optional)</Label>
+              <Label htmlFor="requeue-provider">{t('requeue.preferProvider')}</Label>
               <select
                 id="requeue-provider"
                 className={selectClass}
                 value={providerId}
                 onChange={(e) => setProviderId(e.target.value)}
               >
-                <option value="">Keep the router’s order</option>
+                <option value="">{t('requeue.keepOrder')}</option>
                 {PROVIDER_IDS.map((id) => (
                   <option key={id} value={id}>
                     {id}
@@ -85,7 +86,7 @@ export function RequeueDialog({
             </div>
           )}
           <div className="grid gap-1.5">
-            <Label htmlFor="requeue-reason">Reason (recorded in the audit log)</Label>
+            <Label htmlFor="requeue-reason">{t('reasonLabel')}</Label>
             <Textarea
               id="requeue-reason"
               value={reason}
@@ -96,11 +97,11 @@ export function RequeueDialog({
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={close}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button type="submit" disabled={!reasonOk || pending}>
               {pending && <Loader2 className="animate-spin" />}
-              Requeue
+              {t('requeue.submit')}
             </Button>
           </DialogFooter>
         </form>

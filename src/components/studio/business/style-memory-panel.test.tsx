@@ -22,10 +22,10 @@ const item = (over: Partial<StyleMemoryItem> = {}): StyleMemoryItem => ({
 });
 
 describe('confidence', () => {
-  it('turns the weight into plain language', () => {
-    expect(confidence(0.7)).toBe('Strong signal');
-    expect(confidence(0.4)).toBe('Emerging signal');
-    expect(confidence(0.1)).toContain('not used in scripts yet');
+  it('buckets the weight into a confidence level', () => {
+    expect(confidence(0.7)).toBe('strong');
+    expect(confidence(0.4)).toBe('emerging');
+    expect(confidence(0.1)).toBe('weak');
   });
 });
 

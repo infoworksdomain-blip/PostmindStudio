@@ -1,11 +1,12 @@
 'use client';
 
 import { ImageIcon, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { Render } from '@/lib/client/types';
 
 // 15.A3 — a variant's thumbnail with "Change" (spec 14.2 "thumbnail — editable inline"): pick a
@@ -13,6 +14,8 @@ import type { Render } from '@/lib/client/types';
 // POST /renders/:id/thumbnail; YouTube publishes it with thumbnails.set.
 
 export function VariantThumbnail({ render }: { render: Pick<Render, 'id' | 'durationSec'> }) {
+  const t = useTranslations('review.thumbnail');
+  const errorMessage = useErrorMessage();
   const { data, mutate } = useApi<{ render: { thumbnailUrl?: string | null } }>(
     `/renders/${render.id}`,
   );
@@ -31,7 +34,7 @@ export function VariantThumbnail({ render }: { render: Pick<Render, 'id' | 'dura
         idempotencyKey: newIdempotencyKey(),
         body,
       });
-      toast.success('Thumbnail updated.');
+      toast.success(t('updated'));
       setEditing(false);
       await mutate();
     } catch (err) {
@@ -57,28 +60,24 @@ export function VariantThumbnail({ render }: { render: Pick<Render, 'id' | 'dura
   };
 
   return (
-    <section aria-label="Thumbnail" className="flex flex-col gap-2">
+    <section aria-label={t('aria')} className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
         {url ? (
           // eslint-disable-next-line @next/next/no-img-element -- signed, short-lived URL
-          <img
-            src={url}
-            alt="Variant thumbnail"
-            className="h-16 w-auto rounded border border-border"
-          />
+          <img src={url} alt={t('alt')} className="h-16 w-auto rounded border border-border" />
         ) : (
           <span className="grid h-16 w-16 place-items-center rounded border border-dashed border-border text-muted-foreground">
-            <ImageIcon className="size-5" aria-label="No thumbnail yet" />
+            <ImageIcon className="size-5" aria-label={t('none')} />
           </span>
         )}
         <Button size="sm" variant="outline" onClick={() => setEditing((v) => !v)}>
-          Change
+          {t('change')}
         </Button>
       </div>
       {editing && (
         <div className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs">
-            Frame at (seconds)
+            {t('frameAt')}
             <Input
               type="number"
               min={0}
@@ -89,15 +88,15 @@ export function VariantThumbnail({ render }: { render: Pick<Render, 'id' | 'dura
             />
           </label>
           <label className="flex flex-col gap-1 text-xs">
-            Overlay text (optional)
+            {t('overlayText')}
             <Input value={text} maxLength={120} onChange={(e) => setText(e.target.value)} />
           </label>
           <div className="flex flex-wrap gap-2 sm:col-span-2">
             <Button size="sm" onClick={frame} disabled={busy}>
-              {busy ? <Loader2 className="animate-spin" /> : <ImageIcon />} Use this frame
+              {busy ? <Loader2 className="animate-spin" /> : <ImageIcon />} {t('useFrame')}
             </Button>
             <Button size="sm" variant="outline" onClick={regenerate} disabled={busy}>
-              <RefreshCw /> Regenerate
+              <RefreshCw /> {t('regenerate')}
             </Button>
             <Button
               size="sm"
@@ -105,14 +104,14 @@ export function VariantThumbnail({ render }: { render: Pick<Render, 'id' | 'dura
               onClick={() => fileRef.current?.click()}
               disabled={busy}
             >
-              <Upload /> Upload
+              <Upload /> {t('upload')}
             </Button>
             <input
               ref={fileRef}
               type="file"
               accept="image/jpeg,image/png"
               className="hidden"
-              aria-label="Upload thumbnail"
+              aria-label={t('uploadAria')}
               onChange={(e) => upload(e.target.files?.[0])}
             />
           </div>

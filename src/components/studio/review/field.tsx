@@ -11,7 +11,7 @@ export const CONTROL =
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30';
 
 export function NativeSelect({ className, ...props }: ComponentProps<'select'>) {
-  return <select className={cn(CONTROL, 'pr-8', className)} {...props} />;
+  return <select className={cn(CONTROL, 'pe-8', className)} {...props} />;
 }
 
 export function Field({

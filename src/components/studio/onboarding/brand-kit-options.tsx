@@ -1,10 +1,12 @@
 'use client';
 
 import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 // The brand-kit step's three pickers: logo palette swatches (removable), a short font list
-// (plain names that satisfy the brand-kit FONT rule) and tone chips (up to three).
+// (plain names that satisfy the brand-kit FONT rule) and tone chips (up to three). Tone values are
+// stored in English (they steer script generation); only their labels are localised.
 
 export const FONTS = ['Inter', 'Fraunces', 'Poppins', 'Playfair Display', 'DM Sans'] as const;
 export const TONES = [
@@ -19,6 +21,20 @@ export const TONES = [
 ] as const;
 export const MAX_TONES = 3;
 
+export type Tone = (typeof TONES)[number];
+
+/** Catalogue key (onboarding.brandKit.tones.<key>) of each tone's label. */
+const TONE_KEY = {
+  Warm: 'warm',
+  Friendly: 'friendly',
+  Playful: 'playful',
+  Bold: 'bold',
+  Professional: 'professional',
+  Calm: 'calm',
+  Witty: 'witty',
+  Premium: 'premium',
+} as const satisfies Record<Tone, string>;
+
 const chip =
   'rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 
@@ -29,22 +45,25 @@ export function PaletteSwatches({
   colours: string[];
   onRemove: (colour: string) => void;
 }) {
+  const t = useTranslations('onboarding.brandKit');
   return (
-    <ul aria-label="Palette" className="flex flex-wrap gap-2">
+    <ul aria-label={t('paletteAria')} className="flex flex-wrap gap-2">
       {colours.map((c) => (
         <li
           key={c}
-          className="flex items-center gap-2 rounded-lg border border-border py-1 pr-1 pl-1.5"
+          className="flex items-center gap-2 rounded-lg border border-border py-1 ps-1.5 pe-1"
         >
           <span
             aria-hidden
             className="size-6 rounded-md border border-border"
             style={{ backgroundColor: c }}
           />
-          <span className="font-mono text-xs">{c}</span>
+          <span dir="ltr" className="font-mono text-xs">
+            {c}
+          </span>
           <button
             type="button"
-            aria-label={`Remove ${c}`}
+            aria-label={t('removeColour', { colour: c })}
             onClick={() => onRemove(c)}
             className="rounded p-1 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
@@ -63,8 +82,9 @@ export function FontPicker({
   value: string | null;
   onChange: (font: string) => void;
 }) {
+  const t = useTranslations('onboarding.brandKit');
   return (
-    <div role="radiogroup" aria-label="Font" className="flex flex-wrap gap-2">
+    <div role="radiogroup" aria-label={t('fontAria')} className="flex flex-wrap gap-2">
       {FONTS.map((font) => (
         <button
           key={font}
@@ -94,9 +114,10 @@ export function ToneChips({
   value: string[];
   onChange: (tones: string[]) => void;
 }) {
+  const t = useTranslations('onboarding.brandKit');
   const full = value.length >= MAX_TONES;
   return (
-    <div role="group" aria-label="Tone" className="flex flex-wrap gap-2">
+    <div role="group" aria-label={t('toneAria')} className="flex flex-wrap gap-2">
       {TONES.map((tone) => {
         const on = value.includes(tone);
         return (
@@ -105,7 +126,7 @@ export function ToneChips({
             type="button"
             aria-pressed={on}
             disabled={!on && full}
-            onClick={() => onChange(on ? value.filter((t) => t !== tone) : [...value, tone])}
+            onClick={() => onChange(on ? value.filter((v) => v !== tone) : [...value, tone])}
             className={cn(
               chip,
               'disabled:opacity-40',
@@ -114,7 +135,7 @@ export function ToneChips({
                 : 'border-border text-muted-foreground hover:text-foreground',
             )}
           >
-            {tone}
+            {t(`tones.${TONE_KEY[tone]}`)}
           </button>
         );
       })}

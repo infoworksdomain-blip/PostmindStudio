@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+import { useFormat } from '@/lib/client/format';
 import { joinHex, splitHex } from './colour';
 
 // A colour picker with a transparency slider (13.7): #rrggbb from the native picker plus an
@@ -18,6 +20,8 @@ export function ColourField({
   disabled?: boolean;
   onChange: (hex: string) => void;
 }) {
+  const t = useTranslations('overlays.form');
+  const f = useFormat();
   const { rgb, alpha } = splitHex(value, fallback);
   const percent = Math.round(alpha * 100);
   return (
@@ -37,12 +41,12 @@ export function ColourField({
         step={5}
         value={percent}
         disabled={disabled}
-        aria-label="Opacity (%)"
+        aria-label={t('opacity')}
         onChange={(e) => onChange(joinHex(rgb, Number(e.target.value) / 100))}
         className="w-full min-w-0 accent-primary disabled:opacity-40"
       />
-      <span className="tabular w-9 shrink-0 text-right text-xs text-muted-foreground">
-        {percent}%
+      <span className="tabular w-9 shrink-0 text-end text-xs text-muted-foreground">
+        {f.percent(percent / 100)}
       </span>
     </span>
   );

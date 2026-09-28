@@ -3,17 +3,15 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ChevronRight, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, useApi } from '@/lib/client/api';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
-import {
-  describeAppliesTo,
-  describeStep,
-  type ApprovalWorkflow,
-  type WorkflowInput,
-} from './types';
+import { useApprovalText } from './approval-text';
+import type { ApprovalWorkflow, WorkflowInput } from './types';
 import { WorkflowForm } from './workflow-form';
 
 // 15.D3 — Approval workflows (spec 7.13; spec 3.3 "agency … approval workflows"): list, create,
@@ -23,21 +21,31 @@ import { WorkflowForm } from './workflow-form';
 type Editing = { mode: 'new' } | { mode: 'edit'; workflow: ApprovalWorkflow } | null;
 
 function StepChain({ workflow }: { workflow: ApprovalWorkflow }) {
+  const t = useTranslations('approvals.card');
+  const f = useFormat();
+  const { describeStep } = useApprovalText();
   return (
-    <ol className="flex flex-wrap items-center gap-1.5" aria-label={`${workflow.name} steps`}>
+    <ol
+      className="flex flex-wrap items-center gap-1.5"
+      aria-label={t('stepsAria', { name: workflow.name })}
+    >
       {workflow.steps.map((step, index) => (
         <li key={`${index}-${step.role}`} className="flex items-center gap-1.5">
           {index > 0 && (
-            <ChevronRight className="size-3.5 text-muted-foreground" aria-hidden strokeWidth={2} />
+            <ChevronRight
+              className="size-3.5 text-muted-foreground rtl:-scale-x-100"
+              aria-hidden
+              strokeWidth={2}
+            />
           )}
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs">
             <span
               aria-hidden
               className="inline-flex size-4 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground tabular"
             >
-              {index + 1}
+              {f.number(index + 1)}
             </span>
-            <span className="sr-only">Step {index + 1}:</span>
+            <span className="sr-only">{t('stepNumber', { number: f.number(index + 1) })}</span>
             {describeStep(step)}
           </span>
         </li>
@@ -57,6 +65,9 @@ function WorkflowCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations('approvals.card');
+  const tc = useTranslations('common.actions');
+  const { describeAppliesTo } = useApprovalText();
   const [confirming, setConfirming] = useState(false);
   return (
     <li className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
@@ -69,15 +80,15 @@ function WorkflowCard({
         </div>
         <div className="flex gap-1.5">
           <Button variant="outline" size="sm" onClick={onEdit} disabled={busy}>
-            <Pencil /> Edit
+            <Pencil /> {tc('edit')}
           </Button>
           {confirming ? (
             <>
               <Button variant="destructive" size="sm" onClick={onDelete} disabled={busy}>
-                Confirm delete
+                {t('confirmDelete')}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-                Keep
+                {t('keep')}
               </Button>
             </>
           ) : (
@@ -86,9 +97,9 @@ function WorkflowCard({
               size="sm"
               onClick={() => setConfirming(true)}
               disabled={busy}
-              aria-label={`Delete ${workflow.name}`}
+              aria-label={t('deleteAria', { name: workflow.name })}
             >
-              <Trash2 /> Delete
+              <Trash2 /> {tc('delete')}
             </Button>
           )}
         </div>
@@ -99,6 +110,8 @@ function WorkflowCard({
 }
 
 export function ApprovalWorkflowsScreen() {
+  const t = useTranslations('approvals.screen');
+  const errorMessage = useErrorMessage();
   const { businessId } = useBusiness();
   const res = useApi<{ data: ApprovalWorkflow[] }>('/approval-workflows');
   const [editing, setEditing] = useState<Editing>(null);
@@ -109,10 +122,10 @@ export function ApprovalWorkflowsScreen() {
     try {
       if (editing?.mode === 'edit') {
         await api(`/approval-workflows/${editing.workflow.id}`, { method: 'PATCH', body: input });
-        toast.success('Workflow saved. Reviews already under way keep their steps.');
+        toast.success(t('saved'));
       } else {
         await api('/approval-workflows', { method: 'POST', body: input });
-        toast.success('Workflow created.');
+        toast.success(t('created'));
       }
       setEditing(null);
       await res.mutate();
@@ -127,7 +140,7 @@ export function ApprovalWorkflowsScreen() {
     setBusy(true);
     try {
       await api(`/approval-workflows/${workflow.id}`, { method: 'DELETE' });
-      toast.success(`Deleted “${workflow.name}”.`);
+      toast.success(t('deleted', { name: workflow.name }));
       await res.mutate();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -141,13 +154,13 @@ export function ApprovalWorkflowsScreen() {
   return (
     <>
       <PageHeader
-        eyebrow="Setup"
-        title="Approval workflows"
-        description="Ordered sign-off steps for client or legal review. A video waits in review until every step is approved, and only then publishes. Projects no workflow applies to need one approval."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
         actions={
           editing ? null : (
             <Button onClick={() => setEditing({ mode: 'new' })}>
-              <Plus /> New workflow
+              <Plus /> {t('newWorkflow')}
             </Button>
           )
         }
@@ -155,7 +168,11 @@ export function ApprovalWorkflowsScreen() {
       <div className="flex flex-col gap-6">
         {editing && (
           <Section
-            title={editing.mode === 'edit' ? `Edit “${editing.workflow.name}”` : 'New workflow'}
+            title={
+              editing.mode === 'edit'
+                ? t('editTitle', { name: editing.workflow.name })
+                : t('newWorkflow')
+            }
           >
             <WorkflowForm
               key={editing.mode === 'edit' ? editing.workflow.id : 'new'}
@@ -178,17 +195,17 @@ export function ApprovalWorkflowsScreen() {
           !editing && (
             <EmptyState
               icon={<ListChecks className="size-8" strokeWidth={1.5} />}
-              title="No approval workflows yet"
-              description="Every video needs one approval. Add a workflow when a client, a manager or legal must sign off first."
+              title={t('emptyTitle')}
+              description={t('emptyBody')}
               action={
                 <Button onClick={() => setEditing({ mode: 'new' })}>
-                  <Plus /> New workflow
+                  <Plus /> {t('newWorkflow')}
                 </Button>
               }
             />
           )
         ) : (
-          <ul className="flex flex-col gap-3" aria-label="Approval workflows">
+          <ul className="flex flex-col gap-3" aria-label={t('listAria')}>
             {workflows.map((w) => (
               <WorkflowCard
                 key={w.id}

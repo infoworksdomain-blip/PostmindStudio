@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,21 +68,36 @@ function parseCtas(text: string): BrandKitPayload['ctaTemplates'] {
     .map(([label, template]) => ({ label: label as string, template: template as string }));
 }
 
+const MAX_COLOURS = 8;
+const MAX_TONES = 10;
+const MAX_CTAS = 10;
+
+/** The first problem with a draft: a key under business.kitForm.problems and its arguments. */
+export type KitProblem =
+  | { key: 'name' }
+  | { key: 'tooManyColours'; values: { max: number } }
+  | { key: 'badColour'; values: { colour: string } }
+  | { key: 'badFont'; values: { font: string } }
+  | { key: 'tooManyTones'; values: { max: number } }
+  | { key: 'tooManyCtas'; values: { max: number } };
+
 /** Validate a draft; returns the payload or the first problem. */
-export function toPayload(d: Draft): { payload?: BrandKitPayload; problem?: string } {
+export function toPayload(d: Draft): { payload?: BrandKitPayload; problem?: KitProblem } {
   const palette = parseList(d.palette);
-  if (!d.name.trim()) return { problem: 'Give the kit a name.' };
-  if (palette.length > 8) return { problem: 'Use at most 8 colours.' };
+  if (!d.name.trim()) return { problem: { key: 'name' } };
+  if (palette.length > MAX_COLOURS)
+    return { problem: { key: 'tooManyColours', values: { max: MAX_COLOURS } } };
   const bad = palette.find((c) => !HEX.test(c));
-  if (bad) return { problem: `${bad} is not a #RRGGBB colour.` };
+  if (bad) return { problem: { key: 'badColour', values: { colour: bad } } };
   for (const f of [d.fontPrimary, d.fontSecondary]) {
     if (f.trim() && !FONT.test(f.trim()))
-      return { problem: `“${f}” is not a valid font name (letters, numbers, spaces, hyphens).` };
+      return { problem: { key: 'badFont', values: { font: f } } };
   }
   const tone = parseList(d.tone);
-  if (tone.length > 10) return { problem: 'Use at most 10 tone keywords.' };
+  if (tone.length > MAX_TONES)
+    return { problem: { key: 'tooManyTones', values: { max: MAX_TONES } } };
   const ctas = parseCtas(d.ctas);
-  if (ctas.length > 10) return { problem: 'Use at most 10 call-to-action templates.' };
+  if (ctas.length > MAX_CTAS) return { problem: { key: 'tooManyCtas', values: { max: MAX_CTAS } } };
   return {
     payload: {
       name: d.name.trim(),
@@ -128,6 +144,7 @@ export function BrandKitDialog({
   /** Resolve true when saved (closes the dialog). */
   onSubmit: (payload: BrandKitPayload) => Promise<boolean>;
 }) {
+  const t = useTranslations('business.kitForm');
   const [draft, setDraft] = useState(() => toDraft(kit));
   const [busy, setBusy] = useState(false);
   const { payload, problem } = toPayload(draft);
@@ -149,10 +166,8 @@ export function BrandKitDialog({
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{kit ? `Edit ${kit.name}` : 'New brand kit'}</DialogTitle>
-          <DialogDescription>
-            Used for scripts, overlays and composition in every video for this business.
-          </DialogDescription>
+          <DialogTitle>{kit ? t('editTitle', { name: kit.name }) : t('newTitle')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
         <form
           id="brand-kit-form"
@@ -162,10 +177,10 @@ export function BrandKitDialog({
             void submit();
           }}
         >
-          <Field id="kit-name" label="Name">
+          <Field id="kit-name" label={t('name')}>
             <Input id="kit-name" maxLength={120} value={draft.name} onChange={set('name')} />
           </Field>
-          <Field id="kit-palette" label="Colours" hint="Up to 8 hex colours, e.g. #D6452B, #1F2A44">
+          <Field id="kit-palette" label={t('colours')} hint={t('coloursHint')}>
             <Input id="kit-palette" value={draft.palette} onChange={set('palette')} />
             {swatches.length > 0 && (
               <div className="flex gap-1.5" aria-hidden>
@@ -180,14 +195,14 @@ export function BrandKitDialog({
             )}
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="kit-font-primary" label="Heading font">
+            <Field id="kit-font-primary" label={t('headingFont')}>
               <Input
                 id="kit-font-primary"
                 value={draft.fontPrimary}
                 onChange={set('fontPrimary')}
               />
             </Field>
-            <Field id="kit-font-secondary" label="Body font">
+            <Field id="kit-font-secondary" label={t('bodyFont')}>
               <Input
                 id="kit-font-secondary"
                 value={draft.fontSecondary}
@@ -195,10 +210,10 @@ export function BrandKitDialog({
               />
             </Field>
           </div>
-          <Field id="kit-tone" label="Tone" hint="Up to 10 words, comma separated">
+          <Field id="kit-tone" label={t('tone')} hint={t('toneHint')}>
             <Input id="kit-tone" value={draft.tone} onChange={set('tone')} />
           </Field>
-          <Field id="kit-audience" label="Audience">
+          <Field id="kit-audience" label={t('audience')}>
             <Textarea
               id="kit-audience"
               rows={2}
@@ -207,25 +222,27 @@ export function BrandKitDialog({
               onChange={set('audience')}
             />
           </Field>
-          <Field id="kit-ctas" label="Calls to action" hint="One per line: Label | template">
+          <Field id="kit-ctas" label={t('ctas')} hint={t('ctasHint')}>
             <Textarea id="kit-ctas" rows={3} value={draft.ctas} onChange={set('ctas')} />
           </Field>
-          <Field id="kit-restricted" label="Topics to avoid" hint="Comma separated">
+          <Field id="kit-restricted" label={t('restricted')} hint={t('restrictedHint')}>
             <Input id="kit-restricted" value={draft.restricted} onChange={set('restricted')} />
           </Field>
           {problem && draft.name.trim() && (
             <p role="alert" className="text-xs text-destructive">
-              {problem}
+              {'values' in problem
+                ? t(`problems.${problem.key}`, problem.values)
+                : t(`problems.${problem.key}`)}
             </p>
           )}
         </form>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button type="submit" form="brand-kit-form" disabled={!payload || busy}>
             {busy && <Loader2 className="animate-spin" />}
-            {kit ? 'Save kit' : 'Create kit'}
+            {kit ? t('save') : t('create')}
           </Button>
         </DialogFooter>
       </DialogContent>

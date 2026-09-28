@@ -1,10 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Check, RefreshCw, Shuffle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { selectClass } from '../library/library-filters';
 import type { CategoryOption } from '../library/library-utils';
 import { ConfirmDialog } from './confirm-dialog';
@@ -13,11 +14,11 @@ import type { BulkAction, BulkResponse, ReanalyseResponse } from './library-admi
 // 15.D7 / A3.8 — bulk actions on the selected corpus items: accept the automatic category,
 // override it, reject (retires the item), or re-run analysis + embedding on the stored source.
 
-const DONE: Record<BulkAction, string> = {
-  accept: 'Category accepted',
-  override: 'Category overridden',
-  reject: 'Rejected and retired',
-};
+const DONE = {
+  accept: 'doneAccept',
+  override: 'doneOverride',
+  reject: 'doneReject',
+} as const satisfies Record<BulkAction, string>;
 
 export function LibraryBulkBar({
   ids,
@@ -31,8 +32,9 @@ export function LibraryBulkBar({
   const [category, setCategory] = useState('');
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const t = useTranslations('admin.library.bulk');
+  const errorMessage = useErrorMessage();
   const n = ids.length;
-  const plural = n === 1 ? '' : 's';
 
   const bulk = async (action: BulkAction): Promise<boolean> => {
     setBusy(true);
@@ -42,9 +44,11 @@ export function LibraryBulkBar({
         body: { ids, action, ...(action === 'override' && { category }) },
         idempotencyKey: newIdempotencyKey(),
       });
+      const done = t(DONE[action], { count: res.updated.length });
       toast.success(
-        `${DONE[action]} for ${res.updated.length} item${res.updated.length === 1 ? '' : 's'}` +
-          (res.missing.length ? ` · ${res.missing.length} not found` : ''),
+        res.missing.length
+          ? [done, t('notFound', { count: res.missing.length })].join(' · ')
+          : done,
       );
       onDone();
       return true;
@@ -64,9 +68,7 @@ export function LibraryBulkBar({
         body: { ids },
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success(
-        `Re-analysis queued for ${res.queued.length} item${res.queued.length === 1 ? '' : 's'}`,
-      );
+      toast.success(t('reanalyseQueued', { count: res.queued.length }));
       onDone();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -78,19 +80,19 @@ export function LibraryBulkBar({
   return (
     <div
       role="toolbar"
-      aria-label="Bulk actions"
+      aria-label={t('toolbarAria')}
       className="flex flex-wrap items-end gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3"
     >
-      <p className="mr-auto self-center text-sm font-medium" aria-live="polite">
-        {n} selected
+      <p className="me-auto self-center text-sm font-medium" aria-live="polite">
+        {t('selected', { count: n })}
       </p>
       <Button size="sm" variant="outline" disabled={busy} onClick={() => void bulk('accept')}>
-        <Check /> Accept category
+        <Check /> {t('accept')}
       </Button>
       <div className="flex items-end gap-2">
         <div className="w-48">
           <label htmlFor="bulk-category" className="sr-only">
-            New category
+            {t('newCategory')}
           </label>
           <select
             id="bulk-category"
@@ -98,7 +100,7 @@ export function LibraryBulkBar({
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
-            <option value="">New category…</option>
+            <option value="">{t('newCategoryPlaceholder')}</option>
             {categories.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {`${'  '.repeat(c.depth)}${c.label}`}
@@ -112,21 +114,21 @@ export function LibraryBulkBar({
           disabled={busy || !category}
           onClick={() => void bulk('override')}
         >
-          <Shuffle /> Override
+          <Shuffle /> {t('override')}
         </Button>
       </div>
       <Button size="sm" variant="outline" disabled={busy} onClick={() => void reanalyse()}>
-        <RefreshCw /> Re-analyse
+        <RefreshCw /> {t('reanalyse')}
       </Button>
       <Button size="sm" variant="destructive" disabled={busy} onClick={() => setRejecting(true)}>
-        <X /> Reject
+        <X /> {t('reject')}
       </Button>
       <ConfirmDialog
         open={rejecting}
         onOpenChange={setRejecting}
-        title={`Reject ${n} item${plural}?`}
-        description="Rejected items are retired: hidden from browse, search and recommendations. Projects that already used them keep working."
-        confirmLabel="Reject and retire"
+        title={t('rejectTitle', { count: n })}
+        description={t('rejectBody')}
+        confirmLabel={t('rejectConfirm')}
         onConfirm={() => bulk('reject')}
       />
     </div>

@@ -111,7 +111,7 @@ describe('RedrivePanel', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Re-drive' }));
     expect(await screen.findByText('Re-drive applied')).toBeInTheDocument();
     const { toast } = await import('sonner');
-    expect(toast.success).toHaveBeenCalledWith('Re-drove 1 item(s)');
+    expect(toast.success).toHaveBeenCalledWith('Re-drove 1 item');
     expect(apply).toBeDisabled();
   });
 

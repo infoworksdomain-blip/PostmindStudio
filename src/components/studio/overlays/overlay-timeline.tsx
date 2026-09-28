@@ -1,13 +1,18 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRef, type KeyboardEvent, type PointerEvent } from 'react';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { moveTiming, resizeTiming, type Timing } from './overlay-math';
+import type { OverlayUnit } from './overlay-set';
 import type { Overlay } from './types';
 
 // A4.7 mini-timeline: the shot's duration with one bar per overlay. Drag a bar to move it, drag
 // an end to change its duration. Keyboard: ←/→ move the focused bar 0.1s (Shift: 0.5s);
 // Alt+←/→ change its end. Changes are local drafts until saved.
+// BACKLOG 16.2: time runs left to right in every interface direction (as in video tools), so the
+// ruler and the bars sit in a dir="ltr" box; the labels around them follow the page direction.
 
 type DragMode = 'move' | 'start' | 'end';
 
@@ -38,8 +43,12 @@ export function OverlayTimeline({
   onSeek: (sec: number) => void;
   disabled?: boolean;
   /** What the timeline spans ("shot", "slide", "video"), for the empty state. */
-  unit?: string;
+  unit?: OverlayUnit;
 }) {
+  const t = useTranslations('overlays.timeline');
+  const f = useFormat();
+  const seconds = (sec: number) =>
+    f.number(sec, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const track = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const safeDuration = duration > 0 ? duration : 1;
@@ -97,28 +106,31 @@ export function OverlayTimeline({
     <div className="flex flex-col gap-1">
       <div
         ref={track}
+        dir="ltr"
         onPointerDown={seek}
         className="relative h-5 cursor-pointer border-b border-border"
         aria-hidden
       >
-        {ticks.map((t) => (
+        {ticks.map((tick) => (
           <span
-            key={t}
+            key={tick}
             className="tabular absolute bottom-0 -translate-x-1/2 text-[0.6rem] text-muted-foreground"
-            style={{ left: pct(t) }}
+            style={{ left: pct(tick) }}
           >
-            {t}s
+            {t('tick', { value: tick })}
           </span>
         ))}
       </div>
-      <div className="relative flex flex-col gap-1 py-1">
+      <div dir="ltr" className="relative flex flex-col gap-1 py-1">
         <span
           aria-hidden
           className="pointer-events-none absolute inset-y-0 z-10 w-px bg-primary"
           style={{ left: pct(playhead) }}
         />
         {overlays.length === 0 && (
-          <p className="py-2 text-xs text-muted-foreground">No overlays on this {unit} yet.</p>
+          <p dir="auto" className="py-2 text-xs text-muted-foreground">
+            {t('empty', { unit })}
+          </p>
         )}
         {overlays.map((o) => {
           const selected = o.id === selectedId;
@@ -127,7 +139,11 @@ export function OverlayTimeline({
               <button
                 type="button"
                 aria-pressed={selected}
-                aria-label={`Overlay “${o.text}”, ${o.startAtSec.toFixed(1)}s to ${o.endAtSec.toFixed(1)}s`}
+                aria-label={t('barAria', {
+                  text: o.text,
+                  start: seconds(o.startAtSec),
+                  end: seconds(o.endAtSec),
+                })}
                 aria-describedby="overlay-timeline-help"
                 onClick={() => onSelect(o.id)}
                 onKeyDown={(e) => onKey(e, o)}
@@ -136,7 +152,7 @@ export function OverlayTimeline({
                 onPointerUp={endDrag}
                 onPointerCancel={endDrag}
                 className={cn(
-                  'absolute inset-y-0 flex touch-none items-center overflow-hidden rounded border px-2 text-left text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                  'absolute inset-y-0 flex touch-none items-center overflow-hidden rounded border px-2 text-start text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                   selected
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'border-border bg-card hover:border-foreground/40',
@@ -148,15 +164,17 @@ export function OverlayTimeline({
                   <span
                     aria-hidden
                     onPointerDown={(e) => startDrag(e, o, 'start')}
-                    className="absolute inset-y-0 left-0 w-2 cursor-ew-resize bg-foreground/10"
+                    className="absolute inset-y-0 start-0 w-2 cursor-ew-resize bg-foreground/10"
                   />
                 )}
-                <span className="truncate">{o.text}</span>
+                <span dir="auto" className="truncate">
+                  {o.text}
+                </span>
                 {!disabled && (
                   <span
                     aria-hidden
                     onPointerDown={(e) => startDrag(e, o, 'end')}
-                    className="absolute inset-y-0 right-0 w-2 cursor-ew-resize bg-foreground/10"
+                    className="absolute inset-y-0 end-0 w-2 cursor-ew-resize bg-foreground/10"
                   />
                 )}
               </button>
@@ -165,7 +183,7 @@ export function OverlayTimeline({
         })}
       </div>
       <p id="overlay-timeline-help" className="text-[0.7rem] text-muted-foreground">
-        Drag a bar or its ends. Keyboard: ←/→ move 0.1s (Shift 0.5s), Alt+←/→ change the end.
+        {t('help')}
       </p>
     </div>
   );

@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ArrowRight, Building2, Clapperboard, Layers, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import type { BrandKit, PlatformConnection, Project } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
@@ -17,10 +19,12 @@ import { AutoPublishOption } from './auto-publish-option';
 import {
   BRIEF_MAX,
   buildCreateBody,
+  MAX_BUDGET_POUNDS,
   buildGenerateBody,
   publishPlatforms,
   usesTemplate,
   validateCreate,
+  type CreateProblem,
   type CreateSource,
   type CreateState,
   type QualityTier,
@@ -52,14 +56,25 @@ const INITIAL: Omit<CreateState, 'platforms' | 'brandKitId'> = {
   upload: null,
 };
 
-const SOURCES: Array<{ key: CreateSource; label: string; icon: typeof Clapperboard }> = [
-  { key: 'BRIEF', label: 'Video', icon: Clapperboard },
-  { key: 'SLIDESHOW', label: 'Slideshow', icon: Layers },
-  { key: 'UPLOAD', label: 'Upload a video', icon: Upload },
+const SOURCES: Array<{ key: CreateSource; icon: typeof Clapperboard }> = [
+  { key: 'BRIEF', icon: Clapperboard },
+  { key: 'SLIDESHOW', icon: Layers },
+  { key: 'UPLOAD', icon: Upload },
 ];
+
+const WHOLE_POUNDS: Intl.NumberFormatOptions = {
+  style: 'currency',
+  currency: 'GBP',
+  maximumFractionDigits: 0,
+};
 
 export function CreateScreen({ initialReference }: { initialReference: Reference | null }) {
   const router = useRouter();
+  const t = useTranslations('create.screen');
+  const tp = useTranslations('create.problems');
+  const tl = useTranslations('create.options.lengths');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
   const [form, setForm] = useState(INITIAL);
   const [platforms, setPlatforms] = useState<string[] | null>(null);
@@ -68,7 +83,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const [showOptions, setShowOptions] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [problems, setProblems] = useState<string[]>([]);
+  const [problems, setProblems] = useState<CreateProblem[]>([]);
 
   const kits = useApi<{ data: BrandKit[] }>(businessId ? '/brand-kits' : null, { businessId });
   const connections = useApi<{ data: PlatformConnection[] }>('/platform-connections');
@@ -105,11 +120,11 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
     return (
       <EmptyState
         icon={<Building2 className="size-8" strokeWidth={1.5} />}
-        title="Pick a business first"
-        description="Videos are made for one business at a time. Choose it in the top bar, then come back."
+        title={t('noBusiness.title')}
+        description={t('noBusiness.description')}
         action={
           <Button asChild variant="outline">
-            <Link href="/business">Set up a business</Link>
+            <Link href="/business">{t('noBusiness.action')}</Link>
           </Button>
         }
       />
@@ -132,7 +147,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
         idempotencyKey: newIdempotencyKey(),
       });
       if (body.sourceType === 'SLIDESHOW') {
-        toast.success('Slideshow drafted — check the slides, then generate.');
+        toast.success(t('toast.slideshowDrafted'));
       } else {
         try {
           await api(`/projects/${project.id}/generate`, {
@@ -142,11 +157,11 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
           });
           toast.success(
             body.sourceType === 'UPLOAD'
-              ? 'Generating — Studio is captioning your video.'
-              : 'Generating — Studio is writing the script.',
+              ? t('toast.generatingUpload')
+              : t('toast.generatingScript'),
           );
         } catch (err) {
-          toast.error(`Saved as a draft, but generation didn’t start: ${errorMessage(err)}`);
+          toast.error(t('toast.draftNotStarted', { error: errorMessage(err) }));
         }
       }
       router.push(`/projects/${project.id}`);
@@ -160,25 +175,42 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const isUpload = form.source === 'UPLOAD';
   const templated = usesTemplate(state, reference);
   const chooseTemplate = (id: string | null) => {
-    const t = templates.data?.data.find((x) => x.id === id);
+    const found = templates.data?.data.find((x) => x.id === id);
     patch({
-      projectTemplate: t
-        ? { id: t.id, name: t.name, platforms: t.targetFormats.map((f) => f.platform) }
+      projectTemplate: found
+        ? {
+            id: found.id,
+            name: found.name,
+            platforms: found.targetFormats.map((format) => format.platform),
+          }
         : null,
     });
   };
+  const problemText = (p: CreateProblem): string => {
+    if (p === 'briefTooLong') return tp('briefTooLong', { max: BRIEF_MAX });
+    if (p === 'budgetRange')
+      return tp('budgetRange', {
+        min: f.number(0, WHOLE_POUNDS),
+        max: f.number(MAX_BUDGET_POUNDS, WHOLE_POUNDS),
+      });
+    return tp(p);
+  };
+  // The options summary: separate facts joined with a middle dot (a list, not a sentence).
+  const summary = [
+    templated && form.projectTemplate
+      ? t('summaryTemplate', { name: form.projectTemplate.name })
+      : `${t('summaryPlatforms', { count: state.platforms.length })} · ${tl(form.length)}`,
+    form.autoPublish ? t('summaryAutoPublish') : null,
+    state.brandKitId ? t('summaryBrandKit') : null,
+  ].filter(Boolean);
   return (
     <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 pt-4 md:pt-10">
       <div>
         <p className="mb-3 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-          Create
+          {t('eyebrow')}
         </p>
         <label htmlFor="create-brief" className="font-display text-4xl leading-tight md:text-6xl">
-          {isSlideshow
-            ? 'What’s the slideshow about?'
-            : isUpload
-              ? 'Upload your video'
-              : 'What’s the video about?'}
+          {t(`heading.${form.source}`)}
         </label>
       </div>
       {!isUpload && <ProfileReviewNotice businessId={businessId} />}
@@ -186,17 +218,14 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
         <div className="flex flex-col gap-1">
           <VideoUploadField
             id="create-upload"
-            label={form.upload ? 'Replace the video' : 'Choose a video'}
+            label={form.upload ? t('uploadReplace') : t('uploadChoose')}
             kind="source_video"
             businessId={businessId}
             onUploaded={(result) =>
               patch({ upload: { id: result.upload.id, fileName: result.upload.fileName } })
             }
           />
-          <p className="text-xs text-muted-foreground">
-            Studio adds captions from what’s said, your overlays and every platform format. Notes
-            below are optional.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('uploadNote')}</p>
         </div>
       )}
       {reference && !isSlideshow && !isUpload && (
@@ -218,7 +247,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey))
               e.currentTarget.form?.requestSubmit();
           }}
-          placeholder="Our spring menu launches Friday — three new small plates, 20% off for the first week…"
+          placeholder={t('briefPlaceholder')}
           className="block w-full resize-y bg-transparent px-3 py-2 text-lg leading-relaxed outline-none placeholder:text-muted-foreground/70"
         />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-2 pt-2">
@@ -227,33 +256,31 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             aria-expanded={showOptions}
             aria-controls="create-options"
             onClick={() => setShowOptions((v) => !v)}
-            className="rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="rounded-md px-1.5 py-1 text-start text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {templated && form.projectTemplate
-              ? `${form.projectTemplate.name} template`
-              : `${state.platforms.length} platform${state.platforms.length === 1 ? '' : 's'} · ${
-                  form.length === 'short' ? 'Short' : 'Long'
-                }`}
-            {form.autoPublish ? ' · auto-publish' : ''}
-            {state.brandKitId ? ' · brand kit on' : ''} · <span className="underline">Options</span>
+            {summary.join(' · ')} · <span className="underline">{t('options')}</span>
           </button>
           <Button type="submit" size="lg" disabled={submitting || !ready} className="px-4">
-            {submitting ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-            {isSlideshow ? 'Create slideshow' : 'Generate'}
+            {submitting ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <ArrowRight className="rtl:-scale-x-100" />
+            )}
+            {isSlideshow ? t('createSlideshow') : t('generate')}
           </Button>
         </div>
       </div>
       {problems.length > 0 && (
         <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
           {problems.map((p) => (
-            <li key={p}>{p}</li>
+            <li key={p}>{problemText(p)}</li>
           ))}
         </ul>
       )}
       {showOptions && (
         <div id="create-options" className="flex flex-col gap-5">
-          <div role="radiogroup" aria-label="What to make" className="flex gap-1.5">
-            {SOURCES.map(({ key, label, icon: Icon }) => (
+          <div role="radiogroup" aria-label={t('sourcesAria')} className="flex gap-1.5">
+            {SOURCES.map(({ key, icon: Icon }) => (
               <button
                 key={key}
                 type="button"
@@ -270,7 +297,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
                     : 'border-border text-muted-foreground hover:text-foreground',
                 )}
               >
-                <Icon className="size-4" strokeWidth={1.5} /> {label}
+                <Icon className="size-4" strokeWidth={1.5} /> {t(`sources.${key}`)}
               </button>
             ))}
           </div>
@@ -290,10 +317,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             />
           )}
           {templated ? (
-            <p className="text-xs text-muted-foreground">
-              Platforms and length come from the template. Your text above is optional — it adds
-              specifics to the template’s outline.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('templatedNote')}</p>
           ) : (
             <PlatformChips value={state.platforms} onChange={patch} />
           )}

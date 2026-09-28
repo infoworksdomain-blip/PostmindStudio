@@ -43,6 +43,12 @@ describe('chart utils', () => {
     expect(shortDay('nope')).toBe('nope');
   });
 
+  it('formats days in the requested locale', () => {
+    expect(shortDay('2026-09-27', 'en-US')).toBe('Sep 27');
+    expect(shortDay('2026-09-27', 'zh-Hans')).toBe('9月27日');
+    expect(shortDay('2026-09-27', 'fr')).toMatch(/^27 sept\.?$/);
+  });
+
   it('fills quiet days with zero spend', () => {
     const now = Date.parse('2026-09-27T12:00:00Z');
     expect(fillDays([{ day: '2026-09-26', costPence: 50 }], 3, now)).toEqual([

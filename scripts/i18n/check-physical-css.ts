@@ -1,11 +1,11 @@
 // BACKLOG 16.2 — lists Tailwind classes tied to a physical side (ml-/mr-/pl-/pr-/left-/right-/
 // text-left/text-right/border-l/r/rounded-l/r) in src/components/studio/**, with the logical
-// replacement. Informational during Phase 16 (area agents convert their own screens):
+// replacement. CI runs the --fail form (Phase 16 closed every hit):
 //
 //   npx tsx scripts/i18n/check-physical-css.ts            → report, exit 0
 //   npx tsx scripts/i18n/check-physical-css.ts --fail     → exit 1 when anything is found
 //
-// At the end of Phase 16 the --fail form becomes a CI check. A deliberate physical class (e.g. the
+// A deliberate physical class (e.g. the
 // overlay timeline, which keeps time running left to right in every locale) is exempted by a
 // `i18n-physical-ok` comment on the same line.
 

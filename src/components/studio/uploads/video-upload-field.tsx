@@ -2,9 +2,16 @@
 
 import { useState, type ChangeEvent } from 'react';
 import { CheckCircle2, Loader2, Upload } from 'lucide-react';
-import { errorMessage } from '@/lib/client/api';
-import { formatDuration } from '@/lib/client/format';
-import { uploadVideo, UPLOAD_TYPES, type UploadKind, type UploadResult } from './upload-video';
+import { useTranslations } from 'next-intl';
+import { useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
+import {
+  uploadProblem,
+  uploadVideo,
+  UPLOAD_TYPES,
+  type UploadKind,
+  type UploadResult,
+} from './upload-video';
 
 // A file picker that uploads the chosen video at once (13.5) and reports the result: used by
 // Create ("Upload a video") and the slide editor (VIDEO_CLIP slides).
@@ -26,6 +33,9 @@ export function VideoUploadField({
   disabled?: boolean;
   onUploaded: (result: UploadResult) => void;
 }) {
+  const t = useTranslations('create.upload');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const [status, setStatus] = useState<
     | { state: 'idle' }
     | { state: 'uploading'; name: string }
@@ -37,6 +47,17 @@ export function VideoUploadField({
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    const problem = uploadProblem(file, kind);
+    if (problem) {
+      setStatus({
+        state: 'error',
+        message:
+          problem.code === 'tooLarge'
+            ? t('problems.tooLarge', { max: problem.maxMb })
+            : t(`problems.${problem.code}`),
+      });
+      return;
+    }
     setStatus({ state: 'uploading', name: file.name });
     try {
       const result = await uploadVideo(file, { kind, businessId, projectId });
@@ -66,19 +87,19 @@ export function VideoUploadField({
         />
       </label>
       <p aria-live="polite" className="text-xs text-muted-foreground">
-        {status.state === 'uploading' && `Uploading ${status.name}…`}
+        {status.state === 'uploading' && t('uploading', { name: status.name })}
         {status.state === 'done' && (
           <span className="inline-flex items-center gap-1 text-foreground">
             <CheckCircle2 className="size-3.5 text-emerald-600" /> {status.result.upload.fileName}
             {status.result.upload.durationSec !== null &&
-              ` · ${formatDuration(status.result.upload.durationSec)}`}
+              ` · ${f.duration(status.result.upload.durationSec)}`}
             {status.result.upload.width && status.result.upload.height
               ? ` · ${status.result.upload.width}×${status.result.upload.height}`
               : ''}
           </span>
         )}
         {status.state === 'error' && <span className="text-destructive">{status.message}</span>}
-        {status.state === 'idle' && 'MP4, MOV or WebM.'}
+        {status.state === 'idle' && t('idle')}
       </p>
     </div>
   );

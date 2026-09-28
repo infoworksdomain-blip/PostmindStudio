@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildCreateBody, validateCreate, type CreateState } from '../create/body';
 import { mockFetch, renderWithSWR } from '../review/test-helpers';
-import { uploadProblem, uploadVideo } from './upload-video';
+import { uploadProblem, uploadProblemText, uploadVideo } from './upload-video';
 import { VideoUploadField } from './video-upload-field';
 
 // 13.5 — browser uploads: presigned PUT, then /complete; Create's "Upload a video" body.
@@ -43,11 +43,13 @@ function uploadRoutes() {
 describe('uploadProblem', () => {
   it('checks type and size before anything is sent', () => {
     expect(uploadProblem({ type: 'video/mp4', size: 10 }, 'source_video')).toBeNull();
-    expect(uploadProblem({ type: 'image/png', size: 10 }, 'source_video')).toMatch(/MP4/);
-    expect(uploadProblem({ type: 'video/mp4', size: 0 }, 'slide_clip')).toMatch(/empty/);
-    expect(uploadProblem({ type: 'video/mp4', size: 600 * 1024 * 1024 }, 'source_video')).toMatch(
-      /500 MB/,
-    );
+    expect(uploadProblem({ type: 'image/png', size: 10 }, 'source_video')).toEqual({
+      code: 'type',
+    });
+    expect(uploadProblem({ type: 'video/mp4', size: 0 }, 'slide_clip')).toEqual({ code: 'empty' });
+    const tooLarge = uploadProblem({ type: 'video/mp4', size: 600 * 1024 * 1024 }, 'source_video');
+    expect(tooLarge).toEqual({ code: 'tooLarge', maxMb: 500 });
+    expect(uploadProblemText(tooLarge ?? { code: 'empty' })).toMatch(/500 MB/);
   });
 });
 
@@ -129,7 +131,7 @@ describe('Create body for "Upload a video"', () => {
   };
 
   it('needs a finished upload but no brief', () => {
-    expect(validateCreate(state, 'biz_1')).toEqual(['Upload your video first.']);
+    expect(validateCreate(state, 'biz_1')).toEqual(['uploadRequired']);
     expect(
       validateCreate({ ...state, upload: { id: 'upl_1', fileName: 'a.mp4' } }, 'biz_1'),
     ).toEqual([]);

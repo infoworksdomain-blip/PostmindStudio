@@ -34,23 +34,15 @@ export function referenceHref(id: string, mode: ReferenceMode): string {
   return `/new?${params.toString()}`;
 }
 
-export const MODE_COPY: Record<ReferenceMode, { title: string; body: string }> = {
-  TEMPLATE: {
-    title: 'Same video, my content',
-    body: 'Follows this video’s shot count, timing, overlays and music envelope with entirely new content for your brand.',
-  },
-  INSPIRE: {
-    title: 'Make one like this',
-    body: 'Borrows only the vibe — pace, mood, structure and music feel. Everything else is new.',
-  },
-};
+export type DurationFilterKey = 'any' | 'short' | 'medium' | 'long' | 'xl';
 
-export const DURATION_FILTERS: Array<{ key: string; label: string; min?: number; max?: number }> = [
-  { key: 'any', label: 'Any length' },
-  { key: 'short', label: 'Under 15s', max: 15 },
-  { key: 'medium', label: '15–30s', min: 15, max: 30 },
-  { key: 'long', label: '30–60s', min: 30, max: 60 },
-  { key: 'xl', label: 'Over 60s', min: 60 },
+/** Length filters; the labels are `library.filters.duration.<key>` in the catalogue. */
+export const DURATION_FILTERS: Array<{ key: DurationFilterKey; min?: number; max?: number }> = [
+  { key: 'any' },
+  { key: 'short', max: 15 },
+  { key: 'medium', min: 15, max: 30 },
+  { key: 'long', min: 30, max: 60 },
+  { key: 'xl', min: 60 },
 ];
 
 /** Comma/space separated tag input → normalised, de-duplicated list. */

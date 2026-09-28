@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { CheckCircle2, Link2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
@@ -20,6 +21,7 @@ export function ConnectStep({
   businessId: string;
   onReady: (ready: boolean) => void;
 }) {
+  const t = useTranslations('onboarding.connect');
   const { data, error, mutate } = useApi<{ data: PlatformConnection[] }>('/platform-connections');
   const live = (data?.data ?? []).filter(
     (c) => belongsToBusiness(c, businessId) && c.state === 'active',
@@ -30,16 +32,13 @@ export function ConnectStep({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="font-display text-3xl">Connect where you post</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Studio publishes straight to TikTok, YouTube, Instagram, Facebook, X and LinkedIn. Connect
-          at least one account so your first video can go live.
-        </p>
+        <h2 className="font-display text-3xl">{t('title')}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t('description')}</p>
       </div>
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-      {!data && !error && <Skeleton className="h-16 rounded-xl" aria-label="Loading accounts" />}
+      {!data && !error && <Skeleton className="h-16 rounded-xl" aria-label={t('loading')} />}
       {data && count > 0 && (
-        <ul aria-label="Connected accounts" className="flex flex-col gap-2">
+        <ul aria-label={t('connectedAria')} className="flex flex-col gap-2">
           {live.map((c) => (
             <li
               key={c.id}
@@ -47,18 +46,16 @@ export function ConnectStep({
             >
               <CheckCircle2 className="size-4 text-success" />
               <span className="font-medium">{platformLabel(c.platform)}</span>
-              <span className="text-muted-foreground">{c.platformAccountName}</span>
+              <bdi className="text-muted-foreground">{c.platformAccountName}</bdi>
             </li>
           ))}
         </ul>
       )}
-      {data && count === 0 && (
-        <p className="text-sm text-muted-foreground">No accounts connected yet.</p>
-      )}
+      {data && count === 0 && <p className="text-sm text-muted-foreground">{t('none')}</p>}
       <div>
         <Button asChild variant="outline">
           <Link href="/connections">
-            <Link2 /> {count > 0 ? 'Connect another account' : 'Open Connections'}
+            <Link2 /> {count > 0 ? t('connectAnother') : t('openConnections')}
           </Link>
         </Button>
       </div>

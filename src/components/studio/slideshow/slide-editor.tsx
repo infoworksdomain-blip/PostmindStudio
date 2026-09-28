@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,14 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Field, NativeSelect } from '../review/field';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { ImagePicker } from './image-picker';
-import {
-  SLIDE_TYPE_LABEL,
-  SLIDE_TYPES,
-  TRANSITIONS,
-  type Slide,
-  type SlideContent,
-  type SlideType,
-} from './types';
+import { SLIDE_TYPES, TRANSITIONS, type Slide, type SlideContent, type SlideType } from './types';
 
 // Edit one slide (PATCH /slides/:id): type, the content fields that type renders, image,
 // duration and transition; 13.5: a VIDEO_CLIP slide uploads its clip. Only changed fields are
@@ -121,6 +115,9 @@ export function SlideEditor({
   saving: boolean;
   onSave: (patch: SlidePatch) => void;
 }) {
+  const t = useTranslations('slideshow.editor');
+  const tt = useTranslations('slideshow.types');
+  const tr = useTranslations('slideshow.transitions');
   const [clipName, setClipName] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(() => toForm(slide));
   const set = (patch: Partial<Form>) => setForm((f) => ({ ...f, ...patch }));
@@ -155,21 +152,21 @@ export function SlideEditor({
       }}
       className="grid gap-3 rounded-lg bg-muted/40 p-3 sm:grid-cols-2"
     >
-      <Field id={id('type')} label="Slide type">
+      <Field id={id('type')} label={t('type')}>
         <NativeSelect
           id={id('type')}
           value={type}
           onChange={(e) => set({ slideType: e.target.value as SlideType })}
         >
-          {SLIDE_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {SLIDE_TYPE_LABEL[t]}
+          {SLIDE_TYPES.map((slideType) => (
+            <option key={slideType} value={slideType}>
+              {tt(slideType)}
             </option>
           ))}
         </NativeSelect>
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field id={id('duration')} label="Seconds">
+        <Field id={id('duration')} label={t('seconds')}>
           <Input
             id={id('duration')}
             type="number"
@@ -180,16 +177,16 @@ export function SlideEditor({
             onChange={(e) => set({ durationSec: e.target.value })}
           />
         </Field>
-        <Field id={id('transition')} label="Transition in">
+        <Field id={id('transition')} label={t('transition')}>
           <NativeSelect
             id={id('transition')}
             value={form.transitionIn}
             onChange={(e) => set({ transitionIn: e.target.value })}
           >
-            <option value="">Default</option>
-            {TRANSITIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            <option value="">{tr('default')}</option>
+            {TRANSITIONS.map((transition) => (
+              <option key={transition} value={transition}>
+                {tr(transition)}
               </option>
             ))}
           </NativeSelect>
@@ -197,25 +194,21 @@ export function SlideEditor({
       </div>
       {type === 'QUOTE' && (
         <>
-          {text('quote', 'Quote', 500, true)}
-          {text('author', 'Author', 120)}
+          {text('quote', t('quote'), 500, true)}
+          {text('author', t('author'), 120)}
         </>
       )}
       {type === 'STATISTIC' && (
         <>
-          {text('value', 'Value', 40)}
-          {text('label', 'Label', 120)}
+          {text('value', t('value'), 40)}
+          {text('label', t('label'), 120)}
         </>
       )}
       {type === 'PRODUCT' && (
         <>
-          {text('name', 'Product name', 120)}
-          {text('price', 'Price', 40)}
-          <Field
-            id={id('features')}
-            label="Features (comma separated, up to 4)"
-            className="sm:col-span-2"
-          >
+          {text('name', t('productName'), 120)}
+          {text('price', t('price'), 40)}
+          <Field id={id('features')} label={t('features')} className="sm:col-span-2">
             <Input
               id={id('features')}
               value={form.features}
@@ -224,10 +217,10 @@ export function SlideEditor({
           </Field>
         </>
       )}
-      {!['QUOTE', 'STATISTIC', 'PRODUCT'].includes(type) && text('text', 'Text', 300, true)}
-      {IMAGE_TYPES.has(type) && text('caption', 'Caption', 300)}
+      {!['QUOTE', 'STATISTIC', 'PRODUCT'].includes(type) && text('text', t('text'), 300, true)}
+      {IMAGE_TYPES.has(type) && text('caption', t('caption'), 300)}
       {type === 'TEXT_CARD' && (
-        <Field id={id('bg')} label="Background colour">
+        <Field id={id('bg')} label={t('background')}>
           <input
             id={id('bg')}
             type="color"
@@ -239,10 +232,10 @@ export function SlideEditor({
       )}
       {IMAGE_TYPES.has(type) && businessId && (
         <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <span className="text-xs font-medium text-muted-foreground">Image</span>
+          <span className="text-xs font-medium text-muted-foreground">{t('image')}</span>
           <ImagePicker
             businessId={businessId}
-            label="Slide image"
+            label={t('slideImage')}
             value={form.imageAssetId}
             onChange={(imageAssetId) => set({ imageAssetId })}
           />
@@ -251,11 +244,15 @@ export function SlideEditor({
       {type === 'VIDEO_CLIP' && (
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <span className="text-xs font-medium text-muted-foreground">
-            Clip {form.videoAssetId ? (clipName ? `— ${clipName}` : '— chosen') : '— none yet'}
+            {form.videoAssetId
+              ? clipName
+                ? t('clipNamed', { name: clipName })
+                : t('clipChosen')
+              : t('clipNone')}
           </span>
           <VideoUploadField
             id={id('clip')}
-            label={form.videoAssetId ? 'Replace the clip' : 'Upload a clip'}
+            label={form.videoAssetId ? t('replaceClip') : t('uploadClip')}
             kind="slide_clip"
             projectId={slide.projectId}
             onUploaded={(result) => {
@@ -268,7 +265,7 @@ export function SlideEditor({
       )}
       <div className="sm:col-span-2">
         <Button type="submit" size="sm" disabled={saving || Object.keys(patch).length === 0}>
-          {saving ? <Loader2 className="animate-spin" /> : <Save />} Save slide
+          {saving ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
         </Button>
       </div>
     </form>

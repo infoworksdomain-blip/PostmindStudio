@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { Film } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
-import { formatDuration } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
-import { humanise } from './library-utils';
+import { useAnalysisLabels } from './analysis-labels';
 import type { LibraryVideoDetail, LibraryVideoSummary } from './types';
 
 // One reference video in a grid. List results carry only a thumbnail (A3.10: the preview
@@ -52,6 +53,9 @@ export function VideoCard({
   className?: string;
   size?: 'sm' | 'md';
 }) {
+  const t = useTranslations('library.card');
+  const f = useFormat();
+  const labels = useAnalysisLabels();
   const [previewing, setPreviewing] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reducedMotion = usePrefersReducedMotion();
@@ -108,15 +112,15 @@ export function VideoCard({
         {previewing && <HoverPreview id={video.id} />}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-2.5 pt-10 text-[0.7rem] font-medium text-white">
           <span className="tabular rounded bg-black/40 px-1.5 py-0.5">
-            {formatDuration(video.durationSec)}
+            {f.duration(video.durationSec)}
           </span>
           <span className="rounded bg-black/40 px-1.5 py-0.5">
-            {templateAllowed ? 'Template + Inspire' : 'Inspire only'}
+            {templateAllowed ? t('templateAndInspire') : t('inspireOnly')}
           </span>
         </div>
         {typeof video.similarity === 'number' && (
-          <span className="tabular absolute top-2 left-2 rounded-full bg-background/90 px-2 py-0.5 text-[0.7rem] font-medium">
-            {Math.round(video.similarity * 100)}% match
+          <span className="tabular absolute top-2 start-2 rounded-full bg-background/90 px-2 py-0.5 text-[0.7rem] font-medium">
+            {t('match', { percent: f.percent(video.similarity) })}
           </span>
         )}
       </div>
@@ -124,7 +128,8 @@ export function VideoCard({
         <p className="truncate text-sm font-medium group-hover:underline">{video.title}</p>
         <p className="truncate text-xs text-muted-foreground">
           {video.category.name}
-          {video.analysis && ` · ${humanise(video.analysis.paceTag)} · ${video.analysis.moodTag}`}
+          {video.analysis &&
+            ` · ${labels.pace(video.analysis.paceTag)} · ${video.analysis.moodTag}`}
         </p>
       </div>
     </Link>

@@ -1,7 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCount, formatDuration, formatPence } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, Stat } from '../primitives';
 import type { CostResponse, OverviewResponse } from './types';
 
@@ -12,9 +13,10 @@ export function engagementTotal(t: OverviewResponse['totals']): number {
   return t.likes + t.comments + t.shares + t.saves;
 }
 
-export function engagementRate(t: OverviewResponse['totals']): string {
-  if (t.views <= 0) return '—';
-  return `${((engagementTotal(t) / t.views) * 100).toFixed(1)}%`;
+/** Engagement as a fraction of views (0.032 = 3.2 %); null when nothing was viewed. */
+export function engagementRate(t: OverviewResponse['totals']): number | null {
+  if (t.views <= 0) return null;
+  return engagementTotal(t) / t.views;
 }
 
 export function OverviewStrip({
@@ -24,42 +26,42 @@ export function OverviewStrip({
   overview: { data?: OverviewResponse; error?: unknown; isLoading: boolean; retry: () => void };
   cost: { data?: CostResponse; error?: unknown };
 }) {
+  const t = useTranslations('analytics.overview');
+  const tf = useTranslations('format');
+  const f = useFormat();
   if (overview.error) return <ErrorState error={overview.error} onRetry={overview.retry} />;
   if (overview.isLoading || !overview.data)
-    return <Skeleton aria-label="Loading overview" className="h-36 rounded-xl" />;
+    return <Skeleton aria-label={t('loadingAria')} className="h-36 rounded-xl" />;
 
   const { totals, publications, projectsCreated, days } = overview.data;
+  const rate = engagementRate(totals);
+  const spend = cost.data ? f.pence(cost.data.totalPence) : cost.error ? tf('none') : t('pending');
   return (
     <div className="grid gap-6 border-y border-border/70 py-6 md:grid-cols-[1.3fr_2fr] md:gap-10">
       <div>
         <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
-          Views · last {days} days
+          {t('viewsHeading', { days })}
         </p>
         <p className="tabular mt-2 font-display text-7xl leading-none md:text-8xl">
-          {formatCount(totals.views)}
+          {f.count(totals.views)}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          across {publications} {publications === 1 ? 'publication' : 'publications'} ·{' '}
-          {projectsCreated} {projectsCreated === 1 ? 'project' : 'projects'} started
+          {t('summary', { publications, projects: projectsCreated })}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-end sm:grid-cols-4">
-        <Stat label="Watch time" value={formatDuration(totals.watchTimeSec)} />
+      <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-end sm:grid-cols-4 md:grid-cols-2 xl:grid-cols-4">
+        <Stat label={t('watchTime')} value={f.duration(totals.watchTimeSec)} />
         <Stat
-          label="Engagement"
-          value={formatCount(engagementTotal(totals))}
-          hint={`${engagementRate(totals)} of views`}
+          label={t('engagement')}
+          value={f.count(engagementTotal(totals))}
+          hint={t('engagementHint', { rate: rate === null ? tf('none') : f.percent(rate, 1) })}
         />
         <Stat
-          label="Shares"
-          value={formatCount(totals.shares)}
-          hint={`${formatCount(totals.saves)} saves`}
+          label={t('shares')}
+          value={f.count(totals.shares)}
+          hint={t('savesHint', { saves: totals.saves, formatted: f.count(totals.saves) })}
         />
-        <Stat
-          label="Spend"
-          value={cost.data ? formatPence(cost.data.totalPence) : cost.error ? '—' : '…'}
-          hint="provider costs"
-        />
+        <Stat label={t('spend')} value={spend} hint={t('spendHint')} />
       </div>
     </div>
   );

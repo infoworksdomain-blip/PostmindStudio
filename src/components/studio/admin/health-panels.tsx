@@ -1,10 +1,11 @@
 'use client';
 
 import { RotateCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
-import { formatPence } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, Section } from '../primitives';
 
@@ -34,59 +35,77 @@ export interface ProviderHealth {
 const REFRESH_MS = 30_000;
 /** A job waiting longer than this is worth a look (spec 11.3 queue latency targets are minutes). */
 const SLOW_WAIT_SEC = 300;
+const NONE = '—';
 
-function waitText(sec: number | null): string {
-  if (sec === null) return '—';
-  if (sec < 60) return `${sec}s`;
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ${sec % 60}s`;
-  return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;
+const QUEUE_COLUMNS = ['waiting', 'active', 'failed', 'delayed', 'oldestWaiting'] as const;
+
+function useWaitText(): (sec: number | null) => string {
+  const t = useTranslations('admin.health.queues');
+  const f = useFormat();
+  return (sec) => {
+    if (sec === null) return NONE;
+    if (sec < 60) return t('waitSeconds', { seconds: f.number(sec) });
+    if (sec < 3600)
+      return t('waitMinutes', {
+        minutes: f.number(Math.floor(sec / 60)),
+        seconds: f.number(sec % 60),
+      });
+    return t('waitHours', {
+      hours: f.number(Math.floor(sec / 3600)),
+      minutes: f.number(Math.floor((sec % 3600) / 60)),
+    });
+  };
 }
 
 function Num({ value, warn }: { value: number; warn?: boolean }) {
+  const f = useFormat();
   return (
     <td
       className={cn(
-        'tabular py-1.5 text-right',
+        'tabular py-1.5 text-end',
         warn && value > 0 && 'font-medium text-amber-700 dark:text-amber-400',
       )}
     >
-      {value.toLocaleString('en-GB')}
+      {f.number(value)}
     </td>
   );
 }
 
 function Refresh({ onClick }: { onClick: () => void }) {
+  const t = useTranslations('admin.health');
   return (
     <Button variant="outline" size="sm" onClick={onClick}>
-      <RotateCw /> Refresh
+      <RotateCw /> {t('refresh')}
     </Button>
   );
 }
 
 export function QueuesPanel() {
+  const t = useTranslations('admin.health.queues');
+  const waitText = useWaitText();
   const res = useApi<{ queues: QueueHealth[] }>('/admin/queues', undefined, {
     refreshInterval: REFRESH_MS,
   });
   return (
     <Section
-      title="Queue health"
-      description="BullMQ depth per queue (spec 16.4). Failed jobs stay until an operator re-drives them."
+      title={t('title')}
+      description={t('description')}
       actions={<Refresh onClick={() => void res.mutate()} />}
     >
       {res.error ? (
         <ErrorState error={res.error} onRetry={() => void res.mutate()} />
       ) : !res.data ? (
-        <Skeleton aria-label="Loading queues" className="h-40" />
+        <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : (
-        <table aria-label="Queue health" className="w-full text-sm">
+        <table aria-label={t('tableAria')} className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-muted-foreground">
-              <th scope="col" className="py-1 font-normal">
-                Queue
+            <tr className="text-start text-xs text-muted-foreground">
+              <th scope="col" className="py-1 text-start font-normal">
+                {t('queue')}
               </th>
-              {['Waiting', 'Active', 'Failed', 'Delayed', 'Oldest waiting'].map((h) => (
-                <th key={h} scope="col" className="py-1 text-right font-normal">
-                  {h}
+              {QUEUE_COLUMNS.map((h) => (
+                <th key={h} scope="col" className="py-1 text-end font-normal">
+                  {t(h)}
                 </th>
               ))}
             </tr>
@@ -94,7 +113,7 @@ export function QueuesPanel() {
           <tbody>
             {res.data.queues.map((q) => (
               <tr key={q.name} className="border-t border-border/60">
-                <th scope="row" className="py-1.5 text-left font-medium">
+                <th scope="row" className="py-1.5 text-start font-medium">
                   {q.name}
                 </th>
                 <Num value={q.waiting} />
@@ -103,7 +122,7 @@ export function QueuesPanel() {
                 <Num value={q.delayed} />
                 <td
                   className={cn(
-                    'tabular py-1.5 text-right',
+                    'tabular py-1.5 text-end',
                     (q.oldestWaitingSec ?? 0) > SLOW_WAIT_SEC &&
                       'font-medium text-amber-700 dark:text-amber-400',
                   )}
@@ -119,13 +138,8 @@ export function QueuesPanel() {
   );
 }
 
-const BREAKER_LABEL: Record<ProviderHealth['breaker'], string> = {
-  closed: 'Closed',
-  half_open: 'Half-open (trial)',
-  open: 'Open',
-};
-
 function BreakerTag({ state }: { state: ProviderHealth['breaker'] }) {
+  const t = useTranslations('admin.health.providers.breakerState');
   return (
     <span
       className={cn(
@@ -137,56 +151,58 @@ function BreakerTag({ state }: { state: ProviderHealth['breaker'] }) {
             : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
       )}
     >
-      {BREAKER_LABEL[state]}
+      {t(state)}
     </span>
   );
 }
 
 export function ProvidersPanel() {
+  const t = useTranslations('admin.health.providers');
+  const f = useFormat();
   const res = useApi<{ providers: ProviderHealth[] }>('/admin/providers', undefined, {
     refreshInterval: REFRESH_MS,
   });
   return (
     <Section
-      title="Provider health"
-      description="Circuit breakers are shared by every worker (Redis). Error rate counts provider-side failures of jobs started in the last hour; spend is today (UTC)."
+      title={t('title')}
+      description={t('description')}
       actions={<Refresh onClick={() => void res.mutate()} />}
     >
       {res.error ? (
         <ErrorState error={res.error} onRetry={() => void res.mutate()} />
       ) : !res.data ? (
-        <Skeleton aria-label="Loading providers" className="h-40" />
+        <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : res.data.providers.length === 0 ? (
-        <EmptyState title="No providers yet" description="No provider is configured or has run." />
+        <EmptyState title={t('emptyTitle')} description={t('emptyBody')} />
       ) : (
-        <table aria-label="Provider health" className="w-full text-sm">
+        <table aria-label={t('tableAria')} className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs text-muted-foreground">
-              <th scope="col" className="py-1 font-normal">
-                Provider
+            <tr className="text-start text-xs text-muted-foreground">
+              <th scope="col" className="py-1 text-start font-normal">
+                {t('provider')}
               </th>
-              <th scope="col" className="py-1 font-normal">
-                Breaker
+              <th scope="col" className="py-1 text-start font-normal">
+                {t('breaker')}
               </th>
-              <th scope="col" className="py-1 text-right font-normal">
-                Error rate (1 h)
+              <th scope="col" className="py-1 text-end font-normal">
+                {t('errorRate')}
               </th>
-              <th scope="col" className="py-1 text-right font-normal">
-                Jobs (1 h)
+              <th scope="col" className="py-1 text-end font-normal">
+                {t('jobs')}
               </th>
-              <th scope="col" className="py-1 text-right font-normal">
-                Spend today
+              <th scope="col" className="py-1 text-end font-normal">
+                {t('spendToday')}
               </th>
             </tr>
           </thead>
           <tbody>
             {res.data.providers.map((p) => (
               <tr key={p.id} className="border-t border-border/60">
-                <th scope="row" className="py-1.5 text-left font-medium">
+                <th scope="row" className="py-1.5 text-start font-medium">
                   {p.id}
                   {!p.configured && (
-                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                      not configured
+                    <span className="ms-1.5 text-xs font-normal text-muted-foreground">
+                      {t('notConfigured')}
                     </span>
                   )}
                 </th>
@@ -195,17 +211,25 @@ export function ProvidersPanel() {
                 </td>
                 <td
                   className={cn(
-                    'tabular py-1.5 text-right',
+                    'tabular py-1.5 text-end',
                     (p.errorRate1h ?? 0) >= 0.2 && 'font-medium text-destructive',
                   )}
                 >
-                  {p.errorRate1h === null ? '—' : `${Math.round(p.errorRate1h * 1000) / 10}%`}
+                  {p.errorRate1h === null ? NONE : f.percent(p.errorRate1h, 1)}
                 </td>
-                <td className="tabular py-1.5 text-right text-muted-foreground">
-                  {p.jobs1h.succeeded} ok · {p.jobs1h.failed} failed
-                  {p.jobs1h.running > 0 && ` · ${p.jobs1h.running} running`}
+                <td className="tabular py-1.5 text-end text-muted-foreground">
+                  {p.jobs1h.running > 0
+                    ? t('jobCountsRunning', {
+                        succeeded: f.number(p.jobs1h.succeeded),
+                        failed: f.number(p.jobs1h.failed),
+                        running: f.number(p.jobs1h.running),
+                      })
+                    : t('jobCounts', {
+                        succeeded: f.number(p.jobs1h.succeeded),
+                        failed: f.number(p.jobs1h.failed),
+                      })}
                 </td>
-                <td className="tabular py-1.5 text-right">{formatPence(p.spendTodayPence)}</td>
+                <td className="tabular py-1.5 text-end">{f.pence(p.spendTodayPence)}</td>
               </tr>
             ))}
           </tbody>
