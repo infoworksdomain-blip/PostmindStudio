@@ -6,7 +6,30 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
-## Storage: Cloudflare R2
+## Deployment: Render
+
+[2026-09-28] [Render] Studio deployable on Render from one Blueprint (`render.yaml`): project `postmind-studio`, environments staging (auto-deploy after CI) and production (manual promotion), everything in frankfurt. Render docs read 2026-09-28 and cited inline (blueprint-spec, private-network, deploys, rollbacks, postgresql-backups/-extensions/-connection-pooling, key-value, compute plans, pricing, Cloudflare DNS, REST API deploys/rollback).
+- Per environment: Postgres 17 (pgvector, private only), Key Value (Valkey 8, noeviction, journal+snapshot, `ipAllowList: []`), web (Docker, preDeploy = `prisma migrate deploy` + idempotent seed, health `/api/health/ready`), six queue workers, and a monitoring service. Headless render (browserless) is left out: Render's private network is flat, so compose's isolated `headless` network cannot be reproduced (runbook "Not on Render").
+- DECISION (worker type): queue workers are private services (`pserv`), not `worker`. Background workers cannot receive private-network traffic, so Prometheus could not scrape `:9464/metrics`. A pserv must bind a port, and the metrics listener does, because `METRICS_TOKEN` is always set.
+- DECISION (secrets): non-secret config lives in `studio-config-<env>`. `METRICS_TOKEN` is `generateValue` in `studio-metrics-<env>` (web, workers, Prometheus). `STUDIO_INTERNAL_SERVICE_TOKEN` is `generateValue` on web; Core copies it. `studio-secrets-<env>` is left empty in the Blueprint, and the operator pastes the secrets once per environment. Groups cannot hold `sync: false`, and per-service prompts would mean pasting each secret 7 times. The only `sync: false` values are the PagerDuty key and Slack webhook on the monitoring service. `POSTMIND_SERVICE_TOKEN` is issued by Core, so it is never generated.
+- DECISION (DB URL): the Blueprint sets `RENDER_POSTGRES_URL` (Render's internal connectionString); `scripts/render/with-db-url.sh` (+ `src/lib/render/database-url.ts`) builds DATABASE_URL (`schema=studio`, per-service `connection_limit`, `pool_timeout`, `application_name`=RENDER_SERVICE_NAME) and exec's web / worker / preDeploy, never logging the URL. PgBouncer off: Prisma Migrate needs a direct connection (Prisma docs), Studio only uses transaction-level advisory locks, and the connection budget fits (production Postgres 2c-8g = 200 connections).
+- DECISION (monitoring): `studio-monitoring-<env>` pserv built from `ops/render/monitoring/` (Prometheus 2.55.1 + Alertmanager 0.28.1 + blackbox 0.28.0, the CI-validated versions) with the unchanged alert/SLO rules and routing; scrapes `<host>-discovery` DNS names (every instance); secrets written to files by the entrypoint. SLO rules are now loaded too (the compose config loads only studio-alerts.yml).
+- `scripts/render/deploy.ts` (+ `src/lib/render/deploy.ts`): deploy a commit to a list of services via the Render API. It rolls back to a retained build when one exists, otherwise it builds the commit, deploying web first and then the rest, and waits for `live`. Used as STAGING_DEPLOY_CMD for the rollback rehearsal and for production promotion.
+- Cost (list prices): staging ≈ $124/mo, production ≈ $387/mo, Pro workspace $25/mo.
+- Runbooks: new render-deploy.md (account, Blueprint, secrets table, domains + Cloudflare DNS + disconnect the `postmindstudio` Workers build, first-deploy checks, promotion, rollback, scaling, PITR). deploy.md, staging-gate.md, backup-recovery.md, monitoring-deploy.md, rollback.md and README updated. `.env.example` gains RENDER_POSTGRES_URL, STUDIO_DB_CONNECTION_LIMIT, STUDIO_DB_POOL_TIMEOUT. `js-yaml` (already in the lockfile) is now a direct devDependency for the Blueprint test.
+- Tests: test/unit/render-blueprint.test.ts covers:
+  - frankfurt everywhere and unique names;
+  - Key Value noeviction, `ipAllowList: []` and persistence;
+  - Postgres pinned to PG ≥ 13;
+  - a pserv per queue in both environments;
+  - preDeploy runs migrate + seed;
+  - every requireEnv in src is provided by render.yaml or the runbook table;
+  - no literal secrets;
+  - monitoring template and hosts.
+
+  Also src/lib/render/database-url.test.ts and src/lib/render/deploy.test.ts.
+- UNVERIFIED (needs a Render account): a Blueprint sync (`render blueprints validate`); Redis DB 3 (SELECT) on Render Key Value; the monitoring image build (no Docker locally); `dockerCommand` keeping the image's tini ENTRYPOINT; that dashboard-added group vars survive syncs (documented in Render's blueprint spec; runbook step 7.8 checks it).
+- RISK: `/api/studio/internal/**` and `/api/metrics` are on the public web service (Engagement expects private ingress). Both are token-protected; the runbook adds a Cloudflare WAF rule and turns off the onrender.com subdomain. Render's IP allow-list for web services needs the Scale plan.
 
 [2026-09-28] [R2] Cloudflare R2 as an alternative object store; AWS S3 stays the default and is unchanged. KMS stays on AWS (KMS_KEY_ID, envelope.ts untouched).
 - Config: STORAGE_PROVIDER=s3|r2 (default s3), R2_ACCOUNT_ID, R2_JURISDICTION (eu|us|fedramp, optional), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY. Validated with zod in src/lib/studio/storage-client.ts, which fails fast with a ConfigurationError naming every problem. There was no central env schema; each module validates its own env.

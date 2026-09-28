@@ -9,6 +9,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [kill-switch.md](kill-switch.md) | All four kill-switch levels, the per-platform publishing halt, re-drive after release, and the timed rehearsal (12.2) | 60 s to halt |
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
+| [render-deploy.md](render-deploy.md) | Deployment: Render — one Blueprint (`render.yaml`) for staging + production: secrets, domains, Cloudflare DNS, first deploy, promotion, rollback, scaling, PITR | — |
 | [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning (R2: backup copy, no versioning), Redis (playbook E-12) | — |
 | [r2-setup.md](r2-setup.md) | Cloudflare R2 as the object store (`STORAGE_PROVIDER=r2`): EU buckets, scoped token, CORS, lifecycle, env | — |
 | [storage-failover.md](storage-failover.md) | Secondary-region (S3) or second-bucket (R2) storage failover (15.E9) | — |
