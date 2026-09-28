@@ -363,3 +363,13 @@ Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave
 **Track 3 — integrations and beta**
 - [ ] **14.10** Core integration kit for the Meta internal endpoints (Core team wires it). (built; ready to run by the Core team: integrations/core — copy the client, wire it, `npm run contract:core -- --base-url <staging> --token <token>`)
 - [ ] **14.11** Beta programme tooling, Trust & Safety audit sampling, on-call rota config (people run it). (built; ready to run by people: recruit and enrol 5–10 beta customers in Admin → Beta, staff the rota from ops/oncall/rota.template.yaml + PagerDuty, review the monthly sample in Admin → Safety audit)
+
+## Phase 16 — Multilingual Studio interface
+
+Plan: `plans/phase-16.md`. Operator decision (2026-09-28): interface in en-GB (source), en-US, fr, es, ar (RTL), de, it, pt-BR, pt-PT, hi, zh-Hans; no Nigerian Pidgin. Machine-written translations are flagged for native-speaker review before launch.
+
+- [ ] **16.1** i18n foundation: next-intl, locale selection (user preference → Accept-Language → en-GB), locale-aware formatting, message catalogues + CI completeness/placeholder checks, API error codes → message keys.
+- [ ] **16.2** Right-to-left: dir/lang per locale, logical CSS properties, mirrored directional icons.
+- [ ] **16.3** Every screen localised (create/review/slideshow/overlays; manage/business/connections; library/analytics/admin; shell/onboarding/share/templates/account), all 11 catalogues written.
+- [ ] **16.4** Tests: catalogue parity, ICU validity, RTL + CJK component renders, per-locale formatting.
+- [ ] **16.5** Notifications rendered in the reader's locale (message key + params).
