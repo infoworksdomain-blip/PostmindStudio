@@ -108,13 +108,19 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function Wordmark() {
+/** compact: on phones the header shows only the mark (the name stays for screen readers). */
+function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
-    <Link href="/projects" className="flex items-center gap-2 px-3">
+    <Link href="/projects" className={cn('flex items-center gap-2', compact ? 'sm:px-3' : 'px-3')}>
       <span className="grid size-7 place-items-center rounded-md bg-foreground text-background">
         <Film className="size-4" strokeWidth={2} />
       </span>
-      <span className="font-display text-xl leading-none whitespace-nowrap">
+      <span
+        className={cn(
+          'font-display text-xl leading-none whitespace-nowrap',
+          compact && 'max-sm:sr-only',
+        )}
+      >
         PostMind <em className="text-primary not-italic">Studio</em>
       </span>
     </Link>
@@ -177,7 +183,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           <div className="lg:hidden">
-            <Wordmark />
+            <Wordmark compact />
           </div>
           <div className="ms-auto flex min-w-0 items-center gap-2">
             <div className="hidden md:block">
