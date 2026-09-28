@@ -92,7 +92,13 @@ export interface EngagementReport {
   days: number;
   totals: EngagementRow & { publications: number };
   byProject: Array<
-    EngagementRow & { projectId: string; name: string; hook: string | null; publications: number }
+    EngagementRow & {
+      projectId: string;
+      /** null: the user gave the project no name (17.9; the UI shows the translated fallback). */
+      name: string | null;
+      hook: string | null;
+      publications: number;
+    }
   >;
   byHook: Array<EngagementRow & { hook: string; projects: number; leadRate: number }>;
   byPlatform: Array<

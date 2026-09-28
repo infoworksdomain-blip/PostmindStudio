@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiError, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 15.E5 / decision P8 — the public smart-preview page (studio.postmind.ai/p/:token, spec
 // 4.4). No PostMind session: the token in the URL is the credential. Shows the variants and the
@@ -75,6 +76,7 @@ export function PublicPreview({
 }) {
   const t = useTranslations('share.preview');
   const f = useFormat();
+  const projectName = useProjectName();
   const errorMessage = useErrorMessage();
   const url = `${apiBase}/public/share-links/${encodeURIComponent(token)}`;
   const [data, setData] = useState<PublicPreviewData | null>(null);
@@ -153,7 +155,7 @@ export function PublicPreview({
         {t('eyebrow')}
       </p>
       <h1 dir="auto" className="mt-2 font-display text-4xl break-words">
-        {data.project.name}
+        {projectName(data.project.name)}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {t('intro', {

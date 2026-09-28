@@ -12,6 +12,13 @@ export interface StudioMetrics {
   jobs: Counter<'job' | 'outcome'>;
   queueDepth: Gauge<'queue' | 'state'>;
   breakerState: Gauge<'provider'>;
+  /**
+   * 17.4: a router candidate passed over for a run-time reason (circuit_open, provider_disabled,
+   * over_budget, too_slow, no_cost_estimate), and a candidate selected. Their ratio per provider
+   * is its failover rate (ops/prometheus/studio-alerts.yml StudioProviderFailoverRateHigh).
+   */
+  providerPassedOver: Counter<'provider' | 'reason'>;
+  providerSelected: Counter<'provider'>;
   /** Spec 12.5: cost alerts raised (each (scope, id, period, threshold) once — cost/alerts.ts). */
   costAlerts: Counter<'scope' | 'threshold'>;
   /** Kill-switch flags engaged per level (sampled from system_flags at scrape time). */
@@ -76,6 +83,18 @@ function build(): StudioMetrics {
     breakerState: new Gauge({
       name: 'studio_provider_circuit_state',
       help: 'Provider circuit breaker in this process: 0 closed, 1 half-open, 2 open',
+      labelNames: ['provider'],
+      registers: [registry],
+    }),
+    providerPassedOver: new Counter({
+      name: 'studio_provider_passed_over_total',
+      help: 'Router candidates passed over for a run-time reason (circuit_open | provider_disabled | over_budget | too_slow | no_cost_estimate)',
+      labelNames: ['provider', 'reason'],
+      registers: [registry],
+    }),
+    providerSelected: new Counter({
+      name: 'studio_provider_selected_total',
+      help: 'Router decisions by the provider selected',
       labelNames: ['provider'],
       registers: [registry],
     }),

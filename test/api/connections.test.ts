@@ -98,6 +98,8 @@ describe.skipIf(!hasDb)('platform connections API', { timeout: 60_000 }, () => {
     expect(data).toHaveLength(1);
     expect(data[0]).not.toHaveProperty('encryptedAccessToken');
     expect(data[0]).not.toHaveProperty('encryptedRefreshToken');
+    // 17.3: the account-status check's result is listed (not checked yet on a new connection).
+    expect(data[0]).toMatchObject({ statusCheckedAt: null, statusCheckOutcome: null });
     expect((await call(listRoute.GET, { token: 'stranger' })).json.data).toEqual([]);
 
     expect(

@@ -51,6 +51,9 @@ export interface WebsiteScan {
   completedAt: string | null;
   /** 15.D8 / A11.2: the ownership checkbox text the user ticked (null: historic / scheduled). */
   ownershipStatement?: string | null;
+  /** 17.8: the interface locale and catalogue key of that text (null on older scans). */
+  ownershipStatementLocale?: string | null;
+  ownershipStatementKey?: string | null;
 }
 
 /** GET /scans/:id adds the error lines and the library size per source. */

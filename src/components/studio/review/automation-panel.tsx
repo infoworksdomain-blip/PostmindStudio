@@ -12,6 +12,7 @@ import {
   readTargets,
   type AutoPublishTarget,
   type AutoPublishTargetResult,
+  type ReviewRecord,
 } from '../automation/automation';
 import { AutoPublishOutbox } from './auto-publish-outbox';
 import { SaveTemplate } from './save-template';
@@ -87,12 +88,68 @@ function Targets({ project }: { project: ProjectDetail }) {
   );
 }
 
+const REVIEW_REASON_CODES = [
+  'enterprise_plan',
+  'org_policy',
+  'config_invalid',
+  'force_approved',
+  'content_safety_flag',
+  'quality_not_clean',
+  'script_safety_flag',
+  'not_trusted',
+  'approval_workflow',
+  'auto_approve_error',
+] as const;
+
+/**
+ * 17.9: why a person must review, in the reader's language (review.automation.reasons.<code>);
+ * the stored English reason for a code this build does not know.
+ */
+export function useReviewReason(): (review: ReviewRecord) => string {
+  const t = useTranslations('review.automation');
+  const f = useFormat();
+  return (review: ReviewRecord) => {
+    const fallback = review.reason ?? t('needsReview');
+    const code = review.code ?? '';
+    const params = review.params ?? {};
+    const platform = typeof params.platform === 'string' ? f.platform(params.platform) : null;
+    if (!(REVIEW_REASON_CODES as readonly string[]).includes(code)) return fallback;
+    switch (code as (typeof REVIEW_REASON_CODES)[number]) {
+      case 'force_approved':
+        return platform ? t('reasons.force_approved', { platform }) : fallback;
+      case 'content_safety_flag':
+        return platform
+          ? t('reasons.content_safety_flag', {
+              platform,
+              outcome: params.outcome === 'not_run' ? 'not_run' : 'flagged',
+            })
+          : fallback;
+      case 'quality_not_clean':
+        if (platform) return t('reasons.quality_not_clean', { platform });
+        return review.params ? t('reasons.no_renders') : fallback;
+      case 'not_trusted':
+        if (!review.params) return fallback;
+        return t('reasons.not_trusted', {
+          approved: f.number(Number(params.approved ?? review.humanApprovedCount ?? 0)),
+          needed: f.number(Number(params.needed ?? review.threshold ?? 0)),
+        });
+      case 'approval_workflow':
+        return typeof params.workflow === 'string'
+          ? t('reasons.approval_workflow', { workflow: params.workflow })
+          : fallback;
+      default:
+        return t(`reasons.${code as 'enterprise_plan'}`);
+    }
+  };
+}
+
 export function AutomationPanel({ project }: { project: ProjectDetail }) {
   const t = useTranslations('review.automation');
   const origin = approvalOrigin(project.approvals);
   const review = readReview(project.metadata);
   const needsReview =
     project.state === 'READY_FOR_REVIEW' && review?.decision === 'needs_review' ? review : null;
+  const reviewReason = useReviewReason();
   const autoPublish = project.publishPolicy === 'AUTO_ON_APPROVAL';
   const canSave = project.sourceType !== 'SLIDESHOW' && project.scripts.length > 0;
   if (!origin && !needsReview && !autoPublish && !canSave) return null;
@@ -116,14 +173,14 @@ export function AutomationPanel({ project }: { project: ProjectDetail }) {
       {needsReview && (
         <p className="flex items-start gap-2 text-sm" role="status">
           <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
-          {needsReview.reason ?? t('needsReview')}
+          {reviewReason(needsReview)}
         </p>
       )}
       {autoPublish && <Targets project={project} />}
       {autoPublish && <AutoPublishOutbox projectId={project.id} />}
       {canSave && (
         <div>
-          <SaveTemplate projectId={project.id} defaultName={project.name} />
+          <SaveTemplate projectId={project.id} defaultName={project.name ?? ''} />
         </div>
       )}
     </section>

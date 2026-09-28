@@ -16,6 +16,7 @@ import {
   withShots,
   type ProjectRow,
 } from './redrive';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // BACKLOG 13.20 — auto-resume of projects paused by the organisation's daily or monthly cost cap
 // (spec 12.5 "jobs pause"; runbooks/cost-runaway.md). When a job hits CostCapPausedError the
@@ -182,7 +183,7 @@ async function resumeOne(
     userId: project.createdByUserId,
     // The resume is the end of a cost pause: same preference as the pause alert.
     kind: 'cost_alert',
-    title: `“${project.name}” resumed automatically`,
+    title: `“${projectLabel(project.name)}” resumed automatically`,
     body:
       pause.scope === 'org_monthly'
         ? 'A new month started, so generation continued from where it paused.'
@@ -191,7 +192,7 @@ async function resumeOne(
     dedupeKey: `auto_resume:${project.id}:${pause.scope}:${pause.period}`,
     message: {
       key: pause.scope === 'org_monthly' ? 'autoResumedMonthly' : 'autoResumedDaily',
-      params: { name: project.name },
+      params: { name: projectNameParam(project.name) },
     },
   });
   return { ...base, action: 'resumed', scope: pause.scope, stage };

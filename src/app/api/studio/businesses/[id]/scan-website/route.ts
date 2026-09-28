@@ -11,7 +11,7 @@ export const POST = withStudioRoute(
     const input = await parseBody(req, scanWebsiteInput);
     const scan = await startScan(deps, tenant, businessId, input);
     // A6.7 / A11.2: record the ownership warranty — who gave it, when, and the exact text ticked
-    // (also stored on website_scans.ownershipStatement).
+    // (also stored on website_scans). 17.8: the approved catalogue text, its locale and key.
     audit(
       'studio.website_scan.start',
       { type: 'website_scan', id: scan.id },
@@ -20,6 +20,8 @@ export const POST = withStudioRoute(
         url: scan.url,
         ownershipConfirmed: true,
         ownershipStatement: scan.ownershipStatement,
+        ownershipStatementLocale: scan.ownershipStatementLocale,
+        ownershipStatementKey: scan.ownershipStatementKey,
       },
     );
     return { status: 202, body: { scanId: scan.id, scan } };

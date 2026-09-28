@@ -91,6 +91,9 @@ describe('VoiceProfilesPanel', () => {
     expect(form.get('speakerName')).toBe('Amara Okafor');
     expect(form.get('consent')).toBe('true');
     expect(form.get('consentStatement')).toMatch(/^I, Amara Okafor, consent/);
+    // 17.8: the statement's interface locale and catalogue key are recorded with it.
+    expect(form.get('consentStatementLocale')).toBe('en-GB');
+    expect(form.get('consentStatementKey')).toBe('business.voice.cloneDialog.consentPhrase');
     expect((form.get('consentRecording') as File).name).toBe('consent.mp3');
     expect(form.getAll('samples').map((f) => (f as File).name)).toEqual(['one.mp3', 'two.mp3']);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

@@ -6,7 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
 import { ErrorState } from '../primitives';
-import { categoryLabel, slideCount, type SlideshowTemplate } from './types';
+import { useTemplateCategory } from '../templates/category';
+import { slideCount, type SlideshowTemplate } from './types';
 
 // BACKLOG 10.8 — choose a slideshow template (built-in + organisation, A5.7).
 
@@ -18,6 +19,7 @@ export function TemplatePicker({
   onChange: (id: string) => void;
 }) {
   const t = useTranslations('slideshow.templatePicker');
+  const category = useTemplateCategory();
   const { data, error, isLoading, mutate } = useApi<{ data: SlideshowTemplate[] }>(
     '/slideshow-templates',
   );
@@ -56,7 +58,7 @@ export function TemplatePicker({
             <span className="min-w-0">
               <span className="block truncate text-sm font-medium">{template.name}</span>
               <span className="block truncate text-xs text-muted-foreground">
-                {categoryLabel(template.category)}
+                {category(template.category, true)}
                 {count !== null && ` · ${t('slides', { count })}`}
                 {template.organisationId && ` · ${t('yours')}`}
               </span>

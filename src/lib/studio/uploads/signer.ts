@@ -4,7 +4,7 @@ import { requireEnv } from '../../env';
 import { createFfmpegInspector, type MediaInspector } from '../pipeline/media-probe';
 import { getAssetStorage, type AssetStorage } from '../storage';
 import {
-  createStorageS3Client,
+  createPresignS3Client,
   maxPresignSecFor,
   storageProvider,
   type StorageProvider,
@@ -16,19 +16,22 @@ import {
 // https://docs.aws.amazon.com/AmazonS3/latest/userguide/PresignedUrlUploadObject.html and
 // getSignedUrl from @aws-sdk/s3-request-presigner (read 2026-09-27).
 //
-// Storage: Cloudflare R2 (checked 2026-09-28 against the installed SDK, 3.1141):
-//   - this SDK's presigner puts content-type in its unsignable set, so on S3 the URL above signs
-//     only `host` (X-Amz-SignedHeaders=host) and Content-Type is NOT enforced by the signature
-//     (S3 behaviour left as it was; see the R2 report in PROGRESS.md). On R2 the signer passes
-//     signableHeaders {content-type}, so the URL signs content-type;host and R2 refuses a PUT with
-//     another type (403 SignatureDoesNotMatch) as Cloudflare documents:
+// Both providers (Storage: Cloudflare R2, 2026-09-28; S3 since Phase 17.6):
+//   - the installed presigner (3.1141) puts content-type in its unsignable set unless it is listed
+//     in signableHeaders ("Get Presigned URL with headers that should be signed",
+//     https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-s3-request-presigner/),
+//     so the signer passes signableHeaders {content-type}: the URL signs content-type;host and the
+//     store refuses a PUT with another type (403 SignatureDoesNotMatch). R2 documents the same:
 //     https://developers.cloudflare.com/r2/api/s3/presigned-urls/ ("Restricting Content-Type").
-//     The browser already sends the returned headers ({ 'content-type': <declared type> }).
-//   - the R2 client is built with requestChecksumCalculation WHEN_REQUIRED (storage-client.ts),
-//     so the URL carries no x-amz-checksum-crc32=AAAAAA== / x-amz-sdk-checksum-algorithm (the
-//     CRC32 of an EMPTY body that the SDK default adds, which R2 does not implement for a single
-//     PUT: https://developers.cloudflare.com/r2/api/s3/api/#checksum-types).
-//   - expiry is capped at 7 days (604,800 s), R2's maximum.
+//     The browser already sends the returned headers ({ 'content-type': <declared type> }), and the
+//     bucket CORS rule already allows Content-Type (runbooks/deploy.md, r2-setup.md).
+//   - the signing client uses requestChecksumCalculation WHEN_REQUIRED (storage-client.ts
+//     createPresignS3Client), so the URL carries no x-amz-checksum-crc32=AAAAAA== /
+//     x-amz-sdk-checksum-algorithm (the CRC32 of an EMPTY body the SDK default adds). R2 does not
+//     implement it for a single PUT (https://developers.cloudflare.com/r2/api/s3/api/#checksum-types);
+//     S3 ignores it today and would reject every upload with BadDigest if it enforced it
+//     (PRESIGN_PUT_CHECKSUM_CONFIG explains the evidence).
+//   - R2 caps the expiry at 7 days (604,800 s), its maximum; on S3 the SDK enforces SigV4's limit.
 
 export interface UploadSigner {
   presignPut(input: {
@@ -50,17 +53,16 @@ export interface UploadDeps {
 }
 
 export interface UploadSignerOptions {
-  /** Sign the Content-Type header (R2); default false keeps the S3 URL unchanged. */
+  /** Sign the Content-Type header (both providers via uploadSignerOptionsFor). */
   signContentType?: boolean;
   /** Cap for the URL expiry (R2: 604,800 s). */
   maxExpiresSec?: number;
 }
 
-/** Signer options for a storage provider (S3: none, i.e. today's URLs). */
+/** Signer options for a storage provider: both sign Content-Type; R2 also caps the expiry. */
 export function uploadSignerOptionsFor(provider: StorageProvider): UploadSignerOptions {
-  return provider === 'r2'
-    ? { signContentType: true, maxExpiresSec: maxPresignSecFor(provider) }
-    : {};
+  const maxExpiresSec = maxPresignSecFor(provider);
+  return { signContentType: true, ...(maxExpiresSec !== undefined && { maxExpiresSec }) };
 }
 
 export function createS3UploadSigner(
@@ -85,11 +87,11 @@ export function createS3UploadSigner(
 
 let fromEnv: UploadDeps | undefined;
 
-/** Production wiring: STORAGE_PROVIDER's client + S3_BUCKET_ASSETS, system ffprobe. */
+/** Production wiring: STORAGE_PROVIDER's signing client + S3_BUCKET_ASSETS, system ffprobe. */
 export function uploadDepsFromEnv(): UploadDeps {
   fromEnv ??= {
     signer: createS3UploadSigner(
-      createStorageS3Client(),
+      createPresignS3Client(),
       uploadSignerOptionsFor(storageProvider()),
     ),
     media: createFfmpegInspector(),

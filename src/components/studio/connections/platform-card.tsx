@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
 import { StateBadge } from '../primitives';
+import { CheckedLine } from './checked-line';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import type { OAUTH_PLATFORMS } from './platforms';
 
@@ -47,6 +48,7 @@ function AccountRow({
         <p className="mt-0.5 text-xs text-muted-foreground">
           {stale ? t('stale') : t('connectedOn', { date: f.date(connection.connectedAt) })}
         </p>
+        {!stale && <CheckedLine connection={connection} />}
       </div>
       <div className="flex items-center gap-1">
         {stale && (

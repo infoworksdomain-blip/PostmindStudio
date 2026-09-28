@@ -35,7 +35,12 @@ export interface ProjectTemplate {
 export interface ReviewRecord {
   decision: 'auto_approved' | 'needs_review';
   code?: string;
+  /** English (the fallback for a code this build does not know). */
   reason?: string;
+  /** 17.9: parameters for review.automation.reasons.<code>. */
+  params?: Record<string, string | number>;
+  humanApprovedCount?: number;
+  threshold?: number;
   at: string;
 }
 

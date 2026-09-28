@@ -156,9 +156,10 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
       data: {
         state: 'FAILED',
         robotsBlocked: crawl.robotsBlocked,
+        // 17.9: `<code>: <English>` — the UI translates the code (src/lib/client/failure-reasons.ts).
         errorReason: crawl.robotsBlocked
-          ? "The site's robots.txt does not allow PostMindStudio to fetch the homepage"
-          : 'No pages could be fetched',
+          ? "robots_blocked: The site's robots.txt does not allow PostMindStudio to fetch the homepage"
+          : 'no_pages: No pages could be fetched',
         completedAt: new Date(deps.now()),
       },
     });
@@ -193,7 +194,11 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     if (!capped(err)) throw err;
     await deps.db.websiteScan.update({
       where: { id: scan.id },
-      data: { state: 'FAILED', errorReason: capNote, completedAt: new Date(deps.now()) },
+      data: {
+        state: 'FAILED',
+        errorReason: `scan_cost_cap: ${capNote}`,
+        completedAt: new Date(deps.now()),
+      },
     });
     return null;
   });
@@ -229,7 +234,9 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     ...crawl.errors,
     ...scraped.errors,
     ...stock.errors,
-    ...('capped' in embedded ? [`${capNote}: some images were not indexed for search`] : []),
+    ...('capped' in embedded
+      ? [`scan_images_capped: ${capNote}: some images were not indexed for search`]
+      : []),
   ];
   await deps.db.websiteScan.update({
     where: { id: scan.id },

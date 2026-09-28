@@ -37,6 +37,7 @@ import {
   generateOverridesInput,
   validatePreferredProviders,
 } from './generate-overrides';
+import { isUntitledName } from '../../project-name';
 
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
@@ -63,7 +64,18 @@ const briefInput = z.object({
 });
 
 const projectFields = z.object({
-  name: z.string().trim().min(1).max(200),
+  /**
+   * 17.9: optional — a project the user did not name (omitted or null; PATCH null clears it) is
+   * stored with name null and shown as a translated "Untitled video"; the English placeholder
+   * an older client sends is stored as null too.
+   */
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .nullish()
+    .transform((v) => (isUntitledName(v) ? null : (v as string))),
   businessId: z.string().trim().min(1).max(128),
   sourceType: z
     .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE', 'TEMPLATE', 'UPLOAD'])
@@ -496,7 +508,8 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
       organisationId: source.organisationId,
       businessId: source.businessId,
       createdByUserId: tenant.userId,
-      name: `${source.name} (copy)`.slice(0, 200),
+      // 17.9: an unnamed project's copy stays unnamed (no English words stored).
+      name: isUntitledName(source.name) ? null : `${source.name} (copy)`.slice(0, 200),
       description: source.description,
       state: 'DRAFT',
       sourceType: source.sourceType,

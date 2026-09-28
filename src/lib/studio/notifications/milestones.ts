@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { MetricSnapshot } from '../analytics/store';
 import { notifySafely, type Notifier } from './notifier';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // BACKLOG 13.23 / spec 14.4 "Milestone hit (10k views, 100 comments) — in-app; email opt-in".
 // After every analytics poll the new cumulative totals are compared with the milestones; each
@@ -61,14 +62,14 @@ export async function notifyMilestones(
         organisationId: publication.organisationId,
         userId: project.createdByUserId,
         kind: 'milestone',
-        title: `“${project.name}” reached ${m.label} on ${where}`,
+        title: `“${projectLabel(project.name)}” reached ${m.label} on ${where}`,
         body: `Now at ${snapshot[m.metric].toLocaleString('en-GB')} ${m.metric}. Open the project to see its publications and analytics.`,
         link: `/projects/${publication.projectId}`,
         dedupeKey: milestoneKey(publication.id, m),
         message: {
           key: m.metric === 'views' ? 'milestoneViews' : 'milestoneComments',
           params: {
-            name: project.name,
+            name: projectNameParam(project.name),
             platform: publication.platform,
             threshold: m.threshold,
             count: snapshot[m.metric],

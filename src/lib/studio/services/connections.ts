@@ -37,6 +37,9 @@ const PUBLIC_FIELDS = {
   state: true,
   connectedByUserId: true,
   connectedAt: true,
+  // 17.3: the daily account-status check (services/account-status.ts).
+  statusCheckedAt: true,
+  statusCheckOutcome: true,
 } as const;
 
 export function listConnections(db: PrismaClient, organisationId: string) {

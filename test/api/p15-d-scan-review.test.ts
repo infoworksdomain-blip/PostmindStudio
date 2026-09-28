@@ -6,15 +6,18 @@ import * as scanWebsiteRoute from '../../src/app/api/studio/businesses/[id]/scan
 import * as scanRoute from '../../src/app/api/studio/scans/[id]/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
+import ar from '../../messages/ar.json';
 import { call, installApi, tenant } from '../helpers/api-harness';
 import { createHarness, PROFILE_JSON } from '../helpers/pipeline-harness';
 
 // BACKLOG 15.D8 — A11.2 "The checkbox text is preserved with the scan record for audit" and
-// A13 "low-confidence classifications flagged for user review before use".
+// A13 "low-confidence classifications flagged for user review before use". 17.8: the statement
+// is recorded as { locale, messageKey, text } and must be an approved catalogue text.
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const SITE = 'https://confidence-bakery.example';
 const STATEMENT = 'I own this website or am authorised to represent it, including its images.';
+const KEY = 'business.scan.ownershipStatement';
 
 const PAGE = `<!doctype html><html><head><title>Bakery</title></head><body><main><h1>Bakery</h1>
   <p>${'Bread and cakes baked daily. '.repeat(20)}</p></main></body></html>`;
@@ -74,6 +77,56 @@ describe.skipIf(!hasDb)(
         (await scan(biz, { url: SITE, ownershipConfirmed: false, ownershipStatement: STATEMENT }))
           .status,
       ).toBe(400);
+      // 17.8: free text that is not an approved version of the statement is refused.
+      const refused = await scan(biz, {
+        ...base,
+        ownershipStatement: 'I own or am authorised to represent this website.',
+      });
+      expect(refused.status).toBe(400);
+      expect(refused.json.message).toMatch(/approved version/);
+      expect(
+        (
+          await scan(biz, {
+            ...base,
+            ownershipStatement: { locale: 'ar', messageKey: KEY, text: STATEMENT },
+          })
+        ).status,
+      ).toBe(400);
+      expect(
+        (await scan(biz, { ...base, ownershipStatement: { locale: 'ar', messageKey: 'x.y' } }))
+          .status,
+      ).toBe(400);
+      expect(await db.websiteScan.count({ where: { organisationId: org, businessId: biz } })).toBe(
+        0,
+      );
+    });
+
+    it('17.8: stores the approved text with its locale and key, in the scan and the audit entry', async () => {
+      const { api } = install(0.9);
+      const biz = `biz-${randomUUID()}`;
+      const text = ar.business.scan.ownershipStatement;
+      const started = await scan(biz, {
+        url: SITE,
+        ownershipConfirmed: true,
+        ownershipStatement: { locale: 'ar', messageKey: KEY, text },
+      });
+      expect(started.status).toBe(202);
+      const row = await db.websiteScan.findUniqueOrThrow({
+        where: { id: started.json.scanId as string },
+      });
+      expect(row).toMatchObject({
+        ownershipStatement: text,
+        ownershipStatementLocale: 'ar',
+        ownershipStatementKey: KEY,
+      });
+      const audit = api.audits.find(
+        (a) => a.action === 'studio.website_scan.start' && a.resource.id === row.id,
+      );
+      expect(audit?.metadata).toMatchObject({
+        ownershipStatement: text,
+        ownershipStatementLocale: 'ar',
+        ownershipStatementKey: KEY,
+      });
     });
 
     it('stores the statement on the scan and in the audit entry; flags a low-confidence profile', async () => {
@@ -90,7 +143,12 @@ describe.skipIf(!hasDb)(
         (await db.websiteScan.findUniqueOrThrow({ where: { id: scanId } })).ownershipStatement,
       ).toBe(STATEMENT);
       const audit = api.audits.find((a) => a.action === 'studio.website_scan.start');
-      expect(audit?.metadata).toMatchObject({ ownershipStatement: STATEMENT });
+      // A legacy plain-string request is matched to the approved en-GB text.
+      expect(audit?.metadata).toMatchObject({
+        ownershipStatement: STATEMENT,
+        ownershipStatementLocale: 'en-GB',
+        ownershipStatementKey: KEY,
+      });
       const detail = await call(scanRoute.GET, { token: 'reader', params: { id: scanId } });
       expect((detail.json.scan as { ownershipStatement: string }).ownershipStatement).toBe(
         STATEMENT,

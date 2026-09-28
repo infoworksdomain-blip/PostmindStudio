@@ -198,6 +198,7 @@ describe.skipIf(!hasDb)('notifications API + events', { timeout: 60_000 }, () =>
     async function project(
       state: 'READY_FOR_REVIEW' | 'APPROVED',
       completedAt: Date | null = null,
+      name: string | null = 'Sourdough launch',
     ) {
       const runId = randomUUID();
       const p = await db.videoProject.create({
@@ -205,7 +206,7 @@ describe.skipIf(!hasDb)('notifications API + events', { timeout: 60_000 }, () =>
           organisationId: org,
           businessId: 'biz',
           createdByUserId: 'alice',
-          name: 'Sourdough launch',
+          name,
           state,
           sourceType: 'BRIEF',
           targetFormats: [],
@@ -246,6 +247,17 @@ describe.skipIf(!hasDb)('notifications API + events', { timeout: 60_000 }, () =>
       // Wrong organisation: nothing, and no throw.
       await notifyGenerationComplete(host(), { ...input, organisationId: otherOrg });
       expect((await list('mallory')).json.data).toHaveLength(0);
+    });
+
+    it('17.9: an unnamed project is "Untitled video" in the English text and "" as the param', async () => {
+      const { project: p, runId } = await project('READY_FOR_REVIEW', null, null);
+      await notifyGenerationComplete(host(), { projectId: p.id, organisationId: org, runId });
+      const item = (await list('alice')).json.data.find((n) => n.link === `/projects/${p.id}`);
+      expect(item).toMatchObject({
+        title: '“Untitled video” is ready for review',
+        messageKey: 'generationReady',
+        messageParams: { name: '' },
+      });
     });
 
     it('publication failed: tells the creator once per failure, with the retry link', async () => {

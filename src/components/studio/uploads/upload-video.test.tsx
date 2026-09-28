@@ -145,7 +145,7 @@ describe('Create body for "Upload a video"', () => {
     );
     expect(body).toMatchObject({ sourceType: 'UPLOAD', uploadId: 'upl_1', businessId: 'biz_1' });
     expect(body.brief).toBeUndefined();
-    expect(body.name.toLowerCase()).toContain('shop-tour');
+    expect(body.name?.toLowerCase()).toContain('shop-tour');
     expect(body.targetFormats?.map((f) => f.platform)).toEqual(['tiktok', 'youtube_short']);
   });
 });

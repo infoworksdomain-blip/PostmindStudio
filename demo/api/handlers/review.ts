@@ -84,7 +84,10 @@ route('POST', '/shots/:id/regenerate', ({ params, body }) => {
 async function clipFor(project: ProjectRec, render: Render): Promise<string> {
   const script = project.scripts.find((s) => s.id === render.scriptId);
   const caption =
-    script?.shots.find((s) => s.onScreenText)?.onScreenText ?? project.brief?.hook ?? project.name;
+    script?.shots.find((s) => s.onScreenText)?.onScreenText ??
+    project.brief?.hook ??
+    project.name ??
+    '';
   const aspect: Aspect = ASPECTS.has(render.aspectRatio) ? (render.aspectRatio as Aspect) : '9:16';
   const url = await sampleVideo({ scene: project.scene, aspect, seconds: 4, caption });
   if (!url)

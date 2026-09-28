@@ -267,7 +267,7 @@ export async function purgeDisputedDomain(
     where: { ...scope, state: { in: ['QUEUED', 'RUNNING'] } },
     data: {
       state: 'FAILED',
-      errorReason: 'Stopped: website ownership was disputed',
+      errorReason: 'ownership_disputed: Stopped: website ownership was disputed',
       completedAt: new Date(deps.now()),
     },
   });

@@ -81,9 +81,3 @@ export interface SlideshowTemplate {
 export function slideCount(template: SlideshowTemplate): number | null {
   return Array.isArray(template.slidePlan) ? template.slidePlan.length : null;
 }
-
-/** "photo_dump" → "Photo dump" (template categories are organisation data, not catalogue keys). */
-export function categoryLabel(category: string): string {
-  const text = category.replace(/_/g, ' ').trim();
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : category;
-}

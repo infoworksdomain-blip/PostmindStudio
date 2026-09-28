@@ -48,6 +48,9 @@ export const POST = withStudioRoute(
         provider: profile.provider,
         speakerName: profile.speakerName,
         consentStatement: profile.consentStatement,
+        // 17.8: the interface locale and catalogue key the statement came from (when known).
+        consentStatementLocale: profile.consentStatementLocale,
+        consentStatementKey: profile.consentStatementKey,
         consentRecording: profile.consentS3Key,
         sampleCount: profile.sampleCount,
         state: profile.state,

@@ -164,7 +164,7 @@ describe.skipIf(!hasDb)('tier gates and plan quotas API (15.D2, P3)', { timeout:
         body: {
           url: 'https://example.org',
           ownershipConfirmed: true,
-          ownershipStatement: 'I own or am authorised to represent this website',
+          ownershipStatement: { locale: 'en-GB', messageKey: 'business.scan.ownershipStatement' },
         },
       });
       expectPlanTier(res, 'STANDARD');

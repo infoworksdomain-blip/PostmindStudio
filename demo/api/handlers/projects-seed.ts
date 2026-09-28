@@ -151,7 +151,9 @@ function buns(): ProjectRec {
       scene: 'croissant',
       targetFormats: vertical(['tiktok'], 16),
       costActualPence: 131,
-      errorReason: 'Quality check failed on TikTok: audio loudness is above the platform target.',
+      // 17.9: stored as the server stores it (`<code>: <detail>`); the UI translates the code.
+      errorReason:
+        'quality_failed: tiktok/audio_present: integrated loudness -8.9 LUFS (required -18 to -10); tiktok/caption_sync: "Fresh sourdough every": off by 400ms',
       createdAt: ago(3 * DAY),
       updatedAt: ago(5 * HOUR),
       metadata: {

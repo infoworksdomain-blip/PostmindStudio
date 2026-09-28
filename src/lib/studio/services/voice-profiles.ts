@@ -8,12 +8,14 @@ import {
   NotImplementedError,
   ValidationError,
 } from '../../errors';
+import { LOCALES } from '../../i18n/locales';
 import type { TenantContext } from '../../tenant';
 import { fileField, fileFields, textField } from '../api/multipart';
 import { runProvider, type ProviderRunDeps } from '../pipeline/provider-run';
 import type { VoiceCloningClient, VoiceSample } from '../providers/elevenlabs-voices';
 import type { PlanTier } from '../providers/router';
 import type { AssetStorage } from '../storage';
+import { CONSENT_STATEMENT_KEYS } from './approved-statements';
 import { businessIdParam } from './businesses';
 import { toPlanTier } from './catalog';
 import { checkConsentRecording, stateAfterConsent, type ConsentCheckResult } from './consent-check';
@@ -101,6 +103,13 @@ const fieldsSchema = z.object({
   businessId: businessIdParam.optional(),
   speakerName: z.string().trim().min(1).max(120),
   consentStatement: z.string().trim().min(20).max(1_000),
+  /**
+   * 17.8: the interface locale the statement was shown in and its catalogue key (the key only
+   * when the user kept the suggested wording). Recorded with the consent; the recording itself
+   * stays the evidence and is matched against the statement text (consent-check.ts).
+   */
+  consentStatementLocale: z.enum(LOCALES).optional(),
+  consentStatementKey: z.enum(CONSENT_STATEMENT_KEYS).optional(),
   description: z.string().trim().max(500).optional(),
   consent: z.literal('true', {
     error: 'consent must be true: the speaker must consent to their voice being cloned',
@@ -120,6 +129,8 @@ export async function parseVoiceProfileForm(form: FormData): Promise<VoiceProfil
     businessId: textField(form, 'businessId') || undefined,
     speakerName: textField(form, 'speakerName'),
     consentStatement: textField(form, 'consentStatement'),
+    consentStatementLocale: textField(form, 'consentStatementLocale') || undefined,
+    consentStatementKey: textField(form, 'consentStatementKey') || undefined,
     description: textField(form, 'description') || undefined,
     consent: textField(form, 'consent'),
   });
@@ -241,6 +252,8 @@ export async function createVoiceProfile(
         consentCheckedAt: new Date(deps.now()),
         speakerName: fields.speakerName,
         consentStatement: fields.consentStatement,
+        consentStatementLocale: fields.consentStatementLocale ?? null,
+        consentStatementKey: fields.consentStatementKey ?? null,
         consentGivenByUserId: tenant.userId,
         consentGivenAt: new Date(deps.now()),
         consentS3Bucket: deps.assetsBucket,

@@ -42,7 +42,8 @@
     "a11y": {
       "moreOptions": "مزيد من الخيارات",
       "required": "مطلوب"
-    }
+    },
+    "untitledVideo": "فيديو بلا عنوان"
   },
   "shell": {
     "nav": {
@@ -135,7 +136,8 @@
         "cost_paused": "إيقاف الإنشاء مؤقتًا بسبب الميزانية",
         "safety_review": "مراجعات أمان المحتوى",
         "share_comment": "ملاحظات على رابط المعاينة",
-        "plan_quota": "تنبيهات استخدام الباقة (80% و100%)"
+        "plan_quota": "تنبيهات استخدام الباقة (80% و100%)",
+        "connection_needs_reconnect": "الحسابات التي تحتاج إلى إعادة الربط"
       }
     },
     "usage": {
@@ -366,6 +368,14 @@
     "planQuotaBlocked": {
       "title": "باقة {tier}: نفدت الفيديوهات {kind, select, short {القصيرة} other {الطويلة}} لهذا الشهر",
       "body": "أُنشئ هذا الشهر {used, number} من {limit, number} فيديو {kind, select, short {قصير} other {طويل}}. عمليات الإنشاء الجديدة محظورة حتى يُعاد ضبط الحصة في بداية الشهر القادم (UTC).{nextTier, select, none {} other { رقِّ إلى {nextTier} للحصول على المزيد.}}"
+    },
+    "connectionNeedsReconnect": {
+      "title": "أعد ربط حسابك على {platform} «{account}»",
+      "body": "لم تعد {platform} تقبل وصول Studio إلى هذا الحساب. أعد ربطه من صفحة الحسابات المرتبطة حتى تُنشر المنشورات المجدولة."
+    },
+    "metaConnectionNeedsReconnect": {
+      "title": "أعد ربط حسابك على {platform} «{account}»",
+      "body": "لم تعد Meta تقبل وصول Studio إلى هذا الحساب. أعد ربطه من إعدادات PostMind حتى تُنشر المنشورات المجدولة."
     }
   },
   "create": {
@@ -630,7 +640,20 @@
       "scheduledFor": "مجدول في {date}",
       "sent": "أُرسل للنشر",
       "notPublished": "لم يُنشر: {error}",
-      "failedFallback": "فشل"
+      "failedFallback": "فشل",
+      "reasons": {
+        "enterprise_plan": "يحتاج إلى مراجعة: تراجع مؤسسات Enterprise فيديوهاتها دائمًا.",
+        "org_policy": "يحتاج إلى مراجعة: سياسة مؤسستك توقف الموافقة التلقائية.",
+        "config_invalid": "يحتاج إلى مراجعة: الموافقة التلقائية غير مضبوطة بشكل صحيح.",
+        "force_approved": "يحتاج إلى مراجعة: تمت الموافقة قسرًا على نسخة {platform}.",
+        "content_safety_flag": "{outcome, select, not_run {يحتاج إلى مراجعة: لم يُشغَّل فحص سلامة المحتوى لنسخة {platform}.} other {يحتاج إلى مراجعة: رصد فحص سلامة المحتوى مشكلة في نسخة {platform}.}}",
+        "quality_not_clean": "يحتاج إلى مراجعة: لم تجتز نسخة {platform} أحد فحوصات الجودة.",
+        "no_renders": "يحتاج إلى مراجعة: لا توجد نسخ معروضة لفحصها.",
+        "script_safety_flag": "يحتاج إلى مراجعة: لم يُجِز فحص السلامة النص.",
+        "not_trusted": "يحتاج إلى مراجعة: يراجع شخصٌ أول {needed} فيديوهات لك (تمت الموافقة على {approved} من {needed} حتى الآن).",
+        "approval_workflow": "يحتاج إلى مراجعة: ينطبق مسار الموافقة «{workflow}».",
+        "auto_approve_error": "يحتاج إلى مراجعة: تعذّر تقييم الموافقة التلقائية."
+      }
     },
     "budget": {
       "aria": "رفع الميزانية",
@@ -723,7 +746,12 @@
         "black_frames": "الإطارات السوداء",
         "audio_present": "وجود الصوت",
         "aspect_ratio": "نسبة العرض إلى الارتفاع",
-        "codec": "برنامج الترميز"
+        "codec": "برنامج الترميز",
+        "audio_sync": "تزامن التعليق الصوتي",
+        "caption_sync": "تزامن الترجمة المكتوبة",
+        "watermark": "العلامة المائية",
+        "brand_kit": "حزمة العلامة التجارية",
+        "force_approved": "موافقة قسرية"
       },
       "severity": {
         "block": "حظر",
@@ -736,7 +764,42 @@
       "forceApproved": "تجاوز أحد المراجعين حالات الفشل.",
       "overrideLabel": "تجاوز الفحص الفاشل — السبب (مطلوب، ويُسجَّل للتدقيق)",
       "forceApprove": "موافقة رغم الفشل",
-      "overridden": "تم تجاوز فحص الجودة."
+      "overridden": "تم تجاوز فحص الجودة.",
+      "details": {
+        "safetyScanUnavailable": "تعذّر تشغيل الفحص: {reason}",
+        "safetyBlocked": "محظور: {classes}",
+        "safetyReview": "يحتاج إلى مراجعة: {classes}",
+        "safetyPassed": "{count, plural, zero {لم يُفحص أي إطار.} one {فُحص إطار واحد، ولم يُرصد شيء.} two {فُحص إطاران، ولم يُرصد شيء.} few {فُحصت # إطارات، ولم يُرصد شيء.} many {فُحص # إطارًا، ولم يُرصد شيء.} other {فُحص # إطار، ولم يُرصد شيء.}}",
+        "duration": "مدة العرض {rendered} ث مقابل هدف {target} ث (±{tolerance} ث).",
+        "blackFrames": "إطارات سوداء عند {segments} ث.",
+        "noBlackFrames": "لا يوجد مقطع أسود أطول من {ms} مللي ثانية.",
+        "noAudio": "لا يوجد مسار صوتي.",
+        "loudness": "شدة الصوت {lufs} LUFS (المطلوب من {min} إلى {max}).",
+        "aspectRatio": "{width} × {height} مقابل {target}.",
+        "codec": "برنامج ترميز الفيديو {codec} ({profile}) في {format}.",
+        "audioSyncNotBuilt": "لم يُفحص: تحليل توقيت التعليق الصوتي غير متاح بعد.",
+        "watermarkNotBuilt": "لم يُفحص: فحوصات العلامة المائية غير متاحة بعد.",
+        "captionSyncNotBuilt": "لم يُفحص: فحوصات توقيت الترجمة المكتوبة غير متاحة بعد.",
+        "brandKitNotBuilt": "لم يُفحص: فحوصات حزمة العلامة التجارية غير متاحة بعد.",
+        "noTimelineSummary": "لم يُفحص: لا يوجد في عروض الشرائح خط زمني للقطات.",
+        "noNarration": "لم يُفحص: لا يحتوي الفيديو على تعليق صوتي.",
+        "audioSyncFailed": "{count, plural, zero {لا يتلاءم التعليق الصوتي مع اللقطات {shots}.} one {لا يتلاءم التعليق الصوتي مع اللقطة {shots}.} two {لا يتلاءم التعليق الصوتي مع اللقطتين {shots}.} few {لا يتلاءم التعليق الصوتي مع اللقطات {shots}.} many {لا يتلاءم التعليق الصوتي مع اللقطات {shots}.} other {لا يتلاءم التعليق الصوتي مع اللقطات {shots}.}}",
+        "audioSyncPassed": "{count, plural, zero {لا توجد لقطات بتعليق صوتي.} one {يتلاءم التعليق الصوتي مع لقطته.} two {يتلاءم التعليق الصوتي مع اللقطتين.} few {يتلاءم التعليق الصوتي مع اللقطات الـ #.} many {يتلاءم التعليق الصوتي مع اللقطات الـ #.} other {يتلاءم التعليق الصوتي مع اللقطات الـ #.}}",
+        "noSpokenCaptions": "لم يُفحص: لا يحتوي الفيديو على ترجمة مكتوبة منطوقة.",
+        "captionSyncFailed": "{count, plural, zero {لا توجد ترجمة مكتوبة غير متزامنة.} one {سطر ترجمة واحد غير متزامن مع التعليق الصوتي.} two {سطرا ترجمة غير متزامنين مع التعليق الصوتي.} few {# أسطر ترجمة غير متزامنة مع التعليق الصوتي.} many {# سطرًا من الترجمة غير متزامن مع التعليق الصوتي.} other {# سطر ترجمة غير متزامن مع التعليق الصوتي.}}",
+        "captionSyncPassed": "{count, plural, zero {لا توجد أسطر ترجمة.} one {سطر ترجمة واحد ضمن ±{ms} مللي ثانية من التعليق الصوتي.} two {سطرا ترجمة ضمن ±{ms} مللي ثانية من التعليق الصوتي.} few {# أسطر ترجمة ضمن ±{ms} مللي ثانية من التعليق الصوتي.} many {# سطرًا من الترجمة ضمن ±{ms} مللي ثانية من التعليق الصوتي.} other {# سطر ترجمة ضمن ±{ms} مللي ثانية من التعليق الصوتي.}}",
+        "kitHasNoWatermark": "لم يُفحص: لا تحتوي حزمة العلامة التجارية على علامة مائية.",
+        "slideshowNoWatermark": "لم يُفحص: لا تحمل عروض الشرائح علامة مائية للعلامة التجارية.",
+        "watermarkNotCovering": "لا تغطي العلامة المائية كل إطارات الفيديو.",
+        "watermarkSampleUnavailable": "تعذّر تشغيل أخذ عينات الإطارات: {reason}",
+        "watermarkVisible": "ظاهرة في الإطارات المأخوذة كعينات (التطابق {scores}).",
+        "watermarkNotVisible": "غير ظاهرة في الإطارات المأخوذة كعينات (التطابق {scores}).",
+        "noBrandKit": "لم يُفحص: لا توجد حزمة علامة تجارية للمشروع.",
+        "brandKitMissing": "{count, plural, zero {يحتاج إلى مراجعة: لا ينقص الفيديو أي عنصر.} one {يحتاج إلى مراجعة: ينقص الفيديو عنصر واحد من العلامة التجارية.} two {يحتاج إلى مراجعة: ينقص الفيديو عنصران من العلامة التجارية.} few {يحتاج إلى مراجعة: تنقص الفيديو # عناصر من العلامة التجارية.} many {يحتاج إلى مراجعة: ينقص الفيديو # عنصرًا من العلامة التجارية.} other {يحتاج إلى مراجعة: ينقص الفيديو # عنصر من العلامة التجارية.}}",
+        "brandKitPresent": "الألوان والخطوط والشعار موجودة.",
+        "forceApproved": "تمت الموافقة رغم فشل الفحوصات: {note}",
+        "allowedByReview": "سمحت به مراجعة الثقة والأمان في PostMind: {note}"
+      }
     },
     "saveTemplate": {
       "open": "حفظ كقالب",
@@ -1769,6 +1832,7 @@
     "connected": "مرتبط",
     "stale": "انتهت صلاحية الوصول أو أُلغيت على المنصة. ستفشل المنشورات المجدولة على هذا الحساب حتى تعيد ربطه.",
     "connectedOn": "مرتبط منذ {date}",
+    "checkedOn": "تم التحقق من الوصول في {date}",
     "reconnect": "إعادة الربط",
     "disconnect": "فصل",
     "disconnectAria": "فصل {account}",
@@ -3038,7 +3102,10 @@
       "tweet_video": "فيديو تغريدة",
       "product_launch": "إطلاق منتج",
       "weekly_special": "عرض الأسبوع",
-      "behind_the_scenes": "خلف الكواليس"
+      "behind_the_scenes": "خلف الكواليس",
+      "listicle": "قائمة",
+      "listicle_5": "قائمة أفضل 5",
+      "listicle_10": "قائمة أفضل 10"
     }
   },
   "account": {
@@ -3200,6 +3267,56 @@
       "waiting": "الخطوة {step} من {total} — بانتظار {role}",
       "waitingCount": "الخطوة {step} من {total} — بانتظار {role} ({approvals} من {required} موافقات)",
       "stepNumber": "{number}."
+    }
+  },
+  "failures": {
+    "codes": {
+      "cancelled_by_user": "ألغيت هذا التشغيل.",
+      "brief_too_vague": "كان الموجز غامضًا جدًا لتخطيط فيديو. اختر أحد الاتجاهات المقترحة.",
+      "restricted_topics": "يتناول الموجز موضوعًا مقيّدًا. أكّده للمتابعة.",
+      "script_safety_block": "أوقف فحص سلامة النص هذا الفيديو.",
+      "script_safety_review": "يطلب فحص سلامة النص أن يراجع شخص هذا الفيديو.",
+      "script_safety_blocked_by_review": "أوقفت مراجعة الثقة والأمان في PostMind النص.",
+      "content_safety_blocked_by_review": "أوقفت مراجعة الثقة والأمان في PostMind الفيديو.",
+      "content_safety_block": "أوقف فحص سلامة المحتوى هذا الفيديو.",
+      "quality_failed": "{count, plural, zero {فشل فحص جودة.} one {فشل فحص جودة واحد: {checks}.} two {فشل فحصا جودة: {checks}.} few {فشلت # فحوصات جودة: {checks}.} many {فشل # فحصًا للجودة: {checks}.} other {فشل # فحص جودة: {checks}.}}",
+      "quality_gate_error": "تعذّر إكمال فحوصات الجودة.",
+      "planning_failed": "فشل تخطيط الفيديو.",
+      "slideshow_incomplete": "تعذّر إكمال عرض الشرائح: بعض الشرائح ينقصها محتوى.",
+      "upload_missing": "الفيديو المرفوع لم يعد متاحًا.",
+      "script_regenerate_failed": "تعذّر إنشاء النص من جديد: النص أو موجزه لم يعد موجودًا.",
+      "asset_generation_failed": "{count, plural, zero {تعذّر إنشاء بعض اللقطات.} one {تعذّر إنشاء اللقطة {shots}.} two {تعذّر إنشاء اللقطتين {shots}.} few {تعذّر إنشاء اللقطات {shots}.} many {تعذّر إنشاء اللقطات {shots}.} other {تعذّر إنشاء اللقطات {shots}.}}",
+      "composition_failed": "فشل تجميع الفيديو.",
+      "cost_cap_paused": "توقّف الإنشاء مؤقتًا لبلوغ ميزانية.",
+      "kill_switch": "{level, select, global {متوقف مؤقتًا: أوقفت PostMind الإنشاء والنشر في كل مكان.} workspace {متوقف مؤقتًا: أوقفت PostMind الإنشاء لمؤسستك.} project {متوقف مؤقتًا: أوقفت PostMind هذا المشروع.} provider {متوقف مؤقتًا: أوقفت PostMind أحد مزوّدي الإنشاء.} platform {متوقف مؤقتًا: أوقفت PostMind النشر على هذه المنصة.} other {متوقف مؤقتًا بمفتاح إيقاف طارئ من PostMind.}}",
+      "rejected": "رفضه أحد المراجعين.",
+      "business_deleted": "توقّف: حُذف النشاط التجاري.",
+      "organisation_deleted": "توقّف: حُذفت المؤسسة.",
+      "scheduling_failed": "فشلت الجدولة.",
+      "youtube_quota_deferred": "بُلغ الحد اليومي للرفع على YouTube. سيحاول Studio مجددًا بعد إعادة الضبط اليومية.",
+      "robots_blocked": "لا يسمح ملف robots.txt الخاص بالموقع لـ Studio بقراءة صفحته الرئيسية.",
+      "no_pages": "تعذّرت قراءة أي صفحة من الموقع.",
+      "scan_cost_cap": "توقّف الفحص عند حدّ تكلفته ({amount}).",
+      "scan_images_capped": "بلغ الفحص حدّ تكلفته ({amount}): لم تُفهرس بعض الصور للبحث.",
+      "ownership_disputed": "توقّف: اعتُرض على ملكية الموقع.",
+      "provider_failure": "أبلغ {source} عن مشكلة: {problem}."
+    },
+    "classes": {
+      "rate_limited": "طلبات كثيرة جدًا",
+      "timeout": "انتهت المهلة",
+      "provider_unavailable": "الخدمة غير متاحة",
+      "unavailable": "الخدمة غير متاحة",
+      "auth": "رُفضت بيانات الاعتماد",
+      "insufficient_credits": "نفد رصيد الحساب",
+      "invalid_request": "رُفض الطلب",
+      "content_policy": "رُفض المحتوى وفق سياسة المحتوى لديه",
+      "output_truncated": "جاءت النتيجة ناقصة",
+      "result_expired": "انتهت صلاحية النتيجة",
+      "needs_reconnect": "يجب إعادة ربط الحساب",
+      "quota_exceeded": "بُلغت الحصة",
+      "invalid_media": "رُفض ملف الفيديو",
+      "outcome_unknown": "النتيجة غير معروفة — تحقّق من المنصة قبل إعادة المحاولة",
+      "unknown": "خطأ غير معروف"
     }
   }
 }

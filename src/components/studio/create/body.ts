@@ -52,7 +52,8 @@ export interface Reference {
 }
 
 export interface CreateProjectBody {
-  name: string;
+  /** 17.9: omitted when there is nothing to name the project after (stored as null). */
+  name?: string;
   businessId: string;
   sourceType: 'BRIEF' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE' | 'UPLOAD';
   uploadId?: string;
@@ -137,6 +138,8 @@ export function publishPlatforms(state: CreateState): string[] {
     : state.platforms;
 }
 
+const optionalName = (name: string | undefined) => (name?.trim() ? { name: name.trim() } : {});
+
 export function buildCreateBody(
   state: CreateState,
   businessId: string,
@@ -145,7 +148,7 @@ export function buildCreateBody(
   const rawInput = state.brief.trim();
   const template = usesTemplate(state, reference) ? state.projectTemplate : null;
   const body: CreateProjectBody = {
-    name: rawInput ? nameFromBrief(rawInput) : (template?.name ?? 'Untitled video'),
+    ...optionalName(rawInput ? nameFromBrief(rawInput) : template?.name),
     businessId,
     sourceType: 'BRIEF',
     ...(!template && { targetFormats: buildFormats(state.platforms, state.length) }),
@@ -153,7 +156,11 @@ export function buildCreateBody(
   if (state.source === 'UPLOAD' && state.upload) {
     body.sourceType = 'UPLOAD';
     body.uploadId = state.upload.id;
-    if (!rawInput) body.name = nameFromBrief(state.upload.fileName.replace(/.[a-z0-9]+$/i, ''));
+    if (!rawInput)
+      Object.assign(
+        body,
+        optionalName(nameFromBrief(state.upload.fileName.replace(/.[a-z0-9]+$/i, ''))),
+      );
     if (rawInput) body.brief = { rawInput };
   } else if (state.source === 'SLIDESHOW' && state.templateId) {
     body.sourceType = 'SLIDESHOW';

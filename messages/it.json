@@ -42,7 +42,8 @@
     "a11y": {
       "moreOptions": "Altre opzioni",
       "required": "Obbligatorio"
-    }
+    },
+    "untitledVideo": "Video senza titolo"
   },
   "shell": {
     "nav": {
@@ -135,7 +136,8 @@
         "cost_paused": "Generazione sospesa per il budget",
         "safety_review": "Revisioni di sicurezza dei contenuti",
         "share_comment": "Feedback su un link di anteprima",
-        "plan_quota": "Avvisi sull’utilizzo del piano (80% e 100%)"
+        "plan_quota": "Avvisi sull’utilizzo del piano (80% e 100%)",
+        "connection_needs_reconnect": "Account da ricollegare"
       }
     },
     "usage": {
@@ -366,6 +368,14 @@
     "planQuotaBlocked": {
       "title": "Piano {tier}: video {kind, select, short {brevi} other {lunghi}} esauriti per questo mese",
       "body": "{used, number} video {kind, select, short {brevi} other {lunghi}} su {limit, number} generati questo mese. Le nuove generazioni sono bloccate finché la quota non si azzera all’inizio del mese prossimo (UTC).{nextTier, select, none {} other { Passa a {nextTier} per averne di più.}}"
+    },
+    "connectionNeedsReconnect": {
+      "title": "Ricollega il tuo account {platform} “{account}”",
+      "body": "{platform} non accetta più l’accesso di Studio a questo account. Ricollegalo dalla pagina Connessioni perché i post programmati possano essere pubblicati."
+    },
+    "metaConnectionNeedsReconnect": {
+      "title": "Ricollega il tuo account {platform} “{account}”",
+      "body": "Meta non accetta più l’accesso di Studio a questo account. Ricollegalo nelle impostazioni di PostMind perché i post programmati possano essere pubblicati."
     }
   },
   "create": {
@@ -630,7 +640,20 @@
       "scheduledFor": "Programmato per il {date}",
       "sent": "Inviato per la pubblicazione",
       "notPublished": "Non pubblicato: {error}",
-      "failedFallback": "non riuscito"
+      "failedFallback": "non riuscito",
+      "reasons": {
+        "enterprise_plan": "Da rivedere: le organizzazioni Enterprise rivedono sempre i propri video.",
+        "org_policy": "Da rivedere: la policy della tua organizzazione disattiva l’approvazione automatica.",
+        "config_invalid": "Da rivedere: l’approvazione automatica non è configurata correttamente.",
+        "force_approved": "Da rivedere: la variante per {platform} è stata approvata manualmente.",
+        "content_safety_flag": "{outcome, select, not_run {Da rivedere: l’analisi di sicurezza dei contenuti della variante per {platform} non è stata eseguita.} other {Da rivedere: l’analisi di sicurezza dei contenuti ha segnalato la variante per {platform}.}}",
+        "quality_not_clean": "Da rivedere: un controllo di qualità della variante per {platform} non è stato superato.",
+        "no_renders": "Da rivedere: non ci sono varianti renderizzate da controllare.",
+        "script_safety_flag": "Da rivedere: il controllo di sicurezza non ha approvato lo script.",
+        "not_trusted": "Da rivedere: i tuoi primi {needed} video vengono rivisti da una persona ({approved} su {needed} approvati finora).",
+        "approval_workflow": "Da rivedere: si applica il flusso di approvazione “{workflow}”.",
+        "auto_approve_error": "Da rivedere: non è stato possibile valutare l’approvazione automatica."
+      }
     },
     "budget": {
       "aria": "Aumenta budget",
@@ -723,7 +746,12 @@
         "black_frames": "Fotogrammi neri",
         "audio_present": "Audio presente",
         "aspect_ratio": "Proporzioni",
-        "codec": "Codec"
+        "codec": "Codec",
+        "audio_sync": "Sincronia della voce fuori campo",
+        "caption_sync": "Sincronia dei sottotitoli",
+        "watermark": "Filigrana",
+        "brand_kit": "Brand kit",
+        "force_approved": "Approvato manualmente"
       },
       "severity": {
         "block": "blocco",
@@ -736,7 +764,42 @@
       "forceApproved": "Gli errori sono stati ignorati da un revisore.",
       "overrideLabel": "Ignora il controllo non superato: motivo (obbligatorio, registrato)",
       "forceApprove": "Forza l’approvazione",
-      "overridden": "Controllo qualità ignorato."
+      "overridden": "Controllo qualità ignorato.",
+      "details": {
+        "safetyScanUnavailable": "Non è stato possibile eseguire l’analisi: {reason}",
+        "safetyBlocked": "Bloccato: {classes}",
+        "safetyReview": "Da rivedere: {classes}",
+        "safetyPassed": "{count, plural, one {# fotogramma analizzato, nessuna segnalazione.} many {# di fotogrammi analizzati, nessuna segnalazione.} other {# fotogrammi analizzati, nessuna segnalazione.}}",
+        "duration": "Renderizzato {rendered} s rispetto a un obiettivo di {target} s (±{tolerance} s).",
+        "blackFrames": "Fotogrammi neri a {segments} s.",
+        "noBlackFrames": "Nessun tratto nero più lungo di {ms} ms.",
+        "noAudio": "Nessuna traccia audio.",
+        "loudness": "Loudness {lufs} LUFS (richiesto da {min} a {max}).",
+        "aspectRatio": "{width} × {height} rispetto a {target}.",
+        "codec": "Codec video {codec} ({profile}) in {format}.",
+        "audioSyncNotBuilt": "Non verificato: l’analisi dei tempi della voce fuori campo non è ancora disponibile.",
+        "watermarkNotBuilt": "Non verificato: i controlli della filigrana non sono ancora disponibili.",
+        "captionSyncNotBuilt": "Non verificato: i controlli dei tempi dei sottotitoli non sono ancora disponibili.",
+        "brandKitNotBuilt": "Non verificato: i controlli del brand kit non sono ancora disponibili.",
+        "noTimelineSummary": "Non verificato: le presentazioni non hanno una timeline di inquadrature.",
+        "noNarration": "Non verificato: il video non ha voce fuori campo.",
+        "audioSyncFailed": "{count, plural, one {La voce fuori campo non rientra nell’inquadratura {shots}.} many {La voce fuori campo non rientra nelle inquadrature {shots}.} other {La voce fuori campo non rientra nelle inquadrature {shots}.}}",
+        "audioSyncPassed": "{count, plural, one {La voce fuori campo rientra nella sua inquadratura.} many {La voce fuori campo rientra in tutte le # inquadrature.} other {La voce fuori campo rientra in tutte le # inquadrature.}}",
+        "noSpokenCaptions": "Non verificato: il video non ha sottotitoli parlati.",
+        "captionSyncFailed": "{count, plural, one {# sottotitolo non è sincronizzato con la voce fuori campo.} many {# di sottotitoli non sono sincronizzati con la voce fuori campo.} other {# sottotitoli non sono sincronizzati con la voce fuori campo.}}",
+        "captionSyncPassed": "{count, plural, one {# sottotitolo entro ±{ms} ms dalla voce fuori campo.} many {# di sottotitoli entro ±{ms} ms dalla voce fuori campo.} other {# sottotitoli entro ±{ms} ms dalla voce fuori campo.}}",
+        "kitHasNoWatermark": "Non verificato: il brand kit non ha una filigrana.",
+        "slideshowNoWatermark": "Non verificato: le presentazioni non hanno la filigrana del brand.",
+        "watermarkNotCovering": "La filigrana non copre tutti i fotogrammi del video.",
+        "watermarkSampleUnavailable": "Non è stato possibile campionare i fotogrammi: {reason}",
+        "watermarkVisible": "Visibile nei fotogrammi campionati (corrispondenza {scores}).",
+        "watermarkNotVisible": "Non visibile nei fotogrammi campionati (corrispondenza {scores}).",
+        "noBrandKit": "Non verificato: il progetto non ha un brand kit.",
+        "brandKitMissing": "{count, plural, one {Da rivedere: manca # elemento del brand nel video.} many {Da rivedere: mancano # di elementi del brand nel video.} other {Da rivedere: mancano # elementi del brand nel video.}}",
+        "brandKitPresent": "Colori, font e logo presenti.",
+        "forceApproved": "Approvato nonostante controlli non superati: {note}",
+        "allowedByReview": "Consentito dalla revisione Trust & Safety di PostMind: {note}"
+      }
     },
     "saveTemplate": {
       "open": "Salva come modello",
@@ -1769,6 +1832,7 @@
     "connected": "Collegato",
     "stale": "L’accesso è scaduto o è stato revocato sulla piattaforma. I post programmati su questo account non verranno pubblicati finché non lo ricolleghi.",
     "connectedOn": "Collegato il {date}",
+    "checkedOn": "Accesso verificato il {date}",
     "reconnect": "Ricollega",
     "disconnect": "Scollega",
     "disconnectAria": "Scollega {account}",
@@ -3038,7 +3102,10 @@
       "tweet_video": "video da tweet",
       "product_launch": "lancio prodotto",
       "weekly_special": "offerta della settimana",
-      "behind_the_scenes": "dietro le quinte"
+      "behind_the_scenes": "dietro le quinte",
+      "listicle": "lista",
+      "listicle_5": "top 5",
+      "listicle_10": "top 10"
     }
   },
   "account": {
@@ -3200,6 +3267,56 @@
       "waiting": "Passaggio {step} di {total} — in attesa di: {role}",
       "waitingCount": "Passaggio {step} di {total} — in attesa di: {role} ({approvals} di {required} approvazioni)",
       "stepNumber": "{number}."
+    }
+  },
+  "failures": {
+    "codes": {
+      "cancelled_by_user": "Hai annullato questa esecuzione.",
+      "brief_too_vague": "Il brief era troppo vago per pianificare un video. Scegli una delle direzioni suggerite.",
+      "restricted_topics": "Il brief tocca un argomento soggetto a restrizioni. Confermalo per continuare.",
+      "script_safety_block": "Il controllo di sicurezza dello script ha bloccato questo video.",
+      "script_safety_review": "Il controllo di sicurezza dello script richiede che una persona esamini questo video.",
+      "script_safety_blocked_by_review": "La revisione Trust & Safety di PostMind ha bloccato lo script.",
+      "content_safety_blocked_by_review": "La revisione Trust & Safety di PostMind ha bloccato il video.",
+      "content_safety_block": "L’analisi di sicurezza dei contenuti ha bloccato questo video.",
+      "quality_failed": "{count, plural, =0 {Un controllo di qualità non è stato superato.} one {Un controllo di qualità non è stato superato: {checks}.} other {# controlli di qualità non sono stati superati: {checks}.}}",
+      "quality_gate_error": "Non è stato possibile completare i controlli di qualità.",
+      "planning_failed": "La pianificazione del video non è riuscita.",
+      "slideshow_incomplete": "Non è stato possibile completare la presentazione: ad alcune slide manca il contenuto.",
+      "upload_missing": "Il video caricato non è più disponibile.",
+      "script_regenerate_failed": "Non è stato possibile rigenerare lo script: lo script o il suo brief non esiste più.",
+      "asset_generation_failed": "{count, plural, =0 {Non è stato possibile generare alcune inquadrature.} one {Non è stato possibile generare l’inquadratura {shots}.} other {Non è stato possibile generare le inquadrature {shots}.}}",
+      "composition_failed": "Il montaggio del video non è riuscito.",
+      "cost_cap_paused": "Generazione sospesa perché è stato raggiunto un budget.",
+      "kill_switch": "{level, select, global {In pausa: PostMind ha fermato generazione e pubblicazione ovunque.} workspace {In pausa: PostMind ha fermato la generazione per la tua organizzazione.} project {In pausa: PostMind ha fermato questo progetto.} provider {In pausa: PostMind ha fermato uno dei fornitori di generazione.} platform {In pausa: PostMind ha fermato la pubblicazione su questa piattaforma.} other {In pausa per un interruttore di emergenza di PostMind.}}",
+      "rejected": "Rifiutato da un revisore.",
+      "business_deleted": "Interrotto: l’attività è stata eliminata.",
+      "organisation_deleted": "Interrotto: l’organizzazione è stata eliminata.",
+      "scheduling_failed": "La programmazione non è riuscita.",
+      "youtube_quota_deferred": "È stato raggiunto il limite giornaliero di caricamenti di YouTube. Studio riproverà dopo l’azzeramento giornaliero.",
+      "robots_blocked": "Il file robots.txt del sito non consente a Studio di leggere la home page.",
+      "no_pages": "Non è stato possibile leggere nessuna pagina del sito.",
+      "scan_cost_cap": "L’analisi si è fermata al limite di costo ({amount}).",
+      "scan_images_capped": "L’analisi ha raggiunto il limite di costo ({amount}): alcune immagini non sono state indicizzate per la ricerca.",
+      "ownership_disputed": "Interrotto: la proprietà del sito è stata contestata.",
+      "provider_failure": "{source} ha segnalato un problema: {problem}."
+    },
+    "classes": {
+      "rate_limited": "troppe richieste",
+      "timeout": "tempo scaduto",
+      "provider_unavailable": "servizio non disponibile",
+      "unavailable": "servizio non disponibile",
+      "auth": "credenziali rifiutate",
+      "insufficient_credits": "crediti esauriti sull’account",
+      "invalid_request": "richiesta rifiutata",
+      "content_policy": "contenuto rifiutato in base alle sue norme sui contenuti",
+      "output_truncated": "risultato troncato",
+      "result_expired": "risultato scaduto",
+      "needs_reconnect": "l’account va ricollegato",
+      "quota_exceeded": "quota raggiunta",
+      "invalid_media": "file video rifiutato",
+      "outcome_unknown": "esito sconosciuto: controlla la piattaforma prima di riprovare",
+      "unknown": "errore sconosciuto"
     }
   }
 }

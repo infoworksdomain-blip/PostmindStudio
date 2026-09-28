@@ -8,6 +8,7 @@ import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 15.D5 / spec 13.5 — "Every force-approve is audited and reviewable in the Admin
 // Centre." GET /admin/force-approvals?days=: renders a customer pushed past a failed quality
@@ -40,6 +41,7 @@ const WINDOWS = [7, 30, 90] as const;
 export function ForceApprovalsPanel() {
   const t = useTranslations('admin.forceApprovals');
   const f = useFormat();
+  const projectName = useProjectName();
   const [days, setDays] = useState<number>(30);
   const res = useApi<Response>('/admin/force-approvals', { days });
   return (
@@ -77,7 +79,7 @@ export function ForceApprovalsPanel() {
             {res.data.items.map((item) => (
               <li key={item.renderId} className="grid gap-1 py-3 text-sm">
                 <p className="font-medium">
-                  {item.project.name}
+                  {projectName(item.project.name)}
                   <span className="ms-2 text-xs font-normal text-muted-foreground">
                     {t('meta', {
                       platform: f.platform(item.targetPlatform),

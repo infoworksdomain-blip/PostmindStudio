@@ -73,7 +73,7 @@ describe.skipIf(!hasDb)('golden journeys: Phase 13 A2', { timeout: 120_000 }, ()
       body: {
         url: site,
         ownershipConfirmed: true,
-        ownershipStatement: 'I own this website or am authorised to represent it.',
+        ownershipStatement: { locale: 'en-GB', messageKey: 'business.scan.ownershipStatement' },
       },
     });
     expect(started.status).toBe(202);

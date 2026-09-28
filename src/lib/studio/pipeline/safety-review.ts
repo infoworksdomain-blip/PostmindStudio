@@ -3,6 +3,7 @@ import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { notifySafely, notifierFor, type Notifier } from '../notifications/notifier';
 import { mergeProjectMetadata } from './project-state';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // BACKLOG 13.17 / spec 16.4 — content-safety review queue. Two pipeline results that used to
 // fail the run closed now pause it for a Trust & Safety decision:
@@ -110,7 +111,7 @@ async function notifyOpened(host: SafetyReviewHost, review: SafetyReview): Promi
     where: { id: review.projectId },
     select: { name: true, createdByUserId: true },
   });
-  const name = project?.name ?? 'A project';
+  const name = project ? projectLabel(project.name) : 'A project';
   try {
     await notifierFor(host).notifyStaff({
       kind: 'safety_review',
@@ -122,7 +123,11 @@ async function notifyOpened(host: SafetyReviewHost, review: SafetyReview): Promi
       ...(project && {
         message: {
           key: 'safetyReviewStaff',
-          params: { name: project.name, kind: review.kind, reason: review.reason.slice(0, 500) },
+          params: {
+            name: projectNameParam(project.name),
+            kind: review.kind,
+            reason: review.reason.slice(0, 500),
+          },
         },
       }),
     });
@@ -138,7 +143,10 @@ async function notifyOpened(host: SafetyReviewHost, review: SafetyReview): Promi
       body: 'PostMind’s Trust & Safety team is checking it. Generation continues if it is allowed.',
       link: `/projects/${review.projectId}`,
       dedupeKey: `safety_review_opened:${review.id}`,
-      message: { key: 'safetyReviewOpened', params: { name: project.name } },
+      message: {
+        key: 'safetyReviewOpened',
+        params: { name: projectNameParam(project.name) },
+      },
     });
   }
 }

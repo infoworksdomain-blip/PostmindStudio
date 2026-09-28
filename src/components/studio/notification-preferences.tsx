@@ -30,7 +30,8 @@ export type PreferenceKind =
   | 'cost_paused'
   | 'safety_review'
   | 'share_comment'
-  | 'plan_quota';
+  | 'plan_quota'
+  | 'connection_needs_reconnect';
 
 export interface PreferencesResponse {
   preferences: Record<string, { inApp: boolean; email: boolean }>;
@@ -49,6 +50,7 @@ export const PREFERENCE_KINDS: readonly PreferenceKind[] = [
   'safety_review',
   'share_comment',
   'plan_quota',
+  'connection_needs_reconnect',
 ];
 
 function PreferencesTable() {

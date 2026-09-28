@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { CalendarShadowClient } from '../core/calendar-shadow-client';
+import { projectLabel } from '../../project-name';
 
 // BACKLOG 15.W3 — Core calendar shadow entries (spec 16.1). Instead of hooks inside every
 // schedule / reschedule / cancel code path (a missed hook would silently lose an entry), the
@@ -61,7 +62,7 @@ export async function deriveCalendarShadows(
       row &&
       row.desiredOp === desiredOp &&
       (row.scheduledFor?.getTime() ?? null) === (scheduledFor?.getTime() ?? null) &&
-      row.title === pub.project.name;
+      row.title === projectLabel(pub.project.name);
     if (unchanged) continue;
     const data = {
       organisationId: pub.organisationId,
@@ -69,7 +70,8 @@ export async function deriveCalendarShadows(
       platform: pub.platform,
       desiredOp,
       scheduledFor,
-      title: pub.project.name,
+      // 17.9: the calendar is outside Studio's UI; an unnamed project shows the English label.
+      title: projectLabel(pub.project.name),
       state: 'pending_setup',
       attempts: 0,
       lastError: null,

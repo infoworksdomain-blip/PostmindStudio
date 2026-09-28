@@ -134,7 +134,10 @@ describe.skipIf(!hasDb)('website scan + image library API', { timeout: 120_000 }
   // 15.D8 / A11.2: every scan request carries the checkbox text; tests that don't set one get it.
   const withStatement = (body: unknown) =>
     body && typeof body === 'object' && !('ownershipStatement' in body)
-      ? { ...body, ownershipStatement: 'I own this website or am authorised to represent it.' }
+      ? {
+          ...body,
+          ownershipStatement: { locale: 'en-GB', messageKey: 'business.scan.ownershipStatement' },
+        }
       : body;
   const scan = (businessId: string, body: unknown, token = 'owner') =>
     call(scanWebsiteRoute.POST, {

@@ -50,6 +50,7 @@ import { loadTemplateGuide } from '../../templates/blueprint';
 import { suggestionRows, suggestOverlays } from '../../overlays/suggest';
 import { BUILT_IN_PRESETS } from '../../overlays/presets';
 import type { ProjectJobData } from '../queues';
+import { realProjectName } from '../../../project-name';
 
 // BACKLOG 3.4 — Layers 1 (ideation) and 2 (script + storyboard), then pre-generation script
 // safety (spec 13.2), persistence of briefs/scripts/shots, and fan-out of one generate-asset job
@@ -275,7 +276,8 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       [
         buildIdeationPrompt({
           rawInput,
-          businessName: project.name,
+          // 17.9: an unnamed project sends no name (never the "Untitled video" placeholder).
+          businessName: realProjectName(project.name),
           targetPlatforms: formats.map((f) => f.platform),
           hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
           language: project.language,

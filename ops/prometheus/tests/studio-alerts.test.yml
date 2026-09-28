@@ -84,3 +84,54 @@ tests:
               summary: 'Studio job failure rate 25% (> 5%)'
               description: 'More than 5% of queue jobs are failing after retries.'
               runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/service-health.md#job-failures
+
+  # BACKLOG 17.4: a provider breaker open (2) for more than 5 minutes is a warning; one that
+  # half-opens in time is not.
+  - interval: 1m
+    input_series:
+      - series: 'studio_provider_circuit_state{job="studio-worker", instance="worker-1:9464", provider="runway"}'
+        values: '0 0 2+0x20'
+      - series: 'studio_provider_circuit_state{job="studio-worker", instance="worker-1:9464", provider="luma"}'
+        values: '0 2 2 2 1 0+0x17'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: StudioProviderCircuitOpen
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: StudioProviderCircuitOpen
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              provider: runway
+            exp_annotations:
+              summary: 'Circuit breaker open for runway'
+              description: 'The router is skipping runway and using fallbacks.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md#alerts
+
+  # BACKLOG 17.4: runway passed over in 4 of every 5 routings that reach it warns after 10
+  # minutes; luma switched off by the provider kill switch (provider_disabled) and heygen with
+  # too few failovers (7.5 in 15 minutes) do not.
+  - interval: 1m
+    input_series:
+      - series: 'studio_provider_passed_over_total{job="studio-worker", instance="worker-1:9464", provider="runway", reason="circuit_open"}'
+        values: '0+4x40'
+      - series: 'studio_provider_selected_total{job="studio-worker", instance="worker-1:9464", provider="runway"}'
+        values: '0+1x40'
+      - series: 'studio_provider_passed_over_total{job="studio-worker", instance="worker-1:9464", provider="luma", reason="provider_disabled"}'
+        values: '0+5x40'
+      - series: 'studio_provider_passed_over_total{job="studio-worker", instance="worker-1:9464", provider="heygen", reason="circuit_open"}'
+        values: '0+0.5x40'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: StudioProviderFailoverRateHigh
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: StudioProviderFailoverRateHigh
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              provider: runway
+            exp_annotations:
+              summary: 'High failover rate for runway'
+              description: 'More than 20% of the routing decisions that reached runway passed it over (circuit open, too slow or no cost estimate) for 10 minutes.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md#alerts

@@ -33,7 +33,14 @@ export type ReviewReasonCode =
 
 export type ReviewDecision =
   | { decision: 'auto_approve' }
-  | { decision: 'needs_review'; code: ReviewReasonCode; reason: string };
+  | {
+      decision: 'needs_review';
+      code: ReviewReasonCode;
+      /** English, for logs and older clients. */
+      reason: string;
+      /** 17.9: what the UI needs to say it in the reader's language (with `code`). */
+      params?: Record<string, string | number>;
+    };
 
 export type ThresholdResult = { ok: true; value: number } | { ok: false; reason: string };
 
@@ -75,10 +82,15 @@ function checksOf(render: RenderForDecision): QualityCheck[] {
     : [];
 }
 
-const review = (code: ReviewReasonCode, reason: string): ReviewDecision => ({
+const review = (
+  code: ReviewReasonCode,
+  reason: string,
+  params?: Record<string, string | number>,
+): ReviewDecision => ({
   decision: 'needs_review',
   code,
   reason,
+  ...(params && { params }),
 });
 
 function renderProblem(render: RenderForDecision): ReviewDecision | null {
@@ -88,12 +100,15 @@ function renderProblem(render: RenderForDecision): ReviewDecision | null {
     render.qualityCheckState === 'FORCE_APPROVED' ||
     checks.some((c) => c.code === 'force_approved')
   )
-    return review('force_approved', `Needs review: the ${where} variant was force-approved`);
+    return review('force_approved', `Needs review: the ${where} variant was force-approved`, {
+      platform: where,
+    });
   const safety = checks.find((c) => c.code === 'content_safety');
   if (!safety || safety.status !== 'passed')
     return review(
       'content_safety_flag',
       `Needs review: the ${where} variant's content-safety scan ${safety ? 'flagged it' : 'did not run'}`,
+      { platform: where, outcome: safety ? 'flagged' : 'not_run' },
     );
   // 15.B2: a `warning` (brand-kit compliance, spec 13.1 "User review required") needs a person.
   if (
@@ -103,6 +118,7 @@ function renderProblem(render: RenderForDecision): ReviewDecision | null {
     return review(
       'quality_not_clean',
       `Needs review: a quality check on the ${where} variant did not pass`,
+      { platform: where },
     );
   return null;
 }
@@ -122,7 +138,9 @@ export function decideAutoApproval(input: AutoApprovalInput): ReviewDecision {
       `Needs review: automatic approval is misconfigured (${input.threshold.reason})`,
     );
   if (input.renders.length === 0)
-    return review('quality_not_clean', 'Needs review: no rendered variants to check');
+    return review('quality_not_clean', 'Needs review: no rendered variants to check', {
+      renders: 0,
+    });
   for (const render of input.renders) {
     const problem = renderProblem(render);
     if (problem) return problem;
@@ -139,6 +157,7 @@ export function decideAutoApproval(input: AutoApprovalInput): ReviewDecision {
     return review(
       'not_trusted',
       `Needs review: first ${needed} videos — ${input.humanApprovedCount} of ${needed} approved by a person so far`,
+      { approved: input.humanApprovedCount, needed },
     );
   return { decision: 'auto_approve' };
 }

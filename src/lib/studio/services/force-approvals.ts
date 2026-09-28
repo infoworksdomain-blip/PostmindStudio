@@ -53,7 +53,8 @@ export interface ForceApproval {
   approvedByUserId: string | null;
   note: string | null;
   failedChecks: FailedCheck[];
-  project: { id: string; name: string; state: string; businessId: string };
+  /** name null: the user gave the project no name (17.9). */
+  project: { id: string; name: string | null; state: string; businessId: string };
   organisationId: string;
 }
 

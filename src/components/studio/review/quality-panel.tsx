@@ -6,8 +6,12 @@ import { AlertTriangle, CheckCircle2, CircleSlash, Loader2, XCircle } from 'luci
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { QualityIssue, Render } from '@/lib/client/types';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
+import { humanCode, useQualityCheckLabel } from '../failure-reason';
 import { useAction } from './use-action';
+
+export { humanCode };
 
 // Spec 14.2 quality-check panel: passed items ticked, failures red with click-to-see detail,
 // and a force-approve override for failed renders (spec 13.5; audited, capability-gated).
@@ -19,13 +23,41 @@ const STATUS = {
   skipped: { icon: CircleSlash, className: 'text-muted-foreground' },
 } as const;
 
-const CODES = [
-  'content_safety',
-  'duration_match',
-  'black_frames',
-  'audio_present',
-  'aspect_ratio',
+/** 17.9: detail keys the catalogue knows (review.quality.details.<key>). */
+export const DETAIL_KEYS = [
+  'safetyScanUnavailable',
+  'safetyBlocked',
+  'safetyReview',
+  'safetyPassed',
+  'duration',
+  'blackFrames',
+  'noBlackFrames',
+  'noAudio',
+  'loudness',
+  'aspectRatio',
   'codec',
+  'audioSyncNotBuilt',
+  'watermarkNotBuilt',
+  'captionSyncNotBuilt',
+  'brandKitNotBuilt',
+  'noTimelineSummary',
+  'noNarration',
+  'audioSyncFailed',
+  'audioSyncPassed',
+  'noSpokenCaptions',
+  'captionSyncFailed',
+  'captionSyncPassed',
+  'kitHasNoWatermark',
+  'slideshowNoWatermark',
+  'watermarkNotCovering',
+  'watermarkSampleUnavailable',
+  'watermarkVisible',
+  'watermarkNotVisible',
+  'noBrandKit',
+  'brandKitMissing',
+  'brandKitPresent',
+  'forceApproved',
+  'allowedByReview',
 ] as const;
 const SEVERITIES = ['block', 'error', 'warning', 'info'] as const;
 const oneOf = <T extends string>(list: readonly T[], value: string): value is T =>
@@ -38,12 +70,6 @@ const ORDER: Record<QualityIssue['status'], number> = {
   skipped: 3,
 };
 
-/** A readable label for a check code the catalogue does not know (future checks). */
-export function humanCode(code: string): string {
-  const text = code.replace(/[_.]/g, ' ').trim();
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 export function QualityPanel({ render, onChanged }: { render: Render; onChanged: () => void }) {
   const issues = [...(render.qualityIssues ?? [])].sort(
     (a, b) => ORDER[a.status] - ORDER[b.status],
@@ -51,7 +77,23 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
   const t = useTranslations('review.quality');
   const { pending, run } = useAction();
   const [note, setNote] = useState('');
-  const codeLabel = (code: string) => (oneOf(CODES, code) ? t(`codes.${code}`) : humanCode(code));
+  const codeLabel = useQualityCheckLabel();
+  const f = useFormat();
+  // 17.9: the detail in the reader's language when the check carries a key; numbers in the
+  // locale's digits (counts stay numeric for plurals); otherwise the stored English detail.
+  const detailText = (issue: QualityIssue) => {
+    const key = issue.detailKey;
+    if (!key || !oneOf(DETAIL_KEYS, key)) return issue.detail;
+    const params = Object.fromEntries(
+      Object.entries(issue.detailParams ?? {}).map(([name, value]) => [
+        name,
+        typeof value === 'number' && name !== 'count'
+          ? f.number(value, { maximumFractionDigits: 2, useGrouping: false })
+          : value,
+      ]),
+    );
+    return t(`details.${key}`, params);
+  };
   const severityLabel = (s: string) => (oneOf(SEVERITIES, s) ? t(`severity.${s}`) : s);
 
   async function forceApprove() {
@@ -95,7 +137,7 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
                       {severityLabel(issue.severity)}
                     </span>
                   </summary>
-                  <p className="mt-1 ps-6 text-xs text-muted-foreground">{issue.detail}</p>
+                  <p className="mt-1 ps-6 text-xs text-muted-foreground">{detailText(issue)}</p>
                 </details>
               </li>
             );

@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| **Metric** | `studio_provider_circuit_state{provider}`: 0 closed, 1 half-open, 2 open. Breaker state is shared by every process through Redis (13.16); Admin Centre → **Providers** shows it with the last hour's error rate and today's spend. |
-| **Threshold** | Any provider open (2) on any worker. |
+| **Metric** | `studio_provider_circuit_state{provider}`: 0 closed, 1 half-open, 2 open. Breaker state is shared by every process through Redis (13.16); Admin Centre → **Providers** shows it with the last hour's error rate and today's spend. Failovers: `studio_provider_passed_over_total{provider,reason}` / `studio_provider_selected_total{provider}` (17.4). |
+| **Threshold** | A provider open (2) for more than 5 minutes, or passed over in more than 20% of the routings that reach it (see [Alerts](#alerts)). |
 | **Escalation** | On-call engineer, then the Eng Lead after 30 min, then the vendor account manager. |
 
 ## What happens automatically
@@ -62,7 +62,27 @@
 
 The shot success rate returns to baseline in `studio_jobs_total{job="generate-asset"}`.
 
-**GAP:** there is no alert rule yet (see [README](README.md#gap-alerting)).
+## Alerts
+
+Rules in `ops/prometheus/studio-alerts.yml` (group `studio-providers`), promtool-tested in
+`ops/prometheus/tests/studio-alerts.test.yml`:
+
+- **StudioProviderCircuitOpen** (warning, `severity: ticket`) — `max by (provider)
+  (studio_provider_circuit_state) == 2` for 5 minutes: the breaker has stayed open past its first
+  half-open probe.
+- **StudioProviderFailoverRateHigh** (warning, 17.4) — over 15 minutes, more than 20% of the
+  routing decisions that reached a provider passed it over for a provider-side reason
+  (`circuit_open`, `too_slow`, `no_cost_estimate`), with at least 10 such failovers, for 10
+  minutes. It catches a breaker that flaps between open and half-open without ever staying open
+  for 5 minutes. Kill-switch disables (`provider_disabled`, step 2 below) and cost caps
+  (`over_budget`, cost-runaway.md) are not counted. The router increments
+  `studio_provider_passed_over_total{provider,reason}` for every candidate it skips for a run-time
+  reason and `studio_provider_selected_total{provider}` for the one it picks
+  (providers/router.ts); a provider this deployment does not configure is never counted.
+  `sum by (provider, reason) (rate(studio_provider_passed_over_total[15m]))` shows why.
+- **StudioProviderCircuitsOpenMultiple** (page) — two or more breakers open at once.
+
+Work any of them with the steps above.
 
 ## Phase 15 — what customers see during a fallback (15.B9)
 

@@ -7,10 +7,9 @@ import { jobIds } from '../queue/enqueue';
 import { assertFetchableUrl } from '../scan/safe-fetch';
 import { toPlanTier } from './catalog';
 import { assertScanBusinessAllowed } from './tier-gates';
+import { ownershipStatementInput, resolveOwnershipStatement } from './approved-statements';
 
 // BACKLOG 6.5 / Addendum A6.8 — scan-website, scan history, scan detail, business profile.
-
-export const OWNERSHIP_STATEMENT_MAX = 1_000;
 
 export const scanWebsiteInput = z.object({
   url: z.string().trim().min(1).max(2_000),
@@ -19,14 +18,11 @@ export const scanWebsiteInput = z.object({
     error: 'ownershipConfirmed must be true: confirm you own or represent this website',
   }),
   /**
-   * 15.D8 / A11.2: "The checkbox text is preserved with the scan record for audit." The exact
-   * warranty text the user ticked; required with the confirmation, stored on website_scans.
+   * 15.D8 / A11.2: "The checkbox text is preserved with the scan record for audit." 17.8: the
+   * checkbox's { locale, messageKey } (and optionally the text shown); the server stores the
+   * approved catalogue text for them and refuses anything else (approved-statements.ts).
    */
-  ownershipStatement: z
-    .string({ error: 'ownershipStatement is required: send the checkbox text the user ticked' })
-    .trim()
-    .min(10, 'ownershipStatement must be the checkbox text the user ticked')
-    .max(OWNERSHIP_STATEMENT_MAX),
+  ownershipStatement: ownershipStatementInput,
 });
 
 /**
@@ -59,6 +55,7 @@ export async function startScan(
   const raw = /^[a-z][a-z0-9+.-]*:/i.test(input.url) ? input.url : `https://${input.url}`;
   const url = assertFetchableUrl(raw);
   url.hash = '';
+  const statement = await resolveOwnershipStatement(input.ownershipStatement);
   // 15.D2 / A10.3 "Website scan (Feature D)": 1 / 3 / 10 / unlimited businesses per tier.
   await assertScanBusinessAllowed(deps.db, tenant, businessId);
   await assertScanQuota(deps.db, tenant.organisationId, deps.now());
@@ -81,7 +78,9 @@ export async function startScan(
       url: url.toString(),
       state: 'QUEUED',
       trigger: 'manual',
-      ownershipStatement: input.ownershipStatement,
+      ownershipStatement: statement.text,
+      ownershipStatementLocale: statement.locale,
+      ownershipStatementKey: statement.messageKey,
       // 14.4: the owner's confirmation, stored per scan; it gates the browser-render fallback.
       ownershipConfirmedAt: new Date(deps.now()),
       ownershipConfirmedByUserId: tenant.userId,

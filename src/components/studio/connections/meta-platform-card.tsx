@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
 import { StateBadge } from '../primitives';
+import { CheckedLine } from './checked-line';
 import type { META_PLATFORMS } from './platforms';
 
 // Instagram / Facebook row: read-only. PostMind Core runs the Meta login and registers these
@@ -28,6 +29,7 @@ function MetaAccountRow({ connection }: { connection: PlatformConnection }) {
       <p className="mt-0.5 text-xs text-muted-foreground">
         {stale ? t('meta.stale') : t('meta.connectedVia', { date: f.date(connection.connectedAt) })}
       </p>
+      {!stale && <CheckedLine connection={connection} />}
     </li>
   );
 }

@@ -150,6 +150,42 @@ names every problem.
    `intermediates/orgs/<id>/` per bucket. This exercises `DeleteObjects`; see the checksum note in
    step 4.
 
+## 7. Backup bucket and backup token (Phase 17.5)
+
+The daily backup job (`studio-backup-storage-<env>`, [backup-recovery.md](backup-recovery.md))
+copies the assets, renders and thumbnails buckets into one backup bucket. Per environment:
+
+1. **Create the backup bucket** with the **EU** jurisdiction, like step 1, for example
+   `studio-backup` (staging: `studio-backup-staging`). Same account and jurisdiction as the live
+   buckets, so the job copies server-side and `S3_BACKUP_REGION` stays `auto`.
+   - No bucket lock and no lifecycle expiry of current objects: the job itself deletes copies 30
+     days after their source was deleted, and a lock would stop that (purged data must age out).
+   - Optional: the step-4 rule `studio-abort-incomplete-multipart-7d` on this bucket too. Nothing
+     else.
+   - Do **not** add it to the app token from step 2. The app must not be able to read or delete
+     the backups.
+2. **Create the backup job's token.** It needs **read** on the live buckets and **read & write** on
+   the backup bucket. The dashboard applies one permission to all the buckets a token is scoped to,
+   so create it with the Cloudflare API, with two policies
+   ([API tokens](https://developers.cloudflare.com/r2/api/tokens/), "Workers R2 Storage Bucket Item
+   Read" / "... Write" on bucket resources):
+   - *Workers R2 Storage Bucket Item Read* on `studio-assets`, `studio-renders`, `studio-thumbnails`;
+   - *Workers R2 Storage Bucket Item Write* on `studio-backup`.
+
+   If you can only use the dashboard, create an **Object Read & Write** token scoped to the three
+   live buckets **and** the backup bucket. It works, but that token could also delete live objects:
+   keep it only in the cron job and rotate it like the app token.
+3. Put the values on the cron job (`studio-backup-storage-<env>` → **Environment**; they are
+   `sync: false` in `render.yaml`, so Render asks for them when the Blueprint creates the job, and
+   otherwise leaves them empty): `S3_BACKUP_BUCKET`, `S3_BACKUP_ACCESS_KEY_ID`,
+   `S3_BACKUP_SECRET_ACCESS_KEY`. `S3_BACKUP_REGION=auto` and `S3_BACKUP_RETENTION_DAYS=30` come
+   from `render.yaml`.
+4. Dry run from the cron job's **Shell**: `npx tsx scripts/ops/backup-storage.ts`. It lists what it
+   would copy. Then **Trigger Run** in the dashboard (the job itself runs with `--apply`) and check
+   the log ends with `"event":"storage_backup_run"` and `"ok":true`.
+   - **Check this (UNVERIFIED):** the first `--apply` run exercises `CopyObject` between two R2
+     buckets and `DeleteObjects` (checksum note in step 4) on the backup bucket.
+
 ## Key layout on R2 (why `intermediates/`)
 
 On S3, provider outputs (`orgs/<org>/projects/<p>/providers/...`) are tagged

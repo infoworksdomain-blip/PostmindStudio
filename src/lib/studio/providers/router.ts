@@ -1,6 +1,7 @@
 import type { VisualTreatment } from '@prisma/client';
 import { NoProviderAvailableError, ValidationError } from '../../errors';
 import type { KillSwitch } from '../kill-switch';
+import { getMetrics } from '../observability/metrics';
 import type { CircuitBreaker } from './circuit-breaker';
 import type { ProviderAdapter, ProviderCapability, ProviderRequest } from './interface';
 import type { ProviderRegistry } from './registry';
@@ -89,6 +90,11 @@ export type SkipReason =
   | 'too_slow'
   | 'no_cost_estimate'
   | 'circuit_open';
+
+const STATIC_SKIP_REASONS: ReadonlySet<SkipReason> = new Set<SkipReason>([
+  'not_configured',
+  'capability_unsupported',
+]);
 
 export interface CandidateOutcome {
   providerId: string;
@@ -273,9 +279,14 @@ export async function routeProvider(input: RouteInput, deps: RouterDeps): Promis
     const skipped = await skipReason(adapter, plan.capability, input, deps, now);
     if (skipped || !adapter) {
       candidates.push({ providerId, skipped: skipped ?? 'not_configured' });
+      // 17.4: failover metric — only run-time reasons (a provider this deployment does not
+      // configure, or that cannot do the job, is not failing over).
+      if (skipped && !STATIC_SKIP_REASONS.has(skipped))
+        getMetrics().providerPassedOver.inc({ provider: providerId, reason: skipped });
       continue;
     }
     candidates.push({ providerId });
+    getMetrics().providerSelected.inc({ provider: providerId });
     return {
       providerId,
       adapter,

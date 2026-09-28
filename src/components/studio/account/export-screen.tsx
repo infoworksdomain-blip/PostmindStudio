@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { FailureReason } from '../failure-reason';
 import { EmptyState, ErrorState, PageHeader, Section, StateBadge } from '../primitives';
 
 // BACKLOG 15.E1 — studio.postmind.ai/account/export (spec 18.4 right of access). Request a ZIP
@@ -173,7 +174,7 @@ export function ExportScreen() {
                       </span>
                     )}
                     {e.state === 'FAILED' && e.errorReason && (
-                      <span className="text-destructive">{e.errorReason}</span>
+                      <FailureReason reason={e.errorReason} className="text-destructive" />
                     )}
                   </span>
                   {e.state === 'READY' && <DownloadButton id={e.id} />}

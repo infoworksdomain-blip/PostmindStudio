@@ -19,6 +19,8 @@
 #                          A private service must bind a port, which the metrics listener does
 #                          (METRICS_TOKEN is always set, from studio-metrics-<env>).
 #   studio-monitoring-<env> Prometheus + Alertmanager + blackbox exporter (ops/render/monitoring).
+#   studio-backup-storage-<env> daily CRON job (03:30 UTC): backup copy of the R2 buckets
+#                          (scripts/ops/backup-storage.ts, runbooks/backup-recovery.md).
 # The headless render service (docker-compose.prod.yml `browserless`) is NOT included: see
 # runbooks/render-deploy.md "Not on Render".
 #
@@ -30,8 +32,9 @@
 #                         (`sync: false` is ignored in groups), and prompting on each service
 #                         would mean pasting every secret seven times. The operator pastes them
 #                         ONCE per environment into this group in the dashboard ("Add from .env");
-#                         all seven app services link it. Render keeps env vars that the
-#                         Blueprint does not list. Table of keys: runbooks/render-deploy.md.
+#                         all seven app services and the backup cron job link it. Render keeps
+#                         env vars that the Blueprint does not list. Table of keys:
+#                         runbooks/render-deploy.md.
 # Render does not interpolate variables in a Blueprint, so DATABASE_URL is built at start-up by
 # scripts/render/with-db-url.sh (schema=studio + per-service pool size) from RENDER_POSTGRES_URL.
 #
@@ -45,6 +48,8 @@
 #               orchestration 2×1c-2g $50 · assets 2×1c-2g $50 · publish 2×1c-2g $50 ·
 #               library 1c-2g $25 · scheduled + analytics 2×0.5c-512mb $14 · monitoring
 #               0.5c-512mb $7 + 10 GB disk $2.50                               ≈ $387/month
+#   backup cron prorated by the second ($0.00016/min 0.5c-512mb staging, $0.00058/min 1c-2g
+#               production): well under $1/month each at tens of minutes a day.
 #   workspace   Pro $25/month (7-day Postgres PITR instead of 3, network-isolated environments).
 #               Total ≈ $536/month before bandwidth and build minutes.
 # Postgres connections (plan limits: 0.5c-1g 100, 2c-8g 200, https://render.com/pricing):
@@ -364,6 +369,38 @@ projects:
                   name: studio-worker-library-staging
                   property: host
 
+          # Phase 17.5 — daily backup copy of the assets, renders and thumbnails buckets into the
+          # backup bucket, ageing out copies whose source was deleted > 30 days ago
+          # (runbooks/backup-recovery.md). Object storage only: no database, so no with-db-url.sh.
+          # Render runs at most one run at a time and stops a run after 12 hours; schedules are UTC
+          # (https://render.com/docs/cronjobs, read 2026-09-28). A failed run (exit 1) shows as
+          # failed in the dashboard and triggers the workspace's failure notifications.
+          - type: cron
+            name: studio-backup-storage-staging
+            runtime: docker
+            dockerfilePath: ./Dockerfile
+            region: frankfurt
+            plan: 0.5c-512mb
+            schedule: '30 3 * * *'
+            autoDeployTrigger: checksPass
+            dockerCommand: npx tsx scripts/ops/backup-storage.ts --apply
+            envVars:
+              - fromGroup: studio-config-staging
+              - fromGroup: studio-secrets-staging
+              # The backup bucket (same account and EU jurisdiction: S3_BACKUP_REGION auto) and the
+              # backup job's own R2 token: read on the live buckets, read & write on the backup
+              # bucket. The app token has no access to the backup (runbooks/r2-setup.md).
+              - key: S3_BACKUP_BUCKET
+                sync: false
+              - key: S3_BACKUP_REGION
+                value: auto
+              - key: S3_BACKUP_RETENTION_DAYS
+                value: '30'
+              - key: S3_BACKUP_ACCESS_KEY_ID
+                sync: false
+              - key: S3_BACKUP_SECRET_ACCESS_KEY
+                sync: false
+
       # =========================================================================================
       # PRODUCTION — never auto-deploys. Promote the commit that passed on staging with
       # scripts/render/deploy.ts (runbooks/render-deploy.md step 8).
@@ -666,3 +703,35 @@ projects:
                   type: pserv
                   name: studio-worker-library-production
                   property: host
+
+          # Phase 17.5 — daily backup copy of the assets, renders and thumbnails buckets into the
+          # backup bucket, ageing out copies whose source was deleted > 30 days ago
+          # (runbooks/backup-recovery.md). Object storage only: no database, so no with-db-url.sh.
+          # Render runs at most one run at a time and stops a run after 12 hours; schedules are UTC
+          # (https://render.com/docs/cronjobs, read 2026-09-28). A failed run (exit 1) shows as
+          # failed in the dashboard and triggers the workspace's failure notifications.
+          - type: cron
+            name: studio-backup-storage-production
+            runtime: docker
+            dockerfilePath: ./Dockerfile
+            region: frankfurt
+            plan: 1c-2g
+            schedule: '30 3 * * *'
+            autoDeployTrigger: 'off'
+            dockerCommand: npx tsx scripts/ops/backup-storage.ts --apply
+            envVars:
+              - fromGroup: studio-config-production
+              - fromGroup: studio-secrets-production
+              # The backup bucket (same account and EU jurisdiction: S3_BACKUP_REGION auto) and the
+              # backup job's own R2 token: read on the live buckets, read & write on the backup
+              # bucket. The app token has no access to the backup (runbooks/r2-setup.md).
+              - key: S3_BACKUP_BUCKET
+                sync: false
+              - key: S3_BACKUP_REGION
+                value: auto
+              - key: S3_BACKUP_RETENTION_DAYS
+                value: '30'
+              - key: S3_BACKUP_ACCESS_KEY_ID
+                sync: false
+              - key: S3_BACKUP_SECRET_ACCESS_KEY
+                sync: false

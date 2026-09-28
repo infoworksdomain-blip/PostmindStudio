@@ -42,7 +42,8 @@
     "a11y": {
       "moreOptions": "और विकल्प",
       "required": "ज़रूरी"
-    }
+    },
+    "untitledVideo": "बिना नाम का वीडियो"
   },
   "shell": {
     "nav": {
@@ -135,7 +136,8 @@
         "cost_paused": "बजट के कारण जनरेशन रोका गया",
         "safety_review": "कंटेंट-सुरक्षा समीक्षाएँ",
         "share_comment": "प्रीव्यू लिंक पर फ़ीडबैक",
-        "plan_quota": "प्लान उपयोग अलर्ट (80% और 100%)"
+        "plan_quota": "प्लान उपयोग अलर्ट (80% और 100%)",
+        "connection_needs_reconnect": "वे अकाउंट जिन्हें फिर से कनेक्ट करना ज़रूरी है"
       }
     },
     "usage": {
@@ -366,6 +368,14 @@
     "planQuotaBlocked": {
       "title": "{tier} प्लान: इस महीने के {kind, select, short {छोटे} other {लंबे}} वीडियो ख़त्म",
       "body": "इस महीने {limit, number} में से {used, number} {kind, select, short {छोटे} other {लंबे}} वीडियो जनरेट हुए। अगले महीने की शुरुआत (UTC) में कोटा रीसेट होने तक नए जनरेशन रोके गए हैं।{nextTier, select, none {} other { और वीडियो के लिए {nextTier} पर अपग्रेड करें।}}"
+    },
+    "connectionNeedsReconnect": {
+      "title": "अपना {platform} अकाउंट “{account}” फिर से कनेक्ट करें",
+      "body": "{platform} अब इस अकाउंट पर Studio का एक्सेस स्वीकार नहीं करता। कनेक्शन पेज पर इसे फिर से कनेक्ट करें, ताकि शेड्यूल की गई पोस्ट प्रकाशित हो सकें।"
+    },
+    "metaConnectionNeedsReconnect": {
+      "title": "अपना {platform} अकाउंट “{account}” फिर से कनेक्ट करें",
+      "body": "Meta अब इस अकाउंट पर Studio का एक्सेस स्वीकार नहीं करता। PostMind सेटिंग में इसे फिर से कनेक्ट करें, ताकि शेड्यूल की गई पोस्ट प्रकाशित हो सकें।"
     }
   },
   "create": {
@@ -630,7 +640,20 @@
       "scheduledFor": "{date} के लिए शेड्यूल किया गया",
       "sent": "प्रकाशन के लिए भेजा गया",
       "notPublished": "प्रकाशित नहीं हुआ: {error}",
-      "failedFallback": "विफल"
+      "failedFallback": "विफल",
+      "reasons": {
+        "enterprise_plan": "समीक्षा ज़रूरी: एंटरप्राइज़ संगठन अपने वीडियो की हमेशा समीक्षा करते हैं।",
+        "org_policy": "समीक्षा ज़रूरी: आपके संगठन की नीति अपने-आप स्वीकृति बंद रखती है।",
+        "config_invalid": "समीक्षा ज़रूरी: अपने-आप स्वीकृति ठीक से सेट नहीं है।",
+        "force_approved": "समीक्षा ज़रूरी: {platform} वेरिएंट ज़बरदस्ती स्वीकृत किया गया था।",
+        "content_safety_flag": "{outcome, select, not_run {समीक्षा ज़रूरी: {platform} वेरिएंट का कंटेंट सुरक्षा स्कैन नहीं चला।} other {समीक्षा ज़रूरी: कंटेंट सुरक्षा स्कैन ने {platform} वेरिएंट को चिह्नित किया।}}",
+        "quality_not_clean": "समीक्षा ज़रूरी: {platform} वेरिएंट की एक गुणवत्ता जाँच पास नहीं हुई।",
+        "no_renders": "समीक्षा ज़रूरी: जाँचने के लिए कोई रेंडर किया गया वेरिएंट नहीं है।",
+        "script_safety_flag": "समीक्षा ज़रूरी: सुरक्षा जाँच ने स्क्रिप्ट को मंज़ूरी नहीं दी।",
+        "not_trusted": "समीक्षा ज़रूरी: आपके पहले {needed} वीडियो की समीक्षा कोई व्यक्ति करता है (अब तक {needed} में से {approved} स्वीकृत)।",
+        "approval_workflow": "समीक्षा ज़रूरी: “{workflow}” स्वीकृति वर्कफ़्लो लागू है।",
+        "auto_approve_error": "समीक्षा ज़रूरी: अपने-आप स्वीकृति की जाँच नहीं हो सकी।"
+      }
     },
     "budget": {
       "aria": "बजट बढ़ाएँ",
@@ -723,7 +746,12 @@
         "black_frames": "काले फ़्रेम",
         "audio_present": "ऑडियो मौजूद",
         "aspect_ratio": "आस्पेक्ट रेशियो",
-        "codec": "कोडेक"
+        "codec": "कोडेक",
+        "audio_sync": "वॉइसओवर सिंक",
+        "caption_sync": "कैप्शन सिंक",
+        "watermark": "वॉटरमार्क",
+        "brand_kit": "ब्रांड किट",
+        "force_approved": "ज़बरदस्ती स्वीकृत"
       },
       "severity": {
         "block": "ब्लॉक",
@@ -736,7 +764,42 @@
       "forceApproved": "समीक्षक ने विफलताओं को ओवरराइड किया।",
       "overrideLabel": "विफल जाँच को ओवरराइड करें — कारण (ज़रूरी, ऑडिट किया जाता है)",
       "forceApprove": "ज़बरन स्वीकृत करें",
-      "overridden": "गुणवत्ता जाँच ओवरराइड की गई।"
+      "overridden": "गुणवत्ता जाँच ओवरराइड की गई।",
+      "details": {
+        "safetyScanUnavailable": "स्कैन नहीं चल सका: {reason}",
+        "safetyBlocked": "रोका गया: {classes}",
+        "safetyReview": "समीक्षा ज़रूरी: {classes}",
+        "safetyPassed": "{count, plural, one {# फ़्रेम स्कैन हुआ, कुछ भी चिह्नित नहीं।} other {# फ़्रेम स्कैन हुए, कुछ भी चिह्नित नहीं।}}",
+        "duration": "{target} s के लक्ष्य के मुकाबले {rendered} s रेंडर हुआ (±{tolerance} s)।",
+        "blackFrames": "{segments} s पर काले फ़्रेम।",
+        "noBlackFrames": "{ms} ms से लंबा कोई काला हिस्सा नहीं।",
+        "noAudio": "कोई ऑडियो ट्रैक नहीं।",
+        "loudness": "लाउडनेस {lufs} LUFS ({min} से {max} ज़रूरी)।",
+        "aspectRatio": "{target} के मुकाबले {width} × {height}।",
+        "codec": "{format} में वीडियो कोडेक {codec} ({profile})।",
+        "audioSyncNotBuilt": "जाँच नहीं हुई: वॉइसओवर टाइमिंग विश्लेषण अभी उपलब्ध नहीं है।",
+        "watermarkNotBuilt": "जाँच नहीं हुई: वॉटरमार्क जाँच अभी उपलब्ध नहीं है।",
+        "captionSyncNotBuilt": "जाँच नहीं हुई: कैप्शन टाइमिंग जाँच अभी उपलब्ध नहीं है।",
+        "brandKitNotBuilt": "जाँच नहीं हुई: ब्रांड किट जाँच अभी उपलब्ध नहीं है।",
+        "noTimelineSummary": "जाँच नहीं हुई: स्लाइडशो में शॉट टाइमलाइन नहीं होती।",
+        "noNarration": "जाँच नहीं हुई: वीडियो में वॉइसओवर नहीं है।",
+        "audioSyncFailed": "{count, plural, one {वॉइसओवर शॉट {shots} में फ़िट नहीं होता।} other {वॉइसओवर शॉट {shots} में फ़िट नहीं होता।}}",
+        "audioSyncPassed": "{count, plural, one {वॉइसओवर अपने शॉट में फ़िट होता है।} other {वॉइसओवर सभी # शॉट में फ़िट होता है।}}",
+        "noSpokenCaptions": "जाँच नहीं हुई: वीडियो में बोले गए कैप्शन नहीं हैं।",
+        "captionSyncFailed": "{count, plural, one {# कैप्शन वॉइसओवर के साथ सिंक में नहीं है।} other {# कैप्शन वॉइसओवर के साथ सिंक में नहीं हैं।}}",
+        "captionSyncPassed": "{count, plural, one {# कैप्शन वॉइसओवर से ±{ms} ms के अंदर।} other {# कैप्शन वॉइसओवर से ±{ms} ms के अंदर।}}",
+        "kitHasNoWatermark": "जाँच नहीं हुई: ब्रांड किट में वॉटरमार्क नहीं है।",
+        "slideshowNoWatermark": "जाँच नहीं हुई: स्लाइडशो में ब्रांड वॉटरमार्क नहीं होता।",
+        "watermarkNotCovering": "वॉटरमार्क वीडियो के हर फ़्रेम पर नहीं है।",
+        "watermarkSampleUnavailable": "फ़्रेम सैंपल नहीं चल सका: {reason}",
+        "watermarkVisible": "सैंपल किए गए फ़्रेम में दिखता है (मिलान {scores})।",
+        "watermarkNotVisible": "सैंपल किए गए फ़्रेम में नहीं दिखता (मिलान {scores})।",
+        "noBrandKit": "जाँच नहीं हुई: प्रोजेक्ट में ब्रांड किट नहीं है।",
+        "brandKitMissing": "{count, plural, one {समीक्षा ज़रूरी: वीडियो में # ब्रांड तत्व नहीं है।} other {समीक्षा ज़रूरी: वीडियो में # ब्रांड तत्व नहीं हैं।}}",
+        "brandKitPresent": "रंग, फ़ॉन्ट और लोगो मौजूद हैं।",
+        "forceApproved": "विफल जाँचों के बावजूद स्वीकृत: {note}",
+        "allowedByReview": "PostMind की Trust & Safety समीक्षा ने अनुमति दी: {note}"
+      }
     },
     "saveTemplate": {
       "open": "टेम्पलेट के रूप में सेव करें",
@@ -1769,6 +1832,7 @@
     "connected": "कनेक्ट है",
     "stale": "प्लेटफ़ॉर्म पर एक्सेस की अवधि खत्म हो गई या उसे वापस ले लिया गया। जब तक आप फिर से कनेक्ट नहीं करते, इस अकाउंट की शेड्यूल की गई पोस्ट विफल होंगी।",
     "connectedOn": "{date} को कनेक्ट किया गया",
+    "checkedOn": "एक्सेस {date} को जाँचा गया",
     "reconnect": "फिर से कनेक्ट करें",
     "disconnect": "डिस्कनेक्ट करें",
     "disconnectAria": "{account} डिस्कनेक्ट करें",
@@ -3038,7 +3102,10 @@
       "tweet_video": "ट्वीट वीडियो",
       "product_launch": "प्रोडक्ट लॉन्च",
       "weekly_special": "इस हफ़्ते का ख़ास",
-      "behind_the_scenes": "पर्दे के पीछे"
+      "behind_the_scenes": "पर्दे के पीछे",
+      "listicle": "सूची",
+      "listicle_5": "टॉप 5 सूची",
+      "listicle_10": "टॉप 10 सूची"
     }
   },
   "account": {
@@ -3200,6 +3267,56 @@
       "waiting": "{total} में से चरण {step} — {role} का इंतज़ार",
       "waitingCount": "{total} में से चरण {step} — {role} का इंतज़ार ({required} में से {approvals} मंज़ूरियाँ)",
       "stepNumber": "{number}."
+    }
+  },
+  "failures": {
+    "codes": {
+      "cancelled_by_user": "आपने यह रन रद्द किया।",
+      "brief_too_vague": "ब्रीफ़ इतना अस्पष्ट था कि वीडियो की योजना नहीं बन सकी। सुझाई गई दिशाओं में से एक चुनें।",
+      "restricted_topics": "ब्रीफ़ में एक प्रतिबंधित विषय है। जारी रखने के लिए उसकी पुष्टि करें।",
+      "script_safety_block": "स्क्रिप्ट की सुरक्षा जाँच ने इस वीडियो को रोक दिया।",
+      "script_safety_review": "स्क्रिप्ट की सुरक्षा जाँच चाहती है कि कोई व्यक्ति इस वीडियो की समीक्षा करे।",
+      "script_safety_blocked_by_review": "PostMind की Trust & Safety समीक्षा ने स्क्रिप्ट को रोक दिया।",
+      "content_safety_blocked_by_review": "PostMind की Trust & Safety समीक्षा ने वीडियो को रोक दिया।",
+      "content_safety_block": "कंटेंट सुरक्षा स्कैन ने इस वीडियो को रोक दिया।",
+      "quality_failed": "{count, plural, =0 {एक गुणवत्ता जाँच विफल रही।} one {एक गुणवत्ता जाँच विफल रही: {checks}।} other {# गुणवत्ता जाँचें विफल रहीं: {checks}।}}",
+      "quality_gate_error": "गुणवत्ता जाँचें पूरी नहीं हो सकीं।",
+      "planning_failed": "वीडियो की योजना बनाना विफल रहा।",
+      "slideshow_incomplete": "स्लाइडशो पूरा नहीं हो सका: कुछ स्लाइड में कंटेंट नहीं है।",
+      "upload_missing": "अपलोड किया गया वीडियो अब उपलब्ध नहीं है।",
+      "script_regenerate_failed": "स्क्रिप्ट फिर से नहीं बन सकी: स्क्रिप्ट या उसका ब्रीफ़ अब मौजूद नहीं है।",
+      "asset_generation_failed": "{count, plural, =0 {कुछ शॉट जनरेट नहीं हो सके।} one {शॉट {shots} जनरेट नहीं हो सका।} other {शॉट {shots} जनरेट नहीं हो सके।}}",
+      "composition_failed": "वीडियो जोड़ना विफल रहा।",
+      "cost_cap_paused": "एक बजट पूरा हो जाने से जनरेशन रुका हुआ है।",
+      "kill_switch": "{level, select, global {रुका हुआ: PostMind ने हर जगह जनरेशन और पब्लिशिंग रोक दी है।} workspace {रुका हुआ: PostMind ने आपके संगठन के लिए जनरेशन रोक दिया है।} project {रुका हुआ: PostMind ने इस प्रोजेक्ट को रोक दिया है।} provider {रुका हुआ: PostMind ने जनरेशन देने वाली एक सेवा रोक दी है।} platform {रुका हुआ: PostMind ने इस प्लेटफ़ॉर्म पर पब्लिशिंग रोक दी है।} other {PostMind के किल स्विच से रुका हुआ।}}",
+      "rejected": "एक समीक्षक ने अस्वीकार किया।",
+      "business_deleted": "रुका: व्यवसाय हटा दिया गया।",
+      "organisation_deleted": "रुका: संगठन हटा दिया गया।",
+      "scheduling_failed": "शेड्यूल करना विफल रहा।",
+      "youtube_quota_deferred": "YouTube की रोज़ की अपलोड सीमा पूरी हो गई। रोज़ाना रीसेट के बाद Studio फिर से कोशिश करेगा।",
+      "robots_blocked": "वेबसाइट की robots.txt Studio को उसका होमपेज पढ़ने की अनुमति नहीं देती।",
+      "no_pages": "वेबसाइट का कोई भी पेज पढ़ा नहीं जा सका।",
+      "scan_cost_cap": "स्कैन अपनी लागत सीमा ({amount}) पर रुक गया।",
+      "scan_images_capped": "स्कैन अपनी लागत सीमा ({amount}) तक पहुँच गया: कुछ इमेज खोज के लिए इंडेक्स नहीं हुईं।",
+      "ownership_disputed": "रुका: वेबसाइट के स्वामित्व पर आपत्ति दर्ज हुई।",
+      "provider_failure": "{source} ने एक समस्या बताई: {problem}।"
+    },
+    "classes": {
+      "rate_limited": "बहुत ज़्यादा अनुरोध",
+      "timeout": "समय सीमा खत्म हो गई",
+      "provider_unavailable": "सेवा उपलब्ध नहीं है",
+      "unavailable": "सेवा उपलब्ध नहीं है",
+      "auth": "क्रेडेंशियल अस्वीकार हुए",
+      "insufficient_credits": "खाते में क्रेडिट खत्म हो गए",
+      "invalid_request": "अनुरोध अस्वीकार हुआ",
+      "content_policy": "कंटेंट नीति के तहत कंटेंट अस्वीकार हुआ",
+      "output_truncated": "नतीजा अधूरा रह गया",
+      "result_expired": "नतीजे की समय सीमा खत्म हो गई",
+      "needs_reconnect": "खाते को फिर से कनेक्ट करना होगा",
+      "quota_exceeded": "कोटा पूरा हो गया",
+      "invalid_media": "वीडियो फ़ाइल अस्वीकार हुई",
+      "outcome_unknown": "नतीजा पता नहीं — फिर से कोशिश करने से पहले प्लेटफ़ॉर्म देखें",
+      "unknown": "एक अज्ञात गड़बड़ी"
     }
   }
 }

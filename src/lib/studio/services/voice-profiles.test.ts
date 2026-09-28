@@ -62,6 +62,24 @@ describe('parseVoiceProfileForm', () => {
     expect(input.consentRecording.filename).toBe('consent.mp3');
   });
 
+  it('17.8: records the consent statement locale and catalogue key when they are valid', async () => {
+    const input = await parseVoiceProfileForm(
+      form({
+        consentStatementLocale: 'ar',
+        consentStatementKey: 'business.voice.cloneDialog.consentPhrase',
+      }),
+    );
+    expect(input.fields.consentStatementLocale).toBe('ar');
+    expect(input.fields.consentStatementKey).toBe('business.voice.cloneDialog.consentPhrase');
+    expect((await parseVoiceProfileForm(form())).fields.consentStatementKey).toBeUndefined();
+    await expect(parseVoiceProfileForm(form({ consentStatementLocale: 'xx-YY' }))).rejects.toThrow(
+      'validation',
+    );
+    await expect(
+      parseVoiceProfileForm(form({ consentStatementKey: 'business.scan.ownershipStatement' })),
+    ).rejects.toThrow('validation');
+  });
+
   it('requires consent=true, a speaker, a real consent statement and a recording', async () => {
     await expect(parseVoiceProfileForm(form({ consent: 'false' }))).rejects.toThrow('validation');
     await expect(parseVoiceProfileForm(form({ consent: null }))).rejects.toThrow('validation');

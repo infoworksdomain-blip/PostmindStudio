@@ -18,6 +18,7 @@ import { api, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { fromLocalInput, toLocalInput } from './month';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 13.9 (spec 14.3) — reschedule a scheduled publication: PATCH /publications/:id
 // { scheduledFor }. Drag a post to another day on the month grid, or use the move dialog (the
@@ -75,7 +76,8 @@ export function MoveToDialog({
   );
   const t = useTranslations('calendar.move');
   const [busy, setBusy] = useState(false);
-  const name = publication?.project?.name ?? t('thisVideo');
+  const projectName = useProjectName();
+  const name = publication?.project ? projectName(publication.project.name) : t('thisVideo');
   const to = fromLocalInput(value);
 
   return (

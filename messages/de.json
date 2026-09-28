@@ -42,7 +42,8 @@
     "a11y": {
       "moreOptions": "Weitere Optionen",
       "required": "Pflichtfeld"
-    }
+    },
+    "untitledVideo": "Unbenanntes Video"
   },
   "shell": {
     "nav": {
@@ -135,7 +136,8 @@
         "cost_paused": "Generierung durch Budget pausiert",
         "safety_review": "Prüfungen der Inhaltssicherheit",
         "share_comment": "Feedback zu einem Vorschau-Link",
-        "plan_quota": "Warnungen zur Tarifnutzung (80 % und 100 %)"
+        "plan_quota": "Warnungen zur Tarifnutzung (80 % und 100 %)",
+        "connection_needs_reconnect": "Konten, die neu verbunden werden müssen"
       }
     },
     "usage": {
@@ -366,6 +368,14 @@
     "planQuotaBlocked": {
       "title": "Tarif {tier}: {kind, select, short {kurze} other {lange}} Videos für diesen Monat aufgebraucht",
       "body": "{used, number} von {limit, number} {kind, select, short {kurzen} other {langen}} Videos in diesem Monat generiert. Neue Generierungen sind blockiert, bis das Kontingent zu Beginn des nächsten Monats (UTC) zurückgesetzt wird.{nextTier, select, none {} other { Wechseln Sie zu {nextTier}, um mehr zu erhalten.}}"
+    },
+    "connectionNeedsReconnect": {
+      "title": "Verbinden Sie Ihr {platform}-Konto „{account}“ neu",
+      "body": "{platform} akzeptiert den Zugriff von Studio auf dieses Konto nicht mehr. Verbinden Sie es auf der Seite „Verbindungen“ neu, damit geplante Beiträge veröffentlicht werden können."
+    },
+    "metaConnectionNeedsReconnect": {
+      "title": "Verbinden Sie Ihr {platform}-Konto „{account}“ neu",
+      "body": "Meta akzeptiert den Zugriff von Studio auf dieses Konto nicht mehr. Verbinden Sie es in den PostMind-Einstellungen neu, damit geplante Beiträge veröffentlicht werden können."
     }
   },
   "create": {
@@ -630,7 +640,20 @@
       "scheduledFor": "Geplant für {date}",
       "sent": "Zur Veröffentlichung gesendet",
       "notPublished": "Nicht veröffentlicht: {error}",
-      "failedFallback": "fehlgeschlagen"
+      "failedFallback": "fehlgeschlagen",
+      "reasons": {
+        "enterprise_plan": "Prüfung nötig: Enterprise-Organisationen prüfen ihre Videos immer.",
+        "org_policy": "Prüfung nötig: Die Richtlinie Ihrer Organisation schaltet die automatische Freigabe ab.",
+        "config_invalid": "Prüfung nötig: Die automatische Freigabe ist nicht korrekt eingerichtet.",
+        "force_approved": "Prüfung nötig: Die Variante für {platform} wurde manuell freigegeben.",
+        "content_safety_flag": "{outcome, select, not_run {Prüfung nötig: Die Inhaltssicherheitsprüfung der Variante für {platform} ist nicht gelaufen.} other {Prüfung nötig: Die Inhaltssicherheitsprüfung hat die Variante für {platform} markiert.}}",
+        "quality_not_clean": "Prüfung nötig: Eine Qualitätsprüfung der Variante für {platform} ist nicht bestanden.",
+        "no_renders": "Prüfung nötig: Es gibt keine gerenderten Varianten zum Prüfen.",
+        "script_safety_flag": "Prüfung nötig: Die Sicherheitsprüfung hat das Skript nicht freigegeben.",
+        "not_trusted": "Prüfung nötig: Ihre ersten {needed} Videos prüft eine Person ({approved} von {needed} bisher freigegeben).",
+        "approval_workflow": "Prüfung nötig: Der Freigabe-Workflow „{workflow}“ gilt.",
+        "auto_approve_error": "Prüfung nötig: Die automatische Freigabe konnte nicht bewertet werden."
+      }
     },
     "budget": {
       "aria": "Budget erhöhen",
@@ -723,7 +746,12 @@
         "black_frames": "Schwarzbilder",
         "audio_present": "Ton vorhanden",
         "aspect_ratio": "Seitenverhältnis",
-        "codec": "Codec"
+        "codec": "Codec",
+        "audio_sync": "Voiceover-Synchronität",
+        "caption_sync": "Untertitel-Synchronität",
+        "watermark": "Wasserzeichen",
+        "brand_kit": "Brand-Kit",
+        "force_approved": "Manuell freigegeben"
       },
       "severity": {
         "block": "blockierend",
@@ -736,7 +764,42 @@
       "forceApproved": "Fehler wurden von einer prüfenden Person übergangen.",
       "overrideLabel": "Fehlgeschlagene Prüfung übergehen – Begründung (Pflichtfeld, wird protokolliert)",
       "forceApprove": "Freigabe erzwingen",
-      "overridden": "Qualitätsprüfung übergangen."
+      "overridden": "Qualitätsprüfung übergangen.",
+      "details": {
+        "safetyScanUnavailable": "Die Prüfung konnte nicht laufen: {reason}",
+        "safetyBlocked": "Blockiert: {classes}",
+        "safetyReview": "Prüfung nötig: {classes}",
+        "safetyPassed": "{count, plural, one {# Bild geprüft, nichts markiert.} other {# Bilder geprüft, nichts markiert.}}",
+        "duration": "Gerendert {rendered} s bei einem Ziel von {target} s (±{tolerance} s).",
+        "blackFrames": "Schwarzbilder bei {segments} s.",
+        "noBlackFrames": "Kein schwarzer Abschnitt länger als {ms} ms.",
+        "noAudio": "Keine Tonspur.",
+        "loudness": "Lautheit {lufs} LUFS (erforderlich {min} bis {max}).",
+        "aspectRatio": "{width} × {height} bei Zielformat {target}.",
+        "codec": "Videocodec {codec} ({profile}) in {format}.",
+        "audioSyncNotBuilt": "Nicht geprüft: Die Timing-Analyse des Voiceovers ist noch nicht verfügbar.",
+        "watermarkNotBuilt": "Nicht geprüft: Wasserzeichen-Prüfungen sind noch nicht verfügbar.",
+        "captionSyncNotBuilt": "Nicht geprüft: Untertitel-Timing-Prüfungen sind noch nicht verfügbar.",
+        "brandKitNotBuilt": "Nicht geprüft: Brand-Kit-Prüfungen sind noch nicht verfügbar.",
+        "noTimelineSummary": "Nicht geprüft: Diashows haben keine Einstellungs-Zeitleiste.",
+        "noNarration": "Nicht geprüft: Das Video hat kein Voiceover.",
+        "audioSyncFailed": "{count, plural, one {Das Voiceover passt nicht in Einstellung {shots}.} other {Das Voiceover passt nicht in die Einstellungen {shots}.}}",
+        "audioSyncPassed": "{count, plural, one {Das Voiceover passt in seine Einstellung.} other {Das Voiceover passt in alle # Einstellungen.}}",
+        "noSpokenCaptions": "Nicht geprüft: Das Video hat keine gesprochenen Untertitel.",
+        "captionSyncFailed": "{count, plural, one {# Untertitel ist nicht synchron zum Voiceover.} other {# Untertitel sind nicht synchron zum Voiceover.}}",
+        "captionSyncPassed": "{count, plural, one {# Untertitel innerhalb von ±{ms} ms zum Voiceover.} other {# Untertitel innerhalb von ±{ms} ms zum Voiceover.}}",
+        "kitHasNoWatermark": "Nicht geprüft: Das Brand-Kit hat kein Wasserzeichen.",
+        "slideshowNoWatermark": "Nicht geprüft: Diashows tragen kein Marken-Wasserzeichen.",
+        "watermarkNotCovering": "Das Wasserzeichen deckt nicht jedes Bild des Videos ab.",
+        "watermarkSampleUnavailable": "Die Bildstichprobe konnte nicht laufen: {reason}",
+        "watermarkVisible": "In den Stichprobenbildern sichtbar (Übereinstimmung {scores}).",
+        "watermarkNotVisible": "In den Stichprobenbildern nicht sichtbar (Übereinstimmung {scores}).",
+        "noBrandKit": "Nicht geprüft: Das Projekt hat kein Brand-Kit.",
+        "brandKitMissing": "{count, plural, one {Prüfung nötig: # Markenelement fehlt im Video.} other {Prüfung nötig: # Markenelemente fehlen im Video.}}",
+        "brandKitPresent": "Farben, Schriften und Logo sind vorhanden.",
+        "forceApproved": "Trotz fehlgeschlagener Prüfungen freigegeben: {note}",
+        "allowedByReview": "Von der Trust-&-Safety-Prüfung von PostMind zugelassen: {note}"
+      }
     },
     "saveTemplate": {
       "open": "Als Vorlage speichern",
@@ -1769,6 +1832,7 @@
     "connected": "Verbunden",
     "stale": "Der Zugriff ist abgelaufen oder wurde auf der Plattform widerrufen. Geplante Beiträge für dieses Konto schlagen fehl, bis Sie es neu verbinden.",
     "connectedOn": "Verbunden am {date}",
+    "checkedOn": "Zugriff geprüft am {date}",
     "reconnect": "Neu verbinden",
     "disconnect": "Trennen",
     "disconnectAria": "{account} trennen",
@@ -3038,7 +3102,10 @@
       "tweet_video": "Tweet-Video",
       "product_launch": "Produkteinführung",
       "weekly_special": "Wochenangebot",
-      "behind_the_scenes": "hinter den Kulissen"
+      "behind_the_scenes": "hinter den Kulissen",
+      "listicle": "Liste",
+      "listicle_5": "Top-5-Liste",
+      "listicle_10": "Top-10-Liste"
     }
   },
   "account": {
@@ -3200,6 +3267,56 @@
       "waiting": "Schritt {step} von {total} – wartet auf: {role}",
       "waitingCount": "Schritt {step} von {total} – wartet auf: {role} ({approvals} von {required} Freigaben)",
       "stepNumber": "{number}."
+    }
+  },
+  "failures": {
+    "codes": {
+      "cancelled_by_user": "Sie haben diesen Durchlauf abgebrochen.",
+      "brief_too_vague": "Das Briefing war zu vage, um ein Video zu planen. Wählen Sie eine der vorgeschlagenen Richtungen.",
+      "restricted_topics": "Das Briefing berührt ein eingeschränktes Thema. Bestätigen Sie es, um fortzufahren.",
+      "script_safety_block": "Die Sicherheitsprüfung des Skripts hat dieses Video blockiert.",
+      "script_safety_review": "Die Sicherheitsprüfung des Skripts verlangt, dass eine Person dieses Video prüft.",
+      "script_safety_blocked_by_review": "Die Trust-&-Safety-Prüfung von PostMind hat das Skript blockiert.",
+      "content_safety_blocked_by_review": "Die Trust-&-Safety-Prüfung von PostMind hat das Video blockiert.",
+      "content_safety_block": "Die Inhaltssicherheitsprüfung hat dieses Video blockiert.",
+      "quality_failed": "{count, plural, =0 {Eine Qualitätsprüfung ist fehlgeschlagen.} one {Eine Qualitätsprüfung ist fehlgeschlagen: {checks}.} other {# Qualitätsprüfungen sind fehlgeschlagen: {checks}.}}",
+      "quality_gate_error": "Die Qualitätsprüfungen konnten nicht abgeschlossen werden.",
+      "planning_failed": "Die Planung des Videos ist fehlgeschlagen.",
+      "slideshow_incomplete": "Die Diashow konnte nicht fertiggestellt werden: Einigen Folien fehlt Inhalt.",
+      "upload_missing": "Das hochgeladene Video ist nicht mehr verfügbar.",
+      "script_regenerate_failed": "Das Skript konnte nicht neu erstellt werden: Es oder sein Briefing existiert nicht mehr.",
+      "asset_generation_failed": "{count, plural, =0 {Einige Einstellungen konnten nicht erzeugt werden.} one {Einstellung {shots} konnte nicht erzeugt werden.} other {Die Einstellungen {shots} konnten nicht erzeugt werden.}}",
+      "composition_failed": "Das Zusammensetzen des Videos ist fehlgeschlagen.",
+      "cost_cap_paused": "Generierung pausiert, weil ein Budget erreicht wurde.",
+      "kill_switch": "{level, select, global {Pausiert: PostMind hat Generierung und Veröffentlichung überall gestoppt.} workspace {Pausiert: PostMind hat die Generierung für Ihre Organisation gestoppt.} project {Pausiert: PostMind hat dieses Projekt gestoppt.} provider {Pausiert: PostMind hat einen der Generierungsanbieter gestoppt.} platform {Pausiert: PostMind hat die Veröffentlichung auf dieser Plattform gestoppt.} other {Durch einen PostMind-Notschalter pausiert.}}",
+      "rejected": "Von einer prüfenden Person abgelehnt.",
+      "business_deleted": "Gestoppt: Das Unternehmen wurde gelöscht.",
+      "organisation_deleted": "Gestoppt: Die Organisation wurde gelöscht.",
+      "scheduling_failed": "Die Planung der Veröffentlichung ist fehlgeschlagen.",
+      "youtube_quota_deferred": "Das tägliche Upload-Limit von YouTube ist erreicht. Studio versucht es nach dem täglichen Zurücksetzen erneut.",
+      "robots_blocked": "Die robots.txt der Website erlaubt Studio nicht, die Startseite zu lesen.",
+      "no_pages": "Keine Seite der Website konnte gelesen werden.",
+      "scan_cost_cap": "Der Scan wurde an seiner Kostenobergrenze ({amount}) gestoppt.",
+      "scan_images_capped": "Der Scan hat seine Kostenobergrenze ({amount}) erreicht: Einige Bilder wurden nicht für die Suche indexiert.",
+      "ownership_disputed": "Gestoppt: Die Inhaberschaft der Website wurde angefochten.",
+      "provider_failure": "{source} hat ein Problem gemeldet: {problem}."
+    },
+    "classes": {
+      "rate_limited": "zu viele Anfragen",
+      "timeout": "Zeitüberschreitung",
+      "provider_unavailable": "Dienst nicht verfügbar",
+      "unavailable": "Dienst nicht verfügbar",
+      "auth": "Zugangsdaten abgelehnt",
+      "insufficient_credits": "kein Guthaben mehr auf dem Konto",
+      "invalid_request": "Anfrage abgelehnt",
+      "content_policy": "Inhalt gemäß Inhaltsrichtlinie abgelehnt",
+      "output_truncated": "Ergebnis abgeschnitten",
+      "result_expired": "Ergebnis abgelaufen",
+      "needs_reconnect": "das Konto muss neu verbunden werden",
+      "quota_exceeded": "Kontingent erreicht",
+      "invalid_media": "Videodatei abgelehnt",
+      "outcome_unknown": "Ergebnis unbekannt – prüfen Sie die Plattform, bevor Sie es erneut versuchen",
+      "unknown": "unbekannter Fehler"
     }
   }
 }

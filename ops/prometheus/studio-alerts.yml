@@ -89,6 +89,7 @@ groups:
     rules:
       - alert: StudioProviderCircuitOpen
         # Gauge encoding: 0 closed, 1 half-open, 2 open (shared via Redis since 13.16; max across processes).
+        # BACKLOG 17.4: a warning once a breaker has stayed open for more than 5 minutes.
         expr: max by (provider) (studio_provider_circuit_state) == 2
         for: 5m
         labels:
@@ -96,7 +97,30 @@ groups:
         annotations:
           summary: 'Circuit breaker open for {{ $labels.provider }}'
           description: 'The router is skipping {{ $labels.provider }} and using fallbacks.'
-          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md#alerts
+
+      - alert: StudioProviderFailoverRateHigh
+        # BACKLOG 17.4: the share of routing decisions that reached a provider and passed it over
+        # (studio_provider_passed_over_total) out of all that reached it (passed over + selected,
+        # studio_provider_selected_total), over 15 minutes. Catches a flapping breaker that never
+        # stays open for 5 minutes. provider_disabled (an operator's kill switch) and over_budget
+        # (cost caps, alerted separately) are not outages and are left out of the numerator. At
+        # least 10 failovers in the window, so a single skipped shot on a quiet night is not an alert.
+        expr: |
+          (
+            sum by (provider) (rate(studio_provider_passed_over_total{reason!~"provider_disabled|over_budget"}[15m]))
+              /
+            sum by (provider) (rate({__name__=~"studio_provider_passed_over_total|studio_provider_selected_total"}[15m]))
+          ) > 0.2
+          and
+          sum by (provider) (increase(studio_provider_passed_over_total{reason!~"provider_disabled|over_budget"}[15m])) >= 10
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'High failover rate for {{ $labels.provider }}'
+          description: 'More than 20% of the routing decisions that reached {{ $labels.provider }} passed it over (circuit open, too slow or no cost estimate) for 10 minutes.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md#alerts
 
       - alert: StudioProviderCircuitsOpenMultiple
         expr: count(max by (provider) (studio_provider_circuit_state) == 2) >= 2
@@ -106,7 +130,7 @@ groups:
         annotations:
           summary: '{{ $value }} provider circuit breakers open'
           description: 'Several providers are open at once: fallback chains may be exhausted.'
-          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/provider-outage.md#alerts
 
   - name: studio-cost
     rules:

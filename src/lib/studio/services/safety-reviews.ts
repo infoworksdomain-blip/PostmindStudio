@@ -19,6 +19,7 @@ import type { ProjectJobData } from '../queue/queues';
 import { summarise } from '../queue/workers/run-quality-gate';
 import type { AssetStorage } from '../storage';
 import { toPlanTier } from './catalog';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // BACKLOG 13.17 / spec 16.4 — the staff side of the content-safety review queue
 // (pipeline/safety-review.ts opens the reviews).
@@ -192,6 +193,9 @@ async function resumeContent(
               status: 'passed',
               severity: 'info',
               detail: `Allowed by Trust & Safety review (${c.detail}): ${note}`.slice(0, 1_000),
+              // 17.9: shown in the reader's language; the reviewer's note stays as written.
+              detailKey: 'allowedByReview' as const,
+              detailParams: { note: note.slice(0, 1_000) },
             }
           : c,
       );
@@ -290,16 +294,19 @@ export async function decideSafetyReview(
       kind: 'safety_review',
       title:
         input.decision === 'ALLOW'
-          ? `“${project.name}” passed its content-safety review`
-          : `“${project.name}” was blocked by a content-safety review`,
+          ? `“${projectLabel(project.name)}” passed its content-safety review`
+          : `“${projectLabel(project.name)}” was blocked by a content-safety review`,
       body:
         input.decision === 'ALLOW' ? 'Generation continues.' : `Trust & Safety note: ${input.note}`,
       link: `/projects/${project.id}`,
       dedupeKey: `safety_review_decided:${review.id}`,
       message:
         input.decision === 'ALLOW'
-          ? { key: 'safetyReviewAllowed', params: { name: project.name } }
-          : { key: 'safetyReviewBlocked', params: { name: project.name, note: input.note } },
+          ? { key: 'safetyReviewAllowed', params: { name: projectNameParam(project.name) } }
+          : {
+              key: 'safetyReviewBlocked',
+              params: { name: projectNameParam(project.name), note: input.note },
+            },
     });
   }
   const after = await deps.db.videoProject.findUnique({

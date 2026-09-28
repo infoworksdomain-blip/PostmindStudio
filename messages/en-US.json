@@ -42,7 +42,8 @@
     "a11y": {
       "moreOptions": "More options",
       "required": "Required"
-    }
+    },
+    "untitledVideo": "Untitled video"
   },
   "shell": {
     "nav": {
@@ -135,7 +136,8 @@
         "cost_paused": "Generation paused by a budget",
         "safety_review": "Content-safety reviews",
         "share_comment": "Feedback on a preview link",
-        "plan_quota": "Plan usage alerts (80% and 100%)"
+        "plan_quota": "Plan usage alerts (80% and 100%)",
+        "connection_needs_reconnect": "Accounts that need reconnecting"
       }
     },
     "usage": {
@@ -366,6 +368,14 @@
     "planQuotaBlocked": {
       "title": "{tier} plan: {kind, select, short {short} other {long}} videos used up for this month",
       "body": "{used, number} of {limit, number} {kind, select, short {short} other {long}} videos generated this month. New generations are blocked until the allowance resets at the start of next month (UTC).{nextTier, select, none {} other { Upgrade to {nextTier} for more.}}"
+    },
+    "connectionNeedsReconnect": {
+      "title": "Reconnect your {platform} account “{account}”",
+      "body": "{platform} no longer accepts Studio’s access to this account. Reconnect it on the Connections page so scheduled posts can go out."
+    },
+    "metaConnectionNeedsReconnect": {
+      "title": "Reconnect your {platform} account “{account}”",
+      "body": "Meta no longer accepts Studio’s access to this account. Reconnect it in PostMind settings so scheduled posts can go out."
     }
   },
   "create": {
@@ -630,7 +640,20 @@
       "scheduledFor": "Scheduled for {date}",
       "sent": "Sent to publish",
       "notPublished": "Not published: {error}",
-      "failedFallback": "failed"
+      "failedFallback": "failed",
+      "reasons": {
+        "enterprise_plan": "Needs review: enterprise organizations always review their videos.",
+        "org_policy": "Needs review: your organization’s policy turns automatic approval off.",
+        "config_invalid": "Needs review: automatic approval is not set up correctly.",
+        "force_approved": "Needs review: the {platform} variant was force-approved.",
+        "content_safety_flag": "{outcome, select, not_run {Needs review: the content-safety scan of the {platform} variant did not run.} other {Needs review: the content-safety scan flagged the {platform} variant.}}",
+        "quality_not_clean": "Needs review: a quality check on the {platform} variant did not pass.",
+        "no_renders": "Needs review: there are no rendered variants to check.",
+        "script_safety_flag": "Needs review: the script safety check did not clear the script.",
+        "not_trusted": "Needs review: your first {needed} videos are reviewed by a person ({approved} of {needed} approved so far).",
+        "approval_workflow": "Needs review: the “{workflow}” approval workflow applies.",
+        "auto_approve_error": "Needs review: automatic approval could not be checked."
+      }
     },
     "budget": {
       "aria": "Raise budget",
@@ -723,7 +746,12 @@
         "black_frames": "Black frames",
         "audio_present": "Audio present",
         "aspect_ratio": "Aspect ratio",
-        "codec": "Codec"
+        "codec": "Codec",
+        "audio_sync": "Voiceover sync",
+        "caption_sync": "Caption sync",
+        "watermark": "Watermark",
+        "brand_kit": "Brand kit",
+        "force_approved": "Force-approved"
       },
       "severity": {
         "block": "block",
@@ -736,7 +764,42 @@
       "forceApproved": "Failures were overridden by a reviewer.",
       "overrideLabel": "Override the failed check — reason (required, audited)",
       "forceApprove": "Force-approve",
-      "overridden": "Quality check overridden."
+      "overridden": "Quality check overridden.",
+      "details": {
+        "safetyScanUnavailable": "The scan could not run: {reason}",
+        "safetyBlocked": "Blocked: {classes}",
+        "safetyReview": "Needs review: {classes}",
+        "safetyPassed": "{count, plural, one {# frame scanned, nothing flagged.} other {# frames scanned, nothing flagged.}}",
+        "duration": "Rendered {rendered} s against a target of {target} s (±{tolerance} s).",
+        "blackFrames": "Black frames at {segments} s.",
+        "noBlackFrames": "No black segment longer than {ms} ms.",
+        "noAudio": "No audio track.",
+        "loudness": "Loudness {lufs} LUFS (required {min} to {max}).",
+        "aspectRatio": "{width} × {height} against {target}.",
+        "codec": "Video codec {codec} ({profile}) in {format}.",
+        "audioSyncNotBuilt": "Not checked: voiceover timing analysis is not available yet.",
+        "watermarkNotBuilt": "Not checked: watermark checks are not available yet.",
+        "captionSyncNotBuilt": "Not checked: caption timing checks are not available yet.",
+        "brandKitNotBuilt": "Not checked: brand-kit checks are not available yet.",
+        "noTimelineSummary": "Not checked: slideshows have no shot timeline.",
+        "noNarration": "Not checked: the video has no voiceover.",
+        "audioSyncFailed": "{count, plural, one {The voiceover does not fit shot {shots}.} other {The voiceover does not fit shots {shots}.}}",
+        "audioSyncPassed": "{count, plural, one {The voiceover fits its shot.} other {The voiceover fits all # shots.}}",
+        "noSpokenCaptions": "Not checked: the video has no spoken captions.",
+        "captionSyncFailed": "{count, plural, one {# caption is out of sync with the voiceover.} other {# captions are out of sync with the voiceover.}}",
+        "captionSyncPassed": "{count, plural, one {# caption within ±{ms} ms of the voiceover.} other {# captions within ±{ms} ms of the voiceover.}}",
+        "kitHasNoWatermark": "Not checked: the brand kit has no watermark.",
+        "slideshowNoWatermark": "Not checked: slideshows carry no brand watermark.",
+        "watermarkNotCovering": "The watermark does not cover every frame of the video.",
+        "watermarkSampleUnavailable": "The frame sample could not run: {reason}",
+        "watermarkVisible": "Visible in the sampled frames (match {scores}).",
+        "watermarkNotVisible": "Not visible in the sampled frames (match {scores}).",
+        "noBrandKit": "Not checked: the project has no brand kit.",
+        "brandKitMissing": "{count, plural, one {Review needed: # brand element is missing from the video.} other {Review needed: # brand elements are missing from the video.}}",
+        "brandKitPresent": "Colors, fonts, and logo are present.",
+        "forceApproved": "Approved despite failed checks: {note}",
+        "allowedByReview": "Allowed by PostMind’s Trust & Safety review: {note}"
+      }
     },
     "saveTemplate": {
       "open": "Save as template",
@@ -1769,6 +1832,7 @@
     "connected": "Connected",
     "stale": "Access expired or was revoked on the platform. Scheduled posts to this account will fail until you reconnect.",
     "connectedOn": "Connected {date}",
+    "checkedOn": "Access checked {date}",
     "reconnect": "Reconnect",
     "disconnect": "Disconnect",
     "disconnectAria": "Disconnect {account}",
@@ -3038,7 +3102,10 @@
       "tweet_video": "tweet video",
       "product_launch": "product launch",
       "weekly_special": "weekly special",
-      "behind_the_scenes": "behind the scenes"
+      "behind_the_scenes": "behind the scenes",
+      "listicle": "list",
+      "listicle_5": "top 5 list",
+      "listicle_10": "top 10 list"
     }
   },
   "account": {
@@ -3200,6 +3267,56 @@
       "waiting": "Step {step} of {total} — waiting for {role}",
       "waitingCount": "Step {step} of {total} — waiting for {role} ({approvals} of {required} approvals)",
       "stepNumber": "{number}."
+    }
+  },
+  "failures": {
+    "codes": {
+      "cancelled_by_user": "You canceled this run.",
+      "brief_too_vague": "The brief was too vague to plan a video. Choose one of the suggested directions.",
+      "restricted_topics": "The brief touches a restricted topic. Confirm it to continue.",
+      "script_safety_block": "The script safety check blocked this video.",
+      "script_safety_review": "The script safety check needs a person to review this video.",
+      "script_safety_blocked_by_review": "PostMind’s Trust & Safety review blocked the script.",
+      "content_safety_blocked_by_review": "PostMind’s Trust & Safety review blocked the video.",
+      "content_safety_block": "The content-safety scan blocked this video.",
+      "quality_failed": "{count, plural, =0 {A quality check failed.} one {A quality check failed: {checks}.} other {# quality checks failed: {checks}.}}",
+      "quality_gate_error": "The quality checks could not finish.",
+      "planning_failed": "Planning the video failed.",
+      "slideshow_incomplete": "The slideshow could not be completed: some slides are missing content.",
+      "upload_missing": "The uploaded video is no longer available.",
+      "script_regenerate_failed": "The script could not be regenerated: it or its brief no longer exists.",
+      "asset_generation_failed": "{count, plural, =0 {Some shots could not be generated.} one {Shot {shots} could not be generated.} other {Shots {shots} could not be generated.}}",
+      "composition_failed": "Putting the video together failed.",
+      "cost_cap_paused": "Generation paused because a budget was reached.",
+      "kill_switch": "{level, select, global {Paused: PostMind has stopped generation and publishing everywhere.} workspace {Paused: PostMind has stopped generation for your organization.} project {Paused: PostMind has stopped this project.} provider {Paused: PostMind has stopped one of the generation providers.} platform {Paused: PostMind has stopped publishing to this platform.} other {Paused by a PostMind kill switch.}}",
+      "rejected": "Rejected by a reviewer.",
+      "business_deleted": "Stopped: the business was deleted.",
+      "organisation_deleted": "Stopped: the organization was deleted.",
+      "scheduling_failed": "Scheduling failed.",
+      "youtube_quota_deferred": "YouTube’s daily upload limit was reached. Studio tries again after the daily reset.",
+      "robots_blocked": "The website’s robots.txt does not allow Studio to read its homepage.",
+      "no_pages": "No pages of the website could be read.",
+      "scan_cost_cap": "The scan stopped at its cost cap ({amount}).",
+      "scan_images_capped": "The scan reached its cost cap ({amount}): some images were not indexed for search.",
+      "ownership_disputed": "Stopped: ownership of the website was disputed.",
+      "provider_failure": "{source} reported a problem: {problem}."
+    },
+    "classes": {
+      "rate_limited": "too many requests",
+      "timeout": "it timed out",
+      "provider_unavailable": "the service is unavailable",
+      "unavailable": "the service is unavailable",
+      "auth": "the credentials were refused",
+      "insufficient_credits": "the account is out of credits",
+      "invalid_request": "the request was rejected",
+      "content_policy": "the content was refused under its content policy",
+      "output_truncated": "the result was cut short",
+      "result_expired": "the result expired",
+      "needs_reconnect": "the account needs to be reconnected",
+      "quota_exceeded": "a quota was reached",
+      "invalid_media": "the video file was rejected",
+      "outcome_unknown": "the result is unknown — check the platform before retrying",
+      "unknown": "an unknown error"
     }
   }
 }

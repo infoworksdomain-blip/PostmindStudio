@@ -88,6 +88,39 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       });
     });
 
+    it('17.9: stores no name when none is given (never the English placeholder)', async () => {
+      const { name: _name, ...unnamed } = createBody;
+      void _name;
+      const res = await call(projectsRoute.POST, { method: 'POST', token: 'owner', body: unnamed });
+      expect(res.status).toBe(201);
+      expect(res.json.project).toMatchObject({ name: null });
+      // The legacy placeholder an older client sends is not stored either.
+      const legacy = await call(projectsRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { ...createBody, name: 'Untitled video' },
+      });
+      expect(legacy.json.project).toMatchObject({ name: null });
+      const id = (legacy.json.project as { id: string }).id;
+      // A copy of an unnamed project stays unnamed (no "(copy)" English suffix on nothing).
+      const copy = await call(duplicateRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        params: { id },
+      });
+      expect(copy.json.project).toMatchObject({ name: null });
+      // Clearing a name with PATCH is allowed; the row then reads as untitled.
+      const named = await create();
+      const cleared = await call(projectRoute.PATCH, {
+        method: 'PATCH',
+        token: 'owner',
+        params: { id: named },
+        body: { name: null },
+      });
+      expect(cleared.status).toBe(200);
+      expect((await db.videoProject.findUniqueOrThrow({ where: { id: named } })).name).toBeNull();
+    });
+
     it('returns 401 without a token and 403 without membership or capability', async () => {
       expect((await call(projectsRoute.POST, { method: 'POST', body: createBody })).status).toBe(
         401,

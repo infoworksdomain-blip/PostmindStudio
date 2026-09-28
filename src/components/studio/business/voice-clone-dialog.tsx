@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -54,12 +54,17 @@ function problemOf(d: Draft): DraftProblem | null {
   return null;
 }
 
-function toVoiceForm(d: Draft, businessId: string): FormData {
+/** 17.8: the catalogue key of the suggested consent statement (sent when it was not edited). */
+export const CONSENT_STATEMENT_KEY = 'business.voice.cloneDialog.consentPhrase';
+
+function toVoiceForm(d: Draft, businessId: string, locale: string): FormData {
   const form = new FormData();
   form.set('name', d.name.trim());
   form.set('businessId', businessId);
   form.set('speakerName', d.speaker.trim());
   form.set('consentStatement', d.statement.trim());
+  form.set('consentStatementLocale', locale);
+  if (!d.statementEdited) form.set('consentStatementKey', CONSENT_STATEMENT_KEY);
   form.set('consent', 'true');
   if (d.recording) form.set('consentRecording', d.recording);
   for (const s of d.samples) form.append('samples', s);
@@ -80,6 +85,7 @@ export function VoiceCloneDialog({
   onCreated: (profile: VoiceProfile) => void;
 }) {
   const t = useTranslations('business.voice.cloneDialog');
+  const locale = useLocale();
   const consentStatement = useConsentStatement();
   const voiceErrorMessage = useVoiceErrorMessage();
   const [draft, setDraft] = useState<Draft>(() => ({
@@ -116,7 +122,7 @@ export function VoiceCloneDialog({
     try {
       const res = await api<{ voiceProfile: VoiceProfile }>('/voice-profiles', {
         method: 'POST',
-        body: toVoiceForm(draft, businessId),
+        body: toVoiceForm(draft, businessId, locale),
         idempotencyKey: newIdempotencyKey(),
       });
       onCreated(res.voiceProfile);

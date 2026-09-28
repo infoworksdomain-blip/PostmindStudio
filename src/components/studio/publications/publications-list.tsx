@@ -18,11 +18,13 @@ import {
 import { useApi } from '@/lib/client/api';
 import { PLATFORM_LABEL, useFormat } from '@/lib/client/format';
 import type { Page, Publication } from '@/lib/client/types';
+import { FailureReason } from '../failure-reason';
 import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
 import { NativeSelect } from './native-select';
 import { PublicationActions } from './publication-actions';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.5 — Manage: every publication across platforms (spec 14.3), filtered by state and
 // platform, cursor-paginated (GET /publications).
@@ -56,6 +58,7 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
   const t = useTranslations('publications.list');
   const tf = useTranslations('format');
   const f = useFormat();
+  const projectName = useProjectName();
   const state = f.publicationState(p.state);
   const platform = f.platform(p.platform);
   const when = whenOf(p);
@@ -67,13 +70,13 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
           href={`/projects/${p.projectId}`}
           className="block truncate font-medium hover:underline focus-visible:underline focus-visible:outline-none"
         >
-          {p.project?.name ?? t('untitled')}
+          {p.project ? projectName(p.project.name) : t('untitled')}
         </Link>
         <span className="block truncate text-xs text-muted-foreground md:hidden">
           {t(`rowMobile.${when.kind}`, { platform, date })}
         </span>
         {p.state === 'FAILED' && p.errorReason && (
-          <span className="mt-1 block text-xs text-destructive">{p.errorReason}</span>
+          <FailureReason reason={p.errorReason} className="mt-1 block text-xs text-destructive" />
         )}
         {p.metadata?.tiktokMode === 'inbox' && typeof p.metadata.note === 'string' && (
           <span className="mt-1 block text-xs text-muted-foreground">{p.metadata.note}</span>

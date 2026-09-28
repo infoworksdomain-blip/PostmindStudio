@@ -88,6 +88,30 @@
 - Golden journeys `test/golden/automation.test.ts` (GA-01…GA-05).
 
 Approval and auto-publish share one transaction through the outbox (13.21), and the
-per-organisation policy exists (13.18). **GAP:** a publication created by the outbox whose
-`publish-video` job was lost (the process died between the commit and the enqueue) stays
-SCHEDULED; re-drive it with the stuck scope (runbooks/kill-switch.md).
+per-organisation policy exists (13.18).
+
+### Lost publish jobs (17.2)
+
+A publication is committed before its job is enqueued (POST /publications, the outbox sender,
+retry). If the process dies in between, or a `fire-scheduled-publication` job marks its schedule
+FIRED and dies before handing over, the publication stays SCHEDULED with no job. The
+`redrive-lost-publications` job (every 10 minutes, studio-publish; services/lost-publications.ts)
+finds SCHEDULED publications whose time (scheduledFor, or createdAt for "publish now") and last
+update are more than `STUDIO_LOST_PUBLISH_MARGIN_MINUTES` (default 15) in the past, and:
+
+- skips them while their own job is still queued (`fire-scheduled__<id>[__<time>]`,
+  `publish-video__<id>__<retryCount>`, or the YouTube quota deferral
+  `publish-video__<id>__quota__<time>`), while a kill switch (global, workspace, project or the
+  platform halt) covers them, when the project is deleted, and when an upload started without
+  recording its outcome (check the platform first, as for any `outcome_unknown`);
+- otherwise marks a still-PENDING schedule FIRED (so a late fire job is a no-op) and enqueues
+  `publish-video` once under `publish-video__<id>__redrive__<retryCount>__<due ms>`. The id is
+  deterministic, so two sweeps add it once, and a re-drive that already ran is not repeated
+  ("already re-driven once; check it by hand"). publish-video's own SCHEDULED → PUBLISHING claim
+  and upload marker still guarantee a single post.
+
+Each re-drive is audited (`studio.publication.lost_job_redriven`, actor
+`system:publish-redrive`) and logged ("lost publish job re-driven", with publicationId, platform,
+dueAt and jobId). Halted publications are picked up by a later run once the switch is released.
+Nothing to do by hand unless a run reports "already re-driven once": look at the publication and
+its job in the queue, then use Publications → Retry.
