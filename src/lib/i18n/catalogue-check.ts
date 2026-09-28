@@ -101,8 +101,14 @@ export function analyseMessage(message: string): Analysis {
  * languages where it only covers compact large numbers (fr/es/it/pt: "1 million de…") — optional
  * there. A category the locale never selects is reported as dead.
  */
+const PLURAL_ORDER = ['zero', 'one', 'two', 'few', 'many', 'other'];
+
 export function pluralCategoriesFor(locale: string): { required: string[]; allowed: string[] } {
-  const allowed = new Intl.PluralRules(locale).resolvedOptions().pluralCategories as string[];
+  // Node versions differ in the order they report categories (Node 20: alphabetical; Node 24: CLDR),
+  // so sort into CLDR order for stable messages.
+  const allowed = [
+    ...(new Intl.PluralRules(locale).resolvedOptions().pluralCategories as string[]),
+  ].sort((a, b) => PLURAL_ORDER.indexOf(a) - PLURAL_ORDER.indexOf(b));
   const base = locale.split('-')[0] ?? locale;
   const manyOptional = ['fr', 'es', 'it', 'pt'].includes(base);
   return {
