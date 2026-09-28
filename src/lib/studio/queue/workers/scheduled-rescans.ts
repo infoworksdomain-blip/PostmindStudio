@@ -90,6 +90,10 @@ export async function rescanWebsite(data: ScanJobData, deps: PipelineDeps): Prom
       state: 'QUEUED',
       trigger: 'scheduled',
       planTier: data.planTier,
+      // 14.4: a rescan repeats the confirmed scan of the same URL, so it carries that confirmation
+      // (null for scans made before confirmations were stored: no browser-render fallback).
+      ownershipConfirmedAt: newest.ownershipConfirmedAt,
+      ownershipConfirmedByUserId: newest.ownershipConfirmedByUserId,
     },
   });
   const job: ScanJobData = { ...scope, scanId: scan.id, runId: scan.id, planTier: data.planTier };

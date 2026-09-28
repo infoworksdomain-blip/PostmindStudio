@@ -1,0 +1,214 @@
+name: Staging gate (GATE 12)
+
+# Phase 14.5–14.9 — runs one staging-gate check against STAGING on demand
+# (scripts/ops/staging-gate.ts; order and results table: runbooks/staging-gate.md).
+# Manual trigger only. Secrets come from the `staging` environment and reach the script as env
+# vars; nothing is echoed. Every run uploads ops/results/ as the `staging-gate-results` artifact.
+# Inputs are passed through env (never interpolated into the shell) and validated by the script.
+
+on:
+  workflow_dispatch:
+    inputs:
+      check:
+        description: Which check to run
+        required: true
+        type: choice
+        options:
+          - k6-smoke
+          - k6-full
+          - rehearse-kill-switch
+          - rehearse-rollback
+          - rehearse-all
+          - restore-snapshot
+          - restore-check
+          - live-providers-estimate
+          - live-providers-confirm
+          - corpus-preflight-sample
+          - corpus-preflight-full
+      from_tag:
+        description: 'Rollback: release N (image tag to roll back to)'
+        required: false
+        type: string
+      to_tag:
+        description: 'Rollback: release N+1 (image tag deployed first)'
+        required: false
+        type: string
+      levels:
+        description: 'Kill switch: comma-separated levels (default: all five)'
+        required: false
+        type: string
+      snapshot_run_id:
+        description: 'Restore check: run id of the restore-snapshot run (its artifact holds the snapshot)'
+        required: false
+        type: string
+      incident_at:
+        description: 'Restore check: incident / restore point (ISO), for RPO'
+        required: false
+        type: string
+      restore_started_at:
+        description: 'Restore check: when the restore began (ISO), for RTO'
+        required: false
+        type: string
+      manifest:
+        description: 'Corpus pre-flight: manifest path in the repository'
+        required: false
+        type: string
+        default: corpus/manifest.template.csv
+      operator:
+        description: Operator name for the report
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read # download the snapshot artifact of an earlier run (restore-check)
+
+concurrency:
+  group: staging-gate
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 120
+    env:
+      CHECK: ${{ inputs.check }}
+      FROM_TAG: ${{ inputs.from_tag }}
+      TO_TAG: ${{ inputs.to_tag }}
+      LEVELS: ${{ inputs.levels }}
+      INCIDENT_AT: ${{ inputs.incident_at }}
+      RESTORE_STARTED_AT: ${{ inputs.restore_started_at }}
+      MANIFEST: ${{ inputs.manifest }}
+      GATE_OPERATOR: ${{ inputs.operator || github.actor }}
+      # k6 (14.5)
+      BASE_URL: ${{ vars.STAGING_URL }}
+      STUDIO_TOKEN: ${{ secrets.STAGING_LOADTEST_JWT }}
+      BUSINESS_ID: ${{ vars.LOADTEST_BUSINESS_ID }}
+      # rehearsals (14.6)
+      STUDIO_URL: ${{ vars.STAGING_URL }}
+      STUDIO_STAFF_TOKEN: ${{ secrets.STAGING_STAFF_JWT }}
+      METRICS_URL: ${{ vars.STAGING_METRICS_URL }}
+      METRICS_TOKEN: ${{ secrets.STAGING_METRICS_TOKEN }}
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL_READONLY }}
+      STAGING_DEPLOY_CMD: ${{ vars.STAGING_DEPLOY_CMD }}
+      REHEARSE_WORKSPACE_ID: ${{ vars.REHEARSE_WORKSPACE_ID }}
+      REHEARSE_PROJECT_ID: ${{ vars.REHEARSE_PROJECT_ID }}
+      REHEARSE_PROVIDER: ${{ vars.REHEARSE_PROVIDER }}
+      REHEARSE_PLATFORM: ${{ vars.REHEARSE_PLATFORM }}
+      # live providers (14.8): keys + test accounts of the staging environment
+      STUDIO_USD_TO_GBP_RATE: ${{ vars.STUDIO_USD_TO_GBP_RATE }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      RUNWAY_API_KEY: ${{ secrets.RUNWAY_API_KEY }}
+      LUMA_API_KEY: ${{ secrets.LUMA_API_KEY }}
+      HEYGEN_API_KEY: ${{ secrets.HEYGEN_API_KEY }}
+      HEYGEN_AVATAR_ID: ${{ vars.HEYGEN_AVATAR_ID }}
+      HEYGEN_TEST_AUDIO_URL: ${{ vars.HEYGEN_TEST_AUDIO_URL }}
+      ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID }}
+      SHOTSTACK_API_KEY: ${{ secrets.SHOTSTACK_API_KEY }}
+      SHOTSTACK_ENVIRONMENT: ${{ vars.SHOTSTACK_ENVIRONMENT }}
+      HIVE_API_KEY: ${{ secrets.HIVE_API_KEY }}
+      ASSEMBLYAI_API_KEY: ${{ secrets.ASSEMBLYAI_API_KEY }}
+      STORYBLOCKS_API_PUBLIC_KEY: ${{ secrets.STORYBLOCKS_API_PUBLIC_KEY }}
+      STORYBLOCKS_API_PRIVATE_KEY: ${{ secrets.STORYBLOCKS_API_PRIVATE_KEY }}
+      LIVE_TEST_MEDIA_URL: ${{ vars.LIVE_TEST_MEDIA_URL }}
+      LIVE_TEST_MEDIA_SEC: ${{ vars.LIVE_TEST_MEDIA_SEC }}
+      LIVE_TEST_VIDEO_URL: ${{ vars.LIVE_TEST_VIDEO_URL }}
+      LIVE_TEST_VIDEO_SEC: ${{ vars.LIVE_TEST_VIDEO_SEC }}
+      LIVE_TEST_VIDEO_ASPECT: ${{ vars.LIVE_TEST_VIDEO_ASPECT }}
+      LIVE_TIKTOK_ACCESS_TOKEN: ${{ secrets.LIVE_TIKTOK_ACCESS_TOKEN }}
+      LIVE_TIKTOK_ACCOUNT_ID: ${{ vars.LIVE_TIKTOK_ACCOUNT_ID }}
+      LIVE_INSTAGRAM_REEL_ACCESS_TOKEN: ${{ secrets.LIVE_INSTAGRAM_REEL_ACCESS_TOKEN }}
+      LIVE_INSTAGRAM_REEL_ACCOUNT_ID: ${{ vars.LIVE_INSTAGRAM_REEL_ACCOUNT_ID }}
+      LIVE_YOUTUBE_SHORT_ACCESS_TOKEN: ${{ secrets.LIVE_YOUTUBE_SHORT_ACCESS_TOKEN }}
+      LIVE_YOUTUBE_SHORT_ACCOUNT_ID: ${{ vars.LIVE_YOUTUBE_SHORT_ACCOUNT_ID }}
+      LIVE_YOUTUBE_ACCESS_TOKEN: ${{ secrets.LIVE_YOUTUBE_ACCESS_TOKEN }}
+      LIVE_YOUTUBE_ACCOUNT_ID: ${{ vars.LIVE_YOUTUBE_ACCOUNT_ID }}
+      LIVE_LINKEDIN_VIDEO_ACCESS_TOKEN: ${{ secrets.LIVE_LINKEDIN_VIDEO_ACCESS_TOKEN }}
+      LIVE_LINKEDIN_VIDEO_ACCOUNT_ID: ${{ vars.LIVE_LINKEDIN_VIDEO_ACCOUNT_ID }}
+      LIVE_X_ACCESS_TOKEN: ${{ secrets.LIVE_X_ACCESS_TOKEN }}
+      LIVE_X_ACCOUNT_ID: ${{ vars.LIVE_X_ACCOUNT_ID }}
+      LIVE_FACEBOOK_ACCESS_TOKEN: ${{ secrets.LIVE_FACEBOOK_ACCESS_TOKEN }}
+      LIVE_FACEBOOK_ACCOUNT_ID: ${{ vars.LIVE_FACEBOOK_ACCOUNT_ID }}
+      META_GRAPH_API_VERSION: ${{ vars.META_GRAPH_API_VERSION }}
+      # corpus pre-flight (14.9): the library workers' settings, mirrored as variables
+      STUDIO_LIBRARY_PLAN_TIER: ${{ vars.STUDIO_LIBRARY_PLAN_TIER }}
+      STUDIO_LIBRARY_CONCURRENCY: ${{ vars.STUDIO_LIBRARY_CONCURRENCY }}
+      STUDIO_CORPUS_S3_BUCKETS: ${{ vars.STUDIO_CORPUS_S3_BUCKETS }}
+      S3_BUCKET_LIBRARY: ${{ vars.S3_BUCKET_LIBRARY }}
+      S3_BUCKET_ASSETS: ${{ vars.S3_BUCKET_ASSETS }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Install k6
+        if: startsWith(inputs.check, 'k6-')
+        uses: grafana/setup-k6-action@v1
+      - name: Fetch the pre-restore snapshot
+        if: inputs.check == 'restore-check' && inputs.snapshot_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: staging-gate-results
+          path: ops/results
+          run-id: ${{ inputs.snapshot_run_id }}
+          github-token: ${{ github.token }}
+      - name: Run the check
+        env:
+          # The database each database check reads: the source before a restore, the restored
+          # instance after it.
+          SNAPSHOT_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL_READONLY }}
+          RESTORED_DATABASE_URL: ${{ secrets.RESTORED_DATABASE_URL }}
+          # Live runs write provider_jobs / provider_usage rows like any staging job.
+          LIVE_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          args=()
+          case "$CHECK" in
+            k6-smoke) args=(--k6 smoke) ;;
+            k6-full) args=(--k6 full) ;;
+            rehearse-kill-switch|rehearse-rollback|rehearse-all)
+              args=(--rehearse "${CHECK#rehearse-}")
+              if [ -n "$LEVELS" ]; then args+=(--levels "$LEVELS"); fi
+              if [ -n "$FROM_TAG" ]; then args+=(--from-tag "$FROM_TAG"); fi
+              if [ -n "$TO_TAG" ]; then args+=(--to-tag "$TO_TAG"); fi
+              ;;
+            restore-snapshot)
+              export DATABASE_URL="$SNAPSHOT_DATABASE_URL"
+              args=(--snapshot)
+              ;;
+            restore-check)
+              export DATABASE_URL="$RESTORED_DATABASE_URL"
+              args=(--restore-check)
+              if [ -n "$INCIDENT_AT" ]; then args+=(--incident-at "$INCIDENT_AT"); fi
+              if [ -n "$RESTORE_STARTED_AT" ]; then args+=(--restore-started-at "$RESTORE_STARTED_AT"); fi
+              ;;
+            live-providers-estimate) args=(--live-providers) ;;
+            live-providers-confirm)
+              export DATABASE_URL="$LIVE_DATABASE_URL"
+              if [ -n "$LIVE_TEST_VIDEO_URL" ]; then
+                curl -fsSL --max-time 120 -o "$RUNNER_TEMP/live-test.mp4" "$LIVE_TEST_VIDEO_URL"
+                export LIVE_TEST_VIDEO_PATH="$RUNNER_TEMP/live-test.mp4"
+              fi
+              args=(--live-providers --confirm)
+              ;;
+            corpus-preflight-sample) args=(--corpus-preflight "$MANIFEST" --sample 100) ;;
+            corpus-preflight-full) args=(--corpus-preflight "$MANIFEST") ;;
+            *) echo "unknown check"; exit 1 ;;
+          esac
+          npx tsx scripts/ops/staging-gate.ts "${args[@]}"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-gate-results
+          path: ops/results/
+          if-no-files-found: ignore
+          retention-days: 90

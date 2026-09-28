@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { ValidationError } from '../../errors';
 import { FLAG_ON, flagKeys } from '../system-flags';
+import { graceUntilFrom, purgeGraceDays } from './organisation-hard-delete';
 import { organisationIdParam } from './org-policy';
 
 // BACKLOG 13.22 — POST /api/studio/internal/organisations/:id/purge (spec 8.x internal API:
@@ -16,11 +17,12 @@ import { organisationIdParam } from './org-policy';
 //   4. projects and style memory are soft-deleted (deletedAt), which hides them everywhere;
 //   5. studio.organisation_purges records the request and graceUntil = now + 30 days.
 // Idempotent: a repeat call re-applies steps 1–4 (catching anything created since) and keeps the
-// first request's graceUntil. Hard deletion after the grace period (rows and S3 objects) is NOT
-// built yet: it is destructive and needs an operator-run, audited sweep (see the runbook).
+// first request's graceUntil. BACKLOG 14.1: once graceUntil passes, the daily
+// hard-delete-purged-orgs job deletes the rows and S3 objects (organisation-hard-delete.ts).
+// The grace is STUDIO_PURGE_GRACE_DAYS (default 30, Engagement handover 14.13).
 
+/** The default grace; the effective value is purgeGraceDays() (STUDIO_PURGE_GRACE_DAYS). */
 export const PURGE_GRACE_DAYS = 30;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export interface PurgeResult {
   organisationId: string;
@@ -41,6 +43,7 @@ export async function purgeOrganisation(
   if (!parsed.success) throw new ValidationError('Invalid organisation id');
   const org = parsed.data;
   const now = new Date(deps.now());
+  const graceDays = purgeGraceDays();
 
   return deps.db.$transaction(async (tx) => {
     const channels = await tx.platformConnection.updateMany({
@@ -92,13 +95,21 @@ export async function purgeOrganisation(
             channelsWiped: existing.channelsWiped + channels.count,
             projectsDeleted: existing.projectsDeleted + projects.count,
             publicationsCancelled: existing.publicationsCancelled + ids.length,
+            // 14.1: a purge that staff cancelled (organisation restored) starts a new grace.
+            ...(existing.state === 'cancelled'
+              ? {
+                  state: 'soft_deleted',
+                  requestedAt: now,
+                  graceUntil: graceUntilFrom(now, graceDays),
+                }
+              : {}),
           },
         })
       : await tx.organisationPurge.create({
           data: {
             organisationId: org,
             requestedAt: now,
-            graceUntil: new Date(now.getTime() + PURGE_GRACE_DAYS * DAY_MS),
+            graceUntil: graceUntilFrom(now, graceDays),
             channelsWiped: channels.count,
             projectsDeleted: projects.count,
             publicationsCancelled: ids.length,

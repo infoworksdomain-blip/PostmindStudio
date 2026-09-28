@@ -49,6 +49,8 @@ services:
     <<: *worker
     command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-assets']
     deploy: { replicas: 5 }
+    # 14.4: website scans run here; the headless network reaches only the browserless service.
+    networks: [default, headless]
 
   worker-publish:
     <<: *worker
@@ -70,3 +72,40 @@ services:
     <<: *worker
     command: ['npx', 'tsx', 'scripts/worker.ts', 'studio-library']
     deploy: { replicas: 1 }
+
+  # BACKLOG 14.4 — headless render service for website scans whose homepage is refused by bot
+  # protection (HTTP 403/429/503), used ONLY for sites the business owner confirmed they own
+  # (website_scans.ownershipConfirmedAt; scan worker headlessFor()). Never a way round a third
+  # party's bot protection: no CAPTCHA solving, no proxy rotation (runbooks/scan-blocked.md).
+  # Off unless the profile is enabled:
+  #   docker compose -p postmind-studio -f docker-compose.prod.yml --profile headless-render up -d browserless
+  # and the workers get STUDIO_HEADLESS_RENDER_URL=http://browserless:3000 plus
+  # STUDIO_HEADLESS_RENDER_TOKEN = the same token as the file below (sent as Authorization: Bearer).
+  # Image: the open-source Browserless Chromium build, pinned (github.com/browserless/browserless
+  # release v2.56.7, ghcr.io/browserless/chromium:<tag>); it reads its token from the TOKEN env var
+  # (src/config.ts), so the entrypoint loads it from the secret file instead of an env file. It is
+  # on its own network with worker-assets only, so the browser cannot reach web or other services.
+  browserless:
+    image: ghcr.io/browserless/chromium:v2.56.7
+    profiles: ['headless-render']
+    restart: unless-stopped
+    entrypoint: ['sh', '-c']
+    command: ['export TOKEN="$$(cat /run/secrets/browserless_token)" && exec ./scripts/start.sh']
+    environment:
+      CONCURRENT: '2'
+      QUEUE_LENGTH: '10'
+      TIMEOUT: '45000'
+    secrets: [browserless_token]
+    expose: ['3000']
+    networks: [headless]
+    logging:
+      driver: json-file
+      options: { max-size: '50m', max-file: '5' }
+
+networks:
+  default:
+  headless:
+
+secrets:
+  browserless_token:
+    file: ${BROWSERLESS_TOKEN_FILE:-./secrets/browserless-token}

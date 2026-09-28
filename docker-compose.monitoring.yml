@@ -1,0 +1,84 @@
+# PostMind Studio — monitoring stack (BACKLOG 14.3): Prometheus + Alertmanager + blackbox exporter,
+# run beside docker-compose.prod.yml on the same Docker network (runbooks/monitoring-deploy.md).
+#
+#   docker compose -p postmind-studio -f docker-compose.prod.yml up -d ...      # the app (network
+#                                                                              # postmind-studio_default)
+#   docker compose -f docker-compose.monitoring.yml up -d
+#   ALERTMANAGER_URL=http://127.0.0.1:9093 npx tsx scripts/ops/alert-smoke.ts   # routing + delivery
+#
+# Image versions are pinned to the ones CI validates the configs with (.github/workflows/ci.yml
+# ops-config job: prom/prometheus:v2.55.1, prom/alertmanager:v0.28.1). Secrets are files on the
+# host (never in this repo or in env vars), mounted read-only; the containers run as nobody
+# (uid 65534), so each file must be readable by that user (chmod 0444, or chown 65534).
+#   METRICS_TOKEN_FILE            the METRICS_TOKEN the web and workers were deployed with
+#   PAGERDUTY_ROUTING_KEY_FILE    PagerDuty Events API v2 integration (routing) key
+#   SLACK_WEBHOOK_URL_FILE        Slack incoming webhook URL for #studio-alerts
+# The UIs/APIs have no authentication: they are bound to 127.0.0.1 only (use an SSH tunnel).
+
+name: postmind-studio-monitoring
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --web.external-url=${PROMETHEUS_EXTERNAL_URL:-http://127.0.0.1:9090}
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/prometheus/studio-alerts.yml:/etc/prometheus/rules/studio-alerts.yml:ro
+      - prometheus-data:/prometheus
+    secrets:
+      - source: metrics_token
+        target: /etc/prometheus/secrets/metrics-token
+    ports:
+      - '127.0.0.1:9090:9090'
+    networks: [studio]
+    depends_on: [alertmanager, blackbox]
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.external-url=${ALERTMANAGER_EXTERNAL_URL:-http://127.0.0.1:9093}
+    volumes:
+      - ./ops/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    # The exact paths ops/alertmanager/alertmanager.yml reads (routing_key_file / api_url_file).
+    secrets:
+      - source: pagerduty_routing_key
+        target: /etc/alertmanager/secrets/pagerduty-routing-key
+      - source: slack_webhook_url
+        target: /etc/alertmanager/secrets/slack-webhook-url
+    ports:
+      - '127.0.0.1:9093:9093'
+    networks: [studio]
+
+  # Probes GET /api/health/ready for the StudioNotReady alert (job studio-readiness). The image's
+  # default config ships the http_2xx module.
+  blackbox:
+    image: prom/blackbox-exporter:v0.28.0
+    restart: unless-stopped
+    networks: [studio]
+
+secrets:
+  metrics_token:
+    file: ${METRICS_TOKEN_FILE:-./secrets/metrics-token}
+  pagerduty_routing_key:
+    file: ${PAGERDUTY_ROUTING_KEY_FILE:-./secrets/pagerduty-routing-key}
+  slack_webhook_url:
+    file: ${SLACK_WEBHOOK_URL_FILE:-./secrets/slack-webhook-url}
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+
+networks:
+  # The app's network from docker-compose.prod.yml (project postmind-studio → postmind-studio_default).
+  studio:
+    external: true
+    name: ${STUDIO_NETWORK:-postmind-studio_default}

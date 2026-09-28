@@ -34,11 +34,30 @@ Scheduled publications are re-armed by the scheduler.
 
 ## Restore drill
 
-Quarterly:
+Quarterly (the first drill is GATE 12, Phase 14.7):
 
-1. Restore the `studio` schema into staging from a PITR snapshot.
-2. Run `npx prisma migrate status`.
-3. Boot the image against it.
-4. Run the golden-path smoke.
+1. Before restoring, snapshot the source's row counts:
+   `DATABASE_URL=<staging> npx tsx scripts/ops/staging-gate.ts --snapshot`. This writes
+   `ops/results/restore-snapshot.json`.
+2. Restore the `studio` schema into a new instance from PITR at the target time. Note when you
+   started.
+3. Verify the restored instance:
 
-Record the date and the restore time.
+   ```bash
+   DATABASE_URL=<restored> npx tsx scripts/ops/staging-gate.ts --restore-check \
+     --incident-at <restore point, ISO> --restore-started-at <when you began, ISO>
+   ```
+
+   It runs these checks:
+   - `prisma migrate status` must be up to date.
+   - Row counts are compared with the snapshot. An emptied or missing table fails.
+   - pgvector is checked through `src/lib/studio/vector-sql.ts`.
+   - A read-only smoke runs, with each query in a `READ ONLY` transaction.
+   - RTO and RPO are recorded.
+
+   The report goes to `ops/results/<date>-restore-check.md`.
+4. Boot the image against the restored database and run the golden-path smoke.
+
+Record the date, RTO and RPO in PROGRESS.md and in the results table of
+[staging-gate.md](staging-gate.md). In GitHub Actions, run **Staging gate (GATE 12)** →
+`restore-snapshot`, then `restore-check` with `snapshot_run_id`.

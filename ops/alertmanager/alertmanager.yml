@@ -8,6 +8,11 @@
 global:
   resolve_timeout: 5m
 
+# On-call (BACKLOG 14.11, runbooks/on-call.md): this file only chooses page vs ticket. Who is
+# paged, and the escalation primary → secondary (15 min) → engineering lead (30 min), live in the
+# PagerDuty escalation policy behind the routing key below, configured from
+# ops/oncall/rota.template.yaml. Do not add per-person or per-team routes here.
+
 route:
   receiver: studio-ticket
   group_by: [alertname, severity]

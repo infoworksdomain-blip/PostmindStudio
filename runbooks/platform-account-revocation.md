@@ -65,19 +65,50 @@ Engagement's purge. Studio then, in one transaction: revokes every platform conn
 organisation and wipes its tokens (Meta channels and Studio's own TikTok / YouTube / X / LinkedIn
 connections), engages the workspace kill switch (running work stops), cancels scheduled posts,
 soft-deletes projects and style memory, and records `studio.organisation_purges.graceUntil`
-(+30 days). The call is idempotent; audit `studio.organisation.purge`. Already-published posts
+(+`STUDIO_PURGE_GRACE_DAYS`, default 30). The call is idempotent; audit `studio.organisation.purge`. Already-published posts
 stay on the platforms (Studio can no longer act for the account; takedowns are the customer's).
-To undo within the grace period (organisation restored): release the workspace kill switch and
-clear `deletedAt` on the projects; channels must be registered again by Core.
+To undo within the grace period (organisation restored): set the purge row's `state` to
+`cancelled` (`UPDATE studio.organisation_purges SET state = 'cancelled' WHERE "organisationId" =
+'<orgId>' AND state = 'soft_deleted'`), release the workspace kill switch and clear `deletedAt`
+on the projects; channels must be registered again by Core. A later purge call from Core starts a
+new grace period.
+
+### Hard deletion after the grace (BACKLOG 14.1)
+
+- The daily `hard-delete-purged-orgs` job (01:30 UTC, studio-orchestration) takes every purge in
+  `soft_deleted` or `hard_deleting` whose `graceUntil` has passed. For each: it deletes every
+  object under `orgs/<orgId>/` in the configured buckets (`S3_BUCKET_ASSETS`, `_RENDERS`,
+  `_THUMBNAILS`, `_LIBRARY`) and any other bucket the organisation's rows name, then the
+  organisation's rows in every studio table, children first, 500 rows per batch. Keys outside the
+  prefix (shared corpus or stock objects) are counted, never deleted.
+- The `organisation_purges` row is kept as the tombstone: `state = 'hard_deleted'`,
+  `hardDeletedAt`, and `hardDeleteSummary` (rows per table, objects and bytes per bucket/prefix).
+  Audit `studio.organisation.hard_delete` (actor `system:organisation-purge`). The workspace kill
+  switch flag is kept, so nothing can run for the organisation. The audit trail is in PostMind's
+  audit service and is never touched.
+- **Dry run first:** `GET /api/studio/admin/organisations/<orgId>/purge-plan` (staff,
+  `studio:admin:moderation`) lists the rows per table and the objects per bucket/prefix that
+  would go (object counting stops at 10,000 per bucket: `truncated`), whether the purge is
+  `due`, and, after deletion, the tombstone summary.
+- **A failed run** leaves `state = 'hard_deleting'` with `hardDeleteError` (typically S3
+  `AccessDenied`: the worker role needs `s3:ListBucket` and `s3:DeleteObject` on the buckets).
+  Fix the cause; the next daily run resumes (already-deleted rows and objects are simply gone), or
+  re-run at once by retrying the failed `hard-delete-purged-orgs` job in the queue.
+- Versioned buckets: the delete adds delete markers; the older versions go with the
+  noncurrent-version lifecycle rule (30 days, `infra/s3-lifecycle.json`, BACKLOG 14.2). So all of
+  an organisation's bytes are gone about 30 days after the hard delete.
+- Not covered: a cloned voice at ElevenLabs is not deleted at the provider by the hard delete
+  (only Studio's row and consent recording). Delete remaining voices through the voice-profile
+  delete flow before the grace ends, or in the ElevenLabs console.
 
 ## GAPs
 
-- Hard deletion after the 30-day purge grace (rows and S3 objects) is not built. It is
-  destructive and should be an operator-run, audited sweep over `studio.organisation_purges`
-  past `graceUntil`, dry run first.
 - The daily account-status check job is not built.
 - No Core-side retry or alert exists yet for failed internal calls. That code is Core's, owned
-  by the Core team.
+  by the Core team. Studio ships the kit for it (BACKLOG 14.10, `integrations/core/`): the
+  OpenAPI spec, a copyable client with retries, the retry/alerting recipe
+  (`integrations/core/retry-alerting.md`) and a contract suite Core runs against staging
+  (`npm run contract:core -- --base-url <staging> --token <token>`).
 - Reconciliation between Core's Meta channels and Studio's is built (BACKLOG 13.35) but cannot
   run until Core publishes list-channels. The daily `reconcile-channels` job logs "channel
   reconciliation skipped", and `GET /api/studio/admin/channels/reconciliation` answers 501. Until

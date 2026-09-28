@@ -24,7 +24,16 @@ describe('parseCorpusArgs', () => {
       licenseSource: NOT_REQUIRED_DEFAULT_SOURCE,
       waitMinutes: 180,
       reportOnly: false,
+      preflight: false,
     });
+  });
+
+  it('parses --preflight and refuses it with --apply (14.9)', () => {
+    expect(parseCorpusArgs(['c.csv', '--preflight', '--sample', '100'])).toMatchObject({
+      preflight: true,
+      sample: 100,
+    });
+    expect(() => parseCorpusArgs(['c.csv', '--preflight', '--apply'])).toThrow('submits nothing');
   });
 
   it('parses sample, apply, state and numeric options', () => {
