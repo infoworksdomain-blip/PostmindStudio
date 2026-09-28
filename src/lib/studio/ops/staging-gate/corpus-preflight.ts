@@ -11,6 +11,7 @@ import { concurrencyFor, MAX_LIBRARY_CONCURRENCY } from '../../queue/worker-host
 import { QUEUES } from '../../queue/queues';
 import { libraryPlanTier } from '../../services/library';
 import type { PlanTier } from '../../providers/router';
+import { r2Endpoint, storageConfigFromEnv } from '../../storage-client';
 import type { GateSection, Verdict } from './report';
 
 // Phase 14.9 — corpus pre-flight (pure; unit tested). `ingest-corpus.ts <manifest> --preflight`
@@ -108,6 +109,29 @@ function manifestCheck(input: PreflightInput): PreflightCheck {
   };
 }
 
+/**
+ * Storage: Cloudflare R2 — the bucket probes run through the same storage client as the workers
+ * (STORAGE_PROVIDER: S3 or R2); this line says which one and fails on an invalid configuration.
+ * On R2, s3:// corpus sources must be R2 buckets reachable with the same R2 token and endpoint
+ * (one jurisdiction per client: https://developers.cloudflare.com/r2/reference/data-location/).
+ */
+function storageCheck(input: PreflightInput): PreflightCheck {
+  const name = 'Storage provider (STORAGE_PROVIDER)';
+  try {
+    const config = storageConfigFromEnv(input.env);
+    return {
+      name,
+      level: 'PASS',
+      detail:
+        config.provider === 'r2'
+          ? `Cloudflare R2 via ${r2Endpoint(config.accountId, config.jurisdiction)}`
+          : `AWS S3 in ${config.region}`,
+    };
+  } catch (err) {
+    return { name, level: 'FAIL', detail: (err as Error).message };
+  }
+}
+
 function bucketChecks(input: PreflightInput): PreflightCheck[] {
   const out: PreflightCheck[] = [];
   out.push(
@@ -171,6 +195,7 @@ export function evaluatePreflight(input: PreflightInput): PreflightCheck[] {
     tierCheck(input),
     ...concurrencyCheck(input),
     manifestCheck(input),
+    storageCheck(input),
     ...bucketChecks(input),
   ];
 }

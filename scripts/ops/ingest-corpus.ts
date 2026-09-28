@@ -113,7 +113,7 @@ async function sampleReport(
 
 const errMsg = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-/** Write + delete a tiny object under library/staging/ (expired by the S3 lifecycle rule). */
+/** Write + delete a tiny object under library/staging/ (expired by the S3 / R2 lifecycle rule). */
 async function probeLibraryBucket(): Promise<{ ok: boolean; detail: string } | null> {
   const bucket = process.env.S3_BUCKET_LIBRARY?.trim();
   if (!bucket) return null;

@@ -44,17 +44,19 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
   {
     id: 's3-lifecycle',
     group: 'Infrastructure',
-    title: 'S3 lifecycle rules',
+    title: 'Storage lifecycle rules (S3 or R2)',
     blocker: 'needs people',
-    why: 'Built and ready to run: `npx tsx scripts/ops/apply-s3-lifecycle.ts` (dry-run diff of infra/s3-lifecycle.json against each bucket, then `--apply`) with AWS_REGION and the S3_BUCKET_* names; waiting for DevOps to run it with production credentials.',
-    source: 'BACKLOG 14.2; infra/s3-lifecycle.json; runbooks/storage-cost.md',
+    why: 'Built and ready to run for either storage provider: `npx tsx scripts/ops/apply-s3-lifecycle.ts` picks infra/s3-lifecycle.json (STORAGE_PROVIDER=s3, the default) or infra/r2-lifecycle.json (STORAGE_PROVIDER=r2), prints the dry-run diff against each bucket, then `--apply`; waiting for DevOps to run it with production credentials.',
+    source:
+      'BACKLOG 14.2; infra/s3-lifecycle.json; infra/r2-lifecycle.json; runbooks/storage-cost.md; runbooks/r2-setup.md',
     plan: {
       screens: [],
       endpoints: [
-        'DevOps: run the dry run, review the diff, re-run with --apply (s3:Get/PutLifecycleConfiguration); grant the workers s3:PutObjectTagging',
+        'DevOps on S3: run the dry run, review the diff, re-run with --apply (s3:Get/PutLifecycleConfiguration); grant the workers s3:PutObjectTagging',
+        'DevOps on R2: the same commands with STORAGE_PROVIDER=r2 and an Admin Read & Write R2 token (runbooks/r2-setup.md)',
       ],
       days: 0.25,
-      dependsOn: 'DevOps with production AWS credentials',
+      dependsOn: 'DevOps with production AWS or Cloudflare R2 credentials',
     },
   },
   // ------------------------------------------------------------------ Staging and people (GATE 12)

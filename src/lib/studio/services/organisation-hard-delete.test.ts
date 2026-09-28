@@ -9,6 +9,7 @@ import {
   graceUntilFrom,
   hardDeleteDuePurges,
   hardDeleteOrganisation,
+  planHardDelete,
   purgeGraceDays,
   type HardDeleteDeps,
 } from './organisation-hard-delete';
@@ -126,6 +127,41 @@ describe.skipIf(!hasDb)('hardDeleteOrganisation', { timeout: 60_000 }, () => {
     expect(await hardDeleteOrganisation(deps(t0 + 40 * DAY), org)).toEqual({
       status: 'already_deleted',
     });
+  });
+
+  it('R2: deletes and counts orgs/<id>/ and intermediates/orgs/<id>/ (Storage: Cloudflare R2)', async () => {
+    const r2org = `svc-hard-r2-${randomUUID()}`;
+    await purgeOrganisation({ db, now: () => t0 }, r2org);
+    const { storage, objects } = memoryStorage();
+    const put = (key: string) =>
+      storage.put({ bucket: 'assets', key, body: new Uint8Array(4), contentType: 'image/png' });
+    await put(`orgs/${r2org}/uploads/u/source.mp4`);
+    await put(`intermediates/orgs/${r2org}/projects/p/providers/openai/x.png`);
+    await put(`intermediates/orgs/${r2org}/projects/p/providers/openai/y.png`);
+    await put('intermediates/orgs/someone-else/projects/p/providers/openai/z.png');
+    const r2 = { ...deps(t0 + 31 * DAY, storage), storageProvider: 'r2' as const };
+
+    const plan = await planHardDelete(r2, r2org);
+    expect(plan.storage.map((s) => [s.prefix, s.objects])).toEqual([
+      [`orgs/${r2org}/`, 1],
+      [`intermediates/orgs/${r2org}/`, 2],
+    ]);
+    expect(plan.totals.objects).toBe(3);
+    // The S3 layout would only see orgs/<id>/.
+    const s3plan = await planHardDelete({ ...r2, storageProvider: 's3' }, r2org);
+    expect(s3plan.storage.map((s) => s.prefix)).toEqual([`orgs/${r2org}/`]);
+
+    const out = await hardDeleteOrganisation(r2, r2org);
+    expect(out.status).toBe('deleted');
+    expect(out.summary?.storage).toEqual({
+      [`assets/orgs/${r2org}/`]: { objects: 1, bytes: 4 },
+      [`assets/intermediates/orgs/${r2org}/`]: { objects: 2, bytes: 8 },
+    });
+    expect([...objects.keys()]).toEqual([
+      'assets/intermediates/orgs/someone-else/projects/p/providers/openai/z.png',
+    ]);
+    await db.organisationPurge.deleteMany({ where: { organisationId: r2org } });
+    await db.systemFlag.deleteMany({ where: { key: { contains: r2org } } });
   });
 
   it('never hard-deletes a cancelled purge; a new purge request restarts the grace', async () => {

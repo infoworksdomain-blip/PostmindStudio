@@ -1,0 +1,78 @@
+{
+  "$comment": [
+    "Storage: Cloudflare R2 - lifecycle rules for Studio's R2 buckets (STORAGE_PROVIDER=r2).",
+    "The S3 equivalent is infra/s3-lifecycle.json; same file shape, same AWS SDK v3",
+    "PutBucketLifecycleConfiguration rule shape (R2 implements that operation).",
+    "Apply with: STORAGE_PROVIDER=r2 npx tsx scripts/ops/apply-s3-lifecycle.ts (dry-run diff) then --apply.",
+    "Lifecycle changes need an R2 token with Admin Read & Write (Workers R2 Storage Write), not the",
+    "app's Object Read & Write token: runbooks/r2-setup.md.",
+    "Validated in CI by src/lib/studio/ops/s3-lifecycle.test.ts (npm test).",
+    "R2 limits (developers.cloudflare.com/r2/buckets/object-lifecycles/): prefix filters only (no tag",
+    "filters), expiration after N days, abort incomplete multipart after N days, at most 1000 rules.",
+    "R2 has no bucket versioning, so there are no noncurrent-version or delete-marker rules.",
+    "Intermediates: R2 has no object tagging, so provider outputs are written under",
+    "intermediates/orgs/<org>/projects/<p>/providers/ (src/lib/studio/storage.ts providerOutputKey)",
+    "and expire by that prefix after 30 days in the assets bucket.",
+    "No rule expires current objects under orgs/: completed uploads and renders must not expire.",
+    "Abandoned (PENDING) uploads are swept by the app (sweep-abandoned-uploads job), not by R2.",
+    "Renders are kept for the lifetime of the publication + 90 days: app logic, not lifecycle."
+  ],
+  "buckets": {
+    "assets": {
+      "envVar": "S3_BUCKET_ASSETS",
+      "rules": [
+        {
+          "ID": "studio-intermediates-expire-30d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "intermediates/" },
+          "Expiration": { "Days": 30 }
+        },
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    },
+    "renders": {
+      "envVar": "S3_BUCKET_RENDERS",
+      "rules": [
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    },
+    "thumbnails": {
+      "envVar": "S3_BUCKET_THUMBNAILS",
+      "rules": [
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    },
+    "library": {
+      "envVar": "S3_BUCKET_LIBRARY",
+      "rules": [
+        {
+          "ID": "studio-library-staging-expire-2d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "library/staging/" },
+          "Expiration": { "Days": 2 }
+        },
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    }
+  }
+}

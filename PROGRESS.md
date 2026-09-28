@@ -6,6 +6,34 @@ One line per completed backlog item. Newest at the top.
 
 ---
 
+## Storage: Cloudflare R2
+
+[2026-09-28] [R2] Cloudflare R2 as an alternative object store; AWS S3 stays the default and is unchanged. KMS stays on AWS (KMS_KEY_ID, envelope.ts untouched).
+- Config: STORAGE_PROVIDER=s3|r2 (default s3), R2_ACCOUNT_ID, R2_JURISDICTION (eu|us|fedramp, optional), R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY. Validated with zod in src/lib/studio/storage-client.ts, which fails fast with a ConfigurationError naming every problem. There was no central env schema; each module validates its own env.
+- Client factory: createStorageS3Client() / storageProvider() in storage-client.ts. It replaces the object-storage `new S3Client({ region: AWS_REGION })` in storage.ts (primary and failover), uploads/signer.ts and scripts/ops/apply-s3-lifecycle.ts. ingest-corpus and the staging-gate probes go through getAssetStorage.
+- R2 client settings: region auto; endpoint https://<id>[.<jurisdiction>].r2.cloudflarestorage.com; request/response checksums WHEN_REQUIRED.
+- Key layout (DECISION): provider outputs go under intermediates/orgs/<org>/projects/<p>/providers/... on R2 only. S3 keeps orgs/... plus the studio-object tag, byte-identical.
+  - R2 never sends Tagging.
+  - orgPrefixes() makes the organisation hard delete, its dry run and countKeysOutsidePrefix cover both prefixes on R2.
+  - Readers use the stored s3Key, so existing keys keep working.
+- Lifecycle: infra/r2-lifecycle.json has intermediates/ 30 d (assets), library/staging/ 2 d, and abort multipart 7 d on every bucket. There are no noncurrent-version rules and no tag filters.
+  - s3-lifecycle.ts validates per provider (r2RuleProblems plus the R2 policy).
+  - apply-s3-lifecycle.ts picks the file by STORAGE_PROVIDER (still dry run by default, --apply to write).
+  - CI checks both files.
+- CDN: CDN_URL with STORAGE_PROVIDER=r2 is a ConfigurationError. On R2, presigned GET and PUT expiry is capped at 604,800 s.
+- Failover: same config shape. On R2, S3_FALLBACK_REGION is "auto" or a jurisdiction.
+- Upload signer on R2 signs content-type (signableHeaders) and sends no checksum params.
+- Staging gate:
+  - The corpus pre-flight gains a "Storage provider" check.
+  - The openai-image live test asks for the R2 env on R2.
+  - The staging-gate workflow gains vars STORAGE_PROVIDER / R2_ACCOUNT_ID / R2_JURISDICTION and secrets R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY.
+- Runbooks: new r2-setup.md; storage-cost, storage-failover, backup-recovery (no R2 versioning: a backup copy with ≤30 d retention), staging-gate, deploy and README updated.
+- Tests: storage-client.test.ts, storage-r2.test.ts, uploads/signer.test.ts, s3-lifecycle.test.ts (R2 file), purge-storage.test.ts, organisation-hard-delete.test.ts (R2 purge), corpus-preflight.test.ts, live-providers.test.ts.
+- FINDING (S3, not changed): with the installed @aws-sdk 3.1141, S3 presigned PUTs sign only `host` (the presigner treats content-type as unsignable), so Content-Type is not enforced on S3. They also carry x-amz-checksum-crc32=AAAAAA== (the CRC32 of an empty body) and x-amz-sdk-checksum-algorithm=CRC32. Verify browser uploads on S3 staging; if S3 rejects the checksum, apply the same WHEN_REQUIRED fix to S3 (an operator call, since S3 was to stay unchanged).
+- UNVERIFIED (needs an R2 account):
+  - whether R2 accepts the CRC32 checksum the SDK always sends on DeleteObjects and PutBucketLifecycleConfiguration (the runbook gives a dashboard fallback for lifecycle);
+  - virtual-hosted URLs on the EU jurisdiction endpoint.
+
 ## Phase 16
 
 [2026-09-28] [16.1] next-intl 4.14.7 (pinned) without i18n routing (URLs unchanged): src/i18n/request.ts resolves studio.locale cookie → Accept-Language (formatjs best-fit matcher; bare "en" → en-GB) → en-GB; layout sets <html lang dir> and hands the catalogue to StudioIntlProvider (NextIntlClientProvider + radix DirectionProvider + locale switch). src/lib/i18n/locales.ts: 11 locales, endonyms, dir, content-language mapping. Header LanguageSwitcher (radix Select listbox) writes the cookie + router.refresh(). messages/<locale>.json × 11 with namespaces common/shell/errors/primitives/format/notifications (translated) + empty area namespaces; messages/<locale>.review.json lists every machine-written key (scripts/i18n/review-list.ts). format.ts: locale parameter on every formatter + useFormat() (GBP in every locale). api.ts: errorMessage by error code (errors.codes.*) outside English, server message fallback; useErrorMessage(). Tests render in the en-GB provider by default (test/setup-dom.ts); withLocale() for others. Demo: all catalogues bundled, switcher swaps in place.

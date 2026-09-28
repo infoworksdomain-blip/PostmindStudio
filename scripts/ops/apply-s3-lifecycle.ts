@@ -3,19 +3,21 @@ import { resolve } from 'node:path';
 import {
   GetBucketLifecycleConfigurationCommand,
   PutBucketLifecycleConfigurationCommand,
-  S3Client,
+  type S3Client,
   type LifecycleRule as S3LifecycleRule,
 } from '@aws-sdk/client-s3';
-import { ConfigurationError, ValidationError } from '../../src/lib/errors';
+import { ValidationError } from '../../src/lib/errors';
 import { logger } from '../../src/lib/logger';
 import {
   diffBucket,
   formatDiff,
   isNoop,
+  lifecycleFileFor,
   LOGICAL_BUCKETS,
   parseLifecycleFile,
   type LogicalBucket,
 } from '../../src/lib/studio/ops/s3-lifecycle';
+import { createStorageS3Client, storageProvider } from '../../src/lib/studio/storage-client';
 
 // BACKLOG 14.2 — apply infra/s3-lifecycle.json to Studio's S3 buckets. DevOps runs it with the
 // production credentials (s3:GetLifecycleConfiguration + s3:PutLifecycleConfiguration):
@@ -32,6 +34,15 @@ import {
 //   https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLifecycleConfiguration.html
 //   PutBucketLifecycleConfiguration
 //   https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketLifecycleConfiguration.html
+//
+// Storage: Cloudflare R2 — with STORAGE_PROVIDER=r2 the default file is infra/r2-lifecycle.json
+// and the client comes from the storage factory (storage-client.ts: R2 endpoint, R2_* keys). R2
+// implements Get/PutBucketLifecycleConfiguration, but managing lifecycles is a bucket-level
+// action: run this with the keys of an Admin Read & Write R2 token in R2_ACCESS_KEY_ID /
+// R2_SECRET_ACCESS_KEY (the app's Object Read & Write token cannot change bucket configuration):
+// https://developers.cloudflare.com/r2/buckets/object-lifecycles/ and runbooks/r2-setup.md.
+//
+//   STORAGE_PROVIDER=r2 R2_ACCOUNT_ID=... R2_JURISDICTION=eu R2_ACCESS_KEY_ID=<admin> //   R2_SECRET_ACCESS_KEY=<admin> S3_BUCKET_ASSETS=... npx tsx scripts/ops/apply-s3-lifecycle.ts
 
 interface Args {
   apply: boolean;
@@ -39,8 +50,9 @@ interface Args {
   config: string;
 }
 
-function parseArgs(argv: string[]): Args {
-  const args: Args = { apply: false, config: 'infra/s3-lifecycle.json' };
+/** The default --config follows STORAGE_PROVIDER (lifecycleFileFor). */
+function parseArgs(argv: string[], defaultConfig: string): Args {
+  const args: Args = { apply: false, config: defaultConfig };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
     if (flag === '--apply') args.apply = true;
@@ -71,11 +83,12 @@ async function currentRules(client: S3Client, bucket: string): Promise<S3Lifecyc
 }
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
-  const region = process.env.AWS_REGION?.trim();
-  if (!region) throw new ConfigurationError('AWS_REGION is required');
-  const file = parseLifecycleFile(JSON.parse(readFileSync(resolve(args.config), 'utf8')));
-  const client = new S3Client({ region });
+  const provider = storageProvider();
+  const args = parseArgs(process.argv.slice(2), lifecycleFileFor(provider));
+  const client = createStorageS3Client();
+  const file = parseLifecycleFile(JSON.parse(readFileSync(resolve(args.config), 'utf8')), provider);
+  process.stdout.write(`Storage provider: ${provider}; rules from ${args.config}
+`);
   let failed = false;
   for (const logical of args.only ?? LOGICAL_BUCKETS) {
     const entry = file.buckets[logical];

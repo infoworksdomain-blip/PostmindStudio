@@ -1,5 +1,6 @@
 import type { ProviderRequest } from '../../providers/interface';
 import { PLATFORMS, type Platform } from '../../services/catalog';
+import { storageRequiredEnv } from '../../storage-client';
 import type { GateSection, Verdict } from './report';
 
 // Phase 14.8 — the live provider and posting run (pure plan + cost estimate + verdicts).
@@ -24,6 +25,8 @@ export interface LiveProviderTest {
   npmScript?: string;
   /** Env the test needs besides the provider key (missing → skipped with the reason). */
   requiredEnv: string[];
+  /** The test writes to object storage: also needs STORAGE_PROVIDER's settings (S3 or R2). */
+  usesStorage?: boolean;
   /** Built from env at run time (media URLs, voice id…). */
   request?: (env: Record<string, string | undefined>) => ProviderRequest;
   note?: string;
@@ -188,7 +191,8 @@ export const LIVE_PROVIDER_TESTS: readonly LiveProviderTest[] = [
     id: 'openai-image',
     providerId: 'openai',
     kind: 'adapter',
-    requiredEnv: ['OPENAI_API_KEY', 'S3_BUCKET_ASSETS', 'AWS_REGION'],
+    requiredEnv: ['OPENAI_API_KEY', 'S3_BUCKET_ASSETS'],
+    usesStorage: true,
     request: () => ({
       capability: 'text_to_image',
       organisationId: LIVE_ORG_ID,
@@ -240,7 +244,10 @@ export function missingEnv(
   test: LiveProviderTest,
   env: Record<string, string | undefined>,
 ): string[] {
-  return test.requiredEnv.filter((name) => !env[name]?.trim());
+  const names = test.usesStorage
+    ? [...test.requiredEnv, ...storageRequiredEnv(env)]
+    : test.requiredEnv;
+  return names.filter((name) => !env[name]?.trim());
 }
 
 // ---------------------------------------------------------------- platform posts

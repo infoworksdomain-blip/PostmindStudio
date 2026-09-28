@@ -12,6 +12,26 @@ Spec 4.6: "Storage failures (S3 outage) fall back to a secondary region bucket."
    `S3_FALLBACK_BUCKET_ASSETS / _RENDERS / _THUMBNAILS / _LIBRARY`. A misconfiguration (same
    region, same bucket, no mapped bucket) fails at startup with a configuration error.
 
+## Cloudflare R2 (`STORAGE_PROVIDER=r2`)
+
+The config shape is the same, but the fallback is a second R2 bucket.
+
+- Create one fallback R2 bucket per primary bucket, and include them in the app token's bucket
+  scope ([r2-setup.md](r2-setup.md)). Apply the same lifecycle rules to them.
+- Set `S3_FALLBACK_BUCKET_*` exactly as for S3.
+- Set `S3_FALLBACK_REGION` to the fallback buckets' R2 endpoint instead of an AWS region:
+  - `auto` means the fallback buckets are reached through the primary's endpoint (same account,
+    same `R2_JURISDICTION`).
+  - `eu`, `us` or `fedramp` means the fallback buckets were created in that jurisdiction. A
+    jurisdiction bucket is only reachable through its own endpoint.
+  - An AWS region name is refused at startup. The value is not compared with `AWS_REGION`, which on
+    R2 is KMS's region only.
+- Both buckets are in the same R2 service, so this protects against bucket-level problems (a
+  deleted or misconfigured bucket, a per-bucket 5xx), not against a Cloudflare-wide R2 outage.
+- For data residency, keep the fallback in the same jurisdiction as the primary. For EU tenants,
+  use `auto` with `R2_JURISDICTION=eu`.
+- The behaviour below is unchanged. CloudFront does not apply on R2.
+
 ## Behaviour
 
 - Writes go to the primary; on a network error, timeout or HTTP 5xx they go to the mapped

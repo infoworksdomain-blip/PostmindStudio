@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ValidationError } from '../../errors';
+import { INTERMEDIATES_PREFIX, type StorageProvider } from '../storage-client';
 
 // BACKLOG 14.2 — infra/s3-lifecycle.json: schema, AWS rule constraints, Studio's retention
 // policy, and the dry-run diff for scripts/ops/apply-s3-lifecycle.ts. Pure (no I/O) so CI runs it
@@ -12,8 +13,31 @@ import { ValidationError } from '../../errors';
 //   - AbortIncompleteMultipartUpload and ExpiredObjectDeleteMarker cannot be used in a rule
 //     whose filter uses object tags; at most 1,000 rules per bucket
 //     https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-rules.html
+//
+// Storage: Cloudflare R2 — infra/r2-lifecycle.json uses the same file shape and the same
+// PutBucketLifecycleConfiguration rule shape. R2 constraints (read 2026-09-28):
+//   - lifecycle rules filter by prefix; tag filters are not supported; expiration after N days,
+//     abort incomplete multipart after N days, transition to Infrequent Access; at most 1,000
+//     rules per bucket https://developers.cloudflare.com/r2/buckets/object-lifecycles/
+//   - no bucket versioning (https://developers.cloudflare.com/r2/api/s3/api/), so no
+//     NoncurrentVersionExpiration and no ExpiredObjectDeleteMarker (delete markers are a
+//     versioning feature).
+// Studio's R2 policy: provider outputs are expired by the intermediates/ prefix (storage.ts
+// INTERMEDIATES_PREFIX) in the assets bucket instead of by tag.
 
 export const MANAGED_RULE_PREFIX = 'studio-';
+/** Prefix of provider outputs on R2 (storage-client.ts INTERMEDIATES_PREFIX). */
+export const R2_INTERMEDIATES_PREFIX = INTERMEDIATES_PREFIX;
+
+/** infra/ lifecycle file for each storage provider (scripts/ops/apply-s3-lifecycle.ts). */
+export const LIFECYCLE_FILES: Record<StorageProvider, string> = {
+  s3: 'infra/s3-lifecycle.json',
+  r2: 'infra/r2-lifecycle.json',
+};
+
+export function lifecycleFileFor(provider: StorageProvider): string {
+  return LIFECYCLE_FILES[provider];
+}
 export const MAX_RULES_PER_BUCKET = 1_000;
 export const LOGICAL_BUCKETS = ['assets', 'renders', 'thumbnails', 'library'] as const;
 export type LogicalBucket = (typeof LOGICAL_BUCKETS)[number];
@@ -124,8 +148,28 @@ export function awsRuleProblems(rule: LifecycleRule): string[] {
   return out;
 }
 
+/** What R2 cannot do (tags, versioning). */
+export function r2RuleProblems(rule: LifecycleRule): string[] {
+  const out: string[] = [];
+  if (hasTagFilter(rule)) out.push('R2 lifecycle rules cannot filter by tag');
+  if (
+    rule.Filter.ObjectSizeGreaterThan !== undefined ||
+    rule.Filter.ObjectSizeLessThan !== undefined
+  )
+    out.push('R2 lifecycle rules filter by prefix only');
+  if (rule.NoncurrentVersionExpiration)
+    out.push('R2 has no bucket versioning: NoncurrentVersionExpiration does not apply');
+  if (rule.Expiration?.ExpiredObjectDeleteMarker !== undefined)
+    out.push('R2 has no bucket versioning: ExpiredObjectDeleteMarker does not apply');
+  return out;
+}
+
 /** Studio's retention policy (spec 17.4, runbooks/storage-cost.md + deploy.md). */
-export function policyProblems(bucket: LogicalBucket, rules: LifecycleRule[]): string[] {
+export function policyProblems(
+  bucket: LogicalBucket,
+  rules: LifecycleRule[],
+  provider: StorageProvider = 's3',
+): string[] {
   const out: string[] = [];
   const enabled = rules.filter((r) => r.Status === 'Enabled');
   for (const r of rules) {
@@ -146,18 +190,32 @@ export function policyProblems(bucket: LogicalBucket, rules: LifecycleRule[]): s
   const has = (pred: (r: LifecycleRule) => boolean, what: string) => {
     if (!enabled.some(pred)) out.push(`missing an enabled rule: ${what}`);
   };
-  has(
-    (r) =>
-      r.NoncurrentVersionExpiration?.NoncurrentDays === 30 &&
-      prefixOf(r) === '' &&
-      !hasTagFilter(r),
-    'noncurrent versions expire after 30 days (whole bucket)',
-  );
+  if (provider === 's3') {
+    has(
+      (r) =>
+        r.NoncurrentVersionExpiration?.NoncurrentDays === 30 &&
+        prefixOf(r) === '' &&
+        !hasTagFilter(r),
+      'noncurrent versions expire after 30 days (whole bucket)',
+    );
+  }
   has(
     (r) => r.AbortIncompleteMultipartUpload?.DaysAfterInitiation === 7 && prefixOf(r) === '',
     'abort incomplete multipart uploads after 7 days (whole bucket)',
   );
-  if (bucket === 'assets') {
+  if (provider === 'r2') {
+    for (const r of rules) {
+      const expiresCurrent = r.Expiration?.Days !== undefined || r.Expiration?.Date !== undefined;
+      if (expiresCurrent && prefixOf(r).startsWith(R2_INTERMEDIATES_PREFIX) && bucket !== 'assets')
+        out.push(`${r.ID}: intermediates expire in the assets bucket only`);
+    }
+    if (bucket === 'assets') {
+      has(
+        (r) => r.Expiration?.Days === 30 && prefixOf(r) === R2_INTERMEDIATES_PREFIX,
+        `intermediates (prefix ${R2_INTERMEDIATES_PREFIX}) expire after 30 days`,
+      );
+    }
+  } else if (bucket === 'assets') {
     has(
       (r) =>
         r.Expiration?.Days === 30 &&
@@ -176,7 +234,10 @@ export function policyProblems(bucket: LogicalBucket, rules: LifecycleRule[]): s
 }
 
 /** Every problem with the file; empty = valid. */
-export function validateLifecycleFile(raw: unknown): { file?: LifecycleFile; problems: string[] } {
+export function validateLifecycleFile(
+  raw: unknown,
+  provider: StorageProvider = 's3',
+): { file?: LifecycleFile; problems: string[] } {
   const parsed = lifecycleFileSchema.safeParse(raw);
   if (!parsed.success) {
     return { problems: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`) };
@@ -192,17 +253,20 @@ export function validateLifecycleFile(raw: unknown): { file?: LifecycleFile; pro
     if (new Set(ids).size !== ids.length) problems.push(`${bucket}: duplicate rule IDs`);
     if (entry.rules.length > MAX_RULES_PER_BUCKET)
       problems.push(`${bucket}: more than ${MAX_RULES_PER_BUCKET} rules`);
-    for (const rule of entry.rules)
+    for (const rule of entry.rules) {
       for (const p of awsRuleProblems(rule)) problems.push(`${bucket}/${rule.ID}: ${p}`);
-    for (const p of policyProblems(bucket, entry.rules)) problems.push(`${bucket}: ${p}`);
+      if (provider === 'r2')
+        for (const p of r2RuleProblems(rule)) problems.push(`${bucket}/${rule.ID}: ${p}`);
+    }
+    for (const p of policyProblems(bucket, entry.rules, provider)) problems.push(`${bucket}: ${p}`);
   }
   return { file: parsed.data, problems };
 }
 
-export function parseLifecycleFile(raw: unknown): LifecycleFile {
-  const { file, problems } = validateLifecycleFile(raw);
+export function parseLifecycleFile(raw: unknown, provider: StorageProvider = 's3'): LifecycleFile {
+  const { file, problems } = validateLifecycleFile(raw, provider);
   if (!file || problems.length)
-    throw new ValidationError('infra/s3-lifecycle.json is invalid', { problems });
+    throw new ValidationError(`${lifecycleFileFor(provider)} is invalid`, { problems });
   return file;
 }
 
