@@ -434,5 +434,52 @@ describe.skipIf(!hasDb)('approval workflows API', { timeout: 60_000 }, () => {
       expect((await status(id, 'stranger')).status).toBe(404);
       expect((await approve(id, 'stranger')).status).toBe(404);
     });
+
+    it('serialises concurrent approvals of the same step: no double-count, no lost vote', async () => {
+      // A separate connection-pooled client so the two requests below genuinely overlap in
+      // Postgres instead of queuing behind the single-connection DATABASE_URL used elsewhere.
+      const concurrentDb = new PrismaClient({
+        datasourceUrl: (process.env.DATABASE_URL ?? '').replace(
+          /connection_limit=\d+/,
+          'connection_limit=5',
+        ),
+      });
+      try {
+        installApi(concurrentDb, tokens);
+        await createTwoStep();
+
+        // Same reviewer fires the same step twice at once: exactly one must win, the other
+        // sees "already approved" rather than a second row being recorded.
+        const dupeId = await readyProject();
+        await approve(dupeId, 'admin');
+        const [a, b] = await Promise.all([
+          approve(dupeId, 'reviewerA'),
+          approve(dupeId, 'reviewerA'),
+        ]);
+        expect([a.status, b.status].sort()).toEqual([200, 409]);
+        const dupeTasks = await db.approvalTask.findMany({
+          where: { projectId: dupeId, stepIndex: 1 },
+        });
+        expect(dupeTasks).toHaveLength(1);
+
+        // Two different reviewers complete a minApprovers=2 step concurrently: both votes are
+        // recorded (no vote is lost to the race), and the project reaches APPROVED exactly once.
+        const raceId = await readyProject();
+        await approve(raceId, 'admin');
+        const [c, d] = await Promise.all([
+          approve(raceId, 'reviewerA'),
+          approve(raceId, 'reviewerB'),
+        ]);
+        expect([c.status, d.status].sort()).toEqual([200, 200]);
+        const project = await db.videoProject.findUniqueOrThrow({ where: { id: raceId } });
+        expect(project.state).toBe('APPROVED');
+        const step1Tasks = await db.approvalTask.findMany({
+          where: { projectId: raceId, stepIndex: 1 },
+        });
+        expect(step1Tasks.map((t) => t.resolvedByUserId).sort()).toEqual(['client-a', 'client-b']);
+      } finally {
+        await concurrentDb.$disconnect();
+      }
+    });
   });
 });

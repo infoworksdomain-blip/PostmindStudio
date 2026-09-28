@@ -147,4 +147,82 @@ describe.skipIf(!hasDb)('auto-publish outbox API', { timeout: 60_000 }, () => {
     });
     expect(none.status).toBe(404);
   });
+
+  it('serialises concurrent SCHEDULED approvals of the same business: no two projects take the same drip slot', async () => {
+    // A second, higher-connection-limit client so the two approvals below genuinely overlap in
+    // Postgres instead of queuing behind the single-connection DATABASE_URL used elsewhere.
+    const concurrentDb = new PrismaClient({
+      datasourceUrl: (process.env.DATABASE_URL ?? '').replace(
+        /connection_limit=\d+/,
+        'connection_limit=5',
+      ),
+    });
+    try {
+      const business = `biz-drip-${randomUUID()}`;
+      const weekday = new Date().getUTCDay();
+      await db.dripQueue.create({
+        data: {
+          organisationId: org,
+          businessId: business,
+          slots: [{ weekday, time: '23:59', timezone: 'UTC' }],
+          platforms: [],
+          enabled: true,
+          updatedByUserId: 'user-1',
+        },
+      });
+      const makeProject = () =>
+        db.videoProject.create({
+          data: {
+            organisationId: org,
+            businessId: business,
+            createdByUserId: 'user-1',
+            name: 'Drip race',
+            state: 'READY_FOR_REVIEW',
+            sourceType: 'BRIEF',
+            targetFormats: [],
+            publishPolicy: 'SCHEDULED',
+            metadata: {
+              runId: 'run-1',
+              renders: {},
+              autoPublish: { targets: [{ platform: 'tiktok', connectionId: 'conn-drip' }] },
+            },
+          },
+        });
+      const [p1, p2] = await Promise.all([makeProject(), makeProject()]);
+
+      const approveConcurrently = (projectId: string) =>
+        recordApproval(concurrentDb, {
+          projectId,
+          organisationId: org,
+          actorId: 'user-1',
+          requiredRole: 'reviewer',
+          note: null,
+          now: Date.now(),
+          outbox: { planTier: 'STANDARD', trigger: 'human' },
+        });
+      const [approved1, approved2] = await Promise.all([
+        approveConcurrently(p1.id),
+        approveConcurrently(p2.id),
+      ]);
+      expect(approved1).toBe(true);
+      expect(approved2).toBe(true);
+
+      const rows = await db.autoPublishOutbox.findMany({
+        where: { projectId: { in: [p1.id, p2.id] } },
+        select: { projectId: true, slotAt: true },
+      });
+      expect(rows).toHaveLength(2);
+      const slots = rows.map((r) => r.slotAt?.getTime());
+      // Two distinct slot instants: the advisory lock in planSchedule stops both approvals
+      // reading the same "next free slot" and colliding on the business's weekly slot.
+      expect(new Set(slots).size).toBe(2);
+
+      await db.autoPublishOutbox.deleteMany({ where: { projectId: { in: [p1.id, p2.id] } } });
+      await db.approvalTask.deleteMany({ where: { projectId: { in: [p1.id, p2.id] } } });
+      await db.videoProject.deleteMany({ where: { id: { in: [p1.id, p2.id] } } });
+      await db.dripQueue.deleteMany({ where: { organisationId: org, businessId: business } });
+    } finally {
+      await concurrentDb.$disconnect();
+    }
+  });
 });
