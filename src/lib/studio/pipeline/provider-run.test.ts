@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
-import { ProviderError } from '../../errors';
+import { ProviderError, RateDeferredError } from '../../errors';
 import { createCircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderAdapter } from '../providers/interface';
 import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-repository';
@@ -124,5 +124,49 @@ describe('runProvider timeout', () => {
     const { deps, rows } = setup(stub);
     await expect(runProvider(clip, deps)).rejects.toMatchObject({ errorClass: 'timeout' });
     expect([...rows.values()][0]).toMatchObject({ state: 'CANCELLED', costPence: 0 });
+  });
+});
+
+describe('runProvider — Phase 15 Track C hooks', () => {
+  it('15.C3: a full rate window defers before any submit (no provider job row)', async () => {
+    const stub = new StubAdapter('luma', ['text_to_video']);
+    const { deps, rows } = setup(stub);
+    const acquire = vi.fn(async () => ({ allowed: false as const, retryAfterMs: 3_000 }));
+    const err = await runProvider(clip, { ...deps, providerRates: { acquire } }).catch(
+      (e: unknown) => e,
+    );
+    expect(err).toBeInstanceOf(RateDeferredError);
+    expect(err).toMatchObject({ providerId: 'luma', retryAfterMs: 3_000 });
+    expect(acquire).toHaveBeenCalledWith({ providerId: 'luma', organisationId: 'org-1' });
+    expect(stub.submitCalls).toHaveLength(0);
+    expect(rows.size).toBe(0);
+  });
+
+  it('P1: routes over the organisation registry when one is returned', async () => {
+    const platform = new StubAdapter('luma', ['text_to_video']);
+    const own = new StubAdapter('luma', ['text_to_video']);
+    const { deps } = setup(platform);
+    const registryFor = vi.fn(async () => createProviderRegistry([own]));
+    await runProvider(clip, { ...deps, registryFor });
+    expect(registryFor).toHaveBeenCalledWith({ organisationId: 'org-1', projectId: undefined });
+    expect(own.submitCalls).toHaveLength(1);
+    expect(platform.submitCalls).toHaveLength(0);
+  });
+
+  it('P7: provider scores reorder candidates; a failed lookup is ignored', async () => {
+    const runway = new StubAdapter('runway', ['text_to_video']);
+    const luma = new StubAdapter('luma', ['text_to_video']);
+    const { deps } = setup(runway);
+    const both = { ...deps, registry: createProviderRegistry([runway, luma]) };
+    const rated = await runProvider(clip, {
+      ...both,
+      providerRatings: { scoresFor: async () => ({ runway: 0.9, luma: 0.2 }) },
+    });
+    expect(rated.decision.providerId).toBe('runway');
+    const broken = await runProvider(clip, {
+      ...both,
+      providerRatings: { scoresFor: async () => Promise.reject(new Error('db down')) },
+    });
+    expect(broken.decision.providerId).toBe('luma'); // STANDARD spec order
   });
 });

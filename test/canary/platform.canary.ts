@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { appendFileSync } from 'node:fs';
+import { afterAll, describe, expect, it } from 'vitest';
+import { recordingFetch, type DeprecationSignal } from '../../src/lib/studio/providers/canary';
 import {
   CANARY_ENV,
   canaryCredentials,
@@ -11,6 +13,8 @@ import {
 // platforms without secrets are skipped. Never part of `npm test`.
 
 const PLATFORMS = Object.keys(CANARY_ENV) as CanaryPlatform[];
+// 15.D10 / spec §20: Deprecation / Sunset headers seen on platform responses are logged too.
+const deprecations: DeprecationSignal[] = [];
 
 describe('platform canary (live, read-only)', () => {
   for (const platform of PLATFORMS) {
@@ -21,11 +25,29 @@ describe('platform canary (live, read-only)', () => {
         const result = await runPlatformCanary(
           platform,
           creds as NonNullable<typeof creds>,
-          globalThis.fetch,
+          recordingFetch(platform, globalThis.fetch, deprecations),
           process.env.META_GRAPH_API_VERSION?.trim() || undefined,
         );
         expect(result.ok).toBe(true);
       },
     );
   }
+});
+
+afterAll(() => {
+  const file = process.env.CANARY_ANNOTATIONS_FILE?.trim();
+  if (!file || deprecations.length === 0) return;
+  const lines = deprecations.map(
+    (d) =>
+      `::warning title=Platform deprecation ${d.providerId}::${d.method} ${d.url} → ` +
+      [
+        d.deprecation && `Deprecation: ${d.deprecation}`,
+        d.sunset && `Sunset: ${d.sunset}`,
+        d.link && `Link: ${d.link}`,
+      ]
+        .filter(Boolean)
+        .join('; ')
+        .replace(/[\r\n%]/g, ' '),
+  );
+  appendFileSync(file, `${lines.join('\n')}\n`, 'utf8');
 });

@@ -1,4 +1,8 @@
 // Registers every demo API area. Each module calls route(...) at import time.
+// 15.D3 first: its multi-step POST /projects/:id/approve must match before projects-publish's.
+import './p15-d-workflows';
+// 15.A (Track A) before ./review: its GET /renders/:id adds thumbnailUrl.
+import './p15-a-publishing';
 import './projects';
 import './review';
 import './slideshow';
@@ -23,3 +27,13 @@ import './p13-a3-admin';
 import './p13-a2-library-business';
 import './p13-a2-onboarding';
 import './p13-a2-voice';
+import './p15-d-features';
+import './p15-d-admin-kill';
+import './p15-d-admin-queues';
+import './p15-d-tiers';
+import './p15-d-library-admin';
+import './p15-e-data-rights';
+import './p15-c-planning';
+import './p15-c-byoc';
+import './p15-c-ratings';
+import './p15-b-composition';

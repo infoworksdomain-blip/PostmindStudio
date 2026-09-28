@@ -89,7 +89,7 @@ describe('CreateScreen', () => {
       name: 'Spring menu launch',
       businessId: 'biz_1',
       sourceType: 'BRIEF',
-      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 30 }],
+      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 45 }],
       brief: { rawInput: 'Spring menu launch' },
       brandKitId: 'kit_1',
     });

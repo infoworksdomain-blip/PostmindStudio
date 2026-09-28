@@ -1,47 +1,138 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDuration } from '@/lib/client/format';
-import { ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
+import { formatDuration, relativeTime } from '@/lib/client/format';
+import { ErrorState, Section, StateBadge } from '../primitives';
 import { flattenCategories } from '../library/library-utils';
-import type { CategoryNode, LibraryVideoSummary, ListResponse } from '../library/types';
+import type { CategoryNode, ListResponse } from '../library/types';
 import { IngestForm } from './ingest-form';
 import { IngestStatus } from './ingest-status';
 import { LibraryEditDialog } from './library-edit-dialog';
 import { ConfirmDialog } from './confirm-dialog';
+import { LibraryAdminFilterBar } from './library-admin-filters';
+import { LibraryBulkBar } from './library-bulk-bar';
+import { LicenceAudit } from './licence-audit';
+import {
+  DEFAULT_FILTERS,
+  LICENCE_BADGE,
+  REVIEW_LABEL,
+  type AdminLibraryFilters,
+  type AdminLibraryVideo,
+} from './library-admin-types';
 
-// A3.8 Library admin — bulk import, then browse live corpus items by category to edit
-// metadata/licence or retire them. The browse uses the user-facing list endpoint, so retired
-// items and licence-less items can't be listed here (no staff list endpoint exists yet).
+// A3.8 Library admin — bulk import, ingestion status, the licence audit, then the whole corpus
+// from the staff list (GET /admin/library/videos, 15.D7): unlicensed and retired rows included,
+// filterable by licence status and categorisation review, with bulk accept / override / reject
+// and re-analysis, plus per-item edit and retire.
 
 const PAGE_SIZE = 25;
 
+function CorpusRow({
+  video,
+  selected,
+  onSelect,
+  onEdit,
+  onRetire,
+}: {
+  video: AdminLibraryVideo;
+  selected: boolean;
+  onSelect: (on: boolean) => void;
+  onEdit: () => void;
+  onRetire: () => void;
+}) {
+  return (
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+      <Checkbox
+        checked={selected}
+        onCheckedChange={(v) => onSelect(v === true)}
+        aria-label={`Select ${video.title}`}
+      />
+      <div className="min-w-0 flex-1 basis-60">
+        <Link
+          href={`/library/${video.id}`}
+          className="block truncate text-sm font-medium hover:underline"
+        >
+          {video.title}
+        </Link>
+        <p className="truncate text-xs text-muted-foreground">
+          {video.category.slug} · {formatDuration(video.durationSec)}
+          {video.licence.scenario && ` · ${video.licence.scenario}`}
+          {video.categoryReview && ` · ${REVIEW_LABEL[video.categoryReview]}`}
+          {video.reanalysedAt && ` · re-analysed ${relativeTime(video.reanalysedAt)}`}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {video.retiredAt && <StateBadge label="Retired" tone="neutral" />}
+        <StateBadge {...LICENCE_BADGE[video.licence.status]} />
+        <Button size="sm" variant="outline" onClick={onEdit}>
+          Edit<span className="sr-only"> {video.title}</span>
+        </Button>
+        {!video.retiredAt && (
+          <Button size="sm" variant="destructive" onClick={onRetire}>
+            Retire<span className="sr-only"> {video.title}</span>
+          </Button>
+        )}
+      </div>
+    </li>
+  );
+}
+
 export function LibraryAdminPanel() {
-  const [category, setCategory] = useState('');
+  const [filters, setFilters] = useState<AdminLibraryFilters>(DEFAULT_FILTERS);
   const [cursors, setCursors] = useState<string[]>([]);
-  const [editing, setEditing] = useState<LibraryVideoSummary | null>(null);
-  const [retiring, setRetiring] = useState<LibraryVideoSummary | null>(null);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [editing, setEditing] = useState<AdminLibraryVideo | null>(null);
+  const [retiring, setRetiring] = useState<AdminLibraryVideo | null>(null);
   const tree = useApi<ListResponse<CategoryNode>>('/library/categories');
   const categories = useMemo(() => flattenCategories(tree.data?.data ?? []), [tree.data]);
-  const { data, error, isLoading, mutate } = useApi<ListResponse<LibraryVideoSummary>>(
-    '/library/videos',
-    { category: category || undefined, cursor: cursors.at(-1), limit: PAGE_SIZE },
+  const { data, error, isLoading, mutate } = useApi<ListResponse<AdminLibraryVideo>>(
+    '/admin/library/videos',
+    {
+      licence: filters.licence || undefined,
+      retired: filters.retired || undefined,
+      review: filters.review || undefined,
+      category: filters.category || undefined,
+      q: filters.q || undefined,
+      cursor: cursors.at(-1),
+      limit: PAGE_SIZE,
+    },
   );
+  const audit = useApi('/admin/library/licence-audit', { limit: 20 });
 
-  const retire = async (video: LibraryVideoSummary) => {
+  const applyFilters = useCallback((next: AdminLibraryFilters) => {
+    setFilters(next);
+    setCursors([]);
+    setSelected(new Set());
+  }, []);
+  const refresh = () => {
+    setSelected(new Set());
+    void mutate();
+    void audit.mutate();
+  };
+  const toggle = (id: string, on: boolean) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const pageIds = data?.data.map((v) => v.id) ?? [];
+  const allSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+
+  const retire = async (video: AdminLibraryVideo) => {
     try {
       await api(`/admin/library/videos/${video.id}/retire`, {
         method: 'POST',
         idempotencyKey: newIdempotencyKey(),
       });
       toast.success(`“${video.title}” retired`);
-      await mutate();
+      refresh();
       return true;
     } catch (err) {
       toast.error(errorMessage(err));
@@ -53,93 +144,81 @@ export function LibraryAdminPanel() {
     <div className="grid gap-6">
       <IngestForm categories={categories} />
       <IngestStatus />
+      <LicenceAudit
+        onShowMissing={() => applyFilters({ ...DEFAULT_FILTERS, licence: 'missing' })}
+      />
       <Section
-        title="Live corpus"
-        description="Retired items are hidden from search but kept for projects that used them."
-        actions={
-          <div className="w-56 max-w-full">
-            <label htmlFor="admin-library-category" className="sr-only">
-              Category
-            </label>
-            <select
-              id="admin-library-category"
-              className={selectClass}
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setCursors([]);
-              }}
-            >
-              <option value="">All categories</option>
-              {categories.map((c) => (
-                <option key={c.slug} value={c.slug}>
-                  {`${'  '.repeat(c.depth)}${c.label}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        }
+        title="Corpus"
+        description="Every item, including unlicensed and retired ones. Retired items are hidden from users but kept for projects that used them."
       >
-        {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-        {isLoading && <Skeleton aria-label="Loading corpus" className="h-48 rounded-lg" />}
-        {data && data.data.length === 0 && (
-          <p className="py-6 text-sm text-muted-foreground">No live items in this category.</p>
-        )}
-        {data && data.data.length > 0 && (
-          <ul aria-label="Corpus items" className="divide-y divide-border/70">
-            {data.data.map((v) => (
-              <li key={v.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-                <div className="min-w-0 flex-1 basis-60">
-                  <Link
-                    href={`/library/${v.id}`}
-                    className="block truncate text-sm font-medium hover:underline"
-                  >
-                    {v.title}
-                  </Link>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {v.category.slug} · {formatDuration(v.durationSec)} ·{' '}
-                    {v.allowedModes.length ? v.allowedModes.join(' + ') : 'No licence row'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setEditing(v)}>
-                    Edit<span className="sr-only"> {v.title}</span>
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => setRetiring(v)}>
-                    Retire<span className="sr-only"> {v.title}</span>
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        {data && (cursors.length > 0 || data.nextCursor) && (
-          <div className="mt-4 flex justify-between">
-            <Button
-              variant="ghost"
-              disabled={cursors.length === 0}
-              onClick={() => setCursors((c) => c.slice(0, -1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="ghost"
-              disabled={!data.nextCursor}
-              onClick={() =>
-                data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
-              }
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        <div className="grid gap-4">
+          <LibraryAdminFilterBar
+            filters={filters}
+            categories={categories}
+            onChange={applyFilters}
+          />
+          {selected.size > 0 && (
+            <LibraryBulkBar ids={[...selected]} categories={categories} onDone={refresh} />
+          )}
+          {error && <ErrorState error={error} onRetry={() => void mutate()} />}
+          {isLoading && <Skeleton aria-label="Loading corpus" className="h-48 rounded-lg" />}
+          {data && data.data.length === 0 && (
+            <p className="py-6 text-sm text-muted-foreground">No items match these filters.</p>
+          )}
+          {data && data.data.length > 0 && (
+            <div>
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={(v) =>
+                    setSelected(v === true ? new Set([...selected, ...pageIds]) : new Set())
+                  }
+                  aria-label="Select all on this page"
+                />
+                Select page
+              </label>
+              <ul aria-label="Corpus items" className="divide-y divide-border/70">
+                {data.data.map((v) => (
+                  <CorpusRow
+                    key={v.id}
+                    video={v}
+                    selected={selected.has(v.id)}
+                    onSelect={(on) => toggle(v.id, on)}
+                    onEdit={() => setEditing(v)}
+                    onRetire={() => setRetiring(v)}
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+          {data && (cursors.length > 0 || data.nextCursor) && (
+            <div className="flex justify-between">
+              <Button
+                variant="ghost"
+                disabled={cursors.length === 0}
+                onClick={() => setCursors((c) => c.slice(0, -1))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={!data.nextCursor}
+                onClick={() =>
+                  data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
+                }
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
       </Section>
       {editing && (
         <LibraryEditDialog
           video={editing}
           categories={categories}
           onClose={() => setEditing(null)}
-          onSaved={() => void mutate()}
+          onSaved={refresh}
         />
       )}
       <ConfirmDialog

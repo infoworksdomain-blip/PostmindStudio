@@ -77,12 +77,32 @@ export interface LibraryIngestJobData {
   };
 }
 
+/** 15.D7 / A3.8: re-analyse one stored corpus item (platform-level). runId = request time. */
+export interface LibraryReanalyseJobData {
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  libraryItemId: string;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
 /** Analytics polling (spec 15.2): one job per poll; pollNumber keeps job ids unique. */
 export interface PollAnalyticsJobData extends PublishJobData {
   pollNumber: number;
 }
 
 /** Nightly roll-ups (platform-level). runId = the UTC day being rolled up. */
+/** 15.E1: one organisation's data export. runId = exportId. */
+export interface ExportJobData {
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  exportId: string;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
 export interface RollUpJobData {
   organisationId: string;
   runId: string;
@@ -95,12 +115,16 @@ export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
   'compose-video': ProjectJobData;
+  /** 15.A3: generated thumbnail candidates for a run's renders (after compose). */
+  'generate-thumbnail': ProjectJobData;
   'run-quality-gate': ProjectJobData;
   'publish-video': PublishJobData;
   'fire-scheduled-publication': PublishJobData;
   'scan-website': ScanJobData;
   'populate-slideshow': ProjectJobData;
   'ingest-library-video': LibraryIngestJobData;
+  /** 15.D7: re-run analysis + embedding on a stored corpus item (POST /admin/library/reanalyse). */
+  'reanalyse-library-video': LibraryReanalyseJobData;
   'poll-publication-analytics': PollAnalyticsJobData;
   'roll-up-analytics': RollUpJobData;
   /** BACKLOG 13.29: nightly style-memory build (platform-level, 03:15 UTC). */
@@ -124,6 +148,16 @@ export interface JobDataMap {
   'poll-domain-verifications': RollUpJobData;
   /** BACKLOG 13.11: purge scraped content after an ownership dispute (runId = verification id). */
   'purge-disputed-domain': BusinessJobData;
+  /** 15.E1: build one organisation's data export (runId = exportId). */
+  'export-account-data': ExportJobData;
+  /** 15.E8: daily spec 7.15 retention sweep (platform-level). */
+  'retention-sweep': RollUpJobData;
+  /** 15.W2: derive + send Core usage events (hourly; pending_setup until Core ships). */
+  'report-usage': RollUpJobData;
+  /** 15.W3: derive + sync Core calendar shadow entries (every 5 min; pending_setup until Core ships). */
+  'sync-calendar-shadows': RollUpJobData;
+  /** 15.W4: nightly Core organisation reconciliation (skipped until Core ships). */
+  'reconcile-organisations': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -132,12 +166,14 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'plan-project': QUEUES.orchestration,
   'generate-asset': QUEUES.assets,
   'compose-video': QUEUES.orchestration,
+  'generate-thumbnail': QUEUES.assets,
   'run-quality-gate': QUEUES.orchestration,
   'publish-video': QUEUES.publish,
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
   'ingest-library-video': QUEUES.library,
+  'reanalyse-library-video': QUEUES.library,
   'poll-publication-analytics': QUEUES.analytics,
   'roll-up-analytics': QUEUES.analytics,
   'build-style-memory': QUEUES.analytics,
@@ -151,6 +187,11 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'sweep-stock-refresh': QUEUES.assets,
   'poll-domain-verifications': QUEUES.assets,
   'purge-disputed-domain': QUEUES.assets,
+  'export-account-data': QUEUES.analytics,
+  'retention-sweep': QUEUES.analytics,
+  'report-usage': QUEUES.analytics,
+  'sync-calendar-shadows': QUEUES.analytics,
+  'reconcile-organisations': QUEUES.analytics,
 };
 
 export const MAX_RETRIES = 5;

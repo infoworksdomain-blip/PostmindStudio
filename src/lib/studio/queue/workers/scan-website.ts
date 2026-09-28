@@ -1,4 +1,5 @@
-import { NotFoundError } from '../../../errors';
+import { NoProviderAvailableError, NotFoundError } from '../../../errors';
+import { createScanBudget, scanCostCapPence } from '../../cost/scan-budget';
 import { buildStockLayer, embedMissing, libraryDepsFrom } from '../../images/library';
 import { ingestImage, looksLikeIconOrTracker, MAX_IMAGE_BYTES } from '../../images/ingest';
 import type { PipelineDeps } from '../../pipeline/deps';
@@ -7,6 +8,7 @@ import {
   BUSINESS_PROFILE_SCHEMA,
   buildClassifyPrompt,
   CLASSIFY_SYSTEM_PROMPT,
+  needsReviewFor,
   parseClassifiedProfile,
   type ClassifiedProfile,
 } from '../../scan/classify';
@@ -54,6 +56,9 @@ async function saveProfile(
     restrictedTopics: profile.restrictedTopics,
     brandVoiceSummary: profile.brandVoiceSummary || null,
     classifierModel: model,
+    // 15.D8 / A13: the model's self-reported confidence; below 0.7 the user is asked to confirm.
+    classifierConfidence: profile.confidence,
+    needsReview: needsReviewFor(profile.confidence),
     lastRefreshedAt: new Date(deps.now()),
   };
   if (!existing) {
@@ -152,6 +157,12 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     data: { pagesCrawled: crawl.pages.length, usedJsRender: crawl.usedJsRender },
   });
 
+  // 15.D2 / A10.4: "single scan hard-capped at £0.50" — every provider call of this scan is
+  // budget-checked against the scan's own cap (cost/scan-budget.ts).
+  const budget = createScanBudget(deps.budget, scanCostCapPence());
+  const scanDeps: PipelineDeps = { ...deps, budget };
+  const capped = (err: unknown) => err instanceof NoProviderAvailableError && budget.capReached();
+  const capNote = `Stopped at the scan cost cap (${budget.capPence}p)`;
   const run = await runProvider(
     {
       need: { kind: 'capability', capability: 'text_generation' },
@@ -165,8 +176,16 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
         outputSchema: BUSINESS_PROFILE_SCHEMA as unknown as Record<string, unknown>,
       },
     },
-    deps,
-  );
+    scanDeps,
+  ).catch(async (err: unknown) => {
+    if (!capped(err)) throw err;
+    await deps.db.websiteScan.update({
+      where: { id: scan.id },
+      data: { state: 'FAILED', errorReason: capNote, completedAt: new Date(deps.now()) },
+    });
+    return null;
+  });
+  if (!run) return log.warn({ capPence: budget.capPence }, 'scan stopped at its cost cap');
   const classified = parseClassifiedProfile(jsonOutput(run.output.metadata));
   const metadata = run.output.metadata as { model?: string; costPence?: number };
   const profile = await saveProfile(
@@ -187,9 +206,19 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     queries: profile.imageSearchQueries,
     themes: profile.imageThemes,
   }).catch((err: Error) => ({ created: 0, duplicates: 0, skipped: 0, errors: [err.message] }));
-  const embedded = await embedMissing({ db: deps.db, providers: deps }, data);
+  const embedded = await embedMissing({ db: deps.db, providers: scanDeps }, data).catch(
+    (err: unknown) => {
+      if (!capped(err)) throw err;
+      return { embedded: 0, costPence: 0, capped: true };
+    },
+  );
 
-  const errors = [...crawl.errors, ...scraped.errors, ...stock.errors];
+  const errors = [
+    ...crawl.errors,
+    ...scraped.errors,
+    ...stock.errors,
+    ...('capped' in embedded ? [`${capNote}: some images were not indexed for search`] : []),
+  ];
   await deps.db.websiteScan.update({
     where: { id: scan.id },
     data: {

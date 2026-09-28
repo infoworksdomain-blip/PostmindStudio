@@ -16,6 +16,7 @@ import { PRESET_GROUPS } from '../overlays/presets';
 import { projectMetadata } from '../pipeline/project-state';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { toPlanTier } from './catalog';
+import { assertTierGate } from './tier-gates';
 
 // BACKLOG 8.6 / Addendum A4.8 — overlay presets and overlays. Overlays belong to a shot (or to a
 // render for whole-video overlays); ownership is always proven through the project's
@@ -79,6 +80,8 @@ export function createPreset(
   tenant: TenantContext,
   input: z.infer<typeof createPresetInput>,
 ) {
+  // 15.D2 / A10.3 "Save custom overlay presets": Standard and above (Basic: presets only).
+  assertTierGate(tenant, 'overlays.custom_presets');
   return db.overlayPreset.create({
     data: {
       scope: input.scope === 'org' ? 'ORG' : 'BUSINESS',

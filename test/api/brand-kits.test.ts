@@ -157,7 +157,10 @@ describe.skipIf(!hasDb)('brand kits API', { timeout: 60_000 }, () => {
     const allowed = await del(kit.id);
     expect(allowed.status).toBe(200);
     expect(allowed.json.deleted).toBe(true);
-    expect(await db.brandKit.findUnique({ where: { id: kit.id } })).toBeNull();
+    // 15.B1 spec 8.5: a soft delete — the row stays, marked deleted.
+    expect((await db.brandKit.findUnique({ where: { id: kit.id } }))?.deletedAt).toBeInstanceOf(
+      Date,
+    );
 
     await db.videoProject.delete({ where: { id: project.id } });
   });

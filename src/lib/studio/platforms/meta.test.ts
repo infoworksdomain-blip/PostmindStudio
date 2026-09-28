@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import {
   DEFAULT_GRAPH_VERSION,
+  FacebookFeedPublisher,
   FacebookReelPublisher,
   GRAPH_HOST,
+  GRAPH_VIDEO_HOST,
   InstagramReelPublisher,
   RUPLOAD_HOST,
 } from './meta';
@@ -270,5 +272,107 @@ describe('FacebookReelPublisher', () => {
     await publisher.takedown({ accessToken: 'tok', accountId: 'acc', platformPostId: 'video-9' });
     expect(requests[0]?.method).toBe('DELETE');
     expect(requests[0]?.url).toContain('/video-9');
+  });
+});
+
+describe('Instagram feed video (15.A1)', () => {
+  it('publishes a REELS container shared to the feed, AI label on', async () => {
+    const { fetch: fetchImpl, requests } = fakeFetch(
+      json({ id: 'container-f' }),
+      json({ status_code: 'FINISHED' }),
+      json({ id: 'media-f' }),
+      json({ permalink: 'https://instagram.com/p/feed' }),
+    );
+    const publisher = new InstagramReelPublisher(deps(fetchImpl), 'instagram_feed');
+    expect(publisher.platform).toBe('instagram_feed');
+    const result = await publisher.publish(
+      baseRequest({ video: { ...baseRequest().video, aspectRatio: '4:5' } }),
+    );
+    const body = requests[0]?.body as URLSearchParams;
+    expect(body.get('media_type')).toBe('REELS');
+    expect(body.get('share_to_feed')).toBe('true');
+    expect(body.get('is_ai_generated')).toBe('true');
+    expect(result.platformPostId).toBe('media-f');
+  });
+});
+
+describe('FacebookFeedPublisher (15.A1)', () => {
+  function video(size: number) {
+    const bytes = new Uint8Array(size).fill(7);
+    return {
+      sizeBytes: size,
+      contentType: 'video/mp4' as const,
+      durationSec: 30,
+      aspectRatio: '16:9' as const,
+      signedUrl: 'https://signed.example/feed.mp4',
+      read: vi.fn(async (s: number, e: number) => bytes.slice(s, e + 1)),
+    };
+  }
+
+  it('runs upload_phase start, transfer (per window), finish, then polls status', async () => {
+    const { fetch: fetchImpl, requests } = fakeFetch(
+      json({ upload_session_id: 'sess-1', video_id: 'vid-1', start_offset: '0', end_offset: '60' }),
+      json({ start_offset: '60', end_offset: '100' }),
+      json({ start_offset: '100', end_offset: '100' }),
+      json({ success: true }),
+      json({ status: { video_status: 'processing' } }),
+      json({ status: { video_status: 'ready' } }),
+    );
+    const v = video(100);
+    const result = await new FacebookFeedPublisher(deps(fetchImpl)).publish(
+      baseRequest({ video: v, title: 'Feed title' }),
+    );
+
+    const url = `${GRAPH_VIDEO_HOST}/${DEFAULT_GRAPH_VERSION}/account-1/videos`;
+    expect(requests[0]?.url).toBe(url);
+    const start = requests[0]?.body as URLSearchParams;
+    expect(start.get('upload_phase')).toBe('start');
+    expect(start.get('file_size')).toBe('100');
+    expect(start.get('access_token')).toBe('token-1');
+    const transfer = requests[1]?.body as FormData;
+    expect(transfer.get('upload_phase')).toBe('transfer');
+    expect(transfer.get('upload_session_id')).toBe('sess-1');
+    expect(transfer.get('start_offset')).toBe('0');
+    expect((transfer.get('video_file_chunk') as Blob).size).toBe(60);
+    expect((requests[2]?.body as FormData).get('start_offset')).toBe('60');
+    expect(v.read).toHaveBeenNthCalledWith(2, 60, 99);
+    const finish = requests[3]?.body as URLSearchParams;
+    expect(finish.get('upload_phase')).toBe('finish');
+    expect(finish.get('description')).toBe('caption text');
+    expect(finish.get('title')).toBe('Feed title');
+    expect(requests[4]?.url).toContain('/vid-1?');
+    expect(result).toEqual({
+      platformPostId: 'vid-1',
+      platformUrl: null,
+      metadata: { uploadSessionId: 'sess-1' },
+    });
+  });
+
+  it('throws when start returns no session', async () => {
+    const { fetch: fetchImpl } = fakeFetch(json({}));
+    await expect(
+      new FacebookFeedPublisher(deps(fetchImpl)).publish(baseRequest({ video: video(10) })),
+    ).rejects.toMatchObject({ errorClass: 'unknown', retryable: true });
+  });
+
+  it('fails non-retryably when processing reports error', async () => {
+    const { fetch: fetchImpl } = fakeFetch(
+      json({ upload_session_id: 's', video_id: 'v', start_offset: '0', end_offset: '0' }),
+      json({ success: true }),
+      json({ status: { video_status: 'error' } }),
+    );
+    await expect(
+      new FacebookFeedPublisher(deps(fetchImpl)).publish(baseRequest({ video: video(10) })),
+    ).rejects.toMatchObject({ errorClass: 'invalid_media', retryable: false });
+  });
+
+  it('refuses when finish is not accepted', async () => {
+    const { fetch: fetchImpl } = fakeFetch(
+      json({ upload_session_id: 's', video_id: 'v', start_offset: '0', end_offset: '0' }),
+      json({ success: false }),
+    );
+    await expect(
+      new FacebookFeedPublisher(deps(fetchImpl)).publish(baseRequest({ video: video(10) })),
+    ).rejects.toMatchObject({ errorClass: 'unknown' });
   });
 });

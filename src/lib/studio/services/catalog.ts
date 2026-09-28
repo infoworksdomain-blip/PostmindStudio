@@ -12,6 +12,9 @@ export const PLATFORMS = [
   'linkedin_video',
   'x',
   'facebook',
+  // 15.A1 (spec 3.1 / 9.1: eight destinations incl. Instagram feed and Facebook feed video).
+  'instagram_feed',
+  'facebook_feed',
 ] as const;
 
 export type Platform = (typeof PLATFORMS)[number];

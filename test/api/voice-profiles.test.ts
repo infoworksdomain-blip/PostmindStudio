@@ -62,6 +62,13 @@ describe.skipIf(!hasDb)('voice profiles API', { timeout: 60_000 }, () => {
     });
     cloning = fakeCloning();
     api.deps.voiceCloning = cloning.client;
+    // 15.C7: the consent recording says the statement (the scripted transcriber hears it).
+    h.adapters.assemblyai.respond = () => ({
+      state: 'succeeded',
+      output: {
+        metadata: { text: 'I, Amara Okafor, consent to PostMind Studio cloning my voice.' },
+      },
+    });
   });
 
   afterAll(async () => {
@@ -92,7 +99,7 @@ describe.skipIf(!hasDb)('voice profiles API', { timeout: 60_000 }, () => {
     return call(voicesRoute.POST, { method: 'POST', token, body, headers });
   }
 
-  it('creates a profile with recorded, audited consent (Enterprise only)', async () => {
+  it('creates a profile with recorded, audited consent (Plus and above; P4)', async () => {
     expect((await create('standard')).status).toBe(403);
     expect((await create('reader')).status).toBe(403);
     expect((await create('owner', { consent: null })).status).toBe(400);

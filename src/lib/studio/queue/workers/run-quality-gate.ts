@@ -24,6 +24,8 @@ import type { ProjectJobData } from '../queues';
 import { autoApproveIfTrusted } from '../../automation/auto-approve';
 import { notifyGenerationComplete } from '../../notifications/events';
 import { openSafetyReview, pendingSafetyReview } from '../../pipeline/safety-review';
+import { recordQualityGateOutcome } from '../../observability/slo';
+import { renderSyncChecks } from '../../pipeline/quality-brand-gate';
 
 // BACKLOG 3.7 — Layer 8 (spec 5.9 / 13.1). Every render of the run is measured with ffprobe /
 // ffmpeg, scanned for content safety, and evaluated fail-closed. All pass → READY_FOR_REVIEW;
@@ -72,6 +74,7 @@ async function checkRender(
   data: ProjectJobData,
   render: VideoRender,
   targetDurationSec: number,
+  project: { organisationId: string; businessId: string; brandKitId: string | null },
   asyncOutcome?: QualityInputs['contentSafety'],
 ) {
   const url = await deps.storage.signedUrl(render.s3Bucket, render.s3Key);
@@ -81,12 +84,25 @@ async function checkRender(
     deps.media.integratedLoudness(url),
     scanContentSafety(deps, data, render, url, asyncOutcome),
   ]);
+  // 15.B2: audio/caption sync, watermark and brand-kit checks from the rendered timeline.
+  const sync = await renderSyncChecks(deps, {
+    render,
+    renderUrl: url,
+    renderWidth: probe.width,
+    project,
+  });
+  // Brand intro/outro (and platform) cards lengthen the video beyond the script's target.
+  const cardsSec = sync.summary ? sync.summary.introSec + sync.summary.outroSec : 0;
   return evaluateQuality({
-    target: { durationSec: targetDurationSec, aspectRatio: render.aspectRatio as AspectRatio },
+    target: {
+      durationSec: targetDurationSec + cardsSec,
+      aspectRatio: render.aspectRatio as AspectRatio,
+    },
     probe,
     blackIntervals,
     loudnessLufs,
     contentSafety,
+    sync: sync.checks,
   });
 }
 
@@ -146,7 +162,14 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
   const results = await Promise.all(
     renders.map(async (render) => {
       const target = scripts.get(render.scriptId)?.targetDurationSec ?? render.durationSec;
-      const checks = await checkRender(deps, data, render, target, asyncOutcomes.get(render.id));
+      const checks = await checkRender(
+        deps,
+        data,
+        render,
+        target,
+        project,
+        asyncOutcomes.get(render.id),
+      );
       await deps.db.videoRender.update({
         where: { id: render.id },
         data: {
@@ -195,6 +218,13 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
         },
   });
   log.info({ allPassed, blocked }, 'quality gate complete');
+  // 15.D9: quality pass rate (spec 3.5) and generate → READY_FOR_REVIEW (spec 17.1).
+  recordQualityGateOutcome({
+    project,
+    passed: results.map((r) => qualityPassed(r.checks)),
+    moved,
+    now: deps.now(),
+  });
   // Spec 5.9 review checkpoint: AUTO_APPROVE projects of trusted creators skip the human step.
   if (moved && allPassed) await autoApproveIfTrusted(deps, data);
   // Spec 14.4 "Generation complete" (after auto-approval, so the wording matches the state).

@@ -58,8 +58,10 @@ describe('ElevenLabsAdapter', () => {
       url: 'https://api.elevenlabs.io/v1/text-to-speech/voice%2Fabc?output_format=mp3_44100_128',
       method: 'POST',
       headers: { 'xi-api-key': 'xi-key' },
-      body: { text: tts.text, model_id: 'eleven_multilingual_v2', language_code: 'en' },
+      body: { text: tts.text, model_id: 'eleven_multilingual_v2' },
     });
+    // 15.C5: language_code 'is not supported for multilingual_v2 models' (TTS convert docs).
+    expect(requests[0]?.body).not.toHaveProperty('language_code');
     // 40 chars billed * $0.10/1k * 0.75 = 0.3p → 1p
     expect(submitted.estimatedCostPence).toBe(1);
 
@@ -149,5 +151,23 @@ describe('ElevenLabsAdapter', () => {
     await expect(
       adapter.submit({ capability: 'embedding', organisationId: 'o', input: ['x'], dimensions: 1 }),
     ).rejects.toMatchObject({ errorClass: 'invalid_request' });
+  });
+
+  it('sends language_code (ISO 639-1) for models that accept it (15.C5)', async () => {
+    const fake = fakeFetch(audio());
+    const { storage } = memoryStorage();
+    const adapter = new ElevenLabsAdapter({
+      apiKey: 'xi-key',
+      storage,
+      bucket: 'studio-assets-dev',
+      usdToGbpRate: 0.75,
+      model: 'eleven_flash_v2_5',
+      fetchImpl: fake.fetch,
+    });
+    await adapter.submit({ ...tts, text: 'مرحبا', languageCode: 'ar' });
+    expect(fake.requests[0]?.body).toMatchObject({
+      model_id: 'eleven_flash_v2_5',
+      language_code: 'ar',
+    });
   });
 });

@@ -26,7 +26,20 @@ export interface EngagementClient {
     organisationId: string;
     platform: string;
     platformPostId: string;
+    /** 15.W5 (behind STUDIO_ENGAGEMENT_TRIGGER_FIELDS): core/engagement-trigger.ts. */
+    trigger?: EngagementTriggerFields;
   }): Promise<void>;
+}
+
+/** 15.W5 — fields for Engagement's ON_VIDEO_PUBLISHED trigger (proposed; spec 16.3, v1.1). */
+export interface EngagementTriggerFields {
+  hashtags: string[];
+  projectId: string;
+  projectTags: string[];
+  businessId: string;
+  sourceType: string;
+  templateId: string | null;
+  publishedAt: string | null;
 }
 
 export interface PublishingDeps {
@@ -39,6 +52,8 @@ export interface PublishingDeps {
   engagement: EngagementClient;
   logger: Logger;
   now: () => number;
+  /** 15.A3: S3_BUCKET_THUMBNAILS (custom thumbnails for YouTube); absent = none are sent. */
+  thumbnailsBucket?: string;
 }
 
 export interface PublicationMetadata {
@@ -61,7 +76,7 @@ export function publicationMetadata(p: Pick<VideoPublication, 'metadata'>): Publ
 export async function resolveCredentials(
   deps: PublishingDeps,
   publication: VideoPublication,
-): Promise<{ accessToken: string; accountId: string }> {
+): Promise<{ accessToken: string; accountId: string; scopes?: string[] }> {
   const platform = publication.platform as Platform;
   const rules = PLATFORM_RULES[platform];
   if (rules.credentials === 'meta') {
@@ -89,7 +104,7 @@ export async function resolveCredentials(
     { db: deps.db, keys: deps.keys, oauth: deps.oauth, now: deps.now },
     connection,
   );
-  return { accessToken, accountId: connection.platformAccountId };
+  return { accessToken, accountId: connection.platformAccountId, scopes: connection.scopes };
 }
 
 /**

@@ -45,13 +45,13 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
     group: 'Pipeline and media',
     title: 'Fallback provider adapters',
     blocker: 'blocked on a dependency',
-    why: 'Luma (AI_CLIP fallback for Runway) and HeyGen (AI_AVATAR) are built (13.32), so an open Runway breaker now fails over to Luma. Kling, Veo, fal, Replicate, D-ID, Storyblocks, Pexels footage, Azure Speech, Creatomate and Sightengine are still router candidates without adapters: BASIC-tier clips, stock footage, the voice/composition/safety fallbacks and a second avatar provider have no fallback yet.',
+    why: 'Luma (AI_CLIP fallback for Runway) and HeyGen (AI_AVATAR) are built (13.32), so an open Runway breaker now fails over to Luma. Storyblocks video and Pexels video (STOCK_FOOTAGE), Storyblocks music (music fallback) and the OpenAI text and transcription fallbacks are built (Phase 15 Track C). Kling, Veo, fal, Replicate, D-ID, Azure Speech, Creatomate and Sightengine are still router candidates without adapters: BASIC-tier clips, the voice/composition/safety fallbacks and a second avatar provider have no fallback yet.',
     source:
       'PROGRESS GATE 2 review list; providers/router.ts; plans/phase-13.md 13.38 (docs + router slot per provider)',
     plan: {
       screens: [],
       endpoints: ['one adapter per provider implementing ProviderAdapter + cost estimate'],
-      days: 15,
+      days: 12,
       dependsOn: 'provider accounts and keys (≈ 1.5 days each)',
     },
   },

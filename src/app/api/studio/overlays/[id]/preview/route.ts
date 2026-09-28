@@ -27,4 +27,5 @@ export const POST = withStudioRoute(
       ),
     },
   }),
+  { feature: 'overlays' },
 );

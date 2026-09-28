@@ -435,6 +435,8 @@ describe('createMetricsRegistry', () => {
         'linkedin_video',
         'instagram_reel',
         'facebook',
+        'instagram_feed',
+        'facebook_feed',
       ].sort(),
     );
   });

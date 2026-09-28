@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ProviderError } from '../../errors';
+import { DEFAULT_LANGUAGE, languageInstruction } from '../languages';
 
 // Layer 1 — Ideation (spec 5.2): turn the user's words into a concrete brief. If the input is
 // unusably vague ("make me a video"), return three concrete direction options instead of
@@ -17,6 +18,8 @@ export interface IdeationContext {
   targetPlatforms: string[];
   /** Optional steer from the create-project form (spec 8.2 brief.targetAudience / callToAction). */
   hints?: { targetAudience?: string | null; callToAction?: string | null };
+  /** 15.C5: BCP 47 language the brief is written in (hook, message, CTA, keywords). */
+  language?: string;
 }
 
 export const IDEATION_SCHEMA = {
@@ -96,6 +99,8 @@ export function buildIdeationPrompt(ctx: IdeationContext): string {
   if (ctx.hints?.targetAudience)
     lines.push(`Owner's intended audience: ${ctx.hints.targetAudience}`);
   if (ctx.hints?.callToAction) lines.push(`Owner's call to action: ${ctx.hints.callToAction}`);
+  // 15.C5: the brief is written natively in the video's language (keywords and hashtags too).
+  lines.push(languageInstruction(ctx.language ?? DEFAULT_LANGUAGE));
   lines.push('', 'Owner request:', '"""', ctx.rawInput.trim(), '"""');
   return lines.join('\n');
 }

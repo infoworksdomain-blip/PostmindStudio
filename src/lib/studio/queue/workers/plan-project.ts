@@ -39,6 +39,7 @@ import {
   type TargetFormat,
 } from '../../pipeline/scripting';
 import { styleMemorySupplement } from '../../services/style-memory';
+import { projectLanguages } from '../../languages';
 import { jobIds } from '../enqueue';
 import { planSlideshow } from './plan-slideshow';
 import { planUpload } from './plan-upload';
@@ -122,7 +123,7 @@ async function persistPlan(
   project: VideoProject,
   brief: IdeationResult,
   ideationModel: string,
-  scripts: Array<{ format: TargetFormat; plan: PlannedScript; model: string }>,
+  scripts: Array<{ format: TargetFormat; plan: PlannedScript; model: string; language?: string }>,
   brandKit: BrandKit | null,
   reference: ReferenceGuide | null = null,
 ): Promise<void> {
@@ -146,13 +147,15 @@ async function persistPlan(
       create: { projectId: project.id, ...briefData },
       update: briefData,
     });
-    for (const { format, plan, model } of scripts) {
+    for (const { format, plan, model, language } of scripts) {
       await tx.videoScript.create({
         data: {
           projectId: project.id,
           targetPlatform: format.platform,
           targetAspectRatio: format.aspectRatio,
           targetDurationSec: Math.round(format.durationSec),
+          // 15.C5: the script's language (the project's, or one of its extra languages).
+          ...(language && { language }),
           fullText: plan.fullText,
           scriptModel: model,
           shots: { create: plan.shots.map((shot) => ({ ...shot, state: 'QUEUED' as const })) },
@@ -275,6 +278,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
           businessName: project.name,
           targetPlatforms: formats.map((f) => f.platform),
           hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
+          language: project.language,
           brand: brandKit
             ? {
                 toneKeywords: brandKit.toneKeywords,
@@ -330,16 +334,19 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     );
   }
 
-  // Layer 2 — one script per target format
+  // Layer 2 — one script per target format and language (15.C5: extra languages each get a
+  // full variant set, written natively in that language).
   const treatments = availableTreatments(deps.registry);
+  const languages = projectLanguages(project.language, projectMetadata(project.metadata).languages);
+  const variants = languages.flatMap((language) => formats.map((format) => ({ format, language })));
   const scripts = await Promise.all(
-    formats.map(async (format) => {
+    variants.map(async ({ format, language }) => {
       const run = await runProvider(
         textRequest(
           data,
           SCRIPT_SYSTEM_PROMPT,
           [
-            buildScriptPrompt({ brief, format, treatments, restrictedTopics }),
+            buildScriptPrompt({ brief, format, treatments, restrictedTopics, language }),
             reference?.scriptSupplement(format.durationSec, treatments),
             styleMemory,
           ]
@@ -352,6 +359,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       );
       return {
         format,
+        language,
         plan: ((plan) => (reference ? reference.apply(plan, format.durationSec) : plan))(
           normaliseScript(jsonOutput(run.output), treatments, format.durationSec),
         ),
@@ -367,7 +375,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       SCRIPT_SAFETY_SYSTEM_PROMPT,
       buildScriptSafetyPrompt(
         scripts.map((s) => ({
-          platform: s.format.platform,
+          platform: `${s.format.platform} (${s.language})`,
           fullText: s.plan.fullText,
           onScreenText: s.plan.shots.flatMap((shot) =>
             shot.onScreenText ? [shot.onScreenText] : [],

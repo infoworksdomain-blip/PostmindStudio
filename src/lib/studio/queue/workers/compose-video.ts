@@ -1,4 +1,7 @@
+import type { Prisma } from '@prisma/client';
 import { ConflictError, NotFoundError, ProviderError } from '../../../errors';
+import type { CompositionSummary } from '../../pipeline/composition-summary';
+import type { RenderPreset } from '../../pipeline/render-presets';
 
 /** Thrown inside the render transaction to roll it back when the run was superseded. */
 class StaleRunError extends ConflictError {
@@ -10,11 +13,24 @@ import type { AspectRatio } from '../../providers/interface';
 import { providerOutputKey } from '../../storage';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
-  buildShotstackEdit,
+  buildShotstackComposition,
+  editDuration,
   outputDimensions,
-  totalDuration,
   type EdlShot,
 } from '../../pipeline/edl';
+import { cardSec } from '../../pipeline/edl-brand';
+import {
+  platformCardFromEnv,
+  resolveBrand,
+  resolveProjectBrandKit,
+  resolveWhiteLabel,
+  type ResolvedBrand,
+} from '../../pipeline/brand-resolve';
+import { parseRenderOptions, resolvePreset, withPreset } from '../../pipeline/render-presets';
+import { findCachedRender, withEdlHash } from '../../pipeline/compose-cache';
+import { edlHash } from '../../pipeline/edl-hash';
+import { fallbackFrom, shotFallbacks, type FallbackNotice } from '../../pipeline/fallback-notice';
+import { voiceTrimSecOf } from '../../pipeline/voice-fit';
 import { copyUrlToStorage } from '../../pipeline/persist';
 import {
   currentRunId,
@@ -32,6 +48,7 @@ import { slideOverlayPlacements } from '../../slideshow/slide-overlays';
 import { runProvider } from '../../pipeline/provider-run';
 import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../overlays/compose';
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
+import { ensureVoiceCaptions } from '../../overlays/voice-captions';
 import { resolveSlides } from '../../slideshow/resolve';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
@@ -39,6 +56,9 @@ import type { ProjectJobData } from '../queues';
 // BACKLOG 3.6 — Layers 5–7 (spec 4.5 step 6): music (ElevenLabs Music, pipeline/music.ts), Shotstack edit list per script,
 // render, copy the MP4 into the renders bucket, probe it, record video_renders, then hand off to
 // the quality gate. Renders completed by an earlier attempt are reused (metadata.renders).
+// Phase 15: brand-kit media + fonts per language (15.B1, P2 white-label, P6 AI label), render
+// presets (15.B7), the composition cache (15.B6: an identical edit re-points to the existing
+// render), the timeline summary for the quality gate (15.B2) and fallback notices (15.B9).
 
 export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Promise<void> {
   const log = deps.logger.child({
@@ -46,6 +66,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     organisationId: data.organisationId,
     runId: data.runId,
   });
+  // 15.A4 (Track A): burned-in narration captions as editable overlays before the edit is built.
+  await ensureVoiceCaptions(deps, data);
   const project = await deps.db.videoProject.findUnique({
     where: { id: data.projectId },
     include: {
@@ -100,17 +122,24 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     ...((projectMetadata(project.metadata).renders as Record<string, string>) ?? {}),
   };
   // Same resolution as ideation/overlays/voice: the project's kit, else the business default.
-  const kit = project.brandKitId
-    ? await deps.db.brandKit.findFirst({
-        where: { id: project.brandKitId, organisationId: project.organisationId },
-      })
-    : await deps.db.brandKit.findFirst({
-        where: {
-          organisationId: project.organisationId,
-          businessId: project.businessId,
-          isDefault: true,
-        },
-      });
+  const kit = await resolveProjectBrandKit(deps.db, project);
+  // 15.B1: brand media and fonts, resolved once per script language (fonts follow the script).
+  const brandByLanguage = new Map<string, ResolvedBrand>();
+  const brandFor = async (language: string): Promise<ResolvedBrand> => {
+    const cached = brandByLanguage.get(language);
+    if (cached) return cached;
+    const resolved = await resolveBrand(
+      { db: deps.db, storage: deps.storage, fontsBaseUrl: deps.config.fontsBaseUrl },
+      kit,
+      language,
+    );
+    brandByLanguage.set(language, resolved);
+    return resolved;
+  };
+  // P2: white-label outputs never carry a Studio mark; others get the optional platform card.
+  const whiteLabel = await resolveWhiteLabel(deps.db, project.organisationId, data.planTier);
+  const platformCard = whiteLabel ? undefined : platformCardFromEnv();
+  const renderOptions = parseRenderOptions(project.renderOptions);
   const palette = Array.isArray(kit?.colourPalette)
     ? (kit.colourPalette as unknown[]).filter((c): c is string => typeof c === 'string')
     : [];
@@ -129,14 +158,18 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   const brand = {
     backgroundColour: palette[0],
     textColour: palette[1],
-    fontFamily: kit?.fontPrimary ?? undefined,
+    palette,
   };
+  const primaryBrand = await brandFor(project.scripts[0]?.language ?? 'en-GB');
+  const cardsSec =
+    cardSec(primaryBrand.media.intro) + cardSec(primaryBrand.media.outro) + cardSec(platformCard);
 
   // Layer 5 — one music track for the run, sized to the longest variant (pipeline/music.ts).
   // Non-fatal: without a track the video renders with narration only.
   const longestSec = slides
     ? slideshowDuration(slides)
-    : Math.max(0, ...project.scripts.map((s) => s.shots.reduce((t, x) => t + x.durationSec, 0)));
+    : cardsSec +
+      Math.max(0, ...project.scripts.map((s) => s.shots.reduce((t, x) => t + x.durationSec, 0)));
   // 13.5: an uploaded video keeps its own soundtrack, so no music bed is generated for it.
   const track =
     project.sourceType === 'UPLOAD'
@@ -175,16 +208,25 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   };
 
   const masteringReports: Record<string, MasteringReport> = {};
-  const shotEdit = async (
-    scriptShots: (typeof project.scripts)[number]['shots'],
-    aspectRatio: AspectRatio,
-  ) => {
+  const cacheHits: Array<{ scriptId: string; renderId: string }> = [];
+  // 15.B9: generations that used a fallback provider (shown on the review screen).
+  const fallbacks: FallbackNotice[] = project.scripts.flatMap((s) =>
+    s.shots.flatMap((shot) => shotFallbacks(shot.id, shot.providerRouting)),
+  );
+  const shotEdit = async (script: (typeof project.scripts)[number], preset: RenderPreset) => {
+    const scriptShots = script.shots;
+    const aspectRatio = script.targetAspectRatio as AspectRatio;
+    const brandKit = await brandFor(script.language);
     const shots: EdlShot[] = await Promise.all(
       scriptShots.map(async (shot) => {
         const visual = await signed(shot.assetId);
         const voice = await signed(shot.voiceAssetId);
+        const voiceAsset = shot.voiceAssetId ? assets.get(shot.voiceAssetId) : undefined;
         return {
+          id: shot.id,
           durationSec: shot.durationSec,
+          // 15.B3: narration that could not be fitted stops at a word boundary.
+          voiceTrimSec: voiceAsset ? voiceTrimSecOf(voiceAsset.metadata) : null,
           visualTreatment: shot.visualTreatment,
           visualSrc: visual?.url,
           visualKind: visual?.kind === 'IMAGE' ? ('image' as const) : ('video' as const),
@@ -199,7 +241,23 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
         };
       }),
     );
-    let offset = 0;
+    const composition = buildShotstackComposition({
+      aspectRatio,
+      shots,
+      brand: {
+        ...brand,
+        fontFamily: brandKit.fonts.fontFamily ?? undefined,
+        fontSources: brandKit.fonts.fontSources,
+      },
+      brandMedia: brandKit.media,
+      aiLabel: brandKit.aiLabel,
+      platformCard,
+      language: script.language,
+      preset,
+      ...music,
+    });
+    // Shot overlays sit after the intro card (15.B1).
+    let offset = composition.summary.introSec;
     const placed: PlacedOverlay[] = scriptShots.flatMap((shot) => {
       const at = offset;
       offset += shot.durationSec;
@@ -213,8 +271,9 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       return shot.overlays.map((row) => ({ row, offsetSec: at, words }));
     });
     return {
-      edit: buildShotstackEdit({ aspectRatio, shots, brand, ...music }),
-      outputDurationSec: totalDuration(shots),
+      edit: composition.edit,
+      summary: composition.summary as CompositionSummary | null,
+      outputDurationSec: editDuration(shots, brandKit.media) + cardSec(platformCard),
       placed,
     };
   };
@@ -234,11 +293,14 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     edit: Record<string, unknown>,
     placed: PlacedOverlay[],
     aspectRatio: AspectRatio,
+    preset: RenderPreset,
+    language?: string,
   ) => {
     if (placed.length === 0) return edit;
     const track = await buildOverlayTrack(placed, {
-      frame: outputDimensions(aspectRatio),
+      frame: outputDimensions(aspectRatio, preset.resolution),
       organisationId: project.organisationId,
+      language, // 15.C5: overlay fonts + RTL per script language (overlays/script-fonts.ts)
       preRender: {
         storage: deps.storage,
         bucket: deps.config.rendersBucket,
@@ -256,18 +318,65 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       .filter((script) => !renders[script.id])
       .map(async (script) => {
         const aspectRatio = script.targetAspectRatio as AspectRatio;
+        const chosen = resolvePreset({
+          platform: script.targetPlatform,
+          planTier: data.planTier,
+          options: renderOptions,
+        });
+        // Slideshow layouts are fixed at 1080p: a 4K request renders them at 1080.
+        const preset: RenderPreset =
+          slides && chosen.resolution === '4k' ? { ...chosen, resolution: '1080' } : chosen;
         const built = slides
           ? {
-              edit: buildSlideshowEdit({ aspectRatio, slides, brand, ...music }),
+              edit: withSlideshowFonts(
+                withPreset(
+                  buildSlideshowEdit({
+                    aspectRatio,
+                    slides,
+                    brand: { ...brand, fontFamily: primaryBrand.fonts.fontFamily ?? undefined },
+                    ...music,
+                  }),
+                  aspectRatio,
+                  preset,
+                ),
+                primaryBrand.fonts.fontSources,
+              ),
+              summary: null,
               outputDurationSec: slideshowDuration(slides),
               placed: slideOverlays.flat(),
             }
-          : await shotEdit(script.shots, aspectRatio);
+          : await shotEdit(script, preset);
         const wholeVideo = renderOverlays
           .filter((row) => row.renderId && platformOf.get(row.renderId) === script.targetPlatform)
           .map((row) => ({ row, offsetSec: 0 }));
         const outputDurationSec = built.outputDurationSec;
-        const edit = await withOverlays(built.edit, [...built.placed, ...wholeVideo], aspectRatio);
+        const edit = await withOverlays(
+          built.edit,
+          [...built.placed, ...wholeVideo],
+          aspectRatio,
+          preset,
+          script.language,
+        );
+        // 15.B6: an identical edit for this project and platform re-points to the render it made.
+        const hash = edlHash(edit);
+        const composition = withEdlHash(built.summary, hash);
+        const cached = await findCachedRender(deps, {
+          projectId: project.id,
+          targetPlatform: script.targetPlatform,
+          edlHash: hash,
+        });
+        if (cached) {
+          const recorded = await recordRunRender(deps.db, {
+            projectId: project.id,
+            runId: data.runId,
+            scriptId: script.id,
+            renderId: cached.id,
+          });
+          if (!recorded) throw new StaleRunError();
+          renders[script.id] = cached.id;
+          cacheHits.push({ scriptId: script.id, renderId: cached.id });
+          return;
+        }
         const run = await runProvider(
           {
             need: { kind: 'capability', capability: 'composition' },
@@ -320,6 +429,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           select: { costPence: true },
         });
         const metadata = (run.output.metadata ?? {}) as { renderId?: string };
+        const composerFallback = fallbackFrom(run.decision, 'composition');
+        if (composerFallback) fallbacks.push(composerFallback);
         // The render row and its pointer in metadata.renders commit together: a retry after a
         // crash either sees the pointer (skips this script) or finds neither.
         const render = await deps.db.$transaction(async (tx) => {
@@ -338,6 +449,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
               composerJobId: metadata.renderId ?? null,
               qualityCheckState: 'PENDING',
               costPence: job?.costPence ?? 0,
+              composition: composition as Prisma.InputJsonValue,
             },
           });
           const recorded = await recordRunRender(tx, {
@@ -364,10 +476,11 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     });
   }
   // 13.1 / 13.2: the new renders reflect every script and shot edit made so far.
+  // 15.B6 cache hits and 15.B9 fallback notices are recorded per run.
   await mergeProjectMetadata(deps.db, {
     projectId: project.id,
     runId: data.runId,
-    patch: { staleRenders: [] },
+    patch: { staleRenders: [], compositionCache: cacheHits, fallbacks },
   });
   await transitionProject(deps.db, {
     projectId: project.id,
@@ -376,7 +489,23 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     to: 'QUALITY_CHECKING',
   });
   await deps.queue.add('run-quality-gate', data, { jobId: jobIds.runQualityGate(data) });
+  // 15.A3 (Track A): generated thumbnail candidates (non-blocking, own job).
+  await deps.queue.add('generate-thumbnail', data, { jobId: jobIds.generateThumbnail(data) });
   log.info({ renders: Object.keys(renders).length }, 'renders complete; quality gate enqueued');
+}
+
+/** Slideshow edits get the brand font sources too (timeline.fonts). */
+function withSlideshowFonts(
+  edit: Record<string, unknown>,
+  sources: string[],
+): Record<string, unknown> {
+  if (sources.length === 0) return edit;
+  const timeline = edit.timeline as Record<string, unknown>;
+  const existing = Array.isArray(timeline.fonts) ? (timeline.fonts as Array<{ src: string }>) : [];
+  const added = sources
+    .filter((src) => !existing.some((f) => f.src === src))
+    .map((src) => ({ src }));
+  return { ...edit, timeline: { ...timeline, fonts: [...existing, ...added] } };
 }
 
 export async function onComposeVideoFailed(

@@ -3,6 +3,7 @@ import { getMetrics, routeLabel } from '../observability/metrics';
 import type { z } from 'zod';
 import { ConflictError, StudioError, toErrorResponse, ValidationError } from '../../errors';
 import { getCorrelationId, withContext } from '../../logger';
+import { featureGateFor, type Feature } from '../services/features';
 import { requireCapability, type StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
@@ -61,7 +62,16 @@ function flattenParams(params: Record<string, string | string[]>): Record<string
   );
 }
 
-export function withStudioRoute(capability: StudioCapability, handler: Handler) {
+export interface StudioRouteOptions {
+  /** 15.D1 / A12.4: 403 feature_disabled while this feature is off for the tenant. */
+  feature?: Feature | readonly Feature[];
+}
+
+export function withStudioRoute(
+  capability: StudioCapability,
+  handler: Handler,
+  options: StudioRouteOptions = {},
+) {
   const handle = async function handle(req: Request, next: NextRouteContext): Promise<Response> {
     const correlationId = getCorrelationId(req);
     const headers = { 'x-correlation-id': correlationId };
@@ -75,6 +85,8 @@ export function withStudioRoute(capability: StudioCapability, handler: Handler) 
         deps.logger,
       );
       requireCapability(tenant, capability);
+      for (const feature of [options.feature ?? []].flat())
+        await featureGateFor(deps.db).assertEnabled(feature, tenant.organisationId);
       await deps.rateLimiter?.check({
         organisationId: tenant.organisationId,
         userId: tenant.userId,

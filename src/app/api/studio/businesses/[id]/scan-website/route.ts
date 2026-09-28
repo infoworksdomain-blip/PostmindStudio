@@ -10,11 +10,17 @@ export const POST = withStudioRoute(
     const businessId = parseBusinessId(params.id);
     const input = await parseBody(req, scanWebsiteInput);
     const scan = await startScan(deps, tenant, businessId, input);
-    // A6.7: record the ownership warranty with who gave it and when.
+    // A6.7 / A11.2: record the ownership warranty — who gave it, when, and the exact text ticked
+    // (also stored on website_scans.ownershipStatement).
     audit(
       'studio.website_scan.start',
       { type: 'website_scan', id: scan.id },
-      { businessId, url: scan.url, ownershipConfirmed: true },
+      {
+        businessId,
+        url: scan.url,
+        ownershipConfirmed: true,
+        ownershipStatement: scan.ownershipStatement,
+      },
     );
     return { status: 202, body: { scanId: scan.id, scan } };
   },

@@ -95,11 +95,17 @@ describe.skipIf(!hasDb)('website scan + image library API', { timeout: 120_000 }
   const org = `api-scan-${randomUUID()}`;
   const otherOrg = `api-scan-other-${randomUUID()}`;
   const quotaOrg = `api-scan-quota-${randomUUID()}`;
+  // 15.D2: scan-business limits (A10.3) and image generation (Plus+) are tier-gated and covered
+  // in test/api/p15-d-tiers.test.ts; these suites exercise the mechanics on an Enterprise plan.
+  const enterprise = (id: string) => ({
+    ...tenant(id),
+    organisation: { id, planTier: 'ENTERPRISE' },
+  });
   const tokens = {
-    owner: tenant(org),
+    owner: enterprise(org),
     reader: tenant(org, ['studio:project:read']),
-    other: tenant(otherOrg),
-    quota: tenant(quotaOrg),
+    other: enterprise(otherOrg),
+    quota: enterprise(quotaOrg),
   };
   let h: ReturnType<typeof createHarness>;
 
@@ -125,8 +131,18 @@ describe.skipIf(!hasDb)('website scan + image library API', { timeout: 120_000 }
     await db.$disconnect();
   });
 
+  // 15.D8 / A11.2: every scan request carries the checkbox text; tests that don't set one get it.
+  const withStatement = (body: unknown) =>
+    body && typeof body === 'object' && !('ownershipStatement' in body)
+      ? { ...body, ownershipStatement: 'I own this website or am authorised to represent it.' }
+      : body;
   const scan = (businessId: string, body: unknown, token = 'owner') =>
-    call(scanWebsiteRoute.POST, { method: 'POST', token, params: { id: businessId }, body });
+    call(scanWebsiteRoute.POST, {
+      method: 'POST',
+      token,
+      params: { id: businessId },
+      body: withStatement(body),
+    });
 
   it('scans a site, classifies it and builds the library from site + stock images', async () => {
     const biz = `biz-${randomUUID()}`;

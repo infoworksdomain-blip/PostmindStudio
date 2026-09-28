@@ -100,7 +100,9 @@ export const PLATFORM_LABEL: Record<string, string> = {
   youtube: 'YouTube',
   linkedin_video: 'LinkedIn',
   x: 'X',
-  facebook: 'Facebook',
+  facebook: 'Facebook Reels',
+  instagram_feed: 'Instagram feed',
+  facebook_feed: 'Facebook feed',
 };
 
 export function stateOf(map: Record<string, { label: string; tone: Tone }>, state: string) {

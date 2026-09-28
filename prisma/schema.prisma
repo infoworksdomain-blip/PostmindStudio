@@ -48,9 +48,13 @@ model VideoProject {
   reviewPolicy     ReviewPolicy      @default(REQUIRE_APPROVAL)
   publishPolicy    PublishPolicy     @default(MANUAL)
   scheduledStartAt DateTime?
+  // 15.B7: per-project render options { fps?: 24|30|60, youtubeResolution?: '1080'|'4k', draft?: bool }
+  renderOptions    Json?
   completedAt      DateTime?
   errorReason      String?
   metadata         Json?
+  // 15.C5 (spec 3.1): BCP 47 language of the video (scripts, voice, captions).
+  language         String            @default("en-GB")
 
   brief        VideoBrief?
   scripts      VideoScript[]
@@ -275,6 +279,9 @@ model VideoRender {
   qualityCheckState QualityCheckState
   qualityIssues     Json? // [{code, severity, detail}]
   costPence         Int                @default(0)
+  // 15.B2/B6: what Layer 6 put on the timeline (edlHash, brand elements, shot/voice/caption
+  // spans) — read by the quality gate's sync and brand checks and by the composition cache.
+  composition       Json?
   createdAt         DateTime           @default(now())
   publications      VideoPublication[]
 
@@ -461,12 +468,12 @@ model ProviderUsage {
 
 // 7.11 + A7.2 (businessProfileId)
 model BrandKit {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   organisationId    String
   businessId        String // ref PostMind Core
   businessProfileId String? // A7.2 — ref BusinessProfile
   name              String
-  isDefault         Boolean  @default(false)
+  isDefault         Boolean   @default(false)
   logoAssetId       String?
   watermarkAssetId  String?
   colourPalette     Json // hex colour array
@@ -479,8 +486,13 @@ model BrandKit {
   outroCardAssetId  String?
   voiceProfileId    String?
   restrictedTopics  String[] // never mention
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  // 15.B1: spec 8.5 DELETE is a soft delete.
+  deletedAt         DateTime?
+  // Operator decision P6 (2026-09-28): optional on-video "AI-generated" corner label, default off
+  // (platform AI labels stay always on).
+  aiDisclosureLabel Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([organisationId, businessId])
   @@map("brand_kits")
@@ -500,8 +512,8 @@ model VoiceProfile {
   isDefault            Boolean   @default(false)
   createdAt            DateTime  @default(now())
   // Phase 13.13 (spec 10.2 / 13.4): cloning needs recorded consent. READY | REQUIRES_VERIFICATION
-  // (ElevenLabs asked for voice verification) | DELETED (revoked at the provider; the row stays
-  // as the consent audit record).
+  // (ElevenLabs asked for voice verification) | PENDING_REVIEW (15.C7 consent check not passed)
+  // | DELETED (revoked at the provider; the row stays as the consent audit record).
   state                String    @default("READY")
   speakerName          String?
   consentStatement     String?
@@ -509,6 +521,13 @@ model VoiceProfile {
   consentGivenAt       DateTime?
   consentS3Bucket      String?
   consentS3Key         String?
+  // 15.C7 (spec 10.2): automatic check that the consent recording says the statement.
+  // passed | mismatch | unavailable; anything but passed keeps state PENDING_REVIEW.
+  consentCheck         String?
+  consentTranscript    String?
+  consentCheckedAt     DateTime?
+  // ElevenLabs asked for voice verification at cloning (state after a passed check).
+  providerVerificationRequired Boolean @default(false)
   sampleCount          Int       @default(0)
   sampleSeconds        Float?
   deletedAt            DateTime?
@@ -555,6 +574,11 @@ model StyleMemory {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   deletedAt      DateTime?
+  // 15.E6 (spec 10.4 "view and edit"): pinned rows are never overwritten or removed by the
+  // nightly build; disabled rows are kept but never injected into Layer 1–2 prompts.
+  pinned         Boolean         @default(false)
+  disabled       Boolean         @default(false)
+  editedByUserAt DateTime?
 
   @@unique([organisationId, businessId, signalType])
   @@map("style_memories")
@@ -712,6 +736,11 @@ model VideoLibraryItem {
   embedding      VideoLibraryEmbedding?
   license        VideoLibraryLicense?
   retiredAt      DateTime? // hidden from search
+  // 15.D7 / A3.8: staff review of the automatic categorisation (null = not reviewed yet).
+  categoryReview     LibraryCategoryReview?
+  categoryReviewedAt DateTime?
+  /** 15.D7: last re-analysis (POST /admin/library/reanalyse); null = only the original ingest. */
+  reanalysedAt       DateTime?
 
   @@index([categoryId, retiredAt])
   @@index([tags], type: Gin)
@@ -809,6 +838,15 @@ enum LicenseScenario {
   // Operator decision 2026-09-27: operator-owned corpus content that needs no licence.
   // TEMPLATE + INSPIRE; licenseSource records the decision (who/when) as the audit trail.
   NOT_REQUIRED
+
+  @@schema("studio")
+}
+
+/// 15.D7 / A3.8 "Bulk-edit categorisation (accept auto-classification, override, reject)".
+enum LibraryCategoryReview {
+  ACCEPTED
+  OVERRIDDEN
+  REJECTED
 
   @@schema("studio")
 }
@@ -1001,6 +1039,10 @@ model BusinessProfile {
   classifierVersion  Int      @default(1)
   lastRefreshedAt    DateTime @default(now())
   editedByUser       Boolean  @default(false)
+  // 15.D8 / A13: the classifier's self-reported confidence (0–1; null before 15.D8) and the
+  // low-confidence flag (< 0.7) the user clears by confirming or editing the profile.
+  classifierConfidence Float?
+  needsReview          Boolean @default(false)
 
   // DEVIATION (A7.7 has businessId @unique): Core cannot verify business ids, so uniqueness is
   // per organisation — one tenant can never claim or block another tenant's business id.
@@ -1032,6 +1074,8 @@ model WebsiteScan {
   checkedUnchangedAt DateTime?
   planTier           String?
   trigger            String    @default("manual") // manual | scheduled
+  // 15.D8 / A11.2: the ownership checkbox text the user ticked (null: historic or scheduled).
+  ownershipStatement String?
 
   @@index([businessId, startedAt])
   @@index([state, completedAt])
@@ -1260,6 +1304,9 @@ model OrgPolicy {
   defaultReviewPolicy       ReviewPolicy?
   autoApproveAllowed        Boolean       @default(true)
   autoApproveTrustThreshold Int?
+  // Operator decision P2 (2026-09-28): white-labelled outputs carry no Studio marks. ENTERPRISE
+  // is always white-label; staff may flag other organisations here.
+  whiteLabel                Boolean       @default(false)
   updatedByUserId           String
   createdAt                 DateTime      @default(now())
   updatedAt                 DateTime      @updatedAt
@@ -1300,10 +1347,15 @@ model AutoPublishOutbox {
   lockedAt       DateTime?
   lastError      String?
   publicationId  String?
+  /// 15.A5: absolute publish time (SCHEDULED projects and drip slots, staggered per target).
+  scheduledFor   DateTime?
+  /// 15.A5: the drip slot this approval took (target 0's time); unique per business in use.
+  slotAt         DateTime?
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
   @@unique([approvalTaskId, targetIndex])
+  @@index([slotAt])
   @@index([state, nextAttemptAt])
   @@index([projectId, createdAt])
   @@map("auto_publish_outbox")
@@ -1360,28 +1412,32 @@ model NotificationPreference {
 // probes it (ffprobe). A source video's video_assets row is created with its project (the
 // column needs a project id); a slide clip's asset is created at /complete.
 model VideoUpload {
-  id              String      @id @default(cuid())
-  organisationId  String
-  businessId      String?
-  createdByUserId String
-  kind            UploadKind
-  projectId       String? // SLIDE_CLIP: the slideshow; SOURCE_VIDEO: set when a project uses it
-  fileName        String
-  contentType     String
-  declaredBytes   BigInt
-  s3Bucket        String
-  s3Key           String
-  state           UploadState @default(PENDING)
-  assetId         String? // ref VideoAsset once one exists
-  durationSec     Float?
-  widthPx         Int?
-  heightPx        Int?
-  sizeBytes       BigInt?
-  errorReason     String?
-  expiresAt       DateTime // presigned PUT expiry
-  completedAt     DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                 String      @id @default(cuid())
+  organisationId     String
+  businessId         String?
+  createdByUserId    String
+  kind               UploadKind
+  projectId          String? // SLIDE_CLIP: the slideshow; SOURCE_VIDEO: set when a project uses it
+  fileName           String
+  contentType        String
+  declaredBytes      BigInt
+  s3Bucket           String
+  s3Key              String
+  state              UploadState @default(PENDING)
+  assetId            String? // ref VideoAsset once one exists
+  durationSec        Float?
+  widthPx            Int?
+  heightPx           Int?
+  sizeBytes          BigInt?
+  errorReason        String?
+  expiresAt          DateTime // presigned PUT expiry
+  // 15.B1: brand fonts — A11.5 licence confirmation for commercial embedding, and the family
+  // name embedded in the font (Shotstack matches fonts by it).
+  licenceConfirmedAt DateTime?
+  fontFamily         String?
+  completedAt        DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 
   @@index([organisationId, createdAt])
   @@index([projectId])
@@ -1392,6 +1448,10 @@ model VideoUpload {
 enum UploadKind {
   SOURCE_VIDEO
   SLIDE_CLIP
+  BRAND_LOGO
+  BRAND_WATERMARK
+  BRAND_CARD
+  BRAND_FONT
 
   @@schema("studio")
 }
@@ -1401,5 +1461,242 @@ enum UploadState {
   READY
   FAILED
 
+  @@schema("studio")
+}
+
+// =============================================================================
+// Phase 15 track E — data rights, integrations and sharing
+// (migration 20261001050000_data_rights_integrations)
+// =============================================================================
+
+// DERIVED — 15.E1 spec 18.4 "Right to access: user can export all their Studio data" and A11.7
+// (profile exportable "via API export"). One row per request. activeKey = organisationId while
+// QUEUED / RUNNING (unique: one export at a time per organisation), null once finished. The ZIP
+// is written to the assets bucket; its link lives 7 days (the retention sweep then deletes it).
+model DataExport {
+  id                String    @id @default(cuid())
+  organisationId    String
+  requestedByUserId String
+  include           String[]
+  state             String    @default("QUEUED") // QUEUED | RUNNING | READY | FAILED | EXPIRED
+  activeKey         String?   @unique
+  s3Bucket          String?
+  s3Key             String?
+  bytes             Int?
+  summary           Json? // { tables: { name: rows }, assets: n, truncated: [name] }
+  errorReason       String?
+  expiresAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([organisationId, createdAt])
+  @@index([state, expiresAt])
+  @@map("data_exports")
+  @@schema("studio")
+}
+
+// DERIVED — 15.E2 spec 7.14 / 16.2 business.deleted and A11.7 "on business deletion, profile is
+// deleted within 30 days". Core calls the internal business purge; rows are soft-deleted at
+// once where the table supports it and everything is hard-deleted after graceUntil.
+model BusinessPurge {
+  id                    String    @id @default(cuid())
+  organisationId        String
+  businessId            String
+  requestedAt           DateTime  @default(now())
+  graceUntil            DateTime
+  projectsDeleted       Int
+  publicationsCancelled Int
+  styleMemoriesDeleted  Int
+  state                 String // 'soft_deleted' | 'hard_deleted'
+  hardDeletedAt         DateTime?
+  hardDeleteSummary     Json? // rows deleted per table + S3 objects removed
+
+  @@unique([organisationId, businessId])
+  @@index([state, graceUntil])
+  @@map("business_purges")
+  @@schema("studio")
+}
+
+// DERIVED — 15.E3 spec 8.8 attribute-conversation / 15.4 "Which script hooks convert best to
+// inbox leads?". One row per (publication, Engagement conversation); repeats are idempotent.
+model PublicationConversation {
+  id             String   @id @default(cuid())
+  organisationId String
+  publicationId  String
+  conversationId String // ref Engagement conversation (plain string, spec 7.14)
+  kind           String // comment | dm | mention
+  isLead         Boolean  @default(false)
+  receivedAt     DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([publicationId, conversationId])
+  @@index([organisationId, receivedAt])
+  @@map("publication_conversations")
+  @@schema("studio")
+}
+
+// DERIVED — 15.E4 spec 18.5: requests received at policy@postmind.ai (and platform / regulator
+// notices), entered by PostMind staff; counted in the annual transparency report.
+model TakedownRequest {
+  id               String    @id @default(cuid())
+  receivedAt       DateTime
+  source           String // policy_mailbox | platform | regulator | court | other
+  category         String // copyright | privacy | defamation | safety | impersonation | regulatory | other
+  requester        String?
+  reference        String?
+  organisationId   String?
+  publicationId    String?
+  summary          String
+  state            String    @default("OPEN") // OPEN | ACTIONED | REJECTED
+  resolutionNote   String?
+  enteredByUserId  String
+  resolvedByUserId String?
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([receivedAt])
+  @@index([state, receivedAt])
+  @@map("takedown_requests")
+  @@schema("studio")
+}
+
+// DERIVED — 15.E5 spec 4.4 "public smart-preview links for approvals" (view + comment only;
+// approving from a link waits on decision P8). Only the SHA-256 of the token is stored.
+model ShareLink {
+  id              String             @id @default(cuid())
+  organisationId  String
+  projectId       String
+  tokenHash       String             @unique
+  createdByUserId String
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  revokedByUserId String?
+  viewCount       Int                @default(0)
+  lastViewedAt    DateTime?
+  createdAt       DateTime           @default(now())
+  comments        ShareLinkComment[]
+
+  @@index([organisationId, projectId, createdAt])
+  @@map("share_links")
+  @@schema("studio")
+}
+
+model ShareLinkComment {
+  id             String    @id @default(cuid())
+  shareLinkId    String
+  shareLink      ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+  organisationId String
+  projectId      String
+  authorName     String
+  // Operator decision P8 (2026-09-28): the reviewer may type an email so the team can reply.
+  // Shown to the organisation only, never on the public page.
+  authorEmail    String?
+  body           String
+  createdAt      DateTime  @default(now())
+
+  @@index([shareLinkId, createdAt])
+  @@index([projectId, createdAt])
+  @@map("share_link_comments")
+  @@schema("studio")
+}
+
+// DERIVED — 15.W2 spec 16.1 "Studio reports usage events (video-generated,
+// provider-cost-incurred) via postmind-core.internal/api/internal/usage". Outbox: rows are
+// derived idempotently (eventKey) and stay pending_setup until Core publishes the usage API.
+model UsageEvent {
+  id             String    @id @default(cuid())
+  organisationId String
+  eventType      String // video_generated | provider_cost_incurred
+  eventKey       String    @unique // render:<id> | provider_job:<id>
+  payload        Json
+  occurredAt     DateTime
+  state          String    @default("pending_setup") // pending_setup | sent | failed
+  attempts       Int       @default(0)
+  lastError      String?
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([state, occurredAt])
+  @@index([organisationId, occurredAt])
+  @@map("usage_events")
+  @@schema("studio")
+}
+
+// DERIVED — 15.W3 spec 16.1 "scheduled publications also write shadow entries into PostMind
+// Core's content calendar". One row per publication: the entry Core should hold (upsert while
+// SCHEDULED, delete otherwise). pending_setup until Core publishes a calendar API.
+model CalendarShadow {
+  publicationId  String    @id
+  organisationId String
+  projectId      String
+  platform       String
+  desiredOp      String // upsert | delete
+  scheduledFor   DateTime?
+  title          String?
+  state          String    @default("pending_setup") // pending_setup | synced | failed
+  coreEntryId    String?
+  attempts       Int       @default(0)
+  lastError      String?
+  syncedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([state, updatedAt])
+  @@index([organisationId])
+  @@map("calendar_shadows")
+  @@schema("studio")
+}
+
+// DERIVED — 15.A5 drip queue (spec 3.1 "drip queue", 9.9): per business, weekly posting slots.
+// An approved SCHEDULED project without a start time takes the next free slot; its targets are
+// staggered from there (auto_publish_outbox.slotAt / scheduledFor).
+model DripQueue {
+  id              String   @id @default(cuid())
+  organisationId  String
+  businessId      String
+  /// [{ weekday 0-6 (0 = Sunday), time "HH:MM", timezone IANA }]
+  slots           Json
+  /// Platforms drip-posted (subset of the project's targets); empty = every target.
+  platforms       String[]
+  enabled         Boolean  @default(true)
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([organisationId, businessId])
+  @@map("drip_queues")
+  @@schema("studio")
+}
+
+// DERIVED — Phase 15 operator decision P1 (2026-09-28; spec 6.6 / 12.6): Enterprise
+// organisations may bring their own provider API keys (BYOC). Key material is envelope-encrypted
+// (crypto/envelope.ts) and wiped on revoke; one row per (organisation, provider), re-used when a
+// revoked key is set again. Gated by STUDIO_BYOC_ENABLED.
+model ProviderCredential {
+  id                    String    @id @default(cuid())
+  organisationId        String
+  /// BYOC provider id (providers/byoc-providers.ts), e.g. 'runway', 'elevenlabs', 'storyblocks'.
+  providerId            String
+  /// Envelope-encrypted API key; NULL once revoked.
+  encryptedKey          String?
+  /// Envelope-encrypted private half of a two-part key (Storyblocks); NULL otherwise.
+  encryptedSecondaryKey String?
+  /// Non-secret hint: the last 4 characters of the API key.
+  hint                  String?
+  state                 String    @default("active") // active | revoked
+  lastTestedAt          DateTime?
+  /// { healthy: boolean, reason?: string } from the adapter's healthCheck().
+  lastTestResult        Json?
+  createdByUserId       String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([organisationId, providerId])
+  @@index([organisationId, state])
+  @@map("provider_credentials")
   @@schema("studio")
 }

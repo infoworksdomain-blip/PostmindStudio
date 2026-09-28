@@ -7,6 +7,14 @@ import { buildFormats, nameFromBrief, type Length, type TargetFormatInput } from
 export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD';
 export type ReferenceMode = 'TEMPLATE' | 'INSPIRE';
 export type ReviewPolicy = 'AUTO_APPROVE' | 'REQUIRE_APPROVAL';
+export type QualityTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
+
+const TIER_ORDER: QualityTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
+
+/** 15.C4: tiers a run may use — the plan's and the cheaper ones (never above the plan). */
+export function tiersAtOrBelow(plan: QualityTier): QualityTier[] {
+  return TIER_ORDER.slice(0, TIER_ORDER.indexOf(plan) + 1);
+}
 
 export interface CreateState {
   brief: string;
@@ -27,6 +35,15 @@ export interface CreateState {
   autoPublishAccounts: Record<string, string>;
   /** 13.5: the completed source-video upload (POST /uploads → /complete). */
   upload?: { id: string; fileName: string } | null;
+  /** 15.C5: the video's language (BCP 47) and extra languages (one variant set each). */
+  language?: string;
+  extraLanguages?: string[];
+  /** 15.C4 / 15.A5: publish at this local date-time ('' = not scheduled). */
+  scheduleAt?: string;
+  /** 15.C4: a lower tier for this run ('' = the plan's). */
+  qualityTier?: QualityTier | '';
+  /** 15.C4: an approval workflow (15.D3); '' = the organisation's matching rule. */
+  approvalWorkflowId?: string;
 }
 
 export interface Reference {
@@ -42,7 +59,11 @@ export interface CreateProjectBody {
   /** Omitted for TEMPLATE projects: the template's formats apply. */
   targetFormats?: TargetFormatInput[];
   templateId?: string;
-  publishPolicy?: 'AUTO_ON_APPROVAL';
+  publishPolicy?: 'AUTO_ON_APPROVAL' | 'SCHEDULED';
+  scheduledStartAt?: string;
+  language?: string;
+  languages?: string[];
+  approvalWorkflowId?: string;
   autoPublish?: { targets: AutoPublishTarget[] };
   brief?: { rawInput: string; targetAudience?: string; callToAction?: string };
   slideshow?: { templateId: string; topic?: string };
@@ -56,7 +77,11 @@ export interface CreateProjectBody {
 export const BRIEF_MAX = 4_000;
 
 /** Problems that stop submission (empty = OK). */
-export function validateCreate(state: CreateState, businessId: string | null): string[] {
+export function validateCreate(
+  state: CreateState,
+  businessId: string | null,
+  now: number = Date.now(),
+): string[] {
   const problems: string[] = [];
   const templated = usesTemplate(state);
   if (!businessId) problems.push('Choose a business first.');
@@ -74,6 +99,12 @@ export function validateCreate(state: CreateState, businessId: string | null): s
     problems.push('Choose at least one account to auto-publish to, or turn auto-publish off.');
   if (state.source === 'SLIDESHOW' && !state.templateId)
     problems.push('Pick a slideshow template.');
+  if (state.scheduleAt) {
+    const at = Date.parse(state.scheduleAt);
+    if (!Number.isFinite(at) || at <= now) problems.push('Schedule a time in the future.');
+    else if (!state.autoPublish && state.source !== 'SLIDESHOW')
+      problems.push('Choose the accounts to publish to (auto-publish) for a scheduled video.');
+  }
   if (state.budgetPounds.trim()) {
     const value = Number(state.budgetPounds);
     if (!Number.isFinite(value) || value < 0 || value > 100_000)
@@ -140,8 +171,17 @@ export function buildCreateBody(
   if (state.budgetPounds.trim())
     body.costBudgetPence = Math.round(Number(state.budgetPounds) * 100);
   if (state.reviewPolicy) body.reviewPolicy = state.reviewPolicy;
+  if (state.language) body.language = state.language;
+  const extras = (state.extraLanguages ?? []).filter((l) => l !== state.language);
+  if (extras.length) body.languages = extras;
+  if (state.approvalWorkflowId) body.approvalWorkflowId = state.approvalWorkflowId;
   if (state.autoPublish && state.source !== 'SLIDESHOW') {
     body.publishPolicy = 'AUTO_ON_APPROVAL';
+    // 15.A5: a scheduled project publishes to the same targets at the chosen time.
+    if (state.scheduleAt) {
+      body.publishPolicy = 'SCHEDULED';
+      body.scheduledStartAt = new Date(state.scheduleAt).toISOString();
+    }
     body.autoPublish = {
       targets: buildTargets(
         template ? template.platforms : state.platforms,
@@ -150,6 +190,11 @@ export function buildCreateBody(
     };
   }
   return body;
+}
+
+/** 15.C4: the POST /projects/:id/generate body (a lower tier for this run, when chosen). */
+export function buildGenerateBody(state: CreateState): { qualityTier?: QualityTier } {
+  return state.qualityTier ? { qualityTier: state.qualityTier } : {};
 }
 
 export function parseReference(id: string | undefined, mode: string | undefined): Reference | null {

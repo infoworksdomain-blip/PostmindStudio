@@ -55,16 +55,23 @@ describe('music in the Shotstack edit', () => {
       musicDurationSec: 30,
     });
     const music = tracksOf(edit).at(-1);
+    // 15.B4: ducked under the narrated shot, full bed under the silent end card.
     expect(music?.clips).toEqual([
+      {
+        asset: { type: 'audio', src: 'https://m/track.mp3', volume: MUSIC_UNDER_VOICE_VOLUME },
+        start: 0,
+        length: 6,
+      },
       {
         asset: {
           type: 'audio',
           src: 'https://m/track.mp3',
-          volume: MUSIC_UNDER_VOICE_VOLUME,
+          volume: MUSIC_ALONE_VOLUME,
+          trim: 6,
           effect: 'fadeOut',
         },
-        start: 0,
-        length: 10,
+        start: 6,
+        length: 4,
       },
     ]);
     expect(MUSIC_UNDER_VOICE_VOLUME).toBeLessThan(MUSIC_ALONE_VOLUME);

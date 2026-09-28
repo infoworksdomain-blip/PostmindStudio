@@ -3,6 +3,7 @@ import { NotImplementedError, PlatformError } from '../../../errors';
 import { nextPollDelayMs } from '../../analytics/schedule';
 import { recordSnapshot, rollUpAnalytics, rollUpProviderUsage } from '../../analytics/store';
 import { notifyMilestones } from '../../notifications/milestones';
+import { observeFirstAnalyticsSample } from '../../observability/slo';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
   noteCredentialFailure,
@@ -77,6 +78,7 @@ export async function pollPublicationAnalytics(
       publishedAt: publication.publishedAt,
       now: deps.now(),
     });
+    await observeFirstAnalyticsSample(deps, publication, deps.now()); // 15.D9 freshness SLO
     await recordSnapshot(deps.db, publication.id, result.snapshot, new Date(deps.now()));
     // 13.23 spec 14.4 milestones (10k views, 100 comments): once per publication per threshold.
     await notifyMilestones(deps, publication, result.snapshot);

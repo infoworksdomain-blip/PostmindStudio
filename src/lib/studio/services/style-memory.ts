@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient, StyleSignalType } from '@prisma/client';
 import { NotFoundError } from '../../errors';
+import { z } from 'zod';
 
 // BACKLOG 13.29 — style memory (spec 7.2 / 10.3 / 10.4 / 15.3), built nightly from the signals
 // Studio has today:
@@ -441,6 +442,9 @@ export async function rebuildBusiness(
   }
 
   const learned = await learnSignals(db, organisationId, businessId, windowStart, now);
+  // 15.E6: a memory the user pinned (or edited) is theirs — never overwritten or removed here.
+  const pinned = new Set(rows.filter((r) => r.pinned && !r.deletedAt).map((r) => r.signalType));
+  for (const type of pinned) learned.delete(type);
   // Signals the user deleted are re-learned only from evidence after the deletion.
   for (const [type, deletedAt] of tombstones) {
     learned.delete(type);
@@ -477,7 +481,9 @@ export async function rebuildBusiness(
     upserted += 1;
   }
   // Live memories with no evidence left in the window are removed (nothing kept without reason).
-  const stale = rows.filter((r) => !r.deletedAt && !learned.has(r.signalType)).map((r) => r.id);
+  const stale = rows
+    .filter((r) => !r.deletedAt && !r.pinned && !learned.has(r.signalType))
+    .map((r) => r.id);
   if (stale.length)
     removed += (await db.styleMemory.deleteMany({ where: { id: { in: stale } } })).count;
   return { upserted, removed };
@@ -495,6 +501,11 @@ export interface StyleMemoryView {
   evidenceCount: number;
   lastEvidenceAt: string | null;
   updatedAt: string;
+  /** 15.E6: kept as-is by the nightly build. */
+  pinned: boolean;
+  /** 15.E6: kept but never used in scripts. */
+  disabled: boolean;
+  editedByUserAt: string | null;
 }
 
 function summaryOf(value: Prisma.JsonValue): { summary: string; details: Record<string, unknown> } {
@@ -526,6 +537,9 @@ export async function listStyleMemory(
       evidenceCount: r.evidenceCount,
       lastEvidenceAt: r.lastEvidenceAt?.toISOString() ?? null,
       updatedAt: r.updatedAt.toISOString(),
+      pinned: r.pinned,
+      disabled: r.disabled,
+      editedByUserAt: r.editedByUserAt?.toISOString() ?? null,
     };
   });
 }
@@ -552,9 +566,54 @@ export async function deleteStyleMemory(
       reason: 'Deleted by the user',
       lastEvidenceAt: null,
       deletedAt: new Date(now),
+      pinned: false,
+      disabled: false,
+      editedByUserAt: null,
     },
   });
   return { signalType: row.signalType.toLowerCase() };
+}
+
+// 15.E6 — spec 10.4 "Users can view and edit their style memory" (users must be able to correct
+// inferred data). value = the one-line summary shown and injected into prompts; editing it pins
+// the memory unless the request says pinned: false (otherwise tonight's build would overwrite the
+// correction). disabled keeps the row but stops it guiding scripts.
+export const updateStyleMemoryInput = z
+  .object({
+    value: z.string().trim().min(1).max(200).optional(),
+    pinned: z.boolean().optional(),
+    disabled: z.boolean().optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
+
+export async function updateStyleMemory(
+  db: Db,
+  organisationId: string,
+  businessId: string,
+  memoryId: string,
+  input: z.infer<typeof updateStyleMemoryInput>,
+  now: number,
+): Promise<StyleMemoryView> {
+  const row = await db.styleMemory.findFirst({
+    where: { id: memoryId, organisationId, businessId, deletedAt: null },
+  });
+  if (!row) throw new NotFoundError('Style memory not found');
+  const { details } = summaryOf(row.value);
+  await db.styleMemory.update({
+    where: { id: row.id },
+    data: {
+      ...(input.value !== undefined && {
+        value: { ...details, summary: input.value } as Prisma.InputJsonValue,
+        editedByUserAt: new Date(now),
+      }),
+      pinned: input.pinned ?? (input.value !== undefined ? true : row.pinned),
+      ...(input.disabled !== undefined && { disabled: input.disabled }),
+    },
+  });
+  const view = (await listStyleMemory(db, organisationId, businessId)).find((m) => m.id === row.id);
+  if (!view) throw new NotFoundError('Style memory not found');
+  return view;
 }
 
 // ---------------------------------------------------------------- Layer 1–2 prompts
@@ -587,7 +646,14 @@ export async function styleMemorySupplement(
   businessId: string,
 ): Promise<string | null> {
   const rows = await db.styleMemory.findMany({
-    where: { organisationId, businessId, deletedAt: null, weight: { gte: PROMPT_MIN_WEIGHT } },
+    // 15.E6: disabled memories are never injected; a pinned (user-edited) one always is.
+    where: {
+      organisationId,
+      businessId,
+      deletedAt: null,
+      disabled: false,
+      OR: [{ weight: { gte: PROMPT_MIN_WEIGHT } }, { pinned: true }],
+    },
     orderBy: { weight: 'desc' },
     take: PROMPT_MAX_SIGNALS,
     select: { signalType: true, value: true },

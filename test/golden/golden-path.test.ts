@@ -392,7 +392,14 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
       db,
       'gp07',
       { pageFetch: corpus },
-      { staff: tenant(staffOrg, ['studio:project:read', 'studio:admin:library']) },
+      {
+        staff: tenant(staffOrg, ['studio:project:read', 'studio:admin:library']),
+        // 15.D2 / A10.3: library TEMPLATE mode is a Plus feature (INSPIRE is Standard+).
+        owner: {
+          ...tenant(`${ORG_PREFIX}-gp07`),
+          organisation: { id: `${ORG_PREFIX}-gp07`, planTier: 'PLUS' },
+        },
+      },
     );
     const licensed = `${LIBRARY_URL_PREFIX}licensed.mp4`;
     const scraped = `${LIBRARY_URL_PREFIX}scraped.mp4`;
@@ -510,7 +517,11 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
       method: 'POST',
       token: 'owner',
       params: { id: BUSINESS_ID },
-      body: { url: site, ownershipConfirmed: true },
+      body: {
+        url: site,
+        ownershipConfirmed: true,
+        ownershipStatement: 'I own this website or am authorised to represent it.',
+      },
     });
     expect(started.status).toBe(202);
     await drain(j);

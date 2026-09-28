@@ -15,4 +15,5 @@ export const POST = withStudioRoute(
     );
     return { status: 201, body: { data: overlays } };
   },
+  { feature: 'overlays' },
 );

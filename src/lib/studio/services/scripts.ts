@@ -41,7 +41,11 @@ export const updateScriptInput = z
   });
 
 export const regenerateScriptInput = z
-  .object({ instruction: z.string().trim().min(1).max(1_000).optional() })
+  .object({
+    instruction: z.string().trim().min(1).max(1_000).optional(),
+    /** 15.C9 (spec 8.3): shots kept as they are (assets and position); Layer 2 writes around them. */
+    pinnedShotIds: z.array(z.string().trim().min(1).max(64)).max(100).optional(),
+  })
   .strict();
 
 async function loadScript(db: PrismaClient, organisationId: string, id: string) {
@@ -145,6 +149,8 @@ export interface ScriptRegeneration {
   runId: string;
   scriptId: string;
   instruction: string | null;
+  /** 15.C9: pinned shot ids (kept with their assets and positions). */
+  pinnedShotIds: string[];
 }
 
 export function scriptRegeneration(
@@ -157,6 +163,9 @@ export function scriptRegeneration(
     runId,
     scriptId: value.scriptId,
     instruction: typeof value.instruction === 'string' ? value.instruction : null,
+    pinnedShotIds: Array.isArray(value.pinnedShotIds)
+      ? value.pinnedShotIds.filter((s): s is string => typeof s === 'string')
+      : [],
   };
 }
 
@@ -177,6 +186,19 @@ export async function regenerateScript(
   });
   if (!brief)
     throw new ConflictError('The project has no Layer 1 brief to reuse; generate it instead');
+
+  const pinnedShotIds = [...new Set(input.pinnedShotIds ?? [])];
+  const shotIds = new Set(script.shots.map((s) => s.id));
+  const foreign = pinnedShotIds.filter((s) => !shotIds.has(s));
+  if (foreign.length > 0)
+    throw new ValidationError(`Shot(s) not part of this script: ${foreign.join(', ')}`);
+  if (pinnedShotIds.length > 0 && pinnedShotIds.length >= script.shots.length)
+    throw new ValidationError('Every shot is pinned: nothing is left to rewrite');
+  const pinnedSec = script.shots
+    .filter((s) => pinnedShotIds.includes(s.id))
+    .reduce((sum, s) => sum + s.durationSec, 0);
+  if (pinnedSec >= script.targetDurationSec)
+    throw new ValidationError('The pinned shots already fill the target duration');
 
   const runId = randomUUID();
   const planTier = toPlanTier(tenant.organisation.planTier);
@@ -199,7 +221,12 @@ export async function regenerateScript(
         planTier,
         renders: keptRenders,
         staleRenders: stale,
-        scriptRegenerate: { runId, scriptId: id, instruction: input.instruction ?? null },
+        scriptRegenerate: {
+          runId,
+          scriptId: id,
+          instruction: input.instruction ?? null,
+          pinnedShotIds,
+        },
       } as Prisma.InputJsonValue,
     },
   });
@@ -211,5 +238,10 @@ export async function regenerateScript(
     planTier,
   };
   await deps.queue.add('plan-project', job, { jobId: jobIds.planProject(job) });
-  return { project: { id: project.id, state: 'QUEUED' as const }, runId, staleRenders: stale };
+  return {
+    project: { id: project.id, state: 'QUEUED' as const },
+    runId,
+    staleRenders: stale,
+    pinnedShotIds,
+  };
 }

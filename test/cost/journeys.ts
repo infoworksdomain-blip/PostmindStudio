@@ -1,5 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
+import {
+  inspireSupplement,
+  templateConstraint,
+  type Blueprint,
+} from '../../src/lib/studio/library/blueprint';
+import { EMBEDDING_DIMENSIONS } from '../../src/lib/studio/library/search';
 import { IDEATION_SYSTEM_PROMPT } from '../../src/lib/studio/pipeline/ideation';
 import { SCRIPT_SAFETY_SYSTEM_PROMPT } from '../../src/lib/studio/pipeline/script-safety';
 import { SCRIPT_SYSTEM_PROMPT } from '../../src/lib/studio/pipeline/scripting';
@@ -83,14 +89,32 @@ export interface PricedCall {
 const base = { organisationId: ORG, projectId: PROJECT };
 const userPrompt = 'x'.repeat(USER_PROMPT_CHARS);
 
-function planning(formats: number): PricedCall[] {
-  const text = (system: string, maxTokens: number): PricedCall => ({
+/** 15.D10: Feature A reference supplements appended to the Layer 1 / Layer 2 prompts. */
+interface PlanningSupplement {
+  ideation?: string;
+  script?: string;
+}
+
+function planning(formats: number, supplement: PlanningSupplement = {}): PricedCall[] {
+  const text = (system: string, maxTokens: number, extra?: string): PricedCall => ({
     providerId: 'anthropic',
-    request: { ...base, capability: 'text_generation', system, prompt: userPrompt, maxTokens },
+    request: {
+      ...base,
+      capability: 'text_generation',
+      system,
+      prompt: extra
+        ? `${userPrompt}
+
+${extra}`
+        : userPrompt,
+      maxTokens,
+    },
   });
   return [
-    text(IDEATION_SYSTEM_PROMPT, IDEATION_MAX_TOKENS),
-    ...Array.from({ length: formats }, () => text(SCRIPT_SYSTEM_PROMPT, SCRIPT_MAX_TOKENS)),
+    text(IDEATION_SYSTEM_PROMPT, IDEATION_MAX_TOKENS, supplement.ideation),
+    ...Array.from({ length: formats }, () =>
+      text(SCRIPT_SYSTEM_PROMPT, SCRIPT_MAX_TOKENS, supplement.script),
+    ),
     text(SCRIPT_SAFETY_SYSTEM_PROMPT, SAFETY_MAX_TOKENS),
   ];
 }
@@ -196,6 +220,89 @@ const SLIDESHOW: ShotSpec[] = Array.from({ length: 5 }, () => ({
   narration: '',
 }));
 
+/**
+ * 15.D10 (A10 / A14.2): the spec 12.2 sample 30 s short as one output — three 10 s AI clips,
+ * ~80 words of narration, a 30 s music bed, one composition + safety scan.
+ */
+const SHORT_30S: ShotSpec[] = Array.from({ length: 3 }, () => ({
+  treatment: 'AI_CLIP',
+  durationSec: 10,
+  narration: 'x'.repeat(150),
+}));
+
+/** Feature A: the library search that picks the reference (one query embedding, search.ts). */
+const LIBRARY_SEARCH: PricedCall = {
+  providerId: 'openai',
+  request: {
+    ...base,
+    capability: 'embedding',
+    input: ['cosy bakery morning routine, warm and upbeat'],
+    dimensions: EMBEDDING_DIMENSIONS,
+  },
+};
+
+/** INSPIRE (A3.7): a style signature supplements Layers 1 and 2 (library/reference.ts). */
+const INSPIRE_SUPPLEMENT = inspireSupplement({
+  paceTag: 'fast',
+  moodTag: 'warm, upbeat',
+  structurePattern: 'hook → problem → product reveal → call to action',
+  musicGenreTag: 'acoustic pop',
+});
+
+/** TEMPLATE (A3.6): a five-shot blueprint constrains each Layer 2 prompt. */
+const TEMPLATE_BLUEPRINT: Blueprint = {
+  shotCount: 5,
+  totalDurationSec: 30,
+  shots: [
+    {
+      durationSec: 3,
+      type: 'HOOK_TEXT_ON_STILL',
+      overlayStyle: 'bold-centre',
+      voiceoverPresent: true,
+      hasOnScreenText: true,
+    },
+    {
+      durationSec: 8,
+      type: 'AI_CLIP_ACTION',
+      overlayStyle: 'none',
+      voiceoverPresent: true,
+      hasOnScreenText: false,
+    },
+    {
+      durationSec: 8,
+      type: 'PRODUCT_SHOT',
+      overlayStyle: 'none',
+      voiceoverPresent: true,
+      hasOnScreenText: false,
+    },
+    {
+      durationSec: 7,
+      type: 'B_ROLL',
+      overlayStyle: 'subtitle-lower',
+      voiceoverPresent: true,
+      hasOnScreenText: true,
+    },
+    {
+      durationSec: 4,
+      type: 'CTA_CARD',
+      overlayStyle: 'caption-box',
+      voiceoverPresent: true,
+      hasOnScreenText: true,
+    },
+  ],
+  musicEnvelope: { bpm: 110, energy: 'high', moodTag: 'upbeat' },
+  transitionSequence: ['cut', 'cut', 'cut', 'cut', 'cut'],
+  hookPattern: 'question to camera',
+  structurePattern: 'hook → problem → product reveal → call to action',
+  ctaPattern: 'visit the shop today',
+  paceTag: 'fast',
+};
+const TEMPLATE_SUPPLEMENT = templateConstraint(TEMPLATE_BLUEPRINT, 30, [
+  'AI_CLIP',
+  'IMAGE_STILL',
+  'TEXT_CARD',
+]);
+
 export const JOURNEYS: Record<string, PricedCall[]> = {
   // GP-01: brief → one 15 s TikTok.
   'gp01-short-single-format': [
@@ -214,6 +321,20 @@ export const JOURNEYS: Record<string, PricedCall[]> = {
     ...planning(1),
     ...assets(LONG_FORM),
     ...finishing(sec(LONG_FORM), 1, true),
+  ],
+  // 15.D10: the A10 "per output" comparisons (standard short, INSPIRE, TEMPLATE; A14.2).
+  'standard-30s-short': [...planning(1), ...assets(SHORT_30S), ...finishing(30, 1, false)],
+  'inspire-30s-short': [
+    LIBRARY_SEARCH,
+    ...planning(1, { ideation: INSPIRE_SUPPLEMENT, script: INSPIRE_SUPPLEMENT }),
+    ...assets(SHORT_30S),
+    ...finishing(30, 1, false),
+  ],
+  'template-30s-short': [
+    LIBRARY_SEARCH,
+    ...planning(1, { script: TEMPLATE_SUPPLEMENT }),
+    ...assets(SHORT_30S),
+    ...finishing(30, 1, false),
   ],
   // Slideshow (A5): generated stills, no narration model calls beyond planning.
   'slideshow-five-slides': [

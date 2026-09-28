@@ -13,6 +13,7 @@ import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import { businessIdParam, parseBusinessId } from './businesses';
 import { toPlanTier } from './catalog';
+import { assertImageGenerationAllowed, assertTierGate } from './tier-gates';
 
 // BACKLOG 6.6 / Addendum A6.8 — image library endpoints: list, get, upload, generate, search,
 // delete, refresh. Everything is scoped by organisation AND business.
@@ -139,16 +140,17 @@ export async function generateImage(
   deps: LibraryDeps,
   tenant: TenantContext,
   input: z.infer<typeof generateImageInput>,
+  now: number = Date.now(),
 ) {
-  const outcome = await generateLibraryImage(
-    deps,
-    {
-      organisationId: tenant.organisationId,
-      businessId: input.businessId,
-      planTier: toPlanTier(tenant.organisation.planTier),
-    },
-    input,
-  );
+  // 15.D2: A10.3 on-demand generation (Layer 3) is Plus and above; A10.4 monthly cap per business.
+  assertTierGate(tenant, 'image_library.generate');
+  const scope = {
+    organisationId: tenant.organisationId,
+    businessId: input.businessId,
+    planTier: toPlanTier(tenant.organisation.planTier),
+  };
+  await assertImageGenerationAllowed(deps.db, scope, now);
+  const outcome = await generateLibraryImage(deps, scope, input);
   return outcomeToImage(deps, tenant.organisationId, outcome);
 }
 

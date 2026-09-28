@@ -5,6 +5,7 @@
 import { DemoHttpError, route } from '../registry';
 import type { ProjectContent } from './projects-content';
 import { getProject, newId, type ProjectRec } from './projects-store';
+import { completeBrandUpload, createBrandUpload, isBrandUploadRequest } from './p15-b-composition';
 
 type Body = Record<string, unknown>;
 const obj = (v: unknown): Body =>
@@ -52,6 +53,8 @@ function present(u: DemoUpload) {
 
 route('POST', '/uploads', ({ body }) => {
   const b = obj(body);
+  // 15.B1 (Track B): brand-kit media kinds.
+  if (isBrandUploadRequest(b)) return createBrandUpload(b);
   const kind =
     b.kind === 'slide_clip' ? 'slide_clip' : b.kind === 'source_video' ? 'source_video' : null;
   if (!kind) throw bad('kind must be source_video or slide_clip');
@@ -123,6 +126,8 @@ route('PUT', '/demo-upload/:id', ({ params }) => {
 });
 
 route('POST', '/uploads/:id/complete', ({ params }) => {
+  const brand = completeBrandUpload(params.id ?? '');
+  if (brand) return brand;
   const upload = uploads.get(params.id ?? '');
   if (!upload) throw new DemoHttpError(404, 'not_found', 'Upload not found');
   if (upload.state === 'FAILED')

@@ -3,6 +3,7 @@ import type { Logger } from 'pino';
 import { ConflictError, NotFoundError, StudioError, ValidationError } from '../../errors';
 import { notifySafely, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
+import { firstFreeSlot, heldSlots, parseSlots, staggerMinutes } from '../services/drip-queue';
 import { storedTargets, type AutoPublishTarget } from './targets';
 
 // BACKLOG 13.21 — auto-publish outbox. Approval and auto-publish used to be two steps: a process
@@ -17,6 +18,10 @@ import { storedTargets, type AutoPublishTarget } from './targets';
 // sender died after creating the publication): the row is marked SENT with that publication.
 // Retryable failures back off 1 min, 5 min, 25 min, 2 h; after MAX_OUTBOX_ATTEMPTS the row is
 // FAILED, the creator is notified, and POST /projects/:id/auto-publish/retry re-arms it.
+// 15.A5: publishPolicy SCHEDULED uses the same rows. Each target gets an absolute scheduledFor —
+// the project's scheduledStartAt, or (none set) the next free slot of the business's drip queue —
+// and targets are staggered STUDIO_DEFAULT_STAGGER_MINUTES apart (spec 9.9). The sender creates
+// scheduled publications from them (scheduled_publications + a delayed BullMQ job, spec 9.9).
 
 export const MAX_OUTBOX_ATTEMPTS = 5;
 export const OUTBOX_BACKOFF_BASE_MS = 60_000;
@@ -30,9 +35,72 @@ export function outboxBackoffMs(attempts: number): number {
   return Math.min(OUTBOX_BACKOFF_BASE_MS * 5 ** Math.max(0, attempts - 1), OUTBOX_BACKOFF_CAP_MS);
 }
 
-type Tx = Pick<Prisma.TransactionClient, 'videoProject' | 'autoPublishOutbox'>;
+type Tx = Pick<
+  Prisma.TransactionClient,
+  'videoProject' | 'autoPublishOutbox' | 'dripQueue' | '$executeRaw'
+>;
 
-/** Inside the approval transaction: one PENDING row per stored target (AUTO_ON_APPROVAL only). */
+export interface SchedulePlan {
+  /** Absolute time per target index (null = publish when sent). */
+  times: Array<Date | null>;
+  /** Target indexes that are published (drip queues may be limited to some platforms). */
+  indexes: number[];
+  /** The drip slot taken, if any. */
+  slotAt: Date | null;
+}
+
+/**
+ * 15.A5 — when each target of a SCHEDULED project goes out: from scheduledStartAt (never in the
+ * past) or the next free drip slot, target i at +i × stagger. null = nothing can be scheduled
+ * (no start time and no enabled drip queue, or no free slot in the horizon).
+ */
+export async function planSchedule(
+  tx: Tx,
+  project: {
+    id: string;
+    organisationId: string;
+    businessId: string;
+    scheduledStartAt: Date | null;
+  },
+  targets: AutoPublishTarget[],
+  now: number,
+): Promise<SchedulePlan | null> {
+  const stagger = staggerMinutes() * 60_000;
+  const spread = (base: number, indexes: number[], slotAt: Date | null): SchedulePlan => ({
+    times: targets.map((_, i) => {
+      const position = indexes.indexOf(i);
+      return position < 0 ? null : new Date(base + position * stagger);
+    }),
+    indexes,
+    slotAt,
+  });
+  const all = targets.map((_, i) => i);
+  if (project.scheduledStartAt)
+    return spread(Math.max(project.scheduledStartAt.getTime(), now), all, null);
+  const scope = { organisationId: project.organisationId, businessId: project.businessId };
+  const queue = await tx.dripQueue.findUnique({
+    where: { organisationId_businessId: scope },
+  });
+  if (!queue?.enabled) return null;
+  const indexes = all.filter(
+    (i) => queue.platforms.length === 0 || queue.platforms.includes(targets[i]?.platform ?? ''),
+  );
+  if (indexes.length === 0) return null;
+  // Two approvals of the same business must not take the same slot.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`drip:${project.organisationId}:${project.businessId}`}, 0))`;
+  const held = await heldSlots(tx, scope, now);
+  const slot = firstFreeSlot(
+    parseSlots(queue.slots),
+    held.map((h) => h.slotAt),
+    now,
+  );
+  return slot === null ? null : spread(slot, indexes, new Date(slot));
+}
+
+/**
+ * Inside the approval transaction: one PENDING row per stored target (AUTO_ON_APPROVAL), or per
+ * scheduled target (SCHEDULED, 15.A5).
+ */
 export async function writeOutboxRows(
   tx: Tx,
   input: {
@@ -46,18 +114,34 @@ export async function writeOutboxRows(
 ): Promise<number> {
   const project = await tx.videoProject.findUnique({
     where: { id: input.projectId },
-    select: { publishPolicy: true, metadata: true },
+    select: {
+      id: true,
+      organisationId: true,
+      businessId: true,
+      publishPolicy: true,
+      scheduledStartAt: true,
+      metadata: true,
+    },
   });
-  if (project?.publishPolicy !== 'AUTO_ON_APPROVAL') return 0;
+  if (project?.publishPolicy !== 'AUTO_ON_APPROVAL' && project?.publishPolicy !== 'SCHEDULED')
+    return 0;
   const targets = storedTargets(project.metadata);
   if (targets.length === 0) return 0;
+  const plan =
+    project.publishPolicy === 'SCHEDULED'
+      ? await planSchedule(tx, project, targets, input.now)
+      : null;
+  if (project.publishPolicy === 'SCHEDULED' && !plan) return 0;
+  const indexes = plan?.indexes ?? targets.map((_, i) => i);
   const result = await tx.autoPublishOutbox.createMany({
-    data: targets.map((target, index) => ({
+    data: indexes.map((index) => ({
+      target: targets[index] as unknown as Prisma.InputJsonValue,
+      scheduledFor: plan?.times[index] ?? null,
+      slotAt: plan?.slotAt && index === indexes[0] ? plan.slotAt : null,
       organisationId: input.organisationId,
       projectId: input.projectId,
       approvalTaskId: input.approvalTaskId,
       targetIndex: index,
-      target: target as unknown as Prisma.InputJsonValue,
       planTier: input.planTier,
       trigger: input.trigger,
       nextAttemptAt: new Date(input.now),
@@ -239,6 +323,8 @@ export function publicOutboxRow(row: AutoPublishOutbox) {
       account: target.connectionId ?? target.platformAccountId ?? null,
       scheduleOffsetMinutes: target.scheduleOffsetMinutes ?? null,
     },
+    scheduledFor: row.scheduledFor,
+    slotAt: row.slotAt,
     trigger: row.trigger,
     state: row.state,
     attempts: row.attempts,

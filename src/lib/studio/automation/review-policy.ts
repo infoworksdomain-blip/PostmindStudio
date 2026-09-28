@@ -95,7 +95,11 @@ function renderProblem(render: RenderForDecision): ReviewDecision | null {
       'content_safety_flag',
       `Needs review: the ${where} variant's content-safety scan ${safety ? 'flagged it' : 'did not run'}`,
     );
-  if (render.qualityCheckState !== 'PASSED' || checks.some((c) => c.status === 'failed'))
+  // 15.B2: a `warning` (brand-kit compliance, spec 13.1 "User review required") needs a person.
+  if (
+    render.qualityCheckState !== 'PASSED' ||
+    checks.some((c) => c.status === 'failed' || c.status === 'warning')
+  )
     return review(
       'quality_not_clean',
       `Needs review: a quality check on the ${where} variant did not pass`,

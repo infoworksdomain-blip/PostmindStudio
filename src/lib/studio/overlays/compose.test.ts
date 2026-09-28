@@ -273,3 +273,69 @@ describe('mergeOverlayTrack', () => {
     expect(result.timeline.fonts).toEqual([{ src: 'new.ttf' }]);
   });
 });
+
+describe('buildOverlayTrack — script languages (15.C5)', () => {
+  it('composes an Arabic overlay right-to-left in Noto Sans Arabic', async () => {
+    const row = overlayRowRecord({ text: 'Nike خصم ٥٠٪', animationIn: 'fadeIn' });
+    const track = await buildOverlayTrack([{ row, offsetSec: 0 }], {
+      frame: FRAME,
+      organisationId: 'org-1',
+      language: 'ar',
+      preRender: preRenderDeps(),
+    });
+    const asset = (track.clips[0] as { asset: { text: string; font: { family: string } } }).asset;
+    expect(asset.font.family).toBe('Noto Sans Arabic');
+    expect(asset.text).toBe('‏Nike خصم ٥٠٪');
+    expect(track.fonts).toEqual([{ src: 'https://fonts.example.com/NotoSansArabic.ttf' }]);
+  });
+
+  it('uses Devanagari for Hindi, SC for Mandarin and keeps the preset font for French', async () => {
+    const build = (language: string) =>
+      buildOverlayTrack([{ row: overlayRowRecord({ animationIn: 'fadeIn' }), offsetSec: 0 }], {
+        frame: FRAME,
+        organisationId: 'org-1',
+        language,
+        preRender: preRenderDeps(),
+      });
+    expect((await build('hi')).fonts).toEqual([
+      { src: 'https://fonts.example.com/NotoSansDevanagari.ttf' },
+    ]);
+    expect((await build('zh-Hans')).fonts).toEqual([
+      { src: 'https://fonts.example.com/NotoSansSC.ttf' },
+    ]);
+    const fr = await build('fr');
+    expect(fr.fonts).toEqual([{ src: 'https://fonts.example.com/Montserrat.ttf' }]);
+    expect((fr.clips[0] as { asset: { text: string } }).asset.text).toBe('Hello');
+  });
+
+  it("prefers an overlay's own non-default lang over the script language", async () => {
+    const row = overlayRowRecord({ lang: 'hi', animationIn: 'fadeIn' });
+    const track = await buildOverlayTrack([{ row, offsetSec: 0 }], {
+      frame: FRAME,
+      organisationId: 'org-1',
+      language: 'en-GB',
+      preRender: preRenderDeps(),
+    });
+    expect(track.fonts).toEqual([{ src: 'https://fonts.example.com/NotoSansDevanagari.ttf' }]);
+  });
+
+  it('passes the Arabic font and direction to the pre-renderer', async () => {
+    const spy = vi
+      .spyOn(prerenderModule, 'preRenderOverlay')
+      .mockResolvedValue('https://signed.example/ar.mov');
+    const row = overlayRowRecord({ animationIn: 'karaokeHighlight', text: 'مرحبا بكم' });
+    await buildOverlayTrack([{ row, offsetSec: 0 }], {
+      frame: FRAME,
+      organisationId: 'org-1',
+      language: 'ar',
+      preRender: preRenderDeps(),
+    });
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      'org-1',
+      expect.objectContaining({ fontFamily: 'Noto Sans Arabic', direction: 'rtl' }),
+      FRAME,
+    );
+    spy.mockRestore();
+  });
+});

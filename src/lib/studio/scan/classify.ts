@@ -24,6 +24,7 @@ export const BUSINESS_PROFILE_SCHEMA = {
     'searchQueries',
     'restrictedTopics',
     'brandVoiceSummary',
+    'confidence',
   ],
   properties: {
     industry: { type: 'string', description: "e.g. 'Consumer goods — pets'" },
@@ -45,6 +46,11 @@ export const BUSINESS_PROFILE_SCHEMA = {
       description: 'topics the business should avoid in marketing (regulated claims etc.)',
     },
     brandVoiceSummary: { type: 'string', description: 'one or two sentences' },
+    confidence: {
+      type: 'number',
+      description:
+        'your confidence from 0 to 1 that industry and subNiche are right, given how much evidence the text gives',
+    },
   },
 } as const;
 
@@ -69,7 +75,29 @@ const profileResult = z.object({
   searchQueries: list(10, 80),
   restrictedTopics: list(20),
   brandVoiceSummary: z.string().trim().max(1_000),
+  // A13: self-reported by the model (see LOW_CONFIDENCE_THRESHOLD). Clamped to 0–1; absent = null.
+  confidence: z
+    .number()
+    .finite()
+    .transform((n) => Math.min(1, Math.max(0, n)))
+    .nullable()
+    .optional()
+    .transform((n) => n ?? null),
 });
+
+/**
+ * 15.D8 / Addendum A13 "low-confidence classifications flagged for user review before use".
+ * The confidence is the model's own estimate, requested in the output schema. It is not a
+ * calibrated probability (no labelled evaluation set backs it yet — see 15.D10's 50-site set);
+ * it is a signal of thin or ambiguous evidence. Below LOW_CONFIDENCE_THRESHOLD — or when the
+ * model gave none — the profile is flagged (business_profiles.needsReview) until the user
+ * confirms or edits it. Flagged profiles are still used; the UI asks the user to check them.
+ */
+export const LOW_CONFIDENCE_THRESHOLD = 0.7;
+
+export function needsReviewFor(confidence: number | null): boolean {
+  return confidence === null || confidence < LOW_CONFIDENCE_THRESHOLD;
+}
 
 export type ClassifiedProfile = z.infer<typeof profileResult>;
 
@@ -79,6 +107,7 @@ export const CLASSIFY_SYSTEM_PROMPT = [
   'Describe what the business actually sells and to whom, using only evidence from the text.',
   'searchQueries must be short, concrete, visual stock-photo searches (2–4 words) that fit the niche.',
   'If the text is too thin to tell, say so in industry ("Unknown") rather than guessing.',
+  'confidence (0–1) is how sure you are of industry and subNiche from the evidence: go below 0.7 when the text is thin, generic or could fit more than one kind of business.',
 ].join('\n');
 
 function pageSummary(page: ExtractedPage): string {

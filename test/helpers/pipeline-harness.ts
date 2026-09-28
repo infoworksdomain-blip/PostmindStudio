@@ -136,6 +136,8 @@ export const PROFILE_JSON = {
   searchQueries: ['sourdough bread', 'artisan bakery'],
   restrictedTopics: [],
   brandVoiceSummary: 'Warm and proud of the craft.',
+  /** 15.D8 / A13: the classifier's self-reported confidence (≥ 0.7: not flagged for review). */
+  confidence: 0.92,
 };
 
 function textResult(json: unknown): ProviderPollResult {
@@ -328,6 +330,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     queue,
     storage,
     media,
+    // 15.A3: a JPEG-magic stand-in for FFmpeg thumbnail rendering.
+    thumbnails: { compose: async () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]) },
     logger: pino({ level: 'silent' }),
     config: {
       assetsBucket: 'assets',
@@ -359,6 +363,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       },
       storage,
       engagement: { attributePublication: async (body) => void attributions.push(body) },
+      thumbnailsBucket: 'thumbnails',
       logger: pino({ level: 'silent' }),
       now: Date.now,
     },

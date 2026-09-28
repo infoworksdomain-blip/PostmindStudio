@@ -22,6 +22,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [platform-account-revocation.md](platform-account-revocation.md) | Priority risk 7: platform account revoked | Any account in warning state |
 | [storage-cost.md](storage-cost.md) | Priority risk 8: storage cost balloon | >125% of forecast |
 | [notifications-email.md](notifications-email.md) | Notification email delivery status and the pending Core-vs-Studio sending decision (13.33) | Any `failed` once live |
+| [slo-and-launch-readiness.md](slo-and-launch-readiness.md) | Spec 17.1 SLO / spec 3.5 acceptance alerts, A14.2 launch-readiness checks (overlay pixel diff, classifier eval, scan timing, A10 cost gate) and the daily provider canary (15.D9 / 15.D10) | per alert |
 
 ## Shared tools
 
@@ -65,6 +66,8 @@ Alert rules and paging are committed (Phase 12) and validated in CI (`ops-config
   switch. Every alert has `severity` (`page` or `ticket`) and a `runbook_url` into this folder.
 - `ops/prometheus/tests/studio-alerts.test.yml` — promtool unit tests (target down, global cost
   cap incl. the first alert of a process, job failure rate).
+- `ops/prometheus/studio-slo.yml` + `tests/studio-slo.test.yml` (15.D9) — spec 17.1 latency SLO
+  and spec 3.5 acceptance recording rules and alerts (slo-and-launch-readiness.md).
 - `ops/alertmanager/alertmanager.yml` — `severity=page` → PagerDuty, `severity=ticket` → Slack
   `#studio-alerts`. The PagerDuty routing key and Slack webhook URL are read from files
   (`/etc/alertmanager/secrets/pagerduty-routing-key`, `/etc/alertmanager/secrets/slack-webhook-url`)

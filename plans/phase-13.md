@@ -440,10 +440,13 @@ implements `ProviderAdapter` + `estimateCostPence` and registers only when its k
 | fal | AI_CLIP: BASIC 1st; IMAGE_STILL 2nd (`fal`) | https://fal.ai/docs/documentation/model-apis/inference/queue |
 | Replicate | AI_CLIP: BASIC 2nd; music 2nd, MusicGen (`replicate`) | https://replicate.com/docs/reference/http |
 | D-ID | AI_AVATAR: BASIC/STANDARD 1st, PLUS/ENTERPRISE 2nd (`d-id`) | https://docs.d-id.com/reference/createtalk |
-| Pexels (video) | STOCK_FOOTAGE 2nd (`pexels`) | https://www.pexels.com/api/documentation/#videos-search |
 | Azure Speech | tts 2nd (`azure-speech`) | https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-text-to-speech |
 | Creatomate | composition 2nd (`creatomate`) | https://creatomate.com/docs/api/reference/create-a-render |
 | Sightengine | content_safety 2nd (`sightengine`) | https://sightengine.com/docs/ (video moderation: https://sightengine.com/video-moderation) |
+
+Phase 15 (Track C): Storyblocks video (`storyblocks-video`, STOCK_FOOTAGE 1st) and Pexels video
+(`pexels-video`, STOCK_FOOTAGE 2nd) are built with the keys already configured for images, so they
+left this table (providers/storyblocks-video.ts, providers/pexels-video.ts).
 
 **13.39 Sentiment.** `EngagementSentimentClient` (analytics/engagement-sentiment.ts):
 `publicationSentiment({ organisationId, publications: [{ platform, platformPostId }] })` →

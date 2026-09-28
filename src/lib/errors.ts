@@ -26,6 +26,36 @@ export class ForbiddenError extends StudioError {
   readonly code = 'forbidden';
 }
 
+/** 15.D1 / A12.4: a switchable feature is off (globally, for the organisation or the env). */
+export class FeatureDisabledError extends StudioError {
+  readonly status = 403;
+  readonly code = 'feature_disabled';
+  readonly feature: string;
+
+  constructor(feature: string, message: string, details?: Record<string, unknown>) {
+    super(message, { ...details, feature });
+    this.feature = feature;
+  }
+}
+
+/** 15.D2 / A10.3: the organisation's plan tier is below what the capability needs. */
+export class PlanTierError extends StudioError {
+  readonly status = 403;
+  readonly code = 'plan_tier';
+  readonly requiredTier: string;
+
+  constructor(requiredTier: string, message: string, details?: Record<string, unknown>) {
+    super(message, { ...details, requiredTier });
+    this.requiredTier = requiredTier;
+  }
+}
+
+/** Decision P3 / spec 12.4: the plan's monthly quota (or a per-video limit) is used up. */
+export class QuotaExceededError extends StudioError {
+  readonly status = 403;
+  readonly code = 'quota_exceeded';
+}
+
 export class NotFoundError extends StudioError {
   readonly status = 404;
   readonly code = 'not_found';
@@ -40,6 +70,33 @@ export class ConflictError extends StudioError {
 export class ValidationError extends StudioError {
   readonly status = 400;
   readonly code = 'validation_error';
+}
+
+/** 15.C4: well-formed but not allowed for this organisation (e.g. a tier above its plan). */
+export class UnprocessableError extends StudioError {
+  readonly status = 422;
+  readonly code = 'unprocessable';
+}
+
+/**
+ * 15.C3 (spec 11.4): the provider's rate window for this organisation (or platform-wide) is
+ * full. Workers delay the job until the window frees instead of failing it; no attempt is used.
+ */
+export class RateDeferredError extends StudioError {
+  readonly status = 429;
+  readonly code = 'rate_deferred';
+  readonly providerId: string;
+  readonly retryAfterMs: number;
+
+  constructor(providerId: string, retryAfterMs: number, details?: Record<string, unknown>) {
+    super(`${providerId} rate window is full; retry in ${Math.ceil(retryAfterMs / 1000)}s`, {
+      ...details,
+      providerId,
+      retryAfterMs,
+    });
+    this.providerId = providerId;
+    this.retryAfterMs = retryAfterMs;
+  }
 }
 
 /** The request body is larger than the endpoint accepts. */

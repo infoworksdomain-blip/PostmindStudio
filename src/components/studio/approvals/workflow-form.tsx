@@ -1,0 +1,292 @@
+'use client';
+
+import { useId, useState, type FormEvent } from 'react';
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PLATFORM_LABEL } from '@/lib/client/format';
+import { cn } from '@/lib/utils';
+import {
+  parseList,
+  SUGGESTED_ROLES,
+  WORKFLOW_PLATFORMS,
+  type ApprovalWorkflow,
+  type WorkflowInput,
+  type WorkflowStep,
+} from './types';
+
+// 15.D3 — create / edit one approval workflow: a name, ordered steps (membership role + how many
+// people of that role must approve) and which projects it applies to (businesses, platforms,
+// tags; all empty = every project). Validation mirrors the API's zod schema.
+
+const MAX_STEPS = 10;
+const MAX_APPROVERS = 10;
+const ROLE = /^[a-z][a-z0-9_:-]{0,63}$/;
+
+interface Props {
+  initial?: ApprovalWorkflow;
+  /** The business selected in the top bar, offered as a one-click appliesTo entry. */
+  currentBusinessId?: string | null;
+  saving: boolean;
+  onSubmit: (input: WorkflowInput) => void;
+  onCancel: () => void;
+}
+
+export function validateWorkflow(input: WorkflowInput): string | null {
+  if (!input.name.trim()) return 'Give the workflow a name.';
+  if (input.steps.length === 0) return 'Add at least one step.';
+  for (const [i, step] of input.steps.entries()) {
+    if (!ROLE.test(step.role))
+      return `Step ${i + 1}: use a membership role name such as admin or client_reviewer.`;
+    if (!Number.isInteger(step.minApprovers) || step.minApprovers < 1)
+      return `Step ${i + 1}: at least one approver is needed.`;
+    if (step.minApprovers > MAX_APPROVERS)
+      return `Step ${i + 1}: at most ${MAX_APPROVERS} approvers.`;
+  }
+  return null;
+}
+
+function move<T>(list: T[], from: number, to: number): T[] {
+  if (to < 0 || to >= list.length) return list;
+  const next = [...list];
+  const [item] = next.splice(from, 1);
+  if (item !== undefined) next.splice(to, 0, item);
+  return next;
+}
+
+function StepRow({
+  index,
+  step,
+  count,
+  onChange,
+  onMove,
+  onRemove,
+}: {
+  index: number;
+  step: WorkflowStep;
+  count: number;
+  onChange: (step: WorkflowStep) => void;
+  onMove: (to: number) => void;
+  onRemove: () => void;
+}) {
+  const id = useId();
+  return (
+    <li className="grid grid-cols-[auto_1fr] items-end gap-x-3 gap-y-2 rounded-lg border border-border bg-background p-3 sm:grid-cols-[auto_1fr_7rem_auto]">
+      <span className="font-display row-span-2 self-center text-2xl text-muted-foreground tabular sm:row-span-1">
+        {index + 1}
+      </span>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor={`${id}-role`}>Role</Label>
+        <Input
+          id={`${id}-role`}
+          list={`${id}-roles`}
+          value={step.role}
+          onChange={(e) => onChange({ ...step, role: e.target.value.trim().toLowerCase() })}
+        />
+        <datalist id={`${id}-roles`}>
+          {SUGGESTED_ROLES.map((r) => (
+            <option key={r} value={r} />
+          ))}
+        </datalist>
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor={`${id}-min`}>Approvers</Label>
+        <Input
+          id={`${id}-min`}
+          type="number"
+          min={1}
+          max={MAX_APPROVERS}
+          value={step.minApprovers}
+          onChange={(e) => onChange({ ...step, minApprovers: Number(e.target.value) })}
+        />
+      </div>
+      <div className="col-start-2 flex gap-1 sm:col-start-auto">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Move step ${index + 1} up`}
+          disabled={index === 0}
+          onClick={() => onMove(index - 1)}
+        >
+          <ArrowUp />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Move step ${index + 1} down`}
+          disabled={index === count - 1}
+          onClick={() => onMove(index + 1)}
+        >
+          <ArrowDown />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Remove step ${index + 1}`}
+          disabled={count === 1}
+          onClick={onRemove}
+        >
+          <Trash2 />
+        </Button>
+      </div>
+    </li>
+  );
+}
+
+export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onCancel }: Props) {
+  const id = useId();
+  const [name, setName] = useState(initial?.name ?? '');
+  const [steps, setSteps] = useState<WorkflowStep[]>(
+    initial?.steps ?? [{ role: 'admin', minApprovers: 1 }],
+  );
+  const [businesses, setBusinesses] = useState(initial?.appliesTo.businessIds.join(', ') ?? '');
+  const [tags, setTags] = useState(initial?.appliesTo.tags.join(', ') ?? '');
+  const [platforms, setPlatforms] = useState<string[]>(initial?.appliesTo.platforms ?? []);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const input: WorkflowInput = {
+      name: name.trim(),
+      steps,
+      appliesTo: {
+        businessIds: parseList(businesses),
+        platforms,
+        tags: parseList(tags).map((t) => t.toLowerCase()),
+      },
+    };
+    const invalid = validateWorkflow(input);
+    setProblem(invalid);
+    if (!invalid) onSubmit(input);
+  };
+
+  const togglePlatform = (p: string) =>
+    setPlatforms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
+
+  return (
+    <form
+      onSubmit={submit}
+      aria-label={initial ? `Edit ${initial.name}` : 'New approval workflow'}
+      className="flex flex-col gap-5"
+      noValidate
+    >
+      <div className="flex flex-col gap-1">
+        <Label htmlFor={`${id}-name`}>Name</Label>
+        <Input
+          id={`${id}-name`}
+          value={name}
+          maxLength={120}
+          placeholder="Client sign-off"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-sm font-medium">Steps, in order</legend>
+        <p className="text-xs text-muted-foreground">
+          Each step waits for this many different people with the role. The video is approved — and
+          can publish — only after the last step.
+        </p>
+        <ol className="flex flex-col gap-2">
+          {steps.map((step, index) => (
+            <StepRow
+              key={index}
+              index={index}
+              step={step}
+              count={steps.length}
+              onChange={(s) => setSteps((cur) => cur.map((x, i) => (i === index ? s : x)))}
+              onMove={(to) => setSteps((cur) => move(cur, index, to))}
+              onRemove={() => setSteps((cur) => cur.filter((_, i) => i !== index))}
+            />
+          ))}
+        </ol>
+        <Button
+          type="button"
+          variant="outline"
+          className="self-start"
+          disabled={steps.length >= MAX_STEPS}
+          onClick={() => setSteps((cur) => [...cur, { role: 'client_reviewer', minApprovers: 1 }])}
+        >
+          <Plus /> Add step
+        </Button>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3">
+        <legend className="mb-1 text-sm font-medium">Applies to</legend>
+        <p className="text-xs text-muted-foreground">
+          Leave everything empty for every project. When several workflows match, the most specific
+          wins (business, then tags, then platforms).
+        </p>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor={`${id}-biz`}>Business ids (comma-separated)</Label>
+          <div className="flex gap-2">
+            <Input
+              id={`${id}-biz`}
+              value={businesses}
+              onChange={(e) => setBusinesses(e.target.value)}
+            />
+            {currentBusinessId && !parseList(businesses).includes(currentBusinessId) && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setBusinesses([...parseList(businesses), currentBusinessId].join(', '))
+                }
+              >
+                Add current business
+              </Button>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm" id={`${id}-platforms`}>
+            Platforms
+          </span>
+          <div role="group" aria-labelledby={`${id}-platforms`} className="flex flex-wrap gap-1.5">
+            {WORKFLOW_PLATFORMS.map((p) => {
+              const on = platforms.includes(p);
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => togglePlatform(p)}
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
+                    on
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+                  )}
+                >
+                  {PLATFORM_LABEL[p] ?? p}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor={`${id}-tags`}>Project tags (comma-separated)</Label>
+          <Input id={`${id}-tags`} value={tags} onChange={(e) => setTags(e.target.value)} />
+        </div>
+      </fieldset>
+
+      {problem && (
+        <p role="alert" className="text-sm text-destructive">
+          {problem}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={saving}>
+          {initial ? 'Save workflow' : 'Create workflow'}
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}

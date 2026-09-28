@@ -574,6 +574,57 @@ export function createFacebookMetrics(deps: MetaDeps): MetricsFetcher {
   };
 }
 
+/**
+ * 15.A1 — Facebook feed (non-Reels) Page videos: GET /{video-id}/video_insights (read 2026-09-28,
+ * https://developers.facebook.com/docs/graph-api/reference/video/video_insights/), lifetime:
+ * total_video_views ("played for at least 3 seconds"), total_video_impressions_unique,
+ * total_video_view_total_time (milliseconds), total_video_reactions_by_type_total (by type,
+ * summed as likes). Comments and shares only exist inside total_video_stories_by_action_type,
+ * whose keys the reference does not list, so both are reported unavailable.
+ */
+export const FACEBOOK_FEED_METRICS = [
+  'total_video_views',
+  'total_video_impressions_unique',
+  'total_video_view_total_time',
+  'total_video_reactions_by_type_total',
+] as const;
+
+export function createFacebookFeedMetrics(deps: MetaDeps): MetricsFetcher {
+  return {
+    platform: 'facebook_feed',
+    async fetch(req) {
+      const { body } = await metaInsights(
+        deps,
+        'facebook',
+        `/${encodeURIComponent(req.platformPostId)}/video_insights`,
+        FACEBOOK_FEED_METRICS,
+        req.accessToken,
+      );
+      const m = readInsights(body.data);
+      const views = asCount(m.get('total_video_views'));
+      const reach = asCount(m.get('total_video_impressions_unique'));
+      const viewTimeMs = asCount(m.get('total_video_view_total_time'));
+      const likes = countOrSum(m.get('total_video_reactions_by_type_total'));
+      const unavailable = ['avg_watch_pct', 'comments', 'shares'];
+      if (views === undefined) unavailable.push('views');
+      if (reach === undefined) unavailable.push('unique_viewers');
+      if (viewTimeMs === undefined) unavailable.push('watch_time');
+      if (likes === undefined) unavailable.push('likes');
+      return {
+        snapshot: {
+          views: views ?? 0,
+          uniqueViewers: reach ?? null,
+          ...(viewTimeMs !== undefined && { watchTimeSec: Math.round(viewTimeMs / 1000) }),
+          likes: likes ?? 0,
+          comments: 0,
+          shares: 0,
+        },
+        unavailable,
+      };
+    },
+  };
+}
+
 export type MetricsRegistry = Partial<Record<Platform, MetricsFetcher>>;
 
 export function createMetricsRegistry(
@@ -588,5 +639,8 @@ export function createMetricsRegistry(
     linkedin_video: createLinkedInMetrics({ ...deps, enabled: deps.linkedInEnabled }),
     instagram_reel: createInstagramMetrics(deps),
     facebook: createFacebookMetrics(deps),
+    // 15.A1: an Instagram feed video is a REELS container (share_to_feed), so Reel insights apply.
+    instagram_feed: { ...createInstagramMetrics(deps), platform: 'instagram_feed' },
+    facebook_feed: createFacebookFeedMetrics(deps),
   };
 }

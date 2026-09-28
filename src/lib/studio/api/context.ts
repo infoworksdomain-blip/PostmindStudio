@@ -5,6 +5,7 @@ import { logger } from '../../logger';
 import type { TenantResolver } from '../../tenant';
 import type { CoreBusinessDirectory } from '../core/business-directory';
 import type { CoreChannelDirectory } from '../core/channel-directory';
+import type { CoreContentClient } from '../core/content-client';
 import type { LibraryDeps } from '../images/library';
 import type { VoiceCloningClient } from '../providers/elevenlabs-voices';
 import type { OAuthStateStore } from '../platforms/oauth-state';
@@ -12,7 +13,9 @@ import type { PublishingDeps } from '../platforms/publishing';
 import type { CircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderRegistry } from '../providers/registry';
 import type { InspectableQueue } from '../services/admin-health';
+import type { DeadLetterQueue } from '../services/dead-letter';
 import type { UploadDeps } from '../uploads/signer';
+import type { ThumbnailComposer } from '../services/thumbnail-composer';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import { devTenantFromEnv } from './dev-tenant';
@@ -34,6 +37,8 @@ export interface ApiDeps {
   rateLimiter?: RateLimiter;
   /** Limit for PostMind Core's calls to /api/studio/internal/**; absent = unlimited (tests). */
   internalRateLimiter?: RateLimiter;
+  /** 15.E5: limit for public share-link requests (per client and per link); absent = unlimited. */
+  publicRateLimiter?: RateLimiter;
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
@@ -49,8 +54,17 @@ export interface ApiDeps {
   breaker?: CircuitBreaker;
   /** 13.16: BullMQ queues for GET /admin/queues; absent = built from REDIS_URL on first use. */
   adminQueues?: () => InspectableQueue[];
+  /** 15.D4: failed-job (dead-letter) handles per queue; absent = BullMQ from REDIS_URL. */
+  deadLetterQueues?: () => DeadLetterQueue[];
   /** Core directories (13.34 / 13.35); absent = pending (501 until Core ships the endpoints). */
-  core?: { businesses?: CoreBusinessDirectory; channels?: CoreChannelDirectory };
+  core?: {
+    businesses?: CoreBusinessDirectory;
+    channels?: CoreChannelDirectory;
+    /** 15.W1 Core content library; absent = pending (from-content answers 501). */
+    content?: CoreContentClient;
+  };
+  /** 15.A3: thumbnail rendering + S3_BUCKET_THUMBNAILS; absent = FFmpeg + env on first use. */
+  thumbnails?: { composer: ThumbnailComposer; bucket: string };
   /** 13.5: presigned upload URLs + ffprobe; absent = built from env on first use. */
   uploads?: UploadDeps;
   logger: Logger;
@@ -116,6 +130,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
     internalRateLimiter: rateLimit.createRateLimiter(
       rateLimit.createRedisRateLimitStore(connection),
       rateLimit.internalRateLimitsFromEnv(),
+      { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
+    ),
+    publicRateLimiter: rateLimit.createRateLimiter(
+      rateLimit.createRedisRateLimitStore(connection),
+      rateLimit.publicRateLimitsFromEnv(),
       { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
     ),
     publishing: pipeline.publishing,

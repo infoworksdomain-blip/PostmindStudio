@@ -86,8 +86,8 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
   });
 
   it.each([
-    ['STOCK_FOOTAGE', 'stock_footage', ['storyblocks', 'pexels']],
-    ['IMAGE_STILL', 'text_to_image', ['openai', 'fal']],
+    ['STOCK_FOOTAGE', 'stock_footage', ['storyblocks-video', 'pexels-video']],
+    ['IMAGE_STILL', 'text_to_image', ['openai', 'fal', 'ideogram']],
   ] as const)('%s → %s %o', (treatment, capability, ids) => {
     expect(
       planCandidates({ kind: 'shot', visualTreatment: treatment, durationSec: 3 }, 'PLUS'),
@@ -109,7 +109,8 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
     ['text_generation', ['anthropic', 'openai']],
     ['tts', ['elevenlabs', 'azure-speech']],
-    ['music', ['elevenlabs-music', 'replicate', 'storyblocks']],
+    ['music', ['elevenlabs-music', 'storyblocks-music', 'replicate']],
+    ['transcription', ['assemblyai', 'openai']],
     ['composition', ['shotstack', 'creatomate']],
     ['content_safety', ['hive', 'sightengine']],
   ] as const)('capability %s tries %o', (capability, ids) => {

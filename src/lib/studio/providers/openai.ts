@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { ProviderError } from '../../errors';
+import { ConfigurationError, ProviderError } from '../../errors';
 import { providerOutputKey, type AssetStorage } from '../storage';
 import type {
   AspectRatio,
@@ -12,17 +12,28 @@ import type {
   TextToImageRequest,
 } from './interface';
 import { usdToPence } from './pricing';
+import {
+  DEFAULT_TEXT_MODEL,
+  estimateTextPence,
+  generateText,
+  TEXT_PRICING,
+  transcribe,
+  transcriptionPence,
+  type OpenAITextClient,
+} from './openai-text';
 import { classifyHttpStatus, providerError, type ErrorClassification } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
 
 // BACKLOG 2.5 — OpenAI images (Layer 3 IMAGE_STILL) + embeddings (library / image search).
+// 15.C1 — text generation (Layers 1–2 fallback) and transcription (captions fallback), in
+// openai-text.ts.
 //
 // SPEC DRIFT: the spec names DALL-E 3, which OpenAI removed from the API on 2026-05-12
 // (developers.openai.com/api/docs/deprecations). The default image model is gpt-image-2, the
 // replacement named on that page. GPT image models return base64 only, so images are
 // written to S3 and the adapter returns a signed URL.
 //
-// Both endpoints are synchronous; submit() does the work and poll() returns the parked result.
+// Every endpoint is synchronous; submit() does the work and poll() returns the parked result.
 
 export const PROVIDER_ID = 'openai';
 export const DEFAULT_IMAGE_MODEL = 'gpt-image-2';
@@ -51,7 +62,7 @@ const SIZE_FOR_ASPECT: Record<AspectRatio, string> = {
   '4:5': '1024x1280',
 };
 
-export interface OpenAIClientLike {
+export interface OpenAIClientLike extends OpenAITextClient {
   images: {
     generate(params: OpenAI.ImageGenerateParamsNonStreaming): Promise<OpenAI.ImagesResponse>;
   };
@@ -67,6 +78,10 @@ export interface OpenAIAdapterOptions {
   bucket: string;
   usdToGbpRate: number;
   imageModel?: string;
+  /** 15.C1: OPENAI_TEXT_MODEL (default gpt-6-sol); needs a TEXT_PRICING row. */
+  textModel?: string;
+  /** Downloads media for transcription (the endpoint takes a file, not a URL). */
+  fetchImpl?: typeof fetch;
   now?: () => number;
 }
 
@@ -104,21 +119,37 @@ export function imageCostUsd(
 
 export class OpenAIAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
-  readonly capabilities: readonly ProviderCapability[] = ['text_to_image', 'embedding'];
+  readonly capabilities: readonly ProviderCapability[] = [
+    'text_to_image',
+    'embedding',
+    'text_generation',
+    'transcription',
+  ];
   readonly typicalLatencySec = 60; // image guide: complex prompts "may take up to 2 minutes"
 
   private readonly results: SyncJobStore;
   private readonly imageModel: string;
+  private readonly textModel: string;
   private readonly now: () => number;
 
   constructor(private readonly options: OpenAIAdapterOptions) {
     this.imageModel = options.imageModel ?? DEFAULT_IMAGE_MODEL;
+    this.textModel = options.textModel ?? DEFAULT_TEXT_MODEL;
+    if (!TEXT_PRICING[this.textModel]) {
+      throw new ConfigurationError(`No pricing configured for OpenAI text model ${this.textModel}`);
+    }
     this.now = options.now ?? Date.now;
     this.results = new SyncJobStore(PROVIDER_ID, this.now);
   }
 
   estimateCostPence(request: ProviderRequest): number {
-    return request.capability === 'text_to_image' ? IMAGE_ESTIMATE_PENCE : 1;
+    const rate = this.options.usdToGbpRate;
+    if (request.capability === 'text_to_image') return IMAGE_ESTIMATE_PENCE;
+    if (request.capability === 'text_generation')
+      return estimateTextPence(this.textModel, request, rate);
+    if (request.capability === 'transcription')
+      return transcriptionPence(request.durationSec, rate);
+    return 1;
   }
 
   async submit(request: ProviderRequest): Promise<ProviderSubmitResult> {
@@ -128,6 +159,21 @@ export class OpenAIAdapter implements ProviderAdapter {
       ({ result, costPence } = await this.generateImage(request));
     } else if (request.capability === 'embedding') {
       ({ result, costPence } = await this.embed(request));
+    } else if (request.capability === 'text_generation') {
+      ({ result, costPence } = await generateText(
+        this.options.client,
+        this.textModel,
+        request,
+        this.options.usdToGbpRate,
+        (fn) => this.call(fn),
+      ));
+    } else if (request.capability === 'transcription') {
+      ({ result, costPence } = await transcribe(
+        this.options.client,
+        request,
+        { rate: this.options.usdToGbpRate, fetchImpl: this.options.fetchImpl ?? fetch },
+        (fn) => this.call(fn),
+      ));
     } else {
       throw providerError(
         PROVIDER_ID,

@@ -1,5 +1,6 @@
 import { roundSec } from '../pipeline/edl';
 import { PRE_RENDERED_ANIMATIONS, type Animation, type OverlayStyle } from './params';
+import { directionalText, type TextDirection } from './script-fonts';
 
 // BACKLOG 8.3 / Addendum A4.6 — TextOverlay → Shotstack clip. A4.6 sketches the `text` asset,
 // but Shotstack's API reference (read 2026-09-27) marks `text` and `html` deprecated in favour
@@ -18,6 +19,8 @@ export interface OverlayRow extends OverlayStyle {
   endAtSec: number;
   /** Karaoke (13.6): highlight time per word, seconds from the overlay start (spoken timing). */
   wordStartsSec?: number[];
+  /** 15.C5: text direction of the script language (overlays/script-fonts.ts); default ltr. */
+  direction?: TextDirection;
 }
 
 export interface FrameSize {
@@ -70,7 +73,7 @@ function richTextAsset(overlay: OverlayRow, frame: FrameSize): Record<string, un
   const fill = splitColour(overlay.fillColor);
   const asset: Record<string, unknown> = {
     type: 'rich-text',
-    text: overlay.text.slice(0, 5_000),
+    text: directionalText(overlay.text.slice(0, 5_000), overlay.direction),
     font: {
       family: overlay.fontFamily,
       size: fontPx(overlay, frame),

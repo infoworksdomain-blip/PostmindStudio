@@ -3,6 +3,7 @@ import { projectMetadata } from '../pipeline/project-state';
 import type { ProjectJobData } from '../queue/queues';
 import { AUTO_APPROVE_ACTOR, mergeMetadata, recordApproval, requiredRoleFor } from './approval';
 import { publishOnApproval } from './auto-publish';
+import { resolveWorkflowForProject } from '../services/approval-workflows';
 import { autoApprovePolicyFor } from '../services/org-policy';
 import {
   countHumanApprovedProjects,
@@ -96,8 +97,20 @@ export async function autoApproveIfTrusted(
   const at = () => new Date(deps.now()).toISOString();
   let record: ReviewRecord;
   try {
+    // 15.D3: auto-approve never bypasses a multi-step approval workflow — when one applies, the
+    // project waits for its people (services/approval-workflows.ts).
+    const workflow = await resolveWorkflowForProject(deps.db, project);
     const { decision, humanApprovedCount, threshold } = await decide(deps, data, project);
-    if (decision.decision === 'needs_review') {
+    if (workflow) {
+      record = {
+        decision: 'needs_review',
+        code: 'approval_workflow',
+        reason: `Needs review: the “${workflow.name}” approval workflow applies (${workflow.steps.length} step${workflow.steps.length === 1 ? '' : 's'})`,
+        humanApprovedCount,
+        ...(threshold !== null && { threshold }),
+        at: at(),
+      };
+    } else if (decision.decision === 'needs_review') {
       record = {
         decision: 'needs_review',
         code: decision.code,

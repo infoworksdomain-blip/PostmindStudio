@@ -1,6 +1,9 @@
 import { ThemeProvider } from 'next-themes';
 import { useEffect, type ReactNode } from 'react';
 import { AdminCentre } from '@/components/studio/admin/admin-centre';
+import { ExportScreen } from '@/components/studio/account/export-screen';
+import { PublicPreview } from '@/components/studio/share/public-preview';
+import { TemplatesScreen } from '@/components/studio/templates/templates-screen';
 import { AnalyticsDashboard } from '@/components/studio/analytics/analytics-dashboard';
 import { PublicationAnalytics } from '@/components/studio/analytics/publication-analytics';
 import { AppShell } from '@/components/studio/app-shell';
@@ -8,6 +11,7 @@ import { BusinessProvider } from '@/components/studio/business-context';
 import { BusinessScreen } from '@/components/studio/business/business-screen';
 import { PublicationsCalendar } from '@/components/studio/calendar/publications-calendar';
 import { ConnectionsScreen } from '@/components/studio/connections/connections-screen';
+import { ApprovalWorkflowsScreen } from '@/components/studio/approvals/approval-workflows-screen';
 import { parseReference } from '@/components/studio/create/body';
 import { CreateScreen } from '@/components/studio/create/create-screen';
 import { LibraryBrowse } from '@/components/studio/library/library-browse';
@@ -61,8 +65,12 @@ const ROUTES: RouteDef[] = [
   },
   { path: '/business', render: () => <BusinessScreen /> },
   { path: '/connections', render: () => <ConnectionsScreen /> },
+  { path: '/approvals', render: () => <ApprovalWorkflowsScreen /> },
   { path: '/welcome', render: () => <WelcomeWizard /> },
   { path: '/admin', render: () => <AdminCentre /> },
+  { path: '/templates', render: () => <TemplatesScreen /> },
+  { path: '/account/export', render: () => <ExportScreen /> },
+  { path: '/p/:token', render: (p) => <PublicPreview token={p.token ?? ''} /> },
 ];
 
 function Routed() {

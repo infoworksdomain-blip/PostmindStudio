@@ -11,6 +11,8 @@ const items: LibraryItem[] = LIBRARY.map((i) => ({
 }));
 
 export const libraryItems = (): LibraryItem[] => items.filter((i) => !i.retiredAt);
+/** 15.D7 staff list: every item, retired or not. */
+export const allLibraryItems = (): LibraryItem[] => [...items];
 export const liveItem = (id: string): LibraryItem | undefined =>
   items.find((i) => i.id === id && !i.retiredAt);
 export const anyItem = (id: string): LibraryItem | undefined => items.find((i) => i.id === id);

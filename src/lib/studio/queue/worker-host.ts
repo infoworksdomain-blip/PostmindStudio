@@ -1,4 +1,5 @@
-import { Worker, type ConnectionOptions } from 'bullmq';
+import { DelayedError, Worker, type ConnectionOptions } from 'bullmq';
+import { RateDeferredError } from '../../errors';
 import type { PipelineDeps } from '../pipeline/deps';
 import { QUEUES, retryDelayMs, type JobDataMap, type JobName, type QueueName } from './queues';
 import { queuePrefix } from './redis';
@@ -56,6 +57,23 @@ export const PIPELINE_QUEUES: QueueName[] = [
   QUEUES.analytics,
 ];
 
+/**
+ * 15.C3 (spec 11.4): a full provider rate window moves the job to the delayed set until the
+ * window frees. BullMQ's documented pattern (https://docs.bullmq.io/patterns/process-step-jobs,
+ * read 2026-09-28): `await job.moveToDelayed(ts, token); throw new DelayedError()` — "Manually
+ * moving jobs using special errors does not increment the attemptsMade property".
+ */
+export async function deferIfRateLimited(
+  err: unknown,
+  job: { moveToDelayed(timestamp: number, token?: string): Promise<void> },
+  token: string | undefined,
+  now: () => number,
+): Promise<void> {
+  if (!(err instanceof RateDeferredError)) return;
+  await job.moveToDelayed(now() + err.retryAfterMs, token);
+  throw new DelayedError();
+}
+
 export function startWorkers(input: {
   connection: ConnectionOptions;
   deps: PipelineDeps;
@@ -64,11 +82,16 @@ export function startWorkers(input: {
   return (input.queues ?? PIPELINE_QUEUES).map((queue) => {
     const worker = new Worker(
       queue,
-      async (job) => {
-        await executeJob(job.name as JobName, job.data as JobDataMap[JobName], input.deps, {
-          attemptsMade: job.attemptsMade,
-          maxAttempts: job.opts.attempts ?? 1,
-        });
+      async (job, token) => {
+        try {
+          await executeJob(job.name as JobName, job.data as JobDataMap[JobName], input.deps, {
+            attemptsMade: job.attemptsMade,
+            maxAttempts: job.opts.attempts ?? 1,
+          });
+        } catch (err) {
+          await deferIfRateLimited(err, job, token, input.deps.now);
+          throw err;
+        }
       },
       {
         connection: input.connection,

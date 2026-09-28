@@ -19,4 +19,5 @@ export const POST = withStudioRoute(
     );
     return { status: 201, body: result };
   },
+  { feature: 'image-library' },
 );

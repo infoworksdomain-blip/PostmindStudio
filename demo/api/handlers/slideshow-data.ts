@@ -185,6 +185,13 @@ const templates: SlideshowTemplate[] = [
 
 export const listSlideshowTemplates = () => templates.map((t) => ({ ...t }));
 export const findSlideshowTemplate = (id: string) => templates.find((t) => t.id === id);
+/** 15.E7: remove an organisation template (false when absent). */
+export function removeSlideshowTemplate(id: string): boolean {
+  const i = templates.findIndex((t) => t.id === id);
+  if (i < 0) return false;
+  templates.splice(i, 1);
+  return true;
+}
 export function addSlideshowTemplate(t: SlideshowTemplate): SlideshowTemplate {
   templates.push(t);
   return { ...t };

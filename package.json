@@ -18,6 +18,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:eval": "dotenv -e .env.local -- vitest run --config vitest.eval.config.ts",
+    "test:visual": "vitest run test/visual",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:generate": "prisma generate",

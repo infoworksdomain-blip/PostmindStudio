@@ -246,6 +246,137 @@ async function categorySlugs(deps: PipelineDeps): Promise<Map<string, string>> {
   return new Map(rows.map((r) => [r.slug, r.id]));
 }
 
+/** Step 2 — visual structure of a stored source: probe, scene-detected shots, keyframes. */
+export async function visualStructure(deps: PipelineDeps, url: string) {
+  const probe = await deps.media.probe(url);
+  if (!(probe.durationSec > 0)) throw new ValidationError('Source has no video duration');
+  const shots = shotsFromSceneChanges(
+    await deps.media.sceneChanges(url, SCENE_THRESHOLD),
+    probe.durationSec,
+  );
+  const frames = await keyframes(deps, url, shots);
+  const analysedShots = frames.length < shots.length ? mergeToFrames(shots, frames.length) : shots;
+  return { probe, frames, analysedShots };
+}
+
+type Visual = Awaited<ReturnType<typeof visualStructure>>;
+
+/** Steps 3–5 + 7 — transcript, loudness, then Claude's structure/text/category analysis. */
+export async function analyseContent(
+  deps: PipelineDeps,
+  input: {
+    url: string;
+    visual: Visual;
+    planTier: PlanTier;
+    hints: { title?: string; tags: string[] };
+  },
+) {
+  const { url, visual, planTier } = input;
+  // 3 — audio
+  const transcript = await transcribe(deps, url, visual.probe.durationSec, planTier);
+  const loudness = await deps.media.integratedLoudness(url);
+
+  // 4+5+7 — structure, on-screen text and category (Claude with keyframes)
+  const categories = await categorySlugs(deps);
+  const run = await runProvider(
+    {
+      need: { kind: 'capability', capability: 'text_generation' },
+      planTier,
+      request: {
+        capability: 'text_generation',
+        organisationId: PLATFORM_ORG,
+        system: ANALYSIS_SYSTEM_PROMPT,
+        prompt: buildAnalysisPrompt({
+          durationSec: visual.probe.durationSec,
+          shots: visual.analysedShots,
+          transcript: transcript.text,
+          categorySlugs: [...categories.keys()],
+          hints: input.hints,
+        }),
+        images: visual.frames,
+        maxTokens: 4_000,
+        outputSchema: ANALYSIS_SCHEMA as unknown as Record<string, unknown>,
+      },
+    },
+    deps,
+  );
+  const analysis = parseAnalysis(jsonOutput(run.output), visual.analysedShots.length);
+  const shotRows = visual.analysedShots.map((s, i) => ({ ...s, ...analysis.shots[i] }));
+  const overlayTimeline = shotRows
+    .filter((s) => s.onScreenText)
+    .map((s) => ({
+      startSec: s.startSec,
+      endSec: s.endSec,
+      text: s.onScreenText,
+      style: s.overlayStyle,
+    }));
+  /** video_library_analysis columns (without libraryItemId). */
+  const analysisRow = {
+    shotCount: shotRows.length,
+    shots: shotRows as unknown as Prisma.InputJsonValue,
+    transcript: {
+      text: transcript.text,
+      words: transcript.words,
+      ...(transcript.skipped && { skipped: transcript.skipped }),
+    } as Prisma.InputJsonValue,
+    overlayTimeline: overlayTimeline as Prisma.InputJsonValue,
+    musicEnvelope: {
+      bpm: null,
+      key: null,
+      energy: energyTag(loudness),
+      integratedLufs: loudness,
+      mood: analysis.musicMoodTag,
+      genre: analysis.genreTag,
+    } as Prisma.InputJsonValue,
+    hookPattern: analysis.hookPattern,
+    structurePattern: analysis.structurePattern,
+    ctaPattern: analysis.ctaPattern || null,
+    paceTag: analysis.paceTag,
+    moodTag: analysis.moodTag,
+  };
+  const suggestedCategoryId = analysis.categorySlugs.map((s) => categories.get(s)).find(Boolean);
+  return { analysis, transcript, categories, suggestedCategoryId, analysisRow };
+}
+
+/** Step 6 — embed the analysed description and store it (replacing any previous vector). */
+export async function storeLibraryEmbedding(
+  deps: PipelineDeps,
+  libraryItemId: string,
+  document: string,
+  planTier: PlanTier,
+  replace = false,
+): Promise<void> {
+  const embed = await runProvider(
+    {
+      need: { kind: 'capability', capability: 'embedding' },
+      planTier,
+      request: {
+        capability: 'embedding',
+        organisationId: PLATFORM_ORG,
+        input: [document],
+        dimensions: 1536,
+      },
+    },
+    deps,
+  );
+  const vector = (embed.output.metadata as { embeddings?: number[][] }).embeddings?.[0];
+  if (!vector || vector.length !== 1536) throw new ValidationError('Embedding had the wrong shape');
+  const v = await vectorSql(deps.db);
+  const model = `${embed.decision.adapter.providerId}:text-embedding`;
+  if (replace) {
+    await deps.db.$transaction([
+      deps.db.$executeRaw`DELETE FROM studio.video_library_embeddings WHERE "libraryItemId" = ${libraryItemId}`,
+      deps.db.$executeRaw`INSERT INTO studio.video_library_embeddings
+        (id, "libraryItemId", embedding, "embeddingModel")
+        VALUES (${randomUUID()}, ${libraryItemId}, ${vectorLiteral(vector)}${v.cast}, ${model})`,
+    ]);
+    return;
+  }
+  await deps.db.$executeRaw`INSERT INTO studio.video_library_embeddings
+    (id, "libraryItemId", embedding, "embeddingModel")
+    VALUES (${randomUUID()}, ${libraryItemId}, ${vectorLiteral(vector)}${v.cast}, ${model})`;
+}
+
 export async function ingestLibraryVideo(
   deps: PipelineDeps,
   item: IngestItem,
@@ -261,14 +392,8 @@ export async function ingestLibraryVideo(
   const url = await deps.storage.signedUrl(bucket, s3Key, 6 * 60 * 60);
 
   // 2 — visual structure
-  const probe = await deps.media.probe(url);
-  if (!(probe.durationSec > 0)) throw new ValidationError('Source has no video duration');
-  const shots = shotsFromSceneChanges(
-    await deps.media.sceneChanges(url, SCENE_THRESHOLD),
-    probe.durationSec,
-  );
-  const frames = await keyframes(deps, url, shots);
-  const analysedShots = frames.length < shots.length ? mergeToFrames(shots, frames.length) : shots;
+  const visual = await visualStructure(deps, url);
+  const { probe } = visual;
   const thumbnail = await deps.media.frameJpeg(
     url,
     Math.min(1, probe.durationSec / 2),
@@ -288,38 +413,16 @@ export async function ingestLibraryVideo(
     contentType: 'video/mp4',
   });
 
-  // 3 — audio
-  const transcript = await transcribe(deps, url, probe.durationSec, planTier);
-  const loudness = await deps.media.integratedLoudness(url);
-
-  // 4+5+7 — structure, on-screen text and category (Claude with keyframes)
-  const categories = await categorySlugs(deps);
-  const run = await runProvider(
-    {
-      need: { kind: 'capability', capability: 'text_generation' },
-      planTier,
-      request: {
-        capability: 'text_generation',
-        organisationId: PLATFORM_ORG,
-        system: ANALYSIS_SYSTEM_PROMPT,
-        prompt: buildAnalysisPrompt({
-          durationSec: probe.durationSec,
-          shots: analysedShots,
-          transcript: transcript.text,
-          categorySlugs: [...categories.keys()],
-          hints: { title: item.title, tags: item.tags },
-        }),
-        images: frames,
-        maxTokens: 4_000,
-        outputSchema: ANALYSIS_SCHEMA as unknown as Record<string, unknown>,
-      },
-    },
-    deps,
-  );
-  const analysis = parseAnalysis(jsonOutput(run.output), analysedShots.length);
+  // 3–5 + 7 — audio, structure, on-screen text and category
+  const content = await analyseContent(deps, {
+    url,
+    visual,
+    planTier,
+    hints: { title: item.title, tags: item.tags },
+  });
+  const { analysis, transcript } = content;
   const categoryId =
-    (item.category && categories.get(item.category)) ||
-    analysis.categorySlugs.map((s) => categories.get(s)).find(Boolean);
+    (item.category && content.categories.get(item.category)) || content.suggestedCategoryId;
   if (!categoryId)
     throw new ValidationError('No valid category for this video (seed the taxonomy)');
 
@@ -328,15 +431,6 @@ export async function ingestLibraryVideo(
     0,
     20,
   );
-  const shotRows = analysedShots.map((s, i) => ({ ...s, ...analysis.shots[i] }));
-  const overlayTimeline = shotRows
-    .filter((s) => s.onScreenText)
-    .map((s) => ({
-      startSec: s.startSec,
-      endSec: s.endSec,
-      text: s.onScreenText,
-      style: s.overlayStyle,
-    }));
 
   const libraryItemId = await deps.db.$transaction(async (tx) => {
     const created = await tx.videoLibraryItem.create({
@@ -355,30 +449,7 @@ export async function ingestLibraryVideo(
       },
     });
     await tx.videoLibraryAnalysis.create({
-      data: {
-        libraryItemId: created.id,
-        shotCount: shotRows.length,
-        shots: shotRows as unknown as Prisma.InputJsonValue,
-        transcript: {
-          text: transcript.text,
-          words: transcript.words,
-          ...(transcript.skipped && { skipped: transcript.skipped }),
-        } as Prisma.InputJsonValue,
-        overlayTimeline: overlayTimeline as Prisma.InputJsonValue,
-        musicEnvelope: {
-          bpm: null,
-          key: null,
-          energy: energyTag(loudness),
-          integratedLufs: loudness,
-          mood: analysis.musicMoodTag,
-          genre: analysis.genreTag,
-        } as Prisma.InputJsonValue,
-        hookPattern: analysis.hookPattern,
-        structurePattern: analysis.structurePattern,
-        ctaPattern: analysis.ctaPattern || null,
-        paceTag: analysis.paceTag,
-        moodTag: analysis.moodTag,
-      },
+      data: { libraryItemId: created.id, ...content.analysisRow },
     });
     await tx.videoLibraryLicense.create({
       data: {
@@ -400,33 +471,18 @@ export async function ingestLibraryVideo(
   });
 
   // 6 — embedding
-  const embed = await runProvider(
-    {
-      need: { kind: 'capability', capability: 'embedding' },
-      planTier,
-      request: {
-        capability: 'embedding',
-        organisationId: PLATFORM_ORG,
-        input: [
-          embeddingDocument({
-            title,
-            description: analysis.description,
-            tags,
-            analysis,
-            transcript: transcript.text,
-          }),
-        ],
-        dimensions: 1536,
-      },
-    },
+  await storeLibraryEmbedding(
     deps,
+    libraryItemId,
+    embeddingDocument({
+      title,
+      description: analysis.description,
+      tags,
+      analysis,
+      transcript: transcript.text,
+    }),
+    planTier,
   );
-  const vector = (embed.output.metadata as { embeddings?: number[][] }).embeddings?.[0];
-  if (!vector || vector.length !== 1536) throw new ValidationError('Embedding had the wrong shape');
-  const v = await vectorSql(deps.db);
-  await deps.db.$executeRaw`INSERT INTO studio.video_library_embeddings
-    (id, "libraryItemId", embedding, "embeddingModel")
-    VALUES (${randomUUID()}, ${libraryItemId}, ${vectorLiteral(vector)}${v.cast}, ${`${embed.decision.adapter.providerId}:text-embedding`})`;
   return { libraryItemId, created: true };
 }
 

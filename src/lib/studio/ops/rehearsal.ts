@@ -106,6 +106,20 @@ export function parsePlan(argv: string[]): RehearsalPlan {
   };
 }
 
+/**
+ * BACKLOG 15.D6: engaging the global level answers 202 { pending: { requestId, ... } } until a
+ * second staff member confirms it. Returns the request id, or undefined when the switch was set
+ * directly (200: break-glass, or already engaged).
+ */
+export function pendingGlobalRequestId(status: number, body: unknown): string | undefined {
+  if (status !== 202) return undefined;
+  const requestId = (body as { pending?: { requestId?: unknown } } | null)?.pending?.requestId;
+  if (typeof requestId !== 'string' || requestId === '') {
+    throw new ValidationError('202 from the kill-switch PUT without a pending requestId');
+  }
+  return requestId;
+}
+
 export function formatReport(plan: RehearsalPlan, result: DrainResult): string {
   const secs = (result.elapsedMs / 1000).toFixed(1);
   const verdict = !result.drained

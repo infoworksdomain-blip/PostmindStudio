@@ -6,7 +6,8 @@ import { formatPence, PLATFORM_LABEL } from '@/lib/client/format';
 import type { BrandKit } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { Field, NativeSelect } from '../review/field';
-import type { CreateState, ReviewPolicy } from './body';
+import type { CreateState, QualityTier, ReviewPolicy } from './body';
+import { PlanningAdvancedOptions, type WorkflowOption } from './create-planning-options';
 import {
   DEFAULT_LONG_FORM_BUDGET_PENCE,
   DEFAULT_SHORT_FORM_BUDGET_PENCE,
@@ -25,7 +26,8 @@ function budgetPlaceholder(state: CreateState): string {
   if (state.projectTemplate) {
     return `Default ${formatPence(DEFAULT_SHORT_FORM_BUDGET_PENCE)} / ${formatPence(DEFAULT_LONG_FORM_BUDGET_PENCE)}`;
   }
-  return `Default ${formatPence(defaultProjectBudgetPence(buildFormats(state.platforms, state.length)))}`;
+  const formats = buildFormats(state.platforms, state.length);
+  return `Default ${formatPence(defaultProjectBudgetPence(formats, state.source))}`;
 }
 
 function Chip({
@@ -126,11 +128,16 @@ export function AdvancedOptions({
   onChange,
   open,
   onToggle,
+  planTier,
+  workflows,
 }: {
   state: CreateState;
   onChange: Patch;
   open: boolean;
   onToggle: () => void;
+  /** 15.C4: the organisation's plan (tier override ceiling) and approval workflows. */
+  planTier?: QualityTier;
+  workflows?: WorkflowOption[];
 }) {
   return (
     <div className="border-t border-border/70 pt-4">
@@ -190,6 +197,12 @@ export function AdvancedOptions({
               <option value="AUTO_APPROVE">Approve automatically</option>
             </NativeSelect>
           </Field>
+          <PlanningAdvancedOptions
+            state={state}
+            onChange={onChange}
+            planTier={planTier}
+            workflows={workflows}
+          />
         </div>
       )}
     </div>

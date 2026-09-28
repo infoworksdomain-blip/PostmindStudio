@@ -1,4 +1,4 @@
-name: Daily platform canary
+name: Daily platform and provider canary
 
 # BACKLOG 13.31 — one live, read-only API call per platform with a sandbox account
 # (src/lib/studio/platforms/canary.ts), to catch token/permission loss and response-shape changes
@@ -48,4 +48,58 @@ jobs:
         if: steps.secrets.outputs.present == 'true'
       - name: Live read-only canary per configured platform
         if: steps.secrets.outputs.present == 'true'
-        run: npx vitest run --config vitest.canary.config.ts
+        env:
+          CANARY_ANNOTATIONS_FILE: ${{ runner.temp }}/platform-deprecations.txt
+        run: npx vitest run --config vitest.canary.config.ts test/canary/platform.canary.ts
+      - name: Deprecation / Sunset headers seen (15.D10)
+        if: always() && steps.secrets.outputs.present == 'true'
+        run: cat "${{ runner.temp }}/platform-deprecations.txt" 2>/dev/null || true
+
+  providers:
+    # BACKLOG 15.D10 / spec §20 "Every adapter has integration tests run daily … staging
+    # environment monitors deprecation warnings": each AI provider adapter's own read-only
+    # healthCheck() with a STAGING key (src/lib/studio/providers/canary.ts,
+    # test/canary/providers.canary.ts). Deprecation / Sunset / Link rel=deprecation response
+    # headers become ::warning annotations. Providers without secrets are skipped.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CANARY_ANTHROPIC_API_KEY: ${{ secrets.CANARY_ANTHROPIC_API_KEY }}
+      CANARY_OPENAI_API_KEY: ${{ secrets.CANARY_OPENAI_API_KEY }}
+      CANARY_RUNWAY_API_KEY: ${{ secrets.CANARY_RUNWAY_API_KEY }}
+      CANARY_LUMA_API_KEY: ${{ secrets.CANARY_LUMA_API_KEY }}
+      CANARY_HEYGEN_API_KEY: ${{ secrets.CANARY_HEYGEN_API_KEY }}
+      CANARY_HEYGEN_AVATAR_ID: ${{ secrets.CANARY_HEYGEN_AVATAR_ID }}
+      CANARY_ELEVENLABS_API_KEY: ${{ secrets.CANARY_ELEVENLABS_API_KEY }}
+      CANARY_SHOTSTACK_API_KEY: ${{ secrets.CANARY_SHOTSTACK_API_KEY }}
+      CANARY_HIVE_API_KEY: ${{ secrets.CANARY_HIVE_API_KEY }}
+      CANARY_ASSEMBLYAI_API_KEY: ${{ secrets.CANARY_ASSEMBLYAI_API_KEY }}
+      CANARY_STORYBLOCKS_PUBLIC_KEY: ${{ secrets.CANARY_STORYBLOCKS_PUBLIC_KEY }}
+      CANARY_STORYBLOCKS_PRIVATE_KEY: ${{ secrets.CANARY_STORYBLOCKS_PRIVATE_KEY }}
+    steps:
+      - name: Check for staging provider secrets
+        id: secrets
+        run: |
+          if [ -n "$CANARY_ANTHROPIC_API_KEY$CANARY_OPENAI_API_KEY$CANARY_RUNWAY_API_KEY$CANARY_LUMA_API_KEY$CANARY_HEYGEN_API_KEY$CANARY_ELEVENLABS_API_KEY$CANARY_SHOTSTACK_API_KEY$CANARY_HIVE_API_KEY$CANARY_ASSEMBLYAI_API_KEY$CANARY_STORYBLOCKS_PUBLIC_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Provider canary skipped::No CANARY_* staging provider secrets are configured (runbooks/slo-and-launch-readiness.md)."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.secrets.outputs.present == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.secrets.outputs.present == 'true'
+      - name: Live health check per configured provider
+        if: steps.secrets.outputs.present == 'true'
+        env:
+          CANARY_ANNOTATIONS_FILE: ${{ runner.temp }}/provider-annotations.txt
+        run: npx vitest run --config vitest.canary.config.ts test/canary/providers.canary.ts
+      - name: Deprecation / Sunset headers and unprobed providers
+        if: always() && steps.secrets.outputs.present == 'true'
+        run: cat "${{ runner.temp }}/provider-annotations.txt" 2>/dev/null || true

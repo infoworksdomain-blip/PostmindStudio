@@ -34,6 +34,8 @@ function row(over: Partial<AutoPublishOutbox> = {}): AutoPublishOutbox {
     lockedAt: null,
     lastError: null,
     publicationId: null,
+    scheduledFor: null,
+    slotAt: null,
     createdAt: new Date(NOW),
     updatedAt: new Date(NOW),
     ...over,

@@ -7,6 +7,7 @@ import { ElevenLabsAdapter } from './elevenlabs';
 import { ElevenLabsMusicAdapter } from './elevenlabs-music';
 import { HiveAdapter } from './hive';
 import type { ProviderAdapter } from './interface';
+import type { ByocProviderId, ProviderKeyMap } from './byoc-providers';
 import { OpenAIAdapter } from './openai';
 import { usdToGbpRateFromEnv } from './pricing';
 import { createProviderRegistry, type ProviderRegistry } from './registry';
@@ -16,6 +17,9 @@ import { LumaAdapter } from './luma';
 import { HeyGenAdapter } from './heygen';
 import { ShotstackAdapter } from './shotstack';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
+import { StoryblocksMusicAdapter } from './storyblocks-music';
+import { StoryblocksVideoAdapter } from './storyblocks-video';
+import { PexelsVideoAdapter } from './pexels-video';
 import { createHiveResultReader } from './hive-results';
 
 // Explicit SDK timeouts (the SDK default is 10 minutes). OpenAI's image guide says complex
@@ -26,16 +30,55 @@ const OPENAI_TIMEOUT_MS = 180_000;
 // Builds the registry from environment. A provider is registered only when its API key is
 // set, so an unconfigured provider is simply "not_configured" to the router.
 
-function envValue(name: string): string | undefined {
-  const value = process.env[name];
+type Env = Record<string, string | undefined>;
+
+function valueOf(env: Env, name: string): string | undefined {
+  const value = env[name];
   return value && value.trim() !== '' ? value : undefined;
 }
 
-export function buildAdaptersFromEnv(): ProviderAdapter[] {
+/** The platform's own keys (the *_API_KEY variables) as a key map. */
+export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
+  const keys: ProviderKeyMap = {};
+  const single: ReadonlyArray<[ByocProviderId, string]> = [
+    ['anthropic', 'ANTHROPIC_API_KEY'],
+    ['openai', 'OPENAI_API_KEY'],
+    ['assemblyai', 'ASSEMBLYAI_API_KEY'],
+    ['runway', 'RUNWAY_API_KEY'],
+    ['luma', 'LUMA_API_KEY'],
+    ['heygen', 'HEYGEN_API_KEY'],
+    ['elevenlabs', 'ELEVENLABS_API_KEY'],
+    ['shotstack', 'SHOTSTACK_API_KEY'],
+    ['hive', 'HIVE_API_KEY'],
+    ['pexels', 'PEXELS_API_KEY'],
+  ];
+  for (const [id, name] of single) {
+    const apiKey = valueOf(env, name);
+    if (apiKey) keys[id] = { apiKey };
+  }
+  const sbPublic = valueOf(env, 'STORYBLOCKS_API_PUBLIC_KEY');
+  const sbPrivate = valueOf(env, 'STORYBLOCKS_API_PRIVATE_KEY');
+  if (sbPublic && sbPrivate) keys.storyblocks = { apiKey: sbPublic, secondaryKey: sbPrivate };
+  return keys;
+}
+
+export function buildAdaptersFromEnv(env: Env = process.env): ProviderAdapter[] {
+  return buildAdaptersFromKeys(providerKeysFromEnv(env), env);
+}
+
+/**
+ * P1 BYOC: builds adapters from a key map (the platform's env keys, or an organisation's own
+ * keys). Non-secret settings (models, HeyGen avatar look, regions) still come from `env`.
+ */
+export function buildAdaptersFromKeys(
+  keys: ProviderKeyMap,
+  env: Env = process.env,
+): ProviderAdapter[] {
+  const envValue = (name: string) => valueOf(env, name);
   const usdToGbpRate = usdToGbpRateFromEnv();
   const adapters: ProviderAdapter[] = [];
 
-  const anthropicKey = envValue('ANTHROPIC_API_KEY');
+  const anthropicKey = keys.anthropic?.apiKey;
   if (anthropicKey) {
     adapters.push(
       new AnthropicAdapter({
@@ -46,7 +89,7 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
     );
   }
 
-  const openaiKey = envValue('OPENAI_API_KEY');
+  const openaiKey = keys.openai?.apiKey;
   if (openaiKey) {
     adapters.push(
       new OpenAIAdapter({
@@ -54,12 +97,14 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
         storage: getAssetStorage(),
         bucket: assetsBucket(),
         imageModel: envValue('OPENAI_IMAGE_MODEL'),
+        // 15.C1: the Layers 1–2 text fallback and the captions transcription fallback.
+        textModel: envValue('OPENAI_TEXT_MODEL'),
         usdToGbpRate,
       }),
     );
   }
 
-  const assemblyKey = envValue('ASSEMBLYAI_API_KEY');
+  const assemblyKey = keys.assemblyai?.apiKey;
   if (assemblyKey) {
     adapters.push(
       new AssemblyAiAdapter({
@@ -70,16 +115,16 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
     );
   }
 
-  const runwayKey = envValue('RUNWAY_API_KEY');
+  const runwayKey = keys.runway?.apiKey;
   if (runwayKey) adapters.push(new RunwayAdapter({ apiKey: runwayKey, usdToGbpRate }));
 
   // BACKLOG 13.32: Luma is the AI_CLIP fallback for Runway (router.ts candidate lists).
-  const lumaKey = envValue('LUMA_API_KEY');
+  const lumaKey = keys.luma?.apiKey;
   if (lumaKey) adapters.push(new LumaAdapter({ apiKey: lumaKey, usdToGbpRate }));
 
   // HeyGen renders AI_AVATAR shots with a stock (or brand) avatar look. Registering it makes
   // Layer 2 offer AI_AVATAR, so a key without an avatar is a configuration error, not a skip.
-  const heygenKey = envValue('HEYGEN_API_KEY');
+  const heygenKey = keys.heygen?.apiKey;
   if (heygenKey) {
     const defaultAvatarId = envValue('HEYGEN_AVATAR_ID');
     if (!defaultAvatarId) {
@@ -90,7 +135,7 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
     adapters.push(new HeyGenAdapter({ apiKey: heygenKey, defaultAvatarId, usdToGbpRate }));
   }
 
-  const elevenKey = envValue('ELEVENLABS_API_KEY');
+  const elevenKey = keys.elevenlabs?.apiKey;
   if (elevenKey) {
     adapters.push(
       new ElevenLabsAdapter({
@@ -114,7 +159,7 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
     );
   }
 
-  const shotstackKey = envValue('SHOTSTACK_API_KEY');
+  const shotstackKey = keys.shotstack?.apiKey;
   if (shotstackKey) {
     adapters.push(
       new ShotstackAdapter({
@@ -124,7 +169,7 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
     );
   }
 
-  const hiveKey = envValue('HIVE_API_KEY');
+  const hiveKey = keys.hive?.apiKey;
   if (hiveKey) {
     adapters.push(
       new HiveAdapter({
@@ -137,8 +182,8 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
   }
 
   // 13.27 sound effects: the same Storyblocks keys as the stock image source.
-  const storyblocksPublic = envValue('STORYBLOCKS_API_PUBLIC_KEY');
-  const storyblocksPrivate = envValue('STORYBLOCKS_API_PRIVATE_KEY');
+  const storyblocksPublic = keys.storyblocks?.apiKey;
+  const storyblocksPrivate = keys.storyblocks?.secondaryKey;
   if (storyblocksPublic && storyblocksPrivate) {
     adapters.push(
       new StoryblocksAudioAdapter({
@@ -148,7 +193,25 @@ export function buildAdaptersFromEnv(): ProviderAdapter[] {
         bucket: assetsBucket(),
       }),
     );
+    // 15.C2: the Layer 5 music library fallback (same keys, content_type=music).
+    adapters.push(
+      new StoryblocksMusicAdapter({
+        publicKey: storyblocksPublic,
+        privateKey: storyblocksPrivate,
+        storage: getAssetStorage(),
+        bucket: assetsBucket(),
+      }),
+    );
+    // Phase 15 (13.38 correction): STOCK_FOOTAGE shots. Registering it makes Layer 2 offer
+    // the STOCK_FOOTAGE treatment (pipeline/scripting.ts availableTreatments).
+    adapters.push(
+      new StoryblocksVideoAdapter({ publicKey: storyblocksPublic, privateKey: storyblocksPrivate }),
+    );
   }
+
+  // Phase 15 (13.38 correction): STOCK_FOOTAGE fallback, the key the stock image source uses.
+  const pexelsKey = keys.pexels?.apiKey;
+  if (pexelsKey) adapters.push(new PexelsVideoAdapter({ apiKey: pexelsKey }));
 
   return adapters;
 }

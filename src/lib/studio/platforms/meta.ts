@@ -1,5 +1,5 @@
 import { PlatformError, type PlatformErrorClass } from '../../errors';
-import { platformRequest, pollUntil } from './http';
+import { asBody, platformRequest, pollUntil } from './http';
 import type {
   PlatformPublisher,
   PublishRequest,
@@ -19,10 +19,24 @@ import type {
 //              POST rupload.facebook.com/video-upload/{v}/{video-id} with header file_url (hosted);
 //              POST /{page-id}/video_reels upload_phase=finish {video_id, video_state=PUBLISHED,
 //              description}; GET /{video-id}?fields=status
+// 15.A1 feed video (read 2026-09-28):
+//   Instagram feed: the IG User Media reference lists media_type CAROUSEL | REELS | STORIES only
+//              (https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media),
+//              so a single feed video is a REELS container with share_to_feed=true (it appears
+//              in both Feed and Reels); the rest of the flow is the Reel flow above.
+//   Facebook feed (spec 9.7 "resumable upload flow"): Page Videos reference v26.0
+//              (https://developers.facebook.com/docs/graph-api/reference/page/videos/):
+//              POST /{page-id}/videos upload_phase=start file_size → {upload_session_id,
+//              video_id, start_offset, end_offset}; upload_phase=transfer upload_session_id,
+//              start_offset, video_file_chunk (form data) → next {start_offset, end_offset} until
+//              they are equal; upload_phase=finish upload_session_id, title, description →
+//              {success}. Host graph-video.facebook.com as in the Video API publishing guide
+//              (https://developers.facebook.com/docs/video-api/guides/publishing).
 // Tokens: PostMind Core pushes them to /api/studio/internal/channels (see MetaCredentialSource).
 
 export const GRAPH_HOST = 'https://graph.facebook.com';
 export const RUPLOAD_HOST = 'https://rupload.facebook.com';
+export const GRAPH_VIDEO_HOST = 'https://graph-video.facebook.com';
 export const DEFAULT_GRAPH_VERSION = 'v26.0';
 
 export interface MetaCredentials {
@@ -95,7 +109,13 @@ interface MetaPublisherDeps extends PublisherDeps {
 }
 
 abstract class MetaPublisher implements PlatformPublisher {
-  abstract readonly platform: 'instagram_reel' | 'facebook';
+  abstract readonly platform: 'instagram_reel' | 'instagram_feed' | 'facebook' | 'facebook_feed';
+
+  protected get metaPlatform(): 'instagram' | 'facebook' {
+    return this.platform === 'facebook' || this.platform === 'facebook_feed'
+      ? 'facebook'
+      : 'instagram';
+  }
   protected readonly version: string;
 
   constructor(protected readonly deps: MetaPublisherDeps) {
@@ -121,7 +141,7 @@ abstract class MetaPublisher implements PlatformPublisher {
             body,
           },
       {
-        platform: this.platform === 'facebook' ? 'facebook' : 'instagram',
+        platform: this.metaPlatform,
         fetchImpl: this.deps.fetchImpl,
         describe,
         refine,
@@ -144,7 +164,13 @@ abstract class MetaPublisher implements PlatformPublisher {
 }
 
 export class InstagramReelPublisher extends MetaPublisher {
-  readonly platform = 'instagram_reel' as const;
+  /** instagram_feed publishes the same REELS container (see the header: no feed VIDEO type). */
+  constructor(
+    deps: MetaPublisherDeps,
+    readonly platform: 'instagram_reel' | 'instagram_feed' = 'instagram_reel',
+  ) {
+    super(deps);
+  }
 
   async publish(request: PublishRequest): Promise<PublishResult> {
     const token = request.accessToken;
@@ -322,6 +348,113 @@ export class FacebookReelPublisher extends MetaPublisher {
       platformPostId: videoId,
       platformUrl: permalink,
       metadata: { postId: postId ?? null },
+    };
+  }
+}
+
+interface ChunkWindow {
+  upload_session_id?: string;
+  video_id?: string;
+  start_offset?: string;
+  end_offset?: string;
+}
+
+/** 15.A1 — Facebook feed video via the Page Videos chunked upload (upload_phase start/transfer/finish). */
+export class FacebookFeedPublisher extends MetaPublisher {
+  readonly platform = 'facebook_feed' as const;
+
+  private videos<T>(page: string, token: string, form: FormData | URLSearchParams) {
+    form.set('access_token', token);
+    return platformRequest<T>(
+      `${GRAPH_VIDEO_HOST}/${this.version}/${page}/videos`,
+      { method: 'POST', body: form },
+      {
+        platform: 'facebook',
+        fetchImpl: this.deps.fetchImpl,
+        describe,
+        refine,
+        timeoutMs: 5 * 60_000,
+      },
+    );
+  }
+
+  async publish(request: PublishRequest): Promise<PublishResult> {
+    const token = request.accessToken;
+    const page = encodeURIComponent(request.accountId);
+    const { video } = request;
+    const start = await this.videos<ChunkWindow>(
+      page,
+      token,
+      new URLSearchParams({ upload_phase: 'start', file_size: String(video.sizeBytes) }),
+    );
+    const sessionId = start.body.upload_session_id;
+    const videoId = start.body.video_id;
+    if (!sessionId || !videoId)
+      throw new PlatformError('facebook', 'unknown', 'Upload start returned no session', true);
+
+    let from = Number(start.body.start_offset ?? 0);
+    let to = Number(start.body.end_offset ?? 0);
+    // Meta names the next byte window each time; the upload is done when the window is empty.
+    for (let guard = 0; from < to; guard += 1) {
+      if (!Number.isFinite(from) || !Number.isFinite(to) || guard > 10_000)
+        throw new PlatformError('facebook', 'unknown', 'Invalid upload window from Meta', true);
+      const bytes = await video.read(from, Math.min(to, video.sizeBytes) - 1);
+      const form = new FormData();
+      form.set('upload_phase', 'transfer');
+      form.set('upload_session_id', sessionId);
+      form.set('start_offset', String(from));
+      form.set('video_file_chunk', new Blob([asBody(bytes)], { type: video.contentType }), 'chunk');
+      const next = await this.videos<ChunkWindow>(page, token, form);
+      from = Number(next.body.start_offset ?? to);
+      to = Number(next.body.end_offset ?? to);
+    }
+
+    const finish = await this.videos<{ success?: boolean }>(
+      page,
+      token,
+      new URLSearchParams({
+        upload_phase: 'finish',
+        upload_session_id: sessionId,
+        description: request.text,
+        ...(request.title && { title: request.title }),
+      }),
+    );
+    if (finish.body.success === false)
+      throw new PlatformError('facebook', 'unknown', 'Upload finish was not accepted', true);
+
+    await pollUntil(
+      async () => {
+        const res = await this.graph<{ status?: { video_status?: string } }>(
+          `/${encodeURIComponent(videoId)}`,
+          token,
+          { params: { fields: 'status' } },
+        );
+        const status = res.body.status?.video_status;
+        if (status === 'error' || status === 'upload_failed')
+          throw new PlatformError(
+            'facebook',
+            'invalid_media',
+            `Video processing failed (${status})`,
+            false,
+          );
+        // VideoStatus.video_status: ready | processing | error
+        // (https://developers.facebook.com/docs/graph-api/reference/video-status/).
+        return status === 'ready' ? res.body : undefined;
+      },
+      {
+        intervalMs: 10_000,
+        timeoutMs: 20 * 60_000,
+        platform: 'facebook',
+        what: 'Facebook video processing',
+        sleep: this.deps.sleep,
+        now: this.deps.now,
+      },
+    );
+    return {
+      platformPostId: videoId,
+      // No documented permalink for a Page video id (Video reference fields), so none is guessed.
+      platformUrl: null,
+      metadata: { uploadSessionId: sessionId },
     };
   }
 }

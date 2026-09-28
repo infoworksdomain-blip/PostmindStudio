@@ -32,6 +32,9 @@ export function ffColour(hex: string): string {
 
 function xExpr(overlay: OverlayRow): string {
   const ax = overlay.anchorX.toFixed(4);
+  // 15.C5: RTL karaoke anchors the start (right) edge so each highlighted prefix lines up.
+  if (overlay.animationIn === 'karaokeHighlight' && overlay.direction === 'rtl')
+    return `w*${ax}-tw`;
   if (overlay.alignment === 'left' || overlay.animationIn === 'karaokeHighlight') return `w*${ax}`;
   if (overlay.alignment === 'right') return `w*${ax}-tw`;
   return `w*${ax}-tw/2`;
@@ -103,7 +106,15 @@ export function buildPreRenderArgs(
 ): string[] {
   const duration = Math.max(0.1, overlay.endAtSec - overlay.startAtSec);
   const size = fontPx(overlay, frame);
-  const base = { fontfile: files.font, fontsize: size, x: xExpr(overlay), y: yExpr(overlay) };
+  const base: Record<string, string | number> = {
+    fontfile: files.font,
+    fontsize: size,
+    x: xExpr(overlay),
+    y: yExpr(overlay),
+    // 15.C5: bidi reordering + Arabic joining (libfribidi); explicit so an FFmpeg without it
+    // fails instead of drawing reversed, unjoined Arabic (overlays/script-fonts.ts).
+    ...(overlay.direction === 'rtl' && { text_shaping: 1 }),
+  };
   const stroke: Record<string, string | number> =
     overlay.strokeColor && overlay.strokeWidthPx
       ? { borderw: Math.round(overlay.strokeWidthPx), bordercolor: ffColour(overlay.strokeColor) }

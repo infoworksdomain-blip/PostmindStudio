@@ -11,4 +11,5 @@ export const POST = withStudioRoute(
     audit('studio.slideshow.auto_populate', { type: 'video_project', id });
     return { status: 202, body: result };
   },
+  { feature: 'slideshow' },
 );

@@ -25,4 +25,4 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Golden-journey cost vs baseline (fails on > 10 % drift)
-        run: npx vitest run test/cost/cost-regression.test.ts
+        run: npx vitest run test/cost/cost-regression.test.ts test/cost/a10-cost.test.ts

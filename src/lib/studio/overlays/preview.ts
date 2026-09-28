@@ -96,6 +96,7 @@ export async function previewOverlay(
   const track = await buildOverlayTrack([{ row: overlay, offsetSec: 0 }], {
     frame: outputDimensions(aspectRatio),
     organisationId: scope.organisationId,
+    language: shot.script.language,
     preRender: {
       storage: deps.storage,
       bucket: deps.bucket,

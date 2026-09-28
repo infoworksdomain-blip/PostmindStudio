@@ -19,6 +19,7 @@ import {
 import { businessVideoAssets } from '../slideshow/resolve';
 import { clampDuration, slidePlan, type SlideBlueprint } from '../slideshow/templates';
 import { toPlanTier } from './catalog';
+import { assertTierGate } from './tier-gates';
 
 // BACKLOG 7.5 / 7.7 — slideshow templates, slide CRUD + reorder, auto-populate (A5.7 / A8.3).
 
@@ -76,6 +77,8 @@ export async function saveTemplate(
   tenant: TenantContext,
   input: z.infer<typeof saveTemplateInput>,
 ) {
+  // 15.D2 / A10.3 "Save custom slideshow templates": Standard and above.
+  assertTierGate(tenant, 'slideshow.custom_templates');
   const project = await slideshowProject(db, tenant.organisationId, input.projectId);
   const slides = await db.slideshowSlide.findMany({
     where: { projectId: project.id },

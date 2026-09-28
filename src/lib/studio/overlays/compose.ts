@@ -10,6 +10,8 @@ import {
   type FrameSize,
   type OverlayRow,
 } from './shotstack';
+import { DEFAULT_LANGUAGE } from '../languages';
+import { withScriptTypography } from './script-fonts';
 import { alignKaraoke, type SpokenWord } from './word-timing';
 
 // BACKLOG 8.3 — build the overlay track for a Shotstack edit from text_overlays rows: each
@@ -29,6 +31,18 @@ export function withWordTiming(overlay: OverlayRow, words: SpokenWord[] | undefi
   if (overlay.animationIn !== 'karaokeHighlight' || !words?.length) return overlay;
   const starts = alignKaraoke(overlay.text, words, overlay.startAtSec, overlay.endAtSec);
   return starts ? { ...overlay, wordStartsSec: starts } : overlay;
+}
+
+/**
+ * 15.C5: the language an overlay's text is in — its own `lang` when set to something other
+ * than the column default (en-GB), else the script's language, else its `lang`.
+ */
+export function overlayLanguage(
+  row: Pick<TextOverlay, 'lang'>,
+  scriptLanguage: string | null | undefined,
+): string {
+  if (row.lang && row.lang !== DEFAULT_LANGUAGE) return row.lang;
+  return scriptLanguage || row.lang;
 }
 
 export function toOverlayRow(row: TextOverlay): OverlayRow | null {
@@ -51,7 +65,13 @@ export interface OverlayTrack {
 
 export async function buildOverlayTrack(
   placed: PlacedOverlay[],
-  input: { frame: FrameSize; organisationId: string; preRender: PreRenderDeps },
+  input: {
+    frame: FrameSize;
+    organisationId: string;
+    preRender: PreRenderDeps;
+    /** 15.C5: the script's language — non-Latin fonts and RTL (overlays/script-fonts.ts). */
+    language?: string | null;
+  },
 ): Promise<OverlayTrack> {
   const track: OverlayTrack = { clips: [], fonts: [], skipped: [] };
   if (placed.length === 0) return track;
@@ -67,7 +87,9 @@ export async function buildOverlayTrack(
   );
   for (const { row, offsetSec, words } of ordered) {
     const parsed = toOverlayRow(row);
-    const overlay = parsed ? withWordTiming(parsed, words) : null;
+    const overlay = parsed
+      ? withScriptTypography(withWordTiming(parsed, words), overlayLanguage(row, input.language))
+      : null;
     if (!overlay) {
       track.skipped.push(row.id);
       continue;

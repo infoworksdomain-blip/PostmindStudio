@@ -7,6 +7,24 @@ import { copyUrlToStorage } from '../../pipeline/persist';
 import { currentRunId, transitionProject } from '../../pipeline/project-state';
 import { runProvider, type ProviderRunResult } from '../../pipeline/provider-run';
 import { ensureWordTiming } from '../../pipeline/word-timing';
+import { runPreferredProviders } from '../../services/generate-overrides';
+import {
+  assetFingerprint,
+  candidateProviders,
+  findReusableAsset,
+  reuseAssetForShot,
+  type FingerprintInput,
+} from '../../pipeline/asset-reuse';
+import { fitNarration } from '../../pipeline/narration-fit';
+import { resolveProjectBrandKit } from '../../pipeline/brand-resolve';
+import {
+  findLibraryStill,
+  isGenerationRefusal,
+  keepGeneratedStill,
+  stockStillForRefusal,
+} from '../../pipeline/still-image';
+import { selectStockVoice } from '../../pipeline/voice-fit';
+import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
 import { jobIds } from '../enqueue';
 import type { GenerateAssetJobData, ProjectJobData } from '../queues';
 
@@ -28,6 +46,9 @@ async function timeNarration(deps: PipelineDeps, shotId: string, data: GenerateA
 // copied into the Studio assets bucket (provider URLs expire) and recorded as video_assets.
 // When the last shot of the run reaches a terminal state, compose-video is enqueued (fan-in).
 // Layer 5 music is produced by compose-video, once per script.
+// Phase 15: fingerprint reuse (15.B6), IMAGE_STILL library-first + stock on refusal (15.B5),
+// composer-rendered MOTION_GRAPHICS (15.B8), tone-matched stock voices and narration fitted to
+// the shot (15.B3).
 
 const TERMINAL_SHOT_STATES = ['READY', 'FAILED', 'SKIPPED'] as const;
 
@@ -35,6 +56,7 @@ type ShotWithScript = VideoShot & {
   script: {
     projectId: string;
     targetAspectRatio: string;
+    language: string;
     project: {
       organisationId: string;
       metadata: Prisma.JsonValue;
@@ -63,6 +85,8 @@ async function recordAsset(
   kind: AssetKind,
   run: ProviderRunResult,
   fallback: { extension: string; contentType: string },
+  /** 15.B6: what determined the output (fingerprinted with the provider that made it). */
+  fingerprint?: FingerprintInput,
 ): Promise<StoredAsset> {
   const metadata = (run.output.metadata ?? {}) as Record<string, unknown>;
   const organisationId = shot.script.project.organisationId;
@@ -120,6 +144,7 @@ async function recordAsset(
             : BigInt(bytes),
         providerJobId: run.providerJobRowId,
         costPence: job?.costPence ?? 0,
+        fingerprint: fingerprint ? assetFingerprint(run.decision.providerId, fingerprint) : null,
         metadata: metadata as Prisma.InputJsonValue,
       },
     });
@@ -143,9 +168,15 @@ async function recordAsset(
 }
 
 /** Provider requested via POST /api/studio/shots/:id/regenerate, if any. */
-function preferredProvider(shot: ShotWithScript): string | undefined {
+function preferredProvider(shot: ShotWithScript): string[] {
   const routing = shot.providerRouting as { preferredProviderId?: unknown } | null;
-  return typeof routing?.preferredProviderId === 'string' ? routing.preferredProviderId : undefined;
+  const shotPick =
+    typeof routing?.preferredProviderId === 'string' ? [routing.preferredProviderId] : [];
+  // 15.C4: then the run's preferredProviders for this treatment (generate body).
+  return [
+    ...shotPick,
+    ...runPreferredProviders(shot.script.project.metadata, shot.visualTreatment),
+  ];
 }
 
 /**
@@ -186,6 +217,172 @@ async function generateAvatar(
   return recordAsset(deps, shot, 'VIDEO_CLIP', run, { extension: 'mp4', contentType: 'video/mp4' });
 }
 
+/**
+ * 15.B6: reuse an identical earlier generation instead of paying again. A shot being regenerated
+ * (it already has a routing snapshot for this layer) always generates afresh.
+ */
+async function reuse(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+  input: {
+    kind: AssetKind;
+    need: Parameters<typeof candidateProviders>[0];
+    fingerprint: FingerprintInput;
+    layer: 'visual' | 'voice';
+  },
+): Promise<StoredAsset | null> {
+  const routing = (shot.providerRouting as Record<string, unknown> | null) ?? {};
+  if (input.layer === 'visual' && routing.visual) return null;
+  // A shot regenerated on a named provider reuses only that provider's output.
+  const preferred =
+    typeof routing.preferredProviderId === 'string' ? routing.preferredProviderId : undefined;
+  const providers = candidateProviders(input.need, data.planTier);
+  const source = await findReusableAsset(deps, {
+    organisationId: data.organisationId,
+    kind: input.kind,
+    providers: preferred ? providers.filter((p) => p === preferred) : providers,
+    fingerprint: input.fingerprint,
+  });
+  if (!source) return null;
+  const asset = await reuseAssetForShot(deps, {
+    source,
+    shotId: shot.id,
+    projectId: data.projectId,
+    capability: input.fingerprint.capability,
+    pointer: input.layer === 'voice' ? 'voiceAssetId' : 'assetId',
+    routingKey: input.layer,
+  });
+  deps.logger.info(
+    { shotId: shot.id, reusedFromAssetId: source.id, savedPence: source.costPence },
+    'reused an identical earlier generation',
+  );
+  return { assetId: asset.id, routing: { reused: true, reusedFromAssetId: source.id } };
+}
+
+/** 15.B5: record a library image as the shot's still (no provider call). */
+async function recordLibraryStill(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  item: { id: string; s3Bucket: string; s3Key: string; widthPx: number; heightPx: number },
+  how: 'library' | 'stock_after_refusal',
+): Promise<StoredAsset> {
+  const asset = await deps.db.$transaction(async (tx) => {
+    const created = await tx.videoAsset.create({
+      data: {
+        organisationId: shot.script.project.organisationId,
+        projectId: shot.script.projectId,
+        shotId: shot.id,
+        kind: 'IMAGE',
+        source: `image-library:${item.id}`,
+        s3Bucket: item.s3Bucket,
+        s3Key: item.s3Key,
+        widthPx: item.widthPx,
+        heightPx: item.heightPx,
+        metadata: { imageLibraryId: item.id, chosenBy: how },
+      },
+    });
+    const current = await tx.videoShot.findUniqueOrThrow({
+      where: { id: shot.id },
+      select: { providerRouting: true },
+    });
+    await tx.videoShot.update({
+      where: { id: shot.id },
+      data: {
+        assetId: created.id,
+        providerRouting: {
+          ...((current.providerRouting as Record<string, unknown> | null) ?? {}),
+          visual: {
+            providerId: 'image-library',
+            imageLibraryId: item.id,
+            chosenBy: how,
+            candidates: [],
+          },
+        } as Prisma.InputJsonValue,
+      },
+    });
+    return created;
+  });
+  return { assetId: asset.id, routing: { imageLibraryId: item.id, chosenBy: how } };
+}
+
+async function generateStill(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+  prompt: string,
+): Promise<StoredAsset> {
+  const aspectRatio = shot.script.targetAspectRatio as AspectRatio;
+  const scope = {
+    organisationId: data.organisationId,
+    businessId: shot.script.project.businessId,
+    planTier: data.planTier,
+  };
+  const fingerprint: FingerprintInput = { capability: 'text_to_image', prompt, aspectRatio };
+  const need = { kind: 'shot' as const, visualTreatment: 'IMAGE_STILL' as const, durationSec: 5 };
+  const reused = await reuse(deps, shot, data, {
+    kind: 'IMAGE',
+    need,
+    fingerprint,
+    layer: 'visual',
+  });
+  if (reused) return reused;
+  // A6.5: the business's image library before any generator (not on an explicit regenerate).
+  const regenerating = Boolean((shot.providerRouting as Record<string, unknown> | null)?.visual);
+  const hit = regenerating ? null : await findLibraryStill(deps, scope, shot.sceneDescription);
+  if (hit) return recordLibraryStill(deps, shot, hit, 'library');
+  let run: ProviderRunResult;
+  try {
+    run = await runProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'IMAGE_STILL', durationSec: shot.durationSec },
+        planTier: data.planTier,
+        preferredProviderId: preferredProvider(shot),
+        request: {
+          organisationId: data.organisationId,
+          projectId: data.projectId,
+          shotId: shot.id,
+          capability: 'text_to_image',
+          prompt,
+          aspectRatio,
+        },
+      },
+      deps,
+    );
+  } catch (err) {
+    // A11.4 / 15.W6: a refused generation falls back to the closest stock match.
+    if (!isGenerationRefusal(err)) throw err;
+    const stock = await stockStillForRefusal(
+      deps,
+      { ...scope, projectId: data.projectId },
+      { query: shot.sceneDescription, aspectRatio },
+    );
+    if (!stock) throw err;
+    return recordLibraryStill(deps, shot, stock, 'stock_after_refusal');
+  }
+  const stored = await recordAsset(
+    deps,
+    shot,
+    'IMAGE',
+    run,
+    { extension: 'png', contentType: 'image/png' },
+    fingerprint,
+  );
+  // A6.3: every generated image is kept in the library so it can be reused.
+  const asset = await deps.db.videoAsset.findUnique({
+    where: { id: stored.assetId },
+    select: { s3Bucket: true, s3Key: true },
+  });
+  if (asset)
+    await keepGeneratedStill(deps, scope, {
+      bucket: asset.s3Bucket,
+      key: asset.s3Key,
+      prompt,
+      providerId: run.decision.providerId,
+    });
+  return stored;
+}
+
 async function generateVisual(
   deps: PipelineDeps,
   shot: ShotWithScript,
@@ -197,8 +394,22 @@ async function generateVisual(
   const prompt = [shot.sceneDescription, shot.cameraDirection].filter(Boolean).join(' Camera: ');
   switch (shot.visualTreatment) {
     case 'TEXT_CARD':
-      return null; // rendered by the composer from the shot's text
+    case 'MOTION_GRAPHICS':
+      return null; // rendered by the composer from the shot's text (15.B8: motion cards)
     case 'AI_CLIP': {
+      const fingerprint: FingerprintInput = {
+        capability: 'text_to_video',
+        prompt,
+        durationSec: shot.durationSec,
+        aspectRatio,
+      };
+      const reused = await reuse(deps, shot, data, {
+        kind: 'VIDEO_CLIP',
+        need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: shot.durationSec },
+        fingerprint,
+        layer: 'visual',
+      });
+      if (reused) return reused;
       const run = await runProvider(
         {
           need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: shot.durationSec },
@@ -214,22 +425,39 @@ async function generateVisual(
         },
         deps,
       );
+      return recordAsset(
+        deps,
+        shot,
+        'VIDEO_CLIP',
+        run,
+        { extension: 'mp4', contentType: 'video/mp4' },
+        fingerprint,
+      );
+    }
+    case 'IMAGE_STILL':
+      return generateStill(deps, shot, data, prompt);
+    case 'STOCK_FOOTAGE': {
+      // Phase 15 (Track C): Storyblocks video, then Pexels video. The scene description is the
+      // search text; the adapter returns the licence facts, kept in the asset's metadata.
+      const run = await runProvider(
+        {
+          need: { kind: 'shot', visualTreatment: 'STOCK_FOOTAGE', durationSec: shot.durationSec },
+          planTier: data.planTier,
+          preferredProviderId: preferredProvider(shot),
+          request: {
+            ...base,
+            capability: 'stock_footage',
+            query: shot.sceneDescription,
+            durationSec: shot.durationSec,
+            aspectRatio,
+          },
+        },
+        deps,
+      );
       return recordAsset(deps, shot, 'VIDEO_CLIP', run, {
         extension: 'mp4',
         contentType: 'video/mp4',
       });
-    }
-    case 'IMAGE_STILL': {
-      const run = await runProvider(
-        {
-          need: { kind: 'shot', visualTreatment: 'IMAGE_STILL', durationSec: shot.durationSec },
-          planTier: data.planTier,
-          preferredProviderId: preferredProvider(shot),
-          request: { ...base, capability: 'text_to_image', prompt, aspectRatio },
-        },
-        deps,
-      );
-      return recordAsset(deps, shot, 'IMAGE', run, { extension: 'png', contentType: 'image/png' });
     }
     case 'AI_AVATAR':
       return generateAvatar(deps, shot, data, voiceAssetId);
@@ -240,17 +468,7 @@ async function generateVisual(
 
 async function resolveVoiceId(deps: PipelineDeps, shot: ShotWithScript): Promise<string> {
   const project = shot.script.project;
-  const kit = project.brandKitId
-    ? await deps.db.brandKit.findFirst({
-        where: { id: project.brandKitId, organisationId: project.organisationId },
-      })
-    : await deps.db.brandKit.findFirst({
-        where: {
-          organisationId: project.organisationId,
-          businessId: project.businessId,
-          isDefault: true,
-        },
-      });
+  const kit = await resolveProjectBrandKit(deps.db, project);
   if (kit?.voiceProfileId) {
     const profile = await deps.db.voiceProfile.findFirst({
       // 13.13: a deleted or unverified clone is never used (spec 10.2: fall back to default).
@@ -263,7 +481,16 @@ async function resolveVoiceId(deps: PipelineDeps, shot: ShotWithScript): Promise
     });
     if (profile?.provider === 'elevenlabs') return profile.providerVoiceId;
   }
-  if (deps.config.defaultVoiceId) return deps.config.defaultVoiceId;
+  // 15.B3 spec 5.5: one of the pre-selected stock voices matched to the brand's declared tone.
+  const stock = selectStockVoice(
+    kit?.toneKeywords ?? [],
+    shot.script.language,
+    deps.config.stockVoices ?? new Map(),
+  );
+  if (stock) return stock;
+  // 15.C5: the script language's default voice (ELEVENLABS_DEFAULT_VOICE_ID_<LANG>), then global.
+  const fallback = defaultVoiceIdFor(shot.script.language, deps.config.defaultVoiceId);
+  if (fallback) return fallback;
   throw new ConfigurationError('No brand voice and ELEVENLABS_DEFAULT_VOICE_ID is not set');
 }
 
@@ -271,8 +498,22 @@ async function generateVoice(
   deps: PipelineDeps,
   shot: ShotWithScript,
   data: GenerateAssetJobData,
+  options: { speed?: number } = {},
 ): Promise<StoredAsset | null> {
   if (!shot.voiceoverText) return null;
+  const voiceId = await resolveVoiceId(deps, shot);
+  const fingerprint: FingerprintInput = {
+    capability: 'tts',
+    prompt: shot.voiceoverText,
+    seed: `${voiceId}|${options.speed ?? 1}`,
+  };
+  const reused = await reuse(deps, shot, data, {
+    kind: 'AUDIO_VOICE',
+    need: { kind: 'capability', capability: 'tts' },
+    fingerprint,
+    layer: 'voice',
+  });
+  if (reused) return reused;
   const run = await runProvider(
     {
       need: { kind: 'capability', capability: 'tts' },
@@ -283,15 +524,21 @@ async function generateVoice(
         projectId: data.projectId,
         shotId: shot.id,
         text: shot.voiceoverText,
-        voiceId: await resolveVoiceId(deps, shot),
+        voiceId,
+        languageCode: ttsLanguageCode(shot.script.language),
+        ...(options.speed !== undefined && { speed: options.speed }),
       },
     },
     deps,
   );
-  return recordAsset(deps, shot, 'AUDIO_VOICE', run, {
-    extension: 'mp3',
-    contentType: 'audio/mpeg',
-  });
+  return recordAsset(
+    deps,
+    shot,
+    'AUDIO_VOICE',
+    run,
+    { extension: 'mp3', contentType: 'audio/mpeg' },
+    fingerprint,
+  );
 }
 
 /** Fan-in: enqueue compose once every shot of the run is terminal (idempotent by jobId). */
@@ -322,6 +569,7 @@ export async function generateAsset(data: GenerateAssetJobData, deps: PipelineDe
         select: {
           projectId: true,
           targetAspectRatio: true,
+          language: true,
           project: {
             select: { organisationId: true, metadata: true, brandKitId: true, businessId: true },
           },
@@ -364,6 +612,37 @@ export async function generateAsset(data: GenerateAssetJobData, deps: PipelineDe
   if (!shot.assetId) await generateVisual(deps, shot, data, voiceAssetId);
   if (!voiceFirst && !shot.voiceAssetId) await generateVoice(deps, shot, data);
   await timeNarration(deps, shot.id, data);
+  // 15.B3: extend the shot, speak faster (once) or trim at a word boundary when it runs over.
+  await fitNarration(deps, {
+    shotId: shot.id,
+    organisationId: data.organisationId,
+    planTier: data.planTier,
+    regenerateFaster: async (speed) => {
+      const current = (await deps.db.videoShot.findUnique({
+        where: { id: shot.id },
+        include: {
+          script: {
+            select: {
+              projectId: true,
+              targetAspectRatio: true,
+              language: true,
+              project: {
+                select: {
+                  organisationId: true,
+                  metadata: true,
+                  brandKitId: true,
+                  businessId: true,
+                },
+              },
+            },
+          },
+        },
+      })) as ShotWithScript | null;
+      return current
+        ? ((await generateVoice(deps, current, data, { speed }))?.assetId ?? null)
+        : null;
+    },
+  });
 
   await deps.db.videoShot.update({ where: { id: shot.id }, data: { state: 'READY' } });
   await enqueueComposeIfReady(deps, data);

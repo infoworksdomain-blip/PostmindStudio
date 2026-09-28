@@ -15,8 +15,11 @@ import {
 import {
   availableTreatments,
   buildScriptPrompt,
+  mergePinnedShots,
   normaliseScript,
   parseTargetFormats,
+  pinnedShotsSupplement,
+  type PinnedShotContext,
   SCRIPT_SYSTEM_PROMPT,
   scriptSchema,
   type TargetFormat,
@@ -99,6 +102,23 @@ export async function regenerateScriptPlan(
     (await loadReferenceGuide(deps.db, project, deps.now())) ??
     (await loadTemplateGuide(deps.db, project));
   const treatments = availableTreatments(deps.registry);
+  // 15.C9: pinned shots stay (assets and position); Layer 2 writes only the others.
+  const currentShots = await deps.db.videoShot.findMany({
+    where: { scriptId: script.id },
+    orderBy: { sortOrder: 'asc' },
+  });
+  const pinned = currentShots
+    .map((shot, position) => ({ shot, position }))
+    .filter(({ shot }) => regeneration.pinnedShotIds.includes(shot.id));
+  const pinnedContext: PinnedShotContext[] = pinned.map(({ shot, position }) => ({
+    position,
+    durationSec: shot.durationSec,
+    sceneDescription: shot.sceneDescription,
+    voiceoverText: shot.voiceoverText,
+    onScreenText: shot.onScreenText,
+  }));
+  const pinnedSec = pinned.reduce((sum, p) => sum + p.shot.durationSec, 0);
+  const writeSec = Math.max(1, format.durationSec - pinnedSec);
 
   // Layer 2 only
   const run = await runProvider(
@@ -106,8 +126,15 @@ export async function regenerateScriptPlan(
       data,
       SCRIPT_SYSTEM_PROMPT,
       [
-        buildScriptPrompt({ brief, format, treatments, restrictedTopics }),
+        buildScriptPrompt({
+          brief,
+          format,
+          treatments,
+          restrictedTopics,
+          language: script.language,
+        }),
         reference?.scriptSupplement(format.durationSec, treatments),
+        pinnedShotsSupplement(pinnedContext, format.durationSec),
         instructionSupplement(regeneration.instruction),
       ]
         .filter(Boolean)
@@ -117,8 +144,21 @@ export async function regenerateScriptPlan(
     ),
     deps,
   );
-  const normalised = normaliseScript(jsonOutput(run.output), treatments, format.durationSec);
-  const plan = reference ? reference.apply(normalised, format.durationSec) : normalised;
+  const normalised = normaliseScript(jsonOutput(run.output), treatments, writeSec);
+  const written =
+    reference && pinned.length === 0 ? reference.apply(normalised, format.durationSec) : normalised;
+  const merged = mergePinnedShots(written.shots, pinned);
+  const texts = merged.map((m) => (m.kind === 'pinned' ? m.shot.shot : m.shot));
+  const plan = {
+    fullText:
+      pinned.length === 0
+        ? written.fullText
+        : texts
+            .map((s) => s.voiceoverText ?? '')
+            .filter(Boolean)
+            .join(' '),
+    shots: texts,
+  };
 
   // Pre-generation safety gate — before any Layer 3 spend
   const safetyRun = await runProvider(
@@ -159,18 +199,34 @@ export async function regenerateScriptPlan(
     });
     const runId = (current?.metadata as { runId?: unknown } | null)?.runId;
     if (runId !== data.runId) throw new ConflictError('Run superseded');
-    await tx.textOverlay.deleteMany({ where: { shot: { scriptId: script.id } } });
-    await tx.videoShot.deleteMany({ where: { scriptId: script.id } });
+    const keep = pinned.map((p) => p.shot.id);
+    await tx.textOverlay.deleteMany({
+      where: { shot: { scriptId: script.id }, shotId: { notIn: keep } },
+    });
+    await tx.videoShot.deleteMany({ where: { scriptId: script.id, id: { notIn: keep } } });
     await tx.videoScript.update({
       where: { id: script.id },
-      data: {
-        fullText: plan.fullText,
-        scriptModel: modelLabel(run),
-        version: { increment: 1 },
-        shots: { create: plan.shots.map((shot) => ({ ...shot, state: 'QUEUED' as const })) },
-      },
+      data: { fullText: plan.fullText, scriptModel: modelLabel(run), version: { increment: 1 } },
     });
-    const shots = await tx.videoShot.findMany({ where: { scriptId: script.id } });
+    const created: string[] = [];
+    for (const [sortOrder, entry] of merged.entries()) {
+      if (entry.kind === 'pinned') {
+        // A pinned shot keeps its assets; one that never finished is generated again.
+        await tx.videoShot.update({
+          where: { id: entry.shot.shot.id },
+          data: {
+            sortOrder,
+            ...(entry.shot.shot.state !== 'READY' && { state: 'QUEUED', errorReason: null }),
+          },
+        });
+      } else {
+        const row = await tx.videoShot.create({
+          data: { ...entry.shot, sortOrder, scriptId: script.id, state: 'QUEUED' },
+        });
+        created.push(row.id);
+      }
+    }
+    const shots = await tx.videoShot.findMany({ where: { id: { in: created } } });
     await createSuggestedOverlays(tx, shots, brandKit, reference);
   });
   await transitionProject(deps.db, {

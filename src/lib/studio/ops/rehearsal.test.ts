@@ -5,6 +5,7 @@ import {
   formatReport,
   KILL_SWITCH_SLO_MS,
   parsePlan,
+  pendingGlobalRequestId,
   totalActive,
   waitForDrain,
 } from './rehearsal';
@@ -117,5 +118,21 @@ describe('formatReport', () => {
     expect(
       formatReport(plan, { drained: false, elapsedMs: 180000, withinSlo: false, samples: [] }),
     ).toContain('did not drain');
+  });
+});
+
+describe('pendingGlobalRequestId (15.D6 two-person global kill)', () => {
+  it('returns the pending request id from a 202', () => {
+    expect(pendingGlobalRequestId(202, { ok: true, pending: { requestId: 'req-1' } })).toBe(
+      'req-1',
+    );
+  });
+
+  it('is undefined when the switch was set directly', () => {
+    expect(pendingGlobalRequestId(200, { ok: true, flag: { value: 'true' } })).toBeUndefined();
+  });
+
+  it('rejects a 202 without a request id', () => {
+    expect(() => pendingGlobalRequestId(202, { ok: true })).toThrow(/requestId/);
   });
 });

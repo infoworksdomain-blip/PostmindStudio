@@ -33,8 +33,8 @@ export const DELETE = withStudioRoute(
   StudioCapability.ProjectWrite,
   async ({ tenant, deps, params, audit }) => {
     const id = params.id ?? '';
-    await deleteBrandKit(deps.db, tenant.organisationId, id);
-    audit('studio.brand_kit.delete', { type: 'brand_kit', id });
+    await deleteBrandKit(deps.db, tenant.organisationId, id, new Date(deps.now()));
+    audit('studio.brand_kit.delete', { type: 'brand_kit', id }, { softDelete: true });
     return { body: { deleted: true } };
   },
 );

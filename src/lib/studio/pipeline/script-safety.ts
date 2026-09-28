@@ -15,6 +15,8 @@ export const SAFETY_CATEGORIES = [
   'election_disinformation',
   'medical_misinformation',
   'financial_scam',
+  // 15.C6 (spec 18.3): a real, named or identifiable person is never generated unreviewed.
+  'public_figure',
 ] as const;
 
 export const SCRIPT_SAFETY_SCHEMA = {
@@ -43,6 +45,9 @@ export const SCRIPT_SAFETY_SYSTEM_PROMPT = [
   'REVIEW: plausibly in a category and needs a human decision (e.g. health or financial claims that may mislead).',
   'WARN: borderline but acceptable for ordinary business marketing.',
   'ALLOW: ordinary marketing content.',
+  'public_figure: the script names, quotes or depicts a real, identifiable individual (a celebrity, politician, athlete, influencer or other public figure; not the business owner speaking about their own business). Any public_figure content is at least REVIEW.',
+  // 15.C5: scripts may be in any supported language (languages.ts).
+  'Scripts may be written in English, French, Spanish, Arabic, German, Italian, Portuguese, Hindi or Chinese; judge them in their own language with the same standard.',
   'Judge only the text provided. Be precise; ordinary product promotion is ALLOW.',
 ].join('\n');
 
@@ -72,7 +77,22 @@ export function parseScriptSafety(json: unknown): ScriptSafetyResult {
       true,
     );
   }
-  return parsed.data;
+  return escalatePublicFigure(parsed.data);
+}
+
+/**
+ * 15.C6 (spec 18.3): "includes a real named individual (public figure) triggers a
+ * review-required flag automatically". Raised to at least REVIEW in code, so a classifier that
+ * tags the category but answers ALLOW or WARN cannot skip the 13.17 review queue.
+ */
+export function escalatePublicFigure(result: ScriptSafetyResult): ScriptSafetyResult {
+  if (!result.categories.includes('public_figure')) return result;
+  if (result.verdict === 'REVIEW' || result.verdict === 'BLOCK') return result;
+  return {
+    ...result,
+    verdict: 'REVIEW',
+    reason: `Names a real person (public figure): review required. ${result.reason}`.trim(),
+  };
 }
 
 /** True when the run must stop before any asset is generated (BLOCK fails, REVIEW pauses). */

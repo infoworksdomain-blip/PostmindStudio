@@ -44,6 +44,7 @@ function fakeDb(
   rows: Row[],
   profile: { imageThemes?: string[] } | null = null,
   generatedToday = 0,
+  generatedThisMonthForBusiness = 0,
 ) {
   const slideshowSlide = {
     findMany: vi.fn(async () => rows),
@@ -67,7 +68,10 @@ function fakeDb(
         licenseNotes: null,
       }),
     ),
-    count: vi.fn(async () => generatedToday),
+    // The daily org-wide count has no businessId; the 15.D2 monthly per-business count does.
+    count: vi.fn(async (args?: { where?: { businessId?: string } }) =>
+      args?.where?.businessId ? generatedThisMonthForBusiness : generatedToday,
+    ),
   };
   const db = { slideshowSlide, businessProfile, imageLibraryItem };
   return { db: db as unknown as PrismaClient, slideshowSlide, businessProfile, imageLibraryItem };
@@ -397,6 +401,24 @@ describe('populateSlideshow — image generation', () => {
     expect(generateLibraryImageMock).toHaveBeenCalledTimes(2);
     expect(result.imagesGenerated).toBe(2);
     expect(result.unfilled).toBe(1);
+  });
+
+  it('stops at the business monthly generation cap (15.D2 / A10.4: Standard 50)', async () => {
+    const rows: Row[] = Array.from({ length: 3 }, (_, i) => ({
+      id: `m-${i}`,
+      sortOrder: i,
+      slideType: 'IMAGE_STILL',
+      imageAssetId: null,
+      metadata: { imageQuery: `q-${i}` },
+    }));
+    const { db } = fakeDb(rows, null, 0, 49);
+    searchLibraryMock.mockResolvedValue([]);
+    generateLibraryImageMock.mockImplementation(async () => ({ status: 'created', id: 'gen-m' }));
+
+    const result = await populateSlideshow(deps(db), scope, { topic: null, aspectRatio: '9:16' });
+
+    expect(generateLibraryImageMock).toHaveBeenCalledTimes(1);
+    expect(result.unfilled).toBe(2);
   });
 
   it('never generates for an optional-image slide even when it is the only slide and has no match', async () => {

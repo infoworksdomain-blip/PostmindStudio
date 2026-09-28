@@ -11,4 +11,5 @@ export const POST = withStudioRoute(
     audit('studio.image_library.refresh', { type: 'business', id: input.businessId });
     return { status: 202, body: result };
   },
+  { feature: 'image-library' },
 );

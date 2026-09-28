@@ -26,6 +26,7 @@ describe('scriptRegeneration', () => {
       runId: 'r1',
       scriptId: 's1',
       instruction: 'Punchy',
+      pinnedShotIds: [], // 15.C9: none pinned
     });
     expect(scriptRegeneration(metadata, 'r2')).toBeNull();
     expect(scriptRegeneration(null, 'r1')).toBeNull();

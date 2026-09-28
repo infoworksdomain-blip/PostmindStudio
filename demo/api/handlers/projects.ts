@@ -247,6 +247,14 @@ route('POST', '/projects/:id/generate', ({ params, body }) => {
       `Project is ${p.state}; cancel it or wait for it to finish`,
     );
   const rawInput = str(obj(body).rawInput);
+  // 15.C4: a lower tier for this run; the demo organisation is on STANDARD.
+  const tier = str(obj(body).qualityTier) || 'STANDARD';
+  if (!['BASIC', 'STANDARD'].includes(tier))
+    throw new DemoHttpError(
+      422,
+      'unprocessable',
+      `qualityTier ${tier} is above the organisation's STANDARD plan`,
+    );
   if (rawInput) p.description = rawInput;
   startFullRun(p);
   return {
@@ -255,7 +263,7 @@ route('POST', '/projects/:id/generate', ({ params, body }) => {
       projectId: p.id,
       state: 'QUEUED',
       runId: String(p.metadata?.runId ?? ''),
-      planTier: 'STANDARD',
+      planTier: tier,
     },
   };
 });

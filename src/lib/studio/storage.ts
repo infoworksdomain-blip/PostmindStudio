@@ -10,6 +10,8 @@ import { getSignedUrl as getCloudFrontSignedUrl } from '@aws-sdk/cloudfront-sign
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { requireEnv } from '../env';
 import { ConfigurationError, ValidationError } from '../errors';
+import { logger } from '../logger';
+import { createFailoverStorage, failoverConfigFromEnv } from './storage-failover';
 import { s3Copy, s3PutStream, type StreamPutInput } from './storage-multipart';
 
 // Object storage for provider outputs that arrive as bytes (OpenAI GPT image models return
@@ -180,11 +182,24 @@ export function createS3Storage(
 
 let defaultStorage: AssetStorage | undefined;
 
-/** S3 storage configured from AWS_REGION + standard AWS credential resolution. */
+/**
+ * S3 storage configured from AWS_REGION + standard AWS credential resolution; with
+ * S3_FALLBACK_REGION set, wrapped in the secondary-region failover (15.E9, storage-failover.ts).
+ */
 export function getAssetStorage(): AssetStorage {
-  defaultStorage ??= createS3Storage(new S3Client({ region: requireEnv('AWS_REGION') }), {
+  if (defaultStorage) return defaultStorage;
+  const primary = createS3Storage(new S3Client({ region: requireEnv('AWS_REGION') }), {
     cdn: cdnConfigFromEnv(),
   });
+  const failover = failoverConfigFromEnv();
+  defaultStorage = failover
+    ? createFailoverStorage(
+        primary,
+        createS3Storage(new S3Client({ region: failover.region })),
+        failover,
+        logger,
+      )
+    : primary;
   return defaultStorage;
 }
 

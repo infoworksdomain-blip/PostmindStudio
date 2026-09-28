@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { fakeVideoSource } from '../../../../test/helpers/fake-video-source';
-import { classifyFailReason, planChunks, TikTokPublisher } from './tiktok';
+import { classifyFailReason, planChunks, TIKTOK_INBOX_NOTE, TikTokPublisher } from './tiktok';
 import type { PlatformPublisher, PublishRequest } from './interface';
 
 const NOW = Date.parse('2026-09-27T12:00:00Z');
@@ -143,6 +143,7 @@ describe('TikTokPublisher.publish', () => {
         privacyLevel: 'PUBLIC_TO_EVERYONE',
         creatorUsername: 'demo_creator',
         publiclyAvailable: true,
+        tiktokMode: 'direct',
       },
     });
   });
@@ -211,7 +212,10 @@ describe('TikTokPublisher.publish', () => {
   it('rejects when TikTok returns no usable privacy level option', async () => {
     const { tiktok, requests } = publisher(json({ data: { privacy_level_options: [] } }));
 
-    await expect(tiktok.publish(request())).rejects.toMatchObject({
+    // Without video.upload there is no inbox fallback either.
+    await expect(
+      tiktok.publish(request({ grantedScopes: ['user.info.basic', 'video.publish'] })),
+    ).rejects.toMatchObject({
       errorClass: 'invalid_request',
       retryable: false,
     });
@@ -270,5 +274,82 @@ describe('TikTokPublisher.publish', () => {
     const { tiktok } = publisher();
     const asPublisher: PlatformPublisher = tiktok;
     expect(asPublisher.takedown).toBeUndefined();
+  });
+});
+
+describe('TikTokPublisher inbox upload (15.A2)', () => {
+  it('picks inbox mode only when video.upload is granted without video.publish', () => {
+    expect(TikTokPublisher.modeFor(undefined)).toBe('direct');
+    expect(TikTokPublisher.modeFor(['video.publish', 'video.upload'])).toBe('direct');
+    expect(TikTokPublisher.modeFor(['video.upload'])).toBe('inbox');
+    expect(TikTokPublisher.modeFor(['user.info.basic'])).toBe('direct');
+  });
+
+  it('uploads to the inbox when the connection lacks video.publish', async () => {
+    const { tiktok, requests } = publisher(
+      json({ data: { publish_id: 'inbox-1', upload_url: 'https://upload.tiktok.example/i' } }),
+      new Response(null, { status: 201 }),
+      json({ data: { status: 'PROCESSING_UPLOAD' } }),
+      json({ data: { status: 'SEND_TO_USER_INBOX' } }),
+    );
+
+    const result = await tiktok.publish(request({ grantedScopes: ['video.upload'] }));
+
+    expect(requests[0]).toMatchObject({
+      url: 'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
+      body: {
+        source_info: {
+          source: 'FILE_UPLOAD',
+          video_size: 3 * MB,
+          chunk_size: 3 * MB,
+          total_chunk_count: 1,
+        },
+      },
+    });
+    expect(requests[0]?.body).not.toHaveProperty('post_info');
+    expect(requests[1]).toMatchObject({ method: 'PUT' });
+    expect(result).toEqual({
+      platformPostId: 'inbox-1',
+      platformUrl: null,
+      metadata: {
+        publishId: 'inbox-1',
+        tiktokMode: 'inbox',
+        inboxReason: 'scope',
+        inboxStatus: 'SEND_TO_USER_INBOX',
+        note: TIKTOK_INBOX_NOTE,
+      },
+    });
+    // P6: the inbox API cannot carry is_aigc, so the note asks the creator to keep the label on.
+    expect(TIKTOK_INBOX_NOTE).toContain('AI-generated');
+  });
+
+  it('falls back to the inbox when the creator has no privacy options', async () => {
+    const { tiktok, requests } = publisher(
+      json({ data: { privacy_level_options: [] } }),
+      json({ data: { publish_id: 'inbox-2', upload_url: 'https://upload.tiktok.example/j' } }),
+      new Response(null, { status: 201 }),
+      json({ data: { status: 'SEND_TO_USER_INBOX' } }),
+    );
+
+    const result = await tiktok.publish(
+      request({ grantedScopes: ['video.publish', 'video.upload'] }),
+    );
+
+    expect(requests[1]?.url).toBe('https://open.tiktokapis.com/v2/post/publish/inbox/video/init/');
+    expect(result.metadata).toMatchObject({ tiktokMode: 'inbox', inboxReason: 'privacy_options' });
+  });
+
+  it('fails when the inbox upload fails', async () => {
+    const { tiktok } = publisher(
+      json({ data: { publish_id: 'inbox-3', upload_url: 'https://upload.tiktok.example/k' } }),
+      new Response(null, { status: 201 }),
+      json({ data: { status: 'FAILED', fail_reason: 'frame_check_failed' } }),
+    );
+
+    await expect(
+      tiktok.publish(request({ grantedScopes: ['video.upload'] })),
+    ).rejects.toMatchObject({
+      errorClass: 'invalid_media',
+    });
   });
 });

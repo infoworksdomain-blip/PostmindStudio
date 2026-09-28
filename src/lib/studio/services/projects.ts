@@ -17,18 +17,26 @@ import type { ProjectJobData } from '../queue/queues';
 import { assertModeAllowed } from '../library/blueprint';
 import { slideshowInput } from '../slideshow/planner';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
+import { assertTierGate } from './tier-gates';
 import { budgetFormatsFromJson, defaultProjectBudgetPence } from '../cost/project-budget';
 import { insertSlides, planSlideshowSlides } from './slideshows';
 import { attachSourceUpload } from './uploads';
 import { applyTemplate } from './templates';
 import { defaultReviewPolicyFor } from './org-policy';
-import { assertMayApprove, recordApproval, requiredRoleFor } from '../automation/approval';
+import { approveWithWorkflow, rejectWithWorkflow } from './approval-workflows';
 import {
   assertMayConfigureTargets,
   autoPublishTargets,
   storedTargets,
   validateTargets,
 } from '../automation/targets';
+import { generationStartMetadata } from '../observability/slo';
+import { DEFAULT_LANGUAGE, extraLanguagesInput, languageInput } from '../languages';
+import {
+  effectiveTier,
+  generateOverridesInput,
+  validatePreferredProviders,
+} from './generate-overrides';
 
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
@@ -88,6 +96,12 @@ const projectFields = z.object({
     .optional(),
   publishPolicy: z.enum(['MANUAL', 'SCHEDULED', 'AUTO_ON_APPROVAL']).optional(),
   scheduledStartAt: z.iso.datetime().optional(),
+  /** 15.C5: the video's language (BCP 47, one of languages.ts); default en-GB. */
+  language: languageInput.optional(),
+  /** 15.C5: extra languages; each gets its own set of scripts (one variant set per language). */
+  languages: extraLanguagesInput.optional(),
+  /** 15.C4 (spec 14.1): an approval workflow chosen at create (15.D3 reads metadata). */
+  approvalWorkflowId: z.string().trim().min(1).max(64).optional(),
 });
 
 export const createProjectInput = projectFields.superRefine((v, ctx) => {
@@ -129,11 +143,14 @@ export const updateProjectInput = projectFields
     reviewPolicy: true,
     publishPolicy: true,
     autoPublish: true,
+    language: true,
+    languages: true,
   })
   .partial()
   .extend({
     brief: briefInput.partial().optional(),
     brandKitId: z.string().max(64).nullable().optional(),
+    approvalWorkflowId: z.string().trim().min(1).max(64).nullable().optional(),
     scheduledStartAt: z.iso.datetime().nullable().optional(),
     /** 13.20: resume automatically when the org daily/monthly cap rolls over (default on). */
     autoResume: z.boolean().optional(),
@@ -162,6 +179,8 @@ export const generateInput = z.object({
   rawInput: z.string().trim().min(1).max(4_000).optional(),
   /** Spec 13.3: the user confirms restricted topics flagged at ideation. */
   confirmRestrictedTopics: z.boolean().optional(),
+  /** 15.C4 (spec 8.2): a lower quality tier for this run, and provider preferences. */
+  ...generateOverridesInput,
 });
 
 export const rejectInput = z.object({ note: z.string().trim().min(1).max(2_000) });
@@ -182,6 +201,16 @@ async function assertBrandKit(
   if (!kit) throw new ValidationError('brandKitId does not exist in this organisation');
 }
 
+/** 15.C4: a chosen approval workflow must exist in this organisation. */
+async function assertWorkflow(db: Db, organisationId: string, id: string | null | undefined) {
+  if (!id) return;
+  const found = await db.approvalWorkflow.findFirst({
+    where: { id, organisationId },
+    select: { id: true },
+  });
+  if (!found) throw new ValidationError('approvalWorkflowId does not exist in this organisation');
+}
+
 export async function findProject(db: Db, organisationId: string, id: string) {
   const project = await db.videoProject.findFirst({
     where: { id, organisationId, deletedAt: null },
@@ -196,7 +225,13 @@ export async function createProject(
   input: z.infer<typeof createProjectInput>,
 ) {
   await assertBrandKit(db, tenant.organisationId, input.brandKitId);
+  await assertWorkflow(db, tenant.organisationId, input.approvalWorkflowId);
   if (input.sourceType === 'LIBRARY_REFERENCE' && input.referenceVideoId && input.referenceMode) {
+    // 15.D2 / A10.3: INSPIRE is Standard and above, TEMPLATE Plus and above.
+    assertTierGate(
+      tenant,
+      input.referenceMode === 'TEMPLATE' ? 'library.template' : 'library.inspire',
+    );
     const reference = await db.videoLibraryItem.findFirst({
       where: { id: input.referenceVideoId, retiredAt: null },
       include: { license: true, analysis: { select: { id: true } } },
@@ -258,12 +293,18 @@ export async function createProject(
         brandKitId: template?.brandKitId ?? input.brandKitId ?? null,
         templateId: input.templateId ?? null,
         // Operator decision 2: no explicit budget → the short/long-form default.
-        costBudgetPence: input.costBudgetPence ?? defaultProjectBudgetPence(formats),
+        costBudgetPence:
+          input.costBudgetPence ?? defaultProjectBudgetPence(formats, input.sourceType),
         // 13.18: nothing chosen (client or template) → the organisation's default policy.
         reviewPolicy: (template ? template.reviewPolicy : input.reviewPolicy) ?? orgReviewPolicy,
         publishPolicy: template ? template.publishPolicy : input.publishPolicy,
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
+        language: input.language ?? DEFAULT_LANGUAGE,
         metadata: {
+          ...(input.approvalWorkflowId && { approvalWorkflowId: input.approvalWorkflowId }),
+          ...(input.languages?.length && {
+            languages: input.languages.filter((l) => l !== (input.language ?? DEFAULT_LANGUAGE)),
+          }),
           briefHints: {
             targetAudience: input.brief?.targetAudience ?? null,
             callToAction: input.brief?.callToAction ?? null,
@@ -369,6 +410,7 @@ export async function updateProject(
     throw new ConflictError(`Project cannot be edited while ${project.state}`);
   }
   await assertBrandKit(db, organisationId, input.brandKitId);
+  await assertWorkflow(db, organisationId, input.approvalWorkflowId);
   if (input.autoPublish) {
     assertMayConfigureTargets(tenant, input.autoPublish.targets);
     await validateTargets(
@@ -400,9 +442,18 @@ export async function updateProject(
       ...(input.scheduledStartAt !== undefined && {
         scheduledStartAt: input.scheduledStartAt ? new Date(input.scheduledStartAt) : null,
       }),
-      ...((hintsChanged || input.autoPublish || input.autoResume !== undefined) && {
+      ...(input.language !== undefined && { language: input.language }),
+      ...((hintsChanged ||
+        input.autoPublish ||
+        input.autoResume !== undefined ||
+        input.languages !== undefined ||
+        input.approvalWorkflowId !== undefined) && {
         metadata: {
           ...metadata,
+          ...(input.approvalWorkflowId !== undefined && {
+            approvalWorkflowId: input.approvalWorkflowId ?? undefined,
+          }),
+          ...(input.languages !== undefined && { languages: input.languages }),
           ...(input.autoResume !== undefined && { autoResume: input.autoResume }),
           ...(hintsChanged && {
             briefHints: {
@@ -455,11 +506,15 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
       templateId: source.templateId,
       costBudgetPence:
         source.costBudgetPence ??
-        defaultProjectBudgetPence(budgetFormatsFromJson(source.targetFormats)),
+        defaultProjectBudgetPence(budgetFormatsFromJson(source.targetFormats), source.sourceType),
       reviewPolicy: source.reviewPolicy,
       publishPolicy: source.publishPolicy,
+      language: source.language,
       metadata: {
         duplicatedFrom: source.id,
+        ...(Array.isArray(projectMetadata(source.metadata).languages) && {
+          languages: projectMetadata(source.metadata).languages as Prisma.InputJsonValue,
+        }),
         ...(hints ? { briefHints: hints as Prisma.InputJsonValue } : {}),
       },
     },
@@ -478,7 +533,10 @@ export async function generateProject(
     throw new ConflictError(`Project is ${project.state}; cancel it or wait for it to finish`);
   }
   const runId = randomUUID();
-  const planTier = toPlanTier(tenant.organisation.planTier);
+  // 15.C4: a run may use a lower tier than the plan (422 above it) and preferred providers.
+  const orgTier = toPlanTier(tenant.organisation.planTier);
+  const planTier = effectiveTier(orgTier, input.qualityTier);
+  const preferredProviders = validatePreferredProviders(input.preferredProviders, planTier);
   const metadata = projectMetadata(project.metadata);
   const updated = await deps.db.videoProject.updateMany({
     where: {
@@ -495,11 +553,15 @@ export async function generateProject(
       metadata: {
         ...metadata,
         runId,
+        ...generationStartMetadata(runId, Date.now()), // 15.D9: spec 17.1 generation SLO clock
         // Recorded so an operator re-drive (services/redrive.ts) can rebuild the job payload.
         planTier,
         renders: {},
         ...(input.confirmRestrictedTopics && { restrictedTopicsConfirmed: true }),
         directionOptions: undefined,
+        // Per run: a new generate without preferences clears the previous run's.
+        preferredProviders: preferredProviders ?? undefined,
+        ...(input.qualityTier && { qualityTierOverride: { requested: planTier, plan: orgTier } }),
       } as Prisma.InputJsonValue,
     },
   });
@@ -564,8 +626,9 @@ export async function cancelProject(
 }
 
 /**
- * Human approval (spec 5.9). REQUIRE_APPROVAL_FROM_ROLE projects need an owner/admin approver
- * (automation/approval.ts). Auto-publish on approval is the route's follow-up step.
+ * Human approval (spec 5.9). 15.D3: delegates to services/approval-workflows.ts, which runs the
+ * multi-step workflow when one applies (the project stays READY_FOR_REVIEW until its last step)
+ * and the original single-step approval otherwise. Returns the project, as before.
  */
 export async function approveProject(
   db: Db,
@@ -574,26 +637,10 @@ export async function approveProject(
   note: string | undefined,
   now: number,
 ) {
-  const project = await findProject(db, tenant.organisationId, id);
-  if (project.state !== 'READY_FOR_REVIEW') {
-    throw new ConflictError(
-      `Only READY_FOR_REVIEW projects can be approved (project is ${project.state})`,
-    );
-  }
-  assertMayApprove(tenant, project);
-  const approved = await recordApproval(db, {
-    projectId: id,
-    organisationId: tenant.organisationId,
-    actorId: tenant.userId,
-    requiredRole: requiredRoleFor(project.reviewPolicy),
-    note: note ?? null,
-    now,
-    outbox: { planTier: tenant.organisation.planTier ?? '', trigger: 'human' },
-  });
-  if (!approved) throw new ConflictError('Project changed concurrently; reload and retry');
-  return findProject(db, tenant.organisationId, id);
+  return (await approveWithWorkflow(db, tenant, id, note, now)).project;
 }
 
+/** 15.D3: reject at any workflow step (services/approval-workflows.ts); same behaviour as before. */
 export async function rejectProject(
   db: Db,
   tenant: TenantContext,
@@ -601,28 +648,5 @@ export async function rejectProject(
   note: string,
   now: number,
 ) {
-  const project = await findProject(db, tenant.organisationId, id);
-  if (project.state !== 'READY_FOR_REVIEW' && project.state !== 'QUALITY_FAILED') {
-    throw new ConflictError(
-      `Project is ${project.state}; only reviewable projects can be rejected`,
-    );
-  }
-  await db.$transaction([
-    db.videoProject.updateMany({
-      where: { id, organisationId: tenant.organisationId, state: project.state },
-      data: { state: 'REJECTED', errorReason: `rejected: ${note}`.slice(0, 2_000) },
-    }),
-    db.approvalTask.create({
-      data: {
-        projectId: id,
-        stepIndex: 0,
-        requiredRole: 'reviewer',
-        state: 'REJECTED',
-        resolvedByUserId: tenant.userId,
-        note,
-        resolvedAt: new Date(now),
-      },
-    }),
-  ]);
-  return findProject(db, tenant.organisationId, id);
+  return rejectWithWorkflow(db, tenant, id, note, now);
 }

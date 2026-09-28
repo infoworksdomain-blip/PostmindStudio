@@ -8,4 +8,5 @@ export const POST = withStudioRoute(
   async ({ req, tenant, deps }) => ({
     body: await searchImages(deps.library, tenant, await parseBody(req, searchImagesInput)),
   }),
+  { feature: 'image-library' },
 );

@@ -103,7 +103,10 @@ describe.skipIf(!hasDb)('music journeys (Layer 5)', { timeout: 120_000 }, () => 
     expect(music.requests).toHaveLength(1); // not generated (or paid for) twice
     expect(await musicStatus(j, id)).toMatchObject({ status: 'generated', reused: true });
     expect(musicTrack(lastEdit(j))).toBeDefined();
-    expect(await rendersOf(j, id)).toHaveLength(2);
+    // 15.B6: nothing changed, so the identical edit re-points to the existing render
+    // (no second Shotstack call).
+    expect(await rendersOf(j, id)).toHaveLength(1);
+    expect(j.h.adapters.shotstack.requests).toHaveLength(1);
     await approve(j, id);
   });
 

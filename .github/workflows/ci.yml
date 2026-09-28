@@ -94,11 +94,12 @@ jobs:
       - name: promtool check rules
         run: >-
           docker run --rm -v "$PWD/ops:/ops" --entrypoint promtool prom/prometheus:v2.55.1
-          check rules /ops/prometheus/studio-alerts.yml
+          check rules /ops/prometheus/studio-alerts.yml /ops/prometheus/studio-slo.yml
       - name: promtool test rules
         run: >-
           docker run --rm -v "$PWD/ops:/ops" --entrypoint promtool prom/prometheus:v2.55.1
           test rules /ops/prometheus/tests/studio-alerts.test.yml
+          /ops/prometheus/tests/studio-slo.test.yml
       - name: amtool check-config
         run: >-
           docker run --rm -v "$PWD/ops:/ops" --entrypoint amtool prom/alertmanager:v0.28.1

@@ -20,6 +20,14 @@ export const CHUNK_SIZE = 10 * 1024 * 1024; // spec 9.2 "10MB default"
 const MIN_CHUNK = 5 * 1024 * 1024;
 const STATUS_POLL_MS = 5_000; // spec 9.2: poll every 5 s
 const STATUS_TIMEOUT_MS = 10 * 60_000; // …up to 10 minutes
+/** Direct Post needs video.publish; the inbox upload (15.A2) needs video.upload. */
+export const DIRECT_POST_SCOPE = 'video.publish';
+export const UPLOAD_SCOPE = 'video.upload';
+// The inbox init takes source_info only (no post_info), so is_aigc cannot be set by API on this
+// path: the note asks the creator to switch TikTok's AI-generated content label on (operator
+// decision P6: AI labels always on).
+export const TIKTOK_INBOX_NOTE =
+  'Sent to your TikTok inbox. Open the TikTok app, finish posting from the notification, and keep the "AI-generated content" label switched on.';
 
 interface TikTokEnvelope<T> {
   data?: T;
@@ -105,8 +113,18 @@ export class TikTokPublisher implements PlatformPublisher {
     );
   }
 
+  /** 15.A2: inbox upload when Direct Post is not possible for this connection. */
+  static modeFor(grantedScopes: string[] | undefined): 'direct' | 'inbox' {
+    if (!grantedScopes) return 'direct';
+    return !grantedScopes.includes(DIRECT_POST_SCOPE) && grantedScopes.includes(UPLOAD_SCOPE)
+      ? 'inbox'
+      : 'direct';
+  }
+
   async publish(request: PublishRequest): Promise<PublishResult> {
     const token = request.accessToken;
+    if (TikTokPublisher.modeFor(request.grantedScopes) === 'inbox')
+      return this.publishToInbox(request, 'scope');
     const creator = (
       await this.post<{
         privacy_level_options?: string[];
@@ -131,13 +149,18 @@ export class TikTokPublisher implements PlatformPublisher {
         ? request.options.privacyLevel
         : 'PUBLIC_TO_EVERYONE';
     const privacyLevel = options.includes(requested) ? requested : options[0];
-    if (!privacyLevel)
+    if (!privacyLevel) {
+      // The creator's privacy options forbid a direct post: hand the video to their inbox when
+      // the upload scope was granted (or scopes are unknown; TikTok then refuses cleanly).
+      if (!request.grantedScopes || request.grantedScopes.includes(UPLOAD_SCOPE))
+        return this.publishToInbox(request, 'privacy_options');
       throw new PlatformError(
         'tiktok',
         'invalid_request',
         'TikTok returned no privacy level options',
         false,
       );
+    }
 
     const plan = planChunks(request.video.sizeBytes);
     const init = (
@@ -153,22 +176,87 @@ export class TikTokPublisher implements PlatformPublisher {
             disable_stitch: false,
             is_aigc: request.aiGenerated,
           },
-          source_info: {
-            source: 'FILE_UPLOAD',
-            video_size: request.video.sizeBytes,
-            chunk_size: plan.chunkSize,
-            total_chunk_count: plan.count,
-          },
+          source_info: sourceInfo(request.video.sizeBytes, plan),
         },
       )
     ).body.data;
     if (!init?.publish_id || !init.upload_url)
       throw new PlatformError('tiktok', 'unknown', 'Init returned no publish_id/upload_url', true);
+    await this.uploadChunks(init.upload_url, request, plan);
 
+    const publishId = init.publish_id;
+    const status = await this.waitFor(publishId, token, ['PUBLISH_COMPLETE']);
+
+    // Private posts have no public id; the publish id is TikTok's handle for them.
+    const postId = status.publicaly_available_post_id?.[0];
+    return {
+      platformPostId: postId !== undefined ? String(postId) : publishId,
+      platformUrl: null,
+      metadata: {
+        publishId,
+        privacyLevel,
+        creatorUsername: creator?.creator_username ?? null,
+        publiclyAvailable: postId !== undefined,
+        tiktokMode: 'direct',
+      },
+    };
+  }
+
+  /**
+   * 15.A2 (spec 9.2 / 18.1 "UPLOAD-only fallback"): POST /v2/post/publish/inbox/video/init/
+   * { source_info } (scope video.upload) → publish_id + upload_url; the same chunked PUTs; then
+   * status/fetch until SEND_TO_USER_INBOX ("a notification has been sent to creator's inbox to
+   * complete the draft post using TikTok's editing flow"). Read 2026-09-28:
+   * https://developers.tiktok.com/doc/content-posting-api-reference-upload-video
+   * https://developers.tiktok.com/doc/content-posting-api-reference-get-video-status
+   */
+  private async publishToInbox(
+    request: PublishRequest,
+    reason: 'scope' | 'privacy_options',
+  ): Promise<PublishResult> {
+    const token = request.accessToken;
+    const plan = planChunks(request.video.sizeBytes);
+    const init = (
+      await this.post<{ publish_id?: string; upload_url?: string }>(
+        '/v2/post/publish/inbox/video/init/',
+        token,
+        { source_info: sourceInfo(request.video.sizeBytes, plan) },
+      )
+    ).body.data;
+    if (!init?.publish_id || !init.upload_url)
+      throw new PlatformError(
+        'tiktok',
+        'unknown',
+        'Inbox init returned no publish_id/upload_url',
+        true,
+      );
+    await this.uploadChunks(init.upload_url, request, plan);
+    const status = await this.waitFor(init.publish_id, token, [
+      'SEND_TO_USER_INBOX',
+      'PUBLISH_COMPLETE',
+    ]);
+    return {
+      platformPostId: init.publish_id,
+      platformUrl: null,
+      metadata: {
+        publishId: init.publish_id,
+        tiktokMode: 'inbox',
+        inboxReason: reason,
+        inboxStatus: status.status ?? null,
+        note: TIKTOK_INBOX_NOTE,
+      },
+    };
+  }
+
+  private async uploadChunks(
+    uploadUrl: string,
+    request: PublishRequest,
+    plan: ReturnType<typeof planChunks>,
+  ): Promise<void> {
     for (const [start, end] of plan.ranges) {
       const bytes = await request.video.read(start, end);
       await platformRequest<unknown>(
-        init.upload_url,
+        uploadUrl,
         {
           method: 'PUT',
           headers: {
@@ -181,9 +269,10 @@ export class TikTokPublisher implements PlatformPublisher {
         { platform: 'tiktok', fetchImpl: this.deps.fetchImpl, timeoutMs: 5 * 60_000 },
       );
     }
+  }
 
-    const publishId = init.publish_id;
-    const status = await pollUntil(
+  private waitFor(publishId: string, token: string, done: string[]) {
+    return pollUntil(
       async () => {
         const data = (
           await this.post<{
@@ -201,7 +290,7 @@ export class TikTokPublisher implements PlatformPublisher {
             c.retryable,
           );
         }
-        return data?.status === 'PUBLISH_COMPLETE' ? data : undefined;
+        return data?.status && done.includes(data.status) ? data : undefined;
       },
       {
         intervalMs: STATUS_POLL_MS,
@@ -212,18 +301,14 @@ export class TikTokPublisher implements PlatformPublisher {
         now: this.deps.now,
       },
     );
-
-    // Private posts have no public id; the publish id is TikTok's handle for them.
-    const postId = status.publicaly_available_post_id?.[0];
-    return {
-      platformPostId: postId !== undefined ? String(postId) : publishId,
-      platformUrl: null,
-      metadata: {
-        publishId,
-        privacyLevel,
-        creatorUsername: creator?.creator_username ?? null,
-        publiclyAvailable: postId !== undefined,
-      },
-    };
   }
+}
+
+function sourceInfo(videoSize: number, plan: ReturnType<typeof planChunks>) {
+  return {
+    source: 'FILE_UPLOAD',
+    video_size: videoSize,
+    chunk_size: plan.chunkSize,
+    total_chunk_count: plan.count,
+  };
 }

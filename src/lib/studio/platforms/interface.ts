@@ -29,6 +29,12 @@ export interface PublishRequest {
   accessToken: string;
   /** The platform account (open_id, channel id, IG user id, page id, member URN…). */
   accountId: string;
+  /** OAuth scopes the connection granted (Studio OAuth platforms); absent = unknown (Meta). */
+  grantedScopes?: string[];
+  /** 15.A3: custom thumbnail set after upload (YouTube thumbnails.set). */
+  thumbnail?: { bytes: Uint8Array; contentType: 'image/jpeg' | 'image/png' };
+  /** 15.A4: caption track uploaded after the video (YouTube captions.insert). */
+  captions?: { srt: string; language: string; name: string };
   /** Studio videos are AI-generated; publishers set the platform's AI-content label if it has one. */
   aiGenerated: true;
   options?: Record<string, unknown>;

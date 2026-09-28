@@ -1,0 +1,7 @@
+{
+  "illustrative": true,
+  "source": "ILLUSTRATIVE EXAMPLE ONLY - shows the format of the 20-site QA scan fixture. Deliver the real set as test/eval/fixtures/scan-sites.json (businessId = a business in the staging test org).",
+  "sites": [
+    { "id": "example-01", "url": "https://example.com/", "businessId": "biz_staging_example_01" }
+  ]
+}

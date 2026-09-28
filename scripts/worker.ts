@@ -18,6 +18,13 @@ import { RESCAN_SWEEP_PATTERN, STOCK_REFRESH_PATTERN } from '../src/lib/studio/s
 import { DOMAIN_POLL_PATTERN } from '../src/lib/studio/scan/domain-verification';
 import { OUTBOX_DISPATCH_SCHEDULE } from '../src/lib/studio/automation/outbox';
 import { AUTO_RESUME_SCHEDULE } from '../src/lib/studio/services/auto-resume';
+import type { JobName } from '../src/lib/studio/queue/queues';
+import { RETENTION_SWEEP_SCHEDULE } from '../src/lib/studio/queue/workers/retention-sweep';
+import {
+  CALENDAR_SYNC_SCHEDULE,
+  ORGANISATION_RECONCILE_SCHEDULE,
+  USAGE_REPORT_SCHEDULE,
+} from '../src/lib/studio/queue/workers/core-sync';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -90,6 +97,24 @@ async function main(): Promise<void> {
       },
     },
   );
+
+  // BACKLOG 15.E8 / 15.W2–W4 (track E) — the daily spec 7.15 retention sweep, and the PostMind
+  // Core sync jobs (usage events hourly, calendar shadows every 5 minutes, organisation
+  // reconciliation nightly). The Core jobs keep their outbox rows pending_setup / skip until Core
+  // publishes the APIs they wait for.
+  const trackE: Array<[id: string, pattern: string, name: JobName]> = [
+    ['retention-sweep-daily', RETENTION_SWEEP_SCHEDULE, 'retention-sweep'],
+    ['report-usage-hourly', USAGE_REPORT_SCHEDULE, 'report-usage'],
+    ['sync-calendar-shadows', CALENDAR_SYNC_SCHEDULE, 'sync-calendar-shadows'],
+    ['reconcile-organisations-daily', ORGANISATION_RECONCILE_SCHEDULE, 'reconcile-organisations'],
+  ];
+  for (const [id, pattern, name] of trackE) {
+    await analytics.upsertJobScheduler(
+      id,
+      { pattern, tz: 'UTC' },
+      { name, data: { organisationId: 'postmind-platform', runId: name, planTier: 'STANDARD' } },
+    );
+  }
 
   // BACKLOG 13.10 / 13.11 (Addendum A6.6 / A6.7) — scheduled rescans, weekly stock refresh and
   // the DNS TXT verification poll, on studio-assets.

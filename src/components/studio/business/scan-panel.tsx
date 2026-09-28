@@ -22,6 +22,13 @@ import { ACTIVE_SCAN_STATES, type ScanDetail, type ScanState, type WebsiteScan }
 
 export const SCAN_POLL_MS = 3_000;
 
+/**
+ * A6.7 / A11.2 — the ownership warranty. The checkbox shows exactly this text and the scan
+ * request sends it (ownershipStatement), so the scan record keeps what the user agreed to.
+ */
+export const OWNERSHIP_STATEMENT =
+  'I own this website or am authorised to represent it, including its images.';
+
 const SCAN_STATE: Record<ScanState, { label: string; tone: Tone }> = {
   QUEUED: { label: 'Queued', tone: 'live' },
   RUNNING: { label: 'Scanning your site', tone: 'live' },
@@ -121,7 +128,11 @@ function ScanForm({
         `/businesses/${encodeURIComponent(businessId)}/scan-website`,
         {
           method: 'POST',
-          body: { url: url.trim(), ownershipConfirmed: true },
+          body: {
+            url: url.trim(),
+            ownershipConfirmed: true,
+            ownershipStatement: OWNERSHIP_STATEMENT,
+          },
           idempotencyKey: newIdempotencyKey(),
         },
       );
@@ -168,7 +179,7 @@ function ScanForm({
           className="mt-0.5"
         />
         <Label htmlFor="scan-owner" className="text-sm leading-snug font-normal">
-          I own this website or am authorised to represent it, including its images.
+          {OWNERSHIP_STATEMENT}
         </Label>
       </div>
     </form>

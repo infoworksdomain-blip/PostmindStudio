@@ -48,11 +48,37 @@ export interface RouteInput {
   projectId?: string;
   /** Latest acceptable completion time; providers slower than this are skipped. */
   deadline?: Date;
-  /** Used for per-candidate cost estimates in the budget check. */
-  /** Try this provider first if it is already a candidate for this need and tier. */
-  preferredProviderId?: string;
+  /**
+   * Try this provider (or these, in order) first if already candidates for this need and tier.
+   * 15.C4: a generate body's preferredProviders arrive here as a list.
+   */
+  preferredProviderId?: string | readonly string[];
+  /**
+   * P7 (A3.6 step 3): per-business provider scores in [0, 1]. Candidates without a score count
+   * as NEUTRAL_SCORE; a stable sort keeps the spec order among equal scores. Explicit
+   * preferences above still go first.
+   */
+  providerScores?: Readonly<Record<string, number>>;
   /** Required: every candidate's cost is estimated from it for the budget check. */
   request: ProviderRequest;
+}
+
+export const NEUTRAL_SCORE = 0.5;
+
+/** Stable sort by score, highest first; unrated providers count as neutral. */
+export function orderByScore(
+  providerIds: readonly string[],
+  scores: Readonly<Record<string, number>> | undefined,
+): string[] {
+  if (!scores || Object.keys(scores).length === 0) return [...providerIds];
+  const scoreOf = (id: string) => {
+    const s = scores[id];
+    return typeof s === 'number' && Number.isFinite(s) ? s : NEUTRAL_SCORE;
+  };
+  return providerIds
+    .map((id, index) => ({ id, index, score: scoreOf(id) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((c) => c.id);
 }
 
 export type SkipReason =
@@ -124,13 +150,14 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
   text_generation: ['anthropic', 'openai'], // 5.2: Claude Sonnet, GPT-4o fallback
   embedding: ['openai'],
   tts: ['elevenlabs', 'azure-speech'], // 6.5 Voice
-  // 6.5 Music. SPEC DRIFT: Suno (no public API) replaced by ElevenLabs Music; MusicGen via
-  // Replicate and a Storyblocks pick stay as the spec's (not yet built) fallbacks.
-  music: ['elevenlabs-music', 'replicate', 'storyblocks'],
+  // 6.5 Music. SPEC DRIFT: Suno (no public API) replaced by ElevenLabs Music. 15.C2: the
+  // Storyblocks library pick (spec 5.6) is the built fallback; MusicGen via Replicate is not built.
+  music: ['elevenlabs-music', 'storyblocks-music', 'replicate'],
   // BACKLOG 13.27: Storyblocks audio catalogue, content_type=sfx (providers/storyblocks-audio.ts).
   sfx: ['storyblocks-audio'],
   composition: ['shotstack', 'creatomate'], // 6.5 Composition
-  transcription: ['assemblyai'], // 6.5 Captions (self-hosted Whisper is not a provider)
+  // 6.5 Captions. 15.C1: OpenAI's hosted Whisper (whisper-1) is the fallback.
+  transcription: ['assemblyai', 'openai'],
   content_safety: ['hive', 'sightengine'], // 6.5 Content safety
   // 13.36: no inference host is chosen, so nothing is ever routed here; the media-analysis
   // adapter (providers/media-analysis.ts) reports unhealthy and is not registered.
@@ -165,9 +192,13 @@ export function planCandidates(need: RouteNeed, tier: PlanTier): CandidatePlan {
         providerIds: avatarCandidates(tier, need.brandHasCustomAvatar ?? false),
       };
     case 'STOCK_FOOTAGE':
-      return { capability: 'stock_footage', providerIds: ['storyblocks', 'pexels'] };
+      // Phase 15 (13.38 correction): Storyblocks video catalogue, then Pexels videos.
+      return { capability: 'stock_footage', providerIds: ['storyblocks-video', 'pexels-video'] };
     case 'IMAGE_STILL':
-      return { capability: 'text_to_image', providerIds: ['openai', 'fal'] };
+      // 15.W6 (spec 6.5 / A6.5 "DALL-E 3 or Ideogram"): the Ideogram slot is last and is only
+      // eligible when an Ideogram adapter is registered, which default-registry never does until
+      // an Ideogram account and key exist (providers/ideogram.ts); unregistered = skipped.
+      return { capability: 'text_to_image', providerIds: ['openai', 'fal', 'ideogram'] };
     case 'MOTION_GRAPHICS':
     case 'USER_UPLOAD':
     case 'TEXT_CARD':
@@ -223,11 +254,18 @@ export async function routeProvider(input: RouteInput, deps: RouterDeps): Promis
     projectId: input.projectId,
     planTier: input.planTier,
   });
-  const preferred = input.preferredProviderId;
-  if (preferred && plan.providerIds.includes(preferred)) {
-    // Reorder only: a preference never adds a provider outside the tier's candidate list.
-    plan.providerIds = [preferred, ...plan.providerIds.filter((id) => id !== preferred)];
-  }
+  const preferred = (
+    typeof input.preferredProviderId === 'string'
+      ? [input.preferredProviderId]
+      : (input.preferredProviderId ?? [])
+  ).filter((id) => plan.providerIds.includes(id));
+  // P7 scores rate shot visuals, so they only reorder shot routing (never text, voice, music).
+  const rest = orderByScore(
+    plan.providerIds.filter((id) => !preferred.includes(id)),
+    input.need.kind === 'shot' ? input.providerScores : undefined,
+  );
+  // Reorder only: neither a preference nor a rating adds a provider outside the tier's list.
+  plan.providerIds = [...preferred, ...rest];
   const candidates: CandidateOutcome[] = [];
 
   for (const providerId of plan.providerIds) {
