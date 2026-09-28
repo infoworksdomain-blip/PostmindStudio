@@ -6,6 +6,8 @@ import type { OutboundNotification } from './sender';
 
 type Row = {
   id: string;
+  messageKey?: string | null;
+  messageParams?: unknown;
   organisationId: string;
   userId: string | null;
   kind: string;
@@ -84,6 +86,23 @@ describe('createNotifier', () => {
       ['organisation', 'org-1'],
       ['organisation', 'org-2'],
     ]);
+  });
+
+  it('stores the message key and params (16.5); rows without one store null / DbNull', async () => {
+    const t = setup();
+    await t.notifier.notify({
+      organisationId: 'o',
+      kind: 'approval_pending',
+      title: '“Launch” is waiting for approval',
+      body: 'It has been ready for review for more than 2 hours.',
+      message: { key: 'approvalPending', params: { name: 'Launch' } },
+    });
+    await t.notifier.notify({ organisationId: 'o', kind: 'cost_alert', title: 't', body: 'b' });
+    expect(t.rows[0]).toMatchObject({
+      messageKey: 'approvalPending',
+      messageParams: { name: 'Launch' },
+    });
+    expect(t.rows[1]).toMatchObject({ messageKey: null, messageParams: Prisma.DbNull });
   });
 
   it('without a dedupeKey every call is a new notification; other DB errors propagate', async () => {

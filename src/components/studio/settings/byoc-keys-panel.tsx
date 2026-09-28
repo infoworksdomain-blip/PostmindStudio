@@ -3,10 +3,11 @@
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { KeyRound } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, ApiError, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, ApiError, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type {
   ByocProviderOption,
   ProviderCredential,
@@ -18,18 +19,19 @@ import { Section } from '../primitives';
 // own provider API keys; Studio then calls those providers with the organisation's keys. Keys
 // are write-only here: after saving only the last four characters (hint) are ever shown.
 
-const UNAVAILABLE: Record<'disabled' | 'plan_tier', string> = {
-  disabled: 'Bring-your-own provider keys are not switched on for Studio yet.',
-  plan_tier:
-    'Bring-your-own provider keys are an Enterprise feature. Upgrade to use your own provider accounts.',
-};
+/** Catalogue keys (account.providerKeys.unavailable.<key>) for why BYOC is unavailable. */
+const UNAVAILABLE = { disabled: 'disabled', plan_tier: 'planTier' } as const;
 
-function status(credential: ProviderCredential | undefined): string {
-  if (!credential || credential.state !== 'active') return 'Using Studio’s key';
+type ProviderKeysT = ReturnType<typeof useTranslations<'account.providerKeys'>>;
+
+function status(t: ProviderKeysT, credential: ProviderCredential | undefined): string {
+  if (!credential || credential.state !== 'active') return t('status.studioKey');
   const result = credential.lastTestResult;
-  const hint = `Your key ••••${credential.hint ?? ''}`;
-  if (!result) return `${hint} · not tested`;
-  return result.healthy ? `${hint} · working` : `${hint} · failed: ${result.reason ?? 'unhealthy'}`;
+  const hint = credential.hint ?? '';
+  if (!result) return t('status.notTested', { hint });
+  return result.healthy
+    ? t('status.working', { hint })
+    : t('status.failed', { hint, reason: result.reason ?? t('status.unhealthy') });
 }
 
 function ProviderRow({
@@ -41,6 +43,8 @@ function ProviderRow({
   credential: ProviderCredential | undefined;
   onChanged: () => Promise<unknown>;
 }) {
+  const t = useTranslations('account.providerKeys');
+  const errorMessage = useErrorMessage();
   const [apiKey, setApiKey] = useState('');
   const [secondaryKey, setSecondaryKey] = useState('');
   const [busy, setBusy] = useState<null | 'save' | 'test' | 'remove'>(null);
@@ -69,7 +73,7 @@ function ProviderRow({
       });
       setApiKey('');
       setSecondaryKey('');
-      toast.success(`${provider.label} key saved`);
+      toast.success(t('toast.saved', { provider: provider.label }));
     });
   }
 
@@ -79,14 +83,20 @@ function ProviderRow({
         method: 'POST',
         idempotencyKey: newIdempotencyKey(),
       });
-      if (res.healthy) toast.success(`${provider.label} key works`);
-      else toast.error(`${provider.label} key failed: ${res.reason ?? 'unhealthy'}`);
+      if (res.healthy) toast.success(t('toast.works', { provider: provider.label }));
+      else
+        toast.error(
+          t('toast.failed', {
+            provider: provider.label,
+            reason: res.reason ?? t('status.unhealthy'),
+          }),
+        );
     });
 
   const remove = () =>
     run('remove', async () => {
       await api(path, { method: 'DELETE', idempotencyKey: newIdempotencyKey() });
-      toast.success(`${provider.label} key removed; Studio’s key is used again`);
+      toast.success(t('toast.removed', { provider: provider.label }));
     });
 
   return (
@@ -97,7 +107,7 @@ function ProviderRow({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-medium">{provider.label}</p>
-          <p className="text-xs text-muted-foreground">{status(credential)}</p>
+          <p className="text-xs text-muted-foreground">{status(t, credential)}</p>
         </div>
         {active && (
           <div className="flex gap-2">
@@ -107,7 +117,7 @@ function ProviderRow({
               disabled={busy !== null}
               onClick={() => void test()}
             >
-              {busy === 'test' ? 'Testing…' : 'Test'}
+              {busy === 'test' ? t('testing') : t('test')}
             </Button>
             <Button
               size="sm"
@@ -115,7 +125,7 @@ function ProviderRow({
               disabled={busy !== null}
               onClick={() => void remove()}
             >
-              Remove
+              {t('remove')}
             </Button>
           </div>
         )}
@@ -125,9 +135,17 @@ function ProviderRow({
           type="password"
           autoComplete="off"
           aria-label={
-            provider.twoPart ? `${provider.label} public key` : `${provider.label} API key`
+            provider.twoPart
+              ? t('publicKeyAria', { provider: provider.label })
+              : t('apiKeyAria', { provider: provider.label })
           }
-          placeholder={active ? 'Replace key' : provider.twoPart ? 'Public key' : 'API key'}
+          placeholder={
+            active
+              ? t('placeholder.replace')
+              : provider.twoPart
+                ? t('placeholder.publicKey')
+                : t('placeholder.apiKey')
+          }
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           className="max-w-xs"
@@ -136,8 +154,8 @@ function ProviderRow({
           <Input
             type="password"
             autoComplete="off"
-            aria-label={`${provider.label} private key`}
-            placeholder="Private key"
+            aria-label={t('privateKeyAria', { provider: provider.label })}
+            placeholder={t('placeholder.privateKey')}
             value={secondaryKey}
             onChange={(e) => setSecondaryKey(e.target.value)}
             className="max-w-xs"
@@ -152,7 +170,7 @@ function ProviderRow({
             (provider.twoPart && secondaryKey.trim().length < 8)
           }
         >
-          {busy === 'save' ? 'Saving…' : active ? 'Replace' : 'Save'}
+          {busy === 'save' ? t('saving') : active ? t('replace') : t('save')}
         </Button>
       </form>
     </li>
@@ -160,30 +178,28 @@ function ProviderRow({
 }
 
 export function ByocKeysPanel() {
+  const t = useTranslations('account.providerKeys');
+  const errorMessage = useErrorMessage();
   const { data, error, isLoading, mutate } =
     useApi<ProviderCredentialsResponse>('/provider-credentials');
   // Members without the connections capability (403) do not manage provider keys: no panel.
   if (error instanceof ApiError && error.status === 403) return null;
 
   return (
-    <Section
-      className="mt-8"
-      title="Provider keys (BYOC)"
-      description="Use your own AI provider accounts. Studio never shows a saved key again; only its last four characters."
-    >
+    <Section className="mt-8" title={t('title')} description={t('description')}>
       {error && (
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <p>Couldn’t load provider keys: {errorMessage(error)}</p>
+          <p>{t('loadFailed', { reason: errorMessage(error) })}</p>
           <Button size="sm" variant="outline" onClick={() => void mutate()}>
-            Retry
+            {t('retry')}
           </Button>
         </div>
       )}
-      {isLoading && <Skeleton className="h-24 rounded-xl" aria-label="Loading provider keys" />}
+      {isLoading && <Skeleton className="h-24 rounded-xl" aria-label={t('loading')} />}
       {data && !data.enabled && (
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <KeyRound className="mt-0.5 size-4 shrink-0" />
-          {UNAVAILABLE[data.reason ?? 'disabled']}
+          {t(`unavailable.${UNAVAILABLE[data.reason ?? 'disabled']}`)}
         </p>
       )}
       {data?.enabled && (

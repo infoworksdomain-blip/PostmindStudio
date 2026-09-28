@@ -1,8 +1,10 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Info, PauseCircle, ShieldAlert } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { useAction } from './use-action';
 
@@ -33,6 +35,8 @@ export function AutoResumeNote({
   project: ProjectDetail;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.paused');
+  const ta = useTranslations('review.actions');
   const { run, busy } = useAction();
   const [enabled, setEnabled] = useState(project.metadata?.autoResume !== false);
   const scope = orgCapPause(project);
@@ -43,7 +47,7 @@ export function AutoResumeNote({
     const ok = await run('auto-resume', `/projects/${project.id}`, {
       method: 'PATCH',
       body: { autoResume: next },
-      success: next ? 'Will resume automatically' : 'Automatic resume turned off',
+      success: next ? t('willResume') : t('resumeTurnedOff'),
     });
     if (ok) onChanged();
     else setEnabled(!next);
@@ -51,34 +55,33 @@ export function AutoResumeNote({
 
   return (
     <section
-      aria-label="Paused by budget"
+      aria-label={t('aria')}
       className="flex flex-col gap-2 rounded-xl border border-foreground/15 bg-card p-4 text-sm"
     >
       <p className="flex items-start gap-2">
         <PauseCircle className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
-        {scope === 'org_daily'
-          ? 'Paused: your organisation’s generation budget for today is spent.'
-          : 'Paused: your organisation’s generation budget for this month is spent.'}{' '}
+        {scope === 'org_daily' ? t('daily') : t('monthly')}{' '}
         {enabled
           ? scope === 'org_daily'
-            ? 'It resumes automatically at 00:05 UTC.'
-            : 'It resumes automatically on the 1st at 00:05 UTC.'
-          : 'Automatic resume is off — press “Generate again” when you are ready.'}
+            ? t('resumesDaily')
+            : t('resumesMonthly')
+          : t('resumeOff', { action: ta('generateAgain') })}
       </p>
       <label className="flex items-center gap-2 text-xs text-muted-foreground">
         <Switch
           checked={enabled}
           disabled={busy}
           onCheckedChange={(v) => void toggle(v)}
-          aria-label="Resume automatically"
+          aria-label={t('resumeToggle')}
         />
-        Resume automatically
+        {t('resumeToggle')}
       </label>
     </section>
   );
 }
 
 export function SafetyReviewNote({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.paused');
   const marker = record(project.metadata?.safetyReview);
   if (marker?.state !== 'PENDING') return null;
   return (
@@ -87,8 +90,7 @@ export function SafetyReviewNote({ project }: { project: ProjectDetail }) {
       className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"
     >
       <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
-      Paused for a content-safety review by PostMind’s Trust &amp; Safety team. Generation continues
-      automatically if it is allowed; you will be notified either way.
+      {t('safety')}
     </p>
   );
 }
@@ -97,19 +99,16 @@ export function SafetyReviewNote({ project }: { project: ProjectDetail }) {
 // metadata.fallbacks[] when a preferred provider was passed over at run time (disabled, over
 // budget, too slow, circuit open) and a later one produced the output.
 
-const LAYER_LABEL: Record<string, string> = {
-  visual: 'visuals',
-  voice: 'narration',
-  music: 'music',
-  composition: 'final render',
-};
-const REASON_LABEL: Record<string, string> = {
-  provider_disabled: 'paused by PostMind',
-  over_budget: 'over budget',
-  too_slow: 'too slow',
-  no_cost_estimate: 'no cost estimate',
-  circuit_open: 'temporarily unavailable',
-};
+const LAYERS = ['visual', 'voice', 'music', 'composition'] as const;
+const REASONS = [
+  'provider_disabled',
+  'over_budget',
+  'too_slow',
+  'no_cost_estimate',
+  'circuit_open',
+] as const;
+const oneOf = <T extends string>(list: readonly T[], value: string): value is T =>
+  (list as readonly string[]).includes(value);
 
 export interface FallbackItem {
   layer: string;
@@ -144,27 +143,35 @@ export function fallbacksOf(metadata: ProjectDetail['metadata']): FallbackItem[]
 }
 
 export function FallbackNote({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.fallback');
+  const f = useFormat();
   const items = fallbacksOf(project.metadata);
   if (items.length === 0) return null;
-  const layers = [...new Set(items.map((i) => LAYER_LABEL[i.layer] ?? i.layer))];
+  const layerLabel = (layer: string) => (oneOf(LAYERS, layer) ? t(`layers.${layer}`) : layer);
+  const reasonLabel = (reason: string) =>
+    oneOf(REASONS, reason) ? t(`reasons.${reason}`) : reason;
+  const layers = [...new Set(items.map((i) => layerLabel(i.layer)))];
   return (
     <section
-      aria-label="Fallback provider used"
+      aria-label={t('aria')}
       className="flex flex-col gap-1 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"
     >
       <p className="flex items-start gap-2">
         <Info className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
-        We used a fallback provider for the {layers.join(', ')} of this video, so quality may differ
-        from usual. Check it before approving, or regenerate later.
+        {t('intro', { layers: f.list(layers) })}
       </p>
-      <ul className="pl-6 text-xs text-muted-foreground">
+      <ul className="ps-6 text-xs text-muted-foreground">
         {items.map((i, n) => (
           <li key={`${i.layer}-${i.shotId ?? n}`}>
-            {LAYER_LABEL[i.layer] ?? i.layer}: made with {i.usedProviderId} (
-            {i.skipped
-              .map((s) => `${s.providerId} ${REASON_LABEL[s.reason] ?? s.reason}`)
-              .join(', ')}
-            )
+            {t('item', {
+              layer: layerLabel(i.layer),
+              provider: i.usedProviderId,
+              skipped: f.list(
+                i.skipped.map((s) =>
+                  t('skipped', { provider: s.providerId, reason: reasonLabel(s.reason) }),
+                ),
+              ),
+            })}
           </li>
         ))}
       </ul>

@@ -2,11 +2,12 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { CheckCircle2, Link2, TriangleAlert, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { PlatformConnection } from '@/lib/client/types';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
@@ -15,7 +16,7 @@ import { PlatformCard } from './platform-card';
 import { ByocKeysPanel } from '../settings/byoc-keys-panel';
 import {
   belongsToBusiness,
-  callbackErrorMessage,
+  callbackErrorCode,
   META_PLATFORMS,
   OAUTH_PLATFORMS,
   platformLabel,
@@ -30,6 +31,7 @@ import {
 type Notice = { tone: 'good' | 'bad'; text: string };
 
 function useCallbackNotice(): [Notice | null, () => void] {
+  const t = useTranslations('connections');
   const params = useSearchParams();
   const router = useRouter();
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -43,18 +45,21 @@ function useCallbackNotice(): [Notice | null, () => void] {
     const key = `${connected ?? ''}|${failed ?? ''}`;
     if (handled.current === key) return;
     handled.current = key;
+    const code = callbackErrorCode(failed ?? '');
     const next: Notice = connected
-      ? {
-          tone: 'good',
-          text: `${platformLabel(connected)} is connected. You can publish to it now.`,
-        }
-      : { tone: 'bad', text: callbackErrorMessage(failed as string) };
+      ? { tone: 'good', text: t('connectedNotice', { platform: platformLabel(connected) }) }
+      : {
+          tone: 'bad',
+          text: code
+            ? t(`callbackErrors.${code}`)
+            : t('callbackErrors.unknown', { code: failed ?? '' }),
+        };
     setNotice(next);
     if (next.tone === 'good') toast.success(next.text);
     else toast.error(next.text);
     // Drop the query so a refresh does not replay the message.
     router.replace('/connections', { scroll: false });
-  }, [connected, failed, router]);
+  }, [connected, failed, router, t]);
 
   return [notice, () => setNotice(null)];
 }
@@ -64,6 +69,9 @@ function goTo(url: string) {
 }
 
 export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string) => void }) {
+  const t = useTranslations('connections');
+  const tn = useTranslations('shell.nav.groups');
+  const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
   const { data, error, isLoading, mutate } = useApi<{ data: PlatformConnection[] }>(
     businessId ? '/platform-connections' : null,
@@ -93,7 +101,7 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
         method: 'DELETE',
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success(`${connection.platformAccountName} disconnected`);
+      toast.success(t('disconnected', { account: connection.platformAccountName }));
       await mutate();
       return true;
     } catch (err) {
@@ -110,11 +118,7 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
 
   return (
     <>
-      <PageHeader
-        eyebrow="Set up"
-        title="Connections"
-        description="The accounts Studio publishes to. Instagram and Facebook are connected in PostMind settings."
-      />
+      <PageHeader eyebrow={tn('setup')} title={t('title')} description={t('description')} />
       {notice && (
         <div
           role={notice.tone === 'bad' ? 'alert' : 'status'}
@@ -130,7 +134,7 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
           )}
           <p className="flex-1">{notice.text}</p>
-          <Button variant="ghost" size="icon-xs" aria-label="Dismiss" onClick={dismiss}>
+          <Button variant="ghost" size="icon-xs" aria-label={t('dismiss')} onClick={dismiss}>
             <X />
           </Button>
         </div>
@@ -138,13 +142,13 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
       {ready && !businessId && (
         <EmptyState
           icon={<Link2 className="size-8" strokeWidth={1.5} />}
-          title="Pick a business first"
-          description="Connections belong to a business. Choose one in the top bar."
+          title={t('pickFirst.title')}
+          description={t('pickFirst.body')}
         />
       )}
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {businessId && isLoading && (
-        <div className="flex flex-col gap-3" aria-label="Loading connections">
+        <div className="flex flex-col gap-3" aria-label={t('loading')}>
           {OAUTH_PLATFORMS.map((p) => (
             <Skeleton key={p.id} className="h-24 rounded-xl" />
           ))}

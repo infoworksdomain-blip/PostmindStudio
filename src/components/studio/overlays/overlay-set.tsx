@@ -1,10 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type KeyboardEvent } from 'react';
 import { Eye, Loader2, Redo2, Save, Trash2, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState } from '../primitives';
 import { useAction } from '../review/use-action';
 import {
@@ -22,6 +24,7 @@ import { OverlayFrame } from './overlay-frame';
 import { applyDraft, buildPatch, draftProblems, newOverlayTiming } from './overlay-math';
 import { OverlayTimeline } from './overlay-timeline';
 import { AddOverlay, ManagePresets, SavePreset } from './preset-controls';
+import { useSafeAreaLabel } from './safe-area-label';
 import { safeAreaFor } from './safe-areas';
 import type { Overlay, OverlayDraft, OverlayPreset, OverlayPreviewResult } from './types';
 
@@ -50,8 +53,10 @@ export interface OverlaySetProps {
   /** Server preview renders exist for shot overlays only. */
   canPreview?: boolean;
   /** What the timing is relative to, for the empty-state text. */
-  unit?: string;
+  unit?: OverlayUnit;
 }
+
+export type OverlayUnit = 'shot' | 'slide' | 'video';
 
 export function OverlaySet({
   listPath,
@@ -67,6 +72,10 @@ export function OverlaySet({
   canPreview = true,
   unit = 'shot',
 }: OverlaySetProps) {
+  const t = useTranslations('overlays.set');
+  const tp = useTranslations('overlays.problems');
+  const f = useFormat();
+  const safeAreaLabel = useSafeAreaLabel();
   const { data, error, isLoading, mutate } = useApi<{ data: Overlay[] }>(listPath);
   const { pending, run, busy } = useAction();
   const [history, setHistory] = useState(emptyHistory);
@@ -75,8 +84,7 @@ export function OverlaySet({
   const [preview, setPreview] = useState<string | null>(null);
 
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
-  if (isLoading || !data)
-    return <Skeleton className="h-72 rounded-xl" aria-label="Loading overlays" />;
+  if (isLoading || !data) return <Skeleton className="h-72 rounded-xl" aria-label={t('loading')} />;
 
   const drafts = history.present;
   const overlays = data.data.map((o) => applyDraft(o, drafts[o.id]));
@@ -107,7 +115,7 @@ export function OverlaySet({
     const request = create({ text, ...timing, presetId });
     const result = await run<unknown>('add', request.path, {
       body: request.body,
-      success: 'Overlay added.',
+      success: t('added'),
     });
     if (!result) return false;
     await mutate();
@@ -120,7 +128,7 @@ export function OverlaySet({
     const ok = await run('save', `/overlays/${original.id}`, {
       method: 'PATCH',
       body: patch,
-      success: 'Overlay saved — re-render to apply it.',
+      success: t('saved'),
     });
     if (ok) {
       await mutate();
@@ -133,7 +141,7 @@ export function OverlaySet({
     if (!original) return;
     const ok = await run('delete', `/overlays/${original.id}`, {
       method: 'DELETE',
-      success: 'Overlay deleted.',
+      success: t('deleted'),
     });
     if (ok) {
       discard(original.id);
@@ -158,9 +166,7 @@ export function OverlaySet({
         idPrefix={idPrefix}
       />
       {full && (
-        <p className="text-xs text-muted-foreground">
-          This {unit} has the maximum of {maxCount} overlays.
-        </p>
+        <p className="text-xs text-muted-foreground">{t('full', { unit, max: maxCount })}</p>
       )}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_1fr]">
         <div className="flex flex-col gap-3">
@@ -183,26 +189,30 @@ export function OverlaySet({
                 aria-hidden
                 className={
                   safeArea.official
-                    ? 'mr-1 inline-block size-2 border border-emerald-500'
-                    : 'mr-1 inline-block size-2 border border-dashed border-amber-500'
+                    ? 'me-1 inline-block size-2 border border-emerald-500'
+                    : 'me-1 inline-block size-2 border border-dashed border-amber-500'
                 }
               />
-              {safeArea.label}
+              {safeAreaLabel(safeArea)}
             </p>
           )}
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="shrink-0">Playhead</span>
+            <span className="shrink-0">{t('playhead')}</span>
             <input
               type="range"
               min={0}
               max={duration}
               step={0.1}
               value={playhead}
-              aria-label="Playhead position (seconds)"
+              aria-label={t('playheadAria')}
               onChange={(e) => setPlayhead(Number(e.target.value))}
               className="w-full accent-primary"
             />
-            <span className="tabular w-10 shrink-0 text-right">{playhead.toFixed(1)}s</span>
+            <span className="tabular w-10 shrink-0 text-end">
+              {t('seconds', {
+                value: f.number(playhead, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+              })}
+            </span>
           </label>
           <div className="flex gap-2">
             <Button
@@ -212,7 +222,7 @@ export function OverlaySet({
               disabled={history.past.length === 0}
               aria-keyshortcuts="Control+Z"
             >
-              <Undo2 /> Undo
+              <Undo2 /> {t('undo')}
             </Button>
             <Button
               size="sm"
@@ -221,7 +231,7 @@ export function OverlaySet({
               disabled={history.future.length === 0}
               aria-keyshortcuts="Control+Shift+Z"
             >
-              <Redo2 /> Redo
+              <Redo2 /> {t('redo')}
             </Button>
           </div>
         </div>
@@ -248,7 +258,11 @@ export function OverlaySet({
               {problems.length > 0 && (
                 <ul role="alert" className="text-xs text-destructive">
                   {problems.map((p) => (
-                    <li key={p}>{p}</li>
+                    <li key={p.code}>
+                      {p.code === 'endWithin'
+                        ? tp('endWithin', { duration: p.duration })
+                        : tp(p.code)}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -257,25 +271,25 @@ export function OverlaySet({
                   onClick={save}
                   disabled={!editable || !patch || problems.length > 0 || busy}
                 >
-                  {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} Save
+                  {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
                 </Button>
                 <Button variant="ghost" onClick={() => discard(selected.id)} disabled={!patch}>
-                  <Undo2 /> Discard changes
+                  <Undo2 /> {t('discard')}
                 </Button>
                 {canPreview && (
                   <Button
                     variant="outline"
                     onClick={renderPreview}
                     disabled={Boolean(patch) || busy}
-                    title={patch ? 'Save first — the preview renders the saved overlay' : undefined}
+                    title={patch ? t('saveFirst') : undefined}
                   >
                     {pending === 'preview' ? <Loader2 className="animate-spin" /> : <Eye />}
-                    Preview render
+                    {t('preview')}
                   </Button>
                 )}
                 <Button variant="destructive" onClick={remove} disabled={!editable || busy}>
                   {pending === 'delete' ? <Loader2 className="animate-spin" /> : <Trash2 />}
-                  Delete
+                  {t('delete')}
                 </Button>
               </div>
               {preview && (
@@ -285,7 +299,7 @@ export function OverlaySet({
                   autoPlay
                   muted
                   playsInline
-                  aria-label="Overlay preview render"
+                  aria-label={t('previewAria')}
                   className="max-h-80 w-full rounded-lg bg-foreground"
                 />
               )}
@@ -304,9 +318,7 @@ export function OverlaySet({
               />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Select an overlay on the timeline to style and time it.
-            </p>
+            <p className="text-sm text-muted-foreground">{t('selectHint')}</p>
           )}
         </div>
       </div>

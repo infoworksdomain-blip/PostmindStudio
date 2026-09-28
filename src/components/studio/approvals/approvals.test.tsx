@@ -1,17 +1,13 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
 import { mockFetch, renderWithSWR } from '../library/test-helpers';
+import { useApprovalText } from './approval-text';
 import { ApprovalStepIndicator } from './approval-step-indicator';
 import { ApprovalWorkflowsScreen } from './approval-workflows-screen';
-import {
-  describeAppliesTo,
-  parseList,
-  stepIndicatorText,
-  type ApprovalStatus,
-  type ApprovalWorkflow,
-} from './types';
+import { parseList, type ApprovalStatus, type ApprovalWorkflow } from './types';
 import { validateWorkflow } from './workflow-form';
 
 // 15.D3 — approval workflow editor and the review-screen step indicator.
@@ -43,6 +39,9 @@ const status = (over: Partial<ApprovalStatus> = {}): ApprovalStatus => ({
 
 describe('helpers', () => {
   it('describes steps, appliesTo and the waiting step', () => {
+    const { describeAppliesTo, describeStep, stepIndicatorText } = renderHook(() =>
+      useApprovalText(),
+    ).result.current;
     expect(stepIndicatorText(status())).toBe(
       'Step 2 of 2 — waiting for client reviewer (1 of 2 approvals)',
     );
@@ -62,6 +61,8 @@ describe('helpers', () => {
     expect(describeAppliesTo({ businessIds: [], platforms: [], tags: [] })).toBe(
       'Applies to every project',
     );
+    expect(describeStep({ role: 'client_reviewer', minApprovers: 2 })).toBe('2 client reviewers');
+    expect(describeStep({ role: 'brand:lead', minApprovers: 1 })).toBe('brand lead');
     expect(parseList(' a, b,, a ,c ')).toEqual(['a', 'b', 'c']);
   });
 
@@ -72,17 +73,21 @@ describe('helpers', () => {
       appliesTo: CLIENT_SIGN_OFF.appliesTo,
     };
     expect(validateWorkflow(ok)).toBeNull();
-    expect(validateWorkflow({ ...ok, name: ' ' })).toMatch(/name/);
-    expect(validateWorkflow({ ...ok, steps: [] })).toMatch(/at least one step/);
-    expect(validateWorkflow({ ...ok, steps: [{ role: 'Bad Role', minApprovers: 1 }] })).toMatch(
-      /Step 1/,
-    );
-    expect(validateWorkflow({ ...ok, steps: [{ role: 'admin', minApprovers: 0 }] })).toMatch(
-      /at least one approver/,
-    );
-    expect(validateWorkflow({ ...ok, steps: [{ role: 'admin', minApprovers: 11 }] })).toMatch(
-      /at most 10/,
-    );
+    expect(validateWorkflow({ ...ok, name: ' ' })).toEqual({ code: 'name' });
+    expect(validateWorkflow({ ...ok, steps: [] })).toEqual({ code: 'noSteps' });
+    expect(validateWorkflow({ ...ok, steps: [{ role: 'Bad Role', minApprovers: 1 }] })).toEqual({
+      code: 'role',
+      step: 1,
+    });
+    expect(validateWorkflow({ ...ok, steps: [{ role: 'admin', minApprovers: 0 }] })).toEqual({
+      code: 'minApprovers',
+      step: 1,
+    });
+    expect(validateWorkflow({ ...ok, steps: [{ role: 'admin', minApprovers: 11 }] })).toEqual({
+      code: 'maxApprovers',
+      step: 1,
+      max: 10,
+    });
   });
 });
 
@@ -211,5 +216,44 @@ describe('ApprovalStepIndicator', () => {
     );
     expect(calls).toHaveLength(0);
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe('approval workflows localisation', () => {
+  it('renders the workflows screen in Arabic, right to left', async () => {
+    mockFetch([{ match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } }]);
+    renderWithSWR(withLocale('ar', <ApprovalWorkflowsScreen />));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'مسارات الموافقة' }),
+    ).toBeInTheDocument();
+    const list = await screen.findByRole('list', { name: 'مسارات الموافقة' });
+    // The workflow name is user content: never translated.
+    expect(within(list).getByText('Client sign-off')).toBeInTheDocument();
+    const steps = within(list).getByRole('list', { name: 'خطوات Client sign-off' });
+    expect(steps).toHaveTextContent('مسؤول');
+    expect(steps).toHaveTextContent('مراجعان من العميل');
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+  });
+
+  it('renders the workflows screen and the step indicator in Simplified Chinese', async () => {
+    mockFetch([
+      { match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } },
+      { match: '/projects/prj_1/approval', body: { ok: true, approval: status() } },
+    ]);
+    renderWithSWR(
+      withLocale(
+        'zh-Hans',
+        <>
+          <ApprovalWorkflowsScreen />
+          <ApprovalStepIndicator project={{ id: 'prj_1', state: 'READY_FOR_REVIEW' }} />
+        </>,
+      ),
+    );
+    expect(await screen.findByRole('heading', { level: 1, name: '审批流程' })).toBeInTheDocument();
+    expect(await screen.findByText('适用于：商家 biz_1 · TikTok')).toBeInTheDocument();
+    const region = await screen.findByRole('region', { name: '审批步骤' });
+    expect(within(region).getByRole('status')).toHaveTextContent(
+      '第 2 步，共 2 步——等待客户审核人（已获 1/2 项批准）',
+    );
   });
 });

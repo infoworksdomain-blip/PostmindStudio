@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  cancelLabel,
   destructive = true,
   onConfirm,
 }: {
@@ -30,10 +32,13 @@ export function ConfirmDialog({
   title: string;
   description: ReactNode;
   confirmLabel: string;
+  /** The keep/cancel button; defaults to “Keep it”. */
+  cancelLabel?: string;
   destructive?: boolean;
   /** Resolve true to close the dialog; false keeps it open. */
   onConfirm: () => Promise<boolean>;
 }) {
+  const t = useTranslations('publications.confirmDialog');
   const [busy, setBusy] = useState(false);
 
   async function confirm() {
@@ -55,7 +60,7 @@ export function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
-            Keep it
+            {cancelLabel ?? t('keep')}
           </Button>
           <Button
             variant={destructive ? 'destructive' : 'default'}

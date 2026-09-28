@@ -147,7 +147,7 @@ function ItemCard({ item }: { item: NotBuiltItem }) {
           <h3 className="text-base font-semibold">{item.title}</h3>
           <Pill tone={BLOCKER_TONE[item.blocker]}>{item.blocker}</Pill>
         </div>
-        <p className="mt-1.5 text-sm text-muted-foreground">{item.why}</p>
+        <p className="mt-1.5 text-sm wrap-anywhere text-muted-foreground">{item.why}</p>
         <p className="mt-2 text-[0.7rem] text-muted-foreground">
           Recorded in <span className="font-mono">{item.source}</span>
         </p>

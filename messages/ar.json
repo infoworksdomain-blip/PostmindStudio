@@ -1,0 +1,3205 @@
+{
+  "common": {
+    "actions": {
+      "add": "إضافة",
+      "apply": "تطبيق",
+      "back": "رجوع",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "confirm": "تأكيد",
+      "continue": "متابعة",
+      "copy": "نسخ",
+      "create": "إنشاء",
+      "delete": "حذف",
+      "done": "تم",
+      "edit": "تعديل",
+      "next": "التالي",
+      "previous": "السابق",
+      "remove": "إزالة",
+      "retry": "إعادة المحاولة",
+      "save": "حفظ",
+      "search": "بحث",
+      "send": "إرسال",
+      "submit": "إرسال",
+      "switch": "تبديل"
+    },
+    "states": {
+      "loading": "جارٍ التحميل…",
+      "saving": "جارٍ الحفظ…",
+      "saved": "تم الحفظ",
+      "empty": "لا يوجد شيء هنا بعد.",
+      "unknown": "غير معروف",
+      "none": "لا شيء",
+      "on": "مفعّل",
+      "off": "متوقف",
+      "yes": "نعم",
+      "no": "لا"
+    },
+    "count": {
+      "items": "{count, plural, =0 {لا توجد عناصر} zero {لا توجد عناصر} one {عنصر واحد} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+      "selected": "{count, plural, =0 {لم يُحدَّد شيء} zero {لم يُحدَّد شيء} one {تم تحديد عنصر واحد} two {تم تحديد عنصرين} few {تم تحديد # عناصر} many {تم تحديد # عنصرًا} other {تم تحديد # عنصر}}"
+    },
+    "a11y": {
+      "moreOptions": "مزيد من الخيارات",
+      "required": "مطلوب"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "فتح قائمة التنقل",
+      "navigationTitle": "التنقل",
+      "getStarted": "ابدأ الآن",
+      "groups": {
+        "make": "الإنتاج",
+        "manage": "الإدارة",
+        "setup": "الإعداد",
+        "staff": "فريق PostMind"
+      },
+      "items": {
+        "create": "إنشاء",
+        "projects": "المشاريع",
+        "library": "المكتبة المرجعية",
+        "templates": "القوالب",
+        "publications": "المنشورات",
+        "calendar": "التقويم",
+        "analytics": "التحليلات",
+        "business": "النشاط التجاري والصور",
+        "connections": "الحسابات المرتبطة",
+        "approvals": "مسارات الموافقة",
+        "export": "تصدير البيانات",
+        "admin": "الإدارة العامة"
+      }
+    },
+    "theme": {
+      "useLight": "استخدام المظهر الفاتح",
+      "useDark": "استخدام المظهر الداكن"
+    },
+    "language": {
+      "label": "اللغة",
+      "trigger": "لغة الواجهة: {language}",
+      "changed": "تم تغيير لغة الواجهة إلى {language}"
+    },
+    "business": {
+      "label": "النشاط التجاري",
+      "choose": "اختر نشاطًا تجاريًا",
+      "idPlaceholder": "معرّف النشاط التجاري في PostMind",
+      "listPending": "قائمة الأنشطة التجارية بانتظار PostMind Core: اكتب معرّف النشاط التجاري."
+    },
+    "feedback": {
+      "button": "ملاحظات",
+      "buttonAria": "إرسال ملاحظات",
+      "title": "إرسال ملاحظات",
+      "description": "أخبرنا بما ينجح وما لا ينجح. سنعرف الشاشة التي كنت عليها.",
+      "kindLegend": "ما نوع ملاحظتك؟",
+      "kindAria": "نوع الملاحظة",
+      "kinds": {
+        "bug": "هناك خلل ما",
+        "idea": "فكرة",
+        "praise": "شيء أعجبني",
+        "other": "أخرى"
+      },
+      "message": "الرسالة",
+      "characterCount": "{count}/{max}",
+      "attachProject": "الملاحظة تخص المشروع الذي أعرضه",
+      "thanks": "شكرًا لك — يقرأ فريق PostMind كل رسالة"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "bellAria": "{count, plural, =0 {الإشعارات} zero {الإشعارات} one {الإشعارات، إشعار واحد غير مقروء} two {الإشعارات، إشعاران غير مقروءين} few {الإشعارات، # إشعارات غير مقروءة} many {الإشعارات، # إشعارًا غير مقروء} other {الإشعارات، # إشعار غير مقروء}}",
+      "markAllRead": "تعليم الكل كمقروء",
+      "markRead": "تعليم كمقروء",
+      "markReadAria": "تعليم «{title}» كمقروء",
+      "empty": "لا توجد إشعارات بعد.",
+      "emailPendingSetup": "البريد الإلكتروني بانتظار الإعداد: لم يتم ربط خدمة إرسال البريد بعد.",
+      "inAppOnly": "داخل التطبيق فقط. إرسال البريد الإلكتروني غير متاح بعد."
+    },
+    "preferences": {
+      "button": "تفضيلات الإشعارات",
+      "title": "تفضيلات الإشعارات",
+      "description": "اختر ما يصلك. البريد الإلكتروني: بانتظار الإعداد — تُحفظ اختياراتك الخاصة بالبريد وتُطبَّق فور ربط خدمة الإرسال.",
+      "tableAria": "تفضيلات الإشعارات",
+      "notification": "الإشعار",
+      "inApp": "داخل التطبيق",
+      "email": "البريد الإلكتروني",
+      "pendingSetup": "بانتظار الإعداد",
+      "switchInApp": "{label}: داخل التطبيق",
+      "switchEmail": "{label}: البريد الإلكتروني",
+      "kinds": {
+        "generation_complete": "الفيديو جاهز للمراجعة",
+        "approval_pending": "موافقة معلّقة لأكثر من ساعتين",
+        "publication_failed": "فشل النشر",
+        "auto_publish_failed": "توقف النشر التلقائي",
+        "milestone": "الإنجازات (10 آلاف مشاهدة، 100 تعليق)",
+        "cost_alert": "تنبيهات الميزانية",
+        "cost_paused": "إيقاف الإنشاء مؤقتًا بسبب الميزانية",
+        "safety_review": "مراجعات أمان المحتوى",
+        "share_comment": "ملاحظات على رابط المعاينة",
+        "plan_quota": "تنبيهات استخدام الباقة (80% و100%)"
+      }
+    },
+    "usage": {
+      "bannerAria": "استخدام الباقة",
+      "tiers": {
+        "BASIC": "الأساسية",
+        "STANDARD": "القياسية",
+        "PLUS": "بلس",
+        "ENTERPRISE": "المؤسسات"
+      },
+      "exceededTitle": "لقد استهلكت فيديوهات باقة {tier} لهذا الشهر",
+      "warningTitle": "اقتربت من حد باقة {tier} لهذا الشهر",
+      "blockedBody": "إنشاء الفيديوهات الجديدة متوقف مؤقتًا حتى {date}. رقِّ باقتك لمواصلة الإنشاء.",
+      "resetBody": "يتجدد الرصيد في {date}. رقِّ باقتك للحصول على مزيد من الفيديوهات.",
+      "shortVideos": "فيديوهات قصيرة",
+      "longVideos": "فيديوهات طويلة",
+      "shortVideosUpTo": "فيديوهات قصيرة (حتى {seconds} ث)",
+      "longVideosUpTo": "فيديوهات طويلة (حتى {minutes} د)",
+      "usedOf": "{used} من {limit}",
+      "usedUnlimited": "{used} (غير محدود)",
+      "planName": "باقة {tier}",
+      "scans": "فحص المواقع الإلكترونية لـ {scanned} من {limit} أنشطة تجارية",
+      "scansUnlimited": "فحص المواقع الإلكترونية لـ {scanned} من أنشطة تجارية غير محدودة",
+      "resets": "يتجدد في {date}",
+      "enforced": "الحدود مطبّقة",
+      "notEnforced": "الحدود غير مطبّقة بعد"
+    },
+    "pageTitle": {
+      "library": "المكتبة المرجعية",
+      "libraryVideo": "فيديو مرجعي",
+      "analytics": "التحليلات",
+      "publicationAnalytics": "تحليلات المنشور",
+      "approvals": "مسارات الموافقة",
+      "admin": "مركز الإدارة"
+    }
+  },
+  "errors": {
+    "generic": "حدث خطأ ما.",
+    "sessionExpired": "انتهت جلستك في PostMind. سجّل الدخول مجددًا.",
+    "forbidden": "ليست لديك صلاحية للقيام بذلك.",
+    "rateLimited": "طلبات كثيرة جدًا — حاول مجددًا بعد قليل.",
+    "withProblems": "{message}: {problems}",
+    "requestFailed": "فشل الطلب ({status})",
+    "codes": {
+      "unauthorized": "انتهت جلستك في PostMind. سجّل الدخول مجددًا.",
+      "forbidden": "ليست لديك صلاحية للقيام بذلك.",
+      "feature_disabled": "هذه الميزة غير مفعّلة لمؤسستك.",
+      "plan_tier": "باقتك لا تتضمن هذه الميزة. رقِّ باقتك لاستخدامها.",
+      "quota_exceeded": "لقد بلغت حد باقتك لهذا الشهر. رقِّ باقتك لمواصلة الإنشاء.",
+      "not_found": "تعذّر العثور على العنصر. ربما تم حذفه.",
+      "conflict": "تغيّر هذا العنصر أثناء عملك عليه. حدّث الصفحة وحاول مجددًا.",
+      "validation_error": "بعض البيانات غير صالحة. تحقق منها وحاول مجددًا.",
+      "unprocessable": "لا يمكن تنفيذ ذلك في حالته الحالية.",
+      "rate_deferred": "أحد المزوّدين مشغول. سيعيد Studio المحاولة قريبًا.",
+      "rate_limited": "طلبات كثيرة جدًا — حاول مجددًا بعد قليل.",
+      "payload_too_large": "حجم الملف كبير جدًا.",
+      "kill_switch_active": "أوقفت PostMind الإنشاء مؤقتًا الآن. حاول مجددًا لاحقًا.",
+      "provider_error": "واجه أحد مزوّدي الإنشاء مشكلة. حاول مجددًا بعد قليل.",
+      "platform_error": "واجهت منصة التواصل الاجتماعي مشكلة. حاول مجددًا بعد قليل.",
+      "no_provider_available": "لا يوجد مزوّد متاح لتنفيذ هذه المهمة الآن. حاول مجددًا لاحقًا.",
+      "cost_cap_paused": "تم إيقاف الإنشاء مؤقتًا بسبب بلوغ حد الميزانية.",
+      "upstream_error": "واجهت إحدى الخدمات المرتبطة مشكلة. حاول مجددًا بعد قليل.",
+      "configuration_error": "لم يكتمل إعداد Studio لهذه الميزة بعد. تواصل مع دعم PostMind.",
+      "not_implemented": "هذه الميزة غير متاحة بعد.",
+      "internal_error": "حدث خطأ من جهتنا. حاول مجددًا بعد قليل.",
+      "upload_failed": "فشل الرفع. حاول مجددًا."
+    }
+  },
+  "primitives": {
+    "errorTitle": "تعذّر تحميل هذا المحتوى",
+    "retry": "إعادة المحاولة"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "الآن",
+    "duration": {
+      "hoursMinutes": "{hours} س {minutes} د",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} ث"
+    },
+    "projectState": {
+      "DRAFT": "مسودة",
+      "QUEUED": "في قائمة الانتظار",
+      "SCANNING": "جارٍ الملء التلقائي",
+      "PLANNING": "جارٍ كتابة النص",
+      "ASSETS_QUEUED": "جارٍ إنشاء اللقطات",
+      "ASSETS_GENERATING": "جارٍ إنشاء اللقطات",
+      "RENDERING": "جارٍ المعالجة",
+      "QUALITY_CHECKING": "جارٍ فحص الجودة",
+      "QUALITY_FAILED": "فشل فحص الجودة",
+      "READY_FOR_REVIEW": "جاهز للمراجعة",
+      "APPROVED": "تمت الموافقة",
+      "PUBLISHING": "جارٍ النشر",
+      "PUBLISHED": "منشور",
+      "PARTIALLY_PUBLISHED": "منشور جزئيًا",
+      "REJECTED": "مرفوض",
+      "FAILED": "فشل"
+    },
+    "publicationState": {
+      "SCHEDULED": "مجدول",
+      "PUBLISHING": "جارٍ النشر",
+      "PUBLISHED": "منشور",
+      "FAILED": "فشل",
+      "CANCELLED": "ملغى",
+      "TAKEN_DOWN": "تمت إزالته"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "موجز Instagram",
+      "facebook_feed": "موجز Facebook"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "«{name}» جاهز للمراجعة",
+      "body": "اجتازت كل النسخ فحوصات الجودة. راجعه، ثم وافق عليه أو انشره."
+    },
+    "generationAutoApproved": {
+      "title": "تم إنشاء «{name}» والموافقة عليه تلقائيًا",
+      "body": "اجتاز الفيديو كل فحوصات الجودة ووافقت عليه سياسة المراجعة لديك تلقائيًا."
+    },
+    "publicationFailed": {
+      "title": "فشل نشر «{name}» على {platform}",
+      "body": "{reason} — افتح المشروع لإعادة المحاولة."
+    },
+    "approvalPending": {
+      "title": "«{name}» بانتظار الموافقة",
+      "body": "إنه جاهز للمراجعة منذ أكثر من ساعتين."
+    },
+    "autoPublishFailed": {
+      "title": "فشل النشر التلقائي لـ «{name}» على {platform}",
+      "body": "{reason} — افتح المشروع لإعادة المحاولة."
+    },
+    "shareComment": {
+      "title": "ملاحظات جديدة على {name}",
+      "body": "{author}: {comment}"
+    },
+    "milestoneViews": {
+      "title": "وصل «{name}» إلى {threshold, number} مشاهدة على {platform}",
+      "body": "العدد الآن {count, number} مشاهدة. افتح المشروع لعرض منشوراته وتحليلاته."
+    },
+    "milestoneComments": {
+      "title": "وصل «{name}» إلى {threshold, number} تعليق على {platform}",
+      "body": "العدد الآن {count, number} تعليق. افتح المشروع لعرض منشوراته وتحليلاته."
+    },
+    "autoResumedMonthly": {
+      "title": "استُؤنف «{name}» تلقائيًا",
+      "body": "بدأ شهر جديد، لذا استُكمل الإنشاء من حيث توقف."
+    },
+    "autoResumedDaily": {
+      "title": "استُؤنف «{name}» تلقائيًا",
+      "body": "بدأ يوم جديد (بتوقيت UTC)، لذا استُكمل الإنشاء من حيث توقف."
+    },
+    "costProjectPaused": {
+      "title": "توقف الإنشاء مؤقتًا: بلغ «{name}» ‏{pausePercent, number}٪ من ميزانيته",
+      "body": "أُنفق {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. افتح المشروع وارفع ميزانيته (رفع الميزانية)، ثم اضغط «إنشاء» مرة أخرى."
+    },
+    "costProjectAlert": {
+      "title": "استخدم «{name}» ‏{threshold, number}٪ من ميزانيته",
+      "body": "أُنفق {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. يتوقف الإنشاء مؤقتًا عند {pausePercent, number}٪ من الميزانية، ويمكن حينها رفعها من صفحة المشروع."
+    },
+    "costProjectOverBudget": {
+      "title": "استخدم «{name}» ‏{threshold, number}٪ من ميزانيته",
+      "body": "أُنفق {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. يبقى الإنشاء متوقفًا حتى تُرفع الميزانية."
+    },
+    "costDailyAlert": {
+      "title": "استُخدم {threshold, number}٪ من ميزانية الإنشاء لهذا اليوم",
+      "body": "أُنفق اليوم (UTC) {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. يتوقف الإنشاء مؤقتًا عند 100٪ حتى منتصف الليل بتوقيت UTC؛ ولا يتأثر النشر."
+    },
+    "costDailyPaused": {
+      "title": "توقف الإنشاء مؤقتًا: نفدت ميزانية الإنشاء لهذا اليوم",
+      "body": "أُنفق اليوم (UTC) {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. يُستأنف الإنشاء بعد منتصف الليل بتوقيت UTC؛ ولا يتأثر النشر."
+    },
+    "costMonthlyAlert": {
+      "title": "استُخدم {threshold, number}٪ من ميزانية الإنشاء لهذا الشهر",
+      "body": "أُنفق هذا الشهر (UTC) {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. يتوقف الإنشاء مؤقتًا عند 100٪ حتى اليوم الأول من الشهر (UTC)؛ ولا يتأثر النشر."
+    },
+    "costMonthlyPaused": {
+      "title": "توقف الإنشاء مؤقتًا: نفدت ميزانية الإنشاء لهذا الشهر",
+      "body": "أُنفق هذا الشهر (UTC) {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. يُستأنف الإنشاء في اليوم الأول من الشهر (UTC) أو عند رفع الحد الشهري لباقتك؛ ولا يتأثر النشر."
+    },
+    "costProviderDaily": {
+      "title": "استُخدم {threshold, number}٪ من ميزانية {provider} لهذا اليوم",
+      "body": "أُنفق اليوم (UTC) مع {provider} مبلغ {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP}. عند 100٪ ينتقل Studio إلى مزوّدين بدلاء إن وُجدوا."
+    },
+    "costGlobalAlert": {
+      "title": "بلغ الإنفاق اليومي العام على المزوّدين {threshold, number}٪ من الحد",
+      "body": "أُنفق اليوم (UTC) عبر جميع المؤسسات {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP} (STUDIO_GLOBAL_DAILY_CAP_PENCE). راجع runbooks/cost-runaway.md."
+    },
+    "costGlobalPaused": {
+      "title": "تم بلوغ الحد اليومي العام للمزوّدين: توقف كل الإنشاء مؤقتًا",
+      "body": "أُنفق اليوم (UTC) عبر جميع المؤسسات {spent, number, ::currency/GBP} من {cap, number, ::currency/GBP} (STUDIO_GLOBAL_DAILY_CAP_PENCE). راجع runbooks/cost-runaway.md."
+    },
+    "safetyReviewStaff": {
+      "title": "مطلوب مراجعة لسلامة المحتوى: «{name}»",
+      "body": "تم الإبلاغ عن {kind, select, script {النص} other {الفيديو المُنتَج}}: {reason}"
+    },
+    "safetyReviewOpened": {
+      "title": "«{name}» بانتظار مراجعة سلامة المحتوى",
+      "body": "يتحقق منه فريق Trust & Safety في PostMind. سيستمر الإنشاء إذا سُمح به."
+    },
+    "safetyReviewAllowed": {
+      "title": "اجتاز «{name}» مراجعة سلامة المحتوى",
+      "body": "يستمر الإنشاء."
+    },
+    "safetyReviewBlocked": {
+      "title": "حُظر «{name}» بعد مراجعة سلامة المحتوى",
+      "body": "ملاحظة Trust & Safety: {note}"
+    },
+    "safetyAuditMiss": {
+      "title": "تدقيق Trust & Safety: محتوى فات فحص Hive",
+      "body": "فشل فيديو منشور على {platform} (المؤسسة {organisationId}، النشر {publicationId}) في تدقيق {period}: {note}. اتبع runbooks/content-safety-miss.md."
+    },
+    "planQuotaNearing": {
+      "title": "باقة {tier}: استُخدم {threshold, number}٪ من الفيديوهات {kind, select, short {القصيرة} other {الطويلة}}",
+      "body": "أُنشئ هذا الشهر {used, number} من {limit, number} فيديو {kind, select, short {قصير} other {طويل}}. يُعاد ضبط الحصة في بداية الشهر القادم (UTC).{nextTier, select, none {} other { رقِّ إلى {nextTier} للحصول على المزيد.}}"
+    },
+    "planQuotaReached": {
+      "title": "باقة {tier}: نفدت الفيديوهات {kind, select, short {القصيرة} other {الطويلة}} لهذا الشهر",
+      "body": "أُنشئ هذا الشهر {used, number} من {limit, number} فيديو {kind, select, short {قصير} other {طويل}}. يُعاد ضبط الحصة في بداية الشهر القادم (UTC).{nextTier, select, none {} other { رقِّ إلى {nextTier} للحصول على المزيد.}}"
+    },
+    "planQuotaBlocked": {
+      "title": "باقة {tier}: نفدت الفيديوهات {kind, select, short {القصيرة} other {الطويلة}} لهذا الشهر",
+      "body": "أُنشئ هذا الشهر {used, number} من {limit, number} فيديو {kind, select, short {قصير} other {طويل}}. عمليات الإنشاء الجديدة محظورة حتى يُعاد ضبط الحصة في بداية الشهر القادم (UTC).{nextTier, select, none {} other { رقِّ إلى {nextTier} للحصول على المزيد.}}"
+    }
+  },
+  "create": {
+    "page": {
+      "title": "إنشاء"
+    },
+    "screen": {
+      "eyebrow": "إنشاء",
+      "heading": {
+        "BRIEF": "عمّ يتحدث الفيديو؟",
+        "SLIDESHOW": "عمّ يتحدث عرض الشرائح؟",
+        "UPLOAD": "ارفع الفيديو الخاص بك"
+      },
+      "uploadChoose": "اختر فيديو",
+      "uploadReplace": "استبدال الفيديو",
+      "uploadNote": "يضيف Studio ترجمة نصية مما يُقال، والنصوص المتراكبة الخاصة بك، وكل تنسيقات المنصات. الملاحظات أدناه اختيارية.",
+      "briefPlaceholder": "تنطلق قائمة الربيع يوم الجمعة — ثلاثة أطباق صغيرة جديدة، وخصم 20٪ في الأسبوع الأول…",
+      "summaryTemplate": "قالب {name}",
+      "summaryPlatforms": "{count, plural, =0 {لا توجد منصات} zero {لا توجد منصات} one {منصة واحدة} two {منصتان} few {# منصات} many {# منصة} other {# منصة}}",
+      "summaryAutoPublish": "نشر تلقائي",
+      "summaryBrandKit": "هوية العلامة التجارية مفعّلة",
+      "options": "الخيارات",
+      "generate": "إنشاء",
+      "createSlideshow": "إنشاء عرض شرائح",
+      "sourcesAria": "ما الذي تريد إنشاءه",
+      "sources": {
+        "BRIEF": "فيديو",
+        "SLIDESHOW": "عرض شرائح",
+        "UPLOAD": "رفع فيديو"
+      },
+      "templatedNote": "تأتي المنصات والمدة من القالب. النص أعلاه اختياري — يضيف تفاصيل إلى مخطط القالب.",
+      "noBusiness": {
+        "title": "اختر نشاطًا تجاريًا أولًا",
+        "description": "تُنشأ الفيديوهات لنشاط تجاري واحد في كل مرة. اختره من الشريط العلوي، ثم عُد إلى هنا.",
+        "action": "إعداد نشاط تجاري"
+      },
+      "toast": {
+        "slideshowDrafted": "تمت صياغة مسودة عرض الشرائح — راجع الشرائح، ثم ابدأ الإنشاء.",
+        "generatingUpload": "جارٍ الإنشاء — يضيف Studio الترجمة النصية إلى الفيديو.",
+        "generatingScript": "جارٍ الإنشاء — يكتب Studio النص.",
+        "draftNotStarted": "تم الحفظ كمسودة، لكن الإنشاء لم يبدأ: {error}"
+      }
+    },
+    "problems": {
+      "businessRequired": "اختر نشاطًا تجاريًا أولًا.",
+      "uploadRequired": "ارفع الفيديو أولًا.",
+      "briefRequired": "صِف موضوع الفيديو.",
+      "briefTooLong": "اجعل الوصف أقل من {max, number} حرف.",
+      "platformRequired": "اختر منصة واحدة على الأقل.",
+      "autoPublishAccountRequired": "اختر حسابًا واحدًا على الأقل للنشر التلقائي، أو أوقف النشر التلقائي.",
+      "slideshowTemplateRequired": "اختر قالبًا لعرض الشرائح.",
+      "scheduleInPast": "حدّد موعدًا في المستقبل.",
+      "scheduleNeedsAutoPublish": "اختر الحسابات التي سيُنشر عليها (النشر التلقائي) للفيديو المجدول.",
+      "budgetRange": "يجب أن تكون الميزانية بين {min} و{max}."
+    },
+    "options": {
+      "platforms": "المنصات",
+      "length": "المدة",
+      "lengths": {
+        "short": "قصير",
+        "long": "طويل"
+      },
+      "brandKit": {
+        "label": "هوية العلامة التجارية",
+        "none": "بدون هوية علامة تجارية",
+        "loading": "جارٍ التحميل…",
+        "defaultKit": "{name} (الافتراضية)"
+      },
+      "advanced": {
+        "toggle": "خيارات متقدمة",
+        "audience": "الجمهور المستهدف",
+        "audiencePlaceholder": "مثلًا: من يشترون منزلهم الأول",
+        "cta": "دعوة إلى اتخاذ إجراء",
+        "ctaPlaceholder": "مثلًا: احجز استشارة مجانية",
+        "budget": "الحد الأقصى للميزانية (£)",
+        "budgetHint": "يتوقف الإنشاء مؤقتًا عند 90٪ من هذا المبلغ، ويمكنك رفعه من صفحة المشروع. إذا تُرك فارغًا = {short} للفيديوهات القصيرة، و{long} للفيديوهات الطويلة (أكثر من 3 دقائق، أو أكثر من دقيقة على YouTube).",
+        "budgetPlaceholder": "الافتراضي {amount}",
+        "budgetPlaceholderTemplate": "الافتراضي {short} / {long}",
+        "approval": "الموافقة",
+        "approvalDefault": "الإعداد الافتراضي للمؤسسة",
+        "approvalRequire": "المراجعة قبل النشر",
+        "approvalAuto": "الموافقة تلقائيًا"
+      }
+    },
+    "planning": {
+      "language": "اللغة",
+      "languageOption": "{name} — {nativeName}",
+      "alsoMakeIn": "أنشئه أيضًا بلغات أخرى (نسخة لكل لغة)",
+      "tier": "مستوى الجودة",
+      "tierHint": "يستخدم المستوى الأدنى مزوّدين أقل تكلفة لهذا الفيديو. ولا يمكن أن يتجاوز باقتك أبدًا.",
+      "tierPlan": "باقتك ({tier})",
+      "tierPlanUnknown": "باقتك",
+      "tiers": {
+        "BASIC": "الأساسية",
+        "STANDARD": "القياسية",
+        "PLUS": "بلس",
+        "ENTERPRISE": "المؤسسات"
+      },
+      "schedule": "الجدولة",
+      "scheduleHint": "يُنشر على حسابات النشر التلقائي في هذا الموعد بعد الموافقة.",
+      "workflow": "مسار الموافقة",
+      "workflowNone": "لم يتم إعداد أي مسارات",
+      "workflowOrg": "قواعد المؤسسة"
+    },
+    "autoPublish": {
+      "legend": "النشر التلقائي",
+      "toggle": "النشر تلقائيًا عند الموافقة",
+      "toggleHint": "بمجرد الموافقة على الفيديو — منك أو تلقائيًا — يُنشر على الحسابات أدناه.",
+      "account": "حساب {platform}",
+      "noAccount": "لا يوجد حساب مرتبط.",
+      "connectOne": "اربط حسابًا",
+      "dontAutoPublish": "بدون نشر تلقائي"
+    },
+    "templatePicker": {
+      "legend": "القالب",
+      "aria": "قالب الفيديو",
+      "loading": "جارٍ تحميل القوالب",
+      "none": "بدون قالب",
+      "noneDetail": "يخطط Studio للفيديو انطلاقًا من وصفك",
+      "shots": "{count, plural, zero {لا لقطات} one {لقطة واحدة} two {لقطتان} few {# لقطات} many {# لقطة} other {# لقطة}}",
+      "autoPublishes": "ينشر تلقائيًا",
+      "yours": "قالبك"
+    },
+    "reference": {
+      "eyebrow": "من المكتبة المرجعية",
+      "unavailable": "الفيديو المرجعي غير متاح",
+      "loading": "جارٍ تحميل المرجع…",
+      "modesAria": "وضع المرجع",
+      "modes": {
+        "INSPIRE": {
+          "label": "استلهام",
+          "hint": "استعِر الأجواء والإيقاع"
+        },
+        "TEMPLATE": {
+          "label": "قالب",
+          "hint": "اتبع بنيته لقطةً بلقطة"
+        }
+      },
+      "modeNotAllowed": "ترخيص هذا الفيديو لا يسمح بهذا الوضع",
+      "clear": "بدون مرجع"
+    },
+    "upload": {
+      "uploading": "جارٍ رفع {name}…",
+      "idle": "MP4 أو MOV أو WebM.",
+      "problems": {
+        "type": "اختر فيديو بتنسيق MP4 أو MOV أو WebM.",
+        "empty": "الملف فارغ.",
+        "tooLarge": "الحد الأقصى لحجم الفيديو {max, number} ميغابايت."
+      }
+    }
+  },
+  "review": {
+    "page": {
+      "title": "المراجعة"
+    },
+    "screen": {
+      "back": "المشاريع",
+      "eyebrow": "المراجعة",
+      "sources": {
+        "BRIEF": "من وصف مكتوب",
+        "SLIDESHOW": "عرض شرائح",
+        "LIBRARY_REFERENCE": "من فيديو مرجعي",
+        "POSTMIND_CONTENT": "من محتوى PostMind",
+        "TEMPLATE": "من قالب",
+        "UPLOAD": "الفيديو الخاص بك"
+      },
+      "loading": "جارٍ تحميل المشروع",
+      "spent": "أُنفق {amount}",
+      "ofBudget": "من ميزانية قدرها {amount}",
+      "cancelled": "تم الإلغاء.",
+      "tabsAria": "أقسام المراجعة",
+      "tabs": {
+        "slides": "الشرائح",
+        "variants": "النسخ",
+        "shots": "اللقطات",
+        "overlays": "النصوص المتراكبة",
+        "script": "النص",
+        "publish": "النشر"
+      },
+      "variantsWorking": "تظهر النسخ هنا فور انتهاء معالجة كل تنسيق.",
+      "variantsNone": "لم تتم معالجة أي نسخة بعد.",
+      "publishTitle": "النشر",
+      "publishDescription": "انشر كل نسخة تمت الموافقة عليها الآن أو حدّد لها موعدًا.",
+      "approveFirst": "وافق على الفيديو قبل نشره.",
+      "postsTitle": "المنشورات"
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "generate": "إنشاء",
+      "generateAgain": "إنشاء مرة أخرى",
+      "started": "بدأ الإنشاء.",
+      "cancelled": "تم الإلغاء — أُنفق {amount} على هذه العملية."
+    },
+    "approval": {
+      "aria": "الموافقة",
+      "readyPrompt": "شاهد كل نسخة، ثم وافق على نشرها أو أعِدها للتعديل.",
+      "qualityFailedPrompt": "فشل فحص الجودة. وافق على إحدى النسخ أدناه رغم ذلك، أو ارفض المشروع.",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "rejectNote": "ما الذي يجب تغييره؟ (مطلوب)",
+      "approveNote": "ملاحظة (اختيارية)",
+      "back": "رجوع",
+      "confirmReject": "تأكيد الرفض",
+      "confirmApprove": "تأكيد الموافقة",
+      "approved": "تمت الموافقة — جاهز للنشر.",
+      "rejected": "تم الرفض."
+    },
+    "publish": {
+      "suggested": "الموعد المقترح: {day} {time}",
+      "suggestedLittleData": "الموعد المقترح: {day} {time} (البيانات قليلة حتى الآن)",
+      "captionsSuggested": "تم اقتراح تعليقات لكل منصة.",
+      "noPassed": "لم تجتز أي نسخة فحص الجودة.",
+      "suggest": "اقتراح تعليقات",
+      "noAccount": "لا يوجد حساب مرتبط.",
+      "connect": "ربط {platform}",
+      "account": "الحساب",
+      "hashtags": "الوسوم",
+      "hashtagsPlaceholder": "#ربيع #قائمة_الطعام",
+      "caption": "التعليق",
+      "schedule": "الجدولة (اختيارية)",
+      "scheduleCount": "جدولة ({count, number})",
+      "publishNowCount": "النشر الآن ({count, number})",
+      "platformError": "{platform}: {error}",
+      "scheduled": "{count, plural, zero {لم تتم جدولة أي منشور.} one {تمت جدولة منشور واحد.} two {تمت جدولة منشورين.} few {تمت جدولة # منشورات.} many {تمت جدولة # منشورًا.} other {تمت جدولة # منشور.}}",
+      "publishing": "{count, plural, zero {لا توجد منشورات للنشر.} one {جارٍ نشر منشور واحد.} two {جارٍ نشر منشورين.} few {جارٍ نشر # منشورات.} many {جارٍ نشر # منشورًا.} other {جارٍ نشر # منشور.}}"
+    },
+    "publications": {
+      "empty": "لم يُنشر أو يُجدول أي شيء بعد.",
+      "cancelled": "تم إلغاء المنشور المجدول.",
+      "retrying": "جارٍ إعادة المحاولة.",
+      "scheduledFor": "في {date}",
+      "liveSince": "منشور منذ {date}",
+      "created": "أُنشئ في {date}",
+      "view": "عرض",
+      "cancel": "إلغاء",
+      "retry": "إعادة المحاولة",
+      "cancelAria": "إلغاء منشور {platform}",
+      "retryAria": "إعادة محاولة منشور {platform}"
+    },
+    "outbox": {
+      "title": "حالة النشر التلقائي",
+      "sent": "أُرسل للنشر",
+      "sending": "جارٍ الإرسال…",
+      "pending": "قيد الانتظار",
+      "retryingAt": "إعادة المحاولة في {date} (المحاولة {attempt, number} من {max, number})",
+      "retryingSoon": "جارٍ إعادة المحاولة (المحاولة {attempt, number} من {max, number})",
+      "failed": "{count, plural, zero {فشل دون أي محاولة} one {فشل بعد محاولة واحدة} two {فشل بعد محاولتين} few {فشل بعد # محاولات} many {فشل بعد # محاولة} other {فشل بعد # محاولة}}",
+      "requeued": "{count, plural, zero {لا توجد وجهات لإعادة المحاولة} one {جارٍ إعادة المحاولة لوجهة واحدة} two {جارٍ إعادة المحاولة لوجهتين} few {جارٍ إعادة المحاولة لـ # وجهات} many {جارٍ إعادة المحاولة لـ # وجهة} other {جارٍ إعادة المحاولة لـ # وجهة}}",
+      "retry": "إعادة محاولة النشر التلقائي"
+    },
+    "automation": {
+      "aria": "أتمتة المراجعة والنشر",
+      "approvedAutomatically": "تمت الموافقة تلقائيًا — منشئ موثوق واجتاز الفيديو كل فحوصات الجودة.",
+      "approvedByPerson": "وافق عليه شخص.",
+      "needsReview": "يحتاج إلى مراجعة من شخص.",
+      "noTargets": "النشر التلقائي مفعّل، لكن لم يتم اختيار أي حسابات — لن يُنشر أي شيء تلقائيًا.",
+      "publishesAutomatically": "يُنشر تلقائيًا عند الموافقة",
+      "publishesAutomaticallyLastRun": "يُنشر تلقائيًا عند الموافقة · آخر تشغيل {date}",
+      "targetsAria": "وجهات النشر التلقائي",
+      "accountFallback": "حساب",
+      "waits": "بانتظار الموافقة",
+      "scheduledFor": "مجدول في {date}",
+      "sent": "أُرسل للنشر",
+      "notPublished": "لم يُنشر: {error}",
+      "failedFallback": "فشل"
+    },
+    "budget": {
+      "aria": "رفع الميزانية",
+      "paused": "توقف الإنشاء مؤقتًا عند 90٪ من ميزانية هذا المشروع (أُنفق {spent} من {budget}). ارفع الميزانية، ثم ابدأ الإنشاء مرة أخرى. لن تفقد أي شيء تم إنتاجه.",
+      "newBudget": "الميزانية الجديدة (£)",
+      "raise": "رفع الميزانية",
+      "tooLow": "أدخل مبلغًا أكبر من {budget} (حتى {max}).",
+      "raised": "تم رفع الميزانية إلى {amount}. اضغط «{action}» للمتابعة."
+    },
+    "music": {
+      "aria": "الموسيقى",
+      "generated": "تم إنشاء موسيقى الخلفية.",
+      "generatedReused": "تم إنشاء موسيقى الخلفية — أُعيد استخدامها من معالجة سابقة.",
+      "generatedTrack": "تم إنشاء موسيقى الخلفية (مقطوعة مدتها {seconds, number} ث).",
+      "generatedTrackReused": "تم إنشاء موسيقى الخلفية (مقطوعة مدتها {seconds, number} ث) — أُعيد استخدامها من معالجة سابقة.",
+      "offForPlan": "لا تتضمن هذه الباقة موسيقى خلفية — تعليق صوتي فقط.",
+      "failed": "تعذّر إنشاء موسيقى الخلفية، لذا يحتوي هذا الفيديو على تعليق صوتي فقط.",
+      "none": "تمت المعالجة قبل توفر موسيقى الخلفية — تعليق صوتي فقط."
+    },
+    "sfx": {
+      "aria": "المؤثرات الصوتية",
+      "added": "المؤثرات الصوتية: أُضيف {added, number} من {total, number}.",
+      "failed": "تعذّرت إضافة المؤثرات الصوتية؛ يُعرض الفيديو بدونها.",
+      "offForPlan": "لا تتضمن هذه الباقة مؤثرات صوتية.",
+      "unavailable": "لم يتم إعداد المؤثرات الصوتية بعد؛ يُعرض الفيديو بدونها.",
+      "cueQuoted": "«{cue}»",
+      "cue": {
+        "added": "أُضيف",
+        "no_match": "لا يوجد مؤثر مطابق",
+        "failed": "تعذّر جلبه"
+      },
+      "cueShots": "{count, plural, zero {لا لقطات} one {لقطة واحدة} two {لقطتان} few {# لقطات} many {# لقطة} other {# لقطة}}"
+    },
+    "pipeline": {
+      "aria": "تقدّم مراحل الإنتاج",
+      "steps": {
+        "queued": "في قائمة الانتظار",
+        "script": "النص",
+        "shots": "اللقطات",
+        "render": "المعالجة",
+        "quality": "الجودة",
+        "review": "المراجعة",
+        "publish": "النشر"
+      },
+      "done": "(اكتمل)"
+    },
+    "paused": {
+      "aria": "متوقف مؤقتًا بسبب الميزانية",
+      "daily": "متوقف مؤقتًا: نفدت ميزانية الإنشاء لمؤسستك لهذا اليوم.",
+      "monthly": "متوقف مؤقتًا: نفدت ميزانية الإنشاء لمؤسستك لهذا الشهر.",
+      "resumesDaily": "يُستأنف تلقائيًا عند 00:05 UTC.",
+      "resumesMonthly": "يُستأنف تلقائيًا في اليوم الأول من الشهر عند 00:05 UTC.",
+      "resumeOff": "الاستئناف التلقائي متوقف — اضغط «{action}» عندما تكون جاهزًا.",
+      "resumeToggle": "الاستئناف تلقائيًا",
+      "willResume": "سيُستأنف تلقائيًا",
+      "resumeTurnedOff": "تم إيقاف الاستئناف التلقائي",
+      "safety": "متوقف مؤقتًا لمراجعة سلامة المحتوى من قِبل فريق Trust & Safety في PostMind. يستمر الإنشاء تلقائيًا إذا سُمح به، وسنُعلمك في كلتا الحالتين."
+    },
+    "fallback": {
+      "aria": "تم استخدام مزوّد بديل",
+      "intro": "استخدمنا مزوّدًا بديلًا في {layers} لهذا الفيديو، لذا قد تختلف الجودة عن المعتاد. تحقّق منه قبل الموافقة، أو أعِد إنشاءه لاحقًا.",
+      "layers": {
+        "visual": "المرئيات",
+        "voice": "التعليق الصوتي",
+        "music": "الموسيقى",
+        "composition": "المعالجة النهائية"
+      },
+      "reasons": {
+        "provider_disabled": "أوقفته PostMind مؤقتًا",
+        "over_budget": "تجاوز الميزانية",
+        "too_slow": "بطيء جدًا",
+        "no_cost_estimate": "لا يوجد تقدير للتكلفة",
+        "circuit_open": "غير متاح مؤقتًا"
+      },
+      "item": "{layer}: أُنشئ باستخدام {provider} ({skipped})",
+      "skipped": "{provider} {reason}"
+    },
+    "quality": {
+      "title": "فحص الجودة",
+      "status": {
+        "passed": "ناجح",
+        "failed": "فاشل",
+        "warning": "تحذير",
+        "skipped": "تم التخطي"
+      },
+      "statusLabel": "{status}:",
+      "codes": {
+        "content_safety": "سلامة المحتوى",
+        "duration_match": "تطابق المدة",
+        "black_frames": "الإطارات السوداء",
+        "audio_present": "وجود الصوت",
+        "aspect_ratio": "نسبة العرض إلى الارتفاع",
+        "codec": "برنامج الترميز"
+      },
+      "severity": {
+        "block": "حظر",
+        "error": "خطأ",
+        "warning": "تحذير",
+        "info": "معلومة"
+      },
+      "pending": "لا تزال الفحوصات جارية.",
+      "none": "لم يتم الإبلاغ عن أي فحوصات فردية.",
+      "forceApproved": "تجاوز أحد المراجعين حالات الفشل.",
+      "overrideLabel": "تجاوز الفحص الفاشل — السبب (مطلوب، ويُسجَّل للتدقيق)",
+      "forceApprove": "موافقة رغم الفشل",
+      "overridden": "تم تجاوز فحص الجودة."
+    },
+    "saveTemplate": {
+      "open": "حفظ كقالب",
+      "aria": "حفظ كقالب",
+      "name": "اسم القالب",
+      "category": "الفئة",
+      "categoryHint": "أحرف إنجليزية صغيرة وأرقام و_ فقط.",
+      "cancel": "إلغاء",
+      "save": "حفظ القالب",
+      "saved": "تم الحفظ كقالب — اختره من شاشة الإنشاء."
+    },
+    "script": {
+      "brief": {
+        "hook": "الافتتاحية الجاذبة",
+        "keyMessage": "الرسالة الأساسية",
+        "audience": "الجمهور",
+        "tone": "الأسلوب"
+      },
+      "empty": "—",
+      "notWritten": "لم يُكتب النص بعد.",
+      "aria": "النص الخاص بـ {platform}",
+      "shots": "{count, plural, zero {لا لقطات} one {لقطة واحدة} two {لقطتان} few {# لقطات} many {# لقطة} other {# لقطة}}",
+      "edit": "تعديل النص",
+      "notEditable": "يمكن تعديل النص بعد أن يصبح الفيديو جاهزًا للمراجعة أو مرفوضًا أو فاشلًا.",
+      "editor": {
+        "loading": "جارٍ تحميل النص",
+        "voiceover": "التعليق الصوتي",
+        "shot": "اللقطة {n, number} · {duration}",
+        "narration": "التعليق الصوتي",
+        "narrationAria": "التعليق الصوتي للقطة {n, number}",
+        "onScreen": "النص الظاهر على الشاشة",
+        "onScreenAria": "النص الظاهر على الشاشة للقطة {n, number}",
+        "revoiceNote": "{count, plural, zero {لا يعيد تغيير التعليق الصوتي تسجيل أي لقطة؛ وتبقى المرئيات كما هي.} one {تغيير التعليق الصوتي يعيد تسجيل صوت لقطة واحدة؛ وتبقى المرئيات كما هي.} two {تغيير التعليق الصوتي يعيد تسجيل صوت لقطتين؛ وتبقى المرئيات كما هي.} few {تغيير التعليق الصوتي يعيد تسجيل صوت # لقطات؛ وتبقى المرئيات كما هي.} many {تغيير التعليق الصوتي يعيد تسجيل صوت # لقطة؛ وتبقى المرئيات كما هي.} other {تغيير التعليق الصوتي يعيد تسجيل صوت # لقطة؛ وتبقى المرئيات كما هي.}}",
+        "textNote": "تغييرات النص تُبقي كل اللقطات؛ أعِد معالجة النسخ لرؤيتها.",
+        "save": "حفظ النص",
+        "cancel": "إلغاء",
+        "savedRevoice": "{count, plural, zero {تم الحفظ — لا توجد لقطات لإعادة تسجيل صوتها.} one {تم الحفظ — جارٍ إعادة تسجيل صوت لقطة واحدة.} two {تم الحفظ — جارٍ إعادة تسجيل صوت لقطتين.} few {تم الحفظ — جارٍ إعادة تسجيل صوت # لقطات.} many {تم الحفظ — جارٍ إعادة تسجيل صوت # لقطة.} other {تم الحفظ — جارٍ إعادة تسجيل صوت # لقطة.}}",
+        "savedRerender": "تم الحفظ — أعِد معالجة النسخ لتطبيق التغييرات."
+      },
+      "regenerate": {
+        "instruction": "تعليمات لإعادة الكتابة (اختيارية)",
+        "placeholder": "افتتاحية أقوى، واذكر حصة يوم السبت",
+        "button": "إعادة إنشاء النص",
+        "started": "جارٍ إعادة كتابة النص انطلاقًا من وصفك."
+      }
+    },
+    "shot": {
+      "loading": "جارٍ تحميل اللقطة",
+      "heading": "اللقطة {n, number} · {duration} · {treatment}",
+      "camera": "الكاميرا: {direction}",
+      "failed": "فشل: {reason}",
+      "promptLabel": "وصف جديد (اختياري — اتركه فارغًا لإعادة إنشاء المشهد نفسه)",
+      "regenerate": "إعادة إنشاء هذه اللقطة",
+      "uploadedNoRegenerate": "المقاطع المرفوعة تُستبدل ولا يُعاد إنشاؤها",
+      "narration": "التعليق الصوتي",
+      "onScreen": "النص الظاهر على الشاشة",
+      "saveText": "حفظ النص",
+      "regenerating": "جارٍ إعادة إنشاء اللقطة {n, number}.",
+      "savedRevoice": "تم الحفظ — جارٍ إعادة تسجيل صوت هذه اللقطة.",
+      "notEditable": "يمكن تغيير اللقطات بعد أن يصبح الفيديو جاهزًا للمراجعة أو مرفوضًا أو فاشلًا."
+    },
+    "shotStrip": {
+      "aria": "اللقطات",
+      "empty": "لم يتم التخطيط لأي لقطات بعد.",
+      "tileAria": "اللقطة {n, number}، {duration}، {treatment}، {state}",
+      "states": {
+        "PLANNED": "مخطط لها",
+        "QUEUED": "في قائمة الانتظار",
+        "GENERATING": "جارٍ الإنشاء",
+        "READY": "جاهزة",
+        "FAILED": "فشلت",
+        "SKIPPED": "تم تخطيها"
+      },
+      "treatments": {
+        "AI_CLIP": "مقطع بالذكاء الاصطناعي",
+        "AI_AVATAR": "شخصية رمزية بالذكاء الاصطناعي",
+        "STOCK_FOOTAGE": "لقطات جاهزة",
+        "IMAGE_STILL": "صورة ثابتة",
+        "MOTION_GRAPHICS": "رسومات متحركة",
+        "USER_UPLOAD": "ملف مرفوع",
+        "TEXT_CARD": "بطاقة نصية",
+        "TRANSITION": "انتقال"
+      }
+    },
+    "swap": {
+      "label": "استبدال من المكتبة",
+      "pickerLabel": "صورة من المكتبة للقطة {n, number}",
+      "use": "استخدام هذه الصورة",
+      "swapped": "تستخدم اللقطة {n, number} الآن صورة المكتبة — أعِد المعالجة لرؤيتها.",
+      "deleted": "تم حذف اللقطة {n, number} — أعِد المعالجة لتحديث النسخ.",
+      "confirm": "هل تريد حذف اللقطة {n, number}؟ سيُعاد ضبط توقيت النص.",
+      "confirmDelete": "تأكيد الحذف",
+      "keep": "الإبقاء عليها",
+      "delete": "حذف اللقطة",
+      "lastShot": "يحتاج النص إلى لقطة واحدة على الأقل"
+    },
+    "shots": {
+      "variant": "النسخة",
+      "variantOption": "{platform} ({ratio})",
+      "noScript": "تظهر اللقطات بعد كتابة النص.",
+      "select": "اختر لقطة لإعادة إنشائها أو تغيير تعليقها الصوتي."
+    },
+    "variant": {
+      "quality": {
+        "PENDING": "جارٍ الفحص",
+        "PASSED": "اجتاز فحص الجودة",
+        "FAILED": "فشل فحص الجودة",
+        "FORCE_APPROVED": "تمت الموافقة رغم الفشل"
+      },
+      "loadingPreview": "جارٍ تحميل المعاينة",
+      "previewUnavailable": "المعاينة غير متاحة — {error}",
+      "previewAria": "معاينة {platform}",
+      "aria": "نسخة {platform}",
+      "outOfDate": "غير محدّثة",
+      "staleNote": "تغيّر النص أو اللقطات بعد معالجة هذه النسخة.",
+      "rerender": "إعادة المعالجة",
+      "rerendering": "جارٍ إعادة المعالجة بتعديلاتك.",
+      "download": "تنزيل MP4"
+    },
+    "thumbnail": {
+      "aria": "الصورة المصغّرة",
+      "alt": "الصورة المصغّرة للنسخة",
+      "none": "لا توجد صورة مصغّرة بعد",
+      "change": "تغيير",
+      "frameAt": "الإطار عند (بالثواني)",
+      "overlayText": "نص متراكب (اختياري)",
+      "useFrame": "استخدام هذا الإطار",
+      "regenerate": "إعادة الإنشاء",
+      "upload": "رفع",
+      "uploadAria": "رفع صورة مصغّرة",
+      "updated": "تم تحديث الصورة المصغّرة."
+    }
+  },
+  "slideshow": {
+    "builder": {
+      "loading": "جارٍ تحميل الشرائح",
+      "slides": "{count, plural, zero {لا شرائح} one {شريحة واحدة} two {شريحتان} few {# شرائح} many {# شريحة} other {# شريحة}}",
+      "needAttention": "{count, plural, zero {لا شيء يحتاج إلى تعديل} one {شريحة واحدة تحتاج إلى تعديل} two {شريحتان تحتاجان إلى تعديل} few {# شرائح تحتاج إلى تعديل} many {# شريحة تحتاج إلى تعديل} other {# شريحة تحتاج إلى تعديل}}",
+      "autoPopulate": "ملء تلقائي",
+      "autoPopulating": "جارٍ الملء التلقائي…",
+      "populateStarted": "جارٍ ملء النصوص والصور تلقائيًا من مكتبتك…",
+      "empty": "لا توجد شرائح بعد — أضف واحدة أدناه.",
+      "deleted": "تم حذف الشريحة.",
+      "saved": "تم حفظ الشريحة.",
+      "templateSaved": "تم الحفظ كقالب.",
+      "moveUp": "نقل الشريحة {n, number} لأعلى",
+      "moveDown": "نقل الشريحة {n, number} لأسفل",
+      "delete": "حذف الشريحة {n, number}",
+      "addLabel": "إضافة شريحة",
+      "add": "إضافة",
+      "saveTemplate": "حفظ كقالب",
+      "templatePlaceholder": "اسم القالب",
+      "save": "حفظ",
+      "pendingText": "سيكتب الملء التلقائي هذا النص",
+      "noText": "بدون نص"
+    },
+    "problems": {
+      "pendingText": "لم يُكتب النص بعد (شغّل الملء التلقائي أو عدّل الشريحة)",
+      "needsImage": "تحتاج إلى صورة",
+      "needsClip": "تحتاج إلى مقطع فيديو",
+      "needsText": "تحتاج إلى نص",
+      "needsBeforeAfter": "تحتاج إلى صورتَي قبل وبعد",
+      "needsQuote": "تحتاج إلى اقتباس",
+      "needsValueLabel": "تحتاج إلى قيمة وتسمية",
+      "needsProductName": "تحتاج إلى اسم منتج"
+    },
+    "types": {
+      "IMAGE_STILL": "صورة",
+      "IMAGE_KENBURNS": "صورة (Ken Burns)",
+      "VIDEO_CLIP": "مقطع فيديو",
+      "TEXT_CARD": "بطاقة نصية",
+      "BEFORE_AFTER": "قبل / بعد",
+      "QUOTE": "اقتباس",
+      "STATISTIC": "إحصائية",
+      "PRODUCT": "منتج"
+    },
+    "transitions": {
+      "default": "الافتراضي",
+      "cut": "قطع",
+      "fade": "تلاشٍ",
+      "wipe": "مسح",
+      "slide": "انزلاق",
+      "zoom": "تكبير"
+    },
+    "editor": {
+      "type": "نوع الشريحة",
+      "seconds": "الثواني",
+      "transition": "انتقال الدخول",
+      "quote": "الاقتباس",
+      "author": "القائل",
+      "value": "القيمة",
+      "label": "التسمية",
+      "productName": "اسم المنتج",
+      "price": "السعر",
+      "features": "المزايا (مفصولة بفواصل، حتى 4)",
+      "text": "النص",
+      "caption": "التعليق",
+      "background": "لون الخلفية",
+      "image": "الصورة",
+      "slideImage": "صورة الشريحة",
+      "clipNamed": "المقطع — {name}",
+      "clipChosen": "المقطع — تم اختياره",
+      "clipNone": "المقطع — لم يُختر بعد",
+      "replaceClip": "استبدال المقطع",
+      "uploadClip": "رفع مقطع",
+      "save": "حفظ الشريحة"
+    },
+    "imagePicker": {
+      "loading": "جارٍ تحميل الصور",
+      "empty": "لا توجد صور بعد — <link>أضف بعضها إلى مكتبة الصور</link> أو شغّل الملء التلقائي.",
+      "imageName": "الصورة {n, number}"
+    },
+    "overlays": {
+      "summary": "النصوص المتراكبة على هذه الشريحة"
+    },
+    "templatePicker": {
+      "loading": "جارٍ تحميل القوالب",
+      "empty": "لا تتوفر قوالب لعروض الشرائح.",
+      "aria": "قالب عرض الشرائح",
+      "slides": "{count, plural, zero {لا شرائح} one {شريحة واحدة} two {شريحتان} few {# شرائح} many {# شريحة} other {# شريحة}}",
+      "yours": "قالبك"
+    }
+  },
+  "overlays": {
+    "editor": {
+      "noScript": "يمكن إضافة النصوص المتراكبة بعد كتابة النص وإعداد لقطاته.",
+      "readOnly": "النصوص المتراكبة للقراءة فقط ما دام المشروع في حالة «{state}».",
+      "shotStripLabel": "اختر لقطة لتعديل نصوصها المتراكبة",
+      "selectShot": "اختر لقطة من الأعلى.",
+      "wholeVideo": "الفيديو كاملًا",
+      "wholeVideoDescription": "نصوص متراكبة تظهر طوال النسخة، مثل العلامة المائية أو اسم الحساب.",
+      "across": "على امتداد الفيديو كاملًا",
+      "acrossDescription": "العلامات المائية وأسماء الحسابات والتعليقات المتكررة."
+    },
+    "set": {
+      "loading": "جارٍ تحميل النصوص المتراكبة",
+      "added": "تمت إضافة النص المتراكب.",
+      "saved": "تم حفظ النص المتراكب — أعد المعالجة لتطبيقه.",
+      "deleted": "تم حذف النص المتراكب.",
+      "full": "{unit, select, slide {بلغت هذه الشريحة الحد الأقصى وهو {max, number} من النصوص المتراكبة.} video {بلغ هذا الفيديو الحد الأقصى وهو {max, number} من النصوص المتراكبة.} other {بلغت هذه اللقطة الحد الأقصى وهو {max, number} من النصوص المتراكبة.}}",
+      "playhead": "مؤشر التشغيل",
+      "playheadAria": "موضع مؤشر التشغيل (بالثواني)",
+      "seconds": "{value} ث",
+      "undo": "تراجع",
+      "redo": "إعادة",
+      "save": "حفظ",
+      "discard": "تجاهل التغييرات",
+      "preview": "معاينة المعالجة",
+      "saveFirst": "احفظ أولًا — تُعالَج المعاينة من النص المتراكب المحفوظ",
+      "delete": "حذف",
+      "previewAria": "معاينة معالجة النص المتراكب",
+      "selectHint": "اختر نصًا متراكبًا على المخطط الزمني لتنسيقه وضبط توقيته."
+    },
+    "safeArea": {
+      "instagram_reel": "المنطقة الآمنة في Instagram Reels ‏(Meta)",
+      "facebook": "المنطقة الآمنة في Facebook Reels ‏(Meta)",
+      "tiktok": "TikTok — هامش احتياطي (لا تنشر TikTok أرقامًا ثابتة)",
+      "youtube_short": "YouTube Shorts — هامش احتياطي (لا توجد أرقام رسمية)",
+      "titleSafe": "{platform} — منطقة آمنة للعناوين بنسبة 5٪ (احتياطية)"
+    },
+    "form": {
+      "legend": "إعدادات النص المتراكب",
+      "text": "النص",
+      "start": "البداية (ث)",
+      "end": "النهاية (ث)",
+      "font": "الخط (Google Fonts)",
+      "weight": "السُمك",
+      "size": "الحجم ({pct, number}٪ من الارتفاع)",
+      "textColour": "لون النص",
+      "background": "الخلفية",
+      "backgrounds": {
+        "none": "بدون",
+        "box": "مربع",
+        "rounded_box": "مربع بزوايا مستديرة",
+        "gradient": "تدرّج",
+        "blur": "ضبابية"
+      },
+      "backgroundColour": "لون الخلفية",
+      "horizontal": "الموضع الأفقي",
+      "vertical": "الموضع العمودي",
+      "alignment": "المحاذاة",
+      "alignments": {
+        "left": "يسار",
+        "center": "وسط",
+        "right": "يمين"
+      },
+      "style": "النمط",
+      "italic": "مائل",
+      "animationIn": "حركة الدخول",
+      "animationOut": "حركة الخروج",
+      "animations": {
+        "none": "بدون",
+        "fadeIn": "ظهور تدريجي",
+        "fadeOut": "اختفاء تدريجي",
+        "slideInLeft": "دخول انزلاقي من اليسار",
+        "slideInRight": "دخول انزلاقي من اليمين",
+        "slideInTop": "دخول انزلاقي من الأعلى",
+        "slideInBottom": "دخول انزلاقي من الأسفل",
+        "slideOutLeft": "خروج انزلاقي إلى اليسار",
+        "slideOutRight": "خروج انزلاقي إلى اليمين",
+        "slideOutTop": "خروج انزلاقي إلى الأعلى",
+        "slideOutBottom": "خروج انزلاقي إلى الأسفل",
+        "scaleIn": "ظهور بالتكبير",
+        "scaleOut": "اختفاء بالتصغير",
+        "typewriter": "آلة كاتبة",
+        "popIn": "ظهور منبثق",
+        "wave": "موجة",
+        "glitch": "تشويش",
+        "blurIn": "ظهور من الضبابية",
+        "karaokeHighlight": "تمييز على طريقة الكاريوكي",
+        "counter": "عدّاد"
+      },
+      "opacity": "العتامة (٪)"
+    },
+    "problems": {
+      "textEmpty": "لا يمكن أن يكون النص فارغًا.",
+      "endAfterStart": "يجب أن تأتي النهاية بعد البداية.",
+      "endWithin": "يجب أن تكون النهاية ضمن مدة اللقطة البالغة {duration, number} ث.",
+      "fontFamily": "يجب أن يكون الخط اسم عائلة خطوط من Google Fonts."
+    },
+    "frame": {
+      "aria": "الإطار عند {time} ث: {texts}",
+      "noOverlays": "لا توجد نصوص متراكبة",
+      "resizeAria": "تغيير حجم النص المتراكب ({pct, number}٪ من ارتفاع الإطار)؛ استخدم مفاتيح الأسهم للضبط"
+    },
+    "timeline": {
+      "tick": "{value, number} ث",
+      "empty": "{unit, select, slide {لا توجد نصوص متراكبة على هذه الشريحة بعد.} video {لا توجد نصوص متراكبة على هذا الفيديو بعد.} other {لا توجد نصوص متراكبة على هذه اللقطة بعد.}}",
+      "barAria": "النص المتراكب «{text}»، من {start} ث إلى {end} ث",
+      "help": "اسحب الشريط أو أحد طرفيه. لوحة المفاتيح: ←/→ للتحريك 0.1 ث (مع Shift ‏0.5 ث)، وAlt+←/→ لتغيير النهاية."
+    },
+    "presets": {
+      "defaultStyle": "النمط الافتراضي",
+      "groups": {
+        "hook": "افتتاحية جاذبة",
+        "subtitle": "ترجمة نصية",
+        "cta": "دعوة إلى اتخاذ إجراء",
+        "quote": "اقتباس",
+        "statistic": "إحصائية",
+        "story": "قصة",
+        "brand": "العلامة التجارية"
+      },
+      "yours": "{name} (خاص بك)",
+      "newText": "نص متراكب جديد",
+      "newPlaceholder": "انتظر لحظة…",
+      "preset": "نمط محفوظ",
+      "addAtPlayhead": "إضافة عند مؤشر التشغيل",
+      "saveAs": "حفظ هذا النمط كنمط محفوظ",
+      "namePlaceholder": "اسم النمط",
+      "group": "المجموعة",
+      "savePreset": "حفظ النمط",
+      "saved": "تم حفظ النمط.",
+      "edit": "تعديل أنماطك المحفوظة",
+      "choose": "اختر أحد أنماطك المحفوظة",
+      "option": "{name} ({group})",
+      "name": "الاسم",
+      "saveName": "حفظ الاسم",
+      "renamed": "تمت إعادة تسمية النمط.",
+      "useStyle": "استخدام نمط هذا النص المتراكب",
+      "styleUpdated": "يستخدم «{name}» الآن نمط هذا النص المتراكب."
+    },
+    "bulk": {
+      "noRenders": "لا توجد معالجات بعد.",
+      "variant": "النسخة",
+      "variantOption": "{platform} ({ratio})",
+      "preset": "نمط محفوظ",
+      "text": "النص",
+      "textPlaceholder": "@yourbrand",
+      "start": "البداية (ث)",
+      "end": "النهاية (ث)",
+      "applyTo": "التطبيق على",
+      "wholeVideo": "الفيديو كاملًا (التوقيت من بداية الفيديو)",
+      "selectedShots": "اللقطات المحددة (التوقيت داخل كل لقطة)",
+      "shot": "اللقطة {n, number}",
+      "apply": "تطبيق النص المتراكب",
+      "wholeVideoNote": "تُعرض النصوص المتراكبة للفيديو كاملًا وتُعدَّل في مسار «الفيديو كاملًا» أعلاه — وتظهر في المعالجة التالية.",
+      "rerenderNote": "تُطبَّق تعديلات النصوص المتراكبة عند إعادة معالجة الفيديو. لا تُنشأ لقطات جديدة.",
+      "rerender": "إعادة معالجة الفيديو",
+      "rerenderUnavailable": "تتوفر إعادة المعالجة بعد أن يصبح الفيديو جاهزًا للمراجعة",
+      "rerendering": "جارٍ إعادة المعالجة بالنصوص المتراكبة الحالية.",
+      "added": "{count, plural, zero {لم تُضف أي نصوص متراكبة.} one {تمت إضافة نص متراكب واحد.} two {تمت إضافة نصين متراكبين.} few {تمت إضافة # نصوص متراكبة.} many {تمت إضافة # نصًا متراكبًا.} other {تمت إضافة # نص متراكب.}}"
+    },
+    "wholeVideo": {
+      "none": "يمكن إضافة نصوص متراكبة للفيديو كاملًا بعد معالجة إحدى النسخ.",
+      "variant": "النسخة",
+      "variantOption": "{platform} ({ratio})"
+    }
+  },
+  "projects": {
+    "list": {
+      "title": "المشاريع",
+      "description": "كل فيديو، من الفكرة الأولى حتى المنشور.",
+      "newVideo": "فيديو جديد",
+      "filtersAria": "تصفية المشاريع",
+      "filters": {
+        "all": "الكل",
+        "working": "قيد التنفيذ",
+        "review": "بانتظار المراجعة",
+        "draft": "المسودات",
+        "published": "منشورة",
+        "failed": "فاشلة"
+      },
+      "loading": "جارٍ تحميل المشاريع",
+      "empty": {
+        "title": "لا توجد فيديوهات بعد",
+        "body": "صِف موضوع الفيديو، وسيتولى Studio كتابته وتصويره ومونتاجه.",
+        "action": "أنشئ أول فيديو لك"
+      },
+      "emptyFiltered": {
+        "title": "لا يوجد شيء هنا",
+        "body": "لا توجد مشاريع تطابق هذا الفلتر."
+      },
+      "noFormats": "لا توجد صيغ",
+      "rowMeta": "{platforms} — آخر تحديث {updated}",
+      "newer": "الأحدث",
+      "older": "الأقدم"
+    }
+  },
+  "publications": {
+    "list": {
+      "title": "المنشورات",
+      "description": "كل منشور نشره Studio أو جدوله، على كل المنصات.",
+      "calendar": "التقويم",
+      "filtersAria": "تصفية المنشورات",
+      "filters": {
+        "all": "الكل",
+        "scheduled": "مجدولة",
+        "live": "منشورة",
+        "failed": "فاشلة",
+        "ended": "ملغاة ومُزالة"
+      },
+      "platform": "المنصة",
+      "allPlatforms": "كل المنصات",
+      "loading": "جارٍ تحميل المنشورات",
+      "empty": {
+        "title": "لم يُنشر شيء بعد",
+        "body": "وافق على الفيديو من شاشة مراجعته لنشره أو جدولته.",
+        "action": "الانتقال إلى المشاريع"
+      },
+      "emptyFiltered": {
+        "title": "لا يوجد شيء هنا",
+        "body": "لا توجد منشورات تطابق هذه الفلاتر."
+      },
+      "columns": {
+        "video": "الفيديو",
+        "platform": "المنصة",
+        "state": "الحالة",
+        "when": "الموعد",
+        "views": "المشاهدات",
+        "actions": "الإجراءات"
+      },
+      "untitled": "مشروع بلا عنوان",
+      "when": {
+        "published": "تاريخ النشر",
+        "scheduledFor": "مجدول في",
+        "created": "تاريخ الإنشاء"
+      },
+      "rowMobile": {
+        "published": "{platform} · نُشر {date}",
+        "scheduledFor": "{platform} · مجدول في {date}",
+        "created": "{platform} · أُنشئ {date}"
+      },
+      "newer": "الأحدث",
+      "older": "الأقدم"
+    },
+    "actions": {
+      "openOn": "فتح {name} على {platform}",
+      "thisVideo": "هذا الفيديو",
+      "retry": "إعادة المحاولة",
+      "cancel": "إلغاء",
+      "takeDown": "إزالة",
+      "done": {
+        "cancel": "تم إلغاء المنشور المجدول",
+        "retry": "أُضيفت إعادة المحاولة إلى قائمة الانتظار",
+        "takedown": "تمت إزالة المنشور"
+      },
+      "cancelConfirm": {
+        "title": "إلغاء هذا المنشور المجدول؟",
+        "body": "لن يُنشر {name} على {platform}. يمكنك جدولته مجددًا من المشروع.",
+        "confirm": "إلغاء المنشور"
+      },
+      "takedownConfirm": {
+        "title": "إزالة هذا المنشور من {platform}؟",
+        "body": "سيُحذف {name} من {platform} بقدر ما تسمح به واجهة API الخاصة بها. ستُفقد المشاهدات والإعجابات والتعليقات على المنشور، ولا يمكن التراجع عن ذلك.",
+        "confirm": "إزالة"
+      }
+    },
+    "confirmDialog": {
+      "keep": "الإبقاء عليه"
+    }
+  },
+  "calendar": {
+    "title": "التقويم",
+    "description": "الفيديوهات المجدولة والمنشورة على كل المنصات.",
+    "allPublications": "كل المنشورات",
+    "refreshing": "جارٍ التحديث",
+    "previousMonth": "الشهر السابق",
+    "today": "اليوم",
+    "nextMonth": "الشهر التالي",
+    "loading": "جارٍ تحميل التقويم",
+    "truncated": "تُعرض أول {count, number} من منشورات هذا الشهر. <link>عرض الكل</link>.",
+    "dragHint": "اسحب منشورًا مجدولًا إلى يوم آخر لنقله (في نفس الوقت من اليوم)، أو استخدم زر النقل الخاص به لاختيار أي تاريخ ووقت.",
+    "grid": {
+      "daysAria": "أيام الشهر",
+      "more": "{count, plural, zero {لا مزيد} one {+منشور واحد آخر} two {+منشوران آخران} few {+# منشورات أخرى} many {+# منشورًا آخر} other {+# منشور آخر}}",
+      "agendaAria": "جدول الأعمال",
+      "emptyMonth": "لا يوجد شيء مجدول أو منشور هذا الشهر."
+    },
+    "event": {
+      "untitled": "مشروع بلا عنوان",
+      "title": "{name} — {platform} — {state}",
+      "aria": "{name}، {platform}، {state}",
+      "ariaAt": "{name}، {platform}، {state} في {time}",
+      "meta": "{platform} · {state}",
+      "moveAria": "نقل {name} إلى وقت آخر",
+      "moveTitle": "نقل إلى وقت آخر"
+    },
+    "move": {
+      "tooSoon": "اختر وقتًا بعد دقيقة واحدة على الأقل من الآن.",
+      "moved": "تم النقل إلى {date}",
+      "title": "نقل «{name}»",
+      "thisVideo": "هذا الفيديو",
+      "description": "اختر تاريخًا ووقتًا جديدين (بتوقيتك المحلي)، بين دقيقة واحدة و180 يومًا من الآن.",
+      "newTime": "الوقت الجديد",
+      "cancel": "إلغاء",
+      "moving": "جارٍ النقل…",
+      "submit": "نقل"
+    },
+    "drip": {
+      "title": "قائمة النشر التدريجي",
+      "description": "الفيديوهات المعتمدة والمضبوطة على «جدولة» دون تاريخ تُنشر في أول خانة متاحة، وتتبعها كل منصة بعد {minutes, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتين} few {# دقائق} many {# دقيقةً} other {# دقيقة}} من سابقتها.",
+      "saved": "تم حفظ قائمة النشر التدريجي.",
+      "nextSlot": "الخانة المتاحة التالية: <strong>{date}</strong> · {queued, plural, zero {لا شيء في الانتظار} one {فيديو واحد في الانتظار} two {فيديوهان في الانتظار} few {# فيديوهات في الانتظار} many {# فيديوًا في الانتظار} other {# فيديو في الانتظار}}",
+      "takenAria": "الخانات المحجوزة",
+      "slotDay": "يوم الخانة {n}",
+      "slotTime": "وقت الخانة {n}",
+      "removeSlot": "إزالة الخانة {n}",
+      "addSlot": "إضافة خانة",
+      "saveSlots": "حفظ الخانات"
+    }
+  },
+  "business": {
+    "screen": {
+      "title": "النشاط التجاري والصور",
+      "description": "ما يعرفه Studio عن هذا النشاط التجاري، والمظهر الذي ينبغي أن يكون عليه، والصور التي يمكنه استخدامها.",
+      "pickFirst": {
+        "title": "اختر نشاطًا تجاريًا أولًا",
+        "body": "اختر النشاط التجاري المراد إعداده من الشريط العلوي."
+      },
+      "tabs": {
+        "profile": "الملف التعريفي",
+        "scan": "فحص الموقع",
+        "brand": "حزم الهوية",
+        "images": "مكتبة الصور",
+        "learned": "ما تعلّمه Studio"
+      }
+    },
+    "kits": {
+      "intro": "تُطبَّق الحزمة الافتراضية على الفيديوهات الجديدة. تستخدم النصوص نبرتها وجمهورها، وتستخدم العناصر المتراكبة والتكوين ألوانها وخطوطها.",
+      "new": "حزمة هوية جديدة",
+      "loading": "جارٍ تحميل حزم الهوية",
+      "empty": {
+        "title": "لا توجد حزمة هوية بعد",
+        "body": "أضف ألوانك وخطوطك ونبرتك ليبدو كل فيديو ويُسمع بأسلوبك."
+      },
+      "listAria": "حزم الهوية",
+      "uploadedFont": "خط مرفوع",
+      "defaultFonts": "الخطوط الافتراضية",
+      "default": "افتراضية",
+      "noColours": "لم تُحدَّد ألوان",
+      "edit": "تعديل",
+      "editAria": "تعديل {name}",
+      "makeDefault": "تعيين كافتراضية",
+      "makeDefaultAria": "تعيين {name} كحزمة افتراضية",
+      "delete": "حذف",
+      "deleteAria": "حذف {name}",
+      "created": "تم إنشاء {name}",
+      "saved": "تم حفظ {name}",
+      "nowDefault": "أصبحت {name} الحزمة الافتراضية",
+      "deleted": "تم حذف {name}",
+      "deleteConfirm": {
+        "title": "حذف {name}؟",
+        "titleFallback": "حذف هذه الحزمة؟",
+        "body": "ستُزال الحزمة من هذا النشاط التجاري (وتحتفظ بها الفيديوهات المكتملة). لا يمكن حذف حزمة لا يزال يستخدمها مشروع نشط.",
+        "confirm": "حذف الحزمة"
+      }
+    },
+    "kitForm": {
+      "editTitle": "تعديل {name}",
+      "newTitle": "حزمة هوية جديدة",
+      "description": "تُستخدم في النصوص والعناصر المتراكبة والتكوين في كل فيديو لهذا النشاط التجاري.",
+      "name": "الاسم",
+      "colours": "الألوان",
+      "coloursHint": "حتى 8 ألوان بصيغة hex، مثل #D6452B، #1F2A44",
+      "headingFont": "خط العناوين",
+      "bodyFont": "خط النص",
+      "tone": "النبرة",
+      "toneHint": "حتى 10 كلمات، مفصولة بفواصل",
+      "audience": "الجمهور",
+      "ctas": "دعوات الإجراء",
+      "ctasHint": "واحدة في كل سطر: التسمية | القالب",
+      "restricted": "مواضيع يجب تجنّبها",
+      "restrictedHint": "مفصولة بفواصل",
+      "cancel": "إلغاء",
+      "save": "حفظ الحزمة",
+      "create": "إنشاء الحزمة",
+      "problems": {
+        "name": "أدخل اسمًا للحزمة.",
+        "tooManyColours": "{max, plural, zero {لا يُسمح بأي لون.} one {استخدم لونًا واحدًا على الأكثر.} two {استخدم لونين على الأكثر.} few {استخدم # ألوان على الأكثر.} many {استخدم # لونًا على الأكثر.} other {استخدم # لون على الأكثر.}}",
+        "badColour": "{colour} ليس لونًا بصيغة #RRGGBB.",
+        "badFont": "«{font}» ليس اسم خط صالحًا (حروف وأرقام ومسافات وشرطات).",
+        "tooManyTones": "{max, plural, zero {لا يُسمح بأي كلمة للنبرة.} one {استخدم كلمة واحدة للنبرة على الأكثر.} two {استخدم كلمتين للنبرة على الأكثر.} few {استخدم # كلمات للنبرة على الأكثر.} many {استخدم # كلمةً للنبرة على الأكثر.} other {استخدم # كلمة للنبرة على الأكثر.}}",
+        "tooManyCtas": "{max, plural, zero {لا يُسمح بأي قالب لدعوة الإجراء.} one {استخدم قالبًا واحدًا لدعوة الإجراء على الأكثر.} two {استخدم قالبين لدعوات الإجراء على الأكثر.} few {استخدم # قوالب لدعوات الإجراء على الأكثر.} many {استخدم # قالبًا لدعوات الإجراء على الأكثر.} other {استخدم # قالب لدعوات الإجراء على الأكثر.}}"
+      }
+    },
+    "media": {
+      "sectionAria": "الوسائط الخاصة بـ {name}",
+      "slots": {
+        "logo": "الشعار",
+        "watermark": "العلامة المائية",
+        "intro": "بطاقة المقدمة",
+        "outro": "بطاقة الخاتمة"
+      },
+      "slotsInline": {
+        "logo": "الشعار",
+        "watermark": "العلامة المائية",
+        "intro": "بطاقة المقدمة",
+        "outro": "بطاقة الخاتمة"
+      },
+      "added": "مُضاف",
+      "none": "لا شيء",
+      "add": "إضافة",
+      "replace": "استبدال",
+      "uploadAria": "رفع {slot} لـ {name}",
+      "addAria": "إضافة {slot}",
+      "replaceAria": "استبدال {slot}",
+      "removeAria": "إزالة {slot}",
+      "slotSaved": "تم حفظ {slot}",
+      "slotRemoved": "تمت إزالة {slot}",
+      "font": "الخط",
+      "defaultFont": "افتراضي",
+      "uploadedFont": "خط مرفوع",
+      "uploadFontAria": "رفع خط لـ {name}",
+      "uploadFont": "رفع TTF/OTF",
+      "fontSaved": "أصبح {family} خط العناوين",
+      "fontSavedGeneric": "أصبح الخط المرفوع خط العناوين",
+      "licence": "أؤكد أن ترخيص هذا الخط يسمح بتضمينه في فيديوهات تجارية.",
+      "aiLabelOn": "وسم «مُنشأ بالذكاء الاصطناعي» مفعّل",
+      "aiLabelOff": "وسم «مُنشأ بالذكاء الاصطناعي» متوقف",
+      "aiLabelAria": "إظهار وسم «مُنشأ بالذكاء الاصطناعي» على الفيديوهات",
+      "aiLabel": "إظهار وسم «مُنشأ بالذكاء الاصطناعي» على الفيديوهات (وسوم الذكاء الاصطناعي الخاصة بالمنصات مفعّلة دائمًا)"
+    },
+    "voiceKit": {
+      "label": "الصوت",
+      "aria": "الصوت الخاص بـ {name}",
+      "stock": "صوت جاهز (افتراضي)",
+      "unavailable": "صوت غير متاح",
+      "cloned": "صوت مستنسخ",
+      "saved": "تم حفظ صوت {name}"
+    },
+    "dispute": {
+      "trigger": "لا أملك الموقع الذي تم فحصه",
+      "title": "أبلغ أنك لا تملك هذا الموقع",
+      "description": "يحذف Studio كل الصور التي جمعها من الموقع خلال 24 ساعة ويتوقف عن إعادة فحصه. تبقى الصور الجاهزة والمُولَّدة في مكتبتك.",
+      "reason": "ماذا حدث؟",
+      "reasonPlaceholder": "مثال: فحصنا موقع منافس عن طريق الخطأ",
+      "confirm": "أؤكد أننا لا نملك هذا الموقع ولا نمثّله.",
+      "cancel": "إلغاء",
+      "submit": "حذف المحتوى المجمَّع",
+      "done": "شكرًا لك — ستُحذف الصور المجمَّعة من ذلك الموقع خلال 24 ساعة"
+    },
+    "domain": {
+      "title": "أثبت ملكيتك للموقع",
+      "description": "باقة المؤسسات: أضف سجل DNS من نوع TXT لإثبات ملكية النطاق الذي تفحصه.",
+      "states": {
+        "PENDING": "بانتظار DNS",
+        "VERIFIED": "تم التحقق",
+        "EXPIRED": "منتهي الصلاحية",
+        "DISPUTED": "الملكية محل نزاع",
+        "PURGED": "تمت إزالة المحتوى المجمَّع"
+      },
+      "recordName": "اسم سجل TXT",
+      "recordValue": "قيمة سجل TXT",
+      "copyRecordName": "نسخ اسم سجل TXT",
+      "copyRecordValue": "نسخ قيمة سجل TXT",
+      "copied": "تم النسخ",
+      "copyFailed": "فشل النسخ — حدّد النص بدلًا من ذلك",
+      "pendingHelp": "أضف هذا السجل لدى مزوّد DNS الخاص بك. يتحقق Studio كل 10 دقائق. تنتهي صلاحية الطلب {expires}.",
+      "pendingHelpChecked": "أضف هذا السجل لدى مزوّد DNS الخاص بك. يتحقق Studio كل 10 دقائق (آخر تحقق {checked}: {result}). تنتهي صلاحية الطلب {expires}.",
+      "checkOk": "سليم",
+      "verifiedOn": "تم التحقق {date}.",
+      "disputed": "أخبرتنا أنك لا تملك هذا الموقع.",
+      "disputedOn": "أخبرتنا أنك لا تملك هذا الموقع ({date}).",
+      "purgedOn": "حُذفت الصور المجمَّعة منه {date}؛ وتبقى الصور الجاهزة والمُولَّدة.",
+      "purging": "جارٍ حذف الصور المجمَّعة منه (خلال 24 ساعة).",
+      "rescansOff": "إعادة الفحص التلقائي متوقفة.",
+      "domainLabel": "النطاق المراد التحقق منه",
+      "domainPlaceholder": "yourbusiness.com",
+      "verify": "التحقق عبر DNS",
+      "enterpriseOnly": "التحقق من النطاق متاح في باقة المؤسسات."
+    },
+    "images": {
+      "sources": {
+        "SCRAPED": "موقعك",
+        "STOCK": "جاهزة",
+        "GENERATED": "مُولَّدة",
+        "UPLOAD": "مرفوعة"
+      },
+      "fallbackAlt": "صورة من المكتبة",
+      "noPreview": "لا توجد معاينة",
+      "sourceMatch": "{source} · تطابق {percent}",
+      "deleteAria": "حذف الصورة: {alt}",
+      "deleteConfirm": {
+        "title": "حذف هذه الصورة؟",
+        "body": "ستُزال من مكتبتك ولن تُستخدم في الفيديوهات الجديدة.",
+        "confirm": "حذف الصورة"
+      },
+      "tooLarge": "حجم الصورة أكبر من 15 MB",
+      "duplicate": "هذه الصورة موجودة بالفعل في مكتبتك",
+      "added": "تمت إضافة الصورة",
+      "fileAria": "ملف الصورة المراد رفعه",
+      "upload": "رفع",
+      "refreshStarted": "{count, plural, zero {جارٍ البحث في مكتبات الصور الجاهزة دون أي استعلام — تظهر الصور الجديدة خلال بضع دقائق} one {جارٍ البحث في مكتبات الصور الجاهزة عن استعلام واحد — تظهر الصور الجديدة خلال بضع دقائق} two {جارٍ البحث في مكتبات الصور الجاهزة عن استعلامين — تظهر الصور الجديدة خلال بضع دقائق} few {جارٍ البحث في مكتبات الصور الجاهزة عن # استعلامات — تظهر الصور الجديدة خلال بضع دقائق} many {جارٍ البحث في مكتبات الصور الجاهزة عن # استعلامًا — تظهر الصور الجديدة خلال بضع دقائق} other {جارٍ البحث في مكتبات الصور الجاهزة عن # استعلام — تظهر الصور الجديدة خلال بضع دقائق}}",
+      "refresh": "تحديث الصور الجاهزة",
+      "generate": "إنشاء",
+      "generated": "تم إنشاء الصورة وإضافتها إلى مكتبتك",
+      "generateTitle": "إنشاء صورة",
+      "generateDescription": "صِف الصورة. ستُحفظ في مكتبة هذا النشاط التجاري. قد يستغرق الإنشاء حتى دقيقة.",
+      "prompt": "الوصف",
+      "style": "النمط (اختياري)",
+      "shape": "الشكل",
+      "cancel": "إلغاء",
+      "searchSummary": "{count, plural, zero {لا صور تشبه <term>«{query}»</term>} one {صورة واحدة تشبه <term>«{query}»</term>} two {صورتان تشبهان <term>«{query}»</term>} few {# صور تشبه <term>«{query}»</term>} many {# صورةً تشبه <term>«{query}»</term>} other {# صورة تشبه <term>«{query}»</term>}}",
+      "clearSearch": "مسح البحث",
+      "noMatches": "لا توجد نتائج قريبة. تصبح الصور قابلة للبحث بعد حساب تضميناتها.",
+      "searchResultsAria": "نتائج البحث",
+      "searchLabel": "البحث في الصور حسب المعنى",
+      "searchPlaceholder": "ابحث: «داخل مخبز دافئ»",
+      "search": "بحث",
+      "deleted": "تم حذف الصورة",
+      "source": "المصدر",
+      "allSources": "كل المصادر",
+      "tag": "الوسم",
+      "apply": "تطبيق",
+      "loading": "جارٍ تحميل الصور",
+      "empty": {
+        "title": "مكتبة صورك فارغة",
+        "body": "افحص موقعك الإلكتروني لملئها تلقائيًا، أو ارفع صورًا وأنشئها."
+      },
+      "emptyFiltered": {
+        "title": "لا توجد صور مطابقة",
+        "body": "جرّب مصدرًا أو وسمًا آخر."
+      },
+      "gridAria": "مكتبة الصور",
+      "newer": "الأحدث",
+      "older": "الأقدم"
+    },
+    "profile": {
+      "fields": {
+        "products": {
+          "label": "المنتجات",
+          "hint": "ما تبيعه — افصل بينها بفواصل."
+        },
+        "services": {
+          "label": "الخدمات",
+          "hint": "ما تقدّمه لعملائك — افصل بينها بفواصل."
+        },
+        "audienceKeywords": {
+          "label": "الجمهور",
+          "hint": "من يشتري منك — افصل بينها بفواصل."
+        },
+        "toneIndicators": {
+          "label": "النبرة",
+          "hint": "أسلوبك في الحديث — افصل بينها بفواصل."
+        },
+        "regions": {
+          "label": "المناطق",
+          "hint": "أين تمارس نشاطك — افصل بينها بفواصل."
+        },
+        "imageThemes": {
+          "label": "موضوعات الصور",
+          "hint": "ما ينبغي أن تُظهره صورك — افصل بينها بفواصل."
+        },
+        "imageSearchQueries": {
+          "label": "عمليات البحث عن الصور الجاهزة",
+          "hint": "استعلامات تُستخدم لملء مكتبة صورك (واحد على الأقل) — افصل بينها بفواصل."
+        },
+        "restrictedTopics": {
+          "label": "مواضيع يجب تجنّبها",
+          "hint": "لا تُعرض ولا تُذكر أبدًا — افصل بينها بفواصل."
+        }
+      },
+      "industry": "القطاع",
+      "niche": "التخصص",
+      "brandVoice": "صوت العلامة التجارية",
+      "saved": "تم حفظ ملف النشاط التجاري",
+      "save": "حفظ الملف",
+      "discard": "تجاهل التغييرات",
+      "invalid": "القطاع والتخصص وعملية بحث واحدة على الأقل عن الصور الجاهزة حقول مطلوبة.",
+      "review": {
+        "aria": "الملف التعريفي بحاجة إلى مراجعتك",
+        "title": "يُرجى تأكيد هذا الملف التعريفي",
+        "body": "لم يكن Studio متأكدًا من طبيعة نشاطك التجاري. راجع التفاصيل أدناه، ثم أكّدها أو عدّلها واحفظها. تعتمد الفيديوهات واقتراحات الصور على هذا الملف.",
+        "bodyConfidence": "لم يكن Studio متأكدًا من طبيعة نشاطك التجاري (درجة الثقة {percent}). راجع التفاصيل أدناه، ثم أكّدها أو عدّلها واحفظها. تعتمد الفيديوهات واقتراحات الصور على هذا الملف.",
+        "confirm": "تأكيد الملف",
+        "confirmed": "تم تأكيد ملف النشاط التجاري"
+      },
+      "loading": "جارٍ تحميل الملف التعريفي",
+      "empty": {
+        "title": "لا يوجد ملف للنشاط التجاري بعد",
+        "body": "افحص موقعك الإلكتروني وسيستنتج Studio ما تبيعه ولمن والصور التي تناسبك. يمكنك تعديل كل شيء لاحقًا.",
+        "action": "افحص موقعك الإلكتروني"
+      },
+      "eyebrow": "ما يعتقد Studio أنك تقوم به",
+      "headline": "{niche} <muted>في مجال</muted> {industry}",
+      "editedByYou": "عدّلته أنت · حُدّث {date}",
+      "classifiedBy": "صنّفه {model} · حُدّث {date}"
+    },
+    "reviewNotice": "لم يتأكد Studio بعد من فهمه لنشاطك التجاري. سيستخدم هذا الفيديو الملف الحالي — <link>راجعه وأكّده</link> للحصول على نتائج أفضل.",
+    "scan": {
+      "ownershipStatement": "أنا مالك هذا الموقع أو مخوّل بتمثيله، بما في ذلك صوره.",
+      "states": {
+        "QUEUED": "في قائمة الانتظار",
+        "RUNNING": "جارٍ فحص موقعك",
+        "SUCCEEDED": "تم",
+        "FAILED": "فشل"
+      },
+      "librarySources": {
+        "SCRAPED": "{count, plural, zero {لا صور من موقعك} one {صورة واحدة من موقعك} two {صورتان من موقعك} few {# صور من موقعك} many {# صورةً من موقعك} other {# صورة من موقعك}}",
+        "STOCK": "{count, plural, zero {لا صور جاهزة} one {صورة جاهزة واحدة} two {صورتان جاهزتان} few {# صور جاهزة} many {# صورةً جاهزة} other {# صورة جاهزة}}",
+        "GENERATED": "{count, plural, zero {لا صور مُولَّدة} one {صورة مُولَّدة واحدة} two {صورتان مُولَّدتان} few {# صور مُولَّدة} many {# صورةً مُولَّدة} other {# صورة مُولَّدة}}",
+        "UPLOAD": "{count, plural, zero {لا صور مرفوعة} one {صورة مرفوعة واحدة} two {صورتان مرفوعتان} few {# صور مرفوعة} many {# صورةً مرفوعة} other {# صورة مرفوعة}}"
+      },
+      "loadingScan": "جارٍ تحميل الفحص",
+      "pagesRead": "الصفحات المقروءة",
+      "imagesFromSite": "صور من موقعك",
+      "imageLibrary": "مكتبة الصور",
+      "robots": "طلب ملف robots.txt في موقعك عدم قراءة بعض الصفحات، لذا تخطيناها.",
+      "started": "بدأ الفحص — يستغرق من 2 إلى 5 دقائق",
+      "urlLabel": "عنوان الموقع الإلكتروني",
+      "urlPlaceholder": "yourbusiness.com",
+      "submit": "فحص الموقع",
+      "renderPolicy": "إذا رفض موقعك أداة الفحص لدينا (مثلًا عبر التحقق من الروبوتات)، فقد نحمّل صفحتك الرئيسية مرة واحدة في متصفح، وذلك فقط لأنك أكّدت أن الموقع موقعك. لا نستخدم ذلك أبدًا للالتفاف على حماية الروبوتات لدى شركة أخرى. إذا استمر الفشل، فاملأ ملفك التعريفي يدويًا أو أضف أداة الفحص لدينا إلى قائمة السماح في موقعك.",
+      "title": "افحص موقعك الإلكتروني",
+      "description": "يقرأ Studio موقعك، ويحدد تخصصك، وينشئ مكتبة صور من صفحاتك والصور الجاهزة والصور المُولَّدة.",
+      "history": "سجل الفحص",
+      "loadingHistory": "جارٍ تحميل عمليات الفحص",
+      "noScans": "لا توجد عمليات فحص بعد.",
+      "historyRow": "{when} · {pages, plural, zero {لا صفحات} one {صفحة واحدة} two {صفحتان} few {# صفحات} many {# صفحةً} other {# صفحة}} · {images, plural, zero {لا صور} one {صورة واحدة} two {صورتان} few {# صور} many {# صورةً} other {# صورة}}"
+    },
+    "schedule": {
+      "aria": "جدول الفحص",
+      "next": "إعادة الفحص التلقائي التالية {date} (كل {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}؛ وتُتخطّى إذا لم يتغير موقعك).",
+      "notYet": "تبدأ إعادة الفحص التلقائي بعد أول فحص ناجح.",
+      "lastSkipped": "آخر تحقق {date}: لا تغييرات، لذا لم تتم إعادة الفحص.",
+      "stock": "تُحدَّث الصور الجاهزة أسبوعيًا — التحديث التالي {date}."
+    },
+    "memory": {
+      "intro": "يتعلّم Studio مما توافق عليه وترفضه وتعيد إنشاءه، ومن أداء فيديوهاتك المنشورة (آخر 90 يومًا). توجّه المؤشرات القوية النصوص الجديدة. احذف أي شيء لا توافق عليه: يُزال فورًا ولا يُعاد تعلّمه إلا من فيديوهات أحدث.",
+      "loading": "جارٍ تحميل ذاكرة الأسلوب",
+      "empty": {
+        "title": "لم يتعلّم شيئًا بعد",
+        "body": "بعد بضعة فيديوهات معتمدة أو منشورة، يعرض Studio هنا ما التقطه."
+      },
+      "listAria": "ما تعلّمه Studio",
+      "signals": {
+        "shot_pace": "إيقاع اللقطات",
+        "treatment_mix": "المزيج البصري",
+        "provider_preference": "أدوات الإنشاء الناجحة",
+        "script_structure": "بنية النص",
+        "posting_time": "أفضل وقت للنشر"
+      },
+      "confidence": {
+        "strong": "مؤشر قوي",
+        "emerging": "مؤشر ناشئ",
+        "weak": "مؤشر ضعيف (لا يُستخدم في النصوص بعد)"
+      },
+      "forgotten": "تم نسيان {label}",
+      "updatedPinned": "تم تحديث {label} وتثبيته",
+      "newValueAria": "قيمة جديدة لـ {label}",
+      "save": "حفظ",
+      "pinned": "(مثبّت)",
+      "notUsed": "(لا يُستخدم في النصوص)",
+      "why": "<label>السبب:</label> {reason}",
+      "evidence": "{confidence} · {count, plural, zero {لا أدلة} one {دليل واحد} two {دليلان} few {# أدلة} many {# دليلًا} other {# دليل}}",
+      "evidenceLatest": "{confidence} · {count, plural, zero {لا أدلة} one {دليل واحد} two {دليلان} few {# أدلة} many {# دليلًا} other {# دليل}} · الأحدث {date}",
+      "useAria": "استخدام {label} في النصوص",
+      "use": "استخدام",
+      "turnedOn": "تم تفعيل {label}",
+      "turnedOff": "تم إيقاف {label}",
+      "edit": "تعديل",
+      "editAria": "تعديل {label}",
+      "pin": "تثبيت",
+      "unpin": "إلغاء التثبيت",
+      "pinAria": "تثبيت {label}",
+      "unpinAria": "إلغاء تثبيت {label}",
+      "pinnedToast": "تم تثبيت {label}",
+      "unpinnedToast": "تم إلغاء تثبيت {label}",
+      "delete": "حذف",
+      "deleteAria": "حذف {label}"
+    },
+    "voice": {
+      "title": "الصوت",
+      "intro": "استنسخ صوتًا حقيقيًا بموافقة مسجّلة من صاحبه، واختره في حزمة هوية لسرد فيديوهاتها. بدونه، تستخدم الفيديوهات صوتًا جاهزًا.",
+      "clone": "استنساخ صوت",
+      "loading": "جارٍ تحميل الأصوات",
+      "empty": {
+        "title": "لا يوجد صوت مستنسخ بعد",
+        "body": "يُستخدم صوت جاهز في السرد إلى أن تستنسخ صوتًا."
+      },
+      "listAria": "ملفات الأصوات",
+      "deleted": "تم حذف {name}",
+      "deletedUnlinked": "{kits, plural, zero {تم حذف {name}؛ ولم تتأثر أي حزمة هوية} one {تم حذف {name}؛ وأصبحت حزمة هوية واحدة تستخدم الصوت الجاهز} two {تم حذف {name}؛ وأصبحت حزمتا هوية تستخدمان الصوت الجاهز} few {تم حذف {name}؛ وأصبحت # حزم هوية تستخدم الصوت الجاهز} many {تم حذف {name}؛ وأصبحت # حزمةً للهوية تستخدم الصوت الجاهز} other {تم حذف {name}؛ وأصبحت # حزمة هوية تستخدم الصوت الجاهز}}",
+      "ready": "{name} جاهز",
+      "needsVerification": "{name} بحاجة إلى تحقق",
+      "deleteConfirm": {
+        "title": "حذف {name}؟",
+        "titleFallback": "حذف هذا الصوت؟",
+        "body": "سيُلغى الصوت لدى ElevenLabs ولن يمكن استخدامه مجددًا. ستعود حزم الهوية التي تستخدمه إلى الصوت الجاهز. يُحتفظ بسجل الموافقة.",
+        "confirm": "حذف الصوت"
+      },
+      "states": {
+        "READY": "جاهز",
+        "REQUIRES_VERIFICATION": "بحاجة إلى تحقق",
+        "DELETED": "محذوف"
+      },
+      "card": {
+        "speaker": "المتحدث: {name}",
+        "samples": "{count, plural, zero {لا عينات} one {عينة واحدة} two {عينتان} few {# عينات} many {# عينةً} other {# عينة}}",
+        "consent": "الموافقة {date}",
+        "verification": "تطلب ElevenLabs التحقق من الصوت قبل إمكانية استخدامه.",
+        "delete": "حذف",
+        "deleteAria": "حذف {name}"
+      },
+      "preview": {
+        "label": "نص المعاينة لـ {name}",
+        "button": "معاينة",
+        "aria": "معاينة {name}",
+        "playerAria": "معاينة {name}",
+        "defaultText": "خبز طازج كل يوم جمعة"
+      },
+      "cloneDialog": {
+        "title": "استنساخ صوت",
+        "description": "اسرد الفيديوهات بصوت شخص حقيقي. لا تستنسخ صوتًا إلا بموافقة مسجّلة من صاحبه.",
+        "name": "اسم الصوت",
+        "namePlaceholder": "أمارا (المالكة)",
+        "speaker": "اسم المتحدث",
+        "statement": "نص الموافقة",
+        "statementHint": "يقرأ المتحدث هذا النص بصوت عالٍ في تسجيل الموافقة. ويُحتفظ به دليلًا على الموافقة.",
+        "recording": "تسجيل الموافقة",
+        "consent": "يوافق المتحدث على أن ينشئ PostMind Studio نسخة اصطناعية من صوته، والتسجيل أعلاه هو له وهو يقرأ النص.",
+        "cancel": "إلغاء",
+        "submit": "استنساخ الصوت",
+        "consentPhrase": "أنا، {name}، أوافق على أن ينشئ PostMind Studio نسخة اصطناعية من صوتي لاستخدامها في فيديوهات {business}.",
+        "yourName": "[اسمك]",
+        "thisBusiness": "هذا النشاط التجاري",
+        "problems": {
+          "name": "أدخل اسمًا للصوت.",
+          "speaker": "أدخل اسم المتحدث.",
+          "statementLength": "يجب أن يتراوح نص الموافقة بين {min, number} و{max, number} حرفًا.",
+          "recording": "سجّل أو ارفع تسجيلًا للمتحدث وهو يقرأ نص الموافقة.",
+          "samples": "أضف عينة صوتية واحدة على الأقل.",
+          "consent": "حدّد مربع الموافقة للمتابعة."
+        }
+      },
+      "recorder": {
+        "stop": "إيقاف التسجيل",
+        "recordAgain": "إعادة التسجيل",
+        "recordNow": "التسجيل الآن",
+        "upload": "رفع تسجيل",
+        "fileAria": "ملف تسجيل الموافقة",
+        "recording": "جارٍ التسجيل — اقرأ النص أعلاه، ثم أوقف التسجيل.",
+        "removeAria": "إزالة تسجيل الموافقة",
+        "micFailed": "تعذّر استخدام الميكروفون. اسمح بالوصول إليه، أو ارفع تسجيلًا بدلًا من ذلك.",
+        "fileMeta": "{name} · {size}"
+      },
+      "samples": {
+        "label": "عينات الصوت",
+        "hint": "من 1 إلى 5 ملفات، بحد أقصى 10 MB لكل ملف. الأفضل نحو 1–2 دقيقة من الكلام الواضح إجمالًا: MP3 بمعدل 192 kbps أو أعلى، دون موسيقى أو ضوضاء خلفية.",
+        "listAria": "العينات المحددة",
+        "removeAria": "إزالة {name}",
+        "total": "{count, number} من {max, number} · الإجمالي {size}",
+        "tooMany": "{max, plural, zero {لا يُسمح بأي عينة.} one {استخدم عينة واحدة على الأكثر.} two {استخدم عينتين على الأكثر.} few {استخدم # عينات على الأكثر.} many {استخدم # عينةً على الأكثر.} other {استخدم # عينة على الأكثر.}}"
+      },
+      "fileProblems": {
+        "notAudio": "{name} ليس ملفًا صوتيًا.",
+        "empty": "{name} فارغ.",
+        "tooLarge": "حجم {name} أكبر من 10 MB."
+      },
+      "bytes": {
+        "b": "{n} B",
+        "kb": "{n} KB",
+        "mb": "{n} MB"
+      },
+      "errors": {
+        "plan": "استنساخ الصوت متاح في باقة {tier}. رقِّ باقتك لاستنساخ صوت؛ لا تزال الأصوات الجاهزة متاحة.",
+        "planGeneric": "استنساخ الصوت غير مشمول في باقتك. رقِّ باقتك لاستنساخ صوت؛ لا تزال الأصوات الجاهزة متاحة.",
+        "notConfigured": "لم يتم إعداد استنساخ الصوت على هذا الخادم بعد ({message})."
+      }
+    }
+  },
+  "connections": {
+    "title": "الحسابات المرتبطة",
+    "description": "الحسابات التي ينشر عليها Studio. يتم ربط Instagram وFacebook من إعدادات PostMind.",
+    "connectedNotice": "تم ربط {platform}. يمكنك النشر عليه الآن.",
+    "callbackErrors": {
+      "validation_error": "لم تمنح المنصة صلاحية الوصول (رُفض الطلب أو أعاد خطأً). حاول الربط مجددًا.",
+      "platform_error": "واجهت المنصة مشكلة في إتمام الربط. حاول مجددًا بعد قليل.",
+      "upstream_error": "واجهت المنصة مشكلة في إتمام الربط. حاول مجددًا بعد قليل.",
+      "internal_error": "حدث خطأ أثناء إتمام الربط. حاول مجددًا.",
+      "unknown": "لم يكتمل الربط ({code}). حاول مجددًا."
+    },
+    "dismiss": "تجاهل",
+    "pickFirst": {
+      "title": "اختر نشاطًا تجاريًا أولًا",
+      "body": "الحسابات المرتبطة تتبع نشاطًا تجاريًا. اختر واحدًا من الشريط العلوي."
+    },
+    "loading": "جارٍ تحميل الحسابات المرتبطة",
+    "disconnected": "تم فصل {account}",
+    "posts": {
+      "tiktok": "فيديوهات عمودية قصيرة",
+      "youtube": "Shorts وفيديوهات طويلة",
+      "x": "منشورات فيديو",
+      "linkedin": "منشورات فيديو للشركات والأعضاء",
+      "instagram": "Reels وفيديوهات الموجز",
+      "facebook": "Reels الصفحة وفيديوهات الموجز"
+    },
+    "notConnected": "غير مرتبط.",
+    "needsReconnecting": "يحتاج إلى إعادة الربط",
+    "connected": "مرتبط",
+    "stale": "انتهت صلاحية الوصول أو أُلغيت على المنصة. ستفشل المنشورات المجدولة على هذا الحساب حتى تعيد ربطه.",
+    "connectedOn": "مرتبط منذ {date}",
+    "reconnect": "إعادة الربط",
+    "disconnect": "فصل",
+    "disconnectAria": "فصل {account}",
+    "disconnectConfirm": {
+      "title": "فصل {account}؟",
+      "body": "سيحذف Studio رموز الوصول الخاصة بـ {platform}. ستفشل المنشورات المجدولة على هذا الحساب، وستحتاج إلى ربطه مجددًا للنشر عليه."
+    },
+    "addAnother": "إضافة حساب {platform} آخر",
+    "connect": "ربط {platform}",
+    "meta": {
+      "stale": "رفضت Meta صلاحية الوصول هذه أو انتهت صلاحيتها. ستفشل المنشورات المجدولة على هذا الحساب حتى تعيد ربطه من إعدادات PostMind.",
+      "connectedVia": "مرتبط عبر PostMind منذ {date}",
+      "guidance": "اربط Instagram وFacebook من إعدادات PostMind."
+    }
+  },
+  "library": {
+    "browse": {
+      "eyebrow": "إنشاء",
+      "title": "مكتبة المراجع",
+      "description": "مقاطع فيديو قصيرة مُحلَّلة لقطةً لقطة. اختر واحدًا وسيصنع Studio مقطعك على غراره، أو يستعير أجواءه فقط.",
+      "heading": "تصفّح",
+      "searchStatus": "نتائج «{query}» في المكتبة كلها، الأكثر تطابقًا أولًا. لا تنطبق عوامل تصفية المدة والأجواء والوسوم على البحث.",
+      "searchStatusInCategory": "نتائج «{query}» في المكتبة كلها ضمن هذه الفئة، الأكثر تطابقًا أولًا. لا تنطبق عوامل تصفية المدة والأجواء والوسوم على البحث.",
+      "loading": "جارٍ تحميل المكتبة",
+      "emptyTitle": "لا توجد مراجع مطابقة",
+      "emptySearch": "لا شيء في المكتبة يطابق هذا البحث. جرّب كلمات أخرى أو امسح البحث.",
+      "emptyFilters": "جرّب فئة أوسع أو عددًا أقل من الوسوم.",
+      "more": "مزيد من المراجع"
+    },
+    "filters": {
+      "formAria": "تصفية المكتبة",
+      "category": "الفئة",
+      "allCategories": "كل الفئات",
+      "length": "المدة",
+      "duration": {
+        "any": "أي مدة",
+        "short": "أقل من 15 ث",
+        "medium": "15–30 ث",
+        "long": "30–60 ث",
+        "xl": "أكثر من 60 ث"
+      },
+      "mood": "الأجواء",
+      "moodPlaceholder": "مثلًا: حماسية",
+      "tags": "الوسوم",
+      "tagsPlaceholder": "مفصولة بفواصل",
+      "search": "البحث في المكتبة",
+      "searchPlaceholder": "مثلًا: مخبز في الخامسة فجرًا بأجواء هادئة من منظور الشخص الأول",
+      "clear": "مسح"
+    },
+    "card": {
+      "templateAndInspire": "قالب + إلهام",
+      "inspireOnly": "إلهام فقط",
+      "match": "تطابق {percent}"
+    },
+    "recommended": {
+      "heading": "مختارة لنشاطك التجاري",
+      "subheading": "مطابقة لملف نشاطك التجاري",
+      "listAria": "موصى بها لنشاطك التجاري",
+      "loading": "جارٍ تحميل التوصيات",
+      "pickBusiness": "اختر نشاطًا تجاريًا من الشريط العلوي لعرض المراجع المطابقة له.",
+      "noProfile": "لا يوجد ملف للنشاط التجاري بعد، فالتوصيات تحتاج إلى فحص الموقع الإلكتروني. <link>افحص موقعك</link>",
+      "unavailable": "التوصيات غير متاحة: {error}",
+      "empty": "لا توجد مطابقات قريبة في هذه الفئة بعد."
+    },
+    "similar": {
+      "heading": "المزيد من هذا النوع",
+      "listAria": "مراجع مشابهة",
+      "loading": "جارٍ تحميل المراجع المشابهة",
+      "unavailable": "مقاطع الفيديو المشابهة غير متاحة: {error}",
+      "empty": "لا توجد مقاطع قريبة بعد."
+    },
+    "detail": {
+      "back": "مكتبة المراجع",
+      "notFoundTitle": "المرجع غير موجود",
+      "notFoundBody": "ربما سُحب من المكتبة.",
+      "loading": "جارٍ تحميل المرجع",
+      "previewAria": "معاينة صامتة لـ {title}",
+      "previewNote": "{minutes, plural, zero {معاينة منخفضة الدقة · تنتهي صلاحية الرابط خلال # دقيقة} one {معاينة منخفضة الدقة · تنتهي صلاحية الرابط خلال دقيقة واحدة} two {معاينة منخفضة الدقة · تنتهي صلاحية الرابط خلال دقيقتين} few {معاينة منخفضة الدقة · تنتهي صلاحية الرابط خلال # دقائق} many {معاينة منخفضة الدقة · تنتهي صلاحية الرابط خلال # دقيقة} other {معاينة منخفضة الدقة · تنتهي صلاحية الرابط خلال # دقيقة}}",
+      "tagsAria": "الوسوم",
+      "facts": {
+        "length": "المدة",
+        "aspect": "نسبة العرض",
+        "shots": "اللقطات",
+        "pace": "الإيقاع",
+        "mood": "الأجواء",
+        "structure": "البنية",
+        "music": "الموسيقى",
+        "hook": "الافتتاحية الجاذبة",
+        "callToAction": "دعوة لاتخاذ إجراء",
+        "musicEnvelope": "الغلاف الموسيقي"
+      },
+      "bpm": "{bpm} نبضة/دقيقة"
+    },
+    "structure": {
+      "heading": "كيف بُني",
+      "notAnalysed": "لم يُحلَّل هذا الفيديو بعد.",
+      "inspireOnly": "مرجع للإلهام فقط: لا تُستخدم بنيته لقطةً لقطة، بل وسوم الأسلوب المجاورة فقط."
+    },
+    "timeline": {
+      "shotTitle": "{type} · {seconds} ث",
+      "shotList": "قائمة اللقطات",
+      "overlay": "الطبقة النصية: {overlay}",
+      "overlayThen": "الطبقة النصية: {overlay} · ثم {transition}",
+      "voiceover": "تعليق صوتي",
+      "onScreenText": "نص على الشاشة",
+      "seconds": "{seconds} ث"
+    },
+    "useReference": {
+      "heading": "الاستخدام كمرجع",
+      "locked": "غير متاح لهذا المرجع بموجب ترخيصه.",
+      "modes": {
+        "TEMPLATE": {
+          "title": "الفيديو نفسه بمحتواي",
+          "body": "يتبع عدد لقطات هذا الفيديو وتوقيتها وطبقاتها النصية وغلافها الموسيقي بمحتوى جديد كليًا لعلامتك التجارية."
+        },
+        "INSPIRE": {
+          "title": "اصنع فيديو مثله",
+          "body": "يستعير الأجواء فقط: الإيقاع والمزاج والبنية والطابع الموسيقي. كل ما عدا ذلك جديد."
+        }
+      }
+    },
+    "analysis": {
+      "pace": {
+        "slow": "بطيء",
+        "medium": "متوسط",
+        "fastCut": "قطع سريع"
+      },
+      "shotType": {
+        "hookTextOnStill": "نص جذّاب على صورة ثابتة",
+        "talkingHead": "متحدث أمام الكاميرا",
+        "avatarTalking": "أفاتار متحدث",
+        "aiClipAction": "مقطع حركة بالذكاء الاصطناعي",
+        "productShot": "لقطة منتج",
+        "stockLifestyle": "لقطات أسلوب حياة جاهزة",
+        "screenRecording": "تسجيل الشاشة",
+        "bRoll": "لقطات تكميلية",
+        "textCard": "بطاقة نصية",
+        "ctaCard": "بطاقة دعوة إلى إجراء"
+      },
+      "overlay": {
+        "none": "بلا نص",
+        "boldCentre": "عريض، في الوسط",
+        "boldTop": "عريض، في الأعلى",
+        "boldBottom": "عريض، في الأسفل",
+        "subtitleLower": "ترجمة، في الثلث السفلي",
+        "captionBox": "مربع تعليق",
+        "quote": "اقتباس",
+        "bigNumber": "رقم كبير"
+      }
+    }
+  },
+  "analytics": {
+    "dashboard": {
+      "eyebrow": "الإدارة",
+      "title": "التحليلات",
+      "description": "أداء مقاطع الفيديو المنشورة وتكلفة إنتاجها.",
+      "rangeLabel": "النطاق الزمني",
+      "rangeOption": "{days, plural, zero {# يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}"
+    },
+    "metrics": {
+      "views": "المشاهدات",
+      "watchTime": "مدة المشاهدة",
+      "engagement": "التفاعل"
+    },
+    "overview": {
+      "loadingAria": "جارٍ تحميل النظرة العامة",
+      "viewsHeading": "المشاهدات · آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "summary": "عبر {publications, plural, zero {# منشور} one {منشور واحد} two {منشورين} few {# منشورات} many {# منشورًا} other {# منشور}} · {projects, plural, zero {لم يبدأ أي مشروع} one {بدء مشروع واحد} two {بدء مشروعين} few {بدء # مشاريع} many {بدء # مشروعًا} other {بدء # مشروع}}",
+      "watchTime": "مدة المشاهدة",
+      "engagement": "التفاعل",
+      "engagementHint": "{rate} من المشاهدات",
+      "shares": "المشاركات",
+      "savesHint": "{saves, plural, zero {لا عمليات حفظ} one {عملية حفظ واحدة} two {عمليتا حفظ} few {{formatted} عمليات حفظ} many {{formatted} عملية حفظ} other {{formatted} عملية حفظ}}",
+      "spend": "المصروفات",
+      "spendHint": "تكاليف مزوّدي الخدمة",
+      "pending": "…"
+    },
+    "trend": {
+      "title": "النشاط اليومي",
+      "metricLabel": "المقياس",
+      "loadingAria": "جارٍ تحميل الرسم البياني",
+      "total": {
+        "views": "{count, plural, zero {لا مشاهدات} one {مشاهدة واحدة} two {مشاهدتان} few {{value} مشاهدات} many {{value} مشاهدة} other {{value} مشاهدة}} خلال الفترة",
+        "watchTime": "{value} من مدة المشاهدة خلال الفترة",
+        "engagement": "{value} تفاعل خلال الفترة"
+      },
+      "chartLabel": {
+        "views": "المشاهدات يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+        "watchTime": "مدة المشاهدة يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+        "engagement": "التفاعل يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}"
+      }
+    },
+    "platforms": {
+      "title": "حسب المنصة",
+      "description": "المشاهدات لكل منصة",
+      "listLabel": "المشاهدات حسب المنصة",
+      "empty": "لم يُنشر شيء خلال هذه الفترة.",
+      "hint": "{posts, plural, zero {# منشور} one {منشور واحد} two {منشوران} few {# منشورات} many {# منشورًا} other {# منشور}} · {engagement} تفاعل"
+    },
+    "leaderboard": {
+      "title": "أفضل الفيديوهات",
+      "description": "المنشورات مرتبة حسب المشاهدات",
+      "empty": "لم يُنشر شيء خلال هذه الفترة.",
+      "listLabel": "أفضل المنشورات",
+      "untitled": "منشور بلا عنوان",
+      "meta": "{platform} · {date}",
+      "openOn": "فتح على {platform}",
+      "analyticsFor": "تحليلات «{caption}»",
+      "analyticsForUntitled": "تحليلات المنشور بلا عنوان"
+    },
+    "cost": {
+      "title": "المصروفات",
+      "description": "{total} على مزوّدي الذكاء الاصطناعي خلال آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "chartLabel": "مصروفات المزوّدين يوميًا، آخر {days, plural, zero {# يوم} one {يوم} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+      "byProvider": {
+        "title": "حسب المزوّد",
+        "listLabel": "المصروفات حسب المزوّد",
+        "empty": "لا توجد مهام لدى المزوّدين خلال هذه الفترة.",
+        "jobs": "{count, plural, zero {# مهمة} one {مهمة واحدة} two {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}}"
+      },
+      "byProject": {
+        "title": "حسب المشروع",
+        "listLabel": "المصروفات حسب المشروع",
+        "empty": "لا توجد مصروفات للمشاريع خلال هذه الفترة.",
+        "none": "غير مرتبط بمشروع"
+      }
+    },
+    "chart": {
+      "keyboardHint": {
+        "day": "{label}. استخدم مفاتيح الأسهم لقراءة قيمة كل يوم.",
+        "position": "{label}. استخدم مفاتيح الأسهم لقراءة قيمة كل نقطة في الفيديو."
+      },
+      "point": "{label}: <b>{value}</b>",
+      "column": {
+        "day": "اليوم",
+        "position": "النقطة في الفيديو",
+        "value": "القيمة"
+      }
+    },
+    "publication": {
+      "eyebrow": "التحليلات",
+      "title": "منشور على {platform}",
+      "titleLoading": "المنشور",
+      "published": "نُشر في {date}",
+      "openOn": "فتح على {platform}",
+      "back": "كل التحليلات",
+      "loadingAria": "جارٍ تحميل تحليلات المنشور",
+      "empty": {
+        "title": "لا توجد أرقام بعد",
+        "body": "يبدأ Studio بقراءة مقاييس هذا المنشور بعد دقائق من نشره."
+      },
+      "stats": {
+        "views": "المشاهدات",
+        "watchTime": "مدة المشاهدة",
+        "avgWatched": "متوسط المشاهدة",
+        "likes": "الإعجابات",
+        "commentsShares": "التعليقات · المشاركات",
+        "commentsSharesValue": "{comments} · {shares}"
+      },
+      "viewsOverTime": {
+        "title": "المشاهدات بمرور الوقت",
+        "description": "إجمالي المشاهدات في نهاية كل يوم",
+        "chartLabel": "إجمالي المشاهدات حسب اليوم",
+        "tooFew": "يظهر الرسم البياني اليومي بعد اليوم الثاني."
+      },
+      "retention": {
+        "title": "الاحتفاظ بالجمهور",
+        "midpoint": "{pct} من المشاهدين ما زالوا يشاهدون عند منتصف الفيديو",
+        "description": "مقدار ما شاهده الناس من الفيديو",
+        "chartLabel": "المشاهدون الذين ما زالوا يشاهدون، حسب التقدّم في الفيديو",
+        "youtubePending": "يوفّر YouTube بيانات الاحتفاظ بعد نحو يوم من النشر. تحقّق مجددًا غدًا.",
+        "notReported": "لا يوفّر {platform} منحنى للاحتفاظ بالجمهور."
+      },
+      "audience": {
+        "title": "الجمهور",
+        "description": "نسبة المشاهدين حسب العمر والجنس",
+        "ageListLabel": "المشاهدون حسب الفئة العمرية",
+        "genderListLabel": "المشاهدون حسب الجنس",
+        "noAge": "لا توجد بيانات عن العمر.",
+        "noGender": "لا توجد بيانات عن الجنس.",
+        "youtubePending": "يعرض YouTube بيانات الجمهور بعد أن يشاهد الفيديو عدد كافٍ من الأشخاص.",
+        "notReported": "لا يوفّر {platform} بيانات ديموغرافية عن الجمهور.",
+        "gender": {
+          "female": "أنثى",
+          "male": "ذكر",
+          "user_specified": "وصف ذاتي"
+        }
+      }
+    }
+  },
+  "admin": {
+    "beta": {
+      "dashboard": {
+        "title": "مجموعة النسخة التجريبية",
+        "description": "المؤسسات المشاركة في البرنامج التجريبي ومدى نجاح Studio معها.",
+        "cohortAria": "المجموعة",
+        "allCohorts": "كل المجموعات",
+        "windowAria": "الفترة",
+        "window": "{days, plural, zero {آخر # يوم} one {آخر يوم} two {آخر يومين} few {آخر # أيام} many {آخر # يومًا} other {آخر # يوم}}",
+        "loadingAria": "جارٍ تحميل لوحة النسخة التجريبية",
+        "organisations": "المؤسسات",
+        "videosGenerated": "الفيديوهات المُنشأة",
+        "published": "المنشورة",
+        "failureRate": "معدل الفشل",
+        "failedHint": "{count, plural, zero {لا إخفاقات} one {إخفاق واحد} two {إخفاقان} few {# إخفاقات} many {# إخفاقًا} other {# إخفاق}}",
+        "providerCost": "تكلفة المزوّدين",
+        "feedback": "الملاحظات",
+        "emptyTitle": "لا توجد مؤسسات تجريبية بعد",
+        "emptyBody": "سجّل أوائل العملاء المتعاونين أدناه. استقطابهم عمل بشري (دليل التشغيل 10.4).",
+        "col": {
+          "organisation": "المؤسسة",
+          "cohort": "المجموعة",
+          "plusUntil": "Plus حتى",
+          "generated": "المُنشأة",
+          "published": "المنشورة",
+          "failureRate": "معدل الفشل",
+          "cost": "التكلفة",
+          "feedback": "الملاحظات"
+        },
+        "plusEnded": "{date} (منتهٍ)",
+        "noPlus": "بدون Plus"
+      },
+      "enrol": {
+        "title": "تسجيل مؤسسة",
+        "description": "يضيفها إلى مجموعة أو ينقلها إلى مجموعة أخرى.",
+        "formAria": "تسجيل مؤسسة",
+        "orgIdLabel": "معرّف المؤسسة",
+        "orgIdPlaceholder": "org_…",
+        "cohort": "المجموعة",
+        "plus": "Plus لمدة 30 يومًا",
+        "submit": "تسجيل",
+        "help": "طالما كانت Plus نشطة، تُوجَّه المؤسسة وتُحدّ ويُوافق عليها تلقائيًا وفق خطة Plus في Studio (وليس أدنى من خطتها في PostMind أبدًا). لا تتغير الفوترة. يُسجَّل في التدقيق.",
+        "enrolledToast": "{id} ضمن {cohort}"
+      },
+      "feedback": {
+        "title": "الملاحظات",
+        "description": "كل ما أرسله العملاء عبر زر الملاحظات، الأحدث أولًا.",
+        "kindAria": "نوع الملاحظة",
+        "allKinds": "كل الأنواع",
+        "loadingAria": "جارٍ تحميل الملاحظات",
+        "empty": "لا توجد ملاحظات بعد.",
+        "project": "المشروع {id}",
+        "kind": {
+          "bug": "خلل",
+          "idea": "فكرة",
+          "praise": "إشادة",
+          "other": "أخرى"
+        }
+      }
+    },
+    "centre": {
+      "eyebrow": "فريق PostMind",
+      "title": "مركز الإدارة",
+      "description": "عناصر تحكم Studio على مستوى المنصة. يخضع كل تغيير هنا للتدقيق.",
+      "checkingAccess": "جارٍ التحقق من الوصول",
+      "staffOnly": {
+        "title": "لفريق PostMind فقط",
+        "description": "يتحكم مركز الإدارة في المنصة بأكملها — مفاتيح الإيقاف الطارئ ومجموعة المراجع وإنفاق المزوّدين. حسابك غير مدرج في قائمة موظفي المنصة."
+      },
+      "tabs": {
+        "killSwitch": "مفتاح الإيقاف الطارئ",
+        "features": "الميزات",
+        "redrive": "إعادة التشغيل",
+        "library": "المكتبة",
+        "cost": "تقرير التكاليف",
+        "queues": "قوائم الانتظار",
+        "providers": "المزوّدون",
+        "safety": "مراجعة السلامة",
+        "safetyAudit": "تدقيق السلامة",
+        "organisations": "المؤسسات",
+        "usage": "استخدام الخطة",
+        "deadLetters": "الرسائل الفاشلة",
+        "forceApprovals": "الموافقات القسرية",
+        "beta": "بيتا"
+      }
+    },
+    "cost": {
+      "report": {
+        "orgFilterAria": "التصفية حسب المؤسسة",
+        "organisation": "المؤسسة",
+        "organisationPlaceholder": "جميع المؤسسات",
+        "windowLabel": "فترة التكاليف",
+        "windowDays": "{count, plural, zero {# يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
+        "loading": "جارٍ تحميل تقرير التكاليف",
+        "spend": "الإنفاق على المزوّدين",
+        "jobs": "المهام",
+        "failedJobs": "المهام الفاشلة",
+        "failedShare": "{percent} من المهام",
+        "organisations": "المؤسسات",
+        "perDay": "الإنفاق اليومي",
+        "noUsageWindow": "لا يوجد استخدام للمزوّدين في هذه الفترة.",
+        "chartAria": "إنفاق المنصة اليومي على المزوّدين، {count, plural, zero {آخر # يوم} one {آخر يوم} two {آخر يومين} few {آخر # أيام} many {آخر # يومًا} other {آخر # يوم}}",
+        "byOrg": "حسب المؤسسة",
+        "byOrgAria": "الإنفاق حسب المؤسسة",
+        "byProvider": "حسب المزوّد",
+        "byProviderAria": "الإنفاق حسب المزوّد",
+        "noUsage": "لا يوجد استخدام.",
+        "jobCount": "{count, plural, zero {لا مهام} one {مهمة واحدة} two {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}}",
+        "failedCount": "{count, plural, zero {لا فاشلة} one {واحدة فاشلة} two {اثنتان فاشلتان} few {# فاشلة} many {# فاشلة} other {# فاشلة}}"
+      },
+      "caps": {
+        "loading": "جارٍ تحميل حدود التكاليف",
+        "title": "حدود اليوم ({day}، UTC)",
+        "globalDaily": "الحد اليومي العام",
+        "globalMeterAria": "المستخدم من الحد اليومي العام",
+        "orgProviderDaily": "المؤسسة × المزوّد، يوميًا",
+        "orgByTier": "حدود المؤسسات حسب الخطة",
+        "noCap": "بلا حد",
+        "spentOfCap": "{spent} / {cap}",
+        "source": {
+          "default": "افتراضي",
+          "env": "تجاوز عبر env",
+          "disabled": "معطّل عبر env",
+          "custom": "مخصّص"
+        },
+        "tierTableAria": "حدود المؤسسات حسب الخطة",
+        "tierCol": "الخطة",
+        "dailyCol": "يومي (يوم UTC)",
+        "monthlyCol": "شهري (شهر UTC)",
+        "explainer": "تتوقف المشاريع مؤقتًا عند {percent} من ميزانيتها؛ وتوقف الحدود اليومية والشهرية الإنشاء عند 100% (يستمر النشر). تُرسل التنبيهات مرة واحدة عند 80% و100% من كل حد. تحصل المشاريع التي أُنشئت دون ميزانية على {shortBudget} (المحتوى القصير) أو {longBudget} (المحتوى الطويل).",
+        "topToday": "المؤسسات الأعلى إنفاقًا اليوم",
+        "noSpendToday": "لا يوجد إنفاق على المزوّدين اليوم.",
+        "spendTodayAria": "إنفاق المؤسسات اليوم",
+        "topMonth": "المؤسسات الأعلى إنفاقًا هذا الشهر ({month})",
+        "noSpendMonth": "لا يوجد إنفاق على المزوّدين هذا الشهر.",
+        "spendMonthAria": "إنفاق المؤسسات هذا الشهر",
+        "projectsNear": "المشاريع التي بلغت 80% من ميزانيتها أو تجاوزتها",
+        "projectsNone": "لا شيء خلال آخر 7 أيام.",
+        "projectsAria": "المشاريع القريبة من ميزانيتها",
+        "projectPaused": "{percent} · متوقف مؤقتًا",
+        "overrides": "استثناءات المؤسسات",
+        "overridesAria": "استثناءات حدود المؤسسات",
+        "overrideTag": "استثناء مؤسسة",
+        "overrideDetail": "يومي {daily} · شهري {monthly} — «{reason}»",
+        "alerts": "تنبيهات التكاليف، آخر 7 أيام",
+        "noAlerts": "لا توجد تنبيهات تكاليف.",
+        "alertsAria": "تنبيهات التكاليف الأخيرة",
+        "alertSpend": "{spent} / {cap} · {when}",
+        "scope": {
+          "PROJECT": "ميزانية المشروع",
+          "ORG_DAILY": "المؤسسة، يوميًا",
+          "ORG_MONTHLY": "المؤسسة، شهريًا",
+          "ORG_PROVIDER_DAILY": "المؤسسة × المزوّد، يوميًا",
+          "GLOBAL_DAILY": "الحد اليومي العام"
+        }
+      }
+    },
+    "deadLetters": {
+      "title": "الرسائل الميتة",
+      "description": "مهام استنفدت محاولات إعادتها (المواصفة 11.5). لا يُفرَّغ شيء هنا تلقائيًا. تُعرض بيانات المهام بعد إزالة الأسرار ورموز عناوين URL.",
+      "queueAria": "قائمة الانتظار",
+      "refresh": "تحديث",
+      "drain": "تفريغ قائمة الانتظار",
+      "loadingAria": "جارٍ تحميل المهام الفاشلة",
+      "emptyTitle": "لا توجد مهام فاشلة",
+      "emptyBody": "لا توجد رسائل ميتة في {queue}.",
+      "total": "{count, plural, zero {لا توجد مهام فاشلة في {queue}.} one {مهمة فاشلة واحدة في {queue}، الأحدث أولًا.} two {مهمتان فاشلتان في {queue}، الأحدث أولًا.} few {# مهام فاشلة في {queue}، الأحدث أولًا.} many {# مهمة فاشلة في {queue}، الأحدث أولًا.} other {# مهمة فاشلة في {queue}، الأحدث أولًا.}}",
+      "listAria": "المهام الفاشلة",
+      "newer": "الأحدث",
+      "older": "الأقدم",
+      "organisation": "المؤسسة {id}",
+      "platformJob": "مهمة المنصة",
+      "project": "المشروع {id}",
+      "attempts": "{count, plural, zero {لا محاولات} one {محاولة واحدة} two {محاولتان} few {# محاولات} many {# محاولة} other {# محاولة}}",
+      "failedWhen": "فشلت {when}",
+      "retry": "إعادة المحاولة",
+      "requeue": "إعادة إلى القائمة",
+      "inspect": "فحص بيانات المهمة",
+      "retriedToast": "تمت إعادة المحاولة: المهمة في الانتظار مجددًا",
+      "retriedAdvisoryToast": "تمت إعادة المحاولة. {advisory}",
+      "requeuedToast": "أُعيدت إلى القائمة",
+      "resumedToast": "أُعيدت إلى القائمة: استأنف المشروع {projectId} مرحلة الأصول ({jobs, plural, zero {لا مهام} one {مهمة واحدة} two {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}})",
+      "drainedToast": "{count, plural, zero {لم تُفرَّغ أي مهام فاشلة من {queue}} one {فُرّغت مهمة فاشلة واحدة من {queue}} two {فُرّغت مهمتان فاشلتان من {queue}} few {فُرّغت # مهام فاشلة من {queue}} many {فُرّغت # مهمة فاشلة من {queue}} other {فُرّغت # مهمة فاشلة من {queue}}}",
+      "retryTitle": "إعادة محاولة {name}؟",
+      "retryBody": "تعمل المهمة نفسها مرة أخرى مع إعادة تعيين محاولاتها. قد يؤدي ذلك إلى إنفاق أموال لدى المزوّد نيابةً عن المؤسسة.",
+      "retryConfirm": "إعادة المحاولة",
+      "drainTitle": "تفريغ جميع المهام الفاشلة في {queue}؟",
+      "drainBody": "تُحذف المهام الفاشلة دون تشغيلها. لا يمكن التراجع عن ذلك.",
+      "drainConfirm": "تفريغ"
+    },
+    "dialogs": {
+      "reasonLabel": "السبب (يُسجَّل في سجل التدقيق)",
+      "typeToConfirm": "اكتب <code>{phrase}</code> للتأكيد",
+      "requeue": {
+        "title": "إعادة {name} إلى قائمة الانتظار",
+        "description": "يضيف المهمة مجددًا بمحاولات جديدة والبيانات نفسها.",
+        "descriptionProvider": "يضيف المهمة مجددًا بمحاولات جديدة. إذا فشل مشروعها في مرحلة الأصول، تُستأنف المرحلة في تشغيل جديد (يُحتفظ بالأصول المدفوعة مسبقًا).",
+        "preferProvider": "المزوّد المفضّل (اختياري)",
+        "keepOrder": "الإبقاء على ترتيب الموجّه",
+        "submit": "إعادة إلى قائمة الانتظار"
+      }
+    },
+    "features": {
+      "loading": "جارٍ تحميل الميزات",
+      "title": "الميزات",
+      "description": "أوقف ميزة على مستوى المنصة أو لمؤسسة واحدة. تصل التغييرات إلى كل عامل وعملية API خلال {seconds, plural, zero {# ثانية} one {ثانية واحدة} two {ثانيتين} few {# ثوانٍ} many {# ثانية} other {# ثانية}}.",
+      "names": {
+        "library": "مكتبة الفيديوهات المرجعية",
+        "overlays": "النصوص المتراكبة",
+        "slideshow": "عروض الشرائح",
+        "imageLibrary": "مكتبة الصور"
+      },
+      "offByEnvironment": "معطّلة بواسطة البيئة (FEATURE_*_ENABLED)",
+      "turnOffGlobally": "إيقاف على مستوى المنصة",
+      "turnOnGlobally": "تشغيل على مستوى المنصة",
+      "disabledForAria": "{feature} معطّلة لـ",
+      "turnBackOn": "إعادة التشغيل",
+      "orgTitle": "تعطيل لمؤسسة واحدة",
+      "featureLabel": "الميزة",
+      "organisationId": "معرّف المؤسسة",
+      "turnOff": "إيقاف",
+      "turnOn": "تشغيل",
+      "dialogDescription": "يتلقى مستخدمو هذه الميزة خطأ «الميزة معطّلة» وتتوقف مهامها في الخلفية حتى يُعاد تشغيلها.",
+      "change": {
+        "onGlobal": "تشغيل {feature} لجميع المؤسسات",
+        "offGlobal": "إيقاف {feature} لجميع المؤسسات",
+        "onOrg": "تشغيل {feature} لـ {organisation}",
+        "offOrg": "إيقاف {feature} لـ {organisation}"
+      },
+      "applied": "{change}: يسري في كل مكان خلال {seconds, plural, zero {# ثانية} one {ثانية واحدة} two {ثانيتين} few {# ثوانٍ} many {# ثانية} other {# ثانية}}"
+    },
+    "forceApprovals": {
+      "title": "الموافقات القسرية",
+      "description": "إخفاقات في بوابة الجودة تجاوزها عميل باستخدام studio:render:force-approve (المواصفة 13.5). لا يمكن أبدًا فرض الموافقة على حظر أمان المحتوى.",
+      "windowAria": "الفترة",
+      "window": "{days, plural, zero {آخر # يوم} one {آخر يوم} two {آخر يومين} few {آخر # أيام} many {آخر # يومًا} other {آخر # يوم}}",
+      "loadingAria": "جارٍ تحميل الموافقات القسرية",
+      "emptyTitle": "لا توجد موافقات قسرية",
+      "emptyBody": "{days, plural, zero {لم تُفرض الموافقة على أي عرض.} one {لم تُفرض الموافقة على أي عرض خلال آخر يوم.} two {لم تُفرض الموافقة على أي عرض خلال آخر يومين.} few {لم تُفرض الموافقة على أي عرض خلال آخر # أيام.} many {لم تُفرض الموافقة على أي عرض خلال آخر # يومًا.} other {لم تُفرض الموافقة على أي عرض خلال آخر # يوم.}}",
+      "listAria": "الموافقات القسرية",
+      "meta": "{platform} {aspect} · المشروع {state}",
+      "byLine": "المؤسسة {organisationId} · بواسطة <mono>{user}</mono> · {date}",
+      "unknownUser": "مستخدم غير معروف",
+      "renderTimeNote": "(وقت العرض؛ وقت الموافقة غير مسجّل)",
+      "note": "ملاحظة:",
+      "quotedNote": "«{note}»",
+      "failedChecks": "الفحوص الفاشلة:",
+      "noneRecorded": "لم يُسجَّل شيء",
+      "check": "{code} ({detail})",
+      "truncated": "تُعرض أحدث الإدخالات فقط؛ ضيّق الفترة أو صفِّ حسب المؤسسة."
+    },
+    "health": {
+      "refresh": "تحديث",
+      "queues": {
+        "title": "حالة قوائم الانتظار",
+        "description": "عمق BullMQ لكل قائمة انتظار (المواصفة 16.4). تبقى المهام الفاشلة إلى أن يعيد أحد المشغّلين تشغيلها.",
+        "loadingAria": "جارٍ تحميل قوائم الانتظار",
+        "tableAria": "حالة قوائم الانتظار",
+        "queue": "قائمة الانتظار",
+        "waiting": "في الانتظار",
+        "active": "نشطة",
+        "failed": "فاشلة",
+        "delayed": "مؤجلة",
+        "oldestWaiting": "أقدم انتظار",
+        "waitSeconds": "{seconds} ث",
+        "waitMinutes": "{minutes} د {seconds} ث",
+        "waitHours": "{hours} س {minutes} د"
+      },
+      "providers": {
+        "title": "حالة المزوّدين",
+        "description": "تتشارك جميع العمليات قواطع الدائرة (Redis). يحسب معدل الأخطاء إخفاقات المزوّد في المهام التي بدأت خلال الساعة الأخيرة؛ والإنفاق هو إنفاق اليوم (UTC).",
+        "loadingAria": "جارٍ تحميل المزوّدين",
+        "emptyTitle": "لا يوجد مزوّدون بعد",
+        "emptyBody": "لم يُضبط أي مزوّد ولم يعمل أي مزوّد بعد.",
+        "tableAria": "حالة المزوّدين",
+        "provider": "المزوّد",
+        "breaker": "القاطع",
+        "errorRate": "معدل الأخطاء (ساعة واحدة)",
+        "jobs": "المهام (ساعة واحدة)",
+        "spendToday": "إنفاق اليوم",
+        "notConfigured": "غير مضبوط",
+        "breakerState": {
+          "closed": "مغلق",
+          "half_open": "نصف مفتوح (تجربة)",
+          "open": "مفتوح"
+        },
+        "jobCounts": "{succeeded} ناجحة · {failed} فاشلة",
+        "jobCountsRunning": "{succeeded} ناجحة · {failed} فاشلة · {running} قيد التشغيل"
+      }
+    },
+    "killSwitch": {
+      "loading": "جارٍ تحميل مفتاح الإيقاف الطارئ",
+      "since": "مُفعَّل {when}",
+      "release": "إلغاء",
+      "releaseAria": "إلغاء {id}",
+      "activeCount": "{count, plural, zero {لا شيء نشط} one {واحد نشط} two {اثنان نشطان} few {# نشطة} many {# نشطًا} other {# نشط}}",
+      "scoped": {
+        "workspace": {
+          "title": "مساحات العمل المجمّدة",
+          "empty": "لا توجد مساحات عمل مجمّدة."
+        },
+        "project": {
+          "title": "المشاريع الموقوفة",
+          "empty": "لا توجد مشاريع موقوفة."
+        },
+        "provider": {
+          "title": "المزوّدون المعطّلون",
+          "empty": "جميع المزوّدين مفعّلون."
+        },
+        "platform": {
+          "title": "المنصات المتوقفة",
+          "empty": "النشر مفعّل على جميع المنصات."
+        }
+      },
+      "global": {
+        "halted": "Studio متوقف",
+        "running": "Studio يعمل",
+        "engagedSince": "فُعِّل مفتاح الإيقاف العام {when}. لا تبدأ أي مهمة في أي مكان.",
+        "off": "مفتاح الإيقاف العام غير مفعّل.",
+        "propagation": "تصل التغييرات إلى كل عامل خلال {seconds, plural, zero {# ثانية} one {ثانية واحدة} two {ثانيتين} few {# ثوانٍ} many {# ثانية} other {# ثانية}}.",
+        "breakGlass": "وضع الطوارئ مفعّل: يسري التفعيل فورًا (مع التدقيق).",
+        "twoPerson": "يتطلب التفعيل شخصين: يؤكده عضو ثانٍ من الفريق خلال 10 دقائق.",
+        "engage": "تفعيل مفتاح الإيقاف العام",
+        "release": "إلغاء مفتاح الإيقاف العام"
+      },
+      "dialog": {
+        "haltTitle": "إيقاف Studio بالكامل؟",
+        "releaseGlobalTitle": "إلغاء مفتاح الإيقاف العام؟",
+        "releaseTargetTitle": "إلغاء {target}؟",
+        "haltDescription": "تتوقف مهام Studio لجميع المؤسسات عند خطوتها التالية: التوليد والعرض والنشر. لا تُلغى طلبات المزوّدين الجارية.",
+        "haltDescriptionTwoPerson": "تتوقف مهام Studio لجميع المؤسسات عند خطوتها التالية: التوليد والعرض والنشر. لا تُلغى طلبات المزوّدين الجارية. يسجّل هذا طلبًا: يجب أن يؤكده عضو ثانٍ من الفريق خلال 10 دقائق.",
+        "releaseDescription": "تبدأ المهام الجديدة بشكل طبيعي مرة أخرى. لا يُستأنف العمل الذي فشل أثناء التفعيل تلقائيًا — استخدم علامة تبويب إعادة التشغيل.",
+        "haltConfirm": "إيقاف Studio",
+        "releaseConfirm": "إلغاء"
+      },
+      "form": {
+        "title": "تفعيل مفتاح محدد النطاق",
+        "description": "يوقف المهام الجديدة لمساحة عمل أو مشروع أو مزوّد واحد، أو عمليات الرفع الجديدة إلى منصة واحدة. لا يتأثر أي شيء آخر.",
+        "aria": "تفعيل مفتاح إيقاف طارئ محدد النطاق",
+        "level": "المستوى",
+        "levels": {
+          "workspace": "تجميد مساحة عمل",
+          "project": "إيقاف مشروع",
+          "provider": "تعطيل مزوّد",
+          "platform": "إيقاف النشر على منصة"
+        },
+        "targets": {
+          "workspace": "معرّف المؤسسة",
+          "project": "معرّف المشروع",
+          "provider": "المزوّد",
+          "platform": "المنصة"
+        },
+        "choose": {
+          "provider": "اختر مزوّدًا",
+          "platform": "اختر منصة"
+        },
+        "reason": "السبب",
+        "reasonPlaceholder": "يُسجَّل في سجل التدقيق",
+        "engage": "تفعيل"
+      },
+      "pending": {
+        "title": "الإيقاف العام بانتظار موافقة ثانية",
+        "requestedBy": "طلبه <who>{name}</who> في {at} — تنتهي صلاحيته خلال {minutes, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}.",
+        "requestedByYou": "طلبته <who>أنت</who> في {at} — تنتهي صلاحيته خلال {minutes, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتين} few {# دقائق} many {# دقيقة} other {# دقيقة}}.",
+        "reasonLabel": "السبب:",
+        "confirm": "التأكيد وإيقاف Studio",
+        "withdraw": "سحب الطلب",
+        "ownRequest": "يجب أن يؤكد طلبك عضو آخر من فريق PostMind.",
+        "dialogTitle": "تأكيد الإيقاف العام؟",
+        "dialogDescription": "موافقة ثانية على طلب {name}. تتوقف مهام Studio لجميع المؤسسات عند خطوتها التالية.",
+        "dialogConfirm": "التأكيد والإيقاف"
+      },
+      "toast": {
+        "pending": "طُلب الإيقاف العام. يجب أن يؤكده عضو ثانٍ من فريق PostMind خلال 10 دقائق.",
+        "confirmed": "فُعِّل مفتاح الإيقاف العام (بموافقة شخصين)",
+        "withdrawn": "سُحب طلب الإيقاف العام",
+        "globalEngaged": "فُعِّل مفتاح الإيقاف العام",
+        "globalReleased": "أُلغي مفتاح الإيقاف العام",
+        "engaged": {
+          "workspace": "فُعِّل تجميد مساحة العمل ({target})",
+          "project": "فُعِّل إيقاف المشروع ({target})",
+          "provider": "فُعِّل تعطيل المزوّد ({target})",
+          "platform": "فُعِّل إيقاف النشر على المنصة ({target})"
+        },
+        "released": {
+          "workspace": "أُلغي تجميد مساحة العمل ({target})",
+          "project": "أُلغي إيقاف المشروع ({target})",
+          "provider": "أُلغي تعطيل المزوّد ({target})",
+          "platform": "أُلغي إيقاف النشر على المنصة ({target})"
+        }
+      }
+    },
+    "library": {
+      "panel": {
+        "corpusTitle": "المجموعة المرجعية",
+        "corpusDescription": "جميع العناصر، بما فيها غير المرخّصة والمسحوبة. تُخفى العناصر المسحوبة عن المستخدمين لكنها تبقى محفوظة للمشاريع التي استخدمتها.",
+        "loading": "جارٍ تحميل المجموعة المرجعية",
+        "empty": "لا توجد عناصر تطابق عوامل التصفية هذه.",
+        "selectAllAria": "تحديد الكل في هذه الصفحة",
+        "selectPage": "تحديد الصفحة",
+        "listAria": "عناصر المجموعة المرجعية",
+        "retiredToast": "تم سحب «{title}»",
+        "retireTitle": "هل تريد سحب «{title}»؟",
+        "retireBody": "سيختفي من التصفح والبحث والتوصيات. وستواصل المشاريع التي استخدمته العمل.",
+        "retireConfirm": "سحب"
+      },
+      "row": {
+        "selectAria": "تحديد {title}",
+        "reanalysed": "أُعيد تحليله {when}",
+        "retired": "مسحوب",
+        "edit": "تعديل",
+        "editAria": "تعديل {title}",
+        "retire": "سحب",
+        "retireAria": "سحب {title}"
+      },
+      "licenceBadge": {
+        "missing": "بلا ترخيص",
+        "expired": "انتهى الترخيص",
+        "expiring": "الترخيص على وشك الانتهاء",
+        "ok": "مرخّص"
+      },
+      "review": {
+        "ACCEPTED": "تم قبول الفئة",
+        "OVERRIDDEN": "تم تجاوز الفئة",
+        "REJECTED": "مرفوض"
+      },
+      "scenario": {
+        "LICENSED": "مرخّص",
+        "OWNED": "مملوك",
+        "SCRAPED": "مجمَّع",
+        "NOT_REQUIRED": "غير مطلوب"
+      },
+      "filters": {
+        "groupAria": "عوامل تصفية المجموعة المرجعية",
+        "search": "بحث",
+        "searchPlaceholder": "العنوان أو الوسم أو المعرّف",
+        "licence": "حالة الترخيص",
+        "licenceAny": "أي ترخيص",
+        "licenceMissing": "بلا سجل ترخيص",
+        "status": "الحالة",
+        "statusLive": "نشط",
+        "statusRetired": "مسحوب",
+        "statusAll": "النشطة والمسحوبة",
+        "review": "التصنيف",
+        "reviewAny": "الكل",
+        "reviewNone": "لم تتم مراجعته",
+        "reviewAccepted": "مقبول",
+        "reviewOverridden": "متجاوَز",
+        "reviewRejected": "مرفوض",
+        "category": "الفئة",
+        "categoryAll": "جميع الفئات"
+      },
+      "bulk": {
+        "toolbarAria": "إجراءات جماعية",
+        "selected": "{count, plural, zero {لم يُحدَّد شيء} one {عنصر واحد محدد} two {عنصران محددان} few {# عناصر محددة} many {# عنصرًا محددًا} other {# عنصر محدد}}",
+        "accept": "قبول الفئة",
+        "newCategory": "فئة جديدة",
+        "newCategoryPlaceholder": "فئة جديدة…",
+        "override": "تجاوز",
+        "reanalyse": "إعادة التحليل",
+        "reject": "رفض",
+        "doneAccept": "تم قبول الفئة لـ{count, plural, zero {لا عناصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+        "doneOverride": "تم تجاوز الفئة لـ{count, plural, zero {لا عناصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+        "doneReject": "{count, plural, zero {لم يُرفض أي عنصر} one {رُفض عنصر واحد وسُحب} two {رُفض عنصران وسُحبا} few {رُفضت # عناصر وسُحبت} many {رُفض # عنصرًا وسُحب} other {رُفض # عنصر وسُحب}}",
+        "notFound": "{count, plural, zero {لا شيء غير موجود} one {عنصر واحد غير موجود} two {عنصران غير موجودين} few {# عناصر غير موجودة} many {# عنصرًا غير موجود} other {# عنصر غير موجود}}",
+        "reanalyseQueued": "أُضيفت إعادة التحليل إلى قائمة الانتظار لـ{count, plural, zero {لا عناصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+        "rejectTitle": "هل تريد رفض {count, plural, zero {لا عناصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}؟",
+        "rejectBody": "تُسحب العناصر المرفوضة: تُخفى عن التصفح والبحث والتوصيات. وستواصل المشاريع التي استخدمتها العمل.",
+        "rejectConfirm": "رفض وسحب"
+      },
+      "edit": {
+        "title": "تعديل المرجع",
+        "titleField": "العنوان",
+        "description": "الوصف",
+        "category": "الفئة",
+        "tags": "الوسوم",
+        "licence": "الترخيص",
+        "unchangedModes": "دون تغيير ({modes})",
+        "unchangedNoLicence": "دون تغيير (بلا ترخيص)",
+        "optionLicensed": "مرخّص",
+        "optionOwned": "مملوك",
+        "optionScraped": "مجمَّع (Inspire فقط)",
+        "optionNotRequired": "غير مطلوب (مملوك للمشغّل)",
+        "licenceSource": "مصدر الترخيص",
+        "licenceSourcePlaceholder": "دون تغيير",
+        "save": "حفظ التغييرات",
+        "saved": "تم تحديث فيديو المكتبة"
+      },
+      "ingest": {
+        "title": "إضافة إلى المجموعة المرجعية",
+        "description": "عنوان URL مصدر واحد في كل سطر (بحد أقصى {max}). يُنزَّل كل عنوان ويُحلَّل ويُفهرَس في الخلفية.",
+        "formAria": "استيراد فيديوهات إلى المكتبة",
+        "urls": "عناوين URL المصدر",
+        "urlsPlaceholder": "https://…",
+        "invalid": "ليس عنوان http(s) صالحًا: {urls}",
+        "tooMany": "{count} عنوان URL — الحد الأقصى {max} لكل دفعة.",
+        "ready": "{count, plural, zero {لا عناوين جاهزة} one {عنوان واحد جاهز} two {عنوانان جاهزان} few {# عناوين جاهزة} many {# عنوانًا جاهزًا} other {# عنوان جاهز}}",
+        "licence": "الترخيص",
+        "scenarioLicensed": "مرخّص (Template + Inspire)",
+        "scenarioOwned": "مملوك (Template + Inspire)",
+        "scenarioScraped": "مجمَّع (Inspire فقط)",
+        "scenarioNotRequired": "غير مطلوب — مملوك للمشغّل (Template + Inspire)",
+        "source": "مصدر الترخيص",
+        "sourcePlaceholder": "الاتفاقية / المالك",
+        "category": "الفئة",
+        "autoClassify": "تصنيف تلقائي",
+        "tags": "الوسوم",
+        "tagsPlaceholder": "مفصولة بفواصل",
+        "tooManyTags": "{max} وسمًا كحد أقصى لكل فيديو.",
+        "submit": "{count, plural, =0 {إضافة إلى قائمة الاستيراد} zero {إضافة إلى قائمة الاستيراد} one {إضافة عنوان واحد إلى قائمة الاستيراد} two {إضافة عنوانين إلى قائمة الاستيراد} few {إضافة # عناوين إلى قائمة الاستيراد} many {إضافة # عنوانًا إلى قائمة الاستيراد} other {إضافة # عنوان إلى قائمة الاستيراد}}",
+        "queued": "{count, plural, zero {لم يُضف أي فيديو إلى قائمة الاستيراد} one {أُضيف فيديو واحد إلى قائمة الاستيراد} two {أُضيف فيديوهان إلى قائمة الاستيراد} few {أُضيفت # فيديوهات إلى قائمة الاستيراد} many {أُضيف # فيديو إلى قائمة الاستيراد} other {أُضيف # فيديو إلى قائمة الاستيراد}}",
+        "lastBatch": "آخر دفعة في قائمة الانتظار",
+        "queuedAria": "مهام الاستيراد في قائمة الانتظار"
+      },
+      "status": {
+        "title": "حالة الاستيراد",
+        "description": "مهام المجموعة المرجعية التي تغيّرت حالتها خلال الفترة. يمكن إعادة إرسال المصادر الفاشلة.",
+        "window": "الفترة",
+        "windowHour": "آخر ساعة",
+        "windowDay": "آخر 24 ساعة",
+        "windowWeek": "آخر 7 أيام",
+        "refreshAria": "تحديث حالة الاستيراد",
+        "loading": "جارٍ تحميل حالة الاستيراد",
+        "countsAria": "أعداد الاستيراد",
+        "SUCCEEDED": "مستورَدة",
+        "DUPLICATE": "مكرّرة",
+        "FAILED": "فاشلة",
+        "RUNNING": "قيد التشغيل",
+        "QUEUED": "في قائمة الانتظار",
+        "backlog": "المتراكم: {queued} في قائمة الانتظار · {running} قيد التشغيل · {perHour} مكتملة في الساعة · {live} عنصرًا نشطًا في المكتبة",
+        "recentFailures": "الإخفاقات الأخيرة",
+        "failuresAria": "إخفاقات الاستيراد الأخيرة",
+        "unknownError": "خطأ غير معروف",
+        "attempts": "{count, plural, zero {لا محاولات} one {محاولة واحدة} two {محاولتان} few {# محاولات} many {# محاولة} other {# محاولة}}"
+      },
+      "audit": {
+        "title": "تدقيق التراخيص",
+        "descriptionLoaded": "المجموعة النشطة، {date} · على وشك الانتهاء = خلال {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}}",
+        "descriptionEmpty": "يجب أن يكون لكل عنصر في المجموعة المرجعية سجل ترخيص.",
+        "refresh": "تحديث",
+        "loading": "جارٍ تحميل تدقيق التراخيص",
+        "problemsAria": "مشكلات الترخيص",
+        "missing": "بلا سجل ترخيص",
+        "missingHint": "لا تظهر للمستخدمين أبدًا",
+        "expired": "منتهية",
+        "expiredHint": "TEMPLATE محظور",
+        "expiringSoon": "تنتهي قريبًا",
+        "byScenarioAria": "العناصر النشطة حسب الترخيص",
+        "scenarioLicensed": "مرخّص",
+        "scenarioOwned": "مملوك",
+        "scenarioScraped": "مجمَّع (INSPIRE فقط)",
+        "scenarioNotRequired": "غير مطلوب",
+        "liveRetired": "{live} نشط · {retired} مسحوب",
+        "problemsListAria": "قائمة مشكلات الترخيص",
+        "showMissing": "عرض العناصر غير المرخّصة",
+        "truncated": "يتم عرض أقدم {count} مشكلة."
+      },
+      "resubmit": {
+        "button": "إعادة إرسال الفاشلة",
+        "done": "{count, plural, zero {لم يُعد إرسال أي مصدر فاشل} one {أُعيد إرسال مصدر فاشل واحد} two {أُعيد إرسال مصدرين فاشلين} few {أُعيد إرسال # مصادر فاشلة} many {أُعيد إرسال # مصدرًا فاشلًا} other {أُعيد إرسال # مصدر فاشل}}",
+        "skipped": "{count, plural, zero {لم يُتخطَّ شيء} one {تم تخطي واحد} two {تم تخطي اثنين} few {تم تخطي #} many {تم تخطي #} other {تم تخطي #}}",
+        "legacy": "{count, plural, zero {لا شيء أُرسل قبل توفر إعادة الإرسال} one {واحد أُرسل قبل توفر إعادة الإرسال: استخدم أداة الاستيراد} two {اثنان أُرسلا قبل توفر إعادة الإرسال: استخدم أداة الاستيراد} few {# أُرسلت قبل توفر إعادة الإرسال: استخدم أداة الاستيراد} many {# أُرسلت قبل توفر إعادة الإرسال: استخدم أداة الاستيراد} other {# أُرسلت قبل توفر إعادة الإرسال: استخدم أداة الاستيراد}}"
+      }
+    },
+    "organisations": {
+      "orgIdLabel": "معرّف المؤسسة",
+      "orgIdPlaceholder": "org_…",
+      "open": "فتح",
+      "policy": {
+        "title": "سياسة المراجعة",
+        "description": "تنطبق على المشاريع الجديدة وعلى الموافقة التلقائية في هذه المؤسسة.",
+        "formAria": "سياسة المراجعة",
+        "loadingAria": "جارٍ تحميل السياسة",
+        "defaultLabel": "سياسة المراجعة الافتراضية للمشاريع الجديدة",
+        "option": {
+          "REQUIRE_APPROVAL": "طلب الموافقة",
+          "REQUIRE_APPROVAL_FROM_ROLE": "طلب الموافقة من مالك أو مسؤول",
+          "AUTO_APPROVE": "الموافقة التلقائية على صنّاع المحتوى الموثوقين"
+        },
+        "autoApprove": "السماح بالموافقة التلقائية",
+        "threshold": "حدّ الثقة (عدد الفيديوهات التي يوافق عليها شخص قبل الموافقة التلقائية)",
+        "thresholdHelp": "فارغ = إعداد المنصة. المصدر الحالي: {source}. لا تتم الموافقة التلقائية على خطط Enterprise أبدًا.",
+        "save": "حفظ السياسة",
+        "savedToast": "تم حفظ السياسة",
+        "lastChanged": "آخر تغيير {when}"
+      },
+      "caps": {
+        "title": "حدود التكلفة",
+        "description": "يتجاوز الحدين اليومي والشهري لفئة الخطة لهذه المؤسسة فقط.",
+        "formAria": "تجاوزات حدود التكلفة",
+        "loadingAria": "جارٍ تحميل حدود التكلفة",
+        "daily": "يومي:",
+        "monthly": "شهري:",
+        "orgOverride": "تجاوز المؤسسة",
+        "planTier": "فئة الخطة — {tiers}",
+        "tierCap": "{tier} {amount}",
+        "noCap": "بلا حد",
+        "overrideReason": "«{reason}» — {when}",
+        "dailyOverride": "تجاوز الحد اليومي (£)",
+        "monthlyOverride": "تجاوز الحد الشهري (£)",
+        "overrideHelp": "فارغ = لا تجاوز (حد فئة الخطة). تطبّق العمليات أي تغيير خلال 30 ثانية.",
+        "reason": "السبب (يُسجَّل في سجل التدقيق)",
+        "save": "حفظ حدود التكلفة",
+        "savedToast": "تم حفظ حدود التكلفة"
+      }
+    },
+    "redrive": {
+      "title": "إعادة تشغيل العمل المتوقف أو العالق",
+      "description": "تُستأنف المشاريع الموقوفة بمفتاح الإيقاف من المرحلة التي توقفت عندها، مع إعادة استخدام اللقطات والعروض المكتملة؛ ويُعاد محاولة المنشورات المتوقفة. أما المشاريع العالقة فتُعاد مرحلتها الحالية إلى قائمة الانتظار (بعد فقدان Redis). عاين أولًا — لا يتغير شيء حتى تطبّق.",
+      "formAria": "عوامل تصفية إعادة التشغيل",
+      "scope": "النطاق",
+      "scopes": {
+        "killSwitch": "العمل الموقوف بمفتاح الإيقاف",
+        "stuck": "المشاريع العالقة"
+      },
+      "level": "المستوى",
+      "anyLevel": "أي مستوى",
+      "levels": {
+        "global": "عام",
+        "workspace": "مساحة عمل",
+        "project": "مشروع",
+        "provider": "مزوّد",
+        "platform": "منصة"
+      },
+      "since": "فشل منذ",
+      "idleMinutes": "خامل لمدة (بالدقائق)",
+      "organisation": "المؤسسة",
+      "allOrganisations": "جميع المؤسسات",
+      "limit": "الحد",
+      "preview": "معاينة",
+      "stale": "تغيّرت عوامل التصفية منذ المعاينة — عاين مرة أخرى قبل التطبيق.",
+      "done": "أُعيد تشغيل {count, plural, zero {# عنصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+      "confirmTitle": "إعادة تشغيل {count, plural, zero {# عنصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}؟",
+      "confirmDescription": "تُضاف مهام إلى قائمة الانتظار لمشاريع ومنشورات مؤسسات أخرى. قد يستدعي العمل المستأنف مزوّدين مدفوعين للأجزاء التي لم تُنفَّذ قط، وتُنشر المنشورات المُعاد محاولتها على حسابات العميل.",
+      "confirmLabel": "إعادة التشغيل",
+      "results": {
+        "previewTitle": "معاينة — لم يتغير شيء بعد",
+        "appliedTitle": "طُبِّقت إعادة التشغيل",
+        "previewDescription": "ما سيفعله التطبيق بهذه العوامل الآن.",
+        "appliedDescription": "أُضيفت المهام إلى قوائم الانتظار؛ تابع التقدم في كل مشروع.",
+        "considered": "تمت دراستها",
+        "wouldRedrive": "سيُعاد تشغيلها",
+        "redriven": "أُعيد تشغيلها",
+        "skipped": "تم تخطيها",
+        "empty": "لا شيء يطابق عوامل التصفية هذه.",
+        "tableAria": "عناصر إعادة التشغيل",
+        "columns": {
+          "kind": "النوع",
+          "id": "المعرّف",
+          "organisation": "المؤسسة",
+          "action": "الإجراء"
+        },
+        "kinds": {
+          "project": "مشروع",
+          "publication": "منشور"
+        },
+        "actions": {
+          "resumePlanning": "الاستئناف من التخطيط",
+          "resumeAssets": "استئناف الأصول الناقصة",
+          "retryPublication": "إعادة محاولة النشر",
+          "reenqueue": "إعادة المرحلة إلى قائمة الانتظار",
+          "skipped": "تم التخطي"
+        }
+      }
+    },
+    "safety": {
+      "decidedWhen": "{state} {when}",
+      "quotedNote": "«{note}»",
+      "review": {
+        "title": "مراجعة أمان المحتوى",
+        "description": "عمليات تشغيل أُوقفت مؤقتًا بسبب حكم REVIEW لأمان النص أو تنبيه من Hive بمستوى المراجعة (المواصفة 13.2 / 16.4). لا تصل نتائج مستوى الحظر إلى هذه القائمة أبدًا.",
+        "showAria": "عرض المراجعات",
+        "filterWaiting": "في الانتظار",
+        "filterWaitingCount": "في الانتظار ({count})",
+        "filterAllowed": "مسموح بها",
+        "filterBlocked": "محظورة",
+        "loadingAria": "جارٍ تحميل المراجعات",
+        "emptyPendingTitle": "لا شيء في الانتظار",
+        "emptyTitle": "لا توجد مراجعات بعد",
+        "emptyBody": "تظهر هنا عمليات التشغيل المتوقفة مؤقتًا مع التنبيه ومعاينة والنص.",
+        "listAria": "مراجعات الأمان",
+        "previewAria": "معاينة {name}",
+        "previewAriaUnnamed": "معاينة الفيديو المُبلَّغ عنه",
+        "noScript": "لا يوجد نص محفوظ لعملية التشغيل هذه.",
+        "scriptLabel": "{platform}:",
+        "kindScript": "النص (قبل الإنشاء)",
+        "kindContent": "فيديو مُعالَج",
+        "kindWhen": "{kind} · {when}",
+        "ids": "المؤسسة {organisationId} · المشروع {projectId}",
+        "flagged": "سبب التنبيه:",
+        "allowResume": "السماح والاستئناف",
+        "block": "حظر",
+        "state": {
+          "PENDING": "بانتظار قرار",
+          "ALLOWED": "مسموح به",
+          "BLOCKED": "محظور"
+        },
+        "allowedToast": "تم السماح — يُستأنف التشغيل",
+        "blockedToast": "تم الحظر",
+        "blockTitle": "حظر هذا الفيديو",
+        "allowTitle": "السماح والاستئناف",
+        "blockBody": "يفشل المشروع مع ملاحظتك، وسيراها العميل.",
+        "allowBody": "يستأنف التشغيل المتوقف من حيث توقف.",
+        "blockConfirm": "حظر",
+        "allowConfirm": "سماح"
+      },
+      "audit": {
+        "title": "التدقيق الشهري للثقة والأمان",
+        "description": "عيّنة عشوائية من الفيديوهات المنشورة في الشهر الماضي، يعيد شخص فحصها. الإخفاق هو فيديو كان على فحص Hive أن يحظره أو يرسله إلى المراجعة.",
+        "monthAria": "شهر التدقيق",
+        "resultAria": "النتيجة",
+        "filter": {
+          "pending": "بانتظار المراجعة",
+          "miss": "الإخفاقات",
+          "pass": "الناجحة",
+          "all": "الكل"
+        },
+        "drawSample": "سحب عيّنة",
+        "loadingAria": "جارٍ تحميل تدقيق الأمان",
+        "sampled": "في العيّنة",
+        "waiting": "في الانتظار",
+        "passed": "ناجحة",
+        "missed": "إخفاقات",
+        "missRate": "معدل إخفاق فحص Hive",
+        "missRateHint": "الإخفاقات ÷ ما تمت مراجعته",
+        "emptyNoSampleTitle": "لا توجد عيّنة لهذا الشهر",
+        "emptyNoSampleBody": "تُسحب العيّنة في اليوم الأول من الشهر الساعة 06:00 UTC. اسحبها الآن إذا لم تعمل المهمة.",
+        "emptyTitle": "لا شيء هنا",
+        "emptyBody": "لا توجد فيديوهات تطابق عامل التصفية هذا.",
+        "videoAria": "فيديو منشور على {platform}",
+        "noPreview": "لا توجد معاينة",
+        "publishedOn": "نُشر في {date}",
+        "ids": "المؤسسة {organisationId} · المشروع {projectId}",
+        "openPost": "فتح المنشور",
+        "pass": "ناجح",
+        "miss": "إخفاق",
+        "result": {
+          "pending": "بانتظار المراجعة",
+          "pass": "ناجح",
+          "miss": "إخفاق"
+        },
+        "passToast": "سُجّل كناجح",
+        "missToast": "سُجّل الإخفاق — تم إبلاغ الفريق",
+        "sampleToast": "أُضيف {added} — {total} من أصل {population, plural, zero {# فيديو منشور} one {فيديو منشور واحد} two {فيديوهين منشورين} few {# فيديوهات منشورة} many {# فيديو منشورًا} other {# فيديو منشور}} في العيّنة",
+        "missTitle": "تسجيل إخفاق",
+        "missBody": "اذكر ما فات الفحص. سيُبلَّغ الفريق، وينبغي إزالة المنشور (runbooks/content-safety-miss.md).",
+        "missConfirm": "تسجيل الإخفاق"
+      }
+    },
+    "usage": {
+      "orgIdLabel": "معرّف المؤسسة",
+      "orgIdPlaceholder": "org_…",
+      "evaluateAgainst": "التقييم مقابل",
+      "recordedTier": "الفئة المسجّلة",
+      "show": "عرض الاستخدام",
+      "title": "استخدام الخطة هذا الشهر",
+      "description": "الفيديوهات التي أُنشئت في هذا الشهر التقويمي (UTC) مقارنةً بحصص المواصفة 12.4.",
+      "loadingAria": "جارٍ تحميل الاستخدام",
+      "summary": "{month} · الفئة {tier} ({source}) · وضع الحصة <strong>{mode}</strong> · الحالة <strong>{status}</strong>",
+      "tierSource": {
+        "query": "مختارة هنا",
+        "last_generation": "مسجّلة في آخر عملية إنشاء",
+        "default": "لم تُسجَّل أي عملية إنشاء — يُفترض Basic"
+      },
+      "mode": {
+        "warn": "تحذير",
+        "enforce": "فرض"
+      },
+      "status": {
+        "ok": "جيد",
+        "warning": "تحذير",
+        "exceeded": "متجاوز"
+      }
+    }
+  },
+  "onboarding": {
+    "page": {
+      "title": "مرحبًا"
+    },
+    "steps": {
+      "connect": "الربط",
+      "brandKit": "هوية العلامة",
+      "firstVideo": "الفيديو الأول",
+      "celebrate": "الاحتفال"
+    },
+    "stepIndicator": {
+      "aria": "تقدّم الإعداد",
+      "done": "(مكتمل)"
+    },
+    "wizard": {
+      "eyebrow": "مرحبًا بك",
+      "title": "لنصنع أول فيديو لك",
+      "description": "أربع خطوات سريعة: اربط حسابًا، واضبط علامتك التجارية، واصنع فيديو، ثم انشره.",
+      "skipSetup": "تخطي الإعداد",
+      "loading": "جارٍ تحميل الإعداد",
+      "skipped": {
+        "title": "تم تخطي الإعداد",
+        "description": "يمكنك استئنافه في أي وقت.",
+        "resume": "استئناف الإعداد"
+      },
+      "noBusiness": {
+        "title": "اختر نشاطًا تجاريًا أولًا",
+        "description": "يتم الإعداد لكل نشاط تجاري على حدة. اختر نشاطًا من الشريط العلوي أو أضف نشاطًا جديدًا.",
+        "action": "إعداد نشاط تجاري"
+      },
+      "currentStep": "الخطوة الحالية",
+      "saving": "جارٍ الحفظ",
+      "skipStep": "تخطي هذه الخطوة",
+      "finish": "إنهاء"
+    },
+    "connect": {
+      "title": "اربط المنصات التي تنشر عليها",
+      "description": "ينشر Studio مباشرةً على TikTok وYouTube وInstagram وFacebook وX وLinkedIn. اربط حسابًا واحدًا على الأقل حتى يُنشر أول فيديو لك.",
+      "loading": "جارٍ تحميل الحسابات",
+      "connectedAria": "الحسابات المرتبطة",
+      "none": "لا توجد حسابات مرتبطة بعد.",
+      "connectAnother": "ربط حساب آخر",
+      "openConnections": "فتح الاتصالات"
+    },
+    "brandKit": {
+      "title": "علامتك التجارية في ثلاث نقرات",
+      "description": "ارفع شعارك وسيستخرج Studio ألوانك منه. ثم اختر خطًا وأسلوب حديثك.",
+      "existing": "{count, plural, zero {لدى هذا النشاط التجاري مجموعات هوية بالفعل ({names}). يمكنك المتابعة أو إضافة مجموعة أخرى أدناه.} one {لدى هذا النشاط التجاري مجموعة هوية بالفعل ({names}). يمكنك المتابعة أو إضافة مجموعة أخرى أدناه.} two {لدى هذا النشاط التجاري مجموعتا هوية بالفعل ({names}). يمكنك المتابعة أو إضافة مجموعة أخرى أدناه.} few {لدى هذا النشاط التجاري # مجموعات هوية بالفعل ({names}). يمكنك المتابعة أو إضافة مجموعة أخرى أدناه.} many {لدى هذا النشاط التجاري # مجموعة هوية بالفعل ({names}). يمكنك المتابعة أو إضافة مجموعة أخرى أدناه.} other {لدى هذا النشاط التجاري # مجموعة هوية بالفعل ({names}). يمكنك المتابعة أو إضافة مجموعة أخرى أدناه.}}",
+      "logoLegend": "1. الشعار",
+      "uploadLogo": "رفع الشعار",
+      "logoType": "ارفع صورة بتنسيق PNG أو JPEG أو WebP أو GIF أو AVIF.",
+      "logoSize": "يجب ألا يتجاوز حجم الشعار {max, number} ميغابايت.",
+      "fontLegend": "2. الخط",
+      "toneLegend": "3. الأسلوب (اختر حتى {max, number})",
+      "save": "حفظ هوية العلامة",
+      "saved": "تم حفظ هوية العلامة.",
+      "defaultKitName": "هوية العلامة الرئيسية",
+      "ready": {
+        "title": "{name} جاهزة",
+        "body": "ستستخدمها كل الفيديوهات التي يصنعها Studio لهذا النشاط التجاري.",
+        "bodyDefault": "ستستخدمها كل الفيديوهات التي يصنعها Studio لهذا النشاط التجاري — وهي مجموعتك الافتراضية."
+      },
+      "paletteAria": "لوحة الألوان",
+      "removeColour": "إزالة {colour}",
+      "fontAria": "الخط",
+      "toneAria": "الأسلوب",
+      "tones": {
+        "warm": "دافئ",
+        "friendly": "ودود",
+        "playful": "مرح",
+        "bold": "جريء",
+        "professional": "احترافي",
+        "calm": "هادئ",
+        "witty": "ظريف",
+        "premium": "راقٍ"
+      }
+    },
+    "firstVideo": {
+      "title": "اصنع أول فيديو لك",
+      "description": "ابدأ بتعريف قصير: من أنت وماذا تقدّم. يخطط Studio اللقطات ويكتب النص ويستخدم هوية علامتك.",
+      "loadingTemplates": "جارٍ تحميل القوالب",
+      "noTemplate": {
+        "title": "قالب التعريف غير متاح",
+        "description": "لا يزال بإمكانك وصف أول فيديو لك في شاشة الإنشاء.",
+        "action": "فتح الإنشاء"
+      },
+      "briefLabel": "هل تريد ذكر شيء ما؟ (اختياري)",
+      "briefPlaceholder": "مخبز عائلي في عمّان منذ 2009 — خبز العجين المخمّر والمعجنات ودروس يوم السبت.",
+      "create": "اصنع فيديو التعريف",
+      "generationNotStarted": "تم الحفظ كمسودة، لكن الإنشاء لم يبدأ: {reason}",
+      "started": {
+        "title": "أول فيديو لك في الطريق",
+        "body": "يكتب Studio النص ويجمع اللقطات. راجعه عندما يصبح جاهزًا، ثم انشره.",
+        "action": "افتح الفيديو"
+      }
+    },
+    "celebrate": {
+      "loading": "جارٍ تحميل الفيديو",
+      "noVideo": {
+        "title": "اقتربت كثيرًا",
+        "body": "عندما يُنشر أول فيديو لك، سنحتفل به هنا. اصنع فيديو متى كنت مستعدًا.",
+        "action": "اصنع فيديو"
+      },
+      "live": {
+        "title": "لقد نشرت للتو على {platform}",
+        "body": "«{name}» منشور الآن. يتابع Studio أداءه في التحليلات.",
+        "seeIt": "شاهده على {platform}",
+        "openProject": "فتح المشروع"
+      },
+      "nearly": {
+        "title": "على وشك النشر",
+        "body": "«{name}» لم يُنشر بعد. راجعه ووافق عليه ثم انشره — وسنحتفل هنا لحظة نشره.",
+        "action": "افتح الفيديو"
+      }
+    },
+    "finished": {
+      "title": "كل شيء جاهز",
+      "description": "Studio جاهز لصنع الفيديوهات ونشرها لنشاطك التجاري.",
+      "makeAnother": "اصنع فيديو آخر",
+      "goToProjects": "الانتقال إلى المشاريع"
+    }
+  },
+  "share": {
+    "links": {
+      "title": "المشاركة لجمع الملاحظات",
+      "description": "يمكن لأي شخص لديه الرابط مشاهدة النسخ وترك ملاحظات، لكنه لا يستطيع الموافقة.",
+      "expiryLabel": "مدة صلاحية الرابط",
+      "expiryDays": "{count, plural, zero {# يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
+      "create": "إنشاء رابط",
+      "copyNow": "انسخ هذا الرابط الآن — فهو لا يُعرض إلا مرة واحدة.",
+      "copied": "تم نسخ الرابط",
+      "copyFailed": "تعذّر النسخ — حدّد الرابط وانسخه بنفسك",
+      "revoked": "تم إلغاء الرابط",
+      "revoke": "إلغاء",
+      "empty": "لا توجد روابط مشاركة بعد.",
+      "listAria": "روابط المشاركة",
+      "feedbackAria": "الملاحظات",
+      "states": {
+        "active": "نشط",
+        "expired": "منتهي الصلاحية",
+        "revoked": "ملغى"
+      },
+      "expiresMeta": "ينتهي في {date} · {views, plural, zero {لا مشاهدات} one {مشاهدة واحدة} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}}",
+      "expiredMeta": "انتهى في {date} · {views, plural, zero {لا مشاهدات} one {مشاهدة واحدة} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}}"
+    },
+    "preview": {
+      "pageTitle": "معاينة الفيديو",
+      "loading": "جارٍ تحميل المعاينة",
+      "unavailable": {
+        "title": "المعاينة غير متاحة",
+        "notFound": "رابط المعاينة هذا غير صالح أو انتهت صلاحيته",
+        "fallback": "هذه المعاينة غير متاحة"
+      },
+      "eyebrow": "PostMind Studio · معاينة لجمع الملاحظات",
+      "intro": "يمكنك المشاهدة والتعليق. تتم الموافقة داخل PostMind Studio. تنتهي صلاحية هذا الرابط في {expires}.",
+      "variantsAria": "النسخ",
+      "noVariants": "لم تُعرض أي نسخة بعد.",
+      "variantCaption": "{platform} · {aspectRatio} · {seconds, number} ث",
+      "feedbackAria": "الملاحظات",
+      "feedbackSoFar": "الملاحظات حتى الآن",
+      "noFeedback": "لا توجد ملاحظات بعد.",
+      "form": {
+        "title": "اترك ملاحظاتك",
+        "name": "اسمك",
+        "email": "البريد الإلكتروني (اختياري، ليتمكن الفريق من الرد)",
+        "feedback": "الملاحظات",
+        "send": "إرسال الملاحظات",
+        "sent": "شكرًا — تم إرسال ملاحظاتك إلى الفريق.",
+        "sendFailed": "تعذّر إرسال الملاحظات"
+      }
+    }
+  },
+  "templates": {
+    "eyebrow": "الإنشاء",
+    "title": "القوالب",
+    "description": "قوالب المشاريع وعروض الشرائح التي حفظتها. حذف قالب لا يغيّر أبدًا الفيديوهات التي صُنعت منه.",
+    "loading": "جارٍ تحميل القوالب",
+    "slideshowTitle": "قوالب عروض الشرائح",
+    "projectTitle": "قوالب المشاريع",
+    "builtInTitle": "القوالب المضمّنة",
+    "noBuiltIns": "لا توجد قوالب مضمّنة",
+    "list": {
+      "emptySlideshow": "احفظ عرض شرائح كقالب من شاشة المراجعة الخاصة به لإعادة استخدامه هنا.",
+      "emptyProject": "احفظ مشروعًا كقالب من شاشة المراجعة الخاصة به لإعادة استخدامه هنا.",
+      "slideshowAria": "قوالب عروض الشرائح",
+      "projectAria": "قوالب المشاريع",
+      "meta": "{category} · حُفظ في {date}",
+      "deleteAria": "حذف {name}",
+      "deleted": "تم حذف «{name}»"
+    },
+    "categories": {
+      "custom": "مخصص",
+      "introduction": "تعريف",
+      "team_introduction": "تعريف بالفريق",
+      "product_showcase": "عرض منتج",
+      "before_after": "قبل وبعد",
+      "food": "طعام",
+      "lifestyle": "أسلوب حياة",
+      "photo_dump": "مجموعة صور",
+      "quote_reel": "مقطع اقتباس",
+      "statistic_reel": "مقطع إحصائية",
+      "tweet_video": "فيديو تغريدة",
+      "product_launch": "إطلاق منتج",
+      "weekly_special": "عرض الأسبوع",
+      "behind_the_scenes": "خلف الكواليس"
+    }
+  },
+  "account": {
+    "export": {
+      "eyebrow": "الحساب",
+      "title": "تصدير بياناتك",
+      "description": "نزّل كل ما يحتفظ به Studio لمؤسستك كملف ZIP يضم ملفات JSON مع روابط إلى وسائطك. لا تُضمَّن أبدًا رموز الوصول أو أي أسرار أخرى.",
+      "newExport": "تصدير جديد",
+      "includeLegend": "ما يجب تضمينه",
+      "groups": {
+        "projects": {
+          "label": "المشاريع",
+          "hint": "الموجزات والنصوص واللقطات والمخرجات والمنشورات وروابط الوسائط"
+        },
+        "analytics": {
+          "label": "التحليلات",
+          "hint": "المشاهدات والتفاعل لكل منشور، وإنفاق مزوّدي الخدمة"
+        },
+        "brand": {
+          "label": "العلامة التجارية",
+          "hint": "مجموعات الهوية والأصوات وذاكرة الأسلوب وملف النشاط التجاري والقوالب"
+        },
+        "imageLibrary": {
+          "label": "مكتبة الصور",
+          "hint": "كل صورة ومصدرها"
+        }
+      },
+      "request": "طلب التصدير",
+      "preparing": "يجري تجهيز عملية تصدير",
+      "requested": "تم طلب التصدير — سنجهّزه في الخلفية",
+      "yourExports": "عمليات التصدير",
+      "linksExpire": "تنتهي صلاحية الروابط بعد {days, plural, zero {# يوم} one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}} من جاهزية التصدير.",
+      "loading": "جارٍ تحميل عمليات التصدير",
+      "empty": {
+        "title": "لا توجد عمليات تصدير بعد",
+        "description": "اطلب تصديرًا لتنزيل بياناتك."
+      },
+      "listAria": "عمليات التصدير",
+      "states": {
+        "queued": "في قائمة الانتظار",
+        "running": "قيد التجهيز",
+        "ready": "جاهز",
+        "failed": "فشل",
+        "expired": "منتهي الصلاحية"
+      },
+      "sizeKb": "{kb, number} ك.ب",
+      "download": "تنزيل",
+      "noLongerAvailable": "لم يعد هذا التصدير متاحًا"
+    },
+    "providerKeys": {
+      "title": "مفاتيح مزوّدي الخدمة (BYOC)",
+      "description": "استخدم حساباتك الخاصة لدى مزوّدي الذكاء الاصطناعي. لا يعرض Studio المفتاح المحفوظ مرة أخرى أبدًا، بل آخر أربعة أحرف منه فقط.",
+      "loading": "جارٍ تحميل مفاتيح مزوّدي الخدمة",
+      "loadFailed": "تعذّر تحميل مفاتيح مزوّدي الخدمة: {reason}",
+      "retry": "إعادة المحاولة",
+      "unavailable": {
+        "disabled": "ميزة استخدام مفاتيحك الخاصة لمزوّدي الخدمة غير مفعّلة في Studio بعد.",
+        "planTier": "استخدام مفاتيحك الخاصة لمزوّدي الخدمة ميزة ضمن باقة Enterprise. قم بالترقية لاستخدام حساباتك الخاصة لدى المزوّدين."
+      },
+      "status": {
+        "studioKey": "يُستخدم مفتاح Studio",
+        "notTested": "مفتاحك ••••{hint} · لم يُختبر",
+        "working": "مفتاحك ••••{hint} · يعمل",
+        "failed": "مفتاحك ••••{hint} · فشل: {reason}",
+        "unhealthy": "لا يعمل"
+      },
+      "test": "اختبار",
+      "testing": "جارٍ الاختبار…",
+      "remove": "إزالة",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ…",
+      "replace": "استبدال",
+      "apiKeyAria": "مفتاح API لـ {provider}",
+      "publicKeyAria": "المفتاح العام لـ {provider}",
+      "privateKeyAria": "المفتاح الخاص لـ {provider}",
+      "placeholder": {
+        "replace": "استبدال المفتاح",
+        "apiKey": "مفتاح API",
+        "publicKey": "المفتاح العام",
+        "privateKey": "المفتاح الخاص"
+      },
+      "toast": {
+        "saved": "تم حفظ مفتاح {provider}",
+        "works": "مفتاح {provider} يعمل",
+        "failed": "فشل مفتاح {provider}: {reason}",
+        "removed": "تمت إزالة مفتاح {provider}؛ عاد Studio إلى استخدام مفتاحه"
+      }
+    }
+  },
+  "approvals": {
+    "screen": {
+      "eyebrow": "الإعداد",
+      "title": "مسارات الموافقة",
+      "description": "خطوات موافقة مرتبة لمراجعة العميل أو المراجعة القانونية. ينتظر الفيديو في المراجعة حتى تتم الموافقة على كل خطوة، ولا يُنشر إلا بعد ذلك. المشاريع التي لا ينطبق عليها أي مسار تحتاج إلى موافقة واحدة.",
+      "newWorkflow": "مسار جديد",
+      "editTitle": "تعديل «{name}»",
+      "listAria": "مسارات الموافقة",
+      "emptyTitle": "لا توجد مسارات موافقة بعد",
+      "emptyBody": "يحتاج كل فيديو إلى موافقة واحدة. أضف مسارًا عندما يجب أن يوافق عميل أو مدير أو الفريق القانوني أولًا.",
+      "saved": "حُفظ المسار. المراجعات الجارية تحتفظ بخطواتها.",
+      "created": "أُنشئ المسار.",
+      "deleted": "حُذف «{name}»."
+    },
+    "card": {
+      "stepsAria": "خطوات {name}",
+      "stepNumber": "الخطوة {number}:",
+      "confirmDelete": "تأكيد الحذف",
+      "keep": "الإبقاء",
+      "deleteAria": "حذف {name}"
+    },
+    "form": {
+      "newAria": "مسار موافقة جديد",
+      "editAria": "تعديل {name}",
+      "name": "الاسم",
+      "namePlaceholder": "موافقة العميل",
+      "steps": "الخطوات بالترتيب",
+      "stepsHelp": "تنتظر كل خطوة هذا العدد من الأشخاص المختلفين الذين يحملون الدور. لا تتم الموافقة على الفيديو، ولا يمكن نشره، إلا بعد الخطوة الأخيرة.",
+      "role": "الدور",
+      "approvers": "الموافِقون",
+      "moveUp": "نقل الخطوة {number} إلى الأعلى",
+      "moveDown": "نقل الخطوة {number} إلى الأسفل",
+      "removeStep": "إزالة الخطوة {number}",
+      "addStep": "إضافة خطوة",
+      "appliesTo": "ينطبق على",
+      "appliesToHelp": "اترك كل الحقول فارغة ليشمل كل المشاريع. عند تطابق عدة مسارات، يُطبَّق الأكثر تحديدًا (النشاط التجاري، ثم الوسوم، ثم المنصات).",
+      "businessIds": "معرّفات الأنشطة التجارية (مفصولة بفواصل)",
+      "addCurrentBusiness": "إضافة النشاط التجاري الحالي",
+      "platforms": "المنصات",
+      "projectTags": "وسوم المشروع (مفصولة بفواصل)",
+      "save": "حفظ المسار",
+      "create": "إنشاء المسار"
+    },
+    "problems": {
+      "name": "أدخل اسمًا للمسار.",
+      "noSteps": "أضف خطوة واحدة على الأقل.",
+      "role": "الخطوة {step}: استخدم اسم دور عضوية مثل admin أو client_reviewer.",
+      "minApprovers": "الخطوة {step}: يلزم موافِق واحد على الأقل.",
+      "maxApprovers": "الخطوة {step}: {max} موافِقين كحد أقصى."
+    },
+    "roles": {
+      "owner": "{count, plural, zero {# مالك} one {مالك} two {مالكان} few {# مُلّاك} many {# مالكًا} other {# مالك}}",
+      "admin": "{count, plural, zero {# مسؤول} one {مسؤول} two {مسؤولان} few {# مسؤولين} many {# مسؤولًا} other {# مسؤول}}",
+      "client_reviewer": "{count, plural, zero {# مراجع من العميل} one {مراجع العميل} two {مراجعان من العميل} few {# مراجعين من العميل} many {# مراجعًا من العميل} other {# مراجع من العميل}}",
+      "legal": "{count, plural, zero {# مراجع قانوني} one {الفريق القانوني} two {مراجعان قانونيان} few {# مراجعين قانونيين} many {# مراجعًا قانونيًا} other {# مراجع قانوني}}",
+      "reviewer": "{count, plural, zero {# مراجع} one {مراجع} two {مراجعان} few {# مراجعين} many {# مراجعًا} other {# مراجع}}",
+      "custom": "{count, plural, zero {{role} × #} one {{role}} two {{role} × #} few {{role} × #} many {{role} × #} other {{role} × #}}"
+    },
+    "appliesTo": {
+      "every": "ينطبق على كل المشاريع",
+      "some": "ينطبق على: {targets}",
+      "businesses": "{count, plural, zero {الأنشطة التجارية {ids}} one {النشاط التجاري {ids}} two {النشاطان التجاريان {ids}} few {الأنشطة التجارية {ids}} many {الأنشطة التجارية {ids}} other {الأنشطة التجارية {ids}}}",
+      "tagged": "الموسومة بـ {tags}"
+    },
+    "indicator": {
+      "regionAria": "خطوات الموافقة",
+      "approved": "{name}: تمت الموافقة على كل الخطوات",
+      "rejected": "{name}: رُفض عند الخطوة {step} من {total}",
+      "step": "{name}: الخطوة {step} من {total}",
+      "waiting": "الخطوة {step} من {total} — بانتظار {role}",
+      "waitingCount": "الخطوة {step} من {total} — بانتظار {role} ({approvals} من {required} موافقات)",
+      "stepNumber": "{number}."
+    }
+  }
+}

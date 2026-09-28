@@ -1,7 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import useSWR from 'swr';
-import { api, errorMessage, type ApiError } from '@/lib/client/api';
+import { api, useErrorMessage, type ApiError } from '@/lib/client/api';
 import { VideoRow } from './video-row';
 import type { LibraryVideoSummary, ListResponse } from './types';
 
@@ -11,6 +12,8 @@ import type { LibraryVideoSummary, ListResponse } from './types';
 const SIMILAR_LIMIT = 12;
 
 export function SimilarShelf({ id }: { id: string }) {
+  const t = useTranslations('library.similar');
+  const errorMessage = useErrorMessage();
   const { data, error, isLoading } = useSWR<ListResponse<LibraryVideoSummary>, ApiError>(
     ['library-similar', id],
     () =>
@@ -23,18 +26,19 @@ export function SimilarShelf({ id }: { id: string }) {
   return (
     <section aria-labelledby="library-similar" className="min-w-0">
       <h2 id="library-similar" className="mb-4 font-display text-2xl">
-        More like this
+        {t('heading')}
       </h2>
       {error ? (
         <p className="text-sm text-muted-foreground">
-          Similar videos are unavailable: {errorMessage(error)}
+          {t('unavailable', { error: errorMessage(error) })}
         </p>
       ) : (
         <VideoRow
-          label="Similar references"
+          label={t('listAria')}
+          loadingLabel={t('loading')}
           videos={data?.data}
           isLoading={isLoading}
-          empty={<p className="text-sm text-muted-foreground">No close neighbours yet.</p>}
+          empty={<p className="text-sm text-muted-foreground">{t('empty')}</p>}
         />
       )}
     </section>

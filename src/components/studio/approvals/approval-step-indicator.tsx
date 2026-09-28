@@ -1,9 +1,12 @@
 'use client';
 
 import { Check, CircleDashed, CircleX, Hourglass } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
-import { describeStep, stepIndicatorText, type ApprovalStatus } from './types';
+import { useApprovalText } from './approval-text';
+import type { ApprovalStatus } from './types';
 
 // 15.D3 — review-screen indicator for multi-step approval workflows: "Step 1 of 2 — waiting for
 // client reviewer", with the ordered steps and which are done. Renders nothing when no workflow
@@ -31,6 +34,9 @@ const ICON: Record<StepState, typeof Check> = {
 };
 
 export function ApprovalStepIndicator({ project }: Props) {
+  const t = useTranslations('approvals.indicator');
+  const f = useFormat();
+  const { describeStep, stepIndicatorText } = useApprovalText();
   const shown = SHOWN_STATES.has(project.state);
   const res = useApi<{ approval: ApprovalStatus }>(
     shown ? `/projects/${project.id}/approval` : null,
@@ -44,7 +50,7 @@ export function ApprovalStepIndicator({ project }: Props) {
 
   return (
     <section
-      aria-label="Approval steps"
+      aria-label={t('regionAria')}
       className="flex flex-col gap-3 rounded-xl border border-foreground/15 bg-card p-4"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -71,7 +77,10 @@ export function ApprovalStepIndicator({ project }: Props) {
               )}
             >
               <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-              <span className="tabular">{index + 1}.</span> {describeStep(step)}
+              <span className="tabular">
+                {t('stepNumber', { number: f.number(index + 1) })}
+              </span>{' '}
+              {describeStep(step)}
             </li>
           );
         })}

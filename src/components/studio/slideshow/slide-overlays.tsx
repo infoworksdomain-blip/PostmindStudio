@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { OverlaySet } from '../overlays/overlay-set';
 import type { Overlay, OverlayPreset } from '../overlays/types';
@@ -25,12 +26,13 @@ export function SlideOverlays({
   editable: boolean;
   businessId: string | null;
 }) {
+  const t = useTranslations('slideshow.overlays');
   const presets = useApi<{ data: OverlayPreset[] }>('/overlay-presets', {
     businessId: businessId ?? undefined,
   });
   return (
     <details className="rounded-lg border border-border px-3 py-2">
-      <summary className="cursor-pointer text-sm font-medium">Text overlays on this slide</summary>
+      <summary className="cursor-pointer text-sm font-medium">{t('summary')}</summary>
       <div className="pt-3">
         <OverlaySet
           listPath={`/slides/${slideId}/overlays`}

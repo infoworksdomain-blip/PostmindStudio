@@ -3,16 +3,20 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { api, errorMessage, useApi } from '@/lib/client/api';
-import { relativeTime } from '@/lib/client/format';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { NotificationPreferencesButton } from './notification-preferences';
+import { useNotificationText } from './notification-text';
 
 // Spec 14.4 — in-app notifications (GET /notifications): generation complete, approval
 // pending > 2 h, publication failed, cost 80% / 100% / paused. Polls every minute.
+// BACKLOG 16.5: a notification stored with a message key renders in the reader's locale
+// (notification-text.ts); older rows without one show their stored English text.
 
 export interface StudioNotification {
   id: string;
@@ -24,6 +28,9 @@ export interface StudioNotification {
   createdAt: string;
   /** 13.33: null = no email requested; pending_setup until an email sender exists. */
   emailStatus?: 'pending_setup' | 'sent' | 'failed' | null;
+  /** 16.5: key under the `notifications` catalogue namespace + its ICU parameters. */
+  messageKey?: string | null;
+  messageParams?: Record<string, string | number> | null;
 }
 
 export interface NotificationsResponse {
@@ -46,6 +53,9 @@ export function unreadLabel(count: number): string {
 }
 
 function Item({ n, onRead }: { n: StudioNotification; onRead: (id: string) => Promise<void> }) {
+  const t = useTranslations('shell.notifications');
+  const f = useFormat();
+  const { title, body } = useNotificationText()(n);
   const unread = !n.readAt;
   const href = safeLink(n.link);
   return (
@@ -65,29 +75,27 @@ function Item({ n, onRead }: { n: StudioNotification; onRead: (id: string) => Pr
               className="font-medium hover:underline"
               onClick={() => void (unread ? onRead(n.id) : undefined)}
             >
-              {n.title}
+              {title}
             </Link>
           ) : (
-            <p className="font-medium">{n.title}</p>
+            <p className="font-medium">{title}</p>
           )}
-          <p className="text-xs text-muted-foreground">{n.body}</p>
+          <p className="text-xs text-muted-foreground">{body}</p>
           {n.emailStatus === 'pending_setup' && (
-            <p className="text-[0.7rem] text-muted-foreground italic">
-              Email pending setup: email delivery is not connected yet.
-            </p>
+            <p className="text-[0.7rem] text-muted-foreground italic">{t('emailPendingSetup')}</p>
           )}
           <div className="flex items-center justify-between gap-2">
             <time dateTime={n.createdAt} className="text-[0.7rem] text-muted-foreground">
-              {relativeTime(n.createdAt)}
+              {f.relative(n.createdAt)}
             </time>
             {unread && (
               <button
                 type="button"
                 className="text-[0.7rem] text-primary hover:underline"
                 onClick={() => void onRead(n.id)}
-                aria-label={`Mark “${n.title}” as read`}
+                aria-label={t('markReadAria', { title })}
               >
-                Mark read
+                {t('markRead')}
               </button>
             )}
           </div>
@@ -98,6 +106,9 @@ function Item({ n, onRead }: { n: StudioNotification; onRead: (id: string) => Pr
 }
 
 export function NotificationsBell() {
+  const t = useTranslations('shell.notifications');
+  const tc = useTranslations('common.states');
+  const errorMessage = useErrorMessage();
   const [open, setOpen] = useState(false);
   const { data, error, mutate } = useApi<NotificationsResponse>(
     '/notifications',
@@ -130,13 +141,13 @@ export function NotificationsBell() {
           variant="ghost"
           size="icon"
           className="relative"
-          aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+          aria-label={t('bellAria', { count: unread })}
         >
           <Bell />
           {unread > 0 && (
             <span
               aria-hidden
-              className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.6rem] font-semibold text-primary-foreground"
+              className="absolute -top-0.5 -end-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.6rem] font-semibold text-primary-foreground"
             >
               {unreadLabel(unread)}
             </span>
@@ -145,7 +156,7 @@ export function NotificationsBell() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 max-w-[calc(100vw-2rem)] p-0">
         <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-          <h2 className="text-sm font-semibold">Notifications</h2>
+          <h2 className="text-sm font-semibold">{t('title')}</h2>
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -153,7 +164,7 @@ export function NotificationsBell() {
               disabled={unread === 0}
               onClick={() => void markAll()}
             >
-              <CheckCheck /> Mark all read
+              <CheckCheck /> {t('markAllRead')}
             </Button>
             {/* 13.24 per-kind in-app / email preferences */}
             <NotificationPreferencesButton />
@@ -165,12 +176,14 @@ export function NotificationsBell() {
               {errorMessage(error)}
             </p>
           )}
-          {!error && !data && <p className="px-2 py-4 text-sm text-muted-foreground">Loading…</p>}
+          {!error && !data && (
+            <p className="px-2 py-4 text-sm text-muted-foreground">{tc('loading')}</p>
+          )}
           {data && data.data.length === 0 && (
-            <p className="px-2 py-4 text-sm text-muted-foreground">No notifications yet.</p>
+            <p className="px-2 py-4 text-sm text-muted-foreground">{t('empty')}</p>
           )}
           {data && data.data.length > 0 && (
-            <ul aria-label="Notifications" className="grid gap-0.5">
+            <ul aria-label={t('title')} className="grid gap-0.5">
               {data.data.map((n) => (
                 <Item key={n.id} n={n} onRead={markRead} />
               ))}
@@ -178,7 +191,7 @@ export function NotificationsBell() {
           )}
         </div>
         <p className="border-t border-border/70 px-3 py-2 text-[0.7rem] text-muted-foreground">
-          In-app only. Email delivery isn’t available yet.
+          {t('inAppOnly')}
         </p>
       </PopoverContent>
     </Popover>

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { ErrorState, Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { ReasonDialog } from './reason-dialog';
@@ -19,12 +20,13 @@ import { ReasonDialog } from './reason-dialog';
 export const FEATURE_NAMES = ['library', 'overlays', 'slideshow', 'image-library'] as const;
 export type FeatureName = (typeof FEATURE_NAMES)[number];
 
-export const FEATURE_LABEL: Record<FeatureName, string> = {
-  library: 'Reference video library',
-  overlays: 'Text overlays',
-  slideshow: 'Slideshows',
-  'image-library': 'Image library',
-};
+/** Feature id → catalogue key under admin.features.names. */
+const FEATURE_KEY = {
+  library: 'library',
+  overlays: 'overlays',
+  slideshow: 'slideshow',
+  'image-library': 'imageLibrary',
+} as const satisfies Record<FeatureName, string>;
 
 export interface FeaturesResponse {
   features: Record<FeatureName, { global: boolean; environment: boolean; disabledFor: string[] }>;
@@ -38,18 +40,24 @@ export interface FeatureChange {
   enabled: boolean;
 }
 
-function describe(change: FeatureChange): string {
-  const what = FEATURE_LABEL[change.feature];
-  const where =
-    change.scope === 'global' ? 'for every organisation' : `for ${change.organisationId}`;
-  return `${change.enabled ? 'Turn on' : 'Turn off'} ${what} ${where}`;
-}
-
 export function FeaturesPanel() {
   const { data, error, isLoading, mutate } = useApi<FeaturesResponse>('/admin/features');
   const [change, setChange] = useState<FeatureChange | null>(null);
   const [orgFeature, setOrgFeature] = useState<FeatureName>('library');
   const [orgId, setOrgId] = useState('');
+  const t = useTranslations('admin.features');
+  const tc = useTranslations('common.states');
+  const errorMessage = useErrorMessage();
+  const label = (feature: FeatureName) => t(`names.${FEATURE_KEY[feature]}`);
+  const describe = (c: FeatureChange): string => {
+    const feature = label(c.feature);
+    if (c.scope === 'global')
+      return c.enabled ? t('change.onGlobal', { feature }) : t('change.offGlobal', { feature });
+    const organisation = c.organisationId ?? '';
+    return c.enabled
+      ? t('change.onOrg', { feature, organisation })
+      : t('change.offOrg', { feature, organisation });
+  };
 
   const apply = async (reason: string): Promise<boolean> => {
     if (!change) return false;
@@ -60,7 +68,7 @@ export function FeaturesPanel() {
         idempotencyKey: newIdempotencyKey(),
       });
       await mutate(next, { revalidate: false });
-      toast.success(`${describe(change)}: applies everywhere within ${next.propagationSec} s`);
+      toast.success(t('applied', { change: describe(change), seconds: next.propagationSec }));
       return true;
     } catch (err) {
       toast.error(errorMessage(err));
@@ -76,15 +84,11 @@ export function FeaturesPanel() {
   };
 
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
-  if (isLoading || !data)
-    return <Skeleton aria-label="Loading features" className="h-48 rounded-xl" />;
+  if (isLoading || !data) return <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />;
 
   return (
     <div className="grid gap-6">
-      <Section
-        title="Features"
-        description={`Switch a feature off globally or for one organisation. Changes reach every worker and API process within ${data.propagationSec} seconds.`}
-      >
+      <Section title={t('title')} description={t('description', { seconds: data.propagationSec })}>
         <ul className="grid gap-3">
           {FEATURE_NAMES.map((feature) => {
             const state = data.features[feature];
@@ -93,22 +97,25 @@ export function FeaturesPanel() {
               <li key={feature} className="grid gap-2 rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{FEATURE_LABEL[feature]}</span>
-                    <Badge variant={on ? 'secondary' : 'destructive'}>{on ? 'On' : 'Off'}</Badge>
-                    {!state.environment && (
-                      <Badge variant="outline">Off by environment (FEATURE_*_ENABLED)</Badge>
-                    )}
+                    <span className="font-medium">{label(feature)}</span>
+                    <Badge variant={on ? 'secondary' : 'destructive'}>
+                      {on ? tc('on') : tc('off')}
+                    </Badge>
+                    {!state.environment && <Badge variant="outline">{t('offByEnvironment')}</Badge>}
                   </div>
                   <Button
                     size="sm"
                     variant={state.global ? 'destructive' : 'default'}
                     onClick={() => setChange({ feature, scope: 'global', enabled: !state.global })}
                   >
-                    {state.global ? 'Turn off globally' : 'Turn on globally'}
+                    {state.global ? t('turnOffGlobally') : t('turnOnGlobally')}
                   </Button>
                 </div>
                 {state.disabledFor.length > 0 && (
-                  <ul aria-label={`${FEATURE_LABEL[feature]} disabled for`} className="grid gap-1">
+                  <ul
+                    aria-label={t('disabledForAria', { feature: label(feature) })}
+                    className="grid gap-1"
+                  >
                     {state.disabledFor.map((org) => (
                       <li key={org} className="flex items-center justify-between gap-2 text-sm">
                         <span className="font-mono">{org}</span>
@@ -124,7 +131,7 @@ export function FeaturesPanel() {
                             })
                           }
                         >
-                          Turn back on
+                          {t('turnBackOn')}
                         </Button>
                       </li>
                     ))}
@@ -135,10 +142,10 @@ export function FeaturesPanel() {
           })}
         </ul>
       </Section>
-      <Section title="Disable for one organisation">
+      <Section title={t('orgTitle')}>
         <form onSubmit={disableForOrg} className="flex flex-wrap items-end gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor="feature-org-feature">Feature</Label>
+            <Label htmlFor="feature-org-feature">{t('featureLabel')}</Label>
             <select
               id="feature-org-feature"
               className={selectClass}
@@ -147,13 +154,13 @@ export function FeaturesPanel() {
             >
               {FEATURE_NAMES.map((f) => (
                 <option key={f} value={f}>
-                  {FEATURE_LABEL[f]}
+                  {label(f)}
                 </option>
               ))}
             </select>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="feature-org-id">Organisation id</Label>
+            <Label htmlFor="feature-org-id">{t('organisationId')}</Label>
             <Input
               id="feature-org-id"
               value={orgId}
@@ -162,7 +169,7 @@ export function FeaturesPanel() {
             />
           </div>
           <Button type="submit" variant="destructive" disabled={!orgId.trim()}>
-            Turn off
+            {t('turnOff')}
           </Button>
         </form>
       </Section>
@@ -170,8 +177,8 @@ export function FeaturesPanel() {
         open={change !== null}
         onOpenChange={(open) => !open && setChange(null)}
         title={change ? describe(change) : ''}
-        description="Users of this feature get a “feature disabled” error and its background jobs stop until it is turned back on."
-        confirmLabel={change?.enabled ? 'Turn on' : 'Turn off'}
+        description={t('dialogDescription')}
+        confirmLabel={change?.enabled ? t('turnOn') : t('turnOff')}
         destructive={change ? !change.enabled : false}
         confirmPhrase={
           change && change.scope === 'global' && !change.enabled ? change.feature : undefined

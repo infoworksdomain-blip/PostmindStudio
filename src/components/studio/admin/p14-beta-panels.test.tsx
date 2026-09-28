@@ -2,6 +2,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
 import { mockFetch, renderWithSWR } from '../library/test-helpers';
 import { BetaPanel, type BetaDashboardResponse } from './beta-panel';
 import { SafetyAuditPanel, type AuditItem, type AuditResponse } from './safety-audit-panel';
@@ -86,6 +87,24 @@ describe('BetaPanel', () => {
     expect(within(row).getByText('25%')).toBeInTheDocument();
     expect(within(row).getByText('£42.10')).toBeInTheDocument();
     expect(await screen.findByText('Preview froze on Safari')).toBeInTheDocument();
+  });
+
+  it('renders in Arabic (right to left) and Simplified Chinese', async () => {
+    mockFetch([
+      { match: '/admin/beta', body: { ok: true, ...dashboard } },
+      { match: '/admin/feedback', body: feedback },
+    ]);
+    const { unmount } = renderWithSWR(withLocale('ar', <BetaPanel />));
+    expect(
+      await screen.findByRole('heading', { name: 'مجموعة النسخة التجريبية' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('row', { name: /org_leeds/ })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+    unmount();
+
+    renderWithSWR(withLocale('zh-Hans', <BetaPanel />));
+    expect(await screen.findByRole('heading', { name: 'Beta 用户群' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument();
   });
 
   it('enrols an organisation with Plus for 30 days, or without Plus', async () => {

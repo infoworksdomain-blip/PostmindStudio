@@ -282,6 +282,16 @@ export async function recordAuditResult(
         body: `A published ${row.platform} video (organisation ${row.organisationId}, publication ${row.publicationId}) failed the ${row.period} audit: ${row.note ?? ''}. Follow runbooks/content-safety-miss.md.`,
         link: '/admin?tab=safety-audit',
         dedupeKey: `safety-audit-miss:${row.id}`,
+        message: {
+          key: 'safetyAuditMiss',
+          params: {
+            platform: row.platform,
+            organisationId: row.organisationId,
+            publicationId: row.publicationId,
+            period: row.period,
+            note: row.note ?? '',
+          },
+        },
       });
     } catch (err) {
       // The verdict is stored and audited; a failed staff notification must not undo it.

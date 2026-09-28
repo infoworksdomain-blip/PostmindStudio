@@ -1,7 +1,8 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { PLATFORM_LABEL } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { Field, NativeSelect } from './field';
 import { ShotPanel } from './shot-panel';
@@ -20,13 +21,18 @@ export function ScriptSelect({
   onChange: (scriptId: string) => void;
   id: string;
 }) {
+  const t = useTranslations('review.shots');
+  const f = useFormat();
   if (project.scripts.length < 2) return null;
   return (
-    <Field id={id} label="Variant" className="w-full sm:w-64">
+    <Field id={id} label={t('variant')} className="w-full sm:w-64">
       <NativeSelect id={id} value={value} onChange={(e) => onChange(e.target.value)}>
         {project.scripts.map((s) => (
           <option key={s.id} value={s.id}>
-            {PLATFORM_LABEL[s.targetPlatform] ?? s.targetPlatform} ({s.targetAspectRatio})
+            {t('variantOption', {
+              platform: f.platform(s.targetPlatform),
+              ratio: s.targetAspectRatio,
+            })}
           </option>
         ))}
       </NativeSelect>
@@ -43,13 +49,11 @@ export function ShotsTab({
   onChanged: () => void;
   businessId?: string | null;
 }) {
+  const t = useTranslations('review.shots');
   const [scriptId, setScriptId] = useState(project.scripts[0]?.id ?? '');
   const [shotId, setShotId] = useState<string | null>(null);
   const script = project.scripts.find((s) => s.id === scriptId) ?? project.scripts[0];
-  if (!script)
-    return (
-      <p className="text-sm text-muted-foreground">Shots appear once the script is written.</p>
-    );
+  if (!script) return <p className="text-sm text-muted-foreground">{t('noScript')}</p>;
   const index = script.shots.findIndex((s) => s.id === shotId);
 
   return (
@@ -79,9 +83,7 @@ export function ShotsTab({
           }}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Select a shot to regenerate it or change its narration.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('select')}</p>
       )}
     </div>
   );

@@ -1,16 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { CalendarClock, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { PLATFORM_LABEL } from '@/lib/client/format';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat, type StudioFormat } from '@/lib/client/format';
 import type { PlatformConnection, ProjectDetail, Render } from '@/lib/client/types';
-import { belongsToBusiness, isMetaPlatform, META_CONNECT_GUIDANCE } from '../connections/platforms';
+import { belongsToBusiness, isMetaPlatform } from '../connections/platforms';
 import { Field, NativeSelect } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
 
@@ -19,8 +20,6 @@ import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
 // 15.A7: "Suggest captions" fills each variant with its per-platform caption and hashtags (spec
 // 9.8, POST /projects/:id/caption-suggestions); edited variants are left alone.
 // 15.A6: the schedule picker shows an advisory best time (GET /analytics/best-times).
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface BestTimes {
   bestPerDay: Array<{ weekday: number; hour: number; score: number; basis: string }>;
@@ -32,11 +31,28 @@ interface Suggestion {
   hashtags: string[];
 }
 
-/** "Suggested: Tue 08:00" from the best-scoring day, or null. */
-export function bestTimeLabel(best: BestTimes | undefined): string | null {
+export interface BestTime {
+  /** 0 = Sunday … 6 = Saturday. */
+  weekday: number;
+  hour: number;
+  sufficientData: boolean;
+}
+
+/** The best-scoring day and hour, or null. */
+export function bestTime(best: BestTimes | undefined): BestTime | null {
   const top = [...(best?.bestPerDay ?? [])].sort((a, b) => b.score - a.score)[0];
   if (!top) return null;
-  return `Suggested: ${WEEKDAYS[top.weekday] ?? ''} ${String(top.hour).padStart(2, '0')}:00${best?.sufficientData ? '' : ' (little data yet)'}`;
+  return { weekday: top.weekday, hour: top.hour, sufficientData: Boolean(best?.sufficientData) };
+}
+
+/** The weekday and hour in the locale's words ("Tue" / "08:00", "mar." / "08:00"). */
+export function bestTimeParts(time: BestTime, f: StudioFormat): { day: string; time: string } {
+  // 7 January 2024 was a Sunday: add the weekday to reach that day of the week.
+  const at = new Date(2024, 0, 7 + time.weekday, time.hour, 0).toISOString();
+  return {
+    day: f.date(at, { weekday: 'short' }),
+    time: f.date(at, { hour: '2-digit', minute: '2-digit' }),
+  };
 }
 
 function browserTimeZone(): string {
@@ -86,6 +102,10 @@ export function PublishPanel({
   businessId: string | null;
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.publish');
+  const tc = useTranslations('connections');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const { data, error } = useApi<{ data: PlatformConnection[] }>('/platform-connections');
   const [drafts, setDrafts] = useState<Record<string, VariantDraft>>({});
   const [scheduleAt, setScheduleAt] = useState('');
@@ -96,7 +116,10 @@ export function PublishPanel({
     ...(businessId && { businessId }),
     timezone: browserTimeZone(),
   });
-  const bestLabel = bestTimeLabel(best);
+  const best0 = bestTime(best);
+  const bestLabel = best0
+    ? t(best0.sufficientData ? 'suggested' : 'suggestedLittleData', bestTimeParts(best0, f))
+    : null;
   const renders = project.renders.filter((r) => RENDER_PUBLISHABLE.has(r.qualityCheckState));
   const connections = data?.data ?? [];
 
@@ -129,7 +152,7 @@ export function PublishPanel({
         { method: 'POST', idempotencyKey: newIdempotencyKey(), body: {} },
       );
       setSuggestions(res.suggestions);
-      toast.success('Captions suggested for each platform.');
+      toast.success(t('captionsSuggested'));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -159,23 +182,23 @@ export function PublishPanel({
         done += 1;
       } catch (err) {
         toast.error(
-          `${PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform}: ${errorMessage(err)}`,
+          t('platformError', {
+            platform: f.platform(render.targetPlatform),
+            error: errorMessage(err),
+          }),
         );
       }
     }
     setSubmitting(false);
     if (done) {
       toast.success(
-        scheduledFor ? `Scheduled ${done} post${done === 1 ? '' : 's'}.` : `Publishing ${done}.`,
+        scheduledFor ? t('scheduled', { count: done }) : t('publishing', { count: done }),
       );
       onChanged();
     }
   }
 
-  if (renders.length === 0)
-    return (
-      <p className="text-sm text-muted-foreground">No variant has passed its quality check.</p>
-    );
+  if (renders.length === 0) return <p className="text-sm text-muted-foreground">{t('noPassed')}</p>;
 
   return (
     <div className="flex flex-col gap-4">
@@ -183,12 +206,12 @@ export function PublishPanel({
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
           {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}
-          Suggest captions
+          {t('suggest')}
         </Button>
       </div>
       <ul className="flex flex-col gap-3">
         {renders.map((render) => {
-          const label = PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform;
+          const label = f.platform(render.targetPlatform);
           const options = connectionsFor(render, connections, businessId);
           const d = draftFor(render);
           const connectionPlatform = RENDER_CONNECTION[render.targetPlatform] ?? '';
@@ -205,22 +228,22 @@ export function PublishPanel({
               </label>
               {options.length === 0 && isMetaPlatform(connectionPlatform) && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  No connected account. {META_CONNECT_GUIDANCE}
+                  {t('noAccount')} {tc('meta.guidance')}
                 </p>
               )}
               {options.length === 0 &&
                 connectionPlatform &&
                 !isMetaPlatform(connectionPlatform) && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    No connected account.{' '}
+                    {t('noAccount')}{' '}
                     <Link href="/connections" className="underline">
-                      Connect {label}
+                      {t('connect', { platform: label })}
                     </Link>
                   </p>
                 )}
               {options.length > 0 && d.enabled && (
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <Field id={`acct-${render.id}`} label="Account">
+                  <Field id={`acct-${render.id}`} label={t('account')}>
                     <NativeSelect
                       id={`acct-${render.id}`}
                       value={d.connectionId}
@@ -233,15 +256,15 @@ export function PublishPanel({
                       ))}
                     </NativeSelect>
                   </Field>
-                  <Field id={`tags-${render.id}`} label="Hashtags">
+                  <Field id={`tags-${render.id}`} label={t('hashtags')}>
                     <Input
                       id={`tags-${render.id}`}
                       value={d.hashtags}
-                      placeholder="#spring #menu"
+                      placeholder={t('hashtagsPlaceholder')}
                       onChange={(e) => update(render, { hashtags: e.target.value })}
                     />
                   </Field>
-                  <Field id={`caption-${render.id}`} label="Caption" className="sm:col-span-2">
+                  <Field id={`caption-${render.id}`} label={t('caption')} className="sm:col-span-2">
                     <Textarea
                       id={`caption-${render.id}`}
                       value={d.caption}
@@ -255,7 +278,7 @@ export function PublishPanel({
         })}
       </ul>
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <Field id="publish-schedule" label="Schedule (optional)" className="w-full sm:w-64">
+        <Field id="publish-schedule" label={t('schedule')} className="w-full sm:w-64">
           <Input
             id="publish-schedule"
             type="datetime-local"
@@ -272,7 +295,9 @@ export function PublishPanel({
           ) : (
             <Send />
           )}
-          {scheduleAt ? 'Schedule' : 'Publish now'} ({selected.length})
+          {scheduleAt
+            ? t('scheduleCount', { count: selected.length })
+            : t('publishNowCount', { count: selected.length })}
         </Button>
       </div>
     </div>

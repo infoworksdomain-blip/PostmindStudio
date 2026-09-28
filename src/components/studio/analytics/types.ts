@@ -7,15 +7,6 @@ export type RangeDays = (typeof RANGE_DAYS)[number];
 export const METRICS = ['views', 'watchTime', 'engagement', 'likes', 'comments', 'shares'] as const;
 export type Metric = (typeof METRICS)[number];
 
-export const METRIC_LABEL: Record<Metric, string> = {
-  views: 'Views',
-  watchTime: 'Watch time',
-  engagement: 'Engagement',
-  likes: 'Likes',
-  comments: 'Comments',
-  shares: 'Shares',
-};
-
 export interface OverviewResponse {
   ok: true;
   days: number;

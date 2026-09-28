@@ -49,7 +49,7 @@ describe('BudgetRaise', () => {
     ]);
     renderWithSWR(<BudgetRaise project={project} onChanged={onChanged} />);
     expect(screen.getByRole('region', { name: 'Raise budget' })).toHaveTextContent(
-      "Generation paused at 90% of this project's budget (£3.15 of £3.50 spent)",
+      'Generation paused at 90% of this project’s budget (£3.15 of £3.50 spent)',
     );
     const input = screen.getByLabelText('New budget (£)');
     expect(input).toHaveValue('7.00'); // suggested: double the current budget

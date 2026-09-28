@@ -98,10 +98,10 @@ describe('create body helpers', () => {
   it('schedules only in the future and with accounts to publish to', () => {
     const now = Date.parse('2026-10-01T10:00:00Z');
     expect(validateCreate({ ...base, scheduleAt: '2026-09-30T10:00' }, 'biz', now)).toContain(
-      'Schedule a time in the future.',
+      'scheduleInPast',
     );
     expect(validateCreate({ ...base, scheduleAt: '2026-10-05T10:00' }, 'biz', now)).toContain(
-      'Choose the accounts to publish to (auto-publish) for a scheduled video.',
+      'scheduleNeedsAutoPublish',
     );
     const scheduled = buildCreateBody(
       {

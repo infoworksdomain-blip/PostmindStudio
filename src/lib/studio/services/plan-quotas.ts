@@ -5,7 +5,7 @@ import { QuotaExceededError, ValidationError } from '../../errors';
 import { logger as rootLogger } from '../../logger';
 import type { TenantContext } from '../../tenant';
 import { budgetFormatsFromJson } from '../cost/project-budget';
-import { notifySafely, type Notifier } from '../notifications/notifier';
+import { notifySafely, type NotificationMessage, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
 import { businessIdParam } from './businesses';
@@ -268,9 +268,40 @@ export async function monthlyVideoUsage(
   return usage;
 }
 
+function nextTier(tier: PlanTier): PlanTier | undefined {
+  return TIER_ORDER[TIER_ORDER.indexOf(tier) + 1];
+}
+
 function upgradeHint(tier: PlanTier): string {
-  const next = TIER_ORDER[TIER_ORDER.indexOf(tier) + 1];
+  const next = nextTier(tier);
   return next ? ` Upgrade to ${tierLabel(next)} for more.` : '';
+}
+
+/**
+ * 16.5: the localisable form of a plan-quota alert (notifications.planQuota*). `nextTier` is the
+ * plan label to upgrade to, or 'none' on the top tier (the catalogue selects on it).
+ */
+export function quotaMessage(
+  tier: PlanTier,
+  kind: 'short' | 'long',
+  threshold: number,
+  meter: Pick<QuotaMeter, 'used' | 'limit'>,
+  enforce: boolean,
+): NotificationMessage {
+  const next = nextTier(tier);
+  const key =
+    threshold < 100 ? 'planQuotaNearing' : enforce ? 'planQuotaBlocked' : 'planQuotaReached';
+  return {
+    key,
+    params: {
+      tier: tierLabel(tier),
+      kind,
+      threshold,
+      used: meter.used,
+      limit: meter.limit ?? 0,
+      nextTier: next ? tierLabel(next) : 'none',
+    },
+  };
 }
 
 export interface QuotaDeps {
@@ -482,6 +513,7 @@ export async function notifyQuotaThresholds(
             10,
           )}.${view.mode === 'enforce' && threshold >= 100 ? ' New generations are blocked until then.' : ''}${upgradeHint(tier)}`,
           dedupeKey: `plan-quota:${view.month}:${kind}:${threshold}`,
+          message: quotaMessage(tier, kind, threshold, m, view.mode === 'enforce'),
         });
         sent += 1;
       }

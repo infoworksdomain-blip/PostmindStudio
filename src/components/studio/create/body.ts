@@ -76,39 +76,51 @@ export interface CreateProjectBody {
 
 export const BRIEF_MAX = 4_000;
 
+/** Why submission is blocked; each code is a message key (create.problems.*). */
+export type CreateProblem =
+  | 'businessRequired'
+  | 'uploadRequired'
+  | 'briefRequired'
+  | 'briefTooLong'
+  | 'platformRequired'
+  | 'autoPublishAccountRequired'
+  | 'slideshowTemplateRequired'
+  | 'scheduleInPast'
+  | 'scheduleNeedsAutoPublish'
+  | 'budgetRange';
+
+export const MAX_BUDGET_POUNDS = 100_000;
+
 /** Problems that stop submission (empty = OK). */
 export function validateCreate(
   state: CreateState,
   businessId: string | null,
   now: number = Date.now(),
-): string[] {
-  const problems: string[] = [];
+): CreateProblem[] {
+  const problems: CreateProblem[] = [];
   const templated = usesTemplate(state);
-  if (!businessId) problems.push('Choose a business first.');
+  if (!businessId) problems.push('businessRequired');
   const uploading = state.source === 'UPLOAD';
-  if (uploading && !state.upload) problems.push('Upload your video first.');
-  if (!state.brief.trim() && !templated && !uploading)
-    problems.push('Describe what the video is about.');
-  if (state.brief.length > BRIEF_MAX)
-    problems.push(`Keep the brief under ${BRIEF_MAX} characters.`);
-  if (state.platforms.length === 0 && !templated) problems.push('Pick at least one platform.');
+  if (uploading && !state.upload) problems.push('uploadRequired');
+  if (!state.brief.trim() && !templated && !uploading) problems.push('briefRequired');
+  if (state.brief.length > BRIEF_MAX) problems.push('briefTooLong');
+  if (state.platforms.length === 0 && !templated) problems.push('platformRequired');
   if (
     state.autoPublish &&
     buildTargets(publishPlatforms(state), state.autoPublishAccounts).length === 0
   )
-    problems.push('Choose at least one account to auto-publish to, or turn auto-publish off.');
-  if (state.source === 'SLIDESHOW' && !state.templateId)
-    problems.push('Pick a slideshow template.');
+    problems.push('autoPublishAccountRequired');
+  if (state.source === 'SLIDESHOW' && !state.templateId) problems.push('slideshowTemplateRequired');
   if (state.scheduleAt) {
     const at = Date.parse(state.scheduleAt);
-    if (!Number.isFinite(at) || at <= now) problems.push('Schedule a time in the future.');
+    if (!Number.isFinite(at) || at <= now) problems.push('scheduleInPast');
     else if (!state.autoPublish && state.source !== 'SLIDESHOW')
-      problems.push('Choose the accounts to publish to (auto-publish) for a scheduled video.');
+      problems.push('scheduleNeedsAutoPublish');
   }
   if (state.budgetPounds.trim()) {
     const value = Number(state.budgetPounds);
-    if (!Number.isFinite(value) || value < 0 || value > 100_000)
-      problems.push('Budget must be between £0 and £100,000.');
+    if (!Number.isFinite(value) || value < 0 || value > MAX_BUDGET_POUNDS)
+      problems.push('budgetRange');
   }
   return problems;
 }

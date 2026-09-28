@@ -1,0 +1,3205 @@
+{
+  "common": {
+    "actions": {
+      "add": "Añadir",
+      "apply": "Aplicar",
+      "back": "Atrás",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "confirm": "Confirmar",
+      "continue": "Continuar",
+      "copy": "Copiar",
+      "create": "Crear",
+      "delete": "Eliminar",
+      "done": "Listo",
+      "edit": "Editar",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "remove": "Quitar",
+      "retry": "Reintentar",
+      "save": "Guardar",
+      "search": "Buscar",
+      "send": "Enviar",
+      "submit": "Enviar",
+      "switch": "Cambiar"
+    },
+    "states": {
+      "loading": "Cargando…",
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "empty": "Aún no hay nada aquí.",
+      "unknown": "Desconocido",
+      "none": "Ninguno",
+      "on": "Activado",
+      "off": "Desactivado",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "count": {
+      "items": "{count, plural, =0 {Ningún elemento} one {# elemento} many {# de elementos} other {# elementos}}",
+      "selected": "{count, plural, =0 {Nada seleccionado} one {# seleccionado} many {# seleccionados} other {# seleccionados}}"
+    },
+    "a11y": {
+      "moreOptions": "Más opciones",
+      "required": "Obligatorio"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "Abrir navegación",
+      "navigationTitle": "Navegación",
+      "getStarted": "Primeros pasos",
+      "groups": {
+        "make": "Crear",
+        "manage": "Gestionar",
+        "setup": "Configurar",
+        "staff": "Equipo de PostMind"
+      },
+      "items": {
+        "create": "Crear",
+        "projects": "Proyectos",
+        "library": "Biblioteca de referencias",
+        "templates": "Plantillas",
+        "publications": "Publicaciones",
+        "calendar": "Calendario",
+        "analytics": "Analítica",
+        "business": "Negocio e imágenes",
+        "connections": "Conexiones",
+        "approvals": "Flujos de aprobación",
+        "export": "Exportar datos",
+        "admin": "Administración"
+      }
+    },
+    "theme": {
+      "useLight": "Usar tema claro",
+      "useDark": "Usar tema oscuro"
+    },
+    "language": {
+      "label": "Idioma",
+      "trigger": "Idioma de la interfaz: {language}",
+      "changed": "Idioma de la interfaz cambiado a {language}"
+    },
+    "business": {
+      "label": "Negocio",
+      "choose": "Elige un negocio",
+      "idPlaceholder": "ID de negocio de PostMind",
+      "listPending": "La lista de negocios está pendiente de PostMind Core: escribe el ID del negocio."
+    },
+    "feedback": {
+      "button": "Comentarios",
+      "buttonAria": "Enviar comentarios",
+      "title": "Enviar comentarios",
+      "description": "Cuéntanos qué funciona y qué no. Veremos en qué pantalla estabas.",
+      "kindLegend": "¿Qué tipo de comentario es?",
+      "kindAria": "Tipo de comentario",
+      "kinds": {
+        "bug": "Algo no funciona",
+        "idea": "Una idea",
+        "praise": "Algo que me gusta",
+        "other": "Otro"
+      },
+      "message": "Mensaje",
+      "characterCount": "{count}/{max}",
+      "attachProject": "Tiene que ver con el proyecto que estoy viendo",
+      "thanks": "Gracias — el equipo de PostMind lee todos los mensajes"
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "bellAria": "{count, plural, =0 {Notificaciones} one {Notificaciones, # sin leer} many {Notificaciones, # sin leer} other {Notificaciones, # sin leer}}",
+      "markAllRead": "Marcar todo como leído",
+      "markRead": "Marcar como leído",
+      "markReadAria": "Marcar «{title}» como leído",
+      "empty": "Aún no hay notificaciones.",
+      "emailPendingSetup": "Correo electrónico pendiente de configurar: el envío de correos aún no está conectado.",
+      "inAppOnly": "Solo en la aplicación. El envío de correos aún no está disponible."
+    },
+    "preferences": {
+      "button": "Preferencias de notificaciones",
+      "title": "Preferencias de notificaciones",
+      "description": "Elige qué te llega. Correo electrónico: pendiente de configurar — tus preferencias de correo se guardan y se aplicarán en cuanto se conecte el envío de correos.",
+      "tableAria": "Preferencias de notificaciones",
+      "notification": "Notificación",
+      "inApp": "En la aplicación",
+      "email": "Correo electrónico",
+      "pendingSetup": "pendiente de configurar",
+      "switchInApp": "{label}: en la aplicación",
+      "switchEmail": "{label}: correo electrónico",
+      "kinds": {
+        "generation_complete": "Vídeo listo para revisar",
+        "approval_pending": "Aprobación pendiente desde hace más de 2 horas",
+        "publication_failed": "Error al publicar",
+        "auto_publish_failed": "La publicación automática se ha detenido",
+        "milestone": "Hitos (10 mil visualizaciones, 100 comentarios)",
+        "cost_alert": "Alertas de presupuesto",
+        "cost_paused": "Generación pausada por un presupuesto",
+        "safety_review": "Revisiones de seguridad del contenido",
+        "share_comment": "Comentarios en un enlace de vista previa",
+        "plan_quota": "Alertas de uso del plan (80 % y 100 %)"
+      }
+    },
+    "usage": {
+      "bannerAria": "Uso del plan",
+      "tiers": {
+        "BASIC": "Básico",
+        "STANDARD": "Estándar",
+        "PLUS": "Plus",
+        "ENTERPRISE": "Empresa"
+      },
+      "exceededTitle": "Has usado todos los vídeos de tu plan {tier} de este mes",
+      "warningTitle": "Estás cerca del límite mensual de tu plan {tier}",
+      "blockedBody": "Los vídeos nuevos están en pausa hasta el {date}. Mejora tu plan para seguir creando.",
+      "resetBody": "Tu cupo se renueva el {date}. Mejora tu plan para tener más vídeos.",
+      "shortVideos": "Vídeos cortos",
+      "longVideos": "Vídeos largos",
+      "shortVideosUpTo": "Vídeos cortos (hasta {seconds} s)",
+      "longVideosUpTo": "Vídeos largos (hasta {minutes} min)",
+      "usedOf": "{used} de {limit}",
+      "usedUnlimited": "{used} (ilimitado)",
+      "planName": "Plan {tier}",
+      "scans": "análisis de sitio web para {scanned} de {limit} negocios",
+      "scansUnlimited": "análisis de sitio web para {scanned} negocios (ilimitados)",
+      "resets": "se renueva el {date}",
+      "enforced": "límites aplicados",
+      "notEnforced": "límites aún no aplicados"
+    },
+    "pageTitle": {
+      "library": "Biblioteca de referencia",
+      "libraryVideo": "Vídeo de referencia",
+      "analytics": "Analíticas",
+      "publicationAnalytics": "Analíticas de la publicación",
+      "approvals": "Flujos de aprobación",
+      "admin": "Centro de administración"
+    }
+  },
+  "errors": {
+    "generic": "Algo ha salido mal.",
+    "sessionExpired": "Tu sesión de PostMind ha caducado. Vuelve a iniciar sesión.",
+    "forbidden": "No tienes permiso para hacer eso.",
+    "rateLimited": "Demasiadas solicitudes — vuelve a intentarlo en un momento.",
+    "withProblems": "{message}: {problems}",
+    "requestFailed": "Error en la solicitud ({status})",
+    "codes": {
+      "unauthorized": "Tu sesión de PostMind ha caducado. Vuelve a iniciar sesión.",
+      "forbidden": "No tienes permiso para hacer eso.",
+      "feature_disabled": "Esta función no está activada para tu organización.",
+      "plan_tier": "Tu plan no incluye esta función. Mejora tu plan para usarla.",
+      "quota_exceeded": "Has alcanzado el límite mensual de tu plan. Mejora tu plan para seguir creando.",
+      "not_found": "No lo hemos encontrado. Puede que se haya eliminado.",
+      "conflict": "Esto ha cambiado mientras trabajabas en ello. Actualiza y vuelve a intentarlo.",
+      "validation_error": "Algunos datos no son válidos. Revísalos y vuelve a intentarlo.",
+      "unprocessable": "No se puede hacer en su estado actual.",
+      "rate_deferred": "Un proveedor está ocupado. Studio volverá a intentarlo en breve.",
+      "rate_limited": "Demasiadas solicitudes — vuelve a intentarlo en un momento.",
+      "payload_too_large": "El archivo es demasiado grande.",
+      "kill_switch_active": "PostMind ha pausado la generación en este momento. Inténtalo más tarde.",
+      "provider_error": "Un proveedor de generación ha tenido un problema. Vuelve a intentarlo en un momento.",
+      "platform_error": "La red social ha tenido un problema. Vuelve a intentarlo en un momento.",
+      "no_provider_available": "Ahora mismo ningún proveedor puede encargarse de esta tarea. Inténtalo más tarde.",
+      "cost_cap_paused": "La generación está en pausa porque se ha alcanzado un presupuesto.",
+      "upstream_error": "Un servicio conectado ha tenido un problema. Vuelve a intentarlo en un momento.",
+      "configuration_error": "Studio aún no está totalmente configurado para esto. Ponte en contacto con el soporte de PostMind.",
+      "not_implemented": "Esto aún no está disponible.",
+      "internal_error": "Algo ha salido mal por nuestra parte. Vuelve a intentarlo en un momento.",
+      "upload_failed": "No se ha podido subir el archivo. Vuelve a intentarlo."
+    }
+  },
+  "primitives": {
+    "errorTitle": "No se ha podido cargar",
+    "retry": "Reintentar"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "ahora mismo",
+    "duration": {
+      "hoursMinutes": "{hours} h {minutes} min",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} s"
+    },
+    "projectState": {
+      "DRAFT": "Borrador",
+      "QUEUED": "En cola",
+      "SCANNING": "Autocompletando",
+      "PLANNING": "Escribiendo el guion",
+      "ASSETS_QUEUED": "Generando planos",
+      "ASSETS_GENERATING": "Generando planos",
+      "RENDERING": "Renderizando",
+      "QUALITY_CHECKING": "Comprobando la calidad",
+      "QUALITY_FAILED": "Control de calidad no superado",
+      "READY_FOR_REVIEW": "Listo para revisar",
+      "APPROVED": "Aprobado",
+      "PUBLISHING": "Publicando",
+      "PUBLISHED": "Publicado",
+      "PARTIALLY_PUBLISHED": "Publicado parcialmente",
+      "REJECTED": "Rechazado",
+      "FAILED": "Error"
+    },
+    "publicationState": {
+      "SCHEDULED": "Programada",
+      "PUBLISHING": "Publicando",
+      "PUBLISHED": "Publicada",
+      "FAILED": "Error",
+      "CANCELLED": "Cancelada",
+      "TAKEN_DOWN": "Retirada"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Feed de Instagram",
+      "facebook_feed": "Feed de Facebook"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "«{name}» está listo para revisar",
+      "body": "Todas las variantes han superado los controles de calidad. Revísalo y apruébalo o publícalo."
+    },
+    "generationAutoApproved": {
+      "title": "«{name}» se ha generado y se ha aprobado automáticamente",
+      "body": "El vídeo ha superado todos los controles de calidad y tu política de revisión lo ha aprobado automáticamente."
+    },
+    "publicationFailed": {
+      "title": "Error al publicar «{name}» en {platform}",
+      "body": "{reason} — abre el proyecto para reintentarlo."
+    },
+    "approvalPending": {
+      "title": "«{name}» está pendiente de aprobación",
+      "body": "Lleva más de 2 horas listo para revisar."
+    },
+    "autoPublishFailed": {
+      "title": "Error en la publicación automática de «{name}» en {platform}",
+      "body": "{reason} — abre el proyecto para reintentarlo."
+    },
+    "shareComment": {
+      "title": "Nuevos comentarios sobre {name}",
+      "body": "{author}: {comment}"
+    },
+    "milestoneViews": {
+      "title": "«{name}» ha alcanzado {threshold, number} visualizaciones en {platform}",
+      "body": "Ya lleva {count, number} visualizaciones. Abre el proyecto para ver sus publicaciones y su analítica."
+    },
+    "milestoneComments": {
+      "title": "«{name}» ha alcanzado {threshold, number} comentarios en {platform}",
+      "body": "Ya lleva {count, number} comentarios. Abre el proyecto para ver sus publicaciones y su analítica."
+    },
+    "autoResumedMonthly": {
+      "title": "«{name}» se ha reanudado automáticamente",
+      "body": "Ha empezado un nuevo mes, así que la generación ha continuado donde se pausó."
+    },
+    "autoResumedDaily": {
+      "title": "«{name}» se ha reanudado automáticamente",
+      "body": "Ha empezado un nuevo día (UTC), así que la generación ha continuado donde se pausó."
+    },
+    "costProjectPaused": {
+      "title": "Generación en pausa: «{name}» alcanzó el {pausePercent, number} % de su presupuesto",
+      "body": "Gastado: {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. Abre el proyecto, aumenta su presupuesto (Aumentar presupuesto) y vuelve a pulsar Generar."
+    },
+    "costProjectAlert": {
+      "title": "«{name}» ha usado el {threshold, number} % de su presupuesto",
+      "body": "Gastado: {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. La generación se pausa al {pausePercent, number} % del presupuesto; entonces podrás aumentarlo en la página del proyecto."
+    },
+    "costProjectOverBudget": {
+      "title": "«{name}» ha usado el {threshold, number} % de su presupuesto",
+      "body": "Gastado: {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. La generación está en pausa hasta que se aumente el presupuesto."
+    },
+    "costDailyAlert": {
+      "title": "Usado el {threshold, number} % del presupuesto de generación de hoy",
+      "body": "Gastado hoy (UTC): {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. La generación se pausa al 100 % hasta la medianoche UTC; la publicación no se ve afectada."
+    },
+    "costDailyPaused": {
+      "title": "Generación en pausa: se agotó el presupuesto de generación de hoy",
+      "body": "Gastado hoy (UTC): {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. La generación se reanuda después de la medianoche UTC; la publicación no se ve afectada."
+    },
+    "costMonthlyAlert": {
+      "title": "Usado el {threshold, number} % del presupuesto de generación de este mes",
+      "body": "Gastado este mes (UTC): {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. La generación se pausa al 100 % hasta el día 1 (UTC); la publicación no se ve afectada."
+    },
+    "costMonthlyPaused": {
+      "title": "Generación en pausa: se agotó el presupuesto de generación de este mes",
+      "body": "Gastado este mes (UTC): {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. La generación se reanuda el día 1 (UTC) o cuando se aumente el límite mensual de tu plan; la publicación no se ve afectada."
+    },
+    "costProviderDaily": {
+      "title": "Usado el {threshold, number} % del presupuesto de {provider} de hoy",
+      "body": "Gastado hoy (UTC) con {provider}: {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP}. Al 100 %, Studio usa proveedores alternativos cuando los hay."
+    },
+    "costGlobalAlert": {
+      "title": "Gasto diario global en proveedores al {threshold, number} % del límite",
+      "body": "Gastado hoy (UTC) en todas las organizaciones: {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP} (STUDIO_GLOBAL_DAILY_CAP_PENCE). Consulta runbooks/cost-runaway.md."
+    },
+    "costGlobalPaused": {
+      "title": "Límite diario global de proveedores alcanzado: toda la generación está en pausa",
+      "body": "Gastado hoy (UTC) en todas las organizaciones: {spent, number, ::currency/GBP} de {cap, number, ::currency/GBP} (STUDIO_GLOBAL_DAILY_CAP_PENCE). Consulta runbooks/cost-runaway.md."
+    },
+    "safetyReviewStaff": {
+      "title": "Se necesita una revisión de seguridad del contenido: «{name}»",
+      "body": "{kind, select, script {Guion marcado} other {Vídeo renderizado marcado}}: {reason}"
+    },
+    "safetyReviewOpened": {
+      "title": "«{name}» está pendiente de una revisión de seguridad del contenido",
+      "body": "El equipo de Trust & Safety de PostMind lo está revisando. La generación continuará si se permite."
+    },
+    "safetyReviewAllowed": {
+      "title": "«{name}» superó la revisión de seguridad del contenido",
+      "body": "La generación continúa."
+    },
+    "safetyReviewBlocked": {
+      "title": "«{name}» fue bloqueado por una revisión de seguridad del contenido",
+      "body": "Nota de Trust & Safety: {note}"
+    },
+    "safetyAuditMiss": {
+      "title": "Auditoría de Trust & Safety: fallo de detección de Hive",
+      "body": "Un vídeo publicado en {platform} (organización {organisationId}, publicación {publicationId}) no superó la auditoría de {period}: {note}. Sigue runbooks/content-safety-miss.md."
+    },
+    "planQuotaNearing": {
+      "title": "Plan {tier}: usado el {threshold, number} % de los vídeos {kind, select, short {cortos} other {largos}}",
+      "body": "{used, number} de {limit, number} vídeos {kind, select, short {cortos} other {largos}} generados este mes. El cupo se renueva a principios del mes que viene (UTC).{nextTier, select, none {} other { Pásate a {nextTier} para tener más.}}"
+    },
+    "planQuotaReached": {
+      "title": "Plan {tier}: vídeos {kind, select, short {cortos} other {largos}} agotados este mes",
+      "body": "{used, number} de {limit, number} vídeos {kind, select, short {cortos} other {largos}} generados este mes. El cupo se renueva a principios del mes que viene (UTC).{nextTier, select, none {} other { Pásate a {nextTier} para tener más.}}"
+    },
+    "planQuotaBlocked": {
+      "title": "Plan {tier}: vídeos {kind, select, short {cortos} other {largos}} agotados este mes",
+      "body": "{used, number} de {limit, number} vídeos {kind, select, short {cortos} other {largos}} generados este mes. Las nuevas generaciones están bloqueadas hasta que el cupo se renueve a principios del mes que viene (UTC).{nextTier, select, none {} other { Pásate a {nextTier} para tener más.}}"
+    }
+  },
+  "create": {
+    "page": {
+      "title": "Crear"
+    },
+    "screen": {
+      "eyebrow": "Crear",
+      "heading": {
+        "BRIEF": "¿De qué trata el vídeo?",
+        "SLIDESHOW": "¿De qué trata la presentación?",
+        "UPLOAD": "Sube tu vídeo"
+      },
+      "uploadChoose": "Elegir un vídeo",
+      "uploadReplace": "Sustituir el vídeo",
+      "uploadNote": "Studio añade subtítulos a partir de lo que se dice, tus superposiciones y todos los formatos de cada plataforma. Las notas de abajo son opcionales.",
+      "briefPlaceholder": "Nuestro menú de primavera se estrena el viernes: tres nuevos platos para compartir, con un 20 % de descuento la primera semana…",
+      "summaryTemplate": "Plantilla {name}",
+      "summaryPlatforms": "{count, plural, =0 {Ninguna plataforma} one {# plataforma} other {# plataformas}}",
+      "summaryAutoPublish": "publicación automática",
+      "summaryBrandKit": "kit de marca activado",
+      "options": "Opciones",
+      "generate": "Generar",
+      "createSlideshow": "Crear presentación",
+      "sourcesAria": "Qué crear",
+      "sources": {
+        "BRIEF": "Vídeo",
+        "SLIDESHOW": "Presentación",
+        "UPLOAD": "Subir un vídeo"
+      },
+      "templatedNote": "Las plataformas y la duración vienen de la plantilla. Tu texto de arriba es opcional: añade detalles al esquema de la plantilla.",
+      "noBusiness": {
+        "title": "Primero elige un negocio",
+        "description": "Los vídeos se crean para un negocio cada vez. Elígelo en la barra superior y vuelve aquí.",
+        "action": "Configurar un negocio"
+      },
+      "toast": {
+        "slideshowDrafted": "Borrador de la presentación listo: revisa las diapositivas y luego genera.",
+        "generatingUpload": "Generando: Studio está subtitulando tu vídeo.",
+        "generatingScript": "Generando: Studio está escribiendo el guion.",
+        "draftNotStarted": "Guardado como borrador, pero la generación no ha empezado: {error}"
+      }
+    },
+    "problems": {
+      "businessRequired": "Primero elige un negocio.",
+      "uploadRequired": "Primero sube tu vídeo.",
+      "briefRequired": "Describe de qué trata el vídeo.",
+      "briefTooLong": "La descripción debe tener menos de {max, number} caracteres.",
+      "platformRequired": "Elige al menos una plataforma.",
+      "autoPublishAccountRequired": "Elige al menos una cuenta para la publicación automática o desactívala.",
+      "slideshowTemplateRequired": "Elige una plantilla de presentación.",
+      "scheduleInPast": "Programa una hora futura.",
+      "scheduleNeedsAutoPublish": "Para programar un vídeo, elige las cuentas donde publicarlo (publicación automática).",
+      "budgetRange": "El presupuesto debe estar entre {min} y {max}."
+    },
+    "options": {
+      "platforms": "Plataformas",
+      "length": "Duración",
+      "lengths": {
+        "short": "Corto",
+        "long": "Largo"
+      },
+      "brandKit": {
+        "label": "Kit de marca",
+        "none": "Sin kit de marca",
+        "loading": "Cargando…",
+        "defaultKit": "{name} (predeterminado)"
+      },
+      "advanced": {
+        "toggle": "Opciones avanzadas",
+        "audience": "Público objetivo",
+        "audiencePlaceholder": "p. ej., personas que compran su primera vivienda",
+        "cta": "Llamada a la acción",
+        "ctaPlaceholder": "p. ej., Reserva una consulta gratuita",
+        "budget": "Presupuesto máximo (£)",
+        "budgetHint": "La generación se pausa al 90 % de esta cantidad; puedes aumentarla en la página del proyecto. En blanco = {short} para vídeos cortos, {long} para vídeos largos (más de 3 minutos, o YouTube de más de 1 minuto).",
+        "budgetPlaceholder": "Predeterminado: {amount}",
+        "budgetPlaceholderTemplate": "Predeterminado: {short} / {long}",
+        "approval": "Aprobación",
+        "approvalDefault": "Predeterminado de la organización",
+        "approvalRequire": "Revisar antes de publicar",
+        "approvalAuto": "Aprobar automáticamente"
+      }
+    },
+    "planning": {
+      "language": "Idioma",
+      "languageOption": "{name} — {nativeName}",
+      "alsoMakeIn": "Crearlo también en (una versión por idioma)",
+      "tier": "Nivel de calidad",
+      "tierHint": "Un nivel inferior usa proveedores más baratos para este vídeo. Nunca puede superar tu plan.",
+      "tierPlan": "Tu plan ({tier})",
+      "tierPlanUnknown": "Tu plan",
+      "tiers": {
+        "BASIC": "Básico",
+        "STANDARD": "Estándar",
+        "PLUS": "Plus",
+        "ENTERPRISE": "Empresa"
+      },
+      "schedule": "Programar",
+      "scheduleHint": "Se publica en las cuentas de publicación automática a esta hora, una vez aprobado.",
+      "workflow": "Flujo de aprobación",
+      "workflowNone": "No hay flujos configurados",
+      "workflowOrg": "Reglas de la organización"
+    },
+    "autoPublish": {
+      "legend": "Publicación automática",
+      "toggle": "Publicar automáticamente al aprobarse",
+      "toggleHint": "En cuanto se aprueba el vídeo, ya sea por ti o automáticamente, se publica en las cuentas de abajo.",
+      "account": "Cuenta de {platform}",
+      "noAccount": "No hay ninguna cuenta conectada.",
+      "connectOne": "Conectar una",
+      "dontAutoPublish": "No publicar automáticamente"
+    },
+    "templatePicker": {
+      "legend": "Plantilla",
+      "aria": "Plantilla de vídeo",
+      "loading": "Cargando plantillas",
+      "none": "Sin plantilla",
+      "noneDetail": "Studio planifica el vídeo a partir de tu descripción",
+      "shots": "{count, plural, one {# plano} other {# planos}}",
+      "autoPublishes": "se publica automáticamente",
+      "yours": "tuya"
+    },
+    "reference": {
+      "eyebrow": "De la biblioteca de referencias",
+      "unavailable": "Vídeo de referencia no disponible",
+      "loading": "Cargando referencia…",
+      "modesAria": "Modo de referencia",
+      "modes": {
+        "INSPIRE": {
+          "label": "Inspiración",
+          "hint": "Toma prestados el ambiente y el ritmo"
+        },
+        "TEMPLATE": {
+          "label": "Plantilla",
+          "hint": "Sigue su estructura plano a plano"
+        }
+      },
+      "modeNotAllowed": "La licencia de este vídeo no permite este modo",
+      "clear": "No usar una referencia"
+    },
+    "upload": {
+      "uploading": "Subiendo {name}…",
+      "idle": "MP4, MOV o WebM.",
+      "problems": {
+        "type": "Elige un vídeo MP4, MOV o WebM.",
+        "empty": "El archivo está vacío.",
+        "tooLarge": "Los vídeos pueden ocupar como máximo {max, number} MB."
+      }
+    }
+  },
+  "review": {
+    "page": {
+      "title": "Revisión"
+    },
+    "screen": {
+      "back": "Proyectos",
+      "eyebrow": "Revisión",
+      "sources": {
+        "BRIEF": "A partir de una descripción",
+        "SLIDESHOW": "Presentación",
+        "LIBRARY_REFERENCE": "A partir de un vídeo de referencia",
+        "POSTMIND_CONTENT": "A partir de contenido de PostMind",
+        "TEMPLATE": "A partir de una plantilla",
+        "UPLOAD": "Tu vídeo"
+      },
+      "loading": "Cargando proyecto",
+      "spent": "{amount} gastado",
+      "ofBudget": "de un presupuesto de {amount}",
+      "cancelled": "Cancelado.",
+      "tabsAria": "Secciones de revisión",
+      "tabs": {
+        "slides": "Diapositivas",
+        "variants": "Variantes",
+        "shots": "Planos",
+        "overlays": "Superposiciones",
+        "script": "Guion",
+        "publish": "Publicar"
+      },
+      "variantsWorking": "Las variantes aparecen aquí a medida que termina de renderizarse cada formato.",
+      "variantsNone": "Aún no se ha renderizado ninguna variante.",
+      "publishTitle": "Publicar",
+      "publishDescription": "Publica ahora cada variante aprobada o prográmala.",
+      "approveFirst": "Aprueba el vídeo antes de publicarlo.",
+      "postsTitle": "Publicaciones"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "generate": "Generar",
+      "generateAgain": "Volver a generar",
+      "started": "Generación iniciada.",
+      "cancelled": "Cancelado: se gastaron {amount} en esta ejecución."
+    },
+    "approval": {
+      "aria": "Aprobación",
+      "readyPrompt": "Mira cada variante y apruébala para publicarla o devuélvela.",
+      "qualityFailedPrompt": "El control de calidad no se ha superado. Fuerza la aprobación de una variante abajo o rechaza el proyecto.",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "rejectNote": "¿Qué hay que cambiar? (obligatorio)",
+      "approveNote": "Nota (opcional)",
+      "back": "Atrás",
+      "confirmReject": "Confirmar rechazo",
+      "confirmApprove": "Confirmar aprobación",
+      "approved": "Aprobado: listo para publicar.",
+      "rejected": "Rechazado."
+    },
+    "publish": {
+      "suggested": "Sugerido: {day} {time}",
+      "suggestedLittleData": "Sugerido: {day} {time} (aún hay pocos datos)",
+      "captionsSuggested": "Textos sugeridos para cada plataforma.",
+      "noPassed": "Ninguna variante ha superado su control de calidad.",
+      "suggest": "Sugerir textos",
+      "noAccount": "No hay ninguna cuenta conectada.",
+      "connect": "Conectar {platform}",
+      "account": "Cuenta",
+      "hashtags": "Hashtags",
+      "hashtagsPlaceholder": "#primavera #menu",
+      "caption": "Texto de la publicación",
+      "schedule": "Programar (opcional)",
+      "scheduleCount": "Programar ({count, number})",
+      "publishNowCount": "Publicar ahora ({count, number})",
+      "platformError": "{platform}: {error}",
+      "scheduled": "{count, plural, one {Se ha programado # publicación.} other {Se han programado # publicaciones.}}",
+      "publishing": "{count, plural, one {Publicando # publicación.} other {Publicando # publicaciones.}}"
+    },
+    "publications": {
+      "empty": "Aún no hay nada publicado ni programado.",
+      "cancelled": "Publicación programada cancelada.",
+      "retrying": "Reintentando.",
+      "scheduledFor": "Para el {date}",
+      "liveSince": "Publicado desde el {date}",
+      "created": "Creado el {date}",
+      "view": "Ver",
+      "cancel": "Cancelar",
+      "retry": "Reintentar",
+      "cancelAria": "Cancelar la publicación en {platform}",
+      "retryAria": "Reintentar la publicación en {platform}"
+    },
+    "outbox": {
+      "title": "Estado de la publicación automática",
+      "sent": "Enviado para publicar",
+      "sending": "Enviando…",
+      "pending": "Pendiente",
+      "retryingAt": "Se reintentará el {date} (intento {attempt, number} de {max, number})",
+      "retryingSoon": "Reintentando (intento {attempt, number} de {max, number})",
+      "failed": "{count, plural, one {Error tras # intento} other {Error tras # intentos}}",
+      "requeued": "{count, plural, one {Reintentando # destino} other {Reintentando # destinos}}",
+      "retry": "Reintentar la publicación automática"
+    },
+    "automation": {
+      "aria": "Automatización de la revisión y la publicación",
+      "approvedAutomatically": "Aprobado automáticamente: creador de confianza y todos los controles de calidad superados.",
+      "approvedByPerson": "Aprobado por una persona.",
+      "needsReview": "Necesita la revisión de una persona.",
+      "noTargets": "La publicación automática está activada, pero no hay cuentas elegidas: no se publicará nada automáticamente.",
+      "publishesAutomatically": "Se publica automáticamente al aprobarse",
+      "publishesAutomaticallyLastRun": "Se publica automáticamente al aprobarse · última ejecución: {date}",
+      "targetsAria": "Destinos de la publicación automática",
+      "accountFallback": "cuenta",
+      "waits": "Espera la aprobación",
+      "scheduledFor": "Programado para el {date}",
+      "sent": "Enviado para publicar",
+      "notPublished": "No publicado: {error}",
+      "failedFallback": "error"
+    },
+    "budget": {
+      "aria": "Aumentar presupuesto",
+      "paused": "La generación se ha pausado al 90 % del presupuesto de este proyecto (gastado: {spent} de {budget}). Aumenta el presupuesto y vuelve a generar. No se pierde nada de lo que ya se ha creado.",
+      "newBudget": "Nuevo presupuesto (£)",
+      "raise": "Aumentar presupuesto",
+      "tooLow": "Introduce más de {budget} (hasta {max}).",
+      "raised": "Presupuesto aumentado a {amount}. Pulsa «{action}» para continuar."
+    },
+    "music": {
+      "aria": "Música",
+      "generated": "Música de fondo generada.",
+      "generatedReused": "Música de fondo generada: reutilizada de un renderizado anterior.",
+      "generatedTrack": "Música de fondo generada (pista de {seconds, number} s).",
+      "generatedTrackReused": "Música de fondo generada (pista de {seconds, number} s): reutilizada de un renderizado anterior.",
+      "offForPlan": "Este plan no incluye música de fondo: solo narración.",
+      "failed": "No se ha podido crear la música de fondo, así que este vídeo solo tiene narración.",
+      "none": "Renderizado antes de que existiera la música de fondo: solo narración."
+    },
+    "sfx": {
+      "aria": "Efectos de sonido",
+      "added": "Efectos de sonido: {added, number} de {total, number} añadidos.",
+      "failed": "No se han podido añadir los efectos de sonido; el vídeo se reproduce sin ellos.",
+      "offForPlan": "Este plan no incluye efectos de sonido.",
+      "unavailable": "Los efectos de sonido aún no están configurados; el vídeo se reproduce sin ellos.",
+      "cueQuoted": "«{cue}»",
+      "cue": {
+        "added": "añadido",
+        "no_match": "ningún efecto coincidente",
+        "failed": "no se ha podido obtener"
+      },
+      "cueShots": "{count, plural, one {# plano} other {# planos}}"
+    },
+    "pipeline": {
+      "aria": "Progreso del proceso",
+      "steps": {
+        "queued": "En cola",
+        "script": "Guion",
+        "shots": "Planos",
+        "render": "Renderizado",
+        "quality": "Calidad",
+        "review": "Revisión",
+        "publish": "Publicación"
+      },
+      "done": "(hecho)"
+    },
+    "paused": {
+      "aria": "En pausa por presupuesto",
+      "daily": "En pausa: se ha agotado el presupuesto de generación de tu organización para hoy.",
+      "monthly": "En pausa: se ha agotado el presupuesto de generación de tu organización para este mes.",
+      "resumesDaily": "Se reanuda automáticamente a las 00:05 UTC.",
+      "resumesMonthly": "Se reanuda automáticamente el día 1 a las 00:05 UTC.",
+      "resumeOff": "La reanudación automática está desactivada: pulsa «{action}» cuando quieras.",
+      "resumeToggle": "Reanudar automáticamente",
+      "willResume": "Se reanudará automáticamente",
+      "resumeTurnedOff": "Reanudación automática desactivada",
+      "safety": "En pausa por una revisión de seguridad del contenido del equipo de Trust & Safety de PostMind. La generación continuará automáticamente si se permite; te avisaremos en cualquier caso."
+    },
+    "fallback": {
+      "aria": "Se usó un proveedor alternativo",
+      "intro": "Hemos usado un proveedor alternativo en este vídeo para: {layers}. Por eso la calidad puede ser distinta de la habitual. Revísalo antes de aprobarlo o vuelve a generarlo más tarde.",
+      "layers": {
+        "visual": "imágenes",
+        "voice": "narración",
+        "music": "música",
+        "composition": "renderizado final"
+      },
+      "reasons": {
+        "provider_disabled": "en pausa por PostMind",
+        "over_budget": "por encima del presupuesto",
+        "too_slow": "demasiado lento",
+        "no_cost_estimate": "sin estimación de coste",
+        "circuit_open": "no disponible temporalmente"
+      },
+      "item": "{layer}: creado con {provider} ({skipped})",
+      "skipped": "{provider} {reason}"
+    },
+    "quality": {
+      "title": "Control de calidad",
+      "status": {
+        "passed": "Superado",
+        "failed": "No superado",
+        "warning": "Advertencia",
+        "skipped": "Omitido"
+      },
+      "statusLabel": "{status}:",
+      "codes": {
+        "content_safety": "Seguridad del contenido",
+        "duration_match": "Coincidencia de duración",
+        "black_frames": "Fotogramas negros",
+        "audio_present": "Audio presente",
+        "aspect_ratio": "Relación de aspecto",
+        "codec": "Códec"
+      },
+      "severity": {
+        "block": "bloqueo",
+        "error": "error",
+        "warning": "advertencia",
+        "info": "info"
+      },
+      "pending": "Los controles siguen en curso.",
+      "none": "No se ha informado de controles individuales.",
+      "forceApproved": "Un revisor ha anulado los fallos.",
+      "overrideLabel": "Anular el control no superado: motivo (obligatorio, queda registrado)",
+      "forceApprove": "Forzar aprobación",
+      "overridden": "Control de calidad anulado."
+    },
+    "saveTemplate": {
+      "open": "Guardar como plantilla",
+      "aria": "Guardar como plantilla",
+      "name": "Nombre de la plantilla",
+      "category": "Categoría",
+      "categoryHint": "Solo letras minúsculas, dígitos y _.",
+      "cancel": "Cancelar",
+      "save": "Guardar plantilla",
+      "saved": "Guardado como plantilla: elígela en la pantalla Crear."
+    },
+    "script": {
+      "brief": {
+        "hook": "Gancho",
+        "keyMessage": "Mensaje clave",
+        "audience": "Público",
+        "tone": "Tono"
+      },
+      "empty": "—",
+      "notWritten": "El guion aún no se ha escrito.",
+      "aria": "Guion para {platform}",
+      "shots": "{count, plural, one {# plano} other {# planos}}",
+      "edit": "Editar guion",
+      "notEditable": "Puedes editar el guion cuando el vídeo esté listo para revisar, se haya rechazado o haya dado error.",
+      "editor": {
+        "loading": "Cargando guion",
+        "voiceover": "Voz en off",
+        "shot": "Plano {n, number} · {duration}",
+        "narration": "Narración",
+        "narrationAria": "Narración del plano {n, number}",
+        "onScreen": "Texto en pantalla",
+        "onScreenAria": "Texto en pantalla del plano {n, number}",
+        "revoiceNote": "{count, plural, one {La narración modificada vuelve a locutar # plano; las imágenes se mantienen.} other {La narración modificada vuelve a locutar # planos; las imágenes se mantienen.}}",
+        "textNote": "Los cambios de texto mantienen todos los planos; vuelve a renderizar las variantes para verlos.",
+        "save": "Guardar guion",
+        "cancel": "Cancelar",
+        "savedRevoice": "{count, plural, one {Guardado: volviendo a locutar # plano.} other {Guardado: volviendo a locutar # planos.}}",
+        "savedRerender": "Guardado: vuelve a renderizar las variantes para aplicarlo."
+      },
+      "regenerate": {
+        "instruction": "Instrucciones para reescribirlo (opcional)",
+        "placeholder": "Un gancho con más fuerza, menciona la clase del sábado",
+        "button": "Volver a generar el guion",
+        "started": "Reescribiendo el guion a partir de tu descripción."
+      }
+    },
+    "shot": {
+      "loading": "Cargando plano",
+      "heading": "Plano {n, number} · {duration} · {treatment}",
+      "camera": "Cámara: {direction}",
+      "failed": "Error: {reason}",
+      "promptLabel": "Nuevo prompt (opcional: déjalo en blanco para volver a generar la misma escena)",
+      "regenerate": "Volver a generar este plano",
+      "uploadedNoRegenerate": "Los clips subidos se sustituyen, no se vuelven a generar",
+      "narration": "Narración",
+      "onScreen": "Texto en pantalla",
+      "saveText": "Guardar texto",
+      "regenerating": "Volviendo a generar el plano {n, number}.",
+      "savedRevoice": "Guardado: volviendo a locutar este plano.",
+      "notEditable": "Puedes cambiar los planos cuando el vídeo esté listo para revisar, se haya rechazado o haya dado error."
+    },
+    "shotStrip": {
+      "aria": "Planos",
+      "empty": "Aún no se ha planificado ningún plano.",
+      "tileAria": "Plano {n, number}, {duration}, {treatment}, {state}",
+      "states": {
+        "PLANNED": "planificado",
+        "QUEUED": "en cola",
+        "GENERATING": "generando",
+        "READY": "listo",
+        "FAILED": "error",
+        "SKIPPED": "omitido"
+      },
+      "treatments": {
+        "AI_CLIP": "clip de IA",
+        "AI_AVATAR": "avatar de IA",
+        "STOCK_FOOTAGE": "imágenes de archivo",
+        "IMAGE_STILL": "imagen fija",
+        "MOTION_GRAPHICS": "gráficos animados",
+        "USER_UPLOAD": "archivo subido",
+        "TEXT_CARD": "tarjeta de texto",
+        "TRANSITION": "transición"
+      }
+    },
+    "swap": {
+      "label": "Sustituir desde la biblioteca",
+      "pickerLabel": "Imagen de la biblioteca para el plano {n, number}",
+      "use": "Usar esta imagen",
+      "swapped": "El plano {n, number} ya usa la imagen de la biblioteca: vuelve a renderizar para verlo.",
+      "deleted": "Plano {n, number} eliminado: vuelve a renderizar para actualizar las variantes.",
+      "confirm": "¿Eliminar el plano {n, number}? Se reajustarán los tiempos del guion.",
+      "confirmDelete": "Confirmar eliminación",
+      "keep": "Conservarlo",
+      "delete": "Eliminar plano",
+      "lastShot": "Un guion necesita al menos un plano"
+    },
+    "shots": {
+      "variant": "Variante",
+      "variantOption": "{platform} ({ratio})",
+      "noScript": "Los planos aparecen cuando el guion está escrito.",
+      "select": "Selecciona un plano para volver a generarlo o cambiar su narración."
+    },
+    "variant": {
+      "quality": {
+        "PENDING": "Comprobando",
+        "PASSED": "Calidad superada",
+        "FAILED": "Calidad no superada",
+        "FORCE_APPROVED": "Aprobación forzada"
+      },
+      "loadingPreview": "Cargando vista previa",
+      "previewUnavailable": "Vista previa no disponible: {error}",
+      "previewAria": "Vista previa de {platform}",
+      "aria": "Variante de {platform}",
+      "outOfDate": "Desactualizada",
+      "staleNote": "El guion o los planos cambiaron después de renderizar esta variante.",
+      "rerender": "Volver a renderizar",
+      "rerendering": "Volviendo a renderizar con tus cambios.",
+      "download": "Descargar MP4"
+    },
+    "thumbnail": {
+      "aria": "Miniatura",
+      "alt": "Miniatura de la variante",
+      "none": "Aún no hay miniatura",
+      "change": "Cambiar",
+      "frameAt": "Fotograma en (segundos)",
+      "overlayText": "Texto superpuesto (opcional)",
+      "useFrame": "Usar este fotograma",
+      "regenerate": "Volver a generar",
+      "upload": "Subir",
+      "uploadAria": "Subir miniatura",
+      "updated": "Miniatura actualizada."
+    }
+  },
+  "slideshow": {
+    "builder": {
+      "loading": "Cargando diapositivas",
+      "slides": "{count, plural, one {# diapositiva} other {# diapositivas}}",
+      "needAttention": "{count, plural, one {# necesita atención} other {# necesitan atención}}",
+      "autoPopulate": "Autocompletar",
+      "autoPopulating": "Autocompletando…",
+      "populateStarted": "Autocompletando textos e imágenes desde tu biblioteca…",
+      "empty": "Aún no hay diapositivas: añade una abajo.",
+      "deleted": "Diapositiva eliminada.",
+      "saved": "Diapositiva guardada.",
+      "templateSaved": "Guardado como plantilla.",
+      "moveUp": "Subir la diapositiva {n, number}",
+      "moveDown": "Bajar la diapositiva {n, number}",
+      "delete": "Eliminar la diapositiva {n, number}",
+      "addLabel": "Añadir una diapositiva",
+      "add": "Añadir",
+      "saveTemplate": "Guardar como plantilla",
+      "templatePlaceholder": "Nombre de la plantilla",
+      "save": "Guardar",
+      "pendingText": "El texto lo escribirá el autocompletado",
+      "noText": "Sin texto"
+    },
+    "problems": {
+      "pendingText": "texto aún sin escribir (usa el autocompletado o edita la diapositiva)",
+      "needsImage": "necesita una imagen",
+      "needsClip": "necesita un clip de vídeo",
+      "needsText": "necesita texto",
+      "needsBeforeAfter": "necesita imágenes de antes y después",
+      "needsQuote": "necesita una cita",
+      "needsValueLabel": "necesita un valor y una etiqueta",
+      "needsProductName": "necesita un nombre de producto"
+    },
+    "types": {
+      "IMAGE_STILL": "Imagen",
+      "IMAGE_KENBURNS": "Imagen (Ken Burns)",
+      "VIDEO_CLIP": "Clip de vídeo",
+      "TEXT_CARD": "Tarjeta de texto",
+      "BEFORE_AFTER": "Antes / después",
+      "QUOTE": "Cita",
+      "STATISTIC": "Estadística",
+      "PRODUCT": "Producto"
+    },
+    "transitions": {
+      "default": "Predeterminada",
+      "cut": "corte",
+      "fade": "fundido",
+      "wipe": "barrido",
+      "slide": "deslizamiento",
+      "zoom": "zoom"
+    },
+    "editor": {
+      "type": "Tipo de diapositiva",
+      "seconds": "Segundos",
+      "transition": "Transición de entrada",
+      "quote": "Cita",
+      "author": "Autor",
+      "value": "Valor",
+      "label": "Etiqueta",
+      "productName": "Nombre del producto",
+      "price": "Precio",
+      "features": "Características (separadas por comas, hasta 4)",
+      "text": "Texto",
+      "caption": "Pie de texto",
+      "background": "Color de fondo",
+      "image": "Imagen",
+      "slideImage": "Imagen de la diapositiva",
+      "clipNamed": "Clip: {name}",
+      "clipChosen": "Clip: elegido",
+      "clipNone": "Clip: aún ninguno",
+      "replaceClip": "Sustituir el clip",
+      "uploadClip": "Subir un clip",
+      "save": "Guardar diapositiva"
+    },
+    "imagePicker": {
+      "loading": "Cargando imágenes",
+      "empty": "Aún no hay imágenes: <link>añade algunas a la biblioteca de imágenes</link> o usa el autocompletado.",
+      "imageName": "Imagen {n, number}"
+    },
+    "overlays": {
+      "summary": "Superposiciones de texto en esta diapositiva"
+    },
+    "templatePicker": {
+      "loading": "Cargando plantillas",
+      "empty": "No hay plantillas de presentación disponibles.",
+      "aria": "Plantilla de presentación",
+      "slides": "{count, plural, one {# diapositiva} other {# diapositivas}}",
+      "yours": "tuya"
+    }
+  },
+  "overlays": {
+    "editor": {
+      "noScript": "Puedes añadir superposiciones cuando existan el guion y sus planos.",
+      "readOnly": "Las superposiciones son de solo lectura mientras el proyecto está en el estado «{state}».",
+      "shotStripLabel": "Elige un plano para editar sus superposiciones",
+      "selectShot": "Selecciona un plano arriba.",
+      "wholeVideo": "Vídeo completo",
+      "wholeVideoDescription": "Superposiciones que se muestran en toda la variante, como una marca de agua o un nombre de usuario.",
+      "across": "En todo el vídeo",
+      "acrossDescription": "Marcas de agua, nombres de usuario y textos repetidos."
+    },
+    "set": {
+      "loading": "Cargando superposiciones",
+      "added": "Superposición añadida.",
+      "saved": "Superposición guardada: vuelve a renderizar para aplicarla.",
+      "deleted": "Superposición eliminada.",
+      "full": "{unit, select, slide {Esta diapositiva ya tiene el máximo de {max, number} superposiciones.} video {Este vídeo ya tiene el máximo de {max, number} superposiciones.} other {Este plano ya tiene el máximo de {max, number} superposiciones.}}",
+      "playhead": "Cabezal",
+      "playheadAria": "Posición del cabezal (segundos)",
+      "seconds": "{value} s",
+      "undo": "Deshacer",
+      "redo": "Rehacer",
+      "save": "Guardar",
+      "discard": "Descartar cambios",
+      "preview": "Renderizar vista previa",
+      "saveFirst": "Guarda primero: la vista previa renderiza la superposición guardada",
+      "delete": "Eliminar",
+      "previewAria": "Vista previa renderizada de la superposición",
+      "selectHint": "Selecciona una superposición en la línea de tiempo para darle estilo y ajustar sus tiempos."
+    },
+    "safeArea": {
+      "instagram_reel": "Zona segura de Instagram Reels (Meta)",
+      "facebook": "Zona segura de Facebook Reels (Meta)",
+      "tiktok": "TikTok: margen conservador (TikTok no publica cifras fijas)",
+      "youtube_short": "YouTube Shorts: margen conservador (sin cifras oficiales)",
+      "titleSafe": "{platform}: zona segura de títulos del 5 % (conservadora)"
+    },
+    "form": {
+      "legend": "Ajustes de la superposición",
+      "text": "Texto",
+      "start": "Inicio (s)",
+      "end": "Fin (s)",
+      "font": "Fuente (Google Fonts)",
+      "weight": "Grosor",
+      "size": "Tamaño ({pct, number} % de la altura)",
+      "textColour": "Color del texto",
+      "background": "Fondo",
+      "backgrounds": {
+        "none": "ninguno",
+        "box": "recuadro",
+        "rounded_box": "recuadro redondeado",
+        "gradient": "degradado",
+        "blur": "desenfoque"
+      },
+      "backgroundColour": "Color de fondo",
+      "horizontal": "Posición horizontal",
+      "vertical": "Posición vertical",
+      "alignment": "Alineación",
+      "alignments": {
+        "left": "izquierda",
+        "center": "centro",
+        "right": "derecha"
+      },
+      "style": "Estilo",
+      "italic": "Cursiva",
+      "animationIn": "Animación de entrada",
+      "animationOut": "Animación de salida",
+      "animations": {
+        "none": "Ninguna",
+        "fadeIn": "Aparecer con fundido",
+        "fadeOut": "Desaparecer con fundido",
+        "slideInLeft": "Entrar por la izquierda",
+        "slideInRight": "Entrar por la derecha",
+        "slideInTop": "Entrar por arriba",
+        "slideInBottom": "Entrar por abajo",
+        "slideOutLeft": "Salir por la izquierda",
+        "slideOutRight": "Salir por la derecha",
+        "slideOutTop": "Salir por arriba",
+        "slideOutBottom": "Salir por abajo",
+        "scaleIn": "Ampliar al entrar",
+        "scaleOut": "Reducir al salir",
+        "typewriter": "Máquina de escribir",
+        "popIn": "Aparición rápida",
+        "wave": "Ola",
+        "glitch": "Glitch",
+        "blurIn": "Entrar desenfocado",
+        "karaokeHighlight": "Resaltado karaoke",
+        "counter": "Contador"
+      },
+      "opacity": "Opacidad (%)"
+    },
+    "problems": {
+      "textEmpty": "El texto no puede estar vacío.",
+      "endAfterStart": "El fin debe ser posterior al inicio.",
+      "endWithin": "El fin debe estar dentro de los {duration, number} s del plano.",
+      "fontFamily": "La fuente debe ser el nombre de una familia de Google Fonts."
+    },
+    "frame": {
+      "aria": "Fotograma en el segundo {time}: {texts}",
+      "noOverlays": "sin superposiciones",
+      "resizeAria": "Cambiar el tamaño de la superposición ({pct, number} % de la altura del fotograma); ajústalo con las flechas"
+    },
+    "timeline": {
+      "tick": "{value, number} s",
+      "empty": "{unit, select, slide {Aún no hay superposiciones en esta diapositiva.} video {Aún no hay superposiciones en este vídeo.} other {Aún no hay superposiciones en este plano.}}",
+      "barAria": "Superposición «{text}», de {start} s a {end} s",
+      "help": "Arrastra una barra o sus extremos. Teclado: ←/→ mueve 0,1 s (Shift 0,5 s), Alt+←/→ cambia el final."
+    },
+    "presets": {
+      "defaultStyle": "Estilo predeterminado",
+      "groups": {
+        "hook": "Gancho",
+        "subtitle": "Subtítulo",
+        "cta": "Llamada a la acción",
+        "quote": "Cita",
+        "statistic": "Estadística",
+        "story": "Historia",
+        "brand": "Marca"
+      },
+      "yours": "{name} (tuyo)",
+      "newText": "Texto de la nueva superposición",
+      "newPlaceholder": "Espera, que viene…",
+      "preset": "Ajuste predefinido",
+      "addAtPlayhead": "Añadir en el cabezal",
+      "saveAs": "Guardar este estilo como ajuste predefinido",
+      "namePlaceholder": "Nombre del ajuste",
+      "group": "Grupo",
+      "savePreset": "Guardar ajuste",
+      "saved": "Ajuste predefinido guardado.",
+      "edit": "Editar tus ajustes predefinidos",
+      "choose": "Elige uno de tus ajustes predefinidos",
+      "option": "{name} ({group})",
+      "name": "Nombre",
+      "saveName": "Guardar nombre",
+      "renamed": "Ajuste predefinido renombrado.",
+      "useStyle": "Usar el estilo de esta superposición",
+      "styleUpdated": "«{name}» ahora usa el estilo de esta superposición."
+    },
+    "bulk": {
+      "noRenders": "Aún no hay renderizados.",
+      "variant": "Variante",
+      "variantOption": "{platform} ({ratio})",
+      "preset": "Ajuste predefinido",
+      "text": "Texto",
+      "textPlaceholder": "@yourbrand",
+      "start": "Inicio (s)",
+      "end": "Fin (s)",
+      "applyTo": "Aplicar a",
+      "wholeVideo": "Vídeo completo (tiempos desde el inicio del vídeo)",
+      "selectedShots": "Planos seleccionados (tiempos dentro de cada plano)",
+      "shot": "Plano {n, number}",
+      "apply": "Aplicar superposición",
+      "wholeVideoNote": "Las superposiciones de vídeo completo se muestran y editan en la pista Vídeo completo de arriba; aparecen en el siguiente renderizado.",
+      "rerenderNote": "Los cambios en las superposiciones se aplican al volver a renderizar el vídeo. No se genera metraje nuevo.",
+      "rerender": "Volver a renderizar el vídeo",
+      "rerenderUnavailable": "Podrás volver a renderizar cuando el vídeo esté listo para revisar",
+      "rerendering": "Volviendo a renderizar con las superposiciones actuales.",
+      "added": "{count, plural, one {Se ha añadido # superposición.} other {Se han añadido # superposiciones.}}"
+    },
+    "wholeVideo": {
+      "none": "Puedes añadir superposiciones de vídeo completo cuando se haya renderizado una variante.",
+      "variant": "Variante",
+      "variantOption": "{platform} ({ratio})"
+    }
+  },
+  "projects": {
+    "list": {
+      "title": "Proyectos",
+      "description": "Todos tus vídeos, desde la primera idea hasta la publicación.",
+      "newVideo": "Nuevo vídeo",
+      "filtersAria": "Filtrar proyectos",
+      "filters": {
+        "all": "Todos",
+        "working": "En curso",
+        "review": "Por revisar",
+        "draft": "Borradores",
+        "published": "Publicados",
+        "failed": "Con error"
+      },
+      "loading": "Cargando proyectos",
+      "empty": {
+        "title": "Aún no hay vídeos",
+        "body": "Cuenta de qué trata el vídeo y Studio lo escribe, lo graba y lo edita.",
+        "action": "Crea tu primer vídeo"
+      },
+      "emptyFiltered": {
+        "title": "No hay nada aquí",
+        "body": "Ningún proyecto coincide con este filtro."
+      },
+      "noFormats": "Sin formatos",
+      "rowMeta": "{platforms} — actualizado {updated}",
+      "newer": "Más recientes",
+      "older": "Más antiguos"
+    }
+  },
+  "publications": {
+    "list": {
+      "title": "Publicaciones",
+      "description": "Todo lo que Studio ha publicado o programado, en cada plataforma.",
+      "calendar": "Calendario",
+      "filtersAria": "Filtrar publicaciones",
+      "filters": {
+        "all": "Todas",
+        "scheduled": "Programadas",
+        "live": "Publicadas",
+        "failed": "Con error",
+        "ended": "Canceladas y retiradas"
+      },
+      "platform": "Plataforma",
+      "allPlatforms": "Todas las plataformas",
+      "loading": "Cargando publicaciones",
+      "empty": {
+        "title": "Aún no hay nada publicado",
+        "body": "Aprueba un vídeo en su pantalla de revisión para publicarlo o programarlo.",
+        "action": "Ir a proyectos"
+      },
+      "emptyFiltered": {
+        "title": "No hay nada aquí",
+        "body": "Ninguna publicación coincide con estos filtros."
+      },
+      "columns": {
+        "video": "Vídeo",
+        "platform": "Plataforma",
+        "state": "Estado",
+        "when": "Cuándo",
+        "views": "Visualizaciones",
+        "actions": "Acciones"
+      },
+      "untitled": "Proyecto sin título",
+      "when": {
+        "published": "Publicada",
+        "scheduledFor": "Programada para",
+        "created": "Creada"
+      },
+      "rowMobile": {
+        "published": "{platform} · publicada el {date}",
+        "scheduledFor": "{platform} · programada para el {date}",
+        "created": "{platform} · creada el {date}"
+      },
+      "newer": "Más recientes",
+      "older": "Más antiguas"
+    },
+    "actions": {
+      "openOn": "Abrir {name} en {platform}",
+      "thisVideo": "este vídeo",
+      "retry": "Reintentar",
+      "cancel": "Cancelar",
+      "takeDown": "Retirar",
+      "done": {
+        "cancel": "Publicación programada cancelada",
+        "retry": "Reintento en cola",
+        "takedown": "Publicación retirada"
+      },
+      "cancelConfirm": {
+        "title": "¿Cancelar esta publicación programada?",
+        "body": "{name} no se publicará en {platform}. Puedes volver a programarla desde el proyecto.",
+        "confirm": "Cancelar publicación"
+      },
+      "takedownConfirm": {
+        "title": "¿Retirar esta publicación de {platform}?",
+        "body": "{name} se eliminará de {platform} si su API lo permite. Se perderán las visualizaciones, los «me gusta» y los comentarios, y no se puede deshacer.",
+        "confirm": "Retirar"
+      }
+    },
+    "confirmDialog": {
+      "keep": "Mantener"
+    }
+  },
+  "calendar": {
+    "title": "Calendario",
+    "description": "Vídeos programados y publicados en todas las plataformas.",
+    "allPublications": "Todas las publicaciones",
+    "refreshing": "Actualizando",
+    "previousMonth": "Mes anterior",
+    "today": "Hoy",
+    "nextMonth": "Mes siguiente",
+    "loading": "Cargando calendario",
+    "truncated": "Se muestran las primeras {count, number} publicaciones de este mes. <link>Verlas todas</link>.",
+    "dragHint": "Arrastra una publicación programada a otro día para moverla (a la misma hora), o usa su botón de mover para elegir cualquier fecha y hora.",
+    "grid": {
+      "daysAria": "Días del mes",
+      "more": "{count, plural, one {+# más} other {+# más}}",
+      "agendaAria": "Agenda",
+      "emptyMonth": "No hay nada programado ni publicado este mes."
+    },
+    "event": {
+      "untitled": "Proyecto sin título",
+      "title": "{name} — {platform} — {state}",
+      "aria": "{name}, {platform}, {state}",
+      "ariaAt": "{name}, {platform}, {state} a las {time}",
+      "meta": "{platform} · {state}",
+      "moveAria": "Mover {name} a otra hora",
+      "moveTitle": "Mover a otra hora"
+    },
+    "move": {
+      "tooSoon": "Elige una hora al menos un minuto a partir de ahora.",
+      "moved": "Movida al {date}",
+      "title": "Mover «{name}»",
+      "thisVideo": "este vídeo",
+      "description": "Elige una nueva fecha y hora (tu hora local), entre un minuto y 180 días a partir de ahora.",
+      "newTime": "Nueva hora",
+      "cancel": "Cancelar",
+      "moving": "Moviendo…",
+      "submit": "Mover"
+    },
+    "drip": {
+      "title": "Cola de publicación",
+      "description": "Los vídeos aprobados con «Programar» y sin fecha salen en la siguiente franja libre; cada plataforma se publica {minutes, plural, one {# minuto} other {# minutos}} después de la anterior.",
+      "saved": "Cola de publicación guardada.",
+      "nextSlot": "Siguiente franja libre: <strong>{date}</strong> · {queued, plural, one {# en cola} other {# en cola}}",
+      "takenAria": "Franjas ocupadas",
+      "slotDay": "Día de la franja {n}",
+      "slotTime": "Hora de la franja {n}",
+      "removeSlot": "Quitar la franja {n}",
+      "addSlot": "Añadir franja",
+      "saveSlots": "Guardar franjas"
+    }
+  },
+  "business": {
+    "screen": {
+      "title": "Negocio e imágenes",
+      "description": "Lo que Studio sabe de este negocio, cómo debe verse y las imágenes que puede usar.",
+      "pickFirst": {
+        "title": "Primero elige un negocio",
+        "body": "Elige en la barra superior el negocio que quieres configurar."
+      },
+      "tabs": {
+        "profile": "Perfil",
+        "scan": "Análisis de la web",
+        "brand": "Kits de marca",
+        "images": "Biblioteca de imágenes",
+        "learned": "Lo que Studio ha aprendido"
+      }
+    },
+    "kits": {
+      "intro": "El kit predeterminado se aplica a los vídeos nuevos. Los guiones usan su tono y su público; los textos superpuestos y la composición, sus colores y fuentes.",
+      "new": "Nuevo kit de marca",
+      "loading": "Cargando kits de marca",
+      "empty": {
+        "title": "Aún no hay ningún kit de marca",
+        "body": "Añade tus colores, fuentes y tono para que cada vídeo se vea y suene como tú."
+      },
+      "listAria": "Kits de marca",
+      "uploadedFont": "Fuente subida",
+      "defaultFonts": "Fuentes predeterminadas",
+      "default": "Predeterminado",
+      "noColours": "Sin colores",
+      "edit": "Editar",
+      "editAria": "Editar {name}",
+      "makeDefault": "Hacer predeterminado",
+      "makeDefaultAria": "Hacer predeterminado {name}",
+      "delete": "Eliminar",
+      "deleteAria": "Eliminar {name}",
+      "created": "{name} creado",
+      "saved": "{name} guardado",
+      "nowDefault": "{name} es ahora el kit predeterminado",
+      "deleted": "{name} eliminado",
+      "deleteConfirm": {
+        "title": "¿Eliminar {name}?",
+        "titleFallback": "¿Eliminar este kit?",
+        "body": "El kit se quita de este negocio (los vídeos terminados lo conservan). No se puede eliminar un kit que aún usa un proyecto activo.",
+        "confirm": "Eliminar kit"
+      }
+    },
+    "kitForm": {
+      "editTitle": "Editar {name}",
+      "newTitle": "Nuevo kit de marca",
+      "description": "Se usa para los guiones, los textos superpuestos y la composición de todos los vídeos de este negocio.",
+      "name": "Nombre",
+      "colours": "Colores",
+      "coloursHint": "Hasta 8 colores hexadecimales, p. ej. #D6452B, #1F2A44",
+      "headingFont": "Fuente de títulos",
+      "bodyFont": "Fuente del texto",
+      "tone": "Tono",
+      "toneHint": "Hasta 10 palabras, separadas por comas",
+      "audience": "Público",
+      "ctas": "Llamadas a la acción",
+      "ctasHint": "Una por línea: Etiqueta | plantilla",
+      "restricted": "Temas que evitar",
+      "restrictedHint": "Separados por comas",
+      "cancel": "Cancelar",
+      "save": "Guardar kit",
+      "create": "Crear kit",
+      "problems": {
+        "name": "Ponle un nombre al kit.",
+        "tooManyColours": "{max, plural, one {Usa # color como máximo.} other {Usa # colores como máximo.}}",
+        "badColour": "{colour} no es un color #RRGGBB.",
+        "badFont": "«{font}» no es un nombre de fuente válido (letras, números, espacios y guiones).",
+        "tooManyTones": "{max, plural, one {Usa # palabra de tono como máximo.} other {Usa # palabras de tono como máximo.}}",
+        "tooManyCtas": "{max, plural, one {Usa # plantilla de llamada a la acción como máximo.} other {Usa # plantillas de llamada a la acción como máximo.}}"
+      }
+    },
+    "media": {
+      "sectionAria": "Recursos de {name}",
+      "slots": {
+        "logo": "Logotipo",
+        "watermark": "Marca de agua",
+        "intro": "Tarjeta de entrada",
+        "outro": "Tarjeta de cierre"
+      },
+      "slotsInline": {
+        "logo": "logotipo",
+        "watermark": "marca de agua",
+        "intro": "tarjeta de entrada",
+        "outro": "tarjeta de cierre"
+      },
+      "added": "Añadido",
+      "none": "Ninguno",
+      "add": "Añadir",
+      "replace": "Sustituir",
+      "uploadAria": "Subir {slot} para {name}",
+      "addAria": "Añadir {slot}",
+      "replaceAria": "Sustituir {slot}",
+      "removeAria": "Quitar {slot}",
+      "slotSaved": "{slot}: guardado",
+      "slotRemoved": "{slot}: quitado",
+      "font": "Fuente",
+      "defaultFont": "Predeterminada",
+      "uploadedFont": "Fuente subida",
+      "uploadFontAria": "Subir fuente para {name}",
+      "uploadFont": "Subir TTF/OTF",
+      "fontSaved": "{family} es ahora la fuente de títulos",
+      "fontSavedGeneric": "La fuente subida es ahora la fuente de títulos",
+      "licence": "Confirmo que la licencia de esta fuente permite incrustarla en vídeos comerciales.",
+      "aiLabelOn": "Etiqueta de IA activada",
+      "aiLabelOff": "Etiqueta de IA desactivada",
+      "aiLabelAria": "Mostrar una etiqueta de contenido generado por IA en los vídeos",
+      "aiLabel": "Mostrar una etiqueta «Generado por IA» en los vídeos (las etiquetas de IA de las plataformas siempre están activadas)"
+    },
+    "voiceKit": {
+      "label": "Voz",
+      "aria": "Voz de {name}",
+      "stock": "Voz de stock (predeterminada)",
+      "unavailable": "Voz no disponible",
+      "cloned": "Voz clonada",
+      "saved": "Voz {name} guardada"
+    },
+    "dispute": {
+      "trigger": "No soy el propietario del sitio analizado",
+      "title": "Indica que este sitio no es tuyo",
+      "description": "Studio elimina en un plazo de 24 horas todas las imágenes que extrajo del sitio y deja de volver a analizarlo. Las imágenes de stock y las generadas se quedan en tu biblioteca.",
+      "reason": "¿Qué ha pasado?",
+      "reasonPlaceholder": "p. ej. Analizamos por error la web de un competidor",
+      "confirm": "Confirmo que no somos propietarios de este sitio web ni lo representamos.",
+      "cancel": "Cancelar",
+      "submit": "Eliminar contenido extraído",
+      "done": "Gracias — las imágenes extraídas de ese sitio se eliminarán en un plazo de 24 horas"
+    },
+    "domain": {
+      "title": "Demuestra que el sitio es tuyo",
+      "description": "Plan Empresa: añade un registro DNS TXT para demostrar que eres propietario del dominio que analizas.",
+      "states": {
+        "PENDING": "Esperando al DNS",
+        "VERIFIED": "Verificado",
+        "EXPIRED": "Caducado",
+        "DISPUTED": "Propiedad en disputa",
+        "PURGED": "Contenido extraído eliminado"
+      },
+      "recordName": "Nombre del registro TXT",
+      "recordValue": "Valor del registro TXT",
+      "copyRecordName": "Copiar el nombre del registro TXT",
+      "copyRecordValue": "Copiar el valor del registro TXT",
+      "copied": "Copiado",
+      "copyFailed": "No se ha podido copiar — selecciona el texto",
+      "pendingHelp": "Añade este registro en tu proveedor de DNS. Studio lo comprueba cada 10 minutos. La solicitud caduca el {expires}.",
+      "pendingHelpChecked": "Añade este registro en tu proveedor de DNS. Studio lo comprueba cada 10 minutos (última comprobación {checked}: {result}). La solicitud caduca el {expires}.",
+      "checkOk": "correcto",
+      "verifiedOn": "Verificado el {date}.",
+      "disputed": "Nos indicaste que este sitio no es tuyo.",
+      "disputedOn": "Nos indicaste que este sitio no es tuyo ({date}).",
+      "purgedOn": "Las imágenes extraídas de él se eliminaron el {date}; las de stock y las generadas se mantienen.",
+      "purging": "Se están eliminando las imágenes extraídas de él (en un plazo de 24 horas).",
+      "rescansOff": "Los análisis automáticos están desactivados.",
+      "domainLabel": "Dominio que verificar",
+      "domainPlaceholder": "tuempresa.es",
+      "verify": "Verificar con DNS",
+      "enterpriseOnly": "La verificación de dominio está disponible en el plan Empresa."
+    },
+    "images": {
+      "sources": {
+        "SCRAPED": "Tu web",
+        "STOCK": "Stock",
+        "GENERATED": "Generada",
+        "UPLOAD": "Subida"
+      },
+      "fallbackAlt": "Imagen de la biblioteca",
+      "noPreview": "Sin vista previa",
+      "sourceMatch": "{source} · coincidencia del {percent}",
+      "deleteAria": "Eliminar imagen: {alt}",
+      "deleteConfirm": {
+        "title": "¿Eliminar esta imagen?",
+        "body": "Se quitará de tu biblioteca y no se usará en vídeos nuevos.",
+        "confirm": "Eliminar imagen"
+      },
+      "tooLarge": "La imagen ocupa más de 15 MB",
+      "duplicate": "Esa imagen ya está en tu biblioteca",
+      "added": "Imagen añadida",
+      "fileAria": "Archivo de imagen que subir",
+      "upload": "Subir",
+      "refreshStarted": "{count, plural, one {Buscando en bancos de imágenes para # consulta — las imágenes nuevas aparecerán en unos minutos} other {Buscando en bancos de imágenes para # consultas — las imágenes nuevas aparecerán en unos minutos}}",
+      "refresh": "Actualizar stock",
+      "generate": "Generar",
+      "generated": "Imagen generada y añadida a tu biblioteca",
+      "generateTitle": "Generar una imagen",
+      "generateDescription": "Describe la imagen. Se guarda en la biblioteca de este negocio. La generación puede tardar hasta un minuto.",
+      "prompt": "Descripción",
+      "style": "Estilo (opcional)",
+      "shape": "Formato",
+      "cancel": "Cancelar",
+      "searchSummary": "{count, plural, one {# imagen parecida a <term>«{query}»</term>} other {# imágenes parecidas a <term>«{query}»</term>}}",
+      "clearSearch": "Borrar búsqueda",
+      "noMatches": "No hay coincidencias cercanas. Las imágenes se pueden buscar cuando se ha calculado su embedding.",
+      "searchResultsAria": "Resultados de búsqueda",
+      "searchLabel": "Buscar imágenes por significado",
+      "searchPlaceholder": "Buscar: «interior acogedor de panadería»",
+      "search": "Buscar",
+      "deleted": "Imagen eliminada",
+      "source": "Origen",
+      "allSources": "Todos los orígenes",
+      "tag": "Etiqueta",
+      "apply": "Aplicar",
+      "loading": "Cargando imágenes",
+      "empty": {
+        "title": "Tu biblioteca de imágenes está vacía",
+        "body": "Analiza tu web para llenarla automáticamente, o sube y genera imágenes."
+      },
+      "emptyFiltered": {
+        "title": "Ninguna imagen coincide",
+        "body": "Prueba con otro origen u otra etiqueta."
+      },
+      "gridAria": "Biblioteca de imágenes",
+      "newer": "Más recientes",
+      "older": "Más antiguas"
+    },
+    "profile": {
+      "fields": {
+        "products": {
+          "label": "Productos",
+          "hint": "Lo que vendes — sepáralo con comas."
+        },
+        "services": {
+          "label": "Servicios",
+          "hint": "Lo que haces para tus clientes — sepáralo con comas."
+        },
+        "audienceKeywords": {
+          "label": "Público",
+          "hint": "Quién te compra — sepáralo con comas."
+        },
+        "toneIndicators": {
+          "label": "Tono",
+          "hint": "Cómo suenas — sepáralo con comas."
+        },
+        "regions": {
+          "label": "Regiones",
+          "hint": "Dónde vendes — sepáralo con comas."
+        },
+        "imageThemes": {
+          "label": "Temas de imagen",
+          "hint": "Qué deben mostrar tus imágenes — sepáralo con comas."
+        },
+        "imageSearchQueries": {
+          "label": "Búsquedas de imágenes de stock",
+          "hint": "Consultas para llenar tu biblioteca de imágenes (al menos una) — sepáralas con comas."
+        },
+        "restrictedTopics": {
+          "label": "Temas que evitar",
+          "hint": "Nunca se muestran ni se mencionan — sepáralos con comas."
+        }
+      },
+      "industry": "Sector",
+      "niche": "Nicho",
+      "brandVoice": "Voz de marca",
+      "saved": "Perfil del negocio guardado",
+      "save": "Guardar perfil",
+      "discard": "Descartar cambios",
+      "invalid": "El sector, el nicho y al menos una búsqueda de imágenes de stock son obligatorios.",
+      "review": {
+        "aria": "El perfil necesita tu revisión",
+        "title": "Confirma este perfil",
+        "body": "Studio no estaba seguro de a qué se dedica tu negocio. Revisa los datos de abajo y confírmalos, o edítalos y guárdalos. Los vídeos y las sugerencias de imágenes usan este perfil.",
+        "bodyConfidence": "Studio no estaba seguro de a qué se dedica tu negocio (confianza {percent}). Revisa los datos de abajo y confírmalos, o edítalos y guárdalos. Los vídeos y las sugerencias de imágenes usan este perfil.",
+        "confirm": "Confirmar perfil",
+        "confirmed": "Perfil del negocio confirmado"
+      },
+      "loading": "Cargando perfil",
+      "empty": {
+        "title": "Aún no hay perfil del negocio",
+        "body": "Analiza tu web y Studio deducirá qué vendes, a quién y qué imágenes te encajan. Después puedes editarlo todo.",
+        "action": "Analizar tu web"
+      },
+      "eyebrow": "Lo que Studio cree que haces",
+      "headline": "{niche} <muted>en</muted> {industry}",
+      "editedByYou": "Editado por ti · actualizado {date}",
+      "classifiedBy": "Clasificado por {model} · actualizado {date}"
+    },
+    "reviewNotice": "Studio aún no está seguro de haber entendido tu negocio. Este vídeo usará el perfil actual — <link>revísalo y confírmalo</link> para obtener mejores resultados.",
+    "scan": {
+      "ownershipStatement": "Soy el propietario de este sitio web o estoy autorizado para representarlo, incluidas sus imágenes.",
+      "states": {
+        "QUEUED": "En cola",
+        "RUNNING": "Analizando tu web",
+        "SUCCEEDED": "Listo",
+        "FAILED": "Error"
+      },
+      "librarySources": {
+        "SCRAPED": "{count, plural, one {# de tu web} other {# de tu web}}",
+        "STOCK": "{count, plural, one {# de stock} other {# de stock}}",
+        "GENERATED": "{count, plural, one {# generada} other {# generadas}}",
+        "UPLOAD": "{count, plural, one {# subida} other {# subidas}}"
+      },
+      "loadingScan": "Cargando análisis",
+      "pagesRead": "Páginas leídas",
+      "imagesFromSite": "Imágenes de tu web",
+      "imageLibrary": "Biblioteca de imágenes",
+      "robots": "El robots.txt de tu web nos pidió no leer algunas páginas, así que las hemos omitido.",
+      "started": "Análisis iniciado — tarda entre 2 y 5 minutos",
+      "urlLabel": "Dirección web",
+      "urlPlaceholder": "tuempresa.es",
+      "submit": "Analizar web",
+      "renderPolicy": "Si tu web rechaza nuestro analizador (por ejemplo, con una comprobación antibots), puede que carguemos tu página de inicio una vez en un navegador, y solo porque has confirmado que la web es tuya. Nunca lo usamos para saltarnos la protección antibots de otra empresa. Si sigue fallando, rellena tu perfil a mano o añade nuestro analizador a la lista de permitidos de tu web.",
+      "title": "Analiza tu web",
+      "description": "Studio lee tu web, deduce tu nicho y crea una biblioteca de imágenes a partir de tus páginas, fotos de stock e imágenes generadas.",
+      "history": "Historial de análisis",
+      "loadingHistory": "Cargando análisis",
+      "noScans": "Aún no hay análisis.",
+      "historyRow": "{when} · {pages, plural, one {# página} other {# páginas}} · {images, plural, one {# imagen} other {# imágenes}}"
+    },
+    "schedule": {
+      "aria": "Programación de análisis",
+      "next": "Próximo análisis automático: {date} (cada {days, plural, one {# día} other {# días}}; se omite si tu web no ha cambiado).",
+      "notYet": "Los análisis automáticos empiezan tras tu primer análisis correcto.",
+      "lastSkipped": "Última comprobación {date}: sin cambios, así que no se ha vuelto a analizar.",
+      "stock": "Las fotos de stock se actualizan cada semana — la próxima vez: {date}."
+    },
+    "memory": {
+      "intro": "Studio aprende de lo que apruebas, rechazas y regeneras, y de cómo funcionan tus vídeos publicados (últimos 90 días). Las señales fuertes guían los guiones nuevos. Elimina lo que no te convenza: se borra al instante y solo se vuelve a aprender de vídeos más recientes.",
+      "loading": "Cargando memoria de estilo",
+      "empty": {
+        "title": "Aún no ha aprendido nada",
+        "body": "Tras algunos vídeos aprobados o publicados, Studio te muestra aquí lo que ha aprendido."
+      },
+      "listAria": "Lo que Studio ha aprendido",
+      "signals": {
+        "shot_pace": "Ritmo de los planos",
+        "treatment_mix": "Mezcla visual",
+        "provider_preference": "Generadores que funcionan",
+        "script_structure": "Estructura del guion",
+        "posting_time": "Mejor hora para publicar"
+      },
+      "confidence": {
+        "strong": "Señal fuerte",
+        "emerging": "Señal emergente",
+        "weak": "Señal débil (aún no se usa en los guiones)"
+      },
+      "forgotten": "{label} olvidado",
+      "updatedPinned": "{label} actualizado y fijado",
+      "newValueAria": "Nuevo valor para {label}",
+      "save": "Guardar",
+      "pinned": "(fijado)",
+      "notUsed": "(no se usa en los guiones)",
+      "why": "<label>Por qué:</label> {reason}",
+      "evidence": "{confidence} · {count, plural, one {# evidencia} other {# evidencias}}",
+      "evidenceLatest": "{confidence} · {count, plural, one {# evidencia} other {# evidencias}} · la última el {date}",
+      "useAria": "Usar {label} en los guiones",
+      "use": "Usar",
+      "turnedOn": "{label} activado",
+      "turnedOff": "{label} desactivado",
+      "edit": "Editar",
+      "editAria": "Editar {label}",
+      "pin": "Fijar",
+      "unpin": "Desfijar",
+      "pinAria": "Fijar {label}",
+      "unpinAria": "Desfijar {label}",
+      "pinnedToast": "{label} fijado",
+      "unpinnedToast": "{label} desfijado",
+      "delete": "Eliminar",
+      "deleteAria": "Eliminar {label}"
+    },
+    "voice": {
+      "title": "Voz",
+      "intro": "Clona una voz real, con el consentimiento grabado de quien habla, y elígela en un kit de marca para narrar sus vídeos. Si no hay ninguna, los vídeos usan una voz de stock.",
+      "clone": "Clonar una voz",
+      "loading": "Cargando voces",
+      "empty": {
+        "title": "Aún no hay ninguna voz clonada",
+        "body": "La narración usa una voz de stock hasta que clones una."
+      },
+      "listAria": "Perfiles de voz",
+      "deleted": "{name} eliminada",
+      "deletedUnlinked": "{kits, plural, one {{name} eliminada; # kit de marca usa ahora la voz de stock} other {{name} eliminada; # kits de marca usan ahora la voz de stock}}",
+      "ready": "{name} está lista",
+      "needsVerification": "{name} necesita verificación",
+      "deleteConfirm": {
+        "title": "¿Eliminar {name}?",
+        "titleFallback": "¿Eliminar esta voz?",
+        "body": "La voz se revoca en ElevenLabs y no se podrá volver a usar. Los kits de marca que la usan vuelven a la voz de stock. El registro de consentimiento se conserva.",
+        "confirm": "Eliminar voz"
+      },
+      "states": {
+        "READY": "Lista",
+        "REQUIRES_VERIFICATION": "Necesita verificación",
+        "DELETED": "Eliminada"
+      },
+      "card": {
+        "speaker": "Locutor: {name}",
+        "samples": "{count, plural, one {# muestra} other {# muestras}}",
+        "consent": "consentimiento {date}",
+        "verification": "ElevenLabs pide verificar la voz antes de poder usarla.",
+        "delete": "Eliminar",
+        "deleteAria": "Eliminar {name}"
+      },
+      "preview": {
+        "label": "Texto de prueba para {name}",
+        "button": "Escuchar",
+        "aria": "Escuchar {name}",
+        "playerAria": "Vista previa de {name}",
+        "defaultText": "Pan recién hecho todos los viernes"
+      },
+      "cloneDialog": {
+        "title": "Clonar una voz",
+        "description": "Narra vídeos con la voz de una persona real. Clona una voz solo con el consentimiento grabado de esa persona.",
+        "name": "Nombre de la voz",
+        "namePlaceholder": "Amara (propietaria)",
+        "speaker": "Nombre del locutor",
+        "statement": "Declaración de consentimiento",
+        "statementHint": "El locutor lee esto en voz alta en la grabación de consentimiento. Se conserva como prueba de consentimiento.",
+        "recording": "Grabación de consentimiento",
+        "consent": "El locutor consiente que PostMind Studio cree una copia sintética de su voz, y la grabación de arriba es esa persona leyendo la declaración.",
+        "cancel": "Cancelar",
+        "submit": "Clonar voz",
+        "consentPhrase": "Yo, {name}, consiento que PostMind Studio cree una copia sintética de mi voz para los vídeos de {business}.",
+        "yourName": "[tu nombre]",
+        "thisBusiness": "este negocio",
+        "problems": {
+          "name": "Ponle un nombre a la voz.",
+          "speaker": "Escribe el nombre del locutor.",
+          "statementLength": "La declaración de consentimiento debe tener entre {min, number} y {max, number} caracteres.",
+          "recording": "Graba o sube al locutor leyendo la declaración de consentimiento.",
+          "samples": "Añade al menos una muestra de voz.",
+          "consent": "Marca la casilla de consentimiento para continuar."
+        }
+      },
+      "recorder": {
+        "stop": "Detener grabación",
+        "recordAgain": "Volver a grabar",
+        "recordNow": "Grabar ahora",
+        "upload": "Subir grabación",
+        "fileAria": "Archivo de la grabación de consentimiento",
+        "recording": "Grabando — lee la declaración de arriba y luego detén la grabación.",
+        "removeAria": "Quitar la grabación de consentimiento",
+        "micFailed": "No se ha podido usar el micrófono. Permite el acceso o sube una grabación.",
+        "fileMeta": "{name} · {size}"
+      },
+      "samples": {
+        "label": "Muestras de voz",
+        "hint": "De 1 a 5 archivos, de hasta 10 MB cada uno. Lo ideal es 1–2 minutos de voz limpia en total: MP3 a 192 kbps o más, sin música ni ruido de fondo.",
+        "listAria": "Muestras seleccionadas",
+        "removeAria": "Quitar {name}",
+        "total": "{count, number} de {max, number} · {size} en total",
+        "tooMany": "{max, plural, one {Usa # muestra como máximo.} other {Usa # muestras como máximo.}}"
+      },
+      "fileProblems": {
+        "notAudio": "{name} no es un archivo de audio.",
+        "empty": "{name} está vacío.",
+        "tooLarge": "{name} ocupa más de 10 MB."
+      },
+      "bytes": {
+        "b": "{n} B",
+        "kb": "{n} KB",
+        "mb": "{n} MB"
+      },
+      "errors": {
+        "plan": "La clonación de voz está disponible en el plan {tier}. Mejora tu plan para clonar una voz; las voces de stock siguen disponibles.",
+        "planGeneric": "Tu plan no incluye la clonación de voz. Mejora tu plan para clonar una voz; las voces de stock siguen disponibles.",
+        "notConfigured": "La clonación de voz aún no está configurada en este servidor ({message})."
+      }
+    }
+  },
+  "connections": {
+    "title": "Conexiones",
+    "description": "Las cuentas en las que publica Studio. Instagram y Facebook se conectan en los ajustes de PostMind.",
+    "connectedNotice": "{platform} está conectado. Ya puedes publicar.",
+    "callbackErrors": {
+      "validation_error": "La plataforma no concedió el acceso (se rechazó la solicitud o devolvió un error). Vuelve a conectar.",
+      "platform_error": "La plataforma tuvo un problema al completar la conexión. Vuelve a intentarlo en breve.",
+      "upstream_error": "La plataforma tuvo un problema al completar la conexión. Vuelve a intentarlo en breve.",
+      "internal_error": "Algo ha fallado al terminar la conexión. Vuelve a intentarlo.",
+      "unknown": "La conexión no se completó ({code}). Vuelve a intentarlo."
+    },
+    "dismiss": "Descartar",
+    "pickFirst": {
+      "title": "Primero elige un negocio",
+      "body": "Las conexiones pertenecen a un negocio. Elige uno en la barra superior."
+    },
+    "loading": "Cargando conexiones",
+    "disconnected": "{account} desconectada",
+    "posts": {
+      "tiktok": "Vídeos cortos verticales",
+      "youtube": "Shorts y vídeos largos",
+      "x": "Publicaciones con vídeo",
+      "linkedin": "Vídeos de empresa y de miembros",
+      "instagram": "Reels y vídeos en el feed",
+      "facebook": "Reels y vídeos en el feed de la página"
+    },
+    "notConnected": "No conectado.",
+    "needsReconnecting": "Hay que reconectar",
+    "connected": "Conectado",
+    "stale": "El acceso ha caducado o se ha revocado en la plataforma. Las publicaciones programadas en esta cuenta fallarán hasta que vuelvas a conectarla.",
+    "connectedOn": "Conectada el {date}",
+    "reconnect": "Reconectar",
+    "disconnect": "Desconectar",
+    "disconnectAria": "Desconectar {account}",
+    "disconnectConfirm": {
+      "title": "¿Desconectar {account}?",
+      "body": "Studio elimina sus tokens de acceso a {platform}. Las publicaciones programadas en esta cuenta fallarán y tendrás que volver a conectarla para publicar aquí."
+    },
+    "addAnother": "Añadir otra cuenta de {platform}",
+    "connect": "Conectar {platform}",
+    "meta": {
+      "stale": "Meta ha rechazado o dejado caducar este acceso. Las publicaciones programadas en esta cuenta fallarán hasta que vuelvas a conectarla en los ajustes de PostMind.",
+      "connectedVia": "Conectada a través de PostMind el {date}",
+      "guidance": "Conecta Instagram y Facebook en los ajustes de PostMind."
+    }
+  },
+  "library": {
+    "browse": {
+      "eyebrow": "Crear",
+      "title": "Biblioteca de referencias",
+      "description": "Vídeos cortos analizados plano a plano. Elige uno y Studio crea el tuyo a su imagen, o simplemente toma prestado su estilo.",
+      "heading": "Explorar",
+      "searchStatus": "Resultados para «{query}» en toda la biblioteca, los más relevantes primero. Los filtros de duración, ambiente y etiquetas no se aplican a una búsqueda.",
+      "searchStatusInCategory": "Resultados para «{query}» en toda la biblioteca dentro de esta categoría, los más relevantes primero. Los filtros de duración, ambiente y etiquetas no se aplican a una búsqueda.",
+      "loading": "Cargando la biblioteca",
+      "emptyTitle": "Ninguna referencia coincide",
+      "emptySearch": "Nada en la biblioteca coincide con esa búsqueda. Prueba con otras palabras o borra la búsqueda.",
+      "emptyFilters": "Prueba con una categoría más amplia o menos etiquetas.",
+      "more": "Más referencias"
+    },
+    "filters": {
+      "formAria": "Filtrar la biblioteca",
+      "category": "Categoría",
+      "allCategories": "Todas las categorías",
+      "length": "Duración",
+      "duration": {
+        "any": "Cualquier duración",
+        "short": "Menos de 15 s",
+        "medium": "15–30 s",
+        "long": "30–60 s",
+        "xl": "Más de 60 s"
+      },
+      "mood": "Ambiente",
+      "moodPlaceholder": "p. ej., animado",
+      "tags": "Etiquetas",
+      "tagsPlaceholder": "separadas por comas",
+      "search": "Buscar en la biblioteca",
+      "searchPlaceholder": "p. ej., panadería a las 5 de la mañana, ambiente íntimo, en primera persona",
+      "clear": "Borrar"
+    },
+    "card": {
+      "templateAndInspire": "Plantilla + Inspiración",
+      "inspireOnly": "Solo inspiración",
+      "match": "{percent} de coincidencia"
+    },
+    "recommended": {
+      "heading": "Elegidas para tu negocio",
+      "subheading": "Adaptadas al perfil de tu negocio",
+      "listAria": "Recomendadas para tu negocio",
+      "loading": "Cargando recomendaciones",
+      "pickBusiness": "Elige un negocio en la barra superior para ver las referencias que encajan con él.",
+      "noProfile": "Aún no hay perfil del negocio: las recomendaciones necesitan un análisis del sitio web. <link>Analiza tu sitio</link>",
+      "unavailable": "Las recomendaciones no están disponibles: {error}",
+      "empty": "Todavía no hay coincidencias cercanas en esta categoría."
+    },
+    "similar": {
+      "heading": "Más como este",
+      "listAria": "Referencias similares",
+      "loading": "Cargando referencias similares",
+      "unavailable": "Los vídeos similares no están disponibles: {error}",
+      "empty": "Todavía no hay vídeos parecidos."
+    },
+    "detail": {
+      "back": "Biblioteca de referencias",
+      "notFoundTitle": "No se encontró la referencia",
+      "notFoundBody": "Puede que se haya retirado de la biblioteca.",
+      "loading": "Cargando la referencia",
+      "previewAria": "Vista previa sin sonido de {title}",
+      "previewNote": "{minutes, plural, one {Vista previa en baja resolución · el enlace caduca en # min} other {Vista previa en baja resolución · el enlace caduca en # min}}",
+      "tagsAria": "Etiquetas",
+      "facts": {
+        "length": "Duración",
+        "aspect": "Formato",
+        "shots": "Planos",
+        "pace": "Ritmo",
+        "mood": "Ambiente",
+        "structure": "Estructura",
+        "music": "Música",
+        "hook": "Gancho",
+        "callToAction": "Llamada a la acción",
+        "musicEnvelope": "Envolvente musical"
+      },
+      "bpm": "{bpm} BPM"
+    },
+    "structure": {
+      "heading": "Cómo está construido",
+      "notAnalysed": "Este vídeo aún no se ha analizado.",
+      "inspireOnly": "Referencia solo de inspiración: no se usa su estructura plano a plano, solo las etiquetas de estilo que aparecen al lado."
+    },
+    "timeline": {
+      "shotTitle": "{type} · {seconds} s",
+      "shotList": "Lista de planos",
+      "overlay": "Superposición: {overlay}",
+      "overlayThen": "Superposición: {overlay} · después {transition}",
+      "voiceover": "Voz en off",
+      "onScreenText": "Texto en pantalla",
+      "seconds": "{seconds} s"
+    },
+    "useReference": {
+      "heading": "Usar como referencia",
+      "locked": "No disponible para esta referencia por su licencia.",
+      "modes": {
+        "TEMPLATE": {
+          "title": "Mismo vídeo, mi contenido",
+          "body": "Sigue el número de planos, los tiempos, las superposiciones y la envolvente musical de este vídeo con contenido totalmente nuevo para tu marca."
+        },
+        "INSPIRE": {
+          "title": "Crea uno como este",
+          "body": "Solo toma prestado el estilo: ritmo, ambiente, estructura y sensación musical. Todo lo demás es nuevo."
+        }
+      }
+    },
+    "analysis": {
+      "pace": {
+        "slow": "Lento",
+        "medium": "Medio",
+        "fastCut": "Corte rápido"
+      },
+      "shotType": {
+        "hookTextOnStill": "Texto gancho sobre imagen fija",
+        "talkingHead": "Plano a cámara",
+        "avatarTalking": "Avatar hablando",
+        "aiClipAction": "Clip de acción con IA",
+        "productShot": "Plano de producto",
+        "stockLifestyle": "Estilo de vida (banco de imágenes)",
+        "screenRecording": "Grabación de pantalla",
+        "bRoll": "Recursos (B-roll)",
+        "textCard": "Tarjeta de texto",
+        "ctaCard": "Tarjeta de llamada a la acción"
+      },
+      "overlay": {
+        "none": "Sin texto",
+        "boldCentre": "Negrita, centro",
+        "boldTop": "Negrita, arriba",
+        "boldBottom": "Negrita, abajo",
+        "subtitleLower": "Subtítulo, tercio inferior",
+        "captionBox": "Cuadro de texto",
+        "quote": "Cita",
+        "bigNumber": "Número grande"
+      }
+    }
+  },
+  "analytics": {
+    "dashboard": {
+      "eyebrow": "Gestión",
+      "title": "Analíticas",
+      "description": "Cómo les va a tus vídeos publicados y cuánto cuesta hacerlos.",
+      "rangeLabel": "Periodo",
+      "rangeOption": "{days, plural, one {# día} other {# días}}"
+    },
+    "metrics": {
+      "views": "Visualizaciones",
+      "watchTime": "Tiempo de visualización",
+      "engagement": "Interacción"
+    },
+    "overview": {
+      "loadingAria": "Cargando resumen",
+      "viewsHeading": "Visualizaciones · {days, plural, one {último día} other {últimos # días}}",
+      "summary": "en {publications, plural, one {# publicación} other {# publicaciones}} · {projects, plural, one {# proyecto iniciado} other {# proyectos iniciados}}",
+      "watchTime": "Tiempo de visualización",
+      "engagement": "Interacción",
+      "engagementHint": "{rate} de las visualizaciones",
+      "shares": "Compartidos",
+      "savesHint": "{saves, plural, one {{formatted} guardado} other {{formatted} guardados}}",
+      "spend": "Gasto",
+      "spendHint": "costes de proveedores",
+      "pending": "…"
+    },
+    "trend": {
+      "title": "Actividad diaria",
+      "metricLabel": "Métrica",
+      "loadingAria": "Cargando gráfico",
+      "total": {
+        "views": "{count, plural, one {{value} visualización} other {{value} visualizaciones}} en el periodo",
+        "watchTime": "{value} de tiempo de visualización en el periodo",
+        "engagement": "{value} interacciones en el periodo"
+      },
+      "chartLabel": {
+        "views": "Visualizaciones por día, {days, plural, one {último día} other {últimos # días}}",
+        "watchTime": "Tiempo de visualización por día, {days, plural, one {último día} other {últimos # días}}",
+        "engagement": "Interacción por día, {days, plural, one {último día} other {últimos # días}}"
+      }
+    },
+    "platforms": {
+      "title": "Por plataforma",
+      "description": "Visualizaciones por plataforma",
+      "listLabel": "Visualizaciones por plataforma",
+      "empty": "No se publicó nada en este periodo.",
+      "hint": "{posts, plural, one {# publicación} other {# publicaciones}} · {engagement} interacciones"
+    },
+    "leaderboard": {
+      "title": "Vídeos destacados",
+      "description": "Publicaciones ordenadas por visualizaciones",
+      "empty": "No se publicó nada en este periodo.",
+      "listLabel": "Publicaciones destacadas",
+      "untitled": "Publicación sin título",
+      "meta": "{platform} · {date}",
+      "openOn": "Abrir en {platform}",
+      "analyticsFor": "Analíticas de «{caption}»",
+      "analyticsForUntitled": "Analíticas de la publicación sin título"
+    },
+    "cost": {
+      "title": "Gasto",
+      "description": "{total} en proveedores de IA {days, plural, one {el último día} other {en los últimos # días}}",
+      "chartLabel": "Gasto en proveedores por día, {days, plural, one {último día} other {últimos # días}}",
+      "byProvider": {
+        "title": "Por proveedor",
+        "listLabel": "Gasto por proveedor",
+        "empty": "No hay trabajos de proveedores en este periodo.",
+        "jobs": "{count, plural, one {# trabajo} other {# trabajos}}"
+      },
+      "byProject": {
+        "title": "Por proyecto",
+        "listLabel": "Gasto por proyecto",
+        "empty": "No hay gasto de proyectos en este periodo.",
+        "none": "Sin proyecto asociado"
+      }
+    },
+    "chart": {
+      "keyboardHint": {
+        "day": "{label}. Usa las flechas para recorrer cada día.",
+        "position": "{label}. Usa las flechas para recorrer cada punto del vídeo."
+      },
+      "point": "{label}: <b>{value}</b>",
+      "column": {
+        "day": "Día",
+        "position": "Punto del vídeo",
+        "value": "Valor"
+      }
+    },
+    "publication": {
+      "eyebrow": "Analíticas",
+      "title": "Publicación en {platform}",
+      "titleLoading": "Publicación",
+      "published": "Publicado el {date}",
+      "openOn": "Abrir en {platform}",
+      "back": "Todas las analíticas",
+      "loadingAria": "Cargando analíticas de la publicación",
+      "empty": {
+        "title": "Aún no hay datos",
+        "body": "Studio empieza a leer las métricas de esta publicación unos minutos después de que se publique."
+      },
+      "stats": {
+        "views": "Visualizaciones",
+        "watchTime": "Tiempo de visualización",
+        "avgWatched": "Visto de media",
+        "likes": "Me gusta",
+        "commentsShares": "Comentarios · compartidos",
+        "commentsSharesValue": "{comments} · {shares}"
+      },
+      "viewsOverTime": {
+        "title": "Visualizaciones a lo largo del tiempo",
+        "description": "Total de visualizaciones al final de cada día",
+        "chartLabel": "Total de visualizaciones por día",
+        "tooFew": "El gráfico diario aparece a partir del segundo día."
+      },
+      "retention": {
+        "title": "Retención de la audiencia",
+        "midpoint": "{pct} de los espectadores sigue viendo a mitad del vídeo",
+        "description": "Cuánto del vídeo vio la gente",
+        "chartLabel": "Espectadores que siguen viendo, según el avance del vídeo",
+        "youtubePending": "YouTube informa de la retención aproximadamente un día después de publicar. Vuelve mañana.",
+        "notReported": "{platform} no ofrece una curva de retención."
+      },
+      "audience": {
+        "title": "Audiencia",
+        "description": "Porcentaje de espectadores por edad y género",
+        "ageListLabel": "Espectadores por grupo de edad",
+        "genderListLabel": "Espectadores por género",
+        "noAge": "No hay datos de edad.",
+        "noGender": "No hay datos de género.",
+        "youtubePending": "YouTube muestra los datos de audiencia cuando lo ha visto suficiente gente.",
+        "notReported": "{platform} no ofrece datos demográficos de la audiencia.",
+        "gender": {
+          "female": "Mujer",
+          "male": "Hombre",
+          "user_specified": "Autodescrito"
+        }
+      }
+    }
+  },
+  "admin": {
+    "beta": {
+      "dashboard": {
+        "title": "Cohorte beta",
+        "description": "Las organizaciones del programa beta y cómo les está funcionando Studio.",
+        "cohortAria": "Cohorte",
+        "allCohorts": "Todas las cohortes",
+        "windowAria": "Periodo",
+        "window": "{days, plural, one {Último día} other {Últimos # días}}",
+        "loadingAria": "Cargando el panel beta",
+        "organisations": "Organizaciones",
+        "videosGenerated": "Vídeos generados",
+        "published": "Publicados",
+        "failureRate": "Tasa de fallos",
+        "failedHint": "{count, plural, one {# fallido} other {# fallidos}}",
+        "providerCost": "Coste de proveedores",
+        "feedback": "Comentarios",
+        "emptyTitle": "Aún no hay organizaciones beta",
+        "emptyBody": "Inscribe abajo a los primeros clientes de confianza. Reclutarlos es trabajo de personas (playbook 10.4).",
+        "col": {
+          "organisation": "Organización",
+          "cohort": "Cohorte",
+          "plusUntil": "Plus hasta",
+          "generated": "Generados",
+          "published": "Publicados",
+          "failureRate": "Tasa de fallos",
+          "cost": "Coste",
+          "feedback": "Comentarios"
+        },
+        "plusEnded": "{date} (finalizado)",
+        "noPlus": "Sin Plus"
+      },
+      "enrol": {
+        "title": "Inscribir una organización",
+        "description": "La añade a una cohorte o la mueve a otra.",
+        "formAria": "Inscribir organización",
+        "orgIdLabel": "ID de la organización",
+        "orgIdPlaceholder": "org_…",
+        "cohort": "Cohorte",
+        "plus": "Plus durante 30 días",
+        "submit": "Inscribir",
+        "help": "Mientras Plus esté activo, la organización se enruta, se limita y se aprueba automáticamente como el plan Plus en Studio (nunca por debajo de su plan de PostMind). La facturación no cambia. Queda auditado.",
+        "enrolledToast": "{id} está en {cohort}"
+      },
+      "feedback": {
+        "title": "Comentarios",
+        "description": "Todo lo que los clientes enviaron con el botón Comentarios, lo más reciente primero.",
+        "kindAria": "Tipo de comentario",
+        "allKinds": "Todos los tipos",
+        "loadingAria": "Cargando comentarios",
+        "empty": "Aún no hay comentarios.",
+        "project": "proyecto {id}",
+        "kind": {
+          "bug": "Error",
+          "idea": "Idea",
+          "praise": "Elogio",
+          "other": "Otro"
+        }
+      }
+    },
+    "centre": {
+      "eyebrow": "Equipo de PostMind",
+      "title": "Centro de administración",
+      "description": "Controles de Studio para toda la plataforma. Cada cambio aquí queda auditado.",
+      "checkingAccess": "Comprobando el acceso",
+      "staffOnly": {
+        "title": "Solo para el equipo de PostMind",
+        "description": "El Centro de administración controla toda la plataforma: interruptores de emergencia, el corpus de referencia y el gasto en proveedores. Tu cuenta no está en la lista del personal de la plataforma."
+      },
+      "tabs": {
+        "killSwitch": "Interruptor de emergencia",
+        "features": "Funciones",
+        "redrive": "Relanzar",
+        "library": "Biblioteca",
+        "cost": "Informe de costes",
+        "queues": "Colas",
+        "providers": "Proveedores",
+        "safety": "Revisión de seguridad",
+        "safetyAudit": "Auditoría de seguridad",
+        "organisations": "Organizaciones",
+        "usage": "Uso del plan",
+        "deadLetters": "Mensajes fallidos",
+        "forceApprovals": "Aprobaciones forzadas",
+        "beta": "Beta"
+      }
+    },
+    "cost": {
+      "report": {
+        "orgFilterAria": "Filtrar por organización",
+        "organisation": "Organización",
+        "organisationPlaceholder": "Todas las organizaciones",
+        "windowLabel": "Periodo de costes",
+        "windowDays": "{count, plural, one {# día} other {# días}}",
+        "loading": "Cargando el informe de costes",
+        "spend": "Gasto en proveedores",
+        "jobs": "Tareas",
+        "failedJobs": "Tareas fallidas",
+        "failedShare": "{percent} de las tareas",
+        "organisations": "Organizaciones",
+        "perDay": "Gasto por día",
+        "noUsageWindow": "No hay uso de proveedores en este periodo.",
+        "chartAria": "Gasto de la plataforma en proveedores por día, {count, plural, one {último # día} other {últimos # días}}",
+        "byOrg": "Por organización",
+        "byOrgAria": "Gasto por organización",
+        "byProvider": "Por proveedor",
+        "byProviderAria": "Gasto por proveedor",
+        "noUsage": "Sin uso.",
+        "jobCount": "{count, plural, one {# tarea} other {# tareas}}",
+        "failedCount": "{count, plural, one {# fallida} other {# fallidas}}"
+      },
+      "caps": {
+        "loading": "Cargando los límites de costes",
+        "title": "Límites de hoy ({day}, UTC)",
+        "globalDaily": "Global diario",
+        "globalMeterAria": "Uso del límite global diario",
+        "orgProviderDaily": "Organización × proveedor, diario",
+        "orgByTier": "Límites por organización, según el plan",
+        "noCap": "Sin límite",
+        "spentOfCap": "{spent} / {cap}",
+        "source": {
+          "default": "predeterminado",
+          "env": "sustituido por env",
+          "disabled": "desactivado por env",
+          "custom": "personalizado"
+        },
+        "tierTableAria": "Límites por organización según el plan",
+        "tierCol": "Plan",
+        "dailyCol": "Diario (día UTC)",
+        "monthlyCol": "Mensual (mes UTC)",
+        "explainer": "Los proyectos se pausan al {percent} de su presupuesto; los límites diarios y mensuales pausan la generación al 100 % (la publicación continúa). Las alertas se envían una sola vez al 80 % y al 100 % de cada límite. Los proyectos creados sin presupuesto reciben {shortBudget} (formato corto) o {longBudget} (formato largo).",
+        "topToday": "Organizaciones con más gasto hoy",
+        "noSpendToday": "No hay gasto en proveedores hoy.",
+        "spendTodayAria": "Gasto de las organizaciones hoy",
+        "topMonth": "Organizaciones con más gasto este mes ({month})",
+        "noSpendMonth": "No hay gasto en proveedores este mes.",
+        "spendMonthAria": "Gasto de las organizaciones este mes",
+        "projectsNear": "Proyectos al 80 % o más de su presupuesto",
+        "projectsNone": "Ninguno en los últimos 7 días.",
+        "projectsAria": "Proyectos cerca de su presupuesto",
+        "projectPaused": "{percent} · en pausa",
+        "overrides": "Excepciones por organización",
+        "overridesAria": "Excepciones de límite por organización",
+        "overrideTag": "excepción de org.",
+        "overrideDetail": "diario {daily} · mensual {monthly} — «{reason}»",
+        "alerts": "Alertas de costes, últimos 7 días",
+        "noAlerts": "No hay alertas de costes.",
+        "alertsAria": "Alertas de costes recientes",
+        "alertSpend": "{spent} / {cap} · {when}",
+        "scope": {
+          "PROJECT": "Presupuesto del proyecto",
+          "ORG_DAILY": "Organización, diario",
+          "ORG_MONTHLY": "Organización, mensual",
+          "ORG_PROVIDER_DAILY": "Organización × proveedor, diario",
+          "GLOBAL_DAILY": "Global diario"
+        }
+      }
+    },
+    "deadLetters": {
+      "title": "Mensajes fallidos",
+      "description": "Trabajos que agotaron sus reintentos (espec. 11.5). Aquí nada se vacía automáticamente. Los datos del trabajo se muestran sin secretos ni tokens de URL.",
+      "queueAria": "Cola",
+      "refresh": "Actualizar",
+      "drain": "Vaciar cola",
+      "loadingAria": "Cargando trabajos fallidos",
+      "emptyTitle": "No hay trabajos fallidos",
+      "emptyBody": "No hay nada en mensajes fallidos en {queue}.",
+      "total": "{count, plural, one {# fallido en {queue}, los más recientes primero.} other {# fallidos en {queue}, los más recientes primero.}}",
+      "listAria": "Trabajos fallidos",
+      "newer": "Más recientes",
+      "older": "Más antiguos",
+      "organisation": "Organización {id}",
+      "platformJob": "Trabajo de la plataforma",
+      "project": "proyecto {id}",
+      "attempts": "{count, plural, one {# intento} other {# intentos}}",
+      "failedWhen": "falló {when}",
+      "retry": "Reintentar",
+      "requeue": "Volver a encolar",
+      "inspect": "Inspeccionar datos del trabajo",
+      "retriedToast": "Reintentado: el trabajo vuelve a estar en espera",
+      "retriedAdvisoryToast": "Reintentado. {advisory}",
+      "requeuedToast": "Vuelto a encolar",
+      "resumedToast": "Vuelto a encolar: el proyecto {projectId} ha reanudado su etapa de recursos ({jobs, plural, one {# trabajo} other {# trabajos}})",
+      "drainedToast": "{count, plural, one {Se vació # trabajo fallido de {queue}} other {Se vaciaron # trabajos fallidos de {queue}}}",
+      "retryTitle": "¿Reintentar {name}?",
+      "retryBody": "El mismo trabajo se vuelve a ejecutar con sus intentos a cero. Esto puede generar gasto de proveedor en nombre de la organización.",
+      "retryConfirm": "Reintentar",
+      "drainTitle": "¿Vaciar todos los trabajos fallidos de {queue}?",
+      "drainBody": "Los trabajos fallidos se eliminan sin ejecutarse. No se puede deshacer.",
+      "drainConfirm": "Vaciar"
+    },
+    "dialogs": {
+      "reasonLabel": "Motivo (se registra en el log de auditoría)",
+      "typeToConfirm": "Escribe <code>{phrase}</code> para confirmar",
+      "requeue": {
+        "title": "Volver a poner {name} en cola",
+        "description": "Añade el trabajo de nuevo con intentos nuevos y los mismos datos.",
+        "descriptionProvider": "Añade el trabajo de nuevo con intentos nuevos. Si su proyecto falló en la etapa de recursos, la etapa se reanuda en una nueva ejecución (se conservan los recursos ya pagados).",
+        "preferProvider": "Proveedor preferido (opcional)",
+        "keepOrder": "Mantener el orden del enrutador",
+        "submit": "Volver a poner en cola"
+      }
+    },
+    "features": {
+      "loading": "Cargando funciones",
+      "title": "Funciones",
+      "description": "Desactiva una función globalmente o para una organización. Los cambios llegan a todos los workers y procesos de la API en {seconds, plural, one {# segundo} other {# segundos}} como máximo.",
+      "names": {
+        "library": "Biblioteca de vídeos de referencia",
+        "overlays": "Textos superpuestos",
+        "slideshow": "Presentaciones",
+        "imageLibrary": "Biblioteca de imágenes"
+      },
+      "offByEnvironment": "Desactivada por el entorno (FEATURE_*_ENABLED)",
+      "turnOffGlobally": "Desactivar globalmente",
+      "turnOnGlobally": "Activar globalmente",
+      "disabledForAria": "{feature} desactivada para",
+      "turnBackOn": "Reactivar",
+      "orgTitle": "Desactivar para una organización",
+      "featureLabel": "Función",
+      "organisationId": "ID de la organización",
+      "turnOff": "Desactivar",
+      "turnOn": "Activar",
+      "dialogDescription": "Los usuarios de esta función reciben un error de «función desactivada» y sus trabajos en segundo plano se detienen hasta que vuelva a activarse.",
+      "change": {
+        "onGlobal": "Activar {feature} para todas las organizaciones",
+        "offGlobal": "Desactivar {feature} para todas las organizaciones",
+        "onOrg": "Activar {feature} para {organisation}",
+        "offOrg": "Desactivar {feature} para {organisation}"
+      },
+      "applied": "{change}: se aplica en todas partes en {seconds, plural, one {# segundo} other {# segundos}} como máximo"
+    },
+    "forceApprovals": {
+      "title": "Aprobaciones forzadas",
+      "description": "Fallos del control de calidad que un cliente anuló con studio:render:force-approve (espec. 13.5). Los bloqueos de seguridad del contenido nunca se pueden forzar.",
+      "windowAria": "Periodo",
+      "window": "{days, plural, one {Último día} other {Últimos # días}}",
+      "loadingAria": "Cargando aprobaciones forzadas",
+      "emptyTitle": "No hay aprobaciones forzadas",
+      "emptyBody": "{days, plural, one {No se forzó la aprobación de ningún render en el último día.} other {No se forzó la aprobación de ningún render en los últimos # días.}}",
+      "listAria": "Aprobaciones forzadas",
+      "meta": "{platform} {aspect} · proyecto {state}",
+      "byLine": "Organización {organisationId} · por <mono>{user}</mono> · {date}",
+      "unknownUser": "usuario desconocido",
+      "renderTimeNote": "(hora del render; hora de aprobación no registrada)",
+      "note": "Nota:",
+      "quotedNote": "«{note}»",
+      "failedChecks": "Comprobaciones fallidas:",
+      "noneRecorded": "ninguna registrada",
+      "check": "{code} ({detail})",
+      "truncated": "Solo se muestran las entradas más recientes; acorta el periodo o filtra por organización."
+    },
+    "health": {
+      "refresh": "Actualizar",
+      "queues": {
+        "title": "Estado de las colas",
+        "description": "Profundidad de BullMQ por cola (espec. 16.4). Los trabajos fallidos permanecen hasta que un operador los vuelve a lanzar.",
+        "loadingAria": "Cargando colas",
+        "tableAria": "Estado de las colas",
+        "queue": "Cola",
+        "waiting": "En espera",
+        "active": "Activos",
+        "failed": "Fallidos",
+        "delayed": "Retrasados",
+        "oldestWaiting": "Espera más antigua",
+        "waitSeconds": "{seconds} s",
+        "waitMinutes": "{minutes} min {seconds} s",
+        "waitHours": "{hours} h {minutes} min"
+      },
+      "providers": {
+        "title": "Estado de los proveedores",
+        "description": "Todos los workers comparten los disyuntores (Redis). La tasa de error cuenta los fallos del proveedor en trabajos iniciados en la última hora; el gasto es el de hoy (UTC).",
+        "loadingAria": "Cargando proveedores",
+        "emptyTitle": "Aún no hay proveedores",
+        "emptyBody": "Ningún proveedor está configurado ni se ha ejecutado.",
+        "tableAria": "Estado de los proveedores",
+        "provider": "Proveedor",
+        "breaker": "Disyuntor",
+        "errorRate": "Tasa de error (1 h)",
+        "jobs": "Trabajos (1 h)",
+        "spendToday": "Gasto de hoy",
+        "notConfigured": "sin configurar",
+        "breakerState": {
+          "closed": "Cerrado",
+          "half_open": "Semiabierto (prueba)",
+          "open": "Abierto"
+        },
+        "jobCounts": "{succeeded} correctos · {failed} fallidos",
+        "jobCountsRunning": "{succeeded} correctos · {failed} fallidos · {running} en curso"
+      }
+    },
+    "killSwitch": {
+      "loading": "Cargando el interruptor de emergencia",
+      "since": "activado {when}",
+      "release": "Liberar",
+      "releaseAria": "Liberar {id}",
+      "activeCount": "{count, plural, one {# activo} other {# activos}}",
+      "scoped": {
+        "workspace": {
+          "title": "Espacios de trabajo congelados",
+          "empty": "No hay espacios de trabajo congelados."
+        },
+        "project": {
+          "title": "Proyectos detenidos",
+          "empty": "No hay proyectos detenidos."
+        },
+        "provider": {
+          "title": "Proveedores desactivados",
+          "empty": "Todos los proveedores están activados."
+        },
+        "platform": {
+          "title": "Plataformas en pausa",
+          "empty": "La publicación está activa en todas las plataformas."
+        }
+      },
+      "global": {
+        "halted": "Studio está detenido",
+        "running": "Studio está en marcha",
+        "engagedSince": "Interruptor global activado {when}. No se inicia ningún trabajo en ninguna parte.",
+        "off": "El interruptor global está desactivado.",
+        "propagation": "Los cambios llegan a todos los workers en {seconds, plural, one {# segundo} other {# segundos}} como máximo.",
+        "breakGlass": "El modo de emergencia está activo: la activación es inmediata (auditada).",
+        "twoPerson": "Activarlo requiere dos personas: otro miembro del personal lo confirma en 10 minutos.",
+        "engage": "Activar el interruptor global",
+        "release": "Liberar el interruptor global"
+      },
+      "dialog": {
+        "haltTitle": "¿Detener todo Studio?",
+        "releaseGlobalTitle": "¿Liberar el interruptor global?",
+        "releaseTargetTitle": "¿Liberar {target}?",
+        "haltDescription": "Los trabajos de Studio de todas las organizaciones se detienen en su siguiente paso: generación, renderizado y publicación. Las llamadas a proveedores en curso no se cancelan.",
+        "haltDescriptionTwoPerson": "Los trabajos de Studio de todas las organizaciones se detienen en su siguiente paso: generación, renderizado y publicación. Las llamadas a proveedores en curso no se cancelan. Esto registra una solicitud: otro miembro del personal debe confirmarla en 10 minutos.",
+        "releaseDescription": "Los nuevos trabajos vuelven a iniciarse con normalidad. El trabajo que falló mientras estaba activado no se reanuda solo: usa la pestaña Relanzar.",
+        "haltConfirm": "Detener Studio",
+        "releaseConfirm": "Liberar"
+      },
+      "form": {
+        "title": "Activar un interruptor específico",
+        "description": "Detiene los trabajos nuevos de un espacio de trabajo, proyecto o proveedor, o las subidas nuevas a una plataforma. No afecta a nada más.",
+        "aria": "Activar un interruptor de emergencia específico",
+        "level": "Nivel",
+        "levels": {
+          "workspace": "Congelar un espacio de trabajo",
+          "project": "Detener un proyecto",
+          "provider": "Desactivar un proveedor",
+          "platform": "Pausar la publicación en una plataforma"
+        },
+        "targets": {
+          "workspace": "ID de la organización",
+          "project": "ID del proyecto",
+          "provider": "Proveedor",
+          "platform": "Plataforma"
+        },
+        "choose": {
+          "provider": "Elige un proveedor",
+          "platform": "Elige una plataforma"
+        },
+        "reason": "Motivo",
+        "reasonPlaceholder": "Se registra en el log de auditoría",
+        "engage": "Activar"
+      },
+      "pending": {
+        "title": "Parada global a la espera de un segundo aprobador",
+        "requestedBy": "Solicitado por <who>{name}</who> el {at} — caduca en {minutes, plural, one {# min} other {# min}}.",
+        "requestedByYou": "Solicitado por <who>ti</who> el {at} — caduca en {minutes, plural, one {# min} other {# min}}.",
+        "reasonLabel": "Motivo:",
+        "confirm": "Confirmar y detener Studio",
+        "withdraw": "Retirar la solicitud",
+        "ownRequest": "Otro miembro del personal de PostMind debe confirmar tu solicitud.",
+        "dialogTitle": "¿Confirmar la parada global?",
+        "dialogDescription": "Segunda aprobación de la solicitud de {name}. Los trabajos de Studio de todas las organizaciones se detienen en su siguiente paso.",
+        "dialogConfirm": "Confirmar y detener"
+      },
+      "toast": {
+        "pending": "Parada global solicitada. Otro miembro del personal de PostMind debe confirmarla en 10 minutos.",
+        "confirmed": "Interruptor global activado (aprobación de dos personas)",
+        "withdrawn": "Solicitud de parada global retirada",
+        "globalEngaged": "Interruptor global activado",
+        "globalReleased": "Interruptor global liberado",
+        "engaged": {
+          "workspace": "Congelación del espacio de trabajo ({target}) activada",
+          "project": "Parada del proyecto ({target}) activada",
+          "provider": "Desactivación del proveedor ({target}) activada",
+          "platform": "Pausa de publicación en la plataforma ({target}) activada"
+        },
+        "released": {
+          "workspace": "Congelación del espacio de trabajo ({target}) liberada",
+          "project": "Parada del proyecto ({target}) liberada",
+          "provider": "Desactivación del proveedor ({target}) liberada",
+          "platform": "Pausa de publicación en la plataforma ({target}) liberada"
+        }
+      }
+    },
+    "library": {
+      "panel": {
+        "corpusTitle": "Corpus",
+        "corpusDescription": "Todos los elementos, incluidos los que no tienen licencia y los retirados. Los elementos retirados se ocultan a los usuarios, pero se conservan para los proyectos que los usaron.",
+        "loading": "Cargando el corpus",
+        "empty": "Ningún elemento coincide con estos filtros.",
+        "selectAllAria": "Seleccionar todo en esta página",
+        "selectPage": "Seleccionar página",
+        "listAria": "Elementos del corpus",
+        "retiredToast": "«{title}» retirado",
+        "retireTitle": "¿Retirar «{title}»?",
+        "retireBody": "Desaparece de la exploración, la búsqueda y las recomendaciones. Los proyectos que ya lo usaron siguen funcionando.",
+        "retireConfirm": "Retirar"
+      },
+      "row": {
+        "selectAria": "Seleccionar {title}",
+        "reanalysed": "reanalizado {when}",
+        "retired": "Retirado",
+        "edit": "Editar",
+        "editAria": "Editar {title}",
+        "retire": "Retirar",
+        "retireAria": "Retirar {title}"
+      },
+      "licenceBadge": {
+        "missing": "Sin licencia",
+        "expired": "Licencia caducada",
+        "expiring": "Licencia a punto de caducar",
+        "ok": "Con licencia"
+      },
+      "review": {
+        "ACCEPTED": "Categoría aceptada",
+        "OVERRIDDEN": "Categoría sustituida",
+        "REJECTED": "Rechazado"
+      },
+      "scenario": {
+        "LICENSED": "Con licencia",
+        "OWNED": "Propio",
+        "SCRAPED": "Recopilado",
+        "NOT_REQUIRED": "No necesaria"
+      },
+      "filters": {
+        "groupAria": "Filtros del corpus",
+        "search": "Buscar",
+        "searchPlaceholder": "Título, etiqueta o id",
+        "licence": "Estado de la licencia",
+        "licenceAny": "Cualquier licencia",
+        "licenceMissing": "Sin fila de licencia",
+        "status": "Estado",
+        "statusLive": "Activo",
+        "statusRetired": "Retirado",
+        "statusAll": "Activos y retirados",
+        "review": "Categorización",
+        "reviewAny": "Cualquiera",
+        "reviewNone": "Sin revisar",
+        "reviewAccepted": "Aceptada",
+        "reviewOverridden": "Sustituida",
+        "reviewRejected": "Rechazada",
+        "category": "Categoría",
+        "categoryAll": "Todas las categorías"
+      },
+      "bulk": {
+        "toolbarAria": "Acciones en bloque",
+        "selected": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+        "accept": "Aceptar categoría",
+        "newCategory": "Nueva categoría",
+        "newCategoryPlaceholder": "Nueva categoría…",
+        "override": "Sustituir",
+        "reanalyse": "Reanalizar",
+        "reject": "Rechazar",
+        "doneAccept": "Categoría aceptada para {count, plural, one {# elemento} other {# elementos}}",
+        "doneOverride": "Categoría sustituida para {count, plural, one {# elemento} other {# elementos}}",
+        "doneReject": "{count, plural, one {# elemento rechazado y retirado} other {# elementos rechazados y retirados}}",
+        "notFound": "{count, plural, one {# no encontrado} other {# no encontrados}}",
+        "reanalyseQueued": "Reanálisis en cola para {count, plural, one {# elemento} other {# elementos}}",
+        "rejectTitle": "¿Rechazar {count, plural, one {# elemento} other {# elementos}}?",
+        "rejectBody": "Los elementos rechazados se retiran: se ocultan de la exploración, la búsqueda y las recomendaciones. Los proyectos que ya los usaron siguen funcionando.",
+        "rejectConfirm": "Rechazar y retirar"
+      },
+      "edit": {
+        "title": "Editar referencia",
+        "titleField": "Título",
+        "description": "Descripción",
+        "category": "Categoría",
+        "tags": "Etiquetas",
+        "licence": "Licencia",
+        "unchangedModes": "Sin cambios ({modes})",
+        "unchangedNoLicence": "Sin cambios (sin licencia)",
+        "optionLicensed": "Con licencia",
+        "optionOwned": "Propio",
+        "optionScraped": "Recopilado (solo Inspire)",
+        "optionNotRequired": "No necesaria (propiedad del operador)",
+        "licenceSource": "Origen de la licencia",
+        "licenceSourcePlaceholder": "Sin cambios",
+        "save": "Guardar cambios",
+        "saved": "Vídeo de la biblioteca actualizado"
+      },
+      "ingest": {
+        "title": "Añadir al corpus",
+        "description": "Una URL de origen por línea (máximo {max}). Cada una se descarga, analiza e indexa en segundo plano.",
+        "formAria": "Importar vídeos a la biblioteca",
+        "urls": "URL de origen",
+        "urlsPlaceholder": "https://…",
+        "invalid": "No es una URL http(s) válida: {urls}",
+        "tooMany": "{count} URL: el límite es {max} por lote.",
+        "ready": "{count, plural, one {# URL lista} other {# URL listas}}",
+        "licence": "Licencia",
+        "scenarioLicensed": "Con licencia (Template + Inspire)",
+        "scenarioOwned": "Propio (Template + Inspire)",
+        "scenarioScraped": "Recopilado (solo Inspire)",
+        "scenarioNotRequired": "No necesaria: propiedad del operador (Template + Inspire)",
+        "source": "Origen de la licencia",
+        "sourcePlaceholder": "Acuerdo / titular",
+        "category": "Categoría",
+        "autoClassify": "Clasificación automática",
+        "tags": "Etiquetas",
+        "tagsPlaceholder": "separadas por comas",
+        "tooManyTags": "Máximo {max} etiquetas por vídeo.",
+        "submit": "{count, plural, =0 {Poner en cola de importación} one {Poner # en cola de importación} other {Poner # en cola de importación}}",
+        "queued": "{count, plural, one {# vídeo en cola de importación} other {# vídeos en cola de importación}}",
+        "lastBatch": "Último lote en cola",
+        "queuedAria": "Tareas de importación en cola"
+      },
+      "status": {
+        "title": "Estado de la importación",
+        "description": "Tareas del corpus cuyo estado cambió en el periodo. Puedes volver a enviar los orígenes fallidos.",
+        "window": "Periodo",
+        "windowHour": "Última hora",
+        "windowDay": "Últimas 24 horas",
+        "windowWeek": "Últimos 7 días",
+        "refreshAria": "Actualizar el estado de la importación",
+        "loading": "Cargando el estado de la importación",
+        "countsAria": "Recuentos de importación",
+        "SUCCEEDED": "Importados",
+        "DUPLICATE": "Duplicados",
+        "FAILED": "Fallidos",
+        "RUNNING": "En curso",
+        "QUEUED": "En cola",
+        "backlog": "Pendientes: {queued} en cola · {running} en curso · {perHour} completados por hora · {live} elementos activos en la biblioteca",
+        "recentFailures": "Fallos recientes",
+        "failuresAria": "Fallos de importación recientes",
+        "unknownError": "Error desconocido",
+        "attempts": "{count, plural, one {# intento} other {# intentos}}"
+      },
+      "audit": {
+        "title": "Auditoría de licencias",
+        "descriptionLoaded": "Corpus activo, {date} · a punto de caducar = en {days, plural, one {# día} other {# días}}",
+        "descriptionEmpty": "Cada elemento del corpus debe tener una fila de licencia.",
+        "refresh": "Actualizar",
+        "loading": "Cargando la auditoría de licencias",
+        "problemsAria": "Problemas de licencia",
+        "missing": "Sin fila de licencia",
+        "missingHint": "nunca se muestra a los usuarios",
+        "expired": "Caducadas",
+        "expiredHint": "TEMPLATE bloqueado",
+        "expiringSoon": "Caducan pronto",
+        "byScenarioAria": "Elementos activos por licencia",
+        "scenarioLicensed": "Con licencia",
+        "scenarioOwned": "Propio",
+        "scenarioScraped": "Recopilado (solo INSPIRE)",
+        "scenarioNotRequired": "No necesaria",
+        "liveRetired": "{live} activos · {retired} retirados",
+        "problemsListAria": "Lista de problemas de licencia",
+        "showMissing": "Ver elementos sin licencia",
+        "truncated": "Se muestran los {count} problemas más antiguos."
+      },
+      "resubmit": {
+        "button": "Reenviar fallidos",
+        "done": "{count, plural, one {# origen fallido reenviado} other {# orígenes fallidos reenviados}}",
+        "skipped": "{count, plural, one {# omitido} other {# omitidos}}",
+        "legacy": "{count, plural, one {# enviado antes de que existiera el reenvío: usa la herramienta de importación} other {# enviados antes de que existiera el reenvío: usa la herramienta de importación}}"
+      }
+    },
+    "organisations": {
+      "orgIdLabel": "ID de la organización",
+      "orgIdPlaceholder": "org_…",
+      "open": "Abrir",
+      "policy": {
+        "title": "Política de revisión",
+        "description": "Se aplica a los proyectos nuevos y a la aprobación automática en esta organización.",
+        "formAria": "Política de revisión",
+        "loadingAria": "Cargando la política",
+        "defaultLabel": "Política de revisión predeterminada para proyectos nuevos",
+        "option": {
+          "REQUIRE_APPROVAL": "Requerir aprobación",
+          "REQUIRE_APPROVAL_FROM_ROLE": "Requerir la aprobación de un propietario o administrador",
+          "AUTO_APPROVE": "Aprobar automáticamente a los creadores de confianza"
+        },
+        "autoApprove": "Permitir la aprobación automática",
+        "threshold": "Umbral de confianza (vídeos aprobados por una persona antes de la aprobación automática)",
+        "thresholdHelp": "Vacío = la configuración de la plataforma. Origen actual: {source}. Los planes Enterprise nunca se aprueban automáticamente.",
+        "save": "Guardar política",
+        "savedToast": "Política guardada",
+        "lastChanged": "Último cambio {when}"
+      },
+      "caps": {
+        "title": "Límites de coste",
+        "description": "Sustituye los límites diario y mensual del plan solo para esta organización.",
+        "formAria": "Excepciones de límites de coste",
+        "loadingAria": "Cargando límites de coste",
+        "daily": "Diario:",
+        "monthly": "Mensual:",
+        "orgOverride": "excepción de la organización",
+        "planTier": "nivel del plan: {tiers}",
+        "tierCap": "{tier} {amount}",
+        "noCap": "sin límite",
+        "overrideReason": "«{reason}» — {when}",
+        "dailyOverride": "Excepción del límite diario (£)",
+        "monthlyOverride": "Excepción del límite mensual (£)",
+        "overrideHelp": "Vacío = sin excepción (el límite del plan). Los workers aplican un cambio en menos de 30 segundos.",
+        "reason": "Motivo (se registra en el log de auditoría)",
+        "save": "Guardar límites de coste",
+        "savedToast": "Límites de coste guardados"
+      }
+    },
+    "redrive": {
+      "title": "Relanzar trabajo detenido o atascado",
+      "description": "Los proyectos detenidos por el interruptor se reanudan desde la etapa interrumpida y reutilizan las tomas y renders terminados; las publicaciones en pausa se reintentan. Los proyectos atascados vuelven a poner en cola su etapa actual (tras una pérdida de Redis). Previsualiza primero: nada cambia hasta que apliques.",
+      "formAria": "Filtros de relanzamiento",
+      "scope": "Alcance",
+      "scopes": {
+        "killSwitch": "Trabajo detenido por el interruptor",
+        "stuck": "Proyectos atascados"
+      },
+      "level": "Nivel",
+      "anyLevel": "Cualquier nivel",
+      "levels": {
+        "global": "Global",
+        "workspace": "Espacio de trabajo",
+        "project": "Proyecto",
+        "provider": "Proveedor",
+        "platform": "Plataforma"
+      },
+      "since": "Con fallos desde",
+      "idleMinutes": "Inactivo durante (minutos)",
+      "organisation": "Organización",
+      "allOrganisations": "Todas las organizaciones",
+      "limit": "Límite",
+      "preview": "Previsualizar",
+      "stale": "Los filtros cambiaron desde la previsualización: vuelve a previsualizar antes de aplicar.",
+      "done": "{count, plural, one {# elemento relanzado} other {# elementos relanzados}}",
+      "confirmTitle": "¿Relanzar {count, plural, one {# elemento} other {# elementos}}?",
+      "confirmDescription": "Se ponen en cola trabajos para proyectos y publicaciones de otras organizaciones. El trabajo reanudado puede llamar a proveedores de pago para las partes que nunca se ejecutaron, y las publicaciones reintentadas se publican en las cuentas del cliente.",
+      "confirmLabel": "Relanzar",
+      "results": {
+        "previewTitle": "Previsualización: todavía no ha cambiado nada",
+        "appliedTitle": "Relanzamiento aplicado",
+        "previewDescription": "Lo que haría ahora mismo aplicar estos filtros.",
+        "appliedDescription": "Los trabajos se añadieron a las colas; sigue el progreso en cada proyecto.",
+        "considered": "Evaluados",
+        "wouldRedrive": "Se relanzarían",
+        "redriven": "Relanzados",
+        "skipped": "Omitidos",
+        "empty": "Nada coincide con estos filtros.",
+        "tableAria": "Elementos del relanzamiento",
+        "columns": {
+          "kind": "Tipo",
+          "id": "ID",
+          "organisation": "Organización",
+          "action": "Acción"
+        },
+        "kinds": {
+          "project": "Proyecto",
+          "publication": "Publicación"
+        },
+        "actions": {
+          "resumePlanning": "Reanudar desde la planificación",
+          "resumeAssets": "Reanudar recursos pendientes",
+          "retryPublication": "Reintentar publicación",
+          "reenqueue": "Volver a poner la etapa en cola",
+          "skipped": "Omitido"
+        }
+      }
+    },
+    "safety": {
+      "decidedWhen": "{state} {when}",
+      "quotedNote": "«{note}»",
+      "review": {
+        "title": "Revisión de seguridad del contenido",
+        "description": "Ejecuciones en pausa por un veredicto REVIEW de seguridad del guion o una alerta de Hive de nivel revisión (espec. 13.2 / 16.4). Los resultados de nivel bloqueo nunca llegan a esta cola.",
+        "showAria": "Mostrar revisiones",
+        "filterWaiting": "En espera",
+        "filterWaitingCount": "En espera ({count})",
+        "filterAllowed": "Permitidas",
+        "filterBlocked": "Bloqueadas",
+        "loadingAria": "Cargando revisiones",
+        "emptyPendingTitle": "Nada en espera",
+        "emptyTitle": "Aún no hay revisiones",
+        "emptyBody": "Las ejecuciones en pausa aparecen aquí con la alerta, una vista previa y el guion.",
+        "listAria": "Revisiones de seguridad",
+        "previewAria": "Vista previa de {name}",
+        "previewAriaUnnamed": "Vista previa del vídeo marcado",
+        "noScript": "No hay guion guardado para esta ejecución.",
+        "scriptLabel": "{platform}:",
+        "kindScript": "Guion (antes de generar)",
+        "kindContent": "Vídeo renderizado",
+        "kindWhen": "{kind} · {when}",
+        "ids": "Organización {organisationId} · proyecto {projectId}",
+        "flagged": "Marcado:",
+        "allowResume": "Permitir y reanudar",
+        "block": "Bloquear",
+        "state": {
+          "PENDING": "Pendiente de decisión",
+          "ALLOWED": "Permitida",
+          "BLOCKED": "Bloqueada"
+        },
+        "allowedToast": "Permitida: la ejecución se reanuda",
+        "blockedToast": "Bloqueada",
+        "blockTitle": "Bloquear este vídeo",
+        "allowTitle": "Permitir y reanudar",
+        "blockBody": "El proyecto falla con tu nota; el cliente la verá.",
+        "allowBody": "La ejecución en pausa continúa desde donde se detuvo.",
+        "blockConfirm": "Bloquear",
+        "allowConfirm": "Permitir"
+      },
+      "audit": {
+        "title": "Auditoría mensual de Trust & Safety",
+        "description": "Una muestra aleatoria de los vídeos publicados el mes pasado, revisados de nuevo por una persona. Un fallo es un vídeo que el análisis de Hive debería haber bloqueado o enviado a revisión.",
+        "monthAria": "Mes de la auditoría",
+        "resultAria": "Resultado",
+        "filter": {
+          "pending": "Pendientes de revisión",
+          "miss": "Fallos",
+          "pass": "Aprobados",
+          "all": "Todos"
+        },
+        "drawSample": "Extraer muestra",
+        "loadingAria": "Cargando la auditoría de seguridad",
+        "sampled": "En la muestra",
+        "waiting": "En espera",
+        "passed": "Aprobados",
+        "missed": "Fallos",
+        "missRate": "Tasa de fallos del análisis de Hive",
+        "missRateHint": "fallos ÷ revisados",
+        "emptyNoSampleTitle": "No hay muestra para este mes",
+        "emptyNoSampleBody": "La muestra se extrae el día 1 a las 06:00 UTC. Extráela ahora si el trabajo no se ejecutó.",
+        "emptyTitle": "Nada por aquí",
+        "emptyBody": "Ningún vídeo coincide con este filtro.",
+        "videoAria": "Vídeo publicado en {platform}",
+        "noPreview": "Sin vista previa",
+        "publishedOn": "publicado el {date}",
+        "ids": "Organización {organisationId} · proyecto {projectId}",
+        "openPost": "Abrir la publicación",
+        "pass": "Aprobar",
+        "miss": "Fallo",
+        "result": {
+          "pending": "Pendiente de revisión",
+          "pass": "Aprobado",
+          "miss": "Fallo"
+        },
+        "passToast": "Registrado como aprobado",
+        "missToast": "Fallo registrado: se ha avisado al equipo",
+        "sampleToast": "{added} añadidos: {total} de {population, plural, one {# vídeo publicado} other {# vídeos publicados}} en la muestra",
+        "missTitle": "Registrar un fallo",
+        "missBody": "Explica qué se le pasó al análisis. Se avisa al equipo y la publicación debería retirarse (runbooks/content-safety-miss.md).",
+        "missConfirm": "Registrar fallo"
+      }
+    },
+    "usage": {
+      "orgIdLabel": "ID de la organización",
+      "orgIdPlaceholder": "org_…",
+      "evaluateAgainst": "Evaluar según",
+      "recordedTier": "Plan registrado",
+      "show": "Ver uso",
+      "title": "Uso del plan este mes",
+      "description": "Vídeos generados en este mes natural (UTC) frente a las cuotas de la espec. 12.4.",
+      "loadingAria": "Cargando uso",
+      "summary": "{month} · plan {tier} ({source}) · modo de cuota <strong>{mode}</strong> · estado <strong>{status}</strong>",
+      "tierSource": {
+        "query": "elegido aquí",
+        "last_generation": "registrado en su última generación",
+        "default": "sin generaciones registradas: se asume Basic"
+      },
+      "mode": {
+        "warn": "avisar",
+        "enforce": "aplicar"
+      },
+      "status": {
+        "ok": "correcto",
+        "warning": "aviso",
+        "exceeded": "superado"
+      }
+    }
+  },
+  "onboarding": {
+    "page": {
+      "title": "Bienvenida"
+    },
+    "steps": {
+      "connect": "Conectar",
+      "brandKit": "Kit de marca",
+      "firstVideo": "Primer vídeo",
+      "celebrate": "Celebrar"
+    },
+    "stepIndicator": {
+      "aria": "Progreso de la configuración",
+      "done": "(hecho)"
+    },
+    "wizard": {
+      "eyebrow": "Te damos la bienvenida",
+      "title": "Hagamos tu primer vídeo",
+      "description": "Cuatro pasos rápidos: conecta una cuenta, configura tu marca, crea un vídeo y publícalo.",
+      "skipSetup": "Omitir configuración",
+      "loading": "Cargando la configuración",
+      "skipped": {
+        "title": "Configuración omitida",
+        "description": "Puedes retomarla cuando quieras.",
+        "resume": "Retomar configuración"
+      },
+      "noBusiness": {
+        "title": "Primero elige un negocio",
+        "description": "La configuración es por negocio. Elige uno en la barra superior o añade uno.",
+        "action": "Configurar un negocio"
+      },
+      "currentStep": "Paso actual",
+      "saving": "Guardando",
+      "skipStep": "Omitir este paso",
+      "finish": "Terminar"
+    },
+    "connect": {
+      "title": "Conecta dónde publicas",
+      "description": "Studio publica directamente en TikTok, YouTube, Instagram, Facebook, X y LinkedIn. Conecta al menos una cuenta para que tu primer vídeo pueda publicarse.",
+      "loading": "Cargando cuentas",
+      "connectedAria": "Cuentas conectadas",
+      "none": "Aún no hay cuentas conectadas.",
+      "connectAnother": "Conectar otra cuenta",
+      "openConnections": "Abrir Conexiones"
+    },
+    "brandKit": {
+      "title": "Tu marca en tres clics",
+      "description": "Sube tu logotipo y Studio extrae tus colores. Después elige una fuente y cómo suenas.",
+      "existing": "{count, plural, one {Este negocio ya tiene un kit de marca ({names}). Puedes continuar o añadir otro abajo.} other {Este negocio ya tiene kits de marca ({names}). Puedes continuar o añadir otro abajo.}}",
+      "logoLegend": "1. Logotipo",
+      "uploadLogo": "Subir logotipo",
+      "logoType": "Sube una imagen PNG, JPEG, WebP, GIF o AVIF.",
+      "logoSize": "El logotipo debe pesar {max, number} MB o menos.",
+      "fontLegend": "2. Fuente",
+      "toneLegend": "3. Tono (elige hasta {max, number})",
+      "save": "Guardar kit de marca",
+      "saved": "Kit de marca guardado.",
+      "defaultKitName": "Kit de marca principal",
+      "ready": {
+        "title": "{name} está listo",
+        "body": "Todos los vídeos que Studio cree para este negocio lo usarán.",
+        "bodyDefault": "Todos los vídeos que Studio cree para este negocio lo usarán: es tu kit predeterminado."
+      },
+      "paletteAria": "Paleta",
+      "removeColour": "Quitar {colour}",
+      "fontAria": "Fuente",
+      "toneAria": "Tono",
+      "tones": {
+        "warm": "Cercano",
+        "friendly": "Amable",
+        "playful": "Divertido",
+        "bold": "Atrevido",
+        "professional": "Profesional",
+        "calm": "Sereno",
+        "witty": "Ingenioso",
+        "premium": "Premium"
+      }
+    },
+    "firstVideo": {
+      "title": "Crea tu primer vídeo",
+      "description": "Empieza con una breve presentación: quién eres y a qué te dedicas. Studio planifica las tomas, escribe el guion y usa tu kit de marca.",
+      "loadingTemplates": "Cargando plantillas",
+      "noTemplate": {
+        "title": "La plantilla de presentación no está disponible",
+        "description": "Aun así, puedes describir tu primer vídeo en la pantalla Crear.",
+        "action": "Abrir Crear"
+      },
+      "briefLabel": "¿Algo que mencionar? (opcional)",
+      "briefPlaceholder": "Panadería familiar en Valencia desde 2009: pan de masa madre, bollería y talleres los sábados.",
+      "create": "Crear mi vídeo de presentación",
+      "generationNotStarted": "Se guardó como borrador, pero la generación no empezó: {reason}",
+      "started": {
+        "title": "Tu primer vídeo está en camino",
+        "body": "Studio está escribiendo el guion y reuniendo las tomas. Revísalo cuando esté listo y luego publícalo.",
+        "action": "Abrir tu vídeo"
+      }
+    },
+    "celebrate": {
+      "loading": "Cargando tu vídeo",
+      "noVideo": {
+        "title": "Ya casi está",
+        "body": "Cuando tu primer vídeo se publique, lo celebraremos aquí. Crea uno cuando quieras.",
+        "action": "Crear un vídeo"
+      },
+      "live": {
+        "title": "Acabas de publicar en {platform}",
+        "body": "«{name}» ya está ahí fuera. Studio sigue su rendimiento en Analítica.",
+        "seeIt": "Verlo en {platform}",
+        "openProject": "Abrir el proyecto"
+      },
+      "nearly": {
+        "title": "Casi publicado",
+        "body": "«{name}» aún no está publicado. Revísalo y apruébalo, y luego publícalo: lo celebraremos aquí en cuanto esté en línea.",
+        "action": "Abrir tu vídeo"
+      }
+    },
+    "finished": {
+      "title": "Todo listo",
+      "description": "Studio está listo para crear y publicar vídeos para tu negocio.",
+      "makeAnother": "Crear otro vídeo",
+      "goToProjects": "Ir a proyectos"
+    }
+  },
+  "share": {
+    "links": {
+      "title": "Compartir para recibir comentarios",
+      "description": "Cualquier persona con el enlace puede ver las variantes y dejar comentarios. No puede aprobar.",
+      "expiryLabel": "Duración del enlace",
+      "expiryDays": "{count, plural, one {# día} other {# días}}",
+      "create": "Crear enlace",
+      "copyNow": "Copia este enlace ahora: solo se muestra una vez.",
+      "copied": "Enlace copiado",
+      "copyFailed": "No se pudo copiar: selecciona el enlace y cópialo tú",
+      "revoked": "Enlace revocado",
+      "revoke": "Revocar",
+      "empty": "Aún no hay enlaces compartidos.",
+      "listAria": "Enlaces compartidos",
+      "feedbackAria": "Comentarios",
+      "states": {
+        "active": "Activo",
+        "expired": "Caducado",
+        "revoked": "Revocado"
+      },
+      "expiresMeta": "Caduca el {date} · {views, plural, one {# visualización} other {# visualizaciones}}",
+      "expiredMeta": "Caducó el {date} · {views, plural, one {# visualización} other {# visualizaciones}}"
+    },
+    "preview": {
+      "pageTitle": "Vista previa del vídeo",
+      "loading": "Cargando la vista previa",
+      "unavailable": {
+        "title": "Vista previa no disponible",
+        "notFound": "Este enlace de vista previa no es válido o ha caducado",
+        "fallback": "Esta vista previa no está disponible"
+      },
+      "eyebrow": "PostMind Studio · vista previa para comentarios",
+      "intro": "Puedes verlo y comentar. La aprobación se hace dentro de PostMind Studio. Este enlace caduca el {expires}.",
+      "variantsAria": "Variantes",
+      "noVariants": "Aún no se ha renderizado ninguna variante.",
+      "variantCaption": "{platform} · {aspectRatio} · {seconds, number} s",
+      "feedbackAria": "Comentarios",
+      "feedbackSoFar": "Comentarios hasta ahora",
+      "noFeedback": "Aún no hay comentarios.",
+      "form": {
+        "title": "Deja tus comentarios",
+        "name": "Tu nombre",
+        "email": "Correo electrónico (opcional, para que el equipo pueda responderte)",
+        "feedback": "Comentarios",
+        "send": "Enviar comentarios",
+        "sent": "Gracias: tus comentarios se enviaron al equipo.",
+        "sendFailed": "No se pudieron enviar los comentarios"
+      }
+    }
+  },
+  "templates": {
+    "eyebrow": "Crear",
+    "title": "Plantillas",
+    "description": "Tus plantillas de proyecto y de presentación guardadas. Eliminar una plantilla nunca cambia los vídeos ya creados con ella.",
+    "loading": "Cargando plantillas",
+    "slideshowTitle": "Plantillas de presentación",
+    "projectTitle": "Plantillas de proyecto",
+    "builtInTitle": "Plantillas integradas",
+    "noBuiltIns": "No hay plantillas integradas",
+    "list": {
+      "emptySlideshow": "Guarda una presentación como plantilla desde su pantalla de revisión para reutilizarla aquí.",
+      "emptyProject": "Guarda un proyecto como plantilla desde su pantalla de revisión para reutilizarlo aquí.",
+      "slideshowAria": "plantillas de presentación",
+      "projectAria": "plantillas de proyecto",
+      "meta": "{category} · guardada el {date}",
+      "deleteAria": "Eliminar {name}",
+      "deleted": "Se eliminó «{name}»"
+    },
+    "categories": {
+      "custom": "personalizada",
+      "introduction": "presentación",
+      "team_introduction": "presentación del equipo",
+      "product_showcase": "escaparate de producto",
+      "before_after": "antes y después",
+      "food": "comida",
+      "lifestyle": "estilo de vida",
+      "photo_dump": "carrusel de fotos",
+      "quote_reel": "reel de cita",
+      "statistic_reel": "reel de dato",
+      "tweet_video": "vídeo de tuit",
+      "product_launch": "lanzamiento de producto",
+      "weekly_special": "especial de la semana",
+      "behind_the_scenes": "entre bastidores"
+    }
+  },
+  "account": {
+    "export": {
+      "eyebrow": "Cuenta",
+      "title": "Exporta tus datos",
+      "description": "Descarga todo lo que Studio guarda de tu organización en un ZIP de archivos JSON con enlaces a tus archivos multimedia. Nunca se incluyen tokens de acceso ni otros secretos.",
+      "newExport": "Nueva exportación",
+      "includeLegend": "Qué incluir",
+      "groups": {
+        "projects": {
+          "label": "Proyectos",
+          "hint": "Briefs, guiones, tomas, renders, publicaciones y enlaces a multimedia"
+        },
+        "analytics": {
+          "label": "Analítica",
+          "hint": "Visualizaciones e interacción por publicación, gasto en proveedores"
+        },
+        "brand": {
+          "label": "Marca",
+          "hint": "Kits de marca, voces, memoria de estilo, perfil del negocio, plantillas"
+        },
+        "imageLibrary": {
+          "label": "Biblioteca de imágenes",
+          "hint": "Cada imagen y su origen"
+        }
+      },
+      "request": "Solicitar exportación",
+      "preparing": "Se está preparando una exportación",
+      "requested": "Exportación solicitada: la prepararemos en segundo plano",
+      "yourExports": "Tus exportaciones",
+      "linksExpire": "Los enlaces caducan {days, plural, one {# día} other {# días}} después de que la exportación esté lista.",
+      "loading": "Cargando exportaciones",
+      "empty": {
+        "title": "Aún no hay exportaciones",
+        "description": "Solicita una para descargar tus datos."
+      },
+      "listAria": "Exportaciones",
+      "states": {
+        "queued": "En cola",
+        "running": "Preparando",
+        "ready": "Lista",
+        "failed": "Fallida",
+        "expired": "Caducada"
+      },
+      "sizeKb": "{kb, number} KB",
+      "download": "Descargar",
+      "noLongerAvailable": "Esta exportación ya no está disponible"
+    },
+    "providerKeys": {
+      "title": "Claves de proveedor (BYOC)",
+      "description": "Usa tus propias cuentas de proveedores de IA. Studio nunca vuelve a mostrar una clave guardada, solo sus cuatro últimos caracteres.",
+      "loading": "Cargando claves de proveedor",
+      "loadFailed": "No se pudieron cargar las claves de proveedor: {reason}",
+      "retry": "Reintentar",
+      "unavailable": {
+        "disabled": "Las claves de proveedor propias aún no están activadas en Studio.",
+        "planTier": "Las claves de proveedor propias son una función de Enterprise. Mejora tu plan para usar tus propias cuentas de proveedor."
+      },
+      "status": {
+        "studioKey": "Usando la clave de Studio",
+        "notTested": "Tu clave ••••{hint} · sin probar",
+        "working": "Tu clave ••••{hint} · funciona",
+        "failed": "Tu clave ••••{hint} · falló: {reason}",
+        "unhealthy": "no disponible"
+      },
+      "test": "Probar",
+      "testing": "Probando…",
+      "remove": "Quitar",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "replace": "Reemplazar",
+      "apiKeyAria": "Clave de API de {provider}",
+      "publicKeyAria": "Clave pública de {provider}",
+      "privateKeyAria": "Clave privada de {provider}",
+      "placeholder": {
+        "replace": "Reemplazar clave",
+        "apiKey": "Clave de API",
+        "publicKey": "Clave pública",
+        "privateKey": "Clave privada"
+      },
+      "toast": {
+        "saved": "Clave de {provider} guardada",
+        "works": "La clave de {provider} funciona",
+        "failed": "Falló la clave de {provider}: {reason}",
+        "removed": "Clave de {provider} quitada; se vuelve a usar la clave de Studio"
+      }
+    }
+  },
+  "approvals": {
+    "screen": {
+      "eyebrow": "Configuración",
+      "title": "Flujos de aprobación",
+      "description": "Pasos de aprobación ordenados para la revisión del cliente o del equipo legal. Un vídeo espera en revisión hasta que se aprueban todos los pasos, y solo entonces se publica. Los proyectos sin flujo aplicable necesitan una sola aprobación.",
+      "newWorkflow": "Nuevo flujo",
+      "editTitle": "Editar «{name}»",
+      "listAria": "Flujos de aprobación",
+      "emptyTitle": "Aún no hay flujos de aprobación",
+      "emptyBody": "Cada vídeo necesita una aprobación. Añade un flujo cuando un cliente, un responsable o el equipo legal deba dar el visto bueno antes.",
+      "saved": "Flujo guardado. Las revisiones ya en curso mantienen sus pasos.",
+      "created": "Flujo creado.",
+      "deleted": "Se eliminó «{name}»."
+    },
+    "card": {
+      "stepsAria": "Pasos de {name}",
+      "stepNumber": "Paso {number}:",
+      "confirmDelete": "Confirmar eliminación",
+      "keep": "Conservar",
+      "deleteAria": "Eliminar {name}"
+    },
+    "form": {
+      "newAria": "Nuevo flujo de aprobación",
+      "editAria": "Editar {name}",
+      "name": "Nombre",
+      "namePlaceholder": "Aprobación del cliente",
+      "steps": "Pasos, en orden",
+      "stepsHelp": "Cada paso espera a este número de personas distintas con el rol. El vídeo queda aprobado, y puede publicarse, solo después del último paso.",
+      "role": "Rol",
+      "approvers": "Aprobadores",
+      "moveUp": "Subir el paso {number}",
+      "moveDown": "Bajar el paso {number}",
+      "removeStep": "Quitar el paso {number}",
+      "addStep": "Añadir paso",
+      "appliesTo": "Se aplica a",
+      "appliesToHelp": "Déjalo todo vacío para aplicarlo a todos los proyectos. Si coinciden varios flujos, gana el más específico (negocio, luego etiquetas, luego plataformas).",
+      "businessIds": "ID de negocios (separados por comas)",
+      "addCurrentBusiness": "Añadir el negocio actual",
+      "platforms": "Plataformas",
+      "projectTags": "Etiquetas del proyecto (separadas por comas)",
+      "save": "Guardar flujo",
+      "create": "Crear flujo"
+    },
+    "problems": {
+      "name": "Ponle un nombre al flujo.",
+      "noSteps": "Añade al menos un paso.",
+      "role": "Paso {step}: usa un nombre de rol de miembro, como admin o client_reviewer.",
+      "minApprovers": "Paso {step}: se necesita al menos un aprobador.",
+      "maxApprovers": "Paso {step}: como máximo {max} aprobadores."
+    },
+    "roles": {
+      "owner": "{count, plural, one {propietario} other {# propietarios}}",
+      "admin": "{count, plural, one {administrador} other {# administradores}}",
+      "client_reviewer": "{count, plural, one {revisor del cliente} other {# revisores del cliente}}",
+      "legal": "{count, plural, one {equipo legal} other {# revisores legales}}",
+      "reviewer": "{count, plural, one {revisor} other {# revisores}}",
+      "custom": "{count, plural, one {{role}} other {{role} × #}}"
+    },
+    "appliesTo": {
+      "every": "Se aplica a todos los proyectos",
+      "some": "Se aplica a: {targets}",
+      "businesses": "{count, plural, one {negocio {ids}} other {negocios {ids}}}",
+      "tagged": "con la etiqueta {tags}"
+    },
+    "indicator": {
+      "regionAria": "Pasos de aprobación",
+      "approved": "{name}: todos los pasos aprobados",
+      "rejected": "{name}: rechazado en el paso {step} de {total}",
+      "step": "{name}: paso {step} de {total}",
+      "waiting": "Paso {step} de {total} — esperando a: {role}",
+      "waitingCount": "Paso {step} de {total} — esperando a: {role} ({approvals} de {required} aprobaciones)",
+      "stepNumber": "{number}."
+    }
+  }
+}

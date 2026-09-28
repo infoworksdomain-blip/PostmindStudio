@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
+import { ALL_MESSAGES } from '@/lib/i18n/all-messages';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
 import {
   ageBreakdown,
@@ -127,5 +129,38 @@ describe('PublicationAnalytics', () => {
     mockFetch(() => fail(404, 'Publication not found', 'not_found'));
     renderScreen(<PublicationAnalytics publicationId="pub_x" />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Publication not found');
+  });
+});
+
+describe('PublicationAnalytics localisation', () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute('dir');
+    document.documentElement.removeAttribute('lang');
+  });
+
+  it('renders Arabic right-to-left', async () => {
+    const ar = ALL_MESSAGES.ar.analytics.publication;
+    mockFetch(() => ok(body()));
+    renderScreen(withLocale('ar', <PublicationAnalytics publicationId="pub_1" />));
+    expect(await screen.findByRole('heading', { name: 'منشور على YouTube' })).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
+    expect(screen.getByRole('link', { name: ar.back })).toHaveAttribute('href', '/analytics');
+    const genders = screen.getByRole('list', { name: ar.audience.genderListLabel });
+    expect(within(genders).getAllByRole('listitem')[0]).toHaveTextContent(
+      ar.audience.gender.female,
+    );
+    expect(
+      screen.getByRole('img', { name: new RegExp(ar.retention.chartLabel) }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders Simplified Chinese', async () => {
+    const zh = ALL_MESSAGES['zh-Hans'].analytics.publication;
+    mockFetch(() => ok(body()));
+    renderScreen(withLocale('zh-Hans', <PublicationAnalytics publicationId="pub_1" />));
+    expect(await screen.findByRole('heading', { name: 'YouTube 帖子' })).toBeInTheDocument();
+    expect(screen.getByText('61% 的观众看到了一半')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: zh.back })).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('lang', 'zh-Hans'));
   });
 });

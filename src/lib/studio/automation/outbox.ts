@@ -244,6 +244,10 @@ async function notifyGaveUp(deps: OutboxDeps, row: AutoPublishOutbox): Promise<v
     body: `${row.lastError ?? 'Unknown error'} — open the project to retry.`,
     link: `/projects/${row.projectId}`,
     dedupeKey: `auto_publish_failed:${row.id}:${row.attempts}`,
+    message: {
+      key: 'autoPublishFailed',
+      params: { name: project.name, platform, reason: row.lastError ?? 'Unknown error' },
+    },
   });
 }
 

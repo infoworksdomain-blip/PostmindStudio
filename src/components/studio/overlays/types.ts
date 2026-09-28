@@ -136,6 +136,3 @@ export const OVERLAY_EDITABLE = new Set([
 /** POST /renders/:id/rerender accepts these. */
 export const RERENDERABLE = new Set(['READY_FOR_REVIEW', 'QUALITY_FAILED', 'REJECTED']);
 export const MAX_OVERLAYS_PER_SHOT = 12;
-
-export const ANIMATION_LABEL = (a: string): string =>
-  a === 'none' ? 'None' : a.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());

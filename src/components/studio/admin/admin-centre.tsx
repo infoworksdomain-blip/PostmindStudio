@@ -2,6 +2,7 @@
 
 import { ShieldAlert } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApi } from '@/lib/client/api';
@@ -26,11 +27,12 @@ import { isForbidden, type KillSwitchState } from './types';
 // access probe: a 403 shows the staff-only state instead of three failing tabs.
 
 export function StaffOnly() {
+  const t = useTranslations('admin.centre.staffOnly');
   return (
     <EmptyState
       icon={<ShieldAlert className="size-8" strokeWidth={1.5} />}
-      title="PostMind staff only"
-      description="The Admin Centre controls the whole platform — kill switches, the reference corpus and provider spend. Your account isn’t on the platform staff list."
+      title={t('title')}
+      description={t('description')}
     />
   );
 }
@@ -52,17 +54,34 @@ const TABS = [
   'beta',
 ] as const;
 
+type Tab = (typeof TABS)[number];
+
+// Tab value (URL ?tab=) → catalogue key under admin.centre.tabs.
+const TAB_KEY = {
+  'kill-switch': 'killSwitch',
+  features: 'features',
+  redrive: 'redrive',
+  library: 'library',
+  cost: 'cost',
+  queues: 'queues',
+  providers: 'providers',
+  safety: 'safety',
+  'safety-audit': 'safetyAudit',
+  organisations: 'organisations',
+  usage: 'usage',
+  'dead-letters': 'deadLetters',
+  'force-approvals': 'forceApprovals',
+  beta: 'beta',
+} as const satisfies Record<Tab, string>;
+
 export function AdminCentre() {
+  const t = useTranslations('admin.centre');
   const probe = useApi<KillSwitchState>('/admin/kill-switch');
   // ?tab= opens a tab directly (the safety-review notification links to ?tab=safety).
   const requested = useSearchParams()?.get('tab') ?? '';
   const initialTab = (TABS as readonly string[]).includes(requested) ? requested : 'kill-switch';
   const header = (
-    <PageHeader
-      eyebrow="PostMind staff"
-      title="Admin Centre"
-      description="Platform-wide controls for Studio. Every change here is audited."
-    />
+    <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
   );
 
   if (isForbidden(probe.error))
@@ -83,7 +102,7 @@ export function AdminCentre() {
     return (
       <>
         {header}
-        <Skeleton aria-label="Checking access" className="h-64 rounded-xl" />
+        <Skeleton aria-label={t('checkingAccess')} className="h-64 rounded-xl" />
       </>
     );
 
@@ -92,20 +111,11 @@ export function AdminCentre() {
       {header}
       <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
         <TabsList className="max-w-full overflow-x-auto">
-          <TabsTrigger value="kill-switch">Kill switch</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
-          <TabsTrigger value="redrive">Re-drive</TabsTrigger>
-          <TabsTrigger value="library">Library</TabsTrigger>
-          <TabsTrigger value="cost">Cost report</TabsTrigger>
-          <TabsTrigger value="queues">Queues</TabsTrigger>
-          <TabsTrigger value="providers">Providers</TabsTrigger>
-          <TabsTrigger value="safety">Safety review</TabsTrigger>
-          <TabsTrigger value="safety-audit">Safety audit</TabsTrigger>
-          <TabsTrigger value="organisations">Organisations</TabsTrigger>
-          <TabsTrigger value="usage">Plan usage</TabsTrigger>
-          <TabsTrigger value="dead-letters">Dead letters</TabsTrigger>
-          <TabsTrigger value="force-approvals">Force-approvals</TabsTrigger>
-          <TabsTrigger value="beta">Beta</TabsTrigger>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab} value={tab}>
+              {t(`tabs.${TAB_KEY[tab]}`)}
+            </TabsTrigger>
+          ))}
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />

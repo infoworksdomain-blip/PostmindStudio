@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { PageHeader } from '../primitives';
 import { Leaderboard, PlatformBreakdown } from './breakdowns';
@@ -15,6 +16,7 @@ import { RANGE_DAYS, type CostResponse, type OverviewResponse, type RangeDays } 
 // (the windows the overview, leaderboard and cost endpoints accept).
 
 export function AnalyticsDashboard() {
+  const t = useTranslations('analytics.dashboard');
   const [days, setDays] = useState<RangeDays>(30);
   const overview = useApi<OverviewResponse>('/analytics/overview', { days });
   const cost = useApi<CostResponse>('/analytics/cost', { days });
@@ -22,15 +24,15 @@ export function AnalyticsDashboard() {
   return (
     <>
       <PageHeader
-        eyebrow="Manage"
-        title="Analytics"
-        description="How your published videos are doing, and what they cost to make."
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
         actions={
           <Segmented
-            label="Date range"
+            label={t('rangeLabel')}
             value={days}
             onChange={setDays}
-            options={RANGE_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
+            options={RANGE_DAYS.map((d) => ({ value: d, label: t('rangeOption', { days: d }) }))}
           />
         }
       />

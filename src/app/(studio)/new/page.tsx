@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { parseReference } from '@/components/studio/create/body';
 import { CreateScreen } from '@/components/studio/create/create-screen';
 
-export const metadata: Metadata = { title: 'Create' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('create.page');
+  return { title: t('title') };
+}
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

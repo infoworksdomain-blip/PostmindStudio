@@ -44,7 +44,7 @@ function ScreenCard({ screen, wide }: { screen: ScreenEntry; wide: boolean }) {
     <article
       className={
         wide
-          ? 'grid gap-5 rounded-xl border border-border bg-card p-4 md:grid-cols-[minmax(0,15rem)_1fr] md:p-5'
+          ? 'grid gap-5 rounded-xl border border-border bg-card p-4 wrap-anywhere md:grid-cols-[minmax(0,15rem)_1fr] md:p-5'
           : 'flex flex-col gap-4 rounded-xl border border-border bg-card p-4'
       }
     >
@@ -153,7 +153,7 @@ function WorkflowCard({ flow, index }: { flow: Workflow; index: number }) {
   return (
     <article
       id={`flow-${flow.id}`}
-      className="grid gap-5 rounded-xl border border-border bg-card p-4 sm:grid-cols-[7.5rem_1fr] md:p-5"
+      className="grid gap-5 rounded-xl border border-border bg-card p-4 wrap-anywhere sm:grid-cols-[7.5rem_1fr] md:p-5"
     >
       <SceneVideo
         scene={flow.scene}

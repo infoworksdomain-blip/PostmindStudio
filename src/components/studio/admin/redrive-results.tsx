@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   Table,
   TableBody,
@@ -8,24 +9,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatCount } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { Section, StateBadge, Stat } from '../primitives';
 import type { RedriveItem, RedriveResponse } from './types';
 
 // The plan (dry run) or outcome (apply) of POST /admin/redrive, one row per project/publication.
 
-const ACTION_LABEL: Record<RedriveItem['action'], string> = {
-  resume_planning: 'Resume from planning',
-  resume_assets: 'Resume missing assets',
-  retry_publication: 'Retry publication',
-  reenqueue: 'Re-enqueue stage',
-  skipped: 'Skipped',
-};
+/** Server action → catalogue key under admin.redrive.results.actions. */
+const ACTION_KEY = {
+  resume_planning: 'resumePlanning',
+  resume_assets: 'resumeAssets',
+  retry_publication: 'retryPublication',
+  reenqueue: 'reenqueue',
+  skipped: 'skipped',
+} as const satisfies Record<RedriveItem['action'], string>;
 
 function ItemRow({ item }: { item: RedriveItem }) {
+  const t = useTranslations('admin.redrive.results');
+  const f = useFormat();
   return (
     <TableRow>
-      <TableCell className="text-xs text-muted-foreground capitalize">{item.kind}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{t(`kinds.${item.kind}`)}</TableCell>
       <TableCell className="max-w-0 font-mono text-xs md:w-[28%]">
         <span className="block truncate" title={item.id}>
           {item.id}
@@ -38,11 +42,11 @@ function ItemRow({ item }: { item: RedriveItem }) {
       </TableCell>
       <TableCell className="whitespace-normal">
         <StateBadge
-          label={ACTION_LABEL[item.action]}
+          label={t(`actions.${ACTION_KEY[item.action]}`)}
           tone={item.action === 'skipped' ? 'warn' : 'good'}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          {item.skippedReason ?? (item.jobs ?? []).join(', ')}
+          {item.skippedReason ?? f.list(item.jobs ?? [], 'unit')}
         </p>
       </TableCell>
     </TableRow>
@@ -51,33 +55,31 @@ function ItemRow({ item }: { item: RedriveItem }) {
 
 export function RedriveResults({ result }: { result: RedriveResponse }) {
   const { counts } = result;
+  const t = useTranslations('admin.redrive.results');
+  const f = useFormat();
   return (
     <Section
-      title={result.dryRun ? 'Preview — nothing has changed yet' : 'Re-drive applied'}
-      description={
-        result.dryRun
-          ? 'What an apply with these filters would do right now.'
-          : 'Jobs were added to the queues; follow progress on each project.'
-      }
+      title={result.dryRun ? t('previewTitle') : t('appliedTitle')}
+      description={result.dryRun ? t('previewDescription') : t('appliedDescription')}
     >
       <div className="mb-4 grid grid-cols-3 gap-6 border-b border-border/70 pb-4">
-        <Stat label="Considered" value={formatCount(counts.considered)} />
+        <Stat label={t('considered')} value={f.count(counts.considered)} />
         <Stat
-          label={result.dryRun ? 'Would re-drive' : 'Re-driven'}
-          value={formatCount(counts.redriven)}
+          label={result.dryRun ? t('wouldRedrive') : t('redriven')}
+          value={f.count(counts.redriven)}
         />
-        <Stat label="Skipped" value={formatCount(counts.skipped)} />
+        <Stat label={t('skipped')} value={f.count(counts.skipped)} />
       </div>
       {result.items.length === 0 ? (
-        <p className="py-4 text-sm text-muted-foreground">Nothing matches these filters.</p>
+        <p className="py-4 text-sm text-muted-foreground">{t('empty')}</p>
       ) : (
-        <Table aria-label="Re-drive items">
+        <Table aria-label={t('tableAria')}>
           <TableHeader>
             <TableRow>
-              <TableHead>Kind</TableHead>
-              <TableHead>Id</TableHead>
-              <TableHead className="hidden md:table-cell">Organisation</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>{t('columns.kind')}</TableHead>
+              <TableHead>{t('columns.id')}</TableHead>
+              <TableHead className="hidden md:table-cell">{t('columns.organisation')}</TableHead>
+              <TableHead>{t('columns.action')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

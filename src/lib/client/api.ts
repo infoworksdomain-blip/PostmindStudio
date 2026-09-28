@@ -1,6 +1,9 @@
 'use client';
 
+import { useLocale, useMessages } from 'next-intl';
+import { useCallback } from 'react';
 import useSWR, { type SWRConfiguration } from 'swr';
+import type { Messages } from '@/lib/i18n/messages';
 
 // BACKLOG 10.2 — browser → /api/studio. Auth rides on PostMind's session cookie (same-origin
 // requests; tenant.ts verifies it), so no token is ever handled in JavaScript. Errors keep the
@@ -100,18 +103,82 @@ export function newIdempotencyKey(): string {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-/** A user-facing sentence for any error thrown by api(). */
-export function errorMessage(err: unknown): string {
+// BACKLOG 16.1 — API errors in the reader's language. The server writes English messages, so an
+// English locale keeps the server's (more specific) sentence as before; other locales show the
+// catalogue sentence for the error code (messages/<locale>.json → errors.codes.<code>), falling
+// back to the server message when the code has no entry. 401 / 403 / 429 are always the catalogue's.
+
+export type ErrorCatalogue = Messages['errors'];
+
+export interface ErrorLocale {
+  locale: string;
+  errors: ErrorCatalogue;
+}
+
+/** Fallback when no catalogue is registered (a plain unit test, or before the provider renders). */
+const ENGLISH: ErrorCatalogue = {
+  generic: 'Something went wrong.',
+  sessionExpired: 'Your PostMind session has expired. Sign in again.',
+  forbidden: 'You don’t have permission to do that.',
+  rateLimited: 'Too many requests — try again in a moment.',
+  withProblems: '{message}: {problems}',
+  requestFailed: 'Request failed ({status})',
+  codes: {} as ErrorCatalogue['codes'],
+};
+
+let activeCatalogue: ErrorLocale | null = null;
+
+/**
+ * StudioIntlProvider registers the active locale's `errors` namespace so plain calls such as
+ * `toast.error(errorMessage(err))` outside a component body are translated too.
+ */
+export function registerErrorCatalogue(locale: string, errors: ErrorCatalogue): void {
+  if (activeCatalogue?.locale === locale && activeCatalogue.errors === errors) return;
+  activeCatalogue = { locale, errors };
+}
+
+function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (whole, name: string) =>
+    name in values ? String(values[name]) : whole,
+  );
+}
+
+function codeMessage(errors: ErrorCatalogue, code: string): string | undefined {
+  return Object.prototype.hasOwnProperty.call(errors.codes, code)
+    ? errors.codes[code as keyof ErrorCatalogue['codes']]
+    : undefined;
+}
+
+/** A user-facing sentence for any error thrown by api(), in the active (or given) locale. */
+export function errorMessage(err: unknown, target: ErrorLocale | null = activeCatalogue): string {
+  const errors = target?.errors ?? ENGLISH;
+  const english = !target || target.locale.toLowerCase().startsWith('en');
   if (err instanceof ApiError) {
-    if (err.status === 401) return 'Your PostMind session has expired. Sign in again.';
+    if (err.status === 401) return errors.sessionExpired;
     // 15.D2 / P3: plan gates and quotas carry their own upgrade message.
     if (err.status === 403 && (err.code === 'plan_tier' || err.code === 'quota_exceeded'))
+      return english ? err.message : (codeMessage(errors, err.code) ?? err.message);
+    if (err.status === 403) return errors.forbidden;
+    if (err.status === 429) return errors.rateLimited;
+    if (!english) {
+      const byCode = codeMessage(errors, err.code);
+      if (byCode) return byCode;
+      if (/^http_\d{3}$/.test(err.code)) return fill(errors.requestFailed, { status: err.status });
       return err.message;
-    if (err.status === 403) return 'You don’t have permission to do that.';
-    if (err.status === 429) return 'Too many requests — try again in a moment.';
+    }
     const problems = err.details?.problems;
-    if (Array.isArray(problems) && problems.length) return `${err.message}: ${problems.join('; ')}`;
+    if (Array.isArray(problems) && problems.length)
+      return fill(errors.withProblems, { message: err.message, problems: problems.join('; ') });
     return err.message;
   }
-  return err instanceof Error ? err.message : 'Something went wrong.';
+  // Errors thrown in the browser carry English text; other locales get the generic sentence.
+  return err instanceof Error && english ? err.message : errors.generic;
+}
+
+/** Hook form of errorMessage bound to the nearest StudioIntlProvider's locale. */
+export function useErrorMessage(): (err: unknown) => string {
+  const locale = useLocale();
+  const messages = useMessages() as Messages;
+  const errors = messages.errors;
+  return useCallback((err: unknown) => errorMessage(err, { locale, errors }), [locale, errors]);
 }

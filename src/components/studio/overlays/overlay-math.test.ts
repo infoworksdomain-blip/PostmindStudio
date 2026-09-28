@@ -78,7 +78,7 @@ describe('styleOf / draftProblems', () => {
     );
     expect(problems).toHaveLength(3);
     expect(draftProblems(makeOverlay({ endAtSec: 9 }), 5)).toEqual([
-      'End must be within the shot’s 5s.',
+      { code: 'endWithin', duration: 5 },
     ]);
   });
 });

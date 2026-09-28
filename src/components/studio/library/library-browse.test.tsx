@@ -2,6 +2,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
 import { BusinessProvider } from '../business-context';
 import { LibraryBrowse } from './library-browse';
 import { mockFetch, renderWithSWR, summary } from './test-helpers';
@@ -200,5 +201,46 @@ describe('LibraryBrowse', () => {
       'href',
       '/business',
     );
+  });
+});
+
+describe('LibraryBrowse localisation', () => {
+  function mockList() {
+    mockFetch([
+      { match: '/library/categories', body: categories },
+      {
+        match: '/library/videos',
+        body: {
+          ok: true,
+          data: [summary(), summary({ id: 'lib_2', title: 'Gym hype', allowedModes: ['INSPIRE'] })],
+          nextCursor: null,
+        },
+      },
+    ]);
+  }
+
+  it('renders in Arabic, right to left', async () => {
+    mockList();
+    renderWithSWR(withLocale('ar', <LibraryBrowse />));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'مكتبة المراجع' }),
+    ).toBeInTheDocument();
+    const coffee = await screen.findByRole('link', { name: /Morning coffee ritual/ });
+    expect(within(coffee).getByText('قالب + إلهام')).toBeInTheDocument();
+    expect(screen.getByText('إلهام فقط')).toBeInTheDocument();
+    expect(screen.getByLabelText('الفئة')).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+  });
+
+  it('renders in Simplified Chinese', async () => {
+    mockList();
+    renderWithSWR(withLocale('zh-Hans', <LibraryBrowse />));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: '参考视频库' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText('仅限灵感')).toBeInTheDocument();
+    expect(screen.getByLabelText('分类')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '应用' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('dir', 'ltr');
   });
 });

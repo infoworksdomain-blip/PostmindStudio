@@ -7,6 +7,7 @@ import type { PlatformConnection } from '@/lib/client/types';
 export type OAuthPlatform = Exclude<PlatformConnection['platform'], MetaPlatform>;
 export type MetaPlatform = 'instagram' | 'facebook';
 
+// `posts` is the en-GB description; screens show connections.posts.<id>.
 export const OAUTH_PLATFORMS: Array<{ id: OAuthPlatform; label: string; posts: string }> = [
   { id: 'tiktok', label: 'TikTok', posts: 'Short vertical videos' },
   { id: 'youtube', label: 'YouTube', posts: 'Shorts and long-form videos' },
@@ -19,7 +20,10 @@ export const META_PLATFORMS: Array<{ id: MetaPlatform; label: string; posts: str
   { id: 'facebook', label: 'Facebook', posts: 'Page Reels and feed videos' },
 ];
 
-/** Where users connect Instagram / Facebook (PostMind Core owns the Meta login). */
+/**
+ * Where users connect Instagram / Facebook (PostMind Core owns the Meta login). en-GB text of
+ * connections.meta.guidance — localised screens use that key.
+ */
 export const META_CONNECT_GUIDANCE = 'Connect Instagram and Facebook in PostMind settings.';
 
 export function isMetaPlatform(platform: string): platform is MetaPlatform {
@@ -35,16 +39,20 @@ export function belongsToBusiness(
 }
 
 /** Error codes the OAuth callback can put in ?connection_error= (StudioError codes). */
-const CALLBACK_ERRORS: Record<string, string> = {
-  validation_error:
-    'The platform did not grant access (the request was declined or returned an error). Try connecting again.',
-  platform_error: 'The platform had a problem completing the connection. Try again shortly.',
-  upstream_error: 'The platform had a problem completing the connection. Try again shortly.',
-  internal_error: 'Something went wrong finishing the connection. Try again.',
-};
+export const CALLBACK_ERROR_CODES = [
+  'validation_error',
+  'platform_error',
+  'upstream_error',
+  'internal_error',
+] as const;
 
-export function callbackErrorMessage(code: string): string {
-  return CALLBACK_ERRORS[code] ?? `The connection did not complete (${code}). Try again.`;
+export type CallbackErrorCode = (typeof CALLBACK_ERROR_CODES)[number];
+
+/** A known callback error code (connections.callbackErrors.<code>), or null for an unknown one. */
+export function callbackErrorCode(code: string): CallbackErrorCode | null {
+  return (CALLBACK_ERROR_CODES as readonly string[]).includes(code)
+    ? (code as CallbackErrorCode)
+    : null;
 }
 
 export function platformLabel(id: string): string {

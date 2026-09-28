@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link2, Loader2, RefreshCw, Unplug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatDate } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
 import { StateBadge } from '../primitives';
 import { ConfirmDialog } from '../publications/confirm-dialog';
@@ -27,46 +28,47 @@ function AccountRow({
   onReconnect: () => void;
   onDisconnect: () => Promise<boolean>;
 }) {
+  const t = useTranslations('connections');
+  const f = useFormat();
   const [confirming, setConfirming] = useState(false);
   const stale = connection.state === 'needs_reconnect';
+  const account = connection.platformAccountName;
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 py-3">
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-2">
           <span className="truncate font-medium">{connection.platformAccountName}</span>
           {stale ? (
-            <StateBadge label="Needs reconnecting" tone="warn" />
+            <StateBadge label={t('needsReconnecting')} tone="warn" />
           ) : (
-            <StateBadge label="Connected" tone="good" />
+            <StateBadge label={t('connected')} tone="good" />
           )}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {stale
-            ? 'Access expired or was revoked on the platform. Scheduled posts to this account will fail until you reconnect.'
-            : `Connected ${formatDate(connection.connectedAt)}`}
+          {stale ? t('stale') : t('connectedOn', { date: f.date(connection.connectedAt) })}
         </p>
       </div>
       <div className="flex items-center gap-1">
         {stale && (
           <Button size="sm" disabled={connecting} onClick={onReconnect}>
-            {connecting ? <Loader2 className="animate-spin" /> : <RefreshCw />} Reconnect
+            {connecting ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('reconnect')}
           </Button>
         )}
         <Button
           variant="ghost"
           size="sm"
-          aria-label={`Disconnect ${connection.platformAccountName}`}
+          aria-label={t('disconnectAria', { account })}
           onClick={() => setConfirming(true)}
         >
-          <Unplug /> <span className="sr-only sm:not-sr-only">Disconnect</span>
+          <Unplug /> <span className="sr-only sm:not-sr-only">{t('disconnect')}</span>
         </Button>
       </div>
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
-        title={`Disconnect ${connection.platformAccountName}?`}
-        description={`Studio deletes its ${label} access tokens. Scheduled posts to this account will fail, and you will need to connect again to publish here.`}
-        confirmLabel="Disconnect"
+        title={t('disconnectConfirm.title', { account })}
+        description={t('disconnectConfirm.body', { platform: label })}
+        confirmLabel={t('disconnect')}
         onConfirm={onDisconnect}
       />
     </li>
@@ -86,6 +88,7 @@ export function PlatformCard({
   onConnect: () => void;
   onDisconnect: (connection: PlatformConnection) => Promise<boolean>;
 }) {
+  const t = useTranslations('connections');
   const connected = connections.length > 0;
   return (
     <section
@@ -96,7 +99,7 @@ export function PlatformCard({
         <h2 id={`platform-${platform.id}`} className="font-display text-3xl leading-none">
           {platform.label}
         </h2>
-        <p className="mt-1.5 text-xs text-muted-foreground">{platform.posts}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{t(`posts.${platform.id}`)}</p>
       </div>
       <div className="min-w-0">
         {connected ? (
@@ -113,7 +116,7 @@ export function PlatformCard({
             ))}
           </ul>
         ) : (
-          <p className="py-3 text-sm text-muted-foreground">Not connected.</p>
+          <p className="py-3 text-sm text-muted-foreground">{t('notConnected')}</p>
         )}
         <Button
           className="mt-2"
@@ -122,7 +125,9 @@ export function PlatformCard({
           onClick={onConnect}
         >
           {connecting ? <Loader2 className="animate-spin" /> : <Link2 />}
-          {connected ? `Add another ${platform.label} account` : `Connect ${platform.label}`}
+          {connected
+            ? t('addAnother', { platform: platform.label })
+            : t('connect', { platform: platform.label })}
         </Button>
       </div>
     </section>

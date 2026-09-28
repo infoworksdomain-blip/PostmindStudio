@@ -1,0 +1,3205 @@
+{
+  "common": {
+    "actions": {
+      "add": "添加",
+      "apply": "应用",
+      "back": "返回",
+      "cancel": "取消",
+      "close": "关闭",
+      "confirm": "确认",
+      "continue": "继续",
+      "copy": "复制",
+      "create": "创建",
+      "delete": "删除",
+      "done": "完成",
+      "edit": "编辑",
+      "next": "下一步",
+      "previous": "上一步",
+      "remove": "移除",
+      "retry": "重试",
+      "save": "保存",
+      "search": "搜索",
+      "send": "发送",
+      "submit": "提交",
+      "switch": "切换"
+    },
+    "states": {
+      "loading": "正在加载…",
+      "saving": "正在保存…",
+      "saved": "已保存",
+      "empty": "这里还没有内容。",
+      "unknown": "未知",
+      "none": "无",
+      "on": "开",
+      "off": "关",
+      "yes": "是",
+      "no": "否"
+    },
+    "count": {
+      "items": "{count, plural, =0 {无项目} other {# 个项目}}",
+      "selected": "{count, plural, =0 {未选择} other {已选择 # 个}}"
+    },
+    "a11y": {
+      "moreOptions": "更多选项",
+      "required": "必填"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "打开导航",
+      "navigationTitle": "导航",
+      "getStarted": "开始使用",
+      "groups": {
+        "make": "创作",
+        "manage": "管理",
+        "setup": "设置",
+        "staff": "PostMind 员工"
+      },
+      "items": {
+        "create": "创建",
+        "projects": "项目",
+        "library": "参考素材库",
+        "templates": "模板",
+        "publications": "发布",
+        "calendar": "日历",
+        "analytics": "数据分析",
+        "business": "商家与图片",
+        "connections": "账号连接",
+        "approvals": "审批流程",
+        "export": "导出数据",
+        "admin": "管理后台"
+      }
+    },
+    "theme": {
+      "useLight": "使用浅色主题",
+      "useDark": "使用深色主题"
+    },
+    "language": {
+      "label": "语言",
+      "trigger": "界面语言：{language}",
+      "changed": "界面语言已切换为{language}"
+    },
+    "business": {
+      "label": "商家",
+      "choose": "选择商家",
+      "idPlaceholder": "PostMind 商家 ID",
+      "listPending": "商家列表需等待 PostMind Core 接入：请输入商家 ID。"
+    },
+    "feedback": {
+      "button": "反馈",
+      "buttonAria": "发送反馈",
+      "title": "发送反馈",
+      "description": "告诉我们哪些好用、哪些不好用。我们会看到您当时所在的页面。",
+      "kindLegend": "反馈类型？",
+      "kindAria": "反馈类型",
+      "kinds": {
+        "bug": "出现问题",
+        "idea": "建议",
+        "praise": "我喜欢的地方",
+        "other": "其他"
+      },
+      "message": "内容",
+      "characterCount": "{count}/{max}",
+      "attachProject": "与我正在查看的项目相关",
+      "thanks": "感谢反馈！PostMind 团队会阅读每一条消息"
+    },
+    "notifications": {
+      "title": "通知",
+      "bellAria": "{count, plural, =0 {通知} other {通知，# 条未读}}",
+      "markAllRead": "全部标为已读",
+      "markRead": "标为已读",
+      "markReadAria": "将“{title}”标为已读",
+      "empty": "暂无通知。",
+      "emailPendingSetup": "邮件待设置：邮件发送功能尚未接入。",
+      "inAppOnly": "仅限应用内通知，邮件发送暂不可用。"
+    },
+    "preferences": {
+      "button": "通知偏好",
+      "title": "通知偏好",
+      "description": "选择您要接收的通知。邮件：待设置——您的邮件选项会被保存，并在邮件发送功能接入后生效。",
+      "tableAria": "通知偏好",
+      "notification": "通知",
+      "inApp": "应用内",
+      "email": "邮件",
+      "pendingSetup": "待设置",
+      "switchInApp": "{label}：应用内",
+      "switchEmail": "{label}：邮件",
+      "kinds": {
+        "generation_complete": "视频待审核",
+        "approval_pending": "审批等待超过 2 小时",
+        "publication_failed": "发布失败",
+        "auto_publish_failed": "自动发布已放弃",
+        "milestone": "里程碑（1 万次观看、100 条评论）",
+        "cost_alert": "预算提醒",
+        "cost_paused": "因预算限制暂停生成",
+        "safety_review": "内容安全审核",
+        "share_comment": "预览链接收到反馈",
+        "plan_quota": "套餐用量提醒（80% 和 100%）"
+      }
+    },
+    "usage": {
+      "bannerAria": "套餐用量",
+      "tiers": {
+        "BASIC": "基础版",
+        "STANDARD": "标准版",
+        "PLUS": "高级版",
+        "ENTERPRISE": "企业版"
+      },
+      "exceededTitle": "本月{tier}套餐的视频额度已用完",
+      "warningTitle": "即将达到本月{tier}套餐的额度上限",
+      "blockedBody": "新视频将暂停至 {date}。升级套餐即可继续创作。",
+      "resetBody": "额度将于 {date} 重置。升级套餐可获得更多视频。",
+      "shortVideos": "短视频",
+      "longVideos": "长视频",
+      "shortVideosUpTo": "短视频（最长 {seconds} 秒）",
+      "longVideosUpTo": "长视频（最长 {minutes} 分钟）",
+      "usedOf": "{used} / {limit}",
+      "usedUnlimited": "{used}（不限）",
+      "planName": "{tier}套餐",
+      "scans": "网站扫描：{scanned} / {limit} 个商家",
+      "scansUnlimited": "网站扫描：{scanned} 个商家（不限）",
+      "resets": "{date} 重置",
+      "enforced": "已启用额度限制",
+      "notEnforced": "尚未启用额度限制"
+    },
+    "pageTitle": {
+      "library": "参考视频库",
+      "libraryVideo": "参考视频",
+      "analytics": "数据分析",
+      "publicationAnalytics": "发布数据分析",
+      "approvals": "审批流程",
+      "admin": "管理中心"
+    }
+  },
+  "errors": {
+    "generic": "出错了。",
+    "sessionExpired": "您的 PostMind 会话已过期，请重新登录。",
+    "forbidden": "您无权执行此操作。",
+    "rateLimited": "请求过于频繁，请稍后再试。",
+    "withProblems": "{message}：{problems}",
+    "requestFailed": "请求失败（{status}）",
+    "codes": {
+      "unauthorized": "您的 PostMind 会话已过期，请重新登录。",
+      "forbidden": "您无权执行此操作。",
+      "feature_disabled": "您的组织尚未开通此功能。",
+      "plan_tier": "您的套餐不包含此功能。请升级套餐后使用。",
+      "quota_exceeded": "您已达到本月套餐额度上限。升级套餐即可继续创作。",
+      "not_found": "未找到该内容，可能已被删除。",
+      "conflict": "在您操作期间内容已发生变化。请刷新后重试。",
+      "validation_error": "部分信息无效，请检查后重试。",
+      "unprocessable": "当前状态下无法执行此操作。",
+      "rate_deferred": "服务提供商繁忙，Studio 将稍后自动重试。",
+      "rate_limited": "请求过于频繁，请稍后再试。",
+      "payload_too_large": "文件过大。",
+      "kill_switch_active": "PostMind 目前已暂停生成，请稍后再试。",
+      "provider_error": "生成服务提供商出现问题，请稍后再试。",
+      "platform_error": "社交平台出现问题，请稍后再试。",
+      "no_provider_available": "目前没有可处理此任务的服务提供商，请稍后再试。",
+      "cost_cap_paused": "已达到预算上限，生成已暂停。",
+      "upstream_error": "已连接的服务出现问题，请稍后再试。",
+      "configuration_error": "Studio 尚未完成此功能的配置，请联系 PostMind 支持团队。",
+      "not_implemented": "此功能暂不可用。",
+      "internal_error": "我们这边出了点问题，请稍后再试。",
+      "upload_failed": "上传失败，请重试。"
+    }
+  },
+  "primitives": {
+    "errorTitle": "无法加载",
+    "retry": "重试"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "刚刚",
+    "duration": {
+      "hoursMinutes": "{hours} 小时 {minutes} 分",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} 秒"
+    },
+    "projectState": {
+      "DRAFT": "草稿",
+      "QUEUED": "排队中",
+      "SCANNING": "自动填充中",
+      "PLANNING": "正在撰写脚本",
+      "ASSETS_QUEUED": "正在生成镜头",
+      "ASSETS_GENERATING": "正在生成镜头",
+      "RENDERING": "渲染中",
+      "QUALITY_CHECKING": "质量检查中",
+      "QUALITY_FAILED": "质量检查未通过",
+      "READY_FOR_REVIEW": "待审核",
+      "APPROVED": "已批准",
+      "PUBLISHING": "发布中",
+      "PUBLISHED": "已发布",
+      "PARTIALLY_PUBLISHED": "部分已发布",
+      "REJECTED": "已拒绝",
+      "FAILED": "失败"
+    },
+    "publicationState": {
+      "SCHEDULED": "已排期",
+      "PUBLISHING": "发布中",
+      "PUBLISHED": "已上线",
+      "FAILED": "失败",
+      "CANCELLED": "已取消",
+      "TAKEN_DOWN": "已下架"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Instagram 动态",
+      "facebook_feed": "Facebook 动态"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "“{name}”已可审核",
+      "body": "所有版本均已通过质量检查。请审核后批准或发布。"
+    },
+    "generationAutoApproved": {
+      "title": "“{name}”已生成并自动批准",
+      "body": "该视频已通过全部质量检查，并由您的审核策略自动批准。"
+    },
+    "publicationFailed": {
+      "title": "“{name}”发布到 {platform} 失败",
+      "body": "{reason}——请打开项目重试。"
+    },
+    "approvalPending": {
+      "title": "“{name}”正在等待审批",
+      "body": "该项目已待审核超过 2 小时。"
+    },
+    "autoPublishFailed": {
+      "title": "“{name}”自动发布到 {platform} 失败",
+      "body": "{reason}——请打开项目重试。"
+    },
+    "shareComment": {
+      "title": "{name} 收到新反馈",
+      "body": "{author}：{comment}"
+    },
+    "milestoneViews": {
+      "title": "“{name}”在 {platform} 上的观看次数已达 {threshold, number}",
+      "body": "目前观看次数为 {count, number}。打开项目查看其发布和数据分析。"
+    },
+    "milestoneComments": {
+      "title": "“{name}”在 {platform} 上的评论数已达 {threshold, number}",
+      "body": "目前评论数为 {count, number}。打开项目查看其发布和数据分析。"
+    },
+    "autoResumedMonthly": {
+      "title": "“{name}”已自动恢复",
+      "body": "新的一个月已开始，生成已从暂停处继续。"
+    },
+    "autoResumedDaily": {
+      "title": "“{name}”已自动恢复",
+      "body": "新的一天（UTC）已开始，生成已从暂停处继续。"
+    },
+    "costProjectPaused": {
+      "title": "生成已暂停：“{name}”已用完预算的 {pausePercent, number}%",
+      "body": "已花费 {spent, number, ::currency/GBP}，预算为 {cap, number, ::currency/GBP}。请打开项目，提高预算（提高预算），然后再次点击“生成”。"
+    },
+    "costProjectAlert": {
+      "title": "“{name}”已使用预算的 {threshold, number}%",
+      "body": "已花费 {spent, number, ::currency/GBP}，预算为 {cap, number, ::currency/GBP}。用到预算的 {pausePercent, number}% 时将暂停生成，届时可在项目页面提高预算。"
+    },
+    "costProjectOverBudget": {
+      "title": "“{name}”已使用预算的 {threshold, number}%",
+      "body": "已花费 {spent, number, ::currency/GBP}，预算为 {cap, number, ::currency/GBP}。在提高预算之前，生成将保持暂停。"
+    },
+    "costDailyAlert": {
+      "title": "今日生成预算已使用 {threshold, number}%",
+      "body": "今日（UTC）已花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}。达到 100% 后将暂停生成，直至 UTC 午夜；发布不受影响。"
+    },
+    "costDailyPaused": {
+      "title": "生成已暂停：今日生成预算已用完",
+      "body": "今日（UTC）已花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}。UTC 午夜后将恢复新的生成；发布不受影响。"
+    },
+    "costMonthlyAlert": {
+      "title": "本月生成预算已使用 {threshold, number}%",
+      "body": "本月（UTC）已花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}。达到 100% 后将暂停生成，直至下月 1 日（UTC）；发布不受影响。"
+    },
+    "costMonthlyPaused": {
+      "title": "生成已暂停：本月生成预算已用完",
+      "body": "本月（UTC）已花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}。新的生成将于下月 1 日（UTC）或你的套餐月度上限提高后恢复；发布不受影响。"
+    },
+    "costProviderDaily": {
+      "title": "今日 {provider} 预算已使用 {threshold, number}%",
+      "body": "今日（UTC）在 {provider} 上已花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}。达到 100% 后，Studio 会在有备用服务商时改用备用服务商。"
+    },
+    "costGlobalAlert": {
+      "title": "全局每日服务商支出已达上限的 {threshold, number}%",
+      "body": "今日（UTC）所有组织共花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}（STUDIO_GLOBAL_DAILY_CAP_PENCE）。请参阅 runbooks/cost-runaway.md。"
+    },
+    "costGlobalPaused": {
+      "title": "已达到全局每日服务商上限：所有生成均已暂停",
+      "body": "今日（UTC）所有组织共花费 {spent, number, ::currency/GBP}，上限为 {cap, number, ::currency/GBP}（STUDIO_GLOBAL_DAILY_CAP_PENCE）。请参阅 runbooks/cost-runaway.md。"
+    },
+    "safetyReviewStaff": {
+      "title": "需要内容安全审核：“{name}”",
+      "body": "{kind, select, script {脚本} other {渲染后的视频}}被标记：{reason}"
+    },
+    "safetyReviewOpened": {
+      "title": "“{name}”正在等待内容安全审核",
+      "body": "PostMind 的 Trust & Safety 团队正在检查。如获准许，生成将继续进行。"
+    },
+    "safetyReviewAllowed": {
+      "title": "“{name}”已通过内容安全审核",
+      "body": "生成继续进行。"
+    },
+    "safetyReviewBlocked": {
+      "title": "“{name}”未通过内容安全审核，已被拦截",
+      "body": "Trust & Safety 备注：{note}"
+    },
+    "safetyAuditMiss": {
+      "title": "Trust & Safety 审计：Hive 扫描漏检",
+      "body": "一个已发布的 {platform} 视频（组织 {organisationId}，发布 {publicationId}）未通过 {period} 审计：{note}。请按照 runbooks/content-safety-miss.md 处理。"
+    },
+    "planQuotaNearing": {
+      "title": "{tier} 套餐：{kind, select, short {短视频} other {长视频}}额度已使用 {threshold, number}%",
+      "body": "本月已生成 {used, number} 个{kind, select, short {短视频} other {长视频}}，额度为 {limit, number} 个。额度将于下月初（UTC）重置。{nextTier, select, none {} other {升级到 {nextTier} 可获得更多额度。}}"
+    },
+    "planQuotaReached": {
+      "title": "{tier} 套餐：本月{kind, select, short {短视频} other {长视频}}额度已用完",
+      "body": "本月已生成 {used, number} 个{kind, select, short {短视频} other {长视频}}，额度为 {limit, number} 个。额度将于下月初（UTC）重置。{nextTier, select, none {} other {升级到 {nextTier} 可获得更多额度。}}"
+    },
+    "planQuotaBlocked": {
+      "title": "{tier} 套餐：本月{kind, select, short {短视频} other {长视频}}额度已用完",
+      "body": "本月已生成 {used, number} 个{kind, select, short {短视频} other {长视频}}，额度为 {limit, number} 个。在下月初（UTC）额度重置前，将无法开始新的生成。{nextTier, select, none {} other {升级到 {nextTier} 可获得更多额度。}}"
+    }
+  },
+  "create": {
+    "page": {
+      "title": "创建"
+    },
+    "screen": {
+      "eyebrow": "创建",
+      "heading": {
+        "BRIEF": "视频的主题是什么？",
+        "SLIDESHOW": "幻灯片的主题是什么？",
+        "UPLOAD": "上传您的视频"
+      },
+      "uploadChoose": "选择视频",
+      "uploadReplace": "替换视频",
+      "uploadNote": "Studio 会根据视频中的语音添加字幕，并加上您的叠加层和各平台格式。下方备注为选填。",
+      "briefPlaceholder": "我们的春季菜单周五上新——三款新小食，首周八折…",
+      "summaryTemplate": "{name} 模板",
+      "summaryPlatforms": "{count, plural, =0 {未选平台} other {# 个平台}}",
+      "summaryAutoPublish": "自动发布",
+      "summaryBrandKit": "已启用品牌套件",
+      "options": "选项",
+      "generate": "生成",
+      "createSlideshow": "创建幻灯片",
+      "sourcesAria": "要制作的内容",
+      "sources": {
+        "BRIEF": "视频",
+        "SLIDESHOW": "幻灯片",
+        "UPLOAD": "上传视频"
+      },
+      "templatedNote": "平台和时长由模板决定。上方文字为选填，可为模板大纲补充具体内容。",
+      "noBusiness": {
+        "title": "请先选择商家",
+        "description": "每个视频只针对一个商家制作。请在顶部栏选择商家后再返回。",
+        "action": "设置商家"
+      },
+      "toast": {
+        "slideshowDrafted": "幻灯片草稿已生成——请检查幻灯片，然后生成。",
+        "generatingUpload": "正在生成——Studio 正在为您的视频添加字幕。",
+        "generatingScript": "正在生成——Studio 正在撰写脚本。",
+        "draftNotStarted": "已保存为草稿，但未能开始生成：{error}"
+      }
+    },
+    "problems": {
+      "businessRequired": "请先选择商家。",
+      "uploadRequired": "请先上传您的视频。",
+      "briefRequired": "请描述视频的主题。",
+      "briefTooLong": "简介请控制在 {max, number} 个字符以内。",
+      "platformRequired": "请至少选择一个平台。",
+      "autoPublishAccountRequired": "请至少选择一个自动发布账号，或关闭自动发布。",
+      "slideshowTemplateRequired": "请选择幻灯片模板。",
+      "scheduleInPast": "请选择将来的时间。",
+      "scheduleNeedsAutoPublish": "排期发布的视频需要选择要发布到的账号（自动发布）。",
+      "budgetRange": "预算必须介于 {min} 和 {max} 之间。"
+    },
+    "options": {
+      "platforms": "平台",
+      "length": "时长",
+      "lengths": {
+        "short": "短",
+        "long": "长"
+      },
+      "brandKit": {
+        "label": "品牌套件",
+        "none": "不使用品牌套件",
+        "loading": "正在加载…",
+        "defaultKit": "{name}（默认）"
+      },
+      "advanced": {
+        "toggle": "高级选项",
+        "audience": "目标受众",
+        "audiencePlaceholder": "例如：首次购房者",
+        "cta": "行动号召",
+        "ctaPlaceholder": "例如：预约免费咨询",
+        "budget": "预算上限（£）",
+        "budgetHint": "达到该金额的 90% 时将暂停生成；您可以在项目页面提高预算。留空 = 短视频 {short}，长视频 {long}（超过 3 分钟，或 YouTube 超过 1 分钟）。",
+        "budgetPlaceholder": "默认 {amount}",
+        "budgetPlaceholderTemplate": "默认 {short} / {long}",
+        "approval": "审批",
+        "approvalDefault": "组织默认设置",
+        "approvalRequire": "发布前审核",
+        "approvalAuto": "自动批准"
+      }
+    },
+    "planning": {
+      "language": "语言",
+      "languageOption": "{name}——{nativeName}",
+      "alsoMakeIn": "同时制作以下语言版本（每种语言一个版本）",
+      "tier": "质量等级",
+      "tierHint": "较低等级会为此视频使用成本更低的服务商。等级永远不会高于您的套餐。",
+      "tierPlan": "您的套餐（{tier}）",
+      "tierPlanUnknown": "您的套餐",
+      "tiers": {
+        "BASIC": "基础版",
+        "STANDARD": "标准版",
+        "PLUS": "进阶版",
+        "ENTERPRISE": "企业版"
+      },
+      "schedule": "排期",
+      "scheduleHint": "批准后将在此时间发布到自动发布账号。",
+      "workflow": "审批流程",
+      "workflowNone": "尚未设置审批流程",
+      "workflowOrg": "组织规则"
+    },
+    "autoPublish": {
+      "legend": "自动发布",
+      "toggle": "批准后自动发布",
+      "toggleHint": "视频一经批准（由您批准或自动批准），就会发布到下方账号。",
+      "account": "{platform} 账号",
+      "noAccount": "没有已连接的账号。",
+      "connectOne": "去连接",
+      "dontAutoPublish": "不自动发布"
+    },
+    "templatePicker": {
+      "legend": "模板",
+      "aria": "视频模板",
+      "loading": "正在加载模板",
+      "none": "不使用模板",
+      "noneDetail": "Studio 会根据您的简介规划视频",
+      "shots": "{count, plural, other {# 个镜头}}",
+      "autoPublishes": "自动发布",
+      "yours": "我的"
+    },
+    "reference": {
+      "eyebrow": "来自参考视频库",
+      "unavailable": "参考视频不可用",
+      "loading": "正在加载参考视频…",
+      "modesAria": "参考方式",
+      "modes": {
+        "INSPIRE": {
+          "label": "灵感",
+          "hint": "借鉴氛围和节奏"
+        },
+        "TEMPLATE": {
+          "label": "模板",
+          "hint": "逐镜头沿用其结构"
+        }
+      },
+      "modeNotAllowed": "此视频的许可不支持该方式",
+      "clear": "不使用参考视频"
+    },
+    "upload": {
+      "uploading": "正在上传 {name}…",
+      "idle": "MP4、MOV 或 WebM。",
+      "problems": {
+        "type": "请选择 MP4、MOV 或 WebM 格式的视频。",
+        "empty": "文件为空。",
+        "tooLarge": "视频最大为 {max, number} MB。"
+      }
+    }
+  },
+  "review": {
+    "page": {
+      "title": "审核"
+    },
+    "screen": {
+      "back": "项目",
+      "eyebrow": "审核",
+      "sources": {
+        "BRIEF": "来自简介",
+        "SLIDESHOW": "幻灯片",
+        "LIBRARY_REFERENCE": "来自参考视频",
+        "POSTMIND_CONTENT": "来自 PostMind 内容",
+        "TEMPLATE": "来自模板",
+        "UPLOAD": "您的视频"
+      },
+      "loading": "正在加载项目",
+      "spent": "已花费 {amount}",
+      "ofBudget": "预算 {amount}",
+      "cancelled": "已取消。",
+      "tabsAria": "审核分区",
+      "tabs": {
+        "slides": "幻灯片",
+        "variants": "版本",
+        "shots": "镜头",
+        "overlays": "叠加层",
+        "script": "脚本",
+        "publish": "发布"
+      },
+      "variantsWorking": "每种格式渲染完成后，对应版本会显示在这里。",
+      "variantsNone": "尚未渲染任何版本。",
+      "publishTitle": "发布",
+      "publishDescription": "立即发布每个已批准的版本，或为其排期。",
+      "approveFirst": "请先批准视频，再进行发布。",
+      "postsTitle": "帖子"
+    },
+    "actions": {
+      "cancel": "取消",
+      "generate": "生成",
+      "generateAgain": "重新生成",
+      "started": "已开始生成。",
+      "cancelled": "已取消——本次运行花费了 {amount}。"
+    },
+    "approval": {
+      "aria": "审批",
+      "readyPrompt": "请观看每个版本，然后批准发布或退回修改。",
+      "qualityFailedPrompt": "质量检查未通过。请在下方强制批准某个版本，或拒绝该项目。",
+      "approve": "批准",
+      "reject": "拒绝",
+      "rejectNote": "需要修改什么？（必填）",
+      "approveNote": "备注（选填）",
+      "back": "返回",
+      "confirmReject": "确认拒绝",
+      "confirmApprove": "确认批准",
+      "approved": "已批准——可以发布了。",
+      "rejected": "已拒绝。"
+    },
+    "publish": {
+      "suggested": "建议时间：{day} {time}",
+      "suggestedLittleData": "建议时间：{day} {time}（数据尚少）",
+      "captionsSuggested": "已为每个平台生成建议文案。",
+      "noPassed": "尚无版本通过质量检查。",
+      "suggest": "建议文案",
+      "noAccount": "没有已连接的账号。",
+      "connect": "连接 {platform}",
+      "account": "账号",
+      "hashtags": "话题标签",
+      "hashtagsPlaceholder": "#春季 #菜单",
+      "caption": "文案",
+      "schedule": "排期（选填）",
+      "scheduleCount": "排期（{count, number}）",
+      "publishNowCount": "立即发布（{count, number}）",
+      "platformError": "{platform}：{error}",
+      "scheduled": "{count, plural, other {已排期 # 条帖子。}}",
+      "publishing": "{count, plural, other {正在发布 # 条帖子。}}"
+    },
+    "publications": {
+      "empty": "尚无已发布或已排期的内容。",
+      "cancelled": "已取消排期帖子。",
+      "retrying": "正在重试。",
+      "scheduledFor": "排期：{date}",
+      "liveSince": "{date} 起已上线",
+      "created": "创建于 {date}",
+      "view": "查看",
+      "cancel": "取消",
+      "retry": "重试",
+      "cancelAria": "取消 {platform} 帖子",
+      "retryAria": "重试 {platform} 帖子"
+    },
+    "outbox": {
+      "title": "自动发布状态",
+      "sent": "已提交发布",
+      "sending": "正在提交…",
+      "pending": "待处理",
+      "retryingAt": "将于 {date} 重试（第 {attempt, number} 次，共 {max, number} 次）",
+      "retryingSoon": "正在重试（第 {attempt, number} 次，共 {max, number} 次）",
+      "failed": "{count, plural, other {尝试 # 次后失败}}",
+      "requeued": "{count, plural, other {正在重试 # 个目标}}",
+      "retry": "重试自动发布"
+    },
+    "automation": {
+      "aria": "审核与发布自动化",
+      "approvedAutomatically": "已自动批准——受信任的创作者，且所有质量检查均已通过。",
+      "approvedByPerson": "已由人工批准。",
+      "needsReview": "需要人工审核。",
+      "noTargets": "自动发布已开启，但未选择任何账号——不会自动发布任何内容。",
+      "publishesAutomatically": "批准后自动发布",
+      "publishesAutomaticallyLastRun": "批准后自动发布 · 上次运行：{date}",
+      "targetsAria": "自动发布目标",
+      "accountFallback": "账号",
+      "waits": "等待审批",
+      "scheduledFor": "已排期至 {date}",
+      "sent": "已提交发布",
+      "notPublished": "未发布：{error}",
+      "failedFallback": "失败"
+    },
+    "budget": {
+      "aria": "提高预算",
+      "paused": "已用到此项目预算的 90%，生成已暂停（已花费 {spent}，预算为 {budget}）。请提高预算，然后重新生成。已制作的内容不会丢失。",
+      "newBudget": "新预算（£）",
+      "raise": "提高预算",
+      "tooLow": "请输入大于 {budget} 的金额（最高 {max}）。",
+      "raised": "预算已提高至 {amount}。请点击“{action}”继续。"
+    },
+    "music": {
+      "aria": "音乐",
+      "generated": "背景音乐已生成。",
+      "generatedReused": "背景音乐已生成——复用了之前的渲染结果。",
+      "generatedTrack": "背景音乐已生成（{seconds, number} 秒音轨）。",
+      "generatedTrackReused": "背景音乐已生成（{seconds, number} 秒音轨）——复用了之前的渲染结果。",
+      "offForPlan": "当前套餐不含背景音乐——仅有旁白。",
+      "failed": "背景音乐未能生成，因此此视频仅有旁白。",
+      "none": "渲染时尚未提供背景音乐功能——仅有旁白。"
+    },
+    "sfx": {
+      "aria": "音效",
+      "added": "音效：已添加 {added, number} 个，共 {total, number} 个。",
+      "failed": "未能添加音效；视频将不带音效播放。",
+      "offForPlan": "当前套餐不含音效。",
+      "unavailable": "音效尚未设置；视频将不带音效播放。",
+      "cueQuoted": "“{cue}”",
+      "cue": {
+        "added": "已添加",
+        "no_match": "无匹配音效",
+        "failed": "获取失败"
+      },
+      "cueShots": "{count, plural, other {# 个镜头}}"
+    },
+    "pipeline": {
+      "aria": "流程进度",
+      "steps": {
+        "queued": "排队",
+        "script": "脚本",
+        "shots": "镜头",
+        "render": "渲染",
+        "quality": "质量",
+        "review": "审核",
+        "publish": "发布"
+      },
+      "done": "（已完成）"
+    },
+    "paused": {
+      "aria": "因预算暂停",
+      "daily": "已暂停：您组织今日的生成预算已用完。",
+      "monthly": "已暂停：您组织本月的生成预算已用完。",
+      "resumesDaily": "将于 00:05 UTC 自动恢复。",
+      "resumesMonthly": "将于下月 1 日 00:05 UTC 自动恢复。",
+      "resumeOff": "自动恢复已关闭——准备就绪后请点击“{action}”。",
+      "resumeToggle": "自动恢复",
+      "willResume": "将自动恢复",
+      "resumeTurnedOff": "已关闭自动恢复",
+      "safety": "已暂停，等待 PostMind 的 Trust & Safety 团队进行内容安全审核。如获准许，生成将自动继续；无论结果如何，您都会收到通知。"
+    },
+    "fallback": {
+      "aria": "已使用备用服务商",
+      "intro": "此视频的{layers}使用了备用服务商，因此质量可能与平时不同。请在批准前检查，或稍后重新生成。",
+      "layers": {
+        "visual": "画面",
+        "voice": "旁白",
+        "music": "音乐",
+        "composition": "最终渲染"
+      },
+      "reasons": {
+        "provider_disabled": "已被 PostMind 暂停",
+        "over_budget": "超出预算",
+        "too_slow": "速度过慢",
+        "no_cost_estimate": "无成本估算",
+        "circuit_open": "暂时不可用"
+      },
+      "item": "{layer}：由 {provider} 制作（{skipped}）",
+      "skipped": "{provider} {reason}"
+    },
+    "quality": {
+      "title": "质量检查",
+      "status": {
+        "passed": "通过",
+        "failed": "未通过",
+        "warning": "警告",
+        "skipped": "已跳过"
+      },
+      "statusLabel": "{status}：",
+      "codes": {
+        "content_safety": "内容安全",
+        "duration_match": "时长匹配",
+        "black_frames": "黑帧",
+        "audio_present": "音频存在",
+        "aspect_ratio": "宽高比",
+        "codec": "编码格式"
+      },
+      "severity": {
+        "block": "阻止",
+        "error": "错误",
+        "warning": "警告",
+        "info": "提示"
+      },
+      "pending": "检查仍在进行中。",
+      "none": "未报告任何单项检查结果。",
+      "forceApproved": "审核人员已覆盖未通过的检查。",
+      "overrideLabel": "覆盖未通过的检查——原因（必填，将被审计）",
+      "forceApprove": "强制批准",
+      "overridden": "已覆盖质量检查结果。"
+    },
+    "saveTemplate": {
+      "open": "另存为模板",
+      "aria": "另存为模板",
+      "name": "模板名称",
+      "category": "类别",
+      "categoryHint": "仅限小写字母、数字和 _。",
+      "cancel": "取消",
+      "save": "保存模板",
+      "saved": "已保存为模板——可在“创建”页面选用。"
+    },
+    "script": {
+      "brief": {
+        "hook": "开场钩子",
+        "keyMessage": "核心信息",
+        "audience": "受众",
+        "tone": "语气"
+      },
+      "empty": "—",
+      "notWritten": "脚本尚未撰写。",
+      "aria": "{platform} 的脚本",
+      "shots": "{count, plural, other {# 个镜头}}",
+      "edit": "编辑脚本",
+      "notEditable": "视频处于待审核、已拒绝或失败状态时才能编辑脚本。",
+      "editor": {
+        "loading": "正在加载脚本",
+        "voiceover": "配音",
+        "shot": "镜头 {n, number} · {duration}",
+        "narration": "旁白",
+        "narrationAria": "镜头 {n, number} 的旁白",
+        "onScreen": "屏幕文字",
+        "onScreenAria": "镜头 {n, number} 的屏幕文字",
+        "revoiceNote": "{count, plural, other {修改旁白将为 # 个镜头重新配音；画面保持不变。}}",
+        "textNote": "修改文字会保留所有镜头；重新渲染版本即可看到效果。",
+        "save": "保存脚本",
+        "cancel": "取消",
+        "savedRevoice": "{count, plural, other {已保存——正在为 # 个镜头重新配音。}}",
+        "savedRerender": "已保存——重新渲染版本即可应用。"
+      },
+      "regenerate": {
+        "instruction": "重写说明（选填）",
+        "placeholder": "开场更有冲击力，提一下周六的课程",
+        "button": "重新生成脚本",
+        "started": "正在根据您的简介重写脚本。"
+      }
+    },
+    "shot": {
+      "loading": "正在加载镜头",
+      "heading": "镜头 {n, number} · {duration} · {treatment}",
+      "camera": "镜头运动：{direction}",
+      "failed": "失败：{reason}",
+      "promptLabel": "新提示词（选填——留空则重新生成同一场景）",
+      "regenerate": "重新生成此镜头",
+      "uploadedNoRegenerate": "上传的片段只能替换，不能重新生成",
+      "narration": "旁白",
+      "onScreen": "屏幕文字",
+      "saveText": "保存文字",
+      "regenerating": "正在重新生成镜头 {n, number}。",
+      "savedRevoice": "已保存——正在为此镜头重新配音。",
+      "notEditable": "视频处于待审核、已拒绝或失败状态时才能修改镜头。"
+    },
+    "shotStrip": {
+      "aria": "镜头",
+      "empty": "尚未规划任何镜头。",
+      "tileAria": "镜头 {n, number}，{duration}，{treatment}，{state}",
+      "states": {
+        "PLANNED": "已规划",
+        "QUEUED": "排队中",
+        "GENERATING": "生成中",
+        "READY": "就绪",
+        "FAILED": "失败",
+        "SKIPPED": "已跳过"
+      },
+      "treatments": {
+        "AI_CLIP": "AI 片段",
+        "AI_AVATAR": "AI 数字人",
+        "STOCK_FOOTAGE": "素材库视频",
+        "IMAGE_STILL": "静态图片",
+        "MOTION_GRAPHICS": "动态图形",
+        "USER_UPLOAD": "用户上传",
+        "TEXT_CARD": "文字卡片",
+        "TRANSITION": "转场"
+      }
+    },
+    "swap": {
+      "label": "从图片库替换",
+      "pickerLabel": "镜头 {n, number} 的图片库图片",
+      "use": "使用此图片",
+      "swapped": "镜头 {n, number} 现已使用图片库图片——重新渲染即可查看。",
+      "deleted": "已删除镜头 {n, number}——重新渲染以更新版本。",
+      "confirm": "删除镜头 {n, number}？脚本时间将重新调整。",
+      "confirmDelete": "确认删除",
+      "keep": "保留",
+      "delete": "删除镜头",
+      "lastShot": "脚本至少需要一个镜头"
+    },
+    "shots": {
+      "variant": "版本",
+      "variantOption": "{platform}（{ratio}）",
+      "noScript": "脚本撰写完成后将显示镜头。",
+      "select": "选择一个镜头，即可重新生成或修改其旁白。"
+    },
+    "variant": {
+      "quality": {
+        "PENDING": "检查中",
+        "PASSED": "质量合格",
+        "FAILED": "质量不合格",
+        "FORCE_APPROVED": "已强制批准"
+      },
+      "loadingPreview": "正在加载预览",
+      "previewUnavailable": "预览不可用——{error}",
+      "previewAria": "{platform} 预览",
+      "aria": "{platform} 版本",
+      "outOfDate": "已过时",
+      "staleNote": "此版本渲染后，脚本或镜头已有更改。",
+      "rerender": "重新渲染",
+      "rerendering": "正在按您的修改重新渲染。",
+      "download": "下载 MP4"
+    },
+    "thumbnail": {
+      "aria": "封面",
+      "alt": "版本封面",
+      "none": "暂无封面",
+      "change": "更改",
+      "frameAt": "取帧时间（秒）",
+      "overlayText": "叠加文字（选填）",
+      "useFrame": "使用此帧",
+      "regenerate": "重新生成",
+      "upload": "上传",
+      "uploadAria": "上传封面",
+      "updated": "封面已更新。"
+    }
+  },
+  "slideshow": {
+    "builder": {
+      "loading": "正在加载幻灯片",
+      "slides": "{count, plural, other {# 张幻灯片}}",
+      "needAttention": "{count, plural, other {# 张需要处理}}",
+      "autoPopulate": "自动填充",
+      "autoPopulating": "正在自动填充…",
+      "populateStarted": "正在从您的素材库自动填充文字和图片…",
+      "empty": "还没有幻灯片——请在下方添加。",
+      "deleted": "幻灯片已删除。",
+      "saved": "幻灯片已保存。",
+      "templateSaved": "已保存为模板。",
+      "moveUp": "上移第 {n, number} 张幻灯片",
+      "moveDown": "下移第 {n, number} 张幻灯片",
+      "delete": "删除第 {n, number} 张幻灯片",
+      "addLabel": "添加幻灯片",
+      "add": "添加",
+      "saveTemplate": "另存为模板",
+      "templatePlaceholder": "模板名称",
+      "save": "保存",
+      "pendingText": "文字将由自动填充生成",
+      "noText": "无文字"
+    },
+    "problems": {
+      "pendingText": "文字尚未生成（请运行自动填充或编辑幻灯片）",
+      "needsImage": "需要图片",
+      "needsClip": "需要视频片段",
+      "needsText": "需要文字",
+      "needsBeforeAfter": "需要前后对比图片",
+      "needsQuote": "需要引语",
+      "needsValueLabel": "需要数值和标签",
+      "needsProductName": "需要产品名称"
+    },
+    "types": {
+      "IMAGE_STILL": "图片",
+      "IMAGE_KENBURNS": "图片（Ken Burns）",
+      "VIDEO_CLIP": "视频片段",
+      "TEXT_CARD": "文字卡片",
+      "BEFORE_AFTER": "前后对比",
+      "QUOTE": "引语",
+      "STATISTIC": "数据",
+      "PRODUCT": "产品"
+    },
+    "transitions": {
+      "default": "默认",
+      "cut": "硬切",
+      "fade": "淡入淡出",
+      "wipe": "擦除",
+      "slide": "滑动",
+      "zoom": "缩放"
+    },
+    "editor": {
+      "type": "幻灯片类型",
+      "seconds": "秒数",
+      "transition": "入场转场",
+      "quote": "引语",
+      "author": "作者",
+      "value": "数值",
+      "label": "标签",
+      "productName": "产品名称",
+      "price": "价格",
+      "features": "特点（用逗号分隔，最多 4 个）",
+      "text": "文字",
+      "caption": "说明文字",
+      "background": "背景颜色",
+      "image": "图片",
+      "slideImage": "幻灯片图片",
+      "clipNamed": "片段——{name}",
+      "clipChosen": "片段——已选择",
+      "clipNone": "片段——尚未选择",
+      "replaceClip": "替换片段",
+      "uploadClip": "上传片段",
+      "save": "保存幻灯片"
+    },
+    "imagePicker": {
+      "loading": "正在加载图片",
+      "empty": "还没有图片——<link>向图片库添加一些图片</link>，或运行自动填充。",
+      "imageName": "图片 {n, number}"
+    },
+    "overlays": {
+      "summary": "此幻灯片上的文字叠加层"
+    },
+    "templatePicker": {
+      "loading": "正在加载模板",
+      "empty": "没有可用的幻灯片模板。",
+      "aria": "幻灯片模板",
+      "slides": "{count, plural, other {# 张幻灯片}}",
+      "yours": "我的"
+    }
+  },
+  "overlays": {
+    "editor": {
+      "noScript": "脚本及其镜头生成后才能添加叠加层。",
+      "readOnly": "项目处于“{state}”状态时，叠加层为只读。",
+      "shotStripLabel": "选择一个镜头以编辑其叠加层",
+      "selectShot": "请在上方选择一个镜头。",
+      "wholeVideo": "整个视频",
+      "wholeVideoDescription": "贯穿整个版本的叠加层，例如水印或账号名。",
+      "across": "贯穿整个视频",
+      "acrossDescription": "水印、账号名和重复出现的字幕。"
+    },
+    "set": {
+      "loading": "正在加载叠加层",
+      "added": "已添加叠加层。",
+      "saved": "叠加层已保存——重新渲染即可应用。",
+      "deleted": "叠加层已删除。",
+      "full": "{unit, select, slide {此幻灯片的叠加层已达上限（{max, number} 个）。} video {此视频的叠加层已达上限（{max, number} 个）。} other {此镜头的叠加层已达上限（{max, number} 个）。}}",
+      "playhead": "播放头",
+      "playheadAria": "播放头位置（秒）",
+      "seconds": "{value} 秒",
+      "undo": "撤销",
+      "redo": "重做",
+      "save": "保存",
+      "discard": "放弃更改",
+      "preview": "预览渲染",
+      "saveFirst": "请先保存——预览渲染的是已保存的叠加层",
+      "delete": "删除",
+      "previewAria": "叠加层预览渲染",
+      "selectHint": "在时间轴上选择一个叠加层，以设置其样式和时间。"
+    },
+    "safeArea": {
+      "instagram_reel": "Instagram Reels 安全区（Meta）",
+      "facebook": "Facebook Reels 安全区（Meta）",
+      "tiktok": "TikTok——保守边距（TikTok 未公布固定数值）",
+      "youtube_short": "YouTube Shorts——保守边距（无官方数值）",
+      "titleSafe": "{platform}——5% 标题安全区（保守）"
+    },
+    "form": {
+      "legend": "叠加层设置",
+      "text": "文字",
+      "start": "开始（秒）",
+      "end": "结束（秒）",
+      "font": "字体（Google Fonts）",
+      "weight": "字重",
+      "size": "大小（高度的 {pct, number}%）",
+      "textColour": "文字颜色",
+      "background": "背景",
+      "backgrounds": {
+        "none": "无",
+        "box": "方框",
+        "rounded_box": "圆角方框",
+        "gradient": "渐变",
+        "blur": "模糊"
+      },
+      "backgroundColour": "背景颜色",
+      "horizontal": "水平位置",
+      "vertical": "垂直位置",
+      "alignment": "对齐",
+      "alignments": {
+        "left": "左对齐",
+        "center": "居中",
+        "right": "右对齐"
+      },
+      "style": "样式",
+      "italic": "斜体",
+      "animationIn": "入场动画",
+      "animationOut": "出场动画",
+      "animations": {
+        "none": "无",
+        "fadeIn": "淡入",
+        "fadeOut": "淡出",
+        "slideInLeft": "从左滑入",
+        "slideInRight": "从右滑入",
+        "slideInTop": "从上滑入",
+        "slideInBottom": "从下滑入",
+        "slideOutLeft": "向左滑出",
+        "slideOutRight": "向右滑出",
+        "slideOutTop": "向上滑出",
+        "slideOutBottom": "向下滑出",
+        "scaleIn": "放大进入",
+        "scaleOut": "缩小退出",
+        "typewriter": "打字机",
+        "popIn": "弹出",
+        "wave": "波浪",
+        "glitch": "故障",
+        "blurIn": "模糊进入",
+        "karaokeHighlight": "卡拉 OK 高亮",
+        "counter": "计数器"
+      },
+      "opacity": "不透明度（%）"
+    },
+    "problems": {
+      "textEmpty": "文字不能为空。",
+      "endAfterStart": "结束时间必须晚于开始时间。",
+      "endWithin": "结束时间必须在镜头的 {duration, number} 秒以内。",
+      "fontFamily": "字体必须是 Google Fonts 中的字体系列名称。"
+    },
+    "frame": {
+      "aria": "{time} 秒处的画面：{texts}",
+      "noOverlays": "无叠加层",
+      "resizeAria": "调整叠加层大小（画面高度的 {pct, number}%）；可用方向键调整"
+    },
+    "timeline": {
+      "tick": "{value, number} 秒",
+      "empty": "{unit, select, slide {此幻灯片上还没有叠加层。} video {此视频上还没有叠加层。} other {此镜头上还没有叠加层。}}",
+      "barAria": "叠加层“{text}”，{start} 秒至 {end} 秒",
+      "help": "拖动条块或其两端。键盘：←/→ 移动 0.1 秒（按住 Shift 为 0.5 秒），Alt+←/→ 调整结束时间。"
+    },
+    "presets": {
+      "defaultStyle": "默认样式",
+      "groups": {
+        "hook": "开场钩子",
+        "subtitle": "字幕",
+        "cta": "行动号召",
+        "quote": "引语",
+        "statistic": "数据",
+        "story": "故事",
+        "brand": "品牌"
+      },
+      "yours": "{name}（我的）",
+      "newText": "新叠加层文字",
+      "newPlaceholder": "精彩马上来…",
+      "preset": "预设",
+      "addAtPlayhead": "在播放头处添加",
+      "saveAs": "将此样式保存为预设",
+      "namePlaceholder": "预设名称",
+      "group": "分组",
+      "savePreset": "保存预设",
+      "saved": "预设已保存。",
+      "edit": "编辑我的预设",
+      "choose": "选择一个我的预设",
+      "option": "{name}（{group}）",
+      "name": "名称",
+      "saveName": "保存名称",
+      "renamed": "预设已重命名。",
+      "useStyle": "使用此叠加层的样式",
+      "styleUpdated": "“{name}”现已使用此叠加层的样式。"
+    },
+    "bulk": {
+      "noRenders": "尚无渲染结果。",
+      "variant": "版本",
+      "variantOption": "{platform}（{ratio}）",
+      "preset": "预设",
+      "text": "文字",
+      "textPlaceholder": "@yourbrand",
+      "start": "开始（秒）",
+      "end": "结束（秒）",
+      "applyTo": "应用于",
+      "wholeVideo": "整个视频（从视频开头计时）",
+      "selectedShots": "所选镜头（在每个镜头内计时）",
+      "shot": "镜头 {n, number}",
+      "apply": "应用叠加层",
+      "wholeVideoNote": "整个视频的叠加层会在上方的“整个视频”轨道中列出和编辑——将在下次渲染时显示。",
+      "rerenderNote": "叠加层的修改会在视频重新渲染时生效，不会生成新素材。",
+      "rerender": "重新渲染视频",
+      "rerenderUnavailable": "视频待审核后即可重新渲染",
+      "rerendering": "正在按当前叠加层重新渲染。",
+      "added": "{count, plural, other {已添加 # 个叠加层。}}"
+    },
+    "wholeVideo": {
+      "none": "有版本渲染完成后，即可添加整个视频的叠加层。",
+      "variant": "版本",
+      "variantOption": "{platform}（{ratio}）"
+    }
+  },
+  "projects": {
+    "list": {
+      "title": "项目",
+      "description": "每个视频，从最初的需求简述到发布的帖子。",
+      "newVideo": "新建视频",
+      "filtersAria": "筛选项目",
+      "filters": {
+        "all": "全部",
+        "working": "进行中",
+        "review": "待审核",
+        "draft": "草稿",
+        "published": "已发布",
+        "failed": "失败"
+      },
+      "loading": "正在加载项目",
+      "empty": {
+        "title": "还没有视频",
+        "body": "描述视频的主题，Studio 会为您撰写脚本、拍摄并剪辑。",
+        "action": "制作您的第一个视频"
+      },
+      "emptyFiltered": {
+        "title": "这里没有内容",
+        "body": "没有符合此筛选条件的项目。"
+      },
+      "noFormats": "无格式",
+      "rowMeta": "{platforms} — 更新于 {updated}",
+      "newer": "较新",
+      "older": "较早"
+    }
+  },
+  "publications": {
+    "list": {
+      "title": "发布",
+      "description": "Studio 在各个平台上发布或排期的所有帖子。",
+      "calendar": "日历",
+      "filtersAria": "筛选发布",
+      "filters": {
+        "all": "全部",
+        "scheduled": "已排期",
+        "live": "已上线",
+        "failed": "失败",
+        "ended": "已取消和已下架"
+      },
+      "platform": "平台",
+      "allPlatforms": "所有平台",
+      "loading": "正在加载发布",
+      "empty": {
+        "title": "还没有发布任何内容",
+        "body": "在视频的审核页面批准视频，即可发布或排期。",
+        "action": "前往项目"
+      },
+      "emptyFiltered": {
+        "title": "这里没有内容",
+        "body": "没有符合这些筛选条件的发布。"
+      },
+      "columns": {
+        "video": "视频",
+        "platform": "平台",
+        "state": "状态",
+        "when": "时间",
+        "views": "观看次数",
+        "actions": "操作"
+      },
+      "untitled": "未命名项目",
+      "when": {
+        "published": "发布时间",
+        "scheduledFor": "排期时间",
+        "created": "创建时间"
+      },
+      "rowMobile": {
+        "published": "{platform} · 发布于 {date}",
+        "scheduledFor": "{platform} · 排期于 {date}",
+        "created": "{platform} · 创建于 {date}"
+      },
+      "newer": "较新",
+      "older": "较早"
+    },
+    "actions": {
+      "openOn": "在 {platform} 上打开{name}",
+      "thisVideo": "此视频",
+      "retry": "重试",
+      "cancel": "取消",
+      "takeDown": "下架",
+      "done": {
+        "cancel": "已取消排期帖子",
+        "retry": "已加入重试队列",
+        "takedown": "帖子已下架"
+      },
+      "cancelConfirm": {
+        "title": "取消这条排期帖子？",
+        "body": "{name}将不会发布到 {platform}。您可以在项目中重新排期。",
+        "confirm": "取消帖子"
+      },
+      "takedownConfirm": {
+        "title": "从 {platform} 下架这条帖子？",
+        "body": "在 {platform} 的 API 允许的范围内，{name}将被删除。帖子的观看次数、点赞和评论都会丢失，且此操作无法撤销。",
+        "confirm": "下架"
+      }
+    },
+    "confirmDialog": {
+      "keep": "保留"
+    }
+  },
+  "calendar": {
+    "title": "日历",
+    "description": "各平台上已排期和已发布的视频。",
+    "allPublications": "所有发布",
+    "refreshing": "正在刷新",
+    "previousMonth": "上个月",
+    "today": "今天",
+    "nextMonth": "下个月",
+    "loading": "正在加载日历",
+    "truncated": "正在显示本月前 {count, number} 条发布。<link>查看全部</link>。",
+    "dragHint": "将排期帖子拖到其他日期即可移动（时间不变），也可以使用其移动按钮选择任意日期和时间。",
+    "grid": {
+      "daysAria": "本月日期",
+      "more": "{count, plural, other {还有 # 条}}",
+      "agendaAria": "日程",
+      "emptyMonth": "本月没有排期或发布的内容。"
+    },
+    "event": {
+      "untitled": "未命名项目",
+      "title": "{name} — {platform} — {state}",
+      "aria": "{name}，{platform}，{state}",
+      "ariaAt": "{name}，{platform}，{time}{state}",
+      "meta": "{platform} · {state}",
+      "moveAria": "将{name}移至其他时间",
+      "moveTitle": "移至其他时间"
+    },
+    "move": {
+      "tooSoon": "请选择至少一分钟之后的时间。",
+      "moved": "已移至 {date}",
+      "title": "移动“{name}”",
+      "thisVideo": "此视频",
+      "description": "选择新的日期和时间（您的当地时间），范围为一分钟后到 180 天内。",
+      "newTime": "新时间",
+      "cancel": "取消",
+      "moving": "正在移动…",
+      "submit": "移动"
+    },
+    "drip": {
+      "title": "定时发布队列",
+      "description": "设为“排期”但未指定日期的已批准视频，会在下一个空闲时段发出；每个平台在上一个平台之后 {minutes, plural, other {# 分钟}}发布。",
+      "saved": "定时发布队列已保存。",
+      "nextSlot": "下一个空闲时段：<strong>{date}</strong> · {queued, plural, other {# 个排队中}}",
+      "takenAria": "已占用的发布时段",
+      "slotDay": "时段 {n} 日期",
+      "slotTime": "时段 {n} 时间",
+      "removeSlot": "移除时段 {n}",
+      "addSlot": "添加时段",
+      "saveSlots": "保存时段"
+    }
+  },
+  "business": {
+    "screen": {
+      "title": "商家与图片",
+      "description": "Studio 对这家商家的了解、品牌应有的外观，以及可以使用的图片。",
+      "pickFirst": {
+        "title": "请先选择商家",
+        "body": "请在顶部栏中选择要设置的商家。"
+      },
+      "tabs": {
+        "profile": "资料",
+        "scan": "网站扫描",
+        "brand": "品牌套件",
+        "images": "图片库",
+        "learned": "Studio 学到的内容"
+      }
+    },
+    "kits": {
+      "intro": "默认套件会应用于新视频。脚本使用其语气和受众；叠加层和画面构图使用其颜色和字体。",
+      "new": "新建品牌套件",
+      "loading": "正在加载品牌套件",
+      "empty": {
+        "title": "还没有品牌套件",
+        "body": "添加您的颜色、字体和语气，让每个视频的观感和声音都符合您的品牌。"
+      },
+      "listAria": "品牌套件",
+      "uploadedFont": "已上传的字体",
+      "defaultFonts": "默认字体",
+      "default": "默认",
+      "noColours": "未设置颜色",
+      "edit": "编辑",
+      "editAria": "编辑{name}",
+      "makeDefault": "设为默认",
+      "makeDefaultAria": "将{name}设为默认",
+      "delete": "删除",
+      "deleteAria": "删除{name}",
+      "created": "已创建{name}",
+      "saved": "已保存{name}",
+      "nowDefault": "{name}现为默认套件",
+      "deleted": "已删除{name}",
+      "deleteConfirm": {
+        "title": "删除{name}？",
+        "titleFallback": "删除此套件？",
+        "body": "该套件将从此商家中移除（已完成的视频仍保留它）。仍被进行中项目使用的套件无法删除。",
+        "confirm": "删除套件"
+      }
+    },
+    "kitForm": {
+      "editTitle": "编辑{name}",
+      "newTitle": "新建品牌套件",
+      "description": "用于此商家所有视频的脚本、叠加层和画面构图。",
+      "name": "名称",
+      "colours": "颜色",
+      "coloursHint": "最多 8 个十六进制颜色，例如 #D6452B, #1F2A44",
+      "headingFont": "标题字体",
+      "bodyFont": "正文字体",
+      "tone": "语气",
+      "toneHint": "最多 10 个词，用逗号分隔",
+      "audience": "受众",
+      "ctas": "行动号召",
+      "ctasHint": "每行一个：标签 | 模板",
+      "restricted": "需避免的话题",
+      "restrictedHint": "用逗号分隔",
+      "cancel": "取消",
+      "save": "保存套件",
+      "create": "创建套件",
+      "problems": {
+        "name": "请为套件命名。",
+        "tooManyColours": "{max, plural, other {最多使用 # 种颜色。}}",
+        "badColour": "{colour} 不是有效的 #RRGGBB 颜色。",
+        "badFont": "“{font}”不是有效的字体名称（仅限字母、数字、空格和连字符）。",
+        "tooManyTones": "{max, plural, other {最多使用 # 个语气关键词。}}",
+        "tooManyCtas": "{max, plural, other {最多使用 # 个行动号召模板。}}"
+      }
+    },
+    "media": {
+      "sectionAria": "{name}的媒体",
+      "slots": {
+        "logo": "徽标",
+        "watermark": "水印",
+        "intro": "片头卡",
+        "outro": "片尾卡"
+      },
+      "slotsInline": {
+        "logo": "徽标",
+        "watermark": "水印",
+        "intro": "片头卡",
+        "outro": "片尾卡"
+      },
+      "added": "已添加",
+      "none": "无",
+      "add": "添加",
+      "replace": "替换",
+      "uploadAria": "为{name}上传{slot}",
+      "addAria": "添加{slot}",
+      "replaceAria": "替换{slot}",
+      "removeAria": "移除{slot}",
+      "slotSaved": "{slot}已保存",
+      "slotRemoved": "{slot}已移除",
+      "font": "字体",
+      "defaultFont": "默认",
+      "uploadedFont": "已上传的字体",
+      "uploadFontAria": "为{name}上传字体",
+      "uploadFont": "上传 TTF/OTF",
+      "fontSaved": "{family} 现为标题字体",
+      "fontSavedGeneric": "已上传的字体现为标题字体",
+      "licence": "我确认此字体的许可允许将其嵌入商业视频中。",
+      "aiLabelOn": "AI 生成标签已开启",
+      "aiLabelOff": "AI 生成标签已关闭",
+      "aiLabelAria": "在视频上显示 AI 生成标签",
+      "aiLabel": "在视频上显示“AI 生成”标签（平台的 AI 标签始终开启）"
+    },
+    "voiceKit": {
+      "label": "配音",
+      "aria": "{name}的配音",
+      "stock": "素材库配音（默认）",
+      "unavailable": "不可用的配音",
+      "cloned": "克隆的声音",
+      "saved": "{name}的配音已保存"
+    },
+    "dispute": {
+      "trigger": "被扫描的网站不属于我",
+      "title": "报告此网站不属于您",
+      "description": "Studio 会在 24 小时内删除从该网站抓取的所有图片，并停止重新扫描。素材库图片和生成的图片仍保留在您的图片库中。",
+      "reason": "发生了什么？",
+      "reasonPlaceholder": "例如：我们误扫描了竞争对手的网站",
+      "confirm": "我确认我们不拥有也不代表此网站。",
+      "cancel": "取消",
+      "submit": "删除抓取的内容",
+      "done": "谢谢！从该网站抓取的图片将在 24 小时内删除"
+    },
+    "domain": {
+      "title": "证明网站归您所有",
+      "description": "企业版：添加 DNS TXT 记录，证明您对所扫描域名的所有权。",
+      "states": {
+        "PENDING": "等待 DNS 生效",
+        "VERIFIED": "已验证",
+        "EXPIRED": "已过期",
+        "DISPUTED": "所有权有争议",
+        "PURGED": "抓取的内容已移除"
+      },
+      "recordName": "TXT 记录名称",
+      "recordValue": "TXT 记录值",
+      "copyRecordName": "复制 TXT 记录名称",
+      "copyRecordValue": "复制 TXT 记录值",
+      "copied": "已复制",
+      "copyFailed": "复制失败，请手动选择文本",
+      "pendingHelp": "请在您的 DNS 服务商处添加此记录。Studio 每 10 分钟检查一次。此请求将于 {expires} 过期。",
+      "pendingHelpChecked": "请在您的 DNS 服务商处添加此记录。Studio 每 10 分钟检查一次（上次检查 {checked}：{result}）。此请求将于 {expires} 过期。",
+      "checkOk": "正常",
+      "verifiedOn": "已于 {date} 验证。",
+      "disputed": "您已告知我们此网站不归您所有。",
+      "disputedOn": "您已告知我们此网站不归您所有（{date}）。",
+      "purgedOn": "从该网站抓取的图片已于 {date} 删除；素材库图片和生成的图片仍会保留。",
+      "purging": "正在删除从该网站抓取的图片（24 小时内完成）。",
+      "rescansOff": "自动重新扫描已关闭。",
+      "domainLabel": "要验证的域名",
+      "domainPlaceholder": "yourbusiness.cn",
+      "verify": "通过 DNS 验证",
+      "enterpriseOnly": "域名验证仅适用于企业版套餐。"
+    },
+    "images": {
+      "sources": {
+        "SCRAPED": "您的网站",
+        "STOCK": "素材库",
+        "GENERATED": "AI 生成",
+        "UPLOAD": "已上传"
+      },
+      "fallbackAlt": "图片库图片",
+      "noPreview": "无预览",
+      "sourceMatch": "{source} · 匹配度 {percent}",
+      "deleteAria": "删除图片：{alt}",
+      "deleteConfirm": {
+        "title": "删除此图片？",
+        "body": "该图片将从您的图片库中移除，且不会用于新视频。",
+        "confirm": "删除图片"
+      },
+      "tooLarge": "图片大于 15 MB",
+      "duplicate": "该图片已在您的图片库中",
+      "added": "已添加图片",
+      "fileAria": "要上传的图片文件",
+      "upload": "上传",
+      "refreshStarted": "{count, plural, other {正在按 # 个搜索词检索素材库，新图片将在几分钟内出现}}",
+      "refresh": "刷新素材图片",
+      "generate": "生成",
+      "generated": "图片已生成并添加到您的图片库",
+      "generateTitle": "生成图片",
+      "generateDescription": "描述您想要的画面。图片将保存到此商家的图片库。生成最多可能需要一分钟。",
+      "prompt": "提示词",
+      "style": "风格（可选）",
+      "shape": "画幅",
+      "cancel": "取消",
+      "searchSummary": "{count, plural, other {# 张与<term>“{query}”</term>相似的图片}}",
+      "clearSearch": "清除搜索",
+      "noMatches": "没有相近的结果。图片的向量嵌入计算完成后才能被搜索到。",
+      "searchResultsAria": "搜索结果",
+      "searchLabel": "按含义搜索图片",
+      "searchPlaceholder": "搜索：“温馨的面包店内景”",
+      "search": "搜索",
+      "deleted": "图片已删除",
+      "source": "来源",
+      "allSources": "所有来源",
+      "tag": "标签",
+      "apply": "应用",
+      "loading": "正在加载图片",
+      "empty": {
+        "title": "您的图片库是空的",
+        "body": "扫描您的网站即可自动填充，也可以上传或生成图片。"
+      },
+      "emptyFiltered": {
+        "title": "没有匹配的图片",
+        "body": "请尝试其他来源或标签。"
+      },
+      "gridAria": "图片库",
+      "newer": "较新",
+      "older": "较早"
+    },
+    "profile": {
+      "fields": {
+        "products": {
+          "label": "产品",
+          "hint": "您销售什么——用逗号分隔。"
+        },
+        "services": {
+          "label": "服务",
+          "hint": "您为客户提供什么服务——用逗号分隔。"
+        },
+        "audienceKeywords": {
+          "label": "受众",
+          "hint": "谁在向您购买——用逗号分隔。"
+        },
+        "toneIndicators": {
+          "label": "语气",
+          "hint": "您的说话风格——用逗号分隔。"
+        },
+        "regions": {
+          "label": "地区",
+          "hint": "您的经营区域——用逗号分隔。"
+        },
+        "imageThemes": {
+          "label": "图片主题",
+          "hint": "您的图片应展示什么——用逗号分隔。"
+        },
+        "imageSearchQueries": {
+          "label": "素材图片搜索词",
+          "hint": "用于填充图片库的搜索词（至少一个）——用逗号分隔。"
+        },
+        "restrictedTopics": {
+          "label": "需避免的话题",
+          "hint": "永不展示或提及——用逗号分隔。"
+        }
+      },
+      "industry": "行业",
+      "niche": "细分领域",
+      "brandVoice": "品牌语调",
+      "saved": "商家资料已保存",
+      "save": "保存资料",
+      "discard": "放弃更改",
+      "invalid": "行业、细分领域和至少一个素材图片搜索词为必填项。",
+      "review": {
+        "aria": "资料需要您审核",
+        "title": "请确认此资料",
+        "body": "Studio 不确定您的商家是做什么的。请检查以下信息，然后确认，或编辑后保存。视频和图片推荐都会使用此资料。",
+        "bodyConfidence": "Studio 不确定您的商家是做什么的（置信度 {percent}）。请检查以下信息，然后确认，或编辑后保存。视频和图片推荐都会使用此资料。",
+        "confirm": "确认资料",
+        "confirmed": "商家资料已确认"
+      },
+      "loading": "正在加载资料",
+      "empty": {
+        "title": "还没有商家资料",
+        "body": "扫描您的网站，Studio 会分析出您销售什么、面向谁，以及哪些图片适合您。之后您可以编辑所有内容。",
+        "action": "扫描您的网站"
+      },
+      "eyebrow": "Studio 认为您的业务是",
+      "headline": "{industry}<muted>中的</muted>{niche}",
+      "editedByYou": "由您编辑 · 刷新于 {date}",
+      "classifiedBy": "由 {model} 分类 · 刷新于 {date}"
+    },
+    "reviewNotice": "Studio 还不确定是否已理解您的商家。此视频将使用当前资料——<link>检查并确认资料</link>可获得更好的效果。",
+    "scan": {
+      "ownershipStatement": "我拥有此网站或已获授权代表此网站（包括其图片）。",
+      "states": {
+        "QUEUED": "排队中",
+        "RUNNING": "正在扫描您的网站",
+        "SUCCEEDED": "完成",
+        "FAILED": "失败"
+      },
+      "librarySources": {
+        "SCRAPED": "{count, plural, other {# 张来自您的网站}}",
+        "STOCK": "{count, plural, other {# 张素材库图片}}",
+        "GENERATED": "{count, plural, other {# 张 AI 生成}}",
+        "UPLOAD": "{count, plural, other {# 张已上传}}"
+      },
+      "loadingScan": "正在加载扫描",
+      "pagesRead": "已读取页面",
+      "imagesFromSite": "来自您网站的图片",
+      "imageLibrary": "图片库",
+      "robots": "您网站的 robots.txt 要求我们不要读取部分页面，因此我们已跳过这些页面。",
+      "started": "扫描已开始，大约需要 2–5 分钟",
+      "urlLabel": "网站地址",
+      "urlPlaceholder": "yourbusiness.cn",
+      "submit": "扫描网站",
+      "renderPolicy": "如果您的网站拒绝了我们的扫描程序（例如通过机器人验证），我们可能会在浏览器中加载一次您的首页，前提是您已确认这是您的网站。我们绝不会借此绕过其他公司的机器人防护。如果仍然失败，请手动填写资料，或将我们的扫描程序加入您网站的允许列表。",
+      "title": "扫描您的网站",
+      "description": "Studio 会读取您的网站，分析您的细分领域，并用您网站上的图片、素材库照片和生成的图片建立图片库。",
+      "history": "扫描记录",
+      "loadingHistory": "正在加载扫描记录",
+      "noScans": "还没有扫描记录。",
+      "historyRow": "{when} · {pages, plural, other {# 个页面}} · {images, plural, other {# 张图片}}"
+    },
+    "schedule": {
+      "aria": "扫描计划",
+      "next": "下次自动重新扫描时间：{date}（每 {days, plural, other {# 天}}一次；如果您的网站没有变化则跳过）。",
+      "notYet": "首次扫描成功后，将开始自动重新扫描。",
+      "lastSkipped": "上次检查 {date}：没有变化，因此未重新扫描。",
+      "stock": "素材库照片每周刷新一次——下次刷新：{date}。"
+    },
+    "memory": {
+      "intro": "Studio 会从您批准、拒绝和重新生成的内容中学习，也会参考您已发布视频的表现（最近 90 天）。强信号会用于指导新脚本。如有不认同的内容，可以删除：它会立即移除，之后只会从较新的视频中重新学习。",
+      "loading": "正在加载风格记忆",
+      "empty": {
+        "title": "尚未学到任何内容",
+        "body": "在批准或发布几个视频后，Studio 会在这里展示它学到的内容。"
+      },
+      "listAria": "Studio 学到的内容",
+      "signals": {
+        "shot_pace": "镜头节奏",
+        "treatment_mix": "视觉组合",
+        "provider_preference": "效果好的生成器",
+        "script_structure": "脚本结构",
+        "posting_time": "最佳发布时间"
+      },
+      "confidence": {
+        "strong": "强信号",
+        "emerging": "新兴信号",
+        "weak": "弱信号（尚未用于脚本）"
+      },
+      "forgotten": "已忘记{label}",
+      "updatedPinned": "{label}已更新并置顶",
+      "newValueAria": "{label}的新值",
+      "save": "保存",
+      "pinned": "（已置顶）",
+      "notUsed": "（未用于脚本）",
+      "why": "<label>原因：</label>{reason}",
+      "evidence": "{confidence} · {count, plural, other {# 条依据}}",
+      "evidenceLatest": "{confidence} · {count, plural, other {# 条依据}} · 最近 {date}",
+      "useAria": "在脚本中使用{label}",
+      "use": "使用",
+      "turnedOn": "{label}已开启",
+      "turnedOff": "{label}已关闭",
+      "edit": "编辑",
+      "editAria": "编辑{label}",
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "pinAria": "置顶{label}",
+      "unpinAria": "取消置顶{label}",
+      "pinnedToast": "{label}已置顶",
+      "unpinnedToast": "{label}已取消置顶",
+      "delete": "删除",
+      "deleteAria": "删除{label}"
+    },
+    "voice": {
+      "title": "配音",
+      "intro": "在说话人录音同意的前提下克隆真实声音，并在品牌套件中选择它来为视频配音。未克隆声音时，视频使用素材库配音。",
+      "clone": "克隆声音",
+      "loading": "正在加载声音",
+      "empty": {
+        "title": "还没有克隆的声音",
+        "body": "在您克隆声音之前，旁白将使用素材库配音。"
+      },
+      "listAria": "声音档案",
+      "deleted": "已删除{name}",
+      "deletedUnlinked": "{kits, plural, other {已删除{name}；# 个品牌套件现改用素材库配音}}",
+      "ready": "{name}已就绪",
+      "needsVerification": "{name}需要验证",
+      "deleteConfirm": {
+        "title": "删除{name}？",
+        "titleFallback": "删除此声音？",
+        "body": "该声音将在 ElevenLabs 上被撤销，且无法再次使用。使用它的品牌套件将恢复为素材库配音。同意记录会被保留。",
+        "confirm": "删除声音"
+      },
+      "states": {
+        "READY": "就绪",
+        "REQUIRES_VERIFICATION": "需要验证",
+        "DELETED": "已删除"
+      },
+      "card": {
+        "speaker": "说话人：{name}",
+        "samples": "{count, plural, other {# 个样本}}",
+        "consent": "同意于 {date}",
+        "verification": "ElevenLabs 要求先完成声音验证，才能使用此声音。",
+        "delete": "删除",
+        "deleteAria": "删除{name}"
+      },
+      "preview": {
+        "label": "{name}的试听文本",
+        "button": "试听",
+        "aria": "试听{name}",
+        "playerAria": "{name}的试听",
+        "defaultText": "每周五新鲜出炉的面包"
+      },
+      "cloneDialog": {
+        "title": "克隆声音",
+        "description": "用真人的声音为视频配音。只有在获得本人录音同意后才能克隆其声音。",
+        "name": "声音名称",
+        "namePlaceholder": "李娜（店主）",
+        "speaker": "说话人姓名",
+        "statement": "同意声明",
+        "statementHint": "说话人需在同意录音中朗读此声明。它将作为同意证明予以保留。",
+        "recording": "同意录音",
+        "consent": "说话人同意 PostMind Studio 创建其声音的合成副本，且上方录音是其本人在朗读该声明。",
+        "cancel": "取消",
+        "submit": "克隆声音",
+        "consentPhrase": "我，{name}，同意 PostMind Studio 为{business}的视频创建我声音的合成副本。",
+        "yourName": "[您的姓名]",
+        "thisBusiness": "本商家",
+        "problems": {
+          "name": "请为声音命名。",
+          "speaker": "请输入说话人姓名。",
+          "statementLength": "同意声明须为 {min, number}–{max, number} 个字符。",
+          "recording": "请录制或上传说话人朗读同意声明的录音。",
+          "samples": "请至少添加一个声音样本。",
+          "consent": "请勾选同意框以继续。"
+        }
+      },
+      "recorder": {
+        "stop": "停止录音",
+        "recordAgain": "重新录音",
+        "recordNow": "立即录音",
+        "upload": "上传录音",
+        "fileAria": "同意录音文件",
+        "recording": "正在录音——请朗读上方声明，然后停止。",
+        "removeAria": "移除同意录音",
+        "micFailed": "无法使用麦克风。请允许访问，或改为上传录音。",
+        "fileMeta": "{name} · {size}"
+      },
+      "samples": {
+        "label": "声音样本",
+        "hint": "1–5 个文件，每个不超过 10 MB。总计约 1–2 分钟的清晰语音效果最佳：MP3 格式，192 kbps 或更高，无音乐或背景噪音。",
+        "listAria": "已选样本",
+        "removeAria": "移除{name}",
+        "total": "{count, number} / {max, number} · 共 {size}",
+        "tooMany": "{max, plural, other {最多使用 # 个样本。}}"
+      },
+      "fileProblems": {
+        "notAudio": "{name} 不是音频文件。",
+        "empty": "{name} 是空文件。",
+        "tooLarge": "{name} 大于 10 MB。"
+      },
+      "bytes": {
+        "b": "{n} B",
+        "kb": "{n} KB",
+        "mb": "{n} MB"
+      },
+      "errors": {
+        "plan": "声音克隆功能仅适用于{tier}套餐。升级套餐即可克隆声音；素材库配音仍可使用。",
+        "planGeneric": "您的套餐不包含声音克隆功能。升级套餐即可克隆声音；素材库配音仍可使用。",
+        "notConfigured": "此服务器尚未设置声音克隆功能（{message}）。"
+      }
+    }
+  },
+  "connections": {
+    "title": "账号连接",
+    "description": "Studio 发布内容的目标账号。Instagram 和 Facebook 需在 PostMind 设置中连接。",
+    "connectedNotice": "{platform} 已连接，现在可以发布了。",
+    "callbackErrors": {
+      "validation_error": "平台未授予访问权限（请求被拒绝或返回了错误）。请重新连接。",
+      "platform_error": "平台在完成连接时出现问题，请稍后重试。",
+      "upstream_error": "平台在完成连接时出现问题，请稍后重试。",
+      "internal_error": "完成连接时出错，请重试。",
+      "unknown": "连接未完成（{code}）。请重试。"
+    },
+    "dismiss": "关闭",
+    "pickFirst": {
+      "title": "请先选择商家",
+      "body": "账号连接归属于商家。请在顶部栏中选择一个商家。"
+    },
+    "loading": "正在加载账号连接",
+    "disconnected": "{account} 已断开连接",
+    "posts": {
+      "tiktok": "竖屏短视频",
+      "youtube": "Shorts 和长视频",
+      "x": "视频帖子",
+      "linkedin": "公司和成员视频帖子",
+      "instagram": "Reels 和动态视频",
+      "facebook": "主页 Reels 和动态视频"
+    },
+    "notConnected": "未连接。",
+    "needsReconnecting": "需要重新连接",
+    "connected": "已连接",
+    "stale": "平台上的访问权限已过期或被撤销。在您重新连接之前，发往此账号的排期帖子都会失败。",
+    "connectedOn": "连接于 {date}",
+    "reconnect": "重新连接",
+    "disconnect": "断开连接",
+    "disconnectAria": "断开 {account} 的连接",
+    "disconnectConfirm": {
+      "title": "断开 {account} 的连接？",
+      "body": "Studio 将删除其 {platform} 访问令牌。发往此账号的排期帖子会失败，您需要重新连接才能在此发布。"
+    },
+    "addAnother": "添加另一个 {platform} 账号",
+    "connect": "连接 {platform}",
+    "meta": {
+      "stale": "Meta 拒绝了此访问权限或权限已过期。在您于 PostMind 设置中重新连接之前，发往此账号的排期帖子都会失败。",
+      "connectedVia": "通过 PostMind 连接于 {date}",
+      "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。"
+    }
+  },
+  "library": {
+    "browse": {
+      "eyebrow": "制作",
+      "title": "参考视频库",
+      "description": "逐镜头分析的短视频。选一个，Studio 就会照着它为您制作视频，或者只借用它的氛围。",
+      "heading": "浏览",
+      "searchStatus": "在整个视频库中搜索“{query}”的结果，按匹配度排序。时长、氛围和标签筛选不适用于搜索。",
+      "searchStatusInCategory": "在整个视频库的此分类中搜索“{query}”的结果，按匹配度排序。时长、氛围和标签筛选不适用于搜索。",
+      "loading": "正在加载视频库",
+      "emptyTitle": "没有匹配的参考视频",
+      "emptySearch": "视频库中没有与该搜索匹配的内容。请换个词试试，或清除搜索。",
+      "emptyFilters": "请尝试更宽泛的分类或减少标签。",
+      "more": "更多参考视频"
+    },
+    "filters": {
+      "formAria": "筛选视频库",
+      "category": "分类",
+      "allCategories": "全部分类",
+      "length": "时长",
+      "duration": {
+        "any": "任意时长",
+        "short": "15 秒以内",
+        "medium": "15–30 秒",
+        "long": "30–60 秒",
+        "xl": "60 秒以上"
+      },
+      "mood": "氛围",
+      "moodPlaceholder": "例如：欢快",
+      "tags": "标签",
+      "tagsPlaceholder": "用逗号分隔",
+      "search": "搜索视频库",
+      "searchPlaceholder": "例如：清晨 5 点的面包店，氛围感，第一视角",
+      "clear": "清除"
+    },
+    "card": {
+      "templateAndInspire": "模板 + 灵感",
+      "inspireOnly": "仅限灵感",
+      "match": "匹配度 {percent}"
+    },
+    "recommended": {
+      "heading": "为您的商家精选",
+      "subheading": "与您的商家资料匹配",
+      "listAria": "为您的商家推荐",
+      "loading": "正在加载推荐",
+      "pickBusiness": "请在顶部栏选择一个商家，查看与之匹配的参考视频。",
+      "noProfile": "尚无商家资料——推荐需要先扫描网站。<link>扫描您的网站</link>",
+      "unavailable": "推荐暂不可用：{error}",
+      "empty": "此分类中暂无相近的匹配。"
+    },
+    "similar": {
+      "heading": "更多类似视频",
+      "listAria": "相似的参考视频",
+      "loading": "正在加载相似的参考视频",
+      "unavailable": "相似视频暂不可用：{error}",
+      "empty": "暂无相近的视频。"
+    },
+    "detail": {
+      "back": "参考视频库",
+      "notFoundTitle": "未找到参考视频",
+      "notFoundBody": "它可能已从视频库下架。",
+      "loading": "正在加载参考视频",
+      "previewAria": "{title} 的静音预览",
+      "previewNote": "{minutes, plural, other {低清预览 · 链接将在 # 分钟后失效}}",
+      "tagsAria": "标签",
+      "facts": {
+        "length": "时长",
+        "aspect": "画幅",
+        "shots": "镜头数",
+        "pace": "节奏",
+        "mood": "氛围",
+        "structure": "结构",
+        "music": "音乐",
+        "hook": "开场钩子",
+        "callToAction": "行动号召",
+        "musicEnvelope": "音乐起伏"
+      },
+      "bpm": "{bpm} BPM"
+    },
+    "structure": {
+      "heading": "它是如何构成的",
+      "notAnalysed": "此视频尚未分析。",
+      "inspireOnly": "仅限灵感的参考视频：不会使用其逐镜头结构，只使用旁边的风格标签。"
+    },
+    "timeline": {
+      "shotTitle": "{type} · {seconds} 秒",
+      "shotList": "镜头列表",
+      "overlay": "叠加样式：{overlay}",
+      "overlayThen": "叠加样式：{overlay} · 随后 {transition}",
+      "voiceover": "旁白",
+      "onScreenText": "屏幕文字",
+      "seconds": "{seconds} 秒"
+    },
+    "useReference": {
+      "heading": "用作参考",
+      "locked": "根据其许可，此参考视频不支持该方式。",
+      "modes": {
+        "TEMPLATE": {
+          "title": "同款视频，我的内容",
+          "body": "沿用此视频的镜头数、节奏时长、叠加样式和音乐起伏，并为您的品牌配上全新内容。"
+        },
+        "INSPIRE": {
+          "title": "做一个类似的",
+          "body": "只借用氛围——节奏、情绪、结构和音乐感觉，其余全部是新的。"
+        }
+      }
+    },
+    "analysis": {
+      "pace": {
+        "slow": "慢节奏",
+        "medium": "中等节奏",
+        "fastCut": "快剪"
+      },
+      "shotType": {
+        "hookTextOnStill": "静帧钩子文字",
+        "talkingHead": "真人出镜口播",
+        "avatarTalking": "数字人口播",
+        "aiClipAction": "AI 动作片段",
+        "productShot": "产品镜头",
+        "stockLifestyle": "素材库生活场景",
+        "screenRecording": "录屏",
+        "bRoll": "空镜",
+        "textCard": "文字卡",
+        "ctaCard": "行动号召卡"
+      },
+      "overlay": {
+        "none": "无叠加文字",
+        "boldCentre": "粗体居中",
+        "boldTop": "粗体顶部",
+        "boldBottom": "粗体底部",
+        "subtitleLower": "字幕（下三分之一）",
+        "captionBox": "说明框",
+        "quote": "引语",
+        "bigNumber": "大号数字"
+      }
+    }
+  },
+  "analytics": {
+    "dashboard": {
+      "eyebrow": "管理",
+      "title": "数据分析",
+      "description": "查看已发布视频的表现及制作成本。",
+      "rangeLabel": "日期范围",
+      "rangeOption": "{days, plural, other {# 天}}"
+    },
+    "metrics": {
+      "views": "播放量",
+      "watchTime": "观看时长",
+      "engagement": "互动"
+    },
+    "overview": {
+      "loadingAria": "正在加载概览",
+      "viewsHeading": "播放量 · 最近 {days, plural, other {# 天}}",
+      "summary": "共 {publications, plural, other {# 条发布}} · 新建 {projects, plural, other {# 个项目}}",
+      "watchTime": "观看时长",
+      "engagement": "互动",
+      "engagementHint": "占播放量的 {rate}",
+      "shares": "分享",
+      "savesHint": "{saves, plural, other {{formatted} 次收藏}}",
+      "spend": "支出",
+      "spendHint": "服务商费用",
+      "pending": "…"
+    },
+    "trend": {
+      "title": "每日活动",
+      "metricLabel": "指标",
+      "loadingAria": "正在加载图表",
+      "total": {
+        "views": "该时段内共 {count, plural, other {{value} 次播放}}",
+        "watchTime": "该时段内观看时长 {value}",
+        "engagement": "该时段内共 {value} 次互动"
+      },
+      "chartLabel": {
+        "views": "每日播放量，最近 {days, plural, other {# 天}}",
+        "watchTime": "每日观看时长，最近 {days, plural, other {# 天}}",
+        "engagement": "每日互动，最近 {days, plural, other {# 天}}"
+      }
+    },
+    "platforms": {
+      "title": "按平台",
+      "description": "各平台播放量",
+      "listLabel": "按平台划分的播放量",
+      "empty": "此时段内没有发布内容。",
+      "hint": "{posts, plural, other {# 条帖子}} · {engagement} 次互动"
+    },
+    "leaderboard": {
+      "title": "热门视频",
+      "description": "按播放量排序的发布",
+      "empty": "此时段内没有发布内容。",
+      "listLabel": "热门发布",
+      "untitled": "无标题帖子",
+      "meta": "{platform} · {date}",
+      "openOn": "在 {platform} 上打开",
+      "analyticsFor": "“{caption}”的数据分析",
+      "analyticsForUntitled": "无标题帖子的数据分析"
+    },
+    "cost": {
+      "title": "支出",
+      "description": "最近 {days, plural, other {# 天}}在 AI 服务商上支出 {total}",
+      "chartLabel": "每日服务商支出，最近 {days, plural, other {# 天}}",
+      "byProvider": {
+        "title": "按服务商",
+        "listLabel": "按服务商划分的支出",
+        "empty": "此时段内没有服务商任务。",
+        "jobs": "{count, plural, other {# 个任务}}"
+      },
+      "byProject": {
+        "title": "按项目",
+        "listLabel": "按项目划分的支出",
+        "empty": "此时段内没有项目支出。",
+        "none": "未关联项目"
+      }
+    },
+    "chart": {
+      "keyboardHint": {
+        "day": "{label}。使用方向键逐日读取数据。",
+        "position": "{label}。使用方向键逐点读取视频各位置的数据。"
+      },
+      "point": "{label}：<b>{value}</b>",
+      "column": {
+        "day": "日期",
+        "position": "视频位置",
+        "value": "数值"
+      }
+    },
+    "publication": {
+      "eyebrow": "数据分析",
+      "title": "{platform} 帖子",
+      "titleLoading": "发布",
+      "published": "发布于 {date}",
+      "openOn": "在 {platform} 上打开",
+      "back": "全部数据分析",
+      "loadingAria": "正在加载发布数据分析",
+      "empty": {
+        "title": "暂无数据",
+        "body": "帖子上线几分钟后，Studio 会开始读取其指标。"
+      },
+      "stats": {
+        "views": "播放量",
+        "watchTime": "观看时长",
+        "avgWatched": "平均观看比例",
+        "likes": "点赞",
+        "commentsShares": "评论 · 分享",
+        "commentsSharesValue": "{comments} · {shares}"
+      },
+      "viewsOverTime": {
+        "title": "播放量趋势",
+        "description": "每天结束时的总播放量",
+        "chartLabel": "每日总播放量",
+        "tooFew": "第二天之后将显示每日图表。"
+      },
+      "retention": {
+        "title": "观众留存",
+        "midpoint": "{pct} 的观众看到了一半",
+        "description": "观众看了视频的多少内容",
+        "chartLabel": "仍在观看的观众（按视频进度）",
+        "youtubePending": "YouTube 通常在发布约一天后提供留存数据，请明天再来查看。",
+        "notReported": "{platform} 不提供留存曲线。"
+      },
+      "audience": {
+        "title": "观众",
+        "description": "按年龄和性别划分的观众占比",
+        "ageListLabel": "按年龄段划分的观众",
+        "genderListLabel": "按性别划分的观众",
+        "noAge": "暂无年龄数据。",
+        "noGender": "暂无性别数据。",
+        "youtubePending": "观看人数足够后，YouTube 才会显示观众数据。",
+        "notReported": "{platform} 不提供观众人口统计数据。",
+        "gender": {
+          "female": "女性",
+          "male": "男性",
+          "user_specified": "自定义"
+        }
+      }
+    }
+  },
+  "admin": {
+    "beta": {
+      "dashboard": {
+        "title": "Beta 用户群",
+        "description": "参与 Beta 计划的组织，以及 Studio 对它们的使用效果。",
+        "cohortAria": "用户群",
+        "allCohorts": "所有用户群",
+        "windowAria": "时间范围",
+        "window": "{days, plural, other {最近 # 天}}",
+        "loadingAria": "正在加载 Beta 仪表板",
+        "organisations": "组织",
+        "videosGenerated": "已生成视频",
+        "published": "已发布",
+        "failureRate": "失败率",
+        "failedHint": "{count, plural, other {# 个失败}}",
+        "providerCost": "服务商费用",
+        "feedback": "反馈",
+        "emptyTitle": "暂无 Beta 组织",
+        "emptyBody": "请在下方加入首批友好客户。招募他们需要人工完成（操作手册 10.4）。",
+        "col": {
+          "organisation": "组织",
+          "cohort": "用户群",
+          "plusUntil": "Plus 截止",
+          "generated": "已生成",
+          "published": "已发布",
+          "failureRate": "失败率",
+          "cost": "费用",
+          "feedback": "反馈"
+        },
+        "plusEnded": "{date}（已结束）",
+        "noPlus": "无 Plus"
+      },
+      "enrol": {
+        "title": "加入组织",
+        "description": "将其加入某个用户群，或移到另一个用户群。",
+        "formAria": "加入组织",
+        "orgIdLabel": "组织 ID",
+        "orgIdPlaceholder": "org_…",
+        "cohort": "用户群",
+        "plus": "30 天 Plus",
+        "submit": "加入",
+        "help": "Plus 生效期间，该组织在 Studio 中按 Plus 套餐进行路由、限额和自动批准（不低于其 PostMind 套餐）。计费不变。操作会被审计。",
+        "enrolledToast": "{id} 已加入 {cohort}"
+      },
+      "feedback": {
+        "title": "反馈",
+        "description": "客户通过“反馈”按钮发送的所有内容，最新的在前。",
+        "kindAria": "反馈类型",
+        "allKinds": "所有类型",
+        "loadingAria": "正在加载反馈",
+        "empty": "暂无反馈。",
+        "project": "项目 {id}",
+        "kind": {
+          "bug": "缺陷",
+          "idea": "建议",
+          "praise": "表扬",
+          "other": "其他"
+        }
+      }
+    },
+    "centre": {
+      "eyebrow": "PostMind 员工",
+      "title": "管理中心",
+      "description": "Studio 的全平台控制。此处的每项更改都会被审计。",
+      "checkingAccess": "正在检查访问权限",
+      "staffOnly": {
+        "title": "仅限 PostMind 员工",
+        "description": "管理中心控制整个平台——紧急停止开关、参考语料库和服务商支出。您的账号不在平台员工名单中。"
+      },
+      "tabs": {
+        "killSwitch": "紧急停止",
+        "features": "功能",
+        "redrive": "重新驱动",
+        "library": "素材库",
+        "cost": "成本报告",
+        "queues": "队列",
+        "providers": "服务商",
+        "safety": "安全审核",
+        "safetyAudit": "安全审计",
+        "organisations": "组织",
+        "usage": "套餐用量",
+        "deadLetters": "死信",
+        "forceApprovals": "强制批准",
+        "beta": "测试版"
+      }
+    },
+    "cost": {
+      "report": {
+        "orgFilterAria": "按组织筛选",
+        "organisation": "组织",
+        "organisationPlaceholder": "所有组织",
+        "windowLabel": "费用时段",
+        "windowDays": "{count, plural, other {# 天}}",
+        "loading": "正在加载费用报告",
+        "spend": "服务商支出",
+        "jobs": "任务",
+        "failedJobs": "失败的任务",
+        "failedShare": "占任务的 {percent}",
+        "organisations": "组织",
+        "perDay": "每日支出",
+        "noUsageWindow": "此时段内没有服务商用量。",
+        "chartAria": "{count, plural, other {平台过去 # 天的每日服务商支出}}",
+        "byOrg": "按组织",
+        "byOrgAria": "按组织的支出",
+        "byProvider": "按服务商",
+        "byProviderAria": "按服务商的支出",
+        "noUsage": "没有用量。",
+        "jobCount": "{count, plural, other {# 个任务}}",
+        "failedCount": "{count, plural, other {# 个失败}}"
+      },
+      "caps": {
+        "loading": "正在加载费用上限",
+        "title": "今日上限（{day}，UTC）",
+        "globalDaily": "全局每日",
+        "globalMeterAria": "全局每日上限已用",
+        "orgProviderDaily": "组织 × 服务商每日",
+        "orgByTier": "组织上限（按套餐）",
+        "noCap": "无上限",
+        "spentOfCap": "{spent} / {cap}",
+        "source": {
+          "default": "默认",
+          "env": "env 覆盖",
+          "disabled": "已由 env 禁用",
+          "custom": "自定义"
+        },
+        "tierTableAria": "按套餐的组织上限",
+        "tierCol": "套餐",
+        "dailyCol": "每日（UTC 日）",
+        "monthlyCol": "每月（UTC 月）",
+        "explainer": "项目在达到预算的 {percent} 时暂停；每日和每月上限在达到 100% 时暂停生成（发布不受影响）。每个上限在 80% 和 100% 时各提醒一次。未设预算创建的项目将获得 {shortBudget}（短视频）或 {longBudget}（长视频）。",
+        "topToday": "今日支出最高的组织",
+        "noSpendToday": "今日没有服务商支出。",
+        "spendTodayAria": "今日各组织支出",
+        "topMonth": "本月支出最高的组织（{month}）",
+        "noSpendMonth": "本月没有服务商支出。",
+        "spendMonthAria": "本月各组织支出",
+        "projectsNear": "达到或超过预算 80% 的项目",
+        "projectsNone": "过去 7 天内没有。",
+        "projectsAria": "接近预算的项目",
+        "projectPaused": "{percent} · 已暂停",
+        "overrides": "组织例外",
+        "overridesAria": "组织上限例外",
+        "overrideTag": "组织例外",
+        "overrideDetail": "每日 {daily} · 每月 {monthly} ——“{reason}”",
+        "alerts": "费用提醒（过去 7 天）",
+        "noAlerts": "没有费用提醒。",
+        "alertsAria": "最近的费用提醒",
+        "alertSpend": "{spent} / {cap} · {when}",
+        "scope": {
+          "PROJECT": "项目预算",
+          "ORG_DAILY": "组织每日",
+          "ORG_MONTHLY": "组织每月",
+          "ORG_PROVIDER_DAILY": "组织 × 服务商每日",
+          "GLOBAL_DAILY": "全局每日"
+        }
+      }
+    },
+    "deadLetters": {
+      "title": "死信",
+      "description": "已用尽重试次数的任务（规范 11.5）。这里不会自动清空任何内容。任务数据显示时已移除密钥和 URL 令牌。",
+      "queueAria": "队列",
+      "refresh": "刷新",
+      "drain": "清空队列",
+      "loadingAria": "正在加载失败任务",
+      "emptyTitle": "没有失败任务",
+      "emptyBody": "{queue} 中没有死信。",
+      "total": "{count, plural, other {{queue} 中有 # 个失败任务，最新的在前。}}",
+      "listAria": "失败任务",
+      "newer": "较新",
+      "older": "较早",
+      "organisation": "组织 {id}",
+      "platformJob": "平台任务",
+      "project": "项目 {id}",
+      "attempts": "{count, plural, other {# 次尝试}}",
+      "failedWhen": "{when}失败",
+      "retry": "重试",
+      "requeue": "重新入队",
+      "inspect": "查看任务数据",
+      "retriedToast": "已重试：任务重新进入等待",
+      "retriedAdvisoryToast": "已重试。{advisory}",
+      "requeuedToast": "已重新入队",
+      "resumedToast": "已重新入队：项目 {projectId} 已恢复素材阶段（{jobs, plural, other {# 个任务}}）",
+      "drainedToast": "{count, plural, other {已从 {queue} 清空 # 个失败任务}}",
+      "retryTitle": "重试 {name}？",
+      "retryBody": "同一任务将重置尝试次数后再次运行。这可能会代表该组织产生服务商费用。",
+      "retryConfirm": "重试",
+      "drainTitle": "清空 {queue} 中的所有失败任务？",
+      "drainBody": "失败任务将被删除而不会运行。此操作无法撤销。",
+      "drainConfirm": "清空"
+    },
+    "dialogs": {
+      "reasonLabel": "原因（将记录在审计日志中）",
+      "typeToConfirm": "输入 <code>{phrase}</code> 以确认",
+      "requeue": {
+        "title": "重新排队 {name}",
+        "description": "以全新的重试次数和相同的数据重新添加该任务。",
+        "descriptionProvider": "以全新的重试次数重新添加该任务。如果其项目在素材阶段失败，该阶段会在新的运行中恢复（已付费的素材会保留）。",
+        "preferProvider": "首选服务商（可选）",
+        "keepOrder": "保持路由器的顺序",
+        "submit": "重新排队"
+      }
+    },
+    "features": {
+      "loading": "正在加载功能",
+      "title": "功能",
+      "description": "在全局或为单个组织关闭某项功能。更改会在 {seconds, plural, other {# 秒}}内传达到每个 worker 和 API 进程。",
+      "names": {
+        "library": "参考视频库",
+        "overlays": "文字叠加",
+        "slideshow": "幻灯片",
+        "imageLibrary": "图片库"
+      },
+      "offByEnvironment": "已被环境关闭（FEATURE_*_ENABLED）",
+      "turnOffGlobally": "全局关闭",
+      "turnOnGlobally": "全局开启",
+      "disabledForAria": "{feature}已停用的组织",
+      "turnBackOn": "重新开启",
+      "orgTitle": "为单个组织停用",
+      "featureLabel": "功能",
+      "organisationId": "组织 ID",
+      "turnOff": "关闭",
+      "turnOn": "开启",
+      "dialogDescription": "此功能的用户会收到“功能已停用”错误，其后台任务会停止，直到重新开启。",
+      "change": {
+        "onGlobal": "为所有组织开启{feature}",
+        "offGlobal": "为所有组织关闭{feature}",
+        "onOrg": "为 {organisation} 开启{feature}",
+        "offOrg": "为 {organisation} 关闭{feature}"
+      },
+      "applied": "{change}：将在 {seconds, plural, other {# 秒}}内全面生效"
+    },
+    "forceApprovals": {
+      "title": "强制批准",
+      "description": "客户使用 studio:render:force-approve 绕过的质量关卡失败（规范 13.5）。内容安全拦截永远不能强制批准。",
+      "windowAria": "时间范围",
+      "window": "{days, plural, other {最近 # 天}}",
+      "loadingAria": "正在加载强制批准",
+      "emptyTitle": "没有强制批准",
+      "emptyBody": "{days, plural, other {最近 # 天内没有渲染被强制批准。}}",
+      "listAria": "强制批准",
+      "meta": "{platform} {aspect} · 项目 {state}",
+      "byLine": "组织 {organisationId} · 操作人 <mono>{user}</mono> · {date}",
+      "unknownUser": "未知用户",
+      "renderTimeNote": "（渲染时间；未记录批准时间）",
+      "note": "备注：",
+      "quotedNote": "“{note}”",
+      "failedChecks": "未通过的检查：",
+      "noneRecorded": "未记录",
+      "check": "{code}（{detail}）",
+      "truncated": "仅显示最近的条目；请缩小时间范围或按组织筛选。"
+    },
+    "health": {
+      "refresh": "刷新",
+      "queues": {
+        "title": "队列健康状况",
+        "description": "每个队列的 BullMQ 深度（规范 16.4）。失败的任务会一直保留，直到操作员重新驱动。",
+        "loadingAria": "正在加载队列",
+        "tableAria": "队列健康状况",
+        "queue": "队列",
+        "waiting": "等待中",
+        "active": "进行中",
+        "failed": "失败",
+        "delayed": "延迟",
+        "oldestWaiting": "最长等待",
+        "waitSeconds": "{seconds} 秒",
+        "waitMinutes": "{minutes} 分 {seconds} 秒",
+        "waitHours": "{hours} 小时 {minutes} 分"
+      },
+      "providers": {
+        "title": "服务商健康状况",
+        "description": "所有 worker 共享熔断器（Redis）。错误率统计过去一小时内启动的任务中由服务商导致的失败；支出为今天（UTC）的支出。",
+        "loadingAria": "正在加载服务商",
+        "emptyTitle": "暂无服务商",
+        "emptyBody": "尚未配置或运行任何服务商。",
+        "tableAria": "服务商健康状况",
+        "provider": "服务商",
+        "breaker": "熔断器",
+        "errorRate": "错误率（1 小时）",
+        "jobs": "任务（1 小时）",
+        "spendToday": "今日支出",
+        "notConfigured": "未配置",
+        "breakerState": {
+          "closed": "关闭",
+          "half_open": "半开（试探）",
+          "open": "打开"
+        },
+        "jobCounts": "{succeeded} 成功 · {failed} 失败",
+        "jobCountsRunning": "{succeeded} 成功 · {failed} 失败 · {running} 运行中"
+      }
+    },
+    "killSwitch": {
+      "loading": "正在加载紧急停止开关",
+      "since": "{when}启用",
+      "release": "解除",
+      "releaseAria": "解除 {id}",
+      "activeCount": "{count, plural, other {# 个生效中}}",
+      "scoped": {
+        "workspace": {
+          "title": "已冻结的工作区",
+          "empty": "没有冻结的工作区。"
+        },
+        "project": {
+          "title": "已终止的项目",
+          "empty": "没有终止的项目。"
+        },
+        "provider": {
+          "title": "已停用的服务商",
+          "empty": "所有服务商均已启用。"
+        },
+        "platform": {
+          "title": "已暂停的平台",
+          "empty": "所有平台均可发布。"
+        }
+      },
+      "global": {
+        "halted": "Studio 已停止",
+        "running": "Studio 正在运行",
+        "engagedSince": "全局紧急停止已于{when}启用。任何地方都不会启动任务。",
+        "off": "全局紧急停止未启用。",
+        "propagation": "更改会在 {seconds, plural, other {# 秒}}内传达到每个 worker。",
+        "breakGlass": "破窗模式已开启：启用后立即生效（会被审计）。",
+        "twoPerson": "启用需要两人：另一名员工需在 10 分钟内确认。",
+        "engage": "启用全局紧急停止",
+        "release": "解除全局紧急停止"
+      },
+      "dialog": {
+        "haltTitle": "停止整个 Studio？",
+        "releaseGlobalTitle": "解除全局紧急停止？",
+        "releaseTargetTitle": "解除 {target}？",
+        "haltDescription": "所有组织的 Studio 任务会在下一步停止：生成、渲染和发布。正在进行的服务商调用不会被取消。",
+        "haltDescriptionTwoPerson": "所有组织的 Studio 任务会在下一步停止：生成、渲染和发布。正在进行的服务商调用不会被取消。此操作会记录一个请求：另一名员工必须在 10 分钟内确认。",
+        "releaseDescription": "新任务将恢复正常启动。启用期间失败的工作不会自动恢复——请使用“重新驱动”标签页。",
+        "haltConfirm": "停止 Studio",
+        "releaseConfirm": "解除"
+      },
+      "form": {
+        "title": "启用定向开关",
+        "description": "停止某个工作区、项目或服务商的新任务，或停止向某个平台的新上传。其他一切不受影响。",
+        "aria": "启用定向紧急停止开关",
+        "level": "级别",
+        "levels": {
+          "workspace": "冻结工作区",
+          "project": "终止项目",
+          "provider": "停用服务商",
+          "platform": "暂停向某平台发布"
+        },
+        "targets": {
+          "workspace": "组织 ID",
+          "project": "项目 ID",
+          "provider": "服务商",
+          "platform": "平台"
+        },
+        "choose": {
+          "provider": "选择服务商",
+          "platform": "选择平台"
+        },
+        "reason": "原因",
+        "reasonPlaceholder": "将记录在审计日志中",
+        "engage": "启用"
+      },
+      "pending": {
+        "title": "全局停止正在等待第二位批准人",
+        "requestedBy": "由 <who>{name}</who> 于 {at} 请求——将在 {minutes, plural, other {# 分钟}}后过期。",
+        "requestedByYou": "由<who>您</who>于 {at} 请求——将在 {minutes, plural, other {# 分钟}}后过期。",
+        "reasonLabel": "原因：",
+        "confirm": "确认并停止 Studio",
+        "withdraw": "撤回请求",
+        "ownRequest": "您的请求必须由另一名 PostMind 员工确认。",
+        "dialogTitle": "确认全局停止？",
+        "dialogDescription": "对 {name} 的请求进行第二次批准。所有组织的 Studio 任务会在下一步停止。",
+        "dialogConfirm": "确认并停止"
+      },
+      "toast": {
+        "pending": "已请求全局停止。另一名 PostMind 员工必须在 10 分钟内确认。",
+        "confirmed": "全局紧急停止已启用（双人批准）",
+        "withdrawn": "全局停止请求已撤回",
+        "globalEngaged": "全局紧急停止已启用",
+        "globalReleased": "全局紧急停止已解除",
+        "engaged": {
+          "workspace": "工作区冻结（{target}）已启用",
+          "project": "项目终止（{target}）已启用",
+          "provider": "服务商停用（{target}）已启用",
+          "platform": "平台发布暂停（{target}）已启用"
+        },
+        "released": {
+          "workspace": "工作区冻结（{target}）已解除",
+          "project": "项目终止（{target}）已解除",
+          "provider": "服务商停用（{target}）已解除",
+          "platform": "平台发布暂停（{target}）已解除"
+        }
+      }
+    },
+    "library": {
+      "panel": {
+        "corpusTitle": "语料库",
+        "corpusDescription": "所有条目，包括无许可和已下架的条目。已下架的条目对用户隐藏，但会为曾使用它们的项目保留。",
+        "loading": "正在加载语料库",
+        "empty": "没有符合这些筛选条件的条目。",
+        "selectAllAria": "全选本页",
+        "selectPage": "选择本页",
+        "listAria": "语料库条目",
+        "retiredToast": "已下架“{title}”",
+        "retireTitle": "要下架“{title}”吗？",
+        "retireBody": "它将从浏览、搜索和推荐中消失。已使用它的项目仍可正常运行。",
+        "retireConfirm": "下架"
+      },
+      "row": {
+        "selectAria": "选择{title}",
+        "reanalysed": "{when}重新分析",
+        "retired": "已下架",
+        "edit": "编辑",
+        "editAria": "编辑{title}",
+        "retire": "下架",
+        "retireAria": "下架{title}"
+      },
+      "licenceBadge": {
+        "missing": "无许可",
+        "expired": "许可已过期",
+        "expiring": "许可即将过期",
+        "ok": "已许可"
+      },
+      "review": {
+        "ACCEPTED": "已接受分类",
+        "OVERRIDDEN": "已覆盖分类",
+        "REJECTED": "已拒绝"
+      },
+      "scenario": {
+        "LICENSED": "已许可",
+        "OWNED": "自有",
+        "SCRAPED": "采集",
+        "NOT_REQUIRED": "无需许可"
+      },
+      "filters": {
+        "groupAria": "语料库筛选",
+        "search": "搜索",
+        "searchPlaceholder": "标题、标签或 ID",
+        "licence": "许可状态",
+        "licenceAny": "任意许可",
+        "licenceMissing": "无许可记录",
+        "status": "状态",
+        "statusLive": "在线",
+        "statusRetired": "已下架",
+        "statusAll": "在线和已下架",
+        "review": "分类审核",
+        "reviewAny": "全部",
+        "reviewNone": "未审核",
+        "reviewAccepted": "已接受",
+        "reviewOverridden": "已覆盖",
+        "reviewRejected": "已拒绝",
+        "category": "分类",
+        "categoryAll": "所有分类"
+      },
+      "bulk": {
+        "toolbarAria": "批量操作",
+        "selected": "{count, plural, other {已选 # 项}}",
+        "accept": "接受分类",
+        "newCategory": "新分类",
+        "newCategoryPlaceholder": "新分类…",
+        "override": "覆盖",
+        "reanalyse": "重新分析",
+        "reject": "拒绝",
+        "doneAccept": "{count, plural, other {已为 # 个条目接受分类}}",
+        "doneOverride": "{count, plural, other {已为 # 个条目覆盖分类}}",
+        "doneReject": "{count, plural, other {已拒绝并下架 # 个条目}}",
+        "notFound": "{count, plural, other {# 个未找到}}",
+        "reanalyseQueued": "{count, plural, other {已将 # 个条目加入重新分析队列}}",
+        "rejectTitle": "{count, plural, other {要拒绝 # 个条目吗？}}",
+        "rejectBody": "被拒绝的条目将下架：从浏览、搜索和推荐中隐藏。已使用它们的项目仍可正常运行。",
+        "rejectConfirm": "拒绝并下架"
+      },
+      "edit": {
+        "title": "编辑参考素材",
+        "titleField": "标题",
+        "description": "描述",
+        "category": "分类",
+        "tags": "标签",
+        "licence": "许可",
+        "unchangedModes": "不变（{modes}）",
+        "unchangedNoLicence": "不变（无许可）",
+        "optionLicensed": "已许可",
+        "optionOwned": "自有",
+        "optionScraped": "采集（仅 Inspire）",
+        "optionNotRequired": "无需许可（运营方自有）",
+        "licenceSource": "许可来源",
+        "licenceSourcePlaceholder": "不变",
+        "save": "保存更改",
+        "saved": "素材库视频已更新"
+      },
+      "ingest": {
+        "title": "添加到语料库",
+        "description": "每行一个来源 URL（最多 {max} 个）。每个 URL 都会在后台下载、分析并生成向量。",
+        "formAria": "导入素材库视频",
+        "urls": "来源 URL",
+        "urlsPlaceholder": "https://…",
+        "invalid": "不是有效的 http(s) URL：{urls}",
+        "tooMany": "{count} 个 URL——每批上限为 {max} 个。",
+        "ready": "{count, plural, other {# 个 URL 已就绪}}",
+        "licence": "许可",
+        "scenarioLicensed": "已许可（Template + Inspire）",
+        "scenarioOwned": "自有（Template + Inspire）",
+        "scenarioScraped": "采集（仅 Inspire）",
+        "scenarioNotRequired": "无需许可——运营方自有（Template + Inspire）",
+        "source": "许可来源",
+        "sourcePlaceholder": "协议 / 权利方",
+        "category": "分类",
+        "autoClassify": "自动分类",
+        "tags": "标签",
+        "tagsPlaceholder": "用逗号分隔",
+        "tooManyTags": "每个视频最多 {max} 个标签。",
+        "submit": "{count, plural, =0 {加入导入队列} other {将 # 个加入导入队列}}",
+        "queued": "{count, plural, other {已将 # 个视频加入导入队列}}",
+        "lastBatch": "最近加入队列的批次",
+        "queuedAria": "排队中的导入任务"
+      },
+      "status": {
+        "title": "导入状态",
+        "description": "在所选时段内状态发生变化的语料库任务。失败的来源可以重新提交。",
+        "window": "时段",
+        "windowHour": "过去 1 小时",
+        "windowDay": "过去 24 小时",
+        "windowWeek": "过去 7 天",
+        "refreshAria": "刷新导入状态",
+        "loading": "正在加载导入状态",
+        "countsAria": "导入统计",
+        "SUCCEEDED": "已导入",
+        "DUPLICATE": "重复",
+        "FAILED": "失败",
+        "RUNNING": "运行中",
+        "QUEUED": "排队中",
+        "backlog": "积压：{queued} 个排队 · {running} 个运行中 · 每小时完成 {perHour} 个 · 素材库中有 {live} 个在线条目",
+        "recentFailures": "最近的失败",
+        "failuresAria": "最近的导入失败",
+        "unknownError": "未知错误",
+        "attempts": "{count, plural, other {尝试 # 次}}"
+      },
+      "audit": {
+        "title": "许可审计",
+        "descriptionLoaded": "在线语料库，{date} · 即将过期 = {days, plural, other {# 天内}}",
+        "descriptionEmpty": "每个语料库条目都必须有许可记录。",
+        "refresh": "刷新",
+        "loading": "正在加载许可审计",
+        "problemsAria": "许可问题",
+        "missing": "无许可记录",
+        "missingHint": "从不向用户显示",
+        "expired": "已过期",
+        "expiredHint": "TEMPLATE 已禁用",
+        "expiringSoon": "即将过期",
+        "byScenarioAria": "按许可统计的在线条目",
+        "scenarioLicensed": "已许可",
+        "scenarioOwned": "自有",
+        "scenarioScraped": "采集（仅 INSPIRE）",
+        "scenarioNotRequired": "无需许可",
+        "liveRetired": "{live} 个在线 · {retired} 个已下架",
+        "problemsListAria": "许可问题列表",
+        "showMissing": "列出无许可条目",
+        "truncated": "显示最早的 {count} 个问题。"
+      },
+      "resubmit": {
+        "button": "重新提交失败项",
+        "done": "{count, plural, other {已重新提交 # 个失败来源}}",
+        "skipped": "{count, plural, other {跳过 # 个}}",
+        "legacy": "{count, plural, other {# 个在重新提交功能推出前提交：请使用导入工具}}"
+      }
+    },
+    "organisations": {
+      "orgIdLabel": "组织 ID",
+      "orgIdPlaceholder": "org_…",
+      "open": "打开",
+      "policy": {
+        "title": "审核策略",
+        "description": "适用于此组织的新项目和自动批准。",
+        "formAria": "审核策略",
+        "loadingAria": "正在加载策略",
+        "defaultLabel": "新项目的默认审核策略",
+        "option": {
+          "REQUIRE_APPROVAL": "需要批准",
+          "REQUIRE_APPROVAL_FROM_ROLE": "需要所有者或管理员批准",
+          "AUTO_APPROVE": "自动批准可信创作者"
+        },
+        "autoApprove": "允许自动批准",
+        "threshold": "信任阈值（自动批准前需经人工批准的视频数）",
+        "thresholdHelp": "留空 = 使用平台设置。当前来源：{source}。Enterprise 套餐永不自动批准。",
+        "save": "保存策略",
+        "savedToast": "策略已保存",
+        "lastChanged": "上次更改于 {when}"
+      },
+      "caps": {
+        "title": "费用上限",
+        "description": "仅为此组织覆盖套餐等级的每日和每月上限。",
+        "formAria": "费用上限覆盖",
+        "loadingAria": "正在加载费用上限",
+        "daily": "每日：",
+        "monthly": "每月：",
+        "orgOverride": "组织覆盖",
+        "planTier": "套餐等级：{tiers}",
+        "tierCap": "{tier} {amount}",
+        "noCap": "无上限",
+        "overrideReason": "“{reason}”——{when}",
+        "dailyOverride": "每日上限覆盖（£）",
+        "monthlyOverride": "每月上限覆盖（£）",
+        "overrideHelp": "留空 = 不覆盖（使用套餐等级的上限）。worker 会在 30 秒内应用更改。",
+        "reason": "原因（记入审计日志）",
+        "save": "保存费用上限",
+        "savedToast": "费用上限已保存"
+      }
+    },
+    "redrive": {
+      "title": "重新驱动已停止或卡住的工作",
+      "description": "被紧急停止的项目会从中断的阶段恢复，复用已完成的镜头和渲染；被暂停的发布会重试。卡住的项目会重新将当前阶段加入队列（在 Redis 数据丢失后）。请先预览——应用之前不会有任何更改。",
+      "formAria": "重新驱动筛选条件",
+      "scope": "范围",
+      "scopes": {
+        "killSwitch": "被紧急停止的工作",
+        "stuck": "卡住的项目"
+      },
+      "level": "级别",
+      "anyLevel": "任意级别",
+      "levels": {
+        "global": "全局",
+        "workspace": "工作区",
+        "project": "项目",
+        "provider": "服务商",
+        "platform": "平台"
+      },
+      "since": "失败起始时间",
+      "idleMinutes": "空闲时长（分钟）",
+      "organisation": "组织",
+      "allOrganisations": "所有组织",
+      "limit": "上限",
+      "preview": "预览",
+      "stale": "预览后筛选条件已更改——应用前请重新预览。",
+      "done": "已重新驱动 {count, plural, other {# 项}}",
+      "confirmTitle": "重新驱动 {count, plural, other {# 项}}？",
+      "confirmDescription": "将为其他组织的项目和发布加入任务队列。恢复的工作可能会为从未运行的部分调用付费服务商，重试的发布会发布到客户的账号。",
+      "confirmLabel": "重新驱动",
+      "results": {
+        "previewTitle": "预览——尚未进行任何更改",
+        "appliedTitle": "已应用重新驱动",
+        "previewDescription": "按这些筛选条件立即应用时将执行的操作。",
+        "appliedDescription": "任务已加入队列；请在各项目中跟踪进度。",
+        "considered": "已检查",
+        "wouldRedrive": "将重新驱动",
+        "redriven": "已重新驱动",
+        "skipped": "已跳过",
+        "empty": "没有符合这些筛选条件的内容。",
+        "tableAria": "重新驱动项",
+        "columns": {
+          "kind": "类型",
+          "id": "ID",
+          "organisation": "组织",
+          "action": "操作"
+        },
+        "kinds": {
+          "project": "项目",
+          "publication": "发布"
+        },
+        "actions": {
+          "resumePlanning": "从规划阶段恢复",
+          "resumeAssets": "恢复缺失的素材",
+          "retryPublication": "重试发布",
+          "reenqueue": "重新加入队列",
+          "skipped": "已跳过"
+        }
+      }
+    },
+    "safety": {
+      "decidedWhen": "{state}（{when}）",
+      "quotedNote": "“{note}”",
+      "review": {
+        "title": "内容安全审核",
+        "description": "因脚本安全 REVIEW 判定或审核级 Hive 标记而暂停的运行（规范 13.2 / 16.4）。拦截级结果不会进入此队列。",
+        "showAria": "显示审核",
+        "filterWaiting": "等待中",
+        "filterWaitingCount": "等待中（{count}）",
+        "filterAllowed": "已允许",
+        "filterBlocked": "已拦截",
+        "loadingAria": "正在加载审核",
+        "emptyPendingTitle": "没有待处理项",
+        "emptyTitle": "暂无审核",
+        "emptyBody": "暂停的运行会显示在这里，并附带标记原因、预览和脚本。",
+        "listAria": "安全审核",
+        "previewAria": "{name} 的预览",
+        "previewAriaUnnamed": "被标记视频的预览",
+        "noScript": "此次运行未存储脚本。",
+        "scriptLabel": "{platform}：",
+        "kindScript": "脚本（生成前）",
+        "kindContent": "已渲染视频",
+        "kindWhen": "{kind} · {when}",
+        "ids": "组织 {organisationId} · 项目 {projectId}",
+        "flagged": "标记原因：",
+        "allowResume": "允许并继续",
+        "block": "拦截",
+        "state": {
+          "PENDING": "等待决定",
+          "ALLOWED": "已允许",
+          "BLOCKED": "已拦截"
+        },
+        "allowedToast": "已允许，运行继续",
+        "blockedToast": "已拦截",
+        "blockTitle": "拦截此视频",
+        "allowTitle": "允许并继续",
+        "blockBody": "项目将以失败结束并附上你的备注，客户可以看到。",
+        "allowBody": "暂停的运行将从停止处继续。",
+        "blockConfirm": "拦截",
+        "allowConfirm": "允许"
+      },
+      "audit": {
+        "title": "Trust & Safety 月度审计",
+        "description": "从上个月发布的视频中随机抽样，由人工复查。漏检是指 Hive 扫描本应拦截或送审的视频。",
+        "monthAria": "审计月份",
+        "resultAria": "结果",
+        "filter": {
+          "pending": "等待复查",
+          "miss": "漏检",
+          "pass": "通过",
+          "all": "全部"
+        },
+        "drawSample": "抽取样本",
+        "loadingAria": "正在加载安全审计",
+        "sampled": "已抽样",
+        "waiting": "等待中",
+        "passed": "通过",
+        "missed": "漏检",
+        "missRate": "Hive 扫描漏检率",
+        "missRateHint": "漏检 ÷ 已复查",
+        "emptyNoSampleTitle": "本月暂无样本",
+        "emptyNoSampleBody": "样本在每月 1 日 06:00 UTC 抽取。如果任务未运行，请立即抽取。",
+        "emptyTitle": "这里什么都没有",
+        "emptyBody": "没有符合此筛选条件的视频。",
+        "videoAria": "已发布的 {platform} 视频",
+        "noPreview": "无预览",
+        "publishedOn": "发布于 {date}",
+        "ids": "组织 {organisationId} · 项目 {projectId}",
+        "openPost": "打开帖子",
+        "pass": "通过",
+        "miss": "漏检",
+        "result": {
+          "pending": "等待复查",
+          "pass": "通过",
+          "miss": "漏检"
+        },
+        "passToast": "已记录为通过",
+        "missToast": "已记录漏检，并已通知员工",
+        "sampleToast": "新增 {added} 个：已从 {population, plural, other {# 个已发布视频}}中抽取 {total} 个",
+        "missTitle": "记录漏检",
+        "missBody": "请说明扫描漏掉了什么。系统会通知员工，且应下架该发布内容（runbooks/content-safety-miss.md）。",
+        "missConfirm": "记录漏检"
+      }
+    },
+    "usage": {
+      "orgIdLabel": "组织 ID",
+      "orgIdPlaceholder": "org_…",
+      "evaluateAgainst": "评估依据",
+      "recordedTier": "已记录的等级",
+      "show": "查看用量",
+      "title": "本月套餐用量",
+      "description": "本自然月（UTC）生成的视频与规范 12.4 配额的对比。",
+      "loadingAria": "正在加载用量",
+      "summary": "{month} · 等级 {tier}（{source}）· 配额模式 <strong>{mode}</strong> · 状态 <strong>{status}</strong>",
+      "tierSource": {
+        "query": "在此选择",
+        "last_generation": "记录于其最近一次生成",
+        "default": "未记录生成，按 Basic 计算"
+      },
+      "mode": {
+        "warn": "警告",
+        "enforce": "强制"
+      },
+      "status": {
+        "ok": "正常",
+        "warning": "警告",
+        "exceeded": "已超出"
+      }
+    }
+  },
+  "onboarding": {
+    "page": {
+      "title": "欢迎"
+    },
+    "steps": {
+      "connect": "连接账号",
+      "brandKit": "品牌套件",
+      "firstVideo": "首个视频",
+      "celebrate": "庆祝上线"
+    },
+    "stepIndicator": {
+      "aria": "设置进度",
+      "done": "（已完成）"
+    },
+    "wizard": {
+      "eyebrow": "欢迎",
+      "title": "一起制作你的第一个视频",
+      "description": "只需四步：连接账号、设置品牌、制作视频、发布上线。",
+      "skipSetup": "跳过设置",
+      "loading": "正在加载设置",
+      "skipped": {
+        "title": "已跳过设置",
+        "description": "你可以随时继续。",
+        "resume": "继续设置"
+      },
+      "noBusiness": {
+        "title": "请先选择一个商家",
+        "description": "设置按商家进行。请在顶部栏中选择一个商家，或添加新商家。",
+        "action": "设置商家"
+      },
+      "currentStep": "当前步骤",
+      "saving": "正在保存",
+      "skipStep": "跳过此步骤",
+      "finish": "完成"
+    },
+    "connect": {
+      "title": "连接你的发布渠道",
+      "description": "Studio 可直接发布到 TikTok、YouTube、Instagram、Facebook、X 和 LinkedIn。请至少连接一个账号，以便发布你的第一个视频。",
+      "loading": "正在加载账号",
+      "connectedAria": "已连接的账号",
+      "none": "尚未连接任何账号。",
+      "connectAnother": "再连接一个账号",
+      "openConnections": "打开“连接”"
+    },
+    "brandKit": {
+      "title": "三步设置你的品牌",
+      "description": "上传你的标志，Studio 会从中提取品牌色。然后选择字体和说话风格。",
+      "existing": "{count, plural, other {该商家已有品牌套件（{names}）。你可以继续，或在下方再添加一个。}}",
+      "logoLegend": "1. 标志",
+      "uploadLogo": "上传标志",
+      "logoType": "请上传 PNG、JPEG、WebP、GIF 或 AVIF 图片。",
+      "logoSize": "标志不能超过 {max, number} MB。",
+      "fontLegend": "2. 字体",
+      "toneLegend": "3. 风格（最多选 {max, number} 个）",
+      "save": "保存品牌套件",
+      "saved": "品牌套件已保存。",
+      "defaultKitName": "主品牌套件",
+      "ready": {
+        "title": "{name} 已就绪",
+        "body": "Studio 为该商家制作的每个视频都会使用它。",
+        "bodyDefault": "Studio 为该商家制作的每个视频都会使用它——这是你的默认套件。"
+      },
+      "paletteAria": "调色板",
+      "removeColour": "移除 {colour}",
+      "fontAria": "字体",
+      "toneAria": "风格",
+      "tones": {
+        "warm": "温暖",
+        "friendly": "亲切",
+        "playful": "活泼",
+        "bold": "大胆",
+        "professional": "专业",
+        "calm": "沉稳",
+        "witty": "风趣",
+        "premium": "高端"
+      }
+    },
+    "firstVideo": {
+      "title": "制作你的第一个视频",
+      "description": "先从简短的自我介绍开始：你是谁、你做什么。Studio 会规划镜头、撰写脚本，并使用你的品牌套件。",
+      "loadingTemplates": "正在加载模板",
+      "noTemplate": {
+        "title": "介绍模板暂不可用",
+        "description": "你仍可以在“创建”页面描述你的第一个视频。",
+        "action": "打开“创建”"
+      },
+      "briefLabel": "有什么想特别提到的吗？（可选）",
+      "briefPlaceholder": "自 2009 年起在成都经营的家庭面包房——酸种面包、西点和周六烘焙课。",
+      "create": "制作我的介绍视频",
+      "generationNotStarted": "已保存为草稿，但生成未开始：{reason}",
+      "started": {
+        "title": "你的第一个视频正在制作中",
+        "body": "Studio 正在撰写脚本并收集镜头。完成后请审阅，然后发布。",
+        "action": "打开你的视频"
+      }
+    },
+    "celebrate": {
+      "loading": "正在加载你的视频",
+      "noVideo": {
+        "title": "就差一步",
+        "body": "你的第一个视频上线后，我们会在这里为它庆祝。准备好了就随时制作一个吧。",
+        "action": "制作视频"
+      },
+      "live": {
+        "title": "你刚刚在 {platform} 上线了",
+        "body": "“{name}”已经发布。Studio 会在“数据分析”中跟踪它的表现。",
+        "seeIt": "在 {platform} 上查看",
+        "openProject": "打开项目"
+      },
+      "nearly": {
+        "title": "即将上线",
+        "body": "“{name}”尚未发布。请审阅并批准，然后发布——上线的那一刻我们会在这里庆祝。",
+        "action": "打开你的视频"
+      }
+    },
+    "finished": {
+      "title": "一切就绪",
+      "description": "Studio 已准备好为你的商家制作和发布视频。",
+      "makeAnother": "再制作一个视频",
+      "goToProjects": "前往项目"
+    }
+  },
+  "share": {
+    "links": {
+      "title": "分享以征求反馈",
+      "description": "任何拥有链接的人都可以观看各个版本并留下反馈，但无法批准。",
+      "expiryLabel": "链接有效期",
+      "expiryDays": "{count, plural, other {# 天}}",
+      "create": "创建链接",
+      "copyNow": "请立即复制此链接——它只会显示一次。",
+      "copied": "链接已复制",
+      "copyFailed": "复制失败——请选中链接后自行复制",
+      "revoked": "链接已撤销",
+      "revoke": "撤销",
+      "empty": "暂无分享链接。",
+      "listAria": "分享链接",
+      "feedbackAria": "反馈",
+      "states": {
+        "active": "有效",
+        "expired": "已过期",
+        "revoked": "已撤销"
+      },
+      "expiresMeta": "{date} 过期 · {views, plural, other {# 次观看}}",
+      "expiredMeta": "已于 {date} 过期 · {views, plural, other {# 次观看}}"
+    },
+    "preview": {
+      "pageTitle": "视频预览",
+      "loading": "正在加载预览",
+      "unavailable": {
+        "title": "预览不可用",
+        "notFound": "此预览链接无效或已过期",
+        "fallback": "此预览不可用"
+      },
+      "eyebrow": "PostMind Studio · 反馈预览",
+      "intro": "你可以观看并发表评论。批准需在 PostMind Studio 内完成。此链接将于 {expires} 过期。",
+      "variantsAria": "版本",
+      "noVariants": "尚未渲染任何版本。",
+      "variantCaption": "{platform} · {aspectRatio} · {seconds, number} 秒",
+      "feedbackAria": "反馈",
+      "feedbackSoFar": "已有反馈",
+      "noFeedback": "暂无反馈。",
+      "form": {
+        "title": "留下反馈",
+        "name": "你的姓名",
+        "email": "电子邮箱（可选，方便团队回复你）",
+        "feedback": "反馈",
+        "send": "发送反馈",
+        "sent": "谢谢！你的反馈已发送给团队。",
+        "sendFailed": "无法发送反馈"
+      }
+    }
+  },
+  "templates": {
+    "eyebrow": "制作",
+    "title": "模板",
+    "description": "你保存的项目模板和幻灯片模板。删除模板不会影响已用它制作的视频。",
+    "loading": "正在加载模板",
+    "slideshowTitle": "幻灯片模板",
+    "projectTitle": "项目模板",
+    "builtInTitle": "内置模板",
+    "noBuiltIns": "没有内置模板",
+    "list": {
+      "emptySlideshow": "在幻灯片的审阅页面将其另存为模板，即可在这里重复使用。",
+      "emptyProject": "在项目的审阅页面将其另存为模板，即可在这里重复使用。",
+      "slideshowAria": "幻灯片模板",
+      "projectAria": "项目模板",
+      "meta": "{category} · 保存于 {date}",
+      "deleteAria": "删除 {name}",
+      "deleted": "已删除“{name}”"
+    },
+    "categories": {
+      "custom": "自定义",
+      "introduction": "介绍",
+      "team_introduction": "团队介绍",
+      "product_showcase": "产品展示",
+      "before_after": "前后对比",
+      "food": "美食",
+      "lifestyle": "生活方式",
+      "photo_dump": "照片合集",
+      "quote_reel": "金句短片",
+      "statistic_reel": "数据短片",
+      "tweet_video": "推文视频",
+      "product_launch": "新品发布",
+      "weekly_special": "本周特惠",
+      "behind_the_scenes": "幕后花絮"
+    }
+  },
+  "account": {
+    "export": {
+      "eyebrow": "账户",
+      "title": "导出你的数据",
+      "description": "以 ZIP 压缩包（内含 JSON 文件及媒体链接）的形式下载 Studio 为你的组织保存的全部数据。访问令牌和其他密钥绝不会包含在内。",
+      "newExport": "新建导出",
+      "includeLegend": "包含内容",
+      "groups": {
+        "projects": {
+          "label": "项目",
+          "hint": "简报、脚本、镜头、渲染结果、发布记录和媒体链接"
+        },
+        "analytics": {
+          "label": "数据分析",
+          "hint": "每条帖子的观看量和互动数据、服务商费用"
+        },
+        "brand": {
+          "label": "品牌",
+          "hint": "品牌套件、配音、风格记忆、商家资料、模板"
+        },
+        "imageLibrary": {
+          "label": "图片库",
+          "hint": "每张图片及其来源"
+        }
+      },
+      "request": "申请导出",
+      "preparing": "正在准备导出",
+      "requested": "已申请导出——我们会在后台准备",
+      "yourExports": "你的导出",
+      "linksExpire": "导出就绪后，链接将在 {days, plural, other {# 天}}后过期。",
+      "loading": "正在加载导出记录",
+      "empty": {
+        "title": "暂无导出",
+        "description": "申请一次导出即可下载你的数据。"
+      },
+      "listAria": "导出记录",
+      "states": {
+        "queued": "排队中",
+        "running": "准备中",
+        "ready": "已就绪",
+        "failed": "失败",
+        "expired": "已过期"
+      },
+      "sizeKb": "{kb, number} KB",
+      "download": "下载",
+      "noLongerAvailable": "此导出已不可用"
+    },
+    "providerKeys": {
+      "title": "服务商密钥（BYOC）",
+      "description": "使用你自己的 AI 服务商账号。Studio 不会再次显示已保存的密钥，只显示最后四个字符。",
+      "loading": "正在加载服务商密钥",
+      "loadFailed": "无法加载服务商密钥：{reason}",
+      "retry": "重试",
+      "unavailable": {
+        "disabled": "Studio 尚未开启自带服务商密钥功能。",
+        "planTier": "自带服务商密钥是 Enterprise 功能。升级后即可使用你自己的服务商账号。"
+      },
+      "status": {
+        "studioKey": "正在使用 Studio 的密钥",
+        "notTested": "你的密钥 ••••{hint} · 未测试",
+        "working": "你的密钥 ••••{hint} · 正常",
+        "failed": "你的密钥 ••••{hint} · 失败：{reason}",
+        "unhealthy": "不可用"
+      },
+      "test": "测试",
+      "testing": "正在测试…",
+      "remove": "移除",
+      "save": "保存",
+      "saving": "正在保存…",
+      "replace": "替换",
+      "apiKeyAria": "{provider} API 密钥",
+      "publicKeyAria": "{provider} 公钥",
+      "privateKeyAria": "{provider} 私钥",
+      "placeholder": {
+        "replace": "替换密钥",
+        "apiKey": "API 密钥",
+        "publicKey": "公钥",
+        "privateKey": "私钥"
+      },
+      "toast": {
+        "saved": "{provider} 密钥已保存",
+        "works": "{provider} 密钥可用",
+        "failed": "{provider} 密钥测试失败：{reason}",
+        "removed": "已移除 {provider} 密钥；将重新使用 Studio 的密钥"
+      }
+    }
+  },
+  "approvals": {
+    "screen": {
+      "eyebrow": "设置",
+      "title": "审批流程",
+      "description": "为客户或法务审核设置有序的审批步骤。视频会一直处于审核中，直到每一步都获批准后才会发布。没有适用流程的项目只需一次审批。",
+      "newWorkflow": "新建流程",
+      "editTitle": "编辑“{name}”",
+      "listAria": "审批流程",
+      "emptyTitle": "暂无审批流程",
+      "emptyBody": "每个视频都需要一次审批。当客户、经理或法务需要先行签批时，请添加流程。",
+      "saved": "流程已保存。正在进行的审核将保留原有步骤。",
+      "created": "流程已创建。",
+      "deleted": "已删除“{name}”。"
+    },
+    "card": {
+      "stepsAria": "{name} 的步骤",
+      "stepNumber": "第 {number} 步：",
+      "confirmDelete": "确认删除",
+      "keep": "保留",
+      "deleteAria": "删除 {name}"
+    },
+    "form": {
+      "newAria": "新建审批流程",
+      "editAria": "编辑 {name}",
+      "name": "名称",
+      "namePlaceholder": "客户签批",
+      "steps": "步骤（按顺序）",
+      "stepsHelp": "每一步都需等待这么多名具有该角色的不同人员批准。只有最后一步完成后，视频才会获批并可以发布。",
+      "role": "角色",
+      "approvers": "审批人数",
+      "moveUp": "上移第 {number} 步",
+      "moveDown": "下移第 {number} 步",
+      "removeStep": "移除第 {number} 步",
+      "addStep": "添加步骤",
+      "appliesTo": "适用范围",
+      "appliesToHelp": "全部留空即适用于所有项目。多个流程同时匹配时，以最具体的为准（商家优先，其次标签，最后平台）。",
+      "businessIds": "商家 ID（用逗号分隔）",
+      "addCurrentBusiness": "添加当前商家",
+      "platforms": "平台",
+      "projectTags": "项目标签（用逗号分隔）",
+      "save": "保存流程",
+      "create": "创建流程"
+    },
+    "problems": {
+      "name": "请为流程命名。",
+      "noSteps": "请至少添加一个步骤。",
+      "role": "第 {step} 步：请使用成员角色名称，例如 admin 或 client_reviewer。",
+      "minApprovers": "第 {step} 步：至少需要一名审批人。",
+      "maxApprovers": "第 {step} 步：审批人最多 {max} 名。"
+    },
+    "roles": {
+      "owner": "{count, plural, =1 {所有者} other {# 名所有者}}",
+      "admin": "{count, plural, =1 {管理员} other {# 名管理员}}",
+      "client_reviewer": "{count, plural, =1 {客户审核人} other {# 名客户审核人}}",
+      "legal": "{count, plural, =1 {法务} other {# 名法务审核人}}",
+      "reviewer": "{count, plural, =1 {审核人} other {# 名审核人}}",
+      "custom": "{count, plural, =1 {{role}} other {{role} × #}}"
+    },
+    "appliesTo": {
+      "every": "适用于所有项目",
+      "some": "适用于：{targets}",
+      "businesses": "{count, plural, other {商家 {ids}}}",
+      "tagged": "标签为 {tags}"
+    },
+    "indicator": {
+      "regionAria": "审批步骤",
+      "approved": "{name}：所有步骤均已批准",
+      "rejected": "{name}：在第 {step} 步（共 {total} 步）被拒绝",
+      "step": "{name}：第 {step} 步，共 {total} 步",
+      "waiting": "第 {step} 步，共 {total} 步——等待{role}",
+      "waitingCount": "第 {step} 步，共 {total} 步——等待{role}（已获 {approvals}/{required} 项批准）",
+      "stepNumber": "{number}."
+    }
+  }
+}

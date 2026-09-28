@@ -1,9 +1,12 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { directionOf, isLocale } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 
-// Accessible tab bar (WAI-ARIA tabs: arrow keys move between tabs, one tab stop).
+// Accessible tab bar (WAI-ARIA tabs: arrow keys move between tabs, one tab stop). In a
+// right-to-left interface the tabs run right to left, so ArrowLeft moves to the next tab.
 
 export interface TabDef {
   key: string;
@@ -23,9 +26,13 @@ export function ReviewTabs({
   idPrefix?: string;
 }) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const t = useTranslations('review.screen');
+  const locale = useLocale();
+  const forward = isLocale(locale) && directionOf(locale) === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
+  const backward = forward === 'ArrowRight' ? 'ArrowLeft' : 'ArrowRight';
 
   function onKeyDown(e: KeyboardEvent, index: number) {
-    const delta = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    const delta = e.key === forward ? 1 : e.key === backward ? -1 : 0;
     if (!delta) return;
     e.preventDefault();
     const next = (index + delta + tabs.length) % tabs.length;
@@ -39,7 +46,7 @@ export function ReviewTabs({
   return (
     <div
       role="tablist"
-      aria-label="Review sections"
+      aria-label={t('tabsAria')}
       className="-mx-1 flex gap-1 overflow-x-auto border-b border-border px-1"
     >
       {tabs.map((tab, i) => {

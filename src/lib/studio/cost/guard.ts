@@ -3,7 +3,7 @@ import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { CostCapPausedError } from '../../errors';
 import type { StudioMetrics } from '../observability/metrics';
-import type { Notifier, NotificationKind } from '../notifications/notifier';
+import type { Notifier, NotificationKind, NotificationMessage } from '../notifications/notifier';
 import { utcDay } from '../providers/job-repository';
 import type { PlanTier } from '../providers/router';
 import {
@@ -101,30 +101,53 @@ interface Message {
   title: string;
   body: string;
   link?: string;
+  /** 16.5: rendered in the reader's locale (notifications.cost*). */
+  message?: NotificationMessage;
+}
+
+/**
+ * ICU parameters shared by every cost message. Money is in pounds (the catalogue formats it with
+ * `{spent, number, ::currency/GBP}`); `threshold` / `pausePercent` are whole percentages.
+ */
+function costParams(usage: CapUsage, threshold: number): Record<string, number> {
+  return { spent: usage.spentPence / 100, cap: usage.capPence / 100, threshold };
 }
 
 export function alertMessage(usage: CapUsage, threshold: number): Message {
   const spent = `${formatGbp(usage.spentPence)} of ${formatGbp(usage.capPence)}`;
   const pause = threshold >= pausesAt(usage) && usage.scope !== 'ORG_PROVIDER_DAILY';
+  const params = costParams(usage, threshold);
   switch (usage.scope) {
     case 'PROJECT': {
       const name = usage.project?.name ?? 'A project';
       const link = usage.project ? `/projects/${usage.project.id}` : undefined;
+      // Without a project row there is no name to show: the stored English text is used.
+      const keyed = (key: NotificationMessage['key']) =>
+        usage.project
+          ? {
+              message: {
+                key,
+                params: { ...params, name, pausePercent: PROJECT_PAUSE_PERCENT },
+              },
+            }
+          : {};
       if (threshold === PROJECT_PAUSE_PERCENT)
         return {
           kind: 'cost_paused',
           title: `Generation paused: “${name}” reached 90% of its budget`,
           body: `${spent} spent. Open the project, raise its budget (Raise budget), then press Generate again.`,
           link,
+          ...keyed('costProjectPaused'),
         };
+      const under = threshold < PROJECT_PAUSE_PERCENT;
       return {
         kind: 'cost_alert',
         title: `“${name}” has used ${threshold}% of its budget`,
-        body:
-          threshold < PROJECT_PAUSE_PERCENT
-            ? `${spent} spent. Generation pauses at 90% of the budget; it can then be raised on the project page.`
-            : `${spent} spent. Generation is paused until the budget is raised.`,
+        body: under
+          ? `${spent} spent. Generation pauses at 90% of the budget; it can then be raised on the project page.`
+          : `${spent} spent. Generation is paused until the budget is raised.`,
         link,
+        ...keyed(under ? 'costProjectAlert' : 'costProjectOverBudget'),
       };
     }
     case 'ORG_DAILY':
@@ -137,6 +160,7 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
           ? `${spent} spent today (UTC). New generation resumes after midnight UTC; publishing is not affected.`
           : `${spent} spent today (UTC). Generation pauses at 100% until midnight UTC; publishing is not affected.`,
         link: '/analytics',
+        message: { key: pause ? 'costDailyPaused' : 'costDailyAlert', params },
       };
     case 'ORG_MONTHLY':
       return {
@@ -148,6 +172,7 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
           ? `${spent} spent this month (UTC). New generation resumes on the 1st (UTC) or when your plan's monthly cap is raised; publishing is not affected.`
           : `${spent} spent this month (UTC). Generation pauses at 100% until the 1st (UTC); publishing is not affected.`,
         link: '/analytics',
+        message: { key: pause ? 'costMonthlyPaused' : 'costMonthlyAlert', params },
       };
     case 'ORG_PROVIDER_DAILY':
       return {
@@ -155,6 +180,9 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
         title: `${threshold}% of today’s ${usage.provider ?? 'provider'} budget used`,
         body: `${spent} spent today (UTC) with ${usage.provider ?? 'this provider'}. At 100% Studio routes to fallback providers where they exist.`,
         link: '/analytics',
+        ...(usage.provider && {
+          message: { key: 'costProviderDaily', params: { ...params, provider: usage.provider } },
+        }),
       };
     case 'GLOBAL_DAILY':
       return {
@@ -164,6 +192,7 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
           : `Global daily provider spend at ${threshold}% of the cap`,
         body: `${spent} spent today (UTC) across all organisations (STUDIO_GLOBAL_DAILY_CAP_PENCE). See runbooks/cost-runaway.md.`,
         link: '/admin',
+        message: { key: pause ? 'costGlobalPaused' : 'costGlobalAlert', params },
       };
   }
 }

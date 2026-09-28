@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { selectClass } from '../library/library-filters';
@@ -10,6 +11,7 @@ import type { AdminLibraryFilters } from './library-admin-types';
 // "no licence row", A11.1), live/retired, categorisation review, category and title search.
 
 const SEARCH_DEBOUNCE_MS = 300;
+const SCENARIOS = ['LICENSED', 'OWNED', 'SCRAPED', 'NOT_REQUIRED'] as const;
 
 function Select({
   id,
@@ -50,6 +52,8 @@ export function LibraryAdminFilterBar({
   categories: CategoryOption[];
   onChange: (next: AdminLibraryFilters) => void;
 }) {
+  const t = useTranslations('admin.library.filters');
+  const tl = useTranslations('admin.library');
   const [q, setQ] = useState(filters.q);
   const set = (key: keyof AdminLibraryFilters) => (value: string) =>
     onChange({ ...filters, [key]: value });
@@ -64,16 +68,16 @@ export function LibraryAdminFilterBar({
     <div
       className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
       role="group"
-      aria-label="Corpus filters"
+      aria-label={t('groupAria')}
     >
       <div className="grid gap-1">
         <label htmlFor="admin-library-q" className="text-xs text-muted-foreground">
-          Search
+          {t('search')}
         </label>
         <Input
           id="admin-library-q"
           className="h-8"
-          placeholder="Title, tag or id"
+          placeholder={t('searchPlaceholder')}
           maxLength={200}
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -81,46 +85,47 @@ export function LibraryAdminFilterBar({
       </div>
       <Select
         id="admin-library-licence"
-        label="Licence status"
+        label={t('licence')}
         value={filters.licence}
         onChange={set('licence')}
       >
-        <option value="">Any licence</option>
-        <option value="missing">No licence row</option>
-        <option value="LICENSED">Licensed</option>
-        <option value="OWNED">Owned</option>
-        <option value="SCRAPED">Scraped</option>
-        <option value="NOT_REQUIRED">Not required</option>
+        <option value="">{t('licenceAny')}</option>
+        <option value="missing">{t('licenceMissing')}</option>
+        {SCENARIOS.map((s) => (
+          <option key={s} value={s}>
+            {tl(`scenario.${s}`)}
+          </option>
+        ))}
       </Select>
       <Select
         id="admin-library-retired"
-        label="Status"
+        label={t('status')}
         value={filters.retired}
         onChange={set('retired')}
       >
-        <option value="false">Live</option>
-        <option value="true">Retired</option>
-        <option value="">Live and retired</option>
+        <option value="false">{t('statusLive')}</option>
+        <option value="true">{t('statusRetired')}</option>
+        <option value="">{t('statusAll')}</option>
       </Select>
       <Select
         id="admin-library-review"
-        label="Categorisation"
+        label={t('review')}
         value={filters.review}
         onChange={set('review')}
       >
-        <option value="">Any</option>
-        <option value="unreviewed">Not reviewed</option>
-        <option value="ACCEPTED">Accepted</option>
-        <option value="OVERRIDDEN">Overridden</option>
-        <option value="REJECTED">Rejected</option>
+        <option value="">{t('reviewAny')}</option>
+        <option value="unreviewed">{t('reviewNone')}</option>
+        <option value="ACCEPTED">{t('reviewAccepted')}</option>
+        <option value="OVERRIDDEN">{t('reviewOverridden')}</option>
+        <option value="REJECTED">{t('reviewRejected')}</option>
       </Select>
       <Select
         id="admin-library-category"
-        label="Category"
+        label={t('category')}
         value={filters.category}
         onChange={set('category')}
       >
-        <option value="">All categories</option>
+        <option value="">{t('categoryAll')}</option>
         {categories.map((c) => (
           <option key={c.slug} value={c.slug}>
             {`${'  '.repeat(c.depth)}${c.label}`}

@@ -24,6 +24,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
+      # Phase 16: every locale has every key, and screens use logical (RTL-safe) CSS only.
+      - run: npx tsx scripts/i18n/check-catalogues.ts
+      - run: npx tsx scripts/i18n/check-physical-css.ts --fail
       - run: npm test
 
   database:

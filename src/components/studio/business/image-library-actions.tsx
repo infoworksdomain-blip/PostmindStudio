@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, Upload, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { NativeSelect } from '../publications/native-select';
 
 // A6.3 / A6.6 / A6.8 — add to the library: upload a file (multipart), generate one from a
@@ -31,12 +32,14 @@ export function UploadImageButton({
   businessId: string;
   onAdded: () => void;
 }) {
+  const t = useTranslations('business.images');
+  const errorMessage = useErrorMessage();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
   async function upload(file: File) {
     if (file.size > MAX_UPLOAD_BYTES) {
-      toast.error('Image is larger than 15 MB');
+      toast.error(t('tooLarge'));
       return;
     }
     const form = new FormData();
@@ -48,7 +51,7 @@ export function UploadImageButton({
         method: 'POST',
         body: form,
       });
-      toast.success(res.duplicate ? 'That image is already in your library' : 'Image added');
+      toast.success(res.duplicate ? t('duplicate') : t('added'));
       onAdded();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -65,7 +68,7 @@ export function UploadImageButton({
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
         className="sr-only"
-        aria-label="Image file to upload"
+        aria-label={t('fileAria')}
         tabIndex={-1}
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -73,13 +76,15 @@ export function UploadImageButton({
         }}
       />
       <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
-        {busy ? <Loader2 className="animate-spin" /> : <Upload />} Upload
+        {busy ? <Loader2 className="animate-spin" /> : <Upload />} {t('upload')}
       </Button>
     </>
   );
 }
 
 export function RefreshLibraryButton({ businessId }: { businessId: string }) {
+  const t = useTranslations('business.images');
+  const errorMessage = useErrorMessage();
   const [busy, setBusy] = useState(false);
   async function refresh() {
     setBusy(true);
@@ -89,9 +94,7 @@ export function RefreshLibraryButton({ businessId }: { businessId: string }) {
         body: { businessId },
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success(
-        `Searching stock libraries for ${res.queries.length} ${res.queries.length === 1 ? 'query' : 'queries'} — new images appear in a few minutes`,
-      );
+      toast.success(t('refreshStarted', { count: res.queries.length }));
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -100,7 +103,7 @@ export function RefreshLibraryButton({ businessId }: { businessId: string }) {
   }
   return (
     <Button variant="ghost" disabled={busy} onClick={() => void refresh()}>
-      {busy ? <Loader2 className="animate-spin" /> : <RefreshCw />} Refresh stock
+      {busy ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('refresh')}
     </Button>
   );
 }
@@ -112,6 +115,8 @@ export function GenerateImageButton({
   businessId: string;
   onAdded: () => void;
 }) {
+  const t = useTranslations('business.images');
+  const errorMessage = useErrorMessage();
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
@@ -132,7 +137,7 @@ export function GenerateImageButton({
         },
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success('Image generated and added to your library');
+      toast.success(t('generated'));
       setOpen(false);
       setPrompt('');
       onAdded();
@@ -146,15 +151,12 @@ export function GenerateImageButton({
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && setOpen(next)}>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        <Wand2 /> Generate
+        <Wand2 /> {t('generate')}
       </Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Generate an image</DialogTitle>
-          <DialogDescription>
-            Describe the picture. It is saved to this business’s library. Generation can take up to
-            a minute.
-          </DialogDescription>
+          <DialogTitle>{t('generateTitle')}</DialogTitle>
+          <DialogDescription>{t('generateDescription')}</DialogDescription>
         </DialogHeader>
         <form
           id="generate-image-form"
@@ -165,7 +167,7 @@ export function GenerateImageButton({
           }}
         >
           <div className="grid gap-1.5">
-            <Label htmlFor="generate-prompt">Prompt</Label>
+            <Label htmlFor="generate-prompt">{t('prompt')}</Label>
             <Textarea
               id="generate-prompt"
               rows={3}
@@ -176,7 +178,7 @@ export function GenerateImageButton({
           </div>
           <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
             <div className="grid gap-1.5">
-              <Label htmlFor="generate-style">Style (optional)</Label>
+              <Label htmlFor="generate-style">{t('style')}</Label>
               <Input
                 id="generate-style"
                 maxLength={200}
@@ -185,7 +187,7 @@ export function GenerateImageButton({
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="generate-aspect">Shape</Label>
+              <Label htmlFor="generate-aspect">{t('shape')}</Label>
               <NativeSelect
                 id="generate-aspect"
                 value={aspect}
@@ -202,10 +204,10 @@ export function GenerateImageButton({
         </form>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button type="submit" form="generate-image-form" disabled={!valid || busy}>
-            {busy && <Loader2 className="animate-spin" />} Generate
+            {busy && <Loader2 className="animate-spin" />} {t('generate')}
           </Button>
         </DialogFooter>
       </DialogContent>

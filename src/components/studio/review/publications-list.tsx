@@ -1,14 +1,9 @@
 'use client';
 
 import { ExternalLink, Loader2, RotateCw, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import {
-  formatDate,
-  PLATFORM_LABEL,
-  PUBLICATION_STATE,
-  safeHttpUrl,
-  stateOf,
-} from '@/lib/client/format';
+import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { StateBadge } from '../primitives';
 import { useAction } from './use-action';
@@ -22,16 +17,18 @@ export function PublicationsList({
   publications: Publication[];
   onChanged: () => void;
 }) {
+  const t = useTranslations('review.publications');
+  const f = useFormat();
   const { pending, run, busy } = useAction();
   if (publications.length === 0)
-    return <p className="text-sm text-muted-foreground">Nothing published or scheduled yet.</p>;
+    return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
 
   async function act(publication: Publication, action: 'cancel' | 'retry') {
     const ok = await run(
       `${action}-${publication.id}`,
       `/publications/${publication.id}/${action}`,
       {
-        success: action === 'cancel' ? 'Scheduled post cancelled.' : 'Retrying.',
+        success: action === 'cancel' ? t('cancelled') : t('retrying'),
       },
     );
     if (ok) onChanged();
@@ -40,7 +37,7 @@ export function PublicationsList({
   return (
     <ul className="divide-y divide-border">
       {publications.map((p) => {
-        const label = PLATFORM_LABEL[p.platform] ?? p.platform;
+        const label = f.platform(p.platform);
         const platformUrl = safeHttpUrl(p.platformUrl);
         return (
           <li key={p.id} className="flex flex-wrap items-center gap-3 py-3">
@@ -48,18 +45,18 @@ export function PublicationsList({
               <p className="text-sm font-medium">{label}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {p.state === 'SCHEDULED'
-                  ? `For ${formatDate(p.scheduledFor)}`
+                  ? t('scheduledFor', { date: f.date(p.scheduledFor) })
                   : p.publishedAt
-                    ? `Live since ${formatDate(p.publishedAt)}`
-                    : `Created ${formatDate(p.createdAt)}`}
+                    ? t('liveSince', { date: f.date(p.publishedAt) })
+                    : t('created', { date: f.date(p.createdAt) })}
                 {p.errorReason && ` — ${p.errorReason}`}
               </p>
             </div>
-            <StateBadge {...stateOf(PUBLICATION_STATE, p.state)} />
+            <StateBadge {...f.publicationState(p.state)} />
             {platformUrl && (
               <Button asChild variant="ghost" size="sm">
                 <a href={platformUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink /> View
+                  <ExternalLink /> {t('view')}
                 </a>
               </Button>
             )}
@@ -69,10 +66,10 @@ export function PublicationsList({
                 size="sm"
                 disabled={busy}
                 onClick={() => act(p, 'cancel')}
-                aria-label={`Cancel ${label} post`}
+                aria-label={t('cancelAria', { platform: label })}
               >
                 {pending === `cancel-${p.id}` ? <Loader2 className="animate-spin" /> : <X />}
-                Cancel
+                {t('cancel')}
               </Button>
             )}
             {p.state === 'FAILED' && (
@@ -81,10 +78,10 @@ export function PublicationsList({
                 size="sm"
                 disabled={busy}
                 onClick={() => act(p, 'retry')}
-                aria-label={`Retry ${label} post`}
+                aria-label={t('retryAria', { platform: label })}
               >
                 {pending === `retry-${p.id}` ? <Loader2 className="animate-spin" /> : <RotateCw />}
-                Retry
+                {t('retry')}
               </Button>
             )}
           </li>

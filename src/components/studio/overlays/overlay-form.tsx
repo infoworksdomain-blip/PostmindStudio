@@ -1,18 +1,12 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, NativeSelect } from '../review/field';
 import { ColourField } from './colour-field';
 import { snapAnchor } from './overlay-math';
-import {
-  ALIGNMENTS,
-  ANIMATION_LABEL,
-  ANIMATIONS,
-  BACKGROUND_TYPES,
-  type Overlay,
-  type OverlayDraft,
-} from './types';
+import { ALIGNMENTS, ANIMATIONS, BACKGROUND_TYPES, type Overlay, type OverlayDraft } from './types';
 
 // The style panel for one overlay (A4.1): text, timing, typography, colour, background,
 // position and animation. Every change is a local draft; the parent saves it. Colours carry an
@@ -36,11 +30,12 @@ export function OverlayForm({
   disabled: boolean;
   onDraft: (patch: OverlayDraft) => void;
 }) {
+  const t = useTranslations('overlays.form');
   const id = (name: string) => `ov-${overlay.id}-${name}`;
   return (
     <fieldset disabled={disabled} className="grid min-w-0 grid-cols-2 gap-3">
-      <legend className="sr-only">Overlay settings</legend>
-      <Field id={id('text')} label="Text" className="col-span-2">
+      <legend className="sr-only">{t('legend')}</legend>
+      <Field id={id('text')} label={t('text')} className="col-span-2">
         <Textarea
           id={id('text')}
           value={overlay.text}
@@ -49,7 +44,7 @@ export function OverlayForm({
           onChange={(e) => onDraft({ text: e.target.value })}
         />
       </Field>
-      <Field id={id('start')} label="Start (s)">
+      <Field id={id('start')} label={t('start')}>
         <Input
           id={id('start')}
           type="number"
@@ -60,7 +55,7 @@ export function OverlayForm({
           onChange={(e) => onDraft({ startAtSec: num(e.target.value, overlay.startAtSec) })}
         />
       </Field>
-      <Field id={id('end')} label="End (s)">
+      <Field id={id('end')} label={t('end')}>
         <Input
           id={id('end')}
           type="number"
@@ -71,7 +66,7 @@ export function OverlayForm({
           onChange={(e) => onDraft({ endAtSec: num(e.target.value, overlay.endAtSec) })}
         />
       </Field>
-      <Field id={id('font')} label="Font (Google Fonts)">
+      <Field id={id('font')} label={t('font')}>
         <Input
           id={id('font')}
           value={overlay.fontFamily}
@@ -79,7 +74,7 @@ export function OverlayForm({
           onChange={(e) => onDraft({ fontFamily: e.target.value })}
         />
       </Field>
-      <Field id={id('weight')} label="Weight">
+      <Field id={id('weight')} label={t('weight')}>
         <NativeSelect
           id={id('weight')}
           value={overlay.fontWeight}
@@ -92,7 +87,7 @@ export function OverlayForm({
           ))}
         </NativeSelect>
       </Field>
-      <Field id={id('size')} label={`Size (${overlay.fontSizePct}% of height)`}>
+      <Field id={id('size')} label={t('size', { pct: overlay.fontSizePct })}>
         <input
           id={id('size')}
           type="range"
@@ -104,7 +99,7 @@ export function OverlayForm({
           className="accent-primary"
         />
       </Field>
-      <Field id={id('fill')} label="Text colour">
+      <Field id={id('fill')} label={t('textColour')}>
         <ColourField
           id={id('fill')}
           value={overlay.fillColor}
@@ -112,7 +107,7 @@ export function OverlayForm({
           onChange={(fillColor) => onDraft({ fillColor })}
         />
       </Field>
-      <Field id={id('bg')} label="Background">
+      <Field id={id('bg')} label={t('background')}>
         <NativeSelect
           id={id('bg')}
           value={overlay.backgroundType}
@@ -126,12 +121,12 @@ export function OverlayForm({
         >
           {BACKGROUND_TYPES.map((b) => (
             <option key={b} value={b}>
-              {b.replace('_', ' ')}
+              {t(`backgrounds.${b}`)}
             </option>
           ))}
         </NativeSelect>
       </Field>
-      <Field id={id('bgc')} label="Background colour">
+      <Field id={id('bgc')} label={t('backgroundColour')}>
         <ColourField
           id={id('bgc')}
           value={overlay.backgroundColor}
@@ -140,7 +135,7 @@ export function OverlayForm({
           onChange={(backgroundColor) => onDraft({ backgroundColor })}
         />
       </Field>
-      <Field id={id('x')} label="Horizontal position">
+      <Field id={id('x')} label={t('horizontal')}>
         <input
           id={id('x')}
           type="range"
@@ -152,7 +147,7 @@ export function OverlayForm({
           className="accent-primary"
         />
       </Field>
-      <Field id={id('y')} label="Vertical position">
+      <Field id={id('y')} label={t('vertical')}>
         <input
           id={id('y')}
           type="range"
@@ -164,7 +159,7 @@ export function OverlayForm({
           className="accent-primary"
         />
       </Field>
-      <Field id={id('align')} label="Alignment">
+      <Field id={id('align')} label={t('alignment')}>
         <NativeSelect
           id={id('align')}
           value={overlay.alignment}
@@ -172,12 +167,12 @@ export function OverlayForm({
         >
           {ALIGNMENTS.map((a) => (
             <option key={a} value={a}>
-              {a}
+              {t(`alignments.${a}`)}
             </option>
           ))}
         </NativeSelect>
       </Field>
-      <Field id={id('italic')} label="Style">
+      <Field id={id('italic')} label={t('style')}>
         <label className="flex h-8 items-center gap-2 text-sm">
           <input
             id={id('italic')}
@@ -185,10 +180,10 @@ export function OverlayForm({
             checked={overlay.fontItalic}
             onChange={(e) => onDraft({ fontItalic: e.target.checked })}
           />
-          Italic
+          {t('italic')}
         </label>
       </Field>
-      <Field id={id('in')} label="Animation in">
+      <Field id={id('in')} label={t('animationIn')}>
         <NativeSelect
           id={id('in')}
           value={overlay.animationIn}
@@ -196,12 +191,12 @@ export function OverlayForm({
         >
           {ANIMATIONS.map((a) => (
             <option key={a} value={a}>
-              {ANIMATION_LABEL(a)}
+              {t(`animations.${a}`)}
             </option>
           ))}
         </NativeSelect>
       </Field>
-      <Field id={id('out')} label="Animation out">
+      <Field id={id('out')} label={t('animationOut')}>
         <NativeSelect
           id={id('out')}
           value={overlay.animationOut}
@@ -209,7 +204,7 @@ export function OverlayForm({
         >
           {ANIMATIONS.map((a) => (
             <option key={a} value={a}>
-              {ANIMATION_LABEL(a)}
+              {t(`animations.${a}`)}
             </option>
           ))}
         </NativeSelect>

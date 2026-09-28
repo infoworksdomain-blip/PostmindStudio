@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Ban, ExternalLink, Loader2, RotateCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
-import { PLATFORM_LABEL, safeHttpUrl } from '@/lib/client/format';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
+import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { ConfirmDialog } from './confirm-dialog';
 
@@ -13,12 +14,6 @@ import { ConfirmDialog } from './confirm-dialog';
 // down a live one. Cancel and take-down are irreversible, so both ask first.
 
 type Action = 'cancel' | 'retry' | 'takedown';
-
-const DONE: Record<Action, string> = {
-  cancel: 'Scheduled post cancelled',
-  retry: 'Retry queued',
-  takedown: 'Post taken down',
-};
 
 export function availableActions(p: Publication): Action[] {
   if (p.state === 'SCHEDULED' && p.scheduledFor) return ['cancel'];
@@ -34,10 +29,13 @@ export function PublicationActions({
   publication: Publication;
   onChanged: () => void;
 }) {
+  const t = useTranslations('publications.actions');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const [confirming, setConfirming] = useState<Action | null>(null);
   const [running, setRunning] = useState<Action | null>(null);
-  const platform = PLATFORM_LABEL[publication.platform] ?? publication.platform;
-  const name = publication.project?.name ?? 'this video';
+  const platform = f.platform(publication.platform);
+  const name = publication.project?.name ?? t('thisVideo');
 
   async function run(action: Action): Promise<boolean> {
     setRunning(action);
@@ -46,7 +44,7 @@ export function PublicationActions({
         method: 'POST',
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success(DONE[action]);
+      toast.success(t(`done.${action}`));
       onChanged();
       return true;
     } catch (err) {
@@ -67,9 +65,9 @@ export function PublicationActions({
             href={platformUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`Open ${name} on ${platform}`}
+            aria-label={t('openOn', { name, platform })}
           >
-            <ExternalLink />
+            <ExternalLink className="rtl:-scale-x-100" />
           </a>
         </Button>
       )}
@@ -81,35 +79,35 @@ export function PublicationActions({
           onClick={() => void run('retry')}
         >
           {running === 'retry' ? <Loader2 className="animate-spin" /> : <RotateCw />}
-          <span className="sr-only sm:not-sr-only">Retry</span>
+          <span className="sr-only sm:not-sr-only">{t('retry')}</span>
         </Button>
       )}
       {actions.includes('cancel') && (
         <Button variant="ghost" size="sm" onClick={() => setConfirming('cancel')}>
           <Ban />
-          <span className="sr-only sm:not-sr-only">Cancel</span>
+          <span className="sr-only sm:not-sr-only">{t('cancel')}</span>
         </Button>
       )}
       {actions.includes('takedown') && (
         <Button variant="ghost" size="sm" onClick={() => setConfirming('takedown')}>
           <Trash2 />
-          <span className="sr-only sm:not-sr-only">Take down</span>
+          <span className="sr-only sm:not-sr-only">{t('takeDown')}</span>
         </Button>
       )}
       <ConfirmDialog
         open={confirming === 'cancel'}
         onOpenChange={(open) => !open && setConfirming(null)}
-        title="Cancel this scheduled post?"
-        description={`${name} will not be posted to ${platform}. You can schedule it again from the project.`}
-        confirmLabel="Cancel post"
+        title={t('cancelConfirm.title')}
+        description={t('cancelConfirm.body', { name, platform })}
+        confirmLabel={t('cancelConfirm.confirm')}
         onConfirm={() => run('cancel')}
       />
       <ConfirmDialog
         open={confirming === 'takedown'}
         onOpenChange={(open) => !open && setConfirming(null)}
-        title={`Take this post down from ${platform}?`}
-        description={`${name} will be deleted from ${platform} where its API allows. Views, likes and comments on the post are lost and this cannot be undone.`}
-        confirmLabel="Take down"
+        title={t('takedownConfirm.title', { platform })}
+        description={t('takedownConfirm.body', { name, platform })}
+        confirmLabel={t('takedownConfirm.confirm')}
         onConfirm={() => run('takedown')}
       />
     </div>

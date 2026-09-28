@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { api, errorMessage, newIdempotencyKey, type ApiRequest } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage, type ApiRequest } from '@/lib/client/api';
 
 // Shared by Review, Slideshow and Overlay screens: run one write, send an Idempotency-Key, toast
 // the outcome and expose which action is in flight (so its button can show progress and every
@@ -17,6 +17,7 @@ export interface ActionOptions {
 
 export function useAction() {
   const [pending, setPending] = useState<string | null>(null);
+  const errorMessage = useErrorMessage();
 
   const run = useCallback(
     async <T>(key: string, path: string, options: ActionOptions = {}): Promise<T | null> => {
@@ -36,7 +37,7 @@ export function useAction() {
         setPending(null);
       }
     },
-    [],
+    [errorMessage],
   );
 
   return { pending, run, busy: pending !== null };

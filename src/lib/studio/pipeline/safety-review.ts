@@ -118,6 +118,13 @@ async function notifyOpened(host: SafetyReviewHost, review: SafetyReview): Promi
       body: `${review.kind === 'script' ? 'Script' : 'Rendered video'} flagged: ${review.reason}`,
       link: '/admin?tab=safety',
       dedupeKey: `safety_review:${review.id}`,
+      // 16.5: without a project row there is no name; the stored English text is used.
+      ...(project && {
+        message: {
+          key: 'safetyReviewStaff',
+          params: { name: project.name, kind: review.kind, reason: review.reason.slice(0, 500) },
+        },
+      }),
     });
   } catch (err) {
     host.logger.error({ err, reviewId: review.id }, 'safety review staff notification failed');
@@ -131,6 +138,7 @@ async function notifyOpened(host: SafetyReviewHost, review: SafetyReview): Promi
       body: 'PostMind’s Trust & Safety team is checking it. Generation continues if it is allowed.',
       link: `/projects/${review.projectId}`,
       dedupeKey: `safety_review_opened:${review.id}`,
+      message: { key: 'safetyReviewOpened', params: { name: project.name } },
     });
   }
 }

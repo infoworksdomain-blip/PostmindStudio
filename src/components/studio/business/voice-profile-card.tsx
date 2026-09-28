@@ -1,23 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, Play, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { StateBadge } from '../primitives';
 import {
-  DEFAULT_PREVIEW_TEXT,
   MAX_PREVIEW_CHARS,
-  VOICE_STATE,
-  voiceErrorMessage,
+  useVoiceErrorMessage,
+  VOICE_STATE_TONE,
   type VoiceProfile,
 } from './voice-types';
 
 // One voice profile: state, consent details, a short preview in the cloned voice, delete.
 
 function VoicePreview({ profile }: { profile: VoiceProfile }) {
-  const [text, setText] = useState(DEFAULT_PREVIEW_TEXT);
+  const t = useTranslations('business.voice.preview');
+  const voiceErrorMessage = useVoiceErrorMessage();
+  const [text, setText] = useState(() => t('defaultText'));
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +45,7 @@ function VoicePreview({ profile }: { profile: VoiceProfile }) {
   return (
     <div className="grid gap-2">
       <label htmlFor={inputId} className="sr-only">
-        Preview text for {profile.name}
+        {t('label', { name: profile.name })}
       </label>
       <div className="flex gap-2">
         <Input
@@ -55,9 +58,9 @@ function VoicePreview({ profile }: { profile: VoiceProfile }) {
           variant="outline"
           disabled={busy || !text.trim()}
           onClick={() => void preview()}
-          aria-label={`Preview ${profile.name}`}
+          aria-label={t('aria', { name: profile.name })}
         >
-          {busy ? <Loader2 className="animate-spin" /> : <Play />} Preview
+          {busy ? <Loader2 className="animate-spin" /> : <Play />} {t('button')}
         </Button>
       </div>
       {url && (
@@ -68,7 +71,7 @@ function VoicePreview({ profile }: { profile: VoiceProfile }) {
           autoPlay
           src={url}
           className="h-9 w-full"
-          aria-label={`Preview of ${profile.name}`}
+          aria-label={t('playerAria', { name: profile.name })}
         >
           <track kind="captions" />
         </audio>
@@ -89,7 +92,8 @@ export function VoiceProfileCard({
   profile: VoiceProfile;
   onDelete: () => void;
 }) {
-  const state = VOICE_STATE[profile.state];
+  const t = useTranslations('business.voice');
+  const f = useFormat();
   return (
     <li className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
@@ -97,26 +101,31 @@ export function VoiceProfileCard({
           <h3 className="truncate font-display text-2xl leading-tight">{profile.name}</h3>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {[
-              profile.speakerName && `Speaker: ${profile.speakerName}`,
-              `${profile.sampleCount} sample${profile.sampleCount === 1 ? '' : 's'}`,
+              profile.speakerName && t('card.speaker', { name: profile.speakerName }),
+              t('card.samples', { count: profile.sampleCount }),
               profile.consentGivenAt &&
-                `consent ${new Date(profile.consentGivenAt).toLocaleDateString()}`,
+                t('card.consent', {
+                  date: f.date(profile.consentGivenAt, { dateStyle: 'medium' }),
+                }),
             ]
               .filter(Boolean)
               .join(' · ')}
           </p>
         </div>
-        <StateBadge label={state.label} tone={state.tone} />
+        <StateBadge label={t(`states.${profile.state}`)} tone={VOICE_STATE_TONE[profile.state]} />
       </div>
       {profile.state === 'REQUIRES_VERIFICATION' && (
-        <p className="text-sm text-muted-foreground">
-          ElevenLabs asks for voice verification before this voice can be used.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('card.verification')}</p>
       )}
       {profile.state === 'READY' && <VoicePreview profile={profile} />}
       <div className="mt-auto">
-        <Button variant="ghost" size="sm" onClick={onDelete} aria-label={`Delete ${profile.name}`}>
-          <Trash2 /> Delete
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          aria-label={t('card.deleteAria', { name: profile.name })}
+        >
+          <Trash2 /> {t('card.delete')}
         </Button>
       </div>
     </li>

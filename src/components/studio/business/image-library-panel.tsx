@@ -1,28 +1,27 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ImageIcon, Loader2, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, useApi } from '@/lib/client/api';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import type { Page } from '@/lib/client/types';
 import { EmptyState, ErrorState } from '../primitives';
 import { NativeSelect } from '../publications/native-select';
-import { ImageGrid, SOURCE_LABEL } from './image-grid';
+import { IMAGE_SOURCES, ImageGrid } from './image-grid';
 import {
   GenerateImageButton,
   RefreshLibraryButton,
   UploadImageButton,
 } from './image-library-actions';
-import type { ImageSource, LibraryImage } from './types';
+import type { LibraryImage } from './types';
 
 // A6.8 — the per-business image library: browse by source/tag (GET, cursor pages), semantic
 // search (POST /image-library/search), upload, generate, refresh stock, delete.
-
-const SOURCES = Object.keys(SOURCE_LABEL) as ImageSource[];
 
 function SearchResults({
   query,
@@ -35,29 +34,33 @@ function SearchResults({
   onClear: () => void;
   onDelete: (image: LibraryImage) => Promise<boolean>;
 }) {
+  const t = useTranslations('business.images');
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm">
-          {results.length} {results.length === 1 ? 'image' : 'images'} like{' '}
-          <span className="font-medium">“{query}”</span>
+          {t.rich('searchSummary', {
+            count: results.length,
+            query,
+            term: (chunks) => <span className="font-medium">{chunks}</span>,
+          })}
         </p>
         <Button variant="ghost" size="sm" onClick={onClear}>
-          <X /> Clear search
+          <X /> {t('clearSearch')}
         </Button>
       </div>
       {results.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No close matches. Images are searchable once their embedding is computed.
-        </p>
+        <p className="text-sm text-muted-foreground">{t('noMatches')}</p>
       ) : (
-        <ImageGrid images={results} onDelete={onDelete} label="Search results" />
+        <ImageGrid images={results} onDelete={onDelete} label={t('searchResultsAria')} />
       )}
     </div>
   );
 }
 
 export function ImageLibraryPanel({ businessId }: { businessId: string }) {
+  const t = useTranslations('business.images');
+  const errorMessage = useErrorMessage();
   const [source, setSource] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [tag, setTag] = useState('');
@@ -93,7 +96,7 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
   async function remove(image: LibraryImage): Promise<boolean> {
     try {
       await api(`/image-library/${image.id}`, { method: 'DELETE' });
-      toast.success('Image deleted');
+      toast.success(t('deleted'));
       setSearch((s) => s && { ...s, results: s.results.filter((r) => r.id !== image.id) });
       void mutate();
       return true;
@@ -121,18 +124,18 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
           }}
         >
           <Label htmlFor="library-search" className="sr-only">
-            Search images by meaning
+            {t('searchLabel')}
           </Label>
           <Input
             id="library-search"
-            placeholder="Search: “cosy bakery interior”"
+            placeholder={t('searchPlaceholder')}
             maxLength={500}
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
           />
           <Button type="submit" variant="secondary" disabled={!queryInput.trim() || searching}>
             {searching ? <Loader2 className="animate-spin" /> : <Search />}
-            <span className="sr-only sm:not-sr-only">Search</span>
+            <span className="sr-only sm:not-sr-only">{t('search')}</span>
           </Button>
         </form>
         <div className="flex flex-wrap gap-1">
@@ -160,7 +163,7 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
             }}
           >
             <Label htmlFor="library-source" className="text-xs text-muted-foreground">
-              Source
+              {t('source')}
             </Label>
             <NativeSelect
               id="library-source"
@@ -170,15 +173,15 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
                 setCursors([]);
               }}
             >
-              <option value="">All sources</option>
-              {SOURCES.map((s) => (
+              <option value="">{t('allSources')}</option>
+              {IMAGE_SOURCES.map((s) => (
                 <option key={s} value={s.toLowerCase()}>
-                  {SOURCE_LABEL[s]}
+                  {t(`sources.${s}`)}
                 </option>
               ))}
             </NativeSelect>
-            <Label htmlFor="library-tag" className="ml-2 text-xs text-muted-foreground">
-              Tag
+            <Label htmlFor="library-tag" className="ms-2 text-xs text-muted-foreground">
+              {t('tag')}
             </Label>
             <Input
               id="library-tag"
@@ -188,14 +191,14 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
               onChange={(e) => setTagInput(e.target.value)}
             />
             <Button type="submit" variant="ghost" size="sm">
-              Apply
+              {t('apply')}
             </Button>
           </form>
           {error && <ErrorState error={error} onRetry={() => void mutate()} />}
           {isLoading && (
             <div
               className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5"
-              aria-label="Loading images"
+              aria-label={t('loading')}
             >
               {Array.from({ length: 10 }, (_, i) => (
                 <Skeleton key={i} className="aspect-square rounded-lg" />
@@ -205,24 +208,20 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
           {data && data.data.length === 0 && (
             <EmptyState
               icon={<ImageIcon className="size-8" strokeWidth={1.5} />}
-              title={filtered ? 'No images match' : 'Your image library is empty'}
-              description={
-                filtered
-                  ? 'Try another source or tag.'
-                  : 'Scan your website to fill it automatically, or upload and generate images.'
-              }
+              title={filtered ? t('emptyFiltered.title') : t('empty.title')}
+              description={filtered ? t('emptyFiltered.body') : t('empty.body')}
             />
           )}
           {data && data.data.length > 0 && (
             <>
-              <ImageGrid images={data.data} onDelete={remove} label="Image library" />
+              <ImageGrid images={data.data} onDelete={remove} label={t('gridAria')} />
               <div className="flex justify-between">
                 <Button
                   variant="ghost"
                   disabled={cursors.length === 0}
                   onClick={() => setCursors((c) => c.slice(0, -1))}
                 >
-                  Newer
+                  {t('newer')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -231,7 +230,7 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
                     data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
                   }
                 >
-                  Older
+                  {t('older')}
                 </Button>
               </div>
             </>

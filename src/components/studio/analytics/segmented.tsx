@@ -1,10 +1,13 @@
 'use client';
 
 import { useRef, type KeyboardEvent } from 'react';
+import { useLocale } from 'next-intl';
+import { directionOf, isLocale } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 
 // A compact single-choice control (date range, metric). Radio semantics with roving focus:
-// Tab reaches the checked option, arrow keys move and select.
+// Tab reaches the checked option, arrow keys move and select. Left/right follow the reading
+// direction: in RTL the next option is to the left.
 
 export interface SegmentedOption<T extends string | number> {
   value: T;
@@ -25,13 +28,17 @@ export function Segmented<T extends string | number>({
   className?: string;
 }) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const locale = useLocale();
+  const rtl = isLocale(locale) && directionOf(locale) === 'rtl';
   const index = options.findIndex((o) => o.value === value);
 
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+    const backward = rtl ? 'ArrowRight' : 'ArrowLeft';
     const delta =
-      e.key === 'ArrowRight' || e.key === 'ArrowDown'
+      e.key === forward || e.key === 'ArrowDown'
         ? 1
-        : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+        : e.key === backward || e.key === 'ArrowUp'
           ? -1
           : 0;
     if (!delta) return;

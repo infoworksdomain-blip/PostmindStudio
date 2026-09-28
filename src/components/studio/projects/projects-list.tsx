@@ -2,35 +2,31 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowRight, Clapperboard, Layers, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
-import {
-  formatPence,
-  PLATFORM_LABEL,
-  PROJECT_STATE,
-  relativeTime,
-  stateOf,
-} from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { Page, Project } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
 
 // BACKLOG 10.5 — Manage: projects list, filtered by state (spec 14.3), cursor pagination.
 
-export const PROJECT_FILTERS: Array<{ key: string; label: string; states?: string }> = [
-  { key: 'all', label: 'All' },
+export type ProjectFilterKey = 'all' | 'working' | 'review' | 'draft' | 'published' | 'failed';
+
+export const PROJECT_FILTERS: Array<{ key: ProjectFilterKey; states?: string }> = [
+  { key: 'all' },
   {
     key: 'working',
-    label: 'In progress',
     states:
       'QUEUED,SCANNING,PLANNING,ASSETS_QUEUED,ASSETS_GENERATING,RENDERING,QUALITY_CHECKING,PUBLISHING',
   },
-  { key: 'review', label: 'To review', states: 'READY_FOR_REVIEW,QUALITY_FAILED' },
-  { key: 'draft', label: 'Drafts', states: 'DRAFT' },
-  { key: 'published', label: 'Published', states: 'PUBLISHED,PARTIALLY_PUBLISHED,APPROVED' },
-  { key: 'failed', label: 'Failed', states: 'FAILED,REJECTED' },
+  { key: 'review', states: 'READY_FOR_REVIEW,QUALITY_FAILED' },
+  { key: 'draft', states: 'DRAFT' },
+  { key: 'published', states: 'PUBLISHED,PARTIALLY_PUBLISHED,APPROVED' },
+  { key: 'failed', states: 'FAILED,REJECTED' },
 ];
 
 const SOURCE_ICON: Record<string, typeof Clapperboard> = {
@@ -39,11 +35,11 @@ const SOURCE_ICON: Record<string, typeof Clapperboard> = {
 };
 
 function ProjectRow({ project }: { project: Project }) {
-  const state = stateOf(PROJECT_STATE, project.state);
+  const t = useTranslations('projects.list');
+  const f = useFormat();
+  const state = f.projectState(project.state);
   const Icon = SOURCE_ICON[project.sourceType] ?? Clapperboard;
-  const platforms = (project.targetFormats ?? []).map(
-    (f) => PLATFORM_LABEL[f.platform] ?? f.platform,
-  );
+  const platforms = (project.targetFormats ?? []).map((tf) => f.platform(tf.platform));
   return (
     <li>
       <Link
@@ -56,25 +52,30 @@ function ProjectRow({ project }: { project: Project }) {
         <span className="min-w-0">
           <span className="block truncate font-medium">{project.name}</span>
           <span className="block truncate text-xs text-muted-foreground">
-            {platforms.join(' · ') || 'No formats'} — updated {relativeTime(project.updatedAt)}
+            {t('rowMeta', {
+              platforms: platforms.join(' · ') || t('noFormats'),
+              updated: f.relative(project.updatedAt),
+            })}
           </span>
         </span>
         <span className="hidden md:block">
           <StateBadge {...state} />
         </span>
-        <span className="tabular hidden text-right text-sm text-muted-foreground md:block">
-          {formatPence(project.costActualPence)}
+        <span className="tabular hidden text-end text-sm text-muted-foreground md:block">
+          {f.pence(project.costActualPence)}
         </span>
-        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
       </Link>
     </li>
   );
 }
 
 export function ProjectsList() {
-  const [filter, setFilter] = useState('all');
+  const t = useTranslations('projects.list');
+  const tn = useTranslations('shell.nav.groups');
+  const [filter, setFilter] = useState<ProjectFilterKey>('all');
   const [cursors, setCursors] = useState<string[]>([]);
-  const states = PROJECT_FILTERS.find((f) => f.key === filter)?.states;
+  const states = PROJECT_FILTERS.find((pf) => pf.key === filter)?.states;
   const { data, error, isLoading, mutate } = useApi<Page<Project>>('/projects', {
     state: states,
     cursor: cursors.at(-1),
@@ -84,42 +85,42 @@ export function ProjectsList() {
   return (
     <>
       <PageHeader
-        eyebrow="Manage"
-        title="Projects"
-        description="Every video, from first brief to published post."
+        eyebrow={tn('manage')}
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button asChild>
             <Link href="/new">
-              <Plus /> New video
+              <Plus /> {t('newVideo')}
             </Link>
           </Button>
         }
       />
-      <div role="tablist" aria-label="Filter projects" className="mb-6 flex flex-wrap gap-1.5">
-        {PROJECT_FILTERS.map((f) => (
+      <div role="tablist" aria-label={t('filtersAria')} className="mb-6 flex flex-wrap gap-1.5">
+        {PROJECT_FILTERS.map((pf) => (
           <button
-            key={f.key}
+            key={pf.key}
             role="tab"
-            aria-selected={filter === f.key}
+            aria-selected={filter === pf.key}
             onClick={() => {
-              setFilter(f.key);
+              setFilter(pf.key);
               setCursors([]);
             }}
             className={cn(
               'rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-              filter === f.key
+              filter === pf.key
                 ? 'border-foreground bg-foreground text-background'
                 : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
             )}
           >
-            {f.label}
+            {t(`filters.${pf.key}`)}
           </button>
         ))}
       </div>
 
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && (
-        <div className="flex flex-col gap-2" aria-label="Loading projects">
+        <div className="flex flex-col gap-2" aria-label={t('loading')}>
           {Array.from({ length: 5 }, (_, i) => (
             <Skeleton key={i} className="h-[4.5rem] rounded-xl" />
           ))}
@@ -127,17 +128,13 @@ export function ProjectsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
-          title={filter === 'all' ? 'No videos yet' : 'Nothing here'}
-          description={
-            filter === 'all'
-              ? 'Describe what the video is about and Studio writes, shoots and edits it.'
-              : 'No projects match this filter.'
-          }
+          title={filter === 'all' ? t('empty.title') : t('emptyFiltered.title')}
+          description={filter === 'all' ? t('empty.body') : t('emptyFiltered.body')}
           action={
             filter === 'all' && (
               <Button asChild>
                 <Link href="/new">
-                  <Plus /> Make your first video
+                  <Plus /> {t('empty.action')}
                 </Link>
               </Button>
             )
@@ -157,7 +154,7 @@ export function ProjectsList() {
               disabled={cursors.length === 0}
               onClick={() => setCursors((c) => c.slice(0, -1))}
             >
-              Newer
+              {t('newer')}
             </Button>
             <Button
               variant="ghost"
@@ -166,7 +163,7 @@ export function ProjectsList() {
                 data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
               }
             >
-              Older
+              {t('older')}
             </Button>
           </div>
         </>

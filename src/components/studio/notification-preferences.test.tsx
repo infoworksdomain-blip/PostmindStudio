@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR } from './library/test-helpers';
-import { NotificationPreferencesButton, PREFERENCE_ROWS } from './notification-preferences';
+import { NotificationPreferencesButton, PREFERENCE_KINDS } from './notification-preferences';
 
 // BACKLOG 13.24 — notification preferences dialog (in-app / email per kind; email pending setup).
 
@@ -20,7 +20,7 @@ if (typeof window !== 'undefined' && !('ResizeObserver' in window)) {
 afterEach(() => vi.unstubAllGlobals());
 
 const preferences = Object.fromEntries(
-  PREFERENCE_ROWS.map(({ kind }) => [kind, { inApp: true, email: false }]),
+  PREFERENCE_KINDS.map((kind) => [kind, { inApp: true, email: false }]),
 );
 
 describe('NotificationPreferencesButton', () => {

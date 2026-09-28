@@ -2,11 +2,12 @@
 
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { api, errorMessage, newIdempotencyKey } from '@/lib/client/api';
+import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { ConfirmDialog } from './confirm-dialog';
@@ -70,6 +71,9 @@ export function RedrivePanel() {
   const [previewed, setPreviewed] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const t = useTranslations('admin.redrive');
+  const tc = useTranslations('common.actions');
+  const errorMessage = useErrorMessage();
   const set = (patch: Partial<Filters>) => setFilters((f) => ({ ...f, ...patch }));
   const validSince = filters.scope === 'stuck' || !Number.isNaN(Date.parse(filters.since));
   const key = JSON.stringify(filters);
@@ -86,7 +90,7 @@ export function RedrivePanel() {
       });
       setResult(res);
       setPreviewed(dryRun ? key : null);
-      if (!dryRun) toast.success(`Re-drove ${res.counts.redriven} item(s)`);
+      if (!dryRun) toast.success(t('done', { count: res.counts.redriven }));
       return true;
     } catch (err) {
       toast.error(errorMessage(err));
@@ -103,44 +107,41 @@ export function RedrivePanel() {
 
   return (
     <div className="grid gap-6">
-      <Section
-        title="Re-drive halted or stuck work"
-        description="Kill-switched projects resume from the stage that was stopped, reusing finished shots and renders; halted publications are retried. Stuck projects get their current stage re-enqueued (after a Redis loss). Preview first — nothing changes until you apply."
-      >
+      <Section title={t('title')} description={t('description')}>
         <form
           onSubmit={preview}
-          aria-label="Re-drive filters"
+          aria-label={t('formAria')}
           className="grid gap-3 md:grid-cols-3 lg:grid-cols-6 md:items-end"
         >
-          <Field id="redrive-scope" label="Scope">
+          <Field id="redrive-scope" label={t('scope')}>
             <select
               id="redrive-scope"
               className={selectClass}
               value={filters.scope}
               onChange={(e) => set({ scope: e.target.value as Filters['scope'] })}
             >
-              <option value="kill_switch">Kill-switched work</option>
-              <option value="stuck">Stuck projects</option>
+              <option value="kill_switch">{t('scopes.killSwitch')}</option>
+              <option value="stuck">{t('scopes.stuck')}</option>
             </select>
           </Field>
           {filters.scope === 'kill_switch' ? (
             <>
-              <Field id="redrive-level" label="Level">
+              <Field id="redrive-level" label={t('level')}>
                 <select
                   id="redrive-level"
                   className={selectClass}
                   value={filters.level}
                   onChange={(e) => set({ level: e.target.value as Filters['level'] })}
                 >
-                  <option value="">Any level</option>
+                  <option value="">{t('anyLevel')}</option>
                   {LEVELS.map((l) => (
                     <option key={l} value={l}>
-                      {l}
+                      {t(`levels.${l}`)}
                     </option>
                   ))}
                 </select>
               </Field>
-              <Field id="redrive-since" label="Failed since">
+              <Field id="redrive-since" label={t('since')}>
                 <Input
                   id="redrive-since"
                   type="datetime-local"
@@ -150,7 +151,7 @@ export function RedrivePanel() {
               </Field>
             </>
           ) : (
-            <Field id="redrive-stuck" label="Idle for (minutes)">
+            <Field id="redrive-stuck" label={t('idleMinutes')}>
               <Input
                 id="redrive-stuck"
                 type="number"
@@ -160,17 +161,17 @@ export function RedrivePanel() {
               />
             </Field>
           )}
-          <Field id="redrive-org" label="Organisation">
+          <Field id="redrive-org" label={t('organisation')}>
             <Input
               id="redrive-org"
               value={filters.organisationId}
               onChange={(e) => set({ organisationId: e.target.value })}
-              placeholder="All organisations"
+              placeholder={t('allOrganisations')}
               className="font-mono"
               autoComplete="off"
             />
           </Field>
-          <Field id="redrive-limit" label="Limit">
+          <Field id="redrive-limit" label={t('limit')}>
             <Input
               id="redrive-limit"
               type="number"
@@ -183,7 +184,7 @@ export function RedrivePanel() {
           <div className="flex gap-2">
             <Button type="submit" variant="outline" disabled={!validSince || pending}>
               {pending && <Loader2 className="animate-spin" />}
-              Preview
+              {t('preview')}
             </Button>
             <Button
               type="button"
@@ -191,14 +192,12 @@ export function RedrivePanel() {
               disabled={!canApply || pending}
               onClick={() => setConfirming(true)}
             >
-              Apply
+              {tc('apply')}
             </Button>
           </div>
         </form>
         {previewed !== null && previewed !== key && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            Filters changed since the preview — preview again before applying.
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">{t('stale')}</p>
         )}
       </Section>
 
@@ -207,9 +206,9 @@ export function RedrivePanel() {
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
-        title={`Re-drive ${result?.counts.redriven ?? 0} item(s)?`}
-        description="Jobs are queued for other organisations' projects and publications. Resumed work may call paid providers for the parts that never ran, and retried publications post to the customer's accounts."
-        confirmLabel="Re-drive"
+        title={t('confirmTitle', { count: result?.counts.redriven ?? 0 })}
+        description={t('confirmDescription')}
+        confirmLabel={t('confirmLabel')}
         onConfirm={() => send(false)}
       />
     </div>

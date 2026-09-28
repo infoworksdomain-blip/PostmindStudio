@@ -1,5 +1,5 @@
 import { ThemeProvider } from 'next-themes';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AdminCentre } from '@/components/studio/admin/admin-centre';
 import { ExportScreen } from '@/components/studio/account/export-screen';
 import { PublicPreview } from '@/components/studio/share/public-preview';
@@ -20,6 +20,9 @@ import { WelcomeWizard } from '@/components/studio/onboarding/welcome-wizard';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
 import { PublicationsList } from '@/components/studio/publications/publications-list';
 import { ReviewScreen } from '@/components/studio/review/review-screen';
+import { StudioIntlProvider } from '@/components/studio/i18n/intl-provider';
+import { ALL_MESSAGES } from '@/lib/i18n/all-messages';
+import { LOCALE_COOKIE, resolveLocale, type Locale } from '@/lib/i18n/locales';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DEMO_BUSINESS_ID } from './api/ids';
@@ -98,7 +101,30 @@ function Routed() {
   );
 }
 
+/** Phase 16: the demo's locale — the saved choice (cookie), else the browser's languages. */
+function initialLocale(): Locale {
+  const cookie = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith(`${LOCALE_COOKIE}=`))
+    ?.slice(LOCALE_COOKIE.length + 1);
+  return resolveLocale({
+    cookie: cookie ? decodeURIComponent(cookie) : null,
+    acceptLanguage: navigator.languages.join(','),
+  });
+}
+
 export function DemoApp() {
+  // Every catalogue ships in the bundle, so the header language switcher swaps locale in place
+  // (the app instead refreshes its server tree).
+  const [locale, setLocale] = useState<Locale>(initialLocale);
+  return (
+    <StudioIntlProvider locale={locale} messages={ALL_MESSAGES[locale]} onLocaleChange={setLocale}>
+      <DemoShell />
+    </StudioIntlProvider>
+  );
+}
+
+function DemoShell() {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <TooltipProvider delayDuration={200}>

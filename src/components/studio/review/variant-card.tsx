@@ -1,12 +1,13 @@
 'use client';
 
 import { Download, Loader2, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDuration, formatPence, PLATFORM_LABEL, type Tone } from '@/lib/client/format';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat, type Tone } from '@/lib/client/format';
 import type { Render } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { StateBadge } from '../primitives';
@@ -17,11 +18,11 @@ import type { SignedUrl } from './types';
 // One variant (render) per target format (spec 14.2): inline player from a signed preview URL,
 // download, and its quality panel.
 
-const QUALITY: Record<Render['qualityCheckState'], { label: string; tone: Tone }> = {
-  PENDING: { label: 'Checking', tone: 'live' },
-  PASSED: { label: 'Quality passed', tone: 'good' },
-  FAILED: { label: 'Quality failed', tone: 'bad' },
-  FORCE_APPROVED: { label: 'Force-approved', tone: 'warn' },
+const QUALITY_TONE: Record<Render['qualityCheckState'], Tone> = {
+  PENDING: 'live',
+  PASSED: 'good',
+  FAILED: 'bad',
+  FORCE_APPROVED: 'warn',
 };
 
 const ASPECT_CLASS: Record<string, string> = {
@@ -32,16 +33,19 @@ const ASPECT_CLASS: Record<string, string> = {
 };
 
 export function VariantPlayer({ render }: { render: Render }) {
+  const t = useTranslations('review.variant');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const { data, error, isLoading } = useApi<SignedUrl>(`/renders/${render.id}/preview`);
   const frame = cn(
     'mx-auto w-full overflow-hidden rounded-lg bg-foreground/90',
     ASPECT_CLASS[render.aspectRatio] ?? 'aspect-video',
   );
-  if (isLoading) return <Skeleton className={frame} aria-label="Loading preview" />;
+  if (isLoading) return <Skeleton className={frame} aria-label={t('loadingPreview')} />;
   if (error || !data)
     return (
       <div className={cn(frame, 'grid place-items-center p-4 text-center text-sm text-background')}>
-        Preview unavailable — {errorMessage(error)}
+        {t('previewUnavailable', { error: errorMessage(error) })}
       </div>
     );
   return (
@@ -51,7 +55,7 @@ export function VariantPlayer({ render }: { render: Render }) {
       controls
       playsInline
       preload="metadata"
-      aria-label={`${PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform} preview`}
+      aria-label={t('previewAria', { platform: f.platform(render.targetPlatform) })}
     />
   );
 }
@@ -71,6 +75,9 @@ export function VariantCard({
   stale?: boolean;
   projectState?: string;
 }) {
+  const t = useTranslations('review.variant');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const [downloading, setDownloading] = useState(false);
   const [rerendering, setRerendering] = useState(false);
 
@@ -81,7 +88,7 @@ export function VariantCard({
         method: 'POST',
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success('Re-rendering with your edits.');
+      toast.success(t('rerendering'));
       onChanged();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -89,7 +96,10 @@ export function VariantCard({
       setRerendering(false);
     }
   }
-  const quality = QUALITY[render.qualityCheckState];
+  const quality = {
+    label: t(`quality.${render.qualityCheckState}`),
+    tone: QUALITY_TONE[render.qualityCheckState],
+  };
 
   async function download() {
     setDownloading(true);
@@ -105,7 +115,7 @@ export function VariantCard({
 
   return (
     <article
-      aria-label={`${PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform} variant`}
+      aria-label={t('aria', { platform: f.platform(render.targetPlatform) })}
       className="grid gap-5 rounded-xl border border-border bg-card p-4 md:grid-cols-[minmax(0,20rem)_1fr]"
     >
       <VariantPlayer render={render} />
@@ -113,24 +123,24 @@ export function VariantCard({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h3 className="font-display text-2xl leading-none">
-              {PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform}
+              {f.platform(render.targetPlatform)}
             </h3>
             <p className="tabular mt-1 text-xs text-muted-foreground">
-              {render.aspectRatio} · {render.resolution} · {formatDuration(render.durationSec)} ·{' '}
-              {formatPence(render.costPence)}
+              {render.aspectRatio} · {render.resolution} · {f.duration(render.durationSec)} ·{' '}
+              {f.pence(render.costPence)}
             </p>
           </div>
           <span className="flex flex-wrap gap-1.5">
-            {stale && <StateBadge label="Out of date" tone="warn" />}
+            {stale && <StateBadge label={t('outOfDate')} tone="warn" />}
             <StateBadge {...quality} />
           </span>
         </div>
         {stale && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm">
-            <span>The script or shots changed after this variant was rendered.</span>
+            <span>{t('staleNote')}</span>
             {projectState && RERENDERABLE.has(projectState) && (
               <Button size="sm" variant="outline" onClick={rerender} disabled={rerendering}>
-                {rerendering ? <Loader2 className="animate-spin" /> : <RefreshCw />} Re-render
+                {rerendering ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('rerender')}
               </Button>
             )}
           </div>
@@ -139,7 +149,7 @@ export function VariantCard({
         <QualityPanel render={render} onChanged={onChanged} />
         <div>
           <Button variant="outline" size="sm" onClick={download} disabled={downloading}>
-            {downloading ? <Loader2 className="animate-spin" /> : <Download />} Download MP4
+            {downloading ? <Loader2 className="animate-spin" /> : <Download />} {t('download')}
           </Button>
         </div>
       </div>

@@ -12,17 +12,6 @@ export const SLIDE_TYPES = [
 ] as const;
 export type SlideType = (typeof SLIDE_TYPES)[number];
 
-export const SLIDE_TYPE_LABEL: Record<SlideType, string> = {
-  IMAGE_STILL: 'Image',
-  IMAGE_KENBURNS: 'Image (Ken Burns)',
-  VIDEO_CLIP: 'Video clip',
-  TEXT_CARD: 'Text card',
-  BEFORE_AFTER: 'Before / after',
-  QUOTE: 'Quote',
-  STATISTIC: 'Statistic',
-  PRODUCT: 'Product',
-};
-
 export const TRANSITIONS = ['cut', 'fade', 'wipe', 'slide', 'zoom'] as const;
 export type Transition = (typeof TRANSITIONS)[number];
 
@@ -60,6 +49,25 @@ export interface Slide {
   problem: string | null;
 }
 
+/** The server's slide problems (lib/studio/slideshow/planner.ts slideProblem) → message keys. */
+export const SLIDE_PROBLEM_KEY = {
+  'text not written yet (run auto-populate or edit the slide)': 'pendingText',
+  'needs an image': 'needsImage',
+  'needs a video clip': 'needsClip',
+  'needs text': 'needsText',
+  'needs before and after images': 'needsBeforeAfter',
+  'needs a quote': 'needsQuote',
+  'needs a value and label': 'needsValueLabel',
+  'needs a product name': 'needsProductName',
+} as const;
+export type SlideProblemKey = (typeof SLIDE_PROBLEM_KEY)[keyof typeof SLIDE_PROBLEM_KEY];
+
+export function slideProblemKey(problem: string): SlideProblemKey | null {
+  return Object.prototype.hasOwnProperty.call(SLIDE_PROBLEM_KEY, problem)
+    ? SLIDE_PROBLEM_KEY[problem as keyof typeof SLIDE_PROBLEM_KEY]
+    : null;
+}
+
 export interface SlideshowTemplate {
   id: string;
   organisationId: string | null;
@@ -74,7 +82,7 @@ export function slideCount(template: SlideshowTemplate): number | null {
   return Array.isArray(template.slidePlan) ? template.slidePlan.length : null;
 }
 
-/** "photo_dump" → "Photo dump". */
+/** "photo_dump" → "Photo dump" (template categories are organisation data, not catalogue keys). */
 export function categoryLabel(category: string): string {
   const text = category.replace(/_/g, ' ').trim();
   return text ? text.charAt(0).toUpperCase() + text.slice(1) : category;

@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { ExternalLink, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { api, errorMessage, useApi } from '@/lib/client/api';
-import { formatDate, relativeTime, safeHttpUrl } from '@/lib/client/format';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
+import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section, Stat } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { ReasonDialog } from './reason-dialog';
@@ -47,12 +48,6 @@ export interface AuditResponse {
   hasMore: boolean;
 }
 
-const RESULT_LABEL: Record<Result, string> = {
-  pending: 'Waiting for review',
-  pass: 'Pass',
-  miss: 'Miss',
-};
-
 function AuditCard({
   item,
   onPass,
@@ -64,7 +59,12 @@ function AuditCard({
   onMiss: () => void;
   busy: boolean;
 }) {
+  const t = useTranslations('admin.safety.audit');
+  const ts = useTranslations('admin.safety');
+  const f = useFormat();
   const link = safeHttpUrl(item.platformUrl);
+  const platform = f.platform(item.platform);
+  const resultLabel = t(`result.${item.result}`);
   return (
     <li className="grid gap-3 rounded-lg border border-border p-4 md:grid-cols-[minmax(0,200px)_1fr]">
       {item.previewUrl ? (
@@ -73,23 +73,23 @@ function AuditCard({
           controls
           muted
           preload="metadata"
-          aria-label={`Published ${item.platform} video`}
+          aria-label={t('videoAria', { platform })}
           className="aspect-[9/16] max-h-64 w-full rounded-md bg-black object-contain"
         />
       ) : (
         <div className="grid aspect-[9/16] max-h-64 place-items-center rounded-md bg-muted text-xs text-muted-foreground">
-          No preview
+          {t('noPreview')}
         </div>
       )}
       <div className="flex flex-col gap-2 text-sm">
         <p className="font-medium">
-          {item.platform}
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            published {formatDate(item.publishedAt)}
+          {platform}
+          <span className="ms-2 text-xs font-normal text-muted-foreground">
+            {t('publishedOn', { date: f.date(item.publishedAt) })}
           </span>
         </p>
         <p className="text-xs text-muted-foreground">
-          Organisation {item.organisationId} · project {item.projectId}
+          {t('ids', { organisationId: item.organisationId, projectId: item.projectId })}
         </p>
         {link && (
           <a
@@ -98,24 +98,25 @@ function AuditCard({
             rel="noreferrer noopener"
             className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
           >
-            Open the post <ExternalLink className="size-3" />
+            {t('openPost')} <ExternalLink className="size-3 rtl:-scale-x-100" />
           </a>
         )}
         {item.result === 'pending' ? (
           <div className="mt-auto flex flex-wrap gap-2 pt-2">
             <Button size="sm" variant="outline" onClick={onPass} disabled={busy}>
               {busy && <Loader2 className="animate-spin" />}
-              Pass
+              {t('pass')}
             </Button>
             <Button size="sm" variant="destructive" onClick={onMiss} disabled={busy}>
-              Miss
+              {t('miss')}
             </Button>
           </div>
         ) : (
           <p className={item.result === 'miss' ? 'text-xs text-destructive' : 'text-xs'}>
-            {RESULT_LABEL[item.result]}
-            {item.reviewedAt && ` ${relativeTime(item.reviewedAt)}`}
-            {item.note && ` — “${item.note}”`}
+            {item.reviewedAt
+              ? ts('decidedWhen', { state: resultLabel, when: f.relative(item.reviewedAt) })
+              : resultLabel}
+            {item.note && <> — {ts('quotedNote', { note: item.note })}</>}
           </p>
         )}
       </div>
@@ -124,6 +125,9 @@ function AuditCard({
 }
 
 export function SafetyAuditPanel() {
+  const t = useTranslations('admin.safety.audit');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const [period, setPeriod] = useState('');
   const [result, setResult] = useState<Result | ''>('pending');
   const res = useApi<AuditResponse>('/admin/safety-audit', { period, result, limit: 50 });
@@ -139,7 +143,7 @@ export function SafetyAuditPanel() {
         method: 'POST',
         body: { result: verdict, ...(note && { note }) },
       });
-      toast.success(verdict === 'pass' ? 'Recorded as pass' : 'Miss recorded — staff notified');
+      toast.success(verdict === 'pass' ? t('passToast') : t('missToast'));
       await res.mutate();
       return true;
     } catch (err) {
@@ -158,7 +162,11 @@ export function SafetyAuditPanel() {
         { method: 'POST', body: shown ? { period: shown } : {} },
       );
       toast.success(
-        `${out.sample.added} added — ${out.sample.total} of ${out.sample.population} published videos sampled`,
+        t('sampleToast', {
+          added: f.number(out.sample.added),
+          total: f.number(out.sample.total),
+          population: out.sample.population,
+        }),
       );
       await res.mutate();
     } catch (err) {
@@ -172,12 +180,12 @@ export function SafetyAuditPanel() {
 
   return (
     <Section
-      title="Trust & Safety monthly audit"
-      description="A random sample of last month’s published videos, re-checked by a person. A miss is a video the Hive scan should have blocked or sent to review."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex flex-wrap gap-2">
           <select
-            aria-label="Audit month"
+            aria-label={t('monthAria')}
             className={selectClass}
             value={shown}
             onChange={(e) => setPeriod(e.target.value)}
@@ -189,19 +197,19 @@ export function SafetyAuditPanel() {
             ))}
           </select>
           <select
-            aria-label="Result"
+            aria-label={t('resultAria')}
             className={selectClass}
             value={result}
             onChange={(e) => setResult(e.target.value as Result | '')}
           >
-            <option value="pending">Waiting for review</option>
-            <option value="miss">Misses</option>
-            <option value="pass">Passes</option>
-            <option value="">All</option>
+            <option value="pending">{t('filter.pending')}</option>
+            <option value="miss">{t('filter.miss')}</option>
+            <option value="pass">{t('filter.pass')}</option>
+            <option value="">{t('filter.all')}</option>
           </select>
           <Button size="sm" variant="outline" onClick={() => void drawSample()} disabled={sampling}>
             {sampling && <Loader2 className="animate-spin" />}
-            Draw sample
+            {t('drawSample')}
           </Button>
         </div>
       }
@@ -209,32 +217,32 @@ export function SafetyAuditPanel() {
       {res.error ? (
         <ErrorState error={res.error} onRetry={() => void res.mutate()} />
       ) : !res.data ? (
-        <Skeleton aria-label="Loading safety audit" className="h-64" />
+        <Skeleton aria-label={t('loadingAria')} className="h-64" />
       ) : (
         <div className="grid gap-6">
           <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
-            <Stat label="Sampled" value={res.data.summary.sampled} />
-            <Stat label="Waiting" value={res.data.summary.pending} />
-            <Stat label="Passed" value={res.data.summary.passed} />
-            <Stat label="Missed" value={res.data.summary.missed} />
+            <Stat label={t('sampled')} value={f.number(res.data.summary.sampled)} />
+            <Stat label={t('waiting')} value={f.number(res.data.summary.pending)} />
+            <Stat label={t('passed')} value={f.number(res.data.summary.passed)} />
+            <Stat label={t('missed')} value={f.number(res.data.summary.missed)} />
             <Stat
-              label="Hive scan miss rate"
+              label={t('missRate')}
               value={
                 res.data.summary.missRate === null
                   ? '—'
-                  : `${(res.data.summary.missRate * 100).toFixed(1)}%`
+                  : f.number(res.data.summary.missRate, {
+                      style: 'percent',
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })
               }
-              hint="missed ÷ reviewed"
+              hint={t('missRateHint')}
             />
           </div>
           {res.data.data.length === 0 ? (
             <EmptyState
-              title={res.data.summary.sampled === 0 ? 'No sample for this month' : 'Nothing here'}
-              description={
-                res.data.summary.sampled === 0
-                  ? 'The sample is drawn on the 1st at 06:00 UTC. Draw it now if the job did not run.'
-                  : 'No videos match this filter.'
-              }
+              title={res.data.summary.sampled === 0 ? t('emptyNoSampleTitle') : t('emptyTitle')}
+              description={res.data.summary.sampled === 0 ? t('emptyNoSampleBody') : t('emptyBody')}
             />
           ) : (
             <ul className="grid gap-3">
@@ -254,9 +262,9 @@ export function SafetyAuditPanel() {
       <ReasonDialog
         open={missing !== null}
         onOpenChange={(open) => !open && setMissing(null)}
-        title="Record a miss"
-        description="Say what the scan missed. Staff are notified, and the publication should be taken down (runbooks/content-safety-miss.md)."
-        confirmLabel="Record miss"
+        title={t('missTitle')}
+        description={t('missBody')}
+        confirmLabel={t('missConfirm')}
         destructive
         onConfirm={async (note) => (missing ? record(missing, 'miss', note) : false)}
       />

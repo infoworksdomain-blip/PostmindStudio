@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Mic, Square, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { audioFileProblem, formatBytes } from './voice-types';
+import { useAudioFileProblem, useFormatBytes } from './voice-types';
 
 // Spec 10.2 — the consent recording: the speaker reading the consent statement aloud. Recorded
 // in the browser with MediaRecorder when it is available, otherwise (or by choice) uploaded.
@@ -31,6 +32,9 @@ export function ConsentRecorder({
   value: File | null;
   onChange: (file: File | null) => void;
 }) {
+  const t = useTranslations('business.voice.recorder');
+  const audioFileProblem = useAudioFileProblem();
+  const formatBytes = useFormatBytes();
   const [recordable, setRecordable] = useState(false);
   const [recording, setRecording] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -69,7 +73,7 @@ export function ConsentRecorder({
       rec.start();
       setRecording(true);
     } catch {
-      setProblem('Could not use the microphone. Allow access, or upload a recording instead.');
+      setProblem(t('micFailed'));
     }
   }
 
@@ -86,21 +90,21 @@ export function ConsentRecorder({
         {recordable &&
           (recording ? (
             <Button type="button" variant="destructive" onClick={() => recorder.current?.stop()}>
-              <Square /> Stop recording
+              <Square /> {t('stop')}
             </Button>
           ) : (
             <Button type="button" variant="outline" onClick={() => void start()}>
-              <Mic /> {value ? 'Record again' : 'Record now'}
+              <Mic /> {value ? t('recordAgain') : t('recordNow')}
             </Button>
           ))}
         <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted focus-within:ring-2 focus-within:ring-ring">
           <Upload className="size-4" aria-hidden />
-          Upload recording
+          {t('upload')}
           <Input
             type="file"
             accept="audio/*"
             className="sr-only"
-            aria-label="Consent recording file"
+            aria-label={t('fileAria')}
             onChange={(e) => {
               pick(e.target.files?.[0]);
               e.target.value = '';
@@ -111,19 +115,17 @@ export function ConsentRecorder({
       {recording && (
         <p className="flex items-center gap-2 text-xs text-primary" role="status">
           <span aria-hidden className="size-2 animate-rec rounded-full bg-primary" />
-          Recording — read the statement above, then stop.
+          {t('recording')}
         </p>
       )}
       {value && !recording && (
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>
-            {value.name} · {formatBytes(value.size)}
-          </span>
+          <span>{t('fileMeta', { name: value.name, size: formatBytes(value.size) })}</span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            aria-label="Remove consent recording"
+            aria-label={t('removeAria')}
             onClick={() => onChange(null)}
           >
             <X />

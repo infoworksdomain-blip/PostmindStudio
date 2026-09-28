@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AudioLines, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { EmptyState, ErrorState } from '../primitives';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { VoiceCloneDialog } from './voice-clone-dialog';
 import { VoiceProfileCard } from './voice-profile-card';
-import { voiceErrorMessage, type VoiceProfile } from './voice-types';
+import { useVoiceErrorMessage, type VoiceProfile } from './voice-types';
 
 // BACKLOG 13.13 — brand voice (spec 10.2, 13.4): the business's cloned voices. A brand kit can
 // narrate in a READY voice; deleting a voice revokes it at ElevenLabs and kits fall back to the
@@ -27,6 +28,8 @@ export function VoiceProfilesPanel({
   businessId: string;
   businessName?: string;
 }) {
+  const t = useTranslations('business.voice');
+  const voiceErrorMessage = useVoiceErrorMessage();
   const { data, error, isLoading, mutate } = useApi<{ data: VoiceProfile[] }>(
     ...voiceProfilesKey(businessId),
   );
@@ -44,8 +47,8 @@ export function VoiceProfilesPanel({
       const kits = res.brandKitsUnlinked;
       toast.success(
         kits > 0
-          ? `${profile.name} deleted; ${kits} brand kit${kits === 1 ? '' : 's'} now use the stock voice`
-          : `${profile.name} deleted`,
+          ? t('deletedUnlinked', { name: profile.name, kits })
+          : t('deleted', { name: profile.name }),
       );
       refresh();
       return true;
@@ -60,28 +63,25 @@ export function VoiceProfilesPanel({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="max-w-xl">
           <h2 id="voice-heading" className="font-display text-3xl leading-none">
-            Voice
+            {t('title')}
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Clone a real voice, with the speaker’s recorded consent, and pick it in a brand kit to
-            narrate its videos. Without one, videos use a stock voice.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{t('intro')}</p>
         </div>
         <Button onClick={() => setCloning(true)}>
-          <Plus /> Clone a voice
+          <Plus /> {t('clone')}
         </Button>
       </div>
       {error && <ErrorState error={error} onRetry={refresh} />}
-      {isLoading && <Skeleton aria-label="Loading voices" className="h-40 rounded-xl" />}
+      {isLoading && <Skeleton aria-label={t('loading')} className="h-40 rounded-xl" />}
       {data && profiles.length === 0 && (
         <EmptyState
           icon={<AudioLines className="size-8" strokeWidth={1.5} />}
-          title="No cloned voice yet"
-          description="Narration uses a stock voice until you clone one."
+          title={t('empty.title')}
+          description={t('empty.body')}
         />
       )}
       {profiles.length > 0 && (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Voice profiles">
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label={t('listAria')}>
           {profiles.map((p) => (
             <VoiceProfileCard key={p.id} profile={p} onDelete={() => setDeleting(p)} />
           ))}
@@ -95,7 +95,9 @@ export function VoiceProfilesPanel({
           businessName={businessName}
           onCreated={(p) => {
             toast.success(
-              p.state === 'READY' ? `${p.name} is ready` : `${p.name} needs verification`,
+              p.state === 'READY'
+                ? t('ready', { name: p.name })
+                : t('needsVerification', { name: p.name }),
             );
             refresh();
           }}
@@ -104,9 +106,13 @@ export function VoiceProfilesPanel({
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title={`Delete ${deleting?.name ?? 'this voice'}?`}
-        description="The voice is revoked at ElevenLabs and can’t be used again. Brand kits using it go back to the stock voice. The consent record is kept."
-        confirmLabel="Delete voice"
+        title={
+          deleting
+            ? t('deleteConfirm.title', { name: deleting.name })
+            : t('deleteConfirm.titleFallback')
+        }
+        description={t('deleteConfirm.body')}
+        confirmLabel={t('deleteConfirm.confirm')}
         onConfirm={() => (deleting ? remove(deleting) : Promise.resolve(true))}
       />
     </section>

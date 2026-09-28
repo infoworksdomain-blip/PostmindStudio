@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, PageHeader } from '../primitives';
 import {
   dayKey,
@@ -27,6 +29,9 @@ import { MAX_PAGES, PAGE_LIMIT, useCalendarPublications } from './use-calendar-p
 // Scheduled posts can be dragged to another day or moved with the move dialog (13.9).
 
 export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
+  const t = useTranslations('calendar');
+  const tn = useTranslations('shell.nav.groups');
+  const f = useFormat();
   const [month, setMonth] = useState(() => monthOf(initialDate ?? new Date()));
   const days = useMemo(() => monthGrid(month), [month]);
   const range = useMemo(() => gridWindow(month), [month]);
@@ -36,7 +41,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
     range.to,
   );
   const byDay = useMemo(() => groupByDay(data?.publications ?? []), [data]);
-  const title = formatMonth(month);
+  const title = formatMonth(month, f.locale);
   const [moving, setMoving] = useState<Publication | null>(null);
   const { move, pending } = useReschedule(() => void mutate());
   const moveHandlers: MoveHandlers = {
@@ -53,13 +58,13 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   return (
     <>
       <PageHeader
-        eyebrow="Manage"
-        title="Calendar"
-        description="Scheduled and published videos across every platform."
+        eyebrow={tn('manage')}
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="outline" asChild>
             <Link href="/publications">
-              <List /> All publications
+              <List /> {t('allPublications')}
             </Link>
           </Button>
         }
@@ -72,7 +77,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
           {title}
           {isValidating && !isLoading && (
             <Loader2
-              aria-label="Refreshing"
+              aria-label={t('refreshing')}
               className="size-4 animate-spin text-muted-foreground"
             />
           )}
@@ -81,44 +86,44 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
           <Button
             variant="outline"
             size="icon"
-            aria-label="Previous month"
+            aria-label={t('previousMonth')}
             onClick={() => setMonth((m) => shiftMonth(m, -1))}
           >
-            <ChevronLeft />
+            <ChevronLeft className="rtl:-scale-x-100" />
           </Button>
           <Button variant="outline" onClick={() => setMonth(monthOf(new Date()))}>
-            Today
+            {t('today')}
           </Button>
           <Button
             variant="outline"
             size="icon"
-            aria-label="Next month"
+            aria-label={t('nextMonth')}
             onClick={() => setMonth((m) => shiftMonth(m, 1))}
           >
-            <ChevronRight />
+            <ChevronRight className="rtl:-scale-x-100" />
           </Button>
         </div>
       </div>
 
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-      {isLoading && <Skeleton aria-label="Loading calendar" className="h-[32rem] rounded-xl" />}
+      {isLoading && <Skeleton aria-label={t('loading')} className="h-[32rem] rounded-xl" />}
       {data && (
         <>
           {data.truncated && (
             <p role="status" className="mb-3 text-xs text-muted-foreground">
-              Showing the first {MAX_PAGES * PAGE_LIMIT} publications this month.{' '}
-              <Link href="/publications" className="underline underline-offset-2">
-                See them all
-              </Link>
-              .
+              {t.rich('truncated', {
+                count: MAX_PAGES * PAGE_LIMIT,
+                link: (chunks) => (
+                  <Link href="/publications" className="underline underline-offset-2">
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </p>
           )}
           <MonthGrid days={days} month={month} byDay={byDay} today={today} move={moveHandlers} />
           <AgendaList days={days} month={month} byDay={byDay} today={today} move={moveHandlers} />
-          <p className="mt-4 text-xs text-muted-foreground">
-            Drag a scheduled post to another day to move it (same time of day), or use its move
-            button to pick any date and time.
-          </p>
+          <p className="mt-4 text-xs text-muted-foreground">{t('dragHint')}</p>
           <MoveToDialog
             key={moving?.id ?? 'none'}
             publication={moving}

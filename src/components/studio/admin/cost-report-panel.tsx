@@ -1,15 +1,15 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApi } from '@/lib/client/api';
-import { formatCount, formatPence } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section, Stat } from '../primitives';
-import { AreaChart } from '../analytics/area-chart';
+import { AreaChart, useShortDay } from '../analytics/area-chart';
 import { BarList } from '../analytics/bar-list';
-import { shortDay } from '../analytics/chart-utils';
 import { Segmented } from '../analytics/segmented';
 import type { AdminCostResponse, AdminCostRow } from './types';
 import { CostCapsPanel } from './cost-caps-panel';
@@ -63,6 +63,10 @@ export function rollup(rows: AdminCostRow[]): Rollup {
 }
 
 export function CostReportPanel() {
+  const t = useTranslations('admin.cost.report');
+  const tc = useTranslations('common.actions');
+  const f = useFormat();
+  const shortDay = useShortDay();
   const [days, setDays] = useState<number>(30);
   const [orgDraft, setOrgDraft] = useState('');
   const [organisationId, setOrganisationId] = useState('');
@@ -81,90 +85,102 @@ export function CostReportPanel() {
     <div className="grid gap-6">
       <CostCapsPanel />
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <form
-          onSubmit={applyOrg}
-          aria-label="Filter by organisation"
-          className="flex items-end gap-2"
-        >
+        <form onSubmit={applyOrg} aria-label={t('orgFilterAria')} className="flex items-end gap-2">
           <div className="grid gap-1.5">
             <label htmlFor="cost-org" className="text-sm font-medium">
-              Organisation
+              {t('organisation')}
             </label>
             <Input
               id="cost-org"
               value={orgDraft}
               onChange={(e) => setOrgDraft(e.target.value)}
-              placeholder="All organisations"
+              placeholder={t('organisationPlaceholder')}
               className="w-56 max-w-full font-mono"
             />
           </div>
           <Button type="submit" variant="outline">
-            Apply
+            {tc('apply')}
           </Button>
         </form>
         <Segmented
-          label="Cost window"
+          label={t('windowLabel')}
           value={days}
           onChange={setDays}
-          options={WINDOWS.map((d) => ({ value: d, label: `${d} days` }))}
+          options={WINDOWS.map((d) => ({ value: d, label: t('windowDays', { count: d }) }))}
         />
       </div>
 
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-      {isLoading && <Skeleton aria-label="Loading cost report" className="h-64 rounded-xl" />}
+      {isLoading && <Skeleton aria-label={t('loading')} className="h-64 rounded-xl" />}
       {r && (
         <>
           <div className="grid grid-cols-2 gap-6 border-y border-border/70 py-5 sm:grid-cols-4">
-            <Stat label="Provider spend" value={formatPence(r.totalPence)} />
-            <Stat label="Jobs" value={formatCount(r.jobs)} />
+            <Stat label={t('spend')} value={f.pence(r.totalPence)} />
+            <Stat label={t('jobs')} value={f.count(r.jobs)} />
             <Stat
-              label="Failed jobs"
-              value={formatCount(r.failed)}
-              hint={r.jobs ? `${((r.failed / r.jobs) * 100).toFixed(1)}% of jobs` : undefined}
+              label={t('failedJobs')}
+              value={f.count(r.failed)}
+              hint={
+                r.jobs
+                  ? t('failedShare', {
+                      percent: f.number(r.failed / r.jobs, {
+                        style: 'percent',
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                      }),
+                    })
+                  : undefined
+              }
             />
-            <Stat label="Organisations" value={formatCount(r.byOrg.length)} />
+            <Stat label={t('organisations')} value={f.count(r.byOrg.length)} />
           </div>
-          <Section title="Spend per day">
+          <Section title={t('perDay')}>
             {r.byDay.length === 0 ? (
-              <p className="py-6 text-sm text-muted-foreground">
-                No provider usage in this window.
-              </p>
+              <p className="py-6 text-sm text-muted-foreground">{t('noUsageWindow')}</p>
             ) : (
               <AreaChart
-                points={r.byDay.map((d) => ({ label: shortDay(d.day), value: d.costPence }))}
-                label={`Platform provider spend per day, last ${days} days`}
-                formatValue={formatPence}
+                points={r.byDay.map((d) => ({
+                  label: shortDay(d.day),
+                  value: d.costPence,
+                }))}
+                label={t('chartAria', { count: days })}
+                formatValue={f.pence}
                 color="var(--chart-2)"
                 height={160}
               />
             )}
           </Section>
           <div className="grid gap-6 md:grid-cols-2">
-            <Section title="By organisation">
+            <Section title={t('byOrg')}>
               <BarList
-                label="Spend by organisation"
-                empty="No usage."
+                label={t('byOrgAria')}
+                empty={t('noUsage')}
                 tone="var(--chart-1)"
                 rows={r.byOrg.slice(0, 15).map((o) => ({
                   key: o.key,
                   label: <span className="font-mono text-xs">{o.key}</span>,
                   value: o.costPence,
-                  display: formatPence(o.costPence),
-                  hint: `${formatCount(o.jobs)} jobs`,
+                  display: f.pence(o.costPence),
+                  hint: t('jobCount', { count: o.jobs }),
                 }))}
               />
             </Section>
-            <Section title="By provider">
+            <Section title={t('byProvider')}>
               <BarList
-                label="Spend by provider"
-                empty="No usage."
+                label={t('byProviderAria')}
+                empty={t('noUsage')}
                 tone="var(--chart-2)"
                 rows={r.byProvider.map((p) => ({
                   key: p.key,
                   label: p.key,
                   value: p.costPence,
-                  display: formatPence(p.costPence),
-                  hint: `${formatCount(p.jobs)} jobs${p.failed ? ` · ${p.failed} failed` : ''}`,
+                  display: f.pence(p.costPence),
+                  hint: [
+                    t('jobCount', { count: p.jobs }),
+                    p.failed ? t('failedCount', { count: p.failed }) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
                 }))}
               />
             </Section>

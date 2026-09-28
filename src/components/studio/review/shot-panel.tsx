@@ -1,15 +1,16 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Loader2, RotateCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useApi } from '@/lib/client/api';
-import { formatDuration } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState } from '../primitives';
 import { ShotSwapDelete } from './shot-swap-delete';
-import { treatmentLabel } from './shot-strip';
+import { useShotLabels } from './shot-strip';
 import { SHOT_EDITABLE, type ShotDetail } from './types';
 import { useAction } from './use-action';
 
@@ -34,6 +35,9 @@ export function ShotPanel({
   isLastShot?: boolean;
   onDeleted?: () => void;
 }) {
+  const t = useTranslations('review.shot');
+  const f = useFormat();
+  const labels = useShotLabels();
   const { data, error, isLoading, mutate } = useApi<{ shot: ShotDetail }>(`/shots/${shotId}`);
   const { pending, run, busy } = useAction();
   const [prompt, setPrompt] = useState('');
@@ -49,7 +53,7 @@ export function ShotPanel({
   }, [shot?.id, shot?.voiceoverText, shot?.onScreenText]);
 
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
-  if (isLoading || !shot) return <Skeleton className="h-48 rounded-xl" aria-label="Loading shot" />;
+  if (isLoading || !shot) return <Skeleton className="h-48 rounded-xl" aria-label={t('loading')} />;
 
   const textChanged =
     voiceover !== (shot.voiceoverText ?? '') || caption !== (shot.onScreenText ?? '');
@@ -57,7 +61,7 @@ export function ShotPanel({
   async function regenerate() {
     const ok = await run('regenerate', `/shots/${shotId}/regenerate`, {
       body: prompt.trim() ? { prompt: prompt.trim() } : {},
-      success: `Regenerating shot ${index + 1}.`,
+      success: t('regenerating', { n: index + 1 }),
     });
     if (ok) onChanged();
   }
@@ -66,7 +70,7 @@ export function ShotPanel({
     const ok = await run('text', `/shots/${shotId}`, {
       method: 'PATCH',
       body: { voiceoverText: voiceover.trim() || null, onScreenText: caption.trim() || null },
-      success: 'Saved — re-voicing this shot.',
+      success: t('savedRevoice'),
     });
     if (ok) {
       void mutate();
@@ -79,20 +83,27 @@ export function ShotPanel({
       <div className="flex min-w-0 flex-col gap-3">
         <div>
           <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">
-            Shot {index + 1} · {formatDuration(shot.durationSec)} ·{' '}
-            {treatmentLabel(shot.visualTreatment)}
+            {t('heading', {
+              n: index + 1,
+              duration: f.duration(shot.durationSec),
+              treatment: labels.treatment(shot.visualTreatment),
+            })}
           </p>
           <p className="mt-2 text-sm leading-relaxed">{shot.sceneDescription}</p>
           {shot.cameraDirection && (
-            <p className="mt-1 text-xs text-muted-foreground">Camera: {shot.cameraDirection}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t('camera', { direction: shot.cameraDirection })}
+            </p>
           )}
           {shot.errorReason && (
-            <p className="mt-2 text-xs text-destructive">Failed: {shot.errorReason}</p>
+            <p className="mt-2 text-xs text-destructive">
+              {t('failed', { reason: shot.errorReason })}
+            </p>
           )}
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor={`prompt-${shotId}`} className="text-xs font-medium text-muted-foreground">
-            New prompt (optional — leave blank to reroll the same scene)
+            {t('promptLabel')}
           </label>
           <Textarea
             id={`prompt-${shotId}`}
@@ -106,14 +117,10 @@ export function ShotPanel({
               variant="outline"
               onClick={regenerate}
               disabled={!editable || busy || shot.visualTreatment === 'USER_UPLOAD'}
-              title={
-                shot.visualTreatment === 'USER_UPLOAD'
-                  ? 'Uploaded clips are swapped, not regenerated'
-                  : undefined
-              }
+              title={shot.visualTreatment === 'USER_UPLOAD' ? t('uploadedNoRegenerate') : undefined}
             >
               {pending === 'regenerate' ? <Loader2 className="animate-spin" /> : <RotateCw />}
-              Regenerate this shot
+              {t('regenerate')}
             </Button>
           </div>
         </div>
@@ -121,7 +128,7 @@ export function ShotPanel({
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex flex-col gap-2">
           <label htmlFor={`vo-${shotId}`} className="text-xs font-medium text-muted-foreground">
-            Narration
+            {t('narration')}
           </label>
           <Textarea
             id={`vo-${shotId}`}
@@ -133,7 +140,7 @@ export function ShotPanel({
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor={`cap-${shotId}`} className="text-xs font-medium text-muted-foreground">
-            On-screen text
+            {t('onScreen')}
           </label>
           <Textarea
             id={`cap-${shotId}`}
@@ -145,7 +152,7 @@ export function ShotPanel({
         </div>
         <div>
           <Button onClick={saveText} disabled={!editable || !textChanged || busy}>
-            {pending === 'text' ? <Loader2 className="animate-spin" /> : <Save />} Save text
+            {pending === 'text' ? <Loader2 className="animate-spin" /> : <Save />} {t('saveText')}
           </Button>
         </div>
       </div>
@@ -162,9 +169,7 @@ export function ShotPanel({
         onDeleted={onDeleted}
       />
       {!editable && (
-        <p className="text-xs text-muted-foreground lg:col-span-2">
-          Shots can be changed once the video is ready for review, rejected or failed.
-        </p>
+        <p className="text-xs text-muted-foreground lg:col-span-2">{t('notEditable')}</p>
       )}
     </div>
   );

@@ -117,7 +117,7 @@ describe('templates and auto-publish', () => {
 
   it('auto-publish needs at least one account', () => {
     expect(validateCreate({ ...base, autoPublish: true }, 'biz')).toEqual([
-      'Choose at least one account to auto-publish to, or turn auto-publish off.',
+      'autoPublishAccountRequired',
     ]);
   });
 });

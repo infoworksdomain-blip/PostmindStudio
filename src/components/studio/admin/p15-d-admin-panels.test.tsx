@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { screen, waitFor, within } from '@testing-library/react';
+import { renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useTranslations } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mockFetch, renderWithSWR } from '../library/test-helpers';
 import { DeadLetterPanel, outcomeText, type FailedPage } from './dead-letter-panel';
@@ -155,10 +156,12 @@ describe('DeadLetterPanel', () => {
   });
 
   it('describes requeue outcomes', () => {
-    expect(outcomeText({ action: 'requeued' })).toBe('Requeued');
-    expect(outcomeText({ action: 'resumed_project', projectId: 'p', runId: 'r', jobs: 1 })).toMatch(
-      /project p resumed its asset stage \(1 job\)/,
-    );
+    const { result } = renderHook(() => useTranslations('admin.deadLetters'));
+    const t = result.current;
+    expect(outcomeText({ action: 'requeued' }, t)).toBe('Requeued');
+    expect(
+      outcomeText({ action: 'resumed_project', projectId: 'p', runId: 'r', jobs: 1 }, t),
+    ).toMatch(/project p resumed its asset stage \(1 job\)/);
   });
 });
 

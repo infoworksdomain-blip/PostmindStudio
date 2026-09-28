@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { BookmarkPlus, Loader2, Plus, RefreshCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,12 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Field, NativeSelect } from '../review/field';
 import { useAction } from '../review/use-action';
 import { styleOf } from './overlay-math';
-import { PRESET_GROUPS, type Overlay, type OverlayPreset } from './types';
+import { PRESET_GROUPS, type Overlay, type OverlayPreset, type PresetGroup } from './types';
 
 // Presets (A4.3): pick one when adding an overlay (the < 5-click hook path of A4.1), and save an
 // overlay's current style as a business preset; edit your own presets (13.7).
 
-const groupLabel = (g: string) => g.charAt(0).toUpperCase() + g.slice(1);
+const isGroup = (g: string): g is PresetGroup => (PRESET_GROUPS as readonly string[]).includes(g);
+
+/** A preset group's name in the interface language (unknown groups read as stored). */
+function useGroupLabel(): (group: string) => string {
+  const t = useTranslations('overlays.presets');
+  return (g) => (isGroup(g) ? t(`groups.${g}`) : g.charAt(0).toUpperCase() + g.slice(1));
+}
 
 export function PresetSelect({
   id,
@@ -25,18 +32,19 @@ export function PresetSelect({
   value: string;
   onChange: (presetId: string) => void;
 }) {
+  const t = useTranslations('overlays.presets');
+  const groupLabel = useGroupLabel();
   const groups = [...new Set(presets.map((p) => p.group))];
   return (
     <NativeSelect id={id} value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">Default style</option>
+      <option value="">{t('defaultStyle')}</option>
       {groups.map((g) => (
         <optgroup key={g} label={groupLabel(g)}>
           {presets
             .filter((p) => p.group === g)
             .map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name}
-                {p.scope === 'BUILT_IN' ? '' : ' (yours)'}
+                {p.scope === 'BUILT_IN' ? p.name : t('yours', { name: p.name })}
               </option>
             ))}
         </optgroup>
@@ -59,6 +67,7 @@ export function AddOverlay({
   adding: boolean;
   onAdd: (text: string, presetId: string | null) => Promise<boolean>;
 }) {
+  const t = useTranslations('overlays.presets');
   const [text, setText] = useState('');
   const [presetId, setPresetId] = useState('');
 
@@ -70,17 +79,17 @@ export function AddOverlay({
 
   return (
     <form onSubmit={submit} className="grid gap-2 sm:grid-cols-[1fr_12rem_auto] sm:items-end">
-      <Field id={`${idPrefix}add-overlay-text`} label="New overlay text">
+      <Field id={`${idPrefix}add-overlay-text`} label={t('newText')}>
         <Input
           id={`${idPrefix}add-overlay-text`}
           value={text}
           maxLength={500}
           disabled={disabled}
-          placeholder="Wait for it…"
+          placeholder={t('newPlaceholder')}
           onChange={(e) => setText(e.target.value)}
         />
       </Field>
-      <Field id={`${idPrefix}add-overlay-preset`} label="Preset">
+      <Field id={`${idPrefix}add-overlay-preset`} label={t('preset')}>
         <PresetSelect
           id={`${idPrefix}add-overlay-preset`}
           presets={presets}
@@ -89,7 +98,7 @@ export function AddOverlay({
         />
       </Field>
       <Button type="submit" disabled={disabled || adding || !text.trim()}>
-        {adding ? <Loader2 className="animate-spin" /> : <Plus />} Add at playhead
+        {adding ? <Loader2 className="animate-spin" /> : <Plus />} {t('addAtPlayhead')}
       </Button>
     </form>
   );
@@ -106,6 +115,8 @@ export function SavePreset({
   businessId: string | null;
   onSaved: () => void;
 }) {
+  const t = useTranslations('overlays.presets');
+  const groupLabel = useGroupLabel();
   const [name, setName] = useState('');
   const [group, setGroup] = useState<string>('hook');
   const { pending, run } = useAction();
@@ -119,7 +130,7 @@ export function SavePreset({
         ...(businessId ? { scope: 'business', businessId } : { scope: 'org' }),
         parameters: styleOf(overlay),
       },
-      success: 'Preset saved.',
+      success: t('saved'),
     });
     if (ok) {
       setName('');
@@ -132,16 +143,16 @@ export function SavePreset({
       onSubmit={save}
       className="grid grid-cols-[1fr_7rem] gap-2 sm:grid-cols-[1fr_8rem_auto] sm:items-end"
     >
-      <Field id={`${idPrefix}preset-name`} label="Save this style as a preset">
+      <Field id={`${idPrefix}preset-name`} label={t('saveAs')}>
         <Input
           id={`${idPrefix}preset-name`}
           value={name}
           maxLength={80}
-          placeholder="Preset name"
+          placeholder={t('namePlaceholder')}
           onChange={(e) => setName(e.target.value)}
         />
       </Field>
-      <Field id={`${idPrefix}preset-group`} label="Group">
+      <Field id={`${idPrefix}preset-group`} label={t('group')}>
         <NativeSelect
           id={`${idPrefix}preset-group`}
           value={group}
@@ -160,7 +171,7 @@ export function SavePreset({
         className="col-span-2 sm:col-span-1"
         disabled={!name.trim() || pending !== null}
       >
-        {pending ? <Loader2 className="animate-spin" /> : <BookmarkPlus />} Save preset
+        {pending ? <Loader2 className="animate-spin" /> : <BookmarkPlus />} {t('savePreset')}
       </Button>
     </form>
   );
@@ -183,6 +194,8 @@ export function ManagePresets({
   disabled: boolean;
   onChanged: () => void;
 }) {
+  const t = useTranslations('overlays.presets');
+  const groupLabel = useGroupLabel();
   const own = presets.filter((p) => p.scope !== 'BUILT_IN');
   const [presetId, setPresetId] = useState('');
   const [name, setName] = useState('');
@@ -213,25 +226,25 @@ export function ManagePresets({
 
   return (
     <details className="rounded-lg border border-border px-3 py-2">
-      <summary className="cursor-pointer text-sm font-medium">Edit your presets</summary>
+      <summary className="cursor-pointer text-sm font-medium">{t('edit')}</summary>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <Field id={`${idPrefix}edit-preset`} label="Preset" className="sm:col-span-2">
+        <Field id={`${idPrefix}edit-preset`} label={t('preset')} className="sm:col-span-2">
           <NativeSelect
             id={`${idPrefix}edit-preset`}
             value={presetId}
             onChange={(e) => choose(e.target.value)}
           >
-            <option value="">Choose one of your presets</option>
+            <option value="">{t('choose')}</option>
             {own.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} ({groupLabel(p.group)})
+                {t('option', { name: p.name, group: groupLabel(p.group) })}
               </option>
             ))}
           </NativeSelect>
         </Field>
         {preset && (
           <>
-            <Field id={`${idPrefix}edit-preset-name`} label="Name">
+            <Field id={`${idPrefix}edit-preset-name`} label={t('name')}>
               <Input
                 id={`${idPrefix}edit-preset-name`}
                 value={name}
@@ -240,7 +253,7 @@ export function ManagePresets({
                 onChange={(e) => setName(e.target.value)}
               />
             </Field>
-            <Field id={`${idPrefix}edit-preset-group`} label="Group">
+            <Field id={`${idPrefix}edit-preset-group`} label={t('group')}>
               <NativeSelect
                 id={`${idPrefix}edit-preset-group`}
                 value={group}
@@ -259,9 +272,9 @@ export function ManagePresets({
                 size="sm"
                 variant="outline"
                 disabled={disabled || !renamed || !name.trim() || pending !== null}
-                onClick={() => void update({ name: name.trim(), group }, 'Preset renamed.')}
+                onClick={() => void update({ name: name.trim(), group }, t('renamed'))}
               >
-                {pending ? <Loader2 className="animate-spin" /> : <Save />} Save name
+                {pending ? <Loader2 className="animate-spin" /> : <Save />} {t('saveName')}
               </Button>
               <Button
                 size="sm"
@@ -270,11 +283,11 @@ export function ManagePresets({
                 onClick={() =>
                   void update(
                     { parameters: styleOf(overlay) },
-                    `“${preset.name}” now uses this overlay’s style.`,
+                    t('styleUpdated', { name: preset.name }),
                   )
                 }
               >
-                <RefreshCw /> Use this overlay’s style
+                <RefreshCw /> {t('useStyle')}
               </Button>
             </div>
           </>

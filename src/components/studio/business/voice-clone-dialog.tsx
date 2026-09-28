@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -19,10 +20,10 @@ import { api, newIdempotencyKey } from '@/lib/client/api';
 import { ConsentRecorder } from './voice-consent-recorder';
 import { VoiceSamplesInput } from './voice-samples-input';
 import {
-  consentStatement,
   MAX_CONSENT_CHARS,
   MIN_CONSENT_CHARS,
-  voiceErrorMessage,
+  useConsentStatement,
+  useVoiceErrorMessage,
   type VoiceProfile,
 } from './voice-types';
 
@@ -39,15 +40,17 @@ interface Draft {
   samples: File[];
 }
 
-function problemOf(d: Draft): string | null {
-  if (!d.name.trim()) return 'Give the voice a name.';
-  if (!d.speaker.trim()) return 'Enter the speaker’s name.';
+type DraftProblem = 'name' | 'speaker' | 'statementLength' | 'recording' | 'samples' | 'consent';
+
+/** The first thing missing from a draft (a key under business.voice.cloneDialog.problems). */
+function problemOf(d: Draft): DraftProblem | null {
+  if (!d.name.trim()) return 'name';
+  if (!d.speaker.trim()) return 'speaker';
   const len = d.statement.trim().length;
-  if (len < MIN_CONSENT_CHARS || len > MAX_CONSENT_CHARS)
-    return `The consent statement must be ${MIN_CONSENT_CHARS}–${MAX_CONSENT_CHARS} characters.`;
-  if (!d.recording) return 'Record or upload the speaker reading the consent statement.';
-  if (d.samples.length === 0) return 'Add at least one voice sample.';
-  if (!d.consent) return 'Tick the consent box to continue.';
+  if (len < MIN_CONSENT_CHARS || len > MAX_CONSENT_CHARS) return 'statementLength';
+  if (!d.recording) return 'recording';
+  if (d.samples.length === 0) return 'samples';
+  if (!d.consent) return 'consent';
   return null;
 }
 
@@ -76,6 +79,9 @@ export function VoiceCloneDialog({
   businessName: string;
   onCreated: (profile: VoiceProfile) => void;
 }) {
+  const t = useTranslations('business.voice.cloneDialog');
+  const consentStatement = useConsentStatement();
+  const voiceErrorMessage = useVoiceErrorMessage();
   const [draft, setDraft] = useState<Draft>(() => ({
     name: '',
     speaker: '',
@@ -88,6 +94,12 @@ export function VoiceCloneDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const problem = problemOf(draft);
+  const problemText =
+    problem === 'statementLength'
+      ? t('problems.statementLength', { min: MIN_CONSENT_CHARS, max: MAX_CONSENT_CHARS })
+      : problem
+        ? t(`problems.${problem}`)
+        : undefined;
 
   function setSpeaker(speaker: string) {
     setDraft((d) => ({
@@ -120,11 +132,8 @@ export function VoiceCloneDialog({
     <Dialog open={open} onOpenChange={(next) => !busy && onOpenChange(next)}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Clone a voice</DialogTitle>
-          <DialogDescription>
-            Narrate videos in a real person’s voice. Only clone a voice with that person’s recorded
-            consent.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
         <form
           id="voice-clone-form"
@@ -136,17 +145,17 @@ export function VoiceCloneDialog({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="voice-name">Voice name</Label>
+              <Label htmlFor="voice-name">{t('name')}</Label>
               <Input
                 id="voice-name"
                 maxLength={80}
-                placeholder="Amara (owner)"
+                placeholder={t('namePlaceholder')}
                 value={draft.name}
                 onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
               />
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="voice-speaker">Speaker name</Label>
+              <Label htmlFor="voice-speaker">{t('speaker')}</Label>
               <Input
                 id="voice-speaker"
                 maxLength={120}
@@ -156,7 +165,7 @@ export function VoiceCloneDialog({
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="voice-statement">Consent statement</Label>
+            <Label htmlFor="voice-statement">{t('statement')}</Label>
             <Textarea
               id="voice-statement"
               rows={3}
@@ -166,12 +175,10 @@ export function VoiceCloneDialog({
                 setDraft((d) => ({ ...d, statement: e.target.value, statementEdited: true }))
               }
             />
-            <p className="text-xs text-muted-foreground">
-              The speaker reads this aloud in the consent recording. It is kept as proof of consent.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('statementHint')}</p>
           </div>
           <div className="grid gap-1.5">
-            <span className="text-sm font-medium">Consent recording</span>
+            <span className="text-sm font-medium">{t('recording')}</span>
             <ConsentRecorder
               value={draft.recording}
               onChange={(recording) => setDraft((d) => ({ ...d, recording }))}
@@ -188,8 +195,7 @@ export function VoiceCloneDialog({
               onCheckedChange={(v) => setDraft((d) => ({ ...d, consent: v === true }))}
             />
             <Label htmlFor="voice-consent" className="text-sm leading-snug font-normal">
-              The speaker consents to PostMind Studio creating a synthetic copy of their voice, and
-              the recording above is them reading the statement.
+              {t('consent')}
             </Label>
           </div>
           {error && (
@@ -200,16 +206,16 @@ export function VoiceCloneDialog({
         </form>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button
             type="submit"
             form="voice-clone-form"
             disabled={Boolean(problem) || busy}
-            title={problem ?? undefined}
+            title={problemText}
           >
             {busy && <Loader2 className="animate-spin" />}
-            Clone voice
+            {t('submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError, useApi } from '@/lib/client/api';
-import { formatDuration } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState } from '../primitives';
 import { BlueprintTimeline } from './blueprint-timeline';
-import { humanise } from './library-utils';
+import { useAnalysisLabels } from './analysis-labels';
 import { SimilarShelf } from './similar-shelf';
 import type { BlueprintResponse, LibraryVideoDetail } from './types';
 import { UseReferencePanel } from './use-reference-panel';
@@ -26,11 +27,17 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function StructureSection({ id }: { id: string }) {
+  const t = useTranslations('library.structure');
+  const tf = useTranslations('library.detail.facts');
+  const td = useTranslations('library.detail');
+  const none = useTranslations('format')('none');
+  const f = useFormat();
+  const labels = useAnalysisLabels();
   const { data, error, isLoading } = useApi<BlueprintResponse>(`/library/blueprint/${id}`);
   let body;
   if (isLoading) body = <Skeleton className="h-40 rounded-xl" />;
   else if (error instanceof ApiError && error.status === 404)
-    body = <p className="text-sm text-muted-foreground">This video hasn’t been analysed yet.</p>;
+    body = <p className="text-sm text-muted-foreground">{t('notAnalysed')}</p>;
   else if (error) body = <ErrorState error={error} />;
   else if (data) {
     const s = data.styleSignature;
@@ -41,29 +48,29 @@ function StructureSection({ id }: { id: string }) {
             <BlueprintTimeline blueprint={data.blueprint} />
           ) : (
             <p className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-              Inspire-only reference: its shot-by-shot structure isn’t used, only the style tags
-              alongside.
+              {t('inspireOnly')}
             </p>
           )}
         </div>
-        <dl className="grid content-start gap-3 border-t border-border pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-          <Fact label="Pace" value={humanise(s.paceTag)} />
-          <Fact label="Mood" value={s.moodTag} />
-          <Fact label="Structure" value={s.structurePattern} />
-          <Fact label="Music" value={s.musicGenreTag ?? '—'} />
+        <dl className="grid content-start gap-3 border-t border-border pt-4 lg:border-t-0 lg:border-s lg:pt-0 lg:ps-6">
+          <Fact label={tf('pace')} value={labels.pace(s.paceTag)} />
+          <Fact label={tf('mood')} value={s.moodTag} />
+          <Fact label={tf('structure')} value={s.structurePattern} />
+          <Fact label={tf('music')} value={s.musicGenreTag ?? none} />
           {data.blueprint && (
             <>
-              <Fact label="Hook" value={data.blueprint.hookPattern} />
-              <Fact label="Call to action" value={data.blueprint.ctaPattern ?? '—'} />
+              <Fact label={tf('hook')} value={data.blueprint.hookPattern} />
+              <Fact label={tf('callToAction')} value={data.blueprint.ctaPattern ?? none} />
               <Fact
-                label="Music envelope"
+                label={tf('musicEnvelope')}
                 value={
                   [
-                    data.blueprint.musicEnvelope.bpm && `${data.blueprint.musicEnvelope.bpm} bpm`,
+                    data.blueprint.musicEnvelope.bpm &&
+                      td('bpm', { bpm: f.number(data.blueprint.musicEnvelope.bpm) }),
                     data.blueprint.musicEnvelope.energy,
                   ]
                     .filter(Boolean)
-                    .join(' · ') || '—'
+                    .join(' · ') || none
                 }
               />
             </>
@@ -75,7 +82,7 @@ function StructureSection({ id }: { id: string }) {
   return (
     <section aria-labelledby="library-structure" className="min-w-0">
       <h2 id="library-structure" className="mb-4 font-display text-2xl">
-        How it’s built
+        {t('heading')}
       </h2>
       {body}
     </section>
@@ -83,6 +90,11 @@ function StructureSection({ id }: { id: string }) {
 }
 
 export function LibraryDetail({ id }: { id: string }) {
+  const t = useTranslations('library.detail');
+  const tf = useTranslations('library.detail.facts');
+  const none = useTranslations('format')('none');
+  const f = useFormat();
+  const labels = useAnalysisLabels();
   const { data, error, isLoading, mutate } = useApi<{ ok: true; video: LibraryVideoDetail }>(
     `/library/videos/${id}`,
   );
@@ -91,7 +103,7 @@ export function LibraryDetail({ id }: { id: string }) {
       href="/library"
       className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
     >
-      <ArrowLeft className="size-4" /> Reference library
+      <ArrowLeft className="size-4 rtl:-scale-x-100" /> {t('back')}
     </Link>
   );
 
@@ -99,10 +111,7 @@ export function LibraryDetail({ id }: { id: string }) {
     return (
       <>
         {back}
-        <EmptyState
-          title="Reference not found"
-          description="It may have been retired from the library."
-        />
+        <EmptyState title={t('notFoundTitle')} description={t('notFoundBody')} />
       </>
     );
   }
@@ -115,7 +124,7 @@ export function LibraryDetail({ id }: { id: string }) {
     );
   if (isLoading || !data)
     return (
-      <div aria-label="Loading reference" className="grid gap-6 md:grid-cols-[18rem_1fr]">
+      <div aria-label={t('loading')} className="grid gap-6 md:grid-cols-[18rem_1fr]">
         <Skeleton className="aspect-[9/16] rounded-2xl" />
         <Skeleton className="h-64 rounded-xl" />
       </div>
@@ -135,11 +144,11 @@ export function LibraryDetail({ id }: { id: string }) {
             playsInline
             controls
             preload="metadata"
-            aria-label={`Muted preview of ${video.title}`}
+            aria-label={t('previewAria', { title: video.title })}
             className="aspect-[9/16] w-full rounded-2xl bg-secondary object-cover shadow-[0_24px_48px_-24px_rgb(0_0_0/0.35)]"
           />
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            Low-res preview · link expires in {Math.round(video.previewExpiresInSec / 60)} min
+            {t('previewNote', { minutes: Math.round(video.previewExpiresInSec / 60) })}
           </p>
         </div>
         <div className="min-w-0">
@@ -153,13 +162,16 @@ export function LibraryDetail({ id }: { id: string }) {
             <p className="mt-4 max-w-prose text-sm text-muted-foreground">{video.description}</p>
           )}
           <dl className="mt-6 grid grid-cols-2 gap-4 border-y border-border/70 py-4 sm:grid-cols-4">
-            <Fact label="Length" value={formatDuration(video.durationSec)} />
-            <Fact label="Aspect" value={video.aspectRatio} />
-            <Fact label="Shots" value={String(video.analysis?.shotCount ?? '—')} />
-            <Fact label="Pace" value={humanise(video.analysis?.paceTag)} />
+            <Fact label={tf('length')} value={f.duration(video.durationSec)} />
+            <Fact label={tf('aspect')} value={video.aspectRatio} />
+            <Fact
+              label={tf('shots')}
+              value={video.analysis ? f.number(video.analysis.shotCount) : none}
+            />
+            <Fact label={tf('pace')} value={labels.pace(video.analysis?.paceTag)} />
           </dl>
           {video.tags.length > 0 && (
-            <ul aria-label="Tags" className="mt-4 flex flex-wrap gap-1.5">
+            <ul aria-label={t('tagsAria')} className="mt-4 flex flex-wrap gap-1.5">
               {video.tags.map((t) => (
                 <li key={t} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs">
                   {t}

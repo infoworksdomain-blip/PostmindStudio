@@ -40,7 +40,13 @@ export interface ApprovalStatus {
 }
 
 /** Suggested Core membership roles; any role name is accepted. */
-export const SUGGESTED_ROLES = ['owner', 'admin', 'client_reviewer', 'legal', 'reviewer'];
+export const SUGGESTED_ROLES = ['owner', 'admin', 'client_reviewer', 'legal', 'reviewer'] as const;
+
+export type SuggestedRole = (typeof SUGGESTED_ROLES)[number];
+
+export function isSuggestedRole(role: string): role is SuggestedRole {
+  return (SUGGESTED_ROLES as readonly string[]).includes(role);
+}
 
 /** Platforms a workflow can be limited to (services/catalog.ts PLATFORMS). */
 export const WORKFLOW_PLATFORMS = Object.keys(PLATFORM_LABEL);
@@ -59,39 +65,4 @@ export function parseList(text: string): string[] {
         .filter(Boolean),
     ),
   ];
-}
-
-/** One line describing which projects a workflow applies to. */
-export function describeAppliesTo(appliesTo: WorkflowAppliesTo): string {
-  const parts: string[] = [];
-  if (appliesTo.businessIds.length)
-    parts.push(
-      `${appliesTo.businessIds.length === 1 ? 'business' : 'businesses'} ${appliesTo.businessIds.join(', ')}`,
-    );
-  if (appliesTo.platforms.length)
-    parts.push(appliesTo.platforms.map((p) => PLATFORM_LABEL[p] ?? p).join(' / '));
-  if (appliesTo.tags.length) parts.push(`tagged ${appliesTo.tags.join(', ')}`);
-  return parts.length ? `Applies to ${parts.join(' · ')}` : 'Applies to every project';
-}
-
-/** "admin" (one approver) or "2 client reviewers". */
-export function describeStep(step: WorkflowStep): string {
-  return step.minApprovers === 1
-    ? roleLabel(step.role)
-    : `${step.minApprovers} ${roleLabel(step.role)}s`;
-}
-
-/** "Step 1 of 2 — waiting for client reviewer (1 of 2 approvals)". */
-export function stepIndicatorText(status: ApprovalStatus): string {
-  if (!status.workflow) return '';
-  const name = status.workflow.name;
-  if (status.outcome === 'approved') return `${name}: every step approved`;
-  if (status.outcome === 'rejected')
-    return `${name}: rejected at step ${status.stepIndex + 1} of ${status.stepCount}`;
-  const step = `Step ${status.stepIndex + 1} of ${status.stepCount}`;
-  const waiting = status.waitingFor;
-  if (!waiting) return `${name}: ${step}`;
-  const count =
-    waiting.minApprovers > 1 ? ` (${waiting.approvals} of ${waiting.minApprovers} approvals)` : '';
-  return `${step} — waiting for ${roleLabel(waiting.role)}${count}`;
 }

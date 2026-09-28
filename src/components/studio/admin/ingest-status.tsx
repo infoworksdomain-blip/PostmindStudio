@@ -1,10 +1,12 @@
 'use client';
 
 import { RotateCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { ErrorState, Section, Stat } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { ResubmitFailures } from './resubmit-failures';
@@ -15,20 +17,22 @@ import type { IngestRunState, IngestStatusResponse } from './types';
 // 30 seconds while the tab is open.
 
 const WINDOWS = [
-  { hours: 1, label: 'Last hour' },
-  { hours: 24, label: 'Last 24 hours' },
-  { hours: 24 * 7, label: 'Last 7 days' },
-];
+  { hours: 1, label: 'windowHour' },
+  { hours: 24, label: 'windowDay' },
+  { hours: 24 * 7, label: 'windowWeek' },
+] as const;
 const REFRESH_MS = 30_000;
-const STATES: Array<{ state: IngestRunState; label: string }> = [
-  { state: 'SUCCEEDED', label: 'Ingested' },
-  { state: 'DUPLICATE', label: 'Duplicates' },
-  { state: 'FAILED', label: 'Failed' },
-  { state: 'RUNNING', label: 'Running' },
-  { state: 'QUEUED', label: 'Queued' },
-];
+const STATES = [
+  'SUCCEEDED',
+  'DUPLICATE',
+  'FAILED',
+  'RUNNING',
+  'QUEUED',
+] as const satisfies ReadonlyArray<IngestRunState>;
 
 export function IngestStatus() {
+  const t = useTranslations('admin.library.status');
+  const f = useFormat();
   const [windowHours, setWindowHours] = useState(24);
   const { data, error, isLoading, mutate, isValidating } = useApi<IngestStatusResponse>(
     '/admin/library/ingest/status',
@@ -38,12 +42,12 @@ export function IngestStatus() {
 
   return (
     <Section
-      title="Ingestion status"
-      description="Corpus jobs whose state changed in the window. Failed sources can be resubmitted."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex items-center gap-2">
           <label htmlFor="ingest-status-window" className="sr-only">
-            Window
+            {t('window')}
           </label>
           <select
             id="ingest-status-window"
@@ -53,7 +57,7 @@ export function IngestStatus() {
           >
             {WINDOWS.map((w) => (
               <option key={w.hours} value={w.hours}>
-                {w.label}
+                {t(w.label)}
               </option>
             ))}
           </select>
@@ -63,7 +67,7 @@ export function IngestStatus() {
             variant="ghost"
             onClick={() => void mutate()}
             disabled={isValidating}
-            aria-label="Refresh ingestion status"
+            aria-label={t('refreshAria')}
           >
             <RotateCw className={isValidating ? 'animate-spin' : undefined} />
           </Button>
@@ -71,40 +75,42 @@ export function IngestStatus() {
       }
     >
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
-      {isLoading && <Skeleton aria-label="Loading ingestion status" className="h-24 rounded-lg" />}
+      {isLoading && <Skeleton aria-label={t('loading')} className="h-24 rounded-lg" />}
       {data && (
-        <div className="grid gap-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
           <div
             role="group"
-            aria-label="Ingestion counts"
+            aria-label={t('countsAria')}
             className="grid grid-cols-2 gap-4 sm:grid-cols-5"
           >
-            {STATES.map(({ state, label }) => (
+            {STATES.map((state) => (
               <div key={state}>
-                <Stat label={label} value={data.counts[state]} />
+                <Stat label={t(state)} value={data.counts[state]} />
               </div>
             ))}
           </div>
           <p className="text-xs text-muted-foreground">
-            Backlog {data.backlog.queued} queued · {data.backlog.running} running ·{' '}
-            {data.completedPerHour} completed per hour · {data.liveLibraryItems} live items in the
-            library
+            {t('backlog', {
+              queued: f.number(data.backlog.queued),
+              running: f.number(data.backlog.running),
+              perHour: f.number(data.completedPerHour),
+              live: f.number(data.liveLibraryItems),
+            })}
           </p>
           {data.recentFailures.length > 0 && (
             <div>
-              <h3 className="mb-2 text-xs font-semibold">Recent failures</h3>
-              <ul aria-label="Recent ingestion failures" className="divide-y divide-border/70">
-                {data.recentFailures.map((f) => (
-                  <li key={f.runId} className="py-2 text-xs">
-                    <p className="truncate font-mono" title={f.sourceUrl}>
-                      {f.sourceRef ? `${f.sourceRef} · ` : ''}
-                      {f.sourceUrl}
+              <h3 className="mb-2 text-xs font-semibold">{t('recentFailures')}</h3>
+              <ul aria-label={t('failuresAria')} className="divide-y divide-border/70">
+                {data.recentFailures.map((failure) => (
+                  <li key={failure.runId} className="py-2 text-xs">
+                    <p className="truncate font-mono" title={failure.sourceUrl}>
+                      {[failure.sourceRef, failure.sourceUrl].filter(Boolean).join(' · ')}
                     </p>
-                    <p className="text-destructive">
-                      {f.errorReason ?? 'Unknown error'}
+                    <p className="break-words text-destructive">
+                      {failure.errorReason ?? t('unknownError')}
                       <span className="text-muted-foreground">
-                        {' '}
-                        · {f.attempts} attempt{f.attempts === 1 ? '' : 's'}
+                        {' · '}
+                        {t('attempts', { count: failure.attempts })}
                       </span>
                     </p>
                   </li>

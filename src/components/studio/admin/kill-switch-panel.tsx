@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { OctagonX, Power } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate, relativeTime } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { ErrorState, Section } from '../primitives';
 import { PendingGlobalKillBanner } from './pending-global-kill';
@@ -25,36 +26,16 @@ type Pending =
   | { kind: 'release'; level: Exclude<KillLevel, 'global'>; target: string }
   | null;
 
+type ScopedLevel = Exclude<KillLevel, 'global'>;
+
 const SCOPED: Array<{
-  level: Exclude<KillLevel, 'global'>;
+  level: ScopedLevel;
   key: 'frozenWorkspaces' | 'killedProjects' | 'disabledProviders' | 'disabledPlatforms';
-  title: string;
-  empty: string;
 }> = [
-  {
-    level: 'workspace',
-    key: 'frozenWorkspaces',
-    title: 'Frozen workspaces',
-    empty: 'No workspaces frozen.',
-  },
-  {
-    level: 'project',
-    key: 'killedProjects',
-    title: 'Killed projects',
-    empty: 'No projects killed.',
-  },
-  {
-    level: 'provider',
-    key: 'disabledProviders',
-    title: 'Disabled providers',
-    empty: 'Every provider is enabled.',
-  },
-  {
-    level: 'platform',
-    key: 'disabledPlatforms',
-    title: 'Halted platforms',
-    empty: 'Publishing is on for every platform.',
-  },
+  { level: 'workspace', key: 'frozenWorkspaces' },
+  { level: 'project', key: 'killedProjects' },
+  { level: 'provider', key: 'disabledProviders' },
+  { level: 'platform', key: 'disabledPlatforms' },
 ];
 
 function EntryList({
@@ -66,6 +47,8 @@ function EntryList({
   empty: string;
   onRelease: (id: string) => void;
 }) {
+  const t = useTranslations('admin.killSwitch');
+  const f = useFormat();
   if (entries.length === 0) return <p className="text-sm text-muted-foreground">{empty}</p>;
   return (
     <ul className="divide-y divide-border/70">
@@ -73,12 +56,17 @@ function EntryList({
         <li key={e.id} className="flex items-center justify-between gap-3 py-2">
           <span className="min-w-0">
             <span className="block truncate font-mono text-sm">{e.id}</span>
-            <span className="text-xs text-muted-foreground" title={formatDate(e.since)}>
-              since {relativeTime(e.since)}
+            <span className="text-xs text-muted-foreground" title={f.date(e.since)}>
+              {t('since', { when: f.relative(e.since) })}
             </span>
           </span>
-          <Button size="sm" variant="outline" onClick={() => onRelease(e.id)}>
-            Release<span className="sr-only"> {e.id}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            aria-label={t('releaseAria', { id: e.id })}
+            onClick={() => onRelease(e.id)}
+          >
+            {t('release')}
           </Button>
         </li>
       ))}
@@ -89,10 +77,11 @@ function EntryList({
 export function KillSwitchPanel() {
   const { data, error, isLoading, mutate, set, confirmGlobal, withdrawGlobal } = useKillSwitch();
   const [pending, setPending] = useState<Pending>(null);
+  const t = useTranslations('admin.killSwitch');
+  const f = useFormat();
 
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
-  if (isLoading || !data)
-    return <Skeleton aria-label="Loading kill switch" className="h-64 rounded-xl" />;
+  if (isLoading || !data) return <Skeleton aria-label={t('loading')} className="h-64 rounded-xl" />;
 
   const halted = data.global.enabled;
   const confirm = (reason: string) => {
@@ -134,19 +123,17 @@ export function KillSwitchPanel() {
           </span>
           <div>
             <h2 id="global-kill" className="font-display text-3xl leading-tight">
-              {halted ? 'Studio is halted' : 'Studio is running'}
+              {halted ? t('global.halted') : t('global.running')}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {halted
-                ? `Global kill switch engaged ${relativeTime(data.global.since)}. No jobs start anywhere.`
-                : 'Global kill switch is off.'}{' '}
-              Changes reach every worker within {data.propagationSec}s.
+                ? t('global.engagedSince', { when: f.relative(data.global.since) })
+                : t('global.off')}{' '}
+              {t('global.propagation', { seconds: data.propagationSec })}
             </p>
             {!halted && (
               <p className="mt-1 text-xs text-muted-foreground">
-                {data.singleApprover
-                  ? 'Break-glass is on: engaging takes effect at once (audited).'
-                  : 'Engaging needs two people: a second staff member confirms within 10 minutes.'}
+                {data.singleApprover ? t('global.breakGlass') : t('global.twoPerson')}
               </p>
             )}
           </div>
@@ -156,7 +143,7 @@ export function KillSwitchPanel() {
           disabled={!halted && Boolean(pendingGlobal)}
           onClick={() => setPending({ kind: 'global', enabled: !halted })}
         >
-          {halted ? 'Release global kill switch' : 'Engage global kill switch'}
+          {halted ? t('global.release') : t('global.engage')}
         </Button>
       </section>
 
@@ -164,12 +151,12 @@ export function KillSwitchPanel() {
         {SCOPED.map((s) => (
           <Section
             key={s.level}
-            title={s.title}
-            description={`${(data[s.key] ?? []).length} active`}
+            title={t(`scoped.${s.level}.title`)}
+            description={t('activeCount', { count: (data[s.key] ?? []).length })}
           >
             <EntryList
               entries={data[s.key] ?? []}
-              empty={s.empty}
+              empty={t(`scoped.${s.level}.empty`)}
               onRelease={(target) => setPending({ kind: 'release', level: s.level, target })}
             />
           </Section>
@@ -184,16 +171,24 @@ export function KillSwitchPanel() {
         title={
           pending?.kind === 'global'
             ? pending.enabled
-              ? 'Halt all of Studio?'
-              : 'Release the global kill switch?'
-            : `Release ${pending?.kind === 'release' ? pending.target : ''}?`
+              ? t('dialog.haltTitle')
+              : t('dialog.releaseGlobalTitle')
+            : t('dialog.releaseTargetTitle', {
+                target: pending?.kind === 'release' ? pending.target : '',
+              })
         }
         description={
           pending?.kind === 'global' && pending.enabled
-            ? `Every organisation’s Studio jobs stop at their next step: generation, rendering and publishing. In-flight provider calls are not cancelled.${data.singleApprover ? '' : ' This records a request: a second staff member must confirm it within 10 minutes.'}`
-            : 'New jobs start normally again. Work that failed while it was engaged does not resume on its own — use the Re-drive tab.'
+            ? data.singleApprover
+              ? t('dialog.haltDescription')
+              : t('dialog.haltDescriptionTwoPerson')
+            : t('dialog.releaseDescription')
         }
-        confirmLabel={pending?.kind === 'global' && pending.enabled ? 'Halt Studio' : 'Release'}
+        confirmLabel={
+          pending?.kind === 'global' && pending.enabled
+            ? t('dialog.haltConfirm')
+            : t('dialog.releaseConfirm')
+        }
         confirmPhrase={
           pending?.kind === 'global' && pending.enabled ? GLOBAL_CONFIRM_PHRASE : undefined
         }

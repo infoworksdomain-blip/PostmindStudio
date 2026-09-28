@@ -37,6 +37,9 @@ const PUBLIC_FIELDS = {
   createdAt: true,
   /** 13.33: null | pending_setup | sent | failed. */
   emailStatus: true,
+  /** 16.5: catalogue key + ICU params; the app renders them in the reader's locale. */
+  messageKey: true,
+  messageParams: true,
 } as const;
 
 export async function listNotifications(

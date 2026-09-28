@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ImageIcon, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,8 @@ export function ShotSwapDelete({
   onChanged: () => void;
   onDeleted: () => void;
 }) {
+  const t = useTranslations('review.swap');
+  const n = index + 1;
   const [imageId, setImageId] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const { pending, run, busy } = useAction();
@@ -37,7 +40,7 @@ export function ShotSwapDelete({
     const ok = await run('swap', `/shots/${shotId}`, {
       method: 'PATCH',
       body: { imageLibraryId: imageId },
-      success: `Shot ${index + 1} now uses the library image — re-render to see it.`,
+      success: t('swapped', { n }),
     });
     if (ok) {
       setImageId(null);
@@ -48,7 +51,7 @@ export function ShotSwapDelete({
   async function remove() {
     const ok = await run('delete', `/shots/${shotId}`, {
       method: 'DELETE',
-      success: `Shot ${index + 1} deleted — re-render to update the variants.`,
+      success: t('deleted', { n }),
     });
     setConfirming(false);
     if (ok) onDeleted();
@@ -58,10 +61,10 @@ export function ShotSwapDelete({
     <div className="flex flex-col gap-4 border-t border-border pt-4 lg:col-span-2">
       {businessId && (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Swap from library</span>
+          <span className="text-xs font-medium text-muted-foreground">{t('label')}</span>
           <ImagePicker
             businessId={businessId}
-            label={`Library image for shot ${index + 1}`}
+            label={t('pickerLabel', { n })}
             value={imageId}
             onChange={setImageId}
           />
@@ -73,7 +76,7 @@ export function ShotSwapDelete({
               disabled={!editable || !imageId || busy}
             >
               {pending === 'swap' ? <Loader2 className="animate-spin" /> : <ImageIcon />}
-              Use this image
+              {t('use')}
             </Button>
           </div>
         </div>
@@ -81,13 +84,13 @@ export function ShotSwapDelete({
       <div className="flex flex-wrap items-center gap-2">
         {confirming ? (
           <>
-            <span className="text-sm">Delete shot {index + 1}? The script is re-timed.</span>
+            <span className="text-sm">{t('confirm', { n })}</span>
             <Button variant="destructive" size="sm" onClick={remove} disabled={busy}>
               {pending === 'delete' ? <Loader2 className="animate-spin" /> : <Trash2 />}
-              Confirm delete
+              {t('confirmDelete')}
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-              Keep it
+              {t('keep')}
             </Button>
           </>
         ) : (
@@ -96,9 +99,9 @@ export function ShotSwapDelete({
             size="sm"
             onClick={() => setConfirming(true)}
             disabled={!editable || isLastShot || busy}
-            title={isLastShot ? 'A script needs at least one shot' : undefined}
+            title={isLastShot ? t('lastShot') : undefined}
           >
-            <Trash2 /> Delete shot
+            <Trash2 /> {t('delete')}
           </Button>
         )}
       </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { PLATFORM_LABEL } from '@/lib/client/format';
+import { useTranslations } from 'next-intl';
+import { useFormat } from '@/lib/client/format';
 import type { PlatformConnection } from '@/lib/client/types';
 import { AUTO_PUBLISH_CONNECTION, connectionsFor } from '../automation/automation';
-import { isMetaPlatform, META_CONNECT_GUIDANCE } from '../connections/platforms';
+import { isMetaPlatform } from '../connections/platforms';
 import { Field, NativeSelect } from '../review/field';
 
 // "Auto-publish when approved" (publishPolicy AUTO_ON_APPROVAL): one connected account per
@@ -28,9 +29,12 @@ export function AutoPublishOption({
   connections: PlatformConnection[] | undefined;
   businessId: string | null;
 }) {
+  const t = useTranslations('create.autoPublish');
+  const tc = useTranslations('connections');
+  const f = useFormat();
   return (
     <fieldset className="flex flex-col gap-3 rounded-lg border border-border/70 p-3">
-      <legend className="sr-only">Auto-publish</legend>
+      <legend className="sr-only">{t('legend')}</legend>
       <label className="flex items-start gap-2 text-sm">
         <input
           type="checkbox"
@@ -39,33 +43,32 @@ export function AutoPublishOption({
           onChange={(e) => onToggle(e.target.checked)}
         />
         <span>
-          Auto-publish when approved
-          <span className="block text-xs text-muted-foreground">
-            As soon as the video is approved — by you or automatically — it is posted to the
-            accounts below.
-          </span>
+          {t('toggle')}
+          <span className="block text-xs text-muted-foreground">{t('toggleHint')}</span>
         </span>
       </label>
       {enabled && (
         <div className="grid gap-3 sm:grid-cols-2">
           {platforms.map((platform) => {
-            const label = PLATFORM_LABEL[platform] ?? platform;
+            const label = f.platform(platform);
             const options = connectionsFor(platform, connections, businessId);
             const id = `auto-publish-${platform}`;
             return (
               <Field
                 key={platform}
                 id={id}
-                label={`${label} account`}
+                label={t('account', { platform: label })}
                 hint={
                   options.length === 0 &&
                   isMetaPlatform(AUTO_PUBLISH_CONNECTION[platform] ?? '') ? (
-                    <>No connected account. {META_CONNECT_GUIDANCE}</>
+                    <>
+                      {t('noAccount')} {tc('meta.guidance')}
+                    </>
                   ) : options.length === 0 ? (
                     <>
-                      No connected account.{' '}
+                      {t('noAccount')}{' '}
                       <Link href="/connections" className="underline">
-                        Connect one
+                        {t('connectOne')}
                       </Link>
                     </>
                   ) : undefined
@@ -77,7 +80,7 @@ export function AutoPublishOption({
                   disabled={options.length === 0}
                   onChange={(e) => onAccount(platform, e.target.value)}
                 >
-                  <option value="">Don’t auto-publish</option>
+                  <option value="">{t('dontAutoPublish')}</option>
                   {options.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.platformAccountName}

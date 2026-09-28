@@ -1,10 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, errorMessage } from '@/lib/client/api';
+import { api, useErrorMessage } from '@/lib/client/api';
 
 // BACKLOG 13.15 — "Resubmit failures": POST /admin/library/ingest/resubmit { failedOnly: true }
 // re-enqueues every FAILED corpus run with the item it was submitted with (staff only).
@@ -16,6 +17,8 @@ export interface ResubmitResponse {
 }
 
 export function ResubmitFailures({ failed, onDone }: { failed: number; onDone: () => void }) {
+  const t = useTranslations('admin.library.resubmit');
+  const errorMessage = useErrorMessage();
   const [busy, setBusy] = useState(false);
   return (
     <Button
@@ -30,13 +33,12 @@ export function ResubmitFailures({ failed, onDone }: { failed: number; onDone: (
             body: { failedOnly: true },
           });
           const legacy = res.runs.filter((r) => r.reason?.startsWith('no stored item')).length;
-          toast.success(
-            `Resubmitted ${res.queued} failed source${res.queued === 1 ? '' : 's'}` +
-              (res.skipped ? ` · ${res.skipped} skipped` : '') +
-              (legacy
-                ? ` (${legacy} submitted before resubmission existed: use the ingest tool)`
-                : ''),
-          );
+          const parts = [
+            t('done', { count: res.queued }),
+            res.skipped ? t('skipped', { count: res.skipped }) : null,
+            legacy ? t('legacy', { count: legacy }) : null,
+          ];
+          toast.success(parts.filter(Boolean).join(' · '));
           onDone();
         } catch (err) {
           toast.error(errorMessage(err));
@@ -45,7 +47,7 @@ export function ResubmitFailures({ failed, onDone }: { failed: number; onDone: (
         }
       }}
     >
-      <RotateCcw /> Resubmit failures
+      <RotateCcw /> {t('button')}
     </Button>
   );
 }

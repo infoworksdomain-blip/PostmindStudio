@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
-import { formatPence, relativeTime } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { ErrorState, Section } from '../primitives';
 
@@ -11,7 +12,14 @@ import { ErrorState, Section } from '../primitives';
 // alerts (GET /admin/cost/caps). Cap values are the operator's defaults in code (cost/caps.ts),
 // overridable per environment (STUDIO_*_CAP_PENCE; "none" disables a cap).
 
-type AlertScope = 'PROJECT' | 'ORG_DAILY' | 'ORG_MONTHLY' | 'ORG_PROVIDER_DAILY' | 'GLOBAL_DAILY';
+const SCOPES = [
+  'PROJECT',
+  'ORG_DAILY',
+  'ORG_MONTHLY',
+  'ORG_PROVIDER_DAILY',
+  'GLOBAL_DAILY',
+] as const;
+type AlertScope = (typeof SCOPES)[number];
 /** custom = caps built without costCapsFromEnv (never in production). */
 type CapSource = 'default' | 'env' | 'disabled' | 'custom';
 
@@ -69,30 +77,25 @@ export interface CostCapsResponse {
   }>;
 }
 
-const SCOPE_LABEL: Record<AlertScope, string> = {
-  PROJECT: 'Project budget',
-  ORG_DAILY: 'Organisation daily',
-  ORG_MONTHLY: 'Organisation monthly',
-  ORG_PROVIDER_DAILY: 'Organisation × provider daily',
-  GLOBAL_DAILY: 'Global daily',
-};
+/** Projects created without a budget (cost/caps.ts): short-form and long-form defaults. */
+const DEFAULT_SHORT_BUDGET_PENCE = 350;
+const DEFAULT_LONG_BUDGET_PENCE = 3_000;
+const PERCENT = 100;
 
-const capText = (pence: number | null | undefined) =>
-  pence === null || pence === undefined ? 'No cap' : formatPence(pence);
-
-const SOURCE_LABEL: Record<CapSource, string> = {
-  default: 'default',
-  env: 'env override',
-  disabled: 'disabled by env',
-  custom: 'custom',
-};
+/** "No cap" or the cap in the reader's locale. */
+function useCapText(): (pence: number | null | undefined) => string {
+  const t = useTranslations('admin.cost.caps');
+  const f = useFormat();
+  return (pence) => (pence === null || pence === undefined ? t('noCap') : f.pence(pence));
+}
 
 function SourceTag({ source }: { source: CapSource | undefined }) {
+  const t = useTranslations('admin.cost.caps.source');
   if (!source) return null;
   return (
     <span
       className={cn(
-        'ml-1.5 rounded px-1 py-px text-[10px] font-normal tracking-wide uppercase',
+        'ms-1.5 rounded px-1 py-px text-[10px] font-normal tracking-wide uppercase',
         source === 'env'
           ? 'bg-primary/10 text-primary'
           : source === 'disabled'
@@ -100,31 +103,33 @@ function SourceTag({ source }: { source: CapSource | undefined }) {
             : 'bg-muted text-muted-foreground',
       )}
     >
-      {SOURCE_LABEL[source]}
+      {t(source)}
     </span>
   );
 }
 
 function TierCaps({ caps }: { caps: CostCapsResponse['caps'] }) {
+  const t = useTranslations('admin.cost.caps');
+  const capText = useCapText();
   return (
-    <table aria-label="Organisation caps by plan tier" className="w-full text-sm">
+    <table aria-label={t('tierTableAria')} className="w-full text-sm">
       <thead>
-        <tr className="text-left text-xs text-muted-foreground">
+        <tr className="text-start text-xs text-muted-foreground">
           <th scope="col" className="py-1 font-normal">
-            Plan tier
+            {t('tierCol')}
           </th>
           <th scope="col" className="py-1 font-normal">
-            Daily (UTC day)
+            {t('dailyCol')}
           </th>
           <th scope="col" className="py-1 font-normal">
-            Monthly (UTC month)
+            {t('monthlyCol')}
           </th>
         </tr>
       </thead>
       <tbody>
         {Object.keys(caps.orgDailyByTier).map((tier) => (
           <tr key={tier} className="border-t border-border/60">
-            <th scope="row" className="py-1.5 text-left font-medium capitalize">
+            <th scope="row" className="py-1.5 text-start font-medium capitalize">
               {tier.toLowerCase()}
             </th>
             <td className="py-1.5 tabular-nums">
@@ -166,85 +171,99 @@ function Meter({ percent, label }: { percent: number | null; label: string }) {
 }
 
 export function CostCapsPanel() {
+  const t = useTranslations('admin.cost.caps');
+  const f = useFormat();
+  const capText = useCapText();
   const { data, error, isLoading, mutate } = useApi<CostCapsResponse>('/admin/cost/caps');
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
   if (isLoading || !data?.caps) {
-    return <Skeleton aria-label="Loading cost caps" className="h-40 rounded-xl" />;
+    return <Skeleton aria-label={t('loading')} className="h-40 rounded-xl" />;
   }
   const { caps } = data;
+  const percent = (n: number) => f.percent(n / PERCENT);
+  const projectPercent = (n: number | null) => (n === null ? f.date(null) : percent(n));
+  const scopeLabel = (scope: string) =>
+    (SCOPES as readonly string[]).includes(scope) ? t(`scope.${scope as AlertScope}`) : scope;
   return (
-    <Section title={`Caps today (${data.day}, UTC)`}>
+    <Section title={t('title', { day: data.day })}>
       <div className="grid gap-6">
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="grid gap-1.5">
-            <dt className="text-xs text-muted-foreground">Global daily</dt>
+            <dt className="text-xs text-muted-foreground">{t('globalDaily')}</dt>
             <dd className="text-sm font-medium">
-              {formatPence(caps.globalDaily.spentPence)} / {capText(caps.globalDaily.capPence)}
+              {t('spentOfCap', {
+                spent: f.pence(caps.globalDaily.spentPence),
+                cap: capText(caps.globalDaily.capPence),
+              })}
               <SourceTag source={caps.sources.globalDaily} />
             </dd>
-            <Meter percent={caps.globalDaily.percent} label="Global daily cap used" />
+            <Meter percent={caps.globalDaily.percent} label={t('globalMeterAria')} />
           </div>
           <div className="grid gap-1.5">
-            <dt className="text-xs text-muted-foreground">Organisation × provider daily</dt>
+            <dt className="text-xs text-muted-foreground">{t('orgProviderDaily')}</dt>
             <dd className="text-sm font-medium">{capText(caps.orgProviderDaily)}</dd>
           </div>
           <div className="grid gap-1.5 sm:col-span-2">
-            <dt className="text-xs text-muted-foreground">Organisation caps, by plan tier</dt>
+            <dt className="text-xs text-muted-foreground">{t('orgByTier')}</dt>
             <dd>
               <TierCaps caps={caps} />
             </dd>
           </div>
         </dl>
         <p className="text-xs text-muted-foreground">
-          Projects pause at {caps.projectPausePercent}% of their budget; daily and monthly caps
-          pause generation at 100% (publishing continues). Alerts fire once at 80% and 100% of each
-          cap. Projects created without a budget get £3.50 (short-form) or £30 (long-form).
+          {t('explainer', {
+            percent: percent(caps.projectPausePercent),
+            shortBudget: f.pence(DEFAULT_SHORT_BUDGET_PENCE),
+            longBudget: f.pence(DEFAULT_LONG_BUDGET_PENCE),
+          })}
         </p>
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold">Top organisations today</h3>
+            <h3 className="text-sm font-semibold">{t('topToday')}</h3>
             {data.organisations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No provider spend today.</p>
+              <p className="text-sm text-muted-foreground">{t('noSpendToday')}</p>
             ) : (
-              <ul aria-label="Organisation spend today" className="grid gap-1.5 text-sm">
+              <ul aria-label={t('spendTodayAria')} className="grid gap-1.5 text-sm">
                 {data.organisations.slice(0, 10).map((o) => (
                   <li key={o.organisationId} className="flex justify-between gap-2">
                     <span className="truncate font-mono text-xs">{o.organisationId}</span>
-                    <span>{formatPence(o.spentPence)}</span>
+                    <span>{f.pence(o.spentPence)}</span>
                   </li>
                 ))}
               </ul>
             )}
           </div>
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold">Top organisations this month ({data.month})</h3>
+            <h3 className="text-sm font-semibold">{t('topMonth', { month: data.month })}</h3>
             {data.organisationsThisMonth.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No provider spend this month.</p>
+              <p className="text-sm text-muted-foreground">{t('noSpendMonth')}</p>
             ) : (
-              <ul aria-label="Organisation spend this month" className="grid gap-1.5 text-sm">
+              <ul aria-label={t('spendMonthAria')} className="grid gap-1.5 text-sm">
                 {data.organisationsThisMonth.slice(0, 10).map((o) => (
                   <li key={o.organisationId} className="flex justify-between gap-2">
                     <span className="truncate font-mono text-xs">{o.organisationId}</span>
-                    <span>{formatPence(o.spentPence)}</span>
+                    <span>{f.pence(o.spentPence)}</span>
                   </li>
                 ))}
               </ul>
             )}
           </div>
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold">Projects at or over 80% of budget</h3>
+            <h3 className="text-sm font-semibold">{t('projectsNear')}</h3>
             {data.projects.length === 0 ? (
-              <p className="text-sm text-muted-foreground">None in the last 7 days.</p>
+              <p className="text-sm text-muted-foreground">{t('projectsNone')}</p>
             ) : (
-              <ul aria-label="Projects near their budget" className="grid gap-1.5 text-sm">
+              <ul aria-label={t('projectsAria')} className="grid gap-1.5 text-sm">
                 {data.projects.slice(0, 10).map((p) => (
                   <li key={p.id} className="flex justify-between gap-2">
                     <Link href={`/projects/${p.id}`} className="truncate hover:underline">
                       {p.name}
                     </Link>
                     <span className={cn(p.paused && 'text-destructive')}>
-                      {p.percent ?? '—'}%{p.paused ? ' · paused' : ''}
+                      {p.paused
+                        ? t('projectPaused', { percent: projectPercent(p.percent) })
+                        : projectPercent(p.percent)}
                     </span>
                   </li>
                 ))}
@@ -255,18 +274,22 @@ export function CostCapsPanel() {
 
         {(data.orgOverrides?.length ?? 0) > 0 && (
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold">Organisation overrides</h3>
-            <ul aria-label="Organisation cap overrides" className="grid gap-1.5 text-sm">
+            <h3 className="text-sm font-semibold">{t('overrides')}</h3>
+            <ul aria-label={t('overridesAria')} className="grid gap-1.5 text-sm">
               {data.orgOverrides?.map((o) => (
                 <li key={o.organisationId} className="flex flex-wrap justify-between gap-2">
                   <span>
                     <span className="font-mono text-xs">{o.organisationId}</span>
-                    <span className="ml-1.5 rounded bg-primary/10 px-1 py-px text-[10px] tracking-wide text-primary uppercase">
-                      org override
+                    <span className="ms-1.5 rounded bg-primary/10 px-1 py-px text-[10px] tracking-wide text-primary uppercase">
+                      {t('overrideTag')}
                     </span>
                   </span>
                   <span className="text-muted-foreground">
-                    daily {capText(o.dailyPence)} · monthly {capText(o.monthlyPence)} — “{o.reason}”
+                    {t('overrideDetail', {
+                      daily: capText(o.dailyPence),
+                      monthly: capText(o.monthlyPence),
+                      reason: o.reason,
+                    })}
                   </span>
                 </li>
               ))}
@@ -275,22 +298,25 @@ export function CostCapsPanel() {
         )}
 
         <div className="grid gap-2">
-          <h3 className="text-sm font-semibold">Cost alerts, last 7 days</h3>
+          <h3 className="text-sm font-semibold">{t('alerts')}</h3>
           {data.recentAlerts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No cost alerts.</p>
+            <p className="text-sm text-muted-foreground">{t('noAlerts')}</p>
           ) : (
-            <ul aria-label="Recent cost alerts" className="grid gap-1.5 text-sm">
+            <ul aria-label={t('alertsAria')} className="grid gap-1.5 text-sm">
               {data.recentAlerts.map((a) => (
                 <li key={a.id} className="flex flex-wrap justify-between gap-2">
                   <span>
                     <span className={cn('font-medium', a.threshold >= 100 && 'text-destructive')}>
-                      {a.threshold}%
+                      {percent(a.threshold)}
                     </span>{' '}
-                    {SCOPE_LABEL[a.scope]} · <span className="font-mono text-xs">{a.scopeId}</span>
+                    {scopeLabel(a.scope)} · <span className="font-mono text-xs">{a.scopeId}</span>
                   </span>
                   <span className="text-muted-foreground">
-                    {formatPence(a.spentPence)} / {formatPence(a.capPence)} ·{' '}
-                    {relativeTime(a.createdAt)}
+                    {t('alertSpend', {
+                      spent: f.pence(a.spentPence),
+                      cap: f.pence(a.capPence),
+                      when: f.relative(a.createdAt),
+                    })}
                   </span>
                 </li>
               ))}

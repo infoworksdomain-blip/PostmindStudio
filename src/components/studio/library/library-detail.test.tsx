@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { withLocale } from '../../../../test/i18n-wrapper';
 import { LibraryDetail } from './library-detail';
 import { mockFetch, renderWithSWR, summary } from './test-helpers';
 import type { BlueprintResponse, LibraryVideoDetail } from './types';
@@ -182,5 +183,36 @@ describe('LibraryDetail', () => {
     ]);
     renderWithSWR(<LibraryDetail id="lib_1" />);
     expect(await screen.findByText(/hasn’t been analysed yet/)).toBeInTheDocument();
+  });
+});
+
+describe('LibraryDetail localisation', () => {
+  function mockDetail() {
+    mockFetch([
+      { match: '/library/videos/lib_1/similar', method: 'POST', body: { ok: true, data: [] } },
+      { match: '/library/videos/lib_1', body: { ok: true, video: detail() } },
+      { match: '/library/blueprint/lib_1', body: blueprint },
+    ]);
+  }
+
+  it('renders in Arabic, right to left', async () => {
+    mockDetail();
+    renderWithSWR(withLocale('ar', <LibraryDetail id="lib_1" />));
+    // The title is user content: never translated.
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Morning coffee ritual' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /الفيديو نفسه بمحتواي/ })).toBeInTheDocument();
+    expect(await screen.findByRole('list', { name: 'قائمة اللقطات' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'كيف بُني' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('dir', 'rtl');
+  });
+
+  it('renders in Simplified Chinese', async () => {
+    mockDetail();
+    renderWithSWR(withLocale('zh-Hans', <LibraryDetail id="lib_1" />));
+    expect(await screen.findByRole('link', { name: /做一个类似的/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '用作参考' })).toBeInTheDocument();
+    expect(await screen.findByRole('list', { name: '镜头列表' })).toBeInTheDocument();
   });
 });

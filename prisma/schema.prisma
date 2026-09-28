@@ -1257,6 +1257,9 @@ model Notification {
   createdAt      DateTime  @default(now())
   /// BACKLOG 13.33: null = no email requested; pending_setup | sent | failed (notifications/email.ts).
   emailStatus    String?
+  /// BACKLOG 16.5: catalogue key (notifications.<key>) + ICU params; title/body stay the English fallback.
+  messageKey     String?
+  messageParams  Json?
 
   @@unique([organisationId, dedupeKey])
   @@index([organisationId, createdAt])

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
   useEffect,
   useRef,
@@ -8,9 +9,11 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from 'react';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { GUIDES, isActiveAt, snapAnchor } from './overlay-math';
 import { resizedFontPct, steppedFontPct } from './resize-math';
+import { useSafeAreaLabel } from './safe-area-label';
 import type { SafeArea } from './safe-areas';
 import type { Overlay } from './types';
 
@@ -82,6 +85,7 @@ function ResizeHandle({
   overlay: Overlay;
   onResize: (fontSizePct: number) => void;
 }) {
+  const t = useTranslations('overlays.frame');
   const start = useRef<{ x: number; y: number; pct: number; height: number } | null>(null);
 
   function down(e: PointerEvent<HTMLButtonElement>) {
@@ -112,16 +116,18 @@ function ResizeHandle({
     onResize(next);
   }
 
+  // The handle sits on the frame's bottom-right corner in every interface direction: the frame is
+  // the video frame, and resize-math reads the drag physically.
   return (
     <button
       type="button"
-      aria-label={`Resize overlay (${overlay.fontSizePct}% of frame height); arrow keys adjust`}
+      aria-label={t('resizeAria', { pct: overlay.fontSizePct })}
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={up}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={key}
-      className="pointer-events-auto absolute -right-2 -bottom-2 size-3.5 cursor-nwse-resize rounded-sm border border-background bg-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="pointer-events-auto absolute -right-2 -bottom-2 size-3.5 cursor-nwse-resize rounded-sm border border-background bg-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" // i18n-physical-ok
     />
   );
 }
@@ -153,10 +159,11 @@ function OverlayText({
 const pct = (fraction: number) => `${Math.round(fraction * 10_000) / 100}%`;
 
 function SafeAreaGuide({ area }: { area: SafeArea }) {
+  const safeAreaLabel = useSafeAreaLabel();
   return (
     <span
       aria-hidden
-      title={area.label}
+      title={safeAreaLabel(area)}
       data-testid="safe-area"
       className={cn(
         'pointer-events-none absolute border',
@@ -191,6 +198,8 @@ export function OverlayFrame({
   /** 13.7: the target platform's safe area. */
   safeArea?: SafeArea | null;
 }) {
+  const t = useTranslations('overlays.frame');
+  const f = useFormat();
   const visible = overlays.filter((o) => isActiveAt(o, playhead));
 
   function place(e: MouseEvent<HTMLDivElement>) {
@@ -206,7 +215,10 @@ export function OverlayFrame({
   return (
     <div
       role="img"
-      aria-label={`Frame at ${playhead.toFixed(1)}s: ${visible.map((o) => o.text).join(', ') || 'no overlays'}`}
+      aria-label={t('aria', {
+        time: f.number(playhead, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+        texts: visible.map((o) => o.text).join(', ') || t('noOverlays'),
+      })}
       onClick={place}
       className={cn(
         'relative mx-auto w-full overflow-hidden rounded-lg bg-[linear-gradient(135deg,var(--foreground),color-mix(in_oklch,var(--foreground),var(--primary)_35%))]',

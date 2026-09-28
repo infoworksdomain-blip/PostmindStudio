@@ -1,8 +1,9 @@
 'use client';
 
 import { ChevronDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
-import { formatPence, PLATFORM_LABEL } from '@/lib/client/format';
+import { useFormat, type StudioFormat } from '@/lib/client/format';
 import type { BrandKit } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { Field, NativeSelect } from '../review/field';
@@ -20,14 +21,21 @@ import { buildFormats, PLATFORM_OPTIONS, type Length } from './formats';
 
 type Patch = (patch: Partial<CreateState>) => void;
 
+type AdvancedT = ReturnType<typeof useTranslations<'create.options.advanced'>>;
+
 /** The budget the server applies when the field is left blank (cost/project-budget.ts). A
  *  template's formats are only known server-side, so its placeholder names both defaults. */
-function budgetPlaceholder(state: CreateState): string {
+function budgetPlaceholder(state: CreateState, t: AdvancedT, f: StudioFormat): string {
   if (state.projectTemplate) {
-    return `Default ${formatPence(DEFAULT_SHORT_FORM_BUDGET_PENCE)} / ${formatPence(DEFAULT_LONG_FORM_BUDGET_PENCE)}`;
+    return t('budgetPlaceholderTemplate', {
+      short: f.pence(DEFAULT_SHORT_FORM_BUDGET_PENCE),
+      long: f.pence(DEFAULT_LONG_FORM_BUDGET_PENCE),
+    });
   }
   const formats = buildFormats(state.platforms, state.length);
-  return `Default ${formatPence(defaultProjectBudgetPence(formats, state.source))}`;
+  return t('budgetPlaceholder', {
+    amount: f.pence(defaultProjectBudgetPence(formats, state.source)),
+  });
 }
 
 function Chip({
@@ -55,6 +63,8 @@ function Chip({
 }
 
 export function PlatformChips({ value, onChange }: { value: string[]; onChange: Patch }) {
+  const t = useTranslations('create.options');
+  const f = useFormat();
   const toggle = (platform: string) =>
     onChange({
       platforms: value.includes(platform)
@@ -63,7 +73,7 @@ export function PlatformChips({ value, onChange }: { value: string[]; onChange: 
     });
   return (
     <fieldset>
-      <legend className="mb-2 text-xs font-medium text-muted-foreground">Platforms</legend>
+      <legend className="mb-2 text-xs font-medium text-muted-foreground">{t('platforms')}</legend>
       <div className="flex flex-wrap gap-1.5">
         {PLATFORM_OPTIONS.map((o) => (
           <Chip
@@ -71,7 +81,7 @@ export function PlatformChips({ value, onChange }: { value: string[]; onChange: 
             checked={value.includes(o.platform)}
             onToggle={() => toggle(o.platform)}
           >
-            {PLATFORM_LABEL[o.platform] ?? o.platform}
+            {f.platform(o.platform)}
           </Chip>
         ))}
       </div>
@@ -80,13 +90,14 @@ export function PlatformChips({ value, onChange }: { value: string[]; onChange: 
 }
 
 export function LengthToggle({ value, onChange }: { value: Length; onChange: Patch }) {
+  const t = useTranslations('create.options');
   return (
     <fieldset>
-      <legend className="mb-2 text-xs font-medium text-muted-foreground">Length</legend>
+      <legend className="mb-2 text-xs font-medium text-muted-foreground">{t('length')}</legend>
       <div className="flex gap-1.5">
         {(['short', 'long'] as const).map((l) => (
           <Chip key={l} checked={value === l} onToggle={() => onChange({ length: l })}>
-            {l === 'short' ? 'Short' : 'Long'}
+            {t(`lengths.${l}`)}
           </Chip>
         ))}
       </div>
@@ -103,19 +114,19 @@ export function BrandKitSelect({
   value: string | null;
   onChange: Patch;
 }) {
+  const t = useTranslations('create.options.brandKit');
   return (
-    <Field id="create-brand-kit" label="Brand kit">
+    <Field id="create-brand-kit" label={t('label')}>
       <NativeSelect
         id="create-brand-kit"
         value={value ?? ''}
         disabled={!kits}
         onChange={(e) => onChange({ brandKitId: e.target.value || null })}
       >
-        <option value="">{kits ? 'No brand kit' : 'Loading…'}</option>
+        <option value="">{kits ? t('none') : t('loading')}</option>
         {kits?.map((k) => (
           <option key={k.id} value={k.id}>
-            {k.name}
-            {k.isDefault ? ' (default)' : ''}
+            {k.isDefault ? t('defaultKit', { name: k.name }) : k.name}
           </option>
         ))}
       </NativeSelect>
@@ -139,6 +150,8 @@ export function AdvancedOptions({
   planTier?: QualityTier;
   workflows?: WorkflowOption[];
 }) {
+  const t = useTranslations('create.options.advanced');
+  const f = useFormat();
   return (
     <div className="border-t border-border/70 pt-4">
       <button
@@ -149,52 +162,55 @@ export function AdvancedOptions({
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
-        Advanced options
+        {t('toggle')}
       </button>
       {open && (
         <div id="create-advanced" className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field id="create-audience" label="Target audience">
+          <Field id="create-audience" label={t('audience')}>
             <Input
               id="create-audience"
               maxLength={500}
               value={state.targetAudience}
               disabled={state.source === 'SLIDESHOW'}
               onChange={(e) => onChange({ targetAudience: e.target.value })}
-              placeholder="e.g. first-time home buyers"
+              placeholder={t('audiencePlaceholder')}
             />
           </Field>
-          <Field id="create-cta" label="Call to action">
+          <Field id="create-cta" label={t('cta')}>
             <Input
               id="create-cta"
               maxLength={200}
               value={state.callToAction}
               disabled={state.source === 'SLIDESHOW'}
               onChange={(e) => onChange({ callToAction: e.target.value })}
-              placeholder="e.g. Book a free consultation"
+              placeholder={t('ctaPlaceholder')}
             />
           </Field>
           <Field
             id="create-budget"
-            label="Budget cap (£)"
-            hint={`Generation pauses at 90% of this; you can raise it on the project page. Blank = ${formatPence(DEFAULT_SHORT_FORM_BUDGET_PENCE)} for short videos, ${formatPence(DEFAULT_LONG_FORM_BUDGET_PENCE)} for long-form (over 3 minutes, or YouTube over 1 minute).`}
+            label={t('budget')}
+            hint={t('budgetHint', {
+              short: f.pence(DEFAULT_SHORT_FORM_BUDGET_PENCE),
+              long: f.pence(DEFAULT_LONG_FORM_BUDGET_PENCE),
+            })}
           >
             <Input
               id="create-budget"
               inputMode="decimal"
               value={state.budgetPounds}
               onChange={(e) => onChange({ budgetPounds: e.target.value })}
-              placeholder={budgetPlaceholder(state)}
+              placeholder={budgetPlaceholder(state, t, f)}
             />
           </Field>
-          <Field id="create-review" label="Approval">
+          <Field id="create-review" label={t('approval')}>
             <NativeSelect
               id="create-review"
               value={state.reviewPolicy}
               onChange={(e) => onChange({ reviewPolicy: e.target.value as ReviewPolicy | '' })}
             >
-              <option value="">Organisation default</option>
-              <option value="REQUIRE_APPROVAL">Review before publishing</option>
-              <option value="AUTO_APPROVE">Approve automatically</option>
+              <option value="">{t('approvalDefault')}</option>
+              <option value="REQUIRE_APPROVAL">{t('approvalRequire')}</option>
+              <option value="AUTO_APPROVE">{t('approvalAuto')}</option>
             </NativeSelect>
           </Field>
           <PlanningAdvancedOptions

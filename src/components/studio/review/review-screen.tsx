@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
-import { ACTIVE_STATES, formatPence, PROJECT_STATE, stateOf } from '@/lib/client/format';
+import { ACTIVE_STATES, useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { useBusiness } from '../business-context';
 import { ErrorState, PageHeader, Section, StateBadge } from '../primitives';
@@ -34,14 +35,19 @@ import { AutoResumeNote, FallbackNote, SafetyReviewNote } from './paused-notes';
 
 export const POLL_MS = 4_000;
 
-const SOURCE_LABEL: Record<string, string> = {
-  BRIEF: 'From a brief',
-  SLIDESHOW: 'Slideshow',
-  LIBRARY_REFERENCE: 'From a reference video',
-  POSTMIND_CONTENT: 'From PostMind content',
-  TEMPLATE: 'From a template',
-  UPLOAD: 'Your video',
-};
+const SOURCES = [
+  'BRIEF',
+  'SLIDESHOW',
+  'LIBRARY_REFERENCE',
+  'POSTMIND_CONTENT',
+  'TEMPLATE',
+  'UPLOAD',
+] as const;
+type SourceKey = (typeof SOURCES)[number];
+const isSource = (s: string): s is SourceKey => (SOURCES as readonly string[]).includes(s);
+
+const TAB_KEYS = ['slides', 'variants', 'shots', 'overlays', 'script', 'publish'] as const;
+type TabKey = (typeof TAB_KEYS)[number];
 
 /** 13.1 / 13.2: renders made before the latest script or shot edits. */
 export function staleRenderIds(project: ProjectDetail): Set<string> {
@@ -49,20 +55,15 @@ export function staleRenderIds(project: ProjectDetail): Set<string> {
   return new Set(Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string') : []);
 }
 
-function tabsFor(project: ProjectDetail): TabDef[] {
-  const tabs: TabDef[] = [];
-  if (project.sourceType === 'SLIDESHOW') tabs.push({ key: 'slides', label: 'Slides' });
-  tabs.push(
-    { key: 'variants', label: 'Variants' },
-    { key: 'shots', label: 'Shots' },
-    { key: 'overlays', label: 'Overlays' },
-    { key: 'script', label: 'Script' },
-    { key: 'publish', label: 'Publish' },
+function tabsFor(project: ProjectDetail, label: (key: TabKey) => string): TabDef[] {
+  return TAB_KEYS.filter((key) => key !== 'slides' || project.sourceType === 'SLIDESHOW').map(
+    (key) => ({ key, label: label(key) }),
   );
-  return tabs;
 }
 
 export function ReviewScreen({ projectId }: { projectId: string }) {
+  const t = useTranslations('review.screen');
+  const f = useFormat();
   const { businessId } = useBusiness();
   const { data, error, isLoading, mutate } = useApi<{ project: ProjectDetail }>(
     `/projects/${projectId}`,
@@ -84,7 +85,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
     );
   if (isLoading || !data)
     return (
-      <div className="flex flex-col gap-4" aria-label="Loading project">
+      <div className="flex flex-col gap-4" aria-label={t('loading')}>
         <Skeleton className="h-24 rounded-xl" />
         <Skeleton className="h-8 rounded-lg" />
         <Skeleton className="h-96 rounded-xl" />
@@ -92,23 +93,27 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
     );
 
   const { project } = data;
-  const tabs = tabsFor(project);
+  const tabs = tabsFor(project, (key) => t(`tabs.${key}`));
   const active = tab && tabs.some((t) => t.key === tab) ? tab : (tabs[0]?.key ?? 'variants');
-  const state = stateOf(PROJECT_STATE, project.state);
+  const state = f.projectState(project.state);
   const working = ACTIVE_STATES.has(project.state);
 
   return (
     <>
       <BackLink />
       <PageHeader
-        eyebrow={SOURCE_LABEL[project.sourceType] ?? 'Review'}
+        eyebrow={isSource(project.sourceType) ? t(`sources.${project.sourceType}`) : t('eyebrow')}
         title={project.name}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StateBadge {...state} />
-            <span className="tabular">{formatPence(project.costActualPence)} spent</span>
+            <span className="tabular">
+              {t('spent', { amount: f.pence(project.costActualPence) })}
+            </span>
             {project.costBudgetPence !== null && (
-              <span className="tabular">of {formatPence(project.costBudgetPence)} budget</span>
+              <span className="tabular">
+                {t('ofBudget', { amount: f.pence(project.costBudgetPence) })}
+              </span>
             )}
           </span>
         }
@@ -122,7 +127,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
               role="alert"
               className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
             >
-              {project.errorReason === 'cancelled_by_user' ? 'Cancelled.' : project.errorReason}
+              {project.errorReason === 'cancelled_by_user' ? t('cancelled') : project.errorReason}
             </p>
           )}
         {isProjectBudgetPause(project) && <BudgetRaise project={project} onChanged={refresh} />}
@@ -144,9 +149,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
             {active === 'variants' &&
               (project.renders.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  {working
-                    ? 'Variants appear here as each format finishes rendering.'
-                    : 'No variants rendered yet.'}
+                  {working ? t('variantsWorking') : t('variantsNone')}
                 </p>
               ) : (
                 <div className="flex flex-col gap-4">
@@ -170,19 +173,14 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
             {active === 'script' && <ScriptView project={project} onChanged={refresh} />}
             {active === 'publish' && (
               <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
-                <Section
-                  title="Publish"
-                  description="Post each approved variant now or schedule it."
-                >
+                <Section title={t('publishTitle')} description={t('publishDescription')}>
                   {PUBLISHABLE.has(project.state) ? (
                     <PublishPanel project={project} businessId={businessId} onChanged={refresh} />
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Approve the video before publishing it.
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t('approveFirst')}</p>
                   )}
                 </Section>
-                <Section title="Posts">
+                <Section title={t('postsTitle')}>
                   <PublicationsList publications={project.publications} onChanged={refresh} />
                 </Section>
               </div>
@@ -195,10 +193,11 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
 }
 
 function BackLink() {
+  const t = useTranslations('review.screen');
   return (
-    <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
+    <Button asChild variant="ghost" size="sm" className="mb-4 -ms-2">
       <Link href="/projects">
-        <ArrowLeft /> Projects
+        <ArrowLeft className="rtl:-scale-x-100" /> {t('back')}
       </Link>
     </Button>
   );

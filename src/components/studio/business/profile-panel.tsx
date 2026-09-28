@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { CircleAlert, Globe, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,27 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { api, ApiError, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDate } from '@/lib/client/format';
+import { api, ApiError, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState } from '../primitives';
 import { parseList, type BusinessProfile, type ProfileListField } from './types';
 
 // A6.8 — the LLM-classified business profile, editable. Edited profiles are kept across
 // re-scans (editedByUser), so the save sends only the fields that changed.
 
-const LIST_FIELDS: Array<{ key: ProfileListField; label: string; hint: string }> = [
-  { key: 'products', label: 'Products', hint: 'What you sell' },
-  { key: 'services', label: 'Services', hint: 'What you do for customers' },
-  { key: 'audienceKeywords', label: 'Audience', hint: 'Who buys from you' },
-  { key: 'toneIndicators', label: 'Tone', hint: 'How you sound' },
-  { key: 'regions', label: 'Regions', hint: 'Where you trade' },
-  { key: 'imageThemes', label: 'Image themes', hint: 'What your pictures should show' },
-  {
-    key: 'imageSearchQueries',
-    label: 'Stock image searches',
-    hint: 'Queries used to fill your image library (at least one)',
-  },
-  { key: 'restrictedTopics', label: 'Topics to avoid', hint: 'Never shown or mentioned' },
+/** Editable list fields, in form order (labels and hints: business.profile.fields.*). */
+const LIST_FIELDS: readonly ProfileListField[] = [
+  'products',
+  'services',
+  'audienceKeywords',
+  'toneIndicators',
+  'regions',
+  'imageThemes',
+  'imageSearchQueries',
+  'restrictedTopics',
 ];
 
 type Draft = Record<ProfileListField, string> & {
@@ -38,7 +36,7 @@ type Draft = Record<ProfileListField, string> & {
 };
 
 function toDraft(p: BusinessProfile): Draft {
-  const lists = Object.fromEntries(LIST_FIELDS.map((f) => [f.key, p[f.key].join(', ')]));
+  const lists = Object.fromEntries(LIST_FIELDS.map((key) => [key, p[key].join(', ')]));
   return {
     ...(lists as Record<ProfileListField, string>),
     industry: p.industry,
@@ -54,7 +52,7 @@ export function profileChanges(p: BusinessProfile, d: Draft): Record<string, unk
   if (d.subNiche.trim() !== p.subNiche) changes.subNiche = d.subNiche.trim();
   const voice = d.brandVoiceSummary.trim() || null;
   if (voice !== (p.brandVoiceSummary ?? null)) changes.brandVoiceSummary = voice;
-  for (const { key } of LIST_FIELDS) {
+  for (const key of LIST_FIELDS) {
     const next = parseList(d[key]);
     if (next.join('\n') !== p[key].join('\n')) changes[key] = next;
   }
@@ -62,6 +60,8 @@ export function profileChanges(p: BusinessProfile, d: Draft): Record<string, unk
 }
 
 function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: () => void }) {
+  const t = useTranslations('business.profile');
+  const errorMessage = useErrorMessage();
   const [draft, setDraft] = useState(() => toDraft(profile));
   const [saving, setSaving] = useState(false);
   const changes = profileChanges(profile, draft);
@@ -79,7 +79,7 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
         body: changes,
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success('Business profile saved');
+      toast.success(t('saved'));
       onSaved();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -100,7 +100,7 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor="profile-industry">Industry</Label>
+          <Label htmlFor="profile-industry">{t('industry')}</Label>
           <Input
             id="profile-industry"
             value={draft.industry}
@@ -109,7 +109,7 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="profile-subniche">Niche</Label>
+          <Label htmlFor="profile-subniche">{t('niche')}</Label>
           <Input
             id="profile-subniche"
             value={draft.subNiche}
@@ -118,7 +118,7 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
           />
         </div>
         <div className="grid gap-1.5 sm:col-span-2">
-          <Label htmlFor="profile-voice">Brand voice</Label>
+          <Label htmlFor="profile-voice">{t('brandVoice')}</Label>
           <Textarea
             id="profile-voice"
             rows={3}
@@ -129,25 +129,25 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
         </div>
       </div>
       <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-        {LIST_FIELDS.map((f) => (
-          <div key={f.key} className="grid gap-1.5">
-            <Label htmlFor={`profile-${f.key}`}>{f.label}</Label>
+        {LIST_FIELDS.map((key) => (
+          <div key={key} className="grid gap-1.5">
+            <Label htmlFor={`profile-${key}`}>{t(`fields.${key}.label`)}</Label>
             <Textarea
-              id={`profile-${f.key}`}
+              id={`profile-${key}`}
               rows={2}
-              value={draft[f.key]}
-              aria-describedby={`profile-${f.key}-hint`}
-              onChange={(e) => set(f.key)(e.target.value)}
+              value={draft[key]}
+              aria-describedby={`profile-${key}-hint`}
+              onChange={(e) => set(key)(e.target.value)}
             />
-            <p id={`profile-${f.key}-hint`} className="text-xs text-muted-foreground">
-              {f.hint} — separate with commas.
+            <p id={`profile-${key}-hint`} className="text-xs text-muted-foreground">
+              {t(`fields.${key}.hint`)}
             </p>
           </div>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3 border-t border-border/70 pt-5">
         <Button type="submit" disabled={!dirty || invalid || saving}>
-          {saving ? <Loader2 className="animate-spin" /> : <Save />} Save profile
+          {saving ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
         </Button>
         <Button
           type="button"
@@ -155,13 +155,9 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
           disabled={!dirty || saving}
           onClick={() => setDraft(toDraft(profile))}
         >
-          Discard changes
+          {t('discard')}
         </Button>
-        {invalid && (
-          <p className="text-xs text-destructive">
-            Industry, niche and at least one stock image search are required.
-          </p>
-        )}
+        {invalid && <p className="text-xs text-destructive">{t('invalid')}</p>}
       </div>
     </form>
   );
@@ -178,11 +174,10 @@ export function ProfileReviewBanner({
   profile: BusinessProfile;
   onConfirmed: () => void;
 }) {
+  const t = useTranslations('business.profile.review');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const [busy, setBusy] = useState(false);
-  const confidence =
-    typeof profile.classifierConfidence === 'number'
-      ? ` (confidence ${Math.round(profile.classifierConfidence * 100)}%)`
-      : '';
   async function confirm() {
     setBusy(true);
     try {
@@ -191,7 +186,7 @@ export function ProfileReviewBanner({
         body: { confirmed: true },
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success('Business profile confirmed');
+      toast.success(t('confirmed'));
       onConfirmed();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -202,19 +197,20 @@ export function ProfileReviewBanner({
   return (
     <div
       role="status"
-      aria-label="Profile needs your review"
+      aria-label={t('aria')}
       className="flex flex-wrap items-start gap-3 rounded-lg border border-warning/50 bg-warning/10 p-4"
     >
       <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1 basis-64">
-        <p className="text-sm font-medium">Please confirm this profile</p>
+        <p className="text-sm font-medium">{t('title')}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Studio was not sure what your business does{confidence}. Check the details below, then
-          confirm them or edit and save. Videos and image suggestions use this profile.
+          {typeof profile.classifierConfidence === 'number'
+            ? t('bodyConfidence', { percent: f.percent(profile.classifierConfidence) })
+            : t('body')}
         </p>
       </div>
       <Button size="sm" disabled={busy} onClick={() => void confirm()}>
-        {busy && <Loader2 className="animate-spin" />} Confirm profile
+        {busy && <Loader2 className="animate-spin" />} {t('confirm')}
       </Button>
     </div>
   );
@@ -227,18 +223,20 @@ export function ProfilePanel({
   businessId: string;
   onGoToScan: () => void;
 }) {
+  const t = useTranslations('business.profile');
+  const f = useFormat();
   const { data, error, isLoading, mutate } = useApi<{ profile: BusinessProfile }>(
     `/businesses/${encodeURIComponent(businessId)}/business-profile`,
   );
 
-  if (isLoading) return <Skeleton aria-label="Loading profile" className="h-96 rounded-xl" />;
+  if (isLoading) return <Skeleton aria-label={t('loading')} className="h-96 rounded-xl" />;
   if (error instanceof ApiError && error.status === 404) {
     return (
       <EmptyState
         icon={<Globe className="size-8" strokeWidth={1.5} />}
-        title="No business profile yet"
-        description="Scan your website and Studio works out what you sell, who for and which images suit you. You can edit everything afterwards."
-        action={<Button onClick={onGoToScan}>Scan your website</Button>}
+        title={t('empty.title')}
+        description={t('empty.body')}
+        action={<Button onClick={onGoToScan}>{t('empty.action')}</Button>}
       />
     );
   }
@@ -248,16 +246,22 @@ export function ProfilePanel({
 
   return (
     <div className="grid gap-8">
-      <div className="border-l-2 border-primary pl-5">
-        <p className="text-xs tracking-[0.18em] text-muted-foreground uppercase">
-          What Studio thinks you do
-        </p>
+      <div className="border-s-2 border-primary ps-5">
+        <p className="text-xs tracking-[0.18em] text-muted-foreground uppercase">{t('eyebrow')}</p>
         <p className="mt-2 font-display text-3xl leading-tight md:text-4xl">
-          {profile.subNiche} <span className="text-muted-foreground">in</span> {profile.industry}
+          {t.rich('headline', {
+            niche: profile.subNiche,
+            industry: profile.industry,
+            muted: (chunks) => <span className="text-muted-foreground">{chunks}</span>,
+          })}
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
-          {profile.editedByUser ? 'Edited by you' : `Classified by ${profile.classifierModel}`} ·
-          refreshed {formatDate(profile.lastRefreshedAt)}
+          {profile.editedByUser
+            ? t('editedByYou', { date: f.date(profile.lastRefreshedAt) })
+            : t('classifiedBy', {
+                model: profile.classifierModel,
+                date: f.date(profile.lastRefreshedAt),
+              })}
         </p>
       </div>
       {profile.needsReview && (

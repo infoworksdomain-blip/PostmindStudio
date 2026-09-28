@@ -1,23 +1,57 @@
-// Display helpers shared by Studio screens (en-GB, GBP).
+import { useLocale, useTranslations } from 'next-intl';
+import { useMemo } from 'react';
+import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
+import type { Messages } from '@/lib/i18n/messages';
 
-export function formatPence(pence: number | null | undefined): string {
+// Display helpers shared by Studio screens. BACKLOG 16.1: every formatter takes the active locale
+// (Intl.* does the work); money stays GBP in every locale — only the presentation changes
+// (£1,234.50 in en-GB, 1 234,50 £GB in fr). The plain functions default to en-GB so existing
+// callers keep working; screens use useFormat(), which binds them to the active locale and the
+// `format` catalogue (duration units, "just now", state and platform labels).
+
+export function formatPence(
+  pence: number | null | undefined,
+  locale: string = DEFAULT_LOCALE,
+): string {
   const value = (pence ?? 0) / 100;
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: 'GBP' }).format(value);
 }
 
-export function formatCount(n: number | null | undefined): string {
-  return new Intl.NumberFormat('en-GB', { notation: 'compact', maximumFractionDigits: 1 }).format(
+export function formatCount(n: number | null | undefined, locale: string = DEFAULT_LOCALE): string {
+  return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(
     n ?? 0,
   );
 }
 
-export function formatDuration(totalSec: number | null | undefined): string {
+export function formatNumber(
+  n: number | null | undefined,
+  locale: string = DEFAULT_LOCALE,
+  options?: Intl.NumberFormatOptions,
+): string {
+  return new Intl.NumberFormat(locale, options).format(n ?? 0);
+}
+
+export interface DurationParts {
+  kind: 'hours' | 'minutes' | 'seconds';
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+export function durationParts(totalSec: number | null | undefined): DurationParts {
   const sec = Math.max(0, Math.round(totalSec ?? 0));
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (h) return `${h}h ${String(m).padStart(2, '0')}m`;
-  if (m) return `${m}:${String(s).padStart(2, '0')}`;
+  const hours = Math.floor(sec / 3600);
+  const minutes = Math.floor((sec % 3600) / 60);
+  const seconds = sec % 60;
+  const kind = hours ? 'hours' : minutes ? 'minutes' : 'seconds';
+  return { kind, hours, minutes, seconds };
+}
+
+/** English duration (1h 05m, 3:07, 42s). Screens use useFormat().duration for other locales. */
+export function formatDuration(totalSec: number | null | undefined): string {
+  const { kind, hours: h, minutes: m, seconds: s } = durationParts(totalSec);
+  if (kind === 'hours') return `${h}h ${String(m).padStart(2, '0')}m`;
+  if (kind === 'minutes') return `${m}:${String(s).padStart(2, '0')}`;
   return `${s}s`;
 }
 
@@ -30,21 +64,35 @@ const UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
   ['minute', 60_000],
 ];
 
-export function relativeTime(iso: string | null | undefined, now: number = Date.now()): string {
-  if (!iso) return '—';
+export interface RelativeTimeOptions {
+  locale?: string;
+  /** Under a minute: "just now" in English; the catalogue's format.justNow via useFormat. */
+  justNow?: string;
+  /** The placeholder for a missing date. */
+  none?: string;
+}
+
+export function relativeTime(
+  iso: string | null | undefined,
+  now: number = Date.now(),
+  options: RelativeTimeOptions = {},
+): string {
+  if (!iso) return options.none ?? '—';
   const diff = new Date(iso).getTime() - now;
-  const rtf = new Intl.RelativeTimeFormat('en-GB', { numeric: 'auto' });
+  const rtf = new Intl.RelativeTimeFormat(options.locale ?? DEFAULT_LOCALE, { numeric: 'auto' });
   for (const [unit, ms] of UNITS) {
     if (Math.abs(diff) >= ms) return rtf.format(Math.round(diff / ms), unit);
   }
-  return 'just now';
+  return options.justNow ?? 'just now';
 }
 
-export function formatDate(iso: string | null | undefined): string {
+export function formatDate(
+  iso: string | null | undefined,
+  locale: string = DEFAULT_LOCALE,
+  options: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' },
+): string {
   if (!iso) return '—';
-  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(iso),
-  );
+  return new Intl.DateTimeFormat(locale, options).format(new Date(iso));
 }
 
 /**
@@ -115,3 +163,88 @@ export const ACTIVE_STATES = new Set(
     .filter(([, v]) => v.tone === 'live')
     .map(([k]) => k),
 );
+
+type FormatMessages = Messages['format'];
+type ProjectStateKey = keyof FormatMessages['projectState'];
+type PublicationStateKey = keyof FormatMessages['publicationState'];
+type PlatformKey = keyof FormatMessages['platform'];
+
+function hasKey<T extends object>(map: T, key: string): key is Extract<keyof T, string> {
+  return Object.prototype.hasOwnProperty.call(map, key);
+}
+
+export interface StudioFormat {
+  locale: string;
+  /** Pence → GBP in the locale's currency presentation. */
+  pence: (pence: number | null | undefined) => string;
+  /** Compact counts (1.2K, 1,2 k, 1.2万). */
+  count: (n: number | null | undefined) => string;
+  number: (n: number | null | undefined, options?: Intl.NumberFormatOptions) => string;
+  percent: (fraction: number | null | undefined, maximumFractionDigits?: number) => string;
+  duration: (totalSec: number | null | undefined) => string;
+  relative: (iso: string | null | undefined, now?: number) => string;
+  /** Date and time (medium date, short time) unless options say otherwise. */
+  date: (iso: string | null | undefined, options?: Intl.DateTimeFormatOptions) => string;
+  /** "a, b and c" in the locale's list style. */
+  list: (items: readonly string[], type?: Intl.ListFormatType) => string;
+  projectState: (state: string) => { label: string; tone: Tone };
+  publicationState: (state: string) => { label: string; tone: Tone };
+  platform: (platform: string) => string;
+}
+
+/**
+ * Locale-bound formatters for Client Components (BACKLOG 16.1). Use this instead of the plain
+ * functions in any localised screen:
+ *
+ *   const f = useFormat();
+ *   f.pence(project.costPence); f.relative(p.createdAt); f.projectState(p.state).label
+ */
+export function useFormat(): StudioFormat {
+  const locale = useLocale();
+  const t = useTranslations('format');
+  return useMemo<StudioFormat>(() => {
+    const none = t('none');
+    const twoDigits = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 });
+    const plain = new Intl.NumberFormat(locale);
+    return {
+      locale,
+      pence: (p) => formatPence(p, locale),
+      count: (n) => formatCount(n, locale),
+      number: (n, options) => formatNumber(n, locale, options),
+      percent: (fraction, maximumFractionDigits = 0) =>
+        formatNumber(fraction, locale, { style: 'percent', maximumFractionDigits }),
+      duration: (totalSec) => {
+        const d = durationParts(totalSec);
+        if (d.kind === 'hours')
+          return t('duration.hoursMinutes', {
+            hours: plain.format(d.hours),
+            minutes: twoDigits.format(d.minutes),
+          });
+        if (d.kind === 'minutes')
+          return t('duration.minutesSeconds', {
+            minutes: plain.format(d.minutes),
+            seconds: twoDigits.format(d.seconds),
+          });
+        return t('duration.seconds', { seconds: plain.format(d.seconds) });
+      },
+      relative: (iso, now) => relativeTime(iso, now, { locale, justNow: t('justNow'), none }),
+      date: (iso, options) => (iso ? formatDate(iso, locale, options) : none),
+      list: (items, type = 'conjunction') =>
+        new Intl.ListFormat(locale, { style: 'long', type }).format(items),
+      projectState: (state) => {
+        const known = stateOf(PROJECT_STATE, state);
+        return hasKey(PROJECT_STATE, state)
+          ? { label: t(`projectState.${state as ProjectStateKey}`), tone: known.tone }
+          : known;
+      },
+      publicationState: (state) => {
+        const known = stateOf(PUBLICATION_STATE, state);
+        return hasKey(PUBLICATION_STATE, state)
+          ? { label: t(`publicationState.${state as PublicationStateKey}`), tone: known.tone }
+          : known;
+      },
+      platform: (platform) =>
+        hasKey(PLATFORM_LABEL, platform) ? t(`platform.${platform as PlatformKey}`) : platform,
+    };
+  }, [locale, t]);
+}

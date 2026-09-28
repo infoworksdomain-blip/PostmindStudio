@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Check, ImagePlus, Loader2, Type, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,19 +19,21 @@ export type BrandMediaKind = 'brand_logo' | 'brand_watermark' | 'brand_card' | '
 
 type MediaField = 'logoAssetId' | 'watermarkAssetId' | 'introCardAssetId' | 'outroCardAssetId';
 
-const SLOTS: Array<{ field: MediaField; kind: BrandMediaKind; label: string; accept: string }> = [
-  { field: 'logoAssetId', kind: 'brand_logo', label: 'Logo', accept: 'image/png' },
-  { field: 'watermarkAssetId', kind: 'brand_watermark', label: 'Watermark', accept: 'image/png' },
+type SlotKey = 'logo' | 'watermark' | 'intro' | 'outro';
+
+const SLOTS: Array<{ field: MediaField; kind: BrandMediaKind; key: SlotKey; accept: string }> = [
+  { field: 'logoAssetId', kind: 'brand_logo', key: 'logo', accept: 'image/png' },
+  { field: 'watermarkAssetId', kind: 'brand_watermark', key: 'watermark', accept: 'image/png' },
   {
     field: 'introCardAssetId',
     kind: 'brand_card',
-    label: 'Intro card',
+    key: 'intro',
     accept: 'image/png,image/jpeg,video/mp4',
   },
   {
     field: 'outroCardAssetId',
     kind: 'brand_card',
-    label: 'Outro card',
+    key: 'outro',
     accept: 'image/png,image/jpeg,video/mp4',
   },
 ];
@@ -93,10 +96,13 @@ function MediaSlot({
   slot: (typeof SLOTS)[number];
   onSaved: () => void;
 }) {
+  const t = useTranslations('business.media');
   const input = useRef<HTMLInputElement>(null);
   const id = useId();
   const [busy, setBusy] = useState(false);
   const current = kit[slot.field] ?? null;
+  const label = t(`slots.${slot.key}`);
+  const inline = t(`slotsInline.${slot.key}`);
 
   async function run(work: () => Promise<void>, success: string) {
     setBusy(true);
@@ -114,14 +120,14 @@ function MediaSlot({
 
   return (
     <li className="flex items-center gap-2 text-sm">
-      <span className="w-20 shrink-0 text-muted-foreground">{slot.label}</span>
+      <span className="w-20 shrink-0 text-muted-foreground">{label}</span>
       <span className="min-w-0 flex-1 truncate">
         {current ? (
           <span className="inline-flex items-center gap-1">
-            <Check className="size-3.5 text-success" aria-hidden /> Added
+            <Check className="size-3.5 text-success" aria-hidden /> {t('added')}
           </span>
         ) : (
-          <span className="text-muted-foreground">None</span>
+          <span className="text-muted-foreground">{t('none')}</span>
         )}
       </span>
       <input
@@ -130,14 +136,20 @@ function MediaSlot({
         type="file"
         className="sr-only"
         accept={slot.accept}
-        aria-label={`Upload ${slot.label.toLowerCase()} for ${kit.name}`}
+        aria-label={t('uploadAria', { slot: inline, name: kit.name })}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (!file) return;
-          void run(async () => {
-            const up = await uploadBrandFile(file, { kind: slot.kind, businessId: kit.businessId });
-            await patchKit(kit, { [slot.field]: up.id });
-          }, `${slot.label} saved`);
+          void run(
+            async () => {
+              const up = await uploadBrandFile(file, {
+                kind: slot.kind,
+                businessId: kit.businessId,
+              });
+              await patchKit(kit, { [slot.field]: up.id });
+            },
+            t('slotSaved', { slot: label }),
+          );
         }}
       />
       <Button
@@ -145,19 +157,19 @@ function MediaSlot({
         size="sm"
         disabled={busy}
         onClick={() => input.current?.click()}
-        aria-label={`${current ? 'Replace' : 'Add'} ${slot.label.toLowerCase()}`}
+        aria-label={current ? t('replaceAria', { slot: inline }) : t('addAria', { slot: inline })}
       >
         {busy ? <Loader2 className="animate-spin" /> : <ImagePlus />}
-        {current ? 'Replace' : 'Add'}
+        {current ? t('replace') : t('add')}
       </Button>
       {current && (
         <Button
           variant="ghost"
           size="sm"
           disabled={busy}
-          aria-label={`Remove ${slot.label.toLowerCase()}`}
+          aria-label={t('removeAria', { slot: inline })}
           onClick={() =>
-            void run(() => patchKit(kit, { [slot.field]: null }), `${slot.label} removed`)
+            void run(() => patchKit(kit, { [slot.field]: null }), t('slotRemoved', { slot: label }))
           }
         >
           <X />
@@ -168,6 +180,7 @@ function MediaSlot({
 }
 
 function FontUpload({ kit, onSaved }: { kit: BrandKit; onSaved: () => void }) {
+  const t = useTranslations('business.media');
   const input = useRef<HTMLInputElement>(null);
   const licenceId = useId();
   const [licence, setLicence] = useState(false);
@@ -183,7 +196,9 @@ function FontUpload({ kit, onSaved }: { kit: BrandKit; onSaved: () => void }) {
         licenceConfirmed: licence,
       });
       await patchKit(kit, { fontPrimary: `upload:${up.id}` });
-      toast.success(`${up.fontFamily ?? 'Font'} is now the heading font`);
+      toast.success(
+        up.fontFamily ? t('fontSaved', { family: up.fontFamily }) : t('fontSavedGeneric'),
+      );
       onSaved();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -196,16 +211,16 @@ function FontUpload({ kit, onSaved }: { kit: BrandKit; onSaved: () => void }) {
   return (
     <li className="flex flex-col gap-1.5 text-sm">
       <div className="flex items-center gap-2">
-        <span className="w-20 shrink-0 text-muted-foreground">Font</span>
+        <span className="w-20 shrink-0 text-muted-foreground">{t('font')}</span>
         <span className="min-w-0 flex-1 truncate">
-          {uploaded ? 'Uploaded font' : (kit.fontPrimary ?? 'Default')}
+          {uploaded ? t('uploadedFont') : (kit.fontPrimary ?? t('defaultFont'))}
         </span>
         <input
           ref={input}
           type="file"
           className="sr-only"
           accept=".ttf,.otf,font/ttf,font/otf"
-          aria-label={`Upload font for ${kit.name}`}
+          aria-label={t('uploadFontAria', { name: kit.name })}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) void upload(file);
@@ -218,12 +233,12 @@ function FontUpload({ kit, onSaved }: { kit: BrandKit; onSaved: () => void }) {
           onClick={() => input.current?.click()}
         >
           {busy ? <Loader2 className="animate-spin" /> : <Type />}
-          Upload TTF/OTF
+          {t('uploadFont')}
         </Button>
       </div>
       <label
         htmlFor={licenceId}
-        className="flex items-start gap-2 pl-22 text-xs text-muted-foreground"
+        className="flex items-start gap-2 ps-22 text-xs text-muted-foreground"
       >
         <input
           id={licenceId}
@@ -232,13 +247,14 @@ function FontUpload({ kit, onSaved }: { kit: BrandKit; onSaved: () => void }) {
           checked={licence}
           onChange={(e) => setLicence(e.target.checked)}
         />
-        I confirm this font’s licence allows embedding it in commercial videos.
+        {t('licence')}
       </label>
     </li>
   );
 }
 
 export function BrandKitMedia({ kit, onSaved }: { kit: BrandKit; onSaved: () => void }) {
+  const t = useTranslations('business.media');
   const [busy, setBusy] = useState(false);
   const labelId = useId();
 
@@ -246,7 +262,7 @@ export function BrandKitMedia({ kit, onSaved }: { kit: BrandKit; onSaved: () => 
     setBusy(true);
     try {
       await patchKit(kit, { aiDisclosureLabel: next });
-      toast.success(next ? 'AI-generated label on' : 'AI-generated label off');
+      toast.success(next ? t('aiLabelOn') : t('aiLabelOff'));
       onSaved();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -256,7 +272,10 @@ export function BrandKitMedia({ kit, onSaved }: { kit: BrandKit; onSaved: () => 
   }
 
   return (
-    <section aria-label={`Media for ${kit.name}`} className="flex flex-col gap-2 border-t pt-3">
+    <section
+      aria-label={t('sectionAria', { name: kit.name })}
+      className="flex flex-col gap-2 border-t pt-3"
+    >
       <ul className="flex flex-col gap-2">
         {SLOTS.map((slot) => (
           <MediaSlot key={slot.field} kit={kit} slot={slot} onSaved={onSaved} />
@@ -269,9 +288,9 @@ export function BrandKitMedia({ kit, onSaved }: { kit: BrandKit; onSaved: () => 
           checked={kit.aiDisclosureLabel ?? false}
           disabled={busy}
           onCheckedChange={(v) => void toggleLabel(v)}
-          aria-label="Show an AI-generated label on videos"
+          aria-label={t('aiLabelAria')}
         />
-        Show an “AI-generated” label on videos (platform AI labels are always on)
+        {t('aiLabel')}
       </label>
     </section>
   );

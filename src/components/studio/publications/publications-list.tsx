@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,8 +16,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useApi } from '@/lib/client/api';
-import { formatDate, PLATFORM_LABEL, PUBLICATION_STATE, stateOf } from '@/lib/client/format';
+import { PLATFORM_LABEL, useFormat } from '@/lib/client/format';
 import type { Page, Publication } from '@/lib/client/types';
+import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
 import { NativeSelect } from './native-select';
@@ -25,31 +27,39 @@ import { PublicationActions } from './publication-actions';
 // BACKLOG 10.5 — Manage: every publication across platforms (spec 14.3), filtered by state and
 // platform, cursor-paginated (GET /publications).
 
-export const PUBLICATION_FILTERS: Array<{ key: string; label: string; states?: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'scheduled', label: 'Scheduled', states: 'SCHEDULED' },
-  { key: 'live', label: 'Live', states: 'PUBLISHED,PUBLISHING' },
-  { key: 'failed', label: 'Failed', states: 'FAILED' },
-  { key: 'ended', label: 'Cancelled & taken down', states: 'CANCELLED,TAKEN_DOWN' },
+export type PublicationFilterKey = 'all' | 'scheduled' | 'live' | 'failed' | 'ended';
+
+export const PUBLICATION_FILTERS: Array<{ key: PublicationFilterKey; states?: string }> = [
+  { key: 'all' },
+  { key: 'scheduled', states: 'SCHEDULED' },
+  { key: 'live', states: 'PUBLISHED,PUBLISHING' },
+  { key: 'failed', states: 'FAILED' },
+  { key: 'ended', states: 'CANCELLED,TAKEN_DOWN' },
 ];
 
-/** The moment that matters for a row: when it went live, else when it is due, else created. */
 /** 15.A8: live view count for the list ("—" before the first metrics poll). */
-export function viewsOf(p: Publication): string {
+export function viewsOf(p: Publication, locale: string = DEFAULT_LOCALE, none = '—'): string {
   const views = p.latestMetrics?.views;
-  return typeof views === 'number' ? new Intl.NumberFormat('en-GB').format(views) : '—';
+  return typeof views === 'number' ? new Intl.NumberFormat(locale).format(views) : none;
 }
 
-export function whenOf(p: Publication): { label: string; iso: string } {
-  if (p.publishedAt) return { label: 'Published', iso: p.publishedAt };
-  if (p.scheduledFor) return { label: 'Scheduled for', iso: p.scheduledFor };
-  return { label: 'Created', iso: p.createdAt };
+export type WhenKind = 'published' | 'scheduledFor' | 'created';
+
+/** The moment that matters for a row: when it went live, else when it is due, else created. */
+export function whenOf(p: Publication): { kind: WhenKind; iso: string } {
+  if (p.publishedAt) return { kind: 'published', iso: p.publishedAt };
+  if (p.scheduledFor) return { kind: 'scheduledFor', iso: p.scheduledFor };
+  return { kind: 'created', iso: p.createdAt };
 }
 
 function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => void }) {
-  const state = stateOf(PUBLICATION_STATE, p.state);
-  const platform = PLATFORM_LABEL[p.platform] ?? p.platform;
+  const t = useTranslations('publications.list');
+  const tf = useTranslations('format');
+  const f = useFormat();
+  const state = f.publicationState(p.state);
+  const platform = f.platform(p.platform);
   const when = whenOf(p);
+  const date = f.date(when.iso);
   return (
     <TableRow>
       <TableCell className="max-w-0 py-3 whitespace-normal md:w-[40%]">
@@ -57,10 +67,10 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
           href={`/projects/${p.projectId}`}
           className="block truncate font-medium hover:underline focus-visible:underline focus-visible:outline-none"
         >
-          {p.project?.name ?? 'Untitled project'}
+          {p.project?.name ?? t('untitled')}
         </Link>
         <span className="block truncate text-xs text-muted-foreground md:hidden">
-          {platform} · {when.label.toLowerCase()} {formatDate(when.iso)}
+          {t(`rowMobile.${when.kind}`, { platform, date })}
         </span>
         {p.state === 'FAILED' && p.errorReason && (
           <span className="mt-1 block text-xs text-destructive">{p.errorReason}</span>
@@ -74,11 +84,13 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
         <StateBadge {...state} />
       </TableCell>
       <TableCell className="tabular hidden text-muted-foreground md:table-cell">
-        <span className="block text-xs">{when.label}</span>
-        {formatDate(when.iso)}
+        <span className="block text-xs">{t(`when.${when.kind}`)}</span>
+        {date}
       </TableCell>
-      <TableCell className="tabular hidden text-right md:table-cell">{viewsOf(p)}</TableCell>
-      <TableCell className="text-right">
+      <TableCell className="tabular hidden text-end md:table-cell">
+        {viewsOf(p, f.locale, tf('none'))}
+      </TableCell>
+      <TableCell className="text-end">
         <PublicationActions publication={p} onChanged={onChanged} />
       </TableCell>
     </TableRow>
@@ -86,56 +98,60 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
 }
 
 export function PublicationsList() {
-  const [filter, setFilter] = useState('all');
+  const t = useTranslations('publications.list');
+  const tn = useTranslations('shell.nav.groups');
+  const f = useFormat();
+  const [filter, setFilter] = useState<PublicationFilterKey>('all');
   const [platform, setPlatform] = useState('');
   const [cursors, setCursors] = useState<string[]>([]);
-  const states = PUBLICATION_FILTERS.find((f) => f.key === filter)?.states;
+  const states = PUBLICATION_FILTERS.find((pf) => pf.key === filter)?.states;
   const { data, error, isLoading, mutate } = useApi<Page<Publication>>('/publications', {
     state: states,
     platform: platform || undefined,
     cursor: cursors.at(-1),
     limit: 25,
   });
+  const unfiltered = filter === 'all' && !platform;
 
   return (
     <>
       <PageHeader
-        eyebrow="Manage"
-        title="Publications"
-        description="Every post Studio has made or scheduled, on every platform."
+        eyebrow={tn('manage')}
+        title={t('title')}
+        description={t('description')}
         actions={
           <Button variant="outline" asChild>
             <Link href="/calendar">
-              <CalendarDays /> Calendar
+              <CalendarDays /> {t('calendar')}
             </Link>
           </Button>
         }
       />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label="Filter publications" className="flex flex-wrap gap-1.5">
-          {PUBLICATION_FILTERS.map((f) => (
+        <div role="tablist" aria-label={t('filtersAria')} className="flex flex-wrap gap-1.5">
+          {PUBLICATION_FILTERS.map((pf) => (
             <button
-              key={f.key}
+              key={pf.key}
               role="tab"
-              aria-selected={filter === f.key}
+              aria-selected={filter === pf.key}
               onClick={() => {
-                setFilter(f.key);
+                setFilter(pf.key);
                 setCursors([]);
               }}
               className={cn(
                 'rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                filter === f.key
+                filter === pf.key
                   ? 'border-foreground bg-foreground text-background'
                   : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
               )}
             >
-              {f.label}
+              {t(`filters.${pf.key}`)}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <Label htmlFor="publication-platform" className="text-xs text-muted-foreground">
-            Platform
+            {t('platform')}
           </Label>
           <NativeSelect
             id="publication-platform"
@@ -145,10 +161,10 @@ export function PublicationsList() {
               setCursors([]);
             }}
           >
-            <option value="">All platforms</option>
-            {Object.entries(PLATFORM_LABEL).map(([key, label]) => (
+            <option value="">{t('allPlatforms')}</option>
+            {Object.keys(PLATFORM_LABEL).map((key) => (
               <option key={key} value={key}>
-                {label}
+                {f.platform(key)}
               </option>
             ))}
           </NativeSelect>
@@ -157,7 +173,7 @@ export function PublicationsList() {
 
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && (
-        <div className="flex flex-col gap-2" aria-label="Loading publications">
+        <div className="flex flex-col gap-2" aria-label={t('loading')}>
           {Array.from({ length: 5 }, (_, i) => (
             <Skeleton key={i} className="h-14 rounded-lg" />
           ))}
@@ -165,17 +181,12 @@ export function PublicationsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
-          title={filter === 'all' && !platform ? 'Nothing published yet' : 'Nothing here'}
-          description={
-            filter === 'all' && !platform
-              ? 'Approve a video on its review screen to publish or schedule it.'
-              : 'No publications match these filters.'
-          }
+          title={unfiltered ? t('empty.title') : t('emptyFiltered.title')}
+          description={unfiltered ? t('empty.body') : t('emptyFiltered.body')}
           action={
-            filter === 'all' &&
-            !platform && (
+            unfiltered && (
               <Button asChild>
-                <Link href="/projects">Go to projects</Link>
+                <Link href="/projects">{t('empty.action')}</Link>
               </Button>
             )
           }
@@ -186,13 +197,15 @@ export function PublicationsList() {
           <Table className="table-fixed md:table-auto">
             <TableHeader>
               <TableRow>
-                <TableHead>Video</TableHead>
-                <TableHead className="hidden md:table-cell">Platform</TableHead>
-                <TableHead className="w-28 md:w-auto">State</TableHead>
-                <TableHead className="hidden md:table-cell">When</TableHead>
-                <TableHead className="hidden text-right md:table-cell">Views</TableHead>
-                <TableHead className="w-28 text-right md:w-auto">
-                  <span className="sr-only">Actions</span>
+                <TableHead>{t('columns.video')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('columns.platform')}</TableHead>
+                <TableHead className="w-28 md:w-auto">{t('columns.state')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('columns.when')}</TableHead>
+                <TableHead className="hidden text-end md:table-cell">
+                  {t('columns.views')}
+                </TableHead>
+                <TableHead className="w-28 text-end md:w-auto">
+                  <span className="sr-only">{t('columns.actions')}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -208,7 +221,7 @@ export function PublicationsList() {
               disabled={cursors.length === 0}
               onClick={() => setCursors((c) => c.slice(0, -1))}
             >
-              Newer
+              {t('newer')}
             </Button>
             <Button
               variant="ghost"
@@ -217,7 +230,7 @@ export function PublicationsList() {
                 data.nextCursor && setCursors((c) => [...c, data.nextCursor as string])
               }
             >
-              Older
+              {t('older')}
             </Button>
           </div>
         </>

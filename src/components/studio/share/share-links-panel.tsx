@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Copy, Link2, Loader2, MessageSquare, XCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
-import { formatDate } from '@/lib/client/format';
+import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { useFormat } from '@/lib/client/format';
 import { Section, StateBadge } from '../primitives';
 
 // BACKLOG 15.E5 / operator decision P8 — "Share for feedback" on the review screen. A link lets
@@ -32,18 +33,19 @@ export interface ShareLinkItem {
 }
 
 const STATE_TONE = {
-  active: { label: 'Active', tone: 'good' },
-  expired: { label: 'Expired', tone: 'neutral' },
-  revoked: { label: 'Revoked', tone: 'bad' },
+  active: 'good',
+  expired: 'neutral',
+  revoked: 'bad',
 } as const;
 
-export const EXPIRY_OPTIONS = [
-  { hours: 24, label: '1 day' },
-  { hours: 72, label: '3 days' },
-  { hours: 168, label: '7 days' },
-];
+/** Link lifetimes offered, in hours (labels: share.links.expiryDays). */
+export const EXPIRY_OPTIONS = [24, 72, 168] as const;
 
 export function ShareLinksPanel({ projectId }: { projectId: string }) {
+  const t = useTranslations('share.links');
+  const tc = useTranslations('common.actions');
+  const f = useFormat();
+  const errorMessage = useErrorMessage();
   const path = `/projects/${encodeURIComponent(projectId)}/share-links`;
   const { data, mutate } = useApi<{ data: ShareLinkItem[] }>(path);
   const [hours, setHours] = useState(72);
@@ -70,9 +72,9 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
   const copy = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
-      toast.success('Link copied');
+      toast.success(t('copied'));
     } catch {
-      toast.error('Copy failed — select the link and copy it yourself');
+      toast.error(t('copyFailed'));
     }
   };
 
@@ -82,7 +84,7 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
         method: 'DELETE',
         idempotencyKey: newIdempotencyKey(),
       });
-      toast.success('Link revoked');
+      toast.success(t('revoked'));
       await mutate();
     } catch (err) {
       toast.error(errorMessage(err));
@@ -92,12 +94,12 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
   const links = data?.data ?? [];
   return (
     <Section
-      title="Share for feedback"
-      description="Anyone with the link can watch the variants and leave feedback. They cannot approve."
+      title={t('title')}
+      description={t('description')}
       actions={
         <div className="flex items-center gap-2">
           <label className="sr-only" htmlFor="share-expiry">
-            Link lasts
+            {t('expiryLabel')}
           </label>
           <select
             id="share-expiry"
@@ -105,61 +107,70 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
             value={hours}
             onChange={(e) => setHours(Number(e.target.value))}
           >
-            {EXPIRY_OPTIONS.map((o) => (
-              <option key={o.hours} value={o.hours}>
-                {o.label}
+            {EXPIRY_OPTIONS.map((h) => (
+              <option key={h} value={h}>
+                {t('expiryDays', { count: h / 24 })}
               </option>
             ))}
           </select>
           <Button size="sm" onClick={() => void create()} disabled={busy}>
             {busy ? <Loader2 className="animate-spin" /> : <Link2 />}
-            Create link
+            {t('create')}
           </Button>
         </div>
       }
     >
       {fresh && (
         <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-          <p className="font-medium">Copy this link now — it is shown only once.</p>
+          <p className="font-medium">{t('copyNow')}</p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1 text-xs">
+            <code
+              dir="ltr"
+              className="min-w-0 flex-1 truncate rounded bg-background px-2 py-1 text-xs"
+            >
               {fresh}
             </code>
             <Button size="sm" variant="outline" onClick={() => void copy(fresh)}>
-              <Copy /> Copy
+              <Copy /> {tc('copy')}
             </Button>
           </div>
         </div>
       )}
       {links.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No share links yet.</p>
+        <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : (
-        <ul aria-label="Share links" className="grid gap-3">
+        <ul aria-label={t('listAria')} className="grid gap-3">
           {links.map((l) => (
             <li key={l.id} className="rounded-lg border border-border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="flex items-center gap-2">
-                  <StateBadge {...STATE_TONE[l.state]} />
+                  <StateBadge label={t(`states.${l.state}`)} tone={STATE_TONE[l.state]} />
                   <span className="text-muted-foreground">
-                    {l.state === 'active' ? 'Expires' : 'Expired'} {formatDate(l.expiresAt)} ·{' '}
-                    {l.viewCount} views
+                    {t(l.state === 'active' ? 'expiresMeta' : 'expiredMeta', {
+                      date: f.date(l.expiresAt),
+                      views: l.viewCount,
+                    })}
                   </span>
                 </span>
                 {l.state === 'active' && (
                   <Button size="sm" variant="ghost" onClick={() => void revoke(l.id)}>
-                    <XCircle /> Revoke
+                    <XCircle /> {t('revoke')}
                   </Button>
                 )}
               </div>
               {l.comments.length > 0 && (
-                <ul aria-label="Feedback" className="mt-3 grid gap-2">
+                <ul aria-label={t('feedbackAria')} className="mt-3 grid gap-2">
                   {l.comments.map((c) => (
                     <li key={c.id} className="rounded-md bg-muted/50 p-2 text-sm">
                       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <MessageSquare className="size-3" />
                         <bdi className="font-medium text-foreground">{c.authorName}</bdi>
-                        {c.authorEmail && <span>· {c.authorEmail}</span>}
-                        <span>· {formatDate(c.createdAt)}</span>
+                        {c.authorEmail && (
+                          <span>
+                            · <bdi>{c.authorEmail}</bdi>
+                          </span>
+                        )}
+                        <span>· {f.date(c.createdAt)}</span>
                       </p>
                       <p dir="auto" className="mt-1 break-words whitespace-pre-wrap">
                         {c.body}

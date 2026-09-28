@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,13 +23,11 @@ export interface AdminUsageResponse {
   };
 }
 
-const TIER_SOURCE: Record<AdminUsageResponse['usage']['tier']['source'], string> = {
-  query: 'chosen here',
-  last_generation: 'recorded on its latest generation',
-  default: 'no generation recorded — Basic assumed',
-};
+const TIERS: readonly Tier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
 
 function OrgUsage({ orgId, tier }: { orgId: string; tier: Tier | '' }) {
+  const t = useTranslations('admin.usage');
+  const tTier = useTranslations('shell.usage.tiers');
   const res = useApi<AdminUsageResponse>(
     `/admin/organisations/${encodeURIComponent(orgId)}/usage`,
     {
@@ -36,14 +35,19 @@ function OrgUsage({ orgId, tier }: { orgId: string; tier: Tier | '' }) {
     },
   );
   if (res.error) return <ErrorState error={res.error} onRetry={() => void res.mutate()} />;
-  if (!res.data) return <Skeleton aria-label="Loading usage" className="h-40" />;
+  if (!res.data) return <Skeleton aria-label={t('loadingAria')} className="h-40" />;
   const { usage } = res.data;
   return (
     <div className="grid gap-4">
       <p className="text-xs text-muted-foreground">
-        {usage.month} · tier {usage.tier.value} ({TIER_SOURCE[usage.tier.source]}) · quota mode{' '}
-        <span className="font-medium text-foreground">{usage.mode}</span> · status{' '}
-        <span className="font-medium text-foreground">{usage.status}</span>
+        {t.rich('summary', {
+          month: usage.month,
+          tier: tTier(usage.tier.value),
+          source: t(`tierSource.${usage.tier.source}`),
+          mode: t(`mode.${usage.mode}`),
+          status: t(`status.${usage.status}`),
+          strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+        })}
       </p>
       <UsageMeters usage={usage} />
     </div>
@@ -51,6 +55,8 @@ function OrgUsage({ orgId, tier }: { orgId: string; tier: Tier | '' }) {
 }
 
 export function UsagePanel() {
+  const t = useTranslations('admin.usage');
+  const tTier = useTranslations('shell.usage.tiers');
   const [input, setInput] = useState('');
   const [orgId, setOrgId] = useState<string | null>(null);
   const [tier, setTier] = useState<Tier | ''>('');
@@ -64,41 +70,38 @@ export function UsagePanel() {
         }}
       >
         <div className="grid gap-1.5">
-          <Label htmlFor="usage-org">Organisation id</Label>
+          <Label htmlFor="usage-org">{t('orgIdLabel')}</Label>
           <Input
             id="usage-org"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="org_…"
+            placeholder={t('orgIdPlaceholder')}
             className="w-72"
             maxLength={128}
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="usage-tier">Evaluate against</Label>
+          <Label htmlFor="usage-tier">{t('evaluateAgainst')}</Label>
           <select
             id="usage-tier"
             className={selectClass}
             value={tier}
             onChange={(e) => setTier(e.target.value as Tier | '')}
           >
-            <option value="">Recorded tier</option>
-            <option value="BASIC">Basic</option>
-            <option value="STANDARD">Standard</option>
-            <option value="PLUS">Plus</option>
-            <option value="ENTERPRISE">Enterprise</option>
+            <option value="">{t('recordedTier')}</option>
+            {TIERS.map((v) => (
+              <option key={v} value={v}>
+                {tTier(v)}
+              </option>
+            ))}
           </select>
         </div>
         <Button type="submit" variant="outline" disabled={!input.trim()}>
-          Show usage
+          {t('show')}
         </Button>
       </form>
       {orgId && (
-        <Section
-          key={orgId}
-          title="Plan usage this month"
-          description="Videos generated this calendar month (UTC) against the spec 12.4 quotas."
-        >
+        <Section key={orgId} title={t('title')} description={t('description')}>
           <OrgUsage orgId={orgId} tier={tier} />
         </Section>
       )}

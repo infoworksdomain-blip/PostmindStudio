@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { CalendarClock } from 'lucide-react';
-import { PLATFORM_LABEL, PUBLICATION_STATE, stateOf } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { eventTime, formatTime } from './month';
@@ -13,9 +14,9 @@ import { canMove, DRAG_TYPE } from './reschedule';
 // "Move to" button (keyboard and phone alternative to dragging).
 
 const RULE: Record<string, string> = {
-  SCHEDULED: 'border-l-muted-foreground/60',
-  PUBLISHING: 'border-l-primary',
-  PUBLISHED: 'border-l-success',
+  SCHEDULED: 'border-s-muted-foreground/60',
+  PUBLISHING: 'border-s-primary',
+  PUBLISHED: 'border-s-success',
 };
 
 export function CalendarEvent({
@@ -30,31 +31,36 @@ export function CalendarEvent({
   onMove?: (publication: Publication) => void;
   busy?: boolean;
 }) {
+  const t = useTranslations('calendar.event');
+  const f = useFormat();
   const at = eventTime(publication);
-  const platform = PLATFORM_LABEL[publication.platform] ?? publication.platform;
-  const state = stateOf(PUBLICATION_STATE, publication.state);
-  const name = publication.project?.name ?? 'Untitled project';
+  const time = at ? formatTime(at, f.locale) : null;
+  const platform = f.platform(publication.platform);
+  const state = f.publicationState(publication.state).label;
+  const name = publication.project?.name ?? t('untitled');
   const movable = Boolean(onMove) && canMove(publication);
   const link = (
     <Link
       href={`/projects/${publication.projectId}`}
-      title={`${name} — ${platform} — ${state.label}`}
-      aria-label={`${name}, ${platform}, ${state.label}${at ? ` at ${formatTime(at)}` : ''}`}
+      title={t('title', { name, platform, state })}
+      aria-label={
+        time ? t('ariaAt', { name, platform, state, time }) : t('aria', { name, platform, state })
+      }
       className={cn(
-        'block min-w-0 rounded-sm border-l-2 bg-secondary/60 transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-        RULE[publication.state] ?? 'border-l-border',
+        'block min-w-0 rounded-sm border-s-2 bg-secondary/60 transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+        RULE[publication.state] ?? 'border-s-border',
         compact ? 'px-1.5 py-0.5 text-[0.7rem] leading-tight' : 'px-3 py-2 text-sm',
         movable && 'flex-1 cursor-grab active:cursor-grabbing',
         busy && 'opacity-50',
       )}
     >
       <span className="flex items-baseline gap-1.5">
-        {at && <span className="tabular shrink-0 text-muted-foreground">{formatTime(at)}</span>}
+        {time && <span className="tabular shrink-0 text-muted-foreground">{time}</span>}
         <span className="truncate font-medium">{name}</span>
       </span>
       {!compact && (
         <span className="mt-0.5 block text-xs text-muted-foreground">
-          {platform} · {state.label}
+          {t('meta', { platform, state })}
         </span>
       )}
     </Link>
@@ -72,8 +78,8 @@ export function CalendarEvent({
       {link}
       <button
         type="button"
-        aria-label={`Move ${name} to another time`}
-        title="Move to another time"
+        aria-label={t('moveAria', { name })}
+        title={t('moveTitle')}
         disabled={busy}
         onClick={() => onMove?.(publication)}
         className="grid shrink-0 place-items-center rounded-sm px-1 text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"

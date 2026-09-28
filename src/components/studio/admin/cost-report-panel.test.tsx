@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { forbidden, mockFetch, renderWithSWR } from '../library/test-helpers';
 import { CostReportPanel, rollup } from './cost-report-panel';
 import type { AdminCostRow } from './types';
+import { ALL_MESSAGES } from '@/lib/i18n/all-messages';
+import { withLocale } from '../../../../test/i18n-wrapper';
 
 const rows: AdminCostRow[] = [
   {
@@ -90,5 +92,23 @@ describe('CostReportPanel', () => {
     const alerts = await screen.findAllByRole('alert');
     expect(alerts.length).toBeGreaterThan(0);
     for (const alert of alerts) expect(alert).toHaveTextContent('permission');
+  });
+});
+
+describe('CostReportPanel localisation', () => {
+  it('renders Arabic right-to-left', async () => {
+    mockFetch([{ match: '/admin/cost', body: { ok: true, days: 30, data: rows } }]);
+    renderWithSWR(withLocale('ar', <CostReportPanel />));
+    const ar = ALL_MESSAGES.ar.admin.cost.report;
+    expect(await screen.findByRole('list', { name: ar.byProviderAria })).toBeInTheDocument();
+    expect(screen.getByText(ar.spend)).toBeInTheDocument();
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
+  });
+
+  it('renders Simplified Chinese', async () => {
+    mockFetch([{ match: '/admin/cost', body: { ok: true, days: 30, data: rows } }]);
+    renderWithSWR(withLocale('zh-Hans', <CostReportPanel />));
+    expect(await screen.findByText('服务商支出')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: '90 天' })).toBeInTheDocument();
   });
 });

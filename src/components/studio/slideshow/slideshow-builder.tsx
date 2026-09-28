@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   AlertTriangle,
@@ -16,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
-import { formatDuration } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { ErrorState } from '../primitives';
@@ -24,24 +25,22 @@ import { Field, NativeSelect } from '../review/field';
 import { useAction } from '../review/use-action';
 import { SlideEditor, type SlidePatch } from './slide-editor';
 import { SlideOverlays } from './slide-overlays';
-import { SLIDE_TYPE_LABEL, SLIDE_TYPES, type Slide, type SlideType } from './types';
+import { slideProblemKey, SLIDE_TYPES, type Slide, type SlideType } from './types';
 
 // BACKLOG 10.8 — slideshow builder (A5): slides in order with what each still needs, edit,
 // reorder, add, delete, auto-populate from the image library (A5.5), save as a template (A5.7).
 
 const EDITABLE = new Set(['DRAFT', 'FAILED', 'REJECTED', 'QUALITY_FAILED', 'READY_FOR_REVIEW']);
 
-export function slideSummary(slide: Slide): string {
+/** The slide's own text, or which placeholder message to show instead. */
+export type SlideSummary = { text: string } | { key: 'pendingText' | 'noText' };
+
+export function slideSummary(slide: Slide): SlideSummary {
   const c = slide.content;
-  return (
-    c.text ||
-    c.quote ||
-    (c.value && `${c.value} ${c.label ?? ''}`.trim()) ||
-    c.name ||
-    c.caption ||
-    (c.pendingText ? 'Text to be written by auto-populate' : '') ||
-    'No text'
-  );
+  const text =
+    c.text || c.quote || (c.value && `${c.value} ${c.label ?? ''}`.trim()) || c.name || c.caption;
+  if (text) return { text };
+  return { key: c.pendingText ? 'pendingText' : 'noText' };
 }
 
 export function SlideshowBuilder({
@@ -53,6 +52,10 @@ export function SlideshowBuilder({
   businessId: string | null;
   onChanged: () => void;
 }) {
+  const t = useTranslations('slideshow.builder');
+  const tt = useTranslations('slideshow.types');
+  const tp = useTranslations('slideshow.problems');
+  const f = useFormat();
   const populating = project.state === 'SCANNING';
   const { data, error, isLoading, mutate } = useApi<{ data: Slide[] }>(
     `/projects/${project.id}/slides`,
@@ -75,7 +78,7 @@ export function SlideshowBuilder({
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
   if (isLoading || !data)
     return (
-      <div className="flex flex-col gap-2" aria-label="Loading slides">
+      <div className="flex flex-col gap-2" aria-label={t('loading')}>
         {Array.from({ length: 4 }, (_, i) => (
           <Skeleton key={i} className="h-14 rounded-lg" />
         ))}
@@ -96,7 +99,7 @@ export function SlideshowBuilder({
   async function remove(slide: Slide) {
     const ok = await run(`delete-${slide.id}`, `/slides/${slide.id}`, {
       method: 'DELETE',
-      success: 'Slide deleted.',
+      success: t('deleted'),
     });
     if (ok) await mutate();
   }
@@ -105,7 +108,7 @@ export function SlideshowBuilder({
     const ok = await run(`save-${slide.id}`, `/slides/${slide.id}`, {
       method: 'PATCH',
       body: patch,
-      success: 'Slide saved.',
+      success: t('saved'),
     });
     if (ok) {
       setOpenId(null);
@@ -125,7 +128,7 @@ export function SlideshowBuilder({
 
   async function autoPopulate() {
     const ok = await run('populate', `/projects/${project.id}/auto-populate`, {
-      success: 'Auto-populating text and images from your library…',
+      success: t('populateStarted'),
     });
     if (ok) onChanged();
   }
@@ -134,26 +137,35 @@ export function SlideshowBuilder({
     e.preventDefault();
     const ok = await run('template', '/slideshow-templates', {
       body: { projectId: project.id, name: templateName.trim() },
-      success: 'Saved as a template.',
+      success: t('templateSaved'),
     });
     if (ok) setTemplateName('');
   }
+
+  const summaryText = (slide: Slide) => {
+    const summary = slideSummary(slide);
+    return 'text' in summary ? summary.text : t(summary.key);
+  };
+  const problemText = (problem: string) => {
+    const key = slideProblemKey(problem);
+    return key ? tp(key) : problem;
+  };
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="tabular text-sm text-muted-foreground">
-          {slides.length} slides · {formatDuration(total)}
-          {needing > 0 && <span className="text-foreground"> · {needing} need attention</span>}
+          {t('slides', { count: slides.length })} · {f.duration(total)}
+          {needing > 0 && (
+            <span className="text-foreground"> · {t('needAttention', { count: needing })}</span>
+          )}
         </p>
         <Button variant="outline" onClick={autoPopulate} disabled={!editable || busy || populating}>
           {pending === 'populate' || populating ? <Loader2 className="animate-spin" /> : <Wand2 />}
-          {populating ? 'Auto-populating…' : 'Auto-populate'}
+          {populating ? t('autoPopulating') : t('autoPopulate')}
         </Button>
       </div>
-      {slides.length === 0 && (
-        <p className="text-sm text-muted-foreground">No slides yet — add one below.</p>
-      )}
+      {slides.length === 0 && <p className="text-sm text-muted-foreground">{t('empty')}</p>}
       <ol className="flex flex-col gap-2">
         {slides.map((slide, i) => {
           const open = openId === slide.id;
@@ -173,15 +185,15 @@ export function SlideshowBuilder({
                   type="button"
                   aria-expanded={open}
                   onClick={() => setOpenId(open ? null : slide.id)}
-                  className="min-w-0 flex-1 rounded text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="min-w-0 flex-1 rounded text-start focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
-                  <span className="block truncate text-sm">{slideSummary(slide)}</span>
+                  <span className="block truncate text-sm">{summaryText(slide)}</span>
                   <span className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
-                    {SLIDE_TYPE_LABEL[slide.slideType]} · {formatDuration(slide.durationSec)}
+                    {tt(slide.slideType)} · {f.duration(slide.durationSec)}
                     {slide.problem && (
                       <>
                         <AlertTriangle aria-hidden className="size-3 text-warning" />
-                        <span>{slide.problem}</span>
+                        <span>{problemText(slide.problem)}</span>
                       </>
                     )}
                   </span>
@@ -196,7 +208,7 @@ export function SlideshowBuilder({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Move slide ${i + 1} up`}
+                  aria-label={t('moveUp', { n: i + 1 })}
                   disabled={!editable || busy || i === 0}
                   onClick={() => reorder(slide, i - 1)}
                 >
@@ -205,7 +217,7 @@ export function SlideshowBuilder({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Move slide ${i + 1} down`}
+                  aria-label={t('moveDown', { n: i + 1 })}
                   disabled={!editable || busy || i === slides.length - 1}
                   onClick={() => reorder(slide, i + 1)}
                 >
@@ -214,7 +226,7 @@ export function SlideshowBuilder({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Delete slide ${i + 1}`}
+                  aria-label={t('delete', { n: i + 1 })}
                   disabled={!editable || busy}
                   onClick={() => remove(slide)}
                 >
@@ -248,30 +260,30 @@ export function SlideshowBuilder({
       {editable && (
         <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
           <div className="flex items-end gap-2">
-            <Field id="new-slide-type" label="Add a slide" className="flex-1">
+            <Field id="new-slide-type" label={t('addLabel')} className="flex-1">
               <NativeSelect
                 id="new-slide-type"
                 value={newType}
                 onChange={(e) => setNewType(e.target.value as SlideType)}
               >
-                {SLIDE_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {SLIDE_TYPE_LABEL[t]}
+                {SLIDE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {tt(type)}
                   </option>
                 ))}
               </NativeSelect>
             </Field>
             <Button variant="outline" onClick={add} disabled={busy || slides.length >= 40}>
-              {pending === 'add' ? <Loader2 className="animate-spin" /> : <Plus />} Add
+              {pending === 'add' ? <Loader2 className="animate-spin" /> : <Plus />} {t('add')}
             </Button>
           </div>
           <form onSubmit={saveTemplate} className="flex items-end gap-2">
-            <Field id="template-name" label="Save as template" className="flex-1">
+            <Field id="template-name" label={t('saveTemplate')} className="flex-1">
               <Input
                 id="template-name"
                 value={templateName}
                 maxLength={120}
-                placeholder="Template name"
+                placeholder={t('templatePlaceholder')}
                 onChange={(e) => setTemplateName(e.target.value)}
               />
             </Field>
@@ -281,7 +293,7 @@ export function SlideshowBuilder({
               disabled={busy || !templateName.trim() || slides.length === 0}
             >
               {pending === 'template' ? <Loader2 className="animate-spin" /> : <BookmarkPlus />}{' '}
-              Save
+              {t('save')}
             </Button>
           </form>
         </div>
