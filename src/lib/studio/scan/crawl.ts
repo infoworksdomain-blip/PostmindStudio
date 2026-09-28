@@ -188,7 +188,14 @@ async function renderBlockedHomepage(
   }
 }
 
-/** Browserless /content (https://docs.browserless.io/rest-apis/content). */
+/**
+ * Browserless /content (https://docs.browserless.io/rest-apis/content). BACKLOG 14.4 security
+ * review: the token goes in an `Authorization: Bearer` header, never in the URL (query strings
+ * end up in access logs and proxies). Browserless documents "?token= … or the Authorization
+ * header", and the open-source server (browserless/browserless src/utils.ts getTokenFromRequest /
+ * getAuthHeaderToken, v2.56.7) reads `Bearer <token>` from the header. An empty token (a
+ * self-hosted host without TOKEN) sends no header.
+ */
 export function createBrowserlessRenderer(input: {
   token: string;
   fetchImpl: typeof fetch;
@@ -197,15 +204,14 @@ export function createBrowserlessRenderer(input: {
   const base = input.baseUrl ?? 'https://production-sfo.browserless.io';
   return {
     async render(url) {
-      const res = await input.fetchImpl(
-        `${base}/content?token=${encodeURIComponent(input.token)}`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ url }),
-          signal: AbortSignal.timeout(45_000),
-        },
-      );
+      const headers: Record<string, string> = { 'content-type': 'application/json' };
+      if (input.token) headers.authorization = `Bearer ${input.token}`;
+      const res = await input.fetchImpl(`${base}/content`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ url }),
+        signal: AbortSignal.timeout(45_000),
+      });
       if (!res.ok) throw new ValidationError(`Browserless render failed (HTTP ${res.status})`);
       const html = await res.text();
       return html.slice(0, 5 * 1024 * 1024);

@@ -50,5 +50,28 @@
    - Was the category not covered? Adjust `SAFETY_*` in `src/lib/studio/pipeline/quality-checks.ts`
      with a test, and deploy.
 
-**GAP:** the monthly audit sampling job and its dashboard are process work for Trust & Safety.
-They are not in code.
+## Monthly Trust & Safety audit (BACKLOG 14.11)
+
+The metric "Hive scan miss rate" comes from this audit.
+
+- **Sampling (automatic).** The `sample-safety-audit` job runs at 06:00 UTC on the 1st of each
+  month (worker scheduler `sample-safety-audit-monthly`). It draws a uniform random sample of
+  `STUDIO_SAFETY_AUDIT_SAMPLE` (default 50, max 500) videos **published** the month before into
+  `studio.safety_audit_items`. It is idempotent: a re-run only tops the sample up. If it failed
+  (log `safety audit sampling failed`), draw it by hand: Admin Centre → **Safety audit** →
+  *Draw sample*, or `POST /api/studio/admin/safety-audit/sample { "period": "YYYY-MM" }`.
+- **Review (a person, every month).** Admin Centre → **Safety audit** (`GET
+  /api/studio/admin/safety-audit?period=YYYY-MM`) lists the sample with a preview and the post
+  link. For each video record **Pass** or **Miss** (a miss needs a note saying what was missed:
+  it should have been blocked or sent to review). `POST /api/studio/admin/safety-audit/:id/result`,
+  capability `studio:admin:moderation`, audited (`studio.safety_audit.record`). A result is
+  recorded once (409 afterwards).
+- **A miss** notifies PostMind staff at once (notification kind `safety_review`, link to the
+  audit tab). Treat it as a true miss: follow **Steps** above for that publication (take down,
+  preserve evidence, root cause).
+- **Metric.** The tab's summary shows sampled / pending / passed / missed and
+  **miss rate = missed ÷ (passed + missed)** for the period. Record it monthly in the T&S log.
+  Threshold: any true miss (above). Target: the whole sample reviewed by the 15th.
+
+**GAP (people):** someone in Trust & Safety must own the monthly review; nothing enforces it
+beyond the pending count on the tab.

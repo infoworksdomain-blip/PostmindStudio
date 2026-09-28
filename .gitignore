@@ -60,3 +60,6 @@ scratch/
 
 # Demo build output (regenerate with node scripts/demo/build.mjs)
 demo/dist/
+
+# Deployment secret files mounted by docker-compose.*.yml (BACKLOG 14.3 / 14.4) - never commit
+/secrets/

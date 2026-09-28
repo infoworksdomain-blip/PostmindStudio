@@ -59,4 +59,18 @@ If a migration itself is broken:
 4. Confirm that N runs correctly on the N+1 schema.
 5. Redeploy N+1 and confirm it runs.
 
-Record the times in PROGRESS.md. **Anything over 5 minutes is a blocker.**
+Steps 2–3 are automated (Phase 14.6). `STAGING_DEPLOY_CMD` is your deploy command with `{tag}`:
+
+```bash
+STUDIO_URL=https://studio-staging.postmind.ai \
+STAGING_DEPLOY_CMD='IMAGE_TAG={tag} docker compose -f docker-compose.prod.yml up -d --no-deps web worker-orchestration worker-assets worker-publish worker-scheduled worker-analytics worker-library' \
+npx tsx scripts/ops/staging-gate.ts --rehearse rollback --from-tag <N> --to-tag <N+1>
+```
+
+It deploys N+1 and waits for `/api/health/ready` (or `STAGING_READY_URL`) to answer 200 three
+times in a row. Then it rolls back to N and times from the start of the rollback to ready, against
+the 5 min SLO. The report goes to `ops/results/<date>-rehearse-rollback.md`. The same check is in
+GitHub Actions: **Staging gate (GATE 12)** → `rehearse-rollback`. Steps 4–5 stay manual.
+
+Record the times in PROGRESS.md and runbooks/staging-gate.md. **Anything over 5 minutes is a
+blocker.**

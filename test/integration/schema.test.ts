@@ -56,6 +56,10 @@ const EXPECTED_TABLES = [
   'organisation_purges',
   'notification_preferences',
   'content_safety_tasks',
+  // Phase 14
+  'organisation_beta',
+  'beta_feedback',
+  'safety_audit_items',
 ];
 
 let db: PGlite;
@@ -69,7 +73,7 @@ afterAll(async () => {
 });
 
 describe('studio schema migrations', () => {
-  it('creates all 46 tables in the studio schema and nowhere else', async () => {
+  it('creates all 49 tables in the studio schema and nowhere else', async () => {
     const { rows } = await db.query<{ schemaname: string; tablename: string }>(
       `SELECT schemaname, tablename FROM pg_tables
        WHERE schemaname NOT IN ('pg_catalog', 'information_schema')`,

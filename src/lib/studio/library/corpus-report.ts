@@ -31,6 +31,8 @@ export interface CorpusArgs {
   licenseSource: string;
   waitMinutes: number;
   reportOnly: boolean;
+  /** Phase 14.9: check tier, concurrency, buckets and the manifest; submit nothing. */
+  preflight: boolean;
 }
 
 const NUMERIC: Record<string, keyof CorpusArgs> = {
@@ -55,11 +57,13 @@ export function parseCorpusArgs(argv: string[]): CorpusArgs {
     licenseSource: NOT_REQUIRED_DEFAULT_SOURCE,
     waitMinutes: 180,
     reportOnly: false,
+    preflight: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i] as string;
     if (flag === '--apply') args.apply = true;
     else if (flag === '--report') args.reportOnly = true;
+    else if (flag === '--preflight') args.preflight = true;
     else if (flag === '--state' || flag === '--license-source') {
       const value = argv[i + 1];
       if (value === undefined || value.startsWith('--'))
@@ -83,6 +87,8 @@ export function parseCorpusArgs(argv: string[]): CorpusArgs {
     if (v !== undefined && !Number.isInteger(v))
       throw new ValidationError(`--${key} must be a whole number`);
   }
+  if (args.preflight && (args.apply || args.reportOnly))
+    throw new ValidationError('--preflight submits nothing: drop --apply / --report');
   if (args.concurrency > 8) throw new ValidationError('--concurrency is at most 8 batches');
   if (!args.licenseSource) throw new ValidationError('--license-source cannot be empty');
   return args;

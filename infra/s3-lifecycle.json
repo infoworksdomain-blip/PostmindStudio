@@ -1,0 +1,101 @@
+{
+  "$comment": [
+    "BACKLOG 14.2 - S3 lifecycle rules for Studio's buckets (spec 17.4, runbooks/storage-cost.md).",
+    "Rules use the AWS SDK v3 PutBucketLifecycleConfiguration shape (LifecycleConfiguration.Rules).",
+    "Apply with: npx tsx scripts/ops/apply-s3-lifecycle.ts (dry-run diff) then --apply.",
+    "Validated in CI by src/lib/studio/ops/s3-lifecycle.test.ts (npm test).",
+    "Rule IDs start with 'studio-': the apply script only replaces studio- rules and keeps others.",
+    "Intermediates: S3 filters cannot match orgs/*/projects/*/providers/, and orgs/<id>/ also holds",
+    "uploads, scraped images and voice consent, so provider outputs are tagged",
+    "studio-object=provider-output at write time (src/lib/studio/storage.ts) and expire by tag.",
+    "No rule expires current objects under orgs/: completed uploads and renders must not expire.",
+    "Abandoned (PENDING) uploads are swept by the app (sweep-abandoned-uploads job), not by S3.",
+    "Renders are kept for the lifetime of the publication + 90 days: app logic, not lifecycle."
+  ],
+  "buckets": {
+    "assets": {
+      "envVar": "S3_BUCKET_ASSETS",
+      "rules": [
+        {
+          "ID": "studio-intermediates-expire-30d",
+          "Status": "Enabled",
+          "Filter": { "Tag": { "Key": "studio-object", "Value": "provider-output" } },
+          "Expiration": { "Days": 30 }
+        },
+        {
+          "ID": "studio-noncurrent-versions-expire-30d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "NoncurrentVersionExpiration": { "NoncurrentDays": 30 },
+          "Expiration": { "ExpiredObjectDeleteMarker": true }
+        },
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    },
+    "renders": {
+      "envVar": "S3_BUCKET_RENDERS",
+      "rules": [
+        {
+          "ID": "studio-noncurrent-versions-expire-30d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "NoncurrentVersionExpiration": { "NoncurrentDays": 30 },
+          "Expiration": { "ExpiredObjectDeleteMarker": true }
+        },
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    },
+    "thumbnails": {
+      "envVar": "S3_BUCKET_THUMBNAILS",
+      "rules": [
+        {
+          "ID": "studio-noncurrent-versions-expire-30d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "NoncurrentVersionExpiration": { "NoncurrentDays": 30 },
+          "Expiration": { "ExpiredObjectDeleteMarker": true }
+        },
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    },
+    "library": {
+      "envVar": "S3_BUCKET_LIBRARY",
+      "rules": [
+        {
+          "ID": "studio-library-staging-expire-2d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "library/staging/" },
+          "Expiration": { "Days": 2 }
+        },
+        {
+          "ID": "studio-noncurrent-versions-expire-30d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "NoncurrentVersionExpiration": { "NoncurrentDays": 30 },
+          "Expiration": { "ExpiredObjectDeleteMarker": true }
+        },
+        {
+          "ID": "studio-abort-incomplete-multipart-7d",
+          "Status": "Enabled",
+          "Filter": { "Prefix": "" },
+          "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+        }
+      ]
+    }
+  }
+}

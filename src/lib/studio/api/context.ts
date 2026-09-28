@@ -13,6 +13,7 @@ import type { CircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderRegistry } from '../providers/registry';
 import type { InspectableQueue } from '../services/admin-health';
 import type { UploadDeps } from '../uploads/signer';
+import type { BetaPlanLookup } from '../services/beta';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import { devTenantFromEnv } from './dev-tenant';
@@ -53,6 +54,8 @@ export interface ApiDeps {
   core?: { businesses?: CoreBusinessDirectory; channels?: CoreChannelDirectory };
   /** 13.5: presigned upload URLs + ffprobe; absent = built from env on first use. */
   uploads?: UploadDeps;
+  /** 14.11: beta "Plus for 30 days" override lookup; absent = Core's plan tier as-is (tests). */
+  betaPlans?: BetaPlanLookup;
   logger: Logger;
   now: () => number;
 }
@@ -89,6 +92,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
   const rateLimit = await import('./rate-limit');
   const voices = await import('../providers/elevenlabs-voices');
   const adminHealth = await import('../services/admin-health');
+  const beta = await import('../services/beta');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -126,6 +130,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     appUrl: env.requireEnv('APP_URL'),
     breaker: pipeline.breaker,
     adminQueues: () => adminHealth.bullQueuesFor(connection),
+    betaPlans: beta.createBetaPlanLookup({ db: prisma, logger, now: Date.now }),
     logger,
     now: Date.now,
   };

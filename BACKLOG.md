@@ -195,8 +195,8 @@ Work items in the order Claude Code should execute them. Each item names its acc
 ## Phase 12 — Hardening + launch prep (target: week 14-16)
 
 - [x] **12.1** Load testing (k6 scripts per Engagement pattern).
-- [ ] **12.2** Kill switch rehearsals — all 4 levels, timed against SLO. _(tooling + procedure built; timed rehearsal pending on staging)_
-- [ ] **12.3** Rollback rehearsal. _(procedure built; timed rehearsal pending on staging)_
+- [ ] **12.2** Kill switch rehearsals — all 4 levels, timed against SLO. _(tooling built, all five levels timed unattended since 14.6: `npx tsx scripts/ops/staging-gate.ts --rehearse kill-switch`; timed rehearsal pending on staging — runbooks/staging-gate.md)_
+- [ ] **12.3** Rollback rehearsal. _(automated since 14.6: `STAGING_DEPLOY_CMD=… npx tsx scripts/ops/staging-gate.ts --rehearse rollback --from-tag <N> --to-tag <N+1>`; timed rehearsal pending on staging — runbooks/rollback.md)_
 - [x] **12.4** All runbooks written per playbook Section 11.
 - [ ] **12.5** Beta customer onboarding (5-10 friendlies).
 - [x] **12.6** Production deployment configs (Dockerfile, docker-compose.prod.yml, deploy runbooks).
@@ -265,21 +265,21 @@ Plan, endpoint contracts and sample requests/responses: `plans/phase-13.md`. Wav
 Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave B (13.33–13.39). Items whose last step is a person's are built, then marked "ready to run" until that step happens.
 
 **Track 1 — data and infrastructure**
-- [ ] **14.1** Organisation purge: hard deletion after the 30-day grace.
-- [ ] **14.2** S3 lifecycle rules as code + apply script (DevOps applies).
-- [ ] **14.3** Prometheus + Alertmanager deployment stack (DevOps supplies keys and runs).
-- [ ] **14.4** Headless render fallback service, owner-confirmed sites only (operator enables).
+- [x] **14.1** Organisation purge: hard deletion after the 30-day grace.
+- [ ] **14.2** S3 lifecycle rules as code + apply script (DevOps applies). (built; ready to run by DevOps: `npx tsx scripts/ops/apply-s3-lifecycle.ts` with AWS_REGION + S3_BUCKET_*, review the diff, then `--apply`)
+- [ ] **14.3** Prometheus + Alertmanager deployment stack (DevOps supplies keys and runs). (built; ready to run by DevOps: secret files, `docker compose -f docker-compose.monitoring.yml up -d`, then `npx tsx scripts/ops/alert-smoke.ts` — runbooks/monitoring-deploy.md)
+- [ ] **14.4** Headless render fallback service, owner-confirmed sites only (operator enables). (built; ready to run by the operator: `docker compose -p postmind-studio -f docker-compose.prod.yml --profile headless-render up -d browserless` + STUDIO_HEADLESS_RENDER_URL/_TOKEN on staging — runbooks/scan-blocked.md)
 
 **Track 2 — staging gate**
-- [ ] **14.5** k6 smoke + full run automation (operator runs on staging).
-- [ ] **14.6** Kill-switch (all five levels) and rollback rehearsal automation (operator runs).
-- [ ] **14.7** Point-in-time restore verification (DevOps restores, then runs the check).
-- [ ] **14.8** Live provider + posting run harness (operator runs with staging keys).
-- [ ] **14.9** Corpus manifest template, pre-flight and review checklist (operator runs 9.2 → 9.3).
+- [ ] **14.5** k6 smoke + full run automation (built; ready to run by the operator on staging: `staging-gate.ts --k6 smoke|full` or the Staging gate workflow).
+- [ ] **14.6** Kill-switch (all five levels) and rollback rehearsal automation (built; ready to run by the operator on staging, DevOps supplies STAGING_DEPLOY_CMD: `staging-gate.ts --rehearse all`).
+- [ ] **14.7** Point-in-time restore verification (built; ready to run by DevOps: `staging-gate.ts --snapshot` → PITR restore → `--restore-check`).
+- [ ] **14.8** Live provider + posting run harness (built; ready to run by the operator with staging keys and test accounts: `npm run gate:live -- --confirm`).
+- [ ] **14.9** Corpus manifest template, pre-flight and review checklist (built; ready to run by the operator: `ingest-corpus.ts <manifest> --preflight`, then 9.2 → review → 9.3).
 
 **Track 3 — integrations and beta**
-- [ ] **14.10** Core integration kit for the Meta internal endpoints (Core team wires it).
-- [ ] **14.11** Beta programme tooling, Trust & Safety audit sampling, on-call rota config (people run it).
+- [ ] **14.10** Core integration kit for the Meta internal endpoints (Core team wires it). (built; ready to run by the Core team: integrations/core — copy the client, wire it, `npm run contract:core -- --base-url <staging> --token <token>`)
+- [ ] **14.11** Beta programme tooling, Trust & Safety audit sampling, on-call rota config (people run it). (built; ready to run by people: recruit and enrol 5–10 beta customers in Admin → Beta, staff the rota from ops/oncall/rota.template.yaml + PagerDuty, review the monthly sample in Admin → Safety audit)
 
 ## Phase 15 — Spec coverage gaps
 

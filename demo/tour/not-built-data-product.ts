@@ -103,16 +103,15 @@ export const PRODUCT_GAPS: NotBuiltItem[] = [
     group: 'Business set-up',
     title: 'Browser-rendering fallback for blocked scans',
     blocker: 'needs staging',
-    why: 'Contract shipped, waiting for a headless Chromium host: with STUDIO_HEADLESS_RENDER_URL set, a homepage refused with 403/429/503 is rendered once (self-hosted Browserless /content); unset, scans fall back to manual entry as before.',
-    source: 'PROGRESS [13.37]; runbooks/scan-blocked.md GAP',
+    why: 'Built and ready to run: `docker compose -p postmind-studio -f docker-compose.prod.yml --profile headless-render up -d browserless` with STUDIO_HEADLESS_RENDER_URL=http://browserless:3000 and the token file (runbooks/scan-blocked.md); used only for sites whose owner confirmed ownership, never against a third party’s bot protection; waiting for the operator to enable the profile on staging.',
+    source: 'BACKLOG 14.4; docker-compose.prod.yml; runbooks/scan-blocked.md',
     plan: {
       screens: [],
       endpoints: [
-        'deploy ghcr.io/browserless/chromium privately and set STUDIO_HEADLESS_RENDER_URL/_TOKEN',
+        'operator: create the token file, set the two env vars, enable the profile on staging, check one owned 403 site, then production',
       ],
-      days: 0.5,
-      dependsOn:
-        'operator decision to run it (scan-blocked.md policy) and a place to run headless Chromium',
+      days: 0.25,
+      dependsOn: 'operator on staging',
     },
   },
 ];

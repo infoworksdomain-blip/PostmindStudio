@@ -40,6 +40,26 @@ export function memoryStorage() {
       if (!object) throw new Error(`missing ${bucket}/${fromKey}`);
       objects.set(`${bucket}/${toKey}`, object);
     },
+    // 14.1: ListObjectsV2-like paging (1,000 per page, token = last key) and DeleteObjects.
+    async list(bucket, prefix, continuationToken) {
+      const keys = [...objects.keys()]
+        .filter((k) => k.startsWith(`${bucket}/${prefix}`))
+        .map((k) => k.slice(bucket.length + 1))
+        .sort()
+        .filter((k) => !continuationToken || k > continuationToken);
+      const page = keys.slice(0, 1_000);
+      return {
+        objects: page.map((key) => ({
+          key,
+          size: objects.get(`${bucket}/${key}`)?.body.byteLength ?? 0,
+        })),
+        nextToken: keys.length > page.length ? page[page.length - 1] : undefined,
+      };
+    },
+    async deleteMany(bucket, keys) {
+      for (const key of keys) objects.delete(`${bucket}/${key}`);
+      return { deleted: keys.length, errors: [] };
+    },
   };
   return { storage, objects };
 }

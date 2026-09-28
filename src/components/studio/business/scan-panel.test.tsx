@@ -59,6 +59,10 @@ describe('ScanPanel', () => {
     await user.type(screen.getByLabelText('Website address'), 'bakery.example');
     const submit = screen.getByRole('button', { name: 'Scan website' });
     expect(submit).toBeDisabled();
+    // 14.4: the browser-render fallback policy is stated next to the confirmation.
+    expect(screen.getByTestId('scan-render-policy')).toHaveTextContent(
+      /only because you have confirmed it is your site.*never use this to get round another company/,
+    );
     await user.click(screen.getByRole('checkbox'));
     await user.click(submit);
     await waitFor(() => expect(api.find('POST', '/businesses/biz_1/scan-website')).toHaveLength(1));

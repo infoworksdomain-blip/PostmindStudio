@@ -1,0 +1,2576 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PostMind Studio internal API (for PostMind Core)",
+    "version": "1.0.0",
+    "description": "Service-to-service endpoints PostMind Core calls, mirroring Engagement handover 14.13. Authenticate with the X-Service-Token header (STUDIO_INTERNAL_SERVICE_TOKEN on Studio, at least 32 characters). Route /api/studio/internal/* from the private network only. Every operation is idempotent, so Core may retry it after a timeout, a 429 (honour Retry-After) or a 5xx. Bodies are capped at 65536 bytes. Responses never contain access tokens. GENERATED from the route handlers’ zod schemas — do not edit by hand."
+  },
+  "servers": [
+    {
+      "url": "https://{studioHost}",
+      "variables": {
+        "studioHost": {
+          "default": "studio.internal"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "internal",
+      "description": "Called by PostMind Core only."
+    }
+  ],
+  "paths": {
+    "/api/studio/internal/channels": {
+      "post": {
+        "operationId": "registerChannel",
+        "summary": "Register (or re-register) a Meta channel after Core’s OAuth token exchange",
+        "description": "Engagement handover 9.5 step 7. Idempotent upsert on (organisationId, platform, platformAccountId): 201 when created, 200 when it already existed (the token is replaced and the channel re-activated). The token is stored envelope-encrypted and never returned. String fields are trimmed; unknown fields are ignored.",
+        "tags": ["internal"],
+        "security": [
+          {
+            "serviceToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "organisationId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "platform": {
+                    "type": "string",
+                    "enum": ["instagram", "facebook"]
+                  },
+                  "platformAccountId": {
+                    "type": "string",
+                    "pattern": "^\\d{1,64}$"
+                  },
+                  "platformAccountName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "accessToken": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 4096,
+                    "pattern": "^\\S+$"
+                  },
+                  "tokenExpiresAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "scopes": {
+                    "default": [],
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    }
+                  },
+                  "businessId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "connectedByUserId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "organisationId",
+                  "platform",
+                  "platformAccountId",
+                  "platformAccountName",
+                  "accessToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already registered: updated.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "channel": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "organisationId": {
+                          "type": "string"
+                        },
+                        "businessId": {
+                          "type": ["string", "null"]
+                        },
+                        "platform": {
+                          "type": "string"
+                        },
+                        "platformAccountId": {
+                          "type": "string"
+                        },
+                        "platformAccountName": {
+                          "type": "string"
+                        },
+                        "accessTokenExpiresAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["active", "needs_reconnect", "revoked"]
+                        },
+                        "connectedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "organisationId",
+                        "businessId",
+                        "platform",
+                        "platformAccountId",
+                        "platformAccountName",
+                        "accessTokenExpiresAt",
+                        "scopes",
+                        "state",
+                        "connectedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "created": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["ok", "channel", "created"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Registered.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "channel": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "organisationId": {
+                          "type": "string"
+                        },
+                        "businessId": {
+                          "type": ["string", "null"]
+                        },
+                        "platform": {
+                          "type": "string"
+                        },
+                        "platformAccountId": {
+                          "type": "string"
+                        },
+                        "platformAccountName": {
+                          "type": "string"
+                        },
+                        "accessTokenExpiresAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["active", "needs_reconnect", "revoked"]
+                        },
+                        "connectedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "organisationId",
+                        "businessId",
+                        "platform",
+                        "platformAccountId",
+                        "platformAccountName",
+                        "accessTokenExpiresAt",
+                        "scopes",
+                        "state",
+                        "connectedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "created": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["ok", "channel", "created"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body failed validation (details.issues: path + message, never values).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong X-Service-Token.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — also the answer for EVERY path when STUDIO_INTERNAL_SERVICE_TOKEN is unset on Studio (internal API disabled).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body larger than 65536 bytes.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (STUDIO_INTERNAL_RATE_LIMIT_PER_MIN, default 600/min). Retry after the Retry-After header (seconds).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              },
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Studio error ({ ok: false, error: \"internal_error\" }). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Studio unavailable (deploy / load balancer). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "disconnectChannelByAccount",
+        "summary": "Disconnect a Meta channel by account (tokens wiped)",
+        "description": "For callers that did not keep Studio’s channel id. Idempotent: disconnecting an already revoked channel returns 200 again.",
+        "tags": ["internal"],
+        "security": [
+          {
+            "serviceToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "organisationId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "name": "platform",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["instagram", "facebook"]
+            }
+          },
+          {
+            "name": "platformAccountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{1,64}$"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disconnected (or already).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "disconnected": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "channel": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "organisationId": {
+                          "type": "string"
+                        },
+                        "businessId": {
+                          "type": ["string", "null"]
+                        },
+                        "platform": {
+                          "type": "string"
+                        },
+                        "platformAccountId": {
+                          "type": "string"
+                        },
+                        "platformAccountName": {
+                          "type": "string"
+                        },
+                        "accessTokenExpiresAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["active", "needs_reconnect", "revoked"]
+                        },
+                        "connectedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "organisationId",
+                        "businessId",
+                        "platform",
+                        "platformAccountId",
+                        "platformAccountName",
+                        "accessTokenExpiresAt",
+                        "scopes",
+                        "state",
+                        "connectedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["ok", "disconnected", "channel"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "organisationId, platform and platformAccountId are required.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong X-Service-Token.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such channel (or the internal API is disabled).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (STUDIO_INTERNAL_RATE_LIMIT_PER_MIN, default 600/min). Retry after the Retry-After header (seconds).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              },
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Studio error ({ ok: false, error: \"internal_error\" }). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Studio unavailable (deploy / load balancer). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/studio/internal/channels/{id}": {
+      "delete": {
+        "operationId": "disconnectChannel",
+        "summary": "Disconnect a Meta channel by Studio channel id (tokens wiped)",
+        "description": "The id is the channel.id POST /internal/channels returned. The optional organisationId must match when given. Only Meta channels (instagram, facebook). Idempotent.",
+        "tags": ["internal"],
+        "security": [
+          {
+            "serviceToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Studio channel id (channel.id from registerChannel).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organisationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disconnected (or already).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "disconnected": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "channel": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "organisationId": {
+                          "type": "string"
+                        },
+                        "businessId": {
+                          "type": ["string", "null"]
+                        },
+                        "platform": {
+                          "type": "string"
+                        },
+                        "platformAccountId": {
+                          "type": "string"
+                        },
+                        "platformAccountName": {
+                          "type": "string"
+                        },
+                        "accessTokenExpiresAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "scopes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["active", "needs_reconnect", "revoked"]
+                        },
+                        "connectedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "organisationId",
+                        "businessId",
+                        "platform",
+                        "platformAccountId",
+                        "platformAccountName",
+                        "accessTokenExpiresAt",
+                        "scopes",
+                        "state",
+                        "connectedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["ok", "disconnected", "channel"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong X-Service-Token.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such Meta channel for this organisation (or the internal API is disabled).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (STUDIO_INTERNAL_RATE_LIMIT_PER_MIN, default 600/min). Retry after the Retry-After header (seconds).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              },
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Studio error ({ ok: false, error: \"internal_error\" }). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Studio unavailable (deploy / load balancer). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/studio/internal/tokens/refreshed": {
+      "post": {
+        "operationId": "pushRefreshedTokens",
+        "summary": "Push tokens Core’s nightly job refreshed (one, or a batch of up to 100)",
+        "description": "Engagement handover 9.6 / 14.13. Single form: 200 { result } when updated, 404 when the channel was never registered, 409 when it was disconnected (register again to reconnect). Batch form { channels: [≤100] }: always 200 with a per-channel result (updated | not_found | revoked). A needs_reconnect channel becomes active again. Idempotent.",
+        "tags": ["internal"],
+        "security": [
+          {
+            "serviceToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "channels": {
+                        "minItems": 1,
+                        "maxItems": 100,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "organisationId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 128
+                            },
+                            "platform": {
+                              "type": "string",
+                              "enum": ["instagram", "facebook"]
+                            },
+                            "platformAccountId": {
+                              "type": "string",
+                              "pattern": "^\\d{1,64}$"
+                            },
+                            "accessToken": {
+                              "type": "string",
+                              "minLength": 16,
+                              "maxLength": 4096,
+                              "pattern": "^\\S+$"
+                            },
+                            "tokenExpiresAt": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "scopes": {
+                              "maxItems": 50,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              }
+                            }
+                          },
+                          "required": [
+                            "organisationId",
+                            "platform",
+                            "platformAccountId",
+                            "accessToken"
+                          ]
+                        }
+                      }
+                    },
+                    "required": ["channels"]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "organisationId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "platform": {
+                        "type": "string",
+                        "enum": ["instagram", "facebook"]
+                      },
+                      "platformAccountId": {
+                        "type": "string",
+                        "pattern": "^\\d{1,64}$"
+                      },
+                      "accessToken": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 4096,
+                        "pattern": "^\\S+$"
+                      },
+                      "tokenExpiresAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "scopes": {
+                        "maxItems": 50,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        }
+                      }
+                    },
+                    "required": ["organisationId", "platform", "platformAccountId", "accessToken"]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Single: { result }. Batch: { results }.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "result": {
+                          "type": "object",
+                          "properties": {
+                            "platform": {
+                              "type": "string"
+                            },
+                            "platformAccountId": {
+                              "type": "string"
+                            },
+                            "organisationId": {
+                              "type": "string"
+                            },
+                            "result": {
+                              "type": "string",
+                              "enum": ["updated", "not_found", "revoked"]
+                            },
+                            "id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["platform", "platformAccountId", "organisationId", "result"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["ok", "result"],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "platform": {
+                                "type": "string"
+                              },
+                              "platformAccountId": {
+                                "type": "string"
+                              },
+                              "organisationId": {
+                                "type": "string"
+                              },
+                              "result": {
+                                "type": "string",
+                                "enum": ["updated", "not_found", "revoked"]
+                              },
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "platform",
+                              "platformAccountId",
+                              "organisationId",
+                              "result"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["ok", "results"],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body failed validation.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong X-Service-Token.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Single form: channel not registered; POST /internal/channels first.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Single form: channel was disconnected; register it again to reconnect.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body larger than 65536 bytes.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (STUDIO_INTERNAL_RATE_LIMIT_PER_MIN, default 600/min). Retry after the Retry-After header (seconds).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              },
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Studio error ({ ok: false, error: \"internal_error\" }). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Studio unavailable (deploy / load balancer). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/studio/internal/organisations/{id}/purge": {
+      "post": {
+        "operationId": "purgeOrganisation",
+        "summary": "Purge an organisation Core deleted",
+        "description": "No body. Wipes every token and disconnects every channel, engages the organisation’s kill switch, cancels scheduled posts and soft-deletes Studio data with a 30-day grace period. Idempotent: a repeat call re-applies the purge (catching anything created since), keeps the first graceUntil and answers repeated: true.",
+        "tags": ["internal"],
+        "security": [
+          {
+            "serviceToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "PostMind organisation id (trimmed).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Purge applied.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "purge": {
+                      "type": "object",
+                      "properties": {
+                        "organisationId": {
+                          "type": "string"
+                        },
+                        "channelsWiped": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "projectsDeleted": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "publicationsCancelled": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "requestedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "graceUntil": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "repeated": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "organisationId",
+                        "channelsWiped",
+                        "projectsDeleted",
+                        "publicationsCancelled",
+                        "requestedAt",
+                        "graceUntil",
+                        "repeated"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["ok", "purge"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid organisation id.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong X-Service-Token.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found — also the answer for EVERY path when STUDIO_INTERNAL_SERVICE_TOKEN is unset on Studio (internal API disabled).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited (STUDIO_INTERNAL_RATE_LIMIT_PER_MIN, default 600/min). Retry after the Retry-After header (seconds).",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              },
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Studio error ({ ok: false, error: \"internal_error\" }). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Studio unavailable (deploy / load balancer). Retry with backoff.",
+            "headers": {
+              "x-correlation-id": {
+                "$ref": "#/components/headers/CorrelationId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": false
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "properties": {
+                        "issues": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["path", "message"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": ["ok", "error"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "serviceToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Service-Token"
+      }
+    },
+    "parameters": {
+      "CorrelationId": {
+        "name": "x-correlation-id",
+        "in": "header",
+        "required": false,
+        "description": "Optional request id (letters, digits, . _ -; up to 128). Studio logs under it and echoes it; any other value is replaced by a generated one. Send the same value on every retry of one logical call.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]{1,128}$"
+        }
+      }
+    },
+    "headers": {
+      "CorrelationId": {
+        "description": "The request id Studio logged this request under.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "RetryAfter": {
+        "description": "Seconds to wait before retrying.",
+        "schema": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

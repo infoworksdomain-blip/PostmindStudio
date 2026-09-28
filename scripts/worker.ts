@@ -14,10 +14,13 @@ import { queuePrefix } from '../src/lib/studio/queue/redis';
 import { APPROVAL_CHECK_SCHEDULE } from '../src/lib/studio/queue/workers/check-approvals';
 import { STYLE_MEMORY_SCHEDULE } from '../src/lib/studio/queue/workers/build-style-memory';
 import { CHANNEL_RECONCILE_SCHEDULE } from '../src/lib/studio/queue/workers/reconcile-channels';
+import { SAFETY_AUDIT_SCHEDULE } from '../src/lib/studio/services/safety-audit';
 import { RESCAN_SWEEP_PATTERN, STOCK_REFRESH_PATTERN } from '../src/lib/studio/scan/schedule';
 import { DOMAIN_POLL_PATTERN } from '../src/lib/studio/scan/domain-verification';
 import { OUTBOX_DISPATCH_SCHEDULE } from '../src/lib/studio/automation/outbox';
 import { AUTO_RESUME_SCHEDULE } from '../src/lib/studio/services/auto-resume';
+import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
+import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -90,6 +93,15 @@ async function main(): Promise<void> {
       },
     },
   );
+  // BACKLOG 14.11 — monthly Trust & Safety audit sample (06:00 UTC on the 1st, last month).
+  await analytics.upsertJobScheduler(
+    'sample-safety-audit-monthly',
+    { pattern: SAFETY_AUDIT_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sample-safety-audit',
+      data: { organisationId: 'postmind-platform', runId: 'safety-audit', planTier: 'STANDARD' },
+    },
+  );
 
   // BACKLOG 13.10 / 13.11 (Addendum A6.6 / A6.7) — scheduled rescans, weekly stock refresh and
   // the DNS TXT verification poll, on studio-assets.
@@ -126,6 +138,24 @@ async function main(): Promise<void> {
     {
       name: 'auto-resume-paused',
       data: { organisationId: 'postmind-platform', runId: 'auto-resume', planTier: 'STANDARD' },
+    },
+  );
+  // BACKLOG 14.1 / 14.2 — daily data retention: hard delete of organisations past the purge
+  // grace (STUDIO_PURGE_GRACE_DAYS) and the sweep of abandoned browser uploads.
+  await orchestration.upsertJobScheduler(
+    'hard-delete-purged-orgs-daily',
+    { pattern: HARD_DELETE_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'hard-delete-purged-orgs',
+      data: { organisationId: 'postmind-platform', runId: 'hard-delete', planTier: 'STANDARD' },
+    },
+  );
+  await orchestration.upsertJobScheduler(
+    'sweep-abandoned-uploads-daily',
+    { pattern: UPLOAD_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-abandoned-uploads',
+      data: { organisationId: 'postmind-platform', runId: 'upload-sweep', planTier: 'STANDARD' },
     },
   );
   await publish.upsertJobScheduler(

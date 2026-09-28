@@ -70,7 +70,8 @@ describe('headlessRendererFromEnv', () => {
     expect(renderer.configured).toBe(true);
     await expect(renderer.render(HOME)).resolves.toBe(renderedHtml);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe('http://headless.internal:3000/content?token=tok');
+    expect(url).toBe('http://headless.internal:3000/content');
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer tok');
     expect(JSON.parse(String(init.body))).toEqual({ url: HOME });
   });
 });

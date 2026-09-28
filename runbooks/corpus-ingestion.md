@@ -32,9 +32,27 @@ licences are refused.
   submitted before 13.15 have no stored item and are skipped with that reason: resubmit them
   with the tool.
 
+- `ingest-corpus.ts <manifest> --preflight [--sample 100] [--workers N]` (Phase 14.9) checks
+  that a run can start. It submits nothing. Run it with the **library workers' env**, for example
+  inside the `worker-library` container, so it reads the settings the workers use. It checks:
+  - the admin API and the taxonomy
+  - the caps tier: `STUDIO_LIBRARY_PLAN_TIER` must be ENTERPRISE for a full run (a WARN for a
+    sample)
+  - the job slots (`STUDIO_LIBRARY_CONCURRENCY` × `--workers`) against the table below, with the
+    time and daily-spend estimate
+  - write and delete access to `S3_BUCKET_LIBRARY` (a probe object under `library/staging/`)
+  - that every s3:// row is inside `STUDIO_CORPUS_S3_BUCKETS`, with HEAD probes of up to 20 of
+    them
+  - manifest validation
+
+  It exits 1 on any FAIL.
+  `npx tsx scripts/ops/staging-gate.ts --corpus-preflight <manifest> [--sample 100]` wraps it and
+  writes `ops/results/<date>-corpus-preflight-*.md` (runbooks/staging-gate.md).
+
 ### Manifest
 
-Put one row per video. Use CSV with a header row, or JSONL with one object per line.
+Start from `corpus/manifest.template.csv`: the header row plus two example rows to replace. Put
+one row per video. Use CSV with a header row, or JSONL with one object per line.
 
 | Field | Aliases | Required | Notes |
 | --- | --- | --- | --- |
@@ -80,6 +98,8 @@ SSRF guard.
      ```
 
    - Fix every invalid row it reports. Read the cost and time estimate.
+   - Run the pre-flight for the sample:
+     `… ingest-corpus.ts corpus.csv --preflight --sample 100`. Fix every FAIL.
 2. **Sample run (9.2).**
 
    ```
@@ -96,17 +116,32 @@ SSRF guard.
      - 10 random items as `<STUDIO_URL>/library/<id>` links
    - State goes to `corpus.csv.state.json`, or to `--state <file>`.
    - To reprint the report later, run `… corpus.csv --report`.
-3. **Operator review (the gate).** Open the 10 links. For each one, check:
-   - the category
-   - the shot breakdown and on-screen text
-   - that "Use as template" works (TEMPLATE and INSPIRE should both be offered)
+3. **Operator review (the gate).** Work through this checklist on the review report:
+   - [ ] Failure rate is 5% or less. Every failure reason is understood: a bad source, or a fix
+     is planned.
+   - [ ] The category distribution matches the manifest's strata, and no category is missing.
+   - [ ] For each of the 10 random links:
+     - [ ] the category is right, or close enough that search still finds it
+     - [ ] the shot breakdown matches the video (count, rough timing)
+     - [ ] the on-screen text and transcript are right and in the right language
+     - [ ] the style signature and tags are sensible (no generic or empty tags)
+     - [ ] "Use as template" offers TEMPLATE and INSPIRE, and a TEMPLATE project starts
+   - [ ] Search: `GET /library/videos?category=<slug>` returns sample items for two or three
+     categories.
+   - [ ] Spend: today's corpus spend (`GET /api/studio/admin/cost/caps`) is in line with
+     £0.02–£0.05 per video.
+   - [ ] Throughput: the measured `completedPerHour` replaces the 3-minute assumption in the
+     full-run estimate.
 
-   Record the operator's approval, or the problems, in PROGRESS.md.
+   Record the operator's approval, or the problems, in PROGRESS.md and in
+   runbooks/staging-gate.md (results row 10).
 
    Fix the causes (taxonomy, manifest categories, analysis prompt) and repeat step 2 until the
    operator approves. Retire bad sample items with
    `POST /api/studio/admin/library/videos/<id>/retire`.
-4. **Full run (9.3).** Set the throughput and cost settings (see below), then run:
+4. **Full run (9.3).** Set the throughput and cost settings (see below). Run the pre-flight in
+   full mode, `… ingest-corpus.ts corpus.csv --preflight --workers 2`, until it passes. Then
+   run:
 
    ```
    npx tsx scripts/ops/ingest-corpus.ts corpus.csv --apply --queue-concurrency 8 --workers 2
@@ -168,7 +203,7 @@ SSRF guard.
   `library/<sha256>.mp4`), so a job holds about one part in memory. Budget FFmpeg per slot
   (about 300 MB) rather than the source size. A failed upload is aborted (no orphaned parts);
   a crashed worker can leave a `library/staging/` object behind, which the S3 lifecycle rule
-  should expire after a day (storage-cost.md).
+  `studio-library-staging-expire-2d` expires after 2 days (infra/s3-lifecycle.json, storage-cost.md).
 - **Providers:** each video makes about 1 Claude vision call (up to 12 keyframes), 1 AssemblyAI
   transcription and 1 embedding. 640 per hour is about 11 per minute: check your account's rate
   limits before going above 16 slots.

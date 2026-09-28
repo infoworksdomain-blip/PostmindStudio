@@ -24,11 +24,23 @@
 3. If failures are rising across many sites, check for egress IP reputation problems. That is a
    DevOps matter.
 
-## Browser-render fallback (BACKLOG 13.37)
+## Browser-render fallback (BACKLOG 13.37, 14.4)
 
+**Policy.** The browser render is used **only** when the business owner has confirmed they own
+or represent the site being scanned. It is **never** used to get round a third party's bot
+protection. The scan screen says so next to the confirmation.
+
+- The confirmation is stored per scan: `website_scans.ownershipConfirmedAt` and
+  `ownershipConfirmedByUserId` (who ticked "I own this website or am authorised to represent
+  it"). A scheduled rescan carries the confirmation of the scan it repeats. Scans made before
+  14.4 have no stored confirmation and never use the render; the owner can start a new scan.
+  The scan worker passes the renderer only when the confirmation is set (`headlessFor()`).
 - When `STUDIO_HEADLESS_RENDER_URL` points at a self-hosted headless Chromium host, a homepage
   refused with HTTP 403, 429 or 503 is rendered once by that browser. The host is the
   open-source Browserless image (`POST /content`).
+- The token is sent as `Authorization: Bearer <STUDIO_HEADLESS_RENDER_TOKEN>`, never as
+  `?token=` in the URL (URLs end up in access logs). Browserless documents both, and the
+  open-source server reads the Bearer header (`getTokenFromRequest`, v2.56.7).
 - robots.txt is still read first, and a disallow stops the scan. Only the homepage URL Studio's
   SSRF-guarded fetcher already reached is rendered.
 - There is no CAPTCHA solving and no proxy rotation. If the render fails too, the scan fails as
@@ -36,8 +48,25 @@
 - Unset (the default): no render, and the fallback is manual entry plus stock images.
 - A successful render sets `website_scans.usedJsRender`.
 
-**GAP:** the operator must decide whether to run the headless host. It is a policy call against
-step 2 above ("do not try to evade bot protection"), and it needs somewhere to run Chromium.
+### Running the headless host (docker-compose.prod.yml, profile `headless-render`)
+
+1. Create the token file on the deploy host (never in the repo; `secrets/` is git-ignored):
+   `openssl rand -hex 32 > secrets/browserless-token && chmod 0444 secrets/browserless-token`
+   (the container runs as uid 999, so the file must be readable by it), or point
+   `BROWSERLESS_TOKEN_FILE` at it.
+2. Put the same value in the secret manager as `STUDIO_HEADLESS_RENDER_TOKEN`, and set
+   `STUDIO_HEADLESS_RENDER_URL=http://browserless:3000` for the workers.
+3. `docker compose -p postmind-studio -f docker-compose.prod.yml --profile headless-render up -d browserless`,
+   then redeploy `worker-assets` so it joins the `headless` network and reads the new env.
+4. Check: start a scan of a site you own that returns 403 to the scanner; the scan succeeds with
+   `usedJsRender = true`. Turn it off by stopping the service and unsetting the URL.
+
+- The image is pinned (`ghcr.io/browserless/chromium:v2.56.7`, `CONCURRENT=2`, `QUEUE_LENGTH=10`,
+  `TIMEOUT=45000`); upgrade deliberately. It sits on its own `headless` network with
+  `worker-assets` only. DevOps: block its egress to private ranges and the instance metadata
+  endpoint (IMDSv2 with hop limit 1), since the browser follows the site's own subresources.
+
+**GAP:** enabling the profile on staging (then production) is an **operator** step.
 
 ## Scheduled rescans (BACKLOG 13.10) and ownership disputes (13.11)
 

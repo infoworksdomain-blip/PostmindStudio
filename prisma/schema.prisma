@@ -1032,6 +1032,11 @@ model WebsiteScan {
   checkedUnchangedAt DateTime?
   planTier           String?
   trigger            String    @default("manual") // manual | scheduled
+  // BACKLOG 14.4: the owner's "I own or represent this website" confirmation, stored per scan
+  // (a scheduled rescan carries the confirmation of the scan it repeats). The browser-render
+  // fallback for a blocked homepage is only ever used when this is set.
+  ownershipConfirmedAt       DateTime?
+  ownershipConfirmedByUserId String?
 
   @@index([businessId, startedAt])
   @@index([state, completedAt])
@@ -1328,8 +1333,14 @@ model OrganisationPurge {
   channelsWiped         Int
   projectsDeleted       Int
   publicationsCancelled Int
-  state                 String // 'soft_deleted' (hard deletion after grace is not built yet)
+  state                 String // 'soft_deleted' | 'hard_deleting' | 'hard_deleted' | 'cancelled' (14.1)
   hardDeletedAt         DateTime?
+  // BACKLOG 14.1: the row is the tombstone kept after hard deletion — what was deleted (rows per
+  // table, objects per bucket/prefix, accumulated across resumed attempts) and when.
+  hardDeleteStartedAt   DateTime?
+  hardDeleteAttempts    Int       @default(0)
+  hardDeleteSummary     Json?
+  hardDeleteError       String?
 
   @@index([graceUntil])
   @@map("organisation_purges")
@@ -1401,5 +1412,63 @@ enum UploadState {
   READY
   FAILED
 
+  @@schema("studio")
+}
+
+// BACKLOG 14.11 — beta programme (playbook 10.4). One row per organisation in the beta. While
+// plusUntil is in the future the organisation's effective plan tier for Studio routing, cost
+// caps and auto-approve is at least PLUS (services/beta.ts), whatever Core reports.
+model OrganisationBeta {
+  organisationId  String    @id
+  cohort          String // e.g. 'beta-1'
+  plusUntil       DateTime?
+  enrolledAt      DateTime  @default(now())
+  updatedByUserId String
+  updatedAt       DateTime  @updatedAt
+
+  @@index([cohort])
+  @@map("organisation_beta")
+  @@schema("studio")
+}
+
+// BACKLOG 14.11 — in-app feedback (POST /api/studio/feedback), read by staff.
+model BetaFeedback {
+  id             String   @id @default(cuid())
+  organisationId String
+  userId         String
+  kind           String // 'bug' | 'idea' | 'praise' | 'other'
+  message        String
+  projectId      String?
+  screen         String
+  createdAt      DateTime @default(now())
+
+  @@index([organisationId, createdAt])
+  @@index([kind, createdAt])
+  @@index([createdAt])
+  @@map("beta_feedback")
+  @@schema("studio")
+}
+
+// BACKLOG 14.11 — Trust & Safety monthly audit: published publications sampled for a human
+// re-check. result 'pending' until staff record 'pass' or 'miss' (a miss = Hive let through
+// content that should have been blocked or reviewed; runbook metric "Hive scan miss rate").
+model SafetyAuditItem {
+  id               String    @id @default(cuid())
+  period           String // 'YYYY-MM' (UTC) the sample was drawn for
+  organisationId   String
+  publicationId    String
+  projectId        String
+  platform         String
+  platformUrl      String?
+  publishedAt      DateTime
+  result           String    @default("pending") // 'pending' | 'pass' | 'miss'
+  note             String?
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@unique([period, publicationId])
+  @@index([period, result])
+  @@map("safety_audit_items")
   @@schema("studio")
 }

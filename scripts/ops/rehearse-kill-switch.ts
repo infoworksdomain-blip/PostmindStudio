@@ -12,7 +12,11 @@ import {
 //   STUDIO_URL=https://studio-staging.postmind.ai STUDIO_STAFF_TOKEN=<staging staff JWT> \
 //   METRICS_URL=https://studio-staging.internal/api/metrics METRICS_TOKEN=<token> \
 //   npx tsx scripts/ops/rehearse-kill-switch.ts global
-//   ... workspace <organisationId> | project <projectId> | provider <providerId>
+//   ... workspace <organisationId> | project <projectId> | provider <providerId> | platform <p>
+//
+// Phase 14.6: `staging-gate.ts --rehearse kill-switch` times every level unattended (the scoped
+// levels from the staging database) and writes the GATE 12 report; this script stays for a
+// quick interactive check.
 //
 // Global: engages the switch, times until every queue reports zero active jobs (SLO 60 s), then
 // releases it. Other levels are not visible in the queue gauge (it isn't per-org), so the script
@@ -69,7 +73,9 @@ async function main(): Promise<void> {
           'Verify now (runbooks/kill-switch.md), then press Enter to release:',
           plan.level === 'provider'
             ? '  - new shots route to the fallback provider (provider_jobs.providerId)'
-            : `  - new jobs for ${plan.target} fail with kill_switch_${plan.level}; other organisations keep processing`,
+            : plan.level === 'platform'
+              ? `  - new ${plan.target} publications fail as kill_switch_platform; other platforms keep publishing`
+              : `  - new jobs for ${plan.target} fail with kill_switch_${plan.level}; other organisations keep processing`,
           '',
         ].join('\n'),
       );
