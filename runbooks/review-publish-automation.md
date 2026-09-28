@@ -57,7 +57,25 @@
    **Retry auto-publish** on the Review screen (`POST /projects/<id>/auto-publish/retry`, re-arms the
    FAILED rows). Rows stuck `SENDING` for over 10 minutes (a sender died) are re-claimed; a target
    that was in fact already published is recognised by the duplicate guard and marked SENT.
-5. **Organisation policy (13.18):** Admin Centre → **Organisations** → Review policy sets, per
+5. **Scheduled and drip publishing (15.A5):** a project with `publishPolicy: SCHEDULED` writes
+   its outbox rows at approval with an absolute `scheduledFor`: `scheduledStartAt` (or now, if it
+   has passed) for the first target and `STUDIO_DEFAULT_STAGGER_MINUTES` (15–60, default 30) more
+   for each next one. Without a start time the business's drip queue
+   (`GET|PUT /api/studio/businesses/<id>/drip-queue`, calendar → Drip queue) gives the next free
+   weekly slot (`auto_publish_outbox.slotAt`). No start time and no enabled drip queue = nothing is
+   scheduled (publish from the Publish tab). Rows then behave like step 4; the publications they
+   create are ordinary scheduled publications (move or cancel them in the calendar).
+6. **YouTube quota reached (15.A9):** the publication goes back to `SCHEDULED` with
+   `errorCode quota_exceeded` and `metadata.quotaDeferredUntil` (5 min after the next midnight
+   Pacific Time) and is retried then; audit `studio.publication.quota_deferred`. Repeated deferrals
+   (`metadata.quotaDeferrals`) mean the daily quota is too small: raise it with Google or cancel
+   and reschedule.
+7. **TikTok "sent to inbox" (15.A2):** when the connection lacks `video.publish` (or the creator
+   cannot direct-post), the video goes to the creator's TikTok inbox and the publication is
+   PUBLISHED with `metadata.tiktokMode = "inbox"`. The creator must finish the post in the TikTok
+   app and keep the AI-generated label on. Reconnecting TikTok with Direct Post approval restores
+   direct posting.
+8. **Organisation policy (13.18):** Admin Centre → **Organisations** → Review policy sets, per
    organisation, the default review policy for new projects, whether automatic approval is
    allowed at all, and its own trust threshold (instead of `STUDIO_AUTO_APPROVE_TRUST_THRESHOLD`).
    "Needs review: your organisation's policy turns automatic approval off" means the org has it

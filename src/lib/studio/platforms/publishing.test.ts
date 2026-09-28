@@ -137,7 +137,7 @@ describe('resolveCredentials', () => {
     } as unknown as PublishingDeps;
 
     const result = await resolveCredentials(deps, publication);
-    expect(result).toEqual({ accessToken: 'studio-access-token', accountId: 'account-42' });
+    expect(result).toMatchObject({ accessToken: 'studio-access-token', accountId: 'account-42' });
     expect(findFirst).toHaveBeenCalledWith({
       where: { id: connection.id, organisationId: 'org-1' },
     });

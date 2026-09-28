@@ -9,7 +9,9 @@ import type { PlanTier } from '../providers/router';
 // BACKLOG 9.4 / Addendum A3.5 — pgvector nearest-neighbour search over the library.
 // The A7.4 schema stores one 1536-d vector per video (embedding of its analysed description),
 // so the visual/audio/text weights recorded on each row are informational: similarity is a
-// single cosine distance. Retired items never appear.
+// single cosine distance. Retired items never appear, and neither do rows without a
+// video_library_licenses row (Addendum A11.1: "Rows without a licence status are unusable — the
+// API rejects them from search results"; BACKLOG 15.D7).
 
 export interface SimilarHit {
   id: string;
@@ -29,13 +31,15 @@ export async function similarVideos(
     SELECT l.id, (e.embedding ${v.distance} src.embedding)::float8 AS distance
     FROM studio.video_library_embeddings e
     JOIN studio.video_library l ON l.id = e."libraryItemId"
+    JOIN studio.video_library_licenses lic ON lic."libraryItemId" = l.id
     JOIN studio.video_library_embeddings src ON src."libraryItemId" = ${libraryItemId}
+    JOIN studio.video_library_licenses srclic ON srclic."libraryItemId" = ${libraryItemId}
     WHERE l."retiredAt" IS NULL AND l.id <> ${libraryItemId}
     ORDER BY e.embedding ${v.distance} src.embedding
     LIMIT ${limit}`;
   if (rows.length === 0) {
     const exists = await db.videoLibraryItem.findFirst({
-      where: { id: libraryItemId, retiredAt: null },
+      where: { id: libraryItemId, retiredAt: null, license: { isNot: null } },
       select: { id: true },
     });
     if (!exists) throw new NotFoundError('Library video not found');
@@ -100,6 +104,7 @@ export async function recommendedVideos(
     FROM studio.video_library_embeddings e
     JOIN studio.video_library l ON l.id = e."libraryItemId"
     JOIN studio.video_library_categories c ON c.id = l."categoryId"
+    JOIN studio.video_library_licenses lic ON lic."libraryItemId" = l.id
     WHERE l."retiredAt" IS NULL AND c.slug LIKE ${prefix}
     ORDER BY e.embedding ${v.distance} ${literal}${v.cast}
     LIMIT ${options.limit}`;

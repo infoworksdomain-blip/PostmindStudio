@@ -27,7 +27,9 @@ export type PreferenceKind =
   | 'milestone'
   | 'cost_alert'
   | 'cost_paused'
-  | 'safety_review';
+  | 'safety_review'
+  | 'share_comment'
+  | 'plan_quota';
 
 export interface PreferencesResponse {
   preferences: Record<string, { inApp: boolean; email: boolean }>;
@@ -43,6 +45,8 @@ export const PREFERENCE_ROWS: Array<{ kind: PreferenceKind; label: string }> = [
   { kind: 'cost_alert', label: 'Budget alerts' },
   { kind: 'cost_paused', label: 'Generation paused by a budget' },
   { kind: 'safety_review', label: 'Content-safety reviews' },
+  { kind: 'share_comment', label: 'Feedback on a preview link' },
+  { kind: 'plan_quota', label: 'Plan usage alerts (80% and 100%)' },
 ];
 
 function PreferencesTable() {

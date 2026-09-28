@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigurationError } from '../../errors';
-import { buildAdaptersFromEnv } from './default-registry';
+import {
+  buildAdaptersFromEnv,
+  buildAdaptersFromKeys,
+  providerKeysFromEnv,
+} from './default-registry';
 
 const KEYS = [
   'ANTHROPIC_API_KEY',
@@ -11,6 +15,9 @@ const KEYS = [
   'ELEVENLABS_API_KEY',
   'SHOTSTACK_API_KEY',
   'HIVE_API_KEY',
+  'STORYBLOCKS_API_PUBLIC_KEY',
+  'STORYBLOCKS_API_PRIVATE_KEY',
+  'PEXELS_API_KEY',
 ];
 
 beforeEach(() => {
@@ -22,6 +29,7 @@ beforeEach(() => {
   vi.stubEnv('ELEVENLABS_MUSIC_MODEL', '');
   vi.stubEnv('SHOTSTACK_ENVIRONMENT', '');
   vi.stubEnv('HEYGEN_AVATAR_ID', '');
+  vi.stubEnv('OPENAI_TEXT_MODEL', '');
   for (const key of KEYS) vi.stubEnv(key, '');
 });
 
@@ -45,6 +53,10 @@ describe('buildAdaptersFromEnv', () => {
       'elevenlabs-music',
       'shotstack',
       'hive',
+      'storyblocks-audio',
+      'storyblocks-music',
+      'storyblocks-video',
+      'pexels-video',
     ]);
   });
 
@@ -72,5 +84,40 @@ describe('buildAdaptersFromEnv', () => {
     vi.stubEnv('SHOTSTACK_API_KEY', 'k');
     vi.stubEnv('SHOTSTACK_ENVIRONMENT', 'production');
     expect(() => buildAdaptersFromEnv()).toThrow(/SHOTSTACK_ENVIRONMENT/);
+    vi.stubEnv('SHOTSTACK_API_KEY', '');
+    vi.stubEnv('OPENAI_API_KEY', 'k');
+    vi.stubEnv('OPENAI_TEXT_MODEL', 'gpt-3.5-turbo');
+    expect(() => buildAdaptersFromEnv()).toThrow(/No pricing configured for OpenAI text model/);
+  });
+});
+
+// P1 BYOC: an organisation's own keys build the same adapters as the platform's env keys.
+describe('buildAdaptersFromKeys', () => {
+  it('builds adapters from a key map, one key backing several adapters', () => {
+    const ids = buildAdaptersFromKeys({
+      runway: { apiKey: 'org-runway' },
+      elevenlabs: { apiKey: 'org-eleven' },
+      storyblocks: { apiKey: 'pub', secondaryKey: 'priv' },
+    }).map((a) => a.providerId);
+    expect(ids).toEqual([
+      'runway',
+      'elevenlabs',
+      'elevenlabs-music',
+      'storyblocks-audio',
+      'storyblocks-music',
+      'storyblocks-video',
+    ]);
+  });
+
+  it('skips a two-part key without its private half', () => {
+    expect(buildAdaptersFromKeys({ storyblocks: { apiKey: 'pub' } })).toEqual([]);
+  });
+
+  it('reads the platform keys from env', () => {
+    vi.stubEnv('RUNWAY_API_KEY', 'rk');
+    vi.stubEnv('STORYBLOCKS_API_PUBLIC_KEY', 'pub');
+    expect(providerKeysFromEnv()).toEqual({ runway: { apiKey: 'rk' } });
+    vi.stubEnv('STORYBLOCKS_API_PRIVATE_KEY', 'priv');
+    expect(providerKeysFromEnv().storyblocks).toEqual({ apiKey: 'pub', secondaryKey: 'priv' });
   });
 });

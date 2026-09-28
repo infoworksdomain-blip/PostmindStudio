@@ -1,0 +1,21 @@
+{
+  "illustrative": true,
+  "source": "ILLUSTRATIVE EXAMPLE ONLY - shows the manifest format. Not the Playbook H-03 labelled set and never used to claim accuracy. Deliver the real 50-site set as test/eval/fixtures/classifier-manifest.json.",
+  "sites": [
+    {
+      "id": "example-01",
+      "url": "https://example.com/",
+      "acceptIndustry": ["bakery", "baked goods", "food and drink"],
+      "rejectIndustry": ["bakery equipment"],
+      "labelledBy": "example",
+      "notes": "Placeholder domain (RFC 2606) - replace with a real labelled site."
+    },
+    {
+      "id": "example-02",
+      "url": "https://example.org/",
+      "acceptIndustry": ["pet", "pets"],
+      "rejectIndustry": ["pet insurance"],
+      "labelledBy": "example"
+    }
+  ]
+}

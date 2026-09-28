@@ -6,6 +6,8 @@ import {
   type RegisterChannelInput,
 } from '../../../../integrations/core/client/studio-internal-client';
 import {
+  attributionResponseSchema,
+  businessPurgeResponseSchema,
   disconnectResponseSchema,
   errorResponseSchema,
   purgeResponseSchema,
@@ -233,6 +235,53 @@ export async function runCoreContract(options: ContractOptions): Promise<Contrac
     expect(channelId, 'no channel id (registration failed)');
     const res = await client.disconnectChannel(channelId, { organisationId });
     conforms(disconnectResponseSchema, { ok: true, ...res }, 'disconnect-by-id body');
+  });
+
+  // Phase 15 operations (15.E2 business purge, 15.E3 attribution, 15.W1 from-content).
+  const businessId = `contract-biz-${randomBytes(4).toString('hex')}`;
+  await check('purgeBusiness answers 202 and is idempotent', async () => {
+    const first = await client.purgeBusiness(businessId, { organisationId });
+    conforms(businessPurgeResponseSchema, { ok: true, ...first }, 'business purge body');
+    expect(first.purge.businessId === businessId, 'purge for a different business');
+    const second = await client.purgeBusiness(businessId, { organisationId });
+    expect(second.purge.repeated, 'a repeat business purge should report repeated: true');
+    expect(second.purge.graceUntil === first.purge.graceUntil, 'graceUntil changed on repeat');
+  });
+
+  await check(
+    'attributeConversation refuses a publication outside the organisation (404)',
+    async () => {
+      try {
+        const res = await client.attributeConversation(`contract-pub-${graphId()}`, {
+          organisationId,
+          conversationId: `contract-conv-${graphId()}`,
+        });
+        conforms(attributionResponseSchema, { ok: true, ...res }, 'attribution body');
+        throw new ContractFailure('expected 404 for a publication the organisation does not own');
+      } catch (err) {
+        if (err instanceof ContractFailure) throw err;
+        expect(err instanceof StudioInternalError && err.status === 404, `got ${String(err)}`);
+      }
+    },
+  );
+
+  await check('createProjectFromContent answers 501 until Core ships its content API', async () => {
+    const res = await raw(
+      'POST',
+      '/api/studio/internal/projects/from-content',
+      JSON.stringify({
+        organisationId,
+        userId: 'contract-user',
+        contentId: `contract-content-${graphId()}`,
+        targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', durationSec: 30 }],
+      }),
+    );
+    // 501 not_implemented while Core's GET /api/internal/content/:id does not exist; once it
+    // does, the synthetic content id is unknown to Core and the answer is 404. Never 201.
+    expect(res.status === 501 || res.status === 404, `expected 501 (or 404), got ${res.status}`);
+    const body = conforms(errorResponseSchema, res.json, 'from-content error body');
+    if (res.status === 501)
+      expect(body.error === 'not_implemented', `expected not_implemented, got ${body.error}`);
   });
 
   await check('purgeOrganisation answers 202 and is idempotent', async () => {

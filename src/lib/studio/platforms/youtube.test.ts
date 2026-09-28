@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { fakeVideoSource } from '../../../../test/helpers/fake-video-source';
-import { CHUNK_SIZE, UPLOAD_URL, YouTubePublisher } from './youtube';
+import { CAPTIONS_URL, CHUNK_SIZE, THUMBNAIL_URL, UPLOAD_URL, YouTubePublisher } from './youtube';
 import type { PublishRequest } from './interface';
 
 const NOW = Date.parse('2026-09-27T12:00:00Z');
@@ -255,5 +255,60 @@ describe('YouTubePublisher.takedown', () => {
         platformPostId: 'missing',
       }),
     ).rejects.toMatchObject({ errorClass: 'invalid_request' });
+  });
+});
+
+describe('YouTubePublisher thumbnails.set + captions.insert (15.A3 / 15.A4)', () => {
+  const thumbnail = {
+    bytes: new Uint8Array([0xff, 0xd8, 0xff]),
+    contentType: 'image/jpeg' as const,
+  };
+  const captions = {
+    srt: '1\n00:00:00,000 --> 00:00:01,000\nHola\n',
+    language: 'es',
+    name: 'Studio narration',
+  };
+
+  it('sets the custom thumbnail and uploads the SRT track after the upload', async () => {
+    const { youtube, requests } = publisher(
+      'youtube',
+      sessionResponse('https://upload.googleapis.com/session-t'),
+      json({ id: 'yt-t' }),
+      json({ items: [{ status: { uploadStatus: 'processed' } }] }),
+      json({ kind: 'youtube#thumbnailSetResponse' }),
+      json({ id: 'track-1' }),
+    );
+    const result = await youtube.publish(request({ thumbnail, captions }));
+
+    expect(requests[3]).toMatchObject({
+      url: `${THUMBNAIL_URL}?videoId=yt-t&uploadType=media`,
+      method: 'POST',
+      headers: { 'content-type': 'image/jpeg', authorization: 'Bearer yt-token' },
+    });
+    expect(requests[4]?.url).toBe(`${CAPTIONS_URL}?uploadType=multipart&part=snippet`);
+    expect(requests[4]?.headers['content-type']).toMatch(/^multipart\/related; boundary=/);
+    const body = String(requests[4]?.body);
+    expect(body).toContain('"videoId":"yt-t"');
+    expect(body).toContain('"language":"es"');
+    expect(body).toContain('Hola');
+    expect(result.metadata).toMatchObject({
+      thumbnail: 'set',
+      captions: 'uploaded',
+      captionTrackId: 'track-1',
+    });
+  });
+
+  it('records a thumbnail or caption failure without failing the publish', async () => {
+    const { youtube } = publisher(
+      'youtube_short',
+      sessionResponse('https://upload.googleapis.com/session-u'),
+      json({ id: 'yt-u' }),
+      json({ items: [{ status: { uploadStatus: 'processed' } }] }),
+      json({ error: { code: 403, errors: [{ reason: 'forbidden' }] } }, 403),
+      json({ error: { code: 409, errors: [{ reason: 'captionExists' }] } }, 409),
+    );
+    const result = await youtube.publish(request({ thumbnail, captions }));
+    expect(result.platformPostId).toBe('yt-u');
+    expect(result.metadata).toMatchObject({ thumbnail: 'failed', captions: 'failed' });
   });
 });

@@ -19,6 +19,7 @@ const row = (over: Partial<OrgPolicy> = {}): OrgPolicy => ({
   defaultReviewPolicy: null,
   autoApproveAllowed: true,
   autoApproveTrustThreshold: null,
+  whiteLabel: false,
   updatedByUserId: 'staff-1',
   createdAt: new Date('2026-09-01T00:00:00Z'),
   updatedAt: new Date('2026-09-02T00:00:00Z'),
@@ -84,6 +85,7 @@ describe('viewPolicy', () => {
         defaultReviewPolicy: 'AUTO_APPROVE',
         autoApproveTrustThreshold: 3,
         autoApproveAllowed: false,
+        whiteLabel: true,
       }),
       {},
     );
@@ -91,6 +93,7 @@ describe('viewPolicy', () => {
       defaultReviewPolicy: 'AUTO_APPROVE',
       autoApproveTrustThreshold: 3,
       autoApproveAllowed: false,
+      whiteLabel: true,
     });
     expect(view.source.autoApproveTrustThreshold).toBe('organisation');
   });

@@ -11,6 +11,7 @@ export const PATCH = withStudioRoute(
     audit('studio.overlay_preset.update', { type: 'overlay_preset', id: preset.id });
     return { body: { preset } };
   },
+  { feature: 'overlays' },
 );
 
 export const DELETE = withStudioRoute(
@@ -21,4 +22,5 @@ export const DELETE = withStudioRoute(
     audit('studio.overlay_preset.delete', { type: 'overlay_preset', id });
     return { body: { deleted: true } };
   },
+  { feature: 'overlays' },
 );

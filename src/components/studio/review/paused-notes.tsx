@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PauseCircle, ShieldAlert } from 'lucide-react';
+import { Info, PauseCircle, ShieldAlert } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import type { ProjectDetail } from '@/lib/client/types';
 import { useAction } from './use-action';
@@ -90,5 +90,84 @@ export function SafetyReviewNote({ project }: { project: ProjectDetail }) {
       Paused for a content-safety review by PostMind’s Trust &amp; Safety team. Generation continues
       automatically if it is allowed; you will be notified either way.
     </p>
+  );
+}
+
+// 15.B9 — spec 20: "user notified of quality tier drop if fallback used". compose-video records
+// metadata.fallbacks[] when a preferred provider was passed over at run time (disabled, over
+// budget, too slow, circuit open) and a later one produced the output.
+
+const LAYER_LABEL: Record<string, string> = {
+  visual: 'visuals',
+  voice: 'narration',
+  music: 'music',
+  composition: 'final render',
+};
+const REASON_LABEL: Record<string, string> = {
+  provider_disabled: 'paused by PostMind',
+  over_budget: 'over budget',
+  too_slow: 'too slow',
+  no_cost_estimate: 'no cost estimate',
+  circuit_open: 'temporarily unavailable',
+};
+
+export interface FallbackItem {
+  layer: string;
+  shotId?: string;
+  usedProviderId: string;
+  skipped: Array<{ providerId: string; reason: string }>;
+}
+
+export function fallbacksOf(metadata: ProjectDetail['metadata']): FallbackItem[] {
+  const list = metadata?.fallbacks;
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((v) => {
+    const r = record(v);
+    if (!r || typeof r.layer !== 'string' || typeof r.usedProviderId !== 'string') return [];
+    const skipped = Array.isArray(r.skipped)
+      ? r.skipped.flatMap((s) => {
+          const x = record(s);
+          return x && typeof x.providerId === 'string' && typeof x.reason === 'string'
+            ? [{ providerId: x.providerId, reason: x.reason }]
+            : [];
+        })
+      : [];
+    return [
+      {
+        layer: r.layer,
+        usedProviderId: r.usedProviderId,
+        skipped,
+        ...(typeof r.shotId === 'string' && { shotId: r.shotId }),
+      },
+    ];
+  });
+}
+
+export function FallbackNote({ project }: { project: ProjectDetail }) {
+  const items = fallbacksOf(project.metadata);
+  if (items.length === 0) return null;
+  const layers = [...new Set(items.map((i) => LAYER_LABEL[i.layer] ?? i.layer))];
+  return (
+    <section
+      aria-label="Fallback provider used"
+      className="flex flex-col gap-1 rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"
+    >
+      <p className="flex items-start gap-2">
+        <Info className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
+        We used a fallback provider for the {layers.join(', ')} of this video, so quality may differ
+        from usual. Check it before approving, or regenerate later.
+      </p>
+      <ul className="pl-6 text-xs text-muted-foreground">
+        {items.map((i, n) => (
+          <li key={`${i.layer}-${i.shotId ?? n}`}>
+            {LAYER_LABEL[i.layer] ?? i.layer}: made with {i.usedProviderId} (
+            {i.skipped
+              .map((s) => `${s.providerId} ${REASON_LABEL[s.reason] ?? s.reason}`)
+              .join(', ')}
+            )
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

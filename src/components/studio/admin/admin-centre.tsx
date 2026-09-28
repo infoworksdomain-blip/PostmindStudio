@@ -7,12 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApi } from '@/lib/client/api';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { CostReportPanel } from './cost-report-panel';
+import { DeadLetterPanel } from './dead-letter-panel';
+import { FeaturesPanel } from './features-panel';
+import { ForceApprovalsPanel } from './force-approvals-panel';
 import { KillSwitchPanel } from './kill-switch-panel';
 import { LibraryAdminPanel } from './library-admin-panel';
 import { RedrivePanel } from './redrive-panel';
 import { ProvidersPanel, QueuesPanel } from './health-panels';
 import { OrganisationPanel } from './organisation-panel';
 import { SafetyReviewPanel } from './safety-review-panel';
+import { UsagePanel } from './usage-panel';
 import { BetaPanel } from './beta-panel';
 import { SafetyAuditPanel } from './safety-audit-panel';
 import { isForbidden, type KillSwitchState } from './types';
@@ -33,6 +37,7 @@ export function StaffOnly() {
 
 const TABS = [
   'kill-switch',
+  'features',
   'redrive',
   'library',
   'cost',
@@ -41,6 +46,9 @@ const TABS = [
   'safety',
   'safety-audit',
   'organisations',
+  'usage',
+  'dead-letters',
+  'force-approvals',
   'beta',
 ] as const;
 
@@ -85,6 +93,7 @@ export function AdminCentre() {
       <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
         <TabsList className="max-w-full overflow-x-auto">
           <TabsTrigger value="kill-switch">Kill switch</TabsTrigger>
+          <TabsTrigger value="features">Features</TabsTrigger>
           <TabsTrigger value="redrive">Re-drive</TabsTrigger>
           <TabsTrigger value="library">Library</TabsTrigger>
           <TabsTrigger value="cost">Cost report</TabsTrigger>
@@ -93,10 +102,16 @@ export function AdminCentre() {
           <TabsTrigger value="safety">Safety review</TabsTrigger>
           <TabsTrigger value="safety-audit">Safety audit</TabsTrigger>
           <TabsTrigger value="organisations">Organisations</TabsTrigger>
+          <TabsTrigger value="usage">Plan usage</TabsTrigger>
+          <TabsTrigger value="dead-letters">Dead letters</TabsTrigger>
+          <TabsTrigger value="force-approvals">Force-approvals</TabsTrigger>
           <TabsTrigger value="beta">Beta</TabsTrigger>
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />
+        </TabsContent>
+        <TabsContent value="features">
+          <FeaturesPanel />
         </TabsContent>
         <TabsContent value="redrive">
           <RedrivePanel />
@@ -118,6 +133,15 @@ export function AdminCentre() {
         </TabsContent>
         <TabsContent value="organisations">
           <OrganisationPanel />
+        </TabsContent>
+        <TabsContent value="usage">
+          <UsagePanel />
+        </TabsContent>
+        <TabsContent value="dead-letters">
+          <DeadLetterPanel />
+        </TabsContent>
+        <TabsContent value="force-approvals">
+          <ForceApprovalsPanel />
         </TabsContent>
         <TabsContent value="safety-audit">
           <SafetyAuditPanel />

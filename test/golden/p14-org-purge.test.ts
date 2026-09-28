@@ -61,7 +61,8 @@ describe.skipIf(!hasDb)(
       vi.stubEnv('STUDIO_INTERNAL_SERVICE_TOKEN', SERVICE_TOKEN);
       vi.stubEnv('S3_BUCKET_ASSETS', 'assets');
       vi.stubEnv('S3_BUCKET_RENDERS', 'renders');
-      vi.stubEnv('S3_BUCKET_THUMBNAILS', '');
+      // The pipeline harness writes 15.A3 render thumbnails to the 'thumbnails' bucket.
+      vi.stubEnv('S3_BUCKET_THUMBNAILS', 'thumbnails');
       vi.stubEnv('S3_BUCKET_LIBRARY', '');
       vi.stubEnv('STUDIO_PURGE_GRACE_DAYS', '');
       return startJourney(
@@ -169,7 +170,7 @@ describe.skipIf(!hasDb)(
       const plan = planRes.json.plan as PurgePlan;
       expect(plan.purge).toMatchObject({ state: 'soft_deleted', due: false });
       expect(plan.tables.find((t) => t.table === 'video_projects')?.rows).toBe(1);
-      expect(plan.storage.map((s) => s.bucket)).toEqual(['assets', 'renders']);
+      expect(plan.storage.map((s) => s.bucket)).toEqual(['assets', 'renders', 'thumbnails']);
       expect(plan.totals.objects).toBe(objectsUnder(gone, `orgs/${gone.org}/`).length);
       expect(plan.totals.rows).toBe(Object.values(goneBefore).reduce((a, b) => a + b, 0));
       expect(await rowCounts(gone.org)).toEqual(goneBefore);

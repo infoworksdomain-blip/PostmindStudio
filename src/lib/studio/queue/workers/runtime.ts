@@ -10,12 +10,14 @@ import {
   NotImplementedError,
   PlatformError,
   ProviderError,
+  RateDeferredError,
   StudioError,
   ValidationError,
 } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject } from '../../pipeline/project-state';
 import { recordCostPause } from '../../services/auto-resume';
+import { featureGateFor, type Feature } from '../../services/features';
 import { retryDelayMs, type JobDataMap, type JobName } from '../queues';
 import type { InlineJobQueue } from '../enqueue';
 import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-approvals';
@@ -28,8 +30,17 @@ import {
   sweepAbandonedUploadsJob,
 } from './data-retention';
 import { onReconcileChannelsFailed, reconcileChannels } from './reconcile-channels';
+import {
+  onCoreSyncFailed,
+  reconcileOrganisationsJob,
+  reportUsage,
+  syncCalendar,
+} from './core-sync';
+import { exportAccountData, onExportAccountDataFailed } from './export-account-data';
+import { onRetentionSweepFailed, retentionSweep } from './retention-sweep';
 import { onSampleSafetyAuditFailed, sampleSafetyAuditJob } from './sample-safety-audit';
 import { composeVideo, onComposeVideoFailed } from './compose-video';
+import { generateThumbnails, onGenerateThumbnailsFailed } from './generate-thumbnail';
 import { generateAsset, onGenerateAssetFailed } from './generate-asset';
 import { onPlanProjectFailed, planProject } from './plan-project';
 import {
@@ -39,6 +50,7 @@ import {
   publishVideo,
 } from './publish-video';
 import { ingestLibraryVideoJob, onIngestLibraryVideoFailed } from './ingest-library-video';
+import { onReanalyseLibraryVideoFailed, reanalyseLibraryVideoJob } from './reanalyse-library-video';
 import {
   onPollPublicationAnalyticsFailed,
   onRollUpAnalyticsFailed,
@@ -85,12 +97,14 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'plan-project': planProject,
   'generate-asset': generateAsset,
   'compose-video': composeVideo,
+  'generate-thumbnail': generateThumbnails,
   'run-quality-gate': runQualityGate,
   'publish-video': publishVideo,
   'fire-scheduled-publication': fireScheduledPublication,
   'scan-website': scanWebsite,
   'populate-slideshow': populateSlideshowJob,
   'ingest-library-video': ingestLibraryVideoJob,
+  'reanalyse-library-video': reanalyseLibraryVideoJob,
   'poll-publication-analytics': pollPublicationAnalytics,
   'roll-up-analytics': rollUpAnalyticsJob,
   'build-style-memory': buildStyleMemoryJob,
@@ -107,18 +121,25 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'sweep-stock-refresh': sweepStockRefresh,
   'poll-domain-verifications': pollDomainVerifications,
   'purge-disputed-domain': purgeDisputedDomainJob,
+  'export-account-data': exportAccountData,
+  'retention-sweep': retentionSweep,
+  'report-usage': reportUsage,
+  'sync-calendar-shadows': syncCalendar,
+  'reconcile-organisations': reconcileOrganisationsJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'plan-project': onPlanProjectFailed,
   'generate-asset': onGenerateAssetFailed,
   'compose-video': onComposeVideoFailed,
+  'generate-thumbnail': onGenerateThumbnailsFailed,
   'run-quality-gate': onRunQualityGateFailed,
   'publish-video': onPublishVideoFailed,
   'fire-scheduled-publication': onFireScheduledFailed,
   'scan-website': onScanWebsiteFailed,
   'populate-slideshow': onPopulateSlideshowFailed,
   'ingest-library-video': onIngestLibraryVideoFailed,
+  'reanalyse-library-video': onReanalyseLibraryVideoFailed,
   'poll-publication-analytics': onPollPublicationAnalyticsFailed,
   'roll-up-analytics': onRollUpAnalyticsFailed,
   'build-style-memory': onBuildStyleMemoryFailed,
@@ -135,6 +156,21 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'sweep-stock-refresh': onSweepFailed,
   'poll-domain-verifications': onDomainJobFailed,
   'purge-disputed-domain': onDomainJobFailed,
+  'export-account-data': onExportAccountDataFailed,
+  'retention-sweep': onRetentionSweepFailed,
+  'report-usage': onCoreSyncFailed,
+  'sync-calendar-shadows': onCoreSyncFailed,
+  'reconcile-organisations': onCoreSyncFailed,
+};
+
+/**
+ * 15.D1 / A12.4: jobs that belong to a switchable feature stop (403 feature_disabled, not retried)
+ * while the feature is off for their organisation. Library ingestion is staff curation and stays
+ * on; generate-asset's image-library lookups follow the project, which was gated at creation.
+ */
+export const JOB_FEATURES: Partial<Record<JobName, Feature>> = {
+  'populate-slideshow': 'slideshow',
+  'refresh-image-library': 'image-library',
 };
 
 export function isRetryable(err: unknown): boolean {
@@ -191,9 +227,18 @@ export async function executeJob<N extends JobName>(
       organisationId: data.organisationId,
       projectId: data.projectId,
     });
+    const feature = JOB_FEATURES[name];
+    if (feature)
+      await (deps.features ?? featureGateFor(deps.db)).assertEnabled(feature, data.organisationId);
     await PROCESSORS[name](data, deps);
     record('succeeded');
   } catch (err) {
+    // 15.C3: a full provider rate window is not a failure; the caller delays the job without
+    // spending an attempt (worker-host.ts moveToDelayed, drainInline sleeps).
+    if (err instanceof RateDeferredError) {
+      log.info({ providerId: err.providerId, retryAfterMs: err.retryAfterMs }, 'job deferred');
+      throw err;
+    }
     const retryable = isRetryable(err);
     const final = !retryable || attempt.attemptsMade + 1 >= attempt.maxAttempts;
     record(final ? 'failed' : 'retrying');
@@ -244,8 +289,16 @@ export async function drainInline(
         await executeJob(job.name, job.data as never, deps, { attemptsMade, maxAttempts });
         break;
       } catch (err) {
+        // 15.C3: wait out the rate window; the deferral does not count as an attempt.
+        if (err instanceof RateDeferredError) {
+          attemptsMade -= 1;
+          await deps.sleep(err.retryAfterMs);
+          continue;
+        }
         if (err instanceof UnrecoverableError || attemptsMade + 1 >= maxAttempts) {
           failedJobs.push(job.jobId ?? job.name);
+          // Dead-letter it, as BullMQ keeps it in the failed set (15.D4 admin view).
+          queue.fail(job, describeError(err), attemptsMade + 1);
           break;
         }
         await deps.sleep(retryDelayMs(attemptsMade + 1));

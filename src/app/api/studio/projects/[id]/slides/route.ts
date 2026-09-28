@@ -9,6 +9,7 @@ export const GET = withStudioRoute(
   async ({ tenant, deps, params }) => ({
     body: { data: await listSlides(deps.db, tenant.organisationId, params.id ?? '') },
   }),
+  { feature: 'slideshow' },
 );
 
 export const POST = withStudioRoute(
@@ -27,4 +28,5 @@ export const POST = withStudioRoute(
     );
     return { status: 201, body: { slide } };
   },
+  { feature: 'slideshow' },
 );

@@ -8,6 +8,7 @@ export const GET = withStudioRoute(
   async ({ tenant, deps, params }) => ({
     body: { image: await getImage(deps, tenant.organisationId, params.id ?? '') },
   }),
+  { feature: 'image-library' },
 );
 
 export const DELETE = withStudioRoute(
@@ -18,4 +19,5 @@ export const DELETE = withStudioRoute(
     audit('studio.image_library.delete', { type: 'image_library', id });
     return { body: { deleted: true } };
   },
+  { feature: 'image-library' },
 );

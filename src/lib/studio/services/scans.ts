@@ -6,8 +6,11 @@ import type { JobQueue } from '../queue/enqueue';
 import { jobIds } from '../queue/enqueue';
 import { assertFetchableUrl } from '../scan/safe-fetch';
 import { toPlanTier } from './catalog';
+import { assertScanBusinessAllowed } from './tier-gates';
 
 // BACKLOG 6.5 / Addendum A6.8 — scan-website, scan history, scan detail, business profile.
+
+export const OWNERSHIP_STATEMENT_MAX = 1_000;
 
 export const scanWebsiteInput = z.object({
   url: z.string().trim().min(1).max(2_000),
@@ -15,6 +18,15 @@ export const scanWebsiteInput = z.object({
   ownershipConfirmed: z.literal(true, {
     error: 'ownershipConfirmed must be true: confirm you own or represent this website',
   }),
+  /**
+   * 15.D8 / A11.2: "The checkbox text is preserved with the scan record for audit." The exact
+   * warranty text the user ticked; required with the confirmation, stored on website_scans.
+   */
+  ownershipStatement: z
+    .string({ error: 'ownershipStatement is required: send the checkbox text the user ticked' })
+    .trim()
+    .min(10, 'ownershipStatement must be the checkbox text the user ticked')
+    .max(OWNERSHIP_STATEMENT_MAX),
 });
 
 /**
@@ -47,6 +59,8 @@ export async function startScan(
   const raw = /^[a-z][a-z0-9+.-]*:/i.test(input.url) ? input.url : `https://${input.url}`;
   const url = assertFetchableUrl(raw);
   url.hash = '';
+  // 15.D2 / A10.3 "Website scan (Feature D)": 1 / 3 / 10 / unlimited businesses per tier.
+  await assertScanBusinessAllowed(deps.db, tenant, businessId);
   await assertScanQuota(deps.db, tenant.organisationId, deps.now());
   const running = await deps.db.websiteScan.findFirst({
     where: {
@@ -67,6 +81,7 @@ export async function startScan(
       url: url.toString(),
       state: 'QUEUED',
       trigger: 'manual',
+      ownershipStatement: input.ownershipStatement,
       // 14.4: the owner's confirmation, stored per scan; it gates the browser-render fallback.
       ownershipConfirmedAt: new Date(deps.now()),
       ownershipConfirmedByUserId: tenant.userId,
@@ -138,6 +153,8 @@ export const patchBusinessProfileInput = z
     imageSearchQueries: editableList(10),
     restrictedTopics: editableList(20),
     brandVoiceSummary: z.string().trim().max(1_000).nullable(),
+    /** 15.D8 / A13: "this profile is right" — clears needsReview without editing a field. */
+    confirmed: z.literal(true),
   })
   .partial()
   .strict()
@@ -153,8 +170,16 @@ export async function patchBusinessProfile(
   if (input.imageSearchQueries && input.imageSearchQueries.length === 0) {
     throw new ValidationError('imageSearchQueries needs at least one query');
   }
+  const { confirmed, ...fields } = input;
+  const edited = Object.keys(fields).length > 0;
+  // A13: editing or confirming the profile is the user's review of a low-confidence
+  // classification. A bare confirmation is not an edit, so re-scans may still refresh it.
   return db.businessProfile.update({
     where: { id: profile.id },
-    data: { ...input, editedByUser: true },
+    data: {
+      ...fields,
+      ...(edited && { editedByUser: true }),
+      ...((edited || confirmed) && { needsReview: false }),
+    },
   });
 }

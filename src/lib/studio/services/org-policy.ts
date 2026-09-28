@@ -41,6 +41,8 @@ export const orgPolicyInput = z
       .max(MAX_TRUST_THRESHOLD)
       .nullable()
       .optional(),
+    /** Operator decision P2: white-labelled outputs (no Studio marks). ENTERPRISE always is. */
+    whiteLabel: z.boolean().optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'Send at least one policy field' });
@@ -51,6 +53,7 @@ export interface EffectivePolicy {
   defaultReviewPolicy: ReviewPolicy;
   autoApproveTrustThreshold: number | null;
   autoApproveAllowed: boolean;
+  whiteLabel: boolean;
 }
 
 export interface OrgPolicyView {
@@ -85,6 +88,7 @@ export function viewPolicy(
       autoApproveTrustThreshold:
         row?.autoApproveTrustThreshold ?? (envThreshold.ok ? envThreshold.value : null),
       autoApproveAllowed: row?.autoApproveAllowed ?? true,
+      whiteLabel: row?.whiteLabel ?? false,
     },
     source: {
       defaultReviewPolicy: row?.defaultReviewPolicy ? 'organisation' : 'default',
@@ -129,6 +133,7 @@ export async function putOrgPolicy(
     ...(input.autoApproveTrustThreshold !== undefined && {
       autoApproveTrustThreshold: input.autoApproveTrustThreshold,
     }),
+    ...(input.whiteLabel !== undefined && { whiteLabel: input.whiteLabel }),
     updatedByUserId: actorUserId,
   };
   const row = await db.orgPolicy.upsert({

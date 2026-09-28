@@ -1,7 +1,9 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { KillSwitch } from '../kill-switch';
+import type { FeatureGate } from '../services/features';
 import type { CircuitBreaker } from '../providers/circuit-breaker';
+import type { ProviderRateLimiter } from '../providers/provider-rate';
 import type { ProviderRegistry } from '../providers/registry';
 import type { BudgetChecker, PlanTier } from '../providers/router';
 import type { TrackingDeps } from '../providers/tracked';
@@ -12,12 +14,16 @@ import type { PublishingDeps } from '../platforms/publishing';
 import type { PageRenderer } from '../scan/crawl';
 import type { HeadlessRenderer } from '../scan/headless-render';
 import type { CoreChannelDirectory } from '../core/channel-directory';
+import type { CalendarShadowClient } from '../core/calendar-shadow-client';
+import type { CoreOrganisationDirectory } from '../core/organisation-directory';
+import type { UsageReporter } from '../core/usage-reporter';
 import type { JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
 import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
+import type { ThumbnailComposer } from '../services/thumbnail-composer';
 
 // Everything a pipeline processor needs, injected so processors are testable without Redis,
 // real providers or ffmpeg.
@@ -27,6 +33,8 @@ export interface PipelineConfig {
   rendersBucket: string;
   /** Voice used when the brand kit has none (spec 5.5 "pre-selected ElevenLabs voices"). */
   defaultVoiceId?: string;
+  /** 15.B3: tone-matched stock voices (STUDIO_STOCK_VOICES; pipeline/voice-fit.ts). */
+  stockVoices?: ReadonlyMap<string, string>;
   /** Poll cadence for async providers (Runway asks for ≥5s). */
   providerPollIntervalMs: number;
   /** Give up on a single provider job after this long. */
@@ -53,6 +61,8 @@ export interface PipelineDeps {
   registry: ProviderRegistry;
   breaker: CircuitBreaker;
   killSwitch: KillSwitch;
+  /** 15.D1 feature flags; absent = the process-wide gate for `db` (30 s cache). */
+  features?: FeatureGate;
   budget: BudgetChecker;
   tracking: TrackingDeps;
   queue: JobQueue;
@@ -72,12 +82,41 @@ export interface PipelineDeps {
   notifier?: Notifier;
   /** Core's channel list for the daily Meta reconciliation (13.35); absent = pending (skipped). */
   coreChannels?: CoreChannelDirectory;
+  /**
+   * 15.W2–W4 Core clients (usage events, calendar shadows, organisation existence); absent =
+   * pending (the jobs keep their outbox rows pending_setup / skip until Core ships the APIs).
+   */
+  core?: CoreSyncClients;
+  /** 15.A3 thumbnail rendering (FFmpeg); absent = built from FFMPEG_PATH on first use. */
+  thumbnails?: ThumbnailComposer;
   /** 13.26 loudness normalisation + H.264 re-encode after compose; absent = not mastered. */
   mastering?: RenderMastering;
+  /** 15.C3 per-(organisation, provider) rate windows; absent = no Studio-side limits. */
+  providerRates?: ProviderRateLimiter;
+  /**
+   * P1 BYOC: the organisation's own-key registry (Enterprise, STUDIO_BYOC_ENABLED); absent or
+   * undefined for an organisation = the platform registry above.
+   */
+  registryFor?: (scope: ProviderScope) => Promise<ProviderRegistry | undefined>;
+  /** P7: per-business provider scores (0–1) the router prefers within a tier's candidates. */
+  providerRatings?: { scoresFor(scope: ProviderScope): Promise<Readonly<Record<string, number>>> };
   /** HTTP client for downloading provider outputs. */
   fetch: typeof fetch;
   now: () => number;
   sleep: (ms: number) => Promise<void>;
+}
+
+/** 15.W2–W4: PostMind Core integrations the scheduled Core-sync jobs use. */
+export interface CoreSyncClients {
+  usage?: UsageReporter;
+  calendar?: CalendarShadowClient;
+  organisations?: CoreOrganisationDirectory;
+}
+
+/** Who a provider call is for (Phase 15: BYOC registry and provider ratings are per org). */
+export interface ProviderScope {
+  organisationId: string;
+  projectId?: string;
 }
 
 export interface ScanDeps {

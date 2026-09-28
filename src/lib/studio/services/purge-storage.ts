@@ -19,14 +19,23 @@ export function orgPrefix(organisationId: string): string {
   return `orgs/${organisationId}/`;
 }
 
-/** Studio's configured buckets (S3_BUCKET_ASSETS / RENDERS / THUMBNAILS / LIBRARY). */
+/**
+ * Studio's configured buckets (S3_BUCKET_ASSETS / RENDERS / THUMBNAILS / LIBRARY) and their
+ * 15.E9 fallback-region buckets (S3_FALLBACK_BUCKET_*): during a primary outage objects land in
+ * the fallback bucket under the same orgs/<id>/ key, and thumbnails record no bucket on their row.
+ */
 export function purgeBucketsFromEnv(env: Record<string, string | undefined> = process.env) {
-  return [
+  const names = [
     env.S3_BUCKET_ASSETS,
     env.S3_BUCKET_RENDERS,
     env.S3_BUCKET_THUMBNAILS,
     env.S3_BUCKET_LIBRARY,
+    env.S3_FALLBACK_BUCKET_ASSETS,
+    env.S3_FALLBACK_BUCKET_RENDERS,
+    env.S3_FALLBACK_BUCKET_THUMBNAILS,
+    env.S3_FALLBACK_BUCKET_LIBRARY,
   ].flatMap((b) => (b?.trim() ? [b.trim()] : []));
+  return [...new Set(names)];
 }
 
 /** Configured buckets plus any other bucket the organisation's rows point at. */
@@ -41,7 +50,8 @@ export async function bucketsFor(
       WHERE "projectId" IN (SELECT "id" FROM "studio"."video_projects" WHERE "organisationId" = ${organisationId})
     UNION SELECT DISTINCT "s3Bucket" FROM "studio"."image_library" WHERE "organisationId" = ${organisationId}
     UNION SELECT DISTINCT "s3Bucket" FROM "studio"."video_uploads" WHERE "organisationId" = ${organisationId}
-    UNION SELECT DISTINCT "consentS3Bucket" FROM "studio"."voice_profiles" WHERE "organisationId" = ${organisationId}`;
+    UNION SELECT DISTINCT "consentS3Bucket" FROM "studio"."voice_profiles" WHERE "organisationId" = ${organisationId}
+    UNION SELECT DISTINCT "s3Bucket" FROM "studio"."data_exports" WHERE "organisationId" = ${organisationId}`;
   const fromRows = rows.flatMap((r) => (r.bucket?.trim() ? [r.bucket.trim()] : []));
   return [...new Set([...configured, ...fromRows])].sort();
 }

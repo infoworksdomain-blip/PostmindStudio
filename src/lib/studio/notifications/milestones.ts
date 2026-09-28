@@ -37,6 +37,8 @@ const PLATFORM_NAME: Record<string, string> = {
   linkedin_video: 'LinkedIn',
   x: 'X',
   facebook: 'Facebook',
+  instagram_feed: 'Instagram',
+  facebook_feed: 'Facebook',
 };
 
 /** Never throws: a milestone that cannot be stored is logged, the poll carries on. */

@@ -68,6 +68,15 @@ function spring(): ProjectRec {
       completedAt: ago(40 * MIN),
       metadata: {
         music: { status: 'generated', reused: false, durationSec: 25 },
+        // 15.B9 (Track B): one clip came from the next provider in the tier.
+        fallbacks: [
+          {
+            layer: 'visual',
+            shotId: 'shot-2',
+            usedProviderId: 'luma',
+            skipped: [{ providerId: 'runway', reason: 'circuit_open' }],
+          },
+        ],
         review: {
           decision: 'needs_review',
           code: 'price_claim',

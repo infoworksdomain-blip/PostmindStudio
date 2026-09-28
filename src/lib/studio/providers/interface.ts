@@ -106,11 +106,25 @@ export interface AvatarVideoRequest extends ProviderRequestBase {
   aspectRatio: AspectRatio;
 }
 
+export interface StockFootageRequest extends ProviderRequestBase {
+  capability: 'stock_footage';
+  /** The shot's scene description; adapters reduce it to search keywords. */
+  query: string;
+  /** Shortest clip wanted (the shot's length), in seconds. */
+  durationSec: number;
+  aspectRatio: AspectRatio;
+}
+
 export interface TtsRequest extends ProviderRequestBase {
   capability: 'tts';
   text: string;
   voiceId: string;
   languageCode?: string;
+  /**
+   * 15.B3: speaking rate, 1 = normal (ElevenLabs voice_settings.speed; documented range
+   * 0.7–1.2). Used to fit narration to its shot; adapters without a rate control ignore it.
+   */
+  speed?: number;
 }
 
 export interface MusicRequest extends ProviderRequestBase {
@@ -135,6 +149,8 @@ export interface TranscriptionRequest extends ProviderRequestBase {
   mediaUrl: string;
   /** For cost estimation. */
   durationSec: number;
+  /** 15.C5: BCP 47 tag of the spoken language (Studio language list); omitted = auto. */
+  languageCode?: string;
 }
 
 export interface ContentSafetyRequest extends ProviderRequestBase {
@@ -175,6 +191,7 @@ export type ProviderRequest =
   | TextToVideoRequest
   | ImageToVideoRequest
   | AvatarVideoRequest
+  | StockFootageRequest
   | TtsRequest
   | MusicRequest
   | CompositionRequest

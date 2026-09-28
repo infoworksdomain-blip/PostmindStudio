@@ -18,6 +18,10 @@ export interface BusinessProfile {
   classifierModel: string;
   lastRefreshedAt: string;
   editedByUser: boolean;
+  /** 15.D8 / A13: the classifier's self-reported confidence (0–1; null before 15.D8). */
+  classifierConfidence?: number | null;
+  /** 15.D8 / A13: low-confidence classification the user has not yet confirmed or edited. */
+  needsReview?: boolean;
 }
 
 export type ProfileListField =
@@ -45,6 +49,8 @@ export interface WebsiteScan {
   costPence: number;
   startedAt: string;
   completedAt: string | null;
+  /** 15.D8 / A11.2: the ownership checkbox text the user ticked (null: historic / scheduled). */
+  ownershipStatement?: string | null;
 }
 
 /** GET /scans/:id adds the error lines and the library size per source. */

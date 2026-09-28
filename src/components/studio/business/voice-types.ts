@@ -67,7 +67,7 @@ export const VOICE_STATE: Record<VoiceProfileState, { label: string; tone: Tone 
 
 /**
  * errorMessage() turns every 403 into a generic permission sentence; for voice cloning the 403
- * is the plan gate, so its own message ("Voice cloning is available on the ENTERPRISE plan") is
+ * is the plan gate, so its own message ("Voice cloning is available on the PLUS plan") is
  * kept. 501 means the server has no ElevenLabs key.
  */
 export function voiceErrorMessage(err: unknown): string {

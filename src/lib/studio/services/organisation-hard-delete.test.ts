@@ -154,6 +154,78 @@ describe.skipIf(!hasDb)('hardDeleteOrganisation', { timeout: 60_000 }, () => {
     await db.systemFlag.deleteMany({ where: { key: { contains: restored } } });
   });
 
+  it('wipes provider credentials and exports, keeps tombstones and an anonymised takedown', async () => {
+    const gone = `svc-hard-p15-${randomUUID()}`;
+    await db.providerCredential.create({
+      data: {
+        organisationId: gone,
+        providerId: 'runway',
+        encryptedKey: 'v1:enc:secret',
+        hint: 'abcd',
+        createdByUserId: 'u1',
+      },
+    });
+    await db.dataExport.create({ data: { organisationId: gone, requestedByUserId: 'u1' } });
+    await db.usageEvent.create({
+      data: {
+        organisationId: gone,
+        eventType: 'video_generated',
+        eventKey: `render:${gone}`,
+        payload: {},
+        occurredAt: new Date(t0),
+      },
+    });
+    const takedown = await db.takedownRequest.create({
+      data: {
+        receivedAt: new Date(t0),
+        source: 'policy_mailbox',
+        category: 'privacy',
+        requester: 'Jane Doe <jane@example.com>',
+        organisationId: gone,
+        publicationId: 'pub-gone',
+        summary: 'Asked for removal',
+        enteredByUserId: 'staff-1',
+      },
+    });
+    await purgeOrganisation({ db, now: () => t0 }, gone);
+    await db.businessPurge.create({
+      data: {
+        organisationId: gone,
+        businessId: 'biz-1',
+        graceUntil: new Date(t0),
+        projectsDeleted: 0,
+        publicationsCancelled: 0,
+        styleMemoriesDeleted: 0,
+        state: 'hard_deleted',
+      },
+    });
+
+    const res = await hardDeleteOrganisation(deps(t0 + 31 * DAY), gone);
+    expect(res.status).toBe('deleted');
+    expect(res.summary?.tables).toMatchObject({
+      provider_credentials: 1,
+      data_exports: 1,
+      usage_events: 1,
+      'takedown_requests:anonymised': 1,
+    });
+    expect(await db.providerCredential.count({ where: { organisationId: gone } })).toBe(0);
+    expect(await db.dataExport.count({ where: { organisationId: gone } })).toBe(0);
+    expect(await db.businessPurge.count({ where: { organisationId: gone } })).toBe(1);
+    const kept = await db.takedownRequest.findUniqueOrThrow({ where: { id: takedown.id } });
+    expect(kept).toMatchObject({
+      requester: null,
+      publicationId: null,
+      category: 'privacy',
+      source: 'policy_mailbox',
+      organisationId: gone,
+    });
+
+    await db.takedownRequest.delete({ where: { id: takedown.id } });
+    await db.businessPurge.deleteMany({ where: { organisationId: gone } });
+    await db.organisationPurge.deleteMany({ where: { organisationId: gone } });
+    await db.systemFlag.deleteMany({ where: { key: { contains: gone } } });
+  });
+
   it('fails loudly when the storage cannot list or batch-delete', async () => {
     const other = `svc-hard-nolist-${randomUUID()}`;
     await purgeOrganisation({ db, now: () => t0 }, other);

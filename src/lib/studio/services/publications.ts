@@ -104,9 +104,30 @@ export async function listPublications(
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: query.limit + 1,
     ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),
-    include: { project: { select: { id: true, name: true } } },
+    include: {
+      project: { select: { id: true, name: true } },
+      // 15.A8 (spec 14.3 "live view counts"): the latest cumulative snapshot.
+      analytics: {
+        orderBy: { bucketAt: 'desc' },
+        take: 1,
+        select: { views: true, likes: true, comments: true, bucketAt: true },
+      },
+    },
   });
-  const page = rows.slice(0, query.limit);
+  const page = rows.slice(0, query.limit).map(({ analytics, ...row }) => {
+    const latest = analytics[0];
+    return {
+      ...row,
+      latestMetrics: latest
+        ? {
+            views: latest.views,
+            likes: latest.likes,
+            comments: latest.comments,
+            at: latest.bucketAt,
+          }
+        : null,
+    };
+  });
   return { data: page, nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null };
 }
 
@@ -156,6 +177,8 @@ export async function createPublication(
   },
   tenant: TenantContext,
   input: CreatePublicationInput,
+  /** Studio-initiated publications only (auto-publish / schedule / drip; 15.A9). */
+  extra: { captionTruncated?: boolean } = {},
 ) {
   const { db } = deps;
   const orgId = tenant.organisationId;
@@ -257,6 +280,7 @@ export async function createPublication(
           rawCaption: input.caption,
           options: input.options ?? {},
           requestedBy: tenant.userId,
+          ...(extra.captionTruncated && { captionTruncated: true }),
         } as Prisma.InputJsonValue,
       },
     });

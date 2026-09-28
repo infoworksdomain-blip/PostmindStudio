@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Globe, Loader2, Save } from 'lucide-react';
+import { CircleAlert, Globe, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -167,6 +167,59 @@ function ProfileForm({ profile, onSaved }: { profile: BusinessProfile; onSaved: 
   );
 }
 
+/**
+ * 15.D8 / A13 — "low-confidence classifications flagged for user review before use". Confirming
+ * (or saving an edit) clears the flag; until then the profile is still used, with this warning.
+ */
+export function ProfileReviewBanner({
+  profile,
+  onConfirmed,
+}: {
+  profile: BusinessProfile;
+  onConfirmed: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const confidence =
+    typeof profile.classifierConfidence === 'number'
+      ? ` (confidence ${Math.round(profile.classifierConfidence * 100)}%)`
+      : '';
+  async function confirm() {
+    setBusy(true);
+    try {
+      await api(`/businesses/${encodeURIComponent(profile.businessId)}/business-profile`, {
+        method: 'PATCH',
+        body: { confirmed: true },
+        idempotencyKey: newIdempotencyKey(),
+      });
+      toast.success('Business profile confirmed');
+      onConfirmed();
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div
+      role="status"
+      aria-label="Profile needs your review"
+      className="flex flex-wrap items-start gap-3 rounded-lg border border-warning/50 bg-warning/10 p-4"
+    >
+      <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
+      <div className="min-w-0 flex-1 basis-64">
+        <p className="text-sm font-medium">Please confirm this profile</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Studio was not sure what your business does{confidence}. Check the details below, then
+          confirm them or edit and save. Videos and image suggestions use this profile.
+        </p>
+      </div>
+      <Button size="sm" disabled={busy} onClick={() => void confirm()}>
+        {busy && <Loader2 className="animate-spin" />} Confirm profile
+      </Button>
+    </div>
+  );
+}
+
 export function ProfilePanel({
   businessId,
   onGoToScan,
@@ -207,6 +260,9 @@ export function ProfilePanel({
           refreshed {formatDate(profile.lastRefreshedAt)}
         </p>
       </div>
+      {profile.needsReview && (
+        <ProfileReviewBanner profile={profile} onConfirmed={() => void mutate()} />
+      )}
       <ProfileForm
         key={profile.id + profile.lastRefreshedAt}
         profile={profile}

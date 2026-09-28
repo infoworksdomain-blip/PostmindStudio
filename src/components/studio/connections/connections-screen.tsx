@@ -12,6 +12,7 @@ import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { MetaPlatformCard } from './meta-platform-card';
 import { PlatformCard } from './platform-card';
+import { ByocKeysPanel } from '../settings/byoc-keys-panel';
 import {
   belongsToBusiness,
   callbackErrorMessage,
@@ -170,6 +171,7 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
           ))}
         </div>
       )}
+      <ByocKeysPanel />
     </>
   );
 }

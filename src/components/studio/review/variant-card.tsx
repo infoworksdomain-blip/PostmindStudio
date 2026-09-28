@@ -11,6 +11,7 @@ import type { Render } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { StateBadge } from '../primitives';
 import { QualityPanel } from './quality-panel';
+import { VariantThumbnail } from './variant-thumbnail';
 import type { SignedUrl } from './types';
 
 // One variant (render) per target format (spec 14.2): inline player from a signed preview URL,
@@ -134,6 +135,7 @@ export function VariantCard({
             )}
           </div>
         )}
+        <VariantThumbnail render={render} />
         <QualityPanel render={render} onChanged={onChanged} />
         <div>
           <Button variant="outline" size="sm" onClick={download} disabled={downloading}>

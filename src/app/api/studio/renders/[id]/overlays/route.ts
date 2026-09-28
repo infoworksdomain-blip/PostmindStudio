@@ -9,4 +9,5 @@ export const GET = withStudioRoute(
   async ({ tenant, deps, params }) => ({
     body: { data: await listRenderOverlays(deps.db, tenant.organisationId, params.id ?? '') },
   }),
+  { feature: 'overlays' },
 );

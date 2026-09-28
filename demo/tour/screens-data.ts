@@ -133,6 +133,23 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
           },
         ],
       },
+      {
+        title: 'Templates',
+        href: '#/templates',
+        summary:
+          'Saved slideshow and project templates, with delete; built-in templates listed read-only (A5.4, 15.E7).',
+        scene: 'flatlay',
+      },
+      {
+        title: 'Share for feedback',
+        href: '#/p/demoTokenSpringMenu000000000000000000000000',
+        summary:
+          'The public preview an outside reviewer opens from a share link: watch the variants and leave feedback (including right-to-left text); approving is not possible from a link (15.E5, decision P8).',
+        scene: 'sourdough',
+        tryIt: [
+          'On a project’s review screen, “Share for feedback” creates, lists and revokes links.',
+        ],
+      },
     ],
   },
   {
@@ -194,6 +211,24 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
           'TikTok, YouTube, LinkedIn and X by OAuth (X needs a reconnect); Instagram and Facebook from PostMind.',
         scene: 'street',
       },
+      {
+        title: 'Approval workflows',
+        href: '#/approvals',
+        summary:
+          'Multi-step sign-off (spec 7.13): ordered steps of a role and how many approvers, applied by business, platform or tag — the most specific workflow wins.',
+        scene: 'baker',
+        tryIt: [
+          'Create a workflow, reorder its steps, then edit or delete it.',
+          'Open “Spring menu launch” (it targets Instagram Reels): the review screen shows “Step 1 of 2 — waiting for admin”; approve twice to finish.',
+        ],
+      },
+      {
+        title: 'Export data',
+        href: '#/account/export',
+        summary:
+          'Right of access: request a ZIP of all the organisation’s Studio data (tokens never included); the download link lasts 7 days (15.E1).',
+        scene: 'coffee',
+      },
     ],
   },
   {
@@ -212,6 +247,9 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
           'Re-drive tab: choose filters, Preview, then Apply for exactly what was previewed.',
           'Library tab: ingest a video, watch Ingestion status, edit category or licence, retire.',
           'Cost report tab: caps today, top organisations, projects over 80% of budget.',
+          'Kill switch tab: a global kill waits for a second staff member; confirm Priya’s pending request (typed phrase) or withdraw it.',
+          'Dead letters tab: inspect a failed job, requeue a generate-asset job with another provider, drain a queue by typing its name.',
+          'Force-approvals tab: review quality-gate overrides with the customer’s note and the failed checks.',
         ],
       },
     ],

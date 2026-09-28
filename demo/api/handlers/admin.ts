@@ -12,6 +12,7 @@ import {
   type Halted,
   type KillLevel,
 } from './admin-state';
+import { pendingGlobalState, requestGlobalKill } from './p15-d-admin-kill';
 
 const LEVELS: KillLevel[] = ['global', 'workspace', 'project', 'provider', 'platform'];
 const PROVIDER_IDS = [
@@ -50,7 +51,7 @@ const PLATFORMS = [
   'facebook',
 ];
 
-route('GET', '/admin/kill-switch', () => killSwitchState());
+route('GET', '/admin/kill-switch', () => ({ ...killSwitchState(), ...pendingGlobalState() }));
 
 interface KillBody {
   level?: KillLevel;
@@ -78,6 +79,9 @@ route('PUT', '/admin/kill-switch', ({ body }) => {
     throw new DemoHttpError(400, 'validation_error', 'Unknown providerId');
   if (input.level === 'platform' && !PLATFORMS.includes(target ?? ''))
     throw new DemoHttpError(400, 'validation_error', 'Unknown platform');
+  // 15.D6: engaging the global level needs a second staff member (p15-d-admin-kill.ts).
+  if (input.level === 'global' && input.enabled && !killSwitchState().global.enabled)
+    return requestGlobalKill(input.reason.trim());
   return { flag: setFlag(input.level, target, input.enabled) };
 });
 

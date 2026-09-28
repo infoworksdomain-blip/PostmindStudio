@@ -104,6 +104,9 @@ export function newIdempotencyKey(): string {
 export function errorMessage(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.status === 401) return 'Your PostMind session has expired. Sign in again.';
+    // 15.D2 / P3: plan gates and quotas carry their own upgrade message.
+    if (err.status === 403 && (err.code === 'plan_tier' || err.code === 'quota_exceeded'))
+      return err.message;
     if (err.status === 403) return 'You don’t have permission to do that.';
     if (err.status === 429) return 'Too many requests — try again in a moment.';
     const problems = err.details?.problems;

@@ -31,6 +31,30 @@
   origin with the `Content-Type` header (the URL signs it). The web role's IAM policy needs
   `s3:PutObject` there to sign it, plus `s3:GetObject` / `s3:DeleteObject` (probe and reject).
   Without the CORS rule the upload fails in the browser with a network error and the upload stays
+  PENDING. GAP: abandoned PENDING uploads (`orgs/*/uploads/`, rows in `video_uploads`) are not
+  swept yet. Do NOT add a blanket S3 expiry on that prefix: READY uploads are the footage of
+  UPLOAD projects and slideshow clips.
+- Languages (15.C5: en-GB, en-US, fr, es, ar, de, it, pt-BR, pt-PT, hi, zh-Hans) — media side:
+  - **Fonts.** `STUDIO_FONTS_BASE_URL` must also serve `NotoSansArabic.ttf`,
+    `NotoSansDevanagari.ttf` and `NotoSansSC.ttf` (Google Fonts, SIL OFL; the file name is the
+    family without spaces). Overlays, captions and cards in Arabic, Hindi and Mandarin are set in
+    these families (Latin languages keep the brand/preset font); a missing file fails the render
+    or the overlay pre-render ("Font … could not be downloaded"). `src/lib/studio/overlays/script-fonts.ts`.
+  - **Arabic direction.** Shotstack's `rich-text` asset has no direction property; Arabic overlay
+    text is prefixed with U+200F (right-to-left mark) and relies on Shotstack's Unicode bidi.
+    Verify one Arabic render (a line starting with a Latin brand name) before GA. The FFmpeg
+    pre-render (karaoke, glitch, counter) sets `drawtext text_shaping=1` for Arabic, so the
+    worker's FFmpeg must be built with `--enable-libfribidi` (and `--enable-libharfbuzz`, which
+    drawtext needs anyway and which shapes Devanagari). Check: `ffmpeg -hide_banner -h
+    filter=drawtext | grep text_shaping`. Without fribidi Arabic pre-renders fail loudly.
+  - **Known limits.** Karaoke splits words on spaces, so Mandarin lines highlight all at once;
+    overlay left/right alignment is not mirrored for Arabic.
+  - **Voice.** Optional `ELEVENLABS_DEFAULT_VOICE_ID_<LANG>` (e.g. `_AR`, `_HI`, `_ZH_HANS`,
+    `_PT_BR`) picks a native-accent default voice per language; unset = the global default (the
+    multilingual models speak every Studio language). `language_code` is sent to ElevenLabs only
+    for `eleven_flash_v2_5` / `eleven_v3` (not supported by `eleven_multilingual_v2`).
+  - **Word timing.** AssemblyAI gets the script's `language_code` (en_uk, en_us, fr, es, ar, de,
+    it, pt, hi, zh — all on Universal-3.5 Pro); whisper-1 gets the ISO 639-1 `language`.
   PENDING. Abandoned PENDING uploads (`orgs/*/uploads/`, rows in `video_uploads`) are deleted by
   the daily `sweep-abandoned-uploads` job (BACKLOG 14.2) a day after their upload URL expired.
   Do NOT add a blanket S3 expiry on that prefix: READY uploads are the footage of UPLOAD projects
@@ -72,3 +96,16 @@ Migrations always run **before** the new code, and they are expand-only (see
 
 **Exception:** when a release adds a new job type, roll out the workers first. Otherwise jobs
 enqueued by the new web code could find no worker that understands them.
+
+## Phase 15 Track B — composition configuration
+
+- `STUDIO_FONTS_BASE_URL` must host each brand font named in brand kits as `<FamilyNoSpaces>.ttf`
+  plus `NotoSans.ttf`, `NotoSansArabic.ttf`, `NotoSansDevanagari.ttf`, `NotoSansSC.ttf`
+  (i18n/scripts.ts). Uploaded brand fonts need nothing: their signed S3 URL goes into
+  `timeline.fonts`.
+- `STUDIO_STOCK_VOICES` (optional): `tone=voiceId` pairs for tone-matched stock narration (15.B3).
+- `STUDIO_MADE_WITH_CARD_URL` (optional, https): end card for non-white-label organisations
+  (operator decision P2). White-label: ENTERPRISE, or `PUT /admin/organisations/:id/policy
+  { whiteLabel: true }`.
+- The watermark quality check samples frames with FFmpeg (`FFMPEG_PATH`): without FFmpeg, kits
+  with a watermark fail that check closed (force-approvable).

@@ -45,7 +45,8 @@ describe.skipIf(!hasDb)(
     const org = `api-library-${randomUUID()}`;
     const biz = `biz-${randomUUID()}`;
     const tokens = {
-      owner: tenant(org),
+      // 15.D2 / A10.3: TEMPLATE mode needs Plus (gate covered in test/api/p15-d-tiers.test.ts).
+      owner: { ...tenant(org), organisation: { id: org, planTier: 'PLUS' } },
       staff: tenant(org, ['studio:project:read', 'studio:admin:library']),
       reader: tenant(org, ['studio:project:read']),
     };

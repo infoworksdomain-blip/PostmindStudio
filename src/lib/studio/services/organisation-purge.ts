@@ -3,6 +3,7 @@ import { ValidationError } from '../../errors';
 import { FLAG_ON, flagKeys } from '../system-flags';
 import { graceUntilFrom, purgeGraceDays } from './organisation-hard-delete';
 import { organisationIdParam } from './org-policy';
+import { BYOC_CREDENTIAL_REVOKED, notifyByocKeysChanged } from './provider-credentials';
 
 // BACKLOG 13.22 — POST /api/studio/internal/organisations/:id/purge (spec 8.x internal API:
 // "Called by PostMind Core when an org is deleted; soft-deletes all Studio data with 30-day
@@ -10,7 +11,8 @@ import { organisationIdParam } from './org-policy';
 // 6.5 "soft-deletes its rows (or hard-deletes after 30-day grace)"). In one transaction:
 //   1. every platform connection of the organisation (Meta channels Core registered and Studio's
 //      own TikTok / YouTube / X / LinkedIn OAuth rows) is disconnected and its tokens WIPED —
-//      tokens of a deleted organisation must not survive the grace period;
+//      tokens of a deleted organisation must not survive the grace period; likewise its BYOC
+//      provider API keys (15, P1) are revoked and their key material WIPED;
 //   2. the organisation's workspace kill switch is engaged, so queued and running work stops at
 //      the next job start / provider call (spec 12);
 //   3. scheduled publications are cancelled (nothing posts for a deleted organisation);
@@ -45,7 +47,18 @@ export async function purgeOrganisation(
   const now = new Date(deps.now());
   const graceDays = purgeGraceDays();
 
-  return deps.db.$transaction(async (tx) => {
+  const result = await deps.db.$transaction(async (tx) => {
+    await tx.providerCredential.updateMany({
+      where: {
+        organisationId: org,
+        OR: [
+          { state: { not: BYOC_CREDENTIAL_REVOKED } },
+          { encryptedKey: { not: null } },
+          { encryptedSecondaryKey: { not: null } },
+        ],
+      },
+      data: { state: BYOC_CREDENTIAL_REVOKED, encryptedKey: null, encryptedSecondaryKey: null },
+    });
     const channels = await tx.platformConnection.updateMany({
       where: {
         organisationId: org,
@@ -126,4 +139,7 @@ export async function purgeOrganisation(
       repeated: Boolean(existing),
     };
   });
+  // Drop any cached BYOC key of the organisation in this process.
+  notifyByocKeysChanged(org);
+  return result;
 }

@@ -1,0 +1,65 @@
+name: Overlay pixel diff
+
+# BACKLOG 15.D10 / A14.2 "Overlay editor pixel-diff CI passes against reference renders for all
+# 25 built-in presets". test/visual/overlay-presets.visual.test.ts renders every built-in preset
+# as the editor's HTML preview (Chromium via Playwright) and as the production FFmpeg pre-render,
+# and diffs them — and against the Shotstack reference PNGs in test/visual/references/ once the
+# operator has captured them (runbooks/slo-and-launch-readiness.md "Overlay pixel diff").
+# Fonts are the same TTFs production renders with (STUDIO_FONTS_BASE_URL/<Family>.ttf); without
+# that repository variable the job skips with a notice.
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/studio/overlays/**'
+      - 'src/components/studio/overlays/**'
+      - 'test/visual/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pixel-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      STUDIO_FONTS_BASE_URL: ${{ vars.STUDIO_FONTS_BASE_URL }}
+    steps:
+      - name: Check for the fonts host
+        id: fonts
+        run: |
+          if [ -n "$STUDIO_FONTS_BASE_URL" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Overlay pixel diff skipped::Set the STUDIO_FONTS_BASE_URL repository variable (the host serving <Family>.ttf)."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.fonts.outputs.present == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.fonts.outputs.present == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.fonts.outputs.present == 'true'
+      - name: Install ffmpeg and Playwright Chromium (not repo dependencies)
+        if: steps.fonts.outputs.present == 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          npm install --no-save playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Download the preset fonts
+        if: steps.fonts.outputs.present == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/fonts"
+          npx tsx -e "import { BUILT_IN_PRESETS } from './src/lib/studio/overlays/presets'; import { resolveStyle } from './src/lib/studio/overlays/params'; process.stdout.write([...new Set(BUILT_IN_PRESETS.map((p) => resolveStyle(p.parameters).fontFamily.replace(/ /g, '')))].join('\n'))" > "$RUNNER_TEMP/families.txt"
+          while read -r family; do
+            curl -fsSL "${STUDIO_FONTS_BASE_URL%/}/${family}.ttf" -o "$RUNNER_TEMP/fonts/${family}.ttf"
+          done < "$RUNNER_TEMP/families.txt"
+      - name: Pixel diff per built-in preset
+        if: steps.fonts.outputs.present == 'true'
+        env:
+          VISUAL_FONTS_DIR: ${{ runner.temp }}/fonts
+        run: npx vitest run test/visual

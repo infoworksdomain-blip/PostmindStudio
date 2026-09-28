@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { ArrowRight, Building2, Clapperboard, Layers, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,18 +17,22 @@ import { AutoPublishOption } from './auto-publish-option';
 import {
   BRIEF_MAX,
   buildCreateBody,
+  buildGenerateBody,
   publishPlatforms,
   usesTemplate,
   validateCreate,
   type CreateSource,
   type CreateState,
+  type QualityTier,
   type Reference,
 } from './body';
+import { defaultSourceFor, LanguageOptions, type WorkflowOption } from './create-planning-options';
 import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './create-options';
 import { defaultPlatforms } from './formats';
 import { ProjectTemplatePicker } from './project-template-picker';
 import { ReferenceBanner } from './reference-banner';
 import { VideoUploadField } from '../uploads/video-upload-field';
+import { ProfileReviewNotice } from '../business/profile-review-notice';
 
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
 // business's connections and default brand kit; options sit behind progressive disclosure.
@@ -69,6 +73,16 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const kits = useApi<{ data: BrandKit[] }>(businessId ? '/brand-kits' : null, { businessId });
   const connections = useApi<{ data: PlatformConnection[] }>('/platform-connections');
   const templates = useApi<{ data: ProjectTemplate[] }>('/templates');
+  // 15.C4: the plan tier caps the tier override; workflows feed the approval picker (15.D3).
+  const usage = useApi<{ usage: { planTier: QualityTier } }>('/usage');
+  const workflows = useApi<{ data: WorkflowOption[] }>('/approval-workflows');
+  const planTier = usage.data?.usage.planTier;
+  const [sourceTouched, setSourceTouched] = useState(false);
+  // P5 (operator decision): the Basic plan starts on Slideshow until the user picks.
+  useEffect(() => {
+    if (sourceTouched || initialReference) return;
+    setForm((f) => ({ ...f, source: defaultSourceFor(planTier) }));
+  }, [planTier, sourceTouched, initialReference]);
 
   const state: CreateState = {
     ...form,
@@ -123,7 +137,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
         try {
           await api(`/projects/${project.id}/generate`, {
             method: 'POST',
-            body: {},
+            body: buildGenerateBody(state),
             idempotencyKey: newIdempotencyKey(),
           });
           toast.success(
@@ -167,6 +181,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
               : 'What’s the video about?'}
         </label>
       </div>
+      {!isUpload && <ProfileReviewNotice businessId={businessId} />}
       {isUpload && businessId && (
         <div className="flex flex-col gap-1">
           <VideoUploadField
@@ -244,7 +259,10 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
                 type="button"
                 role="radio"
                 aria-checked={form.source === key}
-                onClick={() => patch({ source: key })}
+                onClick={() => {
+                  setSourceTouched(true);
+                  patch({ source: key });
+                }}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                   form.source === key
@@ -283,6 +301,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             {!templated && <LengthToggle value={form.length} onChange={patch} />}
             <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />
           </div>
+          <LanguageOptions state={state} onChange={patch} />
           {!isSlideshow && (
             <AutoPublishOption
               enabled={form.autoPublish}
@@ -303,6 +322,8 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             onChange={patch}
             open={showAdvanced}
             onToggle={() => setShowAdvanced((v) => !v)}
+            planTier={planTier}
+            workflows={workflows.data?.data}
           />
         </div>
       )}

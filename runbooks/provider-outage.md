@@ -28,6 +28,19 @@
   render with narration only and `metadata.music.status` is `failed` (with the reason); nothing
   retries it for that run. Disabling it with the provider kill switch is safe at any time. A
   re-render after recovery generates the track (the Review screen shows the music status).
+- Phase 15 fallbacks (Track C): Claude (text) falls back to OpenAI (`OPENAI_TEXT_MODEL`,
+  Responses API); AssemblyAI (captions, word timing, the voice-consent check) falls back to
+  OpenAI whisper-1; ElevenLabs Music falls back to a Storyblocks library track
+  (`storyblocks-music`); STOCK_FOOTAGE shots use Storyblocks video, then Pexels video. All use
+  keys already configured; a provider without its key is simply skipped.
+- Rate windows (15.C3): with `STUDIO_PROVIDER_RATE_<ID>` set (e.g. `STUDIO_PROVIDER_RATE_PEXELS_VIDEO
+  ="200/3600,org=50/3600"`), a job that finds the window full is moved to BullMQ's delayed set
+  until a slot frees ("job deferred" in the logs). It is not a failure and uses no retry. When a
+  provider starts answering 429 during an incident, lower its window instead of disabling it.
+  To inspect: `redis-cli -n 3 ZCARD studio:prate:<provider>`. Redis down = no Studio-side limit
+  (fail-open, warned once a minute).
+- A voice clone whose consent check could not run (transcription down) stays PENDING_REVIEW;
+  after recovery the owner (or support) calls `POST /api/studio/voice-profiles/:id/consent-check`.
 
 ## Steps
 
@@ -50,3 +63,13 @@
 The shot success rate returns to baseline in `studio_jobs_total{job="generate-asset"}`.
 
 **GAP:** there is no alert rule yet (see [README](README.md#gap-alerting)).
+
+## Phase 15 — what customers see during a fallback (15.B9)
+
+When the router passes over a preferred provider for a run-time reason (circuit open, kill
+switch, over budget, too slow, no cost estimate) and a later candidate produces the output, the
+project's `metadata.fallbacks[]` lists it and the review screen shows "We used a fallback provider
+for the … of this video". Nothing to do beyond the outage itself; owners may regenerate the shot
+once the preferred provider is healthy (the regenerate never reuses the fallback's asset).
+Reused generations (15.B6, `provider_jobs.operation = '<capability>:reused'`, cost 0) are not
+provider traffic and never trip the breaker.

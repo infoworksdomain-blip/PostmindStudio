@@ -4,10 +4,12 @@ import type { BlackInterval, MediaProbe } from './media-probe';
 
 // Layer 8 auto-check panel (spec 13.1). Pure evaluation: given measurements, decide pass/fail.
 // Fail-closed: a check that should run but could not produces a failure, never a pass.
-// Checks that depend on features not built yet (captions, watermark, brand-kit rendering,
-// audio-sync analysis) are recorded as `not_run` with the reason — never reported as passed.
+// Checks that do not apply to a render are recorded as `not_run` with the reason — never
+// reported as passed. 15.B2: audio_sync, caption_sync, watermark and brand_kit are evaluated by
+// quality-sync.ts; brand_kit's §13.1 failure action is "User review required", recorded as
+// `warning` (does not fail the gate; keeps the video from auto-approval).
 
-export type CheckStatus = 'passed' | 'failed' | 'not_run';
+export type CheckStatus = 'passed' | 'failed' | 'not_run' | 'warning';
 /** block = content-safety block (no customer force-approve, spec 13.5); error = force-approvable. */
 export type CheckSeverity = 'block' | 'error' | 'info';
 
@@ -66,6 +68,8 @@ export interface QualityInputs {
   blackIntervals: BlackInterval[];
   loudnessLufs: number | null;
   contentSafety: { scan: ContentSafetyScan } | { unavailable: string };
+  /** 15.B2 audio_sync / caption_sync / watermark / brand_kit results (quality-sync.ts). */
+  sync?: QualityCheck[];
 }
 
 const RATIO_VALUE: Record<AspectRatio, number> = {
@@ -171,6 +175,7 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
 
   checks.push(evaluateContentSafety(input.contentSafety));
 
+  if (input.sync) return [...checks, ...input.sync];
   for (const [code, reason] of [
     ['audio_sync', 'voiceover-to-shot peak alignment analysis not built yet'],
     ['watermark', 'watermark rendering arrives with brand kits'],

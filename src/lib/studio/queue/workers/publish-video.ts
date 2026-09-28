@@ -1,7 +1,12 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, VideoPublication, VideoRender } from '@prisma/client';
 import { NotFoundError, PlatformError } from '../../../errors';
+import { nextMidnight } from '../../automation/zoned-time';
+import { ensureRenderSrt } from '../../overlays/voice-captions';
+import type { PublishRequest } from '../../platforms/interface';
+import { readThumbnail } from '../../services/thumbnails';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { notifyPublicationFailed } from '../../notifications/events';
+import { recordPublished, recordPublishFailed } from '../../observability/slo';
 import {
   noteCredentialFailure,
   publicationMetadata,
@@ -17,6 +22,88 @@ import type { PublishJobData } from '../queues';
 // PUBLISHED / PARTIALLY_PUBLISHED once no publication of the project is still pending.
 
 const PENDING_STATES = ['SCHEDULED', 'PUBLISHING'] as const;
+
+/** 15.A9: YouTube Data API quota resets at midnight Pacific Time. */
+export const YOUTUBE_QUOTA_TIMEZONE = 'America/Los_Angeles';
+/** A few minutes past the reset, so the retry does not race the quota rollover. */
+const QUOTA_RESET_MARGIN_MS = 5 * 60_000;
+
+function isYouTube(platform: string): boolean {
+  return platform === 'youtube' || platform === 'youtube_short';
+}
+
+/**
+ * 15.A9 (spec 9.4 "quotaExceeded → back off to next quota window"): a YouTube quota refusal
+ * (nothing was uploaded) puts the publication back to SCHEDULED and re-queues it just after the
+ * next Pacific-midnight reset instead of failing it.
+ */
+export async function deferForQuota(
+  data: PublishJobData,
+  deps: PipelineDeps,
+  publication: Pick<VideoPublication, 'id' | 'retryCount'>,
+  meta: Record<string, unknown>,
+): Promise<Date> {
+  const at = new Date(nextMidnight(deps.now(), YOUTUBE_QUOTA_TIMEZONE) + QUOTA_RESET_MARGIN_MS);
+  const deferrals = typeof meta.quotaDeferrals === 'number' ? meta.quotaDeferrals + 1 : 1;
+  await deps.db.videoPublication.update({
+    where: { id: publication.id },
+    data: {
+      state: 'SCHEDULED',
+      scheduledFor: at,
+      errorReason: 'YouTube upload quota reached; retrying after the daily reset',
+      errorCode: 'quota_exceeded',
+      metadata: {
+        ...meta,
+        quotaDeferredUntil: at.toISOString(),
+        quotaDeferrals: deferrals,
+      } as Prisma.InputJsonValue,
+    },
+  });
+  await deps.queue.add('publish-video', data, {
+    jobId: `publish-video__${publication.id}__quota__${at.getTime()}`,
+    delayMs: at.getTime() - deps.now(),
+  });
+  deps.audit({
+    actorUserId: 'system:studio-publisher',
+    organisationId: data.organisationId,
+    action: 'studio.publication.quota_deferred',
+    resource: { type: 'video_publication', id: publication.id },
+    metadata: { retryAt: at.toISOString(), deferrals },
+  });
+  return at;
+}
+
+/** 15.A3 / 15.A4: YouTube extras — custom thumbnail and (long-form) the narration SRT. */
+async function youtubeExtras(
+  deps: PipelineDeps,
+  render: VideoRender,
+  organisationId: string,
+): Promise<Pick<PublishRequest, 'thumbnail' | 'captions'>> {
+  const out: Pick<PublishRequest, 'thumbnail' | 'captions'> = {};
+  const bucket = deps.publishing.thumbnailsBucket;
+  if (bucket) {
+    const thumbnail = await readThumbnail({ storage: deps.storage, bucket }, render).catch(
+      () => null,
+    );
+    if (thumbnail) out.thumbnail = thumbnail;
+  }
+  if (render.targetPlatform === 'youtube') {
+    const srt = await ensureRenderSrt(deps, render, organisationId).catch((err: unknown) => {
+      deps.logger.warn(
+        { err, renderId: render.id },
+        'caption track unavailable; publishing without it',
+      );
+      return null;
+    });
+    if (srt)
+      out.captions = {
+        srt: srt.captions.srt,
+        language: srt.captions.language,
+        name: 'Studio narration',
+      };
+  }
+  return out;
+}
 
 /** Platform errors that mean the upload was refused outright (so nothing can be live). */
 function definitelyNotPosted(err: unknown): boolean {
@@ -107,8 +194,11 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
       false,
     );
   }
-  const { accessToken, accountId } = await resolveCredentials(deps.publishing, publication);
+  const { accessToken, accountId, scopes } = await resolveCredentials(deps.publishing, publication);
   const video = await videoSource(deps.publishing, publication.render);
+  const extras = isYouTube(platform)
+    ? await youtubeExtras(deps, publication.render, data.organisationId)
+    : {};
   const setMetadata = (value: Record<string, unknown>) =>
     deps.db.videoPublication.update({
       where: { id: publication.id },
@@ -128,8 +218,20 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
       accountId,
       aiGenerated: true,
       options: meta.options,
+      ...(scopes && { grantedScopes: scopes }),
+      ...extras,
     });
   } catch (err) {
+    // 15.A9: YouTube quota refusal → back off to the next quota window (nothing was uploaded).
+    if (
+      isYouTube(platform) &&
+      err instanceof PlatformError &&
+      err.errorClass === 'quota_exceeded'
+    ) {
+      const at = await deferForQuota(data, deps, publication, meta);
+      await noteCredentialFailure(deps.publishing, publication, err);
+      return log.warn({ retryAt: at.toISOString() }, 'YouTube quota reached; publication deferred');
+    }
     // The platform answered with a definite rejection: nothing was posted, a retry is safe.
     // Timeouts and unclassified failures keep the marker (the upload may have gone through).
     if (definitelyNotPosted(err)) await setMetadata(meta);
@@ -145,7 +247,15 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
         platformPostId: result.platformPostId,
         platformUrl: result.platformUrl,
         publishedAt: new Date(deps.now()),
-        metadata: { ...meta, result: result.metadata } as Prisma.InputJsonValue,
+        metadata: {
+          ...meta,
+          result: result.metadata,
+          // 15.A2: an inbox upload is finished by the creator in the TikTok app.
+          ...(result.metadata.tiktokMode === 'inbox' && {
+            tiktokMode: 'inbox',
+            note: result.metadata.note,
+          }),
+        } as Prisma.InputJsonValue,
       },
     });
   } catch (err) {
@@ -157,6 +267,7 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
     );
     throw err;
   }
+  recordPublished(publication, deps.now()); // 15.D9: approve → live latency, first-attempt rate
   deps.audit({
     actorUserId: 'system:studio-publisher',
     organisationId: data.organisationId,
@@ -201,6 +312,7 @@ export async function onPublishVideoFailed(
     },
   });
   if (updated.count > 0) {
+    await recordPublishFailed(deps, data.publicationId); // 15.D9: first-attempt success rate
     deps.audit({
       actorUserId: 'system:studio-publisher',
       organisationId: data.organisationId,

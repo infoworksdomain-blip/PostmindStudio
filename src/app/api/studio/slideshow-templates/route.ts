@@ -9,10 +9,14 @@ import {
 
 // GET  /api/studio/slideshow-templates — built-in + this organisation's templates (?category)
 // POST /api/studio/slideshow-templates — save a slideshow project's structure as a template
-export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ req, tenant, deps }) => {
-  const { category } = parseQuery(req, listTemplatesQuery);
-  return { body: { data: await listTemplates(deps.db, tenant.organisationId, category) } };
-});
+export const GET = withStudioRoute(
+  StudioCapability.ProjectRead,
+  async ({ req, tenant, deps }) => {
+    const { category } = parseQuery(req, listTemplatesQuery);
+    return { body: { data: await listTemplates(deps.db, tenant.organisationId, category) } };
+  },
+  { feature: 'slideshow' },
+);
 
 export const POST = withStudioRoute(
   StudioCapability.ProjectWrite,
@@ -21,4 +25,5 @@ export const POST = withStudioRoute(
     audit('studio.slideshow_template.create', { type: 'slideshow_template', id: template.id });
     return { status: 201, body: { template } };
   },
+  { feature: 'slideshow' },
 );

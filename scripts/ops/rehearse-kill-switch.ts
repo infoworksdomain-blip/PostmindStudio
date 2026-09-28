@@ -3,6 +3,7 @@ import { logger } from '../../src/lib/logger';
 import {
   formatReport,
   parsePlan,
+  pendingGlobalRequestId,
   waitForDrain,
   type RehearsalPlan,
 } from '../../src/lib/studio/ops/rehearsal';
@@ -11,6 +12,7 @@ import {
 //
 //   STUDIO_URL=https://studio-staging.postmind.ai STUDIO_STAFF_TOKEN=<staging staff JWT> \
 //   METRICS_URL=https://studio-staging.internal/api/metrics METRICS_TOKEN=<token> \
+//   STUDIO_CONFIRMER_TOKEN=<a SECOND staff member's staging JWT> (two-person global kill, 15.D6) \
 //   npx tsx scripts/ops/rehearse-kill-switch.ts global
 //   ... workspace <organisationId> | project <projectId> | provider <providerId> | platform <p>
 //
@@ -18,8 +20,10 @@ import {
 // levels from the staging database) and writes the GATE 12 report; this script stays for a
 // quick interactive check.
 //
-// Global: engages the switch, times until every queue reports zero active jobs (SLO 60 s), then
-// releases it. Other levels are not visible in the queue gauge (it isn't per-org), so the script
+// Global (15.D6 / spec 19.2 two-person approval): the PUT only creates a pending request; the
+// script confirms it with STUDIO_CONFIRMER_TOKEN (a different staff user — the API refuses the
+// requester), then times until every queue reports zero active jobs (SLO 60 s, measured from the
+// confirmation, when the flag is actually set), then releases it. Other levels are not visible in the queue gauge (it isn't per-org), so the script
 // engages, confirms the flag through the Admin API, waits the 30 s propagation window and prints
 // the manual checks from the runbook before releasing. Release always runs, even on failure.
 
@@ -32,19 +36,41 @@ function env(name: string): string {
 const PROPAGATION_MS = 30_000;
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-async function setSwitch(plan: RehearsalPlan, enabled: boolean): Promise<void> {
-  const res = await fetch(`${env('STUDIO_URL')}/api/studio/admin/kill-switch`, {
-    method: 'PUT',
+async function adminCall(
+  method: 'PUT' | 'POST',
+  path: string,
+  token: string,
+  body: unknown,
+): Promise<{ status: number; json: unknown }> {
+  const res = await fetch(`${env('STUDIO_URL')}/api/studio/admin/kill-switch${path}`, {
+    method,
     headers: {
-      authorization: `Bearer ${env('STUDIO_STAFF_TOKEN')}`,
+      authorization: `Bearer ${token}`,
       'content-type': 'application/json',
       'idempotency-key': crypto.randomUUID(),
     },
-    body: JSON.stringify({ ...plan, enabled }),
+    body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    throw new UpstreamServiceError(`kill-switch PUT failed: ${res.status} ${await res.text()}`);
+  const text = await res.text();
+  if (!res.ok)
+    throw new UpstreamServiceError(`kill-switch ${method}${path} failed: ${res.status} ${text}`);
+  return { status: res.status, json: text ? (JSON.parse(text) as unknown) : {} };
+}
+
+/** Engage or release; resolves when the flag-setting call started (the drain timer's zero). */
+async function setSwitch(plan: RehearsalPlan, enabled: boolean): Promise<number> {
+  let setAt = Date.now();
+  const res = await adminCall('PUT', '', env('STUDIO_STAFF_TOKEN'), { ...plan, enabled });
+  const requestId = enabled ? pendingGlobalRequestId(res.status, res.json) : undefined;
+  if (requestId) {
+    // Two-person approval: a different staff member confirms within 10 minutes.
+    setAt = Date.now();
+    await adminCall('POST', '/global/confirm', env('STUDIO_CONFIRMER_TOKEN'), {
+      requestId,
+      reason: `${plan.reason} (second approver)`,
+    });
   }
+  return setAt;
 }
 
 async function scrape(): Promise<string> {
@@ -57,8 +83,8 @@ async function scrape(): Promise<string> {
 
 async function main(): Promise<void> {
   const plan = parsePlan(process.argv.slice(2));
-  const startedAt = Date.now();
-  await setSwitch(plan, true);
+  if (plan.level === 'global') env('STUDIO_CONFIRMER_TOKEN'); // fail before engaging anything
+  const startedAt = await setSwitch(plan, true);
   let passed = false;
   try {
     if (plan.level === 'global') {

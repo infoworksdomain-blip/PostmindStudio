@@ -12,4 +12,5 @@ export const POST = withStudioRoute(
       await parseBody(req, similarInput),
     ),
   }),
+  { feature: 'library' },
 );

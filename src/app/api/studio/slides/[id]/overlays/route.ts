@@ -13,6 +13,7 @@ export const GET = withStudioRoute(
   async ({ tenant, deps, params }) => ({
     body: { data: await listSlideOverlays(deps.db, tenant.organisationId, params.id ?? '') },
   }),
+  { feature: ['slideshow', 'overlays'] },
 );
 
 export const POST = withStudioRoute(
@@ -32,4 +33,5 @@ export const POST = withStudioRoute(
     );
     return { status: 201, body: { overlay } };
   },
+  { feature: ['slideshow', 'overlays'] },
 );

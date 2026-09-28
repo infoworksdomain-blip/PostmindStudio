@@ -9,9 +9,16 @@
 //     (TikTok, Reels, YouTube Shorts), or
 //   · a regular YouTube upload (platform "youtube", not "youtube_short") longer than 60 s.
 // Everything else is short-form.
+//
+// 15.D2 / Addendum A10.4: "Slideshow projects: default costBudgetPence £150 (vs £300 for AI
+// video)." — read as 150 pence (£1.50), half the AI-video figure, since the field is in pence and
+// operator decision 2 set the AI short-form default at 350 pence. Slideshow projects (sourceType
+// SLIDESHOW) get £1.50 whatever their formats. "Library-referenced projects: default
+// costBudgetPence unchanged from AI video baseline" — they follow the short/long-form rule.
 
 export const DEFAULT_SHORT_FORM_BUDGET_PENCE = 350;
 export const DEFAULT_LONG_FORM_BUDGET_PENCE = 3_000;
+export const DEFAULT_SLIDESHOW_BUDGET_PENCE = 150;
 export const SHORT_FORM_MAX_SEC = 180;
 export const YOUTUBE_LONG_FORM_MIN_SEC = 60;
 
@@ -35,7 +42,11 @@ export function isLongForm(formats: readonly BudgetFormat[]): boolean {
   });
 }
 
-export function defaultProjectBudgetPence(formats: readonly BudgetFormat[]): number {
+export function defaultProjectBudgetPence(
+  formats: readonly BudgetFormat[],
+  sourceType?: string,
+): number {
+  if (sourceType === 'SLIDESHOW') return DEFAULT_SLIDESHOW_BUDGET_PENCE;
   return isLongForm(formats) ? DEFAULT_LONG_FORM_BUDGET_PENCE : DEFAULT_SHORT_FORM_BUDGET_PENCE;
 }
 

@@ -3,6 +3,7 @@ import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { StudioError } from '../../errors';
 import type { TenantContext } from '../../tenant';
+import { fitCaption } from '../platforms/captions';
 import type { AssetStorage } from '../storage';
 import type { JobQueue } from '../queue/enqueue';
 import { createPublication, createPublicationInput } from '../services/publications';
@@ -27,6 +28,9 @@ import { storedTargets, type AutoPublishTarget } from './targets';
 // BACKLOG 13.21: targets travel through the auto-publish outbox (automation/outbox.ts), written in
 // the approval transaction and retried by the dispatcher job, so a crash between approval and
 // publishing can no longer lose them. metadata.autoPublishResult mirrors the outbox for the UI.
+// 15.A5: publishPolicy SCHEDULED travels the same way (rows carry an absolute scheduledFor).
+// 15.A9: captions Studio sends on its own are fitted to the platform limit (fitCaption) instead
+// of failing on a 400; the publication records metadata.captionTruncated.
 
 export interface AutoPublishDeps {
   db: PrismaClient;
@@ -97,15 +101,26 @@ export function createTargetSender(deps: AutoPublishDeps): TargetSender {
         error: `No ${target.platform} render in this version`,
         retryable: false,
       };
-    const scheduledFor = target.scheduleOffsetMinutes
-      ? new Date(row.createdAt.getTime() + target.scheduleOffsetMinutes * 60_000).toISOString()
-      : undefined;
+    const scheduledFor = row.scheduledFor
+      ? row.scheduledFor.toISOString()
+      : target.scheduleOffsetMinutes
+        ? new Date(row.createdAt.getTime() + target.scheduleOffsetMinutes * 60_000).toISOString()
+        : undefined;
+    let fitted: { caption: string; truncated: boolean };
+    try {
+      fitted = fitCaption(target.platform, {
+        caption: target.caption ?? '',
+        hashtags: target.hashtags ?? [],
+      });
+    } catch (err) {
+      return { status: 'failed', error: errorText(err), retryable: false };
+    }
     const input = createPublicationInput.safeParse({
       renderId,
       platform: target.platform,
       connectionId: target.connectionId,
       platformAccountId: target.platformAccountId,
-      caption: target.caption ?? '',
+      caption: fitted.caption,
       hashtags: target.hashtags ?? [],
       // A retry after the scheduled time publishes now rather than failing on a past schedule.
       scheduledFor:
@@ -119,7 +134,9 @@ export function createTargetSender(deps: AutoPublishDeps): TargetSender {
       };
     try {
       const tenant = systemTenant(row.organisationId, row.planTier);
-      const publication = await createPublication(deps, tenant, input.data);
+      const publication = await createPublication(deps, tenant, input.data, {
+        captionTruncated: fitted.truncated,
+      });
       deps.audit({
         actorUserId: AUTO_PUBLISH_ACTOR,
         organisationId: row.organisationId,
@@ -131,6 +148,7 @@ export function createTargetSender(deps: AutoPublishDeps): TargetSender {
           platform: target.platform,
           renderId,
           scheduledFor: input.data.scheduledFor ?? null,
+          captionTruncated: fitted.truncated,
           outboxId: row.id,
           attempt: row.attempts + 1,
         },
@@ -157,6 +175,7 @@ function toResult(row: AutoPublishOutbox): AutoPublishTargetResult {
     index: row.targetIndex,
     platform: target.platform,
     account: target.connectionId ?? target.platformAccountId ?? null,
+    ...(row.scheduledFor && { scheduledFor: row.scheduledFor.toISOString() }),
   };
   if (row.state === 'SENT')
     return {
@@ -219,10 +238,10 @@ export async function runAutoPublish(
     where: { id: input.projectId, organisationId: input.organisationId, deletedAt: null },
   });
   if (!project) return { status: 'skipped', reason: 'project not found' };
-  if (project.publishPolicy !== 'AUTO_ON_APPROVAL')
+  if (project.publishPolicy !== 'AUTO_ON_APPROVAL' && project.publishPolicy !== 'SCHEDULED')
     return { status: 'skipped', reason: `publish policy is ${project.publishPolicy}` };
   if (storedTargets(project.metadata).length === 0)
-    log.info('AUTO_ON_APPROVAL project has no auto-publish targets; nothing published');
+    log.info(`${project.publishPolicy} project has no publish targets; nothing published`);
 
   // The rows were written with the approval; send the due ones now (the dispatcher job covers
   // anything this request does not get to).
@@ -281,4 +300,22 @@ export async function dispatchAutoPublishOutbox(
     failed: settled.filter((r) => r.state === 'FAILED').length,
     retrying: settled.filter((r) => r.state === 'PENDING').length,
   };
+}
+
+/** 15.A5 — the approve response's `scheduled` list: when each target is due to go live. */
+export function scheduledSummary(
+  outcome: AutoPublishOutcome,
+): Array<{ platform: string; scheduledFor: string; publicationId: string | null }> {
+  if (!('results' in outcome)) return [];
+  return outcome.results.flatMap((r) =>
+    r.scheduledFor
+      ? [
+          {
+            platform: r.platform,
+            scheduledFor: r.scheduledFor,
+            publicationId: r.publicationId ?? null,
+          },
+        ]
+      : [],
+  );
 }

@@ -26,6 +26,10 @@ export const NOTIFICATION_KINDS = [
   'safety_review',
   'auto_publish_failed',
   'milestone',
+  // Phase 15 (15.E5, decision P8): an external reviewer left feedback on a share link.
+  'share_comment',
+  // Phase 15 (decision P3): 80 % / 100 % of the plan's monthly video quota (services/plan-quotas.ts).
+  'plan_quota',
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];

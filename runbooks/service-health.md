@@ -59,4 +59,21 @@ own runbooks ([provider-outage.md](provider-outage.md), [cost-runaway.md](cost-r
 ## Dead letter
 
 Failed jobs are never auto-drained (spec 11.5). Inspect them, fix the cause, then re-drive.
+
+**Admin Centre → Dead letters** (BACKLOG 15.D4; staff, `studio:admin:providers` to read,
+`studio:admin:redrive` to act, every action audited as `studio.dead_letter.*`):
+
+- `GET /api/studio/admin/queues/<queue>/failed?limit=25&cursor=` lists failed jobs newest first
+  with the job data (secret-looking keys and every URL query value redacted), failure reason,
+  attempts and timestamps.
+- **Retry** (`POST …/failed/<jobId>/retry`): the same job runs again with attempts reset. The
+  response's `advisory` says when the worker will skip it (a newer run, or the project is no
+  longer in the pipeline); use the re-drive tool or regenerate for those.
+- **Requeue** (`POST …/failed/<jobId>/requeue {"providerId"?}`): a fresh job with the same data.
+  `providerId` works for `generate-asset` only and must be a router candidate for the shot's
+  treatment and plan (400 lists the candidates); it sets the shot's preferred provider. If the
+  project failed at the asset stage (`asset_generation_failed`) the asset stage resumes under a
+  new run, keeping assets already paid for; the old run's other dead letters can then be drained.
+- **Drain** (`POST …/failed/drain {"confirm":"<queue name>","reason"}`): deletes every failed job
+  in that queue; the queue name must be typed exactly.
 The alert only measures growth; the absolute count is `studio_queue_jobs{state="failed"}`.

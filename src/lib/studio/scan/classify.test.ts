@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ProviderError } from '../../errors';
-import { buildClassifyPrompt, parseClassifiedProfile } from './classify';
+import {
+  BUSINESS_PROFILE_SCHEMA,
+  buildClassifyPrompt,
+  CLASSIFY_SYSTEM_PROMPT,
+  LOW_CONFIDENCE_THRESHOLD,
+  needsReviewFor,
+  parseClassifiedProfile,
+} from './classify';
 import type { ExtractedPage } from './extract';
 
 function extractedPage(overrides: Partial<ExtractedPage> = {}): ExtractedPage {
@@ -167,5 +174,44 @@ describe('parseClassifiedProfile', () => {
 
   it('throws ProviderError for a completely invalid input (null)', () => {
     expect(() => parseClassifiedProfile(null)).toThrow(ProviderError);
+  });
+});
+
+// BACKLOG 15.D8 / Addendum A13 — the classifier's self-reported confidence.
+describe('classification confidence', () => {
+  const base = {
+    industry: 'Food',
+    subNiche: 'bakery',
+    products: [],
+    services: [],
+    audienceKeywords: [],
+    toneIndicators: [],
+    regions: [],
+    imageThemes: [],
+    searchQueries: ['bread'],
+    restrictedTopics: [],
+    brandVoiceSummary: '',
+  };
+
+  it('asks the model for a 0–1 confidence in the schema and the prompt', () => {
+    expect(BUSINESS_PROFILE_SCHEMA.required).toContain('confidence');
+    expect(BUSINESS_PROFILE_SCHEMA.properties.confidence.type).toBe('number');
+    expect(CLASSIFY_SYSTEM_PROMPT).toMatch(/confidence \(0–1\)/);
+  });
+
+  it('parses, clamps and defaults the confidence', () => {
+    expect(parseClassifiedProfile({ ...base, confidence: 0.55 }).confidence).toBe(0.55);
+    expect(parseClassifiedProfile({ ...base, confidence: 7 }).confidence).toBe(1);
+    expect(parseClassifiedProfile({ ...base, confidence: -1 }).confidence).toBe(0);
+    expect(parseClassifiedProfile(base).confidence).toBeNull();
+    expect(() => parseClassifiedProfile({ ...base, confidence: 'high' })).toThrow(ProviderError);
+  });
+
+  it('flags confidence below 0.7, or none at all, for user review', () => {
+    expect(LOW_CONFIDENCE_THRESHOLD).toBe(0.7);
+    expect(needsReviewFor(0.69)).toBe(true);
+    expect(needsReviewFor(0.7)).toBe(false);
+    expect(needsReviewFor(0.95)).toBe(false);
+    expect(needsReviewFor(null)).toBe(true);
   });
 });

@@ -5,6 +5,7 @@ import { generateLibraryImage, searchLibrary, type LibraryDeps } from '../images
 import type { PlanTier } from '../providers/router';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
+import { imageGenerationUsage } from '../services/tier-gates';
 import { parseSlideContent, type SlideContent } from './planner';
 import { IMAGE_SLIDE_TYPES, OPTIONAL_IMAGE_SLIDE_TYPES } from './templates';
 
@@ -185,9 +186,15 @@ export async function populateSlideshow(
       createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },
   });
+  // 15.D2 / A10.4: the business's monthly generated-image cap (tier-gates.ts) also applies.
+  const monthly = await imageGenerationUsage(deps.db, scope, Date.now());
   const generationBudget = Math.max(
     0,
-    Math.min(MAX_GENERATIONS_PER_RUN, MAX_GENERATIONS_PER_ORG_PER_DAY - generatedToday),
+    Math.min(
+      MAX_GENERATIONS_PER_RUN,
+      MAX_GENERATIONS_PER_ORG_PER_DAY - generatedToday,
+      monthly.remaining,
+    ),
   );
 
   for (const slide of slides.filter(needsImage)) {

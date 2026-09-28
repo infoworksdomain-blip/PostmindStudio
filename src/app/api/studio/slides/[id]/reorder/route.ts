@@ -13,4 +13,5 @@ export const POST = withStudioRoute(
       },
     };
   },
+  { feature: 'slideshow' },
 );

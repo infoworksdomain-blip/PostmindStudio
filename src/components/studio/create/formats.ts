@@ -17,11 +17,15 @@ export interface PlatformOption {
 export const PLATFORM_OPTIONS: PlatformOption[] = [
   { platform: 'tiktok', aspectRatio: '9:16', shortSec: 30, longSec: 90 },
   { platform: 'instagram_reel', aspectRatio: '9:16', shortSec: 30, longSec: 90 },
-  { platform: 'youtube_short', aspectRatio: '9:16', shortSec: 30, longSec: 60 },
+  // 15.C8: spec 5.3 "45-60s for YouTube Shorts".
+  { platform: 'youtube_short', aspectRatio: '9:16', shortSec: 45, longSec: 60 },
   { platform: 'youtube', aspectRatio: '16:9', shortSec: 60, longSec: 300 },
   { platform: 'linkedin_video', aspectRatio: '16:9', shortSec: 30, longSec: 120 },
   { platform: 'x', aspectRatio: '16:9', shortSec: 30, longSec: 120 },
   { platform: 'facebook', aspectRatio: '9:16', shortSec: 30, longSec: 90 },
+  // 15.A1 feed destinations (not pre-selected: CONNECTION_PLATFORMS still picks the Reels).
+  { platform: 'instagram_feed', aspectRatio: '4:5', shortSec: 30, longSec: 90 },
+  { platform: 'facebook_feed', aspectRatio: '1:1', shortSec: 30, longSec: 120 },
 ];
 
 /** API body shape of one target format (catalog.targetFormatInput). */

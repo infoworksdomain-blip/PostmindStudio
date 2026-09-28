@@ -658,6 +658,8 @@ const KINDS = [
   'safety_review',
   'auto_publish_failed',
   'milestone',
+  'share_comment',
+  'plan_quota',
 ] as const;
 
 const prefs = new Map<string, { inApp: boolean; email: boolean }>(

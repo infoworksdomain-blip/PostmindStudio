@@ -1,4 +1,4 @@
-import type { PrismaClient, ReviewPolicy } from '@prisma/client';
+import type { Prisma, PrismaClient, ReviewPolicy } from '@prisma/client';
 import { ForbiddenError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { writeOutboxRows } from './outbox';
@@ -13,8 +13,9 @@ export const AUTO_APPROVE_ACTOR = 'system:auto-approve';
 export const AUTO_PUBLISH_ACTOR = 'system:auto-publish';
 
 /**
- * REQUIRE_APPROVAL_FROM_ROLE: the spec names the policy but not the role (approval_workflows
- * steps carry roles, and no workflow editor exists). DECISION: the approver must hold the
+ * REQUIRE_APPROVAL_FROM_ROLE: the spec names the policy but not the role. When a 15.D3 approval
+ * workflow applies to the project, its step roles decide instead (services/approval-workflows.ts).
+ * Without one — DECISION: the approver must hold the
  * organisation's `owner` or `admin` membership role from PostMind Core, on top of the
  * studio:project:approve capability every approval needs.
  */
@@ -44,57 +45,71 @@ export function assertMayApprove(
   }
 }
 
+export interface ApprovalInput {
+  projectId: string;
+  organisationId: string;
+  actorId: string;
+  requiredRole: string;
+  note: string | null;
+  now: number;
+  /** 13.21: write the auto-publish outbox rows in the same transaction (AUTO_ON_APPROVAL). */
+  outbox?: { planTier: string; trigger: 'human' | 'auto' };
+  /** 15.D3: the approval workflow and step this final approval completes (default: none, 0). */
+  workflowId?: string | null;
+  stepIndex?: number;
+}
+
+/**
+ * The transactional body of recordApproval, for callers that already hold a transaction
+ * (15.D3 services/approval-workflows.ts completes the last workflow step with it).
+ * Returns the approval_tasks id, or null (recording nothing) when the project was no longer
+ * awaiting review.
+ */
+export async function recordApprovalTx(
+  tx: Prisma.TransactionClient,
+  input: ApprovalInput,
+): Promise<string | null> {
+  const moved = await tx.videoProject.updateMany({
+    where: {
+      id: input.projectId,
+      organisationId: input.organisationId,
+      state: 'READY_FOR_REVIEW',
+    },
+    data: { state: 'APPROVED' },
+  });
+  if (moved.count === 0) return null;
+  const task = await tx.approvalTask.create({
+    data: {
+      projectId: input.projectId,
+      workflowId: input.workflowId ?? null,
+      stepIndex: input.stepIndex ?? 0,
+      requiredRole: input.requiredRole,
+      state: 'APPROVED',
+      resolvedByUserId: input.actorId,
+      note: input.note,
+      resolvedAt: new Date(input.now),
+    },
+  });
+  if (input.outbox) {
+    await writeOutboxRows(tx, {
+      projectId: input.projectId,
+      organisationId: input.organisationId,
+      approvalTaskId: task.id,
+      planTier: input.outbox.planTier,
+      trigger: input.outbox.trigger,
+      now: input.now,
+    });
+  }
+  return task.id;
+}
+
 /**
  * Compare-and-set READY_FOR_REVIEW → APPROVED plus the approval row (and, 13.21, the auto-publish
  * outbox rows), in one transaction.
  * Returns false (and records nothing) when the project was no longer awaiting review.
  */
-export async function recordApproval(
-  db: PrismaClient,
-  input: {
-    projectId: string;
-    organisationId: string;
-    actorId: string;
-    requiredRole: string;
-    note: string | null;
-    now: number;
-    /** 13.21: write the auto-publish outbox rows in the same transaction (AUTO_ON_APPROVAL). */
-    outbox?: { planTier: string; trigger: 'human' | 'auto' };
-  },
-): Promise<boolean> {
-  return db.$transaction(async (tx) => {
-    const moved = await tx.videoProject.updateMany({
-      where: {
-        id: input.projectId,
-        organisationId: input.organisationId,
-        state: 'READY_FOR_REVIEW',
-      },
-      data: { state: 'APPROVED' },
-    });
-    if (moved.count === 0) return false;
-    const task = await tx.approvalTask.create({
-      data: {
-        projectId: input.projectId,
-        stepIndex: 0,
-        requiredRole: input.requiredRole,
-        state: 'APPROVED',
-        resolvedByUserId: input.actorId,
-        note: input.note,
-        resolvedAt: new Date(input.now),
-      },
-    });
-    if (input.outbox) {
-      await writeOutboxRows(tx, {
-        projectId: input.projectId,
-        organisationId: input.organisationId,
-        approvalTaskId: task.id,
-        planTier: input.outbox.planTier,
-        trigger: input.outbox.trigger,
-        now: input.now,
-      });
-    }
-    return true;
-  });
+export async function recordApproval(db: PrismaClient, input: ApprovalInput): Promise<boolean> {
+  return (await db.$transaction((tx) => recordApprovalTx(tx, input))) !== null;
 }
 
 /**

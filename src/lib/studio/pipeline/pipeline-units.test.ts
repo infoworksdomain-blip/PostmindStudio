@@ -263,7 +263,9 @@ describe('Shotstack edit list', () => {
     expect(visual?.clips[2]).toMatchObject({ asset: { type: 'html', html: '<p>Subscribe</p>' } });
     expect((captions?.clips[0]?.asset as { html: string }).html).toBe('<p>Hi &lt;you&gt;</p>');
     expect(voice?.clips).toHaveLength(1);
-    expect(music?.clips[0]).toMatchObject({ start: 0, length: 9, asset: { volume: 0.2 } });
+    // 15.B4: ducked under narration (shot 1), full bed under the silent still + card.
+    expect(music?.clips[0]).toMatchObject({ start: 0, length: 4, asset: { volume: 0.2 } });
+    expect(music?.clips[1]).toMatchObject({ start: 4, length: 5, asset: { volume: 0.7, trim: 4 } });
     expect(edit.output).toEqual({
       format: 'mp4',
       resolution: '1080',

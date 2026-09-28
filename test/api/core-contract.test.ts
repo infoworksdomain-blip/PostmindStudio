@@ -2,7 +2,10 @@ import { PrismaClient } from '@prisma/client';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as channelRoute from '../../src/app/api/studio/internal/channels/[id]/route';
 import * as channelsRoute from '../../src/app/api/studio/internal/channels/route';
+import * as businessPurgeRoute from '../../src/app/api/studio/internal/businesses/[id]/purge/route';
 import * as purgeRoute from '../../src/app/api/studio/internal/organisations/[id]/purge/route';
+import * as fromContentRoute from '../../src/app/api/studio/internal/projects/from-content/route';
+import * as attributeRoute from '../../src/app/api/studio/internal/publications/[id]/attribute-conversation/route';
 import * as refreshedRoute from '../../src/app/api/studio/internal/tokens/refreshed/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
 import {
@@ -33,6 +36,9 @@ function inProcessFetch(): typeof fetch {
     [/^\/api\/studio\/internal\/channels\/([^/]+)$/, channelRoute],
     [/^\/api\/studio\/internal\/tokens\/refreshed$/, refreshedRoute],
     [/^\/api\/studio\/internal\/organisations\/([^/]+)\/purge$/, purgeRoute],
+    [/^\/api\/studio\/internal\/businesses\/([^/]+)\/purge$/, businessPurgeRoute],
+    [/^\/api\/studio\/internal\/publications\/([^/]+)\/attribute-conversation$/, attributeRoute],
+    [/^\/api\/studio\/internal\/projects\/from-content$/, fromContentRoute],
   ];
   return (async (input: string | URL | Request, init?: RequestInit) => {
     const req = new Request(input, init);
@@ -67,6 +73,7 @@ describe.skipIf(!hasDb)(
       setApiDeps(undefined);
       await db.platformConnection.deleteMany({ where: { organisationId: { in: orgs } } });
       await db.organisationPurge.deleteMany({ where: { organisationId: { in: orgs } } });
+      await db.businessPurge.deleteMany({ where: { organisationId: { in: orgs } } });
       await db.systemFlag.deleteMany({
         where: { key: { in: orgs.map((o) => `kill_switch:workspace:${o}`) } },
       });
@@ -83,10 +90,10 @@ describe.skipIf(!hasDb)(
       orgs.push(report.organisationId);
       const failed = report.checks.filter((c) => !c.ok);
       expect(failed).toEqual([]);
-      expect(report.checks).toHaveLength(12);
+      expect(report.checks).toHaveLength(15);
       expect(report.passed).toBe(true);
       const text = formatContractReport(report);
-      expect(text).toContain('12/12 passed');
+      expect(text).toContain('15/15 passed');
       // Nothing the suite registered keeps a token: the purge wiped them.
       const rows = await db.platformConnection.findMany({
         where: { organisationId: report.organisationId },

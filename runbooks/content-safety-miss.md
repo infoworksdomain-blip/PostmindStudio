@@ -27,6 +27,11 @@
 - Automatic approval (`AUTO_APPROVE`, trusted creators only) never applies to force-approved,
   flagged or script-`WARN` runs — see [review-publish-automation.md](review-publish-automation.md).
 - Publishing requires an approved render.
+- Languages (15.C5): the Hive scan is **visual** moderation only, so it is language-independent
+  but does not read on-screen text or narration in any language. Words (all 11 Studio languages)
+  are screened only by the Layer 2 script-safety classifier. Hive OCR Moderation lists all Studio
+  languages (https://docs.thehive.ai/docs/ocr-text-recognition-moderation, read 2026-09-28) but
+  is not integrated — **GAP** if a miss involves burned-in text or a non-English script.
 
 ## Steps
 

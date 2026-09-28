@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate, relativeTime } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { ErrorState, Section } from '../primitives';
+import { PendingGlobalKillBanner } from './pending-global-kill';
 import { ReasonDialog } from './reason-dialog';
 import { ScopedKillForm } from './scoped-kill-form';
 import type { KillLevel, KillSwitchEntry, SetKillSwitchBody } from './types';
@@ -86,7 +87,7 @@ function EntryList({
 }
 
 export function KillSwitchPanel() {
-  const { data, error, isLoading, mutate, set } = useKillSwitch();
+  const { data, error, isLoading, mutate, set, confirmGlobal, withdrawGlobal } = useKillSwitch();
   const [pending, setPending] = useState<Pending>(null);
 
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
@@ -103,8 +104,18 @@ export function KillSwitchPanel() {
     return set(body);
   };
 
+  const pendingGlobal = data.pendingGlobal;
+
   return (
     <div className="grid gap-6">
+      {pendingGlobal && (
+        <PendingGlobalKillBanner
+          pending={pendingGlobal}
+          confirmPhrase={GLOBAL_CONFIRM_PHRASE}
+          onConfirm={(reason) => confirmGlobal(pendingGlobal.requestId, reason)}
+          onWithdraw={withdrawGlobal}
+        />
+      )}
       <section
         aria-labelledby="global-kill"
         className={cn(
@@ -131,10 +142,18 @@ export function KillSwitchPanel() {
                 : 'Global kill switch is off.'}{' '}
               Changes reach every worker within {data.propagationSec}s.
             </p>
+            {!halted && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {data.singleApprover
+                  ? 'Break-glass is on: engaging takes effect at once (audited).'
+                  : 'Engaging needs two people: a second staff member confirms within 10 minutes.'}
+              </p>
+            )}
           </div>
         </div>
         <Button
           variant={halted ? 'default' : 'destructive'}
+          disabled={!halted && Boolean(pendingGlobal)}
           onClick={() => setPending({ kind: 'global', enabled: !halted })}
         >
           {halted ? 'Release global kill switch' : 'Engage global kill switch'}
@@ -171,7 +190,7 @@ export function KillSwitchPanel() {
         }
         description={
           pending?.kind === 'global' && pending.enabled
-            ? 'Every organisation’s Studio jobs stop at their next step: generation, rendering and publishing. In-flight provider calls are not cancelled.'
+            ? `Every organisation’s Studio jobs stop at their next step: generation, rendering and publishing. In-flight provider calls are not cancelled.${data.singleApprover ? '' : ' This records a request: a second staff member must confirm it within 10 minutes.'}`
             : 'New jobs start normally again. Work that failed while it was engaged does not resume on its own — use the Re-drive tab.'
         }
         confirmLabel={pending?.kind === 'global' && pending.enabled ? 'Halt Studio' : 'Release'}

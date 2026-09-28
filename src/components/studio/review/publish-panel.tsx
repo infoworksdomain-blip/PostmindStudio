@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, Loader2, Send } from 'lucide-react';
+import { CalendarClock, Loader2, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +16,36 @@ import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
 
 // Spec 14.2 publish controls: per-variant enable, account, caption and hashtags; publish all now
 // or schedule. One POST /publications per enabled variant.
+// 15.A7: "Suggest captions" fills each variant with its per-platform caption and hashtags (spec
+// 9.8, POST /projects/:id/caption-suggestions); edited variants are left alone.
+// 15.A6: the schedule picker shows an advisory best time (GET /analytics/best-times).
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+interface BestTimes {
+  bestPerDay: Array<{ weekday: number; hour: number; score: number; basis: string }>;
+  sufficientData: boolean;
+}
+
+interface Suggestion {
+  caption: string;
+  hashtags: string[];
+}
+
+/** "Suggested: Tue 08:00" from the best-scoring day, or null. */
+export function bestTimeLabel(best: BestTimes | undefined): string | null {
+  const top = [...(best?.bestPerDay ?? [])].sort((a, b) => b.score - a.score)[0];
+  if (!top) return null;
+  return `Suggested: ${WEEKDAYS[top.weekday] ?? ''} ${String(top.hour).padStart(2, '0')}:00${best?.sufficientData ? '' : ' (little data yet)'}`;
+}
+
+function browserTimeZone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
 
 interface VariantDraft {
   enabled: boolean;
@@ -60,6 +90,13 @@ export function PublishPanel({
   const [drafts, setDrafts] = useState<Record<string, VariantDraft>>({});
   const [scheduleAt, setScheduleAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<Record<string, Suggestion>>({});
+  const { data: best } = useApi<BestTimes>('/analytics/best-times', {
+    ...(businessId && { businessId }),
+    timezone: browserTimeZone(),
+  });
+  const bestLabel = bestTimeLabel(best);
   const renders = project.renders.filter((r) => RENDER_PUBLISHABLE.has(r.qualityCheckState));
   const connections = data?.data ?? [];
 
@@ -69,8 +106,10 @@ export function PublishPanel({
       drafts[render.id] ?? {
         enabled: options.length > 0,
         connectionId: options[0]?.id ?? '',
-        caption: project.brief?.hook ?? '',
-        hashtags: '',
+        caption: suggestions[render.targetPlatform]?.caption ?? project.brief?.hook ?? '',
+        hashtags: (suggestions[render.targetPlatform]?.hashtags ?? [])
+          .map((t) => `#${t}`)
+          .join(' '),
       }
     );
   };
@@ -81,6 +120,22 @@ export function PublishPanel({
     const d = draftFor(r);
     return d.enabled && d.connectionId;
   });
+
+  async function suggest() {
+    setSuggesting(true);
+    try {
+      const res = await api<{ suggestions: Record<string, Suggestion> }>(
+        `/projects/${project.id}/caption-suggestions`,
+        { method: 'POST', idempotencyKey: newIdempotencyKey(), body: {} },
+      );
+      setSuggestions(res.suggestions);
+      toast.success('Captions suggested for each platform.');
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   async function publish() {
     const scheduledFor = scheduleAt ? new Date(scheduleAt).toISOString() : undefined;
@@ -125,6 +180,12 @@ export function PublishPanel({
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="text-sm text-destructive">{errorMessage(error)}</p>}
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
+          {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}
+          Suggest captions
+        </Button>
+      </div>
       <ul className="flex flex-col gap-3">
         {renders.map((render) => {
           const label = PLATFORM_LABEL[render.targetPlatform] ?? render.targetPlatform;
@@ -201,6 +262,7 @@ export function PublishPanel({
             value={scheduleAt}
             onChange={(e) => setScheduleAt(e.target.value)}
           />
+          {bestLabel && <p className="mt-1 text-xs text-muted-foreground">{bestLabel}</p>}
         </Field>
         <Button onClick={publish} disabled={submitting || selected.length === 0}>
           {submitting ? (

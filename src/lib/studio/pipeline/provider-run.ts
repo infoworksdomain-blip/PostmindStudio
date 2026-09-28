@@ -1,4 +1,4 @@
-import { NotImplementedError, ProviderError } from '../../errors';
+import { NotImplementedError, ProviderError, RateDeferredError } from '../../errors';
 import type { ProviderPollResult, ProviderRequest } from '../providers/interface';
 import {
   routeProvider,
@@ -21,7 +21,17 @@ export interface ProviderRunResult {
 
 export type ProviderRunDeps = Pick<
   PipelineDeps,
-  'registry' | 'breaker' | 'killSwitch' | 'budget' | 'tracking' | 'config' | 'now' | 'sleep'
+  | 'registry'
+  | 'breaker'
+  | 'killSwitch'
+  | 'budget'
+  | 'tracking'
+  | 'config'
+  | 'now'
+  | 'sleep'
+  | 'providerRates'
+  | 'registryFor'
+  | 'providerRatings'
 >;
 
 export async function runProvider(
@@ -30,10 +40,21 @@ export async function runProvider(
     request: ProviderRequest;
     planTier: PlanTier;
     deadline?: Date;
-    preferredProviderId?: string;
+    preferredProviderId?: string | readonly string[];
   },
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  const providerScope = {
+    organisationId: input.request.organisationId,
+    projectId: input.request.projectId,
+  };
+  // P1 BYOC: an Enterprise organisation with its own keys routes over its own registry.
+  const registry = (await deps.registryFor?.(providerScope)) ?? deps.registry;
+  // P7: ratings only reorder the tier's candidates; they are advisory, so a failed lookup
+  // routes in the spec's order rather than failing the job.
+  const providerScores = await deps.providerRatings
+    ?.scoresFor(providerScope)
+    .catch(() => undefined);
   const decision = await routeProvider(
     {
       need: input.need,
@@ -42,10 +63,11 @@ export async function runProvider(
       projectId: input.request.projectId,
       deadline: input.deadline,
       preferredProviderId: input.preferredProviderId,
+      providerScores,
       request: input.request,
     },
     {
-      registry: deps.registry,
+      registry,
       breaker: deps.breaker,
       killSwitch: deps.killSwitch,
       budget: deps.budget,
@@ -53,6 +75,15 @@ export async function runProvider(
     },
   );
   const { adapter } = decision;
+  // 15.C3 (spec 11.4): a full rate window delays the job (worker-host moveToDelayed) instead of
+  // failing it or spending an attempt.
+  if (deps.providerRates) {
+    const slot = await deps.providerRates.acquire({
+      providerId: adapter.providerId,
+      organisationId: input.request.organisationId,
+    });
+    if (!slot.allowed) throw new RateDeferredError(adapter.providerId, slot.retryAfterMs);
+  }
   const scope = { organisationId: input.request.organisationId };
   // Spec 12.5 alerts: evaluated after the reservation (submit) and after settlement (terminal).
   const recordSpend = () =>

@@ -353,3 +353,25 @@ describe('preRenderOverlay', () => {
     expect(stored?.body).toEqual(new Uint8Array([9, 9, 9]));
   });
 });
+
+describe('buildPreRenderArgs — right-to-left (15.C5)', () => {
+  const files: PreRenderFiles = { font: 'font.ttf', texts: ['t0.txt', 't1.txt', 't2.txt'] };
+
+  it('asks drawtext to shape RTL text and anchors karaoke on the right edge', () => {
+    const overlay = overlayRow({
+      text: 'مرحبا بكم',
+      animationIn: 'karaokeHighlight',
+      direction: 'rtl',
+      fontFamily: 'Noto Sans Arabic',
+    });
+    const vf = buildPreRenderArgs(overlay, FRAME, files, 'out.mov');
+    const filter = vf[vf.indexOf('-vf') + 1] as string;
+    expect(filter).toContain('text_shaping=1');
+    expect(filter).toContain(`x='w*${overlay.anchorX.toFixed(4)}-tw'`);
+  });
+
+  it('leaves LTR overlays without text_shaping', () => {
+    const vf = buildPreRenderArgs(overlayRow({ animationIn: 'glitch' }), FRAME, files, 'out.mov');
+    expect(vf[vf.indexOf('-vf') + 1]).not.toContain('text_shaping');
+  });
+});

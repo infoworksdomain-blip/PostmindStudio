@@ -107,6 +107,10 @@ export interface Publication {
   retryCount: number;
   createdAt: string;
   project?: { id: string; name: string };
+  /** 15.A8: latest cumulative metrics snapshot (list endpoint only). */
+  latestMetrics?: { views: number; likes: number; comments: number; at: string } | null;
+  /** Per-platform extras (15.A2 tiktokMode "inbox" + note; 15.A9 captionTruncated). */
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface ProjectDetail extends Project {
@@ -151,4 +155,35 @@ export interface BrandKit {
   restrictedTopics: string[];
   /** 13.13: the kit's cloned narration voice (null/absent = stock voice). */
   voiceProfileId?: string | null;
+  /** 15.B1: ids of READY brand uploads (logo, watermark, intro/outro cards). */
+  logoAssetId?: string | null;
+  watermarkAssetId?: string | null;
+  introCardAssetId?: string | null;
+  outroCardAssetId?: string | null;
+  /** Operator decision P6: optional on-video "AI-generated" label. */
+  aiDisclosureLabel?: boolean;
+}
+
+/** P1 BYOC: GET /provider-credentials (never key material; `hint` is the last 4 characters). */
+export interface ByocProviderOption {
+  id: string;
+  label: string;
+  /** Needs a public + private key pair (Storyblocks). */
+  twoPart: boolean;
+}
+
+export interface ProviderCredential {
+  providerId: string;
+  hint: string | null;
+  state: 'active' | 'revoked';
+  lastTestedAt: string | null;
+  lastTestResult: { healthy: boolean; reason?: string } | null;
+  updatedAt: string;
+}
+
+export interface ProviderCredentialsResponse {
+  enabled: boolean;
+  reason?: 'disabled' | 'plan_tier';
+  providers: ByocProviderOption[];
+  credentials: ProviderCredential[];
 }

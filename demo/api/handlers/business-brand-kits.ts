@@ -3,6 +3,7 @@
 import type { BrandKit } from '@/lib/client/types';
 import { BRAND_KITS, DEMO_BUSINESS_ID, DEMO_ORG_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
+import { brandUploadKind } from './p15-b-composition';
 
 export type DemoBrandKit = BrandKit & {
   organisationId: string;
@@ -104,7 +105,14 @@ type KitFields = Partial<
     | 'ctaTemplates'
     | 'restrictedTopics'
   >
-> & { voiceProfileId?: string | null };
+> & {
+  voiceProfileId?: string | null;
+  logoAssetId?: string | null;
+  watermarkAssetId?: string | null;
+  introCardAssetId?: string | null;
+  outroCardAssetId?: string | null;
+  aiDisclosureLabel?: boolean;
+};
 
 const strings = (v: unknown, max: number, len: number) =>
   Array.isArray(v) &&
@@ -131,8 +139,29 @@ function parseFields(input: Record<string, unknown>, allowed: Set<string>): KitF
       )
         problems.push('colourPalette: colours must be #RRGGBB');
       else out.colourPalette = v as string[];
+    } else if (
+      key === 'logoAssetId' ||
+      key === 'watermarkAssetId' ||
+      key === 'introCardAssetId' ||
+      key === 'outroCardAssetId'
+    ) {
+      // 15.B1: READY brand uploads of the matching kind.
+      const want = {
+        logoAssetId: 'brand_logo',
+        watermarkAssetId: 'brand_watermark',
+        introCardAssetId: 'brand_card',
+        outroCardAssetId: 'brand_card',
+      }[key];
+      if (v !== null && (typeof v !== 'string' || brandUploadKind(v) !== want))
+        problems.push(`${key} is not a ${want} upload`);
+      else out[key] = typeof v === 'string' ? v : null;
+    } else if (key === 'aiDisclosureLabel') {
+      if (typeof v !== 'boolean') problems.push('aiDisclosureLabel: must be true or false');
+      else out.aiDisclosureLabel = v;
     } else if (key === 'fontPrimary' || key === 'fontSecondary') {
-      if (v !== null && (typeof v !== 'string' || !FONT.test(v.trim())))
+      const uploaded =
+        typeof v === 'string' && /^upload:/.test(v) && brandUploadKind(v.slice(7)) === 'brand_font';
+      if (v !== null && !uploaded && (typeof v !== 'string' || !FONT.test(v.trim())))
         problems.push(`${key}: invalid font name`);
       else out[key] = typeof v === 'string' ? v.trim() : null;
     } else if (key === 'toneKeywords') {
@@ -253,7 +282,15 @@ route('PATCH', '/brand-kits/:id', ({ params, body }) => {
   const current = find(params.id ?? '');
   const fields = parseFields(
     (body ?? {}) as Record<string, unknown>,
-    new Set([...FIELDS, 'voiceProfileId']),
+    new Set([
+      ...FIELDS,
+      'voiceProfileId',
+      'logoAssetId',
+      'watermarkAssetId',
+      'introCardAssetId',
+      'outroCardAssetId',
+      'aiDisclosureLabel',
+    ]),
   );
   if (Object.keys(fields).length === 0) throw bad(['Nothing to update']);
   Object.assign(current, fields, { updatedAt: new Date().toISOString() });

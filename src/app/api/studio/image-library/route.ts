@@ -6,9 +6,13 @@ import { listImages, listImagesQuery, uploadImage } from '@/lib/studio/services/
 
 // GET  /api/studio/image-library — list (?businessId, ?source, ?tag, cursor pagination)
 // POST /api/studio/image-library — multipart upload (fields: businessId, file, tags?, altText?)
-export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ req, tenant, deps }) => ({
-  body: await listImages(deps, tenant.organisationId, parseQuery(req, listImagesQuery)),
-}));
+export const GET = withStudioRoute(
+  StudioCapability.ProjectRead,
+  async ({ req, tenant, deps }) => ({
+    body: await listImages(deps, tenant.organisationId, parseQuery(req, listImagesQuery)),
+  }),
+  { feature: 'image-library' },
+);
 
 const MAX_UPLOAD_REQUEST_BYTES = MAX_IMAGE_BYTES + 64 * 1024;
 
@@ -32,4 +36,5 @@ export const POST = withStudioRoute(
     audit('studio.image_library.upload', { type: 'image_library', id: result.image.id });
     return { status: result.duplicate ? 200 : 201, body: result };
   },
+  { feature: 'image-library' },
 );

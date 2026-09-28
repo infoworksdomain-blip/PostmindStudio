@@ -20,6 +20,19 @@ export interface KillSwitchState {
   /** Publishing platforms halted by the platform level (ids from PUBLISH_PLATFORMS). */
   disabledPlatforms: KillSwitchEntry[];
   propagationSec: number;
+  /** 15.D6: a global kill waiting for a second staff member (absent in older responses). */
+  pendingGlobal?: PendingGlobalKill | null;
+  /** 15.D6: break-glass STUDIO_KILL_SWITCH_SINGLE_APPROVER is on (one person engages). */
+  singleApprover?: boolean;
+}
+
+export interface PendingGlobalKill {
+  requestId: string;
+  requestedBy: string;
+  reason: string;
+  requestedAt: string;
+  expiresAt: string;
+  requestedByYou: boolean;
 }
 
 export interface SetKillSwitchBody {
@@ -69,6 +82,9 @@ export const PUBLISH_PLATFORMS = [
   'linkedin_video',
   'x',
   'facebook',
+  // 15.A1: the eight destinations incl. Instagram feed and Facebook feed video (catalog PLATFORMS).
+  'instagram_feed',
+  'facebook_feed',
 ] as const;
 
 /** POST /admin/redrive body and response (services/redrive.ts). */

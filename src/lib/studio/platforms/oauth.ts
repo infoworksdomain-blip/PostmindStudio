@@ -130,7 +130,8 @@ export function createTikTokOAuth(config: OAuthConfig, deps: Deps): OAuthClient 
       const url = new URL('https://www.tiktok.com/v2/auth/authorize/');
       url.searchParams.set('client_key', config.clientId);
       // video.list: read the post's metrics (analytics polling, Phase 11).
-      url.searchParams.set('scope', 'user.info.basic,video.publish,video.list');
+      // video.upload: inbox-upload fallback when Direct Post is unavailable (15.A2, spec 18.1).
+      url.searchParams.set('scope', 'user.info.basic,video.publish,video.upload,video.list');
       url.searchParams.set('response_type', 'code');
       url.searchParams.set('redirect_uri', config.redirectUri);
       url.searchParams.set('state', state);

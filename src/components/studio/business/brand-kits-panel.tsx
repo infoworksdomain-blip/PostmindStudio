@@ -11,6 +11,7 @@ import { EmptyState, ErrorState, StateBadge } from '../primitives';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { BrandKitDialog, type BrandKitPayload } from './brand-kit-form';
 import { VoiceKitSelect } from './voice-kit-select';
+import { BrandKitMedia } from './brand-kit-media';
 
 // Spec 8.5 — brand kits for the selected business: list, create, edit, delete, set default.
 
@@ -51,7 +52,10 @@ function KitCard({
         <div className="min-w-0">
           <h3 className="truncate font-display text-2xl leading-tight">{kit.name}</h3>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {[kit.fontPrimary, kit.fontSecondary].filter(Boolean).join(' / ') || 'Default fonts'}
+            {[kit.fontPrimary, kit.fontSecondary]
+              .filter(Boolean)
+              .map((f) => (f?.startsWith('upload:') ? 'Uploaded font' : f))
+              .join(' / ') || 'Default fonts'}
           </p>
         </div>
         {kit.isDefault && <StateBadge label="Default" tone="good" />}
@@ -71,6 +75,7 @@ function KitCard({
         <p className="text-sm text-muted-foreground">{kit.toneKeywords.join(' · ')}</p>
       )}
       <VoiceKitSelect kit={kit} onSaved={onVoiceSaved} />
+      <BrandKitMedia kit={kit} onSaved={onVoiceSaved} />
       <div className="mt-auto flex flex-wrap gap-1">
         <Button variant="outline" size="sm" onClick={onEdit} aria-label={`Edit ${kit.name}`}>
           <Pencil /> Edit
@@ -189,7 +194,7 @@ export function BrandKitsPanel({ businessId }: { businessId: string }) {
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
         title={`Delete ${deleting?.name ?? 'this kit'}?`}
-        description="This cannot be undone. A kit still used by an active project cannot be deleted."
+        description="The kit is removed from this business (finished videos keep it). A kit still used by an active project cannot be deleted."
         confirmLabel="Delete kit"
         onConfirm={() => (deleting ? remove(deleting) : Promise.resolve(true))}
       />

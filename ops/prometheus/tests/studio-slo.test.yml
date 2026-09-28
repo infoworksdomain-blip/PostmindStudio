@@ -1,0 +1,192 @@
+# promtool test rules ops/prometheus/tests/studio-slo.test.yml (run in CI, ops-config job).
+# BACKLOG 15.D9 — every sample below is one minute apart (interval 1m).
+rule_files:
+  - ../studio-slo.yml
+
+evaluation_interval: 1m
+
+tests:
+  # Short-form generations all land between 10 and 15 minutes (60 an hour): p50 and p95 both
+  # break their SLOs and alert after 30 minutes; a fast slideshow series never alerts.
+  - interval: 1m
+    input_series:
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="short_form", le="600"}'
+        values: '0+0x120'
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="short_form", le="900"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="short_form", le="+Inf"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_count{job="studio-worker", instance="worker-1:9464", kind="short_form"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="slideshow", le="60"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="slideshow", le="+Inf"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_count{job="studio-worker", instance="worker-1:9464", kind="slideshow"}'
+        values: '0+1x120'
+    promql_expr_test:
+      # (600, 900] bucket only: p95 = 600 + 300 × 0.95 = 885 (compared, not matched exactly).
+      - expr: studio:generation_seconds:p95_1h{kind="short_form"} > bool 880
+        eval_time: 60m
+        exp_samples:
+          - labels: '{kind="short_form"}'
+            value: 1
+      - expr: studio:generation_seconds:p95_1h{kind="slideshow"} < bool 60
+        eval_time: 60m
+        exp_samples:
+          - labels: '{kind="slideshow"}'
+            value: 1
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: StudioShortGenerationP95Slow
+        exp_alerts: []
+      - eval_time: 60m
+        alertname: StudioShortGenerationP95Slow
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              kind: short_form
+            exp_annotations:
+              summary: 'Short-form generation p95 is over 10 minutes (spec 17.1)'
+              description: 'p95 generate → READY_FOR_REVIEW for short_form over the last hour exceeds the 10-minute SLO.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#generation-latency
+      - eval_time: 60m
+        alertname: StudioShortGenerationP50Slow
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              kind: short_form
+            exp_annotations:
+              summary: 'Short-form generation p50 is over 4 minutes (spec 17.1)'
+              description: 'Median generate → READY_FOR_REVIEW for short_form over the last hour exceeds the 4-minute SLO.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#generation-latency
+      - eval_time: 60m
+        alertname: StudioLongFormGenerationP95Slow
+        exp_alerts: []
+
+  # Fast short-form generation (all under 3 minutes) does not alert.
+  - interval: 1m
+    input_series:
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="short_form", le="180"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_bucket{job="studio-worker", instance="worker-1:9464", kind="short_form", le="+Inf"}'
+        values: '0+1x120'
+      - series: 'studio_generation_seconds_count{job="studio-worker", instance="worker-1:9464", kind="short_form"}'
+        values: '0+1x120'
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: StudioShortGenerationP50Slow
+        exp_alerts: []
+      - eval_time: 60m
+        alertname: StudioShortGenerationP95Slow
+        exp_alerts: []
+
+  # TikTok publications take 3–5 minutes from approval (p95 294 s): alerts for tiktok only;
+  # YouTube publications within a minute do not.
+  - interval: 1m
+    input_series:
+      - series: 'studio_publish_latency_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="tiktok", le="180"}'
+        values: '0+0x120'
+      - series: 'studio_publish_latency_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="tiktok", le="300"}'
+        values: '0+1x120'
+      - series: 'studio_publish_latency_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="tiktok", le="+Inf"}'
+        values: '0+1x120'
+      - series: 'studio_publish_latency_seconds_count{job="studio-worker", instance="worker-1:9464", platform="tiktok"}'
+        values: '0+1x120'
+      - series: 'studio_publish_latency_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="youtube", le="60"}'
+        values: '0+1x120'
+      - series: 'studio_publish_latency_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="youtube", le="180"}'
+        values: '0+1x120'
+      - series: 'studio_publish_latency_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="youtube", le="+Inf"}'
+        values: '0+1x120'
+      - series: 'studio_publish_latency_seconds_count{job="studio-worker", instance="worker-1:9464", platform="youtube"}'
+        values: '0+1x120'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: StudioPublishLatencyP95High
+        exp_alerts: []
+      - eval_time: 60m
+        alertname: StudioPublishLatencyP95High
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+              platform: tiktok
+            exp_annotations:
+              summary: 'Publishing to tiktok p95 is over 3 minutes from approval (spec 17.1)'
+              description: 'p95 approve (or scheduled time) → platform live on tiktok over the last hour exceeds 3 minutes.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#publish-latency
+
+  # First analytics samples arrive 5–10 minutes after publish: freshness alert.
+  - interval: 1m
+    input_series:
+      - series: 'studio_analytics_first_metric_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="x", le="300"}'
+        values: '0+0x120'
+      - series: 'studio_analytics_first_metric_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="x", le="600"}'
+        values: '0+1x120'
+      - series: 'studio_analytics_first_metric_seconds_bucket{job="studio-worker", instance="worker-1:9464", platform="x", le="+Inf"}'
+        values: '0+1x120'
+      - series: 'studio_analytics_first_metric_seconds_count{job="studio-worker", instance="worker-1:9464", platform="x"}'
+        values: '0+1x120'
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: StudioAnalyticsFreshnessSlow
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+            exp_annotations:
+              summary: 'First analytics arrive more than 5 minutes after publish (spec 17.1)'
+              description: 'p95 publishedAt → first analytics sample over the last hour exceeds 5 minutes.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#analytics-freshness
+
+  # 90% of renders pass the quality gate (spec 3.5 wants 92%+) and 90% of publications succeed
+  # first time (spec 3.5 wants 98%+): both alert after an hour.
+  - interval: 1m
+    input_series:
+      - series: 'studio_quality_gate_renders_total{job="studio-worker", instance="worker-1:9464", result="pass"}'
+        values: '0+9x150'
+      - series: 'studio_quality_gate_renders_total{job="studio-worker", instance="worker-1:9464", result="fail"}'
+        values: '0+1x150'
+      - series: 'studio_publications_total{job="studio-worker", instance="worker-1:9464", platform="linkedin", outcome="first_attempt"}'
+        values: '0+9x150'
+      - series: 'studio_publications_total{job="studio-worker", instance="worker-1:9464", platform="linkedin", outcome="failed"}'
+        values: '0+1x150'
+    promql_expr_test:
+      - expr: studio:quality_gate:pass_ratio_24h < bool 0.92
+        eval_time: 2h
+        exp_samples:
+          - labels: '{}'
+            value: 1
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: StudioQualityPassRateLow
+        exp_alerts: []
+      - eval_time: 2h
+        alertname: StudioQualityPassRateLow
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+            exp_annotations:
+              summary: 'Fewer than 92% of renders pass the quality gate (spec 3.5)'
+              description: 'Quality-gate pass rate over the last 24 hours is below the 92% acceptance criterion.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#quality-pass-rate
+      - eval_time: 2h
+        alertname: StudioPublishFirstAttemptRateLow
+        exp_alerts:
+          - exp_labels:
+              severity: ticket
+            exp_annotations:
+              summary: 'Fewer than 98% of publications succeed on the first attempt (spec 3.5)'
+              description: 'First-attempt publish success over the last 24 hours is below the 98% acceptance criterion.'
+              runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#publish-first-attempt
+
+  # 95% pass: above the 92% criterion, no alert.
+  - interval: 1m
+    input_series:
+      - series: 'studio_quality_gate_renders_total{job="studio-worker", instance="worker-1:9464", result="pass"}'
+        values: '0+19x150'
+      - series: 'studio_quality_gate_renders_total{job="studio-worker", instance="worker-1:9464", result="fail"}'
+        values: '0+1x150'
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: StudioQualityPassRateLow
+        exp_alerts: []

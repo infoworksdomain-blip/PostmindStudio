@@ -21,7 +21,7 @@ import { parseList } from './types';
 // restricted topics. Field rules mirror services/brand-kits.ts so mistakes show before saving.
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const FONT = /^[A-Za-z0-9 -]{1,64}$/;
+const FONT = /^[A-Za-z0-9 -]{1,64}$|^upload:[A-Za-z0-9_-]{1,64}$/;
 
 export type BrandKitPayload = Pick<
   BrandKit,

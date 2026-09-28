@@ -9,11 +9,15 @@ import {
 
 // GET  /api/studio/overlay-presets — built-in + org + business presets (?group, ?businessId)
 // POST /api/studio/overlay-presets — save an org- or business-scoped preset
-export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ req, tenant, deps }) => ({
-  body: {
-    data: await listPresets(deps.db, tenant.organisationId, parseQuery(req, listPresetsQuery)),
-  },
-}));
+export const GET = withStudioRoute(
+  StudioCapability.ProjectRead,
+  async ({ req, tenant, deps }) => ({
+    body: {
+      data: await listPresets(deps.db, tenant.organisationId, parseQuery(req, listPresetsQuery)),
+    },
+  }),
+  { feature: 'overlays' },
+);
 
 export const POST = withStudioRoute(
   StudioCapability.ProjectWrite,
@@ -22,4 +26,5 @@ export const POST = withStudioRoute(
     audit('studio.overlay_preset.create', { type: 'overlay_preset', id: preset.id });
     return { status: 201, body: { preset } };
   },
+  { feature: 'overlays' },
 );

@@ -208,7 +208,14 @@ describe('prompt supplement', () => {
     expect(text).not.toContain('treatment');
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { organisationId: 'o', businessId: 'b', deletedAt: null, weight: { gte: 0.3 } },
+        // 15.E6: disabled memories never; pinned (user-edited) ones regardless of weight.
+        where: {
+          organisationId: 'o',
+          businessId: 'b',
+          deletedAt: null,
+          disabled: false,
+          OR: [{ weight: { gte: 0.3 } }, { pinned: true }],
+        },
         take: 5,
       }),
     );

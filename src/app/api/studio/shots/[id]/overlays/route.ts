@@ -12,6 +12,7 @@ export const GET = withStudioRoute(
   async ({ tenant, deps, params }) => ({
     body: { data: await listShotOverlays(deps.db, tenant.organisationId, params.id ?? '') },
   }),
+  { feature: 'overlays' },
 );
 
 export const POST = withStudioRoute(
@@ -22,4 +23,5 @@ export const POST = withStudioRoute(
     audit('studio.overlay.create', { type: 'text_overlay', id: overlay.id }, { shotId: params.id });
     return { status: 201, body: { overlay } };
   },
+  { feature: 'overlays' },
 );

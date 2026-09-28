@@ -84,6 +84,74 @@ export interface PurgeResult {
   repeated: boolean;
 }
 
+export interface BusinessPurgeResult {
+  organisationId: string;
+  businessId: string;
+  projectsDeleted: number;
+  publicationsCancelled: number;
+  styleMemoriesDeleted: number;
+  channelsWiped: number;
+  requestedAt: string;
+  graceUntil: string;
+  repeated: boolean;
+}
+
+/** Body of POST /internal/publications/:id/attribute-conversation (Engagement → Studio). */
+export interface AttributeConversationInput {
+  organisationId: string;
+  conversationId: string;
+  /** Default comment. */
+  kind?: 'comment' | 'dm' | 'mention';
+  /** Engagement's lead classification; sticky once true. Default false. */
+  isLead?: boolean;
+  /** ISO 8601 (UTC); default = when Studio received the call. */
+  receivedAt?: string;
+}
+
+export interface AttributionResult {
+  attributed: true;
+  publicationId: string;
+  conversationId: string;
+  isLead: boolean;
+  repeated: boolean;
+}
+
+export type StudioPlatform =
+  | 'tiktok'
+  | 'instagram_reel'
+  | 'youtube_short'
+  | 'youtube'
+  | 'linkedin_video'
+  | 'x'
+  | 'facebook'
+  | 'instagram_feed'
+  | 'facebook_feed';
+
+export interface TargetFormat {
+  platform: StudioPlatform;
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  /** 5–900 seconds. */
+  durationSec: number;
+}
+
+/** Body of POST /internal/projects/from-content ("make a video from this post"). */
+export interface FromContentInput {
+  organisationId: string;
+  /** The PostMind user the DRAFT project is created for. */
+  userId: string;
+  /** Defaults to the content's own business. */
+  businessId?: string;
+  contentId: string;
+  /** 1–10 formats. */
+  targetFormats: TargetFormat[];
+}
+
+export interface FromContentProject {
+  id: string;
+  state: string;
+  sourceRef: string | null;
+}
+
 /** Studio's batch limit for POST /internal/tokens/refreshed. */
 export const MAX_REFRESH_BATCH = 100;
 
@@ -277,6 +345,51 @@ export class StudioInternalClient {
       'purgeOrganisation',
       'POST',
       `/api/studio/internal/organisations/${encodeURIComponent(organisationId)}/purge`,
+    );
+  }
+
+  /** POST /api/studio/internal/businesses/:id/purge { organisationId } — 202, idempotent. */
+  async purgeBusiness(
+    businessId: string,
+    input: { organisationId: string },
+  ): Promise<{ purge: BusinessPurgeResult }> {
+    return this.request(
+      'purgeBusiness',
+      'POST',
+      `/api/studio/internal/businesses/${encodeURIComponent(businessId)}/purge`,
+      input,
+    );
+  }
+
+  /**
+   * POST /api/studio/internal/publications/:id/attribute-conversation — called by Engagement.
+   * Idempotent per (publication, conversation); 404 when the publication is not the org's.
+   */
+  async attributeConversation(
+    publicationId: string,
+    input: AttributeConversationInput,
+  ): Promise<AttributionResult> {
+    return this.request(
+      'attributeConversation',
+      'POST',
+      `/api/studio/internal/publications/${encodeURIComponent(publicationId)}/attribute-conversation`,
+      input,
+    );
+  }
+
+  /**
+   * POST /api/studio/internal/projects/from-content — 201 { project } (a DRAFT). NOTE: answers
+   * 501 not_implemented (StudioInternalError code 'not_implemented', not retried) until Core
+   * publishes its content API (GET /api/internal/content/:id) that Studio reads the post from.
+   */
+  async createProjectFromContent(
+    input: FromContentInput,
+  ): Promise<{ project: FromContentProject }> {
+    return this.request(
+      'createProjectFromContent',
+      'POST',
+      '/api/studio/internal/projects/from-content',
+      input,
     );
   }
 

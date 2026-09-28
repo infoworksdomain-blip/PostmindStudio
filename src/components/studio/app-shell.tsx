@@ -8,10 +8,13 @@ import {
   BarChart3,
   Building2,
   CalendarDays,
+  Download,
   Clapperboard,
   Film,
+  LayoutTemplate,
   Library,
   Link2,
+  ListChecks,
   Menu,
   Moon,
   Plus,
@@ -25,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { BusinessSwitcher } from './business-picker';
 import { FeedbackButton } from './feedback-dialog';
 import { NotificationsBell } from './notifications-bell';
+import { UsageBanner } from './usage-meter';
 import { WelcomeLink } from './onboarding/welcome-link';
 
 // Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
@@ -33,11 +37,14 @@ export const NAV = [
   { href: '/new', label: 'Create', icon: Plus, group: 'make' },
   { href: '/projects', label: 'Projects', icon: Clapperboard, group: 'make' },
   { href: '/library', label: 'Reference library', icon: Library, group: 'make' },
+  { href: '/templates', label: 'Templates', icon: LayoutTemplate, group: 'make' },
   { href: '/publications', label: 'Publications', icon: Send, group: 'manage' },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays, group: 'manage' },
   { href: '/analytics', label: 'Analytics', icon: BarChart3, group: 'manage' },
   { href: '/business', label: 'Business & images', icon: Building2, group: 'setup' },
   { href: '/connections', label: 'Connections', icon: Link2, group: 'setup' },
+  { href: '/approvals', label: 'Approval workflows', icon: ListChecks, group: 'setup' },
+  { href: '/account/export', label: 'Export data', icon: Download, group: 'setup' },
   { href: '/admin', label: 'Admin', icon: ShieldAlert, group: 'staff' },
 ] as const;
 
@@ -175,6 +182,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-8 md:py-10">
+          <UsageBanner />
           {children}
         </main>
       </div>

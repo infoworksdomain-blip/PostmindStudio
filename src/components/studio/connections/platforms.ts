@@ -15,8 +15,8 @@ export const OAUTH_PLATFORMS: Array<{ id: OAuthPlatform; label: string; posts: s
 ];
 
 export const META_PLATFORMS: Array<{ id: MetaPlatform; label: string; posts: string }> = [
-  { id: 'instagram', label: 'Instagram', posts: 'Reels' },
-  { id: 'facebook', label: 'Facebook', posts: 'Page Reels' },
+  { id: 'instagram', label: 'Instagram', posts: 'Reels and feed videos' },
+  { id: 'facebook', label: 'Facebook', posts: 'Page Reels and feed videos' },
 ];
 
 /** Where users connect Instagram / Facebook (PostMind Core owns the Meta login). */

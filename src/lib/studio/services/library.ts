@@ -34,6 +34,13 @@ import { toPlanTier } from './catalog';
 // a download of a reference video — only a thumbnail and a short-lived in-picker preview.
 
 type Db = PrismaClient;
+
+/**
+ * Addendum A11.1: "Rows without a licence status are unusable — the API rejects them from search
+ * results." Every user-facing read (browse, detail, similar, recommended, blueprint) requires a
+ * video_library_licenses row, matching free-text search (BACKLOG 15.D7).
+ */
+export const USABLE_LIBRARY_ITEM = { retiredAt: null, license: { isNot: null } } as const;
 const THUMB_TTL_SEC = 60 * 60;
 const PREVIEW_TTL_SEC = 10 * 60;
 
@@ -87,7 +94,7 @@ export async function listLibraryVideos(
   query: z.infer<typeof listLibraryQuery>,
 ) {
   const where: Prisma.VideoLibraryItemWhereInput = {
-    retiredAt: null,
+    ...USABLE_LIBRARY_ITEM,
     ...(query.category && { category: { slug: { startsWith: query.category } } }),
     ...(query.tags?.length && { tags: { hasEvery: query.tags } }),
     ...((query.durationMin !== undefined || query.durationMax !== undefined) && {
@@ -114,7 +121,7 @@ export async function listLibraryVideos(
 
 export async function getLibraryVideo(deps: { db: Db; storage: AssetStorage }, id: string) {
   const item = await deps.db.videoLibraryItem.findFirst({
-    where: { id, retiredAt: null },
+    where: { id, ...USABLE_LIBRARY_ITEM },
     include: { analysis: true, license: true, category: { select: { slug: true, name: true } } },
   });
   if (!item) throw new NotFoundError('Library video not found');
@@ -135,7 +142,7 @@ async function hydrate(
   hits: Array<{ id: string; similarity: number }>,
 ) {
   const rows = await deps.db.videoLibraryItem.findMany({
-    where: { id: { in: hits.map((h) => h.id) }, retiredAt: null },
+    where: { id: { in: hits.map((h) => h.id) }, ...USABLE_LIBRARY_ITEM },
     select: summary,
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
@@ -220,7 +227,7 @@ export function libraryCategories(db: Db) {
 /** GET /library/blueprint/:id — what TEMPLATE mode would apply (and INSPIRE's signature). */
 export async function libraryBlueprint(db: Db, id: string) {
   const item = await db.videoLibraryItem.findFirst({
-    where: { id, retiredAt: null },
+    where: { id, ...USABLE_LIBRARY_ITEM },
     include: { analysis: true, license: true },
   });
   if (!item?.analysis) throw new NotFoundError('Library video not found');

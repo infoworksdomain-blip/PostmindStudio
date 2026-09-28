@@ -77,7 +77,7 @@ route('GET', '/analytics/publications/:id', ({ params }) => {
 
 // ---------------------------------------------------------------- style memory (13.29)
 
-interface Memory {
+export interface Memory {
   id: string;
   signalType: string;
   value: string;
@@ -87,6 +87,8 @@ interface Memory {
   evidenceCount: number;
   lastEvidenceAt: string | null;
   updatedAt: string;
+  pinned?: boolean;
+  disabled?: boolean;
 }
 
 const daysAgo = (d: number) => new Date(Date.now() - d * DAY).toISOString();
@@ -150,6 +152,19 @@ let memories: Memory[] = [
     updatedAt: daysAgo(0),
   },
 ];
+
+/** 15.E6 (demo/api/handlers/p15-e-data-rights.ts): edit one memory in place. */
+export function patchStyleMemory(
+  memoryId: string,
+  change: { value?: string; pinned?: boolean; disabled?: boolean },
+): Memory | undefined {
+  const i = memories.findIndex((m) => m.id === memoryId);
+  const current = memories[i];
+  if (!current) return undefined;
+  const next = { ...current, ...change };
+  memories = memories.map((m, j) => (j === i ? next : m));
+  return next;
+}
 
 route('GET', '/businesses/:id/style-memory', ({ params }) => ({
   data: params.id === DEMO_BUSINESS_ID ? memories : [],

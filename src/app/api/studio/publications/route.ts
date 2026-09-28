@@ -1,5 +1,6 @@
 import { StudioCapability } from '@/lib/rbac';
 import { parseBody, parseQuery, withStudioRoute } from '@/lib/studio/api/route';
+import { checkPublishQuota } from '@/lib/studio/services/plan-quotas';
 import {
   createPublication,
   createPublicationInput,
@@ -12,6 +13,7 @@ export const POST = withStudioRoute(
   StudioCapability.PublicationWrite,
   async ({ req, tenant, deps, audit }) => {
     const input = await parseBody(req, createPublicationInput);
+    await checkPublishQuota(deps, tenant, input); // decision P3: per-tier platform/length limits
     const publication = await createPublication(deps, tenant, input);
     audit(
       input.scheduledFor ? 'studio.publication.schedule' : 'studio.publication.publish',

@@ -16,6 +16,7 @@ import {
   moveToDay,
   shiftMonth,
 } from './month';
+import { DripQueuePanel } from './drip-queue';
 import { AgendaList, MonthGrid, type MoveHandlers } from './month-views';
 import { MoveToDialog, useReschedule } from './reschedule';
 import type { Publication } from '@/lib/client/types';
@@ -126,6 +127,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
           />
         </>
       )}
+      <DripQueuePanel />
     </>
   );
 }

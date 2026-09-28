@@ -11,6 +11,7 @@ export const PATCH = withStudioRoute(
     audit('studio.overlay.update', { type: 'text_overlay', id: overlay.id });
     return { body: { overlay } };
   },
+  { feature: 'overlays' },
 );
 
 export const DELETE = withStudioRoute(
@@ -21,4 +22,5 @@ export const DELETE = withStudioRoute(
     audit('studio.overlay.delete', { type: 'text_overlay', id });
     return { body: { deleted: true } };
   },
+  { feature: 'overlays' },
 );

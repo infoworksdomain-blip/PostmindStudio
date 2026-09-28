@@ -16,6 +16,9 @@ import { runProvider } from './provider-run';
 // read 2026-09-27) and the words are stored on the asset as metadata.wordTiming. Karaoke
 // overlays read them at composition (overlays/compose.ts).
 //
+// 15.C5: the script's language is sent to the transcriber (AssemblyAI language_code, whisper-1
+// language), so non-English narration is not transcribed as English.
+//
 // Non-fatal by design: without timing, karaoke spreads words evenly as before. A cost-cap pause or
 // a kill switch still stops the run, like every other provider call.
 
@@ -53,6 +56,8 @@ export async function transcribeWords(
     planTier: PlanTier;
     mediaUrl: string;
     durationSec: number;
+    /** 15.C5: BCP 47 language of the speech (the script's language). */
+    languageCode?: string;
   },
 ): Promise<WordTiming> {
   try {
@@ -66,6 +71,7 @@ export async function transcribeWords(
           projectId: input.projectId,
           mediaUrl: input.mediaUrl,
           durationSec: Math.max(1, input.durationSec),
+          ...(input.languageCode && { languageCode: input.languageCode }),
         },
       },
       deps,
@@ -88,6 +94,28 @@ export async function transcribeWords(
 }
 
 /**
+ * 15.C5: the language spoken in an asset — its shot's script language (video_scripts.language),
+ * else the project's language (uploads). Undefined when neither is found.
+ */
+export async function spokenLanguageOf(
+  deps: PipelineDeps,
+  asset: { shotId: string | null; projectId: string },
+): Promise<string | undefined> {
+  if (asset.shotId) {
+    const shot = await deps.db.videoShot.findUnique({
+      where: { id: asset.shotId },
+      select: { script: { select: { language: true } } },
+    });
+    if (shot?.script.language) return shot.script.language;
+  }
+  const project = await deps.db.videoProject.findUnique({
+    where: { id: asset.projectId },
+    select: { language: true },
+  });
+  return project?.language ?? undefined;
+}
+
+/**
  * Transcribe an audio/video asset once and store its word timing on it. An asset that already
  * has a result (any status) is left alone, so a job retry never pays twice.
  */
@@ -107,6 +135,7 @@ export async function ensureWordTiming(
     planTier: input.planTier,
     mediaUrl: await deps.storage.signedUrl(asset.s3Bucket, asset.s3Key),
     durationSec: asset.durationSec ?? 1,
+    languageCode: await spokenLanguageOf(deps, asset),
   });
   const base =
     asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)

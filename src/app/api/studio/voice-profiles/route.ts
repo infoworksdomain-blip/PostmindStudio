@@ -14,7 +14,7 @@ import {
 // GET  /api/studio/voice-profiles?businessId= — active profiles of the organisation
 // POST /api/studio/voice-profiles — multipart: name, businessId?, speakerName, consentStatement,
 //      consent=true, consentRecording (audio), samples (1–5 audio files ≤ 10 MB each).
-//      Plan-gated (STUDIO_VOICE_CLONE_MIN_TIER, default ENTERPRISE); consent audited.
+//      Plan-gated (STUDIO_VOICE_CLONE_MIN_TIER, default PLUS); consent audited.
 export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ req, tenant, deps }) => {
   const { businessId } = parseQuery(req, listVoiceProfilesQuery);
   const rows = await listVoiceProfiles(deps.db, tenant.organisationId, businessId);
@@ -32,6 +32,8 @@ export const POST = withStudioRoute(
         storage: deps.storage,
         assetsBucket: deps.library.bucket,
         cloning: deps.voiceCloning,
+        // 15.C7: the consent recording is transcribed and matched before the clone is usable.
+        providers: deps.library.providers,
         now: deps.now,
       },
       tenant,
@@ -49,6 +51,7 @@ export const POST = withStudioRoute(
         consentRecording: profile.consentS3Key,
         sampleCount: profile.sampleCount,
         state: profile.state,
+        consentCheck: profile.consentCheck,
       },
     );
     return { status: 201, body: { voiceProfile: presentVoiceProfile(profile) } };

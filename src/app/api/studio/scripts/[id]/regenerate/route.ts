@@ -3,7 +3,8 @@ import { parseBody, withStudioRoute } from '@/lib/studio/api/route';
 import { regenerateScript, regenerateScriptInput } from '@/lib/studio/services/scripts';
 
 // POST /api/studio/scripts/:id/regenerate — new run from Layer 2 reusing the Layer 1 brief
-// (13.1, spec 8.4). The instruction is the owner's steer for the rewrite.
+// (13.1, spec 8.4). The instruction is the owner's steer for the rewrite; 15.C9 pinnedShotIds
+// keep those shots (assets and position) and Layer 2 writes around them.
 export const POST = withStudioRoute(
   StudioCapability.ProjectWrite,
   async ({ req, tenant, deps, params, audit }) => {
@@ -17,6 +18,7 @@ export const POST = withStudioRoute(
         projectId: result.project.id,
         runId: result.runId,
         instruction: Boolean(input.instruction),
+        pinnedShotIds: result.pinnedShotIds,
       },
     );
     return { status: 202, body: result };

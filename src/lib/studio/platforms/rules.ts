@@ -101,7 +101,7 @@ export const PLATFORM_RULES: Record<Platform, PlatformRules> = {
     captionMaxChars: 280,
     maxHashtags: 2,
   },
-  // Facebook Reels only (spec 9.7; FB Reels docs: 9:16, 3–90 s). Feed-video upload is not built.
+  // Facebook Reels (spec 9.7; FB Reels docs: 9:16, 3–90 s). Feed video is `facebook_feed`.
   facebook: {
     credentials: 'meta',
     connectionPlatform: 'facebook',
@@ -109,6 +109,34 @@ export const PLATFORM_RULES: Record<Platform, PlatformRules> = {
     minDurationSec: 3,
     maxDurationSec: 90,
     maxBytes: 1 * GB,
+    captionMaxChars: 63206,
+    maxHashtags: 5,
+  },
+  // 15.A1 — spec 9.1 "Instagram feed: 1:1 or 4:5 MP4". The IG User Media reference (read
+  // 2026-09-28, https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media)
+  // lists only CAROUSEL, REELS and STORIES as media_type: a single feed video is published as a
+  // REELS container with share_to_feed=true, so the Reel limits apply (3 s–15 min, ≤300 MB;
+  // aspect 0.01:1–10:1, so 1:1 and 4:5 are accepted). Spec's "≤60 min" is stricter-capped here.
+  instagram_feed: {
+    credentials: 'meta',
+    connectionPlatform: 'instagram',
+    aspectRatios: ['1:1', '4:5'],
+    minDurationSec: 3,
+    maxDurationSec: 900,
+    maxBytes: 300 * MB,
+    captionMaxChars: 2200,
+    maxHashtags: 30,
+  },
+  // 15.A1 — spec 9.1 "Facebook feed video: 16:9 or 1:1, up to 240 min", resumable upload (9.7).
+  // The Page Videos reference (v26.0) states no file-size limit; 4 GB is a Studio cap (renders
+  // are far smaller), not a Meta rule.
+  facebook_feed: {
+    credentials: 'meta',
+    connectionPlatform: 'facebook',
+    aspectRatios: ['16:9', '1:1'],
+    minDurationSec: 1,
+    maxDurationSec: 240 * 60,
+    maxBytes: 4 * GB,
     captionMaxChars: 63206,
     maxHashtags: 5,
   },

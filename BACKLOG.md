@@ -260,6 +260,89 @@ Plan, endpoint contracts and sample requests/responses: `plans/phase-13.md`. Wav
 
 **Wave C — staging and people** (closes 9.2, 9.3, 12.2, 12.3, 12.5, GATE 12): Core Meta wiring → alerting deployment → live provider/posting runs → rehearsals → k6 → PITR drill → corpus sample + full run → S3 lifecycle → beta onboarding, on-call rota, Trust & Safety audit.
 
+## Phase 15 — Spec coverage gaps
+
+Features in the specs that no earlier phase or register item covered. The list and plan come from a spec-vs-code audit (`plans/phase-15.md`). Dependency-blocked items found by the audit are queued, as in Phase 13 Wave B.
+
+**Track A — Publishing and distribution**
+
+- [x] **15.A1** Instagram feed (REELS container + share_to_feed, 1:1/4:5) and Facebook feed video (Page Videos upload_phase start/transfer/finish, 16:9/1:1) publishers, rules, metrics readers, Create formats, labels (8 destinations).
+- [x] **15.A2** TikTok inbox-upload fallback (/v2/post/publish/inbox/video/init/, video.upload): used when video.publish is not granted or the creator has no privacy options; PUBLISHED with metadata.tiktokMode "inbox" + note (AI label reminder, P6).
+- [x] **15.A3** Render thumbnails: generate-thumbnail job after compose (keyframe + hook text on the highest-engagement library image, FFmpeg), POST /renders/:id/thumbnail (regenerate or JPEG/PNG upload), thumbnailUrl on GET /renders/:id, YouTube thumbnails.set; variant-card Change.
+- [x] **15.A4** Narration captions per format: burned-in editable overlays (subtitle box / TikTok-native, project language) for every platform but YouTube long-form, which gets an SRT (captionsSrtS3Key) uploaded with captions.insert; GET /renders/:id/captions.
+- [x] **15.A5** publishPolicy SCHEDULED acted on (drift #2): approval schedules every target from scheduledStartAt, staggered STUDIO_DEFAULT_STAGGER_MINUTES (15–60, default 30), through the outbox; per-business drip queue (GET|PUT /businesses/:id/drip-queue) takes the next free slot; approve returns `scheduled`; calendar drip panel.
+- [x] **15.A6** GET /analytics/best-times (per platform/weekday/hour, viewer time zone, optional language; style-memory POSTING_TIME fallback, advisory); "Suggested: Tue 08:00" in the publish panel.
+- [x] **15.A7** POST /projects/:id/caption-suggestions (one Claude call per project, spec 9.8 conventions, project language, fitted to PLATFORM_RULES, cached); publish panel "Suggest captions".
+- [x] **15.A8** GET /publications rows carry latestMetrics { views, likes, comments, at }; Views column.
+- [x] **15.A9** YouTube quotaExceeded → deferred to just after the next Pacific-midnight reset (drift #5); Studio-initiated captions truncated at a word boundary with metadata.captionTruncated, manual input still 400 (drift #4).
+
+**Track B — Composition and media quality**
+
+- [x] **15.B1** Brand-kit media: upload kinds brand_logo (PNG with transparency) / brand_watermark / brand_card (PNG, JPEG or ≤30 s MP4) / brand_font (TTF/OTF, licenceConfirmed required, family name read from the font); PATCH /brand-kits/:id logo/watermark/intro/outro ids and fontPrimary "upload:<id>"; EDL logo bug, watermark, intro/outro cards and timeline.fonts; soft DELETE (drift #3); brand-kit media pickers.
+- [x] **15.B2** §13.1 audio_sync, caption_sync (±200 ms), watermark (timeline + ffmpeg frame sample) and brand_kit (warning = user review) evaluated from video_renders.composition (drift #17).
+- [x] **15.B3** Narration fitted to the shot (±5%): extend stills/text/motion cards, else ElevenLabs voice_settings.speed ≤1.2 once, else trim at a word boundary (drift #7); STUDIO_STOCK_VOICES tone-matched stock voices per language (drift #8).
+- [x] **15.B4** Per-shot music ducking (split music clips with `trim`: ducked under narration, full under silent shots and cards).
+- [x] **15.B5** IMAGE_STILL: image library first (0.30 similarity), generated stills kept + embedded in the library, stock image on a generation refusal (W6 buildable half) (drift #13).
+- [x] **15.B6** video_assets.fingerprint reuse (zero-cost `<capability>:reused` provider jobs) and composition cache (identical EDL → same render).
+- [x] **15.B7** Render presets per platform (fps 24/30/60, `quality`, 720p drafts via scaleTo, 4K YouTube at Plus+); PATCH /projects/:id { renderOptions } (drift #11).
+- [x] **15.B8** MOTION_GRAPHICS shots rendered by Shotstack (shape + animated accent + text), offered when Shotstack is registered.
+- [x] **15.B9** "We used a fallback provider" review note (metadata.fallbacks from routing snapshots).
+- [x] **15.P2** White-label (operator decision): ENTERPRISE or org_policies.whiteLabel → no Studio mark; others get the optional STUDIO_MADE_WITH_CARD_URL end card.
+- [x] **15.P6** Optional on-video "AI-generated" label per brand kit (aiDisclosureLabel, default off), in the video's language; platform AI labels stay on.
+
+**Track C — Planning, providers and create inputs**
+
+- [x] **15.C1** OpenAI text-generation (Responses API, structured JSON) and whisper-1 transcription fallbacks; router: anthropic → openai, assemblyai → openai.
+- [x] **15.C2** Storyblocks music library pick (storyblocks-music, content_type=music); music list elevenlabs-music → storyblocks-music → replicate.
+- [x] **15.C3** Per-org, per-provider rate coordination (Redis sliding windows, STUDIO_PROVIDER_RATE_<ID>); full window → job delayed (moveToDelayed), no attempt used.
+- [x] **15.C4** Generate overrides (qualityTier down only, 422 above plan; preferredProviders per treatment) + Create advanced options (tier, schedule, approval workflow).
+- [x] **15.C5** Languages (operator list: en-GB, en-US, fr, es, ar, de, it, pt-BR, pt-PT, hi, zh-Hans; no Pidgin): project language + extra-language variant sets, native Layer 1–2 prompts, voice/transcription language, RTL/script fonts, Create picker.
+- [x] **15.C6** Public-figure review flag (public_figure category, verdict raised to at least REVIEW → 13.17 queue).
+- [x] **15.C7** Automatic consent-phrase check on voice clones (passed | mismatch | unavailable; PENDING_REVIEW unless passed; POST /voice-profiles/:id/consent-check).
+- [x] **15.C8** Platform-native Layer 2 guidance (hook framing, pacing, caption style, spec 5.3 duration curves); Create default for Shorts 45 s.
+- [x] **15.C9** Pin shots when regenerating a script (pinnedShotIds keep assets and positions; Layer 2 writes around them).
+- [x] **15.C-stock** STOCK_FOOTAGE adapters: Storyblocks video (storyblocks-video) and Pexels video (pexels-video), licence metadata, 0p; Layer 2 offers STOCK_FOOTAGE when configured (register 13.38 correction).
+- [x] **15.P1** BYOC provider keys (Enterprise, STUDIO_BYOC_ENABLED): provider_credentials (envelope-encrypted), per-org registry, per-project override, Connections panel.
+- [x] **15.P5** Basic plan defaults the Create screen to Slideshow (user can switch).
+- [x] **15.P7** Per-business provider ratings (approval, regeneration, retention) reorder shot candidates; GET /businesses/:id/provider-ratings.
+
+**Track D — Governance, admin and cost controls**
+
+- [x] **15.D1** Feature flags (A12.4): studio.features.<library|overlays|slideshow|image-library> + per-org override, 30 s cache, FEATURE_*_ENABLED now read (hard off); 403 feature_disabled in routes, project create and jobs; GET|PUT /admin/features + Admin "Features" tab.
+- [x] **15.D2** A10.3 tier gates (services/tier-gates.ts: INSPIRE Standard+, TEMPLATE Plus+, custom presets/templates Standard+, scans 1/3/10/∞ businesses, image generation Plus+) → 403 plan_tier + requiredTier; A10.4 £0.50 per-scan cap, monthly image-generation cap 20/50/200/1000, slideshow default budget £1.50.
+- [x] **15.P3** Plan quotas (operator decision): spec 12.4 monthly video quotas per tier (env-overridable), STUDIO_QUOTA_MODE=warn|enforce (default warn; enforce = 403 quota_exceeded on generate/publish), 80 %/100 % notifications; GET /usage + usage meter; GET /admin/organisations/:id/usage + Admin "Plan usage" tab.
+- [x] **15.P4** Voice cloning for Plus and Enterprise (STUDIO_VOICE_CLONE_MIN_TIER default PLUS).
+- [x] **15.D3** Multi-step approval workflows (spec 7.13): CRUD /approval-workflows, appliesTo matching, step machine (role + minApprovers, one vote per user per step, reject at any step), GET /projects/:id/approval; editor screen + review step indicator.
+- [x] **15.D4** Dead-letter admin view (spec 11.5): GET /admin/queues/:name/failed (redacted), POST …/:jobId/retry|requeue (providerId override), POST …/failed/drain (typed confirmation); Admin "Dead letters" tab.
+- [x] **15.D5** GET /admin/force-approvals?days= (spec 13.5) + Admin "Force-approvals" tab.
+- [x] **15.D6** Two-person global kill (spec 19.2): PUT /admin/kill-switch {level:global} → pending request; a different staff user confirms within 10 min (POST /admin/kill-switch/global/confirm, DELETE …/pending); break-glass STUDIO_KILL_SWITCH_SINGLE_APPROVER audited; rehearsal script updated.
+- [x] **15.D7** Library licence filter (A11.1, drift #1): browse, detail, similar, recommended and blueprint exclude rows without a licence row; staff GET /admin/library/videos, POST …/videos/bulk (accept|override|reject), POST /admin/library/reanalyse, GET /admin/library/licence-audit; Admin library panel uses them.
+- [x] **15.D8** Scan ownership statement stored on website_scans (A11.2); classifier confidence < 0.7 → business_profiles.needsReview + Business screen confirmation (A13).
+- [x] **15.D9** SLO metrics (spec 17.1 / 3.5): studio_generation_seconds{kind}, studio_publish_latency_seconds, studio_analytics_first_metric_seconds, publication outcome and quality-gate counters; ops/prometheus/studio-slo.yml rules + alerts with promtool tests.
+- [x] **15.D10** Launch-readiness harnesses: test/visual preset pixel diff (skips without ffmpeg/browser), test/eval classifier accuracy + scan timing (skip without the Playbook H-03 fixtures), A10 ±15 % cost journeys, daily provider canary (Sunset/Deprecation headers). Operator run with staging keys pending.
+
+**Track E — Data rights, integrations and sharing**
+
+- [x] **15.E1** Data export (spec 18.4 / A11.7): POST|GET /account/export, GET /account/export/:id; export-account-data job writes an org-scoped ZIP (JSON per table, no tokens, signed media links) to the assets bucket; one at a time; 7-day link; /account/export screen.
+- [x] **15.E2** Business purge: POST /internal/businesses/:id/purge (soft-delete + stop projects, cancel posts, wipe memories and business tokens, 30-day grace); hard delete by the retention sweep.
+- [x] **15.E3** POST /internal/publications/:id/attribute-conversation (publication_conversations, idempotent, sticky lead) + GET /analytics/engagement-conversations (by project, hook, platform).
+- [x] **15.E4** GET /admin/transparency?year, takedown log (GET|POST /admin/takedown-requests, PATCH …/:id); generated ops/compliance-matrix.md with a CI staleness test.
+- [x] **15.E5** Share links (decision P8: view + feedback, never approve): GET|POST /projects/:id/share-links, DELETE …/:linkId; public GET /public/share-links/:token and POST …/comments (rate limited, owner notified); /p/[token] page (RTL/CJK safe); review-screen panel.
+- [x] **15.E6** PATCH /businesses/:id/style-memory/:memoryId { value?, pinned?, disabled? }; pinned kept by the nightly build, disabled never injected.
+- [x] **15.E7** /templates screen + DELETE /slideshow-templates/:id.
+- [x] **15.E8** Daily retention-sweep job (spec 7.15) + GET /admin/retention dry run.
+- [x] **15.E9** Secondary-region storage failover (S3_FALLBACK_REGION / S3_FALLBACK_BUCKET_*).
+- [x] **15.W1** (contract) POST /internal/projects/from-content + CoreContentClient — 501 until Core ships GET /api/internal/content/:id.
+- [x] **15.W2** (contract) usage_events outbox + UsageReporter (pending_setup until Core usage API).
+- [x] **15.W3** (contract) calendar_shadows derived from publications + CalendarShadowClient (pending_setup).
+- [x] **15.W4** (contract) nightly reconcile-organisations job, skipped until Core ships an existence check.
+- [x] **15.W5** (contract) Engagement trigger fields behind STUDIO_ENGAGEMENT_TRIGGER_FIELDS.
+- [x] **15.W6** (contract) Ideogram router slot + honest-501 adapter, never registered without an account.
+
+**Integration**
+
+- [x] **15.INT** Tracks A–E + Phase 14 merged green: Phase 15 internal routes in the Core kit (OpenAPI, client, 15-check contract suite), purge coverage of every Phase 15 table (tombstones + anonymised takedowns kept), caption lane de-duplicated against the hook, composition cache keyed on asset ids.
+
 ## Phase 14 — Deliver every outstanding item not blocked by a dependency
 
 Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave B (13.33–13.39). Items whose last step is a person's are built, then marked "ready to run" until that step happens.
@@ -280,7 +363,3 @@ Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave
 **Track 3 — integrations and beta**
 - [ ] **14.10** Core integration kit for the Meta internal endpoints (Core team wires it). (built; ready to run by the Core team: integrations/core — copy the client, wire it, `npm run contract:core -- --base-url <staging> --token <token>`)
 - [ ] **14.11** Beta programme tooling, Trust & Safety audit sampling, on-call rota config (people run it). (built; ready to run by people: recruit and enrol 5–10 beta customers in Admin → Beta, staff the rota from ops/oncall/rota.template.yaml + PagerDuty, review the monthly sample in Admin → Safety audit)
-
-## Phase 15 — Spec coverage gaps
-
-Features in the specs that no earlier phase or register item covered. The list and plan come from a spec-vs-code audit (`plans/phase-15.md`). Dependency-blocked items found by the audit are queued, as in Phase 13 Wave B.

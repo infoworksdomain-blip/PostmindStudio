@@ -17,6 +17,7 @@ export const PATCH = withStudioRoute(
     );
     return { body: { slide } };
   },
+  { feature: 'slideshow' },
 );
 
 export const DELETE = withStudioRoute(
@@ -27,4 +28,5 @@ export const DELETE = withStudioRoute(
     audit('studio.slide.delete', { type: 'slideshow_slide', id });
     return { body: { deleted: true } };
   },
+  { feature: 'slideshow' },
 );

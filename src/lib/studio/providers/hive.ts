@@ -30,6 +30,15 @@ import { SyncJobStore } from './sync-jobs';
 // `running` until it arrives. Hive documents no cancel endpoint: cancel() of an async task is a
 // no-op (the tracked reservation is still released). The adapter reports per-class maxima;
 // policy lives in the pipeline.
+//
+// 15.C5 languages (read 2026-09-28): this adapter runs VISUAL moderation only — its classes are
+// about the pictures, so they are language-independent; on-screen text in any language is NOT
+// read or classified here. Hive's separate OCR Moderation product lists English, Spanish,
+// French, German, Italian, Mandarin, Russian, Portuguese, Arabic, Korean, Japanese and Hindi
+// (https://docs.thehive.ai/docs/ocr-text-recognition-moderation), i.e. all Studio languages,
+// and Hive Text Moderation states "~30 languages"
+// (https://docs.thehive.ai/docs/classification-text); neither is integrated. Spoken and written
+// words of non-English scripts are screened only by Studio's own script-safety pass (Layer 2).
 
 export const PROVIDER_ID = 'hive';
 export const SYNC_URL = 'https://api.thehive.ai/api/v2/task/sync';

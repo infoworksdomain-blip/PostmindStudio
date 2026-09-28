@@ -17,9 +17,22 @@ import type {
 //        256 KiB; 308 = continue (Range: bytes=0-N); 200/201 = video resource; 404 = session expired
 //   GET  https://www.googleapis.com/youtube/v3/videos?part=status&id=…  (uploadStatus)
 // Quota (2026-06 bucket model): videos.insert costs 1 unit of the "Video Uploads" bucket.
+// 15.A3 / 15.A4 (read 2026-09-28):
+//   POST https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=  body = the image
+//        (image/jpeg | image/png, ≤50 MB; ~50 units)
+//        https://developers.google.com/youtube/v3/docs/thumbnails/set
+//   POST https://www.googleapis.com/upload/youtube/v3/captions?part=snippet  caption resource
+//        {snippet: {videoId, language, name}} + the track (400 units; youtube.force-ssl, which
+//        Studio's OAuth requests), sent as a Google multipart media upload (uploadType=multipart:
+//        multipart/related, JSON metadata part then the media part)
+//        https://developers.google.com/youtube/v3/docs/captions/insert
+//   Both run after the video is live, so a failure is recorded on the publication, never
+//   turned into a failed publish (the video would be uploaded twice on retry).
 // Unverified API projects' uploads are forced private until the project passes an audit.
 
 export const UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
+export const THUMBNAIL_URL = 'https://www.googleapis.com/upload/youtube/v3/thumbnails/set';
+export const CAPTIONS_URL = 'https://www.googleapis.com/upload/youtube/v3/captions';
 export const API = 'https://www.googleapis.com/youtube/v3';
 export const CHUNK_SIZE = 32 * 256 * 1024; // 8 MiB, a multiple of 256 KiB
 const DEFAULT_CATEGORY_ID = '22'; // spec 9.4: "People & Blogs"
@@ -171,6 +184,7 @@ export class YouTubePublisher implements PlatformPublisher {
       },
     );
 
+    const extras = await this.afterUpload(videoId, request);
     return {
       platformPostId: videoId,
       // The Data API documents no watch-URL format (only an example inside the push-notification
@@ -180,8 +194,75 @@ export class YouTubePublisher implements PlatformPublisher {
         uploadStatus: status.uploadStatus,
         privacyStatus,
         shorts: this.platform === 'youtube_short',
+        ...extras,
       },
     };
+  }
+
+  /** thumbnails.set + captions.insert; each outcome is reported, never thrown (video is live). */
+  private async afterUpload(
+    videoId: string,
+    request: PublishRequest,
+  ): Promise<Record<string, unknown>> {
+    const auth = { authorization: `Bearer ${request.accessToken}` };
+    const out: Record<string, unknown> = {};
+    if (request.thumbnail) {
+      try {
+        await platformRequest<unknown>(
+          `${THUMBNAIL_URL}?videoId=${encodeURIComponent(videoId)}&uploadType=media`,
+          {
+            method: 'POST',
+            headers: { ...auth, 'content-type': request.thumbnail.contentType },
+            body: asBody(request.thumbnail.bytes),
+          },
+          this.opts(),
+        );
+        out.thumbnail = 'set';
+      } catch (err) {
+        out.thumbnail = 'failed';
+        out.thumbnailError = err instanceof Error ? err.message.slice(0, 300) : 'unknown';
+      }
+    }
+    if (request.captions) {
+      try {
+        const boundary = `studio-captions-${videoId}`;
+        const meta = JSON.stringify({
+          snippet: {
+            videoId,
+            language: request.captions.language,
+            name: request.captions.name,
+            isDraft: false,
+          },
+        });
+        const body = [
+          `--${boundary}`,
+          'Content-Type: application/json; charset=UTF-8',
+          '',
+          meta,
+          `--${boundary}`,
+          'Content-Type: application/octet-stream',
+          '',
+          request.captions.srt,
+          `--${boundary}--`,
+          '',
+        ].join('\r\n');
+        const res = await platformRequest<{ id?: string }>(
+          `${CAPTIONS_URL}?uploadType=multipart&part=snippet`,
+          {
+            method: 'POST',
+            headers: { ...auth, 'content-type': `multipart/related; boundary=${boundary}` },
+            body,
+          },
+          this.opts(),
+        );
+        out.captions = 'uploaded';
+        out.captionTrackId = res.body.id ?? null;
+      } catch (err) {
+        out.captions = 'failed';
+        out.captionsError = err instanceof Error ? err.message.slice(0, 300) : 'unknown';
+      }
+    }
+    return out;
   }
 
   /** videos.delete: DELETE /youtube/v3/videos?id= → 204 (50 quota units; youtube.force-ssl). */

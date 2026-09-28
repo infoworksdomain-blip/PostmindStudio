@@ -3,6 +3,7 @@ import {
   budgetFormatsFromJson,
   DEFAULT_LONG_FORM_BUDGET_PENCE,
   DEFAULT_SHORT_FORM_BUDGET_PENCE,
+  DEFAULT_SLIDESHOW_BUDGET_PENCE,
   defaultProjectBudgetPence,
   isLongForm,
 } from './project-budget';
@@ -46,5 +47,20 @@ describe('defaultProjectBudgetPence (operator decision 2)', () => {
     expect(isLongForm(stored)).toBe(true);
     expect(budgetFormatsFromJson({ not: 'an array' })).toEqual([]);
     expect(defaultProjectBudgetPence(budgetFormatsFromJson(null))).toBe(350);
+  });
+});
+
+describe('slideshow default (15.D2 / A10.4)', () => {
+  it('gives SLIDESHOW projects £1.50 whatever their formats; library references follow AI video', () => {
+    expect(DEFAULT_SLIDESHOW_BUDGET_PENCE).toBe(150);
+    expect(defaultProjectBudgetPence([{ platform: 'tiktok', durationSec: 30 }], 'SLIDESHOW')).toBe(
+      150,
+    );
+    expect(
+      defaultProjectBudgetPence([{ platform: 'youtube', durationSec: 600 }], 'SLIDESHOW'),
+    ).toBe(150);
+    expect(
+      defaultProjectBudgetPence([{ platform: 'tiktok', durationSec: 30 }], 'LIBRARY_REFERENCE'),
+    ).toBe(350);
   });
 });

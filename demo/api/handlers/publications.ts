@@ -10,6 +10,7 @@ import {
   simulatePublish,
   updatePublication,
 } from './publications-store';
+import { demoLatestMetrics } from './p15-a-publishing';
 
 const STATES = ['SCHEDULED', 'PUBLISHING', 'PUBLISHED', 'FAILED', 'CANCELLED', 'TAKEN_DOWN'];
 const PLATFORMS = [
@@ -20,11 +21,15 @@ const PLATFORMS = [
   'linkedin_video',
   'x',
   'facebook',
+  'instagram_feed',
+  'facebook_feed',
 ];
 /** Publishers with a delete API (platforms/*.ts implement takedown); TikTok has none. */
 const TAKEDOWN_PLATFORMS = new Set([
   'instagram_reel',
   'facebook',
+  'instagram_feed',
+  'facebook_feed',
   'youtube',
   'youtube_short',
   'linkedin_video',
@@ -75,7 +80,8 @@ route('GET', '/publications', ({ query }) => {
   const cursor = query.get('cursor');
   const start = cursor ? all.findIndex((p) => p.id === cursor) + 1 : 0;
   const rows = all.slice(start, start + limit + 1);
-  const page = rows.slice(0, limit);
+  // 15.A8: rows carry their latest metrics snapshot.
+  const page = rows.slice(0, limit).map((p) => ({ ...p, latestMetrics: demoLatestMetrics(p) }));
   return { data: page, nextCursor: rows.length > limit ? (page.at(-1)?.id ?? null) : null };
 });
 

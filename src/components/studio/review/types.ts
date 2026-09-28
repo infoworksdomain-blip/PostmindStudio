@@ -53,4 +53,6 @@ export const RENDER_CONNECTION: Record<string, string> = {
   x: 'x',
   instagram_reel: 'instagram',
   facebook: 'facebook',
+  instagram_feed: 'instagram',
+  facebook_feed: 'facebook',
 };

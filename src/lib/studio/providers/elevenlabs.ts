@@ -16,6 +16,7 @@ import {
   type ErrorClassification,
 } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
+import { elevenLabsLanguageCode } from '../pipeline/voice-language';
 
 // BACKLOG 2.7 — ElevenLabs TTS (Layer 4, spec 5.5). Contract from
 // elevenlabs.io/docs/api-reference/text-to-speech/convert (read 2026-09-27):
@@ -29,6 +30,8 @@ export const BASE_URL = 'https://api.elevenlabs.io';
 export const DEFAULT_MODEL = 'eleven_multilingual_v2';
 const OUTPUT_FORMAT = 'mp3_44100_128';
 const REQUEST_TIMEOUT_MS = 120_000;
+export const MIN_SPEED = 0.7;
+export const MAX_SPEED = 1.2;
 
 /** Max characters per request (elevenlabs.io/docs/models). */
 const MAX_CHARS: Readonly<Record<string, number>> = {
@@ -176,7 +179,19 @@ export class ElevenLabsAdapter implements ProviderAdapter {
         body: JSON.stringify({
           text: request.text,
           model_id: this.model,
-          ...(request.languageCode && { language_code: request.languageCode }),
+          // 15.C5: language_code (ISO 639-1) only for models that accept it — the docs say it
+          // "is not supported for multilingual_v2 models" (pipeline/voice-language.ts).
+          ...(elevenLabsLanguageCode(this.model, request.languageCode) && {
+            language_code: elevenLabsLanguageCode(this.model, request.languageCode),
+          }),
+          // 15.B3: voice_settings.speed ("values greater than 1.0 speed it up", default 1;
+          // https://elevenlabs.io/docs/api-reference/text-to-speech/convert, read 2026-09-28).
+          // ElevenLabs documents 0.7–1.2 as the supported range
+          // (https://elevenlabs.io/docs/eleven-agents/customization/voice/speed-control).
+          ...(request.speed !== undefined &&
+            request.speed !== 1 && {
+              voice_settings: { speed: Math.min(MAX_SPEED, Math.max(MIN_SPEED, request.speed)) },
+            }),
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });

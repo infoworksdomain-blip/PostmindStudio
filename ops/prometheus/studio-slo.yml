@@ -1,0 +1,153 @@
+# PostMind Studio — SLO recording rules and alerts (BACKLOG 15.D9). Spec 17.1 latency SLOs and
+# the spec 3.5 acceptance criteria, from the histograms/counters in
+# src/lib/studio/observability/metrics.ts (instrumented by src/lib/studio/observability/slo.ts).
+#
+#   spec 17.1  30 s short generation     p50 < 4 min, p95 < 10 min  (generate → READY_FOR_REVIEW)
+#   spec 17.1  6-min long-form           p50 < 15 min, p95 < 40 min
+#   spec 17.1  Publish to platform       p95 < 3 min from approve to platform live
+#   spec 17.1  Analytics freshness       first metrics visible within 5 min of publish
+#   spec 3.5   Quality auto-checks pass  92%+ of generated videos
+#   spec 3.5   Publishing first attempt  98%+
+#
+# kind="short_form" covers every short-form format (≤ 3 min, or YouTube ≤ 60 s — cost/
+# project-budget.ts isLongForm), so it is at least as strict as the spec's 30 s short. Slideshows
+# (kind="slideshow") are recorded but have no spec SLO, so no alert.
+# Every quantile alert needs a minimum volume in its window: a single slow job is not an SLO
+# breach. Annotations carry no $value so the promtool tests stay exact; the value is on the
+# recorded series (Grafana / Prometheus UI).
+# Validated in CI (ops-config job): promtool check rules + promtool test rules
+# (ops/prometheus/tests/studio-slo.test.yml). Runbook: runbooks/slo-and-launch-readiness.md.
+
+groups:
+  - name: studio-slo
+    rules:
+      # ---- recording rules -------------------------------------------------------------------
+      - record: studio:generation_seconds:p50_1h
+        expr: histogram_quantile(0.5, sum by (kind, le) (rate(studio_generation_seconds_bucket[1h])))
+      - record: studio:generation_seconds:p95_1h
+        expr: histogram_quantile(0.95, sum by (kind, le) (rate(studio_generation_seconds_bucket[1h])))
+      - record: studio:generation_completions:increase_1h
+        expr: sum by (kind) (increase(studio_generation_seconds_count[1h]))
+
+      - record: studio:publish_latency_seconds:p95_1h
+        expr: histogram_quantile(0.95, sum by (platform, le) (rate(studio_publish_latency_seconds_bucket[1h])))
+      - record: studio:publish_latency:increase_1h
+        expr: sum by (platform) (increase(studio_publish_latency_seconds_count[1h]))
+
+      - record: studio:analytics_first_metric_seconds:p95_1h
+        expr: histogram_quantile(0.95, sum by (le) (rate(studio_analytics_first_metric_seconds_bucket[1h])))
+      - record: studio:analytics_first_metric:increase_1h
+        expr: sum(increase(studio_analytics_first_metric_seconds_count[1h]))
+
+      - record: studio:quality_gate_renders:increase_24h
+        expr: sum(increase(studio_quality_gate_renders_total[24h]))
+      - record: studio:quality_gate:pass_ratio_24h
+        expr: |
+          sum(increase(studio_quality_gate_renders_total{result="pass"}[24h]))
+            /
+          sum(increase(studio_quality_gate_renders_total[24h]))
+
+      - record: studio:publications:increase_24h
+        expr: sum(increase(studio_publications_total[24h]))
+      - record: studio:publications:first_attempt_ratio_24h
+        expr: |
+          sum(increase(studio_publications_total{outcome="first_attempt"}[24h]))
+            /
+          sum(increase(studio_publications_total[24h]))
+
+      # ---- alerts ----------------------------------------------------------------------------
+      - alert: StudioShortGenerationP50Slow
+        expr: |
+          studio:generation_seconds:p50_1h{kind="short_form"} > 240
+            and studio:generation_completions:increase_1h >= 5
+        for: 30m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Short-form generation p50 is over 4 minutes (spec 17.1)'
+          description: 'Median generate → READY_FOR_REVIEW for {{ $labels.kind }} over the last hour exceeds the 4-minute SLO.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#generation-latency
+
+      - alert: StudioShortGenerationP95Slow
+        expr: |
+          studio:generation_seconds:p95_1h{kind="short_form"} > 600
+            and studio:generation_completions:increase_1h >= 5
+        for: 30m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Short-form generation p95 is over 10 minutes (spec 17.1)'
+          description: 'p95 generate → READY_FOR_REVIEW for {{ $labels.kind }} over the last hour exceeds the 10-minute SLO.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#generation-latency
+
+      - alert: StudioLongFormGenerationP50Slow
+        expr: |
+          studio:generation_seconds:p50_1h{kind="long_form"} > 900
+            and studio:generation_completions:increase_1h >= 3
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Long-form generation p50 is over 15 minutes (spec 17.1)'
+          description: 'Median generate → READY_FOR_REVIEW for {{ $labels.kind }} over the last hour exceeds the 15-minute SLO.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#generation-latency
+
+      - alert: StudioLongFormGenerationP95Slow
+        expr: |
+          studio:generation_seconds:p95_1h{kind="long_form"} > 2400
+            and studio:generation_completions:increase_1h >= 3
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Long-form generation p95 is over 40 minutes (spec 17.1)'
+          description: 'p95 generate → READY_FOR_REVIEW for {{ $labels.kind }} over the last hour exceeds the 40-minute SLO.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#generation-latency
+
+      - alert: StudioPublishLatencyP95High
+        expr: |
+          studio:publish_latency_seconds:p95_1h > 180
+            and studio:publish_latency:increase_1h >= 5
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Publishing to {{ $labels.platform }} p95 is over 3 minutes from approval (spec 17.1)'
+          description: 'p95 approve (or scheduled time) → platform live on {{ $labels.platform }} over the last hour exceeds 3 minutes.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#publish-latency
+
+      - alert: StudioAnalyticsFreshnessSlow
+        expr: |
+          studio:analytics_first_metric_seconds:p95_1h > 300
+            and studio:analytics_first_metric:increase_1h >= 5
+        for: 30m
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'First analytics arrive more than 5 minutes after publish (spec 17.1)'
+          description: 'p95 publishedAt → first analytics sample over the last hour exceeds 5 minutes.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#analytics-freshness
+
+      - alert: StudioQualityPassRateLow
+        expr: |
+          studio:quality_gate:pass_ratio_24h < 0.92
+            and studio:quality_gate_renders:increase_24h >= 20
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Fewer than 92% of renders pass the quality gate (spec 3.5)'
+          description: 'Quality-gate pass rate over the last 24 hours is below the 92% acceptance criterion.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#quality-pass-rate
+
+      - alert: StudioPublishFirstAttemptRateLow
+        expr: |
+          studio:publications:first_attempt_ratio_24h < 0.98
+            and studio:publications:increase_24h >= 50
+        for: 1h
+        labels:
+          severity: ticket
+        annotations:
+          summary: 'Fewer than 98% of publications succeed on the first attempt (spec 3.5)'
+          description: 'First-attempt publish success over the last 24 hours is below the 98% acceptance criterion.'
+          runbook_url: https://github.com/infoworksdomain-blip/PostmindStudio/blob/main/runbooks/slo-and-launch-readiness.md#publish-first-attempt

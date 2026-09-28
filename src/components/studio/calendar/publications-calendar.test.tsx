@@ -64,7 +64,7 @@ describe('PublicationsCalendar', () => {
     const agenda = screen.getByRole('list', { name: 'Agenda' });
     expect(within(agenda).getAllByRole('link')).toHaveLength(2);
 
-    const q = api.requests[0]!.url.searchParams;
+    const q = api.find('GET', '/publications')[0]!.url.searchParams;
     expect(q.get('state')).toBe('SCHEDULED,PUBLISHING,PUBLISHED');
     expect(new Date(q.get('from')!).getTime()).toBe(new Date(2026, 7, 31).getTime());
     expect(new Date(q.get('to')!).getTime()).toBe(new Date(2026, 9, 5).getTime());
@@ -77,22 +77,24 @@ describe('PublicationsCalendar', () => {
     await screen.findByText('Nothing scheduled or published this month.');
     await user.click(screen.getByRole('button', { name: 'Next month' }));
     expect(screen.getByRole('heading', { name: /October 2026/ })).toBeInTheDocument();
-    await waitFor(() => expect(api.requests).toHaveLength(2));
-    expect(new Date(api.requests[1]!.url.searchParams.get('from')!).getTime()).toBe(
-      new Date(2026, 8, 28).getTime(),
-    );
+    await waitFor(() => expect(api.find('GET', '/publications')).toHaveLength(2));
+    expect(
+      new Date(api.find('GET', '/publications')[1]!.url.searchParams.get('from')!).getTime(),
+    ).toBe(new Date(2026, 8, 28).getTime());
   });
 
   it('follows the cursor but stops after MAX_PAGES pages', async () => {
     let n = 0;
-    const api = mockFetch(() => {
+    const api = mockFetch((req) => {
+      // 15.A5: the drip queue panel's own GET is not a calendar page.
+      if (req.url.pathname.includes('drip-queue')) return undefined;
       n += 1;
       return ok({ data: [pub(`p${n}`, {})], nextCursor: `c${n}` });
     });
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
     expect(await screen.findByRole('status')).toHaveTextContent('Showing the first');
-    expect(api.requests).toHaveLength(MAX_PAGES);
-    expect(api.requests[1]!.url.searchParams.get('cursor')).toBe('c1');
+    expect(api.find('GET', '/publications')).toHaveLength(MAX_PAGES);
+    expect(api.find('GET', '/publications')[1]!.url.searchParams.get('cursor')).toBe('c1');
   });
 
   it('shows the error state', async () => {

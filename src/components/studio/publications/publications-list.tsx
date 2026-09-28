@@ -34,6 +34,12 @@ export const PUBLICATION_FILTERS: Array<{ key: string; label: string; states?: s
 ];
 
 /** The moment that matters for a row: when it went live, else when it is due, else created. */
+/** 15.A8: live view count for the list ("—" before the first metrics poll). */
+export function viewsOf(p: Publication): string {
+  const views = p.latestMetrics?.views;
+  return typeof views === 'number' ? new Intl.NumberFormat('en-GB').format(views) : '—';
+}
+
 export function whenOf(p: Publication): { label: string; iso: string } {
   if (p.publishedAt) return { label: 'Published', iso: p.publishedAt };
   if (p.scheduledFor) return { label: 'Scheduled for', iso: p.scheduledFor };
@@ -59,6 +65,9 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
         {p.state === 'FAILED' && p.errorReason && (
           <span className="mt-1 block text-xs text-destructive">{p.errorReason}</span>
         )}
+        {p.metadata?.tiktokMode === 'inbox' && typeof p.metadata.note === 'string' && (
+          <span className="mt-1 block text-xs text-muted-foreground">{p.metadata.note}</span>
+        )}
       </TableCell>
       <TableCell className="hidden md:table-cell">{platform}</TableCell>
       <TableCell>
@@ -68,6 +77,7 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
         <span className="block text-xs">{when.label}</span>
         {formatDate(when.iso)}
       </TableCell>
+      <TableCell className="tabular hidden text-right md:table-cell">{viewsOf(p)}</TableCell>
       <TableCell className="text-right">
         <PublicationActions publication={p} onChanged={onChanged} />
       </TableCell>
@@ -180,6 +190,7 @@ export function PublicationsList() {
                 <TableHead className="hidden md:table-cell">Platform</TableHead>
                 <TableHead className="w-28 md:w-auto">State</TableHead>
                 <TableHead className="hidden md:table-cell">When</TableHead>
+                <TableHead className="hidden text-right md:table-cell">Views</TableHead>
                 <TableHead className="w-28 text-right md:w-auto">
                   <span className="sr-only">Actions</span>
                 </TableHead>

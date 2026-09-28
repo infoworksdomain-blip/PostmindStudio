@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../../errors';
-import { composeCaption, normaliseHashtags } from './captions';
+import { composeCaption, fitCaption, normaliseHashtags } from './captions';
 
 describe('normaliseHashtags', () => {
   it('trims, strips leading #, dedupes case-insensitively, and preserves first-seen casing', () => {
@@ -102,5 +102,37 @@ describe('composeCaption', () => {
   it('does not produce a title for platforms without titleMaxChars', () => {
     const result = composeCaption('x', { caption: 'Hello', hashtags: [] });
     expect(result.title).toBeUndefined();
+  });
+});
+
+describe('fitCaption (15.A9)', () => {
+  it('leaves a caption that fits unchanged', () => {
+    expect(fitCaption('tiktok', { caption: 'Short and sweet', hashtags: ['bread'] })).toEqual({
+      caption: 'Short and sweet',
+      truncated: false,
+    });
+  });
+
+  it('cuts an over-long caption at a word boundary with an ellipsis so composeCaption passes', () => {
+    const caption = Array.from({ length: 600 }, (_, i) => `word${i}`).join(' ');
+    const fitted = fitCaption('instagram_reel', { caption, hashtags: ['bakery', 'leeds'] });
+    expect(fitted.truncated).toBe(true);
+    expect(fitted.caption).toMatch(/word\d+…$/);
+    const composed = composeCaption('instagram_reel', {
+      caption: fitted.caption,
+      hashtags: ['bakery', 'leeds'],
+    });
+    expect([...composed.text].length).toBeLessThanOrEqual(2200);
+  });
+
+  it('respects the 280-character X limit including hashtags', () => {
+    const fitted = fitCaption('x', { caption: 'a '.repeat(400), hashtags: ['one'] });
+    expect(() => composeCaption('x', { caption: fitted.caption, hashtags: ['one'] })).not.toThrow();
+  });
+
+  it('counts YouTube descriptions in bytes', () => {
+    const fitted = fitCaption('youtube', { caption: 'é '.repeat(3000), hashtags: [] });
+    expect(fitted.truncated).toBe(true);
+    expect(Buffer.byteLength(fitted.caption, 'utf8')).toBeLessThanOrEqual(5000);
   });
 });

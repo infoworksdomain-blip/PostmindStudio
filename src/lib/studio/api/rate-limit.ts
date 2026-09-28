@@ -78,6 +78,21 @@ export function internalRateLimitsFromEnv(
   return { readsPerMin: perMin, writesPerMin: perMin, orgPerMin: perMin };
 }
 
+/**
+ * 15.E5 public share links (no session): per client address STUDIO_PUBLIC_RATE_LIMIT_READS_PER_MIN
+ * (default 60) and STUDIO_PUBLIC_RATE_LIMIT_WRITES_PER_MIN (default 5 comments a minute), and per
+ * link STUDIO_PUBLIC_RATE_LIMIT_LINK_PER_MIN (default 120 requests a minute from everyone).
+ */
+export function publicRateLimitsFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): RateLimits {
+  return {
+    readsPerMin: positiveInt(env, 'STUDIO_PUBLIC_RATE_LIMIT_READS_PER_MIN', 60),
+    writesPerMin: positiveInt(env, 'STUDIO_PUBLIC_RATE_LIMIT_WRITES_PER_MIN', 5),
+    orgPerMin: positiveInt(env, 'STUDIO_PUBLIC_RATE_LIMIT_LINK_PER_MIN', 120),
+  };
+}
+
 export interface RateLimiter {
   /** Throws RateLimitError (429 + Retry-After) when a limit is exceeded. */
   check(input: { organisationId: string; userId: string; method: string }): Promise<void>;

@@ -16,15 +16,18 @@ import type { PlanTier } from '../providers/router';
 import type { AssetStorage } from '../storage';
 import { businessIdParam } from './businesses';
 import { toPlanTier } from './catalog';
+import { checkConsentRecording, stateAfterConsent, type ConsentCheckResult } from './consent-check';
 
 // BACKLOG 13.13 — voice profiles (spec 10.2 brand voice cloning, 13.4 deepfake protection):
 //   - spec 13.4: "at lower tiers, only stock voices are available" → cloning needs the tier in
-//     STUDIO_VOICE_CLONE_MIN_TIER (default ENTERPRISE; playbook decision A-06 is still open);
+//     STUDIO_VOICE_CLONE_MIN_TIER (default PLUS: operator decision P4, 2026-09-28 — spec 12.4
+//     lists "brand voice clone" under Plus; Playbook A-06 closed);
 //   - spec 10.2: "consent recording is required — the speaker must record a specific consent
 //     phrase" → every clone needs consent=true, the speaker's name, the consent statement they
 //     read and a consentRecording file; the recording is kept in the assets bucket and the
-//     consent is written to the audit log. (Checking that the recording actually says the phrase
-//     is NOT automated: the file is kept for review.)
+//     consent is written to the audit log. 15.C7: the recording is transcribed and matched to
+//     the statement (services/consent-check.ts); unless it passes, the profile stays
+//     PENDING_REVIEW and is never used (POST /voice-profiles/:id/consent-check re-runs it);
 //   - samples go to ElevenLabs Instant Voice Cloning and are not stored by Studio;
 //   - DELETE revokes the voice at ElevenLabs, unlinks it from brand kits (narration falls back
 //     to the default voice) and keeps the row (state DELETED) as the consent record.
@@ -56,9 +59,12 @@ const AUDIO_TYPES: Readonly<Record<string, string>> = {
 
 const TIERS: readonly PlanTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
 
+/** Operator decision P4 (2026-09-28): voice cloning for Plus and Enterprise. */
+export const DEFAULT_VOICE_CLONE_MIN_TIER: PlanTier = 'PLUS';
+
 export function voiceCloneMinTier(env: Record<string, string | undefined> = process.env): PlanTier {
   const raw = env.STUDIO_VOICE_CLONE_MIN_TIER?.trim().toUpperCase();
-  return TIERS.find((t) => t === raw) ?? 'ENTERPRISE';
+  return TIERS.find((t) => t === raw) ?? DEFAULT_VOICE_CLONE_MIN_TIER;
 }
 
 export function assertVoiceCloneTier(
@@ -150,6 +156,8 @@ export function presentVoiceProfile(row: VoiceProfile) {
     consentGivenAt: row.consentGivenAt,
     sampleCount: row.sampleCount,
     languagesSupported: row.languagesSupported,
+    consentCheck: row.consentCheck,
+    consentCheckedAt: row.consentCheckedAt,
     createdAt: row.createdAt,
     deletedAt: row.deletedAt,
   };
@@ -160,7 +168,25 @@ export interface VoiceDeps {
   storage: AssetStorage;
   assetsBucket: string;
   cloning: VoiceCloningClient | undefined;
+  /** 15.C7: transcription for the consent check; absent = the check is "unavailable". */
+  providers?: ProviderRunDeps;
   now: () => number;
+}
+
+async function runConsentCheck(
+  deps: VoiceDeps,
+  tenant: TenantContext,
+  input: { bucket: string; key: string; statement: string; speakerName: string },
+): Promise<ConsentCheckResult> {
+  if (!deps.providers)
+    return { check: 'unavailable', transcript: null, similarity: null, reason: 'no transcription' };
+  return checkConsentRecording(deps.providers, {
+    organisationId: tenant.organisationId,
+    planTier: toPlanTier(tenant.organisation.planTier),
+    mediaUrl: await deps.storage.signedUrl(input.bucket, input.key),
+    statement: input.statement,
+    speakerName: input.speakerName,
+  });
 }
 
 function requireCloning(cloning: VoiceCloningClient | undefined): VoiceCloningClient {
@@ -187,6 +213,13 @@ export async function createVoiceProfile(
     body: input.consentRecording.bytes,
     contentType: input.consentRecording.contentType,
   });
+  // 15.C7: the recording must say the statement before the clone is usable.
+  const consent = await runConsentCheck(deps, tenant, {
+    bucket: deps.assetsBucket,
+    key: consentKey,
+    statement: fields.consentStatement,
+    speakerName: fields.speakerName,
+  });
   const voice = await cloning.addVoice({
     name: `${fields.name} (${tenant.organisationId.slice(0, 24)})`,
     description: fields.description,
@@ -201,7 +234,11 @@ export async function createVoiceProfile(
         provider: cloning.providerId,
         providerVoiceId: voice.voiceId,
         languagesSupported: [],
-        state: voice.requiresVerification ? 'REQUIRES_VERIFICATION' : 'READY',
+        state: stateAfterConsent(consent.check, voice.requiresVerification),
+        providerVerificationRequired: voice.requiresVerification,
+        consentCheck: consent.check,
+        consentTranscript: consent.transcript,
+        consentCheckedAt: new Date(deps.now()),
         speakerName: fields.speakerName,
         consentStatement: fields.consentStatement,
         consentGivenByUserId: tenant.userId,
@@ -313,4 +350,41 @@ export async function assertLinkableVoice(
   if (row.businessId && row.businessId !== businessId)
     throw new ValidationError('That voice profile belongs to another business');
   if (row.state !== 'READY') throw new ValidationError(`That voice profile is ${row.state}`);
+}
+
+/**
+ * 15.C7: POST /voice-profiles/:id/consent-check — run the consent check again on the stored
+ * recording (e.g. after "unavailable"). Only a PENDING_REVIEW profile can be re-checked.
+ */
+export async function recheckVoiceConsent(
+  deps: VoiceDeps,
+  tenant: TenantContext,
+  id: string,
+): Promise<{ profile: VoiceProfile; similarity: number | null; reason?: string }> {
+  const row = await findActive(deps.db, tenant.organisationId, id);
+  if (row.state !== 'PENDING_REVIEW')
+    throw new ConflictError(`Voice profile is ${row.state}; only PENDING_REVIEW can be re-checked`);
+  if (!row.consentS3Bucket || !row.consentS3Key || !row.consentStatement || !row.speakerName)
+    throw new ConflictError('This profile has no stored consent recording to check');
+  const consent = await runConsentCheck(deps, tenant, {
+    bucket: row.consentS3Bucket,
+    key: row.consentS3Key,
+    statement: row.consentStatement,
+    speakerName: row.speakerName,
+  });
+  const updated = await deps.db.voiceProfile.updateMany({
+    where: { id, organisationId: tenant.organisationId, state: 'PENDING_REVIEW', deletedAt: null },
+    data: {
+      state: stateAfterConsent(consent.check, row.providerVerificationRequired),
+      consentCheck: consent.check,
+      consentTranscript: consent.transcript,
+      consentCheckedAt: new Date(deps.now()),
+    },
+  });
+  if (updated.count === 0) throw new ConflictError('Voice profile changed concurrently; reload');
+  return {
+    profile: await findActive(deps.db, tenant.organisationId, id),
+    similarity: consent.similarity,
+    ...(consent.reason && { reason: consent.reason }),
+  };
 }

@@ -17,15 +17,17 @@ import { MusicStatus } from './music-status';
 import { SfxStatus } from './sfx-status';
 import { PipelineStrip } from './pipeline-strip';
 import { ApprovalBar, ProjectActions } from './project-actions';
+import { ApprovalStepIndicator } from '../approvals/approval-step-indicator';
 import { PublicationsList } from './publications-list';
 import { PublishPanel } from './publish-panel';
+import { ShareLinksPanel } from '../share/share-links-panel';
 import { ReviewTabs, TabPanel, type TabDef } from './review-tabs';
 import { ScriptView } from './script-view';
 import { ShotsTab } from './shots-tab';
 import { PUBLISHABLE } from './types';
 import { VariantCard } from './variant-card';
 import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
-import { AutoResumeNote, SafetyReviewNote } from './paused-notes';
+import { AutoResumeNote, FallbackNote, SafetyReviewNote } from './paused-notes';
 
 // BACKLOG 10.4 — Review (spec 14.2): one screen, all variants. Polls every 4 s while the
 // pipeline is working so progress, shots and renders update in place.
@@ -126,10 +128,13 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         {isProjectBudgetPause(project) && <BudgetRaise project={project} onChanged={refresh} />}
         <AutoResumeNote project={project} onChanged={refresh} />
         <SafetyReviewNote project={project} />
+        <FallbackNote project={project} />
+        <ApprovalStepIndicator project={project} />
         <ApprovalBar project={project} onChanged={refresh} />
         <AutomationPanel project={project} />
         <MusicStatus project={project} />
         <SfxStatus project={project} />
+        {project.renders.length > 0 && <ShareLinksPanel projectId={project.id} />}
         <div>
           <ReviewTabs tabs={tabs} active={active} onChange={setTab} />
           <TabPanel tab={active}>

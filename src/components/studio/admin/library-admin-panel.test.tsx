@@ -38,10 +38,38 @@ const ingestStatus = {
   ],
 };
 
+// 15.D7: the corpus list is the staff endpoint (every row with its licence status) and the panel
+// shows the licence audit.
+const adminRow = {
+  ...summary(),
+  ingestedAt: '2026-09-20T10:00:00.000Z',
+  retiredAt: null,
+  reanalysedAt: null,
+  categoryReview: null,
+  categoryReviewedAt: null,
+  licence: { status: 'ok', scenario: 'OWNED', licenseExpires: null, licenseSource: null },
+};
+
+const licenceAudit = {
+  ok: true,
+  generatedAt: '2026-09-27T12:00:00.000Z',
+  expiringWithinDays: 30,
+  live: 56,
+  retired: 0,
+  byScenario: { LICENSED: 20, OWNED: 36, SCRAPED: 0, NOT_REQUIRED: 0 },
+  missing: 0,
+  expired: 0,
+  expiringSoon: 0,
+  problems: [],
+  problemsTruncated: false,
+};
+
 function routes(extra: MockRoute[] = []): MockRoute[] {
   return [
     ...extra,
     { match: '/library/categories', body: categories },
+    { match: '/admin/library/licence-audit', body: licenceAudit },
+    { match: '/admin/library/videos', body: { ok: true, data: [adminRow], nextCursor: null } },
     { match: '/library/videos', body: { ok: true, data: [summary()], nextCursor: null } },
     { match: '/admin/library/ingest/status', body: ingestStatus },
   ];
@@ -165,8 +193,9 @@ describe('LibraryAdminPanel', () => {
   it('shows an error when the corpus list fails', async () => {
     mockFetch([
       { match: '/library/categories', body: categories },
+      { match: '/admin/library/licence-audit', body: licenceAudit },
       {
-        match: '/library/videos',
+        match: '/admin/library/videos',
         status: 500,
         body: { ok: false, error: 'internal', message: 'Search index offline' },
       },

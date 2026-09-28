@@ -70,7 +70,11 @@ describe.skipIf(!hasDb)('golden journeys: Phase 13 A2', { timeout: 120_000 }, ()
       method: 'POST',
       token: 'owner',
       params: { id: BUSINESS_ID },
-      body: { url: site, ownershipConfirmed: true },
+      body: {
+        url: site,
+        ownershipConfirmed: true,
+        ownershipStatement: 'I own this website or am authorised to represent it.',
+      },
     });
     expect(started.status).toBe(202);
     await drain(j);

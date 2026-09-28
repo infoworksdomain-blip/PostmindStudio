@@ -78,6 +78,10 @@ export async function forceApproveRender(
           status: 'passed',
           severity: 'info',
           detail: `by ${tenant.userId}: ${note}`,
+          // 15.D5: structured copy for the Admin Centre force-approve review.
+          userId: tenant.userId,
+          note,
+          at: new Date().toISOString(),
         },
       ] as unknown as Prisma.InputJsonValue,
     },

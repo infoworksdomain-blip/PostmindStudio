@@ -45,7 +45,9 @@ describe('createTikTokOAuth', () => {
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('redirect_uri')).toBe(config.redirectUri);
     expect(url.searchParams.get('state')).toBe('state-1');
-    expect(url.searchParams.get('scope')).toBe('user.info.basic,video.publish,video.list');
+    expect(url.searchParams.get('scope')).toBe(
+      'user.info.basic,video.publish,video.upload,video.list',
+    );
     expect(client.usesPkce).toBe(false);
   });
 

@@ -9,6 +9,7 @@ import type {
 } from './interface';
 import { usdToPence } from './pricing';
 import { providerError } from './provider-errors';
+import { findLanguage } from '../languages';
 
 // AssemblyAI async transcription (BACKLOG 9.1 step 3; spec 6.5 captions). Contract from
 // assemblyai.com/docs (read 2026-09-27):
@@ -18,6 +19,14 @@ import { providerError } from './provider-errors';
 //        words[{text,start,end,confidence}] (ms), audio_duration (s), language_code, error
 //   DELETE /v2/transcript/{id} removes the transcript
 // speech_models is omitted so AssemblyAI's documented default routing applies.
+// 15.C5 language: `language_code` per
+// https://www.assemblyai.com/docs/pre-recorded-audio/supported-languages (read 2026-09-28).
+// Universal-3.5 Pro supports en, en_uk, en_us, es, fr, de, it, pt, ar, hi, zh (among others),
+// i.e. every Studio language, and the default speech_models ["universal-3-5-pro", "universal-2"]
+// (https://www.assemblyai.com/docs/pre-recorded-audio/select-the-speech-model) covers them, so no
+// specific model is needed. Portuguese has one code (`pt`, both dialects recognised); Chinese is
+// `zh` (Mandarin). Without a code the request keeps its previous (pre-15.C5) behaviour. The docs state no per-language limit on word-level
+// timestamps; for Mandarin a "word" is whatever token AssemblyAI returns (no spaces in the text).
 // Pricing: Universal-3.5 Pro $0.21/hour (pricing page, pay-as-you-go).
 
 export const PROVIDER_ID = 'assemblyai';
@@ -54,6 +63,27 @@ function errorMessage(body: unknown): string | undefined {
   if (body && typeof body === 'object' && 'error' in body)
     return String((body as { error: unknown }).error);
   return typeof body === 'string' ? body : undefined;
+}
+
+/** AssemblyAI language_code for each Studio language (BCP 47 → documented code). */
+export const ASSEMBLYAI_LANGUAGE_CODES: Readonly<Record<string, string>> = {
+  'en-GB': 'en_uk',
+  'en-US': 'en_us',
+  fr: 'fr',
+  es: 'es',
+  ar: 'ar',
+  de: 'de',
+  it: 'it',
+  'pt-BR': 'pt',
+  'pt-PT': 'pt',
+  hi: 'hi',
+  'zh-Hans': 'zh',
+};
+
+/** The documented AssemblyAI code for a Studio language tag; undefined = let AssemblyAI decide. */
+export function assemblyAiLanguageCode(tag: string | null | undefined): string | undefined {
+  const language = findLanguage(tag);
+  return language ? ASSEMBLYAI_LANGUAGE_CODES[language.code] : undefined;
 }
 
 export class AssemblyAiAdapter implements ProviderAdapter {
@@ -98,7 +128,12 @@ export class AssemblyAiAdapter implements ProviderAdapter {
     }
     const { body } = await this.request<AssemblyTranscript>('/v2/transcript', {
       method: 'POST',
-      body: JSON.stringify({ audio_url: request.mediaUrl }),
+      body: JSON.stringify({
+        audio_url: request.mediaUrl,
+        ...(assemblyAiLanguageCode(request.languageCode) && {
+          language_code: assemblyAiLanguageCode(request.languageCode),
+        }),
+      }),
     });
     return {
       providerJobId: body.id,

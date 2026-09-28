@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
-import { AssemblyAiAdapter, EU_BASE_URL, US_BASE_URL } from './assemblyai';
+import { LANGUAGES } from '../languages';
+import {
+  ASSEMBLYAI_LANGUAGE_CODES,
+  AssemblyAiAdapter,
+  EU_BASE_URL,
+  US_BASE_URL,
+  assemblyAiLanguageCode,
+} from './assemblyai';
 
 // Contract from assemblyai.com/docs (read 2026-09-27), see assemblyai.ts header comment.
 
@@ -170,5 +177,56 @@ describe('AssemblyAiAdapter.estimateCostPence', () => {
     expect(
       aai.estimateCostPence({ capability: 'tts', organisationId: 'o', text: 't', voiceId: 'v' }),
     ).toBe(0);
+  });
+});
+
+describe('AssemblyAI language codes (15.C5)', () => {
+  // Codes from https://www.assemblyai.com/docs/pre-recorded-audio/supported-languages
+  // (Universal-3.5 Pro list, read 2026-09-28).
+  const DOCUMENTED = new Set([
+    'en',
+    'en_au',
+    'en_uk',
+    'en_us',
+    'es',
+    'fr',
+    'de',
+    'it',
+    'pt',
+    'ar',
+    'hi',
+    'zh',
+  ]);
+
+  it('maps every Studio language to a documented code', () => {
+    for (const language of LANGUAGES) {
+      const code = assemblyAiLanguageCode(language.code);
+      expect(code, language.code).toBeDefined();
+      expect(DOCUMENTED.has(code as string), `${language.code} → ${code}`).toBe(true);
+    }
+    expect(Object.keys(ASSEMBLYAI_LANGUAGE_CODES).sort()).toEqual(
+      LANGUAGES.map((l) => l.code).sort(),
+    );
+    expect(assemblyAiLanguageCode('en-GB')).toBe('en_uk');
+    expect(assemblyAiLanguageCode('en-us')).toBe('en_us');
+    expect(assemblyAiLanguageCode('pt-BR')).toBe('pt');
+    expect(assemblyAiLanguageCode('zh-Hans')).toBe('zh');
+    expect(assemblyAiLanguageCode('xx')).toBeUndefined();
+    expect(assemblyAiLanguageCode(undefined)).toBeUndefined();
+  });
+
+  it('sends language_code in the request body when the language is known', async () => {
+    const { aai, requests } = adapter(
+      {},
+      json({ id: 't', status: 'queued' }),
+      json({ id: 'u', status: 'queued' }),
+    );
+    await aai.submit({ ...transcriptionRequest, languageCode: 'ar' });
+    expect(requests[0]?.body).toEqual({
+      audio_url: transcriptionRequest.mediaUrl,
+      language_code: 'ar',
+    });
+    await aai.submit({ ...transcriptionRequest, languageCode: 'klingon' });
+    expect(requests[1]?.body).toEqual({ audio_url: transcriptionRequest.mediaUrl });
   });
 });

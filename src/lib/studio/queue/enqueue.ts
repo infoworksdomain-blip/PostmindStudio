@@ -29,12 +29,16 @@ export const jobIds = {
   planProject: (d: JobDataMap['plan-project']) => `plan-project__${d.projectId}__${d.runId}`,
   generateAsset: (d: JobDataMap['generate-asset']) => `generate-asset__${d.shotId}__${d.runId}`,
   composeVideo: (d: JobDataMap['compose-video']) => `compose-video__${d.projectId}__${d.runId}`,
+  generateThumbnail: (d: JobDataMap['generate-thumbnail']) =>
+    `generate-thumbnail__${d.projectId}__${d.runId}`,
   publishVideo: (d: JobDataMap['publish-video'], attempt = 0) =>
     `publish-video__${d.publicationId}__${attempt}`,
   fireScheduled: (d: JobDataMap['fire-scheduled-publication']) =>
     `fire-scheduled__${d.publicationId}`,
   scanWebsite: (d: JobDataMap['scan-website']) => `scan-website__${d.scanId}`,
   ingestLibraryVideo: (d: JobDataMap['ingest-library-video']) => `ingest-library-video__${d.runId}`,
+  reanalyseLibraryVideo: (d: JobDataMap['reanalyse-library-video']) =>
+    `reanalyse-library-video__${d.libraryItemId}__${d.runId}`,
   pollAnalytics: (d: JobDataMap['poll-publication-analytics']) =>
     `poll-analytics__${d.publicationId}__${d.pollNumber}`,
   rollUpAnalytics: (d: JobDataMap['roll-up-analytics']) => `roll-up-analytics__${d.runId}`,
@@ -46,6 +50,8 @@ export const jobIds = {
     `run-quality-gate__${d.projectId}__${d.runId}`,
   /** One scheduled rescan per last-scan per day (13.10). */
   rescanWebsite: (d: JobDataMap['rescan-website']) => `rescan-website__${d.scanId}__${d.runId}`,
+  /** 15.E1: one job per export. */
+  exportAccountData: (d: JobDataMap['export-account-data']) => `export-account-data__${d.exportId}`,
   purgeDisputedDomain: (d: JobDataMap['purge-disputed-domain']) =>
     `purge-disputed-domain__${d.runId}`,
 };
@@ -90,6 +96,15 @@ export interface InlineJob<N extends JobName = JobName> {
   jobId?: string;
 }
 
+/** A dead-lettered inline job (BullMQ keeps these in the queue's failed set; 15.D4). */
+export interface InlineFailedJob<N extends JobName = JobName> extends InlineJob<N> {
+  id: string;
+  failedReason: string;
+  attemptsMade: number;
+  timestamp: number;
+  finishedOn: number;
+}
+
 /**
  * In-process queue: records jobs (deduplicating by jobId, like BullMQ) for a runner to execute.
  * Used by tests and the GATE 3 script so the whole pipeline runs without Redis.
@@ -101,6 +116,9 @@ export class InlineJobQueue implements JobQueue {
   readonly defer = new Set<JobName>();
   readonly deferred: InlineJob[] = [];
   private readonly seen = new Set<string>();
+  /** Jobs that exhausted their attempts (drainInline), for the dead-letter admin (15.D4). */
+  readonly failed: InlineFailedJob[] = [];
+  private failedSeq = 0;
 
   async add<N extends JobName>(
     name: N,
@@ -136,6 +154,28 @@ export class InlineJobQueue implements JobQueue {
     }
     this.deferred.push(...keep);
     return moved;
+  }
+
+  /** Dead-letter a job that exhausted its attempts, as BullMQ moves it to the failed set. */
+  fail(job: InlineJob, failedReason: string, attemptsMade: number, now = Date.now()): void {
+    this.failedSeq += 1;
+    this.failed.push({
+      name: job.name,
+      data: job.data,
+      jobId: job.jobId,
+      id: job.jobId ?? `inline-${this.failedSeq}`,
+      failedReason,
+      attemptsMade,
+      timestamp: now,
+      finishedOn: now,
+    } as InlineFailedJob);
+  }
+
+  /** Run a dead-lettered job again (retry / requeue), bypassing the jobId dedupe of add(). */
+  requeue(job: InlineJob): void {
+    const again = { name: job.name, data: job.data, jobId: job.jobId } as InlineJob;
+    this.pending.push(again);
+    this.history.push(again);
   }
 
   take(): InlineJob | undefined {

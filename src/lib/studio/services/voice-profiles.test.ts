@@ -40,15 +40,16 @@ function form(overrides: Record<string, string | File[] | File | null> = {}): Fo
 }
 
 describe('voice clone tier gating (spec 13.4)', () => {
-  it('defaults to ENTERPRISE; STUDIO_VOICE_CLONE_MIN_TIER moves it', () => {
-    expect(voiceCloneMinTier({})).toBe('ENTERPRISE');
-    expect(voiceCloneMinTier({ STUDIO_VOICE_CLONE_MIN_TIER: 'plus' })).toBe('PLUS');
-    expect(voiceCloneMinTier({ STUDIO_VOICE_CLONE_MIN_TIER: 'nonsense' })).toBe('ENTERPRISE');
+  it('defaults to PLUS (operator decision P4); STUDIO_VOICE_CLONE_MIN_TIER moves it', () => {
+    expect(voiceCloneMinTier({})).toBe('PLUS');
+    expect(voiceCloneMinTier({ STUDIO_VOICE_CLONE_MIN_TIER: 'enterprise' })).toBe('ENTERPRISE');
+    expect(voiceCloneMinTier({ STUDIO_VOICE_CLONE_MIN_TIER: 'nonsense' })).toBe('PLUS');
     expect(() => assertVoiceCloneTier(tenant('ENTERPRISE'), {})).not.toThrow();
-    expect(() => assertVoiceCloneTier(tenant('PLUS'), {})).toThrow('ENTERPRISE');
+    expect(() => assertVoiceCloneTier(tenant('PLUS'), {})).not.toThrow();
+    expect(() => assertVoiceCloneTier(tenant('STANDARD'), {})).toThrow('PLUS');
     expect(() =>
-      assertVoiceCloneTier(tenant('PLUS'), { STUDIO_VOICE_CLONE_MIN_TIER: 'PLUS' }),
-    ).not.toThrow();
+      assertVoiceCloneTier(tenant('PLUS'), { STUDIO_VOICE_CLONE_MIN_TIER: 'ENTERPRISE' }),
+    ).toThrow('ENTERPRISE');
   });
 });
 
