@@ -87,19 +87,35 @@ describe.skipIf(!hasDb)('overlay API + re-render', { timeout: 120_000 }, () => {
       include: { overlays: true },
     });
   const lastEdit = () => (h.adapters.shotstack.requests.at(-1) as unknown as { edit: Edit }).edit;
+  /** 15.A4 narration captions are their own lane (ids in project.metadata.voiceCaptions). */
+  const captionIds = async () => {
+    const { metadata } = await db.videoProject.findUniqueOrThrow({ where: { id: projectId } });
+    const records = (
+      (metadata ?? {}) as { voiceCaptions?: Record<string, { overlayIds: string[] }> }
+    ).voiceCaptions;
+    return new Set(Object.values(records ?? {}).flatMap((r) => r.overlayIds));
+  };
 
   it('proposes styled overlays at script time and composes them as rich-text', async () => {
     const project = await db.videoProject.findUniqueOrThrow({ where: { id: projectId } });
     expect(project.state).toBe('READY_FOR_REVIEW');
     const [hook, , card] = await shots();
-    expect(hook?.overlays).toHaveLength(1);
-    expect(hook?.overlays[0]).toMatchObject({
+    const captions = await captionIds();
+    const suggested = hook?.overlays.filter((o) => !captions.has(o.id)) ?? [];
+    expect(suggested).toHaveLength(1);
+    // The caption lane never repeats the hook text the auto-suggested overlay already shows.
+    const hookCaptions = hook?.overlays.filter((o) => captions.has(o.id)) ?? [];
+    expect(hookCaptions.every((o) => o.sortOrder >= 50)).toBe(true);
+    expect(hookCaptions.map((o) => o.text)).not.toContain('Still buying supermarket bread?');
+    expect(hook?.overlays.filter((o) => !captions.has(o.id))[0]).toMatchObject({
       text: 'Still buying supermarket bread?',
       fontFamily: 'Montserrat',
       animationIn: 'popIn',
     });
-    expect(hook?.overlays[0]?.presetId).toBeTruthy(); // seeded built-in "TikTok Native"
-    expect(card?.overlays).toHaveLength(0); // TEXT_CARD shots show their own text
+    expect(suggested[0]?.presetId).toBeTruthy(); // seeded built-in "TikTok Native"
+    // TEXT_CARD shots show their own text: no suggested overlay (captions are another lane).
+    expect(card?.overlays.filter((o) => !captions.has(o.id))).toHaveLength(0);
+    expect(card?.overlays.map((o) => o.text)).not.toContain('Subscribe today');
 
     const edit = lastEdit();
     const top = edit.timeline.tracks[0]?.clips[0];
@@ -245,7 +261,10 @@ describe.skipIf(!hasDb)('overlay API + re-render', { timeout: 120_000 }, () => {
     });
 
     const listed = await call(shotOverlaysRoute.GET, { token: 'reader', params: { id: shotId } });
-    expect((listed.json.data as unknown[]).length).toBe(1);
+    const captions = await captionIds();
+    const listedIds = (listed.json.data as Array<{ id: string }>).map((o) => o.id);
+    // Narration captions are listed too (user-editable, spec 3.1) but are their own lane.
+    expect(listedIds.filter((id) => !captions.has(id))).toEqual([overlayId]);
 
     expect(
       (

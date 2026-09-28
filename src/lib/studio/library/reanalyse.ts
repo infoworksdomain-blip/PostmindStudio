@@ -2,7 +2,12 @@ import { ConfigurationError, NotFoundError } from '../../errors';
 import type { PipelineDeps } from '../pipeline/deps';
 import type { PlanTier } from '../providers/router';
 import { nearestAspectRatio } from './analyse';
-import { analyseContent, embeddingDocument, storeLibraryEmbedding, visualStructure } from './ingest';
+import {
+  analyseContent,
+  embeddingDocument,
+  storeLibraryEmbedding,
+  visualStructure,
+} from './ingest';
 
 // BACKLOG 15.D7 / Addendum A3.8 "Re-run ingestion on selected items (e.g. after upgrading the
 // OCR or embedding model)". Re-runs steps 2–7 of ingest.ts on the source already stored in the
@@ -34,7 +39,9 @@ export async function reanalyseLibraryVideo(
     hints: { title: item.title, tags: item.tags },
   });
   const keepCategory = item.categoryReview === 'ACCEPTED' || item.categoryReview === 'OVERRIDDEN';
-  const categoryId = keepCategory ? item.categoryId : (content.suggestedCategoryId ?? item.categoryId);
+  const categoryId = keepCategory
+    ? item.categoryId
+    : (content.suggestedCategoryId ?? item.categoryId);
   const now = new Date(deps.now());
 
   await deps.db.$transaction(async (tx) => {

@@ -22,6 +22,10 @@ import { BUILT_IN_PRESETS } from './presets';
 // Rows are created once per voice take: project.metadata.voiceCaptions[shotId] records the voice
 // asset they were made from and the overlay ids, so edits and deletions stick; a re-voiced shot
 // (13.1) gets fresh captions (its old caption rows are replaced).
+// Captions are their own lane (sortOrder 50+, ids in metadata.voiceCaptions) next to the shot's
+// other overlays. A caption line that would repeat text already on screen at the same time — the
+// usual case is a hook shot whose on-screen hook (8.5 auto-suggestion) is also the spoken line —
+// is not burned in: the viewer would read the same words twice (withoutOnScreenDuplicates).
 
 export type CaptionMode = 'burn' | 'srt';
 
@@ -47,6 +51,40 @@ export function narrationLines(
     const lastEnd = Math.max(...spoken.map((w) => w.endSec), line.startAtSec + 0.1);
     const end = Math.min(line.endAtSec, Math.round((lastEnd + END_HOLD_SEC) * 1000) / 1000);
     return { ...line, endAtSec: Math.min(maxEndSec, end) };
+  });
+}
+
+const words = (text: string) =>
+  text
+    .toLocaleLowerCase()
+    .split(/[^\p{L}\p{N}']+/u)
+    .filter(Boolean);
+
+/** True when `needle`'s words appear, in order and contiguously, among `haystack`'s words. */
+function containsWords(haystack: string[], needle: string[]): boolean {
+  if (needle.length === 0 || needle.length > haystack.length) return false;
+  for (let i = 0; i + needle.length <= haystack.length; i++)
+    if (needle.every((w, j) => haystack[i + j] === w)) return true;
+  return false;
+}
+
+/**
+ * Drops caption lines whose words are already on screen, at an overlapping time, in another
+ * overlay of the same shot (e.g. the auto-suggested hook that the narration reads out).
+ */
+export function withoutOnScreenDuplicates(
+  lines: CaptionLine[],
+  onScreen: Array<{ text: string; startAtSec: number; endAtSec: number }>,
+): CaptionLine[] {
+  const shown = onScreen.map((o) => ({ ...o, words: words(o.text) }));
+  return lines.filter((line) => {
+    const said = words(line.text);
+    return !shown.some(
+      (o) =>
+        o.startAtSec < line.endAtSec &&
+        line.startAtSec < o.endAtSec &&
+        containsWords(o.words, said),
+    );
   });
 }
 
@@ -133,6 +171,7 @@ async function loadShots(db: Db, scriptId: string, organisationId: string) {
       durationSec: true,
       voiceAssetId: true,
       visualTreatment: true,
+      onScreenText: true,
     },
   });
   const ids = shots.flatMap((s) => (s.voiceAssetId ? [s.voiceAssetId] : []));
@@ -201,7 +240,19 @@ export async function ensureVoiceCaptions(
         if (!shot.voiceAssetId || shot.visualTreatment === 'USER_UPLOAD') continue;
         const previous = records[shot.id];
         if (previous?.voiceAssetId === shot.voiceAssetId) continue;
-        const lines = narrationLines(shot.words, shot.durationSec);
+        const onScreen = await deps.db.textOverlay.findMany({
+          where: { shotId: shot.id, id: { notIn: previous?.overlayIds ?? [] } },
+          select: { text: true, startAtSec: true, endAtSec: true },
+        });
+        // A TEXT_CARD shot shows its own text (onScreenText) for the whole shot.
+        const card =
+          shot.visualTreatment === 'TEXT_CARD' && shot.onScreenText
+            ? [{ text: shot.onScreenText, startAtSec: 0, endAtSec: shot.durationSec }]
+            : [];
+        const lines = withoutOnScreenDuplicates(narrationLines(shot.words, shot.durationSec), [
+          ...onScreen,
+          ...card,
+        ]);
         if (previous?.overlayIds.length)
           await deps.db.textOverlay.deleteMany({
             where: { id: { in: previous.overlayIds }, shotId: shot.id },

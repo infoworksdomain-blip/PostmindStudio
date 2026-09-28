@@ -358,7 +358,16 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           script.language,
         );
         // 15.B6: an identical edit for this project and platform re-points to the render it made.
-        const hash = edlHash(edit);
+        // Asset ids are part of the key: a re-voiced shot may reuse its object key (13.1).
+        const hash = edlHash(edit, {
+          shots: slides
+            ? []
+            : script.shots.map((s) => ({
+                id: s.id,
+                assetId: s.assetId,
+                voiceAssetId: s.voiceAssetId,
+              })),
+        });
         const composition = withEdlHash(built.summary, hash);
         const cached = await findCachedRender(deps, {
           projectId: project.id,

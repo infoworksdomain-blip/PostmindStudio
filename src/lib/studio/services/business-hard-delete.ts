@@ -11,6 +11,15 @@ import type { AssetStorage } from '../storage';
 // orphaned objects). Everything is scoped by (organisationId, businessId) and the business's
 // project ids; image_library_queries (businessId only, no organisation column) and voice profiles
 // (their clones must be revoked at ElevenLabs first) are deliberately not touched.
+//
+// Why this is not the organisation hard delete (organisation-hard-delete.ts + purge-tables.ts +
+// purge-storage.ts) with a narrower predicate: that one deletes whole orgs/<id>/ S3 prefixes and
+// every org-scoped table, but a business's objects share the organisation's prefix (keys are
+// orgs/<org>/projects/<project>/..., not per business) and several org-scoped tables have no
+// businessId (provider_credentials, usage_events, data_exports, notifications). So the business
+// delete addresses objects key by key and rows by (organisationId, businessId) / project id. The
+// two share the tombstone pattern and the retention/grace machinery; the table coverage of both is
+// checked in purge-tables.test.ts (org) and here (business-scoped tables incl. drip_queues).
 
 export interface ObjectRef {
   bucket: string;
@@ -234,6 +243,7 @@ export async function hardDeleteBusiness(
     overlay_presets: (await tx.overlayPreset.deleteMany({ where: { ...scope, scope: 'BUSINESS' } }))
       .count,
     platform_connections: (await tx.platformConnection.deleteMany({ where: scope })).count,
+    drip_queues: (await tx.dripQueue.deleteMany({ where: scope })).count,
   }));
   return { projects: projectIds.length, rows: { ...rows, ...business }, objects };
 }

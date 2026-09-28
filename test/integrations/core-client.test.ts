@@ -8,6 +8,11 @@ import {
   StudioInternalClient,
   StudioInternalError,
   type AccountRef,
+  type AttributeConversationInput,
+  type AttributionResult,
+  type BusinessPurgeResult,
+  type FromContentInput,
+  type FromContentProject,
   type PurgeResult,
   type RefreshedTokenInput,
   type RefreshResult,
@@ -15,10 +20,16 @@ import {
   type StudioChannel,
 } from '../../integrations/core/client/studio-internal-client';
 import type {
+  attributionResultSchema,
+  businessPurgeResultSchema,
+  fromContentProjectSchema,
   publicChannelSchema,
   purgeResultSchema,
   refreshResultSchema,
 } from '../../src/lib/studio/api/internal-contract';
+import type { businessPurgeInput } from '../../src/lib/studio/services/business-purge';
+import type { fromContentInput } from '../../src/lib/studio/services/content-projects';
+import type { attributeConversationInput } from '../../src/lib/studio/services/conversations';
 import {
   MAX_REFRESH_BATCH,
   type accountRefInput,
@@ -40,7 +51,13 @@ const typesMatch: [
   Equal<StudioChannel, z.output<typeof publicChannelSchema>>,
   Equal<RefreshResult, z.output<typeof refreshResultSchema>>,
   Equal<PurgeResult, z.output<typeof purgeResultSchema>>,
-] = [true, true, true, true, true, true];
+  Equal<{ organisationId: string }, z.input<typeof businessPurgeInput>>,
+  Equal<BusinessPurgeResult, z.output<typeof businessPurgeResultSchema>>,
+  Equal<AttributeConversationInput, z.input<typeof attributeConversationInput>>,
+  Equal<AttributionResult, z.output<typeof attributionResultSchema>>,
+  Equal<FromContentInput, z.input<typeof fromContentInput>>,
+  Equal<FromContentProject, z.output<typeof fromContentProjectSchema>>,
+] = [true, true, true, true, true, true, true, true, true, true, true, true];
 
 const BASE = 'http://studio.test';
 const TOKEN = 't'.repeat(40);
@@ -206,6 +223,72 @@ describe('StudioInternalClient', () => {
       `${BASE}/api/studio/internal/channels/ch1?organisationId=org+1`,
       `${BASE}/api/studio/internal/channels?organisationId=o&platform=facebook&platformAccountId=9`,
     ]);
+  });
+
+  it('calls the Phase 15 operations (business purge, attribution, from-content)', async () => {
+    const purge = {
+      organisationId: 'org',
+      businessId: 'biz 1',
+      projectsDeleted: 1,
+      publicationsCancelled: 0,
+      styleMemoriesDeleted: 2,
+      channelsWiped: 1,
+      requestedAt: '2026-10-01T00:00:00.000Z',
+      graceUntil: '2026-10-31T00:00:00.000Z',
+      repeated: false,
+    };
+    const attribution = {
+      attributed: true,
+      publicationId: 'pub1',
+      conversationId: 'conv1',
+      isLead: true,
+      repeated: false,
+    };
+    const project = { id: 'p1', state: 'DRAFT', sourceRef: 'post1' };
+    const { c, calls } = client([
+      json(202, { ok: true, purge }),
+      json(200, { ok: true, ...attribution }),
+      json(201, { ok: true, project }),
+    ]);
+    expect(await c.purgeBusiness('biz 1', { organisationId: 'org' })).toEqual({ purge });
+    expect(
+      await c.attributeConversation('pub1', {
+        organisationId: 'org',
+        conversationId: 'conv1',
+        isLead: true,
+      }),
+    ).toEqual(attribution);
+    const created = await c.createProjectFromContent({
+      organisationId: 'org',
+      userId: 'u1',
+      contentId: 'post1',
+      targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', durationSec: 30 }],
+    });
+    expect(created).toEqual({ project });
+    expect(calls.map((x) => `${String(x.init.method)} ${x.url}`)).toEqual([
+      `POST ${BASE}/api/studio/internal/businesses/biz%201/purge`,
+      `POST ${BASE}/api/studio/internal/publications/pub1/attribute-conversation`,
+      `POST ${BASE}/api/studio/internal/projects/from-content`,
+    ]);
+    expect(JSON.parse(String(calls[0]?.init.body))).toEqual({ organisationId: 'org' });
+  });
+
+  it('surfaces the from-content 501 (waiting for Core) without retrying it', async () => {
+    const { c, calls } = client([
+      json(501, { ok: false, error: 'not_implemented', message: 'waiting for Core content API' }),
+    ]);
+    const err = await c
+      .createProjectFromContent({
+        organisationId: 'org',
+        userId: 'u1',
+        contentId: 'post1',
+        targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', durationSec: 30 }],
+      })
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(StudioInternalError);
+    expect((err as StudioInternalError).status).toBe(501);
+    expect((err as StudioInternalError).code).toBe('not_implemented');
+    expect(calls).toHaveLength(1);
   });
 
   it('chunks refreshed tokens into batches of 100 and concatenates results', async () => {

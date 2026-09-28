@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import { businessPurgeInput } from '../services/business-purge';
+import { businessIdParam } from '../services/businesses';
+import { fromContentInput } from '../services/content-projects';
+import { attributeConversationInput, publicationIdParam } from '../services/conversations';
 import { PURGE_GRACE_DAYS } from '../services/organisation-purge';
 import { organisationIdParam } from '../services/org-policy';
 import {
@@ -71,6 +75,48 @@ export const refreshBatchResponseSchema = z.object({
   results: z.array(refreshResultSchema),
 });
 export const purgeResponseSchema = z.object({ ok: z.literal(true), purge: purgeResultSchema });
+
+/** 15.E2 — services/business-purge.ts BusinessPurgeResult. */
+export const businessPurgeResultSchema = z.object({
+  organisationId: z.string(),
+  businessId: z.string(),
+  projectsDeleted: z.number().int(),
+  publicationsCancelled: z.number().int(),
+  styleMemoriesDeleted: z.number().int(),
+  channelsWiped: z.number().int(),
+  requestedAt: z.iso.datetime({ offset: true }),
+  graceUntil: z.iso.datetime({ offset: true }),
+  /** True when Core had already asked for this business's purge. */
+  repeated: z.boolean(),
+});
+export const businessPurgeResponseSchema = z.object({
+  ok: z.literal(true),
+  purge: businessPurgeResultSchema,
+});
+
+/** 15.E3 — services/conversations.ts AttributionResult. */
+export const attributionResultSchema = z.object({
+  attributed: z.literal(true),
+  publicationId: z.string(),
+  conversationId: z.string(),
+  isLead: z.boolean(),
+  /** True when this conversation was already attributed (idempotent repeat). */
+  repeated: z.boolean(),
+});
+export const attributionResponseSchema = attributionResultSchema.extend({ ok: z.literal(true) });
+
+/** 15.W1 — services/content-projects.ts createProjectFromContent (201 once Core ships). */
+export const fromContentProjectSchema = z.object({
+  id: z.string(),
+  /** Always DRAFT: the user reviews and generates the project from Studio. */
+  state: z.string(),
+  /** The Core content id the project was made from. */
+  sourceRef: z.string().nullable(),
+});
+export const fromContentResponseSchema = z.object({
+  ok: z.literal(true),
+  project: fromContentProjectSchema,
+});
 
 /** The Engagement error envelope every Studio endpoint uses (src/lib/errors.ts). */
 export const errorResponseSchema = z.object({
@@ -197,6 +243,52 @@ export const INTERNAL_OPERATIONS: InternalOperation[] = [
     responses: {
       '202': { description: 'Purge applied.', schema: purgeResponseSchema },
       '400': err('Invalid organisation id.'),
+    },
+  },
+  {
+    operationId: 'purgeBusiness',
+    method: 'post',
+    path: '/api/studio/internal/businesses/{id}/purge',
+    summary: 'Purge a business Core deleted (business.deleted)',
+    description: `BACKLOG 15.E2, spec 7.14 / 16.2, A11.7. Body { organisationId }. In one transaction: the business’s projects are soft-deleted and stopped (project kill switch), its scheduled posts cancelled, its style memories wiped and its business-scoped platform tokens wiped. Everything else of the business is hard-deleted by the retention sweep after the ${PURGE_GRACE_DAYS}-day grace. Idempotent: a repeat call re-applies the purge, keeps the first graceUntil and answers repeated: true.`,
+    pathParams: [idParam('PostMind business id (trimmed).', businessIdParam)],
+    requestBody: businessPurgeInput,
+    responses: {
+      '202': { description: 'Purge applied.', schema: businessPurgeResponseSchema },
+      '400': err('Invalid organisation or business id, or body failed validation.'),
+      '413': err(`Body larger than ${INTERNAL_MAX_BODY_BYTES} bytes.`),
+    },
+  },
+  {
+    operationId: 'attributeConversation',
+    method: 'post',
+    path: '/api/studio/internal/publications/{id}/attribute-conversation',
+    summary: 'Attribute an Engagement conversation to a Studio publication',
+    description:
+      'BACKLOG 15.E3, spec 8.8. Called by Engagement when a comment, DM or mention on a Studio-published video arrives. Idempotent per (publication, conversation): a repeat answers repeated: true; isLead is sticky (once a lead, always a lead). 404 when the publication does not belong to the named organisation.',
+    pathParams: [idParam('Studio publication id.', publicationIdParam)],
+    requestBody: attributeConversationInput,
+    responses: {
+      '200': { description: 'Attributed (or already).', schema: attributionResponseSchema },
+      '400': err('Invalid publication id, or body failed validation.'),
+      '404': err('No such publication for this organisation (or the internal API is disabled).'),
+      '413': err(`Body larger than ${INTERNAL_MAX_BODY_BYTES} bytes.`),
+    },
+  },
+  {
+    operationId: 'createProjectFromContent',
+    method: 'post',
+    path: '/api/studio/internal/projects/from-content',
+    summary: 'Make a DRAFT video project from a PostMind post (“make a video from this post”)',
+    description:
+      'BACKLOG 15.W1, spec 8.8. Studio fetches the content from Core (GET /api/internal/content/:id) and creates a DRAFT project (sourceType POSTMIND_CONTENT, sourceRef = contentId) the user reviews and generates in Studio. businessId falls back to the content’s own business. UNTIL CORE PUBLISHES ITS CONTENT API this endpoint answers 501 not_implemented and creates nothing — Core must not wire it before then.',
+    requestBody: fromContentInput,
+    responses: {
+      '201': { description: 'DRAFT project created.', schema: fromContentResponseSchema },
+      '400': err('Body failed validation, no businessId, or the content has no text.'),
+      '404': err('Content not found for this organisation (or the internal API is disabled).'),
+      '413': err(`Body larger than ${INTERNAL_MAX_BODY_BYTES} bytes.`),
+      '501': err('Waiting for Core’s content API: nothing was created (error: not_implemented).'),
     },
   },
 ];

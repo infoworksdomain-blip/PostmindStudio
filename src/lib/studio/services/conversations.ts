@@ -23,7 +23,7 @@ export const attributeConversationInput = z
 
 export type AttributeConversationInput = z.infer<typeof attributeConversationInput>;
 
-const publicationIdParam = z.string().trim().min(1).max(64);
+export const publicationIdParam = z.string().trim().min(1).max(64);
 
 export interface AttributionResult {
   attributed: true;

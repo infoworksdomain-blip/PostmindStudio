@@ -23,6 +23,9 @@ the exact schemas.
 | `disconnectChannelByAccount` | `DELETE /channels?organisationId&platform&platformAccountId` | Same, when Core did not keep Studio's id. |
 | `pushRefreshedTokens` | `POST /tokens/refreshed` | Core's nightly refresh job (one token, or `{ channels: [≤100] }`). |
 | `purgeOrganisation` | `POST /organisations/:id/purge` | An organisation is deleted. 202. |
+| `purgeBusiness` | `POST /businesses/:id/purge` `{ organisationId }` | A business is deleted (`business.deleted`, Phase 15.E2). 202; projects stopped and soft-deleted, scheduled posts cancelled, style memories and business-scoped tokens wiped; hard-deleted after 30 days. |
+| `attributeConversation` | `POST /publications/:id/attribute-conversation` | **Engagement** (not Core) calls it when a comment / DM / mention on a Studio-published video arrives (Phase 15.E3). 200; idempotent per conversation, `isLead` sticky; 404 when the publication is not the organisation's. |
+| `createProjectFromContent` | `POST /projects/from-content` | The user says "make a video from this post" (spec 8.8, Phase 15.W1). 201 `{ project }` (a DRAFT). **Answers 501 `not_implemented` until Core ships its content API** (dependency 4 below) — do not wire it before then. |
 
 Scopes Core must request in addition to Engagement's: `instagram_content_publish`,
 `instagram_manage_insights` (Instagram); `pages_manage_posts`, `read_insights` (Facebook).
@@ -39,7 +42,11 @@ See `runbooks/platform-account-revocation.md`.
    - on disconnect in settings → `disconnectChannel(id)`;
    - in the nightly refresh job → `pushRefreshedTokens(items)`; act on each result
      (`not_found` → call `registerChannel`; `revoked` → the user disconnected it, stop refreshing);
-   - on organisation deletion → `purgeOrganisation(orgId)`.
+   - on organisation deletion → `purgeOrganisation(orgId)`;
+   - on business deletion → `purgeBusiness(businessId, { organisationId })`;
+   - once dependency 4 below is live → `createProjectFromContent(...)` from the "make a video"
+     action (until then it throws `StudioInternalError` with status 501, code `not_implemented`).
+   Engagement (not Core) copies the same client for `attributeConversation`.
 4. **Retry and alert** as in [`retry-alerting.md`](retry-alerting.md): the client retries
    transient failures in-process; anything that still fails goes to Core's durable retry queue
    and alerts.
@@ -56,9 +63,11 @@ See `runbooks/platform-account-revocation.md`.
    Run it from a Studio checkout (`npm ci` first) on a host that can reach Studio staging's
    private ingress. It creates a synthetic organisation `contract-core-<time>-<random>` with a
    fake token, exercises every operation (auth, validation, 413, idempotent register, single and
-   batch refresh, 404 / 409, both disconnects, purge twice), checks every response against
-   `openapi.json`, checks no token is ever echoed, and ends by purging the synthetic organisation
-   (its rows remain soft-deleted with tokens wiped). Exit code 0 = all 12 checks passed.
+   batch refresh, 404 / 409, both disconnects, business purge twice, attribution 404 for a
+   foreign publication, from-content 501 while Core's content API is pending, organisation purge
+   twice), checks every response against `openapi.json`, checks no token is ever echoed, and ends
+   by purging the synthetic organisation (its rows remain soft-deleted with tokens wiped). Exit
+   code 0 = all 15 checks passed.
    **Never run it against production.**
 
 ## Changing an internal endpoint (Studio side)
@@ -75,7 +84,7 @@ updated too; `npm run typecheck` fails until they match the schemas.
 
 ## What Studio needs from Core
 
-Studio has three open dependencies on Core. None of these endpoints exist in Core today, so Studio
+Studio has four open dependencies on Core. None of these endpoints exist in Core today, so Studio
 answers an honest `501` (or skips the job) until they do. The contracts below are **Studio's
 proposals**, written in Phase 13 (Wave B); the Core team owns the final shape. When Core publishes
 one, Studio implements the matching adapter (the interfaces are already in place) and the
@@ -130,3 +139,19 @@ X-Service-Token: <POSTMIND_SERVICE_TOKEN>
 
 `idempotencyKey` is Studio's notification id: Core should drop a repeat with the same key, since
 Studio retries a failed send.
+
+### 4. Read a post / product for "make a video from this post" (BACKLOG 15.W1)
+
+Source: `src/lib/studio/core/content-client.ts` (`CoreContentClient`). Spec 16.1: Studio reads the
+source content from Core. Until this exists, `POST /api/studio/internal/projects/from-content`
+answers `501 { error: "not_implemented" }` and creates nothing.
+
+```
+GET {POSTMIND_CORE_URL}/api/internal/content/:contentId?organisationId=org_1
+X-Service-Token: <POSTMIND_SERVICE_TOKEN>
+→ 200 { "content": { "id": "post_77", "organisationId": "org_1", "businessId": "biz_1" | null,
+         "kind": "post" | "product", "title": "Spring menu" | null, "text": "…",
+         "media": [ { "url": "https://…", "type": "image" | "video" } ],
+         "product": { "name": "Sourdough loaf", "price": "£4.50", "url": "https://…" } | null } }
+→ 404 when the content does not exist or belongs to another organisation
+```

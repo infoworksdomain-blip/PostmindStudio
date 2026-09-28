@@ -116,7 +116,14 @@ describe.skipIf(!hasDb)('golden journey: corpus ingestion tooling', { timeout: 1
       db,
       'co01',
       { pageFetch: corpusFetch },
-      { staff: tenant(`${ORG_PREFIX}-co01`, ['studio:project:read', 'studio:admin:library']) },
+      {
+        staff: tenant(`${ORG_PREFIX}-co01`, ['studio:project:read', 'studio:admin:library']),
+        // 15.D2 / A10.3: library TEMPLATE mode is a Plus feature.
+        owner: {
+          ...tenant(`${ORG_PREFIX}-co01`),
+          organisation: { id: `${ORG_PREFIX}-co01`, planTier: 'PLUS' },
+        },
+      },
     );
 
     // Validate the manifest against the live taxonomy.

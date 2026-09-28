@@ -9,8 +9,12 @@ import { flagKeys } from '../system-flags';
 // the constants below) and deletes them in batches, so a large organisation never holds one huge
 // transaction and a crashed run resumes where it stopped (already-deleted rows are simply gone).
 //
-// Deliberately NOT deleted (the tombstone and audit trail):
+// Deliberately NOT deleted (the tombstones, the legal record and the audit trail):
 //   - organisation_purges: the row records what was deleted, the counts and when;
+//   - business_purges (15.E2): the per-business tombstones, same reason;
+//   - takedown_requests (15.D, transparency): the legal / transparency-report record of a
+//     takedown survives the organisation, but ANONYMISE_STEPS clears its personal fields
+//     (requester) and its link to the deleted publication;
 //   - system_flags studio.frozenWorkspace.<org>: the workspace kill switch stays engaged so no
 //     job can run for the deleted organisation;
 //   - the audit trail itself lives in PostMind's audit service (src/lib/audit.ts), not here.
@@ -66,6 +70,9 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
     where: (o) => Prisma.sql`"organisationId" = ${o} OR "publicationId" IN (${orgPublications(o)})`,
   },
   org('auto_publish_outbox', 'AutoPublishOutbox'),
+  // Phase 15: rows keyed by publication id (no FK), removed while the publications still exist.
+  org('publication_conversations', 'PublicationConversation'),
+  org('calendar_shadows', 'CalendarShadow'),
   {
     table: 'video_publications',
     model: 'VideoPublication',
@@ -120,6 +127,14 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('notification_preferences', 'NotificationPreference'),
   org('onboarding_states', 'OnboardingState'),
   org('beta_feedback', 'BetaFeedback'),
+  // Phase 15 organisation data. share_link_comments before share_links (FK).
+  org('share_link_comments', 'ShareLinkComment'),
+  org('share_links', 'ShareLink'),
+  org('data_exports', 'DataExport'),
+  org('usage_events', 'UsageEvent'),
+  org('drip_queues', 'DripQueue'),
+  // BYOC API keys (envelope-encrypted): a deleted organisation's credentials must not survive.
+  org('provider_credentials', 'ProviderCredential'),
   {
     // Project-level kill switches of the organisation's projects (not the workspace switch).
     table: 'system_flags',
@@ -153,9 +168,12 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('organisation_beta', 'OrganisationBeta'),
 ];
 
-/** Models that are never purged: the tombstone, and platform-level data owned by no org. */
+/** Models that are never purged: the tombstones, the takedown record, platform-level data. */
 export const NOT_PURGED_MODELS: Readonly<Record<string, string>> = {
   OrganisationPurge: 'tombstone: records what was deleted and when',
+  BusinessPurge: 'tombstone: records which business was deleted, the counts and when',
+  TakedownRequest:
+    'legal / transparency record: kept, personal fields anonymised (ANONYMISE_STEPS)',
   VideoLibraryItem: 'platform corpus (Feature A), not organisation data',
   VideoLibraryCategory: 'platform corpus taxonomy',
   VideoLibraryTag: 'platform corpus tags',
@@ -164,6 +182,42 @@ export const NOT_PURGED_MODELS: Readonly<Record<string, string>> = {
   VideoLibraryLicense: 'platform corpus licences',
   VideoLibraryIngestRun: 'platform corpus ingest runs (staff)',
 };
+
+/**
+ * Kept models whose personal fields the hard delete clears (NOT_PURGED_MODELS keeps the row).
+ * A takedown request keeps source, category, dates, outcome and the staff notes the transparency
+ * report and a legal follow-up need; the requester's identity and the pointer to the (now
+ * deleted) publication go.
+ */
+export interface AnonymiseStep {
+  table: string;
+  model: string;
+  /** SET clause clearing the personal fields. */
+  set: Sql;
+  /** Rows of the organisation that still hold personal data (so a re-run updates nothing). */
+  where: (organisationId: string) => Sql;
+}
+
+export const ANONYMISE_STEPS: readonly AnonymiseStep[] = [
+  {
+    table: 'takedown_requests',
+    model: 'TakedownRequest',
+    set: Prisma.sql`"requester" = NULL, "publicationId" = NULL`,
+    where: (o) =>
+      Prisma.sql`"organisationId" = ${o} AND ("requester" IS NOT NULL OR "publicationId" IS NOT NULL)`,
+  },
+];
+
+/** Clears the personal fields of one kept model's rows of the organisation; returns the count. */
+export async function anonymiseRows(
+  db: PrismaClient,
+  step: AnonymiseStep,
+  organisationId: string,
+): Promise<number> {
+  return db.$executeRaw(
+    Prisma.sql`UPDATE ${t(step.table)} SET ${step.set} WHERE ${step.where(organisationId)}`,
+  );
+}
 
 /** Rows of one step that belong to the organisation. */
 export async function countRows(

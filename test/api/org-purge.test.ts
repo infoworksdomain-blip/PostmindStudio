@@ -68,6 +68,7 @@ describe.skipIf(!hasDb)('internal organisation purge API', { timeout: 60_000 }, 
     await db.videoRender.deleteMany({ where: { projectId: { in: ids } } });
     await db.videoProject.deleteMany({ where: { id: { in: ids } } });
     await db.platformConnection.deleteMany({ where: { organisationId: { in: [org, other] } } });
+    await db.providerCredential.deleteMany({ where: { organisationId: { in: [org, other] } } });
     await db.organisationPurge.deleteMany({ where: { organisationId: { in: [org, other] } } });
     await db.systemFlag.deleteMany({
       where: { key: { in: [flagKeys.workspace(org), flagKeys.workspace(other)] } },
@@ -102,6 +103,17 @@ describe.skipIf(!hasDb)('internal organisation purge API', { timeout: 60_000 }, 
       await channel(other, 'instagram'),
     ];
     const [mine, theirs] = [await project(org), await project(other)];
+    const byoc = (organisationId: string) =>
+      db.providerCredential.create({
+        data: {
+          organisationId,
+          providerId: 'runway',
+          encryptedKey: 'sealed-byoc-key',
+          encryptedSecondaryKey: 'sealed-byoc-secondary',
+          createdByUserId: 'user-1',
+        },
+      });
+    const [myKey, theirKey] = [await byoc(org), await byoc(other)];
     const render = await db.videoRender.create({
       data: {
         projectId: mine.id,
@@ -163,6 +175,13 @@ describe.skipIf(!hasDb)('internal organisation purge API', { timeout: 60_000 }, 
     expect((await db.platformConnection.findUniqueOrThrow({ where: { id: keep.id } })).state).toBe(
       'active',
     );
+    // BYOC provider keys are wiped at once too; another organisation's stay.
+    expect(
+      await db.providerCredential.findUniqueOrThrow({ where: { id: myKey.id } }),
+    ).toMatchObject({ state: 'revoked', encryptedKey: null, encryptedSecondaryKey: null });
+    expect(
+      await db.providerCredential.findUniqueOrThrow({ where: { id: theirKey.id } }),
+    ).toMatchObject({ state: 'active', encryptedKey: 'sealed-byoc-key' });
     expect(
       (await db.videoProject.findUniqueOrThrow({ where: { id: mine.id } })).deletedAt,
     ).not.toBeNull();

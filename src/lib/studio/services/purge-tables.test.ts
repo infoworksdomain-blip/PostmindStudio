@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
-import { NOT_PURGED_MODELS, PURGE_TABLE_STEPS } from './purge-tables';
+import { ANONYMISE_STEPS, NOT_PURGED_MODELS, PURGE_TABLE_STEPS } from './purge-tables';
 
 // BACKLOG 14.1 — the hard delete must cover every table that can hold an organisation's data.
 // This fails as soon as a model is added to prisma/schema.prisma without being either purged
@@ -17,12 +17,42 @@ describe('PURGE_TABLE_STEPS', () => {
     expect(unclassified).toEqual([]);
   });
 
-  it('purges every model with an organisationId column except the tombstone', () => {
+  it('purges every model with an organisationId column except the tombstones and takedowns', () => {
+    const kept = ['OrganisationPurge', 'BusinessPurge', 'TakedownRequest'];
     const orgScoped = models
       .filter((m) => m.fields.some((f) => f.name === 'organisationId'))
       .map((m) => m.name)
-      .filter((name) => name !== 'OrganisationPurge');
+      .filter((name) => !kept.includes(name));
     expect(orgScoped.filter((name) => !stepFor.has(name))).toEqual([]);
+    for (const name of kept) expect(NOT_PURGED_MODELS[name], name).toBeDefined();
+  });
+
+  it('purges the Phase 15 organisation data, including the encrypted provider credentials', () => {
+    for (const model of [
+      'DataExport',
+      'PublicationConversation',
+      'ShareLink',
+      'ShareLinkComment',
+      'UsageEvent',
+      'CalendarShadow',
+      'DripQueue',
+      'ProviderCredential',
+    ])
+      expect(stepFor.has(model), model).toBe(true);
+  });
+
+  it('anonymises every kept model that holds personal fields, and only kept models', () => {
+    for (const step of ANONYMISE_STEPS) {
+      expect(step.model in NOT_PURGED_MODELS, step.model).toBe(true);
+      expect(stepFor.has(step.model)).toBe(false);
+      const model = models.find((m) => m.name === step.model);
+      expect(model?.dbName ?? model?.name).toBe(step.table);
+    }
+    const takedown = ANONYMISE_STEPS.find((s) => s.model === 'TakedownRequest');
+    expect(takedown?.set.sql).toContain('"requester" = NULL');
+    const hostile = `x'; DROP TABLE studio.takedown_requests; --`;
+    expect(takedown?.where(hostile).sql).not.toContain(hostile);
+    expect(takedown?.where(hostile).values).toContain(hostile);
   });
 
   it("uses each model's real table name, once", () => {
@@ -55,10 +85,17 @@ describe('PURGE_TABLE_STEPS', () => {
     before('image_library_queries', 'business_profiles');
     before('image_library_queries', 'image_library');
     before('image_library_queries', 'website_scans');
+    before('share_link_comments', 'share_links');
+    before('publication_conversations', 'video_publications');
+    before('calendar_shadows', 'video_publications');
   });
 
-  it('never deletes the tombstone', () => {
-    expect(PURGE_TABLE_STEPS.some((s) => s.table === 'organisation_purges')).toBe(false);
+  it('never deletes the tombstones or the takedown record', () => {
+    for (const table of ['organisation_purges', 'business_purges', 'takedown_requests'])
+      expect(
+        PURGE_TABLE_STEPS.some((s) => s.table === table),
+        table,
+      ).toBe(false);
     expect(NOT_PURGED_MODELS.OrganisationPurge).toMatch(/tombstone/);
   });
 

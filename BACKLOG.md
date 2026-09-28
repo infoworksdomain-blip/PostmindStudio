@@ -262,6 +262,8 @@ Plan, endpoint contracts and sample requests/responses: `plans/phase-13.md`. Wav
 
 ## Phase 15 — Spec coverage gaps
 
+Features in the specs that no earlier phase or register item covered. The list and plan come from a spec-vs-code audit (`plans/phase-15.md`). Dependency-blocked items found by the audit are queued, as in Phase 13 Wave B.
+
 **Track A — Publishing and distribution**
 
 - [x] **15.A1** Instagram feed (REELS container + share_to_feed, 1:1/4:5) and Facebook feed video (Page Videos upload_phase start/transfer/finish, 16:9/1:1) publishers, rules, metrics readers, Create formats, labels (8 destinations).
@@ -336,6 +338,11 @@ Plan, endpoint contracts and sample requests/responses: `plans/phase-13.md`. Wav
 - [x] **15.W4** (contract) nightly reconcile-organisations job, skipped until Core ships an existence check.
 - [x] **15.W5** (contract) Engagement trigger fields behind STUDIO_ENGAGEMENT_TRIGGER_FIELDS.
 - [x] **15.W6** (contract) Ideogram router slot + honest-501 adapter, never registered without an account.
+
+**Integration**
+
+- [x] **15.INT** Tracks A–E + Phase 14 merged green: Phase 15 internal routes in the Core kit (OpenAPI, client, 15-check contract suite), purge coverage of every Phase 15 table (tombstones + anonymised takedowns kept), caption lane de-duplicated against the hook, composition cache keyed on asset ids.
+
 ## Phase 14 — Deliver every outstanding item not blocked by a dependency
 
 Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave B (13.33–13.39). Items whose last step is a person's are built, then marked "ready to run" until that step happens.
@@ -356,7 +363,3 @@ Plan: `plans/phase-14.md`. Dependency-blocked items stay queued in Phase 13 Wave
 **Track 3 — integrations and beta**
 - [ ] **14.10** Core integration kit for the Meta internal endpoints (Core team wires it). (built; ready to run by the Core team: integrations/core — copy the client, wire it, `npm run contract:core -- --base-url <staging> --token <token>`)
 - [ ] **14.11** Beta programme tooling, Trust & Safety audit sampling, on-call rota config (people run it). (built; ready to run by people: recruit and enrol 5–10 beta customers in Admin → Beta, staff the rota from ops/oncall/rota.template.yaml + PagerDuty, review the monthly sample in Admin → Safety audit)
-
-## Phase 15 — Spec coverage gaps
-
-Features in the specs that no earlier phase or register item covered. The list and plan come from a spec-vs-code audit (`plans/phase-15.md`). Dependency-blocked items found by the audit are queued, as in Phase 13 Wave B.

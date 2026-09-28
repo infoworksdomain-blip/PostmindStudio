@@ -4,6 +4,15 @@ import { createHash } from 'node:crypto';
 // trivial re-renders"). The hash covers the whole edit (timeline + output), with every URL
 // reduced to origin + path: signed URLs carry a fresh signature and expiry on every run, but
 // the same object key means the same media. Keys are sorted so property order never matters.
+// A URL is not proof of identical CONTENT, though: an object can be rewritten under the same key
+// (a re-voiced shot, 13.1), so the caller also passes the media identities the edit was built
+// from (asset ids: a new voice take or visual is a new video_assets row). A changed narration
+// therefore always changes the hash and composition runs again.
+
+/** What the edit was built from, beyond its JSON: per shot, the visual and voice asset ids. */
+export interface EdlMediaInputs {
+  shots?: Array<{ id: string; assetId: string | null; voiceAssetId: string | null }>;
+}
 
 function stripQuery(value: string): string {
   if (!/^https?:\/\//i.test(value)) return value;
@@ -26,11 +35,14 @@ function canonical(value: unknown): unknown {
   return typeof value === 'string' ? stripQuery(value) : value;
 }
 
-/** sha256 of the canonical edit. */
-export function edlHash(edit: Record<string, unknown>): string {
-  return createHash('sha256')
-    .update(JSON.stringify(canonical(edit)))
-    .digest('hex');
+/** sha256 of the canonical edit and the media identities it was built from. */
+export function edlHash(edit: Record<string, unknown>, media: EdlMediaInputs = {}): string {
+  const hash = createHash('sha256').update(JSON.stringify(canonical(edit)));
+  if (media.shots?.length)
+    hash.update(
+      JSON.stringify(media.shots.map((s) => [s.id, s.assetId ?? null, s.voiceAssetId ?? null])),
+    );
+  return hash.digest('hex');
 }
 
 /** The edlHash stored on a render's composition JSON, if any. */

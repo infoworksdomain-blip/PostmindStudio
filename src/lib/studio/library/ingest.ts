@@ -365,7 +365,8 @@ export async function storeLibraryEmbedding(
   const model = `${embed.decision.adapter.providerId}:text-embedding`;
   if (replace) {
     await deps.db.$transaction([
-      deps.db.$executeRaw`DELETE FROM studio.video_library_embeddings WHERE "libraryItemId" = ${libraryItemId}`,
+      deps.db
+        .$executeRaw`DELETE FROM studio.video_library_embeddings WHERE "libraryItemId" = ${libraryItemId}`,
       deps.db.$executeRaw`INSERT INTO studio.video_library_embeddings
         (id, "libraryItemId", embedding, "embeddingModel")
         VALUES (${randomUUID()}, ${libraryItemId}, ${vectorLiteral(vector)}${v.cast}, ${model})`,

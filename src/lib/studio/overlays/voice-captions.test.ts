@@ -5,9 +5,39 @@ import {
   narrationLines,
   timelineLines,
   toSrt,
+  withoutOnScreenDuplicates,
 } from './voice-captions';
 
 describe('voice captions (15.A4)', () => {
+  it('does not burn in a line the hook overlay already shows at the same time', () => {
+    const hook = { text: 'Still buying supermarket bread?', startAtSec: 0, endAtSec: 3 };
+    const lines = [
+      { text: 'Still buying', startAtSec: 0.1, endAtSec: 0.9 },
+      { text: 'supermarket bread?', startAtSec: 0.9, endAtSec: 2 },
+      { text: 'Bake it fresh', startAtSec: 2.1, endAtSec: 2.9 },
+      // Same words, but after the hook has left the screen: kept.
+      { text: 'supermarket bread', startAtSec: 3.2, endAtSec: 4 },
+    ];
+    expect(withoutOnScreenDuplicates(lines, [hook]).map((l) => l.text)).toEqual([
+      'Bake it fresh',
+      'supermarket bread',
+    ]);
+  });
+
+  it('matches whole words in order, not substrings', () => {
+    const shown = [{ text: 'Whatever the weather', startAtSec: 0, endAtSec: 5 }];
+    const lines = [
+      { text: 'Ever', startAtSec: 0, endAtSec: 1 },
+      { text: 'weather the', startAtSec: 1, endAtSec: 2 },
+      { text: 'WHATEVER the', startAtSec: 2, endAtSec: 3 },
+    ];
+    expect(withoutOnScreenDuplicates(lines, shown).map((l) => l.text)).toEqual([
+      'Ever',
+      'weather the',
+    ]);
+    expect(withoutOnScreenDuplicates(lines, [])).toEqual(lines);
+  });
+
   it('burns in everywhere except YouTube long-form, which gets an SRT', () => {
     expect(captionModeFor('youtube')).toBe('srt');
     for (const p of [

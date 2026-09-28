@@ -6,6 +6,9 @@ import {
   buildInternalOpenApi,
   INTERNAL_OPERATIONS,
 } from '../../src/lib/studio/api/internal-contract';
+import { businessPurgeInput } from '../../src/lib/studio/services/business-purge';
+import { fromContentInput } from '../../src/lib/studio/services/content-projects';
+import { attributeConversationInput } from '../../src/lib/studio/services/conversations';
 import {
   accountRefInput,
   refreshedTokensInput,
@@ -65,6 +68,14 @@ describe('integrations/core/openapi.json', () => {
       ['post /api/studio/internal/channels', registerMetaChannelInput, 'registerMetaChannelInput'],
       ['delete /api/studio/internal/channels', accountRefInput, 'accountRefInput'],
       ['post /api/studio/internal/tokens/refreshed', refreshedTokensInput, 'refreshedTokensInput'],
+      // Phase 15 (15.E2 / 15.E3 / 15.W1).
+      ['post /api/studio/internal/businesses/{id}/purge', businessPurgeInput, 'businessPurgeInput'],
+      [
+        'post /api/studio/internal/publications/{id}/attribute-conversation',
+        attributeConversationInput,
+        'attributeConversationInput',
+      ],
+      ['post /api/studio/internal/projects/from-content', fromContentInput, 'fromContentInput'],
     ];
     for (const [key, schema, name] of expectations) {
       expect(byKey.get(key), key).toContain(name);
@@ -104,5 +115,16 @@ describe('integrations/core/openapi.json', () => {
       expect.arrayContaining(['organisationId', 'platform', 'platformAccountId', 'accessToken']),
     );
     expect(register?.content['application/json']?.schema.required).not.toContain('scopes');
+    const fromContent = spec.paths['/api/studio/internal/projects/from-content']?.post?.requestBody;
+    expect(fromContent?.content['application/json']?.schema.required).toEqual(
+      expect.arrayContaining(['organisationId', 'userId', 'contentId', 'targetFormats']),
+    );
+    expect(fromContent?.content['application/json']?.schema.required).not.toContain('businessId');
+  });
+
+  it('documents the honest 501 of from-content until Core ships its content API', () => {
+    const op = INTERNAL_OPERATIONS.find((o) => o.operationId === 'createProjectFromContent');
+    expect(Object.keys(op?.responses ?? {})).toEqual(expect.arrayContaining(['201', '501']));
+    expect(op?.description).toMatch(/501/);
   });
 });

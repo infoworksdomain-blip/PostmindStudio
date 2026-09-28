@@ -196,7 +196,11 @@ export async function bulkReviewLibraryVideos(
   if (ids.length === 0) throw new NotFoundError('None of these library videos exist');
   const now = new Date(deps.now());
   const review =
-    input.action === 'accept' ? 'ACCEPTED' : input.action === 'override' ? 'OVERRIDDEN' : 'REJECTED';
+    input.action === 'accept'
+      ? 'ACCEPTED'
+      : input.action === 'override'
+        ? 'OVERRIDDEN'
+        : 'REJECTED';
   const retired = await deps.db.$transaction(async (tx) => {
     await tx.videoLibraryItem.updateMany({
       where: { id: { in: ids } },
@@ -241,7 +245,12 @@ export const licenceAuditQuery = z.object({
   limit: z.coerce.number().int().min(0).max(MAX_AUDIT_PROBLEMS).default(50),
 });
 
-type ProblemRow = { id: string; title: string; problem: LicenceStatus; licenseExpires: Date | null };
+type ProblemRow = {
+  id: string;
+  title: string;
+  problem: LicenceStatus;
+  licenseExpires: Date | null;
+};
 
 /**
  * GET /admin/library/licence-audit — live (non-retired) corpus by licence scenario, plus the

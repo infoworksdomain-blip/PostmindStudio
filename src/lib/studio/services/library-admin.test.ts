@@ -95,7 +95,11 @@ describe('bulkReviewLibraryVideos', () => {
     });
     expect(updateMany).toHaveBeenCalledWith({
       where: { id: { in: ['a'] } },
-      data: { categoryReview: 'OVERRIDDEN', categoryReviewedAt: new Date(NOW), categoryId: 'cat_new' },
+      data: {
+        categoryReview: 'OVERRIDDEN',
+        categoryReviewedAt: new Date(NOW),
+        categoryId: 'cat_new',
+      },
     });
   });
 
@@ -115,7 +119,10 @@ describe('bulkReviewLibraryVideos', () => {
   it('fails when no id exists', async () => {
     const { db } = fakeDb([]);
     await expect(
-      bulkReviewLibraryVideos({ db: db as never, now: () => NOW }, { ids: ['x'], action: 'accept' }),
+      bulkReviewLibraryVideos(
+        { db: db as never, now: () => NOW },
+        { ids: ['x'], action: 'accept' },
+      ),
     ).rejects.toThrow('None of these library videos exist');
   });
 });

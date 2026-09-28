@@ -82,6 +82,9 @@ function notifyChanged(organisationId: string): void {
   for (const listener of listeners) listener(organisationId);
 }
 
+/** For writers outside this module (the organisation purge wipes every key of an org). */
+export const notifyByocKeysChanged = notifyChanged;
+
 // ---- validation ----
 
 export const setCredentialInput = z

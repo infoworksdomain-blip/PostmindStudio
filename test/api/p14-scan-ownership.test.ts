@@ -74,7 +74,12 @@ describe.skipIf(!hasDb)(
         method: 'POST',
         token: 'owner',
         params: { id: biz },
-        body: { url: SITE, ownershipConfirmed: true },
+        // 15.D8: the exact checkbox text is sent and stored with the confirmation.
+        body: {
+          url: SITE,
+          ownershipConfirmed: true,
+          ownershipStatement: 'I own or am authorised to represent this website.',
+        },
       });
       expect(res.status).toBe(202);
       await drainInline(h.queue, h.deps);

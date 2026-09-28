@@ -82,6 +82,9 @@ export const PUBLISH_PLATFORMS = [
   'linkedin_video',
   'x',
   'facebook',
+  // 15.A1: the eight destinations incl. Instagram feed and Facebook feed video (catalog PLATFORMS).
+  'instagram_feed',
+  'facebook_feed',
 ] as const;
 
 /** POST /admin/redrive body and response (services/redrive.ts). */

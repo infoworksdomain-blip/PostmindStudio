@@ -12,7 +12,13 @@ import {
   orgPrefix,
   type PrefixCount,
 } from './purge-storage';
-import { countRows, deleteBatch, PURGE_TABLE_STEPS } from './purge-tables';
+import {
+  anonymiseRows,
+  ANONYMISE_STEPS,
+  countRows,
+  deleteBatch,
+  PURGE_TABLE_STEPS,
+} from './purge-tables';
 
 // BACKLOG 14.1 — hard deletion after the purge grace (spec 8.x internal API "soft-deletes all
 // Studio data with 30-day grace"; Engagement handover 6.5 "or hard-deletes after 30-day grace",
@@ -22,7 +28,9 @@ import { countRows, deleteBatch, PURGE_TABLE_STEPS } from './purge-tables';
 //      bucket the organisation's rows point at (S3 first: the rows name the buckets);
 //   2. deletes the organisation's rows from every studio table in FK-safe order, in batches
 //      (purge-tables.ts);
-//   3. keeps the organisation_purges row as the tombstone: state hard_deleted, hardDeletedAt,
+//   3. clears the personal fields of the rows deliberately kept (takedown_requests, the legal /
+//      transparency record: ANONYMISE_STEPS), counted as "<table>:anonymised";
+//   4. keeps the organisation_purges row as the tombstone: state hard_deleted, hardDeletedAt,
 //      and hardDeleteSummary (rows per table, objects per bucket/prefix), and writes the audit
 //      entry studio.organisation.hard_delete. The audit trail itself is never deleted.
 // Idempotent and resumable: a crash leaves state hard_deleting and the next run starts again;
@@ -220,6 +228,15 @@ export async function hardDeleteOrganisation(
       }
       summary = mergeSummary(summary, {
         tables: { [step.table]: rows },
+        storage: {},
+        keysOutsidePrefix: 0,
+      });
+      await save();
+    }
+    for (const step of ANONYMISE_STEPS) {
+      const rows = await anonymiseRows(deps.db, step, org);
+      summary = mergeSummary(summary, {
+        tables: { [`${step.table}:anonymised`]: rows },
         storage: {},
         keysOutsidePrefix: 0,
       });

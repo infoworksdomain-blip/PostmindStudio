@@ -25,7 +25,10 @@ export function ProfileReviewNotice({ businessId }: { businessId: string | null 
       <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <span>
         Studio isn’t sure it has understood your business yet. This video will use the current
-        profile — <Link href="/business" className="font-medium underline">check and confirm it</Link>{' '}
+        profile —{' '}
+        <Link href="/business" className="font-medium underline">
+          check and confirm it
+        </Link>{' '}
         for better results.
       </span>
     </p>

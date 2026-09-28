@@ -80,6 +80,18 @@ describe('15.B6 EDL hash', () => {
     expect(storedEdlHash({ edlHash: 'nope' })).toBeNull();
     expect(storedEdlHash(null)).toBeNull();
   });
+
+  it('changes when a shot is re-voiced even if the voice URL is the same (13.1)', () => {
+    const edit = {
+      timeline: { tracks: [{ clips: [{ asset: { src: 'https://s3/b/voice.mp3' } }] }] },
+    };
+    const take = (voiceAssetId: string) => ({
+      shots: [{ id: 'shot1', assetId: 'clip1', voiceAssetId }],
+    });
+    expect(edlHash(edit, take('voice1'))).toBe(edlHash(edit, take('voice1')));
+    expect(edlHash(edit, take('voice2'))).not.toBe(edlHash(edit, take('voice1')));
+    expect(edlHash(edit, { shots: [] })).toBe(edlHash(edit));
+  });
 });
 
 describe('15.B9 fallback notices', () => {

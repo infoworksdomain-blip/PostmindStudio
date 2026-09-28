@@ -48,6 +48,17 @@ describe('purgeBucketsFromEnv', () => {
       }),
     ).toEqual(['a', 'r']);
   });
+
+  it('includes the 15.E9 fallback-region buckets', () => {
+    expect(
+      purgeBucketsFromEnv({
+        S3_BUCKET_ASSETS: 'a',
+        S3_BUCKET_THUMBNAILS: 't',
+        S3_FALLBACK_BUCKET_ASSETS: 'a-dr',
+        S3_FALLBACK_BUCKET_THUMBNAILS: 't-dr',
+      }),
+    ).toEqual(['a', 't', 'a-dr', 't-dr']);
+  });
 });
 
 describe('countPrefix / deletePrefix', () => {

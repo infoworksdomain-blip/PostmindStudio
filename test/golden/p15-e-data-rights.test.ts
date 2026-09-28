@@ -143,6 +143,17 @@ describe.skipIf(!hasDb)(
       expect(text).not.toContain(token);
       expect(text).not.toContain('tokenHash');
 
+      // The business also had a drip queue (15.C), which must go with it.
+      await db.dripQueue.create({
+        data: {
+          organisationId: org,
+          businessId: biz,
+          slots: [{ weekday: 1, time: '09:00', timezone: 'Europe/London' }],
+          platforms: [],
+          updatedByUserId: 'user-1',
+        },
+      });
+
       // 4. Core deletes the business: the link stops working at once.
       const purge = await call(businessPurgeRoute.POST, {
         method: 'POST',
@@ -169,6 +180,7 @@ describe.skipIf(!hasDb)(
       });
       expect(await db.videoProject.findUnique({ where: { id: project.id } })).toBeNull();
       expect(await db.shareLink.count({ where: { projectId: project.id } })).toBe(0);
+      expect(await db.dripQueue.count({ where: { organisationId: org, businessId: biz } })).toBe(0);
       await expect(api.storage.size('renders', render.s3Key)).rejects.toThrow();
       expect(
         await db.businessPurge.findFirstOrThrow({

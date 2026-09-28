@@ -189,9 +189,11 @@ describe.skipIf(!hasDb)('admin library (15.D7)', { timeout: 60_000 }, () => {
       const gone = await db.videoLibraryItem.findUniqueOrThrow({ where: { id: ids.expired } });
       expect(gone.categoryReview).toBe('REJECTED');
       expect(gone.retiredAt).not.toBeNull();
-      expect(rows(await list('review=REJECTED')).map((r) => r.id).sort()).toEqual(
-        [ids.expired, ids.retired].sort(),
-      );
+      expect(
+        rows(await list('review=REJECTED'))
+          .map((r) => r.id)
+          .sort(),
+      ).toEqual([ids.expired, ids.retired].sort());
 
       const audits = api.audits.filter((a) => a.action === 'studio.library.bulk_review');
       expect(audits).toHaveLength(4);
@@ -251,7 +253,9 @@ describe.skipIf(!hasDb)('admin library (15.D7)', { timeout: 60_000 }, () => {
       expect(res.json.expiringSoon as number).toBeGreaterThanOrEqual(1);
       expect(res.json.expiringWithinDays).toBe(30);
       const problems = res.json.problems as Array<{ id: string; problem: string }>;
-      expect(problems).toContainEqual(expect.objectContaining({ id: ids.unlicensed, problem: 'missing' }));
+      expect(problems).toContainEqual(
+        expect.objectContaining({ id: ids.unlicensed, problem: 'missing' }),
+      );
       expect(problems).toContainEqual(
         expect.objectContaining({ id: ids.expiring, problem: 'expiring' }),
       );
