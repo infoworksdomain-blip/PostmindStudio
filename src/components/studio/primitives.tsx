@@ -2,8 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { AlertTriangle, Inbox, RotateCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { errorMessage } from '@/lib/client/api';
+import { useErrorMessage } from '@/lib/client/api';
 import type { Tone } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 
@@ -94,6 +95,8 @@ export function EmptyState({
 }
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const t = useTranslations('primitives');
+  const errorMessage = useErrorMessage();
   return (
     <div
       role="alert"
@@ -101,12 +104,12 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
       <div className="flex-1">
-        <p className="font-medium text-destructive">Couldn’t load this</p>
+        <p className="font-medium text-destructive">{t('errorTitle')}</p>
         <p className="mt-1 text-muted-foreground">{errorMessage(error)}</p>
       </div>
       {onRetry && (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          <RotateCw /> Retry
+          <RotateCw /> {t('retry')}
         </Button>
       )}
     </div>

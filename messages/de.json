@@ -1,0 +1,308 @@
+{
+  "common": {
+    "actions": {
+      "add": "Hinzufügen",
+      "apply": "Anwenden",
+      "back": "Zurück",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "confirm": "Bestätigen",
+      "continue": "Weiter",
+      "copy": "Kopieren",
+      "create": "Erstellen",
+      "delete": "Löschen",
+      "done": "Fertig",
+      "edit": "Bearbeiten",
+      "next": "Weiter",
+      "previous": "Zurück",
+      "remove": "Entfernen",
+      "retry": "Erneut versuchen",
+      "save": "Speichern",
+      "search": "Suchen",
+      "send": "Senden",
+      "submit": "Absenden",
+      "switch": "Wechseln"
+    },
+    "states": {
+      "loading": "Wird geladen …",
+      "saving": "Wird gespeichert …",
+      "saved": "Gespeichert",
+      "empty": "Hier ist noch nichts.",
+      "unknown": "Unbekannt",
+      "none": "Keine",
+      "on": "An",
+      "off": "Aus",
+      "yes": "Ja",
+      "no": "Nein"
+    },
+    "count": {
+      "items": "{count, plural, =0 {Keine Einträge} one {# Eintrag} other {# Einträge}}",
+      "selected": "{count, plural, =0 {Nichts ausgewählt} one {# ausgewählt} other {# ausgewählt}}"
+    },
+    "a11y": {
+      "moreOptions": "Weitere Optionen",
+      "required": "Pflichtfeld"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "Navigation öffnen",
+      "navigationTitle": "Navigation",
+      "getStarted": "Erste Schritte",
+      "groups": {
+        "make": "Erstellen",
+        "manage": "Verwalten",
+        "setup": "Einrichten",
+        "staff": "PostMind-Team"
+      },
+      "items": {
+        "create": "Erstellen",
+        "projects": "Projekte",
+        "library": "Referenzbibliothek",
+        "templates": "Vorlagen",
+        "publications": "Veröffentlichungen",
+        "calendar": "Kalender",
+        "analytics": "Analysen",
+        "business": "Unternehmen & Bilder",
+        "connections": "Verbindungen",
+        "approvals": "Freigabe-Workflows",
+        "export": "Daten exportieren",
+        "admin": "Administration"
+      }
+    },
+    "theme": {
+      "useLight": "Helles Design verwenden",
+      "useDark": "Dunkles Design verwenden"
+    },
+    "language": {
+      "label": "Sprache",
+      "trigger": "Sprache der Oberfläche: {language}",
+      "changed": "Sprache der Oberfläche auf {language} geändert"
+    },
+    "business": {
+      "label": "Unternehmen",
+      "choose": "Unternehmen auswählen",
+      "idPlaceholder": "PostMind-Unternehmens-ID",
+      "listPending": "Die Unternehmensliste wartet noch auf PostMind Core: Geben Sie die Unternehmens-ID ein."
+    },
+    "feedback": {
+      "button": "Feedback",
+      "buttonAria": "Feedback senden",
+      "title": "Feedback senden",
+      "description": "Sagen Sie uns, was funktioniert und was nicht. Wir sehen, auf welcher Seite Sie waren.",
+      "kindLegend": "Welche Art von Feedback?",
+      "kindAria": "Art des Feedbacks",
+      "kinds": {
+        "bug": "Etwas funktioniert nicht",
+        "idea": "Eine Idee",
+        "praise": "Etwas, das mir gefällt",
+        "other": "Sonstiges"
+      },
+      "message": "Nachricht",
+      "characterCount": "{count}/{max}",
+      "attachProject": "Es geht um das Projekt, das ich gerade ansehe",
+      "thanks": "Danke – das PostMind-Team liest jede Nachricht"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "bellAria": "{count, plural, =0 {Benachrichtigungen} one {Benachrichtigungen, # ungelesen} other {Benachrichtigungen, # ungelesen}}",
+      "markAllRead": "Alle als gelesen markieren",
+      "markRead": "Als gelesen markieren",
+      "markReadAria": "„{title}“ als gelesen markieren",
+      "empty": "Noch keine Benachrichtigungen.",
+      "emailPendingSetup": "E-Mail noch nicht eingerichtet: Der E-Mail-Versand ist noch nicht verbunden.",
+      "inAppOnly": "Nur in der App. Der E-Mail-Versand ist noch nicht verfügbar."
+    },
+    "preferences": {
+      "button": "Benachrichtigungseinstellungen",
+      "title": "Benachrichtigungseinstellungen",
+      "description": "Legen Sie fest, worüber Sie informiert werden. E-Mail: noch nicht eingerichtet – Ihre E-Mail-Einstellungen werden gespeichert und gelten, sobald der E-Mail-Versand verbunden ist.",
+      "tableAria": "Benachrichtigungseinstellungen",
+      "notification": "Benachrichtigung",
+      "inApp": "In der App",
+      "email": "E-Mail",
+      "pendingSetup": "noch nicht eingerichtet",
+      "switchInApp": "{label}: in der App",
+      "switchEmail": "{label}: E-Mail",
+      "kinds": {
+        "generation_complete": "Video bereit zur Prüfung",
+        "approval_pending": "Freigabe wartet seit über 2 Stunden",
+        "publication_failed": "Veröffentlichung fehlgeschlagen",
+        "auto_publish_failed": "Automatische Veröffentlichung abgebrochen",
+        "milestone": "Meilensteine (10.000 Aufrufe, 100 Kommentare)",
+        "cost_alert": "Budgetwarnungen",
+        "cost_paused": "Generierung durch Budget pausiert",
+        "safety_review": "Prüfungen der Inhaltssicherheit",
+        "share_comment": "Feedback zu einem Vorschau-Link",
+        "plan_quota": "Warnungen zur Tarifnutzung (80 % und 100 %)"
+      }
+    },
+    "usage": {
+      "bannerAria": "Tarifnutzung",
+      "tiers": {
+        "BASIC": "Basic",
+        "STANDARD": "Standard",
+        "PLUS": "Plus",
+        "ENTERPRISE": "Enterprise"
+      },
+      "exceededTitle": "Sie haben die Videos Ihres {tier}-Tarifs für diesen Monat aufgebraucht",
+      "warningTitle": "Sie erreichen bald das Monatslimit Ihres {tier}-Tarifs",
+      "blockedBody": "Neue Videos sind bis {date} pausiert. Wechseln Sie in einen höheren Tarif, um weiter zu erstellen.",
+      "resetBody": "Das Kontingent wird am {date} zurückgesetzt. Mit einem höheren Tarif erhalten Sie mehr Videos.",
+      "shortVideos": "Kurze Videos",
+      "longVideos": "Lange Videos",
+      "shortVideosUpTo": "Kurze Videos (bis {seconds} s)",
+      "longVideosUpTo": "Lange Videos (bis {minutes} Min.)",
+      "usedOf": "{used} von {limit}",
+      "usedUnlimited": "{used} (unbegrenzt)",
+      "planName": "{tier}-Tarif",
+      "scans": "Website-Scans für {scanned} von {limit} Unternehmen",
+      "scansUnlimited": "Website-Scans für {scanned} von unbegrenzt vielen Unternehmen",
+      "resets": "wird am {date} zurückgesetzt",
+      "enforced": "Limits werden durchgesetzt",
+      "notEnforced": "Limits werden noch nicht durchgesetzt"
+    }
+  },
+  "errors": {
+    "generic": "Etwas ist schiefgelaufen.",
+    "sessionExpired": "Ihre PostMind-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "forbidden": "Dazu fehlt Ihnen die Berechtigung.",
+    "rateLimited": "Zu viele Anfragen – bitte versuchen Sie es gleich noch einmal.",
+    "withProblems": "{message}: {problems}",
+    "requestFailed": "Anfrage fehlgeschlagen ({status})",
+    "codes": {
+      "unauthorized": "Ihre PostMind-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+      "forbidden": "Dazu fehlt Ihnen die Berechtigung.",
+      "feature_disabled": "Diese Funktion ist für Ihre Organisation nicht aktiviert.",
+      "plan_tier": "Ihr Tarif enthält diese Funktion nicht. Wechseln Sie in einen höheren Tarif, um sie zu nutzen.",
+      "quota_exceeded": "Sie haben das Monatslimit Ihres Tarifs erreicht. Wechseln Sie in einen höheren Tarif, um weiter zu erstellen.",
+      "not_found": "Das konnten wir nicht finden. Möglicherweise wurde es gelöscht.",
+      "conflict": "Das wurde geändert, während Sie daran gearbeitet haben. Aktualisieren Sie die Seite und versuchen Sie es erneut.",
+      "validation_error": "Einige Angaben sind ungültig. Bitte prüfen Sie sie und versuchen Sie es erneut.",
+      "unprocessable": "Das ist im aktuellen Zustand nicht möglich.",
+      "rate_deferred": "Ein Anbieter ist ausgelastet. Studio versucht es in Kürze erneut.",
+      "rate_limited": "Zu viele Anfragen – bitte versuchen Sie es gleich noch einmal.",
+      "payload_too_large": "Diese Datei ist zu groß.",
+      "kill_switch_active": "Die Generierung ist derzeit von PostMind pausiert. Bitte versuchen Sie es später erneut.",
+      "provider_error": "Bei einem Generierungsanbieter ist ein Problem aufgetreten. Bitte versuchen Sie es gleich noch einmal.",
+      "platform_error": "Bei der Social-Media-Plattform ist ein Problem aufgetreten. Bitte versuchen Sie es gleich noch einmal.",
+      "no_provider_available": "Derzeit kann kein Anbieter diesen Auftrag übernehmen. Bitte versuchen Sie es später erneut.",
+      "cost_cap_paused": "Die Generierung ist pausiert, weil ein Budget erreicht wurde.",
+      "upstream_error": "Bei einem verbundenen Dienst ist ein Problem aufgetreten. Bitte versuchen Sie es gleich noch einmal.",
+      "configuration_error": "Studio ist dafür noch nicht vollständig eingerichtet. Wenden Sie sich an den PostMind-Support.",
+      "not_implemented": "Das ist noch nicht verfügbar.",
+      "internal_error": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es gleich noch einmal.",
+      "upload_failed": "Der Upload ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+    }
+  },
+  "primitives": {
+    "errorTitle": "Konnte nicht geladen werden",
+    "retry": "Erneut versuchen"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "gerade eben",
+    "duration": {
+      "hoursMinutes": "{hours} Std. {minutes} Min.",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} s"
+    },
+    "projectState": {
+      "DRAFT": "Entwurf",
+      "QUEUED": "In der Warteschlange",
+      "SCANNING": "Wird automatisch befüllt",
+      "PLANNING": "Skript wird geschrieben",
+      "ASSETS_QUEUED": "Szenen werden generiert",
+      "ASSETS_GENERATING": "Szenen werden generiert",
+      "RENDERING": "Wird gerendert",
+      "QUALITY_CHECKING": "Qualität wird geprüft",
+      "QUALITY_FAILED": "Qualitätsprüfung fehlgeschlagen",
+      "READY_FOR_REVIEW": "Bereit zur Prüfung",
+      "APPROVED": "Freigegeben",
+      "PUBLISHING": "Wird veröffentlicht",
+      "PUBLISHED": "Veröffentlicht",
+      "PARTIALLY_PUBLISHED": "Teilweise veröffentlicht",
+      "REJECTED": "Abgelehnt",
+      "FAILED": "Fehlgeschlagen"
+    },
+    "publicationState": {
+      "SCHEDULED": "Geplant",
+      "PUBLISHING": "Wird veröffentlicht",
+      "PUBLISHED": "Live",
+      "FAILED": "Fehlgeschlagen",
+      "CANCELLED": "Abgebrochen",
+      "TAKEN_DOWN": "Entfernt"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Instagram-Feed",
+      "facebook_feed": "Facebook-Feed"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "„{name}“ ist bereit zur Prüfung",
+      "body": "Alle Varianten haben die Qualitätsprüfungen bestanden. Prüfen Sie das Video und geben Sie es frei oder veröffentlichen Sie es."
+    },
+    "generationAutoApproved": {
+      "title": "„{name}“ wurde generiert und automatisch freigegeben",
+      "body": "Das Video hat alle Qualitätsprüfungen bestanden und wurde gemäß Ihrer Prüfrichtlinie automatisch freigegeben."
+    },
+    "publicationFailed": {
+      "title": "Veröffentlichung von „{name}“ auf {platform} fehlgeschlagen",
+      "body": "{reason} – öffnen Sie das Projekt, um es erneut zu versuchen."
+    },
+    "approvalPending": {
+      "title": "„{name}“ wartet auf Freigabe",
+      "body": "Das Video ist seit mehr als 2 Stunden bereit zur Prüfung."
+    },
+    "autoPublishFailed": {
+      "title": "Automatische Veröffentlichung von „{name}“ auf {platform} fehlgeschlagen",
+      "body": "{reason} – öffnen Sie das Projekt, um es erneut zu versuchen."
+    },
+    "shareComment": {
+      "title": "Neues Feedback zu {name}",
+      "body": "{author}: {comment}"
+    },
+    "milestoneViews": {
+      "title": "„{name}“ hat auf {platform} {threshold, number} Aufrufe erreicht",
+      "body": "Aktuell {count, number} Aufrufe. Öffnen Sie das Projekt, um Veröffentlichungen und Analysen zu sehen."
+    },
+    "milestoneComments": {
+      "title": "„{name}“ hat auf {platform} {threshold, number} Kommentare erreicht",
+      "body": "Aktuell {count, number} Kommentare. Öffnen Sie das Projekt, um Veröffentlichungen und Analysen zu sehen."
+    },
+    "autoResumedMonthly": {
+      "title": "„{name}“ wurde automatisch fortgesetzt",
+      "body": "Ein neuer Monat hat begonnen, daher wurde die Generierung an der pausierten Stelle fortgesetzt."
+    },
+    "autoResumedDaily": {
+      "title": "„{name}“ wurde automatisch fortgesetzt",
+      "body": "Ein neuer Tag (UTC) hat begonnen, daher wurde die Generierung an der pausierten Stelle fortgesetzt."
+    }
+  },
+  "create": {},
+  "review": {},
+  "slideshow": {},
+  "overlays": {},
+  "projects": {},
+  "publications": {},
+  "calendar": {},
+  "business": {},
+  "connections": {},
+  "library": {},
+  "analytics": {},
+  "admin": {},
+  "onboarding": {},
+  "share": {},
+  "templates": {},
+  "account": {},
+  "approvals": {}
+}

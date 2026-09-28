@@ -1,6 +1,7 @@
 'use client';
 
 import { Gauge } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
 
@@ -32,34 +33,26 @@ export interface UsageResponse {
   };
 }
 
-const TIER_LABEL: Record<UsageResponse['usage']['planTier'], string> = {
-  BASIC: 'Basic',
-  STANDARD: 'Standard',
-  PLUS: 'Plus',
-  ENTERPRISE: 'Enterprise',
-};
-
-function resetDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'UTC',
-  });
-}
-
-function limitText(m: QuotaMeterView): string {
-  if (m.limit === null) return `${m.used} (unlimited)`;
-  return `${m.used} of ${m.limit}`;
+/** The reset day (UTC: quotas are calendar months in UTC) in the reader's locale. */
+function useResetDate(): (iso: string) => string {
+  const locale = useLocale();
+  return (iso) =>
+    new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
 }
 
 export function MeterRow({ label, meter }: { label: string; meter: QuotaMeterView }) {
+  const t = useTranslations('shell.usage');
+  const limitText =
+    meter.limit === null
+      ? t('usedUnlimited', { used: meter.used })
+      : t('usedOf', { used: meter.used, limit: meter.limit });
   const pct = meter.limit === null ? 0 : Math.min(100, meter.percent ?? 0);
   const tone = pct >= 100 ? 'bg-destructive' : pct >= 80 ? 'bg-warning' : 'bg-primary';
   return (
     <div className="grid gap-1.5">
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="font-medium">{label}</span>
-        <span className="tabular-nums text-muted-foreground">{limitText(meter)}</span>
+        <span className="tabular-nums text-muted-foreground">{limitText}</span>
       </div>
       <div
         role="meter"
@@ -79,30 +72,39 @@ export function MeterRow({ label, meter }: { label: string; meter: QuotaMeterVie
 }
 
 export function UsageMeters({ usage }: { usage: UsageResponse['usage'] }) {
+  const t = useTranslations('shell.usage');
+  const resetDate = useResetDate();
   const short = usage.videos.short.maxDurationSec;
   const long = usage.videos.long.maxDurationSec;
+  const tier = t(`tiers.${usage.planTier}`);
+  const summary = [
+    t('planName', { tier }),
+    usage.platforms.description,
+    usage.scans.limit === null
+      ? t('scansUnlimited', { scanned: usage.scans.businessesScanned })
+      : t('scans', { scanned: usage.scans.businessesScanned, limit: usage.scans.limit }),
+    t('resets', { date: resetDate(usage.resetsAt) }),
+    usage.mode === 'enforce' ? t('enforced') : t('notEnforced'),
+  ];
   return (
     <div className="grid gap-4">
       <MeterRow
-        label={`Short videos${short ? ` (up to ${short} s)` : ''}`}
+        label={short ? t('shortVideosUpTo', { seconds: short }) : t('shortVideos')}
         meter={usage.videos.short}
       />
       <MeterRow
-        label={`Long videos${long ? ` (up to ${Math.round(long / 60)} min)` : ''}`}
+        label={long ? t('longVideosUpTo', { minutes: Math.round(long / 60) }) : t('longVideos')}
         meter={usage.videos.long}
       />
-      <p className="text-xs text-muted-foreground">
-        {TIER_LABEL[usage.planTier]} plan · {usage.platforms.description} · website scans for{' '}
-        {usage.scans.businessesScanned} of {usage.scans.limit ?? 'unlimited'} businesses · resets{' '}
-        {resetDate(usage.resetsAt)} ·{' '}
-        {usage.mode === 'enforce' ? 'limits enforced' : 'limits not enforced yet'}
-      </p>
+      <p className="text-xs text-muted-foreground">{summary.join(' · ')}</p>
     </div>
   );
 }
 
 /** App-shell banner: rendered only once a monthly quota reaches 80 %. */
 export function UsageBanner() {
+  const t = useTranslations('shell.usage');
+  const resetDate = useResetDate();
   const res = useApi<UsageResponse>('/usage');
   const usage = res.data?.usage;
   if (!usage || usage.status === 'ok') return null;
@@ -111,7 +113,7 @@ export function UsageBanner() {
   return (
     <section
       role="status"
-      aria-label="Plan usage"
+      aria-label={t('bannerAria')}
       className={cn(
         'mb-6 grid gap-4 rounded-xl border p-4 md:grid-cols-[auto_1fr_minmax(14rem,20rem)] md:items-center',
         exceeded ? 'border-destructive/40 bg-destructive/5' : 'border-warning/50 bg-warning/10',
@@ -121,19 +123,19 @@ export function UsageBanner() {
       <div className="text-sm">
         <p className="font-medium">
           {exceeded
-            ? `You’ve used this month’s ${TIER_LABEL[usage.planTier]} plan videos`
-            : `You’re close to this month’s ${TIER_LABEL[usage.planTier]} plan limit`}
+            ? t('exceededTitle', { tier: t(`tiers.${usage.planTier}`) })
+            : t('warningTitle', { tier: t(`tiers.${usage.planTier}`) })}
         </p>
         <p className="text-muted-foreground">
           {blocked
-            ? `New videos are paused until ${resetDate(usage.resetsAt)}. Upgrade your plan to keep creating.`
-            : `The allowance resets on ${resetDate(usage.resetsAt)}. Upgrade your plan for more videos.`}
+            ? t('blockedBody', { date: resetDate(usage.resetsAt) })
+            : t('resetBody', { date: resetDate(usage.resetsAt) })}
         </p>
       </div>
       <div className="grid gap-3">
-        <MeterRow label="Short videos" meter={usage.videos.short} />
+        <MeterRow label={t('shortVideos')} meter={usage.videos.short} />
         {usage.videos.long.limit !== 0 && (
-          <MeterRow label="Long videos" meter={usage.videos.long} />
+          <MeterRow label={t('longVideos')} meter={usage.videos.long} />
         )}
       </div>
     </section>

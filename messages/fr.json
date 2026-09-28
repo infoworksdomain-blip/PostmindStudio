@@ -1,0 +1,308 @@
+{
+  "common": {
+    "actions": {
+      "add": "Ajouter",
+      "apply": "Appliquer",
+      "back": "Retour",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "confirm": "Confirmer",
+      "continue": "Continuer",
+      "copy": "Copier",
+      "create": "Créer",
+      "delete": "Supprimer",
+      "done": "Terminé",
+      "edit": "Modifier",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "remove": "Retirer",
+      "retry": "Réessayer",
+      "save": "Enregistrer",
+      "search": "Rechercher",
+      "send": "Envoyer",
+      "submit": "Valider",
+      "switch": "Changer"
+    },
+    "states": {
+      "loading": "Chargement…",
+      "saving": "Enregistrement…",
+      "saved": "Enregistré",
+      "empty": "Rien pour le moment.",
+      "unknown": "Inconnu",
+      "none": "Aucun",
+      "on": "Activé",
+      "off": "Désactivé",
+      "yes": "Oui",
+      "no": "Non"
+    },
+    "count": {
+      "items": "{count, plural, =0 {Aucun élément} one {# élément} many {# d’éléments} other {# éléments}}",
+      "selected": "{count, plural, =0 {Aucune sélection} one {# sélectionné} many {# sélectionnés} other {# sélectionnés}}"
+    },
+    "a11y": {
+      "moreOptions": "Plus d’options",
+      "required": "Obligatoire"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "Ouvrir la navigation",
+      "navigationTitle": "Navigation",
+      "getStarted": "Premiers pas",
+      "groups": {
+        "make": "Créer",
+        "manage": "Gérer",
+        "setup": "Configurer",
+        "staff": "Équipe PostMind"
+      },
+      "items": {
+        "create": "Créer",
+        "projects": "Projets",
+        "library": "Bibliothèque de références",
+        "templates": "Modèles",
+        "publications": "Publications",
+        "calendar": "Calendrier",
+        "analytics": "Statistiques",
+        "business": "Entreprise et images",
+        "connections": "Connexions",
+        "approvals": "Circuits de validation",
+        "export": "Exporter les données",
+        "admin": "Administration"
+      }
+    },
+    "theme": {
+      "useLight": "Utiliser le thème clair",
+      "useDark": "Utiliser le thème sombre"
+    },
+    "language": {
+      "label": "Langue",
+      "trigger": "Langue de l’interface : {language}",
+      "changed": "Langue de l’interface définie sur {language}"
+    },
+    "business": {
+      "label": "Entreprise",
+      "choose": "Choisir une entreprise",
+      "idPlaceholder": "Identifiant d’entreprise PostMind",
+      "listPending": "La liste des entreprises attend PostMind Core : saisissez l’identifiant de l’entreprise."
+    },
+    "feedback": {
+      "button": "Avis",
+      "buttonAria": "Envoyer un avis",
+      "title": "Envoyer un avis",
+      "description": "Dites-nous ce qui fonctionne et ce qui ne fonctionne pas. Nous verrons sur quel écran vous étiez.",
+      "kindLegend": "De quel type d’avis s’agit-il ?",
+      "kindAria": "Type d’avis",
+      "kinds": {
+        "bug": "Quelque chose ne marche pas",
+        "idea": "Une idée",
+        "praise": "Quelque chose que j’aime",
+        "other": "Autre"
+      },
+      "message": "Message",
+      "characterCount": "{count}/{max}",
+      "attachProject": "Cela concerne le projet que je consulte",
+      "thanks": "Merci — l’équipe PostMind lit chaque message"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "bellAria": "{count, plural, =0 {Notifications} one {Notifications, # non lue} many {Notifications, # non lues} other {Notifications, # non lues}}",
+      "markAllRead": "Tout marquer comme lu",
+      "markRead": "Marquer comme lu",
+      "markReadAria": "Marquer « {title} » comme lu",
+      "empty": "Aucune notification pour le moment.",
+      "emailPendingSetup": "E-mail en attente de configuration : l’envoi d’e-mails n’est pas encore connecté.",
+      "inAppOnly": "Dans l’application uniquement. L’envoi d’e-mails n’est pas encore disponible."
+    },
+    "preferences": {
+      "button": "Préférences de notification",
+      "title": "Préférences de notification",
+      "description": "Choisissez ce que vous recevez. E-mail : en attente de configuration — vos choix sont enregistrés et s’appliqueront dès que l’envoi d’e-mails sera connecté.",
+      "tableAria": "Préférences de notification",
+      "notification": "Notification",
+      "inApp": "Dans l’application",
+      "email": "E-mail",
+      "pendingSetup": "en attente de configuration",
+      "switchInApp": "{label} : dans l’application",
+      "switchEmail": "{label} : e-mail",
+      "kinds": {
+        "generation_complete": "Vidéo prête à être examinée",
+        "approval_pending": "Validation en attente depuis plus de 2 heures",
+        "publication_failed": "Échec de la publication",
+        "auto_publish_failed": "Abandon de la publication automatique",
+        "milestone": "Paliers (10 k vues, 100 commentaires)",
+        "cost_alert": "Alertes de budget",
+        "cost_paused": "Génération suspendue par un budget",
+        "safety_review": "Contrôles de sécurité du contenu",
+        "share_comment": "Avis sur un lien d’aperçu",
+        "plan_quota": "Alertes d’utilisation de la formule (80 % et 100 %)"
+      }
+    },
+    "usage": {
+      "bannerAria": "Utilisation de la formule",
+      "tiers": {
+        "BASIC": "Essentiel",
+        "STANDARD": "Standard",
+        "PLUS": "Plus",
+        "ENTERPRISE": "Entreprise"
+      },
+      "exceededTitle": "Vous avez utilisé toutes les vidéos de votre formule {tier} ce mois-ci",
+      "warningTitle": "Vous approchez de la limite mensuelle de votre formule {tier}",
+      "blockedBody": "Les nouvelles vidéos sont suspendues jusqu’au {date}. Passez à une formule supérieure pour continuer à créer.",
+      "resetBody": "Votre quota sera réinitialisé le {date}. Passez à une formule supérieure pour plus de vidéos.",
+      "shortVideos": "Vidéos courtes",
+      "longVideos": "Vidéos longues",
+      "shortVideosUpTo": "Vidéos courtes (jusqu’à {seconds} s)",
+      "longVideosUpTo": "Vidéos longues (jusqu’à {minutes} min)",
+      "usedOf": "{used} sur {limit}",
+      "usedUnlimited": "{used} (illimité)",
+      "planName": "Formule {tier}",
+      "scans": "analyses de site web pour {scanned} entreprises sur {limit}",
+      "scansUnlimited": "analyses de site web pour {scanned} entreprises sur un nombre illimité",
+      "resets": "réinitialisation le {date}",
+      "enforced": "limites appliquées",
+      "notEnforced": "limites pas encore appliquées"
+    }
+  },
+  "errors": {
+    "generic": "Une erreur s’est produite.",
+    "sessionExpired": "Votre session PostMind a expiré. Reconnectez-vous.",
+    "forbidden": "Vous n’avez pas l’autorisation d’effectuer cette action.",
+    "rateLimited": "Trop de requêtes — réessayez dans un instant.",
+    "withProblems": "{message} : {problems}",
+    "requestFailed": "Échec de la requête ({status})",
+    "codes": {
+      "unauthorized": "Votre session PostMind a expiré. Reconnectez-vous.",
+      "forbidden": "Vous n’avez pas l’autorisation d’effectuer cette action.",
+      "feature_disabled": "Cette fonctionnalité n’est pas activée pour votre organisation.",
+      "plan_tier": "Votre formule n’inclut pas cette fonctionnalité. Passez à une formule supérieure pour y accéder.",
+      "quota_exceeded": "Vous avez atteint la limite mensuelle de votre formule. Passez à une formule supérieure pour continuer à créer.",
+      "not_found": "Élément introuvable. Il a peut-être été supprimé.",
+      "conflict": "Cet élément a été modifié pendant que vous travailliez dessus. Actualisez la page et réessayez.",
+      "validation_error": "Certaines informations ne sont pas valides. Vérifiez-les et réessayez.",
+      "unprocessable": "Cette action est impossible dans l’état actuel.",
+      "rate_deferred": "Un fournisseur est occupé. Studio réessaiera sous peu.",
+      "rate_limited": "Trop de requêtes — réessayez dans un instant.",
+      "payload_too_large": "Ce fichier est trop volumineux.",
+      "kill_switch_active": "La génération est actuellement suspendue par PostMind. Réessayez plus tard.",
+      "provider_error": "Un fournisseur de génération a rencontré un problème. Réessayez dans un instant.",
+      "platform_error": "Le réseau social a rencontré un problème. Réessayez dans un instant.",
+      "no_provider_available": "Aucun fournisseur ne peut prendre en charge cette tâche pour le moment. Réessayez plus tard.",
+      "cost_cap_paused": "La génération est suspendue car un budget a été atteint.",
+      "upstream_error": "Un service connecté a rencontré un problème. Réessayez dans un instant.",
+      "configuration_error": "Studio n’est pas encore entièrement configuré pour cela. Contactez l’assistance PostMind.",
+      "not_implemented": "Cette fonctionnalité n’est pas encore disponible.",
+      "internal_error": "Une erreur s’est produite de notre côté. Réessayez dans un instant.",
+      "upload_failed": "Le téléversement a échoué. Réessayez."
+    }
+  },
+  "primitives": {
+    "errorTitle": "Impossible de charger ce contenu",
+    "retry": "Réessayer"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "à l’instant",
+    "duration": {
+      "hoursMinutes": "{hours} h {minutes} min",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} s"
+    },
+    "projectState": {
+      "DRAFT": "Brouillon",
+      "QUEUED": "En file d’attente",
+      "SCANNING": "Remplissage automatique",
+      "PLANNING": "Rédaction du script",
+      "ASSETS_QUEUED": "Génération des plans",
+      "ASSETS_GENERATING": "Génération des plans",
+      "RENDERING": "Rendu en cours",
+      "QUALITY_CHECKING": "Contrôle qualité",
+      "QUALITY_FAILED": "Échec du contrôle qualité",
+      "READY_FOR_REVIEW": "Prêt pour examen",
+      "APPROVED": "Validé",
+      "PUBLISHING": "Publication en cours",
+      "PUBLISHED": "Publié",
+      "PARTIALLY_PUBLISHED": "Partiellement publié",
+      "REJECTED": "Refusé",
+      "FAILED": "Échec"
+    },
+    "publicationState": {
+      "SCHEDULED": "Programmée",
+      "PUBLISHING": "Publication en cours",
+      "PUBLISHED": "En ligne",
+      "FAILED": "Échec",
+      "CANCELLED": "Annulée",
+      "TAKEN_DOWN": "Retirée"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Fil Instagram",
+      "facebook_feed": "Fil Facebook"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "« {name} » est prêt pour examen",
+      "body": "Toutes les variantes ont passé les contrôles qualité. Examinez la vidéo, puis validez-la ou publiez-la."
+    },
+    "generationAutoApproved": {
+      "title": "« {name} » a été généré et validé automatiquement",
+      "body": "La vidéo a passé tous les contrôles qualité et votre politique de validation l’a approuvée automatiquement."
+    },
+    "publicationFailed": {
+      "title": "Échec de la publication de « {name} » sur {platform}",
+      "body": "{reason} — ouvrez le projet pour réessayer."
+    },
+    "approvalPending": {
+      "title": "« {name} » attend une validation",
+      "body": "Il est prêt pour examen depuis plus de 2 heures."
+    },
+    "autoPublishFailed": {
+      "title": "Échec de la publication automatique de « {name} » sur {platform}",
+      "body": "{reason} — ouvrez le projet pour réessayer."
+    },
+    "shareComment": {
+      "title": "Nouvel avis sur {name}",
+      "body": "{author} : {comment}"
+    },
+    "milestoneViews": {
+      "title": "« {name} » a atteint {threshold, number} vues sur {platform}",
+      "body": "{count, number} vues à ce jour. Ouvrez le projet pour voir ses publications et ses statistiques."
+    },
+    "milestoneComments": {
+      "title": "« {name} » a atteint {threshold, number} commentaires sur {platform}",
+      "body": "{count, number} commentaires à ce jour. Ouvrez le projet pour voir ses publications et ses statistiques."
+    },
+    "autoResumedMonthly": {
+      "title": "« {name} » a repris automatiquement",
+      "body": "Un nouveau mois a commencé : la génération a repris là où elle s’était arrêtée."
+    },
+    "autoResumedDaily": {
+      "title": "« {name} » a repris automatiquement",
+      "body": "Un nouveau jour a commencé (UTC) : la génération a repris là où elle s’était arrêtée."
+    }
+  },
+  "create": {},
+  "review": {},
+  "slideshow": {},
+  "overlays": {},
+  "projects": {},
+  "publications": {},
+  "calendar": {},
+  "business": {},
+  "connections": {},
+  "library": {},
+  "analytics": {},
+  "admin": {},
+  "onboarding": {},
+  "share": {},
+  "templates": {},
+  "account": {},
+  "approvals": {}
+}

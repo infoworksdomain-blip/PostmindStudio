@@ -24,6 +24,14 @@ export const POST = withPublicRoute(async ({ req, deps, params }) => {
     title: `New feedback on ${context.projectName}`,
     body: `${comment.authorName}: ${comment.body}`.slice(0, 500),
     link: `/projects/${encodeURIComponent(context.projectId)}`,
+    message: {
+      key: 'shareComment',
+      params: {
+        name: context.projectName,
+        author: comment.authorName,
+        comment: comment.body.slice(0, 500),
+      },
+    },
   });
   return { status: 201, body: { comment } };
 });

@@ -1,0 +1,308 @@
+{
+  "common": {
+    "actions": {
+      "add": "إضافة",
+      "apply": "تطبيق",
+      "back": "رجوع",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "confirm": "تأكيد",
+      "continue": "متابعة",
+      "copy": "نسخ",
+      "create": "إنشاء",
+      "delete": "حذف",
+      "done": "تم",
+      "edit": "تعديل",
+      "next": "التالي",
+      "previous": "السابق",
+      "remove": "إزالة",
+      "retry": "إعادة المحاولة",
+      "save": "حفظ",
+      "search": "بحث",
+      "send": "إرسال",
+      "submit": "إرسال",
+      "switch": "تبديل"
+    },
+    "states": {
+      "loading": "جارٍ التحميل…",
+      "saving": "جارٍ الحفظ…",
+      "saved": "تم الحفظ",
+      "empty": "لا يوجد شيء هنا بعد.",
+      "unknown": "غير معروف",
+      "none": "لا شيء",
+      "on": "مفعّل",
+      "off": "متوقف",
+      "yes": "نعم",
+      "no": "لا"
+    },
+    "count": {
+      "items": "{count, plural, =0 {لا توجد عناصر} zero {لا توجد عناصر} one {عنصر واحد} two {عنصران} few {# عناصر} many {# عنصرًا} other {# عنصر}}",
+      "selected": "{count, plural, =0 {لم يُحدَّد شيء} zero {لم يُحدَّد شيء} one {تم تحديد عنصر واحد} two {تم تحديد عنصرين} few {تم تحديد # عناصر} many {تم تحديد # عنصرًا} other {تم تحديد # عنصر}}"
+    },
+    "a11y": {
+      "moreOptions": "مزيد من الخيارات",
+      "required": "مطلوب"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "فتح قائمة التنقل",
+      "navigationTitle": "التنقل",
+      "getStarted": "ابدأ الآن",
+      "groups": {
+        "make": "الإنتاج",
+        "manage": "الإدارة",
+        "setup": "الإعداد",
+        "staff": "فريق PostMind"
+      },
+      "items": {
+        "create": "إنشاء",
+        "projects": "المشاريع",
+        "library": "المكتبة المرجعية",
+        "templates": "القوالب",
+        "publications": "المنشورات",
+        "calendar": "التقويم",
+        "analytics": "التحليلات",
+        "business": "النشاط التجاري والصور",
+        "connections": "الحسابات المرتبطة",
+        "approvals": "مسارات الموافقة",
+        "export": "تصدير البيانات",
+        "admin": "الإدارة العامة"
+      }
+    },
+    "theme": {
+      "useLight": "استخدام المظهر الفاتح",
+      "useDark": "استخدام المظهر الداكن"
+    },
+    "language": {
+      "label": "اللغة",
+      "trigger": "لغة الواجهة: {language}",
+      "changed": "تم تغيير لغة الواجهة إلى {language}"
+    },
+    "business": {
+      "label": "النشاط التجاري",
+      "choose": "اختر نشاطًا تجاريًا",
+      "idPlaceholder": "معرّف النشاط التجاري في PostMind",
+      "listPending": "قائمة الأنشطة التجارية بانتظار PostMind Core: اكتب معرّف النشاط التجاري."
+    },
+    "feedback": {
+      "button": "ملاحظات",
+      "buttonAria": "إرسال ملاحظات",
+      "title": "إرسال ملاحظات",
+      "description": "أخبرنا بما ينجح وما لا ينجح. سنعرف الشاشة التي كنت عليها.",
+      "kindLegend": "ما نوع ملاحظتك؟",
+      "kindAria": "نوع الملاحظة",
+      "kinds": {
+        "bug": "هناك خلل ما",
+        "idea": "فكرة",
+        "praise": "شيء أعجبني",
+        "other": "أخرى"
+      },
+      "message": "الرسالة",
+      "characterCount": "{count}/{max}",
+      "attachProject": "الملاحظة تخص المشروع الذي أعرضه",
+      "thanks": "شكرًا لك — يقرأ فريق PostMind كل رسالة"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "bellAria": "{count, plural, =0 {الإشعارات} zero {الإشعارات} one {الإشعارات، إشعار واحد غير مقروء} two {الإشعارات، إشعاران غير مقروءين} few {الإشعارات، # إشعارات غير مقروءة} many {الإشعارات، # إشعارًا غير مقروء} other {الإشعارات، # إشعار غير مقروء}}",
+      "markAllRead": "تعليم الكل كمقروء",
+      "markRead": "تعليم كمقروء",
+      "markReadAria": "تعليم «{title}» كمقروء",
+      "empty": "لا توجد إشعارات بعد.",
+      "emailPendingSetup": "البريد الإلكتروني بانتظار الإعداد: لم يتم ربط خدمة إرسال البريد بعد.",
+      "inAppOnly": "داخل التطبيق فقط. إرسال البريد الإلكتروني غير متاح بعد."
+    },
+    "preferences": {
+      "button": "تفضيلات الإشعارات",
+      "title": "تفضيلات الإشعارات",
+      "description": "اختر ما يصلك. البريد الإلكتروني: بانتظار الإعداد — تُحفظ اختياراتك الخاصة بالبريد وتُطبَّق فور ربط خدمة الإرسال.",
+      "tableAria": "تفضيلات الإشعارات",
+      "notification": "الإشعار",
+      "inApp": "داخل التطبيق",
+      "email": "البريد الإلكتروني",
+      "pendingSetup": "بانتظار الإعداد",
+      "switchInApp": "{label}: داخل التطبيق",
+      "switchEmail": "{label}: البريد الإلكتروني",
+      "kinds": {
+        "generation_complete": "الفيديو جاهز للمراجعة",
+        "approval_pending": "موافقة معلّقة لأكثر من ساعتين",
+        "publication_failed": "فشل النشر",
+        "auto_publish_failed": "توقف النشر التلقائي",
+        "milestone": "الإنجازات (10 آلاف مشاهدة، 100 تعليق)",
+        "cost_alert": "تنبيهات الميزانية",
+        "cost_paused": "إيقاف الإنشاء مؤقتًا بسبب الميزانية",
+        "safety_review": "مراجعات أمان المحتوى",
+        "share_comment": "ملاحظات على رابط المعاينة",
+        "plan_quota": "تنبيهات استخدام الباقة (80% و100%)"
+      }
+    },
+    "usage": {
+      "bannerAria": "استخدام الباقة",
+      "tiers": {
+        "BASIC": "الأساسية",
+        "STANDARD": "القياسية",
+        "PLUS": "بلس",
+        "ENTERPRISE": "المؤسسات"
+      },
+      "exceededTitle": "لقد استهلكت فيديوهات باقة {tier} لهذا الشهر",
+      "warningTitle": "اقتربت من حد باقة {tier} لهذا الشهر",
+      "blockedBody": "إنشاء الفيديوهات الجديدة متوقف مؤقتًا حتى {date}. رقِّ باقتك لمواصلة الإنشاء.",
+      "resetBody": "يتجدد الرصيد في {date}. رقِّ باقتك للحصول على مزيد من الفيديوهات.",
+      "shortVideos": "فيديوهات قصيرة",
+      "longVideos": "فيديوهات طويلة",
+      "shortVideosUpTo": "فيديوهات قصيرة (حتى {seconds} ث)",
+      "longVideosUpTo": "فيديوهات طويلة (حتى {minutes} د)",
+      "usedOf": "{used} من {limit}",
+      "usedUnlimited": "{used} (غير محدود)",
+      "planName": "باقة {tier}",
+      "scans": "فحص المواقع الإلكترونية لـ {scanned} من {limit} أنشطة تجارية",
+      "scansUnlimited": "فحص المواقع الإلكترونية لـ {scanned} من أنشطة تجارية غير محدودة",
+      "resets": "يتجدد في {date}",
+      "enforced": "الحدود مطبّقة",
+      "notEnforced": "الحدود غير مطبّقة بعد"
+    }
+  },
+  "errors": {
+    "generic": "حدث خطأ ما.",
+    "sessionExpired": "انتهت جلستك في PostMind. سجّل الدخول مجددًا.",
+    "forbidden": "ليست لديك صلاحية للقيام بذلك.",
+    "rateLimited": "طلبات كثيرة جدًا — حاول مجددًا بعد قليل.",
+    "withProblems": "{message}: {problems}",
+    "requestFailed": "فشل الطلب ({status})",
+    "codes": {
+      "unauthorized": "انتهت جلستك في PostMind. سجّل الدخول مجددًا.",
+      "forbidden": "ليست لديك صلاحية للقيام بذلك.",
+      "feature_disabled": "هذه الميزة غير مفعّلة لمؤسستك.",
+      "plan_tier": "باقتك لا تتضمن هذه الميزة. رقِّ باقتك لاستخدامها.",
+      "quota_exceeded": "لقد بلغت حد باقتك لهذا الشهر. رقِّ باقتك لمواصلة الإنشاء.",
+      "not_found": "تعذّر العثور على العنصر. ربما تم حذفه.",
+      "conflict": "تغيّر هذا العنصر أثناء عملك عليه. حدّث الصفحة وحاول مجددًا.",
+      "validation_error": "بعض البيانات غير صالحة. تحقق منها وحاول مجددًا.",
+      "unprocessable": "لا يمكن تنفيذ ذلك في حالته الحالية.",
+      "rate_deferred": "أحد المزوّدين مشغول. سيعيد Studio المحاولة قريبًا.",
+      "rate_limited": "طلبات كثيرة جدًا — حاول مجددًا بعد قليل.",
+      "payload_too_large": "حجم الملف كبير جدًا.",
+      "kill_switch_active": "أوقفت PostMind الإنشاء مؤقتًا الآن. حاول مجددًا لاحقًا.",
+      "provider_error": "واجه أحد مزوّدي الإنشاء مشكلة. حاول مجددًا بعد قليل.",
+      "platform_error": "واجهت منصة التواصل الاجتماعي مشكلة. حاول مجددًا بعد قليل.",
+      "no_provider_available": "لا يوجد مزوّد متاح لتنفيذ هذه المهمة الآن. حاول مجددًا لاحقًا.",
+      "cost_cap_paused": "تم إيقاف الإنشاء مؤقتًا بسبب بلوغ حد الميزانية.",
+      "upstream_error": "واجهت إحدى الخدمات المرتبطة مشكلة. حاول مجددًا بعد قليل.",
+      "configuration_error": "لم يكتمل إعداد Studio لهذه الميزة بعد. تواصل مع دعم PostMind.",
+      "not_implemented": "هذه الميزة غير متاحة بعد.",
+      "internal_error": "حدث خطأ من جهتنا. حاول مجددًا بعد قليل.",
+      "upload_failed": "فشل الرفع. حاول مجددًا."
+    }
+  },
+  "primitives": {
+    "errorTitle": "تعذّر تحميل هذا المحتوى",
+    "retry": "إعادة المحاولة"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "الآن",
+    "duration": {
+      "hoursMinutes": "{hours} س {minutes} د",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} ث"
+    },
+    "projectState": {
+      "DRAFT": "مسودة",
+      "QUEUED": "في قائمة الانتظار",
+      "SCANNING": "جارٍ الملء التلقائي",
+      "PLANNING": "جارٍ كتابة النص",
+      "ASSETS_QUEUED": "جارٍ إنشاء اللقطات",
+      "ASSETS_GENERATING": "جارٍ إنشاء اللقطات",
+      "RENDERING": "جارٍ المعالجة",
+      "QUALITY_CHECKING": "جارٍ فحص الجودة",
+      "QUALITY_FAILED": "فشل فحص الجودة",
+      "READY_FOR_REVIEW": "جاهز للمراجعة",
+      "APPROVED": "تمت الموافقة",
+      "PUBLISHING": "جارٍ النشر",
+      "PUBLISHED": "منشور",
+      "PARTIALLY_PUBLISHED": "منشور جزئيًا",
+      "REJECTED": "مرفوض",
+      "FAILED": "فشل"
+    },
+    "publicationState": {
+      "SCHEDULED": "مجدول",
+      "PUBLISHING": "جارٍ النشر",
+      "PUBLISHED": "منشور",
+      "FAILED": "فشل",
+      "CANCELLED": "ملغى",
+      "TAKEN_DOWN": "تمت إزالته"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "موجز Instagram",
+      "facebook_feed": "موجز Facebook"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "«{name}» جاهز للمراجعة",
+      "body": "اجتازت كل النسخ فحوصات الجودة. راجعه، ثم وافق عليه أو انشره."
+    },
+    "generationAutoApproved": {
+      "title": "تم إنشاء «{name}» والموافقة عليه تلقائيًا",
+      "body": "اجتاز الفيديو كل فحوصات الجودة ووافقت عليه سياسة المراجعة لديك تلقائيًا."
+    },
+    "publicationFailed": {
+      "title": "فشل نشر «{name}» على {platform}",
+      "body": "{reason} — افتح المشروع لإعادة المحاولة."
+    },
+    "approvalPending": {
+      "title": "«{name}» بانتظار الموافقة",
+      "body": "إنه جاهز للمراجعة منذ أكثر من ساعتين."
+    },
+    "autoPublishFailed": {
+      "title": "فشل النشر التلقائي لـ «{name}» على {platform}",
+      "body": "{reason} — افتح المشروع لإعادة المحاولة."
+    },
+    "shareComment": {
+      "title": "ملاحظات جديدة على {name}",
+      "body": "{author}: {comment}"
+    },
+    "milestoneViews": {
+      "title": "وصل «{name}» إلى {threshold, number} مشاهدة على {platform}",
+      "body": "العدد الآن {count, number} مشاهدة. افتح المشروع لعرض منشوراته وتحليلاته."
+    },
+    "milestoneComments": {
+      "title": "وصل «{name}» إلى {threshold, number} تعليق على {platform}",
+      "body": "العدد الآن {count, number} تعليق. افتح المشروع لعرض منشوراته وتحليلاته."
+    },
+    "autoResumedMonthly": {
+      "title": "استُؤنف «{name}» تلقائيًا",
+      "body": "بدأ شهر جديد، لذا استُكمل الإنشاء من حيث توقف."
+    },
+    "autoResumedDaily": {
+      "title": "استُؤنف «{name}» تلقائيًا",
+      "body": "بدأ يوم جديد (بتوقيت UTC)، لذا استُكمل الإنشاء من حيث توقف."
+    }
+  },
+  "create": {},
+  "review": {},
+  "slideshow": {},
+  "overlays": {},
+  "projects": {},
+  "publications": {},
+  "calendar": {},
+  "business": {},
+  "connections": {},
+  "library": {},
+  "analytics": {},
+  "admin": {},
+  "onboarding": {},
+  "share": {},
+  "templates": {},
+  "account": {},
+  "approvals": {}
+}

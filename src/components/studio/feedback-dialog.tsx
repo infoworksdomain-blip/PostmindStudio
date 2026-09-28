@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { Loader2, MessageSquarePlus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { api, errorMessage } from '@/lib/client/api';
+import { api, useErrorMessage } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
 
 // BACKLOG 14.11 — the app shell's Feedback button: POST /api/studio/feedback
@@ -26,14 +27,9 @@ import { cn } from '@/lib/utils';
 
 export const FEEDBACK_MAX = 2_000;
 
-const KINDS = [
-  { value: 'bug', label: 'Something’s broken' },
-  { value: 'idea', label: 'An idea' },
-  { value: 'praise', label: 'Something I like' },
-  { value: 'other', label: 'Other' },
-] as const;
+const KINDS = ['bug', 'idea', 'praise', 'other'] as const;
 
-type Kind = (typeof KINDS)[number]['value'];
+type Kind = (typeof KINDS)[number];
 
 /** The project a path belongs to (/projects/<id>/…), if any. */
 export function projectIdFromPath(pathname: string): string | null {
@@ -42,6 +38,9 @@ export function projectIdFromPath(pathname: string): string | null {
 }
 
 export function FeedbackButton() {
+  const t = useTranslations('shell.feedback');
+  const tc = useTranslations('common.actions');
+  const errorMessage = useErrorMessage();
   const pathname = usePathname() ?? '/';
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Kind>('idea');
@@ -65,7 +64,7 @@ export function FeedbackButton() {
           ...(projectId && attachProject && { projectId }),
         },
       });
-      toast.success('Thanks — the PostMind team reads every message');
+      toast.success(t('thanks'));
       setMessage('');
       setKind('idea');
       setOpen(false);
@@ -79,43 +78,41 @@ export function FeedbackButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label="Send feedback">
+        <Button variant="ghost" size="sm" aria-label={t('buttonAria')}>
           <MessageSquarePlus />
-          <span className="hidden sm:inline">Feedback</span>
+          <span className="hidden sm:inline">{t('button')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={submit} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>Send feedback</DialogTitle>
-            <DialogDescription>
-              Tell us what works and what doesn’t. We’ll see which screen you were on.
-            </DialogDescription>
+            <DialogTitle>{t('title')}</DialogTitle>
+            <DialogDescription>{t('description')}</DialogDescription>
           </DialogHeader>
           <fieldset className="grid gap-2">
-            <legend className="mb-1 text-sm font-medium">What kind of feedback?</legend>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Feedback kind">
+            <legend className="mb-1 text-sm font-medium">{t('kindLegend')}</legend>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('kindAria')}>
               {KINDS.map((k) => (
                 <button
-                  key={k.value}
+                  key={k}
                   type="button"
                   role="radio"
-                  aria-checked={kind === k.value}
-                  onClick={() => setKind(k.value)}
+                  aria-checked={kind === k}
+                  onClick={() => setKind(k)}
                   className={cn(
                     'rounded-full border px-3 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                    kind === k.value
+                    kind === k
                       ? 'border-primary bg-primary/10 text-foreground'
                       : 'border-border text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {k.label}
+                  {t(`kinds.${k}`)}
                 </button>
               ))}
             </div>
           </fieldset>
           <div className="grid gap-1.5">
-            <Label htmlFor="feedback-message">Message</Label>
+            <Label htmlFor="feedback-message">{t('message')}</Label>
             <Textarea
               id="feedback-message"
               rows={5}
@@ -124,8 +121,8 @@ export function FeedbackButton() {
               onChange={(e) => setMessage(e.target.value)}
               required
             />
-            <p className="text-right text-xs text-muted-foreground tabular">
-              {message.length}/{FEEDBACK_MAX}
+            <p className="text-end text-xs text-muted-foreground tabular">
+              {t('characterCount', { count: message.length, max: FEEDBACK_MAX })}
             </p>
           </div>
           {projectId && (
@@ -136,17 +133,17 @@ export function FeedbackButton() {
                 onCheckedChange={(checked) => setAttachProject(checked === true)}
               />
               <Label htmlFor="feedback-project" className="font-normal">
-                This is about the project I’m looking at
+                {t('attachProject')}
               </Label>
             </div>
           )}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button type="submit" disabled={!trimmed || pending}>
               {pending && <Loader2 className="animate-spin" />}
-              Send
+              {tc('send')}
             </Button>
           </DialogFooter>
         </form>

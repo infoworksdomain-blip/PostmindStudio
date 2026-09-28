@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Settings2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { api, errorMessage, useApi } from '@/lib/client/api';
+import { api, useApi, useErrorMessage } from '@/lib/client/api';
 
 // BACKLOG 13.24 — notification preferences (GET|PATCH /notification-preferences): per kind,
 // in-app and email. Email choices are saved now; delivery waits for an email channel (13.33),
@@ -36,20 +37,24 @@ export interface PreferencesResponse {
   emailDelivery: 'pending_setup' | 'active';
 }
 
-export const PREFERENCE_ROWS: Array<{ kind: PreferenceKind; label: string }> = [
-  { kind: 'generation_complete', label: 'Video ready for review' },
-  { kind: 'approval_pending', label: 'Approval waiting over 2 hours' },
-  { kind: 'publication_failed', label: 'Publishing failed' },
-  { kind: 'auto_publish_failed', label: 'Auto-publish gave up' },
-  { kind: 'milestone', label: 'Milestones (10k views, 100 comments)' },
-  { kind: 'cost_alert', label: 'Budget alerts' },
-  { kind: 'cost_paused', label: 'Generation paused by a budget' },
-  { kind: 'safety_review', label: 'Content-safety reviews' },
-  { kind: 'share_comment', label: 'Feedback on a preview link' },
-  { kind: 'plan_quota', label: 'Plan usage alerts (80% and 100%)' },
+/** Row order; labels are shell.preferences.kinds.<kind> in the catalogue. */
+export const PREFERENCE_KINDS: readonly PreferenceKind[] = [
+  'generation_complete',
+  'approval_pending',
+  'publication_failed',
+  'auto_publish_failed',
+  'milestone',
+  'cost_alert',
+  'cost_paused',
+  'safety_review',
+  'share_comment',
+  'plan_quota',
 ];
 
 function PreferencesTable() {
+  const t = useTranslations('shell.preferences');
+  const tc = useTranslations('common.states');
+  const errorMessage = useErrorMessage();
   const res = useApi<PreferencesResponse>('/notification-preferences');
   const [saving, setSaving] = useState<string | null>(null);
 
@@ -69,34 +74,36 @@ function PreferencesTable() {
   };
 
   if (res.error) return <p className="text-sm text-destructive">{errorMessage(res.error)}</p>;
-  if (!res.data) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (!res.data) return <p className="text-sm text-muted-foreground">{tc('loading')}</p>;
   const pendingEmail = res.data.emailDelivery === 'pending_setup';
   return (
-    <table aria-label="Notification preferences" className="w-full text-sm">
+    <table aria-label={t('tableAria')} className="w-full text-sm">
       <thead>
-        <tr className="text-left text-xs text-muted-foreground">
-          <th scope="col" className="py-1 font-normal">
-            Notification
+        <tr className="text-start text-xs text-muted-foreground">
+          <th scope="col" className="py-1 text-start font-normal">
+            {t('notification')}
           </th>
           <th scope="col" className="py-1 text-center font-normal">
-            In-app
+            {t('inApp')}
           </th>
           <th scope="col" className="py-1 text-center font-normal">
-            Email{pendingEmail && <span className="block text-[0.65rem]">pending setup</span>}
+            {t('email')}
+            {pendingEmail && <span className="block text-[0.65rem]">{t('pendingSetup')}</span>}
           </th>
         </tr>
       </thead>
       <tbody>
-        {PREFERENCE_ROWS.map(({ kind, label }) => {
+        {PREFERENCE_KINDS.map((kind) => {
+          const label = t(`kinds.${kind}`);
           const pref = res.data?.preferences[kind] ?? { inApp: true, email: false };
           return (
             <tr key={kind} className="border-t border-border/60">
-              <th scope="row" className="py-2 pr-2 text-left font-normal">
+              <th scope="row" className="py-2 pe-2 text-start font-normal">
                 {label}
               </th>
               <td className="py-2 text-center">
                 <Switch
-                  aria-label={`${label}: in-app`}
+                  aria-label={t('switchInApp', { label })}
                   checked={pref.inApp}
                   disabled={saving !== null}
                   onCheckedChange={(v) => void change(kind, 'inApp', v)}
@@ -104,7 +111,7 @@ function PreferencesTable() {
               </td>
               <td className="py-2 text-center">
                 <Switch
-                  aria-label={`${label}: email`}
+                  aria-label={t('switchEmail', { label })}
                   checked={pref.email}
                   disabled={saving !== null}
                   onCheckedChange={(v) => void change(kind, 'email', v)}
@@ -119,20 +126,18 @@ function PreferencesTable() {
 }
 
 export function NotificationPreferencesButton() {
+  const t = useTranslations('shell.preferences');
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Notification preferences">
+        <Button variant="ghost" size="icon" aria-label={t('button')}>
           <Settings2 />
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Notification preferences</DialogTitle>
-          <DialogDescription>
-            Choose what reaches you. Email: pending setup — your email choices are saved and apply
-            once email delivery is connected.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
         <PreferencesTable />
       </DialogContent>

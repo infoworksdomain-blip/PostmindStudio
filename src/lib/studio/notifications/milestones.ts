@@ -65,6 +65,15 @@ export async function notifyMilestones(
         body: `Now at ${snapshot[m.metric].toLocaleString('en-GB')} ${m.metric}. Open the project to see its publications and analytics.`,
         link: `/projects/${publication.projectId}`,
         dedupeKey: milestoneKey(publication.id, m),
+        message: {
+          key: m.metric === 'views' ? 'milestoneViews' : 'milestoneComments',
+          params: {
+            name: project.name,
+            platform: publication.platform,
+            threshold: m.threshold,
+            count: snapshot[m.metric],
+          },
+        },
       });
     }
     return reached.length;

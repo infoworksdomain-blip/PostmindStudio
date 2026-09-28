@@ -22,7 +22,15 @@ import { call, installApi, tenant } from '../helpers/api-harness';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
-type Item = { id: string; kind: string; title: string; readAt: string | null; link: string | null };
+type Item = {
+  id: string;
+  kind: string;
+  title: string;
+  readAt: string | null;
+  link: string | null;
+  messageKey?: string | null;
+  messageParams?: Record<string, unknown> | null;
+};
 
 describe.skipIf(!hasDb)('notifications API + events', { timeout: 60_000 }, () => {
   const db = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
@@ -226,6 +234,15 @@ describe.skipIf(!hasDb)('notifications API + events', { timeout: 60_000 }, () =>
         '“Sourdough launch” is ready for review',
       ]);
       expect(items[1]).toMatchObject({ kind: 'generation_complete', link: `/projects/${p.id}` });
+      // 16.5: the API returns the catalogue key + params for the reader's locale.
+      expect(items[0]).toMatchObject({
+        messageKey: 'generationAutoApproved',
+        messageParams: { name: 'Sourdough launch' },
+      });
+      expect(items[1]).toMatchObject({
+        messageKey: 'generationReady',
+        messageParams: { name: 'Sourdough launch' },
+      });
       // Wrong organisation: nothing, and no throw.
       await notifyGenerationComplete(host(), { ...input, organisationId: otherOrg });
       expect((await list('mallory')).json.data).toHaveLength(0);

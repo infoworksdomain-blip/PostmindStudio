@@ -51,6 +51,11 @@ describe('notifyMilestones', () => {
         title: '“Spring menu” reached 10,000 views on TikTok',
         link: '/projects/prj-1',
         dedupeKey: 'milestone:pub-1:views_10000',
+        // 16.5: rendered in the reader's locale from notifications.milestoneViews.
+        message: {
+          key: 'milestoneViews',
+          params: { name: 'Spring menu', platform: 'tiktok', threshold: 10_000, count: 12_345 },
+        },
       }),
     );
     expect(notify).toHaveBeenCalledWith(

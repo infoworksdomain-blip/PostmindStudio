@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { useTheme } from 'next-themes';
+import { useTranslations } from 'next-intl';
 import {
   BarChart3,
   Building2,
@@ -24,54 +25,53 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import { BusinessSwitcher } from './business-picker';
 import { FeedbackButton } from './feedback-dialog';
+import { LanguageSwitcher } from './i18n/language-switcher';
+import { useLocaleSwitch } from './i18n/intl-provider';
 import { NotificationsBell } from './notifications-bell';
 import { UsageBanner } from './usage-meter';
 import { WelcomeLink } from './onboarding/welcome-link';
 
 // Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
+// Labels come from the `shell` catalogue (BACKLOG 16.1); layout uses logical properties so the
+// sidebar and header mirror in RTL (16.2).
 
 export const NAV = [
-  { href: '/new', label: 'Create', icon: Plus, group: 'make' },
-  { href: '/projects', label: 'Projects', icon: Clapperboard, group: 'make' },
-  { href: '/library', label: 'Reference library', icon: Library, group: 'make' },
-  { href: '/templates', label: 'Templates', icon: LayoutTemplate, group: 'make' },
-  { href: '/publications', label: 'Publications', icon: Send, group: 'manage' },
-  { href: '/calendar', label: 'Calendar', icon: CalendarDays, group: 'manage' },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3, group: 'manage' },
-  { href: '/business', label: 'Business & images', icon: Building2, group: 'setup' },
-  { href: '/connections', label: 'Connections', icon: Link2, group: 'setup' },
-  { href: '/approvals', label: 'Approval workflows', icon: ListChecks, group: 'setup' },
-  { href: '/account/export', label: 'Export data', icon: Download, group: 'setup' },
-  { href: '/admin', label: 'Admin', icon: ShieldAlert, group: 'staff' },
+  { href: '/new', key: 'create', icon: Plus, group: 'make' },
+  { href: '/projects', key: 'projects', icon: Clapperboard, group: 'make' },
+  { href: '/library', key: 'library', icon: Library, group: 'make' },
+  { href: '/templates', key: 'templates', icon: LayoutTemplate, group: 'make' },
+  { href: '/publications', key: 'publications', icon: Send, group: 'manage' },
+  { href: '/calendar', key: 'calendar', icon: CalendarDays, group: 'manage' },
+  { href: '/analytics', key: 'analytics', icon: BarChart3, group: 'manage' },
+  { href: '/business', key: 'business', icon: Building2, group: 'setup' },
+  { href: '/connections', key: 'connections', icon: Link2, group: 'setup' },
+  { href: '/approvals', key: 'approvals', icon: ListChecks, group: 'setup' },
+  { href: '/account/export', key: 'export', icon: Download, group: 'setup' },
+  { href: '/admin', key: 'admin', icon: ShieldAlert, group: 'staff' },
 ] as const;
-
-const GROUP_LABEL: Record<string, string> = {
-  make: 'Make',
-  manage: 'Manage',
-  setup: 'Set up',
-  staff: 'PostMind staff',
-};
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const t = useTranslations('shell.nav');
   const pathname = usePathname() ?? '';
   const groups = [...new Set(NAV.map((n) => n.group))];
   return (
-    <nav aria-label="Studio" className="flex flex-col gap-6">
+    <nav aria-label={t('ariaLabel')} className="flex flex-col gap-6">
       <WelcomeLink onNavigate={onNavigate} />
       {groups.map((group) => (
         <div key={group}>
           <p className="mb-2 px-3 text-[0.65rem] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-            {GROUP_LABEL[group]}
+            {t(`groups.${group}`)}
           </p>
           <ul className="flex flex-col gap-0.5">
-            {NAV.filter((n) => n.group === group).map(({ href, label, icon: Icon }) => {
+            {NAV.filter((n) => n.group === group).map(({ href, key, icon: Icon }) => {
               const active = isActive(pathname, href);
               return (
                 <li key={href}>
@@ -96,7 +96,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                       )}
                       strokeWidth={1.75}
                     />
-                    {label}
+                    {t(`items.${key}`)}
                   </Link>
                 </li>
               );
@@ -114,7 +114,7 @@ function Wordmark() {
       <span className="grid size-7 place-items-center rounded-md bg-foreground text-background">
         <Film className="size-4" strokeWidth={2} />
       </span>
-      <span className="font-display text-xl leading-none">
+      <span className="font-display text-xl leading-none whitespace-nowrap">
         PostMind <em className="text-primary not-italic">Studio</em>
       </span>
     </Link>
@@ -124,13 +124,14 @@ function Wordmark() {
 export { BusinessSwitcher };
 
 function ThemeToggle() {
+  const t = useTranslations('shell.theme');
   const { resolvedTheme, setTheme } = useTheme();
   const dark = resolvedTheme === 'dark';
   return (
     <Button
       variant="ghost"
       size="icon"
-      aria-label={dark ? 'Use light theme' : 'Use dark theme'}
+      aria-label={dark ? t('useLight') : t('useDark')}
       onClick={() => setTheme(dark ? 'light' : 'dark')}
     >
       {dark ? <Sun /> : <Moon />}
@@ -139,10 +140,12 @@ function ThemeToggle() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const t = useTranslations('shell.nav');
+  const { locale } = useLocaleSwitch();
   const [open, setOpen] = useState(false);
   return (
     <div className="relative z-10 min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-8 border-r border-sidebar-border bg-sidebar py-6 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-8 border-e border-sidebar-border bg-sidebar py-6 lg:flex">
         <Wordmark />
         <div className="flex-1 overflow-y-auto px-3">
           <NavList />
@@ -156,13 +159,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                 variant="ghost"
                 size="icon"
                 className="lg:hidden"
-                aria-label="Open navigation"
+                aria-label={t('openNavigation')}
               >
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 bg-sidebar p-6">
-              <SheetTitle className="sr-only">Navigation</SheetTitle>
+            {/* The drawer opens from the start edge: left in LTR, right in RTL. */}
+            <SheetContent
+              side={directionOf(locale) === 'rtl' ? 'right' : 'left'}
+              className="w-72 bg-sidebar p-6"
+            >
+              <SheetTitle className="sr-only">{t('navigationTitle')}</SheetTitle>
               <div className="mb-8">
                 <Wordmark />
               </div>
@@ -172,11 +179,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="lg:hidden">
             <Wordmark />
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ms-auto flex items-center gap-2">
             <div className="hidden md:block">
               <BusinessSwitcher />
             </div>
             <FeedbackButton />
+            <LanguageSwitcher />
             <NotificationsBell />
             <ThemeToggle />
           </div>

@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
+import type { Messages } from '../../i18n/messages';
 import { NotImplementedError } from '../../errors';
 import {
   emailSenderFromEnv,
@@ -34,6 +35,19 @@ export const NOTIFICATION_KINDS = [
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
+/** BACKLOG 16.5: a key under the `notifications` catalogue namespace (messages/<locale>.json). */
+export type NotificationMessageKey = keyof Messages['notifications'];
+
+/**
+ * The localisable form of a notification: the app renders notifications.<key>.title/body with
+ * these ICU parameters in the reader's locale. `platform` holds the platform id (the app shows
+ * its label). title/body stay the English text for email, the webhook and older rows.
+ */
+export interface NotificationMessage {
+  key: NotificationMessageKey;
+  params?: Record<string, string | number>;
+}
+
 export interface NotificationInput {
   organisationId: string;
   /** null / undefined = every member of the organisation. */
@@ -44,6 +58,8 @@ export interface NotificationInput {
   link?: string;
   /** Notify at most once per (organisation, dedupeKey). */
   dedupeKey?: string;
+  /** 16.5: rendered in the reader's locale when present. */
+  message?: NotificationMessage;
 }
 
 export type StaffNotificationInput = Omit<NotificationInput, 'organisationId' | 'userId'>;
@@ -172,6 +188,8 @@ export function createNotifier(deps: {
       body: input.body.slice(0, BODY_MAX),
       link: input.link ?? null,
       dedupeKey: input.dedupeKey ?? null,
+      messageKey: input.message?.key ?? null,
+      messageParams: input.message?.params ?? Prisma.DbNull,
     };
     if (!input.dedupeKey) return deps.db.notification.create({ data });
     try {

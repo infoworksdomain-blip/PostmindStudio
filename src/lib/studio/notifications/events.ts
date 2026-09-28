@@ -53,6 +53,10 @@ async function generationComplete(
       : 'Every variant passed the quality checks. Review it, then approve or publish.',
     link: `/projects/${input.projectId}`,
     dedupeKey: `generation_complete:${input.projectId}:${input.runId}`,
+    message: {
+      key: autoApproved ? 'generationAutoApproved' : 'generationReady',
+      params: { name: project.name },
+    },
   });
 }
 
@@ -87,6 +91,14 @@ async function publicationFailed(host: Host, input: PublicationFailure): Promise
     link: `/projects/${input.projectId}`,
     // One per failure: retryCount was incremented by the failure being reported.
     dedupeKey: `publication_failed:${input.publicationId}:${publication.retryCount}`,
+    message: {
+      key: 'publicationFailed',
+      params: {
+        name: publication.project.name,
+        platform: publication.platform,
+        reason: input.reason.slice(0, 500),
+      },
+    },
   });
 }
 
@@ -130,6 +142,7 @@ export async function notifyPendingApprovals(host: Host): Promise<{ notified: nu
         body: 'It has been ready for review for more than 2 hours.',
         link: `/projects/${project.id}`,
         dedupeKey: `approval_pending:${project.id}:${runId}`,
+        message: { key: 'approvalPending', params: { name: project.name } },
       });
       if (created) notified += 1;
     } catch (err) {

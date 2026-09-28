@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
 import { ONBOARDING_PATH, type OnboardingResponse } from './onboarding';
@@ -11,6 +12,7 @@ import { ONBOARDING_PATH, type OnboardingResponse } from './onboarding';
 // says the wizard is suggested (not finished, not dismissed). Errors hide it — it is optional.
 
 export function WelcomeLink({ onNavigate }: { onNavigate?: () => void }) {
+  const t = useTranslations('shell.nav');
   const pathname = usePathname() ?? '';
   const { data } = useApi<OnboardingResponse>(ONBOARDING_PATH);
   if (!data?.onboarding.suggested) return null;
@@ -26,7 +28,7 @@ export function WelcomeLink({ onNavigate }: { onNavigate?: () => void }) {
       )}
     >
       <Sparkles className="size-4 text-primary" strokeWidth={1.75} />
-      Get started
+      {t('getStarted')}
     </Link>
   );
 }

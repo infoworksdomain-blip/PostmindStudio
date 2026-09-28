@@ -189,6 +189,10 @@ async function resumeOne(
         : 'A new day started (UTC), so generation continued from where it paused.',
     link: `/projects/${project.id}`,
     dedupeKey: `auto_resume:${project.id}:${pause.scope}:${pause.period}`,
+    message: {
+      key: pause.scope === 'org_monthly' ? 'autoResumedMonthly' : 'autoResumedDaily',
+      params: { name: project.name },
+    },
   });
   return { ...base, action: 'resumed', scope: pause.scope, stage };
 }

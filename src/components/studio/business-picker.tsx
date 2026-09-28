@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ interface BusinessesResponse {
   data: BusinessSummary[];
 }
 
+/** en-GB text of shell.business.listPending (tests assert against it). */
 export const BUSINESS_LIST_PENDING_HINT =
   'The business list is waiting for PostMind Core: type the business id.';
 
@@ -28,12 +30,13 @@ const SELECT_CLASS =
   'h-8 w-48 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 function BusinessSelect({ businesses }: { businesses: BusinessSummary[] }) {
+  const t = useTranslations('shell.business');
   const { businessId, setBusinessId } = useBusiness();
   const known = businesses.some((b) => b.id === businessId);
   return (
     <div className="flex items-center gap-2">
       <label htmlFor="business-select" className="text-xs whitespace-nowrap text-muted-foreground">
-        Business
+        {t('label')}
       </label>
       <select
         id="business-select"
@@ -42,7 +45,7 @@ function BusinessSelect({ businesses }: { businesses: BusinessSummary[] }) {
         onChange={(e) => setBusinessId(e.target.value || null)}
       >
         <option value="" disabled>
-          Choose a business
+          {t('choose')}
         </option>
         {businesses.map((b) => (
           <option key={b.id} value={b.id}>
@@ -55,6 +58,8 @@ function BusinessSelect({ businesses }: { businesses: BusinessSummary[] }) {
 }
 
 function BusinessIdForm({ hint }: { hint?: string }) {
+  const t = useTranslations('shell.business');
+  const tc = useTranslations('common.actions');
   const { businessId, setBusinessId } = useBusiness();
   const [draft, setDraft] = useState('');
   return (
@@ -68,12 +73,12 @@ function BusinessIdForm({ hint }: { hint?: string }) {
       }}
     >
       <label htmlFor="business-id" className="text-xs whitespace-nowrap text-muted-foreground">
-        Business
+        {t('label')}
       </label>
       <Input
         id="business-id"
         className="h-8 w-44"
-        placeholder={businessId ?? 'PostMind business id'}
+        placeholder={businessId ?? t('idPlaceholder')}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         aria-describedby={hint ? 'business-id-hint' : undefined}
@@ -84,18 +89,19 @@ function BusinessIdForm({ hint }: { hint?: string }) {
         </span>
       )}
       <Button type="submit" size="sm" variant="outline" disabled={!draft}>
-        Switch
+        {tc('switch')}
       </Button>
     </form>
   );
 }
 
 export function BusinessSwitcher() {
+  const t = useTranslations('shell.business');
   const { ready } = useBusiness();
   const { data, error } = useApi<BusinessesResponse>(ready ? '/businesses' : null, undefined, {
     shouldRetryOnError: false,
   });
   if (!ready) return null;
   if (data && data.data.length > 0) return <BusinessSelect businesses={data.data} />;
-  return <BusinessIdForm hint={error?.status === 501 ? BUSINESS_LIST_PENDING_HINT : undefined} />;
+  return <BusinessIdForm hint={error?.status === 501 ? t('listPending') : undefined} />;
 }

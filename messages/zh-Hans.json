@@ -1,0 +1,308 @@
+{
+  "common": {
+    "actions": {
+      "add": "添加",
+      "apply": "应用",
+      "back": "返回",
+      "cancel": "取消",
+      "close": "关闭",
+      "confirm": "确认",
+      "continue": "继续",
+      "copy": "复制",
+      "create": "创建",
+      "delete": "删除",
+      "done": "完成",
+      "edit": "编辑",
+      "next": "下一步",
+      "previous": "上一步",
+      "remove": "移除",
+      "retry": "重试",
+      "save": "保存",
+      "search": "搜索",
+      "send": "发送",
+      "submit": "提交",
+      "switch": "切换"
+    },
+    "states": {
+      "loading": "正在加载…",
+      "saving": "正在保存…",
+      "saved": "已保存",
+      "empty": "这里还没有内容。",
+      "unknown": "未知",
+      "none": "无",
+      "on": "开",
+      "off": "关",
+      "yes": "是",
+      "no": "否"
+    },
+    "count": {
+      "items": "{count, plural, =0 {无项目} other {# 个项目}}",
+      "selected": "{count, plural, =0 {未选择} other {已选择 # 个}}"
+    },
+    "a11y": {
+      "moreOptions": "更多选项",
+      "required": "必填"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "打开导航",
+      "navigationTitle": "导航",
+      "getStarted": "开始使用",
+      "groups": {
+        "make": "创作",
+        "manage": "管理",
+        "setup": "设置",
+        "staff": "PostMind 员工"
+      },
+      "items": {
+        "create": "创建",
+        "projects": "项目",
+        "library": "参考素材库",
+        "templates": "模板",
+        "publications": "发布",
+        "calendar": "日历",
+        "analytics": "数据分析",
+        "business": "商家与图片",
+        "connections": "账号连接",
+        "approvals": "审批流程",
+        "export": "导出数据",
+        "admin": "管理后台"
+      }
+    },
+    "theme": {
+      "useLight": "使用浅色主题",
+      "useDark": "使用深色主题"
+    },
+    "language": {
+      "label": "语言",
+      "trigger": "界面语言：{language}",
+      "changed": "界面语言已切换为{language}"
+    },
+    "business": {
+      "label": "商家",
+      "choose": "选择商家",
+      "idPlaceholder": "PostMind 商家 ID",
+      "listPending": "商家列表需等待 PostMind Core 接入：请输入商家 ID。"
+    },
+    "feedback": {
+      "button": "反馈",
+      "buttonAria": "发送反馈",
+      "title": "发送反馈",
+      "description": "告诉我们哪些好用、哪些不好用。我们会看到您当时所在的页面。",
+      "kindLegend": "反馈类型？",
+      "kindAria": "反馈类型",
+      "kinds": {
+        "bug": "出现问题",
+        "idea": "建议",
+        "praise": "我喜欢的地方",
+        "other": "其他"
+      },
+      "message": "内容",
+      "characterCount": "{count}/{max}",
+      "attachProject": "与我正在查看的项目相关",
+      "thanks": "感谢反馈！PostMind 团队会阅读每一条消息"
+    },
+    "notifications": {
+      "title": "通知",
+      "bellAria": "{count, plural, =0 {通知} other {通知，# 条未读}}",
+      "markAllRead": "全部标为已读",
+      "markRead": "标为已读",
+      "markReadAria": "将“{title}”标为已读",
+      "empty": "暂无通知。",
+      "emailPendingSetup": "邮件待设置：邮件发送功能尚未接入。",
+      "inAppOnly": "仅限应用内通知，邮件发送暂不可用。"
+    },
+    "preferences": {
+      "button": "通知偏好",
+      "title": "通知偏好",
+      "description": "选择您要接收的通知。邮件：待设置——您的邮件选项会被保存，并在邮件发送功能接入后生效。",
+      "tableAria": "通知偏好",
+      "notification": "通知",
+      "inApp": "应用内",
+      "email": "邮件",
+      "pendingSetup": "待设置",
+      "switchInApp": "{label}：应用内",
+      "switchEmail": "{label}：邮件",
+      "kinds": {
+        "generation_complete": "视频待审核",
+        "approval_pending": "审批等待超过 2 小时",
+        "publication_failed": "发布失败",
+        "auto_publish_failed": "自动发布已放弃",
+        "milestone": "里程碑（1 万次观看、100 条评论）",
+        "cost_alert": "预算提醒",
+        "cost_paused": "因预算限制暂停生成",
+        "safety_review": "内容安全审核",
+        "share_comment": "预览链接收到反馈",
+        "plan_quota": "套餐用量提醒（80% 和 100%）"
+      }
+    },
+    "usage": {
+      "bannerAria": "套餐用量",
+      "tiers": {
+        "BASIC": "基础版",
+        "STANDARD": "标准版",
+        "PLUS": "高级版",
+        "ENTERPRISE": "企业版"
+      },
+      "exceededTitle": "本月{tier}套餐的视频额度已用完",
+      "warningTitle": "即将达到本月{tier}套餐的额度上限",
+      "blockedBody": "新视频将暂停至 {date}。升级套餐即可继续创作。",
+      "resetBody": "额度将于 {date} 重置。升级套餐可获得更多视频。",
+      "shortVideos": "短视频",
+      "longVideos": "长视频",
+      "shortVideosUpTo": "短视频（最长 {seconds} 秒）",
+      "longVideosUpTo": "长视频（最长 {minutes} 分钟）",
+      "usedOf": "{used} / {limit}",
+      "usedUnlimited": "{used}（不限）",
+      "planName": "{tier}套餐",
+      "scans": "网站扫描：{scanned} / {limit} 个商家",
+      "scansUnlimited": "网站扫描：{scanned} 个商家（不限）",
+      "resets": "{date} 重置",
+      "enforced": "已启用额度限制",
+      "notEnforced": "尚未启用额度限制"
+    }
+  },
+  "errors": {
+    "generic": "出错了。",
+    "sessionExpired": "您的 PostMind 会话已过期，请重新登录。",
+    "forbidden": "您无权执行此操作。",
+    "rateLimited": "请求过于频繁，请稍后再试。",
+    "withProblems": "{message}：{problems}",
+    "requestFailed": "请求失败（{status}）",
+    "codes": {
+      "unauthorized": "您的 PostMind 会话已过期，请重新登录。",
+      "forbidden": "您无权执行此操作。",
+      "feature_disabled": "您的组织尚未开通此功能。",
+      "plan_tier": "您的套餐不包含此功能。请升级套餐后使用。",
+      "quota_exceeded": "您已达到本月套餐额度上限。升级套餐即可继续创作。",
+      "not_found": "未找到该内容，可能已被删除。",
+      "conflict": "在您操作期间内容已发生变化。请刷新后重试。",
+      "validation_error": "部分信息无效，请检查后重试。",
+      "unprocessable": "当前状态下无法执行此操作。",
+      "rate_deferred": "服务提供商繁忙，Studio 将稍后自动重试。",
+      "rate_limited": "请求过于频繁，请稍后再试。",
+      "payload_too_large": "文件过大。",
+      "kill_switch_active": "PostMind 目前已暂停生成，请稍后再试。",
+      "provider_error": "生成服务提供商出现问题，请稍后再试。",
+      "platform_error": "社交平台出现问题，请稍后再试。",
+      "no_provider_available": "目前没有可处理此任务的服务提供商，请稍后再试。",
+      "cost_cap_paused": "已达到预算上限，生成已暂停。",
+      "upstream_error": "已连接的服务出现问题，请稍后再试。",
+      "configuration_error": "Studio 尚未完成此功能的配置，请联系 PostMind 支持团队。",
+      "not_implemented": "此功能暂不可用。",
+      "internal_error": "我们这边出了点问题，请稍后再试。",
+      "upload_failed": "上传失败，请重试。"
+    }
+  },
+  "primitives": {
+    "errorTitle": "无法加载",
+    "retry": "重试"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "刚刚",
+    "duration": {
+      "hoursMinutes": "{hours} 小时 {minutes} 分",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} 秒"
+    },
+    "projectState": {
+      "DRAFT": "草稿",
+      "QUEUED": "排队中",
+      "SCANNING": "自动填充中",
+      "PLANNING": "正在撰写脚本",
+      "ASSETS_QUEUED": "正在生成镜头",
+      "ASSETS_GENERATING": "正在生成镜头",
+      "RENDERING": "渲染中",
+      "QUALITY_CHECKING": "质量检查中",
+      "QUALITY_FAILED": "质量检查未通过",
+      "READY_FOR_REVIEW": "待审核",
+      "APPROVED": "已批准",
+      "PUBLISHING": "发布中",
+      "PUBLISHED": "已发布",
+      "PARTIALLY_PUBLISHED": "部分已发布",
+      "REJECTED": "已拒绝",
+      "FAILED": "失败"
+    },
+    "publicationState": {
+      "SCHEDULED": "已排期",
+      "PUBLISHING": "发布中",
+      "PUBLISHED": "已上线",
+      "FAILED": "失败",
+      "CANCELLED": "已取消",
+      "TAKEN_DOWN": "已下架"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Instagram 动态",
+      "facebook_feed": "Facebook 动态"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "“{name}”已可审核",
+      "body": "所有版本均已通过质量检查。请审核后批准或发布。"
+    },
+    "generationAutoApproved": {
+      "title": "“{name}”已生成并自动批准",
+      "body": "该视频已通过全部质量检查，并由您的审核策略自动批准。"
+    },
+    "publicationFailed": {
+      "title": "“{name}”发布到 {platform} 失败",
+      "body": "{reason}——请打开项目重试。"
+    },
+    "approvalPending": {
+      "title": "“{name}”正在等待审批",
+      "body": "该项目已待审核超过 2 小时。"
+    },
+    "autoPublishFailed": {
+      "title": "“{name}”自动发布到 {platform} 失败",
+      "body": "{reason}——请打开项目重试。"
+    },
+    "shareComment": {
+      "title": "{name} 收到新反馈",
+      "body": "{author}：{comment}"
+    },
+    "milestoneViews": {
+      "title": "“{name}”在 {platform} 上的观看次数已达 {threshold, number}",
+      "body": "目前观看次数为 {count, number}。打开项目查看其发布和数据分析。"
+    },
+    "milestoneComments": {
+      "title": "“{name}”在 {platform} 上的评论数已达 {threshold, number}",
+      "body": "目前评论数为 {count, number}。打开项目查看其发布和数据分析。"
+    },
+    "autoResumedMonthly": {
+      "title": "“{name}”已自动恢复",
+      "body": "新的一个月已开始，生成已从暂停处继续。"
+    },
+    "autoResumedDaily": {
+      "title": "“{name}”已自动恢复",
+      "body": "新的一天（UTC）已开始，生成已从暂停处继续。"
+    }
+  },
+  "create": {},
+  "review": {},
+  "slideshow": {},
+  "overlays": {},
+  "projects": {},
+  "publications": {},
+  "calendar": {},
+  "business": {},
+  "connections": {},
+  "library": {},
+  "analytics": {},
+  "admin": {},
+  "onboarding": {},
+  "share": {},
+  "templates": {},
+  "account": {},
+  "approvals": {}
+}

@@ -1,0 +1,308 @@
+{
+  "common": {
+    "actions": {
+      "add": "Añadir",
+      "apply": "Aplicar",
+      "back": "Atrás",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "confirm": "Confirmar",
+      "continue": "Continuar",
+      "copy": "Copiar",
+      "create": "Crear",
+      "delete": "Eliminar",
+      "done": "Listo",
+      "edit": "Editar",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "remove": "Quitar",
+      "retry": "Reintentar",
+      "save": "Guardar",
+      "search": "Buscar",
+      "send": "Enviar",
+      "submit": "Enviar",
+      "switch": "Cambiar"
+    },
+    "states": {
+      "loading": "Cargando…",
+      "saving": "Guardando…",
+      "saved": "Guardado",
+      "empty": "Aún no hay nada aquí.",
+      "unknown": "Desconocido",
+      "none": "Ninguno",
+      "on": "Activado",
+      "off": "Desactivado",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "count": {
+      "items": "{count, plural, =0 {Ningún elemento} one {# elemento} many {# de elementos} other {# elementos}}",
+      "selected": "{count, plural, =0 {Nada seleccionado} one {# seleccionado} many {# seleccionados} other {# seleccionados}}"
+    },
+    "a11y": {
+      "moreOptions": "Más opciones",
+      "required": "Obligatorio"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "Abrir navegación",
+      "navigationTitle": "Navegación",
+      "getStarted": "Primeros pasos",
+      "groups": {
+        "make": "Crear",
+        "manage": "Gestionar",
+        "setup": "Configurar",
+        "staff": "Equipo de PostMind"
+      },
+      "items": {
+        "create": "Crear",
+        "projects": "Proyectos",
+        "library": "Biblioteca de referencias",
+        "templates": "Plantillas",
+        "publications": "Publicaciones",
+        "calendar": "Calendario",
+        "analytics": "Analítica",
+        "business": "Negocio e imágenes",
+        "connections": "Conexiones",
+        "approvals": "Flujos de aprobación",
+        "export": "Exportar datos",
+        "admin": "Administración"
+      }
+    },
+    "theme": {
+      "useLight": "Usar tema claro",
+      "useDark": "Usar tema oscuro"
+    },
+    "language": {
+      "label": "Idioma",
+      "trigger": "Idioma de la interfaz: {language}",
+      "changed": "Idioma de la interfaz cambiado a {language}"
+    },
+    "business": {
+      "label": "Negocio",
+      "choose": "Elige un negocio",
+      "idPlaceholder": "ID de negocio de PostMind",
+      "listPending": "La lista de negocios está pendiente de PostMind Core: escribe el ID del negocio."
+    },
+    "feedback": {
+      "button": "Comentarios",
+      "buttonAria": "Enviar comentarios",
+      "title": "Enviar comentarios",
+      "description": "Cuéntanos qué funciona y qué no. Veremos en qué pantalla estabas.",
+      "kindLegend": "¿Qué tipo de comentario es?",
+      "kindAria": "Tipo de comentario",
+      "kinds": {
+        "bug": "Algo no funciona",
+        "idea": "Una idea",
+        "praise": "Algo que me gusta",
+        "other": "Otro"
+      },
+      "message": "Mensaje",
+      "characterCount": "{count}/{max}",
+      "attachProject": "Tiene que ver con el proyecto que estoy viendo",
+      "thanks": "Gracias — el equipo de PostMind lee todos los mensajes"
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "bellAria": "{count, plural, =0 {Notificaciones} one {Notificaciones, # sin leer} many {Notificaciones, # sin leer} other {Notificaciones, # sin leer}}",
+      "markAllRead": "Marcar todo como leído",
+      "markRead": "Marcar como leído",
+      "markReadAria": "Marcar «{title}» como leído",
+      "empty": "Aún no hay notificaciones.",
+      "emailPendingSetup": "Correo electrónico pendiente de configurar: el envío de correos aún no está conectado.",
+      "inAppOnly": "Solo en la aplicación. El envío de correos aún no está disponible."
+    },
+    "preferences": {
+      "button": "Preferencias de notificaciones",
+      "title": "Preferencias de notificaciones",
+      "description": "Elige qué te llega. Correo electrónico: pendiente de configurar — tus preferencias de correo se guardan y se aplicarán en cuanto se conecte el envío de correos.",
+      "tableAria": "Preferencias de notificaciones",
+      "notification": "Notificación",
+      "inApp": "En la aplicación",
+      "email": "Correo electrónico",
+      "pendingSetup": "pendiente de configurar",
+      "switchInApp": "{label}: en la aplicación",
+      "switchEmail": "{label}: correo electrónico",
+      "kinds": {
+        "generation_complete": "Vídeo listo para revisar",
+        "approval_pending": "Aprobación pendiente desde hace más de 2 horas",
+        "publication_failed": "Error al publicar",
+        "auto_publish_failed": "La publicación automática se ha detenido",
+        "milestone": "Hitos (10 mil visualizaciones, 100 comentarios)",
+        "cost_alert": "Alertas de presupuesto",
+        "cost_paused": "Generación pausada por un presupuesto",
+        "safety_review": "Revisiones de seguridad del contenido",
+        "share_comment": "Comentarios en un enlace de vista previa",
+        "plan_quota": "Alertas de uso del plan (80 % y 100 %)"
+      }
+    },
+    "usage": {
+      "bannerAria": "Uso del plan",
+      "tiers": {
+        "BASIC": "Básico",
+        "STANDARD": "Estándar",
+        "PLUS": "Plus",
+        "ENTERPRISE": "Empresa"
+      },
+      "exceededTitle": "Has usado todos los vídeos de tu plan {tier} de este mes",
+      "warningTitle": "Estás cerca del límite mensual de tu plan {tier}",
+      "blockedBody": "Los vídeos nuevos están en pausa hasta el {date}. Mejora tu plan para seguir creando.",
+      "resetBody": "Tu cupo se renueva el {date}. Mejora tu plan para tener más vídeos.",
+      "shortVideos": "Vídeos cortos",
+      "longVideos": "Vídeos largos",
+      "shortVideosUpTo": "Vídeos cortos (hasta {seconds} s)",
+      "longVideosUpTo": "Vídeos largos (hasta {minutes} min)",
+      "usedOf": "{used} de {limit}",
+      "usedUnlimited": "{used} (ilimitado)",
+      "planName": "Plan {tier}",
+      "scans": "análisis de sitio web para {scanned} de {limit} negocios",
+      "scansUnlimited": "análisis de sitio web para {scanned} negocios (ilimitados)",
+      "resets": "se renueva el {date}",
+      "enforced": "límites aplicados",
+      "notEnforced": "límites aún no aplicados"
+    }
+  },
+  "errors": {
+    "generic": "Algo ha salido mal.",
+    "sessionExpired": "Tu sesión de PostMind ha caducado. Vuelve a iniciar sesión.",
+    "forbidden": "No tienes permiso para hacer eso.",
+    "rateLimited": "Demasiadas solicitudes — vuelve a intentarlo en un momento.",
+    "withProblems": "{message}: {problems}",
+    "requestFailed": "Error en la solicitud ({status})",
+    "codes": {
+      "unauthorized": "Tu sesión de PostMind ha caducado. Vuelve a iniciar sesión.",
+      "forbidden": "No tienes permiso para hacer eso.",
+      "feature_disabled": "Esta función no está activada para tu organización.",
+      "plan_tier": "Tu plan no incluye esta función. Mejora tu plan para usarla.",
+      "quota_exceeded": "Has alcanzado el límite mensual de tu plan. Mejora tu plan para seguir creando.",
+      "not_found": "No lo hemos encontrado. Puede que se haya eliminado.",
+      "conflict": "Esto ha cambiado mientras trabajabas en ello. Actualiza y vuelve a intentarlo.",
+      "validation_error": "Algunos datos no son válidos. Revísalos y vuelve a intentarlo.",
+      "unprocessable": "No se puede hacer en su estado actual.",
+      "rate_deferred": "Un proveedor está ocupado. Studio volverá a intentarlo en breve.",
+      "rate_limited": "Demasiadas solicitudes — vuelve a intentarlo en un momento.",
+      "payload_too_large": "El archivo es demasiado grande.",
+      "kill_switch_active": "PostMind ha pausado la generación en este momento. Inténtalo más tarde.",
+      "provider_error": "Un proveedor de generación ha tenido un problema. Vuelve a intentarlo en un momento.",
+      "platform_error": "La red social ha tenido un problema. Vuelve a intentarlo en un momento.",
+      "no_provider_available": "Ahora mismo ningún proveedor puede encargarse de esta tarea. Inténtalo más tarde.",
+      "cost_cap_paused": "La generación está en pausa porque se ha alcanzado un presupuesto.",
+      "upstream_error": "Un servicio conectado ha tenido un problema. Vuelve a intentarlo en un momento.",
+      "configuration_error": "Studio aún no está totalmente configurado para esto. Ponte en contacto con el soporte de PostMind.",
+      "not_implemented": "Esto aún no está disponible.",
+      "internal_error": "Algo ha salido mal por nuestra parte. Vuelve a intentarlo en un momento.",
+      "upload_failed": "No se ha podido subir el archivo. Vuelve a intentarlo."
+    }
+  },
+  "primitives": {
+    "errorTitle": "No se ha podido cargar",
+    "retry": "Reintentar"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "ahora mismo",
+    "duration": {
+      "hoursMinutes": "{hours} h {minutes} min",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} s"
+    },
+    "projectState": {
+      "DRAFT": "Borrador",
+      "QUEUED": "En cola",
+      "SCANNING": "Autocompletando",
+      "PLANNING": "Escribiendo el guion",
+      "ASSETS_QUEUED": "Generando planos",
+      "ASSETS_GENERATING": "Generando planos",
+      "RENDERING": "Renderizando",
+      "QUALITY_CHECKING": "Comprobando la calidad",
+      "QUALITY_FAILED": "Control de calidad no superado",
+      "READY_FOR_REVIEW": "Listo para revisar",
+      "APPROVED": "Aprobado",
+      "PUBLISHING": "Publicando",
+      "PUBLISHED": "Publicado",
+      "PARTIALLY_PUBLISHED": "Publicado parcialmente",
+      "REJECTED": "Rechazado",
+      "FAILED": "Error"
+    },
+    "publicationState": {
+      "SCHEDULED": "Programada",
+      "PUBLISHING": "Publicando",
+      "PUBLISHED": "Publicada",
+      "FAILED": "Error",
+      "CANCELLED": "Cancelada",
+      "TAKEN_DOWN": "Retirada"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Feed de Instagram",
+      "facebook_feed": "Feed de Facebook"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "«{name}» está listo para revisar",
+      "body": "Todas las variantes han superado los controles de calidad. Revísalo y apruébalo o publícalo."
+    },
+    "generationAutoApproved": {
+      "title": "«{name}» se ha generado y se ha aprobado automáticamente",
+      "body": "El vídeo ha superado todos los controles de calidad y tu política de revisión lo ha aprobado automáticamente."
+    },
+    "publicationFailed": {
+      "title": "Error al publicar «{name}» en {platform}",
+      "body": "{reason} — abre el proyecto para reintentarlo."
+    },
+    "approvalPending": {
+      "title": "«{name}» está pendiente de aprobación",
+      "body": "Lleva más de 2 horas listo para revisar."
+    },
+    "autoPublishFailed": {
+      "title": "Error en la publicación automática de «{name}» en {platform}",
+      "body": "{reason} — abre el proyecto para reintentarlo."
+    },
+    "shareComment": {
+      "title": "Nuevos comentarios sobre {name}",
+      "body": "{author}: {comment}"
+    },
+    "milestoneViews": {
+      "title": "«{name}» ha alcanzado {threshold, number} visualizaciones en {platform}",
+      "body": "Ya lleva {count, number} visualizaciones. Abre el proyecto para ver sus publicaciones y su analítica."
+    },
+    "milestoneComments": {
+      "title": "«{name}» ha alcanzado {threshold, number} comentarios en {platform}",
+      "body": "Ya lleva {count, number} comentarios. Abre el proyecto para ver sus publicaciones y su analítica."
+    },
+    "autoResumedMonthly": {
+      "title": "«{name}» se ha reanudado automáticamente",
+      "body": "Ha empezado un nuevo mes, así que la generación ha continuado donde se pausó."
+    },
+    "autoResumedDaily": {
+      "title": "«{name}» se ha reanudado automáticamente",
+      "body": "Ha empezado un nuevo día (UTC), así que la generación ha continuado donde se pausó."
+    }
+  },
+  "create": {},
+  "review": {},
+  "slideshow": {},
+  "overlays": {},
+  "projects": {},
+  "publications": {},
+  "calendar": {},
+  "business": {},
+  "connections": {},
+  "library": {},
+  "analytics": {},
+  "admin": {},
+  "onboarding": {},
+  "share": {},
+  "templates": {},
+  "account": {},
+  "approvals": {}
+}

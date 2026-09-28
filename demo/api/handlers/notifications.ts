@@ -1,6 +1,8 @@
 // In-app notifications (services/notifications.ts): newest first, cursor paging, unread count,
 // mark one read / read all. Titles and bodies follow the real event writers
-// (notifications/events.ts, cost/guard.ts).
+// (notifications/events.ts, cost/guard.ts). Phase 16 (16.5): rows the real writers key carry
+// messageKey + messageParams and render in the reader's locale; the cost and safety rows are not
+// keyed yet and show their stored English text (the fallback for pre-16.5 rows).
 import { PROJECTS } from '../ids';
 import { DemoHttpError, route } from '../registry';
 
@@ -12,6 +14,8 @@ interface DemoNotification {
   link: string | null;
   readAt: string | null;
   createdAt: string;
+  messageKey?: string;
+  messageParams?: Record<string, string | number>;
 }
 
 const MIN = 60_000;
@@ -29,6 +33,8 @@ const rows: DemoNotification[] = [
     link: `/projects/${PROJECTS.springMenu.id}`,
     readAt: null,
     createdAt: ago(12 * MIN),
+    messageKey: 'generationReady',
+    messageParams: { name: PROJECTS.springMenu.name },
   },
   {
     id: 'ntf-wholesale-failed',
@@ -38,6 +44,13 @@ const rows: DemoNotification[] = [
     link: `/projects/${PROJECTS.wholesale.id}`,
     readAt: null,
     createdAt: ago(2 * DAY - 25 * MIN),
+    messageKey: 'publicationFailed',
+    messageParams: {
+      name: PROJECTS.wholesale.name,
+      platform: 'linkedin_video',
+      reason:
+        'LinkedIn rejected the upload: the video is longer than the 10 minutes a page post allows',
+    },
   },
   {
     id: 'ntf-christmas-80',
@@ -56,6 +69,8 @@ const rows: DemoNotification[] = [
     link: `/projects/${PROJECTS.fiveBakes.id}`,
     readAt: null,
     createdAt: ago(5 * HOUR),
+    messageKey: 'approvalPending',
+    messageParams: { name: PROJECTS.fiveBakes.name },
   },
   {
     // 13.23 milestone (analytics poller, once per publication per threshold).
@@ -66,6 +81,13 @@ const rows: DemoNotification[] = [
     link: `/projects/${PROJECTS.sourdoughClass.id}`,
     readAt: null,
     createdAt: ago(35 * MIN),
+    messageKey: 'milestoneViews',
+    messageParams: {
+      name: PROJECTS.sourdoughClass.name,
+      platform: 'tiktok',
+      threshold: 10_000,
+      count: 10_482,
+    },
   },
   {
     // 13.17 content-safety review opened (the run is paused, not failed).
@@ -103,6 +125,8 @@ const rows: DemoNotification[] = [
     link: `/projects/${PROJECTS.sourdoughClass.id}`,
     readAt: ago(6 * DAY),
     createdAt: ago(7 * DAY),
+    messageKey: 'generationReady',
+    messageParams: { name: PROJECTS.sourdoughClass.name },
   },
   {
     id: 'ntf-daily-provider',

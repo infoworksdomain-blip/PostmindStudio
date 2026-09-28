@@ -189,3 +189,10 @@
     }
   }
 }
+
+/* BACKLOG 16.2 — direction-dependent icons (chevrons, arrows, "next"/"back") mirror in RTL.
+   Studio components use Tailwind's `rtl:-scale-x-100`; shadcn's generated components mark the
+   same icons with `cn-rtl-flip`. */
+[dir='rtl'] .cn-rtl-flip {
+  transform: scaleX(-1);
+}

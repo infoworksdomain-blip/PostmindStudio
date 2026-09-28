@@ -1,0 +1,308 @@
+{
+  "common": {
+    "actions": {
+      "add": "जोड़ें",
+      "apply": "लागू करें",
+      "back": "वापस",
+      "cancel": "रद्द करें",
+      "close": "बंद करें",
+      "confirm": "पुष्टि करें",
+      "continue": "जारी रखें",
+      "copy": "कॉपी करें",
+      "create": "बनाएँ",
+      "delete": "हटाएँ",
+      "done": "हो गया",
+      "edit": "संपादित करें",
+      "next": "अगला",
+      "previous": "पिछला",
+      "remove": "निकालें",
+      "retry": "फिर से कोशिश करें",
+      "save": "सेव करें",
+      "search": "खोजें",
+      "send": "भेजें",
+      "submit": "सबमिट करें",
+      "switch": "बदलें"
+    },
+    "states": {
+      "loading": "लोड हो रहा है…",
+      "saving": "सेव हो रहा है…",
+      "saved": "सेव हो गया",
+      "empty": "यहाँ अभी कुछ नहीं है।",
+      "unknown": "अज्ञात",
+      "none": "कोई नहीं",
+      "on": "चालू",
+      "off": "बंद",
+      "yes": "हाँ",
+      "no": "नहीं"
+    },
+    "count": {
+      "items": "{count, plural, =0 {कोई आइटम नहीं} one {# आइटम} other {# आइटम}}",
+      "selected": "{count, plural, =0 {कुछ भी चुना नहीं गया} one {# चुना गया} other {# चुने गए}}"
+    },
+    "a11y": {
+      "moreOptions": "और विकल्प",
+      "required": "ज़रूरी"
+    }
+  },
+  "shell": {
+    "nav": {
+      "ariaLabel": "Studio",
+      "openNavigation": "नेविगेशन खोलें",
+      "navigationTitle": "नेविगेशन",
+      "getStarted": "शुरू करें",
+      "groups": {
+        "make": "बनाएँ",
+        "manage": "प्रबंधित करें",
+        "setup": "सेट अप",
+        "staff": "PostMind स्टाफ़"
+      },
+      "items": {
+        "create": "बनाएँ",
+        "projects": "प्रोजेक्ट",
+        "library": "रेफ़रेंस लाइब्रेरी",
+        "templates": "टेम्पलेट",
+        "publications": "प्रकाशन",
+        "calendar": "कैलेंडर",
+        "analytics": "एनालिटिक्स",
+        "business": "व्यवसाय और इमेज",
+        "connections": "कनेक्शन",
+        "approvals": "अनुमोदन वर्कफ़्लो",
+        "export": "डेटा एक्सपोर्ट करें",
+        "admin": "एडमिन"
+      }
+    },
+    "theme": {
+      "useLight": "लाइट थीम इस्तेमाल करें",
+      "useDark": "डार्क थीम इस्तेमाल करें"
+    },
+    "language": {
+      "label": "भाषा",
+      "trigger": "इंटरफ़ेस की भाषा: {language}",
+      "changed": "इंटरफ़ेस की भाषा बदलकर {language} कर दी गई"
+    },
+    "business": {
+      "label": "व्यवसाय",
+      "choose": "व्यवसाय चुनें",
+      "idPlaceholder": "PostMind व्यवसाय ID",
+      "listPending": "व्यवसायों की सूची PostMind Core से आनी बाकी है: व्यवसाय ID लिखें।"
+    },
+    "feedback": {
+      "button": "फ़ीडबैक",
+      "buttonAria": "फ़ीडबैक भेजें",
+      "title": "फ़ीडबैक भेजें",
+      "description": "हमें बताएँ कि क्या ठीक चल रहा है और क्या नहीं। हम देख पाएँगे कि आप किस स्क्रीन पर थे।",
+      "kindLegend": "किस तरह का फ़ीडबैक?",
+      "kindAria": "फ़ीडबैक का प्रकार",
+      "kinds": {
+        "bug": "कुछ काम नहीं कर रहा",
+        "idea": "एक सुझाव",
+        "praise": "कुछ जो मुझे पसंद है",
+        "other": "अन्य"
+      },
+      "message": "संदेश",
+      "characterCount": "{count}/{max}",
+      "attachProject": "यह उस प्रोजेक्ट के बारे में है जिसे मैं देख रहा/रही हूँ",
+      "thanks": "धन्यवाद — PostMind टीम हर संदेश पढ़ती है"
+    },
+    "notifications": {
+      "title": "सूचनाएँ",
+      "bellAria": "{count, plural, =0 {सूचनाएँ} one {सूचनाएँ, # अपठित} other {सूचनाएँ, # अपठित}}",
+      "markAllRead": "सभी को पढ़ा गया मार्क करें",
+      "markRead": "पढ़ा गया मार्क करें",
+      "markReadAria": "“{title}” को पढ़ा गया मार्क करें",
+      "empty": "अभी कोई सूचना नहीं है।",
+      "emailPendingSetup": "ईमेल सेटअप बाकी है: ईमेल डिलीवरी अभी कनेक्ट नहीं है।",
+      "inAppOnly": "केवल ऐप में। ईमेल डिलीवरी अभी उपलब्ध नहीं है।"
+    },
+    "preferences": {
+      "button": "सूचना प्राथमिकताएँ",
+      "title": "सूचना प्राथमिकताएँ",
+      "description": "चुनें कि आपको कौन-सी सूचनाएँ मिलें। ईमेल: सेटअप बाकी है — आपकी ईमेल पसंद सेव हो जाती है और ईमेल डिलीवरी कनेक्ट होते ही लागू होगी।",
+      "tableAria": "सूचना प्राथमिकताएँ",
+      "notification": "सूचना",
+      "inApp": "ऐप में",
+      "email": "ईमेल",
+      "pendingSetup": "सेटअप बाकी",
+      "switchInApp": "{label}: ऐप में",
+      "switchEmail": "{label}: ईमेल",
+      "kinds": {
+        "generation_complete": "वीडियो समीक्षा के लिए तैयार",
+        "approval_pending": "2 घंटे से अधिक से अनुमोदन बाकी",
+        "publication_failed": "प्रकाशन विफल रहा",
+        "auto_publish_failed": "ऑटो-पब्लिश नहीं हो सका",
+        "milestone": "उपलब्धियाँ (10k व्यूज़, 100 कमेंट)",
+        "cost_alert": "बजट अलर्ट",
+        "cost_paused": "बजट के कारण जनरेशन रोका गया",
+        "safety_review": "कंटेंट-सुरक्षा समीक्षाएँ",
+        "share_comment": "प्रीव्यू लिंक पर फ़ीडबैक",
+        "plan_quota": "प्लान उपयोग अलर्ट (80% और 100%)"
+      }
+    },
+    "usage": {
+      "bannerAria": "प्लान उपयोग",
+      "tiers": {
+        "BASIC": "Basic",
+        "STANDARD": "Standard",
+        "PLUS": "Plus",
+        "ENTERPRISE": "Enterprise"
+      },
+      "exceededTitle": "आपने इस महीने के {tier} प्लान के सभी वीडियो इस्तेमाल कर लिए हैं",
+      "warningTitle": "आप इस महीने की {tier} प्लान सीमा के करीब हैं",
+      "blockedBody": "{date} तक नए वीडियो रुके हुए हैं। बनाना जारी रखने के लिए अपना प्लान अपग्रेड करें।",
+      "resetBody": "सीमा {date} को रीसेट होगी। ज़्यादा वीडियो के लिए अपना प्लान अपग्रेड करें।",
+      "shortVideos": "छोटे वीडियो",
+      "longVideos": "लंबे वीडियो",
+      "shortVideosUpTo": "छोटे वीडियो ({seconds} सेकंड तक)",
+      "longVideosUpTo": "लंबे वीडियो ({minutes} मिनट तक)",
+      "usedOf": "{limit} में से {used}",
+      "usedUnlimited": "{used} (असीमित)",
+      "planName": "{tier} प्लान",
+      "scans": "{limit} में से {scanned} व्यवसायों के लिए वेबसाइट स्कैन",
+      "scansUnlimited": "असीमित में से {scanned} व्यवसायों के लिए वेबसाइट स्कैन",
+      "resets": "{date} को रीसेट",
+      "enforced": "सीमाएँ लागू हैं",
+      "notEnforced": "सीमाएँ अभी लागू नहीं हैं"
+    }
+  },
+  "errors": {
+    "generic": "कुछ गलत हो गया।",
+    "sessionExpired": "आपका PostMind सत्र समाप्त हो गया है। फिर से साइन इन करें।",
+    "forbidden": "आपको ऐसा करने की अनुमति नहीं है।",
+    "rateLimited": "बहुत अधिक अनुरोध — थोड़ी देर में फिर से कोशिश करें।",
+    "withProblems": "{message}: {problems}",
+    "requestFailed": "अनुरोध विफल रहा ({status})",
+    "codes": {
+      "unauthorized": "आपका PostMind सत्र समाप्त हो गया है। फिर से साइन इन करें।",
+      "forbidden": "आपको ऐसा करने की अनुमति नहीं है।",
+      "feature_disabled": "यह सुविधा आपके संगठन के लिए चालू नहीं है।",
+      "plan_tier": "यह आपके प्लान में शामिल नहीं है। इसे इस्तेमाल करने के लिए अपना प्लान अपग्रेड करें।",
+      "quota_exceeded": "आप इस महीने अपने प्लान की सीमा तक पहुँच गए हैं। बनाना जारी रखने के लिए अपना प्लान अपग्रेड करें।",
+      "not_found": "यह नहीं मिला। हो सकता है इसे हटा दिया गया हो।",
+      "conflict": "आपके काम करते समय इसमें बदलाव हो गया। रीफ़्रेश करके फिर से कोशिश करें।",
+      "validation_error": "कुछ जानकारी मान्य नहीं है। उसे जाँचकर फिर से कोशिश करें।",
+      "unprocessable": "मौजूदा स्थिति में यह नहीं किया जा सकता।",
+      "rate_deferred": "एक प्रोवाइडर व्यस्त है। Studio जल्द ही फिर से कोशिश करेगा।",
+      "rate_limited": "बहुत अधिक अनुरोध — थोड़ी देर में फिर से कोशिश करें।",
+      "payload_too_large": "यह फ़ाइल बहुत बड़ी है।",
+      "kill_switch_active": "PostMind ने अभी जनरेशन रोक रखा है। बाद में फिर से कोशिश करें।",
+      "provider_error": "एक जनरेशन प्रोवाइडर में समस्या आई। थोड़ी देर में फिर से कोशिश करें।",
+      "platform_error": "सोशल प्लैटफ़ॉर्म में समस्या आई। थोड़ी देर में फिर से कोशिश करें।",
+      "no_provider_available": "अभी कोई प्रोवाइडर यह काम नहीं ले सकता। बाद में फिर से कोशिश करें।",
+      "cost_cap_paused": "बजट सीमा पूरी होने के कारण जनरेशन रोका गया है।",
+      "upstream_error": "एक कनेक्ट की गई सेवा में समस्या आई। थोड़ी देर में फिर से कोशिश करें।",
+      "configuration_error": "Studio अभी इसके लिए पूरी तरह सेट अप नहीं है। PostMind सपोर्ट से संपर्क करें।",
+      "not_implemented": "यह अभी उपलब्ध नहीं है।",
+      "internal_error": "हमारी तरफ़ से कुछ गलत हो गया। थोड़ी देर में फिर से कोशिश करें।",
+      "upload_failed": "अपलोड विफल रहा। फिर से कोशिश करें।"
+    }
+  },
+  "primitives": {
+    "errorTitle": "इसे लोड नहीं किया जा सका",
+    "retry": "फिर से कोशिश करें"
+  },
+  "format": {
+    "none": "—",
+    "justNow": "अभी-अभी",
+    "duration": {
+      "hoursMinutes": "{hours} घं {minutes} मि",
+      "minutesSeconds": "{minutes}:{seconds}",
+      "seconds": "{seconds} से"
+    },
+    "projectState": {
+      "DRAFT": "ड्राफ़्ट",
+      "QUEUED": "कतार में",
+      "SCANNING": "अपने-आप भरा जा रहा है",
+      "PLANNING": "स्क्रिप्ट लिखी जा रही है",
+      "ASSETS_QUEUED": "शॉट बनाए जा रहे हैं",
+      "ASSETS_GENERATING": "शॉट बनाए जा रहे हैं",
+      "RENDERING": "रेंडर हो रहा है",
+      "QUALITY_CHECKING": "गुणवत्ता जाँची जा रही है",
+      "QUALITY_FAILED": "गुणवत्ता जाँच विफल",
+      "READY_FOR_REVIEW": "समीक्षा के लिए तैयार",
+      "APPROVED": "स्वीकृत",
+      "PUBLISHING": "प्रकाशित हो रहा है",
+      "PUBLISHED": "प्रकाशित",
+      "PARTIALLY_PUBLISHED": "आंशिक रूप से प्रकाशित",
+      "REJECTED": "अस्वीकृत",
+      "FAILED": "विफल"
+    },
+    "publicationState": {
+      "SCHEDULED": "शेड्यूल किया गया",
+      "PUBLISHING": "प्रकाशित हो रहा है",
+      "PUBLISHED": "लाइव",
+      "FAILED": "विफल",
+      "CANCELLED": "रद्द किया गया",
+      "TAKEN_DOWN": "हटाया गया"
+    },
+    "platform": {
+      "tiktok": "TikTok",
+      "instagram_reel": "Instagram Reels",
+      "youtube_short": "YouTube Shorts",
+      "youtube": "YouTube",
+      "linkedin_video": "LinkedIn",
+      "x": "X",
+      "facebook": "Facebook Reels",
+      "instagram_feed": "Instagram फ़ीड",
+      "facebook_feed": "Facebook फ़ीड"
+    }
+  },
+  "notifications": {
+    "generationReady": {
+      "title": "“{name}” समीक्षा के लिए तैयार है",
+      "body": "हर वेरिएंट ने गुणवत्ता जाँच पास कर ली है। इसकी समीक्षा करें, फिर स्वीकृत या प्रकाशित करें।"
+    },
+    "generationAutoApproved": {
+      "title": "“{name}” बन गया है और अपने-आप स्वीकृत हो गया",
+      "body": "वीडियो ने हर गुणवत्ता जाँच पास कर ली और आपकी समीक्षा नीति ने इसे अपने-आप स्वीकृत कर दिया।"
+    },
+    "publicationFailed": {
+      "title": "“{name}” को {platform} पर प्रकाशित नहीं किया जा सका",
+      "body": "{reason} — फिर से कोशिश करने के लिए प्रोजेक्ट खोलें।"
+    },
+    "approvalPending": {
+      "title": "“{name}” अनुमोदन की प्रतीक्षा में है",
+      "body": "यह 2 घंटे से अधिक समय से समीक्षा के लिए तैयार है।"
+    },
+    "autoPublishFailed": {
+      "title": "“{name}” को {platform} पर ऑटो-पब्लिश नहीं किया जा सका",
+      "body": "{reason} — फिर से कोशिश करने के लिए प्रोजेक्ट खोलें।"
+    },
+    "shareComment": {
+      "title": "{name} पर नया फ़ीडबैक",
+      "body": "{author}: {comment}"
+    },
+    "milestoneViews": {
+      "title": "“{name}” ने {platform} पर {threshold, number} व्यूज़ पूरे किए",
+      "body": "अब {count, number} व्यूज़ हैं। इसके प्रकाशन और एनालिटिक्स देखने के लिए प्रोजेक्ट खोलें।"
+    },
+    "milestoneComments": {
+      "title": "“{name}” ने {platform} पर {threshold, number} कमेंट पूरे किए",
+      "body": "अब {count, number} कमेंट हैं। इसके प्रकाशन और एनालिटिक्स देखने के लिए प्रोजेक्ट खोलें।"
+    },
+    "autoResumedMonthly": {
+      "title": "“{name}” अपने-आप फिर से शुरू हो गया",
+      "body": "नया महीना शुरू हो गया, इसलिए जनरेशन वहीं से जारी रहा जहाँ रुका था।"
+    },
+    "autoResumedDaily": {
+      "title": "“{name}” अपने-आप फिर से शुरू हो गया",
+      "body": "नया दिन (UTC) शुरू हो गया, इसलिए जनरेशन वहीं से जारी रहा जहाँ रुका था।"
+    }
+  },
+  "create": {},
+  "review": {},
+  "slideshow": {},
+  "overlays": {},
+  "projects": {},
+  "publications": {},
+  "calendar": {},
+  "business": {},
+  "connections": {},
+  "library": {},
+  "analytics": {},
+  "admin": {},
+  "onboarding": {},
+  "share": {},
+  "templates": {},
+  "account": {},
+  "approvals": {}
+}
