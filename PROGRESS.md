@@ -8,6 +8,7 @@ One line per completed backlog item. Newest at the top.
 
 ## Deployment: Render
 
+[2026-09-28] fix: narration captions (13.6) now use the business default brand kit, not only a kit chosen on the project (same resolver as composition, pipeline/brand-resolve.ts). Found by a flaky GP-10: it read the first overlay without an order; it now checks every overlay on the first shot.
 [2026-09-28] [Render] Studio deployable on Render from one Blueprint (`render.yaml`): project `postmind-studio`, environments staging (auto-deploy after CI) and production (manual promotion), everything in frankfurt. Render docs read 2026-09-28 and cited inline (blueprint-spec, private-network, deploys, rollbacks, postgresql-backups/-extensions/-connection-pooling, key-value, compute plans, pricing, Cloudflare DNS, REST API deploys/rollback).
 - Per environment: Postgres 17 (pgvector, private only), Key Value (Valkey 8, noeviction, journal+snapshot, `ipAllowList: []`), web (Docker, preDeploy = `prisma migrate deploy` + idempotent seed, health `/api/health/ready`), six queue workers, and a monitoring service. Headless render (browserless) is left out: Render's private network is flat, so compose's isolated `headless` network cannot be reproduced (runbook "Not on Render").
 - DECISION (worker type): queue workers are private services (`pserv`), not `worker`. Background workers cannot receive private-network traffic, so Prometheus could not scrape `:9464/metrics`. A pserv must bind a port, and the metrics listener does, because `METRICS_TOKEN` is always set.
