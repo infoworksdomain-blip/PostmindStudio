@@ -13,6 +13,13 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { requireEnv } from '../env';
 import { ConfigurationError, ValidationError } from '../errors';
 import { logger } from '../logger';
+import {
+  createStorageS3Client,
+  INTERMEDIATES_PREFIX,
+  maxPresignSecFor,
+  storageProvider,
+  type StorageProvider,
+} from './storage-client';
 import { createFailoverStorage, failoverConfigFromEnv } from './storage-failover';
 import { s3Copy, s3PutStream, type StreamPutInput } from './storage-multipart';
 
@@ -67,14 +74,39 @@ export interface DeleteManyResult {
   errors: { key: string; code: string; message: string }[];
 }
 
+/**
+ * Storage: Cloudflare R2 - top-level prefix for provider outputs (spec 17.4 "intermediates") on
+ * R2. R2 does not implement object tagging (PutObject x-amz-tagging, Put/GetObjectTagging) and
+ * its lifecycle rules filter by prefix only, never by tag
+ * (https://developers.cloudflare.com/r2/api/s3/api/,
+ * https://developers.cloudflare.com/r2/buckets/object-lifecycles/), so the tag-based 30-day
+ * expiry below cannot work there. Instead provider outputs live under
+ * intermediates/orgs/<org>/projects/<p>/providers/... and infra/r2-lifecycle.json expires that
+ * prefix after 30 days in the assets bucket (renders written with this helper sit in the renders
+ * bucket, which - as on S3 - has no expiry rule).
+ *
+ * Why the layout depends on STORAGE_PROVIDER instead of moving both providers to intermediates/:
+ *   - S3 must stay byte-identical: same keys, same tag, same lifecycle (infra/s3-lifecycle.json);
+ *   - on S3 the prefix would buy nothing (the tag already does the job) and every purge /
+ *     lifecycle / runbook assumption about orgs/<id>/ would change for no gain.
+ * Existing rows keep working on either provider: every reader uses the s3Key stored on the row,
+ * never a recomputed key. Code that enumerates an organisation's objects by prefix (the
+ * organisation hard delete) uses orgPrefixes() in services/purge-storage.ts, which adds this
+ * prefix on R2.
+ */
+export { INTERMEDIATES_PREFIX };
+
 /** Deterministic, tenant-scoped key layout for provider outputs. */
-export function providerOutputKey(input: {
-  organisationId: string;
-  projectId?: string;
-  providerId: string;
-  extension: string;
-  id?: string;
-}): string {
+export function providerOutputKey(
+  input: {
+    organisationId: string;
+    projectId?: string;
+    providerId: string;
+    extension: string;
+    id?: string;
+  },
+  provider: StorageProvider = storageProvider(),
+): string {
   const project = input.projectId ?? 'no-project';
   const id = input.id ?? randomUUID();
   // Tenant-isolation choke point: no segment may contain '/', '..' or anything unusual.
@@ -83,7 +115,8 @@ export function providerOutputKey(input: {
       throw new ValidationError(`Unsafe S3 key segment ${name}: ${JSON.stringify(value)}`);
     }
   }
-  return `orgs/${input.organisationId}/projects/${project}/providers/${input.providerId}/${id}.${input.extension}`;
+  const key = `orgs/${input.organisationId}/projects/${project}/providers/${input.providerId}/${id}.${input.extension}`;
+  return provider === 'r2' ? `${INTERMEDIATES_PREFIX}${key}` : key;
 }
 
 // BACKLOG 14.2 — S3 lifecycle rules cannot match a wildcard prefix (orgs/*/projects/…), and the
@@ -127,6 +160,14 @@ export function cdnConfigFromEnv(
 ): CdnSigningConfig | undefined {
   const base = env.CDN_URL?.trim();
   if (!base) return undefined;
+  // Storage: Cloudflare R2 - CloudFront signing is built for an S3 origin; on R2 delivery uses
+  // plain R2 presigned URLs (operator decision 2026-09-28; presigned URLs cannot be used on R2
+  // custom domains: https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
+  if (storageProvider(env) === 'r2') {
+    throw new ConfigurationError(
+      'CloudFront signed URLs need STORAGE_PROVIDER=s3; on R2 leave CDN_URL empty to use presigned R2 URLs',
+    );
+  }
   let url: URL;
   try {
     url = new URL(base);
@@ -168,17 +209,37 @@ export function cloudFrontSignedUrl(
   });
 }
 
-export function createS3Storage(
-  client: S3Client,
-  options: { cdn?: CdnSigningConfig; now?: () => number } = {},
-): AssetStorage {
+export interface S3StorageOptions {
+  cdn?: CdnSigningConfig;
+  now?: () => number;
+  /**
+   * Storage: Cloudflare R2 - false never sends PutObject Tagging (R2 does not implement
+   * x-amz-tagging: https://developers.cloudflare.com/r2/api/s3/api/). Default true (S3).
+   */
+  objectTagging?: boolean;
+  /** Cap for presigned URL expiry (R2: 604,800 s). Unset = the requested expiry as is (S3). */
+  maxPresignSec?: number;
+}
+
+/** Storage options for a provider (the CDN comes from cdnConfigFromEnv, S3 only). */
+export function storageOptionsFor(provider: StorageProvider): S3StorageOptions {
+  if (provider === 's3') return {};
+  return { objectTagging: false, maxPresignSec: maxPresignSecFor(provider) };
+}
+
+export function createS3Storage(client: S3Client, options: S3StorageOptions = {}): AssetStorage {
   const now = options.now ?? Date.now;
+  const tagging = options.objectTagging ?? true;
   async function signedUrl(bucket: string, key: string, expiresInSec = SIGNED_URL_TTL_SEC) {
     if (options.cdn && bucket === options.cdn.bucket) {
       return cloudFrontSignedUrl(options.cdn, key, expiresInSec, now());
     }
+    const expiresIn =
+      options.maxPresignSec === undefined
+        ? expiresInSec
+        : Math.min(expiresInSec, options.maxPresignSec);
     return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
-      expiresIn: expiresInSec,
+      expiresIn,
     });
   }
   return {
@@ -189,7 +250,7 @@ export function createS3Storage(
           Key: key,
           Body: body,
           ContentType: contentType,
-          Tagging: objectTaggingFor(key),
+          Tagging: tagging ? objectTaggingFor(key) : undefined,
         }),
       );
       return { bucket, key, url: await signedUrl(bucket, key) };
@@ -279,19 +340,22 @@ async function s3DeleteMany(
 let defaultStorage: AssetStorage | undefined;
 
 /**
- * S3 storage configured from AWS_REGION + standard AWS credential resolution; with
- * S3_FALLBACK_REGION set, wrapped in the secondary-region failover (15.E9, storage-failover.ts).
+ * Object storage for STORAGE_PROVIDER (storage-client.ts): S3 from AWS_REGION + standard AWS
+ * credential resolution (default), or Cloudflare R2. With S3_FALLBACK_REGION set, wrapped in the
+ * secondary-bucket failover (15.E9, storage-failover.ts).
  */
 export function getAssetStorage(): AssetStorage {
   if (defaultStorage) return defaultStorage;
-  const primary = createS3Storage(new S3Client({ region: requireEnv('AWS_REGION') }), {
-    cdn: cdnConfigFromEnv(),
-  });
+  const options = storageOptionsFor(storageProvider());
+  const primary = createS3Storage(createStorageS3Client(), { ...options, cdn: cdnConfigFromEnv() });
   const failover = failoverConfigFromEnv();
   defaultStorage = failover
     ? createFailoverStorage(
         primary,
-        createS3Storage(new S3Client({ region: failover.region })),
+        createS3Storage(
+          createStorageS3Client(process.env, { fallbackRegion: failover.region }),
+          options,
+        ),
         failover,
         logger,
       )

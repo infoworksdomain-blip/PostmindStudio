@@ -58,6 +58,15 @@ describe('LIVE_PROVIDER_TESTS', () => {
     const hive = byId('hive');
     expect(hive && missingEnv(hive, { HIVE_API_KEY: 'k' })).toEqual(['LIVE_TEST_MEDIA_URL']);
   });
+
+  it('asks for the storage settings of STORAGE_PROVIDER (S3 or R2) for storage tests', () => {
+    const image = byId('openai-image');
+    const base = { OPENAI_API_KEY: 'k', S3_BUCKET_ASSETS: 'assets' };
+    expect(image && missingEnv(image, base)).toEqual(['AWS_REGION']);
+    expect(
+      image && missingEnv(image, { ...base, STORAGE_PROVIDER: 'r2', R2_ACCOUNT_ID: 'a' }),
+    ).toEqual(['R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']);
+  });
 });
 
 describe('posts', () => {

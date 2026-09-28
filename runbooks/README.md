@@ -9,7 +9,9 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [kill-switch.md](kill-switch.md) | All four kill-switch levels, the per-platform publishing halt, re-drive after release, and the timed rehearsal (12.2) | 60 s to halt |
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
-| [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning, Redis (playbook E-12) | — |
+| [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning (R2: backup copy, no versioning), Redis (playbook E-12) | — |
+| [r2-setup.md](r2-setup.md) | Cloudflare R2 as the object store (`STORAGE_PROVIDER=r2`): EU buckets, scoped token, CORS, lifecycle, env | — |
+| [storage-failover.md](storage-failover.md) | Secondary-region (S3) or second-bucket (R2) storage failover (15.E9) | — |
 | [provider-outage.md](provider-outage.md) | Priority risk 1: provider outage mid-generation | 1+ breaker OPEN |
 | [cost-runaway.md](cost-runaway.md) | Priority risk 2: cost runaway — project / org / provider / global caps, pause, alerts | 80% alert, 90% project pause, 100% daily pause |
 | [service-health.md](service-health.md) | Availability and queue alerts: target down, not ready, job failures, API latency, backlog, dead letter | per alert |

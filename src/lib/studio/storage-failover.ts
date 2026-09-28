@@ -1,6 +1,7 @@
 import type { Logger } from 'pino';
 import { ConfigurationError } from '../errors';
 import type { AssetStorage, StoredObject } from './storage';
+import { R2_JURISDICTIONS, storageProvider } from './storage-client';
 
 // BACKLOG 15.E9 — spec 4.6 "Storage failures (S3 outage) fall back to a secondary region bucket."
 // A decorator over two AssetStorage clients (primary region, S3_FALLBACK_REGION):
@@ -18,6 +19,14 @@ import type { AssetStorage, StoredObject } from './storage';
 //     second bucket after a partial failure; callers already retry the job.
 // DevOps creates the fallback buckets (and, optionally, cross-region replication) — see
 // runbooks/storage-failover.md. Unset S3_FALLBACK_REGION = no failover (the plain primary).
+//
+// Storage: Cloudflare R2 - the same config shape works with a second R2 bucket. With
+// STORAGE_PROVIDER=r2, S3_FALLBACK_REGION is the fallback bucket's R2 endpoint instead of an AWS
+// region: "auto" = the primary's endpoint (same account, same R2_JURISDICTION), or one of
+// eu | us | fedramp when the fallback bucket was created in that jurisdiction (a jurisdiction
+// bucket is only reachable through its own endpoint:
+// https://developers.cloudflare.com/r2/reference/data-location/). It is not compared with
+// AWS_REGION (on R2 that is KMS's region only). S3_FALLBACK_BUCKET_* are unchanged.
 
 export interface FailoverConfig {
   region: string;
@@ -38,7 +47,13 @@ export function failoverConfigFromEnv(
 ): FailoverConfig | undefined {
   const region = env.S3_FALLBACK_REGION?.trim();
   if (!region) return undefined;
-  if (region === env.AWS_REGION?.trim())
+  if (storageProvider(env) === 'r2') {
+    if (region !== 'auto' && !(R2_JURISDICTIONS as readonly string[]).includes(region)) {
+      throw new ConfigurationError(
+        `With STORAGE_PROVIDER=r2, S3_FALLBACK_REGION must be "auto" or one of ${R2_JURISDICTIONS.join(', ')}`,
+      );
+    }
+  } else if (region === env.AWS_REGION?.trim())
     throw new ConfigurationError('S3_FALLBACK_REGION must differ from AWS_REGION');
   const buckets = new Map<string, string>();
   for (const [primaryVar, fallbackVar] of BUCKET_ENV) {

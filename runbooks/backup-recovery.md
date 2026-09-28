@@ -7,8 +7,34 @@ backups are owned by DevOps. This runbook covers the Studio-specific checks.
 | Store | Backup | Studio recovery notes |
 | --- | --- | --- |
 | Postgres (the `studio` schema) | Managed point-in-time recovery (PITR), with at least 7 days of retention | Restore to a new instance at the target time, verify it, then cut over. Migrations are forward-only, so the restored schema matches the image that ran at that time. |
-| S3 buckets | Versioning enabled, with lifecycle rules for noncurrent versions | Restore objects by version id. Renders are immutable, so restoring overwrites nothing. |
+| S3 buckets (`STORAGE_PROVIDER=s3`) | Versioning enabled, with lifecycle rules for noncurrent versions | Restore objects by version id. Renders are immutable, so restoring overwrites nothing. |
+| R2 buckets (`STORAGE_PROVIDER=r2`) | **No versioning on R2**: a deleted object cannot be restored from R2 itself. A separate backup copy is needed (below). | Copy objects back from the backup bucket. The key is on the row (`s3Key`), so restoring is a copy of the same key into the same bucket. |
 | Redis DB 3 (BullMQ, idempotency keys, OAuth state) | AOF persistence or snapshots | Treat Redis as rebuildable. After a loss, re-enqueue the active projects (see below). Idempotency keys expire anyway. |
+
+## R2: recovering deleted objects (no versioning)
+
+R2 does not implement bucket versioning (https://developers.cloudflare.com/r2/api/s3/api/). On
+R2, the only way to recover a deleted object is from a backup copy that DevOps keeps outside the
+live buckets.
+
+- **What to back up.** Studio keys are write-once: uuid or content-hash names, and renders are
+  never overwritten. Losses therefore come from deletes, not overwrites. Back up the assets,
+  renders and thumbnails buckets. The library can be re-ingested from the corpus manifest.
+- **How.** Copy the objects on a schedule (daily is enough for the RPO above) into a backup R2
+  bucket in the same jurisdiction, under a separate token.
+  - Use any S3-compatible sync tool pointed at `https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`.
+  - Copy new keys only. Never propagate deletes immediately.
+  - The app token must not be able to delete from the backup bucket.
+- **Retention must honour purges.** The organisation hard delete (30-day grace) and the business
+  purge delete data for legal reasons.
+  - Expire backup copies after at most 30 days with a lifecycle rule on the backup bucket, so
+    purged data ages out of the backup too.
+  - Never restore an object whose organisation has an `organisation_purges` row in `hard_deleted`.
+- **Do not use R2 bucket locks** on the live buckets as a substitute. They block the deletes that
+  purges, the upload sweep and lifecycle expiry rely on.
+- **Restore.** Find the row's `s3Bucket` / `s3Key`, then copy that key from the backup bucket back
+  into the live bucket. Presigned URLs work again at once; no row changes are needed.
+- **Status: GAP.** The backup job itself is DevOps tooling and is not part of this repo.
 
 ## After a Redis loss
 

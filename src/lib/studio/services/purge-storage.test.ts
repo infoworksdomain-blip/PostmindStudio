@@ -8,6 +8,7 @@ import {
   countPrefix,
   deletePrefix,
   orgPrefix,
+  orgPrefixes,
   purgeBucketsFromEnv,
 } from './purge-storage';
 
@@ -35,6 +36,38 @@ describe('orgPrefix', () => {
     for (const bad of ['', 'a/b', '../x', '.', 'a b', 'x'.repeat(200)]) {
       expect(() => orgPrefix(bad), bad).toThrow(ValidationError);
     }
+  });
+});
+
+describe('orgPrefixes (Storage: Cloudflare R2)', () => {
+  it('S3: only orgs/<id>/ (unchanged)', () => {
+    expect(orgPrefixes('org1', 's3')).toEqual(['orgs/org1/']);
+  });
+
+  it('R2: orgs/<id>/ and intermediates/orgs/<id>/ (provider outputs, no tags on R2)', () => {
+    expect(orgPrefixes('org1', 'r2')).toEqual(['orgs/org1/', 'intermediates/orgs/org1/']);
+    expect(() => orgPrefixes('../x', 'r2')).toThrow(ValidationError);
+  });
+
+  it('R2: deleting both prefixes removes provider outputs and leaves other orgs alone', async () => {
+    const { storage, objects } = memoryStorage();
+    for (const key of [
+      'orgs/org1/uploads/u/source.mp4',
+      'intermediates/orgs/org1/projects/p/providers/openai/x.png',
+      'intermediates/orgs/org10/projects/p/providers/openai/y.png',
+      'orgs/org10/uploads/u/source.mp4',
+    ]) {
+      await storage.put({ bucket: 'b', key, body: new Uint8Array(3), contentType: 'x/y' });
+    }
+    let removed = 0;
+    for (const prefix of orgPrefixes('org1', 'r2')) {
+      removed += (await deletePrefix(storage, 'b', prefix)).objects;
+    }
+    expect(removed).toBe(2);
+    expect([...objects.keys()].sort()).toEqual([
+      'b/intermediates/orgs/org10/projects/p/providers/openai/y.png',
+      'b/orgs/org10/uploads/u/source.mp4',
+    ]);
   });
 });
 
@@ -130,5 +163,24 @@ describe.skipIf(!hasDb)('countKeysOutsidePrefix', () => {
       },
     });
     expect(await countKeysOutsidePrefix(db, org)).toBe(1);
+  });
+
+  it('R2: keys under intermediates/orgs/<id>/ are inside the organisation', async () => {
+    await db.videoUpload.create({
+      data: {
+        organisationId: org,
+        createdByUserId: 'u1',
+        kind: 'SOURCE_VIDEO',
+        fileName: 'provider.png',
+        contentType: 'image/png',
+        declaredBytes: 1,
+        s3Bucket: 'b',
+        s3Key: `intermediates/${orgPrefix(org)}projects/p/providers/openai/x.png`,
+        expiresAt: new Date(Date.now() + 3_600_000),
+      },
+    });
+    // S3 layout: the intermediates key is outside orgs/<id>/ (reported); R2 layout: inside.
+    expect(await countKeysOutsidePrefix(db, org, 's3')).toBe(2);
+    expect(await countKeysOutsidePrefix(db, org, 'r2')).toBe(1);
   });
 });

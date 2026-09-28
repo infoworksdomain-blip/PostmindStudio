@@ -145,9 +145,23 @@ instance.
 - the admin API and taxonomy
 - `STUDIO_LIBRARY_PLAN_TIER` (ENTERPRISE for the full run)
 - library worker slots, compared with the runbook's throughput table
+- the storage provider (`STORAGE_PROVIDER`: S3, or Cloudflare R2 and its endpoint); an invalid
+  configuration fails here
 - write access to `S3_BUCKET_LIBRARY`
 - the `STUDIO_CORPUS_S3_BUCKETS` allow-list, plus HEAD probes of up to 20 s3:// sources
 - manifest validation
+
+The bucket probes use the same storage client as the workers.
+
+- **On R2:** `s3://bucket/key` sources must be R2 buckets in the same account and jurisdiction,
+  readable with the app's R2 token.
+- **In GitHub Actions:** set these alongside the AWS ones in the `staging` environment
+  ([r2-setup.md](r2-setup.md)):
+  - variables `STORAGE_PROVIDER=r2`, `R2_ACCOUNT_ID` and `R2_JURISDICTION`;
+  - secrets `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`.
+
+  The AWS variables stay for KMS. The live `openai-image` test also writes to storage, and it asks
+  for the R2 variables instead of `AWS_REGION` when `STORAGE_PROVIDER=r2`.
 
 Run it with the **library workers' env**. Start the manifest from `corpus/manifest.template.csv`,
 then follow corpus-ingestion.md: sample, review with its checklist, re-run the pre-flight without

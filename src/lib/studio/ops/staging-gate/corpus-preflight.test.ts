@@ -23,6 +23,7 @@ function input(overrides: Partial<PreflightInput> = {}): PreflightInput {
       STUDIO_LIBRARY_PLAN_TIER: 'ENTERPRISE',
       STUDIO_LIBRARY_CONCURRENCY: '8',
       STUDIO_CORPUS_S3_BUCKETS: 'postmind-corpus',
+      AWS_REGION: 'eu-west-2',
     },
     workers: 2,
     minutesPerVideo: 3,
@@ -92,6 +93,31 @@ describe('evaluatePreflight', () => {
         'Corpus bucket allow-list',
       ),
     ).toBe('FAIL');
+  });
+
+  it('reports the storage provider the probes use, and fails a bad configuration', () => {
+    const s3 = evaluatePreflight(input());
+    expect(s3.find((c) => c.name.startsWith('Storage provider'))).toMatchObject({
+      level: 'PASS',
+      detail: 'AWS S3 in eu-west-2',
+    });
+    const r2env = {
+      ...input().env,
+      STORAGE_PROVIDER: 'r2',
+      R2_ACCOUNT_ID: 'acct',
+      R2_JURISDICTION: 'eu',
+      R2_ACCESS_KEY_ID: 'id',
+      R2_SECRET_ACCESS_KEY: 'secret',
+    };
+    expect(
+      evaluatePreflight(input({ env: r2env })).find((c) => c.name.startsWith('Storage provider')),
+    ).toMatchObject({
+      level: 'PASS',
+      detail: 'Cloudflare R2 via https://acct.eu.r2.cloudflarestorage.com',
+    });
+    const broken = evaluatePreflight(input({ env: { ...r2env, R2_SECRET_ACCESS_KEY: '' } }));
+    expect(level(broken, 'Storage provider')).toBe('FAIL');
+    expect(preflightVerdict(broken)).toBe('FAIL');
   });
 
   it('fails when the admin API is unreachable', () => {

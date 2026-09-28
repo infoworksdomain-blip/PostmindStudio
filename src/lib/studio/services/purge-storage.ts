@@ -1,10 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
 import { ConfigurationError, UpstreamServiceError, ValidationError } from '../../errors';
-import type { AssetStorage } from '../storage';
+import { INTERMEDIATES_PREFIX, type AssetStorage } from '../storage';
+import type { StorageProvider } from '../storage-client';
 
 // BACKLOG 14.1 — an organisation's S3 objects. Every tenant object Studio writes lives under
 // orgs/<organisationId>/ (storage.ts providerOutputKey, uploads, images/ingest.ts, voice consent,
-// overlay pre-renders), in the assets, renders and thumbnails buckets. The library bucket holds the
+// overlay pre-renders), in the assets, renders and thumbnails buckets — and, with
+// STORAGE_PROVIDER=r2, provider outputs under intermediates/orgs/<organisationId>/ (orgPrefixes). The library bucket holds the
 // platform corpus under library/ (no org prefix) and is only included because it is configured.
 // Only keys under the organisation's own prefix are ever deleted: a row that points at an object
 // elsewhere (e.g. a shared corpus or stock object) is reported, never deleted.
@@ -17,6 +19,17 @@ export function orgPrefix(organisationId: string): string {
     throw new ValidationError('Organisation id is not usable as a storage prefix');
   }
   return `orgs/${organisationId}/`;
+}
+
+/**
+ * Every key prefix that holds the organisation's objects on the storage provider. S3: only
+ * orgs/<id>/ (unchanged). Storage: Cloudflare R2 - provider outputs live under
+ * intermediates/orgs/<id>/ (storage.ts INTERMEDIATES_PREFIX, no object tags on R2), so the hard
+ * delete, its dry run and the outside-prefix count cover both prefixes.
+ */
+export function orgPrefixes(organisationId: string, provider: StorageProvider): string[] {
+  const prefix = orgPrefix(organisationId);
+  return provider === 'r2' ? [prefix, `${INTERMEDIATES_PREFIX}${prefix}`] : [prefix];
 }
 
 /**
@@ -60,17 +73,20 @@ export async function bucketsFor(
 export async function countKeysOutsidePrefix(
   db: PrismaClient,
   organisationId: string,
+  provider: StorageProvider = 's3',
 ): Promise<number> {
   // A plain "starts with" comparison, not LIKE: the organisation id may contain '_' or '%',
   // which are LIKE wildcards and would make the pattern match keys it should not, undercounting
   // rows whose key sits outside the prefix (see purge-storage.test.ts). strpos(key, prefix) = 1
   // means the key starts with the prefix; strpos never treats the prefix as a pattern.
+  // `other` is the R2 intermediates prefix; on S3 it repeats `prefix`, so the result is unchanged.
   const prefix = orgPrefix(organisationId);
+  const other = orgPrefixes(organisationId, provider)[1] ?? prefix;
   const rows = await db.$queryRaw<{ n: number }[]>`
     SELECT (
-      (SELECT count(*) FROM "studio"."video_assets" WHERE "organisationId" = ${organisationId} AND "s3Key" <> '' AND strpos("s3Key", ${prefix}) <> 1)
-      + (SELECT count(*) FROM "studio"."image_library" WHERE "organisationId" = ${organisationId} AND "s3Key" <> '' AND strpos("s3Key", ${prefix}) <> 1)
-      + (SELECT count(*) FROM "studio"."video_uploads" WHERE "organisationId" = ${organisationId} AND strpos("s3Key", ${prefix}) <> 1)
+      (SELECT count(*) FROM "studio"."video_assets" WHERE "organisationId" = ${organisationId} AND "s3Key" <> '' AND strpos("s3Key", ${prefix}) <> 1 AND strpos("s3Key", ${other}) <> 1)
+      + (SELECT count(*) FROM "studio"."image_library" WHERE "organisationId" = ${organisationId} AND "s3Key" <> '' AND strpos("s3Key", ${prefix}) <> 1 AND strpos("s3Key", ${other}) <> 1)
+      + (SELECT count(*) FROM "studio"."video_uploads" WHERE "organisationId" = ${organisationId} AND strpos("s3Key", ${prefix}) <> 1 AND strpos("s3Key", ${other}) <> 1)
     )::int AS n`;
   return rows[0]?.n ?? 0;
 }

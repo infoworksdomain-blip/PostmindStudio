@@ -142,6 +142,13 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_AWS_SECRET_ACCESS_KEY }}
+      # Storage: Cloudflare R2 — set vars.STORAGE_PROVIDER=r2 to probe R2 buckets instead of S3
+      # (empty = s3). The R2 token is the app's Object Read & Write token (runbooks/r2-setup.md).
+      STORAGE_PROVIDER: ${{ vars.STORAGE_PROVIDER }}
+      R2_ACCOUNT_ID: ${{ vars.R2_ACCOUNT_ID }}
+      R2_JURISDICTION: ${{ vars.R2_JURISDICTION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

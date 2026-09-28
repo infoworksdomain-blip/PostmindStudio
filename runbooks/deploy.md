@@ -20,7 +20,10 @@
 - Required in production:
   - Database and queue: `DATABASE_URL` (the `studio` schema), `REDIS_URL` (DB 3).
   - PostMind Core: `POSTMIND_*` (JWKS, issuer, audience, Core URL, service token).
-  - Storage: `S3_BUCKET_*`, `AWS_REGION`.
+  - Storage: `S3_BUCKET_*`, `AWS_REGION` (S3, the default). With `STORAGE_PROVIDER=r2` also set
+    `R2_ACCOUNT_ID`, `R2_JURISDICTION` (optional), `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`,
+    and leave `CDN_URL` empty ([r2-setup.md](r2-setup.md)). `AWS_REGION` and the AWS credentials
+    are still needed for KMS on both providers.
   - The token-encryption key configuration (see `.env.example`, crypto section).
   - Pricing: `STUDIO_USD_TO_GBP_RATE`.
   - URLs and access: `APP_URL`, `STUDIO_PLATFORM_ORG_IDS`.
@@ -28,7 +31,9 @@
   - The provider and platform keys.
 - Browser uploads (13.5, "Upload a video" and slideshow clips) PUT straight to the assets bucket
   with a presigned URL, so `S3_BUCKET_ASSETS` needs a CORS rule allowing `PUT` from the `APP_URL`
-  origin with the `Content-Type` header (the URL signs it). The web role's IAM policy needs
+  origin with the `Content-Type` header. On R2 the URL signs `content-type`. On S3 the installed
+  AWS SDK (3.1141) leaves `content-type` out of the signature, so S3 does not enforce the type;
+  `/complete` still ffprobes the file. The web role's IAM policy needs
   `s3:PutObject` there to sign it, plus `s3:GetObject` / `s3:DeleteObject` (probe and reject).
   Without the CORS rule the upload fails in the browser with a network error and the upload stays
   PENDING. GAP: abandoned PENDING uploads (`orgs/*/uploads/`, rows in `video_uploads`) are not

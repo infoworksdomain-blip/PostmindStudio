@@ -3,13 +3,14 @@ import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { ConfigurationError, ValidationError } from '../../errors';
 import type { AssetStorage } from '../storage';
+import { storageProvider, type StorageProvider } from '../storage-client';
 import { organisationIdParam } from './org-policy';
 import {
   bucketsFor,
   countKeysOutsidePrefix,
   countPrefix,
   deletePrefix,
-  orgPrefix,
+  orgPrefixes,
   type PrefixCount,
 } from './purge-storage';
 import {
@@ -24,8 +25,9 @@ import {
 // Studio data with 30-day grace"; Engagement handover 6.5 "or hard-deletes after 30-day grace",
 // 14.13). A daily job (hard-delete-purged-orgs, scripts/worker.ts) takes every
 // organisation_purges row whose graceUntil has passed and:
-//   1. deletes every object under orgs/<organisationId>/ in each configured bucket and each
-//      bucket the organisation's rows point at (S3 first: the rows name the buckets);
+//   1. deletes every object under orgs/<organisationId>/ (and, with STORAGE_PROVIDER=r2, under
+//      intermediates/orgs/<organisationId>/: purge-storage.ts orgPrefixes) in each configured
+//      bucket and each bucket the organisation's rows point at (S3 first: the rows name them);
 //   2. deletes the organisation's rows from every studio table in FK-safe order, in batches
 //      (purge-tables.ts);
 //   3. clears the personal fields of the rows deliberately kept (takedown_requests, the legal /
@@ -95,7 +97,11 @@ interface PlanDeps {
   storage: AssetStorage;
   now: () => number;
   buckets: string[];
+  /** Key layout to purge (orgPrefixes); default STORAGE_PROVIDER. */
+  storageProvider?: StorageProvider;
 }
+
+const providerOf = (deps: PlanDeps): StorageProvider => deps.storageProvider ?? storageProvider();
 
 function parseOrg(organisationId: string): string {
   const parsed = organisationIdParam.safeParse(organisationId);
@@ -120,7 +126,8 @@ function presentPurge(purge: OrganisationPurge | null, now: number): PurgePlan['
 /** Dry run: what a hard delete would remove now (rows per table, objects per bucket/prefix). */
 export async function planHardDelete(deps: PlanDeps, organisationId: string): Promise<PurgePlan> {
   const org = parseOrg(organisationId);
-  const prefix = orgPrefix(org);
+  const provider = providerOf(deps);
+  const prefixes = orgPrefixes(org, provider);
   const purge = await deps.db.organisationPurge.findUnique({ where: { organisationId: org } });
   const tables: PurgePlan['tables'] = [];
   for (const step of PURGE_TABLE_STEPS) {
@@ -128,14 +135,14 @@ export async function planHardDelete(deps: PlanDeps, organisationId: string): Pr
   }
   const storage: PrefixCount[] = [];
   for (const bucket of await bucketsFor(deps.db, org, deps.buckets)) {
-    storage.push(await countPrefix(deps.storage, bucket, prefix));
+    for (const prefix of prefixes) storage.push(await countPrefix(deps.storage, bucket, prefix));
   }
   return {
     organisationId: org,
     purge: presentPurge(purge, deps.now()),
     tables,
     storage,
-    keysOutsidePrefix: await countKeysOutsidePrefix(deps.db, org),
+    keysOutsidePrefix: await countKeysOutsidePrefix(deps.db, org, provider),
     totals: {
       rows: tables.reduce((n, r) => n + r.rows, 0),
       objects: storage.reduce((n, s) => n + s.objects, 0),
@@ -179,6 +186,7 @@ export async function hardDeleteOrganisation(
   summary?: HardDeleteSummary;
 }> {
   const org = parseOrg(organisationId);
+  const provider = providerOf(deps);
   const purge = await deps.db.organisationPurge.findUnique({ where: { organisationId: org } });
   if (!purge) return { status: 'not_purged' };
   if (purge.state === 'hard_deleted') return { status: 'already_deleted' };
@@ -199,7 +207,7 @@ export async function hardDeleteOrganisation(
   let summary = mergeSummary(purge.hardDeleteSummary, {
     tables: {},
     storage: {},
-    keysOutsidePrefix: await countKeysOutsidePrefix(deps.db, org),
+    keysOutsidePrefix: await countKeysOutsidePrefix(deps.db, org, provider),
   });
   const save = async (data: Prisma.OrganisationPurgeUpdateInput = {}) => {
     await deps.db.organisationPurge.update({
@@ -208,15 +216,17 @@ export async function hardDeleteOrganisation(
     });
   };
   try {
-    const prefix = orgPrefix(org);
+    const prefixes = orgPrefixes(org, provider);
     for (const bucket of await bucketsFor(deps.db, org, deps.buckets)) {
-      const removed = await deletePrefix(deps.storage, bucket, prefix);
-      summary = mergeSummary(summary, {
-        tables: {},
-        storage: { [`${bucket}/${prefix}`]: removed },
-        keysOutsidePrefix: 0,
-      });
-      await save();
+      for (const prefix of prefixes) {
+        const removed = await deletePrefix(deps.storage, bucket, prefix);
+        summary = mergeSummary(summary, {
+          tables: {},
+          storage: { [`${bucket}/${prefix}`]: removed },
+          keysOutsidePrefix: 0,
+        });
+        await save();
+      }
     }
     const limit = deps.batchSize ?? HARD_DELETE_BATCH;
     for (const step of PURGE_TABLE_STEPS) {

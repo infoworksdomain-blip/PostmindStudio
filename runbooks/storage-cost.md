@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Metric** | Weekly S3 bill per bucket (`studio-assets`, `studio-renders`, `studio-thumbnails`, `studio-library-assets`). |
+| **Metric** | Weekly storage bill per bucket (`studio-assets`, `studio-renders`, `studio-thumbnails`, `studio-library-assets`) — S3, or R2 with `STORAGE_PROVIDER=r2`. |
 | **Threshold** | More than 125% of forecast. The forecast is about 15 TB/year at target scale (spec 17.4). |
 | **Escalation** | DevOps, then Finance. |
 
@@ -53,6 +53,28 @@
 - Renders are never expired by lifecycle: "lifetime of the publication + 90 days" is app logic.
 - `apply-s3-lifecycle.ts` replaces only `studio-*` rules; other rules on a bucket are read and
   written back unchanged.
+
+## Cloudflare R2 (`STORAGE_PROVIDER=r2`)
+
+The R2 rules are in `infra/r2-lifecycle.json`, which is validated in the same CI test. The
+[r2-setup.md](r2-setup.md) runbook covers applying them, including the Admin token they need.
+
+| Bucket | Rule | |
+| --- | --- | --- |
+| assets | `studio-intermediates-expire-30d` | `intermediates/` (provider outputs) expires after 30 days |
+| all four | `studio-abort-incomplete-multipart-7d` | incomplete multipart uploads aborted after 7 days |
+| library | `studio-library-staging-expire-2d` | `library/staging/` after 2 days |
+
+How R2 differs:
+
+- R2 has no object tagging, so provider outputs are written under
+  `intermediates/orgs/<org>/projects/<p>/providers/` instead of being tagged
+  (`storage.ts` `providerOutputKey`). The same 30-day consequence applies: regenerate to re-render
+  after 30 days.
+- R2 has no versioning, so it has no noncurrent-version rule and step 4 above does not apply.
+- Break costs down by bucket and prefix from the R2 dashboard metrics. S3 Storage Lens is AWS-only.
+- Delivery uses R2 presigned URLs (the same 24 h default, capped at 7 days). The CloudFront section
+  above is S3-only.
 
 **GAP:** applying the rules needs production credentials: **DevOps** runs
 `AWS_REGION=… S3_BUCKET_ASSETS=… S3_BUCKET_RENDERS=… S3_BUCKET_THUMBNAILS=… S3_BUCKET_LIBRARY=… npx tsx scripts/ops/apply-s3-lifecycle.ts`,
