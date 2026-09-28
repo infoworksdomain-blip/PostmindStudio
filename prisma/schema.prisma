@@ -32,7 +32,8 @@ model VideoProject {
   organisationId   String // ref PostMind Core
   businessId       String // ref PostMind Core
   createdByUserId  String // ref PostMind Core
-  name             String
+  // 17.9: null = the user gave no name; the UI shows a translated "Untitled video" (never stored).
+  name             String?
   description      String?
   state            VideoProjectState
   sourceType       VideoSourceType
@@ -517,6 +518,10 @@ model VoiceProfile {
   state                        String    @default("READY")
   speakerName                  String?
   consentStatement             String?
+  // 17.8: the interface locale the statement was shown in and its catalogue key (null when the
+  // user edited the statement, or on older rows). The recording stays the consent evidence.
+  consentStatementLocale       String?
+  consentStatementKey          String?
   consentGivenByUserId         String?
   consentGivenAt               DateTime?
   consentS3Bucket              String?
@@ -654,8 +659,14 @@ model PlatformConnection {
   state                 String // 'active' | 'needs_reconnect' | 'revoked'
   connectedByUserId     String
   connectedAt           DateTime  @default(now())
+  /// BACKLOG 17.3: the daily account-status check (services/account-status.ts) — when it last ran
+  /// for this connection and what it found: ok | needs_reconnect | unreachable (unreachable never
+  /// changes `state`).
+  statusCheckedAt       DateTime?
+  statusCheckOutcome    String?
 
   @@unique([organisationId, platform, platformAccountId])
+  @@index([state, statusCheckedAt])
   @@map("platform_connections")
   @@schema("studio")
 }
@@ -1077,7 +1088,12 @@ model WebsiteScan {
   planTier                   String?
   trigger                    String    @default("manual") // manual | scheduled
   // 15.D8 / A11.2: the ownership checkbox text the user ticked (null: historic or scheduled).
+  // 17.8: since Phase 17 it is the approved catalogue text for ownershipStatementLocale +
+  // ownershipStatementKey (messages/<locale>.json), checked on the server; both are null on
+  // older rows, which keep the free text the client sent.
   ownershipStatement         String?
+  ownershipStatementLocale   String?
+  ownershipStatementKey      String?
   // BACKLOG 14.4: the owner's "I own or represent this website" confirmation, stored per scan
   // (a scheduled rescan carries the confirmation of the scan it repeats). The browser-render
   // fallback for a blocked homepage is only ever used when this is set.

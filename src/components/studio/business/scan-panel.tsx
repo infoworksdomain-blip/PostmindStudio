@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSWRConfig } from 'swr';
 import { toast } from 'sonner';
 import { Loader2, ScanSearch } from 'lucide-react';
@@ -19,6 +19,7 @@ import {
   useErrorMessage,
 } from '@/lib/client/api';
 import { useFormat, type Tone } from '@/lib/client/format';
+import { FailureReason } from '../failure-reason';
 import { ErrorState, Section, StateBadge } from '../primitives';
 import { DomainVerificationCard } from './domain-verification';
 import { ScanScheduleLine } from './scan-schedule';
@@ -37,11 +38,14 @@ import {
 export const SCAN_POLL_MS = 3_000;
 
 /**
- * A6.7 / A11.2 — the ownership warranty. The checkbox shows exactly this text (in the interface
- * language: business.scan.ownershipStatement) and the scan request sends it
- * (ownershipStatement), so the scan record keeps what the user agreed to. This constant is the
- * en-GB wording.
+ * A6.7 / A11.2 — the ownership warranty. The checkbox shows the catalogue text
+ * business.scan.ownershipStatement in the interface language; 17.8: the scan request sends
+ * { locale, messageKey, text } and the server stores the approved text for that locale and key
+ * (refusing anything else), so the scan record keeps what the user agreed to. This constant is
+ * the en-GB wording.
  */
+export const OWNERSHIP_STATEMENT_KEY = 'business.scan.ownershipStatement';
+
 export const OWNERSHIP_STATEMENT =
   'I own this website or am authorised to represent it, including its images.';
 
@@ -133,7 +137,9 @@ function ScanProgress({ scanId, onSettled }: { scanId: string; onSettled: () => 
       {scan.errors.length > 0 && (
         <ul className="mt-3 list-disc ps-5 text-xs text-destructive">
           {scan.errors.map((e) => (
-            <li key={e}>{e}</li>
+            <li key={e}>
+              <FailureReason reason={e} />
+            </li>
           ))}
         </ul>
       )}
@@ -150,6 +156,7 @@ function ScanForm({
 }) {
   const t = useTranslations('business.scan');
   const errorMessage = useErrorMessage();
+  const locale = useLocale();
   const ownershipStatement = t('ownershipStatement');
   const [url, setUrl] = useState('');
   const [owner, setOwner] = useState(false);
@@ -165,7 +172,11 @@ function ScanForm({
           body: {
             url: url.trim(),
             ownershipConfirmed: true,
-            ownershipStatement,
+            ownershipStatement: {
+              locale,
+              messageKey: OWNERSHIP_STATEMENT_KEY,
+              text: ownershipStatement,
+            },
           },
           idempotencyKey: newIdempotencyKey(),
         },

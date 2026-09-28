@@ -78,7 +78,7 @@ describe.skipIf(!hasDb)(
         body: {
           url: SITE,
           ownershipConfirmed: true,
-          ownershipStatement: 'I own or am authorised to represent this website.',
+          ownershipStatement: { locale: 'en-GB', messageKey: 'business.scan.ownershipStatement' },
         },
       });
       expect(res.status).toBe(202);

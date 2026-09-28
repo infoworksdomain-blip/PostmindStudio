@@ -7,6 +7,7 @@ import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { ErrorState, Section } from '../primitives';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // Spec 12.5 / 16.4 — spend today (and this month) against every cap, plus the recent cost
 // alerts (GET /admin/cost/caps). Cap values are the operator's defaults in code (cost/caps.ts),
@@ -173,6 +174,7 @@ function Meter({ percent, label }: { percent: number | null; label: string }) {
 export function CostCapsPanel() {
   const t = useTranslations('admin.cost.caps');
   const f = useFormat();
+  const projectName = useProjectName();
   const capText = useCapText();
   const { data, error, isLoading, mutate } = useApi<CostCapsResponse>('/admin/cost/caps');
   if (error) return <ErrorState error={error} onRetry={() => void mutate()} />;
@@ -258,7 +260,7 @@ export function CostCapsPanel() {
                 {data.projects.slice(0, 10).map((p) => (
                   <li key={p.id} className="flex justify-between gap-2">
                     <Link href={`/projects/${p.id}`} className="truncate hover:underline">
-                      {p.name}
+                      {projectName(p.name)}
                     </Link>
                     <span className={cn(p.paused && 'text-destructive')}>
                       {p.paused

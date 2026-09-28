@@ -31,6 +31,11 @@ import {
 } from './data-retention';
 import { onReconcileChannelsFailed, reconcileChannels } from './reconcile-channels';
 import {
+  onRedriveLostPublicationsFailed,
+  redriveLostPublicationsJob,
+} from './redrive-lost-publications';
+import { checkPlatformAccountsJob, onCheckPlatformAccountsFailed } from './check-platform-accounts';
+import {
   onCoreSyncFailed,
   reconcileOrganisationsJob,
   reportUsage,
@@ -126,6 +131,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'report-usage': reportUsage,
   'sync-calendar-shadows': syncCalendar,
   'reconcile-organisations': reconcileOrganisationsJob,
+  'redrive-lost-publications': redriveLostPublicationsJob,
+  'check-platform-accounts': checkPlatformAccountsJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -161,6 +168,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'report-usage': onCoreSyncFailed,
   'sync-calendar-shadows': onCoreSyncFailed,
   'reconcile-organisations': onCoreSyncFailed,
+  'redrive-lost-publications': onRedriveLostPublicationsFailed,
+  'check-platform-accounts': onCheckPlatformAccountsFailed,
 };
 
 /**

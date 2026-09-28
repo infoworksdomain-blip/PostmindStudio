@@ -242,36 +242,79 @@ export function buildScripts(
   });
 }
 
-const PASSED: Array<[string, string]> = [
-  ['duration.within_limits', 'Duration fits the platform limit.'],
-  ['resolution.matches_format', 'Resolution and aspect ratio match the target format.'],
-  ['audio.loudness', 'Integrated loudness −14.2 LUFS (target −14 ±1).'],
-  ['captions.safe_zone', 'On-screen text stays inside the platform safe zone.'],
-  ['video.black_frames', 'No black or frozen frames detected.'],
-  ['content_safety', 'No content-safety concerns found.'],
-  ['brand.colours', 'Brand colours and logo placement follow the brand kit.'],
+// 17.9: the server's check codes with detailKey + detailParams (review.quality.details.*), so
+// the quality panel shows its details in the reader's language, as the app does.
+const PASSED: QualityIssue[] = [
+  {
+    code: 'duration_match',
+    status: 'passed',
+    severity: 'info',
+    detail: 'rendered 15.40s vs target 15s (±2s)',
+    detailKey: 'duration',
+    detailParams: { rendered: 15.4, target: 15, tolerance: 2 },
+  },
+  {
+    code: 'aspect_ratio',
+    status: 'passed',
+    severity: 'info',
+    detail: '1080x1920 vs 9:16',
+    detailKey: 'aspectRatio',
+    detailParams: { width: 1080, height: 1920, target: '9:16' },
+  },
+  {
+    code: 'audio_present',
+    status: 'passed',
+    severity: 'info',
+    detail: 'integrated loudness -14.2 LUFS (required -18 to -10)',
+    detailKey: 'loudness',
+    detailParams: { lufs: -14.2, min: -18, max: -10 },
+  },
+  {
+    code: 'black_frames',
+    status: 'passed',
+    severity: 'info',
+    detail: 'no black segment > 500ms',
+    detailKey: 'noBlackFrames',
+    detailParams: { ms: 500 },
+  },
+  {
+    code: 'content_safety',
+    status: 'passed',
+    severity: 'info',
+    detail: '30 frames scanned, no flagged classes',
+    detailKey: 'safetyPassed',
+    detailParams: { count: 30 },
+  },
+  {
+    code: 'brand_kit',
+    status: 'passed',
+    severity: 'info',
+    detail: 'colours, fonts and logo present',
+    detailKey: 'brandKitPresent',
+  },
 ];
 
 export function qualityIssues(failLoudness = false): QualityIssue[] {
-  return PASSED.map(([code, detail]): QualityIssue =>
-    failLoudness && code === 'audio.loudness'
+  return PASSED.map((issue): QualityIssue =>
+    failLoudness && issue.code === 'audio_present'
       ? {
-          code,
-          status: 'failed' as const,
+          ...issue,
+          status: 'failed',
           severity: 'error',
-          detail:
-            'Integrated loudness −8.9 LUFS, true peak +0.4 dBTP: too loud for TikTok (target −14 LUFS ±1, peak ≤ −1 dBTP). Regenerate or force-approve.',
+          detail: 'integrated loudness -8.9 LUFS (required -18 to -10)',
+          detailParams: { lufs: -8.9, min: -18, max: -10 },
         }
-      : { code, status: 'passed' as const, severity: 'info', detail },
+      : issue,
   ).concat(
     failLoudness
       ? [
           {
-            code: 'captions.readability',
-            status: 'warning',
-            severity: 'warning',
-            detail:
-              'Shot 2 caption is on screen for 1.1 s — shorter than the 1.5 s reading minimum.',
+            code: 'caption_sync',
+            status: 'failed',
+            severity: 'error',
+            detail: '"Fresh sourdough every": off by 400ms',
+            detailKey: 'captionSyncFailed',
+            detailParams: { count: 1 },
           },
         ]
       : [],
@@ -306,7 +349,7 @@ export function buildRender(
 
 export function baseProject(
   id: string,
-  name: string,
+  name: string | null,
   over: Partial<ProjectRec> & Pick<ProjectRec, 'state' | 'targetFormats' | 'scene'>,
 ): ProjectRec {
   return {

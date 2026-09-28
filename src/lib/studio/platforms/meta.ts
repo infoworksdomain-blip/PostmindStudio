@@ -104,6 +104,9 @@ function refine(status: number, code: string | undefined) {
   return undefined;
 }
 
+/** 17.3: Graph error handling for other read-only callers (services/account-status.ts). */
+export const graphErrors = { describe, refine };
+
 interface MetaPublisherDeps extends PublisherDeps {
   graphVersion?: string;
 }

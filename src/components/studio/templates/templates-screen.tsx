@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
+import { useTemplateCategory } from './category';
 
 // BACKLOG 15.E7 — studio.postmind.ai/templates (Addendum A5.4 "save custom slideshows as their own
 // templates for reuse"): the organisation's saved project and slideshow templates, with delete.
@@ -28,29 +29,6 @@ type Kind = 'project' | 'slideshow';
 
 const PATH: Record<Kind, string> = { project: '/templates', slideshow: '/slideshow-templates' };
 
-/** Categories with a catalogue label (templates.categories.<key>); others are shown as stored. */
-const CATEGORY_KEYS = [
-  'custom',
-  'introduction',
-  'team_introduction',
-  'product_showcase',
-  'product_launch',
-  'weekly_special',
-  'behind_the_scenes',
-  'before_after',
-  'food',
-  'lifestyle',
-  'photo_dump',
-  'quote_reel',
-  'statistic_reel',
-  'tweet_video',
-] as const;
-type CategoryKey = (typeof CATEGORY_KEYS)[number];
-
-function isCategoryKey(category: string): category is CategoryKey {
-  return (CATEGORY_KEYS as readonly string[]).includes(category);
-}
-
 function TemplateList({
   kind,
   rows,
@@ -65,8 +43,7 @@ function TemplateList({
   const f = useFormat();
   const errorMessage = useErrorMessage();
   const [deleting, setDeleting] = useState<string | null>(null);
-  const category = (value: string) =>
-    isCategoryKey(value) ? t(`categories.${value}`) : value.replace(/_/g, ' ');
+  const category = useTemplateCategory();
   const remove = async (row: TemplateRow) => {
     setDeleting(row.id);
     try {

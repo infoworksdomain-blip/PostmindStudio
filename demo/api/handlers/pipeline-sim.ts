@@ -74,7 +74,7 @@ export function contentFor(p: ProjectRec): ProjectContent {
   if (p.sourceType === 'SLIDESHOW')
     return { scene: p.scene, brief: null, shots: slidesToShots(p.id) };
   if (p.sourceType === 'UPLOAD') return uploadContent(p);
-  return CONTENT[p.id] ?? contentForBrief(p.description ?? p.name);
+  return CONTENT[p.id] ?? contentForBrief(p.description ?? p.name ?? '');
 }
 
 /** A fresh render for a script, keeping the variant's render id so links to it stay valid. */

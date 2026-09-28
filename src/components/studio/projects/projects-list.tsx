@@ -11,6 +11,7 @@ import { useFormat } from '@/lib/client/format';
 import type { Page, Project } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.5 — Manage: projects list, filtered by state (spec 14.3), cursor pagination.
 
@@ -40,6 +41,7 @@ function ProjectRow({ project }: { project: Project }) {
   const state = f.projectState(project.state);
   const Icon = SOURCE_ICON[project.sourceType] ?? Clapperboard;
   const platforms = (project.targetFormats ?? []).map((tf) => f.platform(tf.platform));
+  const projectName = useProjectName();
   return (
     <li>
       <Link
@@ -50,7 +52,7 @@ function ProjectRow({ project }: { project: Project }) {
           <Icon className="size-5" strokeWidth={1.5} />
         </span>
         <span className="min-w-0">
-          <span className="block truncate font-medium">{project.name}</span>
+          <span className="block truncate font-medium">{projectName(project.name)}</span>
           <span className="block truncate text-xs text-muted-foreground">
             {t('rowMeta', {
               platforms: platforms.join(' · ') || t('noFormats'),

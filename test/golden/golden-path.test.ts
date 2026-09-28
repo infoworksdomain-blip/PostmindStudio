@@ -520,7 +520,7 @@ describe.skipIf(!hasDb)('golden-path journeys (BACKLOG 12.7)', { timeout: 120_00
       body: {
         url: site,
         ownershipConfirmed: true,
-        ownershipStatement: 'I own this website or am authorised to represent it.',
+        ownershipStatement: { locale: 'en-GB', messageKey: 'business.scan.ownershipStatement' },
       },
     });
     expect(started.status).toBe(202);

@@ -78,6 +78,9 @@ export async function forceApproveRender(
           status: 'passed',
           severity: 'info',
           detail: `by ${tenant.userId}: ${note}`,
+          // 17.9: shown in the reader's language; the reviewer's note stays as written.
+          detailKey: 'forceApproved',
+          detailParams: { note },
           // 15.D5: structured copy for the Admin Centre force-approve review.
           userId: tenant.userId,
           note,

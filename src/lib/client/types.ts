@@ -17,7 +17,8 @@ export interface Project {
   id: string;
   organisationId: string;
   businessId: string;
-  name: string;
+  /** 17.9: null when the user gave no name (show useProjectName's translated fallback). */
+  name: string | null;
   description: string | null;
   state: string;
   sourceType:
@@ -72,7 +73,11 @@ export interface QualityIssue {
   code: string;
   status: 'passed' | 'failed' | 'warning' | 'skipped';
   severity: string;
+  /** English (older checks have only this). */
   detail: string;
+  /** 17.9: review.quality.details.<detailKey> with detailParams, in the reader's language. */
+  detailKey?: string;
+  detailParams?: Record<string, string | number>;
 }
 
 export interface Render {
@@ -106,7 +111,7 @@ export interface Publication {
   errorCode: string | null;
   retryCount: number;
   createdAt: string;
-  project?: { id: string; name: string };
+  project?: { id: string; name: string | null };
   /** 15.A8: latest cumulative metrics snapshot (list endpoint only). */
   latestMetrics?: { views: number; likes: number; comments: number; at: string } | null;
   /** Per-platform extras (15.A2 tiktokMode "inbox" + note; 15.A9 captionTruncated). */
@@ -139,6 +144,9 @@ export interface PlatformConnection {
   scopes: string[];
   state: 'active' | 'needs_reconnect' | 'revoked';
   connectedAt: string;
+  /** 17.3: when the daily account-status check last ran, and what it found. */
+  statusCheckedAt?: string | null;
+  statusCheckOutcome?: 'ok' | 'needs_reconnect' | 'unreachable' | null;
 }
 
 export interface BrandKit {

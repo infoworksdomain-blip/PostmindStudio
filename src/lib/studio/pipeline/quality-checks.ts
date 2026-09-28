@@ -17,8 +17,57 @@ export interface QualityCheck {
   code: string;
   status: CheckStatus;
   severity: CheckSeverity;
+  /** English, for logs, audit and older clients. */
   detail: string;
+  /**
+   * 17.9: the detail as a stable key + parameters; the UI renders it in the reader's language
+   * (messages → review.quality.details.<detailKey>). Text from outside Studio (a provider's
+   * reason, a reviewer's note) travels as a parameter and is shown untranslated.
+   */
+  detailKey?: QualityDetailKey;
+  detailParams?: Record<string, string | number>;
 }
+
+export const QUALITY_DETAIL_KEYS = [
+  'safetyScanUnavailable',
+  'safetyBlocked',
+  'safetyReview',
+  'safetyPassed',
+  'duration',
+  'blackFrames',
+  'noBlackFrames',
+  'noAudio',
+  'loudness',
+  'aspectRatio',
+  'codec',
+  'audioSyncNotBuilt',
+  'watermarkNotBuilt',
+  'captionSyncNotBuilt',
+  'brandKitNotBuilt',
+  'noTimelineSummary',
+  'noNarration',
+  'audioSyncFailed',
+  'audioSyncPassed',
+  'noSpokenCaptions',
+  'captionSyncFailed',
+  'captionSyncPassed',
+  'kitHasNoWatermark',
+  'slideshowNoWatermark',
+  'watermarkNotCovering',
+  'watermarkSampleUnavailable',
+  'watermarkVisible',
+  'watermarkNotVisible',
+  'noBrandKit',
+  'brandKitMissing',
+  'brandKitPresent',
+  'forceApproved',
+  'allowedByReview',
+] as const;
+
+export type QualityDetailKey = (typeof QUALITY_DETAIL_KEYS)[number];
+
+/** Rounds for display parameters (the UI formats numbers in the reader's locale). */
+const round = (n: number, digits: number) => Number(n.toFixed(digits));
 
 export const DURATION_TOLERANCE_SEC = 2;
 export const BLACK_FRAME_MAX_SEC = 0.5;
@@ -86,6 +135,8 @@ export function evaluateContentSafety(input: QualityInputs['contentSafety']): Qu
       status: 'failed',
       severity: 'block',
       detail: `Scan could not run: ${input.unavailable}`,
+      detailKey: 'safetyScanUnavailable',
+      detailParams: { reason: input.unavailable },
     };
   }
   const hits = (classes: readonly string[], threshold: number) =>
@@ -99,6 +150,8 @@ export function evaluateContentSafety(input: QualityInputs['contentSafety']): Qu
       status: 'failed',
       severity: 'block',
       detail: `Blocked: ${blocked.join(', ')}`,
+      detailKey: 'safetyBlocked',
+      detailParams: { classes: blocked.join(', ') },
     };
   }
   const review = hits(SAFETY_REVIEW_CLASSES, SAFETY_REVIEW_THRESHOLD);
@@ -108,6 +161,8 @@ export function evaluateContentSafety(input: QualityInputs['contentSafety']): Qu
       status: 'failed',
       severity: 'error',
       detail: `Needs review: ${review.join(', ')}`,
+      detailKey: 'safetyReview',
+      detailParams: { classes: review.join(', ') },
     };
   }
   return {
@@ -115,6 +170,8 @@ export function evaluateContentSafety(input: QualityInputs['contentSafety']): Qu
     status: 'passed',
     severity: 'info',
     detail: `${input.scan.framesAnalysed} frames scanned, no flagged classes`,
+    detailKey: 'safetyPassed',
+    detailParams: { count: input.scan.framesAnalysed },
   };
 }
 
@@ -128,6 +185,12 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
     status: drift <= DURATION_TOLERANCE_SEC ? 'passed' : 'failed',
     severity: 'error',
     detail: `rendered ${probe.durationSec.toFixed(2)}s vs target ${target.durationSec}s (±${DURATION_TOLERANCE_SEC}s)`,
+    detailKey: 'duration',
+    detailParams: {
+      rendered: round(probe.durationSec, 2),
+      target: target.durationSec,
+      tolerance: DURATION_TOLERANCE_SEC,
+    },
   });
 
   const longBlack = input.blackIntervals.filter((b) => b.durationSec > BLACK_FRAME_MAX_SEC);
@@ -138,6 +201,16 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
     detail: longBlack.length
       ? `black ${longBlack.map((b) => `${b.startSec.toFixed(1)}–${b.endSec.toFixed(1)}s`).join(', ')}`
       : `no black segment > ${BLACK_FRAME_MAX_SEC * 1000}ms`,
+    ...(longBlack.length
+      ? {
+          detailKey: 'blackFrames' as const,
+          detailParams: {
+            segments: longBlack
+              .map((b) => `${b.startSec.toFixed(1)}–${b.endSec.toFixed(1)}`)
+              .join(', '),
+          },
+        }
+      : { detailKey: 'noBlackFrames' as const, detailParams: { ms: BLACK_FRAME_MAX_SEC * 1000 } }),
   });
 
   const [minLufs, maxLufs] = LUFS_RANGE;
@@ -154,6 +227,12 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
       probe.audioCodec === null || input.loudnessLufs === null
         ? 'no audio stream'
         : `integrated loudness ${input.loudnessLufs.toFixed(1)} LUFS (required ${minLufs} to ${maxLufs})`,
+    ...(probe.audioCodec === null || input.loudnessLufs === null
+      ? { detailKey: 'noAudio' as const }
+      : {
+          detailKey: 'loudness' as const,
+          detailParams: { lufs: round(input.loudnessLufs, 1), min: minLufs, max: maxLufs },
+        }),
   });
 
   const actual = probe.height > 0 ? probe.width / probe.height : 0;
@@ -163,6 +242,8 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
     status: Math.abs(actual - expected) / expected <= ASPECT_TOLERANCE ? 'passed' : 'failed',
     severity: 'error',
     detail: `${probe.width}x${probe.height} vs ${target.aspectRatio}`,
+    detailKey: 'aspectRatio',
+    detailParams: { width: probe.width, height: probe.height, target: target.aspectRatio },
   });
 
   const isMp4 = probe.formatName.split(',').includes('mp4');
@@ -171,18 +252,24 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
     status: probe.videoCodec === 'h264' && isMp4 ? 'passed' : 'failed',
     severity: 'error',
     detail: `${probe.videoCodec ?? 'none'} (${probe.videoProfile ?? 'unknown profile'}) in ${probe.formatName}`,
+    detailKey: 'codec',
+    detailParams: {
+      codec: probe.videoCodec ?? '—',
+      profile: probe.videoProfile ?? '—',
+      format: probe.formatName,
+    },
   });
 
   checks.push(evaluateContentSafety(input.contentSafety));
 
   if (input.sync) return [...checks, ...input.sync];
-  for (const [code, reason] of [
-    ['audio_sync', 'voiceover-to-shot peak alignment analysis not built yet'],
-    ['watermark', 'watermark rendering arrives with brand kits'],
-    ['caption_sync', 'caption generation (AssemblyAI) not built yet'],
-    ['brand_kit', 'brand-kit rendering compliance arrives with brand kits'],
+  for (const [code, reason, detailKey] of [
+    ['audio_sync', 'voiceover-to-shot peak alignment analysis not built yet', 'audioSyncNotBuilt'],
+    ['watermark', 'watermark rendering arrives with brand kits', 'watermarkNotBuilt'],
+    ['caption_sync', 'caption generation (AssemblyAI) not built yet', 'captionSyncNotBuilt'],
+    ['brand_kit', 'brand-kit rendering compliance arrives with brand kits', 'brandKitNotBuilt'],
   ] as const) {
-    checks.push({ code, status: 'not_run', severity: 'info', detail: reason });
+    checks.push({ code, status: 'not_run', severity: 'info', detail: reason, detailKey });
   }
   return checks;
 }

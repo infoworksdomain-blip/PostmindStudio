@@ -373,3 +373,17 @@ Plan: `plans/phase-16.md`. Operator decision (2026-09-28): interface in en-GB (s
 - [x] **16.3** Every screen localised (create/review/slideshow/overlays; manage/business/connections; library/analytics/admin; shell/onboarding/share/templates/account), all 11 catalogues written.
 - [x] **16.4** Tests: catalogue parity, ICU validity, RTL + CJK component renders, per-locale formatting. (checks + shell/format tests done; screen renders with 16.3)
 - [x] **16.5** Notifications rendered in the reader's locale (message key + params). (email templates follow with Wave B email)
+
+## Phase 17 — Production hardening
+
+Plan: `plans/phase-17.md`. Runbook GAPs that are code, plus follow-ups from Phase 16, R2 and Render.
+
+- [x] **17.1** Sweep abandoned PENDING uploads (grace period; READY uploads untouched).
+- [x] **17.2** Re-enqueue SCHEDULED publications whose publish job was lost.
+- [x] **17.3** Daily platform account-status check → reconnect notice.
+- [x] **17.4** Provider-outage alert rule.
+- [x] **17.5** Scheduled object-storage backup copy (S3 or R2) with bounded retention.
+- [x] **17.6** S3 presigned PUT: sign Content-Type, no empty-body checksum.
+- [x] **17.7** CI: Postgres 17, monitoring image build, render.yaml schema validation.
+- [x] **17.8** Ownership statement stored as locale + message key, checked against approved text.
+- [x] **17.9** Server-originated text (failure reasons, quality details, "Untitled video", template categories) localised.

@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
-import { OWNERSHIP_STATEMENT, ScanPanel } from './scan-panel';
+import { OWNERSHIP_STATEMENT, OWNERSHIP_STATEMENT_KEY, ScanPanel } from './scan-panel';
 import type { ScanDetail, WebsiteScan } from './types';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -67,11 +67,15 @@ describe('ScanPanel', () => {
     await user.click(submit);
     await waitFor(() => expect(api.find('POST', '/businesses/biz_1/scan-website')).toHaveLength(1));
     const post = api.find('POST', '/businesses/biz_1/scan-website')[0]!;
-    // 15.D8 / A11.2: the checkbox text the user ticked travels with the request.
+    // 15.D8 / A11.2 / 17.8: the checkbox's locale, catalogue key and text travel with the request.
     expect(post.body).toEqual({
       url: 'bakery.example',
       ownershipConfirmed: true,
-      ownershipStatement: OWNERSHIP_STATEMENT,
+      ownershipStatement: {
+        locale: 'en-GB',
+        messageKey: OWNERSHIP_STATEMENT_KEY,
+        text: OWNERSHIP_STATEMENT,
+      },
     });
     expect(screen.getByText(OWNERSHIP_STATEMENT)).toBeInTheDocument();
     expect(post.headers['idempotency-key']).toBeTruthy();

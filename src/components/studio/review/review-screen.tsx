@@ -10,6 +10,7 @@ import { useApi } from '@/lib/client/api';
 import { ACTIVE_STATES, useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { useBusiness } from '../business-context';
+import { FailureReason } from '../failure-reason';
 import { ErrorState, PageHeader, Section, StateBadge } from '../primitives';
 import { OverlayEditor } from '../overlays/overlay-editor';
 import { SlideshowBuilder } from '../slideshow/slideshow-builder';
@@ -29,6 +30,7 @@ import { PUBLISHABLE } from './types';
 import { VariantCard } from './variant-card';
 import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
 import { AutoResumeNote, FallbackNote, SafetyReviewNote } from './paused-notes';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.4 — Review (spec 14.2): one screen, all variants. Polls every 4 s while the
 // pipeline is working so progress, shots and renders update in place.
@@ -64,6 +66,7 @@ function tabsFor(project: ProjectDetail, label: (key: TabKey) => string): TabDef
 export function ReviewScreen({ projectId }: { projectId: string }) {
   const t = useTranslations('review.screen');
   const f = useFormat();
+  const projectName = useProjectName();
   const { businessId } = useBusiness();
   const { data, error, isLoading, mutate } = useApi<{ project: ProjectDetail }>(
     `/projects/${projectId}`,
@@ -103,7 +106,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
       <BackLink />
       <PageHeader
         eyebrow={isSource(project.sourceType) ? t(`sources.${project.sourceType}`) : t('eyebrow')}
-        title={project.name}
+        title={projectName(project.name)}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StateBadge {...state} />
@@ -127,7 +130,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
               role="alert"
               className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
             >
-              {project.errorReason === 'cancelled_by_user' ? t('cancelled') : project.errorReason}
+              <FailureReason reason={project.errorReason} />
             </p>
           )}
         {isProjectBudgetPause(project) && <BudgetRaise project={project} onChanged={refresh} />}

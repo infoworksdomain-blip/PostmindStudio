@@ -10,6 +10,7 @@ import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail, Publication } from '@/lib/client/types';
 import { platformLabel } from '../connections/platforms';
 import { EmptyState, ErrorState } from '../primitives';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // Step 4 — "You just went live on TikTok" (spec 14.5) once the first video has a PUBLISHED
 // publication; until then it says the celebration comes when the video goes live.
@@ -25,6 +26,7 @@ export function firstLive(publications: Publication[]): Publication | undefined 
 export function CelebrateStep({ projectId }: { projectId: string | null }) {
   const t = useTranslations('onboarding.celebrate');
   const f = useFormat();
+  const projectName = useProjectName();
   const { data, error, mutate } = useApi<{ project: ProjectDetail }>(
     projectId ? `/projects/${projectId}` : null,
     undefined,
@@ -62,7 +64,7 @@ export function CelebrateStep({ projectId }: { projectId: string | null }) {
         <PartyPopper className="size-10 text-primary" strokeWidth={1.5} />
         <h2 className="font-display text-4xl">{t('live.title', { platform })}</h2>
         <p className="text-sm text-muted-foreground">
-          {t('live.body', { name: data.project.name })}
+          {t('live.body', { name: projectName(data.project.name) })}
         </p>
         <div className="flex flex-wrap gap-2">
           {live.platformUrl && (
@@ -84,7 +86,7 @@ export function CelebrateStep({ projectId }: { projectId: string | null }) {
       <Sparkles className="size-10 text-primary" strokeWidth={1.5} />
       <h2 className="font-display text-3xl">{t('nearly.title')}</h2>
       <p className="text-sm text-muted-foreground">
-        {t('nearly.body', { name: data.project.name })}
+        {t('nearly.body', { name: projectName(data.project.name) })}
       </p>
       <div>
         <Button asChild variant="outline">

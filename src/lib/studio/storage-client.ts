@@ -197,6 +197,33 @@ export function createStorageS3Client(env: Env = process.env, target: ClientTarg
   return new S3Client(storageClientConfig(storageConfigFromEnv(env), target));
 }
 
+/**
+ * Phase 17.6 — the client that signs browser PUT URLs, on both providers. With the SDK default
+ * (WHEN_SUPPORTED) a presigned PutObject URL carries x-amz-checksum-crc32=AAAAAA== (the CRC32 of an
+ * EMPTY body, computed at signing time) + x-amz-sdk-checksum-algorithm=CRC32 (checked with
+ * getSignedUrl on 3.1141, 2026-09-28). S3 does not read checksum values from the query string today
+ * ("there is no support server-side for reading checksum headers from the query string ... The
+ * service will return a 200 but will silently ignore the checksum validation", AWS SDK maintainer,
+ * https://github.com/aws/aws-sdk/issues/480, 2023-02-20), so the value protects nothing; and if S3
+ * starts honouring it, every non-empty upload would fail, because S3 answers a checksum that does
+ * not match the data with BadDigest
+ * (https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity-upload.html).
+ * WHEN_REQUIRED is the SDK's documented switch (https://github.com/aws/aws-sdk-js-v3/issues/6810)
+ * and only drops checksums the S3 model does not require; PutObject does not require one. Only the
+ * signing client gets it: server-side PutObject / UploadPart keep the S3 default.
+ */
+export const PRESIGN_PUT_CHECKSUM_CONFIG = {
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+} as const satisfies Pick<S3ClientConfig, 'requestChecksumCalculation'>;
+
+/** The S3Client that signs browser PUT URLs (storage client + PRESIGN_PUT_CHECKSUM_CONFIG). */
+export function createPresignS3Client(env: Env = process.env): S3Client {
+  return new S3Client({
+    ...storageClientConfig(storageConfigFromEnv(env)),
+    ...PRESIGN_PUT_CHECKSUM_CONFIG,
+  });
+}
+
 /** Longest presigned-URL expiry the provider allows, or undefined for "leave it to the SDK". */
 export function maxPresignSecFor(provider: StorageProvider): number | undefined {
   return provider === 'r2' ? R2_MAX_PRESIGN_SEC : undefined;

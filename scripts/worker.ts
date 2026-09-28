@@ -28,6 +28,8 @@ import {
 } from '../src/lib/studio/queue/workers/core-sync';
 import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
+import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
+import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -181,6 +183,24 @@ async function main(): Promise<void> {
     {
       name: 'sweep-abandoned-uploads',
       data: { organisationId: 'postmind-platform', runId: 'upload-sweep', planTier: 'STANDARD' },
+    },
+  );
+  // BACKLOG 17.2 — publications whose publish job was lost between commit and enqueue.
+  await publish.upsertJobScheduler(
+    'redrive-lost-publications',
+    { pattern: LOST_PUBLISH_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'redrive-lost-publications',
+      data: { organisationId: 'postmind-platform', runId: 'lost-publish', planTier: 'STANDARD' },
+    },
+  );
+  // BACKLOG 17.3 — account-status check: hourly, each connection at most once a day.
+  await analytics.upsertJobScheduler(
+    'check-platform-accounts-hourly',
+    { pattern: ACCOUNT_CHECK_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'check-platform-accounts',
+      data: { organisationId: 'postmind-platform', runId: 'account-check', planTier: 'STANDARD' },
     },
   );
   await publish.upsertJobScheduler(

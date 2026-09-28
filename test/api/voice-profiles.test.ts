@@ -127,6 +127,28 @@ describe.skipIf(!hasDb)('voice profiles API', { timeout: 60_000 }, () => {
     });
   });
 
+  it('17.8: records the consent statement locale and catalogue key with the consent', async () => {
+    const res = await create('owner', {
+      consentStatementLocale: 'fr',
+      consentStatementKey: 'business.voice.cloneDialog.consentPhrase',
+    });
+    expect(res.status).toBe(201);
+    const id = (res.json.voiceProfile as { id: string }).id;
+    const row = await db.voiceProfile.findUniqueOrThrow({ where: { id } });
+    expect(row).toMatchObject({
+      consentStatementLocale: 'fr',
+      consentStatementKey: 'business.voice.cloneDialog.consentPhrase',
+    });
+    const audit = api.audits
+      .filter((a) => a.action === 'studio.voice_profile.create' && a.resource.id === id)
+      .at(-1);
+    expect(audit?.metadata).toMatchObject({
+      consentStatementLocale: 'fr',
+      consentStatementKey: 'business.voice.cloneDialog.consentPhrase',
+    });
+    expect((await create('owner', { consentStatementLocale: 'klingon' })).status).toBe(400);
+  });
+
   it('501 when no voice-cloning provider is configured', async () => {
     api.deps.voiceCloning = undefined;
     expect((await create()).status).toBe(501);

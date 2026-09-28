@@ -8,6 +8,7 @@ import type { Publication } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { eventTime, formatTime } from './month';
 import { canMove, DRAG_TYPE } from './reschedule';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // One publication on the calendar: a thin state-coloured rule, time, platform and video name.
 // Links to the project. A scheduled one can be dragged to another day (13.9) or moved with its
@@ -37,7 +38,8 @@ export function CalendarEvent({
   const time = at ? formatTime(at, f.locale) : null;
   const platform = f.platform(publication.platform);
   const state = f.publicationState(publication.state).label;
-  const name = publication.project?.name ?? t('untitled');
+  const projectName = useProjectName();
+  const name = projectName(publication.project?.name);
   const movable = Boolean(onMove) && canMove(publication);
   const link = (
     <Link

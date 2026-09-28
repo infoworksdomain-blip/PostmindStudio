@@ -42,7 +42,8 @@
     "a11y": {
       "moreOptions": "更多选项",
       "required": "必填"
-    }
+    },
+    "untitledVideo": "未命名视频"
   },
   "shell": {
     "nav": {
@@ -135,7 +136,8 @@
         "cost_paused": "因预算限制暂停生成",
         "safety_review": "内容安全审核",
         "share_comment": "预览链接收到反馈",
-        "plan_quota": "套餐用量提醒（80% 和 100%）"
+        "plan_quota": "套餐用量提醒（80% 和 100%）",
+        "connection_needs_reconnect": "需要重新连接的账号"
       }
     },
     "usage": {
@@ -366,6 +368,14 @@
     "planQuotaBlocked": {
       "title": "{tier} 套餐：本月{kind, select, short {短视频} other {长视频}}额度已用完",
       "body": "本月已生成 {used, number} 个{kind, select, short {短视频} other {长视频}}，额度为 {limit, number} 个。在下月初（UTC）额度重置前，将无法开始新的生成。{nextTier, select, none {} other {升级到 {nextTier} 可获得更多额度。}}"
+    },
+    "connectionNeedsReconnect": {
+      "title": "请重新连接您的 {platform} 账号“{account}”",
+      "body": "{platform} 已不再接受 Studio 对此账号的访问。请在“账号连接”页面重新连接，以便排期帖子能够发布。"
+    },
+    "metaConnectionNeedsReconnect": {
+      "title": "请重新连接您的 {platform} 账号“{account}”",
+      "body": "Meta 已不再接受 Studio 对此账号的访问。请在 PostMind 设置中重新连接，以便排期帖子能够发布。"
     }
   },
   "create": {
@@ -630,7 +640,20 @@
       "scheduledFor": "已排期至 {date}",
       "sent": "已提交发布",
       "notPublished": "未发布：{error}",
-      "failedFallback": "失败"
+      "failedFallback": "失败",
+      "reasons": {
+        "enterprise_plan": "需要审核：企业版组织始终审核其视频。",
+        "org_policy": "需要审核：你所在组织的政策已关闭自动批准。",
+        "config_invalid": "需要审核：自动批准配置不正确。",
+        "force_approved": "需要审核：{platform} 版本已被强制批准。",
+        "content_safety_flag": "{outcome, select, not_run {需要审核：{platform} 版本的内容安全扫描未运行。} other {需要审核：内容安全扫描标记了 {platform} 版本。}}",
+        "quality_not_clean": "需要审核：{platform} 版本有一项质量检查未通过。",
+        "no_renders": "需要审核：没有可检查的已渲染版本。",
+        "script_safety_flag": "需要审核：安全检查未放行该脚本。",
+        "not_trusted": "需要审核：你的前 {needed} 个视频需要人工审核（目前已批准 {approved}/{needed} 个）。",
+        "approval_workflow": "需要审核：适用“{workflow}”审批流程。",
+        "auto_approve_error": "需要审核：无法评估自动批准。"
+      }
     },
     "budget": {
       "aria": "提高预算",
@@ -723,7 +746,12 @@
         "black_frames": "黑帧",
         "audio_present": "音频存在",
         "aspect_ratio": "宽高比",
-        "codec": "编码格式"
+        "codec": "编码格式",
+        "audio_sync": "配音同步",
+        "caption_sync": "字幕同步",
+        "watermark": "水印",
+        "brand_kit": "品牌套件",
+        "force_approved": "强制批准"
       },
       "severity": {
         "block": "阻止",
@@ -736,7 +764,42 @@
       "forceApproved": "审核人员已覆盖未通过的检查。",
       "overrideLabel": "覆盖未通过的检查——原因（必填，将被审计）",
       "forceApprove": "强制批准",
-      "overridden": "已覆盖质量检查结果。"
+      "overridden": "已覆盖质量检查结果。",
+      "details": {
+        "safetyScanUnavailable": "扫描无法运行：{reason}",
+        "safetyBlocked": "已阻止：{classes}",
+        "safetyReview": "需要审核：{classes}",
+        "safetyPassed": "{count, plural, other {已扫描 # 帧，未发现问题。}}",
+        "duration": "渲染时长 {rendered} 秒，目标 {target} 秒（±{tolerance} 秒）。",
+        "blackFrames": "黑帧位于 {segments} 秒。",
+        "noBlackFrames": "没有超过 {ms} 毫秒的黑屏片段。",
+        "noAudio": "没有音轨。",
+        "loudness": "响度 {lufs} LUFS（要求 {min} 至 {max}）。",
+        "aspectRatio": "{width} × {height}，目标为 {target}。",
+        "codec": "视频编码 {codec}（{profile}），封装格式 {format}。",
+        "audioSyncNotBuilt": "未检查：配音时间分析尚不可用。",
+        "watermarkNotBuilt": "未检查：水印检查尚不可用。",
+        "captionSyncNotBuilt": "未检查：字幕时间检查尚不可用。",
+        "brandKitNotBuilt": "未检查：品牌套件检查尚不可用。",
+        "noTimelineSummary": "未检查：幻灯片没有镜头时间线。",
+        "noNarration": "未检查：视频没有配音。",
+        "audioSyncFailed": "{count, plural, other {配音超出了镜头 {shots} 的长度。}}",
+        "audioSyncPassed": "{count, plural, other {配音与全部 # 个镜头匹配。}}",
+        "noSpokenCaptions": "未检查：视频没有口播字幕。",
+        "captionSyncFailed": "{count, plural, other {# 条字幕与配音不同步。}}",
+        "captionSyncPassed": "{count, plural, other {# 条字幕与配音相差在 ±{ms} 毫秒以内。}}",
+        "kitHasNoWatermark": "未检查：品牌套件没有水印。",
+        "slideshowNoWatermark": "未检查：幻灯片不带品牌水印。",
+        "watermarkNotCovering": "水印没有覆盖视频的每一帧。",
+        "watermarkSampleUnavailable": "帧抽样无法运行：{reason}",
+        "watermarkVisible": "在抽样帧中可见（匹配度 {scores}）。",
+        "watermarkNotVisible": "在抽样帧中不可见（匹配度 {scores}）。",
+        "noBrandKit": "未检查：项目没有品牌套件。",
+        "brandKitMissing": "{count, plural, other {需要审核：视频缺少 # 个品牌元素。}}",
+        "brandKitPresent": "颜色、字体和标志均已包含。",
+        "forceApproved": "检查未通过但已批准：{note}",
+        "allowedByReview": "已获 PostMind 信任与安全审核放行：{note}"
+      }
     },
     "saveTemplate": {
       "open": "另存为模板",
@@ -1769,6 +1832,7 @@
     "connected": "已连接",
     "stale": "平台上的访问权限已过期或被撤销。在您重新连接之前，发往此账号的排期帖子都会失败。",
     "connectedOn": "连接于 {date}",
+    "checkedOn": "访问权限检查于 {date}",
     "reconnect": "重新连接",
     "disconnect": "断开连接",
     "disconnectAria": "断开 {account} 的连接",
@@ -3038,7 +3102,10 @@
       "tweet_video": "推文视频",
       "product_launch": "新品发布",
       "weekly_special": "本周特惠",
-      "behind_the_scenes": "幕后花絮"
+      "behind_the_scenes": "幕后花絮",
+      "listicle": "清单",
+      "listicle_5": "前 5 清单",
+      "listicle_10": "前 10 清单"
     }
   },
   "account": {
@@ -3200,6 +3267,56 @@
       "waiting": "第 {step} 步，共 {total} 步——等待{role}",
       "waitingCount": "第 {step} 步，共 {total} 步——等待{role}（已获 {approvals}/{required} 项批准）",
       "stepNumber": "{number}."
+    }
+  },
+  "failures": {
+    "codes": {
+      "cancelled_by_user": "你已取消此次运行。",
+      "brief_too_vague": "简报过于模糊，无法规划视频。请从建议的方向中选择一个。",
+      "restricted_topics": "简报涉及受限话题。请确认后继续。",
+      "script_safety_block": "脚本安全检查已阻止此视频。",
+      "script_safety_review": "脚本安全检查要求人工审核此视频。",
+      "script_safety_blocked_by_review": "PostMind 信任与安全审核已阻止该脚本。",
+      "content_safety_blocked_by_review": "PostMind 信任与安全审核已阻止该视频。",
+      "content_safety_block": "内容安全扫描已阻止此视频。",
+      "quality_failed": "{count, plural, =0 {有一项质量检查未通过。} other {# 项质量检查未通过：{checks}。}}",
+      "quality_gate_error": "质量检查未能完成。",
+      "planning_failed": "视频规划失败。",
+      "slideshow_incomplete": "幻灯片无法完成：部分幻灯片缺少内容。",
+      "upload_missing": "上传的视频已不可用。",
+      "script_regenerate_failed": "无法重新生成脚本：脚本或其简报已不存在。",
+      "asset_generation_failed": "{count, plural, =0 {部分镜头未能生成。} other {镜头 {shots} 未能生成。}}",
+      "composition_failed": "视频合成失败。",
+      "cost_cap_paused": "已达到预算，生成已暂停。",
+      "kill_switch": "{level, select, global {已暂停：PostMind 已在所有地方停止生成和发布。} workspace {已暂停：PostMind 已停止你所在组织的生成。} project {已暂停：PostMind 已停止此项目。} provider {已暂停：PostMind 已停止某个生成服务商。} platform {已暂停：PostMind 已停止向此平台发布。} other {已被 PostMind 紧急开关暂停。}}",
+      "rejected": "已被审核人拒绝。",
+      "business_deleted": "已停止：该商家已被删除。",
+      "organisation_deleted": "已停止：该组织已被删除。",
+      "scheduling_failed": "排期失败。",
+      "youtube_quota_deferred": "已达到 YouTube 每日上传上限。Studio 将在每日重置后重试。",
+      "robots_blocked": "该网站的 robots.txt 不允许 Studio 读取其首页。",
+      "no_pages": "无法读取该网站的任何页面。",
+      "scan_cost_cap": "扫描已在费用上限（{amount}）处停止。",
+      "scan_images_capped": "扫描已达到费用上限（{amount}）：部分图片未编入搜索索引。",
+      "ownership_disputed": "已停止：网站所有权存在争议。",
+      "provider_failure": "{source} 报告了问题：{problem}。"
+    },
+    "classes": {
+      "rate_limited": "请求过多",
+      "timeout": "请求超时",
+      "provider_unavailable": "服务不可用",
+      "unavailable": "服务不可用",
+      "auth": "凭据被拒绝",
+      "insufficient_credits": "账户额度已用完",
+      "invalid_request": "请求被拒绝",
+      "content_policy": "内容因其内容政策被拒绝",
+      "output_truncated": "结果不完整",
+      "result_expired": "结果已过期",
+      "needs_reconnect": "需要重新连接账户",
+      "quota_exceeded": "已达到配额",
+      "invalid_media": "视频文件被拒绝",
+      "outcome_unknown": "结果未知——重试前请先在平台上确认",
+      "unknown": "未知错误"
     }
   }
 }

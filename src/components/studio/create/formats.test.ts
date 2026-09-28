@@ -59,6 +59,7 @@ describe('nameFromBrief', () => {
   });
 
   it('never returns an empty name', () => {
-    expect(nameFromBrief('   ')).toBe('Untitled video');
+    // 17.9: no English placeholder; the project is created without a name.
+    expect(nameFromBrief('   ')).toBe('');
   });
 });

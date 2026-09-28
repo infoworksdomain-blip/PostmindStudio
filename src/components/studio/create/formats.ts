@@ -65,11 +65,14 @@ export function defaultPlatforms(
   return unique.length ? unique : ['tiktok'];
 }
 
-/** A project name from the brief: its first line, trimmed to a sensible length. */
+/**
+ * A project name from the brief: its first line, trimmed to a sensible length. 17.9: '' when the
+ * brief is blank — the project is then created without a name (never an English placeholder).
+ */
 export function nameFromBrief(brief: string): string {
   const firstLine = brief.trim().split(/\r?\n/)[0] ?? '';
   const clean = firstLine.replace(/\s+/g, ' ').trim();
-  if (clean.length <= 60) return clean || 'Untitled video';
+  if (clean.length <= 60) return clean;
   const cut = clean.slice(0, 60);
   const lastSpace = cut.lastIndexOf(' ');
   return `${(lastSpace > 30 ? cut.slice(0, lastSpace) : cut).trim()}…`;

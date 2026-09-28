@@ -39,14 +39,26 @@
   - The provider and platform keys.
 - Browser uploads (13.5, "Upload a video" and slideshow clips) PUT straight to the assets bucket
   with a presigned URL, so `S3_BUCKET_ASSETS` needs a CORS rule allowing `PUT` from the `APP_URL`
-  origin with the `Content-Type` header. On R2 the URL signs `content-type`. On S3 the installed
-  AWS SDK (3.1141) leaves `content-type` out of the signature, so S3 does not enforce the type;
-  `/complete` still ffprobes the file. The web role's IAM policy needs
+  origin with the `Content-Type` header. On both S3 and R2 the URL signs `content-type`
+  (`X-Amz-SignedHeaders=content-type;host`), so a PUT with another type gets
+  `403 SignatureDoesNotMatch`, and the URL carries no `x-amz-checksum-crc32` /
+  `x-amz-sdk-checksum-algorithm` (Phase 17.6: the AWS SDK default put the CRC32 of an *empty* body
+  there, which S3 ignores today but would reject every upload with `BadDigest` if it enforced it;
+  evidence in `src/lib/studio/storage-client.ts` `PRESIGN_PUT_CHECKSUM_CONFIG`). Only the signing
+  client drops the checksum; server-side uploads keep the SDK default. `/complete` still ffprobes
+  the file. The web role's IAM policy needs
   `s3:PutObject` there to sign it, plus `s3:GetObject` / `s3:DeleteObject` (probe and reject).
   Without the CORS rule the upload fails in the browser with a network error and the upload stays
-  PENDING. GAP: abandoned PENDING uploads (`orgs/*/uploads/`, rows in `video_uploads`) are not
-  swept yet. Do NOT add a blanket S3 expiry on that prefix: READY uploads are the footage of
-  UPLOAD projects and slideshow clips.
+  PENDING. Abandoned PENDING uploads are swept by the daily `sweep-abandoned-uploads` job
+  (01:45 UTC, studio-orchestration; 14.2 / 17.1): once the presigned PUT URL has been expired for
+  `STUDIO_UPLOAD_ABANDON_GRACE_HOURS` (default 24), the object under `orgs/<org>/uploads/<id>/`
+  is deleted through the storage layer (S3 or R2) and the `video_uploads` row is marked FAILED
+  ("abandoned: the upload was never completed"). READY and FAILED rows are never touched, and
+  neither is a PENDING row that a project, video asset / slide or brand kit references: those are
+  logged ("abandoned uploads left in place: still referenced") for someone to look at. The worker
+  role needs `s3:DeleteObject` on the assets bucket (R2: an Object Read & Write token). A failed
+  delete puts the row back to PENDING and the job retries. Do NOT add a blanket S3 expiry on that
+  prefix: READY uploads are the footage of UPLOAD projects and slideshow clips.
 - Languages (15.C5: en-GB, en-US, fr, es, ar, de, it, pt-BR, pt-PT, hi, zh-Hans) — media side:
   - **Fonts.** `STUDIO_FONTS_BASE_URL` must also serve `NotoSansArabic.ttf`,
     `NotoSansDevanagari.ttf` and `NotoSansSC.ttf` (Google Fonts, SIL OFL; the file name is the

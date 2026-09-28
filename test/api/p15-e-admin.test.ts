@@ -315,8 +315,14 @@ describe.skipIf(!hasDb)('track E admin APIs and jobs', { timeout: 90_000 }, () =
       });
       const first = await deriveUsageEvents(db, Date.now());
       expect(first.inserted).toBeGreaterThanOrEqual(2);
-      const again = await deriveUsageEvents(db, Date.now());
-      expect(again.inserted).toBe(0);
+      // Idempotence is judged on this organisation's rows: the derive job is global, and other
+      // test files write renders to the same database concurrently.
+      const ours = () =>
+        db.usageEvent.findMany({ where: { organisationId: org }, orderBy: { id: 'asc' } });
+      const before = await ours();
+      expect(before.length).toBeGreaterThanOrEqual(2);
+      await deriveUsageEvents(db, Date.now());
+      expect((await ours()).map((e) => e.id)).toEqual(before.map((e) => e.id));
       const ev = await db.usageEvent.findUniqueOrThrow({ where: { eventKey: `render:${r.id}` } });
       expect(ev).toMatchObject({
         organisationId: org,

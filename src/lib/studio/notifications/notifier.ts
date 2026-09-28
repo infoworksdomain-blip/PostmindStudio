@@ -31,6 +31,8 @@ export const NOTIFICATION_KINDS = [
   'share_comment',
   // Phase 15 (decision P3): 80 % / 100 % of the plan's monthly video quota (services/plan-quotas.ts).
   'plan_quota',
+  // Phase 17 (17.3): the daily account-status check found a connection the platform refuses.
+  'connection_needs_reconnect',
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];

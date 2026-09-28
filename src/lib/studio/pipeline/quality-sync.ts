@@ -19,6 +19,14 @@ import { normaliseWord, type SpokenWord } from '../overlays/word-timing';
 
 export const CAPTION_SYNC_TOLERANCE_SEC = 0.2;
 
+/** A slideshow has no timeline summary: the timeline checks do not apply. */
+const NO_SUMMARY: Omit<QualityCheck, 'code'> = {
+  status: 'not_run',
+  severity: 'info',
+  detail: 'no timeline summary (slideshow)',
+  detailKey: 'noTimelineSummary',
+};
+
 export interface NarrationFact {
   shotId: string;
   fit: FitDecision | null;
@@ -29,38 +37,54 @@ export function evaluateAudioSync(
   narration: NarrationFact[],
 ): QualityCheck {
   const code = 'audio_sync';
-  if (!summary)
-    return { code, status: 'not_run', severity: 'info', detail: 'no timeline summary (slideshow)' };
+  if (!summary) return { ...NO_SUMMARY, code };
   const voiced = summary.shots.filter((s) => s.voiceClipSec !== null && s.shotId);
   if (voiced.length === 0)
-    return { code, status: 'not_run', severity: 'info', detail: 'no narration on the timeline' };
+    return {
+      code,
+      status: 'not_run',
+      severity: 'info',
+      detail: 'no narration on the timeline',
+      detailKey: 'noNarration',
+    };
   const fits = new Map(narration.map((n) => [n.shotId, n.fit]));
   const problems: string[] = [];
-  voiced.forEach((shot, i) => {
+  const badShots: number[] = [];
+  voiced.forEach((shot) => {
     const fit = fits.get(shot.shotId as string) ?? null;
-    const label = `shot ${summary.shots.indexOf(shot) + 1}`;
+    const number = summary.shots.indexOf(shot) + 1;
+    const problem = (text: string) => {
+      problems.push(`shot ${number}: ${text}`);
+      badShots.push(number);
+    };
     if (!fit || fit.voiceSec === null) {
-      problems.push(`${label}: narration length unknown`);
+      problem('narration length unknown');
       return;
     }
     const clip = shot.voiceClipSec ?? 0;
     if (fit.strategy === 'trim') {
-      if (!fit.wordBoundary) problems.push(`${label}: narration cut without word timing`);
+      if (!fit.wordBoundary) problem('narration cut without word timing');
       return;
     }
     if (fit.voiceSec > shot.lengthSec * (1 + FIT_TOLERANCE) || fit.voiceSec > clip + 0.05)
-      problems.push(
-        `${label}: ${fit.voiceSec.toFixed(2)}s of narration in a ${shot.lengthSec.toFixed(2)}s shot`,
-      );
-    void i;
+      problem(`${fit.voiceSec.toFixed(2)}s of narration in a ${shot.lengthSec.toFixed(2)}s shot`);
   });
   return problems.length
-    ? { code, status: 'failed', severity: 'error', detail: problems.join('; ') }
+    ? {
+        code,
+        status: 'failed',
+        severity: 'error',
+        detail: problems.join('; '),
+        detailKey: 'audioSyncFailed',
+        detailParams: { count: badShots.length, shots: badShots.join(', ') },
+      }
     : {
         code,
         status: 'passed',
         severity: 'info',
         detail: `${voiced.length} narrated shot(s) end inside their shots`,
+        detailKey: 'audioSyncPassed',
+        detailParams: { count: voiced.length },
       };
 }
 
@@ -99,7 +123,13 @@ export function matchCaption(
 export function evaluateCaptionSync(captions: SpokenCaption[]): QualityCheck {
   const code = 'caption_sync';
   if (captions.length === 0)
-    return { code, status: 'not_run', severity: 'info', detail: 'no spoken captions on the video' };
+    return {
+      code,
+      status: 'not_run',
+      severity: 'info',
+      detail: 'no spoken captions on the video',
+      detailKey: 'noSpokenCaptions',
+    };
   const problems: string[] = [];
   for (const c of captions) {
     if (c.words.length === 0) {
@@ -119,12 +149,21 @@ export function evaluateCaptionSync(captions: SpokenCaption[]): QualityCheck {
       );
   }
   return problems.length
-    ? { code, status: 'failed', severity: 'error', detail: problems.slice(0, 5).join('; ') }
+    ? {
+        code,
+        status: 'failed',
+        severity: 'error',
+        detail: problems.slice(0, 5).join('; '),
+        detailKey: 'captionSyncFailed',
+        detailParams: { count: problems.length },
+      }
     : {
         code,
         status: 'passed',
         severity: 'info',
         detail: `${captions.length} caption(s) within ±${CAPTION_SYNC_TOLERANCE_SEC * 1000}ms`,
+        detailKey: 'captionSyncPassed',
+        detailParams: { count: captions.length, ms: CAPTION_SYNC_TOLERANCE_SEC * 1000 },
       };
 }
 
@@ -152,13 +191,20 @@ export function evaluateWatermark(
 ): QualityCheck {
   const code = 'watermark';
   if (!expected.watermark)
-    return { code, status: 'not_run', severity: 'info', detail: 'the brand kit has no watermark' };
+    return {
+      code,
+      status: 'not_run',
+      severity: 'info',
+      detail: 'the brand kit has no watermark',
+      detailKey: 'kitHasNoWatermark',
+    };
   if (!summary)
     return {
       code,
       status: 'not_run',
       severity: 'info',
       detail: 'slideshows carry no brand watermark',
+      detailKey: 'slideshowNoWatermark',
     };
   const mark = summary.brand.watermark;
   const contentStart = summary.introSec;
@@ -169,6 +215,7 @@ export function evaluateWatermark(
       status: 'failed',
       severity: 'error',
       detail: 'the watermark does not cover every content frame of the timeline',
+      detailKey: 'watermarkNotCovering',
     };
   if (!sample || sample.status === 'unavailable')
     return {
@@ -176,15 +223,26 @@ export function evaluateWatermark(
       status: 'failed',
       severity: 'error',
       detail: `frame sample could not run: ${sample?.reason ?? 'no sampler'}`,
+      detailKey: 'watermarkSampleUnavailable',
+      detailParams: { reason: sample?.reason ?? 'no sampler' },
     };
   const scores = sample.scores.map((s) => s.toFixed(2)).join(', ');
   return sample.status === 'visible'
-    ? { code, status: 'passed', severity: 'info', detail: `on the timeline; sampled ${scores}` }
+    ? {
+        code,
+        status: 'passed',
+        severity: 'info',
+        detail: `on the timeline; sampled ${scores}`,
+        detailKey: 'watermarkVisible',
+        detailParams: { scores },
+      }
     : {
         code,
         status: 'failed',
         severity: 'error',
         detail: `on the timeline but not visible in sampled frames (${scores})`,
+        detailKey: 'watermarkNotVisible',
+        detailParams: { scores },
       };
 }
 
@@ -194,9 +252,14 @@ export function evaluateBrandKit(
 ): QualityCheck {
   const code = 'brand_kit';
   if (!expected.hasKit)
-    return { code, status: 'not_run', severity: 'info', detail: 'the project has no brand kit' };
-  if (!summary)
-    return { code, status: 'not_run', severity: 'info', detail: 'no timeline summary (slideshow)' };
+    return {
+      code,
+      status: 'not_run',
+      severity: 'info',
+      detail: 'the project has no brand kit',
+      detailKey: 'noBrandKit',
+    };
+  if (!summary) return { ...NO_SUMMARY, code };
   const missing: string[] = [];
   if (expected.logo && !summary.brand.logo) missing.push('logo');
   if (expected.fontFamily && summary.brand.fontFamily !== expected.fontFamily)
@@ -219,6 +282,14 @@ export function evaluateBrandKit(
         status: 'warning',
         severity: 'info',
         detail: `review needed — not on the timeline: ${missing.join(', ')}`,
+        detailKey: 'brandKitMissing',
+        detailParams: { count: missing.length },
       }
-    : { code, status: 'passed', severity: 'info', detail: 'colours, fonts and logo present' };
+    : {
+        code,
+        status: 'passed',
+        severity: 'info',
+        detail: 'colours, fonts and logo present',
+        detailKey: 'brandKitPresent',
+      };
 }

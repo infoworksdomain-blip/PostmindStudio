@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { useDescribeFailure } from '../failure-reason';
 import { ErrorState } from '../primitives';
 import { ShotSwapDelete } from './shot-swap-delete';
 import { useShotLabels } from './shot-strip';
@@ -17,6 +18,26 @@ import { useAction } from './use-action';
 // One shot: its scene, narration and caption; regenerate just this shot with an optional prompt
 // override (POST /shots/:id/regenerate) or edit narration / caption, which re-voices only
 // (PATCH /shots/:id). 13.2: swap its visual from the library or delete it (shot-swap-delete.tsx).
+
+/** 17.9: the shot's failure reason in the reader's language (provider text untranslated). */
+function ShotFailure({ reason }: { reason: string }) {
+  const t = useTranslations('review.shot');
+  const failure = useDescribeFailure()(reason);
+  if (!failure) return null;
+  return (
+    <p className="mt-2 text-xs text-destructive">
+      {t('failed', { reason: failure.text })}
+      {failure.detail && (
+        <>
+          {' '}
+          <bdi dir="auto" className="opacity-80">
+            {failure.detail}
+          </bdi>
+        </>
+      )}
+    </p>
+  );
+}
 
 export function ShotPanel({
   shotId,
@@ -95,11 +116,7 @@ export function ShotPanel({
               {t('camera', { direction: shot.cameraDirection })}
             </p>
           )}
-          {shot.errorReason && (
-            <p className="mt-2 text-xs text-destructive">
-              {t('failed', { reason: shot.errorReason })}
-            </p>
-          )}
+          {shot.errorReason && <ShotFailure reason={shot.errorReason} />}
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor={`prompt-${shotId}`} className="text-xs font-medium text-muted-foreground">

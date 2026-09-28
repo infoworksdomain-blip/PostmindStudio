@@ -37,7 +37,31 @@ describe('AutomationPanel', () => {
         })}
       />,
     );
+    // A record written before 17.9 (no params) keeps its stored English.
     expect(screen.getByRole('status')).toHaveTextContent('first 10 videos — 3 of 10');
+  });
+
+  it('17.9: words the reason from its code and params', () => {
+    mockFetch([]);
+    renderWithSWR(
+      <AutomationPanel
+        project={makeProject({
+          reviewPolicy: 'AUTO_APPROVE',
+          metadata: {
+            review: {
+              decision: 'needs_review',
+              code: 'not_trusted',
+              reason: 'English fallback',
+              params: { approved: 3, needed: 10 },
+              at: '2026-09-27T10:00:00Z',
+            },
+          },
+        })}
+      />,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Needs review: your first 10 videos are reviewed by a person (3 of 10 approved so far).',
+    );
   });
 
   it('distinguishes automatic from human approval', () => {

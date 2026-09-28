@@ -35,6 +35,18 @@ protection. The scan screen says so next to the confirmation.
   it"). A scheduled rescan carries the confirmation of the scan it repeats. Scans made before
   14.4 have no stored confirmation and never use the render; the owner can start a new scan.
   The scan worker passes the renderer only when the confirmation is set (`headlessFor()`).
+- The exact wording agreed to is kept with it (BACKLOG 15.D8, 17.8): `ownershipStatement` (the
+  text), `ownershipStatementLocale` and `ownershipStatementKey` (the interface language and the
+  catalogue key, `business.scan.ownershipStatement`). The app sends `{ locale, messageKey,
+  text }`; the server stores the approved text from `messages/<locale>.json` for that locale and
+  key and refuses anything else (400 "does not match an approved version"). A request that sends
+  only a string is accepted when it equals an approved text in some language. Scans made before
+  17.8 have NULL locale and key and keep the text their client sent. The audit entry
+  `studio.website_scan.start` carries all three. Changing the wording is a catalogue change:
+  rows stored before it keep the text the user agreed to at the time.
+- Failure lines on a scan (`website_scans.errorReason`) are stored as `<code>: <English>`
+  (`robots_blocked`, `no_pages`, `scan_cost_cap`, `scan_images_capped`, `ownership_disputed`;
+  17.9) so the app shows them in the reader's language; per-page crawl errors stay as written.
 - When `STUDIO_HEADLESS_RENDER_URL` points at a self-hosted headless Chromium host, a homepage
   refused with HTTP 403, 429 or 503 is rendered once by that browser. The host is the
   open-source Browserless image (`POST /content`).

@@ -9,6 +9,7 @@ import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { ConfirmDialog } from './confirm-dialog';
+import { useProjectName } from '@/lib/client/use-project-name';
 
 // Row actions for a publication (spec 8.4): cancel a scheduled post, retry a failed one, take
 // down a live one. Cancel and take-down are irreversible, so both ask first.
@@ -35,7 +36,8 @@ export function PublicationActions({
   const [confirming, setConfirming] = useState<Action | null>(null);
   const [running, setRunning] = useState<Action | null>(null);
   const platform = f.platform(publication.platform);
-  const name = publication.project?.name ?? t('thisVideo');
+  const projectName = useProjectName();
+  const name = publication.project ? projectName(publication.project.name) : t('thisVideo');
 
   async function run(action: Action): Promise<boolean> {
     setRunning(action);

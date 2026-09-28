@@ -131,7 +131,7 @@ const CONVENTION: Record<string, { tags: string[]; suffix: string }> = {
 
 route('POST', '/projects/:id/caption-suggestions', ({ params }) => {
   const project = getProject(params.id ?? '');
-  const hook = project.brief?.hook ?? project.name;
+  const hook = project.brief?.hook ?? project.name ?? '';
   const platforms = [...new Set(project.renders.map((r) => r.targetPlatform))];
   const suggestions = Object.fromEntries(
     platforms.map((p) => {
@@ -170,7 +170,7 @@ route('GET', '/renders/:id', ({ params }) => {
   const { project, render } = findRender(params.id ?? '');
   const url =
     thumbnails.get(render.id) ??
-    thumbnailSvg(project.brief?.hook ?? project.name, render.aspectRatio);
+    thumbnailSvg(project.brief?.hook ?? project.name ?? '', render.aspectRatio);
   return { render: { ...render, thumbnailUrl: url } };
 });
 
@@ -195,7 +195,7 @@ route('POST', '/renders/:id/thumbnail', ({ params, body }) => {
   const text =
     typeof input.overlayText === 'string' && input.overlayText.trim()
       ? input.overlayText.trim()
-      : (project.brief?.hook ?? project.name);
+      : (project.brief?.hook ?? project.name ?? '');
   const url = thumbnailSvg(text, render.aspectRatio);
   thumbnails.set(render.id, url);
   return { render: { id: render.id, thumbnailUrl: url } };

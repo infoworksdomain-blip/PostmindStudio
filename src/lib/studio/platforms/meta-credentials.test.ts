@@ -31,6 +31,8 @@ async function row(overrides: Partial<PlatformConnection> = {}): Promise<Platfor
     state: 'active',
     connectedByUserId: 'system:postmind-core',
     connectedAt: new Date(NOW),
+    statusCheckedAt: null,
+    statusCheckOutcome: null,
     ...overrides,
   };
 }

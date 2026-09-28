@@ -7,34 +7,82 @@ backups are owned by DevOps. This runbook covers the Studio-specific checks.
 | Store | Backup | Studio recovery notes |
 | --- | --- | --- |
 | Postgres (the `studio` schema) | Managed point-in-time recovery (PITR), with at least 7 days of retention. **Render:** continuous PITR on paid Postgres, 7 days on a Pro workspace (3 on Hobby), plus on-demand logical exports kept 7 days ([Render docs](https://render.com/docs/postgresql-backups)). | Restore to a new instance at the target time, verify it, then cut over. Migrations are forward-only, so the restored schema matches the image that ran at that time. Render cut-over: [render-deploy.md](render-deploy.md) step 11. |
-| S3 buckets (`STORAGE_PROVIDER=s3`) | Versioning enabled, with lifecycle rules for noncurrent versions | Restore objects by version id. Renders are immutable, so restoring overwrites nothing. |
-| R2 buckets (`STORAGE_PROVIDER=r2`) | **No versioning on R2**: a deleted object cannot be restored from R2 itself. A separate backup copy is needed (below). | Copy objects back from the backup bucket. The key is on the row (`s3Key`), so restoring is a copy of the same key into the same bucket. |
+| S3 buckets (`STORAGE_PROVIDER=s3`) | Versioning enabled, with lifecycle rules for noncurrent versions (kept 30 days). For deletes older than that, the daily backup copy below. | Restore objects by version id within 30 days, otherwise from the backup bucket. Renders are immutable, so restoring overwrites nothing. |
+| R2 buckets (`STORAGE_PROVIDER=r2`) | **No versioning on R2**: a deleted object cannot be restored from R2 itself. The daily backup copy (below) keeps it. | Copy objects back from the backup bucket (below). |
 | Redis DB 3 (BullMQ, idempotency keys, OAuth state) | AOF persistence or snapshots (Render Key Value: `persistenceMode: journal-snapshot`, AOF every second plus snapshots) | Treat Redis as rebuildable. After a loss, re-enqueue the active projects (see below). Idempotency keys expire anyway. |
 
-## R2: recovering deleted objects (no versioning)
+## Object storage backup copy (Phase 17.5)
 
-R2 does not implement bucket versioning (https://developers.cloudflare.com/r2/api/s3/api/). On
-R2, the only way to recover a deleted object is from a backup copy that DevOps keeps outside the
-live buckets.
+R2 does not implement bucket versioning (https://developers.cloudflare.com/r2/api/s3/api/), and
+S3 keeps noncurrent versions for 30 days only. A daily job therefore copies the live buckets into a
+separate **backup bucket**: `scripts/ops/backup-storage.ts` (logic in
+`src/lib/studio/ops/storage-backup*.ts`), run by the Render cron job
+`studio-backup-storage-<env>` at 03:30 UTC ([render-deploy.md](render-deploy.md)). It works on S3
+and R2 through the storage client factory and needs no database.
 
-- **What to back up.** Studio keys are write-once: uuid or content-hash names, and renders are
-  never overwritten. Losses therefore come from deletes, not overwrites. Back up the assets,
-  renders and thumbnails buckets. The library can be re-ingested from the corpus manifest.
-- **How.** Copy the objects on a schedule (daily is enough for the RPO above) into a backup R2
-  bucket in the same jurisdiction, under a separate token.
-  - Use any S3-compatible sync tool pointed at `https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`.
-  - Copy new keys only. Never propagate deletes immediately.
-  - The app token must not be able to delete from the backup bucket.
-- **Retention must honour purges.** The organisation hard delete (30-day grace) and the business
-  purge delete data for legal reasons.
-  - Expire backup copies after at most 30 days with a lifecycle rule on the backup bucket, so
-    purged data ages out of the backup too.
+- **What is backed up.** The assets, renders and thumbnails buckets (`S3_BUCKET_*`), into **one**
+  backup bucket (`S3_BACKUP_BUCKET`) under a prefix per bucket: `assets/<key>`, `renders/<key>`,
+  `thumbnails/<key>`. One bucket means one token scope and one set of bucket rules per environment.
+  The library is not included by default (it can be re-ingested from the corpus manifest); add it
+  with `--only assets,renders,thumbnails,library`. Objects written to the 15.E9 fallback buckets
+  during a primary outage are **not** backed up while they stay there. Consolidate them into the
+  primaries after the outage ([storage-failover.md](storage-failover.md) "After an outage"); the
+  next run then copies them.
+- **How.**
+  - Incremental: both buckets are listed. An object is copied when its copy is missing, has another
+    size, or has another ETag *and* is older than the source.
+  - Server-side `CopyObject` when the backup bucket is behind the same endpoint (same AWS region, or
+    same R2 account and jurisdiction; `S3_BACKUP_REGION` empty / `auto`). Otherwise each object is
+    streamed GET → PUT through the job.
+  - Deletes are never propagated at once (see retention).
+  - Dry run by default; the cron job passes `--apply`.
+- **Credentials.** The job uses its own key pair (`S3_BACKUP_ACCESS_KEY_ID` /
+  `S3_BACKUP_SECRET_ACCESS_KEY`): read on the live buckets, read and write on the backup bucket.
+  The **app token has no access to the backup bucket**, so a leaked app token, or a bug, cannot
+  delete the backups ([r2-setup.md](r2-setup.md) step 7). On S3: an IAM user or role with
+  `s3:ListBucket` + `s3:GetObject` on the live buckets and `s3:ListBucket`, `s3:GetObject`,
+  `s3:PutObject`, `s3:DeleteObject` on the backup bucket.
+- **Retention honours purges.** The organisation hard delete (after its 30-day grace) and the
+  business purge delete data for legal reasons.
+  - The purge (`src/lib/studio/services/purge-storage.ts`) deletes from the live and failover
+    buckets only; it **does not** delete from the backup bucket (it runs with the app token). The
+    backup copies **age out** instead.
+  - The first run that finds a backup copy without its source records a *tombstone* (the time it
+    was first seen missing) in `.studio-backup/state.json` in the backup bucket. When the tombstone
+    is `S3_BACKUP_RETENTION_DAYS` old (default and maximum **30**; the job refuses a larger value),
+    the run deletes the copy. So purged data leaves the backup at most **30 days + one day** after
+    the purge deleted the live object. The same applies to lifecycle expiry (`intermediates/`,
+    `library/staging/`) and the abandoned-upload sweep.
+  - A source that comes back (a restore) clears its tombstone.
+  - A state file that does not parse stops the job (exit 1) rather than restarting every clock.
+    Fix or restore the file; never delete it to "get going again" unless you accept that the
+    30-day clock restarts for copies already waiting.
+  - **Do not** add a versioning rule, object lock or bucket lock to the backup bucket: a deleted
+    copy must really go. On S3, create the backup bucket **without** versioning.
   - Never restore an object whose organisation has an `organisation_purges` row in `hard_deleted`.
+- **Safety valve.** If a run would start the clock on more than 25 % of a bucket's copies at once
+  (at least 100), or the live bucket lists empty, the job does nothing for that bucket and fails. A
+  wrong `S3_BUCKET_*` name must not age the whole backup out. Check the names; when the deletes are
+  real (a large purge), run once by hand with `--allow-mass-tombstone`.
+- **Monitoring.** Each run logs one JSON line per bucket (`event: storage_backup_bucket`: copied,
+  bytes, waiting, expired, errors) and one per run (`event: storage_backup_run`, `ok`). Any copy,
+  delete or listing error, or the safety valve, exits 1: the Render cron run shows **Failed** and
+  the workspace's failure notification fires. Treat a failed run as a ticket, two in a row as a
+  page for DevOps.
+- **Run by hand.** From the `studio-backup-storage-<env>` **Shell**, or anywhere with the same env:
+
+  ```bash
+  npx tsx scripts/ops/backup-storage.ts            # dry run: what would be copied / aged out
+  npx tsx scripts/ops/backup-storage.ts --apply
+  ```
+
+- **Restore.** Find the row's `s3Bucket` / `s3Key`, then copy `<prefix>/<s3Key>` from the backup
+  bucket back to `<s3Key>` in the live bucket (prefix = `assets`, `renders` or `thumbnails` for
+  that bucket), for example with the AWS CLI pointed at the endpoint:
+  `aws s3 cp s3://<backup>/assets/<key> s3://<live>/<key> --endpoint-url https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`.
+  Presigned URLs work again at once; no row changes are needed. The next run clears the tombstone.
 - **Do not use R2 bucket locks** on the live buckets as a substitute. They block the deletes that
   purges, the upload sweep and lifecycle expiry rely on.
-- **Restore.** Find the row's `s3Bucket` / `s3Key`, then copy that key from the backup bucket back
-  into the live bucket. Presigned URLs work again at once; no row changes are needed.
-- **Status: GAP.** The backup job itself is DevOps tooling and is not part of this repo.
 
 ## After a Redis loss
 

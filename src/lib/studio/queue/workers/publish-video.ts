@@ -50,7 +50,9 @@ export async function deferForQuota(
     data: {
       state: 'SCHEDULED',
       scheduledFor: at,
-      errorReason: 'YouTube upload quota reached; retrying after the daily reset',
+      // 17.9: `<code>: <English>` — the UI translates the code.
+      errorReason:
+        'youtube_quota_deferred: YouTube upload quota reached; retrying after the daily reset',
       errorCode: 'quota_exceeded',
       metadata: {
         ...meta,

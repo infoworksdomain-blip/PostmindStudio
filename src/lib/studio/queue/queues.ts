@@ -164,6 +164,10 @@ export interface JobDataMap {
   'sync-calendar-shadows': RollUpJobData;
   /** 15.W4: nightly Core organisation reconciliation (skipped until Core ships). */
   'reconcile-organisations': RollUpJobData;
+  /** 17.2: re-enqueue SCHEDULED publications whose publish job was lost (every 10 minutes). */
+  'redrive-lost-publications': RollUpJobData;
+  /** 17.3: platform account-status check (hourly; each connection once a day). */
+  'check-platform-accounts': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -201,6 +205,8 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'report-usage': QUEUES.analytics,
   'sync-calendar-shadows': QUEUES.analytics,
   'reconcile-organisations': QUEUES.analytics,
+  'redrive-lost-publications': QUEUES.publish,
+  'check-platform-accounts': QUEUES.analytics,
 };
 
 export const MAX_RETRIES = 5;

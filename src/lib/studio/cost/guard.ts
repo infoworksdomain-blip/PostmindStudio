@@ -19,6 +19,7 @@ import {
 } from './caps';
 import { formatGbp } from './format';
 import type { OrgCapOverrideLookup } from './org-overrides';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // Spec 12.5 cost caps and alerting, spec 11.4 "on exhaustion, jobs pause and a notification is
 // sent", risk register "alerting at 80% / 100%; automated pause".
@@ -48,7 +49,7 @@ export interface CapUsage {
   capPence: number;
   spentPence: number;
   thresholds: readonly number[];
-  project?: { id: string; name: string; createdByUserId: string };
+  project?: { id: string; name: string | null; createdByUserId: string };
   provider?: string;
 }
 
@@ -119,7 +120,7 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
   const params = costParams(usage, threshold);
   switch (usage.scope) {
     case 'PROJECT': {
-      const name = usage.project?.name ?? 'A project';
+      const name = usage.project ? projectLabel(usage.project.name) : 'A project';
       const link = usage.project ? `/projects/${usage.project.id}` : undefined;
       // Without a project row there is no name to show: the stored English text is used.
       const keyed = (key: NotificationMessage['key']) =>
@@ -127,7 +128,11 @@ export function alertMessage(usage: CapUsage, threshold: number): Message {
           ? {
               message: {
                 key,
-                params: { ...params, name, pausePercent: PROJECT_PAUSE_PERCENT },
+                params: {
+                  ...params,
+                  name: projectNameParam(usage.project?.name),
+                  pausePercent: PROJECT_PAUSE_PERCENT,
+                },
               },
             }
           : {};

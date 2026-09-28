@@ -65,7 +65,8 @@ export async function createProjectFromContent(
     deps.db,
     tenant,
     createProjectInput.parse({
-      name: (content.title ?? content.text).trim().slice(0, 80) || 'Video from PostMind post',
+      // 17.9: no English placeholder is stored; an empty title leaves the project unnamed.
+      name: (content.title ?? content.text).trim().slice(0, 80) || undefined,
       businessId,
       sourceType: 'POSTMIND_CONTENT',
       sourceRef: content.id,

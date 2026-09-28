@@ -2,6 +2,7 @@ import { withPublicRoute } from '@/lib/studio/api/public';
 import { parseBody } from '@/lib/studio/api/route';
 import { notifySafely } from '@/lib/studio/notifications/notifier';
 import { addPublicComment, shareCommentInput } from '@/lib/studio/services/share-links';
+import { projectLabel, projectNameParam } from '@/lib/project-name';
 
 // POST /api/studio/public/share-links/:token/comments { authorName, authorEmail?, body } —
 // BACKLOG 15.E5 / operator decision P8: an external reviewer leaves feedback (rate limited per
@@ -21,13 +22,13 @@ export const POST = withPublicRoute(async ({ req, deps, params }) => {
     organisationId: context.organisationId,
     userId: context.ownerUserId,
     kind: 'share_comment',
-    title: `New feedback on ${context.projectName}`,
+    title: `New feedback on ${projectLabel(context.projectName)}`,
     body: `${comment.authorName}: ${comment.body}`.slice(0, 500),
     link: `/projects/${encodeURIComponent(context.projectId)}`,
     message: {
       key: 'shareComment',
       params: {
-        name: context.projectName,
+        name: projectNameParam(context.projectName),
         author: comment.authorName,
         comment: comment.body.slice(0, 500),
       },

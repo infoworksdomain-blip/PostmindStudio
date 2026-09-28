@@ -27,16 +27,21 @@ jobs:
       # Phase 16: every locale has every key, and screens use logical (RTL-safe) CSS only.
       - run: npx tsx scripts/i18n/check-catalogues.ts
       - run: npx tsx scripts/i18n/check-physical-css.ts --fail
+      # Phase 17.7: render.yaml against Render's published Blueprint JSON Schema (pinned copy in
+      # ops/render/render.yaml.schema.json, the file SchemaStore's "Render Blueprints" entry serves).
+      - name: render.yaml matches Render's Blueprint schema
+        run: npx tsx scripts/render/validate-blueprint.ts render.yaml
       - run: npm test
 
   database:
-    # Applies the committed migrations to real Postgres 15 + pgvector, seeds system_flags,
-    # and fails if prisma/schema.prisma has drifted from prisma/migrations.
+    # Applies the committed migrations to real Postgres 17 + pgvector (the major render.yaml pins
+    # for Render Postgres, Phase 17.7), seeds system_flags, and fails if prisma/schema.prisma has
+    # drifted from prisma/migrations.
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
       postgres:
-        image: pgvector/pgvector:pg15
+        image: pgvector/pgvector:0.8.6-pg17
         env:
           POSTGRES_USER: studio
           POSTGRES_PASSWORD: studio
@@ -146,6 +151,16 @@ jobs:
           done
           docker logs studio
           exit 1
+      - name: Render monitoring image builds (ops/render/monitoring, Phase 17.7)
+        # Same build context as render.yaml (dockerContext "."). Checks the binaries it copies
+        # from the pinned upstream images exist and the rules/config land where prometheus.yml.tmpl
+        # reads them.
+        run: |
+          docker build -f ops/render/monitoring/Dockerfile -t studio-monitoring:ci .
+          docker run --rm --entrypoint sh studio-monitoring:ci -c '
+            /bin/prometheus --version && /bin/alertmanager --version && /bin/blackbox_exporter --version &&
+            promtool check rules /etc/prometheus/rules/studio-alerts.yml /etc/prometheus/rules/studio-slo.yml &&
+            test -f /etc/prometheus/prometheus.yml.tmpl && test -f /usr/local/bin/studio-monitoring'
       - name: Compose file is valid
         run: |
           touch .env.production

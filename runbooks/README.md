@@ -10,10 +10,10 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
 | [render-deploy.md](render-deploy.md) | Deployment: Render — one Blueprint (`render.yaml`) for staging + production: secrets, domains, Cloudflare DNS, first deploy, promotion, rollback, scaling, PITR | — |
-| [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning (R2: backup copy, no versioning), Redis (playbook E-12) | — |
+| [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning, daily object-storage backup copy with 30-day age-out (17.5), Redis (playbook E-12) | — |
 | [r2-setup.md](r2-setup.md) | Cloudflare R2 as the object store (`STORAGE_PROVIDER=r2`): EU buckets, scoped token, CORS, lifecycle, env | — |
 | [storage-failover.md](storage-failover.md) | Secondary-region (S3) or second-bucket (R2) storage failover (15.E9) | — |
-| [provider-outage.md](provider-outage.md) | Priority risk 1: provider outage mid-generation | 1+ breaker OPEN |
+| [provider-outage.md](provider-outage.md) | Priority risk 1: provider outage mid-generation | Breaker OPEN > 5 min, or failover rate > 20% |
 | [cost-runaway.md](cost-runaway.md) | Priority risk 2: cost runaway — project / org / provider / global caps, pause, alerts | 80% alert, 90% project pause, 100% daily pause |
 | [service-health.md](service-health.md) | Availability and queue alerts: target down, not ready, job failures, API latency, backlog, dead letter | per alert |
 | [content-safety-miss.md](content-safety-miss.md) | Priority risk 3: unsafe content published; the monthly Trust & Safety audit (14.11) | Any true miss |
@@ -52,6 +52,8 @@ format: **trigger metric → threshold → escalation → steps → verification
     - `studio_job_duration_seconds{job,outcome}`
     - `studio_queue_jobs{queue,state}`
     - `studio_provider_circuit_state{provider}`
+    - `studio_provider_passed_over_total{provider,reason}` and `studio_provider_selected_total{provider}`
+      (17.4: router failovers; workers)
     - `studio_cost_alerts_total{scope,threshold}` (every series pre-created at 0)
     - `studio_kill_switch_engaged{level}` (web only; sampled from `system_flags` at scrape)
 - **Health checks:**
@@ -72,7 +74,8 @@ Alert rules and paging are committed (Phase 12) and validated in CI (`ops-config
 - `ops/prometheus/studio-alerts.yml` — rule groups availability, jobs, providers, cost and kill
   switch. Every alert has `severity` (`page` or `ticket`) and a `runbook_url` into this folder.
 - `ops/prometheus/tests/studio-alerts.test.yml` — promtool unit tests (target down, global cost
-  cap incl. the first alert of a process, job failure rate).
+  cap incl. the first alert of a process, job failure rate, provider breaker open > 5 min and
+  provider failover rate).
 - `ops/prometheus/studio-slo.yml` + `tests/studio-slo.test.yml` (15.D9) — spec 17.1 latency SLO
   and spec 3.5 acceptance recording rules and alerts (slo-and-launch-readiness.md).
 - `ops/alertmanager/alertmanager.yml` — `severity=page` → PagerDuty, `severity=ticket` → Slack

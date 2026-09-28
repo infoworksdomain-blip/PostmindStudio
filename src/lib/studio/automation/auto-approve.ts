@@ -20,6 +20,8 @@ export interface ReviewRecord {
   decision: 'auto_approved' | 'needs_review';
   code?: string;
   reason?: string;
+  /** 17.9: parameters for the reason in the reader's language (review.automation.reasons). */
+  params?: Record<string, string | number>;
   humanApprovedCount?: number;
   threshold?: number;
   at: string;
@@ -106,6 +108,7 @@ export async function autoApproveIfTrusted(
         decision: 'needs_review',
         code: 'approval_workflow',
         reason: `Needs review: the “${workflow.name}” approval workflow applies (${workflow.steps.length} step${workflow.steps.length === 1 ? '' : 's'})`,
+        params: { workflow: workflow.name, steps: workflow.steps.length },
         humanApprovedCount,
         ...(threshold !== null && { threshold }),
         at: at(),
@@ -115,6 +118,7 @@ export async function autoApproveIfTrusted(
         decision: 'needs_review',
         code: decision.code,
         reason: decision.reason,
+        ...(decision.params && { params: decision.params }),
         humanApprovedCount,
         ...(threshold !== null && { threshold }),
         at: at(),

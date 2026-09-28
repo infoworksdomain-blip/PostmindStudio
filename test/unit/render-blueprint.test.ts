@@ -34,6 +34,7 @@ type Service = {
   maxmemoryPolicy?: string;
   persistenceMode?: string;
   ipAllowList?: unknown[];
+  schedule?: string;
   envVars?: EnvVar[];
 };
 type Database = {
@@ -420,6 +421,80 @@ describe('render.yaml — monitoring', () => {
     for (const v of hostVars) expect(entrypoint).toContain(`host_var ${v.key}`);
     for (const key of ['PAGERDUTY_ROUTING_KEY', 'SLACK_WEBHOOK_URL']) {
       expect(monitoring.envVars).toContainEqual({ key, sync: false });
+    }
+  });
+});
+
+describe('render.yaml — object-storage backup cron (Phase 17.5)', () => {
+  const COMMAND = 'npx tsx scripts/ops/backup-storage.ts --apply';
+  const cronOf = (name: string) => {
+    const crons = env(name).services.filter((s) => s.type === 'cron');
+    expect(crons).toHaveLength(1);
+    return crons[0]!;
+  };
+
+  it.each(ENV_NAMES)('%s: runs the backup daily on the app image, with --apply', (name) => {
+    const cron = cronOf(name);
+    expect(cron).toMatchObject({
+      name: `studio-backup-storage-${name}`,
+      runtime: 'docker',
+      dockerfilePath: './Dockerfile',
+      dockerCommand: COMMAND,
+    });
+    // Daily (UTC): minute and hour fixed, every day.
+    expect(cron.schedule).toMatch(/^\d{1,2} \d{1,2} \* \* \*$/);
+    const script = read('scripts/ops/backup-storage.ts');
+    expect(script).toContain('runBackup(');
+  });
+
+  it.each(ENV_NAMES)('%s: object storage only — no database, no Key Value', (name) => {
+    const cron = cronOf(name);
+    expect(cron.dockerCommand?.startsWith(WRAPPER)).toBe(false);
+    const vars = cron.envVars ?? [];
+    expect(vars.some((v) => v.fromDatabase || v.fromService)).toBe(false);
+    expect(keysOf(vars)).not.toContain('RENDER_POSTGRES_URL');
+  });
+
+  it.each(ENV_NAMES)('%s: gets storage config + secrets and its own backup token', (name) => {
+    const e = env(name);
+    const cron = cronOf(name);
+    const groups = (cron.envVars ?? []).flatMap((v) => (v.fromGroup ? [v.fromGroup] : []));
+    expect(groups).toEqual([`studio-config-${name}`, `studio-secrets-${name}`]);
+    for (const key of [
+      'S3_BACKUP_BUCKET',
+      'S3_BACKUP_ACCESS_KEY_ID',
+      'S3_BACKUP_SECRET_ACCESS_KEY',
+    ]) {
+      expect(cron.envVars).toContainEqual({ key, sync: false });
+    }
+    const provided = providedKeys(e, cron);
+    const operator = operatorKeys(name);
+    // What backupConfigFromEnv reads on R2 (storage-client.ts + storage-backup.ts).
+    for (const key of [
+      'STORAGE_PROVIDER',
+      'R2_ACCOUNT_ID',
+      'R2_JURISDICTION',
+      'S3_BUCKET_ASSETS',
+      'S3_BUCKET_RENDERS',
+      'S3_BUCKET_THUMBNAILS',
+      'S3_BACKUP_BUCKET',
+      'S3_BACKUP_REGION',
+      'S3_BACKUP_RETENTION_DAYS',
+    ]) {
+      expect(provided.has(key) || operator.has(key), `${name}: ${key}`).toBe(true);
+    }
+    // Retention is never longer than the 30 days the runbooks promise for purged data.
+    const retention = (cron.envVars ?? []).find((v) => v.key === 'S3_BACKUP_RETENTION_DAYS');
+    expect(Number(retention?.value)).toBeGreaterThanOrEqual(1);
+    expect(Number(retention?.value)).toBeLessThanOrEqual(30);
+  });
+
+  it('every key the cron job sets is documented in .env.example', () => {
+    const example = read('.env.example');
+    for (const name of ENV_NAMES) {
+      for (const key of keysOf(cronOf(name).envVars ?? [])) {
+        expect(example, key).toMatch(new RegExp(`^${key}=`, 'm'));
+      }
     }
   });
 });

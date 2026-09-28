@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import { currentRunId } from '../pipeline/project-state';
 import { notifierFor, notifySafely, type Notifier } from './notifier';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // Spec 14.4 events: generation complete, publication failed (with a retry link), approval
 // required after 2 hours. Each helper is called from the worker that owns the event and never
@@ -46,8 +47,8 @@ async function generationComplete(
     userId: project.createdByUserId,
     kind: 'generation_complete',
     title: autoApproved
-      ? `“${project.name}” is generated and was auto-approved`
-      : `“${project.name}” is ready for review`,
+      ? `“${projectLabel(project.name)}” is generated and was auto-approved`
+      : `“${projectLabel(project.name)}” is ready for review`,
     body: autoApproved
       ? 'The video passed every quality check and your review policy approved it automatically.'
       : 'Every variant passed the quality checks. Review it, then approve or publish.',
@@ -55,7 +56,7 @@ async function generationComplete(
     dedupeKey: `generation_complete:${input.projectId}:${input.runId}`,
     message: {
       key: autoApproved ? 'generationAutoApproved' : 'generationReady',
-      params: { name: project.name },
+      params: { name: projectNameParam(project.name) },
     },
   });
 }
@@ -86,7 +87,7 @@ async function publicationFailed(host: Host, input: PublicationFailure): Promise
     organisationId: input.organisationId,
     userId: publication.project.createdByUserId,
     kind: 'publication_failed',
-    title: `Publishing “${publication.project.name}” to ${publication.platform} failed`,
+    title: `Publishing “${projectLabel(publication.project.name)}” to ${publication.platform} failed`,
     body: `${input.reason.slice(0, 500)} — open the project to retry.`,
     link: `/projects/${input.projectId}`,
     // One per failure: retryCount was incremented by the failure being reported.
@@ -94,7 +95,7 @@ async function publicationFailed(host: Host, input: PublicationFailure): Promise
     message: {
       key: 'publicationFailed',
       params: {
-        name: publication.project.name,
+        name: projectNameParam(publication.project.name),
         platform: publication.platform,
         reason: input.reason.slice(0, 500),
       },
@@ -138,11 +139,11 @@ export async function notifyPendingApprovals(host: Host): Promise<{ notified: nu
         // Org-wide: approvers are usually not the creator (studio:project:approve).
         userId: null,
         kind: 'approval_pending',
-        title: `“${project.name}” is waiting for approval`,
+        title: `“${projectLabel(project.name)}” is waiting for approval`,
         body: 'It has been ready for review for more than 2 hours.',
         link: `/projects/${project.id}`,
         dedupeKey: `approval_pending:${project.id}:${runId}`,
-        message: { key: 'approvalPending', params: { name: project.name } },
+        message: { key: 'approvalPending', params: { name: projectNameParam(project.name) } },
       });
       if (created) notified += 1;
     } catch (err) {

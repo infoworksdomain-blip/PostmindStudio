@@ -12,6 +12,32 @@ A refresh failure or a 401 marks the connection `needs_reconnect`. Publishing to
 clear error, and `/connections` shows a Reconnect button. No operator action is needed beyond
 support.
 
+### Daily account-status check (17.3)
+
+The `check-platform-accounts` job (hourly at :20, studio-analytics; services/account-status.ts)
+checks each **active** connection at most once per `STUDIO_ACCOUNT_CHECK_INTERVAL_HOURS` (default
+24), oldest check first, at most `STUDIO_ACCOUNT_CHECK_BATCH` (default 100) per run and
+`STUDIO_ACCOUNT_CHECK_SPACING_MS` (default 2000) apart, so the calls spread over the day. Each
+check is the platform's cheap authenticated read, after the usual token refresh: TikTok
+`GET /v2/user/info/`, YouTube `channels.list mine=true` (1 quota unit), X `GET /2/users/me`,
+LinkedIn `GET /v2/userinfo`, Facebook `GET /{v}/me?fields=id` with the Page token, Instagram
+`GET /{v}/{ig-user-id}/content_publishing_limit`. Studio does not call Meta's `debug_token` (it
+needs an app access token, and the Meta app is Core's).
+
+- An authentication refusal (HTTP 401, a refused refresh, Graph error 190, an expired Meta token)
+  marks the connection `needs_reconnect`, notifies its owner in-app ("Reconnect your … account";
+  Core-registered Meta channels notify the organisation) once per connection, and writes audit
+  `studio.connection.needs_reconnect` (actor `system:account-status-check`). Recovery is the
+  usual reconnect.
+- Anything else (timeouts, 5xx, 429, an unexpected response) is recorded as
+  `statusCheckOutcome = 'unreachable'` and never changes the state; the next day checks again. A
+  platform answering 429 is not called again for the rest of that run.
+- `platform_connections.statusCheckedAt` / `statusCheckOutcome` hold the last result; the
+  Connections page shows "Access checked <date>" after a successful check. Active accounts not
+  checked for two days: `SELECT platform, count(*) FROM studio.platform_connections WHERE state =
+  'active' AND ("statusCheckedAt" IS NULL OR "statusCheckedAt" < now() - interval '2 days') GROUP
+  BY 1` (a growing number means the job is not running or the batch is too small).
+
 ### Instagram and Facebook (tokens pushed by PostMind Core)
 
 Studio does not run the Meta login. PostMind Core does, and pushes the tokens to Studio the same
@@ -103,7 +129,6 @@ new grace period.
 
 ## GAPs
 
-- The daily account-status check job is not built.
 - No Core-side retry or alert exists yet for failed internal calls. That code is Core's, owned
   by the Core team. Studio ships the kit for it (BACKLOG 14.10, `integrations/core/`): the
   OpenAPI spec, a copyable client with retries, the retry/alerting recipe

@@ -84,8 +84,8 @@ const defaultBudget = (formats: TargetFormat[]) =>
 
 route('POST', '/projects', ({ body }) => {
   const b = obj(body);
-  const name = str(b.name);
-  if (!name) throw bad('name is required');
+  // 17.9: a project may have no name (null); the UI shows a translated "Untitled video".
+  const name = str(b.name)?.trim() || null;
   const sourceType = (str(b.sourceType) ?? 'BRIEF') as ProjectRec['sourceType'];
   const brief = obj(b.brief);
   const rawInput = str(brief.rawInput);

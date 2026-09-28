@@ -75,6 +75,38 @@ describe('ConnectionsScreen', () => {
     expect(screen.getByRole('button', { name: 'Connect X' })).toBeInTheDocument();
   });
 
+  it('shows when the daily check last confirmed access (17.3), not after an unreachable check', async () => {
+    mockFetch(() =>
+      ok({
+        data: [
+          conn({ statusCheckedAt: '2026-09-27T01:20:00.000Z', statusCheckOutcome: 'ok' }),
+          conn({
+            id: 'con_2',
+            platform: 'youtube',
+            platformAccountName: 'Bakery TV',
+            statusCheckedAt: '2026-09-27T01:20:00.000Z',
+            statusCheckOutcome: 'unreachable',
+          }),
+          conn({
+            id: 'con_3',
+            platform: 'instagram',
+            businessId: null,
+            platformAccountName: '@bakery.ig',
+            statusCheckedAt: '2026-09-26T01:20:00.000Z',
+            statusCheckOutcome: 'ok',
+          }),
+        ],
+      }),
+    );
+    renderScreen(<ConnectionsScreen />);
+    const tiktok = await screen.findByRole('region', { name: 'TikTok' });
+    expect(within(tiktok).getByText(/^Access checked /)).toBeInTheDocument();
+    const youtube = screen.getByRole('region', { name: 'YouTube' });
+    expect(within(youtube).queryByText(/^Access checked /)).not.toBeInTheDocument();
+    const instagram = screen.getByRole('region', { name: 'Instagram' });
+    expect(within(instagram).getByText(/^Access checked /)).toBeInTheDocument();
+  });
+
   it('lists Instagram / Facebook accounts registered by PostMind read-only, with guidance', async () => {
     mockFetch(() =>
       ok({

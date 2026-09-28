@@ -5,6 +5,7 @@ import { notifySafely, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
 import { firstFreeSlot, heldSlots, parseSlots, staggerMinutes } from '../services/drip-queue';
 import { storedTargets, type AutoPublishTarget } from './targets';
+import { projectLabel, projectNameParam } from '../../project-name';
 
 // BACKLOG 13.21 — auto-publish outbox. Approval and auto-publish used to be two steps: a process
 // dying between them left an APPROVED project with nothing posted. Now the approval transaction
@@ -240,13 +241,17 @@ async function notifyGaveUp(deps: OutboxDeps, row: AutoPublishOutbox): Promise<v
     organisationId: row.organisationId,
     userId: project.createdByUserId,
     kind: 'auto_publish_failed',
-    title: `Auto-publishing “${project.name}” to ${platform} failed`,
+    title: `Auto-publishing “${projectLabel(project.name)}” to ${platform} failed`,
     body: `${row.lastError ?? 'Unknown error'} — open the project to retry.`,
     link: `/projects/${row.projectId}`,
     dedupeKey: `auto_publish_failed:${row.id}:${row.attempts}`,
     message: {
       key: 'autoPublishFailed',
-      params: { name: project.name, platform, reason: row.lastError ?? 'Unknown error' },
+      params: {
+        name: projectNameParam(project.name),
+        platform,
+        reason: row.lastError ?? 'Unknown error',
+      },
     },
   });
 }

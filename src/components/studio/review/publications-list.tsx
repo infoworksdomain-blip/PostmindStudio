@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
+import { FailureReason } from '../failure-reason';
 import { StateBadge } from '../primitives';
 import { useAction } from './use-action';
 
@@ -49,7 +50,12 @@ export function PublicationsList({
                   : p.publishedAt
                     ? t('liveSince', { date: f.date(p.publishedAt) })
                     : t('created', { date: f.date(p.createdAt) })}
-                {p.errorReason && ` — ${p.errorReason}`}
+                {p.errorReason && (
+                  <>
+                    {' — '}
+                    <FailureReason reason={p.errorReason} />
+                  </>
+                )}
               </p>
             </div>
             <StateBadge {...f.publicationState(p.state)} />

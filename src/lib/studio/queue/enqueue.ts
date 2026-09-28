@@ -22,7 +22,15 @@ export interface JobQueue {
   add<N extends JobName>(name: N, data: JobDataMap[N], options?: EnqueueOptions): Promise<void>;
   /** Remove a waiting or delayed job by id (no-op when absent). Optional: best effort only. */
   remove?(name: JobName, jobId: string): Promise<void>;
+  /**
+   * 17.2: whether a job id is still queued ('pending': waiting, delayed, active, prioritized),
+   * already ran ('finished': completed or failed, still retained — a re-add with that id is
+   * ignored), or is unknown to the queue (undefined). Optional: absent = cannot tell.
+   */
+  jobState?(name: JobName, jobId: string): Promise<JobPresence | undefined>;
 }
+
+export type JobPresence = 'pending' | 'finished';
 
 /** Deterministic job ids so fan-in / retries can never enqueue the same step twice per run. */
 export const jobIds = {
@@ -83,6 +91,14 @@ export function createBullJobQueue(
     async remove(name, jobId) {
       // Queue.remove resolves 0 when the job is missing or locked by a worker (bullmq docs).
       await queueFor(JOB_QUEUE[name]).remove(jobId);
+    },
+    async jobState(name, jobId) {
+      // Queue.getJob resolves undefined for an unknown id; Job.getState names its set.
+      const job = await queueFor(JOB_QUEUE[name]).getJob(jobId);
+      if (!job) return undefined;
+      const state = await job.getState();
+      if (state === 'unknown') return undefined;
+      return state === 'completed' || state === 'failed' ? 'finished' : 'pending';
     },
     async close() {
       await Promise.all([...queues.values()].map((q) => q.close()));
@@ -176,6 +192,11 @@ export class InlineJobQueue implements JobQueue {
     const again = { name: job.name, data: job.data, jobId: job.jobId } as InlineJob;
     this.pending.push(again);
     this.history.push(again);
+  }
+
+  async jobState(_name: JobName, jobId: string): Promise<JobPresence | undefined> {
+    if ([...this.pending, ...this.deferred].some((job) => job.jobId === jobId)) return 'pending';
+    return this.seen.has(jobId) ? 'finished' : undefined;
   }
 
   take(): InlineJob | undefined {
