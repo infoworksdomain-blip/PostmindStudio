@@ -14,6 +14,7 @@ import { queuePrefix } from '../src/lib/studio/queue/redis';
 import { APPROVAL_CHECK_SCHEDULE } from '../src/lib/studio/queue/workers/check-approvals';
 import { STYLE_MEMORY_SCHEDULE } from '../src/lib/studio/queue/workers/build-style-memory';
 import { CHANNEL_RECONCILE_SCHEDULE } from '../src/lib/studio/queue/workers/reconcile-channels';
+import { SAFETY_AUDIT_SCHEDULE } from '../src/lib/studio/services/safety-audit';
 import { RESCAN_SWEEP_PATTERN, STOCK_REFRESH_PATTERN } from '../src/lib/studio/scan/schedule';
 import { DOMAIN_POLL_PATTERN } from '../src/lib/studio/scan/domain-verification';
 import { OUTBOX_DISPATCH_SCHEDULE } from '../src/lib/studio/automation/outbox';
@@ -25,6 +26,8 @@ import {
   ORGANISATION_RECONCILE_SCHEDULE,
   USAGE_REPORT_SCHEDULE,
 } from '../src/lib/studio/queue/workers/core-sync';
+import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
+import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -97,6 +100,15 @@ async function main(): Promise<void> {
       },
     },
   );
+  // BACKLOG 14.11 — monthly Trust & Safety audit sample (06:00 UTC on the 1st, last month).
+  await analytics.upsertJobScheduler(
+    'sample-safety-audit-monthly',
+    { pattern: SAFETY_AUDIT_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sample-safety-audit',
+      data: { organisationId: 'postmind-platform', runId: 'safety-audit', planTier: 'STANDARD' },
+    },
+  );
 
   // BACKLOG 15.E8 / 15.W2–W4 (track E) — the daily spec 7.15 retention sweep, and the PostMind
   // Core sync jobs (usage events hourly, calendar shadows every 5 minutes, organisation
@@ -151,6 +163,24 @@ async function main(): Promise<void> {
     {
       name: 'auto-resume-paused',
       data: { organisationId: 'postmind-platform', runId: 'auto-resume', planTier: 'STANDARD' },
+    },
+  );
+  // BACKLOG 14.1 / 14.2 — daily data retention: hard delete of organisations past the purge
+  // grace (STUDIO_PURGE_GRACE_DAYS) and the sweep of abandoned browser uploads.
+  await orchestration.upsertJobScheduler(
+    'hard-delete-purged-orgs-daily',
+    { pattern: HARD_DELETE_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'hard-delete-purged-orgs',
+      data: { organisationId: 'postmind-platform', runId: 'hard-delete', planTier: 'STANDARD' },
+    },
+  );
+  await orchestration.upsertJobScheduler(
+    'sweep-abandoned-uploads-daily',
+    { pattern: UPLOAD_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-abandoned-uploads',
+      data: { organisationId: 'postmind-platform', runId: 'upload-sweep', planTier: 'STANDARD' },
     },
   );
   await publish.upsertJobScheduler(

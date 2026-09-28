@@ -24,6 +24,11 @@ import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-ap
 import { buildStyleMemoryJob, onBuildStyleMemoryFailed } from './build-style-memory';
 import { autoResumePaused, onAutoResumePausedFailed } from './auto-resume';
 import { dispatchAutoPublish, onDispatchAutoPublishFailed } from './dispatch-auto-publish';
+import {
+  hardDeletePurgedOrgs,
+  onDataRetentionFailed,
+  sweepAbandonedUploadsJob,
+} from './data-retention';
 import { onReconcileChannelsFailed, reconcileChannels } from './reconcile-channels';
 import {
   onCoreSyncFailed,
@@ -33,6 +38,7 @@ import {
 } from './core-sync';
 import { exportAccountData, onExportAccountDataFailed } from './export-account-data';
 import { onRetentionSweepFailed, retentionSweep } from './retention-sweep';
+import { onSampleSafetyAuditFailed, sampleSafetyAuditJob } from './sample-safety-audit';
 import { composeVideo, onComposeVideoFailed } from './compose-video';
 import { generateThumbnails, onGenerateThumbnailsFailed } from './generate-thumbnail';
 import { generateAsset, onGenerateAssetFailed } from './generate-asset';
@@ -106,7 +112,10 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'check-pending-approvals': checkPendingApprovals,
   'auto-resume-paused': autoResumePaused,
   'dispatch-auto-publish': dispatchAutoPublish,
+  'hard-delete-purged-orgs': hardDeletePurgedOrgs,
+  'sweep-abandoned-uploads': sweepAbandonedUploadsJob,
   'reconcile-channels': reconcileChannels,
+  'sample-safety-audit': sampleSafetyAuditJob,
   'sweep-website-rescans': sweepWebsiteRescans,
   'rescan-website': rescanWebsite,
   'sweep-stock-refresh': sweepStockRefresh,
@@ -138,7 +147,10 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'check-pending-approvals': onCheckPendingApprovalsFailed,
   'auto-resume-paused': onAutoResumePausedFailed,
   'dispatch-auto-publish': onDispatchAutoPublishFailed,
+  'hard-delete-purged-orgs': onDataRetentionFailed,
+  'sweep-abandoned-uploads': onDataRetentionFailed,
   'reconcile-channels': onReconcileChannelsFailed,
+  'sample-safety-audit': onSampleSafetyAuditFailed,
   'sweep-website-rescans': onSweepFailed,
   'rescan-website': onRescanWebsiteFailed,
   'sweep-stock-refresh': onSweepFailed,

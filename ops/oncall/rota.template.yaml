@@ -1,0 +1,103 @@
+# PostMind Studio on-call rota — TEMPLATE (BACKLOG 14.11; runbooks/on-call.md).
+#
+# Copy to ops/oncall/rota.yaml (or your team's private repo — it holds names and phone numbers,
+# which do not belong in this repository), fill it in, and mirror it into PagerDuty:
+#   - `schedules` → PagerDuty on-call schedules (one per layer)
+#     https://support.pagerduty.com/main/docs/schedule-basics
+#   - `escalation` → the escalation policy of the PagerDuty service whose Events API v2 routing
+#     key Alertmanager uses (ops/alertmanager/alertmanager.yml, receiver studio-page)
+#     https://support.pagerduty.com/main/docs/escalation-policies
+# Alertmanager only decides page vs ticket; WHO gets paged and how it escalates lives in
+# PagerDuty. This file is the reviewed source of truth for that configuration.
+#
+# Everything in <angle brackets> is a placeholder. Times are UTC unless a timezone is given.
+
+version: 1
+service: postmind-studio
+timezone: Europe/London
+
+# Who is eligible. Minimum for GA: 4 engineers on primary (no one on call more than 1 week in 4).
+people:
+  - id: <eng-1>
+    name: <Full name>
+    roles: [primary, secondary]
+    pagerduty_user: <PagerDuty user id or email>
+  - id: <eng-2>
+    name: <Full name>
+    roles: [primary, secondary]
+    pagerduty_user: <…>
+  - id: <eng-3>
+    name: <Full name>
+    roles: [primary, secondary]
+    pagerduty_user: <…>
+  - id: <eng-4>
+    name: <Full name>
+    roles: [primary, secondary]
+    pagerduty_user: <…>
+  - id: <eng-lead>
+    name: <Engineering lead>
+    roles: [manager]
+    pagerduty_user: <…>
+  - id: <tns-1>
+    name: <Trust & Safety lead>
+    roles: [trust-and-safety]
+    pagerduty_user: <…>
+
+schedules:
+  primary:
+    rotation: weekly
+    handoff: 'Monday 10:00 Europe/London'
+    order: [<eng-1>, <eng-2>, <eng-3>, <eng-4>]
+  secondary:
+    # Last week's primary is this week's secondary: context carries over.
+    rotation: weekly
+    handoff: 'Monday 10:00 Europe/London'
+    order: [<eng-4>, <eng-1>, <eng-2>, <eng-3>]
+  trust-and-safety:
+    # Content-safety misses (runbooks/content-safety-miss.md) and the monthly audit review.
+    rotation: monthly
+    handoff: '1st 10:00 Europe/London'
+    order: [<tns-1>]
+
+# Paging escalation for severity=page alerts (PagerDuty escalation policy).
+escalation:
+  rules:
+    - level: 1
+      target: schedule:primary
+      acknowledge_within_minutes: 5
+    - level: 2
+      target: schedule:secondary
+      after_minutes: 15 # unacknowledged at level 1
+    - level: 3
+      target: user:<eng-lead>
+      after_minutes: 30
+  repeat: 2 # re-run the policy twice before giving up
+
+# Response targets (see runbooks/on-call.md "Severity").
+response:
+  page:
+    acknowledge_minutes: 5
+    first_update_minutes: 15 # status to #studio-incidents
+  ticket:
+    triage_by: next working day
+
+# Where things go.
+channels:
+  incidents: '#studio-incidents' # human coordination during a page
+  alerts: '#studio-alerts' # Alertmanager severity=ticket (already configured)
+  status_page: <URL or "none">
+
+# Contacts outside engineering, by escalation path in the runbooks.
+contacts:
+  product: <name, phone>
+  founder: <name, phone>
+  legal: <name, phone> # severe content-safety categories
+  platform_partner_managers:
+    meta: <contact>
+    tiktok: <contact>
+    google: <contact>
+  postmind_core_on_call: <how to page Core> # internal API / purge failures (integrations/core)
+
+# Review this file every quarter and after every incident whose escalation went wrong.
+last_reviewed: <YYYY-MM-DD>
+reviewed_by: <name>

@@ -285,7 +285,7 @@ describe('crawlSite', () => {
 });
 
 describe('createBrowserlessRenderer', () => {
-  it('POSTs to {base}/content with the token as a query param and { url } as the body', async () => {
+  it('POSTs to {base}/content with the token as a Bearer header (never in the URL) and { url } as the body', async () => {
     const { fetch: fetchImpl, requests } = fakeFetch(
       new Response('<html><body>rendered</body></html>', { status: 200 }),
     );
@@ -298,9 +298,19 @@ describe('createBrowserlessRenderer', () => {
     expect(html).toBe('<html><body>rendered</body></html>');
     expect(requests).toHaveLength(1);
     expect(requests[0]?.method).toBe('POST');
-    expect(requests[0]?.url).toBe('https://custom.browserless.example/content?token=tok123');
+    expect(requests[0]?.url).toBe('https://custom.browserless.example/content');
+    expect(requests[0]?.headers.authorization).toBe('Bearer tok123');
     expect(requests[0]?.body).toEqual({ url: 'https://example.com/page' });
     expect(requests[0]?.headers['content-type']).toBe('application/json');
+  });
+
+  it('sends no Authorization header when the host has no token', async () => {
+    const { fetch: fetchImpl, requests } = fakeFetch(new Response('<html></html>'));
+    await createBrowserlessRenderer({ token: '', fetchImpl, baseUrl: 'http://h:3000' }).render(
+      'https://example.com/',
+    );
+    expect(requests[0]?.url).toBe('http://h:3000/content');
+    expect(requests[0]?.headers.authorization).toBeUndefined();
   });
 
   it('throws ValidationError when the render call is not ok', async () => {

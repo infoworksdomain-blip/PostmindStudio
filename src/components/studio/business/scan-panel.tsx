@@ -182,6 +182,13 @@ function ScanForm({
           {OWNERSHIP_STATEMENT}
         </Label>
       </div>
+      {/* 14.4: the browser-render fallback policy, stated where the confirmation is given. */}
+      <p className="text-muted-foreground text-xs leading-snug" data-testid="scan-render-policy">
+        If your site turns our scanner away (for example with a bot check), we may load your
+        homepage once in a browser, and only because you have confirmed it is your site. We never
+        use this to get round another company&apos;s bot protection. If it still fails, fill in your
+        profile by hand or add our scanner to your site&apos;s allow-list.
+      </p>
     </form>
   );
 }

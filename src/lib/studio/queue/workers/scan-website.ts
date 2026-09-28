@@ -13,6 +13,7 @@ import {
   type ClassifiedProfile,
 } from '../../scan/classify';
 import { crawlSite } from '../../scan/crawl';
+import type { HeadlessRenderer } from '../../scan/headless-render';
 import type { ExtractedImage } from '../../scan/extract';
 import { PoliteFetcher } from '../../scan/fetch';
 import type { LibraryRefreshJobData, ScanJobData } from '../queues';
@@ -116,6 +117,14 @@ async function ingestScraped(
   return { created, errors };
 }
 
+/** The browser-render fallback, only for a scan whose owner confirmed ownership of the site. */
+export function headlessFor(
+  scan: { ownershipConfirmedAt: Date | null },
+  headless: HeadlessRenderer | undefined,
+): HeadlessRenderer | undefined {
+  return scan.ownershipConfirmedAt ? headless : undefined;
+}
+
 export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promise<void> {
   const log = deps.logger.child({ scanId: data.scanId, organisationId: data.organisationId });
   const scan = await deps.db.websiteScan.findFirst({
@@ -136,7 +145,10 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
   const crawl = await crawlSite(scan.url, {
     fetcher,
     renderer: deps.scan.renderer,
-    headless: deps.scan.headless,
+    // 14.4 policy: the browser-render fallback for a refused homepage is used ONLY when the
+    // business owner confirmed they own or represent this site (stored on the scan). It is never
+    // a way round a third party's bot protection (runbooks/scan-blocked.md).
+    headless: headlessFor(scan, deps.scan.headless),
   });
   if (crawl.robotsBlocked || crawl.pages.length === 0) {
     await deps.db.websiteScan.update({

@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { BusinessSwitcher } from './business-picker';
+import { FeedbackButton } from './feedback-dialog';
 import { NotificationsBell } from './notifications-bell';
 import { UsageBanner } from './usage-meter';
 import { WelcomeLink } from './onboarding/welcome-link';
@@ -175,6 +176,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="hidden md:block">
               <BusinessSwitcher />
             </div>
+            <FeedbackButton />
             <NotificationsBell />
             <ThemeToggle />
           </div>

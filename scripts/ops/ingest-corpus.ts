@@ -31,6 +31,14 @@ import {
   waitForRuns,
   type StudioClient,
 } from '../../src/lib/studio/library/corpus-run';
+import { parseS3Url } from '../../src/lib/studio/library/corpus-source';
+import {
+  evaluatePreflight,
+  formatPreflight,
+  preflightVerdict,
+  s3ProbeRows,
+} from '../../src/lib/studio/ops/staging-gate/corpus-preflight';
+import { getAssetStorage } from '../../src/lib/studio/storage';
 
 // BACKLOG 9.2 / 9.3 — ingest the library corpus through the admin API
 // (runbooks/corpus-ingestion.md). Dry run by default; --apply submits.
@@ -39,6 +47,7 @@ import {
 //   npx tsx scripts/ops/ingest-corpus.ts corpus.csv [--sample 100 [--seed 7]] [--apply]
 //     [--state corpus.csv.state.json] [--concurrency 2] [--queue-concurrency 2] [--workers 1]
 //     [--minutes-per-video 3] [--license-source "…"] [--wait-minutes 180] [--report]
+//   … corpus.csv --preflight [--sample 100] [--workers 2]   (14.9: checks only, submits nothing)
 //
 // Manifest: CSV (header row) or JSONL with url (https:// or s3://), title, tags (a|b|c or an
 // array), category (slug from GET /library/categories), sourceRef (external id), language.
@@ -102,6 +111,73 @@ async function sampleReport(
   );
 }
 
+const errMsg = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+/** Write + delete a tiny object under library/staging/ (expired by the S3 lifecycle rule). */
+async function probeLibraryBucket(): Promise<{ ok: boolean; detail: string } | null> {
+  const bucket = process.env.S3_BUCKET_LIBRARY?.trim();
+  if (!bucket) return null;
+  const key = `library/staging/preflight-${Date.now()}.txt`;
+  try {
+    const storage = getAssetStorage();
+    await storage.put({
+      bucket,
+      key,
+      body: new TextEncoder().encode('ingest-corpus pre-flight probe'),
+      contentType: 'text/plain',
+    });
+    await storage.delete(bucket, key);
+    return { ok: true, detail: `write + delete OK in s3://${bucket}/library/staging/` };
+  } catch (err) {
+    return { ok: false, detail: `s3://${bucket}: ${errMsg(err)}` };
+  }
+}
+
+async function probeS3Sources(
+  rows: ManifestRow[],
+): Promise<Array<{ url: string; ok: boolean; detail: string }>> {
+  const probes = [];
+  for (const row of s3ProbeRows(rows)) {
+    try {
+      const { bucket, key } = parseS3Url(row.url);
+      const bytes = await getAssetStorage().size(bucket, key);
+      probes.push({ url: row.url, ok: true, detail: `${bytes} bytes` });
+    } catch (err) {
+      probes.push({ url: row.url, ok: false, detail: errMsg(err) });
+    }
+  }
+  return probes;
+}
+
+async function preflight(args: CorpusArgs, client: StudioClient): Promise<void> {
+  const parsed = parseManifest(readFileSync(args.manifest, 'utf8'), formatFromPath(args.manifest));
+  let categories: Set<string>;
+  let categoriesCheck: { ok: boolean; detail: string };
+  try {
+    categories = categorySlugsFromTree(await client.categories());
+    categoriesCheck = { ok: true, detail: `${categories.size} category slugs` };
+  } catch (err) {
+    // Without the taxonomy, category slugs can't be checked: accept the manifest's own.
+    categories = new Set(parsed.rows.flatMap((r) => (r.category ? [r.category] : [])));
+    categoriesCheck = { ok: false, detail: errMsg(err) };
+  }
+  const { valid, errors } = validateRows(parsed.rows, categories);
+  const mode = args.sample ? 'sample' : 'full';
+  const checks = evaluatePreflight({
+    mode,
+    env: process.env,
+    workers: args.workers,
+    minutesPerVideo: args.minutesPerVideo,
+    rows: args.sample ? valid.slice(0, args.sample) : valid,
+    errors: [...parsed.errors, ...errors].sort((a, b) => a.line - b.line),
+    categories: categoriesCheck,
+    libraryBucket: await probeLibraryBucket(),
+    s3Probes: await probeS3Sources(valid),
+  });
+  out(formatPreflight(checks, mode));
+  if (preflightVerdict(checks) === 'FAIL') process.exitCode = 1;
+}
+
 async function main(): Promise<void> {
   const args = parseCorpusArgs(process.argv.slice(2));
   const statePath = args.statePath ?? `${args.manifest}.state.json`;
@@ -111,6 +187,7 @@ async function main(): Promise<void> {
     token: env('STUDIO_STAFF_TOKEN'),
     fetchImpl: globalThis.fetch,
   });
+  if (args.preflight) return preflight(args, client);
 
   const parsed = parseManifest(readFileSync(args.manifest, 'utf8'), formatFromPath(args.manifest));
   const categories = categorySlugsFromTree(await client.categories());

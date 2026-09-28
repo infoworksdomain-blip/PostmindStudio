@@ -131,6 +131,25 @@ Then confirm that the re-driven projects reach `READY_FOR_REVIEW` and publicatio
 
 ## Rehearsal (BACKLOG 12.2) — staging only
 
+**Timed, all five levels, with a report (Phase 14.6):**
+
+```bash
+STUDIO_URL=https://studio-staging.postmind.ai STUDIO_STAFF_TOKEN=... \
+METRICS_URL=https://studio-staging.internal/api/metrics METRICS_TOKEN=... \
+STAGING_DATABASE_URL=<read-only role> \
+npx tsx scripts/ops/staging-gate.ts --rehearse kill-switch \
+  --workspace <load-test orgId> --project <projectId> [--provider runway] [--platform tiktok]
+```
+
+It runs provider → platform → project → workspace → global and releases each level afterwards.
+Global is timed from the queue gauge. The other levels are timed from the staging database: the
+time is when the last in-scope job or publication *started* after the switch was engaged. A level
+with no in-scope work beforehand reports INCOMPLETE. The report goes to
+`ops/results/<date>-rehearse-kill-switch.md`. The same check is in GitHub Actions: **Staging gate
+(GATE 12)** → `rehearse-kill-switch`. See [staging-gate.md](staging-gate.md).
+
+**Interactive check of one level** (the original tool):
+
 ```bash
 STUDIO_URL=https://studio-staging.postmind.ai STUDIO_STAFF_TOKEN=... \
 STUDIO_CONFIRMER_TOKEN=<a second staff user's staging JWT> \
@@ -149,9 +168,9 @@ window, and releases on Enter:
 - `workspace <orgId>`: the frozen org's new jobs are halted while other orgs continue.
 - `provider runway`: new shots route to the fallback provider (Luma).
 - `project <projectId>`: that project's jobs are skipped.
-- Platform level (not in the rehearsal script): halt `tiktok` from the Admin Centre, schedule a
-  TikTok and a YouTube post, confirm TikTok fails as `kill_switch_platform` while YouTube publishes,
-  release, then re-drive with `--level platform` and confirm the TikTok post goes out once.
+- `platform tiktok`: new TikTok publications fail as `kill_switch_platform` while YouTube
+  publishes. After release, re-drive with `--level platform` and confirm the TikTok post goes out
+  once.
 
 Put the system under load first by running the k6 smoke profile plus a few real generations. The
 switch has to work under load. For each level, record the date, the operator, the level and the

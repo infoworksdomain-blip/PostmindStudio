@@ -82,6 +82,9 @@ export async function startScan(
       state: 'QUEUED',
       trigger: 'manual',
       ownershipStatement: input.ownershipStatement,
+      // 14.4: the owner's confirmation, stored per scan; it gates the browser-render fallback.
+      ownershipConfirmedAt: new Date(deps.now()),
+      ownershipConfirmedByUserId: tenant.userId,
       // Scheduled rescans (13.10) run at the tier of the last scan a person started.
       planTier: toPlanTier(tenant.organisation.planTier),
     },

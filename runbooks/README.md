@@ -13,7 +13,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [provider-outage.md](provider-outage.md) | Priority risk 1: provider outage mid-generation | 1+ breaker OPEN |
 | [cost-runaway.md](cost-runaway.md) | Priority risk 2: cost runaway — project / org / provider / global caps, pause, alerts | 80% alert, 90% project pause, 100% daily pause |
 | [service-health.md](service-health.md) | Availability and queue alerts: target down, not ready, job failures, API latency, backlog, dead letter | per alert |
-| [content-safety-miss.md](content-safety-miss.md) | Priority risk 3: unsafe content published | Any true miss |
+| [content-safety-miss.md](content-safety-miss.md) | Priority risk 3: unsafe content published; the monthly Trust & Safety audit (14.11) | Any true miss |
 | [review-publish-automation.md](review-publish-automation.md) | Auto-approve for trusted creators, auto-publish on approval, templates | Any auto-approved takedown |
 | [platform-api-change.md](platform-api-change.md) | Priority risk 4: publishing API breaking change | 1+ adapter test failing |
 | [corpus-ingestion.md](corpus-ingestion.md) | Library corpus: sample run → operator review → full 50k run, monitoring, failures, throughput and cost (9.2 / 9.3) | >5% failures over 1 h |
@@ -23,6 +23,8 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [storage-cost.md](storage-cost.md) | Priority risk 8: storage cost balloon | >125% of forecast |
 | [notifications-email.md](notifications-email.md) | Notification email delivery status and the pending Core-vs-Studio sending decision (13.33) | Any `failed` once live |
 | [slo-and-launch-readiness.md](slo-and-launch-readiness.md) | Spec 17.1 SLO / spec 3.5 acceptance alerts, A14.2 launch-readiness checks (overlay pixel diff, classifier eval, scan timing, A10 cost gate) and the daily provider canary (15.D9 / 15.D10) | per alert |
+| [monitoring-deploy.md](monitoring-deploy.md) | Deploying Prometheus + Alertmanager (`docker-compose.monitoring.yml`) and the alert smoke test (14.3) | Smoke test routes and delivers both severities |
+| [on-call.md](on-call.md) | On-call rota, PagerDuty escalation, severities, handover (14.11; template `ops/oncall/rota.template.yaml`) | Page acknowledged ≤ 5 min |
 
 ## Shared tools
 
@@ -32,6 +34,8 @@ format: **trigger metric → threshold → escalation → steps → verification
     default; capability `studio:admin:redrive`)
   - `GET /api/studio/admin/cost`
   - `GET /api/studio/admin/cost/caps` (today's spend against every cap + cost alerts, 7 days)
+  - `GET /api/studio/admin/organisations/:id/purge-plan` (dry run of an organisation's hard
+    delete, 14.1; platform-account-revocation.md)
   - `/api/studio/admin/library/**` (incl. `GET …/library/ingest/status`; corpus tool
     `scripts/ops/ingest-corpus.ts`, see corpus-ingestion.md)
 
@@ -83,9 +87,10 @@ cost 80% / 100% / paused, generation complete, approval pending > 2 h and public
 
 ## GAP: remaining alerting work
 
-- **Not wired in any environment yet:** DevOps must add the scrape jobs above, load the rule file
-  into Prometheus, deploy Alertmanager with the two secret files, and create the PagerDuty
-  service / Slack channel. Nothing here has paged a human yet.
+- **Built and ready to run, not deployed yet (BACKLOG 14.3):** `docker-compose.monitoring.yml`
+  + `ops/prometheus/prometheus.yml` (the scrape jobs above) + `scripts/ops/alert-smoke.ts`.
+  **DevOps** creates the PagerDuty service / Slack webhook, puts the three secret files on the
+  host and follows monitoring-deploy.md. Nothing here has paged a human yet.
 - **Thresholds are starting points:** the 500-job backlog and 5% failure rate need tuning after
   the k6 run (BACKLOG 12.1) and the first weeks of real traffic.
 - **Email** delivery waits for an operator decision (notifications-email.md). Opted-in email is

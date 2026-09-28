@@ -136,8 +136,14 @@ export interface JobDataMap {
   'auto-resume-paused': RollUpJobData;
   /** BACKLOG 13.21: auto-publish outbox dispatcher (every minute). */
   'dispatch-auto-publish': RollUpJobData;
+  /** BACKLOG 14.1: daily hard delete of organisations past the purge grace (01:30 UTC). */
+  'hard-delete-purged-orgs': RollUpJobData;
+  /** BACKLOG 14.2: daily sweep of browser uploads never completed (01:45 UTC). */
+  'sweep-abandoned-uploads': RollUpJobData;
   /** BACKLOG 13.35: daily Core ↔ Studio Meta channel reconciliation (skipped until Core ships). */
   'reconcile-channels': RollUpJobData;
+  /** BACKLOG 14.11: monthly Trust & Safety audit sample (platform-level, 06:00 UTC on the 1st). */
+  'sample-safety-audit': RollUpJobData;
   /** BACKLOG 13.10: daily sweep for 30-day website rescans (platform-level). */
   'sweep-website-rescans': RollUpJobData;
   /** BACKLOG 13.10: one scheduled rescan (scanId = the business's last successful scan). */
@@ -181,7 +187,10 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'check-pending-approvals': QUEUES.analytics,
   'auto-resume-paused': QUEUES.orchestration,
   'dispatch-auto-publish': QUEUES.publish,
+  'hard-delete-purged-orgs': QUEUES.orchestration,
+  'sweep-abandoned-uploads': QUEUES.orchestration,
   'reconcile-channels': QUEUES.analytics,
+  'sample-safety-audit': QUEUES.analytics,
   'sweep-website-rescans': QUEUES.assets,
   'rescan-website': QUEUES.assets,
   'sweep-stock-refresh': QUEUES.assets,

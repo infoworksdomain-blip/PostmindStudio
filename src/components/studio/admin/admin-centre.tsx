@@ -17,6 +17,8 @@ import { ProvidersPanel, QueuesPanel } from './health-panels';
 import { OrganisationPanel } from './organisation-panel';
 import { SafetyReviewPanel } from './safety-review-panel';
 import { UsagePanel } from './usage-panel';
+import { BetaPanel } from './beta-panel';
+import { SafetyAuditPanel } from './safety-audit-panel';
 import { isForbidden, type KillSwitchState } from './types';
 
 // BACKLOG 10.11 / spec 16.4 — Admin Centre (PostMind staff only). Every /admin route calls
@@ -42,10 +44,12 @@ const TABS = [
   'queues',
   'providers',
   'safety',
+  'safety-audit',
   'organisations',
   'usage',
   'dead-letters',
   'force-approvals',
+  'beta',
 ] as const;
 
 export function AdminCentre() {
@@ -96,10 +100,12 @@ export function AdminCentre() {
           <TabsTrigger value="queues">Queues</TabsTrigger>
           <TabsTrigger value="providers">Providers</TabsTrigger>
           <TabsTrigger value="safety">Safety review</TabsTrigger>
+          <TabsTrigger value="safety-audit">Safety audit</TabsTrigger>
           <TabsTrigger value="organisations">Organisations</TabsTrigger>
           <TabsTrigger value="usage">Plan usage</TabsTrigger>
           <TabsTrigger value="dead-letters">Dead letters</TabsTrigger>
           <TabsTrigger value="force-approvals">Force-approvals</TabsTrigger>
+          <TabsTrigger value="beta">Beta</TabsTrigger>
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />
@@ -136,6 +142,12 @@ export function AdminCentre() {
         </TabsContent>
         <TabsContent value="force-approvals">
           <ForceApprovalsPanel />
+        </TabsContent>
+        <TabsContent value="safety-audit">
+          <SafetyAuditPanel />
+        </TabsContent>
+        <TabsContent value="beta">
+          <BetaPanel />
         </TabsContent>
       </Tabs>
     </>

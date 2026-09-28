@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../../errors';
 import {
   activeJobsByQueue,
+  formatHaltReport,
   formatReport,
   KILL_SWITCH_SLO_MS,
+  observeHalt,
   parsePlan,
   pendingGlobalRequestId,
+  publishQueueActive,
+  REHEARSAL_LEVELS,
   totalActive,
   waitForDrain,
 } from './rehearsal';
@@ -134,5 +138,115 @@ describe('pendingGlobalRequestId (15.D6 two-person global kill)', () => {
 
   it('rejects a 202 without a request id', () => {
     expect(() => pendingGlobalRequestId(202, { ok: true })).toThrow(/requestId/);
+  });
+});
+
+describe('platform level (Phase 14.6)', () => {
+  it('parses platform with a target', () => {
+    expect(parsePlan(['platform', 'tiktok'])).toMatchObject({
+      level: 'platform',
+      target: 'tiktok',
+    });
+    expect(() => parsePlan(['platform'])).toThrow(ValidationError);
+    expect(REHEARSAL_LEVELS).toEqual(['provider', 'platform', 'project', 'workspace', 'global']);
+  });
+
+  it('reads the publish queue active gauge', () => {
+    expect(publishQueueActive(exposition({ 'studio-publish': 2, 'studio-assets': 5 }))).toBe(2);
+    expect(publishQueueActive(exposition({ 'studio-assets': 5 }))).toBe(0);
+  });
+});
+
+describe('observeHalt', () => {
+  const T0 = 1_000_000;
+  function probeClock(frames: Array<{ started: number; last: number | null; inFlight: number }>) {
+    let t = T0;
+    let i = 0;
+    return {
+      probe: async () => {
+        const f = frames[Math.min(i++, frames.length - 1)] as (typeof frames)[number];
+        return {
+          startedSinceEngage: f.started,
+          lastStartedAt: f.last === null ? null : T0 + f.last,
+          inFlight: f.inFlight,
+        };
+      },
+      now: () => t,
+      sleep: async (ms: number) => {
+        t += ms;
+      },
+    };
+  }
+
+  it('passes when the last in-scope start is within 60 s and it stays quiet', async () => {
+    const deps = probeClock([
+      { started: 1, last: 5_000, inFlight: 2 },
+      { started: 2, last: 20_000, inFlight: 1 },
+      { started: 2, last: 20_000, inFlight: 0 },
+    ]);
+    const result = await observeHalt(deps, {
+      startedAt: T0,
+      intervalMs: 10_000,
+      observeMs: 90_000,
+    });
+    expect(result).toMatchObject({ halted: true, elapsedMs: 20_000, withinSlo: true });
+    expect(result.samples.at(-1)?.atMs).toBe(90_000);
+    expect(result.samples[1]?.lastStartMs).toBe(20_000);
+  });
+
+  it('reports 0 s when nothing started after engaging', async () => {
+    const deps = probeClock([{ started: 0, last: null, inFlight: 3 }]);
+    const result = await observeHalt(deps, { startedAt: T0, intervalMs: 30_000 });
+    expect(result).toMatchObject({ halted: true, elapsedMs: 0, withinSlo: true });
+  });
+
+  it('fails when work keeps starting inside the quiet window', async () => {
+    const frames = Array.from({ length: 10 }, (_, i) => ({
+      started: i,
+      last: i * 10_000,
+      inFlight: 1,
+    }));
+    const result = await observeHalt(probeClock(frames), {
+      startedAt: T0,
+      intervalMs: 10_000,
+      observeMs: 90_000,
+    });
+    expect(result.halted).toBe(false);
+    expect(result.withinSlo).toBe(false);
+    expect(formatHaltReport(parsePlan(['provider', 'runway']), result)).toContain('FAIL');
+  });
+
+  it('requires idle when asked (platform: publishing still in flight)', async () => {
+    const deps = probeClock([{ started: 0, last: null, inFlight: 1 }]);
+    const result = await observeHalt(deps, {
+      startedAt: T0,
+      intervalMs: 30_000,
+      requireIdle: true,
+    });
+    expect(result.halted).toBe(false);
+    expect(formatHaltReport(parsePlan(['platform', 'tiktok']), result)).toContain('in flight (1)');
+  });
+
+  it('fails the SLO when the last start came after 60 s', async () => {
+    const deps = probeClock([{ started: 1, last: 65_000, inFlight: 0 }]);
+    const result = await observeHalt(deps, {
+      startedAt: T0,
+      intervalMs: 50_000,
+      observeMs: 100_000,
+    });
+    expect(result).toMatchObject({ halted: true, elapsedMs: 65_000, withinSlo: false });
+    expect(formatHaltReport(parsePlan(['workspace', 'org-1']), result)).toContain(
+      'over the 60s SLO',
+    );
+  });
+
+  it('rejects invalid options', async () => {
+    await expect(
+      observeHalt(probeClock([{ started: 0, last: null, inFlight: 0 }]), {
+        startedAt: T0,
+        observeMs: 10_000,
+        quietMs: 30_000,
+      }),
+    ).rejects.toThrow(ValidationError);
   });
 });

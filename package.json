@@ -37,8 +37,11 @@
     "gate2:shotstack": "dotenv -e .env.local -- tsx scripts/test-shotstack.ts",
     "gate2:router": "dotenv -e .env.local -- tsx scripts/test-router.ts",
     "gate3": "dotenv -e .env.local -- tsx scripts/run-test-project.ts",
+    "gate:live": "dotenv -e .env.local -- tsx scripts/ops/staging-gate.ts --live-providers",
+    "staging-gate": "tsx scripts/ops/staging-gate.ts",
     "worker": "dotenv -e .env.local -- tsx scripts/worker.ts",
     "db:local": "tsx scripts/dev/pglite-server.ts 55432",
+    "contract:core": "tsx scripts/core/contract.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

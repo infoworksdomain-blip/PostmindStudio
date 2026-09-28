@@ -501,38 +501,38 @@ model BrandKit {
 
 // 7.11
 model VoiceProfile {
-  id                   String    @id @default(cuid())
-  organisationId       String
-  businessId           String?
-  name                 String
-  provider             String // 'elevenlabs'
-  providerVoiceId      String
-  cloneSourceAssetId   String?
-  languagesSupported   String[]
-  isDefault            Boolean   @default(false)
-  createdAt            DateTime  @default(now())
+  id                           String    @id @default(cuid())
+  organisationId               String
+  businessId                   String?
+  name                         String
+  provider                     String // 'elevenlabs'
+  providerVoiceId              String
+  cloneSourceAssetId           String?
+  languagesSupported           String[]
+  isDefault                    Boolean   @default(false)
+  createdAt                    DateTime  @default(now())
   // Phase 13.13 (spec 10.2 / 13.4): cloning needs recorded consent. READY | REQUIRES_VERIFICATION
   // (ElevenLabs asked for voice verification) | PENDING_REVIEW (15.C7 consent check not passed)
   // | DELETED (revoked at the provider; the row stays as the consent audit record).
-  state                String    @default("READY")
-  speakerName          String?
-  consentStatement     String?
-  consentGivenByUserId String?
-  consentGivenAt       DateTime?
-  consentS3Bucket      String?
-  consentS3Key         String?
+  state                        String    @default("READY")
+  speakerName                  String?
+  consentStatement             String?
+  consentGivenByUserId         String?
+  consentGivenAt               DateTime?
+  consentS3Bucket              String?
+  consentS3Key                 String?
   // 15.C7 (spec 10.2): automatic check that the consent recording says the statement.
   // passed | mismatch | unavailable; anything but passed keeps state PENDING_REVIEW.
-  consentCheck         String?
-  consentTranscript    String?
-  consentCheckedAt     DateTime?
+  consentCheck                 String?
+  consentTranscript            String?
+  consentCheckedAt             DateTime?
   // ElevenLabs asked for voice verification at cloning (state after a passed check).
-  providerVerificationRequired Boolean @default(false)
-  sampleCount          Int       @default(0)
-  sampleSeconds        Float?
-  deletedAt            DateTime?
-  deletedByUserId      String?
-  updatedAt            DateTime  @default(now()) @updatedAt
+  providerVerificationRequired Boolean   @default(false)
+  sampleCount                  Int       @default(0)
+  sampleSeconds                Float?
+  deletedAt                    DateTime?
+  deletedByUserId              String?
+  updatedAt                    DateTime  @default(now()) @updatedAt
 
   @@index([organisationId, businessId])
   @@map("voice_profiles")
@@ -718,28 +718,30 @@ model SystemFlag {
 
 // A7.3 — Feature A
 model VideoLibraryItem {
-  id             String                 @id @default(cuid())
-  title          String
-  description    String?
-  categoryId     String
-  category       VideoLibraryCategory   @relation(fields: [categoryId], references: [id])
-  tags           String[]
-  sourceUrl      String?
-  sourcePlatform String? // 'tiktok','instagram','user_upload'
-  s3Bucket       String
-  s3Key          String
-  thumbnailS3Key String
-  durationSec    Float
-  aspectRatio    String
-  ingestedAt     DateTime               @default(now())
-  analysis       VideoLibraryAnalysis?
-  embedding      VideoLibraryEmbedding?
-  license        VideoLibraryLicense?
-  retiredAt      DateTime? // hidden from search
+  id                 String                 @id @default(cuid())
+  title              String
+  description        String?
+  categoryId         String
+  category           VideoLibraryCategory   @relation(fields: [categoryId], references: [id])
+  tags               String[]
+  sourceUrl          String?
+  sourcePlatform     String? // 'tiktok','instagram','user_upload'
+  s3Bucket           String
+  s3Key              String
+  thumbnailS3Key     String
+  durationSec        Float
+  aspectRatio        String
+  ingestedAt         DateTime               @default(now())
+  analysis           VideoLibraryAnalysis?
+  embedding          VideoLibraryEmbedding?
+  license            VideoLibraryLicense?
+  retiredAt          DateTime? // hidden from search
   // 15.D7 / A3.8: staff review of the automatic categorisation (null = not reviewed yet).
   categoryReview     LibraryCategoryReview?
   categoryReviewedAt DateTime?
-  /** 15.D7: last re-analysis (POST /admin/library/reanalyse); null = only the original ingest. */
+  /**
+   * 15.D7: last re-analysis (POST /admin/library/reanalyse); null = only the original ingest.
+   */
   reanalysedAt       DateTime?
 
   @@index([categoryId, retiredAt])
@@ -1021,28 +1023,28 @@ model SlideshowTemplate {
 
 // A7.7 — Feature D
 model BusinessProfile {
-  id                 String   @id @default(cuid())
-  organisationId     String
-  businessId         String
-  industry           String
-  subNiche           String
-  products           String[]
-  services           String[]
-  audienceKeywords   String[]
-  toneIndicators     String[]
-  regions            String[]
-  imageThemes        String[]
-  imageSearchQueries String[] // seeded queries for stock APIs
-  restrictedTopics   String[]
-  brandVoiceSummary  String?
-  classifierModel    String
-  classifierVersion  Int      @default(1)
-  lastRefreshedAt    DateTime @default(now())
-  editedByUser       Boolean  @default(false)
+  id                   String   @id @default(cuid())
+  organisationId       String
+  businessId           String
+  industry             String
+  subNiche             String
+  products             String[]
+  services             String[]
+  audienceKeywords     String[]
+  toneIndicators       String[]
+  regions              String[]
+  imageThemes          String[]
+  imageSearchQueries   String[] // seeded queries for stock APIs
+  restrictedTopics     String[]
+  brandVoiceSummary    String?
+  classifierModel      String
+  classifierVersion    Int      @default(1)
+  lastRefreshedAt      DateTime @default(now())
+  editedByUser         Boolean  @default(false)
   // 15.D8 / A13: the classifier's self-reported confidence (0–1; null before 15.D8) and the
   // low-confidence flag (< 0.7) the user clears by confirming or editing the profile.
   classifierConfidence Float?
-  needsReview          Boolean @default(false)
+  needsReview          Boolean  @default(false)
 
   // DEVIATION (A7.7 has businessId @unique): Core cannot verify business ids, so uniqueness is
   // per organisation — one tenant can never claim or block another tenant's business id.
@@ -1053,29 +1055,34 @@ model BusinessProfile {
 
 // A7.7
 model WebsiteScan {
-  id                 String    @id @default(cuid())
-  organisationId     String
-  businessId         String
-  url                String
-  state              ScanState
-  pagesCrawled       Int       @default(0)
-  imagesIngested     Int       @default(0)
-  errorReason        String?
-  robotsBlocked      Boolean   @default(false)
-  usedJsRender       Boolean   @default(false)
-  costPence          Int       @default(0)
-  startedAt          DateTime  @default(now())
-  completedAt        DateTime?
+  id                         String    @id @default(cuid())
+  organisationId             String
+  businessId                 String
+  url                        String
+  state                      ScanState
+  pagesCrawled               Int       @default(0)
+  imagesIngested             Int       @default(0)
+  errorReason                String?
+  robotsBlocked              Boolean   @default(false)
+  usedJsRender               Boolean   @default(false)
+  costPence                  Int       @default(0)
+  startedAt                  DateTime  @default(now())
+  completedAt                DateTime?
   // A6.6 skip-if-unchanged (Phase 13.10): the homepage validators seen by this scan, the last
   // time a scheduled conditional request found the site unchanged, and the plan tier the scan
   // was started at (scheduled rescans run at it; Core's tier is only known on a request).
-  etag               String?
-  lastModified       String?
-  checkedUnchangedAt DateTime?
-  planTier           String?
-  trigger            String    @default("manual") // manual | scheduled
+  etag                       String?
+  lastModified               String?
+  checkedUnchangedAt         DateTime?
+  planTier                   String?
+  trigger                    String    @default("manual") // manual | scheduled
   // 15.D8 / A11.2: the ownership checkbox text the user ticked (null: historic or scheduled).
-  ownershipStatement String?
+  ownershipStatement         String?
+  // BACKLOG 14.4: the owner's "I own or represent this website" confirmation, stored per scan
+  // (a scheduled rescan carries the confirmation of the scan it repeats). The browser-render
+  // fallback for a blocked homepage is only ever used when this is set.
+  ownershipConfirmedAt       DateTime?
+  ownershipConfirmedByUserId String?
 
   @@index([businessId, startedAt])
   @@index([state, completedAt])
@@ -1380,8 +1387,14 @@ model OrganisationPurge {
   channelsWiped         Int
   projectsDeleted       Int
   publicationsCancelled Int
-  state                 String // 'soft_deleted' (hard deletion after grace is not built yet)
+  state                 String // 'soft_deleted' | 'hard_deleting' | 'hard_deleted' | 'cancelled' (14.1)
   hardDeletedAt         DateTime?
+  // BACKLOG 14.1: the row is the tombstone kept after hard deletion — what was deleted (rows per
+  // table, objects per bucket/prefix, accumulated across resumed attempts) and when.
+  hardDeleteStartedAt   DateTime?
+  hardDeleteAttempts    Int       @default(0)
+  hardDeleteSummary     Json?
+  hardDeleteError       String?
 
   @@index([graceUntil])
   @@map("organisation_purges")
@@ -1698,5 +1711,63 @@ model ProviderCredential {
   @@unique([organisationId, providerId])
   @@index([organisationId, state])
   @@map("provider_credentials")
+  @@schema("studio")
+}
+
+// BACKLOG 14.11 — beta programme (playbook 10.4). One row per organisation in the beta. While
+// plusUntil is in the future the organisation's effective plan tier for Studio routing, cost
+// caps and auto-approve is at least PLUS (services/beta.ts), whatever Core reports.
+model OrganisationBeta {
+  organisationId  String    @id
+  cohort          String // e.g. 'beta-1'
+  plusUntil       DateTime?
+  enrolledAt      DateTime  @default(now())
+  updatedByUserId String
+  updatedAt       DateTime  @updatedAt
+
+  @@index([cohort])
+  @@map("organisation_beta")
+  @@schema("studio")
+}
+
+// BACKLOG 14.11 — in-app feedback (POST /api/studio/feedback), read by staff.
+model BetaFeedback {
+  id             String   @id @default(cuid())
+  organisationId String
+  userId         String
+  kind           String // 'bug' | 'idea' | 'praise' | 'other'
+  message        String
+  projectId      String?
+  screen         String
+  createdAt      DateTime @default(now())
+
+  @@index([organisationId, createdAt])
+  @@index([kind, createdAt])
+  @@index([createdAt])
+  @@map("beta_feedback")
+  @@schema("studio")
+}
+
+// BACKLOG 14.11 — Trust & Safety monthly audit: published publications sampled for a human
+// re-check. result 'pending' until staff record 'pass' or 'miss' (a miss = Hive let through
+// content that should have been blocked or reviewed; runbook metric "Hive scan miss rate").
+model SafetyAuditItem {
+  id               String    @id @default(cuid())
+  period           String // 'YYYY-MM' (UTC) the sample was drawn for
+  organisationId   String
+  publicationId    String
+  projectId        String
+  platform         String
+  platformUrl      String?
+  publishedAt      DateTime
+  result           String    @default("pending") // 'pending' | 'pass' | 'miss'
+  note             String?
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@unique([period, publicationId])
+  @@index([period, result])
+  @@map("safety_audit_items")
   @@schema("studio")
 }

@@ -1,0 +1,3 @@
+url,title,tags,category,sourceRef,language,sourcePlatform
+https://cdn.example.com/corpus/bakery-morning-routine.mp4,Bakery morning routine,food|bakery|behind-the-scenes,,corpus-000001,en,tiktok
+s3://postmind-corpus/videos/salon-before-after.mp4,Salon before and after,beauty|transformation,,corpus-000002,en-GB,instagram

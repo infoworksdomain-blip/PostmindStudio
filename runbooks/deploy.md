@@ -55,6 +55,13 @@
     for `eleven_flash_v2_5` / `eleven_v3` (not supported by `eleven_multilingual_v2`).
   - **Word timing.** AssemblyAI gets the script's `language_code` (en_uk, en_us, fr, es, ar, de,
     it, pt, hi, zh — all on Universal-3.5 Pro); whisper-1 gets the ISO 639-1 `language`.
+  PENDING. Abandoned PENDING uploads (`orgs/*/uploads/`, rows in `video_uploads`) are deleted by
+  the daily `sweep-abandoned-uploads` job (BACKLOG 14.2) a day after their upload URL expired.
+  Do NOT add a blanket S3 expiry on that prefix: READY uploads are the footage of UPLOAD projects
+  and slideshow clips (the lifecycle validator refuses such a rule).
+- BACKLOG 14.1 / 14.2: the worker role also needs `s3:PutObjectTagging` on the assets and renders
+  buckets (provider outputs are tagged for the intermediates lifecycle rule) and
+  `s3:ListBucket` + `s3:DeleteObject` on every Studio bucket (organisation hard delete).
 - **`STUDIO_DEV_TENANT` must never be set outside local development.** It is ignored unless
   `NODE_ENV=development`, and the image sets `NODE_ENV=production`.
 
@@ -69,8 +76,11 @@
       ```
       This runs `prisma migrate deploy` and the idempotent seed.
    2. Roll out web, then the workers.
-   3. Run the k6 smoke test (`load-test/k6/studio-api.js`, `RUN_MODE=smoke`) and the golden-path
-      smoke.
+   3. Run the k6 smoke test and the golden-path smoke. The k6 smoke is
+      `npx tsx scripts/ops/staging-gate.ts --k6 smoke` (`BASE_URL`, `STUDIO_TOKEN`). It runs
+      `load-test/k6/studio-api.js`, re-checks the spec 17.1 thresholds and writes
+      `ops/results/<date>-k6-smoke.md`. Before launch, work through the full GATE 12 checklist in
+      [staging-gate.md](staging-gate.md).
 4. **Production:** repeat step 3 with the same SHA. Record the SHA and the previous SHA in the
    deploy log, because [rollback.md](rollback.md) needs the previous one.
 5. Watch for 30 minutes:

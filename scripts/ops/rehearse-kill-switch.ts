@@ -12,8 +12,13 @@ import {
 //
 //   STUDIO_URL=https://studio-staging.postmind.ai STUDIO_STAFF_TOKEN=<staging staff JWT> \
 //   METRICS_URL=https://studio-staging.internal/api/metrics METRICS_TOKEN=<token> \
-//   STUDIO_CONFIRMER_TOKEN=<a SECOND staff member's staging JWT> //   npx tsx scripts/ops/rehearse-kill-switch.ts global
-//   ... workspace <organisationId> | project <projectId> | provider <providerId>
+//   STUDIO_CONFIRMER_TOKEN=<a SECOND staff member's staging JWT> (two-person global kill, 15.D6) \
+//   npx tsx scripts/ops/rehearse-kill-switch.ts global
+//   ... workspace <organisationId> | project <projectId> | provider <providerId> | platform <p>
+//
+// Phase 14.6: `staging-gate.ts --rehearse kill-switch` times every level unattended (the scoped
+// levels from the staging database) and writes the GATE 12 report; this script stays for a
+// quick interactive check.
 //
 // Global (15.D6 / spec 19.2 two-person approval): the PUT only creates a pending request; the
 // script confirms it with STUDIO_CONFIRMER_TOKEN (a different staff user — the API refuses the
@@ -94,7 +99,9 @@ async function main(): Promise<void> {
           'Verify now (runbooks/kill-switch.md), then press Enter to release:',
           plan.level === 'provider'
             ? '  - new shots route to the fallback provider (provider_jobs.providerId)'
-            : `  - new jobs for ${plan.target} fail with kill_switch_${plan.level}; other organisations keep processing`,
+            : plan.level === 'platform'
+              ? `  - new ${plan.target} publications fail as kill_switch_platform; other platforms keep publishing`
+              : `  - new jobs for ${plan.target} fail with kill_switch_${plan.level}; other organisations keep processing`,
           '',
         ].join('\n'),
       );

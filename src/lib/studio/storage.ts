@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -45,6 +47,24 @@ export interface AssetStorage {
   putStream?(input: StreamPutInput): Promise<{ bucket: string; key: string; bytes: number }>;
   /** 13.15: server-side copy within a bucket. */
   copy?(bucket: string, fromKey: string, toKey: string): Promise<void>;
+  /** 14.1: one page (at most 1,000) of the current objects under a key prefix. */
+  list?(bucket: string, prefix: string, continuationToken?: string): Promise<ListedPage>;
+  /** 14.1: delete up to 1,000 keys in one request; per-key failures are returned, not thrown. */
+  deleteMany?(bucket: string, keys: string[]): Promise<DeleteManyResult>;
+}
+
+/** S3 DeleteObjects and ListObjectsV2 both cap one request at 1,000 keys. */
+export const MAX_KEYS_PER_REQUEST = 1_000;
+
+export interface ListedPage {
+  objects: { key: string; size: number }[];
+  /** Pass back to list() for the next page; undefined = this was the last page. */
+  nextToken?: string;
+}
+
+export interface DeleteManyResult {
+  deleted: number;
+  errors: { key: string; code: string; message: string }[];
 }
 
 /** Deterministic, tenant-scoped key layout for provider outputs. */
@@ -64,6 +84,22 @@ export function providerOutputKey(input: {
     }
   }
   return `orgs/${input.organisationId}/projects/${project}/providers/${input.providerId}/${id}.${input.extension}`;
+}
+
+// BACKLOG 14.2 — S3 lifecycle rules cannot match a wildcard prefix (orgs/*/projects/…), and the
+// org prefix also holds uploads, scraped images and voice consent that must not expire. Provider
+// outputs are therefore tagged at write time and infra/s3-lifecycle.json expires the tagged objects
+// in the assets bucket (the "intermediates" of spec 17.4). A lifecycle filter can match one tag:
+// https://docs.aws.amazon.com/AmazonS3/latest/userguide/intro-lifecycle-filters.html
+// PutObject Tagging is URL-query encoded ("key=value"); the writer needs s3:PutObjectTagging.
+export const PROVIDER_OUTPUT_TAG = { key: 'studio-object', value: 'provider-output' } as const;
+const PROVIDER_OUTPUT_KEY = /^orgs\/[^/]+\/projects\/[^/]+\/providers\//;
+
+/** The object tagging (PutObject Tagging) for a key, or undefined for untagged objects. */
+export function objectTaggingFor(key: string): string | undefined {
+  return PROVIDER_OUTPUT_KEY.test(key)
+    ? `${PROVIDER_OUTPUT_TAG.key}=${PROVIDER_OUTPUT_TAG.value}`
+    : undefined;
 }
 
 // BACKLOG 13.30 — CloudFront signed URLs behind the same signedUrl() interface. When CDN_URL
@@ -148,7 +184,13 @@ export function createS3Storage(
   return {
     async put({ bucket, key, body, contentType }) {
       await client.send(
-        new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+          Tagging: objectTaggingFor(key),
+        }),
       );
       return { bucket, key, url: await signedUrl(bucket, key) };
     },
@@ -177,7 +219,61 @@ export function createS3Storage(
     },
     putStream: (input) => s3PutStream(client, input),
     copy: (bucket, fromKey, toKey) => s3Copy(client, bucket, fromKey, toKey),
+    list: (bucket, prefix, continuationToken) => s3List(client, bucket, prefix, continuationToken),
+    deleteMany: (bucket, keys) => s3DeleteMany(client, bucket, keys),
   };
+}
+
+// BACKLOG 14.1 — listing and batch deletion for the organisation hard delete.
+// ListObjectsV2 (Prefix, ContinuationToken; at most 1,000 keys per page, IsTruncated +
+// NextContinuationToken): https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
+// DeleteObjects (at most 1,000 keys; Quiet mode returns only the keys that failed):
+// https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html
+// On a versioned bucket a delete without a version id adds a delete marker; the older bytes are
+// removed by the noncurrent-version lifecycle rule (infra/s3-lifecycle.json, 14.2).
+
+async function s3List(
+  client: S3Client,
+  bucket: string,
+  prefix: string,
+  continuationToken?: string,
+): Promise<ListedPage> {
+  if (!prefix) throw new ValidationError('Refusing to list a whole bucket: prefix is required');
+  const out = await client.send(
+    new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+      MaxKeys: MAX_KEYS_PER_REQUEST,
+    }),
+  );
+  const objects = (out.Contents ?? []).flatMap((o) =>
+    o.Key ? [{ key: o.Key, size: o.Size ?? 0 }] : [],
+  );
+  return { objects, nextToken: out.IsTruncated ? out.NextContinuationToken : undefined };
+}
+
+async function s3DeleteMany(
+  client: S3Client,
+  bucket: string,
+  keys: string[],
+): Promise<DeleteManyResult> {
+  if (keys.length === 0) return { deleted: 0, errors: [] };
+  if (keys.length > MAX_KEYS_PER_REQUEST) {
+    throw new ValidationError(`DeleteObjects takes at most ${MAX_KEYS_PER_REQUEST} keys`);
+  }
+  const out = await client.send(
+    new DeleteObjectsCommand({
+      Bucket: bucket,
+      Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+    }),
+  );
+  const errors = (out.Errors ?? []).map((e) => ({
+    key: e.Key ?? '',
+    code: e.Code ?? 'Unknown',
+    message: e.Message ?? '',
+  }));
+  return { deleted: keys.length - errors.length, errors };
 }
 
 let defaultStorage: AssetStorage | undefined;

@@ -69,7 +69,7 @@ jobs:
             "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
           echo "studio tables: $count"
           # 33 (spec 7 + A7) + cost_alerts + notifications (Phase 12 cost caps / alerting)
-          test "$count" -eq 46
+          test "$count" -eq 59
       - name: Install ffmpeg (Ubuntu repository)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
@@ -100,6 +100,16 @@ jobs:
           docker run --rm -v "$PWD/ops:/ops" --entrypoint promtool prom/prometheus:v2.55.1
           test rules /ops/prometheus/tests/studio-alerts.test.yml
           /ops/prometheus/tests/studio-slo.test.yml
+      - name: promtool check config (docker-compose.monitoring.yml layout)
+        # BACKLOG 14.3: the rule file and the metrics token are mounted where prometheus.yml reads
+        # them; the token here is a placeholder file, never a real secret.
+        run: |
+          printf 'ci-placeholder' > "$RUNNER_TEMP/metrics-token"
+          docker run --rm \
+            -v "$PWD/ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
+            -v "$PWD/ops/prometheus/studio-alerts.yml:/etc/prometheus/rules/studio-alerts.yml:ro" \
+            -v "$RUNNER_TEMP/metrics-token:/etc/prometheus/secrets/metrics-token:ro" \
+            --entrypoint promtool prom/prometheus:v2.55.1 check config /etc/prometheus/prometheus.yml
       - name: amtool check-config
         run: >-
           docker run --rm -v "$PWD/ops:/ops" --entrypoint amtool prom/alertmanager:v0.28.1
@@ -136,5 +146,7 @@ jobs:
       - name: Compose file is valid
         run: |
           touch .env.production
+          # Compose resolves secret file paths; the browserless token is a deploy-host file.
+          mkdir -p secrets && touch secrets/browserless-token
           IMAGE_TAG=ci docker compose -f docker-compose.prod.yml config --quiet
           IMAGE_TAG=ci docker compose -f docker-compose.prod.yml --profile migrate config --quiet
