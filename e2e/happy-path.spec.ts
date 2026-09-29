@@ -47,6 +47,8 @@ async function signIn(page: Page): Promise<void> {
 
 test.skip(!hasDb, 'DATABASE_URL is not set: the happy path needs the app’s database');
 
+// Step headings use .first(): while the wizard swaps steps the outgoing and incoming panels can
+// briefly both be in the tree, which made a strict locator flaky on CI (PR #26).
 test('a new visitor goes from the landing page to their first project', async ({ page }) => {
   // Landing: the value proposition, then pricing.
   await page.goto('/');
@@ -68,21 +70,25 @@ test('a new visitor goes from the landing page to their first project', async ({
 
   // Onboarding: a user with no organisation starts by creating one.
   await page.goto('/welcome');
-  await expect(page.getByRole('heading', { name: 'Name your organisation' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Name your organisation' }).first()).toBeVisible();
   await page.getByLabel('Organisation name').fill(`E2E Bakery ${run}`);
   await page.getByLabel('Country').selectOption('GB');
   await page.getByRole('button', { name: 'Create organisation' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Add your first business' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Add your first business' }).first(),
+  ).toBeVisible();
   await page.getByLabel('Business name').fill(`E2E Sourdough ${run}`);
   await page.getByRole('button', { name: 'Add business' }).click();
 
   // Brand kit and Connect can be skipped; the first video is the goal.
-  await expect(page.getByRole('heading', { name: 'Your brand in three clicks' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Your brand in three clicks' }).first(),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Skip this step' }).click();
-  await expect(page.getByRole('heading', { name: 'Connect where you post' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Connect where you post' }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Skip this step' }).click();
-  await expect(page.getByRole('heading', { name: 'Make your first video' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Make your first video' }).first()).toBeVisible();
   await page.getByLabel('Anything to mention? (optional)').fill('Family bakery, E2E run');
   await page.getByRole('button', { name: 'Make my intro video' }).click();
 
