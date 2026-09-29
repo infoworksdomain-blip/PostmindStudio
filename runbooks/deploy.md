@@ -1,12 +1,19 @@
 # Deploy (BACKLOG 12.6)
 
-> **On Render** (the operator's chosen host), follow [render-deploy.md](render-deploy.md). The
-> Blueprint `render.yaml` replaces `docker-compose.prod.yml`: the same Dockerfile and commands,
-> the migration runs as the web service's pre-deploy command, secrets live in the
-> `studio-secrets-<env>` environment group, and `DATABASE_URL` is built at start-up by
-> `scripts/render/with-db-url.sh`. The environment requirements and order of operations below
-> still apply. Render builds each service from the commit rather than pulling a registry image, so
-> "the same SHA" means the same commit on staging and production.
+> **Primary path: one Hetzner server** — follow [vps-deploy.md](vps-deploy.md).
+> `deploy/vps/compose.yml` runs web, ONE worker for every queue, Postgres 17 + pgvector (with
+> pgBackRest point-in-time backups to R2), Valkey and Caddy on a single server;
+> `scripts/vps/deploy.sh <sha>` pulls `ghcr.io/infoworksdomain-blip/postmind-studio:<sha>` (pushed
+> by CI's `publish-image` job on `main`), migrates, rolls out web then the worker, and waits for
+> readiness. Staging is a second compose project on the same server. The environment requirements
+> and order of operations below still apply.
+>
+> **Alternative: Render** — [render-deploy.md](render-deploy.md). Dropped as the primary path for
+> cost; `render.yaml` is kept and still validated in CI. The Blueprint replaces
+> `docker-compose.prod.yml`: the migration runs as the web service's pre-deploy command, secrets
+> live in the `studio-secrets-<env>` environment group, and `DATABASE_URL` is built at start-up by
+> `scripts/render/with-db-url.sh`. Render builds each service from the commit rather than pulling a
+> registry image, so "the same SHA" means the same commit on staging and production.
 
 ## Artifacts
 
@@ -17,8 +24,15 @@
 - **Topology:** `docker-compose.prod.yml` runs web ×3 plus one worker service per queue, sized per
   playbook §7.3: orchestration 3, assets 5, publish 3, scheduled 2, analytics 2, library 1. The
   same layout maps directly onto ECS services or Kubernetes deployments.
+- **Single server (primary):** `deploy/vps/compose.yml` — web ×1 and ONE worker process running
+  every queue (`STUDIO_WORKER_QUEUES` can split it later), sized for a 2 GB / 1 vCPU server
+  ([vps-deploy.md](vps-deploy.md) section 1).
 - **CI:** the `docker` job builds the image, checks ffmpeg and the non-root user, probes
-  `/api/health`, and validates the compose file.
+  `/api/health`, validates the compose file, and runs the VPS stack smoke (migrate + web readiness
+  on the stack's own Postgres and Valkey). `vps-config` runs shellcheck on `scripts/vps/*.sh`,
+  `docker compose config` on the VPS files, `caddy validate` and `promtool check config`. On `main`,
+  `publish-image` pushes `ghcr.io/infoworksdomain-blip/postmind-studio:<sha>` with BuildKit
+  provenance and a GitHub artifact attestation.
 
 ## Environment
 
@@ -92,9 +106,10 @@
 
 ## Release steps
 
-1. Merge to `main`. CI must be green: `verify`, `database`, and `docker`.
-2. Build and push `postmind-studio:<sha>`.
-3. **Staging:**
+1. Merge to `main`. CI must be green: `verify`, `database`, `ops-config`, `docker` and `vps-config`.
+2. CI's `publish-image` job pushes `ghcr.io/infoworksdomain-blip/postmind-studio:<sha>`.
+3. **Staging** (single server: `bash scripts/vps/deploy.sh --env staging <sha>` does steps i–ii and
+   waits for readiness; [vps-deploy.md](vps-deploy.md) section 9):
    1. Run the migrations:
       ```bash
       IMAGE_TAG=<sha> docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
@@ -106,8 +121,10 @@
       `load-test/k6/studio-api.js`, re-checks the spec 17.1 thresholds and writes
       `ops/results/<date>-k6-smoke.md`. Before launch, work through the full GATE 12 checklist in
       [staging-gate.md](staging-gate.md).
-4. **Production:** repeat step 3 with the same SHA. Record the SHA and the previous SHA in the
-   deploy log, because [rollback.md](rollback.md) needs the previous one.
+4. **Production:** repeat step 3 with the same SHA (`bash scripts/vps/deploy.sh <sha>`). Record
+   the SHA and the previous SHA in the deploy log, because [rollback.md](rollback.md) needs the
+   previous one. On the single server `deploy.sh` keeps this log itself
+   (`/var/lib/postmind-studio/<env>/deployed-tags`) and prints the rollback command.
 5. Watch for 30 minutes:
    - Sentry.
    - The p95 API latency.
@@ -120,7 +137,8 @@ Migrations always run **before** the new code, and they are expand-only (see
 [rollback.md](rollback.md#database-migrations)). Roll out web first, then the workers.
 
 **Exception:** when a release adds a new job type, roll out the workers first. Otherwise jobs
-enqueued by the new web code could find no worker that understands them.
+enqueued by the new web code could find no worker that understands them. On the single server:
+`bash scripts/vps/deploy.sh --workers-first <sha>`.
 
 ## Phase 15 Track B — composition configuration
 

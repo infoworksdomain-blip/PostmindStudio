@@ -63,3 +63,7 @@ demo/dist/
 
 # Deployment secret files mounted by docker-compose.*.yml (BACKLOG 14.3 / 14.4) - never commit
 /secrets/
+
+# Deployment: single VPS - filled-in env files live on the server (/etc/postmind-studio), never here
+deploy/vps/*.env
+deploy/vps/secrets/

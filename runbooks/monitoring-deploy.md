@@ -74,7 +74,33 @@ ALERTMANAGER_URL=http://127.0.0.1:9093 npx tsx scripts/ops/alert-smoke.ts --seve
 - Upgrading Prometheus or Alertmanager: change the image tag here **and** in the `ops-config` CI job
   together.
 
-## On Render
+## On the single server (primary)
+
+[vps-deploy.md](vps-deploy.md) section 10. The same three components, pinned to the same versions,
+are the `monitoring` profile of `deploy/vps/compose.yml`, with the repo's unchanged
+`studio-alerts.yml`, `studio-slo.yml` and `alertmanager.yml`, and
+`deploy/vps/prometheus/prometheus.yml` (jobs `studio-web`, `studio-worker` — one service named
+`worker` runs every queue — and `studio-readiness`; the SLO rules are loaded too). CI checks it with
+`promtool check config` (job `vps-config`).
+
+- **Off by default.** Their limits add up to about 550 MB, which a 2 GB server (the default Hetzner
+  CPX12) does not have. Set `STUDIO_MONITORING=on` in the env file once the server has 4 GB or more,
+  write `pagerduty-routing-key` and `slack-webhook-url` into
+  `/etc/postmind-studio/secrets/<env>/` (mode 0444: the containers run as nobody), and redeploy the
+  current tag. `deploy.sh` writes `metrics-token` there from the env file on every deploy and
+  refuses `STUDIO_MONITORING=on` while the two alert files are empty.
+- **Until then** `scripts/vps/healthcheck.sh` runs every 5 minutes from a systemd timer (readiness
+  through Caddy, container health and OOM kills, swap, memory, disk, queue backlog) and posts
+  problems to `OPS_ALERT_WEBHOOK_URL` (Slack), and an external uptime check watches
+  `/api/health/ready` from outside Hetzner, because nothing on the server can report the server
+  itself going down. Sentry keeps reporting application errors.
+- The UIs listen on `127.0.0.1:9090` / `:9093` (staging: other ports, set in its env file): use an
+  SSH tunnel. Smoke test from the server:
+  `bash scripts/vps/compose.sh production run --rm ops node --import tsx scripts/ops/alert-smoke.ts`.
+- With monitoring on, the health check and the backup job post to Alertmanager instead
+  (`StudioOpsCheckFailed`, severity ticket → Slack).
+
+## On Render (alternative)
 
 `render.yaml` runs the stack as one private service per environment, `studio-monitoring-<env>`,
 built from `ops/render/monitoring/Dockerfile`: the same Prometheus v2.55.1, Alertmanager v0.28.1 and

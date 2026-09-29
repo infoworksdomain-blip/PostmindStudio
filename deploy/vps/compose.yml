@@ -1,0 +1,462 @@
+# PostMind Studio — single-server stack (Deployment: single VPS, Hetzner). One compose PROJECT per
+# environment on the same server:
+#   production  docker compose -p postmind-studio         (volumes postmind-studio_*)
+#   staging     docker compose -p postmind-studio-staging (volumes postmind-studio-staging_*)
+# Never call docker compose on this file by hand: scripts/vps/compose.sh <env> … and
+# scripts/vps/deploy.sh pass the project name, both env files and IMAGE_TAG for you
+# (runbooks/vps-deploy.md). Caddy (HTTPS) is shared by both projects: compose.edge.yml.
+#
+# Interpolation (${…}) comes from /etc/postmind-studio/<env>.env and <env>.backup.env (two
+# --env-file flags). Only <env>.env is the app's env_file. The backup credentials in
+# <env>.backup.env reach ONLY postgres (WAL archiving) and backup-storage, never web or worker
+# (backup-recovery.md: the app must not be able to delete its backups).
+#
+# Nothing here publishes Postgres or Redis on a host port. The only host ports are Prometheus and
+# Alertmanager on 127.0.0.1 (no auth on their UIs: use an SSH tunnel); Caddy publishes 80/443.
+# Docker's published ports bypass UFW (https://docs.docker.com/engine/network/packet-filtering-firewalls/,
+# read 2026-09-29), which is why nothing else is published at all.
+
+name: postmind-studio
+
+x-logging: &logging
+  # json-file does no rotation by default (https://docs.docker.com/engine/logging/configure/,
+  # read 2026-09-29): cap every container at 5 × 20 MB.
+  driver: json-file
+  options: { max-size: '20m', max-file: '5' }
+
+x-app: &app
+  image: ${STUDIO_IMAGE:-ghcr.io/infoworksdomain-blip/postmind-studio}:${IMAGE_TAG:?IMAGE_TAG is set by scripts/vps/deploy.sh or compose.sh}
+  env_file: ${STUDIO_ENV_FILE:?STUDIO_ENV_FILE is set by scripts/vps/compose.sh}
+  restart: unless-stopped
+  logging: *logging
+  networks: [default]
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+# Values derived from the env file so they cannot drift. `environment` wins over env_file
+# (https://docs.docker.com/reference/compose-file/services/#env_file, read 2026-09-29).
+x-app-env: &app-env
+  NODE_ENV: production
+  REDIS_URL: redis://redis:6379/3
+  APP_URL: https://${STUDIO_DOMAIN:?set STUDIO_DOMAIN}
+  STUDIO_PUBLIC_CALLBACK_BASE_URL: https://${STUDIO_DOMAIN}
+  TIKTOK_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=tiktok
+  YOUTUBE_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=youtube
+  X_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=x
+  LINKEDIN_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=linkedin
+  SENTRY_ENVIRONMENT: ${STUDIO_ENV:?set STUDIO_ENV (production or staging)}
+  WORKER_METRICS_PORT: '9464'
+
+services:
+  # ---------------------------------------------------------------------------------------------
+  # Postgres 17 + pgvector (the image CI migrates against) + pgBackRest for WAL archiving and base
+  # backups to R2 (postgres/Dockerfile). Private to this project's network.
+  postgres:
+    build:
+      context: ./postgres
+    image: postmind-studio-postgres:17-pgvector-0.8.6-local
+    restart: unless-stopped
+    logging: *logging
+    shm_size: 64mb
+    environment:
+      POSTGRES_USER: studio
+      POSTGRES_DB: postmind_studio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD (letters and digits only)}
+      # pgBackRest reads every option from PGBACKREST_* (https://pgbackrest.org/command.html,
+      # read 2026-09-29). The key, secret and cipher passphrase are interpolated from the backup
+      # env file (the second --env-file), which is never an env_file of web or worker.
+      PGBACKREST_REPO1_S3_KEY: ${S3_BACKUP_ACCESS_KEY_ID:-}
+      PGBACKREST_REPO1_S3_KEY_SECRET: ${S3_BACKUP_SECRET_ACCESS_KEY:-}
+      PGBACKREST_REPO1_CIPHER_PASS: ${PG_BACKUP_CIPHER_PASS:-}
+      PGBACKREST_STANZA: studio
+      PGBACKREST_PG1_PATH: /var/lib/postgresql/data
+      PGBACKREST_PG1_USER: studio
+      PGBACKREST_REPO1_TYPE: s3
+      PGBACKREST_REPO1_S3_ENDPOINT: ${R2_ACCOUNT_ID:-unset}.${R2_JURISDICTION:-eu}.r2.cloudflarestorage.com
+      PGBACKREST_REPO1_S3_BUCKET: ${S3_BACKUP_BUCKET:-unset}
+      PGBACKREST_REPO1_S3_REGION: auto
+      PGBACKREST_REPO1_S3_URI_STYLE: path
+      PGBACKREST_REPO1_PATH: /postgres/${STUDIO_ENV}
+      PGBACKREST_REPO1_RETENTION_FULL_TYPE: time
+      PGBACKREST_REPO1_RETENTION_FULL: ${PG_BACKUP_RETENTION_DAYS:-22}
+      PGBACKREST_REPO1_CIPHER_TYPE: aes-256-cbc
+      PGBACKREST_COMPRESS_TYPE: zst
+      PGBACKREST_START_FAST: 'y'
+      PGBACKREST_LOG_LEVEL_CONSOLE: info
+      PGBACKREST_LOG_LEVEL_FILE: 'off'
+    # The config file holds the static settings; memory settings and archiving come from the env
+    # file so staging can be smaller. -c overrides the file (postgres image docs).
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - archive_mode=${PG_BACKUPS:-on}
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-96MB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-512MB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-4MB}
+      - -c
+      - maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-64MB}
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-40}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U studio -d postmind_studio']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    stop_grace_period: 120s
+    deploy:
+      resources:
+        limits: { cpus: '${POSTGRES_CPUS:-1}', memory: '${POSTGRES_MEM_LIMIT:-384m}' }
+
+  # ---------------------------------------------------------------------------------------------
+  # Valkey 8 (the engine Render Key Value runs). BullMQ: maxmemory-policy noeviction is "the only
+  # setting that guarantees the correct behavior of the queues", and AOF with fsync every second
+  # (https://docs.bullmq.io/guide/going-to-production, read 2026-09-29). RDB snapshots stay on as
+  # well (https://valkey.io/topics/persistence/). maxmemory makes a full Redis fail writes loudly
+  # instead of being OOM-killed. Studio uses DB 3.
+  redis:
+    image: valkey/valkey:8.1.10-alpine
+    restart: unless-stopped
+    logging: *logging
+    command:
+      - valkey-server
+      - --appendonly
+      - 'yes'
+      - --appendfsync
+      - everysec
+      - --save
+      - '900 1 300 100 60 10000'
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-64mb}
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '${REDIS_MEM_LIMIT:-128m}' }
+
+  # ---------------------------------------------------------------------------------------------
+  # One-shot: committed migrations (forward-only, expand-only: runbooks/rollback.md), then the
+  # idempotent seed. scripts/vps/deploy.sh runs it before web and worker; a failure stops the deploy
+  # and the running release keeps serving.
+  migrate:
+    <<: *app
+    profiles: ['migrate']
+    restart: 'no'
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql://studio:${POSTGRES_PASSWORD}@postgres:5432/postmind_studio?schema=studio&connection_limit=2&application_name=studio-migrate
+    command:
+      ['sh', '-c', 'npx --no-install prisma migrate deploy && npx --no-install prisma db seed']
+    # Runs while the previous release still serves, so on a 2 GB server it leans on swap briefly.
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: '512m' }
+
+  # ---------------------------------------------------------------------------------------------
+  # Next.js API + UI. Reached only through Caddy on the shared edge network, under the alias
+  # studio-web-<env> (the upstream in caddy/site.caddy.tmpl).
+  web:
+    <<: *app
+    # node directly (not npx): one process less, which matters on a 2 GB server, and tini's
+    # SIGTERM reaches Next.js itself.
+    command: ['node', 'node_modules/next/dist/bin/next', 'start', '-p', '3010']
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql://studio:${POSTGRES_PASSWORD}@postgres:5432/postmind_studio?schema=studio&connection_limit=${WEB_DB_CONNECTION_LIMIT:-5}&pool_timeout=20&application_name=studio-web
+      # Heap cap below the container limit, so V8 collects before the kernel OOM-kills.
+      NODE_OPTIONS: --max-old-space-size=${WEB_NODE_HEAP_MB:-288}
+    expose: ['3010']
+    networks:
+      default:
+      edge:
+        aliases: ['studio-web-${STUDIO_ENV}']
+    healthcheck:
+      # Liveness (the image's own check); readiness (DB + Redis) is checked by deploy.sh and the
+      # blackbox probe, so a Postgres blip does not restart-loop the web container.
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3010/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits: { cpus: '${WEB_CPUS:-1}', memory: '${WEB_MEM_LIMIT:-448m}' }
+
+  # ---------------------------------------------------------------------------------------------
+  # ONE worker process for every queue (scripts/worker.ts; the queue names are
+  # src/lib/studio/queue/queues.ts QUEUES). To split later, set STUDIO_WORKER_QUEUES to a subset
+  # here and add a second service with the rest (and its name to prometheus/prometheus.yml).
+  # `node --import tsx` is tsx's documented Node.js CLI form (github.com/privatenumber/tsx
+  # docs/dev-api/node-cli.md, read 2026-09-29): one process instead of npx → tsx → node.
+  worker:
+    <<: *app
+    command: node --import tsx scripts/worker.ts ${STUDIO_WORKER_QUEUES:-studio-orchestration studio-assets studio-publish studio-scheduled studio-analytics studio-library}
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql://studio:${POSTGRES_PASSWORD}@postgres:5432/postmind_studio?schema=studio&connection_limit=${WORKER_DB_CONNECTION_LIMIT:-10}&pool_timeout=20&application_name=studio-worker
+      NODE_OPTIONS: --max-old-space-size=${WORKER_NODE_HEAP_MB:-384}
+    expose: ['9464']
+    # 14.4: website scans may use the browserless service, reachable only on this network.
+    networks: [default, headless]
+    healthcheck:
+      # The metrics listener (METRICS_TOKEN is required on the VPS) answers only while the process
+      # and its event loop are alive. It replaces the image's web-port check.
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:9464/metrics',{headers:{authorization:'Bearer '+process.env.METRICS_TOKEN}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Workers finish in-flight jobs on SIGTERM (scripts/worker.ts); tini forwards it.
+    stop_grace_period: 120s
+    # The limit includes FFmpeg child processes (one at a time: STUDIO_FFMPEG_MAX_CONCURRENT=1).
+    deploy:
+      resources:
+        limits: { cpus: '${WORKER_CPUS:-1}', memory: '${WORKER_MEM_LIMIT:-704m}' }
+
+  # ---------------------------------------------------------------------------------------------
+  # One-shot jobs on the app image (profile ops): scripts/vps/backup.sh runs backup-storage;
+  # `scripts/vps/compose.sh <env> run --rm ops npx tsx scripts/ops/…` runs any ops script
+  # (staging-gate --snapshot / --restore-check, redrive, alert-smoke, run-test-project).
+  backup-storage:
+    <<: *app
+    profiles: ['ops']
+    restart: 'no'
+    depends_on: {}
+    environment:
+      S3_BACKUP_BUCKET: ${S3_BACKUP_BUCKET:?set S3_BACKUP_BUCKET}
+      S3_BACKUP_ACCESS_KEY_ID: ${S3_BACKUP_ACCESS_KEY_ID:?set S3_BACKUP_ACCESS_KEY_ID in the backup env file}
+      S3_BACKUP_SECRET_ACCESS_KEY: ${S3_BACKUP_SECRET_ACCESS_KEY:?set S3_BACKUP_SECRET_ACCESS_KEY in the backup env file}
+      S3_BACKUP_REGION: auto
+      S3_BACKUP_RETENTION_DAYS: '30'
+    command: ['node', '--import', 'tsx', 'scripts/ops/backup-storage.ts', '--apply']
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: '384m' }
+
+  ops:
+    <<: *app
+    profiles: ['ops']
+    restart: 'no'
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql://studio:${POSTGRES_PASSWORD}@postgres:5432/postmind_studio?schema=studio&connection_limit=5&application_name=studio-ops
+      # The restore-drill instance (scripts/vps/pg-restore.sh check swaps it in for one run).
+      RESTORED_DATABASE_URL: postgresql://studio:${POSTGRES_PASSWORD}@postgres-restore:5432/postmind_studio?schema=studio&connection_limit=5&application_name=studio-restore-check
+      ALERTMANAGER_URL: http://alertmanager:9093
+    volumes:
+      # Reports of scripts/ops/staging-gate.ts (ops/results/) survive the one-shot container.
+      - ${STUDIO_STATE_DIR:-/var/lib/postmind-studio}/${STUDIO_ENV}/results:/app/ops/results
+    command: ['node', '-e', "console.log('usage: compose.sh <env> run --rm ops <command>')"]
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: '512m' }
+
+  # ---------------------------------------------------------------------------------------------
+  # Restore drill (profile restore, scripts/vps/pg-restore.sh): a second Postgres on its own
+  # volume, restored by pgBackRest to a point in time, with archiving OFF so it never writes into
+  # the live repository. Private, like the live one.
+  postgres-restore:
+    image: postmind-studio-postgres:17-pgvector-0.8.6-local
+    profiles: ['restore']
+    restart: 'no'
+    logging: *logging
+    shm_size: 64mb
+    environment:
+      PGBACKREST_REPO1_S3_KEY: ${S3_BACKUP_ACCESS_KEY_ID:-}
+      PGBACKREST_REPO1_S3_KEY_SECRET: ${S3_BACKUP_SECRET_ACCESS_KEY:-}
+      PGBACKREST_REPO1_CIPHER_PASS: ${PG_BACKUP_CIPHER_PASS:-}
+      PGBACKREST_STANZA: studio
+      PGBACKREST_PG1_PATH: /var/lib/postgresql/data
+      PGBACKREST_PG1_USER: studio
+      PGBACKREST_REPO1_TYPE: s3
+      PGBACKREST_REPO1_S3_ENDPOINT: ${R2_ACCOUNT_ID:-unset}.${R2_JURISDICTION:-eu}.r2.cloudflarestorage.com
+      PGBACKREST_REPO1_S3_BUCKET: ${S3_BACKUP_BUCKET:-unset}
+      PGBACKREST_REPO1_S3_REGION: auto
+      PGBACKREST_REPO1_S3_URI_STYLE: path
+      PGBACKREST_REPO1_PATH: /postgres/${STUDIO_ENV}
+      PGBACKREST_REPO1_CIPHER_TYPE: aes-256-cbc
+      PGBACKREST_LOG_LEVEL_FILE: 'off'
+    command:
+      [
+        'postgres',
+        '-c',
+        'config_file=/etc/postgresql/postgresql.conf',
+        '-c',
+        'archive_mode=off',
+        '-c',
+        'shared_buffers=64MB',
+        '-c',
+        'max_connections=20',
+      ]
+    volumes:
+      - postgres-restore-data:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U studio -d postmind_studio']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 300s
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: '256m' }
+
+  # ---------------------------------------------------------------------------------------------
+  # BACKLOG 14.4 — headless render for owner-confirmed website scans (runbooks/scan-blocked.md).
+  # Does NOT fit on a 2 GB server (Chromium alone needs more). Off unless HEADLESS_RENDER=on in the
+  # env file (profile headless-render). Only the worker shares
+  # its network. Set STUDIO_HEADLESS_RENDER_URL=http://browserless:3000 and
+  # STUDIO_HEADLESS_RENDER_TOKEN in the env file; the same token is browserless's TOKEN.
+  browserless:
+    image: ghcr.io/browserless/chromium:v2.56.7
+    profiles: ['headless-render']
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      TOKEN: ${STUDIO_HEADLESS_RENDER_TOKEN:-}
+      CONCURRENT: '2'
+      QUEUE_LENGTH: '10'
+      TIMEOUT: '45000'
+    expose: ['3000']
+    networks: [headless]
+    # No healthcheck: we have not verified a documented health endpoint for this image; the scan
+    # worker's own timeout and fallback cover a dead browser (runbooks/scan-blocked.md).
+    deploy:
+      resources:
+        limits: { cpus: '1', memory: '1g' }
+
+  # ---------------------------------------------------------------------------------------------
+  # Monitoring (profile monitoring): OFF by default. It needs about 400 MB more than a 2 GB server
+  # has; switch it on with STUDIO_MONITORING=on once the server has 4 GB or more. Until then
+  # scripts/vps/healthcheck.sh (systemd timer) and an external uptime check cover the basics
+  # (runbooks/vps-deploy.md "Monitoring"). The repo's alert, SLO and routing files,
+  # unchanged; prometheus/prometheus.yml scrapes this project's web and worker.
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: ['monitoring']
+    restart: unless-stopped
+    logging: *logging
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --web.external-url=http://127.0.0.1:${PROMETHEUS_HOST_PORT:-9090}
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../ops/prometheus/studio-alerts.yml:/etc/prometheus/rules/studio-alerts.yml:ro
+      - ../../ops/prometheus/studio-slo.yml:/etc/prometheus/rules/studio-slo.yml:ro
+      - prometheus-data:/prometheus
+    secrets:
+      - source: metrics_token
+        target: /etc/prometheus/secrets/metrics-token
+    ports:
+      - '127.0.0.1:${PROMETHEUS_HOST_PORT:-9090}:9090'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9090/-/healthy']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '384m' }
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    profiles: ['monitoring']
+    restart: unless-stopped
+    logging: *logging
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=
+      - --web.external-url=http://127.0.0.1:${ALERTMANAGER_HOST_PORT:-9093}
+    volumes:
+      - ../../ops/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    # The exact paths ops/alertmanager/alertmanager.yml reads (routing_key_file / api_url_file).
+    secrets:
+      - source: pagerduty_routing_key
+        target: /etc/alertmanager/secrets/pagerduty-routing-key
+      - source: slack_webhook_url
+        target: /etc/alertmanager/secrets/slack-webhook-url
+    ports:
+      - '127.0.0.1:${ALERTMANAGER_HOST_PORT:-9093}:9093'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9093/-/healthy']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '96m' }
+
+  # Probes GET /api/health/ready for StudioNotReady (job studio-readiness); the image's default
+  # config has the http_2xx module (github.com/prometheus/blackbox_exporter blackbox.yml).
+  blackbox:
+    image: prom/blackbox-exporter:v0.28.0
+    profiles: ['monitoring']
+    restart: unless-stopped
+    logging: *logging
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9115/-/healthy']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits: { cpus: '0.25', memory: '64m' }
+
+secrets:
+  # Files on the host (scripts/vps/deploy.sh writes metrics-token from the env file; the operator
+  # writes the other two once — runbooks/vps-deploy.md). Mode 0444: the containers run as nobody.
+  metrics_token:
+    file: ${STUDIO_SECRETS_DIR:?STUDIO_SECRETS_DIR is set by scripts/vps/compose.sh}/metrics-token
+  pagerduty_routing_key:
+    file: ${STUDIO_SECRETS_DIR}/pagerduty-routing-key
+  slack_webhook_url:
+    file: ${STUDIO_SECRETS_DIR}/slack-webhook-url
+
+volumes:
+  postgres-data:
+  postgres-restore-data:
+  redis-data:
+  prometheus-data:
+  alertmanager-data:
+
+networks:
+  default:
+  # Only the worker and browserless are on it, so the browser cannot reach Postgres or Redis.
+  headless:
+  # Shared with Caddy (compose.edge.yml creates it).
+  edge:
+    external: true
+    name: studio-edge

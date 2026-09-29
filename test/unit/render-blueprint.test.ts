@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { load } from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { QUEUES } from '../../src/lib/studio/queue/queues';
+import { requiredAtStartup } from '../helpers/required-env';
 
 // Deployment: Render — render.yaml checked against the code and runbooks/render-deploy.md.
 
@@ -93,49 +94,6 @@ function operatorKeys(envName: string): Set<string> {
     .filter((m) => m[2] === 'both' || m[2] === envName)
     .map((m) => m[1]!);
   return new Set(keys);
-}
-
-function tsFiles(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) return tsFiles(path);
-    return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) ? [path] : [];
-  });
-}
-
-/**
- * What production needs at start-up: every requireEnv('X') in runtime code (src/), plus config the
- * code validates without requireEnv. Derived from the code so a new requireEnv fails this test
- * until render.yaml or the runbook provides it.
- */
-let requiredCache: string[] | undefined;
-function requiredAtStartup(): string[] {
-  if (requiredCache) return requiredCache;
-  const fromCode = new Set<string>();
-  for (const file of tsFiles(join(ROOT, 'src'))) {
-    for (const m of readFileSync(file, 'utf8').matchAll(/requireEnv\('([A-Z0-9_]+)'\)/g)) {
-      fromCode.add(m[1]!);
-    }
-  }
-  // Only for local development: NODE_ENV=production refuses it; KMS_KEY_ID is used instead
-  // (src/lib/studio/crypto/envelope.ts).
-  fromCode.delete('STUDIO_LOCAL_MASTER_KEY');
-  const extra = [
-    'DATABASE_URL', // built by with-db-url.sh from RENDER_POSTGRES_URL
-    'KMS_KEY_ID', // envelope.ts: without it production refuses to start encrypting
-    'AWS_ACCESS_KEY_ID', // KMS credentials: no instance role on Render
-    'AWS_SECRET_ACCESS_KEY',
-    'STORAGE_PROVIDER', // storage-client.ts (defaults to s3; Render uses r2)
-    'R2_ACCOUNT_ID', // storage-client.ts zod: required when STORAGE_PROVIDER=r2
-    'R2_ACCESS_KEY_ID',
-    'R2_SECRET_ACCESS_KEY',
-    'S3_BUCKET_THUMBNAILS',
-    'S3_BUCKET_LIBRARY',
-    'METRICS_TOKEN', // metrics listener = the port a private service must open
-    'STUDIO_PLATFORM_ORG_IDS', // admin endpoints refused in production without it
-  ];
-  requiredCache = [...new Set([...fromCode, ...extra])].sort();
-  return requiredCache;
 }
 
 describe('render.yaml — structure', () => {
