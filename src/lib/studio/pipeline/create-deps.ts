@@ -17,6 +17,7 @@ import { createKillSwitch, createPrismaFlagStore } from '../kill-switch';
 import { costCapsFromEnv } from '../cost/caps';
 import { createCostGuard } from '../cost/guard';
 import { createOrgCapOverrideLookup } from '../cost/org-overrides';
+import { billingPipelineDepsFromEnv } from '../billing/wiring';
 import { createNotifier } from '../notifications/notifier';
 import { createPreferenceLookup } from '../notifications/preference-lookup';
 import { getMetrics } from '../observability/metrics';
@@ -50,6 +51,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
   const keys = lazyDataKeyProvider();
   const killSwitch = createKillSwitch({ store: createPrismaFlagStore(input.db) });
   const caps = costCapsFromEnv();
+  // Phase 18 Track C: billing access at job start + top-up / trial cost-cap adjustments.
+  const billing = billingPipelineDepsFromEnv(input.db);
   // 13.24: in-app suppression and email recipients follow notification preferences.
   const preferences = createPreferenceLookup(input.db);
   const notifier = createNotifier({
@@ -66,6 +69,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     logger,
     metrics: getMetrics(),
     overrides: createOrgCapOverrideLookup(input.db),
+    adjustments: billing.adjustments,
   });
   return {
     db: input.db,
@@ -159,5 +163,6 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     },
     now: Date.now,
     sleep,
+    billingAccess: billing.billingAccess,
   };
 }

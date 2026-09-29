@@ -72,7 +72,24 @@ export interface CostGuardDeps {
   now?: () => number;
   /** 13.19 per-organisation overrides of the daily / monthly caps (cost/org-overrides.ts). */
   overrides?: OrgCapOverrideLookup;
+  /**
+   * Phase 18 §P.3 (billing/cost-adjustments.ts): top-up credit headroom added to the monthly cap,
+   * and the trial's own caps (£10 a day, £15 in total) replacing the tier's.
+   */
+  adjustments?: CapAdjustmentLookup;
 }
+
+export interface CapAdjustment {
+  /** Added to the organisation's monthly cap (consumed top-up credits this month). */
+  monthlyHeadroomPence: number;
+  /** While trialing: these replace the daily and monthly caps. */
+  trial?: { dailyPence: number; monthlyPence: number };
+}
+
+export type CapAdjustmentLookup = (
+  organisationId: string,
+  at: Date,
+) => Promise<CapAdjustment | null>;
 
 export const COST_ACTOR = 'system:studio-cost-guard';
 /** Audit organisation for platform-wide (global cap) events. */
@@ -247,7 +264,11 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
     }
     // 13.19: organisation override > env > default (cost/org-overrides.ts).
     const override = (await deps.overrides?.(scope.organisationId)) ?? null;
-    const orgCap = override?.dailyPence ?? deps.caps.orgDailyPenceByTier[scope.planTier];
+    const adjustment = (await deps.adjustments?.(scope.organisationId, today)) ?? null;
+    const orgCap =
+      adjustment?.trial?.dailyPence ??
+      override?.dailyPence ??
+      deps.caps.orgDailyPenceByTier[scope.planTier];
     if (orgCap !== undefined) {
       const sum = await deps.db.providerUsage.aggregate({
         where: { organisationId: scope.organisationId, day },
@@ -263,7 +284,12 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
         thresholds: DAILY_THRESHOLDS,
       });
     }
-    const monthlyCap = override?.monthlyPence ?? deps.caps.orgMonthlyPenceByTier?.[scope.planTier];
+    const baseMonthly = override?.monthlyPence ?? deps.caps.orgMonthlyPenceByTier?.[scope.planTier];
+    const monthlyCap =
+      adjustment?.trial?.monthlyPence ??
+      (baseMonthly === undefined
+        ? undefined
+        : baseMonthly + (adjustment?.monthlyHeadroomPence ?? 0));
     if (monthlyCap !== undefined) {
       // Served by the provider_usage(organisationId, day) index: one org, one month of days.
       const { start, end } = utcMonthRange(today);

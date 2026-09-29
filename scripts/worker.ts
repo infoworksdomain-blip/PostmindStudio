@@ -29,6 +29,10 @@ import {
 import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
+import {
+  STRIPE_SWEEP_SCHEDULE,
+  SUBSCRIPTION_RECONCILE_SCHEDULE,
+} from '../src/lib/studio/billing/reconcile';
 import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
@@ -201,6 +205,27 @@ async function main(): Promise<void> {
     {
       name: 'check-platform-accounts',
       data: { organisationId: 'postmind-platform', runId: 'account-check', planTier: 'STANDARD' },
+    },
+  );
+  // Phase 18 Track C — Stripe webhook safety nets: event sweeper and nightly reconcile.
+  await analytics.upsertJobScheduler(
+    'sweep-stripe-events',
+    { pattern: STRIPE_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-stripe-events',
+      data: { organisationId: 'postmind-platform', runId: 'stripe-sweep', planTier: 'STANDARD' },
+    },
+  );
+  await analytics.upsertJobScheduler(
+    'reconcile-subscriptions-nightly',
+    { pattern: SUBSCRIPTION_RECONCILE_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'reconcile-subscriptions',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'stripe-reconcile',
+        planTier: 'STANDARD',
+      },
     },
   );
   await publish.upsertJobScheduler(

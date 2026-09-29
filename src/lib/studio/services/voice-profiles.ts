@@ -13,6 +13,7 @@ import type { TenantContext } from '../../tenant';
 import { fileField, fileFields, textField } from '../api/multipart';
 import { runProvider, type ProviderRunDeps } from '../pipeline/provider-run';
 import type { VoiceCloningClient, VoiceSample } from '../providers/elevenlabs-voices';
+import { minTierFor, TIER_ORDER } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 import type { AssetStorage } from '../storage';
 import { CONSENT_STATEMENT_KEYS } from './approved-statements';
@@ -59,10 +60,13 @@ const AUDIO_TYPES: Readonly<Record<string, string>> = {
   'audio/flac': 'flac',
 };
 
-const TIERS: readonly PlanTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
+const TIERS: readonly PlanTier[] = TIER_ORDER;
 
-/** Operator decision P4 (2026-09-28): voice cloning for Plus and Enterprise. */
-export const DEFAULT_VOICE_CLONE_MIN_TIER: PlanTier = 'PLUS';
+/**
+ * Operator decision P4 (2026-09-28): voice cloning for Plus and Enterprise. Phase 18 §P.3: read
+ * from the plan catalogue; STUDIO_VOICE_CLONE_MIN_TIER still overrides.
+ */
+export const DEFAULT_VOICE_CLONE_MIN_TIER: PlanTier = minTierFor('voiceClone');
 
 export function voiceCloneMinTier(env: Record<string, string | undefined> = process.env): PlanTier {
   const raw = env.STUDIO_VOICE_CLONE_MIN_TIER?.trim().toUpperCase();

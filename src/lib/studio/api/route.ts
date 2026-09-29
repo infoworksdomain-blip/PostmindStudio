@@ -8,6 +8,7 @@ import { requireCapability, type StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
 import { applyBetaPlan } from '../services/beta';
+import { billingGate } from '../billing/access-gate';
 import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
 
 /** 422: an Idempotency-Key reused with a different body (the client has a bug). */
@@ -81,7 +82,12 @@ export function withStudioRoute(
       const deps = await getApiDeps();
       log = withContext({ correlationId }, deps.logger);
       // BACKLOG 14.11: a beta organisation routes / caps / auto-approves as PLUS (services/beta.ts).
-      const tenant = await applyBetaPlan(deps.betaPlans, await deps.resolveTenant(req), deps.now());
+      // Phase 18 §P.3: tier + access from entitlements and the 402 access gate (billing/access-gate.ts).
+      const tenant = await applyBetaPlan(
+        deps.betaPlans,
+        await billingGate(deps, req, await deps.resolveTenant(req)),
+        deps.now(),
+      );
       log = withContext(
         { correlationId, organisationId: tenant.organisationId, userId: tenant.userId },
         deps.logger,

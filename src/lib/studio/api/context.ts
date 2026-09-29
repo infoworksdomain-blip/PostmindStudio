@@ -127,6 +127,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
   const voices = await import('../providers/elevenlabs-voices');
   const adminHealth = await import('../services/admin-health');
   const beta = await import('../services/beta');
+  const billingWiring = await import('../billing/wiring');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -170,6 +171,13 @@ async function buildFromEnv(): Promise<ApiDeps> {
     breaker: pipeline.breaker,
     adminQueues: () => adminHealth.bullQueuesFor(connection),
     betaPlans: beta.createBetaPlanLookup({ db: prisma, logger, now: Date.now }),
+    // Phase 18 Track C: modes, entitlements (tier + access gate) and the Stripe billing service.
+    ...billingWiring.billingApiDepsFromEnv({
+      db: prisma,
+      logger,
+      audit: auditLog,
+      appUrl: env.requireEnv('APP_URL'),
+    }),
     logger,
     now: Date.now,
   };

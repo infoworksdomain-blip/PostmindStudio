@@ -18,6 +18,7 @@ import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject } from '../../pipeline/project-state';
 import { recordCostPause } from '../../services/auto-resume';
 import { featureGateFor, type Feature } from '../../services/features';
+import { checkJobAccess } from '../../billing/job-access';
 import { retryDelayMs, type JobDataMap, type JobName } from '../queues';
 import type { InlineJobQueue } from '../enqueue';
 import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-approvals';
@@ -35,6 +36,11 @@ import {
   redriveLostPublicationsJob,
 } from './redrive-lost-publications';
 import { checkPlatformAccountsJob, onCheckPlatformAccountsFailed } from './check-platform-accounts';
+import {
+  onBillingSyncFailed,
+  reconcileSubscriptionsJob,
+  sweepStripeEventsJob,
+} from './billing-sync';
 import {
   onCoreSyncFailed,
   reconcileOrganisationsJob,
@@ -90,6 +96,8 @@ import {
 //   - on the final failed attempt the step's failure handler marks the shot/project FAILED
 //   - failed jobs stay in BullMQ's failed set (dead-letter) for operator action
 
+type JobAccessData = { organisationId: string; publicationId?: string };
+
 type Processor<N extends JobName> = (data: JobDataMap[N], deps: PipelineDeps) => Promise<void>;
 type FailureHandler<N extends JobName> = (
   data: JobDataMap[N],
@@ -133,6 +141,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'reconcile-organisations': reconcileOrganisationsJob,
   'redrive-lost-publications': redriveLostPublicationsJob,
   'check-platform-accounts': checkPlatformAccountsJob,
+  'sweep-stripe-events': sweepStripeEventsJob,
+  'reconcile-subscriptions': reconcileSubscriptionsJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -170,6 +180,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'reconcile-organisations': onCoreSyncFailed,
   'redrive-lost-publications': onRedriveLostPublicationsFailed,
   'check-platform-accounts': onCheckPlatformAccountsFailed,
+  'sweep-stripe-events': onBillingSyncFailed,
+  'reconcile-subscriptions': onBillingSyncFailed,
 };
 
 /**
@@ -236,6 +248,11 @@ export async function executeJob<N extends JobName>(
       organisationId: data.organisationId,
       projectId: data.projectId,
     });
+    // Phase 18 §P.3: billing access at job start — spend jobs stop (402), publish jobs are held.
+    if ((await checkJobAccess(deps, name, data as JobAccessData)) === 'held') {
+      record('succeeded');
+      return;
+    }
     const feature = JOB_FEATURES[name];
     if (feature)
       await (deps.features ?? featureGateFor(deps.db)).assertEnabled(feature, data.organisationId);

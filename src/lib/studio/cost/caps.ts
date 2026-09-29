@@ -1,4 +1,5 @@
 import { ConfigurationError } from '../../errors';
+import { PLAN_CATALOGUE, TIER_ORDER } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 
 // Spec 12.5 cost caps (all in GBP pence of provider spend). Operator decision 2 (2026-09-27)
@@ -16,22 +17,22 @@ import type { PlanTier } from '../providers/router';
 // The per-project cap is video_projects.costBudgetPence; when the client sends none, project
 // creation applies defaultProjectBudgetPence (cost/project-budget.ts).
 
-export const PLAN_TIERS: readonly PlanTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
+export const PLAN_TIERS: readonly PlanTier[] = TIER_ORDER;
 
-/** Operator decision 2: £10 / £30 / £75 / £400 per organisation per UTC day. */
-export const DEFAULT_ORG_DAILY_CAP_PENCE: Readonly<Record<PlanTier, number>> = {
-  BASIC: 1_000,
-  STANDARD: 3_000,
-  PLUS: 7_500,
-  ENTERPRISE: 40_000,
-};
+function byTier(pick: (tier: PlanTier) => number): Readonly<Record<PlanTier, number>> {
+  return Object.freeze(Object.fromEntries(PLAN_TIERS.map((t) => [t, pick(t)]))) as Record<
+    PlanTier,
+    number
+  >;
+}
+
+/**
+ * Operator decision 2: £10 / £30 / £75 / £400 per organisation per UTC day. Phase 18 §P.3: read
+ * from the plan catalogue (billing/catalogue.ts); the env overrides below still win.
+ */
+export const DEFAULT_ORG_DAILY_CAP_PENCE = byTier((t) => PLAN_CATALOGUE[t].dailyCostCapPence);
 /** Operator decision 2: £40 / £150 / £450 / £3,000 per organisation per calendar month (UTC). */
-export const DEFAULT_ORG_MONTHLY_CAP_PENCE: Readonly<Record<PlanTier, number>> = {
-  BASIC: 4_000,
-  STANDARD: 15_000,
-  PLUS: 45_000,
-  ENTERPRISE: 300_000,
-};
+export const DEFAULT_ORG_MONTHLY_CAP_PENCE = byTier((t) => PLAN_CATALOGUE[t].monthlyCostCapPence);
 /** Operator decision 2: £2,500 per UTC day across every organisation. */
 export const DEFAULT_GLOBAL_DAILY_CAP_PENCE = 250_000;
 

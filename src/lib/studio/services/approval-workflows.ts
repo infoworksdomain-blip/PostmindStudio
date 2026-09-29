@@ -29,6 +29,7 @@ import {
   type WorkflowView,
 } from './approval-workflow-steps';
 import { PLATFORMS } from './catalog';
+import { assertTierGate } from './tier-gates';
 
 // 15.D3 — multi-step approval workflows (spec 7.13, 3.3). An organisation defines ordered steps
 // ([{ role, minApprovers }]) and which projects they apply to (businessIds / platforms / tags).
@@ -137,6 +138,9 @@ export async function createWorkflow(
   input: z.infer<typeof createWorkflowInput>,
 ) {
   assertMayManageWorkflows(tenant);
+  // Phase 18 §P.1 (open question 6): multi-step workflows are STANDARD and above; a single
+  // approval step stays available on BASIC, and workflows created earlier keep working.
+  if (input.steps.length > 1) assertTierGate(tenant, 'approval.workflows');
   const count = await db.approvalWorkflow.count({
     where: { organisationId: tenant.organisationId },
   });
