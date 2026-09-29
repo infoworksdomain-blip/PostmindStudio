@@ -30,9 +30,16 @@ export const updateOrganisationInput = z
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
 
-export const transferOwnershipInput = z.object({ memberId: z.string().min(1).max(128) }).strict();
+/** §5.11 re-authentication: the caller's current password (absent for Google-only accounts). */
+const reauthPassword = z.string().max(128).optional();
 
-export const deleteOrganisationInput = z.object({ confirmName: z.string().max(80) }).strict();
+export const transferOwnershipInput = z
+  .object({ memberId: z.string().min(1).max(128), password: reauthPassword })
+  .strict();
+
+export const deleteOrganisationInput = z
+  .object({ confirmName: z.string().max(80), password: reauthPassword })
+  .strict();
 
 export interface OrganisationSettings {
   id: string;

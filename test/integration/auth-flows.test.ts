@@ -236,6 +236,56 @@ describe.skipIf(!hasDb)('auth flows (DB)', { timeout: 120_000 }, () => {
     expect(setCookieHeader(second, SESSION_COOKIE)).toBeDefined();
     expect(h.audits.some((a) => a.action === AuditAction.TwoFactorEnabled)).toBe(true);
   });
+
+  it('turns 2FA off only with the password AND a current code or a backup code (§5.6)', async () => {
+    const ip = '192.0.2.81';
+    const email = h.email('totp-off');
+    let cookies = await signUpVerified(h, email, PASSWORD);
+    const enable = await h.call('/two-factor/enable', {
+      body: { password: PASSWORD },
+      cookies,
+      ip,
+    });
+    cookies = cookiesFrom(enable, cookies);
+    const { totpURI, backupCodes } = (await enable.json()) as {
+      totpURI: string;
+      backupCodes: string[];
+    };
+    const verify = await h.call('/two-factor/verify-totp', {
+      body: { code: totpFromUri(totpURI) },
+      cookies,
+      ip,
+    });
+    cookies = cookiesFrom(verify, cookies);
+
+    const passwordOnly = await h.call('/two-factor/disable', {
+      body: { password: PASSWORD },
+      cookies,
+      ip: '192.0.2.82',
+    });
+    expect(passwordOnly.status).toBe(400);
+    expect(await passwordOnly.json()).toMatchObject({ code: 'INVALID_TWO_FACTOR_CODE' });
+    const wrongCode = await h.call('/two-factor/disable', {
+      body: { password: PASSWORD, code: '000000' === totpFromUri(totpURI) ? '111111' : '000000' },
+      cookies,
+      ip: '192.0.2.83',
+    });
+    expect(wrongCode.status).toBe(400);
+    expect(await db.user.findFirstOrThrow({ where: { email } })).toMatchObject({
+      twoFactorEnabled: true,
+    });
+
+    const withBackup = await h.call('/two-factor/disable', {
+      body: { password: PASSWORD, code: backupCodes[0] },
+      cookies,
+      ip: '192.0.2.84',
+    });
+    expect(withBackup.status).toBe(200);
+    expect(await db.user.findFirstOrThrow({ where: { email } })).toMatchObject({
+      twoFactorEnabled: false,
+    });
+    expect(h.audits.some((a) => a.action === AuditAction.TwoFactorDisabled)).toBe(true);
+  });
 });
 
 describe.skipIf(!hasDb)('organisations + standalone identity (DB)', { timeout: 120_000 }, () => {

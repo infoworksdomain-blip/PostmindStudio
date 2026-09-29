@@ -20,6 +20,7 @@ import { costCapsFromEnv } from '../cost/caps';
 import { createCostGuard } from '../cost/guard';
 import { createOrgCapOverrideLookup } from '../cost/org-overrides';
 import { createEmailSender } from '../notifications/email';
+import { mailerFromEnv } from '../../email/mailer';
 import { billingPipelineDepsFromEnv } from '../billing/wiring';
 import { createNotifier } from '../notifications/notifier';
 import { createPreferenceLookup } from '../notifications/preference-lookup';
@@ -104,6 +105,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       now: Date.now,
     }),
     queue: input.queue,
+    // Phase 18 §2.8: worker-sent transactional email (billing sync, cancelled-org retention).
+    mailer: mailerFromEnv({ db: input.db, queue: input.queue, logger }),
     storage,
     media: createFfmpegInspector(),
     mastering: createFfmpegMastering(),

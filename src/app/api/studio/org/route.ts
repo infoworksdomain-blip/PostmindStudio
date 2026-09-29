@@ -1,4 +1,6 @@
 import { AuditAction } from '@/lib/audit-sink';
+import { reauthenticateRequest } from '@/lib/auth/reauth';
+import { studioModes } from '@/lib/mode';
 import { StudioCapability } from '@/lib/rbac';
 import { parseBody, withStudioRoute } from '@/lib/studio/api/route';
 import {
@@ -12,8 +14,9 @@ import {
 // /api/studio/org (Phase 18 §3 /settings/organisation) — the caller's active organisation.
 //   GET     any member
 //   PATCH   studio:org:manage (owner, admin): name, logo, country, default locale
-//   DELETE  studio:org:delete (owner): { confirmName } — cancels billing, soft-deletes and starts
-//           the existing 30-day purge. Audited.
+//   DELETE  studio:org:delete (owner): { confirmName, password? } — re-authenticates (§5.11: the
+//           password, or a sign-in in the last 15 minutes for Google-only accounts; standalone
+//           mode), cancels billing, soft-deletes and starts the existing 30-day purge. Audited.
 export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ deps, tenant }) => ({
   body: { organisation: await getOrganisationSettings(deps.db, tenant) },
 }));
@@ -36,7 +39,9 @@ export const PATCH = withStudioRoute(
 export const DELETE = withStudioRoute(
   StudioCapability.OrgDelete,
   async ({ req, deps, tenant, audit }) => {
-    const { confirmName } = await parseBody(req, deleteOrganisationInput);
+    const { confirmName, password } = await parseBody(req, deleteOrganisationInput);
+    if ((deps.modes ?? studioModes()).identity === 'standalone')
+      await reauthenticateRequest(req, password);
     const purge = await deleteOrganisation(deps, tenant, confirmName);
     audit(
       AuditAction.OrgDeleted,

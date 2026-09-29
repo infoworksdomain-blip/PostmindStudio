@@ -28,6 +28,7 @@ import type { AllowedCorpusBucket } from '../library/corpus-source';
 import type { ThumbnailComposer } from '../services/thumbnail-composer';
 import type { BillingAccessLookup } from '../billing/job-access';
 import type { BillingJobDeps } from '../billing/wiring';
+import type { AuthMailer } from '../../email/auth-mailer';
 
 // Everything a pipeline processor needs, injected so processors are testable without Redis,
 // real providers or ffmpeg.
@@ -120,6 +121,11 @@ export interface PipelineDeps {
   billingAccess?: BillingAccessLookup;
   /** Phase 18 (Track C): Stripe sweeper + nightly reconcile; absent = built from env on use. */
   billingJobs?: BillingJobDeps;
+  /**
+   * Phase 18 §2.8: transactional email sent by worker jobs (billing notices from the Stripe
+   * sweeper, the cancelled-organisation retention job). Absent = the email is skipped and logged.
+   */
+  mailer?: AuthMailer;
 }
 
 /** Phase 18 §2.8: what the send-email job needs (tests inject a fake transport). */

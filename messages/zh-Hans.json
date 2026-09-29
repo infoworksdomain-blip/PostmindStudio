@@ -3861,7 +3861,9 @@
       "backupListLabel": "备用码",
       "copy": "复制备用码",
       "copied": "备用码已复制。",
-      "saved": "我已保存"
+      "saved": "我已保存",
+      "disableCodeLabel": "应用中的验证码或备用码",
+      "disableCodeHint": "关闭两步验证时需要填写。"
     },
     "sessions": {
       "title": "已登录的设备",
@@ -4012,6 +4014,10 @@
         "staff_impersonation_started": "PostMind 员工开始了支持视图",
         "staff_impersonation_ended": "PostMind 员工结束了支持视图"
       }
+    },
+    "reauth": {
+      "password": "您的密码",
+      "hint": "用于确认是您本人。如果您只使用 Google 登录，请留空（您需要在过去 15 分钟内登录过）。"
     }
   },
   "members": {
@@ -4080,7 +4086,9 @@
       "lastOwner": "最后一名所有者不能离开或被降级，请先转让所有权。",
       "ownerOnly": "只有所有者才能执行此操作。",
       "alreadyMember": "该用户已是成员。",
-      "nameMismatch": "您输入的名称不匹配。"
+      "nameMismatch": "您输入的名称不匹配。",
+      "wrongPassword": "密码不正确。",
+      "signInAgain": "为了您的安全，请退出后重新登录，然后再试一次。"
     }
   },
   "billing": {

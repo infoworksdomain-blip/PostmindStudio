@@ -14,7 +14,12 @@ import type { RollUpJobData } from '../queues';
 function jobDeps(deps: PipelineDeps): BillingJobDeps | undefined {
   return (
     deps.billingJobs ??
-    billingJobDepsFromEnv({ db: deps.db, logger: deps.logger, audit: deps.audit })
+    billingJobDepsFromEnv({
+      db: deps.db,
+      logger: deps.logger,
+      audit: deps.audit,
+      mailer: deps.mailer,
+    })
   );
 }
 
@@ -38,7 +43,7 @@ export async function reconcileSubscriptionsJob(_data: RollUpJobData, deps: Pipe
 
 /**
  * Runs in any billing mode that has Stripe (the clock is only ever set by Stripe sync). Emails go
- * through the AuthMailer when one is wired (deps.billingJobs.mailer, Track B); otherwise the
+ * through the AuthMailer when one is wired (deps.billingJobs.mailer, else deps.mailer); otherwise the
  * purge still happens and the missing email is logged.
  */
 export async function cancelledOrgRetentionJob(_data: RollUpJobData, deps: PipelineDeps) {
@@ -47,7 +52,7 @@ export async function cancelledOrgRetentionJob(_data: RollUpJobData, deps: Pipel
     logger: deps.logger,
     audit: deps.audit,
     now: deps.now,
-    mailer: deps.billingJobs?.mailer,
+    mailer: deps.billingJobs?.mailer ?? deps.mailer,
   });
 }
 

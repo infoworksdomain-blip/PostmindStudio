@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { nextCookies } from 'better-auth/next-js';
 import { admin, organization, twoFactor } from 'better-auth/plugins';
 import type { Logger } from 'pino';
@@ -13,6 +13,7 @@ import type { EntitlementsReader } from '../studio/billing/entitlements-reader';
 import { readCookie } from '../tenant';
 import { isPasswordBreached } from './breached';
 import { AUTH_COOKIE_PREFIX } from './cookie';
+import { normaliseSecondFactorCode, verifySecondFactor } from './two-factor-disable';
 import {
   createArgon2Hasher,
   PASSWORD_MAX_LENGTH,
@@ -205,6 +206,24 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
     // §2.3: changing the password always signs out every other session.
     if (path === '/change-password') {
       return { context: { body: { ...body, revokeOtherSessions: true } } };
+    }
+
+    // §5.6: disabling 2FA needs a current TOTP or a backup code, not only the password (which
+    // the endpoint itself checks). Wrong or missing code: 400 INVALID_TWO_FACTOR_CODE.
+    if (path === '/two-factor/disable') {
+      const session = await getSessionFromCtx(ctx);
+      if (!session) return undefined; // the endpoint answers 401
+      const code = normaliseSecondFactorCode(body.code);
+      const row = await deps.db.twoFactor.findFirst({
+        where: { userId: session.user.id },
+        select: { secret: true, backupCodes: true },
+      });
+      if (!row || !(await verifySecondFactor(row, code, ctx.context.secretConfig))) {
+        throw new APIError('BAD_REQUEST', {
+          message: 'Enter a code from your authenticator app or one of your backup codes',
+          code: 'INVALID_TWO_FACTOR_CODE',
+        });
+      }
     }
 
     // §2.5: Better Auth's /admin/* endpoints need a superadmin WITH two-factor authentication.

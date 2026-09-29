@@ -191,8 +191,9 @@ async function buildFromEnv(): Promise<ApiDeps> {
     breaker: pipeline.breaker,
     adminQueues: () => adminHealth.bullQueuesFor(connection),
     betaPlans: beta.createBetaPlanLookup({ db: prisma, logger, now: Date.now }),
-    // Phase 18 §2.8: Resend through the outbox in standalone mode; logged only otherwise.
-    mailer: mailer.createAuthMailer({ db: prisma, queue, logger }),
+    // Phase 18 §2.8: Resend through the outbox in standalone mode; logged only in development,
+    // tests and core mode (email/mailer.ts mailerFromEnv).
+    mailer: mailer.mailerFromEnv({ db: prisma, queue, logger }),
     core: { businesses: select.selectBusinessDirectory(modes, prisma) },
     businessGuard: select.selectBusinessGuard(modes, prisma),
     metaConnect: select.selectMetaConnect(modes),

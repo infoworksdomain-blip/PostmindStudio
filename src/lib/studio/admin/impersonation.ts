@@ -7,8 +7,8 @@ import type { TenantContext } from '../../tenant';
 // they are READ-ONLY unless STUDIO_IMPERSONATION_WRITE=true. Every start is audited.
 //
 // This module holds the policy. Creating the impersonation session is Better Auth's admin plugin
-// (impersonateUser, Track A milestone A3), installed with setImpersonationStarter(); until then a
-// start that passes every check answers 501.
+// (impersonateUser), installed with setImpersonationStarter() by auth/server.ts when the flag is on
+// (auth/impersonation-starter.ts); otherwise (core mode, flag off) a start answers 501.
 
 type Env = Record<string, string | undefined>;
 
@@ -69,8 +69,14 @@ export function assertCanImpersonate(
 }
 
 export interface ImpersonationStarter {
-  /** Create the impersonation session for the caller's request; returns where to go next. */
-  start(headers: Headers, input: { userId: string }): Promise<{ redirectTo: string }>;
+  /**
+   * Create the impersonation session for the caller's request; returns where to go next and the
+   * session's Set-Cookie headers (the route forwards them).
+   */
+  start(
+    headers: Headers,
+    input: { userId: string },
+  ): Promise<{ redirectTo: string; setCookies?: string[] }>;
 }
 
 const pendingStarter: ImpersonationStarter = {

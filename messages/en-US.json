@@ -3861,7 +3861,9 @@
       "backupListLabel": "Backup codes",
       "copy": "Copy codes",
       "copied": "Backup codes copied.",
-      "saved": "I’ve saved them"
+      "saved": "I’ve saved them",
+      "disableCodeLabel": "Code from the app, or a backup code",
+      "disableCodeHint": "Needed to turn two-step verification off."
     },
     "sessions": {
       "title": "Where you’re signed in",
@@ -4012,6 +4014,10 @@
         "staff_impersonation_started": "PostMind staff started a support view",
         "staff_impersonation_ended": "PostMind staff ended a support view"
       }
+    },
+    "reauth": {
+      "password": "Your password",
+      "hint": "Confirms it is you. Leave it blank if you only sign in with Google (you must have signed in within the last 15 minutes)."
     }
   },
   "members": {
@@ -4080,7 +4086,9 @@
       "lastOwner": "The last owner cannot leave or be demoted. Transfer ownership first.",
       "ownerOnly": "Only an owner can do that.",
       "alreadyMember": "That person is already a member.",
-      "nameMismatch": "The name you typed does not match."
+      "nameMismatch": "The name you typed does not match.",
+      "wrongPassword": "That password is not right.",
+      "signInAgain": "For your security, sign out and sign in again, then try once more."
     }
   },
   "billing": {

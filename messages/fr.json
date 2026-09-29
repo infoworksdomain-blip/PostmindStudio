@@ -3861,7 +3861,9 @@
       "backupListLabel": "Codes de secours",
       "copy": "Copier les codes",
       "copied": "Codes de secours copiés.",
-      "saved": "Je les ai enregistrés"
+      "saved": "Je les ai enregistrés",
+      "disableCodeLabel": "Code de l’application ou code de secours",
+      "disableCodeHint": "Nécessaire pour désactiver la validation en deux étapes."
     },
     "sessions": {
       "title": "Appareils connectés",
@@ -4012,6 +4014,10 @@
         "staff_impersonation_started": "L’équipe PostMind a démarré une vue d’assistance",
         "staff_impersonation_ended": "L’équipe PostMind a terminé une vue d’assistance"
       }
+    },
+    "reauth": {
+      "password": "Votre mot de passe",
+      "hint": "Confirme qu’il s’agit bien de vous. Laissez-le vide si vous vous connectez uniquement avec Google (vous devez vous être connecté au cours des 15 dernières minutes)."
     }
   },
   "members": {
@@ -4080,7 +4086,9 @@
       "lastOwner": "Le dernier propriétaire ne peut ni partir ni être rétrogradé. Transférez d’abord la propriété.",
       "ownerOnly": "Seul un propriétaire peut faire cela.",
       "alreadyMember": "Cette personne est déjà membre.",
-      "nameMismatch": "Le nom saisi ne correspond pas."
+      "nameMismatch": "Le nom saisi ne correspond pas.",
+      "wrongPassword": "Ce mot de passe est incorrect.",
+      "signInAgain": "Pour votre sécurité, déconnectez-vous puis reconnectez-vous, et réessayez."
     }
   },
   "billing": {

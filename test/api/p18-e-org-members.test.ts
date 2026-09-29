@@ -18,6 +18,15 @@ import {
 } from '../../src/lib/studio/services/membership-gateway';
 import type { TenantContext } from '../../src/lib/tenant';
 import { call, installApi } from '../helpers/api-harness';
+import { ForbiddenError } from '../../src/lib/errors';
+
+// §5.11: organisation deletion and ownership transfer re-authenticate (auth/reauth.ts reads the
+// Better Auth session; here the password check is stubbed: only PASSWORD is accepted).
+const PASSWORD = 'correct horse battery';
+const reauth = vi.hoisted(() => ({
+  fn: vi.fn(async (_req: Pick<Request, 'headers'>, _password: string | undefined) => undefined),
+}));
+vi.mock('../../src/lib/auth/reauth', () => ({ reauthenticateRequest: reauth.fn }));
 
 // Phase 18 Track E — /api/studio/{me,org,org/transfer-ownership,members/**,audit}: role rules
 // (admins cannot touch owners, last-owner protection), the Better Auth gateway receives the
@@ -80,6 +89,10 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
   let api: ReturnType<typeof installApi>;
 
   beforeAll(async () => {
+    reauth.fn.mockImplementation(async (_req, password) => {
+      if (password !== PASSWORD)
+        throw new ForbiddenError('Password is incorrect', { reason: 'reauth_failed' });
+    });
     for (const [key, id] of Object.entries(ids))
       await db.user.create({
         data: { id, name: `User ${key}`, email: `${id}@example.test`, emailVerified: true },
@@ -272,9 +285,21 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
       const wrong = await call(orgRoute.DELETE, {
         method: 'DELETE',
         token: 'owner',
-        body: { confirmName: 'bakery a' },
+        body: { confirmName: 'bakery a', password: PASSWORD },
       });
       expect(wrong.status).toBe(400);
+      expect(await db.organization.findUnique({ where: { id: orgA } })).toMatchObject({
+        deletedAt: null,
+      });
+    });
+
+    it('delete re-authenticates the owner first (§5.11)', async () => {
+      for (const body of [{ confirmName: 'Bakery A' }, { confirmName: 'Bakery A', password: 'x' }]) {
+        const res = await call(orgRoute.DELETE, { method: 'DELETE', token: 'owner', body });
+        expect(res.status).toBe(403);
+        expect(res.json).toMatchObject({ details: { reason: 'reauth_failed' } });
+      }
+      expect(reauth.fn).toHaveBeenLastCalledWith(expect.anything(), 'x');
       expect(await db.organization.findUnique({ where: { id: orgA } })).toMatchObject({
         deletedAt: null,
       });
@@ -289,10 +314,17 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
         body: { memberId: memberIds.creator },
       });
       expect(denied.status).toBe(403);
+      const unconfirmed = await call(transferRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { memberId: memberIds.admin, password: 'wrong' },
+      });
+      expect(unconfirmed.status).toBe(403);
+      expect(gateway.updateMemberRole).not.toHaveBeenCalled();
       const res = await call(transferRoute.POST, {
         method: 'POST',
         token: 'owner',
-        body: { memberId: memberIds.admin },
+        body: { memberId: memberIds.admin, password: PASSWORD },
       });
       expect(res.status).toBe(200);
       expect(gateway.updateMemberRole.mock.calls.map((c) => c[1])).toEqual([
@@ -305,7 +337,7 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
       const res = await call(transferRoute.POST, {
         method: 'POST',
         token: 'owner',
-        body: { memberId: memberIds.outsider },
+        body: { memberId: memberIds.outsider, password: PASSWORD },
       });
       expect(res.status).toBe(404);
     });

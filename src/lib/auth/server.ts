@@ -7,7 +7,9 @@ import { logger } from '../logger';
 import { prisma } from '../prisma';
 import { entitlementsReaderFromEnv } from '../studio/billing/entitlements-reader';
 import { redisConnectionFromEnv } from '../studio/queue/redis';
+import { impersonationEnabled, setImpersonationStarter } from '../studio/admin/impersonation';
 import { createAuth, type StudioAuth } from './config';
+import { createBetterAuthImpersonationStarter } from './impersonation-starter';
 import { createRedisAuthRateLimitStore } from './rate-limit-store';
 
 // Phase 18 §2.1: the process's Better Auth instance, built once from env (standalone mode only;
@@ -34,7 +36,7 @@ async function build(): Promise<StudioAuth> {
   const googleSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   const log = logger.child({ component: 'auth' });
   const { getIdentityProvider } = await import('../identity');
-  return createAuth({
+  const auth = createAuth({
     db: prisma,
     secret: requireEnv('BETTER_AUTH_SECRET'),
     baseURL: appUrl,
@@ -59,6 +61,11 @@ async function build(): Promise<StudioAuth> {
         .catch(() => undefined);
     },
   });
+  // Phase 18 §2.5: impersonation stays off (the admin route answers 403 / 501) unless
+  // STUDIO_IMPERSONATION_ENABLED=true; then Better Auth's impersonateUser creates the session.
+  if (impersonationEnabled())
+    setImpersonationStarter(createBetterAuthImpersonationStarter(auth.api));
+  return auth;
 }
 
 export function getAuth(): Promise<StudioAuth> {

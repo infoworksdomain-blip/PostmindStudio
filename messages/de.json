@@ -3861,7 +3861,9 @@
       "backupListLabel": "Sicherungscodes",
       "copy": "Codes kopieren",
       "copied": "Sicherungscodes kopiert.",
-      "saved": "Ich habe sie gespeichert"
+      "saved": "Ich habe sie gespeichert",
+      "disableCodeLabel": "Code aus der App oder ein Backup-Code",
+      "disableCodeHint": "Erforderlich, um die Bestätigung in zwei Schritten zu deaktivieren."
     },
     "sessions": {
       "title": "Wo Sie angemeldet sind",
@@ -4012,6 +4014,10 @@
         "staff_impersonation_started": "PostMind-Mitarbeiter hat eine Support-Ansicht gestartet",
         "staff_impersonation_ended": "PostMind-Mitarbeiter hat eine Support-Ansicht beendet"
       }
+    },
+    "reauth": {
+      "password": "Ihr Passwort",
+      "hint": "Bestätigt, dass Sie es sind. Lassen Sie das Feld leer, wenn Sie sich nur mit Google anmelden (Sie müssen sich in den letzten 15 Minuten angemeldet haben)."
     }
   },
   "members": {
@@ -4080,7 +4086,9 @@
       "lastOwner": "Der letzte Inhaber kann die Organisation nicht verlassen oder herabgestuft werden. Übertragen Sie zuerst die Eigentümerschaft.",
       "ownerOnly": "Nur ein Inhaber kann das tun.",
       "alreadyMember": "Diese Person ist bereits Mitglied.",
-      "nameMismatch": "Der eingegebene Name stimmt nicht überein."
+      "nameMismatch": "Der eingegebene Name stimmt nicht überein.",
+      "wrongPassword": "Dieses Passwort ist nicht richtig.",
+      "signInAgain": "Melden Sie sich zu Ihrer Sicherheit ab und wieder an und versuchen Sie es dann erneut."
     }
   },
   "billing": {

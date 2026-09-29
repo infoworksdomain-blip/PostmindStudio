@@ -3861,7 +3861,9 @@
       "backupListLabel": "Códigos de respaldo",
       "copy": "Copiar códigos",
       "copied": "Códigos de respaldo copiados.",
-      "saved": "Ya los he guardado"
+      "saved": "Ya los he guardado",
+      "disableCodeLabel": "Código de la app o un código de respaldo",
+      "disableCodeHint": "Necesario para desactivar la verificación en dos pasos."
     },
     "sessions": {
       "title": "Dónde tienes la sesión iniciada",
@@ -4012,6 +4014,10 @@
         "staff_impersonation_started": "El equipo de PostMind inició una vista de soporte",
         "staff_impersonation_ended": "El equipo de PostMind finalizó una vista de soporte"
       }
+    },
+    "reauth": {
+      "password": "Tu contraseña",
+      "hint": "Confirma que eres tú. Déjala en blanco si solo inicias sesión con Google (debes haber iniciado sesión en los últimos 15 minutos)."
     }
   },
   "members": {
@@ -4080,7 +4086,9 @@
       "lastOwner": "El último propietario no puede salir ni ser degradado. Transfiere la propiedad primero.",
       "ownerOnly": "Solo un propietario puede hacer eso.",
       "alreadyMember": "Esa persona ya es miembro.",
-      "nameMismatch": "El nombre que escribiste no coincide."
+      "nameMismatch": "El nombre que escribiste no coincide.",
+      "wrongPassword": "Esa contraseña no es correcta.",
+      "signInAgain": "Por tu seguridad, cierra sesión, vuelve a iniciarla e inténtalo de nuevo."
     }
   },
   "billing": {

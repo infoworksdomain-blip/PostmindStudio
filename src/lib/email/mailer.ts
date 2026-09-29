@@ -3,7 +3,11 @@ import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import { studioModes } from '../mode';
 import type { JobQueue } from '../studio/queue/enqueue';
-import { createConsoleAuthMailer, type AuthMailer } from './auth-mailer';
+import {
+  createConsoleAuthMailer,
+  createUnconfiguredAuthMailer,
+  type AuthMailer,
+} from './auth-mailer';
 import { createEmailOutbox, type EmailOutbox } from './outbox';
 
 // Phase 18 §2.8 — the production AuthMailer (Track 0 contract, auth-mailer.ts): every auth,
@@ -44,4 +48,25 @@ export function createAuthMailer(deps: {
   return createOutboxAuthMailer(
     createEmailOutbox({ db: deps.db, queue: deps.queue, logger: deps.logger }),
   );
+}
+
+/**
+ * The mailer each process wires (ApiDeps.mailer in the web process, PipelineDeps.mailer in the
+ * worker): tests and development without RESEND_API_KEY log instead of sending; production with
+ * STUDIO_EMAIL_PROVIDER=none gets the loud no-op; otherwise createAuthMailer (Resend outbox in
+ * `resend` mode, console in core mode, where Studio sends no auth mail).
+ */
+export function mailerFromEnv(deps: {
+  db: PrismaClient;
+  queue?: JobQueue;
+  logger: Logger;
+  env?: Record<string, string | undefined>;
+}): AuthMailer {
+  const env = deps.env ?? process.env;
+  const production = env.NODE_ENV === 'production';
+  if (env.NODE_ENV === 'test') return createConsoleAuthMailer(deps.logger);
+  if (!production && !env.RESEND_API_KEY?.trim()) return createConsoleAuthMailer(deps.logger);
+  if (production && studioModes(env).email === 'none')
+    return createUnconfiguredAuthMailer(deps.logger);
+  return createAuthMailer({ ...deps, env });
 }

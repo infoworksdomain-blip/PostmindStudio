@@ -28,9 +28,9 @@ export const POST = withStudioRoute(
       { type: 'user', id: target.id },
       { reason, write: impersonationWriteAllowed() },
     );
-    const { redirectTo } = await getImpersonationStarter().start(req.headers, {
+    const { redirectTo, setCookies } = await getImpersonationStarter().start(req.headers, {
       userId: target.id,
     });
-    return { body: { redirectTo, readOnly: !impersonationWriteAllowed() } };
+    return { body: { redirectTo, readOnly: !impersonationWriteAllowed() }, setCookies };
   },
 );

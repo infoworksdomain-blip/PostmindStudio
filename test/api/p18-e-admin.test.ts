@@ -19,6 +19,13 @@ import type { BillingService } from '../../src/lib/studio/billing/contracts';
 import type { TenantContext } from '../../src/lib/tenant';
 import { call, installApi } from '../helpers/api-harness';
 
+// §5.11: DELETE /org re-authenticates through Better Auth; the password check is stubbed here
+// (test/api/p18-e-org-members.test.ts covers a refused password).
+const reauth = vi.hoisted(() => ({
+  fn: vi.fn(async (_req: Pick<Request, 'headers'>, _password: string | undefined) => undefined),
+}));
+vi.mock('../../src/lib/auth/reauth', () => ({ reauthenticateRequest: reauth.fn }));
+
 // Phase 18 Track E — admin Organisations / Users / Subscriptions tabs and impersonation:
 // staff capability (granted only with 2FA by the identity provider) is required on every route,
 // impersonation is off by default and read-only when on, staff cannot be impersonated or banned
@@ -397,9 +404,10 @@ describe.skipIf(!hasDb)(
       const res = await call(orgRoute.DELETE, {
         method: 'DELETE',
         token: 'doomedOwner',
-        body: { confirmName: 'Doomed Bakes' },
+        body: { confirmName: 'Doomed Bakes', password: 'owner-password' },
       });
       expect(res.status).toBe(200);
+      expect(reauth.fn).toHaveBeenCalledWith(expect.anything(), 'owner-password');
       expect(res.json).toMatchObject({ deleted: true, graceUntil: expect.any(String) });
       expect(cancelForDeletion).toHaveBeenCalledWith(doomed);
       const row = await db.organization.findUnique({ where: { id: doomed } });

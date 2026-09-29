@@ -94,17 +94,28 @@ export function createConsoleAuthMailer(log: Logger): AuthMailer {
   };
 }
 
-/**
- * The mailer production wiring uses (auth/server.ts and other senders). Track B points this at the
- * Resend sender (outbox + queue). Until then: the console transport outside production, and in
- * production a mailer that records nothing and logs an error, so a missing sender is loud.
- */
-export async function authMailerFromEnv(log: Logger): Promise<AuthMailer> {
-  if (process.env.NODE_ENV !== 'production') return createConsoleAuthMailer(log);
+/** Production without a usable sender: records nothing and logs an error, so it is loud. */
+export function createUnconfiguredAuthMailer(log: Logger): AuthMailer {
   return {
     async sendAuthEmail(template) {
       log.error({ template }, '[email] no transactional email sender is configured');
       return { queued: false, suppressed: false };
     },
   };
+}
+
+/**
+ * The mailer auth/server.ts and other request-time senders use. Tests always get the console
+ * transport. Otherwise it is the process's ApiDeps mailer (src/lib/email/mailer.ts
+ * `mailerFromEnv`): Track B's Resend outbox mailer when STUDIO_EMAIL_PROVIDER is `resend`, the
+ * console transport in development without RESEND_API_KEY, and a loud no-op in production when
+ * no sender is configured.
+ */
+export async function authMailerFromEnv(log: Logger): Promise<AuthMailer> {
+  if (process.env.NODE_ENV === 'test') return createConsoleAuthMailer(log);
+  const { getApiDeps } = await import('../studio/api/context');
+  const { mailer } = await getApiDeps();
+  if (mailer) return mailer;
+  if (process.env.NODE_ENV !== 'production') return createConsoleAuthMailer(log);
+  return createUnconfiguredAuthMailer(log);
 }

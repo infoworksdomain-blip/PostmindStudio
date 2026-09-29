@@ -167,12 +167,50 @@ function DetailsForm({
   );
 }
 
+/**
+ * §5.11: deletion and ownership transfer ask for the current password (the API re-checks it).
+ * Google-only accounts have none: they leave it blank and must have signed in recently.
+ */
+function ReauthPasswordField({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  const t = useTranslations('orgSettings.reauth');
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>{t('password')}</Label>
+      <Input
+        id={id}
+        type="password"
+        autoComplete="current-password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-describedby={`${id}-hint`}
+      />
+      <p id={`${id}-hint`} className="text-xs text-muted-foreground">
+        {t('hint')}
+      </p>
+    </div>
+  );
+}
+
+/** The request body's password, omitted when blank (Google-only accounts). */
+function withPassword<T extends Record<string, unknown>>(body: T, password: string) {
+  return password ? { ...body, password } : body;
+}
+
 function TransferOwnership() {
   const t = useTranslations('orgSettings.transfer');
   const tc = useTranslations('common.actions');
   const errorMessage = useSettingsError();
   const { data } = useApi<MembersResponse>('/members');
   const [memberId, setMemberId] = useState('');
+  const [password, setPassword] = useState('');
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const candidates = data?.members.filter((m) => !m.isYou) ?? [];
@@ -181,7 +219,10 @@ function TransferOwnership() {
   async function transfer() {
     setPending(true);
     try {
-      await api('/org/transfer-ownership', { method: 'POST', body: { memberId } });
+      await api('/org/transfer-ownership', {
+        method: 'POST',
+        body: withPassword({ memberId }, password),
+      });
       toast.success(t('done', { name: chosen?.name ?? '' }));
       window.location.reload();
     } catch (err) {
@@ -217,12 +258,19 @@ function TransferOwnership() {
           </Button>
         </div>
       )}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setPassword('');
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('confirmTitle')}</DialogTitle>
             <DialogDescription>{t('confirmBody', { name: chosen?.name ?? '' })}</DialogDescription>
           </DialogHeader>
+          <ReauthPasswordField id="transfer-password" value={password} onChange={setPassword} />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {tc('cancel')}
@@ -244,12 +292,13 @@ function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
   const errorMessage = useSettingsError();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
+  const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
 
   async function remove() {
     setPending(true);
     try {
-      await api('/org', { method: 'DELETE', body: { confirmName: typed } });
+      await api('/org', { method: 'DELETE', body: withPassword({ confirmName: typed }, password) });
       toast.success(t('done'));
       window.location.assign('/');
     } catch (err) {
@@ -277,7 +326,10 @@ function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
-          if (!next) setTyped('');
+          if (!next) {
+            setTyped('');
+            setPassword('');
+          }
         }}
       >
         <DialogContent>
@@ -294,6 +346,7 @@ function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
               autoComplete="off"
             />
           </div>
+          <ReauthPasswordField id="org-delete-password" value={password} onChange={setPassword} />
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {tc('cancel')}

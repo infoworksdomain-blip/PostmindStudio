@@ -115,8 +115,12 @@ export function TwoFactorSection({
   const disable = (event: FormEvent) => {
     event.preventDefault();
     void run(async () => {
-      await authFetch('/two-factor/disable', { body: { password } });
+      // §5.6: turning 2FA off needs the password AND a current code or a backup code.
+      await authFetch('/two-factor/disable', {
+        body: { password, code: code.replace(/\s/g, '') },
+      });
       setPassword('');
+      setCode('');
       toast.success(t('disabled'));
       onChanged();
     });
@@ -187,6 +191,22 @@ export function TwoFactorSection({
             onChange={setPassword}
             autoComplete="current-password"
           />
+          <div className="space-y-2">
+            <Label htmlFor="totp-disable">{t('disableCodeLabel')}</Label>
+            <Input
+              id="totp-disable"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              autoComplete="one-time-code"
+              maxLength={32}
+              className="h-10 max-w-56 font-mono"
+              dir="ltr"
+              aria-describedby="totp-disable-hint"
+            />
+            <p id="totp-disable-hint" className="text-xs text-muted-foreground">
+              {t('disableCodeHint')}
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
@@ -196,7 +216,11 @@ export function TwoFactorSection({
             >
               {t('regenerate')}
             </Button>
-            <Button type="submit" variant="destructive" disabled={busy || !password}>
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={busy || !password || code.trim().length < 6}
+            >
               {busy && <Loader2 className="animate-spin" />}
               {t('disable')}
             </Button>
