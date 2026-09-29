@@ -218,6 +218,12 @@
       "impersonating": {
         "title": "Vista del equipo.",
         "body": "Estás viendo Studio como {name}. Esta sesión es de solo lectura y cada acción queda registrada."
+      },
+      "cancelled": {
+        "title": "Tu suscripción ha finalizado: tu organización es de solo lectura.",
+        "body": "Vuelve a suscribirte para seguir creando. Aún puedes ver, descargar y exportar tus datos.",
+        "deletesOn": "Si no vuelves a suscribirte, la organización y sus datos se eliminarán después del {date}.",
+        "action": "Volver a suscribirse"
       }
     }
   },

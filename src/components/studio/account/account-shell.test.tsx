@@ -111,6 +111,23 @@ describe('account banners', () => {
     expect(screen.getByRole('link', { name: 'See plans' })).toBeVisible();
   });
 
+  it('a cancelled organisation is told its subscription ended, not that payment is overdue (19.5)', () => {
+    const { rerender } = renderWithSWR(
+      <BillingBanner banner={{ kind: 'cancelled', deletesAt: '2026-12-30T00:00:00Z' }} now={NOW} />,
+    );
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Your subscription has ended');
+    expect(alert).toHaveTextContent('export your data');
+    expect(alert).toHaveTextContent('deleted after 30 December 2026');
+    expect(alert).not.toHaveTextContent(/overdue/i);
+    expect(screen.getByRole('link', { name: 'Subscribe again' })).toHaveAttribute(
+      'href',
+      '/settings/billing',
+    );
+    rerender(<BillingBanner banner={{ kind: 'cancelled', deletesAt: null }} now={NOW} />);
+    expect(screen.getByRole('alert')).not.toHaveTextContent('deleted after');
+  });
+
   it('shows the impersonation banner above the billing one', async () => {
     mockFetch([
       {

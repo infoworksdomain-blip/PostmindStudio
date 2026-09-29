@@ -218,6 +218,12 @@
       "impersonating": {
         "title": "Vue équipe.",
         "body": "Vous consultez Studio en tant que {name}. Cette session est en lecture seule et chaque action est enregistrée dans le journal d’audit."
+      },
+      "cancelled": {
+        "title": "Votre abonnement a pris fin — votre organisation est en lecture seule.",
+        "body": "Abonnez-vous à nouveau pour continuer à créer. Vous pouvez toujours consulter, télécharger et exporter vos données.",
+        "deletesOn": "Sans nouvel abonnement, l’organisation et ses données seront supprimées après le {date}.",
+        "action": "Se réabonner"
       }
     }
   },

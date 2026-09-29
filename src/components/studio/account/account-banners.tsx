@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertTriangle, Clock, Eye, Lock, Sparkles } from 'lucide-react';
+import { AlertTriangle, Archive, Clock, Eye, Lock, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 import { useMe, type AccountBanner } from './use-me';
 
 // Phase 18 §3 / §P.3 — account-state banners at the top of every app page: a superadmin
-// impersonating (always first), then the most urgent billing state from /me: read-only, past
+// impersonating (always first), then the most urgent billing state from /me: read-only (payment
+// overdue), subscription ended (Phase 19.5: read-only, with the deletion date when known), past
 // due (with the grace deadline), no plan yet, or a running trial (days left). Each links to
 // billing (Track C's /settings/billing).
 
@@ -74,6 +75,24 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
           action={<BillingLink>{t('readOnly.action')}</BillingLink>}
         >
           <strong className="font-semibold">{t('readOnly.title')}</strong> {t('readOnly.body')}
+        </Banner>
+      );
+    case 'cancelled':
+      return (
+        <Banner
+          tone="bad"
+          icon={<Archive className="size-4" />}
+          action={<BillingLink>{t('cancelled.action')}</BillingLink>}
+        >
+          <strong className="font-semibold">{t('cancelled.title')}</strong> {t('cancelled.body')}
+          {banner.deletesAt && (
+            <>
+              {' '}
+              {t('cancelled.deletesOn', {
+                date: f.date(banner.deletesAt, { day: 'numeric', month: 'long', year: 'numeric' }),
+              })}
+            </>
+          )}
         </Banner>
       );
     case 'past_due':

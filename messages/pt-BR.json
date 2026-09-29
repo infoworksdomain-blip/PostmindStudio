@@ -218,6 +218,12 @@
       "impersonating": {
         "title": "Visualização da equipe.",
         "body": "Você está vendo o Studio como {name}. Esta sessão é somente leitura e cada ação é registrada em auditoria."
+      },
+      "cancelled": {
+        "title": "Sua assinatura terminou — sua organização está em modo somente leitura.",
+        "body": "Assine novamente para continuar criando. Você ainda pode visualizar, baixar e exportar seus dados.",
+        "deletesOn": "Se você não assinar novamente, a organização e seus dados serão excluídos após {date}.",
+        "action": "Assinar novamente"
       }
     }
   },
