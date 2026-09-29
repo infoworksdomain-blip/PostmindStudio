@@ -14,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -61,8 +61,8 @@ jobs:
       DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio
       SHADOW_DATABASE_URL: postgresql://studio:studio@localhost:5432/shadow?schema=studio
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: promtool check rules
         run: >-
           docker run --rm -v "$PWD/ops:/ops" --entrypoint promtool prom/prometheus:v2.55.1
@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build image
         run: docker build -t postmind-studio:ci .
       - name: Image has ffmpeg, runs as node
@@ -271,7 +271,7 @@ jobs:
       S3_BUCKET_LIBRARY: ci-library
       STUDIO_USD_TO_GBP_RATE: '0.79'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Stand-in legal texts (CI only)
         run: |
           mkdir -p /tmp/e2e-legal/en-GB
@@ -287,7 +287,7 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
             echo "::notice title=E2E happy path skipped::Needs Track A sign-up and Track C pricing pages on this branch."
           fi
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: steps.ready.outputs.present == 'true'
         with:
           node-version: 20
@@ -302,7 +302,7 @@ jobs:
         if: steps.ready.outputs.present == 'true'
       - run: npx playwright test
         if: steps.ready.outputs.present == 'true'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure() && steps.ready.outputs.present == 'true'
         with:
           name: playwright-report
@@ -316,7 +316,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: shellcheck
         run: shellcheck --version && shellcheck -x scripts/vps/*.sh deploy/vps/bootstrap.sh
       - name: docker compose config (app stack, every profile, and the edge)
@@ -370,7 +370,7 @@ jobs:
     env:
       IMAGE: ghcr.io/infoworksdomain-blip/postmind-studio
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
