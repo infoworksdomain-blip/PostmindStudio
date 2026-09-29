@@ -22,6 +22,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [content-safety-miss.md](content-safety-miss.md) | Priority risk 3: unsafe content published; the monthly Trust & Safety audit (14.11) | Any true miss |
 | [review-publish-automation.md](review-publish-automation.md) | Auto-approve for trusted creators, auto-publish on approval, templates | Any auto-approved takedown |
 | [platform-api-change.md](platform-api-change.md) | Priority risk 4: publishing API breaking change | 1+ adapter test failing |
+| [corpus-upload.md](corpus-upload.md) | Library corpus from the operator's hard drive: scan, R2 bucket and key, rclone upload and verify, manifest from the folder, hand-over to the ingest, deleting the source bucket (Phase 19) | Upload or verify exits non-zero after a re-run |
 | [corpus-ingestion.md](corpus-ingestion.md) | Library corpus: sample run → operator review → full 50k run, monitoring, failures, throughput and cost (9.2 / 9.3) | >5% failures over 1 h |
 | [corpus-search-quality.md](corpus-search-quality.md) | Priority risk 5: library search degradation | <80% relevant top-5 |
 | [scan-blocked.md](scan-blocked.md) | Priority risk 6: website scan blocked by anti-bot measures | >10% failures on a customer |
