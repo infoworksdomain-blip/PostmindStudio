@@ -56,6 +56,7 @@ case "$action" in
     log "drill restore of $STUDIO_ENV to $1 (started $started; pass it as --restore-started-at)"
     app_compose --profile restore rm -sf postgres-restore >/dev/null 2>&1 || true
     docker volume rm -f "${PROJECT}_postgres-restore-data" >/dev/null 2>&1 || true
+    # shellcheck disable=SC2016 # expanded by the container shell (args after sh -c), not here
     app_compose --profile restore run --rm --no-deps -u postgres postgres-restore sh -c \
       'pgbackrest --type=time "--target=$1" --target-action=promote restore && chmod 0700 "$2"' \
       restore "$1" "$PGDATA_PATH"
@@ -65,6 +66,7 @@ case "$action" in
     ;;
   check)
     # --restore-check reads DATABASE_URL: point it at the drill instance for this run only.
+    # shellcheck disable=SC2016 # expanded by the container shell (args after sh -c), not here
     app_compose run --rm --no-deps --entrypoint sh ops -c \
       'export DATABASE_URL="$RESTORED_DATABASE_URL"; exec node --import tsx scripts/ops/staging-gate.ts --restore-check "$@"' \
       restore-check "$@"
@@ -81,6 +83,7 @@ case "$action" in
     log "IN-PLACE restore of $STUDIO_ENV to $1: stopping web and worker, then Postgres"
     app_compose stop web worker
     app_compose stop postgres
+    # shellcheck disable=SC2016 # expanded by the container shell (args after sh -c), not here
     app_compose run --rm --no-deps -u postgres postgres sh -c \
       'pgbackrest --delta --type=time "--target=$1" --target-action=promote restore && chmod 0700 "$2"' \
       restore "$1" "$PGDATA_PATH"

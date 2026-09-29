@@ -238,7 +238,7 @@ describe('VPS compose — Postgres and backups', () => {
     const days = Number(withDefaults(String(env.PGBACKREST_REPO1_RETENTION_FULL)));
     expect(days + 7 + 1).toBeLessThanOrEqual(30);
     expect(read('scripts/vps/deploy.sh')).toContain('[ "$days" -gt 22 ]');
-    expect(read('scripts/vps/backup.sh')).toMatch(/date -u \+%u\)" = "7" \]; then kind=full/);
+    expect(read('scripts/vps/backup.sh')).toMatch(/date -u \+%u\)" = "7" \]; then kind="full"/);
     // The object-storage copy keeps the same promise (Phase 17.5).
     expect(app.services['backup-storage']!.environment!.S3_BACKUP_RETENTION_DAYS).toBe('30');
   });

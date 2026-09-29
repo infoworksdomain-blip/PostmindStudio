@@ -19,6 +19,7 @@ STATE_DIR="${STUDIO_STATE_DIR:-/var/lib/postmind-studio}"
 EDGE_PROJECT="postmind-edge"
 
 # Image tags: the same rule as scripts/ops/staging-gate (src/lib/studio/ops/staging-gate/args.ts).
+# shellcheck disable=SC2034 # used by deploy.sh, which sources this file
 TAG_PATTERN='^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$'
 
 log() { printf '%s [vps] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2; }
@@ -113,7 +114,8 @@ post_ops_alert() {
   local summary="$1" resolve="${2:-false}" check="${3:-ops}" now ends port url
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   if [ "$resolve" = "true" ]; then ends="$now"; else ends="$(date -u -d '+25 hours' +%Y-%m-%dT%H:%M:%SZ)"; fi
-  summary="$(printf '%s' "$summary" | tr -d '"\\' | tr '\n' ' ')"
+  # Drop quotes and backslashes so the summary cannot break the hand-built JSON below.
+  summary="$(printf '%s' "$summary" | sed 's/["\\]//g' | tr '\n' ' ')"
   if [ "$(env_get STUDIO_MONITORING "$ENV_FILE")" = "on" ]; then
     port="$(env_get ALERTMANAGER_HOST_PORT "$ENV_FILE")"
     if curl -fsS --max-time 10 -H 'content-type: application/json' \

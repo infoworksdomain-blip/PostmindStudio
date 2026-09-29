@@ -34,7 +34,7 @@ backup_db() {
   local kind="$type"
   if [ -z "$kind" ]; then
     # Sunday = 7 (date +%u). A diff needs a full first; pgBackRest promotes it to full if none exists.
-    if [ "$(date -u +%u)" = "7" ]; then kind=full; else kind=diff; fi
+    if [ "$(date -u +%u)" = "7" ]; then kind="full"; else kind="diff"; fi
   fi
   log "pgBackRest $kind backup of $STUDIO_ENV"
   app_compose exec -T -u postgres postgres pgbackrest --type="$kind" backup &&

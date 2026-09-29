@@ -161,7 +161,7 @@ swap_and_time() {
     mkswap "$SWAPFILE" >/dev/null
     swapon "$SWAPFILE"
   fi
-  grep -qE "^$SWAPFILE[[:space:]]" /etc/fstab || printf '%s swap swap defaults 0 0\n' "$SWAPFILE" >>/etc/fstab
+  grep -qE "^${SWAPFILE}[[:space:]]" /etc/fstab || printf '%s swap swap defaults 0 0\n' "$SWAPFILE" >>/etc/fstab
   # Swap only under pressure. "Set the Linux kernel overcommit memory setting to 1" so Valkey's
   # background save can fork (https://valkey.io/topics/admin/). Each container has a memory limit,
   # so a runaway process is stopped inside its own cgroup first.
