@@ -3196,6 +3196,23 @@
         "failed": "Falló la clave de {provider}: {reason}",
         "removed": "Clave de {provider} quitada; se vuelve a usar la clave de Studio"
       }
+    },
+    "profile": {
+      "eyebrow": "Cuenta",
+      "title": "Perfil",
+      "description": "Tu nombre, tu correo y el idioma en el que te escribimos.",
+      "detailsTitle": "Tus datos",
+      "name": "Nombre",
+      "emailLanguage": "Idioma de los correos",
+      "emailLanguageHint": "Los correos de Studio se escriben en este idioma. El idioma de la app se elige en el encabezado.",
+      "save": "Guardar",
+      "saved": "Perfil guardado.",
+      "emailTitle": "Correo electrónico",
+      "emailCurrent": "Inicias sesión con {email}.",
+      "newEmail": "Correo nuevo",
+      "emailHint": "Pediremos a tu dirección actual que apruebe el cambio y después confirmaremos la nueva.",
+      "changeEmail": "Cambiar correo",
+      "emailRequested": "Revisa tu correo para aprobar el cambio."
     }
   },
   "approvals": {
@@ -3325,8 +3342,180 @@
   "marketing": {},
   "pricing": {},
   "legal": {},
-  "auth": {},
-  "security": {},
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "Ese correo y esa contraseña no coinciden con ninguna cuenta.",
+      "emailNotVerified": "Primero confirma tu correo. Te hemos enviado un enlace nuevo.",
+      "passwordTooShort": "Usa al menos 12 caracteres.",
+      "passwordTooLong": "Usa como máximo 128 caracteres.",
+      "passwordCompromised": "Esta contraseña ha aparecido en una filtración de datos. Elige otra.",
+      "rateLimited": "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+      "invalidToken": "Este enlace ha caducado o ya se ha usado. Pide uno nuevo.",
+      "invalidCode": "Ese código no es correcto. Revísalo y vuelve a intentarlo.",
+      "locked": "Demasiados códigos erróneos. Espera unos minutos antes de volver a intentarlo.",
+      "signupsClosed": "Por ahora solo se pueden crear cuentas por invitación.",
+      "invalidEmail": "Escribe un correo válido.",
+      "network": "No hemos podido conectar con Studio. Revisa tu conexión y vuelve a intentarlo.",
+      "generic": "Algo ha fallado. Vuelve a intentarlo."
+    },
+    "password": {
+      "show": "Mostrar contraseña",
+      "hide": "Ocultar contraseña",
+      "rule": "Al menos {min} caracteres",
+      "strength": {
+        "tooShort": "Demasiado corta",
+        "weak": "Débil",
+        "fair": "Aceptable",
+        "good": "Buena",
+        "strong": "Fuerte"
+      }
+    },
+    "signIn": {
+      "title": "Iniciar sesión",
+      "description": "Te damos la bienvenida de nuevo a PostMind Studio.",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "forgot": "¿Has olvidado tu contraseña?",
+      "noAccount": "Crear una cuenta"
+    },
+    "google": {
+      "or": "o",
+      "continue": "Continuar con Google"
+    },
+    "signUp": {
+      "title": "Crea tu cuenta",
+      "description": "Empieza a crear vídeos para todas las plataformas en minutos.",
+      "name": "Tu nombre",
+      "email": "Correo de trabajo",
+      "password": "Contraseña",
+      "terms": "Al crear una cuenta aceptas las <terms>Condiciones</terms> y el <privacy>Aviso de privacidad</privacy>.",
+      "submit": "Crear cuenta",
+      "haveAccount": "¿Ya tienes cuenta? Inicia sesión",
+      "closedTitle": "Solo por invitación",
+      "closedDescription": "Por ahora solo se pueden crear cuentas por invitación. Pide a alguien de tu equipo que te invite."
+    },
+    "verify": {
+      "title": "Revisa tu correo",
+      "description": "Abre el enlace que te hemos enviado para confirmar tu dirección. Funciona durante 24 horas.",
+      "invalidTitle": "Ese enlace no ha funcionado",
+      "invalidDescription": "Puede que haya caducado o que ya se haya usado. Escribe tu correo para recibir uno nuevo.",
+      "sentTo": "Si {email} es nuevo en Studio, te llegará un enlace de confirmación.",
+      "sentGeneric": "Si la dirección es nueva en Studio, te llegará un enlace de confirmación.",
+      "resent": "Si esa dirección necesita confirmarse, te hemos enviado un enlace nuevo.",
+      "email": "Correo electrónico",
+      "resend": "Enviar un enlace nuevo",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "forgot": {
+      "title": "Restablece tu contraseña",
+      "description": "Escribe tu correo y te enviaremos un enlace para elegir una contraseña nueva.",
+      "email": "Correo electrónico",
+      "submit": "Enviar enlace",
+      "sent": "Si alguna cuenta usa esa dirección, te llegará un enlace para restablecerla. Funciona durante 1 hora.",
+      "backToSignIn": "Volver a iniciar sesión"
+    },
+    "reset": {
+      "title": "Elige una contraseña nueva",
+      "description": "Se cerrará tu sesión en todos los demás dispositivos.",
+      "newPassword": "Contraseña nueva",
+      "submit": "Guardar contraseña",
+      "done": "Tu contraseña ha cambiado. Inicia sesión con la nueva.",
+      "signIn": "Iniciar sesión",
+      "invalidTitle": "Ese enlace no ha funcionado",
+      "invalidDescription": "Los enlaces para restablecer funcionan una vez, durante 1 hora. Pide uno nuevo.",
+      "requestNew": "Recibir un enlace nuevo"
+    },
+    "twoFactor": {
+      "title": "Verificación en dos pasos",
+      "totpDescription": "Escribe el código de 6 dígitos de tu app de autenticación.",
+      "backupDescription": "Escribe uno de tus códigos de respaldo. Cada código funciona una sola vez.",
+      "totpLabel": "Código de autenticación",
+      "backupLabel": "Código de respaldo",
+      "trustDevice": "Confiar en este dispositivo durante 30 días",
+      "submit": "Verificar",
+      "useBackup": "Usar un código de respaldo",
+      "useTotp": "Usar tu app de autenticación",
+      "startOver": "Empezar de nuevo"
+    },
+    "invite": {
+      "title": "Únete a tu equipo",
+      "signedOut": "Inicia sesión o crea una cuenta con el correo al que se envió la invitación.",
+      "signIn": "Inicia sesión para aceptar",
+      "signUp": "Crear una cuenta",
+      "join": "Te han invitado a unirte a una organización en PostMind Studio.",
+      "joinNamed": "Te han invitado a unirte a {organisation} en PostMind Studio.",
+      "accept": "Aceptar invitación",
+      "notNow": "Ahora no",
+      "unavailable": "Esta invitación ha caducado, se ha cancelado o se envió a otro correo."
+    },
+    "support": {
+      "noEmail": "¿Sigues sin recibir el correo tras unos minutos? Escribe a <link>{email}</link>."
+    }
+  },
+  "security": {
+    "eyebrow": "Cuenta",
+    "title": "Inicio de sesión y seguridad",
+    "description": "Tu contraseña, la verificación en dos pasos y dónde tienes la sesión iniciada.",
+    "password": {
+      "title": "Contraseña",
+      "description": "Si la cambias, se cerrará tu sesión en los demás dispositivos.",
+      "current": "Contraseña actual",
+      "new": "Contraseña nueva",
+      "submit": "Cambiar contraseña",
+      "changed": "Contraseña cambiada. Se ha cerrado la sesión en los demás dispositivos."
+    },
+    "twoFactor": {
+      "title": "Verificación en dos pasos",
+      "description": "Un código de una app de autenticación cada vez que inicias sesión. El personal lo necesita para las herramientas de administración.",
+      "statusOn": "Activada",
+      "statusOff": "Desactivada",
+      "offExplainer": "Confirma tu contraseña para configurar una app de autenticación.",
+      "onExplainer": "La verificación en dos pasos protege tu cuenta.",
+      "password": "Contraseña",
+      "enable": "Configurar",
+      "scan": "Escanea este código con tu app de autenticación y escribe el código de 6 dígitos que muestre.",
+      "manual": "¿No puedes escanearlo? Escribe esta clave:",
+      "codeLabel": "Código de la app",
+      "confirm": "Activar",
+      "qrLabel": "Código QR para tu app de autenticación",
+      "enabled": "La verificación en dos pasos está activada.",
+      "disabled": "La verificación en dos pasos está desactivada. Se ha cerrado la sesión en los demás dispositivos.",
+      "disable": "Desactivar",
+      "regenerate": "Nuevos códigos de respaldo",
+      "backupIntro": "Guarda estos códigos de respaldo en un lugar seguro. Cada uno te permite iniciar sesión una vez si pierdes el móvil. No se volverán a mostrar.",
+      "backupListLabel": "Códigos de respaldo",
+      "copy": "Copiar códigos",
+      "copied": "Códigos de respaldo copiados.",
+      "saved": "Ya los he guardado"
+    },
+    "sessions": {
+      "title": "Dónde tienes la sesión iniciada",
+      "description": "Cierra la sesión en cualquier dispositivo que no reconozcas. Puede tardar hasta un minuto.",
+      "revokeOthers": "Cerrar sesión en los demás",
+      "device": "{browser} en {os}",
+      "unknownDevice": "Dispositivo desconocido",
+      "lastActive": "Última actividad {when}",
+      "current": "Este dispositivo",
+      "revoke": "Cerrar sesión",
+      "revokeAria": "Cerrar sesión en {device}",
+      "revoked": "Sesión cerrada."
+    },
+    "methods": {
+      "title": "Métodos de inicio de sesión",
+      "description": "Formas de iniciar sesión en PostMind Studio.",
+      "password": "Correo y contraseña",
+      "on": "Activado",
+      "off": "Sin configurar",
+      "link": "Vincular Google",
+      "unlink": "Desvincular",
+      "unlinked": "Google desvinculado.",
+      "unlinkNeedsPassword": "Crea una contraseña antes de desvincular Google."
+    }
+  },
   "orgSettings": {},
   "members": {},
   "billing": {},

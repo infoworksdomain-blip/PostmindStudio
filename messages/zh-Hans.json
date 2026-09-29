@@ -3196,6 +3196,23 @@
         "failed": "{provider} 密钥测试失败：{reason}",
         "removed": "已移除 {provider} 密钥；将重新使用 Studio 的密钥"
       }
+    },
+    "profile": {
+      "eyebrow": "账户",
+      "title": "个人资料",
+      "description": "您的姓名、邮箱地址以及我们给您发邮件时使用的语言。",
+      "detailsTitle": "您的信息",
+      "name": "姓名",
+      "emailLanguage": "邮件语言",
+      "emailLanguageHint": "Studio 的邮件将使用此语言。应用语言可在页眉中切换。",
+      "save": "保存",
+      "saved": "个人资料已保存。",
+      "emailTitle": "邮箱地址",
+      "emailCurrent": "您使用 {email} 登录。",
+      "newEmail": "新邮箱地址",
+      "emailHint": "我们会先请您当前的邮箱批准更改，再确认新邮箱。",
+      "changeEmail": "更改邮箱",
+      "emailRequested": "请查收邮件以批准更改。"
     }
   },
   "approvals": {
@@ -3325,8 +3342,180 @@
   "marketing": {},
   "pricing": {},
   "legal": {},
-  "auth": {},
-  "security": {},
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "该邮箱和密码与任何账户都不匹配。",
+      "emailNotVerified": "请先确认您的邮箱地址。我们已向您发送了新链接。",
+      "passwordTooShort": "请至少使用 12 个字符。",
+      "passwordTooLong": "最多使用 128 个字符。",
+      "passwordCompromised": "此密码曾出现在数据泄露中，请换一个。",
+      "rateLimited": "尝试次数过多，请等待几分钟后重试。",
+      "invalidToken": "此链接已过期或已被使用，请重新获取。",
+      "invalidCode": "验证码不正确，请检查后重试。",
+      "locked": "错误验证码过多，请等待几分钟后再试。",
+      "signupsClosed": "目前仅支持受邀注册新账户。",
+      "invalidEmail": "请输入有效的邮箱地址。",
+      "network": "无法连接到 Studio，请检查网络后重试。",
+      "generic": "出错了，请重试。"
+    },
+    "password": {
+      "show": "显示密码",
+      "hide": "隐藏密码",
+      "rule": "至少 {min} 个字符",
+      "strength": {
+        "tooShort": "太短",
+        "weak": "弱",
+        "fair": "一般",
+        "good": "良好",
+        "strong": "强"
+      }
+    },
+    "signIn": {
+      "title": "登录",
+      "description": "欢迎回到 PostMind Studio。",
+      "email": "邮箱",
+      "password": "密码",
+      "submit": "登录",
+      "forgot": "忘记密码？",
+      "noAccount": "创建账户"
+    },
+    "google": {
+      "or": "或",
+      "continue": "使用 Google 继续"
+    },
+    "signUp": {
+      "title": "创建您的账户",
+      "description": "几分钟内即可开始为各个平台制作视频。",
+      "name": "您的姓名",
+      "email": "工作邮箱",
+      "password": "密码",
+      "terms": "创建账户即表示您同意<terms>服务条款</terms>和<privacy>隐私声明</privacy>。",
+      "submit": "创建账户",
+      "haveAccount": "已有账户？登录",
+      "closedTitle": "仅限受邀",
+      "closedDescription": "目前仅支持受邀注册新账户。请让团队成员邀请您。"
+    },
+    "verify": {
+      "title": "请查收邮件",
+      "description": "打开我们发送的链接以确认您的邮箱地址，链接 24 小时内有效。",
+      "invalidTitle": "该链接无效",
+      "invalidDescription": "链接可能已过期或已被使用。请输入邮箱以获取新链接。",
+      "sentTo": "如果 {email} 是 Studio 的新用户，确认链接正在发送中。",
+      "sentGeneric": "如果该地址是 Studio 的新用户，确认链接正在发送中。",
+      "resent": "如果该地址需要确认，我们已发送新链接。",
+      "email": "邮箱",
+      "resend": "发送新链接",
+      "backToSignIn": "返回登录"
+    },
+    "forgot": {
+      "title": "重置密码",
+      "description": "输入您的邮箱，我们将发送一个链接供您设置新密码。",
+      "email": "邮箱",
+      "submit": "发送重置链接",
+      "sent": "如果有账户使用该地址，重置链接正在发送中，1 小时内有效。",
+      "backToSignIn": "返回登录"
+    },
+    "reset": {
+      "title": "设置新密码",
+      "description": "您将在所有其他设备上退出登录。",
+      "newPassword": "新密码",
+      "submit": "保存密码",
+      "done": "密码已更改，请使用新密码登录。",
+      "signIn": "登录",
+      "invalidTitle": "该链接无效",
+      "invalidDescription": "重置链接仅可使用一次，1 小时内有效。请重新获取。",
+      "requestNew": "获取新链接"
+    },
+    "twoFactor": {
+      "title": "两步验证",
+      "totpDescription": "请输入身份验证器应用中的 6 位验证码。",
+      "backupDescription": "请输入一个备用码。每个备用码只能使用一次。",
+      "totpLabel": "验证码",
+      "backupLabel": "备用码",
+      "trustDevice": "30 天内信任此设备",
+      "submit": "验证",
+      "useBackup": "改用备用码",
+      "useTotp": "改用身份验证器应用",
+      "startOver": "重新开始"
+    },
+    "invite": {
+      "title": "加入您的团队",
+      "signedOut": "请使用收到邀请的邮箱登录或创建账户。",
+      "signIn": "登录以接受邀请",
+      "signUp": "创建账户",
+      "join": "您受邀加入 PostMind Studio 上的一个组织。",
+      "joinNamed": "您受邀加入 PostMind Studio 上的 {organisation}。",
+      "accept": "接受邀请",
+      "notNow": "以后再说",
+      "unavailable": "此邀请已过期、已被撤销，或发送到了其他邮箱。"
+    },
+    "support": {
+      "noEmail": "几分钟后仍未收到邮件？请联系 <link>{email}</link>。"
+    }
+  },
+  "security": {
+    "eyebrow": "账户",
+    "title": "登录与安全",
+    "description": "您的密码、两步验证以及已登录的设备。",
+    "password": {
+      "title": "密码",
+      "description": "更改后，您将在所有其他设备上退出登录。",
+      "current": "当前密码",
+      "new": "新密码",
+      "submit": "更改密码",
+      "changed": "密码已更改，其他设备已退出登录。"
+    },
+    "twoFactor": {
+      "title": "两步验证",
+      "description": "每次登录时输入身份验证器应用中的验证码。员工使用管理工具时必须开启。",
+      "statusOn": "已开启",
+      "statusOff": "已关闭",
+      "offExplainer": "请确认密码以设置身份验证器应用。",
+      "onExplainer": "两步验证正在保护您的账户。",
+      "password": "密码",
+      "enable": "设置",
+      "scan": "请用身份验证器应用扫描此二维码，然后输入应用显示的 6 位验证码。",
+      "manual": "无法扫描？请改为输入此密钥：",
+      "codeLabel": "应用中的验证码",
+      "confirm": "开启",
+      "qrLabel": "身份验证器应用的二维码",
+      "enabled": "两步验证已开启。",
+      "disabled": "两步验证已关闭，其他设备已退出登录。",
+      "disable": "关闭",
+      "regenerate": "新的备用码",
+      "backupIntro": "请将这些备用码保存在安全的地方。手机丢失时，每个备用码可登录一次。它们不会再次显示。",
+      "backupListLabel": "备用码",
+      "copy": "复制备用码",
+      "copied": "备用码已复制。",
+      "saved": "我已保存"
+    },
+    "sessions": {
+      "title": "已登录的设备",
+      "description": "如有您不认识的设备，请将其退出登录。生效最多可能需要一分钟。",
+      "revokeOthers": "退出所有其他设备",
+      "device": "{os} 上的 {browser}",
+      "unknownDevice": "未知设备",
+      "lastActive": "最近活动：{when}",
+      "current": "此设备",
+      "revoke": "退出登录",
+      "revokeAria": "将 {device} 退出登录",
+      "revoked": "已退出登录。"
+    },
+    "methods": {
+      "title": "登录方式",
+      "description": "您登录 PostMind Studio 的方式。",
+      "password": "邮箱和密码",
+      "on": "已开启",
+      "off": "未设置",
+      "link": "关联 Google",
+      "unlink": "取消关联",
+      "unlinked": "已取消关联 Google。",
+      "unlinkNeedsPassword": "取消关联 Google 前请先设置密码。"
+    }
+  },
   "orgSettings": {},
   "members": {},
   "billing": {},

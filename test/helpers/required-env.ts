@@ -53,8 +53,17 @@ export function requiredAtStartup(mode: StudioMode = 'core'): string[] {
     'METRICS_TOKEN', // metrics listener: Render private services and the VPS worker healthcheck
     'STUDIO_PLATFORM_ORG_IDS', // admin endpoints refused in production without it
   ];
-  const byMode = requiredEnvForModes(studioModes({ STUDIO_MODE: mode })).map((k) => k.name);
-  let keys = [...new Set([...fromCode, ...extra, ...byMode])];
+  const namesFor = (m: StudioMode) =>
+    new Set(requiredEnvForModes(studioModes({ STUDIO_MODE: m })).map((k) => k.name));
+  const byMode = namesFor(mode);
+  const otherModeOnly = [...namesFor(mode === 'core' ? 'standalone' : 'core')].filter(
+    (k) => !byMode.has(k),
+  );
+  // A key only the OTHER mode needs (e.g. BETTER_AUTH_SECRET, read by requireEnv in the
+  // standalone-only auth module) is not required in this mode.
+  let keys = [...new Set([...fromCode, ...extra, ...byMode])].filter(
+    (k) => !otherModeOnly.includes(k),
+  );
   if (mode === 'standalone') {
     keys = keys.filter((k) => !k.startsWith('POSTMIND_') && k !== 'STUDIO_PLATFORM_ORG_IDS');
   }

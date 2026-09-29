@@ -3196,6 +3196,23 @@
         "failed": "{provider} key failed: {reason}",
         "removed": "{provider} key removed; Studio’s key is used again"
       }
+    },
+    "profile": {
+      "eyebrow": "Account",
+      "title": "Profile",
+      "description": "Your name, email address and the language we email you in.",
+      "detailsTitle": "Your details",
+      "name": "Name",
+      "emailLanguage": "Email language",
+      "emailLanguageHint": "Emails from Studio are written in this language. The app’s language is in the header.",
+      "save": "Save",
+      "saved": "Profile saved.",
+      "emailTitle": "Email address",
+      "emailCurrent": "You sign in with {email}.",
+      "newEmail": "New email address",
+      "emailHint": "We’ll ask your current address to approve the change, then confirm the new one.",
+      "changeEmail": "Change email",
+      "emailRequested": "Check your inbox to approve the change."
     }
   },
   "approvals": {
@@ -3325,8 +3342,180 @@
   "marketing": {},
   "pricing": {},
   "legal": {},
-  "auth": {},
-  "security": {},
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "That email and password don’t match an account.",
+      "emailNotVerified": "Confirm your email address first. We’ve sent you a new link.",
+      "passwordTooShort": "Use at least 12 characters.",
+      "passwordTooLong": "Use at most 128 characters.",
+      "passwordCompromised": "This password has appeared in a data breach. Choose a different one.",
+      "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+      "invalidToken": "This link has expired or was already used. Ask for a new one.",
+      "invalidCode": "That code isn’t right. Check it and try again.",
+      "locked": "Too many wrong codes. Wait a few minutes before you try again.",
+      "signupsClosed": "New accounts are by invitation only right now.",
+      "invalidEmail": "Enter a valid email address.",
+      "network": "We couldn’t reach Studio. Check your connection and try again.",
+      "generic": "Something went wrong. Try again."
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password",
+      "rule": "At least {min} characters",
+      "strength": {
+        "tooShort": "Too short",
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      }
+    },
+    "signIn": {
+      "title": "Sign in",
+      "description": "Welcome back to PostMind Studio.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "Create an account"
+    },
+    "google": {
+      "or": "or",
+      "continue": "Continue with Google"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "description": "Start making videos for every platform in minutes.",
+      "name": "Your name",
+      "email": "Work email",
+      "password": "Password",
+      "terms": "By creating an account you agree to the <terms>Terms</terms> and the <privacy>Privacy notice</privacy>.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account? Sign in",
+      "closedTitle": "Invitation only",
+      "closedDescription": "New accounts are by invitation only right now. Ask a member of your team to invite you."
+    },
+    "verify": {
+      "title": "Check your email",
+      "description": "Open the link we sent to confirm your address. It works for 24 hours.",
+      "invalidTitle": "That link didn’t work",
+      "invalidDescription": "It may have expired or already been used. Enter your email to get a new one.",
+      "sentTo": "If {email} is new to Studio, a confirmation link is on its way.",
+      "sentGeneric": "If the address is new to Studio, a confirmation link is on its way.",
+      "resent": "If that address needs confirming, we’ve sent a new link.",
+      "email": "Email",
+      "resend": "Send a new link",
+      "backToSignIn": "Back to sign in"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "description": "Enter your email and we’ll send you a link to choose a new password.",
+      "email": "Email",
+      "submit": "Send reset link",
+      "sent": "If an account uses that address, a reset link is on its way. It works for 1 hour.",
+      "backToSignIn": "Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "description": "You’ll be signed out everywhere else.",
+      "newPassword": "New password",
+      "submit": "Save password",
+      "done": "Your password has changed. Sign in with the new one.",
+      "signIn": "Sign in",
+      "invalidTitle": "That link didn’t work",
+      "invalidDescription": "Reset links work once, for 1 hour. Ask for a new one.",
+      "requestNew": "Get a new link"
+    },
+    "twoFactor": {
+      "title": "Two-step verification",
+      "totpDescription": "Enter the 6-digit code from your authenticator app.",
+      "backupDescription": "Enter one of your backup codes. Each code works once.",
+      "totpLabel": "Authentication code",
+      "backupLabel": "Backup code",
+      "trustDevice": "Trust this device for 30 days",
+      "submit": "Verify",
+      "useBackup": "Use a backup code instead",
+      "useTotp": "Use your authenticator app instead",
+      "startOver": "Start over"
+    },
+    "invite": {
+      "title": "Join your team",
+      "signedOut": "Sign in or create an account with the email address the invitation was sent to.",
+      "signIn": "Sign in to accept",
+      "signUp": "Create an account",
+      "join": "You’ve been invited to join an organisation on PostMind Studio.",
+      "joinNamed": "You’ve been invited to join {organisation} on PostMind Studio.",
+      "accept": "Accept invitation",
+      "notNow": "Not now",
+      "unavailable": "This invitation has expired, was cancelled, or was sent to a different email address."
+    },
+    "support": {
+      "noEmail": "Still no email after a few minutes? Contact <link>{email}</link>."
+    }
+  },
+  "security": {
+    "eyebrow": "Account",
+    "title": "Sign-in and security",
+    "description": "Your password, two-step verification and where you are signed in.",
+    "password": {
+      "title": "Password",
+      "description": "Changing it signs you out on every other device.",
+      "current": "Current password",
+      "new": "New password",
+      "submit": "Change password",
+      "changed": "Password changed. Other devices have been signed out."
+    },
+    "twoFactor": {
+      "title": "Two-step verification",
+      "description": "A code from an authenticator app each time you sign in. Staff need it for admin tools.",
+      "statusOn": "On",
+      "statusOff": "Off",
+      "offExplainer": "Confirm your password to set up an authenticator app.",
+      "onExplainer": "Two-step verification is protecting your account.",
+      "password": "Password",
+      "enable": "Set up",
+      "scan": "Scan this code with your authenticator app, then enter the 6-digit code it shows.",
+      "manual": "Can’t scan it? Enter this key instead:",
+      "codeLabel": "Code from the app",
+      "confirm": "Turn on",
+      "qrLabel": "QR code for your authenticator app",
+      "enabled": "Two-step verification is on.",
+      "disabled": "Two-step verification is off. Other devices have been signed out.",
+      "disable": "Turn off",
+      "regenerate": "New backup codes",
+      "backupIntro": "Save these backup codes somewhere safe. Each one signs you in once if you lose your phone. They won’t be shown again.",
+      "backupListLabel": "Backup codes",
+      "copy": "Copy codes",
+      "copied": "Backup codes copied.",
+      "saved": "I’ve saved them"
+    },
+    "sessions": {
+      "title": "Where you’re signed in",
+      "description": "Sign out any device you don’t recognise. It can take up to a minute to take effect.",
+      "revokeOthers": "Sign out everywhere else",
+      "device": "{browser} on {os}",
+      "unknownDevice": "Unknown device",
+      "lastActive": "Last active {when}",
+      "current": "This device",
+      "revoke": "Sign out",
+      "revokeAria": "Sign out {device}",
+      "revoked": "Signed out."
+    },
+    "methods": {
+      "title": "Sign-in methods",
+      "description": "Ways you can sign in to PostMind Studio.",
+      "password": "Email and password",
+      "on": "On",
+      "off": "Not set",
+      "link": "Connect Google",
+      "unlink": "Disconnect",
+      "unlinked": "Google disconnected.",
+      "unlinkNeedsPassword": "Set a password before you disconnect Google."
+    }
+  },
   "orgSettings": {},
   "members": {},
   "billing": {},

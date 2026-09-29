@@ -93,3 +93,18 @@ export function createConsoleAuthMailer(log: Logger): AuthMailer {
     },
   };
 }
+
+/**
+ * The mailer production wiring uses (auth/server.ts and other senders). Track B points this at the
+ * Resend sender (outbox + queue). Until then: the console transport outside production, and in
+ * production a mailer that records nothing and logs an error, so a missing sender is loud.
+ */
+export async function authMailerFromEnv(log: Logger): Promise<AuthMailer> {
+  if (process.env.NODE_ENV !== 'production') return createConsoleAuthMailer(log);
+  return {
+    async sendAuthEmail(template) {
+      log.error({ template }, '[email] no transactional email sender is configured');
+      return { queued: false, suppressed: false };
+    },
+  };
+}

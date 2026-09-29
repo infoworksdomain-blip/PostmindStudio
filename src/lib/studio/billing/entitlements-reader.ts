@@ -48,3 +48,11 @@ export function createStubEntitlementsReader(): EntitlementsReader {
     },
   };
 }
+
+/**
+ * The reader production wiring uses (identity/standalone.ts, context.ts). Track C points this at
+ * the org_entitlements reader; until then every organisation has no plan.
+ */
+export async function entitlementsReaderFromEnv(): Promise<EntitlementsReader> {
+  return createStubEntitlementsReader();
+}
