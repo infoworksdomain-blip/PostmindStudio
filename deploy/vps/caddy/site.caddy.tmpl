@@ -1,0 +1,24 @@
+# Template for one environment's site. scripts/vps/deploy.sh fills in __DOMAIN__, __ENV__ and
+# __INTERNAL_CIDRS__ (validated first) and writes STUDIO_STATE_DIR/caddy/sites/<env>.caddy.
+# When STUDIO_INTERNAL_ALLOWED_CIDRS is empty it deletes the `not client_ip` line, so the internal
+# API is closed to everyone at the edge.
+__DOMAIN__ {
+	encode zstd gzip
+
+	# Prometheus scrapes web directly on the private network: never serve metrics publicly.
+	@metrics path /api/metrics /api/metrics/*
+	respond @metrics 404
+
+	# PostMind Core -> Studio internal API (Engagement handover 14.13: private ingress only). Still
+	# token-protected by the app; here it is also limited to Core's egress addresses.
+	@internal_denied {
+		path /api/studio/internal /api/studio/internal/*
+		not client_ip __INTERNAL_CIDRS__
+	}
+	respond @internal_denied 404
+
+	reverse_proxy studio-web-__ENV__:3010 {
+		# While web restarts during a deploy (a few seconds), hold requests instead of failing them.
+		lb_try_duration 30s
+	}
+}

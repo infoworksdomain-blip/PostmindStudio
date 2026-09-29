@@ -2,7 +2,12 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { vi } from 'vitest';
-import { createKillSwitch, createPrismaFlagStore } from '../../src/lib/studio/kill-switch';
+import {
+  createKillSwitch,
+  createPrismaFlagStore,
+  type FlagStore,
+} from '../../src/lib/studio/kill-switch';
+import { flagKeys } from '../../src/lib/studio/system-flags';
 import type { PipelineDeps } from '../../src/lib/studio/pipeline/deps';
 import type { MediaInspector, MediaProbe } from '../../src/lib/studio/pipeline/media-probe';
 import { createPrismaBudgetChecker } from '../../src/lib/studio/providers/budget';
@@ -272,7 +277,16 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     };
   });
   const breaker = createCircuitBreaker();
-  const killSwitch = createKillSwitch({ store: createPrismaFlagStore(db), ttlMs: 0 });
+  // The GLOBAL flag is one row shared by every test file on this database, and
+  // test/api/kill-switch-admin.test.ts flips it for real. Journeys here run concurrently in other
+  // files, so they ignore it (as if it were off); workspace/project/provider/platform flags are
+  // keyed by each journey's own ids and stay real. Global behaviour: kill-switch.test.ts +
+  // test/integration/kill-switch.test.ts.
+  const prismaFlags = createPrismaFlagStore(db);
+  const flagStore: FlagStore = {
+    getFlags: (keys) => prismaFlags.getFlags(keys.filter((k) => k !== flagKeys.global())),
+  };
+  const killSwitch = createKillSwitch({ store: flagStore, ttlMs: 0 });
   const queue = new InlineJobQueue();
   const probeResult: MediaProbe = {
     durationSec: 15,
