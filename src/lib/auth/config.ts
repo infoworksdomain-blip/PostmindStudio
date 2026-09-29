@@ -403,7 +403,8 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
         google: {
           clientId: deps.google.clientId,
           clientSecret: deps.google.clientSecret,
-          scope: ['openid', 'email', 'profile'],
+          // Scopes: Better Auth's Google defaults are exactly openid, email, profile
+          // (@better-auth/core/dist/social-providers/google.mjs); no extra scope is added.
           prompt: 'select_account',
           disableImplicitSignUp: !deps.signupsEnabled,
         },
@@ -460,6 +461,14 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
       },
       session: {
         create: {
+          // §5.11: a soft-deleted account (deletion grace) can never start a session.
+          before: async (session) => {
+            const user = await deps.db.user.findUnique({
+              where: { id: session.userId },
+              select: { deletedAt: true },
+            });
+            return user?.deletedAt ? false : undefined;
+          },
           after: async (session) => {
             await audit({
               actorUserId: session.userId,

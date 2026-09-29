@@ -4,13 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { authApi, type SessionPayload } from '@/lib/client/auth';
 import { PageHeader } from '../../primitives';
+import { DeleteAccountSection } from './delete-account-section';
 import { PasswordSection } from './password-section';
 import { SessionsSection } from './sessions-section';
 import { SignInMethodsSection } from './sign-in-methods-section';
 import { TwoFactorSection } from './two-factor-section';
 
 // Phase 18 Track A — /account/security: password, two-factor, active sessions, sign-in methods.
-// (Account deletion joins this page in A3.)
+// and deleting the account (§5.11).
 
 export function SecurityScreen({ googleEnabled }: { googleEnabled: boolean }) {
   const t = useTranslations('security');
@@ -31,6 +32,7 @@ export function SecurityScreen({ googleEnabled }: { googleEnabled: boolean }) {
         <TwoFactorSection enabled={session?.user.twoFactorEnabled === true} onChanged={refresh} />
         <SessionsSection />
         <SignInMethodsSection googleEnabled={googleEnabled} />
+        <DeleteAccountSection />
       </div>
     </div>
   );

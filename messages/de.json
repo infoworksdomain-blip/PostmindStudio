@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Bildbibliothek",
           "hint": "Jedes Bild und seine Quelle"
+        },
+        "account": {
+          "label": "Konto",
+          "hint": "Ihre Organisation, ihre Mitglieder und Rollen sowie Ihr eigenes Profil und Ihr Anmeldeverlauf"
+        },
+        "billing": {
+          "label": "Abrechnung",
+          "hint": "Abonnement, Tarif und Zusatzguthaben (Rechnungen finden Sie unter Abrechnung verwalten)"
         }
       },
       "request": "Export anfordern",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "Neue Konten gibt es derzeit nur auf Einladung.",
       "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein.",
       "network": "Studio ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
-      "generic": "Etwas ist schiefgelaufen. Versuchen Sie es erneut."
+      "generic": "Etwas ist schiefgelaufen. Versuchen Sie es erneut.",
+      "seatLimit": "Diese Organisation hat keine freien Plätze. Bitten Sie eine Administratorin oder einen Administrator, den Tarif zu erweitern.",
+      "inviteNotForYou": "Diese Einladung ging an eine andere E-Mail-Adresse. Melden Sie sich mit dieser Adresse an, um sie anzunehmen."
     },
     "password": {
       "show": "Passwort anzeigen",
@@ -3514,6 +3524,17 @@
       "unlink": "Trennen",
       "unlinked": "Google getrennt.",
       "unlinkNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie Google trennen."
+    },
+    "deleteAccount": {
+      "title": "Konto löschen",
+      "description": "Löschen Sie Ihr Konto und Ihre Anmeldedaten dauerhaft.",
+      "consequences": "Sie werden überall abgemeldet. Organisationen, deren einziges Mitglied Sie sind, werden ebenfalls gelöscht und ihre Abonnements beendet. Sie haben 30 Tage Zeit, den Support um einen Stopp zu bitten.",
+      "password": "Passwort",
+      "confirm": "Ich verstehe, dass dies nach 30 Tagen nicht rückgängig gemacht werden kann.",
+      "submit": "Mein Konto löschen",
+      "wrongPassword": "Dieses Passwort ist nicht richtig.",
+      "signInAgain": "Melden Sie sich zu Ihrer Sicherheit ab und wieder an, bevor Sie Ihr Konto löschen.",
+      "soleOwner": "Sie sind der einzige Inhaber von {organisations}. Ernennen Sie zuerst einen weiteren Inhaber oder entfernen Sie die anderen Mitglieder."
     }
   },
   "orgSettings": {},

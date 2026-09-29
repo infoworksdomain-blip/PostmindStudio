@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "图片库",
           "hint": "每张图片及其来源"
+        },
+        "account": {
+          "label": "账户",
+          "hint": "您的组织、其成员和角色，以及您自己的个人资料和登录记录"
+        },
+        "billing": {
+          "label": "账单",
+          "hint": "订阅、套餐和充值额度（发票位于“管理账单”中）"
         }
       },
       "request": "申请导出",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "目前仅支持受邀注册新账户。",
       "invalidEmail": "请输入有效的邮箱地址。",
       "network": "无法连接到 Studio，请检查网络后重试。",
-      "generic": "出错了，请重试。"
+      "generic": "出错了，请重试。",
+      "seatLimit": "该组织没有空余席位。请让管理员升级套餐。",
+      "inviteNotForYou": "此邀请发送到了其他邮箱地址。请使用该地址登录后接受。"
     },
     "password": {
       "show": "显示密码",
@@ -3514,6 +3524,17 @@
       "unlink": "取消关联",
       "unlinked": "已取消关联 Google。",
       "unlinkNeedsPassword": "取消关联 Google 前请先设置密码。"
+    },
+    "deleteAccount": {
+      "title": "删除账户",
+      "description": "永久删除您的账户和登录信息。",
+      "consequences": "您将在所有设备上退出登录。您是唯一成员的组织也会被删除，其订阅将终止。30 天内您可以联系支持团队撤销。",
+      "password": "密码",
+      "confirm": "我了解 30 天后此操作将无法撤销。",
+      "submit": "删除我的账户",
+      "wrongPassword": "密码不正确。",
+      "signInAgain": "为了您的安全，请先退出并重新登录，再删除账户。",
+      "soleOwner": "您是 {organisations} 的唯一所有者。请先将其他人设为所有者，或移除其他成员。"
     }
   },
   "orgSettings": {},

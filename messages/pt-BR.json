@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Biblioteca de imagens",
           "hint": "Cada imagem e sua origem"
+        },
+        "account": {
+          "label": "Conta",
+          "hint": "Sua organização, os membros e funções dela, e seu próprio perfil e histórico de login"
+        },
+        "billing": {
+          "label": "Cobrança",
+          "hint": "Assinatura, plano e créditos extras (as faturas ficam em Gerenciar cobrança)"
         }
       },
       "request": "Solicitar exportação",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "No momento, novas contas só por convite.",
       "invalidEmail": "Digite um e-mail válido.",
       "network": "Não foi possível acessar o Studio. Verifique sua conexão e tente de novo.",
-      "generic": "Algo deu errado. Tente de novo."
+      "generic": "Algo deu errado. Tente de novo.",
+      "seatLimit": "Esta organização não tem vagas livres. Peça a um administrador para fazer upgrade do plano.",
+      "inviteNotForYou": "Este convite foi enviado para outro e-mail. Entre com esse endereço para aceitar."
     },
     "password": {
       "show": "Mostrar senha",
@@ -3514,6 +3524,17 @@
       "unlink": "Desconectar",
       "unlinked": "Google desconectado.",
       "unlinkNeedsPassword": "Defina uma senha antes de desconectar o Google."
+    },
+    "deleteAccount": {
+      "title": "Excluir conta",
+      "description": "Remova para sempre sua conta e seus dados de login.",
+      "consequences": "Você sairá da conta em todos os lugares. As organizações das quais você é o único membro também serão excluídas e as assinaturas delas vão terminar. Você tem 30 dias para pedir ao suporte que interrompa.",
+      "password": "Senha",
+      "confirm": "Entendo que isso não pode ser desfeito depois de 30 dias.",
+      "submit": "Excluir minha conta",
+      "wrongPassword": "Essa senha não está certa.",
+      "signInAgain": "Por segurança, saia e entre de novo antes de excluir sua conta.",
+      "soleOwner": "Você é o único proprietário de {organisations}. Primeiro torne outra pessoa proprietária ou remova os outros membros."
     }
   },
   "orgSettings": {},

@@ -2378,6 +2378,10 @@
     "account.export.groups.brand.hint",
     "account.export.groups.imageLibrary.label",
     "account.export.groups.imageLibrary.hint",
+    "account.export.groups.account.label",
+    "account.export.groups.account.hint",
+    "account.export.groups.billing.label",
+    "account.export.groups.billing.hint",
     "account.export.request",
     "account.export.preparing",
     "account.export.requested",
@@ -2555,6 +2559,8 @@
     "auth.errors.invalidEmail",
     "auth.errors.network",
     "auth.errors.generic",
+    "auth.errors.seatLimit",
+    "auth.errors.inviteNotForYou",
     "auth.password.show",
     "auth.password.hide",
     "auth.password.rule",
@@ -2676,7 +2682,16 @@
     "security.methods.link",
     "security.methods.unlink",
     "security.methods.unlinked",
-    "security.methods.unlinkNeedsPassword"
+    "security.methods.unlinkNeedsPassword",
+    "security.deleteAccount.title",
+    "security.deleteAccount.description",
+    "security.deleteAccount.consequences",
+    "security.deleteAccount.password",
+    "security.deleteAccount.confirm",
+    "security.deleteAccount.submit",
+    "security.deleteAccount.wrongPassword",
+    "security.deleteAccount.signInAgain",
+    "security.deleteAccount.soleOwner"
   ],
   "reviewed": []
 }

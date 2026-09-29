@@ -137,7 +137,7 @@ describe('ExportScreen', () => {
     const user = userEvent.setup();
     renderScreen(<ExportScreen />);
     expect(await screen.findByText('No exports yet')).toBeInTheDocument();
-    for (const name of ['Analytics', 'Brand', 'Image library'])
+    for (const name of ['Analytics', 'Brand', 'Image library', 'Account', 'Billing'])
       await user.click(screen.getByRole('checkbox', { name }));
     await user.click(screen.getByRole('button', { name: /Request export/ }));
     await waitFor(() => expect(api.find('POST', '/account/export')).toHaveLength(1));

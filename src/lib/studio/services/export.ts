@@ -231,7 +231,9 @@ export async function runDataExport(deps: ExportJobDeps, exportId: string): Prom
   const include = row.include.filter((g): g is ExportGroup =>
     (EXPORT_GROUPS as readonly string[]).includes(g),
   );
-  const collected = await collectExport(deps.db, row.organisationId, include);
+  const collected = await collectExport(deps.db, row.organisationId, include, {
+    requestedByUserId: row.requestedByUserId,
+  });
   const assets = await assetLinks(deps, row.organisationId, include, collected.projectIds);
   const now = deps.now();
   const tables = Object.fromEntries(

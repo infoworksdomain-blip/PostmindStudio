@@ -298,3 +298,77 @@ describe.skipIf(!hasDb)('organisations + standalone identity (DB)', { timeout: 1
     expect(await db.organization.findUnique({ where: { id } })).not.toBeNull();
   });
 });
+
+describe.skipIf(!hasDb)('enumeration timing and Google OAuth (DB)', { timeout: 180_000 }, () => {
+  const db = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
+  const h = hasDb
+    ? createAuthHarness(db, {
+        google: { clientId: 'google-client', clientSecret: 'google-secret' },
+      })
+    : (undefined as unknown as ReturnType<typeof createAuthHarness>);
+
+  afterAll(async () => {
+    await db?.$disconnect();
+  });
+
+  const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]!;
+
+  it('takes about as long for an unknown address as for a wrong password (§5.3)', async () => {
+    const email = h.email('timing');
+    await signUpVerified(h, email, PASSWORD);
+    const known: number[] = [];
+    const unknown: number[] = [];
+    for (let i = 0; i < 8; i += 1) {
+      for (const [target, times] of [
+        [email, known],
+        [h.email(`ghost${i}`), unknown],
+      ] as const) {
+        const started = performance.now();
+        const res = await h.call('/sign-in/email', {
+          body: { email: target, password: 'wrong password 12345' },
+        });
+        times.push(performance.now() - started);
+        expect(res.status).toBe(401);
+      }
+    }
+    // Both paths run exactly one argon2id operation; the medians stay within a factor of 2.
+    const ratio = median(unknown) / median(known);
+    expect(ratio).toBeGreaterThan(0.5);
+    expect(ratio).toBeLessThan(2);
+  });
+
+  it('starts Google sign-in with state and PKCE S256, scopes limited to openid email profile (§2.9, §5.9)', async () => {
+    const res = await h.call('/sign-in/social', {
+      body: { provider: 'google', callbackURL: '/projects' },
+    });
+    expect(res.status).toBe(200);
+    const { url } = (await res.json()) as { url: string };
+    const auth = new URL(url);
+    expect(auth.origin).toBe('https://accounts.google.com');
+    expect(auth.searchParams.get('redirect_uri')).toBe(
+      'https://studio.test/api/auth/callback/google',
+    );
+    expect(auth.searchParams.get('state')?.length).toBeGreaterThanOrEqual(16);
+    expect(auth.searchParams.get('code_challenge_method')).toBe('S256');
+    expect(auth.searchParams.get('code_challenge')).toBeTruthy();
+    expect([...new Set(auth.searchParams.get('scope')?.split(' '))].sort()).toEqual([
+      'email',
+      'openid',
+      'profile',
+    ]);
+  });
+
+  it('refuses an off-site callbackURL (no open redirect, §5.9)', async () => {
+    const res = await h.call('/sign-in/social', {
+      body: { provider: 'google', callbackURL: 'https://evil.example/steal' },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('refuses a callback whose state it did not issue', async () => {
+    const res = await h.call('/callback/google?code=x&state=forged-state-value');
+    expect(res.status).toBeGreaterThanOrEqual(300);
+    expect(res.headers.get('location') ?? '').toMatch(/error/);
+    expect(setCookieHeader(res, SESSION_COOKIE)).toBeUndefined();
+  });
+});

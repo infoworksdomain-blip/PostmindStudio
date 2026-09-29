@@ -17,7 +17,12 @@ export interface SignedInUser {
 }
 
 export interface SignedInSession {
-  session: { id: string; token: string; activeOrganizationId?: string | null };
+  session: {
+    id: string;
+    token: string;
+    activeOrganizationId?: string | null;
+    createdAt?: Date | string;
+  };
   user: SignedInUser;
 }
 

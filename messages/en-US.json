@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Image library",
           "hint": "Every image and its source"
+        },
+        "account": {
+          "label": "Account",
+          "hint": "Your organization, its members and roles, and your own profile and sign-in history"
+        },
+        "billing": {
+          "label": "Billing",
+          "hint": "Subscription, plan and top-up credits (invoices are in Manage billing)"
         }
       },
       "request": "Request export",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "New accounts are by invitation only right now.",
       "invalidEmail": "Enter a valid email address.",
       "network": "We couldn’t reach Studio. Check your connection and try again.",
-      "generic": "Something went wrong. Try again."
+      "generic": "Something went wrong. Try again.",
+      "seatLimit": "This organization has no free seats. Ask an admin to upgrade the plan.",
+      "inviteNotForYou": "This invitation was sent to a different email address. Sign in with that address to accept it."
     },
     "password": {
       "show": "Show password",
@@ -3514,6 +3524,17 @@
       "unlink": "Disconnect",
       "unlinked": "Google disconnected.",
       "unlinkNeedsPassword": "Set a password before you disconnect Google."
+    },
+    "deleteAccount": {
+      "title": "Delete account",
+      "description": "Permanently remove your account and sign-in details.",
+      "consequences": "You’ll be signed out everywhere. Organizations where you’re the only member are deleted too, and their subscriptions end. You have 30 days to ask support to stop it.",
+      "password": "Password",
+      "confirm": "I understand this can’t be undone after 30 days.",
+      "submit": "Delete my account",
+      "wrongPassword": "That password isn’t right.",
+      "signInAgain": "For your security, sign out and sign in again, then delete your account.",
+      "soleOwner": "You’re the only owner of {organisations}. Make someone else an owner, or remove the other members, first."
     }
   },
   "orgSettings": {},

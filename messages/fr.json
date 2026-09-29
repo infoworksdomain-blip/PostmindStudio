@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Bibliothèque d’images",
           "hint": "Chaque image et sa source"
+        },
+        "account": {
+          "label": "Compte",
+          "hint": "Votre organisation, ses membres et rôles, ainsi que votre profil et votre historique de connexion"
+        },
+        "billing": {
+          "label": "Facturation",
+          "hint": "Abonnement, formule et crédits supplémentaires (les factures sont dans Gérer la facturation)"
         }
       },
       "request": "Demander un export",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "Les nouveaux comptes sont pour l’instant sur invitation uniquement.",
       "invalidEmail": "Saisissez une adresse e-mail valide.",
       "network": "Impossible de joindre Studio. Vérifiez votre connexion et réessayez.",
-      "generic": "Une erreur s’est produite. Réessayez."
+      "generic": "Une erreur s’est produite. Réessayez.",
+      "seatLimit": "Cette organisation n’a plus de place libre. Demandez à un administrateur de changer de formule.",
+      "inviteNotForYou": "Cette invitation a été envoyée à une autre adresse e-mail. Connectez-vous avec cette adresse pour l’accepter."
     },
     "password": {
       "show": "Afficher le mot de passe",
@@ -3514,6 +3524,17 @@
       "unlink": "Dissocier",
       "unlinked": "Google dissocié.",
       "unlinkNeedsPassword": "Définissez un mot de passe avant de dissocier Google."
+    },
+    "deleteAccount": {
+      "title": "Supprimer le compte",
+      "description": "Supprimez définitivement votre compte et vos identifiants.",
+      "consequences": "Vous serez déconnecté partout. Les organisations dont vous êtes le seul membre seront aussi supprimées et leurs abonnements prendront fin. Vous avez 30 jours pour demander au support d’annuler.",
+      "password": "Mot de passe",
+      "confirm": "Je comprends que cette action devient irréversible après 30 jours.",
+      "submit": "Supprimer mon compte",
+      "wrongPassword": "Ce mot de passe est incorrect.",
+      "signInAgain": "Par sécurité, déconnectez-vous puis reconnectez-vous avant de supprimer votre compte.",
+      "soleOwner": "Vous êtes le seul propriétaire de {organisations}. Désignez d’abord un autre propriétaire ou retirez les autres membres."
     }
   },
   "orgSettings": {},

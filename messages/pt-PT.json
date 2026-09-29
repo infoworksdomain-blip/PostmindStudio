@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Biblioteca de imagens",
           "hint": "Todas as imagens e a respetiva origem"
+        },
+        "account": {
+          "label": "Conta",
+          "hint": "A sua organização, os membros e funções, e o seu próprio perfil e histórico de início de sessão"
+        },
+        "billing": {
+          "label": "Faturação",
+          "hint": "Subscrição, plano e créditos adicionais (as faturas estão em Gerir faturação)"
         }
       },
       "request": "Pedir exportação",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "De momento, as novas contas são apenas por convite.",
       "invalidEmail": "Introduza um endereço de e-mail válido.",
       "network": "Não foi possível contactar o Studio. Verifique a sua ligação e tente novamente.",
-      "generic": "Algo correu mal. Tente novamente."
+      "generic": "Algo correu mal. Tente novamente.",
+      "seatLimit": "Esta organização não tem lugares livres. Peça a um administrador que atualize o plano.",
+      "inviteNotForYou": "Este convite foi enviado para outro endereço de e-mail. Inicie sessão com esse endereço para o aceitar."
     },
     "password": {
       "show": "Mostrar palavra-passe",
@@ -3514,6 +3524,17 @@
       "unlink": "Desassociar",
       "unlinked": "Google desassociado.",
       "unlinkNeedsPassword": "Defina uma palavra-passe antes de desassociar o Google."
+    },
+    "deleteAccount": {
+      "title": "Eliminar conta",
+      "description": "Remova definitivamente a sua conta e os seus dados de início de sessão.",
+      "consequences": "Terminará a sessão em todo o lado. As organizações das quais é o único membro também serão eliminadas e as respetivas subscrições terminam. Tem 30 dias para pedir ao suporte que o impeça.",
+      "password": "Palavra-passe",
+      "confirm": "Compreendo que isto não pode ser anulado após 30 dias.",
+      "submit": "Eliminar a minha conta",
+      "wrongPassword": "Essa palavra-passe não está correta.",
+      "signInAgain": "Por segurança, termine a sessão e inicie-a novamente antes de eliminar a conta.",
+      "soleOwner": "É o único proprietário de {organisations}. Primeiro torne outra pessoa proprietária ou remova os restantes membros."
     }
   },
   "orgSettings": {},

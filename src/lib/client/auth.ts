@@ -66,6 +66,8 @@ export type AuthErrorKey =
   | 'locked'
   | 'signupsClosed'
   | 'invalidEmail'
+  | 'seatLimit'
+  | 'inviteNotForYou'
   | 'network'
   | 'generic';
 
@@ -98,6 +100,11 @@ export function authErrorKey(err: unknown): AuthErrorKey {
       return 'signupsClosed';
     case 'INVALID_EMAIL':
       return 'invalidEmail';
+    case 'ORGANIZATION_MEMBERSHIP_LIMIT_REACHED':
+      return 'seatLimit';
+    case 'YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION':
+    case 'EMAIL_VERIFICATION_REQUIRED_BEFORE_ACCEPTING_OR_REJECTING_INVITATION':
+      return 'inviteNotForYou';
     default:
       return err.status === 429 ? 'rateLimited' : 'generic';
   }

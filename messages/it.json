@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Libreria immagini",
           "hint": "Ogni immagine e la sua fonte"
+        },
+        "account": {
+          "label": "Account",
+          "hint": "La tua organizzazione, i suoi membri e ruoli, e il tuo profilo e la cronologia degli accessi"
+        },
+        "billing": {
+          "label": "Fatturazione",
+          "hint": "Abbonamento, piano e crediti aggiuntivi (le fatture sono in Gestisci fatturazione)"
         }
       },
       "request": "Richiedi esportazione",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "Per ora i nuovi account sono solo su invito.",
       "invalidEmail": "Inserisci un indirizzo email valido.",
       "network": "Impossibile raggiungere Studio. Controlla la connessione e riprova.",
-      "generic": "Qualcosa è andato storto. Riprova."
+      "generic": "Qualcosa è andato storto. Riprova.",
+      "seatLimit": "Questa organizzazione non ha posti liberi. Chiedi a un amministratore di passare a un piano superiore.",
+      "inviteNotForYou": "Questo invito è stato inviato a un altro indirizzo email. Accedi con quell’indirizzo per accettarlo."
     },
     "password": {
       "show": "Mostra password",
@@ -3514,6 +3524,17 @@
       "unlink": "Scollega",
       "unlinked": "Google scollegato.",
       "unlinkNeedsPassword": "Imposta una password prima di scollegare Google."
+    },
+    "deleteAccount": {
+      "title": "Elimina account",
+      "description": "Rimuovi definitivamente il tuo account e i dati di accesso.",
+      "consequences": "Verrai disconnesso ovunque. Anche le organizzazioni di cui sei l’unico membro verranno eliminate e i loro abbonamenti termineranno. Hai 30 giorni per chiedere al supporto di fermare l’operazione.",
+      "password": "Password",
+      "confirm": "Capisco che dopo 30 giorni non si potrà annullare.",
+      "submit": "Elimina il mio account",
+      "wrongPassword": "La password non è corretta.",
+      "signInAgain": "Per sicurezza, esci e accedi di nuovo prima di eliminare l’account.",
+      "soleOwner": "Sei l’unico proprietario di {organisations}. Prima nomina un altro proprietario o rimuovi gli altri membri."
     }
   },
   "orgSettings": {},

@@ -3134,6 +3134,14 @@
         "imageLibrary": {
           "label": "Biblioteca de imágenes",
           "hint": "Cada imagen y su origen"
+        },
+        "account": {
+          "label": "Cuenta",
+          "hint": "Tu organización, sus miembros y roles, y tu propio perfil e historial de inicio de sesión"
+        },
+        "billing": {
+          "label": "Facturación",
+          "hint": "Suscripción, plan y créditos extra (las facturas están en Gestionar la facturación)"
         }
       },
       "request": "Solicitar exportación",
@@ -3359,7 +3367,9 @@
       "signupsClosed": "Por ahora solo se pueden crear cuentas por invitación.",
       "invalidEmail": "Escribe un correo válido.",
       "network": "No hemos podido conectar con Studio. Revisa tu conexión y vuelve a intentarlo.",
-      "generic": "Algo ha fallado. Vuelve a intentarlo."
+      "generic": "Algo ha fallado. Vuelve a intentarlo.",
+      "seatLimit": "Esta organización no tiene plazas libres. Pide a un administrador que mejore el plan.",
+      "inviteNotForYou": "Esta invitación se envió a otro correo. Inicia sesión con esa dirección para aceptarla."
     },
     "password": {
       "show": "Mostrar contraseña",
@@ -3514,6 +3524,17 @@
       "unlink": "Desvincular",
       "unlinked": "Google desvinculado.",
       "unlinkNeedsPassword": "Crea una contraseña antes de desvincular Google."
+    },
+    "deleteAccount": {
+      "title": "Eliminar cuenta",
+      "description": "Elimina para siempre tu cuenta y tus datos de acceso.",
+      "consequences": "Se cerrará tu sesión en todas partes. Las organizaciones en las que eres el único miembro también se eliminarán y sus suscripciones terminarán. Tienes 30 días para pedir a soporte que lo detenga.",
+      "password": "Contraseña",
+      "confirm": "Entiendo que no se puede deshacer pasados 30 días.",
+      "submit": "Eliminar mi cuenta",
+      "wrongPassword": "Esa contraseña no es correcta.",
+      "signInAgain": "Por seguridad, cierra sesión y vuelve a iniciarla antes de eliminar tu cuenta.",
+      "soleOwner": "Eres el único propietario de {organisations}. Primero nombra a otra persona propietaria o quita a los demás miembros."
     }
   },
   "orgSettings": {},
