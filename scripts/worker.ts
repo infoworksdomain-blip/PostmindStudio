@@ -30,6 +30,7 @@ import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-ha
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
 import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
+import { AUDIT_RETENTION_SCHEDULE } from '../src/lib/studio/services/audit-retention';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -201,6 +202,15 @@ async function main(): Promise<void> {
     {
       name: 'check-platform-accounts',
       data: { organisationId: 'postmind-platform', runId: 'account-check', planTier: 'STANDARD' },
+    },
+  );
+  // Phase 18 §2.6 — local audit log retention.
+  await analytics.upsertJobScheduler(
+    'audit-retention-daily',
+    { pattern: AUDIT_RETENTION_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'audit-retention',
+      data: { organisationId: 'postmind-platform', runId: 'audit-retention', planTier: 'STANDARD' },
     },
   );
   await publish.upsertJobScheduler(

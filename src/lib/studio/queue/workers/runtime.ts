@@ -35,6 +35,7 @@ import {
   redriveLostPublicationsJob,
 } from './redrive-lost-publications';
 import { checkPlatformAccountsJob, onCheckPlatformAccountsFailed } from './check-platform-accounts';
+import { auditRetentionJob, onAuditRetentionFailed } from './audit-retention';
 import {
   onCoreSyncFailed,
   reconcileOrganisationsJob,
@@ -133,6 +134,7 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'reconcile-organisations': reconcileOrganisationsJob,
   'redrive-lost-publications': redriveLostPublicationsJob,
   'check-platform-accounts': checkPlatformAccountsJob,
+  'audit-retention': auditRetentionJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -170,6 +172,7 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'reconcile-organisations': onCoreSyncFailed,
   'redrive-lost-publications': onRedriveLostPublicationsFailed,
   'check-platform-accounts': onCheckPlatformAccountsFailed,
+  'audit-retention': onAuditRetentionFailed,
 };
 
 /**

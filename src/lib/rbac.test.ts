@@ -111,3 +111,41 @@ describe('requirePlatformStaff', () => {
     }
   });
 });
+
+describe('requirePlatformStaff in standalone mode (Phase 18 §2.5)', () => {
+  const base = { organisationId: 'org-customer' };
+
+  it('allows staff and superadmins whose 2FA-gated admin capabilities are present', () => {
+    expect(() =>
+      requirePlatformStaff(
+        { ...base, platformRole: 'staff', capabilities: ['studio:admin:library'] },
+        { NODE_ENV: 'production' },
+      ),
+    ).not.toThrow();
+    expect(() =>
+      requirePlatformStaff({
+        ...base,
+        platformRole: 'superadmin',
+        capabilities: ['studio:admin:*'],
+      }),
+    ).not.toThrow();
+  });
+
+  it('refuses ordinary users even outside production and ignores the org-id list', () => {
+    expect(() =>
+      requirePlatformStaff(
+        { organisationId: 'org-postmind', platformRole: 'user', capabilities: [] },
+        { STUDIO_PLATFORM_ORG_IDS: 'org-postmind' },
+      ),
+    ).toThrow(ForbiddenError);
+  });
+
+  it('refuses staff without two-factor authentication', () => {
+    try {
+      requirePlatformStaff({ ...base, platformRole: 'superadmin', capabilities: [] });
+      expect.unreachable();
+    } catch (err) {
+      expect((err as ForbiddenError).details).toEqual({ reason: 'two_factor_required' });
+    }
+  });
+});

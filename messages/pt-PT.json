@@ -3269,6 +3269,23 @@
         "failed": "A chave do {provider} falhou: {reason}",
         "removed": "Chave do {provider} removida; volta a ser utilizada a chave do Studio"
       }
+    },
+    "profile": {
+      "eyebrow": "Conta",
+      "title": "Perfil",
+      "description": "O seu nome, o seu endereço de e-mail e o idioma em que lhe escrevemos.",
+      "detailsTitle": "Os seus dados",
+      "name": "Nome",
+      "emailLanguage": "Idioma dos e-mails",
+      "emailLanguageHint": "Os e-mails do Studio são escritos neste idioma. O idioma da aplicação escolhe-se no cabeçalho.",
+      "save": "Guardar",
+      "saved": "Perfil guardado.",
+      "emailTitle": "Endereço de e-mail",
+      "emailCurrent": "Inicia sessão com {email}.",
+      "newEmail": "Novo endereço de e-mail",
+      "emailHint": "Pediremos ao seu endereço atual que aprove a alteração e depois confirmaremos o novo.",
+      "changeEmail": "Alterar e-mail",
+      "emailRequested": "Verifique o seu e-mail para aprovar a alteração."
     }
   },
   "approvals": {
@@ -3521,8 +3538,180 @@
     },
     "notTranslated": "Este documento ainda não está disponível no seu idioma, por isso é apresentado em inglês."
   },
-  "auth": {},
-  "security": {},
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "Este e-mail e esta palavra-passe não correspondem a nenhuma conta.",
+      "emailNotVerified": "Confirme primeiro o seu endereço de e-mail. Enviámos-lhe uma nova ligação.",
+      "passwordTooShort": "Utilize pelo menos 12 caracteres.",
+      "passwordTooLong": "Utilize no máximo 128 caracteres.",
+      "passwordCompromised": "Esta palavra-passe apareceu numa fuga de dados. Escolha outra.",
+      "rateLimited": "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
+      "invalidToken": "Esta ligação expirou ou já foi utilizada. Peça uma nova.",
+      "invalidCode": "Esse código não está correto. Verifique-o e tente novamente.",
+      "locked": "Demasiados códigos errados. Aguarde alguns minutos antes de tentar novamente.",
+      "signupsClosed": "De momento, as novas contas são apenas por convite.",
+      "invalidEmail": "Introduza um endereço de e-mail válido.",
+      "network": "Não foi possível contactar o Studio. Verifique a sua ligação e tente novamente.",
+      "generic": "Algo correu mal. Tente novamente."
+    },
+    "password": {
+      "show": "Mostrar palavra-passe",
+      "hide": "Ocultar palavra-passe",
+      "rule": "Pelo menos {min} caracteres",
+      "strength": {
+        "tooShort": "Demasiado curta",
+        "weak": "Fraca",
+        "fair": "Razoável",
+        "good": "Boa",
+        "strong": "Forte"
+      }
+    },
+    "signIn": {
+      "title": "Iniciar sessão",
+      "description": "Bem-vindo de volta ao PostMind Studio.",
+      "email": "E-mail",
+      "password": "Palavra-passe",
+      "submit": "Iniciar sessão",
+      "forgot": "Esqueceu-se da palavra-passe?",
+      "noAccount": "Criar uma conta"
+    },
+    "google": {
+      "or": "ou",
+      "continue": "Continuar com o Google"
+    },
+    "signUp": {
+      "title": "Crie a sua conta",
+      "description": "Comece a criar vídeos para todas as plataformas em minutos.",
+      "name": "O seu nome",
+      "email": "E-mail profissional",
+      "password": "Palavra-passe",
+      "terms": "Ao criar uma conta, aceita os <terms>Termos</terms> e o <privacy>Aviso de privacidade</privacy>.",
+      "submit": "Criar conta",
+      "haveAccount": "Já tem conta? Inicie sessão",
+      "closedTitle": "Apenas por convite",
+      "closedDescription": "De momento, as novas contas são apenas por convite. Peça a alguém da sua equipa que o convide."
+    },
+    "verify": {
+      "title": "Verifique o seu e-mail",
+      "description": "Abra a ligação que lhe enviámos para confirmar o seu endereço. É válida durante 24 horas.",
+      "invalidTitle": "Essa ligação não funcionou",
+      "invalidDescription": "Pode ter expirado ou já ter sido utilizada. Introduza o seu e-mail para receber uma nova.",
+      "sentTo": "Se {email} for novo no Studio, está a caminho uma ligação de confirmação.",
+      "sentGeneric": "Se o endereço for novo no Studio, está a caminho uma ligação de confirmação.",
+      "resent": "Se esse endereço precisar de confirmação, enviámos uma nova ligação.",
+      "email": "E-mail",
+      "resend": "Enviar uma nova ligação",
+      "backToSignIn": "Voltar a iniciar sessão"
+    },
+    "forgot": {
+      "title": "Repor a palavra-passe",
+      "description": "Introduza o seu e-mail e enviaremos uma ligação para escolher uma nova palavra-passe.",
+      "email": "E-mail",
+      "submit": "Enviar ligação",
+      "sent": "Se alguma conta utilizar esse endereço, está a caminho uma ligação de reposição. É válida durante 1 hora.",
+      "backToSignIn": "Voltar a iniciar sessão"
+    },
+    "reset": {
+      "title": "Escolha uma nova palavra-passe",
+      "description": "Terminará a sessão em todos os outros dispositivos.",
+      "newPassword": "Nova palavra-passe",
+      "submit": "Guardar palavra-passe",
+      "done": "A sua palavra-passe foi alterada. Inicie sessão com a nova.",
+      "signIn": "Iniciar sessão",
+      "invalidTitle": "Essa ligação não funcionou",
+      "invalidDescription": "As ligações de reposição funcionam uma vez, durante 1 hora. Peça uma nova.",
+      "requestNew": "Receber uma nova ligação"
+    },
+    "twoFactor": {
+      "title": "Verificação em dois passos",
+      "totpDescription": "Introduza o código de 6 dígitos da sua aplicação de autenticação.",
+      "backupDescription": "Introduza um dos seus códigos de recurso. Cada código funciona uma vez.",
+      "totpLabel": "Código de autenticação",
+      "backupLabel": "Código de recurso",
+      "trustDevice": "Confiar neste dispositivo durante 30 dias",
+      "submit": "Verificar",
+      "useBackup": "Utilizar um código de recurso",
+      "useTotp": "Utilizar a aplicação de autenticação",
+      "startOver": "Recomeçar"
+    },
+    "invite": {
+      "title": "Junte-se à sua equipa",
+      "signedOut": "Inicie sessão ou crie uma conta com o endereço de e-mail para o qual o convite foi enviado.",
+      "signIn": "Iniciar sessão para aceitar",
+      "signUp": "Criar uma conta",
+      "join": "Foi convidado para uma organização no PostMind Studio.",
+      "joinNamed": "Foi convidado para {organisation} no PostMind Studio.",
+      "accept": "Aceitar convite",
+      "notNow": "Agora não",
+      "unavailable": "Este convite expirou, foi cancelado ou foi enviado para outro endereço de e-mail."
+    },
+    "support": {
+      "noEmail": "Continua sem e-mail após alguns minutos? Escreva para <link>{email}</link>."
+    }
+  },
+  "security": {
+    "eyebrow": "Conta",
+    "title": "Início de sessão e segurança",
+    "description": "A sua palavra-passe, a verificação em dois passos e onde tem sessão iniciada.",
+    "password": {
+      "title": "Palavra-passe",
+      "description": "Ao alterá-la, termina a sessão em todos os outros dispositivos.",
+      "current": "Palavra-passe atual",
+      "new": "Nova palavra-passe",
+      "submit": "Alterar palavra-passe",
+      "changed": "Palavra-passe alterada. Terminou a sessão nos outros dispositivos."
+    },
+    "twoFactor": {
+      "title": "Verificação em dois passos",
+      "description": "Um código de uma aplicação de autenticação sempre que inicia sessão. É obrigatória para a equipa nas ferramentas de administração.",
+      "statusOn": "Ativada",
+      "statusOff": "Desativada",
+      "offExplainer": "Confirme a sua palavra-passe para configurar uma aplicação de autenticação.",
+      "onExplainer": "A verificação em dois passos está a proteger a sua conta.",
+      "password": "Palavra-passe",
+      "enable": "Configurar",
+      "scan": "Leia este código com a sua aplicação de autenticação e introduza o código de 6 dígitos apresentado.",
+      "manual": "Não consegue ler o código? Introduza esta chave:",
+      "codeLabel": "Código da aplicação",
+      "confirm": "Ativar",
+      "qrLabel": "Código QR para a sua aplicação de autenticação",
+      "enabled": "A verificação em dois passos está ativada.",
+      "disabled": "A verificação em dois passos está desativada. Terminou a sessão nos outros dispositivos.",
+      "disable": "Desativar",
+      "regenerate": "Novos códigos de recurso",
+      "backupIntro": "Guarde estes códigos de recurso num local seguro. Cada um permite iniciar sessão uma vez se perder o telemóvel. Não voltarão a ser mostrados.",
+      "backupListLabel": "Códigos de recurso",
+      "copy": "Copiar códigos",
+      "copied": "Códigos de recurso copiados.",
+      "saved": "Já os guardei"
+    },
+    "sessions": {
+      "title": "Onde tem sessão iniciada",
+      "description": "Termine a sessão em qualquer dispositivo que não reconheça. Pode demorar até um minuto.",
+      "revokeOthers": "Terminar sessão nos restantes",
+      "device": "{browser} em {os}",
+      "unknownDevice": "Dispositivo desconhecido",
+      "lastActive": "Última atividade {when}",
+      "current": "Este dispositivo",
+      "revoke": "Terminar sessão",
+      "revokeAria": "Terminar sessão em {device}",
+      "revoked": "Sessão terminada."
+    },
+    "methods": {
+      "title": "Métodos de início de sessão",
+      "description": "Formas de iniciar sessão no PostMind Studio.",
+      "password": "E-mail e palavra-passe",
+      "on": "Ativado",
+      "off": "Não definido",
+      "link": "Associar Google",
+      "unlink": "Desassociar",
+      "unlinked": "Google desassociado.",
+      "unlinkNeedsPassword": "Defina uma palavra-passe antes de desassociar o Google."
+    }
+  },
   "orgSettings": {
     "meta": {
       "organisationTitle": "Definições da organização",

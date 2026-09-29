@@ -434,6 +434,29 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
       expect(owner.status).toBe(400);
     });
 
+    it('refuses to invite when members plus pending invitations fill the plan (seat limit)', async () => {
+      api.deps.entitlements = {
+        forOrganisation: async () => ({
+          tier: 'BASIC',
+          access: 'full',
+          source: 'stripe',
+          limits: { seats: 4, businesses: 1, storageGb: 25 },
+        }),
+        invalidate: () => undefined,
+      };
+      const res = await call(invitationsRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { email: 'fifth@example.test', role: 'viewer' },
+      });
+      expect(res.status).toBe(403);
+      expect(res.json).toMatchObject({
+        error: 'quota_exceeded',
+        details: { reason: 'seat_limit', used: 4, limit: 4 },
+      });
+      expect(gateway.createInvitation).not.toHaveBeenCalled();
+    });
+
     it('refuses to invite an existing member', async () => {
       const res = await call(invitationsRoute.POST, {
         method: 'POST',
@@ -444,14 +467,16 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
       expect(gateway.createInvitation).not.toHaveBeenCalled();
     });
 
-    it('answers 501 until the Better Auth gateway is installed', async () => {
+    it('answers 501 in core mode (Core owns the members)', async () => {
       setMembershipGateway(undefined);
+      vi.stubEnv('STUDIO_MODE', 'core');
       const res = await call(invitationsRoute.POST, {
         method: 'POST',
         token: 'owner',
         body: { email: 'later@example.test', role: 'viewer' },
       });
       expect(res.status).toBe(501);
+      vi.unstubAllEnvs();
     });
 
     it('resends and revokes only this organisation’s invitations', async () => {

@@ -69,9 +69,25 @@ export function hasCapability(
  * organisations). Unset: allowed outside production, refused in production.
  */
 export function requirePlatformStaff(
-  context: Pick<TenantContext, 'organisationId'>,
+  context: Pick<TenantContext, 'organisationId'> &
+    Partial<Pick<TenantContext, 'platformRole' | 'capabilities'>>,
   env: Record<string, string | undefined> = process.env,
 ): void {
+  // Phase 18 §2.5 standalone mode (the standalone identity provider always sets platformRole;
+  // core mode never does): staff are users with users.role staff | superadmin AND two-factor
+  // authentication (studio:admin:* capabilities are only granted then). The organisation-id list
+  // below stays core mode's rule, unchanged.
+  if (context.platformRole !== undefined) {
+    const isStaff = context.platformRole === 'staff' || context.platformRole === 'superadmin';
+    const verified = (context.capabilities ?? []).some((c) => c.startsWith('studio:admin:'));
+    if (!isStaff) throw new ForbiddenError('Admin endpoints are for PostMind Studio staff only');
+    if (!verified) {
+      throw new ForbiddenError('Staff must turn on two-factor authentication to use admin tools', {
+        reason: 'two_factor_required',
+      });
+    }
+    return;
+  }
   const allowed = (env.STUDIO_PLATFORM_ORG_IDS ?? '')
     .split(',')
     .map((s) => s.trim())

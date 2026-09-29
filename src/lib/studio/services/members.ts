@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../errors';
+import { ConflictError, ForbiddenError, NotFoundError, QuotaExceededError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { getMembershipGateway, ORG_ROLES, type OrgRole } from './membership-gateway';
@@ -171,11 +171,43 @@ export async function assertInvitationInOrg(
   return invitation;
 }
 
+/**
+ * Better Auth checks the plan's seat limit when an invitation is ACCEPTED (membershipLimit in
+ * pinned better-auth@1.7.6 crud-invites.mjs); Studio also refuses to SEND one when members plus
+ * pending invitations already fill the plan, so nobody is invited to a seat that does not exist.
+ */
+export async function assertSeatAvailable(
+  db: PrismaClient,
+  entitlements: EntitlementsReader | undefined,
+  organisationId: string,
+  now: number,
+): Promise<void> {
+  if (!entitlements) return;
+  const [members, pending] = await Promise.all([
+    db.member.count({ where: { organizationId: organisationId } }),
+    db.invitation.count({
+      where: {
+        organizationId: organisationId,
+        status: 'pending',
+        expiresAt: { gt: new Date(now) },
+      },
+    }),
+  ]);
+  const { used, limit } = await seatUsage(entitlements, organisationId, members, pending);
+  if (limit !== null && used >= limit)
+    throw new QuotaExceededError('Every seat on the plan is in use', {
+      reason: 'seat_limit',
+      used,
+      limit,
+    });
+}
+
 export async function inviteMember(
   db: PrismaClient,
   tenant: TenantContext,
   headers: Headers,
   input: z.infer<typeof inviteInput>,
+  seats?: { entitlements?: EntitlementsReader; now: number },
 ) {
   const already = await db.member.findFirst({
     where: { organizationId: tenant.organisationId, user: { email: input.email } },
@@ -183,6 +215,7 @@ export async function inviteMember(
   });
   if (already)
     throw new ConflictError('This person is already a member', { reason: 'already_member' });
+  if (seats) await assertSeatAvailable(db, seats.entitlements, tenant.organisationId, seats.now);
   return getMembershipGateway().createInvitation(headers, {
     organisationId: tenant.organisationId,
     email: input.email,

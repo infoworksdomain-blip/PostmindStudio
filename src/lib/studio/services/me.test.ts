@@ -51,19 +51,26 @@ describe('accountBanner', () => {
 });
 
 describe('membership gateway registry', () => {
-  it('writes answer not implemented until Better Auth is installed', async () => {
+  it('core mode has no local membership writes (501)', async () => {
     setMembershipGateway(undefined);
-    const gateway = getMembershipGateway();
+    const gateway = getMembershipGateway({ STUDIO_MODE: 'core' });
     const h = new Headers();
     await expect(
       gateway.createInvitation(h, { organisationId: 'o', email: 'a@b.test', role: 'viewer' }),
-    ).rejects.toThrow(/A1/);
-    await expect(gateway.cancelInvitation(h, { invitationId: 'i' })).rejects.toThrow(/A1/);
+    ).rejects.toThrow(/PostMind Core/);
+    await expect(gateway.cancelInvitation(h, { invitationId: 'i' })).rejects.toThrow(/Core/);
     await expect(
       gateway.updateMemberRole(h, { organisationId: 'o', memberId: 'm', role: 'admin' }),
-    ).rejects.toThrow(/A1/);
+    ).rejects.toThrow(/Core/);
     await expect(gateway.removeMember(h, { organisationId: 'o', memberId: 'm' })).rejects.toThrow(
-      /A1/,
+      /Core/,
     );
+  });
+
+  it('an installed gateway wins over the mode default', () => {
+    const fake = getMembershipGateway({ STUDIO_MODE: 'core' });
+    setMembershipGateway(fake);
+    expect(getMembershipGateway({})).toBe(fake);
+    setMembershipGateway(undefined);
   });
 });

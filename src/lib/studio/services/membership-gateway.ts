@@ -1,4 +1,6 @@
 import { NotImplementedError } from '../../errors';
+import { studioModes } from '../../mode';
+import { betterAuthMembershipGateway } from './membership-gateway-better-auth';
 
 // Phase 18 §2.4 — every membership and invitation WRITE goes through Better Auth's organization
 // plugin (server API, with the caller's request headers) so its rules run once, in one place:
@@ -7,9 +9,9 @@ import { NotImplementedError } from '../../errors';
 // Studio's routes (api/studio/members/*, org/transfer-ownership) check their own capability and
 // role rules first (members.ts), then call this gateway.
 //
-// The Better Auth implementation (members-gateway-better-auth.ts) lands with Track A milestone
-// A1 (src/lib/auth/server.ts). Until it is installed, writes answer 501 instead of writing the
-// tables behind Better Auth's back.
+// Standalone mode uses the Better Auth implementation (membership-gateway-better-auth.ts, over
+// Track A's src/lib/auth/server.ts). Core mode has no local membership writes (Core owns members),
+// so writes answer 501 instead of writing the tables behind anyone's back.
 
 export const ORG_ROLES = ['owner', 'admin', 'publisher', 'creator', 'viewer'] as const;
 export type OrgRole = (typeof ORG_ROLES)[number];
@@ -30,25 +32,32 @@ export interface MembershipGateway {
   ): Promise<void>;
 }
 
-const pending: MembershipGateway = {
+const CORE_MODE = 'Members are managed in PostMind Core (STUDIO_MODE=core)';
+
+export const coreModeMembershipGateway: MembershipGateway = {
   async createInvitation() {
-    throw new NotImplementedError('Invitations need Better Auth (Phase 18 milestone A1)');
+    throw new NotImplementedError(CORE_MODE);
   },
   async cancelInvitation() {
-    throw new NotImplementedError('Invitations need Better Auth (Phase 18 milestone A1)');
+    throw new NotImplementedError(CORE_MODE);
   },
   async updateMemberRole() {
-    throw new NotImplementedError('Role changes need Better Auth (Phase 18 milestone A1)');
+    throw new NotImplementedError(CORE_MODE);
   },
   async removeMember() {
-    throw new NotImplementedError('Removing members needs Better Auth (Phase 18 milestone A1)');
+    throw new NotImplementedError(CORE_MODE);
   },
 };
 
 let installed: MembershipGateway | undefined;
 
-export function getMembershipGateway(): MembershipGateway {
-  return installed ?? pending;
+export function getMembershipGateway(
+  env: Record<string, string | undefined> = process.env,
+): MembershipGateway {
+  if (installed) return installed;
+  return studioModes(env).identity === 'standalone'
+    ? betterAuthMembershipGateway()
+    : coreModeMembershipGateway;
 }
 
 /** Install the gateway (Better Auth at start-up; a fake in tests). Pass undefined to reset. */

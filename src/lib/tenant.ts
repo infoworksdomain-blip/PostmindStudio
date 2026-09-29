@@ -119,14 +119,22 @@ export function extractToken(
     ? readCookie(req.headers.get('cookie'), options.sessionCookie)
     : undefined;
   if (!cookie) throw new UnauthorizedError('Missing bearer token');
-  if (!SAFE_METHODS.has((req.method ?? 'GET').toUpperCase())) {
-    const origin = req.headers.get('origin');
-    const sameOrigin = origin
-      ? Boolean(options.appOrigin) && origin === options.appOrigin
-      : req.headers.get('sec-fetch-site') === 'same-origin';
-    if (!sameOrigin) throw new ForbiddenError('Cross-site request refused');
-  }
+  assertSameOriginWrite(req, options.appOrigin);
   return cookie;
+}
+
+/**
+ * CSRF check for cookie-authenticated requests: a state-changing method must carry Studio's own
+ * Origin (or, without an Origin header, Sec-Fetch-Site: same-origin). Safe methods pass. Shared by
+ * core mode (extractToken) and standalone mode (identity/standalone.ts, Phase 18 §2.3).
+ */
+export function assertSameOriginWrite(req: TenantRequest, appOrigin: string | undefined): void {
+  if (SAFE_METHODS.has((req.method ?? 'GET').toUpperCase())) return;
+  const origin = req.headers.get('origin');
+  const sameOrigin = origin
+    ? Boolean(appOrigin) && origin === appOrigin
+    : req.headers.get('sec-fetch-site') === 'same-origin';
+  if (!sameOrigin) throw new ForbiddenError('Cross-site request refused');
 }
 
 function isJwksAvailabilityError(err: unknown): boolean {

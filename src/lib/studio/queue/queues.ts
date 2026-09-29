@@ -168,6 +168,8 @@ export interface JobDataMap {
   'redrive-lost-publications': RollUpJobData;
   /** 17.3: platform account-status check (hourly; each connection once a day). */
   'check-platform-accounts': RollUpJobData;
+  /** Phase 18 §2.6: delete audit_log entries past STUDIO_AUDIT_RETENTION_DAYS (daily). */
+  'audit-retention': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -207,6 +209,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'reconcile-organisations': QUEUES.analytics,
   'redrive-lost-publications': QUEUES.publish,
   'check-platform-accounts': QUEUES.analytics,
+  'audit-retention': QUEUES.analytics,
 };
 
 export const MAX_RETRIES = 5;

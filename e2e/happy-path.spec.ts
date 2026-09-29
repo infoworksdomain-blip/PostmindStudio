@@ -36,7 +36,7 @@ async function markVerified(address: string): Promise<void> {
 async function signIn(page: Page): Promise<void> {
   await page.goto('/sign-in');
   await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/^password/i).fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
 }
 
@@ -54,9 +54,9 @@ test('a new visitor goes from the landing page to their first project', async ({
   await page.goto('/');
   await page.getByRole('link', { name: 'Start free trial' }).first().click();
   await expect(page).toHaveURL(/\/sign-up/);
-  await page.getByLabel(/name/i).first().fill('E2E Baker');
+  await page.getByLabel('Your name').fill('E2E Baker');
   await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/^password/i).fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: /sign up|create account/i }).click();
   await markVerified(email);
   await signIn(page);
