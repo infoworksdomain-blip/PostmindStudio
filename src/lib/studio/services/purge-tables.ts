@@ -166,6 +166,10 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('org_policies', 'OrgPolicy'),
   org('org_cost_caps', 'OrgCostCap'),
   org('organisation_beta', 'OrganisationBeta'),
+  // Phase 18 Track C: top-up credits and entitlements are organisation data (uses before credits).
+  org('usage_credit_uses', 'UsageCreditUse'),
+  org('usage_credits', 'UsageCredit'),
+  org('org_entitlements', 'OrgEntitlement'),
 ];
 
 /** Models that are never purged: the tombstones, the takedown record, platform-level data. */
@@ -181,6 +185,12 @@ export const NOT_PURGED_MODELS: Readonly<Record<string, string>> = {
   VideoLibraryEmbedding: 'platform corpus embeddings',
   VideoLibraryLicense: 'platform corpus licences',
   VideoLibraryIngestRun: 'platform corpus ingest runs (staff)',
+  // Phase 18 Track C (§5.11: Stripe invoices are kept for UK legal retention; these rows hold
+  // Stripe ids and statuses only, no personal data, and link the kept invoices to the org).
+  BillingCustomer: 'billing record: Stripe customer id, marked deleted (§5.11 retention)',
+  Subscription: 'billing record: Stripe subscription ids and statuses (§5.11 retention)',
+  TrialFingerprint: 'abuse control: card fingerprints that already had a trial',
+  StripeEvent: 'platform webhook dedupe log (no organisation column)',
 };
 
 /**
