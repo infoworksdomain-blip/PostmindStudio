@@ -3197,6 +3197,23 @@
         "failed": "{provider}-Schlüssel fehlgeschlagen: {reason}",
         "removed": "{provider}-Schlüssel entfernt; der Schlüssel von Studio wird wieder verwendet"
       }
+    },
+    "profile": {
+      "eyebrow": "Konto",
+      "title": "Profil",
+      "description": "Ihr Name, Ihre E-Mail-Adresse und die Sprache unserer E-Mails.",
+      "detailsTitle": "Ihre Angaben",
+      "name": "Name",
+      "emailLanguage": "Sprache der E-Mails",
+      "emailLanguageHint": "E-Mails von Studio werden in dieser Sprache verfasst. Die Sprache der App wählen Sie in der Kopfzeile.",
+      "save": "Speichern",
+      "saved": "Profil gespeichert.",
+      "emailTitle": "E-Mail-Adresse",
+      "emailCurrent": "Sie melden sich mit {email} an.",
+      "newEmail": "Neue E-Mail-Adresse",
+      "emailHint": "Wir bitten Ihre aktuelle Adresse, die Änderung zu genehmigen, und bestätigen dann die neue.",
+      "changeEmail": "E-Mail ändern",
+      "emailRequested": "Prüfen Sie Ihr Postfach, um die Änderung zu genehmigen."
     }
   },
   "approvals": {
@@ -3464,8 +3481,180 @@
     }
   },
   "legal": {},
-  "auth": {},
-  "security": {},
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "Diese E-Mail-Adresse und dieses Passwort passen zu keinem Konto.",
+      "emailNotVerified": "Bestätigen Sie zuerst Ihre E-Mail-Adresse. Wir haben Ihnen einen neuen Link gesendet.",
+      "passwordTooShort": "Verwenden Sie mindestens 12 Zeichen.",
+      "passwordTooLong": "Verwenden Sie höchstens 128 Zeichen.",
+      "passwordCompromised": "Dieses Passwort ist in einem Datenleck aufgetaucht. Wählen Sie ein anderes.",
+      "rateLimited": "Zu viele Versuche. Warten Sie einige Minuten und versuchen Sie es erneut.",
+      "invalidToken": "Dieser Link ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen an.",
+      "invalidCode": "Dieser Code ist nicht richtig. Prüfen Sie ihn und versuchen Sie es erneut.",
+      "locked": "Zu viele falsche Codes. Warten Sie einige Minuten, bevor Sie es erneut versuchen.",
+      "signupsClosed": "Neue Konten gibt es derzeit nur auf Einladung.",
+      "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein.",
+      "network": "Studio ist nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "generic": "Etwas ist schiefgelaufen. Versuchen Sie es erneut."
+    },
+    "password": {
+      "show": "Passwort anzeigen",
+      "hide": "Passwort verbergen",
+      "rule": "Mindestens {min} Zeichen",
+      "strength": {
+        "tooShort": "Zu kurz",
+        "weak": "Schwach",
+        "fair": "Mittel",
+        "good": "Gut",
+        "strong": "Stark"
+      }
+    },
+    "signIn": {
+      "title": "Anmelden",
+      "description": "Willkommen zurück bei PostMind Studio.",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "submit": "Anmelden",
+      "forgot": "Passwort vergessen?",
+      "noAccount": "Konto erstellen"
+    },
+    "google": {
+      "or": "oder",
+      "continue": "Weiter mit Google"
+    },
+    "signUp": {
+      "title": "Konto erstellen",
+      "description": "Erstellen Sie in wenigen Minuten Videos für jede Plattform.",
+      "name": "Ihr Name",
+      "email": "Geschäftliche E-Mail",
+      "password": "Passwort",
+      "terms": "Mit dem Erstellen eines Kontos akzeptieren Sie die <terms>Nutzungsbedingungen</terms> und die <privacy>Datenschutzhinweise</privacy>.",
+      "submit": "Konto erstellen",
+      "haveAccount": "Sie haben schon ein Konto? Anmelden",
+      "closedTitle": "Nur auf Einladung",
+      "closedDescription": "Neue Konten gibt es derzeit nur auf Einladung. Bitten Sie jemanden aus Ihrem Team, Sie einzuladen."
+    },
+    "verify": {
+      "title": "Prüfen Sie Ihre E-Mails",
+      "description": "Öffnen Sie den Link, den wir Ihnen gesendet haben, um Ihre Adresse zu bestätigen. Er gilt 24 Stunden.",
+      "invalidTitle": "Dieser Link hat nicht funktioniert",
+      "invalidDescription": "Er ist vielleicht abgelaufen oder wurde schon verwendet. Geben Sie Ihre E-Mail-Adresse ein, um einen neuen zu erhalten.",
+      "sentTo": "Wenn {email} neu bei Studio ist, ist ein Bestätigungslink unterwegs.",
+      "sentGeneric": "Wenn die Adresse neu bei Studio ist, ist ein Bestätigungslink unterwegs.",
+      "resent": "Wenn diese Adresse noch bestätigt werden muss, haben wir einen neuen Link gesendet.",
+      "email": "E-Mail",
+      "resend": "Neuen Link senden",
+      "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "forgot": {
+      "title": "Passwort zurücksetzen",
+      "description": "Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link, mit dem Sie ein neues Passwort wählen.",
+      "email": "E-Mail",
+      "submit": "Link senden",
+      "sent": "Wenn ein Konto diese Adresse verwendet, ist ein Link zum Zurücksetzen unterwegs. Er gilt 1 Stunde.",
+      "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "reset": {
+      "title": "Neues Passwort wählen",
+      "description": "Sie werden auf allen anderen Geräten abgemeldet.",
+      "newPassword": "Neues Passwort",
+      "submit": "Passwort speichern",
+      "done": "Ihr Passwort wurde geändert. Melden Sie sich mit dem neuen an.",
+      "signIn": "Anmelden",
+      "invalidTitle": "Dieser Link hat nicht funktioniert",
+      "invalidDescription": "Links zum Zurücksetzen funktionieren einmal, 1 Stunde lang. Fordern Sie einen neuen an.",
+      "requestNew": "Neuen Link anfordern"
+    },
+    "twoFactor": {
+      "title": "Bestätigung in zwei Schritten",
+      "totpDescription": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.",
+      "backupDescription": "Geben Sie einen Ihrer Sicherungscodes ein. Jeder Code funktioniert nur einmal.",
+      "totpLabel": "Authentifizierungscode",
+      "backupLabel": "Sicherungscode",
+      "trustDevice": "Diesem Gerät 30 Tage lang vertrauen",
+      "submit": "Bestätigen",
+      "useBackup": "Stattdessen einen Sicherungscode verwenden",
+      "useTotp": "Stattdessen die Authenticator-App verwenden",
+      "startOver": "Neu beginnen"
+    },
+    "invite": {
+      "title": "Treten Sie Ihrem Team bei",
+      "signedOut": "Melden Sie sich an oder erstellen Sie ein Konto mit der E-Mail-Adresse, an die die Einladung ging.",
+      "signIn": "Zum Annehmen anmelden",
+      "signUp": "Konto erstellen",
+      "join": "Sie wurden eingeladen, einer Organisation in PostMind Studio beizutreten.",
+      "joinNamed": "Sie wurden eingeladen, {organisation} in PostMind Studio beizutreten.",
+      "accept": "Einladung annehmen",
+      "notNow": "Nicht jetzt",
+      "unavailable": "Diese Einladung ist abgelaufen, wurde zurückgezogen oder an eine andere E-Mail-Adresse gesendet."
+    },
+    "support": {
+      "noEmail": "Nach einigen Minuten immer noch keine E-Mail? Schreiben Sie an <link>{email}</link>."
+    }
+  },
+  "security": {
+    "eyebrow": "Konto",
+    "title": "Anmeldung und Sicherheit",
+    "description": "Ihr Passwort, die Bestätigung in zwei Schritten und wo Sie angemeldet sind.",
+    "password": {
+      "title": "Passwort",
+      "description": "Eine Änderung meldet Sie auf allen anderen Geräten ab.",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "submit": "Passwort ändern",
+      "changed": "Passwort geändert. Andere Geräte wurden abgemeldet."
+    },
+    "twoFactor": {
+      "title": "Bestätigung in zwei Schritten",
+      "description": "Bei jeder Anmeldung ein Code aus einer Authenticator-App. Für Admin-Werkzeuge ist sie Pflicht.",
+      "statusOn": "Aktiv",
+      "statusOff": "Aus",
+      "offExplainer": "Bestätigen Sie Ihr Passwort, um eine Authenticator-App einzurichten.",
+      "onExplainer": "Die Bestätigung in zwei Schritten schützt Ihr Konto.",
+      "password": "Passwort",
+      "enable": "Einrichten",
+      "scan": "Scannen Sie diesen Code mit Ihrer Authenticator-App und geben Sie den angezeigten 6-stelligen Code ein.",
+      "manual": "Scannen nicht möglich? Geben Sie stattdessen diesen Schlüssel ein:",
+      "codeLabel": "Code aus der App",
+      "confirm": "Aktivieren",
+      "qrLabel": "QR-Code für Ihre Authenticator-App",
+      "enabled": "Die Bestätigung in zwei Schritten ist aktiv.",
+      "disabled": "Die Bestätigung in zwei Schritten ist aus. Andere Geräte wurden abgemeldet.",
+      "disable": "Deaktivieren",
+      "regenerate": "Neue Sicherungscodes",
+      "backupIntro": "Bewahren Sie diese Sicherungscodes sicher auf. Jeder Code meldet Sie einmal an, falls Sie Ihr Telefon verlieren. Sie werden nicht erneut angezeigt.",
+      "backupListLabel": "Sicherungscodes",
+      "copy": "Codes kopieren",
+      "copied": "Sicherungscodes kopiert.",
+      "saved": "Ich habe sie gespeichert"
+    },
+    "sessions": {
+      "title": "Wo Sie angemeldet sind",
+      "description": "Melden Sie jedes Gerät ab, das Sie nicht kennen. Es kann bis zu einer Minute dauern.",
+      "revokeOthers": "Überall sonst abmelden",
+      "device": "{browser} unter {os}",
+      "unknownDevice": "Unbekanntes Gerät",
+      "lastActive": "Zuletzt aktiv {when}",
+      "current": "Dieses Gerät",
+      "revoke": "Abmelden",
+      "revokeAria": "{device} abmelden",
+      "revoked": "Abgemeldet."
+    },
+    "methods": {
+      "title": "Anmeldemethoden",
+      "description": "So können Sie sich bei PostMind Studio anmelden.",
+      "password": "E-Mail und Passwort",
+      "on": "Aktiv",
+      "off": "Nicht festgelegt",
+      "link": "Google verbinden",
+      "unlink": "Trennen",
+      "unlinked": "Google getrennt.",
+      "unlinkNeedsPassword": "Legen Sie ein Passwort fest, bevor Sie Google trennen."
+    }
+  },
   "orgSettings": {},
   "members": {},
   "billing": {

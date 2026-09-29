@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   // Server-only packages are loaded at runtime in Node rather than bundled.
-  serverExternalPackages: ['@prisma/client', 'bullmq', 'ioredis', 'pino'],
+  serverExternalPackages: ['@prisma/client', 'bullmq', 'ioredis', 'pino', '@node-rs/argon2'],
 };
 
 // BACKLOG 16.1 — next-intl without i18n routing: the plugin wires src/i18n/request.ts (the

@@ -3197,6 +3197,23 @@
         "failed": "A chave do {provider} falhou: {reason}",
         "removed": "Chave do {provider} removida; a chave do Studio volta a ser usada"
       }
+    },
+    "profile": {
+      "eyebrow": "Conta",
+      "title": "Perfil",
+      "description": "Seu nome, seu e-mail e o idioma em que escrevemos para você.",
+      "detailsTitle": "Seus dados",
+      "name": "Nome",
+      "emailLanguage": "Idioma dos e-mails",
+      "emailLanguageHint": "Os e-mails do Studio são escritos neste idioma. O idioma do app fica no cabeçalho.",
+      "save": "Salvar",
+      "saved": "Perfil salvo.",
+      "emailTitle": "Endereço de e-mail",
+      "emailCurrent": "Você entra com {email}.",
+      "newEmail": "Novo e-mail",
+      "emailHint": "Vamos pedir ao seu endereço atual que aprove a mudança e depois confirmar o novo.",
+      "changeEmail": "Alterar e-mail",
+      "emailRequested": "Confira seu e-mail para aprovar a mudança."
     }
   },
   "approvals": {
@@ -3464,8 +3481,180 @@
     }
   },
   "legal": {},
-  "auth": {},
-  "security": {},
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "Esse e-mail e essa senha não correspondem a nenhuma conta.",
+      "emailNotVerified": "Primeiro confirme seu e-mail. Enviamos um novo link para você.",
+      "passwordTooShort": "Use pelo menos 12 caracteres.",
+      "passwordTooLong": "Use no máximo 128 caracteres.",
+      "passwordCompromised": "Essa senha apareceu em um vazamento de dados. Escolha outra.",
+      "rateLimited": "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
+      "invalidToken": "Este link expirou ou já foi usado. Peça um novo.",
+      "invalidCode": "Esse código não está certo. Confira e tente de novo.",
+      "locked": "Muitos códigos errados. Aguarde alguns minutos antes de tentar de novo.",
+      "signupsClosed": "No momento, novas contas só por convite.",
+      "invalidEmail": "Digite um e-mail válido.",
+      "network": "Não foi possível acessar o Studio. Verifique sua conexão e tente de novo.",
+      "generic": "Algo deu errado. Tente de novo."
+    },
+    "password": {
+      "show": "Mostrar senha",
+      "hide": "Ocultar senha",
+      "rule": "Pelo menos {min} caracteres",
+      "strength": {
+        "tooShort": "Muito curta",
+        "weak": "Fraca",
+        "fair": "Razoável",
+        "good": "Boa",
+        "strong": "Forte"
+      }
+    },
+    "signIn": {
+      "title": "Entrar",
+      "description": "Boas-vindas de volta ao PostMind Studio.",
+      "email": "E-mail",
+      "password": "Senha",
+      "submit": "Entrar",
+      "forgot": "Esqueceu a senha?",
+      "noAccount": "Criar uma conta"
+    },
+    "google": {
+      "or": "ou",
+      "continue": "Continuar com o Google"
+    },
+    "signUp": {
+      "title": "Crie sua conta",
+      "description": "Comece a criar vídeos para todas as plataformas em minutos.",
+      "name": "Seu nome",
+      "email": "E-mail de trabalho",
+      "password": "Senha",
+      "terms": "Ao criar uma conta, você concorda com os <terms>Termos</terms> e o <privacy>Aviso de privacidade</privacy>.",
+      "submit": "Criar conta",
+      "haveAccount": "Já tem uma conta? Entre",
+      "closedTitle": "Somente por convite",
+      "closedDescription": "No momento, novas contas só por convite. Peça a alguém da sua equipe para convidar você."
+    },
+    "verify": {
+      "title": "Confira seu e-mail",
+      "description": "Abra o link que enviamos para confirmar seu endereço. Ele vale por 24 horas.",
+      "invalidTitle": "Esse link não funcionou",
+      "invalidDescription": "Ele pode ter expirado ou já ter sido usado. Digite seu e-mail para receber um novo.",
+      "sentTo": "Se {email} for novo no Studio, um link de confirmação está a caminho.",
+      "sentGeneric": "Se o endereço for novo no Studio, um link de confirmação está a caminho.",
+      "resent": "Se esse endereço precisar de confirmação, enviamos um novo link.",
+      "email": "E-mail",
+      "resend": "Enviar um novo link",
+      "backToSignIn": "Voltar para entrar"
+    },
+    "forgot": {
+      "title": "Redefina sua senha",
+      "description": "Digite seu e-mail e enviaremos um link para você escolher uma nova senha.",
+      "email": "E-mail",
+      "submit": "Enviar link",
+      "sent": "Se alguma conta usar esse endereço, um link de redefinição está a caminho. Ele vale por 1 hora.",
+      "backToSignIn": "Voltar para entrar"
+    },
+    "reset": {
+      "title": "Escolha uma nova senha",
+      "description": "Você sairá da conta em todos os outros dispositivos.",
+      "newPassword": "Nova senha",
+      "submit": "Salvar senha",
+      "done": "Sua senha foi alterada. Entre com a nova.",
+      "signIn": "Entrar",
+      "invalidTitle": "Esse link não funcionou",
+      "invalidDescription": "Links de redefinição funcionam uma vez, por 1 hora. Peça um novo.",
+      "requestNew": "Receber um novo link"
+    },
+    "twoFactor": {
+      "title": "Verificação em duas etapas",
+      "totpDescription": "Digite o código de 6 dígitos do seu app autenticador.",
+      "backupDescription": "Digite um dos seus códigos de backup. Cada código funciona uma vez.",
+      "totpLabel": "Código de autenticação",
+      "backupLabel": "Código de backup",
+      "trustDevice": "Confiar neste dispositivo por 30 dias",
+      "submit": "Verificar",
+      "useBackup": "Usar um código de backup",
+      "useTotp": "Usar o app autenticador",
+      "startOver": "Recomeçar"
+    },
+    "invite": {
+      "title": "Entre para a sua equipe",
+      "signedOut": "Entre ou crie uma conta com o e-mail para o qual o convite foi enviado.",
+      "signIn": "Entrar para aceitar",
+      "signUp": "Criar uma conta",
+      "join": "Você foi convidado para uma organização no PostMind Studio.",
+      "joinNamed": "Você foi convidado para {organisation} no PostMind Studio.",
+      "accept": "Aceitar convite",
+      "notNow": "Agora não",
+      "unavailable": "Este convite expirou, foi cancelado ou foi enviado para outro e-mail."
+    },
+    "support": {
+      "noEmail": "Ainda sem e-mail depois de alguns minutos? Escreva para <link>{email}</link>."
+    }
+  },
+  "security": {
+    "eyebrow": "Conta",
+    "title": "Login e segurança",
+    "description": "Sua senha, a verificação em duas etapas e onde você está conectado.",
+    "password": {
+      "title": "Senha",
+      "description": "Ao alterá-la, você sai da conta em todos os outros dispositivos.",
+      "current": "Senha atual",
+      "new": "Nova senha",
+      "submit": "Alterar senha",
+      "changed": "Senha alterada. Os outros dispositivos foram desconectados."
+    },
+    "twoFactor": {
+      "title": "Verificação em duas etapas",
+      "description": "Um código de um app autenticador a cada login. A equipe precisa dela para as ferramentas de administração.",
+      "statusOn": "Ativada",
+      "statusOff": "Desativada",
+      "offExplainer": "Confirme sua senha para configurar um app autenticador.",
+      "onExplainer": "A verificação em duas etapas está protegendo sua conta.",
+      "password": "Senha",
+      "enable": "Configurar",
+      "scan": "Escaneie este código com seu app autenticador e digite o código de 6 dígitos que aparecer.",
+      "manual": "Não consegue escanear? Digite esta chave:",
+      "codeLabel": "Código do app",
+      "confirm": "Ativar",
+      "qrLabel": "Código QR para seu app autenticador",
+      "enabled": "A verificação em duas etapas está ativada.",
+      "disabled": "A verificação em duas etapas está desativada. Os outros dispositivos foram desconectados.",
+      "disable": "Desativar",
+      "regenerate": "Novos códigos de backup",
+      "backupIntro": "Guarde estes códigos de backup em um lugar seguro. Cada um permite entrar uma vez se você perder o celular. Eles não serão mostrados de novo.",
+      "backupListLabel": "Códigos de backup",
+      "copy": "Copiar códigos",
+      "copied": "Códigos de backup copiados.",
+      "saved": "Já salvei"
+    },
+    "sessions": {
+      "title": "Onde você está conectado",
+      "description": "Desconecte qualquer dispositivo que você não reconheça. Pode levar até um minuto.",
+      "revokeOthers": "Sair de todos os outros",
+      "device": "{browser} no {os}",
+      "unknownDevice": "Dispositivo desconhecido",
+      "lastActive": "Ativo pela última vez {when}",
+      "current": "Este dispositivo",
+      "revoke": "Sair",
+      "revokeAria": "Sair de {device}",
+      "revoked": "Desconectado."
+    },
+    "methods": {
+      "title": "Formas de login",
+      "description": "Como você pode entrar no PostMind Studio.",
+      "password": "E-mail e senha",
+      "on": "Ativado",
+      "off": "Não definido",
+      "link": "Conectar Google",
+      "unlink": "Desconectar",
+      "unlinked": "Google desconectado.",
+      "unlinkNeedsPassword": "Defina uma senha antes de desconectar o Google."
+    }
+  },
   "orgSettings": {},
   "members": {},
   "billing": {

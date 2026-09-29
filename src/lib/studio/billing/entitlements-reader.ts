@@ -106,3 +106,20 @@ export function registerEntitlementsReader(reader: EntitlementsReader): () => vo
 export function invalidateEntitlements(organisationId: string): void {
   for (const reader of readers) reader.invalidate(organisationId);
 }
+
+/**
+ * The reader production wiring uses (identity/standalone.ts, auth/server.ts). With Stripe
+ * billing (the standalone default) it is the process-wide org_entitlements reader, registered for
+ * invalidation by the webhook and admin writes; otherwise no organisation has a plan.
+ */
+export async function entitlementsReaderFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): Promise<EntitlementsReader> {
+  const { studioModes } = await import('../../mode');
+  if (studioModes(env).billing !== 'stripe') return createStubEntitlementsReader();
+  const [{ prisma }, { sharedEntitlementsReader }] = await Promise.all([
+    import('../../prisma'),
+    import('./wiring'),
+  ]);
+  return sharedEntitlementsReader(prisma);
+}

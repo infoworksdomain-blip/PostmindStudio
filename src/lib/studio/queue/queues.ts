@@ -175,6 +175,8 @@ export interface JobDataMap {
   'reconcile-subscriptions': RollUpJobData;
   /** Phase 18 Track C: purge organisations cancelled longer than the retention (02:15 UTC). */
   'cancelled-org-retention': RollUpJobData;
+  /** Phase 18 §2.6: delete audit_log entries past STUDIO_AUDIT_RETENTION_DAYS (daily). */
+  'audit-retention': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -217,6 +219,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'sweep-stripe-events': QUEUES.analytics,
   'reconcile-subscriptions': QUEUES.analytics,
   'cancelled-org-retention': QUEUES.orchestration,
+  'audit-retention': QUEUES.analytics,
 };
 
 export const MAX_RETRIES = 5;
