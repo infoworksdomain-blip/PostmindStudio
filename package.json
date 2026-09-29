@@ -133,7 +133,8 @@
     "esbuild@0.28.2": true,
     "unrs-resolver@1.12.2": true
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+  "overrides": {
+    "deepmerge-ts": "8.0.2",
+    "postcss": "8.5.28"
   }
 }

@@ -44,7 +44,8 @@ COPY --from=build --chown=node:node /app/prompts ./prompts
 COPY --from=build --chown=node:node /app/content ./content
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/src ./src
-COPY --from=build --chown=node:node /app/tsconfig.json /app/next.config.ts ./
+# prisma.config.ts: the seed command for `prisma db seed` (the migrate one-shot) lives there.
+COPY --from=build --chown=node:node /app/tsconfig.json /app/next.config.ts /app/prisma.config.ts ./
 USER node
 EXPOSE 3010 9464
 ENTRYPOINT ["/usr/bin/tini", "--"]

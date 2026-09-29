@@ -8,8 +8,11 @@ import { navigate } from '../router';
 // leave it blank. Here:
 //   same-origin paths and "#/…" links  → the demo's hash route (query kept; "/" → "#/", which
 //                                         shows the landing page when signed out, else the tour)
-//   data: / blob: URLs (the export)     → saved as a file, the page stays
+//   data: / blob: URLs (the export)     → saved as a file, the page stays; inside a frame (Claude's
+//                                         artifact viewer blocks downloads) a notice says so instead
 //   anything else (Google, Stripe, …)   → a notice saying where the live app would go
+// It never leaves the page, so it always answers false: buttons that spin "until the page
+// unloads" (Continue with Google, Connect) stop spinning.
 
 const EXTERNAL_LABELS: Array<[RegExp, string]> = [
   [/(^|\.)accounts\.google\.com$/, 'Google sign-in'],
@@ -19,7 +22,25 @@ const EXTERNAL_LABELS: Array<[RegExp, string]> = [
   [/(^|\.)google\.com$/, 'Google'],
 ];
 
+/**
+ * Inside a frame (Claude's artifact viewer, a sandboxed iframe) a download link does nothing, so
+ * the demo says so rather than failing silently. A cross-origin parent throws on access: framed.
+ */
+export function isFramed(win: Window = window): boolean {
+  try {
+    return win.self !== win.top;
+  } catch {
+    return true;
+  }
+}
+
 function download(url: string): void {
+  if (isFramed()) {
+    toast.info(
+      'Downloads are disabled in this preview. Open the demo in its own browser tab to save the sample export; the live app downloads a ZIP of the organisation’s data.',
+    );
+    return;
+  }
   const a = document.createElement('a');
   a.href = url;
   a.download = 'postmind-studio-demo-export.txt';
@@ -37,21 +58,22 @@ export function hardReload(): void {
   void mutate(() => true);
 }
 
-export function hardNavigate(url: string): void {
+/** Same contract as src/lib/client/navigate.ts; false: the demo never leaves the page. */
+export function hardNavigate(url: string): boolean {
   if (url.startsWith('#')) {
     navigate(url);
-    return;
+    return false;
   }
   if (url.startsWith('data:') || url.startsWith('blob:')) {
     download(url);
-    return;
+    return false;
   }
   let target: URL;
   try {
     target = new URL(url, 'https://studio.demo');
   } catch {
     toast.info('In the live app this opens another page.');
-    return;
+    return false;
   }
   const sameOrigin =
     url.startsWith('/') ||
@@ -60,8 +82,9 @@ export function hardNavigate(url: string): void {
   if (sameOrigin && !url.startsWith('//')) {
     // "/" is the landing page for a signed-out visitor and the tour otherwise (demo/app.tsx).
     navigate(`${target.pathname}${target.search}`);
-    return;
+    return false;
   }
   const label = EXTERNAL_LABELS.find(([re]) => re.test(target.hostname))?.[1] ?? target.hostname;
   toast.info(`In the live app this opens ${label}. The demo stays on this page.`);
+  return false;
 }

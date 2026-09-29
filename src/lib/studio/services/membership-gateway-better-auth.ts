@@ -4,6 +4,7 @@ import {
   ForbiddenError,
   NotFoundError,
   QuotaExceededError,
+  RateLimitError,
   ValidationError,
 } from '../../errors';
 import type { MembershipGateway } from './membership-gateway';
@@ -39,6 +40,15 @@ export function mapOrganisationError(err: unknown): never {
   if (err instanceof APIError) {
     const code = (err.body as { code?: string } | undefined)?.code ?? '';
     const message = err.message || code || 'Request refused';
+    if (err.statusCode === 429) {
+      // 19.3 invite limits (account-rate-limits.ts): 429 + Retry-After through withStudioRoute.
+      const retryAfter = Number(new Headers(err.headers).get('X-Retry-After'));
+      throw new RateLimitError(
+        'Too many invitations. Try again later.',
+        Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60,
+        { reason: 'invite_rate_limited' },
+      );
+    }
     if (code === 'ORGANIZATION_MEMBERSHIP_LIMIT_REACHED')
       throw new QuotaExceededError(message, { reason: 'seat_limit' });
     if (code === 'YOU_CANNOT_LEAVE_THE_ORGANIZATION_AS_THE_ONLY_OWNER')

@@ -45,8 +45,7 @@ export function SignInMethodsSection({ googleEnabled }: { googleEnabled: boolean
       const { url } = await authFetch<{ url?: string }>('/link-social', {
         body: { provider: 'google', callbackURL: '/account/security' },
       });
-      if (url) hardNavigate(url);
-      else setBusy(false);
+      if (!url || !hardNavigate(url)) setBusy(false);
     } catch (err) {
       toast.error(tErr(authErrorKey(err)));
       setBusy(false);

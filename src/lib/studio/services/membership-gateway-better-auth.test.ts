@@ -1,5 +1,6 @@
 import { APIError } from 'better-auth/api';
 import { describe, expect, it, vi } from 'vitest';
+import { RateLimitError } from '../../errors';
 import {
   createBetterAuthMembershipGateway,
   mapOrganisationError,
@@ -100,6 +101,22 @@ describe('Better Auth membership gateway', () => {
         if (reason)
           expect((mapped as { details?: { reason?: string } }).details?.reason).toBe(reason);
       }
+    }
+    const limited = new APIError(
+      'TOO_MANY_REQUESTS',
+      { code: 'RATE_LIMITED', message: 'Too many requests. Try again later.' },
+      { 'X-Retry-After': '1200' },
+    );
+    expect(() => mapOrganisationError(limited)).toThrow(RateLimitError);
+    try {
+      mapOrganisationError(limited);
+    } catch (mapped) {
+      expect(mapped).toMatchObject({
+        code: 'rate_limited',
+        status: 429,
+        retryAfterSec: 1200,
+        details: { reason: 'invite_rate_limited' },
+      });
     }
     const plain = new Error('boom');
     expect(() => mapOrganisationError(plain)).toThrow(plain);

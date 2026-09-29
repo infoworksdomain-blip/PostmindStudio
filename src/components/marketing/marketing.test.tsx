@@ -70,6 +70,38 @@ describe('LegalDocumentView', () => {
     );
   });
 
+  it('links only http(s), mailto and relative targets; anything else is plain text', () => {
+    const links = [
+      '[web](https://example.com/a)',
+      '[plain](http://example.com)',
+      '[mail](mailto:legal@example.com)',
+      '[rel](/legal/privacy)',
+      '[anchor](#cookies)',
+      '[js](javascript:alert(1))',
+      '[tel](tel:+441234567890)',
+      '[data](data:text/html;base64,PHNjcmlwdD4=)',
+      '[ftp](ftp://example.com/file)',
+      '[proto](//evil.example/x)',
+    ].join('\n\n');
+    const { container } = render(
+      <LegalDocumentView docKey="terms" markdown={links} placeholder={false} fallback={false} />,
+    );
+    const article = container.querySelector('article')!;
+    const hrefs = [...article.querySelectorAll('a')].map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual([
+      'https://example.com/a',
+      'http://example.com',
+      'mailto:legal@example.com',
+      '/legal/privacy',
+      '#cookies',
+    ]);
+    for (const text of ['js', 'tel', 'data', 'ftp', 'proto']) {
+      const el = within(article).getByText(text);
+      expect(el.tagName).toBe('SPAN');
+      expect(el.closest('a')).toBeNull();
+    }
+  });
+
   it('notes an English fallback in other locales (ar, zh-Hans)', () => {
     const ar = render(
       withLocale(

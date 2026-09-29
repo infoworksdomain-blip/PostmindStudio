@@ -77,7 +77,8 @@ accounts cannot be banned or have 2FA reset from the console: use the CLI.
 | Suspected account takeover | **Sign out everywhere** (deletes all the user's sessions; effective within the 60 s cookie cache). Ask the user to reset their password. |
 | Lost authenticator and backup codes | Verify the person out of band (e.g. a reply from the account's email plus a detail only they know). Then **Reset two-step verification**: the TOTP secret and backup codes are removed and their sessions ended; they sign in with the password and re-enrol. |
 | Abuse, fraud, chargebacks | **Ban user** (signs them out at once and blocks sign-in). **Lift ban** reverses it. |
-| Locked out by too many attempts | Better Auth rate limits and 2FA lockout expire on their own (sign-in 5/min per IP; 2FA 5 per 5 minutes); do not raise limits for one user. |
+| Locked out by too many attempts | Better Auth rate limits and 2FA lockout expire on their own; do not raise limits for one user. Per IP: sign-in 5/min, 2FA 5 per 5 minutes. Per account or address (any IP, Phase 19.3): sign-in 10/hour per email, 2FA 5 per 10 minutes per user (Better Auth also locks 2FA for 15 minutes after 10 wrong codes in a row), password-reset and verification-email resend 3 per 15 minutes per email. |
+| "Too many invitations" | Invitations (including resends) are limited to 20 an hour per organisation and 30 an hour per inviter across all their organisations (`src/lib/auth/account-rate-limits.ts`). Ask them to wait for the hour to pass. |
 | Owner left the company, no other owner | The user cannot be demoted while they are the last owner. Ask them to transfer ownership; if they cannot, a superadmin adds a new owner through the CLI (Track A) and records why. |
 
 ## Impersonation (off by default)

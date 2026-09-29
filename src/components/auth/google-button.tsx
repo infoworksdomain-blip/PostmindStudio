@@ -19,10 +19,8 @@ export function GoogleButton({ next }: { next: string }) {
     setBusy(true);
     try {
       const { url } = await authApi.signInGoogle(next, '/sign-in?error=oauth');
-      if (url) {
-        hardNavigate(url);
-        return;
-      }
+      // Keep the spinner only while the page is really leaving (the demo stays put).
+      if (url && hardNavigate(url)) return;
       setBusy(false);
     } catch (err) {
       toast.error(t(`errors.${authErrorKey(err)}`));
