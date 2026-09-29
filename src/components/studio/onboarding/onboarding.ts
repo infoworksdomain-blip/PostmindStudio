@@ -1,7 +1,8 @@
 // Client view of GET|PATCH /api/studio/onboarding (src/lib/studio/services/onboarding.ts) and the
 // wizard's pure step logic (BACKLOG 13.14, spec 14.5).
 
-export const WIZARD_STEPS = ['connect', 'brand_kit', 'first_video', 'celebrate'] as const;
+// Phase 18: Brand kit before Connect (after the organisation and first-business set-up steps).
+export const WIZARD_STEPS = ['brand_kit', 'connect', 'first_video', 'celebrate'] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
 export type OnboardingStep = WizardStep | 'done';
 
@@ -45,7 +46,7 @@ export function nextStep(step: WizardStep): OnboardingStep {
 }
 
 export function previousStep(step: WizardStep): WizardStep {
-  return WIZARD_STEPS[Math.max(0, stepIndex(step) - 1)] ?? 'connect';
+  return WIZARD_STEPS[Math.max(0, stepIndex(step) - 1)] ?? WIZARD_STEPS[0];
 }
 
 /** The completed list with `step` added (kept in wizard order, no duplicates). */

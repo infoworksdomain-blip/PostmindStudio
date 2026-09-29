@@ -102,10 +102,20 @@ function seal(keys: DataKeyProvider, input: RefreshedTokenInput | RegisterMetaCh
   });
 }
 
+/**
+ * Who obtained the tokens (Phase 18 §2.10): PostMind Core's push (internal routes) or Studio's
+ * own Facebook Login for Business (services/meta-connect.ts), with the Meta user who logged in.
+ */
+export interface MetaChannelOrigin {
+  connectedVia: 'core' | 'studio';
+  metaUserId?: string;
+}
+
 /** Idempotent upsert: re-registering (a reconnect) replaces the token and re-activates. */
 export async function registerMetaChannel(
   deps: MetaChannelDeps,
   input: RegisterMetaChannelInput,
+  origin: MetaChannelOrigin = { connectedVia: 'core' },
 ): Promise<{ channel: PlatformConnection; created: boolean }> {
   const where = uniqueKey(input);
   const existing = await deps.db.platformConnection.findUnique({
@@ -120,6 +130,8 @@ export async function registerMetaChannel(
     state: 'active',
     connectedByUserId: input.connectedByUserId ?? CORE_ACTOR,
     connectedAt: new Date(),
+    connectedVia: origin.connectedVia,
+    metaUserId: origin.metaUserId ?? null,
   };
   const channel = await deps.db.platformConnection.upsert({
     where,

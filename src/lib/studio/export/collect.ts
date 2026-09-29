@@ -8,7 +8,18 @@ import type { PrismaClient } from '@prisma/client';
 // provider_jobs (raw provider request/response bodies) are not exported; their cost is in
 // provider_usage.
 
-export const EXPORT_GROUPS = ['projects', 'analytics', 'brand', 'image_library'] as const;
+// Phase 18 §5.11: `account` (the organisation and its memberships, and the requesting user’s
+// own profile, sign-in methods, 2FA status and session metadata — never secrets or other
+// members’ contact details) and `billing` (customer, subscriptions, entitlements, top-up credits;
+// invoice PDFs stay in Stripe’s portal).
+export const EXPORT_GROUPS = [
+  'projects',
+  'analytics',
+  'brand',
+  'image_library',
+  'account',
+  'billing',
+] as const;
 export type ExportGroup = (typeof EXPORT_GROUPS)[number];
 
 /** Rows per table; a table with more is cut and listed in the manifest's `truncated`. */
@@ -160,10 +171,96 @@ async function collectAccount(db: Db, org: string, c: Collector) {
   c.add('onboarding_states', await db.onboardingState.findMany({ where: scope, take }));
 }
 
+async function collectIdentity(db: Db, org: string, userId: string | undefined, c: Collector) {
+  c.add(
+    'organisation',
+    await db.organization.findMany({
+      where: { id: org },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        country: true,
+        defaultLocale: true,
+        createdAt: true,
+      },
+    }),
+  );
+  c.add(
+    'members',
+    await db.member.findMany({
+      where: { organizationId: org },
+      select: { id: true, userId: true, role: true, createdAt: true },
+      take,
+    }),
+  );
+  c.add(
+    'invitations',
+    await db.invitation.findMany({
+      where: { organizationId: org },
+      select: { id: true, role: true, status: true, expiresAt: true, createdAt: true },
+      take,
+    }),
+  );
+  if (!userId) return;
+  c.add(
+    'my_profile',
+    await db.user.findMany({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        emailVerified: true,
+        locale: true,
+        twoFactorEnabled: true,
+        role: true,
+        createdAt: true,
+      },
+    }),
+  );
+  c.add(
+    'my_sign_in_methods',
+    await db.account.findMany({
+      where: { userId },
+      select: { providerId: true, createdAt: true },
+    }),
+  );
+  c.add(
+    'my_sessions',
+    await db.session.findMany({
+      where: { userId },
+      select: {
+        createdAt: true,
+        updatedAt: true,
+        expiresAt: true,
+        ipAddress: true,
+        userAgent: true,
+      },
+      take,
+    }),
+  );
+}
+
+async function collectBilling(db: Db, org: string, c: Collector) {
+  const scope = { organisationId: org };
+  c.add(
+    'billing_customer',
+    await db.billingCustomer.findMany({
+      where: scope,
+      select: { organisationId: true, stripeCustomerId: true, createdAt: true },
+    }),
+  );
+  c.add('subscriptions', await db.subscription.findMany({ where: scope, take }));
+  c.add('entitlements', await db.orgEntitlement.findMany({ where: scope }));
+  c.add('usage_credits', await db.usageCredit.findMany({ where: scope, take }));
+}
+
 export async function collectExport(
   db: Db,
   organisationId: string,
   include: ExportGroup[],
+  options: { requestedByUserId?: string } = {},
 ): Promise<CollectedTables & { projectIds: string[] }> {
   const c = new Collector();
   const projects = await db.videoProject.findMany({
@@ -180,5 +277,8 @@ export async function collectExport(
   if (include.includes('brand')) await collectBrand(db, organisationId, c);
   if (include.includes('image_library'))
     c.add('image_library', await db.imageLibraryItem.findMany({ where: { organisationId }, take }));
+  if (include.includes('account'))
+    await collectIdentity(db, organisationId, options.requestedByUserId, c);
+  if (include.includes('billing')) await collectBilling(db, organisationId, c);
   return { tables: c.tables, truncated: c.truncated, projectIds };
 }

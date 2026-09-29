@@ -147,6 +147,15 @@ export interface PlatformConnection {
   /** 17.3: when the daily account-status check last ran, and what it found. */
   statusCheckedAt?: string | null;
   statusCheckOutcome?: 'ok' | 'needs_reconnect' | 'unreachable' | null;
+  /** Phase 18: 'core' (PostMind pushed it), 'studio' (Studio's own OAuth), null (pre-Phase 18). */
+  connectedVia?: 'core' | 'studio' | null;
+}
+
+/** Phase 18 §2.10: how Instagram / Facebook are connected (GET /platform-connections `meta`). */
+export interface MetaConnectInfo {
+  connect: 'studio' | 'core';
+  /** false while the operator has not configured Studio's Meta app. */
+  configured: boolean;
 }
 
 export interface BrandKit {

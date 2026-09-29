@@ -12,7 +12,8 @@ export interface OAuthPending {
   organisationId: string;
   userId: string;
   businessId: string;
-  platform: OAuthPlatform;
+  /** 'meta' = Studio's own Facebook Login for Business (Phase 18, services/meta-connect.ts). */
+  platform: OAuthPlatform | 'meta';
   codeVerifier?: string;
   /** Where to send the browser after the callback (validated against APP_URL). */
   returnTo?: string;

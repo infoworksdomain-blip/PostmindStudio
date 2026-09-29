@@ -15,7 +15,12 @@ export type NotBuiltGroup =
 
 /** Why it is not built. */
 export type Blocker =
-  'missing endpoint' | 'blocked on a dependency' | 'needs staging' | 'needs people' | 'not started';
+  | 'missing endpoint'
+  | 'blocked on a dependency'
+  | 'needs staging'
+  | 'needs people'
+  | 'needs operator app settings'
+  | 'not started';
 
 export interface CompletionPlan {
   /** Screens or UI to add or change (empty when there is no UI work). */

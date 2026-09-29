@@ -1,4 +1,5 @@
 import type { JobsOptions } from 'bullmq';
+import { PLAN_CATALOGUE } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 
 // BACKLOG 3.2 — queue names (spec 11.1), job names, typed job payloads, and the retry policy
@@ -12,6 +13,8 @@ export const QUEUES = {
   analytics: 'studio-analytics',
   /** Feature A corpus ingestion: isolated so staff batches never crowd out customer jobs. */
   library: 'studio-library',
+  /** Phase 18 Track B: transactional and notification email (Resend), isolated from publishing. */
+  email: 'studio-email',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -103,6 +106,17 @@ export interface ExportJobData {
   batch?: boolean;
 }
 
+/** Phase 18 §2.8: send one studio.email_outbox row. runId = the outbox id. */
+export interface SendEmailJobData {
+  /** The email's organisation, or 'postmind-platform' for account mail with none. */
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  outboxId: string;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
 export interface RollUpJobData {
   organisationId: string;
   runId: string;
@@ -168,6 +182,18 @@ export interface JobDataMap {
   'redrive-lost-publications': RollUpJobData;
   /** 17.3: platform account-status check (hourly; each connection once a day). */
   'check-platform-accounts': RollUpJobData;
+  /** Phase 18 Track C: re-process Stripe events whose processing failed (every 10 minutes). */
+  'sweep-stripe-events': RollUpJobData;
+  /** Phase 18 Track C: nightly Stripe subscriptions reconcile (03:15 UTC). */
+  'reconcile-subscriptions': RollUpJobData;
+  /** Phase 18 Track C: purge organisations cancelled longer than the retention (02:15 UTC). */
+  'cancelled-org-retention': RollUpJobData;
+  /** Phase 18 §2.6: delete audit_log entries past STUDIO_AUDIT_RETENTION_DAYS (daily). */
+  'audit-retention': RollUpJobData;
+  /** Phase 18 §2.8: render and send one outbox email through Resend (5 retries). */
+  'send-email': SendEmailJobData;
+  /** Phase 18 §2.8: re-enqueue outbox rows whose job was lost; purge old rows (every 5 min). */
+  'sweep-email-outbox': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -207,6 +233,12 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'reconcile-organisations': QUEUES.analytics,
   'redrive-lost-publications': QUEUES.publish,
   'check-platform-accounts': QUEUES.analytics,
+  'sweep-stripe-events': QUEUES.analytics,
+  'reconcile-subscriptions': QUEUES.analytics,
+  'cancelled-org-retention': QUEUES.orchestration,
+  'audit-retention': QUEUES.analytics,
+  'send-email': QUEUES.email,
+  'sweep-email-outbox': QUEUES.email,
 };
 
 export const MAX_RETRIES = 5;
@@ -233,5 +265,6 @@ export const PRIORITY = { high: 1, normal: 5, low: 10 } as const;
 
 export function priorityFor(planTier: PlanTier, batch = false): number {
   if (batch) return PRIORITY.low;
-  return planTier === 'PLUS' || planTier === 'ENTERPRISE' ? PRIORITY.high : PRIORITY.normal;
+  // Phase 18 §P.1 "Queue priority": from the plan catalogue.
+  return PLAN_CATALOGUE[planTier].queuePriority === 'high' ? PRIORITY.high : PRIORITY.normal;
 }

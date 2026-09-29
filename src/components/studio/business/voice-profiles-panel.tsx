@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi } from '@/lib/client/api';
 import { EmptyState, ErrorState } from '../primitives';
 import { ConfirmDialog } from '../publications/confirm-dialog';
+import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { VoiceCloneDialog } from './voice-clone-dialog';
 import { VoiceProfileCard } from './voice-profile-card';
 import { useVoiceErrorMessage, type VoiceProfile } from './voice-types';
@@ -63,7 +64,7 @@ export function VoiceProfilesPanel({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="max-w-xl">
           <h2 id="voice-heading" className="font-display text-3xl leading-none">
-            {t('title')}
+            {t('title')} <PlanLockBadge feature="voiceClone" />
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">{t('intro')}</p>
         </div>

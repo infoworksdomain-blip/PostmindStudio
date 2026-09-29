@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { NotFoundError, PlanTierError, ValidationError } from '../../errors';
+import { minTierFor } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 import {
   FOUR_K_TIERS,
@@ -45,7 +46,7 @@ export function mergeRenderOptions(
   planTier: PlanTier,
 ): RenderOptions {
   if (change.youtubeResolution === '4k' && !FOUR_K_TIERS.has(planTier))
-    throw new PlanTierError('PLUS', '4K needs Plus', { planTier });
+    throw new PlanTierError(minTierFor('renders4k'), '4K needs Plus', { planTier });
   const merged: Record<string, unknown> = { ...parseRenderOptions(stored) };
   for (const [key, value] of Object.entries(change)) {
     if (value === null) delete merged[key];

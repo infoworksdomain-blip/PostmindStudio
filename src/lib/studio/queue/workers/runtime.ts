@@ -18,6 +18,7 @@ import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject } from '../../pipeline/project-state';
 import { recordCostPause } from '../../services/auto-resume';
 import { featureGateFor, type Feature } from '../../services/features';
+import { checkJobAccess } from '../../billing/job-access';
 import { retryDelayMs, type JobDataMap, type JobName } from '../queues';
 import type { InlineJobQueue } from '../enqueue';
 import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-approvals';
@@ -35,6 +36,19 @@ import {
   redriveLostPublicationsJob,
 } from './redrive-lost-publications';
 import { checkPlatformAccountsJob, onCheckPlatformAccountsFailed } from './check-platform-accounts';
+import { auditRetentionJob, onAuditRetentionFailed } from './audit-retention';
+import {
+  onSendEmailFailed,
+  onSweepEmailOutboxFailed,
+  sendEmail,
+  sweepEmailOutbox,
+} from './send-email';
+import {
+  cancelledOrgRetentionJob,
+  onBillingSyncFailed,
+  reconcileSubscriptionsJob,
+  sweepStripeEventsJob,
+} from './billing-sync';
 import {
   onCoreSyncFailed,
   reconcileOrganisationsJob,
@@ -90,6 +104,8 @@ import {
 //   - on the final failed attempt the step's failure handler marks the shot/project FAILED
 //   - failed jobs stay in BullMQ's failed set (dead-letter) for operator action
 
+type JobAccessData = { organisationId: string; publicationId?: string };
+
 type Processor<N extends JobName> = (data: JobDataMap[N], deps: PipelineDeps) => Promise<void>;
 type FailureHandler<N extends JobName> = (
   data: JobDataMap[N],
@@ -133,6 +149,12 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'reconcile-organisations': reconcileOrganisationsJob,
   'redrive-lost-publications': redriveLostPublicationsJob,
   'check-platform-accounts': checkPlatformAccountsJob,
+  'sweep-stripe-events': sweepStripeEventsJob,
+  'reconcile-subscriptions': reconcileSubscriptionsJob,
+  'cancelled-org-retention': cancelledOrgRetentionJob,
+  'audit-retention': auditRetentionJob,
+  'send-email': sendEmail,
+  'sweep-email-outbox': sweepEmailOutbox,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -170,7 +192,22 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'reconcile-organisations': onCoreSyncFailed,
   'redrive-lost-publications': onRedriveLostPublicationsFailed,
   'check-platform-accounts': onCheckPlatformAccountsFailed,
+  'sweep-stripe-events': onBillingSyncFailed,
+  'reconcile-subscriptions': onBillingSyncFailed,
+  'cancelled-org-retention': onBillingSyncFailed,
+  'audit-retention': onAuditRetentionFailed,
+  'send-email': onSendEmailFailed,
+  'sweep-email-outbox': onSweepEmailOutboxFailed,
 };
+
+/**
+ * Phase 18 §2.8: jobs the kill switch does not stop. Email spends no provider budget, and a
+ * global kill must not block password resets, verification or billing notices.
+ */
+export const KILL_SWITCH_EXEMPT: ReadonlySet<JobName> = new Set<JobName>([
+  'send-email',
+  'sweep-email-outbox',
+]);
 
 /**
  * 15.D1 / A12.4: jobs that belong to a switchable feature stop (403 feature_disabled, not retried)
@@ -232,10 +269,17 @@ export async function executeJob<N extends JobName>(
     metrics.jobDuration.observe({ job: name, outcome }, (performance.now() - started) / 1000);
   };
   try {
-    await deps.killSwitch.assertNotKilled({
-      organisationId: data.organisationId,
-      projectId: data.projectId,
-    });
+    if (!KILL_SWITCH_EXEMPT.has(name)) {
+      await deps.killSwitch.assertNotKilled({
+        organisationId: data.organisationId,
+        projectId: data.projectId,
+      });
+    }
+    // Phase 18 §P.3: billing access at job start — spend jobs stop (402), publish jobs are held.
+    if ((await checkJobAccess(deps, name, data as JobAccessData)) === 'held') {
+      record('succeeded');
+      return;
+    }
     const feature = JOB_FEATURES[name];
     if (feature)
       await (deps.features ?? featureGateFor(deps.db)).assertEnabled(feature, data.organisationId);

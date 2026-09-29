@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import type { AssetStorage } from '../storage';
+import { minTierFor, tierAtLeast } from '../billing/catalogue';
 import { toPlanTier } from '../services/catalog';
 
 // BACKLOG 13.11 — Addendum A6.7 / A11.2:
@@ -63,7 +64,7 @@ export const disputeDomainInput = z
 
 /** A6.7 names DNS verification as an Enterprise feature; the tier comes from Core's context. */
 export function requireEnterprise(tenant: TenantContext): void {
-  if (toPlanTier(tenant.organisation.planTier) !== 'ENTERPRISE')
+  if (!tierAtLeast(toPlanTier(tenant.organisation.planTier), minTierFor('dnsDomainVerification')))
     throw new ForbiddenError('Domain verification is available on the Enterprise plan', {
       planTier: tenant.organisation.planTier ?? null,
     });

@@ -9,7 +9,7 @@ import { YouTubePublisher } from './youtube';
 export type PublisherRegistry = Record<Platform, PlatformPublisher>;
 
 export function createPublisherRegistry(
-  deps: PublisherDeps & { graphVersion?: string },
+  deps: PublisherDeps & { graphVersion?: string; appSecret?: string },
 ): PublisherRegistry {
   return {
     tiktok: new TikTokPublisher(deps),

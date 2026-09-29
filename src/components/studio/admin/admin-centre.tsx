@@ -15,11 +15,15 @@ import { KillSwitchPanel } from './kill-switch-panel';
 import { LibraryAdminPanel } from './library-admin-panel';
 import { RedrivePanel } from './redrive-panel';
 import { ProvidersPanel, QueuesPanel } from './health-panels';
-import { OrganisationPanel } from './organisation-panel';
+import { LegalReadinessWarning } from './legal-readiness-warning';
+import { OrganisationsTab } from './organisations/organisations-tab';
+import { SubscriptionsTab } from './subscriptions/subscriptions-tab';
+import { UsersTab } from './users/users-tab';
 import { SafetyReviewPanel } from './safety-review-panel';
 import { UsagePanel } from './usage-panel';
 import { BetaPanel } from './beta-panel';
 import { SafetyAuditPanel } from './safety-audit-panel';
+import { AdminBillingTab } from './billing/billing-tab';
 import { isForbidden, type KillSwitchState } from './types';
 
 // BACKLOG 10.11 / spec 16.4 — Admin Centre (PostMind staff only). Every /admin route calls
@@ -48,6 +52,9 @@ const TABS = [
   'safety',
   'safety-audit',
   'organisations',
+  // Phase 18: the standalone directory tabs.
+  'users',
+  'subscriptions',
   'usage',
   'dead-letters',
   'force-approvals',
@@ -68,6 +75,8 @@ const TAB_KEY = {
   safety: 'safety',
   'safety-audit': 'safetyAudit',
   organisations: 'organisations',
+  users: 'users',
+  subscriptions: 'subscriptions',
   usage: 'usage',
   'dead-letters': 'deadLetters',
   'force-approvals': 'forceApprovals',
@@ -76,10 +85,13 @@ const TAB_KEY = {
 
 export function AdminCentre() {
   const t = useTranslations('admin.centre');
+  const tBilling = useTranslations('billing.admin');
   const probe = useApi<KillSwitchState>('/admin/kill-switch');
   // ?tab= opens a tab directly (the safety-review notification links to ?tab=safety).
   const requested = useSearchParams()?.get('tab') ?? '';
-  const initialTab = (TABS as readonly string[]).includes(requested) ? requested : 'kill-switch';
+  const initialTab = ([...TABS, 'billing'] as readonly string[]).includes(requested)
+    ? requested
+    : 'kill-switch';
   const header = (
     <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
   );
@@ -109,6 +121,7 @@ export function AdminCentre() {
   return (
     <>
       {header}
+      <LegalReadinessWarning />
       <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
         <TabsList className="max-w-full overflow-x-auto">
           {TABS.map((tab) => (
@@ -116,6 +129,7 @@ export function AdminCentre() {
               {t(`tabs.${TAB_KEY[tab]}`)}
             </TabsTrigger>
           ))}
+          <TabsTrigger value="billing">{tBilling('tab')}</TabsTrigger>
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />
@@ -142,7 +156,13 @@ export function AdminCentre() {
           <SafetyReviewPanel />
         </TabsContent>
         <TabsContent value="organisations">
-          <OrganisationPanel />
+          <OrganisationsTab />
+        </TabsContent>
+        <TabsContent value="users">
+          <UsersTab />
+        </TabsContent>
+        <TabsContent value="subscriptions">
+          <SubscriptionsTab />
         </TabsContent>
         <TabsContent value="usage">
           <UsagePanel />
@@ -158,6 +178,9 @@ export function AdminCentre() {
         </TabsContent>
         <TabsContent value="beta">
           <BetaPanel />
+        </TabsContent>
+        <TabsContent value="billing">
+          <AdminBillingTab />
         </TabsContent>
       </Tabs>
     </>

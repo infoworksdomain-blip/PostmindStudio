@@ -80,6 +80,9 @@ projects:
             envVars:
               - key: NODE_ENV
                 value: production
+              # Phase 18 §0: Render staging stays wired to PostMind Core (pre-Phase-18 mode).
+              - key: STUDIO_MODE
+                value: core
               - key: STORAGE_PROVIDER
                 value: r2
               - key: R2_JURISDICTION
@@ -311,6 +314,34 @@ projects:
               - key: STUDIO_DB_CONNECTION_LIMIT
                 value: '3'
 
+          # Phase 18 §2.8 — transactional and notification email (send-email jobs, Resend). Core mode
+          # (this blueprint's STUDIO_MODE) sends no email; the worker still runs the outbox sweeper.
+          - type: pserv
+            name: studio-worker-email-staging
+            runtime: docker
+            dockerfilePath: ./Dockerfile
+            region: frankfurt
+            plan: 0.5c-512mb
+            numInstances: 1
+            autoDeployTrigger: checksPass
+            maxShutdownDelaySeconds: 120
+            dockerCommand: sh scripts/render/with-db-url.sh npx tsx scripts/worker.ts studio-email
+            envVars:
+              - fromGroup: studio-config-staging
+              - fromGroup: studio-metrics-staging
+              - fromGroup: studio-secrets-staging
+              - key: RENDER_POSTGRES_URL
+                fromDatabase:
+                  name: studio-db-staging
+                  property: connectionString
+              - key: REDIS_URL
+                fromService:
+                  type: keyvalue
+                  name: studio-kv-staging
+                  property: connectionString
+              - key: STUDIO_DB_CONNECTION_LIMIT
+                value: '3'
+
           - type: pserv
             name: studio-monitoring-staging
             runtime: docker
@@ -367,6 +398,11 @@ projects:
                 fromService:
                   type: pserv
                   name: studio-worker-library-staging
+                  property: host
+              - key: STUDIO_WORKER_EMAIL_HOST
+                fromService:
+                  type: pserv
+                  name: studio-worker-email-staging
                   property: host
 
           # Phase 17.5 — daily backup copy of the assets, renders and thumbnails buckets into the
@@ -425,6 +461,9 @@ projects:
             envVars:
               - key: NODE_ENV
                 value: production
+              # Phase 18 §0: Render staging stays wired to PostMind Core (pre-Phase-18 mode).
+              - key: STUDIO_MODE
+                value: core
               - key: STORAGE_PROVIDER
                 value: r2
               - key: R2_JURISDICTION
@@ -646,6 +685,34 @@ projects:
               - key: STUDIO_DB_CONNECTION_LIMIT
                 value: '3'
 
+          # Phase 18 §2.8 — transactional and notification email (send-email jobs, Resend). Core mode
+          # (this blueprint's STUDIO_MODE) sends no email; the worker still runs the outbox sweeper.
+          - type: pserv
+            name: studio-worker-email-production
+            runtime: docker
+            dockerfilePath: ./Dockerfile
+            region: frankfurt
+            plan: 1c-2g
+            numInstances: 1
+            autoDeployTrigger: 'off'
+            maxShutdownDelaySeconds: 120
+            dockerCommand: sh scripts/render/with-db-url.sh npx tsx scripts/worker.ts studio-email
+            envVars:
+              - fromGroup: studio-config-production
+              - fromGroup: studio-metrics-production
+              - fromGroup: studio-secrets-production
+              - key: RENDER_POSTGRES_URL
+                fromDatabase:
+                  name: studio-db-production
+                  property: connectionString
+              - key: REDIS_URL
+                fromService:
+                  type: keyvalue
+                  name: studio-kv-production
+                  property: connectionString
+              - key: STUDIO_DB_CONNECTION_LIMIT
+                value: '3'
+
           - type: pserv
             name: studio-monitoring-production
             runtime: docker
@@ -702,6 +769,11 @@ projects:
                 fromService:
                   type: pserv
                   name: studio-worker-library-production
+                  property: host
+              - key: STUDIO_WORKER_EMAIL_HOST
+                fromService:
+                  type: pserv
+                  name: studio-worker-email-production
                   property: host
 
           # Phase 17.5 — daily backup copy of the assets, renders and thumbnails buckets into the

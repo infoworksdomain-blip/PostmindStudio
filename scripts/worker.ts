@@ -29,7 +29,14 @@ import {
 import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
+import { CANCELLED_RETENTION_SCHEDULE } from '../src/lib/studio/billing/retention';
+import {
+  STRIPE_SWEEP_SCHEDULE,
+  SUBSCRIPTION_RECONCILE_SCHEDULE,
+} from '../src/lib/studio/billing/reconcile';
 import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
+import { AUDIT_RETENTION_SCHEDULE } from '../src/lib/studio/services/audit-retention';
+import { EMAIL_SWEEP_SCHEDULE } from '../src/lib/studio/queue/workers/send-email';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -203,12 +210,66 @@ async function main(): Promise<void> {
       data: { organisationId: 'postmind-platform', runId: 'account-check', planTier: 'STANDARD' },
     },
   );
+  // Phase 18 Track C — Stripe webhook safety nets: event sweeper and nightly reconcile.
+  await analytics.upsertJobScheduler(
+    'sweep-stripe-events',
+    { pattern: STRIPE_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-stripe-events',
+      data: { organisationId: 'postmind-platform', runId: 'stripe-sweep', planTier: 'STANDARD' },
+    },
+  );
+  await analytics.upsertJobScheduler(
+    'reconcile-subscriptions-nightly',
+    { pattern: SUBSCRIPTION_RECONCILE_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'reconcile-subscriptions',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'stripe-reconcile',
+        planTier: 'STANDARD',
+      },
+    },
+  );
+  await orchestration.upsertJobScheduler(
+    'cancelled-org-retention-daily',
+    { pattern: CANCELLED_RETENTION_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'cancelled-org-retention',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'cancelled-retention',
+        planTier: 'STANDARD',
+      },
+    },
+  );
+  // Phase 18 §2.6 — local audit log retention.
+  await analytics.upsertJobScheduler(
+    'audit-retention-daily',
+    { pattern: AUDIT_RETENTION_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'audit-retention',
+      data: { organisationId: 'postmind-platform', runId: 'audit-retention', planTier: 'STANDARD' },
+    },
+  );
   await publish.upsertJobScheduler(
     'dispatch-auto-publish',
     { pattern: OUTBOX_DISPATCH_SCHEDULE, tz: 'UTC' },
     {
       name: 'dispatch-auto-publish',
       data: { organisationId: 'postmind-platform', runId: 'auto-publish', planTier: 'STANDARD' },
+    },
+  );
+
+  // Phase 18 §2.8 — the email outbox sweeper: re-enqueues rows whose send-email job was lost and
+  // purges old rows (every 5 minutes, on studio-email).
+  const email = new Queue(QUEUES.email, { connection, prefix: queuePrefix() });
+  await email.upsertJobScheduler(
+    'sweep-email-outbox',
+    { pattern: EMAIL_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-email-outbox',
+      data: { organisationId: 'postmind-platform', runId: 'email-sweep', planTier: 'STANDARD' },
     },
   );
 
@@ -242,6 +303,7 @@ async function main(): Promise<void> {
     await assets.close();
     await orchestration.close();
     await publish.close();
+    await email.close();
     metricsServer?.close();
     await queue.close();
     await db.$disconnect();

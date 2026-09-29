@@ -16,7 +16,7 @@ import type { OAUTH_PLATFORMS } from './platforms';
 
 type PlatformInfo = (typeof OAUTH_PLATFORMS)[number];
 
-function AccountRow({
+export function AccountRow({
   connection,
   label,
   connecting,

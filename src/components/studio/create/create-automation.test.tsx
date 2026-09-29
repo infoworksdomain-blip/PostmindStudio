@@ -27,7 +27,7 @@ const template = {
   createdAt: '2026-09-27T00:00:00Z',
 };
 
-function routes(): MockRoute[] {
+function routes(metaConnect: 'core' | 'studio' = 'core'): MockRoute[] {
   return [
     { match: '/brand-kits', body: { ok: true, data: [] } },
     {
@@ -50,6 +50,7 @@ function routes(): MockRoute[] {
             state: 'needs_reconnect',
           },
         ],
+        meta: { connect: metaConnect, configured: true },
       },
     },
     { match: '/templates', body: { ok: true, data: [template] } },
@@ -129,5 +130,19 @@ describe('CreateScreen — templates and auto-publish', () => {
     expect(
       screen.getByText(/Connect Instagram and Facebook in PostMind settings/),
     ).toBeInTheDocument();
+  });
+
+  it('standalone: points to Connections, never to PostMind settings (Phase 18)', async () => {
+    mockFetch(routes('studio'));
+    renderWithSWR(<CreateScreen initialReference={null} />);
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
+    await userEvent.click(screen.getByLabelText(/Auto-publish when approved/));
+    expect(screen.getByLabelText('Instagram Reels account')).toBeDisabled();
+    expect(screen.queryByText(/PostMind settings/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Connect/ })[0]).toHaveAttribute(
+      'href',
+      '/connections',
+    );
   });
 });

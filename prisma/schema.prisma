@@ -664,9 +664,17 @@ model PlatformConnection {
   /// changes `state`).
   statusCheckedAt       DateTime?
   statusCheckOutcome    String?
+  /// Phase 18 §2.10: who obtained the tokens — 'core' (pushed by PostMind Core) or 'studio'
+  /// (Studio's own OAuth). NULL on rows written before Phase 18 (all of them came from Core).
+  connectedVia          String?
+  /// Phase 18 §2.10: the Meta app-scoped user id whose Facebook Login for Business connected this
+  /// Page / IG account (Studio's own OAuth only; NULL otherwise). The deauthorise and
+  /// data-deletion callbacks name that id, so this is how they find the rows to revoke.
+  metaUserId            String?
 
   @@unique([organisationId, platform, platformAccountId])
   @@index([state, statusCheckedAt])
+  @@index([metaUserId])
   @@map("platform_connections")
   @@schema("studio")
 }
@@ -1645,7 +1653,9 @@ model UsageEvent {
   eventKey       String    @unique // render:<id> | provider_job:<id>
   payload        Json
   occurredAt     DateTime
-  state          String    @default("pending_setup") // pending_setup | sent | failed
+  // pending_setup | sent | failed | local (Phase 18: standalone billing keeps rows as the local
+  // usage record; nothing is sent)
+  state          String    @default("pending_setup")
   attempts       Int       @default(0)
   lastError      String?
   sentAt         DateTime?
@@ -1788,5 +1798,384 @@ model SafetyAuditItem {
   @@unique([period, publicationId])
   @@index([period, result])
   @@map("safety_audit_items")
+  @@schema("studio")
+}
+
+// =============================================================================
+// Phase 18 — standalone SaaS (plans/phase-18.md §4). Expand-only: new tables plus nullable
+// columns. The ~45 existing tables keep organisationId / userId as plain strings with no FK, so
+// core mode (Core ids) and standalone mode (Better Auth ids, <= 128 chars) share one schema.
+// =============================================================================
+
+// ---- Better Auth core + plugins (better-auth@1.7.6). Model names match Better Auth's default
+// model names (user, session, account, verification, organization, member, invitation, twoFactor)
+// so the Prisma adapter needs no modelName mapping; @@map gives the plan's table names. Field
+// names and types were checked against getSchema() of the pinned version (2026-09-29).
+
+model User {
+  id               String    @id
+  name             String
+  email            String    @unique
+  emailVerified    Boolean   @default(false)
+  image            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  // twoFactor plugin
+  twoFactorEnabled Boolean?  @default(false)
+  // admin plugin: 'user' | 'staff' | 'superadmin' (§2.5)
+  role             String?   @default("user")
+  banned           Boolean?  @default(false)
+  banReason        String?
+  banExpires       DateTime?
+  // Studio additional fields
+  locale           String? // UI / email locale (one of the 11 LOCALES); null = en-GB
+  deletedAt        DateTime? // §5.11 soft delete; rows removed at grace end
+
+  sessions    Session[]
+  accounts    Account[]
+  twoFactors  TwoFactor[]
+  members     Member[]
+  invitations Invitation[]
+
+  @@map("users")
+  @@schema("studio")
+}
+
+model Session {
+  id                   String   @id
+  expiresAt            DateTime
+  token                String   @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @default(now()) @updatedAt
+  ipAddress            String?
+  userAgent            String?
+  userId               String
+  // organization plugin
+  activeOrganizationId String?
+  // admin plugin (impersonation, off by default)
+  impersonatedBy       String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+  @@schema("studio")
+}
+
+/// Better Auth `account`: one row per sign-in method. The argon2id password hash lives in
+/// `password` on the row with providerId 'credential'.
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_accounts")
+  @@schema("studio")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+  @@schema("studio")
+}
+
+/// twoFactor plugin. `secret` is AES-encrypted by Better Auth with BETTER_AUTH_SECRET
+/// (symmetricEncrypt); backup codes are stored encrypted (storeBackupCodes: 'encrypted').
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([secret])
+  @@index([userId])
+  @@map("two_factors")
+  @@schema("studio")
+}
+
+/// organization plugin. Studio's organisation (the tenant) in standalone mode.
+model Organization {
+  id            String    @id
+  name          String
+  slug          String    @unique
+  logo          String?
+  createdAt     DateTime  @default(now())
+  metadata      String?
+  // Studio additional fields
+  country       String? // ISO 3166-1 alpha-2, for tax
+  defaultLocale String?
+  deletedAt     DateTime?
+
+  members     Member[]
+  invitations Invitation[]
+
+  @@map("organisations")
+  @@schema("studio")
+}
+
+/// organization plugin. role: owner | admin | publisher | creator | viewer (§2.4).
+model Member {
+  id             String   @id
+  organizationId String
+  userId         String
+  role           String   @default("member")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("members")
+  @@schema("studio")
+}
+
+model Invitation {
+  id             String   @id
+  organizationId String
+  email          String
+  role           String?
+  status         String   @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  inviterId      String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitations")
+  @@schema("studio")
+}
+
+// ---- Studio tables
+
+/// §2.11: businesses owned by an organisation (standalone mode). Unique (organisationId,
+/// lower(name)) among non-deleted rows is a partial expression index created in the migration
+/// (businesses_org_lower_name_live_key); Prisma cannot express it.
+model Business {
+  id              String    @id @default(cuid())
+  organisationId  String
+  name            String
+  domain          String?
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([organisationId, deletedAt])
+  @@map("businesses")
+  @@schema("studio")
+}
+
+/// §2.6 local audit log. Append-only: a trigger rejects UPDATE / DELETE / TRUNCATE unless the
+/// transaction ran SET LOCAL studio.audit_retention = 'on' (only the retention job does).
+/// metadata holds ids and codes, never PII.
+model AuditLog {
+  id                 String   @id @default(cuid())
+  occurredAt         DateTime @default(now())
+  actorUserId        String?
+  actorType          String // user | staff | system | stripe | meta
+  impersonatorUserId String?
+  organisationId     String?
+  action             String
+  resourceType       String
+  resourceId         String
+  metadata           Json?
+  ip                 String?
+  userAgent          String?
+  correlationId      String?
+
+  @@index([organisationId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([occurredAt])
+  @@map("audit_log")
+  @@schema("studio")
+}
+
+/// §2.7: one Stripe customer per organisation.
+model BillingCustomer {
+  organisationId   String    @id
+  stripeCustomerId String    @unique
+  /// Random nonce mixed into outbound Stripe Idempotency-Key values (orgId, intent, nonce).
+  idempotencyNonce String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@map("billing_customers")
+  @@schema("studio")
+}
+
+/// §2.7: current state of a Stripe subscription (re-fetched from the API on every event).
+model Subscription {
+  id                 String    @id // Stripe subscription id (sub_...)
+  organisationId     String
+  stripeCustomerId   String
+  status             String // Stripe status: trialing | active | past_due | unpaid | canceled | ...
+  lookupKey          String? // studio_<tier>_<interval>
+  interval           String? // month | year
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  trialEnd           DateTime?
+  stripeUpdatedAt    DateTime? // when we last re-fetched it from Stripe
+  // Track C (migration 20261004030000): what the subscription is billed, for the admin MRR view
+  // and ENTERPRISE mapping (product metadata studio_tier; ENTERPRISE prices have no lookup key).
+  productTier        String?
+  unitAmountPence    Int?
+  currency           String?
+  quantity           Int       @default(1)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([organisationId])
+  @@index([status])
+  @@map("subscriptions")
+  @@schema("studio")
+}
+
+/// §P.3: the resolved plan for an organisation. The single place Studio reads tier / access.
+model OrgEntitlement {
+  organisationId  String    @id
+  tier            String // BASIC | STANDARD | PLUS | ENTERPRISE
+  access          String // full | read_only | none
+  source          String // stripe | trial | admin | core | none
+  graceUntil      DateTime?
+  /// Per-org differences (Enterprise quotas, seats, businesses, storage, trial caps).
+  overrides       Json?
+  /// Set when the organisation first starts a trial (one trial per organisation).
+  trialStartedAt  DateTime?
+  /// Set once the organisation has paid at least one invoice (canceled: read_only, not none).
+  everPaidAt      DateTime?
+  reason          String?
+  updatedAt       DateTime  @updatedAt
+  updatedByUserId String?
+
+  @@map("org_entitlements")
+  @@schema("studio")
+}
+
+/// §P.3 top-up credits: one row per purchased pack, consumed first-in first-out.
+model UsageCredit {
+  id                      String    @id @default(cuid())
+  organisationId          String
+  kind                    String // short | long
+  packLookupKey           String // studio_topup_short10_basic ...
+  quantity                Int
+  remaining               Int
+  stripeCheckoutSessionId String?   @unique
+  stripePaymentIntentId   String?
+  purchasedAt             DateTime  @default(now())
+  expiresAt               DateTime
+  refundedAt              DateTime?
+  createdAt               DateTime  @default(now())
+
+  @@index([organisationId, kind, expiresAt])
+  @@map("usage_credits")
+  @@schema("studio")
+}
+
+/// One consumed credit; unique per project and month so a retried generate never spends twice.
+model UsageCreditUse {
+  id             String   @id @default(cuid())
+  creditId       String
+  organisationId String
+  projectId      String
+  month          String // 'YYYY-MM' (UTC)
+  kind           String // short | long
+  createdAt      DateTime @default(now())
+
+  @@unique([projectId, month])
+  @@index([organisationId, month])
+  @@index([creditId])
+  @@map("usage_credit_uses")
+  @@schema("studio")
+}
+
+/// §2.7 webhook dedupe: one row per Stripe event id. processedAt NULL = the sweeper retries it.
+model StripeEvent {
+  id          String    @id // evt_...
+  type        String
+  objectId    String?
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  attempts    Int       @default(0)
+  lastError   String?
+
+  @@index([processedAt, receivedAt])
+  @@map("stripe_events")
+  @@schema("studio")
+}
+
+/// §2.7 trial abuse control: card fingerprints that already had a trial.
+model TrialFingerprint {
+  fingerprint    String   @id
+  organisationId String
+  createdAt      DateTime @default(now())
+
+  @@map("trial_fingerprints")
+  @@schema("studio")
+}
+
+/// §2.8 transactional email outbox. idempotencyKey = notificationId or auth:<verificationId>.
+model EmailOutbox {
+  id                String    @id @default(cuid())
+  idempotencyKey    String    @unique
+  organisationId    String?
+  userId            String?
+  toAddress         String
+  template          String
+  locale            String
+  params            Json
+  /// pending | sending | sent | delivered | delayed | bounced | complained | suppressed | failed
+  state             String    @default("pending")
+  providerMessageId String?   @unique
+  attempts          Int       @default(0)
+  lastError         String?
+  sentAt            DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([state, createdAt])
+  @@index([userId])
+  @@map("email_outbox")
+  @@schema("studio")
+}
+
+/// §2.8 hard bounces and complaints, keyed by SHA-256 of the lowercased address so the
+/// suppression outlives account deletion.
+model EmailSuppression {
+  addressHash String   @id
+  reason      String // bounce | complaint | manual
+  createdAt   DateTime @default(now())
+
+  @@map("email_suppressions")
   @@schema("studio")
 }

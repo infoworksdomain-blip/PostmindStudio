@@ -9,6 +9,7 @@ import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { PublishJobData } from '../queue/queues';
 import { toPlanTier } from './catalog';
 import { recordedPlanTier } from './redrive';
+import { billingHoldOf, type BillingAccessLookup } from '../billing/job-access';
 
 // BACKLOG 17.2 — lost publish jobs (runbooks/review-publish-automation.md). A publication is
 // committed first and its job is enqueued after the commit (POST /publications, the auto-publish
@@ -64,6 +65,11 @@ export interface LostPublicationDeps {
   marginMs?: number;
   /** One organisation only (tests, manual runs); absent = all. */
   organisationId?: string;
+  /**
+   * Phase 18 §P.3: billing access. A publication of an organisation without full access is left
+   * SCHEDULED (held); once access is full again this sweep publishes it.
+   */
+  billingAccess?: BillingAccessLookup;
 }
 
 export interface LostPublicationResult {
@@ -114,6 +120,8 @@ async function redriveOne(
     platform: publication.platform,
   });
   if (status.killed) return `kill_switch_engaged: ${status.level}`;
+  if (deps.billingAccess && (await deps.billingAccess(publication.organisationId)) !== 'full')
+    return 'billing hold: waiting for payment';
   if (schedule?.state === 'CANCELLED') return 'schedule cancelled';
 
   const data: PublishJobData = {
@@ -135,7 +143,12 @@ async function redriveOne(
   )
     return 'publish job still queued';
   const dueAt = publication.scheduledFor ?? publication.createdAt;
-  const jobId = redriveJobId(publication.id, publication.retryCount, dueAt);
+  // A publication released from a billing hold gets its own id, so an earlier re-drive does not
+  // block it ("already re-driven once").
+  const heldAt = billingHoldOf(publication.metadata);
+  const jobId = heldAt
+    ? `${redriveJobId(publication.id, publication.retryCount, dueAt)}__billing__${Date.parse(heldAt)}`
+    : redriveJobId(publication.id, publication.retryCount, dueAt);
   const earlier = await queued(deps.queue, 'publish-video', jobId);
   if (earlier === 'pending') return 're-drive already queued';
   if (earlier === 'finished') return 'already re-driven once; check it by hand';

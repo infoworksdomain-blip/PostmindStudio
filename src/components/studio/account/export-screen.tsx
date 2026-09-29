@@ -34,6 +34,8 @@ export const GROUPS = [
   { key: 'analytics', label: 'analytics' },
   { key: 'brand', label: 'brand' },
   { key: 'image_library', label: 'imageLibrary' },
+  { key: 'account', label: 'account' },
+  { key: 'billing', label: 'billing' },
 ] as const;
 
 type GroupLabel = (typeof GROUPS)[number]['label'];

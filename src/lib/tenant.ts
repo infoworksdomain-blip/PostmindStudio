@@ -35,12 +35,29 @@ const coreContextSchema = z.object({
 
 export type CoreContext = z.infer<typeof coreContextSchema>;
 
+/** Platform role of the signed-in user (Phase 18 §2.5; standalone mode only). */
+export type PlatformRole = 'user' | 'staff' | 'superadmin';
+
+/** Billing access of the organisation (Phase 18 §P.3). */
+export type TenantAccess = 'full' | 'read_only' | 'none';
+
 export interface TenantContext {
   userId: string;
   organisationId: string;
   organisation: CoreContext['organisation'];
   memberships: CoreContext['memberships'];
   capabilities: string[];
+  // Phase 18 §2.2 — optional, set by the standalone IdentityProvider (core mode leaves them
+  // unset, so existing consumers are unchanged).
+  platformRole?: PlatformRole;
+  /** Better Auth session id (not the token). */
+  sessionId?: string;
+  /** Set while a superadmin impersonates this user (off by default). */
+  impersonatorUserId?: string;
+  /** From entitlements; absent = full (core mode). */
+  access?: TenantAccess;
+  /** The member's organisation role (owner | admin | publisher | creator | viewer). */
+  role?: string;
 }
 
 const claimsSchema = z
@@ -102,14 +119,22 @@ export function extractToken(
     ? readCookie(req.headers.get('cookie'), options.sessionCookie)
     : undefined;
   if (!cookie) throw new UnauthorizedError('Missing bearer token');
-  if (!SAFE_METHODS.has((req.method ?? 'GET').toUpperCase())) {
-    const origin = req.headers.get('origin');
-    const sameOrigin = origin
-      ? Boolean(options.appOrigin) && origin === options.appOrigin
-      : req.headers.get('sec-fetch-site') === 'same-origin';
-    if (!sameOrigin) throw new ForbiddenError('Cross-site request refused');
-  }
+  assertSameOriginWrite(req, options.appOrigin);
   return cookie;
+}
+
+/**
+ * CSRF check for cookie-authenticated requests: a state-changing method must carry Studio's own
+ * Origin (or, without an Origin header, Sec-Fetch-Site: same-origin). Safe methods pass. Shared by
+ * core mode (extractToken) and standalone mode (identity/standalone.ts, Phase 18 §2.3).
+ */
+export function assertSameOriginWrite(req: TenantRequest, appOrigin: string | undefined): void {
+  if (SAFE_METHODS.has((req.method ?? 'GET').toUpperCase())) return;
+  const origin = req.headers.get('origin');
+  const sameOrigin = origin
+    ? Boolean(appOrigin) && origin === appOrigin
+    : req.headers.get('sec-fetch-site') === 'same-origin';
+  if (!sameOrigin) throw new ForbiddenError('Cross-site request refused');
 }
 
 function isJwksAvailabilityError(err: unknown): boolean {
@@ -234,7 +259,17 @@ function getDefaultResolver(): TenantResolver {
   return defaultResolver;
 }
 
-/** Call first in every /api/studio/* route handler. */
-export function requireTenantContext(req: TenantRequest): Promise<TenantContext> {
-  return getDefaultResolver()(req);
+/** Core mode's resolver: Core's JWKS JWT + context endpoint (unchanged since Phase 10). */
+export function coreTenantResolver(): TenantResolver {
+  return getDefaultResolver();
+}
+
+/**
+ * Call first in every /api/studio/* route handler. Phase 18 §2.2: delegates to the configured
+ * IdentityProvider (STUDIO_IDENTITY_MODE): Better Auth sessions in standalone mode, the Core
+ * resolver above in core mode.
+ */
+export async function requireTenantContext(req: TenantRequest): Promise<TenantContext> {
+  const { getIdentityProvider } = await import('./identity');
+  return (await getIdentityProvider()).resolve(req);
 }

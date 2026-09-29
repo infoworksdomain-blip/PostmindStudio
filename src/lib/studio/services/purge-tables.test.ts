@@ -18,7 +18,17 @@ describe('PURGE_TABLE_STEPS', () => {
   });
 
   it('purges every model with an organisationId column except the tombstones and takedowns', () => {
-    const kept = ['OrganisationPurge', 'BusinessPurge', 'TakedownRequest'];
+    const kept = [
+      'OrganisationPurge',
+      'BusinessPurge',
+      'TakedownRequest',
+      // Phase 18 Track C billing records (§5.11 retention).
+      'BillingCustomer',
+      'Subscription',
+      'TrialFingerprint',
+      // Phase 18 audit trail (append-only; retention job).
+      'AuditLog',
+    ];
     const orgScoped = models
       .filter((m) => m.fields.some((f) => f.name === 'organisationId'))
       .map((m) => m.name)
@@ -88,6 +98,38 @@ describe('PURGE_TABLE_STEPS', () => {
     before('share_link_comments', 'share_links');
     before('publication_conversations', 'video_publications');
     before('calendar_shadows', 'video_publications');
+    // Phase 18: the organisation row goes last, after the memberships and invitations (FKs).
+    before('members', 'organisations');
+    before('invitations', 'organisations');
+    expect(PURGE_TABLE_STEPS.at(-1)?.table).toBe('organisations');
+  });
+
+  it('classifies the Phase 18 identity, email and billing models as the plan says', () => {
+    for (const model of [
+      'Organization',
+      'Member',
+      'Invitation',
+      'Business',
+      'EmailOutbox',
+      'UsageCreditUse',
+      'UsageCredit',
+      'OrgEntitlement',
+    ])
+      expect(stepFor.has(model), model).toBe(true);
+    for (const model of [
+      'User',
+      'Session',
+      'Account',
+      'TwoFactor',
+      'Verification',
+      'AuditLog',
+      'EmailSuppression',
+      'BillingCustomer',
+      'Subscription',
+      'TrialFingerprint',
+      'StripeEvent',
+    ])
+      expect(NOT_PURGED_MODELS[model], model).toBeDefined();
   });
 
   it('never deletes the tombstones or the takedown record', () => {

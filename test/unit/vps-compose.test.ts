@@ -424,7 +424,7 @@ describe('VPS compose — fits the default 2 GB / 1 vCPU server (Hetzner CPX12)'
     const keys = (name: string) => new RegExp(`^${name}=(\\d+)$`, 'm').exec(envExample)?.[1];
     expect(keys('STUDIO_FFMPEG_MAX_CONCURRENT')).toBe('1');
     expect(Number(keys('STUDIO_LIBRARY_CONCURRENCY'))).toBe(1);
-    for (const q of ['ORCHESTRATION', 'ASSETS', 'PUBLISH', 'SCHEDULED', 'ANALYTICS']) {
+    for (const q of ['ORCHESTRATION', 'ASSETS', 'PUBLISH', 'SCHEDULED', 'ANALYTICS', 'EMAIL']) {
       expect(Number(keys(`WORKER_CONCURRENCY_${q}`)), q).toBeLessThanOrEqual(3);
     }
   });
@@ -442,7 +442,7 @@ describe('VPS environment files', () => {
     '%s: every env var the code requires at start-up is set by compose or REQUIRED in .env.example',
     (name) => {
       const provided = new Set([...composeEnv(name), ...required]);
-      const missing = requiredAtStartup().filter((k) => !provided.has(k));
+      const missing = requiredAtStartup('standalone').filter((k) => !provided.has(k));
       expect(missing).toEqual([]);
     },
   );
@@ -472,7 +472,7 @@ describe('VPS environment files', () => {
 
   it('the deploy preflight checks the keys the app cannot start without', () => {
     const deploy = read('scripts/vps/deploy.sh');
-    for (const key of requiredAtStartup()) {
+    for (const key of requiredAtStartup('standalone')) {
       if (
         ['DATABASE_URL', 'REDIS_URL', 'APP_URL', 'STORAGE_PROVIDER', 'METRICS_TOKEN'].includes(key)
       )

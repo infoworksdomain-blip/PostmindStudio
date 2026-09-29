@@ -17,6 +17,9 @@ import { CreateScreen } from '@/components/studio/create/create-screen';
 import { LibraryBrowse } from '@/components/studio/library/library-browse';
 import { LibraryDetail } from '@/components/studio/library/library-detail';
 import { WelcomeWizard } from '@/components/studio/onboarding/welcome-wizard';
+import { AuditScreen } from '@/components/studio/settings/audit-screen';
+import { MembersScreen } from '@/components/studio/settings/members-screen';
+import { OrganisationSettingsScreen } from '@/components/studio/settings/organisation-settings';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
 import { PublicationsList } from '@/components/studio/publications/publications-list';
 import { ReviewScreen } from '@/components/studio/review/review-screen';
@@ -31,6 +34,8 @@ import { NotBuiltScreen } from './tour/not-built';
 import { SystemTour } from './tour/system';
 import { TourHome } from './tour/home';
 import { WhatsNew } from './tour/whats-new';
+import { publicPage } from './public-pages';
+import { BillingScreen } from '@/components/studio/billing/billing-screen';
 import { matchPath, navigate, useLocation } from './router';
 
 // The demo build: the real Studio screens (src/components/studio) inside the real app shell,
@@ -76,6 +81,12 @@ const ROUTES: RouteDef[] = [
   { path: '/templates', render: () => <TemplatesScreen /> },
   { path: '/account/export', render: () => <ExportScreen /> },
   { path: '/p/:token', render: (p) => <PublicPreview token={p.token ?? ''} /> },
+  // Phase 18 Track E: organisation settings, members and the audit log.
+  { path: '/settings/organisation', render: () => <OrganisationSettingsScreen /> },
+  { path: '/settings/members', render: () => <MembersScreen /> },
+  { path: '/settings/audit', render: () => <AuditScreen /> },
+  // Phase 18 Track C: plan, usage, top-ups and invoices (sample data from demo/api p18-billing).
+  { path: '/settings/billing', render: () => <BillingScreen /> },
 ];
 
 function Routed() {
@@ -127,6 +138,19 @@ export function DemoApp() {
 }
 
 function DemoShell() {
+  const { pathname, search } = useLocation();
+  // Phase 18: the public pages (landing, legal, pricing, sign-up) have no app shell.
+  const publicBody = publicPage(pathname, new URLSearchParams(search));
+  if (publicBody)
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <TooltipProvider delayDuration={200}>
+          <DemoBar />
+          {publicBody}
+          <Toaster richColors position="bottom-right" />
+        </TooltipProvider>
+      </ThemeProvider>
+    );
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <TooltipProvider delayDuration={200}>

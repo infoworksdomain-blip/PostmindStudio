@@ -71,6 +71,26 @@ const EXPECTED_TABLES = [
   'share_link_comments',
   'usage_events',
   'calendar_shadows',
+  // Phase 18 — standalone SaaS (plans/phase-18.md §4)
+  'users',
+  'sessions',
+  'auth_accounts',
+  'verifications',
+  'two_factors',
+  'organisations',
+  'members',
+  'invitations',
+  'businesses',
+  'audit_log',
+  'billing_customers',
+  'subscriptions',
+  'org_entitlements',
+  'usage_credits',
+  'usage_credit_uses',
+  'stripe_events',
+  'trial_fingerprints',
+  'email_outbox',
+  'email_suppressions',
 ];
 
 let db: PGlite;
@@ -84,7 +104,7 @@ afterAll(async () => {
 });
 
 describe('studio schema migrations', () => {
-  it('creates all 59 tables in the studio schema and nowhere else', async () => {
+  it('creates all 78 tables in the studio schema and nowhere else', async () => {
     const { rows } = await db.query<{ schemaname: string; tablename: string }>(
       `SELECT schemaname, tablename FROM pg_tables
        WHERE schemaname NOT IN ('pg_catalog', 'information_schema')`,
@@ -134,5 +154,41 @@ describe('studio schema migrations', () => {
     );
     const labels = rows.map((r) => r.label);
     expect(labels).toEqual(expect.arrayContaining(['LIBRARY_REFERENCE', 'SLIDESHOW', 'SCANNING']));
+  });
+
+  it('keeps the audit log append-only unless the retention job opts in (Phase 18 §2.6)', async () => {
+    await db.query(
+      `INSERT INTO studio.audit_log (id, "actorType", action, "resourceType", "resourceId")
+       VALUES ('a1', 'system', 'test.action', 'test', 't1')`,
+    );
+    await expect(
+      db.query(`UPDATE studio.audit_log SET action = 'x' WHERE id = 'a1'`),
+    ).rejects.toThrow(/append-only/);
+    await expect(db.query(`DELETE FROM studio.audit_log WHERE id = 'a1'`)).rejects.toThrow(
+      /append-only/,
+    );
+    await expect(db.query(`TRUNCATE studio.audit_log`)).rejects.toThrow(/append-only/);
+    await db.transaction(async (tx) => {
+      await tx.query(`SET LOCAL studio.audit_retention = 'on'`);
+      await tx.query(`DELETE FROM studio.audit_log WHERE id = 'a1'`);
+    });
+    const { rows } = await db.query(`SELECT id FROM studio.audit_log WHERE id = 'a1'`);
+    expect(rows).toHaveLength(0);
+  });
+
+  it('allows one live business per organisation and case-insensitive name', async () => {
+    const insert = (id: string, name: string, deleted = false) =>
+      db.query(
+        `INSERT INTO studio.businesses (id, "organisationId", name, "createdByUserId", "updatedAt", "deletedAt")
+         VALUES ($1, 'org-b', $2, 'u', now(), ${deleted ? 'now()' : 'NULL'})`,
+        [id, name],
+      );
+    await insert('b1', 'Acme');
+    await expect(insert('b2', 'ACME')).rejects.toThrow(/duplicate key/);
+    await insert('b3', 'acme', true);
+    await db.query(
+      `INSERT INTO studio.businesses (id, "organisationId", name, "createdByUserId", "updatedAt")
+       VALUES ('b4', 'org-other', 'Acme', 'u', now())`,
+    );
   });
 });

@@ -69,7 +69,8 @@
         "connections": "账号连接",
         "approvals": "审批流程",
         "export": "导出数据",
-        "admin": "管理后台"
+        "admin": "管理后台",
+        "settings": "设置"
       }
     },
     "theme": {
@@ -85,7 +86,13 @@
       "label": "商家",
       "choose": "选择商家",
       "idPlaceholder": "PostMind 商家 ID",
-      "listPending": "商家列表需等待 PostMind Core 接入：请输入商家 ID。"
+      "listPending": "商家列表需等待 PostMind Core 接入：请输入商家 ID。",
+      "add": "添加商家",
+      "addLabel": "新商家",
+      "addPlaceholder": "商家名称",
+      "addSubmit": "添加",
+      "addCancel": "取消",
+      "created": "已添加 {name}"
     },
     "feedback": {
       "button": "反馈",
@@ -172,6 +179,46 @@
       "publicationAnalytics": "发布数据分析",
       "approvals": "审批流程",
       "admin": "管理中心"
+    },
+    "account": {
+      "switcherAria": "组织：{name}。切换组织",
+      "organisations": "您的组织",
+      "current": "当前组织",
+      "newOrganisation": "新建组织…",
+      "switchFailed": "无法切换组织，请重试。",
+      "userMenuAria": "{name} 的账户菜单",
+      "organisationSettings": "组织设置",
+      "members": "成员",
+      "security": "安全与登录",
+      "signOut": "退出登录",
+      "signOutFailed": "无法退出登录，请重试。",
+      "billing": "账单"
+    },
+    "banners": {
+      "readOnly": {
+        "title": "您的账户为只读状态。",
+        "body": "由于付款逾期，您可以查看、下载和导出，但无法创建或发布。请更新付款信息以继续使用。",
+        "action": "更新付款信息"
+      },
+      "pastDue": {
+        "title": "您上次的付款失败了。",
+        "body": "目前一切仍可正常使用。请更新付款信息以避免服务中断。",
+        "bodyUntil": "服务将持续到 {date}。请在此之前更新付款信息以避免中断。",
+        "action": "更新付款信息"
+      },
+      "noPlan": {
+        "title": "选择一个套餐以开始制作视频。",
+        "body": "您现在可以设置品牌并连接账户；生成和发布视频需要套餐或免费试用。",
+        "action": "查看套餐"
+      },
+      "trial": {
+        "body": "{days, plural, =0 {您的免费试用今天到期。} other {您的免费试用还剩 # 天。}}",
+        "action": "选择套餐"
+      },
+      "impersonating": {
+        "title": "员工视图。",
+        "body": "您正在以 {name} 的身份查看 Studio。此会话为只读状态，所有操作均会被记录。"
+      }
     }
   },
   "errors": {
@@ -203,7 +250,10 @@
       "configuration_error": "Studio 尚未完成此功能的配置，请联系 PostMind 支持团队。",
       "not_implemented": "此功能暂不可用。",
       "internal_error": "我们这边出了点问题，请稍后再试。",
-      "upload_failed": "上传失败，请重试。"
+      "upload_failed": "上传失败，请重试。",
+      "plan_required": "您的组织尚未选择套餐。请选择套餐后开始创作。",
+      "billing_required": "由于账单问题，您的账户目前为只读。请更新付款信息以继续。",
+      "no_organisation": "请创建或加入一个组织以继续。"
     }
   },
   "primitives": {
@@ -1810,7 +1860,9 @@
       "platform_error": "平台在完成连接时出现问题，请稍后重试。",
       "upstream_error": "平台在完成连接时出现问题，请稍后重试。",
       "internal_error": "完成连接时出错，请重试。",
-      "unknown": "连接未完成（{code}）。请重试。"
+      "unknown": "连接未完成（{code}）。请重试。",
+      "meta_no_accounts": "Meta 未共享任何你可以发布内容的 Facebook 公共主页。请重新连接，并在 Meta 窗口中至少选择一个公共主页（及其 Instagram 账号）。",
+      "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。"
     },
     "dismiss": "关闭",
     "pickFirst": {
@@ -1845,7 +1897,24 @@
     "meta": {
       "stale": "Meta 拒绝了此访问权限或权限已过期。在您于 PostMind 设置中重新连接之前，发往此账号的排期帖子都会失败。",
       "connectedVia": "通过 PostMind 连接于 {date}",
-      "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。"
+      "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。",
+      "connectButton": "使用 Facebook 连接",
+      "studioGuidance": "一次 Facebook 登录即可连接你选择的公共主页，以及与其关联的 Instagram 专业账号。",
+      "notConfigured": "Instagram 和 Facebook 暂不可用：Studio 的 Meta 应用尚未完成设置。请联系你的管理员。"
+    },
+    "descriptionStandalone": "Studio 发布内容的账号。请为所选商家逐一连接。",
+    "connectedMetaNotice": "{count, plural, other {已连接 # 个 Facebook 和 Instagram 账号}}。现在即可向这些账号发布。",
+    "dataDeletion": {
+      "pageTitle": "数据删除状态",
+      "eyebrow": "PostMind Studio · Facebook 和 Instagram 数据",
+      "title": "你的数据删除请求",
+      "completed": "状态：已完成",
+      "receivedOn": "我们于 {date} 收到你的请求，并已立即完成。",
+      "deletedCount": "{count, plural, =0 {Studio 未保存你的任何 Facebook 或 Instagram 连接。} other {已删除 # 个 Facebook 或 Instagram 连接。}}",
+      "whatWasDeleted": "Studio 已删除 Meta 提供的访问令牌、你的 Meta 用户 ID、你授予的权限以及账号名称。",
+      "retained": "已发布的视频仍保留在 Facebook 和 Instagram 上；如需删除，请在对应平台操作。Studio 仅保留其发布记录所引用的公共主页或 Instagram 账号编号。",
+      "codeLabel": "确认码：",
+      "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
     }
   },
   "library": {
@@ -2206,7 +2275,9 @@
         "usage": "套餐用量",
         "deadLetters": "死信",
         "forceApprovals": "强制批准",
-        "beta": "测试版"
+        "beta": "测试版",
+        "users": "用户",
+        "subscriptions": "订阅"
       }
     },
     "cost": {
@@ -2885,7 +2956,8 @@
       "tierSource": {
         "query": "在此选择",
         "last_generation": "记录于其最近一次生成",
-        "default": "未记录生成，按 Basic 计算"
+        "default": "未记录生成，按 Basic 计算",
+        "entitlements": "来自该组织的订阅"
       },
       "mode": {
         "warn": "警告",
@@ -2906,7 +2978,9 @@
       "connect": "连接账号",
       "brandKit": "品牌套件",
       "firstVideo": "首个视频",
-      "celebrate": "庆祝上线"
+      "celebrate": "庆祝上线",
+      "organisation": "组织",
+      "business": "业务"
     },
     "stepIndicator": {
       "aria": "设置进度",
@@ -2915,7 +2989,7 @@
     "wizard": {
       "eyebrow": "欢迎",
       "title": "一起制作你的第一个视频",
-      "description": "只需四步：连接账号、设置品牌、制作视频、发布上线。",
+      "description": "只需几个步骤：您的组织和业务、您的品牌、一个已连接的账号，然后是您的第一个视频。",
       "skipSetup": "跳过设置",
       "loading": "正在加载设置",
       "skipped": {
@@ -3018,6 +3092,35 @@
       "description": "Studio 已准备好为你的商家制作和发布视频。",
       "makeAnother": "再制作一个视频",
       "goToProjects": "前往项目"
+    },
+    "organisation": {
+      "title": "为您的组织命名",
+      "description": "组织承载您的团队、套餐和账单信息，之后您可以为其添加更多业务。",
+      "name": "组织名称",
+      "namePlaceholder": "例如：Leeds Sourdough Ltd",
+      "country": "国家/地区",
+      "countryChoose": "选择国家/地区…",
+      "countryHint": "用于账单中的税费计算。",
+      "language": "默认语言",
+      "submit": "创建组织",
+      "created": "{name} 已就绪。"
+    },
+    "business": {
+      "title": "添加您的第一个业务",
+      "description": "每个业务都有自己的品牌套件、已连接账户和视频。添加网站后，Studio 即可从中学习您的品牌风格。",
+      "loading": "正在加载您的业务",
+      "existing": "选择一个业务",
+      "orNew": "或添加新业务：",
+      "name": "业务名称",
+      "namePlaceholder": "例如：Leeds Sourdough",
+      "website": "网站（可选）",
+      "websitePlaceholder": "leedssourdough.co.uk",
+      "websiteHint": "无需填写 https://。",
+      "submit": "添加业务",
+      "created": "已添加 {name}。",
+      "coreTitle": "请先设置业务",
+      "coreDescription": "您的业务信息来自 PostMind。请选择或添加一个业务，然后返回此处。",
+      "coreAction": "前往业务管理"
     }
   },
   "share": {
@@ -3131,6 +3234,14 @@
         "imageLibrary": {
           "label": "图片库",
           "hint": "每张图片及其来源"
+        },
+        "account": {
+          "label": "账户",
+          "hint": "您的组织、其成员和角色，以及您自己的个人资料和登录记录"
+        },
+        "billing": {
+          "label": "账单",
+          "hint": "订阅、套餐和充值额度（发票位于“管理账单”中）"
         }
       },
       "request": "申请导出",
@@ -3193,6 +3304,23 @@
         "failed": "{provider} 密钥测试失败：{reason}",
         "removed": "已移除 {provider} 密钥；将重新使用 Studio 的密钥"
       }
+    },
+    "profile": {
+      "eyebrow": "账户",
+      "title": "个人资料",
+      "description": "您的姓名、邮箱地址以及我们给您发邮件时使用的语言。",
+      "detailsTitle": "您的信息",
+      "name": "姓名",
+      "emailLanguage": "邮件语言",
+      "emailLanguageHint": "Studio 的邮件将使用此语言。应用语言可在页眉中切换。",
+      "save": "保存",
+      "saved": "个人资料已保存。",
+      "emailTitle": "邮箱地址",
+      "emailCurrent": "您使用 {email} 登录。",
+      "newEmail": "新邮箱地址",
+      "emailHint": "我们会先请您当前的邮箱批准更改，再确认新邮箱。",
+      "changeEmail": "更改邮箱",
+      "emailRequested": "请查收邮件以批准更改。"
     }
   },
   "approvals": {
@@ -3317,6 +3445,1222 @@
       "invalid_media": "视频文件被拒绝",
       "outcome_unknown": "结果未知——重试前请先在平台上确认",
       "unknown": "未知错误"
+    }
+  },
+  "marketing": {
+    "meta": {
+      "title": "PostMind Studio · 面向小微企业的 AI 短视频",
+      "description": "只需一句话，即可生成符合品牌调性的短视频，适配 TikTok、Reels、Shorts、Facebook、LinkedIn 和 X。审核、批准并在同一处发布。"
+    },
+    "nav": {
+      "home": "PostMind Studio 首页",
+      "aria": "主导航",
+      "pricing": "定价",
+      "signIn": "登录",
+      "startTrial": "开始免费试用"
+    },
+    "hero": {
+      "eyebrow": "面向小微企业的 AI 视频工作室",
+      "title": "一周的短视频，<em>在您的咖啡变凉之前完成。</em>",
+      "lede": "告诉 Studio 您想表达的内容。它会撰写脚本，拍摄或采集每个场景素材，为视频添加符合您品牌的配音、音乐和字幕，并针对每个平台进行剪辑。您来审核，它负责发布。",
+      "primaryCta": "开始免费试用",
+      "secondaryCta": "查看定价",
+      "assurances": {
+        "noEditing": "无需剪辑技能",
+        "yourBrand": "专属于您的色彩、字体和口吻",
+        "cancelAnytime": "随时取消"
+      },
+      "frames": {
+        "one": "早上 7 点新鲜出炉",
+        "two": "认识面包师",
+        "three": "一个周末，三条面包"
+      },
+      "slate": {
+        "scene": "场景 01",
+        "take": "第 1 次拍摄"
+      }
+    },
+    "platforms": {
+      "title": "一份创意简介，适配每个信息流"
+    },
+    "steps": {
+      "eyebrow": "使用流程",
+      "title": "构思。审核。发布。",
+      "brief": {
+        "title": "写下一句话",
+        "body": "描述视频内容，粘贴网页链接，或选择一个模板。Studio 会在几秒内起草脚本和分镜脚本。"
+      },
+      "review": {
+        "title": "查看成片",
+        "body": "并排查看每种格式，替换镜头、修改字幕或要求重新拍摄。未经您批准，任何内容都不会发布。"
+      },
+      "publish": {
+        "title": "按计划发布",
+        "body": "立即发布或安排整周的发布计划。Studio 会发布到每个账户，并将浏览量、点赞和评论汇总到一个仪表盘中。"
+      }
+    },
+    "samples": {
+      "eyebrow": "样片集",
+      "title": "一份简介，多种形式。",
+      "body": "为 TikTok、Reels 和 Shorts 提供竖版，为信息流提供方形和竖幅，为 YouTube 和 LinkedIn 提供宽屏。",
+      "note": "以上为 Studio 可生成格式的示意图，并非客户实际视频。",
+      "captions": {
+        "market": "周六市集，上午 8 点",
+        "studio": "我们如何塑形酸种面包",
+        "workshop": "幕后花絮",
+        "counter": "本周新品"
+      }
+    },
+    "features": {
+      "eyebrow": "为小团队打造",
+      "title": "一人营销团队所需的一切。",
+      "body": "Studio 负责制作工作，让您把时间花在业务本身，而不是剪辑时间线上。",
+      "brand": {
+        "title": "始终如一的品牌形象",
+        "body": "标志、色彩、字体和语调都保存在品牌套件中，每个视频都会遵循它。"
+      },
+      "approvals": {
+        "title": "适配您团队的审批流程",
+        "body": "邀请同事并赋予合适的角色。创作者起草，所有者审批，杜绝意外发布。"
+      },
+      "calendar": {
+        "title": "自动为您发布的日历",
+        "body": "规划一周内容，将帖子拖到新的时间段，让 Studio 在每个平台的最佳时机自动发布。"
+      },
+      "budget": {
+        "title": "费用一目了然",
+        "body": "每月额度和消费上限提前展示，不会出现意外账单。"
+      },
+      "languages": {
+        "title": "支持十一种语言",
+        "body": "使用英语、法语、西班牙语、阿拉伯语、德语、意大利语、葡萄牙语、印地语或中文工作，并为使用相应语言的客户制作视频。"
+      },
+      "library": {
+        "title": "灵感随取随用",
+        "body": "浏览经过验证的短视频案例库，以其中一个作为您自己创作的起点。"
+      }
+    },
+    "closing": {
+      "eyebrow": "随时可以开始",
+      "title": "您的第一条视频，十分钟即可完成。",
+      "body": "创建账户，添加业务和品牌信息，连接平台并制作您的第一条视频。引导式设置将全程为您指引。",
+      "primaryCta": "开始免费试用",
+      "secondaryCta": "比较套餐",
+      "fineprint": "价格不含增值税。您可以随时在账单设置中取消。"
+    },
+    "footer": {
+      "tagline": "面向小微企业的 AI 短视频制作与发布平台。",
+      "copyright": "© {year} {entity}",
+      "legalAria": "法律信息",
+      "legalTitle": "法律信息"
+    }
+  },
+  "pricing": {
+    "meta": {
+      "title": "价格"
+    },
+    "hero": {
+      "eyebrow": "价格",
+      "title": "随视频产量一起成长的套餐",
+      "description": "每个套餐均包含 AI 脚本、多格式渲染，以及发布到已连接的账号。"
+    },
+    "interval": {
+      "label": "计费周期",
+      "month": "按月",
+      "year": "按年"
+    },
+    "exclVat": "价格不含增值税。",
+    "unavailable": "暂时无法显示价格，请稍后重试。",
+    "priceUnavailable": "价格暂不可用",
+    "perMonth": "{amount}/月",
+    "perYear": "{amount}/年",
+    "annualSaving": "每年节省 {amount}",
+    "trialNote": "免费试用 {tier} {days, plural, other {# 天}}，包含 {short} 个短视频和 {long} 个长视频。需绑定银行卡，可随时取消。",
+    "popular": "最受欢迎",
+    "tiers": {
+      "BASIC": {
+        "tagline": "适合刚开始制作短视频的单个商家。"
+      },
+      "STANDARD": {
+        "tagline": "适合每天发布内容的成长型团队，含音乐和长视频。"
+      },
+      "PLUS": {
+        "tagline": "适合需要声音克隆、4K 和 AI 图片的代理机构和品牌。"
+      },
+      "ENTERPRISE": {
+        "tagline": "自定义额度、自有服务商密钥和白标输出。"
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, other {每月 # 个短视频}}",
+      "longVideos": "{count, plural, other {每月 # 个长视频}}",
+      "noLongVideos": "不含长视频",
+      "seats": "{count, plural, other {# 个席位}}",
+      "businesses": "{count, plural, other {# 个商家}}",
+      "unlimitedVideos": "视频不限量（合理使用）"
+    },
+    "enterprise": {
+      "price": "定制价格",
+      "contact": "联系销售",
+      "contactAria": "发送邮件向销售团队咨询 Enterprise",
+      "noContact": "请向您的 PostMind 客户经理咨询 Enterprise。"
+    },
+    "cta": {
+      "trial": "开始免费试用",
+      "choose": "选择套餐",
+      "chooseAria": "选择 {tier} 套餐"
+    },
+    "compare": {
+      "title": "套餐对比",
+      "caption": "套餐对比",
+      "feature": "功能",
+      "included": "包含",
+      "notIncluded": "不包含",
+      "unlimited": "不限",
+      "rows": {
+        "shortVideos": "每月短视频数（最长 30 秒）",
+        "longVideos": "每月长视频数",
+        "platforms": "平台",
+        "dailyCostCap": "每日生成预算",
+        "monthlyCostCap": "每月生成预算",
+        "queuePriority": "渲染队列优先级",
+        "musicAndSfx": "音乐和音效",
+        "voiceClone": "品牌声音克隆",
+        "renders4k": "4K 渲染",
+        "imageLibrary": "图片库",
+        "generatedImages": "每个商家每月生成图片数",
+        "scanBusinesses": "网站扫描（商家数）",
+        "libraryInspire": "参考库：灵感模式",
+        "libraryTemplate": "参考库：模板模式",
+        "customPresets": "自定义叠加预设和幻灯片模板",
+        "approvalWorkflows": "多步骤审批流程",
+        "byocProviderKeys": "自有服务商密钥",
+        "whiteLabel": "白标输出",
+        "dnsDomainVerification": "域名验证",
+        "seats": "席位",
+        "businesses": "商家",
+        "storage": "存储空间"
+      },
+      "values": {
+        "longVideos": "{count} 个 × 最长 {minutes} 分钟",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok、Instagram 及另外 1 个",
+          "all": "全部 8 个"
+        },
+        "queuePriority": {
+          "normal": "标准",
+          "high": "高"
+        },
+        "imageLibrary": {
+          "stock": "图库图片",
+          "stock_scrape": "图库和网站图片",
+          "ai_generation": "图库、网站和 AI 图片",
+          "byoc_generation": "使用自有密钥的 AI 图片"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "加购包",
+      "description": "本月需要更多额度？购买一次性加购包。额度会在套餐配额用完后使用，先到期的先用。",
+      "short": "{quantity, plural, other {# 个短视频}}",
+      "long": "{quantity, plural, other {# 个长视频}}",
+      "forTier": "适用于 {tier} 套餐",
+      "validity": "有效期 {months} 个月"
+    },
+    "faq": {
+      "title": "常见问题",
+      "items": {
+        "trial": {
+          "q": "免费试用如何运作？",
+          "a": "Standard 试用需要绑定银行卡。试用结束前不会扣费，您可以在此之前取消。每个组织仅可试用一次。"
+        },
+        "change": {
+          "q": "之后可以更换套餐吗？",
+          "a": "可以。升级立即生效，并按比例计费。降级在当前计费周期结束时生效，且不会删除任何内容。"
+        },
+        "limit": {
+          "q": "达到额度上限后会怎样？",
+          "a": "新视频将暂停生成，直到下月初配额重置。您可以升级套餐或购买加购包继续使用。"
+        },
+        "vat": {
+          "q": "价格含增值税吗？",
+          "a": "不含。价格不含增值税，如适用，将在结账时加收。"
+        },
+        "cancel": {
+          "q": "取消后会怎样？",
+          "a": "在已付费周期结束前，您可以继续使用。之后账号将变为只读：您仍可查看、导出和下载您的作品。"
+        }
+      }
+    }
+  },
+  "legal": {
+    "docs": {
+      "terms": "服务条款",
+      "privacy": "隐私政策",
+      "cookies": "Cookie 政策",
+      "acceptableUse": "可接受使用政策",
+      "dpa": "数据处理协议",
+      "subprocessors": "子处理者"
+    },
+    "navAria": "法律文档",
+    "navTitle": "法律信息",
+    "placeholder": {
+      "title": "该文档尚未发布。",
+      "body": "以下文本为占位内容。本服务的运营者必须在上线前将其替换为自己的内容。"
+    },
+    "notTranslated": "该文档暂无您所用语言的版本，因此以英文显示。"
+  },
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "该邮箱和密码与任何账户都不匹配。",
+      "emailNotVerified": "请先确认您的邮箱地址。我们已向您发送了新链接。",
+      "passwordTooShort": "请至少使用 12 个字符。",
+      "passwordTooLong": "最多使用 128 个字符。",
+      "passwordCompromised": "此密码曾出现在数据泄露中，请换一个。",
+      "rateLimited": "尝试次数过多，请等待几分钟后重试。",
+      "invalidToken": "此链接已过期或已被使用，请重新获取。",
+      "invalidCode": "验证码不正确，请检查后重试。",
+      "locked": "错误验证码过多，请等待几分钟后再试。",
+      "signupsClosed": "目前仅支持受邀注册新账户。",
+      "invalidEmail": "请输入有效的邮箱地址。",
+      "network": "无法连接到 Studio，请检查网络后重试。",
+      "generic": "出错了，请重试。",
+      "seatLimit": "该组织没有空余席位。请让管理员升级套餐。",
+      "inviteNotForYou": "此邀请发送到了其他邮箱地址。请使用该地址登录后接受。"
+    },
+    "password": {
+      "show": "显示密码",
+      "hide": "隐藏密码",
+      "rule": "至少 {min} 个字符",
+      "strength": {
+        "tooShort": "太短",
+        "weak": "弱",
+        "fair": "一般",
+        "good": "良好",
+        "strong": "强"
+      }
+    },
+    "signIn": {
+      "title": "登录",
+      "description": "欢迎回到 PostMind Studio。",
+      "email": "邮箱",
+      "password": "密码",
+      "submit": "登录",
+      "forgot": "忘记密码？",
+      "noAccount": "创建账户"
+    },
+    "google": {
+      "or": "或",
+      "continue": "使用 Google 继续"
+    },
+    "signUp": {
+      "title": "创建您的账户",
+      "description": "几分钟内即可开始为各个平台制作视频。",
+      "name": "您的姓名",
+      "email": "工作邮箱",
+      "password": "密码",
+      "terms": "创建账户即表示您同意<terms>服务条款</terms>和<privacy>隐私声明</privacy>。",
+      "submit": "创建账户",
+      "haveAccount": "已有账户？登录",
+      "closedTitle": "仅限受邀",
+      "closedDescription": "目前仅支持受邀注册新账户。请让团队成员邀请您。"
+    },
+    "verify": {
+      "title": "请查收邮件",
+      "description": "打开我们发送的链接以确认您的邮箱地址，链接 24 小时内有效。",
+      "invalidTitle": "该链接无效",
+      "invalidDescription": "链接可能已过期或已被使用。请输入邮箱以获取新链接。",
+      "sentTo": "如果 {email} 是 Studio 的新用户，确认链接正在发送中。",
+      "sentGeneric": "如果该地址是 Studio 的新用户，确认链接正在发送中。",
+      "resent": "如果该地址需要确认，我们已发送新链接。",
+      "email": "邮箱",
+      "resend": "发送新链接",
+      "backToSignIn": "返回登录"
+    },
+    "forgot": {
+      "title": "重置密码",
+      "description": "输入您的邮箱，我们将发送一个链接供您设置新密码。",
+      "email": "邮箱",
+      "submit": "发送重置链接",
+      "sent": "如果有账户使用该地址，重置链接正在发送中，1 小时内有效。",
+      "backToSignIn": "返回登录"
+    },
+    "reset": {
+      "title": "设置新密码",
+      "description": "您将在所有其他设备上退出登录。",
+      "newPassword": "新密码",
+      "submit": "保存密码",
+      "done": "密码已更改，请使用新密码登录。",
+      "signIn": "登录",
+      "invalidTitle": "该链接无效",
+      "invalidDescription": "重置链接仅可使用一次，1 小时内有效。请重新获取。",
+      "requestNew": "获取新链接"
+    },
+    "twoFactor": {
+      "title": "两步验证",
+      "totpDescription": "请输入身份验证器应用中的 6 位验证码。",
+      "backupDescription": "请输入一个备用码。每个备用码只能使用一次。",
+      "totpLabel": "验证码",
+      "backupLabel": "备用码",
+      "trustDevice": "30 天内信任此设备",
+      "submit": "验证",
+      "useBackup": "改用备用码",
+      "useTotp": "改用身份验证器应用",
+      "startOver": "重新开始"
+    },
+    "invite": {
+      "title": "加入您的团队",
+      "signedOut": "请使用收到邀请的邮箱登录或创建账户。",
+      "signIn": "登录以接受邀请",
+      "signUp": "创建账户",
+      "join": "您受邀加入 PostMind Studio 上的一个组织。",
+      "joinNamed": "您受邀加入 PostMind Studio 上的 {organisation}。",
+      "accept": "接受邀请",
+      "notNow": "以后再说",
+      "unavailable": "此邀请已过期、已被撤销，或发送到了其他邮箱。"
+    },
+    "support": {
+      "noEmail": "几分钟后仍未收到邮件？请联系 <link>{email}</link>。"
+    }
+  },
+  "security": {
+    "eyebrow": "账户",
+    "title": "登录与安全",
+    "description": "您的密码、两步验证以及已登录的设备。",
+    "password": {
+      "title": "密码",
+      "description": "更改后，您将在所有其他设备上退出登录。",
+      "current": "当前密码",
+      "new": "新密码",
+      "submit": "更改密码",
+      "changed": "密码已更改，其他设备已退出登录。"
+    },
+    "twoFactor": {
+      "title": "两步验证",
+      "description": "每次登录时输入身份验证器应用中的验证码。员工使用管理工具时必须开启。",
+      "statusOn": "已开启",
+      "statusOff": "已关闭",
+      "offExplainer": "请确认密码以设置身份验证器应用。",
+      "onExplainer": "两步验证正在保护您的账户。",
+      "password": "密码",
+      "enable": "设置",
+      "scan": "请用身份验证器应用扫描此二维码，然后输入应用显示的 6 位验证码。",
+      "manual": "无法扫描？请改为输入此密钥：",
+      "codeLabel": "应用中的验证码",
+      "confirm": "开启",
+      "qrLabel": "身份验证器应用的二维码",
+      "enabled": "两步验证已开启。",
+      "disabled": "两步验证已关闭，其他设备已退出登录。",
+      "disable": "关闭",
+      "regenerate": "新的备用码",
+      "backupIntro": "请将这些备用码保存在安全的地方。手机丢失时，每个备用码可登录一次。它们不会再次显示。",
+      "backupListLabel": "备用码",
+      "copy": "复制备用码",
+      "copied": "备用码已复制。",
+      "saved": "我已保存",
+      "disableCodeLabel": "应用中的验证码或备用码",
+      "disableCodeHint": "关闭两步验证时需要填写。"
+    },
+    "sessions": {
+      "title": "已登录的设备",
+      "description": "如有您不认识的设备，请将其退出登录。生效最多可能需要一分钟。",
+      "revokeOthers": "退出所有其他设备",
+      "device": "{os} 上的 {browser}",
+      "unknownDevice": "未知设备",
+      "lastActive": "最近活动：{when}",
+      "current": "此设备",
+      "revoke": "退出登录",
+      "revokeAria": "将 {device} 退出登录",
+      "revoked": "已退出登录。"
+    },
+    "methods": {
+      "title": "登录方式",
+      "description": "您登录 PostMind Studio 的方式。",
+      "password": "邮箱和密码",
+      "on": "已开启",
+      "off": "未设置",
+      "link": "关联 Google",
+      "unlink": "取消关联",
+      "unlinked": "已取消关联 Google。",
+      "unlinkNeedsPassword": "取消关联 Google 前请先设置密码。"
+    },
+    "deleteAccount": {
+      "title": "删除账户",
+      "description": "永久删除您的账户和登录信息。",
+      "consequences": "您将在所有设备上退出登录。您是唯一成员的组织也会被删除，其订阅将终止。30 天内您可以联系支持团队撤销。",
+      "password": "密码",
+      "confirm": "我了解 30 天后此操作将无法撤销。",
+      "submit": "删除我的账户",
+      "wrongPassword": "密码不正确。",
+      "signInAgain": "为了您的安全，请先退出并重新登录，再删除账户。",
+      "soleOwner": "您是 {organisations} 的唯一所有者。请先将其他人设为所有者，或移除其他成员。"
+    }
+  },
+  "orgSettings": {
+    "meta": {
+      "organisationTitle": "组织设置",
+      "membersTitle": "成员",
+      "auditTitle": "审计日志"
+    },
+    "nav": {
+      "aria": "设置",
+      "organisation": "组织",
+      "members": "成员",
+      "billing": "账单",
+      "audit": "审计日志"
+    },
+    "page": {
+      "eyebrow": "设置",
+      "title": "组织",
+      "description": "您组织的详细信息、所有权和团队。",
+      "loading": "正在加载组织设置"
+    },
+    "details": {
+      "title": "详细信息",
+      "description": "将显示给您的团队并出现在账单中。",
+      "readOnly": "仅所有者和管理员可以更改这些信息。",
+      "name": "组织名称",
+      "logo": "标志 URL",
+      "logoPlaceholder": "https://example.com/logo.png",
+      "logoHint": "指向正方形图片的 https:// 链接。",
+      "country": "国家/地区",
+      "countryNone": "未设置",
+      "countryHint": "用于账单中的税费计算。",
+      "defaultLocale": "默认语言",
+      "localeNone": "由各成员自行选择",
+      "saved": "组织详细信息已保存。"
+    },
+    "transfer": {
+      "title": "转让所有权",
+      "description": "将所有权转让给其他成员，您将变为管理员。",
+      "nobody": "请先邀请他人：所有权只能转让给其他成员。",
+      "to": "新所有者",
+      "choose": "选择成员…",
+      "action": "转让所有权",
+      "confirmTitle": "转让所有权？",
+      "confirmBody": "{name} 将成为所有者，您将成为管理员。此后 {name} 可以管理账单并删除组织。",
+      "done": "{name} 现在是所有者。"
+    },
+    "delete": {
+      "title": "删除组织",
+      "description": "将取消您的订阅并移除所有业务、视频和已连接账户。数据将保留 30 天后永久删除。",
+      "action": "删除组织…",
+      "confirmTitle": "删除 {name}？",
+      "confirmBody": "30 天后此操作将无法撤销。组织中的所有人将立即失去访问权限。",
+      "typeName": "输入 {name} 以确认",
+      "confirm": "删除组织",
+      "done": "该组织已安排删除。"
+    },
+    "audit": {
+      "title": "审计日志",
+      "description": "记录组织中成员、设置、账单和连接方面的所有操作。",
+      "logTitle": "活动记录",
+      "filter": "显示",
+      "loading": "正在加载审计日志",
+      "empty": {
+        "title": "暂无记录",
+        "body": "成员、设置和账单方面的变更将显示在此处。"
+      },
+      "when": "时间",
+      "who": "操作人",
+      "what": "操作内容",
+      "target": "对象",
+      "viaStaff": "员工视图",
+      "loadMore": "加载更多",
+      "categories": {
+        "all": "全部",
+        "members": "成员",
+        "organisation": "组织",
+        "billing": "账单",
+        "security": "安全",
+        "businesses": "业务",
+        "connections": "连接",
+        "staff": "PostMind 员工"
+      },
+      "actors": {
+        "user": "已离开的成员",
+        "staff": "PostMind 员工",
+        "stripe": "Stripe",
+        "meta": "Meta",
+        "system": "Studio"
+      },
+      "actions": {
+        "member_invited": "邀请了一名成员",
+        "member_joined": "加入了组织",
+        "member_role_changed": "更改了成员角色",
+        "member_removed": "移除了一名成员",
+        "org_created": "创建了组织",
+        "org_renamed": "重命名了组织",
+        "org_updated": "更新了组织信息",
+        "org_deleted": "删除了组织",
+        "billing_checkout_started": "开始了结账流程",
+        "billing_subscription_changed": "订阅发生了变更",
+        "billing_payment_failed": "付款失败",
+        "billing_topup_purchased": "购买了加量包",
+        "auth_sign_in": "登录",
+        "auth_password_changed": "修改了密码",
+        "auth_twoFactor_enabled": "开启了两步验证",
+        "auth_twoFactor_disabled": "关闭了两步验证",
+        "auth_session_revoked": "退出了一个会话",
+        "business_created": "添加了一个业务",
+        "business_deleted": "删除了一个业务",
+        "meta_connected": "连接了 Facebook 或 Instagram",
+        "meta_disconnected": "断开了 Facebook 或 Instagram",
+        "entitlement_override_set": "PostMind 更改了套餐限制",
+        "staff_impersonation_started": "PostMind 员工开始了支持视图",
+        "staff_impersonation_ended": "PostMind 员工结束了支持视图"
+      }
+    },
+    "reauth": {
+      "password": "您的密码",
+      "hint": "用于确认是您本人。如果您只使用 Google 登录，请留空（您需要在过去 15 分钟内登录过）。"
+    }
+  },
+  "members": {
+    "page": {
+      "eyebrow": "设置",
+      "title": "成员",
+      "description": "邀请您的团队，并设置每个人的权限。",
+      "loading": "正在加载成员",
+      "inviteTitle": "邀请成员",
+      "inviteDescription": "对方将收到一封邮件，链接有效期为 7 天。",
+      "membersTitle": "{count, plural, other {# 位成员}}",
+      "empty": "暂无成员",
+      "pendingTitle": "待处理邀请",
+      "seatsTitle": "席位"
+    },
+    "seats": {
+      "label": "已使用席位",
+      "usedOf": "{used} / {limit}",
+      "unlimited": "已使用 {used} · 无限制",
+      "full": "您套餐的所有席位均已使用。",
+      "upgrade": "升级以获得更多席位"
+    },
+    "invite": {
+      "email": "电子邮箱",
+      "emailPlaceholder": "name@example.com",
+      "role": "角色",
+      "send": "发送邀请",
+      "hint": "所有者管理账单并可删除组织；管理员管理成员和设置；发布者负责审批和发布；创作者制作视频；查看者只能查看。",
+      "sent": "邀请已发送至 {email}。",
+      "seatLimit": "您套餐的所有席位均已占用。请升级以获得更多席位，或先移除一位成员。"
+    },
+    "roles": {
+      "owner": "所有者",
+      "admin": "管理员",
+      "publisher": "发布者",
+      "creator": "创作者",
+      "viewer": "查看者"
+    },
+    "table": {
+      "member": "成员",
+      "role": "角色",
+      "joined": "加入时间",
+      "actions": "操作",
+      "you": "您",
+      "twoFactor": "已开启两步验证",
+      "roleFor": "{name} 的角色",
+      "roleChanged": "{name} 现在是{role}。",
+      "remove": "移除",
+      "removeAria": "移除 {name}",
+      "leave": "离开",
+      "removeTitle": "移除 {name}？",
+      "removeBody": "对方将立即失去此组织的访问权限，其视频将会保留。",
+      "removed": "{name} 已被移除。"
+    },
+    "pending": {
+      "none": "暂无待处理的邀请。",
+      "expires": "有效期至 {date}",
+      "resend": "重新发送",
+      "resendAria": "重新发送邀请至 {email}",
+      "revoke": "撤销",
+      "revokeAria": "撤销发往 {email} 的邀请",
+      "resent": "邀请已重新发送至 {email}。",
+      "revoked": "邀请已撤销。"
+    },
+    "errors": {
+      "lastOwner": "最后一名所有者不能离开或被降级，请先转让所有权。",
+      "ownerOnly": "只有所有者才能执行此操作。",
+      "alreadyMember": "该用户已是成员。",
+      "nameMismatch": "您输入的名称不匹配。",
+      "wrongPassword": "密码不正确。",
+      "signInAgain": "为了您的安全，请退出后重新登录，然后再试一次。"
+    }
+  },
+  "billing": {
+    "meta": {
+      "title": "账单"
+    },
+    "header": {
+      "eyebrow": "设置",
+      "title": "账单",
+      "description": "您的套餐、用量、加购额度和发票。"
+    },
+    "loading": "正在加载账单",
+    "notEnabled": {
+      "title": "账单不在此处管理",
+      "body": "您的套餐由您的 PostMind 账号管理。如需更改，请联系您的客户经理。"
+    },
+    "banners": {
+      "checkoutSuccess": "感谢购买。正在为您开通套餐，稍后将显示在此处。",
+      "checkoutCancelled": "结账已取消，未产生任何费用。",
+      "topupSuccess": "加购成功，额度稍后将显示在此处。",
+      "topupCancelled": "加购已取消，未产生任何费用。",
+      "dismiss": "关闭"
+    },
+    "plan": {
+      "title": "当前套餐",
+      "tierName": "{tier} 套餐",
+      "noPlan": "无套餐",
+      "status": {
+        "trialing": "免费试用",
+        "active": "有效",
+        "past_due": "付款失败",
+        "read_only": "只读",
+        "cancelling": "取消中",
+        "none": "无套餐"
+      },
+      "trialEnds": "您的免费试用将于 {date} 结束。除非取消，否则套餐将自动开始。",
+      "renews": "将于 {date} 续订。",
+      "cancelsOn": "您的套餐将于 {date} 结束，在此之前可继续使用全部功能。",
+      "pastDue": "上次扣款未成功。请在 {date} 前更新付款方式，以保留全部功能。",
+      "graceLeft": "{days, plural, other {剩余 # 天}}",
+      "readOnly": "您的账号目前为只读。您仍可查看、导出和下载作品，但在账单问题解决前无法创建或发布。",
+      "none": "您的组织尚未订阅套餐。请在下方选择一个套餐开始创作。",
+      "interval": {
+        "month": "按月计费",
+        "year": "按年计费"
+      },
+      "adminSource": "由 PostMind 工作人员设置的定制套餐。",
+      "manage": "管理账单",
+      "manageHelp": "在安全的 Stripe 门户中更换套餐、更新付款方式、下载收据或取消订阅。",
+      "askOwner": "只有组织所有者可以更改账单。如需其他套餐，请联系所有者。",
+      "checkoutUnavailable": "暂时无法在线结账。",
+      "alreadySubscribed": "您的组织已有订阅。请通过“管理账单”进行更改。"
+    },
+    "usage": {
+      "title": "本月用量",
+      "description": "视频配额于每月第一天（UTC）重置。",
+      "seats": "席位",
+      "businesses": "商家",
+      "storage": "存储空间",
+      "storageUsed": "已用 {used} GB，共 {limit} GB",
+      "storageUnlimited": "已用 {used} GB",
+      "storageOver": "您的存储空间已超出配额。不会删除任何内容，但建议清理或升级。",
+      "cost": "生成支出",
+      "costOf": "{spent} / {cap}",
+      "costNoCap": "{spent}（无上限）",
+      "costHeadroom": "您的上限包含来自加购额度的 {amount}。",
+      "usedOf": "{used} / {limit}",
+      "usedUnlimited": "{used}（不限）"
+    },
+    "credits": {
+      "title": "加购额度",
+      "description": "额度会在每月配额用完后使用，先到期的先用，有效期 12 个月。",
+      "short": "{count, plural, =0 {无短视频额度} other {# 个短视频额度}}",
+      "long": "{count, plural, =0 {无长视频额度} other {# 个长视频额度}}",
+      "buy": "购买",
+      "buyAria": "以 {amount} 购买{pack}",
+      "noPacks": "Basic、Standard 和 Plus 套餐可购买加购包。"
+    },
+    "invoices": {
+      "title": "发票",
+      "empty": "暂无发票。",
+      "caption": "发票",
+      "number": "发票",
+      "date": "日期",
+      "amount": "金额",
+      "status": "状态",
+      "links": "链接",
+      "draft": "草稿",
+      "view": "查看",
+      "viewAria": "查看发票 {number}（在新标签页中打开）",
+      "pdf": "PDF",
+      "pdfAria": "下载发票 {number} 的 PDF（在新标签页中打开）",
+      "statuses": {
+        "draft": "草稿",
+        "open": "待付款",
+        "paid": "已付款",
+        "uncollectible": "无法收回",
+        "void": "已作废"
+      }
+    },
+    "picker": {
+      "title": "选择套餐",
+      "description": "选择套餐，通过 Stripe 安全付款。价格不含增值税。",
+      "trial": "开始免费试用",
+      "choose": "选择 {tier}",
+      "redirecting": "正在打开安全结账页面…"
+    },
+    "subscriptionStatus": {
+      "active": "有效",
+      "trialing": "试用",
+      "past_due": "逾期",
+      "unpaid": "未付款",
+      "canceled": "已取消",
+      "incomplete": "未完成",
+      "incomplete_expired": "已过期",
+      "paused": "已暂停"
+    },
+    "admin": {
+      "tab": "账单",
+      "entitlements": {
+        "title": "套餐与权益",
+        "description": "查询组织，查看其实际套餐、订阅及工作人员覆盖设置。",
+        "orgIdLabel": "组织 ID",
+        "orgIdPlaceholder": "org_…",
+        "open": "打开",
+        "loading": "正在加载权益",
+        "effective": "实际套餐",
+        "tier": "档位",
+        "access": "访问权限",
+        "source": "来源",
+        "graceUntil": "宽限期至",
+        "accessValues": {
+          "full": "完整",
+          "read_only": "只读",
+          "none": "无"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "试用",
+          "admin": "工作人员覆盖",
+          "core": "PostMind Core",
+          "none": "无"
+        },
+        "stored": "已存储的权益",
+        "noStored": "尚未存储权益。",
+        "storedSummary": "{tier} · {access} · {source} · 更新于 {when}",
+        "override": "当前覆盖设置",
+        "noOverride": "无工作人员覆盖设置。",
+        "overrideReason": "原因：{reason}",
+        "overrideSetAt": "设置于 {when}",
+        "expires": "{date} 到期",
+        "noExpiry": "永不过期",
+        "overridePrice": "约定价格：每月 {amount}",
+        "subscriptions": "订阅",
+        "noSubscriptions": "无订阅。",
+        "subscriptionLine": "{tier} · {interval} · {date} 结束",
+        "form": {
+          "title": "设置覆盖",
+          "tier": "档位",
+          "access": "访问权限",
+          "keep": "保持当前",
+          "limits": "自定义额度",
+          "limitsHelp": "留空则使用套餐默认值。勾选“不限”可取消该额度。",
+          "unlimited": "不限",
+          "unlimitedAria": "{limit}：不限",
+          "limitLabels": {
+            "seats": "席位",
+            "businesses": "商家",
+            "storageGb": "存储空间（GB）",
+            "shortVideos": "每月短视频数",
+            "longVideos": "每月长视频数",
+            "longMaxSec": "长视频最大时长（秒）",
+            "generatedImagesPerBusinessPerMonth": "每个商家每月生成图片数",
+            "scanBusinesses": "网站扫描（商家数）"
+          },
+          "price": "约定月价（£，不含增值税）",
+          "minimum": "该组织每月成本上限为 {cap}，对应最低价格：{amount}。",
+          "belowMinimum": "价格低于最低价格 {amount}。",
+          "priceRequired": "Enterprise 覆盖设置需填写约定月价。",
+          "expiresAt": "到期时间（可选）",
+          "reason": "原因（必填）",
+          "save": "保存覆盖设置",
+          "saved": "覆盖设置已保存"
+        },
+        "clear": {
+          "title": "移除覆盖设置",
+          "description": "该组织将恢复为其 Stripe 订阅所提供的权益。",
+          "reason": "移除原因",
+          "button": "移除覆盖设置",
+          "cleared": "覆盖设置已移除"
+        }
+      },
+      "subscriptions": {
+        "title": "订阅",
+        "description": "所有 Stripe 订阅，按时间从新到旧排列。",
+        "loading": "正在加载订阅",
+        "mrr": "月度经常性收入",
+        "mrrHelp": "包括有效和逾期订阅；年付套餐除以 12；不含增值税。",
+        "total": "{count, plural, =0 {无订阅} other {# 个订阅}}",
+        "byTier": "按档位",
+        "byTierAria": "按档位统计订阅",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "按状态",
+        "byStatusAria": "按状态统计订阅",
+        "filter": "状态",
+        "allStatuses": "全部状态",
+        "caption": "订阅",
+        "columns": {
+          "organisation": "组织",
+          "tier": "档位",
+          "interval": "计费",
+          "mrr": "MRR",
+          "periodEnd": "周期结束",
+          "status": "状态"
+        },
+        "cancelling": "取消中",
+        "unknownOrg": "未知组织",
+        "unknownTier": "未知",
+        "empty": "没有匹配的订阅。"
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "升级到 {tier}",
+      "body": "此功能从 {tier} 套餐起提供。",
+      "price": "{tier} 每月 {amount}，不含增值税。",
+      "enterprise": "Enterprise 需与我们的销售团队洽谈。"
+    },
+    "quota": {
+      "title": "您已达到本月额度上限",
+      "body": "升级可获得更多每月配额，也可购买加购包在本月继续使用。"
+    },
+    "planRequired": {
+      "title": "选择套餐开始创作",
+      "body": "您的组织尚未订阅套餐。请选择一个套餐以进行生成、发布和扫描。"
+    },
+    "billingRequired": {
+      "title": "请更新付款方式",
+      "body": "由于账单问题，您的账号目前为只读。请更新付款方式以恢复全部功能。"
+    },
+    "actions": {
+      "upgrade": "升级",
+      "buyTopUp": "购买加购包",
+      "choosePlan": "选择套餐",
+      "updatePayment": "更新付款方式",
+      "viewPlans": "查看套餐",
+      "notNow": "暂不"
+    },
+    "askOwner": "只有组织所有者可以更改套餐或账单。请联系所有者操作。",
+    "lock": {
+      "aria": "需要 {tier} 套餐"
+    }
+  },
+  "email": {
+    "layout": {
+      "brand": "PostMind Studio",
+      "greeting": "{name}，您好：",
+      "greetingAnonymous": "您好：",
+      "buttonFallback": "如果按钮无法使用，请将此链接复制到浏览器中：",
+      "signOff": "PostMind Studio 团队",
+      "footerTransactional": "这是一封关于您 PostMind Studio 账户的服务邮件。即使您关闭了其他邮件，我们仍会发送此类邮件。",
+      "footerNotification": "您收到此邮件，是因为您在 PostMind Studio 中为此类通知开启了邮件提醒。",
+      "support": "有疑问？请发邮件至 {email}。",
+      "unsubscribe": "退订此类邮件"
+    },
+    "templates": {
+      "verifyEmail": {
+        "subject": "请确认您的邮箱地址",
+        "heading": "请确认您的邮箱地址",
+        "body": "请确认这是您的邮箱地址，以完成 PostMind Studio 账户的设置。",
+        "cta": "确认邮箱地址",
+        "note": "此链接将在 24 小时后失效。如果您没有创建账户，请忽略此邮件。"
+      },
+      "resetPassword": {
+        "subject": "重置您的密码",
+        "heading": "重置您的密码",
+        "body": "我们收到了重置您 PostMind Studio 账户密码的请求。请点击下方按钮设置新密码。",
+        "cta": "设置新密码",
+        "note": "此链接将在 1 小时后失效，且只能使用一次。如果不是您本人的请求，请忽略此邮件：您的密码没有改变。"
+      },
+      "passwordChanged": {
+        "subject": "您的密码已更改",
+        "heading": "您的密码已更改",
+        "body": "您的 PostMind Studio 账户密码刚刚被更改，其他会话均已退出登录。",
+        "cta": "查看账户安全",
+        "note": "如果这不是您本人的操作，请立即重置密码并联系客服。"
+      },
+      "emailChangeConfirm": {
+        "subject": "请确认您的新邮箱地址",
+        "heading": "请确认您的新邮箱地址",
+        "body": "您申请将 PostMind Studio 账户的邮箱地址更改为 {newEmail}。请点击下方按钮确认更改。",
+        "cta": "确认新邮箱地址",
+        "note": "此链接将在 24 小时后失效。如果不是您本人的请求，请忽略此邮件。"
+      },
+      "emailChanged": {
+        "subject": "您账户的邮箱地址已更改",
+        "heading": "您的邮箱地址已更改",
+        "body": "您的 PostMind Studio 账户邮箱地址已更改为 {newEmail}。今后账户邮件将发送到该地址。",
+        "cta": "查看账户安全",
+        "note": "如果这不是您本人的更改，请立即联系客服。"
+      },
+      "accountExists": {
+        "subject": "您已拥有 PostMind Studio 账户",
+        "heading": "您已拥有账户",
+        "body": "有人尝试使用此邮箱地址注册 PostMind Studio，但该邮箱已关联一个账户。请直接登录。如果您忘记了密码，请在登录页面选择“忘记密码”。",
+        "cta": "登录",
+        "note": "如果这不是您本人的操作，请忽略此邮件。您的账户没有任何变化。"
+      },
+      "twoFactorChanged": {
+        "subject": "{enabled, select, true {两步验证已开启} other {两步验证已关闭}}",
+        "heading": "{enabled, select, true {两步验证已开启} other {两步验证已关闭}}",
+        "body": "{enabled, select, true {您的 PostMind Studio 账户已开启两步验证。登录时需要使用身份验证器应用或备用码。} other {您的 PostMind Studio 账户已关闭两步验证。现在只需密码即可登录。}}",
+        "cta": "查看账户安全",
+        "note": "如果这不是您本人的操作，请立即重置密码并联系客服。"
+      },
+      "newSignIn": {
+        "subject": "您的账户有新的登录",
+        "heading": "您的账户有新的登录",
+        "body": "刚刚有人通过 {device} 登录了您的 PostMind Studio 账户。",
+        "cta": "查看活跃会话",
+        "note": "如果是您本人，则无需任何操作。否则，请退出该会话并更改密码。"
+      },
+      "invite": {
+        "subject": "{inviterName} 邀请您加入 PostMind Studio 上的 {organisationName}",
+        "heading": "加入 PostMind Studio 上的 {organisationName}",
+        "body": "{inviterName} 邀请您以{role, select, owner {所有者} admin {管理员} publisher {发布者} creator {创作者} viewer {查看者} other {成员}}身份加入 {organisationName}。接受邀请，一起制作视频吧。",
+        "cta": "接受邀请",
+        "note": "邀请将在 7 天后失效。请使用此邮箱地址登录以接受邀请。如果您没有预期收到此邀请，请忽略此邮件。"
+      },
+      "ownershipTransferred": {
+        "subject": "您现在是 {organisationName} 的所有者",
+        "heading": "您现在是 {organisationName} 的所有者",
+        "body": "{newOwnerName} 已将您设为 PostMind Studio 上 {organisationName} 的所有者。作为所有者，您负责管理账单，并可以删除该组织。",
+        "cta": "打开组织设置"
+      },
+      "trialEnding": {
+        "subject": "您的 {planName} 试用将于 {trialEndsAt, date, long} 结束",
+        "heading": "您的试用即将结束",
+        "body": "您的 {planName} 试用将于 {trialEndsAt, date, long} 结束。之后您的套餐将继续，并从已绑定的卡中扣款。如需更改或取消，请在此之前打开账单设置。",
+        "cta": "打开账单"
+      },
+      "paymentFailed": {
+        "subject": "您的付款失败",
+        "heading": "我们未能收取您的付款",
+        "body": "您 PostMind Studio 套餐的最近一次付款失败。请更新您的付款信息。如果到 {graceEndsAt, date, long} 付款仍然失败，您的组织将变为只读，直至付款完成。",
+        "cta": "更新付款信息"
+      },
+      "paymentActionRequired": {
+        "subject": "您的付款需要确认",
+        "heading": "请确认您的付款",
+        "body": "您的银行要求额外确认，才能完成 PostMind Studio 套餐的付款。请打开账单进行确认。",
+        "cta": "确认付款"
+      },
+      "subscriptionChanged": {
+        "subject": "您的套餐现为 {planName}",
+        "heading": "您的套餐已更改",
+        "body": "您的组织现在使用 {planName} 套餐。您的用量限制和功能已更新。",
+        "cta": "打开账单"
+      },
+      "subscriptionCanceled": {
+        "subject": "您的订阅已取消",
+        "heading": "您的订阅已取消",
+        "body": "您的 PostMind Studio 订阅已取消。在 {endsAt, date, long} 之前您仍可完整使用；之后您的组织将变为只读。您可以随时重新订阅。",
+        "cta": "打开账单"
+      },
+      "topupReceipt": {
+        "subject": "您的加量包已到账：{packName}",
+        "heading": "加量包已添加",
+        "body": "感谢您的购买。{packName} 加量包已添加到您的组织，现在即可使用。收据将由 Stripe 另行发送。",
+        "cta": "查看用量"
+      },
+      "accountDeletionScheduled": {
+        "subject": "您的账户将被删除",
+        "heading": "您的账户将被删除",
+        "body": "您已申请删除 PostMind Studio 账户。您已在所有设备上退出登录，您的账户及其数据将于 {deleteAt, date, long} 被永久删除。",
+        "note": "如果不是您本人的申请，请在该日期之前联系客服。"
+      },
+      "orgDeletionScheduled": {
+        "subject": "{organisationName} 将被删除",
+        "heading": "{organisationName} 将被删除",
+        "body": "组织 {organisationName} 已在 PostMind Studio 中被删除。其项目、视频和连接将于 {deleteAt, date, long} 被永久移除。",
+        "note": "如果这是误操作，请在该日期之前联系客服。"
+      },
+      "dataExportReady": {
+        "subject": "您的数据导出已就绪",
+        "heading": "您的数据导出已就绪",
+        "body": "您在 PostMind Studio 申请的导出文件已可下载。下载链接在 {expiresAt, date, long} 之前有效。",
+        "cta": "下载导出文件"
+      }
+    },
+    "notification": {
+      "cta": "在 PostMind Studio 中打开"
+    },
+    "unsubscribe": {
+      "pageTitle": "邮件偏好设置 — PostMind Studio",
+      "confirmHeading": "不再接收这些邮件？",
+      "confirmBody": "您将不再收到此组织关于“{kind}”的邮件。您仍可在 PostMind Studio 中看到这些通知。",
+      "confirmButton": "退订",
+      "doneHeading": "您已退订",
+      "doneBody": "您将不再收到此组织关于“{kind}”的邮件。您可以在 PostMind Studio 的通知偏好设置中重新开启。",
+      "invalidHeading": "此链接无效",
+      "invalidBody": "退订链接不完整或已被修改。请使用最新邮件中的链接，或在 PostMind Studio 中更改通知偏好设置。",
+      "openStudio": "打开 PostMind Studio"
+    },
+    "preferences": {
+      "description": "选择您希望通过应用内和邮件接收的内容。",
+      "suppressed": "我们无法向您发送邮件：发往您邮箱的邮件被退回或被标记为垃圾邮件。请联系客服重新开启邮件。"
+    }
+  },
+  "adminOrgs": {
+    "list": {
+      "search": "搜索组织",
+      "searchPlaceholder": "名称、slug 或 id",
+      "searchAction": "搜索",
+      "loading": "正在加载组织",
+      "empty": "没有匹配的组织。",
+      "results": "{count, plural, other {# 个组织}}",
+      "name": "组织",
+      "plan": "套餐",
+      "status": "状态",
+      "members": "成员",
+      "cost": "本月费用",
+      "created": "创建时间",
+      "actions": "操作",
+      "open": "打开",
+      "openAria": "打开 {name}",
+      "byIdTitle": "按 id 查找",
+      "byIdHint": "查看任意组织 id（包括 PostMind Core 持有的组织）的策略和费用上限。"
+    },
+    "detail": {
+      "back": "全部组织",
+      "loading": "正在加载组织信息",
+      "meta": "{id} · 创建于 {created}",
+      "plan": "套餐",
+      "none": "无",
+      "sources": {
+        "stripe": "来自 Stripe",
+        "trial": "免费试用",
+        "admin": "由员工设置",
+        "core": "来自 PostMind Core",
+        "none": "无套餐"
+      },
+      "access": "访问权限",
+      "members": "成员",
+      "pending": "{count, plural, =0 {没有待处理的邀请} other {# 个待处理的邀请}}",
+      "cost": "本月费用",
+      "businesses": "{count, plural, =0 {暂无业务} other {# 个业务}}",
+      "graceUntil": "付款宽限期至 {date} 结束。",
+      "membersTitle": "成员",
+      "subscriptionsTitle": "订阅",
+      "subscriptionsHint": "只读；请在 Stripe 中更改套餐，或使用权限覆盖。",
+      "noSubscription": "暂无订阅。",
+      "cancelling": "将在当前周期结束时取消"
+    },
+    "status": {
+      "trialing": "试用中",
+      "active": "生效中",
+      "pastDue": "逾期未付",
+      "unpaid": "未付款",
+      "canceled": "已取消",
+      "incomplete": "未完成",
+      "incompleteExpired": "结账已过期",
+      "paused": "已暂停",
+      "full": "完整访问",
+      "readOnly": "只读",
+      "noPlan": "无套餐",
+      "deleted": "已删除",
+      "banned": "已封禁"
+    },
+    "subscriptions": {
+      "readOnlyNote": "只读。订阅在 Stripe 中（或通过客户门户）更改；套餐限制通过权限覆盖更改。",
+      "filter": "状态",
+      "all": "全部状态",
+      "loading": "正在加载订阅",
+      "empty": "没有匹配的订阅。",
+      "results": "{count, plural, other {# 个订阅}}",
+      "organisation": "组织",
+      "plan": "价格",
+      "status": "状态",
+      "renews": "周期结束时间",
+      "grace": "宽限期结束时间",
+      "cancelling": "将在当前周期结束时取消"
+    },
+    "legal": {
+      "title": "法律文档尚未准备好上线。",
+      "blocking": "在服务条款和隐私政策替换为您自己的内容之前，生产环境中的公开注册将保持关闭。",
+      "warning": "注册未被阻止，但这些文档目前仍是占位内容。",
+      "placeholder": "占位内容",
+      "missing": "缺失",
+      "signupsClosed": "在此之前，公开注册将保持关闭。"
+    }
+  },
+  "adminUsers": {
+    "list": {
+      "search": "搜索用户",
+      "searchPlaceholder": "邮箱、姓名或 id",
+      "searchAction": "搜索",
+      "loading": "正在加载用户",
+      "empty": "没有匹配的用户。",
+      "results": "{count, plural, other {# 位用户}}",
+      "user": "用户",
+      "verified": "邮箱已验证",
+      "twoFactor": "2FA",
+      "role": "角色",
+      "sessions": "会话",
+      "created": "加入时间",
+      "actions": "操作",
+      "open": "打开",
+      "openAria": "打开 {name}",
+      "yes": "是",
+      "no": "否"
+    },
+    "detail": {
+      "back": "全部用户",
+      "loading": "正在加载用户信息",
+      "verified": "邮箱已验证",
+      "twoFactor": "两步验证",
+      "role": "角色",
+      "roles": {
+        "user": "客户",
+        "staff": "员工",
+        "superadmin": "超级管理员"
+      },
+      "sessions": "活跃会话",
+      "yes": "是",
+      "no": "否",
+      "banReason": "已封禁：{reason}",
+      "membershipsTitle": "所属组织",
+      "noMemberships": "不属于任何组织。",
+      "actionsTitle": "操作",
+      "actionsHint": "每项操作都需要填写原因，并会被记录在审计日志中。",
+      "ban": "封禁用户",
+      "unban": "解除封禁",
+      "revokeSessions": "在所有设备上退出登录",
+      "resetTwoFactor": "重置两步验证",
+      "impersonate": "以该用户身份查看",
+      "impersonationOff": "以用户身份查看功能已关闭（STUDIO_IMPERSONATION_ENABLED）。",
+      "done": {
+        "ban": "用户已被封禁并退出登录。",
+        "unban": "已解除封禁。",
+        "sessions": "用户已在所有设备上退出登录。",
+        "twoFactor": "两步验证已重置。",
+        "impersonate": "正在打开只读视图。"
+      },
+      "confirm": {
+        "ban": {
+          "title": "封禁 {name}？",
+          "body": "对方将立即被退出登录，且在解除封禁前无法登录。",
+          "action": "封禁用户"
+        },
+        "unban": {
+          "title": "解除对 {name} 的封禁？",
+          "body": "对方可以立即重新登录。",
+          "action": "解除封禁"
+        },
+        "sessions": {
+          "title": "在所有设备上退出 {name} 的登录？",
+          "body": "对方登录的每个浏览器和设备都将退出登录。",
+          "action": "在所有设备上退出登录"
+        },
+        "twoFactor": {
+          "title": "为 {name} 重置两步验证？",
+          "body": "请先通过其他方式核实身份。对方的验证器和备用代码将失效，需要重新设置。",
+          "action": "重置"
+        },
+        "impersonate": {
+          "title": "以 {name} 的身份查看 Studio？",
+          "body": "这是一个 30 分钟的只读会话，并带有提示横幅。您查看的所有内容都会被记录。",
+          "action": "开始查看"
+        }
+      }
     }
   }
 }

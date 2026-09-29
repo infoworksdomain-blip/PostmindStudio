@@ -289,10 +289,11 @@ function CostCapsForm({ orgId }: { orgId: string }) {
   );
 }
 
-export function OrganisationPanel() {
+/** Phase 18: the Organisations directory opens a chosen organisation here (initialOrgId). */
+export function OrganisationPanel({ initialOrgId }: { initialOrgId?: string } = {}) {
   const t = useTranslations('admin.organisations');
-  const [input, setInput] = useState('');
-  const [orgId, setOrgId] = useState<string | null>(null);
+  const [input, setInput] = useState(initialOrgId ?? '');
+  const [orgId, setOrgId] = useState<string | null>(initialOrgId ?? null);
   return (
     <div className="grid gap-6">
       <form

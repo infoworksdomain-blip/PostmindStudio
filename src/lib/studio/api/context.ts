@@ -22,6 +22,14 @@ import type { AssetStorage } from '../storage';
 import { devTenantFromEnv } from './dev-tenant';
 import type { IdempotencyStore } from './idempotency';
 import type { RateLimiter } from './rate-limit';
+import type { AuditSink } from '../../audit-sink';
+import type { AuthMailer } from '../../email/auth-mailer';
+import type { IdentityProvider } from '../../identity/provider';
+import type { StudioModes } from '../../mode';
+import type { BillingService } from '../billing/contracts';
+import type { EntitlementsReader } from '../billing/entitlements-reader';
+import type { BusinessGuard } from '../core/select';
+import type { MetaConnectDeps } from '../services/meta-connect';
 
 // Dependencies for /api/studio route handlers. Built lazily from env in production; tests
 // install their own with setApiDeps().
@@ -40,6 +48,8 @@ export interface ApiDeps {
   internalRateLimiter?: RateLimiter;
   /** 15.E5: limit for public share-link requests (per client and per link); absent = unlimited. */
   publicRateLimiter?: RateLimiter;
+  /** Phase 18: per-IP limit for provider webhooks (Resend, Stripe); absent = unlimited (tests). */
+  webhookRateLimiter?: RateLimiter;
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
@@ -70,6 +80,27 @@ export interface ApiDeps {
   uploads?: UploadDeps;
   /** 14.11: beta "Plus for 30 days" override lookup; absent = Core's plan tier as-is (tests). */
   betaPlans?: BetaPlanLookup;
+  // Phase 18 (plans/phase-18.md §0, §2) — optional so existing tests and core mode are
+  // unchanged; each track fills its own field.
+  /** The resolved integration modes (STUDIO_MODE and overrides); absent = read from env. */
+  modes?: StudioModes;
+  /** The identity provider behind resolveTenant (standalone Better Auth or core). */
+  identity?: IdentityProvider;
+  /** Tier / access per organisation (Track C); absent = no plan limits applied (tests). */
+  entitlements?: EntitlementsReader;
+  /** Stripe checkout / portal / invoices (Track C); absent = billing routes answer 501. */
+  billing?: BillingService;
+  /** Transactional email (Track B); absent = auth email is logged only (development). */
+  mailer?: AuthMailer;
+  /** Durable audit writes (auditLogDurable); absent = audit only through `audit`. */
+  auditSink?: AuditSink;
+  /**
+   * Track D (§2.11): checks every businessId a write names against studio.businesses (local
+   * businesses only); absent = no check (core mode, tests).
+   */
+  businessGuard?: BusinessGuard;
+  /** Track D (§2.10): Studio's own Meta connect; absent = built from env on first use. */
+  metaConnect?: MetaConnectDeps;
   logger: Logger;
   now: () => number;
 }
@@ -107,6 +138,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
   const voices = await import('../providers/elevenlabs-voices');
   const adminHealth = await import('../services/admin-health');
   const beta = await import('../services/beta');
+  const mailer = await import('../../email/mailer');
+  const mode = await import('../../mode');
+  const select = await import('../core/select');
+  const modes = mode.studioModes();
+  const billingWiring = await import('../billing/wiring');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -141,6 +177,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
       rateLimit.publicRateLimitsFromEnv(),
       { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
     ),
+    webhookRateLimiter: rateLimit.createRateLimiter(
+      rateLimit.createRedisRateLimitStore(connection),
+      rateLimit.webhookRateLimitsFromEnv(),
+      { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
+    ),
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),
@@ -150,6 +191,20 @@ async function buildFromEnv(): Promise<ApiDeps> {
     breaker: pipeline.breaker,
     adminQueues: () => adminHealth.bullQueuesFor(connection),
     betaPlans: beta.createBetaPlanLookup({ db: prisma, logger, now: Date.now }),
+    // Phase 18 §2.8: Resend through the outbox in standalone mode; logged only in development,
+    // tests and core mode (email/mailer.ts mailerFromEnv).
+    mailer: mailer.mailerFromEnv({ db: prisma, queue, logger }),
+    core: { businesses: select.selectBusinessDirectory(modes, prisma) },
+    businessGuard: select.selectBusinessGuard(modes, prisma),
+    metaConnect: select.selectMetaConnect(modes),
+    // Phase 18 Track C: modes, entitlements (tier + access gate) and the Stripe billing service.
+    ...billingWiring.billingApiDepsFromEnv({
+      db: prisma,
+      logger,
+      audit: auditLog,
+      appUrl: env.requireEnv('APP_URL'),
+    }),
+    modes,
     logger,
     now: Date.now,
   };

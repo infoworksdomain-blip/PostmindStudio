@@ -291,7 +291,12 @@ describe.skipIf(!hasDb)(
         where: { id: projectId },
         include: {
           scripts: {
-            include: { shots: { orderBy: { sortOrder: 'asc' }, include: { overlays: true } } },
+            include: {
+              shots: {
+                orderBy: { sortOrder: 'asc' },
+                include: { overlays: { orderBy: { createdAt: 'asc' } } },
+              },
+            },
           },
         },
       });
@@ -299,7 +304,9 @@ describe.skipIf(!hasDb)(
       const shots = project.scripts[0]?.shots ?? [];
       expect(shots.map((s) => s.durationSec)).toEqual([2.5, 3.5, 9]);
       expect(shots.map((s) => s.transitionOut)).toEqual(['cut', 'cut', 'cut']);
-      // Hook overlay inherits the reference's "bold-centre" style → Bold Centre preset.
+      // Hook overlay inherits the reference's "bold-centre" style → Bold Centre preset. The first
+      // shot also carries narration captions (13.6); the hook is planned first (layer 2), so it is
+      // the oldest row — reading overlays without an order was flaky on CI.
       expect(shots[0]?.overlays[0]).toMatchObject({ strokeColor: '#000000', strokeWidthPx: 3 });
 
       const scriptCall = h.adapters.anthropic.requests.find((r) =>

@@ -4,6 +4,7 @@ import { useLocale, useMessages } from 'next-intl';
 import { useCallback } from 'react';
 import useSWR, { type SWRConfiguration } from 'swr';
 import type { Messages } from '@/lib/i18n/messages';
+import { emitUpgrade, isUpgradeCode } from './upgrade-events';
 
 // BACKLOG 10.2 — browser → /api/studio. Auth rides on PostMind's session cookie (same-origin
 // requests; tenant.ts verifies it), so no token is ever handled in JavaScript. Errors keep the
@@ -74,12 +75,21 @@ export async function api<T>(path: string, request: ApiRequest = {}): Promise<T>
       message?: string;
       details?: Record<string, unknown>;
     };
-    throw new ApiError(
+    const error = new ApiError(
       res.status,
       envelope.error ?? `http_${res.status}`,
       envelope.message ?? `Request failed (${res.status})`,
       envelope.details,
     );
+    // Phase 18: plan / billing blocks also open the global upgrade dialog.
+    if (isUpgradeCode(error.code))
+      emitUpgrade({
+        code: error.code,
+        status: error.status,
+        message: error.message,
+        details: error.details,
+      });
+    throw error;
   }
   return json as T;
 }

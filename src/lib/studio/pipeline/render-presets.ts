@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { AspectRatio } from '../providers/interface';
+import { PLAN_CATALOGUE, TIER_ORDER } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 
 // BACKLOG 15.B7 — per-format render presets (spec 5.8: "Each target format has its own render
@@ -52,9 +53,11 @@ const DEFAULT_PRESET: Omit<RenderPreset, 'scaleTo'> = {
   quality: 'high',
 };
 
-/** Spec 3.1: 4K is for YouTube long-form, Plus tier and above. */
+/** Spec 3.1: 4K is for YouTube long-form, Plus tier and above (Phase 18: from the catalogue). */
 export const FOUR_K_PLATFORMS = new Set(['youtube']);
-export const FOUR_K_TIERS: ReadonlySet<PlanTier> = new Set<PlanTier>(['PLUS', 'ENTERPRISE']);
+export const FOUR_K_TIERS: ReadonlySet<PlanTier> = new Set<PlanTier>(
+  TIER_ORDER.filter((t) => PLAN_CATALOGUE[t].renders4k),
+);
 
 export const renderOptionsInput = z
   .object({

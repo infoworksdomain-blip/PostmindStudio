@@ -8,7 +8,10 @@ import { requireCapability, type StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
 import { applyBetaPlan } from '../services/beta';
+import { billingGate } from '../billing/access-gate';
+import { assertImpersonationAllowsWrite } from '../admin/impersonation';
 import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
+import { guardBusinessIds } from './business-guard';
 
 /** 422: an Idempotency-Key reused with a different body (the client has a bug). */
 class IdempotencyMismatchError extends StudioError {
@@ -37,6 +40,8 @@ export interface RouteContext {
 export interface RouteResult {
   status?: number;
   body: Record<string, unknown>;
+  /** Set-Cookie headers to forward (never stored with an idempotent replay). */
+  setCookies?: string[];
 }
 
 type Handler = (ctx: RouteContext) => Promise<RouteResult>;
@@ -81,12 +86,19 @@ export function withStudioRoute(
       const deps = await getApiDeps();
       log = withContext({ correlationId }, deps.logger);
       // BACKLOG 14.11: a beta organisation routes / caps / auto-approves as PLUS (services/beta.ts).
-      const tenant = await applyBetaPlan(deps.betaPlans, await deps.resolveTenant(req), deps.now());
+      // Phase 18 §P.3: tier + access from entitlements and the 402 access gate (billing/access-gate.ts).
+      const tenant = await applyBetaPlan(
+        deps.betaPlans,
+        await billingGate(deps, req, await deps.resolveTenant(req)),
+        deps.now(),
+      );
       log = withContext(
         { correlationId, organisationId: tenant.organisationId, userId: tenant.userId },
         deps.logger,
       );
       requireCapability(tenant, capability);
+      // Phase 18 §2.5: impersonation sessions are read-only (defence in depth; Track A too).
+      assertImpersonationAllowsWrite(tenant, req.method);
       for (const feature of [options.feature ?? []].flat())
         await featureGateFor(deps.db).assertEnabled(feature, tenant.organisationId);
       await deps.rateLimiter?.check({
@@ -94,6 +106,10 @@ export function withStudioRoute(
         userId: tenant.userId,
         method: req.method,
       });
+
+      // Phase 18 §2.11: a write naming a businessId must name one of this organisation's.
+      if (deps.businessGuard && MUTATING.has(req.method))
+        await guardBusinessIds(deps.businessGuard, tenant.organisationId, req);
 
       const path = new URL(req.url).pathname;
       const idemKey = MUTATING.has(req.method) ? req.headers.get('idempotency-key') : null;
@@ -157,7 +173,9 @@ export function withStudioRoute(
             await deps.idempotency.complete(idem.scope, idem.bodyHash, { status, body: safeBody });
           else await deps.idempotency.release(idem.scope);
         }
-        return jsonResponse(safeBody, { status, headers });
+        const response = jsonResponse(safeBody, { status, headers });
+        for (const cookie of result.setCookies ?? []) response.headers.append('set-cookie', cookie);
+        return response;
       } catch (err) {
         // A failed request must not pin the key: the client is expected to retry with it.
         if (idem) await deps.idempotency.release(idem.scope).catch(() => undefined);

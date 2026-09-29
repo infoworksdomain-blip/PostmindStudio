@@ -27,6 +27,8 @@ describe('A10.3 tier gates (15.D2)', () => {
     ['overlays.custom_presets', [false, true, true, true], 'STANDARD'],
     ['slideshow.custom_templates', [false, true, true, true], 'STANDARD'],
     ['image_library.generate', [false, false, true, true], 'PLUS'],
+    // Phase 18 §P.1: multi-step approval workflows (new gate).
+    ['approval.workflows', [false, true, true, true], 'STANDARD'],
   ];
   const tiers: PlanTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
 

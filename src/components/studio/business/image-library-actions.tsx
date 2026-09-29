@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
+import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { NativeSelect } from '../publications/native-select';
 
 // A6.3 / A6.6 / A6.8 — add to the library: upload a file (multipart), generate one from a
@@ -153,6 +154,7 @@ export function GenerateImageButton({
       <Button variant="outline" onClick={() => setOpen(true)}>
         <Wand2 /> {t('generate')}
       </Button>
+      <PlanLockBadge feature="imageGeneration" />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('generateTitle')}</DialogTitle>

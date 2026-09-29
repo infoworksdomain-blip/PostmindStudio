@@ -33,6 +33,8 @@ async function row(overrides: Partial<PlatformConnection> = {}): Promise<Platfor
     connectedAt: new Date(NOW),
     statusCheckedAt: null,
     statusCheckOutcome: null,
+    connectedVia: null,
+    metaUserId: null,
     ...overrides,
   };
 }

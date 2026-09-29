@@ -20,5 +20,8 @@ __DOMAIN__ {
 	reverse_proxy studio-web-__ENV__:3010 {
 		# While web restarts during a deploy (a few seconds), hold requests instead of failing them.
 		lb_try_duration 30s
+		# Phase 18 §2.3: the client address for auth rate limits. {client_ip} already honours
+		# trusted_proxies (Cloudflare), and this replaces anything a client sent in X-Real-IP.
+		header_up X-Real-IP {client_ip}
 	}
 }

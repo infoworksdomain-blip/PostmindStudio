@@ -3,6 +3,13 @@ import { PlanTierError, QuotaExceededError } from '../../errors';
 import { logger } from '../../logger';
 import type { TenantContext } from '../../tenant';
 import type { PlanTier } from '../providers/router';
+import {
+  minTierFor,
+  minTierForImageLibrary,
+  PLAN_CATALOGUE,
+  TIER_ORDER as CATALOGUE_TIER_ORDER,
+  tierAtLeast as catalogueTierAtLeast,
+} from '../billing/catalogue';
 import { toPlanTier } from './catalog';
 
 // BACKLOG 15.D2 — Addendum A10.3 "Tier gating for v1.1 features" and A10.4 "Cost cap changes".
@@ -23,7 +30,9 @@ import { toPlanTier } from './catalog';
 // the calendar month (UTC) for the business — on-demand, slideshow and IMAGE_STILL generations
 // alike — so no counter table is needed. A deleted generated image no longer counts (documented).
 
-export const TIER_ORDER: readonly PlanTier[] = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'];
+// Phase 18 §P.3: tier order, minimum tiers and limits come from the plan catalogue
+// (billing/catalogue.ts); env overrides keep precedence where they exist.
+export const TIER_ORDER: readonly PlanTier[] = CATALOGUE_TIER_ORDER;
 
 const TIER_LABEL: Record<PlanTier, string> = {
   BASIC: 'Basic',
@@ -37,7 +46,7 @@ export function tierLabel(tier: PlanTier): string {
 }
 
 export function tierAtLeast(tier: PlanTier, minTier: PlanTier): boolean {
-  return TIER_ORDER.indexOf(tier) >= TIER_ORDER.indexOf(minTier);
+  return catalogueTierAtLeast(tier, minTier);
 }
 
 export interface TierGateDefinition {
@@ -50,29 +59,34 @@ export interface TierGateDefinition {
 
 export const TIER_GATES = {
   'library.inspire': {
-    minTier: 'STANDARD',
+    minTier: minTierFor('libraryInspire'),
     label: 'Library INSPIRE mode',
     spec: 'A10.3 "Library — INSPIRE mode": - / ✓ / ✓ / ✓',
   },
   'library.template': {
-    minTier: 'PLUS',
+    minTier: minTierFor('libraryTemplate'),
     label: 'Library TEMPLATE mode',
     spec: 'A10.3 "Library — TEMPLATE mode": - / - / ✓ / ✓',
   },
   'overlays.custom_presets': {
-    minTier: 'STANDARD',
+    minTier: minTierFor('customPresets'),
     label: 'Saving custom overlay presets',
     spec: 'A10.3 "Save custom overlay presets": - / ✓ / ✓ / ✓',
   },
   'slideshow.custom_templates': {
-    minTier: 'STANDARD',
+    minTier: minTierFor('customPresets'),
     label: 'Saving custom slideshow templates',
     spec: 'A10.3 "Save custom slideshow templates": - / ✓ / ✓ / ✓',
   },
   'image_library.generate': {
-    minTier: 'PLUS',
+    minTier: minTierForImageLibrary('ai_generation'),
     label: 'Generating images for the image library',
     spec: 'A10.3 "Auto-image library": Stock only / Stock + site scrape / All 3 layers / All 3 + BYOC image gen',
+  },
+  'approval.workflows': {
+    minTier: minTierFor('approvalWorkflows'),
+    label: 'Multi-step approval workflows',
+    spec: 'Phase 18 §P.1 "Approval workflows (multi-step)": single approve / ✓ / ✓ / ✓',
   },
 } as const satisfies Record<string, TierGateDefinition>;
 
@@ -117,12 +131,12 @@ export function monthWindow(now: number): MonthWindow {
 // ------------------------------------------------------------------ website scans
 
 /** A10.3 "Website scan (Feature D)": businesses an organisation may scan (null = unlimited). */
-export const SCANNED_BUSINESS_LIMITS: Readonly<Record<PlanTier, number | null>> = {
-  BASIC: 1,
-  STANDARD: 3,
-  PLUS: 10,
-  ENTERPRISE: null,
-};
+export const SCANNED_BUSINESS_LIMITS: Readonly<Record<PlanTier, number | null>> = Object.freeze(
+  Object.fromEntries(TIER_ORDER.map((t) => [t, PLAN_CATALOGUE[t].scanBusinesses])) as Record<
+    PlanTier,
+    number | null
+  >,
+);
 
 /** The lowest tier whose limit admits `count + 1` businesses. */
 function tierForBusinessCount(count: number): PlanTier {
@@ -178,12 +192,12 @@ export async function assertScanBusinessAllowed(
 // ------------------------------------------------------------------ image generation cap
 
 /** A10.4 "Basic 20, Standard 50, Plus 200, Enterprise 1000" generated images per business/month. */
-export const DEFAULT_IMAGE_GENERATION_MONTHLY_CAP: Readonly<Record<PlanTier, number>> = {
-  BASIC: 20,
-  STANDARD: 50,
-  PLUS: 200,
-  ENTERPRISE: 1_000,
-};
+export const DEFAULT_IMAGE_GENERATION_MONTHLY_CAP: Readonly<Record<PlanTier, number>> =
+  Object.freeze(
+    Object.fromEntries(
+      TIER_ORDER.map((t) => [t, PLAN_CATALOGUE[t].generatedImagesPerBusinessPerMonth]),
+    ) as Record<PlanTier, number>,
+  );
 
 /** STUDIO_IMAGE_GEN_MONTHLY_CAP_<TIER> overrides the A10.4 default (a non-negative integer). */
 export function imageGenerationCap(

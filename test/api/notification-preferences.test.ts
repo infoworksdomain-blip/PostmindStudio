@@ -34,11 +34,13 @@ describe.skipIf(!hasDb)('notification preferences API', { timeout: 60_000 }, () 
     await db.$disconnect();
   });
 
-  it('GET returns defaults for every kind and says email is pending setup', async () => {
+  it('GET returns defaults for every kind and the email delivery state', async () => {
     const res = await call(prefsRoute.GET, { token: 'amara' });
     expect(res.status).toBe(200);
     expect(res.json).toMatchObject({
-      emailDelivery: 'pending_setup',
+      // Phase 18 §2.8: standalone mode sends email through Resend (test/api/p18-email.test.ts
+      // covers "suppressed" and the core-mode "pending_setup").
+      emailDelivery: 'active',
       preferences: {
         generation_complete: { inApp: true, email: false },
         milestone: { inApp: true, email: false },

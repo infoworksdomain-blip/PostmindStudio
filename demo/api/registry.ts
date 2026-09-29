@@ -2,6 +2,7 @@
 // real routes return (`{ ok: true, ...body }` / `{ ok: false, error, message }`), with a short
 // latency so loading states are visible. Unknown routes answer 501 and are logged, so a screen
 // that calls something the demo doesn't cover shows its real error state instead of fake data.
+import { handleAuth } from './auth';
 
 export type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -140,6 +141,8 @@ export function installMockFetch(): void {
     // The artifact frame's own URL may not be a usable base (e.g. about:srcdoc).
     const url = new URL(raw, 'https://studio.demo');
     if (url.pathname.startsWith('/api/studio')) return handle(url, init);
+    // Phase 18 Track A screens call Better Auth directly (demo/api/auth.ts).
+    if (url.pathname.startsWith('/api/auth/')) return handleAuth(url, init);
     return realFetch(input, init);
   };
 }

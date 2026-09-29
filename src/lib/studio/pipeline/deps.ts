@@ -1,3 +1,5 @@
+import type { EmailSendConfig } from '../../email/config';
+import type { EmailTransport } from '../../email/resend-client';
 import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { KillSwitch } from '../kill-switch';
@@ -24,6 +26,9 @@ import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
 import type { ThumbnailComposer } from '../services/thumbnail-composer';
+import type { BillingAccessLookup } from '../billing/job-access';
+import type { BillingJobDeps } from '../billing/wiring';
+import type { AuthMailer } from '../../email/auth-mailer';
 
 // Everything a pipeline processor needs, injected so processors are testable without Redis,
 // real providers or ffmpeg.
@@ -100,10 +105,33 @@ export interface PipelineDeps {
   registryFor?: (scope: ProviderScope) => Promise<ProviderRegistry | undefined>;
   /** P7: per-business provider scores (0–1) the router prefers within a tier's candidates. */
   providerRatings?: { scoresFor(scope: ProviderScope): Promise<Readonly<Record<string, number>>> };
+  /**
+   * Phase 18 §2.8 email delivery (send-email job); absent = Resend + config from env on first use
+   * (lib/email/config.ts).
+   */
+  email?: EmailDeliveryDeps;
   /** HTTP client for downloading provider outputs. */
   fetch: typeof fetch;
   now: () => number;
   sleep: (ms: number) => Promise<void>;
+  /**
+   * Phase 18 §P.3 (Track C): the organisation's billing access, checked at job start
+   * (billing/job-access.ts); absent = not checked (core mode, tests).
+   */
+  billingAccess?: BillingAccessLookup;
+  /** Phase 18 (Track C): Stripe sweeper + nightly reconcile; absent = built from env on use. */
+  billingJobs?: BillingJobDeps;
+  /**
+   * Phase 18 §2.8: transactional email sent by worker jobs (billing notices from the Stripe
+   * sweeper, the cancelled-organisation retention job). Absent = the email is skipped and logged.
+   */
+  mailer?: AuthMailer;
+}
+
+/** Phase 18 §2.8: what the send-email job needs (tests inject a fake transport). */
+export interface EmailDeliveryDeps {
+  transport: EmailTransport;
+  config: EmailSendConfig;
 }
 
 /** 15.W2–W4: PostMind Core integrations the scheduled Core-sync jobs use. */
@@ -111,6 +139,18 @@ export interface CoreSyncClients {
   usage?: UsageReporter;
   calendar?: CalendarShadowClient;
   organisations?: CoreOrganisationDirectory;
+  /**
+   * Phase 18 §1 row 12: 'local' = standalone billing (Stripe tiers): usage rows are recorded with
+   * state `local` and never sent. Absent / 'outbox' = rows wait for Core (pending_setup).
+   */
+  usageRecording?: 'outbox' | 'local';
+  /** Phase 18 §1 row 13: false = no Core calendar, so no shadow rows are written. Absent = on. */
+  calendarShadows?: boolean;
+  /**
+   * Phase 18 §1 row 10: false = Studio owns the Meta login (STUDIO_META_CONNECT=studio), so there
+   * is no Core channel list to reconcile against. Absent = on (waits for Core list-channels).
+   */
+  channelReconciliation?: boolean;
 }
 
 /** Who a provider call is for (Phase 15: BYOC registry and provider ratings are per org). */

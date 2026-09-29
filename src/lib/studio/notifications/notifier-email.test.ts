@@ -148,3 +148,22 @@ describe('notifier email step', () => {
     expect(emailRecipients).not.toHaveBeenCalled();
   });
 });
+
+describe('notifier email step: keyed messages (Phase 18 §2.8)', () => {
+  it('passes the keyed form so each recipient gets their own language', async () => {
+    const sent: EmailMessage[] = [];
+    const email: EmailSender = { provider: 'resend', send: async (m) => void sent.push(m) };
+    const { notifier } = setup({ recipients: ['u1'], email });
+    await notifier.notify({
+      ...input,
+      message: {
+        key: 'publicationFailed',
+        params: { name: 'Launch', platform: 'tiktok', reason: 'r' },
+      },
+    });
+    expect(sent[0]?.message).toEqual({
+      key: 'publicationFailed',
+      params: { name: 'Launch', platform: 'tiktok', reason: 'r' },
+    });
+  });
+});

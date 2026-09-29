@@ -387,3 +387,24 @@ Plan: `plans/phase-17.md`. Runbook GAPs that are code, plus follow-ups from Phas
 - [x] **17.7** CI: Postgres 17, monitoring image build, render.yaml schema validation.
 - [x] **17.8** Ownership statement stored as locale + message key, checked against approved text.
 - [x] **17.9** Server-originated text (failure reasons, quality details, "Untitled video", template categories) localised.
+
+## Phase 18 — Standalone SaaS (sign-in, Stripe, Resend, plans and tiers)
+
+Plan: `plans/phase-18.md`. Operator decisions (2026-09-29): standalone product; built-in sign-in (Better Auth); Stripe subscriptions; Resend transactional email; Core and Engagement kept as optional adapters, off by default (`STUDIO_MODE=standalone`). These override CLAUDE.md's "Core handles auth / billing" lines; rule 1 (never modify Core or Engagement code) still holds.
+
+- [x] **18.0** Track 0 — contracts: the whole expand-only migration (19 tables + `platform_connections.connectedVia`, append-only audit trigger), `IdentityProvider` / entitlements / catalogue / billing / auth-mailer / audit-sink contracts, new capabilities, mode-aware env (`STUDIO_MODE`), empty i18n namespaces, leaf-level catalogue merge script.
+- [ ] **18.A** Track A — identity foundation (built on phase-18: A1 10fc587 + A2/A3; impersonation wiring and 2FA-disable code done in the integration; open: Playwright E2E): Better Auth (argon2id, sessions, CSRF, rate limits, enumeration-safe responses), standalone `IdentityProvider`, role → capability map, platform staff, local audit log; sign-up / sign-in / verify / reset / 2FA screens, Google sign-in, account security; super-admin CLI.
+- [x] **18.B** Track B — email: Resend sender, outbox + retries, templates in 11 locales (plain TS, not React Email — see PROGRESS), webhook suppression, one-click unsubscribe.
+- [x] **18.C** Track C — billing, plans and entitlements: Stripe catalogue / checkout / portal / webhook, entitlements and access gate, top-ups, `/pricing`, `/settings/billing`, upgrade dialog, admin overrides.
+- [x] **18.D** Track D — standalone replacements: local businesses, local organisation directory, Studio's own Meta connect (Facebook Login for Business) with deauthorise / data-deletion callbacks, Core-only adapters off. (Staging gate — a live Page/IG connect, Reel publish and deauthorise with the operator's Meta app — waits for the app settings in runbooks/meta-connect.md.)
+- [x] **18.E** Track E — product surfaces and admin: landing, legal, onboarding, organisation / members / audit settings, admin organisations / users / subscriptions, shell switcher and banners, demo, CLAUDE.md and runbooks. Items:
+  - [x] **18.E1** Public landing page at `/` (signed-in visitors → `/projects`; core mode → app).
+  - [x] **18.E2** Legal pages from `content/legal/<locale>/*.md` placeholders + legal-readiness gate (admin warning; production sign-up closed while terms/privacy are placeholders; `scripts/legal/check-ready.ts`).
+  - [x] **18.E3** Onboarding: organisation → first business → brand kit → connect → first video.
+  - [x] **18.E4** `/settings/organisation`, `/settings/members`, `/settings/audit` + `api/studio/{org,members,audit,me}`.
+  - [x] **18.E5** Admin Organisations / Users / Subscriptions tabs; impersonation policy (off by default, read-only when on).
+  - [x] **18.E6** AppShell organisation switcher, user menu with sign-out, account banners (trial, past due, read-only, no plan, staff view).
+  - [x] **18.E7** Demo handlers `p18-*`, tour group and What's new entry.
+  - [x] **18.E8** Docs: CLAUDE.md standalone mode, runbooks/auth.md, vps-deploy.md.
+  - [x] **18.E9** All strings in 11 locales, ar and zh-Hans render tests.
+  - [ ] **18.E10** Playwright happy path runs green in CI — written and wired (CI job `e2e`); runs once Track A sign-up and Track C pricing are merged.

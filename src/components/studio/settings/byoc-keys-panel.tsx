@@ -13,6 +13,7 @@ import type {
   ProviderCredential,
   ProviderCredentialsResponse,
 } from '@/lib/client/types';
+import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { Section } from '../primitives';
 
 // P1 BYOC (operator decision 2026-09-28; spec 6.6 / 12.6): Enterprise organisations add their
@@ -186,7 +187,12 @@ export function ByocKeysPanel() {
   if (error instanceof ApiError && error.status === 403) return null;
 
   return (
-    <Section className="mt-8" title={t('title')} description={t('description')}>
+    <Section
+      className="mt-8"
+      title={t('title')}
+      description={t('description')}
+      actions={<PlanLockBadge feature="byocProviderKeys" />}
+    >
       {error && (
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <p>{t('loadFailed', { reason: errorMessage(error) })}</p>

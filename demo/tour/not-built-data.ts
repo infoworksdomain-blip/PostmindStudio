@@ -29,6 +29,7 @@ export const BLOCKERS: readonly Blocker[] = [
   'not started',
   'needs staging',
   'needs people',
+  'needs operator app settings',
 ];
 
 export function totalDays(items: readonly NotBuiltItem[]): number {

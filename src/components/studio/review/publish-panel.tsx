@@ -10,7 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat, type StudioFormat } from '@/lib/client/format';
-import type { PlatformConnection, ProjectDetail, Render } from '@/lib/client/types';
+import type {
+  MetaConnectInfo,
+  PlatformConnection,
+  ProjectDetail,
+  Render,
+} from '@/lib/client/types';
 import { belongsToBusiness, isMetaPlatform } from '../connections/platforms';
 import { Field, NativeSelect } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
@@ -106,7 +111,11 @@ export function PublishPanel({
   const tc = useTranslations('connections');
   const f = useFormat();
   const errorMessage = useErrorMessage();
-  const { data, error } = useApi<{ data: PlatformConnection[] }>('/platform-connections');
+  const { data, error } = useApi<{ data: PlatformConnection[]; meta?: MetaConnectInfo }>(
+    '/platform-connections',
+  );
+  // Phase 18: "connect in PostMind settings" only when Core runs the Meta login (core mode).
+  const coreMeta = data?.meta?.connect === 'core';
   const [drafts, setDrafts] = useState<Record<string, VariantDraft>>({});
   const [scheduleAt, setScheduleAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -226,14 +235,14 @@ export function PublishPanel({
                 />
                 {label}
               </label>
-              {options.length === 0 && isMetaPlatform(connectionPlatform) && (
+              {options.length === 0 && coreMeta && isMetaPlatform(connectionPlatform) && (
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t('noAccount')} {tc('meta.guidance')}
                 </p>
               )}
               {options.length === 0 &&
                 connectionPlatform &&
-                !isMetaPlatform(connectionPlatform) && (
+                !(coreMeta && isMetaPlatform(connectionPlatform)) && (
                   <p className="mt-2 text-xs text-muted-foreground">
                     {t('noAccount')}{' '}
                     <Link href="/connections" className="underline">

@@ -35,6 +35,8 @@ const connections = {
       state: 'needs_reconnect',
     },
   ],
+  // Core mode: PostMind Core runs the Meta login (standalone: see the test below).
+  meta: { connect: 'core', configured: true },
 };
 
 const approved = makeProject({
@@ -50,6 +52,22 @@ const approved = makeProject({
 describe('PublishPanel', () => {
   it('parses hashtags', () => {
     expect(parseHashtags('#spring, menu  #spring ##new')).toEqual(['spring', 'menu', 'new']);
+  });
+
+  it('standalone: a missing Instagram account links to Connections, not PostMind settings', async () => {
+    mockFetch([
+      {
+        match: '/platform-connections',
+        body: { ...connections, meta: { connect: 'studio', configured: true } },
+      },
+    ]);
+    renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
+    await screen.findByLabelText('Account');
+    expect(screen.queryByText(/PostMind settings/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Connect Instagram/ })).toHaveAttribute(
+      'href',
+      '/connections',
+    );
   });
 
   it('offers only active connections for this business and publishes now', async () => {

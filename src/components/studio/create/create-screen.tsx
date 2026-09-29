@@ -9,7 +9,7 @@ import { ArrowRight, Building2, Clapperboard, Layers, Loader2, Upload } from 'lu
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import type { BrandKit, PlatformConnection, Project } from '@/lib/client/types';
+import type { BrandKit, MetaConnectInfo, PlatformConnection, Project } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
@@ -86,7 +86,9 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const [problems, setProblems] = useState<CreateProblem[]>([]);
 
   const kits = useApi<{ data: BrandKit[] }>(businessId ? '/brand-kits' : null, { businessId });
-  const connections = useApi<{ data: PlatformConnection[] }>('/platform-connections');
+  const connections = useApi<{ data: PlatformConnection[]; meta?: MetaConnectInfo }>(
+    '/platform-connections',
+  );
   const templates = useApi<{ data: ProjectTemplate[] }>('/templates');
   // 15.C4: the plan tier caps the tier override; workflows feed the approval picker (15.D3).
   const usage = useApi<{ usage: { planTier: QualityTier } }>('/usage');
@@ -338,6 +340,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
                 })
               }
               connections={connections.data?.data}
+              metaConnect={connections.data?.meta?.connect}
               businessId={businessId}
             />
           )}

@@ -43,6 +43,15 @@ for bucket in S3_BUCKET_ASSETS S3_BUCKET_RENDERS S3_BUCKET_THUMBNAILS S3_BUCKET_
   set_key "$env" "$bucket" "ci-$(printf '%s' "$bucket" | tr 'A-Z_' 'a-z-')"
 done
 set_key "$env" PG_BACKUPS off
+# Phase 18 standalone (the default mode): placeholders only; the smoke never signs in, bills or
+# sends email.
+set_key "$env" BETTER_AUTH_SECRET "$(rand)"
+set_key "$env" STUDIO_UNSUBSCRIBE_SECRET "$(rand)"
+set_key "$env" STRIPE_SECRET_KEY "sk_test_ci$(rand)"
+set_key "$env" STRIPE_WEBHOOK_SECRET "whsec_ci$(rand)"
+set_key "$env" RESEND_API_KEY "re_ci$(rand)"
+set_key "$env" RESEND_WEBHOOK_SECRET "whsec_ci$(rand)"
+set_key "$env" STUDIO_EMAIL_FROM "no-reply@ci.invalid"
 
 backup="$out/production.backup.env"
 cp "$repo/deploy/vps/backup.env.example" "$backup"

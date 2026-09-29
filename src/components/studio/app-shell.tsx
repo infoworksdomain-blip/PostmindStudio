@@ -20,6 +20,7 @@ import {
   Moon,
   Plus,
   Send,
+  Settings,
   ShieldAlert,
   Sun,
 } from 'lucide-react';
@@ -27,6 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
+import { AccountBanners } from './account/account-banners';
+import { AccountControls } from './account/account-menu';
+import { useMe } from './account/use-me';
 import { BusinessSwitcher } from './business-picker';
 import { FeedbackButton } from './feedback-dialog';
 import { LanguageSwitcher } from './i18n/language-switcher';
@@ -34,6 +38,7 @@ import { useLocaleSwitch } from './i18n/intl-provider';
 import { NotificationsBell } from './notifications-bell';
 import { UsageBanner } from './usage-meter';
 import { WelcomeLink } from './onboarding/welcome-link';
+import { UpgradeDialogHost } from './billing/upgrade-dialog';
 
 // Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
 // Labels come from the `shell` catalogue (BACKLOG 16.1); layout uses logical properties so the
@@ -50,18 +55,28 @@ export const NAV = [
   { href: '/business', key: 'business', icon: Building2, group: 'setup' },
   { href: '/connections', key: 'connections', icon: Link2, group: 'setup' },
   { href: '/approvals', key: 'approvals', icon: ListChecks, group: 'setup' },
+  // Phase 18: organisation settings, members and audit (active on every /settings/* page).
+  { href: '/settings/organisation', key: 'settings', icon: Settings, group: 'setup' },
   { href: '/account/export', key: 'export', icon: Download, group: 'setup' },
   { href: '/admin', key: 'admin', icon: ShieldAlert, group: 'staff' },
 ] as const;
 
 function isActive(pathname: string, href: string) {
+  if (href.startsWith('/settings/')) return pathname.startsWith('/settings/');
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations('shell.nav');
   const pathname = usePathname() ?? '';
-  const groups = [...new Set(NAV.map((n) => n.group))];
+  const me = useMe();
+  // Standalone knows the platform role (Phase 18): the staff group is hidden from everyone else,
+  // including a signed-in user with no organisation yet. Core mode has no role here, so the group
+  // shows as before and the admin routes enforce staff access themselves.
+  const hideStaff =
+    me.error?.code === 'no_organisation' ||
+    (me.data?.me.identityMode === 'standalone' && me.data.me.user.platformRole === 'user');
+  const groups = [...new Set(NAV.map((n) => n.group))].filter((g) => !(g === 'staff' && hideStaff));
   return (
     <nav aria-label={t('ariaLabel')} className="flex flex-col gap-6">
       <WelcomeLink onNavigate={onNavigate} />
@@ -190,14 +205,17 @@ export function AppShell({ children }: { children: ReactNode }) {
               <BusinessSwitcher />
             </div>
             <FeedbackButton />
-            <LanguageSwitcher />
+            <LanguageSwitcher labelClassName="hidden xl:inline" />
             <NotificationsBell />
             <ThemeToggle />
+            <AccountControls />
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-8 md:py-10">
+          <AccountBanners />
           <UsageBanner />
           {children}
+          <UpgradeDialogHost />
         </main>
       </div>
     </div>

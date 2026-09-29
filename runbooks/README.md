@@ -10,6 +10,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
 | [vps-deploy.md](vps-deploy.md) | **Primary deployment:** one Hetzner server with Docker Compose — server size (2 GB default) and resizing, firewall, Cloudflare DNS, bootstrap, env files, deploy/rollback, staging on the same server, health check, pgBackRest PITR to R2, when to split | `/api/health/ready` 200 |
+| [auth.md](auth.md) | **Phase 18 standalone:** sign-in secrets, first super-admin, organisations and roles, member rules, support actions (sign out everywhere, 2FA reset, ban), impersonation (off by default), legal readiness before opening sign-up | Staff console with 2FA |
 | [render-deploy.md](render-deploy.md) | Deployment alternative: Render — one Blueprint (`render.yaml`) for staging + production (dropped as primary for cost) | — |
 | [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning, daily object-storage backup copy with 30-day age-out (17.5), Redis (playbook E-12) | — |
 | [r2-setup.md](r2-setup.md) | Cloudflare R2 as the object store (`STORAGE_PROVIDER=r2`): EU buckets, scoped token, CORS, lifecycle, env | — |
@@ -25,7 +26,8 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [scan-blocked.md](scan-blocked.md) | Priority risk 6: website scan blocked by anti-bot measures | >10% failures on a customer |
 | [platform-account-revocation.md](platform-account-revocation.md) | Priority risk 7: platform account revoked | Any account in warning state |
 | [storage-cost.md](storage-cost.md) | Priority risk 8: storage cost balloon | >125% of forecast |
-| [notifications-email.md](notifications-email.md) | Notification email delivery status and the pending Core-vs-Studio sending decision (13.33) | Any `failed` once live |
+| [notifications-email.md](notifications-email.md) | Notification email: preferences → Resend (option B chosen, Phase 18), emailStatus, core mode (13.33) | Any `failed` |
+| [email-resend.md](email-resend.md) | Resend set-up (domain DNS, API key, webhook), the outbox, bounces / complaints / suppression, unsubscribe (Phase 18 §2.8) | Failed outbox rows, bounce or complaint spikes |
 | [slo-and-launch-readiness.md](slo-and-launch-readiness.md) | Spec 17.1 SLO / spec 3.5 acceptance alerts, A14.2 launch-readiness checks (overlay pixel diff, classifier eval, scan timing, A10 cost gate) and the daily provider canary (15.D9 / 15.D10) | per alert |
 | [monitoring-deploy.md](monitoring-deploy.md) | Deploying Prometheus + Alertmanager (`docker-compose.monitoring.yml`) and the alert smoke test (14.3) | Smoke test routes and delivers both severities |
 | [on-call.md](on-call.md) | On-call rota, PagerDuty escalation, severities, handover (14.11; template `ops/oncall/rota.template.yaml`) | Page acknowledged ≤ 5 min |
@@ -103,5 +105,7 @@ cost 80% / 100% / paused, generation complete, approval pending > 2 h and public
   external uptime check are the only alerting.
 - **Thresholds are starting points:** the 500-job backlog and 5% failure rate need tuning after
   the k6 run (BACKLOG 12.1) and the first weeks of real traffic.
-- **Email** delivery waits for an operator decision (notifications-email.md). Opted-in email is
-  recorded as `pending_setup`; the webhook is the bridge until then.
+- **Email** (Phase 18): Studio sends it through Resend (email-resend.md). It has not sent a real
+  email until the operator's domain, API key and webhook are on staging; `failed` outbox rows
+  and suppressions are the signals to watch (email-resend.md). Core mode still records opted-in
+  email as `pending_setup` (notifications-email.md).

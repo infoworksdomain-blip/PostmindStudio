@@ -69,7 +69,8 @@
         "connections": "Connections",
         "approvals": "Approval workflows",
         "export": "Export data",
-        "admin": "Admin"
+        "admin": "Admin",
+        "settings": "Settings"
       }
     },
     "theme": {
@@ -85,7 +86,13 @@
       "label": "Business",
       "choose": "Choose a business",
       "idPlaceholder": "PostMind business id",
-      "listPending": "The business list is waiting for PostMind Core: type the business id."
+      "listPending": "The business list is waiting for PostMind Core: type the business id.",
+      "add": "Add a business",
+      "addLabel": "New business",
+      "addPlaceholder": "Business name",
+      "addSubmit": "Add",
+      "addCancel": "Cancel",
+      "created": "{name} added"
     },
     "feedback": {
       "button": "Feedback",
@@ -172,6 +179,46 @@
       "publicationAnalytics": "Publication analytics",
       "approvals": "Approval workflows",
       "admin": "Admin Center"
+    },
+    "account": {
+      "switcherAria": "Organization: {name}. Switch organization",
+      "organisations": "Your organizations",
+      "current": "Current organization",
+      "newOrganisation": "New organization…",
+      "switchFailed": "Could not switch organization. Try again.",
+      "userMenuAria": "Account menu for {name}",
+      "organisationSettings": "Organization settings",
+      "members": "Members",
+      "security": "Security and sign-in",
+      "signOut": "Sign out",
+      "signOutFailed": "Could not sign you out. Try again.",
+      "billing": "Billing"
+    },
+    "banners": {
+      "readOnly": {
+        "title": "Your account is read-only.",
+        "body": "Payment is overdue, so you can view, download and export, but not create or publish. Update your payment details to carry on.",
+        "action": "Update payment"
+      },
+      "pastDue": {
+        "title": "Your last payment failed.",
+        "body": "Everything still works for now. Update your payment details to avoid interruption.",
+        "bodyUntil": "Everything works until {date}. Update your payment details before then to avoid interruption.",
+        "action": "Update payment"
+      },
+      "noPlan": {
+        "title": "Choose a plan to start making videos.",
+        "body": "You can set up your brand and connect accounts now; generating and publishing need a plan or a free trial.",
+        "action": "See plans"
+      },
+      "trial": {
+        "body": "{days, plural, =0 {Your free trial ends today.} one {Your free trial ends in # day.} other {Your free trial ends in # days.}}",
+        "action": "Choose a plan"
+      },
+      "impersonating": {
+        "title": "Staff view.",
+        "body": "You are viewing Studio as {name}. This session is read-only and every request is audited."
+      }
     }
   },
   "errors": {
@@ -203,7 +250,10 @@
       "configuration_error": "Studio isn’t fully set up for this yet. Contact PostMind support.",
       "not_implemented": "This isn’t available yet.",
       "internal_error": "Something went wrong on our side. Try again in a moment.",
-      "upload_failed": "The upload failed. Try again."
+      "upload_failed": "The upload failed. Try again.",
+      "plan_required": "Your organization doesn’t have a plan yet. Choose a plan to start creating.",
+      "billing_required": "Your account is read-only because of a billing problem. Update your payment details to continue.",
+      "no_organisation": "Create or join an organization to continue."
     }
   },
   "primitives": {
@@ -1810,7 +1860,9 @@
       "platform_error": "The platform had a problem completing the connection. Try again shortly.",
       "upstream_error": "The platform had a problem completing the connection. Try again shortly.",
       "internal_error": "Something went wrong finishing the connection. Try again.",
-      "unknown": "The connection did not complete ({code}). Try again."
+      "unknown": "The connection did not complete ({code}). Try again.",
+      "meta_no_accounts": "Meta did not share any Facebook Page you can publish to. Connect again and choose at least one Page (and its Instagram account) in the Meta window.",
+      "wrong_user": "This connection was started by a different Studio user. Start it again while signed in as yourself."
     },
     "dismiss": "Dismiss",
     "pickFirst": {
@@ -1845,7 +1897,24 @@
     "meta": {
       "stale": "Meta refused or expired this access. Scheduled posts to this account will fail until you reconnect it in PostMind settings.",
       "connectedVia": "Connected via PostMind {date}",
-      "guidance": "Connect Instagram and Facebook in PostMind settings."
+      "guidance": "Connect Instagram and Facebook in PostMind settings.",
+      "connectButton": "Connect with Facebook",
+      "studioGuidance": "One Facebook login connects the Pages you choose and the Instagram professional accounts linked to them.",
+      "notConfigured": "Instagram and Facebook are not available yet: Studio’s Meta app still needs its settings. Ask your administrator."
+    },
+    "descriptionStandalone": "The accounts Studio publishes to. Connect each one for the selected business.",
+    "connectedMetaNotice": "{count, plural, one {# Facebook or Instagram account is connected} other {# Facebook and Instagram accounts are connected}}. You can publish to them now.",
+    "dataDeletion": {
+      "pageTitle": "Data deletion status",
+      "eyebrow": "PostMind Studio · Facebook and Instagram data",
+      "title": "Your data deletion request",
+      "completed": "Status: completed",
+      "receivedOn": "We received your request on {date} and completed it right away.",
+      "deletedCount": "{count, plural, =0 {Studio held no Facebook or Instagram connections for you.} one {# Facebook or Instagram connection was deleted.} other {# Facebook or Instagram connections were deleted.}}",
+      "whatWasDeleted": "Studio deleted the access tokens Meta gave it, your Meta user ID, the permissions you granted, and the account names.",
+      "retained": "Videos already published stay on Facebook and Instagram; remove them there if you want them gone. Studio keeps only the Page or Instagram account number that its publishing history refers to.",
+      "codeLabel": "Confirmation code:",
+      "unknownCode": "We could not find a deletion request with this confirmation code. Check the link Facebook gave you."
     }
   },
   "library": {
@@ -2206,7 +2275,9 @@
         "usage": "Plan usage",
         "deadLetters": "Dead letters",
         "forceApprovals": "Force-approvals",
-        "beta": "Beta"
+        "beta": "Beta",
+        "users": "Users",
+        "subscriptions": "Subscriptions"
       }
     },
     "cost": {
@@ -2885,7 +2956,8 @@
       "tierSource": {
         "query": "chosen here",
         "last_generation": "recorded on its latest generation",
-        "default": "no generation recorded — Basic assumed"
+        "default": "no generation recorded — Basic assumed",
+        "entitlements": "from the organization’s subscription"
       },
       "mode": {
         "warn": "warn",
@@ -2906,7 +2978,9 @@
       "connect": "Connect",
       "brandKit": "Brand kit",
       "firstVideo": "First video",
-      "celebrate": "Celebrate"
+      "celebrate": "Celebrate",
+      "organisation": "Organization",
+      "business": "Business"
     },
     "stepIndicator": {
       "aria": "Setup progress",
@@ -2915,7 +2989,7 @@
     "wizard": {
       "eyebrow": "Welcome",
       "title": "Let’s make your first video",
-      "description": "Four quick steps: connect an account, set up your brand, make a video, go live.",
+      "description": "A few quick steps: your organization and business, your brand, a connected account, then your first video.",
       "skipSetup": "Skip setup",
       "loading": "Loading setup",
       "skipped": {
@@ -3018,6 +3092,35 @@
       "description": "Studio is ready to make and publish videos for your business.",
       "makeAnother": "Make another video",
       "goToProjects": "Go to projects"
+    },
+    "organisation": {
+      "title": "Name your organization",
+      "description": "The organization holds your team, plan and billing. You can add more businesses to it later.",
+      "name": "Organization name",
+      "namePlaceholder": "e.g. Leeds Sourdough Ltd",
+      "country": "Country",
+      "countryChoose": "Choose a country…",
+      "countryHint": "Used for tax on your invoices.",
+      "language": "Default language",
+      "submit": "Create organization",
+      "created": "{name} is ready."
+    },
+    "business": {
+      "title": "Add your first business",
+      "description": "Each business has its own brand kit, connected accounts and videos. Add its website and Studio can learn your brand from it.",
+      "loading": "Loading your businesses",
+      "existing": "Pick a business",
+      "orNew": "Or add a new one:",
+      "name": "Business name",
+      "namePlaceholder": "e.g. Leeds Sourdough",
+      "website": "Website (optional)",
+      "websitePlaceholder": "leedssourdough.co.uk",
+      "websiteHint": "Without https:// is fine.",
+      "submit": "Add business",
+      "created": "{name} added.",
+      "coreTitle": "Set up a business first",
+      "coreDescription": "Your businesses come from PostMind. Choose or add one, then come back here.",
+      "coreAction": "Go to Business"
     }
   },
   "share": {
@@ -3131,6 +3234,14 @@
         "imageLibrary": {
           "label": "Image library",
           "hint": "Every image and its source"
+        },
+        "account": {
+          "label": "Account",
+          "hint": "Your organization, its members and roles, and your own profile and sign-in history"
+        },
+        "billing": {
+          "label": "Billing",
+          "hint": "Subscription, plan and top-up credits (invoices are in Manage billing)"
         }
       },
       "request": "Request export",
@@ -3193,6 +3304,23 @@
         "failed": "{provider} key failed: {reason}",
         "removed": "{provider} key removed; Studio’s key is used again"
       }
+    },
+    "profile": {
+      "eyebrow": "Account",
+      "title": "Profile",
+      "description": "Your name, email address and the language we email you in.",
+      "detailsTitle": "Your details",
+      "name": "Name",
+      "emailLanguage": "Email language",
+      "emailLanguageHint": "Emails from Studio are written in this language. The app’s language is in the header.",
+      "save": "Save",
+      "saved": "Profile saved.",
+      "emailTitle": "Email address",
+      "emailCurrent": "You sign in with {email}.",
+      "newEmail": "New email address",
+      "emailHint": "We’ll ask your current address to approve the change, then confirm the new one.",
+      "changeEmail": "Change email",
+      "emailRequested": "Check your inbox to approve the change."
     }
   },
   "approvals": {
@@ -3317,6 +3445,1222 @@
       "invalid_media": "the video file was rejected",
       "outcome_unknown": "the result is unknown — check the platform before retrying",
       "unknown": "an unknown error"
+    }
+  },
+  "marketing": {
+    "meta": {
+      "title": "PostMind Studio · AI short videos for small businesses",
+      "description": "Turn a one-line brief into on-brand short videos for TikTok, Reels, Shorts, Facebook, LinkedIn and X. Review, approve and publish from one place."
+    },
+    "nav": {
+      "home": "PostMind Studio home",
+      "aria": "Main",
+      "pricing": "Pricing",
+      "signIn": "Sign in",
+      "startTrial": "Start free trial"
+    },
+    "hero": {
+      "eyebrow": "AI video studio for small businesses",
+      "title": "A week of short videos, <em>made before your coffee cools.</em>",
+      "lede": "Tell Studio what you want to say. It writes the script, shoots or sources every scene, adds your voice, music and captions in your brand, and cuts it for every platform. You approve; it publishes.",
+      "primaryCta": "Start free trial",
+      "secondaryCta": "See pricing",
+      "assurances": {
+        "noEditing": "No editing skills needed",
+        "yourBrand": "Your colors, fonts and voice",
+        "cancelAnytime": "Cancel anytime"
+      },
+      "frames": {
+        "one": "Fresh out at 7am",
+        "two": "Meet the bakers",
+        "three": "Three loaves, one weekend"
+      },
+      "slate": {
+        "scene": "Scene 01",
+        "take": "Take 1"
+      }
+    },
+    "platforms": {
+      "title": "One brief, cut for every feed"
+    },
+    "steps": {
+      "eyebrow": "How it works",
+      "title": "Brief. Review. Publish.",
+      "brief": {
+        "title": "Write a line",
+        "body": "Describe the video, paste a web page or pick a template. Studio drafts the script and shot list in seconds."
+      },
+      "review": {
+        "title": "Check the cut",
+        "body": "Watch every format side by side, swap a shot, change a caption or ask for another take. Nothing goes out until you approve."
+      },
+      "publish": {
+        "title": "Post on schedule",
+        "body": "Publish now or schedule the week. Studio posts to each account and brings the views, likes and comments back to one dashboard."
+      }
+    },
+    "samples": {
+      "eyebrow": "Contact sheet",
+      "title": "Every shape, from one brief.",
+      "body": "Vertical for TikTok, Reels and Shorts, square and portrait for feeds, widescreen for YouTube and LinkedIn.",
+      "note": "Illustrations of the formats Studio renders, not customer videos.",
+      "captions": {
+        "market": "Saturday market, 8am",
+        "studio": "How we shape a sourdough",
+        "workshop": "Behind the counter",
+        "counter": "New this week"
+      }
+    },
+    "features": {
+      "eyebrow": "Built for small teams",
+      "title": "Everything a one-person marketing team needs.",
+      "body": "Studio does the production work, so you spend your time on the business, not on editing timelines.",
+      "brand": {
+        "title": "Your brand, every time",
+        "body": "Logo, colors, fonts and tone of voice live in a brand kit that every video follows."
+      },
+      "approvals": {
+        "title": "Approvals that fit your team",
+        "body": "Invite colleagues with the right role. Creators draft, owners approve, and nothing publishes by accident."
+      },
+      "calendar": {
+        "title": "A calendar that posts for you",
+        "body": "Plan the week, drag posts to new slots and let Studio publish at the right time for each platform."
+      },
+      "budget": {
+        "title": "Costs you can see",
+        "body": "Monthly allowances and spending caps are shown up front, so there are no surprise bills."
+      },
+      "languages": {
+        "title": "Eleven languages",
+        "body": "Work in English, French, Spanish, Arabic, German, Italian, Portuguese, Hindi or Chinese, and make videos for customers in theirs."
+      },
+      "library": {
+        "title": "Ideas when you need them",
+        "body": "Browse a library of proven short videos and use one as the starting point for your own."
+      }
+    },
+    "closing": {
+      "eyebrow": "Ready when you are",
+      "title": "Your first video is ten minutes away.",
+      "body": "Create your account, add your business and brand, connect a platform and make your first video. The guided setup walks you through it.",
+      "primaryCta": "Start free trial",
+      "secondaryCta": "Compare plans",
+      "fineprint": "Prices exclude tax. You can cancel at any time from your billing settings."
+    },
+    "footer": {
+      "tagline": "AI short videos and publishing for small businesses.",
+      "copyright": "© {year} {entity}",
+      "legalAria": "Legal",
+      "legalTitle": "Legal"
+    }
+  },
+  "pricing": {
+    "meta": {
+      "title": "Pricing"
+    },
+    "hero": {
+      "eyebrow": "Pricing",
+      "title": "Plans that grow with your video output",
+      "description": "Every plan includes AI scripts, multi-format renders and publishing to your connected accounts."
+    },
+    "interval": {
+      "label": "Billing period",
+      "month": "Monthly",
+      "year": "Annual"
+    },
+    "exclVat": "Prices exclude VAT.",
+    "unavailable": "Prices can’t be shown right now. Please try again shortly.",
+    "priceUnavailable": "Price unavailable",
+    "perMonth": "{amount} / month",
+    "perYear": "{amount} / year",
+    "annualSaving": "Save {amount} a year",
+    "trialNote": "Try {tier} free for {days, plural, one {# day} other {# days}}, with {short} short videos and {long} long video included. Card required; cancel any time.",
+    "popular": "Most popular",
+    "tiers": {
+      "BASIC": {
+        "tagline": "For a single business getting started with short-form video."
+      },
+      "STANDARD": {
+        "tagline": "For growing teams publishing every day, with music and long-form."
+      },
+      "PLUS": {
+        "tagline": "For agencies and brands that need voice cloning, 4K and AI images."
+      },
+      "ENTERPRISE": {
+        "tagline": "Custom limits, your own provider keys and white-label outputs."
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, one {# short video a month} other {# short videos a month}}",
+      "longVideos": "{count, plural, one {# long video a month} other {# long videos a month}}",
+      "noLongVideos": "No long videos",
+      "seats": "{count, plural, one {# seat} other {# seats}}",
+      "businesses": "{count, plural, one {# business} other {# businesses}}",
+      "unlimitedVideos": "Unlimited videos (fair use)"
+    },
+    "enterprise": {
+      "price": "Custom pricing",
+      "contact": "Contact sales",
+      "contactAria": "Email the sales team about Enterprise",
+      "noContact": "Ask your PostMind account manager about Enterprise."
+    },
+    "cta": {
+      "trial": "Start free trial",
+      "choose": "Choose plan",
+      "chooseAria": "Choose the {tier} plan"
+    },
+    "compare": {
+      "title": "Compare plans",
+      "caption": "Plan comparison",
+      "feature": "Feature",
+      "included": "Included",
+      "notIncluded": "Not included",
+      "unlimited": "Unlimited",
+      "rows": {
+        "shortVideos": "Short videos a month (up to 30 s)",
+        "longVideos": "Long videos a month",
+        "platforms": "Platforms",
+        "dailyCostCap": "Daily generation budget",
+        "monthlyCostCap": "Monthly generation budget",
+        "queuePriority": "Render queue priority",
+        "musicAndSfx": "Music and sound effects",
+        "voiceClone": "Brand voice clone",
+        "renders4k": "4K renders",
+        "imageLibrary": "Image library",
+        "generatedImages": "Generated images per business a month",
+        "scanBusinesses": "Website scans (businesses)",
+        "libraryInspire": "Reference library: Inspire mode",
+        "libraryTemplate": "Reference library: Template mode",
+        "customPresets": "Custom overlay presets and slideshow templates",
+        "approvalWorkflows": "Multi-step approval workflows",
+        "byocProviderKeys": "Your own provider keys",
+        "whiteLabel": "White-label outputs",
+        "dnsDomainVerification": "Domain verification",
+        "seats": "Seats",
+        "businesses": "Businesses",
+        "storage": "Storage"
+      },
+      "values": {
+        "longVideos": "{count} × up to {minutes} min",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok, Instagram and 1 more",
+          "all": "All 8"
+        },
+        "queuePriority": {
+          "normal": "Standard",
+          "high": "High"
+        },
+        "imageLibrary": {
+          "stock": "Stock images",
+          "stock_scrape": "Stock and website images",
+          "ai_generation": "Stock, website and AI images",
+          "byoc_generation": "AI images with your own keys"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "Top-up packs",
+      "description": "Need more this month? Buy a one-off pack. Credits are used after your plan allowance, oldest first.",
+      "short": "{quantity, plural, one {# short video} other {# short videos}}",
+      "long": "{quantity, plural, one {# long video} other {# long videos}}",
+      "forTier": "For {tier} plans",
+      "validity": "Valid for {months} months"
+    },
+    "faq": {
+      "title": "Questions",
+      "items": {
+        "trial": {
+          "q": "How does the free trial work?",
+          "a": "The Standard trial needs a card. You won’t be charged until the trial ends, and you can cancel before then. Each organization can have one trial."
+        },
+        "change": {
+          "q": "Can I change plan later?",
+          "a": "Yes. Upgrades apply straight away and are charged prorated. Downgrades apply at the end of your billing period, and nothing is deleted."
+        },
+        "limit": {
+          "q": "What happens when I reach my limit?",
+          "a": "New videos pause until your allowance resets at the start of the next month. You can upgrade or buy a top-up pack to keep going."
+        },
+        "vat": {
+          "q": "Do prices include VAT?",
+          "a": "No. Prices exclude VAT, which is added at checkout where it applies."
+        },
+        "cancel": {
+          "q": "What happens if I cancel?",
+          "a": "You keep access until the end of the period you paid for. After that your account becomes read-only: you can still view, export and download your work."
+        }
+      }
+    }
+  },
+  "legal": {
+    "docs": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "cookies": "Cookie Policy",
+      "acceptableUse": "Acceptable Use Policy",
+      "dpa": "Data Processing Agreement",
+      "subprocessors": "Sub-processors"
+    },
+    "navAria": "Legal documents",
+    "navTitle": "Legal",
+    "placeholder": {
+      "title": "This document has not been published yet.",
+      "body": "The text below is a placeholder. The operator of this service must replace it with their own before launch."
+    },
+    "notTranslated": "This document is not available in your language yet, so it is shown in English."
+  },
+  "auth": {
+    "shell": {
+      "brand": "PostMind Studio"
+    },
+    "errors": {
+      "invalidCredentials": "That email and password don’t match an account.",
+      "emailNotVerified": "Confirm your email address first. We’ve sent you a new link.",
+      "passwordTooShort": "Use at least 12 characters.",
+      "passwordTooLong": "Use at most 128 characters.",
+      "passwordCompromised": "This password has appeared in a data breach. Choose a different one.",
+      "rateLimited": "Too many attempts. Wait a few minutes and try again.",
+      "invalidToken": "This link has expired or was already used. Ask for a new one.",
+      "invalidCode": "That code isn’t right. Check it and try again.",
+      "locked": "Too many wrong codes. Wait a few minutes before you try again.",
+      "signupsClosed": "New accounts are by invitation only right now.",
+      "invalidEmail": "Enter a valid email address.",
+      "network": "We couldn’t reach Studio. Check your connection and try again.",
+      "generic": "Something went wrong. Try again.",
+      "seatLimit": "This organization has no free seats. Ask an admin to upgrade the plan.",
+      "inviteNotForYou": "This invitation was sent to a different email address. Sign in with that address to accept it."
+    },
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password",
+      "rule": "At least {min} characters",
+      "strength": {
+        "tooShort": "Too short",
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      }
+    },
+    "signIn": {
+      "title": "Sign in",
+      "description": "Welcome back to PostMind Studio.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "Create an account"
+    },
+    "google": {
+      "or": "or",
+      "continue": "Continue with Google"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "description": "Start making videos for every platform in minutes.",
+      "name": "Your name",
+      "email": "Work email",
+      "password": "Password",
+      "terms": "By creating an account you agree to the <terms>Terms</terms> and the <privacy>Privacy notice</privacy>.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account? Sign in",
+      "closedTitle": "Invitation only",
+      "closedDescription": "New accounts are by invitation only right now. Ask a member of your team to invite you."
+    },
+    "verify": {
+      "title": "Check your email",
+      "description": "Open the link we sent to confirm your address. It works for 24 hours.",
+      "invalidTitle": "That link didn’t work",
+      "invalidDescription": "It may have expired or already been used. Enter your email to get a new one.",
+      "sentTo": "If {email} is new to Studio, a confirmation link is on its way.",
+      "sentGeneric": "If the address is new to Studio, a confirmation link is on its way.",
+      "resent": "If that address needs confirming, we’ve sent a new link.",
+      "email": "Email",
+      "resend": "Send a new link",
+      "backToSignIn": "Back to sign in"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "description": "Enter your email and we’ll send you a link to choose a new password.",
+      "email": "Email",
+      "submit": "Send reset link",
+      "sent": "If an account uses that address, a reset link is on its way. It works for 1 hour.",
+      "backToSignIn": "Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "description": "You’ll be signed out everywhere else.",
+      "newPassword": "New password",
+      "submit": "Save password",
+      "done": "Your password has changed. Sign in with the new one.",
+      "signIn": "Sign in",
+      "invalidTitle": "That link didn’t work",
+      "invalidDescription": "Reset links work once, for 1 hour. Ask for a new one.",
+      "requestNew": "Get a new link"
+    },
+    "twoFactor": {
+      "title": "Two-step verification",
+      "totpDescription": "Enter the 6-digit code from your authenticator app.",
+      "backupDescription": "Enter one of your backup codes. Each code works once.",
+      "totpLabel": "Authentication code",
+      "backupLabel": "Backup code",
+      "trustDevice": "Trust this device for 30 days",
+      "submit": "Verify",
+      "useBackup": "Use a backup code instead",
+      "useTotp": "Use your authenticator app instead",
+      "startOver": "Start over"
+    },
+    "invite": {
+      "title": "Join your team",
+      "signedOut": "Sign in or create an account with the email address the invitation was sent to.",
+      "signIn": "Sign in to accept",
+      "signUp": "Create an account",
+      "join": "You’ve been invited to join an organization on PostMind Studio.",
+      "joinNamed": "You’ve been invited to join {organisation} on PostMind Studio.",
+      "accept": "Accept invitation",
+      "notNow": "Not now",
+      "unavailable": "This invitation has expired, was cancelled, or was sent to a different email address."
+    },
+    "support": {
+      "noEmail": "Still no email after a few minutes? Contact <link>{email}</link>."
+    }
+  },
+  "security": {
+    "eyebrow": "Account",
+    "title": "Sign-in and security",
+    "description": "Your password, two-step verification and where you are signed in.",
+    "password": {
+      "title": "Password",
+      "description": "Changing it signs you out on every other device.",
+      "current": "Current password",
+      "new": "New password",
+      "submit": "Change password",
+      "changed": "Password changed. Other devices have been signed out."
+    },
+    "twoFactor": {
+      "title": "Two-step verification",
+      "description": "A code from an authenticator app each time you sign in. Staff need it for admin tools.",
+      "statusOn": "On",
+      "statusOff": "Off",
+      "offExplainer": "Confirm your password to set up an authenticator app.",
+      "onExplainer": "Two-step verification is protecting your account.",
+      "password": "Password",
+      "enable": "Set up",
+      "scan": "Scan this code with your authenticator app, then enter the 6-digit code it shows.",
+      "manual": "Can’t scan it? Enter this key instead:",
+      "codeLabel": "Code from the app",
+      "confirm": "Turn on",
+      "qrLabel": "QR code for your authenticator app",
+      "enabled": "Two-step verification is on.",
+      "disabled": "Two-step verification is off. Other devices have been signed out.",
+      "disable": "Turn off",
+      "regenerate": "New backup codes",
+      "backupIntro": "Save these backup codes somewhere safe. Each one signs you in once if you lose your phone. They won’t be shown again.",
+      "backupListLabel": "Backup codes",
+      "copy": "Copy codes",
+      "copied": "Backup codes copied.",
+      "saved": "I’ve saved them",
+      "disableCodeLabel": "Code from the app, or a backup code",
+      "disableCodeHint": "Needed to turn two-step verification off."
+    },
+    "sessions": {
+      "title": "Where you’re signed in",
+      "description": "Sign out any device you don’t recognize. It can take up to a minute to take effect.",
+      "revokeOthers": "Sign out everywhere else",
+      "device": "{browser} on {os}",
+      "unknownDevice": "Unknown device",
+      "lastActive": "Last active {when}",
+      "current": "This device",
+      "revoke": "Sign out",
+      "revokeAria": "Sign out {device}",
+      "revoked": "Signed out."
+    },
+    "methods": {
+      "title": "Sign-in methods",
+      "description": "Ways you can sign in to PostMind Studio.",
+      "password": "Email and password",
+      "on": "On",
+      "off": "Not set",
+      "link": "Connect Google",
+      "unlink": "Disconnect",
+      "unlinked": "Google disconnected.",
+      "unlinkNeedsPassword": "Set a password before you disconnect Google."
+    },
+    "deleteAccount": {
+      "title": "Delete account",
+      "description": "Permanently remove your account and sign-in details.",
+      "consequences": "You’ll be signed out everywhere. Organizations where you’re the only member are deleted too, and their subscriptions end. You have 30 days to ask support to stop it.",
+      "password": "Password",
+      "confirm": "I understand this can’t be undone after 30 days.",
+      "submit": "Delete my account",
+      "wrongPassword": "That password isn’t right.",
+      "signInAgain": "For your security, sign out and sign in again, then delete your account.",
+      "soleOwner": "You’re the only owner of {organisations}. Make someone else an owner, or remove the other members, first."
+    }
+  },
+  "orgSettings": {
+    "meta": {
+      "organisationTitle": "Organization settings",
+      "membersTitle": "Members",
+      "auditTitle": "Audit log"
+    },
+    "nav": {
+      "aria": "Settings",
+      "organisation": "Organization",
+      "members": "Members",
+      "billing": "Billing",
+      "audit": "Audit log"
+    },
+    "page": {
+      "eyebrow": "Settings",
+      "title": "Organization",
+      "description": "Your organization’s details, ownership and team.",
+      "loading": "Loading organization settings"
+    },
+    "details": {
+      "title": "Details",
+      "description": "Shown to your team and on your invoices.",
+      "readOnly": "Only owners and admins can change these.",
+      "name": "Organization name",
+      "logo": "Logo URL",
+      "logoPlaceholder": "https://example.com/logo.png",
+      "logoHint": "An https:// link to a square image.",
+      "country": "Country",
+      "countryNone": "Not set",
+      "countryHint": "Used for tax on your invoices.",
+      "defaultLocale": "Default language",
+      "localeNone": "Each person’s own choice",
+      "saved": "Organization details saved."
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "description": "Make another member the owner. You stay on as an admin.",
+      "nobody": "Invite someone first: ownership can only go to another member.",
+      "to": "New owner",
+      "choose": "Choose a member…",
+      "action": "Transfer ownership",
+      "confirmTitle": "Transfer ownership?",
+      "confirmBody": "{name} becomes an owner and you become an admin. They can then manage billing and delete the organization.",
+      "done": "{name} is now an owner."
+    },
+    "delete": {
+      "title": "Delete organization",
+      "description": "Cancels your subscription and removes every business, video and connected account. Data is kept for 30 days, then deleted for good.",
+      "action": "Delete organization…",
+      "confirmTitle": "Delete {name}?",
+      "confirmBody": "This cannot be undone after 30 days. Everyone in the organization loses access immediately.",
+      "typeName": "Type {name} to confirm",
+      "confirm": "Delete organization",
+      "done": "The organization is scheduled for deletion."
+    },
+    "audit": {
+      "title": "Audit log",
+      "description": "Who did what in your organization: members, settings, billing and connections.",
+      "logTitle": "Activity",
+      "filter": "Show",
+      "loading": "Loading the audit log",
+      "empty": {
+        "title": "Nothing here yet",
+        "body": "Changes to members, settings and billing appear here."
+      },
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "target": "Item",
+      "viaStaff": "Staff view",
+      "loadMore": "Load more",
+      "categories": {
+        "all": "Everything",
+        "members": "Members",
+        "organisation": "Organization",
+        "billing": "Billing",
+        "security": "Security",
+        "businesses": "Businesses",
+        "connections": "Connections",
+        "staff": "PostMind staff"
+      },
+      "actors": {
+        "user": "A former member",
+        "staff": "PostMind staff",
+        "stripe": "Stripe",
+        "meta": "Meta",
+        "system": "Studio"
+      },
+      "actions": {
+        "member_invited": "Invited a member",
+        "member_joined": "Joined the organization",
+        "member_role_changed": "Changed a member’s role",
+        "member_removed": "Removed a member",
+        "org_created": "Created the organization",
+        "org_renamed": "Renamed the organization",
+        "org_updated": "Updated organization details",
+        "org_deleted": "Deleted the organization",
+        "billing_checkout_started": "Started a checkout",
+        "billing_subscription_changed": "Subscription changed",
+        "billing_payment_failed": "A payment failed",
+        "billing_topup_purchased": "Bought a top-up pack",
+        "auth_sign_in": "Signed in",
+        "auth_password_changed": "Changed their password",
+        "auth_twoFactor_enabled": "Turned on two-step verification",
+        "auth_twoFactor_disabled": "Turned off two-step verification",
+        "auth_session_revoked": "Signed out a session",
+        "business_created": "Added a business",
+        "business_deleted": "Deleted a business",
+        "meta_connected": "Connected Facebook or Instagram",
+        "meta_disconnected": "Disconnected Facebook or Instagram",
+        "entitlement_override_set": "Plan limits changed by PostMind",
+        "staff_impersonation_started": "PostMind staff started a support view",
+        "staff_impersonation_ended": "PostMind staff ended a support view"
+      }
+    },
+    "reauth": {
+      "password": "Your password",
+      "hint": "Confirms it is you. Leave it blank if you only sign in with Google (you must have signed in within the last 15 minutes)."
+    }
+  },
+  "members": {
+    "page": {
+      "eyebrow": "Settings",
+      "title": "Members",
+      "description": "Invite your team and choose what each person can do.",
+      "loading": "Loading members",
+      "inviteTitle": "Invite someone",
+      "inviteDescription": "They get an email with a link that works for 7 days.",
+      "membersTitle": "{count, plural, one {# member} other {# members}}",
+      "empty": "No members yet",
+      "pendingTitle": "Pending invitations",
+      "seatsTitle": "Seats"
+    },
+    "seats": {
+      "label": "Seats used",
+      "usedOf": "{used} of {limit}",
+      "unlimited": "{used} used · no limit",
+      "full": "Every seat on your plan is in use.",
+      "upgrade": "Upgrade for more seats"
+    },
+    "invite": {
+      "email": "Email address",
+      "emailPlaceholder": "name@example.com",
+      "role": "Role",
+      "send": "Send invitation",
+      "hint": "Owners manage billing and can delete the organization; admins manage members and settings; publishers approve and publish; creators make videos; viewers can only watch.",
+      "sent": "Invitation sent to {email}.",
+      "seatLimit": "Every seat on your plan is in use. Upgrade for more seats, or remove someone first."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "publisher": "Publisher",
+      "creator": "Creator",
+      "viewer": "Viewer"
+    },
+    "table": {
+      "member": "Member",
+      "role": "Role",
+      "joined": "Joined",
+      "actions": "Actions",
+      "you": "You",
+      "twoFactor": "Two-step verification on",
+      "roleFor": "Role for {name}",
+      "roleChanged": "{name} is now {role}.",
+      "remove": "Remove",
+      "removeAria": "Remove {name}",
+      "leave": "Leave",
+      "removeTitle": "Remove {name}?",
+      "removeBody": "They lose access to this organization right away. Their videos stay.",
+      "removed": "{name} was removed."
+    },
+    "pending": {
+      "none": "No pending invitations.",
+      "expires": "expires {date}",
+      "resend": "Resend",
+      "resendAria": "Resend the invitation to {email}",
+      "revoke": "Revoke",
+      "revokeAria": "Revoke the invitation to {email}",
+      "resent": "Invitation sent again to {email}.",
+      "revoked": "Invitation revoked."
+    },
+    "errors": {
+      "lastOwner": "The last owner cannot leave or be demoted. Transfer ownership first.",
+      "ownerOnly": "Only an owner can do that.",
+      "alreadyMember": "That person is already a member.",
+      "nameMismatch": "The name you typed does not match.",
+      "wrongPassword": "That password is not right.",
+      "signInAgain": "For your security, sign out and sign in again, then try once more."
+    }
+  },
+  "billing": {
+    "meta": {
+      "title": "Billing"
+    },
+    "header": {
+      "eyebrow": "Settings",
+      "title": "Billing",
+      "description": "Your plan, usage, top-up credits and invoices."
+    },
+    "loading": "Loading billing",
+    "notEnabled": {
+      "title": "Billing isn’t managed here",
+      "body": "Your plan is managed by your PostMind account. Contact your account manager to change it."
+    },
+    "banners": {
+      "checkoutSuccess": "Thank you. Your plan is being set up and will appear here in a moment.",
+      "checkoutCancelled": "Checkout was canceled. You haven’t been charged.",
+      "topupSuccess": "Top-up bought. The credits will appear here in a moment.",
+      "topupCancelled": "Top-up canceled. You haven’t been charged.",
+      "dismiss": "Dismiss"
+    },
+    "plan": {
+      "title": "Current plan",
+      "tierName": "{tier} plan",
+      "noPlan": "No plan",
+      "status": {
+        "trialing": "Free trial",
+        "active": "Active",
+        "past_due": "Payment failed",
+        "read_only": "Read-only",
+        "cancelling": "Cancelling",
+        "none": "No plan"
+      },
+      "trialEnds": "Your free trial ends on {date}. Your plan starts automatically unless you cancel.",
+      "renews": "Renews on {date}.",
+      "cancelsOn": "Your plan ends on {date}. You keep full access until then.",
+      "pastDue": "We couldn’t take your last payment. Update your payment method by {date} to keep full access.",
+      "graceLeft": "{days, plural, one {# day left} other {# days left}}",
+      "readOnly": "Your account is read-only. You can still view, export and download your work, but you can’t create or publish until billing is sorted.",
+      "none": "Your organization doesn’t have a plan yet. Choose one below to start creating.",
+      "interval": {
+        "month": "Billed monthly",
+        "year": "Billed annually"
+      },
+      "adminSource": "Custom plan set by PostMind staff.",
+      "manage": "Manage billing",
+      "manageHelp": "Change plan, update your payment method, download receipts or cancel in the secure Stripe portal.",
+      "askOwner": "Only an organization owner can change billing. Ask an owner if you need a different plan.",
+      "checkoutUnavailable": "Online checkout isn’t available at the moment.",
+      "alreadySubscribed": "Your organization already has a subscription. Use Manage billing to change it."
+    },
+    "usage": {
+      "title": "Usage this month",
+      "description": "Video allowances reset on the first day of each month (UTC).",
+      "seats": "Seats",
+      "businesses": "Businesses",
+      "storage": "Storage",
+      "storageUsed": "{used} GB of {limit} GB",
+      "storageUnlimited": "{used} GB used",
+      "storageOver": "You’re over your storage allowance. Nothing is deleted, but consider tidying up or upgrading.",
+      "cost": "Generation spend",
+      "costOf": "{spent} of {cap}",
+      "costNoCap": "{spent} (no cap)",
+      "costHeadroom": "Your cap includes {amount} extra from top-up credits.",
+      "usedOf": "{used} of {limit}",
+      "usedUnlimited": "{used} (unlimited)"
+    },
+    "credits": {
+      "title": "Top-ups",
+      "description": "Credits are used after your monthly allowance, oldest first, and last 12 months.",
+      "short": "{count, plural, =0 {No short video credits} one {# short video credit} other {# short video credits}}",
+      "long": "{count, plural, =0 {No long video credits} one {# long video credit} other {# long video credits}}",
+      "buy": "Buy",
+      "buyAria": "Buy {pack} for {amount}",
+      "noPacks": "Top-up packs are available on the Basic, Standard and Plus plans."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices yet.",
+      "caption": "Invoices",
+      "number": "Invoice",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "links": "Links",
+      "draft": "Draft",
+      "view": "View",
+      "viewAria": "View invoice {number} (opens in a new tab)",
+      "pdf": "PDF",
+      "pdfAria": "Download invoice {number} as a PDF (opens in a new tab)",
+      "statuses": {
+        "draft": "Draft",
+        "open": "Due",
+        "paid": "Paid",
+        "uncollectible": "Uncollectible",
+        "void": "Void"
+      }
+    },
+    "picker": {
+      "title": "Choose a plan",
+      "description": "Pick a plan and pay securely with Stripe. Prices exclude VAT.",
+      "trial": "Start free trial",
+      "choose": "Choose {tier}",
+      "redirecting": "Opening secure checkout…"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "trialing": "Trial",
+      "past_due": "Past due",
+      "unpaid": "Unpaid",
+      "canceled": "Canceled",
+      "incomplete": "Incomplete",
+      "incomplete_expired": "Expired",
+      "paused": "Paused"
+    },
+    "admin": {
+      "tab": "Billing",
+      "entitlements": {
+        "title": "Plan and entitlements",
+        "description": "Look up an organization to see its effective plan, subscriptions and any staff override.",
+        "orgIdLabel": "Organization id",
+        "orgIdPlaceholder": "org_…",
+        "open": "Open",
+        "loading": "Loading entitlements",
+        "effective": "Effective plan",
+        "tier": "Tier",
+        "access": "Access",
+        "source": "Source",
+        "graceUntil": "Grace until",
+        "accessValues": {
+          "full": "Full",
+          "read_only": "Read-only",
+          "none": "None"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "Trial",
+          "admin": "Staff override",
+          "core": "PostMind Core",
+          "none": "None"
+        },
+        "stored": "Stored entitlement",
+        "noStored": "No entitlement stored yet.",
+        "storedSummary": "{tier} · {access} · {source} · updated {when}",
+        "override": "Current override",
+        "noOverride": "No staff override.",
+        "overrideReason": "Reason: {reason}",
+        "overrideSetAt": "Set {when}",
+        "expires": "Expires {date}",
+        "noExpiry": "No expiry",
+        "overridePrice": "Agreed price: {amount} a month",
+        "subscriptions": "Subscriptions",
+        "noSubscriptions": "No subscriptions.",
+        "subscriptionLine": "{tier} · {interval} · ends {date}",
+        "form": {
+          "title": "Set an override",
+          "tier": "Tier",
+          "access": "Access",
+          "keep": "Keep current",
+          "limits": "Custom limits",
+          "limitsHelp": "Leave a limit empty to use the plan’s value. Tick Unlimited to remove it.",
+          "unlimited": "Unlimited",
+          "unlimitedAria": "{limit}: unlimited",
+          "limitLabels": {
+            "seats": "Seats",
+            "businesses": "Businesses",
+            "storageGb": "Storage (GB)",
+            "shortVideos": "Short videos a month",
+            "longVideos": "Long videos a month",
+            "longMaxSec": "Long video maximum (seconds)",
+            "generatedImagesPerBusinessPerMonth": "Generated images per business a month",
+            "scanBusinesses": "Website scans (businesses)"
+          },
+          "price": "Agreed monthly price (£, excl. VAT)",
+          "minimum": "Minimum for this organization’s {cap} monthly cost cap: {amount}.",
+          "belowMinimum": "The price is below the minimum of {amount}.",
+          "priceRequired": "An Enterprise override needs the agreed monthly price.",
+          "expiresAt": "Expires (optional)",
+          "reason": "Reason (required)",
+          "save": "Save override",
+          "saved": "Override saved"
+        },
+        "clear": {
+          "title": "Remove the override",
+          "description": "The organization goes back to what its Stripe subscription gives it.",
+          "reason": "Reason for removing",
+          "button": "Remove override",
+          "cleared": "Override removed"
+        }
+      },
+      "subscriptions": {
+        "title": "Subscriptions",
+        "description": "Every Stripe subscription, newest first.",
+        "loading": "Loading subscriptions",
+        "mrr": "Monthly recurring revenue",
+        "mrrHelp": "Active and past-due subscriptions; annual plans divided by 12; excl. VAT.",
+        "total": "{count, plural, =0 {No subscriptions} one {# subscription} other {# subscriptions}}",
+        "byTier": "By tier",
+        "byTierAria": "Subscriptions by tier",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "By status",
+        "byStatusAria": "Subscriptions by status",
+        "filter": "Status",
+        "allStatuses": "All statuses",
+        "caption": "Subscriptions",
+        "columns": {
+          "organisation": "Organization",
+          "tier": "Tier",
+          "interval": "Billing",
+          "mrr": "MRR",
+          "periodEnd": "Period ends",
+          "status": "Status"
+        },
+        "cancelling": "Cancelling",
+        "unknownOrg": "Unknown organization",
+        "unknownTier": "Unknown",
+        "empty": "No subscriptions match."
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "Upgrade to {tier}",
+      "body": "This feature is included from the {tier} plan.",
+      "price": "{tier} is {amount} a month, excl. VAT.",
+      "enterprise": "Enterprise is arranged with our sales team."
+    },
+    "quota": {
+      "title": "You’ve reached this month’s limit",
+      "body": "Upgrade for a bigger monthly allowance, or buy a top-up pack to keep going this month."
+    },
+    "planRequired": {
+      "title": "Choose a plan to start creating",
+      "body": "Your organization doesn’t have a plan yet. Pick one to generate, publish and scan."
+    },
+    "billingRequired": {
+      "title": "Update your payment method",
+      "body": "Your account is read-only because of a billing problem. Update your payment method to restore full access."
+    },
+    "actions": {
+      "upgrade": "Upgrade",
+      "buyTopUp": "Buy top-up",
+      "choosePlan": "Choose a plan",
+      "updatePayment": "Update payment method",
+      "viewPlans": "View plans",
+      "notNow": "Not now"
+    },
+    "askOwner": "Only an organization owner can change the plan or billing. Ask an owner to do this.",
+    "lock": {
+      "aria": "Needs the {tier} plan"
+    }
+  },
+  "email": {
+    "layout": {
+      "brand": "PostMind Studio",
+      "greeting": "Hi {name},",
+      "greetingAnonymous": "Hi,",
+      "buttonFallback": "If the button does not work, copy this link into your browser:",
+      "signOff": "The PostMind Studio team",
+      "footerTransactional": "This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.",
+      "footerNotification": "You are receiving this because you turned on email for this type of notification in PostMind Studio.",
+      "support": "Questions? Contact us at {email}.",
+      "unsubscribe": "Unsubscribe from these emails"
+    },
+    "templates": {
+      "verifyEmail": {
+        "subject": "Confirm your email address",
+        "heading": "Confirm your email address",
+        "body": "Confirm that this is your email address to finish setting up your PostMind Studio account.",
+        "cta": "Confirm email address",
+        "note": "This link expires in 24 hours. If you did not create an account, you can ignore this email."
+      },
+      "resetPassword": {
+        "subject": "Reset your password",
+        "heading": "Reset your password",
+        "body": "We received a request to reset the password for your PostMind Studio account. Choose a new password with the button below.",
+        "cta": "Choose a new password",
+        "note": "This link expires in 1 hour and can be used once. If you did not ask for this, you can ignore this email: your password has not changed."
+      },
+      "passwordChanged": {
+        "subject": "Your password was changed",
+        "heading": "Your password was changed",
+        "body": "The password for your PostMind Studio account was just changed, and your other sessions were signed out.",
+        "cta": "Review account security",
+        "note": "If you did not do this, reset your password straight away and contact support."
+      },
+      "emailChangeConfirm": {
+        "subject": "Confirm your new email address",
+        "heading": "Confirm your new email address",
+        "body": "You asked to change the email address of your PostMind Studio account to {newEmail}. Confirm the change with the button below.",
+        "cta": "Confirm new email address",
+        "note": "This link expires in 24 hours. If you did not ask for this, you can ignore this email."
+      },
+      "emailChanged": {
+        "subject": "The email address on your account was changed",
+        "heading": "Your email address was changed",
+        "body": "The email address of your PostMind Studio account was changed to {newEmail}. We will send account emails there from now on.",
+        "cta": "Review account security",
+        "note": "If you did not make this change, contact support straight away."
+      },
+      "accountExists": {
+        "subject": "You already have a PostMind Studio account",
+        "heading": "You already have an account",
+        "body": "Someone tried to sign up for PostMind Studio with this email address, but an account already exists for it. Sign in instead. If you have forgotten your password, choose “Forgot password” on the sign-in page.",
+        "cta": "Sign in",
+        "note": "If this was not you, you can ignore this email. Your account has not changed."
+      },
+      "twoFactorChanged": {
+        "subject": "{enabled, select, true {Two-factor authentication turned on} other {Two-factor authentication turned off}}",
+        "heading": "{enabled, select, true {Two-factor authentication is on} other {Two-factor authentication is off}}",
+        "body": "{enabled, select, true {Two-factor authentication was turned on for your PostMind Studio account. You will need your authenticator app or a backup code when you sign in.} other {Two-factor authentication was turned off for your PostMind Studio account. Signing in now needs only your password.}}",
+        "cta": "Review account security",
+        "note": "If you did not do this, reset your password straight away and contact support."
+      },
+      "newSignIn": {
+        "subject": "New sign-in to your account",
+        "heading": "New sign-in to your account",
+        "body": "Your PostMind Studio account was just signed in to from {device}.",
+        "cta": "Review active sessions",
+        "note": "If this was you, you do not need to do anything. If not, sign out that session and change your password."
+      },
+      "invite": {
+        "subject": "{inviterName} invited you to {organisationName} on PostMind Studio",
+        "heading": "Join {organisationName} on PostMind Studio",
+        "body": "{inviterName} invited you to join {organisationName} as {role, select, owner {an owner} admin {an admin} publisher {a publisher} creator {a creator} viewer {a viewer} other {a member}}. Accept the invitation to start working together on videos.",
+        "cta": "Accept invitation",
+        "note": "The invitation expires in 7 days. Sign in with this email address to accept it. If you were not expecting it, you can ignore this email."
+      },
+      "ownershipTransferred": {
+        "subject": "You are now the owner of {organisationName}",
+        "heading": "You are now the owner of {organisationName}",
+        "body": "{newOwnerName} made you the owner of {organisationName} on PostMind Studio. As owner you manage billing and can delete the organization.",
+        "cta": "Open organization settings"
+      },
+      "trialEnding": {
+        "subject": "Your {planName} trial ends on {trialEndsAt, date, long}",
+        "heading": "Your trial ends soon",
+        "body": "Your {planName} trial ends on {trialEndsAt, date, long}. After that, your plan continues and the card on file is charged. To change or cancel, open billing settings before then.",
+        "cta": "Open billing settings"
+      },
+      "paymentFailed": {
+        "subject": "Your payment failed",
+        "heading": "We could not take your payment",
+        "body": "The latest payment for your PostMind Studio plan failed. Please update your payment details. If the payment still fails by {graceEndsAt, date, long}, your organization becomes read-only until it is paid.",
+        "cta": "Update payment details"
+      },
+      "paymentActionRequired": {
+        "subject": "Your payment needs confirming",
+        "heading": "Confirm your payment",
+        "body": "Your bank asked for extra confirmation before it can complete the payment for your PostMind Studio plan. Open the invoice to confirm it.",
+        "cta": "Confirm payment"
+      },
+      "subscriptionChanged": {
+        "subject": "Your plan is now {planName}",
+        "heading": "Your plan was changed",
+        "body": "Your organization is now on the {planName} plan. Your usage limits and features have been updated.",
+        "cta": "Open billing settings"
+      },
+      "subscriptionCanceled": {
+        "subject": "Your subscription was canceled",
+        "heading": "Your subscription was canceled",
+        "body": "Your PostMind Studio subscription is canceled. You keep full access until {endsAt, date, long}; after that your organization becomes read-only. You can subscribe again at any time.",
+        "cta": "Open billing settings"
+      },
+      "topupReceipt": {
+        "subject": "Your top-up is ready: {packName}",
+        "heading": "Top-up added",
+        "body": "Thank you. The {packName} top-up has been added to your organization and is ready to use. Stripe sends the receipt separately.",
+        "cta": "View usage"
+      },
+      "accountDeletionScheduled": {
+        "subject": "Your account will be deleted",
+        "heading": "Your account will be deleted",
+        "body": "You asked us to delete your PostMind Studio account. You have been signed out everywhere, and your account and its data will be permanently deleted on {deleteAt, date, long}.",
+        "note": "If you did not ask for this, contact support before that date."
+      },
+      "orgDeletionScheduled": {
+        "subject": "{organisationName} will be deleted",
+        "heading": "{organisationName} will be deleted",
+        "body": "The organization {organisationName} was deleted in PostMind Studio. Its projects, videos and connections will be permanently removed on {deleteAt, date, long}.",
+        "note": "If this was a mistake, contact support before that date."
+      },
+      "dataExportReady": {
+        "subject": "Your data export is ready",
+        "heading": "Your data export is ready",
+        "body": "The export you requested from PostMind Studio is ready to download. The download link works until {expiresAt, date, long}.",
+        "cta": "Download export"
+      }
+    },
+    "notification": {
+      "cta": "Open in PostMind Studio"
+    },
+    "unsubscribe": {
+      "pageTitle": "Email preferences — PostMind Studio",
+      "confirmHeading": "Stop these emails?",
+      "confirmBody": "You will no longer receive emails about “{kind}” for this organization. You will still see these notifications in PostMind Studio.",
+      "confirmButton": "Unsubscribe",
+      "doneHeading": "You are unsubscribed",
+      "doneBody": "You will no longer receive emails about “{kind}” for this organization. You can turn them back on in your notification preferences in PostMind Studio.",
+      "invalidHeading": "This link does not work",
+      "invalidBody": "The unsubscribe link is incomplete or has been changed. Use the link in your latest email, or change your notification preferences in PostMind Studio.",
+      "openStudio": "Open PostMind Studio"
+    },
+    "preferences": {
+      "description": "Choose what reaches you, in the app and by email.",
+      "suppressed": "We can’t email you: messages to your address bounced or were marked as spam. Contact support to turn email back on."
+    }
+  },
+  "adminOrgs": {
+    "list": {
+      "search": "Search organizations",
+      "searchPlaceholder": "Name, slug or id",
+      "searchAction": "Search",
+      "loading": "Loading organizations",
+      "empty": "No organizations match.",
+      "results": "{count, plural, one {# organization} other {# organizations}}",
+      "name": "Organization",
+      "plan": "Plan",
+      "status": "Status",
+      "members": "Members",
+      "cost": "Cost this month",
+      "created": "Created",
+      "actions": "Actions",
+      "open": "Open",
+      "openAria": "Open {name}",
+      "byIdTitle": "Look up by id",
+      "byIdHint": "Review policy and cost caps for any organization id, including ones held by PostMind Core."
+    },
+    "detail": {
+      "back": "All organizations",
+      "loading": "Loading the organization",
+      "meta": "{id} · created {created}",
+      "plan": "Plan",
+      "none": "None",
+      "sources": {
+        "stripe": "From Stripe",
+        "trial": "Free trial",
+        "admin": "Set by staff",
+        "core": "From PostMind Core",
+        "none": "No plan"
+      },
+      "access": "Access",
+      "members": "Members",
+      "pending": "{count, plural, =0 {No pending invitations} one {# pending invitation} other {# pending invitations}}",
+      "cost": "Cost this month",
+      "businesses": "{count, plural, =0 {No businesses} one {# business} other {# businesses}}",
+      "graceUntil": "Payment grace period ends {date}.",
+      "membersTitle": "Members",
+      "subscriptionsTitle": "Subscriptions",
+      "subscriptionsHint": "Read-only; change plans in Stripe or with an entitlement override.",
+      "noSubscription": "No subscription.",
+      "cancelling": "Cancels at period end"
+    },
+    "status": {
+      "trialing": "Trial",
+      "active": "Active",
+      "pastDue": "Past due",
+      "unpaid": "Unpaid",
+      "canceled": "Canceled",
+      "incomplete": "Incomplete",
+      "incompleteExpired": "Checkout expired",
+      "paused": "Paused",
+      "full": "Full access",
+      "readOnly": "Read-only",
+      "noPlan": "No plan",
+      "deleted": "Deleted",
+      "banned": "Banned"
+    },
+    "subscriptions": {
+      "readOnlyNote": "Read-only. Subscriptions change in Stripe (or through the customer portal); plan limits change with an entitlement override.",
+      "filter": "Status",
+      "all": "All statuses",
+      "loading": "Loading subscriptions",
+      "empty": "No subscriptions match.",
+      "results": "{count, plural, one {# subscription} other {# subscriptions}}",
+      "organisation": "Organization",
+      "plan": "Price",
+      "status": "Status",
+      "renews": "Period ends",
+      "grace": "Grace ends",
+      "cancelling": "Cancels at period end"
+    },
+    "legal": {
+      "title": "Legal documents are not ready for launch.",
+      "blocking": "Public sign-up stays closed in production until the Terms of Service and Privacy Policy are replaced with your own text.",
+      "warning": "Sign-up is not blocked, but these documents are still placeholders.",
+      "placeholder": "placeholder",
+      "missing": "missing",
+      "signupsClosed": "Public sign-up is closed until then."
+    }
+  },
+  "adminUsers": {
+    "list": {
+      "search": "Search users",
+      "searchPlaceholder": "Email, name or id",
+      "searchAction": "Search",
+      "loading": "Loading users",
+      "empty": "No users match.",
+      "results": "{count, plural, one {# user} other {# users}}",
+      "user": "User",
+      "verified": "Email verified",
+      "twoFactor": "2FA",
+      "role": "Role",
+      "sessions": "Sessions",
+      "created": "Joined",
+      "actions": "Actions",
+      "open": "Open",
+      "openAria": "Open {name}",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "detail": {
+      "back": "All users",
+      "loading": "Loading the user",
+      "verified": "Email verified",
+      "twoFactor": "Two-step verification",
+      "role": "Role",
+      "roles": {
+        "user": "Customer",
+        "staff": "Staff",
+        "superadmin": "Superadmin"
+      },
+      "sessions": "Active sessions",
+      "yes": "Yes",
+      "no": "No",
+      "banReason": "Banned: {reason}",
+      "membershipsTitle": "Organizations",
+      "noMemberships": "Not a member of any organization.",
+      "actionsTitle": "Actions",
+      "actionsHint": "Every action needs a reason and is recorded in the audit log.",
+      "ban": "Ban user",
+      "unban": "Lift ban",
+      "revokeSessions": "Sign out everywhere",
+      "resetTwoFactor": "Reset two-step verification",
+      "impersonate": "View as this user",
+      "impersonationOff": "Viewing as a user is switched off (STUDIO_IMPERSONATION_ENABLED).",
+      "done": {
+        "ban": "User banned and signed out.",
+        "unban": "Ban lifted.",
+        "sessions": "User signed out everywhere.",
+        "twoFactor": "Two-step verification reset.",
+        "impersonate": "Opening a read-only view."
+      },
+      "confirm": {
+        "ban": {
+          "title": "Ban {name}?",
+          "body": "They are signed out at once and cannot sign in until the ban is lifted.",
+          "action": "Ban user"
+        },
+        "unban": {
+          "title": "Lift the ban on {name}?",
+          "body": "They can sign in again right away.",
+          "action": "Lift ban"
+        },
+        "sessions": {
+          "title": "Sign {name} out everywhere?",
+          "body": "Every browser and device they are signed in on is signed out.",
+          "action": "Sign out everywhere"
+        },
+        "twoFactor": {
+          "title": "Reset two-step verification for {name}?",
+          "body": "Only after checking who they are another way. Their authenticator and backup codes stop working and they set it up again.",
+          "action": "Reset"
+        },
+        "impersonate": {
+          "title": "View Studio as {name}?",
+          "body": "A 30-minute, read-only session with a banner. Everything you open is audited.",
+          "action": "Start view"
+        }
+      }
     }
   }
 }

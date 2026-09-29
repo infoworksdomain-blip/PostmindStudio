@@ -77,7 +77,7 @@ jobs:
             "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
           echo "studio tables: $count"
           # 33 (spec 7 + A7) + cost_alerts + notifications (Phase 12 cost caps / alerting)
-          test "$count" -eq 59
+          test "$count" -eq 78
       - name: Install ffmpeg (Ubuntu repository)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
@@ -144,7 +144,19 @@ jobs:
           docker run --rm --entrypoint sh postmind-studio:ci -c 'ffmpeg -version | head -1 && ffprobe -version | head -1 && test "$(id -un)" = node'
       - name: Liveness responds
         run: |
-          docker run -d --name studio -p 3010:3010 postmind-studio:ci
+          # Standalone mode refuses to start without its required settings (src/lib/env.ts
+          # assertStartupEnv), so liveness runs with placeholders. /api/health touches no dependency.
+          docker run -d --name studio -p 3010:3010 \
+            -e DATABASE_URL='postgresql://ci:ci@127.0.0.1:5432/ci?schema=studio' \
+            -e APP_URL='http://localhost:3010' \
+            -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
+            -e STRIPE_SECRET_KEY='sk_test_ci_placeholder' \
+            -e STRIPE_WEBHOOK_SECRET='whsec_ci_placeholder' \
+            -e RESEND_API_KEY='re_ci_placeholder' \
+            -e RESEND_WEBHOOK_SECRET='whsec_ci_placeholder' \
+            -e STUDIO_EMAIL_FROM='PostMind Studio <no-reply@ci.invalid>' \
+            -e STUDIO_UNSUBSCRIBE_SECRET="$(openssl rand -hex 32)" \
+            postmind-studio:ci
           for i in $(seq 1 30); do
             if curl -fsS http://localhost:3010/api/health; then exit 0; fi
             sleep 2
@@ -207,6 +219,95 @@ jobs:
           for c in $(docker ps -aq --filter label=com.docker.compose.project=postmind-studio); do
             echo "--- $c"; docker logs --tail 80 "$c" || true
           done
+
+  e2e:
+    # Phase 18 Track E — Playwright happy path against the real app in standalone mode:
+    # landing → pricing → sign-up → onboarding → first project (e2e/happy-path.spec.ts). It needs
+    # Track A's sign-up / sign-in screens and Track C's pricing page; until both are on the branch
+    # the job skips with a notice (the same pattern as the overlay pixel diff), then runs itself.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: postmind
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U studio -d postmind"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio
+      REDIS_URL: redis://localhost:6379/3
+      STUDIO_MODE: standalone
+      APP_URL: http://127.0.0.1:3102
+      BETTER_AUTH_URL: http://127.0.0.1:3102
+      E2E_BASE_URL: http://127.0.0.1:3102
+      E2E_START: '1'
+      # CI-only placeholders (not secrets): Stripe and Resend are never called on this path;
+      # sign-up email is replaced by marking the user verified in the database.
+      BETTER_AUTH_SECRET: ci-e2e-placeholder-secret-0123456789abcdef
+      STUDIO_UNSUBSCRIBE_SECRET: ci-e2e-placeholder-unsubscribe-0123456789ab
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+      STUDIO_EMAIL_PROVIDER: none
+      # next start runs with NODE_ENV=production, where sign-up stays closed while the terms or
+      # privacy text is a placeholder (src/lib/legal/readiness.ts). CI reads stand-in texts instead.
+      STUDIO_LEGAL_CONTENT_DIR: /tmp/e2e-legal
+      # Loaded with the shared API deps on every route (storage, cost). Placeholders: the happy path
+      # uploads nothing, and generation stops at the billing gate before any provider call.
+      AWS_REGION: eu-west-2
+      S3_BUCKET_ASSETS: ci-assets
+      S3_BUCKET_RENDERS: ci-renders
+      S3_BUCKET_THUMBNAILS: ci-thumbnails
+      S3_BUCKET_LIBRARY: ci-library
+      STUDIO_USD_TO_GBP_RATE: '0.79'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stand-in legal texts (CI only)
+        run: |
+          mkdir -p /tmp/e2e-legal/en-GB
+          for doc in terms privacy cookies acceptable-use dpa subprocessors; do
+            printf '# CI stand-in\n\nNot legal text: used only by the CI end-to-end test.\n' > "/tmp/e2e-legal/en-GB/$doc.md"
+          done
+      - name: Track A and C screens present?
+        id: ready
+        run: |
+          if [ -f 'src/app/(auth)/sign-up/page.tsx' ] && [ -f 'src/app/(marketing)/pricing/page.tsx' ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=E2E happy path skipped::Needs Track A sign-up and Track C pricing pages on this branch."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.ready.outputs.present == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.ready.outputs.present == 'true'
+      - run: npx prisma migrate deploy && npx prisma db seed
+        if: steps.ready.outputs.present == 'true'
+      - run: npx playwright install --with-deps chromium
+        if: steps.ready.outputs.present == 'true'
+      - run: npm run build
+        if: steps.ready.outputs.present == 'true'
+      - run: npx playwright test
+        if: steps.ready.outputs.present == 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.ready.outputs.present == 'true'
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
 
   vps-config:
     # Deployment: single VPS — shell scripts (shellcheck is on the ubuntu runners; not available

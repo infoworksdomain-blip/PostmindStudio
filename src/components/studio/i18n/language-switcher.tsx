@@ -13,7 +13,14 @@ import { useLocaleSwitch } from './intl-provider';
 // name and carries its `lang` so screen readers pronounce it correctly. The choice is stored in
 // the studio.locale cookie (StudioIntlProvider.setLocale).
 
-export function LanguageSwitcher({ className }: { className?: string }) {
+export function LanguageSwitcher({
+  className,
+  labelClassName = 'hidden sm:inline',
+}: {
+  className?: string;
+  /** When the language name shows next to the icon (the app header hides it until xl). */
+  labelClassName?: string;
+}) {
   const t = useTranslations('shell.language');
   const { locale, setLocale } = useLocaleSwitch();
   const current = LOCALE_INFO[locale];
@@ -30,7 +37,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
         className={cn('border-transparent shadow-none hover:bg-accent', className)}
       >
         <Languages aria-hidden className="text-muted-foreground" />
-        <span lang={current.code} className="hidden sm:inline">
+        <span lang={current.code} className={labelClassName}>
           {current.label}
         </span>
       </SelectTrigger>

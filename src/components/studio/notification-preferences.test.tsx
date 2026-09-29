@@ -58,3 +58,37 @@ describe('NotificationPreferencesButton', () => {
     await waitFor(() => expect(toggle).not.toBeChecked());
   });
 });
+
+describe('NotificationPreferencesButton: email delivery (Phase 18)', () => {
+  it('drops the pending note when email is active', async () => {
+    mockFetch([
+      {
+        match: '/notification-preferences',
+        body: { ok: true, preferences, emailDelivery: 'active' },
+      },
+    ]);
+    const user = userEvent.setup();
+    renderWithSWR(<NotificationPreferencesButton />);
+    await user.click(screen.getByRole('button', { name: 'Notification preferences' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      await within(dialog).findByText('Choose what reaches you, in the app and by email.'),
+    ).toBeInTheDocument();
+    await within(dialog).findByRole('switch', { name: 'Budget alerts: email' });
+    expect(within(dialog).queryByText(/pending setup/i)).toBeNull();
+  });
+
+  it('says we cannot email a suppressed address', async () => {
+    mockFetch([
+      {
+        match: '/notification-preferences',
+        body: { ok: true, preferences, emailDelivery: 'suppressed' },
+      },
+    ]);
+    const user = userEvent.setup();
+    renderWithSWR(<NotificationPreferencesButton />);
+    await user.click(screen.getByRole('button', { name: 'Notification preferences' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByRole('status')).toHaveTextContent(/We can’t email you/);
+  });
+});

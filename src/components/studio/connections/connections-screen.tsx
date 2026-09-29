@@ -8,7 +8,7 @@ import { CheckCircle2, Link2, TriangleAlert, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
-import type { PlatformConnection } from '@/lib/client/types';
+import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { MetaPlatformCard } from './meta-platform-card';
@@ -20,13 +20,14 @@ import {
   META_PLATFORMS,
   OAUTH_PLATFORMS,
   platformLabel,
-  type OAuthPlatform,
+  type ConnectPlatform,
 } from './platforms';
 
 // Connections (spec 8.6, 14.5): connect TikTok / YouTube / X / LinkedIn for the selected
 // business. Connect → POST oauth-init → browser goes to the platform → the OAuth callback
 // redirects back here with ?connected=<platform> or ?connection_error=<code>. Instagram and
-// Facebook accounts are connected in PostMind settings and listed here read-only.
+// Facebook: in core mode they are connected in PostMind settings and listed here read-only; in
+// standalone mode (Phase 18 §2.10) "Connect" runs Studio's own Meta login (?connected=meta&count=N).
 
 type Notice = { tone: 'good' | 'bad'; text: string };
 
@@ -37,6 +38,7 @@ function useCallbackNotice(): [Notice | null, () => void] {
   const [notice, setNotice] = useState<Notice | null>(null);
   const handled = useRef<string | null>(null);
   const connected = params?.get('connected');
+  const count = Number(params?.get('count') ?? 0);
   const failed = params?.get('connection_error') ?? params?.get('error');
 
   useEffect(() => {
@@ -47,7 +49,13 @@ function useCallbackNotice(): [Notice | null, () => void] {
     handled.current = key;
     const code = callbackErrorCode(failed ?? '');
     const next: Notice = connected
-      ? { tone: 'good', text: t('connectedNotice', { platform: platformLabel(connected) }) }
+      ? {
+          tone: 'good',
+          text:
+            connected === 'meta'
+              ? t('connectedMetaNotice', { count })
+              : t('connectedNotice', { platform: platformLabel(connected) }),
+        }
       : {
           tone: 'bad',
           text: code
@@ -59,7 +67,7 @@ function useCallbackNotice(): [Notice | null, () => void] {
     else toast.error(next.text);
     // Drop the query so a refresh does not replay the message.
     router.replace('/connections', { scroll: false });
-  }, [connected, failed, router, t]);
+  }, [connected, count, failed, router, t]);
 
   return [notice, () => setNotice(null)];
 }
@@ -73,13 +81,15 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
   const tn = useTranslations('shell.nav.groups');
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
-  const { data, error, isLoading, mutate } = useApi<{ data: PlatformConnection[] }>(
-    businessId ? '/platform-connections' : null,
-  );
-  const [connecting, setConnecting] = useState<OAuthPlatform | null>(null);
+  const { data, error, isLoading, mutate } = useApi<{
+    data: PlatformConnection[];
+    meta?: MetaConnectInfo;
+  }>(businessId ? '/platform-connections' : null);
+  const [connecting, setConnecting] = useState<ConnectPlatform | null>(null);
   const [notice, dismiss] = useCallbackNotice();
+  const metaInfo = data?.meta;
 
-  async function connect(platform: OAuthPlatform) {
+  async function connect(platform: ConnectPlatform) {
     if (!businessId) return;
     setConnecting(platform);
     try {
@@ -118,7 +128,11 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
 
   return (
     <>
-      <PageHeader eyebrow={tn('setup')} title={t('title')} description={t('description')} />
+      <PageHeader
+        eyebrow={tn('setup')}
+        title={t('title')}
+        description={metaInfo?.connect === 'studio' ? t('descriptionStandalone') : t('description')}
+      />
       {notice && (
         <div
           role={notice.tone === 'bad' ? 'alert' : 'status'}
@@ -170,7 +184,11 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
             <MetaPlatformCard
               key={p.id}
               platform={p}
+              info={metaInfo}
               connections={mine.filter((c) => c.platform === p.id)}
+              connecting={connecting === 'meta'}
+              onConnect={() => void connect('meta')}
+              onDisconnect={disconnect}
             />
           ))}
         </div>

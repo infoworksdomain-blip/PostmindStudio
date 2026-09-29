@@ -4,27 +4,13 @@ import type { NotBuiltItem } from './not-built-types';
 // Sources: PROGRESS.md (GATE 12 list, Operator decisions "NOT BUILT" notes, phase review lists),
 // BACKLOG.md unchecked items (9.2, 9.3, 12.2, 12.3, 12.5), runbooks/*.md GAP lines.
 // Phase 17 closed the account-status, provider-outage alert, abandoned-upload, lost-publish and
-// storage-backup GAPs, so they are not listed. Deployment target: one Hetzner VPS in Germany
+// storage-backup GAPs, so they are not listed. Phase 18 Track D closed the Core-dependent Meta
+// items for standalone mode: channel reconciliation does not apply (Studio owns the Meta login)
+// and the Core Meta wiring is core-mode only; what is left is the operator's Meta app settings. Deployment target: one Hetzner VPS in Germany
 // (Docker Compose; runbooks/vps-deploy.md, scripts/vps/deploy.sh).
 
 export const PLATFORM_GAPS: NotBuiltItem[] = [
   // ------------------------------------------------------------------ Publishing and automation
-  {
-    id: 'meta-reconcile',
-    group: 'Publishing and automation',
-    title: 'Core ↔ Studio channel reconciliation',
-    blocker: 'blocked on a dependency',
-    why: 'Reconciliation contract shipped, waiting for Core list-channels: the daily reconcile-channels job skips and GET /admin/channels/reconciliation answers 501, so a missed DELETE leaves a channel active until the daily account-status check (17.3) or Meta itself refuses its token.',
-    source: 'PROGRESS [13.35], [17.3]; runbooks/platform-account-revocation.md GAPs',
-    plan: {
-      screens: [],
-      endpoints: [
-        'CoreChannelDirectory over Core list-channels (reconcile job + logic already built)',
-      ],
-      days: 1,
-      dependsOn: 'Core: list-channels endpoint',
-    },
-  },
   // ------------------------------------------------------------------ Pipeline and media
   {
     id: 'fallback-adapters',
@@ -156,19 +142,21 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
     },
   },
   {
-    id: 'core-meta-wiring',
+    id: 'meta-connect-app',
     group: 'Staging and people (GATE 12)',
-    title: 'Core wiring for the Meta internal endpoints',
-    blocker: 'needs people',
-    why: 'Built and ready: integration kit in integrations/core (OpenAPI spec, copyable client with retries, retry/alerting recipe, contract suite: npm run contract:core -- --base-url <staging> --token <token>); waiting for the Core team to wire it in and run the suite against staging.',
-    source: 'BACKLOG 14.10; integrations/core/README.md; runbooks/platform-account-revocation.md',
+    title: 'Meta connect: Studio’s own Meta app settings',
+    blocker: 'needs operator app settings',
+    why: 'Built (Phase 18 Track D): Studio runs Facebook Login for Business itself — Connect on /connections, long-lived Page tokens sealed with KMS, appsecret_proof on every Graph call, signed deauthorise and data-deletion callbacks with a status page. Connect stays hidden (“Studio’s Meta app still needs its settings”) until the operator configures Studio’s Meta app and App Review grants Advanced Access.',
+    source: 'runbooks/meta-connect.md; plans/phase-18.md §2.10, §7 “Operator must provide” item 4',
     plan: {
       screens: [],
       endpoints: [
-        'Core: call registerChannel / disconnect / pushRefreshedTokens / purgeOrganisation with the copied client, durable retries + alerts, publish + insights scopes',
+        'Operator: Business-type Meta app + Business Verification; FLfB configuration (User access token; Pages + Instagram assets; pages_show_list, pages_read_engagement, pages_manage_posts, read_insights, instagram_basic, instagram_content_publish, instagram_manage_insights) → META_LOGIN_CONFIG_ID',
+        'Operator: redirect URI https://<host>/api/studio/platform-connections/oauth-callback, deauthorise https://<host>/api/meta/deauthorize, data deletion https://<host>/api/meta/data-deletion, Require App Secret on; META_APP_ID / META_APP_SECRET in the VPS env',
+        'Staging: connect a Page and its Instagram account, publish a Reel, disconnect, and fire the deauthorise callback',
       ],
-      days: 2,
-      dependsOn: 'Core team',
+      days: 1,
+      dependsOn: 'Meta App Review (Advanced Access for the permissions above)',
     },
   },
   {

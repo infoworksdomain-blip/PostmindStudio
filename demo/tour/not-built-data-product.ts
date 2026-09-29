@@ -9,19 +9,18 @@ export const PRODUCT_GAPS: NotBuiltItem[] = [
   {
     id: 'email-notifications',
     group: 'Notifications',
-    title: 'Email notifications',
-    blocker: 'blocked on a dependency',
-    why: 'Contract shipped, waiting for an operator decision: Core sends email (no Core email API yet) or Studio sends it via Resend/SES. EmailSender + STUDIO_EMAIL_PROVIDER exist; opted-in email is recorded as “pending setup” and the bell says so.',
-    source: 'PROGRESS [13.33]; runbooks/notifications-email.md GAP',
+    title: 'Email (Resend): first real send on staging',
+    blocker: 'needs staging',
+    why: 'Built (Phase 18 Track B): Resend sender behind the outbox with retries, auth / billing / account / notification templates in all 11 locales, bounce and complaint suppression from the signed webhook, one-click unsubscribe. Not yet sent for real: it needs the operator’s Resend account, verified sending domain, API key and webhook secret on staging.',
+    source: 'PROGRESS [18.B]; runbooks/email-resend.md',
     plan: {
-      // 13.24 built the preferences (table, GET|PATCH, dialog); email delivery is what waits.
-      screens: ['Slack opt-in next to the email switch (preferences dialog exists)'],
+      screens: [],
       endpoints: [
-        'CoreEmailSender.send against the Core email API, or a Resend/SES adapter (EmailSender contract shipped)',
+        'staging: send each template once and use Resend’s bounced@ / complained@resend.dev test addresses to exercise the webhook',
       ],
-      days: 4,
+      days: 0.5,
       dependsOn:
-        'operator decision: a Core email API, or Studio sends email itself (runbooks/notifications-email.md)',
+        'Resend account, sending-domain DNS (SPF, DKIM, return-path MX, DMARC), API key and webhook secret',
     },
   },
   // ------------------------------------------------------------------ Create and review
@@ -63,23 +62,6 @@ export const PRODUCT_GAPS: NotBuiltItem[] = [
     },
   },
   // ------------------------------------------------------------------ Manage
-  {
-    id: 'business-list',
-    group: 'Manage',
-    title: 'Business list and picker',
-    blocker: 'blocked on a dependency',
-    why: 'Contract shipped, waiting for Core list-businesses: GET /api/studio/businesses answers 501 and the header switcher (a picker as soon as it answers) stays a typed business id; Studio cannot yet verify a business belongs to the organisation.',
-    source: 'PROGRESS [13.34]; core/business-directory.ts',
-    plan: {
-      screens: ['Header business switcher as a searchable list'],
-      endpoints: [
-        'Core: GET /api/internal/organisations/:id/businesses',
-        'Studio: CoreBusinessDirectory over that endpoint (cached) + validation on writes',
-      ],
-      days: 1,
-      dependsOn: 'Core team adds the endpoint',
-    },
-  },
   {
     id: 'analytics-depth',
     group: 'Manage',

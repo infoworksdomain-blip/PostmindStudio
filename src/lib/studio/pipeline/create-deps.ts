@@ -9,6 +9,8 @@ import { createMetricsRegistry } from '../analytics/fetchers';
 import { stockSourcesFromEnv } from '../images/stock';
 import { createEngagementClient } from '../platforms/publishing';
 import { triggerFieldsEnabled, withTriggerFields } from '../core/engagement-trigger';
+import { engagementEnabled, selectCoreSyncClients } from '../core/select';
+import { studioModes } from '../../mode';
 import { createBrowserlessRenderer } from '../scan/crawl';
 import { headlessRendererFromEnv } from '../scan/headless-render';
 import { guardedFetch } from '../scan/safe-fetch';
@@ -17,6 +19,9 @@ import { createKillSwitch, createPrismaFlagStore } from '../kill-switch';
 import { costCapsFromEnv } from '../cost/caps';
 import { createCostGuard } from '../cost/guard';
 import { createOrgCapOverrideLookup } from '../cost/org-overrides';
+import { createEmailSender } from '../notifications/email';
+import { mailerFromEnv } from '../../email/mailer';
+import { billingPipelineDepsFromEnv } from '../billing/wiring';
 import { createNotifier } from '../notifications/notifier';
 import { createPreferenceLookup } from '../notifications/preference-lookup';
 import { getMetrics } from '../observability/metrics';
@@ -50,6 +55,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
   const keys = lazyDataKeyProvider();
   const killSwitch = createKillSwitch({ store: createPrismaFlagStore(input.db) });
   const caps = costCapsFromEnv();
+  // Phase 18 Track C: billing access at job start + top-up / trial cost-cap adjustments.
+  const billing = billingPipelineDepsFromEnv(input.db);
   // 13.24: in-app suppression and email recipients follow notification preferences.
   const preferences = createPreferenceLookup(input.db);
   const notifier = createNotifier({
@@ -57,7 +64,14 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     logger,
     preferences,
     emailPreferences: preferences,
+    // Phase 18 §2.8: Resend in standalone mode (outbox + send-email job), per STUDIO_EMAIL_PROVIDER.
+    email: createEmailSender({ db: input.db, queue: input.queue, logger }),
   });
+  // Phase 18 §2.12: Core / Engagement / Meta adapters chosen once from the mode (core/select.ts).
+  const modes = studioModes();
+  const studioMeta = modes.metaConnect === 'studio';
+  // appsecret_proof only with Studio's own Meta app: Core's tokens belong to Core's app.
+  const metaAppSecret = studioMeta ? process.env.META_APP_SECRET?.trim() || undefined : undefined;
   const guard = createCostGuard({
     db: input.db,
     caps,
@@ -66,9 +80,11 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     logger,
     metrics: getMetrics(),
     overrides: createOrgCapOverrideLookup(input.db),
+    adjustments: billing.adjustments,
   });
   return {
     db: input.db,
+    core: selectCoreSyncClients(modes, input.db),
     registry: getProviderRegistry(),
     breaker,
     killSwitch,
@@ -89,6 +105,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       now: Date.now,
     }),
     queue: input.queue,
+    // Phase 18 §2.8: worker-sent transactional email (billing sync, cancelled-org retention).
+    mailer: mailerFromEnv({ db: input.db, queue: input.queue, logger }),
     storage,
     media: createFfmpegInspector(),
     mastering: createFfmpegMastering(),
@@ -119,6 +137,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       fetchImpl: globalThis.fetch,
       linkedInEnabled: process.env.LINKEDIN_POST_ANALYTICS === 'enabled',
       graphVersion: process.env.META_GRAPH_API_VERSION?.trim() || undefined,
+      metaAppSecret,
     }),
     scan: {
       pageFetch: guardedFetch,
@@ -138,26 +157,37 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
         sleep,
         now: Date.now,
         graphVersion: process.env.META_GRAPH_API_VERSION?.trim() || undefined,
+        appSecret: metaAppSecret,
       }),
-      meta: createStoredMetaCredentials({ db: input.db, keys, now: Date.now }),
+      meta: createStoredMetaCredentials({
+        db: input.db,
+        keys,
+        now: Date.now,
+        reconnectIn: studioMeta ? 'studio' : 'core',
+      }),
       thumbnailsBucket: process.env.S3_BUCKET_THUMBNAILS?.trim() || undefined,
       keys,
       oauth: (platform) => oauthClientFromEnv(platform),
       storage,
       // 15.W5: ON_VIDEO_PUBLISHED trigger fields, only with STUDIO_ENGAGEMENT_TRIGGER_FIELDS=true.
-      engagement: withTriggerFields(
-        createEngagementClient({
-          baseUrl: process.env.ENGAGEMENT_INTERNAL_URL,
-          serviceToken: process.env.POSTMIND_SERVICE_TOKEN,
-          fetchImpl: globalThis.fetch,
-          logger,
-        }),
-        { db: input.db, logger, enabled: triggerFieldsEnabled() },
-      ),
+      // Phase 18: Engagement is optional; without ENGAGEMENT_INTERNAL_URL attribution is off
+      // (a silent no-op, not a warning per publish).
+      engagement: engagementEnabled()
+        ? withTriggerFields(
+            createEngagementClient({
+              baseUrl: process.env.ENGAGEMENT_INTERNAL_URL,
+              serviceToken: process.env.POSTMIND_SERVICE_TOKEN,
+              fetchImpl: globalThis.fetch,
+              logger,
+            }),
+            { db: input.db, logger, enabled: triggerFieldsEnabled() },
+          )
+        : { attributePublication: async () => undefined },
       logger,
       now: Date.now,
     },
     now: Date.now,
     sleep,
+    billingAccess: billing.billingAccess,
   };
 }

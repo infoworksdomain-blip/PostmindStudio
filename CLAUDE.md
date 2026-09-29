@@ -15,6 +15,19 @@ PostMind Studio is a new microservice for the PostMind AI platform. It generates
 
 If you cannot open the .docx files directly, ask the operator to provide the relevant section as text.
 
+## Phase 18: standalone mode (operator decision 2026-09-29)
+
+Studio is now a **standalone SaaS** by default (`STUDIO_MODE=standalone`, `src/lib/mode.ts`). It
+signs people in itself (Better Auth, `src/lib/auth/*`), bills with Stripe subscriptions, sends
+transactional email through Resend, and owns its organisations, members, businesses, audit log and
+Meta connection. PostMind Core and Engagement are **optional adapters, off by default**:
+`STUDIO_MODE=core` (or the per-integration overrides `STUDIO_IDENTITY_MODE`, `STUDIO_AUDIT_SINK`,
+`STUDIO_EMAIL_PROVIDER`, `STUDIO_META_CONNECT`, `STUDIO_BILLING`, `STUDIO_BUSINESSES`) keeps the
+pre-Phase-18 behaviour. Adapters are chosen once (`context.ts`, `create-deps.ts`,
+`identity/index.ts`); do not scatter mode checks. Plan: `plans/phase-18.md`. Where the sections
+below say "Core handles X", read them as **core mode only**. Rule 1 still holds in both modes:
+**never modify PostMind Core or Engagement code.**
+
 ## Non-negotiable ground rules
 
 1. **Never modify existing PostMind Core or Engagement code.** Studio is additive. If you think something in PostMind needs changing, stop and ask.
@@ -34,12 +47,12 @@ If you cannot open the .docx files directly, ask the operator to provide the rel
 - **Queue**: BullMQ over Redis. Shared Redis cluster; Studio uses DB 3.
 - **Storage**: S3-compatible object storage. Three buckets: `studio-assets`, `studio-renders`, `studio-thumbnails`. One more for the library: `studio-library-assets`.
 - **CDN**: CloudFront (or equivalent) with signed URLs.
-- **Auth**: JWT issued by PostMind Core. Studio verifies against PostMind's JWKS endpoint. Never issue tokens itself.
+- **Auth**: standalone mode — Better Auth sessions (`__Secure-studio.session_token`), organisations and roles in `studio.organisations` / `studio.members`, staff = `user.role` staff/superadmin with 2FA (runbooks/auth.md). Core mode — JWT issued by PostMind Core, verified against its JWKS endpoint; Studio never issues tokens then.
 - **Integration points** (four `@/lib/*` modules — same pattern as Engagement):
   - `src/lib/prisma.ts` — Prisma client singleton for the studio schema
-  - `src/lib/tenant.ts` — `requireTenantContext(req)` — extracts org/user from JWT, calls PostMind Core for context
-  - `src/lib/rbac.ts` — `requireCapability(context, capability)` — enforces per-endpoint permissions
-  - `src/lib/audit.ts` — `auditLog(entry)` — fire-and-forget POST to PostMind's audit service
+  - `src/lib/tenant.ts` — `requireTenantContext(req)` — delegates to the configured `IdentityProvider` (`src/lib/identity/*`): the Better Auth session + local membership (standalone) or Core's JWT + context (core)
+  - `src/lib/rbac.ts` — `requireCapability(context, capability)` — enforces per-endpoint permissions (standalone: capabilities from the member's role; core: from Core)
+  - `src/lib/audit.ts` — `auditLog(entry)` — fire-and-forget to the configured `AuditSink` (`studio.audit_log` locally, or PostMind's audit service in core mode)
 
 ## The 9-layer generation pipeline
 
@@ -95,9 +108,8 @@ Four levels per spec Section 12. All backed by the `system_flags` table (DB-back
 
 - Do not build the video composition rendering itself — Shotstack does that. You build the JSON edit-decision-list and POST it.
 - Do not build a video encoder — providers return MP4s; we store and serve them.
-- Do not build authentication UI — PostMind Core handles login. Studio only verifies tokens.
-- Do not build the payment / billing system — PostMind Core handles billing. Studio reports usage events.
-- Do not build the Engagement Meta OAuth flow — reuse the tokens Engagement already has.
+- Superseded by Phase 18 (standalone): Studio now has its own sign-in UI, Stripe billing and its own Meta (Facebook Login for Business) connect. In `STUDIO_MODE=core` the old rules still apply: Core handles login and billing (Studio reports usage events) and pushes Meta tokens.
+- Public pages live in `src/app/(marketing)` (landing `/`, `/pricing`, `/legal/*`); legal text is operator Markdown in `content/legal/<locale>/*.md`, and production sign-up stays closed while terms or privacy is a placeholder (`src/lib/legal/readiness.ts`).
 
 ## When you need to make a decision
 

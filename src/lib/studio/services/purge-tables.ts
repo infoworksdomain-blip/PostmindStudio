@@ -17,7 +17,10 @@ import { flagKeys } from '../system-flags';
 //     (requester) and its link to the deleted publication;
 //   - system_flags studio.frozenWorkspace.<org>: the workspace kill switch stays engaged so no
 //     job can run for the deleted organisation;
-//   - the audit trail itself lives in PostMind's audit service (src/lib/audit.ts), not here.
+//   - the audit trail: PostMind's audit service in core mode; in standalone mode studio.audit_log
+//     (append-only, ids only) ages out through the audit-retention job instead;
+//   - the Stripe billing record (billing_customers, subscriptions, trial_fingerprints,
+//     stripe_events) and the per-user identity tables (they go with account deletion).
 // purge-tables.test.ts fails when a model is added to the schema without being classified here.
 
 type Sql = Prisma.Sql;
@@ -133,6 +136,8 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('data_exports', 'DataExport'),
   org('usage_events', 'UsageEvent'),
   org('drip_queues', 'DripQueue'),
+  // Phase 18 §2.11: the organisation's own businesses (standalone mode).
+  org('businesses', 'Business'),
   // BYOC API keys (envelope-encrypted): a deleted organisation's credentials must not survive.
   org('provider_credentials', 'ProviderCredential'),
   {
@@ -166,6 +171,30 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('org_policies', 'OrgPolicy'),
   org('org_cost_caps', 'OrgCostCap'),
   org('organisation_beta', 'OrganisationBeta'),
+  // Phase 18 Track C: top-up credits and entitlements are organisation data (uses before credits).
+  org('usage_credit_uses', 'UsageCreditUse'),
+  org('usage_credits', 'UsageCredit'),
+  org('org_entitlements', 'OrgEntitlement'),
+  // Phase 18 §2.8: the organisation's queued / sent emails (addresses and one-time links).
+  org('email_outbox', 'EmailOutbox'),
+  // Phase 18 identity (Better Auth tables, "organizationId" spelling): memberships and pending
+  // invitations, then the organisation row itself last, after every child that references it
+  // (members / invitations have FKs to organisations; nothing else does).
+  {
+    table: 'members',
+    model: 'Member',
+    where: (o) => Prisma.sql`"organizationId" = ${o}`,
+  },
+  {
+    table: 'invitations',
+    model: 'Invitation',
+    where: (o) => Prisma.sql`"organizationId" = ${o}`,
+  },
+  {
+    table: 'organisations',
+    model: 'Organization',
+    where: (o) => Prisma.sql`"id" = ${o}`,
+  },
 ];
 
 /** Models that are never purged: the tombstones, the takedown record, platform-level data. */
@@ -181,6 +210,20 @@ export const NOT_PURGED_MODELS: Readonly<Record<string, string>> = {
   VideoLibraryEmbedding: 'platform corpus embeddings',
   VideoLibraryLicense: 'platform corpus licences',
   VideoLibraryIngestRun: 'platform corpus ingest runs (staff)',
+  // Phase 18 Track C (§5.11: Stripe invoices are kept for UK legal retention; these rows hold
+  // Stripe ids and statuses only, no personal data, and link the kept invoices to the org).
+  BillingCustomer: 'billing record: Stripe customer id, marked deleted (§5.11 retention)',
+  Subscription: 'billing record: Stripe subscription ids and statuses (§5.11 retention)',
+  TrialFingerprint: 'abuse control: card fingerprints that already had a trial',
+  StripeEvent: 'platform webhook dedupe log (no organisation column)',
+  // Phase 18 identity: per-user rows go with account deletion (§2.4), not with an organisation.
+  User: 'per-user account: removed by account deletion, not by an organisation purge',
+  Session: 'per-user session: cascades from users on account deletion',
+  Account: 'per-user sign-in method: cascades from users on account deletion',
+  TwoFactor: 'per-user 2FA secret: cascades from users on account deletion',
+  Verification: 'global, short-lived tokens keyed by identifier (expire within hours)',
+  AuditLog: 'audit trail: append-only, ids only, deleted by 730-day retention (§2.6)',
+  EmailSuppression: 'global deliverability list: SHA-256 of the address, no organisation',
 };
 
 /**

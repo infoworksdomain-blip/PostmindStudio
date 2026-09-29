@@ -41,3 +41,8 @@ import './p14-t3-beta';
 import './p14-t1-data-retention';
 // Phase 17: coded failure reasons, the untitled project, extra publications.
 import './p17-hardening';
+// Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
+// and sample data for Track C's billing contract.
+import './p18-org';
+import './p18-admin';
+import './p18-billing';

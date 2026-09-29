@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { PlatformError, type PlatformErrorClass } from '../../errors';
 import { asBody, platformRequest, pollUntil } from './http';
 import type {
@@ -109,6 +110,17 @@ export const graphErrors = { describe, refine };
 
 interface MetaPublisherDeps extends PublisherDeps {
   graphVersion?: string;
+  /**
+   * Phase 18 §2.10: Studio's own Meta app secret (STUDIO_META_CONNECT=studio). When set, every
+   * Graph call carries appsecret_proof (https://developers.facebook.com/docs/graph-api/guides/secure-requests).
+   * Absent in core mode: Core's tokens belong to Core's app, whose secret Studio does not hold.
+   */
+  appSecret?: string;
+}
+
+/** hex HMAC-SHA256 of the access token keyed with the app secret (Graph "Secure Requests"). */
+export function graphProof(token: string, appSecret: string): string {
+  return createHmac('sha256', appSecret).update(token, 'utf8').digest('hex');
 }
 
 abstract class MetaPublisher implements PlatformPublisher {
@@ -132,6 +144,7 @@ abstract class MetaPublisher implements PlatformPublisher {
   ) {
     const url = new URL(`${GRAPH_HOST}/${this.version}${path}`);
     const body = new URLSearchParams({ ...init.params, access_token: token });
+    if (this.deps.appSecret) body.set('appsecret_proof', graphProof(token, this.deps.appSecret));
     const isGet = (init.method ?? 'GET') === 'GET';
     if (isGet) body.forEach((v, k) => url.searchParams.set(k, v));
     return platformRequest<T>(
@@ -368,6 +381,7 @@ export class FacebookFeedPublisher extends MetaPublisher {
 
   private videos<T>(page: string, token: string, form: FormData | URLSearchParams) {
     form.set('access_token', token);
+    if (this.deps.appSecret) form.set('appsecret_proof', graphProof(token, this.deps.appSecret));
     return platformRequest<T>(
       `${GRAPH_VIDEO_HOST}/${this.version}/${page}/videos`,
       { method: 'POST', body: form },
