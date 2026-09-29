@@ -20,7 +20,6 @@ import { WelcomeWizard } from '@/components/studio/onboarding/welcome-wizard';
 import { AuditScreen } from '@/components/studio/settings/audit-screen';
 import { MembersScreen } from '@/components/studio/settings/members-screen';
 import { OrganisationSettingsScreen } from '@/components/studio/settings/organisation-settings';
-import { SettingsNav } from '@/components/studio/settings/settings-nav';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
 import { PublicationsList } from '@/components/studio/publications/publications-list';
 import { ReviewScreen } from '@/components/studio/review/review-screen';
@@ -36,6 +35,7 @@ import { SystemTour } from './tour/system';
 import { TourHome } from './tour/home';
 import { WhatsNew } from './tour/whats-new';
 import { publicPage } from './public-pages';
+import { BillingScreen } from '@/components/studio/billing/billing-screen';
 import { matchPath, navigate, useLocation } from './router';
 
 // The demo build: the real Studio screens (src/components/studio) inside the real app shell,
@@ -85,23 +85,9 @@ const ROUTES: RouteDef[] = [
   { path: '/settings/organisation', render: () => <OrganisationSettingsScreen /> },
   { path: '/settings/members', render: () => <MembersScreen /> },
   { path: '/settings/audit', render: () => <AuditScreen /> },
-  { path: '/settings/billing', render: () => <BillingPending /> },
+  // Phase 18 Track C: plan, usage, top-ups and invoices (sample data from demo/api p18-billing).
+  { path: '/settings/billing', render: () => <BillingScreen /> },
 ];
-
-/** /settings/billing is Track C's screen; the demo API already serves its invoices contract. */
-function BillingPending() {
-  return (
-    <>
-      <SettingsNav />
-      <p className="text-muted-foreground max-w-xl text-sm">
-        Billing (current plan, usage meters, top-ups, invoices and the Stripe portal) is built by
-        Phase 18 Track C. The demo API already answers its contract: GET /billing/invoices returns
-        sample invoices, and checkout and the portal are refused because Stripe never opens from the
-        demo.
-      </p>
-    </>
-  );
-}
 
 function Routed() {
   const { pathname, search } = useLocation();
@@ -152,9 +138,9 @@ export function DemoApp() {
 }
 
 function DemoShell() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   // Phase 18: the public pages (landing, legal, pricing, sign-up) have no app shell.
-  const publicBody = publicPage(pathname);
+  const publicBody = publicPage(pathname, new URLSearchParams(search));
   if (publicBody)
     return (
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>

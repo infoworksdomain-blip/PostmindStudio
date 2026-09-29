@@ -127,14 +127,14 @@ const PHASE_18_GROUP: ScreenGroup = {
       title: 'Pricing',
       href: '#/pricing',
       summary:
-        'Plan cards, the comparison table and top-ups (Phase 18 Track C). The demo API already serves Track C’s billing contract with sample invoices.',
+        'Plan cards with a monthly / annual toggle, the comparison table and top-up packs. Prices here are the reference amounts; the live page reads them from Stripe.',
       scene: 'market',
     },
     {
       title: 'Sign up',
       href: '#/sign-up',
       summary:
-        'Email and password or Google, with email verification and two-step verification (Phase 18 Track A). After sign-up the guided setup starts.',
+        'Email and password or Google, with a strength meter, email verification and two-step verification. In the demo nothing is created: “Create account” goes to the check-your-email screen.',
       scene: 'baker',
     },
     {
@@ -173,7 +173,7 @@ const PHASE_18_GROUP: ScreenGroup = {
       title: 'Billing',
       href: '#/settings/billing',
       summary:
-        'Plan, usage, top-ups and invoices (Phase 18 Track C), reached from the settings tabs.',
+        'Plan and renewal date, usage meters against the plan limits, top-up credits and packs, invoices and “Manage billing”. Checkout and the Stripe portal do not open from the demo.',
       scene: 'coffee',
     },
     {

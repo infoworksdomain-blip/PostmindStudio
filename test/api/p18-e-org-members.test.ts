@@ -294,7 +294,10 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
     });
 
     it('delete re-authenticates the owner first (§5.11)', async () => {
-      for (const body of [{ confirmName: 'Bakery A' }, { confirmName: 'Bakery A', password: 'x' }]) {
+      for (const body of [
+        { confirmName: 'Bakery A' },
+        { confirmName: 'Bakery A', password: 'x' },
+      ]) {
         const res = await call(orgRoute.DELETE, { method: 'DELETE', token: 'owner', body });
         expect(res.status).toBe(403);
         expect(res.json).toMatchObject({ details: { reason: 'reauth_failed' } });

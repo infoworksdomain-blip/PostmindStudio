@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <BusinessSwitcher />
             </div>
             <FeedbackButton />
-            <LanguageSwitcher />
+            <LanguageSwitcher labelClassName="hidden xl:inline" />
             <NotificationsBell />
             <ThemeToggle />
             <AccountControls />

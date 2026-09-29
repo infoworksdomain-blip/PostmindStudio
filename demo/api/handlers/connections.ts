@@ -1,6 +1,8 @@
 // Platform connections (services/connections.ts): the organisation-wide list, the OAuth start
 // (the demo "authorize URL" is a hash route back to the Connections screen with ?connected=, so
-// the real callback notice shows) and disconnect (Meta channels → the real 409).
+// the real callback notice shows) and disconnect. Phase 18: the demo runs in standalone mode, so
+// Instagram and Facebook are connected with Studio's own Facebook login (meta.connect 'studio',
+// connectedVia 'studio'): they reconnect and disconnect here like the other platforms.
 // 17.3: the daily account-status check records statusCheckedAt / statusCheckOutcome; healthy
 // accounts show "Access checked <date>", and X was refused (needs_reconnect, with a notification).
 import type { PlatformConnection } from '@/lib/client/types';
@@ -110,7 +112,7 @@ const rows: DemoConnection[] = [
     scopes: ['instagram_basic', 'instagram_content_publish', 'instagram_manage_insights'],
     state: 'active',
     connectedAt: iso(-120 * DAY),
-    connectedByUserId: 'postmind-core',
+    connectedVia: 'studio',
     statusCheckedAt: iso(-3 * HOUR),
     statusCheckOutcome: 'ok',
   }),
@@ -124,7 +126,7 @@ const rows: DemoConnection[] = [
     scopes: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
     state: 'active',
     connectedAt: iso(-120 * DAY),
-    connectedByUserId: 'postmind-core',
+    connectedVia: 'studio',
     // The last check could not reach Facebook (a transient error): recorded, state unchanged.
     statusCheckedAt: iso(-3 * HOUR),
     statusCheckOutcome: 'unreachable',
@@ -150,7 +152,24 @@ export function listConnections(): DemoConnection[] {
     .map((c) => ({ ...c, scopes: [...c.scopes] }));
 }
 
-route('GET', '/platform-connections', () => ({ data: listConnections() }));
+route('GET', '/platform-connections', () => ({
+  data: listConnections(),
+  meta: { connect: 'studio', configured: true },
+}));
+
+/** Studio's own Meta login (services/meta-connect.ts): the Pages and linked IG accounts return. */
+function completeMetaConnect(): number {
+  const fresh = { state: 'active' as const, connectedAt: new Date().toISOString() };
+  let count = 0;
+  for (const id of [CONNECTIONS.instagram.id, CONNECTIONS.facebook.id]) {
+    const i = rows.findIndex((r) => r.id === id);
+    const row = rows[i];
+    if (!row) continue;
+    rows[i] = { ...row, ...fresh, connectedVia: 'studio', connectedByUserId: DEMO_USER_ID };
+    count += 1;
+  }
+  return count;
+}
 
 const ACCOUNT: Record<OAuthPlatform, { accountId: string; name: string }> = {
   tiktok: { accountId: CONNECTIONS.tiktok.accountId, name: CONNECTIONS.tiktok.account },
@@ -190,6 +209,10 @@ function completeConnect(platform: OAuthPlatform, businessId: string): void {
 route('POST', '/platform-connections/oauth-init', ({ body }) => {
   const input = (body ?? {}) as { platform?: unknown; businessId?: unknown };
   const platform = input.platform;
+  if (platform === 'meta') {
+    const count = completeMetaConnect();
+    return { authorizeUrl: `#/connections?connected=meta&count=${count}` };
+  }
   if (typeof platform !== 'string' || !OAUTH_PLATFORMS.includes(platform as OAuthPlatform)) {
     throw new DemoHttpError(400, 'validation_error', 'Invalid request body', {
       problems: ['platform: Invalid option: expected one of "tiktok"|"youtube"|"x"|"linkedin"'],
@@ -204,13 +227,6 @@ route('DELETE', '/platform-connections/:id', ({ params }) => {
   const i = rows.findIndex((r) => r.id === params.id);
   const row = rows[i];
   if (!row) throw new DemoHttpError(404, 'not_found', 'Connection not found');
-  if (row.platform === 'instagram' || row.platform === 'facebook') {
-    throw new DemoHttpError(
-      409,
-      'conflict',
-      'Instagram and Facebook accounts are disconnected in PostMind settings, not in Studio',
-    );
-  }
   rows[i] = { ...row, state: 'revoked', accessTokenExpiresAt: null };
   return { disconnected: true };
 });

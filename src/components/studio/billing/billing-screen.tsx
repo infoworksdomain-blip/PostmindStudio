@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError, useApi } from '@/lib/client/api';
 import { useFormat, type Tone } from '@/lib/client/format';
 import { EmptyState, ErrorState, PageHeader, Section, StateBadge } from '../primitives';
+import { SettingsNav } from '../settings/settings-nav';
 import { InvoicesSection, TopUpsSection, UsageSection } from './billing-sections';
 import { IntervalToggle, PlanCards } from './plan-cards';
 import {
@@ -244,12 +245,16 @@ export function BillingScreen() {
   const res = useApi<BillingResponse>('/billing');
   const plans = useApi<PlansResponse>('/billing/plans');
   const { pending, checkout, portal } = useBillingActions({ onConflict: () => void res.mutate() });
+  // The settings tabs, like the organisation, members and audit screens.
   const header = (
-    <PageHeader
-      eyebrow={t('header.eyebrow')}
-      title={t('header.title')}
-      description={t('header.description')}
-    />
+    <>
+      <PageHeader
+        eyebrow={t('header.eyebrow')}
+        title={t('header.title')}
+        description={t('header.description')}
+      />
+      <SettingsNav />
+    </>
   );
 
   if (res.error instanceof ApiError && res.error.status === 501)

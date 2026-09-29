@@ -76,7 +76,8 @@ export function OrganisationSwitcher({ me }: { me: Me }) {
           className="max-w-48 gap-1.5"
         >
           <Building aria-hidden className="text-muted-foreground" />
-          <span className="truncate">{me.organisation.name}</span>
+          {/* The header is full below xl (business picker, language, bell, theme, user menu). */}
+          <span className="hidden truncate xl:inline">{me.organisation.name}</span>
           <ChevronsUpDown aria-hidden className="size-3.5 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>

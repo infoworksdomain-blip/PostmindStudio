@@ -237,7 +237,7 @@ export const WHATS_NEW: WhatsNewGroup[] = [
     index: '05',
     title: 'Phase 18 — Studio as its own product',
     intro:
-      'Studio no longer needs PostMind Core: a public site, organisations with members and roles, an audit log, plans, and a staff console. Sign-up (Track A) and pricing and billing (Track C) arrive alongside.',
+      'Studio no longer needs PostMind Core: a public site, its own sign-up and sign-in, organisations with members and roles, an audit log, Stripe plans and billing, and a staff console.',
     scene: 'storefront',
     items: [
       {

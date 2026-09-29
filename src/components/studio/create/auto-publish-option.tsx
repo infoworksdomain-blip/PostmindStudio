@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
-import type { PlatformConnection } from '@/lib/client/types';
+import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { AUTO_PUBLISH_CONNECTION, connectionsFor } from '../automation/automation';
 import { isMetaPlatform } from '../connections/platforms';
 import { Field, NativeSelect } from '../review/field';
@@ -20,6 +20,7 @@ export function AutoPublishOption({
   onAccount,
   connections,
   businessId,
+  metaConnect,
 }: {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
@@ -28,6 +29,8 @@ export function AutoPublishOption({
   onAccount: (platform: string, connectionId: string) => void;
   connections: PlatformConnection[] | undefined;
   businessId: string | null;
+  /** GET /platform-connections `meta.connect`: 'core' = Instagram / Facebook live in PostMind. */
+  metaConnect?: MetaConnectInfo['connect'];
 }) {
   const t = useTranslations('create.autoPublish');
   const tc = useTranslations('connections');
@@ -60,6 +63,7 @@ export function AutoPublishOption({
                 label={t('account', { platform: label })}
                 hint={
                   options.length === 0 &&
+                  metaConnect === 'core' &&
                   isMetaPlatform(AUTO_PUBLISH_CONNECTION[platform] ?? '') ? (
                     <>
                       {t('noAccount')} {tc('meta.guidance')}
