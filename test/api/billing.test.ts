@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
+import * as adminUsageRoute from '../../src/app/api/studio/admin/organisations/[id]/usage/route';
 import * as adminSubsRoute from '../../src/app/api/studio/admin/billing/subscriptions/route';
 import * as entitlementsRoute from '../../src/app/api/studio/admin/organisations/[id]/entitlements/route';
 import * as webhookRoute from '../../src/app/api/billing/stripe/webhook/route';
@@ -46,7 +47,11 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       owner: tenant(org, BILLING_CAPS),
       member: tenant(org, [...ALL_CAPABILITIES, StudioCapability.BillingRead], 'member-1'),
       creator: tenant(org, ALL_CAPABILITIES, 'creator-1'),
-      staff: tenant('platform-staff', [StudioCapability.AdminBilling], 'staff-1'),
+      staff: tenant(
+        'platform-staff',
+        [StudioCapability.AdminBilling, StudioCapability.AdminProviders],
+        'staff-1',
+      ),
       stranger: tenant(other, BILLING_CAPS, 'stranger-1'),
     };
     api = installApi(db, tokens);
@@ -396,6 +401,20 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
         body: { tier: 'PLUS', reason: 'Goodwill', expiresAt: '2020-01-01T00:00:00Z' },
       });
       expect(past.status).toBe(400);
+    });
+  });
+
+  it('admin usage reads the stored tier (org_entitlements) before the last generation', async () => {
+    await entitle(org, 'PLUS', 'full');
+    const res = await call(adminUsageRoute.GET, {
+      token: 'staff',
+      path: `/api/studio/admin/organisations/${org}/usage`,
+      params: { id: org },
+    });
+    expect(res.status).toBe(200);
+    expect((res.json.usage as { tier: unknown }).tier).toEqual({
+      value: 'PLUS',
+      source: 'entitlements',
     });
   });
 
