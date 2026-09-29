@@ -37,7 +37,12 @@ async function signIn(page: Page): Promise<void> {
   await page.goto('/sign-in');
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: /sign in/i }).click();
+  // Wait for the session to be set (the form navigates away on success); navigating straight on
+  // would cancel the sign-in request.
+  await Promise.all([
+    page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 30_000 }),
+    page.getByRole('button', { name: /sign in/i }).click(),
+  ]);
 }
 
 test.skip(!hasDb, 'DATABASE_URL is not set: the happy path needs the app’s database');
@@ -80,6 +85,11 @@ test('a new visitor goes from the landing page to their first project', async ({
   await expect(page.getByRole('heading', { name: 'Make your first video' })).toBeVisible();
   await page.getByLabel('Anything to mention? (optional)').fill('Family bakery, E2E run');
   await page.getByRole('button', { name: 'Make my intro video' }).click();
+
+  // A new organisation has no plan yet, so generating stops at the billing gate (402
+  // plan_required) and the upgrade dialog opens; the project itself already exists.
+  await expect(page.getByRole('dialog', { name: 'Choose a plan to start creating' })).toBeVisible();
+  await page.getByRole('button', { name: 'Not now' }).click();
 
   // The first project exists and opens.
   const open = page.getByRole('link', { name: /Open your video/ });

@@ -18,6 +18,8 @@ export default defineConfig({
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL,
+    // The spec asserts en-GB copy; the app picks the language from Accept-Language (Phase 16).
+    locale: 'en-GB',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

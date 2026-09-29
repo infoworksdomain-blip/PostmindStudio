@@ -262,6 +262,14 @@ jobs:
       # next start runs with NODE_ENV=production, where sign-up stays closed while the terms or
       # privacy text is a placeholder (src/lib/legal/readiness.ts). CI reads stand-in texts instead.
       STUDIO_LEGAL_CONTENT_DIR: /tmp/e2e-legal
+      # Loaded with the shared API deps on every route (storage, cost). Placeholders: the happy path
+      # uploads nothing, and generation stops at the billing gate before any provider call.
+      AWS_REGION: eu-west-2
+      S3_BUCKET_ASSETS: ci-assets
+      S3_BUCKET_RENDERS: ci-renders
+      S3_BUCKET_THUMBNAILS: ci-thumbnails
+      S3_BUCKET_LIBRARY: ci-library
+      STUDIO_USD_TO_GBP_RATE: '0.79'
     steps:
       - uses: actions/checkout@v4
       - name: Stand-in legal texts (CI only)

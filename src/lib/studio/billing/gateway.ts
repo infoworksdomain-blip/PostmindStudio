@@ -235,6 +235,8 @@ function isMissing(err: unknown): boolean {
 
 const SUBSCRIPTION_EXPAND = ['items.data.price.product'];
 const LIST_PAGE = 100;
+/** prices.list for the public pricing page (see listPrices). */
+const PRICES_TIMEOUT_MS = 4_000;
 
 export function createStripeGateway(stripe: Stripe): StripeGateway {
   return {
@@ -309,12 +311,19 @@ export function createStripeGateway(stripe: Stripe): StripeGateway {
       call('invoices.retrieve', async () => toInvoiceState(await stripe.invoices.retrieve(id))),
     listPrices: (lookupKeys) =>
       call('prices.list', async () => {
-        const page = await stripe.prices.list({
-          lookup_keys: [...lookupKeys],
-          active: true,
-          limit: LIST_PAGE,
-          expand: ['data.product'],
-        });
+        // The public /pricing page renders from this: a short timeout and no retries, so a slow or
+        // unreachable Stripe shows the page without amounts (retried a minute later) instead of
+        // holding it for the client default (20 s x 3 attempts). Per-request RequestOptions,
+        // stripe-node 22.6.2 lib.d.ts (timeout, maxNetworkRetries).
+        const page = await stripe.prices.list(
+          {
+            lookup_keys: [...lookupKeys],
+            active: true,
+            limit: LIST_PAGE,
+            expand: ['data.product'],
+          },
+          { timeout: PRICES_TIMEOUT_MS, maxNetworkRetries: 0 },
+        );
         return page.data.map(toPriceState);
       }),
     paymentMethodFingerprint: (paymentMethodId) =>
