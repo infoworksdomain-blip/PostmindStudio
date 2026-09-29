@@ -29,7 +29,8 @@ type Db = PrismaClient;
 type Tx = Prisma.TransactionClient;
 
 export const UPLOAD_CONTENT_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'] as const;
-const EXTENSION: Record<(typeof UPLOAD_CONTENT_TYPES)[number], string> = {
+/** File extension per accepted upload type (also the corpus scan's accepted formats). */
+export const UPLOAD_VIDEO_EXTENSION: Record<(typeof UPLOAD_CONTENT_TYPES)[number], string> = {
   'video/mp4': 'mp4',
   'video/quicktime': 'mov',
   'video/webm': 'webm',
@@ -131,7 +132,7 @@ export async function createUpload(
   const id = randomUUID();
   const key = brand
     ? `orgs/${tenant.organisationId}/brand/${id}/file.${BRAND_EXTENSION[input.contentType] ?? 'bin'}`
-    : `orgs/${tenant.organisationId}/uploads/${id}/source.${EXTENSION[input.contentType as keyof typeof EXTENSION]}`;
+    : `orgs/${tenant.organisationId}/uploads/${id}/source.${UPLOAD_VIDEO_EXTENSION[input.contentType as keyof typeof UPLOAD_VIDEO_EXTENSION]}`;
   const expiresAt = new Date(deps.now() + PUT_URL_TTL_SEC * 1000);
   const putUrl = await deps.uploads.signer.presignPut({
     bucket: deps.uploads.bucket,

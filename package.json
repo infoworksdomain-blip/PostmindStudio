@@ -42,6 +42,9 @@
     "worker": "dotenv -e .env.local -- tsx scripts/worker.ts",
     "db:local": "tsx scripts/dev/pglite-server.ts 55432",
     "contract:core": "tsx scripts/core/contract.ts",
+    "corpus:scan": "tsx scripts/corpus/scan-folder.ts",
+    "corpus:manifest": "tsx scripts/corpus/manifest-from-folder.ts",
+    "corpus:rclone-config": "tsx scripts/corpus/rclone-config.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
