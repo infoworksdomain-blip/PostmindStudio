@@ -67,3 +67,7 @@ demo/dist/
 # Deployment: single VPS - filled-in env files live on the server (/etc/postmind-studio), never here
 deploy/vps/*.env
 deploy/vps/secrets/
+
+# Phase 18 E2E (Playwright)
+/playwright-report/
+/test-results/

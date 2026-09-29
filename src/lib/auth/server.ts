@@ -2,6 +2,7 @@ import { Redis } from 'ioredis';
 import { auditLogDurable } from '../audit';
 import { authMailerFromEnv } from '../email/auth-mailer';
 import { requireEnv } from '../env';
+import { signupsOpen } from '../legal/readiness';
 import { logger } from '../logger';
 import { prisma } from '../prisma';
 import { entitlementsReaderFromEnv } from '../studio/billing/entitlements-reader';
@@ -45,7 +46,9 @@ async function build(): Promise<StudioAuth> {
     entitlements: await entitlementsReaderFromEnv(),
     audit: auditLogDurable,
     ...(googleId && googleSecret && { google: { clientId: googleId, clientSecret: googleSecret } }),
-    signupsEnabled: process.env.STUDIO_SIGNUPS_ENABLED?.trim() !== 'false',
+    // STUDIO_SIGNUPS_ENABLED plus the Track E legal gate (closed in production while the terms or
+    // privacy text is still the placeholder; src/lib/legal/readiness.ts).
+    signupsEnabled: (await signupsOpen()).open,
     breachCheck: process.env.STUDIO_HIBP_CHECK?.trim() !== 'false',
     trustedProxies: list(process.env.STUDIO_AUTH_TRUSTED_PROXIES),
     impersonationEnabled: process.env.STUDIO_IMPERSONATION_ENABLED?.trim() === 'true',

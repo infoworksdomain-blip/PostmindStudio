@@ -9,6 +9,7 @@ import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
 import { applyBetaPlan } from '../services/beta';
 import { billingGate } from '../billing/access-gate';
+import { assertImpersonationAllowsWrite } from '../admin/impersonation';
 import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
 import { guardBusinessIds } from './business-guard';
 
@@ -94,6 +95,8 @@ export function withStudioRoute(
         deps.logger,
       );
       requireCapability(tenant, capability);
+      // Phase 18 §2.5: impersonation sessions are read-only (defence in depth; Track A too).
+      assertImpersonationAllowsWrite(tenant, req.method);
       for (const feature of [options.feature ?? []].flat())
         await featureGateFor(deps.db).assertEnabled(feature, tenant.organisationId);
       await deps.rateLimiter?.check({

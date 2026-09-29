@@ -208,6 +208,78 @@ jobs:
             echo "--- $c"; docker logs --tail 80 "$c" || true
           done
 
+  e2e:
+    # Phase 18 Track E — Playwright happy path against the real app in standalone mode:
+    # landing → pricing → sign-up → onboarding → first project (e2e/happy-path.spec.ts). It needs
+    # Track A's sign-up / sign-in screens and Track C's pricing page; until both are on the branch
+    # the job skips with a notice (the same pattern as the overlay pixel diff), then runs itself.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: postmind
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U studio -d postmind"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio
+      REDIS_URL: redis://localhost:6379/3
+      STUDIO_MODE: standalone
+      APP_URL: http://127.0.0.1:3102
+      BETTER_AUTH_URL: http://127.0.0.1:3102
+      E2E_BASE_URL: http://127.0.0.1:3102
+      E2E_START: '1'
+      # CI-only placeholders (not secrets): Stripe and Resend are never called on this path;
+      # sign-up email is replaced by marking the user verified in the database.
+      BETTER_AUTH_SECRET: ci-e2e-placeholder-secret-0123456789abcdef
+      STUDIO_UNSUBSCRIBE_SECRET: ci-e2e-placeholder-unsubscribe-0123456789ab
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+      STUDIO_EMAIL_PROVIDER: none
+    steps:
+      - uses: actions/checkout@v4
+      - name: Track A and C screens present?
+        id: ready
+        run: |
+          if [ -f 'src/app/(auth)/sign-up/page.tsx' ] && [ -f 'src/app/(marketing)/pricing/page.tsx' ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=E2E happy path skipped::Needs Track A sign-up and Track C pricing pages on this branch."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.ready.outputs.present == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+        if: steps.ready.outputs.present == 'true'
+      - run: npx prisma migrate deploy && npx prisma db seed
+        if: steps.ready.outputs.present == 'true'
+      - run: npx playwright install --with-deps chromium
+        if: steps.ready.outputs.present == 'true'
+      - run: npm run build
+        if: steps.ready.outputs.present == 'true'
+      - run: npx playwright test
+        if: steps.ready.outputs.present == 'true'
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.ready.outputs.present == 'true'
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+
   vps-config:
     # Deployment: single VPS — shell scripts (shellcheck is on the ubuntu runners; not available
     # on the build machine), both compose files resolve with the committed examples, Caddy accepts

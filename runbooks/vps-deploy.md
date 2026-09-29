@@ -4,7 +4,7 @@
 | --- | --- |
 | **What** | PostMind Studio on ONE Hetzner Cloud server in Germany, with Docker Compose: Caddy (HTTPS), web, one worker for every queue, Postgres 17 + pgvector, Valkey, backups to Cloudflare R2. Staging can run on the same server when you need it. |
 | **Check** | `https://<domain>/api/health/ready` = 200; `bash scripts/vps/healthcheck.sh production` says OK; the nightly backup timer succeeds. |
-| **Who** | The operator (Hetzner and Cloudflare consoles, the server), DevOps (KMS and R2 keys), the Core team (Core URLs and tokens). |
+| **Who** | The operator (Hetzner and Cloudflare consoles, the server, legal text, Stripe, Resend, Google and Meta apps), DevOps (KMS and R2 keys). The Core team only when `STUDIO_MODE=core` (Core URLs and tokens). |
 
 Render (`render.yaml`, [render-deploy.md](render-deploy.md)) stays in the repo as an alternative. It
 was dropped as the primary path because of its monthly cost.
@@ -217,7 +217,25 @@ Write every secret in **single quotes** (`KEY='value'`): Docker Compose treats s
 literally and would otherwise expand a `$` inside a secret. Generate the random ones on the server:
 `openssl rand -hex 32`. Keep a copy of every secret in the password manager.
 
-`/etc/postmind-studio/production.env` (from `deploy/vps/.env.example`):
+`/etc/postmind-studio/production.env` (from `deploy/vps/.env.example`). Phase 18: Studio runs
+**standalone by default** (`STUDIO_MODE=standalone`: its own sign-in, Stripe billing and Resend
+email). Every `POSTMIND_*` key and `STUDIO_PLATFORM_ORG_IDS` below is needed **only in
+`STUDIO_MODE=core`**; `deploy.sh` checks the right set for the mode (`requiredEnvForModes` in
+`src/lib/env.ts`).
+
+| Key (standalone, Phase 18) | Required | Where it comes from |
+| --- | --- | --- |
+| `STUDIO_MODE` | no | Empty or `standalone`; `core` only when Studio runs inside PostMind Core |
+| `BETTER_AUTH_SECRET` | yes | `openssl rand -hex 32`; rotation in [auth.md](auth.md) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | yes | Stripe dashboard (runbooks/billing-stripe.md, Track C) |
+| `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STUDIO_EMAIL_FROM`, `STUDIO_UNSUBSCRIBE_SECRET` | yes | Resend dashboard (runbooks/email-resend.md, Track B); the unsubscribe secret is `openssl rand -hex 32` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | no | Google Cloud OAuth client; unset hides "Continue with Google" |
+| `STUDIO_SIGNUPS_ENABLED` | no | `true` (default) opens public sign-up; `false` = invite-only. Production sign-up stays closed while the legal placeholders are in place (below) |
+| `STUDIO_IMPERSONATION_ENABLED`, `STUDIO_IMPERSONATION_WRITE` | no | Keep `false` ([auth.md](auth.md) "Impersonation") |
+| `STUDIO_SALES_EMAIL`, `STUDIO_SUPPORT_EMAIL`, `STUDIO_LEGAL_ENTITY_NAME` | no, but set them | Shown on the public pages (the footer shows the legal entity name) |
+
+| Key | Required | Where it comes from |
+| --- | --- | --- |
 
 | Key | Required | Where it comes from |
 | --- | --- | --- |
@@ -226,10 +244,10 @@ literally and would otherwise expand a `$` inside a secret. Generate the random 
 | `ACME_EMAIL` | yes | An ops mailbox for Let's Encrypt notices (production file only) |
 | `POSTGRES_PASSWORD` | yes | `openssl rand -hex 32` (letters and digits only) |
 | `METRICS_TOKEN` | yes | `openssl rand -hex 32` |
-| `STUDIO_INTERNAL_SERVICE_TOKEN` | yes | `openssl rand -hex 32`; give it to the Core team (Core sends it on `/api/studio/internal/**`) |
-| `POSTMIND_CORE_URL`, `POSTMIND_JWKS_URL`, `POSTMIND_JWT_ISSUER`, `POSTMIND_JWT_AUDIENCE`, `POSTMIND_AUDIT_URL` | yes | Core team |
-| `POSTMIND_SERVICE_TOKEN` | yes | Issued by Core to Studio |
-| `STUDIO_PLATFORM_ORG_IDS` | yes | PostMind staff organisation ids |
+| `STUDIO_INTERNAL_SERVICE_TOKEN` | yes | `openssl rand -hex 32`. In core mode give it to the Core team (Core sends it on `/api/studio/internal/**`); standalone keeps it private |
+| `POSTMIND_CORE_URL`, `POSTMIND_JWKS_URL`, `POSTMIND_JWT_ISSUER`, `POSTMIND_JWT_AUDIENCE`, `POSTMIND_AUDIT_URL` | core mode only | Core team |
+| `POSTMIND_SERVICE_TOKEN` | core mode only | Issued by Core to Studio |
+| `STUDIO_PLATFORM_ORG_IDS` | core mode only | PostMind staff organisation ids (standalone: staff are users with the `staff` / `superadmin` role and 2FA, [auth.md](auth.md)) |
 | `AWS_REGION`, `KMS_KEY_ID`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | yes | DevOps: the KMS key and an IAM user limited to it (`kms:Encrypt`, `kms:Decrypt`, `kms:GenerateDataKey`) |
 | `STORAGE_PROVIDER`, `R2_JURISDICTION` | yes | Keep `r2` and `eu` |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | yes | Cloudflare dashboard; the app's R2 token ([r2-setup.md](r2-setup.md) step 2) |
@@ -259,6 +277,22 @@ the backup job ever see it):
 | `PG_BACKUP_CIPHER_PASS` | `openssl rand -hex 32` — **store it in the password manager**: without it no backup can be restored |
 
 Also: add the domain's origin to the assets bucket's CORS rule ([r2-setup.md](r2-setup.md) step 3).
+
+### Legal documents (before public launch)
+
+The public pages `/legal/{terms,privacy,cookies,acceptable-use,dpa,subprocessors}` render
+`content/legal/<locale>/<doc>.md` from the image. The repository ships **placeholders** marked
+`OPERATOR MUST REPLACE`. Replace all six English files (`content/legal/en-GB/`) with your own text
+on the branch you deploy from (translations are optional: `content/legal/fr/terms.md` and so on;
+missing ones fall back to English with a note), then rebuild the image. Check with:
+
+```bash
+npx tsx scripts/legal/check-ready.ts   # lists MISSING / PLACEHOLDER; exit 1 while terms or privacy block sign-up
+```
+
+While terms or privacy is a placeholder, **production public sign-up stays closed** and the Admin
+Centre shows a warning; the other four only warn. `STUDIO_LEGAL_CONTENT_DIR` points the app at another
+directory if you mount the files instead of baking them in.
 
 ## 7. First deploy
 
@@ -292,7 +326,10 @@ Also: add the domain's origin to the assets bucket's CORS rule ([r2-setup.md](r2
    Then a test generation (spends real provider money, about one short clip):
    `bash scripts/vps/compose.sh production run --rm ops node --import tsx scripts/run-test-project.ts --queue`,
    the R2 smoke in [r2-setup.md](r2-setup.md) step 6, and one upload from the browser.
-5. Give Core the internal URL (`https://<domain>/api/studio/internal/…`) and
+5. Standalone: create the first super-admin (`scripts/auth/create-superadmin.ts --email <addr>`,
+   [auth.md](auth.md)), sign in, turn on 2FA, open `/admin` and clear the legal-readiness warning.
+   Then open `/` in a private window: the landing page, `/pricing` and `/sign-up` should load.
+6. Core mode only: give Core the internal URL (`https://<domain>/api/studio/internal/…`) and
    `STUDIO_INTERNAL_SERVICE_TOKEN`, and put Core's egress IPs in `STUDIO_INTERNAL_ALLOWED_CIDRS`.
 
 ## 8. Updates and rollback

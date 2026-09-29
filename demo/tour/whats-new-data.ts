@@ -1,7 +1,8 @@
 import { P17_PROJECTS, PROJECTS } from '../api/ids';
 import type { SceneKind } from '../media';
 
-// #/tour/whats-new — every feature added or changed by Phase 16 (languages + RTL), Phase 17
+// #/tour/whats-new — every feature added or changed by Phase 16 (languages + RTL), Phase 18
+// (standalone SaaS surfaces), Phase 17
 // (production hardening, 17.1–17.9), Cloudflare R2 storage and the single-server deployment, each
 // with a one-line explanation and deep links to the screen or state that shows it. English only,
 // like the other tour pages (the Studio screens behind the links follow the language switcher).
@@ -228,6 +229,63 @@ export const WHATS_NEW: WhatsNewGroup[] = [
         title: 'What people still need to do',
         line: 'Rent the server, run the setup script and fill in the secrets (runbooks/vps-deploy.md); add the PagerDuty key and Slack webhook.',
         see: [{ href: '#/tour/not-built', label: 'Not built: Hetzner server, alert routing' }],
+      },
+    ],
+  },
+  {
+    id: 'phase-18',
+    index: '05',
+    title: 'Phase 18 — Studio as its own product',
+    intro:
+      'Studio no longer needs PostMind Core: a public site, organisations with members and roles, an audit log, plans, and a staff console. Sign-up (Track A) and pricing and billing (Track C) arrive alongside.',
+    scene: 'storefront',
+    items: [
+      {
+        ref: '18.E1',
+        title: 'Landing page',
+        line: 'The public home page tells the story for small businesses and links to sign-up and pricing.',
+        see: [{ href: '#/landing', label: 'Landing page' }],
+      },
+      {
+        ref: '18.E2',
+        title: 'Legal pages and the launch gate',
+        line: 'Six legal documents from the operator’s Markdown; while terms or privacy is a placeholder, production sign-up stays closed and staff see a warning.',
+        see: [
+          { href: '#/legal/privacy', label: 'Privacy policy (placeholder)' },
+          { href: '#/admin', label: 'Admin warning' },
+        ],
+      },
+      {
+        ref: '18.E3',
+        title: 'Guided setup from zero',
+        line: 'Create the organisation, add the first business, then brand kit, connect and first video.',
+        see: [{ href: '#/welcome?new=organisation', label: 'Create an organisation' }],
+      },
+      {
+        ref: '18.E4',
+        title: 'Organisation, members and audit log',
+        line: 'Rename, transfer ownership or delete the organisation; invite members with roles and a seat meter; see who changed what.',
+        see: [
+          { href: '#/settings/organisation', label: 'Organisation settings' },
+          { href: '#/settings/members', label: 'Members' },
+          { href: '#/settings/audit', label: 'Audit log' },
+        ],
+      },
+      {
+        ref: '18.E5',
+        title: 'Staff console for the business',
+        line: 'Search organisations and users, ban, sign out or reset 2FA with a reason, read subscriptions; impersonation is off by default.',
+        see: [
+          { href: '#/admin?tab=organisations', label: 'Organisations' },
+          { href: '#/admin?tab=users', label: 'Users' },
+          { href: '#/admin?tab=subscriptions', label: 'Subscriptions' },
+        ],
+      },
+      {
+        ref: '18.E6',
+        title: 'Organisation switcher, user menu and banners',
+        line: 'Switch organisation and sign out from the header; banners show a trial, a failed payment, read-only access or staff view.',
+        see: [{ href: '#/projects', label: 'Any screen: the header and the trial banner' }],
       },
     ],
   },

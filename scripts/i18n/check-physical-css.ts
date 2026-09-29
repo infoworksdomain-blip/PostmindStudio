@@ -9,13 +9,16 @@
 // overlay timeline, which keeps time running left to right in every locale) is exempted by a
 // `i18n-physical-ok` comment on the same line.
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findPhysicalClasses } from '../../src/lib/i18n/physical-css';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const target = join(root, 'src', 'components', 'studio');
+// Phase 18: the public marketing pages and the auth screens are held to the same rule.
+const targets = ['studio', 'marketing', 'auth']
+  .map((dir) => join(root, 'src', 'components', dir))
+  .filter((dir) => existsSync(dir));
 const fail = process.argv.includes('--fail');
 
 function files(dir: string): string[] {
@@ -28,7 +31,7 @@ function files(dir: string): string[] {
 
 let total = 0;
 const perFile: Array<[string, number]> = [];
-for (const file of files(target)) {
+for (const file of targets.flatMap(files)) {
   const source = readFileSync(file, 'utf8');
   const lines = source.split('\n');
   const hits = findPhysicalClasses(source).filter(
@@ -46,6 +49,6 @@ for (const file of files(target)) {
 process.stdout.write(
   total
     ? `\n${total} physical class(es) in ${perFile.length} file(s)${fail ? '' : ' (informational)'}\n`
-    : 'no physical left/right classes in src/components/studio\n',
+    : 'no physical left/right classes in src/components/{studio,marketing,auth}\n',
 );
 process.exit(fail && total > 0 ? 1 : 0);

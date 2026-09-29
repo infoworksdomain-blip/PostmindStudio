@@ -10,6 +10,7 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
 | [vps-deploy.md](vps-deploy.md) | **Primary deployment:** one Hetzner server with Docker Compose — server size (2 GB default) and resizing, firewall, Cloudflare DNS, bootstrap, env files, deploy/rollback, staging on the same server, health check, pgBackRest PITR to R2, when to split | `/api/health/ready` 200 |
+| [auth.md](auth.md) | **Phase 18 standalone:** sign-in secrets, first super-admin, organisations and roles, member rules, support actions (sign out everywhere, 2FA reset, ban), impersonation (off by default), legal readiness before opening sign-up | Staff console with 2FA |
 | [render-deploy.md](render-deploy.md) | Deployment alternative: Render — one Blueprint (`render.yaml`) for staging + production (dropped as primary for cost) | — |
 | [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning, daily object-storage backup copy with 30-day age-out (17.5), Redis (playbook E-12) | — |
 | [r2-setup.md](r2-setup.md) | Cloudflare R2 as the object store (`STORAGE_PROVIDER=r2`): EU buckets, scoped token, CORS, lifecycle, env | — |

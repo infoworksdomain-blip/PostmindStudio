@@ -52,6 +52,8 @@ async function js() {
     platform: 'browser',
     target: ['es2020'],
     jsx: 'automatic',
+    // Phase 18: the legal pages render content/legal/en-GB/*.md (text) in the demo.
+    loader: { '.md': 'text' },
     tsconfig: join(root, 'tsconfig.json'),
     alias: {
       'next/link': join(root, 'demo', 'shims', 'next-link.tsx'),

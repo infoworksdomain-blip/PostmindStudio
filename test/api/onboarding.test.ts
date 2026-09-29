@@ -51,11 +51,12 @@ describe.skipIf(!hasDb)('onboarding + brand-kit palette extraction', { timeout: 
   const patch = (token: string, body: unknown) =>
     call(onboardingRoute.PATCH, { method: 'PATCH', token, body });
 
-  it('a new user of an empty organisation starts at connect and is pointed at /welcome', async () => {
+  it('a new user of an empty organisation starts at the brand kit and is pointed at /welcome', async () => {
     const res = await get('alice');
     expect(res.status).toBe(200);
+    // Phase 18: Brand kit → Connect → First video → Celebrate (organisation and business come first).
     expect(res.json.onboarding).toMatchObject({
-      step: 'connect',
+      step: 'brand_kit',
       completed: [],
       firstVideoProjectId: null,
       suggested: true,
@@ -72,10 +73,10 @@ describe.skipIf(!hasDb)('onboarding + brand-kit palette extraction', { timeout: 
     expect(res.status).toBe(200);
     expect(res.json.onboarding).toMatchObject({
       step: 'first_video',
-      completed: ['connect', 'brand_kit'],
+      completed: ['brand_kit', 'connect'],
       suggested: true,
     });
-    expect((await get('bob')).json.onboarding).toMatchObject({ step: 'connect', completed: [] });
+    expect((await get('bob')).json.onboarding).toMatchObject({ step: 'brand_kit', completed: [] });
   });
 
   it('validates steps and project ids (tenant-scoped)', async () => {
@@ -94,7 +95,7 @@ describe.skipIf(!hasDb)('onboarding + brand-kit palette extraction', { timeout: 
       (
         await patch('alice', {
           step: 'done',
-          completed: ['connect', 'brand_kit', 'first_video', 'celebrate'],
+          completed: ['brand_kit', 'connect', 'first_video', 'celebrate'],
         })
       ).json.onboarding,
     ).toMatchObject({ step: 'done', suggested: false });

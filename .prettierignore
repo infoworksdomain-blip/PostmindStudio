@@ -7,3 +7,5 @@ prisma/migrations
 *.md
 # Vendored upstream schema (byte-identical; sha256 pinned in scripts/render/validate-blueprint.ts)
 ops/render/render.yaml.schema.json
+/playwright-report/
+/test-results/
