@@ -35,6 +35,10 @@ set_key "$env" POSTMIND_SERVICE_TOKEN "$(rand)"
 set_key "$env" STUDIO_PLATFORM_ORG_IDS ci-platform
 set_key "$env" AWS_REGION eu-central-1
 set_key "$env" R2_ACCOUNT_ID ci
+# Placeholders: the worker validates the storage config at start-up (fails fast when absent);
+# the smoke never talks to R2.
+set_key "$env" R2_ACCESS_KEY_ID "ci-$(rand)"
+set_key "$env" R2_SECRET_ACCESS_KEY "$(rand)"
 for bucket in S3_BUCKET_ASSETS S3_BUCKET_RENDERS S3_BUCKET_THUMBNAILS S3_BUCKET_LIBRARY S3_BACKUP_BUCKET; do
   set_key "$env" "$bucket" "ci-$(printf '%s' "$bucket" | tr 'A-Z_' 'a-z-')"
 done
