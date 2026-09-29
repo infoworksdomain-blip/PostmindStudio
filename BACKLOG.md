@@ -397,4 +397,14 @@ Plan: `plans/phase-18.md`. Operator decisions (2026-09-29): standalone product; 
 - [ ] **18.B** Track B — email: Resend sender, outbox + retries, React Email templates in 11 locales, webhook suppression, one-click unsubscribe.
 - [ ] **18.C** Track C — billing, plans and entitlements: Stripe catalogue / checkout / portal / webhook, entitlements and access gate, top-ups, `/pricing`, `/settings/billing`, upgrade dialog, admin overrides.
 - [ ] **18.D** Track D — standalone replacements: local businesses, local organisation directory, Studio's own Meta connect (Facebook Login for Business) with deauthorise / data-deletion callbacks, Core-only adapters off.
-- [ ] **18.E** Track E — product surfaces and admin: landing, legal, onboarding, organisation / members / audit settings, admin organisations / users / subscriptions, shell switcher and banners, demo, CLAUDE.md and runbooks.
+- [x] **18.E** Track E — product surfaces and admin: landing, legal, onboarding, organisation / members / audit settings, admin organisations / users / subscriptions, shell switcher and banners, demo, CLAUDE.md and runbooks. Items:
+  - [x] **18.E1** Public landing page at `/` (signed-in visitors → `/projects`; core mode → app).
+  - [x] **18.E2** Legal pages from `content/legal/<locale>/*.md` placeholders + legal-readiness gate (admin warning; production sign-up closed while terms/privacy are placeholders; `scripts/legal/check-ready.ts`).
+  - [x] **18.E3** Onboarding: organisation → first business → brand kit → connect → first video.
+  - [x] **18.E4** `/settings/organisation`, `/settings/members`, `/settings/audit` + `api/studio/{org,members,audit,me}`.
+  - [x] **18.E5** Admin Organisations / Users / Subscriptions tabs; impersonation policy (off by default, read-only when on).
+  - [x] **18.E6** AppShell organisation switcher, user menu with sign-out, account banners (trial, past due, read-only, no plan, staff view).
+  - [x] **18.E7** Demo handlers `p18-*`, tour group and What's new entry.
+  - [x] **18.E8** Docs: CLAUDE.md standalone mode, runbooks/auth.md, vps-deploy.md.
+  - [x] **18.E9** All strings in 11 locales, ar and zh-Hans render tests.
+  - [ ] **18.E10** Playwright happy path runs green in CI — written and wired (CI job `e2e`); runs once Track A sign-up and Track C pricing are merged.

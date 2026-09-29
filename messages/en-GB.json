@@ -2962,7 +2962,7 @@
     "wizard": {
       "eyebrow": "Welcome",
       "title": "Let’s make your first video",
-      "description": "Four quick steps: connect an account, set up your brand, make a video, go live.",
+      "description": "A few quick steps: your organisation and business, your brand, a connected account, then your first video.",
       "skipSetup": "Skip setup",
       "loading": "Loading setup",
       "skipped": {
@@ -3657,7 +3657,9 @@
       "usedOf": "{used} of {limit}",
       "unlimited": "{used} used · no limit",
       "full": "Every seat on your plan is in use.",
-      "upgrade": "Upgrade for more seats"
+      "upgrade": "Upgrade for more seats",
+      "limitTitle": "All your seats are in use",
+      "limitBody": "Your plan’s seat limit is reached. Upgrade to invite more people, or remove someone first."
     },
     "invite": {
       "email": "Email address",

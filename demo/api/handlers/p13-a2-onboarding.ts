@@ -4,7 +4,8 @@
 import { DemoHttpError, route } from '../registry';
 import { allProjects } from './projects-store';
 
-const STEPS = ['connect', 'brand_kit', 'first_video', 'celebrate'] as const;
+// Phase 18: Brand kit before Connect (after the organisation and first-business set-up steps).
+const STEPS = ['brand_kit', 'connect', 'first_video', 'celebrate'] as const;
 type Step = (typeof STEPS)[number];
 type AnyStep = Step | 'done';
 
@@ -17,7 +18,7 @@ interface State {
 }
 
 let state: State = {
-  step: 'connect',
+  step: 'brand_kit',
   completed: [],
   firstVideoProjectId: null,
   dismissedAt: null,

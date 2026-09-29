@@ -2962,7 +2962,7 @@
     "wizard": {
       "eyebrow": "Boas-vindas",
       "title": "Vamos criar seu primeiro vídeo",
-      "description": "Quatro passos rápidos: conecte uma conta, configure sua marca, crie um vídeo e publique.",
+      "description": "Alguns passos rápidos: sua organização e seu negócio, sua marca, uma conta conectada e, por fim, seu primeiro vídeo.",
       "skipSetup": "Pular configuração",
       "loading": "Carregando a configuração",
       "skipped": {
@@ -3657,7 +3657,9 @@
       "usedOf": "{used} de {limit}",
       "unlimited": "{used} usadas · sem limite",
       "full": "Todas as vagas do seu plano estão em uso.",
-      "upgrade": "Faça upgrade para mais vagas"
+      "upgrade": "Faça upgrade para mais vagas",
+      "limitTitle": "Todas as vagas estão em uso",
+      "limitBody": "Você atingiu o limite de vagas do seu plano. Faça upgrade para convidar mais pessoas ou remova alguém primeiro."
     },
     "invite": {
       "email": "Endereço de e-mail",

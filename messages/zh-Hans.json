@@ -2962,7 +2962,7 @@
     "wizard": {
       "eyebrow": "欢迎",
       "title": "一起制作你的第一个视频",
-      "description": "只需四步：连接账号、设置品牌、制作视频、发布上线。",
+      "description": "只需几个步骤：您的组织和业务、您的品牌、一个已连接的账号，然后是您的第一个视频。",
       "skipSetup": "跳过设置",
       "loading": "正在加载设置",
       "skipped": {
@@ -3657,7 +3657,9 @@
       "usedOf": "{used} / {limit}",
       "unlimited": "已使用 {used} · 无限制",
       "full": "您套餐的所有席位均已使用。",
-      "upgrade": "升级以获得更多席位"
+      "upgrade": "升级以获得更多席位",
+      "limitTitle": "所有席位均已占用",
+      "limitBody": "您的套餐席位已达上限。请升级以邀请更多成员，或先移除一位成员。"
     },
     "invite": {
       "email": "电子邮箱",

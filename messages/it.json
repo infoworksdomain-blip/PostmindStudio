@@ -2962,7 +2962,7 @@
     "wizard": {
       "eyebrow": "Benvenuto",
       "title": "Creiamo il tuo primo video",
-      "description": "Quattro passaggi veloci: collega un account, configura il tuo brand, crea un video, pubblicalo.",
+      "description": "Pochi passaggi veloci: la tua organizzazione e la tua attività, il tuo brand, un account collegato e poi il tuo primo video.",
       "skipSetup": "Salta la configurazione",
       "loading": "Caricamento della configurazione",
       "skipped": {
@@ -3657,7 +3657,9 @@
       "usedOf": "{used} di {limit}",
       "unlimited": "{used} usati · nessun limite",
       "full": "Tutti i posti del tuo piano sono in uso.",
-      "upgrade": "Passa a un piano superiore per avere più posti"
+      "upgrade": "Passa a un piano superiore per avere più posti",
+      "limitTitle": "Tutti i posti sono occupati",
+      "limitBody": "Hai raggiunto il limite di posti del tuo piano. Passa a un piano superiore per invitare altre persone o rimuovi prima qualcuno."
     },
     "invite": {
       "email": "Indirizzo email",

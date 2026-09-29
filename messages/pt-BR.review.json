@@ -2761,6 +2761,8 @@
     "members.seats.unlimited",
     "members.seats.full",
     "members.seats.upgrade",
+    "members.seats.limitTitle",
+    "members.seats.limitBody",
     "members.invite.email",
     "members.invite.emailPlaceholder",
     "members.invite.role",

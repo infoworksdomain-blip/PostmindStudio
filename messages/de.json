@@ -2962,7 +2962,7 @@
     "wizard": {
       "eyebrow": "Willkommen",
       "title": "Erstellen wir Ihr erstes Video",
-      "description": "Vier kurze Schritte: Konto verbinden, Marke einrichten, Video erstellen, veröffentlichen.",
+      "description": "Ein paar schnelle Schritte: Ihre Organisation und Ihr Unternehmen, Ihre Marke, ein verbundenes Konto und dann Ihr erstes Video.",
       "skipSetup": "Einrichtung überspringen",
       "loading": "Einrichtung wird geladen",
       "skipped": {
@@ -3657,7 +3657,9 @@
       "usedOf": "{used} von {limit}",
       "unlimited": "{used} genutzt · kein Limit",
       "full": "Alle Plätze Ihres Plans sind belegt.",
-      "upgrade": "Upgraden Sie für mehr Plätze"
+      "upgrade": "Upgraden Sie für mehr Plätze",
+      "limitTitle": "Alle Plätze sind belegt",
+      "limitBody": "Die Platzgrenze Ihres Tarifs ist erreicht. Wechseln Sie in einen höheren Tarif, um weitere Personen einzuladen, oder entfernen Sie zuerst jemanden."
     },
     "invite": {
       "email": "E-Mail-Adresse",

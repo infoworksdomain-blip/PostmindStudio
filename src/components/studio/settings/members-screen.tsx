@@ -17,7 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { api, useApi } from '@/lib/client/api';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { api, ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ConfirmDialog } from '../admin/confirm-dialog';
 import { selectClass } from '../library/library-filters';
@@ -102,6 +110,48 @@ function SeatMeter({ used, limit }: { used: number; limit: number | null }) {
   );
 }
 
+/** An invite refused because the plan's seats are used up (Better Auth membershipLimit). */
+export function isSeatLimitError(err: unknown): boolean {
+  if (!(err instanceof ApiError)) return false;
+  return (
+    ['quota_exceeded', 'plan_tier', 'plan_required'].includes(err.code) ||
+    err.details?.reason === 'seat_limit'
+  );
+}
+
+/**
+ * Placeholder for Track C's shared UpgradeDialog (plan §3 cross-cutting UI): until it is merged,
+ * a seat-limit refusal opens this dialog with the same destination (pricing / billing).
+ */
+function SeatLimitDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const t = useTranslations('members.seats');
+  const tc = useTranslations('common.actions');
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('limitTitle')}</DialogTitle>
+          <DialogDescription>{t('limitBody')}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {tc('close')}
+          </Button>
+          <Button asChild>
+            <Link href="/settings/billing">{t('upgrade')}</Link>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () => void }) {
   const t = useTranslations('members.invite');
   const tr = useTranslations('members.roles');
@@ -109,6 +159,7 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<(typeof INVITE_ROLES)[number]>('creator');
   const [sending, setSending] = useState(false);
+  const [limitOpen, setLimitOpen] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -119,49 +170,53 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
       setEmail('');
       onInvited();
     } catch (err) {
-      toast.error(errorMessage(err));
+      if (isSeatLimitError(err)) setLimitOpen(true);
+      else toast.error(errorMessage(err));
     } finally {
       setSending(false);
     }
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} className="flex flex-wrap items-end gap-3">
-      <div className="grid min-w-60 flex-1 gap-1.5">
-        <Label htmlFor="invite-email">{t('email')}</Label>
-        <Input
-          id="invite-email"
-          type="email"
-          dir="ltr"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t('emailPlaceholder')}
-          required
-          disabled={disabled}
-        />
-      </div>
-      <div className="grid gap-1.5">
-        <Label htmlFor="invite-role">{t('role')}</Label>
-        <select
-          id="invite-role"
-          className={selectClass}
-          value={role}
-          onChange={(e) => setRole(e.target.value as (typeof INVITE_ROLES)[number])}
-          disabled={disabled}
-        >
-          {INVITE_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {tr(r)}
-            </option>
-          ))}
-        </select>
-      </div>
-      <Button type="submit" disabled={disabled || sending || !email.trim()}>
-        {sending ? <Loader2 className="animate-spin" /> : <UserPlus />}
-        {t('send')}
-      </Button>
-      <p className="basis-full text-xs text-muted-foreground">{t('hint')}</p>
-    </form>
+    <>
+      <SeatLimitDialog open={limitOpen} onOpenChange={setLimitOpen} />
+      <form onSubmit={(e) => void submit(e)} className="flex flex-wrap items-end gap-3">
+        <div className="grid min-w-60 flex-1 gap-1.5">
+          <Label htmlFor="invite-email">{t('email')}</Label>
+          <Input
+            id="invite-email"
+            type="email"
+            dir="ltr"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t('emailPlaceholder')}
+            required
+            disabled={disabled}
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="invite-role">{t('role')}</Label>
+          <select
+            id="invite-role"
+            className={selectClass}
+            value={role}
+            onChange={(e) => setRole(e.target.value as (typeof INVITE_ROLES)[number])}
+            disabled={disabled}
+          >
+            {INVITE_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {tr(r)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Button type="submit" disabled={disabled || sending || !email.trim()}>
+          {sending ? <Loader2 className="animate-spin" /> : <UserPlus />}
+          {t('send')}
+        </Button>
+        <p className="basis-full text-xs text-muted-foreground">{t('hint')}</p>
+      </form>
+    </>
   );
 }
 

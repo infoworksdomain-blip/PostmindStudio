@@ -101,6 +101,110 @@ export const PROJECT_STATES: DeepLink[] = [
 
 const [firstLibrary] = LIBRARY_VIDEOS;
 
+// Phase 18 (standalone SaaS): the public pages, onboarding, organisation settings and the new
+// admin tabs. Sign-up, pricing and billing are Tracks A and C; their entries say so.
+const PHASE_18_GROUP: ScreenGroup = {
+  key: 'standalone',
+  label: 'Standalone SaaS (Phase 18)',
+  intro:
+    'Studio as its own product: a public site, sign-up, organisations with members and roles, plans, and a staff console to run it.',
+  screens: [
+    {
+      title: 'Landing page',
+      href: '#/landing',
+      summary:
+        'The public home page at /: the product story for small businesses, sample formats, the three-step flow and calls to sign up or see pricing. Signed-in visitors go straight to Projects.',
+      scene: 'storefront',
+      links: [
+        {
+          href: '#/legal/terms',
+          label: 'Legal pages',
+          note: 'Terms, privacy, cookies, acceptable use, DPA and sub-processors from the operator’s Markdown; a banner marks placeholders.',
+        },
+      ],
+    },
+    {
+      title: 'Pricing',
+      href: '#/pricing',
+      summary:
+        'Plan cards, the comparison table and top-ups (Phase 18 Track C). The demo API already serves Track C’s billing contract with sample invoices.',
+      scene: 'market',
+    },
+    {
+      title: 'Sign up',
+      href: '#/sign-up',
+      summary:
+        'Email and password or Google, with email verification and two-step verification (Phase 18 Track A). After sign-up the guided setup starts.',
+      scene: 'baker',
+    },
+    {
+      title: 'Guided setup',
+      href: '#/welcome?new=organisation',
+      summary:
+        'Create the organisation (name, tax country, language), add the first business, then brand kit, connect a platform and make the first video.',
+      scene: 'croissant',
+      links: [
+        {
+          href: '#/welcome',
+          label: 'Resume the wizard',
+          note: 'Brand kit → Connect → First video → Celebrate.',
+        },
+      ],
+    },
+    {
+      title: 'Organisation settings',
+      href: '#/settings/organisation',
+      summary:
+        'Name, logo, tax country and default language; transfer ownership; delete the organisation after typing its name. The header now has an organisation switcher, a user menu with sign-out and a trial banner.',
+      scene: 'flatlay',
+    },
+    {
+      title: 'Members',
+      href: '#/settings/members',
+      summary:
+        'Invite by email and role, change roles, remove people, resend or revoke invitations, and a seat meter with an upgrade prompt at the limit. The last owner cannot leave or be demoted.',
+      scene: 'baker',
+      tryIt: [
+        'Invite someone as Viewer, then resend or revoke it.',
+        'Try to demote yourself (the only owner): the refusal explains why.',
+      ],
+    },
+    {
+      title: 'Billing',
+      href: '#/settings/billing',
+      summary:
+        'Plan, usage, top-ups and invoices (Phase 18 Track C), reached from the settings tabs.',
+      scene: 'coffee',
+    },
+    {
+      title: 'Audit log',
+      href: '#/settings/audit',
+      summary:
+        'Who did what in the organisation: members, settings, billing, connections. Filter by category and load more.',
+      scene: 'studio',
+    },
+    {
+      title: 'Admin: organisations, users, subscriptions',
+      href: '#/admin?tab=organisations',
+      summary:
+        'Staff (with two-step verification) search organisations and users, ban or sign someone out, reset 2FA and read subscriptions; a warning shows while the legal documents are placeholders. Viewing as a user is off by default and read-only when on.',
+      scene: 'studio',
+      links: [
+        {
+          href: '#/admin?tab=users',
+          label: 'Users tab',
+          note: 'Open a user, ban with a reason, sign them out everywhere.',
+        },
+        {
+          href: '#/admin?tab=subscriptions',
+          label: 'Subscriptions tab',
+          note: 'Read-only list with status counts and past-due grace dates.',
+        },
+      ],
+    },
+  ],
+};
+
 export const SCREEN_GROUPS: ScreenGroup[] = [
   {
     key: 'make',
@@ -274,6 +378,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
       },
     ],
   },
+  PHASE_18_GROUP,
 ];
 
 export const BELL_NOTE =

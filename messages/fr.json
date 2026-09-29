@@ -2962,7 +2962,7 @@
     "wizard": {
       "eyebrow": "Bienvenue",
       "title": "Créons votre première vidéo",
-      "description": "Quatre étapes rapides : connectez un compte, configurez votre marque, créez une vidéo, publiez-la.",
+      "description": "Quelques étapes rapides : votre organisation et votre entreprise, votre marque, un compte connecté, puis votre première vidéo.",
       "skipSetup": "Passer la configuration",
       "loading": "Chargement de la configuration",
       "skipped": {
@@ -3657,7 +3657,9 @@
       "usedOf": "{used} sur {limit}",
       "unlimited": "{used} utilisées · sans limite",
       "full": "Toutes les places de votre forfait sont utilisées.",
-      "upgrade": "Passez à un forfait supérieur pour plus de places"
+      "upgrade": "Passez à un forfait supérieur pour plus de places",
+      "limitTitle": "Toutes vos places sont utilisées",
+      "limitBody": "La limite de places de votre offre est atteinte. Passez à une offre supérieure pour inviter d’autres personnes, ou retirez d’abord un membre."
     },
     "invite": {
       "email": "Adresse e-mail",
