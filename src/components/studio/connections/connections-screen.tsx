@@ -73,11 +73,16 @@ function useCallbackNotice(): [Notice | null, () => void] {
   return [notice, () => setNotice(null)];
 }
 
-function goTo(url: string) {
-  hardNavigate(url);
+function goTo(url: string): boolean {
+  return hardNavigate(url);
 }
 
-export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string) => void }) {
+export function ConnectionsScreen({
+  navigate = goTo,
+}: {
+  /** Follows the authorisation URL; false when the page stays (the demo), to stop the spinner. */
+  navigate?: (url: string) => boolean | void;
+}) {
   const t = useTranslations('connections');
   const tn = useTranslations('shell.nav.groups');
   const errorMessage = useErrorMessage();
@@ -99,7 +104,7 @@ export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string
         body: { platform, businessId, returnTo: `${window.location.origin}/connections` },
         idempotencyKey: newIdempotencyKey(),
       });
-      navigate(res.authorizeUrl);
+      if (navigate(res.authorizeUrl) === false) setConnecting(null);
     } catch (err) {
       toast.error(errorMessage(err));
       setConnecting(null);
