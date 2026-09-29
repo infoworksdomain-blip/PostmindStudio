@@ -22,12 +22,23 @@ export const CALENDAR_SYNC_SCHEDULE = '*/5 * * * *';
 export const ORGANISATION_RECONCILE_SCHEDULE = '45 3 * * *';
 
 export async function reportUsage(_data: RollUpJobData, deps: PipelineDeps): Promise<void> {
+  if (deps.core?.usageRecording === 'local') {
+    // Phase 18 standalone billing: the rows are the local usage record; nothing is reported.
+    const derived = await deriveUsageEvents(deps.db, deps.now(), undefined, 'local');
+    deps.logger.info({ ...derived, status: 'local' }, 'usage events recorded');
+    return;
+  }
   const derived = await deriveUsageEvents(deps.db, deps.now());
   const flush = await flushUsageEvents(deps, deps.core?.usage ?? pendingUsageReporter);
   deps.logger.info({ ...derived, ...flush }, 'usage events reported');
 }
 
 export async function syncCalendar(_data: RollUpJobData, deps: PipelineDeps): Promise<void> {
+  if (deps.core?.calendarShadows === false) {
+    // Phase 18: outside core mode Studio's own /calendar is the calendar; no shadows are kept.
+    deps.logger.debug('calendar shadows off (no PostMind Core calendar)');
+    return;
+  }
   const derived = await deriveCalendarShadows(deps.db, deps.now());
   const sync = await syncCalendarShadows(
     deps,

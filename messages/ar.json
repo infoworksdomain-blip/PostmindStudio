@@ -85,7 +85,13 @@
       "label": "النشاط التجاري",
       "choose": "اختر نشاطًا تجاريًا",
       "idPlaceholder": "معرّف النشاط التجاري في PostMind",
-      "listPending": "قائمة الأنشطة التجارية بانتظار PostMind Core: اكتب معرّف النشاط التجاري."
+      "listPending": "قائمة الأنشطة التجارية بانتظار PostMind Core: اكتب معرّف النشاط التجاري.",
+      "add": "إضافة نشاط تجاري",
+      "addLabel": "نشاط تجاري جديد",
+      "addPlaceholder": "اسم النشاط التجاري",
+      "addSubmit": "إضافة",
+      "addCancel": "إلغاء",
+      "created": "تمت إضافة {name}"
     },
     "feedback": {
       "button": "ملاحظات",
@@ -1813,7 +1819,9 @@
       "platform_error": "واجهت المنصة مشكلة في إتمام الربط. حاول مجددًا بعد قليل.",
       "upstream_error": "واجهت المنصة مشكلة في إتمام الربط. حاول مجددًا بعد قليل.",
       "internal_error": "حدث خطأ أثناء إتمام الربط. حاول مجددًا.",
-      "unknown": "لم يكتمل الربط ({code}). حاول مجددًا."
+      "unknown": "لم يكتمل الربط ({code}). حاول مجددًا.",
+      "meta_no_accounts": "لم تشارك Meta أي صفحة على Facebook يمكنك النشر عليها. أعد الربط واختر صفحة واحدة على الأقل (وحساب Instagram المرتبط بها) في نافذة Meta.",
+      "wrong_user": "بدأ مستخدم آخر في Studio عملية الربط هذه. ابدأها من جديد وأنت مسجّل الدخول بحسابك."
     },
     "dismiss": "تجاهل",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "رفضت Meta صلاحية الوصول هذه أو انتهت صلاحيتها. ستفشل المنشورات المجدولة على هذا الحساب حتى تعيد ربطه من إعدادات PostMind.",
       "connectedVia": "مرتبط عبر PostMind منذ {date}",
-      "guidance": "اربط Instagram وFacebook من إعدادات PostMind."
+      "guidance": "اربط Instagram وFacebook من إعدادات PostMind.",
+      "connectButton": "الربط عبر Facebook",
+      "studioGuidance": "تسجيل دخول واحد إلى Facebook يربط الصفحات التي تختارها وحسابات Instagram الاحترافية المرتبطة بها.",
+      "notConfigured": "لا يتوفر Instagram وFacebook بعد: ما زال تطبيق Meta الخاص بـ Studio يحتاج إلى إعداد. تواصل مع المسؤول."
+    },
+    "descriptionStandalone": "الحسابات التي ينشر عليها Studio. اربط كل حساب للنشاط التجاري المحدد.",
+    "connectedMetaNotice": "{count, plural, zero {لم يُربط أي حساب على Facebook أو Instagram} one {تم ربط حساب واحد على Facebook أو Instagram} two {تم ربط حسابين على Facebook وInstagram} few {تم ربط # حسابات على Facebook وInstagram} many {تم ربط # حسابًا على Facebook وInstagram} other {تم ربط # حساب على Facebook وInstagram}}. يمكنك النشر عليها الآن.",
+    "dataDeletion": {
+      "pageTitle": "حالة حذف البيانات",
+      "eyebrow": "PostMind Studio · بيانات Facebook وInstagram",
+      "title": "طلب حذف بياناتك",
+      "completed": "الحالة: مكتمل",
+      "receivedOn": "استلمنا طلبك في {date} وأكملناه فورًا.",
+      "deletedCount": "{count, plural, zero {لم يكن لدى Studio أي اتصالات لك على Facebook أو Instagram.} one {تم حذف اتصال واحد على Facebook أو Instagram.} two {تم حذف اتصالين على Facebook أو Instagram.} few {تم حذف # اتصالات على Facebook أو Instagram.} many {تم حذف # اتصالًا على Facebook أو Instagram.} other {تم حذف # اتصال على Facebook أو Instagram.}}",
+      "whatWasDeleted": "حذف Studio رموز الوصول التي قدّمتها Meta، ومعرّف مستخدم Meta الخاص بك، والأذونات التي منحتها، وأسماء الحسابات.",
+      "retained": "تبقى مقاطع الفيديو المنشورة بالفعل على Facebook وInstagram؛ احذفها من هناك إذا أردت. يحتفظ Studio فقط برقم الصفحة أو حساب Instagram الذي يشير إليه سجل النشر.",
+      "codeLabel": "رمز التأكيد:",
+      "unknownCode": "لم نعثر على طلب حذف بهذا الرمز. تحقّق من الرابط الذي أعطاك إياه Facebook."
     }
   },
   "library": {

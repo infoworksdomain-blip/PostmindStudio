@@ -85,7 +85,13 @@
       "label": "Entreprise",
       "choose": "Choisir une entreprise",
       "idPlaceholder": "Identifiant d’entreprise PostMind",
-      "listPending": "La liste des entreprises attend PostMind Core : saisissez l’identifiant de l’entreprise."
+      "listPending": "La liste des entreprises attend PostMind Core : saisissez l’identifiant de l’entreprise.",
+      "add": "Ajouter une entreprise",
+      "addLabel": "Nouvelle entreprise",
+      "addPlaceholder": "Nom de l’entreprise",
+      "addSubmit": "Ajouter",
+      "addCancel": "Annuler",
+      "created": "{name} ajoutée"
     },
     "feedback": {
       "button": "Avis",
@@ -1813,7 +1819,9 @@
       "platform_error": "La plateforme a rencontré un problème pour finaliser la connexion. Réessayez dans un instant.",
       "upstream_error": "La plateforme a rencontré un problème pour finaliser la connexion. Réessayez dans un instant.",
       "internal_error": "Une erreur s’est produite lors de la finalisation de la connexion. Réessayez.",
-      "unknown": "La connexion n’a pas abouti ({code}). Réessayez."
+      "unknown": "La connexion n’a pas abouti ({code}). Réessayez.",
+      "meta_no_accounts": "Meta n’a partagé aucune Page Facebook sur laquelle vous pouvez publier. Reconnectez-vous et choisissez au moins une Page (et son compte Instagram) dans la fenêtre Meta.",
+      "wrong_user": "Cette connexion a été lancée par un autre utilisateur de Studio. Recommencez en étant connecté avec votre propre compte."
     },
     "dismiss": "Fermer",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "Meta a refusé ou fait expirer cet accès. Les publications programmées sur ce compte échoueront tant que vous ne l’aurez pas reconnecté dans les paramètres PostMind.",
       "connectedVia": "Connecté via PostMind le {date}",
-      "guidance": "Connectez Instagram et Facebook dans les paramètres PostMind."
+      "guidance": "Connectez Instagram et Facebook dans les paramètres PostMind.",
+      "connectButton": "Se connecter avec Facebook",
+      "studioGuidance": "Une seule connexion Facebook relie les Pages que vous choisissez et les comptes Instagram professionnels qui y sont associés.",
+      "notConfigured": "Instagram et Facebook ne sont pas encore disponibles : l’application Meta de Studio doit encore être configurée. Contactez votre administrateur."
+    },
+    "descriptionStandalone": "Les comptes sur lesquels Studio publie. Connectez chacun d’eux pour l’entreprise sélectionnée.",
+    "connectedMetaNotice": "{count, plural, one {# compte Facebook ou Instagram est connecté} other {# comptes Facebook et Instagram sont connectés}}. Vous pouvez y publier dès maintenant.",
+    "dataDeletion": {
+      "pageTitle": "État de la suppression des données",
+      "eyebrow": "PostMind Studio · Données Facebook et Instagram",
+      "title": "Votre demande de suppression de données",
+      "completed": "État : terminée",
+      "receivedOn": "Nous avons reçu votre demande le {date} et l’avons traitée immédiatement.",
+      "deletedCount": "{count, plural, =0 {Studio ne détenait aucune connexion Facebook ou Instagram vous concernant.} one {# connexion Facebook ou Instagram a été supprimée.} other {# connexions Facebook ou Instagram ont été supprimées.}}",
+      "whatWasDeleted": "Studio a supprimé les jetons d’accès fournis par Meta, votre identifiant utilisateur Meta, les autorisations accordées et les noms des comptes.",
+      "retained": "Les vidéos déjà publiées restent sur Facebook et Instagram ; supprimez-les là-bas si vous le souhaitez. Studio ne conserve que le numéro de la Page ou du compte Instagram auquel son historique de publication fait référence.",
+      "codeLabel": "Code de confirmation :",
+      "unknownCode": "Aucune demande de suppression ne correspond à ce code de confirmation. Vérifiez le lien fourni par Facebook."
     }
   },
   "library": {

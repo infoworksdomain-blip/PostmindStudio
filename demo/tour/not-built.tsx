@@ -18,6 +18,7 @@ const BLOCKER_TONE: Record<Blocker, 'bad' | 'warn' | 'neutral' | 'data' | 'live'
   'not started': 'neutral',
   'needs staging': 'data',
   'needs people': 'warn',
+  'needs operator app settings': 'warn',
 };
 
 function formatDays(d: number): string {

@@ -85,7 +85,13 @@
       "label": "Empresa",
       "choose": "Escolha uma empresa",
       "idPlaceholder": "ID da empresa no PostMind",
-      "listPending": "A lista de empresas aguarda o PostMind Core: introduza o ID da empresa."
+      "listPending": "A lista de empresas aguarda o PostMind Core: introduza o ID da empresa.",
+      "add": "Adicionar uma empresa",
+      "addLabel": "Nova empresa",
+      "addPlaceholder": "Nome da empresa",
+      "addSubmit": "Adicionar",
+      "addCancel": "Cancelar",
+      "created": "{name} adicionada"
     },
     "feedback": {
       "button": "Comentários",
@@ -1813,7 +1819,9 @@
       "platform_error": "A plataforma teve um problema ao concluir a ligação. Tente novamente dentro de momentos.",
       "upstream_error": "A plataforma teve um problema ao concluir a ligação. Tente novamente dentro de momentos.",
       "internal_error": "Ocorreu um erro ao concluir a ligação. Tente novamente.",
-      "unknown": "A ligação não foi concluída ({code}). Tente novamente."
+      "unknown": "A ligação não foi concluída ({code}). Tente novamente.",
+      "meta_no_accounts": "A Meta não partilhou nenhuma Página do Facebook em que possa publicar. Ligue novamente e escolha pelo menos uma Página (e a respetiva conta do Instagram) na janela da Meta.",
+      "wrong_user": "Esta ligação foi iniciada por outro utilizador do Studio. Comece de novo com a sua própria sessão iniciada."
     },
     "dismiss": "Ignorar",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "A Meta recusou ou fez expirar este acesso. As publicações agendadas para esta conta falharão até voltar a ligá-la nas definições do PostMind.",
       "connectedVia": "Ligado através do PostMind a {date}",
-      "guidance": "Ligue o Instagram e o Facebook nas definições do PostMind."
+      "guidance": "Ligue o Instagram e o Facebook nas definições do PostMind.",
+      "connectButton": "Ligar com o Facebook",
+      "studioGuidance": "Um único início de sessão no Facebook liga as Páginas que escolher e as contas profissionais do Instagram associadas.",
+      "notConfigured": "O Instagram e o Facebook ainda não estão disponíveis: a aplicação Meta do Studio ainda precisa de ser configurada. Contacte o seu administrador."
+    },
+    "descriptionStandalone": "As contas em que o Studio publica. Ligue cada uma para a empresa selecionada.",
+    "connectedMetaNotice": "{count, plural, one {# conta do Facebook ou do Instagram ligada} other {# contas do Facebook e do Instagram ligadas}}. Já pode publicar nelas.",
+    "dataDeletion": {
+      "pageTitle": "Estado da eliminação de dados",
+      "eyebrow": "PostMind Studio · Dados do Facebook e do Instagram",
+      "title": "O seu pedido de eliminação de dados",
+      "completed": "Estado: concluído",
+      "receivedOn": "Recebemos o seu pedido a {date} e concluímo-lo de imediato.",
+      "deletedCount": "{count, plural, =0 {O Studio não tinha nenhuma ligação do Facebook ou do Instagram sua.} one {Foi eliminada # ligação do Facebook ou do Instagram.} other {Foram eliminadas # ligações do Facebook ou do Instagram.}}",
+      "whatWasDeleted": "O Studio eliminou os tokens de acesso fornecidos pela Meta, o seu ID de utilizador Meta, as permissões concedidas e os nomes das contas.",
+      "retained": "Os vídeos já publicados continuam no Facebook e no Instagram; remova-os lá, se quiser. O Studio guarda apenas o número da Página ou da conta do Instagram a que o histórico de publicações se refere.",
+      "codeLabel": "Código de confirmação:",
+      "unknownCode": "Não encontrámos nenhum pedido de eliminação com este código de confirmação. Verifique a ligação que o Facebook lhe deu."
     }
   },
   "library": {

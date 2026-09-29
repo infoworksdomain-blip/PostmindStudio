@@ -11,6 +11,11 @@ import type { RollUpJobData } from '../queues';
 export const CHANNEL_RECONCILE_SCHEDULE = '30 3 * * *';
 
 export async function reconcileChannels(_data: RollUpJobData, deps: PipelineDeps): Promise<void> {
+  if (deps.core?.channelReconciliation === false) {
+    // Phase 18: Studio's own Meta login — there is no Core channel list to compare with.
+    deps.logger.debug('channel reconciliation not applicable (STUDIO_META_CONNECT=studio)');
+    return;
+  }
   try {
     const report = await reconcileMetaChannels(
       {

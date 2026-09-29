@@ -1,18 +1,26 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { Link2, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
-import type { PlatformConnection } from '@/lib/client/types';
+import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { StateBadge } from '../primitives';
 import { CheckedLine } from './checked-line';
+import { AccountRow } from './platform-card';
 import type { META_PLATFORMS } from './platforms';
 
-// Instagram / Facebook row: read-only. PostMind Core runs the Meta login and registers these
-// accounts with Studio, so connect, reconnect and disconnect all happen in PostMind settings.
+// Instagram / Facebook row. Two modes (GET /platform-connections `meta`, Phase 18 §2.10):
+//   core   — PostMind Core runs the Meta login and registers these accounts with Studio, so the
+//            row is read-only: connect, reconnect and disconnect all happen in PostMind settings.
+//   studio — Studio's own Facebook Login for Business: one "Connect" connects the Pages the user
+//            picks in Meta's dialog and the Instagram accounts linked to them; each account can be
+//            reconnected or disconnected here. Until the operator configures Studio's Meta app
+//            the button is replaced by a note saying so.
 
 type MetaPlatformInfo = (typeof META_PLATFORMS)[number];
 
-function MetaAccountRow({ connection }: { connection: PlatformConnection }) {
+function CoreAccountRow({ connection }: { connection: PlatformConnection }) {
   const t = useTranslations('connections');
   const f = useFormat();
   const stale = connection.state === 'needs_reconnect';
@@ -37,11 +45,22 @@ function MetaAccountRow({ connection }: { connection: PlatformConnection }) {
 export function MetaPlatformCard({
   platform,
   connections,
+  info,
+  connecting = false,
+  onConnect,
+  onDisconnect,
 }: {
   platform: MetaPlatformInfo;
   connections: PlatformConnection[];
+  /** Absent = core mode (pre-Phase-18 API without `meta`). */
+  info?: MetaConnectInfo;
+  connecting?: boolean;
+  onConnect?: () => void;
+  onDisconnect?: (connection: PlatformConnection) => Promise<boolean>;
 }) {
   const t = useTranslations('connections');
+  const studio = info?.connect === 'studio';
+  const canConnect = studio && info.configured && onConnect;
   return (
     <section
       aria-labelledby={`platform-${platform.id}`}
@@ -56,14 +75,42 @@ export function MetaPlatformCard({
       <div className="min-w-0">
         {connections.length > 0 ? (
           <ul className="divide-y divide-border/70">
-            {connections.map((c) => (
-              <MetaAccountRow key={c.id} connection={c} />
-            ))}
+            {connections.map((c) =>
+              studio && c.connectedVia === 'studio' && onDisconnect ? (
+                <AccountRow
+                  key={c.id}
+                  connection={c}
+                  label={platform.label}
+                  connecting={connecting}
+                  onReconnect={() => onConnect?.()}
+                  onDisconnect={() => onDisconnect(c)}
+                />
+              ) : (
+                <CoreAccountRow key={c.id} connection={c} />
+              ),
+            )}
           </ul>
         ) : (
           <p className="py-3 text-sm text-muted-foreground">{t('notConnected')}</p>
         )}
-        <p className="mt-2 text-sm text-muted-foreground">{t('meta.guidance')}</p>
+        {canConnect && (
+          <Button
+            className="mt-2"
+            variant={connections.length > 0 ? 'outline' : 'default'}
+            disabled={connecting}
+            onClick={onConnect}
+          >
+            {connecting ? <Loader2 className="animate-spin" /> : <Link2 />}
+            {t('meta.connectButton')}
+          </Button>
+        )}
+        <p className="mt-2 text-sm text-muted-foreground">
+          {!studio
+            ? t('meta.guidance')
+            : info.configured
+              ? t('meta.studioGuidance')
+              : t('meta.notConfigured')}
+        </p>
       </div>
     </section>
   );

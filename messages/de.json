@@ -85,7 +85,13 @@
       "label": "Unternehmen",
       "choose": "Unternehmen auswählen",
       "idPlaceholder": "PostMind-Unternehmens-ID",
-      "listPending": "Die Unternehmensliste wartet noch auf PostMind Core: Geben Sie die Unternehmens-ID ein."
+      "listPending": "Die Unternehmensliste wartet noch auf PostMind Core: Geben Sie die Unternehmens-ID ein.",
+      "add": "Unternehmen hinzufügen",
+      "addLabel": "Neues Unternehmen",
+      "addPlaceholder": "Name des Unternehmens",
+      "addSubmit": "Hinzufügen",
+      "addCancel": "Abbrechen",
+      "created": "{name} hinzugefügt"
     },
     "feedback": {
       "button": "Feedback",
@@ -1813,7 +1819,9 @@
       "platform_error": "Bei der Plattform ist beim Herstellen der Verbindung ein Problem aufgetreten. Versuchen Sie es gleich noch einmal.",
       "upstream_error": "Bei der Plattform ist beim Herstellen der Verbindung ein Problem aufgetreten. Versuchen Sie es gleich noch einmal.",
       "internal_error": "Beim Abschließen der Verbindung ist etwas schiefgelaufen. Versuchen Sie es erneut.",
-      "unknown": "Die Verbindung wurde nicht abgeschlossen ({code}). Versuchen Sie es erneut."
+      "unknown": "Die Verbindung wurde nicht abgeschlossen ({code}). Versuchen Sie es erneut.",
+      "meta_no_accounts": "Meta hat keine Facebook-Seite freigegeben, auf der du veröffentlichen kannst. Verbinde dich erneut und wähle im Meta-Fenster mindestens eine Seite (und ihr Instagram-Konto) aus.",
+      "wrong_user": "Diese Verbindung wurde von einem anderen Studio-Nutzer gestartet. Starte sie erneut, während du mit deinem eigenen Konto angemeldet bist."
     },
     "dismiss": "Ausblenden",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "Meta hat diesen Zugriff verweigert oder er ist abgelaufen. Geplante Beiträge für dieses Konto schlagen fehl, bis Sie es in den PostMind-Einstellungen neu verbinden.",
       "connectedVia": "Über PostMind verbunden am {date}",
-      "guidance": "Verbinden Sie Instagram und Facebook in den PostMind-Einstellungen."
+      "guidance": "Verbinden Sie Instagram und Facebook in den PostMind-Einstellungen.",
+      "connectButton": "Mit Facebook verbinden",
+      "studioGuidance": "Eine Facebook-Anmeldung verbindet die ausgewählten Seiten und die damit verknüpften professionellen Instagram-Konten.",
+      "notConfigured": "Instagram und Facebook sind noch nicht verfügbar: Die Meta-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
+    },
+    "descriptionStandalone": "Die Konten, auf denen Studio veröffentlicht. Verbinde jedes für das ausgewählte Unternehmen.",
+    "connectedMetaNotice": "{count, plural, one {# Facebook- oder Instagram-Konto ist verbunden} other {# Facebook- und Instagram-Konten sind verbunden}}. Du kannst jetzt dort veröffentlichen.",
+    "dataDeletion": {
+      "pageTitle": "Status der Datenlöschung",
+      "eyebrow": "PostMind Studio · Facebook- und Instagram-Daten",
+      "title": "Deine Anfrage zur Datenlöschung",
+      "completed": "Status: abgeschlossen",
+      "receivedOn": "Wir haben deine Anfrage am {date} erhalten und sofort abgeschlossen.",
+      "deletedCount": "{count, plural, =0 {Studio hatte keine Facebook- oder Instagram-Verbindungen von dir gespeichert.} one {# Facebook- oder Instagram-Verbindung wurde gelöscht.} other {# Facebook- oder Instagram-Verbindungen wurden gelöscht.}}",
+      "whatWasDeleted": "Studio hat die von Meta erhaltenen Zugriffstoken, deine Meta-Nutzer-ID, die erteilten Berechtigungen und die Kontonamen gelöscht.",
+      "retained": "Bereits veröffentlichte Videos bleiben auf Facebook und Instagram; entferne sie dort, wenn du sie nicht mehr möchtest. Studio behält nur die Nummer der Seite bzw. des Instagram-Kontos, auf die sich der Veröffentlichungsverlauf bezieht.",
+      "codeLabel": "Bestätigungscode:",
+      "unknownCode": "Zu diesem Bestätigungscode wurde keine Löschanfrage gefunden. Prüfe den Link, den du von Facebook erhalten hast."
     }
   },
   "library": {

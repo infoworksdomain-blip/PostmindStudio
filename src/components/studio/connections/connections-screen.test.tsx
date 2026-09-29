@@ -3,6 +3,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlatformConnection } from '@/lib/client/types';
+import { render } from '@testing-library/react';
+import { SWRConfig } from 'swr';
+import { withLocale } from '../../../../test/i18n-wrapper';
+import { BusinessProvider } from '../business-context';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
 import { ConnectionsScreen } from './connections-screen';
 
@@ -214,5 +218,106 @@ describe('ConnectionsScreen', () => {
     mockFetch(() => fail(403, 'nope'));
     renderScreen(<ConnectionsScreen />);
     expect(await screen.findByRole('alert')).toHaveTextContent('permission');
+  });
+});
+
+// Phase 18 §2.10 (Track D): standalone mode — Studio's own Meta login.
+describe('ConnectionsScreen — Meta connect in standalone mode', () => {
+  const studioMeta = { connect: 'studio', configured: true };
+
+  it('offers Connect with Facebook and starts the Meta flow', async () => {
+    const api = mockFetch((req) =>
+      req.method === 'POST'
+        ? ok({ authorizeUrl: 'https://www.facebook.com/v26.0/dialog/oauth?state=s' })
+        : ok({ data: [], meta: studioMeta }),
+    );
+    const navigate = vi.fn();
+    const user = userEvent.setup();
+    renderScreen(<ConnectionsScreen navigate={navigate} />);
+    const instagram = await screen.findByRole('region', { name: 'Instagram' });
+    expect(
+      within(instagram).getByText(
+        'One Facebook login connects the Pages you choose and the Instagram professional accounts linked to them.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Connect Instagram and Facebook in PostMind settings.')).toBeNull();
+    await user.click(within(instagram).getByRole('button', { name: 'Connect with Facebook' }));
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith('https://www.facebook.com/v26.0/dialog/oauth?state=s'),
+    );
+    const [init] = api.find('POST', '/platform-connections/oauth-init');
+    expect(init!.body).toMatchObject({ platform: 'meta', businessId: 'biz_1' });
+  });
+
+  it('lets a Studio-connected Page be disconnected here', async () => {
+    const api = mockFetch((req) =>
+      req.method === 'DELETE'
+        ? ok({ disconnected: true })
+        : ok({
+            data: [
+              conn({
+                id: 'con_fb',
+                platform: 'facebook',
+                platformAccountId: '201',
+                platformAccountName: 'Bakery Page',
+                connectedVia: 'studio',
+              }),
+            ],
+            meta: studioMeta,
+          }),
+    );
+    const user = userEvent.setup();
+    renderScreen(<ConnectionsScreen />);
+    await user.click(await screen.findByRole('button', { name: 'Disconnect Bakery Page' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Disconnect' }));
+    await waitFor(() => expect(api.find('DELETE', '/platform-connections/con_fb')).toHaveLength(1));
+  });
+
+  it('says the Meta app is not set up yet instead of offering Connect', async () => {
+    mockFetch(() => ok({ data: [], meta: { connect: 'studio', configured: false } }));
+    renderScreen(<ConnectionsScreen />);
+    const facebook = await screen.findByRole('region', { name: 'Facebook' });
+    expect(within(facebook).queryByRole('button')).toBeNull();
+    expect(
+      within(facebook).getByText(/Studio’s Meta app still needs its settings/),
+    ).toBeInTheDocument();
+  });
+
+  it('reports ?connected=meta&count= and the Meta-specific callback errors', async () => {
+    search = new URLSearchParams('connected=meta&count=2');
+    mockFetch(() => ok({ data: [], meta: studioMeta }));
+    renderScreen(<ConnectionsScreen />);
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      '2 Facebook and Instagram accounts are connected',
+    );
+  });
+
+  it.each([
+    ['meta_no_accounts', 'did not share any Facebook Page'],
+    ['wrong_user', 'started by a different Studio user'],
+  ])('explains ?connection_error=%s', async (code, text) => {
+    search = new URLSearchParams(`connection_error=${code}`);
+    mockFetch(() => ok({ data: [], meta: studioMeta }));
+    renderScreen(<ConnectionsScreen />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(text);
+  });
+
+  it.each([
+    ['ar', 'الربط عبر Facebook'],
+    ['zh-Hans', '使用 Facebook 连接'],
+  ] as const)('renders in %s', async (locale, button) => {
+    mockFetch(() => ok({ data: [], meta: studioMeta }));
+    render(
+      withLocale(
+        locale,
+        <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+          <BusinessProvider initial="biz_1">
+            <ConnectionsScreen />
+          </BusinessProvider>
+        </SWRConfig>,
+      ),
+    );
+    expect((await screen.findAllByRole('button', { name: button })).length).toBe(2);
   });
 });

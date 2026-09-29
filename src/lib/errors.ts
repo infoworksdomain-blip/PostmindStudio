@@ -207,6 +207,15 @@ export class PlatformError extends StudioError {
   }
 }
 
+/**
+ * Phase 18 §2.10: the Meta login finished but granted no Facebook Page (or Instagram account
+ * linked to one) that the user can publish to, so nothing was connected.
+ */
+export class MetaNoAccountsError extends StudioError {
+  readonly status = 422;
+  readonly code = 'meta_no_accounts';
+}
+
 /** Spec 6.4 NO_PROVIDER_AVAILABLE: every routing candidate was skipped. */
 export class NoProviderAvailableError extends StudioError {
   readonly status = 503;

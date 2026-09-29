@@ -667,9 +667,14 @@ model PlatformConnection {
   /// Phase 18 §2.10: who obtained the tokens — 'core' (pushed by PostMind Core) or 'studio'
   /// (Studio's own OAuth). NULL on rows written before Phase 18 (all of them came from Core).
   connectedVia          String?
+  /// Phase 18 §2.10: the Meta app-scoped user id whose Facebook Login for Business connected this
+  /// Page / IG account (Studio's own OAuth only; NULL otherwise). The deauthorise and
+  /// data-deletion callbacks name that id, so this is how they find the rows to revoke.
+  metaUserId            String?
 
   @@unique([organisationId, platform, platformAccountId])
   @@index([state, statusCheckedAt])
+  @@index([metaUserId])
   @@map("platform_connections")
   @@schema("studio")
 }

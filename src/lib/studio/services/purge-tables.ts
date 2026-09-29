@@ -133,6 +133,8 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('data_exports', 'DataExport'),
   org('usage_events', 'UsageEvent'),
   org('drip_queues', 'DripQueue'),
+  // Phase 18 §2.11: the organisation's own businesses (standalone mode).
+  org('businesses', 'Business'),
   // BYOC API keys (envelope-encrypted): a deleted organisation's credentials must not survive.
   org('provider_credentials', 'ProviderCredential'),
   {

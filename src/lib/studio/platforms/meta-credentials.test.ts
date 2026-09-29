@@ -34,6 +34,7 @@ async function row(overrides: Partial<PlatformConnection> = {}): Promise<Platfor
     statusCheckedAt: null,
     statusCheckOutcome: null,
     connectedVia: null,
+    metaUserId: null,
     ...overrides,
   };
 }

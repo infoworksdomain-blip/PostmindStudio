@@ -22,11 +22,13 @@ check is the platform's cheap authenticated read, after the usual token refresh:
 `GET /v2/user/info/`, YouTube `channels.list mine=true` (1 quota unit), X `GET /2/users/me`,
 LinkedIn `GET /v2/userinfo`, Facebook `GET /{v}/me?fields=id` with the Page token, Instagram
 `GET /{v}/{ig-user-id}/content_publishing_limit`. Studio does not call Meta's `debug_token` (it
-needs an app access token, and the Meta app is Core's).
+needs an app access token). With Studio's own Meta login (Phase 18) the Meta probes also carry
+`appsecret_proof`.
 
 - An authentication refusal (HTTP 401, a refused refresh, Graph error 190, an expired Meta token)
   marks the connection `needs_reconnect`, notifies its owner in-app ("Reconnect your … account";
-  Core-registered Meta channels notify the organisation) once per connection, and writes audit
+  Core-registered Meta channels notify the organisation and point to PostMind settings;
+  Studio-connected ones point to the Connections page) once per connection, and writes audit
   `studio.connection.needs_reconnect` (actor `system:account-status-check`). Recovery is the
   usual reconnect.
 - Anything else (timeouts, 5xx, 429, an unexpected response) is recorded as
@@ -38,9 +40,34 @@ needs an app access token, and the Meta app is Core's).
   'active' AND ("statusCheckedAt" IS NULL OR "statusCheckedAt" < now() - interval '2 days') GROUP
   BY 1` (a growing number means the job is not running or the batch is too small).
 
-### Instagram and Facebook (tokens pushed by PostMind Core)
+### Instagram and Facebook — standalone mode (Studio's own Meta login, Phase 18)
 
-Studio does not run the Meta login. PostMind Core does, and pushes the tokens to Studio the same
+With `STUDIO_META_CONNECT=studio` (the default in `STUDIO_MODE=standalone`) Studio runs Facebook
+Login for Business itself and owns the tokens: set-up, callbacks and troubleshooting are in
+[meta-connect.md](meta-connect.md). For revocation:
+
+- Studio stores **Page tokens** (from a long-lived user token), which do not expire, so there is
+  no refresh job and no Core push. The internal channel routes below answer 404 (no
+  `STUDIO_INTERNAL_SERVICE_TOKEN`).
+- A token Meta refuses (Graph error 190: password change, app removed, Page role lost) marks the
+  connection `needs_reconnect`; the daily account-status check catches it even without a
+  publish. The Connections page shows **Reconnect** (runs the Meta login again, which replaces the
+  token and re-activates the row) and **Disconnect** (wipes the token).
+- The user removing Studio's app on Facebook calls `POST /api/meta/deauthorize`; Studio revokes
+  every connection that login created and wipes the tokens (audit
+  `studio.connection.meta_deauthorized`). A data-deletion request (`POST /api/meta/data-deletion`)
+  does the same and also clears the Meta user id, scopes and account names (audit
+  `studio.connection.meta_data_deleted`); the user gets a status link and confirmation code.
+- There is no Core channel list, so channel reconciliation does not apply: the daily
+  `reconcile-channels` job does nothing and `GET /api/studio/admin/channels/reconciliation`
+  answers `{ applicable: false }`.
+- **Our Meta app restricted** (App Review, policy strike): every Meta connection fails at once
+  with 190 or permission errors. Follow "Our app is restricted or revoked" below with target
+  `instagram` and `facebook`; after reinstatement users reconnect from the Connections page.
+
+### Instagram and Facebook — core mode (tokens pushed by PostMind Core)
+
+With `STUDIO_META_CONNECT=core` Studio does not run the Meta login. PostMind Core does, and pushes the tokens to Studio the same
 way it does to Engagement (handover 9.5 / 9.6 / 14.13). All three calls carry
 `X-Service-Token: <STUDIO_INTERNAL_SERVICE_TOKEN>`:
 
@@ -129,13 +156,13 @@ new grace period.
 
 ## GAPs
 
-- No Core-side retry or alert exists yet for failed internal calls. That code is Core's, owned
+- (Core mode only.) No Core-side retry or alert exists yet for failed internal calls. That code is Core's, owned
   by the Core team. Studio ships the kit for it (BACKLOG 14.10, `integrations/core/`): the
   OpenAPI spec, a copyable client with retries, the retry/alerting recipe
   (`integrations/core/retry-alerting.md`) and a contract suite Core runs against staging
   (`npm run contract:core -- --base-url <staging> --token <token>`).
-- Reconciliation between Core's Meta channels and Studio's is built (BACKLOG 13.35) but cannot
-  run until Core publishes list-channels. The daily `reconcile-channels` job logs "channel
+- (Core mode only; standalone has nothing to reconcile.) Reconciliation between Core's Meta
+  channels and Studio's is built (BACKLOG 13.35) but cannot run until Core publishes list-channels. The daily `reconcile-channels` job logs "channel
   reconciliation skipped", and `GET /api/studio/admin/channels/reconciliation` answers 501. Until
   then, a missed DELETE leaves a channel active until Meta refuses its token. Once Core ships the
   endpoint:

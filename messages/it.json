@@ -85,7 +85,13 @@
       "label": "Attività",
       "choose": "Scegli un’attività",
       "idPlaceholder": "ID attività PostMind",
-      "listPending": "L’elenco delle attività è in attesa di PostMind Core: inserisci l’ID dell’attività."
+      "listPending": "L’elenco delle attività è in attesa di PostMind Core: inserisci l’ID dell’attività.",
+      "add": "Aggiungi un’attività",
+      "addLabel": "Nuova attività",
+      "addPlaceholder": "Nome dell’attività",
+      "addSubmit": "Aggiungi",
+      "addCancel": "Annulla",
+      "created": "{name} aggiunta"
     },
     "feedback": {
       "button": "Feedback",
@@ -1813,7 +1819,9 @@
       "platform_error": "La piattaforma ha avuto un problema a completare il collegamento. Riprova tra poco.",
       "upstream_error": "La piattaforma ha avuto un problema a completare il collegamento. Riprova tra poco.",
       "internal_error": "Qualcosa è andato storto nel completare il collegamento. Riprova.",
-      "unknown": "Il collegamento non è stato completato ({code}). Riprova."
+      "unknown": "Il collegamento non è stato completato ({code}). Riprova.",
+      "meta_no_accounts": "Meta non ha condiviso nessuna Pagina Facebook su cui puoi pubblicare. Collegati di nuovo e scegli almeno una Pagina (e il relativo account Instagram) nella finestra di Meta.",
+      "wrong_user": "Questo collegamento è stato avviato da un altro utente di Studio. Ricomincia dopo aver effettuato l’accesso con il tuo account."
     },
     "dismiss": "Chiudi",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "Meta ha rifiutato o fatto scadere questo accesso. I post programmati su questo account non verranno pubblicati finché non lo ricolleghi nelle impostazioni di PostMind.",
       "connectedVia": "Collegato tramite PostMind il {date}",
-      "guidance": "Collega Instagram e Facebook nelle impostazioni di PostMind."
+      "guidance": "Collega Instagram e Facebook nelle impostazioni di PostMind.",
+      "connectButton": "Collega con Facebook",
+      "studioGuidance": "Un solo accesso a Facebook collega le Pagine che scegli e gli account Instagram professionali associati.",
+      "notConfigured": "Instagram e Facebook non sono ancora disponibili: l’app Meta di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore."
+    },
+    "descriptionStandalone": "Gli account su cui Studio pubblica. Collegali uno per uno per l’attività selezionata.",
+    "connectedMetaNotice": "{count, plural, one {# account Facebook o Instagram collegato} other {# account Facebook e Instagram collegati}}. Ora puoi pubblicarvi.",
+    "dataDeletion": {
+      "pageTitle": "Stato dell’eliminazione dei dati",
+      "eyebrow": "PostMind Studio · Dati di Facebook e Instagram",
+      "title": "La tua richiesta di eliminazione dei dati",
+      "completed": "Stato: completata",
+      "receivedOn": "Abbiamo ricevuto la tua richiesta il {date} e l’abbiamo completata subito.",
+      "deletedCount": "{count, plural, =0 {Studio non conservava alcun collegamento Facebook o Instagram per te.} one {È stato eliminato # collegamento Facebook o Instagram.} other {Sono stati eliminati # collegamenti Facebook o Instagram.}}",
+      "whatWasDeleted": "Studio ha eliminato i token di accesso forniti da Meta, il tuo ID utente Meta, le autorizzazioni concesse e i nomi degli account.",
+      "retained": "I video già pubblicati restano su Facebook e Instagram; rimuovili lì se vuoi eliminarli. Studio conserva solo il numero della Pagina o dell’account Instagram a cui fa riferimento la cronologia delle pubblicazioni.",
+      "codeLabel": "Codice di conferma:",
+      "unknownCode": "Non abbiamo trovato alcuna richiesta di eliminazione con questo codice di conferma. Controlla il link fornito da Facebook."
     }
   },
   "library": {

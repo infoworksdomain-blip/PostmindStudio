@@ -85,7 +85,13 @@
       "label": "商家",
       "choose": "选择商家",
       "idPlaceholder": "PostMind 商家 ID",
-      "listPending": "商家列表需等待 PostMind Core 接入：请输入商家 ID。"
+      "listPending": "商家列表需等待 PostMind Core 接入：请输入商家 ID。",
+      "add": "添加商家",
+      "addLabel": "新商家",
+      "addPlaceholder": "商家名称",
+      "addSubmit": "添加",
+      "addCancel": "取消",
+      "created": "已添加 {name}"
     },
     "feedback": {
       "button": "反馈",
@@ -1813,7 +1819,9 @@
       "platform_error": "平台在完成连接时出现问题，请稍后重试。",
       "upstream_error": "平台在完成连接时出现问题，请稍后重试。",
       "internal_error": "完成连接时出错，请重试。",
-      "unknown": "连接未完成（{code}）。请重试。"
+      "unknown": "连接未完成（{code}）。请重试。",
+      "meta_no_accounts": "Meta 未共享任何你可以发布内容的 Facebook 公共主页。请重新连接，并在 Meta 窗口中至少选择一个公共主页（及其 Instagram 账号）。",
+      "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。"
     },
     "dismiss": "关闭",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "Meta 拒绝了此访问权限或权限已过期。在您于 PostMind 设置中重新连接之前，发往此账号的排期帖子都会失败。",
       "connectedVia": "通过 PostMind 连接于 {date}",
-      "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。"
+      "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。",
+      "connectButton": "使用 Facebook 连接",
+      "studioGuidance": "一次 Facebook 登录即可连接你选择的公共主页，以及与其关联的 Instagram 专业账号。",
+      "notConfigured": "Instagram 和 Facebook 暂不可用：Studio 的 Meta 应用尚未完成设置。请联系你的管理员。"
+    },
+    "descriptionStandalone": "Studio 发布内容的账号。请为所选商家逐一连接。",
+    "connectedMetaNotice": "{count, plural, other {已连接 # 个 Facebook 和 Instagram 账号}}。现在即可向这些账号发布。",
+    "dataDeletion": {
+      "pageTitle": "数据删除状态",
+      "eyebrow": "PostMind Studio · Facebook 和 Instagram 数据",
+      "title": "你的数据删除请求",
+      "completed": "状态：已完成",
+      "receivedOn": "我们于 {date} 收到你的请求，并已立即完成。",
+      "deletedCount": "{count, plural, =0 {Studio 未保存你的任何 Facebook 或 Instagram 连接。} other {已删除 # 个 Facebook 或 Instagram 连接。}}",
+      "whatWasDeleted": "Studio 已删除 Meta 提供的访问令牌、你的 Meta 用户 ID、你授予的权限以及账号名称。",
+      "retained": "已发布的视频仍保留在 Facebook 和 Instagram 上；如需删除，请在对应平台操作。Studio 仅保留其发布记录所引用的公共主页或 Instagram 账号编号。",
+      "codeLabel": "确认码：",
+      "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
     }
   },
   "library": {
