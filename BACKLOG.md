@@ -413,8 +413,8 @@ Plan: `plans/phase-18.md`. Operator decisions (2026-09-29): standalone product; 
 
 Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everything that does not depend on the operator or on the server being ready. Three parallel tracks.
 
-- [ ] **19.1** Track 1 — corpus tooling for the 50k reference library (`eu-corpus-source`).
+- [x] **19.1** Track 1 — corpus tooling for the 50k reference library (`eu-corpus-source`): `corpus:scan`, `corpus:manifest`, `corpus:rclone-config`, upload scripts, runbooks/corpus-upload.md (PR #28). The real upload waits on the operator's bucket and key.
 - [x] **19.2** Track 2 — go-live guide (`runbooks/go-live.md`, `docs-site/go-live.html`) and the settings template and checker (`npm run setup:env`, `npm run setup:check`).
-- [ ] **19.3** Track 3 — security hardening.
-- [ ] **19.4** Track 3 — dependency and CI upkeep.
+- [x] **19.3** Track 3 — security hardening: per-account 2FA and per-organisation/inviter invite limits, legal link guard (PR #29).
+- [x] **19.4** Track 3 — dependency and CI upkeep: 0 high advisories, actions on node24, `prisma.config.ts` (PR #29). Follow-ups for the operator: Node 20 → 22/24 (end of life 2026-04-30); vitest 4 for the last moderate advisory.
 - [x] **19.5** Track 2 — cancelled-organisation banner copy: a distinct "subscription ended" read-only banner with the deletion date, in 11 locales.
