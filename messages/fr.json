@@ -69,7 +69,8 @@
         "connections": "Connexions",
         "approvals": "Circuits de validation",
         "export": "Exporter les données",
-        "admin": "Administration"
+        "admin": "Administration",
+        "settings": "Paramètres"
       }
     },
     "theme": {
@@ -172,6 +173,45 @@
       "publicationAnalytics": "Statistiques de la publication",
       "approvals": "Circuits de validation",
       "admin": "Centre d’administration"
+    },
+    "account": {
+      "switcherAria": "Organisation : {name}. Changer d’organisation",
+      "organisations": "Vos organisations",
+      "current": "Organisation actuelle",
+      "newOrganisation": "Nouvelle organisation…",
+      "switchFailed": "Impossible de changer d’organisation. Veuillez réessayer.",
+      "userMenuAria": "Menu du compte pour {name}",
+      "organisationSettings": "Paramètres de l’organisation",
+      "members": "Membres",
+      "security": "Sécurité et connexion",
+      "signOut": "Se déconnecter",
+      "signOutFailed": "Impossible de vous déconnecter. Veuillez réessayer."
+    },
+    "banners": {
+      "readOnly": {
+        "title": "Votre compte est en lecture seule.",
+        "body": "Le paiement est en retard, vous pouvez donc consulter, télécharger et exporter, mais pas créer ni publier. Mettez à jour vos informations de paiement pour continuer.",
+        "action": "Mettre à jour le paiement"
+      },
+      "pastDue": {
+        "title": "Votre dernier paiement a échoué.",
+        "body": "Tout fonctionne encore pour le moment. Mettez à jour vos informations de paiement pour éviter toute interruption.",
+        "bodyUntil": "Tout fonctionne jusqu’au {date}. Mettez à jour vos informations de paiement avant cette date pour éviter toute interruption.",
+        "action": "Mettre à jour le paiement"
+      },
+      "noPlan": {
+        "title": "Choisissez un forfait pour commencer à créer des vidéos.",
+        "body": "Vous pouvez configurer votre marque et connecter des comptes dès maintenant ; la génération et la publication nécessitent un forfait ou un essai gratuit.",
+        "action": "Voir les forfaits"
+      },
+      "trial": {
+        "body": "{days, plural, =0 {Votre essai gratuit se termine aujourd’hui.} one {Votre essai gratuit se termine dans # jour.} other {Votre essai gratuit se termine dans # jours.}}",
+        "action": "Choisir un forfait"
+      },
+      "impersonating": {
+        "title": "Vue équipe.",
+        "body": "Vous consultez Studio en tant que {name}. Cette session est en lecture seule et chaque action est enregistrée dans le journal d’audit."
+      }
     }
   },
   "errors": {
@@ -2209,7 +2249,9 @@
         "usage": "Utilisation du forfait",
         "deadLetters": "Lettres mortes",
         "forceApprovals": "Approbations forcées",
-        "beta": "Bêta"
+        "beta": "Bêta",
+        "users": "Utilisateurs",
+        "subscriptions": "Abonnements"
       }
     },
     "cost": {
@@ -2909,7 +2951,9 @@
       "connect": "Connexion",
       "brandKit": "Kit de marque",
       "firstVideo": "Première vidéo",
-      "celebrate": "Célébration"
+      "celebrate": "Célébration",
+      "organisation": "Organisation",
+      "business": "Entreprise"
     },
     "stepIndicator": {
       "aria": "Progression de la configuration",
@@ -3021,6 +3065,35 @@
       "description": "Studio est prêt à créer et publier des vidéos pour votre entreprise.",
       "makeAnother": "Créer une autre vidéo",
       "goToProjects": "Aller aux projets"
+    },
+    "organisation": {
+      "title": "Nommez votre organisation",
+      "description": "L’organisation regroupe votre équipe, votre forfait et votre facturation. Vous pourrez y ajouter d’autres entreprises plus tard.",
+      "name": "Nom de l’organisation",
+      "namePlaceholder": "p. ex. Leeds Sourdough Ltd",
+      "country": "Pays",
+      "countryChoose": "Choisir un pays…",
+      "countryHint": "Utilisé pour la taxe sur vos factures.",
+      "language": "Langue par défaut",
+      "submit": "Créer l’organisation",
+      "created": "{name} est prête."
+    },
+    "business": {
+      "title": "Ajoutez votre première entreprise",
+      "description": "Chaque entreprise dispose de son propre kit de marque, de ses comptes connectés et de ses vidéos. Ajoutez son site web et Studio pourra apprendre votre marque à partir de celui-ci.",
+      "loading": "Chargement de vos entreprises",
+      "existing": "Choisir une entreprise",
+      "orNew": "Ou en ajouter une nouvelle :",
+      "name": "Nom de l’entreprise",
+      "namePlaceholder": "p. ex. Leeds Sourdough",
+      "website": "Site web (facultatif)",
+      "websitePlaceholder": "leedssourdough.co.uk",
+      "websiteHint": "Sans https:// convient très bien.",
+      "submit": "Ajouter l’entreprise",
+      "created": "{name} a été ajoutée.",
+      "coreTitle": "Configurez d’abord une entreprise",
+      "coreDescription": "Vos entreprises proviennent de PostMind. Choisissez-en une ou ajoutez-en une, puis revenez ici.",
+      "coreAction": "Aller à Entreprise"
     }
   },
   "share": {
@@ -3322,16 +3395,483 @@
       "unknown": "erreur inconnue"
     }
   },
-  "marketing": {},
+  "marketing": {
+    "meta": {
+      "title": "PostMind Studio · Vidéos courtes par IA pour les petites entreprises",
+      "description": "Transformez une simple idée en vidéos courtes à votre image pour TikTok, Reels, Shorts, Facebook, LinkedIn et X. Vérifiez, validez et publiez depuis un seul endroit."
+    },
+    "nav": {
+      "home": "Accueil PostMind Studio",
+      "aria": "Principal",
+      "pricing": "Tarifs",
+      "signIn": "Se connecter",
+      "startTrial": "Démarrer l’essai gratuit"
+    },
+    "hero": {
+      "eyebrow": "Studio vidéo IA pour les petites entreprises",
+      "title": "Une semaine de vidéos courtes, <em>prêtes avant que votre café refroidisse.</em>",
+      "lede": "Dites à Studio ce que vous voulez dire. Il rédige le script, tourne ou trouve chaque scène, ajoute votre voix, votre musique et vos sous-titres selon votre marque, puis monte la vidéo pour chaque plateforme. Vous validez, il publie.",
+      "primaryCta": "Démarrer l’essai gratuit",
+      "secondaryCta": "Voir les tarifs",
+      "assurances": {
+        "noEditing": "Aucune compétence en montage requise",
+        "yourBrand": "Vos couleurs, polices et ton",
+        "cancelAnytime": "Annulation à tout moment"
+      },
+      "frames": {
+        "one": "Tout juste sorti à 7 h",
+        "two": "Rencontrez les boulangers",
+        "three": "Trois pains, un week-end"
+      },
+      "slate": {
+        "scene": "Scène 01",
+        "take": "Prise 1"
+      }
+    },
+    "platforms": {
+      "title": "Un seul brief, adapté à chaque flux"
+    },
+    "steps": {
+      "eyebrow": "Comment ça marche",
+      "title": "Décrivez. Validez. Publiez.",
+      "brief": {
+        "title": "Écrivez quelques lignes",
+        "body": "Décrivez la vidéo, collez une page web ou choisissez un modèle. Studio rédige le script et le plan de tournage en quelques secondes."
+      },
+      "review": {
+        "title": "Vérifiez le montage",
+        "body": "Regardez chaque format côte à côte, remplacez un plan, modifiez un sous-titre ou demandez une autre prise. Rien n’est publié avant votre validation."
+      },
+      "publish": {
+        "title": "Publiez selon votre calendrier",
+        "body": "Publiez immédiatement ou planifiez la semaine. Studio publie sur chaque compte et rassemble les vues, les mentions J’aime et les commentaires dans un seul tableau de bord."
+      }
+    },
+    "samples": {
+      "eyebrow": "Planche contact",
+      "title": "Tous les formats, à partir d’un seul brief.",
+      "body": "Vertical pour TikTok, Reels et Shorts, carré et portrait pour les fils d’actualité, grand écran pour YouTube et LinkedIn.",
+      "note": "Illustrations des formats produits par Studio, et non des vidéos de clients.",
+      "captions": {
+        "market": "Marché du samedi, 8 h",
+        "studio": "Comment nous façonnons un pain au levain",
+        "workshop": "Dans les coulisses du comptoir",
+        "counter": "Nouveauté de la semaine"
+      }
+    },
+    "features": {
+      "eyebrow": "Conçu pour les petites équipes",
+      "title": "Tout ce dont une équipe marketing d’une seule personne a besoin.",
+      "body": "Studio se charge de la production, pour que vous puissiez consacrer votre temps à votre entreprise, pas au montage.",
+      "brand": {
+        "title": "Votre marque, à chaque fois",
+        "body": "Logo, couleurs, polices et ton de voix vivent dans un kit de marque que chaque vidéo respecte."
+      },
+      "approvals": {
+        "title": "Des validations adaptées à votre équipe",
+        "body": "Invitez vos collègues avec le bon rôle. Les créateurs rédigent, les propriétaires valident, et rien n’est publié par accident."
+      },
+      "calendar": {
+        "title": "Un calendrier qui publie pour vous",
+        "body": "Planifiez la semaine, déplacez les publications vers de nouveaux créneaux et laissez Studio publier au bon moment pour chaque plateforme."
+      },
+      "budget": {
+        "title": "Des coûts visibles",
+        "body": "Les quotas mensuels et les plafonds de dépenses sont affichés d’avance, sans mauvaise surprise sur la facture."
+      },
+      "languages": {
+        "title": "Onze langues",
+        "body": "Travaillez en anglais, français, espagnol, arabe, allemand, italien, portugais, hindi ou chinois, et créez des vidéos pour vos clients dans leur langue."
+      },
+      "library": {
+        "title": "Des idées quand vous en avez besoin",
+        "body": "Parcourez une bibliothèque de vidéos courtes qui ont fait leurs preuves et utilisez-en une comme point de départ."
+      }
+    },
+    "closing": {
+      "eyebrow": "Prêt quand vous l’êtes",
+      "title": "Votre première vidéo est à dix minutes.",
+      "body": "Créez votre compte, ajoutez votre entreprise et votre marque, connectez une plateforme et réalisez votre première vidéo. La configuration guidée vous accompagne à chaque étape.",
+      "primaryCta": "Démarrer l’essai gratuit",
+      "secondaryCta": "Comparer les forfaits",
+      "fineprint": "Prix hors TVA. Vous pouvez annuler à tout moment depuis vos paramètres de facturation."
+    },
+    "footer": {
+      "tagline": "Vidéos courtes par IA et publication pour les petites entreprises.",
+      "copyright": "© {year} {entity}",
+      "legalAria": "Mentions légales",
+      "legalTitle": "Mentions légales"
+    }
+  },
   "pricing": {},
-  "legal": {},
+  "legal": {
+    "docs": {
+      "terms": "Conditions d’utilisation",
+      "privacy": "Politique de confidentialité",
+      "cookies": "Politique relative aux cookies",
+      "acceptableUse": "Politique d’utilisation acceptable",
+      "dpa": "Accord de traitement des données",
+      "subprocessors": "Sous-traitants"
+    },
+    "navAria": "Documents légaux",
+    "navTitle": "Mentions légales",
+    "placeholder": {
+      "title": "Ce document n’a pas encore été publié.",
+      "body": "Le texte ci-dessous est provisoire. L’exploitant de ce service doit le remplacer par son propre texte avant le lancement."
+    },
+    "notTranslated": "Ce document n’est pas encore disponible dans votre langue ; il est donc affiché en anglais."
+  },
   "auth": {},
   "security": {},
-  "orgSettings": {},
-  "members": {},
+  "orgSettings": {
+    "meta": {
+      "organisationTitle": "Paramètres de l’organisation",
+      "membersTitle": "Membres",
+      "auditTitle": "Journal d’audit"
+    },
+    "nav": {
+      "aria": "Paramètres",
+      "organisation": "Organisation",
+      "members": "Membres",
+      "billing": "Facturation",
+      "audit": "Journal d’audit"
+    },
+    "page": {
+      "eyebrow": "Paramètres",
+      "title": "Organisation",
+      "description": "Les informations, la propriété et l’équipe de votre organisation.",
+      "loading": "Chargement des paramètres de l’organisation"
+    },
+    "details": {
+      "title": "Informations",
+      "description": "Visibles par votre équipe et sur vos factures.",
+      "readOnly": "Seuls les propriétaires et les administrateurs peuvent les modifier.",
+      "name": "Nom de l’organisation",
+      "logo": "URL du logo",
+      "logoPlaceholder": "https://example.com/logo.png",
+      "logoHint": "Un lien https:// vers une image carrée.",
+      "country": "Pays",
+      "countryNone": "Non défini",
+      "countryHint": "Utilisé pour la taxe sur vos factures.",
+      "defaultLocale": "Langue par défaut",
+      "localeNone": "Choix propre à chaque personne",
+      "saved": "Informations de l’organisation enregistrées."
+    },
+    "transfer": {
+      "title": "Transférer la propriété",
+      "description": "Faites d’un autre membre le propriétaire. Vous conservez le rôle d’administrateur.",
+      "nobody": "Invitez d’abord quelqu’un : la propriété ne peut être transférée qu’à un autre membre.",
+      "to": "Nouveau propriétaire",
+      "choose": "Choisir un membre…",
+      "action": "Transférer la propriété",
+      "confirmTitle": "Transférer la propriété ?",
+      "confirmBody": "{name} devient propriétaire et vous devenez administrateur. Cette personne pourra ensuite gérer la facturation et supprimer l’organisation.",
+      "done": "{name} est désormais propriétaire."
+    },
+    "delete": {
+      "title": "Supprimer l’organisation",
+      "description": "Annule votre abonnement et supprime toutes les entreprises, vidéos et comptes connectés. Les données sont conservées pendant 30 jours, puis supprimées définitivement.",
+      "action": "Supprimer l’organisation…",
+      "confirmTitle": "Supprimer {name} ?",
+      "confirmBody": "Cette action est irréversible après 30 jours. Tous les membres de l’organisation perdent immédiatement l’accès.",
+      "typeName": "Saisissez {name} pour confirmer",
+      "confirm": "Supprimer l’organisation",
+      "done": "La suppression de l’organisation est planifiée."
+    },
+    "audit": {
+      "title": "Journal d’audit",
+      "description": "Qui a fait quoi dans votre organisation : membres, paramètres, facturation et connexions.",
+      "logTitle": "Activité",
+      "filter": "Afficher",
+      "loading": "Chargement du journal d’audit",
+      "empty": {
+        "title": "Rien à afficher pour l’instant",
+        "body": "Les modifications des membres, des paramètres et de la facturation apparaîtront ici."
+      },
+      "when": "Quand",
+      "who": "Qui",
+      "what": "Quoi",
+      "target": "Élément",
+      "viaStaff": "Vue équipe",
+      "loadMore": "Charger plus",
+      "categories": {
+        "all": "Tout",
+        "members": "Membres",
+        "organisation": "Organisation",
+        "billing": "Facturation",
+        "security": "Sécurité",
+        "businesses": "Entreprises",
+        "connections": "Connexions",
+        "staff": "Équipe PostMind"
+      },
+      "actors": {
+        "user": "Un ancien membre",
+        "staff": "Équipe PostMind",
+        "stripe": "Stripe",
+        "meta": "Meta",
+        "system": "Studio"
+      },
+      "actions": {
+        "member_invited": "A invité un membre",
+        "member_joined": "A rejoint l’organisation",
+        "member_role_changed": "A modifié le rôle d’un membre",
+        "member_removed": "A retiré un membre",
+        "org_created": "A créé l’organisation",
+        "org_renamed": "A renommé l’organisation",
+        "org_updated": "A mis à jour les informations de l’organisation",
+        "org_deleted": "A supprimé l’organisation",
+        "billing_checkout_started": "A démarré un paiement",
+        "billing_subscription_changed": "Abonnement modifié",
+        "billing_payment_failed": "Un paiement a échoué",
+        "billing_topup_purchased": "A acheté un forfait complémentaire",
+        "auth_sign_in": "S’est connecté",
+        "auth_password_changed": "A modifié son mot de passe",
+        "auth_twoFactor_enabled": "A activé la vérification en deux étapes",
+        "auth_twoFactor_disabled": "A désactivé la vérification en deux étapes",
+        "auth_session_revoked": "A déconnecté une session",
+        "business_created": "A ajouté une entreprise",
+        "business_deleted": "A supprimé une entreprise",
+        "meta_connected": "A connecté Facebook ou Instagram",
+        "meta_disconnected": "A déconnecté Facebook ou Instagram",
+        "entitlement_override_set": "Limites du forfait modifiées par PostMind",
+        "staff_impersonation_started": "L’équipe PostMind a démarré une vue d’assistance",
+        "staff_impersonation_ended": "L’équipe PostMind a terminé une vue d’assistance"
+      }
+    }
+  },
+  "members": {
+    "page": {
+      "eyebrow": "Paramètres",
+      "title": "Membres",
+      "description": "Invitez votre équipe et choisissez ce que chaque personne peut faire.",
+      "loading": "Chargement des membres",
+      "inviteTitle": "Inviter quelqu’un",
+      "inviteDescription": "Cette personne reçoit un e-mail avec un lien valable 7 jours.",
+      "membersTitle": "{count, plural, one {# membre} other {# membres}}",
+      "empty": "Aucun membre pour l’instant",
+      "pendingTitle": "Invitations en attente",
+      "seatsTitle": "Places"
+    },
+    "seats": {
+      "label": "Places utilisées",
+      "usedOf": "{used} sur {limit}",
+      "unlimited": "{used} utilisées · sans limite",
+      "full": "Toutes les places de votre forfait sont utilisées.",
+      "upgrade": "Passez à un forfait supérieur pour plus de places"
+    },
+    "invite": {
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "nom@exemple.com",
+      "role": "Rôle",
+      "send": "Envoyer l’invitation",
+      "hint": "Les propriétaires gèrent la facturation et peuvent supprimer l’organisation ; les administrateurs gèrent les membres et les paramètres ; les éditeurs valident et publient ; les créateurs réalisent les vidéos ; les lecteurs peuvent seulement regarder.",
+      "sent": "Invitation envoyée à {email}."
+    },
+    "roles": {
+      "owner": "Propriétaire",
+      "admin": "Administrateur",
+      "publisher": "Éditeur",
+      "creator": "Créateur",
+      "viewer": "Lecteur"
+    },
+    "table": {
+      "member": "Membre",
+      "role": "Rôle",
+      "joined": "Inscription",
+      "actions": "Actions",
+      "you": "Vous",
+      "twoFactor": "Vérification en deux étapes activée",
+      "roleFor": "Rôle de {name}",
+      "roleChanged": "{name} a maintenant le rôle {role}.",
+      "remove": "Retirer",
+      "removeAria": "Retirer {name}",
+      "leave": "Quitter",
+      "removeTitle": "Retirer {name} ?",
+      "removeBody": "Cette personne perd immédiatement l’accès à cette organisation. Ses vidéos restent conservées.",
+      "removed": "{name} a été retiré(e)."
+    },
+    "pending": {
+      "none": "Aucune invitation en attente.",
+      "expires": "expire le {date}",
+      "resend": "Renvoyer",
+      "resendAria": "Renvoyer l’invitation à {email}",
+      "revoke": "Révoquer",
+      "revokeAria": "Révoquer l’invitation à {email}",
+      "resent": "Invitation renvoyée à {email}.",
+      "revoked": "Invitation révoquée."
+    },
+    "errors": {
+      "lastOwner": "Le dernier propriétaire ne peut ni partir ni être rétrogradé. Transférez d’abord la propriété.",
+      "ownerOnly": "Seul un propriétaire peut faire cela.",
+      "alreadyMember": "Cette personne est déjà membre.",
+      "nameMismatch": "Le nom saisi ne correspond pas."
+    }
+  },
   "billing": {},
   "upgrade": {},
   "email": {},
-  "adminOrgs": {},
-  "adminUsers": {}
+  "adminOrgs": {
+    "list": {
+      "search": "Rechercher des organisations",
+      "searchPlaceholder": "Nom, identifiant ou id",
+      "searchAction": "Rechercher",
+      "loading": "Chargement des organisations",
+      "empty": "Aucune organisation ne correspond.",
+      "results": "{count, plural, one {# organisation} other {# organisations}}",
+      "name": "Organisation",
+      "plan": "Forfait",
+      "status": "Statut",
+      "members": "Membres",
+      "cost": "Coût ce mois-ci",
+      "created": "Créée le",
+      "actions": "Actions",
+      "open": "Ouvrir",
+      "openAria": "Ouvrir {name}",
+      "byIdTitle": "Rechercher par id",
+      "byIdHint": "Consultez la politique et les plafonds de coûts de n’importe quelle organisation par son id, y compris celles gérées par PostMind Core."
+    },
+    "detail": {
+      "back": "Toutes les organisations",
+      "loading": "Chargement de l’organisation",
+      "meta": "{id} · créée le {created}",
+      "plan": "Forfait",
+      "none": "Aucun",
+      "sources": {
+        "stripe": "Depuis Stripe",
+        "trial": "Essai gratuit",
+        "admin": "Défini par l’équipe",
+        "core": "Depuis PostMind Core",
+        "none": "Aucun forfait"
+      },
+      "access": "Accès",
+      "members": "Membres",
+      "pending": "{count, plural, =0 {Aucune invitation en attente} one {# invitation en attente} other {# invitations en attente}}",
+      "cost": "Coût ce mois-ci",
+      "businesses": "{count, plural, =0 {Aucune entreprise} one {# entreprise} other {# entreprises}}",
+      "graceUntil": "Le délai de grâce pour le paiement se termine le {date}.",
+      "membersTitle": "Membres",
+      "subscriptionsTitle": "Abonnements",
+      "subscriptionsHint": "Lecture seule ; modifiez les forfaits dans Stripe ou avec une dérogation de droits.",
+      "noSubscription": "Aucun abonnement.",
+      "cancelling": "Annulation à la fin de la période"
+    },
+    "status": {
+      "trialing": "Essai",
+      "active": "Actif",
+      "pastDue": "En retard",
+      "unpaid": "Impayé",
+      "canceled": "Annulé",
+      "incomplete": "Incomplet",
+      "incompleteExpired": "Paiement expiré",
+      "paused": "En pause",
+      "full": "Accès complet",
+      "readOnly": "Lecture seule",
+      "noPlan": "Aucun forfait",
+      "deleted": "Supprimé",
+      "banned": "Banni"
+    },
+    "subscriptions": {
+      "readOnlyNote": "Lecture seule. Les abonnements se modifient dans Stripe (ou via le portail client) ; les limites du forfait se modifient avec une dérogation de droits.",
+      "filter": "Statut",
+      "all": "Tous les statuts",
+      "loading": "Chargement des abonnements",
+      "empty": "Aucun abonnement ne correspond.",
+      "results": "{count, plural, one {# abonnement} other {# abonnements}}",
+      "organisation": "Organisation",
+      "plan": "Prix",
+      "status": "Statut",
+      "renews": "Fin de la période",
+      "grace": "Fin du délai de grâce",
+      "cancelling": "Annulation à la fin de la période"
+    },
+    "legal": {
+      "title": "Les documents légaux ne sont pas prêts pour le lancement.",
+      "blocking": "L’inscription publique reste fermée en production jusqu’à ce que les conditions d’utilisation et la politique de confidentialité soient remplacées par votre propre texte.",
+      "warning": "L’inscription n’est pas bloquée, mais ces documents sont encore provisoires.",
+      "placeholder": "provisoire",
+      "missing": "manquant",
+      "signupsClosed": "L’inscription publique est fermée jusqu’à cette date."
+    }
+  },
+  "adminUsers": {
+    "list": {
+      "search": "Rechercher des utilisateurs",
+      "searchPlaceholder": "E-mail, nom ou id",
+      "searchAction": "Rechercher",
+      "loading": "Chargement des utilisateurs",
+      "empty": "Aucun utilisateur ne correspond.",
+      "results": "{count, plural, one {# utilisateur} other {# utilisateurs}}",
+      "user": "Utilisateur",
+      "verified": "E-mail vérifié",
+      "twoFactor": "2FA",
+      "role": "Rôle",
+      "sessions": "Sessions",
+      "created": "Inscrit le",
+      "actions": "Actions",
+      "open": "Ouvrir",
+      "openAria": "Ouvrir {name}",
+      "yes": "Oui",
+      "no": "Non"
+    },
+    "detail": {
+      "back": "Tous les utilisateurs",
+      "loading": "Chargement de l’utilisateur",
+      "verified": "E-mail vérifié",
+      "twoFactor": "Vérification en deux étapes",
+      "role": "Rôle",
+      "roles": {
+        "user": "Client",
+        "staff": "Équipe",
+        "superadmin": "Super-administrateur"
+      },
+      "sessions": "Sessions actives",
+      "yes": "Oui",
+      "no": "Non",
+      "banReason": "Banni : {reason}",
+      "membershipsTitle": "Organisations",
+      "noMemberships": "N’est membre d’aucune organisation.",
+      "actionsTitle": "Actions",
+      "actionsHint": "Chaque action nécessite un motif et est enregistrée dans le journal d’audit.",
+      "ban": "Bannir l’utilisateur",
+      "unban": "Lever le bannissement",
+      "revokeSessions": "Déconnecter partout",
+      "resetTwoFactor": "Réinitialiser la vérification en deux étapes",
+      "impersonate": "Voir en tant que cet utilisateur",
+      "impersonationOff": "La vue « en tant qu’utilisateur » est désactivée (STUDIO_IMPERSONATION_ENABLED).",
+      "done": {
+        "ban": "Utilisateur banni et déconnecté.",
+        "unban": "Bannissement levé.",
+        "sessions": "Utilisateur déconnecté partout.",
+        "twoFactor": "Vérification en deux étapes réinitialisée.",
+        "impersonate": "Ouverture d’une vue en lecture seule."
+      },
+      "confirm": {
+        "ban": {
+          "title": "Bannir {name} ?",
+          "body": "Cette personne est déconnectée immédiatement et ne pourra pas se reconnecter avant la levée du bannissement.",
+          "action": "Bannir l’utilisateur"
+        },
+        "unban": {
+          "title": "Lever le bannissement de {name} ?",
+          "body": "Cette personne pourra se reconnecter immédiatement.",
+          "action": "Lever le bannissement"
+        },
+        "sessions": {
+          "title": "Déconnecter {name} partout ?",
+          "body": "Chaque navigateur et appareil sur lequel cette personne est connectée sera déconnecté.",
+          "action": "Déconnecter partout"
+        },
+        "twoFactor": {
+          "title": "Réinitialiser la vérification en deux étapes pour {name} ?",
+          "body": "Uniquement après avoir vérifié son identité par un autre moyen. Son authentificateur et ses codes de secours cessent de fonctionner et devront être reconfigurés.",
+          "action": "Réinitialiser"
+        },
+        "impersonate": {
+          "title": "Voir Studio en tant que {name} ?",
+          "body": "Une session de 30 minutes, en lecture seule, avec une bannière. Tout ce que vous ouvrez est audité.",
+          "action": "Démarrer la vue"
+        }
+      }
+    }
+  }
 }

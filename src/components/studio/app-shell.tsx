@@ -20,6 +20,7 @@ import {
   Moon,
   Plus,
   Send,
+  Settings,
   ShieldAlert,
   Sun,
 } from 'lucide-react';
@@ -27,6 +28,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
+import { AccountBanners } from './account/account-banners';
+import { AccountControls } from './account/account-menu';
 import { BusinessSwitcher } from './business-picker';
 import { FeedbackButton } from './feedback-dialog';
 import { LanguageSwitcher } from './i18n/language-switcher';
@@ -50,11 +53,14 @@ export const NAV = [
   { href: '/business', key: 'business', icon: Building2, group: 'setup' },
   { href: '/connections', key: 'connections', icon: Link2, group: 'setup' },
   { href: '/approvals', key: 'approvals', icon: ListChecks, group: 'setup' },
+  // Phase 18: organisation settings, members and audit (active on every /settings/* page).
+  { href: '/settings/organisation', key: 'settings', icon: Settings, group: 'setup' },
   { href: '/account/export', key: 'export', icon: Download, group: 'setup' },
   { href: '/admin', key: 'admin', icon: ShieldAlert, group: 'staff' },
 ] as const;
 
 function isActive(pathname: string, href: string) {
+  if (href.startsWith('/settings/')) return pathname.startsWith('/settings/');
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -193,9 +199,11 @@ export function AppShell({ children }: { children: ReactNode }) {
             <LanguageSwitcher />
             <NotificationsBell />
             <ThemeToggle />
+            <AccountControls />
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-8 md:py-10">
+          <AccountBanners />
           <UsageBanner />
           {children}
         </main>

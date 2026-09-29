@@ -18,6 +18,8 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
+  // The business picker remembers the chosen business in localStorage (business-context.tsx).
+  window.localStorage.clear();
 });
 
 const INTRO = {
@@ -34,7 +36,7 @@ const INTRO = {
 
 function onboarding(over: Partial<Onboarding> = {}): Onboarding {
   return {
-    step: 'connect',
+    step: 'brand_kit',
     completed: [],
     firstVideoProjectId: null,
     dismissedAt: null,
@@ -72,7 +74,7 @@ const patches = (api: ReturnType<typeof mockFetch>) =>
 
 describe('WelcomeWizard', () => {
   it('resumes from the server step and shows progress', async () => {
-    server({ step: 'first_video', completed: ['connect', 'brand_kit'] }, (req) =>
+    server({ step: 'first_video', completed: ['brand_kit', 'connect'] }, (req) =>
       req.url.pathname.endsWith('/templates') ? ok({ data: [INTRO] }) : ok({ data: [] }),
     );
     renderScreen(<WelcomeWizard />);
@@ -80,15 +82,26 @@ describe('WelcomeWizard', () => {
     const steps = within(screen.getByRole('list', { name: 'Setup progress' })).getAllByRole(
       'listitem',
     );
-    expect(steps).toHaveLength(4);
-    expect(steps[2]).toHaveAttribute('aria-current', 'step');
+    // Phase 18: Organisation, Business, Brand kit, Connect, First video, Celebrate.
+    expect(steps).toHaveLength(6);
+    expect(steps.map((s) => s.textContent?.replace(/\(done\)|\d/g, '').trim())).toEqual([
+      'Organisation',
+      'Business',
+      'Brand kit',
+      'Connect',
+      'First video',
+      'Celebrate',
+    ]);
+    expect(steps[4]).toHaveAttribute('aria-current', 'step');
     expect(steps[0]).toHaveTextContent('(done)');
-    expect(steps[3]).not.toHaveTextContent('(done)');
+    expect(steps[3]).toHaveTextContent('(done)');
+    expect(steps[5]).not.toHaveTextContent('(done)');
     expect(screen.getByRole('button', { name: /Continue/ })).toBeDisabled();
   });
 
   it('continues past Connect once an account is connected and saves progress', async () => {
-    const api = server({}, (req) => {
+    const api = server({ step: 'connect', completed: ['brand_kit'] }, (req) => {
+      if (req.url.pathname.endsWith('/templates')) return ok({ data: [INTRO] });
       if (req.url.pathname.endsWith('/platform-connections'))
         return ok({
           data: [
@@ -108,12 +121,12 @@ describe('WelcomeWizard', () => {
     const list = await screen.findByRole('list', { name: 'Connected accounts' });
     expect(list).toHaveTextContent('@leedssourdough');
     await user.click(screen.getByRole('button', { name: /Continue/ }));
-    await screen.findByRole('heading', { name: 'Your brand in three clicks' });
-    expect(patches(api)).toEqual([{ step: 'brand_kit', completed: ['connect'] }]);
+    await screen.findByRole('heading', { name: 'Make your first video' });
+    expect(patches(api)).toEqual([{ step: 'first_video', completed: ['brand_kit', 'connect'] }]);
   });
 
   it('builds a brand kit from the logo palette, a font and tone chips', async () => {
-    const api = server({ step: 'brand_kit', completed: ['connect'] }, (req) => {
+    const api = server({ step: 'brand_kit', completed: [] }, (req) => {
       if (req.url.pathname.endsWith('/brand-kits/extract'))
         return ok({ palette: ['#2B1D14', '#C6452D', '#F3E7D3'], suggestedFont: null });
       if (req.url.pathname.endsWith('/brand-kits') && req.method === 'POST')
@@ -155,7 +168,7 @@ describe('WelcomeWizard', () => {
     expect(await screen.findByText('Main brand kit is ready')).toBeVisible();
     await user.click(screen.getByRole('button', { name: /Continue/ }));
     await waitFor(() =>
-      expect(patches(api)).toEqual([{ step: 'first_video', completed: ['connect', 'brand_kit'] }]),
+      expect(patches(api)).toEqual([{ step: 'connect', completed: ['brand_kit'] }]),
     );
   });
 
@@ -248,25 +261,29 @@ describe('WelcomeWizard', () => {
     await user.click(screen.getByRole('button', { name: /Finish/ }));
     expect(await screen.findByText('You’re all set')).toBeVisible();
     expect(patches(api)).toEqual([
-      { step: 'done', completed: ['connect', 'brand_kit', 'first_video', 'celebrate'] },
+      { step: 'done', completed: ['brand_kit', 'connect', 'first_video', 'celebrate'] },
     ]);
   });
 
   it('skips a step without marking it done, goes back, and skips setup', async () => {
-    const api = server({}, (req) =>
-      req.url.pathname.endsWith('/platform-connections') ? ok({ data: [] }) : ok({ data: [] }),
+    const api = server({ step: 'connect' }, (req) =>
+      req.url.pathname.endsWith('/templates') ? ok({ data: [INTRO] }) : ok({ data: [] }),
     );
     const user = userEvent.setup();
     renderScreen(<WelcomeWizard />);
     expect(await screen.findByText('No accounts connected yet.')).toBeVisible();
     expect(screen.getByRole('button', { name: /Continue/ })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Skip this step' }));
-    await screen.findByRole('heading', { name: 'Your brand in three clicks' });
+    await screen.findByRole('heading', { name: 'Make your first video' });
     await user.click(screen.getByRole('button', { name: /Back/ }));
     await screen.findByRole('heading', { name: 'Connect where you post' });
     await user.click(screen.getByRole('button', { name: 'Skip setup' }));
     expect(await screen.findByText('Setup skipped')).toBeVisible();
-    expect(patches(api)).toEqual([{ step: 'brand_kit' }, { step: 'connect' }, { dismissed: true }]);
+    expect(patches(api)).toEqual([
+      { step: 'first_video' },
+      { step: 'connect' },
+      { dismissed: true },
+    ]);
 
     await user.click(screen.getByRole('button', { name: 'Resume setup' }));
     await screen.findByRole('heading', { name: 'Connect where you post' });
@@ -283,7 +300,7 @@ describe('WelcomeWizard', () => {
       if (req.url.pathname.endsWith('/onboarding'))
         return req.method === 'PATCH'
           ? fail(400, 'Nothing to update', 'validation_error')
-          : ok({ onboarding: onboarding() });
+          : ok({ onboarding: onboarding({ step: 'connect' }) });
       return ok({ data: [] });
     });
     const user = userEvent.setup();
@@ -293,9 +310,92 @@ describe('WelcomeWizard', () => {
     expect(screen.getByRole('heading', { name: 'Connect where you post' })).toBeVisible();
   });
 
-  it('asks for a business first', async () => {
-    mockFetch(() => ok({ onboarding: onboarding() }));
+  it('asks for the first business, creates it and moves on to the brand kit', async () => {
+    const api = server({}, (req) => {
+      if (req.url.pathname === '/api/studio/businesses' && req.method === 'POST')
+        return {
+          status: 201,
+          body: { ok: true, business: { id: 'biz_new', name: 'Leeds Sourdough' } },
+        };
+      return ok({ data: [] });
+    });
+    const user = userEvent.setup();
     renderScreen(<WelcomeWizard />, null);
-    expect(await screen.findByText('Pick a business first')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Add your first business' })).toBeVisible();
+    const steps = within(screen.getByRole('list', { name: 'Setup progress' })).getAllByRole(
+      'listitem',
+    );
+    expect(steps[1]).toHaveAttribute('aria-current', 'step');
+    await user.type(screen.getByLabelText('Business name'), 'Leeds Sourdough');
+    await user.type(screen.getByLabelText('Website (optional)'), 'leedssourdough.co.uk');
+    await user.click(screen.getByRole('button', { name: 'Add business' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Your brand in three clicks' }),
+    ).toBeVisible();
+    expect(api.find('POST', '/businesses')[0]!.body).toEqual({
+      name: 'Leeds Sourdough',
+      domain: 'leedssourdough.co.uk',
+    });
+  });
+
+  it('lets the user pick an existing business', async () => {
+    server({}, (req) =>
+      req.url.pathname === '/api/studio/businesses'
+        ? ok({ data: [{ id: 'biz_9', name: 'Harbour Coffee', domain: 'harbour.test' }] })
+        : ok({ data: [] }),
+    );
+    const user = userEvent.setup();
+    renderScreen(<WelcomeWizard />, null);
+    await user.click(await screen.findByRole('button', { name: /Harbour Coffee/ }));
+    expect(
+      await screen.findByRole('heading', { name: 'Your brand in three clicks' }),
+    ).toBeVisible();
+  });
+
+  it('keeps the Core pointer when the business list belongs to Core (501)', async () => {
+    server({}, (req) =>
+      req.url.pathname === '/api/studio/businesses'
+        ? fail(501, 'waiting for Core list-businesses', 'not_implemented')
+        : ok({ data: [] }),
+    );
+    renderScreen(<WelcomeWizard />, null);
+    expect(await screen.findByText('Set up a business first')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Go to Business' })).toHaveAttribute(
+      'href',
+      '/business',
+    );
+  });
+
+  it('creates the organisation first when the user has none', async () => {
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    const api = mockFetch((req) => {
+      const path = req.url.pathname;
+      if (path === '/api/studio/me') return fail(403, 'No organisation', 'no_organisation');
+      if (path === '/api/studio/organisations' && req.method === 'POST')
+        return {
+          status: 201,
+          body: {
+            ok: true,
+            organisation: { id: 'org_1', name: 'Leeds Sourdough Ltd', slug: 'leeds' },
+          },
+        };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderScreen(<WelcomeWizard />, null);
+    expect(await screen.findByRole('heading', { name: 'Name your organisation' })).toBeVisible();
+    await user.type(screen.getByLabelText('Organisation name'), 'Leeds Sourdough Ltd');
+    await user.selectOptions(screen.getByLabelText('Country'), 'GB');
+    await user.selectOptions(screen.getByLabelText('Default language'), 'fr');
+    await user.click(screen.getByRole('button', { name: 'Create organisation' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/welcome'));
+    expect(api.find('POST', '/organisations')[0]!.body).toEqual({
+      name: 'Leeds Sourdough Ltd',
+      country: 'GB',
+      defaultLocale: 'fr',
+    });
+    // No onboarding state is read before the organisation exists.
+    expect(api.find('GET', '/onboarding')).toHaveLength(0);
   });
 });

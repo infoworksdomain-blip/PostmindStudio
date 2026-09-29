@@ -40,6 +40,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/.next ./.next
 COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/prompts ./prompts
+# Phase 18: the operator's legal Markdown for /legal/* (placeholders until replaced).
+COPY --from=build --chown=node:node /app/content ./content
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/tsconfig.json /app/next.config.ts ./

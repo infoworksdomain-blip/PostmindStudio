@@ -69,7 +69,8 @@
         "connections": "Connections",
         "approvals": "Approval workflows",
         "export": "Export data",
-        "admin": "Admin"
+        "admin": "Admin",
+        "settings": "Settings"
       }
     },
     "theme": {
@@ -172,6 +173,45 @@
       "publicationAnalytics": "Publication analytics",
       "approvals": "Approval workflows",
       "admin": "Admin Center"
+    },
+    "account": {
+      "switcherAria": "Organization: {name}. Switch organization",
+      "organisations": "Your organizations",
+      "current": "Current organization",
+      "newOrganisation": "New organization…",
+      "switchFailed": "Could not switch organization. Try again.",
+      "userMenuAria": "Account menu for {name}",
+      "organisationSettings": "Organization settings",
+      "members": "Members",
+      "security": "Security and sign-in",
+      "signOut": "Sign out",
+      "signOutFailed": "Could not sign you out. Try again."
+    },
+    "banners": {
+      "readOnly": {
+        "title": "Your account is read-only.",
+        "body": "Payment is overdue, so you can view, download and export, but not create or publish. Update your payment details to carry on.",
+        "action": "Update payment"
+      },
+      "pastDue": {
+        "title": "Your last payment failed.",
+        "body": "Everything still works for now. Update your payment details to avoid interruption.",
+        "bodyUntil": "Everything works until {date}. Update your payment details before then to avoid interruption.",
+        "action": "Update payment"
+      },
+      "noPlan": {
+        "title": "Choose a plan to start making videos.",
+        "body": "You can set up your brand and connect accounts now; generating and publishing need a plan or a free trial.",
+        "action": "See plans"
+      },
+      "trial": {
+        "body": "{days, plural, =0 {Your free trial ends today.} one {Your free trial ends in # day.} other {Your free trial ends in # days.}}",
+        "action": "Choose a plan"
+      },
+      "impersonating": {
+        "title": "Staff view.",
+        "body": "You are viewing Studio as {name}. This session is read-only and every request is audited."
+      }
     }
   },
   "errors": {
@@ -2209,7 +2249,9 @@
         "usage": "Plan usage",
         "deadLetters": "Dead letters",
         "forceApprovals": "Force-approvals",
-        "beta": "Beta"
+        "beta": "Beta",
+        "users": "Users",
+        "subscriptions": "Subscriptions"
       }
     },
     "cost": {
@@ -2909,7 +2951,9 @@
       "connect": "Connect",
       "brandKit": "Brand kit",
       "firstVideo": "First video",
-      "celebrate": "Celebrate"
+      "celebrate": "Celebrate",
+      "organisation": "Organization",
+      "business": "Business"
     },
     "stepIndicator": {
       "aria": "Setup progress",
@@ -3021,6 +3065,35 @@
       "description": "Studio is ready to make and publish videos for your business.",
       "makeAnother": "Make another video",
       "goToProjects": "Go to projects"
+    },
+    "organisation": {
+      "title": "Name your organization",
+      "description": "The organization holds your team, plan and billing. You can add more businesses to it later.",
+      "name": "Organization name",
+      "namePlaceholder": "e.g. Leeds Sourdough Ltd",
+      "country": "Country",
+      "countryChoose": "Choose a country…",
+      "countryHint": "Used for tax on your invoices.",
+      "language": "Default language",
+      "submit": "Create organization",
+      "created": "{name} is ready."
+    },
+    "business": {
+      "title": "Add your first business",
+      "description": "Each business has its own brand kit, connected accounts and videos. Add its website and Studio can learn your brand from it.",
+      "loading": "Loading your businesses",
+      "existing": "Pick a business",
+      "orNew": "Or add a new one:",
+      "name": "Business name",
+      "namePlaceholder": "e.g. Leeds Sourdough",
+      "website": "Website (optional)",
+      "websitePlaceholder": "leedssourdough.co.uk",
+      "websiteHint": "Without https:// is fine.",
+      "submit": "Add business",
+      "created": "{name} added.",
+      "coreTitle": "Set up a business first",
+      "coreDescription": "Your businesses come from PostMind. Choose or add one, then come back here.",
+      "coreAction": "Go to Business"
     }
   },
   "share": {
@@ -3322,16 +3395,483 @@
       "unknown": "an unknown error"
     }
   },
-  "marketing": {},
+  "marketing": {
+    "meta": {
+      "title": "PostMind Studio · AI short videos for small businesses",
+      "description": "Turn a one-line brief into on-brand short videos for TikTok, Reels, Shorts, Facebook, LinkedIn and X. Review, approve and publish from one place."
+    },
+    "nav": {
+      "home": "PostMind Studio home",
+      "aria": "Main",
+      "pricing": "Pricing",
+      "signIn": "Sign in",
+      "startTrial": "Start free trial"
+    },
+    "hero": {
+      "eyebrow": "AI video studio for small businesses",
+      "title": "A week of short videos, <em>made before your coffee cools.</em>",
+      "lede": "Tell Studio what you want to say. It writes the script, shoots or sources every scene, adds your voice, music and captions in your brand, and cuts it for every platform. You approve; it publishes.",
+      "primaryCta": "Start free trial",
+      "secondaryCta": "See pricing",
+      "assurances": {
+        "noEditing": "No editing skills needed",
+        "yourBrand": "Your colors, fonts and voice",
+        "cancelAnytime": "Cancel anytime"
+      },
+      "frames": {
+        "one": "Fresh out at 7am",
+        "two": "Meet the bakers",
+        "three": "Three loaves, one weekend"
+      },
+      "slate": {
+        "scene": "Scene 01",
+        "take": "Take 1"
+      }
+    },
+    "platforms": {
+      "title": "One brief, cut for every feed"
+    },
+    "steps": {
+      "eyebrow": "How it works",
+      "title": "Brief. Review. Publish.",
+      "brief": {
+        "title": "Write a line",
+        "body": "Describe the video, paste a web page or pick a template. Studio drafts the script and shot list in seconds."
+      },
+      "review": {
+        "title": "Check the cut",
+        "body": "Watch every format side by side, swap a shot, change a caption or ask for another take. Nothing goes out until you approve."
+      },
+      "publish": {
+        "title": "Post on schedule",
+        "body": "Publish now or schedule the week. Studio posts to each account and brings the views, likes and comments back to one dashboard."
+      }
+    },
+    "samples": {
+      "eyebrow": "Contact sheet",
+      "title": "Every shape, from one brief.",
+      "body": "Vertical for TikTok, Reels and Shorts, square and portrait for feeds, widescreen for YouTube and LinkedIn.",
+      "note": "Illustrations of the formats Studio renders, not customer videos.",
+      "captions": {
+        "market": "Saturday market, 8am",
+        "studio": "How we shape a sourdough",
+        "workshop": "Behind the counter",
+        "counter": "New this week"
+      }
+    },
+    "features": {
+      "eyebrow": "Built for small teams",
+      "title": "Everything a one-person marketing team needs.",
+      "body": "Studio does the production work, so you spend your time on the business, not on editing timelines.",
+      "brand": {
+        "title": "Your brand, every time",
+        "body": "Logo, colors, fonts and tone of voice live in a brand kit that every video follows."
+      },
+      "approvals": {
+        "title": "Approvals that fit your team",
+        "body": "Invite colleagues with the right role. Creators draft, owners approve, and nothing publishes by accident."
+      },
+      "calendar": {
+        "title": "A calendar that posts for you",
+        "body": "Plan the week, drag posts to new slots and let Studio publish at the right time for each platform."
+      },
+      "budget": {
+        "title": "Costs you can see",
+        "body": "Monthly allowances and spending caps are shown up front, so there are no surprise bills."
+      },
+      "languages": {
+        "title": "Eleven languages",
+        "body": "Work in English, French, Spanish, Arabic, German, Italian, Portuguese, Hindi or Chinese, and make videos for customers in theirs."
+      },
+      "library": {
+        "title": "Ideas when you need them",
+        "body": "Browse a library of proven short videos and use one as the starting point for your own."
+      }
+    },
+    "closing": {
+      "eyebrow": "Ready when you are",
+      "title": "Your first video is ten minutes away.",
+      "body": "Create your account, add your business and brand, connect a platform and make your first video. The guided setup walks you through it.",
+      "primaryCta": "Start free trial",
+      "secondaryCta": "Compare plans",
+      "fineprint": "Prices exclude tax. You can cancel at any time from your billing settings."
+    },
+    "footer": {
+      "tagline": "AI short videos and publishing for small businesses.",
+      "copyright": "© {year} {entity}",
+      "legalAria": "Legal",
+      "legalTitle": "Legal"
+    }
+  },
   "pricing": {},
-  "legal": {},
+  "legal": {
+    "docs": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "cookies": "Cookie Policy",
+      "acceptableUse": "Acceptable Use Policy",
+      "dpa": "Data Processing Agreement",
+      "subprocessors": "Sub-processors"
+    },
+    "navAria": "Legal documents",
+    "navTitle": "Legal",
+    "placeholder": {
+      "title": "This document has not been published yet.",
+      "body": "The text below is a placeholder. The operator of this service must replace it with their own before launch."
+    },
+    "notTranslated": "This document is not available in your language yet, so it is shown in English."
+  },
   "auth": {},
   "security": {},
-  "orgSettings": {},
-  "members": {},
+  "orgSettings": {
+    "meta": {
+      "organisationTitle": "Organization settings",
+      "membersTitle": "Members",
+      "auditTitle": "Audit log"
+    },
+    "nav": {
+      "aria": "Settings",
+      "organisation": "Organization",
+      "members": "Members",
+      "billing": "Billing",
+      "audit": "Audit log"
+    },
+    "page": {
+      "eyebrow": "Settings",
+      "title": "Organization",
+      "description": "Your organization’s details, ownership and team.",
+      "loading": "Loading organization settings"
+    },
+    "details": {
+      "title": "Details",
+      "description": "Shown to your team and on your invoices.",
+      "readOnly": "Only owners and admins can change these.",
+      "name": "Organization name",
+      "logo": "Logo URL",
+      "logoPlaceholder": "https://example.com/logo.png",
+      "logoHint": "An https:// link to a square image.",
+      "country": "Country",
+      "countryNone": "Not set",
+      "countryHint": "Used for tax on your invoices.",
+      "defaultLocale": "Default language",
+      "localeNone": "Each person’s own choice",
+      "saved": "Organization details saved."
+    },
+    "transfer": {
+      "title": "Transfer ownership",
+      "description": "Make another member the owner. You stay on as an admin.",
+      "nobody": "Invite someone first: ownership can only go to another member.",
+      "to": "New owner",
+      "choose": "Choose a member…",
+      "action": "Transfer ownership",
+      "confirmTitle": "Transfer ownership?",
+      "confirmBody": "{name} becomes an owner and you become an admin. They can then manage billing and delete the organization.",
+      "done": "{name} is now an owner."
+    },
+    "delete": {
+      "title": "Delete organization",
+      "description": "Cancels your subscription and removes every business, video and connected account. Data is kept for 30 days, then deleted for good.",
+      "action": "Delete organization…",
+      "confirmTitle": "Delete {name}?",
+      "confirmBody": "This cannot be undone after 30 days. Everyone in the organization loses access immediately.",
+      "typeName": "Type {name} to confirm",
+      "confirm": "Delete organization",
+      "done": "The organization is scheduled for deletion."
+    },
+    "audit": {
+      "title": "Audit log",
+      "description": "Who did what in your organization: members, settings, billing and connections.",
+      "logTitle": "Activity",
+      "filter": "Show",
+      "loading": "Loading the audit log",
+      "empty": {
+        "title": "Nothing here yet",
+        "body": "Changes to members, settings and billing appear here."
+      },
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "target": "Item",
+      "viaStaff": "Staff view",
+      "loadMore": "Load more",
+      "categories": {
+        "all": "Everything",
+        "members": "Members",
+        "organisation": "Organization",
+        "billing": "Billing",
+        "security": "Security",
+        "businesses": "Businesses",
+        "connections": "Connections",
+        "staff": "PostMind staff"
+      },
+      "actors": {
+        "user": "A former member",
+        "staff": "PostMind staff",
+        "stripe": "Stripe",
+        "meta": "Meta",
+        "system": "Studio"
+      },
+      "actions": {
+        "member_invited": "Invited a member",
+        "member_joined": "Joined the organization",
+        "member_role_changed": "Changed a member’s role",
+        "member_removed": "Removed a member",
+        "org_created": "Created the organization",
+        "org_renamed": "Renamed the organization",
+        "org_updated": "Updated organization details",
+        "org_deleted": "Deleted the organization",
+        "billing_checkout_started": "Started a checkout",
+        "billing_subscription_changed": "Subscription changed",
+        "billing_payment_failed": "A payment failed",
+        "billing_topup_purchased": "Bought a top-up pack",
+        "auth_sign_in": "Signed in",
+        "auth_password_changed": "Changed their password",
+        "auth_twoFactor_enabled": "Turned on two-step verification",
+        "auth_twoFactor_disabled": "Turned off two-step verification",
+        "auth_session_revoked": "Signed out a session",
+        "business_created": "Added a business",
+        "business_deleted": "Deleted a business",
+        "meta_connected": "Connected Facebook or Instagram",
+        "meta_disconnected": "Disconnected Facebook or Instagram",
+        "entitlement_override_set": "Plan limits changed by PostMind",
+        "staff_impersonation_started": "PostMind staff started a support view",
+        "staff_impersonation_ended": "PostMind staff ended a support view"
+      }
+    }
+  },
+  "members": {
+    "page": {
+      "eyebrow": "Settings",
+      "title": "Members",
+      "description": "Invite your team and choose what each person can do.",
+      "loading": "Loading members",
+      "inviteTitle": "Invite someone",
+      "inviteDescription": "They get an email with a link that works for 7 days.",
+      "membersTitle": "{count, plural, one {# member} other {# members}}",
+      "empty": "No members yet",
+      "pendingTitle": "Pending invitations",
+      "seatsTitle": "Seats"
+    },
+    "seats": {
+      "label": "Seats used",
+      "usedOf": "{used} of {limit}",
+      "unlimited": "{used} used · no limit",
+      "full": "Every seat on your plan is in use.",
+      "upgrade": "Upgrade for more seats"
+    },
+    "invite": {
+      "email": "Email address",
+      "emailPlaceholder": "name@example.com",
+      "role": "Role",
+      "send": "Send invitation",
+      "hint": "Owners manage billing and can delete the organization; admins manage members and settings; publishers approve and publish; creators make videos; viewers can only watch.",
+      "sent": "Invitation sent to {email}."
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "publisher": "Publisher",
+      "creator": "Creator",
+      "viewer": "Viewer"
+    },
+    "table": {
+      "member": "Member",
+      "role": "Role",
+      "joined": "Joined",
+      "actions": "Actions",
+      "you": "You",
+      "twoFactor": "Two-step verification on",
+      "roleFor": "Role for {name}",
+      "roleChanged": "{name} is now {role}.",
+      "remove": "Remove",
+      "removeAria": "Remove {name}",
+      "leave": "Leave",
+      "removeTitle": "Remove {name}?",
+      "removeBody": "They lose access to this organization right away. Their videos stay.",
+      "removed": "{name} was removed."
+    },
+    "pending": {
+      "none": "No pending invitations.",
+      "expires": "expires {date}",
+      "resend": "Resend",
+      "resendAria": "Resend the invitation to {email}",
+      "revoke": "Revoke",
+      "revokeAria": "Revoke the invitation to {email}",
+      "resent": "Invitation sent again to {email}.",
+      "revoked": "Invitation revoked."
+    },
+    "errors": {
+      "lastOwner": "The last owner cannot leave or be demoted. Transfer ownership first.",
+      "ownerOnly": "Only an owner can do that.",
+      "alreadyMember": "That person is already a member.",
+      "nameMismatch": "The name you typed does not match."
+    }
+  },
   "billing": {},
   "upgrade": {},
   "email": {},
-  "adminOrgs": {},
-  "adminUsers": {}
+  "adminOrgs": {
+    "list": {
+      "search": "Search organizations",
+      "searchPlaceholder": "Name, slug or id",
+      "searchAction": "Search",
+      "loading": "Loading organizations",
+      "empty": "No organizations match.",
+      "results": "{count, plural, one {# organization} other {# organizations}}",
+      "name": "Organization",
+      "plan": "Plan",
+      "status": "Status",
+      "members": "Members",
+      "cost": "Cost this month",
+      "created": "Created",
+      "actions": "Actions",
+      "open": "Open",
+      "openAria": "Open {name}",
+      "byIdTitle": "Look up by id",
+      "byIdHint": "Review policy and cost caps for any organization id, including ones held by PostMind Core."
+    },
+    "detail": {
+      "back": "All organizations",
+      "loading": "Loading the organization",
+      "meta": "{id} · created {created}",
+      "plan": "Plan",
+      "none": "None",
+      "sources": {
+        "stripe": "From Stripe",
+        "trial": "Free trial",
+        "admin": "Set by staff",
+        "core": "From PostMind Core",
+        "none": "No plan"
+      },
+      "access": "Access",
+      "members": "Members",
+      "pending": "{count, plural, =0 {No pending invitations} one {# pending invitation} other {# pending invitations}}",
+      "cost": "Cost this month",
+      "businesses": "{count, plural, =0 {No businesses} one {# business} other {# businesses}}",
+      "graceUntil": "Payment grace period ends {date}.",
+      "membersTitle": "Members",
+      "subscriptionsTitle": "Subscriptions",
+      "subscriptionsHint": "Read-only; change plans in Stripe or with an entitlement override.",
+      "noSubscription": "No subscription.",
+      "cancelling": "Cancels at period end"
+    },
+    "status": {
+      "trialing": "Trial",
+      "active": "Active",
+      "pastDue": "Past due",
+      "unpaid": "Unpaid",
+      "canceled": "Canceled",
+      "incomplete": "Incomplete",
+      "incompleteExpired": "Checkout expired",
+      "paused": "Paused",
+      "full": "Full access",
+      "readOnly": "Read-only",
+      "noPlan": "No plan",
+      "deleted": "Deleted",
+      "banned": "Banned"
+    },
+    "subscriptions": {
+      "readOnlyNote": "Read-only. Subscriptions change in Stripe (or through the customer portal); plan limits change with an entitlement override.",
+      "filter": "Status",
+      "all": "All statuses",
+      "loading": "Loading subscriptions",
+      "empty": "No subscriptions match.",
+      "results": "{count, plural, one {# subscription} other {# subscriptions}}",
+      "organisation": "Organization",
+      "plan": "Price",
+      "status": "Status",
+      "renews": "Period ends",
+      "grace": "Grace ends",
+      "cancelling": "Cancels at period end"
+    },
+    "legal": {
+      "title": "Legal documents are not ready for launch.",
+      "blocking": "Public sign-up stays closed in production until the Terms of Service and Privacy Policy are replaced with your own text.",
+      "warning": "Sign-up is not blocked, but these documents are still placeholders.",
+      "placeholder": "placeholder",
+      "missing": "missing",
+      "signupsClosed": "Public sign-up is closed until then."
+    }
+  },
+  "adminUsers": {
+    "list": {
+      "search": "Search users",
+      "searchPlaceholder": "Email, name or id",
+      "searchAction": "Search",
+      "loading": "Loading users",
+      "empty": "No users match.",
+      "results": "{count, plural, one {# user} other {# users}}",
+      "user": "User",
+      "verified": "Email verified",
+      "twoFactor": "2FA",
+      "role": "Role",
+      "sessions": "Sessions",
+      "created": "Joined",
+      "actions": "Actions",
+      "open": "Open",
+      "openAria": "Open {name}",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "detail": {
+      "back": "All users",
+      "loading": "Loading the user",
+      "verified": "Email verified",
+      "twoFactor": "Two-step verification",
+      "role": "Role",
+      "roles": {
+        "user": "Customer",
+        "staff": "Staff",
+        "superadmin": "Superadmin"
+      },
+      "sessions": "Active sessions",
+      "yes": "Yes",
+      "no": "No",
+      "banReason": "Banned: {reason}",
+      "membershipsTitle": "Organizations",
+      "noMemberships": "Not a member of any organization.",
+      "actionsTitle": "Actions",
+      "actionsHint": "Every action needs a reason and is recorded in the audit log.",
+      "ban": "Ban user",
+      "unban": "Lift ban",
+      "revokeSessions": "Sign out everywhere",
+      "resetTwoFactor": "Reset two-step verification",
+      "impersonate": "View as this user",
+      "impersonationOff": "Viewing as a user is switched off (STUDIO_IMPERSONATION_ENABLED).",
+      "done": {
+        "ban": "User banned and signed out.",
+        "unban": "Ban lifted.",
+        "sessions": "User signed out everywhere.",
+        "twoFactor": "Two-step verification reset.",
+        "impersonate": "Opening a read-only view."
+      },
+      "confirm": {
+        "ban": {
+          "title": "Ban {name}?",
+          "body": "They are signed out at once and cannot sign in until the ban is lifted.",
+          "action": "Ban user"
+        },
+        "unban": {
+          "title": "Lift the ban on {name}?",
+          "body": "They can sign in again right away.",
+          "action": "Lift ban"
+        },
+        "sessions": {
+          "title": "Sign {name} out everywhere?",
+          "body": "Every browser and device they are signed in on is signed out.",
+          "action": "Sign out everywhere"
+        },
+        "twoFactor": {
+          "title": "Reset two-step verification for {name}?",
+          "body": "Only after checking who they are another way. Their authenticator and backup codes stop working and they set it up again.",
+          "action": "Reset"
+        },
+        "impersonate": {
+          "title": "View Studio as {name}?",
+          "body": "A 30-minute, read-only session with a banner. Everything you open is audited.",
+          "action": "Start view"
+        }
+      }
+    }
+  }
 }

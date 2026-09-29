@@ -8,6 +8,7 @@ import { requireCapability, type StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
 import { applyBetaPlan } from '../services/beta';
+import { assertImpersonationAllowsWrite } from '../admin/impersonation';
 import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
 
 /** 422: an Idempotency-Key reused with a different body (the client has a bug). */
@@ -87,6 +88,8 @@ export function withStudioRoute(
         deps.logger,
       );
       requireCapability(tenant, capability);
+      // Phase 18 §2.5: impersonation sessions are read-only (defence in depth; Track A too).
+      assertImpersonationAllowsWrite(tenant, req.method);
       for (const feature of [options.feature ?? []].flat())
         await featureGateFor(deps.db).assertEnabled(feature, tenant.organisationId);
       await deps.rateLimiter?.check({

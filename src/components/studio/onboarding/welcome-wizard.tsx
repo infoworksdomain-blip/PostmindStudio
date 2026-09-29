@@ -1,13 +1,14 @@
 'use client';
 
-import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Building2, Check, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
+import { useMe } from '../account/use-me';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { BrandKitStep } from './brand-kit-step';
@@ -23,11 +24,15 @@ import {
   type OnboardingPatch,
   type OnboardingResponse,
   type WizardStep,
+  WIZARD_STEPS,
 } from './onboarding';
+import { CreateOrganisationStep, FirstBusinessStep } from './setup-steps';
 import { StepIndicator } from './step-indicator';
 
-// BACKLOG 13.14 — the /welcome first-run wizard (spec 14.5): Connect → Brand kit → First video →
-// Celebrate. Progress is saved with PATCH /onboarding after every move and resumed from GET.
+// BACKLOG 13.14 — the /welcome first-run wizard (spec 14.5). Phase 18 Track E order: create the
+// organisation → first business (setup-steps.tsx, before any wizard state exists) → Brand kit →
+// Connect → First video → Celebrate. Progress is saved with PATCH /onboarding after every move
+// and resumed from GET.
 
 function StepBody({
   step,
@@ -65,7 +70,16 @@ export function WelcomeWizard() {
   const tc = useTranslations('common.actions');
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
-  const { data, error, mutate } = useApi<OnboardingResponse>(ONBOARDING_PATH);
+  const me = useMe();
+  const search = useSearchParams();
+  // Phase 18: no organisation yet (403 no_organisation), or "New organisation" in the switcher.
+  const needsOrganisation =
+    me.error?.code === 'no_organisation' || search?.get('new') === 'organisation';
+  // Wait for /me so a user without an organisation never asks for (403) wizard state.
+  const meSettled = Boolean(me.data || me.error);
+  const { data, error, mutate } = useApi<OnboardingResponse>(
+    meSettled && !needsOrganisation ? ONBOARDING_PATH : null,
+  );
   // Whether each step's own requirement is met (reported by the step component).
   const [readyFor, setReadyFor] = useState<Partial<Record<WizardStep, boolean>>>({});
   const [saving, setSaving] = useState(false);
@@ -111,6 +125,23 @@ export function WelcomeWizard() {
     />
   );
 
+  if (needsOrganisation)
+    return (
+      <>
+        {header}
+        <StepIndicator
+          current={null}
+          completed={[]}
+          setup={{ organisation: 'current', business: 'todo' }}
+        />
+        <section
+          aria-label={t('currentStep')}
+          className="rounded-xl border border-border bg-card p-6 md:p-8"
+        >
+          <CreateOrganisationStep />
+        </section>
+      </>
+    );
   if (error)
     return (
       <>
@@ -153,16 +184,17 @@ export function WelcomeWizard() {
     return (
       <>
         {header}
-        <EmptyState
-          icon={<Building2 className="size-8" strokeWidth={1.5} />}
-          title={t('noBusiness.title')}
-          description={t('noBusiness.description')}
-          action={
-            <Button asChild variant="outline">
-              <Link href="/business">{t('noBusiness.action')}</Link>
-            </Button>
-          }
+        <StepIndicator
+          current={null}
+          completed={[]}
+          setup={{ organisation: 'done', business: 'current' }}
         />
+        <section
+          aria-label={t('currentStep')}
+          className="rounded-xl border border-border bg-card p-6 md:p-8"
+        >
+          <FirstBusinessStep />
+        </section>
       </>
     );
 
@@ -175,7 +207,11 @@ export function WelcomeWizard() {
   return (
     <>
       {header}
-      <StepIndicator current={step} completed={onboarding.completed} />
+      <StepIndicator
+        current={step}
+        completed={onboarding.completed}
+        setup={{ organisation: 'done', business: 'done' }}
+      />
       <section
         aria-label={t('currentStep')}
         className="rounded-xl border border-border bg-card p-6 md:p-8"
@@ -192,7 +228,7 @@ export function WelcomeWizard() {
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <Button
           variant="ghost"
-          disabled={saving || step === 'connect'}
+          disabled={saving || step === WIZARD_STEPS[0]}
           onClick={() => void move({ step: previousStep(step) })}
         >
           <ArrowLeft className="rtl:-scale-x-100" /> {tc('back')}

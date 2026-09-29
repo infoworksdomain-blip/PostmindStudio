@@ -15,7 +15,10 @@ import { KillSwitchPanel } from './kill-switch-panel';
 import { LibraryAdminPanel } from './library-admin-panel';
 import { RedrivePanel } from './redrive-panel';
 import { ProvidersPanel, QueuesPanel } from './health-panels';
-import { OrganisationPanel } from './organisation-panel';
+import { LegalReadinessWarning } from './legal-readiness-warning';
+import { OrganisationsTab } from './organisations/organisations-tab';
+import { SubscriptionsTab } from './subscriptions/subscriptions-tab';
+import { UsersTab } from './users/users-tab';
 import { SafetyReviewPanel } from './safety-review-panel';
 import { UsagePanel } from './usage-panel';
 import { BetaPanel } from './beta-panel';
@@ -48,6 +51,9 @@ const TABS = [
   'safety',
   'safety-audit',
   'organisations',
+  // Phase 18: the standalone directory tabs.
+  'users',
+  'subscriptions',
   'usage',
   'dead-letters',
   'force-approvals',
@@ -68,6 +74,8 @@ const TAB_KEY = {
   safety: 'safety',
   'safety-audit': 'safetyAudit',
   organisations: 'organisations',
+  users: 'users',
+  subscriptions: 'subscriptions',
   usage: 'usage',
   'dead-letters': 'deadLetters',
   'force-approvals': 'forceApprovals',
@@ -109,6 +117,7 @@ export function AdminCentre() {
   return (
     <>
       {header}
+      <LegalReadinessWarning />
       <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
         <TabsList className="max-w-full overflow-x-auto">
           {TABS.map((tab) => (
@@ -142,7 +151,13 @@ export function AdminCentre() {
           <SafetyReviewPanel />
         </TabsContent>
         <TabsContent value="organisations">
-          <OrganisationPanel />
+          <OrganisationsTab />
+        </TabsContent>
+        <TabsContent value="users">
+          <UsersTab />
+        </TabsContent>
+        <TabsContent value="subscriptions">
+          <SubscriptionsTab />
         </TabsContent>
         <TabsContent value="usage">
           <UsagePanel />

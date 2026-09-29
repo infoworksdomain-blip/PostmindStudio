@@ -69,7 +69,8 @@
         "connections": "账号连接",
         "approvals": "审批流程",
         "export": "导出数据",
-        "admin": "管理后台"
+        "admin": "管理后台",
+        "settings": "设置"
       }
     },
     "theme": {
@@ -172,6 +173,45 @@
       "publicationAnalytics": "发布数据分析",
       "approvals": "审批流程",
       "admin": "管理中心"
+    },
+    "account": {
+      "switcherAria": "组织：{name}。切换组织",
+      "organisations": "您的组织",
+      "current": "当前组织",
+      "newOrganisation": "新建组织…",
+      "switchFailed": "无法切换组织，请重试。",
+      "userMenuAria": "{name} 的账户菜单",
+      "organisationSettings": "组织设置",
+      "members": "成员",
+      "security": "安全与登录",
+      "signOut": "退出登录",
+      "signOutFailed": "无法退出登录，请重试。"
+    },
+    "banners": {
+      "readOnly": {
+        "title": "您的账户为只读状态。",
+        "body": "由于付款逾期，您可以查看、下载和导出，但无法创建或发布。请更新付款信息以继续使用。",
+        "action": "更新付款信息"
+      },
+      "pastDue": {
+        "title": "您上次的付款失败了。",
+        "body": "目前一切仍可正常使用。请更新付款信息以避免服务中断。",
+        "bodyUntil": "服务将持续到 {date}。请在此之前更新付款信息以避免中断。",
+        "action": "更新付款信息"
+      },
+      "noPlan": {
+        "title": "选择一个套餐以开始制作视频。",
+        "body": "您现在可以设置品牌并连接账户；生成和发布视频需要套餐或免费试用。",
+        "action": "查看套餐"
+      },
+      "trial": {
+        "body": "{days, plural, =0 {您的免费试用今天到期。} other {您的免费试用还剩 # 天。}}",
+        "action": "选择套餐"
+      },
+      "impersonating": {
+        "title": "员工视图。",
+        "body": "您正在以 {name} 的身份查看 Studio。此会话为只读状态，所有操作均会被记录。"
+      }
     }
   },
   "errors": {
@@ -2209,7 +2249,9 @@
         "usage": "套餐用量",
         "deadLetters": "死信",
         "forceApprovals": "强制批准",
-        "beta": "测试版"
+        "beta": "测试版",
+        "users": "用户",
+        "subscriptions": "订阅"
       }
     },
     "cost": {
@@ -2909,7 +2951,9 @@
       "connect": "连接账号",
       "brandKit": "品牌套件",
       "firstVideo": "首个视频",
-      "celebrate": "庆祝上线"
+      "celebrate": "庆祝上线",
+      "organisation": "组织",
+      "business": "业务"
     },
     "stepIndicator": {
       "aria": "设置进度",
@@ -3021,6 +3065,35 @@
       "description": "Studio 已准备好为你的商家制作和发布视频。",
       "makeAnother": "再制作一个视频",
       "goToProjects": "前往项目"
+    },
+    "organisation": {
+      "title": "为您的组织命名",
+      "description": "组织承载您的团队、套餐和账单信息，之后您可以为其添加更多业务。",
+      "name": "组织名称",
+      "namePlaceholder": "例如：Leeds Sourdough Ltd",
+      "country": "国家/地区",
+      "countryChoose": "选择国家/地区…",
+      "countryHint": "用于账单中的税费计算。",
+      "language": "默认语言",
+      "submit": "创建组织",
+      "created": "{name} 已就绪。"
+    },
+    "business": {
+      "title": "添加您的第一个业务",
+      "description": "每个业务都有自己的品牌套件、已连接账户和视频。添加网站后，Studio 即可从中学习您的品牌风格。",
+      "loading": "正在加载您的业务",
+      "existing": "选择一个业务",
+      "orNew": "或添加新业务：",
+      "name": "业务名称",
+      "namePlaceholder": "例如：Leeds Sourdough",
+      "website": "网站（可选）",
+      "websitePlaceholder": "leedssourdough.co.uk",
+      "websiteHint": "无需填写 https://。",
+      "submit": "添加业务",
+      "created": "已添加 {name}。",
+      "coreTitle": "请先设置业务",
+      "coreDescription": "您的业务信息来自 PostMind。请选择或添加一个业务，然后返回此处。",
+      "coreAction": "前往业务管理"
     }
   },
   "share": {
@@ -3322,16 +3395,483 @@
       "unknown": "未知错误"
     }
   },
-  "marketing": {},
+  "marketing": {
+    "meta": {
+      "title": "PostMind Studio · 面向小微企业的 AI 短视频",
+      "description": "只需一句话，即可生成符合品牌调性的短视频，适配 TikTok、Reels、Shorts、Facebook、LinkedIn 和 X。审核、批准并在同一处发布。"
+    },
+    "nav": {
+      "home": "PostMind Studio 首页",
+      "aria": "主导航",
+      "pricing": "定价",
+      "signIn": "登录",
+      "startTrial": "开始免费试用"
+    },
+    "hero": {
+      "eyebrow": "面向小微企业的 AI 视频工作室",
+      "title": "一周的短视频，<em>在您的咖啡变凉之前完成。</em>",
+      "lede": "告诉 Studio 您想表达的内容。它会撰写脚本，拍摄或采集每个场景素材，为视频添加符合您品牌的配音、音乐和字幕，并针对每个平台进行剪辑。您来审核，它负责发布。",
+      "primaryCta": "开始免费试用",
+      "secondaryCta": "查看定价",
+      "assurances": {
+        "noEditing": "无需剪辑技能",
+        "yourBrand": "专属于您的色彩、字体和口吻",
+        "cancelAnytime": "随时取消"
+      },
+      "frames": {
+        "one": "早上 7 点新鲜出炉",
+        "two": "认识面包师",
+        "three": "一个周末，三条面包"
+      },
+      "slate": {
+        "scene": "场景 01",
+        "take": "第 1 次拍摄"
+      }
+    },
+    "platforms": {
+      "title": "一份创意简介，适配每个信息流"
+    },
+    "steps": {
+      "eyebrow": "使用流程",
+      "title": "构思。审核。发布。",
+      "brief": {
+        "title": "写下一句话",
+        "body": "描述视频内容，粘贴网页链接，或选择一个模板。Studio 会在几秒内起草脚本和分镜脚本。"
+      },
+      "review": {
+        "title": "查看成片",
+        "body": "并排查看每种格式，替换镜头、修改字幕或要求重新拍摄。未经您批准，任何内容都不会发布。"
+      },
+      "publish": {
+        "title": "按计划发布",
+        "body": "立即发布或安排整周的发布计划。Studio 会发布到每个账户，并将浏览量、点赞和评论汇总到一个仪表盘中。"
+      }
+    },
+    "samples": {
+      "eyebrow": "样片集",
+      "title": "一份简介，多种形式。",
+      "body": "为 TikTok、Reels 和 Shorts 提供竖版，为信息流提供方形和竖幅，为 YouTube 和 LinkedIn 提供宽屏。",
+      "note": "以上为 Studio 可生成格式的示意图，并非客户实际视频。",
+      "captions": {
+        "market": "周六市集，上午 8 点",
+        "studio": "我们如何塑形酸种面包",
+        "workshop": "幕后花絮",
+        "counter": "本周新品"
+      }
+    },
+    "features": {
+      "eyebrow": "为小团队打造",
+      "title": "一人营销团队所需的一切。",
+      "body": "Studio 负责制作工作，让您把时间花在业务本身，而不是剪辑时间线上。",
+      "brand": {
+        "title": "始终如一的品牌形象",
+        "body": "标志、色彩、字体和语调都保存在品牌套件中，每个视频都会遵循它。"
+      },
+      "approvals": {
+        "title": "适配您团队的审批流程",
+        "body": "邀请同事并赋予合适的角色。创作者起草，所有者审批，杜绝意外发布。"
+      },
+      "calendar": {
+        "title": "自动为您发布的日历",
+        "body": "规划一周内容，将帖子拖到新的时间段，让 Studio 在每个平台的最佳时机自动发布。"
+      },
+      "budget": {
+        "title": "费用一目了然",
+        "body": "每月额度和消费上限提前展示，不会出现意外账单。"
+      },
+      "languages": {
+        "title": "支持十一种语言",
+        "body": "使用英语、法语、西班牙语、阿拉伯语、德语、意大利语、葡萄牙语、印地语或中文工作，并为使用相应语言的客户制作视频。"
+      },
+      "library": {
+        "title": "灵感随取随用",
+        "body": "浏览经过验证的短视频案例库，以其中一个作为您自己创作的起点。"
+      }
+    },
+    "closing": {
+      "eyebrow": "随时可以开始",
+      "title": "您的第一条视频，十分钟即可完成。",
+      "body": "创建账户，添加业务和品牌信息，连接平台并制作您的第一条视频。引导式设置将全程为您指引。",
+      "primaryCta": "开始免费试用",
+      "secondaryCta": "比较套餐",
+      "fineprint": "价格不含增值税。您可以随时在账单设置中取消。"
+    },
+    "footer": {
+      "tagline": "面向小微企业的 AI 短视频制作与发布平台。",
+      "copyright": "© {year} {entity}",
+      "legalAria": "法律信息",
+      "legalTitle": "法律信息"
+    }
+  },
   "pricing": {},
-  "legal": {},
+  "legal": {
+    "docs": {
+      "terms": "服务条款",
+      "privacy": "隐私政策",
+      "cookies": "Cookie 政策",
+      "acceptableUse": "可接受使用政策",
+      "dpa": "数据处理协议",
+      "subprocessors": "子处理者"
+    },
+    "navAria": "法律文档",
+    "navTitle": "法律信息",
+    "placeholder": {
+      "title": "该文档尚未发布。",
+      "body": "以下文本为占位内容。本服务的运营者必须在上线前将其替换为自己的内容。"
+    },
+    "notTranslated": "该文档暂无您所用语言的版本，因此以英文显示。"
+  },
   "auth": {},
   "security": {},
-  "orgSettings": {},
-  "members": {},
+  "orgSettings": {
+    "meta": {
+      "organisationTitle": "组织设置",
+      "membersTitle": "成员",
+      "auditTitle": "审计日志"
+    },
+    "nav": {
+      "aria": "设置",
+      "organisation": "组织",
+      "members": "成员",
+      "billing": "账单",
+      "audit": "审计日志"
+    },
+    "page": {
+      "eyebrow": "设置",
+      "title": "组织",
+      "description": "您组织的详细信息、所有权和团队。",
+      "loading": "正在加载组织设置"
+    },
+    "details": {
+      "title": "详细信息",
+      "description": "将显示给您的团队并出现在账单中。",
+      "readOnly": "仅所有者和管理员可以更改这些信息。",
+      "name": "组织名称",
+      "logo": "标志 URL",
+      "logoPlaceholder": "https://example.com/logo.png",
+      "logoHint": "指向正方形图片的 https:// 链接。",
+      "country": "国家/地区",
+      "countryNone": "未设置",
+      "countryHint": "用于账单中的税费计算。",
+      "defaultLocale": "默认语言",
+      "localeNone": "由各成员自行选择",
+      "saved": "组织详细信息已保存。"
+    },
+    "transfer": {
+      "title": "转让所有权",
+      "description": "将所有权转让给其他成员，您将变为管理员。",
+      "nobody": "请先邀请他人：所有权只能转让给其他成员。",
+      "to": "新所有者",
+      "choose": "选择成员…",
+      "action": "转让所有权",
+      "confirmTitle": "转让所有权？",
+      "confirmBody": "{name} 将成为所有者，您将成为管理员。此后 {name} 可以管理账单并删除组织。",
+      "done": "{name} 现在是所有者。"
+    },
+    "delete": {
+      "title": "删除组织",
+      "description": "将取消您的订阅并移除所有业务、视频和已连接账户。数据将保留 30 天后永久删除。",
+      "action": "删除组织…",
+      "confirmTitle": "删除 {name}？",
+      "confirmBody": "30 天后此操作将无法撤销。组织中的所有人将立即失去访问权限。",
+      "typeName": "输入 {name} 以确认",
+      "confirm": "删除组织",
+      "done": "该组织已安排删除。"
+    },
+    "audit": {
+      "title": "审计日志",
+      "description": "记录组织中成员、设置、账单和连接方面的所有操作。",
+      "logTitle": "活动记录",
+      "filter": "显示",
+      "loading": "正在加载审计日志",
+      "empty": {
+        "title": "暂无记录",
+        "body": "成员、设置和账单方面的变更将显示在此处。"
+      },
+      "when": "时间",
+      "who": "操作人",
+      "what": "操作内容",
+      "target": "对象",
+      "viaStaff": "员工视图",
+      "loadMore": "加载更多",
+      "categories": {
+        "all": "全部",
+        "members": "成员",
+        "organisation": "组织",
+        "billing": "账单",
+        "security": "安全",
+        "businesses": "业务",
+        "connections": "连接",
+        "staff": "PostMind 员工"
+      },
+      "actors": {
+        "user": "已离开的成员",
+        "staff": "PostMind 员工",
+        "stripe": "Stripe",
+        "meta": "Meta",
+        "system": "Studio"
+      },
+      "actions": {
+        "member_invited": "邀请了一名成员",
+        "member_joined": "加入了组织",
+        "member_role_changed": "更改了成员角色",
+        "member_removed": "移除了一名成员",
+        "org_created": "创建了组织",
+        "org_renamed": "重命名了组织",
+        "org_updated": "更新了组织信息",
+        "org_deleted": "删除了组织",
+        "billing_checkout_started": "开始了结账流程",
+        "billing_subscription_changed": "订阅发生了变更",
+        "billing_payment_failed": "付款失败",
+        "billing_topup_purchased": "购买了加量包",
+        "auth_sign_in": "登录",
+        "auth_password_changed": "修改了密码",
+        "auth_twoFactor_enabled": "开启了两步验证",
+        "auth_twoFactor_disabled": "关闭了两步验证",
+        "auth_session_revoked": "退出了一个会话",
+        "business_created": "添加了一个业务",
+        "business_deleted": "删除了一个业务",
+        "meta_connected": "连接了 Facebook 或 Instagram",
+        "meta_disconnected": "断开了 Facebook 或 Instagram",
+        "entitlement_override_set": "PostMind 更改了套餐限制",
+        "staff_impersonation_started": "PostMind 员工开始了支持视图",
+        "staff_impersonation_ended": "PostMind 员工结束了支持视图"
+      }
+    }
+  },
+  "members": {
+    "page": {
+      "eyebrow": "设置",
+      "title": "成员",
+      "description": "邀请您的团队，并设置每个人的权限。",
+      "loading": "正在加载成员",
+      "inviteTitle": "邀请成员",
+      "inviteDescription": "对方将收到一封邮件，链接有效期为 7 天。",
+      "membersTitle": "{count, plural, other {# 位成员}}",
+      "empty": "暂无成员",
+      "pendingTitle": "待处理邀请",
+      "seatsTitle": "席位"
+    },
+    "seats": {
+      "label": "已使用席位",
+      "usedOf": "{used} / {limit}",
+      "unlimited": "已使用 {used} · 无限制",
+      "full": "您套餐的所有席位均已使用。",
+      "upgrade": "升级以获得更多席位"
+    },
+    "invite": {
+      "email": "电子邮箱",
+      "emailPlaceholder": "name@example.com",
+      "role": "角色",
+      "send": "发送邀请",
+      "hint": "所有者管理账单并可删除组织；管理员管理成员和设置；发布者负责审批和发布；创作者制作视频；查看者只能查看。",
+      "sent": "邀请已发送至 {email}。"
+    },
+    "roles": {
+      "owner": "所有者",
+      "admin": "管理员",
+      "publisher": "发布者",
+      "creator": "创作者",
+      "viewer": "查看者"
+    },
+    "table": {
+      "member": "成员",
+      "role": "角色",
+      "joined": "加入时间",
+      "actions": "操作",
+      "you": "您",
+      "twoFactor": "已开启两步验证",
+      "roleFor": "{name} 的角色",
+      "roleChanged": "{name} 现在是{role}。",
+      "remove": "移除",
+      "removeAria": "移除 {name}",
+      "leave": "离开",
+      "removeTitle": "移除 {name}？",
+      "removeBody": "对方将立即失去此组织的访问权限，其视频将会保留。",
+      "removed": "{name} 已被移除。"
+    },
+    "pending": {
+      "none": "暂无待处理的邀请。",
+      "expires": "有效期至 {date}",
+      "resend": "重新发送",
+      "resendAria": "重新发送邀请至 {email}",
+      "revoke": "撤销",
+      "revokeAria": "撤销发往 {email} 的邀请",
+      "resent": "邀请已重新发送至 {email}。",
+      "revoked": "邀请已撤销。"
+    },
+    "errors": {
+      "lastOwner": "最后一名所有者不能离开或被降级，请先转让所有权。",
+      "ownerOnly": "只有所有者才能执行此操作。",
+      "alreadyMember": "该用户已是成员。",
+      "nameMismatch": "您输入的名称不匹配。"
+    }
+  },
   "billing": {},
   "upgrade": {},
   "email": {},
-  "adminOrgs": {},
-  "adminUsers": {}
+  "adminOrgs": {
+    "list": {
+      "search": "搜索组织",
+      "searchPlaceholder": "名称、slug 或 id",
+      "searchAction": "搜索",
+      "loading": "正在加载组织",
+      "empty": "没有匹配的组织。",
+      "results": "{count, plural, other {# 个组织}}",
+      "name": "组织",
+      "plan": "套餐",
+      "status": "状态",
+      "members": "成员",
+      "cost": "本月费用",
+      "created": "创建时间",
+      "actions": "操作",
+      "open": "打开",
+      "openAria": "打开 {name}",
+      "byIdTitle": "按 id 查找",
+      "byIdHint": "查看任意组织 id（包括 PostMind Core 持有的组织）的策略和费用上限。"
+    },
+    "detail": {
+      "back": "全部组织",
+      "loading": "正在加载组织信息",
+      "meta": "{id} · 创建于 {created}",
+      "plan": "套餐",
+      "none": "无",
+      "sources": {
+        "stripe": "来自 Stripe",
+        "trial": "免费试用",
+        "admin": "由员工设置",
+        "core": "来自 PostMind Core",
+        "none": "无套餐"
+      },
+      "access": "访问权限",
+      "members": "成员",
+      "pending": "{count, plural, =0 {没有待处理的邀请} other {# 个待处理的邀请}}",
+      "cost": "本月费用",
+      "businesses": "{count, plural, =0 {暂无业务} other {# 个业务}}",
+      "graceUntil": "付款宽限期至 {date} 结束。",
+      "membersTitle": "成员",
+      "subscriptionsTitle": "订阅",
+      "subscriptionsHint": "只读；请在 Stripe 中更改套餐，或使用权限覆盖。",
+      "noSubscription": "暂无订阅。",
+      "cancelling": "将在当前周期结束时取消"
+    },
+    "status": {
+      "trialing": "试用中",
+      "active": "生效中",
+      "pastDue": "逾期未付",
+      "unpaid": "未付款",
+      "canceled": "已取消",
+      "incomplete": "未完成",
+      "incompleteExpired": "结账已过期",
+      "paused": "已暂停",
+      "full": "完整访问",
+      "readOnly": "只读",
+      "noPlan": "无套餐",
+      "deleted": "已删除",
+      "banned": "已封禁"
+    },
+    "subscriptions": {
+      "readOnlyNote": "只读。订阅在 Stripe 中（或通过客户门户）更改；套餐限制通过权限覆盖更改。",
+      "filter": "状态",
+      "all": "全部状态",
+      "loading": "正在加载订阅",
+      "empty": "没有匹配的订阅。",
+      "results": "{count, plural, other {# 个订阅}}",
+      "organisation": "组织",
+      "plan": "价格",
+      "status": "状态",
+      "renews": "周期结束时间",
+      "grace": "宽限期结束时间",
+      "cancelling": "将在当前周期结束时取消"
+    },
+    "legal": {
+      "title": "法律文档尚未准备好上线。",
+      "blocking": "在服务条款和隐私政策替换为您自己的内容之前，生产环境中的公开注册将保持关闭。",
+      "warning": "注册未被阻止，但这些文档目前仍是占位内容。",
+      "placeholder": "占位内容",
+      "missing": "缺失",
+      "signupsClosed": "在此之前，公开注册将保持关闭。"
+    }
+  },
+  "adminUsers": {
+    "list": {
+      "search": "搜索用户",
+      "searchPlaceholder": "邮箱、姓名或 id",
+      "searchAction": "搜索",
+      "loading": "正在加载用户",
+      "empty": "没有匹配的用户。",
+      "results": "{count, plural, other {# 位用户}}",
+      "user": "用户",
+      "verified": "邮箱已验证",
+      "twoFactor": "2FA",
+      "role": "角色",
+      "sessions": "会话",
+      "created": "加入时间",
+      "actions": "操作",
+      "open": "打开",
+      "openAria": "打开 {name}",
+      "yes": "是",
+      "no": "否"
+    },
+    "detail": {
+      "back": "全部用户",
+      "loading": "正在加载用户信息",
+      "verified": "邮箱已验证",
+      "twoFactor": "两步验证",
+      "role": "角色",
+      "roles": {
+        "user": "客户",
+        "staff": "员工",
+        "superadmin": "超级管理员"
+      },
+      "sessions": "活跃会话",
+      "yes": "是",
+      "no": "否",
+      "banReason": "已封禁：{reason}",
+      "membershipsTitle": "所属组织",
+      "noMemberships": "不属于任何组织。",
+      "actionsTitle": "操作",
+      "actionsHint": "每项操作都需要填写原因，并会被记录在审计日志中。",
+      "ban": "封禁用户",
+      "unban": "解除封禁",
+      "revokeSessions": "在所有设备上退出登录",
+      "resetTwoFactor": "重置两步验证",
+      "impersonate": "以该用户身份查看",
+      "impersonationOff": "以用户身份查看功能已关闭（STUDIO_IMPERSONATION_ENABLED）。",
+      "done": {
+        "ban": "用户已被封禁并退出登录。",
+        "unban": "已解除封禁。",
+        "sessions": "用户已在所有设备上退出登录。",
+        "twoFactor": "两步验证已重置。",
+        "impersonate": "正在打开只读视图。"
+      },
+      "confirm": {
+        "ban": {
+          "title": "封禁 {name}？",
+          "body": "对方将立即被退出登录，且在解除封禁前无法登录。",
+          "action": "封禁用户"
+        },
+        "unban": {
+          "title": "解除对 {name} 的封禁？",
+          "body": "对方可以立即重新登录。",
+          "action": "解除封禁"
+        },
+        "sessions": {
+          "title": "在所有设备上退出 {name} 的登录？",
+          "body": "对方登录的每个浏览器和设备都将退出登录。",
+          "action": "在所有设备上退出登录"
+        },
+        "twoFactor": {
+          "title": "为 {name} 重置两步验证？",
+          "body": "请先通过其他方式核实身份。对方的验证器和备用代码将失效，需要重新设置。",
+          "action": "重置"
+        },
+        "impersonate": {
+          "title": "以 {name} 的身份查看 Studio？",
+          "body": "这是一个 30 分钟的只读会话，并带有提示横幅。您查看的所有内容都会被记录。",
+          "action": "开始查看"
+        }
+      }
+    }
+  }
 }

@@ -3,12 +3,14 @@ import { z } from 'zod';
 import { ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 
-// BACKLOG 13.14 — spec 14.5 onboarding first-run: the /welcome wizard (Connect → Brand kit →
-// First video → Celebrate). State is per (organisation, user). `suggested` tells the app shell
+// BACKLOG 13.14 — spec 14.5 onboarding first-run: the /welcome wizard. Phase 18 Track E order:
+// (organisation → first business, both before this state exists) → Brand kit → Connect →
+// First video → Celebrate. State is per (organisation, user). `suggested` tells the app shell
 // whether to point the user at /welcome: not finished, not dismissed, and either already started
 // or the organisation has no projects yet (existing customers are not nagged).
 
-export const ONBOARDING_STEPS = ['connect', 'brand_kit', 'first_video', 'celebrate'] as const;
+export const ONBOARDING_STEPS = ['brand_kit', 'connect', 'first_video', 'celebrate'] as const;
+export const FIRST_STEP = ONBOARDING_STEPS[0];
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number] | 'done';
 
 export const patchOnboardingInput = z
@@ -24,7 +26,7 @@ export const patchOnboardingInput = z
 
 function view(row: OnboardingState | null, suggested: boolean) {
   return {
-    step: (row?.step ?? 'connect') as OnboardingStep,
+    step: (row?.step ?? FIRST_STEP) as OnboardingStep,
     completed: row?.completed ?? [],
     firstVideoProjectId: row?.firstVideoProjectId ?? null,
     dismissedAt: row?.dismissedAt ?? null,
@@ -85,6 +87,8 @@ export async function patchOnboarding(
       organisationId: tenant.organisationId,
       userId: tenant.userId,
       completed: completed ?? [],
+      // The column default is the pre-Phase-18 first step; new rows start at the current one.
+      step: FIRST_STEP,
       ...data,
     },
     update: data,
