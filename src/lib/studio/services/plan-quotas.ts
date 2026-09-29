@@ -646,9 +646,11 @@ export async function usageView(
   organisationId: string,
   tier: PlanTier,
   businessId?: string,
+  /** Phase 18: the organisation's entitlements (trial / custom allowance, enforce by default). */
+  entitlements?: Entitlements,
 ): Promise<UsageView> {
   const env = deps.env ?? process.env;
-  const quota = tierQuota(tier, env);
+  const quota = entitlementQuota(tierQuota(tier, env), entitlements);
   const month = monthWindow(deps.now());
   const [usage, businessesScanned, imageGeneration] = await Promise.all([
     monthlyVideoUsage(deps.db, organisationId, quota, month),
@@ -669,7 +671,7 @@ export async function usageView(
   return {
     organisationId,
     planTier: tier,
-    mode: quotaMode(env),
+    mode: quotaMode(env, entitlements ? 'enforce' : 'warn'),
     month: month.key,
     periodStart: month.start.toISOString(),
     resetsAt: month.end.toISOString(),

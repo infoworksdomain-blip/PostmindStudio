@@ -15,6 +15,10 @@ export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ req, t
         tenant.organisationId,
         toPlanTier(tenant.organisation.planTier),
         businessId,
+        // Phase 18: the trial / ENTERPRISE allowance when Studio bills the organisation.
+        deps.entitlements
+          ? await deps.entitlements.forOrganisation(tenant.organisationId)
+          : undefined,
       ),
     },
   };
