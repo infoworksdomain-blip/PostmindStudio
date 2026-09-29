@@ -213,7 +213,7 @@ services:
   # docs/dev-api/node-cli.md, read 2026-09-29): one process instead of npx → tsx → node.
   worker:
     <<: *app
-    command: node --import tsx scripts/worker.ts ${STUDIO_WORKER_QUEUES:-studio-orchestration studio-assets studio-publish studio-scheduled studio-analytics studio-library}
+    command: node --import tsx scripts/worker.ts ${STUDIO_WORKER_QUEUES:-studio-orchestration studio-assets studio-publish studio-scheduled studio-analytics studio-library studio-email}
     environment:
       <<: *app-env
       DATABASE_URL: postgresql://studio:${POSTGRES_PASSWORD}@postgres:5432/postmind_studio?schema=studio&connection_limit=${WORKER_DB_CONNECTION_LIMIT:-10}&pool_timeout=20&application_name=studio-worker

@@ -93,6 +93,17 @@ export function publicRateLimitsFromEnv(
   };
 }
 
+/**
+ * Phase 18: provider webhooks (Resend, Stripe), per source address. Generous — providers burst
+ * after an outage — but bounded so a flood of forged calls cannot tie up signature checks.
+ */
+export function webhookRateLimitsFromEnv(
+  env: Record<string, string | undefined> = process.env,
+): RateLimits {
+  const perMin = positiveInt(env, 'STUDIO_WEBHOOK_RATE_LIMIT_PER_MIN', 600);
+  return { readsPerMin: perMin, writesPerMin: perMin, orgPerMin: perMin * 10 };
+}
+
 export interface RateLimiter {
   /** Throws RateLimitError (429 + Retry-After) when a limit is exceeded. */
   check(input: { organisationId: string; userId: string; method: string }): Promise<void>;

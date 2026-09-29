@@ -3331,7 +3331,162 @@
   "members": {},
   "billing": {},
   "upgrade": {},
-  "email": {},
+  "email": {
+    "layout": {
+      "brand": "PostMind Studio",
+      "greeting": "Olá, {name},",
+      "greetingAnonymous": "Olá,",
+      "buttonFallback": "Se o botão não funcionar, copie este link no seu navegador:",
+      "signOff": "Equipe PostMind Studio",
+      "footerTransactional": "Este é um e-mail de serviço sobre sua conta do PostMind Studio. Ele é enviado mesmo que você tenha desativado outros e-mails.",
+      "footerNotification": "Você está recebendo isto porque ativou o e-mail para este tipo de notificação no PostMind Studio.",
+      "support": "Dúvidas? Fale com a gente em {email}.",
+      "unsubscribe": "Cancelar a inscrição destes e-mails"
+    },
+    "templates": {
+      "verifyEmail": {
+        "subject": "Confirme seu endereço de e-mail",
+        "heading": "Confirme seu endereço de e-mail",
+        "body": "Confirme que este é o seu endereço de e-mail para concluir a configuração da sua conta do PostMind Studio.",
+        "cta": "Confirmar endereço de e-mail",
+        "note": "Este link expira em 24 horas. Se você não criou uma conta, ignore este e-mail."
+      },
+      "resetPassword": {
+        "subject": "Redefina sua senha",
+        "heading": "Redefina sua senha",
+        "body": "Recebemos um pedido para redefinir a senha da sua conta do PostMind Studio. Escolha uma nova senha no botão abaixo.",
+        "cta": "Escolher uma nova senha",
+        "note": "Este link expira em 1 hora e só pode ser usado uma vez. Se você não pediu isso, ignore este e-mail: sua senha não foi alterada."
+      },
+      "passwordChanged": {
+        "subject": "Sua senha foi alterada",
+        "heading": "Sua senha foi alterada",
+        "body": "A senha da sua conta do PostMind Studio acabou de ser alterada, e suas outras sessões foram encerradas.",
+        "cta": "Revisar a segurança da conta",
+        "note": "Se não foi você, redefina sua senha imediatamente e fale com o suporte."
+      },
+      "emailChangeConfirm": {
+        "subject": "Confirme seu novo endereço de e-mail",
+        "heading": "Confirme seu novo endereço de e-mail",
+        "body": "Você pediu para alterar o endereço de e-mail da sua conta do PostMind Studio para {newEmail}. Confirme a alteração no botão abaixo.",
+        "cta": "Confirmar novo endereço",
+        "note": "Este link expira em 24 horas. Se você não pediu isso, ignore este e-mail."
+      },
+      "emailChanged": {
+        "subject": "O endereço de e-mail da sua conta foi alterado",
+        "heading": "Seu endereço de e-mail foi alterado",
+        "body": "O endereço de e-mail da sua conta do PostMind Studio agora é {newEmail}. A partir de agora, enviaremos os e-mails da conta para lá.",
+        "cta": "Revisar a segurança da conta",
+        "note": "Se você não fez essa alteração, fale com o suporte imediatamente."
+      },
+      "accountExists": {
+        "subject": "Você já tem uma conta do PostMind Studio",
+        "heading": "Você já tem uma conta",
+        "body": "Alguém tentou se cadastrar no PostMind Studio com este endereço de e-mail, mas já existe uma conta com ele. Entre na sua conta. Se esqueceu a senha, escolha “Esqueci a senha” na página de login.",
+        "cta": "Entrar",
+        "note": "Se não foi você, ignore este e-mail. Sua conta não foi alterada."
+      },
+      "twoFactorChanged": {
+        "subject": "{enabled, select, true {Autenticação de dois fatores ativada} other {Autenticação de dois fatores desativada}}",
+        "heading": "{enabled, select, true {A autenticação de dois fatores está ativada} other {A autenticação de dois fatores está desativada}}",
+        "body": "{enabled, select, true {A autenticação de dois fatores foi ativada na sua conta do PostMind Studio. Você vai precisar do seu app autenticador ou de um código de backup para entrar.} other {A autenticação de dois fatores foi desativada na sua conta do PostMind Studio. Agora basta a sua senha para entrar.}}",
+        "cta": "Revisar a segurança da conta",
+        "note": "Se não foi você, redefina sua senha imediatamente e fale com o suporte."
+      },
+      "newSignIn": {
+        "subject": "Novo login na sua conta",
+        "heading": "Novo login na sua conta",
+        "body": "Alguém acabou de entrar na sua conta do PostMind Studio a partir de {device}.",
+        "cta": "Revisar sessões ativas",
+        "note": "Se foi você, não precisa fazer nada. Se não, encerre essa sessão e altere sua senha."
+      },
+      "invite": {
+        "subject": "{inviterName} convidou você para {organisationName} no PostMind Studio",
+        "heading": "Participe de {organisationName} no PostMind Studio",
+        "body": "{inviterName} convidou você para participar de {organisationName} como {role, select, owner {proprietário} admin {administrador} publisher {publicador} creator {criador} viewer {leitor} other {membro}}. Aceite o convite para começar a criar vídeos juntos.",
+        "cta": "Aceitar convite",
+        "note": "O convite expira em 7 dias. Entre com este endereço de e-mail para aceitá-lo. Se você não o esperava, ignore este e-mail."
+      },
+      "ownershipTransferred": {
+        "subject": "Agora você é o proprietário de {organisationName}",
+        "heading": "Agora você é o proprietário de {organisationName}",
+        "body": "{newOwnerName} tornou você proprietário de {organisationName} no PostMind Studio. Como proprietário, você gerencia o faturamento e pode excluir a organização.",
+        "cta": "Abrir configurações da organização"
+      },
+      "trialEnding": {
+        "subject": "Seu teste do {planName} termina em {trialEndsAt, date, long}",
+        "heading": "Seu teste termina em breve",
+        "body": "Seu teste do {planName} termina em {trialEndsAt, date, long}. Depois disso, seu plano continua e o cartão cadastrado é cobrado. Para alterar ou cancelar, abra as configurações de faturamento antes dessa data.",
+        "cta": "Abrir faturamento"
+      },
+      "paymentFailed": {
+        "subject": "Seu pagamento falhou",
+        "heading": "Não conseguimos processar seu pagamento",
+        "body": "O último pagamento do seu plano do PostMind Studio falhou. Atualize seus dados de pagamento. Se o pagamento continuar falhando até {graceEndsAt, date, long}, sua organização ficará somente leitura até ser paga.",
+        "cta": "Atualizar dados de pagamento"
+      },
+      "paymentActionRequired": {
+        "subject": "Seu pagamento precisa de confirmação",
+        "heading": "Confirme seu pagamento",
+        "body": "Seu banco pediu uma confirmação extra para concluir o pagamento do seu plano do PostMind Studio. Abra a fatura para confirmar.",
+        "cta": "Confirmar pagamento"
+      },
+      "subscriptionChanged": {
+        "subject": "Seu plano agora é {planName}",
+        "heading": "Seu plano foi alterado",
+        "body": "Sua organização agora está no plano {planName}. Seus limites de uso e recursos foram atualizados.",
+        "cta": "Abrir faturamento"
+      },
+      "subscriptionCanceled": {
+        "subject": "Sua assinatura foi cancelada",
+        "heading": "Sua assinatura foi cancelada",
+        "body": "Sua assinatura do PostMind Studio foi cancelada. Você mantém acesso completo até {endsAt, date, long}; depois disso, sua organização fica somente leitura. Você pode assinar de novo a qualquer momento.",
+        "cta": "Abrir faturamento"
+      },
+      "topupReceipt": {
+        "subject": "Sua recarga está pronta: {packName}",
+        "heading": "Recarga adicionada",
+        "body": "Obrigado. A recarga {packName} foi adicionada à sua organização e já pode ser usada. O Stripe envia o recibo separadamente.",
+        "cta": "Ver uso"
+      },
+      "accountDeletionScheduled": {
+        "subject": "Sua conta será excluída",
+        "heading": "Sua conta será excluída",
+        "body": "Você pediu a exclusão da sua conta do PostMind Studio. Todas as suas sessões foram encerradas, e sua conta e seus dados serão excluídos definitivamente em {deleteAt, date, long}.",
+        "note": "Se você não pediu isso, fale com o suporte antes dessa data."
+      },
+      "orgDeletionScheduled": {
+        "subject": "{organisationName} será excluída",
+        "heading": "{organisationName} será excluída",
+        "body": "A organização {organisationName} foi excluída no PostMind Studio. Seus projetos, vídeos e conexões serão removidos definitivamente em {deleteAt, date, long}.",
+        "note": "Se foi um engano, fale com o suporte antes dessa data."
+      },
+      "dataExportReady": {
+        "subject": "Sua exportação de dados está pronta",
+        "heading": "Sua exportação de dados está pronta",
+        "body": "A exportação que você pediu ao PostMind Studio está pronta para download. O link de download funciona até {expiresAt, date, long}.",
+        "cta": "Baixar exportação"
+      }
+    },
+    "notification": {
+      "cta": "Abrir no PostMind Studio"
+    },
+    "unsubscribe": {
+      "pageTitle": "Preferências de e-mail — PostMind Studio",
+      "confirmHeading": "Parar de receber estes e-mails?",
+      "confirmBody": "Você não vai mais receber e-mails sobre “{kind}” desta organização. Essas notificações continuam aparecendo no PostMind Studio.",
+      "confirmButton": "Cancelar inscrição",
+      "doneHeading": "Inscrição cancelada",
+      "doneBody": "Você não vai mais receber e-mails sobre “{kind}” desta organização. É possível reativá-los nas suas preferências de notificação no PostMind Studio.",
+      "invalidHeading": "Este link não funciona",
+      "invalidBody": "O link de cancelamento está incompleto ou foi alterado. Use o link do seu e-mail mais recente ou altere suas preferências de notificação no PostMind Studio.",
+      "openStudio": "Abrir o PostMind Studio"
+    },
+    "preferences": {
+      "description": "Escolha o que chega até você, no app e por e-mail.",
+      "suppressed": "Não conseguimos enviar e-mails para você: as mensagens para o seu endereço foram devolvidas ou marcadas como spam. Fale com o suporte para reativar o e-mail."
+    }
+  },
   "adminOrgs": {},
   "adminUsers": {}
 }

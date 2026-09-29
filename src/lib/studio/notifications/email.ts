@@ -1,19 +1,24 @@
-import { ConfigurationError, NotImplementedError } from '../../errors';
+import type { PrismaClient } from '@prisma/client';
+import type { Logger } from 'pino';
+import { NotImplementedError } from '../../errors';
+import { createEmailOutbox } from '../../email/outbox';
+import { studioModes, type StudioModes } from '../../mode';
+import type { JobQueue } from '../queue/enqueue';
 import type { NotificationKind } from './notifier';
+import { ResendEmailSender } from './resend-sender';
 
-// BACKLOG 13.33 — email delivery for notifications (spec 14.4). The contract is final; delivery
-// is not built because it waits on an OPERATOR DECISION (runbooks/notifications-email.md):
+// BACKLOG 13.33 / Phase 18 §2.8 — email delivery for notifications (spec 14.4).
 //
-//   A. PostMind Core sends email. Studio passes user ids; Core resolves addresses, templates,
-//      unsubscribe and bounce handling. No Core email API is documented today, so
-//      CoreEmailSender throws NotImplementedError until Core publishes one.
-//   B. Studio sends email itself (Resend or Amazon SES). Studio would then need each user's
-//      address from Core (the context endpoint carries none), a verified sending domain, its own
-//      unsubscribe link and bounce/complaint handling. Not built: no adapter without that decision.
+// Operator decision (2026-09-29, runbooks/notifications-email.md): option B — Studio sends email
+// itself through Resend (ResendEmailSender, resend-sender.ts): addresses come from studio.users,
+// the outbox + `send-email` job deliver it, bounces and complaints suppress the address, and
+// every notification email carries a one-click unsubscribe link. Option A (PostMind Core sends
+// it) stays available for core mode: CoreEmailSender throws NotImplementedError until Core
+// publishes an email API, so opted-in email is recorded as pending setup there.
 //
-// STUDIO_EMAIL_PROVIDER selects the sender: unset or "none" = no email sender (email is
-// recorded as pending setup); "core" = CoreEmailSender. Anything else is a configuration error,
-// including "resend" / "ses" until option B is chosen and built.
+// The sender follows STUDIO_EMAIL_PROVIDER through src/lib/mode.ts: standalone mode defaults to
+// "resend", core mode to "none" (no sender: pending setup); "core" selects CoreEmailSender.
+// createEmailSender() builds it; emailSenderFromEnv() is the database-free subset (core / none).
 
 /** Delivery state stored on studio.notifications.emailStatus (null = email not requested). */
 export type EmailStatus = 'pending_setup' | 'sent' | 'failed';
@@ -29,10 +34,12 @@ export interface EmailMessage {
   text: string;
   /** Absolute when APP_URL is set, otherwise the app-relative path. */
   link: string | null;
+  /** 16.5: the keyed form, rendered in each recipient's locale (absent for unkeyed rows). */
+  message?: { key: string; params: Record<string, string | number> };
 }
 
 export interface EmailSender {
-  readonly provider: 'core';
+  readonly provider: 'core' | 'resend';
   send(message: EmailMessage): Promise<void>;
 }
 
@@ -52,27 +59,40 @@ export class CoreEmailSender implements EmailSender {
   }
 }
 
-export type EmailProvider = 'none' | 'core';
+export type EmailProvider = StudioModes['email'];
 
+/** STUDIO_EMAIL_PROVIDER as resolved by src/lib/mode.ts (invalid values throw). */
 export function emailProviderFromEnv(
   env: Record<string, string | undefined> = process.env,
 ): EmailProvider {
-  const raw = env.STUDIO_EMAIL_PROVIDER?.trim().toLowerCase() ?? '';
-  if (raw === '' || raw === 'none') return 'none';
-  if (raw === 'core') return 'core';
-  if (raw === 'resend' || raw === 'ses') {
-    throw new ConfigurationError(
-      `STUDIO_EMAIL_PROVIDER=${raw} is not built: Studio-sent email needs an operator decision (runbooks/notifications-email.md)`,
-    );
-  }
-  throw new ConfigurationError('STUDIO_EMAIL_PROVIDER must be unset, "none" or "core"');
+  return studioModes(env).email;
 }
 
-/** null = no email sender configured: opted-in email is recorded as pending setup. */
+/**
+ * The database-free senders: "core" = CoreEmailSender, "none" = null. "resend" needs the
+ * database and the queue, so it returns null here — production wiring uses createEmailSender().
+ */
 export function emailSenderFromEnv(
   env: Record<string, string | undefined> = process.env,
 ): EmailSender | null {
   return emailProviderFromEnv(env) === 'core' ? new CoreEmailSender() : null;
+}
+
+/** The sender for STUDIO_EMAIL_PROVIDER (null = none: opted-in email is pending setup). */
+export function createEmailSender(deps: {
+  db: PrismaClient;
+  queue?: JobQueue;
+  logger: Logger;
+  env?: Record<string, string | undefined>;
+}): EmailSender | null {
+  const provider = emailProviderFromEnv(deps.env);
+  if (provider === 'core') return new CoreEmailSender();
+  if (provider === 'none') return null;
+  return new ResendEmailSender({
+    db: deps.db,
+    outbox: createEmailOutbox({ db: deps.db, queue: deps.queue, logger: deps.logger }),
+    logger: deps.logger,
+  });
 }
 
 /**

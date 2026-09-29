@@ -3331,7 +3331,162 @@
   "members": {},
   "billing": {},
   "upgrade": {},
-  "email": {},
+  "email": {
+    "layout": {
+      "brand": "PostMind Studio",
+      "greeting": "Hi {name},",
+      "greetingAnonymous": "Hi,",
+      "buttonFallback": "If the button does not work, copy this link into your browser:",
+      "signOff": "The PostMind Studio team",
+      "footerTransactional": "This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.",
+      "footerNotification": "You are receiving this because you turned on email for this type of notification in PostMind Studio.",
+      "support": "Questions? Contact us at {email}.",
+      "unsubscribe": "Unsubscribe from these emails"
+    },
+    "templates": {
+      "verifyEmail": {
+        "subject": "Confirm your email address",
+        "heading": "Confirm your email address",
+        "body": "Confirm that this is your email address to finish setting up your PostMind Studio account.",
+        "cta": "Confirm email address",
+        "note": "This link expires in 24 hours. If you did not create an account, you can ignore this email."
+      },
+      "resetPassword": {
+        "subject": "Reset your password",
+        "heading": "Reset your password",
+        "body": "We received a request to reset the password for your PostMind Studio account. Choose a new password with the button below.",
+        "cta": "Choose a new password",
+        "note": "This link expires in 1 hour and can be used once. If you did not ask for this, you can ignore this email: your password has not changed."
+      },
+      "passwordChanged": {
+        "subject": "Your password was changed",
+        "heading": "Your password was changed",
+        "body": "The password for your PostMind Studio account was just changed, and your other sessions were signed out.",
+        "cta": "Review account security",
+        "note": "If you did not do this, reset your password straight away and contact support."
+      },
+      "emailChangeConfirm": {
+        "subject": "Confirm your new email address",
+        "heading": "Confirm your new email address",
+        "body": "You asked to change the email address of your PostMind Studio account to {newEmail}. Confirm the change with the button below.",
+        "cta": "Confirm new email address",
+        "note": "This link expires in 24 hours. If you did not ask for this, you can ignore this email."
+      },
+      "emailChanged": {
+        "subject": "The email address on your account was changed",
+        "heading": "Your email address was changed",
+        "body": "The email address of your PostMind Studio account was changed to {newEmail}. We will send account emails there from now on.",
+        "cta": "Review account security",
+        "note": "If you did not make this change, contact support straight away."
+      },
+      "accountExists": {
+        "subject": "You already have a PostMind Studio account",
+        "heading": "You already have an account",
+        "body": "Someone tried to sign up for PostMind Studio with this email address, but an account already exists for it. Sign in instead. If you have forgotten your password, choose “Forgot password” on the sign-in page.",
+        "cta": "Sign in",
+        "note": "If this was not you, you can ignore this email. Your account has not changed."
+      },
+      "twoFactorChanged": {
+        "subject": "{enabled, select, true {Two-factor authentication turned on} other {Two-factor authentication turned off}}",
+        "heading": "{enabled, select, true {Two-factor authentication is on} other {Two-factor authentication is off}}",
+        "body": "{enabled, select, true {Two-factor authentication was turned on for your PostMind Studio account. You will need your authenticator app or a backup code when you sign in.} other {Two-factor authentication was turned off for your PostMind Studio account. Signing in now needs only your password.}}",
+        "cta": "Review account security",
+        "note": "If you did not do this, reset your password straight away and contact support."
+      },
+      "newSignIn": {
+        "subject": "New sign-in to your account",
+        "heading": "New sign-in to your account",
+        "body": "Your PostMind Studio account was just signed in to from {device}.",
+        "cta": "Review active sessions",
+        "note": "If this was you, you do not need to do anything. If not, sign out that session and change your password."
+      },
+      "invite": {
+        "subject": "{inviterName} invited you to {organisationName} on PostMind Studio",
+        "heading": "Join {organisationName} on PostMind Studio",
+        "body": "{inviterName} invited you to join {organisationName} as {role, select, owner {an owner} admin {an admin} publisher {a publisher} creator {a creator} viewer {a viewer} other {a member}}. Accept the invitation to start working together on videos.",
+        "cta": "Accept invitation",
+        "note": "The invitation expires in 7 days. Sign in with this email address to accept it. If you were not expecting it, you can ignore this email."
+      },
+      "ownershipTransferred": {
+        "subject": "You are now the owner of {organisationName}",
+        "heading": "You are now the owner of {organisationName}",
+        "body": "{newOwnerName} made you the owner of {organisationName} on PostMind Studio. As owner you manage billing and can delete the organisation.",
+        "cta": "Open organisation settings"
+      },
+      "trialEnding": {
+        "subject": "Your {planName} trial ends on {trialEndsAt, date, long}",
+        "heading": "Your trial ends soon",
+        "body": "Your {planName} trial ends on {trialEndsAt, date, long}. After that, your plan continues and the card on file is charged. To change or cancel, open billing settings before then.",
+        "cta": "Open billing settings"
+      },
+      "paymentFailed": {
+        "subject": "Your payment failed",
+        "heading": "We could not take your payment",
+        "body": "The latest payment for your PostMind Studio plan failed. Please update your payment details. If the payment still fails by {graceEndsAt, date, long}, your organisation becomes read-only until it is paid.",
+        "cta": "Update payment details"
+      },
+      "paymentActionRequired": {
+        "subject": "Your payment needs confirming",
+        "heading": "Confirm your payment",
+        "body": "Your bank asked for extra confirmation before it can complete the payment for your PostMind Studio plan. Open the invoice to confirm it.",
+        "cta": "Confirm payment"
+      },
+      "subscriptionChanged": {
+        "subject": "Your plan is now {planName}",
+        "heading": "Your plan was changed",
+        "body": "Your organisation is now on the {planName} plan. Your usage limits and features have been updated.",
+        "cta": "Open billing settings"
+      },
+      "subscriptionCanceled": {
+        "subject": "Your subscription was cancelled",
+        "heading": "Your subscription was cancelled",
+        "body": "Your PostMind Studio subscription is cancelled. You keep full access until {endsAt, date, long}; after that your organisation becomes read-only. You can subscribe again at any time.",
+        "cta": "Open billing settings"
+      },
+      "topupReceipt": {
+        "subject": "Your top-up is ready: {packName}",
+        "heading": "Top-up added",
+        "body": "Thank you. The {packName} top-up has been added to your organisation and is ready to use. Stripe sends the receipt separately.",
+        "cta": "View usage"
+      },
+      "accountDeletionScheduled": {
+        "subject": "Your account will be deleted",
+        "heading": "Your account will be deleted",
+        "body": "You asked us to delete your PostMind Studio account. You have been signed out everywhere, and your account and its data will be permanently deleted on {deleteAt, date, long}.",
+        "note": "If you did not ask for this, contact support before that date."
+      },
+      "orgDeletionScheduled": {
+        "subject": "{organisationName} will be deleted",
+        "heading": "{organisationName} will be deleted",
+        "body": "The organisation {organisationName} was deleted in PostMind Studio. Its projects, videos and connections will be permanently removed on {deleteAt, date, long}.",
+        "note": "If this was a mistake, contact support before that date."
+      },
+      "dataExportReady": {
+        "subject": "Your data export is ready",
+        "heading": "Your data export is ready",
+        "body": "The export you requested from PostMind Studio is ready to download. The download link works until {expiresAt, date, long}.",
+        "cta": "Download export"
+      }
+    },
+    "notification": {
+      "cta": "Open in PostMind Studio"
+    },
+    "unsubscribe": {
+      "pageTitle": "Email preferences — PostMind Studio",
+      "confirmHeading": "Stop these emails?",
+      "confirmBody": "You will no longer receive emails about “{kind}” for this organisation. You will still see these notifications in PostMind Studio.",
+      "confirmButton": "Unsubscribe",
+      "doneHeading": "You are unsubscribed",
+      "doneBody": "You will no longer receive emails about “{kind}” for this organisation. You can turn them back on in your notification preferences in PostMind Studio.",
+      "invalidHeading": "This link does not work",
+      "invalidBody": "The unsubscribe link is incomplete or has been changed. Use the link in your latest email, or change your notification preferences in PostMind Studio.",
+      "openStudio": "Open PostMind Studio"
+    },
+    "preferences": {
+      "description": "Choose what reaches you, in the app and by email.",
+      "suppressed": "We can’t email you: messages to your address bounced or were marked as spam. Contact support to turn email back on."
+    }
+  },
   "adminOrgs": {},
   "adminUsers": {}
 }

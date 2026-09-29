@@ -30,6 +30,7 @@ PUBLISH="$(host_var STUDIO_WORKER_PUBLISH_HOST)"
 SCHEDULED="$(host_var STUDIO_WORKER_SCHEDULED_HOST)"
 ANALYTICS="$(host_var STUDIO_WORKER_ANALYTICS_HOST)"
 LIBRARY="$(host_var STUDIO_WORKER_LIBRARY_HOST)"
+EMAIL="$(host_var STUDIO_WORKER_EMAIL_HOST)"
 
 [ -n "${METRICS_TOKEN:-}" ] || fail "METRICS_TOKEN is not set (env group studio-metrics-<env>)"
 [ -n "${PAGERDUTY_ROUTING_KEY:-}" ] || fail "PAGERDUTY_ROUTING_KEY is not set"
@@ -44,6 +45,7 @@ sed \
   -e "s/__SCHEDULED_HOST__/${SCHEDULED}/g" \
   -e "s/__ANALYTICS_HOST__/${ANALYTICS}/g" \
   -e "s/__LIBRARY_HOST__/${LIBRARY}/g" \
+  -e "s/__EMAIL_HOST__/${EMAIL}/g" \
   /etc/prometheus/prometheus.yml.tmpl >/etc/prometheus/prometheus.yml
 
 umask 077

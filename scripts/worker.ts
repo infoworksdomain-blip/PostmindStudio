@@ -30,6 +30,7 @@ import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-ha
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
 import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
+import { EMAIL_SWEEP_SCHEDULE } from '../src/lib/studio/queue/workers/send-email';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -212,6 +213,18 @@ async function main(): Promise<void> {
     },
   );
 
+  // Phase 18 §2.8 — the email outbox sweeper: re-enqueues rows whose send-email job was lost and
+  // purges old rows (every 5 minutes, on studio-email).
+  const email = new Queue(QUEUES.email, { connection, prefix: queuePrefix() });
+  await email.upsertJobScheduler(
+    'sweep-email-outbox',
+    { pattern: EMAIL_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-email-outbox',
+      data: { organisationId: 'postmind-platform', runId: 'email-sweep', planTier: 'STANDARD' },
+    },
+  );
+
   // BACKLOG 11.5 — this process's metrics (job outcomes, durations, breakers) for Prometheus.
   const metricsToken = process.env.METRICS_TOKEN?.trim() || undefined;
   const metricsServer = metricsToken
@@ -242,6 +255,7 @@ async function main(): Promise<void> {
     await assets.close();
     await orchestration.close();
     await publish.close();
+    await email.close();
     metricsServer?.close();
     await queue.close();
     await db.$disconnect();

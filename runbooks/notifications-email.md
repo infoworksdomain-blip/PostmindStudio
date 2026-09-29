@@ -1,54 +1,53 @@
-# Notification email: delivery status and the pending operator decision (BACKLOG 13.33)
+# Notification email: delivery and status (BACKLOG 13.33, Phase 18 §2.8)
 
 | | |
 | --- | --- |
-| **Metric** | Notifications with `emailStatus = 'pending_setup'` or `'failed'` (`studio.notifications`). |
-| **Threshold** | Any `failed` once a sender is live. `pending_setup` is expected until the decision below is made. |
-| **Escalation** | On-call engineer, then the Core team (option A) or DevOps (option B). |
+| **Metric** | Notifications with `emailStatus = 'failed'` (`studio.notifications`); `studio.email_outbox` rows in state `failed`. |
+| **Threshold** | Any `failed`. `pending_setup` is expected only in core mode (below). |
+| **Escalation** | On-call engineer, then DevOps (Resend account, domain, DNS). |
 
-## What exists
+## Decision (operator, 2026-09-29): option B — Studio sends email through Resend
 
-- Users choose per notification kind: in-app and/or email (notification preferences, 13.24).
-- For every notification, the notifier asks the preferences service which users want email for
-  that kind. If anyone does, it hands the notification to the email sender and records
-  `notifications.emailStatus`:
-  - `pending_setup`: no sender is configured, or Core has no email API yet;
-  - `sent` or `failed`: once a sender works.
-- The bell shows "Email pending setup" on those notifications. Email never blocks the in-app
-  notification or the webhook.
-- The sender is chosen by `STUDIO_EMAIL_PROVIDER`: unset or `none` means no sender; `core` means
-  `CoreEmailSender`. Any other value is a configuration error.
+Phase 18 made Studio a standalone product, so option B was chosen: Studio sends notification
+email itself through Resend. Option A (PostMind Core sends it) is kept only for core mode.
 
-## Decision the operator must make
+## How it works
 
-**A. PostMind Core sends the email (recommended if Core already emails its users).**
+1. Users choose per notification kind: in-app and/or email (notification preferences, 13.24).
+2. For every notification the notifier asks the preferences which users want email for that
+   kind and hands the notification to the email sender (`STUDIO_EMAIL_PROVIDER`, default
+   `resend` in standalone mode).
+3. `ResendEmailSender` (`src/lib/studio/notifications/resend-sender.ts`) looks the users up in
+   `studio.users` and drops anyone unverified, deleted or banned. Each remaining user gets one
+   `studio.email_outbox` row keyed `notification:<notificationId>:<userId>`, so a repeat never
+   sends twice. The outbox drops suppressed addresses (hard bounces and complaints).
+4. The `send-email` job (queue `studio-email`) renders the email in the user's locale
+   (`users.locale`, en-GB fallback) from the keyed message (`notifications.*`, 16.5) and sends it
+   with the one-click unsubscribe link and `List-Unsubscribe` / `List-Unsubscribe-Post` headers
+   (RFC 8058). The unsubscribe turns email off for that kind only (runbooks/email-resend.md).
+5. `notifications.emailStatus`:
+   - `sent`: the email was queued in the outbox (delivery is then tracked on the outbox row:
+     `sent` → `delivered`, or `bounced` / `complained` / `suppressed` / `failed`);
+   - `failed`: queueing failed, or the send job gave up (it sets the notification to `failed`);
+   - `pending_setup`: no sender — core mode, where `none` is the default and `core` waits for a
+     Core email API (`CoreEmailSender` throws NotImplementedError; proposed contract in
+     `src/lib/studio/notifications/email.ts`).
+6. The preferences dialog shows the delivery state: `active`, `suppressed` ("we can't email
+   you", with a support contact) or `pending_setup`.
 
-- Studio passes the notification and the opted-in user ids.
-- Core resolves addresses and owns templates, unsubscribe, bounces and complaints.
-- Studio never stores email addresses.
-- Needs from Core: an internal endpoint. The proposed contract is in
-  `src/lib/studio/notifications/email.ts`: `POST /api/internal/notifications/email`,
-  X-Service-Token, idempotent on the notification id.
-- Studio work once it exists: replace the NotImplemented body of `CoreEmailSender.send` (about
-  0.5 day plus tests). Then set `STUDIO_EMAIL_PROVIDER=core`.
+Email never blocks the in-app notification or the webhook.
 
-**B. Studio sends the email itself (Resend or Amazon SES).**
+## Steps
 
-Studio would need:
+1. `failed` notification: find the outbox rows with
+   `SELECT id, state, attempts, "lastError" FROM studio.email_outbox WHERE "idempotencyKey" LIKE 'notification:<notificationId>:%';`
+   and follow runbooks/email-resend.md ("A send failed").
+2. A user says they get no email: check their preference (`notification_preferences.email`),
+   that `users.emailVerified` is true, and whether their address is suppressed
+   (runbooks/email-resend.md, "Suppression").
+3. Core mode: `pending_setup` is expected until Core publishes an email API. Nothing to do.
 
-- each user's address, which Core's context endpoint does not carry, so Core must still add a
-  lookup;
-- a verified sending domain (SPF, DKIM, DMARC);
-- its own unsubscribe link (PECR/GDPR) and bounce/complaint handling;
-- a new secret: `RESEND_API_KEY`, or SES credentials and a region.
+## Verification
 
-Studio work: an adapter plus webhooks (about 3 days). Until it is chosen, `resend` and `ses` are
-refused at startup.
-
-## Steps (today)
-
-1. `pending_setup` rows are expected. Nothing to do until the decision is made.
-2. After a sender goes live, investigate `failed` rows in the worker/web logs: search for
-   `notification email failed` with the notification id.
-
-**GAP:** email delivery waits for decision A or B above.
+- A test notification for a user with email turned on reaches their inbox in their language,
+  and the "Unsubscribe" link turns that kind's email off (the dialog shows it off).

@@ -3331,7 +3331,162 @@
   "members": {},
   "billing": {},
   "upgrade": {},
-  "email": {},
+  "email": {
+    "layout": {
+      "brand": "PostMind Studio",
+      "greeting": "{name}，您好：",
+      "greetingAnonymous": "您好：",
+      "buttonFallback": "如果按钮无法使用，请将此链接复制到浏览器中：",
+      "signOff": "PostMind Studio 团队",
+      "footerTransactional": "这是一封关于您 PostMind Studio 账户的服务邮件。即使您关闭了其他邮件，我们仍会发送此类邮件。",
+      "footerNotification": "您收到此邮件，是因为您在 PostMind Studio 中为此类通知开启了邮件提醒。",
+      "support": "有疑问？请发邮件至 {email}。",
+      "unsubscribe": "退订此类邮件"
+    },
+    "templates": {
+      "verifyEmail": {
+        "subject": "请确认您的邮箱地址",
+        "heading": "请确认您的邮箱地址",
+        "body": "请确认这是您的邮箱地址，以完成 PostMind Studio 账户的设置。",
+        "cta": "确认邮箱地址",
+        "note": "此链接将在 24 小时后失效。如果您没有创建账户，请忽略此邮件。"
+      },
+      "resetPassword": {
+        "subject": "重置您的密码",
+        "heading": "重置您的密码",
+        "body": "我们收到了重置您 PostMind Studio 账户密码的请求。请点击下方按钮设置新密码。",
+        "cta": "设置新密码",
+        "note": "此链接将在 1 小时后失效，且只能使用一次。如果不是您本人的请求，请忽略此邮件：您的密码没有改变。"
+      },
+      "passwordChanged": {
+        "subject": "您的密码已更改",
+        "heading": "您的密码已更改",
+        "body": "您的 PostMind Studio 账户密码刚刚被更改，其他会话均已退出登录。",
+        "cta": "查看账户安全",
+        "note": "如果这不是您本人的操作，请立即重置密码并联系客服。"
+      },
+      "emailChangeConfirm": {
+        "subject": "请确认您的新邮箱地址",
+        "heading": "请确认您的新邮箱地址",
+        "body": "您申请将 PostMind Studio 账户的邮箱地址更改为 {newEmail}。请点击下方按钮确认更改。",
+        "cta": "确认新邮箱地址",
+        "note": "此链接将在 24 小时后失效。如果不是您本人的请求，请忽略此邮件。"
+      },
+      "emailChanged": {
+        "subject": "您账户的邮箱地址已更改",
+        "heading": "您的邮箱地址已更改",
+        "body": "您的 PostMind Studio 账户邮箱地址已更改为 {newEmail}。今后账户邮件将发送到该地址。",
+        "cta": "查看账户安全",
+        "note": "如果这不是您本人的更改，请立即联系客服。"
+      },
+      "accountExists": {
+        "subject": "您已拥有 PostMind Studio 账户",
+        "heading": "您已拥有账户",
+        "body": "有人尝试使用此邮箱地址注册 PostMind Studio，但该邮箱已关联一个账户。请直接登录。如果您忘记了密码，请在登录页面选择“忘记密码”。",
+        "cta": "登录",
+        "note": "如果这不是您本人的操作，请忽略此邮件。您的账户没有任何变化。"
+      },
+      "twoFactorChanged": {
+        "subject": "{enabled, select, true {两步验证已开启} other {两步验证已关闭}}",
+        "heading": "{enabled, select, true {两步验证已开启} other {两步验证已关闭}}",
+        "body": "{enabled, select, true {您的 PostMind Studio 账户已开启两步验证。登录时需要使用身份验证器应用或备用码。} other {您的 PostMind Studio 账户已关闭两步验证。现在只需密码即可登录。}}",
+        "cta": "查看账户安全",
+        "note": "如果这不是您本人的操作，请立即重置密码并联系客服。"
+      },
+      "newSignIn": {
+        "subject": "您的账户有新的登录",
+        "heading": "您的账户有新的登录",
+        "body": "刚刚有人通过 {device} 登录了您的 PostMind Studio 账户。",
+        "cta": "查看活跃会话",
+        "note": "如果是您本人，则无需任何操作。否则，请退出该会话并更改密码。"
+      },
+      "invite": {
+        "subject": "{inviterName} 邀请您加入 PostMind Studio 上的 {organisationName}",
+        "heading": "加入 PostMind Studio 上的 {organisationName}",
+        "body": "{inviterName} 邀请您以{role, select, owner {所有者} admin {管理员} publisher {发布者} creator {创作者} viewer {查看者} other {成员}}身份加入 {organisationName}。接受邀请，一起制作视频吧。",
+        "cta": "接受邀请",
+        "note": "邀请将在 7 天后失效。请使用此邮箱地址登录以接受邀请。如果您没有预期收到此邀请，请忽略此邮件。"
+      },
+      "ownershipTransferred": {
+        "subject": "您现在是 {organisationName} 的所有者",
+        "heading": "您现在是 {organisationName} 的所有者",
+        "body": "{newOwnerName} 已将您设为 PostMind Studio 上 {organisationName} 的所有者。作为所有者，您负责管理账单，并可以删除该组织。",
+        "cta": "打开组织设置"
+      },
+      "trialEnding": {
+        "subject": "您的 {planName} 试用将于 {trialEndsAt, date, long} 结束",
+        "heading": "您的试用即将结束",
+        "body": "您的 {planName} 试用将于 {trialEndsAt, date, long} 结束。之后您的套餐将继续，并从已绑定的卡中扣款。如需更改或取消，请在此之前打开账单设置。",
+        "cta": "打开账单"
+      },
+      "paymentFailed": {
+        "subject": "您的付款失败",
+        "heading": "我们未能收取您的付款",
+        "body": "您 PostMind Studio 套餐的最近一次付款失败。请更新您的付款信息。如果到 {graceEndsAt, date, long} 付款仍然失败，您的组织将变为只读，直至付款完成。",
+        "cta": "更新付款信息"
+      },
+      "paymentActionRequired": {
+        "subject": "您的付款需要确认",
+        "heading": "请确认您的付款",
+        "body": "您的银行要求额外确认，才能完成 PostMind Studio 套餐的付款。请打开账单进行确认。",
+        "cta": "确认付款"
+      },
+      "subscriptionChanged": {
+        "subject": "您的套餐现为 {planName}",
+        "heading": "您的套餐已更改",
+        "body": "您的组织现在使用 {planName} 套餐。您的用量限制和功能已更新。",
+        "cta": "打开账单"
+      },
+      "subscriptionCanceled": {
+        "subject": "您的订阅已取消",
+        "heading": "您的订阅已取消",
+        "body": "您的 PostMind Studio 订阅已取消。在 {endsAt, date, long} 之前您仍可完整使用；之后您的组织将变为只读。您可以随时重新订阅。",
+        "cta": "打开账单"
+      },
+      "topupReceipt": {
+        "subject": "您的加量包已到账：{packName}",
+        "heading": "加量包已添加",
+        "body": "感谢您的购买。{packName} 加量包已添加到您的组织，现在即可使用。收据将由 Stripe 另行发送。",
+        "cta": "查看用量"
+      },
+      "accountDeletionScheduled": {
+        "subject": "您的账户将被删除",
+        "heading": "您的账户将被删除",
+        "body": "您已申请删除 PostMind Studio 账户。您已在所有设备上退出登录，您的账户及其数据将于 {deleteAt, date, long} 被永久删除。",
+        "note": "如果不是您本人的申请，请在该日期之前联系客服。"
+      },
+      "orgDeletionScheduled": {
+        "subject": "{organisationName} 将被删除",
+        "heading": "{organisationName} 将被删除",
+        "body": "组织 {organisationName} 已在 PostMind Studio 中被删除。其项目、视频和连接将于 {deleteAt, date, long} 被永久移除。",
+        "note": "如果这是误操作，请在该日期之前联系客服。"
+      },
+      "dataExportReady": {
+        "subject": "您的数据导出已就绪",
+        "heading": "您的数据导出已就绪",
+        "body": "您在 PostMind Studio 申请的导出文件已可下载。下载链接在 {expiresAt, date, long} 之前有效。",
+        "cta": "下载导出文件"
+      }
+    },
+    "notification": {
+      "cta": "在 PostMind Studio 中打开"
+    },
+    "unsubscribe": {
+      "pageTitle": "邮件偏好设置 — PostMind Studio",
+      "confirmHeading": "不再接收这些邮件？",
+      "confirmBody": "您将不再收到此组织关于“{kind}”的邮件。您仍可在 PostMind Studio 中看到这些通知。",
+      "confirmButton": "退订",
+      "doneHeading": "您已退订",
+      "doneBody": "您将不再收到此组织关于“{kind}”的邮件。您可以在 PostMind Studio 的通知偏好设置中重新开启。",
+      "invalidHeading": "此链接无效",
+      "invalidBody": "退订链接不完整或已被修改。请使用最新邮件中的链接，或在 PostMind Studio 中更改通知偏好设置。",
+      "openStudio": "打开 PostMind Studio"
+    },
+    "preferences": {
+      "description": "选择您希望通过应用内和邮件接收的内容。",
+      "suppressed": "我们无法向您发送邮件：发往您邮箱的邮件被退回或被标记为垃圾邮件。请联系客服重新开启邮件。"
+    }
+  },
   "adminOrgs": {},
   "adminUsers": {}
 }

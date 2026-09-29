@@ -15,6 +15,7 @@ export const DEFAULT_CONCURRENCY: Record<QueueName, number> = {
   [QUEUES.scheduled]: 3,
   [QUEUES.analytics]: 5,
   [QUEUES.library]: 2,
+  [QUEUES.email]: 5,
 };
 
 const CONCURRENCY_ENV: Record<QueueName, string> = {
@@ -24,6 +25,7 @@ const CONCURRENCY_ENV: Record<QueueName, string> = {
   [QUEUES.scheduled]: 'WORKER_CONCURRENCY_SCHEDULED',
   [QUEUES.analytics]: 'WORKER_CONCURRENCY_ANALYTICS',
   [QUEUES.library]: 'WORKER_CONCURRENCY_LIBRARY',
+  [QUEUES.email]: 'WORKER_CONCURRENCY_EMAIL',
 };
 
 /** Corpus ingestion throughput knob (runbooks/corpus-ingestion.md); wins over the legacy name. */
@@ -55,6 +57,7 @@ export const PIPELINE_QUEUES: QueueName[] = [
   QUEUES.scheduled,
   QUEUES.library,
   QUEUES.analytics,
+  QUEUES.email,
 ];
 
 /**

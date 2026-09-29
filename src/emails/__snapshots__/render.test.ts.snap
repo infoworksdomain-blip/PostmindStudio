@@ -1,0 +1,326 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`email templates in every locale > matches the en-GB text snapshots 1`] = `
+{
+  "accountDeletionScheduled": "Subject: Your account will be deleted
+
+Your account will be deleted
+
+Hi,
+
+You asked us to delete your PostMind Studio account. You have been signed out everywhere, and your account and its data will be permanently deleted on 29 October 2026.
+
+If you did not ask for this, contact support before that date.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "accountExists": "Subject: You already have a PostMind Studio account
+
+You already have an account
+
+Hi,
+
+Someone tried to sign up for PostMind Studio with this email address, but an account already exists for it. Sign in instead. If you have forgotten your password, choose “Forgot password” on the sign-in page.
+
+Sign in: https://studio.example.com/sign-in
+
+If this was not you, you can ignore this email. Your account has not changed.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "dataExportReady": "Subject: Your data export is ready
+
+Your data export is ready
+
+Hi,
+
+The export you requested from PostMind Studio is ready to download. The download link works until 6 October 2026.
+
+Download export: https://files.example.com/export.zip
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "emailChangeConfirm": "Subject: Confirm your new email address
+
+Confirm your new email address
+
+Hi,
+
+You asked to change the email address of your PostMind Studio account to new@example.com. Confirm the change with the button below.
+
+Confirm new email address: https://studio.example.com/verify?t=3
+
+This link expires in 24 hours. If you did not ask for this, you can ignore this email.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "emailChanged": "Subject: The email address on your account was changed
+
+Your email address was changed
+
+Hi,
+
+The email address of your PostMind Studio account was changed to new@example.com. We will send account emails there from now on.
+
+Review account security: https://studio.example.com/account/security
+
+If you did not make this change, contact support straight away.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "invite": "Subject: Ben invited you to Acme Bakery on PostMind Studio
+
+Join Acme Bakery on PostMind Studio
+
+Hi,
+
+Ben invited you to join Acme Bakery as a publisher. Accept the invitation to start working together on videos.
+
+Accept invitation: https://studio.example.com/invite/abc
+
+The invitation expires in 7 days. Sign in with this email address to accept it. If you were not expecting it, you can ignore this email.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "newSignIn": "Subject: New sign-in to your account
+
+New sign-in to your account
+
+Hi,
+
+Your PostMind Studio account was just signed in to from Firefox on Windows.
+
+Review active sessions: https://studio.example.com/account/security
+
+If this was you, you do not need to do anything. If not, sign out that session and change your password.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "notification": "Subject: Publishing “Launch” to TikTok failed
+
+Publishing “Launch” to TikTok failed
+
+Hi,
+
+Token expired — open the project to retry.
+
+Open in PostMind Studio: https://studio.example.com/projects/p1
+
+The PostMind Studio team
+
+--
+You are receiving this because you turned on email for this type of notification in PostMind Studio.
+
+Unsubscribe from these emails: https://studio.example.com/api/email/unsubscribe?token=v1.x.y
+",
+  "orgDeletionScheduled": "Subject: Acme Bakery will be deleted
+
+Acme Bakery will be deleted
+
+Hi,
+
+The organisation Acme Bakery was deleted in PostMind Studio. Its projects, videos and connections will be permanently removed on 29 October 2026.
+
+If this was a mistake, contact support before that date.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "ownershipTransferred": "Subject: You are now the owner of Acme Bakery
+
+You are now the owner of Acme Bakery
+
+Hi,
+
+Ben made you the owner of Acme Bakery on PostMind Studio. As owner you manage billing and can delete the organisation.
+
+Open organisation settings: https://studio.example.com/settings/organisation
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "passwordChanged": "Subject: Your password was changed
+
+Your password was changed
+
+Hi Amara,
+
+The password for your PostMind Studio account was just changed, and your other sessions were signed out.
+
+Review account security: https://studio.example.com/account/security
+
+If you did not do this, reset your password straight away and contact support.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "paymentActionRequired": "Subject: Your payment needs confirming
+
+Confirm your payment
+
+Hi,
+
+Your bank asked for extra confirmation before it can complete the payment for your PostMind Studio plan. Open the invoice to confirm it.
+
+Confirm payment: https://invoice.stripe.com/i/acct_1/test
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "paymentFailed": "Subject: Your payment failed
+
+We could not take your payment
+
+Hi,
+
+The latest payment for your PostMind Studio plan failed. Please update your payment details. If the payment still fails by 6 October 2026, your organisation becomes read-only until it is paid.
+
+Update payment details: https://studio.example.com/settings/billing
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "resetPassword": "Subject: Reset your password
+
+Reset your password
+
+Hi,
+
+We received a request to reset the password for your PostMind Studio account. Choose a new password with the button below.
+
+Choose a new password: https://studio.example.com/reset-password?token=t2
+
+This link expires in 1 hour and can be used once. If you did not ask for this, you can ignore this email: your password has not changed.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "subscriptionCanceled": "Subject: Your subscription was cancelled
+
+Your subscription was cancelled
+
+Hi,
+
+Your PostMind Studio subscription is cancelled. You keep full access until 1 November 2026; after that your organisation becomes read-only. You can subscribe again at any time.
+
+Open billing settings: https://studio.example.com/settings/billing
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "subscriptionChanged": "Subject: Your plan is now Plus
+
+Your plan was changed
+
+Hi,
+
+Your organisation is now on the Plus plan. Your usage limits and features have been updated.
+
+Open billing settings: https://studio.example.com/settings/billing
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "topupReceipt": "Subject: Your top-up is ready: 10 short videos
+
+Top-up added
+
+Hi,
+
+Thank you. The 10 short videos top-up has been added to your organisation and is ready to use. Stripe sends the receipt separately.
+
+View usage: https://studio.example.com/settings/billing
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "trialEnding": "Subject: Your Standard trial ends on 13 October 2026
+
+Your trial ends soon
+
+Hi,
+
+Your Standard trial ends on 13 October 2026. After that, your plan continues and the card on file is charged. To change or cancel, open billing settings before then.
+
+Open billing settings: https://studio.example.com/settings/billing
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "twoFactorChanged": "Subject: Two-factor authentication turned on
+
+Two-factor authentication is on
+
+Hi,
+
+Two-factor authentication was turned on for your PostMind Studio account. You will need your authenticator app or a backup code when you sign in.
+
+Review account security: https://studio.example.com/account/security
+
+If you did not do this, reset your password straight away and contact support.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+  "verifyEmail": "Subject: Confirm your email address
+
+Confirm your email address
+
+Hi Amara,
+
+Confirm that this is your email address to finish setting up your PostMind Studio account.
+
+Confirm email address: https://studio.example.com/verify-email?token=t1
+
+This link expires in 24 hours. If you did not create an account, you can ignore this email.
+
+The PostMind Studio team
+
+--
+This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
+",
+}
+`;

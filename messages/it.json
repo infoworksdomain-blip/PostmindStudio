@@ -3331,7 +3331,162 @@
   "members": {},
   "billing": {},
   "upgrade": {},
-  "email": {},
+  "email": {
+    "layout": {
+      "brand": "PostMind Studio",
+      "greeting": "Ciao {name},",
+      "greetingAnonymous": "Ciao,",
+      "buttonFallback": "Se il pulsante non funziona, copia questo link nel browser:",
+      "signOff": "Il team di PostMind Studio",
+      "footerTransactional": "Questa è un’email di servizio sul tuo account PostMind Studio. Viene inviata anche se hai disattivato le altre email.",
+      "footerNotification": "Ricevi questa email perché hai attivato l’email per questo tipo di notifica in PostMind Studio.",
+      "support": "Domande? Scrivici a {email}.",
+      "unsubscribe": "Annulla l’iscrizione a queste email"
+    },
+    "templates": {
+      "verifyEmail": {
+        "subject": "Conferma il tuo indirizzo email",
+        "heading": "Conferma il tuo indirizzo email",
+        "body": "Conferma che questo è il tuo indirizzo email per completare la configurazione del tuo account PostMind Studio.",
+        "cta": "Conferma indirizzo email",
+        "note": "Questo link scade tra 24 ore. Se non hai creato un account, puoi ignorare questa email."
+      },
+      "resetPassword": {
+        "subject": "Reimposta la password",
+        "heading": "Reimposta la password",
+        "body": "Abbiamo ricevuto una richiesta di reimpostazione della password del tuo account PostMind Studio. Scegli una nuova password con il pulsante qui sotto.",
+        "cta": "Scegli una nuova password",
+        "note": "Questo link scade tra 1 ora e si può usare una sola volta. Se non l’hai richiesto, ignora questa email: la tua password non è cambiata."
+      },
+      "passwordChanged": {
+        "subject": "La tua password è stata modificata",
+        "heading": "La tua password è stata modificata",
+        "body": "La password del tuo account PostMind Studio è appena stata modificata e le altre sessioni sono state disconnesse.",
+        "cta": "Controlla la sicurezza dell’account",
+        "note": "Se non sei stato tu, reimposta subito la password e contatta l’assistenza."
+      },
+      "emailChangeConfirm": {
+        "subject": "Conferma il nuovo indirizzo email",
+        "heading": "Conferma il nuovo indirizzo email",
+        "body": "Hai chiesto di cambiare l’indirizzo email del tuo account PostMind Studio in {newEmail}. Conferma la modifica con il pulsante qui sotto.",
+        "cta": "Conferma nuovo indirizzo",
+        "note": "Questo link scade tra 24 ore. Se non l’hai richiesto, puoi ignorare questa email."
+      },
+      "emailChanged": {
+        "subject": "L’indirizzo email del tuo account è stato modificato",
+        "heading": "Il tuo indirizzo email è stato modificato",
+        "body": "L’indirizzo email del tuo account PostMind Studio ora è {newEmail}. D’ora in poi invieremo lì le email dell’account.",
+        "cta": "Controlla la sicurezza dell’account",
+        "note": "Se non hai fatto tu questa modifica, contatta subito l’assistenza."
+      },
+      "accountExists": {
+        "subject": "Hai già un account PostMind Studio",
+        "heading": "Hai già un account",
+        "body": "Qualcuno ha provato a registrarsi a PostMind Studio con questo indirizzo email, ma esiste già un account. Accedi invece. Se hai dimenticato la password, scegli «Password dimenticata» nella pagina di accesso.",
+        "cta": "Accedi",
+        "note": "Se non sei stato tu, puoi ignorare questa email. Il tuo account non è cambiato."
+      },
+      "twoFactorChanged": {
+        "subject": "{enabled, select, true {Autenticazione a due fattori attivata} other {Autenticazione a due fattori disattivata}}",
+        "heading": "{enabled, select, true {L’autenticazione a due fattori è attiva} other {L’autenticazione a due fattori è disattivata}}",
+        "body": "{enabled, select, true {Sul tuo account PostMind Studio è stata attivata l’autenticazione a due fattori. Per accedere ti serviranno l’app di autenticazione o un codice di backup.} other {Sul tuo account PostMind Studio è stata disattivata l’autenticazione a due fattori. Ora per accedere basta la password.}}",
+        "cta": "Controlla la sicurezza dell’account",
+        "note": "Se non sei stato tu, reimposta subito la password e contatta l’assistenza."
+      },
+      "newSignIn": {
+        "subject": "Nuovo accesso al tuo account",
+        "heading": "Nuovo accesso al tuo account",
+        "body": "È appena stato effettuato un accesso al tuo account PostMind Studio da {device}.",
+        "cta": "Controlla le sessioni attive",
+        "note": "Se eri tu, non devi fare nulla. Altrimenti chiudi quella sessione e cambia la password."
+      },
+      "invite": {
+        "subject": "{inviterName} ti ha invitato in {organisationName} su PostMind Studio",
+        "heading": "Unisciti a {organisationName} su PostMind Studio",
+        "body": "{inviterName} ti ha invitato a unirti a {organisationName} come {role, select, owner {proprietario} admin {amministratore} publisher {editore} creator {creatore} viewer {lettore} other {membro}}. Accetta l’invito per iniziare a creare video insieme.",
+        "cta": "Accetta l’invito",
+        "note": "L’invito scade tra 7 giorni. Accedi con questo indirizzo email per accettarlo. Se non lo aspettavi, puoi ignorare questa email."
+      },
+      "ownershipTransferred": {
+        "subject": "Ora sei il proprietario di {organisationName}",
+        "heading": "Ora sei il proprietario di {organisationName}",
+        "body": "{newOwnerName} ti ha nominato proprietario di {organisationName} su PostMind Studio. Come proprietario gestisci la fatturazione e puoi eliminare l’organizzazione.",
+        "cta": "Apri le impostazioni dell’organizzazione"
+      },
+      "trialEnding": {
+        "subject": "La prova di {planName} termina il {trialEndsAt, date, long}",
+        "heading": "La tua prova sta per terminare",
+        "body": "La prova di {planName} termina il {trialEndsAt, date, long}. Dopo, il piano continua e viene addebitata la carta registrata. Per cambiarlo o annullarlo, apri le impostazioni di fatturazione prima di quella data.",
+        "cta": "Apri la fatturazione"
+      },
+      "paymentFailed": {
+        "subject": "Il pagamento non è andato a buon fine",
+        "heading": "Non siamo riusciti a riscuotere il pagamento",
+        "body": "L’ultimo pagamento del tuo piano PostMind Studio non è andato a buon fine. Aggiorna i dati di pagamento. Se il pagamento non riesce ancora entro il {graceEndsAt, date, long}, l’organizzazione passerà in sola lettura fino al saldo.",
+        "cta": "Aggiorna i dati di pagamento"
+      },
+      "paymentActionRequired": {
+        "subject": "Il pagamento deve essere confermato",
+        "heading": "Conferma il pagamento",
+        "body": "La tua banca richiede una conferma aggiuntiva per completare il pagamento del piano PostMind Studio. Apri la fattura per confermarlo.",
+        "cta": "Conferma il pagamento"
+      },
+      "subscriptionChanged": {
+        "subject": "Il tuo piano ora è {planName}",
+        "heading": "Il tuo piano è cambiato",
+        "body": "La tua organizzazione ora ha il piano {planName}. I limiti di utilizzo e le funzioni sono stati aggiornati.",
+        "cta": "Apri la fatturazione"
+      },
+      "subscriptionCanceled": {
+        "subject": "Il tuo abbonamento è stato annullato",
+        "heading": "Il tuo abbonamento è stato annullato",
+        "body": "Il tuo abbonamento PostMind Studio è annullato. Mantieni l’accesso completo fino al {endsAt, date, long}; dopo, l’organizzazione passerà in sola lettura. Puoi abbonarti di nuovo in qualsiasi momento.",
+        "cta": "Apri la fatturazione"
+      },
+      "topupReceipt": {
+        "subject": "La ricarica è pronta: {packName}",
+        "heading": "Ricarica aggiunta",
+        "body": "Grazie. La ricarica {packName} è stata aggiunta alla tua organizzazione ed è già utilizzabile. Stripe invia la ricevuta separatamente.",
+        "cta": "Vedi l’utilizzo"
+      },
+      "accountDeletionScheduled": {
+        "subject": "Il tuo account verrà eliminato",
+        "heading": "Il tuo account verrà eliminato",
+        "body": "Hai chiesto di eliminare il tuo account PostMind Studio. Sei stato disconnesso ovunque e l’account con i suoi dati verrà eliminato definitivamente il {deleteAt, date, long}.",
+        "note": "Se non l’hai richiesto, contatta l’assistenza prima di quella data."
+      },
+      "orgDeletionScheduled": {
+        "subject": "{organisationName} verrà eliminata",
+        "heading": "{organisationName} verrà eliminata",
+        "body": "L’organizzazione {organisationName} è stata eliminata in PostMind Studio. Progetti, video e collegamenti verranno rimossi definitivamente il {deleteAt, date, long}.",
+        "note": "Se si tratta di un errore, contatta l’assistenza prima di quella data."
+      },
+      "dataExportReady": {
+        "subject": "La tua esportazione dei dati è pronta",
+        "heading": "La tua esportazione dei dati è pronta",
+        "body": "L’esportazione richiesta a PostMind Studio è pronta per il download. Il link di download funziona fino al {expiresAt, date, long}.",
+        "cta": "Scarica l’esportazione"
+      }
+    },
+    "notification": {
+      "cta": "Apri in PostMind Studio"
+    },
+    "unsubscribe": {
+      "pageTitle": "Preferenze email — PostMind Studio",
+      "confirmHeading": "Non ricevere più queste email?",
+      "confirmBody": "Non riceverai più email su «{kind}» per questa organizzazione. Continuerai a vedere queste notifiche in PostMind Studio.",
+      "confirmButton": "Annulla l’iscrizione",
+      "doneHeading": "Iscrizione annullata",
+      "doneBody": "Non riceverai più email su «{kind}» per questa organizzazione. Puoi riattivarle nelle preferenze di notifica di PostMind Studio.",
+      "invalidHeading": "Questo link non funziona",
+      "invalidBody": "Il link per annullare l’iscrizione è incompleto o è stato modificato. Usa il link dell’email più recente o cambia le preferenze di notifica in PostMind Studio.",
+      "openStudio": "Apri PostMind Studio"
+    },
+    "preferences": {
+      "description": "Scegli cosa ricevere, nell’app e via email.",
+      "suppressed": "Non possiamo inviarti email: i messaggi al tuo indirizzo sono stati respinti o segnalati come spam. Contatta l’assistenza per riattivare l’email."
+    }
+  },
   "adminOrgs": {},
   "adminUsers": {}
 }
