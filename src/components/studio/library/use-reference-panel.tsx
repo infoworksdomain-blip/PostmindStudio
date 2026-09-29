@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
+import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { referenceHref } from './library-utils';
 import type { ReferenceMode } from './types';
 
@@ -28,6 +29,7 @@ export function UseReferencePanel({ id, allowedModes }: { id: string; allowedMod
           <>
             <span className="min-w-0 flex-1">
               <span className="block font-medium">{t(`modes.${mode}.title`)}</span>
+              {mode === 'TEMPLATE' && <PlanLockBadge feature="libraryTemplate" className="mt-1" />}
               <span className="mt-0.5 block text-xs text-muted-foreground">
                 {allowed ? t(`modes.${mode}.body`) : t('locked')}
               </span>

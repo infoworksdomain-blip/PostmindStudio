@@ -2888,7 +2888,8 @@
       "tierSource": {
         "query": "在此选择",
         "last_generation": "记录于其最近一次生成",
-        "default": "未记录生成，按 Basic 计算"
+        "default": "未记录生成，按 Basic 计算",
+        "entitlements": "来自该组织的订阅"
       },
       "mode": {
         "warn": "警告",
@@ -3323,14 +3324,402 @@
     }
   },
   "marketing": {},
-  "pricing": {},
+  "pricing": {
+    "meta": {
+      "title": "价格"
+    },
+    "hero": {
+      "eyebrow": "价格",
+      "title": "随视频产量一起成长的套餐",
+      "description": "每个套餐均包含 AI 脚本、多格式渲染，以及发布到已连接的账号。"
+    },
+    "interval": {
+      "label": "计费周期",
+      "month": "按月",
+      "year": "按年"
+    },
+    "exclVat": "价格不含增值税。",
+    "unavailable": "暂时无法显示价格，请稍后重试。",
+    "priceUnavailable": "价格暂不可用",
+    "perMonth": "{amount}/月",
+    "perYear": "{amount}/年",
+    "annualSaving": "每年节省 {amount}",
+    "trialNote": "免费试用 {tier} {days, plural, other {# 天}}，包含 {short} 个短视频和 {long} 个长视频。需绑定银行卡，可随时取消。",
+    "popular": "最受欢迎",
+    "tiers": {
+      "BASIC": {
+        "tagline": "适合刚开始制作短视频的单个商家。"
+      },
+      "STANDARD": {
+        "tagline": "适合每天发布内容的成长型团队，含音乐和长视频。"
+      },
+      "PLUS": {
+        "tagline": "适合需要声音克隆、4K 和 AI 图片的代理机构和品牌。"
+      },
+      "ENTERPRISE": {
+        "tagline": "自定义额度、自有服务商密钥和白标输出。"
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, other {每月 # 个短视频}}",
+      "longVideos": "{count, plural, other {每月 # 个长视频}}",
+      "noLongVideos": "不含长视频",
+      "seats": "{count, plural, other {# 个席位}}",
+      "businesses": "{count, plural, other {# 个商家}}",
+      "unlimitedVideos": "视频不限量（合理使用）"
+    },
+    "enterprise": {
+      "price": "定制价格",
+      "contact": "联系销售",
+      "contactAria": "发送邮件向销售团队咨询 Enterprise",
+      "noContact": "请向您的 PostMind 客户经理咨询 Enterprise。"
+    },
+    "cta": {
+      "trial": "开始免费试用",
+      "choose": "选择套餐",
+      "chooseAria": "选择 {tier} 套餐"
+    },
+    "compare": {
+      "title": "套餐对比",
+      "caption": "套餐对比",
+      "feature": "功能",
+      "included": "包含",
+      "notIncluded": "不包含",
+      "unlimited": "不限",
+      "rows": {
+        "shortVideos": "每月短视频数（最长 30 秒）",
+        "longVideos": "每月长视频数",
+        "platforms": "平台",
+        "dailyCostCap": "每日生成预算",
+        "monthlyCostCap": "每月生成预算",
+        "queuePriority": "渲染队列优先级",
+        "musicAndSfx": "音乐和音效",
+        "voiceClone": "品牌声音克隆",
+        "renders4k": "4K 渲染",
+        "imageLibrary": "图片库",
+        "generatedImages": "每个商家每月生成图片数",
+        "scanBusinesses": "网站扫描（商家数）",
+        "libraryInspire": "参考库：灵感模式",
+        "libraryTemplate": "参考库：模板模式",
+        "customPresets": "自定义叠加预设和幻灯片模板",
+        "approvalWorkflows": "多步骤审批流程",
+        "byocProviderKeys": "自有服务商密钥",
+        "whiteLabel": "白标输出",
+        "dnsDomainVerification": "域名验证",
+        "seats": "席位",
+        "businesses": "商家",
+        "storage": "存储空间"
+      },
+      "values": {
+        "longVideos": "{count} 个 × 最长 {minutes} 分钟",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok、Instagram 及另外 1 个",
+          "all": "全部 8 个"
+        },
+        "queuePriority": {
+          "normal": "标准",
+          "high": "高"
+        },
+        "imageLibrary": {
+          "stock": "图库图片",
+          "stock_scrape": "图库和网站图片",
+          "ai_generation": "图库、网站和 AI 图片",
+          "byoc_generation": "使用自有密钥的 AI 图片"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "加购包",
+      "description": "本月需要更多额度？购买一次性加购包。额度会在套餐配额用完后使用，先到期的先用。",
+      "short": "{quantity, plural, other {# 个短视频}}",
+      "long": "{quantity, plural, other {# 个长视频}}",
+      "forTier": "适用于 {tier} 套餐",
+      "validity": "有效期 {months} 个月"
+    },
+    "faq": {
+      "title": "常见问题",
+      "items": {
+        "trial": {
+          "q": "免费试用如何运作？",
+          "a": "Standard 试用需要绑定银行卡。试用结束前不会扣费，您可以在此之前取消。每个组织仅可试用一次。"
+        },
+        "change": {
+          "q": "之后可以更换套餐吗？",
+          "a": "可以。升级立即生效，并按比例计费。降级在当前计费周期结束时生效，且不会删除任何内容。"
+        },
+        "limit": {
+          "q": "达到额度上限后会怎样？",
+          "a": "新视频将暂停生成，直到下月初配额重置。您可以升级套餐或购买加购包继续使用。"
+        },
+        "vat": {
+          "q": "价格含增值税吗？",
+          "a": "不含。价格不含增值税，如适用，将在结账时加收。"
+        },
+        "cancel": {
+          "q": "取消后会怎样？",
+          "a": "在已付费周期结束前，您可以继续使用。之后账号将变为只读：您仍可查看、导出和下载您的作品。"
+        }
+      }
+    }
+  },
   "legal": {},
   "auth": {},
   "security": {},
   "orgSettings": {},
   "members": {},
-  "billing": {},
-  "upgrade": {},
+  "billing": {
+    "meta": {
+      "title": "账单"
+    },
+    "header": {
+      "eyebrow": "设置",
+      "title": "账单",
+      "description": "您的套餐、用量、加购额度和发票。"
+    },
+    "loading": "正在加载账单",
+    "notEnabled": {
+      "title": "账单不在此处管理",
+      "body": "您的套餐由您的 PostMind 账号管理。如需更改，请联系您的客户经理。"
+    },
+    "banners": {
+      "checkoutSuccess": "感谢购买。正在为您开通套餐，稍后将显示在此处。",
+      "checkoutCancelled": "结账已取消，未产生任何费用。",
+      "topupSuccess": "加购成功，额度稍后将显示在此处。",
+      "topupCancelled": "加购已取消，未产生任何费用。",
+      "dismiss": "关闭"
+    },
+    "plan": {
+      "title": "当前套餐",
+      "tierName": "{tier} 套餐",
+      "noPlan": "无套餐",
+      "status": {
+        "trialing": "免费试用",
+        "active": "有效",
+        "past_due": "付款失败",
+        "read_only": "只读",
+        "cancelling": "取消中",
+        "none": "无套餐"
+      },
+      "trialEnds": "您的免费试用将于 {date} 结束。除非取消，否则套餐将自动开始。",
+      "renews": "将于 {date} 续订。",
+      "cancelsOn": "您的套餐将于 {date} 结束，在此之前可继续使用全部功能。",
+      "pastDue": "上次扣款未成功。请在 {date} 前更新付款方式，以保留全部功能。",
+      "graceLeft": "{days, plural, other {剩余 # 天}}",
+      "readOnly": "您的账号目前为只读。您仍可查看、导出和下载作品，但在账单问题解决前无法创建或发布。",
+      "none": "您的组织尚未订阅套餐。请在下方选择一个套餐开始创作。",
+      "interval": {
+        "month": "按月计费",
+        "year": "按年计费"
+      },
+      "adminSource": "由 PostMind 工作人员设置的定制套餐。",
+      "manage": "管理账单",
+      "manageHelp": "在安全的 Stripe 门户中更换套餐、更新付款方式、下载收据或取消订阅。",
+      "askOwner": "只有组织所有者可以更改账单。如需其他套餐，请联系所有者。",
+      "checkoutUnavailable": "暂时无法在线结账。",
+      "alreadySubscribed": "您的组织已有订阅。请通过“管理账单”进行更改。"
+    },
+    "usage": {
+      "title": "本月用量",
+      "description": "视频配额于每月第一天（UTC）重置。",
+      "seats": "席位",
+      "businesses": "商家",
+      "storage": "存储空间",
+      "storageUsed": "已用 {used} GB，共 {limit} GB",
+      "storageUnlimited": "已用 {used} GB",
+      "storageOver": "您的存储空间已超出配额。不会删除任何内容，但建议清理或升级。",
+      "cost": "生成支出",
+      "costOf": "{spent} / {cap}",
+      "costNoCap": "{spent}（无上限）",
+      "costHeadroom": "您的上限包含来自加购额度的 {amount}。",
+      "usedOf": "{used} / {limit}",
+      "usedUnlimited": "{used}（不限）"
+    },
+    "credits": {
+      "title": "加购额度",
+      "description": "额度会在每月配额用完后使用，先到期的先用，有效期 12 个月。",
+      "short": "{count, plural, =0 {无短视频额度} other {# 个短视频额度}}",
+      "long": "{count, plural, =0 {无长视频额度} other {# 个长视频额度}}",
+      "buy": "购买",
+      "buyAria": "以 {amount} 购买{pack}",
+      "noPacks": "Basic、Standard 和 Plus 套餐可购买加购包。"
+    },
+    "invoices": {
+      "title": "发票",
+      "empty": "暂无发票。",
+      "caption": "发票",
+      "number": "发票",
+      "date": "日期",
+      "amount": "金额",
+      "status": "状态",
+      "links": "链接",
+      "draft": "草稿",
+      "view": "查看",
+      "viewAria": "查看发票 {number}（在新标签页中打开）",
+      "pdf": "PDF",
+      "pdfAria": "下载发票 {number} 的 PDF（在新标签页中打开）",
+      "statuses": {
+        "draft": "草稿",
+        "open": "待付款",
+        "paid": "已付款",
+        "uncollectible": "无法收回",
+        "void": "已作废"
+      }
+    },
+    "picker": {
+      "title": "选择套餐",
+      "description": "选择套餐，通过 Stripe 安全付款。价格不含增值税。",
+      "trial": "开始免费试用",
+      "choose": "选择 {tier}",
+      "redirecting": "正在打开安全结账页面…"
+    },
+    "subscriptionStatus": {
+      "active": "有效",
+      "trialing": "试用",
+      "past_due": "逾期",
+      "unpaid": "未付款",
+      "canceled": "已取消",
+      "incomplete": "未完成",
+      "incomplete_expired": "已过期",
+      "paused": "已暂停"
+    },
+    "admin": {
+      "tab": "账单",
+      "entitlements": {
+        "title": "套餐与权益",
+        "description": "查询组织，查看其实际套餐、订阅及工作人员覆盖设置。",
+        "orgIdLabel": "组织 ID",
+        "orgIdPlaceholder": "org_…",
+        "open": "打开",
+        "loading": "正在加载权益",
+        "effective": "实际套餐",
+        "tier": "档位",
+        "access": "访问权限",
+        "source": "来源",
+        "graceUntil": "宽限期至",
+        "accessValues": {
+          "full": "完整",
+          "read_only": "只读",
+          "none": "无"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "试用",
+          "admin": "工作人员覆盖",
+          "core": "PostMind Core",
+          "none": "无"
+        },
+        "stored": "已存储的权益",
+        "noStored": "尚未存储权益。",
+        "storedSummary": "{tier} · {access} · {source} · 更新于 {when}",
+        "override": "当前覆盖设置",
+        "noOverride": "无工作人员覆盖设置。",
+        "overrideReason": "原因：{reason}",
+        "overrideSetAt": "设置于 {when}",
+        "expires": "{date} 到期",
+        "noExpiry": "永不过期",
+        "overridePrice": "约定价格：每月 {amount}",
+        "subscriptions": "订阅",
+        "noSubscriptions": "无订阅。",
+        "subscriptionLine": "{tier} · {interval} · {date} 结束",
+        "form": {
+          "title": "设置覆盖",
+          "tier": "档位",
+          "access": "访问权限",
+          "keep": "保持当前",
+          "limits": "自定义额度",
+          "limitsHelp": "留空则使用套餐默认值。勾选“不限”可取消该额度。",
+          "unlimited": "不限",
+          "unlimitedAria": "{limit}：不限",
+          "limitLabels": {
+            "seats": "席位",
+            "businesses": "商家",
+            "storageGb": "存储空间（GB）",
+            "shortVideos": "每月短视频数",
+            "longVideos": "每月长视频数",
+            "longMaxSec": "长视频最大时长（秒）",
+            "generatedImagesPerBusinessPerMonth": "每个商家每月生成图片数",
+            "scanBusinesses": "网站扫描（商家数）"
+          },
+          "price": "约定月价（£，不含增值税）",
+          "minimum": "该组织每月成本上限为 {cap}，对应最低价格：{amount}。",
+          "belowMinimum": "价格低于最低价格 {amount}。",
+          "priceRequired": "Enterprise 覆盖设置需填写约定月价。",
+          "expiresAt": "到期时间（可选）",
+          "reason": "原因（必填）",
+          "save": "保存覆盖设置",
+          "saved": "覆盖设置已保存"
+        },
+        "clear": {
+          "title": "移除覆盖设置",
+          "description": "该组织将恢复为其 Stripe 订阅所提供的权益。",
+          "reason": "移除原因",
+          "button": "移除覆盖设置",
+          "cleared": "覆盖设置已移除"
+        }
+      },
+      "subscriptions": {
+        "title": "订阅",
+        "description": "所有 Stripe 订阅，按时间从新到旧排列。",
+        "loading": "正在加载订阅",
+        "mrr": "月度经常性收入",
+        "mrrHelp": "包括有效和逾期订阅；年付套餐除以 12；不含增值税。",
+        "total": "{count, plural, =0 {无订阅} other {# 个订阅}}",
+        "byTier": "按档位",
+        "byTierAria": "按档位统计订阅",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "按状态",
+        "byStatusAria": "按状态统计订阅",
+        "filter": "状态",
+        "allStatuses": "全部状态",
+        "caption": "订阅",
+        "columns": {
+          "organisation": "组织",
+          "tier": "档位",
+          "interval": "计费",
+          "mrr": "MRR",
+          "periodEnd": "周期结束",
+          "status": "状态"
+        },
+        "cancelling": "取消中",
+        "unknownOrg": "未知组织",
+        "unknownTier": "未知",
+        "empty": "没有匹配的订阅。"
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "升级到 {tier}",
+      "body": "此功能从 {tier} 套餐起提供。",
+      "price": "{tier} 每月 {amount}，不含增值税。",
+      "enterprise": "Enterprise 需与我们的销售团队洽谈。"
+    },
+    "quota": {
+      "title": "您已达到本月额度上限",
+      "body": "升级可获得更多每月配额，也可购买加购包在本月继续使用。"
+    },
+    "planRequired": {
+      "title": "选择套餐开始创作",
+      "body": "您的组织尚未订阅套餐。请选择一个套餐以进行生成、发布和扫描。"
+    },
+    "billingRequired": {
+      "title": "请更新付款方式",
+      "body": "由于账单问题，您的账号目前为只读。请更新付款方式以恢复全部功能。"
+    },
+    "actions": {
+      "upgrade": "升级",
+      "buyTopUp": "购买加购包",
+      "choosePlan": "选择套餐",
+      "updatePayment": "更新付款方式",
+      "viewPlans": "查看套餐",
+      "notNow": "暂不"
+    },
+    "askOwner": "只有组织所有者可以更改套餐或账单。请联系所有者操作。",
+    "lock": {
+      "aria": "需要 {tier} 套餐"
+    }
+  },
   "email": {},
   "adminOrgs": {},
   "adminUsers": {}

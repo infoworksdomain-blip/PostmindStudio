@@ -2888,7 +2888,8 @@
       "tierSource": {
         "query": "choisie ici",
         "last_generation": "enregistrée sur sa dernière génération",
-        "default": "aucune génération enregistrée — Basic par défaut"
+        "default": "aucune génération enregistrée — Basic par défaut",
+        "entitlements": "d’après l’abonnement de l’organisation"
       },
       "mode": {
         "warn": "avertir",
@@ -3323,14 +3324,402 @@
     }
   },
   "marketing": {},
-  "pricing": {},
+  "pricing": {
+    "meta": {
+      "title": "Tarifs"
+    },
+    "hero": {
+      "eyebrow": "Tarifs",
+      "title": "Des formules qui suivent votre production vidéo",
+      "description": "Chaque formule comprend les scripts IA, les rendus multiformats et la publication sur vos comptes connectés."
+    },
+    "interval": {
+      "label": "Période de facturation",
+      "month": "Mensuel",
+      "year": "Annuel"
+    },
+    "exclVat": "Prix hors TVA.",
+    "unavailable": "Impossible d’afficher les prix pour le moment. Veuillez réessayer dans quelques instants.",
+    "priceUnavailable": "Prix indisponible",
+    "perMonth": "{amount} / mois",
+    "perYear": "{amount} / an",
+    "annualSaving": "Économisez {amount} par an",
+    "trialNote": "Essayez {tier} gratuitement pendant {days, plural, one {# jour} other {# jours}}, avec {short} vidéos courtes et {long} vidéo longue incluses. Carte requise ; résiliable à tout moment.",
+    "popular": "La plus populaire",
+    "tiers": {
+      "BASIC": {
+        "tagline": "Pour une entreprise qui se lance dans la vidéo courte."
+      },
+      "STANDARD": {
+        "tagline": "Pour les équipes en croissance qui publient chaque jour, avec musique et vidéos longues."
+      },
+      "PLUS": {
+        "tagline": "Pour les agences et les marques qui ont besoin du clonage vocal, de la 4K et des images IA."
+      },
+      "ENTERPRISE": {
+        "tagline": "Limites sur mesure, vos propres clés fournisseur et des rendus en marque blanche."
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, one {# vidéo courte par mois} other {# vidéos courtes par mois}}",
+      "longVideos": "{count, plural, one {# vidéo longue par mois} other {# vidéos longues par mois}}",
+      "noLongVideos": "Aucune vidéo longue",
+      "seats": "{count, plural, one {# utilisateur} other {# utilisateurs}}",
+      "businesses": "{count, plural, one {# entreprise} other {# entreprises}}",
+      "unlimitedVideos": "Vidéos illimitées (usage raisonnable)"
+    },
+    "enterprise": {
+      "price": "Tarif sur mesure",
+      "contact": "Contacter l’équipe commerciale",
+      "contactAria": "Écrire à l’équipe commerciale au sujet de l’offre Enterprise",
+      "noContact": "Renseignez-vous sur l’offre Enterprise auprès de votre gestionnaire de compte PostMind."
+    },
+    "cta": {
+      "trial": "Commencer l’essai gratuit",
+      "choose": "Choisir cette formule",
+      "chooseAria": "Choisir la formule {tier}"
+    },
+    "compare": {
+      "title": "Comparer les formules",
+      "caption": "Comparatif des formules",
+      "feature": "Fonctionnalité",
+      "included": "Inclus",
+      "notIncluded": "Non inclus",
+      "unlimited": "Illimité",
+      "rows": {
+        "shortVideos": "Vidéos courtes par mois (jusqu’à 30 s)",
+        "longVideos": "Vidéos longues par mois",
+        "platforms": "Plateformes",
+        "dailyCostCap": "Budget de génération quotidien",
+        "monthlyCostCap": "Budget de génération mensuel",
+        "queuePriority": "Priorité dans la file de rendu",
+        "musicAndSfx": "Musique et effets sonores",
+        "voiceClone": "Clonage de la voix de marque",
+        "renders4k": "Rendus 4K",
+        "imageLibrary": "Bibliothèque d’images",
+        "generatedImages": "Images générées par entreprise et par mois",
+        "scanBusinesses": "Analyses de site web (entreprises)",
+        "libraryInspire": "Bibliothèque de références : mode Inspiration",
+        "libraryTemplate": "Bibliothèque de références : mode Modèle",
+        "customPresets": "Préréglages d’incrustation et modèles de diaporama personnalisés",
+        "approvalWorkflows": "Circuits de validation en plusieurs étapes",
+        "byocProviderKeys": "Vos propres clés fournisseur",
+        "whiteLabel": "Rendus en marque blanche",
+        "dnsDomainVerification": "Vérification de domaine",
+        "seats": "Utilisateurs",
+        "businesses": "Entreprises",
+        "storage": "Stockage"
+      },
+      "values": {
+        "longVideos": "{count} × jusqu’à {minutes} min",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok, Instagram et 1 autre",
+          "all": "Les 8"
+        },
+        "queuePriority": {
+          "normal": "Standard",
+          "high": "Élevée"
+        },
+        "imageLibrary": {
+          "stock": "Images de banque",
+          "stock_scrape": "Images de banque et du site web",
+          "ai_generation": "Images de banque, du site web et IA",
+          "byoc_generation": "Images IA avec vos propres clés"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "Packs de recharge",
+      "description": "Besoin de plus ce mois-ci ? Achetez un pack ponctuel. Les crédits sont utilisés après le quota de votre formule, les plus anciens en premier.",
+      "short": "{quantity, plural, one {# vidéo courte} other {# vidéos courtes}}",
+      "long": "{quantity, plural, one {# vidéo longue} other {# vidéos longues}}",
+      "forTier": "Pour les formules {tier}",
+      "validity": "Valable {months} mois"
+    },
+    "faq": {
+      "title": "Questions",
+      "items": {
+        "trial": {
+          "q": "Comment fonctionne l’essai gratuit ?",
+          "a": "L’essai Standard nécessite une carte. Vous ne serez pas débité avant la fin de l’essai et vous pouvez résilier d’ici là. Chaque organisation a droit à un seul essai."
+        },
+        "change": {
+          "q": "Puis-je changer de formule plus tard ?",
+          "a": "Oui. Les passages à une formule supérieure s’appliquent immédiatement et sont facturés au prorata. Les passages à une formule inférieure s’appliquent à la fin de votre période de facturation, et rien n’est supprimé."
+        },
+        "limit": {
+          "q": "Que se passe-t-il quand j’atteins ma limite ?",
+          "a": "Les nouvelles vidéos sont suspendues jusqu’à la réinitialisation de votre quota au début du mois suivant. Vous pouvez passer à une formule supérieure ou acheter un pack de recharge pour continuer."
+        },
+        "vat": {
+          "q": "Les prix incluent-ils la TVA ?",
+          "a": "Non. Les prix sont hors TVA ; celle-ci est ajoutée au paiement le cas échéant."
+        },
+        "cancel": {
+          "q": "Que se passe-t-il si je résilie ?",
+          "a": "Vous conservez l’accès jusqu’à la fin de la période payée. Ensuite, votre compte passe en lecture seule : vous pouvez toujours consulter, exporter et télécharger vos contenus."
+        }
+      }
+    }
+  },
   "legal": {},
   "auth": {},
   "security": {},
   "orgSettings": {},
   "members": {},
-  "billing": {},
-  "upgrade": {},
+  "billing": {
+    "meta": {
+      "title": "Facturation"
+    },
+    "header": {
+      "eyebrow": "Paramètres",
+      "title": "Facturation",
+      "description": "Votre formule, votre consommation, vos crédits de recharge et vos factures."
+    },
+    "loading": "Chargement de la facturation",
+    "notEnabled": {
+      "title": "La facturation n’est pas gérée ici",
+      "body": "Votre formule est gérée par votre compte PostMind. Contactez votre gestionnaire de compte pour la modifier."
+    },
+    "banners": {
+      "checkoutSuccess": "Merci. Votre formule est en cours d’activation et apparaîtra ici dans un instant.",
+      "checkoutCancelled": "Le paiement a été annulé. Vous n’avez pas été débité.",
+      "topupSuccess": "Recharge achetée. Les crédits apparaîtront ici dans un instant.",
+      "topupCancelled": "Recharge annulée. Vous n’avez pas été débité.",
+      "dismiss": "Fermer"
+    },
+    "plan": {
+      "title": "Formule actuelle",
+      "tierName": "Formule {tier}",
+      "noPlan": "Aucune formule",
+      "status": {
+        "trialing": "Essai gratuit",
+        "active": "Active",
+        "past_due": "Échec du paiement",
+        "read_only": "Lecture seule",
+        "cancelling": "Résiliation en cours",
+        "none": "Aucune formule"
+      },
+      "trialEnds": "Votre essai gratuit se termine le {date}. Votre formule démarrera automatiquement, sauf si vous résiliez.",
+      "renews": "Renouvellement le {date}.",
+      "cancelsOn": "Votre formule prend fin le {date}. Vous conservez un accès complet jusqu’à cette date.",
+      "pastDue": "Nous n’avons pas pu encaisser votre dernier paiement. Mettez à jour votre moyen de paiement avant le {date} pour conserver un accès complet.",
+      "graceLeft": "{days, plural, one {# jour restant} other {# jours restants}}",
+      "readOnly": "Votre compte est en lecture seule. Vous pouvez toujours consulter, exporter et télécharger vos contenus, mais vous ne pourrez ni créer ni publier tant que la facturation n’est pas régularisée.",
+      "none": "Votre organisation n’a pas encore de formule. Choisissez-en une ci-dessous pour commencer à créer.",
+      "interval": {
+        "month": "Facturation mensuelle",
+        "year": "Facturation annuelle"
+      },
+      "adminSource": "Formule personnalisée définie par l’équipe PostMind.",
+      "manage": "Gérer la facturation",
+      "manageHelp": "Changez de formule, mettez à jour votre moyen de paiement, téléchargez vos reçus ou résiliez depuis le portail sécurisé Stripe.",
+      "askOwner": "Seul un propriétaire de l’organisation peut modifier la facturation. Adressez-vous à un propriétaire si vous avez besoin d’une autre formule.",
+      "checkoutUnavailable": "Le paiement en ligne n’est pas disponible pour le moment.",
+      "alreadySubscribed": "Votre organisation a déjà un abonnement. Utilisez Gérer la facturation pour le modifier."
+    },
+    "usage": {
+      "title": "Consommation ce mois-ci",
+      "description": "Les quotas de vidéos sont réinitialisés le premier jour de chaque mois (UTC).",
+      "seats": "Utilisateurs",
+      "businesses": "Entreprises",
+      "storage": "Stockage",
+      "storageUsed": "{used} GB sur {limit} GB",
+      "storageUnlimited": "{used} GB utilisés",
+      "storageOver": "Vous dépassez votre quota de stockage. Rien n’est supprimé, mais pensez à faire du tri ou à passer à une formule supérieure.",
+      "cost": "Dépenses de génération",
+      "costOf": "{spent} sur {cap}",
+      "costNoCap": "{spent} (sans plafond)",
+      "costHeadroom": "Votre plafond inclut {amount} supplémentaires grâce aux crédits de recharge.",
+      "usedOf": "{used} sur {limit}",
+      "usedUnlimited": "{used} (illimité)"
+    },
+    "credits": {
+      "title": "Recharges",
+      "description": "Les crédits sont utilisés après votre quota mensuel, les plus anciens en premier, et sont valables 12 mois.",
+      "short": "{count, plural, =0 {Aucun crédit de vidéo courte} one {# crédit de vidéo courte} other {# crédits de vidéo courte}}",
+      "long": "{count, plural, =0 {Aucun crédit de vidéo longue} one {# crédit de vidéo longue} other {# crédits de vidéo longue}}",
+      "buy": "Acheter",
+      "buyAria": "Acheter {pack} pour {amount}",
+      "noPacks": "Les packs de recharge sont disponibles avec les formules Basic, Standard et Plus."
+    },
+    "invoices": {
+      "title": "Factures",
+      "empty": "Aucune facture pour le moment.",
+      "caption": "Factures",
+      "number": "Facture",
+      "date": "Date",
+      "amount": "Montant",
+      "status": "Statut",
+      "links": "Liens",
+      "draft": "Brouillon",
+      "view": "Voir",
+      "viewAria": "Voir la facture {number} (s’ouvre dans un nouvel onglet)",
+      "pdf": "PDF",
+      "pdfAria": "Télécharger la facture {number} en PDF (s’ouvre dans un nouvel onglet)",
+      "statuses": {
+        "draft": "Brouillon",
+        "open": "À régler",
+        "paid": "Payée",
+        "uncollectible": "Irrécouvrable",
+        "void": "Annulée"
+      }
+    },
+    "picker": {
+      "title": "Choisir une formule",
+      "description": "Choisissez une formule et payez en toute sécurité avec Stripe. Prix hors TVA.",
+      "trial": "Commencer l’essai gratuit",
+      "choose": "Choisir {tier}",
+      "redirecting": "Ouverture du paiement sécurisé…"
+    },
+    "subscriptionStatus": {
+      "active": "Actif",
+      "trialing": "Essai",
+      "past_due": "En retard",
+      "unpaid": "Impayé",
+      "canceled": "Résilié",
+      "incomplete": "Incomplet",
+      "incomplete_expired": "Expiré",
+      "paused": "En pause"
+    },
+    "admin": {
+      "tab": "Facturation",
+      "entitlements": {
+        "title": "Formule et droits",
+        "description": "Recherchez une organisation pour voir sa formule effective, ses abonnements et toute dérogation de l’équipe.",
+        "orgIdLabel": "Identifiant de l’organisation",
+        "orgIdPlaceholder": "org_…",
+        "open": "Ouvrir",
+        "loading": "Chargement des droits",
+        "effective": "Formule effective",
+        "tier": "Niveau",
+        "access": "Accès",
+        "source": "Source",
+        "graceUntil": "Délai de grâce jusqu’au",
+        "accessValues": {
+          "full": "Complet",
+          "read_only": "Lecture seule",
+          "none": "Aucun"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "Essai",
+          "admin": "Dérogation de l’équipe",
+          "core": "PostMind Core",
+          "none": "Aucune"
+        },
+        "stored": "Droits enregistrés",
+        "noStored": "Aucun droit enregistré pour le moment.",
+        "storedSummary": "{tier} · {access} · {source} · mis à jour {when}",
+        "override": "Dérogation actuelle",
+        "noOverride": "Aucune dérogation de l’équipe.",
+        "overrideReason": "Motif : {reason}",
+        "overrideSetAt": "Définie {when}",
+        "expires": "Expire le {date}",
+        "noExpiry": "Sans expiration",
+        "overridePrice": "Prix convenu : {amount} par mois",
+        "subscriptions": "Abonnements",
+        "noSubscriptions": "Aucun abonnement.",
+        "subscriptionLine": "{tier} · {interval} · prend fin le {date}",
+        "form": {
+          "title": "Définir une dérogation",
+          "tier": "Niveau",
+          "access": "Accès",
+          "keep": "Conserver l’actuel",
+          "limits": "Limites personnalisées",
+          "limitsHelp": "Laissez une limite vide pour utiliser la valeur de la formule. Cochez Illimité pour la supprimer.",
+          "unlimited": "Illimité",
+          "unlimitedAria": "{limit} : illimité",
+          "limitLabels": {
+            "seats": "Utilisateurs",
+            "businesses": "Entreprises",
+            "storageGb": "Stockage (GB)",
+            "shortVideos": "Vidéos courtes par mois",
+            "longVideos": "Vidéos longues par mois",
+            "longMaxSec": "Durée maximale d’une vidéo longue (secondes)",
+            "generatedImagesPerBusinessPerMonth": "Images générées par entreprise et par mois",
+            "scanBusinesses": "Analyses de site web (entreprises)"
+          },
+          "price": "Prix mensuel convenu (£, HT)",
+          "minimum": "Minimum pour le plafond de coût mensuel de {cap} de cette organisation : {amount}.",
+          "belowMinimum": "Le prix est inférieur au minimum de {amount}.",
+          "priceRequired": "Une dérogation Enterprise nécessite le prix mensuel convenu.",
+          "expiresAt": "Expiration (facultatif)",
+          "reason": "Motif (obligatoire)",
+          "save": "Enregistrer la dérogation",
+          "saved": "Dérogation enregistrée"
+        },
+        "clear": {
+          "title": "Supprimer la dérogation",
+          "description": "L’organisation revient aux droits accordés par son abonnement Stripe.",
+          "reason": "Motif de la suppression",
+          "button": "Supprimer la dérogation",
+          "cleared": "Dérogation supprimée"
+        }
+      },
+      "subscriptions": {
+        "title": "Abonnements",
+        "description": "Tous les abonnements Stripe, du plus récent au plus ancien.",
+        "loading": "Chargement des abonnements",
+        "mrr": "Revenu mensuel récurrent",
+        "mrrHelp": "Abonnements actifs et en retard de paiement ; formules annuelles divisées par 12 ; hors TVA.",
+        "total": "{count, plural, =0 {Aucun abonnement} one {# abonnement} other {# abonnements}}",
+        "byTier": "Par niveau",
+        "byTierAria": "Abonnements par niveau",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "Par statut",
+        "byStatusAria": "Abonnements par statut",
+        "filter": "Statut",
+        "allStatuses": "Tous les statuts",
+        "caption": "Abonnements",
+        "columns": {
+          "organisation": "Organisation",
+          "tier": "Niveau",
+          "interval": "Facturation",
+          "mrr": "MRR",
+          "periodEnd": "Fin de période",
+          "status": "Statut"
+        },
+        "cancelling": "Résiliation en cours",
+        "unknownOrg": "Organisation inconnue",
+        "unknownTier": "Inconnu",
+        "empty": "Aucun abonnement ne correspond."
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "Passer à {tier}",
+      "body": "Cette fonctionnalité est incluse à partir de la formule {tier}.",
+      "price": "{tier} coûte {amount} par mois, hors TVA.",
+      "enterprise": "L’offre Enterprise se met en place avec notre équipe commerciale."
+    },
+    "quota": {
+      "title": "Vous avez atteint la limite de ce mois-ci",
+      "body": "Passez à une formule supérieure pour un quota mensuel plus élevé, ou achetez un pack de recharge pour continuer ce mois-ci."
+    },
+    "planRequired": {
+      "title": "Choisissez une formule pour commencer à créer",
+      "body": "Votre organisation n’a pas encore de formule. Choisissez-en une pour générer, publier et analyser."
+    },
+    "billingRequired": {
+      "title": "Mettez à jour votre moyen de paiement",
+      "body": "Votre compte est en lecture seule en raison d’un problème de facturation. Mettez à jour votre moyen de paiement pour rétablir un accès complet."
+    },
+    "actions": {
+      "upgrade": "Passer à la formule supérieure",
+      "buyTopUp": "Acheter une recharge",
+      "choosePlan": "Choisir une formule",
+      "updatePayment": "Mettre à jour le moyen de paiement",
+      "viewPlans": "Voir les formules",
+      "notNow": "Plus tard"
+    },
+    "askOwner": "Seul un propriétaire de l’organisation peut modifier la formule ou la facturation. Demandez à un propriétaire de le faire.",
+    "lock": {
+      "aria": "Nécessite la formule {tier}"
+    }
+  },
   "email": {},
   "adminOrgs": {},
   "adminUsers": {}

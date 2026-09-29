@@ -2888,7 +2888,8 @@
       "tierSource": {
         "query": "hier gewählt",
         "last_generation": "bei der letzten Generierung erfasst",
-        "default": "keine Generierung erfasst – Basic angenommen"
+        "default": "keine Generierung erfasst – Basic angenommen",
+        "entitlements": "laut Abonnement der Organisation"
       },
       "mode": {
         "warn": "warnen",
@@ -3323,14 +3324,402 @@
     }
   },
   "marketing": {},
-  "pricing": {},
+  "pricing": {
+    "meta": {
+      "title": "Preise"
+    },
+    "hero": {
+      "eyebrow": "Preise",
+      "title": "Tarife, die mit Ihrer Videoproduktion wachsen",
+      "description": "Jeder Tarif umfasst KI-Skripte, Renderings in mehreren Formaten und die Veröffentlichung auf Ihren verbundenen Konten."
+    },
+    "interval": {
+      "label": "Abrechnungszeitraum",
+      "month": "Monatlich",
+      "year": "Jährlich"
+    },
+    "exclVat": "Preise zzgl. MwSt.",
+    "unavailable": "Die Preise können gerade nicht angezeigt werden. Bitte versuchen Sie es in Kürze erneut.",
+    "priceUnavailable": "Preis nicht verfügbar",
+    "perMonth": "{amount} / Monat",
+    "perYear": "{amount} / Jahr",
+    "annualSaving": "{amount} pro Jahr sparen",
+    "trialNote": "Testen Sie {tier} {days, plural, one {# Tag} other {# Tage}} kostenlos – inklusive {short} Kurzvideos und {long} Langvideo. Karte erforderlich, jederzeit kündbar.",
+    "popular": "Am beliebtesten",
+    "tiers": {
+      "BASIC": {
+        "tagline": "Für ein einzelnes Unternehmen, das mit Kurzvideos startet."
+      },
+      "STANDARD": {
+        "tagline": "Für wachsende Teams, die täglich veröffentlichen – mit Musik und Langvideos."
+      },
+      "PLUS": {
+        "tagline": "Für Agenturen und Marken, die Stimmklonen, 4K und KI-Bilder brauchen."
+      },
+      "ENTERPRISE": {
+        "tagline": "Individuelle Limits, eigene Anbieterschlüssel und White-Label-Ausgaben."
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, one {# Kurzvideo pro Monat} other {# Kurzvideos pro Monat}}",
+      "longVideos": "{count, plural, one {# Langvideo pro Monat} other {# Langvideos pro Monat}}",
+      "noLongVideos": "Keine Langvideos",
+      "seats": "{count, plural, one {# Nutzerplatz} other {# Nutzerplätze}}",
+      "businesses": "{count, plural, one {# Unternehmen} other {# Unternehmen}}",
+      "unlimitedVideos": "Unbegrenzte Videos (Fair Use)"
+    },
+    "enterprise": {
+      "price": "Individuelle Preise",
+      "contact": "Vertrieb kontaktieren",
+      "contactAria": "Vertriebsteam per E-Mail zu Enterprise kontaktieren",
+      "noContact": "Fragen Sie Ihre PostMind-Kundenbetreuung nach Enterprise."
+    },
+    "cta": {
+      "trial": "Kostenlos testen",
+      "choose": "Tarif wählen",
+      "chooseAria": "Tarif {tier} wählen"
+    },
+    "compare": {
+      "title": "Tarife vergleichen",
+      "caption": "Tarifvergleich",
+      "feature": "Funktion",
+      "included": "Enthalten",
+      "notIncluded": "Nicht enthalten",
+      "unlimited": "Unbegrenzt",
+      "rows": {
+        "shortVideos": "Kurzvideos pro Monat (bis 30 s)",
+        "longVideos": "Langvideos pro Monat",
+        "platforms": "Plattformen",
+        "dailyCostCap": "Tägliches Generierungsbudget",
+        "monthlyCostCap": "Monatliches Generierungsbudget",
+        "queuePriority": "Priorität in der Render-Warteschlange",
+        "musicAndSfx": "Musik und Soundeffekte",
+        "voiceClone": "Geklonte Markenstimme",
+        "renders4k": "4K-Renderings",
+        "imageLibrary": "Bildbibliothek",
+        "generatedImages": "Generierte Bilder pro Unternehmen und Monat",
+        "scanBusinesses": "Website-Scans (Unternehmen)",
+        "libraryInspire": "Referenzbibliothek: Inspirationsmodus",
+        "libraryTemplate": "Referenzbibliothek: Vorlagenmodus",
+        "customPresets": "Eigene Overlay-Presets und Slideshow-Vorlagen",
+        "approvalWorkflows": "Mehrstufige Freigabe-Workflows",
+        "byocProviderKeys": "Eigene Anbieterschlüssel",
+        "whiteLabel": "White-Label-Ausgaben",
+        "dnsDomainVerification": "Domain-Verifizierung",
+        "seats": "Nutzerplätze",
+        "businesses": "Unternehmen",
+        "storage": "Speicher"
+      },
+      "values": {
+        "longVideos": "{count} × bis zu {minutes} Min.",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok, Instagram und 1 weitere",
+          "all": "Alle 8"
+        },
+        "queuePriority": {
+          "normal": "Standard",
+          "high": "Hoch"
+        },
+        "imageLibrary": {
+          "stock": "Stockbilder",
+          "stock_scrape": "Stock- und Website-Bilder",
+          "ai_generation": "Stock-, Website- und KI-Bilder",
+          "byoc_generation": "KI-Bilder mit eigenen Schlüsseln"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "Zusatzpakete",
+      "description": "Brauchen Sie diesen Monat mehr? Kaufen Sie ein einmaliges Paket. Guthaben wird nach Ihrem Tarifkontingent verbraucht, ältestes zuerst.",
+      "short": "{quantity, plural, one {# Kurzvideo} other {# Kurzvideos}}",
+      "long": "{quantity, plural, one {# Langvideo} other {# Langvideos}}",
+      "forTier": "Für {tier}-Tarife",
+      "validity": "{months} Monate gültig"
+    },
+    "faq": {
+      "title": "Fragen",
+      "items": {
+        "trial": {
+          "q": "Wie funktioniert die kostenlose Testphase?",
+          "a": "Für die Standard-Testphase ist eine Karte erforderlich. Sie zahlen erst, wenn die Testphase endet, und können vorher kündigen. Jede Organisation kann einmal testen."
+        },
+        "change": {
+          "q": "Kann ich den Tarif später wechseln?",
+          "a": "Ja. Upgrades gelten sofort und werden anteilig berechnet. Downgrades gelten zum Ende Ihres Abrechnungszeitraums, und es wird nichts gelöscht."
+        },
+        "limit": {
+          "q": "Was passiert, wenn ich mein Limit erreiche?",
+          "a": "Neue Videos werden pausiert, bis Ihr Kontingent zu Beginn des nächsten Monats zurückgesetzt wird. Mit einem Upgrade oder Zusatzpaket können Sie weitermachen."
+        },
+        "vat": {
+          "q": "Sind die Preise inklusive MwSt.?",
+          "a": "Nein. Die Preise verstehen sich zzgl. MwSt., die gegebenenfalls beim Bezahlen hinzugefügt wird."
+        },
+        "cancel": {
+          "q": "Was passiert, wenn ich kündige?",
+          "a": "Sie behalten den Zugriff bis zum Ende des bezahlten Zeitraums. Danach ist Ihr Konto schreibgeschützt: Sie können Ihre Arbeit weiterhin ansehen, exportieren und herunterladen."
+        }
+      }
+    }
+  },
   "legal": {},
   "auth": {},
   "security": {},
   "orgSettings": {},
   "members": {},
-  "billing": {},
-  "upgrade": {},
+  "billing": {
+    "meta": {
+      "title": "Abrechnung"
+    },
+    "header": {
+      "eyebrow": "Einstellungen",
+      "title": "Abrechnung",
+      "description": "Ihr Tarif, Ihre Nutzung, Ihr Zusatzguthaben und Ihre Rechnungen."
+    },
+    "loading": "Abrechnung wird geladen",
+    "notEnabled": {
+      "title": "Die Abrechnung wird nicht hier verwaltet",
+      "body": "Ihr Tarif wird über Ihr PostMind-Konto verwaltet. Wenden Sie sich an Ihre Kundenbetreuung, um ihn zu ändern."
+    },
+    "banners": {
+      "checkoutSuccess": "Vielen Dank. Ihr Tarif wird eingerichtet und erscheint hier in Kürze.",
+      "checkoutCancelled": "Der Bezahlvorgang wurde abgebrochen. Ihnen wurde nichts berechnet.",
+      "topupSuccess": "Zusatzpaket gekauft. Das Guthaben erscheint hier in Kürze.",
+      "topupCancelled": "Zusatzpaket abgebrochen. Ihnen wurde nichts berechnet.",
+      "dismiss": "Schließen"
+    },
+    "plan": {
+      "title": "Aktueller Tarif",
+      "tierName": "Tarif {tier}",
+      "noPlan": "Kein Tarif",
+      "status": {
+        "trialing": "Kostenlose Testphase",
+        "active": "Aktiv",
+        "past_due": "Zahlung fehlgeschlagen",
+        "read_only": "Schreibgeschützt",
+        "cancelling": "Wird gekündigt",
+        "none": "Kein Tarif"
+      },
+      "trialEnds": "Ihre kostenlose Testphase endet am {date}. Ihr Tarif beginnt dann automatisch, sofern Sie nicht kündigen.",
+      "renews": "Verlängert sich am {date}.",
+      "cancelsOn": "Ihr Tarif endet am {date}. Bis dahin behalten Sie den vollen Zugriff.",
+      "pastDue": "Ihre letzte Zahlung konnte nicht eingezogen werden. Aktualisieren Sie Ihre Zahlungsmethode bis zum {date}, um den vollen Zugriff zu behalten.",
+      "graceLeft": "{days, plural, one {Noch # Tag} other {Noch # Tage}}",
+      "readOnly": "Ihr Konto ist schreibgeschützt. Sie können Ihre Arbeit weiterhin ansehen, exportieren und herunterladen, aber erst wieder erstellen oder veröffentlichen, wenn die Abrechnung geklärt ist.",
+      "none": "Ihre Organisation hat noch keinen Tarif. Wählen Sie unten einen aus, um loszulegen.",
+      "interval": {
+        "month": "Monatliche Abrechnung",
+        "year": "Jährliche Abrechnung"
+      },
+      "adminSource": "Individueller Tarif, festgelegt von PostMind.",
+      "manage": "Abrechnung verwalten",
+      "manageHelp": "Im sicheren Stripe-Portal können Sie den Tarif wechseln, die Zahlungsmethode aktualisieren, Belege herunterladen oder kündigen.",
+      "askOwner": "Nur Inhaber der Organisation können die Abrechnung ändern. Wenden Sie sich an einen Inhaber, wenn Sie einen anderen Tarif benötigen.",
+      "checkoutUnavailable": "Die Online-Bezahlung ist derzeit nicht verfügbar.",
+      "alreadySubscribed": "Ihre Organisation hat bereits ein Abonnement. Ändern Sie es über „Abrechnung verwalten“."
+    },
+    "usage": {
+      "title": "Nutzung in diesem Monat",
+      "description": "Videokontingente werden am ersten Tag jedes Monats (UTC) zurückgesetzt.",
+      "seats": "Nutzerplätze",
+      "businesses": "Unternehmen",
+      "storage": "Speicher",
+      "storageUsed": "{used} GB von {limit} GB",
+      "storageUnlimited": "{used} GB belegt",
+      "storageOver": "Sie haben Ihr Speicherkontingent überschritten. Es wird nichts gelöscht, aber räumen Sie auf oder führen Sie ein Upgrade durch.",
+      "cost": "Generierungskosten",
+      "costOf": "{spent} von {cap}",
+      "costNoCap": "{spent} (ohne Limit)",
+      "costHeadroom": "Ihr Limit enthält zusätzlich {amount} aus Zusatzguthaben.",
+      "usedOf": "{used} von {limit}",
+      "usedUnlimited": "{used} (unbegrenzt)"
+    },
+    "credits": {
+      "title": "Zusatzguthaben",
+      "description": "Guthaben wird nach Ihrem Monatskontingent verbraucht, ältestes zuerst, und ist 12 Monate gültig.",
+      "short": "{count, plural, =0 {Keine Kurzvideo-Credits} one {# Kurzvideo-Credit} other {# Kurzvideo-Credits}}",
+      "long": "{count, plural, =0 {Keine Langvideo-Credits} one {# Langvideo-Credit} other {# Langvideo-Credits}}",
+      "buy": "Kaufen",
+      "buyAria": "{pack} für {amount} kaufen",
+      "noPacks": "Zusatzpakete sind in den Tarifen Basic, Standard und Plus verfügbar."
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "empty": "Noch keine Rechnungen.",
+      "caption": "Rechnungen",
+      "number": "Rechnung",
+      "date": "Datum",
+      "amount": "Betrag",
+      "status": "Status",
+      "links": "Links",
+      "draft": "Entwurf",
+      "view": "Ansehen",
+      "viewAria": "Rechnung {number} ansehen (öffnet in neuem Tab)",
+      "pdf": "PDF",
+      "pdfAria": "Rechnung {number} als PDF herunterladen (öffnet in neuem Tab)",
+      "statuses": {
+        "draft": "Entwurf",
+        "open": "Fällig",
+        "paid": "Bezahlt",
+        "uncollectible": "Uneinbringlich",
+        "void": "Storniert"
+      }
+    },
+    "picker": {
+      "title": "Tarif wählen",
+      "description": "Wählen Sie einen Tarif und bezahlen Sie sicher mit Stripe. Preise zzgl. MwSt.",
+      "trial": "Kostenlos testen",
+      "choose": "{tier} wählen",
+      "redirecting": "Sicherer Bezahlvorgang wird geöffnet…"
+    },
+    "subscriptionStatus": {
+      "active": "Aktiv",
+      "trialing": "Testphase",
+      "past_due": "Überfällig",
+      "unpaid": "Unbezahlt",
+      "canceled": "Gekündigt",
+      "incomplete": "Unvollständig",
+      "incomplete_expired": "Abgelaufen",
+      "paused": "Pausiert"
+    },
+    "admin": {
+      "tab": "Abrechnung",
+      "entitlements": {
+        "title": "Tarif und Berechtigungen",
+        "description": "Suchen Sie eine Organisation, um ihren effektiven Tarif, ihre Abonnements und etwaige Staff-Overrides zu sehen.",
+        "orgIdLabel": "Organisations-ID",
+        "orgIdPlaceholder": "org_…",
+        "open": "Öffnen",
+        "loading": "Berechtigungen werden geladen",
+        "effective": "Effektiver Tarif",
+        "tier": "Stufe",
+        "access": "Zugriff",
+        "source": "Quelle",
+        "graceUntil": "Kulanz bis",
+        "accessValues": {
+          "full": "Voll",
+          "read_only": "Schreibgeschützt",
+          "none": "Keiner"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "Testphase",
+          "admin": "Staff-Override",
+          "core": "PostMind Core",
+          "none": "Keine"
+        },
+        "stored": "Gespeicherte Berechtigung",
+        "noStored": "Noch keine Berechtigung gespeichert.",
+        "storedSummary": "{tier} · {access} · {source} · aktualisiert {when}",
+        "override": "Aktueller Override",
+        "noOverride": "Kein Staff-Override.",
+        "overrideReason": "Grund: {reason}",
+        "overrideSetAt": "Gesetzt {when}",
+        "expires": "Läuft ab am {date}",
+        "noExpiry": "Kein Ablaufdatum",
+        "overridePrice": "Vereinbarter Preis: {amount} pro Monat",
+        "subscriptions": "Abonnements",
+        "noSubscriptions": "Keine Abonnements.",
+        "subscriptionLine": "{tier} · {interval} · endet am {date}",
+        "form": {
+          "title": "Override festlegen",
+          "tier": "Stufe",
+          "access": "Zugriff",
+          "keep": "Aktuellen Wert beibehalten",
+          "limits": "Individuelle Limits",
+          "limitsHelp": "Lassen Sie ein Limit leer, um den Wert des Tarifs zu verwenden. Aktivieren Sie „Unbegrenzt“, um es aufzuheben.",
+          "unlimited": "Unbegrenzt",
+          "unlimitedAria": "{limit}: unbegrenzt",
+          "limitLabels": {
+            "seats": "Nutzerplätze",
+            "businesses": "Unternehmen",
+            "storageGb": "Speicher (GB)",
+            "shortVideos": "Kurzvideos pro Monat",
+            "longVideos": "Langvideos pro Monat",
+            "longMaxSec": "Maximale Länge Langvideo (Sekunden)",
+            "generatedImagesPerBusinessPerMonth": "Generierte Bilder pro Unternehmen und Monat",
+            "scanBusinesses": "Website-Scans (Unternehmen)"
+          },
+          "price": "Vereinbarter Monatspreis (£, zzgl. MwSt.)",
+          "minimum": "Minimum für das monatliche Kostenlimit von {cap} dieser Organisation: {amount}.",
+          "belowMinimum": "Der Preis liegt unter dem Minimum von {amount}.",
+          "priceRequired": "Für einen Enterprise-Override ist der vereinbarte Monatspreis erforderlich.",
+          "expiresAt": "Läuft ab (optional)",
+          "reason": "Grund (erforderlich)",
+          "save": "Override speichern",
+          "saved": "Override gespeichert"
+        },
+        "clear": {
+          "title": "Override entfernen",
+          "description": "Die Organisation erhält wieder, was ihr Stripe-Abonnement vorsieht.",
+          "reason": "Grund für das Entfernen",
+          "button": "Override entfernen",
+          "cleared": "Override entfernt"
+        }
+      },
+      "subscriptions": {
+        "title": "Abonnements",
+        "description": "Alle Stripe-Abonnements, neueste zuerst.",
+        "loading": "Abonnements werden geladen",
+        "mrr": "Monatlich wiederkehrender Umsatz",
+        "mrrHelp": "Aktive und überfällige Abonnements; Jahrestarife durch 12 geteilt; zzgl. MwSt.",
+        "total": "{count, plural, =0 {Keine Abonnements} one {# Abonnement} other {# Abonnements}}",
+        "byTier": "Nach Stufe",
+        "byTierAria": "Abonnements nach Stufe",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "Nach Status",
+        "byStatusAria": "Abonnements nach Status",
+        "filter": "Status",
+        "allStatuses": "Alle Status",
+        "caption": "Abonnements",
+        "columns": {
+          "organisation": "Organisation",
+          "tier": "Stufe",
+          "interval": "Abrechnung",
+          "mrr": "MRR",
+          "periodEnd": "Zeitraum endet",
+          "status": "Status"
+        },
+        "cancelling": "Wird gekündigt",
+        "unknownOrg": "Unbekannte Organisation",
+        "unknownTier": "Unbekannt",
+        "empty": "Keine passenden Abonnements."
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "Upgrade auf {tier}",
+      "body": "Diese Funktion ist ab dem Tarif {tier} enthalten.",
+      "price": "{tier} kostet {amount} pro Monat, zzgl. MwSt.",
+      "enterprise": "Enterprise wird mit unserem Vertriebsteam vereinbart."
+    },
+    "quota": {
+      "title": "Sie haben das Limit für diesen Monat erreicht",
+      "body": "Führen Sie ein Upgrade für ein größeres Monatskontingent durch oder kaufen Sie ein Zusatzpaket, um diesen Monat weiterzumachen."
+    },
+    "planRequired": {
+      "title": "Wählen Sie einen Tarif, um loszulegen",
+      "body": "Ihre Organisation hat noch keinen Tarif. Wählen Sie einen aus, um zu generieren, zu veröffentlichen und zu scannen."
+    },
+    "billingRequired": {
+      "title": "Zahlungsmethode aktualisieren",
+      "body": "Ihr Konto ist wegen eines Abrechnungsproblems schreibgeschützt. Aktualisieren Sie Ihre Zahlungsmethode, um den vollen Zugriff wiederherzustellen."
+    },
+    "actions": {
+      "upgrade": "Upgrade",
+      "buyTopUp": "Zusatzpaket kaufen",
+      "choosePlan": "Tarif wählen",
+      "updatePayment": "Zahlungsmethode aktualisieren",
+      "viewPlans": "Tarife ansehen",
+      "notNow": "Nicht jetzt"
+    },
+    "askOwner": "Nur Inhaber der Organisation können Tarif oder Abrechnung ändern. Bitten Sie einen Inhaber darum.",
+    "lock": {
+      "aria": "Erfordert den Tarif {tier}"
+    }
+  },
   "email": {},
   "adminOrgs": {},
   "adminUsers": {}

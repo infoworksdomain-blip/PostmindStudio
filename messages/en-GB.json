@@ -2888,7 +2888,8 @@
       "tierSource": {
         "query": "chosen here",
         "last_generation": "recorded on its latest generation",
-        "default": "no generation recorded — Basic assumed"
+        "default": "no generation recorded — Basic assumed",
+        "entitlements": "from the organisation’s subscription"
       },
       "mode": {
         "warn": "warn",
@@ -3323,14 +3324,402 @@
     }
   },
   "marketing": {},
-  "pricing": {},
+  "pricing": {
+    "meta": {
+      "title": "Pricing"
+    },
+    "hero": {
+      "eyebrow": "Pricing",
+      "title": "Plans that grow with your video output",
+      "description": "Every plan includes AI scripts, multi-format renders and publishing to your connected accounts."
+    },
+    "interval": {
+      "label": "Billing period",
+      "month": "Monthly",
+      "year": "Annual"
+    },
+    "exclVat": "Prices exclude VAT.",
+    "unavailable": "Prices can’t be shown right now. Please try again shortly.",
+    "priceUnavailable": "Price unavailable",
+    "perMonth": "{amount} / month",
+    "perYear": "{amount} / year",
+    "annualSaving": "Save {amount} a year",
+    "trialNote": "Try {tier} free for {days, plural, one {# day} other {# days}}, with {short} short videos and {long} long video included. Card required; cancel any time.",
+    "popular": "Most popular",
+    "tiers": {
+      "BASIC": {
+        "tagline": "For a single business getting started with short-form video."
+      },
+      "STANDARD": {
+        "tagline": "For growing teams publishing every day, with music and long-form."
+      },
+      "PLUS": {
+        "tagline": "For agencies and brands that need voice cloning, 4K and AI images."
+      },
+      "ENTERPRISE": {
+        "tagline": "Custom limits, your own provider keys and white-label outputs."
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, one {# short video a month} other {# short videos a month}}",
+      "longVideos": "{count, plural, one {# long video a month} other {# long videos a month}}",
+      "noLongVideos": "No long videos",
+      "seats": "{count, plural, one {# seat} other {# seats}}",
+      "businesses": "{count, plural, one {# business} other {# businesses}}",
+      "unlimitedVideos": "Unlimited videos (fair use)"
+    },
+    "enterprise": {
+      "price": "Custom pricing",
+      "contact": "Contact sales",
+      "contactAria": "Email the sales team about Enterprise",
+      "noContact": "Ask your PostMind account manager about Enterprise."
+    },
+    "cta": {
+      "trial": "Start free trial",
+      "choose": "Choose plan",
+      "chooseAria": "Choose the {tier} plan"
+    },
+    "compare": {
+      "title": "Compare plans",
+      "caption": "Plan comparison",
+      "feature": "Feature",
+      "included": "Included",
+      "notIncluded": "Not included",
+      "unlimited": "Unlimited",
+      "rows": {
+        "shortVideos": "Short videos a month (up to 30 s)",
+        "longVideos": "Long videos a month",
+        "platforms": "Platforms",
+        "dailyCostCap": "Daily generation budget",
+        "monthlyCostCap": "Monthly generation budget",
+        "queuePriority": "Render queue priority",
+        "musicAndSfx": "Music and sound effects",
+        "voiceClone": "Brand voice clone",
+        "renders4k": "4K renders",
+        "imageLibrary": "Image library",
+        "generatedImages": "Generated images per business a month",
+        "scanBusinesses": "Website scans (businesses)",
+        "libraryInspire": "Reference library: Inspire mode",
+        "libraryTemplate": "Reference library: Template mode",
+        "customPresets": "Custom overlay presets and slideshow templates",
+        "approvalWorkflows": "Multi-step approval workflows",
+        "byocProviderKeys": "Your own provider keys",
+        "whiteLabel": "White-label outputs",
+        "dnsDomainVerification": "Domain verification",
+        "seats": "Seats",
+        "businesses": "Businesses",
+        "storage": "Storage"
+      },
+      "values": {
+        "longVideos": "{count} × up to {minutes} min",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok, Instagram and 1 more",
+          "all": "All 8"
+        },
+        "queuePriority": {
+          "normal": "Standard",
+          "high": "High"
+        },
+        "imageLibrary": {
+          "stock": "Stock images",
+          "stock_scrape": "Stock and website images",
+          "ai_generation": "Stock, website and AI images",
+          "byoc_generation": "AI images with your own keys"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "Top-up packs",
+      "description": "Need more this month? Buy a one-off pack. Credits are used after your plan allowance, oldest first.",
+      "short": "{quantity, plural, one {# short video} other {# short videos}}",
+      "long": "{quantity, plural, one {# long video} other {# long videos}}",
+      "forTier": "For {tier} plans",
+      "validity": "Valid for {months} months"
+    },
+    "faq": {
+      "title": "Questions",
+      "items": {
+        "trial": {
+          "q": "How does the free trial work?",
+          "a": "The Standard trial needs a card. You won’t be charged until the trial ends, and you can cancel before then. Each organisation can have one trial."
+        },
+        "change": {
+          "q": "Can I change plan later?",
+          "a": "Yes. Upgrades apply straight away and are charged pro rata. Downgrades apply at the end of your billing period, and nothing is deleted."
+        },
+        "limit": {
+          "q": "What happens when I reach my limit?",
+          "a": "New videos pause until your allowance resets at the start of the next month. You can upgrade or buy a top-up pack to keep going."
+        },
+        "vat": {
+          "q": "Do prices include VAT?",
+          "a": "No. Prices exclude VAT, which is added at checkout where it applies."
+        },
+        "cancel": {
+          "q": "What happens if I cancel?",
+          "a": "You keep access until the end of the period you paid for. After that your account becomes read-only: you can still view, export and download your work."
+        }
+      }
+    }
+  },
   "legal": {},
   "auth": {},
   "security": {},
   "orgSettings": {},
   "members": {},
-  "billing": {},
-  "upgrade": {},
+  "billing": {
+    "meta": {
+      "title": "Billing"
+    },
+    "header": {
+      "eyebrow": "Settings",
+      "title": "Billing",
+      "description": "Your plan, usage, top-up credits and invoices."
+    },
+    "loading": "Loading billing",
+    "notEnabled": {
+      "title": "Billing isn’t managed here",
+      "body": "Your plan is managed by your PostMind account. Contact your account manager to change it."
+    },
+    "banners": {
+      "checkoutSuccess": "Thank you. Your plan is being set up and will appear here in a moment.",
+      "checkoutCancelled": "Checkout was cancelled. You haven’t been charged.",
+      "topupSuccess": "Top-up bought. The credits will appear here in a moment.",
+      "topupCancelled": "Top-up cancelled. You haven’t been charged.",
+      "dismiss": "Dismiss"
+    },
+    "plan": {
+      "title": "Current plan",
+      "tierName": "{tier} plan",
+      "noPlan": "No plan",
+      "status": {
+        "trialing": "Free trial",
+        "active": "Active",
+        "past_due": "Payment failed",
+        "read_only": "Read-only",
+        "cancelling": "Cancelling",
+        "none": "No plan"
+      },
+      "trialEnds": "Your free trial ends on {date}. Your plan starts automatically unless you cancel.",
+      "renews": "Renews on {date}.",
+      "cancelsOn": "Your plan ends on {date}. You keep full access until then.",
+      "pastDue": "We couldn’t take your last payment. Update your payment method by {date} to keep full access.",
+      "graceLeft": "{days, plural, one {# day left} other {# days left}}",
+      "readOnly": "Your account is read-only. You can still view, export and download your work, but you can’t create or publish until billing is sorted.",
+      "none": "Your organisation doesn’t have a plan yet. Choose one below to start creating.",
+      "interval": {
+        "month": "Billed monthly",
+        "year": "Billed annually"
+      },
+      "adminSource": "Custom plan set by PostMind staff.",
+      "manage": "Manage billing",
+      "manageHelp": "Change plan, update your payment method, download receipts or cancel in the secure Stripe portal.",
+      "askOwner": "Only an organisation owner can change billing. Ask an owner if you need a different plan.",
+      "checkoutUnavailable": "Online checkout isn’t available at the moment.",
+      "alreadySubscribed": "Your organisation already has a subscription. Use Manage billing to change it."
+    },
+    "usage": {
+      "title": "Usage this month",
+      "description": "Video allowances reset on the first day of each month (UTC).",
+      "seats": "Seats",
+      "businesses": "Businesses",
+      "storage": "Storage",
+      "storageUsed": "{used} GB of {limit} GB",
+      "storageUnlimited": "{used} GB used",
+      "storageOver": "You’re over your storage allowance. Nothing is deleted, but consider tidying up or upgrading.",
+      "cost": "Generation spend",
+      "costOf": "{spent} of {cap}",
+      "costNoCap": "{spent} (no cap)",
+      "costHeadroom": "Your cap includes {amount} extra from top-up credits.",
+      "usedOf": "{used} of {limit}",
+      "usedUnlimited": "{used} (unlimited)"
+    },
+    "credits": {
+      "title": "Top-ups",
+      "description": "Credits are used after your monthly allowance, oldest first, and last 12 months.",
+      "short": "{count, plural, =0 {No short video credits} one {# short video credit} other {# short video credits}}",
+      "long": "{count, plural, =0 {No long video credits} one {# long video credit} other {# long video credits}}",
+      "buy": "Buy",
+      "buyAria": "Buy {pack} for {amount}",
+      "noPacks": "Top-up packs are available on the Basic, Standard and Plus plans."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices yet.",
+      "caption": "Invoices",
+      "number": "Invoice",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "links": "Links",
+      "draft": "Draft",
+      "view": "View",
+      "viewAria": "View invoice {number} (opens in a new tab)",
+      "pdf": "PDF",
+      "pdfAria": "Download invoice {number} as a PDF (opens in a new tab)",
+      "statuses": {
+        "draft": "Draft",
+        "open": "Due",
+        "paid": "Paid",
+        "uncollectible": "Uncollectible",
+        "void": "Void"
+      }
+    },
+    "picker": {
+      "title": "Choose a plan",
+      "description": "Pick a plan and pay securely with Stripe. Prices exclude VAT.",
+      "trial": "Start free trial",
+      "choose": "Choose {tier}",
+      "redirecting": "Opening secure checkout…"
+    },
+    "subscriptionStatus": {
+      "active": "Active",
+      "trialing": "Trial",
+      "past_due": "Past due",
+      "unpaid": "Unpaid",
+      "canceled": "Cancelled",
+      "incomplete": "Incomplete",
+      "incomplete_expired": "Expired",
+      "paused": "Paused"
+    },
+    "admin": {
+      "tab": "Billing",
+      "entitlements": {
+        "title": "Plan and entitlements",
+        "description": "Look up an organisation to see its effective plan, subscriptions and any staff override.",
+        "orgIdLabel": "Organisation id",
+        "orgIdPlaceholder": "org_…",
+        "open": "Open",
+        "loading": "Loading entitlements",
+        "effective": "Effective plan",
+        "tier": "Tier",
+        "access": "Access",
+        "source": "Source",
+        "graceUntil": "Grace until",
+        "accessValues": {
+          "full": "Full",
+          "read_only": "Read-only",
+          "none": "None"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "Trial",
+          "admin": "Staff override",
+          "core": "PostMind Core",
+          "none": "None"
+        },
+        "stored": "Stored entitlement",
+        "noStored": "No entitlement stored yet.",
+        "storedSummary": "{tier} · {access} · {source} · updated {when}",
+        "override": "Current override",
+        "noOverride": "No staff override.",
+        "overrideReason": "Reason: {reason}",
+        "overrideSetAt": "Set {when}",
+        "expires": "Expires {date}",
+        "noExpiry": "No expiry",
+        "overridePrice": "Agreed price: {amount} a month",
+        "subscriptions": "Subscriptions",
+        "noSubscriptions": "No subscriptions.",
+        "subscriptionLine": "{tier} · {interval} · ends {date}",
+        "form": {
+          "title": "Set an override",
+          "tier": "Tier",
+          "access": "Access",
+          "keep": "Keep current",
+          "limits": "Custom limits",
+          "limitsHelp": "Leave a limit empty to use the plan’s value. Tick Unlimited to remove it.",
+          "unlimited": "Unlimited",
+          "unlimitedAria": "{limit}: unlimited",
+          "limitLabels": {
+            "seats": "Seats",
+            "businesses": "Businesses",
+            "storageGb": "Storage (GB)",
+            "shortVideos": "Short videos a month",
+            "longVideos": "Long videos a month",
+            "longMaxSec": "Long video maximum (seconds)",
+            "generatedImagesPerBusinessPerMonth": "Generated images per business a month",
+            "scanBusinesses": "Website scans (businesses)"
+          },
+          "price": "Agreed monthly price (£, excl. VAT)",
+          "minimum": "Minimum for this organisation’s {cap} monthly cost cap: {amount}.",
+          "belowMinimum": "The price is below the minimum of {amount}.",
+          "priceRequired": "An Enterprise override needs the agreed monthly price.",
+          "expiresAt": "Expires (optional)",
+          "reason": "Reason (required)",
+          "save": "Save override",
+          "saved": "Override saved"
+        },
+        "clear": {
+          "title": "Remove the override",
+          "description": "The organisation goes back to what its Stripe subscription gives it.",
+          "reason": "Reason for removing",
+          "button": "Remove override",
+          "cleared": "Override removed"
+        }
+      },
+      "subscriptions": {
+        "title": "Subscriptions",
+        "description": "Every Stripe subscription, newest first.",
+        "loading": "Loading subscriptions",
+        "mrr": "Monthly recurring revenue",
+        "mrrHelp": "Active and past-due subscriptions; annual plans divided by 12; excl. VAT.",
+        "total": "{count, plural, =0 {No subscriptions} one {# subscription} other {# subscriptions}}",
+        "byTier": "By tier",
+        "byTierAria": "Subscriptions by tier",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "By status",
+        "byStatusAria": "Subscriptions by status",
+        "filter": "Status",
+        "allStatuses": "All statuses",
+        "caption": "Subscriptions",
+        "columns": {
+          "organisation": "Organisation",
+          "tier": "Tier",
+          "interval": "Billing",
+          "mrr": "MRR",
+          "periodEnd": "Period ends",
+          "status": "Status"
+        },
+        "cancelling": "Cancelling",
+        "unknownOrg": "Unknown organisation",
+        "unknownTier": "Unknown",
+        "empty": "No subscriptions match."
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "Upgrade to {tier}",
+      "body": "This feature is included from the {tier} plan.",
+      "price": "{tier} is {amount} a month, excl. VAT.",
+      "enterprise": "Enterprise is arranged with our sales team."
+    },
+    "quota": {
+      "title": "You’ve reached this month’s limit",
+      "body": "Upgrade for a bigger monthly allowance, or buy a top-up pack to keep going this month."
+    },
+    "planRequired": {
+      "title": "Choose a plan to start creating",
+      "body": "Your organisation doesn’t have a plan yet. Pick one to generate, publish and scan."
+    },
+    "billingRequired": {
+      "title": "Update your payment method",
+      "body": "Your account is read-only because of a billing problem. Update your payment method to restore full access."
+    },
+    "actions": {
+      "upgrade": "Upgrade",
+      "buyTopUp": "Buy top-up",
+      "choosePlan": "Choose a plan",
+      "updatePayment": "Update payment method",
+      "viewPlans": "View plans",
+      "notNow": "Not now"
+    },
+    "askOwner": "Only an organisation owner can change the plan or billing. Ask an owner to do this.",
+    "lock": {
+      "aria": "Needs the {tier} plan"
+    }
+  },
   "email": {},
   "adminOrgs": {},
   "adminUsers": {}
