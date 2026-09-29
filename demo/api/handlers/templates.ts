@@ -107,7 +107,56 @@ const templates: ProjectTemplate[] = [
     },
     createdAt: ago(40 * DAY),
   },
+  // 17.9: the organisation's own templates cover the remaining categories, so the Templates
+  // screen shows every category label translated (templates.categories.*).
+  orgTemplate('tpl-org-recipe', 'Recipe of the week', 'food', 30, [
+    bp('AI_CLIP', 3, 'The finished bake'),
+    bp('AI_CLIP', 6, 'Method in three steps'),
+    bp('TEXT_CARD', 3, 'Save for later'),
+  ]),
+  orgTemplate('tpl-org-slow-sunday', 'Slow Sunday', 'lifestyle', 26, [
+    bp('STOCK_FOOTAGE', 4, 'Morning light at home'),
+    bp('AI_CLIP', 5, 'Coffee and a pastry'),
+    bp('TEXT_CARD', 3, 'Open 9–2 on Sundays'),
+  ]),
+  orgTemplate('tpl-org-review-tweet', 'Customer review, read aloud', 'tweet_video', 18, [
+    bp('MOTION_GRAPHICS', 5, 'The review on screen'),
+    bp('AI_CLIP', 4, 'The bake it mentions'),
+  ]),
+  orgTemplate('tpl-org-meet-tom', 'Meet Tom, our head baker', 'introduction', 12, [
+    bp('AI_AVATAR', 5, 'Tom says hello'),
+    bp('AI_CLIP', 6, 'His favourite bake'),
+  ]),
+  orgTemplate('tpl-org-friday-prep', 'Friday prep, behind the scenes', 'behind_the_scenes', 9, [
+    bp('AI_CLIP', 4, 'Ovens on at 4am'),
+    bp('AI_CLIP', 5, 'Shaping the weekend loaves'),
+  ]),
+  orgTemplate('tpl-org-spring-copy', 'Saved from “Spring menu launch”', 'custom', 2, [
+    bp('AI_CLIP', 4, 'Hook'),
+    bp('AI_CLIP', 5, 'Three new plates'),
+    bp('TEXT_CARD', 3, 'Offer'),
+  ]),
 ];
+
+function orgTemplate(
+  id: string,
+  name: string,
+  category: string,
+  daysAgo: number,
+  shots: Blueprint[],
+): ProjectTemplate {
+  return {
+    id,
+    organisationId: DEMO_ORG_ID,
+    builtIn: false,
+    name,
+    category,
+    targetFormats: vertical(['tiktok', 'instagram_reel'], 20),
+    shotBlueprint: { shots },
+    publishDefaults: null,
+    createdAt: ago(daysAgo * DAY),
+  };
+}
 
 const copy = (t: ProjectTemplate): ProjectTemplate =>
   JSON.parse(JSON.stringify(t)) as ProjectTemplate;

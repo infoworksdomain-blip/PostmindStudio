@@ -30,6 +30,21 @@ export const PROJECTS = {
   meetTheBakers: { id: 'prj-meet-the-bakers', name: 'Meet the bakers' },
 } as const;
 
+/**
+ * Phase 17 states (p17-hardening.ts): coded failure reasons (17.9) and an unnamed project. The
+ * untitled one has no name at all (null): every screen shows its translated "Untitled video".
+ */
+export const P17_PROJECTS = {
+  /** FAILED: planning_failed wrapping kill_switch_workspace (a nested cause). */
+  easterWindow: { id: 'prj-easter-window', name: 'Easter window display' },
+  /** FAILED: asset_generation_failed for shots 2 and 4 (each shot names its provider error). */
+  gardenBakes: { id: 'prj-garden-bakes', name: 'Summer garden bakes' },
+  /** FAILED: content_safety_block from the rendered-video scan. */
+  knifeSkills: { id: 'prj-knife-skills', name: 'Bread-knife skills' },
+  /** READY_FOR_REVIEW with name null. */
+  untitled: { id: 'prj-untitled-rye', name: null },
+} as const;
+
 /** Renders (variants): project → platform. */
 export const RENDERS = {
   springTiktok: 'rnd-spring-tiktok',

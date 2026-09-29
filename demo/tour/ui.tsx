@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { sampleVideo, sceneImage, type Aspect, type SceneKind } from '../media';
+import { useLocation } from '../router';
 
 // Shared building blocks for the demo tour pages. They use the app's own tokens (globals.css) and
 // type scale (Instrument Serif display, Inter body) so the tour reads as part of the product.
@@ -284,4 +285,20 @@ export function Toc({ items }: { items: { id: string; label: string }[] }) {
       ))}
     </nav>
   );
+}
+
+/**
+ * Deep links into a tour page: `#/tour/system?section=backup` scrolls to the element with that
+ * id once the page has rendered (and again when only the query changes).
+ */
+export function useSectionScroll(): void {
+  const { search } = useLocation();
+  useEffect(() => {
+    const id = new URLSearchParams(search).get('section');
+    if (!id) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' });
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 }

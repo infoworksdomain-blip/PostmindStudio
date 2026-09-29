@@ -1,4 +1,4 @@
-import { LIBRARY_VIDEOS, PROJECTS } from '../api/ids';
+import { LIBRARY_VIDEOS, P17_PROJECTS, PROJECTS } from '../api/ids';
 import type { SceneKind } from '../media';
 
 // The tour's screen index: every screen of the app and its notable deep states, grouped the way
@@ -77,6 +77,26 @@ export const PROJECT_STATES: DeepLink[] = [
     label: PROJECTS.meetTheBakers.name,
     note: 'Draft: brief saved, nothing generated yet.',
   },
+  {
+    href: p(P17_PROJECTS.untitled.id),
+    label: 'Untitled video (no name)',
+    note: 'Ready for review with no name: lists, review and the bell show “Untitled video” in the reader’s language; quality details with numbers (17.9).',
+  },
+  {
+    href: p(P17_PROJECTS.easterWindow.id),
+    label: P17_PROJECTS.easterWindow.name,
+    note: 'Failed while planning because a workspace kill switch was engaged: both sentences translated (17.9).',
+  },
+  {
+    href: p(P17_PROJECTS.gardenBakes.id),
+    label: P17_PROJECTS.gardenBakes.name,
+    note: 'Shots 2 and 4 could not be generated; each shot shows its provider’s error class translated and its message as sent (17.9).',
+  },
+  {
+    href: p(P17_PROJECTS.knifeSkills.id),
+    label: P17_PROJECTS.knifeSkills.name,
+    note: 'Blocked by the content-safety scan of the rendered video (17.9).',
+  },
 ];
 
 const [firstLibrary] = LIBRARY_VIDEOS;
@@ -137,7 +157,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         title: 'Templates',
         href: '#/templates',
         summary:
-          'Saved slideshow and project templates, with delete; built-in templates listed read-only (A5.4, 15.E7).',
+          'Saved slideshow and project templates, with delete; built-in templates listed read-only (A5.4, 15.E7). Every category label is translated, as in the slideshow picker (17.9).',
         scene: 'flatlay',
       },
       {
@@ -161,7 +181,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         title: 'Publications',
         href: '#/publications',
         summary:
-          'Every post across platforms: filter by state and platform; retry, cancel or take down.',
+          'Every post across platforms: filter by state and platform; retry, cancel or take down. Failure reasons in the reader’s language (platform kill switch, rate limit, reconnect).',
         scene: 'storefront',
       },
       {
@@ -199,7 +219,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         scene: 'flatlay',
         tryIt: [
           'Profile tab: edit the tone and audience Studio writes with.',
-          'Website scan tab: confirm ownership and scan the bakery’s website (progress polls every 3 s); see the next automatic rescan, verify the domain with a DNS TXT record, or report a site you do not own.',
+          'Website scan tab: confirm ownership and scan the bakery’s website (progress polls every 3 s); the statement is sent as {locale, messageKey, text} and checked (17.8); the last scan stopped at its cost cap (translated reason); see the next automatic rescan, verify the domain with a DNS TXT record, or report a site you do not own.',
           'Brand kits tab: the main kit and a Christmas 2026 kit; set the default.',
           'Image library tab: filter by source, semantic search, generate an image.',
         ],
@@ -208,7 +228,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         title: 'Connections',
         href: '#/connections',
         summary:
-          'TikTok, YouTube, LinkedIn and X by OAuth (X needs a reconnect); Instagram and Facebook from PostMind.',
+          'TikTok, YouTube, LinkedIn and X by OAuth; Instagram and Facebook from PostMind. The daily check shows “Access checked” on healthy accounts; X was refused and asks to be reconnected (17.3).',
         scene: 'street',
       },
       {
@@ -257,4 +277,4 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
 ];
 
 export const BELL_NOTE =
-  'The bell in the top bar lists in-app notifications (cost alerts, generation complete, approval waiting, publication failed). Mark one or all as read.';
+  'The bell in the top bar lists in-app notifications in the reader’s language (cost alerts, generation complete, approval waiting, publication failed, safety reviews, plan quota, “Reconnect your X account”, and one for an untitled project). One old row has no message key and stays in its stored English. Mark one or all as read.';

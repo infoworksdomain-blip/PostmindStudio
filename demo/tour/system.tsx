@@ -1,8 +1,9 @@
 import { DeliveryChapters } from './system-delivery';
+import { HardeningChapters } from './system-hardening';
 import { OpsChapters } from './system-ops';
 import { PipelineChapters } from './system-pipeline';
 import { SecurityChapters } from './system-security';
-import { Pill, TourHeader, Toc } from './ui';
+import { Pill, TourHeader, Toc, useSectionScroll } from './ui';
 
 // #/tour/system — "Behind the scenes": the parts of Studio with no screen, each shown with a
 // representative artifact taken from (or formatted exactly like) the real code's output.
@@ -23,11 +24,17 @@ const TOC = [
   { id: 'deploy', label: 'Deployment' },
   { id: 'runbooks', label: 'Runbooks' },
   { id: 'golden', label: 'Golden paths' },
+  { id: 'reliability', label: 'Reliability jobs' },
+  { id: 'failover', label: 'Failover alert' },
+  { id: 'storage', label: 'R2 storage' },
+  { id: 'backup', label: 'Storage backup' },
 ];
 
 export function SystemTour() {
+  useSectionScroll();
   return (
-    <div>
+    // English-only tour text: kept left-to-right in every interface language.
+    <div lang="en" dir="ltr">
       <TourHeader
         eyebrow="Behind the scenes"
         title={
@@ -54,6 +61,7 @@ export function SystemTour() {
         <OpsChapters />
         <SecurityChapters />
         <DeliveryChapters />
+        <HardeningChapters />
       </div>
     </div>
   );

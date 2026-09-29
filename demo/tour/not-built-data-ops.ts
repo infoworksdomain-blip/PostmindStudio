@@ -3,23 +3,25 @@ import type { NotBuiltItem } from './not-built-types';
 // Admin, automation, pipeline, cost, infrastructure and GATE 12 items not built or not run.
 // Sources: PROGRESS.md (GATE 12 list, Operator decisions "NOT BUILT" notes, phase review lists),
 // BACKLOG.md unchecked items (9.2, 9.3, 12.2, 12.3, 12.5), runbooks/*.md GAP lines.
+// Phase 17 closed the account-status, provider-outage alert, abandoned-upload, lost-publish and
+// storage-backup GAPs, so they are not listed. Deployment target: one Hetzner VPS in Germany
+// (Docker Compose; runbooks/vps-deploy.md, scripts/vps/deploy.sh).
 
 export const PLATFORM_GAPS: NotBuiltItem[] = [
   // ------------------------------------------------------------------ Publishing and automation
   {
     id: 'meta-reconcile',
     group: 'Publishing and automation',
-    title: 'Core ↔ Studio channel reconciliation and account-status check',
+    title: 'Core ↔ Studio channel reconciliation',
     blocker: 'blocked on a dependency',
-    why: 'Reconciliation contract shipped, waiting for Core list-channels: the daily reconcile-channels job skips and GET /admin/channels/reconciliation answers 501, so a missed DELETE still leaves a channel active until Meta refuses its token. The daily account-status check is not built.',
-    source: 'PROGRESS [13.35]; runbooks/platform-account-revocation.md GAPs',
+    why: 'Reconciliation contract shipped, waiting for Core list-channels: the daily reconcile-channels job skips and GET /admin/channels/reconciliation answers 501, so a missed DELETE leaves a channel active until the daily account-status check (17.3) or Meta itself refuses its token.',
+    source: 'PROGRESS [13.35], [17.3]; runbooks/platform-account-revocation.md GAPs',
     plan: {
-      screens: ['Connections: “last checked” per account'],
+      screens: [],
       endpoints: [
         'CoreChannelDirectory over Core list-channels (reconcile job + logic already built)',
-        'daily account-status job per platform',
       ],
-      days: 2,
+      days: 1,
       dependsOn: 'Core: list-channels endpoint',
     },
   },
@@ -46,7 +48,7 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
     group: 'Infrastructure',
     title: 'Storage lifecycle rules (S3 or R2)',
     blocker: 'needs people',
-    why: 'Built and ready to run for either storage provider: `npx tsx scripts/ops/apply-s3-lifecycle.ts` picks infra/s3-lifecycle.json (STORAGE_PROVIDER=s3, the default) or infra/r2-lifecycle.json (STORAGE_PROVIDER=r2), prints the dry-run diff against each bucket, then `--apply`; waiting for DevOps to run it with production credentials.',
+    why: 'Ready to run for S3 or R2 (infra/r2-lifecycle.json): `npx tsx scripts/ops/apply-s3-lifecycle.ts` picks infra/s3-lifecycle.json (STORAGE_PROVIDER=s3) or infra/r2-lifecycle.json (STORAGE_PROVIDER=r2, the production choice), prints the dry-run diff against each bucket, then `--apply`; waiting for DevOps to run it with production credentials.',
     source:
       'BACKLOG 14.2; infra/s3-lifecycle.json; infra/r2-lifecycle.json; runbooks/storage-cost.md; runbooks/r2-setup.md',
     plan: {
@@ -59,13 +61,29 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
       dependsOn: 'DevOps with production AWS or Cloudflare R2 credentials',
     },
   },
+  {
+    id: 'r2-buckets',
+    group: 'Infrastructure',
+    title: 'R2 buckets, CORS, app token, backup bucket and backup token',
+    blocker: 'needs people',
+    why: 'The code and runbook are ready; nobody has created the Cloudflare side yet: four EU-jurisdiction buckets, CORS for browser uploads and the app’s Object Read & Write token (runbooks/r2-setup.md steps 1–5), plus the backup bucket and the backup job’s own token (step 7) that the nightly storage backup (17.5) copies into.',
+    source: 'PROGRESS [R2], [17.5]; runbooks/r2-setup.md; runbooks/backup-recovery.md',
+    plan: {
+      screens: [],
+      endpoints: [
+        'operator: create the buckets with the EU jurisdiction, apply CORS, create both tokens, put them in the server’s secrets, dry-run then --apply scripts/ops/backup-storage.ts once',
+      ],
+      days: 0.5,
+      dependsOn: 'a Cloudflare account with R2 enabled',
+    },
+  },
   // ------------------------------------------------------------------ Staging and people (GATE 12)
   {
     id: 'rehearsals',
     group: 'Staging and people (GATE 12)',
     title: 'Kill-switch and rollback rehearsals',
     blocker: 'needs staging',
-    why: 'Built and ready to run: `npx tsx scripts/ops/staging-gate.ts --rehearse all --from-tag <N> --to-tag <N+1>` (all five kill-switch levels timed against 60 s, rollback N+1 → N timed against 5 min; report in ops/results, or the Staging gate workflow); waiting for the operator to run it on staging under load, with DevOps providing STAGING_DEPLOY_CMD.',
+    why: 'Built and ready to run: `npx tsx scripts/ops/staging-gate.ts --rehearse all --from-tag <N> --to-tag <N+1>` (all five kill-switch levels timed against 60 s, rollback N+1 → N timed against 5 min; report in ops/results, or the Staging gate workflow); waiting for the operator to run it on staging under load. STAGING_DEPLOY_CMD is the VPS deploy script (scripts/vps/deploy.sh, being built on its own branch), which deploys the N and N+1 image tags.',
     source: 'BACKLOG 12.2, 12.3; plans/phase-14.md 14.6; runbooks/staging-gate.md',
     plan: {
       screens: [],
@@ -73,7 +91,8 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
         'staging-gate.ts --rehearse kill-switch, then --rehearse rollback; record in runbooks/staging-gate.md',
       ],
       days: 0.5,
-      dependsOn: 'staging under load, a read-only staging DB role, the N and N+1 image tags',
+      dependsOn:
+        'the server (see “Hetzner server”), a read-only staging DB role, the N and N+1 image tags',
     },
   },
   {
@@ -95,15 +114,17 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
   {
     id: 'pitr',
     group: 'Staging and people (GATE 12)',
-    title: 'Point-in-time restore drill',
+    title: 'Database restore drill',
     blocker: 'needs staging',
-    why: 'Built and ready to run: `staging-gate.ts --snapshot` before the restore, then `DATABASE_URL=<restored> npx tsx scripts/ops/staging-gate.ts --restore-check --incident-at <ISO> --restore-started-at <ISO>` (migrate status, row counts vs snapshot, pgvector, read-only smoke, RTO/RPO); waiting for DevOps to perform the PITR restore and run the check.',
+    why: 'Built and ready to run: `staging-gate.ts --snapshot` before the restore, then `DATABASE_URL=<restored> npx tsx scripts/ops/staging-gate.ts --restore-check --incident-at <ISO> --restore-started-at <ISO>` (migrate status, row counts vs snapshot, pgvector, read-only smoke, RTO/RPO); waiting for DevOps to restore the server’s nightly database backup from the R2 backup bucket into a scratch database and run the check.',
     source: 'PROGRESS GATE 12 list; plans/phase-14.md 14.7; runbooks/backup-recovery.md',
     plan: {
       screens: [],
-      endpoints: ['DevOps: snapshot → PITR restore → --restore-check → golden-path smoke'],
+      endpoints: [
+        'DevOps: snapshot → restore the nightly backup (runbooks/vps-deploy.md) → --restore-check → golden-path smoke',
+      ],
       days: 0.5,
-      dependsOn: 'staging database with PITR enabled',
+      dependsOn: 'the server’s nightly database backup in the R2 backup bucket',
     },
   },
   {
@@ -153,17 +174,33 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
   {
     id: 'alerting-deploy',
     group: 'Staging and people (GATE 12)',
-    title: 'Prometheus + Alertmanager deployment',
+    title: 'Alert routing: PagerDuty key and Slack webhook',
     blocker: 'needs people',
-    why: 'Built and ready to run: `docker compose -f docker-compose.monitoring.yml up -d` then `ALERTMANAGER_URL=http://127.0.0.1:9093 npx tsx scripts/ops/alert-smoke.ts` (runbooks/monitoring-deploy.md); waiting for DevOps to supply the PagerDuty routing key and Slack webhook and run it.',
-    source: 'BACKLOG 14.3; docker-compose.monitoring.yml; runbooks/monitoring-deploy.md',
+    why: 'Prometheus and Alertmanager run in the server’s Compose stack (docker-compose.monitoring.yml, rules incl. the 17.4 failover alert); alerts reach nobody until DevOps supplies the PagerDuty routing key and the Slack webhook and runs `ALERTMANAGER_URL=http://127.0.0.1:9093 npx tsx scripts/ops/alert-smoke.ts` (runbooks/monitoring-deploy.md).',
+    source: 'BACKLOG 14.3, 17.4; docker-compose.monitoring.yml; runbooks/monitoring-deploy.md',
     plan: {
       screens: [],
       endpoints: [
-        'DevOps: PagerDuty Events API v2 key + #studio-alerts webhook as secret files, start the stack on staging then production, record a passing smoke test',
+        'DevOps: PagerDuty Events API v2 key + #studio-alerts webhook as secret files on the server, restart Alertmanager, record a passing smoke test',
       ],
       days: 0.5,
       dependsOn: 'DevOps; PagerDuty service; #studio-alerts channel',
+    },
+  },
+  {
+    id: 'vps-server',
+    group: 'Staging and people (GATE 12)',
+    title: 'Hetzner server, setup script and secrets',
+    blocker: 'needs people',
+    why: 'Studio runs on one Hetzner VPS in Germany: Caddy (TLS) → web, one worker process for all six queues, Postgres 17 + pgvector, Redis, Prometheus/Alertmanager and the nightly backups, all in Docker Compose; files in Cloudflare R2 (EU), keys in AWS KMS. Waiting for the operator to rent the server, run the setup script and fill in the secrets (runbooks/vps-deploy.md).',
+    source: 'runbooks/vps-deploy.md; scripts/vps/deploy.sh (being built on its own branch)',
+    plan: {
+      screens: [],
+      endpoints: [
+        'operator: rent the server, point DNS at it, run the setup script, fill in the secrets (JWT, KMS, R2, provider and platform keys), then scripts/vps/deploy.sh and the first-deploy checks',
+      ],
+      days: 1,
+      dependsOn: 'a Hetzner account, the domain’s DNS, the provider and platform keys',
     },
   },
   {
