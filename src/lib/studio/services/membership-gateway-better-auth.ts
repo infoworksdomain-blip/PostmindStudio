@@ -42,9 +42,7 @@ export function mapOrganisationError(err: unknown): never {
     const message = err.message || code || 'Request refused';
     if (err.statusCode === 429) {
       // 19.3 invite limits (account-rate-limits.ts): 429 + Retry-After through withStudioRoute.
-      const retryAfter = Number(
-        (err.headers as Record<string, string> | undefined)?.['X-Retry-After'],
-      );
+      const retryAfter = Number(new Headers(err.headers).get('X-Retry-After'));
       throw new RateLimitError(
         'Too many invitations. Try again later.',
         Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60,

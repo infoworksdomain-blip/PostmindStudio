@@ -43,7 +43,7 @@ describe('account rate limits', () => {
     const err = await enforceLimits(store, twoFactorChecks('u1')).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(APIError);
     expect((err as APIError).body).toMatchObject({ code: 'RATE_LIMITED' });
-    expect(Number((err as APIError).headers['X-Retry-After'])).toBe(600);
+    expect(new Headers((err as APIError).headers).get('X-Retry-After')).toBe('600');
     // Another account is unaffected; the window resets.
     await expect(enforceLimits(store, twoFactorChecks('u2'))).resolves.toBeUndefined();
     t += TWO_FACTOR_ACCOUNT_RULE.window * 1000;
