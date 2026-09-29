@@ -185,7 +185,8 @@
       "members": "Members",
       "security": "Security and sign-in",
       "signOut": "Sign out",
-      "signOutFailed": "Could not sign you out. Try again."
+      "signOutFailed": "Could not sign you out. Try again.",
+      "billing": "Billing"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} of {limit}",
       "unlimited": "{used} used · no limit",
       "full": "Every seat on your plan is in use.",
-      "upgrade": "Upgrade for more seats",
-      "limitTitle": "All your seats are in use",
-      "limitBody": "Your plan’s seat limit is reached. Upgrade to invite more people, or remove someone first."
+      "upgrade": "Upgrade for more seats"
     },
     "invite": {
       "email": "Email address",
@@ -3856,7 +3855,8 @@
       "role": "Role",
       "send": "Send invitation",
       "hint": "Owners manage billing and can delete the organization; admins manage members and settings; publishers approve and publish; creators make videos; viewers can only watch.",
-      "sent": "Invitation sent to {email}."
+      "sent": "Invitation sent to {email}.",
+      "seatLimit": "Every seat on your plan is in use. Upgrade for more seats, or remove someone first."
     },
     "roles": {
       "owner": "Owner",

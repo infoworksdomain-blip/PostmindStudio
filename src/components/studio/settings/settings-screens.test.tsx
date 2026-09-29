@@ -193,13 +193,18 @@ describe('MembersScreen', () => {
     expect(screen.getByLabelText('Email address')).toBeDisabled();
   });
 
-  it('opens the upgrade prompt when Better Auth refuses the invite at the seat limit', async () => {
-    mockFetch([
+  it('explains a seat-limit refusal and refreshes the seat meter', async () => {
+    const api = mockFetch([
       {
         match: '/members/invitations',
         method: 'POST',
         status: 403,
-        body: { ok: false, error: 'quota_exceeded', message: 'Seat limit reached' },
+        body: {
+          ok: false,
+          error: 'quota_exceeded',
+          message: 'Every seat on the plan is in use',
+          details: { reason: 'seat_limit' },
+        },
       },
       { match: '/api/studio/members', body: members() },
     ]);
@@ -207,12 +212,14 @@ describe('MembersScreen', () => {
     renderWithSWR(<MembersScreen />);
     await user.type(await screen.findByLabelText('Email address'), 'dan@example.test');
     await user.click(screen.getByRole('button', { name: 'Send invitation' }));
-    const dialog = await screen.findByRole('dialog', { name: 'All your seats are in use' });
-    expect(within(dialog).getByRole('link', { name: 'Upgrade for more seats' })).toHaveAttribute(
-      'href',
-      '/settings/billing',
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        'Every seat on your plan is in use. Upgrade for more seats, or remove someone first.',
+      ),
     );
-    expect(toast.error).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(api.calls.filter((c) => c.url.endsWith('/api/studio/members')).length).toBe(2),
+    );
   });
 
   it('shows no management controls to a member without members:manage', async () => {

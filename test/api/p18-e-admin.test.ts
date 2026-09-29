@@ -138,6 +138,9 @@ describe.skipIf(!hasDb)(
       setApiDeps(undefined);
       await db.subscription.deleteMany({ where: { organisationId: org } });
       await db.orgEntitlement.deleteMany({ where: { organisationId: org } });
+      // The deletion test starts a real purge; remove its row so another suite's hard-delete job
+      // (which runs past the grace period) never picks this organisation up.
+      await db.organisationPurge.deleteMany({ where: { organisationId: doomed } });
       await db.organization.deleteMany({ where: { id: { in: [org, doomed] } } });
       await db.user.deleteMany({ where: { id: { in: [user, staffUser, superId] } } });
       await db.$disconnect();

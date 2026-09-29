@@ -185,7 +185,8 @@
       "members": "Membres",
       "security": "Sécurité et connexion",
       "signOut": "Se déconnecter",
-      "signOutFailed": "Impossible de vous déconnecter. Veuillez réessayer."
+      "signOutFailed": "Impossible de vous déconnecter. Veuillez réessayer.",
+      "billing": "Facturation"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} sur {limit}",
       "unlimited": "{used} utilisées · sans limite",
       "full": "Toutes les places de votre forfait sont utilisées.",
-      "upgrade": "Passez à un forfait supérieur pour plus de places",
-      "limitTitle": "Toutes vos places sont utilisées",
-      "limitBody": "La limite de places de votre offre est atteinte. Passez à une offre supérieure pour inviter d’autres personnes, ou retirez d’abord un membre."
+      "upgrade": "Passez à un forfait supérieur pour plus de places"
     },
     "invite": {
       "email": "Adresse e-mail",
@@ -3856,7 +3855,8 @@
       "role": "Rôle",
       "send": "Envoyer l’invitation",
       "hint": "Les propriétaires gèrent la facturation et peuvent supprimer l’organisation ; les administrateurs gèrent les membres et les paramètres ; les éditeurs valident et publient ; les créateurs réalisent les vidéos ; les lecteurs peuvent seulement regarder.",
-      "sent": "Invitation envoyée à {email}."
+      "sent": "Invitation envoyée à {email}.",
+      "seatLimit": "Toutes les places de votre offre sont utilisées. Passez à une offre supérieure ou retirez d’abord un membre."
     },
     "roles": {
       "owner": "Propriétaire",

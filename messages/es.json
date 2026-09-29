@@ -185,7 +185,8 @@
       "members": "Miembros",
       "security": "Seguridad e inicio de sesión",
       "signOut": "Cerrar sesión",
-      "signOutFailed": "No se pudo cerrar tu sesión. Inténtalo de nuevo."
+      "signOutFailed": "No se pudo cerrar tu sesión. Inténtalo de nuevo.",
+      "billing": "Facturación"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} de {limit}",
       "unlimited": "{used} usadas · sin límite",
       "full": "Todas las plazas de tu plan están en uso.",
-      "upgrade": "Mejora tu plan para tener más plazas",
-      "limitTitle": "Todos tus puestos están ocupados",
-      "limitBody": "Has alcanzado el límite de puestos de tu plan. Mejora tu plan para invitar a más personas o quita primero a alguien."
+      "upgrade": "Mejora tu plan para tener más plazas"
     },
     "invite": {
       "email": "Correo electrónico",
@@ -3856,7 +3855,8 @@
       "role": "Rol",
       "send": "Enviar invitación",
       "hint": "Los propietarios gestionan la facturación y pueden eliminar la organización; los administradores gestionan miembros y ajustes; los publicadores aprueban y publican; los creadores hacen vídeos; los espectadores solo pueden ver.",
-      "sent": "Invitación enviada a {email}."
+      "sent": "Invitación enviada a {email}.",
+      "seatLimit": "Todos los puestos de tu plan están ocupados. Mejora tu plan o quita primero a alguien."
     },
     "roles": {
       "owner": "Propietario",

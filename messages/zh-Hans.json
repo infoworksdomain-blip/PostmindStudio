@@ -185,7 +185,8 @@
       "members": "成员",
       "security": "安全与登录",
       "signOut": "退出登录",
-      "signOutFailed": "无法退出登录，请重试。"
+      "signOutFailed": "无法退出登录，请重试。",
+      "billing": "账单"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} / {limit}",
       "unlimited": "已使用 {used} · 无限制",
       "full": "您套餐的所有席位均已使用。",
-      "upgrade": "升级以获得更多席位",
-      "limitTitle": "所有席位均已占用",
-      "limitBody": "您的套餐席位已达上限。请升级以邀请更多成员，或先移除一位成员。"
+      "upgrade": "升级以获得更多席位"
     },
     "invite": {
       "email": "电子邮箱",
@@ -3856,7 +3855,8 @@
       "role": "角色",
       "send": "发送邀请",
       "hint": "所有者管理账单并可删除组织；管理员管理成员和设置；发布者负责审批和发布；创作者制作视频；查看者只能查看。",
-      "sent": "邀请已发送至 {email}。"
+      "sent": "邀请已发送至 {email}。",
+      "seatLimit": "您套餐的所有席位均已占用。请升级以获得更多席位，或先移除一位成员。"
     },
     "roles": {
       "owner": "所有者",

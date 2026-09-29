@@ -17,14 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { api, ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ConfirmDialog } from '../admin/confirm-dialog';
@@ -119,39 +111,6 @@ export function isSeatLimitError(err: unknown): boolean {
   );
 }
 
-/**
- * Placeholder for Track C's shared UpgradeDialog (plan §3 cross-cutting UI): until it is merged,
- * a seat-limit refusal opens this dialog with the same destination (pricing / billing).
- */
-function SeatLimitDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
-  const t = useTranslations('members.seats');
-  const tc = useTranslations('common.actions');
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('limitTitle')}</DialogTitle>
-          <DialogDescription>{t('limitBody')}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc('close')}
-          </Button>
-          <Button asChild>
-            <Link href="/settings/billing">{t('upgrade')}</Link>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () => void }) {
   const t = useTranslations('members.invite');
   const tr = useTranslations('members.roles');
@@ -159,7 +118,6 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<(typeof INVITE_ROLES)[number]>('creator');
   const [sending, setSending] = useState(false);
-  const [limitOpen, setLimitOpen] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -170,8 +128,12 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
       setEmail('');
       onInvited();
     } catch (err) {
-      if (isSeatLimitError(err)) setLimitOpen(true);
-      else toast.error(errorMessage(err));
+      // Seat limit: Track C's global UpgradeDialog opens from api() (upgrade-events.ts); here the
+      // list refreshes so the seat meter shows the plan is full, with its upgrade link.
+      if (isSeatLimitError(err)) {
+        toast.error(t('seatLimit'));
+        onInvited();
+      } else toast.error(errorMessage(err));
     } finally {
       setSending(false);
     }
@@ -179,7 +141,6 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
 
   return (
     <>
-      <SeatLimitDialog open={limitOpen} onOpenChange={setLimitOpen} />
       <form onSubmit={(e) => void submit(e)} className="flex flex-wrap items-end gap-3">
         <div className="grid min-w-60 flex-1 gap-1.5">
           <Label htmlFor="invite-email">{t('email')}</Label>

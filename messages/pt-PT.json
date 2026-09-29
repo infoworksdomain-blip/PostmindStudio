@@ -185,7 +185,8 @@
       "members": "Membros",
       "security": "Segurança e sessão",
       "signOut": "Terminar sessão",
-      "signOutFailed": "Não foi possível terminar a sessão. Tente novamente."
+      "signOutFailed": "Não foi possível terminar a sessão. Tente novamente.",
+      "billing": "Faturação"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} de {limit}",
       "unlimited": "{used} utilizados · sem limite",
       "full": "Todos os lugares do seu plano estão em utilização.",
-      "upgrade": "Faça upgrade para mais lugares",
-      "limitTitle": "Todos os lugares estão ocupados",
-      "limitBody": "Atingiu o limite de lugares do seu plano. Mude para um plano superior para convidar mais pessoas ou remova primeiro alguém."
+      "upgrade": "Faça upgrade para mais lugares"
     },
     "invite": {
       "email": "Endereço de e-mail",
@@ -3856,7 +3855,8 @@
       "role": "Função",
       "send": "Enviar convite",
       "hint": "Os proprietários gerem a faturação e podem eliminar a organização; os administradores gerem membros e definições; os publicadores aprovam e publicam; os criadores fazem vídeos; os visualizadores só podem assistir.",
-      "sent": "Convite enviado para {email}."
+      "sent": "Convite enviado para {email}.",
+      "seatLimit": "Todos os lugares do seu plano estão ocupados. Mude para um plano superior ou remova primeiro alguém."
     },
     "roles": {
       "owner": "Proprietário",

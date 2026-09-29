@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   Building,
   Check,
+  CreditCard,
   ChevronsUpDown,
   LogOut,
   Settings,
@@ -156,6 +157,11 @@ export function UserMenu({ me }: { me: Me }) {
         <DropdownMenuItem asChild>
           <Link href="/settings/members">
             <Users aria-hidden /> {t('members')}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings/billing">
+            <CreditCard aria-hidden /> {t('billing')}
           </Link>
         </DropdownMenuItem>
         {me.identityMode === 'standalone' && (

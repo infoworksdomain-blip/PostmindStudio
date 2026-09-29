@@ -185,7 +185,8 @@
       "members": "Mitglieder",
       "security": "Sicherheit und Anmeldung",
       "signOut": "Abmelden",
-      "signOutFailed": "Sie konnten nicht abgemeldet werden. Bitte versuchen Sie es erneut."
+      "signOutFailed": "Sie konnten nicht abgemeldet werden. Bitte versuchen Sie es erneut.",
+      "billing": "Abrechnung"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} von {limit}",
       "unlimited": "{used} genutzt · kein Limit",
       "full": "Alle Plätze Ihres Plans sind belegt.",
-      "upgrade": "Upgraden Sie für mehr Plätze",
-      "limitTitle": "Alle Plätze sind belegt",
-      "limitBody": "Die Platzgrenze Ihres Tarifs ist erreicht. Wechseln Sie in einen höheren Tarif, um weitere Personen einzuladen, oder entfernen Sie zuerst jemanden."
+      "upgrade": "Upgraden Sie für mehr Plätze"
     },
     "invite": {
       "email": "E-Mail-Adresse",
@@ -3856,7 +3855,8 @@
       "role": "Rolle",
       "send": "Einladung senden",
       "hint": "Inhaber verwalten die Abrechnung und können die Organisation löschen; Administratoren verwalten Mitglieder und Einstellungen; Publisher geben frei und veröffentlichen; Ersteller erstellen Videos; Betrachter können nur zusehen.",
-      "sent": "Einladung an {email} gesendet."
+      "sent": "Einladung an {email} gesendet.",
+      "seatLimit": "Alle Plätze Ihres Tarifs sind belegt. Wechseln Sie in einen höheren Tarif oder entfernen Sie zuerst jemanden."
     },
     "roles": {
       "owner": "Inhaber",

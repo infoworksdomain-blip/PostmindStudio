@@ -185,7 +185,8 @@
       "members": "Membros",
       "security": "Segurança e login",
       "signOut": "Sair",
-      "signOutFailed": "Não foi possível sair. Tente novamente."
+      "signOutFailed": "Não foi possível sair. Tente novamente.",
+      "billing": "Cobrança"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} de {limit}",
       "unlimited": "{used} usadas · sem limite",
       "full": "Todas as vagas do seu plano estão em uso.",
-      "upgrade": "Faça upgrade para mais vagas",
-      "limitTitle": "Todas as vagas estão em uso",
-      "limitBody": "Você atingiu o limite de vagas do seu plano. Faça upgrade para convidar mais pessoas ou remova alguém primeiro."
+      "upgrade": "Faça upgrade para mais vagas"
     },
     "invite": {
       "email": "Endereço de e-mail",
@@ -3856,7 +3855,8 @@
       "role": "Papel",
       "send": "Enviar convite",
       "hint": "Proprietários gerenciam a cobrança e podem excluir a organização; administradores gerenciam membros e configurações; publicadores aprovam e publicam; criadores fazem vídeos; visualizadores só podem assistir.",
-      "sent": "Convite enviado para {email}."
+      "sent": "Convite enviado para {email}.",
+      "seatLimit": "Todas as vagas do seu plano estão em uso. Faça upgrade ou remova alguém primeiro."
     },
     "roles": {
       "owner": "Proprietário",

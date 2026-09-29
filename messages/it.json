@@ -185,7 +185,8 @@
       "members": "Membri",
       "security": "Sicurezza e accesso",
       "signOut": "Esci",
-      "signOutFailed": "Impossibile disconnetterti. Riprova."
+      "signOutFailed": "Impossibile disconnetterti. Riprova.",
+      "billing": "Fatturazione"
     },
     "banners": {
       "readOnly": {
@@ -3846,9 +3847,7 @@
       "usedOf": "{used} di {limit}",
       "unlimited": "{used} usati · nessun limite",
       "full": "Tutti i posti del tuo piano sono in uso.",
-      "upgrade": "Passa a un piano superiore per avere più posti",
-      "limitTitle": "Tutti i posti sono occupati",
-      "limitBody": "Hai raggiunto il limite di posti del tuo piano. Passa a un piano superiore per invitare altre persone o rimuovi prima qualcuno."
+      "upgrade": "Passa a un piano superiore per avere più posti"
     },
     "invite": {
       "email": "Indirizzo email",
@@ -3856,7 +3855,8 @@
       "role": "Ruolo",
       "send": "Invia invito",
       "hint": "I titolari gestiscono la fatturazione e possono eliminare l’organizzazione; gli amministratori gestiscono membri e impostazioni; i publisher approvano e pubblicano; i creator realizzano i video; gli spettatori possono solo guardare.",
-      "sent": "Invito inviato a {email}."
+      "sent": "Invito inviato a {email}.",
+      "seatLimit": "Tutti i posti del tuo piano sono occupati. Passa a un piano superiore o rimuovi prima qualcuno."
     },
     "roles": {
       "owner": "Titolare",
