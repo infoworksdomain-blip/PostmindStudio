@@ -2,8 +2,11 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { Messages } from '../../i18n/messages';
 import { NotImplementedError } from '../../errors';
+import type { JobQueue } from '../queue/enqueue';
 import {
+  createEmailSender,
   emailSenderFromEnv,
+  type EmailMessage,
   type EmailPreferenceLookup,
   type EmailSender,
   type EmailStatus,
@@ -12,10 +15,11 @@ import { bestEffort, notificationSenderFromEnv, type NotificationSender } from '
 import { createPreferenceLookup, type PreferenceLookup } from './preference-lookup';
 
 // Spec 14.4 — in-app notifications (studio.notifications) plus the optional outbound webhook.
-// Email (BACKLOG 13.33, email.ts): for users who enabled email for the kind, the notifier hands
-// the notification to the configured EmailSender and records notifications.emailStatus; with no
-// sender (or Core's email API not published yet) that is "pending_setup". Every notification is
-// stored first; the webhook and email are best effort.
+// Email (BACKLOG 13.33, Phase 18 §2.8, email.ts): for users who enabled email for the kind, the
+// notifier hands the notification to the configured EmailSender and records
+// notifications.emailStatus: "sent" once the email is queued (Resend outbox), "failed" when that
+// fails, "pending_setup" with no sender (core mode without a Core email API). Every notification
+// is stored first; the webhook and email are best effort.
 
 export const NOTIFICATION_KINDS = [
   'cost_alert',
@@ -86,6 +90,21 @@ interface StoredRow {
   body: string;
   link: string | null;
   createdAt: Date;
+  messageKey?: string | null;
+  messageParams?: Prisma.JsonValue | null;
+}
+
+/** 16.5: the row's keyed form for email (params are flat ICU values). */
+function keyedMessage(row: StoredRow): EmailMessage['message'] {
+  const params = row.messageParams;
+  if (!row.messageKey) return undefined;
+  const flat: Record<string, string | number> = {};
+  if (params && typeof params === 'object' && !Array.isArray(params)) {
+    for (const [name, value] of Object.entries(params)) {
+      if (typeof value === 'string' || typeof value === 'number') flat[name] = value;
+    }
+  }
+  return { key: row.messageKey, params: flat };
 }
 
 const TITLE_MAX = 200;
@@ -131,6 +150,7 @@ export function createNotifier(deps: {
         subject: row.title,
         text: row.body,
         link: row.link && appUrl ? `${appUrl}${row.link}` : row.link,
+        ...(row.messageKey && { message: keyedMessage(row) }),
       });
       return 'sent';
     } catch (err) {
@@ -252,7 +272,7 @@ export function createNotifier(deps: {
   };
 }
 
-type NotifierHost = { db: PrismaClient; logger: Logger; notifier?: Notifier };
+type NotifierHost = { db: PrismaClient; logger: Logger; notifier?: Notifier; queue?: JobQueue };
 
 const notifiers = new WeakMap<object, Notifier>();
 
@@ -267,6 +287,8 @@ export function notifierFor(host: NotifierHost): Notifier {
       logger: host.logger,
       preferences,
       emailPreferences: preferences,
+      // Phase 18 §2.8: Resend in standalone mode (outbox + send-email job), per STUDIO_EMAIL_PROVIDER.
+      email: createEmailSender({ db: host.db, queue: host.queue, logger: host.logger }),
     });
     notifiers.set(host, notifier);
   }

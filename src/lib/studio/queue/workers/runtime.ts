@@ -37,6 +37,12 @@ import {
 import { checkPlatformAccountsJob, onCheckPlatformAccountsFailed } from './check-platform-accounts';
 import { auditRetentionJob, onAuditRetentionFailed } from './audit-retention';
 import {
+  onSendEmailFailed,
+  onSweepEmailOutboxFailed,
+  sendEmail,
+  sweepEmailOutbox,
+} from './send-email';
+import {
   onCoreSyncFailed,
   reconcileOrganisationsJob,
   reportUsage,
@@ -135,6 +141,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'redrive-lost-publications': redriveLostPublicationsJob,
   'check-platform-accounts': checkPlatformAccountsJob,
   'audit-retention': auditRetentionJob,
+  'send-email': sendEmail,
+  'sweep-email-outbox': sweepEmailOutbox,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -173,7 +181,18 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'redrive-lost-publications': onRedriveLostPublicationsFailed,
   'check-platform-accounts': onCheckPlatformAccountsFailed,
   'audit-retention': onAuditRetentionFailed,
+  'send-email': onSendEmailFailed,
+  'sweep-email-outbox': onSweepEmailOutboxFailed,
 };
+
+/**
+ * Phase 18 §2.8: jobs the kill switch does not stop. Email spends no provider budget, and a
+ * global kill must not block password resets, verification or billing notices.
+ */
+export const KILL_SWITCH_EXEMPT: ReadonlySet<JobName> = new Set<JobName>([
+  'send-email',
+  'sweep-email-outbox',
+]);
 
 /**
  * 15.D1 / A12.4: jobs that belong to a switchable feature stop (403 feature_disabled, not retried)
@@ -235,10 +254,12 @@ export async function executeJob<N extends JobName>(
     metrics.jobDuration.observe({ job: name, outcome }, (performance.now() - started) / 1000);
   };
   try {
-    await deps.killSwitch.assertNotKilled({
-      organisationId: data.organisationId,
-      projectId: data.projectId,
-    });
+    if (!KILL_SWITCH_EXEMPT.has(name)) {
+      await deps.killSwitch.assertNotKilled({
+        organisationId: data.organisationId,
+        projectId: data.projectId,
+      });
+    }
     const feature = JOB_FEATURES[name];
     if (feature)
       await (deps.features ?? featureGateFor(deps.db)).assertEnabled(feature, data.organisationId);

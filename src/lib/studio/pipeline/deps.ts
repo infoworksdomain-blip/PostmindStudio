@@ -1,3 +1,5 @@
+import type { EmailSendConfig } from '../../email/config';
+import type { EmailTransport } from '../../email/resend-client';
 import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { KillSwitch } from '../kill-switch';
@@ -100,10 +102,21 @@ export interface PipelineDeps {
   registryFor?: (scope: ProviderScope) => Promise<ProviderRegistry | undefined>;
   /** P7: per-business provider scores (0–1) the router prefers within a tier's candidates. */
   providerRatings?: { scoresFor(scope: ProviderScope): Promise<Readonly<Record<string, number>>> };
+  /**
+   * Phase 18 §2.8 email delivery (send-email job); absent = Resend + config from env on first use
+   * (lib/email/config.ts).
+   */
+  email?: EmailDeliveryDeps;
   /** HTTP client for downloading provider outputs. */
   fetch: typeof fetch;
   now: () => number;
   sleep: (ms: number) => Promise<void>;
+}
+
+/** Phase 18 §2.8: what the send-email job needs (tests inject a fake transport). */
+export interface EmailDeliveryDeps {
+  transport: EmailTransport;
+  config: EmailSendConfig;
 }
 
 /** 15.W2–W4: PostMind Core integrations the scheduled Core-sync jobs use. */

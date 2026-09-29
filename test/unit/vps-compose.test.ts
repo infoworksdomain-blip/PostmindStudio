@@ -424,7 +424,7 @@ describe('VPS compose — fits the default 2 GB / 1 vCPU server (Hetzner CPX12)'
     const keys = (name: string) => new RegExp(`^${name}=(\\d+)$`, 'm').exec(envExample)?.[1];
     expect(keys('STUDIO_FFMPEG_MAX_CONCURRENT')).toBe('1');
     expect(Number(keys('STUDIO_LIBRARY_CONCURRENCY'))).toBe(1);
-    for (const q of ['ORCHESTRATION', 'ASSETS', 'PUBLISH', 'SCHEDULED', 'ANALYTICS']) {
+    for (const q of ['ORCHESTRATION', 'ASSETS', 'PUBLISH', 'SCHEDULED', 'ANALYTICS', 'EMAIL']) {
       expect(Number(keys(`WORKER_CONCURRENCY_${q}`)), q).toBeLessThanOrEqual(3);
     }
   });

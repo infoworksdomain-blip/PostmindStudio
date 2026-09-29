@@ -46,6 +46,8 @@ export interface ApiDeps {
   internalRateLimiter?: RateLimiter;
   /** 15.E5: limit for public share-link requests (per client and per link); absent = unlimited. */
   publicRateLimiter?: RateLimiter;
+  /** Phase 18: per-IP limit for provider webhooks (Resend, Stripe); absent = unlimited (tests). */
+  webhookRateLimiter?: RateLimiter;
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
@@ -127,6 +129,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
   const voices = await import('../providers/elevenlabs-voices');
   const adminHealth = await import('../services/admin-health');
   const beta = await import('../services/beta');
+  const mailer = await import('../../email/mailer');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -161,6 +164,11 @@ async function buildFromEnv(): Promise<ApiDeps> {
       rateLimit.publicRateLimitsFromEnv(),
       { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
     ),
+    webhookRateLimiter: rateLimit.createRateLimiter(
+      rateLimit.createRedisRateLimitStore(connection),
+      rateLimit.webhookRateLimitsFromEnv(),
+      { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
+    ),
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),
@@ -170,6 +178,8 @@ async function buildFromEnv(): Promise<ApiDeps> {
     breaker: pipeline.breaker,
     adminQueues: () => adminHealth.bullQueuesFor(connection),
     betaPlans: beta.createBetaPlanLookup({ db: prisma, logger, now: Date.now }),
+    // Phase 18 §2.8: Resend through the outbox in standalone mode; logged only otherwise.
+    mailer: mailer.createAuthMailer({ db: prisma, queue, logger }),
     logger,
     now: Date.now,
   };

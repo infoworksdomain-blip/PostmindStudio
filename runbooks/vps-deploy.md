@@ -70,7 +70,7 @@ ordering". This runbook quotes no prices.
   | Postgres | 384 MB | shared_buffers 96 MB, work_mem 4 MB, max_connections 40 |
   | Valkey (Redis) | 128 MB | maxmemory 64 MB, `noeviction` |
   | web | 448 MB | V8 heap capped at 288 MB |
-  | worker | 704 MB | all six queues; V8 heap 384 MB; FFmpeg one at a time (`STUDIO_FFMPEG_MAX_CONCURRENT=1`) |
+  | worker | 704 MB | all seven queues (incl. studio-email); V8 heap 384 MB; FFmpeg one at a time (`STUDIO_FFMPEG_MAX_CONCURRENT=1`) |
   | Caddy | 96 MB | |
   | **Total** | **1,760 MB** | the OS gets the rest; swap absorbs the migration step during deploys |
 

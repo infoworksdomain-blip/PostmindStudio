@@ -1,5 +1,6 @@
 import { StudioCapability } from '@/lib/rbac';
 import { parseBody, withStudioRoute } from '@/lib/studio/api/route';
+import { emailDeliveryFor } from '@/lib/studio/notifications/email-delivery';
 import {
   getPreferences,
   preferencesPatchInput,
@@ -8,12 +9,15 @@ import {
 
 // BACKLOG 13.24 — the caller's notification preferences, per kind: { inApp, email }.
 // GET → every kind (defaults: in-app on, email off). PATCH { <kind>: { inApp?, email? } } → the
-// updated map. Email choices are stored; delivery waits for an email channel (13.33), so the
-// response says emailDelivery "pending_setup". Own preferences only; any member may set them.
-const EMAIL_DELIVERY = 'pending_setup' as const;
+// updated map. Own preferences only; any member may set them. emailDelivery (Phase 18 §2.8):
+// "active" when Studio sends email (Resend), "suppressed" when the caller's address bounced or
+// complained (the UI says "we can't email you"), "pending_setup" with no sender (core mode).
 
 export const GET = withStudioRoute(StudioCapability.ProjectRead, async ({ tenant, deps }) => ({
-  body: { preferences: await getPreferences(deps.db, tenant), emailDelivery: EMAIL_DELIVERY },
+  body: {
+    preferences: await getPreferences(deps.db, tenant),
+    emailDelivery: await emailDeliveryFor(deps, tenant.userId),
+  },
 }));
 
 export const PATCH = withStudioRoute(
@@ -26,6 +30,6 @@ export const PATCH = withStudioRoute(
       { type: 'notification_preferences', id: tenant.userId },
       { kinds: Object.keys(patch) },
     );
-    return { body: { preferences, emailDelivery: EMAIL_DELIVERY } };
+    return { body: { preferences, emailDelivery: await emailDeliveryFor(deps, tenant.userId) } };
   },
 );

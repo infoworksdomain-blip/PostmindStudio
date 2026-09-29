@@ -62,6 +62,8 @@ export const jobIds = {
   exportAccountData: (d: JobDataMap['export-account-data']) => `export-account-data__${d.exportId}`,
   purgeDisputedDomain: (d: JobDataMap['purge-disputed-domain']) =>
     `purge-disputed-domain__${d.runId}`,
+  /** Phase 18 §2.8: one job per outbox row (re-adds by the sweeper are ignored while queued). */
+  sendEmail: (d: JobDataMap['send-email']) => `send-email__${d.outboxId}`,
 };
 
 export function createBullJobQueue(

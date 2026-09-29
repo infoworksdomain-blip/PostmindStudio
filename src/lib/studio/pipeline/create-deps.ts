@@ -17,6 +17,7 @@ import { createKillSwitch, createPrismaFlagStore } from '../kill-switch';
 import { costCapsFromEnv } from '../cost/caps';
 import { createCostGuard } from '../cost/guard';
 import { createOrgCapOverrideLookup } from '../cost/org-overrides';
+import { createEmailSender } from '../notifications/email';
 import { createNotifier } from '../notifications/notifier';
 import { createPreferenceLookup } from '../notifications/preference-lookup';
 import { getMetrics } from '../observability/metrics';
@@ -57,6 +58,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     logger,
     preferences,
     emailPreferences: preferences,
+    // Phase 18 §2.8: Resend in standalone mode (outbox + send-email job), per STUDIO_EMAIL_PROVIDER.
+    email: createEmailSender({ db: input.db, queue: input.queue, logger }),
   });
   const guard = createCostGuard({
     db: input.db,
