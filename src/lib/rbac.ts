@@ -22,6 +22,26 @@ export const StudioCapability = {
   AdminModeration: 'studio:admin:moderation',
   /** Bulk re-drive of kill-switched / stuck work (POST /admin/redrive). Spends provider money. */
   AdminRedrive: 'studio:admin:redrive',
+  // Phase 18 §2.4 — organisation-level capabilities (standalone mode grants them from the
+  // member's role; core mode from Core).
+  /** Rename the organisation, logo, default locale, transfer ownership. */
+  OrgManage: 'studio:org:manage',
+  /** Delete the organisation (owner only). */
+  OrgDelete: 'studio:org:delete',
+  /** Invite, change role and remove members. */
+  MembersManage: 'studio:members:manage',
+  BillingRead: 'studio:billing:read',
+  /** Checkout, portal, plan change, top-ups (owner only). */
+  BillingManage: 'studio:billing:manage',
+  /** Create, rename and delete businesses. */
+  BusinessManage: 'studio:business:manage',
+  /** The organisation's audit log (/settings/audit). */
+  AuditRead: 'studio:audit:read',
+  // Phase 18 §2.5 — platform staff (superadmin) capabilities.
+  AdminOrganisations: 'studio:admin:organisations',
+  AdminUsers: 'studio:admin:users',
+  AdminBilling: 'studio:admin:billing',
+  AdminImpersonate: 'studio:admin:impersonate',
 } as const;
 
 export type StudioCapability = (typeof StudioCapability)[keyof typeof StudioCapability];

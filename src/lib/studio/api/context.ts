@@ -22,6 +22,12 @@ import type { AssetStorage } from '../storage';
 import { devTenantFromEnv } from './dev-tenant';
 import type { IdempotencyStore } from './idempotency';
 import type { RateLimiter } from './rate-limit';
+import type { AuditSink } from '../../audit-sink';
+import type { AuthMailer } from '../../email/auth-mailer';
+import type { IdentityProvider } from '../../identity/provider';
+import type { StudioModes } from '../../mode';
+import type { BillingService } from '../billing/contracts';
+import type { EntitlementsReader } from '../billing/entitlements-reader';
 
 // Dependencies for /api/studio route handlers. Built lazily from env in production; tests
 // install their own with setApiDeps().
@@ -70,6 +76,20 @@ export interface ApiDeps {
   uploads?: UploadDeps;
   /** 14.11: beta "Plus for 30 days" override lookup; absent = Core's plan tier as-is (tests). */
   betaPlans?: BetaPlanLookup;
+  // Phase 18 (plans/phase-18.md §0, §2) — optional so existing tests and core mode are
+  // unchanged; each track fills its own field.
+  /** The resolved integration modes (STUDIO_MODE and overrides); absent = read from env. */
+  modes?: StudioModes;
+  /** The identity provider behind resolveTenant (standalone Better Auth or core). */
+  identity?: IdentityProvider;
+  /** Tier / access per organisation (Track C); absent = no plan limits applied (tests). */
+  entitlements?: EntitlementsReader;
+  /** Stripe checkout / portal / invoices (Track C); absent = billing routes answer 501. */
+  billing?: BillingService;
+  /** Transactional email (Track B); absent = auth email is logged only (development). */
+  mailer?: AuthMailer;
+  /** Durable audit writes (auditLogDurable); absent = audit only through `audit`. */
+  auditSink?: AuditSink;
   logger: Logger;
   now: () => number;
 }

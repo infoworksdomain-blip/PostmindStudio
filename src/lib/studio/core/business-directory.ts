@@ -24,6 +24,11 @@ export interface CoreBusinessDirectory {
   listBusinesses(organisationId: string): Promise<CoreBusiness[]>;
 }
 
+// Phase 18 §2.11: the same contract, mode-neutral. Standalone mode implements it over
+// studio.businesses (LocalBusinessDirectory, Track D); core mode keeps the Core directory.
+export type Business = CoreBusiness;
+export type BusinessDirectory = CoreBusinessDirectory;
+
 export const BUSINESS_LIST_PENDING_MESSAGE =
   'waiting for Core list-businesses (GET /api/internal/organisations/:id/businesses)';
 

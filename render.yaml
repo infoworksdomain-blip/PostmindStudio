@@ -80,6 +80,9 @@ projects:
             envVars:
               - key: NODE_ENV
                 value: production
+              # Phase 18 §0: Render staging stays wired to PostMind Core (pre-Phase-18 mode).
+              - key: STUDIO_MODE
+                value: core
               - key: STORAGE_PROVIDER
                 value: r2
               - key: R2_JURISDICTION
@@ -425,6 +428,9 @@ projects:
             envVars:
               - key: NODE_ENV
                 value: production
+              # Phase 18 §0: Render staging stays wired to PostMind Core (pre-Phase-18 mode).
+              - key: STUDIO_MODE
+                value: core
               - key: STORAGE_PROVIDER
                 value: r2
               - key: R2_JURISDICTION

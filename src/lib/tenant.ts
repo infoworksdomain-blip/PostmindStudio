@@ -35,12 +35,29 @@ const coreContextSchema = z.object({
 
 export type CoreContext = z.infer<typeof coreContextSchema>;
 
+/** Platform role of the signed-in user (Phase 18 §2.5; standalone mode only). */
+export type PlatformRole = 'user' | 'staff' | 'superadmin';
+
+/** Billing access of the organisation (Phase 18 §P.3). */
+export type TenantAccess = 'full' | 'read_only' | 'none';
+
 export interface TenantContext {
   userId: string;
   organisationId: string;
   organisation: CoreContext['organisation'];
   memberships: CoreContext['memberships'];
   capabilities: string[];
+  // Phase 18 §2.2 — optional, set by the standalone IdentityProvider (core mode leaves them
+  // unset, so existing consumers are unchanged).
+  platformRole?: PlatformRole;
+  /** Better Auth session id (not the token). */
+  sessionId?: string;
+  /** Set while a superadmin impersonates this user (off by default). */
+  impersonatorUserId?: string;
+  /** From entitlements; absent = full (core mode). */
+  access?: TenantAccess;
+  /** The member's organisation role (owner | admin | publisher | creator | viewer). */
+  role?: string;
 }
 
 const claimsSchema = z
@@ -234,7 +251,17 @@ function getDefaultResolver(): TenantResolver {
   return defaultResolver;
 }
 
-/** Call first in every /api/studio/* route handler. */
-export function requireTenantContext(req: TenantRequest): Promise<TenantContext> {
-  return getDefaultResolver()(req);
+/** Core mode's resolver: Core's JWKS JWT + context endpoint (unchanged since Phase 10). */
+export function coreTenantResolver(): TenantResolver {
+  return getDefaultResolver();
+}
+
+/**
+ * Call first in every /api/studio/* route handler. Phase 18 §2.2: delegates to the configured
+ * IdentityProvider (STUDIO_IDENTITY_MODE): Better Auth sessions in standalone mode, the Core
+ * resolver above in core mode.
+ */
+export async function requireTenantContext(req: TenantRequest): Promise<TenantContext> {
+  const { getIdentityProvider } = await import('./identity');
+  return (await getIdentityProvider()).resolve(req);
 }

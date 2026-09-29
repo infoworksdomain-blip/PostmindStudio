@@ -203,7 +203,10 @@
       "configuration_error": "Studio ist dafür noch nicht vollständig eingerichtet. Wenden Sie sich an den PostMind-Support.",
       "not_implemented": "Das ist noch nicht verfügbar.",
       "internal_error": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es gleich noch einmal.",
-      "upload_failed": "Der Upload ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+      "upload_failed": "Der Upload ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "plan_required": "Ihre Organisation hat noch keinen Tarif. Wählen Sie einen Tarif, um mit dem Erstellen zu beginnen.",
+      "billing_required": "Ihr Konto ist wegen eines Abrechnungsproblems schreibgeschützt. Aktualisieren Sie Ihre Zahlungsdaten, um fortzufahren.",
+      "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren."
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "Ergebnis unbekannt – prüfen Sie die Plattform, bevor Sie es erneut versuchen",
       "unknown": "unbekannter Fehler"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }

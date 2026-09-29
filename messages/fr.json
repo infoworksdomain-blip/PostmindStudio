@@ -203,7 +203,10 @@
       "configuration_error": "Studio n’est pas encore entièrement configuré pour cela. Contactez l’assistance PostMind.",
       "not_implemented": "Cette fonctionnalité n’est pas encore disponible.",
       "internal_error": "Une erreur s’est produite de notre côté. Réessayez dans un instant.",
-      "upload_failed": "Le téléversement a échoué. Réessayez."
+      "upload_failed": "Le téléversement a échoué. Réessayez.",
+      "plan_required": "Votre organisation n’a pas encore de formule. Choisissez une formule pour commencer à créer.",
+      "billing_required": "Votre compte est en lecture seule en raison d’un problème de facturation. Mettez à jour vos informations de paiement pour continuer.",
+      "no_organisation": "Créez une organisation ou rejoignez-en une pour continuer."
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "résultat inconnu — vérifiez la plateforme avant de réessayer",
       "unknown": "erreur inconnue"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }

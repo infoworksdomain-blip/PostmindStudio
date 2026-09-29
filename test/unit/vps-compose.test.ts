@@ -442,7 +442,7 @@ describe('VPS environment files', () => {
     '%s: every env var the code requires at start-up is set by compose or REQUIRED in .env.example',
     (name) => {
       const provided = new Set([...composeEnv(name), ...required]);
-      const missing = requiredAtStartup().filter((k) => !provided.has(k));
+      const missing = requiredAtStartup('standalone').filter((k) => !provided.has(k));
       expect(missing).toEqual([]);
     },
   );
@@ -472,7 +472,7 @@ describe('VPS environment files', () => {
 
   it('the deploy preflight checks the keys the app cannot start without', () => {
     const deploy = read('scripts/vps/deploy.sh');
-    for (const key of requiredAtStartup()) {
+    for (const key of requiredAtStartup('standalone')) {
       if (
         ['DATABASE_URL', 'REDIS_URL', 'APP_URL', 'STORAGE_PROVIDER', 'METRICS_TOKEN'].includes(key)
       )

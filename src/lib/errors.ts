@@ -50,6 +50,30 @@ export class PlanTierError extends StudioError {
   }
 }
 
+/**
+ * Phase 18 §P.3: the organisation has no plan (never subscribed, or checkout unfinished), so
+ * generate / publish / scan are refused. The UI opens the upgrade dialog.
+ */
+export class PlanRequiredError extends StudioError {
+  readonly status = 402;
+  readonly code = 'plan_required';
+}
+
+/**
+ * Phase 18 §P.3: the organisation's billing is read-only (payment failed past the grace period,
+ * unpaid or cancelled after a paid period). Mutations outside the allowlist are refused.
+ */
+export class BillingRequiredError extends StudioError {
+  readonly status = 402;
+  readonly code = 'billing_required';
+}
+
+/** Phase 18 §2.2: the signed-in user has no (active) organisation yet; the UI routes to onboarding. */
+export class NoOrganisationError extends StudioError {
+  readonly status = 403;
+  readonly code = 'no_organisation';
+}
+
 /** Decision P3 / spec 12.4: the plan's monthly quota (or a per-video limit) is used up. */
 export class QuotaExceededError extends StudioError {
   readonly status = 403;

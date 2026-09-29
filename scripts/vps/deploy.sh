@@ -89,13 +89,31 @@ preflight() {
     "must be at least 16 letters/digits (openssl rand -hex 32)"
   require_value METRICS_TOKEN "$ENV_FILE" '^.{32,}$' "must be at least 32 characters"
   require_value STUDIO_INTERNAL_SERVICE_TOKEN "$ENV_FILE" '^.{32,}$' "must be at least 32 characters"
-  local key
-  for key in POSTMIND_CORE_URL POSTMIND_JWKS_URL POSTMIND_JWT_ISSUER POSTMIND_JWT_AUDIENCE \
-    POSTMIND_SERVICE_TOKEN STUDIO_PLATFORM_ORG_IDS AWS_REGION KMS_KEY_ID R2_ACCOUNT_ID \
-    R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY S3_BUCKET_ASSETS S3_BUCKET_RENDERS S3_BUCKET_THUMBNAILS \
-    S3_BUCKET_LIBRARY STUDIO_USD_TO_GBP_RATE; do
+  local key mode
+  for key in AWS_REGION KMS_KEY_ID R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY \
+    S3_BUCKET_ASSETS S3_BUCKET_RENDERS S3_BUCKET_THUMBNAILS S3_BUCKET_LIBRARY \
+    STUDIO_USD_TO_GBP_RATE; do
     require_value "$key" "$ENV_FILE" '.' "is required (deploy/vps/.env.example REQUIRED section)"
   done
+  # Phase 18 §0: the mode decides the rest (the app's copy is requiredEnvForModes in src/lib/env.ts).
+  mode="$(env_get STUDIO_MODE "$ENV_FILE")"
+  case "${mode:-standalone}" in
+    core)
+      for key in POSTMIND_CORE_URL POSTMIND_JWKS_URL POSTMIND_JWT_ISSUER POSTMIND_JWT_AUDIENCE \
+        POSTMIND_AUDIT_URL POSTMIND_SERVICE_TOKEN STUDIO_PLATFORM_ORG_IDS; do
+        require_value "$key" "$ENV_FILE" '.' "is required when STUDIO_MODE=core"
+      done
+      ;;
+    standalone)
+      require_value BETTER_AUTH_SECRET "$ENV_FILE" '^.{32,}$' "must be at least 32 characters"
+      require_value STUDIO_UNSUBSCRIBE_SECRET "$ENV_FILE" '^.{32,}$' "must be at least 32 characters"
+      for key in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET RESEND_API_KEY RESEND_WEBHOOK_SECRET \
+        STUDIO_EMAIL_FROM; do
+        require_value "$key" "$ENV_FILE" '.' "is required (deploy/vps/.env.example REQUIRED section)"
+      done
+      ;;
+    *) die "STUDIO_MODE in $ENV_FILE must be standalone or core" ;;
+  esac
   local acme_file="$PRODUCTION_ENV_FILE"
   [ -f "$acme_file" ] || acme_file="$ENV_FILE"
   require_value ACME_EMAIL "$acme_file" '^[^@[:space:]]+@[^@[:space:]]+$' "must be an email address"

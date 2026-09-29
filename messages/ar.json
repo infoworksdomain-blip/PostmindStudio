@@ -203,7 +203,10 @@
       "configuration_error": "لم يكتمل إعداد Studio لهذه الميزة بعد. تواصل مع دعم PostMind.",
       "not_implemented": "هذه الميزة غير متاحة بعد.",
       "internal_error": "حدث خطأ من جهتنا. حاول مجددًا بعد قليل.",
-      "upload_failed": "فشل الرفع. حاول مجددًا."
+      "upload_failed": "فشل الرفع. حاول مجددًا.",
+      "plan_required": "لا تملك مؤسستك باقة بعد. اختر باقة لتبدأ الإنشاء.",
+      "billing_required": "حسابك في وضع القراءة فقط بسبب مشكلة في الفوترة. حدِّث بيانات الدفع للمتابعة.",
+      "no_organisation": "أنشئ مؤسسة أو انضم إلى مؤسسة للمتابعة."
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "النتيجة غير معروفة — تحقّق من المنصة قبل إعادة المحاولة",
       "unknown": "خطأ غير معروف"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }

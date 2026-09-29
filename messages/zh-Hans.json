@@ -203,7 +203,10 @@
       "configuration_error": "Studio 尚未完成此功能的配置，请联系 PostMind 支持团队。",
       "not_implemented": "此功能暂不可用。",
       "internal_error": "我们这边出了点问题，请稍后再试。",
-      "upload_failed": "上传失败，请重试。"
+      "upload_failed": "上传失败，请重试。",
+      "plan_required": "您的组织尚未选择套餐。请选择套餐后开始创作。",
+      "billing_required": "由于账单问题，您的账户目前为只读。请更新付款信息以继续。",
+      "no_organisation": "请创建或加入一个组织以继续。"
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "结果未知——重试前请先在平台上确认",
       "unknown": "未知错误"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }

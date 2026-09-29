@@ -203,7 +203,10 @@
       "configuration_error": "O Studio ainda não está totalmente configurado para isto. Contacte o suporte do PostMind.",
       "not_implemented": "Isto ainda não está disponível.",
       "internal_error": "Ocorreu um erro do nosso lado. Tente novamente dentro de momentos.",
-      "upload_failed": "O carregamento falhou. Tente novamente."
+      "upload_failed": "O carregamento falhou. Tente novamente.",
+      "plan_required": "A sua organização ainda não tem um plano. Escolha um plano para começar a criar.",
+      "billing_required": "A sua conta está só de leitura devido a um problema de faturação. Atualize os seus dados de pagamento para continuar.",
+      "no_organisation": "Crie uma organização ou junte-se a uma para continuar."
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "resultado desconhecido — verifique a plataforma antes de tentar novamente",
       "unknown": "erro desconhecido"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }

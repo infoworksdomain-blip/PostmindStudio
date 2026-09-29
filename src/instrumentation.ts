@@ -3,6 +3,12 @@
 // Uses PostMind's existing Sentry project (Engagement handover: SENTRY_DSN).
 
 export async function register(): Promise<void> {
+  // Phase 18 §6: fail fast on a missing mode-dependent key (production only; dev and tests run
+  // with partial env on purpose).
+  if (process.env.NEXT_RUNTIME === 'nodejs' && process.env.NODE_ENV === 'production') {
+    const { assertStartupEnv } = await import('./lib/env');
+    assertStartupEnv();
+  }
   const dsn = process.env.SENTRY_DSN?.trim();
   if (process.env.NEXT_RUNTIME !== 'nodejs' || !dsn) return;
   const Sentry = await import('@sentry/nextjs');

@@ -203,7 +203,10 @@
       "configuration_error": "Studio non è ancora configurato del tutto per questa operazione. Contatta l’assistenza PostMind.",
       "not_implemented": "Non è ancora disponibile.",
       "internal_error": "Si è verificato un problema da parte nostra. Riprova tra un momento.",
-      "upload_failed": "Caricamento non riuscito. Riprova."
+      "upload_failed": "Caricamento non riuscito. Riprova.",
+      "plan_required": "La tua organizzazione non ha ancora un piano. Scegli un piano per iniziare a creare.",
+      "billing_required": "Il tuo account è in sola lettura per un problema di fatturazione. Aggiorna i dati di pagamento per continuare.",
+      "no_organisation": "Crea un’organizzazione o unisciti a una per continuare."
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "esito sconosciuto: controlla la piattaforma prima di riprovare",
       "unknown": "errore sconosciuto"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }

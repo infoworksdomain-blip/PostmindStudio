@@ -203,7 +203,10 @@
       "configuration_error": "Studio isn’t fully set up for this yet. Contact PostMind support.",
       "not_implemented": "This isn’t available yet.",
       "internal_error": "Something went wrong on our side. Try again in a moment.",
-      "upload_failed": "The upload failed. Try again."
+      "upload_failed": "The upload failed. Try again.",
+      "plan_required": "Your organization doesn’t have a plan yet. Choose a plan to start creating.",
+      "billing_required": "Your account is read-only because of a billing problem. Update your payment details to continue.",
+      "no_organisation": "Create or join an organization to continue."
     }
   },
   "primitives": {
@@ -3318,5 +3321,17 @@
       "outcome_unknown": "the result is unknown — check the platform before retrying",
       "unknown": "an unknown error"
     }
-  }
+  },
+  "marketing": {},
+  "pricing": {},
+  "legal": {},
+  "auth": {},
+  "security": {},
+  "orgSettings": {},
+  "members": {},
+  "billing": {},
+  "upgrade": {},
+  "email": {},
+  "adminOrgs": {},
+  "adminUsers": {}
 }
