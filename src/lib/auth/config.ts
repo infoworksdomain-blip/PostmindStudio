@@ -20,6 +20,13 @@ import {
   PASSWORD_MIN_LENGTH,
   type PasswordHasher,
 } from './password';
+import {
+  enforceLimits,
+  INVITE_PATH,
+  inviteChecks,
+  TWO_FACTOR_VERIFY_PATHS,
+  twoFactorChecks,
+} from './account-rate-limits';
 import type { AuthRateLimitStore, RateRule } from './rate-limit-store';
 import {
   organisationAccessControl,
@@ -43,6 +50,8 @@ import {
 //   https://www.better-auth.com/docs/plugins/admin
 
 export const AUTH_BASE_PATH = '/api/auth';
+/** better-auth@1.7.6 plugins/two-factor/constant.mjs (not exported from the package). */
+const TWO_FACTOR_COOKIE_NAME = 'two_factor';
 export { AUTH_COOKIE_PREFIX } from './cookie';
 
 const DAY_S = 24 * 60 * 60;
@@ -167,6 +176,21 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
   const audit = (record: AuditRecord) =>
     deps.audit(record).catch((err: unknown) => log.error({ err }, '[auth] audit failed'));
 
+  // The account behind a 2FA verify: the session's user, or (mid sign-in) the user the signed
+  // two_factor cookie points at, resolved the same way the plugin does
+  // (plugins/two-factor/verify-two-factor.mjs). Null when neither resolves: the endpoint 401s.
+  const twoFactorSubject = async (
+    ctx: Parameters<Parameters<typeof createAuthMiddleware>[0]>[0],
+  ): Promise<string | null> => {
+    const session = await getSessionFromCtx(ctx);
+    if (session) return session.user.id;
+    const cookie = ctx.context.createAuthCookie(TWO_FACTOR_COOKIE_NAME);
+    const signed = await ctx.getSignedCookie(cookie.name, ctx.context.secret);
+    if (!signed) return null;
+    const pending = await ctx.context.internalAdapter.findVerificationValue(signed);
+    return pending?.value ?? null;
+  };
+
   const before = createAuthMiddleware(async (ctx) => {
     const path = ctx.path;
     const body = (ctx.body ?? {}) as Record<string, unknown>;
@@ -174,15 +198,34 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
     // §5.2 per-email limits, on top of Better Auth's per-IP rules.
     const emailRule = EMAIL_RATE_RULES[path];
     if (emailRule && typeof body.email === 'string' && body.email.includes('@')) {
-      const result = await deps.rateLimitStore.consume(
-        `email:${path}:${hashEmail(body.email)}`,
-        emailRule,
-      );
-      if (!result.allowed) {
-        throw new APIError(
-          'TOO_MANY_REQUESTS',
-          { message: 'Too many requests. Try again later.', code: 'RATE_LIMITED' },
-          { 'X-Retry-After': String(result.retryAfter ?? emailRule.window) },
+      await enforceLimits(deps.rateLimitStore, [
+        { key: `email:${path}:${hashEmail(body.email)}`, rule: emailRule },
+      ]);
+    }
+
+    // 19.3 per-account 2FA limit (signed in, or the pending sign-in's two_factor cookie).
+    if (TWO_FACTOR_VERIFY_PATHS.has(path)) {
+      const userId = await twoFactorSubject(ctx);
+      if (userId) await enforceLimits(deps.rateLimitStore, twoFactorChecks(userId));
+    }
+
+    // 19.3 per-organisation and per-inviter invite limits (HTTP and server-side api calls).
+    if (path === INVITE_PATH) {
+      const session = await getSessionFromCtx(ctx);
+      if (session) {
+        const organisationId =
+          typeof body.organizationId === 'string'
+            ? body.organizationId
+            : ((session.session as { activeOrganizationId?: string | null }).activeOrganizationId ??
+              null);
+        const isMember = organisationId
+          ? (await deps.db.member.count({
+              where: { organizationId: organisationId, userId: session.user.id },
+            })) > 0
+          : false;
+        await enforceLimits(
+          deps.rateLimitStore,
+          inviteChecks({ inviterId: session.user.id, organisationId, isMember }),
         );
       }
     }

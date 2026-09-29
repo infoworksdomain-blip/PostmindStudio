@@ -6,7 +6,10 @@ import {
   createStandaloneIdentityProvider,
   type AuthSessionView,
 } from '../../src/lib/identity/standalone';
-import { createStubEntitlementsReader } from '../../src/lib/studio/billing/entitlements-reader';
+import {
+  createStubEntitlementsReader,
+  NO_PLAN_ENTITLEMENTS,
+} from '../../src/lib/studio/billing/entitlements-reader';
 import {
   cookiesFrom,
   createAuthHarness,
@@ -287,6 +290,145 @@ describe.skipIf(!hasDb)('auth flows (DB)', { timeout: 120_000 }, () => {
     expect(h.audits.some((a) => a.action === AuditAction.TwoFactorDisabled)).toBe(true);
   });
 });
+
+describe.skipIf(!hasDb)(
+  'account-keyed rate limits against rotating IPs (DB, 19.3)',
+  { timeout: 180_000 },
+  () => {
+    const db = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
+    // Plenty of seats so only the invite rate limit can refuse.
+    const h = hasDb
+      ? createAuthHarness(db, {
+          entitlements: {
+            forOrganisation: async () => ({
+              ...NO_PLAN_ENTITLEMENTS,
+              limits: { ...NO_PLAN_ENTITLEMENTS.limits, seats: 1000 },
+            }),
+            invalidate: () => undefined,
+          },
+        })
+      : (undefined as unknown as ReturnType<typeof createAuthHarness>);
+
+    afterAll(async () => {
+      await db?.$disconnect();
+    });
+
+    it('allows 5 second-factor attempts per account in 10 minutes, whatever the IP (§5.2)', async () => {
+      const email = h.email('2fa-rl');
+      let cookies = await signUpVerified(h, email, PASSWORD);
+      const enable = await h.call('/two-factor/enable', { body: { password: PASSWORD }, cookies });
+      cookies = cookiesFrom(enable, cookies);
+      const { totpURI } = (await enable.json()) as { totpURI: string };
+      const good = () => totpFromUri(totpURI);
+      const wrong = () => (good() === '000000' ? '111111' : '000000');
+      // Attempt 1: the enrolment check (signed in).
+      expect(
+        (await h.call('/two-factor/verify-totp', { body: { code: good() }, cookies })).status,
+      ).toBe(200);
+
+      // Attempts 2-5: wrong codes, each on a fresh sign-in challenge from a new IP (so neither the
+      // per-IP rule nor the per-challenge attempt count is what stops the attacker).
+      const pending = async (i: number) =>
+        cookiesFrom(
+          await h.call('/sign-in/email', {
+            body: { email, password: PASSWORD },
+            ip: `203.0.113.${i}`,
+          }),
+        );
+      for (let i = 2; i <= 5; i += 1) {
+        const res = await h.call('/two-factor/verify-totp', {
+          body: { code: wrong() },
+          cookies: await pending(i),
+          ip: `203.0.113.${100 + i}`,
+        });
+        expect(res.status).toBe(401);
+      }
+      // Attempt 6, even with the right code and yet another IP: refused.
+      const blocked = await h.call('/two-factor/verify-totp', {
+        body: { code: good() },
+        cookies: await pending(6),
+        ip: '203.0.113.200',
+      });
+      expect(blocked.status).toBe(429);
+      expect(await blocked.json()).toMatchObject({ code: 'RATE_LIMITED' });
+      expect(setCookieHeader(blocked, SESSION_COOKIE)).toBeUndefined();
+      // The backup-code endpoint shares the account budget.
+      const backup = await h.call('/two-factor/verify-backup-code', {
+        body: { code: 'abcde-fghij' },
+        cookies: await pending(7),
+        ip: '203.0.113.201',
+      });
+      expect(backup.status).toBe(429);
+    });
+
+    it('caps an organisation at 20 invitations an hour across IPs, without charging strangers (§5.2)', async () => {
+      let cookies = await signUpVerified(h, h.email('inviter'), PASSWORD);
+      const created = await h.call('/organization/create', {
+        body: { name: 'Invite Co', slug: `invite-co-${Date.now()}` },
+        cookies,
+      });
+      cookies = cookiesFrom(created, cookies);
+      const { id: organizationId } = (await created.json()) as { id: string };
+
+      // A signed-in stranger naming this organisation is refused and uses none of its budget.
+      const stranger = await signUpVerified(h, h.email('stranger'), PASSWORD);
+      for (let i = 0; i < 3; i += 1) {
+        const res = await h.call('/organization/invite-member', {
+          body: { email: h.email(`s${i}`), role: 'viewer', organizationId },
+          cookies: stranger,
+        });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.status).not.toBe(429);
+      }
+
+      const statuses: number[] = [];
+      for (let i = 0; i < 21; i += 1) {
+        const res = await h.call('/organization/invite-member', {
+          body: { email: h.email(`inv${i}`), role: 'viewer', organizationId },
+          cookies,
+          ip: `198.51.100.${i + 1}`,
+        });
+        statuses.push(res.status);
+      }
+      expect(statuses.slice(0, 20).every((s) => s === 200)).toBe(true);
+      expect(statuses[20]).toBe(429);
+      expect(await db.invitation.count({ where: { organizationId } })).toBe(20);
+
+      // Server-side calls (Studio's own invite route) hit the same limit.
+      await expect(
+        h.auth.api.createInvitation({
+          headers: new Headers({ cookie: cookies }),
+          body: { email: h.email('inv-server'), role: 'viewer', organizationId },
+        }),
+      ).rejects.toMatchObject({ statusCode: 429 });
+    });
+
+    it('limits verification-email resends per address across IPs (§5.2)', async () => {
+      const email = h.email('resend-rl');
+      await h.call('/sign-up/email', { body: { email, password: PASSWORD, name: 'R' } });
+      const statuses: number[] = [];
+      for (let i = 0; i < 4; i += 1) {
+        const res = await h.call('/send-verification-email', {
+          body: { email, callbackURL: '/' },
+          ip: `198.18.9.${i + 1}`,
+        });
+        statuses.push(res.status);
+      }
+      expect(statuses).toEqual([200, 200, 200, 429]);
+      // An unknown address answers the same way (no enumeration).
+      const unknown = h.email('resend-nobody');
+      const unknownStatuses: number[] = [];
+      for (let i = 0; i < 4; i += 1) {
+        const res = await h.call('/send-verification-email', {
+          body: { email: unknown, callbackURL: '/' },
+          ip: `198.18.10.${i + 1}`,
+        });
+        unknownStatuses.push(res.status);
+      }
+      expect(unknownStatuses).toEqual(statuses);
+    });
+  },
+);
 
 describe.skipIf(!hasDb)('organisations + standalone identity (DB)', { timeout: 120_000 }, () => {
   const db = hasDb ? new PrismaClient() : (undefined as unknown as PrismaClient);
