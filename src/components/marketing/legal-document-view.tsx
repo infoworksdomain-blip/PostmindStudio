@@ -3,6 +3,7 @@ import { Construction, Languages } from 'lucide-react';
 import Markdown, { type Components } from 'react-markdown';
 import { useTranslations } from 'next-intl';
 import { LEGAL_DOC_KEYS, type LegalDocKey } from './legal-doc-keys';
+import { safeLegalHref } from './legal-links';
 
 // Phase 18 §3 /legal/<doc> — the operator's Markdown, rendered with react-markdown. Raw HTML in
 // the file is skipped (skipHtml), so the placeholder marker comment never shows and nothing in
@@ -18,11 +19,20 @@ const components: Components = {
   p: ({ children }) => <p className="mt-4 leading-relaxed">{children}</p>,
   ul: ({ children }) => <ul className="mt-4 list-disc space-y-1.5 ps-6">{children}</ul>,
   ol: ({ children }) => <ol className="mt-4 list-decimal space-y-1.5 ps-6">{children}</ol>,
-  a: ({ href, children }) => (
-    <a href={href} className="text-primary underline underline-offset-4" rel="noopener noreferrer">
-      {children}
-    </a>
-  ),
+  // Only http(s), mailto and relative links; anything else is plain text (legal-links.ts).
+  a: ({ href, children }) => {
+    const safe = safeLegalHref(href);
+    if (!safe) return <span>{children}</span>;
+    return (
+      <a
+        href={safe}
+        className="text-primary underline underline-offset-4"
+        rel="noopener noreferrer"
+      >
+        {children}
+      </a>
+    );
+  },
   table: ({ children }) => (
     <div className="mt-6 overflow-x-auto">
       <table className="w-full border-collapse text-sm">{children}</table>
