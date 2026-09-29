@@ -32,6 +32,8 @@ export async function deriveUsageEvents(
   db: Db,
   now: number,
   lookbackHours = USAGE_LOOKBACK_HOURS,
+  /** Phase 18: 'local' in standalone (Stripe tiers): the row is the usage record, never sent. */
+  initialState: 'pending_setup' | 'local' = 'pending_setup',
 ): Promise<{ derived: number; inserted: number }> {
   const since = new Date(now - lookbackHours * HOUR_MS);
   const renders = await db.videoRender.findMany({
@@ -90,7 +92,7 @@ export async function deriveUsageEvents(
   ];
   if (events.length === 0) return { derived: 0, inserted: 0 };
   const { count } = await db.usageEvent.createMany({
-    data: events.map((e) => ({ ...e, state: 'pending_setup' })),
+    data: events.map((e) => ({ ...e, state: initialState })),
     skipDuplicates: true,
   });
   return { derived: events.length, inserted: count };

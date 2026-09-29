@@ -9,6 +9,7 @@ import {
   GRAPH_HOST,
   graphErrors,
   type MetaCredentialSource,
+  graphProof,
 } from '../platforms/meta';
 import { META_CHANNEL_PLATFORMS, type MetaChannelPlatform } from '../platforms/meta-credentials';
 import { OAUTH_PLATFORMS, type OAuthClient, type OAuthPlatform } from '../platforms/oauth';
@@ -57,6 +58,8 @@ export interface AccountCheckConfig {
   batch: number;
   spacingMs: number;
   graphVersion: string;
+  /** Phase 18: META_APP_SECRET, for appsecret_proof on Studio-connected Meta accounts. */
+  metaAppSecret?: string;
 }
 
 function intSetting(
@@ -83,6 +86,7 @@ export function accountCheckConfig(
     batch: intSetting(env, 'STUDIO_ACCOUNT_CHECK_BATCH', 100, 1, 1_000),
     spacingMs: intSetting(env, 'STUDIO_ACCOUNT_CHECK_SPACING_MS', 2_000, 0, 60_000),
     graphVersion: env.META_GRAPH_API_VERSION?.trim() || DEFAULT_GRAPH_VERSION,
+    ...(env.META_APP_SECRET?.trim() && { metaAppSecret: env.META_APP_SECRET.trim() }),
   };
 }
 
@@ -121,18 +125,23 @@ async function probeMeta(
   connection: PlatformConnection,
   platform: MetaChannelPlatform,
   graphVersion: string,
+  metaAppSecret?: string,
 ): Promise<void> {
   const { accessToken, accountId } = await deps.meta.getCredentials({
     organisationId: connection.organisationId,
     platform,
     platformAccountId: connection.platformAccountId,
   });
-  const url =
+  const url = new URL(
     platform === 'facebook'
       ? `${GRAPH_HOST}/${graphVersion}/me?fields=id`
-      : `${GRAPH_HOST}/${graphVersion}/${encodeURIComponent(accountId)}/content_publishing_limit?fields=quota_usage`;
+      : `${GRAPH_HOST}/${graphVersion}/${encodeURIComponent(accountId)}/content_publishing_limit?fields=quota_usage`,
+  );
+  // Phase 18: tokens from Studio's own Meta login carry appsecret_proof (Graph Secure Requests).
+  if (metaAppSecret && connection.connectedVia === 'studio')
+    url.searchParams.set('appsecret_proof', graphProof(accessToken, metaAppSecret));
   await platformRequest<unknown>(
-    url,
+    url.toString(),
     { method: 'GET', headers: { Authorization: `Bearer ${accessToken}` } },
     { platform, fetchImpl: deps.fetchImpl, timeoutMs: 20_000, ...graphErrors },
   );
@@ -143,9 +152,11 @@ export async function probeConnection(
   deps: AccountCheckDeps,
   connection: PlatformConnection,
   graphVersion: string,
+  metaAppSecret?: string,
 ): Promise<void> {
   const platform = connection.platform;
-  if (isMetaPlatform(platform)) return probeMeta(deps, connection, platform, graphVersion);
+  if (isMetaPlatform(platform))
+    return probeMeta(deps, connection, platform, graphVersion, metaAppSecret);
   if (!isOAuthPlatform(platform))
     throw new PlatformError(platform, 'unknown', `No account check for ${platform}`, false);
   const accessToken = await getAccessToken(
@@ -171,9 +182,12 @@ export function reconnectNotification(
     | 'platformAccountName'
     | 'connectedByUserId'
     | 'connectedAt'
-  >,
+  > &
+    Partial<Pick<PlatformConnection, 'connectedVia'>>,
 ): NotificationInput {
-  const meta = isMetaPlatform(connection.platform);
+  // Phase 18: only Meta channels PostMind Core registered are reconnected in PostMind settings;
+  // those Studio connected itself (connectedVia 'studio') are reconnected on /connections.
+  const meta = isMetaPlatform(connection.platform) && connection.connectedVia !== 'studio';
   const account = connection.platformAccountName;
   return {
     organisationId: connection.organisationId,
@@ -275,7 +289,7 @@ export async function checkPlatformAccounts(deps: AccountCheckDeps): Promise<Acc
       platform: connection.platform,
     });
     try {
-      await probeConnection(deps, connection, config.graphVersion);
+      await probeConnection(deps, connection, config.graphVersion, config.metaAppSecret);
       await record(deps.db, connection.id, 'ok', new Date(deps.now()));
       result.ok += 1;
       continue;

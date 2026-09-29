@@ -63,23 +63,6 @@ export const PRODUCT_GAPS: NotBuiltItem[] = [
   },
   // ------------------------------------------------------------------ Manage
   {
-    id: 'business-list',
-    group: 'Manage',
-    title: 'Business list and picker',
-    blocker: 'blocked on a dependency',
-    why: 'Contract shipped, waiting for Core list-businesses: GET /api/studio/businesses answers 501 and the header switcher (a picker as soon as it answers) stays a typed business id; Studio cannot yet verify a business belongs to the organisation.',
-    source: 'PROGRESS [13.34]; core/business-directory.ts',
-    plan: {
-      screens: ['Header business switcher as a searchable list'],
-      endpoints: [
-        'Core: GET /api/internal/organisations/:id/businesses',
-        'Studio: CoreBusinessDirectory over that endpoint (cached) + validation on writes',
-      ],
-      days: 1,
-      dependsOn: 'Core team adds the endpoint',
-    },
-  },
-  {
     id: 'analytics-depth',
     group: 'Manage',
     title: 'Deeper analytics (retention, demographics, LinkedIn, TikTok watch time)',

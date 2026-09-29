@@ -9,6 +9,7 @@ import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
 import { applyBetaPlan } from '../services/beta';
 import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
+import { guardBusinessIds } from './business-guard';
 
 /** 422: an Idempotency-Key reused with a different body (the client has a bug). */
 class IdempotencyMismatchError extends StudioError {
@@ -94,6 +95,10 @@ export function withStudioRoute(
         userId: tenant.userId,
         method: req.method,
       });
+
+      // Phase 18 §2.11: a write naming a businessId must name one of this organisation's.
+      if (deps.businessGuard && MUTATING.has(req.method))
+        await guardBusinessIds(deps.businessGuard, tenant.organisationId, req);
 
       const path = new URL(req.url).pathname;
       const idemKey = MUTATING.has(req.method) ? req.headers.get('idempotency-key') : null;

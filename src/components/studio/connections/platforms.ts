@@ -1,11 +1,14 @@
 import type { PlatformConnection } from '@/lib/client/types';
 
-// Platforms Studio connects itself (OAuth, spec 8.6). Instagram and Facebook are connected in
-// PostMind settings: PostMind Core runs the Meta login and registers the accounts with Studio
-// (POST /api/studio/internal/channels), so Studio lists them read-only.
+// Platforms Studio connects itself (OAuth, spec 8.6). Instagram and Facebook: in core mode they
+// are connected in PostMind settings (PostMind Core runs the Meta login and registers the
+// accounts with Studio through POST /api/studio/internal/channels, so Studio lists them
+// read-only); in standalone mode (Phase 18 §2.10) Studio runs its own Meta login ('meta').
 
 export type OAuthPlatform = Exclude<PlatformConnection['platform'], MetaPlatform>;
 export type MetaPlatform = 'instagram' | 'facebook';
+/** What POST /platform-connections/oauth-init takes: an OAuth platform or 'meta' (standalone). */
+export type ConnectPlatform = OAuthPlatform | 'meta';
 
 // `posts` is the en-GB description; screens show connections.posts.<id>.
 export const OAUTH_PLATFORMS: Array<{ id: OAuthPlatform; label: string; posts: string }> = [
@@ -44,6 +47,9 @@ export const CALLBACK_ERROR_CODES = [
   'platform_error',
   'upstream_error',
   'internal_error',
+  // Phase 18 Meta connect: no publishable Page granted / the browser is another user's session.
+  'meta_no_accounts',
+  'wrong_user',
 ] as const;
 
 export type CallbackErrorCode = (typeof CALLBACK_ERROR_CODES)[number];

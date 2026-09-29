@@ -2,13 +2,15 @@ import type { PrismaClient } from '@prisma/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as businessesRoute from '../../src/app/api/studio/businesses/route';
 import * as reconciliationRoute from '../../src/app/api/studio/admin/channels/reconciliation/route';
+import { studioModes } from '../../src/lib/mode';
 import { setApiDeps, type ApiDeps } from '../../src/lib/studio/api/context';
 import type { CoreBusinessDirectory } from '../../src/lib/studio/core/business-directory';
 import type { CoreChannelDirectory } from '../../src/lib/studio/core/channel-directory';
 import { call, installApi, tenant } from '../helpers/api-harness';
 
 // BACKLOG 13.34 / 13.35 (Wave B): the endpoints ship with their final contracts and answer an
-// honest 501 until PostMind Core publishes list-businesses / list-channels. No database needed:
+// honest 501 until PostMind Core publishes list-businesses / list-channels. Phase 18: that is
+// core mode (STUDIO_MODE=core); standalone lists studio.businesses (test/api/p18-businesses.test.ts). No database needed:
 // the 501 paths never query, and the "Core shipped" paths use an in-memory platformConnection.
 
 const STAFF_ORG = 'wave-b-staff';
@@ -49,7 +51,11 @@ let db: ReturnType<typeof fakeDb>;
 
 beforeEach(() => {
   db = fakeDb();
-  deps = installApi(db as unknown as PrismaClient, tokens).deps;
+  deps = {
+    ...installApi(db as unknown as PrismaClient, tokens).deps,
+    modes: studioModes({ STUDIO_MODE: 'core' }),
+  };
+  setApiDeps(deps);
   vi.stubEnv('STUDIO_PLATFORM_ORG_IDS', STAFF_ORG);
 });
 
@@ -98,6 +104,7 @@ describe('GET /api/studio/businesses', () => {
         { id: 'biz_1', name: 'Leeds Sourdough', domain: 'leedssourdough.co.uk' },
         { id: 'biz_2', name: 'Market stall' },
       ],
+      local: false,
     });
   });
 });
@@ -125,6 +132,15 @@ describe('GET /api/studio/admin/channels/reconciliation', () => {
       error: 'not_implemented',
       message: 'waiting for Core list-channels (GET /api/internal/organisations/:id/channels)',
     });
+    expect(db.platformConnection.findMany).not.toHaveBeenCalled();
+  });
+
+  it('is not applicable in standalone mode (Studio owns the Meta login)', async () => {
+    setApiDeps({ ...deps, modes: studioModes({}) });
+    const res = await get('staff');
+    expect(res.status).toBe(200);
+    expect(res.json).toMatchObject({ ok: true, applicable: false });
+    expect(res.json.message).toMatch(/Not applicable in standalone mode/);
     expect(db.platformConnection.findMany).not.toHaveBeenCalled();
   });
 

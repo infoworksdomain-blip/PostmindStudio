@@ -1,7 +1,7 @@
 import { NotImplementedError, PlatformError } from '../../errors';
 import { platformRequest } from '../platforms/http';
 import { LINKEDIN_VERSION } from '../platforms/linkedin';
-import { DEFAULT_GRAPH_VERSION, GRAPH_HOST } from '../platforms/meta';
+import { DEFAULT_GRAPH_VERSION, GRAPH_HOST, graphProof } from '../platforms/meta';
 import type { Platform } from '../services/catalog';
 import type { DemographicSlice, MetricSnapshot, RetentionPoint } from './store';
 
@@ -436,6 +436,8 @@ export function countOrSum(v: unknown): number | undefined {
 
 interface MetaDeps extends Deps {
   graphVersion?: string;
+  /** Phase 18: Studio's Meta app secret (standalone) → appsecret_proof on insights calls. */
+  metaAppSecret?: string;
 }
 
 function metaInsights(
@@ -446,6 +448,7 @@ function metaInsights(
   token: string,
 ) {
   const params = new URLSearchParams({ metric: metrics.join(','), access_token: token });
+  if (deps.metaAppSecret) params.set('appsecret_proof', graphProof(token, deps.metaAppSecret));
   return platformRequest<{ data?: InsightsNode[] }>(
     `${GRAPH_HOST}/${deps.graphVersion ?? DEFAULT_GRAPH_VERSION}${path}?${params}`,
     { method: 'GET' },

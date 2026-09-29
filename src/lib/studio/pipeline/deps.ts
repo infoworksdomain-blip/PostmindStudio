@@ -124,6 +124,18 @@ export interface CoreSyncClients {
   usage?: UsageReporter;
   calendar?: CalendarShadowClient;
   organisations?: CoreOrganisationDirectory;
+  /**
+   * Phase 18 §1 row 12: 'local' = standalone billing (Stripe tiers): usage rows are recorded with
+   * state `local` and never sent. Absent / 'outbox' = rows wait for Core (pending_setup).
+   */
+  usageRecording?: 'outbox' | 'local';
+  /** Phase 18 §1 row 13: false = no Core calendar, so no shadow rows are written. Absent = on. */
+  calendarShadows?: boolean;
+  /**
+   * Phase 18 §1 row 10: false = Studio owns the Meta login (STUDIO_META_CONNECT=studio), so there
+   * is no Core channel list to reconcile against. Absent = on (waits for Core list-channels).
+   */
+  channelReconciliation?: boolean;
 }
 
 /** Who a provider call is for (Phase 15: BYOC registry and provider ratings are per org). */

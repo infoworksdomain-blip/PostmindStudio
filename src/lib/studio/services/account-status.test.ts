@@ -31,6 +31,10 @@ import {
 // needs_reconnect, notifies its owner and is audited; a transient failure changes nothing.
 
 describe('accountCheckConfig', () => {
+  it('reads META_APP_SECRET for appsecret_proof on Studio-connected Meta accounts', () => {
+    expect(accountCheckConfig({ META_APP_SECRET: ' s3cret ' }).metaAppSecret).toBe('s3cret');
+  });
+
   it('defaults to once a day, 100 per run, 2 s apart, Graph v26.0', () => {
     expect(accountCheckConfig({})).toEqual({
       intervalMs: 24 * 3_600_000,
@@ -111,6 +115,17 @@ describe('reconnectNotification', () => {
     expect(n.userId).toBeNull();
     expect(n.message?.key).toBe('metaConnectionNeedsReconnect');
     expect(n.body).toContain('PostMind settings');
+  });
+
+  it('sends a Studio-connected Meta account (Phase 18) to the Connections page', () => {
+    const n = reconnectNotification({
+      ...base,
+      platform: 'facebook',
+      connectedVia: 'studio',
+    });
+    expect(n.userId).toBe('user-1');
+    expect(n.message?.key).toBe('connectionNeedsReconnect');
+    expect(n.body).toContain('Connections page');
   });
 
   it.each(LOCALES)('renders in %s without a placeholder left', (locale) => {

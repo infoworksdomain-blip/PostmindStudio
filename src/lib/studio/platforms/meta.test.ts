@@ -6,6 +6,7 @@ import {
   FacebookReelPublisher,
   GRAPH_HOST,
   GRAPH_VIDEO_HOST,
+  graphProof,
   InstagramReelPublisher,
   RUPLOAD_HOST,
 } from './meta';
@@ -374,5 +375,37 @@ describe('FacebookFeedPublisher (15.A1)', () => {
     await expect(
       new FacebookFeedPublisher(deps(fetchImpl)).publish(baseRequest({ video: video(10) })),
     ).rejects.toMatchObject({ errorClass: 'unknown' });
+  });
+});
+
+describe('appsecret_proof (Phase 18 §2.10, Studio-owned Meta app)', () => {
+  const proof = (token: string) => graphProof(token, 'app-secret');
+
+  it('adds appsecret_proof to every Graph call when the app secret is configured', async () => {
+    const { fetch: fetchImpl, requests } = fakeFetch(
+      json({ id: 'container-1' }),
+      json({ status_code: 'FINISHED', status: 'ok' }),
+      json({ id: 'media-1' }),
+      json({ permalink: 'https://instagram.com/p/abc' }),
+    );
+    const publisher = new InstagramReelPublisher({ ...deps(fetchImpl), appSecret: 'app-secret' });
+    await publisher.publish(baseRequest());
+    for (const request of requests) {
+      const params =
+        request.method === 'GET'
+          ? new URL(request.url).searchParams
+          : new URLSearchParams(String(request.body));
+      expect(params.get('appsecret_proof')).toBe(proof('token-1'));
+    }
+  });
+
+  it('sends none without the secret (core mode: Core’s tokens belong to Core’s app)', async () => {
+    const { fetch: fetchImpl, requests } = fakeFetch(json({ success: true }));
+    await new InstagramReelPublisher(deps(fetchImpl)).takedown({
+      accessToken: 'token-1',
+      accountId: 'a',
+      platformPostId: 'm1',
+    });
+    expect(String(requests[0]?.body)).not.toContain('appsecret_proof');
   });
 });

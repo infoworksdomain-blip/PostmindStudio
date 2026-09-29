@@ -85,7 +85,13 @@
       "label": "व्यवसाय",
       "choose": "व्यवसाय चुनें",
       "idPlaceholder": "PostMind व्यवसाय ID",
-      "listPending": "व्यवसायों की सूची PostMind Core से आनी बाकी है: व्यवसाय ID लिखें।"
+      "listPending": "व्यवसायों की सूची PostMind Core से आनी बाकी है: व्यवसाय ID लिखें।",
+      "add": "व्यवसाय जोड़ें",
+      "addLabel": "नया व्यवसाय",
+      "addPlaceholder": "व्यवसाय का नाम",
+      "addSubmit": "जोड़ें",
+      "addCancel": "रद्द करें",
+      "created": "{name} जोड़ा गया"
     },
     "feedback": {
       "button": "फ़ीडबैक",
@@ -1813,7 +1819,9 @@
       "platform_error": "कनेक्शन पूरा करने में प्लेटफ़ॉर्म को समस्या हुई। थोड़ी देर में फिर कोशिश करें।",
       "upstream_error": "कनेक्शन पूरा करने में प्लेटफ़ॉर्म को समस्या हुई। थोड़ी देर में फिर कोशिश करें।",
       "internal_error": "कनेक्शन पूरा करते समय कुछ गड़बड़ हो गई। फिर से कोशिश करें।",
-      "unknown": "कनेक्शन पूरा नहीं हुआ ({code})। फिर से कोशिश करें।"
+      "unknown": "कनेक्शन पूरा नहीं हुआ ({code})। फिर से कोशिश करें।",
+      "meta_no_accounts": "Meta ने ऐसा कोई Facebook पेज साझा नहीं किया जिस पर आप प्रकाशित कर सकें। फिर से जोड़ें और Meta विंडो में कम से कम एक पेज (और उसका Instagram खाता) चुनें।",
+      "wrong_user": "यह कनेक्शन Studio के किसी दूसरे उपयोगकर्ता ने शुरू किया था। अपने खाते से साइन इन करके इसे फिर से शुरू करें।"
     },
     "dismiss": "ख़ारिज करें",
     "pickFirst": {
@@ -1848,7 +1856,24 @@
     "meta": {
       "stale": "Meta ने यह एक्सेस अस्वीकार कर दिया या इसकी अवधि खत्म हो गई। जब तक आप PostMind सेटिंग में इसे फिर से कनेक्ट नहीं करते, इस अकाउंट की शेड्यूल की गई पोस्ट विफल होंगी।",
       "connectedVia": "PostMind के ज़रिए {date} को कनेक्ट किया गया",
-      "guidance": "Instagram और Facebook को PostMind सेटिंग में कनेक्ट करें।"
+      "guidance": "Instagram और Facebook को PostMind सेटिंग में कनेक्ट करें।",
+      "connectButton": "Facebook से जोड़ें",
+      "studioGuidance": "एक ही Facebook लॉगिन आपके चुने हुए पेज और उनसे जुड़े Instagram प्रोफ़ेशनल खाते जोड़ देता है।",
+      "notConfigured": "Instagram और Facebook अभी उपलब्ध नहीं हैं: Studio के Meta ऐप की सेटिंग्स अभी बाकी हैं। अपने एडमिनिस्ट्रेटर से संपर्क करें।"
+    },
+    "descriptionStandalone": "वे खाते जिन पर Studio प्रकाशित करता है। चुने गए व्यवसाय के लिए हर खाते को जोड़ें।",
+    "connectedMetaNotice": "{count, plural, one {# Facebook या Instagram खाता जुड़ गया है} other {# Facebook और Instagram खाते जुड़ गए हैं}}। अब आप इन पर प्रकाशित कर सकते हैं।",
+    "dataDeletion": {
+      "pageTitle": "डेटा हटाने की स्थिति",
+      "eyebrow": "PostMind Studio · Facebook और Instagram डेटा",
+      "title": "आपका डेटा हटाने का अनुरोध",
+      "completed": "स्थिति: पूरा हुआ",
+      "receivedOn": "हमें आपका अनुरोध {date} को मिला और हमने उसे तुरंत पूरा कर दिया।",
+      "deletedCount": "{count, plural, =0 {Studio के पास आपका कोई Facebook या Instagram कनेक्शन नहीं था।} one {# Facebook या Instagram कनेक्शन हटाया गया।} other {# Facebook या Instagram कनेक्शन हटाए गए।}}",
+      "whatWasDeleted": "Studio ने Meta से मिले एक्सेस टोकन, आपकी Meta यूज़र ID, आपकी दी गई अनुमतियाँ और खातों के नाम हटा दिए।",
+      "retained": "पहले से प्रकाशित वीडियो Facebook और Instagram पर बने रहते हैं; अगर आप उन्हें हटाना चाहें तो वहीं हटाएँ। Studio केवल वह पेज या Instagram खाता संख्या रखता है जिसका उल्लेख उसके प्रकाशन इतिहास में है।",
+      "codeLabel": "पुष्टि कोड:",
+      "unknownCode": "इस पुष्टि कोड वाला कोई डेटा हटाने का अनुरोध नहीं मिला। Facebook से मिला लिंक जाँचें।"
     }
   },
   "library": {
