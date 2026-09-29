@@ -259,8 +259,17 @@ jobs:
       STRIPE_SECRET_KEY: sk_test_ci_placeholder
       STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
       STUDIO_EMAIL_PROVIDER: none
+      # next start runs with NODE_ENV=production, where sign-up stays closed while the terms or
+      # privacy text is a placeholder (src/lib/legal/readiness.ts). CI reads stand-in texts instead.
+      STUDIO_LEGAL_CONTENT_DIR: /tmp/e2e-legal
     steps:
       - uses: actions/checkout@v4
+      - name: Stand-in legal texts (CI only)
+        run: |
+          mkdir -p /tmp/e2e-legal/en-GB
+          for doc in terms privacy cookies acceptable-use dpa subprocessors; do
+            printf '# CI stand-in\n\nNot legal text: used only by the CI end-to-end test.\n' > "/tmp/e2e-legal/en-GB/$doc.md"
+          done
       - name: Track A and C screens present?
         id: ready
         run: |
