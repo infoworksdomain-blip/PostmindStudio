@@ -24,6 +24,24 @@ const renderSwitcher = (initial?: string) =>
   );
 
 describe('BusinessSwitcher', () => {
+  it('shows nothing while a standalone user has no organisation yet (no Core id box)', async () => {
+    mockFetch([
+      {
+        match: '/api/studio/businesses',
+        status: 403,
+        body: {
+          ok: false,
+          error: 'no_organisation',
+          message: 'Create or join an organisation first',
+        },
+      },
+    ]);
+    const { container } = renderSwitcher();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByLabelText('Business')).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('keeps the typed business id and explains why while Core has no business list', async () => {
     mockFetch([
       {

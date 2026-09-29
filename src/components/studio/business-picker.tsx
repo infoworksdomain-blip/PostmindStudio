@@ -220,5 +220,8 @@ export function BusinessSwitcher() {
     return <BusinessSelect businesses={data.data} onAdded={local ? added : undefined} />;
   // Standalone with no business yet: the first one is added right here.
   if (data && local) return <AddBusinessForm onAdded={added} />;
+  // Core mode only: businesses live in PostMind (list 501 until Core ships it), so the id is typed.
+  // Standalone before an organisation exists (403 no_organisation) has nothing to switch yet.
+  if (error?.code === 'no_organisation') return null;
   return <BusinessIdForm hint={error?.status === 501 ? t('listPending') : undefined} />;
 }

@@ -30,6 +30,7 @@ import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import { AccountBanners } from './account/account-banners';
 import { AccountControls } from './account/account-menu';
+import { useMe } from './account/use-me';
 import { BusinessSwitcher } from './business-picker';
 import { FeedbackButton } from './feedback-dialog';
 import { LanguageSwitcher } from './i18n/language-switcher';
@@ -68,7 +69,14 @@ function isActive(pathname: string, href: string) {
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations('shell.nav');
   const pathname = usePathname() ?? '';
-  const groups = [...new Set(NAV.map((n) => n.group))];
+  const me = useMe();
+  // Standalone knows the platform role (Phase 18): the staff group is hidden from everyone else,
+  // including a signed-in user with no organisation yet. Core mode has no role here, so the group
+  // shows as before and the admin routes enforce staff access themselves.
+  const hideStaff =
+    me.error?.code === 'no_organisation' ||
+    (me.data?.me.identityMode === 'standalone' && me.data.me.user.platformRole === 'user');
+  const groups = [...new Set(NAV.map((n) => n.group))].filter((g) => !(g === 'staff' && hideStaff));
   return (
     <nav aria-label={t('ariaLabel')} className="flex flex-col gap-6">
       <WelcomeLink onNavigate={onNavigate} />

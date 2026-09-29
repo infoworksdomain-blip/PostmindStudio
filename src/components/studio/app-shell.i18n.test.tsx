@@ -110,3 +110,41 @@ describe('AppShell localisation', () => {
     expect(document.cookie).toContain(`${LOCALE_COOKIE}=fr`);
   });
 });
+
+describe('AppShell staff navigation (Phase 18)', () => {
+  const me = (platformRole: string) => ({
+    ok: true,
+    me: {
+      user: { id: 'u1', name: 'A', email: 'a@example.test', platformRole },
+      organisation: { id: 'o1', name: 'Org', slug: 'org', role: 'owner' },
+      organisations: [{ id: 'o1', name: 'Org', slug: 'org', role: 'owner' }],
+      plan: null,
+      banner: null,
+      impersonating: false,
+      identityMode: 'standalone',
+    },
+  });
+
+  it('hides the staff section from a standalone user who is not staff', async () => {
+    mockFetch([
+      { match: '/api/studio/me', body: me('user') },
+      { match: '/notifications', body: { ok: true, unreadCount: 0, nextCursor: null, data: [] } },
+      { match: '/businesses', body: { ok: true, local: true, data: [] } },
+    ]);
+    renderWithSWR(withLocale('en-GB', shell()));
+    const nav = screen.getAllByRole('navigation', { name: 'Studio' })[0]!;
+    await waitFor(() => expect(within(nav).queryByText('PostMind staff')).not.toBeInTheDocument());
+    expect(within(nav).queryByRole('link', { name: /Admin/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the staff section to platform staff', async () => {
+    mockFetch([
+      { match: '/api/studio/me', body: me('superadmin') },
+      { match: '/notifications', body: { ok: true, unreadCount: 0, nextCursor: null, data: [] } },
+      { match: '/businesses', body: { ok: true, local: true, data: [] } },
+    ]);
+    renderWithSWR(withLocale('en-GB', shell()));
+    const nav = screen.getAllByRole('navigation', { name: 'Studio' })[0]!;
+    expect(await within(nav).findByText('PostMind staff')).toBeInTheDocument();
+  });
+});
