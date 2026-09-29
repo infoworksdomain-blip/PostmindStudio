@@ -216,6 +216,8 @@ route('PATCH', '/projects/:id', ({ params, body }) => {
     p.costBudgetPence = pence;
   }
   if (str(b.name)) p.name = str(b.name) ?? p.name;
+  // 17.9: PATCH name:null clears the name (the UI then shows its “Untitled video”).
+  if (b.name === null) p.name = null;
   if (b.targetFormats) p.targetFormats = formatsFrom(b.targetFormats);
   if (b.brandKitId !== undefined) p.brandKitId = str(b.brandKitId) ?? null;
   if (str(b.reviewPolicy)) p.reviewPolicy = str(b.reviewPolicy) ?? p.reviewPolicy;
@@ -308,7 +310,9 @@ route('POST', '/projects/:id/reject', ({ params, body }) => {
 
 route('POST', '/projects/:id/duplicate', ({ params }) => {
   const src = getProject(params.id ?? '');
-  const copy = baseProject(newId('prj'), `${src.name} (copy)`.slice(0, 200), {
+  // 17.9: an untitled project's copy stays untitled (services/projects.ts duplicate).
+  const copyName = src.name ? `${src.name} (copy)`.slice(0, 200) : null;
+  const copy = baseProject(newId('prj'), copyName, {
     state: 'DRAFT',
     scene: src.scene,
     sourceType: src.sourceType,

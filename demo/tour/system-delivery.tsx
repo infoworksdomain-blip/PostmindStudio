@@ -1,8 +1,8 @@
 import { ALERTMANAGER, ALERT_RULES, ALERT_RULE_NAMES, K6_OPTIONS, K6_RUN } from './system-snippets';
 import { Chapter, Code, DataTable, Panel, Pill } from './ui';
 
-// Behind the scenes, part 4: alerting, corpus ingestion, load test, deployment, runbooks and
-// golden-path journeys. Output formats follow library/corpus-report.ts and
+// Behind the scenes, part 4: alerting, corpus ingestion, load test, deployment (one Hetzner VPS
+// running the Docker Compose stack; runbooks/vps-deploy.md), runbooks and golden-path journeys. Output formats follow library/corpus-report.ts and
 // scripts/ops/ingest-corpus.ts; names come from runbooks/*.md and test/golden/*.test.ts.
 
 // A sample --sample 100 --apply run (numbers illustrative; the real run is the operator's).
@@ -73,6 +73,11 @@ const RUNBOOKS: [string, string][] = [
     'Platform account revocation — Meta, TikTok, YouTube (risk 7)',
   ],
   ['storage-cost.md', 'Storage cost balloon (risk 8)'],
+  ['r2-setup.md', 'Cloudflare R2 setup (buckets, CORS, tokens, backup bucket)'],
+  ['storage-failover.md', 'Storage failover to the secondary region'],
+  ['monitoring-deploy.md', 'Prometheus + Alertmanager deployment'],
+  ['staging-gate.md', 'Staging gate (rehearsals, k6, restore drill, live providers)'],
+  ['vps-deploy.md', 'Deploying on the Hetzner server (on its own branch)'],
   ['corpus-ingestion.md', 'Corpus ingestion (9.2 sample run, 9.3 full run)'],
   ['review-publish-automation.md', 'Review and publish automation'],
 ];
@@ -152,53 +157,65 @@ const JOURNEYS: [string, string[]][] = [
   ['corpus.test.ts', ['CO-01 manifest → sample → review → TEMPLATE project → resumed full run']],
 ];
 
+const ON_SERVER: [string, string, string][] = [
+  ['caddy', ':443', 'TLS (automatic certificates) → web'],
+  ['web', ':3010', 'next start · API + UI · /api/health, /api/health/ready'],
+  [
+    'worker',
+    '1 process',
+    'all six queues: orchestration, assets, publish, scheduled, analytics, library',
+  ],
+  ['postgres', '17', 'pgvector · studio schema'],
+  ['redis', 'DB 3', 'BullMQ, rate limits, idempotency'],
+  ['prometheus + alertmanager', 'monitoring', 'scrapes /api/metrics and the worker’s :9464'],
+  ['backups', 'nightly', 'database + object storage → the R2 backup bucket'],
+];
+
+const OFF_SERVER: [string, string][] = [
+  ['Cloudflare R2 (EU jurisdiction)', 'assets, renders, thumbnails, library + the backup bucket'],
+  ['AWS KMS', 'envelope keys for tokens and secrets (KMS_KEY_ID)'],
+  ['PostMind Core', 'JWKS for sign-in, business and channel data'],
+  ['AI providers and platforms', 'Runway, Luma, ElevenLabs … TikTok, YouTube, Meta, LinkedIn, X'],
+];
+
 function Topology() {
-  const services: [string, string, string][] = [
-    ['web', '×3', 'next start :3010 · /api/health, /api/health/ready'],
-    ['worker-orchestration', '×3', 'studio-orchestration'],
-    ['worker-assets', '×5', 'studio-assets'],
-    ['worker-publish', '×3', 'studio-publish'],
-    ['worker-scheduled', '×2', 'studio-scheduled'],
-    ['worker-analytics', '×2', 'studio-analytics'],
-    ['worker-library', '×1', 'studio-library'],
-    ['migrate', 'one-shot', 'prisma migrate deploy && prisma db seed'],
-  ];
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
-      <div className="rounded-xl border border-border bg-card p-4">
+    <div className="grid gap-4 lg:grid-cols-[1fr_17rem]">
+      <div className="rounded-xl border-2 border-foreground/80 bg-card p-4">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-sm font-semibold">One Hetzner server · Germany</p>
+          <Pill tone="data">Docker Compose</Pill>
+        </div>
         <p className="mb-3 text-xs text-muted-foreground">
-          docker-compose.prod.yml — one image (web + worker roles; non-root, ffmpeg, tini), tagged
-          with the git SHA
+          One image (web + worker roles; non-root, ffmpeg, tini), tagged with the git SHA and
+          deployed by scripts/vps/deploy.sh. Cost: one server, priced on Hetzner’s site.
         </p>
         <ul className="grid gap-2 sm:grid-cols-2">
-          {services.map(([name, n, what]) => (
+          {ON_SERVER.map(([name, n, what]) => (
             <li
               key={name}
               className="flex items-start justify-between gap-3 rounded-lg border border-border/80 bg-background px-3 py-2"
             >
               <div className="min-w-0">
                 <p className="font-mono text-xs font-medium">{name}</p>
-                <p className="truncate text-[0.7rem] text-muted-foreground">{what}</p>
+                <p className="text-[0.7rem] text-muted-foreground">{what}</p>
               </div>
-              <Pill tone={name === 'web' ? 'live' : 'data'}>{n}</Pill>
+              <Pill tone={name === 'caddy' || name === 'web' ? 'live' : 'data'}>{n}</Pill>
             </li>
           ))}
         </ul>
       </div>
-      <ul className="grid content-start gap-2 text-sm">
-        {[
-          ['Load balancer', 'TLS, studio.postmind.ai → web'],
-          ['PostgreSQL 15 + pgvector', 'shared cluster, studio schema'],
-          ['Redis', 'shared cluster, DB 3 (BullMQ, rate limits, idempotency)'],
-          ['S3', 'assets, renders, thumbnails, library-assets'],
-          ['Prometheus + Alertmanager', 'scrapes /api/metrics and worker :9464'],
-        ].map(([k, v]) => (
-          <li key={k} className="rounded-lg bg-muted px-3 py-2">
-            <p className="font-medium">{k}</p>
-            <p className="text-xs text-muted-foreground">{v}</p>
-          </li>
-        ))}
-      </ul>
+      <div className="grid content-start gap-2 text-sm">
+        <p className="text-xs text-muted-foreground">Outside the server</p>
+        <ul className="grid gap-2">
+          {OFF_SERVER.map(([k, v]) => (
+            <li key={k} className="rounded-lg bg-muted px-3 py-2">
+              <p className="font-medium">{k}</p>
+              <p className="text-xs text-muted-foreground">{v}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -253,7 +270,7 @@ export function DeliveryChapters() {
         id="deploy"
         index="13"
         title="Deployment topology"
-        description="Queue-per-service workers so each scales on its own; forward-only migrations so version N runs on N+1’s schema during a rollback."
+        description="Everything on one server, so there is one machine to run, patch and back up; forward-only migrations so version N runs on N+1’s schema during a rollback."
       >
         <Topology />
       </Chapter>

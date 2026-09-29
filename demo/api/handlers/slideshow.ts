@@ -9,7 +9,7 @@ import {
 import { DemoHttpError, route } from '../registry';
 import { DEMO_ORG_ID } from '../ids';
 import { startAutoPopulate } from './pipeline-sim';
-import { getProject, newId, touch, type ProjectRec } from './projects-store';
+import { ago, DAY, getProject, newId, touch, type ProjectRec } from './projects-store';
 import {
   addSlideshowTemplate,
   DEMO_IMAGES,
@@ -192,9 +192,27 @@ route('POST', '/projects/:id/auto-populate', async ({ params }) => {
   return { status: 202, body: { populateId: populate?.id ?? '' } };
 });
 
+/** Rows carry createdAt like the real list (the Templates screen shows "saved <date>"). */
+const CREATED_AT: Record<string, string> = {
+  'sst-org-new-menu': ago(24 * DAY),
+  'sst-org-saved-custom': ago(6 * DAY),
+};
+const firstSeen = new Map<string, string>();
+function createdAt(id: string, builtIn: boolean): string {
+  const known = CREATED_AT[id] ?? firstSeen.get(id);
+  if (known) return known;
+  const at = builtIn ? ago(200 * DAY) : new Date().toISOString();
+  firstSeen.set(id, at);
+  return at;
+}
+
 route('GET', '/slideshow-templates', ({ query }) => {
   const category = query.get('category');
-  return { data: listSlideshowTemplates().filter((t) => !category || t.category === category) };
+  return {
+    data: listSlideshowTemplates()
+      .filter((t) => !category || t.category === category)
+      .map((t) => ({ ...t, createdAt: createdAt(t.id, t.organisationId === null) })),
+  };
 });
 
 route('POST', '/slideshow-templates', ({ body }) => {

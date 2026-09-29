@@ -1,6 +1,8 @@
 // Platform connections (services/connections.ts): the organisation-wide list, the OAuth start
 // (the demo "authorize URL" is a hash route back to the Connections screen with ?connected=, so
 // the real callback notice shows) and disconnect (Meta channels → the real 409).
+// 17.3: the daily account-status check records statusCheckedAt / statusCheckOutcome; healthy
+// accounts show "Access checked <date>", and X was refused (needs_reconnect, with a notification).
 import type { PlatformConnection } from '@/lib/client/types';
 import { CONNECTIONS, DEMO_BUSINESS_ID, DEMO_ORG_ID, DEMO_USER_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
@@ -54,6 +56,8 @@ const rows: DemoConnection[] = [
     scopes: SCOPES.tiktok,
     state: 'active',
     connectedAt: iso(-94 * DAY),
+    statusCheckedAt: iso(-5 * HOUR),
+    statusCheckOutcome: 'ok',
   }),
   conn({
     id: CONNECTIONS.youtube.id,
@@ -65,6 +69,8 @@ const rows: DemoConnection[] = [
     scopes: SCOPES.youtube,
     state: 'active',
     connectedAt: iso(-88 * DAY),
+    statusCheckedAt: iso(-11 * HOUR),
+    statusCheckOutcome: 'ok',
   }),
   conn({
     id: CONNECTIONS.linkedin.id,
@@ -76,6 +82,9 @@ const rows: DemoConnection[] = [
     scopes: SCOPES.linkedin,
     state: 'active',
     connectedAt: iso(-19 * DAY),
+    // Not checked yet (connected before the check ran for this account): no line shown.
+    statusCheckedAt: null,
+    statusCheckOutcome: null,
   }),
   conn({
     id: CONNECTIONS.x.id,
@@ -87,6 +96,8 @@ const rows: DemoConnection[] = [
     scopes: SCOPES.x,
     state: 'needs_reconnect',
     connectedAt: iso(-140 * DAY),
+    statusCheckedAt: iso(-7 * HOUR),
+    statusCheckOutcome: 'needs_reconnect',
   }),
   // Registered by PostMind Core (organisation-wide Meta channels, read-only in Studio).
   conn({
@@ -100,6 +111,8 @@ const rows: DemoConnection[] = [
     state: 'active',
     connectedAt: iso(-120 * DAY),
     connectedByUserId: 'postmind-core',
+    statusCheckedAt: iso(-3 * HOUR),
+    statusCheckOutcome: 'ok',
   }),
   conn({
     id: CONNECTIONS.facebook.id,
@@ -112,6 +125,9 @@ const rows: DemoConnection[] = [
     state: 'active',
     connectedAt: iso(-120 * DAY),
     connectedByUserId: 'postmind-core',
+    // The last check could not reach Facebook (a transient error): recorded, state unchanged.
+    statusCheckedAt: iso(-3 * HOUR),
+    statusCheckOutcome: 'unreachable',
   }),
   // An old, disconnected TikTok test account (revoked rows stay in the list; the screen hides them).
   conn({

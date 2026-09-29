@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Bell } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Bell, Sparkles } from 'lucide-react';
 import { DEMO_BUSINESS_NAME } from '../api/ids';
 import { BELL_NOTE, SCREEN_GROUPS, type ScreenEntry } from './screens-data';
 import { Chapter, Pill, SceneThumb, SceneVideo, TourHeader, Toc } from './ui';
@@ -36,6 +36,29 @@ function HowTo() {
         </li>
       ))}
     </ol>
+  );
+}
+
+function WhatsNewBanner() {
+  return (
+    <a
+      href="#/tour/whats-new"
+      className="group mt-8 flex items-start gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4 transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    >
+      <Sparkles aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">What’s new</span>
+        <span className="block text-sm text-muted-foreground">
+          11 languages with right-to-left Arabic, Phase 17 hardening (account checks, lost-post
+          re-drive, storage backup, failure reasons in your language), Cloudflare R2 storage and the
+          single-server deployment, each with a link to see it.
+        </span>
+      </span>
+      <ArrowRight
+        aria-hidden
+        className="ms-auto mt-0.5 size-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5"
+      />
+    </a>
   );
 }
 
@@ -194,7 +217,8 @@ function WorkflowCard({ flow, index }: { flow: Workflow; index: number }) {
 
 export function TourHome() {
   return (
-    <div>
+    // English-only tour text: kept left-to-right in every interface language.
+    <div lang="en" dir="ltr">
       <TourHeader
         eyebrow="PostMind Studio · guided demo"
         title={
@@ -227,11 +251,12 @@ export function TourHome() {
           <Pill tone="data">Sample data</Pill>
         </div>
         <HowTo />
+        <WhatsNewBanner />
         <Toc
           items={[
             { id: 'screens', label: 'Every screen' },
             { id: 'workflows', label: 'Guided workflows' },
-            { id: 'more', label: 'Behind the scenes & not built' },
+            { id: 'more', label: 'What’s new, behind the scenes & not built' },
           ]}
         />
       </TourHeader>
@@ -264,7 +289,24 @@ export function TourHome() {
         title="What you can’t click"
         description="Much of Studio has no screen: the pipeline, queues, cost caps, alerting, security. And some of it isn’t built yet."
       >
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
+          <a
+            href="#/tour/whats-new"
+            className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <p className="font-display text-2xl">What’s new</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Phase 16 languages and right-to-left, Phase 17 hardening, R2 storage and the
+              single-server deployment, each linked to the screen or sample that shows it.
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
+              Open{' '}
+              <ArrowRight
+                className="size-4 transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </span>
+          </a>
           <a
             href="#/tour/system"
             className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -272,8 +314,8 @@ export function TourHome() {
             <p className="font-display text-2xl">Behind the scenes</p>
             <p className="mt-1 text-sm text-muted-foreground">
               The 9-layer pipeline, workers, provider routing, kill switch, cost caps, alerts, rate
-              limits, security, internal endpoints and operations tooling, each with a sample of
-              real output.
+              limits, security, reliability jobs, R2 storage and backups, and the server, each with
+              a sample of real output.
             </p>
             <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
               Open{' '}

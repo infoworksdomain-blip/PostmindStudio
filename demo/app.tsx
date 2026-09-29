@@ -30,6 +30,7 @@ import { DemoBar } from './tour/demo-bar';
 import { NotBuiltScreen } from './tour/not-built';
 import { SystemTour } from './tour/system';
 import { TourHome } from './tour/home';
+import { WhatsNew } from './tour/whats-new';
 import { matchPath, navigate, useLocation } from './router';
 
 // The demo build: the real Studio screens (src/components/studio) inside the real app shell,
@@ -42,6 +43,7 @@ interface RouteDef {
 
 const ROUTES: RouteDef[] = [
   { path: '/tour', render: () => <TourHome /> },
+  { path: '/tour/whats-new', render: () => <WhatsNew /> },
   { path: '/tour/system', render: () => <SystemTour /> },
   { path: '/tour/not-built', render: () => <NotBuiltScreen /> },
   {

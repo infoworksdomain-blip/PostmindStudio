@@ -2,7 +2,7 @@
 //   ops/prometheus/studio-alerts.yml, ops/alertmanager/alertmanager.yml,
 //   load-test/k6/studio-api.js, docker-compose.prod.yml.
 
-export const ALERT_RULES = `# ops/prometheus/studio-alerts.yml (excerpt — 13 rules in 5 groups)
+export const ALERT_RULES = `# ops/prometheus/studio-alerts.yml (excerpt — 14 rules in 5 groups)
 groups:
   - name: studio-availability
     rules:
@@ -70,6 +70,7 @@ export const ALERT_RULE_NAMES: { name: string; severity: 'page' | 'ticket'; grou
   { name: 'StudioQueueBacklog', severity: 'ticket', group: 'jobs' },
   { name: 'StudioDeadLetterGrowing', severity: 'ticket', group: 'jobs' },
   { name: 'StudioProviderCircuitOpen', severity: 'ticket', group: 'providers' },
+  { name: 'StudioProviderFailoverRateHigh', severity: 'ticket', group: 'providers' },
   { name: 'StudioProviderCircuitsOpenMultiple', severity: 'page', group: 'providers' },
   { name: 'StudioCostCapWarning', severity: 'ticket', group: 'cost' },
   { name: 'StudioCostCapReached', severity: 'ticket', group: 'cost' },

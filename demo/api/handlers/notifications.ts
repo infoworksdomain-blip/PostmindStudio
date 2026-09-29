@@ -1,9 +1,11 @@
 // In-app notifications (services/notifications.ts): newest first, cursor paging, unread count,
 // mark one read / read all. Titles and bodies follow the real event writers
-// (notifications/events.ts, cost/guard.ts). Phase 16 (16.5): rows the real writers key carry
-// messageKey + messageParams and render in the reader's locale; the cost and safety rows are not
-// keyed yet and show their stored English text (the fallback for pre-16.5 rows).
-import { PROJECTS } from '../ids';
+// (notifications/events.ts, cost/guard.ts, safety-review.ts, plan-quotas.ts, account-status.ts).
+// 16.5: every writer keys its rows (messageKey + messageParams), so the bell renders them in the
+// reader's locale; the stored English title/body is the fallback (kept on one pre-16.5 row
+// below). 17.9: an unnamed project is sent as name '' and shows "Untitled video" translated.
+// 17.3: the daily account check notifies connection_needs_reconnect.
+import { CONNECTIONS, P17_PROJECTS, PROJECTS } from '../ids';
 import { DemoHttpError, route } from '../registry';
 
 interface DemoNotification {
@@ -23,6 +25,65 @@ const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 const LOADED_AT = Date.now();
 const ago = (ms: number) => new Date(LOADED_AT - ms).toISOString();
+
+/** 17.3 account check, 17.9 untitled project, keyed plan quota and safety decisions. */
+const PHASE_17: DemoNotification[] = [
+  {
+    id: 'ntf-x-needs-reconnect',
+    kind: 'connection_needs_reconnect',
+    title: `Reconnect your x account “${CONNECTIONS.x.account}”`,
+    body: 'The platform no longer accepts Studio’s access to this account. Reconnect it on the Connections page so scheduled posts can go out.',
+    link: '/connections',
+    readAt: null,
+    createdAt: ago(7 * HOUR),
+    messageKey: 'connectionNeedsReconnect',
+    messageParams: { account: CONNECTIONS.x.account, platform: 'x' },
+  },
+  {
+    id: 'ntf-untitled-ready',
+    kind: 'generation_complete',
+    title: '“Untitled video” is ready for review',
+    body: 'Every variant passed the quality checks. Review it, then approve or publish.',
+    link: `/projects/${P17_PROJECTS.untitled.id}`,
+    readAt: null,
+    createdAt: ago(90 * MIN),
+    messageKey: 'generationReady',
+    // 17.9: an unnamed project is sent as '' (never the English placeholder).
+    messageParams: { name: '' },
+  },
+  {
+    id: 'ntf-knife-blocked',
+    kind: 'safety_review',
+    title: `“${P17_PROJECTS.knifeSkills.name}” was blocked by a content-safety review`,
+    body: 'Trust & Safety note: Shows a cut finger in close-up; re-shoot without the injury.',
+    link: `/projects/${P17_PROJECTS.knifeSkills.id}`,
+    readAt: null,
+    createdAt: ago(26 * HOUR),
+    messageKey: 'safetyReviewBlocked',
+    messageParams: {
+      name: P17_PROJECTS.knifeSkills.name,
+      note: 'Shows a cut finger in close-up; re-shoot without the injury.',
+    },
+  },
+  {
+    id: 'ntf-quota-nearing',
+    kind: 'plan_quota',
+    title: 'Standard plan: 80% of short videos used',
+    body: '48 of 60 short videos generated this month. The allowance resets at the start of next month (UTC). Upgrade to Plus for more.',
+    link: '/analytics',
+    readAt: null,
+    createdAt: ago(2 * DAY),
+    messageKey: 'planQuotaNearing',
+    messageParams: {
+      tier: 'Standard',
+      kind: 'short',
+      threshold: 80,
+      used: 48,
+      limit: 60,
+      nextTier: 'Plus',
+    },
+  },
+];
 
 const rows: DemoNotification[] = [
   {
@@ -56,10 +117,18 @@ const rows: DemoNotification[] = [
     id: 'ntf-christmas-80',
     kind: 'cost_alert',
     title: `“${PROJECTS.christmas.name}” has used 80% of its budget`,
-    body: '£19.20 spent. Generation pauses at 90% of the budget; it can then be raised on the project page.',
+    body: '£2.40 of £3.00 spent. Generation pauses at 90% of the budget; it can then be raised on the project page.',
     link: `/projects/${PROJECTS.christmas.id}`,
     readAt: null,
     createdAt: ago(3 * HOUR),
+    messageKey: 'costProjectAlert',
+    messageParams: {
+      name: PROJECTS.christmas.name,
+      spent: 2.4,
+      cap: 3,
+      threshold: 80,
+      pausePercent: 90,
+    },
   },
   {
     id: 'ntf-five-bakes-waiting',
@@ -98,24 +167,36 @@ const rows: DemoNotification[] = [
     link: '/projects/prj-bread-knife',
     readAt: null,
     createdAt: ago(40 * MIN),
+    messageKey: 'safetyReviewOpened',
+    messageParams: { name: 'How we slice a country loaf' },
   },
   {
     id: 'ntf-ritual-auto',
     kind: 'generation_complete',
     title: `“${PROJECTS.morningRitual.name}” is generated and was auto-approved`,
-    body: 'The video passed every quality check and your review policy approved it automatically. It auto-publishes to TikTok and YouTube Shorts on schedule.',
+    body: 'The video passed every quality check and your review policy approved it automatically.',
     link: `/projects/${PROJECTS.morningRitual.id}`,
     readAt: null,
     createdAt: ago(9 * HOUR),
+    messageKey: 'generationAutoApproved',
+    messageParams: { name: PROJECTS.morningRitual.name },
   },
   {
     id: 'ntf-christmas-paused',
     kind: 'cost_paused',
     title: `Generation paused: “${PROJECTS.christmas.name}” reached 90% of its budget`,
-    body: '£21.60 spent. Open the project, raise its budget (Raise budget), then press Generate again.',
+    body: '£2.76 of £3.00 spent. Open the project, raise its budget (Raise budget), then press Generate again.',
     link: `/projects/${PROJECTS.christmas.id}`,
     readAt: ago(DAY),
     createdAt: ago(DAY + 2 * HOUR),
+    messageKey: 'costProjectPaused',
+    messageParams: {
+      name: PROJECTS.christmas.name,
+      spent: 2.76,
+      cap: 3,
+      threshold: 90,
+      pausePercent: 90,
+    },
   },
   {
     id: 'ntf-class-ready',
@@ -132,10 +213,12 @@ const rows: DemoNotification[] = [
     id: 'ntf-daily-provider',
     kind: 'cost_alert',
     title: '80% of today’s runway budget used',
-    body: '£40.00 spent today (UTC) with runway. At 100% Studio routes to fallback providers where they exist.',
+    body: '£40.00 of £50.00 spent today (UTC) with runway. At 100% Studio routes to fallback providers where they exist.',
     link: '/analytics',
     readAt: ago(9 * DAY),
     createdAt: ago(9 * DAY + HOUR),
+    messageKey: 'costProviderDaily',
+    messageParams: { spent: 40, cap: 50, threshold: 80, provider: 'runway' },
   },
   {
     id: 'ntf-class-x-failed',
@@ -145,7 +228,9 @@ const rows: DemoNotification[] = [
     link: `/projects/${PROJECTS.sourdoughClass.id}`,
     readAt: ago(4 * DAY),
     createdAt: ago(5 * DAY),
+    // Written before 16.5 (no message key): shown in its stored English in every locale.
   },
+  ...PHASE_17,
 ];
 
 const newestFirst = (a: DemoNotification, b: DemoNotification) =>

@@ -179,7 +179,8 @@ export function NotBuiltScreen() {
     [filter],
   );
   return (
-    <div>
+    // English-only tour text: kept left-to-right in every interface language.
+    <div lang="en" dir="ltr">
       <TourHeader
         eyebrow="Not built yet"
         title={

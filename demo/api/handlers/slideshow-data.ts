@@ -137,6 +137,42 @@ const photoDump: Plan = Array.from({ length: 8 }, () => ({
   slideType: 'IMAGE_STILL' as const,
   durationSec: 1.5,
 }));
+const numbered = (n: number): Plan => [
+  { slideType: 'TEXT_CARD', role: 'hook', durationSec: 2.5 },
+  ...Array.from({ length: n }, () => ({
+    slideType: 'IMAGE_KENBURNS' as const,
+    role: 'body' as const,
+    durationSec: n > 5 ? 2.5 : 3,
+  })),
+  { slideType: 'TEXT_CARD', role: 'cta', durationSec: 2.5 },
+];
+const productShowcase: Plan = [
+  { slideType: 'TEXT_CARD', role: 'hook', durationSec: 2 },
+  { slideType: 'PRODUCT', role: 'body', durationSec: 3.5 },
+  { slideType: 'PRODUCT', role: 'body', durationSec: 3.5 },
+  { slideType: 'PRODUCT', role: 'body', durationSec: 3.5 },
+  { slideType: 'TEXT_CARD', role: 'cta', durationSec: 2.5 },
+];
+const quoteReel: Plan = [
+  { slideType: 'QUOTE', role: 'hook', durationSec: 4 },
+  { slideType: 'QUOTE', role: 'body', durationSec: 4 },
+  { slideType: 'QUOTE', role: 'body', durationSec: 4 },
+  { slideType: 'TEXT_CARD', role: 'cta', durationSec: 2.5 },
+];
+const statisticReel: Plan = [
+  { slideType: 'TEXT_CARD', role: 'hook', durationSec: 2 },
+  { slideType: 'STATISTIC', role: 'body', durationSec: 3 },
+  { slideType: 'STATISTIC', role: 'body', durationSec: 3 },
+  { slideType: 'STATISTIC', role: 'body', durationSec: 3 },
+  { slideType: 'TEXT_CARD', role: 'cta', durationSec: 2.5 },
+];
+const teamIntro: Plan = [
+  { slideType: 'TEXT_CARD', role: 'hook', durationSec: 2.5 },
+  { slideType: 'IMAGE_STILL', role: 'body', durationSec: 3.5 },
+  { slideType: 'IMAGE_STILL', role: 'body', durationSec: 3.5 },
+  { slideType: 'IMAGE_STILL', role: 'body', durationSec: 3.5 },
+  { slideType: 'TEXT_CARD', role: 'cta', durationSec: 2.5 },
+];
 
 const templates: SlideshowTemplate[] = [
   {
@@ -181,7 +217,50 @@ const templates: SlideshowTemplate[] = [
     musicMood: 'warm',
     defaultDurationPerSlide: 3,
   },
+  // 17.9: the remaining built-ins of src/lib/studio/slideshow/templates.ts, so the slideshow
+  // picker and the Templates screen show every category translated (listicle_5, listicle_10, …).
+  builtIn('sst-listicle-5-numbered', 'Listicle 5', 'listicle_5', numbered(5), 'upbeat', 3),
+  builtIn('sst-listicle-10', 'Listicle 10', 'listicle_10', numbered(10), 'energetic', 2.5),
+  builtIn(
+    'sst-product-showcase',
+    'Product showcase',
+    'product_showcase',
+    productShowcase,
+    'warm',
+    3.5,
+  ),
+  builtIn('sst-quote-reel', 'Quote reel', 'quote_reel', quoteReel, 'calm', 4),
+  builtIn('sst-statistic-reel', 'Statistic reel', 'statistic_reel', statisticReel, 'upbeat', 3),
+  builtIn('sst-team-intro', 'Team introduction', 'team_introduction', teamIntro, 'warm', 3.5),
+  {
+    id: 'sst-org-saved-custom',
+    organisationId: DEMO_ORG_ID,
+    name: 'Our Friday specials (saved)',
+    category: 'custom',
+    slidePlan: photoDump.slice(0, 5),
+    musicMood: 'lofi',
+    defaultDurationPerSlide: 2,
+  },
 ];
+
+function builtIn(
+  id: string,
+  name: string,
+  category: string,
+  slidePlan: Plan,
+  musicMood: string,
+  defaultDurationPerSlide: number,
+): SlideshowTemplate {
+  return {
+    id,
+    organisationId: null,
+    name,
+    category,
+    slidePlan,
+    musicMood,
+    defaultDurationPerSlide,
+  };
+}
 
 export const listSlideshowTemplates = () => templates.map((t) => ({ ...t }));
 export const findSlideshowTemplate = (id: string) => templates.find((t) => t.id === id);

@@ -1,9 +1,13 @@
 // Website scans (services/scans.ts + the scan-website worker): start a scan, watch it go
 // QUEUED → RUNNING (pages read climbing) → SUCCEEDED over ~15 s, scan history, scan detail with
 // the library size per source. A finished scan adds the images it found and refreshes the profile.
+// 17.8: the ownership statement arrives as { locale, messageKey, text? } and is checked against the
+// approved catalogue wording (ownership-statement.ts); the stored scan keeps text, locale and key.
+// 17.9: scan errors are stored with a code (scan_images_capped, robots_blocked) and translated.
 import type { ScanDetail, WebsiteScan } from '@/components/studio/business/types';
 import { DEMO_BUSINESS_ID, DEMO_ORG_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
+import { approvedStatement, resolveOwnershipStatement } from './ownership-statement';
 import { SCAN_FINDS, SCAN_PAGES } from './business-images-seed';
 import { addLibraryImages, librarySizeBySource } from './business-images';
 import { refreshProfileFromScan } from './business-profile';
@@ -22,7 +26,31 @@ const DONE_MS = 15_000;
 const LOADED_AT = Date.now();
 const at = (ms: number) => new Date(LOADED_AT + ms).toISOString();
 
+const EN_STATEMENT = approvedStatement('en-GB');
+
 const scans: StoredScan[] = [
+  {
+    // The latest scan: stopped adding images at its cost cap (17.9 coded reason, translated).
+    id: 'scan-3',
+    organisationId: DEMO_ORG_ID,
+    businessId: DEMO_BUSINESS_ID,
+    url: 'https://leedssourdough.co.uk/',
+    state: 'SUCCEEDED',
+    pagesCrawled: 21,
+    imagesIngested: 14,
+    errorReason:
+      'scan_images_capped: Stopped at the scan cost cap (60p): some images were not indexed for search',
+    robotsBlocked: false,
+    usedJsRender: false,
+    costPence: 60,
+    startedAt: at(-2 * DAY),
+    completedAt: at(-2 * DAY + 4 * MIN),
+    ownershipStatement: EN_STATEMENT.text,
+    ownershipStatementLocale: EN_STATEMENT.locale,
+    ownershipStatementKey: EN_STATEMENT.messageKey,
+    live: false,
+    settled: true,
+  },
   {
     id: 'scan-2',
     organisationId: DEMO_ORG_ID,
@@ -37,6 +65,10 @@ const scans: StoredScan[] = [
     costPence: 41,
     startedAt: at(-21 * DAY),
     completedAt: at(-21 * DAY + 3 * MIN + 40_000),
+    // Before 17.8: the text was stored, its locale and key were not.
+    ownershipStatement: EN_STATEMENT.text,
+    ownershipStatementLocale: null,
+    ownershipStatementKey: null,
     live: false,
     settled: true,
   },
@@ -48,7 +80,8 @@ const scans: StoredScan[] = [
     state: 'FAILED',
     pagesCrawled: 0,
     imagesIngested: 0,
-    errorReason: 'The site did not answer within 20 seconds (https://www.leedssourdough.co.uk/)',
+    errorReason:
+      "robots_blocked: The site's robots.txt does not allow PostMindStudio to fetch the homepage",
     robotsBlocked: false,
     usedJsRender: false,
     costPence: 0,
@@ -155,7 +188,11 @@ function normaliseUrl(raw: string): string {
 
 route('POST', '/businesses/:id/scan-website', ({ params, body }) => {
   const businessId = params.id ?? '';
-  const input = (body ?? {}) as { url?: unknown; ownershipConfirmed?: unknown };
+  const input = (body ?? {}) as {
+    url?: unknown;
+    ownershipConfirmed?: unknown;
+    ownershipStatement?: unknown;
+  };
   if (input.ownershipConfirmed !== true) {
     throw new DemoHttpError(400, 'validation_error', 'Invalid request body', {
       problems: ['ownershipConfirmed must be true: confirm you own or represent this website'],
@@ -165,6 +202,8 @@ route('POST', '/businesses/:id/scan-website', ({ params, body }) => {
     throw new DemoHttpError(400, 'validation_error', 'Invalid request body', {
       problems: ['url: Too small'],
     });
+  // 17.8: the approved wording for { locale, messageKey } (400 for anything else).
+  const statement = resolveOwnershipStatement(input.ownershipStatement);
   const running = scans.find(
     (s) => s.businessId === businessId && ['QUEUED', 'RUNNING'].includes(current(s).state),
   );
@@ -186,6 +225,9 @@ route('POST', '/businesses/:id/scan-website', ({ params, body }) => {
     costPence: 0,
     startedAt: new Date().toISOString(),
     completedAt: null,
+    ownershipStatement: statement.text,
+    ownershipStatementLocale: statement.locale,
+    ownershipStatementKey: statement.messageKey,
     live: true,
     settled: false,
   };

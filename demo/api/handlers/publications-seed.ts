@@ -289,8 +289,8 @@ const CATALOGUE: Spec[] = [
     caption: 'Saturday sourdough class — 6 places left. 10am, Chapel Allerton.',
     hashtags: ['leeds', 'sourdough'],
     error: {
-      reason:
-        'The X connection needs reconnecting: the access token was revoked. Reconnect X on the Connections screen, then retry.',
+      // 17.9: stored as the publisher stores it (`<platform>/<errorClass>: <the platform's message>`).
+      reason: 'x/needs_reconnect: The access token was revoked',
       code: 'needs_reconnect',
     },
   },

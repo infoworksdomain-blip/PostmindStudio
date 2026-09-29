@@ -150,8 +150,11 @@ export function SecurityChapters() {
           <Panel title="Also">
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <code className="text-foreground">DELETE /api/studio/internal/channels/:id</code> or{' '}
-                <code className="text-foreground">
+                <code className="break-all text-foreground">
+                  DELETE /api/studio/internal/channels/:id
+                </code>{' '}
+                or{' '}
+                <code className="break-all text-foreground">
                   ?organisationId=&platform=&platformAccountId=
                 </code>{' '}
                 disconnects and wipes the token (Meta rows only).

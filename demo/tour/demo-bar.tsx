@@ -2,10 +2,11 @@ import { cn } from '@/lib/utils';
 import { useLocation } from '../router';
 
 // Slim strip above the app: says plainly that this is a demo with fictional sample data, and
-// links the three tour pages. Stays one line on phones (short labels, horizontal scroll).
+// links the four tour pages. Stays one line on phones (short labels, horizontal scroll).
 
 const LINKS = [
   { href: '#/tour', path: '/tour', label: 'Tour', short: 'Tour' },
+  { href: '#/tour/whats-new', path: '/tour/whats-new', label: 'What’s new', short: 'New' },
   { href: '#/tour/system', path: '/tour/system', label: 'Behind the scenes', short: 'Behind' },
   { href: '#/tour/not-built', path: '/tour/not-built', label: 'Not built yet', short: 'Not built' },
 ] as const;
