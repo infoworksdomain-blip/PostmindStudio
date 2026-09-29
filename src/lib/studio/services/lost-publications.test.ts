@@ -291,4 +291,36 @@ describe.skipIf(!hasDb)('redriveLostPublications', { timeout: 60_000 }, () => {
       'SCHEDULED',
     );
   });
+
+  it('Phase 18: a billing-held publication waits for payment, then is published by the sweep', async () => {
+    const heldAt = new Date().toISOString();
+    const held = await publication({
+      metadata: { connectionId: 'c', billingHold: { at: heldAt, access: 'read_only' } },
+    });
+    const queue = new InlineJobQueue();
+    let access: 'full' | 'read_only' = 'read_only';
+    const sweep = () =>
+      redriveLostPublications({
+        db,
+        queue,
+        killSwitch: { check: async () => ({ killed: false }) },
+        audit: () => undefined,
+        logger,
+        now,
+        organisationId: org,
+        billingAccess: async () => access,
+      });
+    expect((await sweep()).skipped).toContainEqual({
+      id: held.id,
+      reason: 'billing hold: waiting for payment',
+    });
+    access = 'full';
+    expect((await sweep()).redriven).toContain(held.id);
+    const job = queue.history.find(
+      (j) => (j.data as { publicationId?: string }).publicationId === held.id,
+    );
+    expect(job?.jobId).toBe(
+      `${redriveJobId(held.id, 0, held.createdAt)}__billing__${Date.parse(heldAt)}`,
+    );
+  });
 });

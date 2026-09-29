@@ -38,6 +38,12 @@ export async function creditTopUp(
   const pack = topUpPackForLookupKey(session.metadata.studio_topup ?? '');
   if (!pack) return { status: 'unknown_pack' };
   if (session.paymentStatus !== 'paid') return { status: 'not_paid' };
+  // Checked first (the common replay); the unique index still guards a concurrent delivery.
+  const existing = await db.usageCredit.findUnique({
+    where: { stripeCheckoutSessionId: session.id },
+    select: { id: true },
+  });
+  if (existing) return { status: 'duplicate' };
   try {
     const credit = await db.usageCredit.create({
       data: {
@@ -95,7 +101,11 @@ export async function consumeCredit(
   const existing = await tx.usageCreditUse.findUnique({
     where: { projectId_month: { projectId: input.projectId, month: input.month } },
   });
-  if (existing) return { id: existing.id, creditId: existing.creditId, reused: true };
+  if (existing) {
+    // Project ids are unique, so another organisation's row here is impossible; never reuse it.
+    if (existing.organisationId !== input.organisationId) return null;
+    return { id: existing.id, creditId: existing.creditId, reused: true };
+  }
   const candidates = await tx.usageCredit.findMany({
     where: {
       organisationId: input.organisationId,
