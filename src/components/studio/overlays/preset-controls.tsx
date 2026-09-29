@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { BookmarkPlus, Loader2, Plus, RefreshCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { Field, NativeSelect } from '../review/field';
 import { useAction } from '../review/use-action';
 import { styleOf } from './overlay-math';
@@ -173,6 +174,10 @@ export function SavePreset({
       >
         {pending ? <Loader2 className="animate-spin" /> : <BookmarkPlus />} {t('savePreset')}
       </Button>
+      <PlanLockBadge
+        feature="customPresets"
+        className="col-span-2 justify-self-start sm:col-span-3"
+      />
     </form>
   );
 }

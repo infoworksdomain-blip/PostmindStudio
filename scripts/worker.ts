@@ -29,6 +29,11 @@ import {
 import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
+import { CANCELLED_RETENTION_SCHEDULE } from '../src/lib/studio/billing/retention';
+import {
+  STRIPE_SWEEP_SCHEDULE,
+  SUBSCRIPTION_RECONCILE_SCHEDULE,
+} from '../src/lib/studio/billing/reconcile';
 import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
 import { AUDIT_RETENTION_SCHEDULE } from '../src/lib/studio/services/audit-retention';
 import { EMAIL_SWEEP_SCHEDULE } from '../src/lib/studio/queue/workers/send-email';
@@ -203,6 +208,39 @@ async function main(): Promise<void> {
     {
       name: 'check-platform-accounts',
       data: { organisationId: 'postmind-platform', runId: 'account-check', planTier: 'STANDARD' },
+    },
+  );
+  // Phase 18 Track C — Stripe webhook safety nets: event sweeper and nightly reconcile.
+  await analytics.upsertJobScheduler(
+    'sweep-stripe-events',
+    { pattern: STRIPE_SWEEP_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'sweep-stripe-events',
+      data: { organisationId: 'postmind-platform', runId: 'stripe-sweep', planTier: 'STANDARD' },
+    },
+  );
+  await analytics.upsertJobScheduler(
+    'reconcile-subscriptions-nightly',
+    { pattern: SUBSCRIPTION_RECONCILE_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'reconcile-subscriptions',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'stripe-reconcile',
+        planTier: 'STANDARD',
+      },
+    },
+  );
+  await orchestration.upsertJobScheduler(
+    'cancelled-org-retention-daily',
+    { pattern: CANCELLED_RETENTION_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'cancelled-org-retention',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'cancelled-retention',
+        planTier: 'STANDARD',
+      },
     },
   );
   // Phase 18 §2.6 — local audit log retention.

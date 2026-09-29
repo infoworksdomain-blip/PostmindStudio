@@ -2046,6 +2046,12 @@ model Subscription {
   cancelAtPeriodEnd  Boolean   @default(false)
   trialEnd           DateTime?
   stripeUpdatedAt    DateTime? // when we last re-fetched it from Stripe
+  // Track C (migration 20261004030000): what the subscription is billed, for the admin MRR view
+  // and ENTERPRISE mapping (product metadata studio_tier; ENTERPRISE prices have no lookup key).
+  productTier        String?
+  unitAmountPence    Int?
+  currency           String?
+  quantity           Int       @default(1)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

@@ -6,6 +6,7 @@ import {
   ProviderError,
 } from '../../errors';
 import { MAX_MUSIC_SEC, MIN_MUSIC_SEC } from '../providers/elevenlabs-music';
+import { minTierFor, tierAtLeast } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 import type { PipelineDeps } from './deps';
 import { buildMusicPrompt, type MusicPromptInput } from './music-prompt';
@@ -31,8 +32,8 @@ import { runProvider } from './provider-run';
 //     and at least the needed length is reused (re-render, retry, regenerate with same tone),
 //     so a track is never paid for twice.
 
-const TIER_RANK: Record<PlanTier, number> = { BASIC: 0, STANDARD: 1, PLUS: 2, ENTERPRISE: 3 };
-export const DEFAULT_MUSIC_MIN_TIER: PlanTier = 'STANDARD';
+/** Phase 18 §P.3: from the plan catalogue (STUDIO_MUSIC_MIN_TIER still overrides). */
+export const DEFAULT_MUSIC_MIN_TIER: PlanTier = minTierFor('musicAndSfx');
 const LONG_FORM_SEC = 60;
 const REASON_MAX = 300;
 
@@ -60,7 +61,7 @@ export function parseMusicMinTier(raw: string | undefined): PlanTier {
 }
 
 export function musicAllowedForTier(tier: PlanTier, minTier: PlanTier): boolean {
-  return TIER_RANK[tier] >= TIER_RANK[minTier];
+  return tierAtLeast(tier, minTier);
 }
 
 /** Length to request: the video length within the provider's documented 3 s – 5 min. */

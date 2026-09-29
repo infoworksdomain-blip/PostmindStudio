@@ -7,6 +7,7 @@ import {
   onByocKeysChanged,
   projectByocMode,
 } from '../services/provider-credentials';
+import { minTierFor, tierAtLeast } from '../billing/catalogue';
 import { toPlanTier } from '../services/catalog';
 import type { ProviderKeyMap } from './byoc-providers';
 import { buildAdaptersFromKeys } from './default-registry';
@@ -81,7 +82,7 @@ export function createByocRegistryResolver(deps: ByocRegistryResolverDeps): Byoc
     if (projectByocMode(project.metadata) === 'platform') return false;
     const meta = project.metadata as Record<string, unknown> | null;
     const tier = meta && typeof meta.planTier === 'string' ? meta.planTier : undefined;
-    return tier === undefined || toPlanTier(tier) === 'ENTERPRISE';
+    return tier === undefined || tierAtLeast(toPlanTier(tier), minTierFor('byocProviderKeys'));
   }
 
   const resolve = async (scope: ProviderScope) => {

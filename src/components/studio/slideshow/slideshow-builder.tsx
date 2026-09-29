@@ -20,6 +20,7 @@ import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
+import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { ErrorState } from '../primitives';
 import { Field, NativeSelect } from '../review/field';
 import { useAction } from '../review/use-action';
@@ -295,6 +296,7 @@ export function SlideshowBuilder({
               {pending === 'template' ? <Loader2 className="animate-spin" /> : <BookmarkPlus />}{' '}
               {t('save')}
             </Button>
+            <PlanLockBadge feature="customPresets" className="mb-2" />
           </form>
         </div>
       )}

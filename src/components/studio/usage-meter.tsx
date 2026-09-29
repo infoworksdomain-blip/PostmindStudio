@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
+import { UsageBannerActions } from './billing/upgrade-dialog';
 
 // Decision P3 — the plan usage meter (GET /api/studio/usage). The app shell shows the banner from
 // 80 % of any monthly video quota (the spec 12.5 alert thresholds); the admin panel reuses the
@@ -131,6 +132,7 @@ export function UsageBanner() {
             ? t('blockedBody', { date: resetDate(usage.resetsAt) })
             : t('resetBody', { date: resetDate(usage.resetsAt) })}
         </p>
+        <UsageBannerActions />
       </div>
       <div className="grid gap-3">
         <MeterRow label={t('shortVideos')} meter={usage.videos.short} />

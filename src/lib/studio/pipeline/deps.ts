@@ -26,6 +26,8 @@ import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
 import type { ThumbnailComposer } from '../services/thumbnail-composer';
+import type { BillingAccessLookup } from '../billing/job-access';
+import type { BillingJobDeps } from '../billing/wiring';
 
 // Everything a pipeline processor needs, injected so processors are testable without Redis,
 // real providers or ffmpeg.
@@ -111,6 +113,13 @@ export interface PipelineDeps {
   fetch: typeof fetch;
   now: () => number;
   sleep: (ms: number) => Promise<void>;
+  /**
+   * Phase 18 §P.3 (Track C): the organisation's billing access, checked at job start
+   * (billing/job-access.ts); absent = not checked (core mode, tests).
+   */
+  billingAccess?: BillingAccessLookup;
+  /** Phase 18 (Track C): Stripe sweeper + nightly reconcile; absent = built from env on use. */
+  billingJobs?: BillingJobDeps;
 }
 
 /** Phase 18 §2.8: what the send-email job needs (tests inject a fake transport). */

@@ -8,6 +8,10 @@ import { budgetFormatsFromJson } from '../cost/project-budget';
 import { notifySafely, type NotificationMessage, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
+import { PLAN_CATALOGUE, TIER_ORDER as CATALOGUE_TIERS } from '../billing/catalogue';
+import { consumeCredit } from '../billing/credits';
+import type { Entitlements, EntitlementsReader } from '../billing/entitlements-reader';
+import { withQuotaLock } from '../billing/quota-lock';
 import { businessIdParam } from './businesses';
 import { toPlanTier, type Platform } from './catalog';
 import {
@@ -65,33 +69,60 @@ export interface TierQuota {
   platforms: PlatformRule;
 }
 
-export const DEFAULT_TIER_QUOTAS: Readonly<Record<PlanTier, TierQuota>> = {
-  BASIC: {
-    shortVideos: 20,
-    longVideos: 0,
-    shortMaxSec: 30,
-    longMaxSec: 0,
-    platforms: 'tiktok_instagram_plus_one',
-  },
-  STANDARD: { shortVideos: 60, longVideos: 2, shortMaxSec: 30, longMaxSec: 180, platforms: 'all' },
-  PLUS: { shortVideos: 150, longVideos: 8, shortMaxSec: 30, longMaxSec: 360, platforms: 'all' },
-  ENTERPRISE: {
-    shortVideos: null,
-    longVideos: null,
-    shortMaxSec: 30,
-    longMaxSec: null,
-    platforms: 'all',
-  },
-};
+/** Phase 18 §P.3: the defaults come from the plan catalogue (env overrides still win). */
+export const DEFAULT_TIER_QUOTAS: Readonly<Record<PlanTier, TierQuota>> = Object.freeze(
+  Object.fromEntries(
+    CATALOGUE_TIERS.map((tier) => {
+      const plan = PLAN_CATALOGUE[tier];
+      const quota: TierQuota = {
+        shortVideos: plan.shortVideosPerMonth,
+        longVideos: plan.longVideosPerMonth,
+        shortMaxSec: plan.shortMaxSec,
+        longMaxSec: plan.longMaxSec,
+        platforms: plan.platforms,
+      };
+      return [tier, quota];
+    }),
+  ) as Record<PlanTier, TierQuota>,
+);
 
 type Env = Record<string, string | undefined>;
 
-export function quotaMode(env: Env = process.env): QuotaMode {
+/**
+ * STUDIO_QUOTA_MODE. Unset: `fallback` — warn in core mode, enforce once Studio bills the
+ * organisation itself (Phase 18 §6 "standalone default (was warn)"; callers with entitlements pass
+ * 'enforce').
+ */
+export function quotaMode(env: Env = process.env, fallback: QuotaMode = 'warn'): QuotaMode {
   const raw = env.STUDIO_QUOTA_MODE?.trim().toLowerCase();
-  if (!raw || raw === 'warn') return 'warn';
+  if (!raw) return fallback;
+  if (raw === 'warn') return 'warn';
   if (raw === 'enforce') return 'enforce';
   rootLogger.warn({ value: raw }, '[plan-quotas] invalid STUDIO_QUOTA_MODE; using warn');
   return 'warn';
+}
+
+/**
+ * Phase 18 §P.3: the organisation's own allowance — the trial's 5 short + 1 long while trialing,
+ * or ENTERPRISE / staff custom limits — on top of the tier's quota.
+ */
+export function entitlementQuota(base: TierQuota, entitlements?: Entitlements): TierQuota {
+  if (!entitlements) return base;
+  if (entitlements.trial) {
+    return {
+      ...base,
+      shortVideos: entitlements.trial.shortVideos,
+      longVideos: entitlements.trial.longVideos,
+    };
+  }
+  const custom = entitlements.custom;
+  if (!custom) return base;
+  return {
+    ...base,
+    ...(custom.shortVideos !== undefined && { shortVideos: custom.shortVideos }),
+    ...(custom.longVideos !== undefined && { longVideos: custom.longVideos }),
+    ...(custom.longMaxSec !== undefined && { longMaxSec: custom.longMaxSec }),
+  };
 }
 
 function envCount(env: Env, name: string, fallback: number | null): number | null {
@@ -162,6 +193,34 @@ export function generatedAt(metadata: Prisma.JsonValue | null): Date | null {
 
 function inMonth(at: Date | null, month: MonthWindow): boolean {
   return at !== null && at >= month.start && at < month.end;
+}
+
+/**
+ * Phase 18 §8: the slot a locked quota check reserved (metadata.quotaSlot), so a concurrent
+ * generate counts it before generateProject records generationStart.
+ */
+export interface QuotaSlot {
+  month: string;
+  kind: VideoKind;
+  at: string;
+  creditUseId?: string;
+}
+
+export function quotaSlotOf(metadata: Prisma.JsonValue | null): QuotaSlot | null {
+  const slot = projectMetadata(metadata).quotaSlot as Partial<QuotaSlot> | undefined;
+  if (!slot || typeof slot.month !== 'string' || (slot.kind !== 'short' && slot.kind !== 'long'))
+    return null;
+  return {
+    month: slot.month,
+    kind: slot.kind,
+    at: typeof slot.at === 'string' ? slot.at : '',
+    ...(typeof slot.creditUseId === 'string' && { creditUseId: slot.creditUseId }),
+  };
+}
+
+/** Counted in `month`: generation started in it, or a slot was reserved in it. */
+function countedIn(metadata: Prisma.JsonValue | null, month: MonthWindow): boolean {
+  return inMonth(generatedAt(metadata), month) || quotaSlotOf(metadata)?.month === month.key;
 }
 
 export type ViolationCode =
@@ -263,7 +322,7 @@ export async function monthlyVideoUsage(
   });
   const usage: VideoUsage = { short: 0, long: 0 };
   for (const row of rows) {
-    if (inMonth(generatedAt(row.metadata), month)) usage[videoKind(row, quota)] += 1;
+    if (countedIn(row.metadata, month)) usage[videoKind(row, quota)] += 1;
   }
   return usage;
 }
@@ -305,10 +364,32 @@ export function quotaMessage(
 }
 
 export interface QuotaDeps {
-  db: QuotaDb;
+  db: QuotaDb & Partial<Pick<PrismaClient, '$transaction'>>;
   logger: Logger;
   now: () => number;
   env?: Env;
+  /**
+   * Phase 18 (Track C): the organisation's entitlements. Present (standalone billing) = the
+   * trial / custom allowance applies, the check runs under the per-(org, month) advisory lock and
+   * reserves the slot, and top-up credits cover generations past the allowance.
+   */
+  entitlements?: EntitlementsReader;
+}
+
+/** What a locked check reserved; released again when the generation does not start. */
+export interface QuotaReservation {
+  projectId: string;
+  organisationId: string;
+  month: string;
+  /** False when the project was already counted this month (nothing new was reserved). */
+  fresh: boolean;
+  creditUseId?: string;
+}
+
+export interface GenerateQuotaResult {
+  violations: QuotaViolation[];
+  mode: QuotaMode;
+  reservation?: QuotaReservation;
 }
 
 /**
@@ -319,7 +400,9 @@ export async function checkGenerateQuota(
   deps: QuotaDeps,
   tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
   projectId: string,
-): Promise<{ violations: QuotaViolation[]; mode: QuotaMode }> {
+): Promise<GenerateQuotaResult> {
+  if (deps.entitlements && deps.db.$transaction)
+    return checkGenerateQuotaLocked(deps, deps.entitlements, tenant, projectId);
   const env = deps.env ?? process.env;
   const mode = quotaMode(env);
   const tier = toPlanTier(tenant.organisation.planTier);
@@ -340,6 +423,131 @@ export async function checkGenerateQuota(
   });
   raise(deps, mode, tier, violations, { projectId, month: month.key, usage });
   return { violations, mode };
+}
+
+const QUOTA_CODES = new Set<ViolationCode>(['short_quota', 'long_quota']);
+
+/**
+ * Phase 18 §8 / §P.3: the standalone check. Under the per-(org, month) advisory lock it counts,
+ * spends one top-up credit when only the monthly allowance is exhausted (enforce mode), and
+ * reserves the slot (metadata.quotaSlot) before the lock is released, so two racing generate
+ * calls cannot both take the last slot.
+ */
+async function checkGenerateQuotaLocked(
+  deps: QuotaDeps,
+  reader: EntitlementsReader,
+  tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
+  projectId: string,
+): Promise<GenerateQuotaResult> {
+  const env = deps.env ?? process.env;
+  const mode = quotaMode(env, 'enforce');
+  const tier = toPlanTier(tenant.organisation.planTier);
+  const entitlements = await reader.forOrganisation(tenant.organisationId);
+  const quota = entitlementQuota(tierQuota(tier, env), entitlements);
+  const now = deps.now();
+  const month = monthWindow(now);
+  const db = deps.db as PrismaClient;
+  return withQuotaLock(db, tenant.organisationId, month.key, async (tx) => {
+    const project = await tx.videoProject.findFirst({
+      where: { id: projectId, organisationId: tenant.organisationId, deletedAt: null },
+      select: { sourceType: true, targetFormats: true, metadata: true },
+    });
+    if (!project) return { violations: [], mode };
+    const alreadyCounted = countedIn(project.metadata, month);
+    const usage = await monthlyVideoUsage(tx, tenant.organisationId, quota, month);
+    let violations = generateViolations({ project, alreadyCounted, usage, quota, tier });
+    const kind = videoKind(project, quota);
+    let creditUseId = quotaSlotOf(project.metadata)?.creditUseId;
+    const onlyAllowance = violations.length > 0 && violations.every((v) => QUOTA_CODES.has(v.code));
+    if (onlyAllowance && mode === 'enforce') {
+      const use = await consumeCredit(tx, {
+        organisationId: tenant.organisationId,
+        projectId,
+        month: month.key,
+        kind,
+        now: new Date(now),
+      });
+      if (use) {
+        creditUseId = use.id;
+        violations = [];
+        deps.logger.info(
+          { projectId, creditId: use.creditId, reused: use.reused, kind },
+          'top-up credit used for a generation past the plan allowance',
+        );
+      }
+    }
+    raise(deps, mode, tier, violations, { projectId, month: month.key, usage });
+    if (!alreadyCounted) {
+      const slot: QuotaSlot = {
+        month: month.key,
+        kind,
+        at: new Date(now).toISOString(),
+        ...(creditUseId && { creditUseId }),
+      };
+      await tx.videoProject.update({
+        where: { id: projectId },
+        data: {
+          metadata: {
+            ...projectMetadata(project.metadata),
+            quotaSlot: slot,
+          } as unknown as Prisma.InputJsonValue,
+        },
+      });
+    }
+    return {
+      violations,
+      mode,
+      reservation: {
+        projectId,
+        organisationId: tenant.organisationId,
+        month: month.key,
+        fresh: !alreadyCounted,
+        ...(creditUseId && { creditUseId }),
+      },
+    };
+  });
+}
+
+/**
+ * The generation did not start after a locked check (generateProject threw): give the slot and
+ * any credit it spent back. Never throws (the original error is what the caller reports).
+ */
+export async function releaseQuotaReservation(
+  deps: Pick<QuotaDeps, 'db' | 'logger'>,
+  reservation: QuotaReservation | undefined,
+): Promise<void> {
+  if (!reservation?.fresh || !deps.db.$transaction) return;
+  const db = deps.db as PrismaClient;
+  try {
+    await db.$transaction(async (tx) => {
+      const project = await tx.videoProject.findUnique({
+        where: { id: reservation.projectId },
+        select: { metadata: true },
+      });
+      if (!project) return;
+      // generationStart this month means the run did start: keep the slot.
+      if (generatedAt(project.metadata)?.toISOString().slice(0, 7) === reservation.month) return;
+      const rest = Object.fromEntries(
+        Object.entries(projectMetadata(project.metadata)).filter(([k]) => k !== 'quotaSlot'),
+      );
+      await tx.videoProject.update({
+        where: { id: reservation.projectId },
+        data: { metadata: rest as Prisma.InputJsonValue },
+      });
+      if (reservation.creditUseId) {
+        const use = await tx.usageCreditUse.findUnique({ where: { id: reservation.creditUseId } });
+        if (use) {
+          await tx.usageCreditUse.delete({ where: { id: use.id } });
+          await tx.usageCredit.update({
+            where: { id: use.creditId },
+            data: { remaining: { increment: 1 } },
+          });
+        }
+      }
+    });
+  } catch (err) {
+    deps.logger.error({ err, projectId: reservation.projectId }, 'quota reservation not released');
+  }
 }
 
 /** Before POST /publications: the per-video platform and length limits. */
@@ -438,9 +646,11 @@ export async function usageView(
   organisationId: string,
   tier: PlanTier,
   businessId?: string,
+  /** Phase 18: the organisation's entitlements (trial / custom allowance, enforce by default). */
+  entitlements?: Entitlements,
 ): Promise<UsageView> {
   const env = deps.env ?? process.env;
-  const quota = tierQuota(tier, env);
+  const quota = entitlementQuota(tierQuota(tier, env), entitlements);
   const month = monthWindow(deps.now());
   const [usage, businessesScanned, imageGeneration] = await Promise.all([
     monthlyVideoUsage(deps.db, organisationId, quota, month),
@@ -461,7 +671,7 @@ export async function usageView(
   return {
     organisationId,
     planTier: tier,
-    mode: quotaMode(env),
+    mode: quotaMode(env, entitlements ? 'enforce' : 'warn'),
     month: month.key,
     periodStart: month.start.toISOString(),
     resetsAt: month.end.toISOString(),
@@ -560,17 +770,33 @@ export const adminUsageQuery = z.object({
 const organisationIdParam = z.string().trim().min(1).max(128);
 
 export async function organisationUsage(
-  deps: Parameters<typeof usageView>[0],
+  deps: Parameters<typeof usageView>[0] & { entitlements?: EntitlementsReader },
   organisationId: string,
   query: z.infer<typeof adminUsageQuery>,
 ): Promise<
-  { tier: { value: PlanTier; source: 'query' | 'last_generation' | 'default' } } & UsageView
+  {
+    tier: {
+      value: PlanTier;
+      source: 'query' | 'entitlements' | 'last_generation' | 'default';
+    };
+  } & UsageView
 > {
   const id = organisationIdParam.safeParse(organisationId);
   if (!id.success) throw new ValidationError('Invalid organisation id');
-  const recorded = query.tier ? null : await lastRecordedTier(deps.db, id.data);
-  const tier: PlanTier = query.tier ?? recorded ?? 'BASIC';
-  const source = query.tier ? 'query' : recorded ? 'last_generation' : 'default';
-  const view = await usageView(deps, id.data, tier, query.businessId);
+  // Phase 18 (inventory #19): with Stripe billing the tier is stored (org_entitlements), so staff
+  // see the real tier; the tier last recorded on a generation is the core-mode fallback.
+  const entitlements =
+    query.tier || !deps.entitlements ? undefined : await deps.entitlements.forOrganisation(id.data);
+  const stored = entitlements && entitlements.source !== 'none' ? entitlements.tier : null;
+  const recorded = query.tier || stored ? null : await lastRecordedTier(deps.db, id.data);
+  const tier: PlanTier = query.tier ?? stored ?? recorded ?? 'BASIC';
+  const source = query.tier
+    ? 'query'
+    : stored
+      ? 'entitlements'
+      : recorded
+        ? 'last_generation'
+        : 'default';
+  const view = await usageView(deps, id.data, tier, query.businessId, entitlements);
   return { ...view, tier: { value: tier, source } };
 }

@@ -1,5 +1,6 @@
 import type { BrandKit, PrismaClient, UploadKind, VideoUpload } from '@prisma/client';
 import { fontFamilyFor, scriptOf } from '../i18n/scripts';
+import { PLAN_CATALOGUE } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 import type { AssetStorage } from '../storage';
 import type { BrandCard, BrandImage, BrandMedia } from './edl-brand';
@@ -143,7 +144,7 @@ export async function resolveWhiteLabel(
   organisationId: string,
   planTier: PlanTier,
 ): Promise<boolean> {
-  if (planTier === 'ENTERPRISE') return true;
+  if (PLAN_CATALOGUE[planTier].whiteLabel) return true; // Phase 18 §P.1 (catalogue)
   const policy = await db.orgPolicy.findUnique({
     where: { organisationId },
     select: { whiteLabel: true },

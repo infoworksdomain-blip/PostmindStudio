@@ -142,6 +142,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
   const mode = await import('../../mode');
   const select = await import('../core/select');
   const modes = mode.studioModes();
+  const billingWiring = await import('../billing/wiring');
   const devTenant = devTenantFromEnv();
   if (devTenant) {
     logger.warn(
@@ -192,10 +193,17 @@ async function buildFromEnv(): Promise<ApiDeps> {
     betaPlans: beta.createBetaPlanLookup({ db: prisma, logger, now: Date.now }),
     // Phase 18 §2.8: Resend through the outbox in standalone mode; logged only otherwise.
     mailer: mailer.createAuthMailer({ db: prisma, queue, logger }),
-    modes,
     core: { businesses: select.selectBusinessDirectory(modes, prisma) },
     businessGuard: select.selectBusinessGuard(modes, prisma),
     metaConnect: select.selectMetaConnect(modes),
+    // Phase 18 Track C: modes, entitlements (tier + access gate) and the Stripe billing service.
+    ...billingWiring.billingApiDepsFromEnv({
+      db: prisma,
+      logger,
+      audit: auditLog,
+      appUrl: env.requireEnv('APP_URL'),
+    }),
+    modes,
     logger,
     now: Date.now,
   };

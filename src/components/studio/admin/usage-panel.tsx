@@ -19,7 +19,7 @@ type Tier = UsageResponse['usage']['planTier'];
 
 export interface AdminUsageResponse {
   usage: UsageResponse['usage'] & {
-    tier: { value: Tier; source: 'query' | 'last_generation' | 'default' };
+    tier: { value: Tier; source: 'query' | 'entitlements' | 'last_generation' | 'default' };
   };
 }
 

@@ -17,6 +17,7 @@ import {
   type ProviderKeyMap,
 } from '../providers/byoc-providers';
 import type { ProviderAdapter } from '../providers/interface';
+import { minTierFor, tierAtLeast } from '../billing/catalogue';
 import { toPlanTier } from './catalog';
 import { findProject } from './projects';
 
@@ -50,7 +51,7 @@ export function byocAvailability(
   env: Env = process.env,
 ): ByocAvailability {
   if (!byocEnabled(env)) return { enabled: false, reason: 'disabled' };
-  if (toPlanTier(tenant.organisation.planTier) !== 'ENTERPRISE')
+  if (!tierAtLeast(toPlanTier(tenant.organisation.planTier), minTierFor('byocProviderKeys')))
     return { enabled: false, reason: 'plan_tier' };
   return { enabled: true };
 }
@@ -63,9 +64,13 @@ export function assertByocAvailable(
   if (availability.enabled) return;
   if (availability.reason === 'disabled')
     throw new FeatureDisabledError(BYOC_FEATURE, 'Bring-your-own provider keys are not enabled');
-  throw new PlanTierError('ENTERPRISE', 'Bring-your-own provider keys need the Enterprise plan', {
-    planTier: tenant.organisation.planTier ?? null,
-  });
+  throw new PlanTierError(
+    minTierFor('byocProviderKeys'),
+    'Bring-your-own provider keys need the Enterprise plan',
+    {
+      planTier: tenant.organisation.planTier ?? null,
+    },
+  );
 }
 
 // ---- in-process change notifications (the registry cache listens) ----

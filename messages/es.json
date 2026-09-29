@@ -2913,7 +2913,8 @@
       "tierSource": {
         "query": "elegido aquí",
         "last_generation": "registrado en su última generación",
-        "default": "sin generaciones registradas: se asume Basic"
+        "default": "sin generaciones registradas: se asume Basic",
+        "entitlements": "según la suscripción de la organización"
       },
       "mode": {
         "warn": "avisar",
@@ -3373,7 +3374,145 @@
     }
   },
   "marketing": {},
-  "pricing": {},
+  "pricing": {
+    "meta": {
+      "title": "Precios"
+    },
+    "hero": {
+      "eyebrow": "Precios",
+      "title": "Planes que crecen con tu producción de vídeo",
+      "description": "Todos los planes incluyen guiones con IA, renderizados en varios formatos y publicación en tus cuentas conectadas."
+    },
+    "interval": {
+      "label": "Periodo de facturación",
+      "month": "Mensual",
+      "year": "Anual"
+    },
+    "exclVat": "Precios sin IVA.",
+    "unavailable": "Ahora mismo no podemos mostrar los precios. Vuelve a intentarlo en unos minutos.",
+    "priceUnavailable": "Precio no disponible",
+    "perMonth": "{amount} / mes",
+    "perYear": "{amount} / año",
+    "annualSaving": "Ahorra {amount} al año",
+    "trialNote": "Prueba {tier} gratis durante {days, plural, one {# día} other {# días}}, con {short} vídeos cortos y {long} vídeo largo incluidos. Se requiere tarjeta; cancela cuando quieras.",
+    "popular": "El más popular",
+    "tiers": {
+      "BASIC": {
+        "tagline": "Para un negocio que empieza con el vídeo corto."
+      },
+      "STANDARD": {
+        "tagline": "Para equipos en crecimiento que publican a diario, con música y vídeos largos."
+      },
+      "PLUS": {
+        "tagline": "Para agencias y marcas que necesitan clonación de voz, 4K e imágenes con IA."
+      },
+      "ENTERPRISE": {
+        "tagline": "Límites a medida, tus propias claves de proveedor y resultados de marca blanca."
+      }
+    },
+    "highlights": {
+      "shortVideos": "{count, plural, one {# vídeo corto al mes} other {# vídeos cortos al mes}}",
+      "longVideos": "{count, plural, one {# vídeo largo al mes} other {# vídeos largos al mes}}",
+      "noLongVideos": "Sin vídeos largos",
+      "seats": "{count, plural, one {# usuario} other {# usuarios}}",
+      "businesses": "{count, plural, one {# negocio} other {# negocios}}",
+      "unlimitedVideos": "Vídeos ilimitados (uso razonable)"
+    },
+    "enterprise": {
+      "price": "Precio a medida",
+      "contact": "Contactar con ventas",
+      "contactAria": "Escribir al equipo de ventas sobre Enterprise",
+      "noContact": "Pregunta a tu gestor de cuenta de PostMind por Enterprise."
+    },
+    "cta": {
+      "trial": "Empezar prueba gratis",
+      "choose": "Elegir plan",
+      "chooseAria": "Elegir el plan {tier}"
+    },
+    "compare": {
+      "title": "Comparar planes",
+      "caption": "Comparativa de planes",
+      "feature": "Función",
+      "included": "Incluido",
+      "notIncluded": "No incluido",
+      "unlimited": "Ilimitado",
+      "rows": {
+        "shortVideos": "Vídeos cortos al mes (hasta 30 s)",
+        "longVideos": "Vídeos largos al mes",
+        "platforms": "Plataformas",
+        "dailyCostCap": "Presupuesto diario de generación",
+        "monthlyCostCap": "Presupuesto mensual de generación",
+        "queuePriority": "Prioridad en la cola de renderizado",
+        "musicAndSfx": "Música y efectos de sonido",
+        "voiceClone": "Clonación de la voz de marca",
+        "renders4k": "Renderizados en 4K",
+        "imageLibrary": "Biblioteca de imágenes",
+        "generatedImages": "Imágenes generadas por negocio al mes",
+        "scanBusinesses": "Análisis de sitios web (negocios)",
+        "libraryInspire": "Biblioteca de referencias: modo Inspiración",
+        "libraryTemplate": "Biblioteca de referencias: modo Plantilla",
+        "customPresets": "Ajustes de superposición y plantillas de presentación personalizados",
+        "approvalWorkflows": "Flujos de aprobación en varios pasos",
+        "byocProviderKeys": "Tus propias claves de proveedor",
+        "whiteLabel": "Resultados de marca blanca",
+        "dnsDomainVerification": "Verificación de dominio",
+        "seats": "Usuarios",
+        "businesses": "Negocios",
+        "storage": "Almacenamiento"
+      },
+      "values": {
+        "longVideos": "{count} × hasta {minutes} min",
+        "platforms": {
+          "tiktok_instagram_plus_one": "TikTok, Instagram y 1 más",
+          "all": "Las 8"
+        },
+        "queuePriority": {
+          "normal": "Estándar",
+          "high": "Alta"
+        },
+        "imageLibrary": {
+          "stock": "Imágenes de stock",
+          "stock_scrape": "Imágenes de stock y de tu web",
+          "ai_generation": "Imágenes de stock, de tu web y con IA",
+          "byoc_generation": "Imágenes con IA usando tus propias claves"
+        },
+        "storage": "{gb} GB"
+      }
+    },
+    "topUps": {
+      "title": "Paquetes de recarga",
+      "description": "¿Necesitas más este mes? Compra un paquete puntual. Los créditos se usan después de la cuota de tu plan, empezando por los más antiguos.",
+      "short": "{quantity, plural, one {# vídeo corto} other {# vídeos cortos}}",
+      "long": "{quantity, plural, one {# vídeo largo} other {# vídeos largos}}",
+      "forTier": "Para planes {tier}",
+      "validity": "Válido durante {months} meses"
+    },
+    "faq": {
+      "title": "Preguntas",
+      "items": {
+        "trial": {
+          "q": "¿Cómo funciona la prueba gratis?",
+          "a": "La prueba de Standard requiere una tarjeta. No se te cobrará nada hasta que termine la prueba y puedes cancelar antes. Cada organización puede tener una sola prueba."
+        },
+        "change": {
+          "q": "¿Puedo cambiar de plan más adelante?",
+          "a": "Sí. Las mejoras se aplican al momento y se cobran de forma proporcional. Las bajadas de plan se aplican al final de tu periodo de facturación, y no se borra nada."
+        },
+        "limit": {
+          "q": "¿Qué pasa si llego a mi límite?",
+          "a": "Los vídeos nuevos se pausan hasta que tu cuota se renueve a principios del mes siguiente. Puedes mejorar tu plan o comprar un paquete de recarga para seguir."
+        },
+        "vat": {
+          "q": "¿Los precios incluyen IVA?",
+          "a": "No. Los precios no incluyen IVA, que se añade en el pago cuando corresponda."
+        },
+        "cancel": {
+          "q": "¿Qué pasa si cancelo?",
+          "a": "Mantienes el acceso hasta el final del periodo que has pagado. Después, tu cuenta pasa a modo de solo lectura: podrás seguir viendo, exportando y descargando tu trabajo."
+        }
+      }
+    }
+  },
   "legal": {},
   "auth": {
     "shell": {
@@ -3564,8 +3703,258 @@
   },
   "orgSettings": {},
   "members": {},
-  "billing": {},
-  "upgrade": {},
+  "billing": {
+    "meta": {
+      "title": "Facturación"
+    },
+    "header": {
+      "eyebrow": "Ajustes",
+      "title": "Facturación",
+      "description": "Tu plan, tu uso, tus créditos de recarga y tus facturas."
+    },
+    "loading": "Cargando la facturación",
+    "notEnabled": {
+      "title": "La facturación no se gestiona aquí",
+      "body": "Tu plan se gestiona desde tu cuenta de PostMind. Contacta con tu gestor de cuenta para cambiarlo."
+    },
+    "banners": {
+      "checkoutSuccess": "Gracias. Estamos activando tu plan y aparecerá aquí en un momento.",
+      "checkoutCancelled": "Se ha cancelado el pago. No se te ha cobrado nada.",
+      "topupSuccess": "Recarga comprada. Los créditos aparecerán aquí en un momento.",
+      "topupCancelled": "Recarga cancelada. No se te ha cobrado nada.",
+      "dismiss": "Cerrar"
+    },
+    "plan": {
+      "title": "Plan actual",
+      "tierName": "Plan {tier}",
+      "noPlan": "Sin plan",
+      "status": {
+        "trialing": "Prueba gratis",
+        "active": "Activo",
+        "past_due": "Pago fallido",
+        "read_only": "Solo lectura",
+        "cancelling": "Cancelándose",
+        "none": "Sin plan"
+      },
+      "trialEnds": "Tu prueba gratis termina el {date}. Tu plan empezará automáticamente salvo que canceles.",
+      "renews": "Se renueva el {date}.",
+      "cancelsOn": "Tu plan termina el {date}. Hasta entonces mantienes el acceso completo.",
+      "pastDue": "No hemos podido cobrar tu último pago. Actualiza tu método de pago antes del {date} para mantener el acceso completo.",
+      "graceLeft": "{days, plural, one {Queda # día} other {Quedan # días}}",
+      "readOnly": "Tu cuenta está en modo de solo lectura. Puedes seguir viendo, exportando y descargando tu trabajo, pero no podrás crear ni publicar hasta que se resuelva la facturación.",
+      "none": "Tu organización aún no tiene plan. Elige uno a continuación para empezar a crear.",
+      "interval": {
+        "month": "Facturación mensual",
+        "year": "Facturación anual"
+      },
+      "adminSource": "Plan personalizado configurado por el equipo de PostMind.",
+      "manage": "Gestionar facturación",
+      "manageHelp": "Cambia de plan, actualiza tu método de pago, descarga recibos o cancela en el portal seguro de Stripe.",
+      "askOwner": "Solo un propietario de la organización puede cambiar la facturación. Pídeselo a un propietario si necesitas otro plan.",
+      "checkoutUnavailable": "El pago online no está disponible en este momento.",
+      "alreadySubscribed": "Tu organización ya tiene una suscripción. Usa Gestionar facturación para cambiarla."
+    },
+    "usage": {
+      "title": "Uso este mes",
+      "description": "Las cuotas de vídeo se renuevan el primer día de cada mes (UTC).",
+      "seats": "Usuarios",
+      "businesses": "Negocios",
+      "storage": "Almacenamiento",
+      "storageUsed": "{used} GB de {limit} GB",
+      "storageUnlimited": "{used} GB usados",
+      "storageOver": "Has superado tu cuota de almacenamiento. No se borra nada, pero plantéate hacer limpieza o mejorar tu plan.",
+      "cost": "Gasto en generación",
+      "costOf": "{spent} de {cap}",
+      "costNoCap": "{spent} (sin límite)",
+      "costHeadroom": "Tu límite incluye {amount} extra de créditos de recarga.",
+      "usedOf": "{used} de {limit}",
+      "usedUnlimited": "{used} (ilimitado)"
+    },
+    "credits": {
+      "title": "Recargas",
+      "description": "Los créditos se usan después de tu cuota mensual, empezando por los más antiguos, y duran 12 meses.",
+      "short": "{count, plural, =0 {Sin créditos de vídeo corto} one {# crédito de vídeo corto} other {# créditos de vídeo corto}}",
+      "long": "{count, plural, =0 {Sin créditos de vídeo largo} one {# crédito de vídeo largo} other {# créditos de vídeo largo}}",
+      "buy": "Comprar",
+      "buyAria": "Comprar {pack} por {amount}",
+      "noPacks": "Los paquetes de recarga están disponibles en los planes Basic, Standard y Plus."
+    },
+    "invoices": {
+      "title": "Facturas",
+      "empty": "Todavía no hay facturas.",
+      "caption": "Facturas",
+      "number": "Factura",
+      "date": "Fecha",
+      "amount": "Importe",
+      "status": "Estado",
+      "links": "Enlaces",
+      "draft": "Borrador",
+      "view": "Ver",
+      "viewAria": "Ver la factura {number} (se abre en una pestaña nueva)",
+      "pdf": "PDF",
+      "pdfAria": "Descargar la factura {number} en PDF (se abre en una pestaña nueva)",
+      "statuses": {
+        "draft": "Borrador",
+        "open": "Pendiente",
+        "paid": "Pagada",
+        "uncollectible": "Incobrable",
+        "void": "Anulada"
+      }
+    },
+    "picker": {
+      "title": "Elige un plan",
+      "description": "Elige un plan y paga de forma segura con Stripe. Precios sin IVA.",
+      "trial": "Empezar prueba gratis",
+      "choose": "Elegir {tier}",
+      "redirecting": "Abriendo el pago seguro…"
+    },
+    "subscriptionStatus": {
+      "active": "Activa",
+      "trialing": "Prueba",
+      "past_due": "Vencida",
+      "unpaid": "Impagada",
+      "canceled": "Cancelada",
+      "incomplete": "Incompleta",
+      "incomplete_expired": "Caducada",
+      "paused": "En pausa"
+    },
+    "admin": {
+      "tab": "Facturación",
+      "entitlements": {
+        "title": "Plan y derechos",
+        "description": "Busca una organización para ver su plan efectivo, sus suscripciones y cualquier ajuste manual del equipo.",
+        "orgIdLabel": "ID de la organización",
+        "orgIdPlaceholder": "org_…",
+        "open": "Abrir",
+        "loading": "Cargando derechos",
+        "effective": "Plan efectivo",
+        "tier": "Nivel",
+        "access": "Acceso",
+        "source": "Origen",
+        "graceUntil": "Periodo de gracia hasta",
+        "accessValues": {
+          "full": "Completo",
+          "read_only": "Solo lectura",
+          "none": "Ninguno"
+        },
+        "sourceValues": {
+          "stripe": "Stripe",
+          "trial": "Prueba",
+          "admin": "Ajuste manual del equipo",
+          "core": "PostMind Core",
+          "none": "Ninguno"
+        },
+        "stored": "Derechos guardados",
+        "noStored": "Aún no hay derechos guardados.",
+        "storedSummary": "{tier} · {access} · {source} · actualizado {when}",
+        "override": "Ajuste manual actual",
+        "noOverride": "Sin ajuste manual del equipo.",
+        "overrideReason": "Motivo: {reason}",
+        "overrideSetAt": "Configurado {when}",
+        "expires": "Caduca el {date}",
+        "noExpiry": "Sin caducidad",
+        "overridePrice": "Precio acordado: {amount} al mes",
+        "subscriptions": "Suscripciones",
+        "noSubscriptions": "Sin suscripciones.",
+        "subscriptionLine": "{tier} · {interval} · termina el {date}",
+        "form": {
+          "title": "Configurar un ajuste manual",
+          "tier": "Nivel",
+          "access": "Acceso",
+          "keep": "Mantener el actual",
+          "limits": "Límites personalizados",
+          "limitsHelp": "Deja un límite vacío para usar el valor del plan. Marca Ilimitado para quitarlo.",
+          "unlimited": "Ilimitado",
+          "unlimitedAria": "{limit}: ilimitado",
+          "limitLabels": {
+            "seats": "Usuarios",
+            "businesses": "Negocios",
+            "storageGb": "Almacenamiento (GB)",
+            "shortVideos": "Vídeos cortos al mes",
+            "longVideos": "Vídeos largos al mes",
+            "longMaxSec": "Duración máxima de vídeo largo (segundos)",
+            "generatedImagesPerBusinessPerMonth": "Imágenes generadas por negocio al mes",
+            "scanBusinesses": "Análisis de sitios web (negocios)"
+          },
+          "price": "Precio mensual acordado (£, sin IVA)",
+          "minimum": "Mínimo para el límite de coste mensual de {cap} de esta organización: {amount}.",
+          "belowMinimum": "El precio está por debajo del mínimo de {amount}.",
+          "priceRequired": "Un ajuste manual Enterprise necesita el precio mensual acordado.",
+          "expiresAt": "Caduca (opcional)",
+          "reason": "Motivo (obligatorio)",
+          "save": "Guardar ajuste manual",
+          "saved": "Ajuste manual guardado"
+        },
+        "clear": {
+          "title": "Quitar el ajuste manual",
+          "description": "La organización vuelve a lo que le da su suscripción de Stripe.",
+          "reason": "Motivo para quitarlo",
+          "button": "Quitar ajuste manual",
+          "cleared": "Ajuste manual quitado"
+        }
+      },
+      "subscriptions": {
+        "title": "Suscripciones",
+        "description": "Todas las suscripciones de Stripe, de la más reciente a la más antigua.",
+        "loading": "Cargando suscripciones",
+        "mrr": "Ingresos recurrentes mensuales",
+        "mrrHelp": "Suscripciones activas y vencidas; planes anuales divididos entre 12; sin IVA.",
+        "total": "{count, plural, =0 {Sin suscripciones} one {# suscripción} other {# suscripciones}}",
+        "byTier": "Por nivel",
+        "byTierAria": "Suscripciones por nivel",
+        "tierLine": "{count} · {mrr}",
+        "byStatus": "Por estado",
+        "byStatusAria": "Suscripciones por estado",
+        "filter": "Estado",
+        "allStatuses": "Todos los estados",
+        "caption": "Suscripciones",
+        "columns": {
+          "organisation": "Organización",
+          "tier": "Nivel",
+          "interval": "Facturación",
+          "mrr": "MRR",
+          "periodEnd": "Fin del periodo",
+          "status": "Estado"
+        },
+        "cancelling": "Cancelándose",
+        "unknownOrg": "Organización desconocida",
+        "unknownTier": "Desconocido",
+        "empty": "Ninguna suscripción coincide."
+      }
+    }
+  },
+  "upgrade": {
+    "planTier": {
+      "title": "Mejora a {tier}",
+      "body": "Esta función está incluida a partir del plan {tier}.",
+      "price": "{tier} cuesta {amount} al mes, sin IVA.",
+      "enterprise": "Enterprise se contrata con nuestro equipo de ventas."
+    },
+    "quota": {
+      "title": "Has alcanzado el límite de este mes",
+      "body": "Mejora tu plan para tener más cuota mensual o compra un paquete de recarga para seguir este mes."
+    },
+    "planRequired": {
+      "title": "Elige un plan para empezar a crear",
+      "body": "Tu organización aún no tiene plan. Elige uno para generar, publicar y analizar."
+    },
+    "billingRequired": {
+      "title": "Actualiza tu método de pago",
+      "body": "Tu cuenta está en modo de solo lectura por un problema de facturación. Actualiza tu método de pago para recuperar el acceso completo."
+    },
+    "actions": {
+      "upgrade": "Mejorar plan",
+      "buyTopUp": "Comprar recarga",
+      "choosePlan": "Elegir un plan",
+      "updatePayment": "Actualizar método de pago",
+      "viewPlans": "Ver planes",
+      "notNow": "Ahora no"
+    },
+    "askOwner": "Solo un propietario de la organización puede cambiar el plan o la facturación. Pídeselo a un propietario.",
+    "lock": {
+      "aria": "Requiere el plan {tier}"
+    }
+  },
   "email": {
     "layout": {
       "brand": "PostMind Studio",

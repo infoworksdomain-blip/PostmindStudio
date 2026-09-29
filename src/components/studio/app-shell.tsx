@@ -34,6 +34,7 @@ import { useLocaleSwitch } from './i18n/intl-provider';
 import { NotificationsBell } from './notifications-bell';
 import { UsageBanner } from './usage-meter';
 import { WelcomeLink } from './onboarding/welcome-link';
+import { UpgradeDialogHost } from './billing/upgrade-dialog';
 
 // Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
 // Labels come from the `shell` catalogue (BACKLOG 16.1); layout uses logical properties so the
@@ -198,6 +199,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-8 md:py-10">
           <UsageBanner />
           {children}
+          <UpgradeDialogHost />
         </main>
       </div>
     </div>

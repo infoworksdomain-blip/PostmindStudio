@@ -18,7 +18,15 @@ describe('PURGE_TABLE_STEPS', () => {
   });
 
   it('purges every model with an organisationId column except the tombstones and takedowns', () => {
-    const kept = ['OrganisationPurge', 'BusinessPurge', 'TakedownRequest'];
+    const kept = [
+      'OrganisationPurge',
+      'BusinessPurge',
+      'TakedownRequest',
+      // Phase 18 Track C billing records (§5.11 retention).
+      'BillingCustomer',
+      'Subscription',
+      'TrialFingerprint',
+    ];
     const orgScoped = models
       .filter((m) => m.fields.some((f) => f.name === 'organisationId'))
       .map((m) => m.name)

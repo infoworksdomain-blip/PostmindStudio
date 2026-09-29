@@ -20,6 +20,7 @@ import { SafetyReviewPanel } from './safety-review-panel';
 import { UsagePanel } from './usage-panel';
 import { BetaPanel } from './beta-panel';
 import { SafetyAuditPanel } from './safety-audit-panel';
+import { AdminBillingTab } from './billing/billing-tab';
 import { isForbidden, type KillSwitchState } from './types';
 
 // BACKLOG 10.11 / spec 16.4 — Admin Centre (PostMind staff only). Every /admin route calls
@@ -76,10 +77,13 @@ const TAB_KEY = {
 
 export function AdminCentre() {
   const t = useTranslations('admin.centre');
+  const tBilling = useTranslations('billing.admin');
   const probe = useApi<KillSwitchState>('/admin/kill-switch');
   // ?tab= opens a tab directly (the safety-review notification links to ?tab=safety).
   const requested = useSearchParams()?.get('tab') ?? '';
-  const initialTab = (TABS as readonly string[]).includes(requested) ? requested : 'kill-switch';
+  const initialTab = ([...TABS, 'billing'] as readonly string[]).includes(requested)
+    ? requested
+    : 'kill-switch';
   const header = (
     <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
   );
@@ -116,6 +120,7 @@ export function AdminCentre() {
               {t(`tabs.${TAB_KEY[tab]}`)}
             </TabsTrigger>
           ))}
+          <TabsTrigger value="billing">{tBilling('tab')}</TabsTrigger>
         </TabsList>
         <TabsContent value="kill-switch">
           <KillSwitchPanel />
@@ -158,6 +163,9 @@ export function AdminCentre() {
         </TabsContent>
         <TabsContent value="beta">
           <BetaPanel />
+        </TabsContent>
+        <TabsContent value="billing">
+          <AdminBillingTab />
         </TabsContent>
       </Tabs>
     </>
