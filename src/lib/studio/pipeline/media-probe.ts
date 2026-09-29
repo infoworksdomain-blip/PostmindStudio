@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ConfigurationError, ValidationError } from '../../errors';
+import { ffmpegLimiter, type ConcurrencyLimiter } from './process-limit';
 
 // Media inspection for Layer 7 (render metadata) and Layer 8 auto-checks (spec 13.1), via the
 // system ffprobe/ffmpeg (FFPROBE_PATH / FFMPEG_PATH override the PATH lookup). Arguments are
@@ -48,8 +49,27 @@ export interface RunResult {
   stderr: string;
 }
 
-/** Run ffmpeg/ffprobe with an argv array (no shell). Also used by the overlay pre-renderer. */
+/**
+ * Run ffmpeg/ffprobe with an argv array (no shell). Also used by the overlay pre-renderer, the
+ * mastering step and the thumbnail composer. Waits for a slot when STUDIO_FFMPEG_MAX_CONCURRENT
+ * caps the children per process (process-limit.ts); the timeout starts once the child starts.
+ */
 export function run(
+  binary: string,
+  args: string[],
+  timeoutMs: number,
+  cwd?: string,
+): Promise<RunResult> {
+  let limiter: ConcurrencyLimiter;
+  try {
+    limiter = ffmpegLimiter();
+  } catch (err) {
+    return Promise.reject(err);
+  }
+  return limiter.run(() => spawnProcess(binary, args, timeoutMs, cwd));
+}
+
+function spawnProcess(
   binary: string,
   args: string[],
   timeoutMs: number,

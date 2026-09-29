@@ -168,3 +168,120 @@ jobs:
           mkdir -p secrets && touch secrets/browserless-token
           IMAGE_TAG=ci docker compose -f docker-compose.prod.yml config --quiet
           IMAGE_TAG=ci docker compose -f docker-compose.prod.yml --profile migrate config --quiet
+      # Deployment: single VPS — the same image runs the VPS stack (deploy/vps/compose.yml): migrate,
+      # then web answers /api/health/ready against the stack's own Postgres 17 + pgvector and
+      # Valkey, and the worker's `node --import tsx` entry point loads. Placeholder env only.
+      - name: VPS stack smoke (deploy/vps/compose.yml)
+        run: |
+          eval "$(bash scripts/vps/ci-fixture.sh "$RUNNER_TEMP/vps")"
+          # Shell variables win over --env-file values: use the image built above.
+          export IMAGE_TAG=ci STUDIO_IMAGE=postmind-studio
+          vps() {
+            docker compose -p postmind-studio -f deploy/vps/compose.yml \
+              --env-file "$STUDIO_ENV_FILE" --env-file "$STUDIO_BACKUP_ENV_FILE" "$@"
+          }
+          docker network create studio-edge
+          vps build postgres
+          vps up -d --wait --wait-timeout 180 postgres redis
+          vps --profile migrate run --rm migrate
+          vps up -d --no-deps --wait --wait-timeout 240 web
+          vps exec -T web node -e "fetch('http://127.0.0.1:3010/api/health/ready').then(async r=>{console.log(r.status, await r.text());process.exit(r.ok?0:1)})"
+          vps run --rm --no-deps --entrypoint node worker --import tsx -e \
+            "import('./src/lib/studio/queue/queues.ts').then(m=>console.log('queues:', Object.values(m.QUEUES).join(' ')))"
+          vps exec -T redis valkey-cli CONFIG GET maxmemory-policy | grep -qx noeviction
+          vps exec -T redis valkey-cli CONFIG GET appendonly | grep -qx yes
+          vps exec -T -u postgres postgres psql -U studio -d postmind_studio -tAc \
+            "select extversion from pg_extension where extname = 'vector'"
+          vps exec -T -u postgres postgres pgbackrest version
+      - name: VPS stack logs
+        if: failure()
+        run: |
+          docker ps -a
+          for c in $(docker ps -aq --filter label=com.docker.compose.project=postmind-studio); do
+            echo "--- $c"; docker logs --tail 80 "$c" || true
+          done
+
+  vps-config:
+    # Deployment: single VPS — shell scripts (shellcheck is on the ubuntu runners; not available
+    # on the build machine), both compose files resolve with the committed examples, Caddy accepts
+    # the generated site, and Prometheus accepts the VPS scrape config with the repo's rules.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck --version && shellcheck -x scripts/vps/*.sh deploy/vps/bootstrap.sh
+      - name: docker compose config (app stack, every profile, and the edge)
+        run: |
+          eval "$(bash scripts/vps/ci-fixture.sh "$RUNNER_TEMP/vps")"
+          export IMAGE_TAG=ci
+          for profiles in "" "--profile migrate --profile ops --profile restore" "--profile monitoring --profile headless-render"; do
+            # shellcheck disable=SC2086 # word splitting of the profile flags is intended
+            docker compose -p postmind-studio -f deploy/vps/compose.yml \
+              --env-file "$STUDIO_ENV_FILE" --env-file "$STUDIO_BACKUP_ENV_FILE" $profiles config --quiet
+          done
+          docker compose -p postmind-edge -f deploy/vps/compose.edge.yml --env-file "$STUDIO_ENV_FILE" config --quiet
+      - name: caddy validate (Caddyfile + a site rendered like deploy.sh does)
+        run: |
+          mkdir -p "$RUNNER_TEMP/sites"
+          sed -e 's|__DOMAIN__|studio.ci.invalid|g' -e 's|__ENV__|production|g' \
+            -e 's|__INTERNAL_CIDRS__|203.0.113.10/32 2001:db8::/32|g' \
+            deploy/vps/caddy/site.caddy.tmpl > "$RUNNER_TEMP/sites/production.caddy"
+          sed -e '/not client_ip __INTERNAL_CIDRS__/d' -e 's|__DOMAIN__|staging.ci.invalid|g' \
+            -e 's|__ENV__|staging|g' deploy/vps/caddy/site.caddy.tmpl > "$RUNNER_TEMP/sites/staging.caddy"
+          docker run --rm -e ACME_EMAIL=ci@example.com -e CADDY_TRUSTED_PROXIES=127.0.0.1/32 \
+            -v "$PWD/deploy/vps/caddy:/etc/caddy:ro" -v "$RUNNER_TEMP/sites:/etc/caddy-sites:ro" \
+            caddy:2.11.4-alpine caddy validate --config /etc/caddy/Caddyfile
+      - name: promtool check config (deploy/vps/prometheus/prometheus.yml)
+        run: |
+          printf 'ci-placeholder' > "$RUNNER_TEMP/metrics-token"
+          docker run --rm \
+            -v "$PWD/deploy/vps/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
+            -v "$PWD/ops/prometheus/studio-alerts.yml:/etc/prometheus/rules/studio-alerts.yml:ro" \
+            -v "$PWD/ops/prometheus/studio-slo.yml:/etc/prometheus/rules/studio-slo.yml:ro" \
+            -v "$RUNNER_TEMP/metrics-token:/etc/prometheus/secrets/metrics-token:ro" \
+            --entrypoint promtool prom/prometheus:v2.55.1 check config /etc/prometheus/prometheus.yml
+
+  publish-image:
+    # Deployment: single VPS — the server pulls ghcr.io/infoworksdomain-blip/postmind-studio:<sha>.
+    # Only main, only after every check passed. GitHub's documented GHCR flow
+    # (https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images, read
+    # 2026-09-29): GITHUB_TOKEN with packages: write, then an artifact attestation (actions/attest,
+    # push-to-registry) that `gh attestation verify oci://… --owner infoworksdomain-blip` checks.
+    # BuildKit provenance mode=max is attached as well
+    # (https://docs.docker.com/build/ci/github-actions/attestations/).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [verify, database, ops-config, docker, vps-config]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      IMAGE: ghcr.io/infoworksdomain-blip/postmind-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push (tag = commit SHA)
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          provenance: mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Artifact attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true

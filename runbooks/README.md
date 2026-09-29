@@ -9,7 +9,8 @@ format: **trigger metric → threshold → escalation → steps → verification
 | [kill-switch.md](kill-switch.md) | All four kill-switch levels, the per-platform publishing halt, re-drive after release, and the timed rehearsal (12.2) | 60 s to halt |
 | [rollback.md](rollback.md) | Reverting a bad deploy, plus the timed rehearsal (12.3) | 5 min |
 | [deploy.md](deploy.md) | Building, migrating and releasing (12.6) | — |
-| [render-deploy.md](render-deploy.md) | Deployment: Render — one Blueprint (`render.yaml`) for staging + production: secrets, domains, Cloudflare DNS, first deploy, promotion, rollback, scaling, PITR | — |
+| [vps-deploy.md](vps-deploy.md) | **Primary deployment:** one Hetzner server with Docker Compose — server size (2 GB default) and resizing, firewall, Cloudflare DNS, bootstrap, env files, deploy/rollback, staging on the same server, health check, pgBackRest PITR to R2, when to split | `/api/health/ready` 200 |
+| [render-deploy.md](render-deploy.md) | Deployment alternative: Render — one Blueprint (`render.yaml`) for staging + production (dropped as primary for cost) | — |
 | [backup-recovery.md](backup-recovery.md) | Postgres PITR, S3 versioning, daily object-storage backup copy with 30-day age-out (17.5), Redis (playbook E-12) | — |
 | [r2-setup.md](r2-setup.md) | Cloudflare R2 as the object store (`STORAGE_PROVIDER=r2`): EU buckets, scoped token, CORS, lifecycle, env | — |
 | [storage-failover.md](storage-failover.md) | Secondary-region (S3) or second-bucket (R2) storage failover (15.E9) | — |
@@ -96,7 +97,10 @@ cost 80% / 100% / paused, generation complete, approval pending > 2 h and public
 - **Built and ready to run, not deployed yet (BACKLOG 14.3):** `docker-compose.monitoring.yml`
   + `ops/prometheus/prometheus.yml` (the scrape jobs above) + `scripts/ops/alert-smoke.ts`.
   **DevOps** creates the PagerDuty service / Slack webhook, puts the three secret files on the
-  host and follows monitoring-deploy.md. Nothing here has paged a human yet.
+  host and follows monitoring-deploy.md. Nothing here has paged a human yet. On the single server
+  (vps-deploy.md) the same stack is the opt-in `monitoring` profile, off on a 2 GB server; until
+  it is on, `scripts/vps/healthcheck.sh` (5-minute timer → `OPS_ALERT_WEBHOOK_URL`) and an
+  external uptime check are the only alerting.
 - **Thresholds are starting points:** the 500-job backlog and 5% failure rate need tuning after
   the k6 run (BACKLOG 12.1) and the first weeks of real traffic.
 - **Email** delivery waits for an operator decision (notifications-email.md). Opted-in email is

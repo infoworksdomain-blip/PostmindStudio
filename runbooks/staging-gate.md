@@ -17,7 +17,11 @@ without `--confirm`.
 - You have a platform staff JWT for staging (`STUDIO_STAFF_TOKEN`) and a JWT for a dedicated
   load-test organisation (`STUDIO_TOKEN`).
 - You have a read-only role on the staging database (`STAGING_DATABASE_URL`). It times the scoped
-  kill-switch levels and is the source for the restore snapshot. On Render the database accepts
+  kill-switch levels and is the source for the restore snapshot. **On the single server**
+  ([vps-deploy.md](vps-deploy.md) section 9) Postgres is private to the Docker network: run the
+  DB-backed checks (4, 7, 8) on the server through the `ops` service
+  (`bash scripts/vps/compose.sh staging run --rm ops …`, and `scripts/vps/pg-restore.sh` for 7–8).
+  On Render the database accepts
   private-network connections only, so run the DB-backed checks (4, 7, 8) from the
   `studio-web-staging` **Shell**, or add the machine's IP to the database's inbound IP rules for
   the session and remove it afterwards ([render-deploy.md](render-deploy.md)).
@@ -114,6 +118,13 @@ engaged and released but not timed (INCOMPLETE).
 
 `STAGING_DEPLOY_CMD` is your deploy command with `{tag}` in it. For example:
 
+- **Single server (primary):** `bash scripts/vps/deploy.sh --env staging --ssh deploy@<ip> {tag}`,
+  where `{tag}` is the commit SHA of an image CI pushed to GHCR. It runs `scripts/vps/deploy.sh` on
+  the server over SSH: pull, migrate, web, worker, Caddy, and it exits 0 only once
+  `/api/health/ready` answers inside the container and through Caddy, so the wait below starts
+  on the new release. In GitHub Actions the workflow installs the SSH key from the `staging`
+  environment (secret `VPS_SSH_PRIVATE_KEY`, variable `VPS_SSH_KNOWN_HOSTS`) before the check
+  runs ([vps-deploy.md](vps-deploy.md) section 9). Staging must be switched on first.
 - `IMAGE_TAG={tag} docker compose -f docker-compose.prod.yml up -d --no-deps web worker-orchestration …`
 - `./deploy-staging.sh {tag}` for ECS or Kubernetes, which should wait for the rollout.
 - **Render:** `npx tsx scripts/render/deploy.ts {tag}`, where `{tag}` is the git commit SHA.
@@ -137,7 +148,17 @@ the N+1 schema, then redeploy N+1.
 
 1. `--snapshot` records every `studio` table's row count and the latest write, in
    `ops/results/restore-snapshot.json` (or `--snapshot-file`).
-2. DevOps restores to a new instance at the target time (backup-recovery.md). On Render: the
+2. DevOps restores to a new instance at the target time (backup-recovery.md). **On the single
+   server** the whole of 14.7 is three commands on the server, and the live staging database is
+   not touched:
+   ```bash
+   bash scripts/vps/pg-restore.sh staging snapshot                        # step 1 (live db)
+   bash scripts/vps/pg-restore.sh staging drill '2026-10-01 09:00:00+00'  # restore into postgres-restore
+   bash scripts/vps/pg-restore.sh staging check --incident-at <ISO> --restore-started-at <ISO>
+   bash scripts/vps/pg-restore.sh staging cleanup
+   ```
+   `check` runs this script's `--restore-check` with `DATABASE_URL` pointed at the restored copy;
+   reports land in `/var/lib/postmind-studio/staging/results/`. On Render: the
    database → **Recovery → Point-in-Time Recovery** ([render-deploy.md](render-deploy.md) step 11).
    Render Postgres accepts private-network connections only (`ipAllowList: []`), so run the
    snapshot and the check from the `studio-web-staging` **Shell**, with the database URL built by

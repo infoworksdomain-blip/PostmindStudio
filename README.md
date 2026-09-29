@@ -72,6 +72,14 @@ curl -s localhost:3010/api/studio/projects/$ID -H "authorization: Bearer $TOKEN"
 curl -s localhost:3010/api/studio/renders/$RENDER_ID/preview -H "authorization: Bearer $TOKEN"  # signed MP4 URL
 ```
 
+## Deploying
+
+- **Primary: one Hetzner server with Docker Compose** — [runbooks/vps-deploy.md](runbooks/vps-deploy.md).
+  `deploy/vps/` (compose files, Caddy, Postgres + pgBackRest, env examples, `bootstrap.sh`) and
+  `scripts/vps/` (`deploy.sh <sha>`, rollback with `--previous`, backups, restore, health check).
+  CI pushes the image `ghcr.io/infoworksdomain-blip/postmind-studio:<sha>` on every green `main`.
+- **Alternative: Render** — [runbooks/render-deploy.md](runbooks/render-deploy.md) (`render.yaml`).
+
 ## Setup — do this once before starting Claude Code
 
 ### 1. Install Claude Code

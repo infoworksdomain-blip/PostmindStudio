@@ -17,6 +17,24 @@ kill switch first** ([kill-switch.md](kill-switch.md)).
 
 ## Roll back
 
+**Single server (primary, [vps-deploy.md](vps-deploy.md) section 8):**
+
+```bash
+bash scripts/vps/deploy.sh --previous             # the tag deployed before the current one
+bash scripts/vps/deploy.sh <previous good sha>    # or any earlier tag (--env staging for staging)
+```
+
+`deploy.sh` records every deployed tag in `/var/lib/postmind-studio/<env>/deployed-tags` and keeps
+the last three images on the server, so a rollback pulls nothing. It re-runs `prisma migrate deploy`
+from the older image, which applies nothing: the command "does not issue a warning if an already
+applied migration is missing from migration history"
+([Prisma 6 docs](https://www.prisma.io/docs/orm/v6/prisma-migrate/workflows/development-and-production),
+read 2026-09-29), and the older release's own migrations are all applied already. It then re-runs
+the idempotent seed, replaces web and the worker and waits for readiness. The rehearsal below
+exercises exactly this path. From a laptop: add `--ssh deploy@<ip>`.
+
+With the compose file `docker-compose.prod.yml` on other hosts:
+
 ```bash
 PREV=<previous good sha>   # from the deploy log / registry
 IMAGE_TAG=$PREV docker compose -f docker-compose.prod.yml up -d --no-deps \
@@ -63,7 +81,16 @@ If a migration itself is broken:
 4. Confirm that N runs correctly on the N+1 schema.
 5. Redeploy N+1 and confirm it runs.
 
-Steps 2–3 are automated (Phase 14.6). `STAGING_DEPLOY_CMD` is your deploy command with `{tag}`:
+Steps 2–3 are automated (Phase 14.6). `STAGING_DEPLOY_CMD` is your deploy command with `{tag}`.
+On the single server (primary):
+
+```bash
+STUDIO_URL=https://studio-staging.postmind.ai \
+STAGING_DEPLOY_CMD='bash scripts/vps/deploy.sh --env staging --ssh deploy@<ip> {tag}' \
+npx tsx scripts/ops/staging-gate.ts --rehearse rollback --from-tag <N> --to-tag <N+1>
+```
+
+With `docker-compose.prod.yml` on another host:
 
 ```bash
 STUDIO_URL=https://studio-staging.postmind.ai \

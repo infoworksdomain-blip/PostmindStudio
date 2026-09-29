@@ -1,0 +1,22 @@
+# PostMind Studio — Caddy (compose.edge.yml). Caddy docs read 2026-09-29:
+#   global options   https://caddyserver.com/docs/caddyfile/options
+#   env placeholders https://caddyserver.com/docs/caddyfile/concepts#environment-variables
+#                    ({$VAR} is substituted before parsing and may expand to several tokens)
+#   import           https://caddyserver.com/docs/caddyfile/directives/import
+#                    ("an empty glob pattern is not an error": no site file yet = no site)
+#   automatic HTTPS  https://caddyserver.com/docs/automatic-https
+{
+	# ACME account email (Let's Encrypt / ZeroSSL notices).
+	email {$ACME_EMAIL}
+
+	servers {
+		# Only when Cloudflare proxies the domain: CADDY_TRUSTED_PROXIES = Cloudflare's ranges
+		# (https://www.cloudflare.com/ips/), so client_ip is the visitor, not Cloudflare. Right-to-left
+		# parsing is what Caddy recommends behind Cloudflare (trusted_proxies_strict).
+		trusted_proxies static {$CADDY_TRUSTED_PROXIES}
+		trusted_proxies_strict
+	}
+}
+
+# One file per environment, written by scripts/vps/deploy.sh from site.caddy.tmpl.
+import /etc/caddy-sites/*.caddy

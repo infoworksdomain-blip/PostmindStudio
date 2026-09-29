@@ -1,4 +1,10 @@
-# Deploy on Render (Deployment: Render)
+# Deploy on Render (Deployment: Render) — ALTERNATIVE
+
+> **Not the primary path any more.** The operator dropped Render for cost (about $536/month for
+> staging + production) in favour of one Hetzner server: follow [vps-deploy.md](vps-deploy.md).
+> `render.yaml` and `scripts/render/*` are kept, still validated in CI
+> (`test/unit/render-blueprint.test.ts`, the Blueprint JSON Schema check), so Render remains a
+> ready alternative, for example if the product outgrows one server and managed Postgres is wanted.
 
 | | |
 | --- | --- |

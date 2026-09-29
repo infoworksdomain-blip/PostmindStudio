@@ -1,0 +1,54 @@
+# PostMind Studio — the edge: ONE Caddy for every environment on the server (project postmind-edge).
+# It owns ports 80/443, gets and renews the TLS certificates, and proxies each environment's domain
+# to that environment's web container over the shared `studio-edge` network. scripts/vps/deploy.sh
+# starts it, writes one site file per environment into STUDIO_STATE_DIR/caddy/sites and reloads it.
+#
+# Image: the official caddy image, pinned (latest stable v2.11.4, https://hub.docker.com/_/caddy and
+# https://github.com/caddyserver/caddy/releases, read 2026-09-29; the image docs say never to run
+# :latest in production). Its docs also say: persist /data (certificates and ACME account), mount the
+# /etc/caddy directory rather than the Caddyfile itself, publish 80 and 443 (both needed for ACME)
+# plus 443/udp for HTTP/3, and reload with `caddy reload` inside the container.
+# Interpolation comes from the production env file (ACME_EMAIL, CADDY_TRUSTED_PROXIES).
+
+name: postmind-edge
+
+services:
+  caddy:
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    cap_add: [NET_ADMIN]
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in the production env file}
+      # Space-separated CIDRs of a proxy in front of Caddy (Cloudflare proxied mode); the default
+      # trusts nothing but the loopback address.
+      CADDY_TRUSTED_PROXIES: ${CADDY_TRUSTED_PROXIES:-127.0.0.1/32}
+    volumes:
+      - ./caddy:/etc/caddy:ro
+      - ${STUDIO_STATE_DIR:-/var/lib/postmind-studio}/caddy/sites:/etc/caddy-sites:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [edge]
+    healthcheck:
+      # The admin API listens on localhost:2019 inside the container only (Caddy's default).
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:2019/config/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options: { max-size: '20m', max-file: '5' }
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: '96m' }
+
+volumes:
+  caddy-data:
+  caddy-config:
+
+networks:
+  edge:
+    name: studio-edge
