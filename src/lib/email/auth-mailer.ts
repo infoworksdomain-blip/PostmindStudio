@@ -36,6 +36,38 @@ export type AuthEmailTemplate = (typeof AUTH_EMAIL_TEMPLATES)[number];
 /** Template params: plain values only (URLs, names, dates as ISO strings, counts). */
 export type AuthEmailParams = Record<string, string | number | boolean | null>;
 
+/**
+ * The params each template needs (src/emails/catalogue.ts "required", kept equal by
+ * catalogue.test.ts). sendAuthEmail is typed with it, so a call that misses or misnames one is a
+ * type error instead of an email the outbox silently refuses.
+ */
+export const AUTH_EMAIL_REQUIRED = {
+  verifyEmail: ['url'],
+  resetPassword: ['url'],
+  passwordChanged: [],
+  emailChangeConfirm: ['url', 'newEmail'],
+  emailChanged: ['newEmail'],
+  accountExists: [],
+  twoFactorChanged: ['enabled'],
+  newSignIn: ['device'],
+  invite: ['url', 'organisationName', 'inviterName', 'role'],
+  ownershipTransferred: ['organisationName', 'newOwnerName'],
+  trialEnding: ['planName', 'trialEndsAt'],
+  paymentFailed: ['graceEndsAt'],
+  paymentActionRequired: ['url'],
+  subscriptionChanged: ['planName'],
+  subscriptionCanceled: ['endsAt'],
+  topupReceipt: ['packName'],
+  accountDeletionScheduled: ['deleteAt'],
+  orgDeletionScheduled: ['organisationName', 'deleteAt'],
+  dataExportReady: ['url', 'expiresAt'],
+} as const satisfies Record<AuthEmailTemplate, readonly string[]>;
+
+/** Params for one template: its required params (non-null) plus any optional extras. */
+export type AuthEmailParamsFor<T extends AuthEmailTemplate> = {
+  [K in (typeof AUTH_EMAIL_REQUIRED)[T][number]]: string | number | boolean;
+} & AuthEmailParams;
+
 export interface AuthEmailOptions {
   /** Dedupe key for the outbox (e.g. `auth:<verificationId>`); a repeat is not sent twice. */
   idempotencyKey?: string;
@@ -48,10 +80,10 @@ export interface AuthMailer {
    * Queue one email. Resolves once it is recorded (outbox), not when it is delivered; rejects
    * only when it could not be recorded. A suppressed address resolves with `suppressed: true`.
    */
-  sendAuthEmail(
-    template: AuthEmailTemplate,
+  sendAuthEmail<T extends AuthEmailTemplate>(
+    template: T,
     to: string,
-    params: AuthEmailParams,
+    params: AuthEmailParamsFor<T>,
     locale: string,
     options?: AuthEmailOptions,
   ): Promise<{ queued: boolean; suppressed: boolean }>;

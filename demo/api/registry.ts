@@ -42,6 +42,28 @@ interface Route {
 const routes: Route[] = [];
 export const unhandled = new Set<string>();
 
+/**
+ * A check every request passes before its handler, as the real API's route wrapper runs the
+ * billing access gate (demo/api/billing-state.ts registers the demo's). Throw DemoHttpError to
+ * refuse; the body is the parsed JSON (or FormData).
+ */
+export type RequestGate = (req: { method: Method; path: string; body: unknown }) => void;
+
+let requestGate: RequestGate | null = null;
+
+export function setRequestGate(gate: RequestGate): void {
+  requestGate = gate;
+}
+
+function errorResponse(err: DemoHttpError): Response {
+  return json(err.status, {
+    ok: false,
+    error: err.code,
+    message: err.message,
+    details: err.details,
+  });
+}
+
 export function route(method: Method, pattern: string, handler: Handler): void {
   routes.push({ method, parts: pattern.split('/').filter(Boolean), handler });
 }
@@ -94,28 +116,23 @@ export async function handle(url: URL, init?: RequestInit): Promise<Response> {
     .split('/')
     .filter(Boolean);
   await sleep(method === 'GET' ? 120 + Math.random() * 180 : 250 + Math.random() * 250);
+  const body = await readBody(init);
+  try {
+    requestGate?.({ method, path: `/${path.join('/')}`, body });
+  } catch (err) {
+    if (err instanceof DemoHttpError) return errorResponse(err);
+    throw err;
+  }
   for (const r of routes) {
     if (r.method !== method) continue;
     const params = match(r, path);
     if (!params) continue;
     try {
-      const out = await r.handler({
-        params,
-        query: url.searchParams,
-        body: await readBody(init),
-        method,
-      });
+      const out = await r.handler({ params, query: url.searchParams, body, method });
       const result = isResult(out) ? out : { body: out };
       return json(result.status ?? 200, { ok: true, ...result.body });
     } catch (err) {
-      if (err instanceof DemoHttpError) {
-        return json(err.status, {
-          ok: false,
-          error: err.code,
-          message: err.message,
-          details: err.details,
-        });
-      }
+      if (err instanceof DemoHttpError) return errorResponse(err);
       // eslint-disable-next-line no-console -- the demo's only diagnostics channel
       console.error('[demo api]', method, url.pathname, err);
       return json(500, { ok: false, error: 'internal_error', message: 'Demo handler failed' });

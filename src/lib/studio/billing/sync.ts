@@ -2,7 +2,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { AuditAction } from '../../audit-sink';
-import type { AuthEmailTemplate, AuthMailer } from '../../email/auth-mailer';
+import type { AuthEmailParamsFor, AuthEmailTemplate, AuthMailer } from '../../email/auth-mailer';
 import {
   ENDED_STATUSES,
   entitlementsFromSubscription,
@@ -295,11 +295,12 @@ export async function ownerRecipients(
 }
 
 /** Email every owner; failures are logged, never thrown (the webhook must still succeed). */
-export async function emailOwners(
+export async function emailOwners<T extends AuthEmailTemplate>(
   deps: Pick<BillingSyncDeps, 'db' | 'logger' | 'mailer'>,
   organisationId: string,
-  template: AuthEmailTemplate,
-  params: Record<string, string | number | boolean | null>,
+  template: T,
+  /** The params, or a builder for params that are words in the owner's locale (a pack name). */
+  params: AuthEmailParamsFor<T> | ((locale: string) => Promise<AuthEmailParamsFor<T>>),
   idempotencyKey: string,
 ): Promise<number> {
   if (!deps.mailer) {
@@ -309,7 +310,8 @@ export async function emailOwners(
   let sent = 0;
   try {
     for (const owner of await ownerRecipients(deps.db, organisationId)) {
-      await deps.mailer.sendAuthEmail(template, owner.email, params, owner.locale, {
+      const values = typeof params === 'function' ? await params(owner.locale) : params;
+      await deps.mailer.sendAuthEmail(template, owner.email, values, owner.locale, {
         idempotencyKey: `${idempotencyKey}:${owner.userId}`,
         organisationId,
         userId: owner.userId,

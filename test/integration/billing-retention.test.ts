@@ -130,7 +130,11 @@ describe.skipIf(!hasDb)('cancelled organisation retention', { timeout: 90_000 },
         template: 'orgDeletionScheduled',
         to: `${userId}@t.test`,
         locale: 'de',
-        params: { cancelledAt: new Date(start + DAY).toISOString(), retentionDays: 90 },
+        // The organisation's name and the day the purge grace (30 days by default) ends.
+        params: {
+          organisationName: 'Org',
+          deleteAt: new Date(start + 92 * DAY + 30 * DAY).toISOString(),
+        },
       }),
     ]);
     expect(r.audits).toContainEqual(

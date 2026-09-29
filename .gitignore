@@ -66,6 +66,8 @@ demo/dist/
 
 # Deployment: single VPS - filled-in env files live on the server (/etc/postmind-studio), never here
 deploy/vps/*.env
+# Phase 19.2: npm run setup:env writes filled-in settings here (secrets) - never commit
+/.secrets/
 deploy/vps/secrets/
 
 # Phase 18 E2E (Playwright)

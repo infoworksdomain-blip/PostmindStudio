@@ -218,6 +218,12 @@
       "impersonating": {
         "title": "Mitarbeiteransicht.",
         "body": "Sie betrachten Studio als {name}. Diese Sitzung ist nur lesbar, und jede Aktion wird protokolliert."
+      },
+      "cancelled": {
+        "title": "Ihr Abonnement ist beendet — Ihre Organisation ist nur lesbar.",
+        "body": "Schließen Sie erneut ein Abonnement ab, um weiter zu erstellen. Sie können Ihre Daten weiterhin ansehen, herunterladen und exportieren.",
+        "deletesOn": "Ohne neues Abonnement werden die Organisation und ihre Daten nach dem {date} gelöscht.",
+        "action": "Erneut abonnieren"
       }
     }
   },

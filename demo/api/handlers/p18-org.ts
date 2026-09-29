@@ -5,6 +5,7 @@
 //   GET|POST|PATCH|DELETE /members/**             services/members.ts (writes: Better Auth)
 //   GET /audit                                    services/org-audit.ts
 //   POST /organisations                           Track A (organisation create)
+import { limits, meBilling } from '../billing-state';
 import { DEMO_ORG_ID, DEMO_USER_ID, DEMO_USER_NAME } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { OTHER_ORGS } from './admin-state';
@@ -27,11 +28,11 @@ const org = {
   createdAt: ago(120 * DAY),
 };
 
-const orgView = () => ({ ...org, yourRole: 'owner' });
+const yourRole = () => members.find((m) => m.userId === DEMO_USER_ID)?.role ?? 'owner';
+const orgView = () => ({ ...org, yourRole: yourRole() });
 
-// A trial with 9 days left, so the AppShell shows its trial banner in the demo.
-const trialEndsAt = new Date(Date.now() + 9 * DAY - HOUR).toISOString();
-
+// The plan line and the account banner (trial days left, past due with the grace date, read-only,
+// no plan) follow the demo bar's plan switcher (../billing-state.ts).
 route('GET', '/me', () => ({
   me: {
     user: {
@@ -40,13 +41,12 @@ route('GET', '/me', () => ({
       email: 'amara@leedssourdough.example',
       platformRole: 'superadmin',
     },
-    organisation: { id: org.id, name: org.name, role: 'owner' },
+    organisation: { id: org.id, name: org.name, role: yourRole() },
     organisations: [
-      { id: org.id, name: org.name, role: 'owner' },
+      { id: org.id, name: org.name, role: yourRole() },
       { id: OTHER_ORGS.harrogate, name: 'Harrogate Coffee Co', role: 'creator' },
     ],
-    plan: { tier: 'STANDARD', access: 'full', source: 'trial' },
-    banner: { kind: 'trial', endsAt: trialEndsAt },
+    ...meBilling(),
     impersonating: false,
     identityMode: 'standalone',
   },
@@ -76,8 +76,28 @@ route('DELETE', '/org', ({ body }) => {
   throw new DemoHttpError(403, 'forbidden', 'Deleting the sample organisation is off in the demo.');
 });
 
-route('POST', '/org/transfer-ownership', () => {
-  throw new DemoHttpError(403, 'forbidden', 'Ownership transfer is off in the demo.');
+// Standalone mode re-authenticates (password) before the transfer; the demo accepts any password
+// of 8+ characters and refuses a shorter one as a wrong password.
+function demoReauth(body: unknown): void {
+  const password = obj(body).password;
+  if (typeof password !== 'string' || password.length === 0)
+    throw new DemoHttpError(401, 'unauthorized', 'Enter your password', {
+      reason: 'reauth_required',
+    });
+  if (password.length < 8)
+    throw new DemoHttpError(401, 'unauthorized', 'That password is not right', {
+      reason: 'reauth_failed',
+    });
+}
+
+route('POST', '/org/transfer-ownership', ({ body }) => {
+  demoReauth(body);
+  const target = members.find((m) => m.id === obj(body).memberId);
+  if (!target || target.userId === DEMO_USER_ID) throw bad('memberId: Invalid member');
+  const me = members.find((m) => m.userId === DEMO_USER_ID);
+  target.role = 'owner';
+  if (me) me.role = 'admin';
+  return { transferred: true };
 });
 
 route('POST', '/organisations', ({ body }) => {
@@ -85,6 +105,18 @@ route('POST', '/organisations', ({ body }) => {
   if (name.length < 2) throw bad('name: Too small');
   return { status: 201, body: { organisation: { id: 'org-new', name, slug: 'new-org' } } };
 });
+
+/** POST /account/delete (p18-account.ts): the sole-owner rule and the demo re-authentication. */
+export function accountDeletionCheck(body: unknown): void {
+  demoReauth(body);
+  const owners = members.filter((m) => m.role === 'owner');
+  const others = members.filter((m) => m.userId !== DEMO_USER_ID);
+  if (owners.length === 1 && owners[0]?.userId === DEMO_USER_ID && others.length > 0)
+    throw new DemoHttpError(409, 'conflict', 'Transfer ownership first', {
+      reason: 'sole_owner',
+      organisations: [{ id: org.id, name: org.name }],
+    });
+}
 
 // ------------------------------------------------------------------ members
 
@@ -155,14 +187,19 @@ const invitations: Invite[] = [
   },
 ];
 
-const SEAT_LIMIT = 5;
 const ROLES = ['owner', 'admin', 'publisher', 'creator', 'viewer'];
+
+/** Seats in use: members plus pending invitations (Better Auth's membershipLimit counts both). */
+export function seatsUsed(): number {
+  return members.length + invitations.length;
+}
 
 route('GET', '/members', () => ({
   members: members.map((m) => ({ ...m, isYou: m.userId === DEMO_USER_ID })),
   invitations,
-  seats: { used: members.length + invitations.length, limit: SEAT_LIMIT },
-  canManage: true,
+  // The plan's seat limit (2 Basic, 5 Standard, 15 Plus, custom Enterprise) from the demo bar.
+  seats: { used: seatsUsed(), limit: limits().seats },
+  canManage: ['owner', 'admin'].includes(yourRole()),
 }));
 
 route('POST', '/members/invitations', ({ body }) => {
@@ -175,8 +212,13 @@ route('POST', '/members/invitations', ({ body }) => {
   if (!ROLES.includes(role) || role === 'owner') throw bad('role: Invalid option');
   if (members.some((m) => m.email === email))
     throw new DemoHttpError(409, 'conflict', 'Already a member', { reason: 'already_member' });
-  if (members.length + invitations.length >= SEAT_LIMIT)
-    throw new DemoHttpError(403, 'forbidden', 'Every seat on the plan is in use');
+  const seatLimit = limits().seats;
+  if (seatLimit !== null && seatsUsed() >= seatLimit)
+    throw new DemoHttpError(403, 'quota_exceeded', 'Every seat on the plan is in use', {
+      reason: 'seat_limit',
+      resource: 'seats',
+      limit: seatLimit,
+    });
   const invite = {
     id: `inv-${Date.now()}`,
     email,

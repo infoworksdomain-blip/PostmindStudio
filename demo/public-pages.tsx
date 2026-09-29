@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { InviteScreen } from '@/components/auth/invite-screen';
 import { SignInForm } from '@/components/auth/sign-in-form';
 import { SignUpForm } from '@/components/auth/sign-up-form';
+import { TwoFactorForm } from '@/components/auth/two-factor-form';
 import { VerifyEmailScreen } from '@/components/auth/verify-email-screen';
 import { LandingPage } from '@/components/marketing/landing-page';
 import { PricingScreen } from '@/components/studio/billing/pricing-screen';
@@ -15,12 +17,18 @@ import privacy from '../content/legal/en-GB/privacy.md';
 import subprocessors from '../content/legal/en-GB/subprocessors.md';
 import terms from '../content/legal/en-GB/terms.md';
 import { demoPricing } from './api/handlers/p18-billing';
-import { matchPath } from './router';
+import { setBillingState } from './api/billing-state';
+import { isSignedIn, setSignedIn } from './api/session-state';
+import { matchPath, navigate } from './router';
+import { DemoCheckout } from './tour/demo-checkout';
 
-// Phase 18 public pages in the demo: the landing, pricing and legal pages render in the marketing
-// frame (no app shell), exactly as the app's (marketing) route group does; sign-up, sign-in and
-// verify-email render Track A's real screens in the (auth) layout. Pricing uses the §P.2 reference
-// prices (sample data); the auth calls are answered by demo/api/auth.ts (nothing is created).
+// Phase 18 public pages in the demo: the landing page (at "#/", where the demo opens, signed out),
+// pricing and legal pages render in the marketing frame (no app shell), exactly as the app's
+// (marketing) route group does; sign-up, sign-in, two-step, invite and verify-email render Track
+// A's real screens in the (auth) layout, with a small demo note where the demo differs (any email
+// and password sign in; a "Verify (demo)" button stands in for the emailed link). Pricing uses the
+// §P.2 reference prices (sample data); the auth calls are answered by demo/api/auth.ts (nothing is
+// created).
 
 const LEGAL: Record<string, string> = {
   terms,
@@ -36,22 +44,75 @@ const PLACEHOLDER_MARKER = 'OPERATOR MUST REPLACE';
 /** The (auth) route group's frame (src/app/(auth)/layout.tsx). */
 function AuthFrame({ children }: { children: ReactNode }) {
   return (
-    <main className="flex min-h-dvh items-start justify-center bg-muted/30 px-4 py-16 sm:items-center">
+    <main className="flex min-h-dvh flex-col items-center justify-start gap-4 bg-muted/30 px-4 py-16 sm:justify-center">
       {children}
     </main>
   );
 }
 
+/** A small note beside a real auth screen where the demo behaves differently. */
+function DemoNote({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="note"
+      lang="en"
+      dir="ltr"
+      className="w-full max-w-md rounded-lg border border-dashed border-primary/50 bg-primary/5 px-3 py-2 text-sm"
+    >
+      <span className="font-semibold">Demo: </span>
+      {children}
+    </p>
+  );
+}
+
+/** The emailed link's job: signed in, then onboarding for a new organisation (no plan yet). */
+function verifyAndContinue(): void {
+  setBillingState('no_plan');
+  setSignedIn(true);
+  navigate('/welcome?new=organisation');
+}
+
+/** A same-site `next` path (as the app's nextParam allows), else Projects. */
+function nextPath(search: URLSearchParams): string {
+  const next = search.get('next');
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/projects';
+}
+
 function authPage(pathname: string, search: URLSearchParams): ReactNode | null {
-  // The demo is hash-routed: `next` must stay inside it (window.location.assign after sign-in).
+  // Full-page navigations after sign-in go through the demo's hardNavigate shim
+  // (demo/shims/hard-navigate.ts), which keeps them inside the hash-routed page.
   if (pathname === '/sign-up') return <SignUpForm next="/welcome?new=organisation" googleEnabled />;
-  if (pathname === '/sign-in') return <SignInForm next="#/projects" googleEnabled signupsEnabled />;
+  if (pathname === '/sign-in')
+    return (
+      <>
+        <DemoNote>
+          any email and password work and open the sample organisation (Leeds Sourdough, Standard).
+          amara@leedssourdough.example has two-step verification on: any 6-digit code.
+        </DemoNote>
+        <SignInForm next={nextPath(search)} googleEnabled signupsEnabled />
+      </>
+    );
+  if (pathname === '/two-factor') return <TwoFactorForm next={nextPath(search)} />;
+  const invite = matchPath('/invite/:token', pathname);
+  if (invite) return <InviteScreen invitationId={invite.token ?? ''} signedIn={isSignedIn()} />;
   if (pathname === '/verify-email')
     return (
-      <VerifyEmailScreen
-        email={search.get('email') ?? undefined}
-        supportEmail="support@leeds-sourdough.example"
-      />
+      <>
+        <VerifyEmailScreen
+          email={search.get('email') ?? undefined}
+          supportEmail="support@leeds-sourdough.example"
+        />
+        <DemoNote>
+          no email is sent. Stand in for the link in it:{' '}
+          <button
+            type="button"
+            onClick={verifyAndContinue}
+            className="font-medium text-primary underline underline-offset-4 hover:no-underline"
+          >
+            Verify (demo) and continue to set-up
+          </button>
+        </DemoNote>
+      </>
     );
   return null;
 }
@@ -73,10 +134,13 @@ function LegalPage({ doc }: { doc: string }) {
 
 /** The public page for this path, or null when the path belongs to the app. */
 export function publicPage(pathname: string, search = new URLSearchParams()): ReactNode | null {
+  // Where the app would send the browser to Stripe: the demo's own simulated checkout.
+  if (pathname === '/demo-checkout') return <DemoCheckout search={search} />;
   const auth = authPage(pathname, search);
   if (auth) return <AuthFrame>{auth}</AuthFrame>;
   let body: ReactNode | null = null;
-  if (pathname === '/landing') body = <LandingPage />;
+  // The app's "/" is the landing page; "/landing" is kept for older tour links.
+  if (pathname === '/' || pathname === '/landing') body = <LandingPage />;
   else if (pathname === '/pricing')
     body = <PricingScreen pricing={demoPricing()} salesEmail="sales@leeds-sourdough.example" />;
   else {

@@ -1,7 +1,10 @@
 // /projects endpoints for the demo (services/projects.ts shapes): list with state filters and
 // cursor pagination, create (brief / slideshow / library reference / template, auto-publish
 // targets), detail, edit (budget raise), archive, generate, cancel, reject, duplicate.
+import { isPlanTier } from '@/components/studio/billing/types';
 import type { TargetFormat } from '@/lib/client/types';
+import { tierAtLeast } from '@/lib/studio/billing/catalogue';
+import { currentTier } from '../billing-state';
 import { DemoHttpError, route } from '../registry';
 import { DEMO_BUSINESS_ID, DEMO_USER_ID, LIBRARY_VIDEOS } from '../ids';
 import { resumeRendering, startFullRun, stopRun } from './pipeline-sim';
@@ -249,13 +252,14 @@ route('POST', '/projects/:id/generate', ({ params, body }) => {
       `Project is ${p.state}; cancel it or wait for it to finish`,
     );
   const rawInput = str(obj(body).rawInput);
-  // 15.C4: a lower tier for this run; the demo organisation is on STANDARD.
-  const tier = str(obj(body).qualityTier) || 'STANDARD';
-  if (!['BASIC', 'STANDARD'].includes(tier))
+  // 15.C4: a lower tier for this run; the organisation's tier is the demo bar's plan.
+  const orgTier = currentTier();
+  const tier = str(obj(body).qualityTier) || orgTier;
+  if (!isPlanTier(tier) || !tierAtLeast(orgTier, tier))
     throw new DemoHttpError(
       422,
       'unprocessable',
-      `qualityTier ${tier} is above the organisation's STANDARD plan`,
+      `qualityTier ${tier} is above the organisation's ${orgTier} plan`,
     );
   if (rawInput) p.description = rawInput;
   startFullRun(p);

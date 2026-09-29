@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authApi } from '@/lib/client/auth';
+import { hardNavigate } from '@/lib/client/navigate';
 import { AuthCard, AuthError } from './auth-card';
 
 // Phase 18 §5.6 — /two-factor: the second step after the password when 2FA is on. A 6-digit code
@@ -32,7 +33,7 @@ export function TwoFactorForm({ next }: { next: string }) {
     try {
       if (mode === 'totp') await authApi.verifyTotp(code.replace(/\s/g, ''), trust);
       else await authApi.verifyBackupCode(code.trim());
-      window.location.assign(next);
+      hardNavigate(next);
     } catch (err) {
       setError(err);
       setBusy(false);

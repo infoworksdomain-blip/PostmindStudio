@@ -294,7 +294,9 @@ export function BillingScreen() {
     <>
       {header}
       <ReturnBanner />
-      <div className="grid gap-6">
+      {/* minmax(0,1fr): the invoice table scrolls inside its section instead of widening the
+          page on phones. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
         <PlanSummary billing={billing} pending={pending} onPortal={() => void portal()} />
         {showPicker && (
           <PlanPicker
@@ -304,7 +306,7 @@ export function BillingScreen() {
             onChoose={(intent, key) => void checkout(intent, key)}
           />
         )}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
           <UsageSection billing={billing} />
           <TopUpsSection
             billing={billing}

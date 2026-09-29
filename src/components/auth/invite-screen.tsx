@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { authFetch } from '@/lib/client/auth';
+import { hardNavigate } from '@/lib/client/navigate';
 import { AuthCard, AuthError } from './auth-card';
 
 // Phase 18 §2.4 — /invite/[token]: accept an organisation invitation. Only a signed-in user whose
@@ -53,7 +54,7 @@ export function InviteScreen({
     setError(undefined);
     try {
       await authFetch('/organization/accept-invitation', { body: { invitationId } });
-      window.location.assign('/projects');
+      hardNavigate('/projects');
     } catch (err) {
       setError(err);
       setBusy(false);

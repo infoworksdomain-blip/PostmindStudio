@@ -44,7 +44,7 @@ export const POST = withSignedInRoute(async ({ req, session }) => {
         await mailer.sendAuthEmail(
           'accountDeletionScheduled',
           session.user.email,
-          { name: session.user.name, graceUntil: graceUntil.toISOString() },
+          { name: session.user.name, deleteAt: graceUntil.toISOString() },
           profile?.locale ?? 'en-GB',
           { userId: session.user.id, idempotencyKey: `account-deletion:${session.user.id}` },
         );

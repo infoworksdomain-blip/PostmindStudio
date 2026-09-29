@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { AuthError } from '@/components/auth/auth-card';
 import { Button } from '@/components/ui/button';
 import { authErrorKey, authFetch } from '@/lib/client/auth';
+import { hardNavigate } from '@/lib/client/navigate';
 import { Section, StateBadge } from '../../primitives';
 
 // Phase 18 §2.9 — linked Google account. Linking needs Google to report a verified email that
@@ -44,7 +45,7 @@ export function SignInMethodsSection({ googleEnabled }: { googleEnabled: boolean
       const { url } = await authFetch<{ url?: string }>('/link-social', {
         body: { provider: 'google', callbackURL: '/account/security' },
       });
-      if (url) window.location.assign(url);
+      if (url) hardNavigate(url);
       else setBusy(false);
     } catch (err) {
       toast.error(tErr(authErrorKey(err)));
