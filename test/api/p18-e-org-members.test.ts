@@ -231,6 +231,48 @@ describe.skipIf(!hasDb)('org settings, members and audit API', { timeout: 60_000
       expect(res.json.me).toMatchObject({ banner: { kind: 'no_plan' }, plan: { access: 'none' } });
     });
 
+    it('a cancelled organisation gets the "subscription ended" banner with its deletion date (19.5)', async () => {
+      const subId = `sub_p18e_${run}`;
+      await db.subscription.create({
+        data: {
+          id: subId,
+          organisationId: orgA,
+          stripeCustomerId: `cus_p18e_${run}`,
+          status: 'canceled',
+        },
+      });
+      await db.orgEntitlement.upsert({
+        where: { organisationId: orgA },
+        create: {
+          organisationId: orgA,
+          tier: 'BASIC',
+          access: 'read_only',
+          source: 'stripe',
+          everPaidAt: new Date('2026-06-01T00:00:00Z'),
+          overrides: { retention: { cancelledAt: '2026-10-01T00:00:00.000Z' } },
+        },
+        update: { overrides: { retention: { cancelledAt: '2026-10-01T00:00:00.000Z' } } },
+      });
+      api.deps.entitlements = {
+        forOrganisation: async () => ({
+          tier: 'BASIC',
+          access: 'read_only',
+          source: 'stripe',
+          limits: { seats: 2, businesses: 1, storageGb: 25 },
+        }),
+        invalidate: () => undefined,
+      };
+      try {
+        const res = await call(meRoute.GET, { token: 'owner' });
+        expect(res.json.me).toMatchObject({
+          banner: { kind: 'cancelled', deletesAt: '2026-12-30T00:00:00.000Z' },
+        });
+      } finally {
+        await db.subscription.delete({ where: { id: subId } });
+        await db.orgEntitlement.delete({ where: { organisationId: orgA } });
+      }
+    });
+
     it('401 without a session', async () => {
       expect((await call(meRoute.GET)).status).toBe(401);
     });

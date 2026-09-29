@@ -218,6 +218,12 @@
       "impersonating": {
         "title": "Staff view.",
         "body": "You are viewing Studio as {name}. This session is read-only and every request is audited."
+      },
+      "cancelled": {
+        "title": "Your subscription has ended — your organization is read-only.",
+        "body": "Subscribe again to keep creating. You can still view, download and export your data.",
+        "deletesOn": "Unless you subscribe again, the organization and its data will be deleted after {date}.",
+        "action": "Subscribe again"
       }
     }
   },

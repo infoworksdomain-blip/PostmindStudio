@@ -6,6 +6,9 @@
 | **Check** | `https://<domain>/api/health/ready` = 200; `bash scripts/vps/healthcheck.sh production` says OK; the nightly backup timer succeeds. |
 | **Who** | The operator (Hetzner and Cloudflare consoles, the server, legal text, Stripe, Resend, Google and Meta apps), DevOps (KMS and R2 keys). The Core team only when `STUDIO_MODE=core` (Core URLs and tokens). |
 
+First launch: follow [go-live.md](go-live.md). It walks through this runbook and the provider
+set-ups in order, and generates and checks the env file (`npm run setup:env`, `npm run setup:check`).
+
 Render (`render.yaml`, [render-deploy.md](render-deploy.md)) stays in the repo as an alternative. It
 was dropped as the primary path because of its monthly cost.
 
