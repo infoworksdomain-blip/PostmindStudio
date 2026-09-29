@@ -770,17 +770,33 @@ export const adminUsageQuery = z.object({
 const organisationIdParam = z.string().trim().min(1).max(128);
 
 export async function organisationUsage(
-  deps: Parameters<typeof usageView>[0],
+  deps: Parameters<typeof usageView>[0] & { entitlements?: EntitlementsReader },
   organisationId: string,
   query: z.infer<typeof adminUsageQuery>,
 ): Promise<
-  { tier: { value: PlanTier; source: 'query' | 'last_generation' | 'default' } } & UsageView
+  {
+    tier: {
+      value: PlanTier;
+      source: 'query' | 'entitlements' | 'last_generation' | 'default';
+    };
+  } & UsageView
 > {
   const id = organisationIdParam.safeParse(organisationId);
   if (!id.success) throw new ValidationError('Invalid organisation id');
-  const recorded = query.tier ? null : await lastRecordedTier(deps.db, id.data);
-  const tier: PlanTier = query.tier ?? recorded ?? 'BASIC';
-  const source = query.tier ? 'query' : recorded ? 'last_generation' : 'default';
-  const view = await usageView(deps, id.data, tier, query.businessId);
+  // Phase 18 (inventory #19): with Stripe billing the tier is stored (org_entitlements), so staff
+  // see the real tier; the tier last recorded on a generation is the core-mode fallback.
+  const entitlements =
+    query.tier || !deps.entitlements ? undefined : await deps.entitlements.forOrganisation(id.data);
+  const stored = entitlements && entitlements.source !== 'none' ? entitlements.tier : null;
+  const recorded = query.tier || stored ? null : await lastRecordedTier(deps.db, id.data);
+  const tier: PlanTier = query.tier ?? stored ?? recorded ?? 'BASIC';
+  const source = query.tier
+    ? 'query'
+    : stored
+      ? 'entitlements'
+      : recorded
+        ? 'last_generation'
+        : 'default';
+  const view = await usageView(deps, id.data, tier, query.businessId, entitlements);
   return { ...view, tier: { value: tier, source } };
 }

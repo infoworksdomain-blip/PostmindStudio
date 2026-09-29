@@ -86,7 +86,7 @@ describe('portal configuration (scripts/billing/portal-config.ts)', () => {
     expect(params.business_profile?.terms_of_service_url).toBe(
       'https://studio.example.com/legal/terms',
     );
-    expect(params.features.invoice_history.enabled).toBe(true);
+    expect(params.features.invoice_history?.enabled).toBe(true);
     expect(params.features.payment_method_update?.enabled).toBe(true);
     expect(params.features.customer_update?.allowed_updates).toContain('tax_id');
     expect(params.features.subscription_cancel).toMatchObject({

@@ -170,8 +170,8 @@ describe('resolveStoredEntitlements', () => {
 
   it('an unexpired admin override wins; an expired one does not', () => {
     const admin = {
-      tier: 'ENTERPRISE',
-      access: 'full',
+      tier: 'ENTERPRISE' as const,
+      access: 'full' as const,
       reason: 'contract',
       setByUserId: 'staff-1',
       setAt: now.toISOString(),

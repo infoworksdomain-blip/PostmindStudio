@@ -4,6 +4,7 @@ import type { AuditEntry } from '../../audit';
 import { AuditAction } from '../../audit-sink';
 import type { AuthEmailTemplate, AuthMailer } from '../../email/auth-mailer';
 import {
+  ENDED_STATUSES,
   entitlementsFromSubscription,
   graceEndsAt,
   parseOverrides,
@@ -172,8 +173,16 @@ export async function recomputeEntitlements(
   });
   const trialing = governing?.status === 'trialing';
   const trialStartedAt = existing?.trialStartedAt ?? (trialing ? now : null);
+  // Retention clock: starts when a paid organisation's governing subscription has ended, stops
+  // (and is forgotten) as soon as it subscribes again.
+  const ended =
+    Boolean(existing?.everPaidAt) && (!governing || ENDED_STATUSES.has(governing.status));
+  const { retention: previousRetention, ...rest } = overrides;
   const nextOverrides: EntitlementOverrides = {
-    ...overrides,
+    ...rest,
+    ...(ended && {
+      retention: previousRetention ?? { cancelledAt: now.toISOString() },
+    }),
     derived: {
       tier: derived.tier,
       access: derived.access,
@@ -287,7 +296,7 @@ export async function ownerRecipients(
 
 /** Email every owner; failures are logged, never thrown (the webhook must still succeed). */
 export async function emailOwners(
-  deps: BillingSyncDeps,
+  deps: Pick<BillingSyncDeps, 'db' | 'logger' | 'mailer'>,
   organisationId: string,
   template: AuthEmailTemplate,
   params: Record<string, string | number | boolean | null>,

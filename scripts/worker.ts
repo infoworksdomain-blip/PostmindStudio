@@ -29,6 +29,7 @@ import {
 import { HARD_DELETE_SCHEDULE } from '../src/lib/studio/services/organisation-hard-delete';
 import { UPLOAD_SWEEP_SCHEDULE } from '../src/lib/studio/services/upload-sweep';
 import { LOST_PUBLISH_SCHEDULE } from '../src/lib/studio/services/lost-publications';
+import { CANCELLED_RETENTION_SCHEDULE } from '../src/lib/studio/billing/retention';
 import {
   STRIPE_SWEEP_SCHEDULE,
   SUBSCRIPTION_RECONCILE_SCHEDULE,
@@ -224,6 +225,18 @@ async function main(): Promise<void> {
       data: {
         organisationId: 'postmind-platform',
         runId: 'stripe-reconcile',
+        planTier: 'STANDARD',
+      },
+    },
+  );
+  await orchestration.upsertJobScheduler(
+    'cancelled-org-retention-daily',
+    { pattern: CANCELLED_RETENTION_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'cancelled-org-retention',
+      data: {
+        organisationId: 'postmind-platform',
+        runId: 'cancelled-retention',
         planTier: 'STANDARD',
       },
     },

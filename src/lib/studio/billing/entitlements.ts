@@ -174,7 +174,21 @@ export const overridesSchema = z.object({
   admin: adminOverrideSchema.optional(),
   limits: customLimitsSchema.optional(),
   trial: trialStateSchema.optional(),
+  /**
+   * Cancelled-organisation retention (open question 3): when a paid organisation's subscription
+   * ended, when its owners were told, and when the purge was handed off (billing/retention.ts).
+   */
+  retention: z
+    .object({
+      cancelledAt: z.string(),
+      notifiedAt: z.string().optional(),
+      purgeRequestedAt: z.string().optional(),
+    })
+    .optional(),
 });
+
+/** Stripe statuses after which a paid organisation is "cancelled" (read-only, then purged). */
+export const ENDED_STATUSES: ReadonlySet<string> = new Set(['canceled', 'incomplete_expired']);
 
 export type EntitlementOverrides = z.infer<typeof overridesSchema>;
 export type AdminOverride = z.infer<typeof adminOverrideSchema>;

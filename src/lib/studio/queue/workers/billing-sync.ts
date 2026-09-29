@@ -1,6 +1,7 @@
 import { logger as rootLogger } from '../../../logger';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { reconcileSubscriptions, sweepStripeEvents } from '../../billing/reconcile';
+import { purgeCancelledOrganisations } from '../../billing/retention';
 import { billingJobDepsFromEnv, type BillingJobDeps } from '../../billing/wiring';
 import type { RollUpJobData } from '../queues';
 
@@ -33,6 +34,21 @@ export async function reconcileSubscriptionsJob(_data: RollUpJobData, deps: Pipe
     return;
   }
   await reconcileSubscriptions(billing);
+}
+
+/**
+ * Runs in any billing mode that has Stripe (the clock is only ever set by Stripe sync). Emails go
+ * through the AuthMailer when one is wired (deps.billingJobs.mailer, Track B); otherwise the
+ * purge still happens and the missing email is logged.
+ */
+export async function cancelledOrgRetentionJob(_data: RollUpJobData, deps: PipelineDeps) {
+  await purgeCancelledOrganisations({
+    db: deps.db,
+    logger: deps.logger,
+    audit: deps.audit,
+    now: deps.now,
+    mailer: deps.billingJobs?.mailer,
+  });
 }
 
 export async function onBillingSyncFailed(

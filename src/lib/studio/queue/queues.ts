@@ -173,6 +173,8 @@ export interface JobDataMap {
   'sweep-stripe-events': RollUpJobData;
   /** Phase 18 Track C: nightly Stripe subscriptions reconcile (03:15 UTC). */
   'reconcile-subscriptions': RollUpJobData;
+  /** Phase 18 Track C: purge organisations cancelled longer than the retention (02:15 UTC). */
+  'cancelled-org-retention': RollUpJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -214,6 +216,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'check-platform-accounts': QUEUES.analytics,
   'sweep-stripe-events': QUEUES.analytics,
   'reconcile-subscriptions': QUEUES.analytics,
+  'cancelled-org-retention': QUEUES.orchestration,
 };
 
 export const MAX_RETRIES = 5;

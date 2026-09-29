@@ -37,6 +37,7 @@ import {
 } from './redrive-lost-publications';
 import { checkPlatformAccountsJob, onCheckPlatformAccountsFailed } from './check-platform-accounts';
 import {
+  cancelledOrgRetentionJob,
   onBillingSyncFailed,
   reconcileSubscriptionsJob,
   sweepStripeEventsJob,
@@ -143,6 +144,7 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'check-platform-accounts': checkPlatformAccountsJob,
   'sweep-stripe-events': sweepStripeEventsJob,
   'reconcile-subscriptions': reconcileSubscriptionsJob,
+  'cancelled-org-retention': cancelledOrgRetentionJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -182,6 +184,7 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'check-platform-accounts': onCheckPlatformAccountsFailed,
   'sweep-stripe-events': onBillingSyncFailed,
   'reconcile-subscriptions': onBillingSyncFailed,
+  'cancelled-org-retention': onBillingSyncFailed,
 };
 
 /**
