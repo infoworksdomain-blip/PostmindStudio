@@ -144,7 +144,19 @@ jobs:
           docker run --rm --entrypoint sh postmind-studio:ci -c 'ffmpeg -version | head -1 && ffprobe -version | head -1 && test "$(id -un)" = node'
       - name: Liveness responds
         run: |
-          docker run -d --name studio -p 3010:3010 postmind-studio:ci
+          # Standalone mode refuses to start without its required settings (src/lib/env.ts
+          # assertStartupEnv), so liveness runs with placeholders. /api/health touches no dependency.
+          docker run -d --name studio -p 3010:3010 \
+            -e DATABASE_URL='postgresql://ci:ci@127.0.0.1:5432/ci?schema=studio' \
+            -e APP_URL='http://localhost:3010' \
+            -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
+            -e STRIPE_SECRET_KEY='sk_test_ci_placeholder' \
+            -e STRIPE_WEBHOOK_SECRET='whsec_ci_placeholder' \
+            -e RESEND_API_KEY='re_ci_placeholder' \
+            -e RESEND_WEBHOOK_SECRET='whsec_ci_placeholder' \
+            -e STUDIO_EMAIL_FROM='PostMind Studio <no-reply@ci.invalid>' \
+            -e STUDIO_UNSUBSCRIBE_SECRET="$(openssl rand -hex 32)" \
+            postmind-studio:ci
           for i in $(seq 1 30); do
             if curl -fsS http://localhost:3010/api/health; then exit 0; fi
             sleep 2
