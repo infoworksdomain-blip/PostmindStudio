@@ -393,7 +393,7 @@ Plan: `plans/phase-17.md`. Runbook GAPs that are code, plus follow-ups from Phas
 Plan: `plans/phase-18.md`. Operator decisions (2026-09-29): standalone product; built-in sign-in (Better Auth); Stripe subscriptions; Resend transactional email; Core and Engagement kept as optional adapters, off by default (`STUDIO_MODE=standalone`). These override CLAUDE.md's "Core handles auth / billing" lines; rule 1 (never modify Core or Engagement code) still holds.
 
 - [x] **18.0** Track 0 — contracts: the whole expand-only migration (19 tables + `platform_connections.connectedVia`, append-only audit trigger), `IdentityProvider` / entitlements / catalogue / billing / auth-mailer / audit-sink contracts, new capabilities, mode-aware env (`STUDIO_MODE`), empty i18n namespaces, leaf-level catalogue merge script.
-- [ ] **18.A** Track A — identity foundation (built on phase-18: A1 10fc587 + A2/A3; impersonation wiring and 2FA-disable code done in the integration; open: Playwright E2E): Better Auth (argon2id, sessions, CSRF, rate limits, enumeration-safe responses), standalone `IdentityProvider`, role → capability map, platform staff, local audit log; sign-up / sign-in / verify / reset / 2FA screens, Google sign-in, account security; super-admin CLI.
+- [x] **18.A** Track A — identity foundation (built on phase-18: A1 10fc587 + A2/A3; impersonation wiring and 2FA-disable code done in the integration; the Playwright happy path passes in CI, PR #25): Better Auth (argon2id, sessions, CSRF, rate limits, enumeration-safe responses), standalone `IdentityProvider`, role → capability map, platform staff, local audit log; sign-up / sign-in / verify / reset / 2FA screens, Google sign-in, account security; super-admin CLI.
 - [x] **18.B** Track B — email: Resend sender, outbox + retries, templates in 11 locales (plain TS, not React Email — see PROGRESS), webhook suppression, one-click unsubscribe.
 - [x] **18.C** Track C — billing, plans and entitlements: Stripe catalogue / checkout / portal / webhook, entitlements and access gate, top-ups, `/pricing`, `/settings/billing`, upgrade dialog, admin overrides.
 - [x] **18.D** Track D — standalone replacements: local businesses, local organisation directory, Studio's own Meta connect (Facebook Login for Business) with deauthorise / data-deletion callbacks, Core-only adapters off. (Staging gate — a live Page/IG connect, Reel publish and deauthorise with the operator's Meta app — waits for the app settings in runbooks/meta-connect.md.)
@@ -407,4 +407,14 @@ Plan: `plans/phase-18.md`. Operator decisions (2026-09-29): standalone product; 
   - [x] **18.E7** Demo handlers `p18-*`, tour group and What's new entry.
   - [x] **18.E8** Docs: CLAUDE.md standalone mode, runbooks/auth.md, vps-deploy.md.
   - [x] **18.E9** All strings in 11 locales, ar and zh-Hans render tests.
-  - [ ] **18.E10** Playwright happy path runs green in CI — written and wired (CI job `e2e`); runs once Track A sign-up and Track C pricing are merged.
+  - [x] **18.E10** Playwright happy path runs green in CI (CI job `e2e`; passing since PR #25).
+
+## Phase 19 — Launch preparation
+
+Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everything that does not depend on the operator or on the server being ready. Three parallel tracks.
+
+- [ ] **19.1** Track 1 — corpus tooling for the 50k reference library (`eu-corpus-source`).
+- [x] **19.2** Track 2 — go-live guide (`runbooks/go-live.md`, `docs-site/go-live.html`) and the settings template and checker (`npm run setup:env`, `npm run setup:check`).
+- [ ] **19.3** Track 3 — security hardening.
+- [ ] **19.4** Track 3 — dependency and CI upkeep.
+- [x] **19.5** Track 2 — cancelled-organisation banner copy: a distinct "subscription ended" read-only banner with the deletion date, in 11 locales.

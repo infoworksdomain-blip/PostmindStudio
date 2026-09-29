@@ -218,6 +218,12 @@
       "impersonating": {
         "title": "Vista dello staff.",
         "body": "Stai visualizzando Studio come {name}. Questa sessione è in sola lettura e ogni richiesta viene registrata."
+      },
+      "cancelled": {
+        "title": "Il tuo abbonamento è terminato: la tua organizzazione è in sola lettura.",
+        "body": "Abbonati di nuovo per continuare a creare. Puoi ancora visualizzare, scaricare ed esportare i tuoi dati.",
+        "deletesOn": "Se non ti abboni di nuovo, l’organizzazione e i suoi dati verranno eliminati dopo il {date}.",
+        "action": "Abbonati di nuovo"
       }
     }
   },

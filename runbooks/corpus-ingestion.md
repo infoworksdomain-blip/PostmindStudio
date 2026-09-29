@@ -14,6 +14,11 @@ INSPIRE modes. `licenseSource` records the decision as the audit trail. The defa
 LICENSED, OWNED or SCRAPED keep their existing gating: SCRAPED allows INSPIRE only, and expired
 licences are refused.
 
+**Getting the videos into a bucket first.** The operator's corpus is on a local hard drive:
+[corpus-upload.md](corpus-upload.md) scans it, uploads it to the `eu-corpus-source` R2 bucket
+with rclone, writes the manifest from the folder (`npm run corpus:manifest`) and ends at step 1
+below.
+
 ## Tools
 
 - `scripts/ops/ingest-corpus.ts` reads a CSV or JSONL manifest. It is a dry run by default and
@@ -87,8 +92,9 @@ SSRF guard.
 ## Steps
 
 1. **Prepare.**
-   - Upload the corpus, or list its https URLs.
-   - Write the manifest.
+   - Upload the corpus, or list its https URLs. From a local drive: corpus-upload.md steps 1–9.
+   - Write the manifest. From an uploaded folder: `npm run corpus:manifest` (corpus-upload.md
+     step 10).
    - Set `STUDIO_CORPUS_S3_BUCKETS` if you use s3 sources.
    - Check that `S3_BUCKET_LIBRARY` is set and the taxonomy is seeded (`npm run db:seed`).
    - Run a dry run:

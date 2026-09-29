@@ -9,3 +9,5 @@ prisma/migrations
 ops/render/render.yaml.schema.json
 /playwright-report/
 /test-results/
+# Generated from runbooks/go-live.md (scripts/setup/render-go-live.ts); a test compares the bytes
+docs-site/go-live.html

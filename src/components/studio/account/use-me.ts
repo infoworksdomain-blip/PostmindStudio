@@ -15,6 +15,7 @@ export type AccountBanner =
   | { kind: 'trial'; endsAt: string }
   | { kind: 'past_due'; graceUntil: string | null }
   | { kind: 'read_only' }
+  | { kind: 'cancelled'; deletesAt: string | null }
   | { kind: 'no_plan' };
 
 export interface Me {
