@@ -33,6 +33,7 @@ function post(body: unknown, headers: Record<string, string> = { origin: ORIGIN 
       headers: { 'content-type': 'application/json', ...headers },
       body: JSON.stringify(body),
     }),
+    { params: Promise.resolve({}) },
   );
 }
 

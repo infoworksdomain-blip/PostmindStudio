@@ -73,7 +73,8 @@ interface NextRouteContext {
 }
 
 export function withSignedInRoute(handler: (ctx: SignedInRouteContext) => Promise<SignedInResult>) {
-  return async function route(req: Request, next?: NextRouteContext): Promise<Response> {
+  // Required, not optional: next build rejects a route export whose second argument can be undefined.
+  return async function route(req: Request, next: NextRouteContext): Promise<Response> {
     const correlationId = getCorrelationId(req);
     const log = withContext({ correlationId });
     try {
@@ -82,7 +83,7 @@ export function withSignedInRoute(handler: (ctx: SignedInRouteContext) => Promis
       const session = await api.getSession(req.headers);
       if (!session) throw new UnauthorizedError('Sign in to continue');
       assertSameOriginWrite(req, new URL(process.env.APP_URL ?? req.url).origin);
-      const raw = (await next?.params) ?? {};
+      const raw = (await next.params) ?? {};
       const params = Object.fromEntries(
         Object.entries(raw).map(([k, v]) => [k, Array.isArray(v) ? v.join('/') : v]),
       );
