@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
+import { hardNavigate } from '@/lib/client/navigate';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { MetaPlatformCard } from './meta-platform-card';
@@ -73,7 +74,7 @@ function useCallbackNotice(): [Notice | null, () => void] {
 }
 
 function goTo(url: string) {
-  window.location.assign(url);
+  hardNavigate(url);
 }
 
 export function ConnectionsScreen({ navigate = goTo }: { navigate?: (url: string) => void }) {

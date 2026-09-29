@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi } from '@/lib/client/api';
 import { LOCALE_INFO, LOCALES } from '@/lib/i18n/locales';
+import { hardNavigate, hardReload } from '@/lib/client/navigate';
 import { ErrorState, PageHeader, Section } from '../primitives';
 import { selectClass } from '../library/library-filters';
 import { countryOptions } from './countries';
@@ -224,7 +225,7 @@ function TransferOwnership() {
         body: withPassword({ memberId }, password),
       });
       toast.success(t('done', { name: chosen?.name ?? '' }));
-      window.location.reload();
+      hardReload();
     } catch (err) {
       toast.error(errorMessage(err));
       setPending(false);
@@ -300,7 +301,7 @@ function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
     try {
       await api('/org', { method: 'DELETE', body: withPassword({ confirmName: typed }, password) });
       toast.success(t('done'));
-      window.location.assign('/');
+      hardNavigate('/');
     } catch (err) {
       toast.error(errorMessage(err));
       setPending(false);

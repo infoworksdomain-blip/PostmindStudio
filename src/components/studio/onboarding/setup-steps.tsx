@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, ApiError, useApi, useErrorMessage } from '@/lib/client/api';
 import { isLocale, LOCALE_INFO, LOCALES } from '@/lib/i18n/locales';
+import { hardNavigate } from '@/lib/client/navigate';
 import { useBusiness } from '../business-context';
 import { selectClass } from '../library/library-filters';
 import { EmptyState } from '../primitives';
@@ -57,7 +58,7 @@ export function CreateOrganisationStep() {
       });
       toast.success(t('created', { name: name.trim() }));
       // A new active organisation: reload so every server read is scoped to it.
-      window.location.assign('/welcome');
+      hardNavigate('/welcome');
     } catch (err) {
       toast.error(errorMessage(err));
       setSaving(false);

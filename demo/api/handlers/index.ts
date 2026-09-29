@@ -46,3 +46,6 @@ import './p17-hardening';
 import './p18-org';
 import './p18-admin';
 import './p18-billing';
+// Review build: the admin Billing tab (entitlement overrides, MRR) and the account security page.
+import './p18-admin-billing';
+import './p18-account';

@@ -276,7 +276,7 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
           template: 'trialEnding',
           to: `${userId}@t.test`,
           locale: 'fr',
-          params: { trialEnd: '2026-10-02T00:00:00.000Z' },
+          params: { planName: 'Standard', trialEndsAt: '2026-10-02T00:00:00.000Z' },
         }),
       ]);
       await db.member.deleteMany({ where: { organizationId: org } });

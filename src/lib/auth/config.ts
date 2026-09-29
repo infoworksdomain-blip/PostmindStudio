@@ -7,7 +7,7 @@ import { nextCookies } from 'better-auth/next-js';
 import { admin, organization, twoFactor } from 'better-auth/plugins';
 import type { Logger } from 'pino';
 import { AuditAction, type AuditRecord } from '../audit-sink';
-import type { AuthMailer } from '../email/auth-mailer';
+import type { AuthEmailParamsFor, AuthEmailTemplate, AuthMailer } from '../email/auth-mailer';
 import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALES } from '../i18n/locales';
 import type { EntitlementsReader } from '../studio/billing/entitlements-reader';
 import { readCookie } from '../tenant';
@@ -147,14 +147,14 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
   const appUrl = deps.baseURL.replace(/\/$/, '');
   const log = deps.logger;
 
-  const send = (
-    template: Parameters<AuthMailer['sendAuthEmail']>[0],
+  const send = <T extends AuthEmailTemplate>(
+    template: T,
     user: UserWithLocale,
-    params: Record<string, string>,
+    params: AuthEmailParamsFor<T>,
     idempotencyKey?: string,
   ) =>
     deps.mailer
-      .sendAuthEmail(template, user.email, { name: user.name, ...params }, toLocale(user.locale), {
+      .sendAuthEmail(template, user.email, { ...params, name: user.name }, toLocale(user.locale), {
         userId: user.id,
         ...(idempotencyKey && { idempotencyKey }),
       })
@@ -389,8 +389,10 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
         // §5.5: a verified user's current address approves the change (and so is told of it);
         // the new address then gets the verification link.
         sendChangeEmailConfirmation: async ({ user, newEmail, url, token }) => {
+          // The confirmation link for a change of address (Better Auth changeEmail): the
+          // 'emailChangeConfirm' template carries the link; 'emailChanged' is the after-the-fact notice.
           void send(
-            'emailChanged',
+            'emailChangeConfirm',
             user as UserWithLocale,
             { url, newEmail },
             tokenEmailKey('change-email', token),

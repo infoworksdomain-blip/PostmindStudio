@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/table';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { hardNavigate } from '@/lib/client/navigate';
 import { EmptyState, ErrorState, Section } from '../../primitives';
 import { StatusBadge } from '../organisations/status-badge';
 import { ReasonDialog } from '../reason-dialog';
@@ -83,7 +84,7 @@ function UserDetail({ id, onBack }: { id: string; onBack: () => void }) {
           method: 'POST',
           body: { reason },
         });
-        window.location.assign(res.redirectTo);
+        hardNavigate(res.redirectTo);
         return true;
       }
       toast.success(t(`done.${kind}`));

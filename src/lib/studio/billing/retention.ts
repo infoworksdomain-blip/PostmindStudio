@@ -4,6 +4,7 @@ import type { AuditEntry } from '../../audit';
 import { AuditAction } from '../../audit-sink';
 import type { AuthMailer } from '../../email/auth-mailer';
 import { ConfigurationError } from '../../errors';
+import { purgeGraceDays } from '../services/organisation-hard-delete';
 import { purgeOrganisation, type PurgeResult } from '../services/organisation-purge';
 import { ENDED_STATUSES, parseOverrides, type EntitlementOverrides } from './entitlements';
 import { invalidateEntitlements } from './entitlements-reader';
@@ -112,11 +113,18 @@ export async function purgeCancelledOrganisations(deps: RetentionDeps): Promise<
     try {
       const notifiedAt = retention.notifiedAt ?? now.toISOString();
       if (!retention.notifiedAt) {
+        // The purge below starts the existing grace (STUDIO_PURGE_GRACE_DAYS); the data is removed
+        // for good when it ends, so that is the date the owners are told.
+        const org = await deps.db.organization.findUnique({
+          where: { id: organisationId },
+          select: { name: true },
+        });
+        const deleteAt = new Date(now.getTime() + purgeGraceDays(deps.env) * DAY_MS);
         await emailOwners(
           deps,
           organisationId,
           'orgDeletionScheduled',
-          { cancelledAt: retention.cancelledAt, retentionDays: days },
+          { organisationName: org?.name ?? organisationId, deleteAt: deleteAt.toISOString() },
           `billing:retention:${organisationId}:${retention.cancelledAt}`,
         );
         await saveRetention(deps.db, organisationId, overrides, { ...retention, notifiedAt });

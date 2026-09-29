@@ -111,7 +111,7 @@ const PHASE_18_GROUP: ScreenGroup = {
   screens: [
     {
       title: 'Landing page',
-      href: '#/landing',
+      href: '#/',
       summary:
         'The public home page at /: the product story for small businesses, sample formats, the three-step flow and calls to sign up or see pricing. Signed-in visitors go straight to Projects.',
       scene: 'storefront',
@@ -173,8 +173,27 @@ const PHASE_18_GROUP: ScreenGroup = {
       title: 'Billing',
       href: '#/settings/billing',
       summary:
-        'Plan and renewal date, usage meters against the plan limits, top-up credits and packs, invoices and “Manage billing”. Checkout and the Stripe portal do not open from the demo.',
+        'Plan and renewal date, usage meters against the plan limits, top-up credits and packs, invoices and “Manage billing”. The plan follows the demo bar’s plan switcher; checkout and the billing portal open a clearly labelled simulated page (no card details), never Stripe.',
       scene: 'coffee',
+      links: [
+        {
+          href: '#/settings/billing?demoPlan=no_plan',
+          label: 'No plan: the plan picker',
+          note: 'Choose a plan or start the 14-day Standard trial, then the simulated checkout.',
+        },
+        {
+          href: '#/settings/billing?demoPlan=past_due',
+          label: 'Past due',
+          note: 'Grace countdown, open invoice, “Update payment method”.',
+        },
+      ],
+    },
+    {
+      title: 'Account security',
+      href: '#/account/security',
+      summary:
+        'Password, two-step verification with backup codes, active sessions with revoke, Google sign-in, and deleting the account (password again; the only owner must transfer ownership first).',
+      scene: 'studio',
     },
     {
       title: 'Audit log',
@@ -332,7 +351,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         title: 'Connections',
         href: '#/connections',
         summary:
-          'TikTok, YouTube, LinkedIn and X by OAuth; Instagram and Facebook from PostMind. The daily check shows “Access checked” on healthy accounts; X was refused and asks to be reconnected (17.3).',
+          'TikTok, YouTube, LinkedIn and X by OAuth; Instagram and Facebook through Studio’s own Facebook Login for Business (simulated). The daily check shows “Access checked” on healthy accounts; X was refused and asks to be reconnected (17.3).',
         scene: 'street',
       },
       {

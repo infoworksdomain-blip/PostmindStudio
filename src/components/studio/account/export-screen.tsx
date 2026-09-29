@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { hardNavigate } from '@/lib/client/navigate';
 import { FailureReason } from '../failure-reason';
 import { EmptyState, ErrorState, PageHeader, Section, StateBadge } from '../primitives';
 
@@ -60,7 +61,7 @@ function DownloadButton({ id }: { id: string }) {
     setBusy(true);
     try {
       const res = await api<{ export: ExportItem }>(`/account/export/${encodeURIComponent(id)}`);
-      if (res.export.downloadUrl) window.location.assign(res.export.downloadUrl);
+      if (res.export.downloadUrl) hardNavigate(res.export.downloadUrl);
       else toast.error(t('noLongerAvailable'));
     } catch (err) {
       toast.error(errorMessage(err));
