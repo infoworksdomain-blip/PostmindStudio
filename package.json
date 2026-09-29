@@ -131,8 +131,5 @@
   "overrides": {
     "deepmerge-ts": "8.0.2",
     "postcss": "8.5.28"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }
