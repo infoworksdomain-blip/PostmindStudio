@@ -3,6 +3,7 @@ import { AuditAction } from '../../audit-sink';
 import { ValidationError } from '../../errors';
 import { creditTopUp, refundTopUpCredits } from './credits';
 import type { StripeGateway } from './gateway';
+import { planDisplayName, topUpPackName } from './email-params';
 import { rotateCheckoutNonce } from './service';
 import {
   emailOwners,
@@ -193,12 +194,17 @@ async function handleCheckout(deps: WebhookDeps, sessionId: string, cause: strin
       deps,
       organisationId,
       'topupReceipt',
-      { pack: outcome.pack.lookupKey, quantity: outcome.pack.quantity, kind: outcome.pack.kind },
+      async (locale) => ({ packName: await topUpPackName(outcome.pack, locale) }),
       `billing:topup:${session.id}`,
     );
   } else if (outcome.status === 'unknown_pack') {
     deps.logger.warn({ sessionId }, 'paid checkout session without a known top-up pack');
   }
+}
+
+/** Billing settings on APP_URL (a link for emails that have no Stripe page). */
+function billingSettingsUrl(): string {
+  return new URL('/settings/billing', process.env.APP_URL ?? 'http://localhost:3010').toString();
 }
 
 /** The event → action table. Only called for HANDLED_EVENTS. */
@@ -229,11 +235,15 @@ export async function processStripeEvent(deps: WebhookDeps, event: Stripe.Event)
     case 'customer.subscription.resumed': {
       const result = await syncById(deps, id, event.type);
       if (result && event.type === 'customer.subscription.deleted') {
+        // Access runs to the end of the paid period; a subscription deleted outright ends now.
+        const row = await deps.db.subscription.findUnique({ where: { id: id ?? '' } });
+        const periodEnd = row?.currentPeriodEnd?.getTime() ?? 0;
+        const endsAt = new Date(Math.max(periodEnd, deps.now()));
         await emailOwners(
           deps,
           result.organisationId,
           'subscriptionCanceled',
-          {},
+          { endsAt: endsAt.toISOString() },
           `billing:canceled:${id}`,
         );
       }
@@ -243,13 +253,20 @@ export async function processStripeEvent(deps: WebhookDeps, event: Stripe.Event)
       const result = await syncById(deps, id, event.type);
       if (result) {
         const row = await deps.db.subscription.findUnique({ where: { id: id ?? '' } });
-        await emailOwners(
-          deps,
-          result.organisationId,
-          'trialEnding',
-          { trialEnd: row?.trialEnd?.toISOString() ?? null },
-          `billing:trial-ending:${id}`,
-        );
+        const planName = planDisplayName(row?.productTier ?? row?.lookupKey);
+        if (row?.trialEnd && planName)
+          await emailOwners(
+            deps,
+            result.organisationId,
+            'trialEnding',
+            { planName, trialEndsAt: row.trialEnd.toISOString() },
+            `billing:trial-ending:${id}`,
+          );
+        else
+          deps.logger.warn(
+            { subscriptionId: id },
+            'trial ending email skipped: the subscription has no trial end or plan',
+          );
       }
       return;
     }
@@ -279,7 +296,7 @@ export async function processStripeEvent(deps: WebhookDeps, event: Stripe.Event)
         deps,
         organisationId,
         'paymentFailed',
-        { graceUntil: graceUntil.toISOString(), url: invoice.hostedInvoiceUrl },
+        { graceEndsAt: graceUntil.toISOString(), url: invoice.hostedInvoiceUrl },
         `billing:payment-failed:${id}`,
       );
       return;
@@ -292,7 +309,8 @@ export async function processStripeEvent(deps: WebhookDeps, event: Stripe.Event)
         deps,
         organisationId,
         'paymentActionRequired',
-        { url: invoice.hostedInvoiceUrl },
+        // Stripe's hosted page confirms the payment (3-D Secure); without one, billing settings.
+        { url: invoice.hostedInvoiceUrl ?? billingSettingsUrl() },
         `billing:action-required:${id}`,
       );
       return;

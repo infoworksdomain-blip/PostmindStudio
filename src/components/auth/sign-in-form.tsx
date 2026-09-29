@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthApiError, authApi } from '@/lib/client/auth';
+import { hardNavigate } from '@/lib/client/navigate';
 import { AuthCard, AuthError } from './auth-card';
 import { GoogleButton } from './google-button';
 import { PasswordField } from './password-field';
@@ -45,7 +46,7 @@ export function SignInForm({
         router.push(`/two-factor?next=${encodeURIComponent(next)}`);
         return;
       }
-      window.location.assign(next);
+      hardNavigate(next);
     } catch (err) {
       if (err instanceof AuthApiError && err.code === 'EMAIL_NOT_VERIFIED') {
         router.push(`/verify-email?email=${encodeURIComponent(email)}&sent=1`);

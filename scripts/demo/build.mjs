@@ -42,8 +42,29 @@ async function css() {
   return fonts.outputFiles[0].text + minified.outputFiles[0].text;
 }
 
+// Full-page navigations (sign-in / sign-out, org switch, OAuth, Stripe, downloads) go through
+// src/lib/client/navigate.ts in the app; the demo swaps it for a shim that stays inside the
+// hash-routed page. A plugin rather than `alias`, because the import is a tsconfig path.
+const hardNavigateShim = {
+  name: 'demo-hard-navigate',
+  setup(b) {
+    b.onResolve({ filter: /^@\/lib\/client\/navigate$/ }, () => ({
+      path: join(root, 'demo', 'shims', 'hard-navigate.ts'),
+    }));
+    // The email previews (#/tour/email/*) render the real templates; their catalogue reads the
+    // template list from lib/email/auth-mailer.ts, whose server-only sender lazily imports the API
+    // context (Prisma, BullMQ). Left as an import() that never runs in the demo.
+    b.onResolve({ filter: /\/studio\/api\/context$/ }, (args) =>
+      args.importer.replaceAll('\\', '/').endsWith('src/lib/email/auth-mailer.ts')
+        ? { path: args.path, external: true }
+        : undefined,
+    );
+  },
+};
+
 async function js() {
   const result = await build({
+    plugins: [hardNavigateShim],
     entryPoints: [join(root, 'demo', 'entry.tsx')],
     bundle: true,
     write: false,

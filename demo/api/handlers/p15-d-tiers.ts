@@ -1,6 +1,7 @@
 // 15.D2 / decision P3 — plan usage sample handlers (GET /usage and the staff view
 // GET /admin/organisations/:id/usage), shaped like src/lib/studio/services/plan-quotas.ts.
 // The demo organisation is on Standard at 83 % of its short videos, so the app-shell banner shows.
+import { currentTier, videoQuota } from '../billing-state';
 import { DemoHttpError, route } from '../registry';
 
 const TIERS = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const;
@@ -34,11 +35,12 @@ function view(
   tier: Tier,
   used: { short: number; long: number },
   businessId?: string | null,
+  limits?: { short: number | null; long: number | null },
 ) {
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-  const q = QUOTAS[tier];
+  const q = { ...QUOTAS[tier], ...limits };
   const videos = {
     short: meter(used.short, q.short, q.shortMax),
     long: meter(used.long, q.long, q.longMax),
@@ -50,7 +52,8 @@ function view(
   return {
     organisationId,
     planTier: tier,
-    mode: 'warn',
+    // Phase 18: quotas are enforced under Stripe billing; the demo's request gate enforces them.
+    mode: 'enforce',
     month: start.toISOString().slice(0, 7),
     periodStart: start.toISOString(),
     resetsAt: end.toISOString(),
@@ -75,9 +78,20 @@ function view(
   };
 }
 
-route('GET', '/usage', ({ query }) => ({
-  usage: view('org_demo', 'STANDARD', { short: 50, long: 1 }, query.get('businessId')),
-}));
+// The demo organisation's tier and monthly use follow the demo bar's plan switcher
+// (../billing-state.ts): Standard at 50 of 60 by default, Basic at its limit, a trial at 3 of 5.
+route('GET', '/usage', ({ query }) => {
+  const { short, long } = videoQuota();
+  return {
+    usage: view(
+      'org_demo',
+      currentTier(),
+      { short: short.used, long: long.used },
+      query.get('businessId'),
+      { short: short.limit, long: long.limit },
+    ),
+  };
+});
 
 route('GET', '/admin/organisations/:id/usage', ({ params, query }) => {
   const id = params.id?.trim();

@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ApiError, api, useErrorMessage } from '@/lib/client/api';
 import { authFetch } from '@/lib/client/auth';
+import { hardNavigate } from '@/lib/client/navigate';
 import { Section } from '../../primitives';
 
 // Phase 18 §5.11 — delete my account. Re-authenticate with the password (Google-only accounts:
@@ -41,7 +42,7 @@ export function DeleteAccountSection() {
         method: 'POST',
         body: hasPassword ? { password } : {},
       });
-      window.location.assign('/sign-in');
+      hardNavigate('/sign-in');
     } catch (err) {
       if (err instanceof ApiError && err.details?.reason === 'sole_owner') {
         const orgs = (err.details.organisations as Array<{ name: string }> | undefined) ?? [];

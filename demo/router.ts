@@ -11,12 +11,65 @@ export interface Location {
 
 const listeners = new Set<() => void>();
 
+/** An in-page anchor inside the route ("#/settings/billing#topups"), scrolled to once it renders. */
+let pendingAnchor: string | null = null;
+
+function scrollToAnchor(): void {
+  const id = pendingAnchor;
+  pendingAnchor = null;
+  if (!id) return;
+  let tries = 0;
+  const attempt = () => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ block: 'start' });
+    else if (++tries < 20) window.setTimeout(attempt, 150);
+  };
+  window.setTimeout(attempt, 50);
+}
+
+/** A new page starts at the top, or at its anchor. */
+function afterNavigation(): void {
+  if (pendingAnchor) scrollToAnchor();
+  else window.scrollTo({ top: 0 });
+}
+
 function parseHash(hash: string): Location {
-  const raw = hash.replace(/^#/, '');
+  const [route = '', anchor] = hash.replace(/^#/, '').split('#');
+  pendingAnchor = anchor || null;
+  const raw = route;
   if (!raw) return { pathname: '/', search: '' };
   const withSlash = raw.startsWith('/') ? raw : `/${raw}`;
   const [pathname = '/', search = ''] = withSlash.split('?');
   return { pathname, search: search ? `?${search}` : '' };
+}
+
+/**
+ * A hook on every location before any screen sees it (demo/tour-params.ts): tour links carry
+ * `?demoPlan=` / `?lang=`, which are applied and removed here, so a screen mounts with the new
+ * billing state and never fetches with the old one.
+ */
+export type LocationFilter = (location: Location) => Location;
+
+let filter: LocationFilter = (location) => location;
+
+const hashOf = (location: Location) => `#${location.pathname}${location.search}`;
+
+function writeHistory(hash: string, replace: boolean): void {
+  try {
+    if (replace) window.history.replaceState(null, '', hash);
+    else window.history.pushState(null, '', hash);
+  } catch {
+    // Some sandboxed frames refuse history writes; the in-memory route below still works.
+  }
+}
+
+/** Parse, filter, and rewrite the address when the filter removed something. */
+function resolve(hash: string): Location {
+  const parsed = parseHash(hash);
+  const next = filter(parsed);
+  if (typeof window !== 'undefined' && hashOf(next) !== hashOf(parsed))
+    writeHistory(hashOf(next), true);
+  return next;
 }
 
 let current: Location =
@@ -26,11 +79,16 @@ function emit(): void {
   for (const listener of listeners) listener();
 }
 
+export function setLocationFilter(next: LocationFilter): void {
+  filter = next;
+  if (typeof window !== 'undefined') current = resolve(window.location.hash);
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
-    current = parseHash(window.location.hash);
+    current = resolve(window.location.hash);
     emit();
-    window.scrollTo({ top: 0 });
+    afterNavigation();
   });
 }
 
@@ -40,17 +98,11 @@ export function navigate(href: string, options: { replace?: boolean } = {}): voi
     return;
   }
   const target = href.startsWith('#') ? href.slice(1) : href;
-  const next = parseHash(target);
-  const hash = `#${next.pathname}${next.search}`;
-  try {
-    if (options.replace) window.history.replaceState(null, '', hash);
-    else window.history.pushState(null, '', hash);
-  } catch {
-    // Some sandboxed frames refuse history writes; the in-memory route below still works.
-  }
+  const next = filter(parseHash(target));
+  writeHistory(hashOf(next), options.replace === true);
   current = next;
   emit();
-  window.scrollTo({ top: 0 });
+  afterNavigation();
 }
 
 export function useLocation(): Location {
@@ -64,17 +116,4 @@ export function useLocation(): Location {
   );
 }
 
-/** Match "/projects/:id" against a pathname; returns params or null. */
-export function matchPath(pattern: string, pathname: string): Record<string, string> | null {
-  const p = pattern.split('/').filter(Boolean);
-  const a = pathname.split('/').filter(Boolean);
-  if (p.length !== a.length) return null;
-  const params: Record<string, string> = {};
-  for (let i = 0; i < p.length; i++) {
-    const seg = p[i] as string;
-    const val = a[i] as string;
-    if (seg.startsWith(':')) params[seg.slice(1)] = decodeURIComponent(val);
-    else if (seg !== val) return null;
-  }
-  return params;
-}
+export { matchPath } from './routes';

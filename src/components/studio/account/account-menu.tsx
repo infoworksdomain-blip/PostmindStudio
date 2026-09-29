@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { hardNavigate } from '@/lib/client/navigate';
 import { useBusiness } from '../business-context';
 import { setActiveOrganisation, signOut, useMe, type Me } from './use-me';
 
@@ -58,7 +59,7 @@ export function OrganisationSwitcher({ me }: { me: Me }) {
     try {
       if (!(await setActiveOrganisation(id))) throw new Error('switch failed');
       setBusinessId(null);
-      window.location.assign('/projects');
+      hardNavigate('/projects');
     } catch {
       toast.error(t('switchFailed'));
       setSwitching(false);
@@ -116,7 +117,7 @@ export function UserMenu({ me }: { me: Me }) {
     setSigningOut(true);
     try {
       if (!(await signOut())) throw new Error('sign-out failed');
-      window.location.assign('/');
+      hardNavigate('/');
     } catch {
       toast.error(t('signOutFailed'));
       setSigningOut(false);

@@ -186,7 +186,9 @@ export function InvoicesSection({ enabled }: { enabled: boolean }) {
       {invoices.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : (
-        <div className="overflow-x-auto">
+        // relative: the sr-only caption and labels (absolutely positioned) stay inside the scroll
+        // box; otherwise they widen right-to-left pages on phones.
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[32rem] text-sm">
             <caption className="sr-only">{t('caption')}</caption>
             <thead>

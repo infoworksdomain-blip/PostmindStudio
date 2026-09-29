@@ -165,11 +165,11 @@ export function ComparisonTable({ plans }: { plans: readonly PlanPricingView[] }
   const cellFor = useCell();
   const sorted = [...plans].sort((a, b) => a.displayOrder - b.displayOrder);
   return (
-    <section aria-labelledby="compare-heading" className="grid gap-4">
+    <section aria-labelledby="compare-heading" className="grid grid-cols-[minmax(0,1fr)] gap-4">
       <h2 id="compare-heading" className="font-display text-3xl leading-none">
         {t('title')}
       </h2>
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="relative overflow-x-auto rounded-xl border border-border">
         <table className="w-full min-w-[40rem] text-sm">
           <caption className="sr-only">{t('caption')}</caption>
           <thead className="bg-muted/50">
@@ -304,7 +304,7 @@ export function PricingScreen({
   const tTier = useTranslations('shell.usage.tiers');
   const [interval, setBillingInterval] = useState<BillingInterval>('month');
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-10 md:px-8 md:py-16">
+    <div className="mx-auto grid w-full max-w-7xl grid-cols-[minmax(0,1fr)] gap-12 px-4 py-10 md:px-8 md:py-16">
       <PageHeader
         eyebrow={t('hero.eyebrow')}
         title={t('hero.title')}

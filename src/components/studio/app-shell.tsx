@@ -200,7 +200,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="lg:hidden">
             <Wordmark compact />
           </div>
-          <div className="ms-auto flex min-w-0 items-center gap-2">
+          {/* Tighter gaps on phones: at 375 px the eight controls otherwise overflow the header. */}
+          <div className="ms-auto flex min-w-0 items-center gap-1 sm:gap-2">
             <div className="hidden md:block">
               <BusinessSwitcher />
             </div>

@@ -1,6 +1,7 @@
 // Phase 18 Track E sample handlers: the admin Organisations, Users and Subscriptions tabs and the
 // legal-readiness warning. Shapes match services/admin-directory.ts and lib/legal/readiness.ts.
 // Subscriptions are Track C's data (studio.subscriptions), shown read-only.
+import { BILLING_STATE_INFO, getBillingState } from '../billing-state';
 import { DEMO_ORG_ID, DEMO_USER_ID, DEMO_USER_NAME } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { OTHER_ORGS } from './admin-state';
@@ -99,9 +100,28 @@ const ORGS: Org[] = [
   },
 ];
 
-const graceFor = (o: Org) => (o.subscriptionStatus === 'past_due' ? future(4) : null);
+export type AdminOrg = Org;
+export const ADMIN_ORGS: readonly Org[] = ORGS;
+
+/** The demo organisation's row follows the demo bar's plan switcher (../billing-state.ts). */
+export function syncDemoOrg(): void {
+  const row = ORGS.find((o) => o.id === DEMO_ORG_ID);
+  if (!row) return;
+  const state = getBillingState();
+  const info = BILLING_STATE_INFO[state];
+  row.tier = state === 'no_plan' ? null : info.tier;
+  row.access = info.access;
+  row.subscriptionStatus = info.status;
+  row.lookupKey =
+    info.tier === 'ENTERPRISE' || state === 'no_plan'
+      ? null
+      : `studio_${info.tier.toLowerCase()}_monthly`;
+}
+
+export const graceFor = (o: Org) => (o.subscriptionStatus === 'past_due' ? future(4) : null);
 
 route('GET', '/admin/organisations', ({ query }) => {
+  syncDemoOrg();
   const q = (query.get('q') ?? '').toLowerCase();
   const data = ORGS.filter(
     (o) => !q || o.name.toLowerCase().includes(q) || o.slug.includes(q) || o.id === q,
@@ -110,6 +130,7 @@ route('GET', '/admin/organisations', ({ query }) => {
 });
 
 route('GET', '/admin/organisations/:id', ({ params }) => {
+  syncDemoOrg();
   const o = ORGS.find((x) => x.id === params.id);
   if (!o) throw new DemoHttpError(404, 'not_found', 'Organisation not found');
   return {
@@ -167,6 +188,7 @@ route('GET', '/admin/organisations/:id', ({ params }) => {
 });
 
 route('GET', '/admin/subscriptions', ({ query }) => {
+  syncDemoOrg();
   const status = query.get('status');
   const all = ORGS.filter((o) => o.subscriptionStatus);
   const rows = all.filter((o) => !status || o.subscriptionStatus === status);

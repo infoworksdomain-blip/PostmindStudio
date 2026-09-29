@@ -209,7 +209,7 @@ export function AuditScreen() {
           <EmptyState title={t('empty.title')} description={t('empty.body')} />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -242,7 +242,7 @@ function MembersTable({ data, onChanged }: { data: MembersResponse; onChanged: (
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -425,8 +425,8 @@ export function MembersScreen() {
   return (
     <>
       {header}
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-start">
-        <div className="grid min-w-0 gap-6">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
           {data.canManage && (
             <Section title={t('inviteTitle')} description={t('inviteDescription')}>
               <InviteForm disabled={full} onInvited={refresh} />

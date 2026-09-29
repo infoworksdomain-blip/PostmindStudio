@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { authApi, authErrorKey } from '@/lib/client/auth';
+import { hardNavigate } from '@/lib/client/navigate';
 
 // Phase 18 §2.9 — "Continue with Google". Better Auth builds the authorisation URL (state + PKCE
 // kept server-side) and we follow it; the callback lands on /api/auth/callback/google. Shown only
@@ -19,7 +20,7 @@ export function GoogleButton({ next }: { next: string }) {
     try {
       const { url } = await authApi.signInGoogle(next, '/sign-in?error=oauth');
       if (url) {
-        window.location.assign(url);
+        hardNavigate(url);
         return;
       }
       setBusy(false);
