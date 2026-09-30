@@ -1,6 +1,7 @@
 import type Stripe from 'stripe';
 import { UpstreamServiceError } from '../../errors';
 import type { BillingInvoice } from './contracts';
+import { listPricesByLookupKeys } from './stripe-lookup';
 
 // Phase 18 §2.7 — the narrow slice of the Stripe API Studio uses, behind an interface so the
 // billing logic is tested against a scripted fake (billing/testing/fake-gateway.ts) and the real
@@ -315,16 +316,14 @@ export function createStripeGateway(stripe: Stripe): StripeGateway {
         // unreachable Stripe shows the page without amounts (retried a minute later) instead of
         // holding it for the client default (20 s x 3 attempts). Per-request RequestOptions,
         // stripe-node 22.6.2 lib.d.ts (timeout, maxNetworkRetries).
-        const page = await stripe.prices.list(
-          {
-            lookup_keys: [...lookupKeys],
-            active: true,
-            limit: LIST_PAGE,
-            expand: ['data.product'],
-          },
+        // More lookup keys than Stripe's 10-per-request limit: batched (stripe-lookup.ts).
+        const prices = await listPricesByLookupKeys(
+          stripe.prices,
+          lookupKeys,
+          { active: true, limit: LIST_PAGE, expand: ['data.product'] },
           { timeout: PRICES_TIMEOUT_MS, maxNetworkRetries: 0 },
         );
-        return page.data.map(toPriceState);
+        return prices.map(toPriceState);
       }),
     paymentMethodFingerprint: (paymentMethodId) =>
       call('payment_methods.retrieve', async () => {
