@@ -6,7 +6,7 @@ import type { PlanTier } from '../providers/router';
 // DEFAULT_ORG_*_CAP_PENCE) plus the new limits; Track C points those modules at this object
 // (env overrides keep winning: env > catalogue).
 
-export const CATALOGUE_VERSION = '2026-09-29';
+export const CATALOGUE_VERSION = '2026-09-30';
 
 export type BillingInterval = 'month' | 'year';
 export type SelfServeTier = Exclude<PlanTier, 'ENTERPRISE'>;
@@ -69,8 +69,8 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     longVideosPerMonth: 0,
     longMaxSec: 0,
     platforms: 'tiktok_instagram_plus_one',
-    dailyCostCapPence: 1_000,
-    monthlyCostCapPence: 4_000,
+    dailyCostCapPence: 500,
+    monthlyCostCapPence: 2_000,
     queuePriority: 'normal',
     musicAndSfx: false,
     voiceClone: false,
@@ -95,12 +95,12 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     tier: 'STANDARD',
     displayOrder: 2,
     selfServe: true,
-    shortVideosPerMonth: 60,
-    longVideosPerMonth: 2,
+    shortVideosPerMonth: 40,
+    longVideosPerMonth: 1,
     longMaxSec: 180,
     platforms: 'all',
-    dailyCostCapPence: 3_000,
-    monthlyCostCapPence: 15_000,
+    dailyCostCapPence: 1_500,
+    monthlyCostCapPence: 7_300,
     queuePriority: 'normal',
     musicAndSfx: true,
     voiceClone: false,
@@ -126,12 +126,12 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     tier: 'PLUS',
     displayOrder: 3,
     selfServe: true,
-    shortVideosPerMonth: 150,
-    longVideosPerMonth: 8,
+    shortVideosPerMonth: 80,
+    longVideosPerMonth: 4,
     longMaxSec: 360,
     platforms: 'all',
-    dailyCostCapPence: 7_500,
-    monthlyCostCapPence: 45_000,
+    dailyCostCapPence: 4_500,
+    monthlyCostCapPence: 26_400,
     queuePriority: 'high',
     musicAndSfx: true,
     voiceClone: true,
@@ -160,8 +160,8 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     longVideosPerMonth: null,
     longMaxSec: null,
     platforms: 'all',
-    dailyCostCapPence: 40_000,
-    monthlyCostCapPence: 300_000,
+    dailyCostCapPence: 15_000,
+    monthlyCostCapPence: 110_000,
     queuePriority: 'high',
     musicAndSfx: true,
     voiceClone: true,
@@ -198,7 +198,7 @@ export const TOP_UP_PACKS: readonly TopUpPack[] = [
     tier: 'BASIC',
     kind: 'short',
     quantity: 10,
-    capHeadroomPencePerCredit: 200,
+    capHeadroomPencePerCredit: 100,
     validMonths: 12,
   },
   {
@@ -206,7 +206,7 @@ export const TOP_UP_PACKS: readonly TopUpPack[] = [
     tier: 'STANDARD',
     kind: 'short',
     quantity: 10,
-    capHeadroomPencePerCredit: 250,
+    capHeadroomPencePerCredit: 175,
     validMonths: 12,
   },
   {
@@ -214,7 +214,7 @@ export const TOP_UP_PACKS: readonly TopUpPack[] = [
     tier: 'PLUS',
     kind: 'short',
     quantity: 10,
-    capHeadroomPencePerCredit: 300,
+    capHeadroomPencePerCredit: 265,
     validMonths: 12,
   },
   {
@@ -222,7 +222,7 @@ export const TOP_UP_PACKS: readonly TopUpPack[] = [
     tier: 'STANDARD',
     kind: 'long',
     quantity: 2,
-    capHeadroomPencePerCredit: 1_500,
+    capHeadroomPencePerCredit: 1_000,
     validMonths: 12,
   },
   {
@@ -230,7 +230,7 @@ export const TOP_UP_PACKS: readonly TopUpPack[] = [
     tier: 'PLUS',
     kind: 'long',
     quantity: 2,
-    capHeadroomPencePerCredit: 3_000,
+    capHeadroomPencePerCredit: 2_000,
     validMonths: 12,
   },
 ];
@@ -318,18 +318,41 @@ export function allLookupKeys(): string[] {
 // them; re-run the margin maths in the runbook when you do.
 
 export const REFERENCE_PRICES_PENCE: Readonly<Record<string, number>> = {
-  studio_basic_monthly: 5_900,
-  studio_basic_yearly: 59_000,
-  studio_standard_monthly: 20_900,
-  studio_standard_yearly: 209_000,
-  studio_plus_monthly: 74_900,
-  studio_plus_yearly: 823_900,
-  studio_topup_short10_basic: 2_900,
-  studio_topup_short10_standard: 3_900,
-  studio_topup_short10_plus: 4_900,
-  studio_topup_long2_standard: 3_900,
-  studio_topup_long2_plus: 8_900,
+  studio_basic_monthly: 2_900,
+  studio_basic_yearly: 29_000,
+  studio_standard_monthly: 9_900,
+  studio_standard_yearly: 99_000,
+  studio_plus_monthly: 34_900,
+  studio_plus_yearly: 349_000,
+  studio_topup_short10_basic: 1_500,
+  studio_topup_short10_standard: 2_500,
+  studio_topup_short10_plus: 3_500,
+  studio_topup_long2_standard: 2_900,
+  studio_topup_long2_plus: 5_500,
 };
+
+/**
+ * ENTERPRISE list price ("from £1,500 a month", §P.2 revised 2026-09-30). Staff quote per
+ * customer; the admin console still refuses a price below `enterpriseMinimumMonthlyPricePence`
+ * for the organisation's custom monthly cost cap.
+ */
+export const ENTERPRISE_LIST_PRICE_PENCE = 150_000;
+
+/** §P.2 typical provider cost per video (estimates; recheck with real provider_usage). */
+export const TYPICAL_COST_PENCE_PER_VIDEO: Readonly<
+  Record<SelfServeTier, { short: number; long: number }>
+> = {
+  BASIC: { short: 90, long: 0 },
+  STANDARD: { short: 160, long: 900 },
+  PLUS: { short: 240, long: 1_800 },
+};
+
+/** Provider cost of a self-serve tier's whole monthly allowance at the typical per-video cost. */
+export function fullAllowanceTypicalCostPence(tier: SelfServeTier): number {
+  const plan = PLAN_CATALOGUE[tier];
+  const cost = TYPICAL_COST_PENCE_PER_VIDEO[tier];
+  return (plan.shortVideosPerMonth ?? 0) * cost.short + (plan.longVideosPerMonth ?? 0) * cost.long;
+}
 
 /** Worst-case Stripe fees (§P.2): 3.25 % international card + 0.7 % Billing + 0.5 % Tax. */
 export const STRIPE_FEE_RATE = 0.0445;
@@ -362,6 +385,21 @@ export function grossMarginAtCap(input: {
   return (net - cap) / monthlyPrice;
 }
 
+/** §P.2 typical use: half of the monthly allowance at the typical per-video cost. */
+export const TYPICAL_USE_SHARE = 0.5;
+
+/** Gross margin (0–1) of a self-serve subscription at typical use (§P.2). */
+export function grossMarginTypical(input: {
+  tier: SelfServeTier;
+  interval: BillingInterval;
+  pricePence: number;
+}): number {
+  return grossMarginAtCap({
+    ...input,
+    monthlyCapPence: fullAllowanceTypicalCostPence(input.tier) * TYPICAL_USE_SHARE,
+  });
+}
+
 /** Gross margin (0–1) of a top-up pack when every credit spends its full cap headroom. */
 export function topUpMarginAtWorstCase(pack: TopUpPack, pricePence: number): number {
   const net = pricePence * (1 - STRIPE_FEE_RATE) - STRIPE_FIXED_FEE_PENCE;
@@ -371,7 +409,7 @@ export function topUpMarginAtWorstCase(pack: TopUpPack, pricePence: number): num
 /**
  * §P.2 / §P.3 ENTERPRISE minimum monthly price for a custom monthly cost cap C:
  * price × (1 − fees) − fixed fee − infrastructure − C ≥ 15 % × price, i.e.
- * price ≥ (C + fixed + infra) / (1 − fees − 0.15). £3,000 cap → £3,775 (rounded up to a pound).
+ * price ≥ (C + fixed + infra) / (1 − fees − 0.15). £1,100 cap → £1,416 (rounded up to a pound).
  */
 export function enterpriseMinimumMonthlyPricePence(monthlyCapPence: number): number {
   const raw =

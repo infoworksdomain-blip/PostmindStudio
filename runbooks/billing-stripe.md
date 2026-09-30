@@ -17,18 +17,26 @@ Do it in **test mode first**, then repeat in live mode.
 
    | Product (id in test) | Price lookup key | Amount | Type |
    |---|---|---|---|
-   | studio_basic | studio_basic_monthly | £59.00 | monthly |
-   | studio_basic | studio_basic_yearly | £590.00 | yearly |
-   | studio_standard | studio_standard_monthly | £209.00 | monthly |
-   | studio_standard | studio_standard_yearly | £2,090.00 | yearly |
-   | studio_plus | studio_plus_monthly | £749.00 | monthly |
-   | studio_plus | studio_plus_yearly | £8,239.00 | yearly |
-   | studio_enterprise | none (quoted per customer) | from £3,950/month | staff create it |
-   | studio_topup_short10_basic | studio_topup_short10_basic | £29.00 | one-time |
-   | studio_topup_short10_standard | studio_topup_short10_standard | £39.00 | one-time |
-   | studio_topup_short10_plus | studio_topup_short10_plus | £49.00 | one-time |
-   | studio_topup_long2_standard | studio_topup_long2_standard | £39.00 | one-time |
-   | studio_topup_long2_plus | studio_topup_long2_plus | £89.00 | one-time |
+   Price list **2026-09-30** ("lower prices, fewer videos", operator decision 2026-09-30). The lookup keys did not change; only the amounts did.
+
+   | Product (id in test) | Price lookup key | Amount | Type |
+   |---|---|---|---|
+   | studio_basic | studio_basic_monthly | £29.00 | monthly |
+   | studio_basic | studio_basic_yearly | £290.00 | yearly |
+   | studio_standard | studio_standard_monthly | £99.00 | monthly |
+   | studio_standard | studio_standard_yearly | £990.00 | yearly |
+   | studio_plus | studio_plus_monthly | £349.00 | monthly |
+   | studio_plus | studio_plus_yearly | £3,490.00 | yearly |
+   | studio_enterprise | none (quoted per customer) | from £1,500/month | staff create it |
+   | studio_topup_short10_basic | studio_topup_short10_basic | £15.00 | one-time |
+   | studio_topup_short10_standard | studio_topup_short10_standard | £25.00 | one-time |
+   | studio_topup_short10_plus | studio_topup_short10_plus | £35.00 | one-time |
+   | studio_topup_long2_standard | studio_topup_long2_standard | £29.00 | one-time |
+   | studio_topup_long2_plus | studio_topup_long2_plus | £55.00 | one-time |
+
+   Annual is 10 × monthly on every tier (2 months free). The seed script creates these amounts from `REFERENCE_PRICES_PENCE` in `catalogue.ts`; re-running it on a test account that already has the old prices creates new prices with the same lookup keys and moves the keys to them (`transfer_lookup_key`), and archives nothing.
+
+   **Moving from the 2026-09-29 price list (£59 / £209 / £749).** In test mode, re-run the seed script. In live mode, for each row above: open the product, *Add another price* at the new amount (GBP, tax exclusive, same interval), set the same lookup key and tick *Transfer lookup key from an existing price*, then archive the old price. Studio's pricing page shows the new amounts within 10 minutes. Existing subscribers stay on their old price until you migrate them in Stripe (their plan limits and cost caps change at once, because those come from the catalogue). Re-run `portal-config.ts --update bpc_…` afterwards.
 
 3. **Customer Portal.** `STRIPE_SECRET_KEY=… APP_URL=https://<host> npx tsx scripts/billing/portal-config.ts` creates the configuration (payment methods, invoices, tax ids, plan switching among the three products with upgrades invoiced at once and downgrades / shorter intervals at period end, cancel at period end with a reason survey). Put the printed id in `STRIPE_PORTAL_CONFIGURATION_ID`. Re-run with `--update bpc_…` after changing prices.
 4. **Webhook endpoint.** `https://<host>/api/billing/stripe/webhook`, API version 2026-08-26.dahlia, with these events:
@@ -71,33 +79,48 @@ CI runs the scripted equivalent (`test/integration/billing-lifecycle.test.ts`, a
    It creates a test clock and a customer, subscribes to STANDARD with a 14-day trial, and advances the clock: **trial → active → failed payment (pm_card_chargeCustomerFail) → grace (past_due, full) → read-only → recovered (pm_card_visa, invoices paid)**, checking Studio's stored entitlements after each step, then deletes the clock and its rows.
 5. Record the result and date in PROGRESS.md.
 
-## 5. Unit economics (every tier profitable at its cost cap)
+## 5. Unit economics (price list 2026-09-30)
 
-Assumptions (§P.2): worst-case Stripe fees 4.45 % (3.25 % international card + 0.7 % Billing + 0.5 % Tax) + 20p per invoice; infrastructure and email per org a month BASIC £2, STANDARD £4, PLUS £8, ENTERPRISE £40. Provider spend can never exceed the monthly cost cap (generation pauses at 100 %). Margin at cap = (price × 0.9555 − fixed fee − infra − cap) / price, per month (annual: price ÷ 12, fee ÷ 12). The same formula is in `catalogue.ts` (`grossMarginAtCap`) and pinned by `catalogue.test.ts`.
+Assumptions (§P.2): worst-case Stripe fees 4.45 % (3.25 % international card + 0.7 % Billing + 0.5 % Tax) + 20p per invoice; infrastructure and email per org a month BASIC £2, STANDARD £4, PLUS £8, ENTERPRISE £40. Typical provider cost per video: BASIC short £0.90; STANDARD short £1.60, long (3 min) £9; PLUS short £2.40, long (6 min) £18. Typical use is 50 % of the allowance. Provider spend can never exceed the monthly cost cap (generation pauses at 100 %).
 
-| Plan | Price | Net per month | Cap | Margin at cap |
+Margin = (price × 0.9555 − fixed fee − infra − provider cost) / price, per month (annual: price ÷ 12, fee ÷ 12). The same formula is in `catalogue.ts` (`grossMarginAtCap`, `grossMarginTypical`) and pinned by `catalogue.test.ts`.
+
+| Tier | Short / long a month | Monthly cap | Daily cap | Full allowance at typical cost |
 |---|---|---|---|---|
-| BASIC monthly | £59 | 59 × 0.9555 − 0.20 − 2 = £54.17 | £40 | 24.0 % |
-| STANDARD monthly | £209 | 209 × 0.9555 − 0.20 − 4 = £195.50 | £150 | 21.8 % |
-| PLUS monthly | £749 | 749 × 0.9555 − 0.20 − 8 = £707.47 | £450 | 34.4 % |
-| BASIC annual | £590 (£49.17/mo) | £44.96 | £40 | 10.1 % |
-| STANDARD annual | £2,090 (£174.17/mo) | £162.40 | £150 | 7.1 % |
-| PLUS annual | £8,239 (£686.58/mo) | £648.02 | £450 | 28.8 % (§P.2 printed 28.0 %; the formula gives 28.8 %) |
-| ENTERPRISE | ≥ (C + £40.20) / 0.8055 | | custom C | ≥ 15 % (C = £3,000 → minimum £3,775; list "from £3,950") |
+| BASIC | 20 / 0 | £20 | £5 | 20 × £0.90 = £18 |
+| STANDARD | 40 / 1 (≤ 3 min) | £73 | £15 | 40 × £1.60 + 1 × £9 = £73 |
+| PLUS | 80 / 4 (≤ 6 min) | £264 | £45 | 80 × £2.40 + 4 × £18 = £264 |
+| ENTERPRISE | unlimited (fair use) | £1,100 | £150 | custom |
 
-Top-up packs (each consumed credit raises the month's cap by its worst-case cost):
+Each monthly cap covers the whole allowance at the typical per-video cost, so a customer is not paused before using what they paid for (`catalogue.test.ts` guards this).
 
-| Pack | Price | Worst-case cost | Margin |
+| Plan | Price | Net per month | Typical cost | Margin typical | Margin at cap |
+|---|---|---|---|---|---|
+| BASIC monthly | £29 | 29 × 0.9555 − 0.20 − 2 = £25.51 | £9 | **56.9 %** | (25.51 − 20) / 29 = **19.0 %** |
+| STANDARD monthly | £99 | 99 × 0.9555 − 0.20 − 4 = £90.39 | £36.50 | **54.4 %** | (90.39 − 73) / 99 = **17.6 %** |
+| PLUS monthly | £349 | 349 × 0.9555 − 0.20 − 8 = £325.27 | £132 | **55.4 %** | (325.27 − 264) / 349 = **17.6 %** |
+| BASIC annual | £290 (£24.17/mo) | £21.08 | £9 | 50.0 % | 4.5 % |
+| STANDARD annual | £990 (£82.50/mo) | £74.81 | £36.50 | 46.4 % | 2.2 % |
+| PLUS annual | £3,490 (£290.83/mo) | £269.87 | £132 | 47.4 % | 2.0 % |
+| ENTERPRISE | from £1,500 | £1,393.05 at £1,500 | | | 19.5 % at the £1,100 default cap; ≥ 15 % whenever price ≥ (C + £40.20) / 0.8055 (C = £1,100 → minimum £1,416) |
+
+Annual plans stay positive at the cap but thin (2–5 %): an annual customer who spends the whole cap every month is roughly break-even. At typical use they keep 46–50 %.
+
+Top-up packs (each consumed credit raises the month's cap by its headroom, at least its typical per-video cost):
+
+| Pack | Price | Worst-case cost (headroom) | Margin at worst case |
 |---|---|---|---|
-| 10 short BASIC | £29 | 10 × £2.00 | 26 % |
-| 10 short STANDARD | £39 | 10 × £2.50 | 31 % |
-| 10 short PLUS | £49 | 10 × £3.00 | 34 % |
-| 2 long STANDARD | £39 | 2 × £15 | 18 % |
-| 2 long PLUS | £89 | 2 × £30 | 28 % |
+| 10 short BASIC | £15 | 10 × £1.00 | 27.6 % |
+| 10 short STANDARD | £25 | 10 × £1.75 | 24.8 % |
+| 10 short PLUS | £35 | 10 × £2.65 | 19.3 % |
+| 2 long STANDARD | £29 | 2 × £10 | 25.9 % |
+| 2 long PLUS | £55 | 2 × £20 | 22.5 % |
 
-Trial: at most £15 of provider spend (daily £10), card required, one per organisation and card.
+Trial (unchanged): STANDARD features for 14 days, 5 short + 1 long, at most £15 of provider spend (daily £10), card required, one per organisation and card.
 
-Before raising a cap or lowering a price, recompute the row: the margin at cap must stay above 0 (and ≥ 15 % for ENTERPRISE).
+Before raising a cap or lowering a price, recompute the row. Guards in `catalogue.test.ts`: monthly plans ≥ 50 % at typical use and ≥ 15 % at the cap, every price positive at the cap, top-ups > 15 % at worst case, monthly cap ≥ full allowance at typical cost, ENTERPRISE ≥ 15 % at its cap.
+
+History: the 2026-09-29 list (£59 / £209 / £749, caps £40 / £150 / £450 / £3,000, allowances 20 / 60 + 2 / 150 + 8) is in `plans/phase-18.md` §P.2.
 
 ## 6. Environment
 

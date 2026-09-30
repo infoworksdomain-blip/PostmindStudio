@@ -1,5 +1,6 @@
 import { LIBRARY_VIDEOS, P17_PROJECTS, PROJECTS } from '../api/ids';
 import { projectHref as p, withLang, withPlan } from './workflow-types';
+import { PRICE_TEXT } from './price-text';
 import { SHARE_TOKEN } from './workflows-create';
 
 // "Everything built" (#/tour/features): every completed feature of Phases 1–20, grouped by area,
@@ -526,8 +527,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       },
       {
         title: 'Enterprise overrides',
-        description:
-          'Custom limits with the minimum-price check (£3,000 cap → at least £3,775 a month).',
+        description: `Custom limits with the minimum-price check (${PRICE_TEXT.enterpriseCap} cap → at least ${PRICE_TEXT.enterpriseMinimum} a month).`,
         href: '#/admin?tab=billing',
         phase: '18.C',
       },

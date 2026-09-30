@@ -31,16 +31,16 @@ describe('buildPricingView (amounts from Stripe prices.list by lookup key)', () 
     const standard = view.plans.find((p) => p.tier === 'STANDARD');
     expect(standard?.prices.month).toEqual({
       lookupKey: 'studio_standard_monthly',
-      unitAmountPence: 20_900,
+      unitAmountPence: 9_900,
     });
-    expect(standard?.prices.year?.unitAmountPence).toBe(209_000);
-    expect(standard?.annualSavingPence).toBe(20_900 * 12 - 209_000);
+    expect(standard?.prices.year?.unitAmountPence).toBe(99_000);
+    expect(standard?.annualSavingPence).toBe(9_900 * 12 - 99_000);
     expect(standard?.trialDays).toBe(14);
     expect(view.plans.find((p) => p.tier === 'BASIC')?.trialDays).toBe(0);
     const enterprise = view.plans.find((p) => p.tier === 'ENTERPRISE');
     expect(enterprise?.selfServe).toBe(false);
     expect(enterprise?.prices).toEqual({});
-    expect(view.topUps.map((t) => t.unitAmountPence)).toEqual([2_900, 3_900, 4_900, 3_900, 8_900]);
+    expect(view.topUps.map((t) => t.unitAmountPence)).toEqual([1_500, 2_500, 3_500, 2_900, 5_500]);
     expect(view.trial).toEqual({ tier: 'STANDARD', days: 14, shortVideos: 5, longVideos: 1 });
   });
 

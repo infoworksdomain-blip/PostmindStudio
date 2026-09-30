@@ -30,8 +30,9 @@ import {
 //
 //   Tier        "Short videos"   "Long videos"   "Platforms"
 //   Basic       "20 × 30s"       "0"             "TikTok + IG + 1 more"
-//   Standard    "60 × 30s"       "2 × 3min"      "All 8 platforms"
-//   Plus        "150 × 30s"      "8 × 6min"      "All 8 + brand voice clone"
+//   Standard    "40 × 30s"       "1 × 3min"      "All 8 platforms"
+//   Plus        "80 × 30s"       "4 × 6min"      "All 8 + brand voice clone"
+//   (Standard and Plus lowered by the 2026-09-30 price list; the numbers live in catalogue.ts.)
 //   Enterprise  "Unlimited (fair use)" / "Unlimited"
 //
 // The numbers are env-configurable defaults (pricing, Playbook A-04, is not signed off):

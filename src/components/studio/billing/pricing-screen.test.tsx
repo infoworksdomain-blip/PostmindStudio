@@ -15,9 +15,9 @@ function card(name: string) {
 describe('PricingScreen', () => {
   it('renders monthly amounts from Stripe prices, the trial and VAT notes', () => {
     render(<PricingScreen pricing={pricingView()} salesEmail="sales@studio.test" />);
-    expect(within(card('Basic')).getByText('£59.00 / month')).toBeInTheDocument();
-    expect(within(card('Standard')).getByText('£209.00 / month')).toBeInTheDocument();
-    expect(within(card('Plus')).getByText('£749.00 / month')).toBeInTheDocument();
+    expect(within(card('Basic')).getByText('£29.00 / month')).toBeInTheDocument();
+    expect(within(card('Standard')).getByText('£99.00 / month')).toBeInTheDocument();
+    expect(within(card('Plus')).getByText('£349.00 / month')).toBeInTheDocument();
     expect(
       within(card('Standard')).getByRole('link', { name: /Start free trial/ }),
     ).toHaveAttribute('href', '/sign-up?plan=STANDARD&interval=month');
@@ -43,9 +43,9 @@ describe('PricingScreen', () => {
     render(<PricingScreen pricing={pricingView()} />);
     await user.click(screen.getByRole('radio', { name: 'Annual' }));
     expect(screen.getByRole('radio', { name: 'Annual' })).toHaveAttribute('aria-checked', 'true');
-    expect(within(card('Basic')).getByText('£590.00 / year')).toBeInTheDocument();
-    // 12 × £59 − £590 = £118.
-    expect(within(card('Basic')).getByText('Save £118.00 a year')).toBeInTheDocument();
+    expect(within(card('Basic')).getByText('£290.00 / year')).toBeInTheDocument();
+    // 12 × £29 − £290 = £58.
+    expect(within(card('Basic')).getByText('Save £58.00 a year')).toBeInTheDocument();
     expect(
       within(card('Standard')).getByRole('link', { name: /Start free trial/ }),
     ).toHaveAttribute('href', '/sign-up?plan=STANDARD&interval=year');
@@ -55,7 +55,7 @@ describe('PricingScreen', () => {
     render(<PricingScreen pricing={pricingView(null)} />);
     expect(screen.getByRole('status')).toHaveTextContent('Prices can’t be shown right now');
     expect(within(card('Basic')).getByText('Price unavailable')).toBeInTheDocument();
-    expect(screen.queryByText(/£59/)).toBeNull();
+    expect(screen.queryByText(/£29/)).toBeNull();
     expect(within(card('Enterprise')).queryByRole('link')).toBeNull();
     expect(
       within(card('Enterprise')).getByText(/Ask your PostMind account manager/),
@@ -77,10 +77,10 @@ describe('PricingScreen', () => {
       'Seats2515Unlimited',
     );
     expect(within(table).getByRole('row', { name: /Long videos a month/ })).toHaveTextContent(
-      '2 × up to 3 min',
+      '1 × up to 3 min',
     );
     expect(within(table).getByRole('row', { name: /Monthly generation budget/ })).toHaveTextContent(
-      '£40.00£150.00£450.00£3,000.00',
+      '£20.00£73.00£264.00£1,100.00',
     );
   });
 
@@ -88,6 +88,6 @@ describe('PricingScreen', () => {
     render(<PricingScreen pricing={pricingView()} />);
     const packs = screen.getByRole('heading', { name: 'Top-up packs' }).closest('section')!;
     expect(within(packs).getAllByText('10 short videos')).toHaveLength(3);
-    expect(within(packs).getByText('£89.00')).toBeInTheDocument();
+    expect(within(packs).getByText('£55.00')).toBeInTheDocument();
   });
 });

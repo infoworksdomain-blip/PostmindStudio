@@ -68,17 +68,17 @@ X-Studio-Signature: v1=HMAC-SHA256(STUDIO_NOTIFY_WEBHOOK_SECRET, "1790500215.<ra
   "userId": null,
   "kind": "cost_alert",
   "title": "80% of this month’s generation budget used",
-  "body": "£120.00 of £150.00 spent this month (UTC). Generation pauses at 100% until the 1st (UTC); publishing is not affected.",
+  "body": "£58.40 of £73.00 spent this month (UTC). Generation pauses at 100% until the 1st (UTC); publishing is not affected.",
   "link": "https://studio.postmind.ai/analytics",
   "createdAt": "2026-09-27T09:10:15.000Z"
 }
 # Best effort: one attempt, 5 s timeout. Receivers should reject timestamps older than 5 minutes.`;
 
 const TIERS: [string, string, string][] = [
-  ['BASIC', '£10', '£40'],
-  ['STANDARD', '£30', '£150'],
-  ['PLUS', '£75', '£450'],
-  ['ENTERPRISE', '£400', '£3,000'],
+  ['BASIC', '£5', '£20'],
+  ['STANDARD', '£15', '£73'],
+  ['PLUS', '£45', '£264'],
+  ['ENTERPRISE', '£150', '£1,100'],
 ];
 
 function CostCaps() {

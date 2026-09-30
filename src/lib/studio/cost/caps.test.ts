@@ -18,8 +18,8 @@ describe('costCapsFromEnv', () => {
   it('applies the operator defaults when nothing is set (unset and blank alike)', () => {
     expect(costCapsFromEnv({ STUDIO_GLOBAL_DAILY_CAP_PENCE: '  ' })).toEqual({
       orgProviderDailyPence: undefined,
-      orgDailyPenceByTier: { BASIC: 1_000, STANDARD: 3_000, PLUS: 7_500, ENTERPRISE: 40_000 },
-      orgMonthlyPenceByTier: { BASIC: 4_000, STANDARD: 15_000, PLUS: 45_000, ENTERPRISE: 300_000 },
+      orgDailyPenceByTier: { BASIC: 500, STANDARD: 1_500, PLUS: 4_500, ENTERPRISE: 15_000 },
+      orgMonthlyPenceByTier: { BASIC: 2_000, STANDARD: 7_300, PLUS: 26_400, ENTERPRISE: 110_000 },
       globalDailyPence: 250_000,
       sources: {
         orgDailyByTier: {
@@ -37,20 +37,20 @@ describe('costCapsFromEnv', () => {
         globalDaily: 'default',
       },
     });
-    expect(DEFAULT_ORG_DAILY_CAP_PENCE.STANDARD).toBe(3_000);
-    expect(DEFAULT_ORG_MONTHLY_CAP_PENCE.ENTERPRISE).toBe(300_000);
+    expect(DEFAULT_ORG_DAILY_CAP_PENCE.STANDARD).toBe(1_500);
+    expect(DEFAULT_ORG_MONTHLY_CAP_PENCE.ENTERPRISE).toBe(110_000);
     expect(DEFAULT_GLOBAL_DAILY_CAP_PENCE).toBe(250_000);
   });
 
   it('lets env override each cap and records the source', () => {
     const caps = costCapsFromEnv({
-      STUDIO_ORG_DAILY_CAP_PENCE_BASIC: '500',
+      STUDIO_ORG_DAILY_CAP_PENCE_BASIC: '800',
       STUDIO_ORG_MONTHLY_CAP_PENCE_PLUS: ' 60000 ',
       STUDIO_ORG_PROVIDER_DAILY_CAP_PENCE: '2000',
       STUDIO_GLOBAL_DAILY_CAP_PENCE: '1000000',
     });
-    expect(caps.orgDailyPenceByTier.BASIC).toBe(500);
-    expect(caps.orgDailyPenceByTier.PLUS).toBe(7_500);
+    expect(caps.orgDailyPenceByTier.BASIC).toBe(800);
+    expect(caps.orgDailyPenceByTier.PLUS).toBe(4_500);
     expect(caps.orgMonthlyPenceByTier?.PLUS).toBe(60_000);
     expect(caps.orgProviderDailyPence).toBe(2000);
     expect(caps.globalDailyPence).toBe(1_000_000);

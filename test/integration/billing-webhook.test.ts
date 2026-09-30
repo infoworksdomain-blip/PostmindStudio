@@ -340,7 +340,7 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
         id: `ch_d_${org}`,
         paymentIntentId: null,
         customerId: customer,
-        amount: 5_900,
+        amount: 2_900,
         amountRefunded: 0,
         refunded: false,
       });
@@ -392,7 +392,7 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
       expect(await db.subscription.findUnique({ where: { id } })).toMatchObject({
         status: 'active',
         interval: 'year',
-        unitAmountPence: 59_000,
+        unitAmountPence: 29_000,
       });
       expect(await entitlement()).toMatchObject({ tier: 'BASIC', access: 'full' });
     });

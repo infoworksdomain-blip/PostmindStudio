@@ -21,7 +21,7 @@ const invoices: InvoicesResponse = {
       id: 'in_1',
       number: 'PM-0001',
       status: 'paid',
-      amountDuePence: 20_900,
+      amountDuePence: 9_900,
       currency: 'gbp',
       createdAt: '2026-09-01T10:00:00.000Z',
       hostedInvoiceUrl: 'https://invoice.stripe.test/i/in_1',
@@ -69,7 +69,7 @@ describe('BillingScreen', () => {
     );
     expect(screen.getByRole('meter', { name: 'Generation spend' })).toHaveAttribute(
       'aria-valuetext',
-      '£45.00 of £150.00',
+      '£45.00 of £73.00',
     );
     expect(screen.getByText('7 short video credits')).toBeInTheDocument();
     expect(screen.getByText('No long video credits')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('BillingScreen', () => {
 
     const table = await screen.findByRole('table', { name: 'Invoices' });
     const row = within(table).getByRole('row', { name: /PM-0001/ });
-    expect(row).toHaveTextContent('£209.00');
+    expect(row).toHaveTextContent('£99.00');
     expect(row).toHaveTextContent('Paid');
     const view = within(row).getByRole('link', {
       name: 'View invoice PM-0001 (opens in a new tab)',
@@ -112,11 +112,11 @@ describe('BillingScreen', () => {
     const user = userEvent.setup();
     renderWithSWR(<BillingScreen />);
     // STANDARD sees its own short and long packs only.
-    const buy = await screen.findByRole('button', { name: 'Buy 10 short videos for £39.00' });
+    const buy = await screen.findByRole('button', { name: 'Buy 10 short videos for £25.00' });
     expect(
-      screen.getByRole('button', { name: 'Buy 2 long videos for £39.00' }),
+      screen.getByRole('button', { name: 'Buy 2 long videos for £29.00' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /£29\.00/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /£15\.00/ })).toBeNull();
     await user.click(buy);
     await waitFor(() =>
       expect(nav.navigateTo).toHaveBeenCalledWith('https://checkout.stripe.test/c'),
@@ -134,7 +134,7 @@ describe('BillingScreen', () => {
     mockBilling(billing({ entitlements: { ...base.entitlements, tier: 'BASIC' } }));
     renderWithSWR(<BillingScreen />);
     expect(
-      await screen.findByRole('button', { name: 'Buy 10 short videos for £29.00' }),
+      await screen.findByRole('button', { name: 'Buy 10 short videos for £15.00' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /long videos/ })).toBeNull();
   });

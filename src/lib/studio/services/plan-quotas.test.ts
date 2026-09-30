@@ -80,13 +80,13 @@ describe('spec 12.4 defaults and env (decision P3)', () => {
   it('matches the spec table', () => {
     expect(DEFAULT_TIER_QUOTAS.BASIC).toMatchObject({ shortVideos: 20, longVideos: 0 });
     expect(DEFAULT_TIER_QUOTAS.STANDARD).toMatchObject({
-      shortVideos: 60,
-      longVideos: 2,
+      shortVideos: 40,
+      longVideos: 1,
       longMaxSec: 180,
     });
     expect(DEFAULT_TIER_QUOTAS.PLUS).toMatchObject({
-      shortVideos: 150,
-      longVideos: 8,
+      shortVideos: 80,
+      longVideos: 4,
       longMaxSec: 360,
     });
     expect(DEFAULT_TIER_QUOTAS.ENTERPRISE).toMatchObject({ shortVideos: null, longVideos: null });

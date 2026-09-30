@@ -63,7 +63,7 @@ describe('UpgradeDialogHost', () => {
     await block();
     const dialog = await screen.findByRole('dialog', { name: 'Upgrade to Plus' });
     expect(dialog).toHaveTextContent('This feature is included from the Plus plan.');
-    expect(await screen.findByText('Plus is £749.00 a month, excl. VAT.')).toBeInTheDocument();
+    expect(await screen.findByText('Plus is £349.00 a month, excl. VAT.')).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Upgrade' }));
     await waitFor(() =>
       expect(nav.navigateTo).toHaveBeenCalledWith('https://checkout.stripe.test/p'),

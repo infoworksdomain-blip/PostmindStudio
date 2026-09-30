@@ -31,19 +31,19 @@ describe('seed catalogue (scripts/billing/seed-stripe-test.ts)', () => {
   it('creates exactly the §P.2 prices: 6 recurring + 5 one-time, GBP, tax exclusive', () => {
     const specs = cataloguePrices();
     expect(specs.filter((s) => s.interval).map((s) => [s.lookupKey, s.unitAmountPence])).toEqual([
-      ['studio_basic_monthly', 5_900],
-      ['studio_basic_yearly', 59_000],
-      ['studio_standard_monthly', 20_900],
-      ['studio_standard_yearly', 209_000],
-      ['studio_plus_monthly', 74_900],
-      ['studio_plus_yearly', 823_900],
+      ['studio_basic_monthly', 2_900],
+      ['studio_basic_yearly', 29_000],
+      ['studio_standard_monthly', 9_900],
+      ['studio_standard_yearly', 99_000],
+      ['studio_plus_monthly', 34_900],
+      ['studio_plus_yearly', 349_000],
     ]);
     expect(specs.filter((s) => !s.interval)).toHaveLength(5);
     const monthly = priceCreateParams(specs[0]!);
     expect(monthly).toMatchObject({
       product: 'studio_basic',
       currency: 'gbp',
-      unit_amount: 5_900,
+      unit_amount: 2_900,
       lookup_key: 'studio_basic_monthly',
       transfer_lookup_key: true,
       tax_behavior: 'exclusive',
@@ -51,13 +51,13 @@ describe('seed catalogue (scripts/billing/seed-stripe-test.ts)', () => {
     });
     const topup = priceCreateParams(specs.find((s) => s.lookupKey === 'studio_topup_long2_plus')!);
     expect(topup.recurring).toBeUndefined();
-    expect(topup.unit_amount).toBe(8_900);
+    expect(topup.unit_amount).toBe(5_500);
   });
 
   it('leaves a matching price alone and replaces a changed one', () => {
     const spec = cataloguePrices()[0]!;
     const same = {
-      unitAmountPence: 5_900,
+      unitAmountPence: 2_900,
       currency: 'gbp',
       interval: 'month' as const,
       active: true,

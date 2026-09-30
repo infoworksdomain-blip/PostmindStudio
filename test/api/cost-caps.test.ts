@@ -51,7 +51,7 @@ describe.skipIf(!hasDb)('admin cost caps API', { timeout: 60_000 }, () => {
     installApi(db, tokens);
     vi.stubEnv('STUDIO_PLATFORM_ORG_IDS', staffOrg);
     vi.stubEnv('STUDIO_GLOBAL_DAILY_CAP_PENCE', '100000000');
-    vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_BASIC', '500');
+    vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_BASIC', '800');
     vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_PLUS', '');
     vi.stubEnv('STUDIO_ORG_DAILY_CAP_PENCE_ENTERPRISE', 'none');
     vi.stubEnv('STUDIO_ORG_MONTHLY_CAP_PENCE_STANDARD', '20000');
@@ -114,16 +114,16 @@ describe.skipIf(!hasDb)('admin cost caps API', { timeout: 60_000 }, () => {
     expect(body.month).toBe(new Date().toISOString().slice(0, 7));
     // Env override, code defaults (unset / blank) and an explicit "none".
     expect(body.caps.orgDailyByTier).toEqual({
-      BASIC: 500,
-      STANDARD: 3_000,
-      PLUS: 7_500,
+      BASIC: 800,
+      STANDARD: 1_500,
+      PLUS: 4_500,
       ENTERPRISE: null,
     });
     expect(body.caps.orgMonthlyByTier).toEqual({
-      BASIC: 4_000,
+      BASIC: 2_000,
       STANDARD: 20_000,
-      PLUS: 45_000,
-      ENTERPRISE: 300_000,
+      PLUS: 26_400,
+      ENTERPRISE: 110_000,
     });
     expect(body.caps.sources).toEqual({
       globalDaily: 'env',

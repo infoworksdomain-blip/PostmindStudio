@@ -26,7 +26,7 @@ const view: AdminEntitlementsResponse['entitlements'] = {
   },
   admin: null,
   limits: null,
-  enterprise: { monthlyCapPence: 300_000, minimumMonthlyPricePence: 377_500 },
+  enterprise: { monthlyCapPence: 110_000, minimumMonthlyPricePence: 141_600 },
   subscriptions: [
     {
       id: 'sub_1',
@@ -76,19 +76,19 @@ describe('EntitlementsPanel', () => {
     const user = await openOrg();
     await user.selectOptions(screen.getByLabelText('Tier'), 'ENTERPRISE');
     expect(
-      screen.getByText('Minimum for this organisation’s £3,000.00 monthly cost cap: £3,775.00.'),
+      screen.getByText('Minimum for this organisation’s £1,100.00 monthly cost cap: £1,416.00.'),
     ).toBeInTheDocument();
     await user.type(screen.getByLabelText('Reason (required)'), 'Signed enterprise deal');
     const save = screen.getByRole('button', { name: 'Save override' });
     expect(screen.getByRole('alert')).toHaveTextContent('needs the agreed monthly price');
     expect(save).toBeDisabled();
 
-    await user.type(screen.getByLabelText('Agreed monthly price (£, excl. VAT)'), '3500');
-    expect(screen.getByRole('alert')).toHaveTextContent('below the minimum of £3,775.00');
+    await user.type(screen.getByLabelText('Agreed monthly price (£, excl. VAT)'), '1400');
+    expect(screen.getByRole('alert')).toHaveTextContent('below the minimum of £1,416.00');
     expect(save).toBeDisabled();
 
     await user.clear(screen.getByLabelText('Agreed monthly price (£, excl. VAT)'));
-    await user.type(screen.getByLabelText('Agreed monthly price (£, excl. VAT)'), '3950');
+    await user.type(screen.getByLabelText('Agreed monthly price (£, excl. VAT)'), '1500');
     await user.type(screen.getByLabelText('Seats'), '40');
     await user.click(screen.getByRole('checkbox', { name: 'Short videos a month: unlimited' }));
     expect(save).toBeEnabled();
@@ -97,7 +97,7 @@ describe('EntitlementsPanel', () => {
     expect(api.calls.find((c) => c.method === 'PUT')?.body).toEqual({
       tier: 'ENTERPRISE',
       limits: { seats: 40, shortVideos: null },
-      monthlyPricePence: 395_000,
+      monthlyPricePence: 150_000,
       expiresAt: null,
       reason: 'Signed enterprise deal',
     });
@@ -112,7 +112,7 @@ describe('EntitlementsPanel', () => {
         setByUserId: 'staff_1',
         setAt: '2026-09-01T00:00:00.000Z',
         expiresAt: null,
-        monthlyPricePence: 395_000,
+        monthlyPricePence: 150_000,
       },
     };
     const api = mockFetch([
@@ -121,7 +121,7 @@ describe('EntitlementsPanel', () => {
     ]);
     const user = await openOrg();
     expect(screen.getByText('Reason: Pilot')).toBeInTheDocument();
-    expect(screen.getByText('Agreed price: £3,950.00 a month')).toBeInTheDocument();
+    expect(screen.getByText('Agreed price: £1,500.00 a month')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Reason for removing'), 'Pilot ended');
     await user.click(screen.getByRole('button', { name: 'Remove override' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'DELETE')).toBe(true));
@@ -132,13 +132,13 @@ describe('EntitlementsPanel', () => {
 
 const subs: AdminSubscriptionsResponse = {
   summary: {
-    mrrPence: 170_400,
+    mrrPence: 76_783,
     currency: 'gbp',
     byStatus: { active: 3, past_due: 1, trialing: 1 },
     byTier: {
-      BASIC: { count: 1, mrrPence: 5_900 },
-      STANDARD: { count: 2, mrrPence: 20_900 },
-      PLUS: { count: 2, mrrPence: 143_600 },
+      BASIC: { count: 1, mrrPence: 2_900 },
+      STANDARD: { count: 2, mrrPence: 9_900 },
+      PLUS: { count: 2, mrrPence: 63_983 },
       ENTERPRISE: { count: 0, mrrPence: 0 },
     },
     total: 5,
@@ -151,7 +151,7 @@ const subs: AdminSubscriptionsResponse = {
       status: 'past_due',
       tier: 'PLUS',
       interval: 'year',
-      mrrPence: 68_658,
+      mrrPence: 29_083,
       currentPeriodEnd: '2027-01-01T00:00:00.000Z',
       cancelAtPeriodEnd: true,
       trialEnd: null,
@@ -164,15 +164,15 @@ describe('SubscriptionsPanel', () => {
     const api = mockFetch([{ match: '/admin/billing/subscriptions', body: { ok: true, ...subs } }]);
     const user = userEvent.setup();
     renderWithSWR(<SubscriptionsPanel />);
-    expect(await screen.findByText('£1,704.00')).toBeInTheDocument();
+    expect(await screen.findByText('£767.83')).toBeInTheDocument();
     expect(screen.getByText('5 subscriptions')).toBeInTheDocument();
     const byTier = screen.getByRole('list', { name: 'Subscriptions by tier' });
-    expect(within(byTier).getByText('Plus').closest('li')).toHaveTextContent('2 · £1,436.00');
+    expect(within(byTier).getByText('Plus').closest('li')).toHaveTextContent('2 · £639.83');
     const byStatus = screen.getByRole('list', { name: 'Subscriptions by status' });
     expect(within(byStatus).getByText('Past due').closest('li')).toHaveTextContent('1');
     const row = screen.getByRole('row', { name: /Acme Coffee/ });
     expect(row).toHaveTextContent('Annual');
-    expect(row).toHaveTextContent('£686.58');
+    expect(row).toHaveTextContent('£290.83');
     expect(row).toHaveTextContent('Cancelling');
 
     await user.selectOptions(screen.getByLabelText('Status'), 'past_due');

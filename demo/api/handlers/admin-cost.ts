@@ -1,5 +1,6 @@
 // /admin/cost and /admin/cost/caps (agent "insight"): cross-organisation provider spend and the
 // cost caps (defaults from src/lib/studio/cost/caps.ts, one env override, one disabled).
+import { PLAN_CATALOGUE } from '@/lib/studio/billing/catalogue';
 import { DEMO_ORG_ID, PROJECTS } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { OTHER_ORGS } from './admin-state';
@@ -56,8 +57,11 @@ route('GET', '/admin/cost', ({ query }) => {
   return { days, data };
 });
 
-const ORG_DAILY = { BASIC: 1_000, STANDARD: 3_000, PLUS: 9_000, ENTERPRISE: 40_000 };
-const ORG_MONTHLY = { BASIC: 4_000, STANDARD: 15_000, PLUS: 45_000, ENTERPRISE: null };
+const ORG_DAILY = {
+  BASIC: PLAN_CATALOGUE.BASIC.dailyCostCapPence,
+  STANDARD: PLAN_CATALOGUE.STANDARD.dailyCostCapPence,
+};
+const ORG_MONTHLY = { PLUS: PLAN_CATALOGUE.PLUS.monthlyCostCapPence };
 const GLOBAL_DAILY = 250_000;
 const ORG_PROVIDER_DAILY = 2_000;
 const percentOf = (spent: number, cap: number) =>
@@ -144,7 +148,7 @@ route('GET', '/admin/cost/caps', () => {
       period: today,
       threshold: 80,
       capPence: ORG_DAILY.STANDARD,
-      spentPence: 2_430,
+      spentPence: 1_230,
       createdAt: at(40 * 60_000),
     },
     {
@@ -177,7 +181,7 @@ route('GET', '/admin/cost/caps', () => {
       period: month,
       threshold: 80,
       capPence: ORG_MONTHLY.PLUS,
-      spentPence: 36_400,
+      spentPence: 21_400,
       createdAt: at(2 * DAY + 5 * HOUR),
     },
     {
@@ -199,7 +203,7 @@ route('GET', '/admin/cost/caps', () => {
       period: dayOf(4 * DAY),
       threshold: 100,
       capPence: ORG_DAILY.BASIC,
-      spentPence: 1_012,
+      spentPence: 512,
       createdAt: at(4 * DAY + 2 * HOUR),
     },
   ];

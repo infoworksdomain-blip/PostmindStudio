@@ -8,6 +8,7 @@
 //   /notification-preferences                             13.24 (notifications/preferences.ts)
 // Plus two sample projects: one paused by the organisation's daily cap (13.20 auto-resume note)
 // and one waiting for a content-safety review (13.17).
+import { PLAN_CATALOGUE } from '@/lib/studio/billing/catalogue';
 import { DEMO_ORG_ID, DEMO_USER_ID } from '../ids';
 import { sampleVideo } from '../../media';
 import { DemoHttpError, route } from '../registry';
@@ -47,7 +48,7 @@ putProject(
     targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 20 }],
     costActualPence: 140,
     errorReason:
-      'cost_cap_paused: organisation daily cost cap reached (£30.00 today, STANDARD tier); generation resumes after midnight UTC',
+      'cost_cap_paused: organisation daily cost cap reached (£15.00 today, STANDARD tier); generation resumes after midnight UTC',
     createdAt: ago(20 * HOUR),
     updatedAt: ago(14 * HOUR),
     metadata: {
@@ -469,8 +470,12 @@ route('PUT', '/admin/organisations/:id/policy', ({ params, body }) => {
 });
 
 const TIERS = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const;
-const DAILY = { BASIC: 1_000, STANDARD: 3_000, PLUS: 7_500, ENTERPRISE: 40_000 };
-const MONTHLY = { BASIC: 4_000, STANDARD: 15_000, PLUS: 45_000, ENTERPRISE: 300_000 };
+const DAILY = Object.fromEntries(
+  TIERS.map((t) => [t, PLAN_CATALOGUE[t].dailyCostCapPence]),
+) as Record<(typeof TIERS)[number], number>;
+const MONTHLY = Object.fromEntries(
+  TIERS.map((t) => [t, PLAN_CATALOGUE[t].monthlyCostCapPence]),
+) as Record<(typeof TIERS)[number], number>;
 
 interface CapRow {
   dailyPence: number | null;
