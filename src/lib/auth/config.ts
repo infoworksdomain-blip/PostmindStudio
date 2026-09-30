@@ -151,6 +151,16 @@ export function eventEmailKey(kind: string, userId: string, now: number = Date.n
 
 type UserWithLocale = { id: string; email: string; name: string; locale?: unknown };
 
+// Auth emails are queued fire-and-forget (the response must not wait for, or reveal, the send).
+// A long-running server never notices; a one-shot script (scripts/auth/create-superadmin.ts) must
+// wait for them before it disconnects Prisma, or the outbox write fails ("Response from the Engine
+// was empty") and no email is queued. flushAuthEmails() waits for every send started so far.
+const pendingAuthEmails = new Set<Promise<void>>();
+
+export async function flushAuthEmails(): Promise<void> {
+  while (pendingAuthEmails.size > 0) await Promise.allSettled([...pendingAuthEmails]);
+}
+
 export function buildAuthOptions(deps: AuthConfigDeps) {
   const hasher = deps.hasher ?? createArgon2Hasher();
   const appUrl = deps.baseURL.replace(/\/$/, '');
@@ -161,8 +171,8 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
     user: UserWithLocale,
     params: AuthEmailParamsFor<T>,
     idempotencyKey?: string,
-  ) =>
-    deps.mailer
+  ): Promise<void> => {
+    const pending = deps.mailer
       .sendAuthEmail(template, user.email, { ...params, name: user.name }, toLocale(user.locale), {
         userId: user.id,
         ...(idempotencyKey && { idempotencyKey }),
@@ -171,7 +181,11 @@ export function buildAuthOptions(deps: AuthConfigDeps) {
       .catch((err: unknown) => {
         // Never tell the caller (enumeration) and never lose the error.
         log.error({ err, template, userId: user.id }, '[auth] email could not be queued');
-      });
+      })
+      .finally(() => pendingAuthEmails.delete(pending));
+    pendingAuthEmails.add(pending);
+    return pending;
+  };
 
   const audit = (record: AuditRecord) =>
     deps.audit(record).catch((err: unknown) => log.error({ err }, '[auth] audit failed'));

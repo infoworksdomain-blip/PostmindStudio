@@ -5,6 +5,7 @@
 // the user turns on two-factor authentication.
 
 import { auditLogDurable } from '../../src/lib/audit';
+import { flushAuthEmails } from '../../src/lib/auth/config';
 import { getAuth } from '../../src/lib/auth/server';
 import { bootstrapStaff, parseBootstrapArgs } from '../../src/lib/auth/superadmin';
 import { logger } from '../../src/lib/logger';
@@ -23,6 +24,8 @@ async function main(): Promise<void> {
     },
     input,
   );
+  // The set-password email is queued in the background: wait for it before disconnecting.
+  await flushAuthEmails();
   logger.info(
     { userId: result.userId, created: result.created, role: input.role },
     result.created
@@ -32,8 +35,13 @@ async function main(): Promise<void> {
   await prisma.$disconnect();
 }
 
-main().catch(async (err: unknown) => {
-  logger.error({ err }, 'create-superadmin failed');
-  await prisma.$disconnect();
-  process.exit(1);
-});
+// Explicit exits: the app's clients (queues, Redis) keep handles open, so a one-shot script would
+// otherwise never end.
+main()
+  .then(() => process.exit(0))
+  .catch(async (err: unknown) => {
+    logger.error({ err }, 'create-superadmin failed');
+    await flushAuthEmails();
+    await prisma.$disconnect();
+    process.exit(1);
+  });
