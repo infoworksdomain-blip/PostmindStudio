@@ -149,6 +149,20 @@ describe('setup:check', () => {
     expect(stdout).toMatch(/CHECK\s+legal texts/);
   });
 
+  it('drafts with [[…]] markers left block readiness and say to fill them in', async () => {
+    runNewEnv(['--env', 'production', '--out', 'production.env'], io());
+    fillRequired(join(dir, 'production.env'));
+    const legal = join(dir, 'drafts');
+    mkdirSync(join(legal, 'en-GB'), { recursive: true });
+    for (const doc of LEGAL_DOCS)
+      writeFileSync(join(legal, 'en-GB', `${doc}.md`), `# ${doc}\n[[COMPANY LEGAL NAME]]\n`);
+    expect(await runCheckEnv(['production.env', '--legal-dir', legal], io())).toBe(1);
+    expect(stdout).toMatch(
+      /MISSING\s+legal texts\s+- terms, privacy fill in the \[\[…\]\] details/,
+    );
+    expect(stdout).toContain('content/legal/FILL-IN.md');
+  });
+
   it('usage errors exit 2', async () => {
     expect(await runCheckEnv([], io())).toBe(2);
     expect(await runCheckEnv(['nope.env'], io())).toBe(2);

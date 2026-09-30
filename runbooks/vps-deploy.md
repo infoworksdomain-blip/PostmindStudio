@@ -233,7 +233,7 @@ email). Every `POSTMIND_*` key and `STUDIO_PLATFORM_ORG_IDS` below is needed **o
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | yes | Stripe dashboard (runbooks/billing-stripe.md, Track C) |
 | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `STUDIO_EMAIL_FROM`, `STUDIO_UNSUBSCRIBE_SECRET` | yes | Resend dashboard (runbooks/email-resend.md, Track B); the unsubscribe secret is `openssl rand -hex 32` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | no | Google Cloud OAuth client; unset hides "Continue with Google" |
-| `STUDIO_SIGNUPS_ENABLED` | no | `true` (default) opens public sign-up; `false` = invite-only. Production sign-up stays closed while the legal placeholders are in place (below) |
+| `STUDIO_SIGNUPS_ENABLED` | no | `true` (default) opens public sign-up; `false` = invite-only. Production sign-up stays closed while the legal texts still have fill-in markers (below) |
 | `STUDIO_IMPERSONATION_ENABLED`, `STUDIO_IMPERSONATION_WRITE` | no | Keep `false` ([auth.md](auth.md) "Impersonation") |
 | `STUDIO_SALES_EMAIL`, `STUDIO_SUPPORT_EMAIL`, `STUDIO_LEGAL_ENTITY_NAME` | no, but set them | Shown on the public pages (the footer shows the legal entity name) |
 
@@ -284,18 +284,22 @@ Also: add the domain's origin to the assets bucket's CORS rule ([r2-setup.md](r2
 ### Legal documents (before public launch)
 
 The public pages `/legal/{terms,privacy,cookies,acceptable-use,dpa,subprocessors}` render
-`content/legal/<locale>/<doc>.md` from the image. The repository ships **placeholders** marked
-`OPERATOR MUST REPLACE`. Replace all six English files (`content/legal/en-GB/`) with your own text
-on the branch you deploy from (translations are optional: `content/legal/fr/terms.md` and so on;
-missing ones fall back to English with a note), then rebuild the image. Check with:
+`content/legal/<locale>/<doc>.md` from the image. The repository ships **complete drafts** of all
+six English files (`content/legal/en-GB/`, Phase 20.4) with fill-in markers such as
+`[[COMPANY LEGAL NAME]]` for your company details. Replace every marker (the list, and where to
+find each value, is in `content/legal/FILL-IN.md`), have a solicitor review the texts, and commit
+them on the branch you deploy from (translations are optional: `content/legal/fr/terms.md` and so
+on; missing ones fall back to English with a note), then rebuild the image. Check with:
 
 ```bash
-npx tsx scripts/legal/check-ready.ts   # lists MISSING / PLACEHOLDER; exit 1 while terms or privacy block sign-up
+npx tsx scripts/legal/check-ready.ts   # lists MISSING / PLACEHOLDER / FILL-IN (with the markers); exit 1 while terms or privacy block sign-up
 ```
 
-While terms or privacy is a placeholder, **production public sign-up stays closed** and the Admin
-Centre shows a warning; the other four only warn. `STUDIO_LEGAL_CONTENT_DIR` points the app at another
-directory if you mount the files instead of baking them in.
+While terms or privacy still contains a `[[…]]` marker (or is missing, or is an old
+`OPERATOR MUST REPLACE` placeholder), **production public sign-up stays closed** and the Admin
+Centre shows a warning; the other four only warn, and their pages show a "draft" banner.
+`STUDIO_LEGAL_CONTENT_DIR` points the app at another directory if you mount the files instead of
+baking them in.
 
 ## 7. First deploy
 

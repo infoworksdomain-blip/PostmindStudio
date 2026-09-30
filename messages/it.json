@@ -3769,7 +3769,11 @@
       "title": "Questo documento non è ancora stato pubblicato.",
       "body": "Il testo seguente è segnaposto. L’operatore di questo servizio deve sostituirlo con un proprio testo prima del lancio."
     },
-    "notTranslated": "Questo documento non è ancora disponibile nella tua lingua, quindi viene mostrato in inglese."
+    "notTranslated": "Questo documento non è ancora disponibile nella tua lingua, quindi viene mostrato in inglese.",
+    "draft": {
+      "title": "Questo documento è una bozza.",
+      "body": "Alcuni dati aziendali del gestore devono ancora essere inseriti. Contatta il gestore prima di farvi affidamento."
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "La registrazione non è bloccata, ma questi documenti sono ancora segnaposto.",
       "placeholder": "segnaposto",
       "missing": "mancante",
-      "signupsClosed": "La registrazione pubblica resterà chiusa fino ad allora."
+      "signupsClosed": "La registrazione pubblica resterà chiusa fino ad allora.",
+      "fillIn": "dati da inserire",
+      "fillInHint": "Inserisci i dati [[…]] (ragione sociale, numero, indirizzo e contatti) in content/legal/en-GB, come indicato in content/legal/FILL-IN.md, poi fai rivedere i testi da un avvocato."
     }
   },
   "adminUsers": {

@@ -10,6 +10,7 @@ import { PricingScreen } from '@/components/studio/billing/pricing-screen';
 import { legalDocKey } from '@/components/marketing/legal-doc-keys';
 import { LegalDocumentView } from '@/components/marketing/legal-document-view';
 import { MarketingShell } from '@/components/marketing/marketing-shell';
+import { legalTextState } from '@/lib/legal/markers';
 import acceptableUse from '../content/legal/en-GB/acceptable-use.md';
 import cookies from '../content/legal/en-GB/cookies.md';
 import dpa from '../content/legal/en-GB/dpa.md';
@@ -38,8 +39,6 @@ const LEGAL: Record<string, string> = {
   dpa,
   subprocessors,
 };
-
-const PLACEHOLDER_MARKER = 'OPERATOR MUST REPLACE';
 
 /** The (auth) route group's frame (src/app/(auth)/layout.tsx). */
 function AuthFrame({ children }: { children: ReactNode }) {
@@ -122,11 +121,13 @@ function LegalPage({ doc }: { doc: string }) {
   const key = legalDocKey(doc);
   const markdown = LEGAL[doc];
   if (!key || !markdown) return <p className="py-24 text-center">{t('navTitle')}</p>;
+  const state = legalTextState(markdown);
   return (
     <LegalDocumentView
       docKey={key}
       markdown={markdown}
-      placeholder={markdown.includes(PLACEHOLDER_MARKER)}
+      placeholder={state !== 'ready'}
+      draft={state === 'fill_in'}
       fallback={false}
     />
   );

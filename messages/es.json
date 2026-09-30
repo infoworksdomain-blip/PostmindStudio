@@ -3769,7 +3769,11 @@
       "title": "Este documento aún no se ha publicado.",
       "body": "El texto de abajo es un marcador de posición. El operador de este servicio debe sustituirlo por el suyo antes del lanzamiento."
     },
-    "notTranslated": "Este documento aún no está disponible en tu idioma, así que se muestra en inglés."
+    "notTranslated": "Este documento aún no está disponible en tu idioma, así que se muestra en inglés.",
+    "draft": {
+      "title": "Este documento es un borrador.",
+      "body": "Aún faltan algunos datos de la empresa del operador en el texto. Contacte con el operador antes de confiar en él."
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "El registro no está bloqueado, pero estos documentos siguen siendo marcadores de posición.",
       "placeholder": "marcador de posición",
       "missing": "falta",
-      "signupsClosed": "El registro público estará cerrado hasta entonces."
+      "signupsClosed": "El registro público estará cerrado hasta entonces.",
+      "fillIn": "datos por completar",
+      "fillInHint": "Complete los datos [[…]] (razón social, número, dirección y contactos) en content/legal/en-GB, según content/legal/FILL-IN.md, y pida a un abogado que revise los textos."
     }
   },
   "adminUsers": {

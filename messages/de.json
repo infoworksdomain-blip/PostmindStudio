@@ -3769,7 +3769,11 @@
       "title": "Dieses Dokument wurde noch nicht veröffentlicht.",
       "body": "Der folgende Text ist ein Platzhalter. Der Betreiber dieses Dienstes muss ihn vor dem Start durch einen eigenen Text ersetzen."
     },
-    "notTranslated": "Dieses Dokument ist in Ihrer Sprache noch nicht verfügbar und wird daher auf Englisch angezeigt."
+    "notTranslated": "Dieses Dokument ist in Ihrer Sprache noch nicht verfügbar und wird daher auf Englisch angezeigt.",
+    "draft": {
+      "title": "Dieses Dokument ist ein Entwurf.",
+      "body": "Einige Unternehmensangaben des Betreibers fehlen noch. Wenden Sie sich an den Betreiber, bevor Sie sich darauf verlassen."
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "Die Registrierung ist nicht blockiert, aber diese Dokumente sind noch Platzhalter.",
       "placeholder": "Platzhalter",
       "missing": "fehlt",
-      "signupsClosed": "Die öffentliche Registrierung ist bis dahin geschlossen."
+      "signupsClosed": "Die öffentliche Registrierung ist bis dahin geschlossen.",
+      "fillIn": "Angaben fehlen",
+      "fillInHint": "Tragen Sie die [[…]]-Angaben (Firmenname, Nummer, Anschrift und Kontakte) in content/legal/en-GB ein, wie in content/legal/FILL-IN.md beschrieben, und lassen Sie die Texte anwaltlich prüfen."
     }
   },
   "adminUsers": {

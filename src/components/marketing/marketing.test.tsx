@@ -102,6 +102,18 @@ describe('LegalDocumentView', () => {
     }
   });
 
+  it('marks a draft with details to fill in, and hides the drafting comment', () => {
+    const draft =
+      '<!-- Draft prepared 2026-09-30; have a solicitor review it -->\n# Privacy Policy\n\nWrite to [[PRIVACY EMAIL]].';
+    const { container } = render(
+      <LegalDocumentView docKey="privacy" markdown={draft} placeholder draft fallback={false} />,
+    );
+    expect(screen.getByText('This document is a draft.')).toBeVisible();
+    expect(screen.queryByText('This document has not been published yet.')).toBeNull();
+    expect(container.textContent).not.toContain('Draft prepared');
+    expect(container.textContent).toContain('[[PRIVACY EMAIL]]');
+  });
+
   it('notes an English fallback in other locales (ar, zh-Hans)', () => {
     const ar = render(
       withLocale(

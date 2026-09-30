@@ -1,12 +1,22 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DEFAULT_LOCALE, LOCALES, type Locale } from '../i18n/locales';
+import { legalTextState, type LegalTextState } from './markers';
+
+export {
+  isPlaceholder,
+  legalTextState,
+  PLACEHOLDER_MARKER,
+  unfilledMarkers,
+  type LegalTextState,
+} from './markers';
 
 // Phase 18 §3 — the public legal pages (/legal/<doc>) render operator-supplied Markdown from
 // content/legal/<locale>/<doc>.md, falling back to en-GB with a "not translated" note. The files
-// shipped in the repository are placeholders: each carries PLACEHOLDER_MARKER, the page shows a
-// banner while it is there, and the launch gate (readiness.ts) refuses to open production
-// sign-up until terms and privacy are replaced.
+// shipped in the repository are drafts (Phase 20.4) with fill-in markers such as
+// [[COMPANY LEGAL NAME]] (markers.ts). The page shows a banner while a marker or the old
+// PLACEHOLDER_MARKER is there, and the launch gate (readiness.ts) refuses to open production
+// sign-up until terms and privacy are finished.
 
 export const LEGAL_DOCS = [
   'terms',
@@ -18,9 +28,6 @@ export const LEGAL_DOCS = [
 ] as const;
 
 export type LegalDoc = (typeof LEGAL_DOCS)[number];
-
-/** Present in every placeholder file; the operator's real text must not contain it. */
-export const PLACEHOLDER_MARKER = 'OPERATOR MUST REPLACE';
 
 /** Where the Markdown lives (overridable for tests and for a mounted volume on the VPS). */
 export function legalContentDir(env: Record<string, string | undefined> = process.env): string {
@@ -38,12 +45,20 @@ export interface LegalDocument {
   locale: Locale;
   /** True when the reader's locale had no file and en-GB is shown instead. */
   fallback: boolean;
-  /** True while the file is still the repository placeholder. */
+  /** True while the text is unfinished: the repository placeholder or a draft with markers. */
   placeholder: boolean;
+  /** Which: 'placeholder' (replace the file), 'fill_in' (fill in the markers) or 'ready'. */
+  state: LegalTextState;
 }
 
-export function isPlaceholder(markdown: string): boolean {
-  return markdown.includes(PLACEHOLDER_MARKER);
+function toDocument(
+  doc: LegalDoc,
+  markdown: string,
+  locale: Locale,
+  fallback: boolean,
+): LegalDocument {
+  const state = legalTextState(markdown);
+  return { doc, markdown, locale, fallback, placeholder: state !== 'ready', state };
 }
 
 async function readIfPresent(path: string): Promise<string | null> {
@@ -67,22 +82,9 @@ export async function readLegalDocument(
   const wanted = (LOCALES as readonly string[]).includes(locale) ? (locale as Locale) : null;
   if (wanted && wanted !== DEFAULT_LOCALE) {
     const own = await readIfPresent(join(dir, wanted, `${doc}.md`));
-    if (own !== null)
-      return {
-        doc,
-        markdown: own,
-        locale: wanted,
-        fallback: false,
-        placeholder: isPlaceholder(own),
-      };
+    if (own !== null) return toDocument(doc, own, wanted, false);
   }
   const base = await readIfPresent(join(dir, DEFAULT_LOCALE, `${doc}.md`));
   if (base === null) return null;
-  return {
-    doc,
-    markdown: base,
-    locale: DEFAULT_LOCALE,
-    fallback: wanted !== null && wanted !== DEFAULT_LOCALE,
-    placeholder: isPlaceholder(base),
-  };
+  return toDocument(doc, base, DEFAULT_LOCALE, wanted !== null && wanted !== DEFAULT_LOCALE);
 }

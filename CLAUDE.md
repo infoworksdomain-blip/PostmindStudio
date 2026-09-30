@@ -109,7 +109,7 @@ Four levels per spec Section 12. All backed by the `system_flags` table (DB-back
 - Do not build the video composition rendering itself — Shotstack does that. You build the JSON edit-decision-list and POST it.
 - Do not build a video encoder — providers return MP4s; we store and serve them.
 - Superseded by Phase 18 (standalone): Studio now has its own sign-in UI, Stripe billing and its own Meta (Facebook Login for Business) connect. In `STUDIO_MODE=core` the old rules still apply: Core handles login and billing (Studio reports usage events) and pushes Meta tokens.
-- Public pages live in `src/app/(marketing)` (landing `/`, `/pricing`, `/legal/*`); legal text is operator Markdown in `content/legal/<locale>/*.md`, and production sign-up stays closed while terms or privacy is a placeholder (`src/lib/legal/readiness.ts`).
+- Public pages live in `src/app/(marketing)` (landing `/`, `/pricing`, `/legal/*`); legal text is operator Markdown in `content/legal/<locale>/*.md`, and production sign-up stays closed while terms or privacy is a placeholder or still has `[[…]]` fill-in markers (`src/lib/legal/readiness.ts`, `content/legal/FILL-IN.md`).
 
 ## When you need to make a decision
 

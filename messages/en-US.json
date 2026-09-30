@@ -3769,7 +3769,11 @@
       "title": "This document has not been published yet.",
       "body": "The text below is a placeholder. The operator of this service must replace it with their own before launch."
     },
-    "notTranslated": "This document is not available in your language yet, so it is shown in English."
+    "notTranslated": "This document is not available in your language yet, so it is shown in English.",
+    "draft": {
+      "title": "This document is a draft.",
+      "body": "Some of the operator’s company details below are still to be filled in. Contact the operator before relying on it."
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "Sign-up is not blocked, but these documents are still placeholders.",
       "placeholder": "placeholder",
       "missing": "missing",
-      "signupsClosed": "Public sign-up is closed until then."
+      "signupsClosed": "Public sign-up is closed until then.",
+      "fillIn": "details to fill in",
+      "fillInHint": "Fill in the [[…]] details (company name, number, address and contacts) in content/legal/en-GB, as listed in content/legal/FILL-IN.md, then have a solicitor review the texts."
     }
   },
   "adminUsers": {
