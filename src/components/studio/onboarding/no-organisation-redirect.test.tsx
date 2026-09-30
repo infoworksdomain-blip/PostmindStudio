@@ -47,9 +47,18 @@ describe('NoOrganisationRedirect', () => {
     expect(nav.replace).not.toHaveBeenCalled();
   });
 
+  it('sends /account/export (organisation data) to /welcome too', async () => {
+    nav.pathname = '/account/export';
+    mockFetch(() => fail(403, 'No organisation yet', 'no_organisation'));
+    renderScreen(<NoOrganisationRedirect />);
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/welcome'));
+    expect(isAllowedWithoutOrganisation('/account/export')).toBe(false);
+  });
+
   it('matches only the allowed sections, not look-alike paths', () => {
     expect(isAllowedWithoutOrganisation('/welcome')).toBe(true);
     expect(isAllowedWithoutOrganisation('/account/security')).toBe(true);
+    expect(isAllowedWithoutOrganisation('/account/profile')).toBe(true);
     expect(isAllowedWithoutOrganisation('/welcomeback')).toBe(false);
     expect(isAllowedWithoutOrganisation('/calendar')).toBe(false);
   });
