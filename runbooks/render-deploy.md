@@ -152,7 +152,7 @@ Every key the code needs at start-up is either in `render.yaml` or in this table
 | `S3_BUCKET_THUMBNAILS` | production | no | Production thumbnails bucket | web, workers |
 | `S3_BUCKET_LIBRARY` | production | no | Production library bucket | workers |
 | `SENTRY_DSN` | both | no | Sentry project settings (optional; errors are not reported without it) | web, workers |
-| `STUDIO_FONTS_BASE_URL` | both | no | Where the brand and Noto fonts are hosted ([deploy.md](deploy.md)) | workers |
+| `STUDIO_FONTS_BASE_URL` | both | no | Optional: leave unset, Studio serves its render fonts at `<APP_URL>/fonts` (`public/fonts/`). Only a CDN or a host with extra brand families ([deploy.md](deploy.md)) | web, workers |
 | `ANTHROPIC_API_KEY` | both | yes | console.anthropic.com | web, workers |
 | `OPENAI_API_KEY` | both | yes | platform.openai.com (embeddings, images, transcription) | web, workers |
 | `ELEVENLABS_API_KEY` | both | yes | elevenlabs.io | workers |

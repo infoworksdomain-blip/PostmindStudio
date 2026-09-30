@@ -160,6 +160,15 @@ describe('the required list cannot drift', () => {
       expect(compose, key).toMatch(new RegExp(`\\b${key}:`));
   });
 
+  it('STUDIO_FONTS_BASE_URL is optional (20.7: the app serves its own fonts at /fonts)', () => {
+    expect(exampleSections(EXAMPLE).optional).toContain('STUDIO_FONTS_BASE_URL');
+    expect(req()).not.toContain('STUDIO_FONTS_BASE_URL');
+    expect(req(core)).not.toContain('STUDIO_FONTS_BASE_URL');
+    const empty = filledFile('production', { STUDIO_FONTS_BASE_URL: '' });
+    expect(statusOf(empty, 'STUDIO_FONTS_BASE_URL')).toEqual([]);
+    expect(check(empty).ready).toBe(true);
+  });
+
   it('ACME_EMAIL only in production; the backup bucket only with backups on', () => {
     expect(req(standalone, 'staging')).not.toContain('ACME_EMAIL');
     expect(req(standalone, 'production', false)).not.toContain('S3_BACKUP_BUCKET');

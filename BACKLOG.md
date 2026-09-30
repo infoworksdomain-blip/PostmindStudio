@@ -425,3 +425,4 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **20.2** Lower price list (operator decision 2026-09-30): £29 / £99 / £349 a month (annual 10 × monthly), Enterprise from £1,500; 20 / 40 + 1 / 80 + 4 videos; caps £20 / £73 / £264 / £1,100 a month; cheaper top-ups. Stripe lookup keys unchanged.
 - [x] **20.3** Month-ahead auto-scheduling and calendar: one-click posting plans (calendar and onboarding), open drip-queue slots and a "Next 30 days" summary on the calendar (`GET …/drip-queue/upcoming`), "next free slot" on Create, an honest notice + audit + notification (and Try again) when a scheduled video gets no slot, the 180-day limit on `scheduledStartAt` and in the date pickers, "A month of short videos" on the landing page.
 - [x] **20.4** Legal document drafts (six pages) with fill-in markers; sign-up stays closed until the markers are filled
+- [x] **20.7** Self-hosted render fonts (STUDIO_FONTS_BASE_URL optional)

@@ -258,8 +258,9 @@ email). Every `POSTMIND_*` key and `STUDIO_PLATFORM_ORG_IDS` below is needed **o
 | `S3_BACKUP_BUCKET` | yes | The backup bucket ([r2-setup.md](r2-setup.md) step 7) |
 | `STUDIO_USD_TO_GBP_RATE` | yes | Finance (default `0.75`) |
 | `STUDIO_FFMPEG_MAX_CONCURRENT`, `WORKER_CONCURRENCY_*`, `STUDIO_LIBRARY_CONCURRENCY` | yes | Keep the example values on 2 GB; raise after a resize |
-| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `SHOTSTACK_ENVIRONMENT`, `HIVE_API_KEY`, `ASSEMBLYAI_API_KEY`, `ASSEMBLYAI_REGION`, `STUDIO_FONTS_BASE_URL` | yes | Provider dashboards, as in [render-deploy.md](render-deploy.md) step 4 |
+| `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `SHOTSTACK_ENVIRONMENT`, `HIVE_API_KEY`, `ASSEMBLYAI_API_KEY`, `ASSEMBLYAI_REGION` | yes | Provider dashboards, as in [render-deploy.md](render-deploy.md) step 4 |
 | `META_APP_ID`, `META_APP_SECRET`, `TIKTOK_*`, `YOUTUBE_*`, `X_*`, `LINKEDIN_*` (client id/secret) | yes | Platform developer portals. The redirect URIs are set by compose from `STUDIO_DOMAIN`: register `https://<domain>/api/studio/platform-connections/oauth-callback?platform=<tiktok\|youtube\|x\|linkedin>` in each portal |
+| `STUDIO_FONTS_BASE_URL` | no | Leave empty: Studio serves its render fonts at `https://<domain>/fonts` (`public/fonts/SOURCES.md`). Only for a CDN or a host with extra brand families ([deploy.md](deploy.md)) |
 | `STUDIO_IMAGE` | no | Leave empty (GHCR image) |
 | `STUDIO_WORKER_QUEUES` | no | Leave empty (all queues) |
 | `STUDIO_INTERNAL_ALLOWED_CIDRS` | no | Core's egress IPs as CIDRs, from the Core team. Empty = the internal API is closed at Caddy (Core cannot push Meta tokens) |

@@ -74,11 +74,11 @@
   delete puts the row back to PENDING and the job retries. Do NOT add a blanket S3 expiry on that
   prefix: READY uploads are the footage of UPLOAD projects and slideshow clips.
 - Languages (15.C5: en-GB, en-US, fr, es, ar, de, it, pt-BR, pt-PT, hi, zh-Hans) — media side:
-  - **Fonts.** `STUDIO_FONTS_BASE_URL` must also serve `NotoSansArabic.ttf`,
-    `NotoSansDevanagari.ttf` and `NotoSansSC.ttf` (Google Fonts, SIL OFL; the file name is the
-    family without spaces). Overlays, captions and cards in Arabic, Hindi and Mandarin are set in
-    these families (Latin languages keep the brand/preset font); a missing file fails the render
-    or the overlay pre-render ("Font … could not be downloaded"). `src/lib/studio/overlays/script-fonts.ts`.
+  - **Fonts.** Studio serves `NotoSansArabic.ttf`, `NotoSansDevanagari.ttf` and `NotoSansSC.ttf`
+    itself from `/fonts` (`public/fonts/`, 20.7; Google Fonts, SIL OFL; the file name is the family
+    without spaces). A custom `STUDIO_FONTS_BASE_URL` must serve them too. Overlays, captions and
+    cards in Arabic, Hindi and Mandarin are set in these families (Latin languages keep the
+    brand/preset font); a missing file fails the render or the overlay pre-render ("Font … could not be downloaded"). `src/lib/studio/overlays/script-fonts.ts`.
   - **Arabic direction.** Shotstack's `rich-text` asset has no direction property; Arabic overlay
     text is prefixed with U+200F (right-to-left mark) and relies on Shotstack's Unicode bidi.
     Verify one Arabic render (a line starting with a Latin brand name) before GA. The FFmpeg
@@ -142,10 +142,18 @@ enqueued by the new web code could find no worker that understands them. On the 
 
 ## Phase 15 Track B — composition configuration
 
-- `STUDIO_FONTS_BASE_URL` must host each brand font named in brand kits as `<FamilyNoSpaces>.ttf`
-  plus `NotoSans.ttf`, `NotoSansArabic.ttf`, `NotoSansDevanagari.ttf`, `NotoSansSC.ttf`
-  (i18n/scripts.ts). Uploaded brand fonts need nothing: their signed S3 URL goes into
-  `timeline.fonts`.
+- **Render fonts (20.7).** Shotstack has no system fonts: every family a render names is fetched
+  as `<fonts base>/<FamilyNoSpaces>.ttf`. The fonts base is `STUDIO_FONTS_BASE_URL` when set,
+  otherwise `APP_URL/fonts`: Studio ships the files in `public/fonts/` (every overlay preset, the
+  onboarding brand fonts, the thumbnail font and `NotoSans`, `NotoSansArabic`, `NotoSansDevanagari`,
+  `NotoSansSC`; list, sources and licences in `public/fonts/SOURCES.md`; about 24 MB), and
+  `next start` serves them without sign-in (the page guard skips paths with a file extension).
+  So leave `STUDIO_FONTS_BASE_URL` empty unless you use a CDN; it must then serve the same files.
+  A brand kit that NAMES a family not in `public/fonts/` (free text in the brand kit form) fails
+  the render (Shotstack cannot download `<Family>.ttf`): add its TTF to `public/fonts/` (with its
+  licence and a SOURCES.md line) or ask the customer to upload the font. Uploaded brand fonts need nothing: their signed S3 URL goes into
+  `timeline.fonts`. Shotstack fetches the files from the internet, so `APP_URL` must be the public
+  https origin (on the VPS compose sets it from `STUDIO_DOMAIN`).
 - `STUDIO_STOCK_VOICES` (optional): `tone=voiceId` pairs for tone-matched stock narration (15.B3).
 - `STUDIO_MADE_WITH_CARD_URL` (optional, https): end card for non-white-label organisations
   (operator decision P2). White-label: ENTERPRISE, or `PUT /admin/organisations/:id/policy

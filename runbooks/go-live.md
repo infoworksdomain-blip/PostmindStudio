@@ -454,8 +454,9 @@ Details: [meta-connect.md](meta-connect.md). This is **Studio's own** Meta app.
 
 The video, voice and publishing providers each need a key. Where each comes from is in [vps-deploy.md](vps-deploy.md) section 6 and [render-deploy.md](render-deploy.md) step 4.
 
-- **Paste into:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `HIVE_API_KEY`, `ASSEMBLYAI_API_KEY`, `STUDIO_FONTS_BASE_URL`, `TIKTOK_CLIENT_KEY`/`_SECRET`, `YOUTUBE_CLIENT_ID`/`_SECRET`, `X_CLIENT_ID`/`_SECRET`, `LINKEDIN_CLIENT_ID`/`_SECRET`.
+- **Paste into:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `HIVE_API_KEY`, `ASSEMBLYAI_API_KEY`, `TIKTOK_CLIENT_KEY`/`_SECRET`, `YOUTUBE_CLIENT_ID`/`_SECRET`, `X_CLIENT_ID`/`_SECRET`, `LINKEDIN_CLIENT_ID`/`_SECRET`.
 - In the TikTok, YouTube (Google), X and LinkedIn developer portals register the redirect `https://studio.<your domain>/api/studio/platform-connections/oauth-callback?platform=<tiktok|youtube|x|linkedin>`.
+- Fonts: nothing to do. Studio serves the fonts its videos use from `https://studio.<your domain>/fonts`; leave `STUDIO_FONTS_BASE_URL` empty unless you host them on a CDN yourself.
 - Optional: `OPS_ALERT_WEBHOOK_URL` (a Slack incoming webhook for server alerts), `SENTRY_DSN` (error reports).
 
 ## 12. Legal texts
