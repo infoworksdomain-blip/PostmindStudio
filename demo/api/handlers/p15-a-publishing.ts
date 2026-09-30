@@ -21,6 +21,7 @@ import { DEMO_BUSINESS_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { findRender, getProject } from './projects-store';
 import { listPublications } from './publications-store';
+import { demoPlanHeld, demoPlannedPosts } from './p20-plan-month';
 
 const bad = (message: string) => new DemoHttpError(400, 'validation_error', message);
 const DAY = 86_400_000;
@@ -91,7 +92,9 @@ route('GET', '/businesses/:id/drip-queue/upcoming', ({ params, query }) => {
   }
   const q = dripQueues.get(params.id ?? '');
   const enabled = Boolean(q?.enabled);
-  const open = enabled && q ? openSlotsBetween(q.slots, [], window, now) : [];
+  // 20.9: a month plan's post times are held, and its posts still being made are shown.
+  const held = demoPlanHeld();
+  const open = enabled && q ? openSlotsBetween(q.slots, held, window, now) : [];
   const scheduled = listPublications().filter((p) => {
     const t = p.scheduledFor ? Date.parse(p.scheduledFor) : NaN;
     return (
@@ -108,7 +111,10 @@ route('GET', '/businesses/:id/drip-queue/upcoming', ({ params, query }) => {
       horizonDays: DRIP_HORIZON_DAYS,
       scheduled,
       openSlots: open.map((at) => new Date(at).toISOString()),
-      held: [],
+      held: held
+        .filter((d) => d.getTime() >= window.fromMs && d.getTime() < window.toMs)
+        .map((d) => ({ slotAt: d.toISOString(), projectId: 'content-plan' })),
+      planned: demoPlannedPosts(window),
     },
   };
 });

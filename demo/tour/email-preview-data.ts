@@ -27,6 +27,17 @@ export const EMAIL_PREVIEWS: Partial<
     title: 'Trial ends in 3 days',
     params: { name: 'Amara', planName: 'Standard', trialEndsAt: at(3) },
   },
+  monthPlanned: {
+    title: 'Plan my month: every post is scheduled (the one summary email)',
+    params: {
+      name: 'Amara',
+      url: `${EMAIL_APP_URL}/plans/plan-october`,
+      postCount: 29,
+      needsAttention: 1,
+      startDate: at(1),
+      endDate: at(30),
+    },
+  },
   topupReceipt: {
     title: 'Top-up receipt',
     params: { name: 'Amara', packName: '10 short videos (Standard)' },
