@@ -145,6 +145,29 @@ export const PROFILE_JSON = {
   confidence: 0.92,
 };
 
+/**
+ * 20.9: a scripted month plan — one post per slot line of the prompt ("n. <date> — <kind> — angle:
+ * <angle>"), so a draft of any size gets exactly the posts it asked for.
+ */
+export function monthPlanJson(prompt: string) {
+  const count = Number(/Write exactly (\d+) posts/.exec(prompt)?.[1] ?? 0);
+  const lines = prompt.split('\n');
+  return {
+    items: Array.from({ length: count }, (_, i) => {
+      const line = lines.find((l) => l.startsWith(`${i + 1}. `)) ?? '';
+      const [date = '', , angle = ''] = line.slice(`${i + 1}. `.length).split(' — ');
+      return {
+        index: i + 1,
+        title: `${angle.replace('angle: ', '')} for ${date}`.slice(0, 80),
+        brief: `A short post about our sourdough for ${date}.`,
+        hook: 'Fresh from the oven',
+        points: ['Baked at dawn', 'Local flour', 'Delivered weekly'],
+        cta: 'Order today',
+      };
+    }),
+  };
+}
+
 function textResult(json: unknown): ProviderPollResult {
   return {
     state: 'succeeded',
@@ -167,6 +190,8 @@ export interface HarnessOptions {
   noTranscription?: boolean;
   sceneChanges?: number[];
   slideshowText?: unknown;
+  /** 20.9: the month plan answer (default: monthPlanJson of the prompt). */
+  monthPlan?: unknown;
   /** Feature D: fetch used for website pages and images (defaults to the media fetch mock). */
   pageFetch?: typeof fetch;
   renderer?: PageRenderer;
@@ -186,6 +211,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.analysis ?? ANALYSIS_JSON);
     if (request.system.includes('business-classification'))
       return textResult(options.profile ?? PROFILE_JSON);
+    if (request.system.includes('month content planner'))
+      return textResult(options.monthPlan ?? monthPlanJson(request.prompt));
     return textResult(options.safety ?? SAFETY_ALLOW);
   });
   const runway = new ScriptedAdapter(

@@ -86,19 +86,58 @@ export function upcomingSlots(
   return [...out].sort((a, b) => a - b);
 }
 
-type SlotDb = Pick<PrismaClient, 'videoProject' | 'autoPublishOutbox'>;
+type SlotDb = Pick<PrismaClient, 'videoProject' | 'autoPublishOutbox' | 'contentPlanItem'>;
 
-/** Drip slots already held by approved videos of this business (outbox rows, target 0). */
+/** 20.9: month-plan item statuses whose post time is still reserved. */
+export const PLAN_HOLDING_STATUSES = [
+  'QUEUED',
+  'GENERATING',
+  'READY',
+  'SCHEDULED',
+  'HELD',
+] as const;
+
+/**
+ * 20.9: post times reserved by the business's active month plans (content_plan_items.slotAt).
+ * They count as held drip slots, so the queue never gives one to another video. projectId is the
+ * item's project, or `content-plan:<planId>` before the item is generated.
+ */
+export async function planHeldSlots(
+  db: Pick<PrismaClient, 'contentPlanItem'>,
+  scope: { organisationId: string; businessId: string },
+  fromMs: number,
+): Promise<Array<{ slotAt: Date; projectId: string }>> {
+  const items = await db.contentPlanItem.findMany({
+    where: {
+      organisationId: scope.organisationId,
+      slotAt: { gte: new Date(fromMs) },
+      status: { in: [...PLAN_HOLDING_STATUSES] },
+      plan: { businessId: scope.businessId, status: { in: ['GENERATING', 'SCHEDULED'] } },
+    },
+    select: { slotAt: true, projectId: true, planId: true },
+    orderBy: { slotAt: 'asc' },
+  });
+  return items.map((i) => ({
+    slotAt: i.slotAt,
+    projectId: i.projectId ?? `content-plan:${i.planId}`,
+  }));
+}
+
+/**
+ * Drip slots already held by approved videos of this business (outbox rows, target 0) and, 20.9,
+ * by its active month plans.
+ */
 export async function heldSlots(
   db: SlotDb,
   scope: { organisationId: string; businessId: string },
   fromMs: number,
 ): Promise<Array<{ slotAt: Date; projectId: string }>> {
+  const planned = await planHeldSlots(db, scope, fromMs);
   const projects = await db.videoProject.findMany({
     where: { organisationId: scope.organisationId, businessId: scope.businessId, deletedAt: null },
     select: { id: true },
   });
-  if (projects.length === 0) return [];
+  if (projects.length === 0) return planned;
   const rows = await db.autoPublishOutbox.findMany({
     where: {
       organisationId: scope.organisationId,
@@ -109,7 +148,10 @@ export async function heldSlots(
     select: { slotAt: true, projectId: true },
     orderBy: { slotAt: 'asc' },
   });
-  return rows.flatMap((r) => (r.slotAt ? [{ slotAt: r.slotAt, projectId: r.projectId }] : []));
+  const outbox = rows.flatMap((r) =>
+    r.slotAt ? [{ slotAt: r.slotAt, projectId: r.projectId }] : [],
+  );
+  return [...outbox, ...planned].sort((a, b) => a.slotAt.getTime() - b.slotAt.getTime());
 }
 
 /** First slot at least DRIP_MIN_LEAD_MS away that no other approved video holds. */
@@ -251,7 +293,7 @@ export async function getUpcomingSlots(
   window: { fromMs: number; toMs: number },
   now: number,
 ) {
-  const [row, held, scheduled] = await Promise.all([
+  const [row, held, scheduled, planned] = await Promise.all([
     db.dripQueue.findUnique({ where: { organisationId_businessId: scope } }),
     heldSlots(db, scope, Math.min(window.fromMs, now)),
     db.videoPublication.count({
@@ -261,6 +303,18 @@ export async function getUpcomingSlots(
         scheduledFor: { gte: new Date(window.fromMs), lt: new Date(window.toMs) },
         project: { businessId: scope.businessId, deletedAt: null },
       },
+    }),
+    // 20.9: month-plan posts not on the calendar as publications yet (drafting, generating,
+    // waiting for review or held); scheduled ones show as their publications.
+    db.contentPlanItem.findMany({
+      where: {
+        organisationId: scope.organisationId,
+        slotAt: { gte: new Date(window.fromMs), lt: new Date(window.toMs) },
+        status: { in: ['QUEUED', 'GENERATING', 'READY', 'HELD'] },
+        plan: { businessId: scope.businessId, status: { in: ['GENERATING', 'SCHEDULED'] } },
+      },
+      select: { id: true, planId: true, slotAt: true, title: true, kind: true, status: true },
+      orderBy: { slotAt: 'asc' },
     }),
   ]);
   const enabled = Boolean(row?.enabled);
@@ -286,6 +340,14 @@ export async function getUpcomingSlots(
     scheduled,
     openSlots: open.map((at) => new Date(at).toISOString()),
     held: inWindow.map((h) => ({ slotAt: h.slotAt.toISOString(), projectId: h.projectId })),
+    planned: planned.map((i) => ({
+      slotAt: i.slotAt.toISOString(),
+      planId: i.planId,
+      itemId: i.id,
+      title: i.title,
+      kind: i.kind,
+      status: i.status,
+    })),
   };
 }
 

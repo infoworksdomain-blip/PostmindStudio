@@ -64,6 +64,12 @@ export const jobIds = {
     `purge-disputed-domain__${d.runId}`,
   /** Phase 18 §2.8: one job per outbox row (re-adds by the sweeper are ignored while queued). */
   sendEmail: (d: JobDataMap['send-email']) => `send-email__${d.outboxId}`,
+  /** 20.9: one job per draft run of a month plan. */
+  draftContentPlan: (d: JobDataMap['draft-content-plan']) =>
+    `draft-content-plan__${d.planId}__${d.runId}`,
+  /** 20.9: a kick of one plan, at most one a second. */
+  advanceContentPlan: (planId: string, now: number) =>
+    `advance-content-plans__${planId}__${Math.floor(now / 1_000)}`,
 };
 
 export function createBullJobQueue(

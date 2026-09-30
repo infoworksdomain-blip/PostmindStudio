@@ -12,6 +12,9 @@ import { AppShell } from '@/components/studio/app-shell';
 import { BusinessProvider } from '@/components/studio/business-context';
 import { BusinessScreen } from '@/components/studio/business/business-screen';
 import { PublicationsCalendar } from '@/components/studio/calendar/publications-calendar';
+import { PlanMonthForm } from '@/components/studio/plans/plan-month-form';
+import { PlanScreen } from '@/components/studio/plans/plan-screen';
+import { PlansList } from '@/components/studio/plans/plans-list';
 import { ConnectionsScreen } from '@/components/studio/connections/connections-screen';
 import { ApprovalWorkflowsScreen } from '@/components/studio/approvals/approval-workflows-screen';
 import { parseReference } from '@/components/studio/create/body';
@@ -71,6 +74,10 @@ const RENDER: Record<AppPath, Render> = {
   '/library/:id': (p) => <LibraryDetail id={p.id ?? ''} />,
   '/publications': () => <PublicationsList />,
   '/calendar': () => <PublicationsCalendar />,
+  // 20.9: Plan my month.
+  '/plans': () => <PlansList />,
+  '/plans/new': () => <PlanMonthForm />,
+  '/plans/:id': (p) => <PlanScreen planId={p.id ?? ''} />,
   '/analytics': () => <AnalyticsDashboard />,
   '/analytics/publications/:id': (p) => <PublicationAnalytics publicationId={p.id ?? ''} />,
   '/business': () => <BusinessScreen />,

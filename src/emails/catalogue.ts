@@ -97,6 +97,13 @@ export const TEMPLATES: Record<EmailTemplate, TemplateSpec> = {
     required: ['url', 'expiresAt'],
     dates: ['expiresAt'],
   },
+  // 20.9: "Your month is planned: N posts from DATE to DATE — review" (one per plan). Sent to
+  // the person who scheduled the plan, who asked for it; not an unsubscribable notification.
+  monthPlanned: {
+    category: 'account',
+    required: ['url', 'postCount', 'needsAttention', 'startDate', 'endDate'],
+    dates: ['startDate', 'endDate'],
+  },
   // The generic notification email (§2.8): renders notifications.<messageKey>.title/body with
   // messageParams in the reader's locale, or the stored English subject/text for unkeyed rows.
   notification: { category: 'notification', required: ['kind', 'subject', 'text'] },

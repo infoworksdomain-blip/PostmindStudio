@@ -99,11 +99,60 @@
    "Needs review: your organisation's policy turns automatic approval off" means the org has it
    off.
 
+9. **Plan my month (20.9):** `/plans/new` (Create, the calendar header and the end of onboarding
+   link to it). The owner picks the window (default the next free day, 30 days, at most 31),
+   1–4 posts a day or "use my posting times" (the drip-queue slots in the window, at most 4 a
+   day), the video / slideshow slider (default 50/50) and one connected account per platform.
+   `POST /api/studio/content-plans` lays out explicit post times (daily times 12:30; 09:00 +
+   17:30; + 12:30; + 20:00 in the plan's time zone), skips times other videos hold and times under
+   2 hours away, builds a varied mix (how-to, product feature, behind the scenes, offer,
+   "why customers choose you", one seasonal post per UK calendar day) and caps the count at the
+   remaining monthly allowance **including unused top-up credits** and at what fits under the
+   monthly cost cap at the typical cost per post (`cappedReason` allowance / cost_cap; the
+   screens offer a top-up). Claude writes the topics in the background (`draft-content-plan`
+   job, 20 slots per call, prompt in `prompts/month-plan.md`: business facts from the website
+   scan and brand kit, style memory, recent posts to avoid, never invented prices, offers, quotes
+   or claims). Ten drafts per organisation per 24 h; 60 "new topic" calls per plan.
+   - **Generate and schedule** (`POST …/:id/generate`, needs `studio:project:approve` and
+     `studio:publication:write`) creates one project per post through the normal create path —
+     videos as 15-second BRIEF projects, slideshows as text-card SLIDESHOW projects — with
+     `reviewPolicy AUTO_APPROVE`, `publishPolicy SCHEDULED` at the post's own time and the plan's
+     targets, and reserves the allowance for each (`metadata.quotaSlot`, top-up credits used
+     first-in first-out). The first post the allowance cannot cover stops the run: it and every
+     later post are `SKIPPED` (reason `allowance`). `metadata.contentPlan.preApproved` is the
+     owner's approval of the plan: it waives **only** the trust threshold; content safety, script
+     safety, quality checks, ENTERPRISE and the organisation's policy still send a post to a person
+     (it shows as "Needs your review" or "Held by the safety check" and is never published).
+   - **The runner** (`advance-content-plans`, every minute on studio-orchestration, kicked after
+     generate) starts at most `STUDIO_CONTENT_PLAN_CONCURRENCY` (default 2) posts per plan at a
+     time as low-priority batch jobs, earliest first, and at most `STUDIO_CONTENT_PLAN_DAILY_STARTS`
+     posts per UTC day across the platform (default 30 when Hive runs on V3, otherwise unlimited).
+     It holds a plan (`holdReason`) while the organisation is kill-switched, cost-capped or the
+     daily limit is reached, and carries on by itself; a queued post whose time is under 45
+     minutes away is skipped and its allowance given back. When every post is settled the plan
+     is `SCHEDULED` and **one** `monthPlanned` email goes to whoever pressed generate.
+   - **Review window:** until its time the owner can open a post (edit it like any project), swap
+     it for another topic (`PATCH …/items/:itemId`: the old project is taken out of the schedule and
+     a new one made at the same time) or remove it (`DELETE`: generation cancelled, scheduled
+     publication cancelled, pending outbox rows dropped, `publishPolicy` back to MANUAL, the time
+     freed). **Cancel plan** does that for every post not yet out.
+   - **Costs and limits to watch:** a 30-day plan at 4 a day is up to 120 posts in one go. Each
+     render is one Hive scan (≤ 60 s); on Hive V3 (about 100 requests a day for the whole
+     platform, 429 fails closed) keep `STUDIO_CONTENT_PLAN_DAILY_STARTS` low enough to leave room
+     for ordinary videos (a post with 3 platforms is 3 renders). The organisation's daily cost cap
+     also paces a plan (BASIC £5 a day ≈ 3 videos). Plan posts' times count as held drip-queue
+     slots, so the drip queue never gives them to another video.
+   - **Stop one plan:** `POST /api/studio/content-plans/<id>/cancel` as the organisation, or the
+     workspace kill switch (the runner holds; nothing new starts).
+
 ## Verification
 
 - `SELECT "resolvedByUserId", count(*) FROM studio.approval_tasks WHERE state='APPROVED' GROUP BY 1`
   — system approvals are visible and separable from human ones.
-- Golden journeys `test/golden/automation.test.ts` (GA-01…GA-05).
+- Golden journeys `test/golden/automation.test.ts` (GA-01…GA-05) and `test/golden/month-plan.test.ts`
+  (20.9: 3 days × 2 posts, mixed, drafted → scheduled → one email → one removed).
+- Month plans: `SELECT status, "holdReason", count(*) FROM studio.content_plans GROUP BY 1, 2`;
+  items by status: `SELECT status, "statusReason", count(*) FROM studio.content_plan_items GROUP BY 1, 2`.
 
 Approval and auto-publish share one transaction through the outbox (13.21), and the
 per-organisation policy exists (13.18).

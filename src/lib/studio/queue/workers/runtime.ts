@@ -25,6 +25,8 @@ import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-ap
 import { buildStyleMemoryJob, onBuildStyleMemoryFailed } from './build-style-memory';
 import { autoResumePaused, onAutoResumePausedFailed } from './auto-resume';
 import { dispatchAutoPublish, onDispatchAutoPublishFailed } from './dispatch-auto-publish';
+import { draftContentPlan, onDraftContentPlanFailed } from './draft-content-plan';
+import { advanceContentPlansJob, onAdvanceContentPlansFailed } from './advance-content-plans';
 import {
   hardDeletePurgedOrgs,
   onDataRetentionFailed,
@@ -155,6 +157,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'audit-retention': auditRetentionJob,
   'send-email': sendEmail,
   'sweep-email-outbox': sweepEmailOutbox,
+  'draft-content-plan': draftContentPlan,
+  'advance-content-plans': advanceContentPlansJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -198,6 +202,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'audit-retention': onAuditRetentionFailed,
   'send-email': onSendEmailFailed,
   'sweep-email-outbox': onSweepEmailOutboxFailed,
+  'draft-content-plan': onDraftContentPlanFailed,
+  'advance-content-plans': onAdvanceContentPlansFailed,
 };
 
 /**

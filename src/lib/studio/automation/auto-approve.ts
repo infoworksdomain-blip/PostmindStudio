@@ -56,14 +56,21 @@ async function decide(
     renders,
     scriptSafetyVerdict: typeof safety?.verdict === 'string' ? safety.verdict : undefined,
     orgAllowsAutoApprove: orgPolicy.allowed,
+    ownerPreApproved: isPlanPreApproved(project.metadata),
   });
   return { decision, humanApprovedCount, threshold: threshold.ok ? threshold.value : null };
+}
+
+/** 20.9: metadata.contentPlan.preApproved — a month-plan item the owner approved in bulk. */
+export function isPlanPreApproved(metadata: Parameters<typeof projectMetadata>[0]): boolean {
+  const plan = projectMetadata(metadata).contentPlan as { preApproved?: unknown } | undefined;
+  return plan?.preApproved === true;
 }
 
 async function approveAutomatically(
   deps: PipelineDeps,
   data: ProjectJobData,
-  project: { id: string; reviewPolicy: 'AUTO_APPROVE' },
+  project: { id: string; reviewPolicy: 'AUTO_APPROVE'; planPreApproved: boolean },
   humanApprovedCount: number,
 ): Promise<boolean> {
   const approved = await recordApproval(deps.db, {
@@ -71,7 +78,9 @@ async function approveAutomatically(
     organisationId: data.organisationId,
     actorId: AUTO_APPROVE_ACTOR,
     requiredRole: requiredRoleFor(project.reviewPolicy),
-    note: `Approved automatically: trusted creator (${humanApprovedCount} videos approved by a person) and every quality check passed`,
+    note: project.planPreApproved
+      ? 'Approved automatically: part of a month plan the owner scheduled, and every quality check passed'
+      : `Approved automatically: trusted creator (${humanApprovedCount} videos approved by a person) and every quality check passed`,
     now: deps.now(),
     outbox: { planTier: data.planTier, trigger: 'auto' },
   });
@@ -127,7 +136,11 @@ export async function autoApproveIfTrusted(
       const approved = await approveAutomatically(
         deps,
         data,
-        { id: project.id, reviewPolicy: 'AUTO_APPROVE' },
+        {
+          id: project.id,
+          reviewPolicy: 'AUTO_APPROVE',
+          planPreApproved: isPlanPreApproved(project.metadata),
+        },
         humanApprovedCount,
       );
       if (!approved) {

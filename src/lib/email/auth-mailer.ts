@@ -29,6 +29,8 @@ export const AUTH_EMAIL_TEMPLATES = [
   'accountDeletionScheduled',
   'orgDeletionScheduled',
   'dataExportReady',
+  // 20.9 "Plan my month": the one summary email once every post of a plan is scheduled
+  'monthPlanned',
 ] as const;
 
 export type AuthEmailTemplate = (typeof AUTH_EMAIL_TEMPLATES)[number];
@@ -61,6 +63,7 @@ export const AUTH_EMAIL_REQUIRED = {
   accountDeletionScheduled: ['deleteAt'],
   orgDeletionScheduled: ['organisationName', 'deleteAt'],
   dataExportReady: ['url', 'expiresAt'],
+  monthPlanned: ['url', 'postCount', 'needsAttention', 'startDate', 'endDate'],
 } as const satisfies Record<AuthEmailTemplate, readonly string[]>;
 
 /** Params for one template: its required params (non-null) plus any optional extras. */

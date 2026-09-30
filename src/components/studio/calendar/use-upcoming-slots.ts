@@ -19,6 +19,18 @@ export interface UpcomingSlots {
   scheduled: number;
   openSlots: string[];
   held: Array<{ slotAt: string; projectId: string }>;
+  /** 20.9: month-plan posts not yet scheduled (absent from older servers / the demo). */
+  planned?: PlannedPost[];
+}
+
+/** 20.9: a month-plan post still being made (GET …/drip-queue/upcoming `planned`). */
+export interface PlannedPost {
+  slotAt: string;
+  planId: string;
+  itemId: string;
+  title: string;
+  kind: 'VIDEO' | 'SLIDESHOW';
+  status: 'QUEUED' | 'GENERATING' | 'READY' | 'HELD';
 }
 
 export const SUMMARY_DAYS = 30;

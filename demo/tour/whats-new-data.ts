@@ -2,7 +2,7 @@ import { P17_PROJECTS, P20_PROJECTS, PROJECTS } from '../api/ids';
 import type { SceneKind } from '../media';
 
 // #/tour/whats-new — every feature added or changed by Phase 16 (languages + RTL), Phase 18
-// (standalone SaaS surfaces), Phase 20.3 (plan a month ahead), Phase 17
+// (standalone SaaS surfaces), Phase 20.3 (plan a month ahead), 20.9 (plan my month), Phase 17
 // (production hardening, 17.1–17.9), Cloudflare R2 storage and the single-server deployment, each
 // with a one-line explanation and deep links to the screen or state that shows it. English only,
 // like the other tour pages (the Studio screens behind the links follow the language switcher).
@@ -326,6 +326,25 @@ export const WHATS_NEW: WhatsNewGroup[] = [
         title: 'Scheduling limits you can see',
         line: 'Date pickers stop at 180 days ahead and explain why before anything is sent.',
         see: [{ href: project(PROJECTS.springMenu.id), label: 'Review: the Publish tab' }],
+      },
+      {
+        ref: '20.9',
+        title: 'Plan my month',
+        line: 'Pick the dates, 1 to 4 posts a day (or your posting times) and the video / slideshow mix; Claude drafts a varied month from your website, brand kit, past posts and UK calendar days, within your allowance. Edit the list, then “Generate and schedule”.',
+        see: [
+          { href: '#/plans/new', label: 'Plan my month' },
+          { href: '#/calendar', label: 'Calendar: “Plan my month”' },
+        ],
+      },
+      {
+        ref: '20.9',
+        title: 'Auto-post with a review window',
+        line: 'Every post is made and scheduled at its own time, and publishes unless you swap or remove it first; posts the safety check holds are never published, and you get one summary email.',
+        see: [
+          { href: '#/plans/plan-october', label: 'A plan half made (one post held)' },
+          { href: '#/calendar', label: 'Calendar: “Planned” posts' },
+          { href: '#/tour/email/monthPlanned', label: 'The summary email' },
+        ],
       },
     ],
   },
