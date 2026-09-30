@@ -73,7 +73,7 @@ services:
       PGBACKREST_PG1_PATH: /var/lib/postgresql/data
       PGBACKREST_PG1_USER: studio
       PGBACKREST_REPO1_TYPE: s3
-      PGBACKREST_REPO1_S3_ENDPOINT: ${R2_ACCOUNT_ID:-unset}.${R2_JURISDICTION:-eu}.r2.cloudflarestorage.com
+      PGBACKREST_REPO1_S3_ENDPOINT: ${R2_ACCOUNT_ID:-unset}${R2_JURISDICTION:+.${R2_JURISDICTION}}.r2.cloudflarestorage.com
       PGBACKREST_REPO1_S3_BUCKET: ${S3_BACKUP_BUCKET:-unset}
       PGBACKREST_REPO1_S3_REGION: auto
       PGBACKREST_REPO1_S3_URI_STYLE: path
@@ -298,7 +298,7 @@ services:
       PGBACKREST_PG1_PATH: /var/lib/postgresql/data
       PGBACKREST_PG1_USER: studio
       PGBACKREST_REPO1_TYPE: s3
-      PGBACKREST_REPO1_S3_ENDPOINT: ${R2_ACCOUNT_ID:-unset}.${R2_JURISDICTION:-eu}.r2.cloudflarestorage.com
+      PGBACKREST_REPO1_S3_ENDPOINT: ${R2_ACCOUNT_ID:-unset}${R2_JURISDICTION:+.${R2_JURISDICTION}}.r2.cloudflarestorage.com
       PGBACKREST_REPO1_S3_BUCKET: ${S3_BACKUP_BUCKET:-unset}
       PGBACKREST_REPO1_S3_REGION: auto
       PGBACKREST_REPO1_S3_URI_STYLE: path

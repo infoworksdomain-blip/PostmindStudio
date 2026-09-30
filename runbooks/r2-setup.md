@@ -122,7 +122,7 @@ compatibility table lists those checksum headers as not implemented on
 | --- | --- |
 | `STORAGE_PROVIDER` | `r2` |
 | `R2_ACCOUNT_ID` | The Cloudflare account id |
-| `R2_JURISDICTION` | `eu`, matching step 1. Empty only for buckets created without a jurisdiction. |
+| `R2_JURISDICTION` | `eu`, matching step 1. Empty for buckets created without a jurisdiction (the default, global location): the app, the storage backup job and pgBackRest (`deploy/vps/compose.yml`) then use `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`. Production uses this since 2026-09-30 (operator decision: global users); staging stays `eu`. |
 | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | The Object Read & Write token from step 2 |
 | `S3_BUCKET_ASSETS` / `_RENDERS` / `_THUMBNAILS` / `_LIBRARY` | The R2 bucket names |
 | `CDN_URL` | Empty. CloudFront signing is S3-only, and startup fails otherwise. |

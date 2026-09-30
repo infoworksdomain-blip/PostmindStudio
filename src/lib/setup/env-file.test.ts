@@ -260,7 +260,8 @@ describe('checkEnvFile', () => {
     ['STUDIO_EMAIL_FROM', 'PostMind Studio', 'malformed'],
     ['STUDIO_DOMAIN', 'https://studio.example.com', 'malformed'],
     ['R2_ACCOUNT_ID', 'not-an-id', 'malformed'],
-    ['R2_JURISDICTION', 'fedramp', 'malformed'],
+    ['R2_JURISDICTION', 'fedramp', 'ok'],
+    ['R2_JURISDICTION', 'apac', 'malformed'],
     ['S3_BUCKET_ASSETS', 'Bad_Bucket', 'malformed'],
     ['S3_BUCKET_ASSETS', 'studio1eu', 'malformed'],
     ['STUDIO_MODE', 'hybrid', 'malformed'],
@@ -285,6 +286,20 @@ describe('checkEnvFile', () => {
   it('a secret containing $ must be single-quoted', () => {
     const text = filledFile().replace(/^RESEND_API_KEY=.*$/m, 'RESEND_API_KEY="re_ab$cd"');
     expect(statusOf(text, 'RESEND_API_KEY')).toContain('malformed');
+  });
+
+  it('a space between = and the value is wrong (compose would keep it)', () => {
+    const text = filledFile().replace(/^RESEND_API_KEY=/m, 'RESEND_API_KEY= ');
+    expect(statusOf(text, 'RESEND_API_KEY')).toEqual(['malformed']);
+    expect(check(text).ready).toBe(false);
+  });
+
+  it('an empty R2_JURISDICTION (buckets without a jurisdiction) is a reminder, not missing', () => {
+    const text = filledFile().replace(/^R2_JURISDICTION=.*$/m, 'R2_JURISDICTION=');
+    expect(statusOf(text, 'R2_JURISDICTION')).toEqual(['warn']);
+    expect(check(text).ready).toBe(true);
+    const gone = filledFile().replace(/^R2_JURISDICTION=.*$\n/m, '');
+    expect(statusOf(gone, 'R2_JURISDICTION')).toEqual(['missing']);
   });
 
   it('the four buckets must differ and the backup bucket must be its own', () => {

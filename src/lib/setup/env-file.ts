@@ -19,6 +19,8 @@ export interface EnvEntry {
   /** How the value was written; compose interpolates `$` unless it is single-quoted. */
   quote: 'single' | 'double' | 'none';
   line: number;
+  /** Whitespace between `=` and the value: compose would keep it as part of the value. */
+  spaceAfterEquals: boolean;
 }
 
 export interface ParsedEnvFile {
@@ -43,6 +45,7 @@ export function parseEnvFile(text: string): ParsedEnvFile {
       return;
     }
     const key = m[1]!;
+    const spaceAfterEquals = /^[ \t]+\S/.test(m[2]!);
     let value = m[2]!.trim();
     let quote: EnvEntry['quote'] = 'none';
     if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
@@ -53,7 +56,7 @@ export function parseEnvFile(text: string): ParsedEnvFile {
       value = value.slice(1, -1);
     }
     if (entries.has(key)) duplicates.push(key);
-    entries.set(key, { value, quote, line: i + 1 });
+    entries.set(key, { value, quote, line: i + 1, spaceAfterEquals });
   });
   return { entries, duplicates, badLines };
 }
@@ -243,7 +246,12 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   ),
   STORAGE_PROVIDER: (v) => (v === 'r2' ? null : 'must be r2 on the server'),
   R2_ACCOUNT_ID: pattern(/^[0-9a-f]{32}$/, 'must be the 32-character Cloudflare account id'),
-  R2_JURISDICTION: (v) => (v === 'eu' ? null : 'must be eu (the buckets are EU-jurisdiction)'),
+  // Empty = buckets created without a jurisdiction (the default, global location); eu | us |
+  // fedramp = buckets created in that jurisdiction. All buckets of one environment share one.
+  R2_JURISDICTION: (v) =>
+    ['', 'eu', 'us', 'fedramp'].includes(v)
+      ? null
+      : 'must be empty (no jurisdiction) or eu, us or fedramp, matching how the buckets were created',
   S3_BUCKET_ASSETS: bucket,
   S3_BUCKET_RENDERS: bucket,
   S3_BUCKET_THUMBNAILS: bucket,
@@ -291,12 +299,21 @@ function checkValue(
   min?: number,
 ): string | null {
   const v = entry.value.trim();
+  if (entry.spaceAfterEquals) return 'has a space after = - remove it: KEY=value';
   if (PLACEHOLDER.test(v)) return 'still holds a placeholder';
   if (SECRETISH.test(key) && v.includes('$') && entry.quote !== 'single')
     return "contains $ - put the value in single quotes: KEY='value'";
   if (min && v.length < min) return `must be at least ${min} characters`;
   return VALIDATORS[key]?.(v, record) ?? null;
 }
+
+/** Required keys whose line may be present but empty, with the reminder shown for empty. */
+const EMPTY_ALLOWED: ReadonlyMap<string, string> = new Map([
+  [
+    'R2_JURISDICTION',
+    'empty: the buckets must have been created without a jurisdiction (default location, not EU-only)',
+  ],
+]);
 
 export interface CheckInput {
   exampleText: string;
@@ -335,6 +352,10 @@ export function checkEnvFile(input: CheckInput): CheckReport {
 
   for (const key of required) {
     const entry = input.file.entries.get(key);
+    if (entry && entry.value.trim() === '' && EMPTY_ALLOWED.has(key)) {
+      results.push({ key, status: 'warn', reason: EMPTY_ALLOWED.get(key)! });
+      continue;
+    }
     if (!entry || entry.value.trim() === '') {
       results.push({ key, status: 'missing', reason: 'required, not set' });
       continue;
