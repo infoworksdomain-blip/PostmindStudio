@@ -8,7 +8,7 @@ This policy explains how Postmind AI Ltd collects and uses personal data when yo
 
 ## 1. Who we are
 
-1.1 The controller of the personal data described in this policy is Postmind AI Ltd, a company registered in England and Wales under company number 17332378, with its registered office at 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom (**we**, **us**, **our**). We are registered with the Information Commissioner's Office under number [[ICO REGISTRATION NUMBER]].
+1.1 The controller of the personal data described in this policy is Postmind AI Ltd, a company registered in England and Wales under company number 17332378, with its registered office at 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom (**we**, **us**, **our**).
 
 1.2 We are not required to appoint a data protection officer and have not done so. Our privacy lead, a director of Postmind AI Ltd, is responsible for data protection. For anything about this policy or your personal data, email support@postmindai.pro or write to us at the address above.
 
