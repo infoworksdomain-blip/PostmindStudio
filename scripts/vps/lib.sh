@@ -73,7 +73,10 @@ vps_profiles() {
   local args=()
   [ "$(env_get STUDIO_MONITORING "$ENV_FILE")" = "on" ] && args+=(--profile monitoring)
   [ "$(env_get HEADLESS_RENDER "$ENV_FILE")" = "on" ] && args+=(--profile headless-render)
-  printf '%s\n' "${args[@]+"${args[@]}"}"
+  # No profiles = no output at all: `printf '%s\n'` with no arguments prints one empty line, which
+  # `mapfile` turns into an empty argument that docker compose rejects ("unknown docker command").
+  [ "${#args[@]}" -eq 0 ] && return 0
+  printf '%s\n' "${args[@]}"
 }
 
 # The tag currently deployed (last line of the tags file), or empty.
