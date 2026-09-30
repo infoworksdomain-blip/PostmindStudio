@@ -22,7 +22,10 @@ describe('identity provider selection (Phase 18 §2.2)', () => {
     setIdentityProvider({ mode: 'standalone', resolve, invalidate: () => undefined });
     const req = new Request('https://studio.test/api/studio/projects');
     await expect(requireTenantContext(req)).resolves.toBe(tenant);
-    expect(resolve).toHaveBeenCalledWith(req);
+    expect(resolve).toHaveBeenCalledWith(req, undefined);
+    // 20.10: the admin-route option is passed through.
+    await requireTenantContext(req, { staffWithoutOrganisation: true });
+    expect(resolve).toHaveBeenLastCalledWith(req, { staffWithoutOrganisation: true });
   });
 
   it('core mode wraps the Core resolver unchanged', async () => {

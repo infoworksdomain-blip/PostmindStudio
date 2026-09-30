@@ -87,11 +87,15 @@ export function withStudioRoute(
       log = withContext({ correlationId }, deps.logger);
       // BACKLOG 14.11: a beta organisation routes / caps / auto-approves as PLUS (services/beta.ts).
       // Phase 18 §P.3: tier + access from entitlements and the 402 access gate (billing/access-gate.ts).
-      const tenant = await applyBetaPlan(
-        deps.betaPlans,
-        await billingGate(deps, req, await deps.resolveTenant(req)),
-        deps.now(),
+      // 20.10: admin routes accept platform staff who belong to no organisation (staff-only
+      // context: no plan, so no billing gate or beta plan).
+      const resolved = await deps.resolveTenant(
+        req,
+        capability.startsWith('studio:admin:') ? { staffWithoutOrganisation: true } : undefined,
       );
+      const tenant = resolved.staffOnly
+        ? resolved
+        : await applyBetaPlan(deps.betaPlans, await billingGate(deps, req, resolved), deps.now());
       log = withContext(
         { correlationId, organisationId: tenant.organisationId, userId: tenant.userId },
         deps.logger,
