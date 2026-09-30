@@ -37,6 +37,7 @@ import { LanguageSwitcher } from './i18n/language-switcher';
 import { useLocaleSwitch } from './i18n/intl-provider';
 import { NotificationsBell } from './notifications-bell';
 import { UsageBanner } from './usage-meter';
+import { NoOrganisationRedirect } from './onboarding/no-organisation-redirect';
 import { WelcomeLink } from './onboarding/welcome-link';
 import { UpgradeDialogHost } from './billing/upgrade-dialog';
 
@@ -166,6 +167,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative z-10 min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
+      <NoOrganisationRedirect />
       <aside className="sticky top-0 hidden h-dvh flex-col gap-8 border-e border-sidebar-border bg-sidebar py-6 lg:flex">
         <Wordmark />
         <div className="flex-1 overflow-y-auto px-3">
