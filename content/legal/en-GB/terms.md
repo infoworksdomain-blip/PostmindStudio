@@ -4,11 +4,11 @@
 
 **Last updated: 30 September 2026**
 
-These terms are a contract between [[COMPANY LEGAL NAME]] and the business that signs up for PostMind Studio. Please read them carefully. They limit our liability (clause 17) and say how the contract can end (clause 14).
+These terms are a contract between Postmind AI Ltd and the business that signs up for PostMind Studio. Please read them carefully. They limit our liability (clause 17) and say how the contract can end (clause 14).
 
 ## 1. Who we are and who these terms are for
 
-1.1 PostMind Studio (the **Service**) is provided by [[COMPANY LEGAL NAME]], a company registered in England and Wales under company number [[COMPANY NUMBER]], whose registered office is at [[REGISTERED ADDRESS]] (**we**, **us**, **our**). You can contact us at [[CONTACT EMAIL]].
+1.1 PostMind Studio (the **Service**) is provided by Postmind AI Ltd, a company registered in England and Wales under company number 17332378, whose registered office is at 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom (**we**, **us**, **our**). You can contact us at support@postmindai.pro.
 
 1.2 The Service is for businesses only. By creating an account or an organisation, starting a trial or buying a plan, you confirm that you are acting for a business, trade, craft or profession and not as a consumer. If you sign up on behalf of a company or other organisation, **you** and **Customer** mean that organisation, and you confirm that you are authorised to bind it to these terms.
 
@@ -57,7 +57,7 @@ In the Agreement:
 
 5.2 Your Plan sets how many Authorised Users (seats) and businesses your Organisation may have. The owner and administrators of your Organisation control who is invited and what role they have.
 
-5.3 You are responsible for everything done under your Organisation by your Authorised Users, and for making sure they follow the Agreement. Tell us promptly at [[CONTACT EMAIL]] if you suspect any unauthorised access.
+5.3 You are responsible for everything done under your Organisation by your Authorised Users, and for making sure they follow the Agreement. Tell us promptly at support@postmindai.pro if you suspect any unauthorised access.
 
 5.4 Our support staff may view your Organisation, or temporarily act as one of your Authorised Users, only to provide support you ask for, to investigate a suspected breach of the Agreement or a security incident, or where the law requires. Such access is time-limited and recorded in an audit log.
 
@@ -179,7 +179,7 @@ In the Agreement:
 
 15.1 **Read-only period.** When a paid subscription ends (for example after cancellation or unpaid invoices), your Organisation becomes read-only. You can still sign in, view, export and download your Customer Content, but you cannot create new content or publish.
 
-15.2 **Deletion.** Unless you subscribe again, after 90 days in the read-only state we email the Organisation's owners and schedule the Organisation for deletion. We then stop all processing for it, disconnect its Connected Platforms and delete their tokens. After a further 30 days, we permanently delete the Organisation's Customer Content and records from our live systems. If you delete the Organisation yourself, the 30-day period starts immediately. During the 30-day period you can ask us at [[CONTACT EMAIL]] to restore the Organisation.
+15.2 **Deletion.** Unless you subscribe again, after 90 days in the read-only state we email the Organisation's owners and schedule the Organisation for deletion. We then stop all processing for it, disconnect its Connected Platforms and delete their tokens. After a further 30 days, we permanently delete the Organisation's Customer Content and records from our live systems. If you delete the Organisation yourself, the 30-day period starts immediately. During the 30-day period you can ask us at support@postmindai.pro to restore the Organisation.
 
 15.3 **Backups and retained records.** Deleted data may remain in our encrypted backups for up to 30 days after deletion from live systems, until those backups expire. We keep an audit record of significant actions (which identifies people only by internal ID), billing and tax records, consent records for cloned voices, and records of legal and takedown requests, for the periods set out in our [Privacy Policy](/legal/privacy).
 
@@ -217,7 +217,7 @@ Neither party is liable for any delay or failure to perform the Agreement (other
 
 ## 20. Notices
 
-20.1 We may send notices to the email address of your Organisation's owner, or through the Service. You may send notices to [[CONTACT EMAIL]] or by post to [[REGISTERED ADDRESS]].
+20.1 We may send notices to the email address of your Organisation's owner, or through the Service. You may send notices to support@postmindai.pro or by post to 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom.
 
 20.2 A notice by email is treated as received at the time it is sent, unless the sender receives a delivery failure message.
 
@@ -253,4 +253,4 @@ Neither party is liable for any delay or failure to perform the Agreement (other
 
 ## 24. Contact
 
-[[COMPANY LEGAL NAME]], [[REGISTERED ADDRESS]]. Company number [[COMPANY NUMBER]]. Email: [[CONTACT EMAIL]].
+Postmind AI Ltd, 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom. Company number 17332378. Email: support@postmindai.pro.

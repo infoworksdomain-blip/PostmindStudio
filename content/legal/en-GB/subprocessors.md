@@ -4,7 +4,7 @@
 
 **Last updated: 30 September 2026**
 
-This page lists the third parties that [[COMPANY LEGAL NAME]] uses to process personal data when providing PostMind Studio (the **Service**). It is referred to in our [Data Processing Agreement](/legal/dpa) and our [Privacy Policy](/legal/privacy).
+This page lists the third parties that Postmind AI Ltd uses to process personal data when providing PostMind Studio (the **Service**). It is referred to in our [Data Processing Agreement](/legal/dpa) and our [Privacy Policy](/legal/privacy).
 
 **Transfer safeguards.** Where a provider below is outside the UK and EEA, transfers rely on the UK Extension to the EU–US Data Privacy Framework or the EU–US Data Privacy Framework where the provider is certified, and otherwise on the EU Standard Contractual Clauses with the UK International Data Transfer Addendum (or the UK International Data Transfer Agreement) in the provider's data processing terms. In the tables this is shown as **SCCs / DPF**. The EU and EEA have UK adequacy, so no extra safeguard is needed for them.
 
@@ -60,4 +60,4 @@ When you connect an account and ask us to publish or read analytics, the followi
 
 ## 6. Changes to this list
 
-We will update this page at least 30 days before a new sub-processor starts processing personal data, and we will tell the owners of every Organisation by email or in the Service. You may object as described in clause 5.3 of the [Data Processing Agreement](/legal/dpa). Questions: [[PRIVACY EMAIL]].
+We will update this page at least 30 days before a new sub-processor starts processing personal data, and we will tell the owners of every Organisation by email or in the Service. You may object as described in clause 5.3 of the [Data Processing Agreement](/legal/dpa). Questions: support@postmindai.pro.

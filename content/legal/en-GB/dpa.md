@@ -4,7 +4,7 @@
 
 **Last updated: 30 September 2026**
 
-This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/legal/terms) (together with this DPA, the **Agreement**) between [[COMPANY LEGAL NAME]] (**we**, **us**, the **Processor**) and the Customer (**you**, the **Controller**). It applies whenever we process Customer Personal Data on your behalf in providing PostMind Studio (the **Service**). It is accepted when you accept the Terms of Service; no separate signature is needed. Capitalised words not defined here have the meaning given in the Terms of Service.
+This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/legal/terms) (together with this DPA, the **Agreement**) between Postmind AI Ltd (**we**, **us**, the **Processor**) and the Customer (**you**, the **Controller**). It applies whenever we process Customer Personal Data on your behalf in providing PostMind Studio (the **Service**). It is accepted when you accept the Terms of Service; no separate signature is needed. Capitalised words not defined here have the meaning given in the Terms of Service.
 
 ## 1. Definitions
 
@@ -50,7 +50,7 @@ This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/l
 
 5.2 **Changes.** We will tell you of any intended addition or replacement of a Sub-processor at least 30 days in advance by updating the Sub-processors page and notifying your Organisation's owners by email or in the Service. In an emergency (for example to keep the Service running when a provider fails) the notice may be shorter, and we will give it as soon as we can.
 
-5.3 **Objection.** You may object to a new Sub-processor on reasonable data protection grounds by writing to [[PRIVACY EMAIL]] within the notice period. We will discuss your concerns in good faith and, where possible, offer a way to avoid the new Sub-processor processing your Customer Personal Data. If we cannot, you may end the affected part of the Agreement by notice before the change takes effect, and we will refund any prepaid Fees for the period after termination.
+5.3 **Objection.** You may object to a new Sub-processor on reasonable data protection grounds by writing to support@postmindai.pro within the notice period. We will discuss your concerns in good faith and, where possible, offer a way to avoid the new Sub-processor processing your Customer Personal Data. If we cannot, you may end the affected part of the Agreement by notice before the change takes effect, and we will refund any prepaid Fees for the period after termination.
 
 5.4 **Flow-down.** We will impose on each Sub-processor, by written contract, data protection obligations that offer at least the same level of protection as this DPA, and we remain liable to you for its performance of those obligations.
 

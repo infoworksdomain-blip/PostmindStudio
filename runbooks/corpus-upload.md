@@ -4,13 +4,13 @@ This runbook gets the 50,000 reference videos from the operator's hard drive int
 then into Studio's library. The ingest itself is [corpus-ingestion.md](corpus-ingestion.md); this
 runbook ends by handing over to it.
 
-| | |
-| --- | --- |
-| **Who** | **Operator**: plugs in the drive, clicks in the Cloudflare dashboard, pastes the key into Notepad, reviews. **Engineer** (the lead): runs every command. |
-| **Where** | The operator's Windows 10 PC (the drive is plugged in there), with this repository checked out and `npm install` done. |
-| **Bucket** | `eu-corpus-source`, EU jurisdiction, keys under `videos/`. Temporary: deleted after the ingest (step 17). |
-| **Time** | The scan prints the upload time for 10, 50 and 100 Mbit/s. Leave the PC on for that long. |
-| **Cost** | The scan prints it. At $0.015 per GB-month after the free 10 GB, 2 TB is about $30 a month; uploads and downloads cost nothing at this size ([R2 pricing](https://developers.cloudflare.com/r2/pricing/), read 2026-09-29). |
+|            |                                                                                                                                                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Who**    | **Operator**: plugs in the drive, clicks in the Cloudflare dashboard, pastes the key into Notepad, reviews. **Engineer** (the lead): runs every command.                                                                    |
+| **Where**  | The operator's Windows 10 PC (the drive is plugged in there), with this repository checked out and `npm install` done.                                                                                                      |
+| **Bucket** | `eu-corpus-source`, in the same jurisdiction as the environment's other buckets (production since 2026-09-30: none, R2's default location), keys under `videos/`. Temporary: deleted after the ingest (step 17).            |
+| **Time**   | The scan prints the upload time for 10, 50 and 100 Mbit/s. Leave the PC on for that long.                                                                                                                                   |
+| **Cost**   | The scan prints it. At $0.015 per GB-month after the free 10 GB, 2 TB is about $30 a month; uploads and downloads cost nothing at this size ([R2 pricing](https://developers.cloudflare.com/r2/pricing/), read 2026-09-29). |
 
 Sources (read 2026-09-29): [rclone Cloudflare R2](https://rclone.org/s3/#cloudflare-r2),
 [rclone install](https://rclone.org/install/), [rclone flags](https://rclone.org/docs/),
@@ -26,12 +26,12 @@ Use the real drive letter and folder. Commands run in **PowerShell** from the re
 
 ## What the tools do
 
-| Tool | Does | Changes |
-| --- | --- | --- |
-| `npm run corpus:scan` | Counts the videos, finds files Studio would refuse, duplicates and awkward names, estimates time and cost, writes the **upload list**. | Nothing on the drive. Writes only the files you name, and refuses to write them inside the video folder. |
-| `npm run corpus:rclone-config` | Writes the **env file** template, then the **rclone config** from it. | Two files in your user folder. The secret is never printed. |
-| `scripts\corpus\upload.ps1` (or `upload.sh`) | Copies exactly the files in the upload list to the bucket; `-Test` copies 20; `-Verify` checks them. | Adds objects to the bucket. Never deletes anything. |
-| `npm run corpus:manifest` | Writes the manifest `corpus.csv` for `ingest-corpus.ts` and checks it with the same validator. | Nothing on the drive. |
+| Tool                                         | Does                                                                                                                                   | Changes                                                                                                  |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `npm run corpus:scan`                        | Counts the videos, finds files Studio would refuse, duplicates and awkward names, estimates time and cost, writes the **upload list**. | Nothing on the drive. Writes only the files you name, and refuses to write them inside the video folder. |
+| `npm run corpus:rclone-config`               | Writes the **env file** template, then the **rclone config** from it.                                                                  | Two files in your user folder. The secret is never printed.                                              |
+| `scripts\corpus\upload.ps1` (or `upload.sh`) | Copies exactly the files in the upload list to the bucket; `-Test` copies 20; `-Verify` checks them.                                   | Adds objects to the bucket. Never deletes anything.                                                      |
+| `npm run corpus:manifest`                    | Writes the manifest `corpus.csv` for `ingest-corpus.ts` and checks it with the same validator.                                         | Nothing on the drive.                                                                                    |
 
 What Studio refuses (from `src/lib/studio/library/ingest.ts`): files over **200 MB** (200 MiB,
 `MAX_SOURCE_BYTES`) and empty files. The ingest does not look at the extension: FFmpeg reads the
@@ -63,9 +63,9 @@ The tool only reads. It prints:
 
 - how many files of each type and how big they are, and the largest files;
 - **files Studio would refuse**, with the reason. They are left out of the upload list:
-  - *larger than 200 MB*: shorten or re-encode them into a separate folder, or leave them out;
-  - *not an accepted format*: photos, documents and so on. Nothing to do;
-  - *bad name*: the name has a full-width symbol (such as `？` or `：`) or a character the
+  - _larger than 200 MB_: shorten or re-encode them into a separate folder, or leave them out;
+  - _not an accepted format_: photos, documents and so on. Nothing to do;
+  - _bad name_: the name has a full-width symbol (such as `？` or `：`) or a character the
     upload tool would change. Rename those files **now, before the upload**;
 - **duplicates**: files with the same size and the same first and last megabyte. With
   `--skip-duplicates` only the first copy (by path) is uploaded. Without it every copy is uploaded
@@ -89,8 +89,9 @@ upload the paths are fixed.
 1. Sign in at <https://dash.cloudflare.com> and open **R2 object storage**.
 2. Click **Create bucket**.
 3. Name: `eu-corpus-source`.
-4. Under **Location**, choose **Specify jurisdiction**, then **European Union (EU)**. This cannot be
-   changed later, and Studio's own buckets are EU too (r2-setup.md step 1).
+4. Under **Location**, match Studio's buckets. Production uses R2's default location (no
+   jurisdiction, operator decision 2026-09-30), so leave the location as it is; choose **Specify
+   jurisdiction → European Union (EU)** only if Studio's buckets are EU. This cannot be changed later.
 5. Click **Create bucket**.
 
 ## 4. Create the upload key (operator, Cloudflare dashboard)
@@ -120,7 +121,9 @@ This creates `%USERPROFILE%\postmind-corpus.env` with empty places for the key. 
 1. Press **Windows key + R**, type `notepad %USERPROFILE%\postmind-corpus.env`, press **Enter**.
 2. After `CORPUS_R2_ACCESS_KEY_ID=` paste the **Access Key ID** (right-click → Paste).
 3. After `CORPUS_R2_SECRET_ACCESS_KEY=` paste the **Secret Access Key**.
-4. No spaces and no quote marks. Press **Ctrl+S**, then close Notepad and the Cloudflare page.
+4. The bucket has no jurisdiction (production): change `R2_JURISDICTION=eu` to `R2_JURISDICTION=`
+   (empty). Leave `eu` only for an EU-jurisdiction bucket.
+5. No spaces and no quote marks. Press **Ctrl+S**, then close Notepad and the Cloudflare page.
 
 Never email, chat or screenshot this file.
 
@@ -131,7 +134,8 @@ npm run corpus:rclone-config
 ```
 
 It writes `%USERPROFILE%\.config\rclone\postmind-corpus.conf` with the remote `postmind-corpus`:
-provider Cloudflare, endpoint `https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com`, and
+provider Cloudflare, endpoint `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` (or
+`https://<ACCOUNT_ID>.eu.r2.cloudflarestorage.com` with `R2_JURISDICTION=eu`), and
 `no_check_bucket = true` (rclone's R2 page: needed for "Object Read & Write" tokens, which cannot
 create buckets). It prints the endpoint and the first and last four characters of the key ID,
 never the secret. A wrong paste is reported by name (for example "CORPUS_R2_SECRET_ACCESS_KEY is
@@ -195,15 +199,15 @@ npm run corpus:manifest -- "E:\Videos" --bucket eu-corpus-source --prefix videos
 
 Each row, in the format of `corpus/manifest.template.csv`:
 
-| Column | From |
-| --- | --- |
-| `url` | `s3://eu-corpus-source/videos/<path on the drive, with />`: exactly the key the upload wrote |
-| `title` | the file name without the extension, `_` and `-` as spaces, sentence case (all-capital words such as `UK` stay) |
-| `tags` | the folder names, `a\|b\|c`, lower case with dashes |
-| `category` | the top folder when it names a library category, narrowed by the second folder; empty otherwise (Claude classifies it) |
-| `sourceRef` | `corpus-` + a hash of the path: the same file always gets the same id |
-| `language` | only when a folder is a language (`French`, `fr`, `pt-BR`) or the file name has one in brackets (`(Spanish)`, `[en]`); words such as "French toast" do not count |
-| `sourcePlatform` | when the path names exactly one of tiktok, instagram, youtube, facebook, snapchat, linkedin, pinterest, twitter |
+| Column           | From                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`            | `s3://eu-corpus-source/videos/<path on the drive, with />`: exactly the key the upload wrote                                                                     |
+| `title`          | the file name without the extension, `_` and `-` as spaces, sentence case (all-capital words such as `UK` stay)                                                  |
+| `tags`           | the folder names, `a\|b\|c`, lower case with dashes                                                                                                              |
+| `category`       | the top folder when it names a library category, narrowed by the second folder; empty otherwise (Claude classifies it)                                           |
+| `sourceRef`      | `corpus-` + a hash of the path: the same file always gets the same id                                                                                            |
+| `language`       | only when a folder is a language (`French`, `fr`, `pt-BR`) or the file name has one in brackets (`(Spanish)`, `[en]`); words such as "French toast" do not count |
+| `sourcePlatform` | when the path names exactly one of tiktok, instagram, youtube, facebook, snapchat, linkedin, pinterest, twitter                                                  |
 
 The tool then checks the file with the same validator `ingest-corpus.ts` uses, prints the category
 counts and every rejected row, and confirms that every row is a file in the upload list. It exits
@@ -222,8 +226,9 @@ the options differ from the scan).
 ## 12. Let Studio read the bucket (engineer, server)
 
 Studio reads `s3://` sources with its own R2 key (the app token, r2-setup.md step 2), so that key
-must also reach `eu-corpus-source`. One S3 client serves one jurisdiction; the bucket is EU like
-Studio's buckets, so that works.
+must also reach `eu-corpus-source`. One S3 client serves one jurisdiction, so the bucket must share
+Studio's jurisdiction (production: none). The production app token created on 2026-09-30
+already includes `eu-corpus-source`; then skip point 1 and only add the setting in point 2.
 
 1. Cloudflare → R2 → **Manage API Tokens** → **Create Account API token**: **Object Read & Write**,
    scoped to Studio's buckets (the ones in the current app token) **plus** `eu-corpus-source`.
@@ -288,16 +293,16 @@ the backup.
 
 ## If something goes wrong
 
-| Symptom | Cause and fix |
-| --- | --- |
-| `rclone is not installed` | Step 1, then open a new PowerShell window. |
-| `403 Forbidden` / `AccessDenied` | The key is wrong, expired, or not scoped to `eu-corpus-source`: redo steps 4 to 6. |
-| `NoSuchBucket` or a bucket error | The bucket name or jurisdiction differ: the bucket must be `eu-corpus-source` in the EU jurisdiction. |
-| The upload stops, the PC slept, the drive was unplugged | Plug it in and run the same command again. It resumes. |
-| Verify lists missing files | Run the upload again, then verify again. |
-| The manifest says the lists differ | The folder changed, or the options differ from the scan. Re-run the scan with the same options, re-run the upload (it copies only what is new), then the manifest. |
-| Ingest failure "not in STUDIO_CORPUS_S3_BUCKETS" | Step 12, point 2. |
-| Ingest failure "Source object is empty" / "larger than 200 MB" | The scan should have caught it; drop the row. |
+| Symptom                                                        | Cause and fix                                                                                                                                                      |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `rclone is not installed`                                      | Step 1, then open a new PowerShell window.                                                                                                                         |
+| `403 Forbidden` / `AccessDenied`                               | The key is wrong, expired, or not scoped to `eu-corpus-source`: redo steps 4 to 6.                                                                                 |
+| `NoSuchBucket`, `AccessDenied` or a bucket error               | The bucket name or jurisdiction differ: `R2_JURISDICTION` in the env file must match the bucket (empty for production's default-location buckets).                 |
+| The upload stops, the PC slept, the drive was unplugged        | Plug it in and run the same command again. It resumes.                                                                                                             |
+| Verify lists missing files                                     | Run the upload again, then verify again.                                                                                                                           |
+| The manifest says the lists differ                             | The folder changed, or the options differ from the scan. Re-run the scan with the same options, re-run the upload (it copies only what is new), then the manifest. |
+| Ingest failure "not in STUDIO_CORPUS_S3_BUCKETS"               | Step 12, point 2.                                                                                                                                                  |
+| Ingest failure "Source object is empty" / "larger than 200 MB" | The scan should have caught it; drop the row.                                                                                                                      |
 
 ## GAP / not verified
 

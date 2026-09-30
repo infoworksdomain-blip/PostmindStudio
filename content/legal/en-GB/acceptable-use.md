@@ -4,7 +4,7 @@
 
 **Last updated: 30 September 2026**
 
-This policy sets out what you may not do with PostMind Studio (the **Service**), provided by [[COMPANY LEGAL NAME]]. It forms part of our [Terms of Service](/legal/terms), and words with capitals have the meaning given there. It applies to the Customer and to every Authorised User, and to all Inputs, Outputs and publications.
+This policy sets out what you may not do with PostMind Studio (the **Service**), provided by Postmind AI Ltd. It forms part of our [Terms of Service](/legal/terms), and words with capitals have the meaning given there. It applies to the Customer and to every Authorised User, and to all Inputs, Outputs and publications.
 
 ## 1. Illegal and harmful content
 
@@ -72,7 +72,7 @@ You must not:
 
 7.1 upload or distribute viruses, malware or any other harmful code;
 
-7.2 probe, scan or test the vulnerability of the Service or any system connected to it, or breach its security or authentication, without our prior written permission (if you have found a security issue, please tell us at [[CONTACT EMAIL]]);
+7.2 probe, scan or test the vulnerability of the Service or any system connected to it, or breach its security or authentication, without our prior written permission (if you have found a security issue, please tell us at support@postmindai.pro);
 
 7.3 access the Service by automated means other than through the features and interfaces we provide, or scrape, crawl or copy the Service, its reference library or other customers' content;
 
@@ -94,7 +94,7 @@ You must not:
 
 ## 9. Reporting abuse
 
-To report content made or published with the Service that you believe breaches this policy or your rights, email [[CONTACT EMAIL]] with a link to or description of the content, the reason you believe it is unlawful or harmful, and your contact details. Rights holders should include details of the work concerned and confirm they are authorised to act. We keep a record of every report and what we did about it. For child sexual abuse material, you can also report directly to the Internet Watch Foundation at [https://report.iwf.org.uk](https://report.iwf.org.uk).
+To report content made or published with the Service that you believe breaches this policy or your rights, email support@postmindai.pro with a link to or description of the content, the reason you believe it is unlawful or harmful, and your contact details. Rights holders should include details of the work concerned and confirm they are authorised to act. We keep a record of every report and what we did about it. For child sexual abuse material, you can also report directly to the Internet Watch Foundation at [https://report.iwf.org.uk](https://report.iwf.org.uk).
 
 ## 10. Changes
 
