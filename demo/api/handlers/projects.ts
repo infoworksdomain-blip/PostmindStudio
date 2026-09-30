@@ -98,6 +98,10 @@ route('POST', '/projects', ({ body }) => {
     throw new DemoHttpError(404, 'not_found', 'Template not found');
   if (sourceType === 'SLIDESHOW' && !str(slideshow.templateId))
     throw bad('slideshow is required for SLIDESHOW projects');
+  // 20.3: the same 180-day rule as services/projects.ts assertScheduledStartAt.
+  const startAt = str(b.scheduledStartAt);
+  if (startAt && Date.parse(startAt) - Date.now() > 180 * 86_400_000)
+    throw bad('scheduledStartAt must be at most 180 days from now');
   if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(sourceType) && !rawInput)
     throw bad('brief is required');
   // 13.5: an UPLOAD project claims a completed source-video upload (p13-a1-uploads.ts).

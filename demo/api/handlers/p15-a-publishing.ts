@@ -1,6 +1,7 @@
 // Phase 15 Track A — publishing and distribution sample handlers, with the same envelopes,
 // validation messages and shapes as the real routes:
 //   GET/PUT /businesses/:id/drip-queue            (15.A5, services/drip-queue.ts)
+//   GET     /businesses/:id/drip-queue/upcoming   (20.3, month-ahead open slots)
 //   GET     /analytics/best-times                 (15.A6, analytics/best-times.ts)
 //   POST    /projects/:id/caption-suggestions     (15.A7, services/caption-suggestions.ts)
 //   GET     /renders/:id  (+ thumbnailUrl)         (15.A3)
@@ -8,56 +9,108 @@
 //   GET     /renders/:id/captions                  (15.A4, burned-in vs SRT lines)
 // Registered before ./review so GET /renders/:id carries the thumbnail URL.
 import type { Publication } from '@/lib/client/types';
+import { presetSlots } from '@/lib/studio/drip-presets';
+import {
+  DRIP_HORIZON_DAYS,
+  firstFreeSlot,
+  openSlotsBetween,
+  upcomingQuery,
+  upcomingWindow,
+} from '@/lib/studio/services/drip-queue';
+import { DEMO_BUSINESS_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { findRender, getProject } from './projects-store';
+import { listPublications } from './publications-store';
 
 const bad = (message: string) => new DemoHttpError(400, 'validation_error', message);
 const DAY = 86_400_000;
 
 // ------------------------------------------------------------------ drip queue (A5)
+// 20.3: the same slot maths as the service (zoned, DST-aware), a seeded "3 a week" queue for the
+// sample bakery so the calendar shows open slots, and GET …/drip-queue/upcoming.
 
 interface Slot {
   weekday: number;
   time: string;
   timezone: string;
 }
-const dripQueues = new Map<
-  string,
-  { slots: Slot[]; platforms: string[]; enabled: boolean; updatedAt: string }
->();
-
-function nextSlot(slots: Slot[]): string | null {
-  // Demo approximation of the real zoned calculation: next matching weekday at HH:MM UTC.
-  const now = Date.now();
-  let best: number | null = null;
-  for (const s of slots) {
-    const [h, m] = s.time.split(':').map(Number) as [number, number];
-    for (let d = 0; d <= 7; d += 1) {
-      const day = new Date(now + d * DAY);
-      if (day.getUTCDay() !== s.weekday) continue;
-      const at = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), h, m);
-      if (at > now + 120_000 && (best === null || at < best)) best = at;
-    }
-  }
-  return best === null ? null : new Date(best).toISOString();
+interface DemoQueue {
+  slots: Slot[];
+  platforms: string[];
+  enabled: boolean;
+  updatedAt: string;
 }
+const dripQueues = new Map<string, DemoQueue>([
+  [
+    DEMO_BUSINESS_ID,
+    {
+      slots: presetSlots('three', 'Europe/London'),
+      platforms: [],
+      enabled: true,
+      updatedAt: new Date(Date.now() - 3 * DAY).toISOString(),
+    },
+  ],
+]);
 
-function view(q: { slots: Slot[]; platforms: string[]; enabled: boolean; updatedAt: string }) {
+function view(q: DemoQueue) {
+  const next = q.enabled ? firstFreeSlot(q.slots, [], Date.now()) : null;
   return {
     slots: q.slots,
     platforms: q.platforms,
     enabled: q.enabled,
     staggerMinutes: 30,
-    nextSlotAt: q.enabled ? nextSlot(q.slots) : null,
+    nextSlotAt: next === null ? null : new Date(next).toISOString(),
     queued: 0,
     upcoming: [],
     updatedAt: q.updatedAt,
   };
 }
 
+/** 20.3: the next free slot of a business's queue (null = off or none), for the demo retry. */
+export function demoNextFreeSlot(businessId: string): string | null {
+  const q = dripQueues.get(businessId);
+  const next = q?.enabled ? firstFreeSlot(q.slots, [], Date.now()) : null;
+  return next === null ? null : new Date(next).toISOString();
+}
+
 route('GET', '/businesses/:id/drip-queue', ({ params }) => {
   const q = dripQueues.get(params.id ?? '');
   return { dripQueue: q ? view(q) : null };
+});
+
+route('GET', '/businesses/:id/drip-queue/upcoming', ({ params, query }) => {
+  const now = Date.now();
+  const raw = { from: query.get('from') ?? undefined, to: query.get('to') ?? undefined };
+  const parsed = upcomingQuery.safeParse(raw);
+  if (!parsed.success) throw bad('Query parameters failed validation');
+  let window: { fromMs: number; toMs: number };
+  try {
+    window = upcomingWindow(parsed.data, now);
+  } catch (err) {
+    throw bad(err instanceof Error ? err.message : 'Invalid window');
+  }
+  const q = dripQueues.get(params.id ?? '');
+  const enabled = Boolean(q?.enabled);
+  const open = enabled && q ? openSlotsBetween(q.slots, [], window, now) : [];
+  const scheduled = listPublications().filter((p) => {
+    const t = p.scheduledFor ? Date.parse(p.scheduledFor) : NaN;
+    return (
+      (p.state === 'SCHEDULED' || p.state === 'PUBLISHING') && t >= window.fromMs && t < window.toMs
+    );
+  }).length;
+  return {
+    upcoming: {
+      from: new Date(window.fromMs).toISOString(),
+      to: new Date(window.toMs).toISOString(),
+      configured: q !== undefined,
+      enabled,
+      slotsPerWeek: enabled && q ? q.slots.length : 0,
+      horizonDays: DRIP_HORIZON_DAYS,
+      scheduled,
+      openSlots: open.map((at) => new Date(at).toISOString()),
+      held: [],
+    },
+  };
 });
 
 route('PUT', '/businesses/:id/drip-queue', ({ params, body }) => {

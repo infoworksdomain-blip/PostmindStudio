@@ -55,7 +55,7 @@ const ENTRY_POINTS = [
     href: '#/tour/features',
     icon: ListChecks,
     title: 'Everything built',
-    body: `${featureCount} features from Phases 1–18 by area, each with a “See it” link.`,
+    body: `${featureCount} features from Phases 1–20 by area, each with a “See it” link.`,
   },
   {
     href: '#/tour/whats-new',

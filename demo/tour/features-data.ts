@@ -2,7 +2,7 @@ import { LIBRARY_VIDEOS, P17_PROJECTS, PROJECTS } from '../api/ids';
 import { projectHref as p, withLang, withPlan } from './workflow-types';
 import { SHARE_TOKEN } from './workflows-create';
 
-// "Everything built" (#/tour/features): every completed feature of Phases 1–18, grouped by area,
+// "Everything built" (#/tour/features): every completed feature of Phases 1–20, grouped by area,
 // each with one line and a "See it" link into the demo. Plain data so demo/tour/links.test.ts can
 // check every link against the routes demo/app.tsx knows. Features with no screen link to the
 // behind-the-scenes page (`?section=` scrolls to the chapter). The operator / dependency items
@@ -210,6 +210,13 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
           'Scheduled and published posts on a month grid; drag or move a post to another day.',
         href: '#/calendar',
         phase: '13',
+      },
+      {
+        title: 'Plan a month ahead',
+        description:
+          'One-click posting plans fill the drip queue; open slots show on the calendar for the month ahead.',
+        href: '#/calendar',
+        phase: '20.3',
       },
       {
         title: 'Auto-publish',
