@@ -77,7 +77,9 @@ export async function buildOverlayTrack(
   if (placed.length === 0) return track;
   if (!input.preRender.fontsBaseUrl) {
     // Shotstack has no system fonts: rendering overlays without a font source would fail.
-    throw new ConfigurationError('STUDIO_FONTS_BASE_URL is required to render text overlays');
+    throw new ConfigurationError(
+      'No fonts host: set APP_URL (fonts served from /fonts) or STUDIO_FONTS_BASE_URL to render text overlays',
+    );
   }
   const families = new Set<string>();
   const ordered = [...placed].sort(

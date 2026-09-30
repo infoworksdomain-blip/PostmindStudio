@@ -57,7 +57,7 @@ export interface ApiDeps {
   library: LibraryDeps;
   /** 13.13 ElevenLabs Instant Voice Cloning; absent (no ELEVENLABS_API_KEY) = 501. */
   voiceCloning?: VoiceCloningClient;
-  /** Overlay fonts (<FamilyNoSpaces>.ttf) for previews; STUDIO_FONTS_BASE_URL. */
+  /** Overlay fonts (<FamilyNoSpaces>.ttf) for previews; fonts-host.ts (APP_URL/fonts by default). */
   fontsBaseUrl?: string;
   /** Public origin of Studio (OAuth return URLs must stay on it). */
   appUrl: string;

@@ -36,6 +36,7 @@ import { getProviderRegistry } from '../providers/default-registry';
 import { createByocRegistryResolver } from '../providers/byoc-registry';
 import { createPrismaProviderJobRepository } from '../providers/job-repository';
 import type { JobQueue } from '../queue/enqueue';
+import { fontsBaseUrlFromEnv } from '../fonts-host';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { DEFAULT_PIPELINE_TIMING, type PipelineDeps } from './deps';
 import { createFfmpegInspector } from './media-probe';
@@ -122,7 +123,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       rendersBucket: requireEnv('S3_BUCKET_RENDERS'),
       defaultVoiceId: process.env.ELEVENLABS_DEFAULT_VOICE_ID?.trim() || undefined,
       stockVoices: parseStockVoices(process.env.STUDIO_STOCK_VOICES),
-      fontsBaseUrl: process.env.STUDIO_FONTS_BASE_URL?.trim() || undefined,
+      // 20.7: STUDIO_FONTS_BASE_URL, else the fonts this app serves itself at APP_URL/fonts.
+      fontsBaseUrl: fontsBaseUrlFromEnv(process.env),
       musicMinTier: parseMusicMinTier(process.env.STUDIO_MUSIC_MIN_TIER),
       libraryBucket: process.env.S3_BUCKET_LIBRARY?.trim() || undefined,
       corpusS3Buckets: parseCorpusBuckets(process.env.STUDIO_CORPUS_S3_BUCKETS),

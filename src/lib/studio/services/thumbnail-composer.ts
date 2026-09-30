@@ -24,7 +24,7 @@ export interface ThumbnailRequest {
   overlayText?: string;
   width: number;
   height: number;
-  /** A TTF for the text (STUDIO_FONTS_BASE_URL/Montserrat.ttf); absent = FFmpeg's default font. */
+  /** A TTF for the text (<fonts base URL>/Montserrat.ttf; fonts-host.ts); absent = FFmpeg's default font. */
   fontUrl?: string;
 }
 

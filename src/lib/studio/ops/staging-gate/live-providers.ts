@@ -140,7 +140,7 @@ export const LIVE_PROVIDER_TESTS: readonly LiveProviderTest[] = [
       edit: SHOTSTACK_EDIT,
       outputDurationSec: 3,
     }),
-    note: 'Stage environment unless SHOTSTACK_ENVIRONMENT=v1; check the hosted fonts render (STUDIO_FONTS_BASE_URL).',
+    note: 'Stage environment unless SHOTSTACK_ENVIRONMENT=v1; check the hosted fonts render (APP_URL/fonts, or STUDIO_FONTS_BASE_URL when set).',
   },
   {
     id: 'router',

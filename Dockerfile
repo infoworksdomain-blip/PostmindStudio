@@ -41,6 +41,8 @@ ENV NODE_ENV=production \
 COPY --from=build --chown=node:node /app/package.json /app/package-lock.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/.next ./.next
+# 20.7: public/ (render fonts at /fonts/<Family>.ttf, public/fonts/SOURCES.md; about 24 MB).
+COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/prompts ./prompts
 # Phase 18: the operator's legal Markdown for /legal/* (placeholders until replaced).
