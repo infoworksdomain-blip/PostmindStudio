@@ -90,6 +90,8 @@ export function ConnectionsScreen({
   const { data, error, isLoading, mutate } = useApi<{
     data: PlatformConnection[];
     meta?: MetaConnectInfo;
+    /** 20.10: per OAuth platform, whether its app is configured (absent = configured). */
+    configured?: Partial<Record<string, boolean>>;
   }>(businessId ? '/platform-connections' : null);
   const [connecting, setConnecting] = useState<ConnectPlatform | null>(null);
   const [notice, dismiss] = useCallbackNotice();
@@ -182,6 +184,7 @@ export function ConnectionsScreen({
               platform={p}
               connections={mine.filter((c) => c.platform === p.id)}
               connecting={connecting === p.id}
+              configured={data.configured?.[p.id] ?? true}
               onConnect={() => void connect(p.id)}
               onDisconnect={disconnect}
             />

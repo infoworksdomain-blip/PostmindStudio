@@ -81,12 +81,15 @@ export function PlatformCard({
   platform,
   connections,
   connecting,
+  configured = true,
   onConnect,
   onDisconnect,
 }: {
   platform: PlatformInfo;
   connections: PlatformConnection[];
   connecting: boolean;
+  /** 20.10: false while the operator has not set this platform's app (no Connect button). */
+  configured?: boolean;
   onConnect: () => void;
   onDisconnect: (connection: PlatformConnection) => Promise<boolean>;
 }) {
@@ -120,17 +123,23 @@ export function PlatformCard({
         ) : (
           <p className="py-3 text-sm text-muted-foreground">{t('notConnected')}</p>
         )}
-        <Button
-          className="mt-2"
-          variant={connected ? 'outline' : 'default'}
-          disabled={connecting}
-          onClick={onConnect}
-        >
-          {connecting ? <Loader2 className="animate-spin" /> : <Link2 />}
-          {connected
-            ? t('addAnother', { platform: platform.label })
-            : t('connect', { platform: platform.label })}
-        </Button>
+        {configured ? (
+          <Button
+            className="mt-2"
+            variant={connected ? 'outline' : 'default'}
+            disabled={connecting}
+            onClick={onConnect}
+          >
+            {connecting ? <Loader2 className="animate-spin" /> : <Link2 />}
+            {connected
+              ? t('addAnother', { platform: platform.label })
+              : t('connect', { platform: platform.label })}
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {t('notConfigured', { platform: platform.label })}
+          </p>
+        )}
       </div>
     </section>
   );

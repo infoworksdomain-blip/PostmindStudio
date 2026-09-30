@@ -48,6 +48,8 @@ export interface PublishingDeps {
   meta: MetaCredentialSource;
   keys: DataKeyProvider;
   oauth: (platform: OAuthPlatform) => OAuthClient;
+  /** 20.10: false when the platform's OAuth app is not configured; absent = configured. */
+  oauthConfigured?: (platform: OAuthPlatform) => boolean;
   storage: AssetStorage;
   engagement: EngagementClient;
   logger: Logger;

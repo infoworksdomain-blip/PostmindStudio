@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ForbiddenError, NoOrganisationError, UnauthorizedError } from '../errors';
 import { StudioCapability as C, hasCapability } from '../rbac';
+import { PLATFORM_ORGANISATION_ID } from '../tenant';
 import { createStubEntitlementsReader } from '../studio/billing/entitlements-reader';
 import {
   createStandaloneIdentityProvider,
@@ -101,6 +102,49 @@ describe('StandaloneIdentityProvider (Phase 18 §2.2)', () => {
     const err = await provider.resolve(req()).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(NoOrganisationError);
     expect((err as NoOrganisationError).code).toBe('no_organisation');
+  });
+
+  it('gives staff with 2FA and no organisation a staff-only context on admin routes (20.10)', async () => {
+    const staff = record({ platformRole: 'superadmin', twoFactorEnabled: true, memberships: [] });
+    const { provider } = setup({ rec: staff, view: session({ activeOrganizationId: null }) });
+    const admin = await provider.resolve(req(), { staffWithoutOrganisation: true });
+    expect(admin).toMatchObject({
+      userId: 'u1',
+      organisationId: PLATFORM_ORGANISATION_ID,
+      memberships: [],
+      platformRole: 'superadmin',
+      staffOnly: true,
+      access: 'full',
+    });
+    expect(hasCapability(admin, C.AdminKillSwitchWrite)).toBe(true);
+    // No workspace capability comes with it.
+    expect(hasCapability(admin, C.ProjectRead)).toBe(false);
+    // A workspace route (no option) still gets no_organisation, even right after (own cache key).
+    await expect(provider.resolve(req())).rejects.toBeInstanceOf(NoOrganisationError);
+    // Named organisation header: not a member of it, so no staff-only fallback either.
+    await expect(
+      provider.resolve(req('GET', { [ORGANISATION_HEADER]: 'org-a' }), {
+        staffWithoutOrganisation: true,
+      }),
+    ).rejects.toBeInstanceOf(NoOrganisationError);
+  });
+
+  it('keeps no_organisation on admin routes for staff without 2FA and for ordinary users', async () => {
+    for (const rec of [
+      record({ platformRole: 'staff', twoFactorEnabled: false, memberships: [] }),
+      record({ platformRole: 'user', twoFactorEnabled: true, memberships: [] }),
+    ]) {
+      await expect(
+        setup({ rec }).provider.resolve(req(), { staffWithoutOrganisation: true }),
+      ).rejects.toBeInstanceOf(NoOrganisationError);
+    }
+  });
+
+  it('ignores the option for staff who belong to an organisation (their own tenant)', async () => {
+    const { provider } = setup({ rec: record({ platformRole: 'staff', twoFactorEnabled: true }) });
+    const tenant = await provider.resolve(req(), { staffWithoutOrganisation: true });
+    expect(tenant.organisationId).toBe('org-a');
+    expect(tenant.staffOnly).toBeUndefined();
   });
 
   it('falls back to the oldest membership when the active organisation is gone', async () => {

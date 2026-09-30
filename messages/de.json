@@ -1977,7 +1977,8 @@
       "retained": "Bereits veröffentlichte Videos bleiben auf Facebook und Instagram; entferne sie dort, wenn du sie nicht mehr möchtest. Studio behält nur die Nummer der Seite bzw. des Instagram-Kontos, auf die sich der Veröffentlichungsverlauf bezieht.",
       "codeLabel": "Bestätigungscode:",
       "unknownCode": "Zu diesem Bestätigungscode wurde keine Löschanfrage gefunden. Prüfe den Link, den du von Facebook erhalten hast."
-    }
+    },
+    "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
   },
   "library": {
     "browse": {
@@ -5002,6 +5003,21 @@
       "emptyBody": "Lassen Sie Studio einen Monat mit Videos und Diashows entwerfen und erstellen und planen Sie sie dann in einem Schritt ein.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# Beitrag} other {# Beiträge}}"
+    }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Diese Seite wurde nicht gefunden",
+      "body": "Der Link ist vielleicht veraltet, oder die Seite wurde verschoben.",
+      "projects": "Zu den Projekten",
+      "home": "Zur Startseite"
+    },
+    "boundary": {
+      "title": "Auf dieser Seite ist ein Problem aufgetreten",
+      "body": "Wir haben es protokolliert. Versuchen Sie es erneut oder kehren Sie zu Ihren Projekten zurück.",
+      "retry": "Erneut versuchen",
+      "projects": "Zu den Projekten",
+      "reference": "Referenz: {digest}"
     }
   }
 }

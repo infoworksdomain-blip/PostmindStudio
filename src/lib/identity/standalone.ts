@@ -1,15 +1,22 @@
 import type { PrismaClient } from '@prisma/client';
 import { ForbiddenError, NoOrganisationError, UnauthorizedError } from '../errors';
 import type { EntitlementsReader } from '../studio/billing/entitlements-reader';
-import { assertSameOriginWrite, type TenantContext, type TenantRequest } from '../tenant';
+import {
+  assertSameOriginWrite,
+  PLATFORM_ORGANISATION_ID,
+  type ResolveOptions,
+  type TenantContext,
+  type TenantRequest,
+} from '../tenant';
 import type { IdentityProvider } from './provider';
-import { capabilitiesFor, toPlatformRole } from './role-capabilities';
+import { capabilitiesFor, capabilitiesForPlatformRole, toPlatformRole } from './role-capabilities';
 
 // Phase 18 §2.2 standalone mode: the tenant comes from a Better Auth session.
 //   1. Better Auth session (cookie) — none: 401.
 //   2. Cookie-authenticated writes must be same-origin (CSRF, §2.3) — otherwise 403.
 //   3. Organisation = x-studio-organisation-id (members only) or the session's active one — no
-//      membership at all: 403 no_organisation (the UI routes to onboarding).
+//      membership at all: 403 no_organisation (the UI routes to onboarding), except platform staff
+//      with 2FA on an admin route, who get a staff-only context (20.10).
 //   4. Capabilities from the member's role + staff capabilities (2FA required), §2.4 / §2.5.
 //   5. planTier and access from entitlements (Track C).
 //   6. A 30 s per-process cache per (session, organisation); invalidate(userId) drops a user's
@@ -139,15 +146,38 @@ export function createStandaloneIdentityProvider(deps: StandaloneIdentityDeps): 
     cache.set(key, entry);
   }
 
+  /** Platform staff with 2FA and no organisation, on an admin route (20.10). */
+  function staffOnlyContext(view: AuthSessionView, record: IdentityRecord): TenantContext | null {
+    const platformRole = toPlatformRole(record.platformRole);
+    const capabilities = capabilitiesForPlatformRole(platformRole, record.twoFactorEnabled);
+    if (capabilities.length === 0) return null;
+    return {
+      userId: record.userId,
+      organisationId: PLATFORM_ORGANISATION_ID,
+      organisation: { id: PLATFORM_ORGANISATION_ID, name: 'PostMind Studio staff' },
+      memberships: [],
+      capabilities,
+      platformRole,
+      sessionId: view.session.id,
+      ...(view.session.impersonatedBy && { impersonatorUserId: view.session.impersonatedBy }),
+      access: 'full',
+      staffOnly: true,
+    };
+  }
+
   async function build(
     view: AuthSessionView,
     requestedOrg: string | undefined,
+    options: ResolveOptions,
   ): Promise<TenantContext> {
     const record = await deps.store.load(view.session.userId);
     if (!record || record.deletedAt || isBanned(record, now())) {
       throw new UnauthorizedError('Session is no longer valid');
     }
     if (record.memberships.length === 0) {
+      const staff =
+        options.staffWithoutOrganisation && !requestedOrg ? staffOnlyContext(view, record) : null;
+      if (staff) return staff;
       throw new NoOrganisationError('Create or join an organisation first');
     }
     let membership: IdentityMembership | undefined;
@@ -192,7 +222,7 @@ export function createStandaloneIdentityProvider(deps: StandaloneIdentityDeps): 
 
   return {
     mode: 'standalone',
-    async resolve(req: TenantRequest) {
+    async resolve(req: TenantRequest, options: ResolveOptions = {}) {
       const headers = new Headers(req.headers);
       const view = await deps.getSession(headers);
       if (!view) throw new UnauthorizedError('Sign in to continue');
@@ -209,10 +239,12 @@ export function createStandaloneIdentityProvider(deps: StandaloneIdentityDeps): 
         }
       }
       const requestedOrg = headers.get(ORGANISATION_HEADER)?.trim() || undefined;
-      const key = `${view.session.id}\u0000${requestedOrg ?? ''}`;
+      // The staff-only context is cached apart: a workspace route must never be served it.
+      const scope = options.staffWithoutOrganisation ? 'admin' : '';
+      const key = `${view.session.id}\u0000${requestedOrg ?? ''}\u0000${scope}`;
       const cached = cache.get(key);
       if (cached && cached.expiresAt > now()) return cached.context;
-      const context = await build(view, requestedOrg);
+      const context = await build(view, requestedOrg, options);
       remember(key, { userId: context.userId, context, expiresAt: now() + CACHE_TTL_MS });
       return context;
     },

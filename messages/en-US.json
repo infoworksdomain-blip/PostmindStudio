@@ -1977,7 +1977,8 @@
       "retained": "Videos already published stay on Facebook and Instagram; remove them there if you want them gone. Studio keeps only the Page or Instagram account number that its publishing history refers to.",
       "codeLabel": "Confirmation code:",
       "unknownCode": "We could not find a deletion request with this confirmation code. Check the link Facebook gave you."
-    }
+    },
+    "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator."
   },
   "library": {
     "browse": {
@@ -5002,6 +5003,21 @@
       "emptyBody": "Let Studio draft a month of videos and slideshows, then generate and schedule them in one go.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# post} other {# posts}}"
+    }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "We couldn’t find that page",
+      "body": "The link may be out of date, or the page has moved.",
+      "projects": "Go to projects",
+      "home": "Go to the home page"
+    },
+    "boundary": {
+      "title": "This page hit a problem",
+      "body": "We’ve logged it. Try again, or go back to your projects.",
+      "retry": "Try again",
+      "projects": "Go to projects",
+      "reference": "Reference: {digest}"
     }
   }
 }

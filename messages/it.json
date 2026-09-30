@@ -1977,7 +1977,8 @@
       "retained": "I video già pubblicati restano su Facebook e Instagram; rimuovili lì se vuoi eliminarli. Studio conserva solo il numero della Pagina o dell’account Instagram a cui fa riferimento la cronologia delle pubblicazioni.",
       "codeLabel": "Codice di conferma:",
       "unknownCode": "Non abbiamo trovato alcuna richiesta di eliminazione con questo codice di conferma. Controlla il link fornito da Facebook."
-    }
+    },
+    "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore."
   },
   "library": {
     "browse": {
@@ -5002,6 +5003,21 @@
       "emptyBody": "Lascia che Studio prepari un mese di video e slideshow, poi generali e programmali in un colpo solo.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# post} other {# post}}"
+    }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Pagina non trovata",
+      "body": "Il link potrebbe essere obsoleto oppure la pagina è stata spostata.",
+      "projects": "Vai ai progetti",
+      "home": "Vai alla home page"
+    },
+    "boundary": {
+      "title": "Questa pagina ha avuto un problema",
+      "body": "Lo abbiamo registrato. Riprova o torna ai tuoi progetti.",
+      "retry": "Riprova",
+      "projects": "Vai ai progetti",
+      "reference": "Riferimento: {digest}"
     }
   }
 }

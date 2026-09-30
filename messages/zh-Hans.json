@@ -1977,7 +1977,8 @@
       "retained": "已发布的视频仍保留在 Facebook 和 Instagram 上；如需删除，请在对应平台操作。Studio 仅保留其发布记录所引用的公共主页或 Instagram 账号编号。",
       "codeLabel": "确认码：",
       "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
-    }
+    },
+    "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。"
   },
   "library": {
     "browse": {
@@ -5002,6 +5003,21 @@
       "emptyBody": "让 Studio 起草一个月的视频和幻灯片，然后一次性生成并排期。",
       "range": "{start} – {end}",
       "posts": "{count, plural, other {# 条帖子}}"
+    }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "找不到该页面",
+      "body": "链接可能已过期，或页面已移动。",
+      "projects": "前往项目",
+      "home": "前往首页"
+    },
+    "boundary": {
+      "title": "此页面出现问题",
+      "body": "我们已记录此问题。请重试，或返回你的项目。",
+      "retry": "重试",
+      "projects": "前往项目",
+      "reference": "参考编号：{digest}"
     }
   }
 }

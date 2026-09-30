@@ -58,6 +58,24 @@ export interface TenantContext {
   access?: TenantAccess;
   /** The member's organisation role (owner | admin | publisher | creator | viewer). */
   role?: string;
+  /**
+   * 20.10: platform staff with no organisation, resolved for an admin route only. organisationId
+   * is then PLATFORM_ORGANISATION_ID, there are no memberships and the only capabilities are the
+   * staff ones; billing and plan gates do not apply.
+   */
+  staffOnly?: boolean;
+}
+
+/** The pseudo-organisation of platform-level work (audit rows, email outbox, corpus spend). */
+export const PLATFORM_ORGANISATION_ID = 'postmind-platform';
+
+export interface ResolveOptions {
+  /**
+   * An admin route: platform staff (with 2FA) who belong to no organisation get a staff-only
+   * context instead of 403 no_organisation (20.10: the first server's superadmin saw "PostMind
+   * staff only" in the Admin Centre). Workspace routes never pass it.
+   */
+  staffWithoutOrganisation?: boolean;
 }
 
 const claimsSchema = z
@@ -84,7 +102,10 @@ export interface TenantResolverDeps {
 
 export type TenantRequest = Pick<Request, 'headers'> & Partial<Pick<Request, 'method'>>;
 
-export type TenantResolver = (req: TenantRequest) => Promise<TenantContext>;
+export type TenantResolver = (
+  req: TenantRequest,
+  options?: ResolveOptions,
+) => Promise<TenantContext>;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -269,7 +290,10 @@ export function coreTenantResolver(): TenantResolver {
  * IdentityProvider (STUDIO_IDENTITY_MODE): Better Auth sessions in standalone mode, the Core
  * resolver above in core mode.
  */
-export async function requireTenantContext(req: TenantRequest): Promise<TenantContext> {
+export async function requireTenantContext(
+  req: TenantRequest,
+  options?: ResolveOptions,
+): Promise<TenantContext> {
   const { getIdentityProvider } = await import('./identity');
-  return (await getIdentityProvider()).resolve(req);
+  return (await getIdentityProvider()).resolve(req, options);
 }

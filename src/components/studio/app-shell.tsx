@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import {
@@ -145,10 +145,24 @@ function Wordmark({ compact = false }: { compact?: boolean }) {
 
 export { BusinessSwitcher };
 
-function ThemeToggle() {
+const noSubscribe = () => () => undefined;
+
+/** False during the server render and hydration, true once mounted in the browser. */
+function useMounted(): boolean {
+  return useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );
+}
+
+export function ThemeToggle() {
   const t = useTranslations('shell.theme');
   const { resolvedTheme, setTheme } = useTheme();
-  const dark = resolvedTheme === 'dark';
+  // The server cannot know the saved theme: render the light-theme button until mounted, or a
+  // dark-theme visitor's first render differs from the HTML (React error #418 on every page
+  // load; found in the 20.10 QA sweep).
+  const dark = useMounted() && resolvedTheme === 'dark';
   return (
     <Button
       variant="ghost"

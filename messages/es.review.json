@@ -3773,7 +3773,17 @@
     "plans.list.empty",
     "plans.list.emptyBody",
     "plans.list.range",
-    "plans.list.posts"
+    "plans.list.posts",
+    "connections.notConfigured",
+    "errorPage.notFound.title",
+    "errorPage.notFound.body",
+    "errorPage.notFound.projects",
+    "errorPage.notFound.home",
+    "errorPage.boundary.title",
+    "errorPage.boundary.body",
+    "errorPage.boundary.retry",
+    "errorPage.boundary.projects",
+    "errorPage.boundary.reference"
   ],
   "reviewed": []
 }

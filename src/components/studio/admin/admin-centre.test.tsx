@@ -70,6 +70,16 @@ describe('AdminCentre access', () => {
     await user.click(screen.getByRole('tab', { name: 'Cost report' }));
     expect(await screen.findByText('No provider usage in this window.')).toBeInTheDocument();
   });
+
+  it('wraps the tab row from the start edge so no tab is cut off', async () => {
+    mockFetch(routes());
+    renderWithSWR(<AdminCentre />);
+    const list = await screen.findByRole('tablist');
+    // A centred row that overflows cannot be scrolled back to its first tabs (20.10).
+    expect(list).toHaveClass('flex-wrap', 'justify-start');
+    expect(list).not.toHaveClass('justify-center');
+    expect(list).not.toHaveClass('h-8');
+  });
 });
 
 describe('Kill switch tab', () => {

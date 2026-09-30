@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { ConflictError, NotFoundError, ValidationError } from '../../errors';
+import { ConflictError, NotFoundError, NotImplementedError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import type { DataKeyProvider } from '../crypto/envelope';
 import {
@@ -77,9 +77,27 @@ export function safeReturnTo(returnTo: string | undefined, appUrl: string): stri
   return target.toString();
 }
 
+const OAUTH_LABELS: Record<OAuthPlatform, string> = {
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  x: 'X',
+  linkedin: 'LinkedIn',
+};
+
+/** Per OAuth platform: is its app configured (GET /platform-connections `configured`). */
+export function oauthAvailability(
+  configured: ((p: OAuthPlatform) => boolean) | undefined,
+): Record<OAuthPlatform, boolean> {
+  return Object.fromEntries(
+    OAUTH_PLATFORMS.map((p) => [p, configured ? configured(p) : true]),
+  ) as Record<OAuthPlatform, boolean>;
+}
+
 export async function startOAuth(
   deps: {
     oauth: (p: OAuthPlatform) => OAuthClient;
+    /** 20.10: absent = every platform is configured. */
+    oauthConfigured?: (p: OAuthPlatform) => boolean;
     oauthState: OAuthStateStore;
     appUrl: string;
     meta?: MetaConnectDeps;
@@ -93,6 +111,15 @@ export async function startOAuth(
       businessId: input.businessId,
       returnTo: safeReturnTo(input.returnTo, deps.appUrl),
     });
+  }
+  // Without the platform's app settings the client cannot be built: say so (501, like Meta)
+  // instead of a 500 "Something went wrong" from the missing environment variable.
+  if (deps.oauthConfigured && !deps.oauthConfigured(input.platform)) {
+    const label = OAUTH_LABELS[input.platform];
+    throw new NotImplementedError(
+      `${label} is not available yet: Studio's ${label} app still needs its settings. Ask your administrator.`,
+      { reason: 'platform_not_configured', platform: input.platform },
+    );
   }
   const client = deps.oauth(input.platform);
   const pkce = client.usesPkce ? pkcePair() : undefined;

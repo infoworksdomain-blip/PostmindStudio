@@ -1977,7 +1977,8 @@
       "retained": "Os vídeos já publicados continuam no Facebook e no Instagram; remova-os lá, se quiser. O Studio guarda apenas o número da Página ou da conta do Instagram a que o histórico de publicações se refere.",
       "codeLabel": "Código de confirmação:",
       "unknownCode": "Não encontrámos nenhum pedido de eliminação com este código de confirmação. Verifique a ligação que o Facebook lhe deu."
-    }
+    },
+    "notConfigured": "O {platform} ainda não está disponível: a aplicação {platform} do Studio ainda precisa de ser configurada. Contacte o seu administrador."
   },
   "library": {
     "browse": {
@@ -5002,6 +5003,21 @@
       "emptyBody": "Deixe o Studio preparar um mês de vídeos e apresentações e depois gere-os e agende-os de uma só vez.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# publicação} other {# publicações}}"
+    }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Não encontrámos essa página",
+      "body": "A ligação pode estar desatualizada ou a página foi movida.",
+      "projects": "Ir para os projetos",
+      "home": "Ir para a página inicial"
+    },
+    "boundary": {
+      "title": "Esta página teve um problema",
+      "body": "Registámos o erro. Tente novamente ou volte aos seus projetos.",
+      "retry": "Tentar novamente",
+      "projects": "Ir para os projetos",
+      "reference": "Referência: {digest}"
     }
   }
 }

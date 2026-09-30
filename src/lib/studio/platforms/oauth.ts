@@ -389,6 +389,18 @@ const FACTORIES: Record<OAuthPlatform, (c: OAuthConfig, d: Deps) => OAuthClient>
   linkedin: createLinkedInOAuth,
 };
 
+/**
+ * Whether the operator has set this platform's OAuth app (client id, secret and redirect URI).
+ * Without it Connect cannot work: the Connections screen explains that instead of a button that
+ * fails with a server error (20.10).
+ */
+export function oauthConfiguredFromEnv(
+  platform: OAuthPlatform,
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  return ENV[platform].every((name) => Boolean(env[name]?.trim()));
+}
+
 export function oauthClientFromEnv(
   platform: OAuthPlatform,
   deps: Deps = { fetchImpl: fetch, now: Date.now },

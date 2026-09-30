@@ -16,6 +16,7 @@ import {
 import { queuePrefix, redisConnectionFromEnv } from '../queue/redis';
 import { PROVIDER_IDS } from '../system-flags';
 import { requeueGenerateAsset, type RequeueOutcome } from './dead-letter-requeue';
+import { asRedisUnavailable } from './admin-health';
 
 // BACKLOG 15.D4 / spec 11.5 "Dead-letter handling": "An Admin Centre view lists failed jobs with
 // retry / inspect / drain / requeue-with-different-provider actions. Never auto-drain — always
@@ -222,7 +223,7 @@ async function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
     );
   });
   try {
-    return await Promise.race([work, timeout]);
+    return await Promise.race([work.catch(asRedisUnavailable('Dead-letter queue')), timeout]);
   } finally {
     clearTimeout(timer);
   }

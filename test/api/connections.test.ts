@@ -160,4 +160,29 @@ describe.skipIf(!hasDb)('platform connections API', { timeout: 60_000 }, () => {
       `${APP_URL}/settings?connection_error=validation_error`,
     );
   });
+
+  it('says a platform app is not configured (501) and lists which ones are, 20.10', async () => {
+    api.publishing.oauthConfigured = (platform) => platform !== 'youtube';
+    const listed = await call(listRoute.GET, { token: 'reader' });
+    expect(listed.json.configured).toEqual({
+      tiktok: true,
+      youtube: false,
+      x: true,
+      linkedin: true,
+    });
+    const refused = await init({ platform: 'youtube', businessId: 'b' });
+    expect(refused.status).toBe(501);
+    expect(refused.json.error).toBe('not_implemented');
+    expect(refused.json.message).toBe(
+      "YouTube is not available yet: Studio's YouTube app still needs its settings. Ask your administrator.",
+    );
+    expect(refused.json.details).toEqual({
+      reason: 'platform_not_configured',
+      platform: 'youtube',
+    });
+    // Without the check (older deps), every platform counts as configured.
+    delete api.publishing.oauthConfigured;
+    const unchecked = await call(listRoute.GET, { token: 'reader' });
+    expect((unchecked.json.configured as Record<string, boolean>).youtube).toBe(true);
+  });
 });

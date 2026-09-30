@@ -1977,7 +1977,8 @@
       "retained": "Les vidéos déjà publiées restent sur Facebook et Instagram ; supprimez-les là-bas si vous le souhaitez. Studio ne conserve que le numéro de la Page ou du compte Instagram auquel son historique de publication fait référence.",
       "codeLabel": "Code de confirmation :",
       "unknownCode": "Aucune demande de suppression ne correspond à ce code de confirmation. Vérifiez le lien fourni par Facebook."
-    }
+    },
+    "notConfigured": "{platform} n’est pas encore disponible : l’application {platform} de Studio doit encore être configurée. Contactez votre administrateur."
   },
   "library": {
     "browse": {
@@ -5002,6 +5003,21 @@
       "emptyBody": "Laissez Studio préparer un mois de vidéos et de diaporamas, puis générez-les et programmez-les en une fois.",
       "range": "{start} – {end}",
       "posts": "{count, plural, one {# publication} other {# publications}}"
+    }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Page introuvable",
+      "body": "Le lien est peut-être obsolète, ou la page a été déplacée.",
+      "projects": "Aller aux projets",
+      "home": "Aller à l’accueil"
+    },
+    "boundary": {
+      "title": "Cette page a rencontré un problème",
+      "body": "Nous l’avons enregistré. Réessayez ou revenez à vos projets.",
+      "retry": "Réessayer",
+      "projects": "Aller aux projets",
+      "reference": "Référence : {digest}"
     }
   }
 }

@@ -40,6 +40,17 @@ describe('errorMessage by locale', () => {
     );
   });
 
+  it('uses the catalogue sentence in English when the server sent a code but no message', () => {
+    // An unexpected server error is { error: 'internal_error' } with no message (20.10).
+    const err = new ApiError(500, 'internal_error', 'Request failed (500)');
+    expect(errorMessage(err, enGB)).toBe(ALL_MESSAGES['en-GB'].errors.codes.internal_error);
+    expect(errorMessage(err, enGB)).not.toContain('Request failed');
+    // A non-JSON failure (proxy page) has no known code and keeps the status sentence.
+    expect(errorMessage(new ApiError(502, 'http_502', 'Request failed (502)'), enGB)).toBe(
+      'Request failed (502)',
+    );
+  });
+
   it('translates plan gates outside English and keeps their upgrade text in English', () => {
     const err = new ApiError(403, 'plan_tier', 'Slideshows need the Plus plan.');
     expect(errorMessage(err, enGB)).toBe('Slideshows need the Plus plan.');
