@@ -87,6 +87,9 @@ KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 AllowUsers $DEPLOY_USER
 EOF
+  # With socket-activated ssh (Ubuntu 26.04) /run/sshd only exists while sshd runs, and `sshd -t`
+  # refuses without it ("Missing privilege separation directory: /run/sshd").
+  install -d -m 0755 /run/sshd
   sshd -t || fail "sshd config test failed; not restarting ssh"
   # Same page: validate with sshd -t, then restart ssh.service. Open sessions stay connected.
   systemctl restart ssh.service
