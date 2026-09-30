@@ -30,7 +30,7 @@ If a button in a website is not where this guide says, look for a similar name n
 
 - Accounts you already have: Hetzner Cloud (with the firewall and the SSH key named `my-laptop`), Cloudflare (with your domain), Stripe, Resend, Google Cloud, Meta for Developers, AWS, GitHub.
 - A password manager (for every secret below).
-- Your laptop with Git, Node.js 20 and this repository. Once, in the repository folder, run:
+- Your laptop with Git, Node.js 24 and this repository. Once, in the repository folder, run:
 
 ```bash
 npm install

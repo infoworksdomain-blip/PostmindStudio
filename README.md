@@ -31,7 +31,7 @@ postmind-studio/
 
 ## Local development (quick reference)
 
-Requires Node.js 20 LTS or newer, npm 10+, and Docker.
+Requires Node.js 24 LTS or newer, npm 10+, and Docker.
 
 ```bash
 npm install                      # also runs `prisma generate`
@@ -115,7 +115,7 @@ Then populate `.env.local` with your real credentials. Everything in `.env.examp
 ### 5. Verify you have the required tools locally
 
 Required:
-- **Node.js 20 LTS** — `node --version` should be `v20.x`
+- **Node.js 24 LTS** — `node --version` should be `v24.x`
 - **npm 10+** — `npm --version`
 - **Docker** — `docker --version` (for local Postgres + Redis)
 - **PostgreSQL client** (`psql`) — for spot checks
