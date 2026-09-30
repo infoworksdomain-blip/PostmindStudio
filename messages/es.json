@@ -432,6 +432,18 @@
     "metaConnectionNeedsReconnect": {
       "title": "Vuelve a conectar tu cuenta de {platform} «{account}»",
       "body": "Meta ya no acepta el acceso de Studio a esta cuenta. Vuelve a conectarla en los ajustes de PostMind para que las publicaciones programadas puedan salir."
+    },
+    "scheduleQueueOff": {
+      "title": "«{name}» no se ha programado",
+      "body": "La cola de publicación está desactivada: configura horas de publicación en el calendario o elige una fecha."
+    },
+    "scheduleNoPlatform": {
+      "title": "«{name}» no se ha programado",
+      "body": "La cola de publicación no publica en ninguna de sus plataformas: cambia la cola o elige una fecha."
+    },
+    "scheduleNoFreeSlot": {
+      "title": "«{name}» no se ha programado",
+      "body": "No hay ninguna hora de publicación libre {weeks, plural, one {en la próxima semana} other {en las próximas # semanas}}: añade horas o elige una fecha."
     }
   },
   "create": {
@@ -485,7 +497,8 @@
       "slideshowTemplateRequired": "Elige una plantilla de presentación.",
       "scheduleInPast": "Programa una hora futura.",
       "scheduleNeedsAutoPublish": "Para programar un vídeo, elige las cuentas donde publicarlo (publicación automática).",
-      "budgetRange": "El presupuesto debe estar entre {min} y {max}."
+      "budgetRange": "El presupuesto debe estar entre {min} y {max}.",
+      "scheduleTooFar": "Programa como máximo con {days, number} días de antelación."
     },
     "options": {
       "platforms": "Plataformas",
@@ -534,7 +547,9 @@
       "scheduleHint": "Se publica en las cuentas de publicación automática a esta hora, una vez aprobado.",
       "workflow": "Flujo de aprobación",
       "workflowNone": "No hay flujos configurados",
-      "workflowOrg": "Reglas de la organización"
+      "workflowOrg": "Reglas de la organización",
+      "scheduleNextSlot": "Sin fecha: usar la próxima franja libre de la cola de publicación",
+      "scheduleNextSlotHint": "Se publica en la primera hora libre {weeks, plural, one {de la próxima semana} other {de las próximas # semanas}}. Configura las horas en el calendario."
     },
     "autoPublish": {
       "legend": "Publicación automática",
@@ -656,7 +671,9 @@
       "publishNowCount": "Publicar ahora ({count, number})",
       "platformError": "{platform}: {error}",
       "scheduled": "{count, plural, one {Se ha programado # publicación.} other {Se han programado # publicaciones.}}",
-      "publishing": "{count, plural, one {Publicando # publicación.} other {Publicando # publicaciones.}}"
+      "publishing": "{count, plural, one {Publicando # publicación.} other {Publicando # publicaciones.}}",
+      "scheduleTooFar": "Elige una hora como máximo con {days, number} días de antelación.",
+      "scheduleInPast": "Elige una hora al menos un minuto a partir de ahora."
     },
     "publications": {
       "empty": "Aún no hay nada publicado ni programado.",
@@ -709,7 +726,8 @@
         "not_trusted": "Requiere revisión: una persona revisa tus primeros {needed} vídeos ({approved} de {needed} aprobados hasta ahora).",
         "approval_workflow": "Requiere revisión: se aplica el flujo de aprobación «{workflow}».",
         "auto_approve_error": "Requiere revisión: no se ha podido evaluar la aprobación automática."
-      }
+      },
+      "schedulesAutomatically": "Se programa automáticamente al aprobarse"
     },
     "budget": {
       "aria": "Aumentar presupuesto",
@@ -987,6 +1005,17 @@
       "upload": "Subir",
       "uploadAria": "Subir miniatura",
       "updated": "Miniatura actualizada."
+    },
+    "schedule": {
+      "reasons": {
+        "queue_off": "Sin programar: la cola de publicación está desactivada. Configura horas de publicación en el calendario y vuelve a intentarlo, o elige una fecha en la pestaña Publicar.",
+        "no_matching_platform": "Sin programar: la cola de publicación no publica en ninguna de las plataformas de este vídeo. Cambia sus plataformas en el calendario y vuelve a intentarlo, o elige una fecha en la pestaña Publicar.",
+        "no_free_slot": "No hay ninguna hora de publicación libre {weeks, plural, one {en la próxima semana} other {en las próximas # semanas}}: añade horas en el calendario y vuelve a intentarlo, o elige una fecha en la pestaña Publicar."
+      },
+      "openCalendar": "Abrir el calendario",
+      "retry": "Volver a intentarlo",
+      "retried": "{count, plural, one {# publicación programada.} other {# publicaciones programadas.}}",
+      "stillNone": "Sigue sin haber horas de publicación libres: añade horas o elige una fecha."
     }
   },
   "slideshow": {
@@ -1362,7 +1391,8 @@
       "daysAria": "Días del mes",
       "more": "{count, plural, one {+# más} other {+# más}}",
       "agendaAria": "Agenda",
-      "emptyMonth": "No hay nada programado ni publicado este mes."
+      "emptyMonth": "No hay nada programado ni publicado este mes.",
+      "moreOpen": "{count, plural, one {+# franja libre} other {+# franjas libres}}"
     },
     "event": {
       "untitled": "Proyecto sin título",
@@ -1394,7 +1424,25 @@
       "slotTime": "Hora de la franja {n}",
       "removeSlot": "Quitar la franja {n}",
       "addSlot": "Añadir franja",
-      "saveSlots": "Guardar franjas"
+      "saveSlots": "Guardar franjas",
+      "presetsLabel": "Ritmos de publicación rápidos",
+      "presetsHint": "Un ritmo rellena las franjas de abajo en tu zona horaria; cambia las que quieras y guarda.",
+      "presetFilled": "{count, plural, one {# franja rellenada} other {# franjas rellenadas}}: revísalas y guarda.",
+      "presets": {
+        "three": "3 por semana",
+        "five": "5 por semana",
+        "daily": "Todos los días"
+      },
+      "off": "La cola de publicación está desactivada, así que los vídeos configurados para la próxima franja libre no se programan. Guarda las franjas para activarla."
+    },
+    "open": {
+      "label": "Franja libre",
+      "aria": "Hora de publicación libre a las {time}, todavía sin vídeo reservado",
+      "legend": "Los recuadros discontinuos son franjas libres de la cola de publicación: horas de publicación sin vídeo reservado."
+    },
+    "summary": {
+      "next": "Próximos 30 días: {scheduled, plural, one {# publicación programada} other {# publicaciones programadas}} · {open, plural, one {# franja libre} other {# franjas libres}}",
+      "queueOff": "Próximos 30 días: {scheduled, plural, one {# publicación programada} other {# publicaciones programadas}}. La cola de publicación está desactivada: <link>configura tus horas de publicación</link> para llenar el mes automáticamente."
     }
   },
   "business": {
@@ -3127,6 +3175,12 @@
       "coreTitle": "Configura primero un negocio",
       "coreDescription": "Tus negocios vienen de PostMind. Elige uno o añade uno nuevo y vuelve aquí después.",
       "coreAction": "Ir a Negocio"
+    },
+    "plan": {
+      "title": "Planifica tu mes",
+      "body": "Elige con qué frecuencia publicar. Los vídeos programados para la próxima franja libre se publican a estas horas y llenan el mes que viene.",
+      "saved": "Ritmo de publicación: {plan}.",
+      "openCalendar": "Cambiar las horas en el calendario"
     }
   },
   "share": {
@@ -3467,7 +3521,7 @@
     },
     "hero": {
       "eyebrow": "Estudio de vídeo con IA para pequeños negocios",
-      "title": "Una semana de vídeos cortos, <em>listos antes de que se enfríe tu café.</em>",
+      "title": "Un mes de vídeos cortos, <em>listos antes de que se enfríe tu café.</em>",
       "lede": "Cuéntale a Studio lo que quieres decir. Escribe el guion, rueda o consigue cada escena, añade tu voz, música y subtítulos con tu marca, y lo edita para cada plataforma. Tú lo apruebas; él lo publica.",
       "primaryCta": "Empezar prueba gratuita",
       "secondaryCta": "Ver precios",
@@ -3502,7 +3556,7 @@
       },
       "publish": {
         "title": "Publica según el calendario",
-        "body": "Publica ahora o programa la semana. Studio publica en cada cuenta y trae de vuelta las visualizaciones, «me gusta» y comentarios a un solo panel."
+        "body": "Publica ahora o planifica el mes que viene. Studio publica en cada cuenta y trae de vuelta las visualizaciones, «me gusta» y comentarios a un solo panel."
       }
     },
     "samples": {
@@ -3531,7 +3585,7 @@
       },
       "calendar": {
         "title": "Un calendario que publica por ti",
-        "body": "Planifica la semana, arrastra publicaciones a nuevos horarios y deja que Studio las publique en el momento adecuado para cada plataforma."
+        "body": "Planifica el mes que viene, arrastra publicaciones a nuevos horarios y deja que Studio las publique en el momento adecuado para cada plataforma."
       },
       "budget": {
         "title": "Costes que puedes ver",

@@ -62,6 +62,16 @@ export function groupByDay(publications: Publication[]): Map<string, Publication
   return byDay;
 }
 
+/** 20.3: open drip-queue slots (ISO instants) bucketed by local day, in time order. */
+export function groupOpenByDay(openSlots: ReadonlyArray<string>): Map<string, string[]> {
+  const byDay = new Map<string, string[]>();
+  for (const at of [...openSlots].sort()) {
+    const key = dayKey(new Date(at));
+    byDay.set(key, [...(byDay.get(key) ?? []), at]);
+  }
+  return byDay;
+}
+
 export function formatTime(iso: string, locale: string = DEFAULT_LOCALE): string {
   return new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date(iso));
 }

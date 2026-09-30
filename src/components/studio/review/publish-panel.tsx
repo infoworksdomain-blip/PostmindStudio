@@ -16,6 +16,8 @@ import type {
   ProjectDetail,
   Render,
 } from '@/lib/client/types';
+import { MAX_SCHEDULE_AHEAD_DAYS } from '@/lib/studio/schedule-window';
+import { scheduleInputBounds, scheduleProblem } from '../automation/schedule-bounds';
 import { belongsToBusiness, isMetaPlatform } from '../connections/platforms';
 import { Field, NativeSelect } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
@@ -118,6 +120,14 @@ export function PublishPanel({
   const coreMeta = data?.meta?.connect === 'core';
   const [drafts, setDrafts] = useState<Record<string, VariantDraft>>({});
   const [scheduleAt, setScheduleAt] = useState('');
+  // 20.3: the API's window (a minute to 180 days ahead) as input bounds and a client check.
+  const [openedAt] = useState(() => Date.now());
+  const bounds = scheduleInputBounds(openedAt);
+  const [scheduleError, setScheduleError] = useState<'inPast' | 'tooFar' | null>(null);
+  const changeSchedule = (value: string) => {
+    setScheduleAt(value);
+    setScheduleError(scheduleProblem(value, Date.now()));
+  };
   const [submitting, setSubmitting] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, Suggestion>>({});
@@ -170,6 +180,9 @@ export function PublishPanel({
   }
 
   async function publish() {
+    const problem = scheduleProblem(scheduleAt, Date.now());
+    setScheduleError(problem);
+    if (problem) return;
     const scheduledFor = scheduleAt ? new Date(scheduleAt).toISOString() : undefined;
     setSubmitting(true);
     let done = 0;
@@ -291,12 +304,26 @@ export function PublishPanel({
           <Input
             id="publish-schedule"
             type="datetime-local"
+            min={bounds.min}
+            max={bounds.max}
             value={scheduleAt}
-            onChange={(e) => setScheduleAt(e.target.value)}
+            aria-invalid={scheduleError ? true : undefined}
+            aria-describedby={scheduleError ? 'publish-schedule-error' : undefined}
+            onChange={(e) => changeSchedule(e.target.value)}
           />
+          {scheduleError && (
+            <p id="publish-schedule-error" role="alert" className="mt-1 text-xs text-destructive">
+              {scheduleError === 'tooFar'
+                ? t('scheduleTooFar', { days: MAX_SCHEDULE_AHEAD_DAYS })
+                : t('scheduleInPast')}
+            </p>
+          )}
           {bestLabel && <p className="mt-1 text-xs text-muted-foreground">{bestLabel}</p>}
         </Field>
-        <Button onClick={publish} disabled={submitting || selected.length === 0}>
+        <Button
+          onClick={publish}
+          disabled={submitting || selected.length === 0 || scheduleError !== null}
+        >
           {submitting ? (
             <Loader2 className="animate-spin" />
           ) : scheduleAt ? (

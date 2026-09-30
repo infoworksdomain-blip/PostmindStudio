@@ -6,6 +6,7 @@ import type { Publication } from '@/lib/client/types';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
 import { PublicationsCalendar } from './publications-calendar';
 import { MAX_PAGES } from './use-calendar-publications';
+import type { UpcomingSlots } from './use-upcoming-slots';
 
 function pub(id: string, overrides: Partial<Publication>): Publication {
   return {
@@ -101,5 +102,106 @@ describe('PublicationsCalendar', () => {
     mockFetch(() => fail(500, 'Calendar exploded'));
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Calendar exploded');
+  });
+});
+
+describe('PublicationsCalendar — month ahead (20.3)', () => {
+  const DAY = 86_400_000;
+  const QUEUE = '/businesses/biz_1/drip-queue';
+  const UPCOMING = `${QUEUE}/upcoming`;
+  const at = (days: number, h: number, m: number) => {
+    const d = new Date(Date.now() + days * DAY);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m).toISOString();
+  };
+  const upcoming = (over: Partial<UpcomingSlots> = {}): UpcomingSlots => ({
+    from: new Date().toISOString(),
+    to: new Date(Date.now() + 30 * DAY).toISOString(),
+    configured: true,
+    enabled: true,
+    slotsPerWeek: 3,
+    horizonDays: 56,
+    scheduled: 2,
+    openSlots: [at(2, 12, 30), at(2, 18, 0), at(3, 12, 30)],
+    held: [],
+    ...over,
+  });
+  const queue = {
+    slots: [{ weekday: 1, time: '12:30', timezone: 'Europe/London' }],
+    platforms: [],
+    enabled: true,
+    staggerMinutes: 30,
+    nextSlotAt: null,
+    queued: 0,
+    upcoming: [],
+  };
+
+  function server(view: UpcomingSlots) {
+    return mockFetch((req) => {
+      const path = req.url.pathname;
+      if (path.endsWith('/drip-queue/upcoming')) return ok({ upcoming: view });
+      if (path.endsWith('/drip-queue'))
+        return ok({
+          dripQueue: req.method === 'PUT' ? { ...queue, ...(req.body as object) } : queue,
+        });
+      return ok({ data: [], nextCursor: null });
+    });
+  }
+
+  it('shows open slots as dashed, non-link markers and a 30-day summary', async () => {
+    const api = server(upcoming());
+    renderScreen(<PublicationsCalendar initialDate={new Date(Date.now() + 2 * DAY)} />);
+    expect(
+      await screen.findByText('Next 30 days: 2 posts scheduled · 3 open slots'),
+    ).toBeInTheDocument();
+    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    await waitFor(() => expect(within(grid).getAllByText('Open slot')).toHaveLength(3));
+    expect(within(grid).queryAllByRole('link')).toHaveLength(0);
+    expect(
+      within(grid).getAllByText(/^Open posting time at .+, no video booked yet$/),
+    ).toHaveLength(3);
+    expect(screen.getByText(/Dashed boxes are open drip-queue slots/)).toBeInTheDocument();
+    // Summary window: now → +30 days; the markers ask for the visible grid.
+    const calls = api.find('GET', UPCOMING).map((r) => r.url.searchParams);
+    const spans = calls.map((q) => Date.parse(q.get('to')!) - Date.parse(q.get('from')!));
+    expect(spans).toContain(30 * DAY);
+    expect(spans.every((ms) => ms <= 62 * DAY)).toBe(true);
+  });
+
+  it('says the queue is off and points to the posting times', async () => {
+    server(upcoming({ enabled: false, configured: false, openSlots: [], scheduled: 1 }));
+    const user = userEvent.setup();
+    renderScreen(<PublicationsCalendar initialDate={new Date()} />);
+    expect(
+      await screen.findByText(/Next 30 days: 1 post scheduled\. The drip queue is off/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'set posting times' }));
+    expect(screen.getByRole('heading', { name: 'Drip queue' })).toHaveFocus();
+  });
+
+  it('a posting plan fills the slots, which save (turning the queue on) and refresh the markers', async () => {
+    const api = server(upcoming());
+    const user = userEvent.setup();
+    renderScreen(<PublicationsCalendar initialDate={new Date()} />);
+    const plans = await screen.findByRole('group', { name: 'Quick posting plans' });
+    await user.click(within(plans).getByRole('button', { name: '5 a week' }));
+    expect(within(plans).getByRole('button', { name: '5 a week' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getAllByLabelText(/^Slot \d day$/)).toHaveLength(5);
+    expect(screen.getByText(/5 slots filled in — check them, then save\./)).toBeInTheDocument();
+    const before = api.find('GET', UPCOMING).length;
+    await user.click(screen.getByRole('button', { name: 'Save slots' }));
+    await waitFor(() => expect(api.find('PUT', QUEUE)).toHaveLength(1));
+    const body = api.find('PUT', QUEUE)[0]!.body as {
+      slots: Array<{ weekday: number; time: string; timezone: string }>;
+      enabled: boolean;
+    };
+    expect(body.enabled).toBe(true);
+    expect(body.slots.map((s) => s.weekday)).toEqual([1, 2, 3, 4, 5]);
+    expect(body.slots.every((s) => s.time === '12:30' && s.timezone === 'Europe/London')).toBe(
+      true,
+    );
+    await waitFor(() => expect(api.find('GET', UPCOMING).length).toBeGreaterThan(before));
   });
 });

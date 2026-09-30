@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import {
+  DRIP_PRESET_IDS,
+  matchPreset,
+  presetSlots,
+  type DripPresetId,
+} from '@/lib/studio/drip-presets';
+import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
 import { weekdayNames } from './month';
 
@@ -15,6 +22,8 @@ import { weekdayNames } from './month';
 // weekly posting slots in a time zone; approved SCHEDULED videos without a start time take the
 // next free slot and their platforms are staggered from there.
 // GET/PUT /api/studio/businesses/:id/drip-queue.
+// 20.3: one-click plans ("3 a week", "5 a week", "Every day") fill the slots in the queue's time
+// zone (or the viewer's); they can be edited before "Save slots", which turns the queue on.
 
 export interface DripSlot {
   weekday: number;
@@ -32,7 +41,7 @@ export interface DripQueueView {
   upcoming: Array<{ slotAt: string; projectId: string }>;
 }
 
-function defaultZone(): string {
+export function defaultZone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   } catch {
@@ -40,7 +49,38 @@ function defaultZone(): string {
   }
 }
 
-export function DripQueuePanel() {
+/** The one-click plan buttons; `current` is pressed. */
+export function PostingPlanPresets({
+  current,
+  onPick,
+  disabled = false,
+}: {
+  current: DripPresetId | null;
+  onPick: (id: DripPresetId) => void;
+  disabled?: boolean;
+}) {
+  const t = useTranslations('calendar.drip');
+  return (
+    <div role="group" aria-label={t('presetsLabel')} className="flex flex-wrap gap-2">
+      {DRIP_PRESET_IDS.map((id) => (
+        <Button
+          key={id}
+          type="button"
+          size="sm"
+          variant="outline"
+          aria-pressed={current === id}
+          disabled={disabled}
+          className={cn(current === id && 'border-foreground bg-secondary')}
+          onClick={() => onPick(id)}
+        >
+          {t(`presets.${id}`)}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
   const t = useTranslations('calendar.drip');
   const f = useFormat();
   const errorMessage = useErrorMessage();
@@ -50,9 +90,17 @@ export function DripQueuePanel() {
   const { data, mutate } = useApi<{ dripQueue: DripQueueView | null }>(path);
   const [draft, setDraft] = useState<DripSlot[] | null>(null);
   const [saving, setSaving] = useState(false);
+  /** 20.3: how many slots a plan just filled in (announced until saved). */
+  const [filled, setFilled] = useState<number | null>(null);
   if (!businessId) return null;
   const queue = data?.dripQueue ?? null;
   const slots = draft ?? queue?.slots ?? [];
+
+  const pickPreset = (id: DripPresetId) => {
+    const next = presetSlots(id, slots[0]?.timezone ?? defaultZone());
+    setDraft(next);
+    setFilled(next.length);
+  };
 
   const change = (i: number, patch: Partial<DripSlot>) =>
     setDraft(slots.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -68,7 +116,9 @@ export function DripQueuePanel() {
       });
       toast.success(t('saved'));
       setDraft(null);
+      setFilled(null);
       await mutate();
+      onSaved?.();
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -78,7 +128,7 @@ export function DripQueuePanel() {
 
   return (
     <section aria-labelledby="drip-heading" className="mt-8 rounded-xl border border-border p-4">
-      <h3 id="drip-heading" className="font-display text-xl">
+      <h3 id="drip-heading" tabIndex={-1} className="font-display text-xl outline-none">
         {t('title')}
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -101,6 +151,16 @@ export function DripQueuePanel() {
             </li>
           ))}
         </ul>
+      )}
+      <div className="mt-3 flex flex-col gap-1.5">
+        <p className="text-sm font-medium">{t('presetsLabel')}</p>
+        <PostingPlanPresets current={matchPreset(slots)} onPick={pickPreset} disabled={saving} />
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          {filled !== null && draft ? t('presetFilled', { count: filled }) : t('presetsHint')}
+        </p>
+      </div>
+      {queue && !queue.enabled && !draft && (
+        <p className="mt-2 text-sm text-muted-foreground">{t('off')}</p>
       )}
       <ul className="mt-3 flex flex-col gap-2">
         {slots.map((slot, i) => (
@@ -146,7 +206,7 @@ export function DripQueuePanel() {
         >
           <Plus /> {t('addSlot')}
         </Button>
-        {draft && (
+        {(draft || (queue && !queue.enabled)) && (
           <Button size="sm" onClick={save} disabled={saving || slots.length === 0}>
             {saving && <Loader2 className="animate-spin" />} {t('saveSlots')}
           </Button>

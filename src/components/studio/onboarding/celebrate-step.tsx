@@ -11,9 +11,11 @@ import type { ProjectDetail, Publication } from '@/lib/client/types';
 import { platformLabel } from '../connections/platforms';
 import { EmptyState, ErrorState } from '../primitives';
 import { useProjectName } from '@/lib/client/use-project-name';
+import { PostingPlanCard } from './posting-plan-card';
 
 // Step 4 — "You just went live on TikTok" (spec 14.5) once the first video has a PUBLISHED
 // publication; until then it says the celebration comes when the video goes live.
+// 20.3: every state ends with "Plan your month" (one-click posting plans for the drip queue).
 
 const REFRESH_MS = 30_000;
 
@@ -23,7 +25,22 @@ export function firstLive(publications: Publication[]): Publication | undefined 
     .sort((a, b) => (a.publishedAt ?? '').localeCompare(b.publishedAt ?? ''))[0];
 }
 
-export function CelebrateStep({ projectId }: { projectId: string | null }) {
+export function CelebrateStep({
+  projectId,
+  businessId,
+}: {
+  projectId: string | null;
+  businessId?: string | null;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <CelebrateContent projectId={projectId} />
+      {businessId && <PostingPlanCard businessId={businessId} />}
+    </div>
+  );
+}
+
+function CelebrateContent({ projectId }: { projectId: string | null }) {
   const t = useTranslations('onboarding.celebrate');
   const f = useFormat();
   const projectName = useProjectName();

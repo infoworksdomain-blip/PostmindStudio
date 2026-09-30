@@ -1,3 +1,4 @@
+import { isBeyondScheduleWindow } from '@/lib/studio/schedule-window';
 import { buildTargets, type AutoPublishTarget } from '../automation/automation';
 import { buildFormats, nameFromBrief, type Length, type TargetFormatInput } from './formats';
 
@@ -40,6 +41,8 @@ export interface CreateState {
   extraLanguages?: string[];
   /** 15.C4 / 15.A5: publish at this local date-time ('' = not scheduled). */
   scheduleAt?: string;
+  /** 20.3: no date — the business's drip queue gives it the next free posting time. */
+  scheduleNextSlot?: boolean;
   /** 15.C4: a lower tier for this run ('' = the plan's). */
   qualityTier?: QualityTier | '';
   /** 15.C4: an approval workflow (15.D3); '' = the organisation's matching rule. */
@@ -87,6 +90,7 @@ export type CreateProblem =
   | 'autoPublishAccountRequired'
   | 'slideshowTemplateRequired'
   | 'scheduleInPast'
+  | 'scheduleTooFar'
   | 'scheduleNeedsAutoPublish'
   | 'budgetRange';
 
@@ -112,9 +116,12 @@ export function validateCreate(
   )
     problems.push('autoPublishAccountRequired');
   if (state.source === 'SLIDESHOW' && !state.templateId) problems.push('slideshowTemplateRequired');
-  if (state.scheduleAt) {
+  if (state.scheduleNextSlot && state.source !== 'SLIDESHOW') {
+    if (!state.autoPublish) problems.push('scheduleNeedsAutoPublish');
+  } else if (state.scheduleAt) {
     const at = Date.parse(state.scheduleAt);
     if (!Number.isFinite(at) || at <= now) problems.push('scheduleInPast');
+    else if (isBeyondScheduleWindow(at, now)) problems.push('scheduleTooFar');
     else if (!state.autoPublish && state.source !== 'SLIDESHOW')
       problems.push('scheduleNeedsAutoPublish');
   }
@@ -196,8 +203,11 @@ export function buildCreateBody(
   if (state.approvalWorkflowId) body.approvalWorkflowId = state.approvalWorkflowId;
   if (state.autoPublish && state.source !== 'SLIDESHOW') {
     body.publishPolicy = 'AUTO_ON_APPROVAL';
-    // 15.A5: a scheduled project publishes to the same targets at the chosen time.
-    if (state.scheduleAt) {
+    // 15.A5: a scheduled project publishes to the same targets at the chosen time; 20.3: or,
+    // with no date, at the next free posting time of the business's drip queue.
+    if (state.scheduleNextSlot) {
+      body.publishPolicy = 'SCHEDULED';
+    } else if (state.scheduleAt) {
       body.publishPolicy = 'SCHEDULED';
       body.scheduledStartAt = new Date(state.scheduleAt).toISOString();
     }

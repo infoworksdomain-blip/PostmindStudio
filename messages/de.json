@@ -432,6 +432,18 @@
     "metaConnectionNeedsReconnect": {
       "title": "Verbinden Sie Ihr {platform}-Konto „{account}“ neu",
       "body": "Meta akzeptiert den Zugriff von Studio auf dieses Konto nicht mehr. Verbinden Sie es in den PostMind-Einstellungen neu, damit geplante Beiträge veröffentlicht werden können."
+    },
+    "scheduleQueueOff": {
+      "title": "„{name}“ wurde nicht eingeplant",
+      "body": "Die Posting-Warteschlange ist aus — legen Sie im Kalender Posting-Zeiten fest oder wählen Sie ein Datum."
+    },
+    "scheduleNoPlatform": {
+      "title": "„{name}“ wurde nicht eingeplant",
+      "body": "Die Posting-Warteschlange postet auf keiner seiner Plattformen — ändern Sie die Warteschlange oder wählen Sie ein Datum."
+    },
+    "scheduleNoFreeSlot": {
+      "title": "„{name}“ wurde nicht eingeplant",
+      "body": "Keine freie Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} — fügen Sie Posting-Zeiten hinzu oder wählen Sie ein Datum."
     }
   },
   "create": {
@@ -485,7 +497,8 @@
       "slideshowTemplateRequired": "Wählen Sie eine Diashow-Vorlage aus.",
       "scheduleInPast": "Wählen Sie einen Zeitpunkt in der Zukunft.",
       "scheduleNeedsAutoPublish": "Wählen Sie für ein geplantes Video die Konten aus, auf denen es veröffentlicht werden soll (automatische Veröffentlichung).",
-      "budgetRange": "Das Budget muss zwischen {min} und {max} liegen."
+      "budgetRange": "Das Budget muss zwischen {min} und {max} liegen.",
+      "scheduleTooFar": "Planen Sie höchstens {days, number} Tage im Voraus."
     },
     "options": {
       "platforms": "Plattformen",
@@ -534,7 +547,9 @@
       "scheduleHint": "Wird nach der Freigabe zu diesem Zeitpunkt auf den Konten für die automatische Veröffentlichung veröffentlicht.",
       "workflow": "Freigabe-Workflow",
       "workflowNone": "Keine Workflows eingerichtet",
-      "workflowOrg": "Regeln der Organisation"
+      "workflowOrg": "Regeln der Organisation",
+      "scheduleNextSlot": "Kein Datum — den nächsten freien Slot der Posting-Warteschlange nutzen",
+      "scheduleNextSlotHint": "Geht zur ersten freien Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} raus. Die Zeiten legen Sie im Kalender fest."
     },
     "autoPublish": {
       "legend": "Automatische Veröffentlichung",
@@ -656,7 +671,9 @@
       "publishNowCount": "Jetzt veröffentlichen ({count, number})",
       "platformError": "{platform}: {error}",
       "scheduled": "{count, plural, one {# Beitrag geplant.} other {# Beiträge geplant.}}",
-      "publishing": "{count, plural, one {# Beitrag wird veröffentlicht.} other {# Beiträge werden veröffentlicht.}}"
+      "publishing": "{count, plural, one {# Beitrag wird veröffentlicht.} other {# Beiträge werden veröffentlicht.}}",
+      "scheduleTooFar": "Wählen Sie eine Zeit höchstens {days, number} Tage im Voraus.",
+      "scheduleInPast": "Wählen Sie eine Zeit mindestens eine Minute ab jetzt."
     },
     "publications": {
       "empty": "Noch nichts veröffentlicht oder geplant.",
@@ -709,7 +726,8 @@
         "not_trusted": "Prüfung nötig: Ihre ersten {needed} Videos prüft eine Person ({approved} von {needed} bisher freigegeben).",
         "approval_workflow": "Prüfung nötig: Der Freigabe-Workflow „{workflow}“ gilt.",
         "auto_approve_error": "Prüfung nötig: Die automatische Freigabe konnte nicht bewertet werden."
-      }
+      },
+      "schedulesAutomatically": "Wird nach der Freigabe automatisch eingeplant"
     },
     "budget": {
       "aria": "Budget erhöhen",
@@ -987,6 +1005,17 @@
       "upload": "Hochladen",
       "uploadAria": "Vorschaubild hochladen",
       "updated": "Vorschaubild aktualisiert."
+    },
+    "schedule": {
+      "reasons": {
+        "queue_off": "Nicht eingeplant: Die Posting-Warteschlange ist aus. Legen Sie im Kalender Posting-Zeiten fest und versuchen Sie es erneut, oder wählen Sie auf dem Tab „Veröffentlichen“ ein Datum.",
+        "no_matching_platform": "Nicht eingeplant: Die Posting-Warteschlange postet auf keiner Plattform dieses Videos. Ändern Sie ihre Plattformen im Kalender und versuchen Sie es erneut, oder wählen Sie auf dem Tab „Veröffentlichen“ ein Datum.",
+        "no_free_slot": "Keine freie Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} — fügen Sie im Kalender Posting-Zeiten hinzu und versuchen Sie es erneut, oder wählen Sie auf dem Tab „Veröffentlichen“ ein Datum."
+      },
+      "openCalendar": "Kalender öffnen",
+      "retry": "Erneut versuchen",
+      "retried": "{count, plural, one {# Beitrag eingeplant.} other {# Beiträge eingeplant.}}",
+      "stillNone": "Immer noch keine freie Posting-Zeit — fügen Sie Posting-Zeiten hinzu oder wählen Sie ein Datum."
     }
   },
   "slideshow": {
@@ -1362,7 +1391,8 @@
       "daysAria": "Tage des Monats",
       "more": "{count, plural, one {+# weiterer} other {+# weitere}}",
       "agendaAria": "Agenda",
-      "emptyMonth": "In diesem Monat ist nichts geplant oder veröffentlicht."
+      "emptyMonth": "In diesem Monat ist nichts geplant oder veröffentlicht.",
+      "moreOpen": "{count, plural, one {+# freier Slot} other {+# freie Slots}}"
     },
     "event": {
       "untitled": "Unbenanntes Projekt",
@@ -1394,7 +1424,25 @@
       "slotTime": "Uhrzeit für Slot {n}",
       "removeSlot": "Slot {n} entfernen",
       "addSlot": "Slot hinzufügen",
-      "saveSlots": "Slots speichern"
+      "saveSlots": "Slots speichern",
+      "presetsLabel": "Schnelle Posting-Pläne",
+      "presetsHint": "Ein Plan füllt die Slots unten in Ihrer Zeitzone aus; ändern Sie sie nach Bedarf und speichern Sie dann.",
+      "presetFilled": "{count, plural, one {# Slot ausgefüllt} other {# Slots ausgefüllt}} — prüfen Sie sie und speichern Sie dann.",
+      "presets": {
+        "three": "3 pro Woche",
+        "five": "5 pro Woche",
+        "daily": "Jeden Tag"
+      },
+      "off": "Die Posting-Warteschlange ist aus, daher werden Videos für den nächsten freien Slot nicht eingeplant. Speichern Sie die Slots, um sie einzuschalten."
+    },
+    "open": {
+      "label": "Freier Slot",
+      "aria": "Freie Posting-Zeit um {time}, noch kein Video eingeplant",
+      "legend": "Gestrichelte Felder sind freie Slots der Posting-Warteschlange: Posting-Zeiten, für die noch kein Video eingeplant ist."
+    },
+    "summary": {
+      "next": "Nächste 30 Tage: {scheduled, plural, one {# Beitrag geplant} other {# Beiträge geplant}} · {open, plural, one {# freier Slot} other {# freie Slots}}",
+      "queueOff": "Nächste 30 Tage: {scheduled, plural, one {# Beitrag geplant} other {# Beiträge geplant}}. Die Posting-Warteschlange ist aus — <link>legen Sie Posting-Zeiten fest</link>, um den Monat automatisch zu füllen."
     }
   },
   "business": {
@@ -3127,6 +3175,12 @@
       "coreTitle": "Richten Sie zuerst ein Unternehmen ein",
       "coreDescription": "Ihre Unternehmen stammen von PostMind. Wählen Sie eines aus oder fügen Sie eines hinzu und kommen Sie dann hierher zurück.",
       "coreAction": "Zu Unternehmen wechseln"
+    },
+    "plan": {
+      "title": "Planen Sie Ihren Monat",
+      "body": "Wählen Sie, wie oft gepostet wird. Videos, die für den nächsten freien Slot geplant sind, gehen zu diesen Zeiten raus und füllen den kommenden Monat.",
+      "saved": "Posting-Plan: {plan}.",
+      "openCalendar": "Zeiten im Kalender ändern"
     }
   },
   "share": {
@@ -3467,7 +3521,7 @@
     },
     "hero": {
       "eyebrow": "KI-Videostudio für kleine Unternehmen",
-      "title": "Eine Woche Kurzvideos, <em>fertig, bevor Ihr Kaffee kalt wird.</em>",
+      "title": "Ein Monat Kurzvideos, <em>fertig, bevor Ihr Kaffee kalt wird.</em>",
       "lede": "Sagen Sie Studio, was Sie mitteilen möchten. Es schreibt das Skript, dreht oder beschafft jede Szene, fügt Ihre Stimme, Musik und Untertitel im Stil Ihrer Marke hinzu und schneidet das Video für jede Plattform. Sie geben frei, es veröffentlicht.",
       "primaryCta": "Kostenlose Testversion starten",
       "secondaryCta": "Preise ansehen",
@@ -3502,7 +3556,7 @@
       },
       "publish": {
         "title": "Nach Zeitplan veröffentlichen",
-        "body": "Veröffentlichen Sie sofort oder planen Sie die Woche. Studio veröffentlicht auf jedem Konto und bringt Aufrufe, Likes und Kommentare in ein einziges Dashboard zurück."
+        "body": "Veröffentlichen Sie sofort oder planen Sie den kommenden Monat. Studio veröffentlicht auf jedem Konto und bringt Aufrufe, Likes und Kommentare in ein einziges Dashboard zurück."
       }
     },
     "samples": {
@@ -3531,7 +3585,7 @@
       },
       "calendar": {
         "title": "Ein Kalender, der für Sie veröffentlicht",
-        "body": "Planen Sie die Woche, ziehen Sie Beiträge auf neue Zeitfenster und lassen Sie Studio zur richtigen Zeit für jede Plattform veröffentlichen."
+        "body": "Planen Sie den kommenden Monat, ziehen Sie Beiträge auf neue Zeitfenster und lassen Sie Studio zur richtigen Zeit für jede Plattform veröffentlichen."
       },
       "budget": {
         "title": "Kosten, die Sie sehen können",

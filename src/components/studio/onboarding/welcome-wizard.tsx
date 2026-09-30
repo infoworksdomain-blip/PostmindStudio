@@ -61,7 +61,7 @@ function StepBody({
         />
       );
     case 'celebrate':
-      return <CelebrateStep projectId={onboarding.firstVideoProjectId} />;
+      return <CelebrateStep projectId={onboarding.firstVideoProjectId} businessId={businessId} />;
   }
 }
 

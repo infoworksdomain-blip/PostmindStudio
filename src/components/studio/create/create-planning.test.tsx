@@ -117,6 +117,48 @@ describe('create body helpers', () => {
     expect(scheduled.scheduledStartAt).toBe(new Date('2026-10-05T10:00').toISOString());
   });
 
+  it('20.3: refuses a time more than 180 days ahead; "next free slot" schedules without a date', () => {
+    const now = Date.parse('2026-10-01T10:00:00Z');
+    expect(validateCreate({ ...base, scheduleAt: '2027-04-01T10:00' }, 'biz', now)).toContain(
+      'scheduleTooFar',
+    );
+    expect(
+      validateCreate({ ...base, scheduleAt: '2027-03-01T10:00', autoPublish: true }, 'biz', now),
+    ).not.toContain('scheduleTooFar');
+    expect(validateCreate({ ...base, scheduleNextSlot: true }, 'biz', now)).toContain(
+      'scheduleNeedsAutoPublish',
+    );
+    const next = buildCreateBody(
+      {
+        ...base,
+        scheduleNextSlot: true,
+        scheduleAt: '2026-10-05T10:00',
+        autoPublish: true,
+        autoPublishAccounts: { tiktok: 'pc_1' },
+      },
+      'biz',
+      null,
+    );
+    expect(next.publishPolicy).toBe('SCHEDULED');
+    expect(next).not.toHaveProperty('scheduledStartAt');
+  });
+
+  it('20.3: the schedule input carries min/max and the next-slot option disables it', async () => {
+    mockFetch(routes('PLUS'));
+    renderWithSWR(<CreateScreen initialReference={null} />);
+    await userEvent.type(await screen.findByLabelText('What’s the video about?'), 'Launch');
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
+    const input = screen.getByLabelText('Schedule');
+    expect(input.getAttribute('min')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    const max = Date.parse(input.getAttribute('max') ?? '');
+    expect(Math.round((max - Date.now()) / 86_400_000)).toBe(180);
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: /No date — use the next free drip-queue slot/ }),
+    );
+    expect(input).toBeDisabled();
+  });
+
   it('never sends the primary language as an extra; generate body only carries a chosen tier', () => {
     expect(
       buildCreateBody({ ...base, language: 'es', extraLanguages: ['es'] }, 'b', null),
