@@ -9,6 +9,7 @@ import {
   MAX_OUTBOX_ATTEMPTS,
   outboxBackoffMs,
   publicOutboxRow,
+  readScheduleIssue,
   renderIdFor,
   type SendOutcome,
 } from './outbox';
@@ -188,5 +189,21 @@ describe('dispatchOutbox', () => {
     const send = vi.fn();
     await dispatchOutbox({ db: db as never, logger, now: () => NOW }, send);
     expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe('schedule issue (20.3)', () => {
+  it('reads metadata.scheduleIssue, ignoring anything it cannot trust', () => {
+    const issue = { reason: 'no_free_slot', horizonDays: 56, at: '2026-09-30T10:00:00.000Z' };
+    expect(readScheduleIssue({ scheduleIssue: issue })).toEqual(issue);
+    expect(readScheduleIssue({ scheduleIssue: { reason: 'queue_off' } })).toEqual({
+      reason: 'queue_off',
+      horizonDays: 56,
+      at: '',
+    });
+    expect(readScheduleIssue({ scheduleIssue: { reason: 'bogus' } })).toBeNull();
+    expect(readScheduleIssue({ scheduleIssue: 'x' })).toBeNull();
+    expect(readScheduleIssue({})).toBeNull();
+    expect(readScheduleIssue(null)).toBeNull();
   });
 });

@@ -353,6 +353,35 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       ).toBe(404);
     });
 
+    it('20.3: scheduledStartAt may be at most 180 days ahead, on create and update', async () => {
+      const DAY = 86_400_000;
+      const at = (days: number) => new Date(Date.now() + days * DAY).toISOString();
+      const tooFar = await call(projectsRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { ...createBody, publishPolicy: 'SCHEDULED', scheduledStartAt: at(181) },
+      });
+      expect(tooFar.status).toBe(400);
+      expect(tooFar.json.message).toContain('180 days');
+      const fine = await call(projectsRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { ...createBody, publishPolicy: 'SCHEDULED', scheduledStartAt: at(179) },
+      });
+      expect(fine.status).toBe(201);
+      const id = (fine.json.project as { id: string }).id;
+      const patch = (scheduledStartAt: string | null) =>
+        call(projectRoute.PATCH, {
+          method: 'PATCH',
+          token: 'owner',
+          params: { id },
+          body: { scheduledStartAt },
+        });
+      expect((await patch(at(200))).status).toBe(400);
+      expect((await patch(at(30))).status).toBe(200);
+      expect((await patch(null)).status).toBe(200);
+    });
+
     it('refuses edits while generating (409) and archives when idle', async () => {
       const id = await create();
       await call(generateRoute.POST, { method: 'POST', token: 'owner', params: { id } });

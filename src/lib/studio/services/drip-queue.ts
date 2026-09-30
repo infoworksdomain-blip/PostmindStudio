@@ -1,7 +1,9 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { addDays, isValidTimeZone, wallClock, zonedToUtc } from '../automation/zoned-time';
+import { DRIP_HORIZON_WEEKS } from '../drip-presets';
 import { PLATFORMS } from './catalog';
 
 // 15.A5 — per-business drip queue (spec 3.1 "Publish now, schedule to time, drip queue,
@@ -12,8 +14,17 @@ import { PLATFORMS } from './catalog';
 // each of its targets is then staggered STUDIO_DEFAULT_STAGGER_MINUTES apart.
 
 export const MAX_DRIP_SLOTS = 28;
-/** How far ahead slots are searched (and createPublication's 180-day cap is far beyond it). */
-export const DRIP_HORIZON_DAYS = 8 * 7;
+/**
+ * How far ahead slots are searched (and createPublication's 180-day cap is far beyond it).
+ * 20.3: must cover at least a month ahead (MONTH_AHEAD_DAYS); a test pins it.
+ */
+export const DRIP_HORIZON_DAYS = DRIP_HORIZON_WEEKS * 7;
+/** 20.3: "plan a month ahead" — the shortest window the drip queue must be able to fill. */
+export const MONTH_AHEAD_DAYS = 31;
+/** 20.3: GET …/drip-queue/upcoming default window and its cap. */
+export const DEFAULT_UPCOMING_DAYS = MONTH_AHEAD_DAYS;
+export const MAX_UPCOMING_RANGE_DAYS = 62;
+const DAY_MS = 86_400_000;
 /** A slot closer than this is skipped: the outbox needs time to create the publication. */
 export const DRIP_MIN_LEAD_MS = 2 * 60_000;
 export const DEFAULT_STAGGER_MINUTES = 30;
@@ -183,4 +194,113 @@ export async function putDripQueue(
   });
   const scope = { organisationId: tenant.organisationId, businessId };
   return publicDripQueue(row, await heldSlots(db, scope, now), now);
+}
+
+// ------------------------------------------------------------------ 20.3 month-ahead view
+
+export const upcomingQuery = z
+  .object({
+    from: z.iso.datetime({ offset: true }).optional(),
+    to: z.iso.datetime({ offset: true }).optional(),
+  })
+  .strict();
+
+/**
+ * The [from, to) window of GET …/drip-queue/upcoming: default now → now + 31 days, at most
+ * MAX_UPCOMING_RANGE_DAYS long; `to` must be after `from`.
+ */
+export function upcomingWindow(
+  query: z.infer<typeof upcomingQuery>,
+  now: number,
+): { fromMs: number; toMs: number } {
+  const fromMs = query.from ? Date.parse(query.from) : now;
+  const toMs = query.to ? Date.parse(query.to) : fromMs + DEFAULT_UPCOMING_DAYS * DAY_MS;
+  if (!(toMs > fromMs)) throw new ValidationError('to must be after from');
+  if (toMs - fromMs > MAX_UPCOMING_RANGE_DAYS * DAY_MS)
+    throw new ValidationError(`The window can be at most ${MAX_UPCOMING_RANGE_DAYS} days long`, {
+      maxDays: MAX_UPCOMING_RANGE_DAYS,
+    });
+  return { fromMs, toMs };
+}
+
+/**
+ * Open slots in [fromMs, toMs): slot instants no approved video holds, that the scheduler could
+ * still give to the next video — at least DRIP_MIN_LEAD_MS away and within DRIP_HORIZON_DAYS of
+ * now (DECISION: slots beyond the horizon are not shown as open, because no approval can take
+ * them yet).
+ */
+export function openSlotsBetween(
+  slots: DripSlot[],
+  held: Date[],
+  window: { fromMs: number; toMs: number },
+  now: number,
+): number[] {
+  const start = Math.max(window.fromMs, now + DRIP_MIN_LEAD_MS);
+  const end = Math.min(window.toMs, now + DRIP_HORIZON_DAYS * DAY_MS);
+  if (end <= start) return [];
+  const taken = new Set(held.map((d) => d.getTime()));
+  // upcomingSlots returns instants strictly after its start; step back 1 ms to keep `start`.
+  const days = Math.ceil((end - start) / DAY_MS) + 1;
+  return upcomingSlots(slots, start - 1, days).filter((at) => at < end && !taken.has(at));
+}
+
+/** GET /businesses/:id/drip-queue/upcoming — the calendar's open-slot markers and summary. */
+export async function getUpcomingSlots(
+  db: PrismaClient,
+  scope: { organisationId: string; businessId: string },
+  window: { fromMs: number; toMs: number },
+  now: number,
+) {
+  const [row, held, scheduled] = await Promise.all([
+    db.dripQueue.findUnique({ where: { organisationId_businessId: scope } }),
+    heldSlots(db, scope, Math.min(window.fromMs, now)),
+    db.videoPublication.count({
+      where: {
+        organisationId: scope.organisationId,
+        state: { in: ['SCHEDULED', 'PUBLISHING'] },
+        scheduledFor: { gte: new Date(window.fromMs), lt: new Date(window.toMs) },
+        project: { businessId: scope.businessId, deletedAt: null },
+      },
+    }),
+  ]);
+  const enabled = Boolean(row?.enabled);
+  const slots = row ? parseSlots(row.slots) : [];
+  const inWindow = held.filter(
+    (h) => h.slotAt.getTime() >= window.fromMs && h.slotAt.getTime() < window.toMs,
+  );
+  const open = enabled
+    ? openSlotsBetween(
+        slots,
+        held.map((h) => h.slotAt),
+        window,
+        now,
+      )
+    : [];
+  return {
+    from: new Date(window.fromMs).toISOString(),
+    to: new Date(window.toMs).toISOString(),
+    configured: row !== null,
+    enabled,
+    slotsPerWeek: enabled ? slots.length : 0,
+    horizonDays: DRIP_HORIZON_DAYS,
+    scheduled,
+    openSlots: open.map((at) => new Date(at).toISOString()),
+    held: inWindow.map((h) => ({ slotAt: h.slotAt.toISOString(), projectId: h.projectId })),
+  };
+}
+
+// ------------------------------------------------------------------ 20.3 honest scheduling
+
+/** Why a SCHEDULED project without a start time got no drip slot. */
+export type UnscheduledReason = 'queue_off' | 'no_matching_platform' | 'no_free_slot';
+
+/** The reason, from the business's queue and the project's target platforms. */
+export function unscheduledReason(
+  queue: { enabled: boolean; platforms: string[] } | null,
+  targetPlatforms: string[],
+): UnscheduledReason {
+  if (!queue?.enabled) return 'queue_off';
+  const matches =
+    queue.platforms.length === 0 || targetPlatforms.some((p) => queue.platforms.includes(p));
+  return matches ? 'no_free_slot' : 'no_matching_platform';
 }

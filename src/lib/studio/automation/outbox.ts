@@ -3,7 +3,15 @@ import type { Logger } from 'pino';
 import { ConflictError, NotFoundError, StudioError, ValidationError } from '../../errors';
 import { notifySafely, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
-import { firstFreeSlot, heldSlots, parseSlots, staggerMinutes } from '../services/drip-queue';
+import {
+  DRIP_HORIZON_DAYS,
+  firstFreeSlot,
+  heldSlots,
+  parseSlots,
+  staggerMinutes,
+  unscheduledReason,
+  type UnscheduledReason,
+} from '../services/drip-queue';
 import { storedTargets, type AutoPublishTarget } from './targets';
 import { projectLabel, projectNameParam } from '../../project-name';
 
@@ -50,10 +58,21 @@ export interface SchedulePlan {
   slotAt: Date | null;
 }
 
+/** 20.3: metadata.scheduleIssue — why an approved SCHEDULED project got no drip slot. */
+export interface ScheduleIssue {
+  reason: UnscheduledReason;
+  horizonDays: number;
+  at: string;
+}
+
+export type ScheduleDecision =
+  { ok: true; plan: SchedulePlan } | { ok: false; reason: UnscheduledReason };
+
 /**
  * 15.A5 — when each target of a SCHEDULED project goes out: from scheduledStartAt (never in the
- * past) or the next free drip slot, target i at +i × stagger. null = nothing can be scheduled
- * (no start time and no enabled drip queue, or no free slot in the horizon).
+ * past) or the next free drip slot, target i at +i × stagger. 20.3: when nothing can be
+ * scheduled the decision says why (queue off, no drip platform among the targets, or no free
+ * slot within DRIP_HORIZON_DAYS) instead of a bare null.
  */
 export async function planSchedule(
   tx: Tx,
@@ -65,15 +84,18 @@ export async function planSchedule(
   },
   targets: AutoPublishTarget[],
   now: number,
-): Promise<SchedulePlan | null> {
+): Promise<ScheduleDecision> {
   const stagger = staggerMinutes() * 60_000;
-  const spread = (base: number, indexes: number[], slotAt: Date | null): SchedulePlan => ({
-    times: targets.map((_, i) => {
-      const position = indexes.indexOf(i);
-      return position < 0 ? null : new Date(base + position * stagger);
-    }),
-    indexes,
-    slotAt,
+  const spread = (base: number, indexes: number[], slotAt: Date | null): ScheduleDecision => ({
+    ok: true,
+    plan: {
+      times: targets.map((_, i) => {
+        const position = indexes.indexOf(i);
+        return position < 0 ? null : new Date(base + position * stagger);
+      }),
+      indexes,
+      slotAt,
+    },
   });
   const all = targets.map((_, i) => i);
   if (project.scheduledStartAt)
@@ -82,11 +104,12 @@ export async function planSchedule(
   const queue = await tx.dripQueue.findUnique({
     where: { organisationId_businessId: scope },
   });
-  if (!queue?.enabled) return null;
+  const platforms = targets.map((t) => t.platform);
+  if (!queue?.enabled) return { ok: false, reason: unscheduledReason(queue, platforms) };
   const indexes = all.filter(
     (i) => queue.platforms.length === 0 || queue.platforms.includes(targets[i]?.platform ?? ''),
   );
-  if (indexes.length === 0) return null;
+  if (indexes.length === 0) return { ok: false, reason: unscheduledReason(queue, platforms) };
   // Two approvals of the same business must not take the same slot.
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`drip:${project.organisationId}:${project.businessId}`}, 0))`;
   const held = await heldSlots(tx, scope, now);
@@ -95,12 +118,46 @@ export async function planSchedule(
     held.map((h) => h.slotAt),
     now,
   );
-  return slot === null ? null : spread(slot, indexes, new Date(slot));
+  return slot === null
+    ? { ok: false, reason: 'no_free_slot' }
+    : spread(slot, indexes, new Date(slot));
+}
+
+/** 20.3: set (or, with null, clear) metadata.scheduleIssue inside the approval transaction. */
+async function recordScheduleIssue(
+  tx: Tx,
+  projectId: string,
+  issue: ScheduleIssue | null,
+): Promise<void> {
+  if (issue)
+    await tx.$executeRaw`
+      UPDATE "studio"."video_projects"
+      SET "metadata" = COALESCE("metadata", '{}'::jsonb) || ${JSON.stringify({ scheduleIssue: issue })}::jsonb
+      WHERE "id" = ${projectId}`;
+  else
+    await tx.$executeRaw`
+      UPDATE "studio"."video_projects"
+      SET "metadata" = "metadata" - 'scheduleIssue'
+      WHERE "id" = ${projectId} AND "metadata" IS NOT NULL`;
+}
+
+/** 20.3: metadata.scheduleIssue of a project, when there is a readable one. */
+export function readScheduleIssue(metadata: Prisma.JsonValue | null): ScheduleIssue | null {
+  const issue = projectMetadata(metadata).scheduleIssue as Partial<ScheduleIssue> | undefined;
+  if (!issue || typeof issue !== 'object') return null;
+  const reasons: UnscheduledReason[] = ['queue_off', 'no_matching_platform', 'no_free_slot'];
+  if (!reasons.includes(issue.reason as UnscheduledReason)) return null;
+  return {
+    reason: issue.reason as UnscheduledReason,
+    horizonDays: typeof issue.horizonDays === 'number' ? issue.horizonDays : DRIP_HORIZON_DAYS,
+    at: typeof issue.at === 'string' ? issue.at : '',
+  };
 }
 
 /**
  * Inside the approval transaction: one PENDING row per stored target (AUTO_ON_APPROVAL), or per
- * scheduled target (SCHEDULED, 15.A5).
+ * scheduled target (SCHEDULED, 15.A5). 20.3: a SCHEDULED project that gets no slot records
+ * metadata.scheduleIssue (cleared again once it is scheduled) so the Review screen can say so.
  */
 export async function writeOutboxRows(
   tx: Tx,
@@ -112,7 +169,8 @@ export async function writeOutboxRows(
     trigger: 'human' | 'auto';
     now: number;
   },
-): Promise<number> {
+): Promise<{ count: number; unscheduled: UnscheduledReason | null }> {
+  const none = { count: 0, unscheduled: null };
   const project = await tx.videoProject.findUnique({
     where: { id: input.projectId },
     select: {
@@ -125,14 +183,23 @@ export async function writeOutboxRows(
     },
   });
   if (project?.publishPolicy !== 'AUTO_ON_APPROVAL' && project?.publishPolicy !== 'SCHEDULED')
-    return 0;
+    return none;
   const targets = storedTargets(project.metadata);
-  if (targets.length === 0) return 0;
-  const plan =
-    project.publishPolicy === 'SCHEDULED'
-      ? await planSchedule(tx, project, targets, input.now)
-      : null;
-  if (project.publishPolicy === 'SCHEDULED' && !plan) return 0;
+  if (targets.length === 0) return none;
+  let plan: SchedulePlan | null = null;
+  if (project.publishPolicy === 'SCHEDULED') {
+    const decision = await planSchedule(tx, project, targets, input.now);
+    if (!decision.ok) {
+      await recordScheduleIssue(tx, project.id, {
+        reason: decision.reason,
+        horizonDays: DRIP_HORIZON_DAYS,
+        at: new Date(input.now).toISOString(),
+      });
+      return { count: 0, unscheduled: decision.reason };
+    }
+    plan = decision.plan;
+    await recordScheduleIssue(tx, project.id, null);
+  }
   const indexes = plan?.indexes ?? targets.map((_, i) => i);
   const result = await tx.autoPublishOutbox.createMany({
     data: indexes.map((index) => ({
@@ -149,7 +216,7 @@ export async function writeOutboxRows(
     })),
     skipDuplicates: true,
   });
-  return result.count;
+  return { count: result.count, unscheduled: null };
 }
 
 export type SendOutcome =
