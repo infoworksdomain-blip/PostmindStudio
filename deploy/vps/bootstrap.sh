@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostMind Studio — one-time server setup for a fresh Hetzner Cloud server running Ubuntu 24.04
+# PostMind Studio — one-time server setup for a fresh Hetzner Cloud server running Ubuntu 24.04 or 26.04
 # (runbooks/vps-deploy.md step 4). Run as root, once; running it again is safe (idempotent).
 # Contains no secrets.
 #
@@ -33,9 +33,15 @@ fail() {
 [ "$(id -u)" -eq 0 ] || fail "run as root"
 # shellcheck disable=SC1091 # the OS release file only exists on the server
 . /etc/os-release
-if [ "${ID:-}" != "ubuntu" ] || [ "${VERSION_ID:-}" != "24.04" ]; then
-  fail "expected Ubuntu 24.04, found ${PRETTY_NAME:-unknown}"
-fi
+# Ubuntu LTS releases this script is checked against. 26.04 (resolute): Docker publishes a
+# resolute suite (https://download.docker.com/linux/ubuntu/dists/resolute/), OpenSSH still reads
+# sshd_config.d first and the unit is still ssh.service, and fail2ban 1.1.0 depends on
+# python3-systemd, which the systemd backend below needs (all checked on a Hetzner 26.04 server,
+# 2026-09-30).
+case "${ID:-}/${VERSION_ID:-}" in
+  ubuntu/24.04 | ubuntu/26.04) ;;
+  *) fail "expected Ubuntu 24.04 or 26.04, found ${PRETTY_NAME:-unknown}" ;;
+esac
 [[ "$DEPLOY_USER" =~ ^[a-z][a-z0-9_-]{0,30}$ ]] || fail "DEPLOY_USER is not a valid user name"
 [[ "$SWAP_SIZE" =~ ^[0-9]+[MG]$ ]] || fail "SWAP_SIZE must look like 2G or 2048M"
 
@@ -104,7 +110,7 @@ firewall() {
 
 fail2ban_and_updates() {
   say "fail2ban + unattended-upgrades"
-  # Ubuntu 24.04's fail2ban package already enables the sshd jail with backend=systemd
+  # This file enables the sshd jail itself (26.04 included). Ubuntu 24.04's fail2ban package also enables the sshd jail with backend=systemd
   # (debian/debian-files/jail.d_defaults-debian.conf, noble-updates); this file only makes bans
   # longer. Launchpad bug 2055114 broke fail2ban on 24.04 until 1.0.2-3ubuntu0.1: the upgrade above
   # installs the fixed package.
