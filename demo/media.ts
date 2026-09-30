@@ -1,6 +1,15 @@
 // Sample media for the demo build. The artifact page can't load images or video from other hosts,
-// so every picture is drawn on a canvas (data: URL) and every video is a short canvas animation
-// recorded in the browser with MediaRecorder (blob: URL). All of it is labelled as sample media.
+// so every picture is a data: URL and every video is a short canvas animation recorded in the
+// browser with MediaRecorder (blob: URL). All of it is labelled as sample media.
+//
+// Phase 20.8: the photographic scenes are real photos (Unsplash licence, listed in
+// public/marketing/SOURCES.md), inlined by the build through @/lib/marketing/media-src; each is
+// cropped to the requested size on a canvas with the SAMPLE mark, and the sample videos pan and zoom
+// slowly across the same photo. The brand-kit logo is an original SVG. The earlier canvas drawings
+// remain as the fallback while a photo decodes (and for the "studio" wordmark).
+
+import { MARKETING_PHOTOS, type MarketingPhoto } from '@/lib/marketing/media';
+import { marketingSrc } from '@/lib/marketing/media-src';
 
 export type SceneKind =
   | 'sourdough'
@@ -36,6 +45,76 @@ const PALETTES: Record<SceneKind, Palette> = {
   kitchen: { sky: ['#ece6dc', '#a6978a'], accent: '#5c7a6b', ink: '#231d18' },
   studio: { sky: ['#20242b', '#454c57'], accent: '#e2552f', ink: '#f4efe7' },
 };
+
+/** The photo behind each photographic scene (logo and studio are drawn, not photographed). */
+const SCENE_PHOTOS: Partial<Record<SceneKind, MarketingPhoto>> = {
+  sourdough: 'sourdoughLoaf',
+  croissant: 'croissants',
+  coffee: 'coffee',
+  storefront: 'sourdoughBoard',
+  baker: 'sourdoughHands',
+  flatlay: 'breakfast',
+  cake: 'cake',
+  market: 'marketStall',
+  street: 'doughKneading',
+  kitchen: 'doughBalls',
+};
+
+const photoCache = new Map<MarketingPhoto, HTMLImageElement>();
+
+/** The decoded photo for a scene, or null (no photo, not decoded yet, or no DOM). */
+function scenePhoto(kind: SceneKind): HTMLImageElement | null {
+  const name = SCENE_PHOTOS[kind];
+  if (!name || typeof Image === 'undefined') return null;
+  let img = photoCache.get(name);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.src = marketingSrc(MARKETING_PHOTOS[name].path);
+    photoCache.set(name, img);
+  }
+  return img.complete && img.naturalWidth > 0 ? img : null;
+}
+
+/** Start decoding every scene photo (the demo opens on the landing page, long before a screen
+ *  asks for a thumbnail). */
+export function preloadScenePhotos(): void {
+  for (const kind of Object.keys(SCENE_PHOTOS) as SceneKind[]) scenePhoto(kind);
+}
+
+/** Draw `img` to cover w×h; `t` (seconds) drives a slow zoom and pan for the sample videos. */
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  w: number,
+  h: number,
+  t: number,
+): void {
+  const zoom = 1 + Math.min(t, 8) * 0.012;
+  const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight) * zoom;
+  const dw = img.naturalWidth * scale;
+  const dh = img.naturalHeight * scale;
+  const pan = Math.sin(t * 0.35) * 0.5 + 0.5;
+  ctx.drawImage(img, (w - dw) * pan, (h - dh) / 2, dw, dh);
+}
+
+/** Original brand-kit logo for the sample business (a wheat ear in a roundel and the name). */
+function logoSvg(w: number, h: number): string {
+  const ear = [0, 1, 2, 3]
+    .map((i) => {
+      const y = 46 - i * 9;
+      return `<path d="M60 ${y} q-12 -2 -15 -13 q12 1 15 13z"/><path d="M60 ${y} q12 -2 15 -13 q-12 1 -15 13z"/>`;
+    })
+    .join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 400 400">
+<rect width="400" height="400" fill="#1f1a17"/>
+<g transform="translate(140 70) scale(1)"><circle cx="60" cy="50" r="56" fill="none" stroke="#e2552f" stroke-width="4"/>
+<g fill="#fbf6ee">${ear}<rect x="58" y="44" width="4" height="46" rx="2"/></g></g>
+<text x="200" y="262" text-anchor="middle" font-family="Georgia, 'Instrument Serif', serif" font-style="italic" font-size="52" fill="#fbf6ee">Leeds Sourdough</text>
+<text x="200" y="304" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="15" letter-spacing="6" fill="#e2552f">BAKERY · EST. 2019</text>
+</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
 
 function ctx2d(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const canvas = document.createElement('canvas');
@@ -138,6 +217,12 @@ function paintScene(
   t = 0,
 ): void {
   const p = PALETTES[kind];
+  const photo = scenePhoto(kind);
+  if (photo) {
+    drawCover(ctx, photo, w, h, t);
+    sampleMark(ctx, w, h);
+    return;
+  }
   const g = ctx.createLinearGradient(0, 0, w * Math.cos(t * 0.4) * 0.3 + w * 0.3, h);
   g.addColorStop(0, p.sky[0]);
   g.addColorStop(1, p.sky[1]);
@@ -198,11 +283,19 @@ function paintScene(
   for (let i = 0; i < 180; i++) {
     ctx.fillRect(((i * 97) % w) + ((t * 13) % 3), (i * 53) % h, 1.5, 1.5);
   }
+  sampleMark(ctx, w, h);
+}
+
+function sampleMark(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+  const m = Math.min(w, h);
   ctx.font = `600 ${Math.max(10, Math.round(m * 0.035))}px Inter, system-ui, sans-serif`;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 4;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.fillText('SAMPLE', w - m * 0.03, h - m * 0.02);
+  ctx.shadowBlur = 0;
 }
 
 const imageCache = new Map<string, string>();
@@ -211,11 +304,18 @@ export function sceneImage(kind: SceneKind, w = 640, h = 640): string {
   const key = `${kind}:${w}x${h}`;
   const hit = imageCache.get(key);
   if (hit) return hit;
+  if (kind === 'logo') {
+    const svg = logoSvg(w, h);
+    imageCache.set(key, svg);
+    return svg;
+  }
   try {
     const [canvas, ctx] = ctx2d(w, h);
     paintScene(ctx, kind, w, h);
     const url = canvas.toDataURL('image/jpeg', 0.82);
-    imageCache.set(key, url);
+    // Only a photo-backed (or photo-less) drawing is final; a drawing made while the photo was
+    // still decoding is redrawn next time.
+    if (!SCENE_PHOTOS[kind] || scenePhoto(kind)) imageCache.set(key, url);
     return url;
   } catch {
     return '';

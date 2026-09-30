@@ -117,7 +117,7 @@ export function FirstVideoStep({
       )}
       {templates.data && !template && (
         <EmptyState
-          icon={<Clapperboard className="size-8" strokeWidth={1.5} />}
+          illustration="projects"
           title={t('noTemplate.title')}
           description={t('noTemplate.description')}
           action={

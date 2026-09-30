@@ -3547,7 +3547,8 @@
       "slate": {
         "scene": "Cena 01",
         "take": "Take 1"
-      }
+      },
+      "phoneAlt": "Vídeo vertical de exemplo: um pão de fermentação natural com cortes, sobre papel manteiga, com a legenda “Saindo do forno às 7h”"
     },
     "platforms": {
       "title": "Um briefing, cortado para cada feed"
@@ -3572,12 +3573,18 @@
       "eyebrow": "Contact sheet",
       "title": "Todos os formatos, a partir de um briefing.",
       "body": "Vertical para TikTok, Reels e Shorts, quadrado e retrato para feeds, widescreen para YouTube e LinkedIn.",
-      "note": "Ilustrações dos formatos que o Studio produz, não vídeos de clientes.",
+      "note": "Fotos de banco de imagens que mostram os formatos que o Studio cria, não vídeos de clientes.",
       "captions": {
         "market": "Feira de sábado, 8h",
         "studio": "Como moldamos um pão de fermentação natural",
-        "workshop": "Nos bastidores do balcão",
-        "counter": "Novidade da semana"
+        "salon": "Cortes de sexta, agende já",
+        "gym": "Aula das 6h, restam três vagas"
+      },
+      "alts": {
+        "market": "Uma barraca de pães em uma feira de rua, pães empilhados sobre uma toalha xadrez vermelha",
+        "studio": "Mãos com farinha modelando a massa sobre uma bancada de madeira",
+        "salon": "Tesouras, uma navalha e um pente sobre um tapete preto",
+        "gym": "Fileiras de halteres em um suporte na academia"
       }
     },
     "features": {
@@ -3622,6 +3629,56 @@
       "copyright": "© {year} {entity}",
       "legalAria": "Jurídico",
       "legalTitle": "Jurídico"
+    },
+    "flow": {
+      "eyebrow": "Do briefing à publicação",
+      "title": "Veja um vídeo ser feito.",
+      "body": "Seis etapas, uma tela por vez. Estas são telas reais do Studio, com os dados de uma padaria de exemplo.",
+      "note": "Telas da demonstração do Studio, com dados de exemplo da Leeds Sourdough, uma padaria fictícia.",
+      "roleCarousel": "carrossel",
+      "roleSlide": "slide",
+      "stepsLabel": "Etapas",
+      "slideLabel": "{current} de {total}",
+      "previous": "Etapa anterior",
+      "next": "Próxima etapa",
+      "pause": "Pausar a apresentação",
+      "play": "Reproduzir a apresentação",
+      "brief": {
+        "tab": "Briefing",
+        "title": "Escreva uma linha",
+        "body": "Diga do que trata o vídeo ou cole uma página da web. O Studio escolhe as plataformas, a duração e o kit de marca, e você pode mudar qualquer um.",
+        "alt": "A tela Criar com um briefing sobre um pão de centeio e um botão Gerar"
+      },
+      "script": {
+        "tab": "Roteiro",
+        "title": "Leia o roteiro e a lista de cenas",
+        "body": "O Studio escreve um gancho, uma mensagem principal e um roteiro para cada formato, com as cenas certas. Reescreva uma linha ou peça outra versão.",
+        "alt": "A aba Roteiro de um projeto: gancho, público, tom e os roteiros de TikTok e YouTube Shorts"
+      },
+      "generate": {
+        "tab": "Gerar",
+        "title": "Imagens, voz e música",
+        "body": "O Studio gera cada cena com modelos de IA de vídeo e imagem, ou usa suas fotos e imagens de banco, e adiciona voz, música e legendas com a sua marca.",
+        "alt": "A biblioteca de imagens de uma padaria: pães, doces, café e um logotipo"
+      },
+      "review": {
+        "tab": "Revisão",
+        "title": "Confira cada versão antes de publicar",
+        "body": "Assista a cada formato lado a lado. Verificações automáticas, incluindo segurança do conteúdo e seu kit de marca, rodam antes da sua aprovação.",
+        "alt": "Uma variante do TikTok pronta para revisão, com as verificações de qualidade aprovadas, incluindo a segurança do conteúdo"
+      },
+      "calendar": {
+        "tab": "Calendário",
+        "title": "Planeje o próximo mês",
+        "body": "Os vídeos aprovados entram nos horários livres do calendário e são publicados em cada conta no momento certo.",
+        "alt": "O calendário de setembro com posts agendados de manhã e à noite"
+      },
+      "analytics": {
+        "tab": "Análises",
+        "title": "Veja o que funcionou",
+        "body": "Visualizações, tempo de exibição, engajamento e o custo de cada vídeo em um só lugar, para o próximo briefing ser melhor.",
+        "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento, gastos e um gráfico de atividade diária"
+      }
     }
   },
   "pricing": {

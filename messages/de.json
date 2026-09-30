@@ -3547,7 +3547,8 @@
       "slate": {
         "scene": "Szene 01",
         "take": "Take 1"
-      }
+      },
+      "phoneAlt": "Beispiel für ein Hochformat-Video: ein eingeschnittenes Sauerteigbrot auf Backpapier, mit der Einblendung „Frisch aus dem Ofen um 7“"
     },
     "platforms": {
       "title": "Ein Briefing, für jeden Feed geschnitten"
@@ -3572,12 +3573,18 @@
       "eyebrow": "Kontaktbogen",
       "title": "Jedes Format, aus einem Briefing.",
       "body": "Hochformat für TikTok, Reels und Shorts, quadratisch und Hochformat für Feeds, Breitbild für YouTube und LinkedIn.",
-      "note": "Darstellungen der von Studio erstellten Formate, keine Kundenvideos.",
+      "note": "Stockfotos, die die Formate von Studio zeigen, keine Kundenvideos.",
       "captions": {
         "market": "Samstagsmarkt, 8 Uhr",
         "studio": "So formen wir ein Sauerteigbrot",
-        "workshop": "Hinter der Ladentheke",
-        "counter": "Neu diese Woche"
+        "salon": "Freitagsschnitte, jetzt buchen",
+        "gym": "Kurs um 6 Uhr, noch drei Plätze frei"
+      },
+      "alts": {
+        "market": "Ein Brotstand auf einem Straßenmarkt, Laibe auf einer rot karierten Decke gestapelt",
+        "studio": "Bemehlte Hände formen Teig auf einer Holzplatte",
+        "salon": "Scheren, ein Rasiermesser und ein Kamm auf einer schwarzen Matte",
+        "gym": "Reihen von Kurzhanteln in einem Ständer im Fitnessstudio"
       }
     },
     "features": {
@@ -3622,6 +3629,56 @@
       "copyright": "© {year} {entity}",
       "legalAria": "Rechtliches",
       "legalTitle": "Rechtliches"
+    },
+    "flow": {
+      "eyebrow": "Vom Briefing bis zum Posting",
+      "title": "So entsteht ein Video.",
+      "body": "Sechs Schritte, ein Bildschirm nach dem anderen. Das sind echte Studio-Bildschirme mit den Daten einer Beispielbäckerei.",
+      "note": "Bildschirme aus der Studio-Demo mit Beispieldaten von Leeds Sourdough, einer fiktiven Bäckerei.",
+      "roleCarousel": "Karussell",
+      "roleSlide": "Folie",
+      "stepsLabel": "Schritte",
+      "slideLabel": "{current} von {total}",
+      "previous": "Vorheriger Schritt",
+      "next": "Nächster Schritt",
+      "pause": "Diashow anhalten",
+      "play": "Diashow abspielen",
+      "brief": {
+        "tab": "Briefing",
+        "title": "Eine Zeile schreiben",
+        "body": "Sagen Sie, worum es im Video geht, oder fügen Sie eine Webseite ein. Studio wählt Plattformen, Länge und Brand Kit, und Sie können alles ändern.",
+        "alt": "Der Bildschirm „Erstellen“ mit einem Briefing zu einem Roggenbrot und einer Schaltfläche „Generieren“"
+      },
+      "script": {
+        "tab": "Skript",
+        "title": "Skript und Shotliste lesen",
+        "body": "Studio schreibt einen Aufhänger, eine Kernbotschaft und ein Skript für jedes Format, samt passenden Einstellungen. Ändern Sie eine Zeile oder fordern Sie eine neue Version an.",
+        "alt": "Der Skript-Tab eines Projekts: Aufhänger, Zielgruppe, Tonfall und die Skripte für TikTok und YouTube Shorts"
+      },
+      "generate": {
+        "tab": "Generieren",
+        "title": "Bilder, Stimme und Musik",
+        "body": "Studio erzeugt jede Einstellung mit KI-Video- und Bildmodellen oder nutzt Ihre Fotos und Stockmaterial und ergänzt Stimme, Musik und Untertitel in Ihrem Markenauftritt.",
+        "alt": "Die Bildbibliothek einer Bäckerei: Brote, Gebäck, Kaffee und ein Logo"
+      },
+      "review": {
+        "tab": "Prüfung",
+        "title": "Jede Fassung vor der Veröffentlichung prüfen",
+        "body": "Sehen Sie alle Formate nebeneinander. Automatische Prüfungen, darunter Inhaltssicherheit und Ihr Brand Kit, laufen vor Ihrer Freigabe.",
+        "alt": "Eine TikTok-Variante zur Prüfung, mit bestandenen Qualitätsprüfungen einschließlich Inhaltssicherheit"
+      },
+      "calendar": {
+        "tab": "Kalender",
+        "title": "Den nächsten Monat planen",
+        "body": "Freigegebene Videos landen in freien Kalenderplätzen und werden zur richtigen Zeit auf jedem Konto veröffentlicht.",
+        "alt": "Der Kalender für September mit geplanten Beiträgen morgens und abends"
+      },
+      "analytics": {
+        "tab": "Analysen",
+        "title": "Sehen, was funktioniert hat",
+        "body": "Aufrufe, Wiedergabezeit, Interaktionen und die Kosten jedes Videos an einem Ort, damit das nächste Briefing besser wird.",
+        "alt": "Die Analyseseite: Aufrufe in 30 Tagen, Wiedergabezeit, Interaktionen, Ausgaben und ein Diagramm der täglichen Aktivität"
+      }
     }
   },
   "pricing": {

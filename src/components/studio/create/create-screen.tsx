@@ -6,15 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import {
-  ArrowRight,
-  Building2,
-  CalendarRange,
-  Clapperboard,
-  Layers,
-  Loader2,
-  Upload,
-} from 'lucide-react';
+import { ArrowRight, CalendarRange, Clapperboard, Layers, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
@@ -130,7 +122,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   if (ready && !businessId) {
     return (
       <EmptyState
-        icon={<Building2 className="size-8" strokeWidth={1.5} />}
+        illustration="business"
         title={t('noBusiness.title')}
         description={t('noBusiness.description')}
         action={

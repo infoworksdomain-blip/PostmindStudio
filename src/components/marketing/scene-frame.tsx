@@ -1,10 +1,15 @@
 import type { ReactNode } from 'react';
+import { imgProps, type MarketingImage } from '@/lib/marketing/media';
 import { cn } from '@/lib/utils';
 
 // Phase 18 landing page — sample "renders" drawn in CSS (no stock images to license or load):
 // layered gradients that read as a bakery counter, a street at dusk, a studio flat-lay and so on,
 // with the caption chip and safe-area guides a Studio render carries. Decorative: the caption is
 // real text, the scene itself is aria-hidden.
+//
+// Phase 20.8: a frame can show a licensed photo instead (`photo`, public/marketing/SOURCES.md) with
+// its alt text; the gradient stays underneath as the colour while the photo loads. Only the hero's
+// photo is `priority` (eager, fetchpriority high); every other one loads lazily.
 
 export type Scene = 'counter' | 'dusk' | 'flatlay' | 'workshop' | 'market' | 'studio';
 
@@ -38,13 +43,23 @@ export function SceneFrame({
   ratio = '9/16',
   className,
   children,
+  compact = false,
+  photo,
+  alt = '',
+  priority = false,
 }: {
   scene: Scene;
+  photo?: MarketingImage;
+  /** Alt text for the photo; empty when the photo is decorative. */
+  alt?: string;
+  priority?: boolean;
   caption?: string;
   label?: string;
   ratio?: '9/16' | '1/1' | '16/9' | '4/5';
   className?: string;
   children?: ReactNode;
+  /** Smaller caption on phones (the hero's small frames). */
+  compact?: boolean;
 }) {
   return (
     <figure
@@ -55,6 +70,19 @@ export function SceneFrame({
       style={{ aspectRatio: ratio }}
     >
       <div aria-hidden className="absolute inset-0" style={{ background: SCENES[scene] }} />
+      {photo && (
+        // Static files under public/marketing with their real size: next/image would add an
+        // optimiser round trip for images that are already sized and compressed.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          {...imgProps(photo)}
+          alt={alt}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding={priority ? 'sync' : 'async'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          className="absolute inset-0 size-full object-cover"
+        />
+      )}
       {/* Safe-area guides, as in the review screen's frame overlay. */}
       <div
         aria-hidden
@@ -67,7 +95,13 @@ export function SceneFrame({
       )}
       {caption && (
         <figcaption className="absolute inset-x-[9%] bottom-[12%] text-center">
-          <span className="box-decoration-clone rounded bg-white px-1.5 py-0.5 text-[0.8rem] leading-relaxed font-semibold text-foreground shadow">
+          <span
+            className={cn(
+              // Ink on white in both themes: the chip is burnt into the video, not themed.
+              'box-decoration-clone rounded bg-white px-1.5 py-0.5 leading-relaxed font-semibold text-neutral-900 shadow',
+              compact ? 'text-[0.6rem] sm:text-[0.8rem]' : 'text-[0.8rem]',
+            )}
+          >
             {caption}
           </span>
         </figcaption>

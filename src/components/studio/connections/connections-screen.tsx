@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { CheckCircle2, Link2, TriangleAlert, X } from 'lucide-react';
+import { CheckCircle2, TriangleAlert, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
@@ -161,7 +161,7 @@ export function ConnectionsScreen({
       )}
       {ready && !businessId && (
         <EmptyState
-          icon={<Link2 className="size-8" strokeWidth={1.5} />}
+          illustration="connections"
           title={t('pickFirst.title')}
           description={t('pickFirst.body')}
         />

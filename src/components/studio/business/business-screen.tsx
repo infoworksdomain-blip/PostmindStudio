@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Building2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBusiness } from '../business-context';
 import { EmptyState, PageHeader } from '../primitives';
@@ -31,7 +30,7 @@ export function BusinessScreen() {
       <PageHeader eyebrow={tn('setup')} title={t('title')} description={t('description')} />
       {ready && !businessId && (
         <EmptyState
-          icon={<Building2 className="size-8" strokeWidth={1.5} />}
+          illustration="business"
           title={t('pickFirst.title')}
           description={t('pickFirst.body')}
         />
