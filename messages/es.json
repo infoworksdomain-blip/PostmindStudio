@@ -3538,7 +3538,8 @@
       "slate": {
         "scene": "Escena 01",
         "take": "Toma 1"
-      }
+      },
+      "phoneAlt": "Vídeo vertical de ejemplo: una hogaza de masa madre con greña sobre papel de horno, con el texto «Recién salido a las 7»"
     },
     "platforms": {
       "title": "Una idea, adaptada a cada red"
@@ -3563,12 +3564,18 @@
       "eyebrow": "Hoja de contactos",
       "title": "Cada formato, a partir de una sola idea.",
       "body": "Vertical para TikTok, Reels y Shorts, cuadrado y vertical para el feed, panorámico para YouTube y LinkedIn.",
-      "note": "Ilustraciones de los formatos que genera Studio, no vídeos de clientes reales.",
+      "note": "Fotos de archivo que muestran los formatos que crea Studio, no vídeos de clientes.",
       "captions": {
         "market": "Mercado del sábado, 8 de la mañana",
         "studio": "Cómo formamos una masa madre",
-        "workshop": "Detrás del mostrador",
-        "counter": "Novedades de esta semana"
+        "salon": "Cortes del viernes, reserva ya",
+        "gym": "Clase de las 6, quedan tres plazas"
+      },
+      "alts": {
+        "market": "Un puesto de pan en un mercado callejero, hogazas apiladas sobre un mantel de cuadros rojos",
+        "studio": "Manos enharinadas formando una masa sobre una mesa de madera",
+        "salon": "Tijeras, una navaja y un peine sobre una alfombrilla negra",
+        "gym": "Filas de mancuernas en un soporte de un gimnasio"
       }
     },
     "features": {
@@ -3613,6 +3620,56 @@
       "copyright": "© {year} {entity}",
       "legalAria": "Legal",
       "legalTitle": "Legal"
+    },
+    "flow": {
+      "eyebrow": "Del brief a la publicación",
+      "title": "Mira cómo se hace un vídeo.",
+      "body": "Seis pasos, una pantalla cada vez. Son las pantallas reales de Studio, con los datos de una panadería de ejemplo.",
+      "note": "Pantallas de la demo de Studio, con datos de ejemplo de Leeds Sourdough, una panadería ficticia.",
+      "roleCarousel": "carrusel",
+      "roleSlide": "diapositiva",
+      "stepsLabel": "Pasos",
+      "slideLabel": "{current} de {total}",
+      "previous": "Paso anterior",
+      "next": "Paso siguiente",
+      "pause": "Pausar la presentación",
+      "play": "Reproducir la presentación",
+      "brief": {
+        "tab": "Brief",
+        "title": "Escribe una línea",
+        "body": "Di de qué trata el vídeo o pega una página web. Studio elige las plataformas, la duración y el kit de marca, y puedes cambiar cualquiera.",
+        "alt": "La pantalla Crear con un brief sobre un pan de centeno y un botón Generar"
+      },
+      "script": {
+        "tab": "Guion",
+        "title": "Lee el guion y la lista de planos",
+        "body": "Studio escribe un gancho, un mensaje clave y un guion para cada formato, con sus planos. Reescribe una línea o pide otra toma.",
+        "alt": "La pestaña Guion de un proyecto: gancho, público, tono y los guiones de TikTok y YouTube Shorts"
+      },
+      "generate": {
+        "tab": "Generar",
+        "title": "Imágenes, voz y música",
+        "body": "Studio genera cada plano con modelos de IA de vídeo e imagen, o usa tus fotos e imágenes de archivo, y añade voz, música y subtítulos con tu marca.",
+        "alt": "La biblioteca de imágenes de una panadería: panes, bollería, café y un logotipo"
+      },
+      "review": {
+        "tab": "Revisión",
+        "title": "Revisa cada versión antes de publicarla",
+        "body": "Mira cada formato uno junto a otro. Antes de que apruebes se ejecutan comprobaciones automáticas, incluida la seguridad del contenido y tu kit de marca.",
+        "alt": "Una variante de TikTok lista para revisar, con las comprobaciones de calidad superadas, incluida la seguridad del contenido"
+      },
+      "calendar": {
+        "tab": "Calendario",
+        "title": "Planifica el mes siguiente",
+        "body": "Los vídeos aprobados ocupan los huecos libres del calendario y se publican en cada cuenta a la hora adecuada.",
+        "alt": "El calendario de septiembre con publicaciones programadas por la mañana y por la tarde"
+      },
+      "analytics": {
+        "tab": "Analítica",
+        "title": "Descubre qué funcionó",
+        "body": "Visualizaciones, tiempo de reproducción, interacción y el coste de cada vídeo, en un solo lugar, para que el próximo brief sea mejor.",
+        "alt": "La página de analítica: visualizaciones en 30 días, tiempo de reproducción, interacción, gasto y un gráfico de actividad diaria"
+      }
     }
   },
   "pricing": {

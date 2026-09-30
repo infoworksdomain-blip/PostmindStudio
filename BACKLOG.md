@@ -427,3 +427,4 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **20.4** Legal document drafts (six pages) with fill-in markers; sign-up stays closed until the markers are filled
 - [x] **20.6** Hive V3 (self-serve) content safety: `HIVE_V3_SECRET_KEY` / `HIVE_API_VERSION`, V3 visual moderation (≤ 60 s one request, longer renders as `HIVE_V3_MAX_FRAMES` sampled frames), 429 fails closed; V2 Enterprise path kept.
 - [x] **20.7** Self-hosted render fonts (STUDIO_FONTS_BASE_URL optional)
+- [x] **20.8** Visual refresh: homepage visuals and slides; placeholder images replaced

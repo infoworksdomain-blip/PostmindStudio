@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ImageIcon, Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -207,7 +207,7 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
           )}
           {data && data.data.length === 0 && (
             <EmptyState
-              icon={<ImageIcon className="size-8" strokeWidth={1.5} />}
+              illustration="images"
               title={filtered ? t('emptyFiltered.title') : t('empty.title')}
               description={filtered ? t('emptyFiltered.body') : t('empty.body')}
             />

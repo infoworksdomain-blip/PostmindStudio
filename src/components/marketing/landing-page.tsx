@@ -11,11 +11,14 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { MARKETING_PHOTOS } from '@/lib/marketing/media';
+import { FlowCarousel } from './flow-carousel';
 import { SceneFrame } from './scene-frame';
 
 // Phase 18 §3 — the public landing page at `/`. Direction: the Studio's own "editorial production
 // studio" (paper, ink, one vermilion record light) pushed into a call sheet: a slate strip, a
-// timeline for the three steps, a contact sheet of sample renders. Every string is in the
+// timeline for the three steps, a contact sheet of sample renders. Phase 20.8 adds the product
+// flow slides (real demo screens) and licensed photos in the hero phone and the contact sheet. Every string is in the
 // `marketing` namespace; platform and product names are not translated. Pricing is Track C's
 // page, so this only links to /pricing (no amounts here: prices live in Stripe).
 
@@ -65,32 +68,82 @@ function Hero() {
           </ul>
         </div>
 
-        {/* Three formats from one brief, drifting on the paper like prints on a light table. */}
-        <div aria-hidden className="relative mx-auto h-[30rem] w-full max-w-[34rem] sm:h-[34rem]">
-          <div className="absolute start-0 top-10 w-[42%] -rotate-6">
-            <div className="animate-drift [animation-delay:-3s]">
-              <SceneFrame scene="counter" caption={t('frames.one')} label="TikTok" />
-            </div>
-          </div>
-          <div className="absolute start-[29%] top-0 z-10 w-[44%]">
-            <div className="animate-drift">
-              <SceneFrame scene="dusk" caption={t('frames.two')} label="Reels" />
-            </div>
-          </div>
-          <div className="absolute end-0 top-16 w-[40%] rotate-6">
-            <div className="animate-drift [animation-delay:-6s]">
-              <SceneFrame scene="flatlay" caption={t('frames.three')} label="Shorts" />
-            </div>
-          </div>
-          {/* The slate: scene, take and timecode, as on a clapperboard. */}
-          <div className="absolute inset-x-[6%] bottom-0 z-20 flex items-center justify-between gap-3 rounded-lg bg-foreground px-4 py-3 font-mono text-[0.7rem] tracking-widest text-background uppercase shadow-xl">
-            <span>{t('slate.scene')}</span>
-            <span className="text-primary">● {t('slate.take')}</span>
-            <span dir="ltr">00:00:30:00</span>
+        <HeroVisual />
+      </div>
+    </section>
+  );
+}
+
+/** Phase 20.8: a vertical video in a phone (a licensed photo with the caption and playback bar a
+ *  Studio render carries) between two other cuts of the same brief, over the clapperboard slate. */
+function HeroVisual() {
+  const t = useTranslations('marketing.hero');
+  return (
+    <div className="relative mx-auto aspect-[100/96] w-full max-w-[34rem]">
+      <div aria-hidden className="absolute start-0 top-[14%] w-[33%] -rotate-6">
+        <div className="animate-drift [animation-delay:-3s]">
+          <SceneFrame
+            scene="market"
+            ratio="4/5"
+            photo={MARKETING_PHOTOS.marketStall}
+            caption={t('frames.two')}
+            label="Reels · 4:5"
+            compact
+          />
+        </div>
+      </div>
+      <div aria-hidden className="absolute end-0 top-[26%] w-[33%] rotate-6">
+        <div className="animate-drift [animation-delay:-6s]">
+          <SceneFrame
+            scene="studio"
+            ratio="1/1"
+            photo={MARKETING_PHOTOS.sourdoughBoard}
+            caption={t('frames.three')}
+            label="Feed · 1:1"
+            compact
+          />
+        </div>
+      </div>
+      <div className="absolute start-[29%] top-0 z-10 w-[42%]">
+        <div className="animate-drift">
+          <div className="rounded-[2rem] bg-foreground p-[5%] shadow-[0_40px_80px_-30px_rgb(40_20_10/0.6)] ring-1 ring-black/20">
+            <SceneFrame
+              scene="counter"
+              photo={MARKETING_PHOTOS.sourdoughLoaf}
+              alt={t('phoneAlt')}
+              priority
+              caption={t('frames.one')}
+              label="TikTok · 0:24"
+              compact
+              className="rounded-[1.4rem] shadow-none ring-0"
+            >
+              <span
+                aria-hidden
+                className="absolute end-3 top-3 inline-flex items-center max-sm:hidden gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[0.6rem] font-semibold tracking-widest text-white uppercase backdrop-blur"
+              >
+                <span className="size-1.5 animate-rec rounded-full bg-primary" />
+                Rec
+              </span>
+              <span
+                aria-hidden
+                className="absolute inset-x-[7%] bottom-[5%] h-1 overflow-hidden rounded-full bg-white/30"
+              >
+                <span className="block h-full origin-left animate-playback bg-white rtl:origin-right" />
+              </span>
+            </SceneFrame>
           </div>
         </div>
       </div>
-    </section>
+      {/* The slate: scene, take and timecode, as on a clapperboard. */}
+      <div
+        aria-hidden
+        className="absolute inset-x-[6%] bottom-0 z-20 flex items-center justify-between gap-3 rounded-lg bg-foreground px-4 py-3 font-mono text-[0.7rem] tracking-widest text-background uppercase shadow-xl"
+      >
+        <span>{t('slate.scene')}</span>
+        <span className="text-primary">● {t('slate.take')}</span>
+        <span dir="ltr">00:00:30:00</span>
+      </div>
+    </div>
   );
 }
 
@@ -173,6 +226,8 @@ function ContactSheet() {
       <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-6 md:gap-5">
         <SceneFrame
           scene="market"
+          photo={MARKETING_PHOTOS.marketStall}
+          alt={t('alts.market')}
           caption={t('captions.market')}
           label="9:16 · 0:24"
           className="md:col-span-2 md:row-span-2"
@@ -180,6 +235,8 @@ function ContactSheet() {
         <SceneFrame
           scene="studio"
           ratio="16/9"
+          photo={MARKETING_PHOTOS.doughKneading}
+          alt={t('alts.studio')}
           caption={t('captions.studio')}
           label="16:9 · 2:40"
           className="col-span-2 md:col-span-4"
@@ -187,14 +244,18 @@ function ContactSheet() {
         <SceneFrame
           scene="workshop"
           ratio="1/1"
-          caption={t('captions.workshop')}
+          photo={MARKETING_PHOTOS.salonTools}
+          alt={t('alts.salon')}
+          caption={t('captions.salon')}
           label="1:1 · 0:15"
           className="md:col-span-2"
         />
         <SceneFrame
-          scene="counter"
+          scene="dusk"
           ratio="4/5"
-          caption={t('captions.counter')}
+          photo={MARKETING_PHOTOS.gym}
+          alt={t('alts.gym')}
+          caption={t('captions.gym')}
           label="4:5 · 0:30"
           className="md:col-span-2"
         />
@@ -285,6 +346,7 @@ export function LandingPage() {
       <Hero />
       <Platforms />
       <Steps />
+      <FlowCarousel />
       <ContactSheet />
       <Features />
       <Closing />

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { LayoutTemplate, Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -135,10 +135,7 @@ export function TemplatesScreen() {
           </Section>
           <Section title={t('builtInTitle')} className="lg:col-span-2">
             {builtIns.length === 0 ? (
-              <EmptyState
-                icon={<LayoutTemplate className="size-8" strokeWidth={1.5} />}
-                title={t('noBuiltIns')}
-              />
+              <EmptyState illustration="templates" title={t('noBuiltIns')} />
             ) : (
               <ul className="flex flex-wrap gap-2 text-sm">
                 {builtIns.map((b) => (

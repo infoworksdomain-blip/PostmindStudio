@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useErrorMessage } from '@/lib/client/api';
 import type { Tone } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
+import { EmptyIllustration, type IllustrationName } from './empty-illustration';
 
 // Shared building blocks for Studio screens: page header, state badge (with a pulsing
 // "record" light for work in progress), empty and error states, section card.
@@ -76,16 +77,23 @@ export function EmptyState({
   description,
   action,
   icon,
+  illustration,
 }: {
   title: string;
   description?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** Phase 20.8: an original line drawing (decorative) in place of the icon. */
+  illustration?: IllustrationName;
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-16 text-center">
       <div className="mb-4 text-muted-foreground">
-        {icon ?? <Inbox className="size-8" strokeWidth={1.5} />}
+        {illustration ? (
+          <EmptyIllustration name={illustration} />
+        ) : (
+          (icon ?? <Inbox className="size-8" strokeWidth={1.5} />)
+        )}
       </div>
       <h2 className="font-display text-2xl">{title}</h2>
       {description && <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>}

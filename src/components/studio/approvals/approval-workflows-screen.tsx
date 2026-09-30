@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ChevronRight, ListChecks, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -194,7 +194,7 @@ export function ApprovalWorkflowsScreen() {
         ) : workflows.length === 0 ? (
           !editing && (
             <EmptyState
-              icon={<ListChecks className="size-8" strokeWidth={1.5} />}
+              illustration="approvals"
               title={t('emptyTitle')}
               description={t('emptyBody')}
               action={

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Library } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,7 +94,7 @@ export function LibraryBrowse() {
           )}
           {data && visible.length === 0 && (
             <EmptyState
-              icon={<Library className="size-8" strokeWidth={1.5} />}
+              illustration="library"
               title={t('emptyTitle')}
               description={searching ? t('emptySearch') : t('emptyFilters')}
             />

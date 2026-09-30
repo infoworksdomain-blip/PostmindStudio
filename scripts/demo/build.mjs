@@ -51,6 +51,13 @@ const hardNavigateShim = {
     b.onResolve({ filter: /^@\/lib\/client\/navigate$/ }, () => ({
       path: join(root, 'demo', 'shims', 'hard-navigate.ts'),
     }));
+    // Phase 20.8: marketing photos and screens are inlined (data: URLs) instead of /marketing/….
+    b.onResolve({ filter: /(^@\/lib\/marketing|^\.)\/media-src$/ }, (args) =>
+      args.path.startsWith('@') ||
+      args.importer.replaceAll('\\', '/').includes('src/lib/marketing/')
+        ? { path: join(root, 'demo', 'shims', 'marketing-media-src.ts') }
+        : undefined,
+    );
     // The email previews (#/tour/email/*) render the real templates; their catalogue reads the
     // template list from lib/email/auth-mailer.ts, whose server-only sender lazily imports the API
     // context (Prisma, BullMQ). Left as an import() that never runs in the demo.
@@ -74,7 +81,7 @@ async function js() {
     target: ['es2020'],
     jsx: 'automatic',
     // Phase 18: the legal pages render content/legal/en-GB/*.md (text) in the demo.
-    loader: { '.md': 'text' },
+    loader: { '.md': 'text', '.webp': 'dataurl' },
     tsconfig: join(root, 'tsconfig.json'),
     alias: {
       'next/link': join(root, 'demo', 'shims', 'next-link.tsx'),

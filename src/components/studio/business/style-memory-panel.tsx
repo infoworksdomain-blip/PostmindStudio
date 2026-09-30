@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Brain, Check, Loader2, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
+import { Check, Loader2, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -108,11 +108,7 @@ export function StyleMemoryPanel({ businessId }: { businessId: string }) {
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />}
       {data && data.data.length === 0 && (
-        <EmptyState
-          icon={<Brain className="size-8" strokeWidth={1.5} />}
-          title={t('empty.title')}
-          description={t('empty.body')}
-        />
+        <EmptyState illustration="memory" title={t('empty.title')} description={t('empty.body')} />
       )}
       {data && data.data.length > 0 && (
         <ul aria-label={t('listAria')} className="grid gap-3">

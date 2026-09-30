@@ -130,6 +130,7 @@ export function ProjectsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
+          illustration="projects"
           title={filter === 'all' ? t('empty.title') : t('emptyFiltered.title')}
           description={filter === 'all' ? t('empty.body') : t('emptyFiltered.body')}
           action={
