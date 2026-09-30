@@ -77,7 +77,8 @@ jobs:
             "SELECT count(*) FROM pg_tables WHERE schemaname = 'studio' AND tablename <> '_prisma_migrations'")
           echo "studio tables: $count"
           # 33 (spec 7 + A7) + cost_alerts + notifications (Phase 12 cost caps / alerting)
-          test "$count" -eq 78
+          # + content_plans + content_plan_items (Phase 20.9 "Plan my month")
+          test "$count" -eq 80
       - name: Install ffmpeg (Ubuntu repository)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg

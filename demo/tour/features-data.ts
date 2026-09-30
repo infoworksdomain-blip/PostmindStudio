@@ -220,6 +220,13 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
         phase: '20.3',
       },
       {
+        title: 'Plan my month',
+        description:
+          'Claude drafts a month of videos and slideshows (≤ 4 a day); edit the list, then everything is made and scheduled, with a review window.',
+        href: '#/plans/new',
+        phase: '20.9',
+      },
+      {
         title: 'Auto-publish',
         description: 'Approved projects post themselves to the targets chosen at creation.',
         href: p(PROJECTS.morningRitual.id),

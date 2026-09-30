@@ -244,6 +244,8 @@ export async function hardDeleteBusiness(
       .count,
     platform_connections: (await tx.platformConnection.deleteMany({ where: scope })).count,
     drip_queues: (await tx.dripQueue.deleteMany({ where: scope })).count,
+    // 20.9: the business's month plans (their items cascade).
+    content_plans: (await tx.contentPlan.deleteMany({ where: scope })).count,
   }));
   return { projects: projectIds.length, rows: { ...rows, ...business }, objects };
 }

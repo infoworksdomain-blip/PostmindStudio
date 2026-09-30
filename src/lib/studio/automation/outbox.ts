@@ -46,7 +46,7 @@ export function outboxBackoffMs(attempts: number): number {
 
 type Tx = Pick<
   Prisma.TransactionClient,
-  'videoProject' | 'autoPublishOutbox' | 'dripQueue' | '$executeRaw'
+  'videoProject' | 'autoPublishOutbox' | 'dripQueue' | 'contentPlanItem' | '$executeRaw'
 >;
 
 export interface SchedulePlan {

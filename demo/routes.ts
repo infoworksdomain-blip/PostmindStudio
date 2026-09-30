@@ -19,6 +19,10 @@ export const APP_PATHS = [
   '/library/:id',
   '/publications',
   '/calendar',
+  // 20.9 Plan my month
+  '/plans',
+  '/plans/new',
+  '/plans/:id',
   '/analytics',
   '/analytics/publications/:id',
   '/business',

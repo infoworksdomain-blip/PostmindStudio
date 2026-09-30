@@ -1714,6 +1714,127 @@ model DripQueue {
   @@schema("studio")
 }
 
+// DERIVED — 20.9 "Plan my month" (operator request 2026-09-30): a month of videos and slideshows
+// drafted by Claude, edited by the owner, then generated and auto-scheduled (≤ 4 posts a day)
+// with a review window. One plan per request; each item becomes one project when generated.
+model ContentPlan {
+  id                  String            @id @default(cuid())
+  organisationId      String
+  businessId          String
+  createdByUserId     String
+  /// Who pressed "Generate and schedule" (their approval covers the plan's items).
+  scheduledByUserId   String?
+  status              ContentPlanStatus @default(DRAFTING)
+  /// First local day of the plan (YYYY-MM-DD in `timezone`) and its length (1–31 days).
+  startDate           String
+  days                Int
+  timezone            String
+  /// [windowStart, windowEnd): the plan's instants (local midnight of startDate → + days).
+  windowStart         DateTime
+  windowEnd           DateTime
+  /// 1–4 posts a day, or the business's drip-queue posting times (useDripSlots).
+  postsPerDay         Int
+  useDripSlots        Boolean           @default(false)
+  /// 0–100: the share of items that are videos (the rest are slideshows).
+  videoShare          Int               @default(50)
+  platforms           String[]
+  /// AutoPublishTarget[] (automation/targets.ts), one connected account per platform.
+  targets             Json
+  language            String            @default("en-GB")
+  brandKitId          String?
+  /// Plan tier recorded at "Generate and schedule" (the runner's job payloads use it).
+  planTier            String?
+  /// Items the window and posting times allow, before the allowance / cost cap.
+  requestedCount      Int               @default(0)
+  /// Why the draft has fewer items than requestedCount: allowance | cost_cap.
+  cappedReason        String?
+  /// Why the runner is waiting: kill_switch | cost_cap | daily_limit | allowance.
+  holdReason          String?
+  draftError          String?
+  draftModel          String?
+  generationStartedAt DateTime?
+  /// Every item was scheduled (or held / failed): the summary email went out once.
+  scheduledAt         DateTime?
+  summaryEmailedAt    DateTime?
+  completedAt         DateTime?
+  cancelledAt         DateTime?
+  metadata            Json?
+  items               ContentPlanItem[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([organisationId, businessId, createdAt])
+  @@index([status, updatedAt])
+  @@map("content_plans")
+  @@schema("studio")
+}
+
+model ContentPlanItem {
+  id               String                @id @default(cuid())
+  planId           String
+  plan             ContentPlan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  organisationId   String
+  position         Int
+  /// The post time this item was given (item order = slot order).
+  slotAt           DateTime
+  kind             ContentPlanItemKind
+  /// offer | how_to | behind_the_scenes | testimonial | product_feature | seasonal
+  angle            String
+  title            String
+  brief            String
+  /// Slideshow text { hook, points[], cta } (used when kind is SLIDESHOW).
+  slides           Json?
+  /// A seasonal / UK calendar day the item is for (content-plans/calendar-days.ts id).
+  calendarDay      String?
+  status           ContentPlanItemStatus @default(PLANNED)
+  statusReason     String?
+  projectId        String?
+  /// The allowance reservation (plan-quotas.ts QuotaReservation minus ids), set at generate.
+  quotaReservation Json?
+  startedAt        DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([planId, position])
+  @@index([organisationId, slotAt])
+  @@index([projectId])
+  @@map("content_plan_items")
+  @@schema("studio")
+}
+
+enum ContentPlanStatus {
+  DRAFTING
+  DRAFT
+  GENERATING
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+
+  @@schema("studio")
+}
+
+enum ContentPlanItemKind {
+  VIDEO
+  SLIDESHOW
+
+  @@schema("studio")
+}
+
+enum ContentPlanItemStatus {
+  PLANNED
+  QUEUED
+  GENERATING
+  READY
+  SCHEDULED
+  POSTED
+  HELD
+  FAILED
+  SKIPPED
+  REMOVED
+
+  @@schema("studio")
+}
+
 // DERIVED — Phase 15 operator decision P1 (2026-09-28; spec 6.6 / 12.6): Enterprise
 // organisations may bring their own provider API keys (BYOC). Key material is envelope-encrypted
 // (crypto/envelope.ts) and wiped on revoke; one row per (organisation, provider), re-used when a

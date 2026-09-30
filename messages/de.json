@@ -485,7 +485,8 @@
         "generatingUpload": "Wird generiert – Studio untertitelt Ihr Video.",
         "generatingScript": "Wird generiert – Studio schreibt das Skript.",
         "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}"
-      }
+      },
+      "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows"
     },
     "problems": {
       "businessRequired": "Wählen Sie zuerst ein Unternehmen aus.",
@@ -1392,7 +1393,8 @@
       "more": "{count, plural, one {+# weiterer} other {+# weitere}}",
       "agendaAria": "Agenda",
       "emptyMonth": "In diesem Monat ist nichts geplant oder veröffentlicht.",
-      "moreOpen": "{count, plural, one {+# freier Slot} other {+# freie Slots}}"
+      "moreOpen": "{count, plural, one {+# freier Slot} other {+# freie Slots}}",
+      "morePlanned": "+{count} geplant"
     },
     "event": {
       "untitled": "Unbenanntes Projekt",
@@ -1443,6 +1445,12 @@
     "summary": {
       "next": "Nächste 30 Tage: {scheduled, plural, one {# Beitrag geplant} other {# Beiträge geplant}} · {open, plural, one {# freier Slot} other {# freie Slots}}",
       "queueOff": "Nächste 30 Tage: {scheduled, plural, one {# Beitrag geplant} other {# Beiträge geplant}}. Die Posting-Warteschlange ist aus — <link>legen Sie Posting-Zeiten fest</link>, um den Monat automatisch zu füllen."
+    },
+    "planMonth": "Meinen Monat planen",
+    "planned": {
+      "label": "Geplant",
+      "aria": "Beitrag aus dem Monatsplan um {time}: {title} ({status})",
+      "legend": "Mit „Geplant“ markierte Felder sind Beiträge aus dem Monatsplan, die noch erstellt werden; sobald sie eingeplant sind, erscheinen sie als Beiträge."
     }
   },
   "business": {
@@ -3139,7 +3147,8 @@
         "title": "Fast live",
         "body": "„{name}“ ist noch nicht veröffentlicht. Prüfen und genehmigen Sie es und veröffentlichen Sie es dann – wir feiern hier, sobald es online ist.",
         "action": "Ihr Video öffnen"
-      }
+      },
+      "planMonth": "Oder lassen Sie Studio Ihren ganzen Monat planen und einplanen"
     },
     "finished": {
       "title": "Alles bereit",
@@ -4599,6 +4608,12 @@
         "heading": "Ihr Datenexport ist bereit",
         "body": "Der von Ihnen angeforderte Export aus PostMind Studio steht zum Download bereit. Der Download-Link funktioniert bis zum {expiresAt, date, long}.",
         "cta": "Export herunterladen"
+      },
+      "monthPlanned": {
+        "subject": "Ihr Monat ist geplant: {postCount, plural, one {# Beitrag} other {# Beiträge}} vom {startDate, date, long} bis {endDate, date, long}",
+        "heading": "Ihr Monat ist geplant",
+        "body": "{postCount, plural, one {# Beitrag ist} other {# Beiträge sind}} vom {startDate, date, long} bis {endDate, date, long} eingeplant. Jeder geht zu seiner Zeit raus, außer Sie ändern oder entfernen ihn vorher. {needsAttention, plural, one {# Beitrag braucht Ihre Aufmerksamkeit.} other {# Beiträge brauchen Ihre Aufmerksamkeit.}}",
+        "cta": "Ihren Monat prüfen"
       }
     },
     "notification": {
@@ -4784,6 +4799,209 @@
           "action": "Ansicht starten"
         }
       }
+    }
+  },
+  "plans": {
+    "loading": "Plan wird geladen",
+    "new": {
+      "eyebrow": "Meinen Monat planen",
+      "title": "Meinen Monat planen",
+      "description": "Studio entwirft einen Monat mit Videos und Diashows aus Ihrer Website, Ihrem Brand-Kit und Ihren bisherigen Beiträgen. Sie bearbeiten die Liste, dann wird alles erstellt und eingeplant: Jeder Beitrag geht zu seiner Zeit raus, außer Sie ändern oder entfernen ihn vorher.",
+      "yourPlans": "Ihre Monatspläne",
+      "loading": "Ihr Plan wird vorbereitet",
+      "start": "Startdatum",
+      "startHint": "Der erste Tag des Plans. Er beginnt an Ihrem nächsten freien Tag, außer Sie wählen einen anderen.",
+      "days": "Dauer in Tagen",
+      "daysHint": "Bis zu {max} Tage.",
+      "postsPerDay": "Beiträge pro Tag",
+      "postsPerDayOption": "{count, plural, one {# pro Tag} other {# pro Tag}}",
+      "useMyTimes": "Meine Veröffentlichungszeiten verwenden",
+      "useMyTimesHint": "Ihr Kalender hat {count, plural, one {# Veröffentlichungszeit} other {# Veröffentlichungszeiten}} pro Woche; ein Plan nutzt höchstens 4 pro Tag.",
+      "noPostingTimes": "Noch keine Veröffentlichungszeiten. Legen Sie sie im Kalender fest, um sie hier zu nutzen.",
+      "mix": "Videos und Diashows",
+      "mixValue": "{videos} % Videos · {slideshows} % Diashows",
+      "mixHint": "Diashows sind schneller und günstiger zu erstellen; Videos nutzen KI-Clips und ein Voice-over.",
+      "account": "{platform}-Konto",
+      "noAccount": "Kein verbundenes Konto.",
+      "connect": "Eines verbinden",
+      "chooseAccount": "Konto wählen",
+      "submit": "Meinen Monat entwerfen",
+      "submitting": "Wird entworfen…",
+      "estimate": "Bis zu {count, plural, one {# Beitrag} other {# Beiträge}} in {days, plural, one {# Tag} other {# Tagen}}.",
+      "costHint": "Übliche Erstellungskosten: etwa {video} pro Video und bis zu {slideshow} pro Diashow.",
+      "problems": {
+        "startRequired": "Wählen Sie ein Startdatum.",
+        "daysRange": "Wählen Sie zwischen 1 und {max} Tagen.",
+        "platformRequired": "Wählen Sie mindestens eine Plattform aus.",
+        "accountRequired": "Wählen Sie für jede Plattform ein verbundenes Konto: Die Beiträge werden automatisch veröffentlicht."
+      },
+      "noBusiness": {
+        "title": "Wählen Sie zuerst ein Unternehmen",
+        "description": "Ein Monatsplan gehört zu genau einem Unternehmen.",
+        "action": "Unternehmen öffnen"
+      }
+    },
+    "allowance": {
+      "title": "Dieser Monat",
+      "videos": "{remaining, plural, one {# Video übrig} other {# Videos übrig}} von {limit}",
+      "credits": "{count, plural, one {plus # Aufladeguthaben} other {plus # Aufladeguthaben}}",
+      "unlimited": "Ihr Tarif hat kein monatliches Videolimit",
+      "spend": "Ausgabenlimit: {spent} von {cap} verbraucht",
+      "noCap": "Kein monatliches Ausgabenlimit",
+      "topUp": "Aufladung hinzufügen"
+    },
+    "capped": {
+      "allowance": "Dieser Plan hat {count, plural, one {# Beitrag} other {# Beiträge}} statt {requested}: So viel deckt Ihr Kontingent in diesem Monat ab. <link>Fügen Sie eine Aufladung hinzu</link>, um mehr zu planen.",
+      "cost_cap": "Dieser Plan hat {count, plural, one {# Beitrag} other {# Beiträge}} statt {requested}: Mehr würde das Ausgabenlimit dieses Monats überschreiten. <link>Fügen Sie eine Aufladung hinzu</link>, um es zu erhöhen."
+    },
+    "hold": {
+      "kill_switch": "Studio hat die Erstellung vorerst pausiert. Ihre Beiträge laufen danach automatisch weiter.",
+      "cost_cap": "Pausiert: Das Ausgabenlimit dieses Monats ist erreicht. Es geht weiter, wenn das Limit zurückgesetzt wird oder Sie eine Aufladung hinzufügen.",
+      "daily_limit": "Bis morgen pausiert: Das heutige Limit für Monatspläne ist erreicht. Der Rest läuft automatisch weiter."
+    },
+    "drafting": {
+      "title": "Ihr Monat wird entworfen",
+      "body": "Claude schreibt Ihre Beiträge aus den Angaben zu Ihrem Unternehmen. Das dauert meist ein bis zwei Minuten.",
+      "progress": "{written} von {total} Beiträgen geschrieben"
+    },
+    "status": {
+      "DRAFTING": "Wird entworfen",
+      "DRAFT": "Entwurf",
+      "GENERATING": "Wird erstellt",
+      "SCHEDULED": "Eingeplant",
+      "COMPLETED": "Abgeschlossen",
+      "CANCELLED": "Abgebrochen"
+    },
+    "itemStatus": {
+      "PLANNED": "Geplant",
+      "QUEUED": "Wartet auf Erstellung",
+      "GENERATING": "Wird erstellt",
+      "READY": "Braucht Ihre Prüfung",
+      "SCHEDULED": "Eingeplant",
+      "POSTED": "Veröffentlicht",
+      "HELD": "Von der Sicherheitsprüfung zurückgehalten",
+      "FAILED": "Fehlgeschlagen",
+      "SKIPPED": "Übersprungen",
+      "REMOVED": "Entfernt"
+    },
+    "angle": {
+      "how_to": "Anleitung",
+      "product_feature": "Produkt im Fokus",
+      "behind_the_scenes": "Hinter den Kulissen",
+      "offer": "Angebot",
+      "testimonial": "Warum Kunden Sie wählen",
+      "seasonal": "Saisonal",
+      "custom": "Ihre Idee"
+    },
+    "kind": {
+      "VIDEO": "Video",
+      "SLIDESHOW": "Diashow"
+    },
+    "calendarDay": {
+      "new_year": "Neujahr",
+      "valentines": "Valentinstag",
+      "pancake_day": "Faschingsdienstag",
+      "st_davids": "St. David’s Day",
+      "st_patricks": "St. Patrick’s Day",
+      "mothers_day_uk": "Muttertag (Vereinigtes Königreich)",
+      "easter": "Ostern",
+      "st_georges": "St. George’s Day",
+      "early_may_bank_holiday": "Feiertag Anfang Mai",
+      "spring_bank_holiday": "Frühlingsfeiertag",
+      "fathers_day": "Vatertag",
+      "summer_bank_holiday": "Sommerfeiertag",
+      "halloween": "Halloween",
+      "bonfire_night": "Bonfire Night",
+      "black_friday": "Black Friday",
+      "st_andrews": "St. Andrew’s Day",
+      "small_business_saturday": "Small Business Saturday",
+      "christmas_eve": "Heiligabend",
+      "christmas": "Weihnachten",
+      "boxing_day": "Zweiter Weihnachtstag",
+      "new_years_eve": "Silvester"
+    },
+    "reason": {
+      "slot_passed": "Seine Zeit kam, bevor er erstellt werden konnte.",
+      "allowance": "Nicht vom Kontingent dieses Monats abgedeckt.",
+      "removed_by_owner": "Von Ihnen entfernt.",
+      "plan_cancelled": "Der Plan wurde abgebrochen.",
+      "not_started": "Er konnte nicht gestartet werden.",
+      "publish_failed": "Die Veröffentlichung ist fehlgeschlagen. Öffnen Sie ihn, um es erneut zu versuchen.",
+      "safety_review": "Wartet auf eine Sicherheitsprüfung.",
+      "content_safety_flag": "Die Inhaltssicherheitsprüfung hat ihn markiert.",
+      "script_safety_flag": "Die Skriptsicherheitsprüfung hat ihn markiert."
+    },
+    "editor": {
+      "title": "Ihr Monat: {start} – {end}",
+      "draftError": "Einige Beiträge konnten nicht geschrieben werden.",
+      "redraft": "Fehlende Beiträge schreiben",
+      "summary": "{count, plural, one {# Beitrag} other {# Beiträge}}: {videos, plural, one {# Video} other {# Videos}} und {slideshows, plural, one {# Diashow} other {# Diashows}}",
+      "costEstimate": "Geschätzte Erstellungskosten: etwa {typical} (höchstens {max}).",
+      "allowanceUse": "Nutzt {count, plural, one {# Video} other {# Videos}} des Kontingents dieses Monats.",
+      "reviewWindow": "Nach der Erstellung geht jeder Beitrag zu seiner Zeit raus, außer Sie ändern oder entfernen ihn vorher. Sie erhalten eine einzige E-Mail, wenn Ihr Monat fertig ist.",
+      "generate": "Erstellen und einplanen",
+      "discard": "Plan verwerfen",
+      "daysAria": "Beiträge nach Tag",
+      "untitled": "Wird geschrieben…",
+      "saved": "Gespeichert",
+      "edit": "Bearbeiten",
+      "moveUp": "„{title}“ früher einplanen",
+      "moveDown": "„{title}“ später einplanen",
+      "regenerate": "Neues Thema",
+      "regenerateAria": "Ein neues Thema statt „{title}“ schreiben",
+      "remove": "Löschen",
+      "removeAria": "„{title}“ löschen",
+      "removed": "Beitrag gelöscht",
+      "generateConfirmTitle": "{count, plural, one {# Beitrag} other {# Beiträge}} erstellen und einplanen?",
+      "generateConfirmBody": "Studio erstellt jeden Beitrag und plant ihn zu seiner Zeit ein. Jeder wird automatisch veröffentlicht, außer Sie ändern oder entfernen ihn vorher. Sie erhalten eine einzige E-Mail, wenn Ihr Monat fertig ist.",
+      "notYet": "Noch nicht",
+      "generating": "Ihr Monat wird erstellt",
+      "discardConfirmTitle": "Diesen Plan verwerfen?",
+      "discardConfirmBody": "Der Entwurf und seine Beiträge werden verworfen. Es wurde noch nichts erstellt oder eingeplant.",
+      "discarded": "Plan verworfen",
+      "titleLabel": "Thema",
+      "kindLabel": "Format",
+      "briefLabel": "Briefing",
+      "hookLabel": "Eröffnungszeile",
+      "ctaLabel": "Handlungsaufforderung",
+      "pointsLabel": "Punkte der Diashow, einer pro Zeile",
+      "save": "Speichern",
+      "cancelEdit": "Abbrechen",
+      "addTitle": "Beitrag hinzufügen",
+      "addWhen": "Datum und Uhrzeit",
+      "addWhenHint": "Innerhalb der Plandaten, höchstens 4 Beiträge pro Tag.",
+      "addSubmit": "Beitrag hinzufügen",
+      "added": "Beitrag hinzugefügt"
+    },
+    "view": {
+      "calendar": "Kalender öffnen",
+      "statsAria": "Beiträge nach Status",
+      "heldNote": "{count, plural, one {# Beitrag wurde} other {# Beiträge wurden}} von der Sicherheitsprüfung zurückgehalten und nicht veröffentlicht. Öffnen Sie einen, um den Grund zu sehen, und bearbeiten oder entfernen Sie ihn dann.",
+      "reviewWindow": "Jeder Beitrag geht zu seiner Zeit raus. Bis dahin können Sie ihn öffnen, um ihn zu bearbeiten, gegen ein anderes Thema zu tauschen oder zu entfernen.",
+      "daysAria": "Beiträge nach Tag",
+      "cancelPlan": "Plan abbrechen",
+      "cancelConfirm": "Alle Beiträge, die noch nicht raus sind, werden abgebrochen und ihre Zeiten freigegeben. Das lässt sich nicht rückgängig machen.",
+      "cancelled": "Plan abgebrochen",
+      "open": "Öffnen",
+      "openAria": "„{title}“ öffnen",
+      "swap": "Thema tauschen",
+      "swapAria": "„{title}“ gegen ein anderes Thema tauschen",
+      "swapSubmit": "Tauschen und erstellen",
+      "swapped": "Thema getauscht: Der neue Beitrag wird erstellt",
+      "remove": "Entfernen",
+      "removeAria": "„{title}“ entfernen",
+      "removeConfirm": "Seine Veröffentlichung wird abgebrochen und die Zeit freigegeben. Der Rest des Plans läuft weiter.",
+      "removedToast": "Beitrag entfernt"
+    },
+    "list": {
+      "title": "Monatspläne",
+      "description": "Monate, die Studio für dieses Unternehmen geplant hat, die neuesten zuerst.",
+      "loading": "Monatspläne werden geladen",
+      "new": "Meinen Monat planen",
+      "empty": "Noch keine Monatspläne",
+      "emptyBody": "Lassen Sie Studio einen Monat mit Videos und Diashows entwerfen und erstellen und planen Sie sie dann in einem Schritt ein.",
+      "range": "{start} – {end}",
+      "posts": "{count, plural, one {# Beitrag} other {# Beiträge}}"
     }
   }
 }

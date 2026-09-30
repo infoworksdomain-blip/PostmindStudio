@@ -125,6 +125,21 @@ export interface RollUpJobData {
   batch?: boolean;
 }
 
+/** 20.9: write a month plan's topics. runId = the draft run (plan.metadata.draftRunId). */
+export interface ContentPlanJobData {
+  organisationId: string;
+  runId: string;
+  planTier: PlanTier;
+  planId: string;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
+/** 20.9: the month-plan runner (every minute, platform-level); planId = kick one plan now. */
+export interface AdvancePlansJobData extends RollUpJobData {
+  planId?: string;
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
@@ -194,6 +209,10 @@ export interface JobDataMap {
   'send-email': SendEmailJobData;
   /** Phase 18 §2.8: re-enqueue outbox rows whose job was lost; purge old rows (every 5 min). */
   'sweep-email-outbox': RollUpJobData;
+  /** 20.9: Claude writes a month plan's topics (per organisation, spends provider budget). */
+  'draft-content-plan': ContentPlanJobData;
+  /** 20.9: start throttled month-plan items, track their status, send the summary (every minute). */
+  'advance-content-plans': AdvancePlansJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -239,6 +258,8 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'audit-retention': QUEUES.analytics,
   'send-email': QUEUES.email,
   'sweep-email-outbox': QUEUES.email,
+  'draft-content-plan': QUEUES.orchestration,
+  'advance-content-plans': QUEUES.orchestration,
 };
 
 export const MAX_RETRIES = 5;

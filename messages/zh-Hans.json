@@ -485,7 +485,8 @@
         "generatingUpload": "正在生成——Studio 正在为您的视频添加字幕。",
         "generatingScript": "正在生成——Studio 正在撰写脚本。",
         "draftNotStarted": "已保存为草稿，但未能开始生成：{error}"
-      }
+      },
+      "planMonth": "或者规划一整个月的视频和幻灯片"
     },
     "problems": {
       "businessRequired": "请先选择商家。",
@@ -1392,7 +1393,8 @@
       "more": "{count, plural, other {还有 # 条}}",
       "agendaAria": "日程",
       "emptyMonth": "本月没有排期或发布的内容。",
-      "moreOpen": "{count, plural, other {还有 # 个空闲时段}}"
+      "moreOpen": "{count, plural, other {还有 # 个空闲时段}}",
+      "morePlanned": "另有 {count} 条已规划"
     },
     "event": {
       "untitled": "未命名项目",
@@ -1443,6 +1445,12 @@
     "summary": {
       "next": "未来 30 天：{scheduled, plural, other {已排期 # 条帖子}} · {open, plural, other {# 个空闲时段}}",
       "queueOff": "未来 30 天：{scheduled, plural, other {已排期 # 条帖子}}。定时发布队列已关闭——<link>设置发布时间</link>即可自动排满整月。"
+    },
+    "planMonth": "规划我的一个月",
+    "planned": {
+      "label": "已规划",
+      "aria": "{time} 的月度计划帖子：{title}（{status}）",
+      "legend": "标有“已规划”的方框是仍在制作中的月度计划帖子；排期后会显示为帖子。"
     }
   },
   "business": {
@@ -3139,7 +3147,8 @@
         "title": "即将上线",
         "body": "“{name}”尚未发布。请审阅并批准，然后发布——上线的那一刻我们会在这里庆祝。",
         "action": "打开你的视频"
-      }
+      },
+      "planMonth": "或者让 Studio 为你规划并排期整个月"
     },
     "finished": {
       "title": "一切就绪",
@@ -4599,6 +4608,12 @@
         "heading": "您的数据导出已就绪",
         "body": "您在 PostMind Studio 申请的导出文件已可下载。下载链接在 {expiresAt, date, long} 之前有效。",
         "cta": "下载导出文件"
+      },
+      "monthPlanned": {
+        "subject": "你的一个月已规划好：{startDate, date, long} 至 {endDate, date, long}，共 {postCount, plural, other {# 条帖子}}",
+        "heading": "你的一个月已规划好",
+        "body": "{startDate, date, long} 至 {endDate, date, long} 已排期 {postCount, plural, other {# 条帖子}}。每条帖子都会按时发布，除非你在此之前修改或移除它。{needsAttention, plural, other {有 # 条帖子需要你关注。}}",
+        "cta": "查看你的一个月"
       }
     },
     "notification": {
@@ -4784,6 +4799,209 @@
           "action": "开始查看"
         }
       }
+    }
+  },
+  "plans": {
+    "loading": "正在加载计划",
+    "new": {
+      "eyebrow": "规划我的一个月",
+      "title": "规划我的一个月",
+      "description": "Studio 会根据你的网站、品牌套件和以往帖子，起草一个月的视频和幻灯片。你修改清单后，所有内容都会生成并排期：每条帖子都会按时发布，除非你在此之前修改或移除它。",
+      "yourPlans": "你的月度计划",
+      "loading": "正在准备你的计划",
+      "start": "开始日期",
+      "startHint": "计划的第一天。默认从你的下一个空闲日开始，也可以另选一天。",
+      "days": "天数",
+      "daysHint": "最多 {max} 天。",
+      "postsPerDay": "每天帖子数",
+      "postsPerDayOption": "{count, plural, other {每天 # 条}}",
+      "useMyTimes": "使用我的发布时间",
+      "useMyTimesHint": "你的日历每周有 {count, plural, other {# 个发布时间}}；一个计划每天最多使用 4 个。",
+      "noPostingTimes": "还没有发布时间。请先在日历中设置，才能在这里使用。",
+      "mix": "视频与幻灯片",
+      "mixValue": "{videos}% 视频 · {slideshows}% 幻灯片",
+      "mixHint": "幻灯片制作更快、更便宜；视频使用 AI 片段和配音。",
+      "account": "{platform} 账号",
+      "noAccount": "没有已连接的账号。",
+      "connect": "去连接",
+      "chooseAccount": "选择账号",
+      "submit": "起草我的一个月",
+      "submitting": "正在起草…",
+      "estimate": "{days, plural, other {# 天}}内最多 {count, plural, other {# 条帖子}}。",
+      "costHint": "常见制作成本：每个视频约 {video}，每个幻灯片最多 {slideshow}。",
+      "problems": {
+        "startRequired": "请选择开始日期。",
+        "daysRange": "请选择 1 到 {max} 天。",
+        "platformRequired": "请至少选择一个平台。",
+        "accountRequired": "请为每个平台选择一个已连接的账号：帖子会自动发布。"
+      },
+      "noBusiness": {
+        "title": "请先选择一个商家",
+        "description": "一个月度计划只属于一个商家。",
+        "action": "打开商家"
+      }
+    },
+    "allowance": {
+      "title": "本月",
+      "videos": "{limit} 个中还剩 {remaining, plural, other {# 个视频}}",
+      "credits": "{count, plural, other {另有 # 个充值额度}}",
+      "unlimited": "你的套餐没有每月视频上限",
+      "spend": "支出上限：已用 {spent}，共 {cap}",
+      "noCap": "没有每月支出上限",
+      "topUp": "购买充值包"
+    },
+    "capped": {
+      "allowance": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：这是你本月额度能覆盖的数量。<link>购买充值包</link>即可规划更多。",
+      "cost_cap": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：再多就会超出本月的支出上限。<link>购买充值包</link>即可提高上限。"
+    },
+    "hold": {
+      "kill_switch": "Studio 暂时暂停了生成。恢复后你的帖子会自动继续。",
+      "cost_cap": "已暂停：本月支出上限已用完。上限重置或你购买充值包后会继续。",
+      "daily_limit": "暂停到明天：今天的月度计划上限已用完。其余帖子会自动继续。"
+    },
+    "drafting": {
+      "title": "正在起草你的一个月",
+      "body": "Claude 正在根据你的商家信息撰写帖子，通常需要一两分钟。",
+      "progress": "已写好 {written} / {total} 条帖子"
+    },
+    "status": {
+      "DRAFTING": "起草中",
+      "DRAFT": "草稿",
+      "GENERATING": "生成中",
+      "SCHEDULED": "已排期",
+      "COMPLETED": "已完成",
+      "CANCELLED": "已取消"
+    },
+    "itemStatus": {
+      "PLANNED": "已规划",
+      "QUEUED": "等待制作",
+      "GENERATING": "制作中",
+      "READY": "需要你审核",
+      "SCHEDULED": "已排期",
+      "POSTED": "已发布",
+      "HELD": "被安全检查拦下",
+      "FAILED": "失败",
+      "SKIPPED": "已跳过",
+      "REMOVED": "已移除"
+    },
+    "angle": {
+      "how_to": "教程",
+      "product_feature": "产品亮点",
+      "behind_the_scenes": "幕后花絮",
+      "offer": "优惠",
+      "testimonial": "顾客为何选择你",
+      "seasonal": "节令",
+      "custom": "你的点子"
+    },
+    "kind": {
+      "VIDEO": "视频",
+      "SLIDESHOW": "幻灯片"
+    },
+    "calendarDay": {
+      "new_year": "元旦",
+      "valentines": "情人节",
+      "pancake_day": "煎饼节",
+      "st_davids": "圣大卫日",
+      "st_patricks": "圣帕特里克节",
+      "mothers_day_uk": "母亲节（英国）",
+      "easter": "复活节",
+      "st_georges": "圣乔治日",
+      "early_may_bank_holiday": "五月初银行假日",
+      "spring_bank_holiday": "春季银行假日",
+      "fathers_day": "父亲节",
+      "summer_bank_holiday": "夏季银行假日",
+      "halloween": "万圣节",
+      "bonfire_night": "篝火之夜",
+      "black_friday": "黑色星期五",
+      "st_andrews": "圣安德鲁日",
+      "small_business_saturday": "小企业星期六",
+      "christmas_eve": "平安夜",
+      "christmas": "圣诞节",
+      "boxing_day": "节礼日",
+      "new_years_eve": "除夕夜"
+    },
+    "reason": {
+      "slot_passed": "还没来得及制作，发布时间就到了。",
+      "allowance": "不在本月额度之内。",
+      "removed_by_owner": "已被你移除。",
+      "plan_cancelled": "计划已取消。",
+      "not_started": "无法开始制作。",
+      "publish_failed": "发布失败。打开它即可重试。",
+      "safety_review": "正在等待安全审核。",
+      "content_safety_flag": "内容安全检查标记了它。",
+      "script_safety_flag": "脚本安全检查标记了它。"
+    },
+    "editor": {
+      "title": "你的一个月：{start} – {end}",
+      "draftError": "有些帖子未能写出。",
+      "redraft": "补写缺少的帖子",
+      "summary": "{count, plural, other {# 条帖子}}：{videos, plural, other {# 个视频}}和 {slideshows, plural, other {# 个幻灯片}}",
+      "costEstimate": "预计制作成本：约 {typical}（最多 {max}）。",
+      "allowanceUse": "将使用本月额度中的 {count, plural, other {# 个视频}}。",
+      "reviewWindow": "生成后，每条帖子都会按时发布，除非你在此之前修改或移除它。整个月准备好后，你只会收到一封邮件。",
+      "generate": "生成并排期",
+      "discard": "放弃计划",
+      "daysAria": "按日期排列的帖子",
+      "untitled": "正在撰写…",
+      "saved": "已保存",
+      "edit": "编辑",
+      "moveUp": "把“{title}”提前",
+      "moveDown": "把“{title}”推后",
+      "regenerate": "换个主题",
+      "regenerateAria": "为“{title}”换一个新主题",
+      "remove": "删除",
+      "removeAria": "删除“{title}”",
+      "removed": "帖子已删除",
+      "generateConfirmTitle": "生成并排期 {count, plural, other {# 条帖子}}？",
+      "generateConfirmBody": "Studio 会制作每条帖子并按时排期。每条帖子都会自动发布，除非你在此之前修改或移除它。整个月准备好后，你只会收到一封邮件。",
+      "notYet": "暂不",
+      "generating": "正在制作你的一个月",
+      "discardConfirmTitle": "放弃这个计划？",
+      "discardConfirmBody": "草稿及其帖子将被丢弃。目前还没有制作或排期任何内容。",
+      "discarded": "计划已放弃",
+      "titleLabel": "主题",
+      "kindLabel": "形式",
+      "briefLabel": "简介",
+      "hookLabel": "开场句",
+      "ctaLabel": "行动号召",
+      "pointsLabel": "幻灯片要点，每行一条",
+      "save": "保存",
+      "cancelEdit": "取消",
+      "addTitle": "添加帖子",
+      "addWhen": "日期和时间",
+      "addWhenHint": "须在计划日期内，每天最多 4 条帖子。",
+      "addSubmit": "添加帖子",
+      "added": "帖子已添加"
+    },
+    "view": {
+      "calendar": "打开日历",
+      "statsAria": "按状态统计的帖子",
+      "heldNote": "安全检查拦下了 {count, plural, other {# 条帖子}}，它们不会被发布。打开其中一条查看原因，然后编辑或移除它。",
+      "reviewWindow": "每条帖子都会按时发布。在此之前，你可以打开它进行编辑、换成其他主题或将其移除。",
+      "daysAria": "按日期排列的帖子",
+      "cancelPlan": "取消计划",
+      "cancelConfirm": "所有尚未发布的帖子都会被取消，其时间也会释放。此操作无法撤销。",
+      "cancelled": "计划已取消",
+      "open": "打开",
+      "openAria": "打开“{title}”",
+      "swap": "换主题",
+      "swapAria": "把“{title}”换成其他主题",
+      "swapSubmit": "替换并制作",
+      "swapped": "主题已替换：新帖子正在制作",
+      "remove": "移除",
+      "removeAria": "移除“{title}”",
+      "removeConfirm": "它的发布会被取消，时间也会释放。计划的其余部分照常进行。",
+      "removedToast": "帖子已移除"
+    },
+    "list": {
+      "title": "月度计划",
+      "description": "Studio 为这个商家规划的各个月份，最新的在前。",
+      "loading": "正在加载月度计划",
+      "new": "规划我的一个月",
+      "empty": "还没有月度计划",
+      "emptyBody": "让 Studio 起草一个月的视频和幻灯片，然后一次性生成并排期。",
+      "range": "{start} – {end}",
+      "posts": "{count, plural, other {# 条帖子}}"
     }
   }
 }

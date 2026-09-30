@@ -167,6 +167,35 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     expect(spans.every((ms) => ms <= 62 * DAY)).toBe(true);
   });
 
+  it('20.9: shows month-plan posts still being made, linking to their plan', async () => {
+    server(
+      upcoming({
+        openSlots: [],
+        planned: [
+          {
+            slotAt: at(2, 9, 0),
+            planId: 'plan_1',
+            itemId: 'item_1',
+            title: 'Halloween loaves',
+            kind: 'SLIDESHOW',
+            status: 'GENERATING',
+          },
+        ],
+      }),
+    );
+    renderScreen(<PublicationsCalendar initialDate={new Date(Date.now() + 2 * DAY)} />);
+    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const marker = await within(grid).findByRole('link', {
+      name: /^Month-plan post at .+: Halloween loaves \(Being made\)$/,
+    });
+    expect(marker).toHaveAttribute('href', '/plans/plan_1');
+    expect(screen.getByText(/Boxes marked “Planned” are month-plan posts/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Plan my month/ })).toHaveAttribute(
+      'href',
+      '/plans/new',
+    );
+  });
+
   it('says the queue is off and points to the posting times', async () => {
     server(upcoming({ enabled: false, configured: false, openSlots: [], scheduled: 1 }));
     const user = userEvent.setup();

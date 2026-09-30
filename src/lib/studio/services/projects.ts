@@ -555,9 +555,11 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
 /** Start a new run: new runId (older jobs become no-ops), state QUEUED, enqueue plan-project. */
 export async function generateProject(
   deps: { db: Db; queue: JobQueue },
-  tenant: TenantContext,
+  tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
   id: string,
   input: z.infer<typeof generateInput>,
+  /** 20.9: month-plan items run as low-priority batch jobs (spec 11.2). */
+  options: { batch?: boolean } = {},
 ) {
   const project = await findProject(deps.db, tenant.organisationId, id);
   if (!GENERATABLE_STATES.includes(project.state)) {
@@ -603,6 +605,7 @@ export async function generateProject(
     organisationId: tenant.organisationId,
     runId,
     planTier,
+    ...(options.batch && { batch: true }),
   };
   await deps.queue.add('plan-project', job, { jobId: jobIds.planProject(job) });
   return { runId, planTier };

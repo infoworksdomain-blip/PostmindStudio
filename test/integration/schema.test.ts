@@ -91,6 +91,9 @@ const EXPECTED_TABLES = [
   'trial_fingerprints',
   'email_outbox',
   'email_suppressions',
+  // Phase 20.9 — Plan my month
+  'content_plans',
+  'content_plan_items',
 ];
 
 let db: PGlite;
@@ -104,7 +107,7 @@ afterAll(async () => {
 });
 
 describe('studio schema migrations', () => {
-  it('creates all 78 tables in the studio schema and nowhere else', async () => {
+  it('creates all 80 tables in the studio schema and nowhere else', async () => {
     const { rows } = await db.query<{ schemaname: string; tablename: string }>(
       `SELECT schemaname, tablename FROM pg_tables
        WHERE schemaname NOT IN ('pg_catalog', 'information_schema')`,

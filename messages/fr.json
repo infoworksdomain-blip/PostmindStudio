@@ -485,7 +485,8 @@
         "generatingUpload": "Génération en cours — Studio sous-titre votre vidéo.",
         "generatingScript": "Génération en cours — Studio rédige le script.",
         "draftNotStarted": "Enregistré comme brouillon, mais la génération n’a pas démarré : {error}"
-      }
+      },
+      "planMonth": "Ou planifiez tout un mois de vidéos et de diaporamas"
     },
     "problems": {
       "businessRequired": "Choisissez d’abord une entreprise.",
@@ -1392,7 +1393,8 @@
       "more": "{count, plural, one {+# autre} other {+# autres}}",
       "agendaAria": "Agenda",
       "emptyMonth": "Rien de programmé ni de publié ce mois-ci.",
-      "moreOpen": "{count, plural, one {+# créneau libre} other {+# créneaux libres}}"
+      "moreOpen": "{count, plural, one {+# créneau libre} other {+# créneaux libres}}",
+      "morePlanned": "+{count} planifiées"
     },
     "event": {
       "untitled": "Projet sans titre",
@@ -1443,6 +1445,12 @@
     "summary": {
       "next": "30 prochains jours : {scheduled, plural, one {# publication programmée} other {# publications programmées}} · {open, plural, one {# créneau libre} other {# créneaux libres}}",
       "queueOff": "30 prochains jours : {scheduled, plural, one {# publication programmée} other {# publications programmées}}. La file de diffusion est désactivée — <link>définissez vos heures de publication</link> pour remplir le mois automatiquement."
+    },
+    "planMonth": "Planifier mon mois",
+    "planned": {
+      "label": "Planifiée",
+      "aria": "Publication du plan mensuel à {time} : {title} ({status})",
+      "legend": "Les cases marquées « Planifiée » sont des publications du plan mensuel encore en production ; une fois programmées, elles apparaissent comme des publications."
     }
   },
   "business": {
@@ -3139,7 +3147,8 @@
         "title": "Bientôt en ligne",
         "body": "« {name} » n’est pas encore publiée. Relisez-la et approuvez-la, puis publiez-la — nous la célébrerons ici dès sa mise en ligne.",
         "action": "Ouvrir votre vidéo"
-      }
+      },
+      "planMonth": "Ou laissez Studio planifier et programmer tout votre mois"
     },
     "finished": {
       "title": "Tout est prêt",
@@ -4599,6 +4608,12 @@
         "heading": "Votre export de données est prêt",
         "body": "L’export que vous avez demandé à PostMind Studio est prêt à être téléchargé. Le lien de téléchargement fonctionne jusqu’au {expiresAt, date, long}.",
         "cta": "Télécharger l’export"
+      },
+      "monthPlanned": {
+        "subject": "Votre mois est planifié : {postCount, plural, one {# publication} other {# publications}} du {startDate, date, long} au {endDate, date, long}",
+        "heading": "Votre mois est planifié",
+        "body": "{postCount, plural, one {# publication est programmée} other {# publications sont programmées}} du {startDate, date, long} au {endDate, date, long}. Chacune part à son heure, sauf si vous la modifiez ou la retirez avant. {needsAttention, plural, one {# publication demande votre attention.} other {# publications demandent votre attention.}}",
+        "cta": "Vérifier votre mois"
       }
     },
     "notification": {
@@ -4784,6 +4799,209 @@
           "action": "Démarrer la vue"
         }
       }
+    }
+  },
+  "plans": {
+    "loading": "Chargement du plan",
+    "new": {
+      "eyebrow": "Planifier mon mois",
+      "title": "Planifier mon mois",
+      "description": "Studio prépare un mois de vidéos et de diaporamas à partir de votre site, de votre kit de marque et de vos publications passées. Vous modifiez la liste, puis tout est généré et programmé : chaque publication part à son heure, sauf si vous la modifiez ou la retirez avant.",
+      "yourPlans": "Vos plans mensuels",
+      "loading": "Préparation de votre plan",
+      "start": "Date de début",
+      "startHint": "Premier jour du plan. Il commence à votre prochain jour libre, sauf si vous en choisissez un autre.",
+      "days": "Durée en jours",
+      "daysHint": "Jusqu’à {max} jours.",
+      "postsPerDay": "Publications par jour",
+      "postsPerDayOption": "{count, plural, one {# par jour} other {# par jour}}",
+      "useMyTimes": "Utiliser mes horaires de publication",
+      "useMyTimesHint": "Votre calendrier compte {count, plural, one {# horaire de publication} other {# horaires de publication}} par semaine ; un plan en utilise au plus 4 par jour.",
+      "noPostingTimes": "Aucun horaire de publication pour l’instant. Définissez-les dans le calendrier pour les utiliser ici.",
+      "mix": "Vidéos et diaporamas",
+      "mixValue": "{videos} % de vidéos · {slideshows} % de diaporamas",
+      "mixHint": "Les diaporamas sont plus rapides et moins chers à produire ; les vidéos utilisent des clips IA et une voix off.",
+      "account": "Compte {platform}",
+      "noAccount": "Aucun compte connecté.",
+      "connect": "En connecter un",
+      "chooseAccount": "Choisir un compte",
+      "submit": "Préparer mon mois",
+      "submitting": "Préparation…",
+      "estimate": "Jusqu’à {count, plural, one {# publication} other {# publications}} sur {days, plural, one {# jour} other {# jours}}.",
+      "costHint": "Coût de production habituel : environ {video} par vidéo et jusqu’à {slideshow} par diaporama.",
+      "problems": {
+        "startRequired": "Choisissez une date de début.",
+        "daysRange": "Choisissez entre 1 et {max} jours.",
+        "platformRequired": "Choisissez au moins une plateforme.",
+        "accountRequired": "Choisissez un compte connecté pour chaque plateforme : les publications partent d’elles-mêmes."
+      },
+      "noBusiness": {
+        "title": "Choisissez d’abord une entreprise",
+        "description": "Un plan mensuel appartient à une seule entreprise.",
+        "action": "Ouvrir les entreprises"
+      }
+    },
+    "allowance": {
+      "title": "Ce mois-ci",
+      "videos": "{remaining, plural, one {# vidéo restante} other {# vidéos restantes}} sur {limit}",
+      "credits": "{count, plural, one {plus # crédit de recharge} other {plus # crédits de recharge}}",
+      "unlimited": "Aucune limite mensuelle de vidéos dans votre forfait",
+      "spend": "Plafond de dépenses : {spent} utilisés sur {cap}",
+      "noCap": "Aucun plafond de dépenses mensuel",
+      "topUp": "Ajouter une recharge"
+    },
+    "capped": {
+      "allowance": "Ce plan compte {count, plural, one {# publication} other {# publications}} au lieu de {requested} : c’est ce que couvre votre forfait ce mois-ci. <link>Ajoutez une recharge</link> pour en planifier davantage.",
+      "cost_cap": "Ce plan compte {count, plural, one {# publication} other {# publications}} au lieu de {requested} : davantage dépasserait le plafond de dépenses de ce mois. <link>Ajoutez une recharge</link> pour le relever."
+    },
+    "hold": {
+      "kill_switch": "La génération est mise en pause par Studio pour le moment. Vos publications reprendront automatiquement.",
+      "cost_cap": "En pause : le plafond de dépenses de ce mois est atteint. Cela reprend quand le plafond est réinitialisé ou que vous ajoutez une recharge.",
+      "daily_limit": "En pause jusqu’à demain : la limite du jour pour les plans mensuels est atteinte. Le reste reprendra automatiquement."
+    },
+    "drafting": {
+      "title": "Préparation de votre mois",
+      "body": "Claude rédige vos publications à partir des informations sur votre entreprise. Cela prend généralement une minute ou deux.",
+      "progress": "{written} publications rédigées sur {total}"
+    },
+    "status": {
+      "DRAFTING": "En préparation",
+      "DRAFT": "Brouillon",
+      "GENERATING": "En génération",
+      "SCHEDULED": "Programmé",
+      "COMPLETED": "Terminé",
+      "CANCELLED": "Annulé"
+    },
+    "itemStatus": {
+      "PLANNED": "Planifiée",
+      "QUEUED": "En attente de production",
+      "GENERATING": "En production",
+      "READY": "À vérifier",
+      "SCHEDULED": "Programmée",
+      "POSTED": "Publiée",
+      "HELD": "Bloquée par le contrôle de sécurité",
+      "FAILED": "Échec",
+      "SKIPPED": "Ignorée",
+      "REMOVED": "Retirée"
+    },
+    "angle": {
+      "how_to": "Tutoriel",
+      "product_feature": "Produit à la une",
+      "behind_the_scenes": "Coulisses",
+      "offer": "Offre",
+      "testimonial": "Pourquoi vos clients vous choisissent",
+      "seasonal": "Saisonnier",
+      "custom": "Votre idée"
+    },
+    "kind": {
+      "VIDEO": "Vidéo",
+      "SLIDESHOW": "Diaporama"
+    },
+    "calendarDay": {
+      "new_year": "Jour de l’An",
+      "valentines": "Saint-Valentin",
+      "pancake_day": "Mardi gras",
+      "st_davids": "Saint-David",
+      "st_patricks": "Saint-Patrick",
+      "mothers_day_uk": "Fête des mères (Royaume-Uni)",
+      "easter": "Pâques",
+      "st_georges": "Saint-Georges",
+      "early_may_bank_holiday": "Jour férié de début mai",
+      "spring_bank_holiday": "Jour férié de printemps",
+      "fathers_day": "Fête des pères",
+      "summer_bank_holiday": "Jour férié d’été",
+      "halloween": "Halloween",
+      "bonfire_night": "Bonfire Night",
+      "black_friday": "Black Friday",
+      "st_andrews": "Saint-André",
+      "small_business_saturday": "Small Business Saturday",
+      "christmas_eve": "Réveillon de Noël",
+      "christmas": "Noël",
+      "boxing_day": "Boxing Day",
+      "new_years_eve": "Réveillon du Nouvel An"
+    },
+    "reason": {
+      "slot_passed": "Son heure est arrivée avant qu’elle puisse être produite.",
+      "allowance": "Non couverte par le forfait de ce mois.",
+      "removed_by_owner": "Retirée par vous.",
+      "plan_cancelled": "Le plan a été annulé.",
+      "not_started": "Elle n’a pas pu être lancée.",
+      "publish_failed": "La publication a échoué. Ouvrez-la pour réessayer.",
+      "safety_review": "En attente d’une vérification de sécurité.",
+      "content_safety_flag": "Le contrôle de sécurité du contenu l’a signalée.",
+      "script_safety_flag": "Le contrôle de sécurité du script l’a signalée."
+    },
+    "editor": {
+      "title": "Votre mois : {start} – {end}",
+      "draftError": "Certaines publications n’ont pas pu être rédigées.",
+      "redraft": "Rédiger les publications manquantes",
+      "summary": "{count, plural, one {# publication} other {# publications}} : {videos, plural, one {# vidéo} other {# vidéos}} et {slideshows, plural, one {# diaporama} other {# diaporamas}}",
+      "costEstimate": "Coût de production estimé : environ {typical} (au plus {max}).",
+      "allowanceUse": "Utilise {count, plural, one {# vidéo} other {# vidéos}} du forfait de ce mois.",
+      "reviewWindow": "Une fois générée, chaque publication part à son heure, sauf si vous la modifiez ou la retirez avant. Vous recevez un seul e-mail quand votre mois est prêt.",
+      "generate": "Générer et programmer",
+      "discard": "Abandonner le plan",
+      "daysAria": "Publications par jour",
+      "untitled": "Rédaction…",
+      "saved": "Enregistré",
+      "edit": "Modifier",
+      "moveUp": "Avancer « {title} »",
+      "moveDown": "Reculer « {title} »",
+      "regenerate": "Nouveau sujet",
+      "regenerateAria": "Rédiger un nouveau sujet à la place de « {title} »",
+      "remove": "Supprimer",
+      "removeAria": "Supprimer « {title} »",
+      "removed": "Publication supprimée",
+      "generateConfirmTitle": "Générer et programmer {count, plural, one {# publication} other {# publications}} ?",
+      "generateConfirmBody": "Studio produit chaque publication et la programme à son heure. Chacune part d’elle-même, sauf si vous la modifiez ou la retirez avant. Vous recevez un seul e-mail quand votre mois est prêt.",
+      "notYet": "Pas encore",
+      "generating": "Votre mois est en cours de production",
+      "discardConfirmTitle": "Abandonner ce plan ?",
+      "discardConfirmBody": "Le brouillon et ses publications sont supprimés. Rien n’a encore été produit ni programmé.",
+      "discarded": "Plan abandonné",
+      "titleLabel": "Sujet",
+      "kindLabel": "Format",
+      "briefLabel": "Brief",
+      "hookLabel": "Phrase d’accroche",
+      "ctaLabel": "Appel à l’action",
+      "pointsLabel": "Points du diaporama, un par ligne",
+      "save": "Enregistrer",
+      "cancelEdit": "Annuler",
+      "addTitle": "Ajouter une publication",
+      "addWhen": "Date et heure",
+      "addWhenHint": "Dans les dates du plan, au plus 4 publications par jour.",
+      "addSubmit": "Ajouter la publication",
+      "added": "Publication ajoutée"
+    },
+    "view": {
+      "calendar": "Ouvrir le calendrier",
+      "statsAria": "Publications par statut",
+      "heldNote": "{count, plural, one {# publication a été bloquée} other {# publications ont été bloquées}} par le contrôle de sécurité et ne seront pas publiées. Ouvrez-en une pour savoir pourquoi, puis modifiez-la ou retirez-la.",
+      "reviewWindow": "Chaque publication part à son heure. D’ici là, vous pouvez l’ouvrir pour la modifier, la remplacer par un autre sujet ou la retirer.",
+      "daysAria": "Publications par jour",
+      "cancelPlan": "Annuler le plan",
+      "cancelConfirm": "Toutes les publications pas encore parties sont annulées et leurs horaires libérés. Cette action est irréversible.",
+      "cancelled": "Plan annulé",
+      "open": "Ouvrir",
+      "openAria": "Ouvrir « {title} »",
+      "swap": "Changer de sujet",
+      "swapAria": "Remplacer « {title} » par un autre sujet",
+      "swapSubmit": "Remplacer et produire",
+      "swapped": "Sujet remplacé : la nouvelle publication est en production",
+      "remove": "Retirer",
+      "removeAria": "Retirer « {title} »",
+      "removeConfirm": "Sa publication est annulée et l’horaire libéré. Le reste du plan continue.",
+      "removedToast": "Publication retirée"
+    },
+    "list": {
+      "title": "Plans mensuels",
+      "description": "Les mois que Studio a planifiés pour cette entreprise, du plus récent au plus ancien.",
+      "loading": "Chargement des plans mensuels",
+      "new": "Planifier mon mois",
+      "empty": "Aucun plan mensuel pour l’instant",
+      "emptyBody": "Laissez Studio préparer un mois de vidéos et de diaporamas, puis générez-les et programmez-les en une fois.",
+      "range": "{start} – {end}",
+      "posts": "{count, plural, one {# publication} other {# publications}}"
     }
   }
 }
