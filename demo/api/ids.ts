@@ -45,6 +45,11 @@ export const P17_PROJECTS = {
   untitled: { id: 'prj-untitled-rye', name: null },
 } as const;
 
+/** Phase 20.3 (p20-schedule-month.ts): approved as "next free slot" when none was free. */
+export const P20_PROJECTS = {
+  harvestLoaf: { id: 'prj-harvest-loaf', name: 'Harvest loaf week' },
+} as const;
+
 /** Renders (variants): project → platform. */
 export const RENDERS = {
   springTiktok: 'rnd-spring-tiktok',

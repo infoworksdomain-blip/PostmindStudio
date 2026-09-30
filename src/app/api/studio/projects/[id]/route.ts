@@ -54,7 +54,7 @@ export const PATCH = withStudioRoute(
         change: renderChange,
       });
     const project = input
-      ? await updateProject(deps.db, tenant, id, input)
+      ? await updateProject(deps.db, tenant, id, input, deps.now())
       : await getProjectDetail(deps.db, tenant.organisationId, id);
     audit(
       'studio.project.update',

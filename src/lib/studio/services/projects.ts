@@ -38,6 +38,7 @@ import {
   validatePreferredProviders,
 } from './generate-overrides';
 import { isUntitledName } from '../../project-name';
+import { isBeyondScheduleWindow, MAX_SCHEDULE_AHEAD_DAYS } from '../schedule-window';
 
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
@@ -223,6 +224,19 @@ async function assertWorkflow(db: Db, organisationId: string, id: string | null 
   if (!found) throw new ValidationError('approvalWorkflowId does not exist in this organisation');
 }
 
+/**
+ * 20.3: a project's scheduledStartAt follows the publications rule — at most 180 days ahead
+ * (a start in the past still means "as soon as approved", outbox.ts planSchedule).
+ */
+export function assertScheduledStartAt(value: string | null | undefined, now: number): void {
+  if (!value) return;
+  if (isBeyondScheduleWindow(Date.parse(value), now))
+    throw new ValidationError(
+      `scheduledStartAt must be at most ${MAX_SCHEDULE_AHEAD_DAYS} days from now`,
+      { field: 'scheduledStartAt', maxDays: MAX_SCHEDULE_AHEAD_DAYS },
+    );
+}
+
 export async function findProject(db: Db, organisationId: string, id: string) {
   const project = await db.videoProject.findFirst({
     where: { id, organisationId, deletedAt: null },
@@ -235,7 +249,9 @@ export async function createProject(
   db: Db,
   tenant: TenantContext,
   input: z.infer<typeof createProjectInput>,
+  now: number = Date.now(),
 ) {
+  assertScheduledStartAt(input.scheduledStartAt, now);
   await assertBrandKit(db, tenant.organisationId, input.brandKitId);
   await assertWorkflow(db, tenant.organisationId, input.approvalWorkflowId);
   if (input.sourceType === 'LIBRARY_REFERENCE' && input.referenceVideoId && input.referenceMode) {
@@ -413,7 +429,9 @@ export async function updateProject(
   tenant: Pick<TenantContext, 'organisationId' | 'capabilities'>,
   id: string,
   input: z.infer<typeof updateProjectInput>,
+  now: number = Date.now(),
 ) {
+  assertScheduledStartAt(input.scheduledStartAt, now);
   const { organisationId } = tenant;
   const project = await findProject(db, organisationId, id);
   // 13.20: the auto-resume opt-out alone may change in any state (e.g. while generating).

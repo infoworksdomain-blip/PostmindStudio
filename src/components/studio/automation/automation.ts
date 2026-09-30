@@ -99,6 +99,30 @@ export function readAutoPublishResult(
   return result && Array.isArray(result.results) ? (result as unknown as AutoPublishResult) : null;
 }
 
+/** 20.3: why an approved SCHEDULED project got no drip slot (automation/outbox.ts). */
+export interface ScheduleIssue {
+  reason: 'queue_off' | 'no_matching_platform' | 'no_free_slot';
+  horizonDays: number;
+  at: string;
+}
+
+const SCHEDULE_ISSUE_REASONS: ReadonlyArray<ScheduleIssue['reason']> = [
+  'queue_off',
+  'no_matching_platform',
+  'no_free_slot',
+];
+
+export function readScheduleIssue(metadata: Record<string, unknown> | null): ScheduleIssue | null {
+  const issue = record(metadata?.scheduleIssue);
+  if (!issue || !SCHEDULE_ISSUE_REASONS.includes(issue.reason as ScheduleIssue['reason']))
+    return null;
+  return {
+    reason: issue.reason as ScheduleIssue['reason'],
+    horizonDays: typeof issue.horizonDays === 'number' ? issue.horizonDays : 56,
+    at: typeof issue.at === 'string' ? issue.at : '',
+  };
+}
+
 /** Who approved: the newest APPROVED approval row (system actors start with "system:"). */
 export function approvalOrigin(
   approvals: Array<{ state: string; resolvedByUserId?: string | null }>,

@@ -7,6 +7,7 @@ import type { Publication } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { CalendarEvent } from './calendar-event';
 import { dayKey, weekdayNames, type MonthRef } from './month';
+import { OpenSlot } from './open-slot';
 import { DRAG_TYPE } from './reschedule';
 
 /** Reschedule wiring (13.9); absent = a read-only calendar. */
@@ -17,20 +18,26 @@ export interface MoveHandlers {
 }
 
 // Desktop: a seven-column month grid. Phones: the same month as an agenda of days that have
-// something on them (a 7-column grid is unreadable at 375px).
+// something on them (a 7-column grid is unreadable at 375px). 20.3: open drip-queue slots
+// (openByDay) follow the day's posts as dashed markers, only in the room a cell has left.
 
 const MAX_PER_CELL = 3;
+
+const NO_OPEN_SLOTS: ReadonlyMap<string, string[]> = new Map();
 
 export function MonthGrid({
   days,
   month,
   byDay,
+  openByDay = NO_OPEN_SLOTS,
   today,
   move,
 }: {
   days: Date[];
   month: MonthRef;
   byDay: Map<string, Publication[]>;
+  /** 20.3: open drip-queue slots by day (ISO instants). */
+  openByDay?: ReadonlyMap<string, string[]>;
   today: string;
   move?: MoveHandlers;
 }) {
@@ -58,6 +65,8 @@ export function MonthGrid({
         {days.map((day) => {
           const key = dayKey(day);
           const events = byDay.get(key) ?? [];
+          const open = openByDay.get(key) ?? [];
+          const shownOpen = open.slice(0, Math.max(0, MAX_PER_CELL - events.length));
           const inMonth = day.getMonth() === month.month;
           const isToday = key === today;
           return (
@@ -109,6 +118,14 @@ export function MonthGrid({
                   {t('more', { count: events.length - MAX_PER_CELL })}
                 </span>
               )}
+              {shownOpen.map((at) => (
+                <OpenSlot key={at} at={at} compact />
+              ))}
+              {open.length > shownOpen.length && (
+                <span className="px-1.5 text-[0.7rem] text-muted-foreground">
+                  {t('moreOpen', { count: open.length - shownOpen.length })}
+                </span>
+              )}
             </li>
           );
         })}
@@ -121,18 +138,22 @@ export function AgendaList({
   days,
   month,
   byDay,
+  openByDay = NO_OPEN_SLOTS,
   today,
   move,
 }: {
   days: Date[];
   month: MonthRef;
   byDay: Map<string, Publication[]>;
+  openByDay?: ReadonlyMap<string, string[]>;
   today: string;
   move?: MoveHandlers;
 }) {
   const t = useTranslations('calendar.grid');
   const f = useFormat();
-  const busy = days.filter((d) => d.getMonth() === month.month && byDay.has(dayKey(d)));
+  const busy = days.filter(
+    (d) => d.getMonth() === month.month && (byDay.has(dayKey(d)) || openByDay.has(dayKey(d))),
+  );
   if (busy.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground md:hidden">
@@ -167,6 +188,9 @@ export function AgendaList({
                   onMove={move?.onMove}
                   busy={move?.pendingId === p.id}
                 />
+              ))}
+              {(openByDay.get(key) ?? []).map((at) => (
+                <OpenSlot key={at} at={at} />
               ))}
             </div>
           </li>

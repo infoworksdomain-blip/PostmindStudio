@@ -6,6 +6,7 @@ import {
   connectionsFor,
   readAutoPublishResult,
   readReview,
+  readScheduleIssue,
   readTargets,
   templatePlatforms,
 } from './automation';
@@ -74,5 +75,20 @@ describe('automation helpers', () => {
       { platform: 'facebook', connectionId: 'f' },
     ]);
     expect(templatePlatforms(undefined)).toEqual([]);
+  });
+});
+
+describe('readScheduleIssue (20.3)', () => {
+  it('returns a known reason with defaults, else null', () => {
+    expect(readScheduleIssue({ scheduleIssue: { reason: 'no_matching_platform' } })).toEqual({
+      reason: 'no_matching_platform',
+      horizonDays: 56,
+      at: '',
+    });
+    expect(
+      readScheduleIssue({ scheduleIssue: { reason: 'queue_off', horizonDays: 28, at: 't' } }),
+    ).toEqual({ reason: 'queue_off', horizonDays: 28, at: 't' });
+    expect(readScheduleIssue({ scheduleIssue: { reason: 'other' } })).toBeNull();
+    expect(readScheduleIssue(null)).toBeNull();
   });
 });

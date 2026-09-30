@@ -220,6 +220,14 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
         })
       ).status,
     ).toBe(400);
+    // 20.3: the upper bound — more than 180 days ahead is refused too.
+    const tooFar = await publish({
+      ...base,
+      renderId: ok.render.id,
+      scheduledFor: new Date(Date.now() + 181 * 86_400_000).toISOString(),
+    });
+    expect(tooFar.status).toBe(400);
+    expect(JSON.stringify(tooFar.json)).toContain('180 days');
     expect(h.queue.pending).toEqual([]);
   });
 

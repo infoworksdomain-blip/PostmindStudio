@@ -1,5 +1,6 @@
 'use client';
 
+import { MAX_SCHEDULE_AHEAD_DAYS } from '@/lib/studio/schedule-window';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -190,6 +191,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   };
   const problemText = (p: CreateProblem): string => {
     if (p === 'briefTooLong') return tp('briefTooLong', { max: BRIEF_MAX });
+    if (p === 'scheduleTooFar') return tp('scheduleTooFar', { days: MAX_SCHEDULE_AHEAD_DAYS });
     if (p === 'budgetRange')
       return tp('budgetRange', {
         min: f.number(0, WHOLE_POUNDS),

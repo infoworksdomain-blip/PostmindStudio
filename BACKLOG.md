@@ -422,3 +422,4 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 ## Phase 20 — Post-launch-prep changes (operator requests 2026-09-30)
 
 - [x] **20.1** Node 24 LTS runtime: Dockerfile `node:24.21.0-bookworm-slim`, CI `node-version: 24`, `engines.node` >=24, `@types/node` 24.x, docs.
+- [x] **20.3** Month-ahead auto-scheduling and calendar: one-click posting plans (calendar and onboarding), open drip-queue slots and a "Next 30 days" summary on the calendar (`GET …/drip-queue/upcoming`), "next free slot" on Create, an honest notice + audit + notification (and Try again) when a scheduled video gets no slot, the 180-day limit on `scheduledStartAt` and in the date pickers, "A month of short videos" on the landing page.

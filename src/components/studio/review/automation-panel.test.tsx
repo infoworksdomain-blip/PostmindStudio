@@ -181,6 +181,70 @@ describe('AutomationPanel', () => {
     });
   });
 
+  it('20.3: an approved SCHEDULED project with no free slot says so and can try again', async () => {
+    const api = mockFetch([
+      {
+        method: 'POST',
+        match: '/projects/proj_1/auto-publish/retry',
+        status: 202,
+        body: { ok: true, requeued: 0, scheduled: 1, unscheduled: null },
+      },
+    ]);
+    const onChanged = vi.fn();
+    renderWithSWR(
+      <AutomationPanel
+        onChanged={onChanged}
+        project={makeProject({
+          state: 'APPROVED',
+          publishPolicy: 'SCHEDULED',
+          metadata: {
+            autoPublish: { targets: [{ platform: 'tiktok', connectionId: 'conn_tt' }] },
+            scheduleIssue: { reason: 'no_free_slot', horizonDays: 56, at: '2026-09-30T10:00:00Z' },
+          },
+        })}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'No free posting time in the next 8 weeks — add posting times in the calendar and try again, or pick a date on the Publish tab.',
+    );
+    expect(screen.getByRole('link', { name: 'Open the calendar' })).toHaveAttribute(
+      'href',
+      '/calendar',
+    );
+    expect(screen.getByText('Scheduled automatically when approved')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    expect(api.find('POST', '/projects/proj_1/auto-publish/retry')).toHaveLength(1);
+    expect(toast.success).toHaveBeenCalledWith('Scheduled 1 post.');
+  });
+
+  it('20.3: explains a queue that is off, and a retry that still finds nothing', async () => {
+    mockFetch([
+      {
+        method: 'POST',
+        match: '/projects/proj_1/auto-publish/retry',
+        status: 202,
+        body: { ok: true, requeued: 0, scheduled: 0, unscheduled: 'queue_off' },
+      },
+    ]);
+    renderWithSWR(
+      <AutomationPanel
+        project={makeProject({
+          state: 'APPROVED',
+          publishPolicy: 'SCHEDULED',
+          metadata: { scheduleIssue: { reason: 'queue_off', horizonDays: 56, at: 'x' } },
+        })}
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Not scheduled: the drip queue is off.');
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        'Still no free posting time — add posting times or pick a date.',
+      ),
+    );
+  });
+
   it('renders nothing for a slideshow draft with no automation', () => {
     mockFetch([]);
     const { container } = renderWithSWR(

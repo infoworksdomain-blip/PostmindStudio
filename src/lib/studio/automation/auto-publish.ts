@@ -1,8 +1,10 @@
-import type { AutoPublishOutbox, PrismaClient } from '@prisma/client';
+import type { AutoPublishOutbox, Prisma, PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { StudioError } from '../../errors';
 import type { TenantContext } from '../../tenant';
+import { projectLabel, projectNameParam } from '../../project-name';
+import { notifySafely } from '../notifications/notifier';
 import { fitCaption } from '../platforms/captions';
 import type { AssetStorage } from '../storage';
 import type { JobQueue } from '../queue/enqueue';
@@ -14,7 +16,10 @@ import {
   isRetryableSendError,
   latestOutbox,
   MAX_OUTBOX_ATTEMPTS,
+  readScheduleIssue,
   renderIdFor,
+  writeOutboxRows,
+  type ScheduleIssue,
   type SendOutcome,
   type TargetSender,
 } from './outbox';
@@ -247,11 +252,110 @@ export async function runAutoPublish(
   // anything this request does not get to).
   await dispatchOutbox(deps, createTargetSender(deps), { projectId: project.id });
   const outcome = await recordOutboxResult(deps, project.id, input.trigger);
+  // 20.3: a SCHEDULED project that got no drip slot is not a silent no-op.
+  const issue =
+    project.publishPolicy === 'SCHEDULED' && outcome.results.length === 0
+      ? readScheduleIssue(project.metadata)
+      : null;
+  if (issue) await reportUnscheduled(deps, project, issue);
   log.info(
     { status: outcome.status, targets: outcome.results.length },
     'auto-publish on approval dispatched',
   );
   return outcome;
+}
+
+/** Unscheduled-notice message key per reason (notifications.<key>, 11 locales). */
+const UNSCHEDULED_MESSAGE = {
+  queue_off: 'scheduleQueueOff',
+  no_matching_platform: 'scheduleNoPlatform',
+  no_free_slot: 'scheduleNoFreeSlot',
+} as const;
+
+/**
+ * 20.3: an approved SCHEDULED project got no drip slot (queue off, no drip platform, or no free
+ * slot within the horizon). Logged, audited and sent to the creator; the Review screen shows
+ * metadata.scheduleIssue with "Try again" (POST /projects/:id/auto-publish/retry).
+ */
+export async function reportUnscheduled(
+  deps: AutoPublishDeps,
+  project: { id: string; organisationId: string; createdByUserId: string; name: string | null },
+  issue: ScheduleIssue,
+): Promise<void> {
+  const weeks = Math.floor(issue.horizonDays / 7);
+  deps.logger.warn(
+    { projectId: project.id, organisationId: project.organisationId, reason: issue.reason },
+    'scheduled project got no posting time',
+  );
+  deps.audit({
+    actorUserId: AUTO_PUBLISH_ACTOR,
+    organisationId: project.organisationId,
+    action: 'studio.project.schedule_unassigned',
+    resource: { type: 'video_project', id: project.id },
+    metadata: { reason: issue.reason, horizonDays: issue.horizonDays },
+  });
+  const body = {
+    queue_off: 'The drip queue is off — set posting times in the calendar or pick a date.',
+    no_matching_platform:
+      'The drip queue posts to none of its platforms — change the queue or pick a date.',
+    no_free_slot: `No free posting time in the next ${weeks} weeks — add posting times or pick a date.`,
+  }[issue.reason];
+  await notifySafely(deps, {
+    organisationId: project.organisationId,
+    userId: project.createdByUserId,
+    kind: 'auto_publish_failed',
+    title: `“${projectLabel(project.name)}” was not scheduled`,
+    body,
+    link: `/projects/${project.id}`,
+    dedupeKey: `schedule_unassigned:${project.id}:${issue.at}`,
+    message: {
+      key: UNSCHEDULED_MESSAGE[issue.reason],
+      params: { name: projectNameParam(project.name), weeks },
+    },
+  });
+}
+
+/**
+ * 20.3 — "Try again" for an approved SCHEDULED project that got no drip slot: plan it again
+ * against the current queue for its latest approval and send the rows. Returns what happened;
+ * nothing is written when the project is not in that situation (count 0, unscheduled null).
+ */
+export async function retrySchedule(
+  deps: AutoPublishDeps,
+  project: {
+    id: string;
+    organisationId: string;
+    publishPolicy: string;
+    state: string;
+    metadata: Prisma.JsonValue;
+  },
+  planTier: string,
+): Promise<{ count: number; unscheduled: ScheduleIssue['reason'] | null }> {
+  const idle = { count: 0, unscheduled: null };
+  if (project.publishPolicy !== 'SCHEDULED' || project.state !== 'APPROVED') return idle;
+  if (!readScheduleIssue(project.metadata)) return idle;
+  if ((await latestOutbox(deps.db, project.id)).length > 0) return idle;
+  const approval = await deps.db.approvalTask.findFirst({
+    where: { projectId: project.id, state: 'APPROVED' },
+    orderBy: { resolvedAt: 'desc' },
+    select: { id: true },
+  });
+  if (!approval) return idle;
+  const written = await deps.db.$transaction((tx) =>
+    writeOutboxRows(tx, {
+      projectId: project.id,
+      organisationId: project.organisationId,
+      approvalTaskId: approval.id,
+      planTier,
+      trigger: 'human',
+      now: deps.now(),
+    }),
+  );
+  if (written.count > 0) {
+    await dispatchOutbox(deps, createTargetSender(deps), { projectId: project.id });
+    await recordOutboxResult(deps, project.id, 'human');
+  }
+  return written;
 }
 
 /**

@@ -1,8 +1,8 @@
-import { P17_PROJECTS, PROJECTS } from '../api/ids';
+import { P17_PROJECTS, P20_PROJECTS, PROJECTS } from '../api/ids';
 import type { SceneKind } from '../media';
 
 // #/tour/whats-new — every feature added or changed by Phase 16 (languages + RTL), Phase 18
-// (standalone SaaS surfaces), Phase 17
+// (standalone SaaS surfaces), Phase 20.3 (plan a month ahead), Phase 17
 // (production hardening, 17.1–17.9), Cloudflare R2 storage and the single-server deployment, each
 // with a one-line explanation and deep links to the screen or state that shows it. English only,
 // like the other tour pages (the Studio screens behind the links follow the language switcher).
@@ -286,6 +286,46 @@ export const WHATS_NEW: WhatsNewGroup[] = [
         title: 'Organisation switcher, user menu and banners',
         line: 'Switch organisation and sign out from the header; banners show a trial, a failed payment, read-only access or staff view.',
         see: [{ href: '#/projects', label: 'Any screen: the header and the trial banner' }],
+      },
+    ],
+  },
+  {
+    id: 'phase-20',
+    index: '06',
+    title: 'Phase 20 — Plan a month ahead',
+    intro:
+      'Videos can be auto-scheduled up to a month and more ahead: one-click posting plans, open posting times on the calendar, and an honest notice when there is no free time.',
+    scene: 'baker',
+    items: [
+      {
+        ref: '20.3',
+        title: 'Posting plans in one click',
+        line: '“3 a week”, “5 a week” or “Every day” fill the drip queue’s posting times in your time zone; edit any of them, then save.',
+        see: [
+          { href: '#/calendar', label: 'Calendar: the drip queue panel' },
+          { href: '#/welcome', label: 'Onboarding: “Plan your month”' },
+        ],
+      },
+      {
+        ref: '20.3',
+        title: 'Open posting times on the calendar',
+        line: 'Dashed markers show the free drip-queue times for the month ahead, and a line above the grid counts posts scheduled and open slots in the next 30 days.',
+        see: [{ href: '#/calendar', label: 'Calendar' }],
+      },
+      {
+        ref: '20.3',
+        title: 'Schedule into the next free slot',
+        line: 'Create a video with “No date — use the next free drip-queue slot”; if none is free within 8 weeks the Review screen says so, and “Try again” schedules it once there is room.',
+        see: [
+          { href: '#/new', label: 'Create: Advanced options' },
+          { href: project(P20_PROJECTS.harvestLoaf.id), label: 'A video waiting for a free slot' },
+        ],
+      },
+      {
+        ref: '20.3',
+        title: 'Scheduling limits you can see',
+        line: 'Date pickers stop at 180 days ahead and explain why before anything is sent.',
+        see: [{ href: project(PROJECTS.springMenu.id), label: 'Review: the Publish tab' }],
       },
     ],
   },

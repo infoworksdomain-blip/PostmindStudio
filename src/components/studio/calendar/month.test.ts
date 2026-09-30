@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Publication } from '@/lib/client/types';
-import { dayKey, eventTime, gridWindow, groupByDay, monthGrid, shiftMonth } from './month';
+import {
+  dayKey,
+  eventTime,
+  gridWindow,
+  groupByDay,
+  groupOpenByDay,
+  monthGrid,
+  shiftMonth,
+} from './month';
 
 const base = {
   projectId: 'prj',
@@ -56,5 +64,17 @@ describe('month helpers', () => {
     expect(byDay.get('2026-09-03')!.map((p) => p.id)).toEqual(['b', 'a']);
     expect(byDay.has('2026-09-01')).toBe(false);
     expect([...byDay.values()].flat()).toHaveLength(2);
+  });
+});
+
+describe('open slots by day (20.3)', () => {
+  it('buckets open slot instants by local day, in time order', () => {
+    const a = new Date(2026, 9, 5, 18, 0).toISOString();
+    const b = new Date(2026, 9, 5, 9, 0).toISOString();
+    const c = new Date(2026, 9, 6, 12, 30).toISOString();
+    const byDay = groupOpenByDay([a, c, b]);
+    expect(byDay.get('2026-10-05')).toEqual([b, a]);
+    expect(byDay.get('2026-10-06')).toEqual([c]);
+    expect(groupOpenByDay([]).size).toBe(0);
   });
 });

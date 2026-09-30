@@ -9,6 +9,7 @@ import {
   approvalOrigin,
   readAutoPublishResult,
   readReview,
+  readScheduleIssue,
   readTargets,
   type AutoPublishTarget,
   type AutoPublishTargetResult,
@@ -16,6 +17,7 @@ import {
 } from '../automation/automation';
 import { AutoPublishOutbox } from './auto-publish-outbox';
 import { SaveTemplate } from './save-template';
+import { ScheduleNotice } from './schedule-notice';
 
 // Review screen: how this project is approved and published automatically — "Approved
 // automatically" vs by a person, why it still needs a person (spec 5.9), the auto-publish targets
@@ -65,9 +67,11 @@ function Targets({ project }: { project: ProjectDetail }) {
     <div className="flex flex-col gap-2">
       <p className="text-sm">
         <Send className="me-1.5 inline size-4 rtl:-scale-x-100" strokeWidth={1.5} />
-        {outcome
-          ? t('publishesAutomaticallyLastRun', { date: f.date(outcome.at) })
-          : t('publishesAutomatically')}
+        {project.publishPolicy === 'SCHEDULED'
+          ? t('schedulesAutomatically')
+          : outcome
+            ? t('publishesAutomaticallyLastRun', { date: f.date(outcome.at) })
+            : t('publishesAutomatically')}
       </p>
       {outcome?.error && <p className="text-sm text-destructive">{outcome.error}</p>}
       <ul className="flex flex-col gap-1 text-sm" aria-label={t('targetsAria')}>
@@ -143,14 +147,26 @@ export function useReviewReason(): (review: ReviewRecord) => string {
   };
 }
 
-export function AutomationPanel({ project }: { project: ProjectDetail }) {
+export function AutomationPanel({
+  project,
+  onChanged,
+}: {
+  project: ProjectDetail;
+  onChanged?: () => void;
+}) {
   const t = useTranslations('review.automation');
   const origin = approvalOrigin(project.approvals);
   const review = readReview(project.metadata);
   const needsReview =
     project.state === 'READY_FOR_REVIEW' && review?.decision === 'needs_review' ? review : null;
   const reviewReason = useReviewReason();
-  const autoPublish = project.publishPolicy === 'AUTO_ON_APPROVAL';
+  // 20.3: scheduled projects (a date or the drip queue) publish to their targets too.
+  const autoPublish =
+    project.publishPolicy === 'AUTO_ON_APPROVAL' || project.publishPolicy === 'SCHEDULED';
+  const scheduleIssue =
+    project.publishPolicy === 'SCHEDULED' && project.state === 'APPROVED'
+      ? readScheduleIssue(project.metadata)
+      : null;
   const canSave = project.sourceType !== 'SLIDESHOW' && project.scripts.length > 0;
   if (!origin && !needsReview && !autoPublish && !canSave) return null;
 
@@ -175,6 +191,9 @@ export function AutomationPanel({ project }: { project: ProjectDetail }) {
           <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
           {reviewReason(needsReview)}
         </p>
+      )}
+      {scheduleIssue && (
+        <ScheduleNotice projectId={project.id} issue={scheduleIssue} onChanged={onChanged} />
       )}
       {autoPublish && <Targets project={project} />}
       {autoPublish && <AutoPublishOutbox projectId={project.id} />}

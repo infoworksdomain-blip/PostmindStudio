@@ -13,12 +13,16 @@ import {
   formatMonth,
   gridWindow,
   groupByDay,
+  groupOpenByDay,
   monthGrid,
   monthOf,
   moveToDay,
   shiftMonth,
 } from './month';
+import { useBusiness } from '../business-context';
 import { DripQueuePanel } from './drip-queue';
+import { MonthAheadSummary } from './open-slot';
+import { summaryWindow, useUpcomingSlots } from './use-upcoming-slots';
 import { AgendaList, MonthGrid, type MoveHandlers } from './month-views';
 import { MoveToDialog, useReschedule } from './reschedule';
 import type { Publication } from '@/lib/client/types';
@@ -27,6 +31,8 @@ import { MAX_PAGES, PAGE_LIMIT, useCalendarPublications } from './use-calendar-p
 // BACKLOG 10.5 — Manage: calendar of scheduled and published videos (spec 14.3), from
 // GET /publications with a from/to window. Month grid on desktop, agenda list on phones.
 // Scheduled posts can be dragged to another day or moved with the move dialog (13.9).
+// 20.3: open drip-queue slots of the active business show as dashed markers for the visible
+// range, with a "Next 30 days" summary above the grid (GET …/drip-queue/upcoming).
 
 export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   const t = useTranslations('calendar');
@@ -41,6 +47,18 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
     range.to,
   );
   const byDay = useMemo(() => groupByDay(data?.publications ?? []), [data]);
+  const { businessId } = useBusiness();
+  const [openedAt] = useState(() => Date.now());
+  const summary = useUpcomingSlots(businessId, summaryWindow(openedAt), openedAt);
+  const visible = useUpcomingSlots(businessId, range, openedAt);
+  const openByDay = useMemo(
+    () => groupOpenByDay(visible.data?.upcoming?.openSlots ?? []),
+    [visible.data],
+  );
+  const refreshSlots = () => {
+    void summary.mutate();
+    void visible.mutate();
+  };
   const title = formatMonth(month, f.locale);
   const [moving, setMoving] = useState<Publication | null>(null);
   const { move, pending } = useReschedule(() => void mutate());
@@ -105,6 +123,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
         </div>
       </div>
 
+      <MonthAheadSummary upcoming={summary.data?.upcoming ?? undefined} />
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-[32rem] rounded-xl" />}
       {data && (
@@ -121,9 +140,26 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
               })}
             </p>
           )}
-          <MonthGrid days={days} month={month} byDay={byDay} today={today} move={moveHandlers} />
-          <AgendaList days={days} month={month} byDay={byDay} today={today} move={moveHandlers} />
+          <MonthGrid
+            days={days}
+            month={month}
+            byDay={byDay}
+            openByDay={openByDay}
+            today={today}
+            move={moveHandlers}
+          />
+          <AgendaList
+            days={days}
+            month={month}
+            byDay={byDay}
+            openByDay={openByDay}
+            today={today}
+            move={moveHandlers}
+          />
           <p className="mt-4 text-xs text-muted-foreground">{t('dragHint')}</p>
+          {openByDay.size > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">{t('open.legend')}</p>
+          )}
           <MoveToDialog
             key={moving?.id ?? 'none'}
             publication={moving}
@@ -132,7 +168,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
           />
         </>
       )}
-      <DripQueuePanel />
+      <DripQueuePanel onSaved={refreshSlots} />
     </>
   );
 }
