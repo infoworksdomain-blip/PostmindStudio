@@ -66,6 +66,20 @@ describe('queueHealth', () => {
     };
     await expect(queueHealth([stuck], NOW, 20)).rejects.toBeInstanceOf(UpstreamServiceError);
   });
+
+  it('answers 502 with the reason when BullMQ rejects (e.g. Redis too old), not an opaque 500', async () => {
+    const tooOld: InspectableQueue = {
+      name: 'studio-assets',
+      getJobCounts: () =>
+        Promise.reject(new Error('Redis version needs to be greater or equal than 5.0.0')),
+      getJobs: async () => [],
+    };
+    const err = await queueHealth([tooOld], NOW, 1_000).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UpstreamServiceError);
+    expect((err as Error).message).toBe(
+      'Queue health unavailable: Redis error (Redis version needs to be greater or equal than 5.0.0)',
+    );
+  });
 });
 
 function adapter(providerId: string): ProviderAdapter {

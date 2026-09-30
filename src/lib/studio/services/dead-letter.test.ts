@@ -136,6 +136,18 @@ describe('listFailed', () => {
     };
     await expect(listFailed(hanging, { limit: 1 }, 10)).rejects.toThrow(UpstreamServiceError);
   });
+
+  it('502s with the reason when Redis rejects (connection refused, server too old)', async () => {
+    const broken: DeadLetterQueue = {
+      ...findQueue(queueWithFailures(0).queues, QUEUES.publish),
+      countFailed: () => Promise.reject(new Error('connect ECONNREFUSED 127.0.0.1:6379')),
+    };
+    await expect(listFailed(broken, { limit: 1 })).rejects.toThrow(
+      new UpstreamServiceError(
+        'Dead-letter queue unavailable: Redis error (connect ECONNREFUSED 127.0.0.1:6379)',
+      ),
+    );
+  });
 });
 
 describe('retry / requeue / drain', () => {

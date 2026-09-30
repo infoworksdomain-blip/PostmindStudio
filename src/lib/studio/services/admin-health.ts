@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { Queue, type ConnectionOptions } from 'bullmq';
-import { UpstreamServiceError } from '../../errors';
+import { StudioError, UpstreamServiceError } from '../../errors';
 import type { BreakerState, CircuitBreaker } from '../providers/circuit-breaker';
 import { CLIENT_SIDE_ERROR_CLASSES, type ProviderErrorClass } from '../providers/interface';
 import { utcDay } from '../providers/job-repository';
@@ -79,10 +79,23 @@ export async function queueHealth(
     );
   });
   try {
-    return await Promise.race([report, timeout]);
+    return await Promise.race([report.catch(asRedisUnavailable('Queue health')), timeout]);
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * A Redis error thrown by BullMQ (connection refused, a server too old for BullMQ) becomes a 502
+ * with its reason, like the timeout, instead of an opaque 500 "Request failed" (20.10). Staff-only
+ * screens, so the reason is shown.
+ */
+export function asRedisUnavailable(what: string): (err: unknown) => never {
+  return (err) => {
+    if (err instanceof StudioError) throw err;
+    const reason = err instanceof Error ? err.message : String(err);
+    throw new UpstreamServiceError(`${what} unavailable: Redis error (${reason})`);
+  };
 }
 
 let bullQueues: Queue[] | undefined;
