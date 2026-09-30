@@ -3538,7 +3538,8 @@
       "slate": {
         "scene": "Scène 01",
         "take": "Prise 1"
-      }
+      },
+      "phoneAlt": "Exemple de vidéo verticale : un pain au levain entaillé sur du papier cuisson, avec la légende « Tout juste sorti à 7 h »"
     },
     "platforms": {
       "title": "Un seul brief, adapté à chaque flux"
@@ -3563,12 +3564,18 @@
       "eyebrow": "Planche contact",
       "title": "Tous les formats, à partir d’un seul brief.",
       "body": "Vertical pour TikTok, Reels et Shorts, carré et portrait pour les fils d’actualité, grand écran pour YouTube et LinkedIn.",
-      "note": "Illustrations des formats produits par Studio, et non des vidéos de clients.",
+      "note": "Photos d’illustration montrant les formats que Studio produit, pas des vidéos de clients.",
       "captions": {
         "market": "Marché du samedi, 8 h",
         "studio": "Comment nous façonnons un pain au levain",
-        "workshop": "Dans les coulisses du comptoir",
-        "counter": "Nouveauté de la semaine"
+        "salon": "Coupes du vendredi, réservez",
+        "gym": "Cours de 6 h, plus que trois places"
+      },
+      "alts": {
+        "market": "Un étal de pain sur un marché, des miches empilées sur une nappe à carreaux rouges",
+        "studio": "Des mains farinées façonnent une pâte sur un plan de travail en bois",
+        "salon": "Ciseaux, rasoir et peigne posés sur un tapis noir",
+        "gym": "Des rangées d’haltères sur un rack dans une salle de sport"
       }
     },
     "features": {
@@ -3613,6 +3620,56 @@
       "copyright": "© {year} {entity}",
       "legalAria": "Mentions légales",
       "legalTitle": "Mentions légales"
+    },
+    "flow": {
+      "eyebrow": "Du brief à la publication",
+      "title": "Regardez une vidéo se fabriquer.",
+      "body": "Six étapes, un écran à la fois. Ce sont les vrais écrans de Studio, remplis avec les données d’une boulangerie fictive.",
+      "note": "Écrans de la démo de Studio, avec les données d’exemple de Leeds Sourdough, une boulangerie fictive.",
+      "roleCarousel": "carrousel",
+      "roleSlide": "diapositive",
+      "stepsLabel": "Étapes",
+      "slideLabel": "{current} sur {total}",
+      "previous": "Étape précédente",
+      "next": "Étape suivante",
+      "pause": "Mettre le diaporama en pause",
+      "play": "Lancer le diaporama",
+      "brief": {
+        "tab": "Brief",
+        "title": "Écrivez une ligne",
+        "body": "Dites de quoi parle la vidéo, ou collez une page web. Studio choisit les plateformes, la durée et le kit de marque, et vous pouvez tout modifier.",
+        "alt": "L’écran Créer avec un brief sur un pain de seigle et un bouton Générer"
+      },
+      "script": {
+        "tab": "Script",
+        "title": "Lisez le script et la liste des plans",
+        "body": "Studio écrit une accroche, un message clé et un script pour chaque format, avec les plans qui vont avec. Réécrivez une ligne ou demandez une autre prise.",
+        "alt": "L’onglet Script d’un projet : accroche, public, ton et les scripts TikTok et YouTube Shorts"
+      },
+      "generate": {
+        "tab": "Générer",
+        "title": "Images, voix et musique",
+        "body": "Studio génère chaque plan avec des modèles d’IA vidéo et image, ou utilise vos photos et des images d’archive, puis ajoute voix, musique et sous-titres à vos couleurs.",
+        "alt": "La photothèque d’une boulangerie : pains, viennoiseries, café et un logo"
+      },
+      "review": {
+        "tab": "Relecture",
+        "title": "Vérifiez chaque montage avant publication",
+        "body": "Regardez chaque format côte à côte. Des contrôles automatiques, dont la sécurité du contenu et votre kit de marque, passent avant votre validation.",
+        "alt": "Une variante TikTok prête à relire, contrôles qualité réussis, dont la sécurité du contenu"
+      },
+      "calendar": {
+        "tab": "Calendrier",
+        "title": "Planifiez le mois à venir",
+        "body": "Les vidéos validées se placent dans les créneaux libres du calendrier et sont publiées sur chaque compte au bon moment.",
+        "alt": "Le calendrier de septembre avec des publications prévues le matin et le soir"
+      },
+      "analytics": {
+        "tab": "Statistiques",
+        "title": "Voyez ce qui a marché",
+        "body": "Vues, temps de visionnage, engagement et coût de chaque vidéo, au même endroit, pour un meilleur prochain brief.",
+        "alt": "La page Statistiques : vues sur 30 jours, temps de visionnage, engagement, dépenses et un graphique d’activité quotidienne"
+      }
     }
   },
   "pricing": {

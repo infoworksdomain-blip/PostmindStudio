@@ -3538,7 +3538,8 @@
       "slate": {
         "scene": "Scene 01",
         "take": "Take 1"
-      }
+      },
+      "phoneAlt": "Sample vertical video: a scored sourdough loaf on baking paper, captioned “Fresh out at 7am”"
     },
     "platforms": {
       "title": "One brief, cut for every feed"
@@ -3563,12 +3564,18 @@
       "eyebrow": "Contact sheet",
       "title": "Every shape, from one brief.",
       "body": "Vertical for TikTok, Reels and Shorts, square and portrait for feeds, widescreen for YouTube and LinkedIn.",
-      "note": "Illustrations of the formats Studio renders, not customer videos.",
+      "note": "Stock photos showing the shapes Studio renders, not customer videos.",
       "captions": {
         "market": "Saturday market, 8am",
         "studio": "How we shape a sourdough",
-        "workshop": "Behind the counter",
-        "counter": "New this week"
+        "salon": "Friday cuts, book now",
+        "gym": "6am class, three spaces left"
+      },
+      "alts": {
+        "market": "A bread stall at a street market, loaves piled on a red checked cloth",
+        "studio": "Floury hands shaping dough on a wooden bench",
+        "salon": "Scissors, a razor and a comb laid out on a black mat",
+        "gym": "Rows of dumbbells on a rack in a gym"
       }
     },
     "features": {
@@ -3613,6 +3620,56 @@
       "copyright": "© {year} {entity}",
       "legalAria": "Legal",
       "legalTitle": "Legal"
+    },
+    "flow": {
+      "eyebrow": "From brief to booked in",
+      "title": "Watch a video get made.",
+      "body": "Six steps, one screen at a time. These are Studio’s real screens, filled with a sample bakery’s data.",
+      "note": "Screens from the Studio demo, with sample data for Leeds Sourdough, a fictional bakery.",
+      "roleCarousel": "carousel",
+      "roleSlide": "slide",
+      "stepsLabel": "Steps",
+      "slideLabel": "{current} of {total}",
+      "previous": "Previous step",
+      "next": "Next step",
+      "pause": "Pause the slideshow",
+      "play": "Play the slideshow",
+      "brief": {
+        "tab": "Brief",
+        "title": "Write one line",
+        "body": "Say what the video is about, or paste a web page. Studio picks the platforms, length and brand kit, and you can change any of them.",
+        "alt": "The Create screen with a brief about a rye loaf typed in and a Generate button"
+      },
+      "script": {
+        "tab": "Script",
+        "title": "Read the script and shot list",
+        "body": "Studio writes a hook, a key message and a script for each format, with the shots to match. Rewrite a line or ask for another take.",
+        "alt": "A project’s Script tab: hook, audience, tone and the TikTok and YouTube Shorts scripts"
+      },
+      "generate": {
+        "tab": "Generate",
+        "title": "Visuals, voice and music",
+        "body": "Studio generates each shot with AI video and image models, or uses your own photos and stock footage, then adds voice, music and captions in your brand.",
+        "alt": "The image library for a bakery: loaves, pastries, coffee and a logo"
+      },
+      "review": {
+        "tab": "Review",
+        "title": "Check every cut before it goes out",
+        "body": "Watch each format side by side. Automatic checks, including content safety and your brand kit, run before you approve.",
+        "alt": "A TikTok variant ready for review, with its quality checks passed, including content safety"
+      },
+      "calendar": {
+        "tab": "Calendar",
+        "title": "Plan the month ahead",
+        "body": "Approved videos drop into open slots on the calendar and publish to each account at the right time.",
+        "alt": "The calendar for September with morning and evening posts scheduled"
+      },
+      "analytics": {
+        "tab": "Analytics",
+        "title": "See what worked",
+        "body": "Views, watch time, engagement and what each video cost, in one place, so the next brief is better.",
+        "alt": "The analytics page: views over 30 days, watch time, engagement, spend and a daily activity chart"
+      }
     }
   },
   "pricing": {

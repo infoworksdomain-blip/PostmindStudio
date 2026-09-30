@@ -150,6 +150,30 @@
       transform: translateY(-10px);
     }
   }
+  /* Phase 20.8 landing page: the carousel's step timer (FlowCarousel ADVANCE_MS), a slide's
+     entrance and the hero phone's playback bar. Transform and opacity only; the reduced-motion
+     rule below stops them. */
+  --animate-progress: progress 7s linear forwards;
+  --animate-slide-in: slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-playback: progress 12s linear infinite;
+  @keyframes progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   @keyframes rec {
     0%,
     100% {
