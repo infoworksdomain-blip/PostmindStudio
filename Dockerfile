@@ -47,6 +47,12 @@ COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/prompts ./prompts
 # Phase 18: the operator's legal Markdown for /legal/* (placeholders until replaced).
 COPY --from=build --chown=node:node /app/content ./content
+# The UI/email message catalogues: the worker renders every email from them at runtime
+# (src/lib/i18n/messages.ts imports messages/<locale>.json). Missing here, every email failed on the
+# first server with "Cannot find module '/app/messages/en-GB.json'" (2026-09-30).
+COPY --from=build --chown=node:node /app/messages ./messages
+# The Core internal client, imported by src/lib/studio/ops/core-contract.ts (scripts/core, core mode).
+COPY --from=build --chown=node:node /app/integrations ./integrations
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/src ./src
 # prisma.config.ts: the seed command for `prisma db seed` (the migrate one-shot) lives there.
