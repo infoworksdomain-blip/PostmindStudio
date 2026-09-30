@@ -89,7 +89,7 @@ Details: [vps-deploy.md](vps-deploy.md) sections 1 and 2.
 
 - **Click:** **Servers** (left menu) → **Add server**. Choose:
   - **Location:** Falkenstein or Nuremberg (Germany).
-  - **Image:** Ubuntu 24.04.
+  - **Image:** Ubuntu 26.04 (24.04 also works).
   - **Type:** CPX12 (shared x86, 1 vCPU, 2 GB). Not the ARM "CAX" types. If CPX12 is unavailable, pick the next x86 size.
   - **Networking:** public IPv4 on (IPv6 optional).
   - **SSH keys:** tick `my-laptop`.

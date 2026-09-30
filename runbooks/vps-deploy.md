@@ -120,7 +120,7 @@ In the [Hetzner Console](https://console.hetzner.com):
    - TCP 80 and TCP 443 — any IPv4/IPv6 (Let's Encrypt must reach 80);
    - UDP 443 — any (HTTP/3; optional).
    Leave outbound empty (all allowed). The firewall is enforced on the network, outside the server.
-2. **Servers → Add Server**: location Falkenstein or Nuremberg; image **Ubuntu 24.04**; type
+2. **Servers → Add Server**: location Falkenstein or Nuremberg; image **Ubuntu 26.04** (or 24.04); type
    **CPX12**; networking: public IPv4 (and IPv6 if you like); **SSH key: add yours now** — Hetzner:
    "After the server has been created, it is no longer possible to add an SSH key via the Hetzner
    Console"; Firewalls: `studio`; Backups: optional (see section 11); name `postmind-studio-1`.
