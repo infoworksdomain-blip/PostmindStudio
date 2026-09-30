@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, ExternalLink, PartyPopper, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarRange, ExternalLink, PartyPopper, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,10 +32,20 @@ export function CelebrateStep({
   projectId: string | null;
   businessId?: string | null;
 }) {
+  const t = useTranslations('onboarding.celebrate');
   return (
     <div className="flex flex-col gap-6">
       <CelebrateContent projectId={projectId} />
       {businessId && <PostingPlanCard businessId={businessId} />}
+      {/* 20.9: or let Studio draft and schedule the whole month. */}
+      {businessId && (
+        <Link
+          href="/plans/new"
+          className="inline-flex items-center gap-1.5 text-sm underline underline-offset-2"
+        >
+          <CalendarRange className="size-4" strokeWidth={1.5} /> {t('planMonth')}
+        </Link>
+      )}
     </div>
   );
 }

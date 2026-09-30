@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils';
 import { CalendarEvent } from './calendar-event';
 import { dayKey, weekdayNames, type MonthRef } from './month';
 import { OpenSlot } from './open-slot';
+import { PlannedSlot } from './planned-slot';
+import type { PlannedPost } from './use-upcoming-slots';
 import { DRAG_TYPE } from './reschedule';
 
 /** Reschedule wiring (13.9); absent = a read-only calendar. */
@@ -24,12 +26,14 @@ export interface MoveHandlers {
 const MAX_PER_CELL = 3;
 
 const NO_OPEN_SLOTS: ReadonlyMap<string, string[]> = new Map();
+const NO_PLANNED: ReadonlyMap<string, PlannedPost[]> = new Map();
 
 export function MonthGrid({
   days,
   month,
   byDay,
   openByDay = NO_OPEN_SLOTS,
+  plannedByDay = NO_PLANNED,
   today,
   move,
 }: {
@@ -38,6 +42,8 @@ export function MonthGrid({
   byDay: Map<string, Publication[]>;
   /** 20.3: open drip-queue slots by day (ISO instants). */
   openByDay?: ReadonlyMap<string, string[]>;
+  /** 20.9: month-plan posts still being made, by day. */
+  plannedByDay?: ReadonlyMap<string, PlannedPost[]>;
   today: string;
   move?: MoveHandlers;
 }) {
@@ -65,8 +71,13 @@ export function MonthGrid({
         {days.map((day) => {
           const key = dayKey(day);
           const events = byDay.get(key) ?? [];
+          const planned = plannedByDay.get(key) ?? [];
+          const shownPlanned = planned.slice(0, Math.max(0, MAX_PER_CELL - events.length));
           const open = openByDay.get(key) ?? [];
-          const shownOpen = open.slice(0, Math.max(0, MAX_PER_CELL - events.length));
+          const shownOpen = open.slice(
+            0,
+            Math.max(0, MAX_PER_CELL - events.length - shownPlanned.length),
+          );
           const inMonth = day.getMonth() === month.month;
           const isToday = key === today;
           return (
@@ -118,6 +129,14 @@ export function MonthGrid({
                   {t('more', { count: events.length - MAX_PER_CELL })}
                 </span>
               )}
+              {shownPlanned.map((post) => (
+                <PlannedSlot key={post.itemId} post={post} compact />
+              ))}
+              {planned.length > shownPlanned.length && (
+                <span className="px-1.5 text-[0.7rem] text-muted-foreground">
+                  {t('morePlanned', { count: planned.length - shownPlanned.length })}
+                </span>
+              )}
               {shownOpen.map((at) => (
                 <OpenSlot key={at} at={at} compact />
               ))}
@@ -139,6 +158,7 @@ export function AgendaList({
   month,
   byDay,
   openByDay = NO_OPEN_SLOTS,
+  plannedByDay = NO_PLANNED,
   today,
   move,
 }: {
@@ -146,13 +166,16 @@ export function AgendaList({
   month: MonthRef;
   byDay: Map<string, Publication[]>;
   openByDay?: ReadonlyMap<string, string[]>;
+  plannedByDay?: ReadonlyMap<string, PlannedPost[]>;
   today: string;
   move?: MoveHandlers;
 }) {
   const t = useTranslations('calendar.grid');
   const f = useFormat();
   const busy = days.filter(
-    (d) => d.getMonth() === month.month && (byDay.has(dayKey(d)) || openByDay.has(dayKey(d))),
+    (d) =>
+      d.getMonth() === month.month &&
+      (byDay.has(dayKey(d)) || openByDay.has(dayKey(d)) || plannedByDay.has(dayKey(d))),
   );
   if (busy.length === 0) {
     return (
@@ -188,6 +211,9 @@ export function AgendaList({
                   onMove={move?.onMove}
                   busy={move?.pendingId === p.id}
                 />
+              ))}
+              {(plannedByDay.get(key) ?? []).map((post) => (
+                <PlannedSlot key={post.itemId} post={post} />
               ))}
               {(openByDay.get(key) ?? []).map((at) => (
                 <OpenSlot key={at} at={at} />

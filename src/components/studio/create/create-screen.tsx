@@ -6,7 +6,15 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ArrowRight, Building2, Clapperboard, Layers, Loader2, Upload } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  CalendarRange,
+  Clapperboard,
+  Layers,
+  Loader2,
+  Upload,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
@@ -216,6 +224,13 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
         <label htmlFor="create-brief" className="font-display text-4xl leading-tight md:text-6xl">
           {t(`heading.${form.source}`)}
         </label>
+        {/* 20.9: a whole month of videos and slideshows, drafted and scheduled at once. */}
+        <Link
+          href="/plans/new"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+        >
+          <CalendarRange className="size-4" strokeWidth={1.5} /> {t('planMonth')}
+        </Link>
       </div>
       {!isUpload && <ProfileReviewNotice businessId={businessId} />}
       {isUpload && businessId && (

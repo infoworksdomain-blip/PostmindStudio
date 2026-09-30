@@ -485,7 +485,8 @@
         "generatingUpload": "Generazione in corso: Studio sta sottotitolando il tuo video.",
         "generatingScript": "Generazione in corso: Studio sta scrivendo il copione.",
         "draftNotStarted": "Salvato come bozza, ma la generazione non è partita: {error}"
-      }
+      },
+      "planMonth": "Oppure pianifica un mese intero di video e slideshow"
     },
     "problems": {
       "businessRequired": "Prima scegli un’attività.",
@@ -1392,7 +1393,8 @@
       "more": "{count, plural, one {+# altro} other {+# altri}}",
       "agendaAria": "Agenda",
       "emptyMonth": "Niente di programmato o pubblicato questo mese.",
-      "moreOpen": "{count, plural, one {+# slot libero} other {+# slot liberi}}"
+      "moreOpen": "{count, plural, one {+# slot libero} other {+# slot liberi}}",
+      "morePlanned": "+{count} pianificati"
     },
     "event": {
       "untitled": "Progetto senza titolo",
@@ -1443,6 +1445,12 @@
     "summary": {
       "next": "Prossimi 30 giorni: {scheduled, plural, one {# post programmato} other {# post programmati}} · {open, plural, one {# slot libero} other {# slot liberi}}",
       "queueOff": "Prossimi 30 giorni: {scheduled, plural, one {# post programmato} other {# post programmati}}. La coda di pubblicazione è disattivata: <link>imposta gli orari di pubblicazione</link> per riempire il mese in automatico."
+    },
+    "planMonth": "Pianifica il mio mese",
+    "planned": {
+      "label": "Pianificato",
+      "aria": "Post del piano mensile alle {time}: {title} ({status})",
+      "legend": "Le caselle con “Pianificato” sono post del piano mensile ancora in realizzazione; una volta programmati appaiono come post."
     }
   },
   "business": {
@@ -3139,7 +3147,8 @@
         "title": "Quasi online",
         "body": "“{name}” non è ancora pubblicato. Rivedilo, approvalo e pubblicalo: festeggeremo qui non appena sarà online.",
         "action": "Apri il tuo video"
-      }
+      },
+      "planMonth": "Oppure lascia che Studio pianifichi e programmi tutto il tuo mese"
     },
     "finished": {
       "title": "Tutto pronto",
@@ -4542,6 +4551,12 @@
         "heading": "La tua esportazione dei dati è pronta",
         "body": "L’esportazione richiesta a PostMind Studio è pronta per il download. Il link di download funziona fino al {expiresAt, date, long}.",
         "cta": "Scarica l’esportazione"
+      },
+      "monthPlanned": {
+        "subject": "Il tuo mese è pianificato: {postCount, plural, one {# post} other {# post}} dal {startDate, date, long} al {endDate, date, long}",
+        "heading": "Il tuo mese è pianificato",
+        "body": "{postCount, plural, one {# post è programmato} other {# post sono programmati}} dal {startDate, date, long} al {endDate, date, long}. Ognuno esce all’orario previsto, a meno che tu non lo cambi o lo tolga prima. {needsAttention, plural, one {# post richiede la tua attenzione.} other {# post richiedono la tua attenzione.}}",
+        "cta": "Rivedi il tuo mese"
       }
     },
     "notification": {
@@ -4727,6 +4742,209 @@
           "action": "Avvia vista"
         }
       }
+    }
+  },
+  "plans": {
+    "loading": "Caricamento del piano",
+    "new": {
+      "eyebrow": "Pianifica il mio mese",
+      "title": "Pianifica il mio mese",
+      "description": "Studio prepara un mese di video e slideshow partendo dal tuo sito, dal tuo brand kit e dai tuoi post passati. Tu modifichi l’elenco, poi tutto viene generato e programmato: ogni post esce all’orario previsto, a meno che tu non lo cambi o lo tolga prima.",
+      "yourPlans": "I tuoi piani mensili",
+      "loading": "Preparazione del piano",
+      "start": "Data di inizio",
+      "startHint": "Il primo giorno del piano. Parte dal tuo prossimo giorno libero, a meno che tu non ne scelga un altro.",
+      "days": "Durata in giorni",
+      "daysHint": "Fino a {max} giorni.",
+      "postsPerDay": "Post al giorno",
+      "postsPerDayOption": "{count, plural, one {# al giorno} other {# al giorno}}",
+      "useMyTimes": "Usa i miei orari di pubblicazione",
+      "useMyTimesHint": "Il tuo calendario ha {count, plural, one {# orario di pubblicazione} other {# orari di pubblicazione}} a settimana; un piano ne usa al massimo 4 al giorno.",
+      "noPostingTimes": "Nessun orario di pubblicazione per ora. Impostali nel calendario per usarli qui.",
+      "mix": "Video e slideshow",
+      "mixValue": "{videos}% video · {slideshows}% slideshow",
+      "mixHint": "Gli slideshow sono più rapidi ed economici da realizzare; i video usano clip IA e una voce fuori campo.",
+      "account": "Account {platform}",
+      "noAccount": "Nessun account collegato.",
+      "connect": "Collegane uno",
+      "chooseAccount": "Scegli un account",
+      "submit": "Prepara il mio mese",
+      "submitting": "Preparazione…",
+      "estimate": "Fino a {count, plural, one {# post} other {# post}} in {days, plural, one {# giorno} other {# giorni}}.",
+      "costHint": "Costo di realizzazione tipico: circa {video} per video e fino a {slideshow} per slideshow.",
+      "problems": {
+        "startRequired": "Scegli una data di inizio.",
+        "daysRange": "Scegli tra 1 e {max} giorni.",
+        "platformRequired": "Scegli almeno una piattaforma.",
+        "accountRequired": "Scegli un account collegato per ogni piattaforma: i post escono da soli."
+      },
+      "noBusiness": {
+        "title": "Scegli prima un’attività",
+        "description": "Un piano mensile appartiene a una sola attività.",
+        "action": "Apri le attività"
+      }
+    },
+    "allowance": {
+      "title": "Questo mese",
+      "videos": "{remaining, plural, one {# video rimasto} other {# video rimasti}} su {limit}",
+      "credits": "{count, plural, one {più # credito di ricarica} other {più # crediti di ricarica}}",
+      "unlimited": "Il tuo piano non ha un limite mensile di video",
+      "spend": "Limite di spesa: {spent} usati su {cap}",
+      "noCap": "Nessun limite di spesa mensile",
+      "topUp": "Aggiungi una ricarica"
+    },
+    "capped": {
+      "allowance": "Questo piano ha {count, plural, one {# post} other {# post}} invece di {requested}: è quanto copre il tuo piano questo mese. <link>Aggiungi una ricarica</link> per pianificarne di più.",
+      "cost_cap": "Questo piano ha {count, plural, one {# post} other {# post}} invece di {requested}: di più supererebbe il limite di spesa di questo mese. <link>Aggiungi una ricarica</link> per alzarlo."
+    },
+    "hold": {
+      "kill_switch": "Studio ha messo in pausa la generazione per ora. I tuoi post ripartiranno automaticamente.",
+      "cost_cap": "In pausa: è stato raggiunto il limite di spesa di questo mese. Riparte quando il limite si azzera o aggiungi una ricarica.",
+      "daily_limit": "In pausa fino a domani: è stato raggiunto il limite di oggi per i piani mensili. Il resto ripartirà automaticamente."
+    },
+    "drafting": {
+      "title": "Preparazione del tuo mese",
+      "body": "Claude sta scrivendo i tuoi post partendo dai dati della tua attività. Di solito ci vogliono un paio di minuti.",
+      "progress": "{written} post scritti su {total}"
+    },
+    "status": {
+      "DRAFTING": "In preparazione",
+      "DRAFT": "Bozza",
+      "GENERATING": "In generazione",
+      "SCHEDULED": "Programmato",
+      "COMPLETED": "Completato",
+      "CANCELLED": "Annullato"
+    },
+    "itemStatus": {
+      "PLANNED": "Pianificato",
+      "QUEUED": "In attesa di realizzazione",
+      "GENERATING": "In realizzazione",
+      "READY": "Da revisionare",
+      "SCHEDULED": "Programmato",
+      "POSTED": "Pubblicato",
+      "HELD": "Bloccato dal controllo di sicurezza",
+      "FAILED": "Non riuscito",
+      "SKIPPED": "Saltato",
+      "REMOVED": "Rimosso"
+    },
+    "angle": {
+      "how_to": "Tutorial",
+      "product_feature": "Prodotto in evidenza",
+      "behind_the_scenes": "Dietro le quinte",
+      "offer": "Offerta",
+      "testimonial": "Perché i clienti ti scelgono",
+      "seasonal": "Stagionale",
+      "custom": "La tua idea"
+    },
+    "kind": {
+      "VIDEO": "Video",
+      "SLIDESHOW": "Slideshow"
+    },
+    "calendarDay": {
+      "new_year": "Capodanno",
+      "valentines": "San Valentino",
+      "pancake_day": "Martedì grasso",
+      "st_davids": "Festa di San Davide",
+      "st_patricks": "Festa di San Patrizio",
+      "mothers_day_uk": "Festa della mamma (Regno Unito)",
+      "easter": "Pasqua",
+      "st_georges": "Festa di San Giorgio",
+      "early_may_bank_holiday": "Festivo di inizio maggio",
+      "spring_bank_holiday": "Festivo di primavera",
+      "fathers_day": "Festa del papà",
+      "summer_bank_holiday": "Festivo d’estate",
+      "halloween": "Halloween",
+      "bonfire_night": "Bonfire Night",
+      "black_friday": "Black Friday",
+      "st_andrews": "Festa di Sant’Andrea",
+      "small_business_saturday": "Small Business Saturday",
+      "christmas_eve": "Vigilia di Natale",
+      "christmas": "Natale",
+      "boxing_day": "Santo Stefano",
+      "new_years_eve": "San Silvestro"
+    },
+    "reason": {
+      "slot_passed": "Il suo orario è arrivato prima che potesse essere realizzato.",
+      "allowance": "Non coperto dal piano di questo mese.",
+      "removed_by_owner": "Rimosso da te.",
+      "plan_cancelled": "Il piano è stato annullato.",
+      "not_started": "Non è stato possibile avviarlo.",
+      "publish_failed": "La pubblicazione non è riuscita. Aprilo per riprovare.",
+      "safety_review": "In attesa di una revisione di sicurezza.",
+      "content_safety_flag": "Il controllo di sicurezza dei contenuti l’ha segnalato.",
+      "script_safety_flag": "Il controllo di sicurezza del copione l’ha segnalato."
+    },
+    "editor": {
+      "title": "Il tuo mese: {start} – {end}",
+      "draftError": "Alcuni post non sono stati scritti.",
+      "redraft": "Scrivi i post mancanti",
+      "summary": "{count, plural, one {# post} other {# post}}: {videos, plural, one {# video} other {# video}} e {slideshows, plural, one {# slideshow} other {# slideshow}}",
+      "costEstimate": "Costo di realizzazione stimato: circa {typical} (al massimo {max}).",
+      "allowanceUse": "Usa {count, plural, one {# video} other {# video}} del piano di questo mese.",
+      "reviewWindow": "Una volta generato, ogni post esce all’orario previsto, a meno che tu non lo cambi o lo tolga prima. Ricevi una sola email quando il tuo mese è pronto.",
+      "generate": "Genera e programma",
+      "discard": "Scarta il piano",
+      "daysAria": "Post per giorno",
+      "untitled": "In scrittura…",
+      "saved": "Salvato",
+      "edit": "Modifica",
+      "moveUp": "Anticipa “{title}”",
+      "moveDown": "Posticipa “{title}”",
+      "regenerate": "Nuovo argomento",
+      "regenerateAria": "Scrivi un nuovo argomento al posto di “{title}”",
+      "remove": "Elimina",
+      "removeAria": "Elimina “{title}”",
+      "removed": "Post eliminato",
+      "generateConfirmTitle": "Generare e programmare {count, plural, one {# post} other {# post}}?",
+      "generateConfirmBody": "Studio realizza ogni post e lo programma all’orario previsto. Ognuno esce da solo, a meno che tu non lo cambi o lo tolga prima. Ricevi una sola email quando il tuo mese è pronto.",
+      "notYet": "Non ancora",
+      "generating": "Il tuo mese è in realizzazione",
+      "discardConfirmTitle": "Scartare questo piano?",
+      "discardConfirmBody": "La bozza e i suoi post vengono eliminati. Non è ancora stato realizzato né programmato nulla.",
+      "discarded": "Piano scartato",
+      "titleLabel": "Argomento",
+      "kindLabel": "Formato",
+      "briefLabel": "Brief",
+      "hookLabel": "Frase d’apertura",
+      "ctaLabel": "Invito all’azione",
+      "pointsLabel": "Punti dello slideshow, uno per riga",
+      "save": "Salva",
+      "cancelEdit": "Annulla",
+      "addTitle": "Aggiungi un post",
+      "addWhen": "Data e ora",
+      "addWhenHint": "Entro le date del piano, al massimo 4 post al giorno.",
+      "addSubmit": "Aggiungi post",
+      "added": "Post aggiunto"
+    },
+    "view": {
+      "calendar": "Apri il calendario",
+      "statsAria": "Post per stato",
+      "heldNote": "{count, plural, one {# post è stato bloccato} other {# post sono stati bloccati}} dal controllo di sicurezza e non verranno pubblicati. Aprine uno per vedere perché, poi modificalo o toglilo.",
+      "reviewWindow": "Ogni post esce all’orario previsto. Fino ad allora puoi aprirlo per modificarlo, sostituirlo con un altro argomento o toglierlo.",
+      "daysAria": "Post per giorno",
+      "cancelPlan": "Annulla il piano",
+      "cancelConfirm": "Tutti i post non ancora usciti vengono annullati e i loro orari liberati. L’azione non si può annullare.",
+      "cancelled": "Piano annullato",
+      "open": "Apri",
+      "openAria": "Apri “{title}”",
+      "swap": "Cambia argomento",
+      "swapAria": "Sostituisci “{title}” con un altro argomento",
+      "swapSubmit": "Sostituisci e realizza",
+      "swapped": "Argomento sostituito: il nuovo post è in realizzazione",
+      "remove": "Togli",
+      "removeAria": "Togli “{title}”",
+      "removeConfirm": "La sua pubblicazione viene annullata e l’orario liberato. Il resto del piano continua.",
+      "removedToast": "Post tolto"
+    },
+    "list": {
+      "title": "Piani mensili",
+      "description": "I mesi che Studio ha pianificato per questa attività, dal più recente.",
+      "loading": "Caricamento dei piani mensili",
+      "new": "Pianifica il mio mese",
+      "empty": "Ancora nessun piano mensile",
+      "emptyBody": "Lascia che Studio prepari un mese di video e slideshow, poi generali e programmali in un colpo solo.",
+      "range": "{start} – {end}",
+      "posts": "{count, plural, one {# post} other {# post}}"
     }
   }
 }

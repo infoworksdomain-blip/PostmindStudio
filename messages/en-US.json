@@ -485,7 +485,8 @@
         "generatingUpload": "Generating — Studio is captioning your video.",
         "generatingScript": "Generating — Studio is writing the script.",
         "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}"
-      }
+      },
+      "planMonth": "Or plan a whole month of videos and slideshows"
     },
     "problems": {
       "businessRequired": "Choose a business first.",
@@ -1392,7 +1393,8 @@
       "more": "{count, plural, one {+# more} other {+# more}}",
       "agendaAria": "Agenda",
       "emptyMonth": "Nothing scheduled or published this month.",
-      "moreOpen": "{count, plural, one {+# open slot} other {+# open slots}}"
+      "moreOpen": "{count, plural, one {+# open slot} other {+# open slots}}",
+      "morePlanned": "+{count} planned"
     },
     "event": {
       "untitled": "Untitled project",
@@ -1443,6 +1445,12 @@
     "summary": {
       "next": "Next 30 days: {scheduled, plural, one {# post scheduled} other {# posts scheduled}} · {open, plural, one {# open slot} other {# open slots}}",
       "queueOff": "Next 30 days: {scheduled, plural, one {# post scheduled} other {# posts scheduled}}. The drip queue is off — <link>set posting times</link> to fill the month automatically."
+    },
+    "planMonth": "Plan my month",
+    "planned": {
+      "label": "Planned",
+      "aria": "Month-plan post at {time}: {title} ({status})",
+      "legend": "Boxes marked “Planned” are month-plan posts still being made; once scheduled they show as posts."
     }
   },
   "business": {
@@ -3139,7 +3147,8 @@
         "title": "Nearly live",
         "body": "“{name}” isn’t published yet. Review and approve it, then publish — we’ll celebrate here the moment it goes live.",
         "action": "Open your video"
-      }
+      },
+      "planMonth": "Or let Studio plan and schedule your whole month"
     },
     "finished": {
       "title": "You’re all set",
@@ -4542,6 +4551,12 @@
         "heading": "Your data export is ready",
         "body": "The export you requested from PostMind Studio is ready to download. The download link works until {expiresAt, date, long}.",
         "cta": "Download export"
+      },
+      "monthPlanned": {
+        "subject": "Your month is planned: {postCount, plural, one {# post} other {# posts}} from {startDate, date, long} to {endDate, date, long}",
+        "heading": "Your month is planned",
+        "body": "{postCount, plural, one {# post is} other {# posts are}} scheduled from {startDate, date, long} to {endDate, date, long}. Each one publishes at its time unless you change or remove it first. {needsAttention, plural, one {# post needs your attention.} other {# posts need your attention.}}",
+        "cta": "Review your month"
       }
     },
     "notification": {
@@ -4727,6 +4742,209 @@
           "action": "Start view"
         }
       }
+    }
+  },
+  "plans": {
+    "loading": "Loading the plan",
+    "new": {
+      "eyebrow": "Plan my month",
+      "title": "Plan my month",
+      "description": "Studio drafts a month of videos and slideshows from your website, brand kit and past posts. You edit the list, then everything is generated and scheduled: each post goes out at its time unless you change or remove it first.",
+      "yourPlans": "Your month plans",
+      "loading": "Getting your plan ready",
+      "start": "Start date",
+      "startHint": "The first day of the plan. It starts on your next free day unless you pick another.",
+      "days": "Length in days",
+      "daysHint": "Up to {max} days.",
+      "postsPerDay": "Posts a day",
+      "postsPerDayOption": "{count, plural, one {# a day} other {# a day}}",
+      "useMyTimes": "Use my posting times",
+      "useMyTimesHint": "Your calendar has {count, plural, one {# posting time} other {# posting times}} a week; a plan uses at most 4 a day.",
+      "noPostingTimes": "No posting times yet. Set them on the calendar to use them here.",
+      "mix": "Videos and slideshows",
+      "mixValue": "{videos}% videos · {slideshows}% slideshows",
+      "mixHint": "Slideshows are quicker and cheaper to make; videos use AI clips and a voice-over.",
+      "account": "{platform} account",
+      "noAccount": "No connected account.",
+      "connect": "Connect one",
+      "chooseAccount": "Choose an account",
+      "submit": "Draft my month",
+      "submitting": "Drafting…",
+      "estimate": "Up to {count, plural, one {# post} other {# posts}} over {days, plural, one {# day} other {# days}}.",
+      "costHint": "Typical cost to make: about {video} a video and up to {slideshow} a slideshow.",
+      "problems": {
+        "startRequired": "Choose a start date.",
+        "daysRange": "Choose between 1 and {max} days.",
+        "platformRequired": "Choose at least one platform.",
+        "accountRequired": "Choose a connected account for every platform: the posts publish on their own."
+      },
+      "noBusiness": {
+        "title": "Choose a business first",
+        "description": "A month plan belongs to one business.",
+        "action": "Open businesses"
+      }
+    },
+    "allowance": {
+      "title": "This month",
+      "videos": "{remaining, plural, one {# video left} other {# videos left}} of {limit}",
+      "credits": "{count, plural, one {plus # top-up credit} other {plus # top-up credits}}",
+      "unlimited": "No monthly video limit on your plan",
+      "spend": "Spending limit: {spent} of {cap} used",
+      "noCap": "No monthly spending limit",
+      "topUp": "Add a top-up"
+    },
+    "capped": {
+      "allowance": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: that is what your allowance covers this month. <link>Add a top-up</link> to plan more.",
+      "cost_cap": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: more would go past this month’s spending limit. <link>Add a top-up</link> to raise it."
+    },
+    "hold": {
+      "kill_switch": "Generation is paused by Studio for now. Your posts carry on automatically when it resumes.",
+      "cost_cap": "Paused: this month’s spending limit has been reached. It carries on when the limit resets or you add a top-up.",
+      "daily_limit": "Paused until tomorrow: today’s limit for month plans has been reached. The rest carry on automatically."
+    },
+    "drafting": {
+      "title": "Drafting your month",
+      "body": "Claude is writing your posts from your business details. This usually takes a minute or two.",
+      "progress": "{written} of {total} posts written"
+    },
+    "status": {
+      "DRAFTING": "Drafting",
+      "DRAFT": "Draft",
+      "GENERATING": "Generating",
+      "SCHEDULED": "Scheduled",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Canceled"
+    },
+    "itemStatus": {
+      "PLANNED": "Planned",
+      "QUEUED": "Waiting to be made",
+      "GENERATING": "Being made",
+      "READY": "Needs your review",
+      "SCHEDULED": "Scheduled",
+      "POSTED": "Posted",
+      "HELD": "Held by the safety check",
+      "FAILED": "Failed",
+      "SKIPPED": "Skipped",
+      "REMOVED": "Removed"
+    },
+    "angle": {
+      "how_to": "How-to",
+      "product_feature": "Product feature",
+      "behind_the_scenes": "Behind the scenes",
+      "offer": "Offer",
+      "testimonial": "Why customers choose you",
+      "seasonal": "Seasonal",
+      "custom": "Your idea"
+    },
+    "kind": {
+      "VIDEO": "Video",
+      "SLIDESHOW": "Slideshow"
+    },
+    "calendarDay": {
+      "new_year": "New Year’s Day",
+      "valentines": "Valentine’s Day",
+      "pancake_day": "Pancake Day",
+      "st_davids": "St David’s Day",
+      "st_patricks": "St Patrick’s Day",
+      "mothers_day_uk": "Mother’s Day (UK)",
+      "easter": "Easter",
+      "st_georges": "St George’s Day",
+      "early_may_bank_holiday": "Early May bank holiday",
+      "spring_bank_holiday": "Spring bank holiday",
+      "fathers_day": "Father’s Day",
+      "summer_bank_holiday": "Summer bank holiday",
+      "halloween": "Halloween",
+      "bonfire_night": "Bonfire Night",
+      "black_friday": "Black Friday",
+      "st_andrews": "St Andrew’s Day",
+      "small_business_saturday": "Small Business Saturday",
+      "christmas_eve": "Christmas Eve",
+      "christmas": "Christmas Day",
+      "boxing_day": "Boxing Day",
+      "new_years_eve": "New Year’s Eve"
+    },
+    "reason": {
+      "slot_passed": "Its time came before it could be made.",
+      "allowance": "Not covered by this month’s allowance.",
+      "removed_by_owner": "Removed by you.",
+      "plan_cancelled": "The plan was canceled.",
+      "not_started": "It could not be started.",
+      "publish_failed": "Publishing failed. Open it to try again.",
+      "safety_review": "Waiting for a safety review.",
+      "content_safety_flag": "The content safety check flagged it.",
+      "script_safety_flag": "The script safety check flagged it."
+    },
+    "editor": {
+      "title": "Your month: {start} – {end}",
+      "draftError": "Some posts could not be written.",
+      "redraft": "Write the missing posts",
+      "summary": "{count, plural, one {# post} other {# posts}}: {videos, plural, one {# video} other {# videos}} and {slideshows, plural, one {# slideshow} other {# slideshows}}",
+      "costEstimate": "Estimated cost to make: about {typical} (at most {max}).",
+      "allowanceUse": "Uses {count, plural, one {# video} other {# videos}} of this month’s allowance.",
+      "reviewWindow": "Once generated, each post publishes at its time unless you change or remove it before then. You get one email when your month is ready.",
+      "generate": "Generate and schedule",
+      "discard": "Discard plan",
+      "daysAria": "Posts by day",
+      "untitled": "Writing…",
+      "saved": "Saved",
+      "edit": "Edit",
+      "moveUp": "Move “{title}” earlier",
+      "moveDown": "Move “{title}” later",
+      "regenerate": "New topic",
+      "regenerateAria": "Write a new topic instead of “{title}”",
+      "remove": "Delete",
+      "removeAria": "Delete “{title}”",
+      "removed": "Post deleted",
+      "generateConfirmTitle": "Generate and schedule {count, plural, one {# post} other {# posts}}?",
+      "generateConfirmBody": "Studio makes every post and schedules it at its time. Each one publishes on its own unless you change or remove it before then. You get one email when your month is ready.",
+      "notYet": "Not yet",
+      "generating": "Your month is being made",
+      "discardConfirmTitle": "Discard this plan?",
+      "discardConfirmBody": "The draft and its posts are thrown away. Nothing has been made or scheduled yet.",
+      "discarded": "Plan discarded",
+      "titleLabel": "Topic",
+      "kindLabel": "Format",
+      "briefLabel": "Brief",
+      "hookLabel": "Opening line",
+      "ctaLabel": "Call to action",
+      "pointsLabel": "Slideshow points, one per line",
+      "save": "Save",
+      "cancelEdit": "Cancel",
+      "addTitle": "Add a post",
+      "addWhen": "Date and time",
+      "addWhenHint": "Inside the plan’s dates, at most 4 posts a day.",
+      "addSubmit": "Add post",
+      "added": "Post added"
+    },
+    "view": {
+      "calendar": "Open the calendar",
+      "statsAria": "Posts by status",
+      "heldNote": "{count, plural, one {# post was} other {# posts were}} held by the safety check and will not be published. Open one to see why, then edit or remove it.",
+      "reviewWindow": "Each post publishes at its time. Until then you can open it to edit it, swap it for another topic or remove it.",
+      "daysAria": "Posts by day",
+      "cancelPlan": "Cancel plan",
+      "cancelConfirm": "Every post that has not gone out yet is canceled and its time freed. This cannot be undone.",
+      "cancelled": "Plan canceled",
+      "open": "Open",
+      "openAria": "Open “{title}”",
+      "swap": "Swap topic",
+      "swapAria": "Swap “{title}” for another topic",
+      "swapSubmit": "Swap and make it",
+      "swapped": "Topic swapped: the new post is being made",
+      "remove": "Remove",
+      "removeAria": "Remove “{title}”",
+      "removeConfirm": "Its post is canceled and the time is freed. The rest of the plan carries on.",
+      "removedToast": "Post removed"
+    },
+    "list": {
+      "title": "Month plans",
+      "description": "Months Studio planned for this business, newest first.",
+      "loading": "Loading month plans",
+      "new": "Plan my month",
+      "empty": "No month plans yet",
+      "emptyBody": "Let Studio draft a month of videos and slideshows, then generate and schedule them in one go.",
+      "range": "{start} – {end}",
+      "posts": "{count, plural, one {# post} other {# posts}}"
     }
   }
 }

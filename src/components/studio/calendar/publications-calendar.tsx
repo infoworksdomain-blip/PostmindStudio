@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react';
+import { CalendarRange, ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormat } from '@/lib/client/format';
@@ -22,6 +22,7 @@ import {
 import { useBusiness } from '../business-context';
 import { DripQueuePanel } from './drip-queue';
 import { MonthAheadSummary } from './open-slot';
+import { groupPlannedByDay } from './planned-slot';
 import { summaryWindow, useUpcomingSlots } from './use-upcoming-slots';
 import { AgendaList, MonthGrid, type MoveHandlers } from './month-views';
 import { MoveToDialog, useReschedule } from './reschedule';
@@ -55,6 +56,11 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
     () => groupOpenByDay(visible.data?.upcoming?.openSlots ?? []),
     [visible.data],
   );
+  // 20.9: month-plan posts still being made (scheduled ones are publications already).
+  const plannedByDay = useMemo(
+    () => groupPlannedByDay(visible.data?.upcoming?.planned ?? [], dayKey),
+    [visible.data],
+  );
   const refreshSlots = () => {
     void summary.mutate();
     void visible.mutate();
@@ -80,11 +86,18 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
         title={t('title')}
         description={t('description')}
         actions={
-          <Button variant="outline" asChild>
-            <Link href="/publications">
-              <List /> {t('allPublications')}
-            </Link>
-          </Button>
+          <>
+            <Button asChild>
+              <Link href="/plans/new">
+                <CalendarRange /> {t('planMonth')}
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/publications">
+                <List /> {t('allPublications')}
+              </Link>
+            </Button>
+          </>
         }
       />
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -145,6 +158,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
             month={month}
             byDay={byDay}
             openByDay={openByDay}
+            plannedByDay={plannedByDay}
             today={today}
             move={moveHandlers}
           />
@@ -153,12 +167,16 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
             month={month}
             byDay={byDay}
             openByDay={openByDay}
+            plannedByDay={plannedByDay}
             today={today}
             move={moveHandlers}
           />
           <p className="mt-4 text-xs text-muted-foreground">{t('dragHint')}</p>
           {openByDay.size > 0 && (
             <p className="mt-1 text-xs text-muted-foreground">{t('open.legend')}</p>
+          )}
+          {plannedByDay.size > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">{t('planned.legend')}</p>
           )}
           <MoveToDialog
             key={moving?.id ?? 'none'}
