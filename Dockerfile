@@ -6,7 +6,10 @@
 # The same immutable image (tagged by commit SHA) is deployed to staging then production, which is
 # what makes rollback a re-deploy of the previous tag (runbooks/rollback.md).
 
-ARG NODE_VERSION=20.18
+# Node 24 LTS ("Krypton"; Node 20 reached end of life 2026-04-30). Exact patch pinned: Docker Hub
+# library/node tag 24.21.0-bookworm-slim, index digest
+# sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 (read 2026-09-30).
+ARG NODE_VERSION=24.21.0
 
 # ---- deps: install exactly the lockfile (dev deps included: prisma CLI + tsx run in production) ----
 FROM node:${NODE_VERSION}-bookworm-slim AS deps

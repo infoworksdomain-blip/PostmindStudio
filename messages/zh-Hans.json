@@ -432,6 +432,18 @@
     "metaConnectionNeedsReconnect": {
       "title": "请重新连接您的 {platform} 账号“{account}”",
       "body": "Meta 已不再接受 Studio 对此账号的访问。请在 PostMind 设置中重新连接，以便排期帖子能够发布。"
+    },
+    "scheduleQueueOff": {
+      "title": "“{name}”未排期",
+      "body": "定时发布队列已关闭——请在日历中设置发布时间或选择日期。"
+    },
+    "scheduleNoPlatform": {
+      "title": "“{name}”未排期",
+      "body": "定时发布队列不会发布到它的任何平台——请更改队列或选择日期。"
+    },
+    "scheduleNoFreeSlot": {
+      "title": "“{name}”未排期",
+      "body": "未来 {weeks, plural, other {# 周}}内没有空闲的发布时间——请添加发布时间或选择日期。"
     }
   },
   "create": {
@@ -485,7 +497,8 @@
       "slideshowTemplateRequired": "请选择幻灯片模板。",
       "scheduleInPast": "请选择将来的时间。",
       "scheduleNeedsAutoPublish": "排期发布的视频需要选择要发布到的账号（自动发布）。",
-      "budgetRange": "预算必须介于 {min} 和 {max} 之间。"
+      "budgetRange": "预算必须介于 {min} 和 {max} 之间。",
+      "scheduleTooFar": "最多只能提前 {days, number} 天排期。"
     },
     "options": {
       "platforms": "平台",
@@ -534,7 +547,9 @@
       "scheduleHint": "批准后将在此时间发布到自动发布账号。",
       "workflow": "审批流程",
       "workflowNone": "尚未设置审批流程",
-      "workflowOrg": "组织规则"
+      "workflowOrg": "组织规则",
+      "scheduleNextSlot": "不指定日期——使用定时发布队列的下一个空闲时段",
+      "scheduleNextSlotHint": "在未来 {weeks, plural, other {# 周}}内的第一个空闲发布时间发出。请在日历中设置发布时间。"
     },
     "autoPublish": {
       "legend": "自动发布",
@@ -656,7 +671,9 @@
       "publishNowCount": "立即发布（{count, number}）",
       "platformError": "{platform}：{error}",
       "scheduled": "{count, plural, other {已排期 # 条帖子。}}",
-      "publishing": "{count, plural, other {正在发布 # 条帖子。}}"
+      "publishing": "{count, plural, other {正在发布 # 条帖子。}}",
+      "scheduleTooFar": "请选择 {days, number} 天以内的时间。",
+      "scheduleInPast": "请选择至少一分钟之后的时间。"
     },
     "publications": {
       "empty": "尚无已发布或已排期的内容。",
@@ -709,7 +726,8 @@
         "not_trusted": "需要审核：你的前 {needed} 个视频需要人工审核（目前已批准 {approved}/{needed} 个）。",
         "approval_workflow": "需要审核：适用“{workflow}”审批流程。",
         "auto_approve_error": "需要审核：无法评估自动批准。"
-      }
+      },
+      "schedulesAutomatically": "批准后自动排期"
     },
     "budget": {
       "aria": "提高预算",
@@ -987,6 +1005,17 @@
       "upload": "上传",
       "uploadAria": "上传封面",
       "updated": "封面已更新。"
+    },
+    "schedule": {
+      "reasons": {
+        "queue_off": "未排期：定时发布队列已关闭。请在日历中设置发布时间后重试，或在“发布”标签页中选择日期。",
+        "no_matching_platform": "未排期：定时发布队列不会发布到此视频的任何平台。请在日历中更改其平台后重试，或在“发布”标签页中选择日期。",
+        "no_free_slot": "未来 {weeks, plural, other {# 周}}内没有空闲的发布时间——请在日历中添加发布时间后重试，或在“发布”标签页中选择日期。"
+      },
+      "openCalendar": "打开日历",
+      "retry": "重试",
+      "retried": "{count, plural, other {已排期 # 条帖子。}}",
+      "stillNone": "仍然没有空闲的发布时间——请添加发布时间或选择日期。"
     }
   },
   "slideshow": {
@@ -1362,7 +1391,8 @@
       "daysAria": "本月日期",
       "more": "{count, plural, other {还有 # 条}}",
       "agendaAria": "日程",
-      "emptyMonth": "本月没有排期或发布的内容。"
+      "emptyMonth": "本月没有排期或发布的内容。",
+      "moreOpen": "{count, plural, other {还有 # 个空闲时段}}"
     },
     "event": {
       "untitled": "未命名项目",
@@ -1394,7 +1424,25 @@
       "slotTime": "时段 {n} 时间",
       "removeSlot": "移除时段 {n}",
       "addSlot": "添加时段",
-      "saveSlots": "保存时段"
+      "saveSlots": "保存时段",
+      "presetsLabel": "快捷发布计划",
+      "presetsHint": "计划会按您的时区填好下方时段；可按需修改，然后保存。",
+      "presetFilled": "{count, plural, other {已填入 # 个时段}}——请检查后保存。",
+      "presets": {
+        "three": "每周 3 次",
+        "five": "每周 5 次",
+        "daily": "每天"
+      },
+      "off": "定时发布队列已关闭，因此设为“下一个空闲时段”的视频不会被排期。保存时段即可开启。"
+    },
+    "open": {
+      "label": "空闲时段",
+      "aria": "{time} 的空闲发布时间，尚未安排视频",
+      "legend": "虚线框是定时发布队列中的空闲时段：尚未安排视频的发布时间。"
+    },
+    "summary": {
+      "next": "未来 30 天：{scheduled, plural, other {已排期 # 条帖子}} · {open, plural, other {# 个空闲时段}}",
+      "queueOff": "未来 30 天：{scheduled, plural, other {已排期 # 条帖子}}。定时发布队列已关闭——<link>设置发布时间</link>即可自动排满整月。"
     }
   },
   "business": {
@@ -3127,6 +3175,12 @@
       "coreTitle": "请先设置业务",
       "coreDescription": "您的业务信息来自 PostMind。请选择或添加一个业务，然后返回此处。",
       "coreAction": "前往业务管理"
+    },
+    "plan": {
+      "title": "规划您的一个月",
+      "body": "选择发布频率。排到“下一个空闲时段”的视频会在这些时间发出，排满接下来的一个月。",
+      "saved": "发布计划：{plan}。",
+      "openCalendar": "在日历中修改时间"
     }
   },
   "share": {
@@ -3467,7 +3521,7 @@
     },
     "hero": {
       "eyebrow": "面向小微企业的 AI 视频工作室",
-      "title": "一周的短视频，<em>在您的咖啡变凉之前完成。</em>",
+      "title": "一个月的短视频，<em>在您的咖啡变凉之前完成。</em>",
       "lede": "告诉 Studio 您想表达的内容。它会撰写脚本，拍摄或采集每个场景素材，为视频添加符合您品牌的配音、音乐和字幕，并针对每个平台进行剪辑。您来审核，它负责发布。",
       "primaryCta": "开始免费试用",
       "secondaryCta": "查看定价",
@@ -3502,7 +3556,7 @@
       },
       "publish": {
         "title": "按计划发布",
-        "body": "立即发布或安排整周的发布计划。Studio 会发布到每个账户，并将浏览量、点赞和评论汇总到一个仪表盘中。"
+        "body": "立即发布或规划接下来的一个月。Studio 会发布到每个账户，并将浏览量、点赞和评论汇总到一个仪表盘中。"
       }
     },
     "samples": {
@@ -3531,7 +3585,7 @@
       },
       "calendar": {
         "title": "自动为您发布的日历",
-        "body": "规划一周内容，将帖子拖到新的时间段，让 Studio 在每个平台的最佳时机自动发布。"
+        "body": "规划接下来的一个月，将帖子拖到新的时间段，让 Studio 在每个平台的最佳时机自动发布。"
       },
       "budget": {
         "title": "费用一目了然",

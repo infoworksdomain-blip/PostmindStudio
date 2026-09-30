@@ -6,6 +6,7 @@ import { PublicationsList } from './publications-list';
 import { parseHashtags, PublishPanel } from './publish-panel';
 import { makeProject, makeRender, mockFetch, renderWithSWR } from './test-helpers';
 import type { Publication } from '@/lib/client/types';
+import { toLocalInput } from '../calendar/month';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 afterEach(() => vi.unstubAllGlobals());
@@ -142,11 +143,34 @@ describe('PublishPanel', () => {
     ]);
     renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
     await screen.findByLabelText('Account');
-    await userEvent.type(screen.getByLabelText('Schedule (optional)'), '2026-10-01T09:30');
+    // 20.3: the client refuses past and too-far times, so the time is relative to now.
+    const when = toLocalInput(new Date(Date.now() + 2 * 86_400_000).toISOString());
+    await userEvent.type(screen.getByLabelText('Schedule (optional)'), when);
     await userEvent.click(screen.getByRole('button', { name: /Schedule \(1\)/ }));
     await waitFor(() => expect(api.find('POST', '/publications')).toHaveLength(1));
     const body = api.find('POST', '/publications')[0]?.body as { scheduledFor: string };
-    expect(body.scheduledFor).toBe(new Date('2026-10-01T09:30').toISOString());
+    expect(body.scheduledFor).toBe(new Date(when).toISOString());
+  });
+
+  it('20.3: bounds the schedule to 180 days and says so before calling the API', async () => {
+    const api = mockFetch([{ match: '/platform-connections', body: connections }]);
+    renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
+    await screen.findByLabelText('Account');
+    const input = screen.getByLabelText('Schedule (optional)');
+    const max = Date.parse(input.getAttribute('max') ?? '');
+    expect(Math.round((max - Date.now()) / 86_400_000)).toBe(180);
+    expect(input.getAttribute('min')).toBeTruthy();
+    await userEvent.type(
+      input,
+      toLocalInput(new Date(Date.now() + 181 * 86_400_000).toISOString()),
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Pick a time no more than 180 days ahead.');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: /Schedule \(1\)/ })).toBeDisabled();
+    await userEvent.clear(input);
+    await userEvent.type(input, toLocalInput(new Date(Date.now() - 86_400_000).toISOString()));
+    expect(screen.getByRole('alert')).toHaveTextContent('Pick a time at least a minute from now.');
+    expect(api.find('POST', '/publications')).toHaveLength(0);
   });
 
   it('lets a variant be skipped', async () => {

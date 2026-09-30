@@ -41,6 +41,8 @@ import './p14-t3-beta';
 import './p14-t1-data-retention';
 // Phase 17: coded failure reasons, the untitled project, extra publications.
 import './p17-hardening';
+// Phase 20.3: a video approved for the next free slot when none was free (schedule notice).
+import './p20-schedule-month';
 // Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
 // and sample data for Track C's billing contract.
 import './p18-org';

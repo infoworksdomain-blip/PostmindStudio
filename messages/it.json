@@ -432,6 +432,18 @@
     "metaConnectionNeedsReconnect": {
       "title": "Ricollega il tuo account {platform} “{account}”",
       "body": "Meta non accetta più l’accesso di Studio a questo account. Ricollegalo nelle impostazioni di PostMind perché i post programmati possano essere pubblicati."
+    },
+    "scheduleQueueOff": {
+      "title": "«{name}» non è stato programmato",
+      "body": "La coda di pubblicazione è disattivata: imposta gli orari nel calendario o scegli una data."
+    },
+    "scheduleNoPlatform": {
+      "title": "«{name}» non è stato programmato",
+      "body": "La coda di pubblicazione non pubblica su nessuna delle sue piattaforme: modifica la coda o scegli una data."
+    },
+    "scheduleNoFreeSlot": {
+      "title": "«{name}» non è stato programmato",
+      "body": "Nessun orario di pubblicazione libero {weeks, plural, one {nella prossima settimana} other {nelle prossime # settimane}}: aggiungi orari o scegli una data."
     }
   },
   "create": {
@@ -485,7 +497,8 @@
       "slideshowTemplateRequired": "Scegli un modello di presentazione.",
       "scheduleInPast": "Programma un orario futuro.",
       "scheduleNeedsAutoPublish": "Per un video programmato, scegli gli account su cui pubblicare (pubblicazione automatica).",
-      "budgetRange": "Il budget deve essere compreso tra {min} e {max}."
+      "budgetRange": "Il budget deve essere compreso tra {min} e {max}.",
+      "scheduleTooFar": "Programma al massimo con {days, number} giorni di anticipo."
     },
     "options": {
       "platforms": "Piattaforme",
@@ -534,7 +547,9 @@
       "scheduleHint": "Una volta approvato, viene pubblicato a quest’ora sugli account di pubblicazione automatica.",
       "workflow": "Flusso di approvazione",
       "workflowNone": "Nessun flusso configurato",
-      "workflowOrg": "Regole dell’organizzazione"
+      "workflowOrg": "Regole dell’organizzazione",
+      "scheduleNextSlot": "Nessuna data: usa il prossimo slot libero della coda di pubblicazione",
+      "scheduleNextSlotHint": "Esce al primo orario libero {weeks, plural, one {nella prossima settimana} other {nelle prossime # settimane}}. Imposta gli orari nel calendario."
     },
     "autoPublish": {
       "legend": "Pubblicazione automatica",
@@ -656,7 +671,9 @@
       "publishNowCount": "Pubblica ora ({count, number})",
       "platformError": "{platform}: {error}",
       "scheduled": "{count, plural, one {# post programmato.} other {# post programmati.}}",
-      "publishing": "{count, plural, one {Pubblicazione di # post in corso.} other {Pubblicazione di # post in corso.}}"
+      "publishing": "{count, plural, one {Pubblicazione di # post in corso.} other {Pubblicazione di # post in corso.}}",
+      "scheduleTooFar": "Scegli un orario al massimo tra {days, number} giorni.",
+      "scheduleInPast": "Scegli un orario ad almeno un minuto da adesso."
     },
     "publications": {
       "empty": "Ancora niente di pubblicato o programmato.",
@@ -709,7 +726,8 @@
         "not_trusted": "Da rivedere: i tuoi primi {needed} video vengono rivisti da una persona ({approved} su {needed} approvati finora).",
         "approval_workflow": "Da rivedere: si applica il flusso di approvazione “{workflow}”.",
         "auto_approve_error": "Da rivedere: non è stato possibile valutare l’approvazione automatica."
-      }
+      },
+      "schedulesAutomatically": "Programmato automaticamente all’approvazione"
     },
     "budget": {
       "aria": "Aumenta budget",
@@ -987,6 +1005,17 @@
       "upload": "Carica",
       "uploadAria": "Carica miniatura",
       "updated": "Miniatura aggiornata."
+    },
+    "schedule": {
+      "reasons": {
+        "queue_off": "Non programmato: la coda di pubblicazione è disattivata. Imposta gli orari di pubblicazione nel calendario e riprova, oppure scegli una data nella scheda Pubblica.",
+        "no_matching_platform": "Non programmato: la coda di pubblicazione non pubblica su nessuna delle piattaforme di questo video. Cambia le sue piattaforme nel calendario e riprova, oppure scegli una data nella scheda Pubblica.",
+        "no_free_slot": "Nessun orario di pubblicazione libero {weeks, plural, one {nella prossima settimana} other {nelle prossime # settimane}}: aggiungi orari nel calendario e riprova, oppure scegli una data nella scheda Pubblica."
+      },
+      "openCalendar": "Apri il calendario",
+      "retry": "Riprova",
+      "retried": "{count, plural, one {# post programmato.} other {# post programmati.}}",
+      "stillNone": "Ancora nessun orario libero: aggiungi orari di pubblicazione o scegli una data."
     }
   },
   "slideshow": {
@@ -1362,7 +1391,8 @@
       "daysAria": "Giorni del mese",
       "more": "{count, plural, one {+# altro} other {+# altri}}",
       "agendaAria": "Agenda",
-      "emptyMonth": "Niente di programmato o pubblicato questo mese."
+      "emptyMonth": "Niente di programmato o pubblicato questo mese.",
+      "moreOpen": "{count, plural, one {+# slot libero} other {+# slot liberi}}"
     },
     "event": {
       "untitled": "Progetto senza titolo",
@@ -1394,7 +1424,25 @@
       "slotTime": "Orario dello slot {n}",
       "removeSlot": "Rimuovi lo slot {n}",
       "addSlot": "Aggiungi slot",
-      "saveSlots": "Salva slot"
+      "saveSlots": "Salva slot",
+      "presetsLabel": "Piani di pubblicazione rapidi",
+      "presetsHint": "Un piano compila gli slot qui sotto nel tuo fuso orario; modificali se vuoi, poi salva.",
+      "presetFilled": "{count, plural, one {# slot compilato} other {# slot compilati}}: controllali, poi salva.",
+      "presets": {
+        "three": "3 a settimana",
+        "five": "5 a settimana",
+        "daily": "Ogni giorno"
+      },
+      "off": "La coda di pubblicazione è disattivata, quindi i video impostati sul prossimo slot libero non vengono programmati. Salva gli slot per attivarla."
+    },
+    "open": {
+      "label": "Slot libero",
+      "aria": "Orario di pubblicazione libero alle {time}, ancora nessun video prenotato",
+      "legend": "I riquadri tratteggiati sono slot liberi della coda di pubblicazione: orari di pubblicazione senza ancora un video prenotato."
+    },
+    "summary": {
+      "next": "Prossimi 30 giorni: {scheduled, plural, one {# post programmato} other {# post programmati}} · {open, plural, one {# slot libero} other {# slot liberi}}",
+      "queueOff": "Prossimi 30 giorni: {scheduled, plural, one {# post programmato} other {# post programmati}}. La coda di pubblicazione è disattivata: <link>imposta gli orari di pubblicazione</link> per riempire il mese in automatico."
     }
   },
   "business": {
@@ -3127,6 +3175,12 @@
       "coreTitle": "Configura prima un’attività",
       "coreDescription": "Le tue attività provengono da PostMind. Sceglila o aggiungine una, poi torna qui.",
       "coreAction": "Vai a Attività"
+    },
+    "plan": {
+      "title": "Pianifica il tuo mese",
+      "body": "Scegli quanto spesso pubblicare. I video programmati sul prossimo slot libero escono a questi orari e riempiono il mese a venire.",
+      "saved": "Piano di pubblicazione: {plan}.",
+      "openCalendar": "Cambia gli orari nel calendario"
     }
   },
   "share": {
@@ -3467,7 +3521,7 @@
     },
     "hero": {
       "eyebrow": "Studio di video con IA per piccole imprese",
-      "title": "Una settimana di video brevi, <em>pronti prima che il tuo caffè si freddi.</em>",
+      "title": "Un mese di video brevi, <em>pronti prima che il tuo caffè si freddi.</em>",
       "lede": "Racconta a Studio cosa vuoi dire. Lui scrive il copione, filma o reperisce ogni scena, aggiunge la tua voce, la musica e i sottotitoli nel tuo stile, e lo monta per ogni piattaforma. Tu approvi; lui pubblica.",
       "primaryCta": "Inizia la prova gratuita",
       "secondaryCta": "Vedi i prezzi",
@@ -3502,7 +3556,7 @@
       },
       "publish": {
         "title": "Pubblica secondo il calendario",
-        "body": "Pubblica subito o pianifica la settimana. Studio pubblica su ogni account e riporta visualizzazioni, mi piace e commenti in un’unica dashboard."
+        "body": "Pubblica subito o pianifica il mese a venire. Studio pubblica su ogni account e riporta visualizzazioni, mi piace e commenti in un’unica dashboard."
       }
     },
     "samples": {
@@ -3531,7 +3585,7 @@
       },
       "calendar": {
         "title": "Un calendario che pubblica per te",
-        "body": "Pianifica la settimana, sposta i post in nuovi orari e lascia che Studio pubblichi al momento giusto per ogni piattaforma."
+        "body": "Pianifica il mese a venire, sposta i post in nuovi orari e lascia che Studio pubblichi al momento giusto per ogni piattaforma."
       },
       "budget": {
         "title": "Costi che puoi vedere",

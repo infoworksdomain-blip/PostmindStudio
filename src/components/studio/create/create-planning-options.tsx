@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { useFormat } from '@/lib/client/format';
 import { LANGUAGES, type StudioLanguage } from '@/lib/studio/languages';
 import { cn } from '@/lib/utils';
+import { DRIP_HORIZON_WEEKS } from '@/lib/studio/drip-presets';
+import { scheduleInputBounds } from '../automation/schedule-bounds';
 import { Field, NativeSelect } from '../review/field';
 import { tiersAtOrBelow, type CreateState, type QualityTier } from './body';
 
@@ -105,6 +108,8 @@ export function PlanningAdvancedOptions({
 }) {
   const t = useTranslations('create.planning');
   const isSlideshow = state.source === 'SLIDESHOW';
+  // 20.3: the API's window (a minute to 180 days ahead), fixed when the options open.
+  const [bounds] = useState(() => scheduleInputBounds(Date.now()));
   return (
     <>
       <Field id="create-tier" label={t('tier')} hint={t('tierHint')}>
@@ -132,10 +137,32 @@ export function PlanningAdvancedOptions({
         <Input
           id="create-schedule"
           type="datetime-local"
-          value={state.scheduleAt ?? ''}
-          disabled={isSlideshow}
+          min={bounds.min}
+          max={bounds.max}
+          value={state.scheduleNextSlot ? '' : (state.scheduleAt ?? '')}
+          disabled={isSlideshow || state.scheduleNextSlot}
           onChange={(e) => onChange({ scheduleAt: e.target.value })}
         />
+        <label className="mt-2 flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-foreground"
+            checked={Boolean(state.scheduleNextSlot)}
+            disabled={isSlideshow}
+            onChange={(e) =>
+              onChange({
+                scheduleNextSlot: e.target.checked,
+                ...(e.target.checked && { scheduleAt: '' }),
+              })
+            }
+          />
+          <span>
+            {t('scheduleNextSlot')}
+            <span className="block text-xs text-muted-foreground">
+              {t('scheduleNextSlotHint', { weeks: DRIP_HORIZON_WEEKS })}
+            </span>
+          </span>
+        </label>
       </Field>
       <Field id="create-workflow" label={t('workflow')}>
         <NativeSelect

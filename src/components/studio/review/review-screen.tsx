@@ -139,7 +139,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         <FallbackNote project={project} />
         <ApprovalStepIndicator project={project} />
         <ApprovalBar project={project} onChanged={refresh} />
-        <AutomationPanel project={project} />
+        <AutomationPanel project={project} onChanged={refresh} />
         <MusicStatus project={project} />
         <SfxStatus project={project} />
         {project.renders.length > 0 && <ShareLinksPanel projectId={project.id} />}

@@ -432,6 +432,18 @@
     "metaConnectionNeedsReconnect": {
       "title": "Reconnect your {platform} account “{account}”",
       "body": "Meta no longer accepts Studio’s access to this account. Reconnect it in PostMind settings so scheduled posts can go out."
+    },
+    "scheduleQueueOff": {
+      "title": "“{name}” was not scheduled",
+      "body": "The drip queue is off — set posting times in the calendar or pick a date."
+    },
+    "scheduleNoPlatform": {
+      "title": "“{name}” was not scheduled",
+      "body": "The drip queue posts to none of its platforms — change the queue or pick a date."
+    },
+    "scheduleNoFreeSlot": {
+      "title": "“{name}” was not scheduled",
+      "body": "No free posting time in the next {weeks, plural, one {# week} other {# weeks}} — add posting times or pick a date."
     }
   },
   "create": {
@@ -485,7 +497,8 @@
       "slideshowTemplateRequired": "Pick a slideshow template.",
       "scheduleInPast": "Schedule a time in the future.",
       "scheduleNeedsAutoPublish": "Choose the accounts to publish to (auto-publish) for a scheduled video.",
-      "budgetRange": "Budget must be between {min} and {max}."
+      "budgetRange": "Budget must be between {min} and {max}.",
+      "scheduleTooFar": "Schedule no more than {days, number} days ahead."
     },
     "options": {
       "platforms": "Platforms",
@@ -534,7 +547,9 @@
       "scheduleHint": "Publishes to the auto-publish accounts at this time once approved.",
       "workflow": "Approval workflow",
       "workflowNone": "No workflows set up",
-      "workflowOrg": "Organisation rules"
+      "workflowOrg": "Organisation rules",
+      "scheduleNextSlot": "No date — use the next free drip-queue slot",
+      "scheduleNextSlotHint": "Goes out at the first free posting time in the next {weeks, plural, one {# week} other {# weeks}}. Set the times in the calendar."
     },
     "autoPublish": {
       "legend": "Auto-publish",
@@ -656,7 +671,9 @@
       "publishNowCount": "Publish now ({count, number})",
       "platformError": "{platform}: {error}",
       "scheduled": "{count, plural, one {Scheduled # post.} other {Scheduled # posts.}}",
-      "publishing": "{count, plural, one {Publishing # post.} other {Publishing # posts.}}"
+      "publishing": "{count, plural, one {Publishing # post.} other {Publishing # posts.}}",
+      "scheduleTooFar": "Pick a time no more than {days, number} days ahead.",
+      "scheduleInPast": "Pick a time at least a minute from now."
     },
     "publications": {
       "empty": "Nothing published or scheduled yet.",
@@ -709,7 +726,8 @@
         "not_trusted": "Needs review: your first {needed} videos are reviewed by a person ({approved} of {needed} approved so far).",
         "approval_workflow": "Needs review: the “{workflow}” approval workflow applies.",
         "auto_approve_error": "Needs review: automatic approval could not be checked."
-      }
+      },
+      "schedulesAutomatically": "Scheduled automatically when approved"
     },
     "budget": {
       "aria": "Raise budget",
@@ -987,6 +1005,17 @@
       "upload": "Upload",
       "uploadAria": "Upload thumbnail",
       "updated": "Thumbnail updated."
+    },
+    "schedule": {
+      "reasons": {
+        "queue_off": "Not scheduled: the drip queue is off. Set posting times in the calendar and try again, or pick a date on the Publish tab.",
+        "no_matching_platform": "Not scheduled: the drip queue posts to none of this video’s platforms. Change its platforms in the calendar and try again, or pick a date on the Publish tab.",
+        "no_free_slot": "No free posting time in the next {weeks, plural, one {# week} other {# weeks}} — add posting times in the calendar and try again, or pick a date on the Publish tab."
+      },
+      "openCalendar": "Open the calendar",
+      "retry": "Try again",
+      "retried": "{count, plural, one {Scheduled # post.} other {Scheduled # posts.}}",
+      "stillNone": "Still no free posting time — add posting times or pick a date."
     }
   },
   "slideshow": {
@@ -1362,7 +1391,8 @@
       "daysAria": "Days of the month",
       "more": "{count, plural, one {+# more} other {+# more}}",
       "agendaAria": "Agenda",
-      "emptyMonth": "Nothing scheduled or published this month."
+      "emptyMonth": "Nothing scheduled or published this month.",
+      "moreOpen": "{count, plural, one {+# open slot} other {+# open slots}}"
     },
     "event": {
       "untitled": "Untitled project",
@@ -1394,7 +1424,25 @@
       "slotTime": "Slot {n} time",
       "removeSlot": "Remove slot {n}",
       "addSlot": "Add slot",
-      "saveSlots": "Save slots"
+      "saveSlots": "Save slots",
+      "presetsLabel": "Quick posting plans",
+      "presetsHint": "A plan fills in the slots below in your time zone; change any of them, then save.",
+      "presetFilled": "{count, plural, one {# slot filled in} other {# slots filled in}} — check them, then save.",
+      "presets": {
+        "three": "3 a week",
+        "five": "5 a week",
+        "daily": "Every day"
+      },
+      "off": "The drip queue is off, so videos set to the next free slot are not scheduled. Save the slots to turn it on."
+    },
+    "open": {
+      "label": "Open slot",
+      "aria": "Open posting time at {time}, no video booked yet",
+      "legend": "Dashed boxes are open drip-queue slots: posting times with no video booked yet."
+    },
+    "summary": {
+      "next": "Next 30 days: {scheduled, plural, one {# post scheduled} other {# posts scheduled}} · {open, plural, one {# open slot} other {# open slots}}",
+      "queueOff": "Next 30 days: {scheduled, plural, one {# post scheduled} other {# posts scheduled}}. The drip queue is off — <link>set posting times</link> to fill the month automatically."
     }
   },
   "business": {
@@ -3127,6 +3175,12 @@
       "coreTitle": "Set up a business first",
       "coreDescription": "Your businesses come from PostMind. Choose or add one, then come back here.",
       "coreAction": "Go to Business"
+    },
+    "plan": {
+      "title": "Plan your month",
+      "body": "Pick how often to post. Videos scheduled for the next free slot go out at these times, filling the month ahead.",
+      "saved": "Posting plan: {plan}.",
+      "openCalendar": "Change the times in the calendar"
     }
   },
   "share": {
@@ -3467,7 +3521,7 @@
     },
     "hero": {
       "eyebrow": "AI video studio for small businesses",
-      "title": "A week of short videos, <em>made before your coffee cools.</em>",
+      "title": "A month of short videos, <em>made before your coffee cools.</em>",
       "lede": "Tell Studio what you want to say. It writes the script, shoots or sources every scene, adds your voice, music and captions in your brand, and cuts it for every platform. You approve; it publishes.",
       "primaryCta": "Start free trial",
       "secondaryCta": "See pricing",
@@ -3502,7 +3556,7 @@
       },
       "publish": {
         "title": "Post on schedule",
-        "body": "Publish now or schedule the week. Studio posts to each account and brings the views, likes and comments back to one dashboard."
+        "body": "Publish now or plan the month ahead. Studio posts to each account and brings the views, likes and comments back to one dashboard."
       }
     },
     "samples": {
@@ -3531,7 +3585,7 @@
       },
       "calendar": {
         "title": "A calendar that posts for you",
-        "body": "Plan the week, drag posts to new slots and let Studio publish at the right time for each platform."
+        "body": "Plan the month ahead, drag posts to new slots and let Studio publish at the right time for each platform."
       },
       "budget": {
         "title": "Costs you can see",

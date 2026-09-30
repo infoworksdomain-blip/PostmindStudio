@@ -62,9 +62,27 @@
    has passed) for the first target and `STUDIO_DEFAULT_STAGGER_MINUTES` (15–60, default 30) more
    for each next one. Without a start time the business's drip queue
    (`GET|PUT /api/studio/businesses/<id>/drip-queue`, calendar → Drip queue) gives the next free
-   weekly slot (`auto_publish_outbox.slotAt`). No start time and no enabled drip queue = nothing is
-   scheduled (publish from the Publish tab). Rows then behave like step 4; the publications they
-   create are ordinary scheduled publications (move or cancel them in the calendar).
+   weekly slot (`auto_publish_outbox.slotAt`) within 8 weeks (`DRIP_HORIZON_DAYS` = 56; a test
+   keeps it at least 31 so a month ahead can always fill). Rows then behave like step 4; the
+   publications they create are ordinary scheduled publications (move or cancel them in the
+   calendar). `scheduledStartAt` may be at most 180 days ahead (the same rule as publications;
+   400 otherwise).
+   - **Month-ahead planning (20.3):** the calendar's drip queue panel has one-click posting plans
+     ("3 a week", "5 a week", "Every day": weekdays 12:30, weekends 09:00 in the queue's time
+     zone) that fill the slots before saving; onboarding's last step offers the same as "Plan your
+     month". The calendar shows the queue's open slots (dashed markers) and a "Next 30 days" line
+     from `GET /api/studio/businesses/<id>/drip-queue/upcoming?from&to` (≤ 62 days; open slots
+     only within the 8-week horizon). The Create screen's "No date — use the next free drip-queue
+     slot" option sends `publishPolicy: SCHEDULED` without a start time.
+   - **No free slot (20.3):** when the queue is off, posts to none of the project's platforms, or
+     has no free slot within 8 weeks, nothing is scheduled, and that is no longer silent: the
+     approval transaction stores `metadata.scheduleIssue { reason: queue_off |
+     no_matching_platform | no_free_slot, horizonDays, at }`, the audit log gets
+     `studio.project.schedule_unassigned`, the creator gets an `auto_publish_failed` notification
+     (message `scheduleQueueOff` / `scheduleNoPlatform` / `scheduleNoFreeSlot`), and the Review
+     screen shows the reason with **Open the calendar** and **Try again**. Try again
+     (`POST /projects/<id>/auto-publish/retry`) plans the latest approval again against the
+     current queue (`{ scheduled, unscheduled }`); picking a date on the Publish tab always works.
 6. **YouTube quota reached (15.A9):** the publication goes back to `SCHEDULED` with
    `errorCode quota_exceeded` and `metadata.quotaDeferredUntil` (5 min after the next midnight
    Pacific Time) and is retried then; audit `studio.publication.quota_deferred`. Repeated deferrals

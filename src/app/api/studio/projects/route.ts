@@ -22,7 +22,7 @@ export const POST = withStudioRoute(
     // 15.D1: slideshow and library-reference projects need their feature on (A12.4).
     const feature = featureForProjectSource(input.sourceType);
     if (feature) await featureGateFor(deps.db).assertEnabled(feature, tenant.organisationId);
-    const project = await createProject(deps.db, tenant, input);
+    const project = await createProject(deps.db, tenant, input, deps.now());
     audit('studio.project.create', { type: 'video_project', id: project.id });
     return { status: 201, body: { project } };
   },

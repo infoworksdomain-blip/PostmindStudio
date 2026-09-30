@@ -21,7 +21,7 @@ describe('LandingPage', () => {
       </MarketingShell>,
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'A week of short videos, made before your coffee cools.',
+      'A month of short videos, made before your coffee cools.',
     );
     const trials = screen.getAllByRole('link', { name: /Start free trial/ });
     expect(trials.every((a) => a.getAttribute('href') === '/sign-up')).toBe(true);

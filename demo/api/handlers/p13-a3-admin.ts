@@ -12,6 +12,7 @@ import { PLAN_CATALOGUE } from '@/lib/studio/billing/catalogue';
 import { DEMO_ORG_ID, DEMO_USER_ID } from '../ids';
 import { sampleVideo } from '../../media';
 import { DemoHttpError, route } from '../registry';
+import { demoRetrySchedule } from './p20-schedule-month';
 import { OTHER_ORGS } from './admin-state';
 import {
   ago,
@@ -616,6 +617,9 @@ route('GET', '/projects/:id/auto-publish', ({ params }) => {
 
 route('POST', '/projects/:id/auto-publish/retry', ({ params }) => {
   const p = getProject(params.id ?? '');
+  // 20.3: a SCHEDULED project that got no drip slot is planned again (p20-schedule-month.ts).
+  const scheduled = demoRetrySchedule(p);
+  if (scheduled) return { status: 202, body: { requeued: 0, ...scheduled } };
   const rows = outboxFor(p);
   let requeued = 0;
   for (const row of rows) {
@@ -629,7 +633,7 @@ route('POST', '/projects/:id/auto-publish/retry', ({ params }) => {
       updatedAt: nowIso(),
     });
   }
-  return { status: 202, body: { requeued } };
+  return { status: 202, body: { requeued, scheduled: 0, unscheduled: null } };
 });
 
 // ------------------------------------------------------------------ 13.22 purge (internal)

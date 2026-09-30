@@ -2,7 +2,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { FEATURE_SECTIONS } from './features-data';
 import { Chapter, Pill, TourHeader, Toc, useSectionScroll } from './ui';
 
-// #/tour/features — "Everything built": every completed feature of Phases 1–18 by area, each with
+// #/tour/features — "Everything built": every completed feature of Phases 1–20 by area, each with
 // a one-line description and a "See it" link (features-data.ts).
 
 export function FeaturesPage() {
@@ -20,7 +20,7 @@ export function FeaturesPage() {
         }
         lede={
           <p>
-            {total} features from Phases 1 to 18 in {FEATURE_SECTIONS.length} areas. “See it” opens
+            {total} features from Phases 1 to 20 in {FEATURE_SECTIONS.length} areas. “See it” opens
             the screen or state that shows each one; features without a screen open the behind-the-
             scenes page at the right chapter. What is still missing is on{' '}
             <a className="text-foreground underline underline-offset-4" href="#/tour/not-built">

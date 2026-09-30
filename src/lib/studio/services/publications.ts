@@ -14,6 +14,7 @@ import { currentRunId } from '../pipeline/project-state';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { PublishJobData } from '../queue/queues';
 import type { PlanTier } from '../providers/router';
+import { MAX_SCHEDULE_AHEAD_MS, MIN_SCHEDULE_LEAD_MS } from '../schedule-window';
 import { PLATFORMS, toPlanTier } from './catalog';
 
 // Publications (spec 8.4, BACKLOG 5.10–5.11): schedule or publish now, read, cancel, retry,
@@ -25,8 +26,6 @@ const PUBLISHABLE_PROJECT_STATES = [
   'PUBLISHED',
   'PARTIALLY_PUBLISHED',
 ] as const;
-const MIN_SCHEDULE_LEAD_MS = 60_000;
-const MAX_SCHEDULE_AHEAD_MS = 180 * 24 * 60 * 60 * 1000;
 
 export const createPublicationInput = z.object({
   renderId: z.string().min(1).max(64),

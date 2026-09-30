@@ -5,6 +5,7 @@ import type { TenantContext } from '../../tenant';
 import { currentRunId } from '../pipeline/project-state';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { PublishJobData } from '../queue/queues';
+import { MAX_SCHEDULE_AHEAD_MS, MIN_SCHEDULE_LEAD_MS } from '../schedule-window';
 import { toPlanTier } from './catalog';
 
 // BACKLOG 13.9 (spec 14.3 "drag to reschedule") — PATCH /publications/:id { scheduledFor }.
@@ -16,8 +17,8 @@ import { toPlanTier } from './catalog';
 // fire worker is the backstop: every fire job carries the time it was scheduled for and is a
 // no-op once the row points elsewhere (fireScheduledPublication), so a stale job never posts.
 
-export const MIN_RESCHEDULE_LEAD_MS = 60_000;
-export const MAX_RESCHEDULE_AHEAD_MS = 180 * 24 * 60 * 60 * 1000;
+export const MIN_RESCHEDULE_LEAD_MS = MIN_SCHEDULE_LEAD_MS;
+export const MAX_RESCHEDULE_AHEAD_MS = MAX_SCHEDULE_AHEAD_MS;
 
 export const reschedulePublicationInput = z.object({ scheduledFor: z.iso.datetime() }).strict();
 
