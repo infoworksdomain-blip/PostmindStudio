@@ -5,6 +5,7 @@ import {
   ConflictError,
   CostCapPausedError,
   ForbiddenError,
+  NotFoundError,
   QuotaExceededError,
   RateLimitError,
 } from '../../errors';
@@ -99,6 +100,14 @@ export function planDailyStartLimit(
   const n = Number(raw);
   if (raw && Number.isInteger(n) && n > 0) return n;
   return hiveApiVersion === 'v3' ? HIVE_V3_DAILY_STARTS : null;
+}
+
+/** Removing a scheduled post cancels its publication: the POST /publications/:id/cancel right. */
+export function assertMayCancelPublications(tenant: Pick<TenantContext, 'capabilities'>): void {
+  if (!hasCapability(tenant, StudioCapability.PublicationWrite))
+    throw new ForbiddenError('Removing scheduled posts cancels their publications', {
+      capability: StudioCapability.PublicationWrite,
+    });
 }
 
 export function assertMayScheduleForOwner(tenant: Pick<TenantContext, 'capabilities'>): void {
@@ -393,8 +402,14 @@ export async function syncPlanItems(
   db: Pick<PrismaClient, 'contentPlanItem' | 'videoProject' | 'autoPublishOutbox'>,
   planId: string,
 ): Promise<number> {
+  // PLANNED items with a project are mid-preparation (no allowance reserved yet): generate
+  // finishes them, never the sync.
   const items = await db.contentPlanItem.findMany({
-    where: { planId, projectId: { not: null }, status: { notIn: [...FINAL_ITEM_STATUSES] } },
+    where: {
+      planId,
+      projectId: { not: null },
+      status: { notIn: [...FINAL_ITEM_STATUSES, 'PLANNED'] },
+    },
   });
   if (items.length === 0) return 0;
   const ids = items.map((i) => i.projectId!);
@@ -723,9 +738,15 @@ function assertOpenItem(item: ContentPlanItem, now: number) {
 }
 
 /** DELETE an item of a generating / scheduled plan: cancel it and free its time. */
-export async function removeScheduledItem(deps: DetachDeps, plan: PlanWithItems, itemId: string) {
+export async function removeScheduledItem(
+  deps: DetachDeps,
+  tenant: Pick<TenantContext, 'capabilities'>,
+  plan: PlanWithItems,
+  itemId: string,
+) {
+  assertMayCancelPublications(tenant);
   const item = plan.items.find((i) => i.id === itemId);
-  if (!item) throw new ConflictError('Plan item not found');
+  if (!item) throw new NotFoundError('Plan item not found');
   assertOpenItem(item, deps.now());
   await detachItem(deps, item);
   await setItem(deps.db, item.id, { status: 'REMOVED', statusReason: 'removed_by_owner' });
@@ -744,7 +765,7 @@ export async function swapScheduledItem(
 ) {
   assertMayScheduleForOwner(tenant);
   const item = plan.items.find((i) => i.id === itemId);
-  if (!item) throw new ConflictError('Plan item not found');
+  if (!item) throw new NotFoundError('Plan item not found');
   assertOpenItem(item, deps.now());
   await detachItem(deps, item);
   const updated = await setItem(deps.db, item.id, {
@@ -769,8 +790,16 @@ export async function swapScheduledItem(
 }
 
 /** POST /content-plans/:id/cancel — every post not yet out is cancelled; the plan ends. */
-export async function cancelPlan(deps: DetachDeps, organisationId: string, planId: string) {
+export async function cancelPlan(
+  deps: DetachDeps,
+  tenant: Pick<TenantContext, 'organisationId' | 'capabilities'>,
+  planId: string,
+) {
+  const organisationId = tenant.organisationId;
   const plan = await findPlan(deps.db, organisationId, planId);
+  // Cancelling a generating / scheduled plan cancels publications (like POST /publications/:id/cancel).
+  if (plan.status === 'GENERATING' || plan.status === 'SCHEDULED')
+    assertMayCancelPublications(tenant);
   if (plan.status === 'CANCELLED' || plan.status === 'COMPLETED')
     throw new ConflictError(`The plan is ${plan.status}`, { status: plan.status });
   const moved = await deps.db.contentPlan.updateMany({

@@ -40,7 +40,7 @@ export const DELETE = withStudioRoute(
     const plan = await findPlan(deps.db, tenant.organisationId, params.id ?? '');
     const itemId = params.itemId ?? '';
     if (plan.status === 'DRAFT') await deleteDraftItem(deps.db, plan, itemId);
-    else await removeScheduledItem(deps, plan, itemId);
+    else await removeScheduledItem(deps, tenant, plan, itemId);
     audit('studio.content_plan.item_remove', { type: 'content_plan', id: plan.id }, { itemId });
     return { body: { plan: publicPlan(await findPlan(deps.db, tenant.organisationId, plan.id)) } };
   },

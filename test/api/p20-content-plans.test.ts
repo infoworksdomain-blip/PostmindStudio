@@ -385,6 +385,16 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
     const items = ((await generate(plan.id)).json.plan as Plan).items;
     const [a, b] = items;
 
+    // Removing a scheduled post cancels its publication: publication:write is needed.
+    expect(
+      (
+        await call(itemRoute.DELETE, {
+          method: 'DELETE',
+          token: 'writer',
+          params: { id: plan.id, itemId: a!.id },
+        })
+      ).status,
+    ).toBe(403);
     const removed = await call(itemRoute.DELETE, {
       method: 'DELETE',
       token: 'owner',

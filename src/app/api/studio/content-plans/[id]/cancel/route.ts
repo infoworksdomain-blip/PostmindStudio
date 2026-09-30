@@ -9,7 +9,7 @@ import { publicPlan } from '@/lib/studio/services/content-plans';
 export const POST = withStudioRoute(
   StudioCapability.ProjectWrite,
   async ({ tenant, deps, params, audit }) => {
-    const result = await cancelPlan(deps, tenant.organisationId, params.id ?? '');
+    const result = await cancelPlan(deps, tenant, params.id ?? '');
     audit(
       'studio.content_plan.cancel',
       { type: 'content_plan', id: result.plan.id },
