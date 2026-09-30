@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Palette, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, errorMessage, newIdempotencyKey, useApi } from '@/lib/client/api';
@@ -169,11 +169,7 @@ export function BrandKitsPanel({ businessId }: { businessId: string }) {
       {error && <ErrorState error={error} onRetry={refresh} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />}
       {data && data.data.length === 0 && (
-        <EmptyState
-          icon={<Palette className="size-8" strokeWidth={1.5} />}
-          title={t('empty.title')}
-          description={t('empty.body')}
-        />
+        <EmptyState illustration="brand" title={t('empty.title')} description={t('empty.body')} />
       )}
       {data && data.data.length > 0 && (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label={t('listAria')}>

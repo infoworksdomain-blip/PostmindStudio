@@ -184,6 +184,7 @@ export function PublicationsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
+          illustration="publications"
           title={unfiltered ? t('empty.title') : t('emptyFiltered.title')}
           description={unfiltered ? t('empty.body') : t('emptyFiltered.body')}
           action={

@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { Film } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { useAnalysisLabels } from './analysis-labels';
 import type { LibraryVideoDetail, LibraryVideoSummary } from './types';
+import { EmptyIllustration } from '../empty-illustration';
 
 // One reference video in a grid. List results carry only a thumbnail (A3.10: the preview
 // rendition is signed per detail request), so hovering/focusing for a moment fetches the detail
@@ -107,7 +107,7 @@ export function VideoCard({
             className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <Film className="absolute inset-0 m-auto size-8 text-muted-foreground" />
+          <EmptyIllustration name="library" className="absolute inset-0 m-auto h-auto w-4/5" />
         )}
         {previewing && <HoverPreview id={video.id} />}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-2.5 pt-10 text-[0.7rem] font-medium text-white">
