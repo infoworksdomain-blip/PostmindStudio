@@ -418,3 +418,7 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **19.3** Track 3 — security hardening: per-account 2FA and per-organisation/inviter invite limits, legal link guard (PR #29).
 - [x] **19.4** Track 3 — dependency and CI upkeep: 0 high advisories, actions on node24, `prisma.config.ts` (PR #29). Follow-ups for the operator: Node 20 → 22/24 (end of life 2026-04-30); vitest 4 for the last moderate advisory.
 - [x] **19.5** Track 2 — cancelled-organisation banner copy: a distinct "subscription ended" read-only banner with the deletion date, in 11 locales.
+
+## Phase 20 — Post-launch-prep changes (operator requests 2026-09-30)
+
+- [x] **20.3** Month-ahead auto-scheduling and calendar: one-click posting plans (calendar and onboarding), open drip-queue slots and a "Next 30 days" summary on the calendar (`GET …/drip-queue/upcoming`), "next free slot" on Create, an honest notice + audit + notification (and Try again) when a scheduled video gets no slot, the 180-day limit on `scheduledStartAt` and in the date pickers, "A month of short videos" on the landing page.
