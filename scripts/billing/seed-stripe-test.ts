@@ -11,6 +11,7 @@ import {
   type ProductSpec,
 } from '../../src/lib/studio/billing/stripe-setup';
 import { createStripeClient, isTestModeKey } from '../../src/lib/studio/billing/stripe-client';
+import { listPricesByLookupKeys } from '../../src/lib/studio/billing/stripe-lookup';
 
 // Phase 18 §2.7 / §P.2 — create the Studio catalogue in a Stripe TEST-mode account:
 //   4 products (studio_basic / _standard / _plus / _enterprise, metadata studio_tier, tax code
@@ -55,12 +56,12 @@ async function main(): Promise<void> {
   const stripe = createStripeClient(key);
   for (const product of catalogueProducts()) await ensureProduct(stripe, product, dryRun);
   const specs = cataloguePrices();
-  const existing = await stripe.prices.list({
-    lookup_keys: specs.map((s) => s.lookupKey),
-    limit: 100,
-    expand: ['data.product'],
-  });
-  const byKey = new Map(existing.data.map((p) => [p.lookup_key ?? '', toPriceState(p)]));
+  const existing = await listPricesByLookupKeys(
+    stripe.prices,
+    specs.map((s) => s.lookupKey),
+    { expand: ['data.product'] },
+  );
+  const byKey = new Map(existing.map((p) => [p.lookup_key ?? '', toPriceState(p)]));
   let created = 0;
   for (const spec of specs) {
     const current = byKey.get(spec.lookupKey);

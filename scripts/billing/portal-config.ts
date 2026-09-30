@@ -2,6 +2,7 @@ import { ConfigurationError } from '../../src/lib/errors';
 import { logger } from '../../src/lib/logger';
 import { selfServeTiers } from '../../src/lib/studio/billing/catalogue';
 import { createStripeClient } from '../../src/lib/studio/billing/stripe-client';
+import { listPricesByLookupKeys } from '../../src/lib/studio/billing/stripe-lookup';
 import {
   cataloguePrices,
   portalConfigurationParams,
@@ -33,22 +34,22 @@ async function main(): Promise<void> {
     undefined;
   const stripe = createStripeClient(key);
   const recurring = cataloguePrices().filter((p) => p.interval !== null);
-  const prices = await stripe.prices.list({
-    lookup_keys: recurring.map((p) => p.lookupKey),
-    active: true,
-    limit: 100,
-  });
+  const prices = await listPricesByLookupKeys(
+    stripe.prices,
+    recurring.map((p) => p.lookupKey),
+    { active: true },
+  );
   const products = selfServeTiers().map((tier) => {
     const productId = productIdForTier(tier);
     const keys = new Set(
       recurring.filter((p) => p.productId === productId).map((p) => p.lookupKey),
     );
-    const priceIds = prices.data.filter((p) => keys.has(p.lookup_key ?? '')).map((p) => p.id);
+    const priceIds = prices.filter((p) => keys.has(p.lookup_key ?? '')).map((p) => p.id);
     if (priceIds.length !== keys.size)
       throw new ConfigurationError(
         `Missing prices for ${productId}: expected lookup keys ${[...keys].join(', ')}`,
       );
-    const product = prices.data.find((p) => keys.has(p.lookup_key ?? ''))?.product;
+    const product = prices.find((p) => keys.has(p.lookup_key ?? ''))?.product;
     return {
       productId: typeof product === 'string' ? product : (product?.id ?? productId),
       priceIds,
