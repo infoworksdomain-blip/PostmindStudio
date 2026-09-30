@@ -123,7 +123,9 @@ export function AdminCentre() {
       {header}
       <LegalReadinessWarning />
       <Tabs defaultValue={initialTab} className="min-w-0 gap-6">
-        <TabsList className="max-w-full overflow-x-auto">
+        {/* 18 tabs do not fit one row: a centred, scrolling row pushed the first tabs (Kill switch,
+            Features, Redrive) out of reach under the sidebar at 1280 px (20.10). They wrap. */}
+        <TabsList className="h-auto max-w-full flex-wrap justify-start group-data-horizontal/tabs:h-auto">
           {TABS.map((tab) => (
             <TabsTrigger key={tab} value={tab}>
               {t(`tabs.${TAB_KEY[tab]}`)}
