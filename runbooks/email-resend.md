@@ -17,7 +17,7 @@ email.bounced / email.complained), send test emails; docs.svix.com — manual ve
 | Account security | verifyEmail, resetPassword, passwordChanged, emailChangeConfirm, emailChanged, accountExists, twoFactorChanged, newSignIn | No (service mail) |
 | Organisation | invite, ownershipTransferred | No |
 | Billing | trialEnding, paymentFailed, paymentActionRequired, subscriptionChanged, subscriptionCanceled, topupReceipt (Stripe sends invoices and receipts itself) | No |
-| Account | accountDeletionScheduled, orgDeletionScheduled, dataExportReady | No |
+| Account | accountDeletionScheduled, orgDeletionScheduled, dataExportReady, monthPlanned (20.9: one summary per month plan, to whoever scheduled it) | No |
 | Notifications | `notification`: every in-app notification kind, for users who turned email on | Yes, one click, per kind |
 
 Wording lives in `messages/<locale>.json` → `email.*` (all 11 locales; en-GB fallback); the
