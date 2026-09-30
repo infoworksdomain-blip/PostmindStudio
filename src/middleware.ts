@@ -17,6 +17,9 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  // Pages only: API routes, Next internals and files with an extension are never matched.
-  matcher: ['/((?!api/|_next/|p/|.*\.[a-zA-Z0-9]+$).*)'],
+  // Pages only: API routes, Next internals and files with an extension (e.g. the render fonts at
+  // /fonts/<Family>.ttf, fetched by Shotstack without a session) are never matched. The dot is
+  // escaped twice: '\.' in a string literal is just '.', which made the lookahead match every
+  // path of two or more characters and switched the guard off for all pages but "/" (20.7).
+  matcher: ['/((?!api/|_next/|p/|.*\\.[a-zA-Z0-9]+$).*)'],
 };

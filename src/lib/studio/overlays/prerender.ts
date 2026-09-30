@@ -234,7 +234,9 @@ export async function preRenderOverlay(
   const cached = await deps.storage.size(deps.bucket, key).catch(() => 0);
   if (cached > 0) return deps.storage.signedUrl(deps.bucket, key);
   if (!deps.fontsBaseUrl) {
-    throw new ConfigurationError('STUDIO_FONTS_BASE_URL is required to render text overlays');
+    throw new ConfigurationError(
+      'No fonts host: set APP_URL (fonts served from /fonts) or STUDIO_FONTS_BASE_URL to render text overlays',
+    );
   }
   const fontUrl = `${deps.fontsBaseUrl.replace(/\/$/, '')}/${encodeURIComponent(overlay.fontFamily.replace(/ /g, ''))}.ttf`;
   const fontRes = await deps.fetchImpl(fontUrl, { signal: AbortSignal.timeout(30_000) });

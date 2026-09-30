@@ -6,6 +6,7 @@ import {
   PayloadTooLargeError,
   ValidationError,
 } from '../../errors';
+import { hostedFontFileName } from '../fonts-host';
 import type { AssetStorage } from '../storage';
 import {
   createFfmpegThumbnailComposer,
@@ -26,6 +27,8 @@ import {
 export const THUMBNAIL_MAX_BYTES = 8 * 1024 * 1024;
 export const THUMBNAIL_URL_TTL_SEC = 60 * 60;
 const DEFAULT_KEYFRAME_SEC = 1;
+/** The family thumbnail text is drawn in (hosted like the overlay fonts, public/fonts/). */
+export const THUMBNAIL_FONT_FAMILY = 'Montserrat';
 
 export interface ThumbnailDeps {
   db: PrismaClient;
@@ -198,7 +201,7 @@ export async function generateRenderThumbnail(
     overlayText: overlayText ?? undefined,
     ...size,
     fontUrl: deps.fontsBaseUrl
-      ? `${deps.fontsBaseUrl.replace(/\/$/, '')}/Montserrat.ttf`
+      ? `${deps.fontsBaseUrl.replace(/\/$/, '')}/${hostedFontFileName(THUMBNAIL_FONT_FAMILY)}`
       : undefined,
   });
   return storeThumbnail(deps, render, organisationId, bytes, 'image/jpeg');

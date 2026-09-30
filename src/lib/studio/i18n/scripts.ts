@@ -6,9 +6,10 @@ import { languageOf, type LanguageScript } from '../languages';
 //
 // A Latin brand font has no Arabic, Devanagari or Han glyphs, so text in those scripts is set in
 // the matching Noto family (SIL Open Font License, free for commercial embedding). Shotstack has
-// no system fonts: each family must be hosted as <FamilyNoSpaces>.ttf under STUDIO_FONTS_BASE_URL
-// (the same convention as overlays, overlays/shotstack.ts fontSources), e.g.
-// NotoSansArabic.ttf, NotoSansDevanagari.ttf, NotoSansSC.ttf, NotoSans.ttf.
+// no system fonts: each family must be hosted as <FamilyNoSpaces>.ttf on the fonts host
+// (fonts-host.ts: public/fonts/ at APP_URL/fonts, or STUDIO_FONTS_BASE_URL; the same convention as
+// overlays, overlays/shotstack.ts fontSources), e.g. NotoSansArabic.ttf, NotoSansDevanagari.ttf,
+// NotoSansSC.ttf, NotoSans.ttf (sources and licences: public/fonts/SOURCES.md).
 // Sources: https://fonts.google.com/noto/specimen/Noto+Sans+Arabic ,
 // https://fonts.google.com/noto/specimen/Noto+Sans+Devanagari ,
 // https://fonts.google.com/noto/specimen/Noto+Sans+SC (read 2026-09-28).

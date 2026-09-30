@@ -7,7 +7,7 @@ import { findLanguage } from '../languages';
 // Font: a Latin brand/preset font has no Arabic, Devanagari or Han glyphs, so overlays in those
 // languages are set in Noto Sans Arabic / Noto Sans Devanagari / Noto Sans SC; Latin-script
 // languages keep the overlay's own (brand or preset) family. Files are hosted as
-// <FamilyNoSpaces>.ttf under STUDIO_FONTS_BASE_URL (overlays/shotstack.ts fontSources and the
+// <FamilyNoSpaces>.ttf on the fonts host, fonts-host.ts (overlays/shotstack.ts fontSources and the
 // FFmpeg pre-renderer read the same URL): NotoSansArabic.ttf, NotoSansDevanagari.ttf,
 // NotoSansSC.ttf.
 //
