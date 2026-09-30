@@ -41,6 +41,7 @@ import { assetsBucket, getAssetStorage } from '../storage';
 import { DEFAULT_PIPELINE_TIMING, type PipelineDeps } from './deps';
 import { createFfmpegInspector } from './media-probe';
 import { parseCallbackBaseUrl, parseHiveTimeoutMs } from './content-safety-async';
+import { resolveHiveApiVersion } from '../providers/hive-config';
 import { createFfmpegMastering } from './mastering';
 import { parseMusicMinTier } from './music';
 import { createProviderRatings, providerRatingsEnabled } from '../services/provider-ratings';
@@ -130,6 +131,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       corpusS3Buckets: parseCorpusBuckets(process.env.STUDIO_CORPUS_S3_BUCKETS),
       hiveCallbackBaseUrl: parseCallbackBaseUrl(process.env.STUDIO_PUBLIC_CALLBACK_BASE_URL),
       hiveAsyncTimeoutMs: parseHiveTimeoutMs(process.env.HIVE_ASYNC_TIMEOUT_MIN),
+      hiveApiVersion: resolveHiveApiVersion(process.env),
       ...DEFAULT_PIPELINE_TIMING,
     },
     fetch: globalThis.fetch,

@@ -66,7 +66,9 @@ Run the checks in this order. Each step says who runs it.
 whose env is missing are listed as SKIPPED, and the verdict is then INCOMPLETE.
 
 Follow up by hand, as the report lists: the Hive async path (a render over 90 s through the
-pipeline) and `npm run gate3`.
+pipeline; with a V3 key instead, a render over 60 s exercises frame sampling) and `npm run gate3`.
+The Hive adapter test runs with `HIVE_API_KEY` (V2) or `HIVE_V3_SECRET_KEY` (V3: one of its ~100
+requests a day).
 
 ### 3 and 6. k6 (14.5)
 

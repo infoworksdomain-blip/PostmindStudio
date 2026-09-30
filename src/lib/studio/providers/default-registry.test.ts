@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigurationError } from '../../errors';
+import type { HiveAdapter } from './hive';
 import {
   buildAdaptersFromEnv,
   buildAdaptersFromKeys,
@@ -31,6 +32,8 @@ beforeEach(() => {
   vi.stubEnv('HEYGEN_AVATAR_ID', '');
   vi.stubEnv('OPENAI_TEXT_MODEL', '');
   for (const key of KEYS) vi.stubEnv(key, '');
+  for (const key of ['HIVE_API_VERSION', 'HIVE_V3_SECRET_KEY', 'HIVE_V3_MAX_FRAMES'])
+    vi.stubEnv(key, '');
 });
 
 afterEach(() => vi.unstubAllEnvs());
@@ -119,5 +122,44 @@ describe('buildAdaptersFromKeys', () => {
     expect(providerKeysFromEnv()).toEqual({ runway: { apiKey: 'rk' } });
     vi.stubEnv('STORYBLOCKS_API_PRIVATE_KEY', 'priv');
     expect(providerKeysFromEnv().storyblocks).toEqual({ apiKey: 'pub', secondaryKey: 'priv' });
+  });
+});
+
+describe('Hive API version (20.6)', () => {
+  const hiveOf = () =>
+    buildAdaptersFromEnv().find((a) => a.providerId === 'hive') as HiveAdapter | undefined;
+
+  it('registers a V3 adapter from HIVE_V3_SECRET_KEY alone', () => {
+    vi.stubEnv('HIVE_V3_SECRET_KEY', 'v3-secret');
+    expect(providerKeysFromEnv().hive).toEqual({ apiKey: 'v3-secret', apiVersion: 'v3' });
+    expect(hiveOf()?.apiVersion).toBe('v3');
+  });
+
+  it('keeps V2 for HIVE_API_KEY, and when both keys are set without HIVE_API_VERSION', () => {
+    vi.stubEnv('HIVE_API_KEY', 'v2-key');
+    expect(hiveOf()?.apiVersion).toBe('v2');
+    vi.stubEnv('HIVE_V3_SECRET_KEY', 'v3-secret');
+    expect(providerKeysFromEnv().hive).toEqual({ apiKey: 'v2-key', apiVersion: 'v2' });
+    vi.stubEnv('HIVE_API_VERSION', 'v3');
+    expect(providerKeysFromEnv().hive).toEqual({ apiKey: 'v3-secret', apiVersion: 'v3' });
+  });
+
+  it('registers no Hive adapter when the selected version has no key', () => {
+    vi.stubEnv('HIVE_API_KEY', 'v2-key');
+    vi.stubEnv('HIVE_API_VERSION', 'v3');
+    expect(hiveOf()).toBeUndefined();
+  });
+
+  it('rejects a bad HIVE_API_VERSION or HIVE_V3_MAX_FRAMES', () => {
+    vi.stubEnv('HIVE_V3_SECRET_KEY', 'v3-secret');
+    vi.stubEnv('HIVE_V3_MAX_FRAMES', '500');
+    expect(() => buildAdaptersFromEnv()).toThrow(/HIVE_V3_MAX_FRAMES/);
+    vi.stubEnv('HIVE_API_VERSION', 'v9');
+    expect(() => buildAdaptersFromEnv()).toThrow(/HIVE_API_VERSION/);
+  });
+
+  it('an organisation key without a version (BYOC) stays V2', () => {
+    const [hive] = buildAdaptersFromKeys({ hive: { apiKey: 'org-key' } });
+    expect((hive as HiveAdapter).apiVersion).toBe('v2');
   });
 });

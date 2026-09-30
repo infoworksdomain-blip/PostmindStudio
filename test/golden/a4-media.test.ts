@@ -27,6 +27,8 @@ import {
 //          POST /webhooks/hive) → READY_FOR_REVIEW (long-form reaches review)
 //   A4-02  Hive never calls back → the timeout fails the content-safety check closed
 //   A4-03  No public callback URL → long renders fail closed, as before
+//   A4-04  20.6 Hive V3 (self-serve): no callback needed; the 4-minute render is checked as
+//          HIVE_V3_MAX_FRAMES sampled frames, one V3 request each → READY_FOR_REVIEW
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const LONG_SEC = 240;
@@ -261,5 +263,56 @@ describe.skipIf(!hasDb)('A4 media journeys', { timeout: 180_000 }, () => {
     expect(project.state).toBe('QUALITY_FAILED');
     expect(project.errorReason).toContain('STUDIO_PUBLIC_CALLBACK_BASE_URL');
     expect(hiveFetch).not.toHaveBeenCalled();
+  });
+
+  it('A4-04 Hive V3: long render checked as sampled frames, no callback → ready for review', async () => {
+    const j = longJourney(db, 'a404');
+    wireA4(j);
+    const v3Fetch = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
+      Response.json({
+        task_id: 't',
+        model: 'hive/visual-moderation',
+        version: '1',
+        output: [
+          {
+            extra: [],
+            classes: [
+              { class_name: 'general_nsfw', value: 0.01 },
+              { class_name: 'no_gun', value: 0.99 },
+            ],
+          },
+        ],
+      }),
+    );
+    const frameJpeg = vi.fn(async () => new Uint8Array([0xff, 0xd8, 0xff]));
+    const hive = new HiveAdapter({
+      apiKey: 'v3-secret',
+      apiVersion: 'v3',
+      maxFrames: 4,
+      frameJpeg,
+      usdToGbpRate: 0.75,
+      fetchImpl: v3Fetch as unknown as typeof fetch,
+    });
+    j.h.deps.registry = createProviderRegistry([
+      ...j.h.deps.registry.list().filter((a) => a.providerId !== 'hive'),
+      hive,
+    ]);
+    j.h.deps.config.hiveApiVersion = 'v3';
+    const id = await createProject(j, longBrief());
+
+    expect((await generate(j, id)).state).toBe('READY_FOR_REVIEW');
+    expect(await db.contentSafetyTask.count({ where: { projectId: id } })).toBe(0);
+    expect(v3Fetch).toHaveBeenCalledTimes(4);
+    expect(String(v3Fetch.mock.calls[0]?.[0])).toBe(
+      'https://api.thehive.ai/api/v3/hive/visual-moderation',
+    );
+    expect(frameJpeg.mock.calls.map((c) => (c as unknown[])[1])).toEqual([30, 90, 150, 210]);
+    const [render] = await rendersOf(j, id);
+    const checked = await db.videoRender.findUniqueOrThrow({ where: { id: render?.id ?? '' } });
+    expect(checked.qualityIssues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'content_safety', status: 'passed' }),
+      ]),
+    );
   });
 });

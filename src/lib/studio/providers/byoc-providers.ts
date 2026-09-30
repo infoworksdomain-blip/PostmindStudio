@@ -50,6 +50,12 @@ export function byocProvider(id: ByocProviderId): ByocProviderInfo {
 export interface ProviderKey {
   apiKey: string;
   secondaryKey?: string;
+  /**
+   * 20.6 Hive only: which Hive API the key belongs to. The platform key's version comes from
+   * HIVE_API_VERSION (hive-config.ts); an organisation's own (BYOC) Hive key has none and is
+   * used as a V2 key, as before.
+   */
+  apiVersion?: 'v2' | 'v3';
 }
 
 export type ProviderKeyMap = Partial<Record<ByocProviderId, ProviderKey>>;

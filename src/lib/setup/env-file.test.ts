@@ -12,6 +12,7 @@ import {
   exampleSections,
   formatReport,
   GENERATED_SECRET_KEYS,
+  HIVE_ONE_OF_KEYS,
   parseEnvFile,
   prefillValues,
   R2_ACCOUNT_ID,
@@ -108,7 +109,11 @@ describe('the required list cannot drift', () => {
   it('includes every key of the REQUIRED section of deploy/vps/.env.example', () => {
     const { required } = exampleSections(EXAMPLE);
     expect(required.length).toBeGreaterThan(30);
-    expect(req().sort()).toEqual(expect.arrayContaining(required));
+    // 20.6: the Hive keys are one-of (checked by hiveChecks), not each required.
+    expect(required).toEqual(expect.arrayContaining([...HIVE_ONE_OF_KEYS]));
+    const each = required.filter((k) => !HIVE_ONE_OF_KEYS.includes(k));
+    expect(req().sort()).toEqual(expect.arrayContaining(each));
+    for (const key of HIVE_ONE_OF_KEYS) expect(req()).not.toContain(key);
   });
 
   it.each([
@@ -348,5 +353,72 @@ describe('checkEnvFile', () => {
   it('keys compose sets are flagged when an operator adds them', () => {
     const text = `${filledFile()}APP_URL='https://studio.example.com'\n`;
     expect(statusOf(text, 'APP_URL')).toEqual(['warn']);
+  });
+});
+
+describe('Hive content-safety key (20.6: V2 or V3)', () => {
+  const withHive = (values: Record<string, string>) =>
+    filledFile('production', { HIVE_API_KEY: '', ...values });
+  const hiveResults = (text: string) =>
+    check(text).results.filter((r) => r.key.startsWith('HIVE_'));
+
+  it('a V2 key alone is ready (the template default)', () => {
+    const text = filledFile();
+    expect(hiveResults(text)).toEqual([{ key: 'HIVE_API_KEY', status: 'ok' }]);
+    expect(check(text).ready).toBe(true);
+  });
+
+  it('a V3 Secret Key alone is ready (HIVE_API_VERSION may stay empty)', () => {
+    const text = withHive({ HIVE_V3_SECRET_KEY: 'fakeV3SecretKeyValue000000' });
+    expect(hiveResults(text)).toEqual([{ key: 'HIVE_V3_SECRET_KEY', status: 'ok' }]);
+    expect(check(text).ready).toBe(true);
+  });
+
+  it('neither key → missing, naming both', () => {
+    const r = hiveResults(withHive({}));
+    expect(r).toEqual([expect.objectContaining({ key: 'HIVE_API_KEY', status: 'missing' })]);
+    expect(r[0]?.reason).toContain('HIVE_V3_SECRET_KEY');
+    expect(check(withHive({})).ready).toBe(false);
+  });
+
+  it('HIVE_API_VERSION=v3 needs the V3 key; the unused V2 key is a reminder', () => {
+    const noV3 = filledFile('production', { HIVE_API_VERSION: 'v3' });
+    expect(statusOf(noV3, 'HIVE_V3_SECRET_KEY')).toEqual(['missing']);
+    const both = filledFile('production', {
+      HIVE_API_VERSION: 'v3',
+      HIVE_V3_SECRET_KEY: 'fakeV3SecretKeyValue000000',
+    });
+    expect(statusOf(both, 'HIVE_V3_SECRET_KEY')).toEqual(['ok']);
+    expect(statusOf(both, 'HIVE_API_KEY')).toEqual(['warn']);
+    expect(check(both).ready).toBe(true);
+  });
+
+  it('a short V3 value (likely the Access Key ID) is a reminder; spaces are wrong', () => {
+    expect(
+      statusOf(withHive({ HIVE_V3_SECRET_KEY: 'accessKeyId0000000' }), 'HIVE_V3_SECRET_KEY'),
+    ).toEqual(['ok', 'warn']);
+    expect(
+      statusOf(
+        withHive({ HIVE_V3_SECRET_KEY: 'two words here long enough' }),
+        'HIVE_V3_SECRET_KEY',
+      ),
+    ).toEqual(['malformed']);
+    expect(
+      statusOf(withHive({ HIVE_V3_SECRET_KEY: '<paste here>' }), 'HIVE_V3_SECRET_KEY'),
+    ).toEqual(['malformed']);
+  });
+
+  it.each([
+    ['HIVE_API_VERSION', 'v4', 'malformed'],
+    ['HIVE_V3_MAX_FRAMES', '0', 'malformed'],
+    ['HIVE_V3_MAX_FRAMES', '61', 'malformed'],
+  ])('%s=%s → %s', (key, value, status) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toContain(status);
+  });
+
+  it('HIVE_V3_MAX_FRAMES=20 is fine', () => {
+    expect(
+      statusOf(filledFile('production', { HIVE_V3_MAX_FRAMES: '20' }), 'HIVE_V3_MAX_FRAMES'),
+    ).toEqual([]);
   });
 });

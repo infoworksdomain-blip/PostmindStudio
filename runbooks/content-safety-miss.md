@@ -15,6 +15,13 @@
   `HIVE_ASYNC_TIMEOUT_MIN` (default 120) blocks the render. Stuck long-form? Check
   `studio.content_safety_tasks` (state, errorReason) and that the public ingress routes
   `/api/studio/webhooks/hive` to Studio.
+- 20.6 Hive V3 (self-serve Secret Key: `HIVE_V3_SECRET_KEY`, `HIVE_API_VERSION=v3`) has no async
+  API: renders up to 60 s are one synchronous request (every second checked); longer renders are
+  checked as `HIVE_V3_MAX_FRAMES` (default 10) evenly spaced still frames, one request each, so
+  content between the samples is NOT checked. V3's default limit is about 100 requests a day
+  ("developer testing only", docs.thehive.ai/docs/visual-content-moderation): a 429 is logged
+  (`content-safety scan rate limited`), the gate job retries and the video stays unpublished; when
+  retries run out the run fails with `quality_gate_error`. Use a V2 Enterprise key for volume.
 - Block classes are hard-blocked at a score of 0.8 or above, and customers cannot force-approve
   them (spec 13.5).
 - Review-class content pauses the run for PostMind Trust & Safety (BACKLOG 13.17): a script-safety

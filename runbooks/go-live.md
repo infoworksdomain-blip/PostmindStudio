@@ -454,10 +454,22 @@ Details: [meta-connect.md](meta-connect.md). This is **Studio's own** Meta app.
 
 The video, voice and publishing providers each need a key. Where each comes from is in [vps-deploy.md](vps-deploy.md) section 6 and [render-deploy.md](render-deploy.md) step 4.
 
-- **Paste into:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `HIVE_API_KEY`, `ASSEMBLYAI_API_KEY`, `TIKTOK_CLIENT_KEY`/`_SECRET`, `YOUTUBE_CLIENT_ID`/`_SECRET`, `X_CLIENT_ID`/`_SECRET`, `LINKEDIN_CLIENT_ID`/`_SECRET`.
+- **Paste into:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `ASSEMBLYAI_API_KEY`, `TIKTOK_CLIENT_KEY`/`_SECRET`, `YOUTUBE_CLIENT_ID`/`_SECRET`, `X_CLIENT_ID`/`_SECRET`, `LINKEDIN_CLIENT_ID`/`_SECRET`, and one Hive key (11.1).
 - In the TikTok, YouTube (Google), X and LinkedIn developer portals register the redirect `https://studio.<your domain>/api/studio/platform-connections/oauth-callback?platform=<tiktok|youtube|x|linkedin>`.
 - Fonts: nothing to do. Studio serves the fonts its videos use from `https://studio.<your domain>/fonts`; leave `STUDIO_FONTS_BASE_URL` empty unless you host them on a CDN yourself.
 - Optional: `OPS_ALERT_WEBHOOK_URL` (a Slack incoming webhook for server alerts), `SENTRY_DSN` (error reports).
+
+### 11.1 Hive: the content-safety check (V2 or V3)
+
+Every video is checked by Hive before anyone can approve it. Nothing is published unchecked: if the check cannot run, the video is blocked. Hive has two kinds of key; fill in **one**.
+
+- **V3 (self-serve, works today).** Log in at thehive.ai → **Click:** **Service API Keys** in the left sidebar (may be labelled **API Keys**; it opens the **API Keys (V3)** window; direct link `https://thehive.ai/explore?api_keys=1`) → **Create API Key** if the list is empty. The table has two columns: **Access Key ID** (only a name for the key: do **not** use it) and **Secret Key**.
+  - **Copy:** the value in the **Secret Key** column.
+  - **Paste into:** `HIVE_V3_SECRET_KEY`. Leave `HIVE_API_KEY` empty (or set `HIVE_API_VERSION=v3`).
+  - Limits: Hive allows about **100 checks a day** on V3 and calls it "for developer testing ONLY". A video up to 60 seconds uses 1 check; a longer video uses `HIVE_V3_MAX_FRAMES` checks (default 10: ten still frames spread over the video, so short moments between them are not seen). When the day's checks run out, videos wait in "quality checking" and are retried; they are not published unchecked.
+- **V2 (Enterprise, after Hive Sales enables a project).** **Click:** thehive.ai → **Products** → **Models** → your **Visual Moderation** project → **Integration & API Keys**.
+  - **Copy:** the API key. **Paste into:** `HIVE_API_KEY`, and set `HIVE_API_VERSION=v2` (or clear `HIVE_V3_SECRET_KEY`). V2 checks every second of every video, with no daily cap beyond your contract.
+- **Check:** `npm run setup:check` shows `OK HIVE_V3_SECRET_KEY` (or `OK HIVE_API_KEY`). A `CHECK … is short for a V3 Secret Key` line usually means the Access Key ID was pasted instead of the Secret Key. A V3 key sent to the V2 address fails with "Invalid Auth Token": that is expected, the two kinds are not interchangeable.
 
 ## 12. Legal texts
 
@@ -596,3 +608,4 @@ Every page below was read on 2026-09-29. Labels the documentation did not confir
 - Resend: [add a domain](https://resend.com/docs/add-a-domain), [regions](https://resend.com/docs/dashboard/domains/regions), [Cloudflare DNS](https://resend.com/docs/knowledge-base/cloudflare), [API keys](https://resend.com/docs/dashboard/api-keys/introduction), [create a webhook](https://resend.com/docs/webhooks/create-webhook), [verify webhooks](https://resend.com/docs/webhooks/verify-webhooks-requests), [event types](https://resend.com/docs/webhooks/event-types).
 - Google: [configure the OAuth consent screen](https://developers.google.com/workspace/guides/configure-oauth-consent), [OAuth for web server apps](https://developers.google.com/identity/protocols/oauth2/web-server), [publishing status](https://support.google.com/cloud/answer/15549945), [brand verification](https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification).
 - Meta: [create an app](https://developers.facebook.com/docs/development/create-an-app/), [Facebook Login for Business](https://developers.facebook.com/docs/facebook-login/facebook-login-for-business/), [login security](https://developers.facebook.com/docs/facebook-login/security/), [basic settings](https://developers.facebook.com/docs/development/create-an-app/app-dashboard/basic-settings), [advanced settings](https://developers.facebook.com/docs/development/create-an-app/app-dashboard/advanced-settings), [App Review submission](https://developers.facebook.com/docs/app-review/submission-guide), [business verification](https://developers.facebook.com/docs/development/release/business-verification), [app modes](https://developers.facebook.com/docs/development/build-and-test/app-modes).
+- Hive (read 2026-09-30): [Visual Moderation playground API docs (V3)](https://docs.thehive.ai/docs/visual-moderation-playground), [Visual Moderation overview (V3 vs V2)](https://docs.thehive.ai/docs/visual-content-moderation), [FAQ: V2 and V3](https://docs.thehive.ai/docs/frequently-asked-questions-faq), [V2 integration guide](https://docs.thehive.ai/docs/visual-moderation-api), [error codes](https://docs.thehive.ai/reference/error-codes).
