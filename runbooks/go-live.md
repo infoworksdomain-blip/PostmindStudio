@@ -462,13 +462,15 @@ The video, voice and publishing providers each need a key. Where each comes from
 
 Details: [vps-deploy.md](vps-deploy.md) "Legal documents".
 
-### 12.1 Replace the placeholders
+### 12.1 Fill in the drafts and have them reviewed
 
-- The site shows `content/legal/en-GB/terms.md`, `privacy.md`, `cookies.md`, `acceptable-use.md`, `dpa.md` and `subprocessors.md`. The repository ships **placeholders** containing `OPERATOR MUST REPLACE`.
-- **Public sign-up stays closed in production** while terms or privacy is still a placeholder; the other four only show a warning in the Admin Centre.
-- **Click:** GitHub → the repository → `content/legal/en-GB/terms.md` → the pencil (**Edit this file**; may be labelled differently) → replace the whole text with yours (remove the `OPERATOR MUST REPLACE` line) → **Commit changes** → create a branch and open a pull request → merge it once the checks are green. Repeat for the other five. Translations are optional (`content/legal/fr/terms.md` and so on).
-- **Paste into:** `STUDIO_LEGAL_ENTITY_NAME` (your company's legal name, shown in the footer).
-- **Check:** on your laptop, after `git pull`: `npm run setup:check -- .secrets/production.env` shows `OK legal texts`. The texts are built into the app image, so they go live with the next deploy of that commit.
+- The site shows `content/legal/en-GB/terms.md`, `privacy.md`, `cookies.md`, `acceptable-use.md`, `dpa.md` and `subprocessors.md`. The repository ships **complete drafts** of all six (UK law, written from what Studio actually does). Only two things remain: your company details and a solicitor's review.
+- Each draft contains fill-in markers in double square brackets, for example `[[COMPANY LEGAL NAME]]`, `[[COMPANY NUMBER]]`, `[[REGISTERED ADDRESS]]`, `[[ICO REGISTRATION NUMBER]]`, `[[CONTACT EMAIL]]`, `[[PRIVACY EMAIL]]` and `[[DPO OR PRIVACY LEAD]]`. `content/legal/FILL-IN.md` lists every marker, the files it appears in and where to find the value (Companies House for the company name, number and address; the [ICO register of fee payers](https://ico.org.uk/ESDWebPages/Search) for the ICO number).
+- **Public sign-up stays closed in production** while the Terms of Service or the Privacy Policy still contains a marker; the other four show a "draft" banner and a warning in the Admin Centre until they are filled in.
+- **Click:** GitHub → the repository → `content/legal/en-GB/terms.md` → the pencil (**Edit this file**; may be labelled differently) → replace every `[[…]]` marker with your details (keep the rest) → **Commit changes** → create a branch and open a pull request → merge it once the checks are green. Repeat for the other five. Translations are optional (`content/legal/fr/terms.md` and so on).
+- Have a qualified solicitor (England and Wales) review all six texts before launch. If you change a retention or trial setting (`STUDIO_CANCELLED_RETENTION_DAYS`, `STUDIO_PURGE_GRACE_DAYS`, `STUDIO_TRIAL_DAYS` and the others in `FILL-IN.md`), change the text to match.
+- **Paste into:** `STUDIO_LEGAL_ENTITY_NAME` (your company's legal name, shown in the footer; use the same value as `[[COMPANY LEGAL NAME]]`).
+- **Check:** on your laptop, after `git pull`: `npx tsx scripts/legal/check-ready.ts` lists every document as `ok` (a `FILL-IN` line names the markers still left), and `npm run setup:check -- .secrets/production.env` shows `OK legal texts`. The texts are built into the app image, so they go live with the next deploy of that commit.
 - If you must launch before the texts are ready, set `STUDIO_SIGNUPS_ENABLED='false'` (invite-only).
 
 ## 13. Check the settings and copy them to the server
