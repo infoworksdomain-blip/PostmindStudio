@@ -33,6 +33,7 @@ export default async function LegalPage({ params }: Props) {
       docKey={key}
       markdown={document.markdown}
       placeholder={document.placeholder}
+      draft={document.state === 'fill_in'}
       fallback={document.fallback}
     />
   );

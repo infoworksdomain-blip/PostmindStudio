@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { ValidationError } from '../errors';
-import { legalReadiness, signupsState } from '../legal/readiness';
+import { legalReadiness, signupsState, type LegalReadiness } from '../legal/readiness';
 import {
   checkEnvFile,
   envRecord,
@@ -103,25 +103,34 @@ export function runNewEnv(argv: string[], io: CliIo): number {
   return 0;
 }
 
+/** "terms, privacy still the placeholder" or "… fill in the [[…]] details (…FILL-IN.md)". */
+function unfinished(readiness: LegalReadiness, docs: readonly string[]): string {
+  const states = readiness.docs.filter((d) => docs.includes(d.doc));
+  const why = states.some((d) => d.state === 'placeholder' || d.state === 'missing')
+    ? 'still the placeholder'
+    : 'fill in the [[…]] details, see content/legal/FILL-IN.md';
+  return `${docs.join(', ')} ${why}`;
+}
+
 async function legalResults(dir: string, record: Record<string, string>): Promise<CheckResult[]> {
   const readiness = await legalReadiness(dir);
   const state = signupsState(readiness, { ...record, NODE_ENV: 'production' });
   const blockers = readiness.launchBlockers;
   const others = readiness.docs
-    .filter((d) => (!d.present || d.placeholder) && !blockers.includes(d.doc))
+    .filter((d) => d.state !== 'ready' && !blockers.includes(d.doc))
     .map((d) => d.doc);
   const results: CheckResult[] = [];
   if (blockers.length > 0 && !state.open && state.reason === 'legal_placeholder') {
     results.push({
       key: 'legal texts',
       status: 'missing',
-      reason: `${blockers.join(', ')} still the placeholder: public sign-up stays closed (content/legal/en-GB)`,
+      reason: `${unfinished(readiness, blockers)}: public sign-up stays closed (content/legal/en-GB)`,
     });
   } else if (blockers.length > 0) {
     results.push({
       key: 'legal texts',
       status: 'warn',
-      reason: `${blockers.join(', ')} still the placeholder (sign-up is switched off, so launch is not blocked)`,
+      reason: `${unfinished(readiness, blockers)} (sign-up is switched off, so launch is not blocked)`,
     });
   } else {
     results.push({ key: 'legal texts', status: 'ok' });
@@ -130,7 +139,7 @@ async function legalResults(dir: string, record: Record<string, string>): Promis
     results.push({
       key: 'legal texts',
       status: 'warn',
-      reason: `${others.join(', ')} still the placeholder (does not block sign-up)`,
+      reason: `${unfinished(readiness, others)} (does not block sign-up)`,
     });
   return results;
 }

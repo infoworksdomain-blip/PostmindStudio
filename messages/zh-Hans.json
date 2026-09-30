@@ -3769,7 +3769,11 @@
       "title": "该文档尚未发布。",
       "body": "以下文本为占位内容。本服务的运营者必须在上线前将其替换为自己的内容。"
     },
-    "notTranslated": "该文档暂无您所用语言的版本，因此以英文显示。"
+    "notTranslated": "该文档暂无您所用语言的版本，因此以英文显示。",
+    "draft": {
+      "title": "本文档为草稿。",
+      "body": "下文中运营者的部分公司信息尚待填写。在依赖本文档之前，请先联系运营者。"
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "注册未被阻止，但这些文档目前仍是占位内容。",
       "placeholder": "占位内容",
       "missing": "缺失",
-      "signupsClosed": "在此之前，公开注册将保持关闭。"
+      "signupsClosed": "在此之前，公开注册将保持关闭。",
+      "fillIn": "信息待填写",
+      "fillInHint": "请按照 content/legal/FILL-IN.md，在 content/legal/en-GB 中填写 [[…]] 信息（公司名称、编号、地址和联系方式），然后请律师审阅这些文本。"
     }
   },
   "adminUsers": {

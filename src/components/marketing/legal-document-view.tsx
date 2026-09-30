@@ -8,7 +8,8 @@ import { safeLegalHref } from './legal-links';
 // Phase 18 §3 /legal/<doc> — the operator's Markdown, rendered with react-markdown. Raw HTML in
 // the file is skipped (skipHtml), so the placeholder marker comment never shows and nothing in
 // the file can inject markup. A banner marks the repository placeholder; a note marks an
-// English fallback for a locale without its own file.
+// English fallback for a locale without its own file. Phase 20.4: a draft whose [[…]] fill-in
+// markers are not filled in yet (markers.ts) gets its own "draft" banner instead.
 
 const components: Components = {
   h1: ({ children }) => (
@@ -53,11 +54,14 @@ export function LegalDocumentView({
   docKey,
   markdown,
   placeholder,
+  draft = false,
   fallback,
 }: {
   docKey: LegalDocKey;
   markdown: string;
   placeholder: boolean;
+  /** The shipped draft with fill-in markers left (implies placeholder). */
+  draft?: boolean;
   fallback: boolean;
 }) {
   const t = useTranslations('legal');
@@ -93,8 +97,10 @@ export function LegalDocumentView({
           >
             <Construction aria-hidden className="mt-0.5 size-4 shrink-0" />
             <div>
-              <p className="font-semibold">{t('placeholder.title')}</p>
-              <p className="mt-1 text-muted-foreground">{t('placeholder.body')}</p>
+              <p className="font-semibold">{t(draft ? 'draft.title' : 'placeholder.title')}</p>
+              <p className="mt-1 text-muted-foreground">
+                {t(draft ? 'draft.body' : 'placeholder.body')}
+              </p>
             </div>
           </div>
         )}

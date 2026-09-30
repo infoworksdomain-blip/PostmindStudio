@@ -238,6 +238,36 @@ describe('LegalReadinessWarning', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('shows drafts with [[…]] details left as "details to fill in", with the hint', async () => {
+    mockFetch([
+      {
+        match: '/admin/legal-readiness',
+        body: {
+          ok: true,
+          readiness: {
+            ready: false,
+            launchBlockers: ['terms'],
+            docs: [
+              {
+                doc: 'terms',
+                present: true,
+                placeholder: true,
+                state: 'fill_in',
+                unfilled: ['[[COMPANY LEGAL NAME]]'],
+              },
+              { doc: 'dpa', present: true, placeholder: true, state: 'placeholder', unfilled: [] },
+            ],
+          },
+          signups: { open: false, reason: 'legal_placeholder' },
+        },
+      },
+    ]);
+    renderWithSWR(<LegalReadinessWarning />);
+    expect(await screen.findByText('Terms of Service · details to fill in')).toBeVisible();
+    expect(screen.getByText('Data Processing Agreement · placeholder')).toBeVisible();
+    expect(screen.getByText(/Fill in the \[\[…\]\] details/)).toBeVisible();
+  });
 });
 
 describe('admin tabs localised', () => {

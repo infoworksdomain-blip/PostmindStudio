@@ -3769,7 +3769,11 @@
       "title": "Ce document n’a pas encore été publié.",
       "body": "Le texte ci-dessous est provisoire. L’exploitant de ce service doit le remplacer par son propre texte avant le lancement."
     },
-    "notTranslated": "Ce document n’est pas encore disponible dans votre langue ; il est donc affiché en anglais."
+    "notTranslated": "Ce document n’est pas encore disponible dans votre langue ; il est donc affiché en anglais.",
+    "draft": {
+      "title": "Ce document est un projet.",
+      "body": "Certaines coordonnées de l’exploitant ci-dessous doivent encore être complétées. Contactez l’exploitant avant de vous y fier."
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "L’inscription n’est pas bloquée, mais ces documents sont encore provisoires.",
       "placeholder": "provisoire",
       "missing": "manquant",
-      "signupsClosed": "L’inscription publique est fermée jusqu’à cette date."
+      "signupsClosed": "L’inscription publique est fermée jusqu’à cette date.",
+      "fillIn": "informations à compléter",
+      "fillInHint": "Complétez les informations [[…]] (raison sociale, numéro, adresse et contacts) dans content/legal/en-GB, comme indiqué dans content/legal/FILL-IN.md, puis faites relire les textes par un avocat."
     }
   },
   "adminUsers": {

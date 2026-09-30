@@ -7,10 +7,12 @@ import {
   isPlaceholder,
   LEGAL_DOCS,
   legalContentDir,
+  legalTextState,
   PLACEHOLDER_MARKER,
   readLegalDocument,
+  unfilledMarkers,
 } from './documents';
-import { legalReadiness, signupsOpen, signupsState } from './readiness';
+import { legalReadiness, signupsOpen, signupsState, unfilledAcross } from './readiness';
 
 // Phase 18 §3 legal pages and the legal-readiness launch gate.
 
@@ -54,10 +56,26 @@ describe('legal documents', () => {
     await rm(empty, { recursive: true, force: true });
   });
 
-  it('the repository ships placeholders for every document', async () => {
+  it('the repository ships drafts with fill-in markers for every document', async () => {
     const readiness = await legalReadiness(legalContentDir({}));
     expect(readiness.docs.every((d) => d.present && d.placeholder)).toBe(true);
+    expect(readiness.docs.every((d) => d.state === 'fill_in')).toBe(true);
+    expect(readiness.launchBlockers).toEqual(['terms', 'privacy']);
+    expect(unfilledAcross(readiness)).toEqual(
+      expect.arrayContaining(['[[COMPANY LEGAL NAME]]', '[[CONTACT EMAIL]]']),
+    );
     expect(isPlaceholder('real text')).toBe(false);
+  });
+
+  it('the drafts link only to the legal pages, pricing, https and mailto', async () => {
+    const allowed =
+      /^(https:\/\/|mailto:|\/pricing$|\/legal\/(terms|privacy|cookies|acceptable-use|dpa|subprocessors)(#[a-z0-9-]+)?$|#[a-z0-9-]+$)/;
+    for (const doc of LEGAL_DOCS) {
+      const found = await readLegalDocument(doc, 'en-GB', legalContentDir({}));
+      expect(found?.markdown).not.toContain(PLACEHOLDER_MARKER);
+      for (const [, href] of found!.markdown.matchAll(/\]\(([^)\s]+)\)/g))
+        expect(href).toMatch(allowed);
+    }
   });
 
   it('honours STUDIO_LEGAL_CONTENT_DIR', () => {
@@ -65,7 +83,64 @@ describe('legal documents', () => {
   });
 });
 
+describe('fill-in markers', () => {
+  it('lists each distinct [[…]] marker once, in order', () => {
+    const text = '[[COMPANY LEGAL NAME]] of [[REGISTERED ADDRESS]]; [[COMPANY LEGAL NAME]] again';
+    expect(unfilledMarkers(text)).toEqual(['[[COMPANY LEGAL NAME]]', '[[REGISTERED ADDRESS]]']);
+  });
+
+  it('ignores single brackets, links, empty and line-split markers', () => {
+    expect(unfilledMarkers('[a link](/legal/dpa) and [note] and [[\nX]]')).toEqual([]);
+    expect(unfilledMarkers('[[]]')).toEqual([]);
+  });
+
+  it('a draft with markers is not ready; the placeholder marker wins', () => {
+    expect(legalTextState('Contact [[CONTACT EMAIL]].')).toBe('fill_in');
+    expect(isPlaceholder('Contact [[CONTACT EMAIL]].')).toBe(true);
+    expect(legalTextState(`${PLACEHOLDER_MARKER} [[CONTACT EMAIL]]`)).toBe('placeholder');
+    expect(legalTextState('Contact legal@example.com.')).toBe('ready');
+  });
+
+  it('readLegalDocument reports the draft state', async () => {
+    const drafts = await mkdtemp(join(tmpdir(), 'studio-legal-drafts-'));
+    await mkdir(join(drafts, 'en-GB'));
+    await writeFile(join(drafts, 'en-GB', 'terms.md'), '# Terms\n\n[[COMPANY LEGAL NAME]]');
+    expect(await readLegalDocument('terms', 'en-GB', drafts)).toMatchObject({
+      placeholder: true,
+      state: 'fill_in',
+    });
+    await rm(drafts, { recursive: true, force: true });
+  });
+});
+
 describe('legal readiness gate', () => {
+  it('unfilled markers in terms or privacy block launch, with the markers listed', async () => {
+    const drafts = await mkdtemp(join(tmpdir(), 'studio-legal-fill-'));
+    await mkdir(join(drafts, 'en-GB'));
+    for (const doc of LEGAL_DOCS)
+      await writeFile(
+        join(drafts, 'en-GB', `${doc}.md`),
+        doc === 'privacy' ? '# Privacy\n\nWrite to [[PRIVACY EMAIL]].' : `# ${doc}`,
+      );
+    const readiness = await legalReadiness(drafts);
+    expect(readiness).toMatchObject({ ready: false, launchBlockers: ['privacy'] });
+    expect(readiness.docs.find((d) => d.doc === 'privacy')).toMatchObject({
+      present: true,
+      placeholder: true,
+      state: 'fill_in',
+      unfilled: ['[[PRIVACY EMAIL]]'],
+    });
+    expect(readiness.docs.find((d) => d.doc === 'terms')).toMatchObject({
+      state: 'ready',
+      unfilled: [],
+    });
+    expect(signupsState(readiness, { NODE_ENV: 'production' })).toEqual({
+      open: false,
+      reason: 'legal_placeholder',
+    });
+    await rm(drafts, { recursive: true, force: true });
+  });
+
   it('blocks launch while terms or privacy is the placeholder', async () => {
     const readiness = await legalReadiness(dir);
     expect(readiness).toMatchObject({ ready: false, launchBlockers: ['terms', 'privacy'] });

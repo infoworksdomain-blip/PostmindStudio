@@ -6,13 +6,20 @@ import { useApi } from '@/lib/client/api';
 import { legalDocKey } from '@/components/marketing/legal-doc-keys';
 
 // Phase 18 legal-readiness gate, admin side: while any legal document is still the repository
-// placeholder (or missing), staff see which ones and whether public sign-up is held closed.
+// placeholder, missing, or (Phase 20.4) a draft with [[…]] details still to fill in, staff see
+// which ones and whether public sign-up is held closed.
 // A failed read renders nothing: the gate itself is enforced on the server.
 
 interface LegalReadinessResponse {
   ok: true;
   readiness: {
-    docs: Array<{ doc: string; present: boolean; placeholder: boolean }>;
+    docs: Array<{
+      doc: string;
+      present: boolean;
+      placeholder: boolean;
+      state?: 'missing' | 'placeholder' | 'fill_in' | 'ready';
+      unfilled?: string[];
+    }>;
     ready: boolean;
     launchBlockers: string[];
   };
@@ -43,11 +50,14 @@ export function LegalReadinessWarning() {
               <li key={d.doc} className="rounded-full bg-background/70 px-2.5 py-0.5 text-xs">
                 {key ? tl(key) : d.doc}
                 {' · '}
-                {d.present ? t('placeholder') : t('missing')}
+                {!d.present ? t('missing') : d.state === 'fill_in' ? t('fillIn') : t('placeholder')}
               </li>
             );
           })}
         </ul>
+        {outstanding.some((d) => d.state === 'fill_in') && (
+          <p className="mt-1 text-muted-foreground">{t('fillInHint')}</p>
+        )}
         {data.signups.reason === 'legal_placeholder' && (
           <p className="mt-1 font-medium">{t('signupsClosed')}</p>
         )}

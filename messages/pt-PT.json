@@ -3769,7 +3769,11 @@
       "title": "Este documento ainda não foi publicado.",
       "body": "O texto abaixo é apenas um espaço reservado. O operador deste serviço deve substituí-lo pelo seu próprio texto antes do lançamento."
     },
-    "notTranslated": "Este documento ainda não está disponível no seu idioma, por isso é apresentado em inglês."
+    "notTranslated": "Este documento ainda não está disponível no seu idioma, por isso é apresentado em inglês.",
+    "draft": {
+      "title": "Este documento é um rascunho.",
+      "body": "Alguns dados da empresa do operador ainda têm de ser preenchidos. Contacte o operador antes de confiar nele."
+    }
   },
   "auth": {
     "shell": {
@@ -4639,7 +4643,9 @@
       "warning": "O registo não está bloqueado, mas estes documentos ainda são espaços reservados.",
       "placeholder": "espaço reservado",
       "missing": "em falta",
-      "signupsClosed": "O registo público fica fechado até essa data."
+      "signupsClosed": "O registo público fica fechado até essa data.",
+      "fillIn": "dados por preencher",
+      "fillInHint": "Preencha os dados [[…]] (denominação, número, morada e contactos) em content/legal/en-GB, conforme content/legal/FILL-IN.md, e peça a um advogado que reveja os textos."
     }
   },
   "adminUsers": {
