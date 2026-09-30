@@ -74,6 +74,12 @@ export interface AutoApprovalInput {
   scriptSafetyVerdict: string | undefined;
   /** 13.18 organisation policy: false = never auto-approve. Absent = allowed. */
   orgAllowsAutoApprove?: boolean;
+  /**
+   * 20.9: the project belongs to a month plan whose owner chose "Generate and schedule" (their
+   * approval of the plan, with its review window). Waives only the trusted-creator threshold;
+   * every safety, quality, enterprise and organisation-policy check still applies.
+   */
+  ownerPreApproved?: boolean;
 }
 
 function checksOf(render: RenderForDecision): QualityCheck[] {
@@ -153,7 +159,7 @@ export function decideAutoApproval(input: AutoApprovalInput): ReviewDecision {
         : 'Needs review: the script safety check result is missing',
     );
   const needed = input.threshold.value;
-  if (input.humanApprovedCount < needed)
+  if (input.humanApprovedCount < needed && !input.ownerPreApproved)
     return review(
       'not_trusted',
       `Needs review: first ${needed} videos — ${input.humanApprovedCount} of ${needed} approved by a person so far`,

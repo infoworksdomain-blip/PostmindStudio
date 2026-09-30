@@ -41,6 +41,13 @@ const SAMPLE_PARAMS: Record<EmailTemplate, EmailParams> = {
     url: 'https://files.example.com/export.zip',
     expiresAt: '2026-10-06T00:00:00.000Z',
   },
+  monthPlanned: {
+    url: 'https://studio.example.com/plans/plan-1',
+    postCount: 58,
+    needsAttention: 2,
+    startDate: '2026-10-01T12:00:00.000Z',
+    endDate: '2026-10-30T12:00:00.000Z',
+  },
   notification: {
     kind: 'publication_failed',
     subject: 'Publishing “Launch” to TikTok failed',

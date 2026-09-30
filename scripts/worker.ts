@@ -37,6 +37,7 @@ import {
 import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-status';
 import { AUDIT_RETENTION_SCHEDULE } from '../src/lib/studio/services/audit-retention';
 import { EMAIL_SWEEP_SCHEDULE } from '../src/lib/studio/queue/workers/send-email';
+import { CONTENT_PLAN_RUNNER_SCHEDULE } from '../src/lib/studio/services/content-plan-run';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -250,6 +251,15 @@ async function main(): Promise<void> {
     {
       name: 'audit-retention',
       data: { organisationId: 'postmind-platform', runId: 'audit-retention', planTier: 'STANDARD' },
+    },
+  );
+  // 20.9 — the month-plan runner (throttled starts, status, summary email), every minute.
+  await orchestration.upsertJobScheduler(
+    'advance-content-plans',
+    { pattern: CONTENT_PLAN_RUNNER_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'advance-content-plans',
+      data: { organisationId: 'postmind-platform', runId: 'content-plans', planTier: 'STANDARD' },
     },
   );
   await publish.upsertJobScheduler(

@@ -70,6 +70,27 @@ describe('decideAutoApproval', () => {
     );
   });
 
+  it('20.9: an owner-approved month plan waives only the trust threshold', () => {
+    const planned = { humanApprovedCount: 0, ownerPreApproved: true };
+    expect(decideAutoApproval(input(planned))).toEqual({ decision: 'auto_approve' });
+    // Safety, quality, enterprise and organisation policy still hold the video for a person.
+    const flagged = cleanRender({
+      qualityIssues: [{ ...passed('content_safety'), status: 'failed' }] as never,
+    });
+    expect(decideAutoApproval(input({ ...planned, renders: [flagged] }))).toMatchObject({
+      code: 'content_safety_flag',
+    });
+    expect(decideAutoApproval(input({ ...planned, scriptSafetyVerdict: 'WARN' }))).toMatchObject({
+      code: 'script_safety_flag',
+    });
+    expect(decideAutoApproval(input({ ...planned, planTier: 'ENTERPRISE' }))).toMatchObject({
+      code: 'enterprise_plan',
+    });
+    expect(decideAutoApproval(input({ ...planned, orgAllowsAutoApprove: false }))).toMatchObject({
+      code: 'org_policy',
+    });
+  });
+
   it('never auto-approves enterprise organisations', () => {
     expect(decideAutoApproval(input({ planTier: 'ENTERPRISE' }))).toMatchObject({
       code: 'enterprise_plan',
@@ -168,5 +189,15 @@ describe('countHumanApprovedProjects', () => {
         },
       },
     });
+  });
+});
+
+describe('20.9 isPlanPreApproved', () => {
+  it('reads metadata.contentPlan.preApproved (true only)', async () => {
+    const { isPlanPreApproved } = await import('./auto-approve');
+    expect(isPlanPreApproved({ contentPlan: { planId: 'p', preApproved: true } })).toBe(true);
+    expect(isPlanPreApproved({ contentPlan: { planId: 'p', preApproved: false } })).toBe(false);
+    expect(isPlanPreApproved({ contentPlan: { preApproved: 'yes' } })).toBe(false);
+    expect(isPlanPreApproved(null)).toBe(false);
   });
 });
