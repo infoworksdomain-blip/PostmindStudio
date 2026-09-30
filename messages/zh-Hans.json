@@ -1969,7 +1969,8 @@
       "retained": "已发布的视频仍保留在 Facebook 和 Instagram 上；如需删除，请在对应平台操作。Studio 仅保留其发布记录所引用的公共主页或 Instagram 账号编号。",
       "codeLabel": "确认码：",
       "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
-    }
+    },
+    "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。"
   },
   "library": {
     "browse": {

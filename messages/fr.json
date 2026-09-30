@@ -1969,7 +1969,8 @@
       "retained": "Les vidéos déjà publiées restent sur Facebook et Instagram ; supprimez-les là-bas si vous le souhaitez. Studio ne conserve que le numéro de la Page ou du compte Instagram auquel son historique de publication fait référence.",
       "codeLabel": "Code de confirmation :",
       "unknownCode": "Aucune demande de suppression ne correspond à ce code de confirmation. Vérifiez le lien fourni par Facebook."
-    }
+    },
+    "notConfigured": "{platform} n’est pas encore disponible : l’application {platform} de Studio doit encore être configurée. Contactez votre administrateur."
   },
   "library": {
     "browse": {

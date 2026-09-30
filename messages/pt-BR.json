@@ -1969,7 +1969,8 @@
       "retained": "Os vídeos já publicados continuam no Facebook e no Instagram; remova-os lá se quiser. O Studio mantém apenas o número da Página ou da conta do Instagram ao qual o histórico de publicações se refere.",
       "codeLabel": "Código de confirmação:",
       "unknownCode": "Não encontramos nenhuma solicitação de exclusão com este código de confirmação. Confira o link que o Facebook forneceu."
-    }
+    },
+    "notConfigured": "O {platform} ainda não está disponível: o app do {platform} do Studio ainda precisa ser configurado. Fale com o seu administrador."
   },
   "library": {
     "browse": {

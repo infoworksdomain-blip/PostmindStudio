@@ -1969,7 +1969,8 @@
       "retained": "I video già pubblicati restano su Facebook e Instagram; rimuovili lì se vuoi eliminarli. Studio conserva solo il numero della Pagina o dell’account Instagram a cui fa riferimento la cronologia delle pubblicazioni.",
       "codeLabel": "Codice di conferma:",
       "unknownCode": "Non abbiamo trovato alcuna richiesta di eliminazione con questo codice di conferma. Controlla il link fornito da Facebook."
-    }
+    },
+    "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore."
   },
   "library": {
     "browse": {

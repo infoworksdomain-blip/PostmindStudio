@@ -4,7 +4,7 @@ import { auditLog } from '../../audit';
 import { logger } from '../../logger';
 import { lazyDataKeyProvider } from '../crypto/envelope';
 import { createStoredMetaCredentials } from '../platforms/meta-credentials';
-import { oauthClientFromEnv } from '../platforms/oauth';
+import { oauthClientFromEnv, oauthConfiguredFromEnv } from '../platforms/oauth';
 import { createMetricsRegistry } from '../analytics/fetchers';
 import { stockSourcesFromEnv } from '../images/stock';
 import { createEngagementClient } from '../platforms/publishing';
@@ -172,6 +172,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       thumbnailsBucket: process.env.S3_BUCKET_THUMBNAILS?.trim() || undefined,
       keys,
       oauth: (platform) => oauthClientFromEnv(platform),
+      oauthConfigured: (platform) => oauthConfiguredFromEnv(platform),
       storage,
       // 15.W5: ON_VIDEO_PUBLISHED trigger fields, only with STUDIO_ENGAGEMENT_TRIGGER_FIELDS=true.
       // Phase 18: Engagement is optional; without ENGAGEMENT_INTERNAL_URL attribution is off

@@ -1969,7 +1969,8 @@
       "retained": "Los vídeos ya publicados siguen en Facebook e Instagram; elimínalos allí si quieres que desaparezcan. Studio solo conserva el número de la página o de la cuenta de Instagram al que hace referencia su historial de publicaciones.",
       "codeLabel": "Código de confirmación:",
       "unknownCode": "No encontramos ninguna solicitud de eliminación con este código de confirmación. Revisa el enlace que te dio Facebook."
-    }
+    },
+    "notConfigured": "{platform} aún no está disponible: la aplicación de {platform} de Studio todavía necesita su configuración. Consulta a tu administrador."
   },
   "library": {
     "browse": {

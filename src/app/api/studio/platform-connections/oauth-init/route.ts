@@ -14,6 +14,7 @@ export const POST = withStudioRoute(
     const result = await startOAuth(
       {
         oauth: deps.publishing.oauth,
+        oauthConfigured: deps.publishing.oauthConfigured,
         oauthState: deps.oauthState,
         appUrl: deps.appUrl,
         meta: deps.metaConnect ?? selectMetaConnect(deps.modes ?? studioModes()),

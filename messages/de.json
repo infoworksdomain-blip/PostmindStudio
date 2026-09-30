@@ -1969,7 +1969,8 @@
       "retained": "Bereits veröffentlichte Videos bleiben auf Facebook und Instagram; entferne sie dort, wenn du sie nicht mehr möchtest. Studio behält nur die Nummer der Seite bzw. des Instagram-Kontos, auf die sich der Veröffentlichungsverlauf bezieht.",
       "codeLabel": "Bestätigungscode:",
       "unknownCode": "Zu diesem Bestätigungscode wurde keine Löschanfrage gefunden. Prüfe den Link, den du von Facebook erhalten hast."
-    }
+    },
+    "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
   },
   "library": {
     "browse": {

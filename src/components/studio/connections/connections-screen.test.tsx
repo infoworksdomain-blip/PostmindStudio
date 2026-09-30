@@ -284,6 +284,27 @@ describe('ConnectionsScreen — Meta connect in standalone mode', () => {
     ).toBeInTheDocument();
   });
 
+  it('says a platform app is not set up yet instead of offering a Connect that fails', async () => {
+    const api = mockFetch(() =>
+      ok({
+        data: [],
+        meta: { connect: 'studio', configured: false },
+        configured: { tiktok: false, youtube: true, x: true, linkedin: true },
+      }),
+    );
+    renderScreen(<ConnectionsScreen />);
+    const tiktok = await screen.findByRole('region', { name: 'TikTok' });
+    expect(within(tiktok).queryByRole('button')).toBeNull();
+    expect(
+      within(tiktok).getByText(
+        'TikTok is not available yet: Studio’s TikTok app still needs its settings. Ask your administrator.',
+      ),
+    ).toBeInTheDocument();
+    const youtube = screen.getByRole('region', { name: 'YouTube' });
+    expect(within(youtube).getByRole('button', { name: 'Connect YouTube' })).toBeEnabled();
+    expect(api.find('POST', '/platform-connections/oauth-init')).toHaveLength(0);
+  });
+
   it('reports ?connected=meta&count= and the Meta-specific callback errors', async () => {
     search = new URLSearchParams('connected=meta&count=2');
     mockFetch(() => ok({ data: [], meta: studioMeta }));

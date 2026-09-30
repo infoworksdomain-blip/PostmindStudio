@@ -1969,7 +1969,8 @@
       "retained": "Videos already published stay on Facebook and Instagram; remove them there if you want them gone. Studio keeps only the Page or Instagram account number that its publishing history refers to.",
       "codeLabel": "Confirmation code:",
       "unknownCode": "We could not find a deletion request with this confirmation code. Check the link Facebook gave you."
-    }
+    },
+    "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator."
   },
   "library": {
     "browse": {

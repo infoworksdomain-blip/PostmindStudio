@@ -7,6 +7,7 @@ import {
   createXOAuth,
   createYouTubeOAuth,
   oauthClientFromEnv,
+  oauthConfiguredFromEnv,
   pkcePair,
   type OAuthConfig,
 } from './oauth';
@@ -364,5 +365,19 @@ describe('oauthClientFromEnv', () => {
     process.env.TIKTOK_CLIENT_KEY = 'k';
     // TIKTOK_CLIENT_SECRET and TIKTOK_REDIRECT_URI left unset.
     expect(() => oauthClientFromEnv('tiktok')).toThrow(ConfigurationError);
+  });
+});
+
+describe('oauthConfiguredFromEnv', () => {
+  it('is true only when the client id, secret and redirect URI are all set', () => {
+    const full = {
+      TIKTOK_CLIENT_KEY: 'k',
+      TIKTOK_CLIENT_SECRET: 's',
+      TIKTOK_REDIRECT_URI: 'https://app.example/tiktok',
+    };
+    expect(oauthConfiguredFromEnv('tiktok', full)).toBe(true);
+    expect(oauthConfiguredFromEnv('tiktok', { ...full, TIKTOK_CLIENT_SECRET: '  ' })).toBe(false);
+    expect(oauthConfiguredFromEnv('youtube', full)).toBe(false);
+    expect(oauthConfiguredFromEnv('linkedin', {})).toBe(false);
   });
 });
