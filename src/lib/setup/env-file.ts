@@ -1,5 +1,13 @@
 import { requiredEnvForModes } from '../env';
 import { studioModes, type StudioModes } from '../mode';
+import {
+  HIVE_V2_KEY_ENV,
+  HIVE_V3_KEY_ENV,
+  HIVE_VERSION_ENV,
+  hiveKeyEnv,
+  parseHiveV3MaxFrames,
+  resolveHiveApiVersion,
+} from '../studio/providers/hive-config';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -11,6 +19,9 @@ import { studioModes, type StudioModes } from '../mode';
 //   - requiredEnvForModes() from src/lib/env.ts (what assertStartupEnv refuses to start without),
 //     minus the keys deploy/vps/compose.yml sets itself (COMPOSE_SET_KEYS).
 // src/lib/setup/env-file.test.ts pins both, plus deploy.sh's preflight keys.
+// 20.6: the Hive lines of the REQUIRED section are one-of: HIVE_API_KEY (V2) or HIVE_V3_SECRET_KEY
+// (V3), chosen by HIVE_API_VERSION exactly as the worker chooses (providers/hive-config.ts). They
+// are left out of requiredKeys() and checked by hiveChecks() instead.
 //
 // Reports carry key names and reasons only. No function here returns or formats a value.
 
@@ -104,6 +115,9 @@ export function stagingOverrides(exampleText: string): Record<string, string> {
   return out;
 }
 
+/** 20.6: REQUIRED-section keys where one of the set is needed (see hiveChecks). */
+export const HIVE_ONE_OF_KEYS: readonly string[] = [HIVE_V2_KEY_ENV, HIVE_V3_KEY_ENV];
+
 /** Set by deploy/vps/compose.yml from other keys; the operator never writes them. */
 export const COMPOSE_SET_KEYS: readonly string[] = [
   'DATABASE_URL',
@@ -152,7 +166,7 @@ export function requiredKeys(input: RequiredKeysInput): string[] {
     [...(input.modes.mode === 'core' ? standalone : core)].filter((k) => !own.has(k)),
   );
   const keys = [...required, ...forMode].filter(
-    (k) => !COMPOSE_SET_KEYS.includes(k) && !otherModeOnly.has(k),
+    (k) => !COMPOSE_SET_KEYS.includes(k) && !otherModeOnly.has(k) && !HIVE_ONE_OF_KEYS.includes(k),
   );
   // deploy.sh preflight: core mode also needs the staff organisation ids.
   if (input.modes.mode === 'core') keys.push('STUDIO_PLATFORM_ORG_IDS');
@@ -276,6 +290,15 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   STUDIO_SIGNUPS_ENABLED: (v) => (['true', 'false'].includes(v) ? null : 'must be true or false'),
   PG_BACKUPS: (v) => (['on', 'off'].includes(v) ? null : 'must be on or off'),
   PG_BACKUP_CIPHER_PASS: minLength(32),
+  HIVE_API_VERSION: (v) => (['v2', 'v3'].includes(v) ? null : 'must be v2 or v3 (or empty)'),
+  HIVE_V3_MAX_FRAMES: (v) => {
+    try {
+      parseHiveV3MaxFrames(v);
+      return null;
+    } catch {
+      return 'must be a whole number from 1 to 60';
+    }
+  },
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.
@@ -368,11 +391,13 @@ export function checkEnvFile(input: CheckInput): CheckReport {
   const requiredSet = new Set(required);
   for (const [key, entry] of input.file.entries) {
     if (requiredSet.has(key) || entry.value.trim() === '') continue;
+    if (key === HIVE_V2_KEY_ENV || key === HIVE_V3_KEY_ENV) continue; // hiveChecks
+
     const reason = checkValue(key, entry, record);
     if (reason) results.push({ key, status: 'malformed', reason });
   }
 
-  results.push(...pairChecks(record), ...crossChecks(record));
+  results.push(...hiveChecks(input.file, record), ...pairChecks(record), ...crossChecks(record));
   for (const key of input.file.duplicates)
     results.push({ key, status: 'warn', reason: 'is set more than once; the last line wins' });
   for (const line of input.file.badLines)
@@ -418,6 +443,53 @@ function pairChecks(record: Record<string, string>): CheckResult[] {
       .filter((k) => !isSet(record, k))
       .map((key) => ({ key, status, reason: `${what} needs ${keys.join(', ')} together` }));
   });
+}
+
+/** A V3 Secret Key shorter than this is probably the Access Key ID pasted by mistake. */
+const HIVE_V3_SECRET_MIN_LENGTH = 20;
+
+/**
+ * 20.6: content safety needs ONE Hive key: the one HIVE_API_VERSION selects (empty = v3 when only
+ * HIVE_V3_SECRET_KEY is set, else v2). The same rule as the worker (hive-config.ts).
+ */
+function hiveChecks(file: ParsedEnvFile, record: Record<string, string>): CheckResult[] {
+  let version;
+  try {
+    version = resolveHiveApiVersion(record);
+  } catch {
+    return []; // HIVE_API_VERSION itself is reported by its validator.
+  }
+  const key = hiveKeyEnv(version);
+  const entry = file.entries.get(key);
+  if (!entry || entry.value.trim() === '') {
+    return [
+      {
+        key,
+        status: 'missing',
+        reason: `content safety needs ${HIVE_V2_KEY_ENV} (Hive V2) or ${HIVE_V3_KEY_ENV} (Hive V3); ${HIVE_VERSION_ENV} selects ${version}`,
+      },
+    ];
+  }
+  const reason = checkValue(key, entry, record);
+  if (reason) return [{ key, status: 'malformed', reason }];
+  const value = entry.value.trim();
+  if (/\s/.test(value)) return [{ key, status: 'malformed', reason: 'must not contain spaces' }];
+  const out: CheckResult[] = [{ key, status: 'ok' }];
+  if (version === 'v3' && value.length < HIVE_V3_SECRET_MIN_LENGTH)
+    out.push({
+      key,
+      status: 'warn',
+      reason:
+        'is short for a V3 Secret Key: check you pasted the "Secret Key" column, not the "Access Key ID"',
+    });
+  const other = version === 'v3' ? HIVE_V2_KEY_ENV : HIVE_V3_KEY_ENV;
+  if (isSet(record, other))
+    out.push({
+      key: other,
+      status: 'warn',
+      reason: `is set but not used: ${HIVE_VERSION_ENV} selects ${version} (${key})`,
+    });
+  return out;
 }
 
 function crossChecks(record: Record<string, string>): CheckResult[] {

@@ -11,9 +11,22 @@ import type {
 import { usdToPence } from './pricing';
 import { providerError } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
+import { DEFAULT_HIVE_V3_MAX_FRAMES, type HiveApiVersion } from './hive-config';
+import { summariseFrames, type ContentSafetyScan } from './hive-scan';
+import { scanWithV3, v3FrameCount, type FrameGrabber } from './hive-v3';
 
-// Hive Visual Moderation (Layer 8 content safety, spec 13.2). Contract from docs.thehive.ai
-// (read 2026-09-27):
+export type { ContentSafetyScan } from './hive-scan';
+
+// Hive Visual Moderation (Layer 8 content safety, spec 13.2).
+//
+// 20.6: two APIs. `apiVersion: 'v2'` (default; Enterprise project key, HIVE_API_KEY) is the
+// contract below. `apiVersion: 'v3'` (self-serve Secret Key, HIVE_V3_SECRET_KEY) is hive-v3.ts:
+// POST https://api.thehive.ai/api/v3/hive/visual-moderation with `authorization: Bearer`, always
+// synchronous, videos up to 60 s, longer renders scanned as sampled frames. Which one the
+// platform uses: providers/hive-config.ts (HIVE_API_VERSION). Both report the same per-class
+// maxima (hive-scan.ts), so the policy in pipeline/quality-checks.ts is shared.
+//
+// V2 contract from docs.thehive.ai (read 2026-09-27):
 //   POST https://api.thehive.ai/api/v2/task/sync, header `authorization: token <key>`,
 //   form field `url`; response status[].response.output[] = [{ time, classes:[{class, score}] }]
 //   sampled at 1 frame/second.
@@ -43,13 +56,11 @@ import { SyncJobStore } from './sync-jobs';
 export const PROVIDER_ID = 'hive';
 export const SYNC_URL = 'https://api.thehive.ai/api/v2/task/sync';
 export const ASYNC_URL = 'https://api.thehive.ai/api/v2/task/async';
+/** V2 sync limit; longer renders use V2's async API (V3 has none: hive-v3.ts). */
 export const MAX_SYNC_DURATION_SEC = 90;
 /** thehive.ai/models/hive/visual-moderation: "$3.00 / 1000 images" (frames at 1 fps). */
 const USD_PER_FRAME = 0.003;
 const TIMEOUT_MS = 120_000;
-const MAX_FLAGGED_FRAMES = 50;
-/** Scores at or above this are listed as flagged frames (Hive suggests >0.90 as a start). */
-const FLAG_REPORT_THRESHOLD = 0.5;
 
 interface HiveClass {
   class: string;
@@ -64,7 +75,14 @@ interface HiveResponse {
 }
 
 export interface HiveAdapterOptions {
+  /** V2: the project API key. V3: the Secret Key. */
   apiKey: string;
+  /** 20.6: which Hive API `apiKey` belongs to (default v2). */
+  apiVersion?: HiveApiVersion;
+  /** V3 only: frames sampled from renders over 60 s (HIVE_V3_MAX_FRAMES, default 10). */
+  maxFrames?: number;
+  /** V3 only: ffmpeg frame grab for renders over 60 s (pipeline/media-probe.ts frameJpeg). */
+  frameJpeg?: FrameGrabber;
   usdToGbpRate: number;
   fetchImpl?: typeof fetch;
   now?: () => number;
@@ -82,30 +100,12 @@ interface HiveAsyncAck {
   message?: string;
 }
 
-export interface ContentSafetyScan {
-  framesAnalysed: number;
-  maxScores: Record<string, number>;
-  flaggedFrames: Array<{ time: number; class: string; score: number }>;
-}
-
+/** A V2 task object (sync response or async callback body) → per-class maxima. */
 export function summariseHiveOutput(body: HiveResponse): ContentSafetyScan {
   const frames = body.status?.flatMap((s) => s.response?.output ?? []) ?? [];
-  const maxScores: Record<string, number> = {};
-  const flagged: ContentSafetyScan['flaggedFrames'] = [];
-  for (const frame of frames) {
-    for (const c of frame.classes ?? []) {
-      maxScores[c.class] = Math.max(maxScores[c.class] ?? 0, c.score);
-      if (c.score >= FLAG_REPORT_THRESHOLD && !c.class.startsWith('no_')) {
-        flagged.push({ time: frame.time ?? 0, class: c.class, score: c.score });
-      }
-    }
-  }
-  flagged.sort((a, b) => b.score - a.score);
-  return {
-    framesAnalysed: frames.length,
-    maxScores,
-    flaggedFrames: flagged.slice(0, MAX_FLAGGED_FRAMES),
-  };
+  return summariseFrames(
+    frames.map((frame) => ({ time: frame.time ?? 0, classes: frame.classes ?? [] })),
+  );
 }
 
 /** SyncJobStore ids are `hive_<uuid>`; Hive's own task ids (async) never carry that prefix. */
@@ -117,28 +117,37 @@ export class HiveAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
   readonly capabilities: readonly ProviderCapability[] = ['content_safety'];
   readonly typicalLatencySec = 30;
+  readonly apiVersion: HiveApiVersion;
 
   private readonly fetchImpl: typeof fetch;
   private readonly now: () => number;
   private readonly results: SyncJobStore;
+  private readonly maxFrames: number;
 
   constructor(private readonly options: HiveAdapterOptions) {
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? Date.now;
     this.results = new SyncJobStore(PROVIDER_ID, this.now);
+    this.apiVersion = options.apiVersion ?? 'v2';
+    this.maxFrames = options.maxFrames ?? DEFAULT_HIVE_V3_MAX_FRAMES;
   }
 
   estimateCostPence(request: ProviderRequest): number {
     if (request.capability !== 'content_safety') return 0;
-    return usdToPence(Math.ceil(request.durationSec) * USD_PER_FRAME, this.options.usdToGbpRate);
+    const frames =
+      this.apiVersion === 'v3'
+        ? v3FrameCount(request.durationSec, this.maxFrames)
+        : Math.ceil(request.durationSec);
+    return usdToPence(frames * USD_PER_FRAME, this.options.usdToGbpRate);
   }
 
   async submit(request: ProviderRequest): Promise<ProviderSubmitResult> {
     if (request.capability !== 'content_safety') {
       throw this.invalid(`Hive adapter does not support ${request.capability}`);
     }
-    if (request.durationSec > MAX_SYNC_DURATION_SEC) return this.submitAsync(request);
-    const result = await this.scan(request);
+    const v3 = this.apiVersion === 'v3';
+    if (!v3 && request.durationSec > MAX_SYNC_DURATION_SEC) return this.submitAsync(request);
+    const result = v3 ? await this.scanV3(request) : await this.scan(request);
     const costPence =
       (result.output?.metadata as { costPence?: number } | undefined)?.costPence ?? 0;
     return {
@@ -159,9 +168,27 @@ export class HiveAdapter implements ProviderAdapter {
 
   /** Hive documents no free health endpoint; every task is billed. Report configuration only. */
   async healthCheck(): Promise<{ healthy: boolean; reason?: string }> {
-    return this.options.apiKey
-      ? { healthy: true, reason: 'not probed: Hive has no unbilled health endpoint' }
-      : { healthy: false, reason: 'auth: HIVE_API_KEY not set' };
+    if (!this.options.apiKey) {
+      const env = this.apiVersion === 'v3' ? 'HIVE_V3_SECRET_KEY' : 'HIVE_API_KEY';
+      return { healthy: false, reason: `auth: ${env} not set` };
+    }
+    return {
+      healthy: true,
+      reason: `not probed: Hive has no unbilled health endpoint (API ${this.apiVersion})`,
+    };
+  }
+
+  /** 20.6: V3 is synchronous only (hive-v3.ts); the result is parked like a V2 sync scan. */
+  private async scanV3(request: ContentSafetyRequest): Promise<ProviderPollResult> {
+    const frames = await scanWithV3(request, {
+      secretKey: this.options.apiKey,
+      fetchImpl: this.fetchImpl,
+      maxFrames: this.maxFrames,
+      frameJpeg: this.options.frameJpeg,
+    });
+    const scan = summariseFrames(frames);
+    const costPence = usdToPence(scan.framesAnalysed * USD_PER_FRAME, this.options.usdToGbpRate);
+    return { state: 'succeeded', output: { metadata: { ...scan, costPence } } };
   }
 
   private async scan(request: ContentSafetyRequest): Promise<ProviderPollResult> {
@@ -267,4 +294,9 @@ export class HiveAdapter implements ProviderAdapter {
   private invalid(message: string): ProviderError {
     return providerError(PROVIDER_ID, { errorClass: 'invalid_request', retryable: false }, message);
   }
+}
+
+/** 20.6: whether a render of this length goes to Hive's async API (V2 only; V3 has none). */
+export function usesAsyncHiveScan(durationSec: number, apiVersion: HiveApiVersion = 'v2'): boolean {
+  return apiVersion === 'v2' && durationSec > MAX_SYNC_DURATION_SEC;
 }

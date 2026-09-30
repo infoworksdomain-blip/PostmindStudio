@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
-import { HiveAdapter, summariseHiveOutput } from './hive';
+import { HiveAdapter, summariseHiveOutput, usesAsyncHiveScan } from './hive';
 
 // Fixtures follow docs.thehive.ai V2 task response shape.
 const scanResponse = {
@@ -195,5 +195,97 @@ describe('HiveAdapter async (13.25)', () => {
       state: 'failed',
       error: { retryable: false },
     });
+  });
+});
+
+describe('HiveAdapter V3 (20.6)', () => {
+  const v3Body = {
+    task_id: 't1',
+    model: 'hive/visual-moderation',
+    output: [
+      {
+        extra: [{ name: 'timestamp', value: 0 }],
+        classes: [{ class_name: 'general_nsfw', value: 0.02 }],
+      },
+      {
+        extra: [{ name: 'timestamp', value: 1 }],
+        classes: [{ class_name: 'general_nsfw', value: 0.9 }],
+      },
+    ],
+  };
+
+  function v3(...replies: Parameters<typeof fakeFetch>) {
+    const fake = fakeFetch(...replies);
+    const frameJpeg = vi.fn(async () => new Uint8Array([1, 2, 3]));
+    const hive = new HiveAdapter({
+      apiKey: 'sk-v3',
+      apiVersion: 'v3',
+      maxFrames: 4,
+      frameJpeg,
+      usdToGbpRate: 0.75,
+      fetchImpl: fake.fetch,
+    });
+    return { hive, requests: fake.requests, frameJpeg };
+  }
+
+  it('scans a short render with one V3 request and parks the result for poll()', async () => {
+    const { hive, requests } = v3(json(v3Body));
+    const { providerJobId, estimatedCostPence } = await hive.submit(request);
+    expect(requests[0]?.url).toBe('https://api.thehive.ai/api/v3/hive/visual-moderation');
+    expect(requests[0]?.headers.authorization).toBe('Bearer sk-v3');
+    expect(estimatedCostPence).toBe(1); // 2 frames * $0.003 * 0.75 → 0.45p, rounded up
+    expect(await hive.poll(providerJobId)).toMatchObject({
+      state: 'succeeded',
+      output: {
+        metadata: {
+          framesAnalysed: 2,
+          maxScores: { general_nsfw: 0.9 },
+          flaggedFrames: [{ time: 1, class: 'general_nsfw', score: 0.9 }],
+        },
+      },
+    });
+  });
+
+  it('never uses the async API: a 240 s render is sampled synchronously, no callback needed', async () => {
+    const replies = Array.from({ length: 4 }, () => json(v3Body));
+    const { hive, requests, frameJpeg } = v3(...replies);
+    const long = { ...request, durationSec: 240 };
+    expect(hive.estimateCostPence(long)).toBe(1); // 4 frames * $0.003 * 0.75
+    const { providerJobId } = await hive.submit(long);
+    expect(frameJpeg).toHaveBeenCalledTimes(4);
+    expect(requests.map((r) => r.url)).toEqual(
+      Array(4).fill('https://api.thehive.ai/api/v3/hive/visual-moderation'),
+    );
+    expect(await hive.poll(providerJobId)).toMatchObject({ state: 'succeeded' });
+  });
+
+  it('estimates 1 frame/s up to 60 s like V2', () => {
+    const { hive } = v3();
+    expect(hive.estimateCostPence(request)).toBe(7); // 30 * $0.003 * 0.75
+  });
+
+  it('surfaces a V3 rate limit as retryable, with nothing parked', async () => {
+    const { hive } = v3(json({ return_code: 429, message: 'Project has been rate limited' }, 429));
+    await expect(hive.submit(request)).rejects.toMatchObject({
+      errorClass: 'rate_limited',
+      retryable: true,
+    });
+  });
+
+  it('health names the V3 key', async () => {
+    const empty = new HiveAdapter({ apiKey: '', apiVersion: 'v3', usdToGbpRate: 1 });
+    expect(await empty.healthCheck()).toEqual({
+      healthy: false,
+      reason: 'auth: HIVE_V3_SECRET_KEY not set',
+    });
+    expect((await v3().hive.healthCheck()).reason).toContain('API v3');
+    expect(new HiveAdapter({ apiKey: 'k', usdToGbpRate: 1 }).apiVersion).toBe('v2');
+  });
+
+  it('only V2 sends renders over 90 s to the async API', () => {
+    expect(usesAsyncHiveScan(91)).toBe(true);
+    expect(usesAsyncHiveScan(90)).toBe(false);
+    expect(usesAsyncHiveScan(240, 'v2')).toBe(true);
+    expect(usesAsyncHiveScan(240, 'v3')).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import type { Prisma, VideoRender } from '@prisma/client';
 import { NoProviderAvailableError, NotFoundError, ProviderError } from '../../../errors';
-import { MAX_SYNC_DURATION_SEC, type ContentSafetyScan } from '../../providers/hive';
+import { usesAsyncHiveScan, type ContentSafetyScan } from '../../providers/hive';
 import type { AspectRatio } from '../../providers/interface';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
@@ -39,8 +39,9 @@ async function scanContentSafety(
   url: string,
   asyncOutcome?: QualityInputs['contentSafety'],
 ): Promise<QualityInputs['contentSafety']> {
-  // 13.25: renders over Hive's sync limit were scanned asynchronously before the media checks.
-  if (render.durationSec > MAX_SYNC_DURATION_SEC) {
+  // 13.25: renders over Hive's sync limit were scanned asynchronously before the media checks
+  // (V2 only; 20.6 V3 scans every render synchronously, sampling frames past 60 s).
+  if (usesAsyncHiveScan(render.durationSec, deps.config.hiveApiVersion)) {
     return asyncOutcome ?? { unavailable: 'async content-safety scan has no result' };
   }
   try {
@@ -61,6 +62,14 @@ async function scanContentSafety(
     return { scan: run.output.metadata as ContentSafetyScan };
   } catch (err) {
     // Transient provider trouble → retry the job. Anything else → fail closed, not "passed".
+    // 20.6: a Hive rate limit (V3 self-serve keys: ~100 requests/day) is retryable too; the run
+    // stays QUALITY_CHECKING until the retry passes, and fails closed when retries run out.
+    if (err instanceof ProviderError && err.errorClass === 'rate_limited') {
+      deps.logger.warn(
+        { projectId: data.projectId, renderId: render.id, providerId: err.providerId },
+        `content-safety scan rate limited: ${err.message}`,
+      );
+    }
     if (err instanceof ProviderError && err.retryable) throw err;
     if (err instanceof NoProviderAvailableError)
       return { unavailable: 'no content-safety provider available' };
@@ -151,7 +160,9 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
   // stays QUALITY_CHECKING; the Hive callback (or the timeout job) re-runs this gate.
   const asyncOutcomes = new Map<string, QualityInputs['contentSafety']>();
   let awaiting = 0;
-  for (const render of renders.filter((r) => r.durationSec > MAX_SYNC_DURATION_SEC)) {
+  for (const render of renders.filter((r) =>
+    usesAsyncHiveScan(r.durationSec, deps.config.hiveApiVersion),
+  )) {
     const url = await deps.storage.signedUrl(render.s3Bucket, render.s3Key);
     const outcome = await asyncContentSafety(deps, data, render, url);
     if ('pending' in outcome) awaiting += 1;

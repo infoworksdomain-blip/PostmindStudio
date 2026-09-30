@@ -21,6 +21,8 @@ import { StoryblocksMusicAdapter } from './storyblocks-music';
 import { StoryblocksVideoAdapter } from './storyblocks-video';
 import { PexelsVideoAdapter } from './pexels-video';
 import { createHiveResultReader } from './hive-results';
+import { hiveKeyFromEnv, parseHiveV3MaxFrames } from './hive-config';
+import { createFfmpegInspector } from '../pipeline/media-probe';
 
 // Explicit SDK timeouts (the SDK default is 10 minutes). OpenAI's image guide says complex
 // prompts "may take up to 2 minutes", hence the longer OpenAI budget.
@@ -49,13 +51,15 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
     ['heygen', 'HEYGEN_API_KEY'],
     ['elevenlabs', 'ELEVENLABS_API_KEY'],
     ['shotstack', 'SHOTSTACK_API_KEY'],
-    ['hive', 'HIVE_API_KEY'],
     ['pexels', 'PEXELS_API_KEY'],
   ];
   for (const [id, name] of single) {
     const apiKey = valueOf(env, name);
     if (apiKey) keys[id] = { apiKey };
   }
+  // 20.6: HIVE_API_KEY (V2) or HIVE_V3_SECRET_KEY (V3), per HIVE_API_VERSION (hive-config.ts).
+  const hive = hiveKeyFromEnv(env);
+  if (hive.apiKey) keys.hive = { apiKey: hive.apiKey, apiVersion: hive.version };
   const sbPublic = valueOf(env, 'STORYBLOCKS_API_PUBLIC_KEY');
   const sbPrivate = valueOf(env, 'STORYBLOCKS_API_PRIVATE_KEY');
   if (sbPublic && sbPrivate) keys.storyblocks = { apiKey: sbPublic, secondaryKey: sbPrivate };
@@ -171,9 +175,17 @@ export function buildAdaptersFromKeys(
 
   const hiveKey = keys.hive?.apiKey;
   if (hiveKey) {
+    const apiVersion = keys.hive?.apiVersion ?? 'v2';
     adapters.push(
       new HiveAdapter({
         apiKey: hiveKey,
+        apiVersion,
+        // 20.6: V3 scans renders over 60 s as sampled frames (ffmpeg, in the worker).
+        ...(apiVersion === 'v3' && {
+          maxFrames: parseHiveV3MaxFrames(envValue('HIVE_V3_MAX_FRAMES')),
+          frameJpeg: (url: string, atSec: number, maxWidth: number) =>
+            createFfmpegInspector().frameJpeg(url, atSec, maxWidth),
+        }),
         usdToGbpRate,
         // 13.25: async callbacks are stored by POST /api/studio/webhooks/hive.
         asyncResults: createHiveResultReader(async () => (await import('../../prisma')).prisma),
