@@ -4,7 +4,7 @@
 
 **Last updated: 30 September 2026**
 
-This policy explains the cookies and similar technologies used by PostMind Studio (the **Service**), provided by [[COMPANY LEGAL NAME]]. It should be read with our [Privacy Policy](/legal/privacy).
+This policy explains the cookies and similar technologies used by PostMind Studio (the **Service**), provided by Postmind AI Ltd. It should be read with our [Privacy Policy](/legal/privacy).
 
 ## 1. What cookies are
 
@@ -49,4 +49,4 @@ You can block or delete cookies in your browser settings. If you block the cooki
 
 ## 7. Changes and contact
 
-If we change the cookies we use, we will update this page and its date. If we ever want to use cookies that are not strictly necessary, we will ask for your consent first. Questions: [[PRIVACY EMAIL]].
+If we change the cookies we use, we will update this page and its date. If we ever want to use cookies that are not strictly necessary, we will ask for your consent first. Questions: support@postmindai.pro.
