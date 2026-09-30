@@ -4,13 +4,13 @@
 
 **Last updated: 30 September 2026**
 
-This policy explains how [[COMPANY LEGAL NAME]] collects and uses personal data when you use PostMind Studio (the **Service**) or visit our website, and the rights you have. Words with capitals, such as **Customer**, **Organisation**, **Authorised User** and **Customer Content**, have the meaning given in our [Terms of Service](/legal/terms).
+This policy explains how Postmind AI Ltd collects and uses personal data when you use PostMind Studio (the **Service**) or visit our website, and the rights you have. Words with capitals, such as **Customer**, **Organisation**, **Authorised User** and **Customer Content**, have the meaning given in our [Terms of Service](/legal/terms).
 
 ## 1. Who we are
 
-1.1 The controller of the personal data described in this policy is [[COMPANY LEGAL NAME]], a company registered in England and Wales under company number [[COMPANY NUMBER]], with its registered office at [[REGISTERED ADDRESS]] (**we**, **us**, **our**). We are registered with the Information Commissioner's Office under number [[ICO REGISTRATION NUMBER]].
+1.1 The controller of the personal data described in this policy is Postmind AI Ltd, a company registered in England and Wales under company number 17332378, with its registered office at 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom (**we**, **us**, **our**). We are registered with the Information Commissioner's Office under number [[ICO REGISTRATION NUMBER]].
 
-1.2 Our privacy lead is [[DPO OR PRIVACY LEAD]]. For anything about this policy or your personal data, email [[PRIVACY EMAIL]] or write to us at the address above.
+1.2 We are not required to appoint a data protection officer and have not done so. Our privacy lead, a director of Postmind AI Ltd, is responsible for data protection. For anything about this policy or your personal data, email support@postmindai.pro or write to us at the address above.
 
 ## 2. When we are a controller and when we are a processor
 
@@ -85,7 +85,7 @@ This policy explains how [[COMPANY LEGAL NAME]] collects and uses personal data 
 - the UK Extension to the EU–US Data Privacy Framework (the "UK–US data bridge") or the EU–US Data Privacy Framework, where the recipient is certified; or
 - the EU Standard Contractual Clauses together with the UK International Data Transfer Addendum, or the UK International Data Transfer Agreement, included in the provider's data processing terms;
 
-together with the additional safeguards we consider necessary. The [Sub-processors](/legal/subprocessors) page shows the location of each provider. You can ask us for more information about these safeguards at [[PRIVACY EMAIL]].
+together with the additional safeguards we consider necessary. The [Sub-processors](/legal/subprocessors) page shows the location of each provider. You can ask us for more information about these safeguards at support@postmindai.pro.
 
 ## 8. How long we keep personal data
 
@@ -120,13 +120,13 @@ together with the additional safeguards we consider necessary. The [Sub-processo
 - **object** to processing based on legitimate interests; and
 - **withdraw consent** at any time where we rely on consent, without affecting earlier processing.
 
-9.2 Much of this you can do yourself in the Service: change your details and language in your account settings, see and end your active sessions, export your Organisation's data, and delete your account. For anything else, email [[PRIVACY EMAIL]]. We will reply within one month, which we may extend by up to two further months for complex requests. We may need to confirm your identity first.
+9.2 Much of this you can do yourself in the Service: change your details and language in your account settings, see and end your active sessions, export your Organisation's data, and delete your account. For anything else, email support@postmindai.pro. We will reply within one month, which we may extend by up to two further months for complex requests. We may need to confirm your identity first.
 
 9.3 If a Meta (Facebook or Instagram) user removes our app or asks for their data to be deleted through Meta, we revoke the connections and wipe the related tokens and data at once.
 
 ## 10. Complaints
 
-If you are unhappy with how we have used your personal data, please contact us first at [[PRIVACY EMAIL]] so we can try to put it right. You also have the right to complain to the Information Commissioner's Office (ICO), Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF, [https://ico.org.uk](https://ico.org.uk). If you are in the EU, you may complain to the data protection authority where you live or work.
+If you are unhappy with how we have used your personal data, please contact us first at support@postmindai.pro so we can try to put it right. You also have the right to complain to the Information Commissioner's Office (ICO), Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF, [https://ico.org.uk](https://ico.org.uk). If you are in the EU, you may complain to the data protection authority where you live or work.
 
 ## 11. Security
 
@@ -134,7 +134,7 @@ We protect personal data with measures that include: encryption in transit (HTTP
 
 ## 12. Children
 
-The Service is for businesses and is not intended for anyone under 18. We do not knowingly collect personal data from children. If you believe a child has given us personal data, contact [[PRIVACY EMAIL]] and we will delete it.
+The Service is for businesses and is not intended for anyone under 18. We do not knowingly collect personal data from children. If you believe a child has given us personal data, contact support@postmindai.pro and we will delete it.
 
 ## 13. Changes to this policy
 
@@ -142,4 +142,4 @@ We may update this policy from time to time. We will publish the new version her
 
 ## 14. Contact
 
-[[COMPANY LEGAL NAME]], [[REGISTERED ADDRESS]]. Privacy lead: [[DPO OR PRIVACY LEAD]]. Email: [[PRIVACY EMAIL]].
+Postmind AI Ltd, 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom. Privacy lead: a director of Postmind AI Ltd. Email: support@postmindai.pro.

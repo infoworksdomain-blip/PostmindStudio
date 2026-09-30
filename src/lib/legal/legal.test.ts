@@ -56,13 +56,27 @@ describe('legal documents', () => {
     await rm(empty, { recursive: true, force: true });
   });
 
-  it('the repository ships drafts with fill-in markers for every document', async () => {
+  it('the shipped drafts are present, never the old placeholder, and only use known markers', async () => {
+    // The operator fills the [[…]] markers over time (content/legal/FILL-IN.md), so this checks
+    // the rules rather than which markers are still open.
     const readiness = await legalReadiness(legalContentDir({}));
-    expect(readiness.docs.every((d) => d.present && d.placeholder)).toBe(true);
-    expect(readiness.docs.every((d) => d.state === 'fill_in')).toBe(true);
-    expect(readiness.launchBlockers).toEqual(['terms', 'privacy']);
-    expect(unfilledAcross(readiness)).toEqual(
-      expect.arrayContaining(['[[COMPANY LEGAL NAME]]', '[[CONTACT EMAIL]]']),
+    expect(readiness.docs.every((d) => d.present && d.state !== 'placeholder')).toBe(true);
+    const known = [
+      '[[COMPANY LEGAL NAME]]',
+      '[[COMPANY NUMBER]]',
+      '[[REGISTERED ADDRESS]]',
+      '[[ICO REGISTRATION NUMBER]]',
+      '[[CONTACT EMAIL]]',
+      '[[PRIVACY EMAIL]]',
+      '[[DPO OR PRIVACY LEAD]]',
+    ];
+    for (const marker of unfilledAcross(readiness)) expect(known).toContain(marker);
+    for (const d of readiness.docs)
+      expect(d.state).toBe(d.unfilled.length > 0 ? 'fill_in' : 'ready');
+    expect(readiness.launchBlockers).toEqual(
+      readiness.docs
+        .filter((d) => (d.doc === 'terms' || d.doc === 'privacy') && d.state !== 'ready')
+        .map((d) => d.doc),
     );
     expect(isPlaceholder('real text')).toBe(false);
   });
