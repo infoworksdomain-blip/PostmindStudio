@@ -1,4 +1,5 @@
 import { PROJECTS } from '../api/ids';
+import { PRICE_TEXT } from './price-text';
 import { projectHref as p, withPlan, type Workflow } from './workflow-types';
 
 // Phase 18 workflows: sign-up to the first video, subscribing, limits and upgrades, a failed
@@ -119,7 +120,7 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Generate',
       },
       {
-        text: '“Buy top-up” (in the dialog or the banner) opens Billing at the top-up packs: press Buy on “10 short videos” (£29), then “Complete demo payment” on the simulated checkout.',
+        text: `“Buy top-up” (in the dialog or the banner) opens Billing at the top-up packs: press Buy on “10 short videos” (${PRICE_TEXT.basicShortTopUp}), then “Complete demo payment” on the simulated checkout.`,
         href: '#/settings/billing#topups',
         cta: 'Buy a top-up',
       },

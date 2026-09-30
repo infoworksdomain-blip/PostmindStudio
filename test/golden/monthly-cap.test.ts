@@ -33,14 +33,14 @@ import {
 //   MC-01  A project created without a budget gets the £3.50 short-form default; a YouTube
 //          long-form one (directly or from a template) gets £30; an explicit budget wins and is
 //          kept by duplicate; a pre-existing project without a budget is left alone.
-//   MC-02  Month-to-date spend crosses 80% of the STANDARD monthly cap (£150) during a run:
+//   MC-02  Month-to-date spend crosses 80% of the STANDARD monthly cap (£73) during a run:
 //          one ORG_MONTHLY alert (period YYYY-MM) and one org-wide notification.
 //   MC-03  At 100% generation pauses as cost_cap_paused (org monthly), while publishing an
 //          already generated video still goes out.
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const HOOK_TIMEOUT_MS = 120_000;
-const STANDARD_MONTHLY = 15_000;
+const STANDARD_MONTHLY = 7_300;
 
 type Item = { kind: string; title: string; body: string; link: string | null };
 
@@ -182,8 +182,8 @@ describe.skipIf(!hasDb)(
 
     it('MC-02 the monthly 80% alert fires once during a run; generation completes', async () => {
       const { j } = guardedJourney('mc02');
-      // 11,950p this month + ~127p of generation crosses 12,000p (80% of £150) mid-run.
-      await seedMonthToDate(j.org, 11_950);
+      // 5,790p this month + ~127p of generation crosses 5,840p (80% of £73) mid-run.
+      await seedMonthToDate(j.org, 5_790);
       const id = await createProject(j);
       const done = await generate(j, id);
       expect(done.state).toBe('READY_FOR_REVIEW');

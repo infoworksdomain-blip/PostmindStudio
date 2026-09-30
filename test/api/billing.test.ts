@@ -133,7 +133,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       plans: Array<{ tier: string; prices: { month?: { unitAmountPence: number } } }>;
     };
     expect(pricing.plans.find((p) => p.tier === 'PLUS')?.prices.month?.unitAmountPence).toBe(
-      74_900,
+      34_900,
     );
   });
 
@@ -312,7 +312,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       expect(res.json.entitlements).toMatchObject({
         organisationId: org,
         effective: { access: 'none' },
-        enterprise: { monthlyCapPence: 300_000, minimumMonthlyPricePence: 377_500 },
+        enterprise: { monthlyCapPence: 110_000, minimumMonthlyPricePence: 141_600 },
       });
     });
 
@@ -339,19 +339,19 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
         method: 'PUT',
         path: path(),
         params: { id: org },
-        body: { ...body, monthlyPricePence: 300_000 },
+        body: { ...body, monthlyPricePence: 140_000 },
       });
       expect(low.status).toBe(422);
       expect(low.json.details).toMatchObject({
         reason: 'below_minimum_price',
-        minimumMonthlyPricePence: 377_500,
+        minimumMonthlyPricePence: 141_600,
       });
       const ok = await call(entitlementsRoute.PUT, {
         token: 'staff',
         method: 'PUT',
         path: path(),
         params: { id: org },
-        body: { ...body, monthlyPricePence: 395_000 },
+        body: { ...body, monthlyPricePence: 150_000 },
       });
       expect(ok.status).toBe(200);
       expect(ok.json.entitlements).toMatchObject({
@@ -428,7 +428,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
           status: 'active',
           lookupKey: 'studio_plus_monthly',
           interval: 'month',
-          unitAmountPence: 74_900,
+          unitAmountPence: 34_900,
         },
         {
           id: `sub_b_${org}`,
@@ -437,7 +437,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
           status: 'past_due',
           lookupKey: 'studio_basic_yearly',
           interval: 'year',
-          unitAmountPence: 59_000,
+          unitAmountPence: 29_000,
         },
         {
           id: `sub_c_${org}`,
@@ -446,7 +446,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
           status: 'canceled',
           lookupKey: 'studio_basic_monthly',
           interval: 'month',
-          unitAmountPence: 5_900,
+          unitAmountPence: 2_900,
         },
       ],
     });
@@ -464,8 +464,8 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
     });
     expect(res.status).toBe(200);
     const subs = res.json.subscriptions as Array<{ id: string; mrrPence: number }>;
-    expect(subs.find((s) => s.id === `sub_a_${org}`)?.mrrPence).toBe(74_900);
-    expect(subs.find((s) => s.id === `sub_b_${org}`)?.mrrPence).toBe(4_917);
+    expect(subs.find((s) => s.id === `sub_a_${org}`)?.mrrPence).toBe(34_900);
+    expect(subs.find((s) => s.id === `sub_b_${org}`)?.mrrPence).toBe(2_417);
     expect(subs.find((s) => s.id === `sub_c_${org}`)?.mrrPence).toBe(0);
     const filtered = await call(adminSubsRoute.GET, {
       token: 'staff',

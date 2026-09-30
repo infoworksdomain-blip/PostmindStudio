@@ -171,7 +171,7 @@ export function createFakeStripe(): FakeStripe {
           id: 'in_1',
           number: 'STU-0001',
           status: 'paid',
-          amountDuePence: 20_900,
+          amountDuePence: 9_900,
           currency: 'gbp',
           createdAt: '2026-09-01T00:00:00.000Z',
           hostedInvoiceUrl: 'https://invoice.stripe.test/in_1',

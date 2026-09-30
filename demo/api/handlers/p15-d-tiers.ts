@@ -79,7 +79,7 @@ function view(
 }
 
 // The demo organisation's tier and monthly use follow the demo bar's plan switcher
-// (../billing-state.ts): Standard at 50 of 60 by default, Basic at its limit, a trial at 3 of 5.
+// (../billing-state.ts): Standard at 33 of 40 by default, Basic at its limit, a trial at 3 of 5.
 route('GET', '/usage', ({ query }) => {
   const { short, long } = videoQuota();
   return {

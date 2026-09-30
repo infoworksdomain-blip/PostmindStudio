@@ -30,7 +30,7 @@ type Billing = BillingResponse['billing'];
 
 export function billing(patch: Partial<Billing> = {}): Billing {
   return {
-    catalogueVersion: '2026-09-29',
+    catalogueVersion: '2026-09-30',
     entitlements: {
       tier: 'STANDARD',
       access: 'full',
@@ -56,7 +56,7 @@ export function billing(patch: Partial<Billing> = {}): Billing {
       seats: { used: 2, limit: 5 },
       businesses: { used: 1, limit: 3 },
       storage: { usedBytes: String(12 * 1024 ** 3), limitGb: 100, percent: 12 },
-      cost: { month: '2026-09', spentPence: 4_500, capPence: 15_000, headroomPence: 0 },
+      cost: { month: '2026-09', spentPence: 4_500, capPence: 7_300, headroomPence: 0 },
     },
     canManage: true,
     checkoutEnabled: true,

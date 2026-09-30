@@ -25,13 +25,13 @@ describe('resolveOrgCap', () => {
     });
     expect(resolveOrgCap('daily', caps, 'PLUS', null)).toEqual({ pence: 9_000, source: 'env' });
     expect(resolveOrgCap('daily', caps, 'STANDARD', null)).toEqual({
-      pence: 3_000,
+      pence: 1_500,
       source: 'default',
     });
     // A null column is "no override" for that period only.
     expect(
       resolveOrgCap('monthly', caps, 'STANDARD', { dailyPence: 20_000, monthlyPence: null }),
-    ).toEqual({ pence: 15_000, source: 'default' });
+    ).toEqual({ pence: 7_300, source: 'default' });
     expect(resolveOrgCap('monthly', caps, 'ENTERPRISE', null)).toEqual({
       pence: undefined,
       source: 'disabled',
@@ -44,10 +44,10 @@ describe('resolveOrgCap', () => {
 
   it('lists every tier for admin views', () => {
     expect(resolveOrgCapByTier('daily', caps, null)).toEqual({
-      BASIC: { pence: 1_000, source: 'default' },
-      STANDARD: { pence: 3_000, source: 'default' },
+      BASIC: { pence: 500, source: 'default' },
+      STANDARD: { pence: 1_500, source: 'default' },
       PLUS: { pence: 9_000, source: 'env' },
-      ENTERPRISE: { pence: 40_000, source: 'default' },
+      ENTERPRISE: { pence: 15_000, source: 'default' },
     });
   });
 });
@@ -113,7 +113,7 @@ describe('org cost caps service shapes', () => {
     );
     expect(withRow.caps.daily).toMatchObject({ pence: 20_000, source: 'org_override' });
     expect(withRow.caps.monthly).toMatchObject({ pence: null, source: 'plan_tier' });
-    expect(withRow.caps.monthly.byTier.STANDARD).toEqual({ pence: 15_000, source: 'default' });
+    expect(withRow.caps.monthly.byTier.STANDARD).toEqual({ pence: 7_300, source: 'default' });
     expect(viewOrgCostCaps('org-2', null, caps)).toMatchObject({
       override: null,
       caps: { daily: { source: 'plan_tier' } },

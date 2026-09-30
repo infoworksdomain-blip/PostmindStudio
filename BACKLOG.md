@@ -418,3 +418,7 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **19.3** Track 3 — security hardening: per-account 2FA and per-organisation/inviter invite limits, legal link guard (PR #29).
 - [x] **19.4** Track 3 — dependency and CI upkeep: 0 high advisories, actions on node24, `prisma.config.ts` (PR #29). Follow-ups for the operator: Node 20 → 22/24 (end of life 2026-04-30); vitest 4 for the last moderate advisory.
 - [x] **19.5** Track 2 — cancelled-organisation banner copy: a distinct "subscription ended" read-only banner with the deletion date, in 11 locales.
+
+## Phase 20 — Post-launch-prep changes (operator requests 2026-09-30)
+
+- [x] **20.2** Lower price list (operator decision 2026-09-30): £29 / £99 / £349 a month (annual 10 × monthly), Enterprise from £1,500; 20 / 40 + 1 / 80 + 4 videos; caps £20 / £73 / £264 / £1,100 a month; cheaper top-ups. Stripe lookup keys unchanged.

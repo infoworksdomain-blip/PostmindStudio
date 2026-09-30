@@ -600,6 +600,35 @@ Every tier and interval is **positive at the cost cap**, and the monthly plans m
 
 Credits are valid for 12 months, used first-in first-out, and only after the plan allowance runs out. BASIC has no long-video pack, because long video is not included.
 
+#### Revised 2026-09-30: lower prices, fewer videos (operator decision; Phase 20.2)
+
+The tables in P.1 and P.2 above are the 2026-09-29 list, kept for history. The operator approved a lower price list on 2026-09-30. The Stripe lookup keys are unchanged; the amounts in Stripe, `REFERENCE_PRICES_PENCE` and the plan limits in `PLAN_CATALOGUE` (`CATALOGUE_VERSION` 2026-09-30) changed. Everything else in P.1 (features, seats, businesses, storage, platforms, providers, trial) is unchanged.
+
+| Tier | Monthly | Annual (10 × monthly) | Short / month (≤ 30 s) | Long / month | Monthly cost cap | Daily cost cap |
+|---|---|---|---|---|---|---|
+| BASIC | £29 | £290 | 20 | 0 | £20 | £5 |
+| STANDARD | £99 | £990 | 40 | 1 × 3 min | £73 | £15 |
+| PLUS | £349 | £3,490 | 80 | 4 × 6 min | £264 | £45 |
+| ENTERPRISE | from £1,500 (quoted) | – | unlimited (fair use) | unlimited | £1,100 | £150 |
+
+PLUS annual is now 10 × monthly (2 months free) like the other tiers, not "1 month free".
+
+Typical use (50 % of the allowance, same per-video costs as above): BASIC 10 × £0.90 = £9; STANDARD 20 × £1.60 + 0.5 × £9 = £36.50; PLUS 40 × £2.40 + 2 × £18 = £132. Each monthly cap equals or exceeds the whole allowance at typical cost (£18 / £73 / £264), so nobody is paused before using what they paid for.
+
+| Plan | GM typical | GM at cap |
+|---|---|---|
+| BASIC monthly £29 | 56.9 % | 19.0 % |
+| STANDARD monthly £99 | 54.4 % | 17.6 % |
+| PLUS monthly £349 | 55.4 % | 17.6 % |
+| BASIC annual £290 | 50.0 % | 4.5 % |
+| STANDARD annual £990 | 46.4 % | 2.2 % |
+| PLUS annual £3,490 | 47.4 % | 2.0 % |
+| ENTERPRISE from £1,500 | | 19.5 % at the £1,100 cap; minimum price for that cap £1,416 |
+
+Top-ups: 10 short BASIC £15 (headroom £1.00 per credit, 27.6 % at worst case), 10 short STANDARD £25 (£1.75, 24.8 %), 10 short PLUS £35 (£2.65, 19.3 %), 2 long STANDARD £29 (£10, 25.9 %), 2 long PLUS £55 (£20, 22.5 %).
+
+The monthly plans trade the 60–70 % typical target for lower prices (54–57 %); annual plans are thin at the cap (2–5 %) but positive. The live numbers and guards are in `runbooks/billing-stripe.md` §5 and `catalogue.test.ts`.
+
 ### P.3 Entitlements design
 
 - **Single source of truth:** `src/lib/studio/billing/catalogue.ts`, a versioned `PLAN_CATALOGUE` object in code holding every row of P.1 (quotas, caps, gates, min tiers, provider-order label, seats, businesses, storage, packs, display order, Stripe lookup keys).

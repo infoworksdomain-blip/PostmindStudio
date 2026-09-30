@@ -27,11 +27,11 @@ function byTier(pick: (tier: PlanTier) => number): Readonly<Record<PlanTier, num
 }
 
 /**
- * Operator decision 2: £10 / £30 / £75 / £400 per organisation per UTC day. Phase 18 §P.3: read
+ * Price list 2026-09-30: £5 / £15 / £45 / £150 per organisation per UTC day. Phase 18 §P.3: read
  * from the plan catalogue (billing/catalogue.ts); the env overrides below still win.
  */
 export const DEFAULT_ORG_DAILY_CAP_PENCE = byTier((t) => PLAN_CATALOGUE[t].dailyCostCapPence);
-/** Operator decision 2: £40 / £150 / £450 / £3,000 per organisation per calendar month (UTC). */
+/** Price list 2026-09-30: £20 / £73 / £264 / £1,100 per organisation per calendar month (UTC). */
 export const DEFAULT_ORG_MONTHLY_CAP_PENCE = byTier((t) => PLAN_CATALOGUE[t].monthlyCostCapPence);
 /** Operator decision 2: £2,500 per UTC day across every organisation. */
 export const DEFAULT_GLOBAL_DAILY_CAP_PENCE = 250_000;

@@ -151,7 +151,7 @@ describe.skipIf(!hasDb)('organisation policy and cost cap admin API', { timeout:
         organisationId: org,
         override: null,
         caps: {
-          daily: { pence: null, source: 'plan_tier', byTier: { STANDARD: { pence: 3_000 } } },
+          daily: { pence: null, source: 'plan_tier', byTier: { STANDARD: { pence: 1_500 } } },
           monthly: { pence: null, source: 'plan_tier' },
         },
       });

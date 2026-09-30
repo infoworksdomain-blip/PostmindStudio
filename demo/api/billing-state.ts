@@ -6,6 +6,8 @@
 // The choice is kept in a cookie, like the demo's language; purchases made in the simulated
 // checkout move the state on, as Stripe's webhooks would.
 import {
+  CATALOGUE_VERSION,
+  ENTERPRISE_LIST_PRICE_PENCE,
   PLAN_CATALOGUE,
   TOP_UP_PACKS,
   TRIAL,
@@ -74,7 +76,7 @@ export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
     access: 'full',
     source: 'stripe',
     status: 'active',
-    note: 'The default: 50 of 60 short videos used, Plus features show a lock badge.',
+    note: 'The default: 33 of 40 short videos used, Plus features show a lock badge.',
   },
   active_plus: {
     label: 'Active: Plus',
@@ -244,10 +246,10 @@ export function videoQuota(): {
     current === 'no_plan' ? 0 : limit === null ? base : Math.min(base, limit);
   return {
     short: {
-      used: cap(50, plan.shortVideosPerMonth) + generatedShort,
+      used: cap(33, plan.shortVideosPerMonth) + generatedShort,
       limit: plan.shortVideosPerMonth,
     },
-    long: { used: cap(1, plan.longVideosPerMonth), limit: plan.longVideosPerMonth },
+    long: { used: cap(0, plan.longVideosPerMonth), limit: plan.longVideosPerMonth },
   };
 }
 
@@ -276,10 +278,10 @@ export function billingOverview(seatsUsed: number): BillingResponse['billing'] {
     current === 'trial'
       ? TRIAL.totalCostCapPence
       : current === 'enterprise'
-        ? 300_000
+        ? PLAN_CATALOGUE.ENTERPRISE.monthlyCostCapPence
         : plan.monthlyCostCapPence;
   return {
-    catalogueVersion: '2026-09-29',
+    catalogueVersion: CATALOGUE_VERSION,
     entitlements: {
       tier,
       access,
@@ -360,7 +362,8 @@ export function invoices(): Array<Record<string, unknown>> {
   if (current === 'no_plan') return [];
   const { tier } = info();
   const key = PLAN_CATALOGUE[tier].lookupKeys[interval];
-  const price = current === 'enterprise' ? 395_000 : key === undefined ? 0 : priceOf(key);
+  const price =
+    current === 'enterprise' ? ENTERPRISE_LIST_PRICE_PENCE : key === undefined ? 0 : priceOf(key);
   const amount = freshSubscription && current === 'trial' ? 0 : price;
   const failing = current === 'past_due' || current === 'read_only';
   return (freshSubscription ? [0] : [0, 1, 2]).map((months) => ({

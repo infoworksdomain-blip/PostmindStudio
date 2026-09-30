@@ -2,9 +2,10 @@
 //   GET|PUT|DELETE /admin/organisations/:id/entitlements   services: billing/admin.ts
 //   GET /admin/billing/subscriptions                       listAdminSubscriptions (MRR)
 // An ENTERPRISE override needs the agreed monthly price, at least the §P.2 minimum for the
-// monthly cost cap (the real enterpriseMinimumMonthlyPricePence: £3,000 cap → £3,775), else 422.
+// monthly cost cap (the real enterpriseMinimumMonthlyPricePence: £1,100 cap → £1,416), else 422.
 // Saving ENTERPRISE for the demo organisation switches the demo bar's plan to Enterprise.
 import {
+  ENTERPRISE_LIST_PRICE_PENCE,
   PLAN_CATALOGUE,
   enterpriseMinimumMonthlyPricePence,
   planForLookupKey,
@@ -167,7 +168,7 @@ route('GET', '/admin/billing/subscriptions', ({ query }) => {
     const interval = plan?.interval ?? 'month';
     const amount =
       tier === 'ENTERPRISE'
-        ? (own?.monthlyPricePence ?? 395_000)
+        ? (own?.monthlyPricePence ?? ENTERPRISE_LIST_PRICE_PENCE)
         : o.lookupKey
           ? referencePrice(o.lookupKey)
           : 0;

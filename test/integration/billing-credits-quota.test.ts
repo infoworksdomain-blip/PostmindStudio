@@ -67,7 +67,7 @@ describe('entitlementQuota (pure)', () => {
         ...NO_PLAN_ENTITLEMENTS,
         custom: { shortVideos: 999, longMaxSec: null },
       }),
-    ).toMatchObject({ shortVideos: 999, longVideos: 2, longMaxSec: null });
+    ).toMatchObject({ shortVideos: 999, longVideos: 1, longMaxSec: null });
     expect(entitlementQuota(base, undefined)).toBe(base);
   });
 });
@@ -177,8 +177,8 @@ describe.skipIf(!hasDb)('top-up credits and the locked quota check', { timeout: 
         now: new Date(NOW),
       }),
     ).toBeNull();
-    // BASIC short pack: £2.00 headroom per consumed credit.
-    expect(await creditHeadroomPence(db, org, MONTH)).toBe(200);
+    // BASIC short pack: £1.00 headroom per consumed credit.
+    expect(await creditHeadroomPence(db, org, MONTH)).toBe(100);
     expect(await creditHeadroomPence(db, org, '2026-10')).toBe(0);
   });
 
@@ -317,8 +317,8 @@ describe.skipIf(!hasDb)('top-up credits and the locked quota check', { timeout: 
       createCostGuard({
         db,
         caps: {
-          orgDailyPenceByTier: { BASIC: 1_000, STANDARD: 3_000 },
-          orgMonthlyPenceByTier: { BASIC: 4_000, STANDARD: 15_000 },
+          orgDailyPenceByTier: { BASIC: 500, STANDARD: 1_500 },
+          orgMonthlyPenceByTier: { BASIC: 2_000, STANDARD: 7_300 },
         },
         notifier,
         audit: vi.fn(),
@@ -354,9 +354,9 @@ describe.skipIf(!hasDb)('top-up credits and the locked quota check', { timeout: 
         now: new Date(NOW),
       });
       const usage = await guardFor({}).usage({ organisationId: org, planTier: 'BASIC' });
-      expect(usage.find((u) => u.scope === 'ORG_MONTHLY')?.capPence).toBe(4_000 + 400);
+      expect(usage.find((u) => u.scope === 'ORG_MONTHLY')?.capPence).toBe(2_000 + 200);
       expect(await capAdjustmentFor(db, reader({}), org, new Date(NOW))).toEqual({
-        monthlyHeadroomPence: 400,
+        monthlyHeadroomPence: 200,
       });
     });
 

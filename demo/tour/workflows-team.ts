@@ -1,4 +1,5 @@
 import { PROJECTS } from '../api/ids';
+import { PRICE_TEXT } from './price-text';
 import { projectHref as p, withLang, withPlan, type Workflow } from './workflow-types';
 
 // Workflows for the team and the account (members, connections, brand voice, languages) and for
@@ -171,7 +172,7 @@ export const OPERATE_WORKFLOWS: Workflow[] = [
         cta: 'Users',
       },
       {
-        text: 'Billing: MRR by tier and status. Under Entitlements type org-leeds-sourdough, choose Enterprise: a price under £3,775 (the minimum for a £3,000 cost cap) is refused; £3,950 saves and the demo switches to Enterprise.',
+        text: `Billing: MRR by tier and status. Under Entitlements type org-leeds-sourdough, choose Enterprise: a price under ${PRICE_TEXT.enterpriseMinimum} (the minimum for a ${PRICE_TEXT.enterpriseCap} cost cap) is refused; ${PRICE_TEXT.enterpriseList} saves and the demo switches to Enterprise.`,
         href: '#/admin?tab=billing',
         cta: 'MRR & Enterprise',
       },
