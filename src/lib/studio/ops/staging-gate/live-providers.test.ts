@@ -59,6 +59,16 @@ describe('LIVE_PROVIDER_TESTS', () => {
     expect(hive && missingEnv(hive, { HIVE_API_KEY: 'k' })).toEqual(['LIVE_TEST_MEDIA_URL']);
   });
 
+  it('20.6: Hive runs with a V2 or a V3 key, and V3 stays within one 60 s request', () => {
+    const hive = byId('hive');
+    const media = { LIVE_TEST_MEDIA_URL: 'https://x/v.mp4' };
+    expect(hive && missingEnv(hive, { ...media, HIVE_V3_SECRET_KEY: 'k' })).toEqual([]);
+    expect(hive && missingEnv(hive, media)).toEqual(['HIVE_API_KEY or HIVE_V3_SECRET_KEY']);
+    expect(
+      hive?.request?.({ ...media, LIVE_TEST_MEDIA_SEC: '300', HIVE_V3_SECRET_KEY: 'k' }),
+    ).toMatchObject({ durationSec: 60 });
+  });
+
   it('asks for the storage settings of STORAGE_PROVIDER (S3 or R2) for storage tests', () => {
     const image = byId('openai-image');
     const base = { OPENAI_API_KEY: 'k', S3_BUCKET_ASSETS: 'assets' };
