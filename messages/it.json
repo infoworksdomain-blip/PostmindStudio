@@ -4785,5 +4785,20 @@
         }
       }
     }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Pagina non trovata",
+      "body": "Il link potrebbe essere obsoleto oppure la pagina è stata spostata.",
+      "projects": "Vai ai progetti",
+      "home": "Vai alla home page"
+    },
+    "boundary": {
+      "title": "Questa pagina ha avuto un problema",
+      "body": "Lo abbiamo registrato. Riprova o torna ai tuoi progetti.",
+      "retry": "Riprova",
+      "projects": "Vai ai progetti",
+      "reference": "Riferimento: {digest}"
+    }
   }
 }

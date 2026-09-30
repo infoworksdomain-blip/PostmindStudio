@@ -4785,5 +4785,20 @@
         }
       }
     }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Page introuvable",
+      "body": "Le lien est peut-être obsolète, ou la page a été déplacée.",
+      "projects": "Aller aux projets",
+      "home": "Aller à l’accueil"
+    },
+    "boundary": {
+      "title": "Cette page a rencontré un problème",
+      "body": "Nous l’avons enregistré. Réessayez ou revenez à vos projets.",
+      "retry": "Réessayer",
+      "projects": "Aller aux projets",
+      "reference": "Référence : {digest}"
+    }
   }
 }

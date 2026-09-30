@@ -4785,5 +4785,20 @@
         }
       }
     }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "找不到该页面",
+      "body": "链接可能已过期，或页面已移动。",
+      "projects": "前往项目",
+      "home": "前往首页"
+    },
+    "boundary": {
+      "title": "此页面出现问题",
+      "body": "我们已记录此问题。请重试，或返回你的项目。",
+      "retry": "重试",
+      "projects": "前往项目",
+      "reference": "参考编号：{digest}"
+    }
   }
 }

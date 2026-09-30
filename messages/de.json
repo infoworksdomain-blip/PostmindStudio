@@ -4785,5 +4785,20 @@
         }
       }
     }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Diese Seite wurde nicht gefunden",
+      "body": "Der Link ist vielleicht veraltet, oder die Seite wurde verschoben.",
+      "projects": "Zu den Projekten",
+      "home": "Zur Startseite"
+    },
+    "boundary": {
+      "title": "Auf dieser Seite ist ein Problem aufgetreten",
+      "body": "Wir haben es protokolliert. Versuchen Sie es erneut oder kehren Sie zu Ihren Projekten zurück.",
+      "retry": "Erneut versuchen",
+      "projects": "Zu den Projekten",
+      "reference": "Referenz: {digest}"
+    }
   }
 }

@@ -4785,5 +4785,20 @@
         }
       }
     }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "We couldn’t find that page",
+      "body": "The link may be out of date, or the page has moved.",
+      "projects": "Go to projects",
+      "home": "Go to the home page"
+    },
+    "boundary": {
+      "title": "This page hit a problem",
+      "body": "We’ve logged it. Try again, or go back to your projects.",
+      "retry": "Try again",
+      "projects": "Go to projects",
+      "reference": "Reference: {digest}"
+    }
   }
 }

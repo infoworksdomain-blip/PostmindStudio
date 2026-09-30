@@ -4785,5 +4785,20 @@
         }
       }
     }
+  },
+  "errorPage": {
+    "notFound": {
+      "title": "Não encontrámos essa página",
+      "body": "A ligação pode estar desatualizada ou a página foi movida.",
+      "projects": "Ir para os projetos",
+      "home": "Ir para a página inicial"
+    },
+    "boundary": {
+      "title": "Esta página teve um problema",
+      "body": "Registámos o erro. Tente novamente ou volte aos seus projetos.",
+      "retry": "Tentar novamente",
+      "projects": "Ir para os projetos",
+      "reference": "Referência: {digest}"
+    }
   }
 }
