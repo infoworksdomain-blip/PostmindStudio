@@ -176,6 +176,12 @@ export function errorMessage(err: unknown, target: ErrorLocale | null = activeCa
       if (/^http_\d{3}$/.test(err.code)) return fill(errors.requestFailed, { status: err.status });
       return err.message;
     }
+    // The server sent a code but no sentence (every unexpected 500 is `internal_error` with no
+    // message): English showed "Request failed (500)"; use the catalogue sentence (20.10).
+    if (err.message === `Request failed (${err.status})`) {
+      const byCode = codeMessage(errors, err.code);
+      if (byCode) return byCode;
+    }
     const problems = err.details?.problems;
     if (Array.isArray(problems) && problems.length)
       return fill(errors.withProblems, { message: err.message, problems: problems.join('; ') });
