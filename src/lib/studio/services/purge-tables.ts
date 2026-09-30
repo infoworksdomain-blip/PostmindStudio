@@ -136,6 +136,9 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('data_exports', 'DataExport'),
   org('usage_events', 'UsageEvent'),
   org('drip_queues', 'DripQueue'),
+  // 20.9: items before their plans (content_plan_items.planId → content_plans, cascade).
+  org('content_plan_items', 'ContentPlanItem'),
+  org('content_plans', 'ContentPlan'),
   // Phase 18 §2.11: the organisation's own businesses (standalone mode).
   org('businesses', 'Business'),
   // BYOC API keys (envelope-encrypted): a deleted organisation's credentials must not survive.
