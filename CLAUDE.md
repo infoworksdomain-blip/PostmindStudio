@@ -42,7 +42,7 @@ below say "Core handles X", read them as **core mode only**. Rule 1 still holds 
 
 ## Architecture (from the specs — canonical)
 
-- **Runtime**: Next.js 15 (App Router), Node 20 LTS, TypeScript 5.4+
+- **Runtime**: Next.js 15 (App Router), Node 24 LTS, TypeScript 5.4+
 - **Database**: PostgreSQL 15+ with `pgvector` extension. Studio uses the `studio` schema. Shared cluster with PostMind Core (never modify Core's schema).
 - **Queue**: BullMQ over Redis. Shared Redis cluster; Studio uses DB 3.
 - **Storage**: S3-compatible object storage. Three buckets: `studio-assets`, `studio-renders`, `studio-thumbnails`. One more for the library: `studio-library-assets`.

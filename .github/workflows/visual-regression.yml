@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: steps.fonts.outputs.present == 'true'
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
         if: steps.fonts.outputs.present == 'true'
