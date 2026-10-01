@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSWRConfig } from 'swr';
 import { toast } from 'sonner';
 import {
   Archive,
@@ -261,6 +262,12 @@ export function ProjectsList() {
     limit: 20,
   });
   // Filter or search changed (also from the URL): back to the first page.
+  // A row action changes what every filter / search shows (a project leaves All, enters Archived):
+  // refresh every cached list, not just the one on screen (SWR would otherwise serve a list
+  // fetched just before the action when the user switches filter within its dedupe window).
+  const { mutate: mutateAny } = useSWRConfig();
+  const refreshLists = () =>
+    void mutateAny((key) => typeof key === 'string' && key.includes('/projects?'));
   const first = useRef(true);
   useEffect(() => {
     if (first.current) first.current = false;
@@ -342,7 +349,7 @@ export function ProjectsList() {
         <>
           <ul className="flex flex-col gap-1">
             {data.data.map((p) => (
-              <ProjectRow key={p.id} project={p} onChanged={() => void mutate()} />
+              <ProjectRow key={p.id} project={p} onChanged={refreshLists} />
             ))}
           </ul>
           <div className="mt-6 flex justify-between">
