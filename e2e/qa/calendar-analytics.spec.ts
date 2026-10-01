@@ -22,6 +22,15 @@ let organisationId = '';
 let businessId = '';
 let userId = '';
 let storageState = '';
+let ipCounter = 0;
+
+// Better Auth rate-limits per client IP (x-real-ip when no proxy is trusted) and every spec runs
+// from 127.0.0.1, so each context claims its own address instead of sharing the sweep's bucket.
+function uniqueIp(): string {
+  ipCounter += 1;
+  const base = Number.parseInt(run.slice(0, 4), 16) % 200;
+  return `10.${50 + (base % 150)}.${Math.floor(ipCounter / 250)}.${(ipCounter % 250) + 1}`;
+}
 
 interface PageOptions {
   timezoneId?: string;
@@ -37,6 +46,7 @@ async function newPage(browser: Browser, opts: PageOptions = {}): Promise<Page> 
     timezoneId: opts.timezoneId ?? 'Europe/London',
     locale: opts.locale ?? 'en-GB',
     viewport: { width: opts.width ?? 1280, height: 900 },
+    extraHTTPHeaders: { 'x-real-ip': uniqueIp() },
     colorScheme: opts.dark ? 'dark' : 'light',
   });
   const page = await context.newPage();
@@ -61,7 +71,7 @@ async function seedPublication(data: SeedPublication): Promise<string> {
       createdByUserId: userId,
       name: data.name,
       state: 'APPROVED',
-      sourceType: 'PROMPT',
+      sourceType: 'BRIEF',
       targetFormats: [],
     },
   });
@@ -117,6 +127,7 @@ test.beforeAll(async ({ browser }) => {
   test.setTimeout(300_000);
   db = new PrismaClient();
   const page = await browser.newPage();
+  await page.setExtraHTTPHeaders({ 'x-real-ip': uniqueIp() });
   await page.goto('/sign-up');
   await page.getByLabel('Your name').fill('QA5 Tester');
   await page.getByLabel(/email/i).fill(email);
