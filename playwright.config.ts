@@ -25,11 +25,19 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: process.env.E2E_START
-    ? {
-        command: `npm run start -- -p ${port}`,
-        url: `${baseURL}/api/health`,
-        timeout: 120_000,
-        reuseExistingServer: false,
-      }
+    ? [
+        {
+          command: 'node e2e/qa/s3-stub.mjs',
+          url: 'http://127.0.0.1:3199',
+          reuseExistingServer: true,
+          timeout: 30_000,
+        },
+        {
+          command: `npm run start -- -p ${port}`,
+          url: `${baseURL}/api/health`,
+          timeout: 120_000,
+          reuseExistingServer: false,
+        },
+      ]
     : undefined,
 });

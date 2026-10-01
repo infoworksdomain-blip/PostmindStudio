@@ -275,6 +275,8 @@ jobs:
       AWS_ACCESS_KEY_ID: ci-placeholder
       AWS_SECRET_ACCESS_KEY: ci-placeholder
       STUDIO_USD_TO_GBP_RATE: '0.79'
+      # QA specs (e2e/qa): object storage is a local stub (e2e/qa/s3-stub.mjs), never a real bucket.
+      AWS_ENDPOINT_URL_S3: http://127.0.0.1:3199
     steps:
       - uses: actions/checkout@v7
       - name: Stand-in legal texts (CI only)
