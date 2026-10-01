@@ -259,7 +259,10 @@
       "upload_failed": "Der Upload ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "plan_required": "Ihre Organisation hat noch keinen Tarif. Wählen Sie einen Tarif, um mit dem Erstellen zu beginnen.",
       "billing_required": "Ihr Konto ist wegen eines Abrechnungsproblems schreibgeschützt. Aktualisieren Sie Ihre Zahlungsdaten, um fortzufahren.",
-      "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren."
+      "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren.",
+      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt.",
+      "auto_publish_account_required": "Wählen Sie ein verbundenes Konto zum Posten aus, oder deaktivieren Sie die automatische Veröffentlichung und den Termin.",
+      "auto_publish_account_unavailable": "Ein gewähltes Konto ist nicht mehr verbunden. Verbinden Sie es erneut oder wählen Sie ein anderes Konto."
     }
   },
   "primitives": {
@@ -444,6 +447,14 @@
     "scheduleNoFreeSlot": {
       "title": "„{name}“ wurde nicht eingeplant",
       "body": "Keine freie Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} — fügen Sie Posting-Zeiten hinzu oder wählen Sie ein Datum."
+    },
+    "providerAccountProblem": {
+      "title": "Konto bei {provider} braucht Aufmerksamkeit",
+      "body": "{provider} nimmt keine {capability}-Aufträge mehr an ({errorClass}). Studio weicht auf den nächsten Anbieter aus und nimmt {provider} aus dem Routing.{retryAt, select, none {} other { Laut Anbieter ist der Zugriff ab {retryAt} wieder möglich.}}"
+    },
+    "providersUnavailable": {
+      "title": "Kein {capability}-Anbieter verfügbar",
+      "body": "Alle {capability}-Anbieter sind mit einem Kontoproblem ausgefallen: {providers}. Kunden sehen „vorübergehend nicht verfügbar“, bis eines dieser Konten behoben ist."
     }
   },
   "create": {
@@ -463,7 +474,7 @@
       "briefPlaceholder": "Unsere Frühlingskarte startet am Freitag – drei neue kleine Gerichte, in der ersten Woche 20 % Rabatt …",
       "summaryTemplate": "Vorlage {name}",
       "summaryPlatforms": "{count, plural, =0 {Keine Plattformen} one {# Plattform} other {# Plattformen}}",
-      "summaryAutoPublish": "automatische Veröffentlichung",
+      "summaryAutoPublish": "{count, plural, =0 {automatische Veröffentlichung: kein Konto gewählt} one {wird auf # Konto gepostet} other {wird auf # Konten gepostet}}",
       "summaryBrandKit": "Brand-Kit aktiv",
       "options": "Optionen",
       "generate": "Generieren",
@@ -486,7 +497,9 @@
         "generatingScript": "Wird generiert – Studio schreibt das Skript.",
         "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}"
       },
-      "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows"
+      "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows",
+      "summaryNoAccounts": "keine verbundenen Konten: zur Prüfung gespeichert",
+      "summaryForReview": "zur Prüfung gespeichert"
     },
     "problems": {
       "businessRequired": "Wählen Sie zuerst ein Unternehmen aus.",
@@ -494,12 +507,14 @@
       "briefRequired": "Beschreiben Sie, worum es in dem Video geht.",
       "briefTooLong": "Das Briefing darf höchstens {max, number} Zeichen lang sein.",
       "platformRequired": "Wählen Sie mindestens eine Plattform aus.",
-      "autoPublishAccountRequired": "Wählen Sie mindestens ein Konto für die automatische Veröffentlichung aus oder deaktivieren Sie sie.",
+      "autoPublishAccountRequired": "Wählen Sie unter „Posten auf“ das {platforms}-Konto aus, auf dem gepostet werden soll, oder deaktivieren Sie die automatische Veröffentlichung.",
       "slideshowTemplateRequired": "Wählen Sie eine Diashow-Vorlage aus.",
       "scheduleInPast": "Wählen Sie einen Zeitpunkt in der Zukunft.",
-      "scheduleNeedsAutoPublish": "Wählen Sie für ein geplantes Video die Konten aus, auf denen es veröffentlicht werden soll (automatische Veröffentlichung).",
+      "scheduleNeedsAutoPublish": "Ein geplanter Beitrag wird automatisch veröffentlicht: Aktivieren Sie unter „Posten auf“ die automatische Veröffentlichung und wählen Sie ein Konto, oder entfernen Sie den Termin.",
       "budgetRange": "Das Budget muss zwischen {min} und {max} liegen.",
-      "scheduleTooFar": "Planen Sie höchstens {days, number} Tage im Voraus."
+      "scheduleTooFar": "Planen Sie höchstens {days, number} Tage im Voraus.",
+      "autoPublishNoMatchingAccount": "Keines Ihrer verbundenen Konten postet auf den gewählten Plattformen. Fügen Sie {platforms} hinzu, verbinden Sie ein weiteres Konto oder deaktivieren Sie die automatische Veröffentlichung.",
+      "scheduleNeedsAccount": "Ein geplanter Beitrag wird automatisch veröffentlicht und braucht daher ein verbundenes Konto für eine der gewählten Plattformen. Verbinden Sie eines oder entfernen Sie den Termin."
     },
     "options": {
       "platforms": "Plattformen",
@@ -550,16 +565,23 @@
       "workflowNone": "Keine Workflows eingerichtet",
       "workflowOrg": "Regeln der Organisation",
       "scheduleNextSlot": "Kein Datum — den nächsten freien Slot der Posting-Warteschlange nutzen",
-      "scheduleNextSlotHint": "Geht zur ersten freien Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} raus. Die Zeiten legen Sie im Kalender fest."
+      "scheduleNextSlotHint": "Geht zur ersten freien Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} raus. Die Zeiten legen Sie im Kalender fest.",
+      "scheduleNeedsAccount": "Ein Termin wird automatisch gepostet und braucht daher ein verbundenes Konto.",
+      "connectAccount": "Konto verbinden"
     },
     "autoPublish": {
-      "legend": "Automatische Veröffentlichung",
+      "legend": "Posten auf",
       "toggle": "Nach Freigabe automatisch veröffentlichen",
       "toggleHint": "Sobald das Video freigegeben ist – von Ihnen oder automatisch –, wird es auf den folgenden Konten veröffentlicht.",
       "account": "{platform}-Konto",
       "noAccount": "Kein verbundenes Konto.",
       "connectOne": "Konto verbinden",
-      "dontAutoPublish": "Nicht automatisch veröffentlichen"
+      "dontAutoPublish": "Nicht automatisch veröffentlichen",
+      "offHint": "{source, select, SLIDESHOW {Die Diashow wird} other {Das Video wird}} zur Prüfung gespeichert; Sie veröffentlichen es selbst auf seiner Seite.",
+      "noAccounts": "Keine verbundenen Konten – {source, select, SLIDESHOW {Diashows werden} other {Videos werden}} zur Prüfung gespeichert, nicht gepostet.",
+      "connectAccount": "Konto verbinden",
+      "noMatching": "Keines Ihrer verbundenen Konten postet auf den oben gewählten Plattformen. Ihre Konten posten auf {platforms}.",
+      "notPosted": "Nicht automatisch gepostet (kein verbundenes Konto): {platforms}."
     },
     "templatePicker": {
       "legend": "Vorlage",
@@ -674,7 +696,9 @@
       "scheduled": "{count, plural, one {# Beitrag geplant.} other {# Beiträge geplant.}}",
       "publishing": "{count, plural, one {# Beitrag wird veröffentlicht.} other {# Beiträge werden veröffentlicht.}}",
       "scheduleTooFar": "Wählen Sie eine Zeit höchstens {days, number} Tage im Voraus.",
-      "scheduleInPast": "Wählen Sie eine Zeit mindestens eine Minute ab jetzt."
+      "scheduleInPast": "Wählen Sie eine Zeit mindestens eine Minute ab jetzt.",
+      "noAccounts": "Noch keine verbundenen Konten, daher gibt es kein Ziel zum Veröffentlichen. Das Video bleibt hier gespeichert.",
+      "connectAccount": "Konto verbinden"
     },
     "publications": {
       "empty": "Noch nichts veröffentlicht oder geplant.",
@@ -2544,7 +2568,13 @@
           "open": "Offen"
         },
         "jobCounts": "{succeeded} ok · {failed} fehlgeschlagen",
-        "jobCountsRunning": "{succeeded} ok · {failed} fehlgeschlagen · {running} laufend"
+        "jobCountsRunning": "{succeeded} ok · {failed} fehlgeschlagen · {running} laufend",
+        "accountHold": "Gesperrt: {problem} bis {until} UTC",
+        "holdClass": {
+          "auth": "API-Schlüssel abgelehnt",
+          "insufficient_credits": "kein Guthaben",
+          "account_limit": "Nutzungslimit erreicht"
+        }
       }
     },
     "killSwitch": {
@@ -3497,7 +3527,8 @@
       "scan_cost_cap": "Der Scan wurde an seiner Kostenobergrenze ({amount}) gestoppt.",
       "scan_images_capped": "Der Scan hat seine Kostenobergrenze ({amount}) erreicht: Einige Bilder wurden nicht für die Suche indexiert.",
       "ownership_disputed": "Gestoppt: Die Inhaberschaft der Website wurde angefochten.",
-      "provider_failure": "{source} hat ein Problem gemeldet: {problem}."
+      "provider_failure": "{source} hat ein Problem gemeldet: {problem}.",
+      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",
@@ -3514,7 +3545,8 @@
       "quota_exceeded": "Kontingent erreicht",
       "invalid_media": "Videodatei abgelehnt",
       "outcome_unknown": "Ergebnis unbekannt – prüfen Sie die Plattform, bevor Sie es erneut versuchen",
-      "unknown": "unbekannter Fehler"
+      "unknown": "unbekannter Fehler",
+      "account_limit": "ein Nutzungslimit wurde erreicht"
     }
   },
   "marketing": {
@@ -4834,13 +4866,16 @@
         "startRequired": "Wählen Sie ein Startdatum.",
         "daysRange": "Wählen Sie zwischen 1 und {max} Tagen.",
         "platformRequired": "Wählen Sie mindestens eine Plattform aus.",
-        "accountRequired": "Wählen Sie für jede Plattform ein verbundenes Konto: Die Beiträge werden automatisch veröffentlicht."
+        "accountRequired": "Wählen Sie das Konto, auf dem jede Plattform postet. Plattformen ohne verbundenes Konto werden erstellt, aber nicht gepostet."
       },
       "noBusiness": {
         "title": "Wählen Sie zuerst ein Unternehmen",
         "description": "Ein Monatsplan gehört zu genau einem Unternehmen.",
         "action": "Unternehmen öffnen"
-      }
+      },
+      "noAccountsNotice": "Keine verbundenen Konten: Die Beiträge werden erstellt und zu Ihrer Prüfung gespeichert, statt eingeplant zu werden. Verbinden Sie ein Konto, damit sie zu ihrer Zeit gepostet werden.",
+      "someWithoutAccount": "Erstellt, aber nicht automatisch gepostet (kein verbundenes Konto): {platforms}.",
+      "connectAccount": "Konto verbinden"
     },
     "allowance": {
       "title": "Dieser Monat",
@@ -4972,7 +5007,9 @@
       "addWhen": "Datum und Uhrzeit",
       "addWhenHint": "Innerhalb der Plandaten, höchstens 4 Beiträge pro Tag.",
       "addSubmit": "Beitrag hinzufügen",
-      "added": "Beitrag hinzugefügt"
+      "added": "Beitrag hinzugefügt",
+      "noAccountsWindow": "Dieser Plan hat kein verbundenes Konto: Jeder Beitrag wird erstellt und zu Ihrer Prüfung gespeichert, nichts wird automatisch gepostet. Sie erhalten eine E-Mail, wenn Ihr Monat fertig ist.",
+      "generateConfirmBodyNoAccounts": "Studio erstellt jeden Beitrag und speichert ihn zu Ihrer Prüfung. Nichts wird automatisch gepostet, weil der Plan kein verbundenes Konto hat: Veröffentlichen Sie jeden Beitrag auf seiner Seite. Sie erhalten eine E-Mail, wenn Ihr Monat fertig ist."
     },
     "view": {
       "calendar": "Kalender öffnen",

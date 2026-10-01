@@ -29,7 +29,35 @@ export interface ProviderHealth {
   errorRate1h: number | null;
   jobs1h: { succeeded: number; failed: number; running: number };
   spendTodayPence: number;
+  /** 20.11: held out of routing for an account problem (key, credits, usage limit). */
+  accountHold?: { errorClass: string; reason: string; until: string; since: string } | null;
   healthy: boolean;
+}
+
+const HOLD_CLASSES = ['auth', 'insufficient_credits', 'account_limit'] as const;
+
+/** 20.11: why the provider is held and until when; the provider's own message for staff. */
+function AccountHoldNote({ hold }: { hold: NonNullable<ProviderHealth['accountHold']> }) {
+  const t = useTranslations('admin.health.providers');
+  const f = useFormat();
+  const problem = (HOLD_CLASSES as readonly string[]).includes(hold.errorClass)
+    ? t(`holdClass.${hold.errorClass as (typeof HOLD_CLASSES)[number]}`)
+    : hold.errorClass;
+  return (
+    <div className="mt-1 max-w-md text-xs">
+      <p className="font-medium text-destructive">
+        {t('accountHold', {
+          problem,
+          until: f.date(hold.until, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }),
+        })}
+      </p>
+      {hold.reason && (
+        <p className="mt-0.5 break-words text-muted-foreground">
+          <bdi dir="auto">{hold.reason}</bdi>
+        </p>
+      )}
+    </div>
+  );
 }
 
 const REFRESH_MS = 30_000;
@@ -208,6 +236,7 @@ export function ProvidersPanel() {
                 </th>
                 <td className="py-1.5">
                   <BreakerTag state={p.breaker} />
+                  {p.accountHold && <AccountHoldNote hold={p.accountHold} />}
                 </td>
                 <td
                   className={cn(

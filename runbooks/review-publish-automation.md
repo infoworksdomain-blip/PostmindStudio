@@ -29,6 +29,14 @@
   duplicate guard), acting as `system:auto-publish`. Targets are independent: each outcome is in
   `metadata.autoPublishResult.results[]`, shown on the Review screen. Setting or re-arming targets
   needs `studio:publication:write`. The per-platform kill switch still applies at publish time.
+  20.12: "platforms" are the formats rendered; "accounts" are the connected social accounts
+  posted to. `POST /projects` with `AUTO_ON_APPROVAL` or `SCHEDULED` and no target is refused
+  with `400 auto_publish_account_required`; a target whose connection is not this
+  organisation's (or not that platform's) with `400 auto_publish_account_unavailable` (both
+  translated in `errors.codes.*`). Slideshows and uploads take the same targets and schedule as
+  videos. On Create, "Post to" sits in the main form: with no connected account it says the work
+  is saved for review (auto-publish and the schedule are off), otherwise each chosen platform
+  with an account gets a picker (pre-selected when the business has exactly one account there).
 - **Templates (spec 8.6).** `GET|POST /api/studio/templates`, `GET|DELETE /api/studio/templates/:id`.
   Built-ins (`organisationId` null) are read-only; the seed adds "Introduce yourself and what you
   do" (spec 14.5). A `TEMPLATE` project takes the template's formats, publish defaults
@@ -102,7 +110,11 @@
 9. **Plan my month (20.9):** `/plans/new` (Create, the calendar header and the end of onboarding
    link to it). The owner picks the window (default the next free day, 30 days, at most 31),
    1–4 posts a day or "use my posting times" (the drip-queue slots in the window, at most 4 a
-   day), the video / slideshow slider (default 50/50) and one connected account per platform.
+   day), the video / slideshow slider (default 50/50) and one connected account per platform
+   that has one (20.12: a platform without an account is still made but not posted; a plan with
+   no account at all makes every post with `REQUIRE_APPROVAL`, `MANUAL`, no time and
+   `preApproved: false`, so the posts wait in review and nothing is scheduled — the form and the
+   "Generate and schedule" confirmation say so first).
    `POST /api/studio/content-plans` lays out explicit post times (daily times 12:30; 09:00 +
    17:30; + 12:30; + 20:00 in the plan's time zone), skips times other videos hold and times under
    2 hours away, builds a varied mix (how-to, product feature, behind the scenes, offer,

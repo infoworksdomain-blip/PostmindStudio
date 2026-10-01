@@ -160,3 +160,46 @@ export function buildTargets(
 export function templatePlatforms(template: ProjectTemplate | undefined): string[] {
   return (template?.targetFormats ?? []).map((f) => f.platform);
 }
+
+/** 20.12: this business has at least one active connected account (any platform). */
+export function hasConnectedAccount(
+  connections: PlatformConnection[] | undefined,
+  businessId: string | null,
+): boolean {
+  return (connections ?? []).some((c) => c.state === 'active' && belongsToBusiness(c, businessId));
+}
+
+/**
+ * 20.12: the render platforms among `platforms` that an active account of this business can post
+ * to ("platforms" are formats to render; "accounts" are where they are posted).
+ */
+export function publishablePlatforms(
+  platforms: readonly string[],
+  connections: PlatformConnection[] | undefined,
+  businessId: string | null,
+): string[] {
+  return platforms.filter((p) => connectionsFor(p, connections, businessId).length > 0);
+}
+
+/**
+ * 20.12: the account each platform posts to. The owner's choice wins while it is still one of
+ * this business's active accounts ('' = "don't post there"); otherwise the platform's only
+ * account is pre-selected. A choice made for another business (or a disconnected account) is
+ * dropped, so switching business never posts to the wrong account.
+ */
+export function resolveAccounts(
+  platforms: readonly string[],
+  chosen: Record<string, string>,
+  connections: PlatformConnection[] | undefined,
+  businessId: string | null,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const platform of platforms) {
+    const options = connectionsFor(platform, connections, businessId);
+    const pick = chosen[platform];
+    if (pick === '') continue;
+    if (pick && options.some((c) => c.id === pick)) out[platform] = pick;
+    else if (options.length === 1 && options[0]) out[platform] = options[0].id;
+  }
+  return out;
+}

@@ -42,6 +42,34 @@
 - A voice clone whose consent check could not run (transcription down) stays PENDING_REVIEW;
   after recovery the owner (or support) calls `POST /api/studio/voice-profiles/:id/consent-check`.
 
+## Provider account problems: key, credits, usage limits (20.11)
+
+A provider answering "no credits", "usage limit reached", "payment required" or "API key
+refused" is not an outage: retrying cannot help until someone fixes the account. Since 20.11:
+
+- The provider is **held** out of routing at once (no five-failure count): until the time the
+  provider states (Anthropic: "You will regain access on 2026-10-01 at 00:00 UTC"), otherwise for
+  15 minutes; then one half-open trial. The running operation fails over to the next provider in
+  the same job (e.g. Claude → OpenAI for text, Runway → Luma for clips), each with its own
+  `provider_jobs` row (`errorClass` `account_limit`, `insufficient_credits` or `auth`).
+- Admin Centre → **Providers** shows "Held: <problem> until <time> UTC" and the provider's own
+  message. Redis fields: `studio:breaker:<provider>` `holdClass`, `holdReason`, `holdUntil`.
+- One staff notification (kind `provider_alert`) per provider, class and UTC day, also posted
+  to `OPS_ALERT_WEBHOOK_URL` when set; one more when a capability has no provider left.
+- Customers never see the provider's text: the job fails with `service_unavailable` ("Our AI
+  service is temporarily unavailable … our team has been alerted", 11 locales) and is not retried.
+- Classified from the providers' documented errors: Anthropic 400 "You have reached your
+  specified (workspace) API usage limits", 429 `enforced_spend_limit_reached`, 402
+  `billing_error`, 401/403; OpenAI 429 `insufficient_quota`, `credit_balance_exhausted`,
+  `organization_spend_limit_exceeded`, `project_spend_limit_exceeded`,
+  `organization_usage_limit_exceeded`, 401; every HTTP adapter: 401/403 auth, 402 credits
+  (Luma, ElevenLabs, HeyGen, Hive V3 405 and HeyGen quota codes as documented per adapter).
+
+To fix: top up or raise the limit in the provider console (Anthropic: Settings → Billing →
+Spend limits; OpenAI: Billing), or rotate the key. Then release the hold at once instead of
+waiting: `redis-cli -n 3 DEL studio:breaker:<provider> studio:breaker:<provider>:failures`.
+Customers retry the failed scan or generation themselves.
+
 ## Steps
 
 1. Confirm the outage. Check the provider's status page and look at `provider_jobs` errors in the

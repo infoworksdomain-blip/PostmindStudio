@@ -5,6 +5,7 @@ import type { PipelineDeps } from '../pipeline/deps';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
 import type { AspectRatio } from '../providers/interface';
+import { publicErrorText } from '../providers/provider-errors';
 import type { PlanTier } from '../providers/router';
 import type { AssetStorage } from '../storage';
 import {
@@ -107,7 +108,7 @@ export async function buildStockLayer(
         try {
           found = await source.search({ query, perPage: STOCK_PER_QUERY, ...ids });
         } catch (err) {
-          result.errors.push(`${source.provider} "${query}": ${(err as Error).message}`);
+          result.errors.push(`${source.provider} "${query}": ${publicErrorText(err)}`);
           continue;
         }
         await deps.db.imageLibraryQuery.upsert({
@@ -164,7 +165,7 @@ export async function buildStockLayer(
               }),
             );
           } catch (err) {
-            result.errors.push(`${key}: ${(err as Error).message}`.slice(0, 300));
+            result.errors.push(`${key}: ${publicErrorText(err)}`.slice(0, 300));
           }
         }
       }

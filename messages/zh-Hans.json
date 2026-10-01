@@ -259,7 +259,10 @@
       "upload_failed": "上传失败，请重试。",
       "plan_required": "您的组织尚未选择套餐。请选择套餐后开始创作。",
       "billing_required": "由于账单问题，您的账户目前为只读。请更新付款信息以继续。",
-      "no_organisation": "请创建或加入一个组织以继续。"
+      "no_organisation": "请创建或加入一个组织以继续。",
+      "service_unavailable": "我们的 AI 服务暂时不可用。请稍后再试——我们的团队已收到通知。",
+      "auto_publish_account_required": "请选择要发布到的已连接账号，或关闭自动发布和排期。",
+      "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。"
     }
   },
   "primitives": {
@@ -444,6 +447,14 @@
     "scheduleNoFreeSlot": {
       "title": "“{name}”未排期",
       "body": "未来 {weeks, plural, other {# 周}}内没有空闲的发布时间——请添加发布时间或选择日期。"
+    },
+    "providerAccountProblem": {
+      "title": "{provider} 账户需要处理",
+      "body": "{provider} 已停止接受 {capability} 任务（{errorClass}）。Studio 正在切换到下一个提供商，并暂停向 {provider} 路由。{retryAt, select, none {} other {提供商表示将于 {retryAt} 恢复访问。}}"
+    },
+    "providersUnavailable": {
+      "title": "没有可用的 {capability} 提供商",
+      "body": "所有 {capability} 提供商都因账户问题而失败：{providers}。在其中一个账户修复之前，客户会看到“暂时不可用”。"
     }
   },
   "create": {
@@ -463,7 +474,7 @@
       "briefPlaceholder": "我们的春季菜单周五上新——三款新小食，首周八折…",
       "summaryTemplate": "{name} 模板",
       "summaryPlatforms": "{count, plural, =0 {未选平台} other {# 个平台}}",
-      "summaryAutoPublish": "自动发布",
+      "summaryAutoPublish": "{count, plural, =0 {自动发布：未选择账号} other {发布到 # 个账号}}",
       "summaryBrandKit": "已启用品牌套件",
       "options": "选项",
       "generate": "生成",
@@ -486,7 +497,9 @@
         "generatingScript": "正在生成——Studio 正在撰写脚本。",
         "draftNotStarted": "已保存为草稿，但未能开始生成：{error}"
       },
-      "planMonth": "或者规划一整个月的视频和幻灯片"
+      "planMonth": "或者规划一整个月的视频和幻灯片",
+      "summaryNoAccounts": "没有已连接的账号：保存以供审核",
+      "summaryForReview": "保存以供审核"
     },
     "problems": {
       "businessRequired": "请先选择商家。",
@@ -494,12 +507,14 @@
       "briefRequired": "请描述视频的主题。",
       "briefTooLong": "简介请控制在 {max, number} 个字符以内。",
       "platformRequired": "请至少选择一个平台。",
-      "autoPublishAccountRequired": "请至少选择一个自动发布账号，或关闭自动发布。",
+      "autoPublishAccountRequired": "请在“发布到”中选择要发布的 {platforms} 账号，或关闭自动发布。",
       "slideshowTemplateRequired": "请选择幻灯片模板。",
       "scheduleInPast": "请选择将来的时间。",
-      "scheduleNeedsAutoPublish": "排期发布的视频需要选择要发布到的账号（自动发布）。",
+      "scheduleNeedsAutoPublish": "排期的帖子会自动发布：请在“发布到”中开启自动发布并选择账号，或清除排期。",
       "budgetRange": "预算必须介于 {min} 和 {max} 之间。",
-      "scheduleTooFar": "最多只能提前 {days, number} 天排期。"
+      "scheduleTooFar": "最多只能提前 {days, number} 天排期。",
+      "autoPublishNoMatchingAccount": "您已连接的账号都不能发布到所选平台。请添加 {platforms}、连接其他账号，或关闭自动发布。",
+      "scheduleNeedsAccount": "排期的帖子会自动发布，因此需要为所选平台之一连接账号。请连接一个账号，或清除排期。"
     },
     "options": {
       "platforms": "平台",
@@ -550,16 +565,23 @@
       "workflowNone": "尚未设置审批流程",
       "workflowOrg": "组织规则",
       "scheduleNextSlot": "不指定日期——使用定时发布队列的下一个空闲时段",
-      "scheduleNextSlotHint": "在未来 {weeks, plural, other {# 周}}内的第一个空闲发布时间发出。请在日历中设置发布时间。"
+      "scheduleNextSlotHint": "在未来 {weeks, plural, other {# 周}}内的第一个空闲发布时间发出。请在日历中设置发布时间。",
+      "scheduleNeedsAccount": "排期会自动发布，因此需要已连接的账号。",
+      "connectAccount": "连接账号"
     },
     "autoPublish": {
-      "legend": "自动发布",
+      "legend": "发布到",
       "toggle": "批准后自动发布",
       "toggleHint": "视频一经批准（由您批准或自动批准），就会发布到下方账号。",
       "account": "{platform} 账号",
       "noAccount": "没有已连接的账号。",
       "connectOne": "去连接",
-      "dontAutoPublish": "不自动发布"
+      "dontAutoPublish": "不自动发布",
+      "offHint": "{source, select, SLIDESHOW {幻灯片} other {视频}}会保存以供审核，由您在其页面上自行发布。",
+      "noAccounts": "没有已连接的账号 — {source, select, SLIDESHOW {幻灯片} other {视频}}会保存以供审核，不会发布。",
+      "connectAccount": "连接账号",
+      "noMatching": "您已连接的账号都不能发布到上面所选的平台。您的账号可发布到 {platforms}。",
+      "notPosted": "不会自动发布（没有已连接的账号）：{platforms}。"
     },
     "templatePicker": {
       "legend": "模板",
@@ -674,7 +696,9 @@
       "scheduled": "{count, plural, other {已排期 # 条帖子。}}",
       "publishing": "{count, plural, other {正在发布 # 条帖子。}}",
       "scheduleTooFar": "请选择 {days, number} 天以内的时间。",
-      "scheduleInPast": "请选择至少一分钟之后的时间。"
+      "scheduleInPast": "请选择至少一分钟之后的时间。",
+      "noAccounts": "尚未连接任何账号，因此没有可发布的位置。视频会保存在这里。",
+      "connectAccount": "连接账号"
     },
     "publications": {
       "empty": "尚无已发布或已排期的内容。",
@@ -2544,7 +2568,13 @@
           "open": "打开"
         },
         "jobCounts": "{succeeded} 成功 · {failed} 失败",
-        "jobCountsRunning": "{succeeded} 成功 · {failed} 失败 · {running} 运行中"
+        "jobCountsRunning": "{succeeded} 成功 · {failed} 失败 · {running} 运行中",
+        "accountHold": "已暂停：{problem}，至 {until} UTC",
+        "holdClass": {
+          "auth": "API 密钥被拒绝",
+          "insufficient_credits": "额度已用完",
+          "account_limit": "已达用量上限"
+        }
       }
     },
     "killSwitch": {
@@ -3497,7 +3527,8 @@
       "scan_cost_cap": "扫描已在费用上限（{amount}）处停止。",
       "scan_images_capped": "扫描已达到费用上限（{amount}）：部分图片未编入搜索索引。",
       "ownership_disputed": "已停止：网站所有权存在争议。",
-      "provider_failure": "{source} 报告了问题：{problem}。"
+      "provider_failure": "{source} 报告了问题：{problem}。",
+      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。"
     },
     "classes": {
       "rate_limited": "请求过多",
@@ -3514,7 +3545,8 @@
       "quota_exceeded": "已达到配额",
       "invalid_media": "视频文件被拒绝",
       "outcome_unknown": "结果未知——重试前请先在平台上确认",
-      "unknown": "未知错误"
+      "unknown": "未知错误",
+      "account_limit": "已达到用量上限"
     }
   },
   "marketing": {
@@ -4834,13 +4866,16 @@
         "startRequired": "请选择开始日期。",
         "daysRange": "请选择 1 到 {max} 天。",
         "platformRequired": "请至少选择一个平台。",
-        "accountRequired": "请为每个平台选择一个已连接的账号：帖子会自动发布。"
+        "accountRequired": "请为每个平台选择要发布的账号。没有已连接账号的平台会制作内容，但不会发布。"
       },
       "noBusiness": {
         "title": "请先选择一个商家",
         "description": "一个月度计划只属于一个商家。",
         "action": "打开商家"
-      }
+      },
+      "noAccountsNotice": "没有已连接的账号：帖子会制作完成并保存以供您审核，而不会排期发布。连接账号后，帖子会按时发布。",
+      "someWithoutAccount": "会制作但不会自动发布（没有已连接的账号）：{platforms}。",
+      "connectAccount": "连接账号"
     },
     "allowance": {
       "title": "本月",
@@ -4972,7 +5007,9 @@
       "addWhen": "日期和时间",
       "addWhenHint": "须在计划日期内，每天最多 4 条帖子。",
       "addSubmit": "添加帖子",
-      "added": "帖子已添加"
+      "added": "帖子已添加",
+      "noAccountsWindow": "此计划没有已连接的账号，因此每条帖子都会制作完成并保存以供您审核，不会自动发布任何内容。整月内容准备好后，您会收到一封邮件。",
+      "generateConfirmBodyNoAccounts": "Studio 会制作每条帖子并保存以供您审核。由于计划没有已连接的账号，不会自动发布任何内容：请在每条帖子的页面上发布。整月内容准备好后，您会收到一封邮件。"
     },
     "view": {
       "calendar": "打开日历",

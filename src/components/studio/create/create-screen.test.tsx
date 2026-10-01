@@ -92,6 +92,9 @@ describe('CreateScreen', () => {
       targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 45 }],
       brief: { rawInput: 'Spring menu launch' },
       brandKitId: 'kit_1',
+      // 20.12: the business's only YouTube account is pre-selected and auto-publish is on.
+      publishPolicy: 'AUTO_ON_APPROVAL',
+      autoPublish: { targets: [{ platform: 'youtube_short', connectionId: 'c1' }] },
     });
     expect(create?.headers['idempotency-key']).toBeTruthy();
     expect(api.find('POST', '/projects/p9/generate')).toHaveLength(1);
@@ -145,6 +148,11 @@ describe('CreateScreen', () => {
     expect(body.sourceType).toBe('SLIDESHOW');
     expect(body.slideshow).toEqual({ templateId: 'tpl_1', topic: 'Five cafe tips' });
     expect(body.brief).toBeUndefined();
+    // 20.12: slideshows auto-publish like videos.
+    expect(body.publishPolicy).toBe('AUTO_ON_APPROVAL');
+    expect(body.autoPublish).toEqual({
+      targets: [{ platform: 'youtube_short', connectionId: 'c1' }],
+    });
     expect(api.find('POST', '/projects/p9/generate')).toHaveLength(0);
   });
 

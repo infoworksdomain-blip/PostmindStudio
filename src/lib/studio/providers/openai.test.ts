@@ -131,6 +131,61 @@ describe('OpenAIAdapter — images', () => {
       'insufficient_credits',
       false,
     ],
+    // 20.11 — developers.openai.com/api/docs/guides/error-codes (read 2026-09-30).
+    [
+      new OpenAI.RateLimitError(
+        429,
+        {
+          code: 'credit_balance_exhausted',
+          type: 'insufficient_quota',
+          message: 'Your organization has no prepaid credits remaining.',
+        },
+        undefined,
+        new Headers(),
+      ),
+      'insufficient_credits',
+      false,
+    ],
+    [
+      new OpenAI.RateLimitError(
+        429,
+        { type: 'insufficient_quota', message: 'You have no credits remaining.' },
+        undefined,
+        new Headers(),
+      ),
+      'insufficient_credits',
+      false,
+    ],
+    [
+      new OpenAI.RateLimitError(
+        429,
+        { code: 'organization_spend_limit_exceeded' },
+        'spend',
+        new Headers(),
+      ),
+      'account_limit',
+      false,
+    ],
+    [
+      new OpenAI.RateLimitError(429, { code: 'project_spend_limit_exceeded' }, 'p', new Headers()),
+      'account_limit',
+      false,
+    ],
+    [
+      new OpenAI.RateLimitError(
+        429,
+        { code: 'organization_usage_limit_exceeded' },
+        'u',
+        new Headers(),
+      ),
+      'account_limit',
+      false,
+    ],
+    [
+      new OpenAI.AuthenticationError(401, { code: 'invalid_api_key' }, 'key', new Headers()),
+      'auth',
+      false,
+    ],
     [
       new OpenAI.BadRequestError(400, { code: 'moderation_blocked' }, 'blocked', new Headers()),
       'content_policy',

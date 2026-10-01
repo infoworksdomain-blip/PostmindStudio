@@ -62,6 +62,11 @@ export interface RouteInput {
   providerScores?: Readonly<Record<string, number>>;
   /** Required: every candidate's cost is estimated from it for the budget check. */
   request: ProviderRequest;
+  /**
+   * 20.11: providers this operation already tried and lost to an account problem (bad key, no
+   * credits, usage limit); skipped as `account_unavailable` so the next candidate is chosen.
+   */
+  excludeProviderIds?: readonly string[];
 }
 
 export const NEUTRAL_SCORE = 0.5;
@@ -89,7 +94,8 @@ export type SkipReason =
   | 'over_budget'
   | 'too_slow'
   | 'no_cost_estimate'
-  | 'circuit_open';
+  | 'circuit_open'
+  | 'account_unavailable';
 
 const STATIC_SKIP_REASONS: ReadonlySet<SkipReason> = new Set<SkipReason>([
   'not_configured',
@@ -224,6 +230,7 @@ async function skipReason(
 ): Promise<SkipReason | undefined> {
   if (!adapter) return 'not_configured';
   if (!adapter.capabilities.includes(capability)) return 'capability_unsupported';
+  if (input.excludeProviderIds?.includes(adapter.providerId)) return 'account_unavailable';
 
   const kill = await deps.killSwitch.check({
     organisationId: input.organisationId,
