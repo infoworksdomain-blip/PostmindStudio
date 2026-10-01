@@ -1,4 +1,8 @@
-import { NoProviderAvailableError, NotFoundError } from '../../../errors';
+import {
+  NoProviderAvailableError,
+  NotFoundError,
+  ProvidersUnavailableError,
+} from '../../../errors';
 import { createScanBudget, scanCostCapPence } from '../../cost/scan-budget';
 import { buildStockLayer, embedMissing, libraryDepsFrom } from '../../images/library';
 import { ingestImage, looksLikeIconOrTracker, MAX_IMAGE_BYTES } from '../../images/ingest';
@@ -225,8 +229,15 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
   }).catch((err: Error) => ({ created: 0, duplicates: 0, skipped: 0, errors: [err.message] }));
   const embedded = await embedMissing({ db: deps.db, providers: scanDeps }, data).catch(
     (err: unknown) => {
-      if (!capped(err)) throw err;
-      return { embedded: 0, costPence: 0, capped: true };
+      if (capped(err)) return { embedded: 0, costPence: 0, capped: true };
+      // 20.11: no embedding provider can take the job (e.g. the account is out of credits; the
+      // operator is alerted). The profile and images are kept; a later library refresh indexes
+      // them. The scan still succeeds and says why search indexing was skipped.
+      if (err instanceof ProvidersUnavailableError) {
+        log.warn({ failures: err.failures }, 'scan images not indexed: no embedding provider');
+        return { embedded: 0, costPence: 0, unavailable: true };
+      }
+      throw err;
     },
   );
 
@@ -236,6 +247,9 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     ...stock.errors,
     ...('capped' in embedded
       ? [`scan_images_capped: ${capNote}: some images were not indexed for search`]
+      : []),
+    ...('unavailable' in embedded
+      ? ['service_unavailable: images were not indexed for search yet']
       : []),
   ];
   await deps.db.websiteScan.update({
