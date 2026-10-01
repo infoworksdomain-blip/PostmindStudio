@@ -23,7 +23,8 @@ export interface MoveHandlers {
 // something on them (a 7-column grid is unreadable at 375px). 20.3: open drip-queue slots
 // (openByDay) follow the day's posts as dashed markers, only in the room a cell has left.
 
-const MAX_PER_CELL = 3;
+// 4 = the most posts one day can hold (max 4 a day), so a full day never hides a post.
+const MAX_PER_CELL = 4;
 
 const NO_OPEN_SLOTS: ReadonlyMap<string, string[]> = new Map();
 const NO_PLANNED: ReadonlyMap<string, PlannedPost[]> = new Map();

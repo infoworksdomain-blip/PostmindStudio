@@ -36,6 +36,22 @@ afterEach(() => vi.unstubAllGlobals());
 const SEPT = new Date(2026, 8, 10);
 
 describe('PublicationsCalendar', () => {
+  it('shows all four posts of a full day in the month grid (the daily maximum)', async () => {
+    mockFetch(() =>
+      ok({
+        data: [8, 11, 14, 17].map((h, i) =>
+          pub(`d${i}`, { scheduledFor: new Date(2026, 8, 14, h, 0).toISOString() }),
+        ),
+        nextCursor: null,
+      }),
+    );
+    renderScreen(<PublicationsCalendar initialDate={SEPT} />);
+    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const cell = grid.querySelector('[data-day="2026-09-14"]') as HTMLElement;
+    expect(within(cell).getAllByRole('link')).toHaveLength(4);
+    expect(within(cell).queryByText(/more/)).toBeNull();
+  });
+
   it('requests the visible window with calendar states and places events on their day', async () => {
     const api = mockFetch(() =>
       ok({
