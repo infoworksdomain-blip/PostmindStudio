@@ -18,7 +18,7 @@ import {
   submitDecision,
   type IngestStatusQuery,
 } from '../library/ingest-runs';
-import { buildBlueprint, styleSignature } from '../library/blueprint';
+import { buildBlueprint, effectiveAllowedModes, styleSignature } from '../library/blueprint';
 import { searchLibrary } from '../library/search';
 import { recommendedVideos, similarVideos } from '../library/similarity';
 import { categoryTree } from '../library/taxonomy';
@@ -75,7 +75,7 @@ const summary = {
   thumbnailS3Key: true,
   category: { select: { slug: true, name: true } },
   analysis: { select: { paceTag: true, moodTag: true, structurePattern: true, shotCount: true } },
-  license: { select: { allowedModes: true } },
+  license: { select: { allowedModes: true, licenseExpires: true } },
 } as const;
 
 type SummaryRow = Prisma.VideoLibraryItemGetPayload<{ select: typeof summary }>;
@@ -84,7 +84,7 @@ async function present(storage: AssetStorage, row: SummaryRow) {
   const { s3Bucket, thumbnailS3Key, license, ...rest } = row;
   return {
     ...rest,
-    allowedModes: license?.allowedModes ?? [],
+    allowedModes: effectiveAllowedModes(license, Date.now()),
     thumbnailUrl: await storage.signedUrl(s3Bucket, thumbnailS3Key, THUMB_TTL_SEC),
   };
 }
@@ -129,7 +129,7 @@ export async function getLibraryVideo(deps: { db: Db; storage: AssetStorage }, i
   void sourceUrl; // attribution stays internal (A3.10)
   return {
     ...rest,
-    allowedModes: license?.allowedModes ?? [],
+    allowedModes: effectiveAllowedModes(license, Date.now()),
     thumbnailUrl: await deps.storage.signedUrl(s3Bucket, thumbnailS3Key, THUMB_TTL_SEC),
     // Only the low-res muted preview rendition is ever signed for users (A3.10).
     previewUrl: await deps.storage.signedUrl(s3Bucket, previewKey(s3Key), PREVIEW_TTL_SEC),
@@ -231,7 +231,7 @@ export async function libraryBlueprint(db: Db, id: string) {
     include: { analysis: true, license: true },
   });
   if (!item?.analysis) throw new NotFoundError('Library video not found');
-  const modes = item.license?.allowedModes ?? [];
+  const modes = effectiveAllowedModes(item.license, Date.now());
   return {
     libraryVideoId: item.id,
     allowedModes: modes,
