@@ -121,3 +121,95 @@ describe('templates and auto-publish', () => {
     ]);
   });
 });
+
+// 20.12 — "platforms" (formats to render) vs "accounts" (connected accounts to post to).
+describe('20.12 auto-publish accounts', () => {
+  const now = Date.parse('2026-10-01T10:00:00Z');
+  const nine = [
+    'tiktok',
+    'instagram_reel',
+    'youtube_short',
+    'youtube',
+    'linkedin_video',
+    'x',
+    'facebook',
+    'instagram_feed',
+    'facebook_feed',
+  ];
+  const screenshot: CreateState = {
+    ...base,
+    brief: 'AheadAi launch',
+    source: 'SLIDESHOW',
+    templateId: 'tpl_1',
+    platforms: nine,
+  };
+
+  it('regression: a slideshow with 9 platforms and no connected account is not blocked', () => {
+    // Auto-publish off (the Create screen forces it off with no account): nothing to choose.
+    expect(validateCreate(screenshot, 'biz', now, [])).toEqual([]);
+    const body = buildCreateBody(screenshot, 'biz', null);
+    expect(body.sourceType).toBe('SLIDESHOW');
+    expect(body.publishPolicy).toBeUndefined();
+    expect(body.autoPublish).toBeUndefined();
+  });
+
+  it('no matching account: says so instead of "choose an account"', () => {
+    const state = { ...base, platforms: ['linkedin_video'], autoPublish: true };
+    expect(validateCreate(state, 'biz', now, ['tiktok'])).toEqual(['autoPublishNoMatchingAccount']);
+    expect(validateCreate(state, 'biz', now, [])).toEqual(['autoPublishNoMatchingAccount']);
+  });
+
+  it('a matching account that is not picked: asks to pick it', () => {
+    const state = { ...base, platforms: ['tiktok', 'x'], autoPublish: true };
+    expect(validateCreate(state, 'biz', now, ['tiktok'])).toEqual(['autoPublishAccountRequired']);
+    expect(
+      validateCreate({ ...state, autoPublishAccounts: { tiktok: 'conn_tt' } }, 'biz', now, [
+        'tiktok',
+      ]),
+    ).toEqual([]);
+  });
+
+  it('a schedule without an account explains that it needs one', () => {
+    const later = { ...base, scheduleAt: '2026-10-05T10:00' };
+    expect(validateCreate(later, 'biz', now, [])).toEqual(['scheduleNeedsAccount']);
+    expect(validateCreate(later, 'biz', now, ['tiktok'])).toEqual(['scheduleNeedsAutoPublish']);
+    expect(validateCreate({ ...base, scheduleNextSlot: true }, 'biz', now, [])).toEqual([
+      'scheduleNeedsAccount',
+    ]);
+  });
+
+  it('slideshows and uploads auto-publish and schedule like videos', () => {
+    const slideshow = {
+      ...screenshot,
+      platforms: ['tiktok'],
+      autoPublish: true,
+      autoPublishAccounts: { tiktok: 'conn_tt' },
+      scheduleAt: '2026-10-05T10:00',
+    };
+    expect(validateCreate(slideshow, 'biz', now, ['tiktok'])).toEqual([]);
+    expect(buildCreateBody(slideshow, 'biz', null)).toMatchObject({
+      sourceType: 'SLIDESHOW',
+      publishPolicy: 'SCHEDULED',
+      scheduledStartAt: new Date('2026-10-05T10:00').toISOString(),
+      autoPublish: { targets: [{ platform: 'tiktok', connectionId: 'conn_tt' }] },
+    });
+    // Before 20.12 a slideshow with a schedule but no auto-publish slipped through.
+    expect(validateCreate({ ...slideshow, autoPublish: false }, 'biz', now, ['tiktok'])).toEqual([
+      'scheduleNeedsAutoPublish',
+    ]);
+    const upload = buildCreateBody(
+      {
+        ...base,
+        source: 'UPLOAD',
+        upload: { id: 'up_1', fileName: 'clip.mp4' },
+        autoPublish: true,
+        autoPublishAccounts: { tiktok: 'conn_tt' },
+        scheduleNextSlot: true,
+      },
+      'biz',
+      null,
+    );
+    expect(upload).toMatchObject({ sourceType: 'UPLOAD', publishPolicy: 'SCHEDULED' });
+    expect(upload.autoPublish?.targets).toHaveLength(1);
+  });
+});

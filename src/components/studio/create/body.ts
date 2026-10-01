@@ -31,7 +31,10 @@ export interface CreateState {
   reviewPolicy: ReviewPolicy | '';
   /** Project template (spec 8.6): its formats replace the platform/length choice. */
   projectTemplate: { id: string; name: string; platforms: string[] } | null;
-  /** publishPolicy AUTO_ON_APPROVAL with one chosen connection per platform. */
+  /**
+   * publishPolicy AUTO_ON_APPROVAL with one chosen connection per platform (videos, slideshows
+   * and uploads alike; 20.12).
+   */
   autoPublish: boolean;
   autoPublishAccounts: Record<string, string>;
   /** 13.5: the completed source-video upload (POST /uploads → /complete). */
@@ -88,19 +91,28 @@ export type CreateProblem =
   | 'briefTooLong'
   | 'platformRequired'
   | 'autoPublishAccountRequired'
+  | 'autoPublishNoMatchingAccount'
   | 'slideshowTemplateRequired'
   | 'scheduleInPast'
   | 'scheduleTooFar'
   | 'scheduleNeedsAutoPublish'
+  | 'scheduleNeedsAccount'
   | 'budgetRange';
 
 export const MAX_BUDGET_POUNDS = 100_000;
 
-/** Problems that stop submission (empty = OK). */
+/**
+ * Problems that stop submission (empty = OK). `publishable` (20.12): the render platforms this
+ * business has a connected account for, when known — it tells "pick one of your accounts" apart
+ * from "none of your accounts posts to the chosen platforms". Auto-publish and scheduling work
+ * the same for videos, slideshows and uploads (the API enforces the same rule:
+ * automation/targets.ts assertTargetsForPolicy).
+ */
 export function validateCreate(
   state: CreateState,
   businessId: string | null,
   now: number = Date.now(),
+  publishable?: readonly string[],
 ): CreateProblem[] {
   const problems: CreateProblem[] = [];
   const templated = usesTemplate(state);
@@ -110,20 +122,30 @@ export function validateCreate(
   if (!state.brief.trim() && !templated && !uploading) problems.push('briefRequired');
   if (state.brief.length > BRIEF_MAX) problems.push('briefTooLong');
   if (state.platforms.length === 0 && !templated) problems.push('platformRequired');
+  const matching = publishable
+    ? publishPlatforms(state).filter((p) => publishable.includes(p))
+    : publishPlatforms(state);
   if (
     state.autoPublish &&
     buildTargets(publishPlatforms(state), state.autoPublishAccounts).length === 0
   )
-    problems.push('autoPublishAccountRequired');
+    problems.push(matching.length ? 'autoPublishAccountRequired' : 'autoPublishNoMatchingAccount');
   if (state.source === 'SLIDESHOW' && !state.templateId) problems.push('slideshowTemplateRequired');
-  if (state.scheduleNextSlot && state.source !== 'SLIDESHOW') {
-    if (!state.autoPublish) problems.push('scheduleNeedsAutoPublish');
+  const needsAccount = () =>
+    state.autoPublish
+      ? null
+      : matching.length
+        ? 'scheduleNeedsAutoPublish'
+        : 'scheduleNeedsAccount';
+  if (state.scheduleNextSlot) {
+    const problem = needsAccount();
+    if (problem) problems.push(problem);
   } else if (state.scheduleAt) {
     const at = Date.parse(state.scheduleAt);
+    const problem = needsAccount();
     if (!Number.isFinite(at) || at <= now) problems.push('scheduleInPast');
     else if (isBeyondScheduleWindow(at, now)) problems.push('scheduleTooFar');
-    else if (!state.autoPublish && state.source !== 'SLIDESHOW')
-      problems.push('scheduleNeedsAutoPublish');
+    else if (problem) problems.push(problem);
   }
   if (state.budgetPounds.trim()) {
     const value = Number(state.budgetPounds);
@@ -201,7 +223,8 @@ export function buildCreateBody(
   const extras = (state.extraLanguages ?? []).filter((l) => l !== state.language);
   if (extras.length) body.languages = extras;
   if (state.approvalWorkflowId) body.approvalWorkflowId = state.approvalWorkflowId;
-  if (state.autoPublish && state.source !== 'SLIDESHOW') {
+  // 20.12: slideshows auto-publish and schedule exactly like videos (the API always allowed it).
+  if (state.autoPublish) {
     body.publishPolicy = 'AUTO_ON_APPROVAL';
     // 15.A5: a scheduled project publishes to the same targets at the chosen time; 20.3: or,
     // with no date, at the next free posting time of the business's drip queue.

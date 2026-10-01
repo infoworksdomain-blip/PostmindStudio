@@ -55,6 +55,31 @@ describe('PublishPanel', () => {
     expect(parseHashtags('#spring, menu  #spring ##new')).toEqual(['spring', 'menu', 'new']);
   });
 
+  it('20.12: with no connected account it says so once and links to Connections', async () => {
+    mockFetch([
+      {
+        match: '/platform-connections',
+        body: { ok: true, data: [], meta: { connect: 'studio', configured: true } },
+      },
+    ]);
+    renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
+    expect(
+      await screen.findByText(/No connected accounts yet, so there is nowhere to publish/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Connect an account' })).toHaveAttribute(
+      'href',
+      '/connections',
+    );
+    expect(screen.getByRole('button', { name: 'Publish now (0)' })).toBeDisabled();
+  });
+
+  it('20.12: no notice while some variant has an account', async () => {
+    mockFetch([{ match: '/platform-connections', body: connections }]);
+    renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
+    await screen.findByLabelText('Account');
+    expect(screen.queryByText(/nowhere to publish/)).not.toBeInTheDocument();
+  });
+
   it('standalone: a missing Instagram account links to Connections, not PostMind settings', async () => {
     mockFetch([
       {

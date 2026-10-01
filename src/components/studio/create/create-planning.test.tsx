@@ -20,10 +20,18 @@ const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }), usePathname: () => '/new' }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-function routes(planTier: string): MockRoute[] {
+const TIKTOK = {
+  id: 'conn_tt',
+  businessId: 'biz_1',
+  platform: 'tiktok',
+  platformAccountName: 'Acme TikTok',
+  state: 'active',
+};
+
+function routes(planTier: string, connections: unknown[] = []): MockRoute[] {
   return [
     { match: '/brand-kits', body: { ok: true, data: [] } },
-    { match: '/platform-connections', body: { ok: true, data: [] } },
+    { match: '/platform-connections', body: { ok: true, data: connections } },
     { match: '/usage', body: { ok: true, usage: { planTier } } },
     {
       match: '/approval-workflows',
@@ -144,7 +152,7 @@ describe('create body helpers', () => {
   });
 
   it('20.3: the schedule input carries min/max and the next-slot option disables it', async () => {
-    mockFetch(routes('PLUS'));
+    mockFetch(routes('PLUS', [TIKTOK]));
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(await screen.findByLabelText('What’s the video about?'), 'Launch');
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));

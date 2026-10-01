@@ -42,6 +42,8 @@ export function PlanEditor({ plan, onChange }: { plan: Plan; onChange: Change })
   const ids = items.map((i) => i.id);
   const counts = kindCounts(items);
   const base = `/content-plans/${plan.id}`;
+  // 20.12: a plan with no connected account makes its posts and saves them for review.
+  const noAccounts = plan.targets !== undefined && plan.targets.length === 0;
 
   async function call(path: string, method: Method, body?: unknown, success?: string) {
     try {
@@ -90,7 +92,9 @@ export function PlanEditor({ plan, onChange }: { plan: Plan; onChange: Change })
           })}{' '}
           {t('allowanceUse', { count: items.length })}
         </p>
-        <p className="text-xs text-muted-foreground">{t('reviewWindow')}</p>
+        <p className="text-xs text-muted-foreground">
+          {noAccounts ? t('noAccountsWindow') : t('reviewWindow')}
+        </p>
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setConfirming('generate')}
@@ -133,7 +137,7 @@ export function PlanEditor({ plan, onChange }: { plan: Plan; onChange: Change })
         open={confirming === 'generate'}
         onOpenChange={(open) => !open && setConfirming(null)}
         title={t('generateConfirmTitle', { count: items.length })}
-        description={t('generateConfirmBody')}
+        description={noAccounts ? t('generateConfirmBodyNoAccounts') : t('generateConfirmBody')}
         confirmLabel={t('generate')}
         cancelLabel={t('notYet')}
         destructive={false}
