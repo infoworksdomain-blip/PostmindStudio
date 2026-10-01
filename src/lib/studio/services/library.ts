@@ -18,6 +18,7 @@ import {
   submitDecision,
   type IngestStatusQuery,
 } from '../library/ingest-runs';
+import { categorySlugFilter } from '../library/category-filter';
 import { buildBlueprint, effectiveAllowedModes, styleSignature } from '../library/blueprint';
 import { searchLibrary } from '../library/search';
 import { recommendedVideos, similarVideos } from '../library/similarity';
@@ -95,7 +96,7 @@ export async function listLibraryVideos(
 ) {
   const where: Prisma.VideoLibraryItemWhereInput = {
     ...USABLE_LIBRARY_ITEM,
-    ...(query.category && { category: { slug: { startsWith: query.category } } }),
+    ...(query.category && { category: categorySlugFilter(query.category) }),
     ...(query.tags?.length && { tags: { hasEvery: query.tags } }),
     ...((query.durationMin !== undefined || query.durationMax !== undefined) && {
       durationSec: {
