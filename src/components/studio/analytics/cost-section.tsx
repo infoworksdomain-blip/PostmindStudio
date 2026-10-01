@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormat } from '@/lib/client/format';
+import { useProjectName } from '@/lib/client/use-project-name';
 import { ErrorState, Section } from '../primitives';
 import { AreaChart, useShortDay } from './area-chart';
 import { BarList } from './bar-list';
@@ -42,6 +43,7 @@ export function CostSection({
   const t = useTranslations('analytics.cost');
   const f = useFormat();
   const shortDay = useShortDay();
+  const projectName = useProjectName();
   if (error)
     return (
       <Section title={t('title')}>
@@ -99,11 +101,8 @@ export function CostSection({
             rows={data.byProject.slice(0, 8).map((p) => ({
               key: p.projectId ?? 'none',
               label: p.projectId ? (
-                <Link
-                  href={`/projects/${p.projectId}`}
-                  className="font-mono text-xs hover:underline"
-                >
-                  {p.projectId}
+                <Link href={`/projects/${p.projectId}`} className="text-sm hover:underline">
+                  {projectName(p.name)}
                 </Link>
               ) : (
                 <span className="text-muted-foreground">{t('byProject.none')}</span>

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Publication } from '@/lib/client/types';
 import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
+import { zoneLabel } from './month';
 import { PublicationsCalendar } from './publications-calendar';
 import { MAX_PAGES } from './use-calendar-publications';
 import type { UpcomingSlots } from './use-upcoming-slots';
@@ -36,6 +37,61 @@ afterEach(() => vi.unstubAllGlobals());
 const SEPT = new Date(2026, 8, 10);
 
 describe('PublicationsCalendar', () => {
+  it('says which time zone the times are in', async () => {
+    mockFetch(() => ok({ data: [], nextCursor: null }));
+    renderScreen(<PublicationsCalendar initialDate={SEPT} />);
+    const zone = zoneLabel(new Date(2026, 8, 15), 'en-GB');
+    expect(
+      await screen.findByText(`Times are shown in your time zone: ${zone}.`),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the empty-month text in the grid (desktop) as well as the agenda (phones)', async () => {
+    mockFetch(() => ok({ data: [], nextCursor: null }));
+    renderScreen(<PublicationsCalendar initialDate={SEPT} />);
+    const messages = await screen.findAllByText('Nothing scheduled or published this month.');
+    expect(messages).toHaveLength(2);
+    const grid = screen.getByRole('list', { name: 'Days of the month' });
+    expect(grid.parentElement).toContainElement(messages[0] as HTMLElement);
+  });
+
+  it('shows a failed publication as failed and retries it from the calendar', async () => {
+    const user = userEvent.setup();
+    const api = mockFetch((req) => {
+      if (req.method === 'POST' && req.url.pathname.endsWith('/publications/f1/retry'))
+        return ok({ publication: {} });
+      if (req.url.pathname.endsWith('/publications'))
+        return ok({
+          data: [pub('f1', { state: 'FAILED', errorReason: 'quota' })],
+          nextCursor: null,
+        });
+      return undefined;
+    });
+    renderScreen(<PublicationsCalendar initialDate={SEPT} />);
+    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    expect(
+      within(grid).getByRole('link', { name: /Video f1, YouTube Shorts, Failed/ }),
+    ).toBeInTheDocument();
+    await user.click(within(grid).getByRole('button', { name: 'Retry Video f1' }));
+    await waitFor(() => expect(api.find('POST', '/publications/f1/retry')).toHaveLength(1));
+  });
+
+  it('shows all four posts of a full day in the month grid (the daily maximum)', async () => {
+    mockFetch(() =>
+      ok({
+        data: [8, 11, 14, 17].map((h, i) =>
+          pub(`d${i}`, { scheduledFor: new Date(2026, 8, 14, h, 0).toISOString() }),
+        ),
+        nextCursor: null,
+      }),
+    );
+    renderScreen(<PublicationsCalendar initialDate={SEPT} />);
+    const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    const cell = grid.querySelector('[data-day="2026-09-14"]') as HTMLElement;
+    expect(within(cell).getAllByRole('link')).toHaveLength(4);
+    expect(within(cell).queryByText(/more/)).toBeNull();
+  });
+
   it('requests the visible window with calendar states and places events on their day', async () => {
     const api = mockFetch(() =>
       ok({
@@ -66,7 +122,7 @@ describe('PublicationsCalendar', () => {
     expect(within(agenda).getAllByRole('link')).toHaveLength(2);
 
     const q = api.find('GET', '/publications')[0]!.url.searchParams;
-    expect(q.get('state')).toBe('SCHEDULED,PUBLISHING,PUBLISHED');
+    expect(q.get('state')).toBe('SCHEDULED,PUBLISHING,PUBLISHED,FAILED');
     expect(new Date(q.get('from')!).getTime()).toBe(new Date(2026, 7, 31).getTime());
     expect(new Date(q.get('to')!).getTime()).toBe(new Date(2026, 9, 5).getTime());
   });
@@ -75,7 +131,7 @@ describe('PublicationsCalendar', () => {
     const api = mockFetch(() => ok({ data: [], nextCursor: null }));
     const user = userEvent.setup();
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
-    await screen.findByText('Nothing scheduled or published this month.');
+    await screen.findAllByText('Nothing scheduled or published this month.');
     await user.click(screen.getByRole('button', { name: 'Next month' }));
     expect(screen.getByRole('heading', { name: /October 2026/ })).toBeInTheDocument();
     await waitFor(() => expect(api.find('GET', '/publications')).toHaveLength(2));
@@ -207,26 +263,24 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     expect(screen.getByRole('heading', { name: 'Drip queue' })).toHaveFocus();
   });
 
-  it('a posting plan fills the slots, which save (turning the queue on) and refresh the markers', async () => {
+  it('20.14: a posting schedule saves (turning the queue on) and refreshes the markers', async () => {
     const api = server(upcoming());
     const user = userEvent.setup();
     renderScreen(<PublicationsCalendar initialDate={new Date()} />);
-    const plans = await screen.findByRole('group', { name: 'Quick posting plans' });
-    await user.click(within(plans).getByRole('button', { name: '5 a week' }));
-    expect(within(plans).getByRole('button', { name: '5 a week' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    // The saved Monday 12:30 slot reopens as a weekly schedule.
+    expect(await screen.findByRole('radio', { name: 'Times a week' })).toBeChecked();
+    await user.selectOptions(screen.getByLabelText('Posts a week'), '5');
     expect(screen.getAllByLabelText(/^Slot \d day$/)).toHaveLength(5);
-    expect(screen.getByText(/5 slots filled in — check them, then save\./)).toBeInTheDocument();
     const before = api.find('GET', UPCOMING).length;
-    await user.click(screen.getByRole('button', { name: 'Save slots' }));
+    await user.click(screen.getByRole('button', { name: 'Save schedule' }));
     await waitFor(() => expect(api.find('PUT', QUEUE)).toHaveLength(1));
     const body = api.find('PUT', QUEUE)[0]!.body as {
       slots: Array<{ weekday: number; time: string; timezone: string }>;
+      schedule: { mode: string; postsPerWeek: number };
       enabled: boolean;
     };
     expect(body.enabled).toBe(true);
+    expect(body.schedule).toMatchObject({ mode: 'weekly', postsPerWeek: 5 });
     expect(body.slots.map((s) => s.weekday)).toEqual([1, 2, 3, 4, 5]);
     expect(body.slots.every((s) => s.time === '12:30' && s.timezone === 'Europe/London')).toBe(
       true,

@@ -18,6 +18,7 @@ import {
   monthOf,
   moveToDay,
   shiftMonth,
+  zoneLabel,
 } from './month';
 import { useBusiness } from '../business-context';
 import { DripQueuePanel } from './drip-queue';
@@ -26,6 +27,7 @@ import { groupPlannedByDay } from './planned-slot';
 import { summaryWindow, useUpcomingSlots } from './use-upcoming-slots';
 import { AgendaList, MonthGrid, type MoveHandlers } from './month-views';
 import { MoveToDialog, useReschedule } from './reschedule';
+import { useRetryPublication } from './retry';
 import type { Publication } from '@/lib/client/types';
 import { MAX_PAGES, PAGE_LIMIT, useCalendarPublications } from './use-calendar-publications';
 
@@ -68,9 +70,12 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   const title = formatMonth(month, f.locale);
   const [moving, setMoving] = useState<Publication | null>(null);
   const { move, pending } = useReschedule(() => void mutate());
+  const { retry, retrying } = useRetryPublication(() => void mutate());
   const moveHandlers: MoveHandlers = {
     onMove: setMoving,
     pendingId: pending,
+    onRetry: (p) => void retry(p),
+    retryingId: retrying,
     onDropOnDay: (id, day) => {
       const publication = data?.publications.find((p) => p.id === id);
       if (!publication?.scheduledFor) return;
@@ -137,6 +142,9 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
       </div>
 
       <MonthAheadSummary upcoming={summary.data?.upcoming ?? undefined} />
+      <p className="mb-3 text-xs text-muted-foreground">
+        {t('timeZone', { zone: zoneLabel(new Date(month.year, month.month, 15), f.locale) })}
+      </p>
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-[32rem] rounded-xl" />}
       {data && (

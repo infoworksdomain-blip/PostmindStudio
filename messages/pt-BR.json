@@ -1435,7 +1435,9 @@
       "ariaAt": "{name}, {platform}, {state} às {time}",
       "meta": "{platform} · {state}",
       "moveAria": "Mover {name} para outro horário",
-      "moveTitle": "Mover para outro horário"
+      "moveTitle": "Mover para outro horário",
+      "retryAria": "Tentar {name} novamente",
+      "retryTitle": "Tentar esta publicação novamente"
     },
     "move": {
       "tooSoon": "Escolha um horário pelo menos um minuto à frente.",
@@ -1458,16 +1460,67 @@
       "slotTime": "Hora do horário {n}",
       "removeSlot": "Remover horário {n}",
       "addSlot": "Adicionar horário",
-      "saveSlots": "Salvar horários",
-      "presetsLabel": "Planos de postagem rápidos",
-      "presetsHint": "Um plano preenche os horários abaixo no seu fuso horário; altere o que quiser e salve.",
-      "presetFilled": "{count, plural, one {# horário preenchido} other {# horários preenchidos}} — confira e salve.",
-      "presets": {
-        "three": "3 por semana",
-        "five": "5 por semana",
-        "daily": "Todos os dias"
-      },
-      "off": "A fila de postagem está desativada, então os vídeos definidos para o próximo horário livre não são agendados. Salve os horários para ativá-la."
+      "off": "A fila de postagem está desativada, então os vídeos definidos para o próximo horário livre não são agendados. Salve os horários para ativá-la.",
+      "schedule": {
+        "howOften": "Frequência",
+        "modeDaily": "Todos os dias",
+        "modeWeekly": "Vezes por semana",
+        "customNotice": "Estes horários foram definidos um a um em Avançado. Escolha Todos os dias ou Vezes por semana para substituí-los por uma agenda.",
+        "postsPerDay": "Posts por dia",
+        "postsPerWeek": "Posts por semana",
+        "maxPerDay": "No máximo {max} posts por dia.",
+        "days": "Dias de postagem",
+        "daysHintDaily": "Desmarque um dia para pulá-lo.",
+        "daysHintWeekly": "Os posts da semana são distribuídos entre estes dias.",
+        "times": "Horários dos posts",
+        "timesSystem": "Escolha os horários por mim",
+        "timesChoose": "Eu escolho os horários",
+        "timesInterval": "Em intervalos regulares",
+        "timesLine": "Os posts saem às {times}.",
+        "systemHint": "Corrija o problema indicado para ver os horários.",
+        "changeTimes": "Mudar estes horários",
+        "postTime": "Post {n}",
+        "chooseHint": "O mais cedo primeiro, com pelo menos {minutes} minutos de diferença.",
+        "intervalHow": "Como o intervalo é definido",
+        "intervalUser": "A cada poucas horas a partir de um horário inicial",
+        "intervalSystem": "Distribuir no meu horário de postagem",
+        "every": "A cada",
+        "startAt": "Começando às",
+        "windowStart": "Horário de postagem das",
+        "windowEnd": "Até",
+        "timezone": "Fuso horário",
+        "hours": "{count, plural, one {# hora} other {# horas}}",
+        "minutes": "{count, plural, one {# minuto} other {# minutos}}",
+        "hoursMinutes": "{hours} h {minutes} min",
+        "previewTitle": "Próximos 7 dias",
+        "previewEmpty": "Nenhum post nos próximos 7 dias.",
+        "save": "Salvar agenda",
+        "advanced": "Avançado: editar cada horário ({count})",
+        "advancedHint": "Todos os horários semanais que sua agenda cria. Altere, adicione ou remova qualquer um para ter controle total; a agenda passa a ser personalizada.",
+        "summary": {
+          "custom": "{count, plural, one {# post por semana} other {# posts por semana}}, definidos um a um",
+          "perDay": "{count, plural, one {# post por dia} other {# posts por dia}}",
+          "perWeek": "{count, plural, one {# post por semana} other {# posts por semana}}",
+          "onDays": "nos dias {days}",
+          "every": "a cada {interval} a partir das {start}",
+          "spread": "distribuídos das {start} às {end}",
+          "at": "às {times}",
+          "none": "Ainda não há horários de postagem."
+        },
+        "problems": {
+          "days_empty": "Escolha pelo menos um dia de postagem.",
+          "days_duplicate": "Cada dia de postagem só pode ser escolhido uma vez.",
+          "week_too_many": "No máximo {max} posts por dia: escolha mais dias ou menos posts por semana.",
+          "week_too_few": "Menos posts por semana do que dias de postagem: escolha menos dias ou mais posts.",
+          "times_count": "Informe um horário para cada post do dia.",
+          "times_order": "Os horários devem estar em ordem, o mais cedo primeiro.",
+          "times_gap": "Posts do mesmo dia precisam ter pelo menos {minutes} minutos de diferença.",
+          "interval_overflow": "O intervalo passa da meia-noite: comece mais cedo ou poste com menos frequência.",
+          "window_order": "O horário de postagem precisa terminar depois de começar.",
+          "window_too_short": "O horário de postagem é curto demais para manter os posts a {minutes} minutos de distância.",
+          "custom_too_many": "No máximo {max} horários em um dia: remova alguns em Avançado."
+        }
+      }
     },
     "open": {
       "label": "Horário livre",
@@ -1483,7 +1536,8 @@
       "label": "Planejada",
       "aria": "Publicação do plano mensal às {time}: {title} ({status})",
       "legend": "As caixas marcadas como “Planejada” são publicações do plano mensal ainda em produção; depois de agendadas, aparecem como publicações."
-    }
+    },
+    "timeZone": "Os horários são exibidos no seu fuso horário: {zone}."
   },
   "business": {
     "screen": {
@@ -2187,7 +2241,8 @@
         "views": "Visualizações por dia, {days, plural, one {último dia} other {últimos # dias}}",
         "watchTime": "Tempo de exibição por dia, {days, plural, one {último dia} other {últimos # dias}}",
         "engagement": "Engajamento por dia, {days, plural, one {último dia} other {últimos # dias}}"
-      }
+      },
+      "estimated": "Alguns dias são estimativas: faltaram medições, então o crescimento foi distribuído igualmente pelo intervalo."
     },
     "platforms": {
       "title": "Por plataforma",
@@ -3226,8 +3281,9 @@
     },
     "plan": {
       "title": "Planeje seu mês",
-      "body": "Escolha com que frequência postar. Os vídeos agendados para o próximo horário livre saem nesses horários e preenchem o mês seguinte.",
+      "body": "Escolha com que frequência postar. Vídeos agendados para o próximo horário livre saem nestes horários, preenchendo o próximo mês.",
       "saved": "Plano de postagem: {plan}.",
+      "save": "Salvar plano de postagem",
       "openCalendar": "Alterar os horários no calendário"
     }
   },

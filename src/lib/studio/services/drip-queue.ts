@@ -2,8 +2,19 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
-import { addDays, isValidTimeZone, wallClock, zonedToUtc } from '../automation/zoned-time';
 import { DRIP_HORIZON_WEEKS } from '../drip-presets';
+import {
+  MAX_POSTS_PER_DAY,
+  postingScheduleSchema,
+  resolveSchedule,
+  SCHEDULE_PROBLEM_MESSAGES,
+  scheduleProblems,
+  slotSchema,
+  slotsWithinDailyCap,
+  upcomingSlots as upcomingScheduleSlots,
+  type DripSlot,
+  type PostingSchedule,
+} from '../posting-schedule';
 import { PLATFORMS } from './catalog';
 
 // 15.A5 — per-business drip queue (spec 3.1 "Publish now, schedule to time, drip queue,
@@ -31,27 +42,61 @@ export const DEFAULT_STAGGER_MINUTES = 30;
 export const MIN_STAGGER_MINUTES = 15;
 export const MAX_STAGGER_MINUTES = 60;
 
-const slotSchema = z
-  .object({
-    weekday: z.number().int().min(0).max(6),
-    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'time must be HH:MM (24-hour)'),
-    timezone: z
-      .string()
-      .min(1)
-      .max(64)
-      .refine(isValidTimeZone, { message: 'timezone must be an IANA time zone' }),
-  })
-  .strict();
+export type { DripSlot, PostingSchedule };
 
-export type DripSlot = z.infer<typeof slotSchema>;
-
+/**
+ * 20.14: PUT body — `schedule` (daily/weekly) resolves to the slots on the server (any `slots`
+ * sent with it are replaced by the resolved ones, so the stored slots always match the stored
+ * schedule); `schedule.mode: 'custom'` or no schedule keeps the hand-edited `slots`. Every slot
+ * list is at most MAX_DRIP_SLOTS and at most MAX_POSTS_PER_DAY on any weekday.
+ */
 export const dripQueueInput = z
   .object({
-    slots: z.array(slotSchema).min(1).max(MAX_DRIP_SLOTS),
+    slots: z.array(slotSchema).min(1).max(MAX_DRIP_SLOTS).optional(),
+    schedule: postingScheduleSchema.optional(),
     platforms: z.array(z.enum(PLATFORMS)).max(PLATFORMS.length).default([]),
     enabled: z.boolean().default(true),
   })
-  .strict();
+  .strict()
+  .superRefine((input, ctx) => {
+    const simple = input.schedule && input.schedule.mode !== 'custom' ? input.schedule : null;
+    if (simple) {
+      for (const problem of scheduleProblems(simple))
+        ctx.addIssue({
+          code: 'custom',
+          path: ['schedule'],
+          message: SCHEDULE_PROBLEM_MESSAGES[problem],
+          params: { code: problem },
+        });
+      return;
+    }
+    if (!input.slots) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['slots'],
+        message: 'Send slots, or a daily or weekly schedule',
+      });
+      return;
+    }
+    if (!slotsWithinDailyCap(input.slots))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['slots'],
+        message: `At most ${MAX_POSTS_PER_DAY} slots on any day`,
+      });
+  })
+  .transform((input) => {
+    const simple =
+      input.schedule && input.schedule.mode !== 'custom' && !scheduleProblems(input.schedule).length
+        ? input.schedule
+        : null;
+    const slots = simple ? resolveSchedule(simple) : (input.slots ?? []);
+    // No schedule sent (pre-20.14 clients, the API): the hand-made slots are a custom schedule.
+    const schedule: PostingSchedule =
+      input.schedule ??
+      postingScheduleSchema.parse({ mode: 'custom', timezone: slots[0]?.timezone ?? 'UTC' });
+    return { platforms: input.platforms, enabled: input.enabled, schedule, slots };
+  });
 
 /** STUDIO_DEFAULT_STAGGER_MINUTES clamped to the spec's 15–60 (default 30). */
 export function staggerMinutes(env: Record<string, string | undefined> = process.env): number {
@@ -65,25 +110,20 @@ export function parseSlots(value: Prisma.JsonValue): DripSlot[] {
   return parsed.success ? parsed.data : [];
 }
 
+/** 20.14: the stored schedule, or null (none saved yet, or unreadable). */
+export function parseSchedule(value: Prisma.JsonValue | null | undefined): PostingSchedule | null {
+  if (value === null || value === undefined) return null;
+  const parsed = postingScheduleSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 /** Every slot instant after `fromMs` within the horizon, ascending and de-duplicated. */
 export function upcomingSlots(
   slots: DripSlot[],
   fromMs: number,
   horizonDays = DRIP_HORIZON_DAYS,
 ): number[] {
-  const out = new Set<number>();
-  for (const slot of slots) {
-    const [hour, minute] = slot.time.split(':').map(Number) as [number, number];
-    const today = wallClock(fromMs, slot.timezone);
-    for (let d = 0; d <= horizonDays; d += 1) {
-      const date = addDays(today, d);
-      const weekday = new Date(Date.UTC(date.year, date.month - 1, date.day)).getUTCDay();
-      if (weekday !== slot.weekday) continue;
-      const at = zonedToUtc({ ...date, hour, minute }, slot.timezone);
-      if (at > fromMs) out.add(at);
-    }
-  }
-  return [...out].sort((a, b) => a - b);
+  return upcomingScheduleSlots(slots, fromMs, horizonDays);
 }
 
 type SlotDb = Pick<PrismaClient, 'videoProject' | 'autoPublishOutbox' | 'contentPlanItem'>;
@@ -163,6 +203,7 @@ export function firstFreeSlot(slots: DripSlot[], held: Date[], now: number): num
 export function publicDripQueue(
   row: {
     slots: Prisma.JsonValue;
+    schedule?: Prisma.JsonValue | null;
     platforms: string[];
     enabled: boolean;
     updatedAt: Date;
@@ -180,6 +221,7 @@ export function publicDripQueue(
     : null;
   return {
     slots,
+    schedule: parseSchedule(row.schedule),
     platforms: row.platforms,
     enabled: row.enabled,
     staggerMinutes: staggerMinutes(),
@@ -213,22 +255,25 @@ export async function putDripQueue(
   db: PrismaClient,
   tenant: Pick<TenantContext, 'organisationId' | 'userId'>,
   businessId: string,
-  input: z.infer<typeof dripQueueInput>,
+  input: z.output<typeof dripQueueInput>,
   now: number,
 ) {
   const slots = input.slots as unknown as Prisma.InputJsonValue;
+  const schedule = input.schedule as unknown as Prisma.InputJsonValue;
   const row = await db.dripQueue.upsert({
     where: { organisationId_businessId: { organisationId: tenant.organisationId, businessId } },
     create: {
       organisationId: tenant.organisationId,
       businessId,
       slots,
+      schedule,
       platforms: input.platforms,
       enabled: input.enabled,
       updatedByUserId: tenant.userId,
     },
     update: {
       slots,
+      schedule,
       platforms: input.platforms,
       enabled: input.enabled,
       updatedByUserId: tenant.userId,

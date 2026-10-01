@@ -120,3 +120,12 @@ export function fromLocalInput(value: string): Date | null {
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 }
+
+/** The viewer's time zone as shown above the calendar, e.g. "Europe/London (BST)". */
+export function zoneLabel(at: Date, locale: string = DEFAULT_LOCALE): string {
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const short = new Intl.DateTimeFormat(locale, { timeZoneName: 'short' })
+    .formatToParts(at)
+    .find((p) => p.type === 'timeZoneName')?.value;
+  return short && short !== zone ? `${zone} (${short})` : zone;
+}
