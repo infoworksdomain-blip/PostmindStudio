@@ -26,6 +26,7 @@ import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
+import type { LibraryCache } from '../library/cache';
 import type { ThumbnailComposer } from '../services/thumbnail-composer';
 import type { BillingAccessLookup } from '../billing/job-access';
 import type { BillingJobDeps } from '../billing/wiring';
@@ -102,6 +103,11 @@ export interface PipelineDeps {
   thumbnails?: ThumbnailComposer;
   /** 13.26 loudness normalisation + H.264 re-encode after compose; absent = not mastered. */
   mastering?: RenderMastering;
+  /**
+   * 20.15: the shared library read cache; corpus workers bump its version when the catalogue
+   * changes. Absent = no cache (nothing to invalidate).
+   */
+  libraryCache?: LibraryCache;
   /** 15.C3 per-(organisation, provider) rate windows; absent = no Studio-side limits. */
   providerRates?: ProviderRateLimiter;
   /**

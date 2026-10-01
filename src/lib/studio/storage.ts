@@ -36,14 +36,33 @@ export interface StoredObject {
   url: string; // signed GET URL, valid SIGNED_URL_TTL_SEC
 }
 
+/**
+ * 20.15: options for a signed GET URL. `signingDate` signs as of that time instead of now, so
+ * every request inside one window gets the byte-identical URL and browsers / CDNs can cache the
+ * object (library/thumbnail-signing.ts). Validity is signingDate + expiresInSec (capped by
+ * maxPresignSec on R2). @aws-sdk/s3-request-presigner getSignedUrl takes it as
+ * RequestPresigningArguments.signingDate (@smithy/types dist-types/signature.d.ts, SigningArguments
+ * `signingDate?: DateInput`, checked on 3.1141.0).
+ */
+export interface SignedUrlOptions {
+  signingDate?: Date;
+}
+
 export interface AssetStorage {
   put(input: {
     bucket: string;
     key: string;
     body: Uint8Array;
     contentType: string;
+    /** 20.15: Cache-Control stored with the object (served on every GET). */
+    cacheControl?: string;
   }): Promise<StoredObject>;
-  signedUrl(bucket: string, key: string, expiresInSec?: number): Promise<string>;
+  signedUrl(
+    bucket: string,
+    key: string,
+    expiresInSec?: number,
+    options?: SignedUrlOptions,
+  ): Promise<string>;
   /** Object size in bytes. */
   size(bucket: string, key: string): Promise<number>;
   /** Bytes [start, endInclusive] of an object (for chunked platform uploads). */
@@ -230,9 +249,15 @@ export function storageOptionsFor(provider: StorageProvider): S3StorageOptions {
 export function createS3Storage(client: S3Client, options: S3StorageOptions = {}): AssetStorage {
   const now = options.now ?? Date.now;
   const tagging = options.objectTagging ?? true;
-  async function signedUrl(bucket: string, key: string, expiresInSec = SIGNED_URL_TTL_SEC) {
+  async function signedUrl(
+    bucket: string,
+    key: string,
+    expiresInSec = SIGNED_URL_TTL_SEC,
+    signing: SignedUrlOptions = {},
+  ) {
     if (options.cdn && bucket === options.cdn.bucket) {
-      return cloudFrontSignedUrl(options.cdn, key, expiresInSec, now());
+      const from = signing.signingDate?.getTime() ?? now();
+      return cloudFrontSignedUrl(options.cdn, key, expiresInSec, from);
     }
     const expiresIn =
       options.maxPresignSec === undefined
@@ -240,16 +265,18 @@ export function createS3Storage(client: S3Client, options: S3StorageOptions = {}
         : Math.min(expiresInSec, options.maxPresignSec);
     return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
       expiresIn,
+      ...(signing.signingDate && { signingDate: signing.signingDate }),
     });
   }
   return {
-    async put({ bucket, key, body, contentType }) {
+    async put({ bucket, key, body, contentType, cacheControl }) {
       await client.send(
         new PutObjectCommand({
           Bucket: bucket,
           Key: key,
           Body: body,
           ContentType: contentType,
+          ...(cacheControl && { CacheControl: cacheControl }),
           Tagging: tagging ? objectTaggingFor(key) : undefined,
         }),
       );

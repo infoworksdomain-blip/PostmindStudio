@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { NotFoundError, ValidationError } from '../../errors';
 import { categorySlugFilter } from '../library/category-filter';
 import { LICENSE_SCENARIOS, PLATFORM_ORG } from '../library/ingest';
+import type { LibraryCache } from '../library/cache';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { AssetStorage } from '../storage';
@@ -183,7 +184,7 @@ async function resolveCategory(db: Db, input: z.infer<typeof bulkInput>): Promis
 
 /** POST /admin/library/videos/bulk — accept / override / reject the categorisation of ≤100 items. */
 export async function bulkReviewLibraryVideos(
-  deps: { db: Db; now: () => number },
+  deps: { db: Db; now: () => number; libraryCache?: LibraryCache },
   input: z.infer<typeof bulkInput>,
 ): Promise<BulkResult> {
   const categoryId = await resolveCategory(deps.db, input);
@@ -214,6 +215,8 @@ export async function bulkReviewLibraryVideos(
     });
     return result.count;
   });
+  // 20.15: categories (and, for reject, retirement) changed: user reads must see it now.
+  await deps.libraryCache?.bump(`bulk-${input.action}`);
   return { action: input.action, updated: ids, missing, retired, categoryId };
 }
 

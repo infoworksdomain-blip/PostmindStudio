@@ -8,7 +8,7 @@ export const POST = withStudioRoute(
   async ({ deps, params, audit, tenant }) => {
     requirePlatformStaff(tenant);
     const id = params.id ?? '';
-    await retireLibraryVideo(deps.db, id, deps.now());
+    await retireLibraryVideo(deps.db, id, deps.now(), deps.libraryCache);
     audit('studio.library.retire', { type: 'video_library', id });
     return { body: { retired: true } };
   },

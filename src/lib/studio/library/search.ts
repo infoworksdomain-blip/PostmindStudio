@@ -3,9 +3,11 @@ import { ProviderError, ValidationError } from '../../errors';
 import { vectorLiteral } from '../images/ingest';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
+import { EMBEDDING_MODEL, PROVIDER_ID as OPENAI_PROVIDER_ID } from '../providers/openai';
 import type { PlanTier } from '../providers/router';
 import { vectorSql } from '../vector-sql';
 import { categoryLikeParams } from './category-filter';
+import { createUncachedLibraryCache, type LibraryCache } from './cache';
 
 // BACKLOG 13.8 — free-text library search (POST /library/search). The query is embedded with the
 // same embedding path the corpus uses (runProvider → 'embedding', 1536 dims, A7.4), ranked by
@@ -14,6 +16,11 @@ import { categoryLikeParams } from './category-filter';
 // items never appear (A7.4: rows without a licence are rejected from search results).
 
 export const EMBEDDING_DIMENSIONS = 1536;
+/**
+ * 20.15: the query-embedding cache key's model part. Only OpenAI's vectors are cached (the
+ * corpus is embedded with the same model); another provider's answer is used but not shared.
+ */
+export const QUERY_EMBEDDING_MODEL = `${OPENAI_PROVIDER_ID}:${EMBEDDING_MODEL}:${EMBEDDING_DIMENSIONS}`;
 /** Boost when any query word appears in the title. */
 export const TITLE_BOOST = 0.1;
 /** Boost per query word that is one of the item's tags, capped at TAG_BOOST_CAP. */
@@ -87,7 +94,7 @@ async function embedQuery(
   providers: ProviderRunDeps,
   scope: { organisationId: string; planTier: PlanTier },
   q: string,
-): Promise<number[]> {
+): Promise<{ vector: number[]; cacheable: boolean }> {
   const run = await runProvider(
     {
       need: { kind: 'capability', capability: 'embedding' },
@@ -104,11 +111,13 @@ async function embedQuery(
   const vector = (run.output.metadata as { embeddings?: number[][] }).embeddings?.[0];
   if (!vector || vector.length !== EMBEDDING_DIMENSIONS)
     throw new ProviderError('embedding', 'unknown', 'Embedding had the wrong shape', true);
-  return vector;
+  return { vector, cacheable: run.decision.providerId === OPENAI_PROVIDER_ID };
 }
 
+const UNCACHED = createUncachedLibraryCache();
+
 export async function searchLibrary(
-  deps: { db: PrismaClient; providers: ProviderRunDeps },
+  deps: { db: PrismaClient; providers: ProviderRunDeps; cache?: LibraryCache },
   scope: { organisationId: string; planTier: PlanTier },
   input: {
     q: string;
@@ -119,7 +128,10 @@ export async function searchLibrary(
 ): Promise<SearchPage> {
   const offset = parseCursor(input.cursor);
   const terms = queryTerms(input.q);
-  const vector = await embedQuery(deps.providers, scope, input.q);
+  // 20.15: a query already embedded (by anyone, in the last 30 days) costs no provider call.
+  const vector = await (deps.cache ?? UNCACHED).embedding(QUERY_EMBEDDING_MODEL, input.q, () =>
+    embedQuery(deps.providers, scope, input.q),
+  );
   const literal = vectorLiteral(vector);
   const v = await vectorSql(deps.db);
   const category = categoryLikeParams(input.categorySlug);

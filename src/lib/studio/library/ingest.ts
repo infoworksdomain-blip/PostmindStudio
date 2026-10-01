@@ -9,6 +9,7 @@ import type { PlanTier } from '../providers/router';
 import { safeGet } from '../scan/safe-fetch';
 import { assertAllowedS3Source, isS3Url, isSupportedSourceUrl, parseS3Url } from './corpus-source';
 import { openSourceStream, tap } from './source-stream';
+import { THUMBNAIL_CACHE_CONTROL } from './thumbnail-signing';
 import { vectorSql } from '../vector-sql';
 import {
   ANALYSIS_SCHEMA,
@@ -413,12 +414,16 @@ export async function ingestLibraryVideo(
     key: thumbnailS3Key,
     body: thumbnail,
     contentType: 'image/jpeg',
+    // 20.15: content-addressed (the source hash) and never rewritten, so browsers / CDNs may
+    // keep it; the URL itself is stable per signing window (thumbnail-signing.ts).
+    cacheControl: THUMBNAIL_CACHE_CONTROL,
   });
   await deps.storage.put({
     bucket,
     key: previewKey(s3Key),
     body: await deps.media.previewClip(url, PREVIEW_WIDTH, PREVIEW_MAX_SEC),
     contentType: 'video/mp4',
+    cacheControl: THUMBNAIL_CACHE_CONTROL,
   });
 
   // 3–5 + 7 — audio, structure, on-screen text and category
