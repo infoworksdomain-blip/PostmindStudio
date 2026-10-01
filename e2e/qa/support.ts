@@ -188,7 +188,10 @@ export class Watcher {
       );
       if (known) return;
       if (
-        /\/api\/studio\/(library\/recommended|business-profile|domain-verification)/.test(url) &&
+        // Also business-scoped: /businesses/:id/business-profile is 404 until a profile exists.
+        /\/api\/studio\/(?:.*\/)?(library\/recommended|business-profile|domain-verification)(?:\?|$)/.test(
+          url,
+        ) &&
         res.status() === 404
       )
         return;
