@@ -67,7 +67,11 @@ export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
     () => ({ schedule: initialSchedule(queue), custom: queue?.slots ?? [] }),
     [queue],
   );
-  const [draft, setDraft] = useState<Draft | null>(null);
+  // The draft belongs to the business it was made for: switching business must not carry unsaved
+  // edits over, or Save would write one business's schedule to the other (QA-5, 2026-10-01).
+  const [edit, setEdit] = useState<{ businessId: string | null; draft: Draft } | null>(null);
+  const draft = edit && edit.businessId === businessId ? edit.draft : null;
+  const setDraft = (next: Draft | null) => setEdit(next ? { businessId, draft: next } : null);
   const [saving, setSaving] = useState(false);
   const current = draft ?? base;
   const resolved = resolveDraft(current.schedule, current.custom);

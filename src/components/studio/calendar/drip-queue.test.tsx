@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { presetSlots } from '@/lib/studio/drip-presets';
 import { mockFetch, ok, renderScreen } from '../publications/test-utils';
+import { useBusiness } from '../business-context';
 import { DripQueuePanel, type DripQueueView } from './drip-queue';
 
 // 20.14 — the posting-schedule editor in the calendar's drip-queue panel: Every day (1–4 a day)
@@ -225,5 +226,34 @@ describe('DripQueuePanel posting schedule (20.14)', () => {
       await user.click(screen.getByRole('button', { name: 'Add slot' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('At most 4 times on any day');
     expect(screen.getByRole('button', { name: 'Save schedule' })).toBeDisabled();
+  });
+
+  it('switching business drops unsaved edits instead of saving them to the other business', async () => {
+    const daily = view({ slots: presetSlots('three', ZONE) });
+    mockFetch((req) => {
+      if (!req.url.pathname.endsWith('/drip-queue')) return undefined;
+      return ok({ dripQueue: daily });
+    });
+    function Switch() {
+      const { setBusinessId } = useBusiness();
+      return (
+        <button type="button" onClick={() => setBusinessId('biz_2')}>
+          Switch business
+        </button>
+      );
+    }
+    const user = userEvent.setup();
+    renderScreen(
+      <>
+        <Switch />
+        <DripQueuePanel />
+      </>,
+    );
+    await screen.findByRole('heading', { name: 'Drip queue' });
+    expect(screen.getByRole('radio', { name: 'Times a week' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Every day' }));
+    expect(screen.getByRole('radio', { name: 'Every day' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Switch business' }));
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Times a week' })).toBeChecked());
   });
 });
