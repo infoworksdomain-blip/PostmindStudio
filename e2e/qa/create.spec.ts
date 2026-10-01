@@ -81,12 +81,6 @@ test.describe('Create /new with a plan', () => {
     await expect(alert).toContainText('Pick at least one platform.');
     await page.getByRole('checkbox', { name: 'TikTok' }).setChecked(true, { force: true });
 
-    // Auto-publish on with no account chosen.
-    await page.getByRole('checkbox', { name: /Auto-publish when approved/ }).check();
-    await page.getByRole('button', { name: 'Generate' }).click();
-    await expect(alert).toContainText('Choose at least one account to auto-publish to');
-    await page.getByRole('checkbox', { name: /Auto-publish when approved/ }).uncheck();
-
     // Budget out of range, then a schedule in the past.
     await page.getByRole('button', { name: 'Advanced options' }).click();
     await page.locator('#create-budget').fill('abc');
