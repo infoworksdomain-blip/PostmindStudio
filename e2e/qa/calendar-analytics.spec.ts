@@ -180,7 +180,10 @@ test.describe('calendar', () => {
     await page.close();
     const phone = await newPage(browser, { now: NOW, width: 375 });
     await phone.goto('/calendar');
-    await expect(phone.getByText('Nothing scheduled or published this month.')).toBeVisible();
+    // The desktop grid has the same text but is hidden below md; only the agenda copy shows.
+    await expect(
+      phone.getByText('Nothing scheduled or published this month.').filter({ visible: true }),
+    ).toHaveCount(1);
     await phone.close();
   });
 
