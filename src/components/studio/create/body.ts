@@ -188,7 +188,7 @@ export function buildCreateBody(
     if (!rawInput)
       Object.assign(
         body,
-        optionalName(nameFromBrief(state.upload.fileName.replace(/.[a-z0-9]+$/i, ''))),
+        optionalName(nameFromBrief(state.upload.fileName.replace(/\.[a-z0-9]+$/i, ''))),
       );
     if (rawInput) body.brief = { rawInput };
   } else if (state.source === 'SLIDESHOW' && state.templateId) {

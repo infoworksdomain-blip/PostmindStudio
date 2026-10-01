@@ -38,6 +38,10 @@ export const READ_ONLY_ALLOWLIST: readonly RegExp[] = [
 /** Routes that spend provider money, publish or scan: closed to an organisation with no plan. */
 export const SPEND_ROUTES: readonly RegExp[] = [
   /^\/projects\/[^/]+\/generate$/,
+  // 20.9 month plans: Claude writes the topics and generate makes every post.
+  /^\/content-plans$/,
+  /^\/content-plans\/[^/]+\/(generate|redraft)$/,
+  /^\/content-plans\/[^/]+\/items\/[^/]+\/regenerate$/,
   /^\/projects\/[^/]+\/auto-populate$/,
   /^\/projects\/[^/]+\/auto-publish(\/retry)?$/,
   /^\/projects\/[^/]+\/caption-suggestions$/,

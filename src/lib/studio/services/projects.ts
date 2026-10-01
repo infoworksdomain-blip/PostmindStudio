@@ -6,7 +6,7 @@ import {
   type VideoProjectState,
 } from '@prisma/client';
 import { z } from 'zod';
-import { ConflictError, NotFoundError, ValidationError } from '../../errors';
+import { ConflictError, NotFoundError, UpstreamServiceError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { ACTIVE_PIPELINE_STATES, projectMetadata } from '../pipeline/project-state';
 import { createPrismaProviderJobRepository } from '../providers/job-repository';
@@ -611,7 +611,19 @@ export async function generateProject(
     planTier,
     ...(options.batch && { batch: true }),
   };
-  await deps.queue.add('plan-project', job, { jobId: jobIds.planProject(job) });
+  try {
+    await deps.queue.add('plan-project', job, { jobId: jobIds.planProject(job) });
+  } catch (err) {
+    // The queue is unreachable: no job will ever run, so the project must not stay QUEUED (the
+    // user could neither generate again nor cancel it as failed). Put it back and report 502.
+    await deps.db.videoProject.updateMany({
+      where: { id, organisationId: tenant.organisationId, state: 'QUEUED' },
+      data: { state: project.state, errorReason: project.errorReason },
+    });
+    throw new UpstreamServiceError('Generation could not be queued; try again shortly', {
+      cause: err instanceof Error ? err.message : 'queue_unavailable',
+    });
+  }
   return { runId, planTier };
 }
 
