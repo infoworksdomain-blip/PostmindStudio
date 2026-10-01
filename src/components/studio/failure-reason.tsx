@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
 import {
   ERROR_CLASSES,
+  isPlatformSource,
   parseFailure,
   type FailedCheck,
   type ParsedFailure,
@@ -55,6 +56,16 @@ export interface DescribedFailure {
   text: string;
   /** Untranslated text from outside Studio (provider message, reviewer note), if any. */
   detail: string | null;
+}
+
+/**
+ * 20.11: a provider's own text (which can be a raw JSON error body) is never shown; the class
+ * sentence says what happened and staff read the detail in the Admin Centre and provider_jobs.
+ * A social platform's reason for refusing a post stays visible.
+ */
+function shownDetail(p: ParsedFailure): string | null {
+  if (p.code === 'provider_failure' && !isPlatformSource(p.params.source)) return null;
+  return p.detail;
 }
 
 /** Stored reason → { text, detail } in the reader's language (null for an empty reason). */
@@ -109,7 +120,7 @@ export function useDescribeFailure(): (raw: string | null | undefined) => Descri
       if (parsed.cause) parts.push(sentence(parsed.cause));
       return {
         text: parts.join(' '),
-        detail: parsed.cause?.detail ?? parsed.rawCause ?? parsed.detail,
+        detail: parsed.cause ? shownDetail(parsed.cause) : (parsed.rawCause ?? shownDetail(parsed)),
       };
     },
     [t, f, locale, checkLabel],

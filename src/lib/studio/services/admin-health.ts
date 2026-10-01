@@ -119,7 +119,12 @@ export interface ProviderHealth {
   errorRate1h: number | null;
   jobs1h: { succeeded: number; failed: number; running: number };
   spendTodayPence: number;
-  /** Configured and its breaker is not open. */
+  /**
+   * 20.11: held out of routing for an account problem (bad key, no credits, usage limit): the
+   * class, the provider's own message (staff only) and when it may be tried again (ISO).
+   */
+  accountHold: { errorClass: string; reason: string; until: string; since: string } | null;
+  /** Configured, its breaker is not open and it is not held for an account problem. */
   healthy: boolean;
 }
 
@@ -135,7 +140,7 @@ export async function providerHealth(
   deps: { db: HealthDb; registry: ProviderRegistry; breaker: CircuitBreaker },
   now: number,
 ): Promise<ProviderHealth[]> {
-  const [jobs, spend, breakers] = await Promise.all([
+  const [jobs, spend, breakers, holds] = await Promise.all([
     deps.db.providerJob.groupBy({
       by: ['provider', 'state', 'errorClass'],
       where: { startedAt: { gte: new Date(now - HOUR_MS) } },
@@ -147,6 +152,7 @@ export async function providerHealth(
       _sum: { costPence: true },
     }),
     deps.breaker.snapshot(),
+    deps.breaker.accountHolds?.() ?? {},
   ]);
   const configured = new Set(deps.registry.list().map((a) => a.providerId));
   const ids = new Set([
@@ -170,6 +176,7 @@ export async function providerHealth(
       const finished = tally.succeeded + tally.failed;
       const breaker = breakers[id] ?? (await deps.breaker.state(id));
       const isConfigured = configured.has(id);
+      const hold = holds[id];
       return {
         id,
         configured: isConfigured,
@@ -178,7 +185,15 @@ export async function providerHealth(
           finished === 0 ? null : Math.round((tally.healthFailures / finished) * 1000) / 1000,
         jobs1h: { succeeded: tally.succeeded, failed: tally.failed, running: tally.running },
         spendTodayPence: spend.find((s) => s.provider === id)?._sum.costPence ?? 0,
-        healthy: isConfigured && breaker !== 'open',
+        accountHold: hold
+          ? {
+              errorClass: hold.errorClass,
+              reason: hold.reason,
+              until: new Date(hold.until).toISOString(),
+              since: new Date(hold.since).toISOString(),
+            }
+          : null,
+        healthy: isConfigured && breaker !== 'open' && !hold,
       };
     }),
   );

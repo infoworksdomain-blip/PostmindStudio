@@ -260,6 +260,7 @@
       "plan_required": "لا تملك مؤسستك باقة بعد. اختر باقة لتبدأ الإنشاء.",
       "billing_required": "حسابك في وضع القراءة فقط بسبب مشكلة في الفوترة. حدِّث بيانات الدفع للمتابعة.",
       "no_organisation": "أنشئ مؤسسة أو انضم إلى مؤسسة للمتابعة.",
+      "service_unavailable": "خدمة الذكاء الاصطناعي لدينا غير متاحة مؤقتًا. يُرجى المحاولة لاحقًا، فقد تم إبلاغ فريقنا.",
       "auto_publish_account_required": "اختر حسابًا مرتبطًا للنشر عليه، أو أوقف النشر التلقائي والجدولة.",
       "auto_publish_account_unavailable": "أحد الحسابات المختارة لم يعد مرتبطًا. أعد ربطه أو اختر حسابًا آخر."
     }
@@ -446,6 +447,14 @@
     "scheduleNoFreeSlot": {
       "title": "لم تتم جدولة «{name}»",
       "body": "لا يوجد وقت نشر متاح خلال {weeks, plural, zero {# أسبوع} one {أسبوع واحد} two {أسبوعين} few {# أسابيع} many {# أسبوعًا} other {# أسبوع}} من الآن — أضف أوقات نشر أو اختر تاريخًا."
+    },
+    "providerAccountProblem": {
+      "title": "حساب {provider} يحتاج إلى متابعة",
+      "body": "توقّف {provider} عن قبول مهام {capability} ‏({errorClass}). ينتقل Studio إلى المزوّد التالي ويستبعد {provider} من التوجيه.{retryAt, select, none {} other { بحسب المزوّد، يعود الوصول في {retryAt}.}}"
+    },
+    "providersUnavailable": {
+      "title": "لا يتوفر مزوّد لـ {capability}",
+      "body": "فشل جميع مزوّدي {capability} بسبب مشكلة في الحساب: {providers}. يرى العملاء «غير متاح مؤقتًا» إلى أن يتم إصلاح أحد هذه الحسابات."
     }
   },
   "create": {
@@ -2559,7 +2568,13 @@
           "open": "مفتوح"
         },
         "jobCounts": "{succeeded} ناجحة · {failed} فاشلة",
-        "jobCountsRunning": "{succeeded} ناجحة · {failed} فاشلة · {running} قيد التشغيل"
+        "jobCountsRunning": "{succeeded} ناجحة · {failed} فاشلة · {running} قيد التشغيل",
+        "accountHold": "موقوف: {problem} حتى {until} بتوقيت UTC",
+        "holdClass": {
+          "auth": "تم رفض مفتاح API",
+          "insufficient_credits": "نفد الرصيد",
+          "account_limit": "تم بلوغ حد الاستخدام"
+        }
       }
     },
     "killSwitch": {
@@ -3512,7 +3527,8 @@
       "scan_cost_cap": "توقّف الفحص عند حدّ تكلفته ({amount}).",
       "scan_images_capped": "بلغ الفحص حدّ تكلفته ({amount}): لم تُفهرس بعض الصور للبحث.",
       "ownership_disputed": "توقّف: اعتُرض على ملكية الموقع.",
-      "provider_failure": "أبلغ {source} عن مشكلة: {problem}."
+      "provider_failure": "أبلغ {source} عن مشكلة: {problem}.",
+      "service_unavailable": "خدمة الذكاء الاصطناعي لدينا غير متاحة مؤقتًا، لذا تعذّر إكمال هذا. يُرجى المحاولة لاحقًا، فقد تم إبلاغ فريقنا."
     },
     "classes": {
       "rate_limited": "طلبات كثيرة جدًا",
@@ -3529,7 +3545,8 @@
       "quota_exceeded": "بُلغت الحصة",
       "invalid_media": "رُفض ملف الفيديو",
       "outcome_unknown": "النتيجة غير معروفة — تحقّق من المنصة قبل إعادة المحاولة",
-      "unknown": "خطأ غير معروف"
+      "unknown": "خطأ غير معروف",
+      "account_limit": "تم بلوغ حد الاستخدام"
     }
   },
   "marketing": {

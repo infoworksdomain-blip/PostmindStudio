@@ -158,6 +158,14 @@ export function parseBlackdetect(stderr: string): BlackInterval[] {
   return intervals;
 }
 
+/**
+ * ebur128 with its per-frame lines at verbose level, so only the summary reaches stderr. framelog
+ * accepts only info and verbose on ffmpeg 5.1 (Debian bookworm, the runtime image); `quiet` is newer
+ * and made every loudness read fail on the first server ("Error setting option framelog to value
+ * quiet", all 25 library imports, 2026-10-01).
+ */
+export const LOUDNESS_FILTER = 'ebur128=framelog=verbose';
+
 /** The ebur128 summary ends with "Integrated loudness: … I: -14.2 LUFS". */
 export function parseIntegratedLoudness(stderr: string): number | null {
   const summary = stderr.lastIndexOf('Integrated loudness:');
@@ -222,18 +230,7 @@ export function createFfmpegInspector(
     async integratedLoudness(url) {
       const r = await run(
         ffmpeg,
-        [
-          '-hide_banner',
-          '-nostats',
-          '-i',
-          url,
-          '-vn',
-          '-af',
-          'ebur128=framelog=quiet',
-          '-f',
-          'null',
-          '-',
-        ],
+        ['-hide_banner', '-nostats', '-i', url, '-vn', '-af', LOUDNESS_FILTER, '-f', 'null', '-'],
         timeoutMs,
       );
       if (r.code !== 0) {

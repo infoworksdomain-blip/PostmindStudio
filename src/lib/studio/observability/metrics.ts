@@ -88,7 +88,7 @@ function build(): StudioMetrics {
     }),
     providerPassedOver: new Counter({
       name: 'studio_provider_passed_over_total',
-      help: 'Router candidates passed over for a run-time reason (circuit_open | provider_disabled | over_budget | too_slow | no_cost_estimate)',
+      help: 'Router candidates passed over for a run-time reason (circuit_open | provider_disabled | over_budget | too_slow | no_cost_estimate | account_unavailable)',
       labelNames: ['provider', 'reason'],
       registers: [registry],
     }),

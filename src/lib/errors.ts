@@ -234,7 +234,7 @@ export class MetaNoAccountsError extends StudioError {
 /** Spec 6.4 NO_PROVIDER_AVAILABLE: every routing candidate was skipped. */
 export class NoProviderAvailableError extends StudioError {
   readonly status = 503;
-  readonly code = 'no_provider_available';
+  readonly code: 'no_provider_available' | 'service_unavailable' = 'no_provider_available';
 }
 
 export type CostCapScope = 'project' | 'org_daily' | 'org_monthly' | 'global_daily';
@@ -262,6 +262,47 @@ export class UpstreamServiceError extends StudioError {
 }
 
 /** Required configuration (usually an env var) is missing or malformed. */
+/** 20.11: one provider that failed a routed operation with an account problem. */
+export interface ProviderAccountFailure {
+  providerId: string;
+  /** auth | insufficient_credits | account_limit */
+  errorClass: string;
+  /** ISO time the provider said access resumes, if it did. */
+  retryAt?: string;
+}
+
+/**
+ * 20.11: every provider for the capability failed with an account problem (bad key, no credits,
+ * usage limit) or is held out of routing for one. Not retryable within the job: the operator has
+ * to fix the account (they are alerted). Customers see a friendly "temporarily unavailable"
+ * sentence; the provider names and classes stay in logs, provider_jobs and the Admin Centre.
+ */
+export class ProvidersUnavailableError extends NoProviderAvailableError {
+  // A NoProviderAvailableError, so callers that degrade gracefully without a provider (captions,
+  // content safety, library ingest) keep doing so.
+  override readonly code = 'service_unavailable' as const;
+  readonly capability: string;
+  readonly failures: readonly ProviderAccountFailure[];
+
+  constructor(capability: string, failures: readonly ProviderAccountFailure[]) {
+    const summary = failures
+      .map((f) => `${f.providerId}/${f.errorClass}${f.retryAt ? ` until ${f.retryAt}` : ''}`)
+      .join(', ');
+    super(`Every ${capability} provider is unavailable: ${summary}`, {
+      capability,
+      failures: failures.map((f) => ({ ...f })),
+    });
+    this.capability = capability;
+    this.failures = failures;
+  }
+}
+
+/** Customer-safe English sentences for provider failures (the UI translates by code). */
+export const PROVIDER_ERROR_SENTENCE =
+  'A generation provider had a problem. Try again in a moment.';
+export const SERVICE_UNAVAILABLE_SENTENCE =
+  'Our AI service is temporarily unavailable. Please try again later. Our team has been alerted.';
+
 export class ConfigurationError extends StudioError {
   readonly status = 500;
   readonly code = 'configuration_error';
@@ -283,6 +324,29 @@ export function toErrorResponse(err: unknown): Response {
   // Configuration problems are server-side; never leak their detail to callers.
   if (err instanceof ConfigurationError) {
     return Response.json(INTERNAL_ERROR_BODY, { status: 500 });
+  }
+  // 20.11: never pass a provider's own text (or raw JSON body) to a caller; it stays in logs and
+  // provider_jobs. The client shows the catalogue sentence for the code.
+  if (err instanceof ProvidersUnavailableError) {
+    return Response.json(
+      { ok: false, error: err.code, message: SERVICE_UNAVAILABLE_SENTENCE },
+      { status: err.status },
+    );
+  }
+  if (err instanceof ProviderError) {
+    return Response.json(
+      {
+        ok: false,
+        error: err.code,
+        message: PROVIDER_ERROR_SENTENCE,
+        details: {
+          providerId: err.providerId,
+          errorClass: err.errorClass,
+          retryable: err.retryable,
+        },
+      },
+      { status: err.status },
+    );
   }
   const headers: Record<string, string> = {};
   if (err instanceof RateLimitError) headers['Retry-After'] = String(err.retryAfterSec);
