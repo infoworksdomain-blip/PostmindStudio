@@ -29,16 +29,27 @@ const baseURL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:3102';
 // Redis 3 on a Windows dev box): the click must then fail with a plain message, never a crash.
 const queueUp = process.env.E2E_NO_QUEUE !== '1';
 
-/** After a click that enqueues work: the success text, or - without a queue - a plain error toast. */
-async function expectQueued(page: Page, w: Watcher, success: RegExp, url: RegExp): Promise<void> {
+/**
+ * After a click that enqueues work: the success text (returns true), or - without a queue - a
+ * 502 with a translated message that says nothing was kept (returns false; callers then assert
+ * that no row was left behind, so a second click is not met with "already scheduled").
+ */
+async function expectQueued(
+  page: Page,
+  w: Watcher,
+  success: RegExp,
+  url: RegExp,
+): Promise<boolean> {
   if (queueUp) {
     await expect(page.getByText(success).first()).toBeVisible();
-    return;
+    return true;
   }
-  w.expect4xx(url, 500);
+  w.expect4xx(url, 502);
   const toast = page.locator('[data-sonner-toast]').first();
   await expect(toast).toBeVisible();
+  await expect(toast).toContainText(/temporarily unavailable/i);
   await expect(toast).not.toContainText(/redis|bullmq|ioredis/i);
+  return false;
 }
 
 test.skip(!hasDb, 'DATABASE_URL is not set: the QA specs need the app’s database');
@@ -197,6 +208,115 @@ test.describe('projects list', () => {
   });
 });
 
+test.describe('projects search and row actions', () => {
+  test('search narrows the list, lives in the URL and survives a reload', async () => {
+    const page = pages.owner;
+    const w = new Watcher(page, shotsDir);
+    await w.visit('/projects');
+    await page.getByRole('searchbox', { name: 'Search projects' }).fill('Rendering');
+    await expect(page).toHaveURL(/\/projects\?q=Rendering$/);
+    await expect(page.getByRole('link', { name: /QA Rendering video/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /QA Draft video/ })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('Rendering');
+    await expect(page.getByRole('link', { name: /QA Rendering video/ })).toBeVisible();
+    // Brief text is searched too (every seeded brief has the hook "Warm bread, no queue").
+    await page.getByRole('searchbox', { name: 'Search projects' }).fill('Warm bread');
+    await expect(page).toHaveURL(/q=Warm(\+|%20)bread/);
+    await expect(page.getByRole('link', { name: /QA Review video/ }).first()).toBeVisible();
+    await page.getByRole('searchbox', { name: 'Search projects' }).fill('no-such-thing-xyz');
+    await expect(page.getByText('Nothing found')).toBeVisible();
+    await w.shot('projects-search-empty');
+    await report(w);
+  });
+
+  test('duplicate, archive, unarchive and delete (with confirm) from the row menu', async () => {
+    const page = pages.owner;
+    const w = new Watcher(page, shotsDir);
+    await w.visit('/projects');
+    await page.getByRole('searchbox', { name: 'Search projects' }).fill('QA Draft video');
+    // Wait for the search to settle (URL written, list narrowed) before opening a row menu.
+    await expect(page).toHaveURL(/q=QA/);
+    await expect(page.getByRole('link', { name: /QA Review video/ })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /QA Draft video/ })).toBeVisible();
+    const row = (name: string) => page.getByRole('listitem').filter({ hasText: name });
+    const menu = (name: string) => page.getByRole('button', { name: `Actions for ${name}` });
+
+    await menu('QA Draft video').click();
+    await page.getByRole('menuitem', { name: 'Duplicate' }).click();
+    await expect(page.getByText('Copy created.').first()).toBeVisible();
+    await expect(row('QA Draft video (copy)')).toBeVisible();
+    expect(await db.videoProject.count({ where: { name: 'QA Draft video (copy)' } })).toBe(1);
+
+    // Archive the copy: it leaves the default list and shows under Archived.
+    await menu('QA Draft video (copy)').click();
+    await page.getByRole('menuitem', { name: 'Archive' }).click();
+    await expect(page.getByText('Archived.').first()).toBeVisible();
+    await expect(row('QA Draft video (copy)')).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Archived' }).click();
+    await expect(page).toHaveURL(/filter=archived/);
+    await expect(row('QA Draft video (copy)')).toBeVisible();
+    await expect(row('QA Draft video (copy)')).toContainText('Archived');
+
+    // Unarchive puts it back where it was.
+    await menu('QA Draft video (copy)').click();
+    await page.getByRole('menuitem', { name: 'Unarchive' }).click();
+    await expect(page.getByText('Restored.').first()).toBeVisible();
+    await expect(row('QA Draft video (copy)')).toHaveCount(0);
+    await page.getByRole('tab', { name: 'All' }).click();
+    await expect(row('QA Draft video (copy)')).toBeVisible();
+
+    // Delete asks first; keeping it changes nothing, confirming removes it from every list.
+    await menu('QA Draft video (copy)').click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Delete this video?');
+    await dialog.getByRole('button', { name: 'Keep it' }).click();
+    await expect(row('QA Draft video (copy)')).toBeVisible();
+    await menu('QA Draft video (copy)').click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect(page.getByText('Deleted.').first()).toBeVisible();
+    await expect(row('QA Draft video (copy)')).toHaveCount(0);
+    expect(
+      (await db.videoProject.findFirstOrThrow({ where: { name: 'QA Draft video (copy)' } }))
+        .deletedAt,
+    ).not.toBeNull();
+    await report(w);
+  });
+
+  test('a project that is rendering cannot be archived or deleted from the menu', async () => {
+    const page = pages.owner;
+    const w = new Watcher(page, shotsDir);
+    await w.visit('/projects?q=QA%20Rendering%20video');
+    await page.getByRole('button', { name: 'Actions for QA Rendering video' }).click();
+    await expect(page.getByRole('menuitem', { name: 'Archive' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await expect(page.getByRole('menuitem', { name: 'Delete' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await report(w);
+  });
+
+  test('roles: viewers get no row actions; the API refuses them anyway', async () => {
+    const page = pages.viewer;
+    const w = new Watcher(page, shotsDir);
+    await w.visit('/projects');
+    await expect(page.getByRole('link', { name: /QA Review video/ }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(0);
+    w.expect4xx(/\/archive$/, 403);
+    const res = await page.request.post(`/api/studio/projects/${world.projects.draft}/archive`, {
+      headers: { origin: baseURL },
+      data: {},
+    });
+    expect(res.status()).toBe(403);
+    await report(w);
+  });
+});
+
 // ----------------------------------------------------------------------------- Project detail
 
 test.describe('project detail', () => {
@@ -276,16 +396,18 @@ test.describe('project detail', () => {
     await report(w);
   });
 
-  test('a viewer who clicks Generate gets a plain refusal, not a crash or a capability name', async () => {
+  test('a viewer sees no Generate button, and the API still refuses the call', async () => {
     const page = pages.viewer;
     const w = new Watcher(page, shotsDir);
-    w.expect4xx(/\/generate$/, 403);
     await w.visit(`/projects/${world.projects.draft}`);
-    await page.getByRole('button', { name: 'Generate' }).click();
-    await expect(page.locator('[data-sonner-toast]').first()).toBeVisible();
-    await expect(page.locator('[data-sonner-toast]').first()).not.toContainText(
-      /capability|studio:/i,
-    );
+    await expect(page.getByRole('heading', { name: 'QA Draft video' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Generate', exact: true })).toHaveCount(0);
+    w.expect4xx(/\/generate$/, 403);
+    const res = await page.request.post(`/api/studio/projects/${world.projects.draft}/generate`, {
+      headers: { origin: baseURL },
+      data: {},
+    });
+    expect(res.status()).toBe(403);
     await report(w);
   });
 
@@ -297,6 +419,9 @@ test.describe('project detail', () => {
     await expect(page.getByRole('link', { name: 'Projects' }).first()).toBeVisible();
     await expect(page.locator('body')).not.toContainText(/Application error|NotFoundError/);
     await expect(page.getByText('Project not found')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Back to projects' }).click();
+    await expect(page).toHaveURL(/\/projects$/);
     await report(w);
   });
 
@@ -377,18 +502,22 @@ test.describe('approve and reject', () => {
     await report(w);
   });
 
-  test('roles: viewer and creator cannot approve (friendly message), publisher can', async () => {
+  test('roles: viewer and creator see no Approve/Reject (and the API refuses), publisher can', async () => {
     const project = world.projects.review3;
     for (const role of ['viewer', 'creator'] as const) {
       const page = pages[role];
       const w = new Watcher(page, shotsDir);
-      w.expect4xx(/\/approve$/, 403);
       await w.visit(`/projects/${project}`);
-      await page.getByRole('button', { name: 'Approve', exact: true }).click();
-      await page.getByRole('button', { name: 'Confirm approval' }).click();
-      const toast = page.locator('[data-sonner-toast]').first();
-      await expect(toast).toBeVisible();
-      await expect(toast).not.toContainText(/studio:project|capability/);
+      // No buttons to press: the page says who can approve; the API refuses all the same.
+      await expect(page.getByText(/Only a publisher, admin or owner can approve/)).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Approve', exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Reject', exact: true })).toHaveCount(0);
+      w.expect4xx(/\/approve$/, 403);
+      const res = await page.request.post(`/api/studio/projects/${project}/approve`, {
+        headers: { origin: baseURL },
+        data: {},
+      });
+      expect(res.status(), role).toBe(403);
       expect((await db.videoProject.findUniqueOrThrow({ where: { id: project } })).state).toBe(
         'READY_FOR_REVIEW',
       );
@@ -561,7 +690,13 @@ test.describe('publish from a project', () => {
       .slice(0, 16);
     await when.fill(local);
     await page.getByRole('button', { name: /^Schedule/ }).click();
-    await expectQueued(page, w, /Scheduled 1 post/, /\/api\/studio\/publications$/);
+    const queued = await expectQueued(page, w, /Scheduled 1 post/, /\/api\/studio\/publications$/);
+    if (!queued) {
+      expect(
+        await db.videoPublication.count({ where: { projectId: world.projects.approved2 } }),
+      ).toBe(0);
+      return report(w);
+    }
     const pubs = await db.videoPublication.findMany({
       where: { projectId: world.projects.approved2 },
     });
@@ -593,7 +728,18 @@ test.describe('publish from a project', () => {
     await tiktok.getByLabel('Caption').fill('Fresh today');
     await tiktok.getByLabel('Hashtags').fill('#bread, #fresh');
     await page.getByRole('button', { name: /Publish now \(2\)/ }).click();
-    await expectQueued(page, w, /Publishing 2 posts/, /\/api\/studio\/publications$/);
+    const queued = await expectQueued(
+      page,
+      w,
+      /Publishing 2 posts/,
+      /\/api\/studio\/publications$/,
+    );
+    if (!queued) {
+      expect(
+        await db.videoPublication.count({ where: { projectId: world.projects.approved } }),
+      ).toBe(0);
+      return report(w);
+    }
     const pubs = await db.videoPublication.findMany({
       where: { projectId: world.projects.approved, state: { in: ['SCHEDULED', 'PUBLISHING'] } },
     });
@@ -661,6 +807,8 @@ test.describe('publications page', () => {
     await expect(page.getByRole('row').filter({ hasText: 'QA Published video' })).toContainText(
       /service is unavailable/,
     );
+    // A customer never sees the platform's own text (hostnames, tokens, ECONNREFUSED...).
+    await expect(page.locator('body')).not.toContainText(/ECONNREFUSED|access token expired/);
     await w.shot('publications-failed');
     // Platform filter.
     await page.getByRole('tab', { name: 'All' }).click();
@@ -716,7 +864,15 @@ test.describe('publications page', () => {
     const row = page.getByRole('row').filter({ hasText: 'QA Partly published' });
     await expect(row).toContainText(/reconnect/i);
     await row.getByRole('button', { name: 'Retry' }).click();
-    await expectQueued(page, w, /Retry queued/, /\/publications\/[^/]+\/retry$/);
+    const queued = await expectQueued(page, w, /Retry queued/, /\/publications\/[^/]+\/retry$/);
+    if (!queued) {
+      const kept = await db.videoPublication.findUniqueOrThrow({
+        where: { id: world.publications.failed },
+      });
+      expect(kept.state).toBe('FAILED');
+      expect(kept.errorReason).toContain('needs_reconnect');
+      return report(w);
+    }
     await expect
       .poll(
         async () =>

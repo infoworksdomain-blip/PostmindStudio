@@ -48,10 +48,17 @@ None. Object storage is `e2e/qa/s3-stub.mjs` (`AWS_ENDPOINT_URL_S3`). No publish
 publication stays queued; platform publishers (TikTok / YouTube / X) are never reached. Locally Redis is
 v3, which BullMQ rejects: queue-dependent steps are noted in the PR.
 
-## Gaps found while inventorying
+## Gaps found while inventorying (all fixed in this PR)
 
-- No search on `/projects` (requested in the QA brief; the list API has no `q` either).
-- No duplicate / delete / archive buttons on `/projects` or the detail page; the routes
-  (`POST /duplicate`, `DELETE :id`) exist and are only reachable through the API.
-- Approval workflow step roles `client_reviewer` / `legal` / `reviewer` cannot exist in standalone mode
-  (fixed: see PR).
+- `/projects` had no search and no duplicate / delete / archive controls: added search (name, description,
+  brief; debounced, kept in the URL as `?q=` and `?filter=`), an Archived filter and a per-row menu
+  (Duplicate, Archive / Unarchive, Delete with confirm), hidden from roles without `studio:project:write`.
+  Archive is `state = ARCHIVED` with `deletedAt` null (reversible, `metadata.archivedFrom`); Delete is the
+  existing soft delete. No schema change.
+- Approval workflow step roles that cannot exist in standalone mode (`client_reviewer`, `legal`, ...).
+- A stored provider / platform message was shown after the translated sentence: now staff-only.
+- Approve / Reject / Force-approve / Generate were shown to roles the API refuses; the upgrade dialog asked
+  viewers for billing (silent 403).
+- A 404 project or post showed "Couldn't load this" with a Retry: now a not-found page with a way back.
+- `createPublication` / retry left a SCHEDULED row behind (and "already scheduled" on the next try) when the
+  queue was down: now rolled back with a 502 `queue_unavailable`.
