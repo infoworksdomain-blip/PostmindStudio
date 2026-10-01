@@ -214,9 +214,8 @@ describe.skipIf(!hasDb)(
       const blocked = await createProject(j);
       const paused = await generate(j, blocked, { expectClean: false });
       expect(paused.state).toBe('FAILED');
-      expect(paused.errorReason).toMatch(
-        /^cost_cap_paused: organisation monthly cost cap reached .* generation resumes on the 1st \(UTC\)/,
-      );
+      // The customer's API view carries the reason code only (failure-presenter.ts).
+      expect(paused.errorReason).toBe('cost_cap_paused');
       expect(paused.costActualPence).toBe(0); // refused before the first provider call
 
       expect((await monthlyAlerts(j.org)).map((a) => a.threshold)).toEqual([80, 100]);

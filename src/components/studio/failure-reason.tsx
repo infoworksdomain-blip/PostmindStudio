@@ -6,6 +6,7 @@ import { useFormat } from '@/lib/client/format';
 import {
   ERROR_CLASSES,
   parseFailure,
+  UNKNOWN_FAILURE,
   type FailedCheck,
   type ParsedFailure,
 } from '@/lib/client/failure-reasons';
@@ -90,6 +91,8 @@ export function useDescribeFailure(
   return useCallback(
     (raw: string | null | undefined) => {
       if (!raw?.trim()) return null;
+      // The server sends this for a reason a customer may not read (api/failure-presenter.ts).
+      if (raw.trim() === UNKNOWN_FAILURE) return { text: t('generic'), detail: null };
       const source = (id: string) => {
         const label = f.platform(id);
         return label === id ? id.charAt(0).toLocaleUpperCase(locale) + id.slice(1) : label;

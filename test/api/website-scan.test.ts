@@ -315,9 +315,8 @@ describe.skipIf(!hasDb)('website scan + image library API', { timeout: 120_000 }
     const detail = await call(scanRoute.GET, { token: 'reader', params: { id: scanId } });
     const row = detail.json.scan as { state: string; errorReason: string; errors: string[] };
     expect(row.state).toBe('FAILED');
-    expect(row.errorReason).toMatch(/^service_unavailable: /);
-    expect(row.errorReason).toContain('anthropic/account_limit');
-    expect(row.errorReason).toContain('openai/insufficient_credits');
+    // Code only: the provider's text is staff-only (api/failure-presenter.ts).
+    expect(row.errorReason).toBe('service_unavailable');
     expect(JSON.stringify(detail.json)).not.toContain('invalid_request_error');
     expect(JSON.stringify(detail.json)).not.toContain('no credits remaining');
   });

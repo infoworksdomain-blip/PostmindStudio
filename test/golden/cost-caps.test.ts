@@ -88,7 +88,8 @@ describe.skipIf(!hasDb)('golden journeys: cost caps + alerting', { timeout: 120_
 
     const paused = await generate(j, id, { expectClean: false });
     expect(paused.state).toBe('FAILED');
-    expect(paused.errorReason).toMatch(/^cost_cap_paused: project reached 90% of its budget/);
+    // The customer's API view carries the reason code only (failure-presenter.ts).
+    expect(paused.errorReason).toBe('cost_cap_paused');
     // Planning (3p) + two clips (90p) + one voice line: the second clip took it past 90%, and
     // nothing ran after that.
     expect(paused.costActualPence).toBeGreaterThanOrEqual(90);
@@ -139,7 +140,8 @@ describe.skipIf(!hasDb)('golden journeys: cost caps + alerting', { timeout: 120_
     const blocked = await createProject(j);
     const paused = await generate(j, blocked, { expectClean: false });
     expect(paused.state).toBe('FAILED');
-    expect(paused.errorReason).toMatch(/^cost_cap_paused: organisation daily cost cap reached/);
+    // The customer's API view carries the reason code only (failure-presenter.ts).
+    expect(paused.errorReason).toBe('cost_cap_paused');
     expect(paused.costActualPence).toBe(0); // refused before the first provider call
 
     const orgAlerts = (await alertsFor(j.org)).filter((a) => a.scope === 'ORG_DAILY');

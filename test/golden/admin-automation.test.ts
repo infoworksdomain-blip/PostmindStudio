@@ -233,7 +233,8 @@ describe.skipIf(!hasDb)(
       const id = await createProject(j);
       const paused = await generate(j, id, { expectClean: false });
       expect(paused.state).toBe('FAILED');
-      expect(paused.errorReason).toMatch(/^cost_cap_paused: organisation daily cost cap/);
+      // The customer's API view carries the reason code only (failure-presenter.ts).
+      expect(paused.errorReason).toBe('cost_cap_paused');
       const meta = (await db.videoProject.findUniqueOrThrow({ where: { id } })).metadata as {
         costPause?: { scope: string; job: string };
       };
