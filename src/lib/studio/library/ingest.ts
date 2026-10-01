@@ -190,12 +190,19 @@ export function embeddingDocument(input: {
     .slice(0, 8_000);
 }
 
-async function transcribe(
+/**
+ * Step 3 transcript. A video without an audio stream (silent reels, music-free travel clips) has no
+ * speech to transcribe: AssemblyAI refuses it ("No audio stream found in the file"), which failed 2 of
+ * the operator's corpus imports on 2026-10-01, so it is indexed without a transcript instead.
+ */
+export async function transcribe(
   deps: PipelineDeps,
   mediaUrl: string,
-  durationSec: number,
+  probe: { durationSec: number; audioCodec: string | null },
   planTier: PlanTier,
 ): Promise<{ text: string; words: unknown[]; skipped?: string }> {
+  if (probe.audioCodec === null) return { text: '', words: [], skipped: 'no audio stream' };
+  const { durationSec } = probe;
   try {
     const run = await runProvider(
       {
@@ -273,7 +280,7 @@ export async function analyseContent(
 ) {
   const { url, visual, planTier } = input;
   // 3 — audio
-  const transcript = await transcribe(deps, url, visual.probe.durationSec, planTier);
+  const transcript = await transcribe(deps, url, visual.probe, planTier);
   const loudness = await deps.media.integratedLoudness(url);
 
   // 4+5+7 — structure, on-screen text and category (Claude with keyframes)
