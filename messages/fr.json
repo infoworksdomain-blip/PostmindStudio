@@ -260,7 +260,9 @@
       "plan_required": "Votre organisation n’a pas encore de formule. Choisissez une formule pour commencer à créer.",
       "billing_required": "Votre compte est en lecture seule en raison d’un problème de facturation. Mettez à jour vos informations de paiement pour continuer.",
       "no_organisation": "Créez une organisation ou rejoignez-en une pour continuer.",
-      "service_unavailable": "Notre service d’IA est temporairement indisponible. Veuillez réessayer plus tard : notre équipe a été prévenue."
+      "service_unavailable": "Notre service d’IA est temporairement indisponible. Veuillez réessayer plus tard : notre équipe a été prévenue.",
+      "auto_publish_account_required": "Choisissez un compte connecté sur lequel publier, ou désactivez la publication automatique et la programmation.",
+      "auto_publish_account_unavailable": "Un compte choisi n’est plus connecté. Reconnectez-le ou choisissez un autre compte."
     }
   },
   "primitives": {
@@ -472,7 +474,7 @@
       "briefPlaceholder": "Notre menu de printemps sort vendredi — trois nouvelles petites assiettes, 20 % de réduction la première semaine…",
       "summaryTemplate": "Modèle {name}",
       "summaryPlatforms": "{count, plural, =0 {Aucune plateforme} one {# plateforme} other {# plateformes}}",
-      "summaryAutoPublish": "publication automatique",
+      "summaryAutoPublish": "{count, plural, =0 {publication automatique : aucun compte choisi} one {publié sur # compte} other {publié sur # comptes}}",
       "summaryBrandKit": "kit de marque activé",
       "options": "Options",
       "generate": "Générer",
@@ -495,7 +497,9 @@
         "generatingScript": "Génération en cours — Studio rédige le script.",
         "draftNotStarted": "Enregistré comme brouillon, mais la génération n’a pas démarré : {error}"
       },
-      "planMonth": "Ou planifiez tout un mois de vidéos et de diaporamas"
+      "planMonth": "Ou planifiez tout un mois de vidéos et de diaporamas",
+      "summaryNoAccounts": "aucun compte connecté : enregistré pour relecture",
+      "summaryForReview": "enregistré pour relecture"
     },
     "problems": {
       "businessRequired": "Choisissez d’abord une entreprise.",
@@ -503,12 +507,14 @@
       "briefRequired": "Décrivez le sujet de la vidéo.",
       "briefTooLong": "Le brief doit faire moins de {max, number} caractères.",
       "platformRequired": "Choisissez au moins une plateforme.",
-      "autoPublishAccountRequired": "Choisissez au moins un compte pour la publication automatique, ou désactivez-la.",
+      "autoPublishAccountRequired": "Choisissez le compte {platforms} sur lequel publier dans « Publier sur », ou désactivez la publication automatique.",
       "slideshowTemplateRequired": "Choisissez un modèle de diaporama.",
       "scheduleInPast": "Programmez une date dans le futur.",
-      "scheduleNeedsAutoPublish": "Pour une vidéo programmée, choisissez les comptes de publication (publication automatique).",
+      "scheduleNeedsAutoPublish": "Une publication programmée part automatiquement : activez la publication automatique dans « Publier sur » et choisissez un compte, ou effacez la programmation.",
       "budgetRange": "Le budget doit être compris entre {min} et {max}.",
-      "scheduleTooFar": "Programmez au maximum {days, number} jours à l’avance."
+      "scheduleTooFar": "Programmez au maximum {days, number} jours à l’avance.",
+      "autoPublishNoMatchingAccount": "Aucun de vos comptes connectés ne publie sur les plateformes choisies. Ajoutez {platforms}, connectez un autre compte ou désactivez la publication automatique.",
+      "scheduleNeedsAccount": "Une publication programmée part automatiquement : il faut donc un compte connecté pour l’une des plateformes choisies. Connectez-en un ou effacez la programmation."
     },
     "options": {
       "platforms": "Plateformes",
@@ -559,16 +565,23 @@
       "workflowNone": "Aucun circuit configuré",
       "workflowOrg": "Règles de l’organisation",
       "scheduleNextSlot": "Sans date — utiliser le prochain créneau libre de la file de diffusion",
-      "scheduleNextSlotHint": "Part au premier créneau libre dans {weeks, plural, one {la semaine à venir} other {les # semaines à venir}}. Définissez les heures dans le calendrier."
+      "scheduleNextSlotHint": "Part au premier créneau libre dans {weeks, plural, one {la semaine à venir} other {les # semaines à venir}}. Définissez les heures dans le calendrier.",
+      "scheduleNeedsAccount": "Une programmation publie automatiquement : elle nécessite donc un compte connecté.",
+      "connectAccount": "Connecter un compte"
     },
     "autoPublish": {
-      "legend": "Publication automatique",
+      "legend": "Publier sur",
       "toggle": "Publier automatiquement après validation",
       "toggleHint": "Dès que la vidéo est validée — par vous ou automatiquement —, elle est publiée sur les comptes ci-dessous.",
       "account": "Compte {platform}",
       "noAccount": "Aucun compte connecté.",
       "connectOne": "En connecter un",
-      "dontAutoPublish": "Ne pas publier automatiquement"
+      "dontAutoPublish": "Ne pas publier automatiquement",
+      "offHint": "{source, select, SLIDESHOW {Le diaporama est enregistré} other {La vidéo est enregistrée}} pour relecture ; vous la publiez vous-même depuis sa page.",
+      "noAccounts": "Aucun compte connecté — {source, select, SLIDESHOW {les diaporamas sont enregistrés} other {les vidéos sont enregistrées}} pour relecture, sans être publiés.",
+      "connectAccount": "Connecter un compte",
+      "noMatching": "Aucun de vos comptes connectés ne publie sur les plateformes choisies ci-dessus. Vos comptes publient sur {platforms}.",
+      "notPosted": "Pas de publication automatique (aucun compte connecté) : {platforms}."
     },
     "templatePicker": {
       "legend": "Modèle",
@@ -683,7 +696,9 @@
       "scheduled": "{count, plural, one {# publication programmée.} other {# publications programmées.}}",
       "publishing": "{count, plural, one {Publication de # post en cours.} other {Publication de # posts en cours.}}",
       "scheduleTooFar": "Choisissez une date au maximum {days, number} jours à l’avance.",
-      "scheduleInPast": "Choisissez une heure au moins une minute plus tard."
+      "scheduleInPast": "Choisissez une heure au moins une minute plus tard.",
+      "noAccounts": "Aucun compte connecté pour l’instant : il n’y a nulle part où publier. La vidéo reste enregistrée ici.",
+      "connectAccount": "Connecter un compte"
     },
     "publications": {
       "empty": "Rien de publié ni de programmé pour le moment.",
@@ -4903,13 +4918,16 @@
         "startRequired": "Choisissez une date de début.",
         "daysRange": "Choisissez entre 1 et {max} jours.",
         "platformRequired": "Choisissez au moins une plateforme.",
-        "accountRequired": "Choisissez un compte connecté pour chaque plateforme : les publications partent d’elles-mêmes."
+        "accountRequired": "Choisissez le compte sur lequel publie chaque plateforme. Les plateformes sans compte connecté sont produites mais pas publiées."
       },
       "noBusiness": {
         "title": "Choisissez d’abord une entreprise",
         "description": "Un plan mensuel appartient à une seule entreprise.",
         "action": "Ouvrir les entreprises"
-      }
+      },
+      "noAccountsNotice": "Aucun compte connecté : les publications sont produites et enregistrées pour votre relecture au lieu d’être programmées. Connectez un compte pour qu’elles partent à leur heure.",
+      "someWithoutAccount": "Produites mais pas publiées automatiquement (aucun compte connecté) : {platforms}.",
+      "connectAccount": "Connecter un compte"
     },
     "allowance": {
       "title": "Ce mois-ci",
@@ -5041,7 +5059,9 @@
       "addWhen": "Date et heure",
       "addWhenHint": "Dans les dates du plan, au plus 4 publications par jour.",
       "addSubmit": "Ajouter la publication",
-      "added": "Publication ajoutée"
+      "added": "Publication ajoutée",
+      "noAccountsWindow": "Ce plan n’a aucun compte connecté : chaque publication est produite et enregistrée pour votre relecture, rien n’est publié automatiquement. Vous recevez un e-mail quand votre mois est prêt.",
+      "generateConfirmBodyNoAccounts": "Studio produit chaque publication et l’enregistre pour votre relecture. Rien n’est publié automatiquement, car le plan n’a aucun compte connecté : publiez chaque publication depuis sa page. Vous recevez un e-mail quand votre mois est prêt."
     },
     "view": {
       "calendar": "Ouvrir le calendrier",

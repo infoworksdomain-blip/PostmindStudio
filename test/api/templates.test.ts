@@ -486,11 +486,16 @@ describe.skipIf(!hasDb)('templates + automation API', { timeout: 60_000 }, () =>
     });
 
     it('AUTO_ON_APPROVAL with no targets approves and records "no targets"', async () => {
-      const id = (
-        (await createProject(briefBody({ publishPolicy: 'AUTO_ON_APPROVAL' }))).json
-          .project as Project
-      ).id;
-      await db.videoProject.update({ where: { id }, data: { state: 'READY_FOR_REVIEW' } });
+      // 20.12: the API refuses to create one (auto_publish_account_required); a row stored
+      // before that rule (or edited directly) still approves cleanly.
+      const refused = await createProject(briefBody({ publishPolicy: 'AUTO_ON_APPROVAL' }));
+      expect(refused.status).toBe(400);
+      expect(refused.json.error).toBe('auto_publish_account_required');
+      const id = ((await createProject(briefBody())).json.project as Project).id;
+      await db.videoProject.update({
+        where: { id },
+        data: { state: 'READY_FOR_REVIEW', publishPolicy: 'AUTO_ON_APPROVAL' },
+      });
       const ok = await call(approveRoute.POST, { method: 'POST', token: 'owner', params: { id } });
       expect(ok.status).toBe(200);
       expect(ok.json.autoPublish).toMatchObject({ status: 'no_targets', results: [] });

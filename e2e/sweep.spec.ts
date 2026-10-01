@@ -377,6 +377,9 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   for (const source of ['Video', 'Slideshow', 'Upload']) {
     const radio = page.getByRole('radio', { name: new RegExp(source, 'i') }).first();
     if (await radio.count()) await radio.click();
+    // 20.12: with no connected account the form says the work is saved for review (it never
+    // blocks on "choose an account to auto-publish to").
+    await expect(page.getByText(/No connected accounts —/).first()).toBeVisible();
   }
   await w.check('/new sources');
 

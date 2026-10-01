@@ -96,6 +96,21 @@ export class ValidationError extends StudioError {
   readonly code = 'validation_error';
 }
 
+/**
+ * 20.12: auto-publish or a schedule was asked for, but no connected social account was given to
+ * post to. "Platforms" are the formats Studio renders; "accounts" are the connections it posts to.
+ */
+export class AutoPublishAccountRequiredError extends StudioError {
+  readonly status = 400;
+  readonly code = 'auto_publish_account_required';
+}
+
+/** 20.12: a chosen account is not a usable connection of this organisation and platform. */
+export class AutoPublishAccountUnavailableError extends StudioError {
+  readonly status = 400;
+  readonly code = 'auto_publish_account_unavailable';
+}
+
 /** 15.C4: well-formed but not allowed for this organisation (e.g. a tier above its plan). */
 export class UnprocessableError extends StudioError {
   readonly status = 422;

@@ -3842,7 +3842,27 @@
     "errorPage.boundary.body",
     "errorPage.boundary.retry",
     "errorPage.boundary.projects",
-    "errorPage.boundary.reference"
+    "errorPage.boundary.reference",
+    "errors.codes.auto_publish_account_required",
+    "errors.codes.auto_publish_account_unavailable",
+    "create.screen.summaryNoAccounts",
+    "create.screen.summaryForReview",
+    "create.problems.autoPublishNoMatchingAccount",
+    "create.problems.scheduleNeedsAccount",
+    "create.planning.scheduleNeedsAccount",
+    "create.planning.connectAccount",
+    "create.autoPublish.offHint",
+    "create.autoPublish.noAccounts",
+    "create.autoPublish.connectAccount",
+    "create.autoPublish.noMatching",
+    "create.autoPublish.notPosted",
+    "review.publish.noAccounts",
+    "review.publish.connectAccount",
+    "plans.new.noAccountsNotice",
+    "plans.new.someWithoutAccount",
+    "plans.new.connectAccount",
+    "plans.editor.noAccountsWindow",
+    "plans.editor.generateConfirmBodyNoAccounts"
   ],
   "reviewed": []
 }
