@@ -128,7 +128,7 @@ describe('recommendedVideos', () => {
     ).rejects.toBeInstanceOf(ProviderError);
   });
 
-  it('embeds the profile and returns similarity-mapped rows, defaulting the category filter to "%"', async () => {
+  it('embeds the profile and returns similarity-mapped rows, matching every category when none is given', async () => {
     const { db, businessProfile } = fakeDb();
     businessProfile.findFirst.mockResolvedValue({
       industry: 'Food',
@@ -150,12 +150,12 @@ describe('recommendedVideos', () => {
 
     const hits = await recommendedVideos({ db, providers: {} as never }, scope, { limit: 3 });
     expect(hits).toEqual([{ id: 'row-1', similarity: 0.7 }]);
-    // The LIKE prefix should default to '%' when no categorySlug filter is given.
+    // No categorySlug: the `all` bind is true, so the category predicate matches everything.
     const sqlArgs = queryRaw.mock.calls[0] as unknown[];
-    expect(sqlArgs.some((arg) => arg === '%')).toBe(true);
+    expect(sqlArgs.some((arg) => arg === true)).toBe(true);
   });
 
-  it('escapes %, _ and backslash out of a supplied categorySlug before building the LIKE prefix', async () => {
+  it('escapes %, _ and backslash out of a supplied categorySlug before building the exact and child matches', async () => {
     const { db, businessProfile } = fakeDb();
     businessProfile.findFirst.mockResolvedValue({
       industry: 'Food',
@@ -180,6 +180,9 @@ describe('recommendedVideos', () => {
       categorySlug: '10%_off\\special',
     });
     const sqlArgs = queryRaw.mock.calls[0] as unknown[];
-    expect(sqlArgs.some((arg) => arg === '10offspecial%')).toBe(true);
+    // Exact slug or a child ('slug/…'): a sibling that merely shares the prefix never matches.
+    expect(sqlArgs.some((arg) => arg === '10offspecial')).toBe(true);
+    expect(sqlArgs.some((arg) => arg === '10offspecial/%')).toBe(true);
+    expect(sqlArgs.some((arg) => arg === '10offspecial%')).toBe(false);
   });
 });
