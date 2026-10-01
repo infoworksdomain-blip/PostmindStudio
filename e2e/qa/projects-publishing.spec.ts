@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import {
   addMember,
   cleanWorld,
@@ -50,6 +50,19 @@ async function expectQueued(
   await expect(toast).toContainText(/temporarily unavailable/i);
   await expect(toast).not.toContainText(/redis|bullmq|ioredis/i);
   return false;
+}
+
+/**
+ * 20.13: a post needs at least five hashtags before it can be published or scheduled. Add tags to
+ * one variant's editor until the editor stops asking for more.
+ */
+async function fillHashtags(variant: Locator): Promise<void> {
+  const input = variant.getByPlaceholder('Type a hashtag, then press Enter');
+  for (let n = 1; n <= 8; n += 1) {
+    if ((await variant.getByText(/still needed/).count()) === 0) return;
+    await input.fill(`qa${n}`);
+    await input.press('Enter');
+  }
 }
 
 test.skip(!hasDb, 'DATABASE_URL is not set: the QA specs need the app’s database');
@@ -688,6 +701,7 @@ test.describe('publish from a project', () => {
     const local = new Date(future.getTime() - future.getTimezoneOffset() * 60_000)
       .toISOString()
       .slice(0, 16);
+    await fillHashtags(page.getByRole('listitem').filter({ hasText: 'TikTok' }).first());
     await when.fill(local);
     await page.getByRole('button', { name: /^Schedule/ }).click();
     const queued = await expectQueued(page, w, /Scheduled 1 post/, /\/api\/studio\/publications$/);
@@ -726,7 +740,10 @@ test.describe('publish from a project', () => {
     await expect(page.getByRole('checkbox')).toHaveCount(2);
     const tiktok = page.getByRole('listitem').filter({ hasText: 'TikTok' });
     await tiktok.getByLabel('Caption').fill('Fresh today');
-    await tiktok.getByLabel('Hashtags').fill('#bread, #fresh');
+    await tiktok.first().getByPlaceholder('Type a hashtag, then press Enter').fill('bread');
+    await tiktok.first().getByPlaceholder('Type a hashtag, then press Enter').press('Enter');
+    await fillHashtags(tiktok.first());
+    await fillHashtags(page.getByRole('listitem').filter({ hasText: 'YouTube Shorts' }).first());
     await page.getByRole('button', { name: /Publish now \(2\)/ }).click();
     const queued = await expectQueued(
       page,
@@ -744,7 +761,7 @@ test.describe('publish from a project', () => {
       where: { projectId: world.projects.approved, state: { in: ['SCHEDULED', 'PUBLISHING'] } },
     });
     expect(pubs.map((p) => p.platform).sort()).toEqual(['tiktok', 'youtube_short']);
-    expect(pubs.find((p) => p.platform === 'tiktok')?.hashtags).toEqual(['bread', 'fresh']);
+    expect(pubs.find((p) => p.platform === 'tiktok')?.hashtags).toContain('bread');
     await report(w);
   });
 
