@@ -17,13 +17,17 @@ export interface MoveHandlers {
   onMove: (publication: Publication) => void;
   onDropOnDay: (publicationId: string, day: Date) => void;
   pendingId: string | null;
+  /** Retry a failed publication. */
+  onRetry?: (publication: Publication) => void;
+  retryingId?: string | null;
 }
 
 // Desktop: a seven-column month grid. Phones: the same month as an agenda of days that have
 // something on them (a 7-column grid is unreadable at 375px). 20.3: open drip-queue slots
 // (openByDay) follow the day's posts as dashed markers, only in the room a cell has left.
 
-const MAX_PER_CELL = 3;
+// 4 = the most posts one day can hold (max 4 a day), so a full day never hides a post.
+const MAX_PER_CELL = 4;
 
 const NO_OPEN_SLOTS: ReadonlyMap<string, string[]> = new Map();
 const NO_PLANNED: ReadonlyMap<string, PlannedPost[]> = new Map();
@@ -55,6 +59,11 @@ export function MonthGrid({
     return [...names.slice(1), ...names.slice(0, 1)];
   }, [f.locale]);
   const [over, setOver] = useState<string | null>(null);
+  const isEmptyMonth = !days.some(
+    (d) =>
+      d.getMonth() === month.month &&
+      (byDay.has(dayKey(d)) || openByDay.has(dayKey(d)) || plannedByDay.has(dayKey(d))),
+  );
   return (
     <div className="hidden overflow-hidden rounded-xl border border-border md:block">
       <div className="grid grid-cols-7 border-b border-border bg-secondary/40">
@@ -121,7 +130,8 @@ export function MonthGrid({
                   publication={p}
                   compact
                   onMove={move?.onMove}
-                  busy={move?.pendingId === p.id}
+                  onRetry={move?.onRetry}
+                  busy={move?.pendingId === p.id || move?.retryingId === p.id}
                 />
               ))}
               {events.length > MAX_PER_CELL && (
@@ -149,6 +159,11 @@ export function MonthGrid({
           );
         })}
       </ol>
+      {isEmptyMonth && (
+        <p className="border-t border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          {t('emptyMonth')}
+        </p>
+      )}
     </div>
   );
 }
@@ -209,7 +224,8 @@ export function AgendaList({
                   key={p.id}
                   publication={p}
                   onMove={move?.onMove}
-                  busy={move?.pendingId === p.id}
+                  onRetry={move?.onRetry}
+                  busy={move?.pendingId === p.id || move?.retryingId === p.id}
                 />
               ))}
               {(plannedByDay.get(key) ?? []).map((post) => (

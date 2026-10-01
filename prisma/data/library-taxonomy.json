@@ -330,6 +330,23 @@
               "name": "Exotic pets"
             }
           ]
+        },
+        {
+          "name": "Luxury",
+          "children": [
+            {
+              "name": "Cars"
+            },
+            {
+              "name": "Watches and jewellery"
+            },
+            {
+              "name": "Fashion and accessories"
+            },
+            {
+              "name": "Homes and interiors"
+            }
+          ]
         }
       ]
     },

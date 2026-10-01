@@ -366,7 +366,8 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       const fine = await call(projectsRoute.POST, {
         method: 'POST',
         token: 'owner',
-        body: { ...createBody, publishPolicy: 'SCHEDULED', scheduledStartAt: at(179) },
+        // 20.12: SCHEDULED needs an account to post to, so the date alone is stored here.
+        body: { ...createBody, scheduledStartAt: at(179) },
       });
       expect(fine.status).toBe(201);
       const id = (fine.json.project as { id: string }).id;

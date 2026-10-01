@@ -152,19 +152,62 @@ describe('PlanMonthForm', () => {
     });
   });
 
-  it('says what is missing instead of posting', async () => {
+  it('20.12: with no connected account it says so and drafts a plan saved for review', async () => {
     const api = mockFetch((req) => {
       if (req.url.pathname.endsWith('/content-plans/defaults')) return ok({ defaults: DEFAULTS });
       if (req.url.pathname.endsWith('/platform-connections')) return ok({ data: [] });
+      if (req.method === 'POST') return { status: 202, body: { ok: true, plan: plan() } };
       return undefined;
     });
     const user = userEvent.setup();
     renderScreen(<PlanMonthForm />);
-    await user.click(await screen.findByRole('button', { name: 'Draft my month' }));
+    expect(
+      await screen.findByText(
+        /No connected accounts: the posts are made and saved for your review/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Connect an account' })).toHaveAttribute(
+      'href',
+      '/connections',
+    );
+    expect(screen.queryByLabelText('TikTok account')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Draft my month' }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/plans/plan_1'));
+    expect(api.find('POST', '/content-plans')[0]!.body).toMatchObject({
+      platforms: ['tiktok'],
+      targets: [],
+    });
+  });
+
+  it('20.12: asks for the account when a platform has several, and names uncovered ones', async () => {
+    const second = { ...CONNECTION, id: 'conn_tt_2', platformAccountName: 'Second TikTok' };
+    const api = mockFetch((req) => {
+      if (req.url.pathname.endsWith('/content-plans/defaults')) return ok({ defaults: DEFAULTS });
+      if (req.url.pathname.endsWith('/platform-connections'))
+        return ok({ data: [CONNECTION, second] });
+      if (req.method === 'POST') return { status: 202, body: { ok: true, plan: plan() } };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderScreen(<PlanMonthForm />);
+    const select = await screen.findByLabelText('TikTok account');
+    expect(select).toHaveValue('');
+    await user.click(screen.getByLabelText('X'));
+    expect(
+      screen.getByText('Made but not posted automatically (no connected account): X.'),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Draft my month' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Choose a connected account for every platform',
+      'Choose the account each platform posts to.',
     );
     expect(api.find('POST', '/content-plans')).toHaveLength(0);
+    await user.selectOptions(select, 'conn_tt_2');
+    await user.click(screen.getByRole('button', { name: 'Draft my month' }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/plans/plan_1'));
+    expect(api.find('POST', '/content-plans')[0]!.body).toMatchObject({
+      platforms: ['tiktok', 'x'],
+      targets: [{ platform: 'tiktok', connectionId: 'conn_tt_2' }],
+    });
   });
 });
 
@@ -222,6 +265,20 @@ describe('PlanScreen', () => {
     expect(within(dialog).getByText('Generate and schedule 4 posts?')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Generate and schedule' }));
     await waitFor(() => expect(api.find('POST', '/content-plans/plan_1/generate')).toHaveLength(1));
+  });
+
+  it('20.12: a plan with no account says its posts are saved for review before generating', async () => {
+    mockFetch(() => ok({ plan: plan({ targets: [] }) }));
+    const user = userEvent.setup();
+    renderScreen(<PlanScreen planId="plan_1" />);
+    expect(
+      await screen.findByText(/This plan has no connected account, so each post is made and saved/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Generate and schedule/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      within(dialog).getByText(/Nothing is posted automatically because the plan has no connected/),
+    ).toBeInTheDocument();
   });
 
   it('shows statuses, the held note and removes a scheduled post before its time', async () => {

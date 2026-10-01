@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
@@ -100,11 +101,14 @@ export function PlanningAdvancedOptions({
   onChange,
   planTier,
   workflows,
+  canSchedule = true,
 }: {
   state: CreateState;
   onChange: Patch;
   planTier: QualityTier | undefined;
   workflows: WorkflowOption[] | undefined;
+  /** 20.12: a schedule posts automatically, so it needs a connected account. */
+  canSchedule?: boolean;
 }) {
   const t = useTranslations('create.planning');
   const isSlideshow = state.source === 'SLIDESHOW';
@@ -133,14 +137,29 @@ export function PlanningAdvancedOptions({
               ))}
         </NativeSelect>
       </Field>
-      <Field id="create-schedule" label={t('schedule')} hint={t('scheduleHint')}>
+      <Field
+        id="create-schedule"
+        label={t('schedule')}
+        hint={
+          canSchedule ? (
+            t('scheduleHint')
+          ) : (
+            <>
+              {t('scheduleNeedsAccount')}{' '}
+              <Link href="/connections" className="underline">
+                {t('connectAccount')}
+              </Link>
+            </>
+          )
+        }
+      >
         <Input
           id="create-schedule"
           type="datetime-local"
           min={bounds.min}
           max={bounds.max}
           value={state.scheduleNextSlot ? '' : (state.scheduleAt ?? '')}
-          disabled={isSlideshow || state.scheduleNextSlot}
+          disabled={!canSchedule || state.scheduleNextSlot}
           onChange={(e) => onChange({ scheduleAt: e.target.value })}
         />
         <label className="mt-2 flex items-start gap-2 text-sm">
@@ -148,7 +167,7 @@ export function PlanningAdvancedOptions({
             type="checkbox"
             className="mt-0.5 size-4 accent-foreground"
             checked={Boolean(state.scheduleNextSlot)}
-            disabled={isSlideshow}
+            disabled={!canSchedule}
             onChange={(e) =>
               onChange({
                 scheduleNextSlot: e.target.checked,

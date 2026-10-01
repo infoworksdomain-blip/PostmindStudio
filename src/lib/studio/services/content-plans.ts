@@ -83,7 +83,12 @@ export const createPlanInput = z
     useDripSlots: z.boolean().default(false),
     videoShare: z.number().int().min(0).max(100).default(DEFAULT_VIDEO_SHARE),
     platforms: z.array(z.enum(PLATFORMS)).min(1).max(PLATFORMS.length),
-    targets: autoPublishTargets.min(1),
+    /**
+     * 20.12: the accounts the posts go to — none, or some of the platforms, is allowed. A
+     * platform without an account is still rendered; with no account at all every post is made
+     * and saved for review instead of being scheduled (content-plan-run.ts projectBodyFor).
+     */
+    targets: autoPublishTargets.default([]),
     timezone: timezone.optional(),
     language: languageInput.optional(),
     brandKitId: z.string().trim().min(1).max(64).optional(),
@@ -307,12 +312,6 @@ async function assertTargets(
 ) {
   assertMayConfigureTargets(tenant, targets);
   await validateTargets(db, tenant.organisationId, targets, platforms);
-  const covered = new Set(targets.map((t) => t.platform));
-  const missing = platforms.filter((p) => !covered.has(p as AutoPublishTarget['platform']));
-  if (missing.length)
-    throw new ValidationError('Every platform in the plan needs a connected account', {
-      missing,
-    });
 }
 
 /** The candidate post times for a new plan (before other videos' held slots are removed). */

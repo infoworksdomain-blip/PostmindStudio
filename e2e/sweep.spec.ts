@@ -377,6 +377,9 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   for (const source of ['Video', 'Slideshow', 'Upload']) {
     const radio = page.getByRole('radio', { name: new RegExp(source, 'i') }).first();
     if (await radio.count()) await radio.click();
+    // 20.12: with no connected account the form says the work is saved for review (it never
+    // blocks on "choose an account to auto-publish to").
+    await expect(page.getByText(/No connected accounts —/).first()).toBeVisible();
   }
   await w.check('/new sources');
 
@@ -430,14 +433,16 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   }
   await w.check('/analytics ranges');
 
-  // Calendar: month navigation and a one-click posting plan.
+  // Calendar: month navigation and a posting schedule (20.14: 3 a week, system times).
   await w.visit('/calendar');
   await page.getByRole('button', { name: 'Next month' }).click();
   await w.settle();
   await page.getByRole('button', { name: 'Previous month' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
-  await page.getByRole('button', { name: '3 a week' }).click();
-  await page.getByRole('button', { name: /Save slots/ }).click();
+  await page.getByRole('radio', { name: 'Times a week' }).check({ force: true }); // visually hidden native radio; its label takes the click
+  await page.getByLabel('Posts a week').selectOption('3');
+  await page.getByRole('radio', { name: 'Pick times for me' }).check({ force: true });
+  await page.getByRole('button', { name: /Save schedule/ }).click();
   await w.settle();
   await expect(page.getByText(/open slot/i).first()).toBeVisible();
   await w.check('/calendar posting plan');

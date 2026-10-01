@@ -116,22 +116,15 @@ test.describe('Create /new with a plan', () => {
     w.assertClean();
   });
 
-  test('slideshow: template is required, and video-only options left on do not block it', async ({
-    page,
-  }) => {
+  test('slideshow: a template is required', async ({ page }) => {
     const w = new Watcher(page);
     await signIn(page, a.email);
     await page.goto('/new');
     await openOptions(page);
-    // Turn auto-publish on in the video form (no account), then switch to Slideshow.
-    await page.getByRole('checkbox', { name: /Auto-publish when approved/ }).check();
     await page.getByRole('radio', { name: /Slideshow/ }).click();
-    await expect(page.getByRole('checkbox', { name: /Auto-publish when approved/ })).toHaveCount(0);
     await page.locator('#create-brief').fill('Five reasons to try sourdough');
     await page.getByRole('button', { name: 'Create slideshow' }).click();
-    const alert = page.locator('ul[role="alert"]');
-    await expect(alert).toContainText('Pick a slideshow template.');
-    await expect(alert).not.toContainText('auto-publish');
+    await expect(page.locator('ul[role="alert"]')).toContainText('Pick a slideshow template.');
     await w.check('/new slideshow validation');
     w.assertClean();
   });

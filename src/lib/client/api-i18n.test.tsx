@@ -57,6 +57,15 @@ describe('errorMessage by locale', () => {
     expect(errorMessage(err, fr)).toBe(ALL_MESSAGES.fr.errors.codes.plan_tier);
   });
 
+  it('20.12: translates the auto-publish account codes', () => {
+    for (const code of ['auto_publish_account_required', 'auto_publish_account_unavailable']) {
+      const err = new ApiError(400, code, 'English server sentence');
+      const sentence = errorMessage(err, fr);
+      expect(sentence).not.toBe('English server sentence');
+      expect(sentence).toBe(ALL_MESSAGES.fr.errors.codes[code as 'auto_publish_account_required']);
+    }
+  });
+
   it('uses the generic sentence for browser errors outside English', () => {
     expect(errorMessage(new TypeError('Failed to fetch'), fr)).toBe(ALL_MESSAGES.fr.errors.generic);
   });

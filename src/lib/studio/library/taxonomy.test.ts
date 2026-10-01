@@ -88,6 +88,11 @@ describe('the real prisma/data/library-taxonomy.json', () => {
     expect(flat.length).toBeLessThanOrEqual(210);
   });
 
+  it('has Lifestyle → Luxury for the operator corpus folder (2026-10-01)', () => {
+    const slugs = flattenTaxonomy(taxonomyFile.parse(raw).categories).map((n) => n.slug);
+    expect(slugs).toEqual(expect.arrayContaining(['lifestyle/luxury', 'lifestyle/luxury/cars']));
+  });
+
   it('has exactly 8 top-level categories named per Addendum A3.4', () => {
     const parsed = taxonomyFile.parse(raw);
     expect(parsed.categories.map((c) => c.name)).toEqual([

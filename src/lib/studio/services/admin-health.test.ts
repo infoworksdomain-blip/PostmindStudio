@@ -144,6 +144,7 @@ describe('providerHealth', () => {
         errorRate1h: null,
         jobs1h: { succeeded: 0, failed: 0, running: 0 },
         spendTodayPence: 0,
+        accountHold: null,
         healthy: true,
       },
       {
@@ -153,6 +154,7 @@ describe('providerHealth', () => {
         errorRate1h: 0.02,
         jobs1h: { succeeded: 47, failed: 3, running: 5 },
         spendTodayPence: 1_840,
+        accountHold: null,
         healthy: true,
       },
       {
@@ -162,6 +164,7 @@ describe('providerHealth', () => {
         errorRate1h: 1,
         jobs1h: { succeeded: 0, failed: 7, running: 0 },
         spendTodayPence: 0,
+        accountHold: null,
         healthy: false,
       },
     ]);
@@ -185,5 +188,35 @@ describe('providerHealth', () => {
       NOW,
     );
     expect(pika).toMatchObject({ id: 'pika', configured: false, healthy: false, errorRate1h: 0 });
+  });
+
+  it('20.11: reports an account hold with its reason and resume time, and marks it unhealthy', async () => {
+    const breaker = createCircuitBreaker(() => NOW);
+    const until = NOW + 6 * 60 * 60_000;
+    breaker.tripAccount('anthropic', {
+      errorClass: 'account_limit',
+      reason: '400 You have reached your specified API usage limits.',
+      until,
+    });
+    const groupBy = vi.fn(async () => []);
+    const [anthropic] = await providerHealth(
+      {
+        db: { providerJob: { groupBy }, providerUsage: { groupBy } } as never,
+        registry: createProviderRegistry([adapter('anthropic')]),
+        breaker,
+      },
+      NOW,
+    );
+    expect(anthropic).toMatchObject({
+      id: 'anthropic',
+      breaker: 'open',
+      healthy: false,
+      accountHold: {
+        errorClass: 'account_limit',
+        reason: '400 You have reached your specified API usage limits.',
+        until: new Date(until).toISOString(),
+        since: new Date(NOW).toISOString(),
+      },
+    });
   });
 });

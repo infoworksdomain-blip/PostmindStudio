@@ -189,10 +189,10 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
 
   it('POST validates capability, accounts and posting times', async () => {
     expect((await create({}, 'reader')).status).toBe(403);
-    expect((await create({ targets: [] })).status).toBe(400);
-    const missing = await create({ platforms: ['tiktok', 'youtube_short'] });
-    expect(missing.status).toBe(400);
-    expect(JSON.stringify(missing.json)).toContain('youtube_short');
+    // 20.12: a target for a platform the plan does not render is still refused; a plan with no
+    // (or partial) accounts is allowed (test/api/p20-autopublish-accounts.test.ts).
+    const stray = await create({ targets: [{ platform: 'x', connectionId }] });
+    expect(stray.status).toBe(400);
     expect((await create({ useDripSlots: true, postsPerDay: undefined })).status).toBe(400);
     expect((await create({ days: 32 })).status).toBe(400);
   });

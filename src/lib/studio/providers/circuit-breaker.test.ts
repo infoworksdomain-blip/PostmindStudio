@@ -115,3 +115,42 @@ describe('half-open trial slot hygiene', () => {
     expect(breaker.tryAcquire('runway')).toBe(true);
   });
 });
+
+describe('account holds (20.11)', () => {
+  it('opens at once until the hold ends, then allows one trial; success clears the hold', () => {
+    let t = 1_000;
+    const breaker = createCircuitBreaker(() => t);
+    const until = t + 6 * 60 * 60_000; // e.g. Anthropic "regain access … at 00:00 UTC"
+    breaker.tripAccount('anthropic', {
+      errorClass: 'account_limit',
+      reason: 'usage limits',
+      until,
+    });
+    expect(breaker.state('anthropic')).toBe('open');
+    expect(breaker.tryAcquire('anthropic')).toBe(false);
+    expect(breaker.accountHolds()).toEqual({
+      anthropic: { errorClass: 'account_limit', reason: 'usage limits', until, since: 1_000 },
+    });
+    // Well past the normal 5-minute open period, still held.
+    t += OPEN_DURATION_MS * 10;
+    expect(breaker.tryAcquire('anthropic')).toBe(false);
+    t = until;
+    expect(breaker.state('anthropic')).toBe('half_open');
+    expect(breaker.accountHolds()).toEqual({});
+    expect(breaker.tryAcquire('anthropic')).toBe(true);
+    breaker.recordSuccess('anthropic');
+    expect(breaker.state('anthropic')).toBe('closed');
+  });
+
+  it('a failed trial after a hold re-opens for the normal period and drops the hold', () => {
+    let t = 0;
+    const breaker = createCircuitBreaker(() => t);
+    breaker.tripAccount('openai', { errorClass: 'auth', reason: 'bad key', until: 60_000 });
+    t = 60_000;
+    expect(breaker.tryAcquire('openai')).toBe(true);
+    breaker.recordFailure('openai');
+    expect(breaker.state('openai')).toBe('open');
+    t += OPEN_DURATION_MS;
+    expect(breaker.state('openai')).toBe('half_open');
+  });
+});
