@@ -725,6 +725,8 @@ test.describe('publish from a project', () => {
         renderId: world.renders.approved2![0],
         platform: 'tiktok',
         connectionId: world.connections.tiktok,
+        caption: 'Fresh today',
+        hashtags: ['qa1', 'qa2', 'qa3', 'qa4', 'qa5'],
         scheduledFor: future.toISOString(),
       },
     });
