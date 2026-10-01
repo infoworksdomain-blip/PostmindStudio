@@ -34,6 +34,8 @@ export type ProviderErrorClass =
   | 'provider_unavailable'
   | 'auth'
   | 'insufficient_credits'
+  /** 20.11: an account-level usage or spend limit the provider enforces (not a rate limit). */
+  | 'account_limit'
   | 'invalid_request'
   | 'content_policy'
   | 'output_truncated'
@@ -45,6 +47,18 @@ export const CLIENT_SIDE_ERROR_CLASSES: ReadonlySet<ProviderErrorClass> = new Se
   'invalid_request',
   'content_policy',
   'output_truncated',
+]);
+
+/**
+ * 20.11: problems with Studio's ACCOUNT at the provider (bad or unauthorised key, no credits,
+ * a usage or spend limit reached). Retrying the same provider cannot help, so the provider is
+ * held out of routing for a cooldown (circuit breaker) and the job fails over to the next
+ * provider for the capability at once. See providers/account-errors.ts.
+ */
+export const ACCOUNT_ERROR_CLASSES: ReadonlySet<ProviderErrorClass> = new Set([
+  'auth',
+  'insufficient_credits',
+  'account_limit',
 ]);
 
 interface ProviderRequestBase {
