@@ -20,11 +20,15 @@ import { parseTargetFormats } from '../../pipeline/scripting';
 import { parseSlideContent, slideProblem, type SlideContent } from '../../slideshow/planner';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
+import { generateSlideshowCopy, routedGenerator } from '../../services/caption-suggestions';
 
 // BACKLOG 7.6 — the "plan" step of a SLIDESHOW run. The slides are the plan, so Layers 1–4 are
 // skipped (A5.6: slideshows skip Layer 3): check every slide is renderable, run the same
 // pre-generation text-safety gate as scripted videos, create one script row per target format
 // (renders reference a script; its text is the slides' text), then go straight to composition.
+// 20.13: one more text_generation call (through the router, cost-tracked) writes each platform's
+// caption and hashtags from the slides' text; a failure there is logged and never stops the
+// slideshow (publishing tops the hashtags up, and Publish can ask for suggestions again).
 
 const SAFETY_MAX_TOKENS = 1_000;
 
@@ -134,6 +138,25 @@ export async function planSlideshow(
   }
 
   await applyOverlayDefaultsOnce(deps, project, data.runId, log);
+  if (texts.length > 0) {
+    try {
+      await generateSlideshowCopy(
+        {
+          db: deps.db,
+          now: deps.now,
+          generate: routedGenerator(deps, {
+            organisationId: data.organisationId,
+            projectId: data.projectId,
+            planTier: data.planTier,
+          }),
+        },
+        project,
+        texts,
+      );
+    } catch (err) {
+      log.warn({ err }, 'slideshow captions not generated; publishing will top up the hashtags');
+    }
+  }
 
   const durationSec = Math.max(1, Math.round(slides.reduce((sum, s) => sum + s.durationSec, 0)));
   await deps.db.$transaction(async (tx) => {

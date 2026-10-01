@@ -1544,7 +1544,8 @@
         "scan": "网站扫描",
         "brand": "品牌套件",
         "images": "图片库",
-        "learned": "Studio 学到的内容"
+        "learned": "Studio 学到的内容",
+        "hashtags": "话题标签"
       }
     },
     "kits": {
@@ -5111,6 +5112,67 @@
       "retry": "重试",
       "projects": "前往项目",
       "reference": "参考编号：{digest}"
+    }
+  },
+  "hashtags": {
+    "editor": {
+      "add": "添加",
+      "addPlaceholder": "输入话题标签后按回车",
+      "remove": "移除 #{tag}",
+      "moveEarlier": "将 #{tag} 前移",
+      "moveLater": "将 #{tag} 后移",
+      "locked": "#{tag} 会出现在每条帖子中",
+      "platformAdded": "此平台自动添加",
+      "count": "{count, plural, other {# 个话题标签}}（至少 {min} 个，至多 {max} 个）",
+      "countPlain": "{count, plural, other {# 个话题标签}}",
+      "needMore": "还需：{count}",
+      "tooMany": "此处至多 {max} 个话题标签",
+      "invalid": "只能使用字母、数字和 _（不含空格或标点），最多 {max} 个字符。",
+      "duplicate": "#{tag} 已在列表中"
+    },
+    "copy": {
+      "caption": "文案",
+      "title": "标题",
+      "hashtags": "话题标签",
+      "length": "含话题标签 {used} / {max} 个字符",
+      "lengthBytes": "含话题标签 {used} / {max} 字节",
+      "tooLong": "对 {platform} 来说太长：请缩短文案",
+      "source": {
+        "owner": "已由你编辑",
+        "generated": "建议",
+        "none": "暂无建议"
+      },
+      "suggestedNote": "建议来自你的商家资料、帖子内容和时令，而非实时热门数据。",
+      "save": "保存文案",
+      "saved": "文案已保存",
+      "savedScheduled": "{count, plural, other {文案已保存；已更新 # 条排期帖子}}"
+    },
+    "settings": {
+      "title": "话题标签",
+      "description": "每条帖子至少带 {min} 个话题标签：首先是你的商家标签，然后是你始终添加的标签，最后是适合该帖子的建议。",
+      "business": "商家话题标签",
+      "businessHint": "只能使用字母、数字和 _，不含空格，最多 {max} 个字符。",
+      "default": "留空则使用 #{tag}（取自你的商家名称）。",
+      "noDefault": "你的商家名称无法生成默认标签，请自行输入。",
+      "useDefault": "使用默认",
+      "invalid": "只能使用字母、数字和 _，至少包含一个字母，最多 {max} 个字符。",
+      "always": "始终添加",
+      "alwaysHint": "添加到每条帖子的活动或品牌标签（最多 {max} 个）。",
+      "save": "保存话题标签",
+      "saved": "话题标签已保存"
+    },
+    "note": {
+      "title": "话题标签：",
+      "body": "每条帖子都有 {tags}，另加建议（总共至少 {min} 个）。",
+      "none": "尚无商家话题标签。",
+      "edit": "编辑"
+    },
+    "plan": {
+      "title": "文案和话题标签",
+      "platform": "平台",
+      "open": "文案",
+      "openAria": "{title} 的文案和话题标签",
+      "close": "关闭"
     }
   }
 }

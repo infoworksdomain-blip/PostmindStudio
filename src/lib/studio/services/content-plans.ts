@@ -218,6 +218,7 @@ export function publicPlan(plan: PlanWithItems) {
       brief: i.brief,
       slides: i.slides,
       calendarDay: i.calendarDay,
+      postCopy: i.postCopy ?? null,
       status: i.status,
       statusReason: i.statusReason,
       projectId: i.projectId,

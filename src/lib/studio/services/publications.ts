@@ -16,6 +16,7 @@ import type { PublishJobData } from '../queue/queues';
 import type { PlanTier } from '../providers/router';
 import { MAX_SCHEDULE_AHEAD_MS, MIN_SCHEDULE_LEAD_MS } from '../schedule-window';
 import { PLATFORMS, toPlanTier } from './catalog';
+import { preparePublicationCopy } from './post-copy';
 
 // Publications (spec 8.4, BACKLOG 5.10–5.11): schedule or publish now, read, cancel, retry,
 // take down. Validation happens here so a bad request is a 400, never a failed upload.
@@ -176,8 +177,11 @@ export async function createPublication(
   },
   tenant: TenantContext,
   input: CreatePublicationInput,
-  /** Studio-initiated publications only (auto-publish / schedule / drip; 15.A9). */
-  extra: { captionTruncated?: boolean } = {},
+  /**
+   * Studio-initiated publications only (auto-publish / schedule / drip / month plan): the
+   * caption is fitted to the platform (15.A9) and the hashtag minimum never fails (20.13).
+   */
+  extra: { captionTruncated?: boolean; studioInitiated?: boolean } = {},
 ) {
   const { db } = deps;
   const orgId = tenant.organisationId;
@@ -201,11 +205,19 @@ export async function createPublication(
     sizeBytes,
   });
   if (problems.length) throw new ValidationError('Render does not fit this platform', { problems });
-  const composed = composeCaption(input.platform, {
+  // 20.13: the business + always hashtags are added and the list topped up to ≥ 5; a person's
+  // request that still has too few (or too many) is a 400 (post-copy.ts).
+  const copy = await preparePublicationCopy(db, render.project, input.platform, {
     caption: input.caption,
     hashtags: input.hashtags,
+    studioInitiated: Boolean(extra.studioInitiated),
+  });
+  const composed = composeCaption(input.platform, {
+    caption: copy.caption,
+    hashtags: copy.hashtags,
     title: input.title,
   });
+  const captionTruncated = Boolean(extra.captionTruncated) || copy.truncated;
 
   const rules = PLATFORM_RULES[input.platform];
   // Studio OAuth platforms name the connection; Instagram / Facebook may name it or give the
@@ -276,10 +288,11 @@ export async function createPublication(
         metadata: {
           connectionId,
           title: composed.title ?? null,
-          rawCaption: input.caption,
+          rawCaption: copy.caption,
           options: input.options ?? {},
           requestedBy: tenant.userId,
-          ...(extra.captionTruncated && { captionTruncated: true }),
+          ...(captionTruncated && { captionTruncated: true }),
+          ...(copy.toppedUp.length && { hashtagsToppedUp: copy.toppedUp }),
         } as Prisma.InputJsonValue,
       },
     });

@@ -40,6 +40,30 @@ const connections = {
   meta: { connect: 'core', configured: true },
 };
 
+// 20.13: GET /projects/:id/post-copy — each platform's copy and hashtag rules.
+const copyInfo = (hashtags: string[]) => ({
+  caption: 'Spring menu',
+  hashtags,
+  source: 'generated',
+  locked: ['AheadAI'],
+  min: 5,
+  max: 5,
+  captionMaxChars: 2200,
+  captionLimitInBytes: false,
+  required: [],
+  titleMaxChars: null,
+});
+const postCopy = {
+  match: /post-copy/,
+  body: {
+    platforms: {
+      tiktok: copyInfo(['AheadAI', 'bread', 'leeds']),
+      instagram_reel: { ...copyInfo(['AheadAI', 'a', 'b', 'c', 'd']), max: 30 },
+    },
+    minHashtags: 5,
+  },
+};
+
 const approved = makeProject({
   state: 'APPROVED',
   renders: [
@@ -100,6 +124,7 @@ describe('PublishPanel', () => {
     const onChanged = vi.fn();
     const api = mockFetch([
       { match: '/platform-connections', body: connections },
+      postCopy,
       { method: 'POST', match: '/publications', status: 202, body: { ok: true } },
     ]);
     renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={onChanged} />);
@@ -115,7 +140,11 @@ describe('PublishPanel', () => {
 
     await userEvent.clear(screen.getByLabelText('Caption'));
     await userEvent.type(screen.getByLabelText('Caption'), 'New plates');
-    await userEvent.type(screen.getByLabelText('Hashtags'), '#spring food');
+    // 20.13: three hashtags (the business one locked) — publishing waits for five.
+    await screen.findByText('#bread');
+    expect(screen.getByRole('button', { name: /Publish now \(1\)/ })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Remove #AheadAI' })).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Hashtags'), '#spring food{Enter}');
     await userEvent.click(screen.getByRole('button', { name: /Publish now \(1\)/ }));
 
     await waitFor(() => expect(onChanged).toHaveBeenCalled());
@@ -125,7 +154,7 @@ describe('PublishPanel', () => {
       platform: 'tiktok',
       connectionId: 'c_tt',
       caption: 'New plates',
-      hashtags: ['spring', 'food'],
+      hashtags: ['AheadAI', 'bread', 'leeds', 'spring', 'food'],
     });
     expect(call?.headers['idempotency-key']).toBeTruthy();
   });
@@ -148,10 +177,12 @@ describe('PublishPanel', () => {
           ],
         },
       },
+      postCopy,
       { method: 'POST', match: '/publications', status: 202, body: { ok: true } },
     ]);
     renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
     expect(await screen.findByLabelText('Account')).toHaveDisplayValue('@cafe.ig');
+    await screen.findByText('#d');
     await userEvent.click(screen.getByRole('button', { name: /Publish now \(1\)/ }));
     await waitFor(() => expect(api.find('POST', '/publications')).toHaveLength(1));
     expect(api.find('POST', '/publications')[0]?.body).toMatchObject({
@@ -164,10 +195,15 @@ describe('PublishPanel', () => {
   it('schedules when a time is set', async () => {
     const api = mockFetch([
       { match: '/platform-connections', body: connections },
+      {
+        match: /post-copy/,
+        body: { platforms: { tiktok: copyInfo(['AheadAI', 'a', 'b', 'c', 'd']) } },
+      },
       { method: 'POST', match: '/publications', status: 202, body: { ok: true } },
     ]);
     renderWithSWR(<PublishPanel project={approved} businessId="biz_1" onChanged={vi.fn()} />);
     await screen.findByLabelText('Account');
+    await screen.findByText('#d');
     // 20.3: the client refuses past and too-far times, so the time is relative to now.
     const when = toLocalInput(new Date(Date.now() + 2 * 86_400_000).toISOString());
     await userEvent.type(screen.getByLabelText('Schedule (optional)'), when);
@@ -275,5 +311,31 @@ describe('PublicationsList', () => {
     mockFetch([]);
     renderWithSWR(<PublicationsList onChanged={vi.fn()} publications={[]} />);
     expect(screen.getByText('Nothing published or scheduled yet.')).toBeInTheDocument();
+  });
+});
+
+describe('PublishPanel post copy (20.13)', () => {
+  it('saves an edited caption and hashtags for auto-publish and scheduled posts', async () => {
+    const api = mockFetch([
+      { match: '/platform-connections', body: connections },
+      postCopy,
+      { method: 'PUT', match: /post-copy/, body: { scheduledUpdated: 2, copy: {} } },
+    ]);
+    const project = makeProject({ state: 'APPROVED', renders: [makeRender()] });
+    renderWithSWR(<PublishPanel project={project} businessId="biz_1" onChanged={vi.fn()} />);
+    await screen.findByText('#leeds');
+    const save = screen.getByRole('button', { name: /Save caption/ });
+    expect(save).toBeDisabled();
+    expect(screen.getByText(/still needed: 2/)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Hashtags'), 'cake, buns{Enter}');
+    // The business hashtag can move but not be removed.
+    await userEvent.click(screen.getByRole('button', { name: 'Move #cake earlier' }));
+    await userEvent.click(save);
+    await waitFor(() => expect(api.find('PUT', '/projects/proj_1/post-copy')).toHaveLength(1));
+    expect(api.find('PUT', '/projects/proj_1/post-copy')[0]?.body).toEqual({
+      platform: 'tiktok',
+      caption: 'Spring menu',
+      hashtags: ['AheadAI', 'bread', 'cake', 'leeds', 'buns'],
+    });
   });
 });

@@ -15,6 +15,7 @@ import { sealTokens } from '../../src/lib/studio/platforms/tokens';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import { call, installApi, tenant } from '../helpers/api-harness';
 import { createHarness } from '../helpers/pipeline-harness';
+import { withHashtags } from '../helpers/hashtags';
 
 // BACKLOG 11.1–11.4: publish → analytics polling (spec 15.2 schedule) → cumulative snapshots →
 // overview / per-publication / timeseries / leaderboard / cost, and the nightly roll-ups.
@@ -126,7 +127,12 @@ describe.skipIf(!hasDb)('analytics polling + endpoints', { timeout: 120_000 }, (
     const res = await call(publicationsRoute.POST, {
       method: 'POST',
       token: 'owner',
-      body: { renderId: render.id, platform: 'tiktok', connectionId: connection.id, caption },
+      body: withHashtags({
+        renderId: render.id,
+        platform: 'tiktok',
+        connectionId: connection.id,
+        caption,
+      }),
     });
     expect(res.status).toBe(202);
     await drainInline(h.queue, h.deps);

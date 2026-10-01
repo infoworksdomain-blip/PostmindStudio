@@ -7,6 +7,7 @@ import { StubAdapter } from '../providers/test-adapter';
 import { buildShotstackEdit, escapeHtml, outputDimensions, totalDuration } from './edl';
 import { buildIdeationPrompt, parseIdeationResult } from './ideation';
 import {
+  frameFallbackTimes,
   LOUDNESS_FILTER,
   parseBlackdetect,
   parseFfprobe,
@@ -335,6 +336,12 @@ describe('media probe parsers', () => {
     expect(() => parseFfprobe(JSON.stringify({ format: {}, streams: [] }))).toThrow(
       /no video stream/,
     );
+  });
+
+  it('retries a frame grab earlier when the video stream ends before the declared duration', () => {
+    expect(frameFallbackTimes(10.2665)).toEqual([10.267, 5.133, 0]);
+    expect(frameFallbackTimes(0)).toEqual([0]);
+    expect(frameFallbackTimes(-1)).toEqual([0]);
   });
 
   it('uses an ebur128 framelog level the runtime ffmpeg 5.1 accepts (info or verbose only)', () => {

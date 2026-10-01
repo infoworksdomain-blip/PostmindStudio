@@ -5,7 +5,7 @@ import { StudioError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { projectLabel, projectNameParam } from '../../project-name';
 import { notifySafely } from '../notifications/notifier';
-import { fitCaption } from '../platforms/captions';
+import { projectCopy } from '../hashtags/pool';
 import type { AssetStorage } from '../storage';
 import type { JobQueue } from '../queue/enqueue';
 import { createPublication, createPublicationInput } from '../services/publications';
@@ -36,6 +36,9 @@ import { storedTargets, type AutoPublishTarget } from './targets';
 // 15.A5: publishPolicy SCHEDULED travels the same way (rows carry an absolute scheduledFor).
 // 15.A9: captions Studio sends on its own are fitted to the platform limit (fitCaption) instead
 // of failing on a 400; the publication records metadata.captionTruncated.
+// 20.13: a target without its own caption uses the project's post copy (targetCopy), and
+// createPublication (studioInitiated) adds the business + always hashtags, tops up to ≥ 5 and
+// fits the caption — the count never fails an auto-published post.
 
 export interface AutoPublishDeps {
   db: PrismaClient;
@@ -91,12 +94,40 @@ function systemTenant(organisationId: string, planTier: string): TenantContext {
   };
 }
 
+/**
+ * 20.13 — the caption, hashtags and title a target goes out with: the owner's edit for the
+ * platform (metadata.postCopy) wins; otherwise the target's own caption (template / create form)
+ * or the generated suggestion (ideation, slideshow copy, "Suggest captions"), then the brief's
+ * hook. Hashtags: the target's, then the suggestion's; createPublication adds the business and
+ * always hashtags and tops the list up to the minimum.
+ */
+export function targetCopy(
+  project: { metadata: Prisma.JsonValue | null; brief?: { hook: string } | null },
+  target: AutoPublishTarget,
+): { caption: string; hashtags: string[]; title?: string } {
+  const { owner, generated } = projectCopy(project.metadata);
+  const edited = owner[target.platform];
+  if (edited) return edited;
+  const suggestion = generated[target.platform];
+  const caption = target.caption?.trim() || suggestion?.caption || project.brief?.hook || '';
+  return {
+    caption,
+    // createPublicationInput takes at most 40; the platform maximum trims further.
+    hashtags: [...(target.hashtags ?? []), ...(suggestion?.hashtags ?? [])].slice(0, 40),
+    ...(suggestion?.title && { title: suggestion.title }),
+  };
+}
+
 /** Sends one outbox row through createPublication (the POST /publications service). */
 export function createTargetSender(deps: AutoPublishDeps): TargetSender {
   return async (row: AutoPublishOutbox, target: AutoPublishTarget): Promise<SendOutcome> => {
     const project = await deps.db.videoProject.findFirst({
       where: { id: row.projectId, organisationId: row.organisationId, deletedAt: null },
-      select: { metadata: true, renders: { select: { id: true, targetPlatform: true } } },
+      select: {
+        metadata: true,
+        renders: { select: { id: true, targetPlatform: true } },
+        brief: { select: { hook: true } },
+      },
     });
     if (!project) return { status: 'failed', error: 'Project not found', retryable: false };
     const renderId = renderIdFor(project.metadata, project.renders, target.platform);
@@ -111,22 +142,15 @@ export function createTargetSender(deps: AutoPublishDeps): TargetSender {
       : target.scheduleOffsetMinutes
         ? new Date(row.createdAt.getTime() + target.scheduleOffsetMinutes * 60_000).toISOString()
         : undefined;
-    let fitted: { caption: string; truncated: boolean };
-    try {
-      fitted = fitCaption(target.platform, {
-        caption: target.caption ?? '',
-        hashtags: target.hashtags ?? [],
-      });
-    } catch (err) {
-      return { status: 'failed', error: errorText(err), retryable: false };
-    }
+    const copy = targetCopy(project, target);
     const input = createPublicationInput.safeParse({
       renderId,
       platform: target.platform,
       connectionId: target.connectionId,
       platformAccountId: target.platformAccountId,
-      caption: fitted.caption,
-      hashtags: target.hashtags ?? [],
+      caption: copy.caption,
+      hashtags: copy.hashtags,
+      ...(copy.title && { title: copy.title.slice(0, 200) }),
       // A retry after the scheduled time publishes now rather than failing on a past schedule.
       scheduledFor:
         scheduledFor && Date.parse(scheduledFor) > deps.now() + 60_000 ? scheduledFor : undefined,
@@ -140,8 +164,10 @@ export function createTargetSender(deps: AutoPublishDeps): TargetSender {
     try {
       const tenant = systemTenant(row.organisationId, row.planTier);
       const publication = await createPublication(deps, tenant, input.data, {
-        captionTruncated: fitted.truncated,
+        studioInitiated: true,
       });
+      const truncated = (publication.metadata as { captionTruncated?: boolean } | null)
+        ?.captionTruncated;
       deps.audit({
         actorUserId: AUTO_PUBLISH_ACTOR,
         organisationId: row.organisationId,
@@ -153,7 +179,8 @@ export function createTargetSender(deps: AutoPublishDeps): TargetSender {
           platform: target.platform,
           renderId,
           scheduledFor: input.data.scheduledFor ?? null,
-          captionTruncated: fitted.truncated,
+          captionTruncated: Boolean(truncated),
+          hashtags: publication.hashtags.length,
           outboxId: row.id,
           attempt: row.attempts + 1,
         },

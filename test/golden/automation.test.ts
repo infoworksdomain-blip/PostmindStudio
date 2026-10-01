@@ -151,7 +151,11 @@ describe.skipIf(!hasDb)('automation journeys (Phase 12, track A)', { timeout: 12
     expect(meta.autoPublishResult?.results[1]).toMatchObject({ status: 'created' });
     const publications = await db.videoPublication.findMany({ where: { projectId: id } });
     expect(publications).toHaveLength(1);
-    expect(publications[0]).toMatchObject({ state: 'PUBLISHED', caption: 'Fresh sourdough' });
+    // 20.13: the hashtags topped up from the brief's keywords follow the caption.
+    expect(publications[0]).toMatchObject({
+      state: 'PUBLISHED',
+      caption: expect.stringMatching(/^Fresh sourdough\n\n#Sourdough #Leeds$/),
+    });
     expect(j.h.publishers.tiktok.published).toHaveLength(1);
     expect(j.h.audits.map((a) => [a.action, a.actorUserId])).toEqual(
       expect.arrayContaining([

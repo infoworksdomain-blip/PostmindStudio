@@ -346,6 +346,20 @@ export const WHATS_NEW: WhatsNewGroup[] = [
           { href: '#/tour/email/monthPlanned', label: 'The summary email' },
         ],
       },
+      {
+        ref: '20.13',
+        title: 'Captions and at least five hashtags on every post',
+        line: 'Every generated video and slideshow gets a caption per platform and at least five hashtags: your business hashtag first (from your business name, editable), your “always include” hashtags, then suggestions from your business profile, the post and UK calendar days. Suggestions are labelled “Suggested”: no platform gives Studio trend data, so nothing is called trending.',
+        see: [
+          { href: '#/business?tab=hashtags', label: 'Business: Hashtags' },
+          {
+            href: project(PROJECTS.springMenu.id),
+            label: 'Review: edit caption and hashtag chips',
+          },
+          { href: '#/plans/plan-october', label: 'Plan: a post’s caption and hashtags' },
+          { href: '#/publications', label: 'Publications with their hashtags' },
+        ],
+      },
     ],
   },
 ];

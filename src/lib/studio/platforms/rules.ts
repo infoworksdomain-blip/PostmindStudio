@@ -91,6 +91,9 @@ export const PLATFORM_RULES: Record<Platform, PlatformRules> = {
     maxHashtags: 5,
   },
   // spec 9.1: 16:9 or 1:1; spec 9.8: 280 chars (Basic). X docs: tweet_video 0.5 s–20 min default.
+  // 20.13 DECISION: maxHashtags 2 → 5. X documents no hashtag limit (its help centre only
+  // recommends "no more than 2" as best practice); the operator's rule is at least 5 per post, so
+  // X carries exactly 5 and the caption is shortened to fit 280 (hashtags/policy.ts).
   x: {
     credentials: 'studio',
     connectionPlatform: 'x',
@@ -99,7 +102,7 @@ export const PLATFORM_RULES: Record<Platform, PlatformRules> = {
     maxDurationSec: 140,
     maxBytes: 8 * GB,
     captionMaxChars: 280,
-    maxHashtags: 2,
+    maxHashtags: 5,
   },
   // Facebook Reels (spec 9.7; FB Reels docs: 9:16, 3–90 s). Feed video is `facebook_feed`.
   facebook: {

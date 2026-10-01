@@ -29,6 +29,11 @@ import type {
 //   Both run after the video is live, so a failure is recorded on the publication, never
 //   turned into a failed publish (the video would be uploaded twice on retry).
 // Unverified API projects' uploads are forced private until the project passes an audit.
+// 20.13 (read 2026-10-01, https://developers.google.com/youtube/v3/docs/videos#snippet.tags):
+//   snippet.tags[] — keyword tags; "maximum length of 500 characters", commas between items
+//   count, a tag with a space counts its quotation marks. The post's hashtags (no "#") go there
+//   too; the hashtags themselves stay in the description (YouTube shows up to three above the
+//   title, support.google.com/youtube/answer/6390658).
 
 export const UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 export const THUMBNAIL_URL = 'https://www.googleapis.com/upload/youtube/v3/thumbnails/set';
@@ -36,6 +41,20 @@ export const CAPTIONS_URL = 'https://www.googleapis.com/upload/youtube/v3/captio
 export const API = 'https://www.googleapis.com/youtube/v3';
 export const CHUNK_SIZE = 32 * 256 * 1024; // 8 MiB, a multiple of 256 KiB
 const DEFAULT_CATEGORY_ID = '22'; // spec 9.4: "People & Blogs"
+export const MAX_TAGS_CHARS = 500;
+
+/** snippet.tags from the hashtags, within the documented 500-character budget (in order). */
+export function youtubeTags(hashtags: readonly string[]): string[] {
+  const tags: string[] = [];
+  let used = 0;
+  for (const tag of hashtags) {
+    const cost = [...tag].length + (/\s/.test(tag) ? 2 : 0) + (tags.length ? 1 : 0);
+    if (used + cost > MAX_TAGS_CHARS) break;
+    tags.push(tag);
+    used += cost;
+  }
+  return tags;
+}
 const STATUS_POLL_MS = 10_000;
 const STATUS_TIMEOUT_MS = 5 * 60_000;
 
@@ -81,6 +100,7 @@ export class YouTubePublisher implements PlatformPublisher {
         title: request.title ?? 'Untitled',
         description: request.text,
         categoryId: DEFAULT_CATEGORY_ID,
+        ...(request.hashtags.length && { tags: youtubeTags(request.hashtags) }),
       },
       status: {
         privacyStatus,
