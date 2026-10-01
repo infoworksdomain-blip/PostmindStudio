@@ -64,7 +64,7 @@ test.describe('Create /new with a plan', () => {
     await signIn(page, a.email);
     await page.goto('/new');
     await expect(page.getByLabel(/What’s the video about/)).toBeVisible();
-    const alert = page.getByRole('alert');
+    const alert = page.locator('ul[role="alert"]');
 
     // Empty brief.
     await page.getByRole('button', { name: 'Generate' }).click();
@@ -129,7 +129,7 @@ test.describe('Create /new with a plan', () => {
     await expect(page.getByRole('checkbox', { name: /Auto-publish when approved/ })).toHaveCount(0);
     await page.locator('#create-brief').fill('Five reasons to try sourdough');
     await page.getByRole('button', { name: 'Create slideshow' }).click();
-    const alert = page.getByRole('alert');
+    const alert = page.locator('ul[role="alert"]');
     await expect(alert).toContainText('Pick a slideshow template.');
     await expect(alert).not.toContainText('auto-publish');
     await w.check('/new slideshow validation');
@@ -166,7 +166,7 @@ test.describe('Create /new with a plan', () => {
     await openOptions(page);
     await page.getByRole('radio', { name: /Upload/ }).click();
     await page.getByRole('button', { name: 'Generate' }).click();
-    await expect(page.getByRole('alert')).toContainText('Upload your video first.');
+    await expect(page.locator('ul[role="alert"]')).toContainText('Upload your video first.');
 
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto('/new');
@@ -254,7 +254,7 @@ test.describe('Plan my month with a plan', () => {
 
     // No account chosen for TikTok: the form says so (accounts are not guessed).
     await page.getByRole('button', { name: 'Draft my month' }).click();
-    const alert = page.getByRole('alert');
+    const alert = page.locator('ul[role="alert"]');
     if (await alert.count()) await expect(alert).toContainText('Choose a connected account');
 
     await page.getByLabel('Length in days').fill('40');
@@ -262,7 +262,7 @@ test.describe('Plan my month with a plan', () => {
       .getByRole('combobox', { name: /TikTok account/ })
       .selectOption({ label: 'Bakery TikTok' });
     await page.getByRole('button', { name: 'Draft my month' }).click();
-    await expect(page.getByRole('alert')).toContainText('Choose between 1 and 31 days.');
+    await expect(page.locator('ul[role="alert"]')).toContainText('Choose between 1 and 31 days.');
 
     await page.getByLabel('Length in days').fill('3');
     await page.getByRole('radio', { name: '2 a day' }).click();

@@ -7,6 +7,13 @@ import type { PrismaClient } from '@prisma/client';
 // accounts through Prisma, which keeps each scenario to a few seconds. Nothing here calls a paid
 // provider: generation either stops at the billing gate or is queued and never run.
 
+/** A private address of our own per request source: the auth rate limit (3 sign-ups a minute) is
+ *  keyed on x-real-ip, and every spec runs from 127.0.0.1, so sharing it would starve the sweep. */
+export function randomIp(): string {
+  const n = () => 1 + Math.floor(Math.random() * 254);
+  return `10.${n()}.${n()}.${n()}`;
+}
+
 export const PASSWORD = `Qa-${randomUUID()}`;
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PLUS' | null;
@@ -38,7 +45,7 @@ export async function createAccount(
   const email = `qa-create-${options.label}-${run}@example.test`;
   const res = await request.post('/api/auth/sign-up/email', {
     data: { name: `QA ${options.label}`, email, password: PASSWORD },
-    headers: { origin: baseURL },
+    headers: { origin: baseURL, 'x-real-ip': randomIp() },
   });
   expect(res.ok(), `sign-up ${res.status()}`).toBe(true);
   await expect
@@ -97,6 +104,7 @@ export async function createAccount(
 }
 
 export async function signIn(page: Page, email: string): Promise<void> {
+  await page.setExtraHTTPHeaders({ 'x-real-ip': randomIp() });
   await page.goto('/sign-in');
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
