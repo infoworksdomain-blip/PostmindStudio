@@ -31,6 +31,7 @@ import { presetSlots } from '@/lib/studio/drip-presets';
 import { upcomingSlots } from '@/lib/studio/services/drip-queue';
 import { billingOverview, videoQuota } from '../billing-state';
 import { CONNECTIONS, DEMO_BUSINESS_ID } from '../ids';
+import { demoHashtags } from '../hashtags-data';
 import { DemoHttpError, route } from '../registry';
 import type { ProjectContent } from './projects-content';
 import {
@@ -72,6 +73,8 @@ interface DemoItem {
   status: ItemStatus;
   statusReason: string | null;
   projectId: string | null;
+  /** 20.13: the owner's caption + hashtags per platform (otherwise drafted below). */
+  postCopy?: Record<string, { caption: string; hashtags: string[] }>;
 }
 
 interface DemoPlan {
@@ -232,7 +235,9 @@ function publicPlan(p: DemoPlan) {
       typicalPence: videos * 160 + (kinds.length - videos) * 150,
       maxPence: videos * 350 + (kinds.length - videos) * 150,
     },
-    items: [...p.items].sort((a, b) => a.slotAt.localeCompare(b.slotAt)),
+    items: [...p.items]
+      .sort((a, b) => a.slotAt.localeCompare(b.slotAt))
+      .map((i) => ({ ...i, postCopy: i.title ? itemCopy(i, p.platforms) : null })),
   };
 }
 
@@ -586,6 +591,46 @@ route('POST', '/content-plans', ({ body }) => {
   return {
     status: 202,
     body: { plan: publicPlan(plan), allowance: allowance(), cost: cost() },
+  };
+});
+
+/** 20.13: a planned post's caption and hashtags per platform (drafted with the topic). */
+function itemCopy(item: DemoItem, platforms: string[]) {
+  const drafted = [item.slides?.hook ?? item.title, item.slides?.cta]
+    .filter(Boolean)
+    .join(String.fromCharCode(10));
+  return Object.fromEntries(
+    platforms.map((p) => {
+      const own = item.postCopy?.[p];
+      return [
+        p,
+        own ?? { caption: drafted, hashtags: demoHashtags(['Sourdough', 'LeedsFood', 'Bake'], p) },
+      ];
+    }),
+  );
+}
+
+route('PUT', '/content-plans/:id/items/:itemId/post-copy', ({ params, body }) => {
+  const plan = planOr404(params.id);
+  const item = plan.items.find((i) => i.id === params.itemId);
+  if (!item) throw new DemoHttpError(404, 'not_found', 'Plan item not found');
+  const b = (body ?? {}) as { platform?: string; caption?: string; hashtags?: unknown };
+  const chosen = (Array.isArray(b.hashtags) ? b.hashtags : []).filter(
+    (t): t is string => typeof t === 'string',
+  );
+  // The editor sends the business and always hashtags with the owner's own (as the real route).
+  if (chosen.length < 5)
+    throw new DemoHttpError(400, 'validation_error', 'Posts need at least 5 hashtags', {
+      code: 'hashtags_minimum',
+    });
+  item.postCopy = {
+    ...(item.postCopy ?? {}),
+    [b.platform ?? 'tiktok']: { caption: (b.caption ?? '').trim(), hashtags: chosen },
+  };
+  return {
+    plan: publicPlan(plan),
+    copy: { caption: b.caption ?? '', hashtags: chosen },
+    scheduledUpdated: 0,
   };
 });
 

@@ -36,7 +36,7 @@ export const PLAN_OUTPUT_SCHEMA: Record<string, unknown> = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['index', 'title', 'brief', 'hook', 'points', 'cta'],
+        required: ['index', 'title', 'brief', 'hook', 'points', 'cta', 'caption', 'hashtags'],
         properties: {
           index: { type: 'integer', description: 'the slot number' },
           title: { type: 'string' },
@@ -44,6 +44,9 @@ export const PLAN_OUTPUT_SCHEMA: Record<string, unknown> = {
           hook: { type: 'string' },
           points: { type: 'array', items: { type: 'string' } },
           cta: { type: 'string' },
+          // 20.13: the post's caption and hashtags, in the same call (fitted per platform later).
+          caption: { type: 'string' },
+          hashtags: { type: 'array', items: { type: 'string' } },
         },
       },
     },
@@ -83,6 +86,8 @@ export interface PlanPromptInput {
   plannedTitles: string[];
   styleMemory?: string;
   language?: string;
+  /** 20.13: the hashtags Studio adds to every post itself (business + always), without "#". */
+  fixedHashtags?: string[];
 }
 
 const clean = (s: string) => s.replace(/"""/g, '"').replace(/\s+/g, ' ').trim();
@@ -124,6 +129,10 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
       ...input.plannedTitles.map((t) => `- ${clean(t).slice(0, 120)}`),
     );
   if (input.styleMemory) lines.push(input.styleMemory);
+  if (input.fixedHashtags?.length)
+    lines.push(
+      `Hashtags Studio adds to every post itself (never repeat them): ${input.fixedHashtags.map((t) => `#${clean(t)}`).join(' ')}`,
+    );
   lines.push(languageInstruction(input.language ?? DEFAULT_LANGUAGE));
   lines.push('', `Write exactly ${input.slots.length} posts, one per slot, in this order:`);
   for (const s of input.slots) {
@@ -134,7 +143,7 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
   }
   lines.push(
     '',
-    'Return {"items":[{"index","title","brief","hook","points":[],"cta"}]} with one entry per slot number.',
+    'Return {"items":[{"index","title","brief","hook","points":[],"cta","caption","hashtags":[]}]} with one entry per slot number.',
   );
   return lines.join('\n');
 }
@@ -152,6 +161,13 @@ const itemSchema = z.object({
   hook: cut(120),
   points: z.array(cut(100)).max(12),
   cta: cut(80),
+  // 20.13: optional so a chunk without them still parses (the publish path tops hashtags up).
+  caption: z
+    .string()
+    .transform((s) => s.trim())
+    .transform((s) => ([...s].length > 600 ? `${[...s].slice(0, 599).join('')}…` : s))
+    .optional(),
+  hashtags: z.array(z.string().max(120)).max(30).optional(),
 });
 
 const outputSchema = z.object({ items: z.array(itemSchema).max(200) });
@@ -160,6 +176,8 @@ export interface PlannedTopic {
   title: string;
   brief: string;
   slides: { hook: string; points: string[]; cta: string };
+  /** 20.13: the drafted caption (hook when the model gave none) and hashtag suggestions. */
+  copy: { caption: string; hashtags: string[] };
 }
 
 /**
@@ -200,6 +218,10 @@ export function parsePlanResult(json: unknown, count: number): PlannedTopic[] {
         hook: item.hook || item.title,
         points: points.length ? points : [item.title],
         cta: item.cta,
+      },
+      copy: {
+        caption: item.caption || [item.hook || item.title, item.cta].filter(Boolean).join('\n'),
+        hashtags: item.hashtags ?? [],
       },
     });
   }

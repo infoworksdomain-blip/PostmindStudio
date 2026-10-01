@@ -1714,6 +1714,27 @@ model DripQueue {
   @@schema("studio")
 }
 
+// DERIVED — 20.13 captions and hashtags (operator request 2026-10-01): per business, the business
+// hashtag every post carries (null = derived from the business name, hashtags/business-hashtag.ts)
+// and the owner's "always include" hashtags, added to every generated, approved and auto-published
+// post (hashtags/policy.ts).
+model BusinessHashtagSettings {
+  id              String   @id @default(cuid())
+  organisationId  String
+  businessId      String
+  /// Without "#"; letters/digits/underscore, ≤ 30 characters. NULL = the derived default.
+  primaryHashtag  String?
+  /// Without "#", in the owner's order (≤ 10, each ≤ 30 characters).
+  alwaysHashtags  String[]
+  updatedByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([organisationId, businessId])
+  @@map("business_hashtag_settings")
+  @@schema("studio")
+}
+
 // DERIVED — 20.9 "Plan my month" (operator request 2026-09-30): a month of videos and slideshows
 // drafted by Claude, edited by the owner, then generated and auto-scheduled (≤ 4 posts a day)
 // with a review window. One plan per request; each item becomes one project when generated.
@@ -1786,6 +1807,10 @@ model ContentPlanItem {
   slides           Json?
   /// A seasonal / UK calendar day the item is for (content-plans/calendar-days.ts id).
   calendarDay      String?
+  /// 20.13: the post's caption and hashtags per platform { <platform>: { caption, hashtags[],
+  /// title? } } (drafted with the topic, edited by the owner; copied to the project's
+  /// metadata.postCopy when the item is generated).
+  postCopy         Json?
   status           ContentPlanItemStatus @default(PLANNED)
   statusReason     String?
   projectId        String?

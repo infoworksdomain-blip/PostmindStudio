@@ -63,7 +63,10 @@ describe('PublishPanel (15.A6 / 15.A7)', () => {
         match: /caption-suggestions/,
         body: {
           suggestions: {
-            tiktok: { caption: 'Friday means sourdough', hashtags: ['leeds', 'bread'] },
+            tiktok: {
+              caption: 'Friday means sourdough',
+              hashtags: ['AheadAI', 'leeds', 'bread', 'loaf', 'bakery'],
+            },
           },
         },
       },
@@ -77,12 +80,12 @@ describe('PublishPanel (15.A6 / 15.A7)', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Caption')).toHaveValue('Friday means sourdough'),
     );
-    expect(screen.getByLabelText('Hashtags')).toHaveValue('#leeds #bread');
+    expect(screen.getByText('#bakery')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Publish now \(1\)/ }));
     await waitFor(() => expect(api.find('POST', '/publications')).toHaveLength(1));
     expect(api.find('POST', '/publications')[0]?.body).toMatchObject({
       caption: 'Friday means sourdough',
-      hashtags: ['leeds', 'bread'],
+      hashtags: ['AheadAI', 'leeds', 'bread', 'loaf', 'bakery'],
     });
   });
 });

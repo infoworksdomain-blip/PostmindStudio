@@ -9,6 +9,7 @@ import { sealTokens } from '../../src/lib/studio/platforms/tokens';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import { call, installApi, tenant } from '../helpers/api-harness';
 import { createHarness } from '../helpers/pipeline-harness';
+import { withHashtags } from '../helpers/hashtags';
 
 // BACKLOG 13.9 — PATCH /publications/:id { scheduledFor }: auth, validation, tenant isolation,
 // 409 unless SCHEDULED, audit, and the delayed job replaced (the old job can no longer post).
@@ -109,12 +110,12 @@ describe.skipIf(!hasDb)('PATCH /publications/:id (reschedule)', { timeout: 60_00
     const res = await call(publicationsRoute.POST, {
       method: 'POST',
       token: 'owner',
-      body: {
+      body: withHashtags({
         renderId: render.id,
         platform: 'tiktok',
         connectionId: conn.id,
         scheduledFor: new Date(at).toISOString(),
-      },
+      }),
     });
     expect(res.status).toBe(202);
     return (res.json.publication as { id: string }).id;

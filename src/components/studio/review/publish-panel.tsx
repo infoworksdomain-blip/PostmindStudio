@@ -4,10 +4,9 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, Loader2, Send, Sparkles } from 'lucide-react';
+import { CalendarClock, Loader2, Save, Send, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat, type StudioFormat } from '@/lib/client/format';
 import type {
@@ -21,12 +20,25 @@ import { scheduleInputBounds, scheduleProblem } from '../automation/schedule-bou
 import { belongsToBusiness, isMetaPlatform } from '../connections/platforms';
 import { Field, NativeSelect } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
+import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
+import {
+  fallbackCopyInfo,
+  PostCopyEditor,
+  postCopyProblems,
+  type PostCopyInfo,
+  type PostCopyValue,
+} from '../hashtags/post-copy-editor';
+import { withLocked } from '../hashtags/model';
 
 // Spec 14.2 publish controls: per-variant enable, account, caption and hashtags; publish all now
 // or schedule. One POST /publications per enabled variant.
 // 15.A7: "Suggest captions" fills each variant with its per-platform caption and hashtags (spec
 // 9.8, POST /projects/:id/caption-suggestions); edited variants are left alone.
 // 15.A6: the schedule picker shows an advisory best time (GET /analytics/best-times).
+// 20.13: each variant's caption and hashtags come from GET /projects/:id/post-copy (the owner's
+// edit, else the generated suggestion) and are edited as chips (business + always hashtags
+// locked, at least 5, the platform maximum, caption length); "Save caption" stores the edit for
+// auto-publish and the project's scheduled posts (PUT /projects/:id/post-copy).
 
 interface BestTimes {
   bestPerDay: Array<{ weekday: number; hour: number; score: number; basis: string }>;
@@ -73,8 +85,12 @@ function browserTimeZone(): string {
 interface VariantDraft {
   enabled: boolean;
   connectionId: string;
-  caption: string;
-  hashtags: string;
+  /** Set once the person edits the copy (otherwise the server's copy is shown). */
+  copy?: PostCopyValue;
+}
+
+interface PostCopyResponse {
+  platforms: Record<string, PostCopyInfo>;
 }
 
 export function parseHashtags(input: string): string[] {
@@ -111,6 +127,7 @@ export function PublishPanel({
 }) {
   const t = useTranslations('review.publish');
   const tc = useTranslations('connections');
+  const th = useTranslations('hashtags.copy');
   const f = useFormat();
   const errorMessage = useErrorMessage();
   const { data, error } = useApi<{ data: PlatformConnection[]; meta?: MetaConnectInfo }>(
@@ -131,6 +148,10 @@ export function PublishPanel({
   const [submitting, setSubmitting] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<Record<string, Suggestion>>({});
+  const [savingCopy, setSavingCopy] = useState<string | null>(null);
+  const { data: copyData, mutate: refreshCopy } = useApi<PostCopyResponse>(
+    `/projects/${project.id}/post-copy`,
+  );
   const { data: best } = useApi<BestTimes>('/analytics/best-times', {
     ...(businessId && { businessId }),
     timezone: browserTimeZone(),
@@ -148,20 +169,71 @@ export function PublishPanel({
       drafts[render.id] ?? {
         enabled: options.length > 0,
         connectionId: options[0]?.id ?? '',
-        caption: suggestions[render.targetPlatform]?.caption ?? project.brief?.hook ?? '',
-        hashtags: (suggestions[render.targetPlatform]?.hashtags ?? [])
-          .map((t) => `#${t}`)
-          .join(' '),
       }
     );
   };
   const update = (render: Render, patch: Partial<VariantDraft>) =>
     setDrafts((d) => ({ ...d, [render.id]: { ...draftFor(render), ...patch } }));
 
+  /** The editor rules and starting copy of a variant (server copy, then fresh suggestions). */
+  const infoFor = (render: Render): PostCopyInfo => {
+    const info =
+      copyData?.platforms[render.targetPlatform] ??
+      fallbackCopyInfo(render.targetPlatform, project.brief?.hook ?? '');
+    const suggestion = suggestions[render.targetPlatform];
+    if (!suggestion || info.source === 'owner') return info;
+    return {
+      ...info,
+      caption: suggestion.caption,
+      hashtags: withLocked(suggestion.hashtags, info.locked),
+    };
+  };
+  const copyFor = (render: Render): PostCopyValue => {
+    const info = infoFor(render);
+    return (
+      draftFor(render).copy ?? {
+        caption: info.caption,
+        hashtags: info.hashtags,
+        ...(info.title && { title: info.title }),
+      }
+    );
+  };
+  const blocked = (render: Render) => {
+    const p = postCopyProblems(copyFor(render), infoFor(render));
+    return p.short || p.over || p.tooLong;
+  };
+
   const selected = renders.filter((r) => {
     const d = draftFor(r);
     return d.enabled && d.connectionId;
   });
+  const anyBlocked = selected.some(blocked);
+
+  async function saveCopy(render: Render) {
+    const copy = copyFor(render);
+    setSavingCopy(render.id);
+    try {
+      const res = await api<{ scheduledUpdated: number }>(`/projects/${project.id}/post-copy`, {
+        method: 'PUT',
+        idempotencyKey: newIdempotencyKey(),
+        body: {
+          platform: render.targetPlatform,
+          caption: copy.caption.trim(),
+          hashtags: copy.hashtags,
+          ...(copy.title?.trim() && { title: copy.title.trim() }),
+        },
+      });
+      toast.success(
+        res.scheduledUpdated ? th('savedScheduled', { count: res.scheduledUpdated }) : th('saved'),
+      );
+      await refreshCopy();
+      update(render, { copy: undefined });
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setSavingCopy(null);
+    }
+  }
 
   async function suggest() {
     setSuggesting(true);
@@ -171,6 +243,7 @@ export function PublishPanel({
         { method: 'POST', idempotencyKey: newIdempotencyKey(), body: {} },
       );
       setSuggestions(res.suggestions);
+      void refreshCopy();
       toast.success(t('captionsSuggested'));
     } catch (err) {
       toast.error(errorMessage(err));
@@ -188,6 +261,7 @@ export function PublishPanel({
     let done = 0;
     for (const render of selected) {
       const d = draftFor(render);
+      const copy = copyFor(render);
       try {
         await api('/publications', {
           method: 'POST',
@@ -196,8 +270,9 @@ export function PublishPanel({
             renderId: render.id,
             platform: render.targetPlatform,
             connectionId: d.connectionId,
-            caption: d.caption.trim(),
-            hashtags: parseHashtags(d.hashtags),
+            caption: copy.caption.trim(),
+            hashtags: copy.hashtags,
+            ...(copy.title?.trim() && { title: copy.title.trim() }),
             ...(scheduledFor && { scheduledFor }),
           },
         });
@@ -225,7 +300,8 @@ export function PublishPanel({
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="text-sm text-destructive">{errorMessage(error)}</p>}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <BusinessHashtagsNote businessId={businessId} />
         <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
           {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}
           {t('suggest')}
@@ -278,21 +354,30 @@ export function PublishPanel({
                       ))}
                     </NativeSelect>
                   </Field>
-                  <Field id={`tags-${render.id}`} label={t('hashtags')}>
-                    <Input
-                      id={`tags-${render.id}`}
-                      value={d.hashtags}
-                      placeholder={t('hashtagsPlaceholder')}
-                      onChange={(e) => update(render, { hashtags: e.target.value })}
+                  <p className="self-end text-xs text-muted-foreground">
+                    {th(`source.${infoFor(render).source}`)}
+                  </p>
+                  <div className="flex flex-col gap-2 sm:col-span-2">
+                    <PostCopyEditor
+                      id={`copy-${render.id}`}
+                      platformLabel={label}
+                      info={infoFor(render)}
+                      value={copyFor(render)}
+                      onChange={(copy) => update(render, { copy })}
                     />
-                  </Field>
-                  <Field id={`caption-${render.id}`} label={t('caption')} className="sm:col-span-2">
-                    <Textarea
-                      id={`caption-${render.id}`}
-                      value={d.caption}
-                      onChange={(e) => update(render, { caption: e.target.value })}
-                    />
-                  </Field>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs text-muted-foreground">{th('suggestedNote')}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void saveCopy(render)}
+                        disabled={savingCopy !== null || blocked(render)}
+                      >
+                        {savingCopy === render.id ? <Loader2 className="animate-spin" /> : <Save />}
+                        {th('save')}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </li>
@@ -322,7 +407,7 @@ export function PublishPanel({
         </Field>
         <Button
           onClick={publish}
-          disabled={submitting || selected.length === 0 || scheduleError !== null}
+          disabled={submitting || selected.length === 0 || scheduleError !== null || anyBlocked}
         >
           {submitting ? (
             <Loader2 className="animate-spin" />

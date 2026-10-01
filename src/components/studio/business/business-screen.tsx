@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBusiness } from '../business-context';
 import { EmptyState, PageHeader } from '../primitives';
+import { BusinessHashtagsPanel } from '../hashtags/business-hashtags-panel';
 import { BrandKitsPanel } from './brand-kits-panel';
 import { ImageLibraryPanel } from './image-library-panel';
 import { ProfilePanel } from './profile-panel';
@@ -14,8 +16,9 @@ import { VoiceProfilesPanel } from './voice-profiles-panel';
 
 // BACKLOG 10.9 — the selected business: what Studio thinks it does (profile), the website scan
 // that works that out, brand kits, and the image library built from all of it.
+// 20.13: the Hashtags tab (business hashtag + always-include hashtags); ?tab=<tab> opens a tab.
 
-export const BUSINESS_TABS = ['profile', 'scan', 'brand', 'images', 'learned'] as const;
+export const BUSINESS_TABS = ['profile', 'scan', 'brand', 'hashtags', 'images', 'learned'] as const;
 
 type TabValue = (typeof BUSINESS_TABS)[number];
 
@@ -23,7 +26,12 @@ export function BusinessScreen() {
   const t = useTranslations('business.screen');
   const tn = useTranslations('shell.nav.groups');
   const { businessId, ready } = useBusiness();
-  const [tab, setTab] = useState<TabValue>('profile');
+  const requested = useSearchParams()?.get('tab');
+  const [tab, setTab] = useState<TabValue>(() =>
+    (BUSINESS_TABS as readonly string[]).includes(requested ?? '')
+      ? (requested as TabValue)
+      : 'profile',
+  );
 
   return (
     <>
@@ -55,6 +63,9 @@ export function BusinessScreen() {
           <TabsContent value="brand" className="grid gap-12">
             <BrandKitsPanel businessId={businessId} />
             <VoiceProfilesPanel businessId={businessId} />
+          </TabsContent>
+          <TabsContent value="hashtags">
+            <BusinessHashtagsPanel businessId={businessId} />
           </TabsContent>
           <TabsContent value="images">
             <ImageLibraryPanel businessId={businessId} />

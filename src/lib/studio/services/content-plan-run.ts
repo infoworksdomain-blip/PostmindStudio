@@ -222,6 +222,8 @@ export async function prepareItem(
     const project = await createProject(deps.db, tenant, input, now);
     await mergeMetadata(deps.db, project.id, {
       contentPlan: { planId: plan.id, itemId: item.id, preApproved: true },
+      // 20.13: the plan's caption + hashtags (drafted, maybe edited) become the project's copy.
+      ...(item.postCopy && { postCopy: item.postCopy }),
     });
     projectId = project.id;
     await setItem(deps.db, item.id, { projectId });

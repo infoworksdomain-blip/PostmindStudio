@@ -3,7 +3,17 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ArrowDown, ArrowUp, Loader2, Pencil, Plus, RefreshCw, Send, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Hash,
+  Loader2,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Send,
+  Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +23,8 @@ import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { Field, NativeSelect } from '../review/field';
 import { CappedNotice, ItemMeta } from './plan-parts';
+import { ItemCopyEditor } from './item-copy';
+import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import {
   groupByDay,
   kindCounts,
@@ -23,7 +35,7 @@ import {
   type PlanItem,
 } from './plan-model';
 
-type Method = 'POST' | 'PATCH' | 'DELETE';
+type Method = 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 // 20.9 — the DRAFT editor: every planned post by day, each editable (topic, brief, format, slide
 // text), movable (topics move, times stay), replaceable ("New topic", one Claude call) and
@@ -91,6 +103,7 @@ export function PlanEditor({ plan, onChange }: { plan: Plan; onChange: Change })
           {t('allowanceUse', { count: items.length })}
         </p>
         <p className="text-xs text-muted-foreground">{t('reviewWindow')}</p>
+        <BusinessHashtagsNote businessId={plan.businessId} />
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setConfirming('generate')}
@@ -174,7 +187,9 @@ function DraftItemRow({
   call: Call;
 }) {
   const t = useTranslations('plans.editor');
+  const th = useTranslations('hashtags.plan');
   const [editing, setEditing] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const path = `/content-plans/${plan.id}/items/${item.id}`;
   const title = item.title || t('untitled');
@@ -216,6 +231,16 @@ function DraftItemRow({
               <Pencil /> {t('edit')}
             </Button>
             <Button
+              size="sm"
+              variant="ghost"
+              aria-expanded={copyOpen}
+              aria-label={th('openAria', { title })}
+              onClick={() => setCopyOpen((o) => !o)}
+              disabled={!item.title}
+            >
+              <Hash /> {th('open')}
+            </Button>
+            <Button
               size="icon"
               variant="ghost"
               aria-label={t('moveUp', { title })}
@@ -251,6 +276,9 @@ function DraftItemRow({
               <Trash2 /> {t('remove')}
             </Button>
           </div>
+          {copyOpen && (
+            <ItemCopyEditor plan={plan} item={item} call={call} onDone={() => setCopyOpen(false)} />
+          )}
         </>
       )}
     </li>

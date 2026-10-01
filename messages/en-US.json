@@ -1466,7 +1466,8 @@
         "scan": "Website scan",
         "brand": "Brand kits",
         "images": "Image library",
-        "learned": "What Studio has learned"
+        "learned": "What Studio has learned",
+        "hashtags": "Hashtags"
       }
     },
     "kits": {
@@ -5018,6 +5019,67 @@
       "retry": "Try again",
       "projects": "Go to projects",
       "reference": "Reference: {digest}"
+    }
+  },
+  "hashtags": {
+    "editor": {
+      "add": "Add",
+      "addPlaceholder": "Type a hashtag, then press Enter",
+      "remove": "Remove #{tag}",
+      "moveEarlier": "Move #{tag} earlier",
+      "moveLater": "Move #{tag} later",
+      "locked": "#{tag} is on every post",
+      "platformAdded": "Added automatically for this platform",
+      "count": "{count, plural, one {# hashtag} other {# hashtags}} (at least {min}, at most {max})",
+      "countPlain": "{count, plural, one {# hashtag} other {# hashtags}}",
+      "needMore": "still needed: {count}",
+      "tooMany": "at most {max} hashtags here",
+      "invalid": "Use letters, numbers and _ only (no spaces or punctuation), up to {max} characters.",
+      "duplicate": "#{tag} is already in the list"
+    },
+    "copy": {
+      "caption": "Caption",
+      "title": "Title",
+      "hashtags": "Hashtags",
+      "length": "{used} / {max} characters with hashtags",
+      "lengthBytes": "{used} / {max} bytes with hashtags",
+      "tooLong": "too long for {platform}: shorten the caption",
+      "source": {
+        "owner": "Edited by you",
+        "generated": "Suggested",
+        "none": "No suggestion yet"
+      },
+      "suggestedNote": "Suggestions come from your business profile, the post and the time of year, not from live trend data.",
+      "save": "Save caption",
+      "saved": "Caption saved",
+      "savedScheduled": "{count, plural, one {Caption saved; # scheduled post updated} other {Caption saved; # scheduled posts updated}}"
+    },
+    "settings": {
+      "title": "Hashtags",
+      "description": "Every post carries at least {min} hashtags: your business hashtag first, then the ones you always include, then suggestions that fit the post.",
+      "business": "Business hashtag",
+      "businessHint": "Letters, numbers and _ only, no spaces, up to {max} characters.",
+      "default": "Leave it empty to use #{tag} (from your business name).",
+      "noDefault": "Your business name gives no default, so type one.",
+      "useDefault": "Use the default",
+      "invalid": "Use letters, numbers and _ only, with at least one letter, up to {max} characters.",
+      "always": "Always include",
+      "alwaysHint": "Campaign or brand hashtags added to every post (up to {max}).",
+      "save": "Save hashtags",
+      "saved": "Hashtags saved"
+    },
+    "note": {
+      "title": "Hashtags:",
+      "body": "{tags} on every post, plus suggestions (at least {min} in all).",
+      "none": "No business hashtag yet.",
+      "edit": "Edit"
+    },
+    "plan": {
+      "title": "Caption and hashtags",
+      "platform": "Platform",
+      "open": "Caption",
+      "openAria": "Caption and hashtags for {title}",
+      "close": "Close"
     }
   }
 }

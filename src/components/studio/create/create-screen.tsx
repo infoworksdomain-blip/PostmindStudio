@@ -33,6 +33,7 @@ import {
 } from './body';
 import { defaultSourceFor, LanguageOptions, type WorkflowOption } from './create-planning-options';
 import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './create-options';
+import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultPlatforms } from './formats';
 import { ProjectTemplatePicker } from './project-template-picker';
 import { ReferenceBanner } from './reference-banner';
@@ -332,6 +333,8 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
           ) : (
             <PlatformChips value={state.platforms} onChange={patch} />
           )}
+          {/* 20.13: the hashtags every post carries (Business settings → Hashtags). */}
+          <BusinessHashtagsNote businessId={businessId} />
           <div className="grid gap-5 sm:grid-cols-2">
             {!templated && <LengthToggle value={form.length} onChange={patch} />}
             <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />

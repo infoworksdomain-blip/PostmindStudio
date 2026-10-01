@@ -14,6 +14,7 @@ import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { connectionsFor } from '../automation/automation';
 import { useBusiness } from '../business-context';
+import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultZone } from '../calendar/drip-queue';
 import { PlatformChips } from '../create/create-options';
 import { defaultPlatforms } from '../create/formats';
@@ -237,6 +238,8 @@ export function PlanMonthForm() {
             value={form.platforms}
             onChange={(next) => next.platforms && patch({ platforms: next.platforms })}
           />
+          {/* 20.13: the hashtags every planned post carries (Business settings → Hashtags). */}
+          <BusinessHashtagsNote businessId={businessId} />
           <div className="grid gap-3 sm:grid-cols-2">
             {form.platforms.map((platform) => {
               const options = connectionsFor(platform, connections.data?.data, businessId);

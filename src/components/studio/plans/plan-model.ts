@@ -74,6 +74,8 @@ export interface PlanItem {
   status: ItemStatus;
   statusReason: string | null;
   projectId: string | null;
+  /** 20.13: caption + hashtags per platform (drafted, editable). */
+  postCopy?: Record<string, { caption: string; hashtags: string[]; title?: string }> | null;
 }
 
 export interface Plan {

@@ -1466,7 +1466,8 @@
         "scan": "Analyse du site",
         "brand": "Kits de marque",
         "images": "Bibliothèque d’images",
-        "learned": "Ce que Studio a appris"
+        "learned": "Ce que Studio a appris",
+        "hashtags": "Hashtags"
       }
     },
     "kits": {
@@ -5018,6 +5019,67 @@
       "retry": "Réessayer",
       "projects": "Aller aux projets",
       "reference": "Référence : {digest}"
+    }
+  },
+  "hashtags": {
+    "editor": {
+      "add": "Ajouter",
+      "addPlaceholder": "Saisissez un hashtag, puis Entrée",
+      "remove": "Retirer #{tag}",
+      "moveEarlier": "Placer #{tag} avant",
+      "moveLater": "Placer #{tag} après",
+      "locked": "#{tag} figure sur chaque publication",
+      "platformAdded": "Ajouté automatiquement pour cette plateforme",
+      "count": "{count, plural, one {# hashtag} other {# hashtags}} (au moins {min}, au plus {max})",
+      "countPlain": "{count, plural, one {# hashtag} other {# hashtags}}",
+      "needMore": "encore nécessaires : {count}",
+      "tooMany": "au plus {max} hashtags ici",
+      "invalid": "Lettres, chiffres et _ uniquement (sans espaces ni ponctuation), {max} caractères au maximum.",
+      "duplicate": "#{tag} est déjà dans la liste"
+    },
+    "copy": {
+      "caption": "Légende",
+      "title": "Titre",
+      "hashtags": "Hashtags",
+      "length": "{used} / {max} caractères avec les hashtags",
+      "lengthBytes": "{used} / {max} octets avec les hashtags",
+      "tooLong": "trop long pour {platform} : raccourcissez la légende",
+      "source": {
+        "owner": "Modifiée par vous",
+        "generated": "Suggérée",
+        "none": "Pas encore de suggestion"
+      },
+      "suggestedNote": "Les suggestions viennent de votre profil d’entreprise, de la publication et de la période de l’année, pas de données de tendances en direct.",
+      "save": "Enregistrer la légende",
+      "saved": "Légende enregistrée",
+      "savedScheduled": "{count, plural, one {Légende enregistrée ; # publication programmée mise à jour} other {Légende enregistrée ; # publications programmées mises à jour}}"
+    },
+    "settings": {
+      "title": "Hashtags",
+      "description": "Chaque publication porte au moins {min} hashtags : d’abord celui de votre entreprise, puis ceux que vous ajoutez toujours, puis des suggestions adaptées à la publication.",
+      "business": "Hashtag de l’entreprise",
+      "businessHint": "Lettres, chiffres et _ uniquement, sans espaces, {max} caractères au maximum.",
+      "default": "Laissez vide pour utiliser #{tag} (tiré du nom de votre entreprise).",
+      "noDefault": "Le nom de votre entreprise ne donne pas de valeur par défaut : saisissez-en un.",
+      "useDefault": "Utiliser la valeur par défaut",
+      "invalid": "Lettres, chiffres et _ uniquement, avec au moins une lettre, {max} caractères au maximum.",
+      "always": "Toujours inclure",
+      "alwaysHint": "Hashtags de campagne ou de marque ajoutés à chaque publication ({max} au maximum).",
+      "save": "Enregistrer les hashtags",
+      "saved": "Hashtags enregistrés"
+    },
+    "note": {
+      "title": "Hashtags :",
+      "body": "{tags} sur chaque publication, plus des suggestions (au moins {min} au total).",
+      "none": "Pas encore de hashtag d’entreprise.",
+      "edit": "Modifier"
+    },
+    "plan": {
+      "title": "Légende et hashtags",
+      "platform": "Plateforme",
+      "open": "Légende",
+      "openAria": "Légende et hashtags de {title}",
+      "close": "Fermer"
     }
   }
 }

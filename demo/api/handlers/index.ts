@@ -45,6 +45,8 @@ import './p17-hardening';
 import './p20-schedule-month';
 // Phase 20.9: "Plan my month" (a half-made October plan, drafting and generating on each read).
 import './p20-plan-month';
+// Phase 20.13: business hashtags and per-platform post copy.
+import './p20-captions-hashtags';
 // Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
 // and sample data for Track C's billing contract.
 import './p18-org';

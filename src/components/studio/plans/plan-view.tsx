@@ -4,17 +4,18 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ExternalLink, Repeat2, ShieldAlert, Trash2 } from 'lucide-react';
+import { ExternalLink, Hash, Repeat2, ShieldAlert, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { Stat } from '../primitives';
 import { ItemForm } from './plan-editor';
+import { ItemCopyEditor } from './item-copy';
 import { CappedNotice, HoldNotice, ItemMeta, ItemStatusBadge, ReasonText } from './plan-parts';
 import { canChangeScheduled, groupByDay, type Plan, type PlanItem } from './plan-model';
 
-type Method = 'POST' | 'PATCH' | 'DELETE';
+type Method = 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 // 20.9 — a plan that is generating, scheduled or finished: counts by status, a notice while the
 // runner is held (kill switch, spending limit, daily limit), every post with its status and a
@@ -129,8 +130,10 @@ function ItemRow({
   call: Call;
 }) {
   const t = useTranslations('plans.view');
+  const th = useTranslations('hashtags.plan');
   const [swapping, setSwapping] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   const path = `/content-plans/${plan.id}/items/${item.id}`;
   const faded = item.status === 'REMOVED' || item.status === 'SKIPPED';
   return (
@@ -176,6 +179,15 @@ function ItemRow({
               <Button
                 size="sm"
                 variant="ghost"
+                aria-expanded={copyOpen}
+                aria-label={th('openAria', { title: item.title })}
+                onClick={() => setCopyOpen((o) => !o)}
+              >
+                <Hash /> {th('open')}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
                 aria-label={t('swapAria', { title: item.title })}
                 onClick={() => setSwapping(true)}
               >
@@ -192,6 +204,9 @@ function ItemRow({
             </>
           )}
         </div>
+      )}
+      {copyOpen && !swapping && (
+        <ItemCopyEditor plan={plan} item={item} call={call} onDone={() => setCopyOpen(false)} />
       )}
       <ConfirmDialog
         open={removing}

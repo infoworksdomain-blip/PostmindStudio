@@ -1466,7 +1466,8 @@
         "scan": "Website-Scan",
         "brand": "Brand-Kits",
         "images": "Bildbibliothek",
-        "learned": "Was Studio gelernt hat"
+        "learned": "Was Studio gelernt hat",
+        "hashtags": "Hashtags"
       }
     },
     "kits": {
@@ -5018,6 +5019,67 @@
       "retry": "Erneut versuchen",
       "projects": "Zu den Projekten",
       "reference": "Referenz: {digest}"
+    }
+  },
+  "hashtags": {
+    "editor": {
+      "add": "Hinzufügen",
+      "addPlaceholder": "Hashtag eingeben und Enter drücken",
+      "remove": "#{tag} entfernen",
+      "moveEarlier": "#{tag} nach vorne",
+      "moveLater": "#{tag} nach hinten",
+      "locked": "#{tag} steht bei jedem Beitrag",
+      "platformAdded": "Für diese Plattform automatisch ergänzt",
+      "count": "{count, plural, one {# Hashtag} other {# Hashtags}} (mindestens {min}, höchstens {max})",
+      "countPlain": "{count, plural, one {# Hashtag} other {# Hashtags}}",
+      "needMore": "noch nötig: {count}",
+      "tooMany": "hier höchstens {max} Hashtags",
+      "invalid": "Nur Buchstaben, Ziffern und _ (keine Leer- oder Satzzeichen), höchstens {max} Zeichen.",
+      "duplicate": "#{tag} ist schon in der Liste"
+    },
+    "copy": {
+      "caption": "Beitragstext",
+      "title": "Titel",
+      "hashtags": "Hashtags",
+      "length": "{used} / {max} Zeichen mit Hashtags",
+      "lengthBytes": "{used} / {max} Byte mit Hashtags",
+      "tooLong": "zu lang für {platform}: Text kürzen",
+      "source": {
+        "owner": "Von Ihnen bearbeitet",
+        "generated": "Vorschlag",
+        "none": "Noch kein Vorschlag"
+      },
+      "suggestedNote": "Die Vorschläge stammen aus Ihrem Unternehmensprofil, dem Beitrag und der Jahreszeit, nicht aus Live-Trenddaten.",
+      "save": "Text speichern",
+      "saved": "Text gespeichert",
+      "savedScheduled": "{count, plural, one {Text gespeichert; # geplanter Beitrag aktualisiert} other {Text gespeichert; # geplante Beiträge aktualisiert}}"
+    },
+    "settings": {
+      "title": "Hashtags",
+      "description": "Jeder Beitrag hat mindestens {min} Hashtags: zuerst Ihren Unternehmens-Hashtag, dann die, die Sie immer verwenden, dann passende Vorschläge.",
+      "business": "Unternehmens-Hashtag",
+      "businessHint": "Nur Buchstaben, Ziffern und _, ohne Leerzeichen, höchstens {max} Zeichen.",
+      "default": "Leer lassen, um #{tag} zu verwenden (aus Ihrem Unternehmensnamen).",
+      "noDefault": "Ihr Unternehmensname ergibt keinen Standard – bitte einen eingeben.",
+      "useDefault": "Standard verwenden",
+      "invalid": "Nur Buchstaben, Ziffern und _, mit mindestens einem Buchstaben, höchstens {max} Zeichen.",
+      "always": "Immer verwenden",
+      "alwaysHint": "Kampagnen- oder Marken-Hashtags für jeden Beitrag (höchstens {max}).",
+      "save": "Hashtags speichern",
+      "saved": "Hashtags gespeichert"
+    },
+    "note": {
+      "title": "Hashtags:",
+      "body": "{tags} bei jedem Beitrag, dazu Vorschläge (insgesamt mindestens {min}).",
+      "none": "Noch kein Unternehmens-Hashtag.",
+      "edit": "Bearbeiten"
+    },
+    "plan": {
+      "title": "Text und Hashtags",
+      "platform": "Plattform",
+      "open": "Text",
+      "openAria": "Text und Hashtags für {title}",
+      "close": "Schließen"
     }
   }
 }
