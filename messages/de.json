@@ -1427,7 +1427,9 @@
       "ariaAt": "{name}, {platform}, {state} um {time}",
       "meta": "{platform} · {state}",
       "moveAria": "{name} auf einen anderen Zeitpunkt verschieben",
-      "moveTitle": "Auf einen anderen Zeitpunkt verschieben"
+      "moveTitle": "Auf einen anderen Zeitpunkt verschieben",
+      "retryAria": "{name} erneut versuchen",
+      "retryTitle": "Beitrag erneut versuchen"
     },
     "move": {
       "tooSoon": "Wählen Sie einen Zeitpunkt mindestens eine Minute in der Zukunft.",
@@ -1475,7 +1477,8 @@
       "label": "Geplant",
       "aria": "Beitrag aus dem Monatsplan um {time}: {title} ({status})",
       "legend": "Mit „Geplant“ markierte Felder sind Beiträge aus dem Monatsplan, die noch erstellt werden; sobald sie eingeplant sind, erscheinen sie als Beiträge."
-    }
+    },
+    "timeZone": "Die Zeiten werden in Ihrer Zeitzone angezeigt: {zone}."
   },
   "business": {
     "screen": {
@@ -2179,7 +2182,8 @@
         "views": "Aufrufe pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}",
         "watchTime": "Wiedergabezeit pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}",
         "engagement": "Interaktionen pro Tag, {days, plural, one {letzter Tag} other {letzte # Tage}}"
-      }
+      },
+      "estimated": "Einige Tage sind Schätzungen: Es fehlten Messwerte, daher wird der Zuwachs gleichmäßig auf die Lücke verteilt."
     },
     "platforms": {
       "title": "Nach Plattform",

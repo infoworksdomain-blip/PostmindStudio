@@ -1427,7 +1427,9 @@
       "ariaAt": "{name}, {platform}, {state} a las {time}",
       "meta": "{platform} · {state}",
       "moveAria": "Mover {name} a otra hora",
-      "moveTitle": "Mover a otra hora"
+      "moveTitle": "Mover a otra hora",
+      "retryAria": "Reintentar {name}",
+      "retryTitle": "Reintentar esta publicación"
     },
     "move": {
       "tooSoon": "Elige una hora al menos un minuto a partir de ahora.",
@@ -1475,7 +1477,8 @@
       "label": "Planificada",
       "aria": "Publicación del plan mensual a las {time}: {title} ({status})",
       "legend": "Las casillas marcadas como «Planificada» son publicaciones del plan mensual que aún se están haciendo; una vez programadas, aparecen como publicaciones."
-    }
+    },
+    "timeZone": "Las horas se muestran en tu zona horaria: {zone}."
   },
   "business": {
     "screen": {
@@ -2179,7 +2182,8 @@
         "views": "Visualizaciones por día, {days, plural, one {último día} other {últimos # días}}",
         "watchTime": "Tiempo de visualización por día, {days, plural, one {último día} other {últimos # días}}",
         "engagement": "Interacción por día, {days, plural, one {último día} other {últimos # días}}"
-      }
+      },
+      "estimated": "Algunos días son estimaciones: faltaban datos, así que el crecimiento se reparte por igual durante el intervalo."
     },
     "platforms": {
       "title": "Por plataforma",

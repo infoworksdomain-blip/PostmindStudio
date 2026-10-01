@@ -1427,7 +1427,9 @@
       "ariaAt": "{name}, {platform}, {state} alle {time}",
       "meta": "{platform} · {state}",
       "moveAria": "Sposta {name} a un altro orario",
-      "moveTitle": "Sposta a un altro orario"
+      "moveTitle": "Sposta a un altro orario",
+      "retryAria": "Riprova {name}",
+      "retryTitle": "Riprova questa pubblicazione"
     },
     "move": {
       "tooSoon": "Scegli un orario ad almeno un minuto da adesso.",
@@ -1475,7 +1477,8 @@
       "label": "Pianificato",
       "aria": "Post del piano mensile alle {time}: {title} ({status})",
       "legend": "Le caselle con “Pianificato” sono post del piano mensile ancora in realizzazione; una volta programmati appaiono come post."
-    }
+    },
+    "timeZone": "Gli orari sono mostrati nel tuo fuso orario: {zone}."
   },
   "business": {
     "screen": {
@@ -2179,7 +2182,8 @@
         "views": "Visualizzazioni al giorno, {days, plural, one {ultimo giorno} other {ultimi # giorni}}",
         "watchTime": "Tempo di visione al giorno, {days, plural, one {ultimo giorno} other {ultimi # giorni}}",
         "engagement": "Interazioni al giorno, {days, plural, one {ultimo giorno} other {ultimi # giorni}}"
-      }
+      },
+      "estimated": "Alcuni giorni sono stime: mancavano delle rilevazioni, quindi la crescita è distribuita in modo uniforme sull’intervallo."
     },
     "platforms": {
       "title": "Per piattaforma",

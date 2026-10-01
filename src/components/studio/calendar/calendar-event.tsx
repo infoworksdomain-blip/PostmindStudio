@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { CalendarClock } from 'lucide-react';
+import { AlertTriangle, CalendarClock, RotateCw } from 'lucide-react';
 import { useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { eventTime, formatTime } from './month';
 import { canMove, DRAG_TYPE } from './reschedule';
+import { canRetry } from './retry';
 import { useProjectName } from '@/lib/client/use-project-name';
 
 // One publication on the calendar: a thin state-coloured rule, time, platform and video name.
@@ -18,18 +19,22 @@ const RULE: Record<string, string> = {
   SCHEDULED: 'border-s-muted-foreground/60',
   PUBLISHING: 'border-s-primary',
   PUBLISHED: 'border-s-success',
+  FAILED: 'border-s-destructive bg-destructive/10',
 };
 
 export function CalendarEvent({
   publication,
   compact = false,
   onMove,
+  onRetry,
   busy = false,
 }: {
   publication: Publication;
   compact?: boolean;
   /** Opens the move dialog; scheduled publications only. Absent = read-only. */
   onMove?: (publication: Publication) => void;
+  /** Retries a failed publication; failed ones only. Absent = no retry button. */
+  onRetry?: (publication: Publication) => void;
   busy?: boolean;
 }) {
   const t = useTranslations('calendar.event');
@@ -57,6 +62,9 @@ export function CalendarEvent({
       )}
     >
       <span className="flex items-baseline gap-1.5">
+        {publication.state === 'FAILED' && (
+          <AlertTriangle aria-hidden className="size-3 shrink-0 self-center text-destructive" />
+        )}
         {time && <span className="tabular shrink-0 text-muted-foreground">{time}</span>}
         <span className="truncate font-medium">{name}</span>
       </span>
@@ -67,6 +75,23 @@ export function CalendarEvent({
       )}
     </Link>
   );
+  if (onRetry && canRetry(publication)) {
+    return (
+      <div className="flex min-w-0 items-stretch gap-0.5">
+        {link}
+        <button
+          type="button"
+          aria-label={t('retryAria', { name })}
+          title={t('retryTitle')}
+          disabled={busy}
+          onClick={() => onRetry(publication)}
+          className="grid shrink-0 place-items-center rounded-sm px-1 text-destructive hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+        >
+          <RotateCw className={compact ? 'size-3' : 'size-4'} />
+        </button>
+      </div>
+    );
+  }
   if (!movable) return link;
   return (
     <div

@@ -17,6 +17,9 @@ export interface MoveHandlers {
   onMove: (publication: Publication) => void;
   onDropOnDay: (publicationId: string, day: Date) => void;
   pendingId: string | null;
+  /** Retry a failed publication. */
+  onRetry?: (publication: Publication) => void;
+  retryingId?: string | null;
 }
 
 // Desktop: a seven-column month grid. Phones: the same month as an agenda of days that have
@@ -56,6 +59,11 @@ export function MonthGrid({
     return [...names.slice(1), ...names.slice(0, 1)];
   }, [f.locale]);
   const [over, setOver] = useState<string | null>(null);
+  const isEmptyMonth = !days.some(
+    (d) =>
+      d.getMonth() === month.month &&
+      (byDay.has(dayKey(d)) || openByDay.has(dayKey(d)) || plannedByDay.has(dayKey(d))),
+  );
   return (
     <div className="hidden overflow-hidden rounded-xl border border-border md:block">
       <div className="grid grid-cols-7 border-b border-border bg-secondary/40">
@@ -122,7 +130,8 @@ export function MonthGrid({
                   publication={p}
                   compact
                   onMove={move?.onMove}
-                  busy={move?.pendingId === p.id}
+                  onRetry={move?.onRetry}
+                  busy={move?.pendingId === p.id || move?.retryingId === p.id}
                 />
               ))}
               {events.length > MAX_PER_CELL && (
@@ -150,6 +159,11 @@ export function MonthGrid({
           );
         })}
       </ol>
+      {isEmptyMonth && (
+        <p className="border-t border-border px-4 py-6 text-center text-sm text-muted-foreground">
+          {t('emptyMonth')}
+        </p>
+      )}
     </div>
   );
 }
@@ -210,7 +224,8 @@ export function AgendaList({
                   key={p.id}
                   publication={p}
                   onMove={move?.onMove}
-                  busy={move?.pendingId === p.id}
+                  onRetry={move?.onRetry}
+                  busy={move?.pendingId === p.id || move?.retryingId === p.id}
                 />
               ))}
               {(plannedByDay.get(key) ?? []).map((post) => (
