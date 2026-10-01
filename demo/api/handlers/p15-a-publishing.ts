@@ -9,9 +9,11 @@
 //   GET     /renders/:id/captions                  (15.A4, burned-in vs SRT lines)
 // Registered before ./review so GET /renders/:id carries the thumbnail URL.
 import type { Publication } from '@/lib/client/types';
+import { inferSchedule, type PostingSchedule } from '@/lib/studio/posting-schedule';
 import { presetSlots } from '@/lib/studio/drip-presets';
 import {
   DRIP_HORIZON_DAYS,
+  dripQueueInput,
   firstFreeSlot,
   openSlotsBetween,
   upcomingQuery,
@@ -29,6 +31,8 @@ const DAY = 86_400_000;
 // ------------------------------------------------------------------ drip queue (A5)
 // 20.3: the same slot maths as the service (zoned, DST-aware), a seeded "3 a week" queue for the
 // sample bakery so the calendar shows open slots, and GET …/drip-queue/upcoming.
+// 20.14: PUT validates and resolves with the API's own schema (dripQueueInput: daily/weekly
+// schedules resolve to slots, ≤ 4 a day, ≤ 28 a week); the seeded queue carries its schedule.
 
 interface Slot {
   weekday: number;
@@ -37,6 +41,7 @@ interface Slot {
 }
 interface DemoQueue {
   slots: Slot[];
+  schedule: PostingSchedule | null;
   platforms: string[];
   enabled: boolean;
   updatedAt: string;
@@ -46,6 +51,7 @@ const dripQueues = new Map<string, DemoQueue>([
     DEMO_BUSINESS_ID,
     {
       slots: presetSlots('three', 'Europe/London'),
+      schedule: inferSchedule(presetSlots('three', 'Europe/London')),
       platforms: [],
       enabled: true,
       updatedAt: new Date(Date.now() - 3 * DAY).toISOString(),
@@ -57,6 +63,7 @@ function view(q: DemoQueue) {
   const next = q.enabled ? firstFreeSlot(q.slots, [], Date.now()) : null;
   return {
     slots: q.slots,
+    schedule: q.schedule,
     platforms: q.platforms,
     enabled: q.enabled,
     staggerMinutes: 30,
@@ -120,25 +127,12 @@ route('GET', '/businesses/:id/drip-queue/upcoming', ({ params, query }) => {
 });
 
 route('PUT', '/businesses/:id/drip-queue', ({ params, body }) => {
-  const input = (body ?? {}) as { slots?: unknown; platforms?: unknown; enabled?: unknown };
-  if (!Array.isArray(input.slots) || input.slots.length === 0 || input.slots.length > 28)
-    throw bad('slots: between 1 and 28 slots');
-  const slots = input.slots.map((raw, i) => {
-    const s = raw as Partial<Slot>;
-    if (!Number.isInteger(s.weekday) || (s.weekday ?? -1) < 0 || (s.weekday ?? 7) > 6)
-      throw bad(`slots.${i}.weekday: 0-6`);
-    if (typeof s.time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(s.time))
-      throw bad(`slots.${i}.time: time must be HH:MM (24-hour)`);
-    if (typeof s.timezone !== 'string' || !s.timezone)
-      throw bad(`slots.${i}.timezone: timezone must be an IANA time zone`);
-    return { weekday: s.weekday as number, time: s.time, timezone: s.timezone };
-  });
-  const q = {
-    slots,
-    platforms: Array.isArray(input.platforms) ? (input.platforms as string[]) : [],
-    enabled: input.enabled !== false,
-    updatedAt: new Date().toISOString(),
-  };
+  const parsed = dripQueueInput.safeParse(body ?? {});
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    throw bad(issue ? `${issue.path.join('.') || 'body'}: ${issue.message}` : 'Invalid body');
+  }
+  const q: DemoQueue = { ...parsed.data, updatedAt: new Date().toISOString() };
   dripQueues.set(params.id ?? '', q);
   return { dripQueue: view(q) };
 });

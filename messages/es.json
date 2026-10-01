@@ -1462,7 +1462,9 @@
       "ariaAt": "{name}, {platform}, {state} a las {time}",
       "meta": "{platform} · {state}",
       "moveAria": "Mover {name} a otra hora",
-      "moveTitle": "Mover a otra hora"
+      "moveTitle": "Mover a otra hora",
+      "retryAria": "Reintentar {name}",
+      "retryTitle": "Reintentar esta publicación"
     },
     "move": {
       "tooSoon": "Elige una hora al menos un minuto a partir de ahora.",
@@ -1485,16 +1487,67 @@
       "slotTime": "Hora de la franja {n}",
       "removeSlot": "Quitar la franja {n}",
       "addSlot": "Añadir franja",
-      "saveSlots": "Guardar franjas",
-      "presetsLabel": "Ritmos de publicación rápidos",
-      "presetsHint": "Un ritmo rellena las franjas de abajo en tu zona horaria; cambia las que quieras y guarda.",
-      "presetFilled": "{count, plural, one {# franja rellenada} other {# franjas rellenadas}}: revísalas y guarda.",
-      "presets": {
-        "three": "3 por semana",
-        "five": "5 por semana",
-        "daily": "Todos los días"
-      },
-      "off": "La cola de publicación está desactivada, así que los vídeos configurados para la próxima franja libre no se programan. Guarda las franjas para activarla."
+      "off": "La cola de publicación está desactivada, así que los vídeos configurados para la próxima franja libre no se programan. Guarda las franjas para activarla.",
+      "schedule": {
+        "howOften": "Frecuencia",
+        "modeDaily": "Todos los días",
+        "modeWeekly": "Veces por semana",
+        "customNotice": "Estas horas se configuraron una a una en Avanzado. Elige Todos los días o Veces por semana para sustituirlas por un calendario.",
+        "postsPerDay": "Publicaciones al día",
+        "postsPerWeek": "Publicaciones a la semana",
+        "maxPerDay": "Como máximo {max} publicaciones al día.",
+        "days": "Días de publicación",
+        "daysHintDaily": "Desmarca un día para saltártelo.",
+        "daysHintWeekly": "Las publicaciones de la semana se reparten entre estos días.",
+        "times": "Horas de publicación",
+        "timesSystem": "Elige las horas por mí",
+        "timesChoose": "Yo elijo las horas",
+        "timesInterval": "A intervalos regulares",
+        "timesLine": "Las publicaciones salen a las {times}.",
+        "systemHint": "Corrige el problema indicado para ver las horas.",
+        "changeTimes": "Cambiar estas horas",
+        "postTime": "Publicación {n}",
+        "chooseHint": "La más temprana primero, con al menos {minutes} minutos de diferencia.",
+        "intervalHow": "Cómo se define el intervalo",
+        "intervalUser": "Cada pocas horas desde una hora de inicio",
+        "intervalSystem": "Repartir en mi horario de publicación",
+        "every": "Cada",
+        "startAt": "Empezando a las",
+        "windowStart": "Horario de publicación desde",
+        "windowEnd": "Hasta",
+        "timezone": "Zona horaria",
+        "hours": "{count, plural, one {# hora} other {# horas}}",
+        "minutes": "{count, plural, one {# minuto} other {# minutos}}",
+        "hoursMinutes": "{hours} h {minutes} min",
+        "previewTitle": "Próximos 7 días",
+        "previewEmpty": "No hay publicaciones en los próximos 7 días.",
+        "save": "Guardar calendario",
+        "advanced": "Avanzado: editar cada hora ({count})",
+        "advancedHint": "Todas las horas semanales que crea tu calendario. Cambia, añade o quita las que quieras para tener control total; el calendario pasa a ser personalizado.",
+        "summary": {
+          "custom": "{count, plural, one {# publicación a la semana} other {# publicaciones a la semana}}, configuradas una a una",
+          "perDay": "{count, plural, one {# publicación al día} other {# publicaciones al día}}",
+          "perWeek": "{count, plural, one {# publicación a la semana} other {# publicaciones a la semana}}",
+          "onDays": "los {days}",
+          "every": "cada {interval} desde las {start}",
+          "spread": "repartidas de {start} a {end}",
+          "at": "a las {times}",
+          "none": "Aún no hay horas de publicación."
+        },
+        "problems": {
+          "days_empty": "Elige al menos un día de publicación.",
+          "days_duplicate": "Cada día de publicación solo se puede elegir una vez.",
+          "week_too_many": "Como máximo {max} publicaciones al día: elige más días o menos publicaciones a la semana.",
+          "week_too_few": "Menos publicaciones a la semana que días de publicación: elige menos días o más publicaciones.",
+          "times_count": "Indica una hora para cada publicación del día.",
+          "times_order": "Las horas deben ir en orden, la más temprana primero.",
+          "times_gap": "Las publicaciones del mismo día deben estar separadas al menos {minutes} minutos.",
+          "interval_overflow": "El intervalo pasa de medianoche: empieza antes o publica con menos frecuencia.",
+          "window_order": "El horario de publicación debe terminar después de empezar.",
+          "window_too_short": "El horario de publicación es demasiado corto para separar las publicaciones {minutes} minutos.",
+          "custom_too_many": "Como máximo {max} horas en un mismo día: quita algunas en Avanzado."
+        }
+      }
     },
     "open": {
       "label": "Franja libre",
@@ -1510,7 +1563,8 @@
       "label": "Planificada",
       "aria": "Publicación del plan mensual a las {time}: {title} ({status})",
       "legend": "Las casillas marcadas como «Planificada» son publicaciones del plan mensual que aún se están haciendo; una vez programadas, aparecen como publicaciones."
-    }
+    },
+    "timeZone": "Las horas se muestran en tu zona horaria: {zone}."
   },
   "business": {
     "screen": {
@@ -2214,7 +2268,8 @@
         "views": "Visualizaciones por día, {days, plural, one {último día} other {últimos # días}}",
         "watchTime": "Tiempo de visualización por día, {days, plural, one {último día} other {últimos # días}}",
         "engagement": "Interacción por día, {days, plural, one {último día} other {últimos # días}}"
-      }
+      },
+      "estimated": "Algunos días son estimaciones: faltaban datos, así que el crecimiento se reparte por igual durante el intervalo."
     },
     "platforms": {
       "title": "Por plataforma",
@@ -3258,8 +3313,9 @@
     },
     "plan": {
       "title": "Planifica tu mes",
-      "body": "Elige con qué frecuencia publicar. Los vídeos programados para la próxima franja libre se publican a estas horas y llenan el mes que viene.",
+      "body": "Elige con qué frecuencia publicar. Los vídeos programados para la próxima franja libre salen a estas horas y llenan el mes siguiente.",
       "saved": "Ritmo de publicación: {plan}.",
+      "save": "Guardar plan de publicación",
       "openCalendar": "Cambiar las horas en el calendario"
     }
   },
