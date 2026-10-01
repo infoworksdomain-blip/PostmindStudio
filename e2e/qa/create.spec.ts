@@ -266,7 +266,9 @@ test.describe('Plan my month with a plan', () => {
   test('draft editor: edit, move, add (max 4 a day), remove, discard', async ({ page }) => {
     test.setTimeout(180_000);
     // The fifth post of a day is refused on purpose (400).
-    const w = new Watcher(page, [{ method: 'POST', url: /content-plans/[^/]+/items$/, status: 400 }]);
+    const w = new Watcher(page, [
+      { method: 'POST', url: /content-plans\/[^/]+\/items$/, status: 400 },
+    ]);
     // A drafted plan (what the background job leaves): three days, two posts a day.
     const start = new Date(Date.now() + 2 * 86_400_000);
     const day = (n: number, hh: number, mm = 0) =>
