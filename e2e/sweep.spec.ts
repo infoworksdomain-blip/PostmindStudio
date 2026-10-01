@@ -433,14 +433,16 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   }
   await w.check('/analytics ranges');
 
-  // Calendar: month navigation and a one-click posting plan.
+  // Calendar: month navigation and a posting schedule (20.14: 3 a week, system times).
   await w.visit('/calendar');
   await page.getByRole('button', { name: 'Next month' }).click();
   await w.settle();
   await page.getByRole('button', { name: 'Previous month' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
-  await page.getByRole('button', { name: '3 a week' }).click();
-  await page.getByRole('button', { name: /Save slots/ }).click();
+  await page.getByRole('radio', { name: 'Times a week' }).check({ force: true }); // visually hidden native radio; its label takes the click
+  await page.getByLabel('Posts a week').selectOption('3');
+  await page.getByRole('radio', { name: 'Pick times for me' }).check({ force: true });
+  await page.getByRole('button', { name: /Save schedule/ }).click();
   await w.settle();
   await expect(page.getByText(/open slot/i).first()).toBeVisible();
   await w.check('/calendar posting plan');

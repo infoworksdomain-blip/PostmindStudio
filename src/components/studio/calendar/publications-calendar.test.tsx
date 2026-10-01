@@ -207,26 +207,24 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     expect(screen.getByRole('heading', { name: 'Drip queue' })).toHaveFocus();
   });
 
-  it('a posting plan fills the slots, which save (turning the queue on) and refresh the markers', async () => {
+  it('20.14: a posting schedule saves (turning the queue on) and refreshes the markers', async () => {
     const api = server(upcoming());
     const user = userEvent.setup();
     renderScreen(<PublicationsCalendar initialDate={new Date()} />);
-    const plans = await screen.findByRole('group', { name: 'Quick posting plans' });
-    await user.click(within(plans).getByRole('button', { name: '5 a week' }));
-    expect(within(plans).getByRole('button', { name: '5 a week' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    // The saved Monday 12:30 slot reopens as a weekly schedule.
+    expect(await screen.findByRole('radio', { name: 'Times a week' })).toBeChecked();
+    await user.selectOptions(screen.getByLabelText('Posts a week'), '5');
     expect(screen.getAllByLabelText(/^Slot \d day$/)).toHaveLength(5);
-    expect(screen.getByText(/5 slots filled in — check them, then save\./)).toBeInTheDocument();
     const before = api.find('GET', UPCOMING).length;
-    await user.click(screen.getByRole('button', { name: 'Save slots' }));
+    await user.click(screen.getByRole('button', { name: 'Save schedule' }));
     await waitFor(() => expect(api.find('PUT', QUEUE)).toHaveLength(1));
     const body = api.find('PUT', QUEUE)[0]!.body as {
       slots: Array<{ weekday: number; time: string; timezone: string }>;
+      schedule: { mode: string; postsPerWeek: number };
       enabled: boolean;
     };
     expect(body.enabled).toBe(true);
+    expect(body.schedule).toMatchObject({ mode: 'weekly', postsPerWeek: 5 });
     expect(body.slots.map((s) => s.weekday)).toEqual([1, 2, 3, 4, 5]);
     expect(body.slots.every((s) => s.time === '12:30' && s.timezone === 'Europe/London')).toBe(
       true,
