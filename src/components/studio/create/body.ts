@@ -110,20 +110,23 @@ export function validateCreate(
   if (!state.brief.trim() && !templated && !uploading) problems.push('briefRequired');
   if (state.brief.length > BRIEF_MAX) problems.push('briefTooLong');
   if (state.platforms.length === 0 && !templated) problems.push('platformRequired');
+  const slideshow = state.source === 'SLIDESHOW';
+  // Slideshows have no auto-publish or schedule controls (hidden / disabled), so values left
+  // from the video form must not block them.
   if (
+    !slideshow &&
     state.autoPublish &&
     buildTargets(publishPlatforms(state), state.autoPublishAccounts).length === 0
   )
     problems.push('autoPublishAccountRequired');
-  if (state.source === 'SLIDESHOW' && !state.templateId) problems.push('slideshowTemplateRequired');
-  if (state.scheduleNextSlot && state.source !== 'SLIDESHOW') {
+  if (slideshow && !state.templateId) problems.push('slideshowTemplateRequired');
+  if (!slideshow && state.scheduleNextSlot) {
     if (!state.autoPublish) problems.push('scheduleNeedsAutoPublish');
-  } else if (state.scheduleAt) {
+  } else if (!slideshow && state.scheduleAt) {
     const at = Date.parse(state.scheduleAt);
     if (!Number.isFinite(at) || at <= now) problems.push('scheduleInPast');
     else if (isBeyondScheduleWindow(at, now)) problems.push('scheduleTooFar');
-    else if (!state.autoPublish && state.source !== 'SLIDESHOW')
-      problems.push('scheduleNeedsAutoPublish');
+    else if (!state.autoPublish) problems.push('scheduleNeedsAutoPublish');
   }
   if (state.budgetPounds.trim()) {
     const value = Number(state.budgetPounds);
@@ -166,7 +169,7 @@ export function buildCreateBody(
     if (!rawInput)
       Object.assign(
         body,
-        optionalName(nameFromBrief(state.upload.fileName.replace(/.[a-z0-9]+$/i, ''))),
+        optionalName(nameFromBrief(state.upload.fileName.replace(/\.[a-z0-9]+$/i, ''))),
       );
     if (rawInput) body.brief = { rawInput };
   } else if (state.source === 'SLIDESHOW' && state.templateId) {

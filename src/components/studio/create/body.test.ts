@@ -121,3 +121,34 @@ describe('templates and auto-publish', () => {
     ]);
   });
 });
+
+describe('QA: controls hidden or disabled for slideshows never block them', () => {
+  const slideshow: CreateState = { ...base, source: 'SLIDESHOW', templateId: 't1' };
+
+  it('ignores auto-publish left on from the video form (no account picker is shown)', () => {
+    expect(validateCreate({ ...slideshow, autoPublish: true }, 'biz')).toEqual([]);
+  });
+
+  it('ignores a schedule left in the disabled schedule field', () => {
+    const past = new Date(Date.now() - 86_400_000).toISOString().slice(0, 16);
+    expect(validateCreate({ ...slideshow, scheduleAt: past }, 'biz')).toEqual([]);
+  });
+});
+
+describe('QA: upload project name', () => {
+  const upload: CreateState = {
+    ...base,
+    brief: '',
+    source: 'UPLOAD',
+    upload: { id: 'u1', fileName: 'my-clip.mp4' },
+  };
+
+  it('drops the extension only', () => {
+    expect(buildCreateBody(upload, 'biz', null).name).toBe('my-clip');
+  });
+
+  it('keeps a file name that has no extension', () => {
+    const state = { ...upload, upload: { id: 'u1', fileName: 'holiday' } };
+    expect(buildCreateBody(state, 'biz', null).name).toBe('holiday');
+  });
+});

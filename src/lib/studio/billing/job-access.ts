@@ -23,6 +23,7 @@ export const GATED_JOBS: Partial<Record<JobName, JobGate>> = {
   'compose-video': 'spend',
   'populate-slideshow': 'spend',
   'scan-website': 'spend',
+  'draft-content-plan': 'spend',
   'rescan-website': 'spend',
   'refresh-image-library': 'spend',
   'publish-video': 'publish',
