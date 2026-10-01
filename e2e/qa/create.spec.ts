@@ -244,8 +244,10 @@ test.describe('Plan my month with a plan', () => {
       .getByRole('combobox', { name: /TikTok account/ })
       .selectOption({ label: 'Bakery TikTok' });
     await page.getByRole('button', { name: 'Draft my month' }).click();
-    await expect(page.locator('ul[role="alert"]')).toContainText('Choose between 1 and 31 days.');
-
+    // The number input has max=31, so the browser itself stops the submit.
+    const days = page.getByLabel('Length in days');
+    expect(await days.evaluate((el) => (el as HTMLInputElement).checkValidity())).toBe(false);
+    await expect(page.getByRole('button', { name: 'Draft my month' })).toBeEnabled();
     await page.getByLabel('Length in days').fill('3');
     await page.getByRole('radio', { name: '2 a day' }).click();
     await page.getByRole('button', { name: 'Draft my month' }).click();
