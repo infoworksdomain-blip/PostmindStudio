@@ -46,6 +46,11 @@ import { createFfmpegMastering } from './mastering';
 import { parseMusicMinTier } from './music';
 import { createProviderRatings, providerRatingsEnabled } from '../services/provider-ratings';
 import { parseCorpusBuckets } from '../library/corpus-source';
+import {
+  createLibraryCache,
+  createLibraryCacheRedisClient,
+  libraryCacheEnabled,
+} from '../library/cache';
 import { parseStockVoices } from './voice-fit';
 
 // Production wiring for pipeline processors (workers and scripts).
@@ -112,6 +117,13 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     storage,
     media: createFfmpegInspector(),
     mastering: createFfmpegMastering(),
+    // 20.15: shared library cache in Redis DB 3 (STUDIO_LIBRARY_CACHE=off disables it).
+    ...(libraryCacheEnabled() && {
+      libraryCache: createLibraryCache({
+        client: createLibraryCacheRedisClient(redisConnectionFromEnv()),
+        logger,
+      }),
+    }),
     // 15.C3: per-(organisation, provider) rate windows from STUDIO_PROVIDER_RATE_<ID>.
     providerRates: providerRateLimiterFromEnv(
       process.env,

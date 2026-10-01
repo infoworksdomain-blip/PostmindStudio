@@ -33,6 +33,8 @@ export interface StudioMetrics {
   publications: Counter<'platform' | 'outcome'>;
   /** 15.D9 / spec 3.5: rendered videos through the quality gate (pass | fail). */
   qualityGate: Counter<'result'>;
+  /** 20.15: library read-through cache lookups by cache (list, detail, …) and hit | miss | error. */
+  libraryCache: Counter<'cache' | 'result'>;
 }
 
 /** 15.D9 kinds of generation (observability/slo.ts generationKind). */
@@ -143,6 +145,12 @@ function build(): StudioMetrics {
       name: 'studio_quality_gate_renders_total',
       help: 'Renders evaluated by the quality gate: pass | fail (spec 3.5: 92%+ pass)',
       labelNames: ['result'],
+      registers: [registry],
+    }),
+    libraryCache: new Counter({
+      name: 'studio_library_cache_total',
+      help: 'Library cache lookups by cache and result (hit | miss | error); 20.15',
+      labelNames: ['cache', 'result'],
       registers: [registry],
     }),
   };

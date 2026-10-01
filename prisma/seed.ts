@@ -4,6 +4,8 @@ import { seedSystemFlags } from '../src/lib/studio/seed-system-flags';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { seedTaxonomy } from '../src/lib/studio/library/taxonomy';
+import { bumpLibraryVersionOnce, createOneOffRedisClient } from '../src/lib/studio/library/cache';
+import { redisConnectionFromEnv } from '../src/lib/studio/queue/redis';
 import { seedOverlayPresets } from '../src/lib/studio/overlays/seed-presets';
 import { seedSlideshowTemplates } from '../src/lib/studio/slideshow/seed-templates';
 import { seedProjectTemplates } from '../src/lib/studio/templates/seed';
@@ -27,6 +29,10 @@ async function main(): Promise<void> {
       JSON.parse(readFileSync(join(__dirname, 'data', 'library-taxonomy.json'), 'utf8')) as unknown,
     );
     logger.info(taxonomy, '[seed] library categories seeded');
+    // 20.15: category names / tree may have changed: cached library reads must see them.
+    await bumpLibraryVersionOnce('taxonomy-seed', {
+      connect: () => createOneOffRedisClient(redisConnectionFromEnv()),
+    });
   } finally {
     await prisma.$disconnect();
   }
