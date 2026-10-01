@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest';
-import { leaderboardQuery, METRICS, metricValue, timeseriesQuery, windowQuery } from './analytics';
+import { describe, expect, it, vi } from 'vitest';
+import type { PrismaClient, VideoAnalytic } from '@prisma/client';
+import {
+  analyticsCost,
+  costWindowStart,
+  dailyActivity,
+  leaderboardQuery,
+  METRICS,
+  metricValue,
+  timeseriesQuery,
+  windowQuery,
+} from './analytics';
 
 // BACKLOG 11.3 / spec 8.7 — pure parts only (metricValue + the zod query schemas). The DB-backed
 // query functions (analyticsOverview, analyticsTimeseries, ...) are covered by an integration test.
@@ -133,5 +143,115 @@ describe('leaderboardQuery', () => {
 
   it('rejects a limit above 50', () => {
     expect(() => leaderboardQuery.parse({ limit: 51 })).toThrow();
+  });
+});
+
+function snap(publicationId: string, day: string, views: number): VideoAnalytic {
+  return {
+    id: `${publicationId}-${day}`,
+    publicationId,
+    bucketAt: new Date(`${day}T00:00:00Z`),
+    bucketSize: 'day',
+    uniqueViewers: null,
+    avgWatchTimePct: null,
+    clicks: 0,
+    retentionCurve: null,
+    demographics: null,
+    ...counts({ views }),
+  };
+}
+
+describe('dailyActivity (gaps in daily snapshots)', () => {
+  const start = new Date('2026-09-25T00:00:00Z');
+  const now = Date.parse('2026-10-01T12:00:00Z');
+
+  it('puts consecutive-day growth on the day it happened', () => {
+    const points = dailyActivity(
+      [snap('a', '2026-09-27', 100), snap('a', '2026-09-28', 130)],
+      [],
+      start,
+      now,
+      'views',
+    );
+    expect(points.find((p) => p.day === '2026-09-27')?.value).toBe(100);
+    expect(points.find((p) => p.day === '2026-09-28')?.value).toBe(30);
+    expect(points.some((p) => p.estimated)).toBe(false);
+  });
+
+  it('spreads growth over a gap and flags the days as estimated, not all on the first day after it', () => {
+    const points = dailyActivity(
+      [snap('a', '2026-09-26', 100), snap('a', '2026-09-30', 500)],
+      [],
+      start,
+      now,
+      'views',
+    );
+    const byDay = Object.fromEntries(points.map((p) => [p.day, p]));
+    expect(byDay['2026-09-26']?.value).toBe(100);
+    expect(
+      ['2026-09-27', '2026-09-28', '2026-09-29', '2026-09-30'].map((d) => byDay[d]?.value),
+    ).toEqual([100, 100, 100, 100]);
+    expect(byDay['2026-09-29']?.estimated).toBe(true);
+    expect(byDay['2026-09-26']?.estimated).toBeUndefined();
+    expect(points.reduce((t, p) => t + p.value, 0)).toBe(500);
+  });
+
+  it('uses the newest snapshot before the window as the base (no whole-total dump)', () => {
+    const points = dailyActivity(
+      [snap('a', '2026-09-26', 1_050)],
+      [snap('a', '2026-09-20', 1_000)],
+      start,
+      now,
+      'views',
+    );
+    // 50 views over the six days since the 20th; only the in-window days (25th, 26th) are shown.
+    expect(points.reduce((t, p) => t + p.value, 0)).toBeLessThan(50);
+    expect(points.find((p) => p.day === '2026-09-26')?.estimated).toBe(true);
+  });
+
+  it('never goes negative when a platform lowers a count', () => {
+    const points = dailyActivity(
+      [snap('a', '2026-09-26', 100), snap('a', '2026-09-27', 90)],
+      [],
+      start,
+      now,
+      'views',
+    );
+    expect(points.every((p) => p.value >= 0)).toBe(true);
+  });
+});
+
+describe('spend window', () => {
+  it('covers whole UTC days ending today: exactly the days the chart plots', () => {
+    const now = Date.parse('2026-10-01T12:34:00Z');
+    expect(costWindowStart(now, 7).toISOString()).toBe('2026-09-25T00:00:00.000Z');
+    expect(costWindowStart(now, 1).toISOString()).toBe('2026-10-01T00:00:00.000Z');
+  });
+
+  it('names projects (null name stays null) and filters the lookup by organisation', async () => {
+    const findMany = vi.fn().mockResolvedValue([{ id: 'p1', name: 'Spring offer' }]);
+    const db = {
+      providerJob: {
+        groupBy: vi
+          .fn()
+          .mockResolvedValueOnce([
+            { provider: 'runway', _sum: { costPence: 300 }, _count: { _all: 2 } },
+          ])
+          .mockResolvedValueOnce([
+            { projectId: 'p1', _sum: { costPence: 200 } },
+            { projectId: null, _sum: { costPence: 100 } },
+          ]),
+      },
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      videoProject: { findMany },
+    } as unknown as PrismaClient;
+    const res = await analyticsCost(db, 'org1', 7, Date.parse('2026-10-01T12:00:00Z'));
+    expect(res.byProject).toEqual([
+      { projectId: 'p1', name: 'Spring offer', costPence: 200 },
+      { projectId: null, name: null, costPence: 100 },
+    ]);
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: ['p1'] }, organisationId: 'org1' } }),
+    );
   });
 });

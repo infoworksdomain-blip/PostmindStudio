@@ -172,7 +172,61 @@ function latestJson<T>(
   return [];
 }
 
-/** Daily activity across the org: sum over publications of (today's total − previous total). */
+export interface DailyPoint {
+  day: string;
+  value: number;
+  /** True when snapshots were missing and this day's value is an even share of a longer gap. */
+  estimated?: true;
+}
+
+const dayKeyOf = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+
+/**
+ * Per-day activity from cumulative daily snapshots. A publication's activity on a day is the
+ * growth since its previous snapshot. When snapshots are missing for some days, the growth is
+ * spread evenly over the days since that snapshot (the last day takes the remainder) and those
+ * days are flagged `estimated`, instead of putting the whole total on the first day after the
+ * gap. `base` holds each publication's newest snapshot before `start`; a publication with no
+ * earlier snapshot starts from zero on its first snapshot's day.
+ */
+export function dailyActivity(
+  rows: VideoAnalytic[],
+  base: VideoAnalytic[],
+  start: Date,
+  now: number,
+  metric: Metric,
+): DailyPoint[] {
+  const days = new Map<string, { value: number; estimated: boolean }>();
+  for (let t = start.getTime(); t <= now; t += DAY_MS)
+    days.set(dayKeyOf(t), { value: 0, estimated: false });
+  const previous = new Map(base.map((b) => [b.publicationId, b]));
+  const ordered = [...rows].sort(
+    (a, b) =>
+      a.publicationId.localeCompare(b.publicationId) || a.bucketAt.getTime() - b.bucketAt.getTime(),
+  );
+  for (const row of ordered) {
+    const prev = previous.get(row.publicationId);
+    const value = metricValue(row, metric);
+    const delta = Math.max(0, value - (prev ? metricValue(prev, metric) : 0));
+    const rowDay = Math.floor(row.bucketAt.getTime() / DAY_MS);
+    const gap = prev ? Math.max(1, rowDay - Math.floor(prev.bucketAt.getTime() / DAY_MS)) : 1;
+    const share = Math.floor(delta / gap);
+    for (let i = 0; i < gap; i += 1) {
+      const entry = days.get(dayKeyOf((rowDay - gap + 1 + i) * DAY_MS));
+      if (!entry) continue;
+      entry.value += i === gap - 1 ? delta - share * (gap - 1) : share;
+      if (gap > 1) entry.estimated = true;
+    }
+    previous.set(row.publicationId, row);
+  }
+  return [...days.entries()].map(([day, e]) => ({
+    day,
+    value: e.value,
+    ...(e.estimated && { estimated: true as const }),
+  }));
+}
+
+/** Daily activity across the org (see dailyActivity). */
 export async function analyticsTimeseries(
   db: Db,
   organisationId: string,
@@ -180,30 +234,18 @@ export async function analyticsTimeseries(
   now: number,
 ) {
   const start = bucketStart(new Date(now - (query.days - 1) * DAY_MS), 'day');
-  const rows = await db.videoAnalytic.findMany({
-    where: {
-      bucketSize: 'day',
-      bucketAt: { gte: new Date(start.getTime() - DAY_MS) },
-      publication: { organisationId },
-    },
-    orderBy: [{ publicationId: 'asc' }, { bucketAt: 'asc' }],
-  });
-  const perDay = new Map<string, number>();
-  for (let t = start.getTime(); t <= now; t += DAY_MS)
-    perDay.set(new Date(t).toISOString().slice(0, 10), 0);
-  let previous: VideoAnalytic | undefined;
-  for (const row of rows) {
-    const base =
-      previous?.publicationId === row.publicationId ? metricValue(previous, query.metric) : 0;
-    const key = row.bucketAt.toISOString().slice(0, 10);
-    if (perDay.has(key))
-      perDay.set(key, (perDay.get(key) ?? 0) + Math.max(0, metricValue(row, query.metric) - base));
-    previous = row;
-  }
-  return {
-    metric: query.metric,
-    data: [...perDay.entries()].map(([day, value]) => ({ day, value })),
-  };
+  const [rows, base] = await Promise.all([
+    db.videoAnalytic.findMany({
+      where: { bucketSize: 'day', bucketAt: { gte: start }, publication: { organisationId } },
+      orderBy: [{ publicationId: 'asc' }, { bucketAt: 'asc' }],
+    }),
+    db.videoAnalytic.findMany({
+      where: { bucketSize: 'day', bucketAt: { lt: start }, publication: { organisationId } },
+      orderBy: [{ publicationId: 'asc' }, { bucketAt: 'desc' }],
+      distinct: ['publicationId'],
+    }),
+  ]);
+  return { metric: query.metric, data: dailyActivity(rows, base, start, now, query.metric) };
 }
 
 export async function analyticsLeaderboard(
@@ -229,9 +271,14 @@ export async function analyticsLeaderboard(
   };
 }
 
+/** First instant of the spend window: `days` whole UTC days ending today (what the chart plots). */
+export function costWindowStart(now: number, days: number): Date {
+  return bucketStart(new Date(now - (days - 1) * DAY_MS), 'day');
+}
+
 /** BACKLOG 11.4 — cost by provider, by project and by day from the provider-job ledger. */
 export async function analyticsCost(db: Db, organisationId: string, days: number, now: number) {
-  const since = new Date(now - days * DAY_MS);
+  const since = costWindowStart(now, days);
   const where = { organisationId, startedAt: { gte: since } };
   const [byProvider, byProject, byDay] = await Promise.all([
     db.providerJob.groupBy({
@@ -248,16 +295,28 @@ export async function analyticsCost(db: Db, organisationId: string, days: number
       GROUP BY 1 ORDER BY 1`,
   ]);
   const total = byProvider.reduce((t, p) => t + (p._sum.costPence ?? 0), 0);
+  const topProjects = byProject
+    .map((p) => ({ projectId: p.projectId, costPence: p._sum.costPence ?? 0 }))
+    .sort((a, b) => b.costPence - a.costPence)
+    .slice(0, 50);
+  const projectIds = topProjects.flatMap((p) => (p.projectId ? [p.projectId] : []));
+  const named = projectIds.length
+    ? await db.videoProject.findMany({
+        where: { id: { in: projectIds }, organisationId },
+        select: { id: true, name: true },
+      })
+    : [];
+  const names = new Map(named.map((p) => [p.id, p.name]));
   return {
     days,
     totalPence: total,
     byProvider: byProvider
       .map((p) => ({ provider: p.provider, costPence: p._sum.costPence ?? 0, jobs: p._count._all }))
       .sort((a, b) => b.costPence - a.costPence),
-    byProject: byProject
-      .map((p) => ({ projectId: p.projectId, costPence: p._sum.costPence ?? 0 }))
-      .sort((a, b) => b.costPence - a.costPence)
-      .slice(0, 50),
+    byProject: topProjects.map((p) => ({
+      ...p,
+      name: p.projectId ? (names.get(p.projectId) ?? null) : null,
+    })),
     byDay: byDay.map((d) => ({
       day: d.day.toISOString().slice(0, 10),
       costPence: Number(d.costPence),

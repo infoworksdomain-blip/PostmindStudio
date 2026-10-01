@@ -42,8 +42,8 @@ const cost: CostResponse = {
   totalPence: 1_234,
   byProvider: [{ provider: 'runway', costPence: 1_000, jobs: 4 }],
   byProject: [
-    { projectId: 'proj_1', costPence: 900 },
-    { projectId: null, costPence: 334 },
+    { projectId: 'proj_1', name: 'Spring offer', costPence: 900 },
+    { projectId: null, name: null, costPence: 334 },
   ],
   byDay: [{ day: '2026-09-26', costPence: 1_234 }],
 };
@@ -142,11 +142,31 @@ describe('AnalyticsDashboard', () => {
     expect(providers).toHaveTextContent('runway');
     expect(providers).toHaveTextContent('4 jobs');
     const projects = screen.getByRole('list', { name: 'Spend by project' });
-    expect(within(projects).getByRole('link', { name: 'proj_1' })).toHaveAttribute(
+    expect(within(projects).getByRole('link', { name: 'Spring offer' })).toHaveAttribute(
       'href',
       '/projects/proj_1',
     );
     expect(projects).toHaveTextContent('Not tied to a project');
+  });
+
+  it('says when days in the trend are estimated because snapshots were missing', async () => {
+    mockFetch(
+      routes([
+        {
+          match: '/analytics/timeseries',
+          body: {
+            ok: true,
+            metric: 'views',
+            data: [
+              { day: '2026-09-25', value: 100 },
+              { day: '2026-09-26', value: 100, estimated: true },
+            ],
+          },
+        },
+      ]),
+    );
+    renderWithSWR(<AnalyticsDashboard />);
+    expect(await screen.findByRole('note')).toHaveTextContent(/estimates/i);
   });
 
   it('shows empty breakdowns when nothing was published', async () => {

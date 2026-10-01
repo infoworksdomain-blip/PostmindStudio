@@ -1427,7 +1427,9 @@
       "ariaAt": "{name}，{platform}，{time}{state}",
       "meta": "{platform} · {state}",
       "moveAria": "将{name}移至其他时间",
-      "moveTitle": "移至其他时间"
+      "moveTitle": "移至其他时间",
+      "retryAria": "重试 {name}",
+      "retryTitle": "重试此发布"
     },
     "move": {
       "tooSoon": "请选择至少一分钟之后的时间。",
@@ -1526,7 +1528,8 @@
       "label": "已规划",
       "aria": "{time} 的月度计划帖子：{title}（{status}）",
       "legend": "标有“已规划”的方框是仍在制作中的月度计划帖子；排期后会显示为帖子。"
-    }
+    },
+    "timeZone": "时间按你所在的时区显示：{zone}。"
   },
   "business": {
     "screen": {
@@ -2230,7 +2233,8 @@
         "views": "每日播放量，最近 {days, plural, other {# 天}}",
         "watchTime": "每日观看时长，最近 {days, plural, other {# 天}}",
         "engagement": "每日互动，最近 {days, plural, other {# 天}}"
-      }
+      },
+      "estimated": "部分日期为估算值：缺少数据快照，增长量已在空缺期间平均分摊。"
     },
     "platforms": {
       "title": "按平台",
