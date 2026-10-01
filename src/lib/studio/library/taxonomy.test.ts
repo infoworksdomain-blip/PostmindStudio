@@ -81,16 +81,29 @@ describe('the real prisma/data/library-taxonomy.json', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('has between 190 and 210 total nodes', () => {
+  // ~200 nodes per Addendum A3.4, plus operator additions for the corpus folders (2026-10-01).
+  it('has between 190 and 230 total nodes', () => {
     const parsed = taxonomyFile.parse(raw);
     const flat = flattenTaxonomy(parsed.categories);
     expect(flat.length).toBeGreaterThanOrEqual(190);
-    expect(flat.length).toBeLessThanOrEqual(210);
+    expect(flat.length).toBeLessThanOrEqual(230);
   });
 
   it('has Lifestyle → Luxury for the operator corpus folder (2026-10-01)', () => {
     const slugs = flattenTaxonomy(taxonomyFile.parse(raw).categories).map((n) => n.slug);
-    expect(slugs).toEqual(expect.arrayContaining(['lifestyle/luxury', 'lifestyle/luxury/cars']));
+    expect(slugs).toEqual(
+      expect.arrayContaining([
+        'lifestyle/luxury',
+        'lifestyle/luxury/cars',
+        'lifestyle/automotive/motorbikes',
+        'lifestyle/travel/nature',
+        'lifestyle/travel/boats-and-sea',
+        'entertainment/storytelling/sci-fi',
+        'entertainment/viral-formats/ai-content',
+        'entertainment/viral-formats/faceless-reels',
+        'entertainment/viral-formats/viral-hooks',
+      ]),
+    );
   });
 
   it('has exactly 8 top-level categories named per Addendum A3.4', () => {
