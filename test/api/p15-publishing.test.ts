@@ -15,6 +15,7 @@ import { sealTokens } from '../../src/lib/studio/platforms/tokens';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import { call, installApi, multipart, tenant } from '../helpers/api-harness';
 import { createHarness } from '../helpers/pipeline-harness';
+import { withHashtags } from '../helpers/hashtags';
 
 // Phase 15 Track A — publishing and distribution through the real routes, the real publish
 // worker (inline queue) and Postgres: drip queue + SCHEDULED approval (A5), best times (A6),
@@ -374,9 +375,10 @@ describe.skipIf(!hasDb)('Phase 15 Track A publishing API', { timeout: 90_000 }, 
     >;
     expect(s.tiktok).toMatchObject({
       caption: 'Le vendredi, c’est sourdough',
-      hashtags: ['pain', 'leeds'],
+      // 20.13: topped up to five from the other platforms' suggestions.
+      hashtags: ['pain', 'leeds', 'a', 'b', 'c'],
     });
-    expect(s.x?.hashtags).toHaveLength(2);
+    expect(s.x?.hashtags).toEqual(['a', 'b', 'c', 'pain', 'leeds']);
     expect(s.x?.captionTruncated).toBe(true);
     // Missing from the model output → the brief's hook.
     expect(s.youtube_short?.caption).toBe('Le vendredi, c’est sourdough');
@@ -575,13 +577,13 @@ describe.skipIf(!hasDb)('Phase 15 Track A publishing API', { timeout: 90_000 }, 
     const res = await call(publicationsRoute.POST, {
       method: 'POST',
       token: 'owner',
-      body: {
+      body: withHashtags({
         renderId: renders[0]!.id,
         platform: 'youtube_short',
         connectionId: yt.id,
         caption: 'Hi',
         title: 'Hi',
-      },
+      }),
     });
     expect(res.status).toBe(202);
     const id = (res.json.publication as { id: string }).id;

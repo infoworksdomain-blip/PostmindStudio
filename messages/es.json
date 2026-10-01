@@ -1579,7 +1579,8 @@
         "scan": "Análisis de la web",
         "brand": "Kits de marca",
         "images": "Biblioteca de imágenes",
-        "learned": "Lo que Studio ha aprendido"
+        "learned": "Lo que Studio ha aprendido",
+        "hashtags": "Hashtags"
       }
     },
     "kits": {
@@ -5152,6 +5153,67 @@
       "retry": "Reintentar",
       "projects": "Ir a proyectos",
       "reference": "Referencia: {digest}"
+    }
+  },
+  "hashtags": {
+    "editor": {
+      "add": "Añadir",
+      "addPlaceholder": "Escribe un hashtag y pulsa Intro",
+      "remove": "Quitar #{tag}",
+      "moveEarlier": "Mover #{tag} antes",
+      "moveLater": "Mover #{tag} después",
+      "locked": "#{tag} va en todas las publicaciones",
+      "platformAdded": "Se añade automáticamente en esta plataforma",
+      "count": "{count, plural, one {# hashtag} other {# hashtags}} (mínimo {min}, máximo {max})",
+      "countPlain": "{count, plural, one {# hashtag} other {# hashtags}}",
+      "needMore": "faltan: {count}",
+      "tooMany": "aquí caben como máximo {max} hashtags",
+      "invalid": "Solo letras, números y _ (sin espacios ni signos), hasta {max} caracteres.",
+      "duplicate": "#{tag} ya está en la lista"
+    },
+    "copy": {
+      "caption": "Texto",
+      "title": "Título",
+      "hashtags": "Hashtags",
+      "length": "{used} / {max} caracteres con hashtags",
+      "lengthBytes": "{used} / {max} bytes con hashtags",
+      "tooLong": "demasiado largo para {platform}: acorta el texto",
+      "source": {
+        "owner": "Editado por ti",
+        "generated": "Sugerido",
+        "none": "Aún sin sugerencia"
+      },
+      "suggestedNote": "Las sugerencias salen del perfil de tu negocio, de la publicación y de la época del año, no de datos de tendencias en directo.",
+      "save": "Guardar texto",
+      "saved": "Texto guardado",
+      "savedScheduled": "{count, plural, one {Texto guardado; # publicación programada actualizada} other {Texto guardado; # publicaciones programadas actualizadas}}"
+    },
+    "settings": {
+      "title": "Hashtags",
+      "description": "Cada publicación lleva al menos {min} hashtags: primero el de tu negocio, después los que incluyes siempre y luego sugerencias que encajan con la publicación.",
+      "business": "Hashtag del negocio",
+      "businessHint": "Solo letras, números y _, sin espacios, hasta {max} caracteres.",
+      "default": "Déjalo vacío para usar #{tag} (sacado del nombre de tu negocio).",
+      "noDefault": "El nombre de tu negocio no da un valor predeterminado; escribe uno.",
+      "useDefault": "Usar el predeterminado",
+      "invalid": "Solo letras, números y _, con al menos una letra, hasta {max} caracteres.",
+      "always": "Incluir siempre",
+      "alwaysHint": "Hashtags de campaña o de marca que se añaden a cada publicación (hasta {max}).",
+      "save": "Guardar hashtags",
+      "saved": "Hashtags guardados"
+    },
+    "note": {
+      "title": "Hashtags:",
+      "body": "{tags} en cada publicación, más sugerencias (al menos {min} en total).",
+      "none": "Todavía no hay hashtag del negocio.",
+      "edit": "Editar"
+    },
+    "plan": {
+      "title": "Texto y hashtags",
+      "platform": "Plataforma",
+      "open": "Texto",
+      "openAria": "Texto y hashtags de {title}",
+      "close": "Cerrar"
     }
   }
 }

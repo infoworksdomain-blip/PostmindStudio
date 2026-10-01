@@ -244,6 +244,9 @@ export async function hardDeleteBusiness(
       .count,
     platform_connections: (await tx.platformConnection.deleteMany({ where: scope })).count,
     drip_queues: (await tx.dripQueue.deleteMany({ where: scope })).count,
+    // 20.13: the business hashtag and always-include hashtags.
+    business_hashtag_settings: (await tx.businessHashtagSettings.deleteMany({ where: scope }))
+      .count,
     // 20.9: the business's month plans (their items cascade).
     content_plans: (await tx.contentPlan.deleteMany({ where: scope })).count,
   }));

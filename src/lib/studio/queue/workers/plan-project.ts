@@ -51,6 +51,16 @@ import { suggestionRows, suggestOverlays } from '../../overlays/suggest';
 import { BUILT_IN_PRESETS } from '../../overlays/presets';
 import type { ProjectJobData } from '../queues';
 import { realProjectName } from '../../../project-name';
+import {
+  buildSuggestions,
+  formatPlatforms,
+  loadCopyContext,
+  storeSuggestions,
+  suggestionsKey,
+  type CopyContext,
+} from '../../services/caption-suggestions';
+import { hashtagPool } from '../../hashtags/pool';
+import type { Logger } from 'pino';
 
 // BACKLOG 3.4 — Layers 1 (ideation) and 2 (script + storyboard), then pre-generation script
 // safety (spec 13.2), persistence of briefs/scripts/shots, and fan-out of one generate-asset job
@@ -203,6 +213,71 @@ export async function createSuggestedOverlays(
   if (rows.length) await tx.textOverlay.createMany({ data: rows });
 }
 
+/** 20.13: hashtags, facts and moments for the ideation call; null (logged) if unavailable. */
+async function copyContextFor(
+  deps: PipelineDeps,
+  project: VideoProject,
+  log: Logger,
+): Promise<CopyContext | null> {
+  try {
+    return await loadCopyContext(deps.db, project, deps.now());
+  } catch (err) {
+    log.warn({ err }, 'post copy context unavailable; ideation runs without caption instructions');
+    return null;
+  }
+}
+
+/**
+ * 20.13: store the captions and hashtags the ideation call wrote (fitted to each platform and
+ * the business's hashtag policy) as the project's caption suggestions — the copy Publish and
+ * auto-publish use unless the owner edits it.
+ */
+async function storeIdeationCopy(
+  deps: PipelineDeps,
+  project: VideoProject,
+  brief: IdeationResult,
+  copy: CopyContext | null,
+  log: Logger,
+): Promise<void> {
+  if (!copy) return;
+  try {
+    const stored = await deps.db.videoBrief.findUnique({
+      where: { projectId: project.id },
+      select: { id: true },
+    });
+    if (!stored) return;
+    const platforms = formatPlatforms(project.targetFormats);
+    const language = project.language || 'en-GB';
+    const suggestions = buildSuggestions(platforms, brief.socialPosts ?? [], {
+      policy: copy.policy,
+      pool: (platform) =>
+        hashtagPool(platform, {
+          metadata: project.metadata,
+          keywords: brief.keywords,
+          profile: copy.profile,
+        }),
+      fallbackCaption: brief.hook,
+    });
+    await storeSuggestions(deps.db, project.id, {
+      key: suggestionsKey({
+        sourceId: stored.id,
+        platforms,
+        language,
+        hook: brief.hook,
+        policy: copy.policy,
+      }),
+      generatedAt: new Date(deps.now()).toISOString(),
+      language,
+      source: 'ideation',
+      suggestions,
+    });
+  } catch (err) {
+    // The video is unaffected; Publish can still ask for suggestions, and publishing tops the
+    // hashtags up from the business and profile.
+    log.warn({ err }, 'could not store the generated captions');
+  }
+}
+
 export async function planProject(data: ProjectJobData, deps: PipelineDeps): Promise<void> {
   const log = deps.logger.child({
     projectId: data.projectId,
@@ -268,7 +343,8 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     project.businessId,
   );
 
-  // Layer 1 — ideation
+  // Layer 1 — ideation (20.13: and the post copy, in the same call)
+  const copy = await copyContextFor(deps, project, log);
   const ideationRun = await runProvider(
     textRequest(
       data,
@@ -281,6 +357,15 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
           targetPlatforms: formats.map((f) => f.platform),
           hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
           language: project.language,
+          ...(copy && {
+            social: {
+              platforms: formatPlatforms(project.targetFormats),
+              policy: copy.policy,
+              facts: copy.facts,
+              restrictedTopics: [...new Set([...restrictedTopics, ...copy.restrictedTopics])],
+              moments: copy.moments,
+            },
+          }),
           brand: brandKit
             ? {
                 toneKeywords: brandKit.toneKeywords,
@@ -399,6 +484,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     // 13.17: pause for a Trust & Safety decision. The plan is stored (no shot is enqueued), so
     // ALLOW continues from here without paying for ideation and scripting again.
     await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit, reference);
+    await storeIdeationCopy(deps, project, brief, copy, log);
     await openSafetyReview(deps, {
       organisationId: data.organisationId,
       projectId: project.id,
@@ -420,6 +506,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   }
 
   await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit, reference);
+  await storeIdeationCopy(deps, project, brief, copy, log);
   await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,

@@ -10,13 +10,15 @@ import { PLATFORM_RULES } from './rules';
 // fitCaption() first and the publication records metadata.captionTruncated — the person is not
 // there to fix a 400. DECISION recorded in PROGRESS (Phase 15).
 
-const HASHTAG = /^[\p{L}\p{N}_]{1,100}$/u;
+// 20.13: combining marks are allowed after the first character (Devanagari vowel signs, Arabic
+// harakat), so hashtags in those scripts are not mangled.
+const HASHTAG = /^[\p{L}\p{N}_][\p{L}\p{M}\p{N}_]{0,99}$/u;
 
 export function normaliseHashtags(tags: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const raw of tags) {
-    const tag = raw.trim().replace(/^#+/, '');
+    const tag = raw.trim().replace(/^#+/, '').normalize('NFC');
     if (!tag) continue;
     if (!HASHTAG.test(tag))
       throw new ValidationError(`Invalid hashtag "${raw}" (letters, numbers and _ only)`);

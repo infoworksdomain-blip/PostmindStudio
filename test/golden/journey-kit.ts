@@ -13,6 +13,7 @@ import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import type { TenantContext } from '../../src/lib/tenant';
 import { call, installApi, tenant } from '../helpers/api-harness';
 import { createHarness, type HarnessOptions } from '../helpers/pipeline-harness';
+import { withHashtags } from '../helpers/hashtags';
 
 // Shared plumbing for the golden-path journeys (BACKLOG 12.7): one organisation per journey,
 // the real route handlers in front of the real workers (inline queue), scripted providers and
@@ -148,7 +149,11 @@ export async function connect(j: Journey, platform: string, scopes = ['publish']
 }
 
 export async function publish(j: Journey, body: Record<string, unknown>) {
-  const res = await call(publicationsRoute.POST, { method: 'POST', token: 'owner', body });
+  const res = await call(publicationsRoute.POST, {
+    method: 'POST',
+    token: 'owner',
+    body: withHashtags(body),
+  });
   expect(res.status).toBe(202);
   return (res.json.publication as Publication).id;
 }

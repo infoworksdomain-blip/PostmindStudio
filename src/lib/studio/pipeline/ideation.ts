@@ -1,11 +1,20 @@
 import { z } from 'zod';
 import { ProviderError } from '../../errors';
 import { DEFAULT_LANGUAGE, languageInstruction } from '../languages';
+import {
+  SOCIAL_POSTS_JSON_SCHEMA,
+  socialCopyPromptLines,
+  socialPostSchema,
+  type SocialCopyContext,
+} from '../hashtags/copy-prompt';
 
 // Layer 1 — Ideation (spec 5.2): turn the user's words into a concrete brief. If the input is
 // unusably vague ("make me a video"), return three concrete direction options instead of
 // guessing. Restricted topics from the brand kit are detected here (spec 13.3) so the user can
 // confirm before anything is generated.
+// 20.13: the same call also writes each target platform's caption and hashtag suggestions
+// (socialPosts), so a generated video has its post copy without a second Claude call; the
+// worker fits them to the platform and the hashtag policy (caption-suggestions.ts).
 
 export interface IdeationContext {
   rawInput: string;
@@ -20,6 +29,8 @@ export interface IdeationContext {
   hints?: { targetAudience?: string | null; callToAction?: string | null };
   /** 15.C5: BCP 47 language the brief is written in (hook, message, CTA, keywords). */
   language?: string;
+  /** 20.13: caption + hashtag instructions (business hashtags, facts, UK moments). */
+  social?: SocialCopyContext;
 }
 
 export const IDEATION_SCHEMA = {
@@ -35,6 +46,7 @@ export const IDEATION_SCHEMA = {
     'callToAction',
     'keywords',
     'restrictedTopicsMentioned',
+    'socialPosts',
   ],
   properties: {
     actionable: {
@@ -57,6 +69,7 @@ export const IDEATION_SCHEMA = {
       items: { type: 'string' },
       description: 'restricted topics from the brand kit that the brief would touch',
     },
+    socialPosts: SOCIAL_POSTS_JSON_SCHEMA,
   },
 } as const;
 
@@ -70,6 +83,9 @@ const ideationResult = z.object({
   callToAction: z.string(),
   keywords: z.array(z.string()),
   restrictedTopicsMentioned: z.array(z.string()),
+  // 20.13: optional so an answer without it (older fixtures, a model that skipped it) still
+  // parses; the publish path tops the hashtags up from the business and profile instead.
+  socialPosts: z.array(socialPostSchema).max(20).optional(),
 });
 
 export type IdeationResult = z.infer<typeof ideationResult>;
@@ -101,6 +117,7 @@ export function buildIdeationPrompt(ctx: IdeationContext): string {
   if (ctx.hints?.callToAction) lines.push(`Owner's call to action: ${ctx.hints.callToAction}`);
   // 15.C5: the brief is written natively in the video's language (keywords and hashtags too).
   lines.push(languageInstruction(ctx.language ?? DEFAULT_LANGUAGE));
+  if (ctx.social) lines.push('', ...socialCopyPromptLines(ctx.social));
   lines.push('', 'Owner request:', '"""', ctx.rawInput.trim(), '"""');
   return lines.join('\n');
 }

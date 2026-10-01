@@ -432,4 +432,5 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **20.10** Full QA sweep and fixes
 - [x] **20.11** Provider failover on account limits; no raw provider errors for customers
 - [x] **20.12** Auto-publish: accounts vs platforms; no blocking without connected accounts
+- [x] **20.13** Captions and hashtags (≥5, business hashtag, owner "always" hashtags)
 - [x] **20.14** Posting schedule: daily/weekly, chosen/system/interval times, max 4 a day

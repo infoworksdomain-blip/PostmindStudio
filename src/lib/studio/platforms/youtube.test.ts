@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { fakeVideoSource } from '../../../../test/helpers/fake-video-source';
-import { CAPTIONS_URL, CHUNK_SIZE, THUMBNAIL_URL, UPLOAD_URL, YouTubePublisher } from './youtube';
+import {
+  CAPTIONS_URL,
+  CHUNK_SIZE,
+  THUMBNAIL_URL,
+  UPLOAD_URL,
+  YouTubePublisher,
+  youtubeTags,
+} from './youtube';
 import type { PublishRequest } from './interface';
 
 const NOW = Date.parse('2026-09-27T12:00:00Z');
@@ -310,5 +317,35 @@ describe('YouTubePublisher thumbnails.set + captions.insert (15.A3 / 15.A4)', ()
     const result = await youtube.publish(request({ thumbnail, captions }));
     expect(result.platformPostId).toBe('yt-u');
     expect(result.metadata).toMatchObject({ thumbnail: 'failed', captions: 'failed' });
+  });
+});
+
+describe('YouTube hashtags (20.13)', () => {
+  it('sends the hashtags in the description and as snippet.tags', async () => {
+    const { youtube, requests } = publisher(
+      'youtube_short',
+      sessionResponse('https://upload.googleapis.com/session-1'),
+      json({ id: 'yt-vid-1' }),
+      json({ items: [{ status: { uploadStatus: 'uploaded' } }] }),
+    );
+    const tags = ['AheadAI', 'LeedsEats', 'bread', 'cake', 'buns', 'Shorts'];
+    await youtube.publish(
+      request({
+        video: fakeVideoSource({ sizeBytes: 2 * MB, durationSec: 45, aspectRatio: '9:16' }),
+        text: 'Fresh bread\n\n#AheadAI #LeedsEats #bread #cake #buns #Shorts',
+        hashtags: tags,
+      }),
+    );
+    const body = requests[0]?.body as { snippet: { description: string; tags: string[] } };
+    expect(body.snippet.description).toContain('#AheadAI #LeedsEats');
+    expect(body.snippet.tags).toEqual(tags);
+  });
+
+  it('keeps snippet.tags within the documented 500 characters', () => {
+    const many = Array.from({ length: 40 }, (_, i) => `tag${String(i).padStart(2, '0')}xxxxxxx`);
+    const kept = youtubeTags(many);
+    expect(kept.join(',').length).toBeLessThanOrEqual(500);
+    expect(kept.length).toBeLessThan(many.length);
+    expect(youtubeTags(['two words'])).toEqual(['two words']);
   });
 });

@@ -1579,7 +1579,8 @@
         "scan": "Analisi del sito",
         "brand": "Kit del brand",
         "images": "Libreria immagini",
-        "learned": "Cosa ha imparato Studio"
+        "learned": "Cosa ha imparato Studio",
+        "hashtags": "Hashtag"
       }
     },
     "kits": {
@@ -5152,6 +5153,67 @@
       "retry": "Riprova",
       "projects": "Vai ai progetti",
       "reference": "Riferimento: {digest}"
+    }
+  },
+  "hashtags": {
+    "editor": {
+      "add": "Aggiungi",
+      "addPlaceholder": "Scrivi un hashtag e premi Invio",
+      "remove": "Rimuovi #{tag}",
+      "moveEarlier": "Sposta #{tag} prima",
+      "moveLater": "Sposta #{tag} dopo",
+      "locked": "#{tag} è in ogni post",
+      "platformAdded": "Aggiunto automaticamente per questa piattaforma",
+      "count": "{count, plural, one {# hashtag} other {# hashtag}} (almeno {min}, al massimo {max})",
+      "countPlain": "{count, plural, one {# hashtag} other {# hashtag}}",
+      "needMore": "ne mancano: {count}",
+      "tooMany": "qui al massimo {max} hashtag",
+      "invalid": "Solo lettere, numeri e _ (niente spazi né punteggiatura), fino a {max} caratteri.",
+      "duplicate": "#{tag} è già nell’elenco"
+    },
+    "copy": {
+      "caption": "Didascalia",
+      "title": "Titolo",
+      "hashtags": "Hashtag",
+      "length": "{used} / {max} caratteri con gli hashtag",
+      "lengthBytes": "{used} / {max} byte con gli hashtag",
+      "tooLong": "troppo lunga per {platform}: accorcia la didascalia",
+      "source": {
+        "owner": "Modificata da te",
+        "generated": "Suggerita",
+        "none": "Ancora nessun suggerimento"
+      },
+      "suggestedNote": "I suggerimenti vengono dal profilo della tua attività, dal post e dal periodo dell’anno, non da dati di tendenza in tempo reale.",
+      "save": "Salva didascalia",
+      "saved": "Didascalia salvata",
+      "savedScheduled": "{count, plural, one {Didascalia salvata; # post programmato aggiornato} other {Didascalia salvata; # post programmati aggiornati}}"
+    },
+    "settings": {
+      "title": "Hashtag",
+      "description": "Ogni post ha almeno {min} hashtag: prima quello della tua attività, poi quelli che includi sempre, poi suggerimenti adatti al post.",
+      "business": "Hashtag dell’attività",
+      "businessHint": "Solo lettere, numeri e _, senza spazi, fino a {max} caratteri.",
+      "default": "Lascia vuoto per usare #{tag} (dal nome della tua attività).",
+      "noDefault": "Il nome della tua attività non dà un valore predefinito: scrivine uno.",
+      "useDefault": "Usa il predefinito",
+      "invalid": "Solo lettere, numeri e _, con almeno una lettera, fino a {max} caratteri.",
+      "always": "Includi sempre",
+      "alwaysHint": "Hashtag di campagna o del brand aggiunti a ogni post (fino a {max}).",
+      "save": "Salva hashtag",
+      "saved": "Hashtag salvati"
+    },
+    "note": {
+      "title": "Hashtag:",
+      "body": "{tags} in ogni post, più suggerimenti (almeno {min} in tutto).",
+      "none": "Ancora nessun hashtag dell’attività.",
+      "edit": "Modifica"
+    },
+    "plan": {
+      "title": "Didascalia e hashtag",
+      "platform": "Piattaforma",
+      "open": "Didascalia",
+      "openAria": "Didascalia e hashtag di {title}",
+      "close": "Chiudi"
     }
   }
 }

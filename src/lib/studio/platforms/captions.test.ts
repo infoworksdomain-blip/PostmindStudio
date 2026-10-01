@@ -45,9 +45,10 @@ describe('composeCaption', () => {
   });
 
   it('rejects more hashtags than the platform allows (beyond required ones)', () => {
-    expect(() => composeCaption('x', { caption: 'c', hashtags: ['a', 'b', 'c'] })).toThrow(
-      ValidationError,
-    );
+    // 20.13: X allows five hashtags (was two).
+    expect(() =>
+      composeCaption('x', { caption: 'c', hashtags: ['a', 'b', 'c', 'd', 'e', 'f'] }),
+    ).toThrow(ValidationError);
   });
 
   it('allows required hashtags in addition to the platform max', () => {
