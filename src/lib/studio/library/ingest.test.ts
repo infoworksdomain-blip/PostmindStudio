@@ -5,7 +5,9 @@ import {
   ingestItemInput,
   mergeToFrames,
   previewKey,
+  transcribe,
 } from './ingest';
+import type { PipelineDeps } from '../pipeline/deps';
 import type { ShotTiming, VideoAnalysis } from './analyse';
 
 // BACKLOG 9.1 / Addendum A3.3 — pure helper unit tests only (no S3/db/provider deps).
@@ -182,5 +184,27 @@ describe('ingestItemInput', () => {
       title: 'Custom title',
       sourcePlatform: 'tiktok',
     });
+  });
+});
+
+describe('transcribe', () => {
+  it('skips a video with no audio stream without calling a transcription provider', async () => {
+    // Any provider lookup on these deps would throw: the skip must happen first.
+    const deps = new Proxy(
+      {},
+      {
+        get() {
+          throw new Error('providers must not be called for a silent video');
+        },
+      },
+    ) as PipelineDeps;
+    await expect(
+      transcribe(
+        deps,
+        'https://example.test/v.mp4',
+        { durationSec: 12, audioCodec: null },
+        'STANDARD',
+      ),
+    ).resolves.toEqual({ text: '', words: [], skipped: 'no audio stream' });
   });
 });

@@ -1702,6 +1702,11 @@ model DripQueue {
   businessId      String
   /// [{ weekday 0-6 (0 = Sunday), time "HH:MM", timezone IANA }]
   slots           Json
+  /// 20.14: the posting schedule the slots were made from (src/lib/studio/posting-schedule.ts):
+  /// { mode daily | weekly | custom, timezone, postsPerDay, postsPerWeek, days, timesMode
+  /// choose | system | interval, times, intervalBy, intervalStart, intervalMinutes, windowStart,
+  /// windowEnd }. Null for queues saved before 20.14 (the editor infers one from the slots).
+  schedule        Json?
   /// Platforms drip-posted (subset of the project's targets); empty = every target.
   platforms       String[]
   enabled         Boolean  @default(true)

@@ -207,7 +207,7 @@ describe('DripQueuePanel (15.A5)', () => {
     expect(await screen.findByText(/1 queued/)).toBeInTheDocument();
     expect(screen.getByLabelText('Slot 1 day')).toHaveValue('1');
     await userEvent.click(screen.getByRole('button', { name: /Add slot/ }));
-    await userEvent.click(screen.getByRole('button', { name: /Save slots/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Save schedule/ }));
     await waitFor(() => expect(api.find('PUT', '/businesses/biz_1/drip-queue')).toHaveLength(1));
     const body = api.find('PUT', '/businesses/biz_1/drip-queue')[0]?.body as { slots: unknown[] };
     expect(body.slots).toHaveLength(2);
