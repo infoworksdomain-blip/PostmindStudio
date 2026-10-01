@@ -4,10 +4,13 @@ import {
   approvalOrigin,
   buildTargets,
   connectionsFor,
+  hasConnectedAccount,
+  publishablePlatforms,
   readAutoPublishResult,
   readReview,
   readScheduleIssue,
   readTargets,
+  resolveAccounts,
   templatePlatforms,
 } from './automation';
 
@@ -90,5 +93,40 @@ describe('readScheduleIssue (20.3)', () => {
     ).toEqual({ reason: 'queue_off', horizonDays: 28, at: 't' });
     expect(readScheduleIssue({ scheduleIssue: { reason: 'other' } })).toBeNull();
     expect(readScheduleIssue(null)).toBeNull();
+  });
+});
+
+describe('20.12 accounts for the chosen platforms', () => {
+  const tiktok = conn({ id: 'tt' });
+  const yt1 = conn({ id: 'yt1', platform: 'youtube' });
+  const yt2 = conn({ id: 'yt2', platform: 'youtube' });
+  const other = conn({ id: 'x-other', platform: 'x', businessId: 'biz-2' });
+  const stale = conn({ id: 'li', platform: 'linkedin', state: 'needs_reconnect' });
+
+  it('knows whether the business has any account, and which platforms it can post', () => {
+    expect(hasConnectedAccount([], 'biz')).toBe(false);
+    expect(hasConnectedAccount([other, stale], 'biz')).toBe(false);
+    expect(hasConnectedAccount([tiktok], 'biz')).toBe(true);
+    expect(
+      publishablePlatforms(
+        ['tiktok', 'youtube_short', 'x', 'linkedin_video'],
+        [tiktok, yt1, other, stale],
+        'biz',
+      ),
+    ).toEqual(['tiktok', 'youtube_short']);
+  });
+
+  it('pre-selects the only account, keeps a valid choice and drops stale ones', () => {
+    const all = [tiktok, yt1, yt2, other];
+    // TikTok has one account (pre-selected); YouTube has two (the owner picks).
+    expect(resolveAccounts(['tiktok', 'youtube_short'], {}, all, 'biz')).toEqual({ tiktok: 'tt' });
+    expect(resolveAccounts(['youtube_short'], { youtube_short: 'yt2' }, all, 'biz')).toEqual({
+      youtube_short: 'yt2',
+    });
+    // '' = "don't auto-publish" wins over the pre-selection.
+    expect(resolveAccounts(['tiktok'], { tiktok: '' }, all, 'biz')).toEqual({});
+    // A choice from another business (or a disconnected account) is not kept.
+    expect(resolveAccounts(['x'], { x: 'x-other' }, all, 'biz')).toEqual({});
+    expect(resolveAccounts(['tiktok'], { tiktok: 'gone' }, all, 'biz')).toEqual({ tiktok: 'tt' });
   });
 });

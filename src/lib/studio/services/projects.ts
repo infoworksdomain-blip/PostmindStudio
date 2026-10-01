@@ -26,6 +26,7 @@ import { defaultReviewPolicyFor } from './org-policy';
 import { approveWithWorkflow, rejectWithWorkflow } from './approval-workflows';
 import {
   assertMayConfigureTargets,
+  assertTargetsForPolicy,
   autoPublishTargets,
   storedTargets,
   validateTargets,
@@ -283,6 +284,9 @@ export async function createProject(
       : null;
   const formats = template?.targetFormats ?? input.targetFormats ?? [];
   const targets = template?.autoPublishTargets ?? input.autoPublish?.targets ?? [];
+  // 20.12: auto-publish / a schedule the request asked for needs an account to post to (a
+  // template's own publish defaults are the template's business).
+  if (!template) assertTargetsForPolicy(input.publishPolicy, targets);
   assertMayConfigureTargets(tenant, targets);
   await validateTargets(
     db,

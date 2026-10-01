@@ -141,6 +141,20 @@ describe('ElevenLabsAdapter', () => {
     expect(ok.requests[0]?.url).toBe('https://api.elevenlabs.io/v1/user/subscription');
     const bad = setup(json({ detail: { code: 'invalid_api_key', message: 'bad' } }, 401));
     expect((await bad.adapter.healthCheck()).reason).toContain('auth');
+    // 20.11: a key restricted to TTS lacks user_read; the subscription endpoint refuses it.
+    const scoped = setup(
+      json(
+        {
+          detail: {
+            status: 'missing_permissions',
+            message:
+              'The API key you used is missing the permission user_read to execute this operation.',
+          },
+        },
+        401,
+      ),
+    );
+    await expect(scoped.adapter.healthCheck()).resolves.toMatchObject({ healthy: true });
     const down = setup(new TypeError('fetch failed'));
     expect((await down.adapter.healthCheck()).healthy).toBe(false);
   });

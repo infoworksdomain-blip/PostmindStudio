@@ -41,3 +41,13 @@ export function classifyNetworkError(err: unknown): ErrorClassification {
   }
   return { errorClass: 'provider_unavailable', retryable: true };
 }
+
+/**
+ * 20.11: text about a failure that may be shown to customers (e.g. a scan's error list). A
+ * provider's own message (which can be a raw JSON body) is replaced by `<provider>/<class>`; the
+ * full message stays in logs and provider_jobs.
+ */
+export function publicErrorText(err: unknown): string {
+  if (err instanceof ProviderError) return `${err.providerId}/${err.errorClass}`;
+  return err instanceof Error ? err.message : String(err);
+}

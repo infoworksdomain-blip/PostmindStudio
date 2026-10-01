@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ForbiddenError, ValidationError } from '../../errors';
+import {
+  AutoPublishAccountRequiredError,
+  AutoPublishAccountUnavailableError,
+  ForbiddenError,
+  ValidationError,
+} from '../../errors';
 import {
   assertMayConfigureTargets,
+  assertTargetsForPolicy,
   autoPublishTarget,
   readPublishDefaults,
   storedTargets,
@@ -82,7 +88,7 @@ describe('validateTargets', () => {
     });
   });
 
-  it('reports every problem: platform not rendered, foreign/wrong connection, duplicates', async () => {
+  it('reports format problems: platform not rendered, duplicates', async () => {
     const { db: fake } = db([{ id: 'conn-yt', platform: 'youtube' }]);
     const err = await validateTargets(
       fake,
@@ -94,8 +100,33 @@ describe('validateTargets', () => {
     const problems = (err as ValidationError).details?.problems as string[];
     expect(problems.join('\n')).toMatch(/targets\[1\]: duplicate target/);
     expect(problems.join('\n')).toMatch(/targets\[2\]: x is not one of the project's formats/);
+  });
+
+  it('20.12: an account that is not this organisation’s has its own code', async () => {
+    const { db: fake } = db([{ id: 'conn-yt', platform: 'youtube' }]);
+    const err = await validateTargets(
+      fake,
+      'org',
+      [tiktok, { platform: 'x', connectionId: 'conn-yt' }],
+      ['tiktok', 'x'],
+    ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(AutoPublishAccountUnavailableError);
+    expect((err as AutoPublishAccountUnavailableError).code).toBe(
+      'auto_publish_account_unavailable',
+    );
+    const problems = (err as AutoPublishAccountUnavailableError).details?.problems as string[];
     expect(problems.join('\n')).toMatch(/targets\[0\]: connectionId is not a tiktok connection/);
-    expect(problems.join('\n')).toMatch(/targets\[2\]: connectionId is not a x connection/);
+    expect(problems.join('\n')).toMatch(/targets\[1\]: connectionId is not a x connection/);
+  });
+
+  it('20.12: auto-publish or a schedule needs at least one target', () => {
+    expect(() => assertTargetsForPolicy('AUTO_ON_APPROVAL', [])).toThrow(
+      AutoPublishAccountRequiredError,
+    );
+    expect(() => assertTargetsForPolicy('SCHEDULED', [])).toThrow(AutoPublishAccountRequiredError);
+    expect(() => assertTargetsForPolicy('MANUAL', [])).not.toThrow();
+    expect(() => assertTargetsForPolicy(undefined, [])).not.toThrow();
+    expect(() => assertTargetsForPolicy('SCHEDULED', [tiktok])).not.toThrow();
   });
 
   it('skips the lookup when no target uses a Studio connection', async () => {

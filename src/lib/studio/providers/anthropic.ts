@@ -9,6 +9,7 @@ import type {
   TextGenerationRequest,
 } from './interface';
 import { usdToPence } from './pricing';
+import { parseRegainAt } from './account-errors';
 import { classifyHttpStatus, providerError, type ErrorClassification } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
 
@@ -60,7 +61,56 @@ export function computeCostUsd(model: string, usage: Anthropic.Usage): number {
   return (inputTokens * price.input + usage.output_tokens * price.output) / 1_000_000;
 }
 
-function classifySdkError(err: unknown): ErrorClassification {
+interface AnthropicErrorBody {
+  type?: string;
+  error?: { type?: string; message?: string; details?: { error_code?: string } };
+  request_id?: string;
+}
+
+/** What an Anthropic error means for Studio, plus the readable message and any resume time. */
+export interface AnthropicErrorInfo extends ErrorClassification {
+  message?: string;
+  /** ISO time the provider says access resumes (spend limits / caps). */
+  retryAt?: string;
+}
+
+// 20.11 — documented account-level errors (read 2026-09-30):
+//   https://platform.claude.com/docs/en/api/errors
+//     401 authentication_error (key malformed, revoked, expired) → auth
+//     402 billing_error ("an issue with your billing or payment information") → insufficient_credits
+//     403 permission_error → auth
+//     400 invalid_request_error is "also returned … when usage reaches an organization or
+//         workspace spend limit you set"
+//     429 rate_limit_error covers rate limits AND the usage tier's monthly spend cap
+//   https://platform.claude.com/docs/en/api/rate-limits
+//     "Setting your own spend limit": 400 invalid_request_error whose message "begins `You have
+//       reached your specified API usage limits`, or `You have reached your specified workspace
+//       API usage limits` for a workspace limit, and states when access resumes" → account_limit
+//     "Reaching your spend cap": 429 rate_limit_error with error.details.error_code
+//       "enforced_spend_limit_reached" (no retry-after; "keeps failing until access resumes"),
+//       message "… You will regain access on 2026-09-01 at 00:00 UTC." → account_limit
+const SPEND_LIMIT_MESSAGE = /^You have reached your specified (?:workspace )?API usage limits/i;
+const SPEND_CAP_CODE = 'enforced_spend_limit_reached';
+
+export function classifyAnthropicError(status: number, body: unknown): AnthropicErrorInfo {
+  const error = (body as AnthropicErrorBody | undefined)?.error;
+  const message = typeof error?.message === 'string' ? error.message : undefined;
+  const regain = message ? parseRegainAt(message) : undefined;
+  const limit = (): AnthropicErrorInfo => ({
+    errorClass: 'account_limit',
+    retryable: false,
+    message,
+    ...(regain && { retryAt: regain.toISOString() }),
+  });
+  if (status === 400 && message && SPEND_LIMIT_MESSAGE.test(message)) return limit();
+  if (status === 429 && error?.details?.error_code === SPEND_CAP_CODE) return limit();
+  if (status === 402 || error?.type === 'billing_error') {
+    return { errorClass: 'insufficient_credits', retryable: false, message };
+  }
+  return { ...classifyHttpStatus(status), message };
+}
+
+function classifySdkError(err: unknown): AnthropicErrorInfo {
   if (err instanceof Anthropic.APIConnectionTimeoutError) {
     return { errorClass: 'timeout', retryable: true };
   }
@@ -68,9 +118,18 @@ function classifySdkError(err: unknown): ErrorClassification {
     return { errorClass: 'provider_unavailable', retryable: true };
   }
   if (err instanceof Anthropic.APIError && typeof err.status === 'number') {
-    return classifyHttpStatus(err.status);
+    return classifyAnthropicError(err.status, err.error);
   }
   return { errorClass: 'unknown', retryable: false };
+}
+
+/** A readable message: the API's own `error.message`, never the raw JSON body. */
+function sdkErrorMessage(err: unknown, info: AnthropicErrorInfo): string {
+  if (info.message) {
+    const status = err instanceof Anthropic.APIError ? err.status : undefined;
+    return status ? `${status} ${info.message}` : info.message;
+  }
+  return (err as Error).message;
 }
 
 function extractText(message: Anthropic.Message): string {
@@ -150,8 +209,8 @@ export class AnthropicAdapter implements ProviderAdapter {
       await this.client.models.retrieve(this.model);
       return { healthy: true };
     } catch (err) {
-      const { errorClass } = classifySdkError(err);
-      return { healthy: false, reason: `${errorClass}: ${(err as Error).message}` };
+      const info = classifySdkError(err);
+      return { healthy: false, reason: `${info.errorClass}: ${sdkErrorMessage(err, info)}` };
     }
   }
 
@@ -185,7 +244,18 @@ export class AnthropicAdapter implements ProviderAdapter {
       });
     } catch (err) {
       if (err instanceof ProviderError) throw err;
-      throw providerError(PROVIDER_ID, classifySdkError(err), (err as Error).message);
+      const info = classifySdkError(err);
+      const requestId = err instanceof Anthropic.APIError ? err.requestID : undefined;
+      throw providerError(
+        PROVIDER_ID,
+        { errorClass: info.errorClass, retryable: info.retryable },
+        sdkErrorMessage(err, info),
+        {
+          ...(err instanceof Anthropic.APIError && err.status && { status: err.status }),
+          ...(requestId && { requestId }),
+          ...(info.retryAt && { retryAt: info.retryAt }),
+        },
+      );
     }
   }
 

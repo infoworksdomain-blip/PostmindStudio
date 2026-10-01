@@ -16,6 +16,7 @@ import {
   type ErrorClassification,
 } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
+import { missingUserReadOnly, USER_READ_NOTE } from './elevenlabs';
 
 // Layer 5 music (spec 5.6). SPEC DRIFT: the spec names Suno v4, which has no public API
 // (operator decision 2026-09-27); ElevenLabs Music replaces it.
@@ -179,6 +180,10 @@ export class ElevenLabsMusicAdapter implements ProviderAdapter {
       });
       if (res.ok) return { healthy: true };
       const { classification, message } = await classifyMusicError(res);
+      // 20.11: a key without user_read still composes music (see elevenlabs.ts).
+      if (missingUserReadOnly(classification.errorClass, message)) {
+        return { healthy: true, reason: USER_READ_NOTE };
+      }
       return { healthy: false, reason: `${classification.errorClass}: ${message}` };
     } catch (err) {
       return {
