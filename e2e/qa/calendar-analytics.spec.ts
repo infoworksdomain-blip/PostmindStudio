@@ -280,10 +280,18 @@ test.describe('calendar', () => {
     });
     const page = await newPage(browser, { now: NOW, timezoneId: 'Europe/London' });
     await page.goto('/calendar');
+    await expect(page.getByText(/Next 30 days/)).toBeVisible();
     const link = page
       .locator('[data-day="2026-10-23"]')
       .getByRole('link', { name: new RegExp(`Drag ${run}`) });
-    await link.dragTo(page.locator('[data-day="2026-10-26"]'));
+    // Chromium's native drag does not deliver 'drop' under automation here (dragstart and
+    // dragover fire and are accepted, then no drop), so replay the same three events with one
+    // shared DataTransfer, exactly what the browser would send.
+    const transfer = await page.evaluateHandle(() => new DataTransfer());
+    const target = page.locator('[data-day="2026-10-26"]');
+    await link.dispatchEvent('dragstart', { dataTransfer: transfer });
+    await target.dispatchEvent('dragover', { dataTransfer: transfer });
+    await target.dispatchEvent('drop', { dataTransfer: transfer });
     await expect(page.getByText(/Moved to/).first()).toBeVisible();
     await expect
       .poll(async () =>
@@ -316,7 +324,7 @@ test.describe('calendar', () => {
       route.fulfill({ status: 500, json: { ok: false, error: 'boom' } }),
     );
     await page.goto('/calendar');
-    await expect(page.getByRole('alert')).toContainText('Couldn’t load this');
+    await expect(page.getByRole('alert').filter({ hasText: 'Couldn’t load this' })).toBeVisible();
     await page.unroute('**/api/studio/publications?*');
     await page.getByRole('button', { name: 'Retry' }).click();
     await expect(page.locator('[data-day]').first()).toBeVisible();
@@ -340,6 +348,11 @@ test.describe('calendar', () => {
 test.describe('analytics', () => {
   test('seeded data: ranges change the totals and charts contain no NaN', async ({ browser }) => {
     const now = Date.now();
+    // The calendar tests seeded "published" posts in the future; take them out of the analytics window.
+    await db.videoPublication.updateMany({
+      where: { organisationId, publishedAt: { gt: new Date(now) } },
+      data: { state: 'CANCELLED' },
+    });
     await seedPublication({
       state: 'PUBLISHED',
       platform: 'tiktok',
@@ -380,7 +393,7 @@ test.describe('analytics', () => {
       route.fulfill({ status: 500, json: { ok: false, error: 'boom' } }),
     );
     await page.goto('/analytics');
-    await expect(page.getByRole('alert')).toContainText('Couldn’t load this');
+    await expect(page.getByRole('alert').filter({ hasText: 'Couldn’t load this' })).toBeVisible();
     await expect(page.getByText(/Views · last/)).toBeVisible();
     await page.close();
   });
