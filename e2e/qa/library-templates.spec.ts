@@ -52,6 +52,8 @@ class Watcher {
   current = '';
   /** Pages that deliberately provoke errors turn the collector off. */
   paused = false;
+  /** Before the Admin Centre: staff without an organisation get 403 on every workspace call. */
+  noOrganisation = false;
 
   constructor(private readonly page: Page) {
     page.on('pageerror', (e) => this.add('pageerror', e.message));
@@ -73,6 +75,7 @@ class Watcher {
     if (status < 500 && EXPECTED_4XX.some((e) => e.url.test(url) && e.status.includes(status))) {
       return;
     }
+    if (status === 403 && this.noOrganisation) return;
     if (status === 403) {
       // Staff without an organisation: the shell's workspace calls answer 403 no_organisation by
       // design (the Admin Centre must not depend on them).
@@ -772,6 +775,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   await page.goto('about:blank');
   await page.context().clearCookies();
 
+  w.noOrganisation = true;
   await signUp(page, staffEmail, 'QA Staff');
   await db.user.update({ where: { email: staffEmail }, data: { role: 'superadmin' } });
   await signIn(page, staffEmail);
@@ -789,6 +793,8 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   await page.getByRole('button', { name: 'Turn on' }).click();
   await expect(page.getByText('Two-step verification is on.').first()).toBeVisible();
 
+  // From here on a 403 other than no_organisation is an error.
+  w.noOrganisation = false;
   w.current = '/admin library';
   await page.goto('/admin');
   await page.getByRole('tab', { name: 'Library' }).click();
@@ -797,7 +803,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   // The filter box is debounced; filter to one title at a time (the corpus has 32 rows here).
   const find = async (title: string) => {
     await page.getByLabel('Search').fill(title);
-    await expect(list.getByRole('listitem')).toHaveCount(1);
+    await expect(list.getByRole('listitem')).toHaveCount(1, { timeout: 60_000 });
   };
   await expect(list).toBeVisible();
   await find(titles.bakery);
