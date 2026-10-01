@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto';
-import { expect, test, type Page, type Response } from '@playwright/test';
+import { expect, test, type BrowserContext, type Page, type Response } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 
 // QA agent 4: the reference library (/library, /library/[id], "Picked for your business",
@@ -167,6 +167,29 @@ async function signIn(page: Page, as: string): Promise<void> {
     page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 180_000 }),
     page.getByRole('button', { name: /sign in/i }).click(),
   ]);
+}
+
+let ipCounter = 0;
+let ownerCookies: Awaited<ReturnType<BrowserContext['cookies']>> = [];
+
+/**
+ * Better Auth rate-limits sign-in per client IP (x-real-ip when no proxy is trusted) and every
+ * spec runs from 127.0.0.1, so each test claims its own address instead of sharing a bucket with
+ * the other specs (sign-in 5/min per IP, 10/h per email).
+ */
+function uniqueIp(): string {
+  ipCounter += 1;
+  const base = Number.parseInt(run.slice(0, 4), 16) % 100;
+  return `10.${100 + base}.${Math.floor(ipCounter / 250)}.${(ipCounter % 250) + 1}`;
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.setExtraHTTPHeaders({ 'x-real-ip': uniqueIp() });
+});
+
+/** Reuse the owner's session from the fixtures test instead of signing in again. */
+async function useOwnerSession(page: Page): Promise<void> {
+  await page.context().addCookies(ownerCookies);
 }
 
 /** Library thumbnails and previews are signed S3 URLs: nothing is fetched, answer locally. */
@@ -382,6 +405,7 @@ test('fixtures: an owner with an organisation, a business profile and a referenc
   // `next dev` compiles a route on first use: visit every route once so the later tests time
   // the app, not the compiler (a no-op against a production build).
   await signIn(page, ownerEmail);
+  ownerCookies = await page.context().cookies();
   for (const path of ['/library', `/library/${ids.bakery}`, '/templates', '/new', '/admin']) {
     await page.goto(path, { timeout: 180_000 });
     await page.waitForLoadState('networkidle', { timeout: 120_000 }).catch(() => undefined);
@@ -393,7 +417,7 @@ test('browse: grid, filters, search, pagination and empty states', async ({ page
   const w = new Watcher(page);
   await stubStorage(page);
   await useBusiness(page, businessId);
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   await w.visit('/library');
   const grid = page.locator('section[aria-labelledby="library-browse"]');
   await expect(page.getByRole('heading', { name: 'Reference library' })).toBeVisible();
@@ -483,7 +507,7 @@ test('recommended shelf, hover preview and keyboard', async ({ page }) => {
   const w = new Watcher(page);
   await stubStorage(page);
   await useBusiness(page, businessId);
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   await w.visit('/library');
   const shelf = page.getByRole('region', { name: 'Picked for your business' });
   await expect(shelf.getByRole('list', { name: 'Recommended for your business' })).toBeVisible();
@@ -515,7 +539,7 @@ test('detail: player, blueprint, similar videos and the two ways into Create', a
   const w = new Watcher(page);
   await stubStorage(page);
   await useBusiness(page, businessId);
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   await w.visit(`/library/${ids.bakery}`);
   await expect(page.getByRole('heading', { name: titles.bakery })).toBeVisible();
   const player = page.locator('video[controls]');
@@ -572,7 +596,7 @@ test('licence rules: scraped is Inspire only, expired and unlicensed are not usa
   const w = new Watcher(page);
   await stubStorage(page);
   await useBusiness(page, businessId);
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
 
   // SCRAPED: Template locked, Inspire open, no blueprint.
   await w.visit(`/library/${ids.scraped}`);
@@ -602,7 +626,7 @@ test('licence rules: scraped is Inspire only, expired and unlicensed are not usa
 test('detail error state retries', async ({ page }) => {
   const w = new Watcher(page);
   await stubStorage(page);
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   let fail = true;
   await page.route(`**/api/studio/library/videos/${ids.gym}`, (route) =>
     fail
@@ -625,7 +649,7 @@ test('templates: list, delete, empty states, error retry and the Create picker',
 }) => {
   test.setTimeout(240_000);
   const w = new Watcher(page);
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   const formats = [{ platform: 'TIKTOK', aspectRatio: '9:16', duration: 15 }];
   await w.visit('/templates');
   await expect(page.getByRole('heading', { name: 'Templates', exact: true })).toBeVisible();
@@ -746,7 +770,7 @@ test('mobile, dark mode and right-to-left render without overflow', async ({ pag
   await stubStorage(page);
   await useBusiness(page, businessId);
   await page.setViewportSize({ width: 375, height: 800 });
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   for (const path of ['/library', `/library/${ids.bakery}`, '/templates']) {
     await w.visit(path);
     const overflow = await page.evaluate(
@@ -783,7 +807,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   const w = new Watcher(page);
   await stubStorage(page);
   // A non-staff owner is refused by the staff API.
-  await signIn(page, ownerEmail);
+  await useOwnerSession(page);
   expect((await page.request.get('/api/studio/admin/library/videos')).status()).toBe(403);
   // Leave the signed-in app first: its pollers would answer 401 once the cookies are gone.
   await page.goto('about:blank');
