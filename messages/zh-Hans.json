@@ -1745,6 +1745,7 @@
       "fallbackAlt": "图片库图片",
       "noPreview": "无预览",
       "sourceMatch": "{source} · 匹配度 {percent}",
+      "stockCredit": "图片来自 {providers}",
       "deleteAria": "删除图片：{alt}",
       "deleteConfirm": {
         "title": "删除此图片？",

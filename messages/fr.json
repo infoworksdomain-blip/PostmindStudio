@@ -1745,6 +1745,7 @@
       "fallbackAlt": "Image de la bibliothèque",
       "noPreview": "Pas d’aperçu",
       "sourceMatch": "{source} · correspondance {percent}",
+      "stockCredit": "Images de {providers}",
       "deleteAria": "Supprimer l’image : {alt}",
       "deleteConfirm": {
         "title": "Supprimer cette image ?",

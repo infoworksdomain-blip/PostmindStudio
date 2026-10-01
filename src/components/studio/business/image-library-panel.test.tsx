@@ -64,6 +64,35 @@ describe('ImageLibraryPanel', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Library down');
   });
 
+  it('20.16: credits stock providers on each stock tile and under the grid', async () => {
+    mockFetch(() =>
+      ok({
+        data: [
+          image({ id: 'img_p', sourceProvider: 'pixabay', altText: 'Pixabay loaf' }),
+          image({ id: 'img_x', sourceProvider: 'pexels', altText: 'Pexels loaf' }),
+          image({ id: 'img_u', source: 'UPLOAD', sourceProvider: null, altText: 'Own photo' }),
+        ],
+        nextCursor: null,
+      }),
+    );
+    renderScreen(<ImageLibraryPanel businessId="biz_1" />);
+    const grid = await screen.findByRole('list', { name: 'Image library' });
+    const tiles = within(grid).getAllByRole('listitem');
+    expect(tiles[0]).toHaveTextContent('Images from Pixabay');
+    expect(tiles[1]).toHaveTextContent('Images from Pexels');
+    expect(tiles[2]).not.toHaveTextContent('Images from');
+    expect(screen.getByText('Images from Pixabay and Pexels')).toBeInTheDocument();
+  });
+
+  it('shows no stock credit when no stock image is listed', async () => {
+    mockFetch(() =>
+      ok({ data: [image({ source: 'UPLOAD', sourceProvider: null })], nextCursor: null }),
+    );
+    renderScreen(<ImageLibraryPanel businessId="biz_1" />);
+    await screen.findByRole('list', { name: 'Image library' });
+    expect(screen.queryByText(/Images from/)).toBeNull();
+  });
+
   it('runs a semantic search and shows match scores', async () => {
     const api = mockFetch((req) =>
       req.method === 'POST'

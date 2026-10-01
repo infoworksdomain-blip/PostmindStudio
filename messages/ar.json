@@ -1745,6 +1745,7 @@
       "fallbackAlt": "صورة من المكتبة",
       "noPreview": "لا توجد معاينة",
       "sourceMatch": "{source} · تطابق {percent}",
+      "stockCredit": "صور من {providers}",
       "deleteAria": "حذف الصورة: {alt}",
       "deleteConfirm": {
         "title": "حذف هذه الصورة؟",

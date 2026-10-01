@@ -260,6 +260,7 @@ email). Every `POSTMIND_*` key and `STUDIO_PLATFORM_ORG_IDS` below is needed **o
 | `STUDIO_FFMPEG_MAX_CONCURRENT`, `WORKER_CONCURRENCY_*`, `STUDIO_LIBRARY_CONCURRENCY` | yes | Keep the example values on 2 GB; raise after a resize |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `SHOTSTACK_ENVIRONMENT`, `HIVE_API_KEY` or `HIVE_V3_SECRET_KEY` (one of the two, [go-live.md](go-live.md) 11.1), `ASSEMBLYAI_API_KEY`, `ASSEMBLYAI_REGION` | yes | Provider dashboards, as in [render-deploy.md](render-deploy.md) step 4 |
 | `META_APP_ID`, `META_APP_SECRET`, `TIKTOK_*`, `YOUTUBE_*`, `X_*`, `LINKEDIN_*` (client id/secret) | yes | Platform developer portals. The redirect URIs are set by compose from `STUDIO_DOMAIN`: register `https://<domain>/api/studio/platform-connections/oauth-callback?platform=<tiktok\|youtube\|x\|linkedin>` in each portal |
+| `PIXABAY_API_KEY` | no, but set it | Free stock images: log in at pixabay.com, then the key is on [pixabay.com/api/docs](https://pixabay.com/api/docs/) ([go-live.md](go-live.md) 11.2). Without any stock key (`PIXABAY_API_KEY`, `PEXELS_API_KEY`, `STORYBLOCKS_API_*_KEY`, `UNSPLASH_ACCESS_KEY`) scans add no stock images |
 | `STUDIO_FONTS_BASE_URL` | no | Leave empty: Studio serves its render fonts at `https://<domain>/fonts` (`public/fonts/SOURCES.md`). Only for a CDN or a host with extra brand families ([deploy.md](deploy.md)) |
 | `STUDIO_IMAGE` | no | Leave empty (GHCR image) |
 | `STUDIO_WORKER_QUEUES` | no | Leave empty (all queues) |

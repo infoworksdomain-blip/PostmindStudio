@@ -471,6 +471,16 @@ Every video is checked by Hive before anyone can approve it. Nothing is publishe
   - **Copy:** the API key. **Paste into:** `HIVE_API_KEY`, and set `HIVE_API_VERSION=v2` (or clear `HIVE_V3_SECRET_KEY`). V2 checks every second of every video, with no daily cap beyond your contract.
 - **Check:** `npm run setup:check` shows `OK HIVE_V3_SECRET_KEY` (or `OK HIVE_API_KEY`). A `CHECK … is short for a V3 Secret Key` line usually means the Access Key ID was pasted instead of the Secret Key. A V3 key sent to the V2 address fails with "Invalid Auth Token": that is expected, the two kinds are not interchangeable.
 
+### 11.2 Stock images: Pixabay (free)
+
+Website scans, slideshows and the image library fill up with stock photos. Pexels no longer gives out free API keys and Unsplash approval takes 5–10 working days, so use **Pixabay**: free, and the key is shown straight away.
+
+- **Click:** log in (or sign up) at [pixabay.com](https://pixabay.com) → open [pixabay.com/api/docs](https://pixabay.com/api/docs/) → your key is shown under **Parameters** next to `key` (may be labelled differently; it only appears when you are logged in).
+- **Copy:** the key. **Paste into:** `PIXABAY_API_KEY`.
+- What Studio does with it: searches photos only, with safe search on; copies every chosen image into your own storage (Pixabay does not allow using its image links permanently); caches each search for 24 hours (Pixabay's rule); shows "Images from Pixabay" on those images in the library. Pixabay allows 100 searches a minute; a search over that limit is skipped (the next stock source is tried, if you have one) and the next refresh tries again.
+- If you also have keys for Pexels or Storyblocks, they are searched first; Unsplash (`UNSPLASH_ACCESS_KEY`) stays the last resort.
+- **Check:** `npm run setup:check` no longer shows `CHECK stock images`. After the deploy, **Refresh stock** in a business's image library adds images with the Pixabay credit.
+
 ## 12. Legal texts
 
 Details: [vps-deploy.md](vps-deploy.md) "Legal documents".

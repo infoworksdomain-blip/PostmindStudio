@@ -350,6 +350,32 @@ describe('checkEnvFile', () => {
     ).toBe(true);
   });
 
+  it('20.16: PIXABAY_API_KEY only needs a value without spaces (no documented format)', () => {
+    const ok = filledFile('production', { PIXABAY_API_KEY: 'fake-pixabay-key-0000' });
+    expect(statusOf(ok, 'PIXABAY_API_KEY')).toEqual([]);
+    const spaced = filledFile('production', { PIXABAY_API_KEY: 'key: fake0000' });
+    expect(statusOf(spaced, 'PIXABAY_API_KEY')).toEqual(['malformed']);
+    expect(
+      statusOf(filledFile('production', { PIXABAY_API_KEY: '<paste here>' }), 'PIXABAY_API_KEY'),
+    ).toEqual(['malformed']);
+  });
+
+  it('20.16: no stock image key is a reminder naming Pixabay; any one source clears it', () => {
+    const none = check(filledFile());
+    const reminder = none.results.find((r) => r.key === 'stock images');
+    expect(reminder).toMatchObject({ status: 'warn' });
+    expect(reminder?.reason).toContain('PIXABAY_API_KEY');
+    expect(none.ready).toBe(true);
+    expect(statusOf(filledFile('production', { PIXABAY_API_KEY: 'k' }), 'stock images')).toEqual(
+      [],
+    );
+    expect(statusOf(filledFile('production', { PEXELS_API_KEY: 'k' }), 'stock images')).toEqual([]);
+    // Storyblocks needs both keys.
+    expect(
+      statusOf(filledFile('production', { STORYBLOCKS_API_PUBLIC_KEY: 'k' }), 'stock images'),
+    ).toEqual(['warn']);
+  });
+
   it('keys compose sets are flagged when an operator adds them', () => {
     const text = `${filledFile()}APP_URL='https://studio.example.com'\n`;
     expect(statusOf(text, 'APP_URL')).toEqual(['warn']);

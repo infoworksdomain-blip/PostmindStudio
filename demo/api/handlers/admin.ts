@@ -35,6 +35,7 @@ const PROVIDER_IDS = [
   'storyblocks',
   'pexels',
   'unsplash',
+  'pixabay',
   'assemblyai',
   'shotstack',
   'creatomate',
