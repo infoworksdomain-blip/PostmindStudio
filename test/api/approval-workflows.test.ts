@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as workflowRoute from '../../src/app/api/studio/approval-workflows/[id]/route';
 import * as workflowsRoute from '../../src/app/api/studio/approval-workflows/route';
 import * as approvalRoute from '../../src/app/api/studio/projects/[id]/approval/route';
@@ -9,6 +9,10 @@ import * as rejectRoute from '../../src/app/api/studio/projects/[id]/reject/rout
 import { setApiDeps } from '../../src/lib/studio/api/context';
 import type { TenantContext } from '../../src/lib/tenant';
 import { ALL_CAPABILITIES, call, installApi, tenant } from '../helpers/api-harness';
+
+// Workflow steps here name Core roles (client_reviewer, ...): Core mode (standalone refuses roles
+// no member can hold, see approval-workflows.test.ts in src/lib/studio/services).
+vi.stubEnv('STUDIO_IDENTITY_MODE', 'core');
 
 // 15.D3 — approval workflow CRUD and the step machine behind POST /projects/:id/approve, through
 // the real routes on real Postgres: auth, validation, tenant isolation, audit, step roles,

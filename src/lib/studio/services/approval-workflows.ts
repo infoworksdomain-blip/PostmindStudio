@@ -1,6 +1,9 @@
 import type { ApprovalWorkflow, Prisma, PrismaClient, VideoProject } from '@prisma/client';
 import { z } from 'zod';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../errors';
+import { ROLE_CAPABILITIES } from '../../identity/role-capabilities';
+import { studioModes } from '../../mode';
+import { StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import {
   APPROVER_ROLES,
@@ -21,6 +24,7 @@ import {
   readSnapshot,
   SNAPSHOT_KEY,
   stepProgress,
+  unapprovableStepRoles,
   workflowAppliesTo,
   workflowSteps,
   type WorkflowAppliesTo,
@@ -102,6 +106,26 @@ export function assertMayManageWorkflows(tenant: TenantContext): void {
   }
 }
 
+/**
+ * Standalone mode: every step must name an organisation role that can approve (owner, admin or
+ * publisher). Core mode keeps free-form roles (client_reviewer, legal, ...), which Core assigns.
+ */
+export function assertStepRolesCanApprove(
+  steps: ReadonlyArray<{ role: string }>,
+  identity: 'standalone' | 'core' = studioModes().identity,
+): void {
+  if (identity !== 'standalone') return;
+  const approvers = Object.entries(ROLE_CAPABILITIES)
+    .filter(([, caps]) => caps.includes(StudioCapability.ProjectApprove))
+    .map(([role]) => role);
+  const bad = unapprovableStepRoles(steps, approvers);
+  if (bad.length === 0) return;
+  throw new ValidationError(
+    `No member can hold the role ${bad.join(', ')}; use ${approvers.join(', ')}`,
+    { roles: bad, allowedRoles: approvers },
+  );
+}
+
 async function orgWorkflows(db: Pick<Db, 'approvalWorkflow'>, organisationId: string) {
   const rows = await db.approvalWorkflow.findMany({
     where: { organisationId },
@@ -138,6 +162,7 @@ export async function createWorkflow(
   input: z.infer<typeof createWorkflowInput>,
 ) {
   assertMayManageWorkflows(tenant);
+  assertStepRolesCanApprove(input.steps);
   // Phase 18 §P.1 (open question 6): multi-step workflows are STANDARD and above; a single
   // approval step stays available on BASIC, and workflows created earlier keep working.
   if (input.steps.length > 1) assertTierGate(tenant, 'approval.workflows');
@@ -168,6 +193,7 @@ export async function updateWorkflow(
   input: z.infer<typeof updateWorkflowInput>,
 ) {
   assertMayManageWorkflows(tenant);
+  if (input.steps) assertStepRolesCanApprove(input.steps);
   await getWorkflow(db, tenant.organisationId, id);
   const data: Prisma.ApprovalWorkflowUpdateManyMutationInput = {
     ...(input.name !== undefined && { name: input.name }),

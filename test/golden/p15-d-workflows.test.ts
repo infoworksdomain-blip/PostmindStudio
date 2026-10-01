@@ -22,6 +22,10 @@ import {
   type Journey,
 } from './journey-kit';
 
+// Workflow steps here name Core roles (client_reviewer, ...): Core mode (standalone refuses roles
+// no member can hold, see approval-workflows.test.ts in src/lib/studio/services).
+vi.stubEnv('STUDIO_IDENTITY_MODE', 'core');
+
 // 15.D3 golden journeys — multi-step approval workflows (spec 7.13, 3.3 agency) on the real
 // routes and workers:
 //
