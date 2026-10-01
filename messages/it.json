@@ -262,7 +262,8 @@
       "no_organisation": "Crea un’organizzazione o unisciti a una per continuare.",
       "service_unavailable": "Il nostro servizio di IA è temporaneamente non disponibile. Riprova più tardi: il nostro team è stato avvisato.",
       "auto_publish_account_required": "Scegli un account collegato su cui pubblicare, oppure disattiva la pubblicazione automatica e la programmazione.",
-      "auto_publish_account_unavailable": "Un account scelto non è più collegato. Ricollegalo o scegli un altro account."
+      "auto_publish_account_unavailable": "Un account scelto non è più collegato. Ricollegalo o scegli un altro account.",
+      "queue_unavailable": "La pubblicazione non è temporaneamente disponibile. Non è stato pubblicato né salvato nulla; riprova tra un attimo."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Pubblicato",
       "PARTIALLY_PUBLISHED": "Pubblicato in parte",
       "REJECTED": "Rifiutato",
-      "FAILED": "Non riuscito"
+      "FAILED": "Non riuscito",
+      "ARCHIVED": "Archiviato"
     },
     "publicationState": {
       "SCHEDULED": "Programmato",
@@ -654,7 +656,12 @@
       "publishTitle": "Pubblica",
       "publishDescription": "Pubblica subito ogni variante approvata o programmala.",
       "approveFirst": "Approva il video prima di pubblicarlo.",
-      "postsTitle": "Post"
+      "postsTitle": "Post",
+      "notFound": {
+        "title": "Progetto non trovato",
+        "body": "Potrebbe essere stato eliminato, oppure il link è sbagliato.",
+        "action": "Torna ai progetti"
+      }
     },
     "actions": {
       "cancel": "Annulla",
@@ -675,7 +682,8 @@
       "confirmReject": "Conferma il rifiuto",
       "confirmApprove": "Conferma l’approvazione",
       "approved": "Approvato: pronto per la pubblicazione.",
-      "rejected": "Rifiutato."
+      "rejected": "Rifiutato.",
+      "noPermission": "Solo un publisher, un amministratore o il proprietario può approvare o rifiutare questo video."
     },
     "publish": {
       "suggested": "Consigliato: {day} {time}",
@@ -1310,7 +1318,8 @@
         "review": "Da rivedere",
         "draft": "Bozze",
         "published": "Pubblicati",
-        "failed": "Non riusciti"
+        "failed": "Non riusciti",
+        "archived": "Archiviati"
       },
       "loading": "Caricamento dei progetti",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "Nessun formato",
       "rowMeta": "{platforms} — aggiornato {updated}",
       "newer": "Più recenti",
-      "older": "Meno recenti"
+      "older": "Meno recenti",
+      "search": {
+        "label": "Cerca progetti",
+        "placeholder": "Cerca per nome o brief"
+      },
+      "emptySearch": {
+        "title": "Nessun risultato",
+        "body": "Nessun progetto corrisponde a “{query}”."
+      },
+      "actions": {
+        "menu": "Azioni per {name}",
+        "duplicate": "Duplica",
+        "archive": "Archivia",
+        "unarchive": "Ripristina dall’archivio",
+        "delete": "Elimina",
+        "done": {
+          "duplicate": "Copia creata.",
+          "archive": "Archiviato.",
+          "unarchive": "Ripristinato.",
+          "delete": "Eliminato."
+        },
+        "deleteConfirm": {
+          "title": "Eliminare questo video?",
+          "body": "“{name}” verrà rimosso dai tuoi progetti. I post già pubblicati restano dove sono.",
+          "confirm": "Elimina"
+        }
+      }
     }
   },
   "publications": {
@@ -2276,6 +2311,11 @@
           "male": "Uomo",
           "user_specified": "Autodefinito"
         }
+      },
+      "notFound": {
+        "title": "Post non trovato",
+        "body": "Potrebbe essere stato rimosso, oppure il link è sbagliato.",
+        "action": "Torna alle analisi"
       }
     }
   },
@@ -3547,7 +3587,8 @@
       "outcome_unknown": "esito sconosciuto: controlla la piattaforma prima di riprovare",
       "unknown": "errore sconosciuto",
       "account_limit": "è stato raggiunto un limite di utilizzo"
-    }
+    },
+    "generic": "Questo passaggio non è riuscito. Riprova o contatta l’assistenza se continua."
   },
   "marketing": {
     "meta": {

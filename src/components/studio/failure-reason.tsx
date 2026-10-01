@@ -5,12 +5,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
 import {
   ERROR_CLASSES,
-  isPlatformSource,
   parseFailure,
   type FailedCheck,
   type ParsedFailure,
 } from '@/lib/client/failure-reasons';
 import { cn } from '@/lib/utils';
+import { useMe } from './account/use-me';
 
 // BACKLOG 17.9 — a stored failure reason (project, shot, publication, export or scan
 // `errorReason`) in the reader's language: the sentence for its code (messages → failures.*),
@@ -59,21 +59,33 @@ export interface DescribedFailure {
 }
 
 /**
- * 20.11: a provider's own text (which can be a raw JSON error body) is never shown; the class
- * sentence says what happened and staff read the detail in the Admin Centre and provider_jobs.
- * A social platform's reason for refusing a post stays visible.
+ * A provider's or platform's own text (a raw JSON body, a hostname, ECONNREFUSED, a token hint) is
+ * for staff only: customers read the translated class sentence (QA 3, after 20.11 hid it for AI
+ * providers; social platforms' messages followed). Staff see it here and in the Admin Centre and
+ * provider_jobs.
  */
-function shownDetail(p: ParsedFailure): string | null {
-  if (p.code === 'provider_failure' && !isPlatformSource(p.params.source)) return null;
+function shownDetail(p: ParsedFailure, staff: boolean): string | null {
+  if (p.code === 'provider_failure' && !staff) return null;
   return p.detail;
 }
 
+/** True for platform staff, who may read the raw text behind a failure. */
+export function useIsStaff(): boolean {
+  const role = useMe().data?.me?.user?.platformRole;
+  return role === 'staff' || role === 'superadmin';
+}
+
 /** Stored reason → { text, detail } in the reader's language (null for an empty reason). */
-export function useDescribeFailure(): (raw: string | null | undefined) => DescribedFailure | null {
+export function useDescribeFailure(
+  options: { plain?: boolean } = {},
+): (raw: string | null | undefined) => DescribedFailure | null {
   const t = useTranslations('failures');
   const f = useFormat();
   const locale = useLocale();
   const checkLabel = useQualityCheckLabel();
+  // `plain`: notes Studio wrote itself about the customer's own data (a scanned page timing out).
+  const staff = useIsStaff();
+  const showStored = staff || Boolean(options.plain);
 
   return useCallback(
     (raw: string | null | undefined) => {
@@ -115,15 +127,23 @@ export function useDescribeFailure(): (raw: string | null | undefined) => Descri
         }
       };
       const parsed = parseFailure(raw);
-      if (!parsed) return { text: raw.trim(), detail: null };
+      // A reason with no known code is raw text from somewhere else: staff read it as stored.
+      if (!parsed)
+        return showStored
+          ? { text: raw.trim(), detail: null }
+          : { text: t('generic'), detail: null };
       const parts = [sentence(parsed)];
       if (parsed.cause) parts.push(sentence(parsed.cause));
       return {
         text: parts.join(' '),
-        detail: parsed.cause ? shownDetail(parsed.cause) : (parsed.rawCause ?? shownDetail(parsed)),
+        detail: parsed.cause
+          ? shownDetail(parsed.cause, staff)
+          : staff
+            ? (parsed.rawCause ?? shownDetail(parsed, staff))
+            : shownDetail(parsed, staff),
       };
     },
-    [t, f, locale, checkLabel],
+    [t, f, locale, checkLabel, staff, showStored],
   );
 }
 
@@ -132,12 +152,15 @@ export function FailureReason({
   reason,
   className,
   detailClassName,
+  plain,
 }: {
   reason: string | null | undefined;
+  /** The text is Studio's own note about the customer's data, safe to show as written. */
+  plain?: boolean;
   className?: string;
   detailClassName?: string;
 }) {
-  const describe = useDescribeFailure();
+  const describe = useDescribeFailure({ plain });
   const described = describe(reason);
   if (!described) return null;
   return (

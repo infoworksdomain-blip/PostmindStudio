@@ -262,7 +262,8 @@
       "no_organisation": "请创建或加入一个组织以继续。",
       "service_unavailable": "我们的 AI 服务暂时不可用。请稍后再试——我们的团队已收到通知。",
       "auto_publish_account_required": "请选择要发布到的已连接账号，或关闭自动发布和排期。",
-      "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。"
+      "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。",
+      "queue_unavailable": "发布功能暂时不可用。没有发布或保存任何内容；请稍后再试。"
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "已发布",
       "PARTIALLY_PUBLISHED": "部分已发布",
       "REJECTED": "已拒绝",
-      "FAILED": "失败"
+      "FAILED": "失败",
+      "ARCHIVED": "已归档"
     },
     "publicationState": {
       "SCHEDULED": "已排期",
@@ -654,7 +656,12 @@
       "publishTitle": "发布",
       "publishDescription": "立即发布每个已批准的版本，或为其排期。",
       "approveFirst": "请先批准视频，再进行发布。",
-      "postsTitle": "帖子"
+      "postsTitle": "帖子",
+      "notFound": {
+        "title": "未找到项目",
+        "body": "它可能已被删除，或链接有误。",
+        "action": "返回项目"
+      }
     },
     "actions": {
       "cancel": "取消",
@@ -675,7 +682,8 @@
       "confirmReject": "确认拒绝",
       "confirmApprove": "确认批准",
       "approved": "已批准——可以发布了。",
-      "rejected": "已拒绝。"
+      "rejected": "已拒绝。",
+      "noPermission": "只有发布者、管理员或所有者才能批准或拒绝此视频。"
     },
     "publish": {
       "suggested": "建议时间：{day} {time}",
@@ -1310,7 +1318,8 @@
         "review": "待审核",
         "draft": "草稿",
         "published": "已发布",
-        "failed": "失败"
+        "failed": "失败",
+        "archived": "已归档"
       },
       "loading": "正在加载项目",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "无格式",
       "rowMeta": "{platforms} — 更新于 {updated}",
       "newer": "较新",
-      "older": "较早"
+      "older": "较早",
+      "search": {
+        "label": "搜索项目",
+        "placeholder": "按名称或简介搜索"
+      },
+      "emptySearch": {
+        "title": "没有找到",
+        "body": "没有项目匹配“{query}”。"
+      },
+      "actions": {
+        "menu": "{name} 的操作",
+        "duplicate": "复制",
+        "archive": "归档",
+        "unarchive": "取消归档",
+        "delete": "删除",
+        "done": {
+          "duplicate": "已创建副本。",
+          "archive": "已归档。",
+          "unarchive": "已恢复。",
+          "delete": "已删除。"
+        },
+        "deleteConfirm": {
+          "title": "删除此视频？",
+          "body": "“{name}”将从您的项目中移除。已发布的帖子保持不变。",
+          "confirm": "删除"
+        }
+      }
     }
   },
   "publications": {
@@ -2276,6 +2311,11 @@
           "male": "男性",
           "user_specified": "自定义"
         }
+      },
+      "notFound": {
+        "title": "未找到帖子",
+        "body": "它可能已被移除，或链接有误。",
+        "action": "返回分析"
       }
     }
   },
@@ -3547,7 +3587,8 @@
       "outcome_unknown": "结果未知——重试前请先在平台上确认",
       "unknown": "未知错误",
       "account_limit": "已达到用量上限"
-    }
+    },
+    "generic": "此步骤失败。请重试，如果持续出现请联系支持。"
   },
   "marketing": {
     "meta": {

@@ -262,7 +262,8 @@
       "no_organisation": "Crie uma organização ou junte-se a uma para continuar.",
       "service_unavailable": "O nosso serviço de IA está temporariamente indisponível. Tente novamente mais tarde — a nossa equipa já foi alertada.",
       "auto_publish_account_required": "Escolha uma conta ligada onde publicar ou desative a publicação automática e o agendamento.",
-      "auto_publish_account_unavailable": "Uma conta escolhida já não está ligada. Volte a ligá-la ou escolha outra conta."
+      "auto_publish_account_unavailable": "Uma conta escolhida já não está ligada. Volte a ligá-la ou escolha outra conta.",
+      "queue_unavailable": "A publicação está temporariamente indisponível. Nada foi publicado nem guardado; tente novamente dentro de momentos."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Publicado",
       "PARTIALLY_PUBLISHED": "Publicado parcialmente",
       "REJECTED": "Rejeitado",
-      "FAILED": "Falhou"
+      "FAILED": "Falhou",
+      "ARCHIVED": "Arquivado"
     },
     "publicationState": {
       "SCHEDULED": "Agendada",
@@ -654,7 +656,12 @@
       "publishTitle": "Publicar",
       "publishDescription": "Publique já cada variante aprovada ou agende a publicação.",
       "approveFirst": "Aprove o vídeo antes de o publicar.",
-      "postsTitle": "Publicações"
+      "postsTitle": "Publicações",
+      "notFound": {
+        "title": "Projeto não encontrado",
+        "body": "Pode ter sido eliminado ou a ligação está errada.",
+        "action": "Voltar aos projetos"
+      }
     },
     "actions": {
       "cancel": "Cancelar",
@@ -675,7 +682,8 @@
       "confirmReject": "Confirmar rejeição",
       "confirmApprove": "Confirmar aprovação",
       "approved": "Aprovado — pronto para publicar.",
-      "rejected": "Rejeitado."
+      "rejected": "Rejeitado.",
+      "noPermission": "Só um publicador, administrador ou proprietário pode aprovar ou rejeitar este vídeo."
     },
     "publish": {
       "suggested": "Sugestão: {day}, {time}",
@@ -1310,7 +1318,8 @@
         "review": "Por rever",
         "draft": "Rascunhos",
         "published": "Publicados",
-        "failed": "Falhados"
+        "failed": "Falhados",
+        "archived": "Arquivados"
       },
       "loading": "A carregar projetos",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "Sem formatos",
       "rowMeta": "{platforms} — atualizado {updated}",
       "newer": "Mais recentes",
-      "older": "Mais antigos"
+      "older": "Mais antigos",
+      "search": {
+        "label": "Pesquisar projetos",
+        "placeholder": "Pesquisar por nome ou briefing"
+      },
+      "emptySearch": {
+        "title": "Nada encontrado",
+        "body": "Nenhum projeto corresponde a “{query}”."
+      },
+      "actions": {
+        "menu": "Ações para {name}",
+        "duplicate": "Duplicar",
+        "archive": "Arquivar",
+        "unarchive": "Desarquivar",
+        "delete": "Eliminar",
+        "done": {
+          "duplicate": "Cópia criada.",
+          "archive": "Arquivado.",
+          "unarchive": "Restaurado.",
+          "delete": "Eliminado."
+        },
+        "deleteConfirm": {
+          "title": "Eliminar este vídeo?",
+          "body": "“{name}” será removido dos seus projetos. As publicações já feitas ficam onde estão.",
+          "confirm": "Eliminar"
+        }
+      }
     }
   },
   "publications": {
@@ -2276,6 +2311,11 @@
           "male": "Masculino",
           "user_specified": "Autodescrito"
         }
+      },
+      "notFound": {
+        "title": "Publicação não encontrada",
+        "body": "Pode ter sido removida ou a ligação está errada.",
+        "action": "Voltar às análises"
       }
     }
   },
@@ -3547,7 +3587,8 @@
       "outcome_unknown": "resultado desconhecido — verifique a plataforma antes de tentar novamente",
       "unknown": "erro desconhecido",
       "account_limit": "foi atingido um limite de utilização"
-    }
+    },
+    "generic": "Este passo falhou. Tente novamente ou contacte o apoio se continuar."
   },
   "marketing": {
     "meta": {

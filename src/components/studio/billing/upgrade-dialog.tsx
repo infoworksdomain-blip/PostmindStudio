@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { StudioCapability } from '@/lib/rbac';
 import { subscribeUpgrade, type UpgradeEvent } from '@/lib/client/upgrade-events';
 import {
   isLiveSubscription,
@@ -24,6 +25,8 @@ import {
   type PlansResponse,
 } from './types';
 import { useBillingActions } from './use-billing-actions';
+import { useCan } from '../use-can';
+import { useMe } from '../account/use-me';
 
 // Phase 18 §3 / §P.4 — the global upgrade dialog. api() emits every plan / billing block on the
 // upgrade bus (src/lib/client/upgrade-events.ts); this host (mounted once in AppShell) opens:
@@ -140,7 +143,13 @@ const COPY = {
 export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose: () => void }) {
   const t = useTranslations('upgrade');
   const tTier = useTranslations('shell.usage.tiers');
-  const billing = useApi<BillingResponse>('/billing', undefined, { shouldRetryOnError: false });
+  // Billing details are only readable with studio:billing:read (owner, admin); others are told to
+  // ask an owner without a request the API would refuse.
+  const meKnown = Boolean(useMe().data);
+  const mayReadBilling = useCan(StudioCapability.BillingRead);
+  const billing = useApi<BillingResponse>(mayReadBilling ? '/billing' : null, undefined, {
+    shouldRetryOnError: false,
+  });
   const plans = useApi<PlansResponse>(event.code === 'plan_tier' ? '/billing/plans' : null);
   const required = event.details?.requiredTier;
   const requiredTier = isPlanTier(required) ? required : null;
@@ -164,7 +173,8 @@ export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose
               ) : (
                 <p>{t(`${copy}.body`)}</p>
               )}
-              {data && !data.canManage && event.code !== 'plan_required' && <p>{t('askOwner')}</p>}
+              {((data && !data.canManage) || (meKnown && !mayReadBilling)) &&
+                event.code !== 'plan_required' && <p>{t('askOwner')}</p>}
             </div>
           </DialogDescription>
         </DialogHeader>

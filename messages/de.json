@@ -262,7 +262,8 @@
       "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren.",
       "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt.",
       "auto_publish_account_required": "Wählen Sie ein verbundenes Konto zum Posten aus, oder deaktivieren Sie die automatische Veröffentlichung und den Termin.",
-      "auto_publish_account_unavailable": "Ein gewähltes Konto ist nicht mehr verbunden. Verbinden Sie es erneut oder wählen Sie ein anderes Konto."
+      "auto_publish_account_unavailable": "Ein gewähltes Konto ist nicht mehr verbunden. Verbinden Sie es erneut oder wählen Sie ein anderes Konto.",
+      "queue_unavailable": "Das Veröffentlichen ist vorübergehend nicht verfügbar. Es wurde nichts gepostet oder gespeichert; versuchen Sie es gleich noch einmal."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Veröffentlicht",
       "PARTIALLY_PUBLISHED": "Teilweise veröffentlicht",
       "REJECTED": "Abgelehnt",
-      "FAILED": "Fehlgeschlagen"
+      "FAILED": "Fehlgeschlagen",
+      "ARCHIVED": "Archiviert"
     },
     "publicationState": {
       "SCHEDULED": "Geplant",
@@ -654,7 +656,12 @@
       "publishTitle": "Veröffentlichen",
       "publishDescription": "Veröffentlichen Sie jede freigegebene Variante sofort oder planen Sie sie ein.",
       "approveFirst": "Geben Sie das Video frei, bevor Sie es veröffentlichen.",
-      "postsTitle": "Beiträge"
+      "postsTitle": "Beiträge",
+      "notFound": {
+        "title": "Projekt nicht gefunden",
+        "body": "Es wurde möglicherweise gelöscht, oder der Link ist falsch.",
+        "action": "Zurück zu den Projekten"
+      }
     },
     "actions": {
       "cancel": "Abbrechen",
@@ -675,7 +682,8 @@
       "confirmReject": "Ablehnung bestätigen",
       "confirmApprove": "Freigabe bestätigen",
       "approved": "Freigegeben – bereit zur Veröffentlichung.",
-      "rejected": "Abgelehnt."
+      "rejected": "Abgelehnt.",
+      "noPermission": "Nur ein Publisher, Admin oder Inhaber kann dieses Video freigeben oder ablehnen."
     },
     "publish": {
       "suggested": "Vorschlag: {day} {time}",
@@ -1310,7 +1318,8 @@
         "review": "Zu prüfen",
         "draft": "Entwürfe",
         "published": "Veröffentlicht",
-        "failed": "Fehlgeschlagen"
+        "failed": "Fehlgeschlagen",
+        "archived": "Archiviert"
       },
       "loading": "Projekte werden geladen",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "Keine Formate",
       "rowMeta": "{platforms} – aktualisiert {updated}",
       "newer": "Neuere",
-      "older": "Ältere"
+      "older": "Ältere",
+      "search": {
+        "label": "Projekte durchsuchen",
+        "placeholder": "Nach Name oder Briefing suchen"
+      },
+      "emptySearch": {
+        "title": "Nichts gefunden",
+        "body": "Kein Projekt passt zu „{query}“."
+      },
+      "actions": {
+        "menu": "Aktionen für {name}",
+        "duplicate": "Duplizieren",
+        "archive": "Archivieren",
+        "unarchive": "Aus dem Archiv holen",
+        "delete": "Löschen",
+        "done": {
+          "duplicate": "Kopie erstellt.",
+          "archive": "Archiviert.",
+          "unarchive": "Wiederhergestellt.",
+          "delete": "Gelöscht."
+        },
+        "deleteConfirm": {
+          "title": "Dieses Video löschen?",
+          "body": "„{name}“ wird aus Ihren Projekten entfernt. Bereits veröffentlichte Beiträge bleiben, wo sie sind.",
+          "confirm": "Löschen"
+        }
+      }
     }
   },
   "publications": {
@@ -2276,6 +2311,11 @@
           "male": "Männlich",
           "user_specified": "Selbst beschrieben"
         }
+      },
+      "notFound": {
+        "title": "Beitrag nicht gefunden",
+        "body": "Er wurde möglicherweise entfernt, oder der Link ist falsch.",
+        "action": "Zurück zu den Analysen"
       }
     }
   },
@@ -3547,7 +3587,8 @@
       "outcome_unknown": "Ergebnis unbekannt – prüfen Sie die Plattform, bevor Sie es erneut versuchen",
       "unknown": "unbekannter Fehler",
       "account_limit": "ein Nutzungslimit wurde erreicht"
-    }
+    },
+    "generic": "Dieser Schritt ist fehlgeschlagen. Versuchen Sie es erneut oder wenden Sie sich an den Support, wenn es weiter auftritt."
   },
   "marketing": {
     "meta": {

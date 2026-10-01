@@ -67,14 +67,19 @@ describe('FailureReason', () => {
     expect(
       reason('zh-Hans', 'openai/insufficient_credits: 429 You have no credits remaining.'),
     ).toBe('我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。');
-    // A social platform's reason is still shown.
-    expect(reason('en-GB', 'tiktok/content_policy: Video violates community guidelines')).toContain(
-      'Video violates community guidelines',
-    );
+    // QA 3: a social platform's own text is staff-only too; customers read the class sentence.
+    const refused = reason('en-GB', 'tiktok/content_policy: Video violates community guidelines');
+    expect(refused).toContain('TikTok reported a problem');
+    expect(refused).not.toContain('Video violates community guidelines');
   });
 
-  it('falls back to the stored text for reasons without a known code', () => {
-    expect(reason('ar', 'Export bucket missing')).toBe('Export bucket missing');
+  it('replaces reasons without a known code with a generic sentence (staff see the stored text)', () => {
+    // QA 3: raw text from outside Studio is staff-only; customers get the translated generic sentence.
+    expect(reason('ar', 'Export bucket missing')).not.toContain('Export bucket missing');
+    expect(reason('ar', 'Export bucket missing')).toMatch(/\p{Script=Arabic}/u);
+    expect(reason('en-GB', 'Export bucket missing')).toBe(
+      'This step failed. Try again, or contact support if it keeps happening.',
+    );
     expect(reason('en-GB', 'rejected: Logo is wrong')).toBe(
       'Rejected by a reviewer. Logo is wrong',
     );

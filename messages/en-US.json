@@ -262,7 +262,8 @@
       "no_organisation": "Create or join an organization to continue.",
       "service_unavailable": "Our AI service is temporarily unavailable. Please try again later — our team has been alerted.",
       "auto_publish_account_required": "Choose a connected account to post to, or turn auto-publish and the schedule off.",
-      "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account."
+      "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account.",
+      "queue_unavailable": "Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Published",
       "PARTIALLY_PUBLISHED": "Partly published",
       "REJECTED": "Rejected",
-      "FAILED": "Failed"
+      "FAILED": "Failed",
+      "ARCHIVED": "Archived"
     },
     "publicationState": {
       "SCHEDULED": "Scheduled",
@@ -654,7 +656,12 @@
       "publishTitle": "Publish",
       "publishDescription": "Post each approved variant now or schedule it.",
       "approveFirst": "Approve the video before publishing it.",
-      "postsTitle": "Posts"
+      "postsTitle": "Posts",
+      "notFound": {
+        "title": "Project not found",
+        "body": "It may have been deleted, or the link may be wrong.",
+        "action": "Back to projects"
+      }
     },
     "actions": {
       "cancel": "Cancel",
@@ -675,7 +682,8 @@
       "confirmReject": "Confirm rejection",
       "confirmApprove": "Confirm approval",
       "approved": "Approved — ready to publish.",
-      "rejected": "Rejected."
+      "rejected": "Rejected.",
+      "noPermission": "Only a publisher, admin or owner can approve or reject this video."
     },
     "publish": {
       "suggested": "Suggested: {day} {time}",
@@ -1310,7 +1318,8 @@
         "review": "To review",
         "draft": "Drafts",
         "published": "Published",
-        "failed": "Failed"
+        "failed": "Failed",
+        "archived": "Archived"
       },
       "loading": "Loading projects",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "No formats",
       "rowMeta": "{platforms} — updated {updated}",
       "newer": "Newer",
-      "older": "Older"
+      "older": "Older",
+      "search": {
+        "label": "Search projects",
+        "placeholder": "Search by name or brief"
+      },
+      "emptySearch": {
+        "title": "Nothing found",
+        "body": "No project matches “{query}”."
+      },
+      "actions": {
+        "menu": "Actions for {name}",
+        "duplicate": "Duplicate",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "delete": "Delete",
+        "done": {
+          "duplicate": "Copy created.",
+          "archive": "Archived.",
+          "unarchive": "Restored.",
+          "delete": "Deleted."
+        },
+        "deleteConfirm": {
+          "title": "Delete this video?",
+          "body": "“{name}” will be removed from your projects. Posts already published stay where they are.",
+          "confirm": "Delete"
+        }
+      }
     }
   },
   "publications": {
@@ -2276,6 +2311,11 @@
           "male": "Male",
           "user_specified": "Self-described"
         }
+      },
+      "notFound": {
+        "title": "Post not found",
+        "body": "It may have been removed, or the link may be wrong.",
+        "action": "Back to analytics"
       }
     }
   },
@@ -3547,7 +3587,8 @@
       "outcome_unknown": "the result is unknown — check the platform before retrying",
       "unknown": "an unknown error",
       "account_limit": "a usage limit was reached"
-    }
+    },
+    "generic": "This step failed. Try again, or contact support if it keeps happening."
   },
   "marketing": {
     "meta": {

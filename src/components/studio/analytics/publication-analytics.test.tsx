@@ -128,7 +128,13 @@ describe('PublicationAnalytics', () => {
     unmount();
     mockFetch(() => fail(404, 'Publication not found', 'not_found'));
     renderScreen(<PublicationAnalytics publicationId="pub_x" />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Publication not found');
+    // A missing post is a not-found page with a way back, not a retryable error.
+    expect(await screen.findByText('Post not found')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to analytics' })).toHaveAttribute(
+      'href',
+      '/analytics',
+    );
+    expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
   });
 });
 

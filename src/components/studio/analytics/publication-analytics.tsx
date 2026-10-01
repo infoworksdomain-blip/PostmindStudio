@@ -178,7 +178,18 @@ export function PublicationAnalytics({ publicationId }: { publicationId: string 
           </Link>
         }
       />
-      {error && <ErrorState error={error} onRetry={() => void mutate()} />}
+      {error && (
+        <ErrorState
+          error={error}
+          onRetry={() => void mutate()}
+          notFound={{
+            title: t('notFound.title'),
+            body: t('notFound.body'),
+            href: '/analytics',
+            action: t('notFound.action'),
+          }}
+        />
+      )}
       {isLoading && <Skeleton aria-label={t('loadingAria')} className="h-64 rounded-xl" />}
       {data && !latest && <EmptyState title={t('empty.title')} description={t('empty.body')} />}
       {data && latest && (

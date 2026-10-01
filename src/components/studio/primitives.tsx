@@ -1,10 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { AlertTriangle, Inbox, RotateCw } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Inbox, RotateCw, SearchX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { useErrorMessage } from '@/lib/client/api';
+import { ApiError, useErrorMessage } from '@/lib/client/api';
 import type { Tone } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { EmptyIllustration, type IllustrationName } from './empty-illustration';
@@ -102,9 +103,52 @@ export function EmptyState({
   );
 }
 
-export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+/** What a detail page says when the thing it was opened for does not exist (HTTP 404). */
+export interface NotFoundCopy {
+  title: string;
+  body: string;
+  /** Where "back" goes, and what the link says. */
+  href: string;
+  action: string;
+}
+
+export function NotFoundState({ copy }: { copy: NotFoundCopy }) {
+  return (
+    <div
+      role="status"
+      className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-6 text-sm"
+    >
+      <SearchX className="size-6 text-muted-foreground" aria-hidden />
+      <div>
+        <p className="text-base font-medium">{copy.title}</p>
+        <p className="mt-1 text-muted-foreground">{copy.body}</p>
+      </div>
+      <Button asChild variant="outline" size="sm">
+        <Link href={copy.href}>
+          <ArrowLeft className="rtl:-scale-x-100" /> {copy.action}
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * A failed request. With `notFound`, a 404 becomes a proper "not found" page with a way back
+ * instead of "Couldn't load this" and a Retry that can never succeed.
+ */
+export function ErrorState({
+  error,
+  onRetry,
+  notFound,
+}: {
+  error: unknown;
+  onRetry?: () => void;
+  notFound?: NotFoundCopy;
+}) {
   const t = useTranslations('primitives');
   const errorMessage = useErrorMessage();
+  if (notFound && error instanceof ApiError && error.status === 404)
+    return <NotFoundState copy={notFound} />;
   return (
     <div
       role="alert"

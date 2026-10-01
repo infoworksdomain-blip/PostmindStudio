@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { ProjectsList } from '@/components/studio/projects/projects-list';
 
@@ -8,5 +9,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ProjectsPage() {
-  return <ProjectsList />;
+  // The list reads ?filter= and ?q= from the URL (useSearchParams).
+  return (
+    <Suspense>
+      <ProjectsList />
+    </Suspense>
+  );
 }

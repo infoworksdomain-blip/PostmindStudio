@@ -84,13 +84,21 @@ describe('PublicationsList', () => {
       req.method === 'POST'
         ? ok({ publication: pub({ state: 'PUBLISHING' }) })
         : ok({
-            data: [pub({ state: 'FAILED', errorReason: 'Token expired', platformUrl: null })],
+            data: [
+              pub({
+                state: 'FAILED',
+                errorReason: 'tiktok/needs_reconnect: Token expired',
+                platformUrl: null,
+              }),
+            ],
             nextCursor: null,
           }),
     );
     const user = userEvent.setup();
     renderScreen(<PublicationsList />);
-    expect(await screen.findByText('Token expired')).toBeInTheDocument();
+    // The sentence for the class; the platform's own text ("Token expired") is staff-only.
+    expect(await screen.findByText(/the account needs to be reconnected/)).toBeInTheDocument();
+    expect(screen.queryByText(/Token expired/)).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(api.find('POST', '/publications/pub_1/retry')).toHaveLength(1));
     expect(

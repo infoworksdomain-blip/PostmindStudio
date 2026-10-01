@@ -44,7 +44,7 @@ describe('ReviewScreen', () => {
     expect(screen.getByRole('list', { name: 'Pipeline progress' })).toBeInTheDocument();
   });
 
-  it('shows an error state with retry', async () => {
+  it('shows a not-found page with a way back for a missing project (no useless Retry)', async () => {
     mockFetch([
       {
         match: '/projects/nope',
@@ -54,6 +54,23 @@ describe('ReviewScreen', () => {
     ]);
     renderWithSWR(<ReviewScreen projectId="nope" />);
     expect(await screen.findByText('Project not found')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to projects' })).toHaveAttribute(
+      'href',
+      '/projects',
+    );
+    expect(screen.queryByRole('button', { name: /Retry/ })).toBeNull();
+  });
+
+  it('shows an error state with retry when loading fails', async () => {
+    mockFetch([
+      {
+        match: '/projects/boom',
+        status: 500,
+        body: { ok: false, error: 'internal', message: 'Database unavailable' },
+      },
+    ]);
+    renderWithSWR(<ReviewScreen projectId="boom" />);
+    expect(await screen.findByText('Database unavailable')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retry/ })).toBeInTheDocument();
   });
 

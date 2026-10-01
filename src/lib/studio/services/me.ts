@@ -41,6 +41,11 @@ export interface MeView {
   impersonating: boolean;
   /** Standalone shows sign-out and the organisation switcher; core mode signs in through Core. */
   identityMode: 'standalone' | 'core';
+  /**
+   * What the caller may do (the same list the API checks with requireCapability). The UI hides
+   * controls the API would refuse; it never replaces the server check.
+   */
+  capabilities: string[];
 }
 
 interface SubscriptionState {
@@ -169,5 +174,6 @@ export async function getMe(
     ),
     impersonating: Boolean(tenant.impersonatorUserId),
     identityMode: (deps.modes ?? studioModes()).identity,
+    capabilities: [...tenant.capabilities],
   };
 }
