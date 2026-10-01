@@ -166,6 +166,17 @@ export function parseBlackdetect(stderr: string): BlackInterval[] {
  */
 export const LOUDNESS_FILTER = 'ebur128=framelog=verbose';
 
+/**
+ * Times to try for a single frame, latest first. Some files declare a longer duration than their video
+ * stream really has (a corpus reel said 15.09 s but had no frames after about 10 s); ffmpeg then exits 0
+ * with "Output file is empty" and no JPEG, which failed the import with ENOENT (2026-10-01). Falling back
+ * to half the time, then the first frame, still gives the analysis a representative picture.
+ */
+export function frameFallbackTimes(atSec: number): number[] {
+  const t = Math.max(0, atSec);
+  return [...new Set([t, t / 2, 0].map((x) => Math.round(x * 1000) / 1000))];
+}
+
 /** The ebur128 summary ends with "Integrated loudness: … I: -14.2 LUFS". */
 export function parseIntegratedLoudness(stderr: string): number | null {
   const summary = stderr.lastIndexOf('Integrated loudness:');
@@ -270,30 +281,36 @@ export function createFfmpegInspector(
     async frameJpeg(url, atSec, maxWidth) {
       const dir = await mkdtemp(join(tmpdir(), 'studio-frame-'));
       try {
-        const r = await run(
-          ffmpeg,
-          [
-            '-hide_banner',
-            '-nostdin',
-            '-ss',
-            atSec.toFixed(3),
-            '-i',
-            url,
-            '-frames:v',
-            '1',
-            '-vf',
-            `scale='min(${Math.round(maxWidth)},iw)':-2`,
-            '-q:v',
-            '3',
-            '-y',
-            'frame.jpg',
-          ],
-          timeoutMs,
-          dir,
-        );
-        if (r.code !== 0)
-          throw new ValidationError(`ffmpeg frame grab failed: ${r.stderr.slice(-500)}`);
-        return new Uint8Array(await readFile(join(dir, 'frame.jpg')));
+        let last = '';
+        for (const t of frameFallbackTimes(atSec)) {
+          const r = await run(
+            ffmpeg,
+            [
+              '-hide_banner',
+              '-nostdin',
+              '-ss',
+              t.toFixed(3),
+              '-i',
+              url,
+              '-frames:v',
+              '1',
+              '-vf',
+              `scale='min(${Math.round(maxWidth)},iw)':-2`,
+              '-q:v',
+              '3',
+              '-y',
+              'frame.jpg',
+            ],
+            timeoutMs,
+            dir,
+          );
+          if (r.code !== 0)
+            throw new ValidationError(`ffmpeg frame grab failed: ${r.stderr.slice(-500)}`);
+          const bytes = await readFile(join(dir, 'frame.jpg')).catch(() => null);
+          if (bytes && bytes.length > 0) return new Uint8Array(bytes);
+          last = r.stderr.slice(-300);
+        }
+        throw new ValidationError(`ffmpeg produced no frame near ${atSec.toFixed(3)}s: ${last}`);
       } finally {
         await rm(dir, { recursive: true, force: true });
       }
