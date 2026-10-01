@@ -83,6 +83,17 @@ afterEach(() => {
 });
 
 describe('LibraryAdminPanel', () => {
+  it('loads its category pickers from the staff endpoint, which works without an organisation', async () => {
+    const { calls } = mockFetch(routes());
+    renderWithSWR(<LibraryAdminPanel />);
+    await screen.findAllByRole('option', { name: 'Fitness' });
+    const urls = calls.map((c) => new URL(c.url, 'http://x').pathname);
+    expect(urls.some((u) => u.endsWith('/admin/library/categories'))).toBe(true);
+    expect(urls.some((u) => u.endsWith('/library/categories') && !u.includes('/admin/'))).toBe(
+      false,
+    );
+  });
+
   it('queues a batch of URLs with the shared licence, category and tags', async () => {
     const user = userEvent.setup();
     const { calls } = mockFetch(
@@ -224,6 +235,20 @@ describe('admin library helpers', () => {
         description: video.description ?? '',
         category: video.category.slug,
         tags: video.tags.join(', '),
+        scenario: '',
+        licenseSource: '',
+      }),
+    ).toEqual({});
+  });
+
+  it('does not treat the same tags in another order or case as a change', () => {
+    const video = { ...summary(), tags: ['Bakery', 'coffee', 'morning'] };
+    expect(
+      buildPatch(video, {
+        title: video.title,
+        description: video.description ?? '',
+        category: video.category.slug,
+        tags: 'morning, COFFEE,bakery',
         scenario: '',
         licenseSource: '',
       }),

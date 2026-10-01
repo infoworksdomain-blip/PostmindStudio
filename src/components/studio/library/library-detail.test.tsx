@@ -19,7 +19,6 @@ function detail(over: Partial<LibraryVideoDetail> = {}): LibraryVideoDetail {
     category: { slug: 'food/cafes', name: 'Cafés' },
     analysis: {
       shotCount: 2,
-      shots: null,
       hookPattern: 'question',
       structurePattern: 'hook-demo-cta',
       ctaPattern: 'visit today',

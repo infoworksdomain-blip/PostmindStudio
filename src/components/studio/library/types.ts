@@ -24,16 +24,6 @@ export interface LibraryVideoSummary {
   similarity?: number;
 }
 
-export interface LibraryShot {
-  startSec: number;
-  endSec: number;
-  type: string;
-  description?: string;
-  onScreenText?: string;
-  overlayStyle?: string;
-  voiceoverPresent?: boolean;
-}
-
 export interface LibraryVideoDetail {
   id: string;
   title: string;
@@ -46,7 +36,6 @@ export interface LibraryVideoDetail {
   category: { slug: string; name: string };
   analysis: {
     shotCount: number;
-    shots: LibraryShot[] | null;
     hookPattern: string;
     structurePattern: string;
     ctaPattern: string | null;

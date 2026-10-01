@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import { parseReference } from '@/components/studio/create/body';
+import { parseInitialTemplate, parseReference } from '@/components/studio/create/body';
 import { CreateScreen } from '@/components/studio/create/create-screen';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,5 +19,9 @@ export default async function NewProjectPage({
 }) {
   const params = await searchParams;
   const reference = parseReference(first(params.reference), first(params.mode));
-  return <CreateScreen initialReference={reference} />;
+  const initialTemplate = parseInitialTemplate(
+    first(params.template),
+    first(params.slideshowTemplate),
+  );
+  return <CreateScreen initialReference={reference} initialTemplate={initialTemplate} />;
 }

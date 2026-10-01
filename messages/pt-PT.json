@@ -611,7 +611,15 @@
         }
       },
       "modeNotAllowed": "A licença deste vídeo não permite este modo",
-      "clear": "Não utilizar uma referência"
+      "clear": "Não utilizar uma referência",
+      "preview": {
+        "loading": "A carregar a estrutura",
+        "notAnalysed": "Este vídeo ainda não foi analisado.",
+        "templateHeading": "O que o Studio vai seguir",
+        "templateBody": "O seu vídeo mantém este número de planos, o tempo e as sobreposições, com conteúdo totalmente novo para a sua marca.",
+        "inspireHeading": "O que o Studio vai aproveitar",
+        "inspireBody": "Apenas o ambiente: ritmo, humor, estrutura e sensação musical."
+      }
     },
     "upload": {
       "uploading": "A carregar {name}…",
@@ -2100,8 +2108,8 @@
       "title": "Biblioteca de referências",
       "description": "Vídeos curtos analisados plano a plano. Escolha um e o Studio cria o seu à imagem dele — ou apenas se inspira no ambiente.",
       "heading": "Explorar",
-      "searchStatus": "Resultados para «{query}» em toda a biblioteca, os mais relevantes primeiro. Os filtros de duração, ambiente e etiquetas não se aplicam a uma pesquisa.",
-      "searchStatusInCategory": "Resultados para «{query}» em toda a biblioteca nesta categoria, os mais relevantes primeiro. Os filtros de duração, ambiente e etiquetas não se aplicam a uma pesquisa.",
+      "searchStatus": "Resultados para «{query}» em toda a biblioteca, os mais relevantes primeiro.",
+      "searchStatusInCategory": "Resultados para «{query}» em toda a biblioteca nesta categoria, os mais relevantes primeiro.",
       "loading": "A carregar a biblioteca",
       "emptyTitle": "Nenhuma referência corresponde",
       "emptySearch": "Nada na biblioteca corresponde a essa pesquisa. Experimente outras palavras ou limpe a pesquisa.",
@@ -3386,7 +3394,14 @@
       "projectAria": "modelos de projeto",
       "meta": "{category} · guardado a {date}",
       "deleteAria": "Eliminar {name}",
-      "deleted": "«{name}» eliminado"
+      "deleted": "«{name}» eliminado",
+      "preview": "Pré-visualizar",
+      "previewAria": "Pré-visualizar {name}",
+      "use": "Usar modelo",
+      "useAria": "Usar {name}",
+      "confirmTitle": "Eliminar «{name}»?",
+      "confirmBody": "Os vídeos já criados com este modelo não mudam.",
+      "confirmDelete": "Eliminar modelo"
     },
     "categories": {
       "custom": "personalizado",
@@ -3406,6 +3421,20 @@
       "listicle": "lista",
       "listicle_5": "top 5",
       "listicle_10": "top 10"
+    },
+    "builtInAria": "Modelos integrados",
+    "preview": {
+      "formats": "Formatos",
+      "formatLine": "{platform} · {aspect} · {seconds} s",
+      "shots": "Estrutura de planos",
+      "noStructure": "Este modelo não tem estrutura de planos guardada.",
+      "outline": "Esquema do guião",
+      "autoPublishes": "Publica automaticamente depois de aprovado.",
+      "slides": "Diapositivos",
+      "slideCount": "{count, plural, one {# diapositivo} other {# diapositivos}}",
+      "pacing": "Ritmo",
+      "perSlide": "{seconds} s por diapositivo",
+      "music": "Ambiente musical"
     }
   },
   "account": {

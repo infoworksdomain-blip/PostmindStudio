@@ -310,6 +310,12 @@ jobs:
         if: steps.ready.outputs.present == 'true'
       - run: npx playwright test
         if: steps.ready.outputs.present == 'true'
+        env:
+          # e2e/qa/library-templates.spec.ts: library search and recommendations embed text; the
+          # preload answers those OpenAI calls offline (no paid API, no secret).
+          OPENAI_API_KEY: ci-placeholder
+          QA_EMBEDDING_STUB: '1'
+          NODE_OPTIONS: --require ./e2e/qa/embedding-stub.cjs
       - uses: actions/upload-artifact@v7
         if: failure() && steps.ready.outputs.present == 'true'
         with:

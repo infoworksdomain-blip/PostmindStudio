@@ -1,6 +1,7 @@
 import type { LicenseScenario, Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { NotFoundError, ValidationError } from '../../errors';
+import { categorySlugFilter } from '../library/category-filter';
 import { LICENSE_SCENARIOS, PLATFORM_ORG } from '../library/ingest';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
@@ -97,7 +98,7 @@ function adminWhere(query: z.infer<typeof adminListQuery>): Prisma.VideoLibraryI
       query.licence !== 'missing' && { license: { is: { scenario: query.licence } } }),
     ...(review === 'unreviewed' && { categoryReview: null }),
     ...(review && review !== 'unreviewed' && { categoryReview: review }),
-    ...(query.category && { category: { slug: { startsWith: query.category } } }),
+    ...(query.category && { category: categorySlugFilter(query.category) }),
     ...(query.q && {
       OR: [
         { title: { contains: query.q, mode: 'insensitive' } },

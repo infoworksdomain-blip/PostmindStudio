@@ -18,7 +18,8 @@ import {
   submitDecision,
   type IngestStatusQuery,
 } from '../library/ingest-runs';
-import { buildBlueprint, styleSignature } from '../library/blueprint';
+import { categorySlugFilter } from '../library/category-filter';
+import { buildBlueprint, effectiveAllowedModes, styleSignature } from '../library/blueprint';
 import { searchLibrary } from '../library/search';
 import { recommendedVideos, similarVideos } from '../library/similarity';
 import { categoryTree } from '../library/taxonomy';
@@ -75,7 +76,7 @@ const summary = {
   thumbnailS3Key: true,
   category: { select: { slug: true, name: true } },
   analysis: { select: { paceTag: true, moodTag: true, structurePattern: true, shotCount: true } },
-  license: { select: { allowedModes: true } },
+  license: { select: { allowedModes: true, licenseExpires: true } },
 } as const;
 
 type SummaryRow = Prisma.VideoLibraryItemGetPayload<{ select: typeof summary }>;
@@ -84,7 +85,7 @@ async function present(storage: AssetStorage, row: SummaryRow) {
   const { s3Bucket, thumbnailS3Key, license, ...rest } = row;
   return {
     ...rest,
-    allowedModes: license?.allowedModes ?? [],
+    allowedModes: effectiveAllowedModes(license, Date.now()),
     thumbnailUrl: await storage.signedUrl(s3Bucket, thumbnailS3Key, THUMB_TTL_SEC),
   };
 }
@@ -95,7 +96,7 @@ export async function listLibraryVideos(
 ) {
   const where: Prisma.VideoLibraryItemWhereInput = {
     ...USABLE_LIBRARY_ITEM,
-    ...(query.category && { category: { slug: { startsWith: query.category } } }),
+    ...(query.category && { category: categorySlugFilter(query.category) }),
     ...(query.tags?.length && { tags: { hasEvery: query.tags } }),
     ...((query.durationMin !== undefined || query.durationMax !== undefined) && {
       durationSec: {
@@ -125,14 +126,35 @@ export async function getLibraryVideo(deps: { db: Db; storage: AssetStorage }, i
     include: { analysis: true, license: true, category: { select: { slug: true, name: true } } },
   });
   if (!item) throw new NotFoundError('Library video not found');
-  const { s3Bucket, s3Key, thumbnailS3Key, license, sourceUrl, ...rest } = item;
-  void sourceUrl; // attribution stays internal (A3.10)
+  const { analysis, license } = item;
+  // A3.10: an explicit allow-list. Users get the structure summary, never the reference's own
+  // content (transcript, per-shot text, overlay timeline) nor staff / source fields.
   return {
-    ...rest,
-    allowedModes: license?.allowedModes ?? [],
-    thumbnailUrl: await deps.storage.signedUrl(s3Bucket, thumbnailS3Key, THUMB_TTL_SEC),
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    tags: item.tags,
+    durationSec: item.durationSec,
+    aspectRatio: item.aspectRatio,
+    sourcePlatform: item.sourcePlatform,
+    ingestedAt: item.ingestedAt,
+    category: item.category,
+    analysis: analysis && {
+      shotCount: analysis.shotCount,
+      hookPattern: analysis.hookPattern,
+      structurePattern: analysis.structurePattern,
+      ctaPattern: analysis.ctaPattern,
+      paceTag: analysis.paceTag,
+      moodTag: analysis.moodTag,
+    },
+    allowedModes: effectiveAllowedModes(license, Date.now()),
+    thumbnailUrl: await deps.storage.signedUrl(item.s3Bucket, item.thumbnailS3Key, THUMB_TTL_SEC),
     // Only the low-res muted preview rendition is ever signed for users (A3.10).
-    previewUrl: await deps.storage.signedUrl(s3Bucket, previewKey(s3Key), PREVIEW_TTL_SEC),
+    previewUrl: await deps.storage.signedUrl(
+      item.s3Bucket,
+      previewKey(item.s3Key),
+      PREVIEW_TTL_SEC,
+    ),
     previewExpiresInSec: PREVIEW_TTL_SEC,
   };
 }
@@ -193,6 +215,10 @@ export const searchLibraryInput = z
   .object({
     q: z.string().trim().min(1).max(200),
     categorySlug: z.string().trim().max(200).optional(),
+    durationMin: z.number().min(0).max(3_600).optional(),
+    durationMax: z.number().min(0).max(3_600).optional(),
+    mood: z.string().trim().max(80).optional(),
+    tags: z.array(z.string().trim().toLowerCase().min(1).max(60)).max(20).optional(),
     limit: z.number().int().min(1).max(50).default(24),
     cursor: z.string().max(8).nullable().optional(),
   })
@@ -231,7 +257,7 @@ export async function libraryBlueprint(db: Db, id: string) {
     include: { analysis: true, license: true },
   });
   if (!item?.analysis) throw new NotFoundError('Library video not found');
-  const modes = item.license?.allowedModes ?? [];
+  const modes = effectiveAllowedModes(item.license, Date.now());
   return {
     libraryVideoId: item.id,
     allowedModes: modes,

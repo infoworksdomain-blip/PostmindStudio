@@ -197,6 +197,19 @@ export function applyTemplate(
   };
 }
 
+/**
+ * The modes a user may actually start now: none once the licence has expired, so the library
+ * never offers an action that project creation would refuse with a 409 (assertModeAllowed).
+ */
+export function effectiveAllowedModes(
+  license: { allowedModes: string[]; licenseExpires: Date | null } | null | undefined,
+  now: number,
+): string[] {
+  if (!license) return [];
+  if (license.licenseExpires && license.licenseExpires.getTime() < now) return [];
+  return license.allowedModes;
+}
+
 /** A3.1 / A3.2 licence gate: TEMPLATE needs a licence row that allows it. */
 export function assertModeAllowed(
   mode: 'TEMPLATE' | 'INSPIRE',

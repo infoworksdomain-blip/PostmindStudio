@@ -109,7 +109,7 @@ export function LibraryAdminPanel() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [editing, setEditing] = useState<AdminLibraryVideo | null>(null);
   const [retiring, setRetiring] = useState<AdminLibraryVideo | null>(null);
-  const tree = useApi<ListResponse<CategoryNode>>('/library/categories');
+  const tree = useApi<ListResponse<CategoryNode>>('/admin/library/categories');
   const categories = useMemo(() => flattenCategories(tree.data?.data ?? []), [tree.data]);
   const { data, error, isLoading, mutate } = useApi<ListResponse<AdminLibraryVideo>>(
     '/admin/library/videos',

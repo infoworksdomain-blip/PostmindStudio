@@ -34,6 +34,7 @@ import {
   type CreateProblem,
   type CreateSource,
   type CreateState,
+  type InitialTemplate,
   type QualityTier,
   type Reference,
 } from './body';
@@ -43,6 +44,7 @@ import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultPlatforms, PLATFORM_OPTIONS } from './formats';
 import { ProjectTemplatePicker } from './project-template-picker';
 import { ReferenceBanner } from './reference-banner';
+import { ReferencePreview } from './reference-preview';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { ProfileReviewNotice } from '../business/profile-review-notice';
 
@@ -81,7 +83,14 @@ const WHOLE_POUNDS: Intl.NumberFormatOptions = {
   maximumFractionDigits: 0,
 };
 
-export function CreateScreen({ initialReference }: { initialReference: Reference | null }) {
+export function CreateScreen({
+  initialReference,
+  initialTemplate = null,
+}: {
+  initialReference: Reference | null;
+  /** A template picked on /templates: applied once its list has loaded. */
+  initialTemplate?: InitialTemplate | null;
+}) {
   const router = useRouter();
   const t = useTranslations('create.screen');
   const tp = useTranslations('create.problems');
@@ -89,11 +98,15 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const f = useFormat();
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
-  const [form, setForm] = useState<FormState>(INITIAL);
+  const [form, setForm] = useState<FormState>(() =>
+    initialTemplate?.kind === 'slideshow'
+      ? { ...INITIAL, source: 'SLIDESHOW', templateId: initialTemplate.id }
+      : INITIAL,
+  );
   const [platforms, setPlatforms] = useState<string[] | null>(null);
   const [brandKitId, setBrandKitId] = useState<string | null | undefined>(undefined);
   const [reference, setReference] = useState<Reference | null>(initialReference);
-  const [showOptions, setShowOptions] = useState(false);
+  const [showOptions, setShowOptions] = useState(initialTemplate !== null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [problems, setProblems] = useState<CreateProblem[]>([]);
@@ -107,7 +120,24 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const usage = useApi<{ usage: { planTier: QualityTier } }>('/usage');
   const workflows = useApi<{ data: WorkflowOption[] }>('/approval-workflows');
   const planTier = usage.data?.usage.planTier;
-  const [sourceTouched, setSourceTouched] = useState(false);
+  // "Use template" on /templates: pick that project template once the list is here (a template
+  // deleted meanwhile is simply not applied).
+  const [templateApplied, setTemplateApplied] = useState(false);
+  useEffect(() => {
+    if (templateApplied || initialTemplate?.kind !== 'project' || !templates.data) return;
+    setTemplateApplied(true);
+    const found = templates.data.data.find((x) => x.id === initialTemplate.id);
+    if (!found) return;
+    setForm((f) => ({
+      ...f,
+      projectTemplate: {
+        id: found.id,
+        name: found.name,
+        platforms: found.targetFormats.map((format) => format.platform),
+      },
+    }));
+  }, [templateApplied, initialTemplate, templates.data]);
+  const [sourceTouched, setSourceTouched] = useState(initialTemplate?.kind === 'slideshow');
   // P5 (operator decision): the Basic plan starts on Slideshow until the user picks.
   useEffect(() => {
     if (sourceTouched || initialReference) return;
@@ -292,11 +322,14 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
         </div>
       )}
       {reference && !isSlideshow && !isUpload && (
-        <ReferenceBanner
-          reference={reference}
-          onModeChange={(mode) => setReference({ ...reference, mode })}
-          onClear={() => setReference(null)}
-        />
+        <>
+          <ReferenceBanner
+            reference={reference}
+            onModeChange={(mode) => setReference({ ...reference, mode })}
+            onClear={() => setReference(null)}
+          />
+          <ReferencePreview id={reference.id} mode={reference.mode} />
+        </>
       )}
       <div className="rounded-2xl border border-border bg-card p-2 shadow-[0_1px_0_rgb(0_0_0/0.03)] focus-within:border-ring">
         <textarea

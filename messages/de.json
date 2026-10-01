@@ -611,7 +611,15 @@
         }
       },
       "modeNotAllowed": "Die Lizenz dieses Videos erlaubt diesen Modus nicht",
-      "clear": "Keine Referenz verwenden"
+      "clear": "Keine Referenz verwenden",
+      "preview": {
+        "loading": "Struktur wird geladen",
+        "notAnalysed": "Dieses Video wurde noch nicht analysiert.",
+        "templateHeading": "Woran sich Studio hält",
+        "templateBody": "Dein Video übernimmt diese Szenenzahl, das Timing und die Overlays – mit komplett neuem Inhalt für deine Marke.",
+        "inspireHeading": "Was Studio übernimmt",
+        "inspireBody": "Nur die Stimmung: Tempo, Stimmung, Struktur und Musikgefühl."
+      }
     },
     "upload": {
       "uploading": "{name} wird hochgeladen …",
@@ -2100,8 +2108,8 @@
       "title": "Referenzbibliothek",
       "description": "Kurzvideos, Einstellung für Einstellung analysiert. Wählen Sie eines aus, und Studio erstellt Ihres nach diesem Vorbild – oder übernimmt nur die Stimmung.",
       "heading": "Durchsuchen",
-      "searchStatus": "Ergebnisse für „{query}“ in der gesamten Bibliothek, beste Treffer zuerst. Filter für Länge, Stimmung und Tags gelten nicht für eine Suche.",
-      "searchStatusInCategory": "Ergebnisse für „{query}“ in der gesamten Bibliothek innerhalb dieser Kategorie, beste Treffer zuerst. Filter für Länge, Stimmung und Tags gelten nicht für eine Suche.",
+      "searchStatus": "Ergebnisse für „{query}“ in der gesamten Bibliothek, beste Treffer zuerst.",
+      "searchStatusInCategory": "Ergebnisse für „{query}“ in der gesamten Bibliothek innerhalb dieser Kategorie, beste Treffer zuerst.",
       "loading": "Bibliothek wird geladen",
       "emptyTitle": "Keine passenden Referenzen",
       "emptySearch": "Nichts in der Bibliothek passt zu dieser Suche. Versuchen Sie andere Begriffe oder löschen Sie die Suche.",
@@ -3386,7 +3394,14 @@
       "projectAria": "Projektvorlagen",
       "meta": "{category} · gespeichert am {date}",
       "deleteAria": "{name} löschen",
-      "deleted": "„{name}“ gelöscht"
+      "deleted": "„{name}“ gelöscht",
+      "preview": "Vorschau",
+      "previewAria": "Vorschau von {name}",
+      "use": "Vorlage verwenden",
+      "useAria": "{name} verwenden",
+      "confirmTitle": "„{name}“ löschen?",
+      "confirmBody": "Bereits aus dieser Vorlage erstellte Videos bleiben unverändert.",
+      "confirmDelete": "Vorlage löschen"
     },
     "categories": {
       "custom": "benutzerdefiniert",
@@ -3406,6 +3421,20 @@
       "listicle": "Liste",
       "listicle_5": "Top-5-Liste",
       "listicle_10": "Top-10-Liste"
+    },
+    "builtInAria": "Integrierte Vorlagen",
+    "preview": {
+      "formats": "Formate",
+      "formatLine": "{platform} · {aspect} · {seconds} s",
+      "shots": "Szenenstruktur",
+      "noStructure": "Diese Vorlage hat keine gespeicherte Szenenstruktur.",
+      "outline": "Skriptgerüst",
+      "autoPublishes": "Wird nach der Freigabe automatisch veröffentlicht.",
+      "slides": "Folien",
+      "slideCount": "{count, plural, one {# Folie} other {# Folien}}",
+      "pacing": "Tempo",
+      "perSlide": "{seconds} s pro Folie",
+      "music": "Musikstimmung"
     }
   },
   "account": {

@@ -611,7 +611,15 @@
         }
       },
       "modeNotAllowed": "La licenza di questo video non consente questa modalità",
-      "clear": "Non usare un riferimento"
+      "clear": "Non usare un riferimento",
+      "preview": {
+        "loading": "Caricamento della struttura",
+        "notAnalysed": "Questo video non è ancora stato analizzato.",
+        "templateHeading": "Cosa seguirà Studio",
+        "templateBody": "Il tuo video mantiene questo numero di inquadrature, i tempi e gli overlay, con contenuti completamente nuovi per il tuo brand.",
+        "inspireHeading": "Cosa prenderà Studio",
+        "inspireBody": "Solo l’atmosfera: ritmo, mood, struttura e sensazione musicale."
+      }
     },
     "upload": {
       "uploading": "Caricamento di {name}…",
@@ -2100,8 +2108,8 @@
       "title": "Libreria di riferimenti",
       "description": "Video brevi analizzati inquadratura per inquadratura. Scegline uno e Studio crea il tuo a sua immagine, o ne prende in prestito solo l’atmosfera.",
       "heading": "Sfoglia",
-      "searchStatus": "Risultati per “{query}” in tutta la libreria, i più pertinenti per primi. I filtri di durata, atmosfera e tag non si applicano a una ricerca.",
-      "searchStatusInCategory": "Risultati per “{query}” in tutta la libreria all’interno di questa categoria, i più pertinenti per primi. I filtri di durata, atmosfera e tag non si applicano a una ricerca.",
+      "searchStatus": "Risultati per “{query}” in tutta la libreria, i più pertinenti per primi.",
+      "searchStatusInCategory": "Risultati per “{query}” in tutta la libreria all’interno di questa categoria, i più pertinenti per primi.",
       "loading": "Caricamento della libreria",
       "emptyTitle": "Nessun riferimento corrispondente",
       "emptySearch": "Nulla nella libreria corrisponde a questa ricerca. Prova con altre parole o cancella la ricerca.",
@@ -3386,7 +3394,14 @@
       "projectAria": "modelli di progetto",
       "meta": "{category} · salvato il {date}",
       "deleteAria": "Elimina {name}",
-      "deleted": "“{name}” eliminato"
+      "deleted": "“{name}” eliminato",
+      "preview": "Anteprima",
+      "previewAria": "Anteprima di {name}",
+      "use": "Usa il modello",
+      "useAria": "Usa {name}",
+      "confirmTitle": "Eliminare «{name}»?",
+      "confirmBody": "I video già creati con questo modello non cambiano.",
+      "confirmDelete": "Elimina modello"
     },
     "categories": {
       "custom": "personalizzato",
@@ -3406,6 +3421,20 @@
       "listicle": "lista",
       "listicle_5": "top 5",
       "listicle_10": "top 10"
+    },
+    "builtInAria": "Modelli integrati",
+    "preview": {
+      "formats": "Formati",
+      "formatLine": "{platform} · {aspect} · {seconds} s",
+      "shots": "Struttura delle inquadrature",
+      "noStructure": "Questo modello non ha una struttura di inquadrature salvata.",
+      "outline": "Schema dello script",
+      "autoPublishes": "Pubblicato automaticamente dopo l’approvazione.",
+      "slides": "Diapositive",
+      "slideCount": "{count, plural, one {# diapositiva} other {# diapositive}}",
+      "pacing": "Ritmo",
+      "perSlide": "{seconds} s per diapositiva",
+      "music": "Atmosfera musicale"
     }
   },
   "account": {

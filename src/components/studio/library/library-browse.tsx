@@ -15,7 +15,8 @@ import { VideoCard } from './video-card';
 
 // BACKLOG 10.7 / Addendum A3.1 — browse the reference library: recommended shelf, taxonomy
 // filters, a grid of previews with cursor pagination. A search (13.8) queries the whole library
-// on the server (POST /library/search: meaning, plus title/tag words), within the category.
+// on the server (POST /library/search: meaning, plus title/tag words), within the category and
+// the length, mood and tag filters.
 
 const PAGE_SIZE = 24;
 
@@ -48,6 +49,10 @@ export function LibraryBrowse() {
       ? {
           q: query,
           categorySlug: filters.category || undefined,
+          durationMin: duration?.min,
+          durationMax: duration?.max,
+          mood: filters.mood.trim() || undefined,
+          tags: tags.length ? tags : undefined,
           cursor: cursors.at(-1),
           limit: PAGE_SIZE,
         }

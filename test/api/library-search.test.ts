@@ -25,7 +25,15 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
 
   async function item(
     key: string,
-    input: { title: string; text: string; tags?: string[]; category: string; licensed?: boolean },
+    input: {
+      title: string;
+      text: string;
+      tags?: string[];
+      category: string;
+      licensed?: boolean;
+      durationSec?: number;
+      mood?: string;
+    },
   ) {
     const row = await db.videoLibraryItem.create({
       data: {
@@ -35,10 +43,25 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
         s3Bucket: 'library',
         s3Key: `library/${RUN}-${key}.mp4`,
         thumbnailS3Key: `library/${RUN}-${key}-thumb.jpg`,
-        durationSec: 15,
+        durationSec: input.durationSec ?? 15,
         aspectRatio: '9:16',
       },
     });
+    if (input.mood)
+      await db.videoLibraryAnalysis.create({
+        data: {
+          libraryItemId: row.id,
+          shotCount: 1,
+          shots: [],
+          transcript: {},
+          overlayTimeline: [],
+          musicEnvelope: {},
+          hookPattern: 'question',
+          structurePattern: 'hook-demo-cta',
+          paceTag: 'medium',
+          moodTag: input.mood,
+        },
+      });
     if (input.licensed !== false)
       await db.videoLibraryLicense.create({
         data: { libraryItemId: row.id, scenario: 'OWNED', allowedModes: ['TEMPLATE', 'INSPIRE'] },
@@ -65,6 +88,7 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
       text: 'moody early bakery bread oven dawn pov',
       tags: ['bakery', 'pov'],
       category: food.id,
+      mood: 'moody',
     });
     await item('bread', {
       title: 'Sourdough shaping',
@@ -75,6 +99,17 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
       title: 'Leg day',
       text: 'gym squat workout fitness',
       category: fit.id,
+      durationSec: 45,
+      mood: 'energetic',
+    });
+    // A look-alike sibling of the `t<run>` category: a bare prefix match would include it.
+    const sibling = await db.videoLibraryCategory.create({
+      data: { slug: `t${RUN}-extra`, name: 'Extra', depth: 0 },
+    });
+    await item('sibling', {
+      title: 'Sibling bakery pov',
+      text: 'moody early bakery bread oven dawn pov',
+      category: sibling.id,
     });
     const retired = await item('retired', {
       title: 'Retired bakery pov',
@@ -97,9 +132,10 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
     setApiDeps(undefined);
     const itemIds = Object.values(ids);
     await db.$executeRaw`DELETE FROM studio.video_library_embeddings WHERE "libraryItemId" = ANY(${itemIds})`;
+    await db.videoLibraryAnalysis.deleteMany({ where: { libraryItemId: { in: itemIds } } });
     await db.videoLibraryLicense.deleteMany({ where: { libraryItemId: { in: itemIds } } });
     await db.videoLibraryItem.deleteMany({ where: { id: { in: itemIds } } });
-    await db.videoLibraryCategory.deleteMany({ where: { slug: { startsWith: `t${RUN}/` } } });
+    await db.videoLibraryCategory.deleteMany({ where: { slug: { startsWith: `t${RUN}` } } });
     await db.providerJob.deleteMany({ where: { organisationId: org } });
     await db.$disconnect();
   });
@@ -144,6 +180,30 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
     const b = (second.json.data as Array<{ id: string }>)[0]?.id;
     expect(b).toBeDefined();
     expect(b).not.toBe(a);
+  });
+
+  it('matches a category exactly or its children, never a look-alike sibling', async () => {
+    const res = await search({ q: 'moody bakery pov', categorySlug: `t${RUN}`, limit: 20 });
+    const order = (res.json.data as Array<{ id: string }>).map((d) => d.id);
+    expect(order).toContain(ids.bakery);
+    expect(order).not.toContain(ids.sibling);
+    const sibling = await search({ q: 'moody bakery pov', categorySlug: `t${RUN}-extra` });
+    expect((sibling.json.data as Array<{ id: string }>).map((d) => d.id)).toEqual([ids.sibling]);
+  });
+
+  it('honours the length, mood and tag filters alongside the query', async () => {
+    const base = { q: 'bakery bread workout', categorySlug: `t${RUN}`, limit: 20 };
+    const ids$ = async (filters: Record<string, unknown>) =>
+      ((await search({ ...base, ...filters })).json.data as Array<{ id: string }>).map((d) => d.id);
+    expect(await ids$({ durationMin: 30 })).toEqual([ids.gym]);
+    expect(await ids$({ durationMax: 20 })).not.toContain(ids.gym);
+    expect(await ids$({ mood: 'MOOD' })).toEqual([ids.bakery]);
+    expect(await ids$({ tags: ['pov'] })).toEqual([ids.bakery]);
+    expect(await ids$({ tags: ['pov', 'nope'] })).toEqual([]);
+    // Items without an analysis never match a mood filter.
+    expect(await ids$({ mood: 'energetic' })).toEqual([ids.gym]);
+    expect((await search({ ...base, durationMin: -1 })).status).toBe(400);
+    expect((await search({ ...base, tags: 'pov' })).status).toBe(400);
   });
 
   it('validates the body and needs studio:project:read', async () => {
