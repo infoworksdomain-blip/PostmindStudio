@@ -435,3 +435,4 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **20.13** Captions and hashtags (≥5, business hashtag, owner "always" hashtags)
 - [x] **20.14** Posting schedule: daily/weekly, chosen/system/interval times, max 4 a day
 - [x] **20.15** Library caching: shared Redis read-through cache with a catalogue version bumped on every write, stable thumbnail URLs + Cache-Control (and a backfill script), cached query embeddings, private max-age on GET library responses
+- [x] **20.17** Library previews with sound (operator decision 2026-10-01; supersedes the "muted" part of A3.10 / 10.7): previews keep AAC audio (360 px, ≤ 30 s, no download, 10-minute signed URL unchanged), the detail player is unmuted with controls and no autoplay, hover previews stay muted, `scripts/library/rebuild-previews.ts` regenerates existing previews

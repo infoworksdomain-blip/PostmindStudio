@@ -2163,7 +2163,7 @@
       "notFoundTitle": "Référence introuvable",
       "notFoundBody": "Elle a peut-être été retirée de la bibliothèque.",
       "loading": "Chargement de la référence",
-      "previewAria": "Aperçu muet de {title}",
+      "previewAria": "Aperçu de {title}",
       "previewNote": "{minutes, plural, one {Aperçu basse résolution · le lien expire dans # min} other {Aperçu basse résolution · le lien expire dans # min}}",
       "tagsAria": "Tags",
       "facts": {

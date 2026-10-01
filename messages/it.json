@@ -2163,7 +2163,7 @@
       "notFoundTitle": "Riferimento non trovato",
       "notFoundBody": "Potrebbe essere stato ritirato dalla libreria.",
       "loading": "Caricamento del riferimento",
-      "previewAria": "Anteprima senza audio di {title}",
+      "previewAria": "Anteprima di {title}",
       "previewNote": "{minutes, plural, one {Anteprima a bassa risoluzione · il link scade tra # min} other {Anteprima a bassa risoluzione · il link scade tra # min}}",
       "tagsAria": "Tag",
       "facts": {
