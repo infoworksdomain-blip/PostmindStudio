@@ -30,6 +30,7 @@ const me = (over: Partial<Me> = {}): Me => ({
   banner: null,
   impersonating: false,
   identityMode: 'standalone',
+  capabilities: ['studio:project:read'],
   ...over,
 });
 

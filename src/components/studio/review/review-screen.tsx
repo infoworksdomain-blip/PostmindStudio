@@ -83,7 +83,16 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
     return (
       <>
         <BackLink />
-        <ErrorState error={error} onRetry={refresh} />
+        <ErrorState
+          error={error}
+          onRetry={refresh}
+          notFound={{
+            title: t('notFound.title'),
+            body: t('notFound.body'),
+            href: '/projects',
+            action: t('notFound.action'),
+          }}
+        />
       </>
     );
   if (isLoading || !data)

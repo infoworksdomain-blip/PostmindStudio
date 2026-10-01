@@ -246,7 +246,9 @@ describe.skipIf(!hasDb)('A4 media journeys', { timeout: 180_000 }, () => {
     const project = await generate(j, id);
     expect(project.state).toBe('QUALITY_FAILED');
     expect(project.errorReason).toContain('content_safety_block');
-    expect(project.errorReason).toContain('no moderation callback');
+    // The customer's API view carries the code only; the stored text names the cause.
+    const stored = await db.videoProject.findUniqueOrThrow({ where: { id } });
+    expect(stored.errorReason).toContain('no moderation callback');
     const task = await db.contentSafetyTask.findFirstOrThrow({ where: { projectId: id } });
     expect(task.state).toBe('EXPIRED');
     const hiveJob = await db.providerJob.findFirstOrThrow({
@@ -261,7 +263,8 @@ describe.skipIf(!hasDb)('A4 media journeys', { timeout: 180_000 }, () => {
     const id = await createProject(j, longBrief());
     const project = await generate(j, id);
     expect(project.state).toBe('QUALITY_FAILED');
-    expect(project.errorReason).toContain('STUDIO_PUBLIC_CALLBACK_BASE_URL');
+    const stored = await db.videoProject.findUniqueOrThrow({ where: { id } });
+    expect(stored.errorReason).toContain('STUDIO_PUBLIC_CALLBACK_BASE_URL');
     expect(hiveFetch).not.toHaveBeenCalled();
   });
 

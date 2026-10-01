@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import * as archiveRoute from '../../src/app/api/studio/projects/[id]/archive/route';
+import * as unarchiveRoute from '../../src/app/api/studio/projects/[id]/unarchive/route';
 import * as approveRoute from '../../src/app/api/studio/projects/[id]/approve/route';
 import * as cancelRoute from '../../src/app/api/studio/projects/[id]/cancel/route';
 import * as duplicateRoute from '../../src/app/api/studio/projects/[id]/duplicate/route';
@@ -580,6 +582,105 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       });
       expect(
         (await call(duplicateRoute.POST, { method: 'POST', token: 'stranger', params: { id } }))
+          .status,
+      ).toBe(404);
+    });
+  });
+
+  // QA 3: search, archive and unarchive behind the /projects list.
+  describe('search and archive', () => {
+    const list = async (query: string, token = 'reader') =>
+      (await call(projectsRoute.GET, { token, path: `/api/studio/projects?${query}` })).json
+        .data as Array<{ id: string; name: string | null; state: string }>;
+
+    it('searches by name or brief text, case-insensitively, within the organisation', async () => {
+      const marker = randomUUID().slice(0, 8);
+      const byName = (
+        await call(projectsRoute.POST, {
+          method: 'POST',
+          token: 'owner',
+          body: { ...createBody, name: `Zebra ${marker} launch` },
+        })
+      ).json.project as { id: string };
+      const byBrief = (
+        await call(projectsRoute.POST, {
+          method: 'POST',
+          token: 'owner',
+          body: {
+            ...createBody,
+            name: 'Plain',
+            brief: { rawInput: `About the ${marker.toUpperCase()} offer` },
+          },
+        })
+      ).json.project as { id: string };
+      await call(projectsRoute.POST, {
+        method: 'POST',
+        token: 'stranger',
+        body: { ...createBody, name: `Zebra ${marker}` },
+      });
+
+      const hits = await list(`q=${marker}`);
+      expect(hits.map((p) => p.id).sort()).toEqual([byName.id, byBrief.id].sort());
+      expect(await list('q=no-such-project-text-anywhere')).toEqual([]);
+      expect(
+        (
+          await call(projectsRoute.GET, {
+            token: 'reader',
+            path: '/api/studio/projects?q=' + 'x'.repeat(201),
+          })
+        ).status,
+      ).toBe(400);
+    });
+
+    it('archives an idle project out of the default list, then restores it to its earlier state', async () => {
+      const id = await create();
+      await db.videoProject.update({ where: { id }, data: { state: 'REJECTED' } });
+      const archived = await call(archiveRoute.POST, {
+        method: 'POST',
+        token: 'editor',
+        params: { id },
+      });
+      expect(archived.status).toBe(200);
+      expect((await list('limit=100')).some((p) => p.id === id)).toBe(false);
+      expect((await list('state=ARCHIVED')).map((p) => p.id)).toContain(id);
+      // Still readable (unlike a deleted project), and not generatable while archived.
+      expect((await call(projectRoute.GET, { token: 'reader', params: { id } })).status).toBe(200);
+      const gen = await call(generateRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        params: { id },
+      });
+      expect(gen.status).toBe(409);
+
+      const restored = await call(unarchiveRoute.POST, {
+        method: 'POST',
+        token: 'editor',
+        params: { id },
+      });
+      expect(restored.status).toBe(200);
+      expect(
+        (await call(projectRoute.GET, { token: 'reader', params: { id } })).json.project,
+      ).toMatchObject({ state: 'REJECTED' });
+      expect((await list('limit=100')).map((p) => p.id)).toContain(id);
+    });
+
+    it('refuses to archive a running project, to unarchive a normal one, and to readers', async () => {
+      const id = await create();
+      await call(generateRoute.POST, { method: 'POST', token: 'owner', params: { id } });
+      expect(
+        (await call(archiveRoute.POST, { method: 'POST', token: 'owner', params: { id } })).status,
+      ).toBe(409);
+      const idle = await create();
+      expect(
+        (await call(unarchiveRoute.POST, { method: 'POST', token: 'owner', params: { id: idle } }))
+          .status,
+      ).toBe(409);
+      expect(
+        (await call(archiveRoute.POST, { method: 'POST', token: 'reader', params: { id: idle } }))
+          .status,
+      ).toBe(403);
+      expect(
+        (await call(archiveRoute.POST, { method: 'POST', token: 'stranger', params: { id: idle } }))
           .status,
       ).toBe(404);
     });

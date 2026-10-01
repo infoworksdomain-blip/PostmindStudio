@@ -130,6 +130,7 @@ export const PROJECT_STATE: Record<string, { label: string; tone: Tone }> = {
   PARTIALLY_PUBLISHED: { label: 'Partly published', tone: 'warn' },
   REJECTED: { label: 'Rejected', tone: 'bad' },
   FAILED: { label: 'Failed', tone: 'bad' },
+  ARCHIVED: { label: 'Archived', tone: 'neutral' },
 };
 
 export const PUBLICATION_STATE: Record<string, { label: string; tone: Tone }> = {

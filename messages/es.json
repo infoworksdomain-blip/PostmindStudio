@@ -262,7 +262,8 @@
       "no_organisation": "Crea una organización o únete a una para continuar.",
       "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado.",
       "auto_publish_account_required": "Elige una cuenta conectada donde publicar, o desactiva la publicación automática y la programación.",
-      "auto_publish_account_unavailable": "Una de las cuentas elegidas ya no está conectada. Vuelve a conectarla o elige otra cuenta."
+      "auto_publish_account_unavailable": "Una de las cuentas elegidas ya no está conectada. Vuelve a conectarla o elige otra cuenta.",
+      "queue_unavailable": "La publicación no está disponible temporalmente. No se publicó ni se guardó nada; inténtalo de nuevo en un momento."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Publicado",
       "PARTIALLY_PUBLISHED": "Publicado parcialmente",
       "REJECTED": "Rechazado",
-      "FAILED": "Error"
+      "FAILED": "Error",
+      "ARCHIVED": "Archivado"
     },
     "publicationState": {
       "SCHEDULED": "Programada",
@@ -654,7 +656,12 @@
       "publishTitle": "Publicar",
       "publishDescription": "Publica ahora cada variante aprobada o prográmala.",
       "approveFirst": "Aprueba el vídeo antes de publicarlo.",
-      "postsTitle": "Publicaciones"
+      "postsTitle": "Publicaciones",
+      "notFound": {
+        "title": "Proyecto no encontrado",
+        "body": "Puede que se haya eliminado o que el enlace sea incorrecto.",
+        "action": "Volver a los proyectos"
+      }
     },
     "actions": {
       "cancel": "Cancelar",
@@ -675,7 +682,8 @@
       "confirmReject": "Confirmar rechazo",
       "confirmApprove": "Confirmar aprobación",
       "approved": "Aprobado: listo para publicar.",
-      "rejected": "Rechazado."
+      "rejected": "Rechazado.",
+      "noPermission": "Solo un publicador, un administrador o el propietario puede aprobar o rechazar este vídeo."
     },
     "publish": {
       "suggested": "Sugerido: {day} {time}",
@@ -1310,7 +1318,8 @@
         "review": "Por revisar",
         "draft": "Borradores",
         "published": "Publicados",
-        "failed": "Con error"
+        "failed": "Con error",
+        "archived": "Archivados"
       },
       "loading": "Cargando proyectos",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "Sin formatos",
       "rowMeta": "{platforms} — actualizado {updated}",
       "newer": "Más recientes",
-      "older": "Más antiguos"
+      "older": "Más antiguos",
+      "search": {
+        "label": "Buscar proyectos",
+        "placeholder": "Buscar por nombre o brief"
+      },
+      "emptySearch": {
+        "title": "No se encontró nada",
+        "body": "Ningún proyecto coincide con «{query}»."
+      },
+      "actions": {
+        "menu": "Acciones para {name}",
+        "duplicate": "Duplicar",
+        "archive": "Archivar",
+        "unarchive": "Desarchivar",
+        "delete": "Eliminar",
+        "done": {
+          "duplicate": "Copia creada.",
+          "archive": "Archivado.",
+          "unarchive": "Restaurado.",
+          "delete": "Eliminado."
+        },
+        "deleteConfirm": {
+          "title": "¿Eliminar este vídeo?",
+          "body": "«{name}» se quitará de tus proyectos. Las publicaciones ya hechas se quedan donde están.",
+          "confirm": "Eliminar"
+        }
+      }
     }
   },
   "publications": {
@@ -2332,6 +2367,11 @@
           "male": "Hombre",
           "user_specified": "Autodescrito"
         }
+      },
+      "notFound": {
+        "title": "Publicación no encontrada",
+        "body": "Puede que se haya quitado o que el enlace sea incorrecto.",
+        "action": "Volver a analíticas"
       }
     }
   },
@@ -3604,7 +3644,8 @@
       "outcome_unknown": "el resultado es desconocido; comprueba la plataforma antes de reintentar",
       "unknown": "un error desconocido",
       "account_limit": "se alcanzó un límite de uso"
-    }
+    },
+    "generic": "Este paso falló. Inténtalo de nuevo o contacta con soporte si sigue ocurriendo."
   },
   "marketing": {
     "meta": {

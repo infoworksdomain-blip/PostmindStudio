@@ -7,6 +7,8 @@ import { Check, Loader2, Play, RotateCw, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useFormat } from '@/lib/client/format';
+import { StudioCapability } from '@/lib/rbac';
+import { useCan } from '../use-can';
 import type { ProjectDetail } from '@/lib/client/types';
 import { CANCELLABLE, GENERATABLE } from './types';
 import { useAction } from './use-action';
@@ -24,6 +26,9 @@ export function ProjectActions({
   const f = useFormat();
   const { pending, run, busy } = useAction();
   const { id, state } = project;
+  // Generate and Cancel need studio:project:write; a viewer only reads.
+  const mayWrite = useCan(StudioCapability.ProjectWrite);
+  if (!mayWrite) return null;
 
   async function generate() {
     const ok = await run('generate', `/projects/${id}/generate`, {
@@ -77,7 +82,18 @@ export function ApprovalBar({
   const [note, setNote] = useState('');
   const canApprove = project.state === 'READY_FOR_REVIEW';
   const canReject = canApprove || project.state === 'QUALITY_FAILED';
+  // The API answers 403 to anyone without studio:project:approve: say so instead of offering buttons.
+  const mayDecide = useCan(StudioCapability.ProjectApprove);
   if (!canReject) return null;
+  if (!mayDecide)
+    return (
+      <section
+        aria-label={t('aria')}
+        className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground"
+      >
+        {t('noPermission')}
+      </section>
+    );
 
   async function submit() {
     if (!mode) return;

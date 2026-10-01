@@ -68,7 +68,8 @@ export const PATCH = withStudioRoute(
   },
 );
 
-// DELETE /api/studio/projects/:id — archive (soft delete; publications remain)
+// DELETE /api/studio/projects/:id — delete (soft: gone from every list, publications remain).
+// Archiving without deleting is POST /archive and /unarchive.
 export const DELETE = withStudioRoute(
   StudioCapability.ProjectWrite,
   async ({ tenant, deps, params, audit }) => {

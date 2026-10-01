@@ -262,7 +262,8 @@
       "no_organisation": "Crie uma organização ou entre em uma para continuar.",
       "service_unavailable": "Nosso serviço de IA está temporariamente indisponível. Tente novamente mais tarde — nossa equipe já foi avisada.",
       "auto_publish_account_required": "Escolha uma conta conectada para publicar ou desative a publicação automática e o agendamento.",
-      "auto_publish_account_unavailable": "Uma conta escolhida não está mais conectada. Conecte-a de novo ou escolha outra conta."
+      "auto_publish_account_unavailable": "Uma conta escolhida não está mais conectada. Conecte-a de novo ou escolha outra conta.",
+      "queue_unavailable": "A publicação está temporariamente indisponível. Nada foi publicado nem salvo; tente de novo em instantes."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Publicado",
       "PARTIALLY_PUBLISHED": "Publicado em parte",
       "REJECTED": "Rejeitado",
-      "FAILED": "Falhou"
+      "FAILED": "Falhou",
+      "ARCHIVED": "Arquivado"
     },
     "publicationState": {
       "SCHEDULED": "Agendada",
@@ -654,7 +656,12 @@
       "publishTitle": "Publicar",
       "publishDescription": "Publique cada variante aprovada agora ou agende a publicação.",
       "approveFirst": "Aprove o vídeo antes de publicá-lo.",
-      "postsTitle": "Publicações"
+      "postsTitle": "Publicações",
+      "notFound": {
+        "title": "Projeto não encontrado",
+        "body": "Ele pode ter sido excluído ou o link está errado.",
+        "action": "Voltar aos projetos"
+      }
     },
     "actions": {
       "cancel": "Cancelar",
@@ -675,7 +682,8 @@
       "confirmReject": "Confirmar rejeição",
       "confirmApprove": "Confirmar aprovação",
       "approved": "Aprovado — pronto para publicar.",
-      "rejected": "Rejeitado."
+      "rejected": "Rejeitado.",
+      "noPermission": "Somente um publicador, administrador ou proprietário pode aprovar ou rejeitar este vídeo."
     },
     "publish": {
       "suggested": "Sugestão: {day}, {time}",
@@ -1310,7 +1318,8 @@
         "review": "Para revisar",
         "draft": "Rascunhos",
         "published": "Publicados",
-        "failed": "Com falha"
+        "failed": "Com falha",
+        "archived": "Arquivados"
       },
       "loading": "Carregando projetos",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "Nenhum formato",
       "rowMeta": "{platforms} — atualizado {updated}",
       "newer": "Mais recentes",
-      "older": "Mais antigos"
+      "older": "Mais antigos",
+      "search": {
+        "label": "Buscar projetos",
+        "placeholder": "Buscar por nome ou briefing"
+      },
+      "emptySearch": {
+        "title": "Nada encontrado",
+        "body": "Nenhum projeto corresponde a “{query}”."
+      },
+      "actions": {
+        "menu": "Ações para {name}",
+        "duplicate": "Duplicar",
+        "archive": "Arquivar",
+        "unarchive": "Desarquivar",
+        "delete": "Excluir",
+        "done": {
+          "duplicate": "Cópia criada.",
+          "archive": "Arquivado.",
+          "unarchive": "Restaurado.",
+          "delete": "Excluído."
+        },
+        "deleteConfirm": {
+          "title": "Excluir este vídeo?",
+          "body": "“{name}” será removido dos seus projetos. As publicações já feitas continuam onde estão.",
+          "confirm": "Excluir"
+        }
+      }
     }
   },
   "publications": {
@@ -2332,6 +2367,11 @@
           "male": "Masculino",
           "user_specified": "Autodescrito"
         }
+      },
+      "notFound": {
+        "title": "Publicação não encontrada",
+        "body": "Ela pode ter sido removida ou o link está errado.",
+        "action": "Voltar às análises"
       }
     }
   },
@@ -3604,7 +3644,8 @@
       "outcome_unknown": "resultado desconhecido — confira a plataforma antes de tentar de novo",
       "unknown": "erro desconhecido",
       "account_limit": "um limite de uso foi atingido"
-    }
+    },
+    "generic": "Esta etapa falhou. Tente de novo ou fale com o suporte se continuar."
   },
   "marketing": {
     "meta": {

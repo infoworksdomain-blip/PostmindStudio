@@ -297,3 +297,15 @@ export function memberRoles(tenant: {
     .filter((m) => m.organisationId === tenant.organisationId)
     .map((m) => m.role.trim().toLowerCase());
 }
+
+/**
+ * Step roles (de-duplicated, in order) that no holder of `approverRoles` can satisfy. Standalone
+ * organisations only have owner / admin / publisher / creator / viewer, and only the first three
+ * may approve, so a `client_reviewer` or `legal` step would leave every review waiting forever.
+ */
+export function unapprovableStepRoles<T extends { role: string }>(
+  steps: readonly T[],
+  approverRoles: readonly string[],
+): string[] {
+  return [...new Set(steps.map((s) => s.role))].filter((role) => !approverRoles.includes(role));
+}

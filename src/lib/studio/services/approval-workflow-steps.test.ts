@@ -10,6 +10,7 @@ import {
   projectFacts,
   readSnapshot,
   specificity,
+  unapprovableStepRoles,
   stepProgress,
   workflowAppliesTo,
   workflowMatches,
@@ -269,5 +270,29 @@ describe('schemas', () => {
         ],
       }),
     ).toEqual(['admin']);
+  });
+});
+
+describe('unapprovableStepRoles (QA 3: a step nobody can sign off would stall every review)', () => {
+  it('lists step roles outside the roles that may approve', () => {
+    const steps = [
+      { role: 'admin', minApprovers: 1 },
+      { role: 'client_reviewer', minApprovers: 1 },
+      { role: 'viewer', minApprovers: 1 },
+      { role: 'client_reviewer', minApprovers: 2 },
+    ];
+    expect(unapprovableStepRoles(steps, ['owner', 'admin', 'publisher'])).toEqual([
+      'client_reviewer',
+      'viewer',
+    ]);
+  });
+
+  it('is empty when every step role can approve', () => {
+    expect(
+      unapprovableStepRoles(
+        [{ role: 'publisher', minApprovers: 1 }],
+        ['owner', 'admin', 'publisher'],
+      ),
+    ).toEqual([]);
   });
 });

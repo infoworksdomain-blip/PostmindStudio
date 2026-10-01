@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { QualityIssue, Render } from '@/lib/client/types';
 import { useFormat } from '@/lib/client/format';
+import { StudioCapability } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
+import { useCan } from '../use-can';
 import { humanCode, useQualityCheckLabel } from '../failure-reason';
 import { useAction } from './use-action';
 
@@ -79,6 +81,7 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
   const [note, setNote] = useState('');
   const codeLabel = useQualityCheckLabel();
   const f = useFormat();
+  const mayForceApprove = useCan(StudioCapability.RenderForceApprove);
   // 17.9: the detail in the reader's language when the check carries a key; numbers in the
   // locale's digits (counts stay numeric for plurals); otherwise the stored English detail.
   const detailText = (issue: QualityIssue) => {
@@ -147,7 +150,7 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
       {render.qualityCheckState === 'FORCE_APPROVED' && (
         <p className="text-xs text-muted-foreground">{t('forceApproved')}</p>
       )}
-      {render.qualityCheckState === 'FAILED' && (
+      {render.qualityCheckState === 'FAILED' && mayForceApprove && (
         <div className="flex flex-col gap-2 rounded-lg border border-destructive/25 p-3">
           <label htmlFor={`force-${render.id}`} className="text-xs font-medium">
             {t('overrideLabel')}

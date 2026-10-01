@@ -9,6 +9,7 @@ import type { TenantContext } from '../../tenant';
 import { getApiDeps, type ApiDeps } from './context';
 import { applyBetaPlan } from '../services/beta';
 import { billingGate } from '../billing/access-gate';
+import { presentBody } from './failure-presenter';
 import { assertImpersonationAllowsWrite } from '../admin/impersonation';
 import { hashBody, idempotencyScope, isValidIdempotencyKey } from './idempotency';
 import { guardBusinessIds } from './business-guard';
@@ -168,8 +169,13 @@ export function withStudioRoute(
         });
         const status = result.status ?? 200;
         const safeBody = JSON.parse(
-          JSON.stringify({ ok: true, ...result.body }, (_k, v: unknown) =>
-            typeof v === 'bigint' ? v.toString() : v,
+          JSON.stringify(
+            presentBody(
+              { ok: true, ...result.body },
+              // Admin routes are staff-only (requirePlatformStaff) and exist to show the raw text.
+              capability.startsWith('studio:admin:') ? { platformRole: 'staff' } : tenant,
+            ),
+            (_k, v: unknown) => (typeof v === 'bigint' ? v.toString() : v),
           ),
         ) as Record<string, unknown>;
         if (idem) {

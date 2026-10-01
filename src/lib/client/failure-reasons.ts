@@ -80,6 +80,12 @@ export interface FailedCheck {
   check: string;
 }
 
+/**
+ * What the server sends in place of a reason it may not show a customer (no known code, or raw
+ * provider text only). The client renders the generic sentence for it.
+ */
+export const UNKNOWN_FAILURE = 'unknown_failure';
+
 export interface ParsedFailure {
   code: FailureCode;
   /** Kill-switch level, provider/platform + error class, shot numbers, amounts. */

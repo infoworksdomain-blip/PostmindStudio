@@ -26,6 +26,8 @@ export interface Me {
   banner: AccountBanner | null;
   impersonating: boolean;
   identityMode: 'standalone' | 'core';
+  /** The caller's capabilities, as the API checks them (src/lib/rbac.ts). */
+  capabilities: string[];
 }
 
 export interface MeResponse {

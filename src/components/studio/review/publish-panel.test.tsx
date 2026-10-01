@@ -295,7 +295,10 @@ describe('PublicationsList', () => {
         ]}
       />,
     );
-    expect(screen.getByText(/token expired/)).toBeInTheDocument();
+    // QA 3: a reason with no known code is raw text from outside Studio: customers get the
+    // generic sentence (staff read the stored text).
+    expect(screen.getByText(/This step failed/)).toBeInTheDocument();
+    expect(screen.queryByText(/token expired/)).toBeNull();
     expect(screen.getByRole('link', { name: /View/ })).toHaveAttribute(
       'href',
       'https://tiktok.test/1',

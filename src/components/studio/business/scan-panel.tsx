@@ -138,7 +138,7 @@ function ScanProgress({ scanId, onSettled }: { scanId: string; onSettled: () => 
         <ul className="mt-3 list-disc ps-5 text-xs text-destructive">
           {scan.errors.map((e) => (
             <li key={e}>
-              <FailureReason reason={e} />
+              <FailureReason reason={e} plain />
             </li>
           ))}
         </ul>

@@ -111,7 +111,7 @@ function StepRow({
           onChange={(e) => onChange({ ...step, role: e.target.value.trim().toLowerCase() })}
         />
         <datalist id={`${id}-roles`}>
-          {SUGGESTED_ROLES.map((r) => (
+          {[...SUGGESTED_ROLES, 'publisher'].map((r) => (
             <option key={r} value={r} />
           ))}
         </datalist>
@@ -236,7 +236,7 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
           variant="outline"
           className="self-start"
           disabled={steps.length >= MAX_STEPS}
-          onClick={() => setSteps((cur) => [...cur, { role: 'client_reviewer', minApprovers: 1 }])}
+          onClick={() => setSteps((cur) => [...cur, { role: 'publisher', minApprovers: 1 }])}
         >
           <Plus /> {t('addStep')}
         </Button>

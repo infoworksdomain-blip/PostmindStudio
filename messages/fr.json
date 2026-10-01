@@ -262,7 +262,8 @@
       "no_organisation": "Créez une organisation ou rejoignez-en une pour continuer.",
       "service_unavailable": "Notre service d’IA est temporairement indisponible. Veuillez réessayer plus tard : notre équipe a été prévenue.",
       "auto_publish_account_required": "Choisissez un compte connecté sur lequel publier, ou désactivez la publication automatique et la programmation.",
-      "auto_publish_account_unavailable": "Un compte choisi n’est plus connecté. Reconnectez-le ou choisissez un autre compte."
+      "auto_publish_account_unavailable": "Un compte choisi n’est plus connecté. Reconnectez-le ou choisissez un autre compte.",
+      "queue_unavailable": "La publication est temporairement indisponible. Rien n’a été publié ni conservé ; réessayez dans un instant."
     }
   },
   "primitives": {
@@ -293,7 +294,8 @@
       "PUBLISHED": "Publié",
       "PARTIALLY_PUBLISHED": "Partiellement publié",
       "REJECTED": "Refusé",
-      "FAILED": "Échec"
+      "FAILED": "Échec",
+      "ARCHIVED": "Archivé"
     },
     "publicationState": {
       "SCHEDULED": "Programmée",
@@ -654,7 +656,12 @@
       "publishTitle": "Publier",
       "publishDescription": "Publiez chaque variante validée maintenant ou programmez-la.",
       "approveFirst": "Validez la vidéo avant de la publier.",
-      "postsTitle": "Publications"
+      "postsTitle": "Publications",
+      "notFound": {
+        "title": "Projet introuvable",
+        "body": "Il a peut-être été supprimé, ou le lien est incorrect.",
+        "action": "Retour aux projets"
+      }
     },
     "actions": {
       "cancel": "Annuler",
@@ -675,7 +682,8 @@
       "confirmReject": "Confirmer le refus",
       "confirmApprove": "Confirmer la validation",
       "approved": "Validé — prêt à publier.",
-      "rejected": "Refusé."
+      "rejected": "Refusé.",
+      "noPermission": "Seul un éditeur, un administrateur ou le propriétaire peut approuver ou rejeter cette vidéo."
     },
     "publish": {
       "suggested": "Suggestion : {day} {time}",
@@ -1310,7 +1318,8 @@
         "review": "À examiner",
         "draft": "Brouillons",
         "published": "Publiés",
-        "failed": "En échec"
+        "failed": "En échec",
+        "archived": "Archivés"
       },
       "loading": "Chargement des projets",
       "empty": {
@@ -1325,7 +1334,33 @@
       "noFormats": "Aucun format",
       "rowMeta": "{platforms} — mis à jour {updated}",
       "newer": "Plus récents",
-      "older": "Plus anciens"
+      "older": "Plus anciens",
+      "search": {
+        "label": "Rechercher des projets",
+        "placeholder": "Rechercher par nom ou brief"
+      },
+      "emptySearch": {
+        "title": "Aucun résultat",
+        "body": "Aucun projet ne correspond à « {query} »."
+      },
+      "actions": {
+        "menu": "Actions pour {name}",
+        "duplicate": "Dupliquer",
+        "archive": "Archiver",
+        "unarchive": "Désarchiver",
+        "delete": "Supprimer",
+        "done": {
+          "duplicate": "Copie créée.",
+          "archive": "Archivé.",
+          "unarchive": "Restauré.",
+          "delete": "Supprimé."
+        },
+        "deleteConfirm": {
+          "title": "Supprimer cette vidéo ?",
+          "body": "« {name} » sera retiré de vos projets. Les publications déjà en ligne restent où elles sont.",
+          "confirm": "Supprimer"
+        }
+      }
     }
   },
   "publications": {
@@ -2332,6 +2367,11 @@
           "male": "Hommes",
           "user_specified": "Autre identité"
         }
+      },
+      "notFound": {
+        "title": "Publication introuvable",
+        "body": "Elle a peut-être été retirée, ou le lien est incorrect.",
+        "action": "Retour aux statistiques"
       }
     }
   },
@@ -3604,7 +3644,8 @@
       "outcome_unknown": "résultat inconnu — vérifiez la plateforme avant de réessayer",
       "unknown": "erreur inconnue",
       "account_limit": "une limite d’utilisation a été atteinte"
-    }
+    },
+    "generic": "Cette étape a échoué. Réessayez, ou contactez le support si cela continue."
   },
   "marketing": {
     "meta": {

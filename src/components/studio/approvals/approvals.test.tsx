@@ -131,7 +131,7 @@ describe('ApprovalWorkflowsScreen', () => {
         name: 'Client sign-off',
         steps: [
           { role: 'admin', minApprovers: 1 },
-          { role: 'client_reviewer', minApprovers: 2 },
+          { role: 'publisher', minApprovers: 2 },
         ],
         appliesTo: { businessIds: ['biz_1'], platforms: ['tiktok'], tags: [] },
       }),

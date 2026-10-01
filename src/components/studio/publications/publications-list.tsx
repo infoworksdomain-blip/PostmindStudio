@@ -45,6 +45,21 @@ export function viewsOf(p: Publication, locale: string = DEFAULT_LOCALE, none = 
   return typeof views === 'number' ? new Intl.NumberFormat(locale).format(views) : none;
 }
 
+/** How often the list refreshes while a post is going out (matches the review screen's poll). */
+export const PUBLICATIONS_POLL_MS = 5_000;
+
+/**
+ * Refresh interval for a page of publications: poll while any post is PUBLISHING or queued to go
+ * out now (SCHEDULED with no time), otherwise stay still. Without it a post stayed "Publishing"
+ * until the user reloaded the page.
+ */
+export function publicationsRefreshMs(page: Pick<Page<Publication>, 'data'> | undefined): number {
+  const inFlight = page?.data.some(
+    (p) => p.state === 'PUBLISHING' || (p.state === 'SCHEDULED' && !p.scheduledFor),
+  );
+  return inFlight ? PUBLICATIONS_POLL_MS : 0;
+}
+
 export type WhenKind = 'published' | 'scheduledFor' | 'created';
 
 /** The moment that matters for a row: when it went live, else when it is due, else created. */
@@ -108,12 +123,16 @@ export function PublicationsList() {
   const [platform, setPlatform] = useState('');
   const [cursors, setCursors] = useState<string[]>([]);
   const states = PUBLICATION_FILTERS.find((pf) => pf.key === filter)?.states;
-  const { data, error, isLoading, mutate } = useApi<Page<Publication>>('/publications', {
-    state: states,
-    platform: platform || undefined,
-    cursor: cursors.at(-1),
-    limit: 25,
-  });
+  const { data, error, isLoading, mutate } = useApi<Page<Publication>>(
+    '/publications',
+    {
+      state: states,
+      platform: platform || undefined,
+      cursor: cursors.at(-1),
+      limit: 25,
+    },
+    { refreshInterval: publicationsRefreshMs },
+  );
   const unfiltered = filter === 'all' && !platform;
 
   return (

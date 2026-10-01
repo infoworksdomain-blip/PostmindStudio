@@ -183,6 +183,8 @@ export const listProjectsQuery = z.object({
     })
     .optional(),
   businessId: z.string().max(128).optional(),
+  /** QA 3: free-text search over the name, description and brief (case-insensitive). */
+  q: z.string().trim().max(200).optional(),
   days: z.coerce.number().int().min(1).max(3650).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   cursor: z.string().max(64).optional(),
@@ -374,6 +376,17 @@ export async function listProjects(
   if (query.state) {
     const states = query.state.split(',') as VideoProjectState[];
     where.state = { in: states };
+  } else {
+    // Archived projects have their own filter; the default list is the live work.
+    where.state = { not: 'ARCHIVED' };
+  }
+  if (query.q) {
+    const text = { contains: query.q, mode: 'insensitive' as const };
+    where.OR = [
+      { name: text },
+      { description: text },
+      { brief: { is: { OR: [{ rawInput: text }, { hook: text }, { keyMessage: text }] } } },
+    ];
   }
   if (query.businessId) where.businessId = query.businessId;
   if (query.days) where.createdAt = { gte: new Date(now - query.days * 86_400_000) };
@@ -520,6 +533,47 @@ export async function archiveProject(db: Db, organisationId: string, id: string,
   });
   if (archived.count === 0)
     throw new ConflictError('Project changed concurrently; reload and retry');
+}
+
+/**
+ * Archive keeps the project and its posts, hides it from the default list and stops it being
+ * generated or edited; unarchive puts it back in the state it had (metadata.archivedFrom). Delete
+ * (archiveProject above, DELETE /projects/:id) is the one that removes it from every list.
+ */
+export async function setProjectArchived(
+  db: Db,
+  organisationId: string,
+  id: string,
+  archive: boolean,
+) {
+  const project = await findProject(db, organisationId, id);
+  const metadata = projectMetadata(project.metadata);
+  if (archive) {
+    if (ACTIVE_PIPELINE_STATES.includes(project.state))
+      throw new ConflictError('Cancel generation before archiving');
+    if (project.state === 'ARCHIVED') return project;
+  } else if (project.state !== 'ARCHIVED') {
+    throw new ConflictError('Only an archived project can be restored');
+  }
+  const from = typeof metadata.archivedFrom === 'string' ? metadata.archivedFrom : 'DRAFT';
+  const { archivedFrom: _drop, ...rest } = metadata;
+  const updated = await db.videoProject.updateMany({
+    where: { id, organisationId, state: project.state },
+    data: archive
+      ? {
+          state: 'ARCHIVED',
+          metadata: { ...metadata, archivedFrom: project.state } as Prisma.InputJsonValue,
+        }
+      : {
+          state: (PROJECT_STATES.has(from) && from !== 'ARCHIVED'
+            ? from
+            : 'DRAFT') as VideoProjectState,
+          metadata: rest as Prisma.InputJsonValue,
+        },
+  });
+  if (updated.count === 0)
+    throw new ConflictError('Project changed concurrently; reload and retry');
+  return findProject(db, organisationId, id);
 }
 
 export async function duplicateProject(db: Db, tenant: TenantContext, id: string) {
