@@ -16,6 +16,11 @@ import {
 } from '../content-plans/prompt';
 import type { PlanAngle, PlanKind } from '../content-plans/mix';
 import { styleMemorySupplement } from './style-memory';
+import { loadHashtagPolicy } from './business-hashtags';
+import { buildSuggestions } from './caption-suggestions';
+import { profileHashtags, type ProfileWords } from '../hashtags/pool';
+import type { HashtagPolicy } from '../hashtags/policy';
+import { PLATFORMS, type Platform } from './catalog';
 
 // 20.9 — Claude writes the month (Layer-1 model via the provider router, like ideation): one call
 // per PLAN_CHUNK_SIZE slots, each told what the earlier chunks already planned so the month does
@@ -61,13 +66,22 @@ export function routedPlanGenerator(
 
 type DraftDb = Pick<
   PrismaClient,
-  'business' | 'businessProfile' | 'brandKit' | 'videoProject' | 'styleMemory' | 'contentPlanItem'
+  | 'business'
+  | 'businessProfile'
+  | 'brandKit'
+  | 'videoProject'
+  | 'styleMemory'
+  | 'contentPlanItem'
+  | 'businessHashtagSettings'
 >;
 
 export interface PlanContext {
   facts: PlanBusinessFacts;
   recentPosts: string[];
   styleMemory?: string;
+  /** 20.13: the business + always hashtags every post carries, and profile top-up tags. */
+  policy?: HashtagPolicy;
+  profileTags?: string[];
 }
 
 const RECENT_DAYS = 90;
@@ -80,7 +94,7 @@ export async function loadPlanContext(
   now: number,
 ): Promise<PlanContext> {
   const scope = { organisationId: plan.organisationId, businessId: plan.businessId };
-  const [business, profile, kit, recent, styleMemory] = await Promise.all([
+  const [business, profile, kit, recent, styleMemory, policy] = await Promise.all([
     db.business.findFirst({
       where: { id: plan.businessId, organisationId: plan.organisationId, deletedAt: null },
       select: { name: true },
@@ -102,6 +116,7 @@ export async function loadPlanContext(
       take: RECENT_LIMIT * 2,
     }),
     styleMemorySupplement(db, plan.organisationId, plan.businessId),
+    loadHashtagPolicy(db, scope),
   ]);
   const recentPosts = recent
     .filter(
@@ -130,7 +145,30 @@ export async function loadPlanContext(
     },
     recentPosts,
     ...(styleMemory && { styleMemory }),
+    policy,
+    profileTags: profileHashtags(profile as ProfileWords | null),
   };
+}
+
+/**
+ * 20.13: one drafted caption + hashtags → the item's copy for each of the plan's platforms,
+ * fitted to the platform and the business's hashtag policy (≥ 5, business hashtag first).
+ */
+export function itemPostCopy(
+  platforms: readonly string[],
+  topic: PlannedTopic,
+  context: Pick<PlanContext, 'policy' | 'profileTags'>,
+): Prisma.InputJsonValue {
+  const list = platforms.filter((p): p is Platform => (PLATFORMS as readonly string[]).includes(p));
+  return buildSuggestions(
+    list,
+    list.map((platform) => ({ platform, ...topic.copy })),
+    {
+      policy: context.policy ?? { business: null, always: [] },
+      pool: () => context.profileTags ?? [],
+      fallbackCaption: topic.slides.hook,
+    },
+  ) as unknown as Prisma.InputJsonValue;
 }
 
 /** "Tuesday 6 October 2026" in the plan's time zone (English: the prompt is English). */
@@ -149,7 +187,7 @@ type DraftItem = Pick<ContentPlanItem, 'id' | 'slotAt' | 'kind' | 'angle' | 'cal
 /** Write topics for `items` (slot order), chunk by chunk. Returns the model label used. */
 export async function writeTopics(
   deps: { db: Pick<PrismaClient, 'contentPlanItem' | '$transaction'>; generate: PlanGenerator },
-  plan: Pick<ContentPlan, 'timezone' | 'language'>,
+  plan: Pick<ContentPlan, 'timezone' | 'language' | 'platforms'>,
   items: DraftItem[],
   context: PlanContext,
   plannedTitles: string[],
@@ -169,6 +207,7 @@ export async function writeTopics(
             title: topic.title,
             brief: topic.brief,
             slides: topic.slides as unknown as Prisma.InputJsonValue,
+            postCopy: itemPostCopy(plan.platforms, topic, context),
           },
         });
       }),
@@ -201,6 +240,10 @@ async function topicsFor(
       plannedTitles,
       styleMemory: context.styleMemory,
       language: plan.language,
+      fixedHashtags: [
+        ...(context.policy?.business ? [context.policy.business] : []),
+        ...(context.policy?.always ?? []),
+      ],
     }),
     outputSchema: PLAN_OUTPUT_SCHEMA,
     maxTokens: PLAN_MAX_TOKENS,

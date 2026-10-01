@@ -12,6 +12,7 @@ import { sealTokens } from '../../src/lib/studio/platforms/tokens';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import { call, installApi, tenant } from '../helpers/api-harness';
 import { createHarness } from '../helpers/pipeline-harness';
+import { withHashtags } from '../helpers/hashtags';
 
 // BACKLOG 5.9–5.11: publish now, schedule, cancel, retry, take down — through the real routes,
 // the real publish worker (inline queue) and Postgres, with recording fake publishers.
@@ -115,7 +116,7 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
   }
 
   const publish = (body: unknown, token = 'owner') =>
-    call(publicationsRoute.POST, { method: 'POST', token, body });
+    call(publicationsRoute.POST, { method: 'POST', token, body: withHashtags(body) });
 
   it('publishes now: worker uploads, marks PUBLISHED, attributes and rolls up the project', async () => {
     const { project, render } = await approvedRender();

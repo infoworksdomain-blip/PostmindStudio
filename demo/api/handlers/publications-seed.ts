@@ -4,6 +4,7 @@
 // row links to a real project in the demo.
 import type { Publication } from '@/lib/client/types';
 import { CONNECTIONS, PROJECTS, PUBLICATIONS, RENDERS } from '../ids';
+import { demoHashtags } from '../hashtags-data';
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -91,7 +92,8 @@ function row(s: Spec): Publication {
     platformPostId: post.platformPostId,
     platformUrl: s.state === 'TAKEN_DOWN' ? null : post.platformUrl,
     caption: s.caption,
-    hashtags: s.hashtags,
+    // 20.13: every sample post carries the business hashtag first and at least five.
+    hashtags: demoHashtags(s.hashtags, s.platform),
     errorReason: s.error?.reason ?? null,
     errorCode: s.error?.code ?? null,
     retryCount: s.retryCount ?? 0,

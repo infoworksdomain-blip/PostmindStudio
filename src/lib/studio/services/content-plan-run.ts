@@ -231,6 +231,8 @@ export async function prepareItem(
     await mergeMetadata(deps.db, project.id, {
       // Pre-approved (auto-posted at its time) only when the plan has an account to post to.
       contentPlan: { planId: plan.id, itemId: item.id, preApproved: planTargets(plan).length > 0 },
+      // 20.13: the plan's caption + hashtags (drafted, maybe edited) become the project's copy.
+      ...(item.postCopy && { postCopy: item.postCopy }),
     });
     projectId = project.id;
     await setItem(deps.db, item.id, { projectId });

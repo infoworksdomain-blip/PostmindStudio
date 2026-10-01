@@ -23,3 +23,5 @@ For every post write:
 - hook: the opening line on screen (at most 90 characters).
 - points: three to five short on-screen points for a slideshow (each at most 80 characters).
 - cta: a short call to action (at most 60 characters), or an empty string if none fits.
+- caption: the social caption the post goes out with (20.13). The first line is the hook and makes sense on its own; then one or two short lines and a call to action; at most 300 characters; no hashtags inside it. Never call anything "trending" or "viral". Studio fits it to each platform.
+- hashtags: 8 to 10 relevant hashtags without "#" and without spaces, each at most 30 characters: a mix of broad (the industry), niche (this post's topic or product) and local (a town or region from the business facts, only if the facts name one). Never repeat the hashtags Studio adds itself (listed in the request).

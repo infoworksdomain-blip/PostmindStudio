@@ -50,7 +50,11 @@ describe('InstagramReelPublisher', () => {
       json({ permalink: 'https://instagram.com/p/abc', shortcode: 'abc', timestamp: '2026-01-01' }),
     );
     const publisher = new InstagramReelPublisher(deps(fetchImpl));
-    const result = await publisher.publish(baseRequest());
+    // 20.13: the caption field carries the post's hashtags (business hashtag first).
+    const text = 'Fresh bread\n\n#AheadAI #LeedsEats #bread #cake #buns';
+    const result = await publisher.publish(
+      baseRequest({ text, hashtags: ['AheadAI', 'LeedsEats', 'bread', 'cake', 'buns'] }),
+    );
 
     expect(result).toEqual({
       platformPostId: 'media-1',
@@ -61,6 +65,7 @@ describe('InstagramReelPublisher', () => {
     expect(requests[0]?.method).toBe('POST');
     const createBody = requests[0]?.body as URLSearchParams;
     expect(createBody.get('media_type')).toBe('REELS');
+    expect(createBody.get('caption')).toBe(text);
     expect(createBody.get('video_url')).toBe('https://signed.example/video.mp4');
     expect(createBody.get('share_to_feed')).toBe('true');
     expect(createBody.get('is_ai_generated')).toBe('true');

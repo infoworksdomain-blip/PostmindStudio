@@ -26,7 +26,7 @@ change (bump the version constant in the publisher, then regenerate this file).
 | youtube_short | youtube | Studio OAuth | 9:16 | 1–180 s | 256 GB | 5000 bytes | 15 |
 | youtube | youtube | Studio OAuth | 16:9 | 1–43200 s | 256 GB | 5000 bytes | 15 |
 | linkedin_video | linkedin | Studio OAuth | 16:9, 1:1 | 3–600 s | 500 MB | 3000 | 5 |
-| x | x | Studio OAuth | 16:9, 1:1 | 1–140 s | 8 GB | 280 | 2 |
+| x | x | Studio OAuth | 16:9, 1:1 | 1–140 s | 8 GB | 280 | 5 |
 | facebook | facebook | Engagement (Meta) | 9:16 | 3–90 s | 1 GB | 63206 | 5 |
 | instagram_feed | instagram | Engagement (Meta) | 1:1, 4:5 | 3–900 s | 300 MB | 2200 | 30 |
 | facebook_feed | facebook | Engagement (Meta) | 16:9, 1:1 | 1–14400 s | 4 GB | 63206 | 5 |
