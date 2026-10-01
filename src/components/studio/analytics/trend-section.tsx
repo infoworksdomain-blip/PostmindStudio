@@ -32,6 +32,7 @@ export function TrendSection({ days }: { days: number }) {
   });
   const points = (data?.data ?? []).map((d) => ({ label: shortDay(d.day), value: d.value }));
   const total = points.reduce((t, p) => t + p.value, 0);
+  const hasEstimates = (data?.data ?? []).some((d) => d.estimated);
 
   return (
     <Section
@@ -50,6 +51,11 @@ export function TrendSection({ days }: { days: number }) {
     >
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && <Skeleton aria-label={t('loadingAria')} className="h-[200px] rounded-lg" />}
+      {data && hasEstimates && (
+        <p role="note" className="mb-2 text-xs text-muted-foreground">
+          {t('estimated')}
+        </p>
+      )}
       {data && (
         <AreaChart
           points={points}

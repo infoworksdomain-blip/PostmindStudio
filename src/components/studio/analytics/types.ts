@@ -26,7 +26,7 @@ export interface OverviewResponse {
 export interface TimeseriesResponse {
   ok: true;
   metric: Metric;
-  data: Array<{ day: string; value: number }>;
+  data: Array<{ day: string; value: number; estimated?: true }>;
 }
 
 export interface LeaderboardEntry {
@@ -50,7 +50,7 @@ export interface CostResponse {
   days: number;
   totalPence: number;
   byProvider: Array<{ provider: string; costPence: number; jobs: number }>;
-  byProject: Array<{ projectId: string | null; costPence: number }>;
+  byProject: Array<{ projectId: string | null; name: string | null; costPence: number }>;
   byDay: Array<{ day: string; costPence: number }>;
 }
 

@@ -8,7 +8,7 @@ import type { Page, Publication } from '@/lib/client/types';
 // 200. A month rarely holds more, but the fetch follows the cursor for at most MAX_PAGES pages
 // so a busy agency account can never turn one calendar view into an unbounded crawl.
 
-export const CALENDAR_STATES = 'SCHEDULED,PUBLISHING,PUBLISHED';
+export const CALENDAR_STATES = 'SCHEDULED,PUBLISHING,PUBLISHED,FAILED';
 export const PAGE_LIMIT = 200;
 export const MAX_PAGES = 5;
 
