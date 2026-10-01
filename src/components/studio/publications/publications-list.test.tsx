@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Publication } from '@/lib/client/types';
-import { PublicationsList } from './publications-list';
+import { PUBLICATIONS_POLL_MS, PublicationsList, publicationsRefreshMs } from './publications-list';
 import { fail, mockFetch, ok, renderScreen } from './test-utils';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -165,5 +165,30 @@ describe('PublicationsList', () => {
       expect(toast.error).toHaveBeenCalledWith('Only published posts can be taken down'),
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+});
+
+describe('publicationsRefreshMs (QA 3: a post in flight must not stay "Publishing" until a reload)', () => {
+  it('polls while a post is publishing or queued to go out now', () => {
+    expect(publicationsRefreshMs({ data: [pub({ state: 'PUBLISHING' })] })).toBe(
+      PUBLICATIONS_POLL_MS,
+    );
+    expect(publicationsRefreshMs({ data: [pub({ state: 'SCHEDULED', scheduledFor: null })] })).toBe(
+      PUBLICATIONS_POLL_MS,
+    );
+  });
+
+  it('does not poll for settled, failed or future-scheduled posts, or before data arrives', () => {
+    expect(publicationsRefreshMs(undefined)).toBe(0);
+    expect(publicationsRefreshMs({ data: [] })).toBe(0);
+    expect(
+      publicationsRefreshMs({
+        data: [
+          pub({ state: 'PUBLISHED' }),
+          pub({ state: 'FAILED' }),
+          pub({ state: 'SCHEDULED', scheduledFor: '2099-01-01T00:00:00.000Z' }),
+        ],
+      }),
+    ).toBe(0);
   });
 });
