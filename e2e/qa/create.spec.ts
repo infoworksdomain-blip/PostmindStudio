@@ -126,7 +126,12 @@ test.describe('Create /new with a plan', () => {
   test('reference hand-off: unknown reference id degrades, mode radios and clear work', async ({
     page,
   }) => {
-    const w = new Watcher(page, [{ method: 'GET', url: /\/library\/videos\//, status: 404 }]);
+    // An unknown reference answers 404 for the video and, since the Create blueprint preview
+    // (QA-4), for its blueprint; the screen degrades to "Reference video unavailable".
+    const w = new Watcher(page, [
+      { method: 'GET', url: /\/library\/videos\//, status: 404 },
+      { method: 'GET', url: /\/library\/blueprint\//, status: 404 },
+    ]);
     await signIn(page, a.email);
     await page.goto('/new?reference=does-not-exist&mode=template');
     await expect(page.getByText('Reference video unavailable')).toBeVisible();
