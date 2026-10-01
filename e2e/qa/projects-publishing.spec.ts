@@ -764,7 +764,10 @@ test.describe('publish from a project', () => {
       where: { projectId: world.projects.approved, state: { in: ['SCHEDULED', 'PUBLISHING'] } },
     });
     expect(pubs.map((p) => p.platform).sort()).toEqual(['tiktok', 'youtube_short']);
-    expect(pubs.find((p) => p.platform === 'tiktok')?.hashtags).toContain('bread');
+    // Stored in the platform's casing (20.13 title-cases a word: Bread).
+    expect(
+      pubs.find((p) => p.platform === 'tiktok')?.hashtags.map((h) => h.toLowerCase()),
+    ).toContain('bread');
     await report(w);
   });
 
