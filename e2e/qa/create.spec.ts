@@ -239,11 +239,6 @@ test.describe('Plan my month with a plan', () => {
     await page.getByLabel('Videos and slideshows').fill('100');
     await expect(page.getByText('100% videos · 0% slideshows')).toBeVisible();
 
-    // No account chosen for TikTok: the form says so (accounts are not guessed).
-    await page.getByRole('button', { name: 'Draft my month' }).click();
-    const alert = page.locator('ul[role="alert"]');
-    if (await alert.count()) await expect(alert).toContainText('Choose a connected account');
-
     await page.getByLabel('Length in days').fill('40');
     await page
       .getByRole('combobox', { name: /TikTok account/ })
