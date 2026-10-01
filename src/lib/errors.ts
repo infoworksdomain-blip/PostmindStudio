@@ -255,6 +255,15 @@ export class CostCapPausedError extends StudioError {
   }
 }
 
+/**
+ * QA 3: the job queue (Redis) could not take a job. Nothing was posted and nothing was kept, so
+ * the same request can simply be sent again (502, translated errors.codes.queue_unavailable).
+ */
+export class QueueUnavailableError extends StudioError {
+  readonly status = 502;
+  readonly code = 'queue_unavailable';
+}
+
 /** A PostMind Core / Engagement dependency failed or returned an unexpected shape. */
 export class UpstreamServiceError extends StudioError {
   readonly status = 502;

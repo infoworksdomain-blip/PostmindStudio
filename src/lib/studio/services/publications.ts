@@ -1,6 +1,13 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { ConflictError, NotFoundError, PlatformError, ValidationError } from '../../errors';
+import {
+  ConflictError,
+  NotFoundError,
+  PlatformError,
+  QueueUnavailableError,
+  ValidationError,
+} from '../../errors';
+import { logger } from '../../logger';
 import type { TenantContext } from '../../tenant';
 import { composeCaption } from '../platforms/captions';
 import {
@@ -300,22 +307,71 @@ export async function createPublication(
   });
 
   const data = jobData(scopeOf(tenant), publication, currentRunId(render.project) ?? 'publish');
-  if (scheduledFor) {
-    const jobId = jobIds.fireScheduled(data);
-    // The fire job carries its time: a later reschedule (13.9) turns this job into a no-op.
-    const fireData = { ...data, scheduledFor: scheduledFor.toISOString() };
-    await deps.queue.add('fire-scheduled-publication', fireData, {
-      jobId,
-      delayMs: scheduledFor.getTime() - deps.now(),
-    });
-    await db.scheduledPublication.update({
-      where: { publicationId: publication.id },
-      data: { jobId },
-    });
-  } else {
-    await deps.queue.add('publish-video', data, { jobId: jobIds.publishVideo(data, 0) });
+  try {
+    if (scheduledFor) {
+      const jobId = jobIds.fireScheduled(data);
+      // The fire job carries its time: a later reschedule (13.9) turns this job into a no-op.
+      const fireData = { ...data, scheduledFor: scheduledFor.toISOString() };
+      await deps.queue.add('fire-scheduled-publication', fireData, {
+        jobId,
+        delayMs: scheduledFor.getTime() - deps.now(),
+      });
+      await db.scheduledPublication.update({
+        where: { publicationId: publication.id },
+        data: { jobId },
+      });
+    } else {
+      await deps.queue.add('publish-video', data, { jobId: jobIds.publishVideo(data, 0) });
+    }
+  } catch (err) {
+    await rollBackUnqueued(db, publication.id, render.projectId, render.project.state, err);
+    throw new QueueUnavailableError(QUEUE_DOWN_MESSAGE, { publicationId: publication.id });
   }
   return publication;
+}
+
+const QUEUE_DOWN_MESSAGE =
+  'Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment.';
+
+/** Project states createPublication / retryPublication move to PUBLISHING. */
+const RESTORABLE_PROJECT_STATES = ['APPROVED', 'PUBLISHED', 'PARTIALLY_PUBLISHED'];
+
+/**
+ * The publication row is committed before its job is queued (so a crash between the two is found
+ * by the lost-publications sweep, 17.2). When the queue itself refuses the job, the row has no job
+ * and the caller gets an error: delete it and put the project back, so the same request can be
+ * sent again (otherwise the retry hits "already scheduled"). If even the rollback fails, the row
+ * stays SCHEDULED and the sweep re-drives it.
+ */
+async function rollBackUnqueued(
+  db: PrismaClient,
+  publicationId: string,
+  projectId: string,
+  previousProjectState: string,
+  cause: unknown,
+): Promise<void> {
+  logger.error({ err: cause, publicationId, projectId }, 'publish job could not be queued');
+  try {
+    await db.$transaction(async (tx) => {
+      await tx.scheduledPublication.deleteMany({ where: { publicationId } });
+      await tx.videoPublication.deleteMany({ where: { id: publicationId, state: 'SCHEDULED' } });
+      if (RESTORABLE_PROJECT_STATES.includes(previousProjectState)) {
+        const inFlight = await tx.videoPublication.count({
+          where: { projectId, state: { in: ['SCHEDULED', 'PUBLISHING'] } },
+        });
+        if (inFlight === 0)
+          await tx.videoProject.updateMany({
+            where: { id: projectId, state: 'PUBLISHING' },
+            data: { state: previousProjectState as 'APPROVED' },
+          });
+      }
+    });
+  } catch (rollbackErr) {
+    logger.error(
+      { err: rollbackErr, publicationId },
+      'rolling back an unqueued publication failed',
+    );
+  }
 }
 
 /** Cancel before it fires: the delayed job becomes a no-op (it checks state). */
@@ -387,9 +443,35 @@ export async function retryPublicationFor(
     data: { state: 'PUBLISHING' },
   });
   const data = jobData(scope, publication, currentRunId(project) ?? 'publish');
-  await deps.queue.add('publish-video', data, {
-    jobId: jobIds.publishVideo(data, publication.retryCount),
-  });
+  try {
+    await deps.queue.add('publish-video', data, {
+      jobId: jobIds.publishVideo(data, publication.retryCount),
+    });
+  } catch (err) {
+    logger.error({ err, publicationId: id }, 'publish retry could not be queued');
+    // Put the post back as it was (FAILED, same reason) so the user can press Retry again.
+    await deps.db.videoPublication
+      .updateMany({
+        where: { id, organisationId: scope.organisationId, state: 'SCHEDULED' },
+        data: {
+          state: 'FAILED',
+          errorReason: publication.errorReason,
+          errorCode: publication.errorCode,
+          metadata: (publication.metadata ?? {}) as Prisma.InputJsonValue,
+        },
+      })
+      .catch((rollbackErr: unknown) =>
+        logger.error({ err: rollbackErr, publicationId: id }, 'restoring a failed post failed'),
+      );
+    if (RESTORABLE_PROJECT_STATES.includes(project.state) && project.state !== 'APPROVED')
+      await deps.db.videoProject
+        .updateMany({
+          where: { id: project.id, organisationId: scope.organisationId, state: 'PUBLISHING' },
+          data: { state: project.state as 'PUBLISHED' },
+        })
+        .catch(() => undefined);
+    throw new QueueUnavailableError(QUEUE_DOWN_MESSAGE, { publicationId: id });
+  }
   return findPublication(deps.db, scope.organisationId, id);
 }
 

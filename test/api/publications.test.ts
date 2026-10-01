@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as cancelRoute from '../../src/app/api/studio/publications/[id]/cancel/route';
 import * as retryRoute from '../../src/app/api/studio/publications/[id]/retry/route';
 import * as publicationRoute from '../../src/app/api/studio/publications/[id]/route';
@@ -523,5 +523,81 @@ describe.skipIf(!hasDb)('publications API + publish worker', { timeout: 60_000 }
     const strangers = await call(publicationsRoute.GET, { token: 'stranger' });
     expect(strangers.status).toBe(200);
     expect(strangers.json.data).toEqual([]);
+  });
+
+  // QA 3: the row is committed before the job is enqueued. A queue outage used to leave a
+  // SCHEDULED row behind with a 500, so the user's retry hit "already scheduled".
+  it('answers 502 queue_unavailable and leaves nothing behind when the queue is down; a retry works', async () => {
+    const { project, render } = await approvedRender();
+    const conn = await connection('tiktok');
+    const body = { renderId: render.id, platform: 'tiktok', connectionId: conn.id, caption: 'Hi' };
+    const add = vi.spyOn(h.queue, 'add').mockRejectedValueOnce(new Error('connect ECONNREFUSED'));
+
+    const down = await publish(body);
+    expect(down.status).toBe(502);
+    expect(down.json.error).toBe('queue_unavailable');
+    expect(JSON.stringify(down.json)).not.toContain('ECONNREFUSED');
+    expect(await db.videoPublication.count({ where: { renderId: render.id } })).toBe(0);
+    expect((await db.videoProject.findUnique({ where: { id: project.id } }))?.state).toBe(
+      'APPROVED',
+    );
+
+    add.mockRestore();
+    const again = await publish(body);
+    expect(again.status).toBe(202);
+  });
+
+  it('a scheduled post is rolled back the same way when its delayed job cannot be queued', async () => {
+    const { render } = await approvedRender();
+    const conn = await connection('tiktok');
+    vi.spyOn(h.queue, 'add').mockRejectedValueOnce(new Error('Redis version needs to be >= 5'));
+    const res = await publish({
+      renderId: render.id,
+      platform: 'tiktok',
+      connectionId: conn.id,
+      scheduledFor: new Date(Date.now() + 86_400_000).toISOString(),
+    });
+    expect(res.status).toBe(502);
+    expect(await db.videoPublication.count({ where: { renderId: render.id } })).toBe(0);
+  });
+
+  it('retry with the queue down keeps the post FAILED (reason intact) and answers 502; retrying again works', async () => {
+    const { project, render } = await approvedRender({ state: 'PARTIALLY_PUBLISHED' });
+    const conn = await connection('tiktok');
+    const failed = await db.videoPublication.create({
+      data: {
+        organisationId: org,
+        projectId: project.id,
+        renderId: render.id,
+        platform: 'tiktok',
+        platformAccountId: conn.platformAccountId,
+        state: 'FAILED',
+        errorReason: 'tiktok/unavailable: nope',
+        errorCode: 'unavailable',
+        metadata: { connectionId: conn.id },
+      },
+    });
+    const add = vi.spyOn(h.queue, 'add').mockRejectedValueOnce(new Error('ECONNREFUSED'));
+    const down = await call(retryRoute.POST, {
+      method: 'POST',
+      token: 'owner',
+      params: { id: failed.id },
+    });
+    expect(down.status).toBe(502);
+    expect(down.json.error).toBe('queue_unavailable');
+    const after = await db.videoPublication.findUniqueOrThrow({ where: { id: failed.id } });
+    expect(after.state).toBe('FAILED');
+    expect(after.errorReason).toBe('tiktok/unavailable: nope');
+    expect((await db.videoProject.findUnique({ where: { id: project.id } }))?.state).toBe(
+      'PARTIALLY_PUBLISHED',
+    );
+
+    add.mockRestore();
+    const ok = await call(retryRoute.POST, {
+      method: 'POST',
+      token: 'owner',
+      params: { id: failed.id },
+    });
+    expect(ok.status).toBe(202);
   });
 });
