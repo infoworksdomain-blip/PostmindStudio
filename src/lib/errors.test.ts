@@ -6,6 +6,7 @@ import {
   NotFoundError,
   NotImplementedError,
   ProviderError,
+  ProvidersUnavailableError,
   RateLimitError,
   StudioError,
   UnauthorizedError,
@@ -74,5 +75,31 @@ describe('toErrorResponse', () => {
     const res = toErrorResponse(new ConfigurationError('Missing JWT_SECRET'));
     expect(res.status).toBe(500);
     expect(JSON.stringify(await res.json())).not.toContain('JWT_SECRET');
+  });
+
+  // 20.11 production bug: the Anthropic usage-limit JSON reached a customer.
+  it('never passes a provider message or raw body to the caller', async () => {
+    const raw =
+      '400 {"type":"error","error":{"type":"invalid_request_error","message":"You have reached your specified API usage limits."}}';
+    const res = toErrorResponse(new ProviderError('anthropic', 'account_limit', raw, false));
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body).toMatchObject({ ok: false, error: 'provider_error' });
+    expect(JSON.stringify(body)).not.toContain('usage limits');
+    expect(JSON.stringify(body)).not.toContain('invalid_request_error');
+  });
+
+  it('answers 503 service_unavailable with a friendly sentence when every provider is out', async () => {
+    const res = toErrorResponse(
+      new ProvidersUnavailableError('text_generation', [
+        { providerId: 'anthropic', errorClass: 'account_limit', retryAt: '2026-10-01T00:00:00Z' },
+        { providerId: 'openai', errorClass: 'insufficient_credits' },
+      ]),
+    );
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe('service_unavailable');
+    expect(body.message).toMatch(/temporarily unavailable/);
+    expect(JSON.stringify(body)).not.toContain('anthropic');
   });
 });

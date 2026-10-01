@@ -7,6 +7,7 @@ import { StubAdapter } from '../providers/test-adapter';
 import { buildShotstackEdit, escapeHtml, outputDimensions, totalDuration } from './edl';
 import { buildIdeationPrompt, parseIdeationResult } from './ideation';
 import {
+  LOUDNESS_FILTER,
   parseBlackdetect,
   parseFfprobe,
   parseIntegratedLoudness,
@@ -334,6 +335,10 @@ describe('media probe parsers', () => {
     expect(() => parseFfprobe(JSON.stringify({ format: {}, streams: [] }))).toThrow(
       /no video stream/,
     );
+  });
+
+  it('uses an ebur128 framelog level the runtime ffmpeg 5.1 accepts (info or verbose only)', () => {
+    expect(LOUDNESS_FILTER).toMatch(/^ebur128=framelog=(info|verbose)$/);
   });
 
   it('parses blackdetect and ebur128 output', () => {

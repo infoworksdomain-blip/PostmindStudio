@@ -21,11 +21,27 @@ export const TRIAL_TIMEOUT_MS = 15 * 60_000;
 
 export type BreakerState = 'closed' | 'open' | 'half_open';
 
+/**
+ * 20.11: why a provider is held out of routing for an account problem (bad key, no credits,
+ * usage / spend limit) and until when. Shown in the Admin Centre provider health view.
+ */
+export interface AccountHold {
+  errorClass: string;
+  reason: string;
+  /** ms since epoch: when the provider may be tried again (then one half-open trial). */
+  until: number;
+  /** ms since epoch: when the hold was placed. */
+  since: number;
+}
+
 interface ProviderBreaker {
   failures: number[]; // timestamps within the window
   openedAt?: number;
+  /** How long this opening lasts; undefined = OPEN_DURATION_MS (20.11 account holds differ). */
+  openMs?: number;
   /** When the half-open trial slot was claimed; undefined = free. */
   trialStartedAt?: number;
+  hold?: AccountHold;
 }
 
 export type Awaitable<T> = T | Promise<T>;
@@ -39,6 +55,14 @@ export interface CircuitBreaker {
   /** Free a claimed trial slot whose request was never sent (e.g. aborted by the kill switch). */
   releaseTrial(providerId: string): Awaitable<void>;
   snapshot(): Awaitable<Record<string, BreakerState>>;
+  /**
+   * 20.11: open the breaker at once until `hold.until` for an account problem (no failure count:
+   * retrying the same account cannot succeed). Optional so simple test doubles stay valid;
+   * callers fall back to recordFailure.
+   */
+  tripAccount?(providerId: string, hold: Omit<AccountHold, 'since'>): Awaitable<void>;
+  /** 20.11: the account holds still in force, by provider. */
+  accountHolds?(): Awaitable<Record<string, AccountHold>>;
 }
 
 /** The in-memory store answers synchronously. */
@@ -49,12 +73,18 @@ export interface MemoryCircuitBreaker extends CircuitBreaker {
   recordFailure(providerId: string): void;
   releaseTrial(providerId: string): void;
   snapshot(): Record<string, BreakerState>;
+  tripAccount(providerId: string, hold: Omit<AccountHold, 'since'>): void;
+  accountHolds(): Record<string, AccountHold>;
 }
 
 /** Breaker state from the time it opened (shared by both stores). */
-export function stateAt(openedAt: number | undefined, now: number): BreakerState {
+export function stateAt(
+  openedAt: number | undefined,
+  now: number,
+  openMs: number = OPEN_DURATION_MS,
+): BreakerState {
   if (openedAt === undefined) return 'closed';
-  return now - openedAt >= OPEN_DURATION_MS ? 'half_open' : 'open';
+  return now - openedAt >= openMs ? 'half_open' : 'open';
 }
 
 export function createCircuitBreaker(now: () => number = Date.now): MemoryCircuitBreaker {
@@ -70,13 +100,16 @@ export function createCircuitBreaker(now: () => number = Date.now): MemoryCircui
   }
 
   function state(providerId: string): BreakerState {
-    return stateAt(breakers.get(providerId)?.openedAt, now());
+    const breaker = breakers.get(providerId);
+    return stateAt(breaker?.openedAt, now(), breaker?.openMs);
   }
 
-  function open(breaker: ProviderBreaker): void {
+  function open(breaker: ProviderBreaker, openMs?: number): void {
     breaker.openedAt = now();
+    breaker.openMs = openMs;
     breaker.failures = [];
     breaker.trialStartedAt = undefined;
+    if (openMs === undefined) breaker.hold = undefined;
   }
 
   return {
@@ -95,8 +128,10 @@ export function createCircuitBreaker(now: () => number = Date.now): MemoryCircui
     recordSuccess(providerId) {
       const breaker = get(providerId);
       breaker.openedAt = undefined;
+      breaker.openMs = undefined;
       breaker.failures = [];
       breaker.trialStartedAt = undefined;
+      breaker.hold = undefined;
     },
     recordFailure(providerId) {
       const breaker = get(providerId);
@@ -113,6 +148,20 @@ export function createCircuitBreaker(now: () => number = Date.now): MemoryCircui
     },
     snapshot() {
       return Object.fromEntries([...breakers.keys()].map((id) => [id, state(id)]));
+    },
+    tripAccount(providerId, hold) {
+      const breaker = get(providerId);
+      const since = now();
+      open(breaker, Math.max(0, hold.until - since));
+      breaker.hold = { ...hold, since };
+    },
+    accountHolds() {
+      const t = now();
+      return Object.fromEntries(
+        [...breakers.entries()]
+          .filter(([, b]) => b.hold !== undefined && b.hold.until > t)
+          .map(([id, b]) => [id, b.hold as AccountHold]),
+      );
     },
   };
 }

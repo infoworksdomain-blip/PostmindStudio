@@ -47,6 +47,35 @@ describe('ScanPanel', () => {
     expect(screen.getByText('Timed out on /blog')).toBeInTheDocument();
   });
 
+  // 20.11 production bug (2026-09-30): the customer saw Anthropic's raw 400 JSON here.
+  it('shows a friendly sentence, never raw provider JSON, when the AI service is unavailable', async () => {
+    const raw =
+      'anthropic/invalid_request: 400 {"type":"error","error":{"type":"invalid_request_error","message":"You have reached your specified API usage limits. You will regain access on 2026-10-01 at 00:00 UTC."},"request_id":"req_1"}';
+    mockFetch((req) =>
+      req.url.pathname.endsWith('/scans')
+        ? ok({ data: [{ ...SCAN, state: 'FAILED' }] })
+        : ok({
+            scan: detail({
+              state: 'FAILED',
+              errors: [
+                'service_unavailable: Every text_generation provider is unavailable: anthropic/account_limit until 2026-10-01T00:00:00.000Z, openai/insufficient_credits',
+                raw,
+                'service_unavailable: anthropic/account_limit',
+              ],
+            }),
+          }),
+    );
+    renderScreen(<ScanPanel businessId="biz_1" />);
+    const items = await screen.findAllByText(/Our AI service is temporarily unavailable/);
+    expect(items).toHaveLength(2);
+    const list = items[0]!.closest('ul')!;
+    expect(list).not.toHaveTextContent('{');
+    expect(list).not.toHaveTextContent('usage limits');
+    expect(list).not.toHaveTextContent('openai');
+    // A pre-20.11 row: the class sentence without the provider's text.
+    expect(list).toHaveTextContent('Anthropic reported a problem: the request was rejected.');
+  });
+
   it('requires the ownership warranty and sends it with the URL', async () => {
     const api = mockFetch((req) => {
       if (req.method === 'POST') return ok({ scanId: 'scan_2', scan: { ...SCAN, id: 'scan_2' } });

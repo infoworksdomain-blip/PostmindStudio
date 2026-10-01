@@ -13,6 +13,7 @@ import {
   OPEN_DURATION_MS,
   stateAt,
   TRIAL_TIMEOUT_MS,
+  type AccountHold,
   type BreakerState,
   type CircuitBreaker,
   type MemoryCircuitBreaker,
@@ -23,7 +24,9 @@ import {
 // for every process, and there is one half-open trial platform-wide.
 //
 // Keys (Studio's Redis DB 3):
-//   studio:breaker:<provider>            HASH  openedAt, trialStartedAt (ms since epoch)
+//   studio:breaker:<provider>            HASH  openedAt, trialStartedAt (ms since epoch); 20.11
+//                                              account holds add openMs, holdClass, holdReason,
+//                                              holdUntil, holdSince
 //   studio:breaker:<provider>:failures   ZSET  failure timestamps inside the 60 s window
 //   studio:breaker:providers             SET   providers ever recorded (snapshot / admin)
 // Every read-modify-write is one Lua script (atomic; Redis >= 2.6). Times come from the
@@ -43,11 +46,13 @@ const stateKey = (providerId: string) => `${BREAKER_KEY_PREFIX}${providerId}`;
 const failuresKey = (providerId: string) => `${BREAKER_KEY_PREFIX}${providerId}:failures`;
 
 // KEYS: state hash. ARGV: now, open duration, trial timeout. 1 = may send, 0 = blocked.
+// A 20.11 account hold stores its own open duration (openMs).
 const TRY_ACQUIRE = `
 local opened = redis.call('HGET', KEYS[1], 'openedAt')
 if not opened then return 1 end
 local now = tonumber(ARGV[1])
-if now - tonumber(opened) < tonumber(ARGV[2]) then return 0 end
+local openMs = tonumber(redis.call('HGET', KEYS[1], 'openMs') or ARGV[2])
+if now - tonumber(opened) < openMs then return 0 end
 local trial = redis.call('HGET', KEYS[1], 'trialStartedAt')
 if trial and now - tonumber(trial) < tonumber(ARGV[3]) then return 0 end
 redis.call('HSET', KEYS[1], 'trialStartedAt', ARGV[1])
@@ -60,9 +65,10 @@ redis.call('SADD', KEYS[3], ARGV[6])
 local now = tonumber(ARGV[1])
 local opened = redis.call('HGET', KEYS[1], 'openedAt')
 if opened then
-  if now - tonumber(opened) >= tonumber(ARGV[2]) then
+  local openMs = tonumber(redis.call('HGET', KEYS[1], 'openMs') or ARGV[2])
+  if now - tonumber(opened) >= openMs then
     redis.call('HSET', KEYS[1], 'openedAt', ARGV[1])
-    redis.call('HDEL', KEYS[1], 'trialStartedAt')
+    redis.call('HDEL', KEYS[1], 'trialStartedAt', 'openMs', 'holdClass', 'holdReason', 'holdUntil', 'holdSince')
     redis.call('DEL', KEYS[2])
     return 2
   end
@@ -73,11 +79,22 @@ redis.call('ZADD', KEYS[2], now, ARGV[5])
 redis.call('PEXPIRE', KEYS[2], ARGV[3])
 if redis.call('ZCARD', KEYS[2]) >= tonumber(ARGV[4]) then
   redis.call('HSET', KEYS[1], 'openedAt', ARGV[1])
-  redis.call('HDEL', KEYS[1], 'trialStartedAt')
+  redis.call('HDEL', KEYS[1], 'trialStartedAt', 'openMs', 'holdClass', 'holdReason', 'holdUntil', 'holdSince')
   redis.call('DEL', KEYS[2])
   return 2
 end
 return 0`;
+
+// 20.11 — KEYS: state hash, failures zset, providers set. ARGV: now, open ms, error class,
+// reason, until, provider id. Opens the breaker at once for an account hold. HMSET (not a
+// multi-field HSET) keeps Redis < 4 working.
+const TRIP_ACCOUNT = `
+redis.call('SADD', KEYS[3], ARGV[6])
+redis.call('HDEL', KEYS[1], 'trialStartedAt')
+redis.call('HMSET', KEYS[1], 'openedAt', ARGV[1], 'openMs', ARGV[2], 'holdClass', ARGV[3],
+  'holdReason', ARGV[4], 'holdUntil', ARGV[5], 'holdSince', ARGV[1])
+redis.call('DEL', KEYS[2])
+return 1`;
 
 /** The Redis commands the store uses (ioredis satisfies it; tests may pass a failing double). */
 export interface BreakerRedisClient {
@@ -115,16 +132,33 @@ export function createRedisCircuitBreaker(deps: RedisBreakerDeps): CircuitBreake
     }
   }
 
-  const openedAtOf = async (providerId: string) => {
-    const raw = await deps.client.hget(stateKey(providerId), 'openedAt');
-    return raw === null ? undefined : Number(raw);
+  const numberField = async (providerId: string, field: string) => {
+    const raw = await deps.client.hget(stateKey(providerId), field);
+    return raw === null || raw === undefined ? undefined : Number(raw);
+  };
+  const stateOf = async (providerId: string) =>
+    stateAt(
+      await numberField(providerId, 'openedAt'),
+      now(),
+      await numberField(providerId, 'openMs'),
+    );
+  const holdOf = async (providerId: string): Promise<AccountHold | undefined> => {
+    const until = await numberField(providerId, 'holdUntil');
+    if (until === undefined || !(until > now())) return undefined;
+    const key = stateKey(providerId);
+    return {
+      errorClass: (await deps.client.hget(key, 'holdClass')) ?? 'unknown',
+      reason: (await deps.client.hget(key, 'holdReason')) ?? '',
+      until,
+      since: (await numberField(providerId, 'holdSince')) ?? until,
+    };
   };
 
   return {
     state(providerId) {
       return shared(
         'state',
-        async () => stateAt(await openedAtOf(providerId), now()),
+        async () => stateOf(providerId),
         () => local.state(providerId),
       );
     },
@@ -194,14 +228,51 @@ export function createRedisCircuitBreaker(deps: RedisBreakerDeps): CircuitBreake
         async () => {
           const ids = await deps.client.smembers(BREAKER_PROVIDERS_KEY);
           const states = await Promise.all(
-            ids.map(async (id): Promise<[string, BreakerState]> => [
-              id,
-              stateAt(await openedAtOf(id), now()),
-            ]),
+            ids.map(async (id): Promise<[string, BreakerState]> => [id, await stateOf(id)]),
           );
           return Object.fromEntries(states.sort(([a], [b]) => a.localeCompare(b)));
         },
         () => local.snapshot(),
+      );
+    },
+    tripAccount(providerId, hold) {
+      local.tripAccount(providerId, hold);
+      return shared(
+        'tripAccount',
+        async () => {
+          await deps.client.eval(
+            TRIP_ACCOUNT,
+            3,
+            stateKey(providerId),
+            failuresKey(providerId),
+            BREAKER_PROVIDERS_KEY,
+            String(now()),
+            String(Math.max(0, hold.until - now())),
+            hold.errorClass,
+            hold.reason,
+            String(hold.until),
+            providerId,
+          );
+        },
+        () => undefined,
+      );
+    },
+    accountHolds() {
+      return shared(
+        'accountHolds',
+        async () => {
+          const ids = await deps.client.smembers(BREAKER_PROVIDERS_KEY);
+          const holds = await Promise.all(
+            ids.map(async (id): Promise<[string, AccountHold | undefined]> => [
+              id,
+              await holdOf(id),
+            ]),
+          );
+          return Object.fromEntries(
+            holds.filter((entry): entry is [string, AccountHold] => entry[1] !== undefined),
+          );
+        },
+        () => local.accountHolds(),
       );
     },
   };

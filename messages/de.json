@@ -259,7 +259,8 @@
       "upload_failed": "Der Upload ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "plan_required": "Ihre Organisation hat noch keinen Tarif. Wählen Sie einen Tarif, um mit dem Erstellen zu beginnen.",
       "billing_required": "Ihr Konto ist wegen eines Abrechnungsproblems schreibgeschützt. Aktualisieren Sie Ihre Zahlungsdaten, um fortzufahren.",
-      "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren."
+      "no_organisation": "Erstellen Sie eine Organisation oder treten Sie einer bei, um fortzufahren.",
+      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt."
     }
   },
   "primitives": {
@@ -444,6 +445,14 @@
     "scheduleNoFreeSlot": {
       "title": "„{name}“ wurde nicht eingeplant",
       "body": "Keine freie Posting-Zeit in {weeks, plural, one {der nächsten Woche} other {den nächsten # Wochen}} — fügen Sie Posting-Zeiten hinzu oder wählen Sie ein Datum."
+    },
+    "providerAccountProblem": {
+      "title": "Konto bei {provider} braucht Aufmerksamkeit",
+      "body": "{provider} nimmt keine {capability}-Aufträge mehr an ({errorClass}). Studio weicht auf den nächsten Anbieter aus und nimmt {provider} aus dem Routing.{retryAt, select, none {} other { Laut Anbieter ist der Zugriff ab {retryAt} wieder möglich.}}"
+    },
+    "providersUnavailable": {
+      "title": "Kein {capability}-Anbieter verfügbar",
+      "body": "Alle {capability}-Anbieter sind mit einem Kontoproblem ausgefallen: {providers}. Kunden sehen „vorübergehend nicht verfügbar“, bis eines dieser Konten behoben ist."
     }
   },
   "create": {
@@ -2595,7 +2604,13 @@
           "open": "Offen"
         },
         "jobCounts": "{succeeded} ok · {failed} fehlgeschlagen",
-        "jobCountsRunning": "{succeeded} ok · {failed} fehlgeschlagen · {running} laufend"
+        "jobCountsRunning": "{succeeded} ok · {failed} fehlgeschlagen · {running} laufend",
+        "accountHold": "Gesperrt: {problem} bis {until} UTC",
+        "holdClass": {
+          "auth": "API-Schlüssel abgelehnt",
+          "insufficient_credits": "kein Guthaben",
+          "account_limit": "Nutzungslimit erreicht"
+        }
       }
     },
     "killSwitch": {
@@ -3549,7 +3564,8 @@
       "scan_cost_cap": "Der Scan wurde an seiner Kostenobergrenze ({amount}) gestoppt.",
       "scan_images_capped": "Der Scan hat seine Kostenobergrenze ({amount}) erreicht: Einige Bilder wurden nicht für die Suche indexiert.",
       "ownership_disputed": "Gestoppt: Die Inhaberschaft der Website wurde angefochten.",
-      "provider_failure": "{source} hat ein Problem gemeldet: {problem}."
+      "provider_failure": "{source} hat ein Problem gemeldet: {problem}.",
+      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",
@@ -3566,7 +3582,8 @@
       "quota_exceeded": "Kontingent erreicht",
       "invalid_media": "Videodatei abgelehnt",
       "outcome_unknown": "Ergebnis unbekannt – prüfen Sie die Plattform, bevor Sie es erneut versuchen",
-      "unknown": "unbekannter Fehler"
+      "unknown": "unbekannter Fehler",
+      "account_limit": "ein Nutzungslimit wurde erreicht"
     }
   },
   "marketing": {

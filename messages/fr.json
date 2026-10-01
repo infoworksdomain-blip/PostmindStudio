@@ -259,7 +259,8 @@
       "upload_failed": "Le téléversement a échoué. Réessayez.",
       "plan_required": "Votre organisation n’a pas encore de formule. Choisissez une formule pour commencer à créer.",
       "billing_required": "Votre compte est en lecture seule en raison d’un problème de facturation. Mettez à jour vos informations de paiement pour continuer.",
-      "no_organisation": "Créez une organisation ou rejoignez-en une pour continuer."
+      "no_organisation": "Créez une organisation ou rejoignez-en une pour continuer.",
+      "service_unavailable": "Notre service d’IA est temporairement indisponible. Veuillez réessayer plus tard : notre équipe a été prévenue."
     }
   },
   "primitives": {
@@ -444,6 +445,14 @@
     "scheduleNoFreeSlot": {
       "title": "« {name} » n’a pas été programmée",
       "body": "Aucun créneau libre dans {weeks, plural, one {la semaine à venir} other {les # semaines à venir}} — ajoutez des heures de publication ou choisissez une date."
+    },
+    "providerAccountProblem": {
+      "title": "Le compte {provider} demande votre attention",
+      "body": "{provider} n’accepte plus les tâches {capability} ({errorClass}). Studio bascule vers le fournisseur suivant et retire {provider} du routage.{retryAt, select, none {} other { Selon le fournisseur, l’accès reprend le {retryAt}.}}"
+    },
+    "providersUnavailable": {
+      "title": "Aucun fournisseur {capability} disponible",
+      "body": "Tous les fournisseurs {capability} ont échoué à cause d’un problème de compte : {providers}. Les clients voient « temporairement indisponible » jusqu’à ce que l’un de ces comptes soit réparé."
     }
   },
   "create": {
@@ -2595,7 +2604,13 @@
           "open": "Ouvert"
         },
         "jobCounts": "{succeeded} réussies · {failed} en échec",
-        "jobCountsRunning": "{succeeded} réussies · {failed} en échec · {running} en cours"
+        "jobCountsRunning": "{succeeded} réussies · {failed} en échec · {running} en cours",
+        "accountHold": "Suspendu : {problem} jusqu’au {until} UTC",
+        "holdClass": {
+          "auth": "clé d’API refusée",
+          "insufficient_credits": "plus de crédits",
+          "account_limit": "limite d’utilisation atteinte"
+        }
       }
     },
     "killSwitch": {
@@ -3549,7 +3564,8 @@
       "scan_cost_cap": "L’analyse s’est arrêtée à son plafond de coût ({amount}).",
       "scan_images_capped": "L’analyse a atteint son plafond de coût ({amount}) : certaines images n’ont pas été indexées pour la recherche.",
       "ownership_disputed": "Arrêté : la propriété du site a été contestée.",
-      "provider_failure": "{source} a signalé un problème : {problem}."
+      "provider_failure": "{source} a signalé un problème : {problem}.",
+      "service_unavailable": "Notre service d’IA est temporairement indisponible, cette opération n’a donc pas pu aboutir. Veuillez réessayer plus tard : notre équipe a été prévenue."
     },
     "classes": {
       "rate_limited": "trop de requêtes",
@@ -3566,7 +3582,8 @@
       "quota_exceeded": "quota atteint",
       "invalid_media": "fichier vidéo refusé",
       "outcome_unknown": "résultat inconnu — vérifiez la plateforme avant de réessayer",
-      "unknown": "erreur inconnue"
+      "unknown": "erreur inconnue",
+      "account_limit": "une limite d’utilisation a été atteinte"
     }
   },
   "marketing": {

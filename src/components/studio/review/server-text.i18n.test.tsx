@@ -33,8 +33,9 @@ describe('FailureReason', () => {
   });
 
   it('translates coded reasons in Simplified Chinese', () => {
+    // 20.11: the provider's own text is not shown (it can be a raw JSON body).
     expect(reason('zh-Hans', 'composition_failed: shotstack/rate_limited: Too Many Requests')).toBe(
-      '视频合成失败。 Shotstack 报告了问题：请求过多。 Too Many Requests',
+      '视频合成失败。 Shotstack 报告了问题：请求过多。',
     );
     expect(reason('zh-Hans', 'scan_cost_cap: Stopped at the scan cost cap (50p)')).toMatch(
       /^扫描已在费用上限（.*0\.50.*）处停止。$/,
@@ -51,6 +52,25 @@ describe('FailureReason', () => {
         'quality_failed: tiktok/audio_present: no audio stream; tiktok/codec: vp9 (x) in webm',
       ),
     ).toBe('2 项质量检查未通过：TikTok – 音频存在和TikTok – 编码格式。');
+  });
+
+  it('20.11: account problems read as a friendly unavailable sentence in every locale', () => {
+    expect(reason('en-GB', 'service_unavailable: anthropic/account_limit')).toBe(
+      'Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted.',
+    );
+    expect(
+      reason('ar', 'planning_failed: service_unavailable: Every text_generation provider'),
+    ).toBe(
+      'فشل تخطيط الفيديو. خدمة الذكاء الاصطناعي لدينا غير متاحة مؤقتًا، لذا تعذّر إكمال هذا. يُرجى المحاولة لاحقًا، فقد تم إبلاغ فريقنا.',
+    );
+    // Rows stored before 20.11 as <provider>/<account class>: <provider text>.
+    expect(
+      reason('zh-Hans', 'openai/insufficient_credits: 429 You have no credits remaining.'),
+    ).toBe('我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。');
+    // A social platform's reason is still shown.
+    expect(reason('en-GB', 'tiktok/content_policy: Video violates community guidelines')).toContain(
+      'Video violates community guidelines',
+    );
   });
 
   it('falls back to the stored text for reasons without a known code', () => {

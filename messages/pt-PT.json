@@ -259,7 +259,8 @@
       "upload_failed": "O carregamento falhou. Tente novamente.",
       "plan_required": "A sua organização ainda não tem um plano. Escolha um plano para começar a criar.",
       "billing_required": "A sua conta está só de leitura devido a um problema de faturação. Atualize os seus dados de pagamento para continuar.",
-      "no_organisation": "Crie uma organização ou junte-se a uma para continuar."
+      "no_organisation": "Crie uma organização ou junte-se a uma para continuar.",
+      "service_unavailable": "O nosso serviço de IA está temporariamente indisponível. Tente novamente mais tarde — a nossa equipa já foi alertada."
     }
   },
   "primitives": {
@@ -444,6 +445,14 @@
     "scheduleNoFreeSlot": {
       "title": "«{name}» não foi agendado",
       "body": "Nenhuma hora de publicação livre {weeks, plural, one {na próxima semana} other {nas próximas # semanas}} — adicione horas ou escolha uma data."
+    },
+    "providerAccountProblem": {
+      "title": "A conta {provider} precisa de atenção",
+      "body": "{provider} deixou de aceitar trabalhos de {capability} ({errorClass}). O Studio passa para o fornecedor seguinte e retira {provider} do encaminhamento.{retryAt, select, none {} other { Segundo o fornecedor, o acesso é retomado a {retryAt}.}}"
+    },
+    "providersUnavailable": {
+      "title": "Nenhum fornecedor de {capability} disponível",
+      "body": "Todos os fornecedores de {capability} falharam devido a um problema de conta: {providers}. Os clientes veem «temporariamente indisponível» até uma destas contas ser corrigida."
     }
   },
   "create": {
@@ -2595,7 +2604,13 @@
           "open": "Aberto"
         },
         "jobCounts": "{succeeded} ok · {failed} com falha",
-        "jobCountsRunning": "{succeeded} ok · {failed} com falha · {running} em execução"
+        "jobCountsRunning": "{succeeded} ok · {failed} com falha · {running} em execução",
+        "accountHold": "Retido: {problem} até {until} UTC",
+        "holdClass": {
+          "auth": "chave de API recusada",
+          "insufficient_credits": "sem créditos",
+          "account_limit": "limite de utilização atingido"
+        }
       }
     },
     "killSwitch": {
@@ -3549,7 +3564,8 @@
       "scan_cost_cap": "A análise parou no limite de custo ({amount}).",
       "scan_images_capped": "A análise atingiu o limite de custo ({amount}): algumas imagens não foram indexadas para pesquisa.",
       "ownership_disputed": "Interrompido: a propriedade do site foi contestada.",
-      "provider_failure": "{source} informou um problema: {problem}."
+      "provider_failure": "{source} informou um problema: {problem}.",
+      "service_unavailable": "O nosso serviço de IA está temporariamente indisponível, pelo que não foi possível concluir. Tente novamente mais tarde — a nossa equipa já foi alertada."
     },
     "classes": {
       "rate_limited": "demasiados pedidos",
@@ -3566,7 +3582,8 @@
       "quota_exceeded": "cota atingida",
       "invalid_media": "arquivo de vídeo recusado",
       "outcome_unknown": "resultado desconhecido — verifique a plataforma antes de tentar novamente",
-      "unknown": "erro desconhecido"
+      "unknown": "erro desconhecido",
+      "account_limit": "foi atingido um limite de utilização"
     }
   },
   "marketing": {
