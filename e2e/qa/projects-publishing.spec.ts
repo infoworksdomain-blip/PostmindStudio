@@ -773,8 +773,9 @@ test.describe('publish from a project', () => {
 
   test('a platform with no active connection offers to connect instead of failing', async () => {
     const page = pages.owner;
+    // The project's only variant is TikTok: with that account needing a reconnect there is none to post with.
     await db.platformConnection.update({
-      where: { id: world.connections.youtube },
+      where: { id: world.connections.tiktok },
       data: { state: 'needs_reconnect' },
     });
     const w = new Watcher(page, shotsDir);
@@ -783,7 +784,7 @@ test.describe('publish from a project', () => {
     await expect(page.getByText('No connected account.').first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Connect/ }).first()).toBeVisible();
     await db.platformConnection.update({
-      where: { id: world.connections.youtube },
+      where: { id: world.connections.tiktok },
       data: { state: 'active' },
     });
     await report(w);
