@@ -4,9 +4,13 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StudioCapability } from '@/lib/rbac';
 import { useBusiness } from '../business-context';
+import { useCan } from '../use-can';
+import { WriteGate } from '../write-gate';
 import { EmptyState, PageHeader } from '../primitives';
 import { BusinessHashtagsPanel } from '../hashtags/business-hashtags-panel';
+import { BusinessDetailsCard } from './business-details-card';
 import { BrandKitsPanel } from './brand-kits-panel';
 import { ImageLibraryPanel } from './image-library-panel';
 import { ProfilePanel } from './profile-panel';
@@ -26,6 +30,7 @@ export function BusinessScreen() {
   const t = useTranslations('business.screen');
   const tn = useTranslations('shell.nav.groups');
   const { businessId, ready } = useBusiness();
+  const mayWrite = useCan(StudioCapability.ProjectWrite);
   const requested = useSearchParams()?.get('tab');
   const [tab, setTab] = useState<TabValue>(() =>
     (BUSINESS_TABS as readonly string[]).includes(requested ?? '')
@@ -43,6 +48,11 @@ export function BusinessScreen() {
           description={t('pickFirst.body')}
         />
       )}
+      {businessId && !mayWrite && (
+        <p role="note" className="mb-4 text-sm text-muted-foreground">
+          {t('readOnly')}
+        </p>
+      )}
       {businessId && (
         <Tabs value={tab} onValueChange={(v) => setTab(v as TabValue)} className="gap-6">
           <div className="max-w-full overflow-x-auto">
@@ -55,23 +65,34 @@ export function BusinessScreen() {
             </TabsList>
           </div>
           <TabsContent value="profile">
-            <ProfilePanel businessId={businessId} onGoToScan={() => setTab('scan')} />
+            <BusinessDetailsCard businessId={businessId} />
+            <WriteGate>
+              <ProfilePanel businessId={businessId} onGoToScan={() => setTab('scan')} />
+            </WriteGate>
           </TabsContent>
           <TabsContent value="scan">
-            <ScanPanel businessId={businessId} />
+            <WriteGate>
+              <ScanPanel businessId={businessId} />
+            </WriteGate>
           </TabsContent>
           <TabsContent value="brand" className="grid gap-12">
-            <BrandKitsPanel businessId={businessId} />
-            <VoiceProfilesPanel businessId={businessId} />
+            <WriteGate>
+              <BrandKitsPanel businessId={businessId} />
+              <VoiceProfilesPanel businessId={businessId} />
+            </WriteGate>
           </TabsContent>
           <TabsContent value="hashtags">
-            <BusinessHashtagsPanel businessId={businessId} />
+            <WriteGate>
+              <BusinessHashtagsPanel businessId={businessId} />
+            </WriteGate>
           </TabsContent>
           <TabsContent value="images">
             <ImageLibraryPanel businessId={businessId} />
           </TabsContent>
           <TabsContent value="learned">
-            <StyleMemoryPanel businessId={businessId} />
+            <WriteGate>
+              <StyleMemoryPanel businessId={businessId} />
+            </WriteGate>
           </TabsContent>
         </Tabs>
       )}

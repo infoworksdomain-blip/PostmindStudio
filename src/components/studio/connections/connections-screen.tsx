@@ -10,10 +10,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { hardNavigate } from '@/lib/client/navigate';
+import { StudioCapability } from '@/lib/rbac';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { MetaPlatformCard } from './meta-platform-card';
 import { PlatformCard } from './platform-card';
+import { useCan } from '../use-can';
+import { WriteGate } from '../write-gate';
 import { ByocKeysPanel } from '../settings/byoc-keys-panel';
 import {
   belongsToBusiness,
@@ -96,6 +99,7 @@ export function ConnectionsScreen({
   const [connecting, setConnecting] = useState<ConnectPlatform | null>(null);
   const [notice, dismiss] = useCallbackNotice();
   const metaInfo = data?.meta;
+  const mayManage = useCan(StudioCapability.ConnectionsManage);
 
   async function connect(platform: ConnectPlatform) {
     if (!businessId) return;
@@ -176,31 +180,38 @@ export function ConnectionsScreen({
           ))}
         </div>
       )}
+      {businessId && data && !mayManage && (
+        <p role="note" className="mb-4 text-sm text-muted-foreground">
+          {t('readOnly')}
+        </p>
+      )}
       {businessId && data && (
-        <div className="border-t border-border/70">
-          {OAUTH_PLATFORMS.map((p) => (
-            <PlatformCard
-              key={p.id}
-              platform={p}
-              connections={mine.filter((c) => c.platform === p.id)}
-              connecting={connecting === p.id}
-              configured={data.configured?.[p.id] ?? true}
-              onConnect={() => void connect(p.id)}
-              onDisconnect={disconnect}
-            />
-          ))}
-          {META_PLATFORMS.map((p) => (
-            <MetaPlatformCard
-              key={p.id}
-              platform={p}
-              info={metaInfo}
-              connections={mine.filter((c) => c.platform === p.id)}
-              connecting={connecting === 'meta'}
-              onConnect={() => void connect('meta')}
-              onDisconnect={disconnect}
-            />
-          ))}
-        </div>
+        <WriteGate capability={StudioCapability.ConnectionsManage}>
+          <div className="border-t border-border/70">
+            {OAUTH_PLATFORMS.map((p) => (
+              <PlatformCard
+                key={p.id}
+                platform={p}
+                connections={mine.filter((c) => c.platform === p.id)}
+                connecting={connecting === p.id}
+                configured={data.configured?.[p.id] ?? true}
+                onConnect={() => void connect(p.id)}
+                onDisconnect={disconnect}
+              />
+            ))}
+            {META_PLATFORMS.map((p) => (
+              <MetaPlatformCard
+                key={p.id}
+                platform={p}
+                info={metaInfo}
+                connections={mine.filter((c) => c.platform === p.id)}
+                connecting={connecting === 'meta'}
+                onConnect={() => void connect('meta')}
+                onDisconnect={disconnect}
+              />
+            ))}
+          </div>
+        </WriteGate>
       )}
       <ByocKeysPanel />
     </>
