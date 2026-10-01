@@ -38,7 +38,7 @@ jobs:
     # for Render Postgres, Phase 17.7), seeds system_flags, and fails if prisma/schema.prisma has
     # drifted from prisma/migrations.
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25 # the suite passed 15 min as Phase 20 added DB-backed tests (cancelled runs, 2026-10-01)
     services:
       postgres:
         image: pgvector/pgvector:0.8.6-pg17

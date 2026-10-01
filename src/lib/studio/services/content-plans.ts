@@ -6,6 +6,7 @@ import {
   NotFoundError,
   QuotaExceededError,
   RateLimitError,
+  UpstreamServiceError,
   ValidationError,
 } from '../../errors';
 import type { TenantContext } from '../../tenant';
@@ -449,7 +450,16 @@ export async function createPlan(
     },
     include: { items: { orderBy: [{ slotAt: 'asc' }, { position: 'asc' }] } },
   });
-  await enqueueDraft(deps.queue, plan, runId, tier);
+  try {
+    await enqueueDraft(deps.queue, plan, runId, tier);
+  } catch (err) {
+    // The queue is unreachable: nothing will ever write the topics. Remove the empty draft so it
+    // does not sit in DRAFTING and block the next attempt (409 "still being drafted").
+    await deps.db.contentPlan.delete({ where: { id: plan.id } });
+    throw new UpstreamServiceError('Month planning is unavailable right now; try again shortly', {
+      cause: err instanceof Error ? err.message : 'queue_unavailable',
+    });
+  }
   return { plan, allowance, cost };
 }
 

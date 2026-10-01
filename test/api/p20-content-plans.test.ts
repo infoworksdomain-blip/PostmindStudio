@@ -197,6 +197,16 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
     expect((await create({ days: 32 })).status).toBe(400);
   });
 
+  it('QA: a queue outage answers 502 and leaves no stuck draft that blocks the next try', async () => {
+    const add = h.queue.add.bind(h.queue);
+    h.queue.add = async () => Promise.reject(new Error('redis unavailable'));
+    const failed = await create();
+    expect(failed.status).toBe(502);
+    expect(await db.contentPlan.count({ where: { organisationId: org, businessId: biz } })).toBe(0);
+    h.queue.add = add;
+    expect((await create()).status).toBe(202);
+  });
+
   it('creates a draft (3 days × 2), writes it in the background, lists and scopes it', async () => {
     const res = await create();
     expect(res.status).toBe(202);

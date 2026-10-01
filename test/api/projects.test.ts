@@ -448,6 +448,26 @@ describe.skipIf(!hasDb)('project API', { timeout: 60_000 }, () => {
       ).toBe(404);
     });
 
+    it('QA: a queue outage answers 502 and puts the project back to DRAFT (not stuck QUEUED)', async () => {
+      const id = await create();
+      const add = api.queue.add.bind(api.queue);
+      api.queue.add = async () => Promise.reject(new Error('redis unavailable'));
+      const res = await call(generateRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        params: { id },
+      });
+      api.queue.add = add;
+      expect(res.status).toBe(502);
+      expect((await db.videoProject.findUniqueOrThrow({ where: { id } })).state).toBe('DRAFT');
+      const retry = await call(generateRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        params: { id },
+      });
+      expect(retry.status).toBe(202);
+    });
+
     it('cancels an in-flight run, supersedes its runId and cancels running provider jobs', async () => {
       const id = await create();
       const started = await call(generateRoute.POST, {

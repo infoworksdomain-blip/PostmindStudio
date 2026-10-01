@@ -23,6 +23,10 @@ describe('accessDecision (§P.3 access gate)', () => {
   describe('access none (never subscribed): spend routes → 402 plan_required', () => {
     const blocked = [
       '/projects/p1/generate',
+      '/content-plans',
+      '/content-plans/c1/generate',
+      '/content-plans/c1/redraft',
+      '/content-plans/c1/items/i1/regenerate',
       '/projects/p1/auto-populate',
       '/projects/p1/auto-publish',
       '/projects/p1/auto-publish/retry',

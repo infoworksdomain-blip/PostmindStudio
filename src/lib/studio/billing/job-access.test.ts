@@ -33,6 +33,7 @@ describe('checkJobAccess (worker half of the §P.3 access gate)', () => {
     expect(GATED_JOBS['generate-asset']).toBe('spend');
     expect(GATED_JOBS['compose-video']).toBe('spend');
     expect(GATED_JOBS['scan-website']).toBe('spend');
+    expect(GATED_JOBS['draft-content-plan']).toBe('spend');
     expect(GATED_JOBS['publish-video']).toBe('publish');
     expect(GATED_JOBS['poll-publication-analytics']).toBeUndefined();
   });

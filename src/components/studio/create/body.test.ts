@@ -213,3 +213,21 @@ describe('20.12 auto-publish accounts', () => {
     expect(upload.autoPublish?.targets).toHaveLength(1);
   });
 });
+
+describe('QA: upload project name', () => {
+  const upload: CreateState = {
+    ...base,
+    brief: '',
+    source: 'UPLOAD',
+    upload: { id: 'u1', fileName: 'my-clip.mp4' },
+  };
+
+  it('drops the extension only', () => {
+    expect(buildCreateBody(upload, 'biz', null).name).toBe('my-clip');
+  });
+
+  it('keeps a file name that has no extension', () => {
+    const state = { ...upload, upload: { id: 'u1', fileName: 'holiday' } };
+    expect(buildCreateBody(state, 'biz', null).name).toBe('holiday');
+  });
+});
