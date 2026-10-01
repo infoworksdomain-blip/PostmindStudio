@@ -241,6 +241,20 @@ describe('admin library helpers', () => {
     ).toEqual({});
   });
 
+  it('does not treat the same tags in another order or case as a change', () => {
+    const video = { ...summary(), tags: ['Bakery', 'coffee', 'morning'] };
+    expect(
+      buildPatch(video, {
+        title: video.title,
+        description: video.description ?? '',
+        category: video.category.slug,
+        tags: 'morning, COFFEE,bakery',
+        scenario: '',
+        licenseSource: '',
+      }),
+    ).toEqual({});
+  });
+
   it('clears a description to null and normalises tags', () => {
     const video = summary();
     expect(

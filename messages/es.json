@@ -609,7 +609,15 @@
         }
       },
       "modeNotAllowed": "La licencia de este vídeo no permite este modo",
-      "clear": "No usar una referencia"
+      "clear": "No usar una referencia",
+      "preview": {
+        "loading": "Cargando la estructura",
+        "notAnalysed": "Este vídeo aún no se ha analizado.",
+        "templateHeading": "Lo que seguirá Studio",
+        "templateBody": "Tu vídeo mantiene este número de planos, la duración y las superposiciones, con contenido totalmente nuevo para tu marca.",
+        "inspireHeading": "Lo que tomará Studio",
+        "inspireBody": "Solo la atmósfera: ritmo, ambiente, estructura y sensación musical."
+      }
     },
     "upload": {
       "uploading": "Subiendo {name}…",
@@ -3289,7 +3297,14 @@
       "projectAria": "plantillas de proyecto",
       "meta": "{category} · guardada el {date}",
       "deleteAria": "Eliminar {name}",
-      "deleted": "Se eliminó «{name}»"
+      "deleted": "Se eliminó «{name}»",
+      "preview": "Vista previa",
+      "previewAria": "Vista previa de {name}",
+      "use": "Usar plantilla",
+      "useAria": "Usar {name}",
+      "confirmTitle": "¿Eliminar «{name}»?",
+      "confirmBody": "Los vídeos ya creados con esta plantilla no cambian.",
+      "confirmDelete": "Eliminar plantilla"
     },
     "categories": {
       "custom": "personalizada",
@@ -3309,6 +3324,20 @@
       "listicle": "lista",
       "listicle_5": "top 5",
       "listicle_10": "top 10"
+    },
+    "builtInAria": "Plantillas integradas",
+    "preview": {
+      "formats": "Formatos",
+      "formatLine": "{platform} · {aspect} · {seconds} s",
+      "shots": "Estructura de planos",
+      "noStructure": "Esta plantilla no tiene una estructura de planos guardada.",
+      "outline": "Esquema del guion",
+      "autoPublishes": "Se publica automáticamente una vez aprobado.",
+      "slides": "Diapositivas",
+      "slideCount": "{count, plural, one {# diapositiva} other {# diapositivas}}",
+      "pacing": "Ritmo",
+      "perSlide": "{seconds} s por diapositiva",
+      "music": "Ambiente musical"
     }
   },
   "account": {

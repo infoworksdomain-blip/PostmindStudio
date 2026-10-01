@@ -33,12 +33,15 @@ State legend: E empty, L loading, X error, S success, P permission denied / plan
 | SimilarShelf | `similar-shelf.tsx` | populated, empty, error |
 | UseReferencePanel | `use-reference-panel.tsx` | TEMPLATE link, INSPIRE link, locked (SCRAPED, expired), plan lock badge |
 | ReferenceBanner (Create) | `create/reference-banner.tsx` | title, mode radios (disabled by licence), clear, unavailable |
+| ReferencePreview (Create) | `create/reference-preview.tsx` | TEMPLATE: shot-structure strip; INSPIRE: style signature; loading, not analysed, error |
+| Create `?template=` / `?slideshowTemplate=` | `create/create-screen.tsx` | applies the template picked on /templates (project: picker selected once the list loads; slideshow: Slideshow source + template) |
 
 ## Components (templates)
 
 | Component | File | What is exercised |
 | --- | --- | --- |
-| TemplatesScreen | `templates/templates-screen.tsx` | loading, error + retry, own slideshow / project lists, built-ins, empty lists, delete (toast, refresh) |
+| TemplatesScreen | `templates/templates-screen.tsx` | loading, error + retry, own slideshow / project lists, built-ins, empty lists, Preview, Use template, delete behind a confirm dialog (toast, refresh) |
+| TemplatePreviewDialog | `templates/template-preview.tsx` | formats, shot structure (blueprint strip), script outline, auto-publish note; slideshow: slides, pacing, music mood |
 | ProjectTemplatePicker (Create) | `create/project-template-picker.tsx` | built-in + own templates, "No template", selection, summary line |
 | SaveTemplate (project review) | `review/save-template.tsx` | name, category validation, save, 201 |
 | Slideshow TemplatePicker / save | `slideshow/template-picker.tsx`, `slideshow-builder.tsx` | list, select, save as template |
@@ -68,6 +71,7 @@ IngestForm, IngestStatus, LicenceAudit, LibraryAdminFilterBar, CorpusRow list, L
 | `/api/studio/library/recommended` | GET | businessId, category, limit; 404 without profile |
 | `/api/studio/library/categories` | GET | tree |
 | `/api/studio/library/blueprint/[libraryVideoId]` | GET | TEMPLATE blueprint or INSPIRE signature |
+| `/api/studio/admin/library/categories` | GET | staff category tree (works without an organisation) |
 | `/api/studio/templates` | GET, POST | list (built-in + own), save from project |
 | `/api/studio/templates/[id]` | GET, DELETE | built-ins read-only |
 | `/api/studio/slideshow-templates` | GET, POST | |

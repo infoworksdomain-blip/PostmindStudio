@@ -177,10 +177,105 @@ describe('TemplatesScreen', () => {
     const user = userEvent.setup();
     renderScreen(<TemplatesScreen />);
     await user.click(await screen.findByRole('button', { name: 'Delete My listicle' }));
+    // Deleting asks first: cancelling leaves the template alone.
+    const dialog = await screen.findByRole('dialog', { name: 'Delete “My listicle”?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(api.find('DELETE', '/slideshow-templates/st_1')).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Delete My listicle' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete template' }),
+    );
     await waitFor(() => expect(api.find('DELETE', '/slideshow-templates/st_1')).toHaveLength(1));
     expect(await screen.findByText(/Save a slideshow as a template/)).toBeInTheDocument();
     expect(screen.getByText('Photo dump')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete Photo dump' })).toBeNull();
+  });
+});
+
+describe('TemplatesScreen preview and use', () => {
+  const project = {
+    id: 'tp_1',
+    name: 'Weekly special',
+    category: 'weekly_special',
+    organisationId: 'org',
+    createdAt: '2026-10-01T00:00:00Z',
+    targetFormats: [{ platform: 'TIKTOK', aspectRatio: '9:16', duration: 15 }],
+    shotBlueprint: {
+      shots: [
+        {
+          durationSec: 5,
+          type: 'HOOK_TEXT_ON_STILL',
+          overlayStyle: 'bold-centre',
+          voiceoverPresent: false,
+          hasOnScreenText: true,
+        },
+        {
+          durationSec: 10,
+          type: 'PRODUCT_SHOT',
+          overlayStyle: 'none',
+          voiceoverPresent: true,
+          hasOnScreenText: false,
+        },
+      ],
+    },
+    scriptTemplate: '{{brief}} Open with the special of the week.',
+    publishDefaults: { publishPolicy: 'AUTO_ON_APPROVAL' },
+  };
+  const slideshow = {
+    id: 'st_9',
+    name: 'Menu board',
+    category: 'photo_dump',
+    organisationId: null,
+    createdAt: '2026-01-01T00:00:00Z',
+    slidePlan: [{}, {}, {}, {}],
+    musicMood: 'upbeat',
+    defaultDurationPerSlide: 2.5,
+  };
+
+  function mockTemplates() {
+    return mockFetch((req) =>
+      req.url.pathname.endsWith('/slideshow-templates')
+        ? ok({ data: [slideshow] })
+        : ok({ data: [project] }),
+    );
+  }
+
+  it('previews a project template: formats, shot structure and outline', async () => {
+    mockTemplates();
+    const user = userEvent.setup();
+    renderScreen(<TemplatesScreen />);
+    await user.click(await screen.findByRole('button', { name: 'Preview Weekly special' }));
+    const dialog = await screen.findByRole('dialog', { name: /Weekly special/ });
+    expect(within(dialog).getByRole('list', { name: 'Formats' })).toHaveTextContent('9:16');
+    expect(
+      within(dialog).getByRole('list', { name: 'Shot list' }).querySelectorAll('li'),
+    ).toHaveLength(2);
+    expect(within(dialog).getByText(/Open with the special of the week/)).toBeInTheDocument();
+    expect(within(dialog).getByText('Publishes automatically once approved.')).toBeInTheDocument();
+  });
+
+  it('previews a built-in slideshow template: slides, pacing and music', async () => {
+    mockTemplates();
+    const user = userEvent.setup();
+    renderScreen(<TemplatesScreen />);
+    await user.click(await screen.findByRole('button', { name: 'Preview Menu board' }));
+    const dialog = await screen.findByRole('dialog', { name: /Menu board/ });
+    expect(within(dialog).getByText('4 slides')).toBeInTheDocument();
+    expect(within(dialog).getByText('2.5s per slide')).toBeInTheDocument();
+    expect(within(dialog).getByText('upbeat')).toBeInTheDocument();
+  });
+
+  it('opens Create with the template applied', async () => {
+    mockTemplates();
+    renderScreen(<TemplatesScreen />);
+    expect(await screen.findByRole('link', { name: 'Use Weekly special' })).toHaveAttribute(
+      'href',
+      '/new?template=tp_1',
+    );
+    expect(screen.getByRole('link', { name: 'Use Menu board' })).toHaveAttribute(
+      'href',
+      '/new?slideshowTemplate=st_9',
+    );
   });
 });
 

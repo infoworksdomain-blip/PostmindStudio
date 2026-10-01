@@ -25,6 +25,14 @@ import type { LibraryPatchBody, LicenseScenario } from './types';
 // A3.8 — override a corpus item's metadata, category or licence (PATCH /admin/library/videos/:id).
 // Only changed fields are sent; the API rejects an empty patch.
 
+/** Tags are a set, stored lower-case: order and case never make an edit. */
+function sameTags(next: string[], current: string[]): boolean {
+  const normal = (tags: string[]) => [...new Set(tags.map((t) => t.trim().toLowerCase()))].sort();
+  const a = normal(next);
+  const b = normal(current);
+  return a.length === b.length && a.every((tag, i) => tag === b[i]);
+}
+
 export function buildPatch(
   video: LibraryVideoSummary,
   form: {
@@ -42,7 +50,7 @@ export function buildPatch(
   if (description !== (video.description ?? null)) patch.description = description;
   if (form.category && form.category !== video.category.slug) patch.category = form.category;
   const tags = parseTags(form.tags);
-  if (tags.join(',') !== video.tags.join(',')) patch.tags = tags;
+  if (!sameTags(tags, video.tags)) patch.tags = tags;
   if (form.scenario) patch.licenseScenario = form.scenario as LicenseScenario;
   if (form.licenseSource.trim()) patch.licenseSource = form.licenseSource.trim();
   return patch;

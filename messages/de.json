@@ -609,7 +609,15 @@
         }
       },
       "modeNotAllowed": "Die Lizenz dieses Videos erlaubt diesen Modus nicht",
-      "clear": "Keine Referenz verwenden"
+      "clear": "Keine Referenz verwenden",
+      "preview": {
+        "loading": "Struktur wird geladen",
+        "notAnalysed": "Dieses Video wurde noch nicht analysiert.",
+        "templateHeading": "Woran sich Studio hält",
+        "templateBody": "Dein Video übernimmt diese Szenenzahl, das Timing und die Overlays – mit komplett neuem Inhalt für deine Marke.",
+        "inspireHeading": "Was Studio übernimmt",
+        "inspireBody": "Nur die Stimmung: Tempo, Stimmung, Struktur und Musikgefühl."
+      }
     },
     "upload": {
       "uploading": "{name} wird hochgeladen …",
@@ -3289,7 +3297,14 @@
       "projectAria": "Projektvorlagen",
       "meta": "{category} · gespeichert am {date}",
       "deleteAria": "{name} löschen",
-      "deleted": "„{name}“ gelöscht"
+      "deleted": "„{name}“ gelöscht",
+      "preview": "Vorschau",
+      "previewAria": "Vorschau von {name}",
+      "use": "Vorlage verwenden",
+      "useAria": "{name} verwenden",
+      "confirmTitle": "„{name}“ löschen?",
+      "confirmBody": "Bereits aus dieser Vorlage erstellte Videos bleiben unverändert.",
+      "confirmDelete": "Vorlage löschen"
     },
     "categories": {
       "custom": "benutzerdefiniert",
@@ -3309,6 +3324,20 @@
       "listicle": "Liste",
       "listicle_5": "Top-5-Liste",
       "listicle_10": "Top-10-Liste"
+    },
+    "builtInAria": "Integrierte Vorlagen",
+    "preview": {
+      "formats": "Formate",
+      "formatLine": "{platform} · {aspect} · {seconds} s",
+      "shots": "Szenenstruktur",
+      "noStructure": "Diese Vorlage hat keine gespeicherte Szenenstruktur.",
+      "outline": "Skriptgerüst",
+      "autoPublishes": "Wird nach der Freigabe automatisch veröffentlicht.",
+      "slides": "Folien",
+      "slideCount": "{count, plural, one {# Folie} other {# Folien}}",
+      "pacing": "Tempo",
+      "perSlide": "{seconds} s pro Folie",
+      "music": "Musikstimmung"
     }
   },
   "account": {

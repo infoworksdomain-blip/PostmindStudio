@@ -609,7 +609,15 @@
         }
       },
       "modeNotAllowed": "La licence de cette vidéo n’autorise pas ce mode",
-      "clear": "Ne pas utiliser de référence"
+      "clear": "Ne pas utiliser de référence",
+      "preview": {
+        "loading": "Chargement de la structure",
+        "notAnalysed": "Cette vidéo n’a pas encore été analysée.",
+        "templateHeading": "Ce que Studio va suivre",
+        "templateBody": "Votre vidéo garde ce nombre de plans, ce rythme et ces incrustations, avec un contenu entièrement nouveau pour votre marque.",
+        "inspireHeading": "Ce que Studio va emprunter",
+        "inspireBody": "Seulement l’ambiance : rythme, humeur, structure et sensation musicale."
+      }
     },
     "upload": {
       "uploading": "Import de {name}…",
@@ -3289,7 +3297,14 @@
       "projectAria": "modèles de projet",
       "meta": "{category} · enregistré le {date}",
       "deleteAria": "Supprimer {name}",
-      "deleted": "« {name} » supprimé"
+      "deleted": "« {name} » supprimé",
+      "preview": "Aperçu",
+      "previewAria": "Aperçu de {name}",
+      "use": "Utiliser le modèle",
+      "useAria": "Utiliser {name}",
+      "confirmTitle": "Supprimer « {name} » ?",
+      "confirmBody": "Les vidéos déjà créées avec ce modèle ne changent pas.",
+      "confirmDelete": "Supprimer le modèle"
     },
     "categories": {
       "custom": "personnalisé",
@@ -3309,6 +3324,20 @@
       "listicle": "liste",
       "listicle_5": "top 5",
       "listicle_10": "top 10"
+    },
+    "builtInAria": "Modèles intégrés",
+    "preview": {
+      "formats": "Formats",
+      "formatLine": "{platform} · {aspect} · {seconds} s",
+      "shots": "Structure des plans",
+      "noStructure": "Ce modèle n’a pas de structure de plans enregistrée.",
+      "outline": "Trame du script",
+      "autoPublishes": "Publié automatiquement après approbation.",
+      "slides": "Diapositives",
+      "slideCount": "{count, plural, one {# diapositive} other {# diapositives}}",
+      "pacing": "Rythme",
+      "perSlide": "{seconds} s par diapositive",
+      "music": "Ambiance musicale"
     }
   },
   "account": {

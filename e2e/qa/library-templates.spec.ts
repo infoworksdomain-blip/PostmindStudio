@@ -525,6 +525,14 @@ test('detail: player, blueprint, similar videos and the two ways into Create', a
     await expect(
       page.getByRole('radio', { name: mode === 'TEMPLATE' ? 'Template' : 'Inspire' }),
     ).toHaveAttribute('aria-checked', 'true');
+    // Create shows what the reference will do: the shot structure (TEMPLATE) or the style (INSPIRE).
+    await expect(
+      page.getByRole('heading', {
+        name: mode === 'TEMPLATE' ? 'What Studio will follow' : 'What Studio will borrow',
+      }),
+    ).toBeVisible();
+    if (mode === 'TEMPLATE')
+      await expect(page.getByRole('list', { name: 'Shot list' })).toBeVisible();
     await page.goBack();
     await expect(page.getByRole('heading', { name: titles.bakery })).toBeVisible();
   }
@@ -615,7 +623,12 @@ test('templates: list, delete, empty states, error retry and the Create picker',
       category: 'weekly_special',
       targetFormats: formats,
       scriptTemplate: '{{brief}}',
-      shotBlueprint: { shots: [{ durationSec: 3 }, { durationSec: 4 }] },
+      shotBlueprint: {
+        shots: [
+          { durationSec: 3, type: 'HOOK_TEXT_ON_STILL' },
+          { durationSec: 4, type: 'PRODUCT_SHOT' },
+        ],
+      },
     },
   });
   await db.slideshowTemplate.create({
@@ -666,10 +679,34 @@ test('templates: list, delete, empty states, error retry and the Create picker',
   await retry.click();
   await expect(projects).toContainText(`QA project template ${run}`);
 
-  // Delete both; the empty hints come back; the database rows are gone.
+  // Preview, then "Use template" opens Create with the template applied.
+  await page.getByRole('button', { name: `Preview QA project template ${run}` }).click();
+  const preview = page.getByRole('dialog', { name: new RegExp(`QA project template ${run}`) });
+  await expect(preview.getByRole('list', { name: 'Formats' })).toContainText('9:16');
+  await expect(preview.getByRole('list', { name: 'Shot list' })).toBeVisible();
+  await preview.getByRole('button', { name: 'Close', exact: true }).first().click();
+  await page.getByRole('link', { name: `Use QA project template ${run}` }).click();
+  await expect(page).toHaveURL(/\/new\?template=/);
+  await expect(
+    page.getByRole('radio', { name: new RegExp(`QA project template ${run}`) }),
+  ).toHaveAttribute('aria-checked', 'true');
+  await page.goto('/templates');
+  await page.getByRole('link', { name: `Use QA slideshow template ${run}` }).click();
+  await expect(page).toHaveURL(/\/new\?slideshowTemplate=/);
+  await expect(
+    page.getByRole('radio', { name: new RegExp(`QA slideshow template ${run}`) }),
+  ).toHaveAttribute('aria-checked', 'true');
+  await page.goto('/templates');
+
+  // Delete asks first: cancelling keeps the template; confirming deletes both.
   await page.getByRole('button', { name: `Delete QA project template ${run}` }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  expect(await db.template.count({ where: { organisationId: orgId } })).toBe(1);
+  await page.getByRole('button', { name: `Delete QA project template ${run}` }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete template' }).click();
   await expect(page.getByText(`Deleted “QA project template ${run}”`).first()).toBeVisible();
   await page.getByRole('button', { name: `Delete QA slideshow template ${run}` }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete template' }).click();
   await expect(page.getByText(`Deleted “QA slideshow template ${run}”`).first()).toBeVisible();
   await expect(page.getByText(/Save a project as a template/)).toBeVisible();
   expect(await db.template.count({ where: { organisationId: orgId } })).toBe(0);

@@ -609,7 +609,15 @@
         }
       },
       "modeNotAllowed": "This video’s license does not allow this mode",
-      "clear": "Don’t use a reference"
+      "clear": "Don’t use a reference",
+      "preview": {
+        "loading": "Loading the structure",
+        "notAnalysed": "This video hasn’t been analyzed yet.",
+        "templateHeading": "What Studio will follow",
+        "templateBody": "Your video keeps this shot count, timing and overlays, with all-new content for your brand.",
+        "inspireHeading": "What Studio will borrow",
+        "inspireBody": "Only the vibe: pace, mood, structure and music feel."
+      }
     },
     "upload": {
       "uploading": "Uploading {name}…",
@@ -3289,7 +3297,14 @@
       "projectAria": "project templates",
       "meta": "{category} · saved {date}",
       "deleteAria": "Delete {name}",
-      "deleted": "Deleted “{name}”"
+      "deleted": "Deleted “{name}”",
+      "preview": "Preview",
+      "previewAria": "Preview {name}",
+      "use": "Use template",
+      "useAria": "Use {name}",
+      "confirmTitle": "Delete “{name}”?",
+      "confirmBody": "Videos already made from this template are not changed.",
+      "confirmDelete": "Delete template"
     },
     "categories": {
       "custom": "custom",
@@ -3309,6 +3324,20 @@
       "listicle": "list",
       "listicle_5": "top 5 list",
       "listicle_10": "top 10 list"
+    },
+    "builtInAria": "Built-in templates",
+    "preview": {
+      "formats": "Formats",
+      "formatLine": "{platform} · {aspect} · {seconds}s",
+      "shots": "Shot structure",
+      "noStructure": "This template has no saved shot structure.",
+      "outline": "Script outline",
+      "autoPublishes": "Publishes automatically once approved.",
+      "slides": "Slides",
+      "slideCount": "{count, plural, one {# slide} other {# slides}}",
+      "pacing": "Pacing",
+      "perSlide": "{seconds}s per slide",
+      "music": "Music mood"
     }
   },
   "account": {

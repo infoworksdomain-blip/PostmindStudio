@@ -186,6 +186,118 @@ describe('CreateScreen', () => {
     expect(body.referenceMode).toBe('TEMPLATE');
   });
 
+  const referenceVideo: MockRoute = {
+    match: '/library/videos/lib_1',
+    body: {
+      ok: true,
+      video: {
+        id: 'lib_1',
+        title: 'Barista hook',
+        allowedModes: ['INSPIRE', 'TEMPLATE'],
+        durationSec: 20,
+      },
+    },
+  };
+  const blueprint: MockRoute = {
+    match: '/library/blueprint/lib_1',
+    body: {
+      ok: true,
+      libraryVideoId: 'lib_1',
+      allowedModes: ['INSPIRE', 'TEMPLATE'],
+      blueprint: {
+        shotCount: 2,
+        totalDurationSec: 20,
+        shots: [
+          {
+            durationSec: 8,
+            type: 'HOOK_TEXT_ON_STILL',
+            overlayStyle: 'bold-centre',
+            voiceoverPresent: false,
+            hasOnScreenText: true,
+          },
+          {
+            durationSec: 12,
+            type: 'PRODUCT_SHOT',
+            overlayStyle: 'none',
+            voiceoverPresent: true,
+            hasOnScreenText: false,
+          },
+        ],
+        musicEnvelope: { bpm: 96, energy: 'medium', moodTag: 'warm' },
+        transitionSequence: ['cut', 'cut'],
+        hookPattern: 'question',
+        structurePattern: 'hook-demo-cta',
+        ctaPattern: 'visit',
+        paceTag: 'medium',
+      },
+      styleSignature: {
+        paceTag: 'medium',
+        moodTag: 'warm',
+        structurePattern: 'hook-demo-cta',
+        musicGenreTag: 'acoustic',
+      },
+    },
+  };
+
+  it('previews the shot structure a TEMPLATE reference will follow', async () => {
+    mockFetch(routes([referenceVideo, blueprint]));
+    renderWithSWR(<CreateScreen initialReference={{ id: 'lib_1', mode: 'TEMPLATE' }} />);
+    expect(await screen.findByRole('heading', { name: 'What Studio will follow' })).toBeVisible();
+    const shots = await screen.findByRole('list', { name: 'Shot list' });
+    expect(shots.querySelectorAll('li')).toHaveLength(2);
+    expect(screen.getByText('Hook text on still')).toBeInTheDocument();
+  });
+
+  it('previews only the style signature for an INSPIRE reference, and follows the mode', async () => {
+    mockFetch(routes([referenceVideo, blueprint]));
+    renderWithSWR(<CreateScreen initialReference={{ id: 'lib_1', mode: 'INSPIRE' }} />);
+    expect(await screen.findByRole('heading', { name: 'What Studio will borrow' })).toBeVisible();
+    expect(await screen.findByText('hook-demo-cta')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Shot list' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Template' }));
+    expect(await screen.findByRole('list', { name: 'Shot list' })).toBeInTheDocument();
+  });
+
+  it('applies a project template chosen on /templates', async () => {
+    mockFetch(
+      routes([
+        {
+          match: '/templates',
+          body: {
+            ok: true,
+            data: [
+              {
+                id: 'tpl_p1',
+                organisationId: 'org_1',
+                builtIn: false,
+                name: 'Weekly special',
+                category: 'weekly_special',
+                targetFormats: [{ platform: 'TIKTOK', aspectRatio: '9:16', duration: 15 }],
+                shotBlueprint: { shots: [{}, {}] },
+                publishDefaults: null,
+                createdAt: '2026-09-01T00:00:00Z',
+              },
+            ],
+          },
+        },
+      ]),
+    );
+    renderWithSWR(
+      <CreateScreen initialReference={null} initialTemplate={{ kind: 'project', id: 'tpl_p1' }} />,
+    );
+    const radio = await screen.findByRole('radio', { name: /Weekly special/ });
+    await waitFor(() => expect(radio).toHaveAttribute('aria-checked', 'true'));
+  });
+
+  it('starts a slideshow from the slideshow template chosen on /templates', async () => {
+    mockFetch(routes());
+    renderWithSWR(
+      <CreateScreen initialReference={null} initialTemplate={{ kind: 'slideshow', id: 'tpl_1' }} />,
+    );
+    const radio = await screen.findByRole('radio', { name: /Listicle 5/ });
+    expect(radio).toHaveAttribute('aria-checked', 'true');
+  });
+
   it('reports an API error and stays on the page', async () => {
     mockFetch([
       {

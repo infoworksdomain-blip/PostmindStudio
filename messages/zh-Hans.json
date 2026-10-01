@@ -609,7 +609,15 @@
         }
       },
       "modeNotAllowed": "此视频的许可不支持该方式",
-      "clear": "不使用参考视频"
+      "clear": "不使用参考视频",
+      "preview": {
+        "loading": "正在加载结构",
+        "notAnalysed": "此视频尚未分析。",
+        "templateHeading": "Studio 将遵循的内容",
+        "templateBody": "你的视频保留这一镜头数量、时间安排和叠加元素，内容则为你的品牌全新创作。",
+        "inspireHeading": "Studio 将借鉴的内容",
+        "inspireBody": "只借鉴氛围：节奏、情绪、结构和音乐感觉。"
+      }
     },
     "upload": {
       "uploading": "正在上传 {name}…",
@@ -3289,7 +3297,14 @@
       "projectAria": "项目模板",
       "meta": "{category} · 保存于 {date}",
       "deleteAria": "删除 {name}",
-      "deleted": "已删除“{name}”"
+      "deleted": "已删除“{name}”",
+      "preview": "预览",
+      "previewAria": "预览 {name}",
+      "use": "使用模板",
+      "useAria": "使用 {name}",
+      "confirmTitle": "删除“{name}”？",
+      "confirmBody": "已用此模板制作的视频不会改变。",
+      "confirmDelete": "删除模板"
     },
     "categories": {
       "custom": "自定义",
@@ -3309,6 +3324,20 @@
       "listicle": "清单",
       "listicle_5": "前 5 清单",
       "listicle_10": "前 10 清单"
+    },
+    "builtInAria": "内置模板",
+    "preview": {
+      "formats": "格式",
+      "formatLine": "{platform} · {aspect} · {seconds} 秒",
+      "shots": "镜头结构",
+      "noStructure": "此模板没有已保存的镜头结构。",
+      "outline": "脚本大纲",
+      "autoPublishes": "审批通过后自动发布。",
+      "slides": "幻灯片",
+      "slideCount": "{count, plural, other {# 张幻灯片}}",
+      "pacing": "节奏",
+      "perSlide": "每张幻灯片 {seconds} 秒",
+      "music": "音乐氛围"
     }
   },
   "account": {
