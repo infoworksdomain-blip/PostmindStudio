@@ -43,6 +43,8 @@ export interface RouteResult {
   body: Record<string, unknown>;
   /** Set-Cookie headers to forward (never stored with an idempotent replay). */
   setCookies?: string[];
+  /** 20.15: extra response headers on success, e.g. Cache-Control (not stored for replays). */
+  headers?: Record<string, string>;
 }
 
 type Handler = (ctx: RouteContext) => Promise<RouteResult>;
@@ -183,7 +185,10 @@ export function withStudioRoute(
             await deps.idempotency.complete(idem.scope, idem.bodyHash, { status, body: safeBody });
           else await deps.idempotency.release(idem.scope);
         }
-        const response = jsonResponse(safeBody, { status, headers });
+        const response = jsonResponse(safeBody, {
+          status,
+          headers: { ...result.headers, ...headers },
+        });
         for (const cookie of result.setCookies ?? []) response.headers.append('set-cookie', cookie);
         return response;
       } catch (err) {

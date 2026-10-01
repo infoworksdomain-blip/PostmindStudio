@@ -7,6 +7,7 @@ import type { CoreBusinessDirectory } from '../core/business-directory';
 import type { CoreChannelDirectory } from '../core/channel-directory';
 import type { CoreContentClient } from '../core/content-client';
 import type { LibraryDeps } from '../images/library';
+import type { LibraryCache } from '../library/cache';
 import type { VoiceCloningClient } from '../providers/elevenlabs-voices';
 import type { OAuthStateStore } from '../platforms/oauth-state';
 import type { PublishingDeps } from '../platforms/publishing';
@@ -55,6 +56,8 @@ export interface ApiDeps {
   oauthState: OAuthStateStore;
   /** Feature D: image library (ingest, generation, embeddings, search). */
   library: LibraryDeps;
+  /** 20.15: shared video-library read cache (Redis); absent = every read hits the database. */
+  libraryCache?: LibraryCache;
   /** 13.13 ElevenLabs Instant Voice Cloning; absent (no ELEVENLABS_API_KEY) = 501. */
   voiceCloning?: VoiceCloningClient;
   /** Overlay fonts (<FamilyNoSpaces>.ttf) for previews; fonts-host.ts (APP_URL/fonts by default). */
@@ -185,6 +188,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),
+    libraryCache: pipeline.libraryCache,
     voiceCloning: voices.voiceCloningFromEnv(),
     fontsBaseUrl: pipeline.config.fontsBaseUrl,
     appUrl: env.requireEnv('APP_URL'),

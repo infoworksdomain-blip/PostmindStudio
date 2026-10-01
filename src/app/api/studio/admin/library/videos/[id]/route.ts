@@ -8,7 +8,7 @@ export const PATCH = withStudioRoute(
   async ({ req, deps, params, audit, tenant }) => {
     requirePlatformStaff(tenant);
     const input = await parseBody(req, adminPatchInput);
-    const video = await adminPatchLibraryVideo(deps.db, params.id ?? '', input);
+    const video = await adminPatchLibraryVideo(deps.db, params.id ?? '', input, deps.libraryCache);
     audit(
       'studio.library.update',
       { type: 'video_library', id: video.id },
