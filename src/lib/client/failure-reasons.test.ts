@@ -83,6 +83,24 @@ describe('parseFailure', () => {
     ]);
   });
 
+  it('20.11: reads service_unavailable and older provider account failures as it', () => {
+    expect(
+      parseFailure('service_unavailable: Every text_generation provider is unavailable'),
+    ).toMatchObject({
+      code: 'service_unavailable',
+      detail: null,
+    });
+    for (const cls of ['auth', 'insufficient_credits', 'account_limit']) {
+      expect(parseFailure(`anthropic/${cls}: {"type":"error"}`)).toMatchObject({
+        code: 'service_unavailable',
+        detail: null,
+      });
+    }
+    expect(parseFailure('planning_failed: service_unavailable: x')?.cause?.code).toBe(
+      'service_unavailable',
+    );
+  });
+
   it('reads provider and platform failures with their error class', () => {
     expect(parseFailure('tiktok/needs_reconnect: token revoked')).toMatchObject({
       code: 'provider_failure',

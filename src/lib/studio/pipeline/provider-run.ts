@@ -1,4 +1,18 @@
-import { NotImplementedError, ProviderError, RateDeferredError } from '../../errors';
+import {
+  NoProviderAvailableError,
+  NotImplementedError,
+  ProviderError,
+  ProvidersUnavailableError,
+  RateDeferredError,
+  type ProviderAccountFailure,
+} from '../../errors';
+import { notifierFor } from '../notifications/notifier';
+import {
+  alertAccountProblem,
+  alertProvidersExhausted,
+  type AccountAlertDeps,
+} from '../providers/account-alerts';
+import { isAccountProviderError, retryAtOf } from '../providers/account-errors';
 import type { ProviderPollResult, ProviderRequest } from '../providers/interface';
 import {
   routeProvider,
@@ -32,18 +46,95 @@ export type ProviderRunDeps = Pick<
   | 'providerRates'
   | 'registryFor'
   | 'providerRatings'
+  | 'notifier'
+  | 'logger'
+  | 'fetch'
+  | 'db'
 >;
 
+export interface RunProviderInput {
+  need: RouteNeed;
+  request: ProviderRequest;
+  planTier: PlanTier;
+  deadline?: Date;
+  preferredProviderId?: string | readonly string[];
+}
+
+/**
+ * 20.11: route → run, failing over at once when a provider fails with an ACCOUNT problem (bad
+ * key, no credits, usage / spend limit). tracked.ts has already held that provider out of routing
+ * (circuit breaker) and the provider_jobs row records its failure; the next candidate for the
+ * capability is tried in the same call, with its own provider_jobs row and cost accounting. When
+ * no candidate is left, ProvidersUnavailableError (not retried; customers see a friendly
+ * "temporarily unavailable" sentence) and one ops alert naming every provider.
+ */
 export async function runProvider(
-  input: {
-    need: RouteNeed;
-    request: ProviderRequest;
-    planTier: PlanTier;
-    deadline?: Date;
-    preferredProviderId?: string | readonly string[];
-  },
+  input: RunProviderInput,
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  const failures: ProviderAccountFailure[] = [];
+  for (;;) {
+    let decision: RouteDecision;
+    try {
+      decision = await route(
+        input,
+        failures.map((f) => f.providerId),
+        deps,
+      );
+    } catch (err) {
+      if (err instanceof NoProviderAvailableError && failures.length > 0) {
+        const capability = (err.details?.capability as string | undefined) ?? input.need.kind;
+        await safely(deps, () =>
+          alertProvidersExhausted(alertDeps(deps), { capability, failures }),
+        );
+        throw new ProvidersUnavailableError(capability, failures);
+      }
+      throw err;
+    }
+    try {
+      return await runDecided(decision, input, deps);
+    } catch (err) {
+      if (!isAccountProviderError(err) || err.providerId !== decision.providerId) throw err;
+      const failure: ProviderAccountFailure = {
+        providerId: decision.providerId,
+        errorClass: err.errorClass,
+        ...(retryAtOf(err) && { retryAt: retryAtOf(err) }),
+      };
+      failures.push(failure);
+      await safely(deps, () =>
+        alertAccountProblem(alertDeps(deps), {
+          ...failure,
+          message: err.message,
+          capability: decision.capability,
+        }),
+      );
+    }
+  }
+}
+
+/** Alerting must never change the outcome of the operation it reports on. */
+async function safely(deps: ProviderRunDeps, alert: () => Promise<unknown>): Promise<void> {
+  try {
+    await alert();
+  } catch (err) {
+    deps.logger?.warn({ err }, 'provider account alert failed');
+  }
+}
+
+function alertDeps(deps: ProviderRunDeps): AccountAlertDeps {
+  return {
+    notifier: deps.notifier ?? notifierFor(deps),
+    logger: deps.logger,
+    now: deps.now,
+    fetchImpl: deps.fetch,
+  };
+}
+
+async function route(
+  input: RunProviderInput,
+  excludeProviderIds: readonly string[],
+  deps: ProviderRunDeps,
+): Promise<RouteDecision> {
   const providerScope = {
     organisationId: input.request.organisationId,
     projectId: input.request.projectId,
@@ -55,7 +146,7 @@ export async function runProvider(
   const providerScores = await deps.providerRatings
     ?.scoresFor(providerScope)
     .catch(() => undefined);
-  const decision = await routeProvider(
+  return routeProvider(
     {
       need: input.need,
       planTier: input.planTier,
@@ -65,6 +156,7 @@ export async function runProvider(
       preferredProviderId: input.preferredProviderId,
       providerScores,
       request: input.request,
+      excludeProviderIds,
     },
     {
       registry,
@@ -74,6 +166,13 @@ export async function runProvider(
       now: deps.now,
     },
   );
+}
+
+async function runDecided(
+  decision: RouteDecision,
+  input: RunProviderInput,
+  deps: ProviderRunDeps,
+): Promise<ProviderRunResult> {
   const { adapter } = decision;
   // 15.C3 (spec 11.4): a full rate window delays the job (worker-host moveToDelayed) instead of
   // failing it or spending an attempt.

@@ -5,6 +5,7 @@ import {
   ProviderError,
   ValidationError,
 } from '../../errors';
+import { ACCOUNT_HOLD_MS } from './account-errors';
 import { createCircuitBreaker, OPEN_DURATION_MS } from './circuit-breaker';
 import type { ProviderJobRecord, ProviderJobRepository, UsageDelta } from './job-repository';
 import { StubAdapter } from './test-adapter';
@@ -168,6 +169,34 @@ describe('submitTracked', () => {
     ).toBe(true);
     expect(totals()).toEqual({ jobs: 5, succeeded: 0, failed: 5, costPence: 0 });
     expect(breaker.state('runway')).toBe('open');
+  });
+
+  it('20.11: holds the provider at once on an account error, until the stated resume time', async () => {
+    const ctx = setup();
+    const regain = new Date(T0 + 6 * 60 * 60_000).toISOString();
+    ctx.adapter.nextSubmit = async () => {
+      throw new ProviderError('runway', 'account_limit', 'usage limit reached', false, {
+        retryAt: regain,
+      });
+    };
+    await expect(submitTracked(ctx.adapter, request, ctx.d)).rejects.toBeInstanceOf(ProviderError);
+    expect(ctx.breaker.state('runway')).toBe('open'); // one failure, not five
+    expect(ctx.breaker.accountHolds().runway).toMatchObject({
+      errorClass: 'account_limit',
+      reason: 'usage limit reached',
+      until: Date.parse(regain),
+    });
+    ctx.advance(OPEN_DURATION_MS * 2);
+    expect(ctx.breaker.tryAcquire('runway')).toBe(false);
+  });
+
+  it('20.11: holds for the default 15 minutes when no resume time is stated', async () => {
+    const ctx = setup();
+    ctx.adapter.nextSubmit = async () => {
+      throw new ProviderError('runway', 'insufficient_credits', 'no credits', false);
+    };
+    await submitTracked(ctx.adapter, request, ctx.d).catch(() => undefined);
+    expect(ctx.breaker.accountHolds().runway?.until).toBe(T0 + ACCOUNT_HOLD_MS);
   });
 
   it('does not count client-side errors against provider health and frees a trial', async () => {

@@ -105,4 +105,16 @@ describe('20.9 plan model', () => {
       useDripSlots: true,
     });
   });
+
+  it('20.12: platforms without a connected account never block the plan', () => {
+    const two = { ...FORM, platforms: ['tiktok', 'x'], accounts: { tiktok: 'conn_1' } };
+    // X has no account: made but not posted. No account at all: saved for review.
+    expect(validatePlanForm(two, 31, ['tiktok'])).toEqual([]);
+    expect(validatePlanForm({ ...two, accounts: {} }, 31, [])).toEqual([]);
+    expect(validatePlanForm({ ...two, accounts: {} }, 31, ['tiktok'])).toEqual(['accountRequired']);
+    expect(buildPlanBody(two, 'biz_1', 'UTC').targets).toEqual([
+      { platform: 'tiktok', connectionId: 'conn_1' },
+    ]);
+    expect(buildPlanBody({ ...two, accounts: {} }, 'biz_1', 'UTC').targets).toEqual([]);
+  });
 });

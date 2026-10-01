@@ -12,7 +12,7 @@ import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/ap
 import { useFormat } from '@/lib/client/format';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
-import { connectionsFor } from '../automation/automation';
+import { connectionsFor, publishablePlatforms } from '../automation/automation';
 import { useBusiness } from '../business-context';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultZone } from '../calendar/drip-queue';
@@ -99,7 +99,11 @@ export function PlanMonthForm() {
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!form || !businessId || !d) return;
-    const found = validatePlanForm(form, d.maxDays);
+    const found = validatePlanForm(
+      form,
+      d.maxDays,
+      publishablePlatforms(form.platforms, connections.data?.data, businessId),
+    );
     if (found.length) {
       setProblems(found);
       return;
@@ -148,6 +152,7 @@ export function PlanMonthForm() {
     );
 
   const slideshows = 100 - form.videoShare;
+  const withAccounts = publishablePlatforms(form.platforms, connections.data?.data, businessId);
   const count = form.useDripSlots
     ? Math.round((d.postingTimesPerWeek * form.days) / 7)
     : requestedPosts(form.days, form.postsPerDay);
@@ -238,10 +243,11 @@ export function PlanMonthForm() {
             value={form.platforms}
             onChange={(next) => next.platforms && patch({ platforms: next.platforms })}
           />
+          <PlanAccountsNotice platforms={form.platforms} withAccounts={withAccounts} />
           {/* 20.13: the hashtags every planned post carries (Business settings → Hashtags). */}
           <BusinessHashtagsNote businessId={businessId} />
           <div className="grid gap-3 sm:grid-cols-2">
-            {form.platforms.map((platform) => {
+            {withAccounts.map((platform) => {
               const options = connectionsFor(platform, connections.data?.data, businessId);
               const id = `plan-account-${platform}`;
               return (
@@ -249,21 +255,10 @@ export function PlanMonthForm() {
                   key={platform}
                   id={id}
                   label={t('account', { platform: f.platform(platform) })}
-                  hint={
-                    options.length === 0 ? (
-                      <>
-                        {t('noAccount')}{' '}
-                        <Link href="/connections" className="underline">
-                          {t('connect')}
-                        </Link>
-                      </>
-                    ) : undefined
-                  }
                 >
                   <NativeSelect
                     id={id}
                     value={form.accounts[platform] ?? ''}
-                    disabled={options.length === 0}
                     onChange={(e) =>
                       patch({ accounts: { ...form.accounts, [platform]: e.target.value } })
                     }
@@ -308,6 +303,37 @@ export function PlanMonthForm() {
         </aside>
       </form>
     </>
+  );
+}
+
+/**
+ * 20.12: what happens to platforms without a connected account — with none at all the posts are
+ * made and saved for review (nothing is scheduled); otherwise the uncovered platforms are made
+ * but not posted.
+ */
+function PlanAccountsNotice({
+  platforms,
+  withAccounts,
+}: {
+  platforms: string[];
+  withAccounts: string[];
+}) {
+  const t = useTranslations('plans.new');
+  const f = useFormat();
+  const without = platforms.filter((p) => !withAccounts.includes(p));
+  if (platforms.length === 0 || without.length === 0) return null;
+  return (
+    <p
+      role="status"
+      className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground"
+    >
+      {withAccounts.length === 0
+        ? t('noAccountsNotice')
+        : t('someWithoutAccount', { platforms: f.list(without.map((p) => f.platform(p))) })}{' '}
+      <Link href="/connections" className="text-foreground underline underline-offset-2">
+        {t('connectAccount')}
+      </Link>
+    </p>
   );
 }
 

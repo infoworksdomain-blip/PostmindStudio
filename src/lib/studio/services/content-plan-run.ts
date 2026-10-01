@@ -150,15 +150,23 @@ export function projectBodyFor(
     durationSec,
   }));
   const text = slideText(item);
+  const targets = planTargets(plan);
+  // 20.12 DECISION: a plan with no connected account cannot auto-post, so its posts are made
+  // and saved for review (REQUIRE_APPROVAL, MANUAL, no time) instead of failing to schedule.
+  const posting = targets.length > 0;
   const common = {
     name: item.title.slice(0, 200),
     businessId: plan.businessId,
     targetFormats,
-    reviewPolicy: 'AUTO_APPROVE' as const,
-    publishPolicy: 'SCHEDULED' as const,
-    scheduledStartAt: item.slotAt.toISOString(),
     language: plan.language,
-    autoPublish: { targets: planTargets(plan) },
+    ...(posting
+      ? {
+          reviewPolicy: 'AUTO_APPROVE' as const,
+          publishPolicy: 'SCHEDULED' as const,
+          scheduledStartAt: item.slotAt.toISOString(),
+          autoPublish: { targets },
+        }
+      : { reviewPolicy: 'REQUIRE_APPROVAL' as const, publishPolicy: 'MANUAL' as const }),
     ...(plan.brandKitId && { brandKitId: plan.brandKitId }),
   };
   if (item.kind === 'SLIDESHOW') {
@@ -221,7 +229,8 @@ export async function prepareItem(
     const input = createProjectInput.parse(projectBodyFor(plan, item, quota.shortMaxSec));
     const project = await createProject(deps.db, tenant, input, now);
     await mergeMetadata(deps.db, project.id, {
-      contentPlan: { planId: plan.id, itemId: item.id, preApproved: true },
+      // Pre-approved (auto-posted at its time) only when the plan has an account to post to.
+      contentPlan: { planId: plan.id, itemId: item.id, preApproved: planTargets(plan).length > 0 },
       // 20.13: the plan's caption + hashtags (drafted, maybe edited) become the project's copy.
       ...(item.postCopy && { postCopy: item.postCopy }),
     });

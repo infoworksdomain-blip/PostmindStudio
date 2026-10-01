@@ -87,6 +87,8 @@ interface DemoPlan {
   useDripSlots: boolean;
   videoShare: number;
   platforms: string[];
+  /** 20.12: platforms with an account; undefined = every platform (the seeded plans). */
+  targetPlatforms?: string[];
   requestedCount: number;
   cappedReason: 'allowance' | 'cost_cap' | null;
   holdReason: null;
@@ -214,7 +216,7 @@ function publicPlan(p: DemoPlan) {
     useDripSlots: p.useDripSlots,
     videoShare: p.videoShare,
     platforms: p.platforms,
-    targets: p.platforms.map((platform) => ({
+    targets: (p.targetPlatforms ?? p.platforms).map((platform) => ({
       platform,
       connectionId: CONNECTIONS.tiktok.id,
       platformAccountId: null,
@@ -524,8 +526,8 @@ route('POST', '/content-plans', ({ body }) => {
     ? (input.targets as Array<{ platform: string }>)
     : [];
   if (platforms.length === 0) throw bad('platforms: choose at least one');
-  if (platforms.some((p) => !targets.some((t) => t.platform === p)))
-    throw bad('Every platform in the plan needs a connected account');
+  // 20.12: platforms without an account are made but not posted; none = saved for review.
+  const targetPlatforms = platforms.filter((p) => targets.some((t) => t.platform === p));
   const now = Date.now();
   const start =
     typeof input.startDate === 'string' ? parseLocalDate(input.startDate) : nextFreeStart(now);
@@ -564,6 +566,7 @@ route('POST', '/content-plans', ({ body }) => {
     useDripSlots,
     videoShare,
     platforms,
+    targetPlatforms,
     requestedCount: skeleton.length,
     cappedReason: count < skeleton.length ? 'allowance' : null,
     holdReason: null,

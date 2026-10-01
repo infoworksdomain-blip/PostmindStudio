@@ -1,6 +1,11 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { ForbiddenError, ValidationError } from '../../errors';
+import {
+  AutoPublishAccountRequiredError,
+  AutoPublishAccountUnavailableError,
+  ForbiddenError,
+  ValidationError,
+} from '../../errors';
 import { hasCapability, StudioCapability } from '../../rbac';
 import type { TenantContext } from '../../tenant';
 import { PLATFORM_RULES } from '../platforms/rules';
@@ -124,14 +129,43 @@ export async function validateTargets(
         select: { id: true, platform: true },
       })
     : [];
+  if (problems.length) throw new ValidationError('Auto-publish targets are invalid', { problems });
   const platformOf = new Map(connections.map((c) => [c.id, c.platform]));
+  const unavailable: string[] = [];
   for (const [i, t] of targets.entries()) {
     if (!t.connectionId) continue;
     const expected = PLATFORM_RULES[t.platform].connectionPlatform;
     if (platformOf.get(t.connectionId) !== expected)
-      problems.push(
+      unavailable.push(
         `targets[${i}]: connectionId is not a ${expected} connection in this organisation`,
       );
   }
-  if (problems.length) throw new ValidationError('Auto-publish targets are invalid', { problems });
+  // 20.12: a translated code of its own, so the Create screen can say "reconnect or pick another".
+  if (unavailable.length)
+    throw new AutoPublishAccountUnavailableError(
+      'A chosen account is not connected to this organisation any more',
+      { problems: unavailable },
+    );
+}
+
+/** Publish policies that post on their own, so they need at least one account to post to. */
+export const POSTING_POLICIES: ReadonlySet<string> = new Set(['AUTO_ON_APPROVAL', 'SCHEDULED']);
+
+/**
+ * 20.12: auto-publish (AUTO_ON_APPROVAL) and scheduling (SCHEDULED) post to connected accounts,
+ * so a request that asks for either with no target is refused with a code the client translates
+ * ("platforms" are formats to render; "accounts" are where the video is posted). The Create
+ * screen's validateCreate (components/studio/create/body.ts) applies the same rule first.
+ */
+export function assertTargetsForPolicy(
+  publishPolicy: string | null | undefined,
+  targets: readonly AutoPublishTarget[],
+): void {
+  if (!publishPolicy || !POSTING_POLICIES.has(publishPolicy) || targets.length > 0) return;
+  throw new AutoPublishAccountRequiredError(
+    publishPolicy === 'SCHEDULED'
+      ? 'A scheduled video is posted automatically, so choose at least one connected account to post to'
+      : 'Auto-publish needs at least one connected account to post to',
+    { publishPolicy },
+  );
 }

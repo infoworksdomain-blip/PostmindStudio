@@ -83,6 +83,20 @@ async function classifyResponse(
   };
 }
 
+/**
+ * 20.11: the health check reads /v1/user/subscription, which needs the key's `user_read`
+ * permission. Keys restricted to the product areas Studio uses (text to speech, music) answer
+ * 401/403 "missing the permission user_read" (elevenlabs.io/docs/eleven-api/resources/errors,
+ * read 2026-09-30: 401 authentication_error / 403 authorization_error insufficient_permissions).
+ * The key authenticated; only the subscription is unreadable, so the provider is healthy for TTS.
+ */
+export function missingUserReadOnly(errorClass: string, message: string): boolean {
+  return errorClass === 'auth' && /\buser_read\b/.test(message);
+}
+
+export const USER_READ_NOTE =
+  'key valid; it lacks the user_read permission, so the subscription check was skipped';
+
 export class ElevenLabsAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
   readonly capabilities: readonly ProviderCapability[] = ['tts'];
@@ -148,6 +162,9 @@ export class ElevenLabsAdapter implements ProviderAdapter {
       });
       if (res.ok) return { healthy: true };
       const { classification, message } = await classifyResponse(res);
+      if (missingUserReadOnly(classification.errorClass, message)) {
+        return { healthy: true, reason: USER_READ_NOTE };
+      }
       return { healthy: false, reason: `${classification.errorClass}: ${message}` };
     } catch (err) {
       return {

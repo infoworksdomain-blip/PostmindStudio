@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import Anthropic from '@anthropic-ai/sdk';
 import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import * as profileRoute from '../../src/app/api/studio/businesses/[id]/business-profile/route';
@@ -12,9 +13,17 @@ import * as searchRoute from '../../src/app/api/studio/image-library/search/rout
 import * as scanRoute from '../../src/app/api/studio/scans/[id]/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
 import type { StockImageSource } from '../../src/lib/studio/images/stock';
+import { resetAccountAlertCache } from '../../src/lib/studio/providers/account-alerts';
+import {
+  AnthropicAdapter,
+  type AnthropicClientLike,
+} from '../../src/lib/studio/providers/anthropic';
+import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
+import { ProviderError } from '../../src/lib/errors';
 import { call, installApi, multipart, tenant } from '../helpers/api-harness';
-import { createHarness } from '../helpers/pipeline-harness';
+import { createHarness, PROFILE_JSON } from '../helpers/pipeline-harness';
+import { ScriptedAdapter } from '../helpers/scripted-adapter';
 import { fakePng } from '../helpers/png';
 
 // BACKLOG 6.1–6.7 end to end: scan a (fake) website through the real routes, the scan worker,
@@ -204,6 +213,113 @@ describe.skipIf(!hasDb)('website scan + image library API', { timeout: 120_000 }
     const again = await scan(biz, { url: SITE, ownershipConfirmed: true });
     expect(again.status).toBe(202);
     expect((await scan(biz, { url: SITE, ownershipConfirmed: true })).status).toBe(409);
+  });
+
+  // BACKLOG 20.11 — production 2026-09-30: Anthropic's documented spend-limit 400
+  // (platform.claude.com/docs/en/api/rate-limits, read 2026-09-30) failed the scan with its raw
+  // JSON shown to the customer. The REAL Anthropic adapter now reports account_limit and the scan
+  // fails over to OpenAI in the same job.
+  const usageLimitAnthropic = () =>
+    new AnthropicAdapter({
+      client: {
+        messages: {
+          create: async () => {
+            throw Anthropic.APIError.generate(
+              400,
+              {
+                type: 'error',
+                error: {
+                  type: 'invalid_request_error',
+                  message:
+                    'You have reached your specified API usage limits. You will regain access on 2026-10-01 at 00:00 UTC.',
+                },
+                request_id: 'req_011Studio',
+              },
+              undefined,
+              new Headers(),
+            );
+          },
+        },
+        models: { retrieve: async () => ({}) },
+      } as unknown as AnthropicClientLike,
+      usdToGbpRate: 0.75,
+    });
+  const openaiWith = (text: 'answers' | 'no_credits') =>
+    new ScriptedAdapter(
+      'openai',
+      ['text_generation', 'embedding', 'text_to_image'],
+      (request) => {
+        if (request.capability !== 'text_generation') return h.adapters.openai.respond(request);
+        return text === 'answers'
+          ? {
+              state: 'succeeded',
+              output: { metadata: { model: 'scripted-gpt', json: PROFILE_JSON, costPence: 2 } },
+            }
+          : Promise.reject(
+              // developers.openai.com/api/docs/guides/error-codes: 429 credit_balance_exhausted.
+              new ProviderError(
+                'openai',
+                'insufficient_credits',
+                '429 You have no credits remaining.',
+                false,
+              ),
+            );
+      },
+      2,
+    );
+
+  it('20.11: Anthropic usage limit → the scan fails over to OpenAI and completes', async () => {
+    resetAccountAlertCache();
+    h.deps.registry = createProviderRegistry([
+      ...h.deps.registry.list().filter((a) => !['anthropic', 'openai'].includes(a.providerId)),
+      usageLimitAnthropic(),
+      openaiWith('answers'),
+    ]);
+    const biz = `biz-${randomUUID()}`;
+    const earlier = (await db.providerJob.findMany({ where: { organisationId: org } })).map(
+      (j) => j.id,
+    );
+    const started = await scan(biz, { url: `${SITE}/`, ownershipConfirmed: true });
+    const scanId = started.json.scanId as string;
+    const drained = await drainInline(h.queue, h.deps);
+    expect(drained.failedJobs).toEqual([]);
+
+    const detail = await call(scanRoute.GET, { token: 'reader', params: { id: scanId } });
+    expect((detail.json.scan as Record<string, unknown>).state).toBe('SUCCEEDED');
+    const profile = await db.businessProfile.findFirstOrThrow({
+      where: { organisationId: org, businessId: biz },
+    });
+    expect(profile.classifierModel).toBe('openai:scripted-gpt');
+    const jobs = await db.providerJob.findMany({
+      where: { organisationId: org, operation: 'text_generation', id: { notIn: earlier } },
+      orderBy: { startedAt: 'asc' },
+    });
+    expect(jobs.map((j) => j.provider)).toEqual(['anthropic', 'openai']);
+    const byProvider = (id: string) => jobs.find((j) => j.provider === id);
+    expect(byProvider('anthropic')).toMatchObject({ state: 'FAILED', errorClass: 'account_limit' });
+    expect(byProvider('anthropic')?.errorMessage).toContain('specified API usage limits');
+    expect(byProvider('openai')).toMatchObject({ state: 'SUCCEEDED', costPence: 2 });
+  });
+
+  it('20.11: both AI accounts out → the scan fails with a friendly code, no provider text', async () => {
+    resetAccountAlertCache();
+    h.deps.registry = createProviderRegistry([
+      ...h.deps.registry.list().filter((a) => !['anthropic', 'openai'].includes(a.providerId)),
+      usageLimitAnthropic(),
+      openaiWith('no_credits'),
+    ]);
+    const biz = `biz-${randomUUID()}`;
+    const started = await scan(biz, { url: `${SITE}/`, ownershipConfirmed: true });
+    const scanId = started.json.scanId as string;
+    await drainInline(h.queue, h.deps);
+    const detail = await call(scanRoute.GET, { token: 'reader', params: { id: scanId } });
+    const row = detail.json.scan as { state: string; errorReason: string; errors: string[] };
+    expect(row.state).toBe('FAILED');
+    expect(row.errorReason).toMatch(/^service_unavailable: /);
+    expect(row.errorReason).toContain('anthropic/account_limit');
+    expect(row.errorReason).toContain('openai/insufficient_credits');
+    expect(JSON.stringify(detail.json)).not.toContain('invalid_request_error');
+    expect(JSON.stringify(detail.json)).not.toContain('no credits remaining');
   });
 
   it('keeps user edits to the profile across re-scans', async () => {

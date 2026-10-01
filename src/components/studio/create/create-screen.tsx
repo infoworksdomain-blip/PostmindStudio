@@ -15,7 +15,13 @@ import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
 import { TemplatePicker } from '../slideshow/template-picker';
-import type { ProjectTemplate } from '../automation/automation';
+import {
+  buildTargets,
+  hasConnectedAccount,
+  publishablePlatforms,
+  resolveAccounts,
+  type ProjectTemplate,
+} from '../automation/automation';
 import { AutoPublishOption } from './auto-publish-option';
 import {
   BRIEF_MAX,
@@ -34,7 +40,7 @@ import {
 import { defaultSourceFor, LanguageOptions, type WorkflowOption } from './create-planning-options';
 import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './create-options';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
-import { defaultPlatforms } from './formats';
+import { defaultPlatforms, PLATFORM_OPTIONS } from './formats';
 import { ProjectTemplatePicker } from './project-template-picker';
 import { ReferenceBanner } from './reference-banner';
 import { VideoUploadField } from '../uploads/video-upload-field';
@@ -43,7 +49,12 @@ import { ProfileReviewNotice } from '../business/profile-review-notice';
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
 // business's connections and default brand kit; options sit behind progressive disclosure.
 
-const INITIAL: Omit<CreateState, 'platforms' | 'brandKitId'> = {
+/** The form's own state; autoPublish null = the default (on when an account can post). */
+type FormState = Omit<CreateState, 'platforms' | 'brandKitId' | 'autoPublish'> & {
+  autoPublish: boolean | null;
+};
+
+const INITIAL: FormState = {
   brief: '',
   source: 'BRIEF',
   length: 'short',
@@ -53,7 +64,7 @@ const INITIAL: Omit<CreateState, 'platforms' | 'brandKitId'> = {
   budgetPounds: '',
   reviewPolicy: '',
   projectTemplate: null,
-  autoPublish: false,
+  autoPublish: null,
   autoPublishAccounts: {},
   upload: null,
 };
@@ -78,7 +89,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   const f = useFormat();
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
-  const [form, setForm] = useState(INITIAL);
+  const [form, setForm] = useState<FormState>(INITIAL);
   const [platforms, setPlatforms] = useState<string[] | null>(null);
   const [brandKitId, setBrandKitId] = useState<string | null | undefined>(undefined);
   const [reference, setReference] = useState<Reference | null>(initialReference);
@@ -103,16 +114,37 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
     setForm((f) => ({ ...f, source: defaultSourceFor(planTier) }));
   }, [planTier, sourceTouched, initialReference]);
 
-  const state: CreateState = {
+  const chosen: CreateState = {
     ...form,
+    autoPublish: false,
     platforms: platforms ?? defaultPlatforms(connections.data?.data, businessId),
     brandKitId:
       brandKitId === undefined
         ? (kits.data?.data.find((k) => k.isDefault)?.id ?? null)
         : brandKitId,
   };
+  // 20.12: "platforms" are the formats to render; "accounts" are the connected social accounts
+  // the result is posted to. Auto-publish defaults on only when an account can post one of the
+  // chosen platforms, and is always off for a business with no connected account.
+  const connectionList = connections.data?.data;
+  const hasAccounts = hasConnectedAccount(connectionList, businessId);
+  const publishable = publishablePlatforms(
+    PLATFORM_OPTIONS.map((o) => o.platform),
+    connectionList,
+    businessId,
+  );
+  const accounts = resolveAccounts(
+    publishPlatforms(chosen),
+    form.autoPublishAccounts,
+    connectionList,
+    businessId,
+  );
+  const autoPublish =
+    hasAccounts &&
+    (form.autoPublish ?? buildTargets(publishPlatforms(chosen), accounts).length > 0);
+  const state: CreateState = { ...chosen, autoPublish, autoPublishAccounts: accounts };
 
-  const patch = (next: Partial<CreateState>) => {
+  const patch = (next: Partial<FormState & Pick<CreateState, 'platforms' | 'brandKitId'>>) => {
     const { platforms: p, brandKitId: kit, ...rest } = next;
     if (p) setPlatforms(p);
     if (kit !== undefined) setBrandKitId(kit);
@@ -137,7 +169,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const found = validateCreate(state, businessId);
+    const found = validateCreate(state, businessId, Date.now(), publishable);
     if (found.length || !businessId) {
       setProblems(found);
       return;
@@ -192,6 +224,17 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
   };
   const problemText = (p: CreateProblem): string => {
     if (p === 'briefTooLong') return tp('briefTooLong', { max: BRIEF_MAX });
+    if (p === 'autoPublishAccountRequired')
+      return tp(p, {
+        platforms: f.list(
+          publishPlatforms(state)
+            .filter((x) => publishable.includes(x))
+            .map((x) => f.platform(x)),
+          'disjunction',
+        ),
+      });
+    if (p === 'autoPublishNoMatchingAccount')
+      return tp(p, { platforms: f.list(publishable.map((x) => f.platform(x))) });
     if (p === 'scheduleTooFar') return tp('scheduleTooFar', { days: MAX_SCHEDULE_AHEAD_DAYS });
     if (p === 'budgetRange')
       return tp('budgetRange', {
@@ -205,7 +248,15 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
     templated && form.projectTemplate
       ? t('summaryTemplate', { name: form.projectTemplate.name })
       : `${t('summaryPlatforms', { count: state.platforms.length })} · ${tl(form.length)}`,
-    form.autoPublish ? t('summaryAutoPublish') : null,
+    !connections.data
+      ? null
+      : !hasAccounts
+        ? t('summaryNoAccounts')
+        : state.autoPublish
+          ? t('summaryAutoPublish', {
+              count: buildTargets(publishPlatforms(state), accounts).length,
+            })
+          : t('summaryForReview'),
     state.brandKitId ? t('summaryBrandKit') : null,
   ].filter(Boolean);
   return (
@@ -282,6 +333,23 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
           </Button>
         </div>
       </div>
+      <AutoPublishOption
+        source={form.source}
+        enabled={state.autoPublish}
+        onToggle={(on) => patch({ autoPublish: on })}
+        platforms={publishPlatforms(state)}
+        accounts={accounts}
+        onAccount={(platform, connectionId) =>
+          patch({
+            autoPublishAccounts: { ...form.autoPublishAccounts, [platform]: connectionId },
+            // Picking accounts settles the toggle: un-picking them all asks, never silently stops.
+            autoPublish: form.autoPublish ?? state.autoPublish,
+          })
+        }
+        connections={connectionList}
+        metaConnect={connections.data?.meta?.connect}
+        businessId={businessId}
+      />
       {problems.length > 0 && (
         <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
           {problems.map((p) => (
@@ -340,22 +408,6 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />
           </div>
           <LanguageOptions state={state} onChange={patch} />
-          {!isSlideshow && (
-            <AutoPublishOption
-              enabled={form.autoPublish}
-              onToggle={(autoPublish) => patch({ autoPublish })}
-              platforms={publishPlatforms(state)}
-              accounts={form.autoPublishAccounts}
-              onAccount={(platform, connectionId) =>
-                patch({
-                  autoPublishAccounts: { ...form.autoPublishAccounts, [platform]: connectionId },
-                })
-              }
-              connections={connections.data?.data}
-              metaConnect={connections.data?.meta?.connect}
-              businessId={businessId}
-            />
-          )}
           <AdvancedOptions
             state={state}
             onChange={patch}
@@ -363,6 +415,7 @@ export function CreateScreen({ initialReference }: { initialReference: Reference
             onToggle={() => setShowAdvanced((v) => !v)}
             planTier={planTier}
             workflows={workflows.data?.data}
+            canSchedule={!connections.data || publishable.length > 0}
           />
         </div>
       )}

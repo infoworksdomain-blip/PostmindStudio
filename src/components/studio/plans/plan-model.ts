@@ -91,6 +91,8 @@ export interface Plan {
   useDripSlots: boolean;
   videoShare: number;
   platforms: string[];
+  /** The accounts the posts go to (20.12: empty = made and saved for review, not scheduled). */
+  targets?: Array<{ platform: string; connectionId: string | null }>;
   requestedCount: number;
   cappedReason: 'allowance' | 'cost_cap' | null;
   holdReason: 'kill_switch' | 'cost_cap' | 'daily_limit' | null;
@@ -225,13 +227,23 @@ export interface PlanFormState {
   accounts: Record<string, string>;
 }
 
-export function validatePlanForm(state: PlanFormState, maxDays = 31): PlanProblem[] {
+/**
+ * `withAccounts` (20.12): the chosen platforms this business has a connected account for. Each
+ * of those needs its account chosen; a platform without one is still made but not posted, and a
+ * plan with no account at all is made and saved for review (never blocked).
+ */
+export function validatePlanForm(
+  state: PlanFormState,
+  maxDays = 31,
+  withAccounts: readonly string[] = state.platforms,
+): PlanProblem[] {
   const problems: PlanProblem[] = [];
   if (!/^\d{4}-\d{2}-\d{2}$/.test(state.startDate)) problems.push('startRequired');
   if (!Number.isInteger(state.days) || state.days < 1 || state.days > maxDays)
     problems.push('daysRange');
   if (state.platforms.length === 0) problems.push('platformRequired');
-  else if (state.platforms.some((p) => !state.accounts[p])) problems.push('accountRequired');
+  else if (state.platforms.some((p) => withAccounts.includes(p) && !state.accounts[p]))
+    problems.push('accountRequired');
   return problems;
 }
 
@@ -244,10 +256,10 @@ export function buildPlanBody(state: PlanFormState, businessId: string, timezone
     ...(state.useDripSlots ? { useDripSlots: true } : { postsPerDay: state.postsPerDay }),
     videoShare: state.videoShare,
     platforms: state.platforms,
-    targets: state.platforms.map((platform) => ({
-      platform,
-      connectionId: state.accounts[platform]!,
-    })),
+    // 20.12: only platforms with a chosen account; none = the posts are saved for review.
+    targets: state.platforms.flatMap((platform) =>
+      state.accounts[platform] ? [{ platform, connectionId: state.accounts[platform] }] : [],
+    ),
     timezone,
   };
 }
