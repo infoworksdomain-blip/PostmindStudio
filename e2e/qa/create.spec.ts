@@ -317,7 +317,7 @@ test.describe('Plan my month with a plan', () => {
 
     // Edit a topic.
     await page.getByRole('button', { name: 'Edit' }).first().click();
-    await page.getByLabel('Topic').fill('Sourdough for beginners');
+    await page.getByRole('textbox', { name: 'Topic', exact: true }).fill('Sourdough for beginners');
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(page.getByText('Sourdough for beginners').first()).toBeVisible();
     expect(
@@ -346,15 +346,15 @@ test.describe('Plan my month with a plan', () => {
     ] as const) {
       await page.getByRole('button', { name: 'Add a post' }).click();
       await page.getByLabel('Date and time').fill(day(0, hh, 15).toISOString().slice(0, 16));
-      await page.getByLabel('Topic').last().fill(title);
-      await page.getByLabel('Brief').last().fill(`Brief ${title}`);
+      await page.getByRole('textbox', { name: 'Topic', exact: true }).last().fill(title);
+      await page.getByRole('textbox', { name: 'Brief', exact: true }).last().fill(`Brief ${title}`);
       await page.getByRole('button', { name: 'Add post' }).click();
       await expect(page.getByText(title).first()).toBeVisible();
     }
     await page.getByRole('button', { name: 'Add a post' }).click();
     await page.getByLabel('Date and time').fill(day(0, 22, 15).toISOString().slice(0, 16));
-    await page.getByLabel('Topic').last().fill('Fifth of the day');
-    await page.getByLabel('Brief').last().fill('Too many');
+    await page.getByRole('textbox', { name: 'Topic', exact: true }).last().fill('Fifth of the day');
+    await page.getByRole('textbox', { name: 'Brief', exact: true }).last().fill('Too many');
     await page.getByRole('button', { name: 'Add post' }).click();
     await expect(page.getByText('At most 4 posts a day').first()).toBeVisible();
     expect(
