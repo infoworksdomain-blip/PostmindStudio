@@ -259,7 +259,8 @@
       "upload_failed": "上传失败，请重试。",
       "plan_required": "您的组织尚未选择套餐。请选择套餐后开始创作。",
       "billing_required": "由于账单问题，您的账户目前为只读。请更新付款信息以继续。",
-      "no_organisation": "请创建或加入一个组织以继续。"
+      "no_organisation": "请创建或加入一个组织以继续。",
+      "service_unavailable": "我们的 AI 服务暂时不可用。请稍后再试——我们的团队已收到通知。"
     }
   },
   "primitives": {
@@ -444,6 +445,14 @@
     "scheduleNoFreeSlot": {
       "title": "“{name}”未排期",
       "body": "未来 {weeks, plural, other {# 周}}内没有空闲的发布时间——请添加发布时间或选择日期。"
+    },
+    "providerAccountProblem": {
+      "title": "{provider} 账户需要处理",
+      "body": "{provider} 已停止接受 {capability} 任务（{errorClass}）。Studio 正在切换到下一个提供商，并暂停向 {provider} 路由。{retryAt, select, none {} other {提供商表示将于 {retryAt} 恢复访问。}}"
+    },
+    "providersUnavailable": {
+      "title": "没有可用的 {capability} 提供商",
+      "body": "所有 {capability} 提供商都因账户问题而失败：{providers}。在其中一个账户修复之前，客户会看到“暂时不可用”。"
     }
   },
   "create": {
@@ -2544,7 +2553,13 @@
           "open": "打开"
         },
         "jobCounts": "{succeeded} 成功 · {failed} 失败",
-        "jobCountsRunning": "{succeeded} 成功 · {failed} 失败 · {running} 运行中"
+        "jobCountsRunning": "{succeeded} 成功 · {failed} 失败 · {running} 运行中",
+        "accountHold": "已暂停：{problem}，至 {until} UTC",
+        "holdClass": {
+          "auth": "API 密钥被拒绝",
+          "insufficient_credits": "额度已用完",
+          "account_limit": "已达用量上限"
+        }
       }
     },
     "killSwitch": {
@@ -3497,7 +3512,8 @@
       "scan_cost_cap": "扫描已在费用上限（{amount}）处停止。",
       "scan_images_capped": "扫描已达到费用上限（{amount}）：部分图片未编入搜索索引。",
       "ownership_disputed": "已停止：网站所有权存在争议。",
-      "provider_failure": "{source} 报告了问题：{problem}。"
+      "provider_failure": "{source} 报告了问题：{problem}。",
+      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。"
     },
     "classes": {
       "rate_limited": "请求过多",
@@ -3514,7 +3530,8 @@
       "quota_exceeded": "已达到配额",
       "invalid_media": "视频文件被拒绝",
       "outcome_unknown": "结果未知——重试前请先在平台上确认",
-      "unknown": "未知错误"
+      "unknown": "未知错误",
+      "account_limit": "已达到用量上限"
     }
   },
   "marketing": {

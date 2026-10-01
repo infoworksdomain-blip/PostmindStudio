@@ -259,7 +259,8 @@
       "upload_failed": "अपलोड विफल रहा। फिर से कोशिश करें।",
       "plan_required": "आपके संगठन के पास अभी कोई प्लान नहीं है। बनाना शुरू करने के लिए एक प्लान चुनें।",
       "billing_required": "बिलिंग की समस्या के कारण आपका खाता केवल पढ़ने के लिए है। जारी रखने के लिए अपनी भुगतान जानकारी अपडेट करें।",
-      "no_organisation": "जारी रखने के लिए कोई संगठन बनाएँ या उसमें शामिल हों।"
+      "no_organisation": "जारी रखने के लिए कोई संगठन बनाएँ या उसमें शामिल हों।",
+      "service_unavailable": "हमारी AI सेवा अभी अस्थायी रूप से उपलब्ध नहीं है। कृपया बाद में फिर कोशिश करें — हमारी टीम को सूचित कर दिया गया है।"
     }
   },
   "primitives": {
@@ -444,6 +445,14 @@
     "scheduleNoFreeSlot": {
       "title": "“{name}” शेड्यूल नहीं हुआ",
       "body": "{weeks, plural, one {अगले # हफ्ते} other {अगले # हफ्तों}} में कोई खाली पोस्टिंग समय नहीं — पोस्टिंग समय जोड़ें या तारीख चुनें।"
+    },
+    "providerAccountProblem": {
+      "title": "{provider} खाते पर ध्यान देने की ज़रूरत है",
+      "body": "{provider} ने {capability} के काम लेना बंद कर दिया है ({errorClass})। Studio अगले प्रदाता पर चला जाता है और {provider} को रूटिंग से बाहर रखता है।{retryAt, select, none {} other { प्रदाता के अनुसार एक्सेस {retryAt} पर फिर शुरू होगा।}}"
+    },
+    "providersUnavailable": {
+      "title": "कोई {capability} प्रदाता उपलब्ध नहीं",
+      "body": "सभी {capability} प्रदाता खाते की समस्या के कारण विफल रहे: {providers}। जब तक इनमें से कोई खाता ठीक नहीं होता, ग्राहकों को “अस्थायी रूप से उपलब्ध नहीं” दिखेगा।"
     }
   },
   "create": {
@@ -2544,7 +2553,13 @@
           "open": "खुला"
         },
         "jobCounts": "{succeeded} सफल · {failed} विफल",
-        "jobCountsRunning": "{succeeded} सफल · {failed} विफल · {running} चल रहे हैं"
+        "jobCountsRunning": "{succeeded} सफल · {failed} विफल · {running} चल रहे हैं",
+        "accountHold": "रोका गया: {problem}, {until} UTC तक",
+        "holdClass": {
+          "auth": "API कुंजी अस्वीकार की गई",
+          "insufficient_credits": "क्रेडिट खत्म",
+          "account_limit": "उपयोग सीमा पूरी"
+        }
       }
     },
     "killSwitch": {
@@ -3497,7 +3512,8 @@
       "scan_cost_cap": "स्कैन अपनी लागत सीमा ({amount}) पर रुक गया।",
       "scan_images_capped": "स्कैन अपनी लागत सीमा ({amount}) तक पहुँच गया: कुछ इमेज खोज के लिए इंडेक्स नहीं हुईं।",
       "ownership_disputed": "रुका: वेबसाइट के स्वामित्व पर आपत्ति दर्ज हुई।",
-      "provider_failure": "{source} ने एक समस्या बताई: {problem}।"
+      "provider_failure": "{source} ने एक समस्या बताई: {problem}।",
+      "service_unavailable": "हमारी AI सेवा अभी अस्थायी रूप से उपलब्ध नहीं है, इसलिए यह पूरा नहीं हो सका। कृपया बाद में फिर कोशिश करें — हमारी टीम को सूचित कर दिया गया है।"
     },
     "classes": {
       "rate_limited": "बहुत ज़्यादा अनुरोध",
@@ -3514,7 +3530,8 @@
       "quota_exceeded": "कोटा पूरा हो गया",
       "invalid_media": "वीडियो फ़ाइल अस्वीकार हुई",
       "outcome_unknown": "नतीजा पता नहीं — फिर से कोशिश करने से पहले प्लेटफ़ॉर्म देखें",
-      "unknown": "एक अज्ञात गड़बड़ी"
+      "unknown": "एक अज्ञात गड़बड़ी",
+      "account_limit": "उपयोग सीमा पूरी हो गई"
     }
   },
   "marketing": {

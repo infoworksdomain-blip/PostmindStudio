@@ -1,7 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigurationError, ProviderError } from '../../errors';
-import { AnthropicAdapter, computeCostUsd, type AnthropicClientLike } from './anthropic';
+import {
+  AnthropicAdapter,
+  classifyAnthropicError,
+  computeCostUsd,
+  type AnthropicClientLike,
+} from './anthropic';
 
 // Fixtures follow the Messages API response shape (@anthropic-ai/sdk Message type). Replace
 // with recordings from scripts/test-anthropic.ts once staging keys are available.
@@ -261,5 +266,89 @@ describe('AnthropicAdapter', () => {
     const result = await new AnthropicAdapter({ client: broken, usdToGbpRate: 0.75 }).healthCheck();
     expect(result.healthy).toBe(false);
     expect(result.reason).toContain('auth');
+  });
+});
+
+// 20.11 — account-level errors, bodies exactly as documented (read 2026-09-30):
+// platform.claude.com/docs/en/api/errors and platform.claude.com/docs/en/api/rate-limits.
+describe('Anthropic account errors (20.11)', () => {
+  // "Setting your own spend limit": 400 invalid_request_error; the message begins "You have
+  // reached your specified API usage limits" and states when access resumes (the production body).
+  const orgSpendLimit = {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message:
+        'You have reached your specified API usage limits. You will regain access on 2026-10-01 at 00:00 UTC.',
+    },
+    request_id: 'req_011Studio',
+  };
+  const workspaceSpendLimit = {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message:
+        'You have reached your specified workspace API usage limits. You will regain access on 2026-10-01 at 00:00 UTC.',
+    },
+    request_id: 'req_011Studio',
+  };
+  // "Reaching your spend cap": the documented 429 body.
+  const tierSpendCap = {
+    type: 'error',
+    error: {
+      type: 'rate_limit_error',
+      message:
+        "You have reached your API usage limits: your organization has crossed its monthly API usage threshold, set based on your organization's API tier. You will regain access on 2026-09-01 at 00:00 UTC.",
+      details: { error_code: 'enforced_spend_limit_reached' },
+    },
+    request_id: 'req_018EeWyXxfu5pfWkrYcMdjWG',
+  };
+  const billing = {
+    type: 'error',
+    error: { type: 'billing_error', message: 'There is an issue with your billing.' },
+  };
+
+  it.each([
+    [400, orgSpendLimit, 'account_limit', '2026-10-01T00:00:00.000Z'],
+    [400, workspaceSpendLimit, 'account_limit', '2026-10-01T00:00:00.000Z'],
+    [429, tierSpendCap, 'account_limit', '2026-09-01T00:00:00.000Z'],
+    [402, billing, 'insufficient_credits', undefined],
+  ])('classifies %i %o as %s', (status, body, errorClass, retryAt) => {
+    const info = classifyAnthropicError(status, body);
+    expect(info).toMatchObject({ errorClass, retryable: false });
+    expect(info.retryAt).toBe(retryAt);
+  });
+
+  it('keeps an ordinary 429 a retryable rate limit and an ordinary 400 invalid', () => {
+    const rate = {
+      type: 'error',
+      error: {
+        type: 'rate_limit_error',
+        message: 'Number of requests has exceeded your rate limit',
+      },
+    };
+    expect(classifyAnthropicError(429, rate)).toMatchObject({
+      errorClass: 'rate_limited',
+      retryable: true,
+    });
+    const bad = { type: 'error', error: { type: 'invalid_request_error', message: 'max_tokens' } };
+    expect(classifyAnthropicError(400, bad)).toMatchObject({ errorClass: 'invalid_request' });
+    expect(classifyAnthropicError(401, undefined)).toMatchObject({ errorClass: 'auth' });
+    expect(classifyAnthropicError(403, undefined)).toMatchObject({ errorClass: 'auth' });
+  });
+
+  it('throws account_limit with the resume time and the readable message, not the raw JSON', async () => {
+    const create = vi.fn(async () => {
+      throw Anthropic.APIError.generate(400, orgSpendLimit, undefined, new Headers());
+    });
+    const adapter = new AnthropicAdapter({ client: client(create), usdToGbpRate: 0.75 });
+    const err = (await adapter.submit(request).catch((e: unknown) => e)) as ProviderError;
+    expect(err).toMatchObject({ providerId: 'anthropic', errorClass: 'account_limit' });
+    expect(err.retryable).toBe(false);
+    expect(err.details?.retryAt).toBe('2026-10-01T00:00:00.000Z');
+    expect(err.message).toBe(
+      '400 You have reached your specified API usage limits. You will regain access on 2026-10-01 at 00:00 UTC.',
+    );
+    expect(err.message).not.toContain('{');
   });
 });

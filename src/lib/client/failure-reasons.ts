@@ -38,6 +38,8 @@ export const FAILURE_CODES = [
   'scan_images_capped',
   'ownership_disputed',
   'provider_failure',
+  // 20.11: every provider for the job is out (account problem) or held; no provider text shown.
+  'service_unavailable',
 ] as const;
 
 export type FailureCode = (typeof FAILURE_CODES)[number];
@@ -59,6 +61,7 @@ export const ERROR_CLASSES = [
   'unavailable',
   'auth',
   'insufficient_credits',
+  'account_limit',
   'invalid_request',
   'content_policy',
   'output_truncated',
@@ -96,6 +99,29 @@ export interface ParsedFailure {
   rawCause: string | null;
 }
 
+/**
+ * Social platforms (PlatformError ids and the catalogue's destinations): their messages are the
+ * platform's reason for refusing a post and stay visible; `auth` never comes from a platform.
+ */
+const PLATFORM_SOURCES: ReadonlySet<string> = new Set([
+  'tiktok',
+  'instagram',
+  'instagram_reel',
+  'instagram_feed',
+  'youtube',
+  'youtube_short',
+  'facebook',
+  'facebook_feed',
+  'linkedin',
+  'linkedin_video',
+  'x',
+]);
+
+/** True when a provider_failure's source is a social platform (its detail may be shown). */
+export function isPlatformSource(source: string | undefined): boolean {
+  return source !== undefined && PLATFORM_SOURCES.has(source);
+}
+
 const has = <T extends string>(list: readonly T[], value: string): value is T =>
   (list as readonly string[]).includes(value);
 
@@ -121,6 +147,17 @@ const SERVER_WORDED: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'scan_cost_cap',
   'scan_images_capped',
   'ownership_disputed',
+  'service_unavailable',
+]);
+
+/**
+ * 20.11: provider error classes that mean Studio's account at the provider needs attention. Older
+ * rows stored them as `<provider>/<class>: <provider text>`; they read as service_unavailable.
+ */
+const ACCOUNT_CLASSES: ReadonlySet<string> = new Set([
+  'auth',
+  'insufficient_credits',
+  'account_limit',
 ]);
 
 /** Codes whose text after the colon is another reason (parsed as the cause). */
@@ -194,6 +231,12 @@ export function parseFailure(raw: string | null | undefined): ParsedFailure | nu
   if (reviewed)
     return make(`${reviewed[1] as 'script' | 'content'}_safety_blocked_by_review`, {}, reviewed[2]);
   const sourced = SOURCE_CLASS.exec(reason);
+  if (
+    sourced &&
+    ACCOUNT_CLASSES.has(sourced[2] as string) &&
+    !PLATFORM_SOURCES.has(sourced[1] as string)
+  )
+    return make('service_unavailable');
   if (sourced)
     return make(
       'provider_failure',

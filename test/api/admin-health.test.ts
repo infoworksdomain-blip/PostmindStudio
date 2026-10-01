@@ -109,6 +109,7 @@ describe.skipIf(!hasDb)('admin queue and provider health API', { timeout: 60_000
       errorRate1h: 0.25,
       jobs1h: { succeeded: 2, failed: 2, running: 0 },
       spendTodayPence: 1_840,
+      accountHold: null,
       healthy: false,
     });
     // The harness registry's runway adapter is listed as configured.

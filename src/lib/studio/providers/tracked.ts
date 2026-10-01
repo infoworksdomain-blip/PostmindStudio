@@ -1,5 +1,11 @@
 import { NotFoundError, ProviderError, ValidationError } from '../../errors';
 import type { KillSwitch } from '../kill-switch';
+import {
+  ACCOUNT_REASON_MAX,
+  accountHoldUntil,
+  isAccountErrorClass,
+  retryAtOf,
+} from './account-errors';
 import type { CircuitBreaker } from './circuit-breaker';
 import {
   CLIENT_SIDE_ERROR_CLASSES,
@@ -68,13 +74,26 @@ export function redactUrls(value: unknown): unknown {
   return value;
 }
 
-/** Health signal for the breaker; a request that says nothing about health frees a trial. */
+/**
+ * Health signal for the breaker; a request that says nothing about health frees a trial.
+ * 20.11: an account problem (bad key, no credits, usage limit) holds the provider out of routing
+ * at once, until the time the provider stated or for ACCOUNT_HOLD_MS.
+ */
 async function reportOutcome(
   breaker: CircuitBreaker,
   providerId: string,
-  errorClass: string,
+  failure: { errorClass: string; message: string; retryAt?: string },
+  now: number,
 ): Promise<void> {
-  if (affectsProviderHealth(errorClass)) await breaker.recordFailure(providerId);
+  if (isAccountErrorClass(failure.errorClass) && breaker.tripAccount) {
+    await breaker.tripAccount(providerId, {
+      errorClass: failure.errorClass,
+      reason: failure.message.slice(0, ACCOUNT_REASON_MAX),
+      until: accountHoldUntil(now, failure.retryAt),
+    });
+    return;
+  }
+  if (affectsProviderHealth(failure.errorClass)) await breaker.recordFailure(providerId);
   else await breaker.releaseTrial(providerId);
 }
 
@@ -127,7 +146,16 @@ export async function submitTracked(
       costDeltaPence: 0,
       projectId: request.projectId,
     });
-    await reportOutcome(deps.breaker, adapter.providerId, errorClass);
+    await reportOutcome(
+      deps.breaker,
+      adapter.providerId,
+      {
+        errorClass,
+        message: err instanceof Error ? err.message : String(err),
+        retryAt: retryAtOf(err),
+      },
+      now(),
+    );
     throw err;
   }
 
@@ -224,7 +252,12 @@ export async function pollTracked(
     failed: 1,
     costDeltaPence: chargedPence - reserved,
   });
-  await reportOutcome(deps.breaker, adapter.providerId, errorClass);
+  await reportOutcome(
+    deps.breaker,
+    adapter.providerId,
+    { errorClass, message: result.error?.message ?? '' },
+    now(),
+  );
   return result;
 }
 

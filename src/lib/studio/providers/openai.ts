@@ -85,15 +85,44 @@ export interface OpenAIAdapterOptions {
   now?: () => number;
 }
 
-function classifySdkError(err: unknown): ErrorClassification {
+const CREDIT_CODES: ReadonlySet<string> = new Set([
+  'insufficient_quota',
+  'credit_balance_exhausted',
+]);
+const LIMIT_CODES: ReadonlySet<string> = new Set([
+  'organization_spend_limit_exceeded',
+  'project_spend_limit_exceeded',
+  'organization_usage_limit_exceeded',
+]);
+
+/** A 429's billing meaning (account problem, not a rate limit), from its documented code / type. */
+export function classifyOpenAIBilling(
+  code: string | null | undefined,
+  type: string | null | undefined,
+): ErrorClassification | undefined {
+  if (code && CREDIT_CODES.has(code))
+    return { errorClass: 'insufficient_credits', retryable: false };
+  if (code && LIMIT_CODES.has(code)) return { errorClass: 'account_limit', retryable: false };
+  if (type === 'insufficient_quota')
+    return { errorClass: 'insufficient_credits', retryable: false };
+  return undefined;
+}
+
+export function classifySdkError(err: unknown): ErrorClassification {
   if (err instanceof OpenAI.APIConnectionTimeoutError)
     return { errorClass: 'timeout', retryable: true };
   if (err instanceof OpenAI.APIConnectionError)
     return { errorClass: 'provider_unavailable', retryable: true };
   if (err instanceof OpenAI.APIError && typeof err.status === 'number') {
-    // 429 is both rate limiting (retry) and quota exhaustion (don't) — tell them apart by code.
-    if (err.status === 429 && err.code === 'insufficient_quota') {
-      return { errorClass: 'insufficient_credits', retryable: false };
+    // 429 is both rate limiting (retry) and account billing limits (don't) — tell them apart by
+    // code / type. 20.11, https://developers.openai.com/api/docs/guides/error-codes (read
+    // 2026-09-30): "Credit balance exhausted" code credit_balance_exhausted ("Your organization
+    // has no prepaid credits remaining"), organization_spend_limit_exceeded,
+    // project_spend_limit_exceeded, organization_usage_limit_exceeded; "For billing errors, inspect
+    // error.code … The broader error.type can still be insufficient_quota."
+    if (err.status === 429) {
+      const billing = classifyOpenAIBilling(err.code, err.type);
+      if (billing) return billing;
     }
     if (err.status === 400 && err.code === 'moderation_blocked') {
       return { errorClass: 'content_policy', retryable: false };
