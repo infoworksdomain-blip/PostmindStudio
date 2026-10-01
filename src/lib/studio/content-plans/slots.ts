@@ -1,5 +1,11 @@
 import { ValidationError } from '../../errors';
 import { addDays, wallClock, zonedToUtc } from '../automation/zoned-time';
+import {
+  DAILY_POST_TIMES,
+  dailyPostTimes,
+  MAX_POSTS_PER_DAY,
+  MIN_POSTS_PER_DAY,
+} from '../posting-schedule';
 import { upcomingSlots, type DripSlot } from '../services/drip-queue';
 import type { LocalDate } from './calendar-days';
 
@@ -16,26 +22,14 @@ import type { LocalDate } from './calendar-days';
 // day" uses the fixed daily times below in the plan's time zone (weekday lunchtime / morning like
 // the 20.3 presets, then early evening and evening). Never more than MAX_POSTS_PER_DAY a day.
 
-export const MIN_POSTS_PER_DAY = 1;
-export const MAX_POSTS_PER_DAY = 4;
+// 20.14: the daily times and the 4-a-day cap live in posting-schedule.ts, shared with the drip
+// queue's "Pick times for me", so "N a day" here and a daily posting schedule give the same times.
+export { DAILY_POST_TIMES, dailyPostTimes, MAX_POSTS_PER_DAY, MIN_POSTS_PER_DAY };
 export const DEFAULT_PLAN_DAYS = 30;
 export const MAX_PLAN_DAYS = 31;
 /** A post time closer than this is skipped: the item needs time to be generated first. */
 export const PLAN_MIN_LEAD_MS = 2 * 60 * 60_000;
 const DAY_MS = 86_400_000;
-
-/** Daily post times (HH:MM, local) for 1–4 posts a day. */
-export const DAILY_POST_TIMES: Readonly<Record<number, readonly string[]>> = {
-  1: ['12:30'],
-  2: ['09:00', '17:30'],
-  3: ['09:00', '12:30', '17:30'],
-  4: ['09:00', '12:30', '17:30', '20:00'],
-};
-
-export function dailyPostTimes(postsPerDay: number): readonly string[] {
-  const n = Math.min(MAX_POSTS_PER_DAY, Math.max(MIN_POSTS_PER_DAY, Math.round(postsPerDay)));
-  return DAILY_POST_TIMES[n] ?? DAILY_POST_TIMES[1]!;
-}
 
 /** "2026-10-01" → { 2026, 10, 1 }; throws ValidationError for anything else. */
 export function parseLocalDate(value: string): LocalDate {
