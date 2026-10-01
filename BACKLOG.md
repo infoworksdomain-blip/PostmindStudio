@@ -430,3 +430,5 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **20.8** Visual refresh: homepage visuals and slides; placeholder images replaced
 - [x] **20.9** Plan my month: batch-generate videos and slideshows and auto-schedule (≤4/day)
 - [x] **20.10** Full QA sweep and fixes
+- [x] **20.11** Provider failover on account limits; no raw provider errors for customers
+- [x] **20.12** Auto-publish: accounts vs platforms; no blocking without connected accounts

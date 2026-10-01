@@ -208,11 +208,18 @@ route('GET', '/admin/providers', () => ({
     {
       id: 'runway',
       configured: true,
-      breaker: 'closed',
+      breaker: 'open',
       errorRate1h: 0.02,
       jobs1h: { succeeded: 47, failed: 1, running: 5 },
       spendTodayPence: 1_840,
-      healthy: true,
+      // 20.11: held for an account problem; clips fail over to Luma meanwhile.
+      accountHold: {
+        errorClass: 'auth',
+        reason: '401: The provided API key is not valid.',
+        until: new Date(Date.now() + 12 * 60_000).toISOString(),
+        since: new Date(Date.now() - 3 * 60_000).toISOString(),
+      },
+      healthy: false,
     },
     {
       id: 'shotstack',

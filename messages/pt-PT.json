@@ -259,7 +259,10 @@
       "upload_failed": "O carregamento falhou. Tente novamente.",
       "plan_required": "A sua organização ainda não tem um plano. Escolha um plano para começar a criar.",
       "billing_required": "A sua conta está só de leitura devido a um problema de faturação. Atualize os seus dados de pagamento para continuar.",
-      "no_organisation": "Crie uma organização ou junte-se a uma para continuar."
+      "no_organisation": "Crie uma organização ou junte-se a uma para continuar.",
+      "service_unavailable": "O nosso serviço de IA está temporariamente indisponível. Tente novamente mais tarde — a nossa equipa já foi alertada.",
+      "auto_publish_account_required": "Escolha uma conta ligada onde publicar ou desative a publicação automática e o agendamento.",
+      "auto_publish_account_unavailable": "Uma conta escolhida já não está ligada. Volte a ligá-la ou escolha outra conta."
     }
   },
   "primitives": {
@@ -444,6 +447,14 @@
     "scheduleNoFreeSlot": {
       "title": "«{name}» não foi agendado",
       "body": "Nenhuma hora de publicação livre {weeks, plural, one {na próxima semana} other {nas próximas # semanas}} — adicione horas ou escolha uma data."
+    },
+    "providerAccountProblem": {
+      "title": "A conta {provider} precisa de atenção",
+      "body": "{provider} deixou de aceitar trabalhos de {capability} ({errorClass}). O Studio passa para o fornecedor seguinte e retira {provider} do encaminhamento.{retryAt, select, none {} other { Segundo o fornecedor, o acesso é retomado a {retryAt}.}}"
+    },
+    "providersUnavailable": {
+      "title": "Nenhum fornecedor de {capability} disponível",
+      "body": "Todos os fornecedores de {capability} falharam devido a um problema de conta: {providers}. Os clientes veem «temporariamente indisponível» até uma destas contas ser corrigida."
     }
   },
   "create": {
@@ -463,7 +474,7 @@
       "briefPlaceholder": "A nossa ementa de primavera estreia na sexta-feira — três novos petiscos, 20% de desconto na primeira semana…",
       "summaryTemplate": "Modelo {name}",
       "summaryPlatforms": "{count, plural, =0 {Nenhuma plataforma} one {# plataforma} other {# plataformas}}",
-      "summaryAutoPublish": "publicação automática",
+      "summaryAutoPublish": "{count, plural, =0 {publicação automática: nenhuma conta escolhida} one {publica em # conta} other {publica em # contas}}",
       "summaryBrandKit": "kit de marca ativado",
       "options": "Opções",
       "generate": "Gerar",
@@ -486,7 +497,9 @@
         "generatingScript": "A gerar — o Studio está a escrever o guião.",
         "draftNotStarted": "Guardado como rascunho, mas a geração não começou: {error}"
       },
-      "planMonth": "Ou planeie um mês inteiro de vídeos e apresentações"
+      "planMonth": "Ou planeie um mês inteiro de vídeos e apresentações",
+      "summaryNoAccounts": "nenhuma conta ligada: guardado para revisão",
+      "summaryForReview": "guardado para revisão"
     },
     "problems": {
       "businessRequired": "Escolha primeiro uma empresa.",
@@ -494,12 +507,14 @@
       "briefRequired": "Descreva o tema do vídeo.",
       "briefTooLong": "O briefing deve ter menos de {max, number} carateres.",
       "platformRequired": "Escolha pelo menos uma plataforma.",
-      "autoPublishAccountRequired": "Escolha pelo menos uma conta para a publicação automática ou desative a publicação automática.",
+      "autoPublishAccountRequired": "Escolha em «Publicar em» a conta de {platforms} onde publicar, ou desative a publicação automática.",
       "slideshowTemplateRequired": "Escolha um modelo de apresentação de diapositivos.",
       "scheduleInPast": "Agende para uma hora no futuro.",
-      "scheduleNeedsAutoPublish": "Para agendar um vídeo, escolha as contas onde será publicado (publicação automática).",
+      "scheduleNeedsAutoPublish": "Uma publicação agendada sai automaticamente: ative a publicação automática em «Publicar em» e escolha uma conta, ou remova o agendamento.",
       "budgetRange": "O orçamento tem de estar entre {min} e {max}.",
-      "scheduleTooFar": "Agende com, no máximo, {days, number} dias de antecedência."
+      "scheduleTooFar": "Agende com, no máximo, {days, number} dias de antecedência.",
+      "autoPublishNoMatchingAccount": "Nenhuma das suas contas ligadas publica nas plataformas escolhidas. Adicione {platforms}, ligue outra conta ou desative a publicação automática.",
+      "scheduleNeedsAccount": "Uma publicação agendada sai automaticamente, por isso precisa de uma conta ligada para uma das plataformas escolhidas. Ligue uma ou remova o agendamento."
     },
     "options": {
       "platforms": "Plataformas",
@@ -550,16 +565,23 @@
       "workflowNone": "Nenhum fluxo configurado",
       "workflowOrg": "Regras da organização",
       "scheduleNextSlot": "Sem data — usar a próxima vaga livre da fila de publicação",
-      "scheduleNextSlotHint": "Sai na primeira hora livre {weeks, plural, one {da próxima semana} other {das próximas # semanas}}. Defina as horas no calendário."
+      "scheduleNextSlotHint": "Sai na primeira hora livre {weeks, plural, one {da próxima semana} other {das próximas # semanas}}. Defina as horas no calendário.",
+      "scheduleNeedsAccount": "Um agendamento publica automaticamente, por isso precisa de uma conta ligada.",
+      "connectAccount": "Ligar uma conta"
     },
     "autoPublish": {
-      "legend": "Publicação automática",
+      "legend": "Publicar em",
       "toggle": "Publicar automaticamente quando aprovado",
       "toggleHint": "Assim que o vídeo for aprovado — pelo utilizador ou automaticamente —, é publicado nas contas abaixo.",
       "account": "Conta de {platform}",
       "noAccount": "Nenhuma conta ligada.",
       "connectOne": "Ligar uma",
-      "dontAutoPublish": "Não publicar automaticamente"
+      "dontAutoPublish": "Não publicar automaticamente",
+      "offHint": "{source, select, SLIDESHOW {A apresentação é guardada} other {O vídeo é guardado}} para revisão; publique-o na respetiva página.",
+      "noAccounts": "Nenhuma conta ligada — {source, select, SLIDESHOW {as apresentações são guardadas} other {os vídeos são guardados}} para revisão, sem serem publicados.",
+      "connectAccount": "Ligar uma conta",
+      "noMatching": "Nenhuma das suas contas ligadas publica nas plataformas escolhidas acima. As suas contas publicam em {platforms}.",
+      "notPosted": "Não publicado automaticamente (nenhuma conta ligada): {platforms}."
     },
     "templatePicker": {
       "legend": "Modelo",
@@ -674,7 +696,9 @@
       "scheduled": "{count, plural, one {# publicação agendada.} other {# publicações agendadas.}}",
       "publishing": "{count, plural, one {A publicar # publicação.} other {A publicar # publicações.}}",
       "scheduleTooFar": "Escolha uma hora com, no máximo, {days, number} dias de antecedência.",
-      "scheduleInPast": "Escolha uma hora a, pelo menos, um minuto de agora."
+      "scheduleInPast": "Escolha uma hora a, pelo menos, um minuto de agora.",
+      "noAccounts": "Ainda não há contas ligadas, por isso não há onde publicar. O vídeo fica guardado aqui.",
+      "connectAccount": "Ligar uma conta"
     },
     "publications": {
       "empty": "Ainda não há nada publicado nem agendado.",
@@ -2544,7 +2568,13 @@
           "open": "Aberto"
         },
         "jobCounts": "{succeeded} ok · {failed} com falha",
-        "jobCountsRunning": "{succeeded} ok · {failed} com falha · {running} em execução"
+        "jobCountsRunning": "{succeeded} ok · {failed} com falha · {running} em execução",
+        "accountHold": "Retido: {problem} até {until} UTC",
+        "holdClass": {
+          "auth": "chave de API recusada",
+          "insufficient_credits": "sem créditos",
+          "account_limit": "limite de utilização atingido"
+        }
       }
     },
     "killSwitch": {
@@ -3497,7 +3527,8 @@
       "scan_cost_cap": "A análise parou no limite de custo ({amount}).",
       "scan_images_capped": "A análise atingiu o limite de custo ({amount}): algumas imagens não foram indexadas para pesquisa.",
       "ownership_disputed": "Interrompido: a propriedade do site foi contestada.",
-      "provider_failure": "{source} informou um problema: {problem}."
+      "provider_failure": "{source} informou um problema: {problem}.",
+      "service_unavailable": "O nosso serviço de IA está temporariamente indisponível, pelo que não foi possível concluir. Tente novamente mais tarde — a nossa equipa já foi alertada."
     },
     "classes": {
       "rate_limited": "demasiados pedidos",
@@ -3514,7 +3545,8 @@
       "quota_exceeded": "cota atingida",
       "invalid_media": "arquivo de vídeo recusado",
       "outcome_unknown": "resultado desconhecido — verifique a plataforma antes de tentar novamente",
-      "unknown": "erro desconhecido"
+      "unknown": "erro desconhecido",
+      "account_limit": "foi atingido um limite de utilização"
     }
   },
   "marketing": {
@@ -4834,13 +4866,16 @@
         "startRequired": "Escolha uma data de início.",
         "daysRange": "Escolha entre 1 e {max} dias.",
         "platformRequired": "Escolha pelo menos uma plataforma.",
-        "accountRequired": "Escolha uma conta ligada para cada plataforma: as publicações saem sozinhas."
+        "accountRequired": "Escolha a conta em que cada plataforma publica. As plataformas sem conta ligada são criadas, mas não publicadas."
       },
       "noBusiness": {
         "title": "Escolha primeiro um negócio",
         "description": "Um plano mensal pertence a um único negócio.",
         "action": "Abrir negócios"
-      }
+      },
+      "noAccountsNotice": "Nenhuma conta ligada: as publicações são criadas e guardadas para a sua revisão em vez de serem agendadas. Ligue uma conta para que saiam à hora prevista.",
+      "someWithoutAccount": "Criadas, mas não publicadas automaticamente (nenhuma conta ligada): {platforms}.",
+      "connectAccount": "Ligar uma conta"
     },
     "allowance": {
       "title": "Este mês",
@@ -4972,7 +5007,9 @@
       "addWhen": "Data e hora",
       "addWhenHint": "Dentro das datas do plano, no máximo 4 publicações por dia.",
       "addSubmit": "Adicionar publicação",
-      "added": "Publicação adicionada"
+      "added": "Publicação adicionada",
+      "noAccountsWindow": "Este plano não tem nenhuma conta ligada: cada publicação é criada e guardada para a sua revisão e nada é publicado automaticamente. Recebe um e-mail quando o seu mês estiver pronto.",
+      "generateConfirmBodyNoAccounts": "O Studio cria cada publicação e guarda-a para a sua revisão. Nada é publicado automaticamente porque o plano não tem nenhuma conta ligada: publique cada uma na respetiva página. Recebe um e-mail quando o seu mês estiver pronto."
     },
     "view": {
       "calendar": "Abrir o calendário",

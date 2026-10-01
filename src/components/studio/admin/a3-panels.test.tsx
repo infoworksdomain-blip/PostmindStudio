@@ -95,6 +95,40 @@ describe('QueuesPanel / ProvidersPanel', () => {
     expect(screen.getByText('not configured')).toBeInTheDocument();
   });
 
+  it('20.11: shows an account hold with its reason and resume time (UTC)', async () => {
+    mockFetch([
+      {
+        match: '/admin/providers',
+        body: {
+          ok: true,
+          providers: [
+            {
+              id: 'anthropic',
+              configured: true,
+              breaker: 'open',
+              errorRate1h: 1,
+              jobs1h: { succeeded: 0, failed: 3, running: 0 },
+              spendTodayPence: 0,
+              accountHold: {
+                errorClass: 'account_limit',
+                reason: '400 You have reached your specified API usage limits.',
+                until: '2026-10-01T00:00:00.000Z',
+                since: '2026-09-30T18:00:00.000Z',
+              },
+              healthy: false,
+            },
+          ],
+        },
+      },
+    ]);
+    renderWithSWR(<ProvidersPanel />);
+    const row = await screen.findByRole('row', { name: /anthropic/ });
+    expect(
+      within(row).getByText(/Held: usage limit reached until .*1 Oct 2026.* UTC/),
+    ).toBeInTheDocument();
+    expect(within(row).getByText(/specified API usage limits/)).toBeInTheDocument();
+  });
+
   it('shows the error state for a non-staff account', async () => {
     mockFetch([{ match: '/admin/queues', status: 403, body: forbidden }]);
     renderWithSWR(<QueuesPanel />);

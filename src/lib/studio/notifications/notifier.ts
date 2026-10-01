@@ -37,6 +37,8 @@ export const NOTIFICATION_KINDS = [
   'plan_quota',
   // Phase 17 (17.3): the daily account-status check found a connection the platform refuses.
   'connection_needs_reconnect',
+  // Phase 20 (20.11): staff only — a provider account needs attention (key, credits, usage limit).
+  'provider_alert',
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];

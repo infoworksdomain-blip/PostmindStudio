@@ -67,6 +67,18 @@ describe('fail-safe while Redis is down', () => {
     expect(warn).toHaveBeenCalledTimes(2);
   });
 
+  it('20.11: holds a provider for an account problem in this process while Redis is down', async () => {
+    const t = 1_000;
+    const breaker = createRedisCircuitBreaker({ client: downClient(), now: () => t, logger });
+    await breaker.tripAccount?.('anthropic', {
+      errorClass: 'account_limit',
+      reason: 'limit',
+      until: t + 60_000,
+    });
+    expect(await breaker.tryAcquire('anthropic')).toBe(false);
+    expect(Object.keys((await breaker.accountHolds?.()) ?? {})).toEqual(['anthropic']);
+  });
+
   it('mirrors outcomes into the local breaker even while Redis answers', async () => {
     const local = createCircuitBreaker(() => 0);
     const client: BreakerRedisClient = {
@@ -137,6 +149,28 @@ describe.skipIf(!redisUrl)('shared state in Redis', () => {
     expect(await a.tryAcquire(provider)).toBe(true);
     await a.recordSuccess(provider);
     expect(await b.state(provider)).toBe('closed');
+  });
+
+  it('20.11: an account hold is shared, outlasts the normal open period and is reported', async () => {
+    let t = Date.now();
+    const clock = () => t;
+    const a = await processBreaker(clock);
+    const b = await processBreaker(clock);
+    const until = t + 3 * OPEN_DURATION_MS;
+    await a.tripAccount?.(provider, { errorClass: 'account_limit', reason: 'limit', until });
+    expect(await b.state(provider)).toBe('open');
+    expect((await b.accountHolds?.())?.[provider]).toMatchObject({
+      errorClass: 'account_limit',
+      reason: 'limit',
+      until,
+    });
+    t += OPEN_DURATION_MS + 1;
+    expect(await b.tryAcquire(provider)).toBe(false);
+    t = until;
+    expect(await b.tryAcquire(provider)).toBe(true);
+    await b.recordSuccess(provider);
+    expect(await a.state(provider)).toBe('closed');
+    expect((await a.accountHolds?.())?.[provider]).toBeUndefined();
   });
 
   it('forgets failures outside the 60 s window', async () => {

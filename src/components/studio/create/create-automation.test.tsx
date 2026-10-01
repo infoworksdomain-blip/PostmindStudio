@@ -96,17 +96,16 @@ describe('CreateScreen — templates and auto-publish', () => {
     const api = mockFetch(routes());
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Weekend offer');
-    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
-    await userEvent.click(screen.getByLabelText(/Auto-publish when approved/));
-    const select = await screen.findByLabelText('TikTok account');
-    await waitFor(() =>
-      expect(screen.getByRole('option', { name: 'Acme TikTok' })).toBeInTheDocument(),
-    );
+    // 20.12: the picker is in the main form; the only active TikTok account is pre-selected.
+    expect(await screen.findByLabelText(/Auto-publish when approved/)).toBeChecked();
+    const select = screen.getByLabelText('TikTok account');
+    await waitFor(() => expect(select).toHaveValue('conn_tt'));
     expect(screen.queryByRole('option', { name: 'Old account' })).not.toBeInTheDocument();
 
-    // Nothing chosen yet → a clear problem instead of a request.
+    // Nothing chosen → a clear problem naming the platform instead of a request.
+    await userEvent.selectOptions(select, '');
     await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Choose at least one account');
+    expect(screen.getByRole('alert')).toHaveTextContent('Pick the TikTok account to post to');
     expect(api.find('POST', '/projects')).toHaveLength(0);
 
     await userEvent.selectOptions(select, 'conn_tt');
@@ -119,14 +118,16 @@ describe('CreateScreen — templates and auto-publish', () => {
     });
   });
 
-  it('offers Instagram auto-publish and points to PostMind settings when none is connected', async () => {
+  it('says Instagram is not posted and points to PostMind settings when none is connected', async () => {
     mockFetch(routes());
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
-    await userEvent.click(screen.getByLabelText(/Auto-publish when approved/));
-    expect(screen.queryByText(/not available for auto-publish/)).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Instagram Reels account')).toBeDisabled();
+    expect(screen.getByLabelText(/Auto-publish when approved/)).toBeChecked();
+    expect(screen.queryByLabelText('Instagram Reels account')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Not posted automatically \(no connected account\): Instagram Reels\./),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/Connect Instagram and Facebook in PostMind settings/),
     ).toBeInTheDocument();
@@ -137,10 +138,9 @@ describe('CreateScreen — templates and auto-publish', () => {
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
-    await userEvent.click(screen.getByLabelText(/Auto-publish when approved/));
-    expect(screen.getByLabelText('Instagram Reels account')).toBeDisabled();
+    expect(screen.queryByLabelText('Instagram Reels account')).not.toBeInTheDocument();
     expect(screen.queryByText(/PostMind settings/)).not.toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /Connect/ })[0]).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Connect an account' })).toHaveAttribute(
       'href',
       '/connections',
     );
