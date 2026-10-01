@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
@@ -9,30 +9,34 @@ import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import {
-  DRIP_PRESET_IDS,
-  matchPreset,
-  presetSlots,
-  type DripPresetId,
-} from '@/lib/studio/drip-presets';
-import { cn } from '@/lib/utils';
+  MAX_POSTS_PER_WEEK,
+  MAX_POSTS_PER_DAY,
+  MIN_POST_GAP_MINUTES,
+  slotsWithinDailyCap,
+  type DripSlot,
+  type PostingSchedule,
+} from '@/lib/studio/posting-schedule';
 import { useBusiness } from '../business-context';
 import { weekdayNames } from './month';
+import { PostingScheduleEditor } from './schedule-editor';
+import { initialSchedule, resolveDraft, viewerZone } from './schedule-model';
+import { SchedulePreview } from './schedule-preview';
 
 // 15.A5 — the business's drip queue under the calendar (spec 3.1 "drip queue", 9.9 stagger):
 // weekly posting slots in a time zone; approved SCHEDULED videos without a start time take the
 // next free slot and their platforms are staggered from there.
 // GET/PUT /api/studio/businesses/:id/drip-queue.
-// 20.3: one-click plans ("3 a week", "5 a week", "Every day") fill the slots in the queue's time
-// zone (or the viewer's); they can be edited before "Save slots", which turns the queue on.
+// 20.14: a posting-schedule editor replaces the 20.3 one-click plans: Every day (1–4 a day) or
+// N a week on chosen days, times chosen / picked by the system / at intervals, a time zone, a
+// summary and the next 7 days. The per-slot list stays under "Advanced"; editing it there makes
+// the schedule custom. The server resolves daily/weekly schedules itself (posting-schedule.ts).
 
-export interface DripSlot {
-  weekday: number;
-  time: string;
-  timezone: string;
-}
+export type { DripSlot };
 
 export interface DripQueueView {
   slots: DripSlot[];
+  /** 20.14: absent from older servers; null for queues saved before 20.14. */
+  schedule?: PostingSchedule | null;
   platforms: string[];
   enabled: boolean;
   staggerMinutes: number;
@@ -41,82 +45,68 @@ export interface DripQueueView {
   upcoming: Array<{ slotAt: string; projectId: string }>;
 }
 
-export function defaultZone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
+/** The viewer's IANA zone (kept for older imports). */
+export const defaultZone = viewerZone;
 
-/** The one-click plan buttons; `current` is pressed. */
-export function PostingPlanPresets({
-  current,
-  onPick,
-  disabled = false,
-}: {
-  current: DripPresetId | null;
-  onPick: (id: DripPresetId) => void;
-  disabled?: boolean;
-}) {
-  const t = useTranslations('calendar.drip');
-  return (
-    <div role="group" aria-label={t('presetsLabel')} className="flex flex-wrap gap-2">
-      {DRIP_PRESET_IDS.map((id) => (
-        <Button
-          key={id}
-          type="button"
-          size="sm"
-          variant="outline"
-          aria-pressed={current === id}
-          disabled={disabled}
-          className={cn(current === id && 'border-foreground bg-secondary')}
-          onClick={() => onPick(id)}
-        >
-          {t(`presets.${id}`)}
-        </Button>
-      ))}
-    </div>
-  );
+interface Draft {
+  schedule: PostingSchedule;
+  /** Hand-edited slots (schedule.mode 'custom'). */
+  custom: DripSlot[];
 }
 
 export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
   const t = useTranslations('calendar.drip');
+  const ts = useTranslations('calendar.drip.schedule');
   const f = useFormat();
   const errorMessage = useErrorMessage();
-  const weekdays = useMemo(() => weekdayNames(f.locale, 'long'), [f.locale]);
   const { businessId } = useBusiness();
   const path = businessId ? `/businesses/${encodeURIComponent(businessId)}/drip-queue` : null;
   const { data, mutate } = useApi<{ dripQueue: DripQueueView | null }>(path);
-  const [draft, setDraft] = useState<DripSlot[] | null>(null);
-  const [saving, setSaving] = useState(false);
-  /** 20.3: how many slots a plan just filled in (announced until saved). */
-  const [filled, setFilled] = useState<number | null>(null);
-  if (!businessId) return null;
   const queue = data?.dripQueue ?? null;
-  const slots = draft ?? queue?.slots ?? [];
+  const base = useMemo<Draft>(
+    () => ({ schedule: initialSchedule(queue), custom: queue?.slots ?? [] }),
+    [queue],
+  );
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [saving, setSaving] = useState(false);
+  const current = draft ?? base;
+  const resolved = resolveDraft(current.schedule, current.custom);
+  if (!businessId) return null;
 
-  const pickPreset = (id: DripPresetId) => {
-    const next = presetSlots(id, slots[0]?.timezone ?? defaultZone());
-    setDraft(next);
-    setFilled(next.length);
-  };
+  const customTooMany = current.schedule.mode === 'custom' && !slotsWithinDailyCap(resolved.slots);
+  const canSave =
+    resolved.problems.length === 0 &&
+    resolved.slots.length > 0 &&
+    resolved.slots.length <= MAX_POSTS_PER_WEEK &&
+    !customTooMany;
 
-  const change = (i: number, patch: Partial<DripSlot>) =>
-    setDraft(slots.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+  const changeSchedule = (schedule: PostingSchedule) =>
+    setDraft({
+      schedule,
+      // A time-zone change applies to hand-edited slots too.
+      custom: current.custom.map((s) => ({ ...s, timezone: schedule.timezone })),
+    });
+
+  /** Advanced edits start from the slots the schedule shows now, and make it custom. */
+  const editSlots = (slots: DripSlot[]) =>
+    setDraft({ schedule: { ...current.schedule, mode: 'custom' }, custom: slots });
 
   async function save() {
-    if (!path) return;
+    if (!path || !canSave) return;
     setSaving(true);
     try {
       await api(path, {
         method: 'PUT',
         idempotencyKey: newIdempotencyKey(),
-        body: { slots, platforms: queue?.platforms ?? [], enabled: true },
+        body: {
+          schedule: current.schedule,
+          slots: resolved.slots,
+          platforms: queue?.platforms ?? [],
+          enabled: true,
+        },
       });
       toast.success(t('saved'));
       setDraft(null);
-      setFilled(null);
       await mutate();
       onSaved?.();
     } catch (err) {
@@ -126,6 +116,7 @@ export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
     }
   }
 
+  const showSave = Boolean(draft) || !queue || !queue.enabled;
   return (
     <section aria-labelledby="drip-heading" className="mt-8 rounded-xl border border-border p-4">
       <h3 id="drip-heading" tabIndex={-1} className="font-display text-xl outline-none">
@@ -152,66 +143,115 @@ export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
           ))}
         </ul>
       )}
-      <div className="mt-3 flex flex-col gap-1.5">
-        <p className="text-sm font-medium">{t('presetsLabel')}</p>
-        <PostingPlanPresets current={matchPreset(slots)} onPick={pickPreset} disabled={saving} />
-        <p className="text-xs text-muted-foreground" aria-live="polite">
-          {filled !== null && draft ? t('presetFilled', { count: filled }) : t('presetsHint')}
-        </p>
-      </div>
       {queue && !queue.enabled && !draft && (
         <p className="mt-2 text-sm text-muted-foreground">{t('off')}</p>
       )}
-      <ul className="mt-3 flex flex-col gap-2">
-        {slots.map((slot, i) => (
-          <li key={i} className="flex flex-wrap items-center gap-2">
-            <select
-              aria-label={t('slotDay', { n: i + 1 })}
-              className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
-              value={slot.weekday}
-              onChange={(e) => change(i, { weekday: Number(e.target.value) })}
-            >
-              {weekdays.map((d, n) => (
-                <option key={d} value={n}>
-                  {d}
-                </option>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
+        <PostingScheduleEditor
+          schedule={current.schedule}
+          onChange={changeSchedule}
+          disabled={saving}
+        />
+        <div className="flex flex-col gap-3">
+          {(resolved.problems.length > 0 || customTooMany) && (
+            <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
+              {resolved.problems.map((p) => (
+                <li key={p}>
+                  {ts(`problems.${p}`, { max: MAX_POSTS_PER_DAY, minutes: MIN_POST_GAP_MINUTES })}
+                </li>
               ))}
-            </select>
-            <Input
-              aria-label={t('slotTime', { n: i + 1 })}
-              type="time"
-              className="w-32"
-              value={slot.time}
-              onChange={(e) => change(i, { time: e.target.value })}
-            />
-            <span className="text-xs text-muted-foreground">{slot.timezone}</span>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label={t('removeSlot', { n: i + 1 })}
-              onClick={() => setDraft(slots.filter((_, j) => j !== i))}
-            >
-              <Trash2 />
+              {customTooMany && (
+                <li>{ts('problems.custom_too_many', { max: MAX_POSTS_PER_DAY })}</li>
+              )}
+            </ul>
+          )}
+          <SchedulePreview schedule={current.schedule} slots={canSave ? resolved.slots : []} />
+          {showSave && (
+            <Button size="sm" className="self-start" onClick={save} disabled={saving || !canSave}>
+              {saving && <Loader2 className="animate-spin" />} {ts('save')}
             </Button>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-3 flex gap-2">
+          )}
+        </div>
+      </div>
+
+      <AdvancedSlots
+        slots={resolved.slots}
+        timezone={current.schedule.timezone}
+        onChange={editSlots}
+      />
+    </section>
+  );
+}
+
+/** "Advanced": every weekly slot, editable one by one (the pre-20.14 list). */
+function AdvancedSlots({
+  slots,
+  timezone,
+  onChange,
+}: {
+  slots: DripSlot[];
+  timezone: string;
+  onChange: (slots: DripSlot[]) => void;
+}) {
+  const t = useTranslations('calendar.drip');
+  const ts = useTranslations('calendar.drip.schedule');
+  const f = useFormat();
+  const weekdays = useMemo(() => weekdayNames(f.locale, 'long'), [f.locale]);
+  const change = (i: number, patch: Partial<DripSlot>) =>
+    onChange(slots.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+  return (
+    <details className="group mt-4 rounded-lg border border-border">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+        <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+        {ts('advanced', { count: slots.length })}
+      </summary>
+      <div className="flex flex-col gap-3 px-3 pb-3">
+        <p className="text-xs text-muted-foreground">{ts('advancedHint')}</p>
+        <ul className="flex flex-col gap-2">
+          {slots.map((slot, i) => (
+            <li key={i} className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label={t('slotDay', { n: i + 1 })}
+                className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                value={slot.weekday}
+                onChange={(e) => change(i, { weekday: Number(e.target.value) })}
+              >
+                {weekdays.map((d, n) => (
+                  <option key={d} value={n}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              <Input
+                aria-label={t('slotTime', { n: i + 1 })}
+                type="time"
+                className="w-32"
+                value={slot.time}
+                onChange={(e) => change(i, { time: e.target.value })}
+              />
+              <span className="text-xs text-muted-foreground">{slot.timezone}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={t('removeSlot', { n: i + 1 })}
+                onClick={() => onChange(slots.filter((_, j) => j !== i))}
+              >
+                <Trash2 />
+              </Button>
+            </li>
+          ))}
+        </ul>
         <Button
           size="sm"
           variant="outline"
-          onClick={() =>
-            setDraft([...slots, { weekday: 1, time: '09:00', timezone: defaultZone() }])
-          }
+          className="self-start"
+          disabled={slots.length >= MAX_POSTS_PER_WEEK}
+          onClick={() => onChange([...slots, { weekday: 1, time: '09:00', timezone }])}
         >
           <Plus /> {t('addSlot')}
         </Button>
-        {(draft || (queue && !queue.enabled)) && (
-          <Button size="sm" onClick={save} disabled={saving || slots.length === 0}>
-            {saving && <Loader2 className="animate-spin" />} {t('saveSlots')}
-          </Button>
-        )}
       </div>
-    </section>
+    </details>
   );
 }
