@@ -141,6 +141,7 @@ export function AdvancedOptions({
   onToggle,
   planTier,
   workflows,
+  canSchedule = true,
 }: {
   state: CreateState;
   onChange: Patch;
@@ -149,6 +150,8 @@ export function AdvancedOptions({
   /** 15.C4: the organisation's plan (tier override ceiling) and approval workflows. */
   planTier?: QualityTier;
   workflows?: WorkflowOption[];
+  /** 20.12: false when no connected account can post (a schedule posts automatically). */
+  canSchedule?: boolean;
 }) {
   const t = useTranslations('create.options.advanced');
   const f = useFormat();
@@ -218,6 +221,7 @@ export function AdvancedOptions({
             onChange={onChange}
             planTier={planTier}
             workflows={workflows}
+            canSchedule={canSchedule}
           />
         </div>
       )}

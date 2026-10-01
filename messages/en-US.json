@@ -260,7 +260,9 @@
       "plan_required": "Your organization doesn’t have a plan yet. Choose a plan to start creating.",
       "billing_required": "Your account is read-only because of a billing problem. Update your payment details to continue.",
       "no_organisation": "Create or join an organization to continue.",
-      "service_unavailable": "Our AI service is temporarily unavailable. Please try again later — our team has been alerted."
+      "service_unavailable": "Our AI service is temporarily unavailable. Please try again later — our team has been alerted.",
+      "auto_publish_account_required": "Choose a connected account to post to, or turn auto-publish and the schedule off.",
+      "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account."
     }
   },
   "primitives": {
@@ -472,7 +474,7 @@
       "briefPlaceholder": "Our spring menu launches Friday — three new small plates, 20% off for the first week…",
       "summaryTemplate": "{name} template",
       "summaryPlatforms": "{count, plural, =0 {No platforms} one {# platform} other {# platforms}}",
-      "summaryAutoPublish": "auto-publish",
+      "summaryAutoPublish": "{count, plural, =0 {auto-publish: no account picked} one {posts to # account} other {posts to # accounts}}",
       "summaryBrandKit": "brand kit on",
       "options": "Options",
       "generate": "Generate",
@@ -495,7 +497,9 @@
         "generatingScript": "Generating — Studio is writing the script.",
         "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}"
       },
-      "planMonth": "Or plan a whole month of videos and slideshows"
+      "planMonth": "Or plan a whole month of videos and slideshows",
+      "summaryNoAccounts": "no connected accounts: saved for review",
+      "summaryForReview": "saved for review"
     },
     "problems": {
       "businessRequired": "Choose a business first.",
@@ -503,12 +507,14 @@
       "briefRequired": "Describe what the video is about.",
       "briefTooLong": "Keep the brief under {max, number} characters.",
       "platformRequired": "Pick at least one platform.",
-      "autoPublishAccountRequired": "Choose at least one account to auto-publish to, or turn auto-publish off.",
+      "autoPublishAccountRequired": "Pick the {platforms} account to post to under “Post to”, or turn auto-publish off.",
       "slideshowTemplateRequired": "Pick a slideshow template.",
       "scheduleInPast": "Schedule a time in the future.",
-      "scheduleNeedsAutoPublish": "Choose the accounts to publish to (auto-publish) for a scheduled video.",
+      "scheduleNeedsAutoPublish": "A scheduled post is published automatically: turn on auto-publish under “Post to” and pick an account, or clear the schedule.",
       "budgetRange": "Budget must be between {min} and {max}.",
-      "scheduleTooFar": "Schedule no more than {days, number} days ahead."
+      "scheduleTooFar": "Schedule no more than {days, number} days ahead.",
+      "autoPublishNoMatchingAccount": "None of your connected accounts posts to the platforms you chose. Add {platforms}, connect another account, or turn auto-publish off.",
+      "scheduleNeedsAccount": "A scheduled post is published automatically, so it needs a connected account for one of the chosen platforms. Connect one, or clear the schedule."
     },
     "options": {
       "platforms": "Platforms",
@@ -559,16 +565,23 @@
       "workflowNone": "No workflows set up",
       "workflowOrg": "Organization rules",
       "scheduleNextSlot": "No date — use the next free drip-queue slot",
-      "scheduleNextSlotHint": "Goes out at the first free posting time in the next {weeks, plural, one {# week} other {# weeks}}. Set the times in the calendar."
+      "scheduleNextSlotHint": "Goes out at the first free posting time in the next {weeks, plural, one {# week} other {# weeks}}. Set the times in the calendar.",
+      "scheduleNeedsAccount": "A schedule posts automatically, so it needs a connected account.",
+      "connectAccount": "Connect an account"
     },
     "autoPublish": {
-      "legend": "Auto-publish",
+      "legend": "Post to",
       "toggle": "Auto-publish when approved",
       "toggleHint": "As soon as the video is approved — by you or automatically — it is posted to the accounts below.",
       "account": "{platform} account",
       "noAccount": "No connected account.",
       "connectOne": "Connect one",
-      "dontAutoPublish": "Don’t auto-publish"
+      "dontAutoPublish": "Don’t auto-publish",
+      "offHint": "{source, select, SLIDESHOW {The slideshow is} other {The video is}} saved for review; publish it yourself from its page.",
+      "noAccounts": "No connected accounts — {source, select, SLIDESHOW {slideshows are} other {videos are}} saved for review, not posted.",
+      "connectAccount": "Connect an account",
+      "noMatching": "None of your connected accounts posts to the platforms chosen above. Your accounts post to {platforms}.",
+      "notPosted": "Not posted automatically (no connected account): {platforms}."
     },
     "templatePicker": {
       "legend": "Template",
@@ -683,7 +696,9 @@
       "scheduled": "{count, plural, one {Scheduled # post.} other {Scheduled # posts.}}",
       "publishing": "{count, plural, one {Publishing # post.} other {Publishing # posts.}}",
       "scheduleTooFar": "Pick a time no more than {days, number} days ahead.",
-      "scheduleInPast": "Pick a time at least a minute from now."
+      "scheduleInPast": "Pick a time at least a minute from now.",
+      "noAccounts": "No connected accounts yet, so there is nowhere to publish. The video stays saved here.",
+      "connectAccount": "Connect an account"
     },
     "publications": {
       "empty": "Nothing published or scheduled yet.",
@@ -4851,13 +4866,16 @@
         "startRequired": "Choose a start date.",
         "daysRange": "Choose between 1 and {max} days.",
         "platformRequired": "Choose at least one platform.",
-        "accountRequired": "Choose a connected account for every platform: the posts publish on their own."
+        "accountRequired": "Choose the account each platform posts to. Platforms without a connected account are made but not posted."
       },
       "noBusiness": {
         "title": "Choose a business first",
         "description": "A month plan belongs to one business.",
         "action": "Open businesses"
-      }
+      },
+      "noAccountsNotice": "No connected accounts: the posts are made and saved for your review instead of being scheduled. Connect an account to have them posted at their times.",
+      "someWithoutAccount": "Made but not posted automatically (no connected account): {platforms}.",
+      "connectAccount": "Connect an account"
     },
     "allowance": {
       "title": "This month",
@@ -4989,7 +5007,9 @@
       "addWhen": "Date and time",
       "addWhenHint": "Inside the plan’s dates, at most 4 posts a day.",
       "addSubmit": "Add post",
-      "added": "Post added"
+      "added": "Post added",
+      "noAccountsWindow": "This plan has no connected account, so each post is made and saved for your review; nothing is posted automatically. You get one email when your month is ready.",
+      "generateConfirmBodyNoAccounts": "Studio makes every post and saves it for your review. Nothing is posted automatically because the plan has no connected account: publish each post from its page. You get one email when your month is ready."
     },
     "view": {
       "calendar": "Open the calendar",

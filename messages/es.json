@@ -260,7 +260,9 @@
       "plan_required": "Tu organización todavía no tiene un plan. Elige un plan para empezar a crear.",
       "billing_required": "Tu cuenta está en modo de solo lectura por un problema de facturación. Actualiza tus datos de pago para continuar.",
       "no_organisation": "Crea una organización o únete a una para continuar.",
-      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado."
+      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado.",
+      "auto_publish_account_required": "Elige una cuenta conectada donde publicar, o desactiva la publicación automática y la programación.",
+      "auto_publish_account_unavailable": "Una de las cuentas elegidas ya no está conectada. Vuelve a conectarla o elige otra cuenta."
     }
   },
   "primitives": {
@@ -472,7 +474,7 @@
       "briefPlaceholder": "Nuestro menú de primavera se estrena el viernes: tres nuevos platos para compartir, con un 20 % de descuento la primera semana…",
       "summaryTemplate": "Plantilla {name}",
       "summaryPlatforms": "{count, plural, =0 {Ninguna plataforma} one {# plataforma} other {# plataformas}}",
-      "summaryAutoPublish": "publicación automática",
+      "summaryAutoPublish": "{count, plural, =0 {publicación automática: ninguna cuenta elegida} one {se publica en # cuenta} other {se publica en # cuentas}}",
       "summaryBrandKit": "kit de marca activado",
       "options": "Opciones",
       "generate": "Generar",
@@ -495,7 +497,9 @@
         "generatingScript": "Generando: Studio está escribiendo el guion.",
         "draftNotStarted": "Guardado como borrador, pero la generación no ha empezado: {error}"
       },
-      "planMonth": "O planifica un mes entero de vídeos y presentaciones"
+      "planMonth": "O planifica un mes entero de vídeos y presentaciones",
+      "summaryNoAccounts": "sin cuentas conectadas: se guarda para revisar",
+      "summaryForReview": "se guarda para revisar"
     },
     "problems": {
       "businessRequired": "Primero elige un negocio.",
@@ -503,12 +507,14 @@
       "briefRequired": "Describe de qué trata el vídeo.",
       "briefTooLong": "La descripción debe tener menos de {max, number} caracteres.",
       "platformRequired": "Elige al menos una plataforma.",
-      "autoPublishAccountRequired": "Elige al menos una cuenta para la publicación automática o desactívala.",
+      "autoPublishAccountRequired": "Elige en «Publicar en» la cuenta de {platforms} donde publicar, o desactiva la publicación automática.",
       "slideshowTemplateRequired": "Elige una plantilla de presentación.",
       "scheduleInPast": "Programa una hora futura.",
-      "scheduleNeedsAutoPublish": "Para programar un vídeo, elige las cuentas donde publicarlo (publicación automática).",
+      "scheduleNeedsAutoPublish": "Una publicación programada sale automáticamente: activa la publicación automática en «Publicar en» y elige una cuenta, o quita la programación.",
       "budgetRange": "El presupuesto debe estar entre {min} y {max}.",
-      "scheduleTooFar": "Programa como máximo con {days, number} días de antelación."
+      "scheduleTooFar": "Programa como máximo con {days, number} días de antelación.",
+      "autoPublishNoMatchingAccount": "Ninguna de tus cuentas conectadas publica en las plataformas elegidas. Añade {platforms}, conecta otra cuenta o desactiva la publicación automática.",
+      "scheduleNeedsAccount": "Una publicación programada sale automáticamente, así que necesita una cuenta conectada para alguna de las plataformas elegidas. Conecta una o quita la programación."
     },
     "options": {
       "platforms": "Plataformas",
@@ -559,16 +565,23 @@
       "workflowNone": "No hay flujos configurados",
       "workflowOrg": "Reglas de la organización",
       "scheduleNextSlot": "Sin fecha: usar la próxima franja libre de la cola de publicación",
-      "scheduleNextSlotHint": "Se publica en la primera hora libre {weeks, plural, one {de la próxima semana} other {de las próximas # semanas}}. Configura las horas en el calendario."
+      "scheduleNextSlotHint": "Se publica en la primera hora libre {weeks, plural, one {de la próxima semana} other {de las próximas # semanas}}. Configura las horas en el calendario.",
+      "scheduleNeedsAccount": "Una programación publica automáticamente, así que necesita una cuenta conectada.",
+      "connectAccount": "Conectar una cuenta"
     },
     "autoPublish": {
-      "legend": "Publicación automática",
+      "legend": "Publicar en",
       "toggle": "Publicar automáticamente al aprobarse",
       "toggleHint": "En cuanto se aprueba el vídeo, ya sea por ti o automáticamente, se publica en las cuentas de abajo.",
       "account": "Cuenta de {platform}",
       "noAccount": "No hay ninguna cuenta conectada.",
       "connectOne": "Conectar una",
-      "dontAutoPublish": "No publicar automáticamente"
+      "dontAutoPublish": "No publicar automáticamente",
+      "offHint": "{source, select, SLIDESHOW {La presentación se guarda} other {El vídeo se guarda}} para revisar; lo publicas tú desde su página.",
+      "noAccounts": "Sin cuentas conectadas: {source, select, SLIDESHOW {las presentaciones se guardan} other {los vídeos se guardan}} para revisar, no se publican.",
+      "connectAccount": "Conectar una cuenta",
+      "noMatching": "Ninguna de tus cuentas conectadas publica en las plataformas elegidas arriba. Tus cuentas publican en {platforms}.",
+      "notPosted": "No se publica automáticamente (sin cuenta conectada): {platforms}."
     },
     "templatePicker": {
       "legend": "Plantilla",
@@ -683,7 +696,9 @@
       "scheduled": "{count, plural, one {Se ha programado # publicación.} other {Se han programado # publicaciones.}}",
       "publishing": "{count, plural, one {Publicando # publicación.} other {Publicando # publicaciones.}}",
       "scheduleTooFar": "Elige una hora como máximo con {days, number} días de antelación.",
-      "scheduleInPast": "Elige una hora al menos un minuto a partir de ahora."
+      "scheduleInPast": "Elige una hora al menos un minuto a partir de ahora.",
+      "noAccounts": "Aún no hay cuentas conectadas, así que no hay dónde publicar. El vídeo queda guardado aquí.",
+      "connectAccount": "Conectar una cuenta"
     },
     "publications": {
       "empty": "Aún no hay nada publicado ni programado.",
@@ -4851,13 +4866,16 @@
         "startRequired": "Elige una fecha de inicio.",
         "daysRange": "Elige entre 1 y {max} días.",
         "platformRequired": "Elige al menos una plataforma.",
-        "accountRequired": "Elige una cuenta conectada para cada plataforma: las publicaciones salen solas."
+        "accountRequired": "Elige la cuenta en la que publica cada plataforma. Las plataformas sin cuenta conectada se crean pero no se publican."
       },
       "noBusiness": {
         "title": "Primero elige un negocio",
         "description": "Un plan mensual pertenece a un solo negocio.",
         "action": "Abrir negocios"
-      }
+      },
+      "noAccountsNotice": "Sin cuentas conectadas: las publicaciones se crean y se guardan para que las revises en lugar de programarse. Conecta una cuenta para que salgan a su hora.",
+      "someWithoutAccount": "Se crean pero no se publican automáticamente (sin cuenta conectada): {platforms}.",
+      "connectAccount": "Conectar una cuenta"
     },
     "allowance": {
       "title": "Este mes",
@@ -4989,7 +5007,9 @@
       "addWhen": "Fecha y hora",
       "addWhenHint": "Dentro de las fechas del plan, como máximo 4 publicaciones al día.",
       "addSubmit": "Añadir publicación",
-      "added": "Publicación añadida"
+      "added": "Publicación añadida",
+      "noAccountsWindow": "Este plan no tiene ninguna cuenta conectada: cada publicación se crea y se guarda para que la revises; no se publica nada automáticamente. Recibirás un correo cuando tu mes esté listo.",
+      "generateConfirmBodyNoAccounts": "Studio crea cada publicación y la guarda para que la revises. No se publica nada automáticamente porque el plan no tiene ninguna cuenta conectada: publica cada una desde su página. Recibirás un correo cuando tu mes esté listo."
     },
     "view": {
       "calendar": "Abrir el calendario",

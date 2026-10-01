@@ -221,10 +221,27 @@ export function PublishPanel({
   }
 
   if (renders.length === 0) return <p className="text-sm text-muted-foreground">{t('noPassed')}</p>;
+  // 20.12: no connected account can post any variant — say so once instead of "Publish now (0)".
+  const noAccounts =
+    data !== undefined &&
+    renders.every((r) => connectionsFor(r, connections, businessId).length === 0);
 
   return (
     <div className="flex flex-col gap-4">
       {error && <p className="text-sm text-destructive">{errorMessage(error)}</p>}
+      {noAccounts && (
+        <p
+          role="status"
+          className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground"
+        >
+          {t('noAccounts')}{' '}
+          {coreMeta ? null : (
+            <Link href="/connections" className="text-foreground underline underline-offset-2">
+              {t('connectAccount')}
+            </Link>
+          )}
+        </p>
+      )}
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
           {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}
