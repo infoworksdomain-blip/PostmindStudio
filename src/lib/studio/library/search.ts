@@ -5,6 +5,7 @@ import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
 import type { PlanTier } from '../providers/router';
 import { vectorSql } from '../vector-sql';
+import { categoryLikeParams } from './category-filter';
 
 // BACKLOG 13.8 — free-text library search (POST /library/search). The query is embedded with the
 // same embedding path the corpus uses (runProvider → 'embedding', 1536 dims, A7.4), ranked by
@@ -28,6 +29,31 @@ export interface SearchHit {
   similarity: number;
   /** similarity + keyword boost: the ranking key. */
   score: number;
+}
+
+/** The browse filters a search honours as well (same meaning as GET /library/videos). */
+export interface SearchFilters {
+  durationMin?: number;
+  durationMax?: number;
+  mood?: string;
+  /** Lower-case tags the item must all carry. */
+  tags?: string[];
+}
+
+/** Bind values for the filters: null / empty means "no constraint". */
+export function filterParams(filters: SearchFilters): {
+  durationMin: number | null;
+  durationMax: number | null;
+  mood: string | null;
+  tags: string[];
+} {
+  const mood = filters.mood?.trim();
+  return {
+    durationMin: filters.durationMin ?? null,
+    durationMax: filters.durationMax ?? null,
+    mood: mood ? (likePatterns([mood])[0] ?? null) : null,
+    tags: filters.tags ?? [],
+  };
 }
 
 export interface SearchPage {
@@ -84,14 +110,20 @@ async function embedQuery(
 export async function searchLibrary(
   deps: { db: PrismaClient; providers: ProviderRunDeps },
   scope: { organisationId: string; planTier: PlanTier },
-  input: { q: string; categorySlug?: string; limit: number; cursor?: string | null },
+  input: {
+    q: string;
+    categorySlug?: string;
+    limit: number;
+    cursor?: string | null;
+  } & SearchFilters,
 ): Promise<SearchPage> {
   const offset = parseCursor(input.cursor);
   const terms = queryTerms(input.q);
   const vector = await embedQuery(deps.providers, scope, input.q);
   const literal = vectorLiteral(vector);
   const v = await vectorSql(deps.db);
-  const prefix = input.categorySlug ? `${input.categorySlug.replace(/[%_\\]/g, '')}%` : '%';
+  const category = categoryLikeParams(input.categorySlug);
+  const filter = filterParams(input);
   const patterns = likePatterns(terms);
   // With no usable words the boost is 0; ANY('{}') is false and the tag intersection is empty.
   const rows = await deps.db.$queryRaw<Array<{ id: string; distance: number; boost: number }>>`
@@ -105,7 +137,13 @@ export async function searchLibrary(
       JOIN studio.video_library l ON l.id = e."libraryItemId"
       JOIN studio.video_library_categories c ON c.id = l."categoryId"
       JOIN studio.video_library_licenses lic ON lic."libraryItemId" = l.id
-      WHERE l."retiredAt" IS NULL AND c.slug LIKE ${prefix}
+      LEFT JOIN studio.video_library_analysis a ON a."libraryItemId" = l.id
+      WHERE l."retiredAt" IS NULL
+        AND (${category.all}::boolean OR c.slug = ${category.exact} OR c.slug LIKE ${category.children})
+        AND (${filter.durationMin}::float8 IS NULL OR l."durationSec" >= ${filter.durationMin}::float8)
+        AND (${filter.durationMax}::float8 IS NULL OR l."durationSec" <= ${filter.durationMax}::float8)
+        AND (${filter.mood}::text IS NULL OR a."moodTag" ILIKE ${filter.mood}::text)
+        AND l.tags @> ${filter.tags}::text[]
     ) ranked
     ORDER BY (1 - ranked.distance + ranked.boost) DESC, ranked.id ASC
     LIMIT ${input.limit + 1} OFFSET ${offset}`;

@@ -215,6 +215,10 @@ export const searchLibraryInput = z
   .object({
     q: z.string().trim().min(1).max(200),
     categorySlug: z.string().trim().max(200).optional(),
+    durationMin: z.number().min(0).max(3_600).optional(),
+    durationMax: z.number().min(0).max(3_600).optional(),
+    mood: z.string().trim().max(80).optional(),
+    tags: z.array(z.string().trim().toLowerCase().min(1).max(60)).max(20).optional(),
     limit: z.number().int().min(1).max(50).default(24),
     cursor: z.string().max(8).nullable().optional(),
   })

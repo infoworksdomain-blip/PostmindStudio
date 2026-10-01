@@ -452,6 +452,20 @@ test('browse: grid, filters, search, pagination and empty states', async ({ page
   const first = cards.first();
   await expect(first).toContainText(titles.bakery);
   await expect(first).toContainText('% match');
+  // The length, mood and tag filters narrow a search too (the 45 s gym reference is "30–60s").
+  await expect(grid.getByRole('link', { name: new RegExp(titles.gym) })).toBeVisible();
+  await page.getByLabel('Length').selectOption('long');
+  await expect(cards).toHaveCount(1);
+  await expect(grid.getByRole('link', { name: new RegExp(titles.gym) })).toBeVisible();
+  await expect(page.getByRole('status')).not.toContainText(/don’t apply/);
+  await page.getByLabel('Length').selectOption('any');
+  await page.getByLabel('Tags').fill('fitness');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(grid.getByRole('link', { name: new RegExp(titles.gym) })).toBeVisible();
+  await page.getByLabel('Tags').fill('');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(first).toContainText(titles.bakery);
   // Empty search state.
   await page.getByLabel('Search the library').fill('zzzzqqqq');
   await page.getByRole('button', { name: 'Apply' }).click();

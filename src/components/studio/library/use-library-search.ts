@@ -10,6 +10,11 @@ import type { ListResponse, LibraryVideoSummary } from './types';
 export interface LibrarySearchArgs {
   q: string;
   categorySlug?: string;
+  /** The browse filters, honoured by the search too. */
+  durationMin?: number;
+  durationMax?: number;
+  mood?: string;
+  tags?: string[];
   cursor?: string;
   limit: number;
 }
@@ -19,7 +24,17 @@ export type SearchResult = LibraryVideoSummary & { similarity: number; score: nu
 export function useLibrarySearch(args: LibrarySearchArgs | null) {
   return useSWR<ListResponse<SearchResult>, ApiError>(
     args
-      ? ['library-search', args.q, args.categorySlug ?? '', args.cursor ?? '', args.limit]
+      ? [
+          'library-search',
+          args.q,
+          args.categorySlug ?? '',
+          args.durationMin ?? '',
+          args.durationMax ?? '',
+          args.mood ?? '',
+          (args.tags ?? []).join(','),
+          args.cursor ?? '',
+          args.limit,
+        ]
       : null,
     () =>
       api<ListResponse<SearchResult>>('/library/search', {
@@ -27,6 +42,10 @@ export function useLibrarySearch(args: LibrarySearchArgs | null) {
         body: {
           q: args?.q,
           ...(args?.categorySlug && { categorySlug: args.categorySlug }),
+          ...(args?.durationMin !== undefined && { durationMin: args.durationMin }),
+          ...(args?.durationMax !== undefined && { durationMax: args.durationMax }),
+          ...(args?.mood && { mood: args.mood }),
+          ...(args?.tags?.length && { tags: args.tags }),
           limit: args?.limit,
           cursor: args?.cursor ?? null,
         },

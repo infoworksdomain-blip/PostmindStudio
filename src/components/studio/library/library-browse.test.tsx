@@ -129,6 +129,34 @@ describe('LibraryBrowse', () => {
     expect(post?.body).toEqual({ q: 'moody gym', categorySlug: 'food', limit: 24, cursor: null });
   });
 
+  it('sends the length, mood and tag filters with a search and says they apply', async () => {
+    const user = userEvent.setup();
+    const { calls } = mockFetch([
+      { match: '/library/categories', body: categories },
+      { match: '/library/videos', body: { ok: true, data: [summary()], nextCursor: null } },
+      { match: '/library/search', method: 'POST', body: { ok: true, data: [], nextCursor: null } },
+    ]);
+    renderWithSWR(<LibraryBrowse />);
+    await screen.findByRole('link', { name: /Morning coffee/ });
+    await user.selectOptions(screen.getByLabelText('Length'), 'medium');
+    await user.type(screen.getByLabelText('Mood'), 'upbeat');
+    await user.type(screen.getByLabelText('Tags'), 'Coffee, morning');
+    await user.type(screen.getByLabelText('Search the library'), 'barista');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    await waitFor(() => expect(calls.some((c) => c.url.includes('/library/search'))).toBe(true));
+    const post = calls.find((c) => c.url.includes('/library/search'));
+    expect(post?.body).toEqual({
+      q: 'barista',
+      durationMin: 15,
+      durationMax: 30,
+      mood: 'upbeat',
+      tags: ['coffee', 'morning'],
+      limit: 24,
+      cursor: null,
+    });
+    expect(screen.getByRole('status')).not.toHaveTextContent(/don’t apply/);
+  });
+
   it('pages with the cursor', async () => {
     const user = userEvent.setup();
     const { calls } = mockFetch([

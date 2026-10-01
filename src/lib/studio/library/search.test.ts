@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { likePatterns, MAX_SEARCH_OFFSET, parseCursor, queryTerms } from './search';
+import { filterParams, likePatterns, MAX_SEARCH_OFFSET, parseCursor, queryTerms } from './search';
 
 describe('library search helpers', () => {
   it('queryTerms lower-cases, dedupes and drops one-letter words and punctuation', () => {
@@ -21,5 +21,26 @@ describe('library search helpers', () => {
     expect(() => parseCursor('-1')).toThrow('cursor');
     expect(() => parseCursor('abc')).toThrow('cursor');
     expect(() => parseCursor(String(MAX_SEARCH_OFFSET + 1))).toThrow('past the last page');
+  });
+});
+
+describe('filterParams', () => {
+  it('binds nothing when no filter is given', () => {
+    expect(filterParams({})).toEqual({
+      durationMin: null,
+      durationMax: null,
+      mood: null,
+      tags: [],
+    });
+  });
+
+  it('carries the length range, an escaped mood pattern and the tags', () => {
+    expect(
+      filterParams({ durationMin: 15, durationMax: 30, mood: ' up_beat% ', tags: ['bakery'] }),
+    ).toEqual({ durationMin: 15, durationMax: 30, mood: '%up\\_beat\\%%', tags: ['bakery'] });
+  });
+
+  it('treats a blank mood as no mood filter', () => {
+    expect(filterParams({ mood: '   ' }).mood).toBeNull();
   });
 });

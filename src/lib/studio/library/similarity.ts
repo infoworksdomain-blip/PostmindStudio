@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import { NotFoundError, ProviderError } from '../../errors';
 import { vectorLiteral } from '../images/ingest';
 import { vectorSql } from '../vector-sql';
+import { categoryLikeParams } from './category-filter';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
 import type { PlanTier } from '../providers/router';
@@ -97,7 +98,7 @@ export async function recommendedVideos(
   if (!vector || vector.length !== 1536)
     throw new ProviderError('embedding', 'unknown', 'Embedding had the wrong shape', true);
   const literal = vectorLiteral(vector);
-  const prefix = options.categorySlug ? `${options.categorySlug.replace(/[%_\\]/g, '')}%` : '%';
+  const category = categoryLikeParams(options.categorySlug);
   const v = await vectorSql(deps.db);
   const rows = await deps.db.$queryRaw<Array<{ id: string; distance: number }>>`
     SELECT l.id, (e.embedding ${v.distance} ${literal}${v.cast})::float8 AS distance
@@ -105,7 +106,8 @@ export async function recommendedVideos(
     JOIN studio.video_library l ON l.id = e."libraryItemId"
     JOIN studio.video_library_categories c ON c.id = l."categoryId"
     JOIN studio.video_library_licenses lic ON lic."libraryItemId" = l.id
-    WHERE l."retiredAt" IS NULL AND c.slug LIKE ${prefix}
+    WHERE l."retiredAt" IS NULL
+      AND (${category.all}::boolean OR c.slug = ${category.exact} OR c.slug LIKE ${category.children})
     ORDER BY e.embedding ${v.distance} ${literal}${v.cast}
     LIMIT ${options.limit}`;
   return rows.map((r) => ({ id: r.id, similarity: round(r.distance) }));
