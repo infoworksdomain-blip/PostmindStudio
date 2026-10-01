@@ -726,7 +726,8 @@ test.describe('publish from a project', () => {
         platform: 'tiktok',
         connectionId: world.connections.tiktok,
         caption: 'Fresh today',
-        hashtags: ['qa1', 'qa2', 'qa3', 'qa4', 'qa5'],
+        // The business hashtag is added server-side (20.13), so four of ours make the five it needs.
+        hashtags: ['qa1', 'qa2', 'qa3', 'qa4'],
         scheduledFor: future.toISOString(),
       },
     });
