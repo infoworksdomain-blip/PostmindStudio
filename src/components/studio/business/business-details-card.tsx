@@ -113,7 +113,7 @@ export function BusinessDetailsCard({ businessId }: { businessId: string }) {
   const { data, mutate } = useApi<BusinessesResponse>('/businesses', undefined, {
     shouldRetryOnError: false,
   });
-  const business = data?.data.find((b) => b.id === businessId);
+  const business = data?.data?.find((b) => b.id === businessId);
   if (!data?.local || !business) return null;
   return (
     <section aria-labelledby="business-details-title" className="mb-8 grid gap-4">
