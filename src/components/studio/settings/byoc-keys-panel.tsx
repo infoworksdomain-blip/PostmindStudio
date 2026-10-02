@@ -13,8 +13,10 @@ import type {
   ProviderCredential,
   ProviderCredentialsResponse,
 } from '@/lib/client/types';
+import { StudioCapability } from '@/lib/rbac';
 import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { Section } from '../primitives';
+import { useCan } from '../use-can';
 
 // P1 BYOC (operator decision 2026-09-28; spec 6.6 / 12.6): Enterprise organisations add their
 // own provider API keys; Studio then calls those providers with the organisation's keys. Keys
@@ -181,10 +183,14 @@ function ProviderRow({
 export function ByocKeysPanel() {
   const t = useTranslations('account.providerKeys');
   const errorMessage = useErrorMessage();
-  const { data, error, isLoading, mutate } =
-    useApi<ProviderCredentialsResponse>('/provider-credentials');
-  // Members without the connections capability (403) do not manage provider keys: no panel.
-  if (error instanceof ApiError && error.status === 403) return null;
+  // Members without the connections capability do not manage provider keys: no panel, and no
+  // request that can only answer 403 (it showed up as an error in every viewer's console). Until
+  // /me says what the member may do, nothing is requested.
+  const mayManage = useCan(StudioCapability.ConnectionsManage, false);
+  const { data, error, isLoading, mutate } = useApi<ProviderCredentialsResponse>(
+    mayManage ? '/provider-credentials' : null,
+  );
+  if (!mayManage || (error instanceof ApiError && error.status === 403)) return null;
 
   return (
     <Section

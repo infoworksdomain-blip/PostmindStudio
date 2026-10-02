@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { withLocale } from '../../../../test/i18n-wrapper';
 import { ExportScreen } from '../account/export-screen';
-import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
+import { fail, mockFetch as rawMockFetch, ok, renderScreen } from '../publications/test-utils';
 import { ByocKeysPanel } from '../settings/byoc-keys-panel';
 import { PublicPreview } from '../share/public-preview';
 import { ShareLinksPanel } from '../share/share-links-panel';
@@ -12,6 +12,14 @@ import { WelcomeWizard } from './welcome-wizard';
 
 // BACKLOG 16.3 / 16.4 — Track 4 screens (onboarding, share, templates, account) render from the
 // Arabic (RTL, six plural categories) and Simplified Chinese catalogues. Missing keys throw.
+
+/** ByocKeysPanel asks for provider keys only once /me says the member may manage connections. */
+const mockFetch: typeof rawMockFetch = (handler) =>
+  rawMockFetch((req) =>
+    req.url.pathname === '/api/studio/me'
+      ? ok({ me: { capabilities: ['studio:connections:manage'], user: { platformRole: 'user' } } })
+      : handler(req),
+  );
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 afterEach(() => {

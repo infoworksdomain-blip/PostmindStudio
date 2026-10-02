@@ -18,6 +18,7 @@ import {
   RefreshLibraryButton,
   UploadImageButton,
 } from './image-library-actions';
+import { WriteGate } from '../write-gate';
 import type { LibraryImage } from './types';
 
 // A6.8 — the per-business image library: browse by source/tag (GET, cursor pages), semantic
@@ -138,11 +139,13 @@ export function ImageLibraryPanel({ businessId }: { businessId: string }) {
             <span className="sr-only sm:not-sr-only">{t('search')}</span>
           </Button>
         </form>
-        <div className="flex flex-wrap gap-1">
-          <UploadImageButton businessId={businessId} onAdded={added} />
-          <GenerateImageButton businessId={businessId} onAdded={added} />
-          <RefreshLibraryButton businessId={businessId} />
-        </div>
+        <WriteGate>
+          <div className="flex flex-wrap gap-1">
+            <UploadImageButton businessId={businessId} onAdded={added} />
+            <GenerateImageButton businessId={businessId} onAdded={added} />
+            <RefreshLibraryButton businessId={businessId} />
+          </div>
+        </WriteGate>
       </div>
 
       {search ? (

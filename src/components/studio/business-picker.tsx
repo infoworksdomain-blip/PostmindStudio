@@ -7,7 +7,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { StudioCapability } from '@/lib/rbac';
 import { useBusiness } from './business-context';
+import { useCan } from './use-can';
 
 // Header business picker. Phase 18 §2.11 (standalone): GET /businesses lists the organisation's
 // own businesses (studio.businesses); the picker selects one (the first by default) and adds new
@@ -20,7 +22,7 @@ export interface BusinessSummary {
   domain?: string;
 }
 
-interface BusinessesResponse {
+export interface BusinessesResponse {
   ok: true;
   data: BusinessSummary[];
   /** Phase 18: true when Studio owns the list (businesses can be added here). */
@@ -210,6 +212,8 @@ export function BusinessSwitcher() {
     undefined,
     { shouldRetryOnError: false },
   );
+  // Adding a business needs business:manage; the others pick from the list only.
+  const mayAdd = useCan(StudioCapability.BusinessManage);
   if (!ready) return null;
   const added = async (business: BusinessSummary) => {
     await mutate();
@@ -217,9 +221,9 @@ export function BusinessSwitcher() {
   };
   const local = data?.local === true;
   if (data && data.data.length > 0)
-    return <BusinessSelect businesses={data.data} onAdded={local ? added : undefined} />;
+    return <BusinessSelect businesses={data.data} onAdded={local && mayAdd ? added : undefined} />;
   // Standalone with no business yet: the first one is added right here.
-  if (data && local) return <AddBusinessForm onAdded={added} />;
+  if (data && local) return mayAdd ? <AddBusinessForm onAdded={added} /> : null;
   // Core mode only: businesses live in PostMind (list 501 until Core ships it), so the id is typed.
   // Standalone before an organisation exists (403 no_organisation) has nothing to switch yet.
   if (error?.code === 'no_organisation') return null;

@@ -20,12 +20,15 @@ export function AccountRow({
   connection,
   label,
   connecting,
+  canReconnect = true,
   onReconnect,
   onDisconnect,
 }: {
   connection: PlatformConnection;
   label: string;
   connecting: boolean;
+  /** False while the platform's app is not set up: a Reconnect would only fail. */
+  canReconnect?: boolean;
   onReconnect: () => void;
   onDisconnect: () => Promise<boolean>;
 }) {
@@ -51,7 +54,7 @@ export function AccountRow({
         {!stale && <CheckedLine connection={connection} />}
       </div>
       <div className="flex items-center gap-1">
-        {stale && (
+        {stale && canReconnect && (
           <Button size="sm" disabled={connecting} onClick={onReconnect}>
             {connecting ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('reconnect')}
           </Button>
@@ -115,6 +118,7 @@ export function PlatformCard({
                 connection={c}
                 label={platform.label}
                 connecting={connecting}
+                canReconnect={configured}
                 onReconnect={onConnect}
                 onDisconnect={() => onDisconnect(c)}
               />

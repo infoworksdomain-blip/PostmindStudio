@@ -63,10 +63,18 @@ export async function GET(req: Request): Promise<Response> {
       accountName: outcome.accountName,
     });
   } catch (err) {
-    const returnTo =
+    const pendingReturnTo =
       err instanceof StudioError
         ? (err.details?.pending as { returnTo?: string } | undefined)?.returnTo
         : undefined;
+    // A person's browser always ends on Connections with an explanation. Without a stored
+    // returnTo (the state is unknown, expired or already used: a stale tab, a double click) the
+    // page is Studio's own; scripts and tests that do not ask for HTML still get the JSON error.
+    const returnTo =
+      pendingReturnTo ??
+      (req.headers.get('accept')?.includes('text/html')
+        ? new URL('/connections', deps.appUrl).toString()
+        : undefined);
     if (returnTo) {
       const back = new URL(returnTo);
       const reason = err instanceof StudioError ? err.details?.reason : undefined;
