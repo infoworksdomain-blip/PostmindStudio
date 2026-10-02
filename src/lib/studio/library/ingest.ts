@@ -34,9 +34,14 @@ import {
 // embeddings (CLIP/CLAP) — see the Phase 9 review list.
 
 export const MAX_SOURCE_BYTES = 200 * 1024 * 1024;
-/** A3.10: users only ever see this rendition (low-res, muted, 30s), never the source. */
+/**
+ * A3.10: users only ever see this rendition (low-res, 30s), never the source. With sound since
+ * BACKLOG 20.17 (operator decision 2026-10-01; scripts/library/rebuild-previews.ts regenerates
+ * older silent ones).
+ */
 export const PREVIEW_WIDTH = 360;
 export const PREVIEW_MAX_SEC = 30;
+export const PREVIEW_CONTENT_TYPE = 'video/mp4';
 
 /** Key of an item's preview rendition, derived from its source key. */
 export function previewKey(s3Key: string): string {
@@ -422,7 +427,7 @@ export async function ingestLibraryVideo(
     bucket,
     key: previewKey(s3Key),
     body: await deps.media.previewClip(url, PREVIEW_WIDTH, PREVIEW_MAX_SEC),
-    contentType: 'video/mp4',
+    contentType: PREVIEW_CONTENT_TYPE,
     cacheControl: THUMBNAIL_CACHE_CONTROL,
   });
 

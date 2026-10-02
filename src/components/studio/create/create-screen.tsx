@@ -47,6 +47,7 @@ import { ReferenceBanner } from './reference-banner';
 import { ReferencePreview } from './reference-preview';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { ProfileReviewNotice } from '../business/profile-review-notice';
+import { BriefHint, briefHintDescribedBy } from '../brief-hint';
 
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
 // business's connections and default brand kit; options sit behind progressive disclosure.
@@ -339,6 +340,7 @@ export function CreateScreen({
           rows={5}
           autoFocus
           onChange={(e) => patch({ brief: e.target.value })}
+          aria-describedby={briefHintDescribedBy(form.brief, 'create-brief-hint')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey))
               e.currentTarget.form?.requestSubmit();
@@ -366,6 +368,8 @@ export function CreateScreen({
           </Button>
         </div>
       </div>
+      {/* 20.18: a gentle nudge for a very short or generic brief; Generate still works. */}
+      <BriefHint text={form.brief} id="create-brief-hint" className="-mt-3" />
       <AutoPublishOption
         source={form.source}
         enabled={state.autoPublish}

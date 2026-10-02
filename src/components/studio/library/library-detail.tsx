@@ -13,9 +13,13 @@ import { SimilarShelf } from './similar-shelf';
 import type { BlueprintResponse, LibraryVideoDetail } from './types';
 import { UseReferencePanel } from './use-reference-panel';
 
-// BACKLOG 10.7 — one reference video: muted preview, metadata, analysed structure (the
+// BACKLOG 10.7 — one reference video: preview, metadata, analysed structure (the
 // TEMPLATE blueprint when the licence allows it, otherwise only the INSPIRE style signature),
 // similar videos and "Use as reference".
+// BACKLOG 20.17 (operator decision 2026-10-01): the preview has sound. It is not muted and never
+// autoplays (browsers block autoplay with sound anyway); it plays with sound when the user
+// presses play. Hover previews on cards (video-card.tsx) stay muted. Still no download: the
+// browser's download control is hidden and the signed URL lives 10 minutes (A3.10).
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -139,10 +143,12 @@ export function LibraryDetail({ id }: { id: string }) {
           <video
             src={video.previewUrl}
             poster={video.thumbnailUrl}
-            muted
             loop
             playsInline
             controls
+            controlsList="nodownload"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
             preload="metadata"
             aria-label={t('previewAria', { title: video.title })}
             className="aspect-[9/16] w-full rounded-2xl bg-secondary object-cover shadow-[0_24px_48px_-24px_rgb(0_0_0/0.35)]"

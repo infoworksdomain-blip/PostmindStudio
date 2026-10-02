@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { withLocale } from '../../../test/i18n-wrapper';
@@ -150,5 +150,17 @@ describe('BusinessSwitcher — standalone businesses', () => {
       ),
     );
     expect(await screen.findByLabelText(label)).toBeInTheDocument();
+  });
+
+  it('drops a remembered business that is not in an organisation that has none', async () => {
+    window.localStorage.setItem('studio.businessId', 'biz_of_another_organisation');
+    mockFetch([{ match: '/api/studio/businesses', body: { ok: true, local: true, data: [] } }]);
+    renderWithSWR(
+      <BusinessProvider>
+        <BusinessSwitcher />
+      </BusinessProvider>,
+    );
+    await screen.findByLabelText('New business');
+    await waitFor(() => expect(window.localStorage.getItem('studio.businessId')).toBeNull());
   });
 });

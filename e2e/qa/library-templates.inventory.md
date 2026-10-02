@@ -27,7 +27,7 @@ State legend: E empty, L loading, X error, S success, P permission denied / plan
 | RecommendedShelf | `recommended-shelf.tsx` | no business, no profile (404, link to /business), error, empty, populated, category pass-through |
 | VideoCard | `video-card.tsx` | thumbnail, fallback illustration, duration, licence chip (Template + Inspire / Inspire only), match %, hover/focus preview, reduced motion |
 | VideoRow | `video-row.tsx` | skeleton, empty, horizontal list |
-| LibraryDetail | `library-detail.tsx` | 404 empty state, error + retry, skeleton, player (poster, controls, muted), facts, tags, back link |
+| LibraryDetail | `library-detail.tsx` | 404 empty state, error + retry, skeleton, player (poster, controls, sound on play, no download, 20.17), facts, tags, back link |
 | StructureSection | (in library-detail) | blueprint timeline (TEMPLATE), INSPIRE-only note, not analysed (404), error |
 | BlueprintTimeline | `blueprint-timeline.tsx` | proportional strip, ordered shot list, voiceover / on-screen text icons |
 | SimilarShelf | `similar-shelf.tsx` | populated, empty, error |

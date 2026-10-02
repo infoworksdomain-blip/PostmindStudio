@@ -47,6 +47,7 @@ export function CreateOrganisationStep() {
   const [country, setCountry] = useState('');
   const [defaultLocale, setDefaultLocale] = useState(isLocale(locale) ? locale : 'en-GB');
   const [saving, setSaving] = useState(false);
+  const { setBusinessId } = useBusiness();
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -57,6 +58,10 @@ export function CreateOrganisationStep() {
         body: { name: name.trim(), country, defaultLocale },
       });
       toast.success(t('created', { name: name.trim() }));
+      // The business remembered in this browser belongs to the previous organisation (the user came
+      // through "New organisation"): forget it, or the wizard would skip the first-business step and
+      // carry on with another organisation's business.
+      setBusinessId(null);
       // A new active organisation: reload so every server read is scoped to it.
       hardNavigate('/welcome');
     } catch (err) {

@@ -74,6 +74,26 @@ const blueprint: BlueprintResponse = {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('LibraryDetail', () => {
+  it('plays the preview with sound on demand, never autoplays and offers no download', async () => {
+    mockFetch([
+      { match: '/library/videos/lib_1/similar', method: 'POST', body: { ok: true, data: [] } },
+      { match: '/library/videos/lib_1', body: { ok: true, video: detail() } },
+      { match: '/library/blueprint/lib_1', body: blueprint },
+    ]);
+    renderWithSWR(<LibraryDetail id="lib_1" />);
+    const video = (await screen.findByLabelText(
+      'Preview of Morning coffee ritual',
+    )) as HTMLVideoElement;
+    // BACKLOG 20.17: not muted, with controls, and no autoplay (browsers block it with sound).
+    expect(video.muted).toBe(false);
+    expect(video).not.toHaveAttribute('muted');
+    expect(video.autoplay).toBe(false);
+    expect(video).toHaveAttribute('controls');
+    // A3.10 no-download measures stay.
+    expect(video).toHaveAttribute('controlslist', 'nodownload');
+    expect(video).toHaveAttribute('disablepictureinpicture');
+  });
+
   it('shows the preview, facts and both reference modes', async () => {
     mockFetch([
       { match: '/library/videos/lib_1/similar', method: 'POST', body: { ok: true, data: [] } },
@@ -84,7 +104,7 @@ describe('LibraryDetail', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Morning coffee ritual' }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Muted preview of Morning coffee ritual')).toHaveAttribute(
+    expect(screen.getByLabelText('Preview of Morning coffee ritual')).toHaveAttribute(
       'src',
       'https://cdn.test/preview.mp4',
     );

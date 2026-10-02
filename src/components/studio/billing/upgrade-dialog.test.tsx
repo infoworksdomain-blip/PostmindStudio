@@ -97,6 +97,20 @@ describe('UpgradeDialogHost', () => {
     );
   });
 
+  it('a seat limit is not a monthly limit: seat wording, upgrade, no top-up', async () => {
+    mockFetch(
+      routes(billing(), [
+        gated(403, 'quota_exceeded', { reason: 'seat_limit', used: 2, limit: 2 }),
+      ]),
+    );
+    renderWithSWR(<UpgradeDialogHost />);
+    await block();
+    const dialog = await screen.findByRole('dialog', { name: 'Every seat on your plan is in use' });
+    expect(dialog).not.toHaveTextContent('month');
+    expect(screen.queryByRole('link', { name: 'Buy top-up' })).toBeNull();
+    expect(await screen.findByRole('button', { name: 'Upgrade' })).toBeInTheDocument();
+  });
+
   it('quota_exceeded offers upgrade and a top-up', async () => {
     mockFetch(routes(billing(), [gated(403, 'quota_exceeded')]));
     renderWithSWR(<UpgradeDialogHost />);

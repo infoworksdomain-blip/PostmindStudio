@@ -43,7 +43,8 @@
       "moreOptions": "More options",
       "required": "Required"
     },
-    "untitledVideo": "Untitled video"
+    "untitledVideo": "Untitled video",
+    "briefHint": "This is quite short. Add who it’s for, what to say, or the feel you want, and we’ll make something better. You can still generate."
   },
   "shell": {
     "nav": {
@@ -1061,6 +1062,28 @@
       "retry": "Try again",
       "retried": "{count, plural, one {Scheduled # post.} other {Scheduled # posts.}}",
       "stillNone": "Still no free posting time — add posting times or pick a date."
+    },
+    "directions": {
+      "title": "Choose a direction",
+      "body": "Your request is a bit too vague to make a good video. Pick one of these directions, or add more detail below.",
+      "optionsAria": "Suggested directions",
+      "option": "Direction {number}",
+      "use": "Use this direction",
+      "useAria": "Use direction {number}",
+      "noPermission": "Someone who can edit projects needs to choose a direction or add more detail."
+    },
+    "needsInput": {
+      "editLabel": "Your brief",
+      "editSubmit": "Generate with my changes",
+      "started": "Generation started."
+    },
+    "restricted": {
+      "title": "Check the restricted topics",
+      "body": "Your brief touches topics your brand kit or business profile marks as restricted. Continue anyway if they are fine for this video, or edit the brief to leave them out.",
+      "topicsAria": "Restricted topics found",
+      "continue": "Continue anyway",
+      "continueHint": "The video is made as briefed, including these topics.",
+      "noPermission": "Someone who can edit projects needs to continue or change the brief."
     }
   },
   "slideshow": {
@@ -2181,7 +2204,7 @@
       "notFoundTitle": "Reference not found",
       "notFoundBody": "It may have been retired from the library.",
       "loading": "Loading reference",
-      "previewAria": "Muted preview of {title}",
+      "previewAria": "Preview of {title}",
       "previewNote": "{minutes, plural, one {Low-res preview · link expires in # min} other {Low-res preview · link expires in # min}}",
       "tagsAria": "Tags",
       "facts": {
@@ -4653,6 +4676,10 @@
     "askOwner": "Only an organisation owner can change the plan or billing. Ask an owner to do this.",
     "lock": {
       "aria": "Needs the {tier} plan"
+    },
+    "seatLimit": {
+      "title": "Every seat on your plan is in use",
+      "body": "Your plan has no free seat for another person. Upgrade for more seats, or remove someone first."
     }
   },
   "email": {

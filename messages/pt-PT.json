@@ -43,7 +43,8 @@
       "moreOptions": "Mais opções",
       "required": "Obrigatório"
     },
-    "untitledVideo": "Vídeo sem título"
+    "untitledVideo": "Vídeo sem título",
+    "briefHint": "Está bastante curto. Indique para quem é, o que dizer ou o ambiente que pretende, e o resultado será melhor. Pode gerar na mesma."
   },
   "shell": {
     "nav": {
@@ -1061,6 +1062,28 @@
       "retry": "Tentar novamente",
       "retried": "{count, plural, one {# publicação agendada.} other {# publicações agendadas.}}",
       "stillNone": "Continua sem haver horas livres — adicione horas de publicação ou escolha uma data."
+    },
+    "directions": {
+      "title": "Escolha uma direção",
+      "body": "O seu pedido está um pouco vago demais para fazer um bom vídeo. Escolha uma destas direções ou acrescente mais detalhes abaixo.",
+      "optionsAria": "Direções sugeridas",
+      "option": "Direção {number}",
+      "use": "Usar esta direção",
+      "useAria": "Usar a direção {number}",
+      "noPermission": "Alguém que possa editar projetos tem de escolher uma direção ou acrescentar mais detalhes."
+    },
+    "needsInput": {
+      "editLabel": "O seu briefing",
+      "editSubmit": "Gerar com as minhas alterações",
+      "started": "Geração iniciada."
+    },
+    "restricted": {
+      "title": "Verifique os temas restritos",
+      "body": "O seu briefing toca em temas que o seu kit de marca ou perfil da empresa marca como restritos. Continue mesmo assim se forem adequados para este vídeo, ou edite o briefing para os retirar.",
+      "topicsAria": "Temas restritos encontrados",
+      "continue": "Continuar mesmo assim",
+      "continueHint": "O vídeo é feito conforme o briefing, incluindo estes temas.",
+      "noPermission": "Alguém que possa editar projetos tem de continuar ou alterar o briefing."
     }
   },
   "slideshow": {
@@ -2181,7 +2204,7 @@
       "notFoundTitle": "Referência não encontrada",
       "notFoundBody": "Pode ter sido retirada da biblioteca.",
       "loading": "A carregar a referência",
-      "previewAria": "Pré-visualização sem som de {title}",
+      "previewAria": "Pré-visualização de {title}",
       "previewNote": "{minutes, plural, one {Pré-visualização em baixa resolução · a ligação expira dentro de # min} other {Pré-visualização em baixa resolução · a ligação expira dentro de # min}}",
       "tagsAria": "Etiquetas",
       "facts": {
@@ -4653,6 +4676,10 @@
     "askOwner": "Só um proprietário da organização pode alterar o plano ou a faturação. Peça a um proprietário para o fazer.",
     "lock": {
       "aria": "Requer o plano {tier}"
+    },
+    "seatLimit": {
+      "title": "Todos os lugares do seu plano estão ocupados",
+      "body": "O seu plano não tem lugar livre para mais uma pessoa. Mude para um plano superior ou remova primeiro alguém."
     }
   },
   "email": {
