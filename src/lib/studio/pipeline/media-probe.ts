@@ -153,10 +153,43 @@ export function parseFfprobe(json: string): MediaProbe {
   };
 }
 
+/**
+ * ffmpeg blackdetect thresholds (ffmpeg-filters "blackdetect"; libavfilter/vf_blackdetect.c),
+ * pinned here rather than left to the filter's defaults so a different ffmpeg build cannot move
+ * them. BACKLOG 20.22 reviewed them against the first production QUALITY_FAILED (QA run 3):
+ *   - pix_th 0.10 (the filter default): a pixel is black when its luma is under 10 % of the luma
+ *     range, 16 + 0.10 × 219 ≈ 38 on limited-range video. Dark but real footage (night scenes,
+ *     dark brand colours) stays above it; the composer keeps every card and the timeline
+ *     backdrop at luma ≥ 0.2 (edl-backdrop.ts), twice this threshold;
+ *   - pic_th 0.98 (the filter default): a frame counts as black only when 98 % of its pixels are,
+ *     so a black card is caught once its text has faded or is small, while a dark shot with any
+ *     lit subject is not;
+ *   - d = the shortest interval reported; the gate asks for BLACK_FRAME_MAX_SEC (spec 13.1:
+ *     black > 500 ms fails), so an intentional dip of up to half a second (a Shotstack
+ *     `fadeFast`, or the darkest part of a 1 s `fade`) is not a failure, while a real gap (an
+ *     empty or black card, a clip that ends early) is.
+ */
+export const BLACKDETECT_PIXEL_THRESHOLD = 0.1;
+export const BLACKDETECT_PICTURE_THRESHOLD = 0.98;
+
+/** The -vf argument for blackdetect reporting intervals of at least `minDurationSec`. */
+export function blackdetectFilter(minDurationSec: number): string {
+  if (!Number.isFinite(minDurationSec) || minDurationSec <= 0)
+    throw new ValidationError(`blackdetect needs a positive duration, got ${minDurationSec}`);
+  return `blackdetect=d=${minDurationSec}:pix_th=${BLACKDETECT_PIXEL_THRESHOLD}:pic_th=${BLACKDETECT_PICTURE_THRESHOLD}`;
+}
+
+// ffmpeg prints times with av_ts2timestr ("%.6g"), so a tiny value can appear as 1e-05.
+const TIME = String.raw`(\d+(?:\.\d+)?(?:e[-+]?\d+)?)`;
+const BLACK_LINE = new RegExp(
+  String.raw`black_start:\s*${TIME}\s+black_end:\s*${TIME}\s+black_duration:\s*${TIME}`,
+  'gi',
+);
+
+/** "[blackdetect @ 0x…] black_start:7.2 black_end:8 black_duration:0.8" lines, in order. */
 export function parseBlackdetect(stderr: string): BlackInterval[] {
   const intervals: BlackInterval[] = [];
-  const re = /black_start:\s*([\d.]+)\s+black_end:\s*([\d.]+)\s+black_duration:\s*([\d.]+)/g;
-  for (const m of stderr.matchAll(re)) {
+  for (const m of stderr.matchAll(BLACK_LINE)) {
     intervals.push({ startSec: Number(m[1]), endSec: Number(m[2]), durationSec: Number(m[3]) });
   }
   return intervals;
@@ -277,7 +310,7 @@ export function createFfmpegInspector(
           '-i',
           url,
           '-vf',
-          `blackdetect=d=${minDurationSec}:pic_th=0.98`,
+          blackdetectFilter(minDurationSec),
           '-an',
           '-f',
           'null',

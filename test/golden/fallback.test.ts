@@ -219,6 +219,7 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
         visual: {
           providerId: 'luma',
           candidates: [
+            { providerId: 'seedance', skipped: 'not_configured' },
             { providerId: 'kling', skipped: 'not_configured' },
             { providerId: 'veo', skipped: 'not_configured' },
             { providerId: 'runway', skipped: 'circuit_open' },

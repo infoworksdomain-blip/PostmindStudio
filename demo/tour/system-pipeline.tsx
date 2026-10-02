@@ -48,6 +48,7 @@ const LAYERS: Layer[] = [
       b('luma (ray-3.2)'),
       b('kling (kling-3.0, 720p, silent)'),
       b('veo (veo-3.1-fast-generate-preview)'),
+      b('seedance (dreamina-seedance-2-0-mini / 2-5)'),
       planned('fal'),
       planned('replicate'),
       b('heygen (avatar v3)'),
@@ -164,11 +165,12 @@ const QUEUE_ROWS: [string, string, number, number][] = [
 ];
 
 const ROUTER_SAMPLE = `// video_shots.providerRouting — the router's decision snapshot for one AI_CLIP shot,
-// STANDARD plan, Kling's breaker open, a 10 s shot (Veo renders at most 8 s).
+// STANDARD plan, Seedance and Kling breakers open, a 10 s shot (Veo renders at most 8 s).
 {
   "providerId": "runway",
   "capability": "text_to_video",
   "candidates": [
+    { "providerId": "seedance", "skipped": "circuit_open" },
     { "providerId": "kling",  "skipped": "circuit_open" },
     { "providerId": "veo",    "skipped": "capability_unsupported" },
     { "providerId": "runway" }
@@ -258,8 +260,8 @@ export function PipelineChapters() {
               head={['Tier', 'Candidates, in order']}
               rows={[
                 ['BASIC', 'fal → replicate'],
-                ['STANDARD', 'kling → veo → runway → luma'],
-                ['PLUS / ENTERPRISE', 'kling → veo → runway → luma'],
+                ['STANDARD', 'seedance (2.0 mini) → kling → veo → runway → luma'],
+                ['PLUS / ENTERPRISE', 'seedance (2.5) → kling → veo → runway → luma'],
                 ['Avatar (≤ STANDARD)', 'd-id → heygen'],
                 ['Stock footage', 'storyblocks → pexels'],
                 ['Image still', 'openai → fal'],

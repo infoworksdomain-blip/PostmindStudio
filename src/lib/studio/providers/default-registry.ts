@@ -14,6 +14,7 @@ import { AssemblyAiAdapter } from './assemblyai';
 import { RunwayAdapter } from './runway';
 import { LumaAdapter } from './luma';
 import { veoOptionsFromEnv, VeoAdapter } from './veo';
+import { seedanceOptionsFromEnv, SeedanceAdapter } from './seedance';
 import { klingCredentialsFrom, klingOptionsFromEnv, KlingAdapter } from './kling';
 import { HeyGenAdapter } from './heygen';
 import { ShotstackAdapter } from './shotstack';
@@ -47,6 +48,7 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
     ['runway', 'RUNWAY_API_KEY'],
     ['luma', 'LUMA_API_KEY'],
     ['veo', 'GOOGLE_GEMINI_API_KEY'],
+    ['seedance', 'BYTEPLUS_API_KEY'],
     ['heygen', 'HEYGEN_API_KEY'],
     ['elevenlabs', 'ELEVENLABS_API_KEY'],
     ['shotstack', 'SHOTSTACK_API_KEY'],
@@ -133,11 +135,21 @@ export function buildAdaptersFromKeys(
   const lumaKey = keys.luma?.apiKey;
   if (lumaKey) adapters.push(new LumaAdapter({ apiKey: lumaKey, usdToGbpRate }));
 
-  // BACKLOG 20.20: Google Veo 3.1 (Gemini API) is the third AI_CLIP option after Runway and
-  // Luma (router.ts). VEO_MODEL / VEO_PERSON_GENERATION are optional (veo.ts defaults).
+  // BACKLOG 20.20: Google Veo 3.1 (Gemini API), the AI_CLIP fallback after Seedance and Kling (router.ts,
+  // order since 20.23). VEO_MODEL / VEO_PERSON_GENERATION are optional (veo.ts defaults).
   const veoKey = keys.veo?.apiKey;
   if (veoKey) {
     adapters.push(new VeoAdapter({ apiKey: veoKey, usdToGbpRate, ...veoOptionsFromEnv(env) }));
+  }
+
+  // BACKLOG 20.23: BytePlus ModelArk Seedance — the first AI_CLIP option on every tier
+  // (router.ts). SEEDANCE_MODEL, SEEDANCE_LONG_MODEL and BYTEPLUS_ARK_BASE_URL are optional
+  // (seedance.ts defaults).
+  const seedanceKey = keys.seedance?.apiKey;
+  if (seedanceKey) {
+    adapters.push(
+      new SeedanceAdapter({ apiKey: seedanceKey, usdToGbpRate, ...seedanceOptionsFromEnv(env) }),
+    );
   }
 
   // BACKLOG 20.24: Kling 3.0 (Kling AI API key). KLING_MODEL / KLING_RESOLUTION /

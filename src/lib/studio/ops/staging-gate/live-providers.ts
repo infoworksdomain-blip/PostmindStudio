@@ -119,6 +119,22 @@ export const LIVE_PROVIDER_TESTS: readonly LiveProviderTest[] = [
     note: 'One 4 s 720p clip (Veo 3.1 Fast: $0.40). The output URI needs the API key to download; the pipeline copies it via VeoAdapter.fetchOutput.',
   },
   {
+    // 20.23: no GATE 2 script; built from env (BYTEPLUS_API_KEY, SEEDANCE_MODEL) and tracked.
+    id: 'seedance',
+    providerId: 'seedance',
+    kind: 'adapter',
+    requiredEnv: ['BYTEPLUS_API_KEY'],
+    request: () => ({
+      capability: 'text_to_video',
+      organisationId: LIVE_ORG_ID,
+      prompt:
+        'Slow push-in on a golden sourdough loaf on a flour-dusted wooden counter, morning window light, steam rising.',
+      durationSec: 4,
+      aspectRatio: '9:16',
+    }),
+    note: 'One 4 s 720p silent clip, the shortest Seedance renders (2.0 mini at list price: 86,400 tokens ≈ $0.30). The video URL is pre-signed for 24 hours.',
+  },
+  {
     // 20.24: no GATE 2 script; built from env (KLING_API_KEY, KLING_RESOLUTION) and tracked.
     id: 'kling',
     providerId: 'kling',

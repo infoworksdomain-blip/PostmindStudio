@@ -9,8 +9,8 @@ import { isAccountProviderError } from '../providers/account-errors';
 // failed and the whole video failed with asset_generation_failed although every other layer
 // worked. When the presenter cannot be produced because NO avatar provider is available —
 // account problem / hold (20.11), provider-level kill switch, open breaker, nothing configured —
-// the shot degrades to a regular generated clip (text_to_video through the router: Runway / Luma)
-// that illustrates the narration. The shot keeps its narration (generated first for the avatar)
+// the shot degrades to a regular generated clip (text_to_video through the router: Seedance,
+// Veo, Runway, Luma) that illustrates the narration. The shot keeps its narration (generated first for the avatar)
 // and its duration, so composition lines up. A content refusal, a validation error, a cost-cap
 // pause or a workspace / project / global kill switch is NOT an availability problem: those fail
 // (or pause) the shot as before.

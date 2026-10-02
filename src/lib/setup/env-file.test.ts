@@ -424,6 +424,51 @@ describe('Google Veo settings (20.20)', () => {
   });
 });
 
+describe('BytePlus Seedance settings (20.23)', () => {
+  const KEYS = [
+    'BYTEPLUS_API_KEY',
+    'SEEDANCE_MODEL',
+    'SEEDANCE_LONG_MODEL',
+    'BYTEPLUS_ARK_BASE_URL',
+  ];
+  // Shape of the operator's real key (2026-10-02): ~179 characters with dots. Fake value.
+  const LONG_DOTTED_KEY = `FAKE.${'a1B2c3D4e5'.repeat(17)}.sig-_xyz`;
+
+  it('are documented in the OPTIONAL section of the server example', () => {
+    const { optional, required } = exampleSections(EXAMPLE);
+    for (const key of KEYS) {
+      expect(optional).toContain(key);
+      expect(required).not.toContain(key);
+    }
+  });
+
+  it('are optional: a file without them is ready', () => {
+    expect(check(filledFile()).ready).toBe(true);
+  });
+
+  it('a long dotted key, the models and the base URL pass', () => {
+    expect(LONG_DOTTED_KEY.length).toBeGreaterThan(170);
+    const text = filledFile('production', {
+      BYTEPLUS_API_KEY: LONG_DOTTED_KEY,
+      SEEDANCE_MODEL: 'dreamina-seedance-2-0-fast-260128',
+      SEEDANCE_LONG_MODEL: 'dreamina-seedance-2-5-260628',
+      BYTEPLUS_ARK_BASE_URL: 'https://ark.ap-southeast.bytepluses.com/api/v3',
+    });
+    expect(check(text).ready).toBe(true);
+    for (const key of KEYS) expect(statusOf(text, key)).toEqual([]);
+  });
+
+  it.each([
+    ['BYTEPLUS_API_KEY', 'two words in the key here 0123456789abcdef'],
+    ['BYTEPLUS_API_KEY', 'short.key'],
+    ['SEEDANCE_MODEL', 'seedance-1-5-pro-251215'],
+    ['SEEDANCE_LONG_MODEL', 'dreamina-seedance-9'],
+    ['BYTEPLUS_ARK_BASE_URL', 'https://example.com/api/v3'],
+  ])('%s=%s is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+});
+
 describe('Kling settings (20.24)', () => {
   const KEYS = [
     'KLING_API_KEY',

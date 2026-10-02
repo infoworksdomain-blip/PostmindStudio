@@ -3,6 +3,7 @@ import { buildShotstackComposition, editDuration, type EdlShot } from './edl';
 import { brandImageRect, cardSec, IMAGE_CARD_SEC, MAX_VIDEO_CARD_SEC } from './edl-brand';
 import { duckedMusicClips, mergeSpans } from './edl-music';
 import { motionPalette } from './motion-graphics';
+import { DEFAULT_BACKDROP } from './edl-backdrop';
 import {
   fourKAllowed,
   outputDimensions,
@@ -285,14 +286,14 @@ describe('15.B8 motion-graphics cards', () => {
           transitionOut: 'fade',
         },
       ],
-      brand: { palette: ['#112233', '#ffeecc', '#ff0066'] },
+      brand: { palette: ['#2255aa', '#ffeecc', '#ff0066'] },
     });
     const tracks = tracksOf(edit);
     const background = tracks
       .flatMap((t) => t.clips)
       .find((c) => c.asset.type === 'shape' && c.asset.width === 1080);
     expect(background).toMatchObject({
-      asset: { shape: 'rectangle', fill: { color: '#112233', opacity: 1 } },
+      asset: { shape: 'rectangle', fill: { color: '#2255aa', opacity: 1 } },
       transition: { in: 'fade', out: 'fade' },
     });
     const accent = tracks
@@ -308,10 +309,11 @@ describe('15.B8 motion-graphics cards', () => {
     expect(tracks.flatMap((t) => t.clips).filter((c) => c.asset.type === 'html')).toHaveLength(1);
     // Each track holds non-overlapping clips.
     for (const t of tracks) expect(t.clips.length).toBeLessThanOrEqual(1);
+    // 20.22: no brand colour → the neutral backdrop (never #111111, which blackdetect reads as black).
     expect(motionPalette(['bad'])).toEqual({
-      background: '#111111',
-      text: '#ffffff',
-      accent: '#ffffff',
+      background: DEFAULT_BACKDROP,
+      text: '#FFFFFF',
+      accent: '#FFFFFF',
     });
   });
 });

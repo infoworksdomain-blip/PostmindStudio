@@ -43,7 +43,8 @@ describe('router failover metrics', () => {
       selected: await value('studio_provider_selected_total', { provider: 'luma' }),
     };
     const decision = await routeProvider(aiClip, {
-      // AI_CLIP tries kling → veo → runway → luma (20.24); kling and veo are not registered here.
+      // STANDARD AI_CLIP tries seedance → kling → veo → runway → luma; only runway and luma are
+      // registered here.
       registry: createProviderRegistry([
         new StubAdapter('runway', ['text_to_video']),
         new StubAdapter('luma', ['text_to_video']),

@@ -66,21 +66,21 @@ describe('router with provider ratings (P7)', () => {
   ];
 
   it('keeps the spec order without ratings', async () => {
-    // 20.24: kling → veo → runway → luma on every paid tier.
+    // 20.24: seedance → kling → veo → runway → luma; Seedance is not registered here.
     expect((await routeProvider(clip, deps(adapters()))).providerId).toBe('kling');
   });
 
-  it('tries the higher-rated Runway before Luma', async () => {
+  it('tries the higher-rated Luma before Runway', async () => {
     const scores = scoresOf(
       rateProviders({
-        assets: [...outputs('luma', 6, 4), ...outputs('runway', 6, 0)],
+        assets: [...outputs('runway', 6, 4), ...outputs('luma', 6, 0)],
         decisions: [],
         renders: [],
       }),
     );
-    expect(scores.runway).toBeGreaterThan(scores.luma ?? 0);
+    expect(scores.luma).toBeGreaterThan(scores.runway ?? 0);
     const decision = await routeProvider({ ...clip, providerScores: scores }, deps(adapters()));
-    expect(decision.providerId).toBe('runway');
+    expect(decision.providerId).toBe('luma');
   });
 
   it('an explicit preference still beats a rating, and ratings never add providers', async () => {

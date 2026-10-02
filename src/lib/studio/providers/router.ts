@@ -24,11 +24,18 @@ import type { ProviderRegistry } from './registry';
 //   - BACKLOG 20.20 (operator decision 2026-10-02): Google Veo 3.1 (providers/veo.ts) is the
 //     THIRD AI_CLIP option on STANDARD, PLUS and ENTERPRISE, after Runway and Luma, so it is a
 //     failover by default rather than the first choice 6.4 gives "Veo" on PLUS. Veo renders at
-//     most 8 s; longer shots skip it (supportsRequest → capability_unsupported).
-//   - BACKLOG 20.24 (operator decision 2026-10-02): approved order Seedance → Kling 3 → Veo 3.1
-//     Fast → Runway → Luma on STANDARD, PLUS and ENTERPRISE. Seedance (p20-byteplus-seedance)
-//     is not on main yet, so the order here is kling → veo → runway → luma; the Seedance PR puts
-//     seedance first. Kling renders 3–15 s (supportsRequest), so it takes the longest shots.
+//     most 8 s; longer shots skip it (supportsRequest → capability_unsupported). The ORDER is
+//     superseded by 20.23 below.
+//   - BACKLOG 20.23 (operator decision 2026-10-02, routing approved the same day): BytePlus
+//     ModelArk Seedance (providers/seedance.ts) is the FIRST AI_CLIP option on STANDARD, PLUS and
+//     ENTERPRISE, then Veo 3.1 Fast, Runway and Luma as fallbacks. The tier picks the Seedance
+//     MODEL, not the order: STANDARD uses SEEDANCE_MODEL (2.0 mini by default: $0.0756 a second at
+//     720p list, 4 s $0.30, 10 s $0.76), PLUS / ENTERPRISE and shots longer than that model's
+//     15 s use SEEDANCE_LONG_MODEL (2.5 by default, up to 30 s). runProvider passes the tier on the
+//     request. Shots longer than every configured Seedance model skip it (supportsRequest).
+//   - BACKLOG 20.24 (same approval): Kling 3.0 (providers/kling.ts) is SECOND, after Seedance
+//     and before Veo: seedance → kling → veo → runway → luma on every paid tier. Kling renders
+//     3–15 s (supportsRequest), always silent.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -195,8 +202,8 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
-  // 20.24: every paid tier tries the same order (premium choices happen inside an adapter).
-  return ['kling', 'veo', 'runway', 'luma'];
+  // 20.23 / 20.24: every paid tier tries the same order; Seedance picks its model by tier.
+  return ['seedance', 'kling', 'veo', 'runway', 'luma'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {

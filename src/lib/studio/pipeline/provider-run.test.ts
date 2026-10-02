@@ -167,6 +167,7 @@ describe('runProvider — Phase 15 Track C hooks', () => {
       ...both,
       providerRatings: { scoresFor: async () => Promise.reject(new Error('db down')) },
     });
-    expect(broken.decision.providerId).toBe('runway'); // spec order (20.24: runway before luma)
+    // Spec order (20.23/20.24): seedance → kling → veo → runway → luma; only the last two exist here.
+    expect(broken.decision.providerId).toBe('runway');
   });
 });

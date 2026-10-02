@@ -14,6 +14,7 @@ import { RunwayAdapter } from './runway';
 import { ShotstackAdapter } from './shotstack';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
 import { VeoAdapter } from './veo';
+import { SeedanceAdapter } from './seedance';
 import { KlingAdapter } from './kling';
 
 // BACKLOG 15.D10 / spec §20 — "Every adapter has integration tests run daily; … staging
@@ -48,6 +49,7 @@ export const PROVIDER_CANARY_ENV: Record<string, string[]> = {
   runway: ['CANARY_RUNWAY_API_KEY'],
   luma: ['CANARY_LUMA_API_KEY'],
   veo: ['CANARY_GOOGLE_GEMINI_API_KEY'],
+  seedance: ['CANARY_BYTEPLUS_API_KEY'],
   kling: ['CANARY_KLING_API_KEY'],
   heygen: ['CANARY_HEYGEN_API_KEY', 'CANARY_HEYGEN_AVATAR_ID'],
   elevenlabs: ['CANARY_ELEVENLABS_API_KEY'],
@@ -163,6 +165,9 @@ export function buildCanaryAdapter(
     case 'veo':
       // healthCheck = models.get on the default Veo model (unbilled).
       return new VeoAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
+    case 'seedance':
+      // healthCheck = list one video task (unbilled).
+      return new SeedanceAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
     case 'kling':
       // healthCheck = GET /account/costs (free; documented QPS <= 1).
       return new KlingAdapter({

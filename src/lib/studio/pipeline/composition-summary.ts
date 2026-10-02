@@ -48,6 +48,8 @@ export const compositionSummarySchema = z.object({
     fontSources: z.array(z.string()),
     textColour: z.string(),
     backgroundColour: z.string(),
+    /** 20.22: the non-black colour behind cards and the timeline (absent on older renders). */
+    backdropColour: z.string().optional(),
   }),
 });
 

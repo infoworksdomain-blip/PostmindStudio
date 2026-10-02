@@ -885,6 +885,9 @@
       "overrideLabel": "Override the failed check — reason (required, audited)",
       "forceApprove": "Force-approve",
       "overridden": "Quality check overridden.",
+      "softFailureHint": "These checks are advisory. Watch the video; if it looks right, force-approve it with a short reason.",
+      "askToOverride": "These checks are advisory. Watch the video; an owner or admin can force-approve it.",
+      "blockedNoOverride": "A content-safety block can only be cleared by PostMind staff.",
       "details": {
         "safetyScanUnavailable": "The scan could not run: {reason}",
         "safetyNotScanned": "Not scanned: no content-safety scan is set up.",
