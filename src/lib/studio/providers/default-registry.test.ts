@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigurationError } from '../../errors';
 import { VeoAdapter } from './veo';
+import { SeedanceAdapter } from './seedance';
 import {
   buildAdaptersFromEnv,
   buildAdaptersFromKeys,
@@ -13,6 +14,7 @@ const KEYS = [
   'RUNWAY_API_KEY',
   'LUMA_API_KEY',
   'GOOGLE_GEMINI_API_KEY',
+  'BYTEPLUS_API_KEY',
   'HEYGEN_API_KEY',
   'ELEVENLABS_API_KEY',
   'SHOTSTACK_API_KEY',
@@ -33,6 +35,8 @@ beforeEach(() => {
   vi.stubEnv('OPENAI_TEXT_MODEL', '');
   vi.stubEnv('VEO_MODEL', '');
   vi.stubEnv('VEO_PERSON_GENERATION', '');
+  for (const key of ['SEEDANCE_MODEL', 'SEEDANCE_LONG_MODEL', 'BYTEPLUS_ARK_BASE_URL'])
+    vi.stubEnv(key, '');
   for (const key of KEYS) vi.stubEnv(key, '');
   for (const key of [
     'HIVE_API_KEY',
@@ -59,6 +63,7 @@ describe('buildAdaptersFromEnv', () => {
       'runway',
       'luma',
       'veo',
+      'seedance',
       'heygen',
       'elevenlabs',
       'elevenlabs-music',
@@ -163,5 +168,39 @@ describe('Google Veo (20.20)', () => {
     expect(buildAdaptersFromKeys({ veo: { apiKey: 'org-key' } }).map((a) => a.providerId)).toEqual([
       'veo',
     ]);
+  });
+});
+
+describe('BytePlus Seedance (20.23)', () => {
+  it('registers Seedance from BYTEPLUS_API_KEY with the documented defaults', () => {
+    vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
+    const [seedance] = buildAdaptersFromEnv();
+    expect(seedance).toBeInstanceOf(SeedanceAdapter);
+    expect(seedance).toMatchObject({
+      providerId: 'seedance',
+      model: 'dreamina-seedance-2-0-mini-260615',
+      longModel: 'dreamina-seedance-2-5-260628',
+      baseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3',
+    });
+    expect(providerKeysFromEnv().seedance).toEqual({ apiKey: 'test.key' });
+  });
+
+  it('uses SEEDANCE_MODEL / SEEDANCE_LONG_MODEL / BYTEPLUS_ARK_BASE_URL and refuses unknown values', () => {
+    vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
+    vi.stubEnv('SEEDANCE_MODEL', 'dreamina-seedance-2-0-fast-260128');
+    vi.stubEnv('SEEDANCE_LONG_MODEL', 'dreamina-seedance-2-5-260628');
+    vi.stubEnv('BYTEPLUS_ARK_BASE_URL', 'https://ark.eu-west.bytepluses.com/api/v3');
+    expect(buildAdaptersFromEnv()[0]).toMatchObject({
+      model: 'dreamina-seedance-2-0-fast-260128',
+      baseUrl: 'https://ark.eu-west.bytepluses.com/api/v3',
+    });
+    vi.stubEnv('SEEDANCE_MODEL', 'seedance-1-5-pro-251215');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('an organisation key (BYOC) builds Seedance too', () => {
+    expect(
+      buildAdaptersFromKeys({ seedance: { apiKey: 'org-key' } }).map((a) => a.providerId),
+    ).toEqual(['seedance']);
   });
 });

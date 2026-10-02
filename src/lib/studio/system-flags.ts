@@ -24,6 +24,7 @@ export const PROVIDER_IDS = [
   'openai',
   'runway',
   'veo',
+  'seedance',
   'luma',
   'kling',
   'pika',

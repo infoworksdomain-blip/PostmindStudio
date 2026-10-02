@@ -22,6 +22,8 @@ export const BYOC_PROVIDERS = [
   { id: 'luma', label: 'Luma', adapters: ['luma'] },
   // 20.20: a Gemini API key from Google AI Studio (billing enabled) backs the Veo adapter.
   { id: 'veo', label: 'Google Veo (Gemini API)', adapters: ['veo'] },
+  // 20.23: a BytePlus ModelArk API key (ap-southeast-1, Seedance models activated).
+  { id: 'seedance', label: 'BytePlus Seedance (ModelArk)', adapters: ['seedance'] },
   { id: 'heygen', label: 'HeyGen', adapters: ['heygen'] },
   { id: 'elevenlabs', label: 'ElevenLabs', adapters: ['elevenlabs', 'elevenlabs-music'] },
   { id: 'shotstack', label: 'Shotstack', adapters: ['shotstack'] },

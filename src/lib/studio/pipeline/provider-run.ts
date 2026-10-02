@@ -74,9 +74,15 @@ export interface RunProviderInput {
  * "temporarily unavailable" sentence) and one ops alert naming every provider.
  */
 export async function runProvider(
-  input: RunProviderInput,
+  rawInput: RunProviderInput,
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  // 20.23: adapters see the plan tier (Seedance picks its model by it); routing, cost estimates
+  // and the submit all use the same request.
+  const input: RunProviderInput = {
+    ...rawInput,
+    request: { ...rawInput.request, planTier: rawInput.planTier },
+  };
   const failures: ProviderAccountFailure[] = [];
   for (;;) {
     let decision: RouteDecision;

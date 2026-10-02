@@ -160,13 +160,14 @@ describe('runProvider — Phase 15 Track C hooks', () => {
     const both = { ...deps, registry: createProviderRegistry([runway, luma]) };
     const rated = await runProvider(clip, {
       ...both,
-      providerRatings: { scoresFor: async () => ({ runway: 0.9, luma: 0.2 }) },
+      providerRatings: { scoresFor: async () => ({ runway: 0.2, luma: 0.9 }) },
     });
-    expect(rated.decision.providerId).toBe('runway');
+    expect(rated.decision.providerId).toBe('luma');
     const broken = await runProvider(clip, {
       ...both,
       providerRatings: { scoresFor: async () => Promise.reject(new Error('db down')) },
     });
-    expect(broken.decision.providerId).toBe('luma'); // STANDARD spec order
+    // STANDARD spec order (20.23): seedance → veo → runway → luma; only the last two exist here.
+    expect(broken.decision.providerId).toBe('runway');
   });
 });

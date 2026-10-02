@@ -24,7 +24,16 @@ import type { ProviderRegistry } from './registry';
 //   - BACKLOG 20.20 (operator decision 2026-10-02): Google Veo 3.1 (providers/veo.ts) is the
 //     THIRD AI_CLIP option on STANDARD, PLUS and ENTERPRISE, after Runway and Luma, so it is a
 //     failover by default rather than the first choice 6.4 gives "Veo" on PLUS. Veo renders at
-//     most 8 s; longer shots skip it (supportsRequest → capability_unsupported).
+//     most 8 s; longer shots skip it (supportsRequest → capability_unsupported). The ORDER is
+//     superseded by 20.23 below.
+//   - BACKLOG 20.23 (operator decision 2026-10-02, routing approved the same day): BytePlus
+//     ModelArk Seedance (providers/seedance.ts) is the FIRST AI_CLIP option on STANDARD, PLUS and
+//     ENTERPRISE, then Veo 3.1 Fast, Runway and Luma as fallbacks. The tier picks the Seedance
+//     MODEL, not the order: STANDARD uses SEEDANCE_MODEL (2.0 mini by default: $0.0756 a second at
+//     720p list, 4 s $0.30, 10 s $0.76), PLUS / ENTERPRISE and shots longer than that model's
+//     15 s use SEEDANCE_LONG_MODEL (2.5 by default, up to 30 s). runProvider passes the tier on the
+//     request. Shots longer than every configured Seedance model skip it (supportsRequest).
+//     `kling` stays in the lists unbuilt (not_configured); the Kling branch sets its position.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -191,8 +200,8 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
-  if (tier === 'STANDARD') return ['luma', 'runway', 'veo', 'kling'];
-  return ['runway', 'luma', 'veo', 'kling'];
+  if (tier === 'STANDARD') return ['seedance', 'veo', 'runway', 'luma', 'kling'];
+  return ['seedance', 'veo', 'runway', 'luma', 'kling'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
