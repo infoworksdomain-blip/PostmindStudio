@@ -40,7 +40,7 @@ const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const REASON_MAX = 500;
 
 export type AsyncScanOutcome =
-  { pending: true } | { scan: ContentSafetyScan } | { unavailable: string };
+  { pending: true } | { scan: ContentSafetyScan } | { unavailable: string; humanReview?: boolean };
 
 /** STUDIO_PUBLIC_CALLBACK_BASE_URL: an https origin (http only for localhost development). */
 export function parseCallbackBaseUrl(raw: string | undefined): string | undefined {
@@ -120,8 +120,9 @@ async function submitTask(
       deps,
     );
   } catch (err) {
+    // 20.19: same as the sync scan — no provider means a person reviews the render.
     if (err instanceof NoProviderAvailableError)
-      return { unavailable: 'no content-safety provider available' };
+      return { unavailable: 'no content-safety provider available', humanReview: true };
     throw err;
   }
   let row;

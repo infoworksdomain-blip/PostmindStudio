@@ -31,6 +31,13 @@ const avatar = {
   aspectRatio: '9:16' as const,
 };
 
+// 20.19: the exact error seen in production on 2026-10-02 (shots 3, 7 and 10 of a QA project).
+const PRODUCTION_CREDIT_ERROR = {
+  code: 'MOVIO_PAYMENT_INSUFFICIENT_CREDIT',
+  message: "Insufficient credit. This operation requires 'api' credits.",
+};
+const PRODUCTION_MESSAGE = `${PRODUCTION_CREDIT_ERROR.code}: ${PRODUCTION_CREDIT_ERROR.message}`;
+
 const created = { data: { video_id: VIDEO_ID, status: 'waiting', output_format: 'mp4' } };
 
 const detail = (patch: Record<string, unknown>) => ({
@@ -119,12 +126,38 @@ describe('HeyGenAdapter.submit', () => {
     [429, 'rate_limit_exceeded', 'rate_limited', true],
     [429, 'quota_exceeded', 'insufficient_credits', false],
     [500, 'internal_error', 'provider_unavailable', true],
+    // 20.19: documented auth codes, and the undocumented legacy payment code seen in production.
+    [403, 'insufficient_api_key_scope', 'auth', false],
+    [403, 'phone_verification_required', 'auth', false],
+    [402, 'subscription_required', 'insufficient_credits', false],
+    [402, 'trial_limit_exceeded', 'insufficient_credits', false],
+    [400, 'MOVIO_PAYMENT_INSUFFICIENT_CREDIT', 'insufficient_credits', false],
+    [402, 'MOVIO_PAYMENT_INSUFFICIENT_CREDIT', 'insufficient_credits', false],
   ])('maps HTTP %i %s to %s', async (status, code, errorClass, retryable) => {
     const { heygen } = adapter(json({ error: { code, message: 'details' } }, status));
     await expect(heygen.submit(avatar)).rejects.toMatchObject({
       errorClass,
       retryable,
       message: `${code}: details`,
+    });
+  });
+
+  it('20.19: classifies the production MOVIO_PAYMENT_INSUFFICIENT_CREDIT submit error as an account problem', async () => {
+    const { heygen } = adapter(json({ error: PRODUCTION_CREDIT_ERROR }, 400));
+    await expect(heygen.submit(avatar)).rejects.toMatchObject({
+      providerId: 'heygen',
+      errorClass: 'insufficient_credits',
+      retryable: false,
+      message: PRODUCTION_MESSAGE,
+    });
+  });
+
+  it('20.19: an unknown code whose message says "insufficient credit" is a credit problem', async () => {
+    const { heygen } = adapter(
+      json({ error: { code: 'BILLING_SOMETHING_NEW', message: 'Insufficient credit.' } }, 400),
+    );
+    await expect(heygen.submit(avatar)).rejects.toMatchObject({
+      errorClass: 'insufficient_credits',
     });
   });
 
@@ -198,6 +231,30 @@ describe('HeyGenAdapter.poll', () => {
     });
   });
 
+  it('20.19: classifies the production MOVIO_PAYMENT_INSUFFICIENT_CREDIT render failure', async () => {
+    const { heygen } = adapter(
+      json(
+        detail({
+          status: 'failed',
+          failure_code: PRODUCTION_CREDIT_ERROR.code,
+          failure_message: PRODUCTION_CREDIT_ERROR.message,
+        }),
+      ),
+    );
+    await expect(heygen.poll(VIDEO_ID)).resolves.toEqual({
+      state: 'failed',
+      error: { class: 'insufficient_credits', retryable: false, message: PRODUCTION_MESSAGE },
+    });
+  });
+
+  it('20.19: classifies a credit error answered by the status endpoint itself', async () => {
+    const { heygen } = adapter(json({ error: PRODUCTION_CREDIT_ERROR }, 402));
+    await expect(heygen.poll(VIDEO_ID)).rejects.toMatchObject({
+      errorClass: 'insufficient_credits',
+      retryable: false,
+    });
+  });
+
   it('reports a completed video without a URL, and a missing video, as retryable', async () => {
     const empty = adapter(json(detail({ status: 'completed' })));
     await expect(empty.heygen.poll(VIDEO_ID)).resolves.toMatchObject({
@@ -230,8 +287,36 @@ describe('classifyHeyGenCode', () => {
     ['script_too_short', 'invalid_request', false],
     ['avatar_consent_required', 'invalid_request', false],
     ['brand_new_code', 'unknown', false],
+    ['INSUFFICIENT_CREDIT', 'insufficient_credits', false],
+    ['MOVIO_PAYMENT_INSUFFICIENT_CREDIT', 'insufficient_credits', false],
+    ['MOVIO_PAYMENT_SOMETHING_ELSE', 'insufficient_credits', false],
+    ['unauthorized', 'auth', false],
+    ['forbidden', 'auth', false],
+    ['insufficient_api_key_scope', 'auth', false],
+    ['MOVIO_UNAUTHORIZED', 'auth', false],
+    ['subscription_required', 'insufficient_credits', false],
   ])('%s → %s', (code, errorClass, retryable) => {
     expect(classifyHeyGenCode(code)).toEqual({ class: errorClass, retryable });
+  });
+
+  it('uses the message only for codes it does not know', () => {
+    expect(classifyHeyGenCode(null, 'Insufficient credit.')).toEqual({
+      class: 'insufficient_credits',
+      retryable: false,
+    });
+    expect(classifyHeyGenCode('rendering_failed', 'Insufficient API credit')).toEqual({
+      class: 'insufficient_credits',
+      retryable: false,
+    });
+    // A documented code wins over its message.
+    expect(classifyHeyGenCode('content_policy_violation', 'insufficient credit')).toEqual({
+      class: 'content_policy',
+      retryable: false,
+    });
+    expect(classifyHeyGenCode('rendering_failed', 'Avatar rendering timed out')).toEqual({
+      class: 'unknown',
+      retryable: false,
+    });
   });
 });
 

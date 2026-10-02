@@ -846,6 +846,10 @@
       "item": "{layer} : réalisé avec {provider} ({skipped})",
       "skipped": "{provider} : {reason}"
     },
+    "presenterFallback": {
+      "aria": "Présentateur indisponible",
+      "note": "Le présentateur n’était pas disponible pour cette vidéo : ces moments utilisent donc des clips vidéo à la place."
+    },
     "quality": {
       "title": "Contrôle qualité",
       "status": {
