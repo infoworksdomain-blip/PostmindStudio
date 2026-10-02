@@ -1593,7 +1593,8 @@
         "images": "Biblioteca de imagens",
         "learned": "O que o Studio aprendeu",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Você tem acesso somente para leitura a este negócio. Peça a um proprietário ou administrador para fazer as alterações."
     },
     "kits": {
       "intro": "O kit padrão é aplicado aos novos vídeos. Os roteiros usam o tom e o público dele; as sobreposições e a composição usam as cores e as fontes.",
@@ -1793,7 +1794,8 @@
       },
       "gridAria": "Biblioteca de imagens",
       "newer": "Mais recentes",
-      "older": "Mais antigas"
+      "older": "Mais antigas",
+      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando."
     },
     "profile": {
       "fields": {
@@ -2037,6 +2039,16 @@
         "planGeneric": "A clonagem de voz não está incluída no seu plano. Faça upgrade do plano para clonar uma voz; as vozes de banco continuam disponíveis.",
         "notConfigured": "A clonagem de voz ainda não está configurada neste servidor ({message})."
       }
+    },
+    "details": {
+      "title": "Dados do negócio",
+      "description": "O nome mostrado na barra superior e o endereço do site deste negócio.",
+      "name": "Nome do negócio",
+      "domain": "Endereço do site (opcional)",
+      "domainHint": "Um nome de host como leedssourdough.co.uk, sem https:// nem caminho.",
+      "domainInvalid": "Use um nome de host como exemplo.co.uk.",
+      "save": "Salvar dados",
+      "saved": "Dados do negócio salvos"
     }
   },
   "connections": {
@@ -2050,7 +2062,8 @@
       "internal_error": "Algo deu errado ao concluir a conexão. Tente novamente.",
       "unknown": "A conexão não foi concluída ({code}). Tente novamente.",
       "meta_no_accounts": "A Meta não compartilhou nenhuma Página do Facebook em que você possa publicar. Conecte de novo e escolha pelo menos uma Página (e a conta do Instagram dela) na janela da Meta.",
-      "wrong_user": "Esta conexão foi iniciada por outro usuário do Studio. Comece de novo com a sua própria sessão."
+      "wrong_user": "Esta conexão foi iniciada por outro usuário do Studio. Comece de novo com a sua própria sessão.",
+      "state_expired": "Esse link de login já foi usado ou expirou. Comece a conexão de novo."
     },
     "dismiss": "Dispensar",
     "pickFirst": {
@@ -2104,7 +2117,8 @@
       "codeLabel": "Código de confirmação:",
       "unknownCode": "Não encontramos nenhuma solicitação de exclusão com este código de confirmação. Confira o link que o Facebook forneceu."
     },
-    "notConfigured": "O {platform} ainda não está disponível: o app do {platform} do Studio ainda precisa ser configurado. Fale com o seu administrador."
+    "notConfigured": "O {platform} ainda não está disponível: o app do {platform} do Studio ainda precisa ser configurado. Fale com o seu administrador.",
+    "readOnly": "Somente proprietários e administradores podem conectar ou desconectar contas."
   },
   "library": {
     "browse": {
@@ -3658,7 +3672,11 @@
       "scan_images_capped": "A análise atingiu o limite de custo ({amount}): algumas imagens não foram indexadas para busca.",
       "ownership_disputed": "Interrompido: a propriedade do site foi contestada.",
       "provider_failure": "{source} informou um problema: {problem}.",
-      "service_unavailable": "Nosso serviço de IA está temporariamente indisponível, por isso não foi possível concluir. Tente novamente mais tarde — nossa equipe já foi avisada."
+      "service_unavailable": "Nosso serviço de IA está temporariamente indisponível, por isso não foi possível concluir. Tente novamente mais tarde — nossa equipe já foi avisada.",
+      "scan_pages_skipped": "{count, plural, one {Não foi possível ler # página e ela foi ignorada.} many {Não foi possível ler # páginas e elas foram ignoradas.} other {Não foi possível ler # páginas e elas foram ignoradas.}}",
+      "scan_images_skipped": "{count, plural, one {Não foi possível baixar # imagem do seu site e ela foi ignorada.} many {Não foi possível baixar # imagens do seu site e elas foram ignoradas.} other {Não foi possível baixar # imagens do seu site e elas foram ignoradas.}}",
+      "stock_not_configured": "Não foi possível adicionar fotos de banco de imagens: ainda não há nenhum serviço de fotos configurado.",
+      "stock_unavailable": "Desta vez não foi possível adicionar algumas fotos de banco de imagens. Use «Atualizar fotos» na biblioteca de imagens para tentar de novo."
     },
     "classes": {
       "rate_limited": "solicitações demais",

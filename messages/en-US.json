@@ -1593,7 +1593,8 @@
         "images": "Image library",
         "learned": "What Studio has learned",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "You have view-only access to this business. Ask an owner or admin to make changes."
     },
     "kits": {
       "intro": "The default kit is applied to new videos. Scripts use its tone and audience; overlays and composition use its colors and fonts.",
@@ -1793,7 +1794,8 @@
       },
       "gridAria": "Image library",
       "newer": "Newer",
-      "older": "Older"
+      "older": "Older",
+      "stockNotConfigured": "Stock photos aren’t set up yet, so there is nothing to refresh. Your site photos, uploads and generated images still work."
     },
     "profile": {
       "fields": {
@@ -2037,6 +2039,16 @@
         "planGeneric": "Voice cloning isn’t included in your plan. Upgrade your plan to clone a voice; stock voices are still available.",
         "notConfigured": "Voice cloning isn’t set up on this server yet ({message})."
       }
+    },
+    "details": {
+      "title": "Business details",
+      "description": "The name shown in the top bar and this business’s website address.",
+      "name": "Business name",
+      "domain": "Website address (optional)",
+      "domainHint": "A host name such as leedssourdough.co.uk, without https:// or a path.",
+      "domainInvalid": "Use a host name such as example.co.uk.",
+      "save": "Save details",
+      "saved": "Business details saved"
     }
   },
   "connections": {
@@ -2050,7 +2062,8 @@
       "internal_error": "Something went wrong finishing the connection. Try again.",
       "unknown": "The connection did not complete ({code}). Try again.",
       "meta_no_accounts": "Meta did not share any Facebook Page you can publish to. Connect again and choose at least one Page (and its Instagram account) in the Meta window.",
-      "wrong_user": "This connection was started by a different Studio user. Start it again while signed in as yourself."
+      "wrong_user": "This connection was started by a different Studio user. Start it again while signed in as yourself.",
+      "state_expired": "That sign-in link was already used or has expired. Start connecting again."
     },
     "dismiss": "Dismiss",
     "pickFirst": {
@@ -2104,7 +2117,8 @@
       "codeLabel": "Confirmation code:",
       "unknownCode": "We could not find a deletion request with this confirmation code. Check the link Facebook gave you."
     },
-    "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator."
+    "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator.",
+    "readOnly": "Only owners and admins can connect or disconnect accounts."
   },
   "library": {
     "browse": {
@@ -3658,7 +3672,11 @@
       "scan_images_capped": "The scan reached its cost cap ({amount}): some images were not indexed for search.",
       "ownership_disputed": "Stopped: ownership of the website was disputed.",
       "provider_failure": "{source} reported a problem: {problem}.",
-      "service_unavailable": "Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted."
+      "service_unavailable": "Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted.",
+      "scan_pages_skipped": "{count, plural, one {# page could not be read and was skipped.} other {# pages could not be read and were skipped.}}",
+      "scan_images_skipped": "{count, plural, one {# image on your site could not be downloaded and was skipped.} other {# images on your site could not be downloaded and were skipped.}}",
+      "stock_not_configured": "Stock photos could not be added: no stock photo service is set up yet.",
+      "stock_unavailable": "Some stock photos could not be added this time. Use Refresh stock in the image library to try again."
     },
     "classes": {
       "rate_limited": "too many requests",

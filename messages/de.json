@@ -1593,7 +1593,8 @@
         "images": "Bildbibliothek",
         "learned": "Was Studio gelernt hat",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Sie haben nur Lesezugriff auf dieses Unternehmen. Bitten Sie einen Inhaber oder Administrator um Änderungen."
     },
     "kits": {
       "intro": "Das Standard-Kit wird auf neue Videos angewendet. Skripte übernehmen seinen Ton und seine Zielgruppe, Einblendungen und Bildgestaltung seine Farben und Schriften.",
@@ -1793,7 +1794,8 @@
       },
       "gridAria": "Bildbibliothek",
       "newer": "Neuere",
-      "older": "Ältere"
+      "older": "Ältere",
+      "stockNotConfigured": "Stockfotos sind noch nicht eingerichtet, deshalb gibt es nichts zu aktualisieren. Fotos Ihrer Website, Uploads und generierte Bilder funktionieren weiterhin."
     },
     "profile": {
       "fields": {
@@ -2037,6 +2039,16 @@
         "planGeneric": "Das Klonen von Stimmen ist in Ihrem Tarif nicht enthalten. Wechseln Sie in einen höheren Tarif, um eine Stimme zu klonen; Stock-Stimmen stehen weiterhin zur Verfügung.",
         "notConfigured": "Das Klonen von Stimmen ist auf diesem Server noch nicht eingerichtet ({message})."
       }
+    },
+    "details": {
+      "title": "Unternehmensdaten",
+      "description": "Der Name in der oberen Leiste und die Website-Adresse dieses Unternehmens.",
+      "name": "Name des Unternehmens",
+      "domain": "Website-Adresse (optional)",
+      "domainHint": "Ein Hostname wie leedssourdough.co.uk, ohne https:// und ohne Pfad.",
+      "domainInvalid": "Verwenden Sie einen Hostnamen wie beispiel.co.uk.",
+      "save": "Daten speichern",
+      "saved": "Unternehmensdaten gespeichert"
     }
   },
   "connections": {
@@ -2050,7 +2062,8 @@
       "internal_error": "Beim Abschließen der Verbindung ist etwas schiefgelaufen. Versuchen Sie es erneut.",
       "unknown": "Die Verbindung wurde nicht abgeschlossen ({code}). Versuchen Sie es erneut.",
       "meta_no_accounts": "Meta hat keine Facebook-Seite freigegeben, auf der du veröffentlichen kannst. Verbinde dich erneut und wähle im Meta-Fenster mindestens eine Seite (und ihr Instagram-Konto) aus.",
-      "wrong_user": "Diese Verbindung wurde von einem anderen Studio-Nutzer gestartet. Starte sie erneut, während du mit deinem eigenen Konto angemeldet bist."
+      "wrong_user": "Diese Verbindung wurde von einem anderen Studio-Nutzer gestartet. Starte sie erneut, während du mit deinem eigenen Konto angemeldet bist.",
+      "state_expired": "Dieser Anmeldelink wurde bereits verwendet oder ist abgelaufen. Starten Sie die Verbindung erneut."
     },
     "dismiss": "Ausblenden",
     "pickFirst": {
@@ -2104,7 +2117,8 @@
       "codeLabel": "Bestätigungscode:",
       "unknownCode": "Zu diesem Bestätigungscode wurde keine Löschanfrage gefunden. Prüfe den Link, den du von Facebook erhalten hast."
     },
-    "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
+    "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration.",
+    "readOnly": "Nur Inhaber und Administratoren können Konten verbinden oder trennen."
   },
   "library": {
     "browse": {
@@ -3658,7 +3672,11 @@
       "scan_images_capped": "Der Scan hat seine Kostenobergrenze ({amount}) erreicht: Einige Bilder wurden nicht für die Suche indexiert.",
       "ownership_disputed": "Gestoppt: Die Inhaberschaft der Website wurde angefochten.",
       "provider_failure": "{source} hat ein Problem gemeldet: {problem}.",
-      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt."
+      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt.",
+      "scan_pages_skipped": "{count, plural, one {# Seite konnte nicht gelesen werden und wurde übersprungen.} other {# Seiten konnten nicht gelesen werden und wurden übersprungen.}}",
+      "scan_images_skipped": "{count, plural, one {# Bild Ihrer Website konnte nicht heruntergeladen werden und wurde übersprungen.} other {# Bilder Ihrer Website konnten nicht heruntergeladen werden und wurden übersprungen.}}",
+      "stock_not_configured": "Stockfotos konnten nicht hinzugefügt werden: Es ist noch kein Stockfoto-Dienst eingerichtet.",
+      "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",
