@@ -10,7 +10,12 @@ import type {
   ProviderSubmitResult,
 } from './interface';
 import { usdToPence } from './pricing';
-import { classifyHttpStatus, providerError, type ErrorClassification } from './provider-errors';
+import {
+  classifyHttpStatus,
+  isOutOfCreditMessage,
+  providerError,
+  type ErrorClassification,
+} from './provider-errors';
 
 // BACKLOG 20.20 — Google Veo 3.1 through the Gemini API (Layer 3 AI_CLIP; operator decision
 // 2026-10-02: a third text-to-video provider after Runway and Luma, since OpenAI's Sora API was
@@ -274,11 +279,36 @@ function googleError(body: unknown): GoogleStatus | undefined {
   return undefined;
 }
 
+/**
+ * 20.19 (shared rule, provider-errors.ts): out-of-credit wording on what would otherwise be an
+ * input error or an unknown failure is an ACCOUNT problem, so failover, the account hold and the
+ * operator alert apply. Veo always refines its HTTP errors, so httpJson's classifyHttpFailure
+ * never upgrades them itself; this does the same here.
+ */
+export function withOutOfCredit(
+  classification: ErrorClassification,
+  message: string,
+): ErrorClassification {
+  return (classification.errorClass === 'invalid_request' ||
+    classification.errorClass === 'unknown') &&
+    isOutOfCreditMessage(message)
+    ? { errorClass: 'insufficient_credits', retryable: false }
+    : classification;
+}
+
 /** HTTP-level errors: the documented status codes, refined by Google's status name. */
 export function classifyVeoHttpError(status: number, body: unknown): ErrorClassification {
   const error = googleError(body);
-  const name = typeof error?.status === 'string' ? error.status : '';
   const message = typeof error?.message === 'string' ? error.message : '';
+  return withOutOfCredit(classifyVeoStatus(status, error, message), message);
+}
+
+function classifyVeoStatus(
+  status: number,
+  error: GoogleStatus | undefined,
+  message: string,
+): ErrorClassification {
+  const name = typeof error?.status === 'string' ? error.status : '';
   if (status === 402) return { errorClass: 'insufficient_credits', retryable: false };
   if (status === 401 || status === 403) return classifyGoogleStatus('PERMISSION_DENIED', message);
   if (status === 429) return classifyGoogleStatus('RESOURCE_EXHAUSTED', message, error?.details);
@@ -298,7 +328,8 @@ export function classifyOperationError(error: GoogleStatus): {
       : typeof error.status === 'string'
         ? error.status
         : String(error.code ?? '');
-  const classified = classifyGoogleStatus(name, error.message ?? '', error.details);
+  const message = error.message ?? '';
+  const classified = withOutOfCredit(classifyGoogleStatus(name, message, error.details), message);
   return { class: classified.errorClass, retryable: classified.retryable };
 }
 

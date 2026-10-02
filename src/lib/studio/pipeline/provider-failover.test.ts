@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import pino from 'pino';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { memoryStorage } from '../../../../test/helpers/memory-storage';
 import { ProviderError, ProvidersUnavailableError } from '../../errors';
 import { resetAccountAlertCache } from '../providers/account-alerts';
@@ -11,6 +12,7 @@ import type { ProviderAdapter } from '../providers/interface';
 import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-repository';
 import { OpenAIAdapter, type OpenAIClientLike } from '../providers/openai';
 import { createProviderRegistry } from '../providers/registry';
+import { RunwayAdapter } from '../providers/runway';
 import { StubAdapter } from '../providers/test-adapter';
 import { describeError, isRetryable } from '../queue/workers/runtime';
 import { runProvider, type ProviderRunDeps } from './provider-run';
@@ -365,6 +367,61 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(download).toHaveBeenCalledWith(
       'https://generativelanguage.googleapis.com/v1beta/files/x',
     );
+  });
+
+  // 20.19 — production 2026-10-02: Runway's 400 { error } for an empty credit balance was
+  // classified invalid_request, so the clip never moved to Luma and the video failed.
+  const RUNWAY_NO_CREDITS = 'You do not have enough credits to run this task.';
+  const clipRequest = {
+    need: { kind: 'shot' as const, visualTreatment: 'AI_CLIP' as const, durationSec: 5 },
+    planTier: 'PLUS' as const,
+    request: {
+      capability: 'text_to_video' as const,
+      organisationId: 'org-1',
+      prompt: 'bread',
+      durationSec: 5,
+      aspectRatio: '9:16' as const,
+    },
+  };
+
+  it('video: the real Runway adapter "not enough credits" 400 fails over to Luma in the same job', async () => {
+    const http = fakeFetch(json({ error: RUNWAY_NO_CREDITS }, 400));
+    const runway = new RunwayAdapter({
+      apiKey: 'key_x',
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    const { deps, breaker, rows } = setup([runway, luma]);
+    const run = await runProvider(clipRequest, deps);
+    expect(run.decision.providerId).toBe('luma');
+    // 20.20: Veo now comes after Runway and Luma on PLUS, so Luma is reached first.
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'runway', skipped: 'account_unavailable' },
+      { providerId: 'luma' },
+    ]);
+    expect(breaker.accountHolds().runway?.errorClass).toBe('insufficient_credits');
+    expect(rows.find((r) => r.provider === 'runway')).toMatchObject({
+      errorClass: 'insufficient_credits',
+      errorMessage: RUNWAY_NO_CREDITS,
+    });
+  });
+
+  it('video: a Runway task that FAILED for lack of credits also fails over to Luma', async () => {
+    const http = fakeFetch(
+      json({ id: 'task-1' }),
+      json({ id: 'task-1', status: 'FAILED', failure: RUNWAY_NO_CREDITS, failureCode: null }),
+    );
+    const runway = new RunwayAdapter({
+      apiKey: 'key_x',
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    const { deps, breaker } = setup([runway, luma]);
+    const run = await runProvider(clipRequest, deps);
+    expect(run.decision.providerId).toBe('luma');
+    expect(breaker.accountHolds().runway?.errorClass).toBe('insufficient_credits');
   });
 
   it('does not fail over for problems that are not about the account', async () => {

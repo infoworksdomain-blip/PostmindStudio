@@ -71,6 +71,22 @@ Spend limits; OpenAI: Billing), or rotate the key. Then release the hold at once
 waiting: `redis-cli -n 3 DEL studio:breaker:<provider> studio:breaker:<provider>:failures`.
 Customers retry the failed scan or generation themselves.
 
+Two capabilities degrade instead of failing the video (20.19):
+
+- **Avatar presenter (HeyGen / D-ID).** When no `avatar_video` provider is available (account
+  problem or hold, provider kill switch, open breaker, nothing configured) an `AI_AVATAR` shot is
+  made as a regular generated clip (`text_to_video`: Runway / Luma) that illustrates its
+  narration; the narration and shot length are kept. The shot's `providerRouting.visual` and the
+  asset's metadata carry `degradedFrom: "avatar_video"` and `degradedReason`; the project's
+  `metadata.degradedShots` lists them and the review screen tells the customer "The presenter
+  wasn’t available for this video, so those moments use video clips instead." A content refusal
+  or invalid request still fails the shot. HeyGen's undocumented `MOVIO_PAYMENT_*` failure codes
+  (production 2026-10-02: `MOVIO_PAYMENT_INSUFFICIENT_CREDIT`) count as `insufficient_credits`.
+- **Content safety (Hive).** With no content-safety provider (no key, or the key rejected / out
+  of balance and held) the render is not passed: the run pauses for a Trust & Safety review
+  (Admin Centre → Safety) instead of failing with a block nobody can lift. Each paused video
+  needs a staff decision until a working Hive key is set, so fix the key first.
+
 ## Steps
 
 1. Confirm the outage. Check the provider's status page and look at `provider_jobs` errors in the

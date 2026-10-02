@@ -846,6 +846,10 @@
       "item": "{layer}: creado con {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "Presentador no disponible",
+      "note": "El presentador no estaba disponible para este vídeo, así que en esos momentos se usan clips de vídeo."
+    },
     "quality": {
       "title": "Control de calidad",
       "status": {
@@ -1589,7 +1593,8 @@
         "images": "Biblioteca de imágenes",
         "learned": "Lo que Studio ha aprendido",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Tienes acceso de solo lectura a este negocio. Pide a un propietario o administrador que haga los cambios."
     },
     "kits": {
       "intro": "El kit predeterminado se aplica a los vídeos nuevos. Los guiones usan su tono y su público; los textos superpuestos y la composición, sus colores y fuentes.",
@@ -1789,7 +1794,8 @@
       },
       "gridAria": "Biblioteca de imágenes",
       "newer": "Más recientes",
-      "older": "Más antiguas"
+      "older": "Más antiguas",
+      "stockNotConfigured": "Las fotos de archivo aún no están configuradas, así que no hay nada que actualizar. Las fotos de tu web, las subidas y las imágenes generadas siguen funcionando."
     },
     "profile": {
       "fields": {
@@ -2033,6 +2039,16 @@
         "planGeneric": "Tu plan no incluye la clonación de voz. Mejora tu plan para clonar una voz; las voces de stock siguen disponibles.",
         "notConfigured": "La clonación de voz aún no está configurada en este servidor ({message})."
       }
+    },
+    "details": {
+      "title": "Datos del negocio",
+      "description": "El nombre que se muestra en la barra superior y la dirección web de este negocio.",
+      "name": "Nombre del negocio",
+      "domain": "Dirección web (opcional)",
+      "domainHint": "Un nombre de host como leedssourdough.co.uk, sin https:// ni ruta.",
+      "domainInvalid": "Usa un nombre de host como ejemplo.co.uk.",
+      "save": "Guardar datos",
+      "saved": "Datos del negocio guardados"
     }
   },
   "connections": {
@@ -2046,7 +2062,8 @@
       "internal_error": "Algo ha fallado al terminar la conexión. Vuelve a intentarlo.",
       "unknown": "La conexión no se completó ({code}). Vuelve a intentarlo.",
       "meta_no_accounts": "Meta no compartió ninguna página de Facebook en la que puedas publicar. Vuelve a conectar y elige al menos una página (y su cuenta de Instagram) en la ventana de Meta.",
-      "wrong_user": "Otro usuario de Studio inició esta conexión. Vuelve a empezar con tu propia sesión iniciada."
+      "wrong_user": "Otro usuario de Studio inició esta conexión. Vuelve a empezar con tu propia sesión iniciada.",
+      "state_expired": "Ese enlace de inicio de sesión ya se usó o ha caducado. Vuelve a empezar la conexión."
     },
     "dismiss": "Descartar",
     "pickFirst": {
@@ -2100,7 +2117,8 @@
       "codeLabel": "Código de confirmación:",
       "unknownCode": "No encontramos ninguna solicitud de eliminación con este código de confirmación. Revisa el enlace que te dio Facebook."
     },
-    "notConfigured": "{platform} aún no está disponible: la aplicación de {platform} de Studio todavía necesita su configuración. Consulta a tu administrador."
+    "notConfigured": "{platform} aún no está disponible: la aplicación de {platform} de Studio todavía necesita su configuración. Consulta a tu administrador.",
+    "readOnly": "Solo los propietarios y administradores pueden conectar o desconectar cuentas."
   },
   "library": {
     "browse": {
@@ -3654,7 +3672,11 @@
       "scan_images_capped": "El análisis alcanzó su límite de coste ({amount}): algunas imágenes no se indexaron para la búsqueda.",
       "ownership_disputed": "Detenido: se ha disputado la propiedad del sitio web.",
       "provider_failure": "{source} ha informado de un problema: {problem}.",
-      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente, así que no se pudo completar. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado."
+      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente, así que no se pudo completar. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado.",
+      "scan_pages_skipped": "{count, plural, one {No se pudo leer # página y se omitió.} many {No se pudieron leer # páginas y se omitieron.} other {No se pudieron leer # páginas y se omitieron.}}",
+      "scan_images_skipped": "{count, plural, one {No se pudo descargar # imagen de tu web y se omitió.} many {No se pudieron descargar # imágenes de tu web y se omitieron.} other {No se pudieron descargar # imágenes de tu web y se omitieron.}}",
+      "stock_not_configured": "No se pudieron añadir fotos de archivo: todavía no hay ningún servicio de fotos configurado.",
+      "stock_unavailable": "Esta vez no se pudieron añadir algunas fotos de archivo. Usa «Actualizar fotos» en la biblioteca de imágenes para volver a intentarlo."
     },
     "classes": {
       "rate_limited": "demasiadas solicitudes",

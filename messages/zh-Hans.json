@@ -846,6 +846,10 @@
       "item": "{layer}：由 {provider} 制作（{skipped}）",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "主持人不可用",
+      "note": "此视频的主持人不可用，因此这些片段改用了视频剪辑。"
+    },
     "quality": {
       "title": "质量检查",
       "status": {
@@ -1589,7 +1593,8 @@
         "images": "图片库",
         "learned": "Studio 学到的内容",
         "hashtags": "话题标签"
-      }
+      },
+      "readOnly": "你对此业务只有查看权限。如需更改，请联系所有者或管理员。"
     },
     "kits": {
       "intro": "默认套件会应用于新视频。脚本使用其语气和受众；叠加层和画面构图使用其颜色和字体。",
@@ -1789,7 +1794,8 @@
       },
       "gridAria": "图片库",
       "newer": "较新",
-      "older": "较早"
+      "older": "较早",
+      "stockNotConfigured": "图库照片尚未设置，因此没有可刷新的内容。你网站上的照片、上传的图片和生成的图片仍可使用。"
     },
     "profile": {
       "fields": {
@@ -2033,6 +2039,16 @@
         "planGeneric": "您的套餐不包含声音克隆功能。升级套餐即可克隆声音；素材库配音仍可使用。",
         "notConfigured": "此服务器尚未设置声音克隆功能（{message}）。"
       }
+    },
+    "details": {
+      "title": "业务详情",
+      "description": "顶部栏中显示的名称，以及此业务的网站地址。",
+      "name": "业务名称",
+      "domain": "网站地址（可选）",
+      "domainHint": "主机名，例如 leedssourdough.co.uk，不含 https:// 或路径。",
+      "domainInvalid": "请使用主机名，例如 example.co.uk。",
+      "save": "保存详情",
+      "saved": "业务详情已保存"
     }
   },
   "connections": {
@@ -2046,7 +2062,8 @@
       "internal_error": "完成连接时出错，请重试。",
       "unknown": "连接未完成（{code}）。请重试。",
       "meta_no_accounts": "Meta 未共享任何你可以发布内容的 Facebook 公共主页。请重新连接，并在 Meta 窗口中至少选择一个公共主页（及其 Instagram 账号）。",
-      "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。"
+      "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。",
+      "state_expired": "该登录链接已被使用或已过期。请重新开始连接。"
     },
     "dismiss": "关闭",
     "pickFirst": {
@@ -2100,7 +2117,8 @@
       "codeLabel": "确认码：",
       "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
     },
-    "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。"
+    "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。",
+    "readOnly": "只有所有者和管理员可以连接或断开账号。"
   },
   "library": {
     "browse": {
@@ -3654,7 +3672,11 @@
       "scan_images_capped": "扫描已达到费用上限（{amount}）：部分图片未编入搜索索引。",
       "ownership_disputed": "已停止：网站所有权存在争议。",
       "provider_failure": "{source} 报告了问题：{problem}。",
-      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。"
+      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。",
+      "scan_pages_skipped": "{count, plural, other {有 # 个页面无法读取，已跳过。}}",
+      "scan_images_skipped": "{count, plural, other {你网站上有 # 张图片无法下载，已跳过。}}",
+      "stock_not_configured": "无法添加图库照片：尚未设置图库照片服务。",
+      "stock_unavailable": "这次有些图库照片无法添加。请在图片库中点击“刷新图库”重试。"
     },
     "classes": {
       "rate_limited": "请求过多",

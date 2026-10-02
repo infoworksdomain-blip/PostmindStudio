@@ -481,3 +481,47 @@ describe('kill switch (spec 6.7 level 4)', () => {
     });
   });
 });
+
+describe('out-of-credit wording (20.19 shared rule)', () => {
+  const body = (status: string, message: string) => ({ error: { code: 0, message, status } });
+
+  it.each([
+    [400, body('INVALID_ARGUMENT', 'You do not have enough credits to run this task.')],
+    [400, body('', 'Insufficient balance on this project')],
+    [418, body('', 'You are out of credits')],
+  ] as const)('HTTP %s with out-of-credit text → insufficient_credits', (status, errorBody) => {
+    expect(classifyVeoHttpError(status, errorBody)).toEqual({
+      errorClass: 'insufficient_credits',
+      retryable: false,
+    });
+  });
+
+  it('does not upgrade generic input errors, safety blocks or retryable failures', () => {
+    expect(classifyVeoHttpError(400, body('INVALID_ARGUMENT', 'bad aspectRatio')).errorClass).toBe(
+      'invalid_request',
+    );
+    expect(classifyVeoHttpError(503, body('UNAVAILABLE', 'not enough credits')).errorClass).toBe(
+      'provider_unavailable',
+    );
+  });
+
+  it('a finished operation that failed for lack of credit is an account problem', () => {
+    expect(
+      classifyOperationError({ code: 3, message: 'Insufficient credits to generate the video' }),
+    ).toEqual({ class: 'insufficient_credits', retryable: false });
+    expect(classifyOperationError({ code: 99, message: 'not enough credits' })).toEqual({
+      class: 'insufficient_credits',
+      retryable: false,
+    });
+  });
+
+  it('a submit with out-of-credit text fails over as an account error', async () => {
+    const { veo } = adapter([
+      json(body('INVALID_ARGUMENT', 'You do not have enough credits to run this task.'), 400),
+    ]);
+    await expect(veo.submit(t2v)).rejects.toMatchObject({
+      errorClass: 'insufficient_credits',
+      retryable: false,
+    });
+  });
+});
