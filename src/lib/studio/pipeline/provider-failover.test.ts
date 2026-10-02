@@ -8,6 +8,7 @@ import { ProviderError, ProvidersUnavailableError } from '../../errors';
 import { resetAccountAlertCache } from '../providers/account-alerts';
 import { AnthropicAdapter, type AnthropicClientLike } from '../providers/anthropic';
 import { createCircuitBreaker } from '../providers/circuit-breaker';
+import { KlingAdapter } from '../providers/kling';
 import type { ProviderAdapter } from '../providers/interface';
 import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-repository';
 import { OpenAIAdapter, type OpenAIClientLike } from '../providers/openai';
@@ -318,6 +319,8 @@ describe('runProvider account-problem failover (20.11)', () => {
     );
     expect(run.decision.providerId).toBe('luma');
     expect(run.decision.candidates).toEqual([
+      { providerId: 'kling', skipped: 'not_configured' },
+      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
     ]);
@@ -325,21 +328,18 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(run.fetchOutput).toBeUndefined();
   });
 
-  it('video (20.20): Runway out of credits and Luma over its limit → Veo, with its download', async () => {
-    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
-    runway.nextSubmit = async () => {
-      throw new ProviderError('runway', 'insufficient_credits', 'no credits', false, {
-        status: 402,
+  it("video (20.24): Kling over its account limit → Veo (20.20), with Veo's own download", async () => {
+    const kling = new StubAdapter('kling', ['text_to_video'], { costPence: 32 });
+    kling.nextSubmit = async () => {
+      throw new ProviderError('kling', 'account_limit', '1100: Abnormal account status', false, {
+        status: 429,
       });
-    };
-    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
-    luma.nextSubmit = async () => {
-      throw new ProviderError('luma', 'account_limit', 'budget exhausted', false, { status: 429 });
     };
     const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
     const download = vi.fn(async () => new Response('mp4'));
     Object.assign(veo, { fetchOutput: download });
-    const { deps, breaker } = setup([runway, luma, veo]);
+    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
+    const { deps, breaker } = setup([kling, veo, runway]);
     const run = await runProvider(
       {
         need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6 },
@@ -356,12 +356,10 @@ describe('runProvider account-problem failover (20.11)', () => {
     );
     expect(run.decision.providerId).toBe('veo');
     expect(run.decision.candidates).toEqual([
-      { providerId: 'runway', skipped: 'account_unavailable' },
-      { providerId: 'luma', skipped: 'account_unavailable' },
+      { providerId: 'kling', skipped: 'account_unavailable' },
       { providerId: 'veo' },
     ]);
-    expect(breaker.accountHolds().runway?.errorClass).toBe('insufficient_credits');
-    expect(breaker.accountHolds().luma?.errorClass).toBe('account_limit');
+    expect(breaker.accountHolds().kling?.errorClass).toBe('account_limit');
     // Layer 3 downloads Veo's output with Veo's own (keyed) fetch.
     await run.fetchOutput?.('https://generativelanguage.googleapis.com/v1beta/files/x');
     expect(download).toHaveBeenCalledWith(
@@ -395,8 +393,10 @@ describe('runProvider account-problem failover (20.11)', () => {
     const { deps, breaker, rows } = setup([runway, luma]);
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('luma');
-    // 20.20: Veo now comes after Runway and Luma on PLUS, so Luma is reached first.
+    // 20.24: Kling and Veo come first but are not configured here.
     expect(run.decision.candidates).toEqual([
+      { providerId: 'kling', skipped: 'not_configured' },
+      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
     ]);
@@ -404,6 +404,30 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(rows.find((r) => r.provider === 'runway')).toMatchObject({
       errorClass: 'insufficient_credits',
       errorMessage: RUNWAY_NO_CREDITS,
+    });
+  });
+
+  it('video (20.24): the real Kling adapter 1102 "resource pack exhausted" fails over to Veo', async () => {
+    const http = fakeFetch(
+      json({ code: 1102, message: 'Resource pack exhausted', request_id: 'r' }, 429),
+    );
+    const kling = new KlingAdapter({
+      credentials: { kind: 'api_key', apiKey: 'kling_x' },
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
+    const { deps, breaker, rows } = setup([kling, veo]);
+    const run = await runProvider(clipRequest, deps);
+    expect(run.decision.providerId).toBe('veo');
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'kling', skipped: 'account_unavailable' },
+      { providerId: 'veo' },
+    ]);
+    expect(breaker.accountHolds().kling?.errorClass).toBe('insufficient_credits');
+    expect(rows.find((r) => r.provider === 'kling')).toMatchObject({
+      errorClass: 'insufficient_credits',
+      errorMessage: '1102: Resource pack exhausted',
     });
   });
 

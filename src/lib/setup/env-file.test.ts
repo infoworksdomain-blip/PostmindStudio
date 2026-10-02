@@ -423,3 +423,64 @@ describe('Google Veo settings (20.20)', () => {
     expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
   });
 });
+
+describe('Kling settings (20.24)', () => {
+  const KEYS = [
+    'KLING_API_KEY',
+    'KLING_ACCESS_KEY',
+    'KLING_SECRET_KEY',
+    'KLING_MODEL',
+    'KLING_RESOLUTION',
+    'KLING_BASE_URL',
+  ];
+
+  it('are documented in the OPTIONAL section of the server example', () => {
+    const { optional, required } = exampleSections(EXAMPLE);
+    for (const key of KEYS) {
+      expect(optional).toContain(key);
+      expect(required).not.toContain(key);
+    }
+  });
+
+  it('are optional: a file without them is ready', () => {
+    expect(check(filledFile()).ready).toBe(true);
+  });
+
+  it('a well-formed key, model, resolution and base URL pass', () => {
+    const text = filledFile('production', {
+      KLING_API_KEY: 'FAKE-kling-key-0123456789abcdef',
+      KLING_MODEL: 'kling-3.0',
+      KLING_RESOLUTION: '1080p',
+      KLING_BASE_URL: 'https://api-singapore.klingai.com',
+    });
+    expect(check(text).ready).toBe(true);
+    for (const key of KEYS) expect(statusOf(text, key)).toEqual([]);
+  });
+
+  it('the legacy AccessKey + SecretKey pair passes when both are set', () => {
+    const text = filledFile('production', {
+      KLING_ACCESS_KEY: 'FAKE-access-key-0123',
+      KLING_SECRET_KEY: 'FAKE-secret-key-4567',
+    });
+    expect(check(text).ready).toBe(true);
+    expect(statusOf(text, 'KLING_ACCESS_KEY')).toEqual([]);
+    expect(statusOf(text, 'KLING_SECRET_KEY')).toEqual([]);
+  });
+
+  it.each([
+    ['KLING_ACCESS_KEY', 'FAKE-access-key-0123'],
+    ['KLING_SECRET_KEY', 'FAKE-secret-key-4567'],
+  ])('%s without the other half of the pair is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+
+  it.each([
+    ['KLING_API_KEY', 'two words in the key here 0123456789'],
+    ['KLING_API_KEY', 'short'],
+    ['KLING_MODEL', 'kling-v2-6'],
+    ['KLING_RESOLUTION', '4k'],
+    ['KLING_BASE_URL', 'http://api-singapore.klingai.com'],
+  ])('%s=%s is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+});

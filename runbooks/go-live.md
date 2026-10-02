@@ -468,7 +468,7 @@ Studio no longer uses Hive (operator decision 2026-10-02) or any other content-s
 
 ### 11.2 Google Veo: the third AI video provider (optional)
 
-Studio makes AI clips with Runway, then Luma, then Google Veo 3.1 when the first two cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips use Runway and Luma only.
+Studio makes AI clips with Kling 3.0 first (11.3), then Google Veo 3.1, then Runway, then Luma, moving on when one cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips skip it.
 
 - **Click:** [Google AI Studio](https://aistudio.google.com/apikey) (sign in with the company Google account) → **Get API key** / **Create API key** → choose or create a project.
 - **Billing (required):** Veo has no free tier. In AI Studio **Click:** **Set up billing** next to the project → link a billing account and add Prepay credit (at least $5), or choose Postpay if offered. With Prepay, every key of the project stops when the credit reaches $0: turn on auto-reload ([billing guide](https://ai.google.dev/gemini-api/docs/billing)).
@@ -477,6 +477,20 @@ Studio makes AI clips with Runway, then Luma, then Google Veo 3.1 when the first
 - Optional: `VEO_PERSON_GENERATION`. Leave empty: text-to-video then sends no `personGeneration` (the live API refuses `allow_adult` for text-to-video, checked 2026-10-02) and image-to-video always sends `allow_adult`. Set `allow_all` only for a server outside the EU, UK, Switzerland and the Middle East/North Africa.
 - Google keeps each clip for 2 days; Studio copies it to its own storage as soon as it is ready.
 - **Check:** `npm run setup:check` shows `OK GOOGLE_GEMINI_API_KEY` when the key is shaped right. The provider canary (`CANARY_GOOGLE_GEMINI_API_KEY`) and the staging gate (`--live-providers --only veo`) test it against Google.
+
+### 11.3 Kling 3.0: the first AI video provider (optional)
+
+Studio makes AI clips with Kling 3.0 first, then Google Veo, then Runway, then Luma (an outage, no credits, a usage limit or a shot Kling cannot do moves the clip to the next one). Kling is optional; without its key the clips start with Veo. Kling bills from **prepaid resource packages**, not a card on file.
+
+- **Click:** [Kling AI developer platform](https://kling.ai/dev) → **Sign In** (company account) → **Purchase** ([pricing](https://kling.ai/dev/pricing)) → a **Video API** package (Standard Package 1: $700 for 5,000 units, valid 180 days, 20 clips at a time; larger packages are 10% cheaper per unit). The image packages do not cover video.
+- **Click:** **Console** ([API keys](https://kling.ai/dev/api-key)) → **+ Create a new API Key** → name it `studio-production` → confirm.
+- **Copy:** the API key (shown only once). **Paste into:** `KLING_API_KEY`. Studio sends it as `Authorization: Bearer <key>`.
+- Older accounts only: if the console gives you an **Access Key** and a **Secret Key** instead, paste them into `KLING_ACCESS_KEY` and `KLING_SECRET_KEY` (both, and leave `KLING_API_KEY` empty). Studio signs them into a 30-minute token for each call. Kling calls this pair "legacy"; create an API key when you can (the API key wins when both are set).
+- Optional: `KLING_RESOLUTION` (empty = `720p`, 0.6 units = $0.084 a second; `1080p` 0.8 units = $0.112). Clips are always requested **without sound** (sound would cost 0.9 / 1.2 units a second, and the composer mutes clip audio anyway). A 3 s clip is the shortest, so a 1–2 s shot is billed as 3 s; 15 s is the longest.
+- Optional: `KLING_MODEL` (only `kling-3.0`) and `KLING_BASE_URL` (empty = `https://api-singapore.klingai.com`, Kling's endpoint for servers outside China).
+- Kling deletes each clip after 30 days; Studio copies it to its own storage as soon as it is ready.
+- Watch the balance: Console → usage, or `GET /account/costs` (the canary's health call). When the package runs out or expires Kling answers code 1102 and Studio moves clips to Veo, Runway and Luma and alerts the operator.
+- **Check:** `npm run setup:check` shows `OK KLING_API_KEY` (or `OK` for both halves of the pair; one half alone is reported) when the key is shaped right. The provider canary (`CANARY_KLING_API_KEY`) and the staging gate (`--live-providers --only kling`, one 3 s clip, about $0.25) test it against Kling.
 
 ## 12. Legal texts
 

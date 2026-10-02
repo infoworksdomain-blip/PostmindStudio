@@ -25,6 +25,10 @@ import type { ProviderRegistry } from './registry';
 //     THIRD AI_CLIP option on STANDARD, PLUS and ENTERPRISE, after Runway and Luma, so it is a
 //     failover by default rather than the first choice 6.4 gives "Veo" on PLUS. Veo renders at
 //     most 8 s; longer shots skip it (supportsRequest → capability_unsupported).
+//   - BACKLOG 20.24 (operator decision 2026-10-02): approved order Seedance → Kling 3 → Veo 3.1
+//     Fast → Runway → Luma on STANDARD, PLUS and ENTERPRISE. Seedance (p20-byteplus-seedance)
+//     is not on main yet, so the order here is kling → veo → runway → luma; the Seedance PR puts
+//     seedance first. Kling renders 3–15 s (supportsRequest), so it takes the longest shots.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -191,8 +195,8 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
-  if (tier === 'STANDARD') return ['luma', 'runway', 'veo', 'kling'];
-  return ['runway', 'luma', 'veo', 'kling'];
+  // 20.24: every paid tier tries the same order (premium choices happen inside an adapter).
+  return ['kling', 'veo', 'runway', 'luma'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {

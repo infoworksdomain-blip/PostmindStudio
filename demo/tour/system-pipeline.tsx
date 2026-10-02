@@ -46,7 +46,7 @@ const LAYERS: Layer[] = [
       b('runway (gen4.5 / gen4_turbo)'),
       b('openai (gpt-image-2)'),
       b('luma (ray-3.2)'),
-      planned('kling'),
+      b('kling (kling-3.0, 720p, silent)'),
       b('veo (veo-3.1-fast-generate-preview)'),
       planned('fal'),
       planned('replicate'),
@@ -164,14 +164,14 @@ const QUEUE_ROWS: [string, string, number, number][] = [
 ];
 
 const ROUTER_SAMPLE = `// video_shots.providerRouting — the router's decision snapshot for one AI_CLIP shot,
-// STANDARD plan, Luma and Kling adapters not configured, Runway's breaker closed.
+// STANDARD plan, Kling's breaker open, a 10 s shot (Veo renders at most 8 s).
 {
   "providerId": "runway",
   "capability": "text_to_video",
   "candidates": [
-    { "providerId": "luma",   "skipped": "not_configured" },
-    { "providerId": "runway" },
-    { "providerId": "kling",  "skipped": "not_configured" }
+    { "providerId": "kling",  "skipped": "circuit_open" },
+    { "providerId": "veo",    "skipped": "capability_unsupported" },
+    { "providerId": "runway" }
   ],
   "decidedAt": "2026-09-27T09:14:03.118Z"
 }
@@ -258,8 +258,8 @@ export function PipelineChapters() {
               head={['Tier', 'Candidates, in order']}
               rows={[
                 ['BASIC', 'fal → replicate'],
-                ['STANDARD', 'luma → runway → veo → kling'],
-                ['PLUS / ENTERPRISE', 'runway → luma → veo → kling'],
+                ['STANDARD', 'kling → veo → runway → luma'],
+                ['PLUS / ENTERPRISE', 'kling → veo → runway → luma'],
                 ['Avatar (≤ STANDARD)', 'd-id → heygen'],
                 ['Stock footage', 'storyblocks → pexels'],
                 ['Image still', 'openai → fal'],

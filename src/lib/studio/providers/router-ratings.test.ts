@@ -66,7 +66,8 @@ describe('router with provider ratings (P7)', () => {
   ];
 
   it('keeps the spec order without ratings', async () => {
-    expect((await routeProvider(clip, deps(adapters()))).providerId).toBe('luma');
+    // 20.24: kling → veo → runway → luma on every paid tier.
+    expect((await routeProvider(clip, deps(adapters()))).providerId).toBe('kling');
   });
 
   it('tries the higher-rated Runway before Luma', async () => {

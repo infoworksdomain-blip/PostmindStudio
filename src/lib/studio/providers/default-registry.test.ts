@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigurationError } from '../../errors';
 import { VeoAdapter } from './veo';
+import { KlingAdapter } from './kling';
 import {
   buildAdaptersFromEnv,
   buildAdaptersFromKeys,
@@ -13,6 +14,7 @@ const KEYS = [
   'RUNWAY_API_KEY',
   'LUMA_API_KEY',
   'GOOGLE_GEMINI_API_KEY',
+  'KLING_API_KEY',
   'HEYGEN_API_KEY',
   'ELEVENLABS_API_KEY',
   'SHOTSTACK_API_KEY',
@@ -33,6 +35,14 @@ beforeEach(() => {
   vi.stubEnv('OPENAI_TEXT_MODEL', '');
   vi.stubEnv('VEO_MODEL', '');
   vi.stubEnv('VEO_PERSON_GENERATION', '');
+  for (const key of [
+    'KLING_ACCESS_KEY',
+    'KLING_SECRET_KEY',
+    'KLING_MODEL',
+    'KLING_RESOLUTION',
+    'KLING_BASE_URL',
+  ])
+    vi.stubEnv(key, '');
   for (const key of KEYS) vi.stubEnv(key, '');
   for (const key of [
     'HIVE_API_KEY',
@@ -59,6 +69,7 @@ describe('buildAdaptersFromEnv', () => {
       'runway',
       'luma',
       'veo',
+      'kling',
       'heygen',
       'elevenlabs',
       'elevenlabs-music',
@@ -163,5 +174,47 @@ describe('Google Veo (20.20)', () => {
     expect(buildAdaptersFromKeys({ veo: { apiKey: 'org-key' } }).map((a) => a.providerId)).toEqual([
       'veo',
     ]);
+  });
+});
+
+describe('Kling 3.0 (20.24)', () => {
+  it('registers Kling from KLING_API_KEY with the documented defaults', () => {
+    vi.stubEnv('KLING_API_KEY', 'test-key');
+    const [kling] = buildAdaptersFromEnv();
+    expect(kling).toBeInstanceOf(KlingAdapter);
+    expect(kling as KlingAdapter).toMatchObject({
+      model: 'kling-3.0',
+      resolution: '720p',
+      baseUrl: 'https://api-singapore.klingai.com',
+      authKind: 'api_key',
+    });
+    expect(providerKeysFromEnv().kling).toEqual({ apiKey: 'test-key' });
+  });
+
+  it('accepts the legacy AccessKey + SecretKey pair; the API key wins when both are set', () => {
+    vi.stubEnv('KLING_ACCESS_KEY', 'ak');
+    vi.stubEnv('KLING_SECRET_KEY', 'sk');
+    expect(providerKeysFromEnv().kling).toEqual({ apiKey: 'ak', secondaryKey: 'sk' });
+    expect((buildAdaptersFromEnv()[0] as KlingAdapter).authKind).toBe('access_key');
+    vi.stubEnv('KLING_API_KEY', 'key');
+    expect((buildAdaptersFromEnv()[0] as KlingAdapter).authKind).toBe('api_key');
+  });
+
+  it('half a legacy pair, an unknown resolution or a non-https base URL is refused', () => {
+    vi.stubEnv('KLING_ACCESS_KEY', 'ak');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+    vi.stubEnv('KLING_ACCESS_KEY', '');
+    vi.stubEnv('KLING_API_KEY', 'key');
+    vi.stubEnv('KLING_RESOLUTION', '4k');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+    vi.stubEnv('KLING_RESOLUTION', '1080p');
+    vi.stubEnv('KLING_BASE_URL', 'http://api.klingai.com');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('an organisation key (BYOC) builds Kling too', () => {
+    expect(
+      buildAdaptersFromKeys({ kling: { apiKey: 'org-key' } }).map((a) => a.providerId),
+    ).toEqual(['kling']);
   });
 });

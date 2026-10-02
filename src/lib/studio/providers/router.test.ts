@@ -6,6 +6,7 @@ import { HeyGenAdapter } from './heygen';
 import { LumaAdapter } from './luma';
 import { RunwayAdapter } from './runway';
 import { VeoAdapter } from './veo';
+import { KlingAdapter } from './kling';
 import { createProviderRegistry } from './registry';
 import { planCandidates, routeProvider, type BudgetChecker, type RouteInput } from './router';
 import { StubAdapter } from './test-adapter';
@@ -46,9 +47,9 @@ const aiClip = (planTier: RouteInput['planTier'], extra: Partial<RouteInput> = {
 describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
     ['BASIC', ['fal', 'replicate']],
-    ['STANDARD', ['luma', 'runway', 'veo', 'kling']],
-    ['PLUS', ['runway', 'luma', 'veo', 'kling']],
-    ['ENTERPRISE', ['runway', 'luma', 'veo', 'kling']],
+    ['STANDARD', ['kling', 'veo', 'runway', 'luma']],
+    ['PLUS', ['kling', 'veo', 'runway', 'luma']],
+    ['ENTERPRISE', ['kling', 'veo', 'runway', 'luma']],
   ] as const)('AI_CLIP on %s tries %o', (tier, ids) => {
     expect(
       planCandidates({ kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 4 }, tier),
@@ -121,54 +122,54 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
 
 describe('routeProvider', () => {
   it('skips unconfigured candidates and picks the first usable one', async () => {
-    const runway = new StubAdapter('runway', ['text_to_video', 'image_to_video']);
-    const decision = await routeProvider(aiClip('STANDARD'), deps([runway]));
-    expect(decision.providerId).toBe('runway');
-    expect(decision.adapter).toBe(runway);
+    const veo = new StubAdapter('veo', ['text_to_video', 'image_to_video']);
+    const decision = await routeProvider(aiClip('STANDARD'), deps([veo]));
+    expect(decision.providerId).toBe('veo');
+    expect(decision.adapter).toBe(veo);
     expect(decision.candidates).toEqual([
-      { providerId: 'luma', skipped: 'not_configured' },
-      { providerId: 'runway' },
+      { providerId: 'kling', skipped: 'not_configured' },
+      { providerId: 'veo' },
     ]);
   });
 
   it('skips providers that lack the needed capability', async () => {
-    const luma = new StubAdapter('luma', ['image_to_video']);
-    const runway = new StubAdapter('runway', ['text_to_video']);
-    const decision = await routeProvider(aiClip('STANDARD'), deps([luma, runway]));
+    const kling = new StubAdapter('kling', ['image_to_video']);
+    const veo = new StubAdapter('veo', ['text_to_video']);
+    const decision = await routeProvider(aiClip('STANDARD'), deps([kling, veo]));
     expect(decision.candidates[0]).toEqual({
-      providerId: 'luma',
+      providerId: 'kling',
       skipped: 'capability_unsupported',
     });
-    expect(decision.providerId).toBe('runway');
+    expect(decision.providerId).toBe('veo');
   });
 
   it('falls back when the first choice has an open circuit breaker', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video']);
-    const runway = new StubAdapter('runway', ['text_to_video']);
-    const d = deps([luma, runway]);
-    for (let i = 0; i < 5; i += 1) d.breaker.recordFailure('luma');
+    const kling = new StubAdapter('kling', ['text_to_video']);
+    const veo = new StubAdapter('veo', ['text_to_video']);
+    const d = deps([kling, veo]);
+    for (let i = 0; i < 5; i += 1) d.breaker.recordFailure('kling');
     const decision = await routeProvider(aiClip('STANDARD'), d);
-    expect(decision.providerId).toBe('runway');
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'circuit_open' });
+    expect(decision.providerId).toBe('veo');
+    expect(decision.candidates[0]).toEqual({ providerId: 'kling', skipped: 'circuit_open' });
   });
 
   it('skips a provider disabled by the level-4 kill switch', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video']);
-    const runway = new StubAdapter('runway', ['text_to_video']);
+    const kling = new StubAdapter('kling', ['text_to_video']);
+    const veo = new StubAdapter('veo', ['text_to_video']);
     const killSwitch = {
       check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
-        providerId === 'luma'
-          ? { killed: true, level: 'provider', key: 'studio.disabledProvider.luma' }
+        providerId === 'kling'
+          ? { killed: true, level: 'provider', key: 'studio.disabledProvider.kling' }
           : { killed: false },
       ),
     };
-    const decision = await routeProvider(aiClip('STANDARD'), deps([luma, runway], { killSwitch }));
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'provider_disabled' });
+    const decision = await routeProvider(aiClip('STANDARD'), deps([kling, veo], { killSwitch }));
+    expect(decision.candidates[0]).toEqual({ providerId: 'kling', skipped: 'provider_disabled' });
   });
 
   it('skips over-budget providers using the adapter cost estimate', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 500 });
-    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 50 });
+    const kling = new StubAdapter('kling', ['text_to_video'], { costPence: 500 });
+    const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 50 });
     const budget: BudgetChecker = {
       hasBudget: vi.fn(async ({ estimatedCostPence }) => estimatedCostPence < 100),
     };
@@ -181,23 +182,27 @@ describe('routeProvider', () => {
     };
     const decision = await routeProvider(
       aiClip('STANDARD', { request }),
-      deps([luma, runway], { budget }),
+      deps([kling, veo], { budget }),
     );
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'over_budget' });
+    expect(decision.candidates[0]).toEqual({ providerId: 'kling', skipped: 'over_budget' });
     expect(budget.hasBudget).toHaveBeenCalledWith(
-      expect.objectContaining({ providerId: 'luma', estimatedCostPence: 500, projectId: 'proj-1' }),
+      expect.objectContaining({
+        providerId: 'kling',
+        estimatedCostPence: 500,
+        projectId: 'proj-1',
+      }),
     );
   });
 
   it('skips providers too slow for the deadline', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video'], { typicalLatencySec: 600 });
-    const runway = new StubAdapter('runway', ['text_to_video'], { typicalLatencySec: 60 });
+    const kling = new StubAdapter('kling', ['text_to_video'], { typicalLatencySec: 600 });
+    const veo = new StubAdapter('veo', ['text_to_video'], { typicalLatencySec: 60 });
     const decision = await routeProvider(
       aiClip('STANDARD', { deadline: new Date(120_000) }),
-      deps([luma, runway]),
+      deps([kling, veo]),
     );
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'too_slow' });
-    expect(decision.providerId).toBe('runway');
+    expect(decision.candidates[0]).toEqual({ providerId: 'kling', skipped: 'too_slow' });
+    expect(decision.providerId).toBe('veo');
   });
 
   it('raises NO_PROVIDER_AVAILABLE with every skip reason when all candidates fail', async () => {
@@ -211,10 +216,10 @@ describe('routeProvider', () => {
     expect(err.details).toEqual({
       capability: 'text_to_video',
       candidates: [
-        { providerId: 'luma', skipped: 'not_configured' },
-        { providerId: 'runway', skipped: 'circuit_open' },
-        { providerId: 'veo', skipped: 'not_configured' },
         { providerId: 'kling', skipped: 'not_configured' },
+        { providerId: 'veo', skipped: 'not_configured' },
+        { providerId: 'runway', skipped: 'circuit_open' },
+        { providerId: 'luma', skipped: 'not_configured' },
       ],
     });
   });
@@ -281,6 +286,8 @@ describe('Luma and HeyGen fallbacks', () => {
       const decision = await routeProvider(aiClip(tier), d);
       expect(decision.providerId).toBe('luma');
       expect(decision.candidates).toEqual([
+        { providerId: 'kling', skipped: 'not_configured' },
+        { providerId: 'veo', skipped: 'not_configured' },
         { providerId: 'runway', skipped: 'circuit_open' },
         { providerId: 'luma' },
       ]);
@@ -313,7 +320,10 @@ describe('Luma and HeyGen fallbacks', () => {
     };
     const decision = await routeProvider(aiClip('PLUS'), d);
     expect(decision.providerId).toBe('luma');
-    expect(decision.candidates[0]).toEqual({ providerId: 'runway', skipped: 'provider_disabled' });
+    expect(decision.candidates).toContainEqual({
+      providerId: 'runway',
+      skipped: 'provider_disabled',
+    });
   });
 
   it('routes image-to-video clips to Luma too', async () => {
@@ -367,15 +377,23 @@ describe('Luma and HeyGen fallbacks', () => {
   });
 });
 
-// BACKLOG 20.20 — Google Veo is the third AI_CLIP option (after Runway and Luma) on every tier
-// that has AI clips, so it is a failover by default; shots over 8 s skip it.
-describe('Veo as the third AI_CLIP option', () => {
+// BACKLOG 20.24 — operator-approved AI_CLIP order on every paid tier: Kling 3.0 → Veo 3.1 →
+// Runway → Luma (Seedance goes in front once its PR lands). Veo renders at most 8 s and Kling
+// 3–15 s, so long shots skip Veo; any account, breaker or kill-switch problem moves on.
+describe('AI_CLIP order kling → veo → runway → luma (20.24)', () => {
   const noFetch = (() => {
     throw new Error('routing must not call the provider');
   }) as unknown as typeof fetch;
   const runway = () => new RunwayAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
   const luma = () => new LumaAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
   const veo = () => new VeoAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
+  const kling = () =>
+    new KlingAdapter({
+      credentials: { kind: 'api_key', apiKey: 'k' },
+      usdToGbpRate: 0.75,
+      fetchImpl: noFetch,
+    });
+  const all = () => [kling(), veo(), runway(), luma()];
   const real = (adapters: ProviderAdapter[]) => ({
     ...deps([]),
     registry: createProviderRegistry(adapters),
@@ -383,100 +401,130 @@ describe('Veo as the third AI_CLIP option', () => {
   const openBreaker = async (d: ReturnType<typeof real>, id: string) => {
     for (let i = 0; i < 5; i += 1) await d.breaker.recordFailure(id);
   };
-
-  it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
-    '%s: Runway and Luma healthy → Veo is not used',
-    async (tier) => {
-      const decision = await routeProvider(aiClip(tier), real([runway(), luma(), veo()]));
-      expect(['runway', 'luma']).toContain(decision.providerId);
-    },
-  );
-
-  it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
-    '%s: Runway and Luma breakers open → Veo takes the clip',
-    async (tier) => {
-      const d = real([runway(), luma(), veo()]);
-      await openBreaker(d, 'runway');
-      await openBreaker(d, 'luma');
-      const decision = await routeProvider(aiClip(tier), d);
-      expect(decision.providerId).toBe('veo');
-      expect(decision.candidates.map((c) => c.providerId)).toEqual(
-        tier === 'STANDARD' ? ['luma', 'runway', 'veo'] : ['runway', 'luma', 'veo'],
-      );
-    },
-  );
-
-  it('Runway killed by the provider kill switch and Luma not configured → Veo', async () => {
-    const d = {
-      ...real([runway(), veo()]),
-      killSwitch: {
-        check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
-          providerId === 'runway'
-            ? { killed: true, level: 'provider', key: `studio.disabledProvider.${providerId}` }
-            : { killed: false },
-        ),
-      },
-    };
-    const decision = await routeProvider(aiClip('PLUS'), d);
-    expect(decision.providerId).toBe('veo');
-    expect(decision.candidates).toEqual([
-      { providerId: 'runway', skipped: 'provider_disabled' },
-      { providerId: 'luma', skipped: 'not_configured' },
-      { providerId: 'veo' },
-    ]);
+  const killOnly = (ids: string[]) => ({
+    check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
+      providerId && ids.includes(providerId)
+        ? { killed: true, level: 'provider', key: `studio.disabledProvider.${providerId}` }
+        : { killed: false },
+    ),
   });
-
-  it('the Veo kill switch keeps it out of failover', async () => {
-    const d = {
-      ...real([runway(), veo()]),
-      killSwitch: {
-        check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
-          providerId === 'veo'
-            ? { killed: true, level: 'provider', key: `studio.disabledProvider.${providerId}` }
-            : { killed: false },
-        ),
-      },
-    };
-    await openBreaker(d, 'runway');
-    await expect(routeProvider(aiClip('PLUS'), d)).rejects.toBeInstanceOf(NoProviderAvailableError);
-  });
-
-  it('a 10 s shot skips Veo (8 s maximum) as capability_unsupported', async () => {
-    const d = real([veo()]);
-    const input = aiClip('PLUS', {
-      need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 10 },
+  const shot = (durationSec: number): RouteInput =>
+    aiClip('PLUS', {
+      need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec },
       request: {
         capability: 'text_to_video',
         organisationId: 'org-1',
         prompt: 'p',
-        durationSec: 10,
+        durationSec,
         aspectRatio: '9:16',
       },
     });
-    const err = await routeProvider(input, d).catch((e: unknown) => e);
+
+  it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
+    '%s: everything healthy → Kling takes the clip',
+    async (tier) => {
+      const decision = await routeProvider(aiClip(tier), real(all()));
+      expect(decision.providerId).toBe('kling');
+      expect(decision.candidates).toEqual([{ providerId: 'kling' }]);
+    },
+  );
+
+  it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
+    '%s: Kling open → Veo; Kling and Veo open → Runway; then Luma',
+    async (tier) => {
+      const d = real(all());
+      await openBreaker(d, 'kling');
+      expect((await routeProvider(aiClip(tier), d)).providerId).toBe('veo');
+      await openBreaker(d, 'veo');
+      expect((await routeProvider(aiClip(tier), d)).providerId).toBe('runway');
+      await openBreaker(d, 'runway');
+      const decision = await routeProvider(aiClip(tier), d);
+      expect(decision.providerId).toBe('luma');
+      expect(decision.candidates).toEqual([
+        { providerId: 'kling', skipped: 'circuit_open' },
+        { providerId: 'veo', skipped: 'circuit_open' },
+        { providerId: 'runway', skipped: 'circuit_open' },
+        { providerId: 'luma' },
+      ]);
+    },
+  );
+
+  it('a Kling account problem (20.11 exclusion) fails over to Veo at once', async () => {
+    const decision = await routeProvider(
+      aiClip('STANDARD', { excludeProviderIds: ['kling'] }),
+      real(all()),
+    );
+    expect(decision.providerId).toBe('veo');
+    expect(decision.candidates[0]).toEqual({ providerId: 'kling', skipped: 'account_unavailable' });
+  });
+
+  it('the Kling kill switch keeps it out of routing', async () => {
+    const d = { ...real(all()), killSwitch: killOnly(['kling']) };
+    const decision = await routeProvider(aiClip('PLUS'), d);
+    expect(decision.providerId).toBe('veo');
+    expect(decision.candidates[0]).toEqual({ providerId: 'kling', skipped: 'provider_disabled' });
+  });
+
+  it('Kling killed and Veo not configured → Runway', async () => {
+    const d = { ...real([kling(), runway(), luma()]), killSwitch: killOnly(['kling']) };
+    const decision = await routeProvider(aiClip('PLUS'), d);
+    expect(decision.providerId).toBe('runway');
+    expect(decision.candidates).toEqual([
+      { providerId: 'kling', skipped: 'provider_disabled' },
+      { providerId: 'veo', skipped: 'not_configured' },
+      { providerId: 'runway' },
+    ]);
+  });
+
+  it('a 10 s shot with Kling down skips Veo (8 s maximum) and goes to Runway', async () => {
+    const d = real(all());
+    await openBreaker(d, 'kling');
+    const decision = await routeProvider(shot(10), d);
+    expect(decision.providerId).toBe('runway');
+    expect(decision.candidates).toEqual([
+      { providerId: 'kling', skipped: 'circuit_open' },
+      { providerId: 'veo', skipped: 'capability_unsupported' },
+      { providerId: 'runway' },
+    ]);
+  });
+
+  it('a 15 s shot is still for Kling; a 16 s shot is not', async () => {
+    expect((await routeProvider(shot(15), real([kling()]))).providerId).toBe('kling');
+    const err = await routeProvider(shot(16), real([kling()])).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(NoProviderAvailableError);
     expect((err as NoProviderAvailableError).details?.candidates).toContainEqual({
-      providerId: 'veo',
+      providerId: 'kling',
       skipped: 'capability_unsupported',
     });
   });
 
-  it('a source frame routes Veo as image_to_video', async () => {
-    const d = real([veo()]);
-    const decision = await routeProvider(
-      aiClip('PLUS', {
-        need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6, hasSourceImage: true },
-        request: {
-          capability: 'image_to_video',
-          organisationId: 'org-1',
-          prompt: 'p',
-          imageUrl: 'https://cdn.example/f.png',
-          durationSec: 6,
-          aspectRatio: '9:16',
-        },
-      }),
-      d,
-    );
-    expect(decision).toMatchObject({ providerId: 'veo', capability: 'image_to_video' });
+  it('the Veo kill switch keeps it out of failover', async () => {
+    const d = { ...real([kling(), veo()]), killSwitch: killOnly(['veo']) };
+    await openBreaker(d, 'kling');
+    await expect(routeProvider(aiClip('PLUS'), d)).rejects.toBeInstanceOf(NoProviderAvailableError);
+  });
+
+  it('a source frame routes Kling (and Veo behind it) as image_to_video', async () => {
+    const input = aiClip('PLUS', {
+      need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6, hasSourceImage: true },
+      request: {
+        capability: 'image_to_video',
+        organisationId: 'org-1',
+        prompt: 'p',
+        imageUrl: 'https://cdn.example/f.png',
+        durationSec: 6,
+        aspectRatio: '9:16',
+      },
+    });
+    expect(await routeProvider(input, real(all()))).toMatchObject({
+      providerId: 'kling',
+      capability: 'image_to_video',
+    });
+    const d = real(all());
+    await openBreaker(d, 'kling');
+    expect(await routeProvider(input, d)).toMatchObject({
+      providerId: 'veo',
+      capability: 'image_to_video',
+    });
   });
 });

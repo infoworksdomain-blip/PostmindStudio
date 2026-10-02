@@ -1,6 +1,12 @@
 import { requiredEnvForModes } from '../env';
 import { studioModes, type StudioModes } from '../mode';
 import { isPersonGeneration, isVeoModel, VEO_MODELS } from '../studio/providers/veo';
+import {
+  isKlingBaseUrl,
+  isKlingModel,
+  isKlingResolution,
+  KLING_MODELS,
+} from '../studio/providers/kling';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -195,6 +201,19 @@ const minLength =
   (v) =>
     v.length >= n ? null : `must be at least ${n} characters`;
 
+/** 20.24: one half of Kling's legacy AccessKey + SecretKey pair; the other half must be set. */
+function klingPairHalf(
+  value: string,
+  otherHalf: string | undefined,
+  label: 'Access' | 'Secret',
+  otherName: 'ACCESS' | 'SECRET',
+): string | null {
+  if (!/^[^\s'"]{8,}$/.test(value)) {
+    return `must be the ${label} Key from the Kling AI console (one unbroken string, no spaces)`;
+  }
+  return otherHalf ? null : `needs KLING_${otherName}_KEY too (or use KLING_API_KEY instead)`;
+}
+
 const pattern =
   (re: RegExp, reason: string): Validator =>
   (v) =>
@@ -302,6 +321,20 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
     isVeoModel(v) ? null : `must be one of ${Object.keys(VEO_MODELS).join(', ')} (or empty)`,
   VEO_PERSON_GENERATION: (v) =>
     isPersonGeneration(v) ? null : 'must be allow_adult or allow_all (or empty)',
+  // 20.24 Kling 3.0. Kling does not document the API key's format, so only its shape as one
+  // unbroken token is checked (https://kling.ai/document-api/api/get-started/authentication).
+  KLING_API_KEY: pattern(
+    /^[^\s'"]{20,}$/,
+    'must be the API key from the Kling AI console (one unbroken string, no spaces)',
+  ),
+  // The legacy pair works only together (kling.ts klingCredentialsFrom).
+  KLING_ACCESS_KEY: (v, env) => klingPairHalf(v, env.KLING_SECRET_KEY, 'Access', 'SECRET'),
+  KLING_SECRET_KEY: (v, env) => klingPairHalf(v, env.KLING_ACCESS_KEY, 'Secret', 'ACCESS'),
+  KLING_MODEL: (v) =>
+    isKlingModel(v) ? null : `must be one of ${Object.keys(KLING_MODELS).join(', ')} (or empty)`,
+  KLING_RESOLUTION: (v) => (isKlingResolution(v) ? null : 'must be 720p or 1080p (or empty)'),
+  KLING_BASE_URL: (v) =>
+    isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.

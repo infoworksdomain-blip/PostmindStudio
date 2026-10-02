@@ -9,11 +9,15 @@
 ## What happens automatically
 
 - The router skips providers whose circuit is open and routes each shot to the next candidate for
-  its `visualTreatment` (spec 6.4). For example, Runway fails over to Luma and then Google Veo
-  (AI clips: STANDARD tries luma → runway → veo, PLUS/ENTERPRISE runway → luma → veo; Luma needs
-  `LUMA_API_KEY`, Veo `GOOGLE_GEMINI_API_KEY`; Veo renders at most 8 s, so 9–10 s shots skip it). AI
+  its `visualTreatment` (spec 6.4). AI clips on every paid tier try Kling 3.0 → Google Veo →
+  Runway → Luma (20.24; the Seedance PR adds Seedance in front). Kling needs `KLING_API_KEY`, Veo
+  `GOOGLE_GEMINI_API_KEY`, Luma `LUMA_API_KEY`; Veo renders at most 8 s, so 9–10 s shots skip it,
+  and Kling renders 3–15 s. A Kling account problem (code 1101 arrears, 1102 resource pack used up
+  or expired, 1000–1004 key, 1103 model not on the account, 1304 IP allow-list) holds Kling out of
+  routing and fails over at once; 1303 (over the pack's concurrency, 20 for the standard video
+  packs) is a rate limit and retries. AI
   avatars have only HeyGen until D-ID is built: a HeyGen outage fails avatar shots.
-- Luma, Veo and HeyGen have no cancel endpoint. A job that times out keeps its `provider_jobs` row
+- Kling, Luma, Veo and HeyGen have no cancel endpoint. A job that times out keeps its `provider_jobs` row
   RUNNING with its cost reservation, because the provider may still finish and bill it. Such
   rows are expected after an outage; reconcile them against the provider dashboard.
 - An open breaker half-opens after 5 minutes and lets one probe through, platform-wide.
