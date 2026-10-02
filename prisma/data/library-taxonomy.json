@@ -268,6 +268,12 @@
             },
             {
               "name": "Outdoor adventure"
+            },
+            {
+              "name": "Nature"
+            },
+            {
+              "name": "Boats and sea"
             }
           ]
         },
@@ -345,6 +351,14 @@
             },
             {
               "name": "Homes and interiors"
+            }
+          ]
+        },
+        {
+          "name": "Automotive",
+          "children": [
+            {
+              "name": "Motorbikes"
             }
           ]
         }
@@ -485,6 +499,23 @@
             },
             {
               "name": "Mini documentary"
+            },
+            {
+              "name": "Sci-fi"
+            }
+          ]
+        },
+        {
+          "name": "Viral formats",
+          "children": [
+            {
+              "name": "AI content"
+            },
+            {
+              "name": "Faceless reels"
+            },
+            {
+              "name": "Viral hooks"
             }
           ]
         }

@@ -1589,7 +1589,8 @@
         "images": "Bibliothèque d’images",
         "learned": "Ce que Studio a appris",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Vous avez un accès en lecture seule à cette entreprise. Demandez à un propriétaire ou à un administrateur de faire les modifications."
     },
     "kits": {
       "intro": "Le kit par défaut s’applique aux nouvelles vidéos. Les scripts reprennent son ton et son public ; les incrustations et la composition, ses couleurs et ses polices.",
@@ -1789,7 +1790,8 @@
       },
       "gridAria": "Bibliothèque d’images",
       "newer": "Plus récentes",
-      "older": "Plus anciennes"
+      "older": "Plus anciennes",
+      "stockNotConfigured": "Les photos de banque d’images ne sont pas encore configurées : il n’y a rien à actualiser. Les photos de votre site, vos imports et les images générées fonctionnent toujours."
     },
     "profile": {
       "fields": {
@@ -2033,6 +2035,16 @@
         "planGeneric": "Le clonage de voix n’est pas inclus dans votre formule. Passez à une formule supérieure pour cloner une voix ; les voix de banque restent disponibles.",
         "notConfigured": "Le clonage de voix n’est pas encore configuré sur ce serveur ({message})."
       }
+    },
+    "details": {
+      "title": "Détails de l’entreprise",
+      "description": "Le nom affiché dans la barre supérieure et l’adresse du site web de cette entreprise.",
+      "name": "Nom de l’entreprise",
+      "domain": "Adresse du site web (facultatif)",
+      "domainHint": "Un nom d’hôte comme leedssourdough.co.uk, sans https:// ni chemin.",
+      "domainInvalid": "Utilisez un nom d’hôte comme exemple.co.uk.",
+      "save": "Enregistrer les détails",
+      "saved": "Détails de l’entreprise enregistrés"
     }
   },
   "connections": {
@@ -2046,7 +2058,8 @@
       "internal_error": "Une erreur s’est produite lors de la finalisation de la connexion. Réessayez.",
       "unknown": "La connexion n’a pas abouti ({code}). Réessayez.",
       "meta_no_accounts": "Meta n’a partagé aucune Page Facebook sur laquelle vous pouvez publier. Reconnectez-vous et choisissez au moins une Page (et son compte Instagram) dans la fenêtre Meta.",
-      "wrong_user": "Cette connexion a été lancée par un autre utilisateur de Studio. Recommencez en étant connecté avec votre propre compte."
+      "wrong_user": "Cette connexion a été lancée par un autre utilisateur de Studio. Recommencez en étant connecté avec votre propre compte.",
+      "state_expired": "Ce lien de connexion a déjà été utilisé ou a expiré. Recommencez la connexion."
     },
     "dismiss": "Fermer",
     "pickFirst": {
@@ -2100,7 +2113,8 @@
       "codeLabel": "Code de confirmation :",
       "unknownCode": "Aucune demande de suppression ne correspond à ce code de confirmation. Vérifiez le lien fourni par Facebook."
     },
-    "notConfigured": "{platform} n’est pas encore disponible : l’application {platform} de Studio doit encore être configurée. Contactez votre administrateur."
+    "notConfigured": "{platform} n’est pas encore disponible : l’application {platform} de Studio doit encore être configurée. Contactez votre administrateur.",
+    "readOnly": "Seuls les propriétaires et les administrateurs peuvent connecter ou déconnecter des comptes."
   },
   "library": {
     "browse": {
@@ -3654,7 +3668,11 @@
       "scan_images_capped": "L’analyse a atteint son plafond de coût ({amount}) : certaines images n’ont pas été indexées pour la recherche.",
       "ownership_disputed": "Arrêté : la propriété du site a été contestée.",
       "provider_failure": "{source} a signalé un problème : {problem}.",
-      "service_unavailable": "Notre service d’IA est temporairement indisponible, cette opération n’a donc pas pu aboutir. Veuillez réessayer plus tard : notre équipe a été prévenue."
+      "service_unavailable": "Notre service d’IA est temporairement indisponible, cette opération n’a donc pas pu aboutir. Veuillez réessayer plus tard : notre équipe a été prévenue.",
+      "scan_pages_skipped": "{count, plural, one {# page n’a pas pu être lue et a été ignorée.} many {# pages n’ont pas pu être lues et ont été ignorées.} other {# pages n’ont pas pu être lues et ont été ignorées.}}",
+      "scan_images_skipped": "{count, plural, one {# image de votre site n’a pas pu être téléchargée et a été ignorée.} many {# images de votre site n’ont pas pu être téléchargées et ont été ignorées.} other {# images de votre site n’ont pas pu être téléchargées et ont été ignorées.}}",
+      "stock_not_configured": "Les photos de banque d’images n’ont pas pu être ajoutées : aucun service de photos n’est encore configuré.",
+      "stock_unavailable": "Certaines photos de banque d’images n’ont pas pu être ajoutées cette fois. Utilisez « Actualiser les photos » dans la bibliothèque d’images pour réessayer."
     },
     "classes": {
       "rate_limited": "trop de requêtes",

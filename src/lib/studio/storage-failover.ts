@@ -127,8 +127,8 @@ export function createFailoverStorage(
         return fallback.put({ ...input, bucket: mapped });
       }
     },
-    signedUrl: (bucket, key, expiresInSec) =>
-      (isFallbackBucket(bucket) ? fallback : primary).signedUrl(bucket, key, expiresInSec),
+    signedUrl: (bucket, key, expiresInSec, options) =>
+      (isFallbackBucket(bucket) ? fallback : primary).signedUrl(bucket, key, expiresInSec, options),
     size: (bucket, key) => readWithFailover(bucket, key, (s, b) => s.size(b, key)),
     readRange: (bucket, key, start, end) =>
       readWithFailover(bucket, key, (s, b) => s.readRange(b, key, start, end)),

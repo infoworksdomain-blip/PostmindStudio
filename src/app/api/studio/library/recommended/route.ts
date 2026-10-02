@@ -1,16 +1,27 @@
 import { StudioCapability } from '@/lib/rbac';
 import { parseQuery, withStudioRoute } from '@/lib/studio/api/route';
-import { recommendedLibraryVideos, recommendedQuery } from '@/lib/studio/services/library';
+import {
+  LIBRARY_RESPONSE_HEADERS,
+  recommendedLibraryVideos,
+  recommendedQuery,
+} from '@/lib/studio/services/library';
 
 // GET /api/studio/library/recommended?businessId= — nearest to the business profile
 export const GET = withStudioRoute(
   StudioCapability.ProjectRead,
   async ({ req, tenant, deps }) => ({
     body: await recommendedLibraryVideos(
-      { db: deps.db, storage: deps.library.storage, providers: deps.library.providers },
+      {
+        db: deps.db,
+        storage: deps.library.storage,
+        providers: deps.library.providers,
+        cache: deps.libraryCache,
+        now: deps.now,
+      },
       tenant,
       parseQuery(req, recommendedQuery),
     ),
+    headers: { ...LIBRARY_RESPONSE_HEADERS },
   }),
   { feature: 'library' },
 );

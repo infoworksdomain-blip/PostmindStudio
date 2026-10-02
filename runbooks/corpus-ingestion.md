@@ -235,6 +235,64 @@ SSRF guard.
   customers) most of its room.
 - The tool prints the estimate before anything is submitted.
 
+## Library caching (20.15)
+
+The reference library is the same for every customer, so user reads are cached once for
+everyone in Studio's Redis (DB 3). Code: `src/lib/studio/library/cache.ts`.
+
+What is cached:
+
+| Read | Key parts | TTL |
+| --- | --- | --- |
+| Category tree | none | 15 min |
+| Browse page (`GET /library/videos`) | every filter: category, tags (sorted), duration, mood, cursor, limit | 15 min |
+| Detail (`GET /library/videos/:id`) | id (the trimmed allow-list shape only) | 15 min |
+| Similar | id, limit | 15 min |
+| Blueprint | id | 15 min |
+| Search page (`POST /library/search`) | normalised query, category, duration, mood, tags, cursor, limit | 15 min |
+| Recommended | organisation, business, category, limit | 1 h |
+| Query embedding | sha256(model + normalised query) | 30 days |
+
+- Every key carries the catalogue version (`studio:library:version`). Any catalogue change
+  INCRs it, so the next read is fresh. Nothing is scanned or deleted; old keys expire.
+- What bumps it: ingest worker (success and final failure), re-analysis worker, admin edit
+  (`PATCH /admin/library/videos/:id`, including licence changes), bulk review, retire, and
+  `npm run db:seed` (taxonomy). Staff reads (`/admin/library/*`, including
+  `/admin/library/categories`) are never cached.
+- Licence expiry is not frozen in the cache: the raw licence terms are cached and the allowed
+  modes are worked out on every response.
+- Signed URLs are never cached. Thumbnails are signed as of the start of the UTC day, valid for
+  25 h, so the URL stays the same all day and the browser keeps the image (`Cache-Control:
+  public, max-age=604800, immutable`, set at upload). Previews stay 10-minute, per request.
+- GET library responses carry `Cache-Control: private, max-age=60`.
+- Redis down or erroring: reads go to the database, a warning is logged at most once a minute,
+  and no request fails. A failed version bump is logged ("version bump failed"); cached reads
+  can then be up to 15 minutes old.
+- Metrics: `studio_library_cache_total{cache, result="hit|miss|error"}`.
+- Off switch: `STUDIO_LIBRARY_CACHE=off` (every read goes to the database).
+
+After a database restore or a manual SQL change to the library tables, bump the version by
+hand:
+
+```bash
+redis-cli -u "$REDIS_URL" INCR studio:library:version
+```
+
+### Thumbnail Cache-Control backfill (one-off)
+
+Thumbnails ingested before 20.15 have no Cache-Control. Run once per environment, with the
+storage env of that environment (STORAGE_PROVIDER, R2_* or AWS_*, S3_BUCKET_LIBRARY):
+
+```bash
+npx tsx scripts/library/set-thumbnail-cache-headers.ts --dry-run    # counts only, writes nothing
+npx tsx scripts/library/set-thumbnail-cache-headers.ts --limit 20   # trial batch
+npx tsx scripts/library/set-thumbnail-cache-headers.ts              # everything
+```
+
+It copies each `library/<hash>-thumb.jpg` onto itself (CopyObject, MetadataDirective REPLACE),
+keeping Content-Type and user metadata. Objects that already have the header are skipped, so it
+is safe to re-run. It exits 1 if any object failed; the failed keys are logged.
+
 ## Verification
 
 - `counts.SUCCEEDED + counts.DUPLICATE` reaches the manifest's valid-row count.

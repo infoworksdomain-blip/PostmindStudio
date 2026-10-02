@@ -11,6 +11,8 @@ export async function reanalyseLibraryVideoJob(
   deps: PipelineDeps,
 ): Promise<void> {
   const result = await reanalyseLibraryVideo(deps, data.libraryItemId, data.planTier);
+  // 20.15: analysis, description, category and embedding changed: cached reads must see it.
+  await deps.libraryCache?.bump('reanalyse');
   deps.logger.info(result, 'library video re-analysed');
 }
 

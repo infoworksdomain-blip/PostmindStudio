@@ -1,4 +1,5 @@
 import {
+  ConfigurationError,
   NoProviderAvailableError,
   NotFoundError,
   ProvidersUnavailableError,
@@ -20,6 +21,7 @@ import { crawlSite } from '../../scan/crawl';
 import type { HeadlessRenderer } from '../../scan/headless-render';
 import type { ExtractedImage } from '../../scan/extract';
 import { PoliteFetcher } from '../../scan/fetch';
+import { scanWarnings } from '../../scan/warnings';
 import type { LibraryRefreshJobData, ScanJobData } from '../queues';
 
 // BACKLOG 6.1–6.4 — one website scan (Addendum A6.2 + A6.3):
@@ -226,7 +228,13 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
   const stock = await buildStockLayer(libraryDeps(deps), data, {
     queries: profile.imageSearchQueries,
     themes: profile.imageThemes,
-  }).catch((err: Error) => ({ created: 0, duplicates: 0, skipped: 0, errors: [err.message] }));
+  }).catch((err: Error) => ({
+    created: 0,
+    duplicates: 0,
+    skipped: 0,
+    errors: [err.message],
+    notConfigured: err instanceof ConfigurationError,
+  }));
   const embedded = await embedMissing({ db: deps.db, providers: scanDeps }, data).catch(
     (err: unknown) => {
       if (capped(err)) return { embedded: 0, costPence: 0, capped: true };
@@ -241,10 +249,23 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
     },
   );
 
+  // The raw lines name hosts, addresses and settings: they go to the log, the customer gets one
+  // coded sentence per kind (scan/warnings.ts).
+  if (crawl.errors.length + scraped.errors.length + stock.errors.length > 0) {
+    log.warn(
+      { crawl: crawl.errors, images: scraped.errors, stock: stock.errors },
+      'scan finished with warnings',
+    );
+  }
   const errors = [
-    ...crawl.errors,
-    ...scraped.errors,
-    ...stock.errors,
+    ...scanWarnings({
+      crawlErrors: crawl.errors,
+      imageErrors: scraped.errors,
+      stock: {
+        errors: stock.errors,
+        notConfigured: 'notConfigured' in stock && stock.notConfigured,
+      },
+    }),
     ...('capped' in embedded
       ? [`scan_images_capped: ${capNote}: some images were not indexed for search`]
       : []),
