@@ -178,3 +178,32 @@ export function FallbackNote({ project }: { project: ProjectDetail }) {
     </section>
   );
 }
+
+// 20.19 — an AI_AVATAR shot whose presenter was unavailable (e.g. the avatar provider's account
+// ran out of credits) was made as a regular generated clip instead of failing the video.
+// compose-video records metadata.degradedShots[]; the customer sees one gentle sentence (no
+// provider names or reasons — those stay in the shot's routing for staff).
+
+export function degradedPresenterShots(metadata: ProjectDetail['metadata']): string[] {
+  const list = metadata?.degradedShots;
+  if (!Array.isArray(list)) return [];
+  return list.flatMap((v) => {
+    const r = record(v);
+    return r && r.degradedFrom === 'avatar_video' && typeof r.shotId === 'string' ? [r.shotId] : [];
+  });
+}
+
+export function PresenterFallbackNote({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.presenterFallback');
+  if (degradedPresenterShots(project.metadata).length === 0) return null;
+  return (
+    <p
+      role="note"
+      aria-label={t('aria')}
+      className="flex items-start gap-2 rounded-xl border border-foreground/15 bg-card px-3 py-2 text-sm"
+    >
+      <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+      {t('note')}
+    </p>
+  );
+}

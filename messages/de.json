@@ -847,6 +847,10 @@
       "item": "{layer}: erstellt mit {provider} ({skipped})",
       "skipped": "{provider}: {reason}"
     },
+    "presenterFallback": {
+      "aria": "Moderator nicht verfügbar",
+      "note": "Der Moderator war für dieses Video nicht verfügbar, daher werden an diesen Stellen stattdessen Videoclips verwendet."
+    },
     "quality": {
       "title": "Qualitätsprüfung",
       "status": {

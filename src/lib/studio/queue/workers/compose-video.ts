@@ -30,6 +30,7 @@ import { parseRenderOptions, resolvePreset, withPreset } from '../../pipeline/re
 import { findCachedRender, withEdlHash } from '../../pipeline/compose-cache';
 import { edlHash } from '../../pipeline/edl-hash';
 import { fallbackFrom, shotFallbacks, type FallbackNotice } from '../../pipeline/fallback-notice';
+import { degradedShotsOf } from '../../pipeline/avatar-fallback';
 import { voiceTrimSecOf } from '../../pipeline/voice-fit';
 import { copyUrlToStorage } from '../../pipeline/persist';
 import {
@@ -489,7 +490,13 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   await mergeProjectMetadata(deps.db, {
     projectId: project.id,
     runId: data.runId,
-    patch: { staleRenders: [], compositionCache: cacheHits, fallbacks },
+    // 20.19: shots whose avatar presenter was unavailable and became a generated clip.
+    patch: {
+      staleRenders: [],
+      compositionCache: cacheHits,
+      fallbacks,
+      degradedShots: degradedShotsOf(project.scripts.flatMap((s) => s.shots)),
+    },
   });
   await transitionProject(deps.db, {
     projectId: project.id,

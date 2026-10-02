@@ -847,6 +847,10 @@
       "item": "{layer}：由 {provider} 制作（{skipped}）",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "主持人不可用",
+      "note": "此视频的主持人不可用，因此这些片段改用了视频剪辑。"
+    },
     "quality": {
       "title": "质量检查",
       "status": {

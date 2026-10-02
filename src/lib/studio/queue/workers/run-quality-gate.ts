@@ -71,8 +71,11 @@ async function scanContentSafety(
       );
     }
     if (err instanceof ProviderError && err.retryable) throw err;
+    // 20.19: no provider at all (none configured, or every one held for an account problem such
+    // as a rejected key — the operator was alerted once by runProvider) → a person reviews the
+    // render instead of the video failing with a block nobody can lift.
     if (err instanceof NoProviderAvailableError)
-      return { unavailable: 'no content-safety provider available' };
+      return { unavailable: 'no content-safety provider available', humanReview: true };
     if (err instanceof ProviderError) return { unavailable: err.message };
     throw err;
   }
