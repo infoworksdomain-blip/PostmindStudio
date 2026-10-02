@@ -31,6 +31,11 @@ export interface ProviderRunResult {
   decision: RouteDecision;
   providerJobRowId: string;
   output: NonNullable<ProviderPollResult['output']>;
+  /**
+   * 20.20: how to download output.url when the provider requires its credentials for it (Veo);
+   * absent = a plain fetch of the (pre-signed) URL.
+   */
+  fetchOutput?: (url: string) => Promise<Response>;
 }
 
 export type ProviderRunDeps = Pick<
@@ -208,7 +213,13 @@ async function runDecided(
           true,
         );
       }
-      return { decision, providerJobRowId: submitted.jobId, output: result.output };
+      const fetchOutput = adapter.fetchOutput?.bind(adapter);
+      return {
+        decision,
+        providerJobRowId: submitted.jobId,
+        output: result.output,
+        ...(fetchOutput && { fetchOutput }),
+      };
     }
     if (result.state === 'failed') {
       const error = result.error ?? {

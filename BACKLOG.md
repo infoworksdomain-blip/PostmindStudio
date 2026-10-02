@@ -435,3 +435,4 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 - [x] **20.13** Captions and hashtags (≥5, business hashtag, owner "always" hashtags)
 - [x] **20.14** Posting schedule: daily/weekly, chosen/system/interval times, max 4 a day
 - [x] **20.15** Library caching: shared Redis read-through cache with a catalogue version bumped on every write, stable thumbnail URLs + Cache-Control (and a backfill script), cached query embeddings, private max-age on GET library responses
+- [x] **20.20** Google Veo 3.1 (Gemini API) as the third AI_CLIP provider after Runway and Luma: adapter, routing failover, env + setup checker, canary, docs (operator decision 2026-10-02)

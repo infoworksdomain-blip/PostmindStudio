@@ -7,6 +7,9 @@ import type { AssetStorage, StoredObject } from '../storage';
 export const MAX_COPY_BYTES = 1_000_000_000; // 1 GB: well above a 6-minute 1080p render
 const COPY_TIMEOUT_MS = 10 * 60_000;
 
+/** A plain fetch, or an adapter's authenticated download (ProviderAdapter.fetchOutput, 20.20). */
+export type OutputFetch = (url: string, init?: RequestInit) => Promise<Response>;
+
 export interface CopiedObject extends StoredObject {
   bytes: number;
   contentType: string;
@@ -51,7 +54,7 @@ export async function copyUrlToStorage(
     fallbackContentType: string;
     providerId: string;
   },
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: OutputFetch = fetch,
 ): Promise<CopiedObject> {
   let res: Response;
   try {

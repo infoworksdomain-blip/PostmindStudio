@@ -9,10 +9,11 @@
 ## What happens automatically
 
 - The router skips providers whose circuit is open and routes each shot to the next candidate for
-  its `visualTreatment` (spec 6.4). For example, Runway fails over to Luma (AI clips: STANDARD
-  tries luma → runway, PLUS/ENTERPRISE veo → runway → luma; Luma needs `LUMA_API_KEY`). AI
+  its `visualTreatment` (spec 6.4). For example, Runway fails over to Luma and then Google Veo
+  (AI clips: STANDARD tries luma → runway → veo, PLUS/ENTERPRISE runway → luma → veo; Luma needs
+  `LUMA_API_KEY`, Veo `GOOGLE_GEMINI_API_KEY`; Veo renders at most 8 s, so 9–10 s shots skip it). AI
   avatars have only HeyGen until D-ID is built: a HeyGen outage fails avatar shots.
-- Luma and HeyGen have no cancel endpoint. A job that times out keeps its `provider_jobs` row
+- Luma, Veo and HeyGen have no cancel endpoint. A job that times out keeps its `provider_jobs` row
   RUNNING with its cost reservation, because the provider may still finish and bill it. Such
   rows are expected after an outage; reconcile them against the provider dashboard.
 - An open breaker half-opens after 5 minutes and lets one probe through, platform-wide.

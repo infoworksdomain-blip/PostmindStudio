@@ -47,7 +47,7 @@ const LAYERS: Layer[] = [
       b('openai (gpt-image-2)'),
       b('luma (ray-3.2)'),
       planned('kling'),
-      planned('veo'),
+      b('veo (veo-3.1-fast-generate-preview)'),
       planned('fal'),
       planned('replicate'),
       b('heygen (avatar v3)'),
@@ -258,8 +258,8 @@ export function PipelineChapters() {
               head={['Tier', 'Candidates, in order']}
               rows={[
                 ['BASIC', 'fal → replicate'],
-                ['STANDARD', 'luma → runway → kling'],
-                ['PLUS / ENTERPRISE', 'veo → runway → luma → kling'],
+                ['STANDARD', 'luma → runway → veo → kling'],
+                ['PLUS / ENTERPRISE', 'runway → luma → veo → kling'],
                 ['Avatar (≤ STANDARD)', 'd-id → heygen'],
                 ['Stock footage', 'storyblocks → pexels'],
                 ['Image still', 'openai → fal'],

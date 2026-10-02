@@ -170,11 +170,7 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
       expect(shot.providerRouting).toMatchObject({
         visual: {
           providerId: 'luma',
-          candidates: [
-            { providerId: 'veo', skipped: 'not_configured' },
-            { providerId: 'runway', skipped: 'circuit_open' },
-            { providerId: 'luma' },
-          ],
+          candidates: [{ providerId: 'runway', skipped: 'circuit_open' }, { providerId: 'luma' }],
         },
       });
     }
