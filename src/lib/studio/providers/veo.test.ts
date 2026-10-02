@@ -73,10 +73,12 @@ describe('format mapping', () => {
     expect(VEO_RATIO).toEqual({ '9:16': '9:16', '16:9': '16:9', '4:5': '9:16', '1:1': '16:9' });
   });
 
-  it('image-to-video always uses allow_adult; text-to-video uses the configured value', () => {
+  it('image-to-video always uses allow_adult; text-to-video sends only a configured value', () => {
     expect(personGenerationFor('image_to_video', 'allow_all')).toBe('allow_adult');
+    expect(personGenerationFor('image_to_video', undefined)).toBe('allow_adult');
     expect(personGenerationFor('text_to_video', 'allow_all')).toBe('allow_all');
-    expect(personGenerationFor('text_to_video', 'allow_adult')).toBe('allow_adult');
+    // The live API refuses allow_adult for text-to-video, so nothing is sent by default.
+    expect(personGenerationFor('text_to_video', undefined)).toBeUndefined();
   });
 });
 
@@ -119,12 +121,13 @@ describe('VeoAdapter.submit', () => {
           aspectRatio: '9:16',
           durationSeconds: 6,
           resolution: '720p',
-          personGeneration: 'allow_adult',
           sampleCount: 1,
         },
       },
     });
     expect(JSON.stringify(requests[0]?.body)).not.toContain('generateAudio');
+    // Text-to-video sends no personGeneration by default (allow_adult is refused there).
+    expect(JSON.stringify(requests[0]?.body)).not.toContain('personGeneration');
     // Veo 3.1 Fast 720p $0.10/s × 6 s = $0.60 × 0.75 = 45p
     expect(submitted).toEqual({
       providerJobId: OP,

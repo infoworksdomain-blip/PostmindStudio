@@ -111,11 +111,13 @@ export const VEO_RATIO: Record<AspectRatio, '16:9' | '9:16'> = {
 
 export type PersonGeneration = 'allow_adult' | 'allow_all';
 /**
- * The safe default: allow_adult is the only value allowed in the EU, UK, CH and MENA, and the
- * only value image-to-video accepts anywhere. A server outside those regions may set
- * VEO_PERSON_GENERATION=allow_all, which text-to-video then sends.
+ * Image-to-video accepts only allow_adult. Text-to-video accepts only allow_all, and the live API
+ * refuses allow_adult there ("allow_adult for personGeneration is currently not supported",
+ * production staging gate 2026-10-02), so text-to-video sends no personGeneration unless
+ * VEO_PERSON_GENERATION is set and Google applies its own default for the server's region
+ * (https://ai.google.dev/gemini-api/docs/veo, read 2026-10-02).
  */
-export const DEFAULT_PERSON_GENERATION: PersonGeneration = 'allow_adult';
+export const IMAGE_TO_VIDEO_PERSON_GENERATION: PersonGeneration = 'allow_adult';
 
 export function isVeoModel(value: string): value is VeoModel {
   return Object.hasOwn(VEO_MODELS, value);
@@ -161,9 +163,9 @@ export function veoDuration(durationSec: number): VeoDuration {
 
 export function personGenerationFor(
   capability: 'text_to_video' | 'image_to_video',
-  configured: PersonGeneration,
-): PersonGeneration {
-  return capability === 'image_to_video' ? 'allow_adult' : configured;
+  configured: PersonGeneration | undefined,
+): PersonGeneration | undefined {
+  return capability === 'image_to_video' ? IMAGE_TO_VIDEO_PERSON_GENERATION : configured;
 }
 
 interface GoogleStatus {
@@ -347,13 +349,13 @@ export class VeoAdapter implements ProviderAdapter {
   readonly typicalLatencySec = TYPICAL_LATENCY_SEC;
   readonly model: VeoModel;
 
-  private readonly personGeneration: PersonGeneration;
+  private readonly personGeneration: PersonGeneration | undefined;
   private readonly fetchImpl: typeof fetch;
   private readonly now: () => number;
 
   constructor(private readonly options: VeoAdapterOptions) {
     this.model = options.model ?? DEFAULT_VEO_MODEL;
-    this.personGeneration = options.personGeneration ?? DEFAULT_PERSON_GENERATION;
+    this.personGeneration = options.personGeneration;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? Date.now;
   }
@@ -410,6 +412,7 @@ export class VeoAdapter implements ProviderAdapter {
     if (request.capability === 'image_to_video') {
       instance.image = await this.fetchImage(request.imageUrl);
     }
+    const person = personGenerationFor(request.capability, this.personGeneration);
     return {
       instances: [instance],
       parameters: {
@@ -418,7 +421,7 @@ export class VeoAdapter implements ProviderAdapter {
         // JSON numbers (GenerateVideosConfig.durationSeconds: number), which we follow.
         durationSeconds: veoDuration(request.durationSec),
         resolution: RESOLUTION,
-        personGeneration: personGenerationFor(request.capability, this.personGeneration),
+        ...(person && { personGeneration: person }),
         sampleCount: 1,
       },
     };
