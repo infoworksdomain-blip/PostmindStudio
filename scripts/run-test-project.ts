@@ -14,7 +14,7 @@ import { main, out } from './lib/harness';
 //   npm run gate3 -- --queue      # enqueues on BullMQ; run `npm run worker` in another terminal
 //
 // Spends real money: Claude calls, one ~5s Runway clip, ElevenLabs narration, a Shotstack
-// render (use SHOTSTACK_ENVIRONMENT=stage) and a Hive scan.
+// render (use SHOTSTACK_ENVIRONMENT=stage). No content-safety scan (20.21: none is built).
 
 const ORG = 'gate3-smoke-org';
 

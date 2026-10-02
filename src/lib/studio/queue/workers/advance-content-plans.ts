@@ -22,7 +22,6 @@ export async function advanceContentPlansJob(
       budget: deps.budget,
       mailer: deps.mailer,
       appUrl: process.env.APP_URL?.trim() || undefined,
-      hiveApiVersion: deps.config.hiveApiVersion,
     },
     data.planId ? { planId: data.planId } : {},
   );

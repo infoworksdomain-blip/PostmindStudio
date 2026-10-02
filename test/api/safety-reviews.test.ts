@@ -9,7 +9,13 @@ import {
   evaluateContentSafety,
   type QualityCheck,
 } from '../../src/lib/studio/pipeline/quality-checks';
-import { openSafetyReview } from '../../src/lib/studio/pipeline/safety-review';
+import { openSafetyReview, SAFETY_REVIEW_ACTOR } from '../../src/lib/studio/pipeline/safety-review';
+import { releaseSafetyHolds } from '../../src/lib/studio/ops/release-safety-holds';
+import {
+  NO_PROVIDER_RELEASE_NOTE,
+  NO_PROVIDER_SCAN_DETAIL,
+  releaseNoProviderSafetyReview,
+} from '../../src/lib/studio/services/safety-reviews';
 import { call, installApi, tenant } from '../helpers/api-harness';
 
 // BACKLOG 13.17 — content-safety review queue: GET /admin/safety-reviews and POST
@@ -60,8 +66,18 @@ describe.skipIf(!hasDb)('safety review API', { timeout: 60_000 }, () => {
     { code: 'duration_match', status: 'passed', severity: 'error', detail: 'ok' },
   ];
 
+  /** 20.19's check when no content-safety provider existed (review-level, so the run paused). */
+  const noProviderFlag = (): QualityCheck => ({
+    code: 'content_safety',
+    status: 'failed',
+    severity: 'error',
+    detail: NO_PROVIDER_SCAN_DETAIL,
+    detailKey: 'safetyScanUnavailable',
+    detailParams: { reason: 'no content-safety provider available' },
+  });
+
   /** A run paused by a review-level content flag on one render (as run-quality-gate leaves it). */
-  async function pausedContentRun(extraFailure = false) {
+  async function pausedContentRun(extraFailure = false, noProvider = false) {
     const runId = randomUUID();
     const project = await db.videoProject.create({
       data: {
@@ -85,9 +101,11 @@ describe.skipIf(!hasDb)('safety review API', { timeout: 60_000 }, () => {
         scriptModel: 'test',
       },
     });
-    const flag = evaluateContentSafety({
-      scan: { framesAnalysed: 3, maxScores: { knife_in_hand: 0.86 }, flaggedFrames: [] },
-    });
+    const flag = noProvider
+      ? noProviderFlag()
+      : evaluateContentSafety({
+          scan: { framesAnalysed: 3, maxScores: { knife_in_hand: 0.86 }, flaggedFrames: [] },
+        });
     const checks: QualityCheck[] = [
       ...cleanChecks(),
       flag,
@@ -277,5 +295,96 @@ describe.skipIf(!hasDb)('safety review API', { timeout: 60_000 }, () => {
       body: { decision: 'ALLOW', note: 'fine' },
     });
     expect(missing.status).toBe(404);
+  });
+
+  describe('20.21: releasing no-provider holds (scripts/ops/release-safety-holds.ts)', () => {
+    const releaseDeps = () => ({ ...host(), afterReady: vi.fn(async () => undefined) });
+
+    it('dry run lists only the no-provider reviews and changes nothing', async () => {
+      const held = await pausedContentRun(false, true);
+      const flagged = await pausedContentRun();
+      const report = await releaseSafetyHolds(releaseDeps(), {
+        dryRun: true,
+        limit: 100,
+        organisationId: org,
+      });
+      expect(report.releasable).toContain(held.review.id);
+      expect(report.releasable).not.toContain(flagged.review.id);
+      expect(report.released).toEqual([]);
+      expect(
+        (await db.safetyReview.findUniqueOrThrow({ where: { id: held.review.id } })).state,
+      ).toBe('PENDING');
+    });
+
+    it('releases them: not scanned → READY_FOR_REVIEW; real flags stay for staff', async () => {
+      const held = await pausedContentRun(false, true);
+      const flagged = await pausedContentRun();
+      const deps = releaseDeps();
+      const report = await releaseSafetyHolds(deps, {
+        dryRun: false,
+        limit: 100,
+        organisationId: org,
+      });
+      expect(report.released).toContain(held.review.id);
+      expect(report.released).not.toContain(flagged.review.id);
+      expect(report.skipped).toEqual([]);
+
+      const review = await db.safetyReview.findUniqueOrThrow({ where: { id: held.review.id } });
+      expect(review).toMatchObject({
+        state: 'ALLOWED',
+        decidedByUserId: SAFETY_REVIEW_ACTOR,
+        decisionNote: NO_PROVIDER_RELEASE_NOTE,
+      });
+      const project = await db.videoProject.findUniqueOrThrow({ where: { id: held.project.id } });
+      expect(project.state).toBe('READY_FOR_REVIEW');
+      expect(project.metadata).toMatchObject({
+        safetyReview: { state: 'ALLOWED' },
+        contentSafety: { state: 'skipped', reason: 'no_provider' },
+      });
+      const render = await db.videoRender.findUniqueOrThrow({ where: { id: held.render.id } });
+      expect(render.qualityCheckState).toBe('PASSED');
+      expect(render.qualityIssues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'content_safety',
+            status: 'not_run',
+            detailKey: 'safetyNotScanned',
+          }),
+        ]),
+      );
+      expect(deps.afterReady).toHaveBeenCalledWith(
+        expect.objectContaining({ projectId: held.project.id, runId: held.runId }),
+      );
+      expect(api.audits.at(-1)).toMatchObject({
+        actorUserId: SAFETY_REVIEW_ACTOR,
+        action: 'studio.safety_review.release',
+        resource: { type: 'safety_review', id: held.review.id },
+      });
+      // The creator is not told about a safety review result (there was no review).
+      expect(
+        await db.notification.count({
+          where: { organisationId: org, dedupeKey: `safety_review_decided:${held.review.id}` },
+        }),
+      ).toBe(0);
+
+      // The real flag is untouched.
+      expect(
+        (await db.safetyReview.findUniqueOrThrow({ where: { id: flagged.review.id } })).state,
+      ).toBe('PENDING');
+      // Re-running is safe.
+      expect(await releaseNoProviderSafetyReview(host(), held.review.id)).toBe('not_pending');
+      expect(await releaseNoProviderSafetyReview(host(), flagged.review.id)).toBe(
+        'not_no_provider',
+      );
+    });
+
+    it('a no-provider hold with another failed check lands in QUALITY_FAILED', async () => {
+      const held = await pausedContentRun(true, true);
+      expect(await releaseNoProviderSafetyReview(host(), held.review.id)).toBe('released');
+      const project = await db.videoProject.findUniqueOrThrow({ where: { id: held.project.id } });
+      expect(project.state).toBe('QUALITY_FAILED');
+      expect(project.errorReason).toContain('black_frames');
+      expect(project.errorReason).not.toContain('content_safety');
+    });
   });
 });

@@ -64,7 +64,7 @@ refused" is not an outage: retrying cannot help until someone fixes the account.
   `billing_error`, 401/403; OpenAI 429 `insufficient_quota`, `credit_balance_exhausted`,
   `organization_spend_limit_exceeded`, `project_spend_limit_exceeded`,
   `organization_usage_limit_exceeded`, 401; every HTTP adapter: 401/403 auth, 402 credits
-  (Luma, ElevenLabs, HeyGen, Hive V3 405 and HeyGen quota codes as documented per adapter).
+  (Luma, ElevenLabs, HeyGen, and HeyGen quota codes as documented per adapter).
 
 To fix: top up or raise the limit in the provider console (Anthropic: Settings → Billing →
 Spend limits; OpenAI: Billing), or rotate the key. Then release the hold at once instead of
@@ -82,10 +82,11 @@ Two capabilities degrade instead of failing the video (20.19):
   wasn’t available for this video, so those moments use video clips instead." A content refusal
   or invalid request still fails the shot. HeyGen's undocumented `MOVIO_PAYMENT_*` failure codes
   (production 2026-10-02: `MOVIO_PAYMENT_INSUFFICIENT_CREDIT`) count as `insufficient_credits`.
-- **Content safety (Hive).** With no content-safety provider (no key, or the key rejected / out
-  of balance and held) the render is not passed: the run pauses for a Trust & Safety review
-  (Admin Centre → Safety) instead of failing with a block nobody can lift. Each paused video
-  needs a staff decision until a working Hive key is set, so fix the key first.
+- **Content safety.** 20.21 (operator decision 2026-10-02): Hive was removed and no
+  content-safety provider is built, so the scan is skipped ("Not scanned") and the video goes on
+  to the normal review. Nothing pauses, nothing is blocked and no alert is sent for it. (20.19's
+  Trust & Safety pause for a missing provider is gone; `scripts/ops/release-safety-holds.ts`
+  released the runs it parked — [content-safety-miss.md](content-safety-miss.md).)
 
 ## Steps
 

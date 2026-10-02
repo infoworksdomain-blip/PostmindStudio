@@ -38,7 +38,6 @@ const PROVIDER_IDS = [
   'assemblyai',
   'shotstack',
   'creatomate',
-  'hive',
   'sightengine',
 ];
 const PLATFORMS = [

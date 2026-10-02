@@ -97,11 +97,11 @@ describe('runProviderCanary', () => {
     expect(result.reason).toMatch(/auth|401|bad key/i);
   });
 
-  it('marks Hive as not probed (its healthCheck sends no request)', async () => {
-    const base = vi.fn();
-    const result = await runProviderCanary('hive', ['key'], base as unknown as typeof fetch);
-    expect(result.probed).toBe(false);
-    expect(base).not.toHaveBeenCalled();
+  it('20.21: has no Hive canary (Hive was removed)', async () => {
+    expect(Object.keys(PROVIDER_CANARY_ENV)).not.toContain('hive');
+    await expect(
+      runProviderCanary('hive', ['key'], vi.fn() as unknown as typeof fetch),
+    ).rejects.toThrow(/No provider canary for hive/);
   });
 });
 

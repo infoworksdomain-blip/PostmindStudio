@@ -2,9 +2,10 @@ import type { PrismaClient } from '@prisma/client';
 
 // 15.E1 — what one organisation's data export contains. Every query is scoped to the organisation
 // (directly, or through the organisation's own project / publication / link ids), and secrets are
-// never selected: platform tokens, share-link token hashes, domain-verification tokens, Hive
-// callback token hashes and image embeddings are left out by construction (Prisma `omit` /
-// explicit selects), then scrubbed again by key name as defence in depth (redactSecrets).
+// never selected: platform tokens, share-link token hashes, domain-verification tokens, legacy
+// content-safety callback token hashes and image embeddings are left out by construction
+// (Prisma `omit` / explicit selects), then scrubbed again by key name as defence in depth
+// (redactSecrets).
 // provider_jobs (raw provider request/response bodies) are not exported; their cost is in
 // provider_usage.
 

@@ -14,7 +14,7 @@ import { ReasonDialog } from './reason-dialog';
 
 // BACKLOG 14.11 — Admin → Safety audit: the Trust & Safety monthly audit (runbooks/
 // content-safety-miss.md). A job samples N videos published last month; staff re-check each one
-// and record Pass or Miss (a miss needs a note, notifies staff and counts towards the "Hive scan
+// and record Pass or Miss (a miss needs a note, notifies staff and counts towards the "safety
 // miss rate"). GET /admin/safety-audit, POST /admin/safety-audit/:id/result, POST …/sample.
 
 type Result = 'pending' | 'pass' | 'miss';

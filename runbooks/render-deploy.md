@@ -158,10 +158,6 @@ Every key the code needs at start-up is either in `render.yaml` or in this table
 | `ELEVENLABS_API_KEY` | both | yes | elevenlabs.io | workers |
 | `SHOTSTACK_API_KEY` | both | yes | shotstack.io | workers |
 | `SHOTSTACK_ENVIRONMENT` | both | no | `stage` on staging; the production value from the Shotstack dashboard | workers |
-| `HIVE_API_KEY` | both | yes | thehive.ai (content safety), V2 Enterprise project key. Set this **or** `HIVE_V3_SECRET_KEY` ([go-live.md](go-live.md) 11.1) | workers |
-| `HIVE_V3_SECRET_KEY` | both | yes | thehive.ai self-serve V3: the **Secret Key** column of API Keys (V3), not the Access Key ID ([go-live.md](go-live.md) 11.1) | workers |
-| `HIVE_API_VERSION` | both | no | `v2` / `v3`; empty = v3 when only the V3 key is set | workers |
-| `HIVE_V3_MAX_FRAMES` | both | no | V3: frames checked in a render over 60 s (1-60, default 10) | workers |
 | `RUNWAY_API_KEY` | both | yes | Runway developer portal (optional provider) | workers |
 | `LUMA_API_KEY` | both | yes | Luma (optional provider) | workers |
 | `HEYGEN_API_KEY` | both | yes | HeyGen (optional; needs `HEYGEN_AVATAR_ID`) | workers |

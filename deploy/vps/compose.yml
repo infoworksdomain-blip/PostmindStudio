@@ -40,7 +40,6 @@ x-app-env: &app-env
   NODE_ENV: production
   REDIS_URL: redis://redis:6379/3
   APP_URL: https://${STUDIO_DOMAIN:?set STUDIO_DOMAIN}
-  STUDIO_PUBLIC_CALLBACK_BASE_URL: https://${STUDIO_DOMAIN}
   TIKTOK_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=tiktok
   YOUTUBE_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=youtube
   X_REDIRECT_URI: https://${STUDIO_DOMAIN}/api/studio/platform-connections/oauth-callback?platform=x

@@ -23,7 +23,6 @@ const PROVIDERS = [
   { id: 'heygen', label: 'HeyGen', twoPart: false },
   { id: 'elevenlabs', label: 'ElevenLabs', twoPart: false },
   { id: 'shotstack', label: 'Shotstack', twoPart: false },
-  { id: 'hive', label: 'Hive', twoPart: false },
   { id: 'storyblocks', label: 'Storyblocks', twoPart: true },
   { id: 'pexels', label: 'Pexels', twoPart: false },
 ];

@@ -416,7 +416,7 @@
       "body": "Trust & Safety 备注：{note}"
     },
     "safetyAuditMiss": {
-      "title": "Trust & Safety 审计：Hive 扫描漏检",
+      "title": "Trust & Safety 审计：安全检查漏检",
       "body": "一个已发布的 {platform} 视频（组织 {organisationId}，发布 {publicationId}）未通过 {period} 审计：{note}。请按照 runbooks/content-safety-miss.md 处理。"
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "已覆盖质量检查结果。",
       "details": {
         "safetyScanUnavailable": "扫描无法运行：{reason}",
+        "safetyNotScanned": "未扫描：未设置内容安全扫描。",
         "safetyBlocked": "已阻止：{classes}",
         "safetyReview": "需要审核：{classes}",
         "safetyPassed": "{count, plural, other {已扫描 # 帧，未发现问题。}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "“{note}”",
       "review": {
         "title": "内容安全审核",
-        "description": "因脚本安全 REVIEW 判定或审核级 Hive 标记而暂停的运行（规范 13.2 / 16.4）。拦截级结果不会进入此队列。",
+        "description": "因脚本安全 REVIEW 判定或审核级内容安全标记而暂停的运行（规范 13.2 / 16.4）。拦截级结果不会进入此队列。",
         "showAria": "显示审核",
         "filterWaiting": "等待中",
         "filterWaitingCount": "等待中（{count}）",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Trust & Safety 月度审计",
-        "description": "从上个月发布的视频中随机抽样，由人工复查。漏检是指 Hive 扫描本应拦截或送审的视频。",
+        "description": "从上个月发布的视频中随机抽样，由人工复查。漏检是指本应被拦截或送审的视频。",
         "monthAria": "审计月份",
         "resultAria": "结果",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "等待中",
         "passed": "通过",
         "missed": "漏检",
-        "missRate": "Hive 扫描漏检率",
+        "missRate": "安全检查漏检率",
         "missRateHint": "漏检 ÷ 已复查",
         "emptyNoSampleTitle": "本月暂无样本",
         "emptyNoSampleBody": "样本在每月 1 日 06:00 UTC 抽取。如果任务未运行，请立即抽取。",

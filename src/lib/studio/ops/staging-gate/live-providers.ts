@@ -1,7 +1,4 @@
 import type { ProviderRequest } from '../../providers/interface';
-import { resolveHiveApiVersion } from '../../providers/hive-config';
-import { MAX_SYNC_DURATION_SEC } from '../../providers/hive';
-import { MAX_V3_VIDEO_SEC } from '../../providers/hive-v3';
 import { PLATFORMS, type Platform } from '../../services/catalog';
 import { storageRequiredEnv } from '../../storage-client';
 import type { GateSection, Verdict } from './report';
@@ -28,22 +25,13 @@ export interface LiveProviderTest {
   npmScript?: string;
   /** Env the test needs besides the provider key (missing → skipped with the reason). */
   requiredEnv: string[];
-  /** Groups where any one key is enough (20.6: Hive V2 or V3 key). */
+  /** Groups where any one key is enough (e.g. a provider with two kinds of key). */
   requiredEnvAnyOf?: string[][];
   /** The test writes to object storage: also needs STORAGE_PROVIDER's settings (S3 or R2). */
   usesStorage?: boolean;
   /** Built from env at run time (media URLs, voice id…). */
   request?: (env: Record<string, string | undefined>) => ProviderRequest;
   note?: string;
-}
-
-/** 20.6: the longest render one synchronous Hive request takes, for the configured API. */
-function liveHiveMaxSec(env: Record<string, string | undefined>): number {
-  try {
-    return resolveHiveApiVersion(env) === 'v3' ? MAX_V3_VIDEO_SEC : MAX_SYNC_DURATION_SEC;
-  } catch {
-    return MAX_SYNC_DURATION_SEC;
-  }
 }
 
 const num = (raw: string | undefined, fallback: number) => {
@@ -193,21 +181,6 @@ export const LIVE_PROVIDER_TESTS: readonly LiveProviderTest[] = [
     }),
   },
   {
-    id: 'hive',
-    providerId: 'hive',
-    kind: 'adapter',
-    requiredEnv: ['LIVE_TEST_MEDIA_URL'],
-    requiredEnvAnyOf: [['HIVE_API_KEY', 'HIVE_V3_SECRET_KEY']],
-    request: (env) => ({
-      capability: 'content_safety',
-      organisationId: LIVE_ORG_ID,
-      mediaUrl: env.LIVE_TEST_MEDIA_URL ?? '',
-      // One synchronous request: V2 sync takes up to 90 s, V3 up to 60 s (hive-v3.ts).
-      durationSec: Math.min(liveHiveMaxSec(env), num(env.LIVE_TEST_MEDIA_SEC, 10)),
-    }),
-    note: 'Synchronous scan (V2 ≤ 90 s, V3 ≤ 60 s: one request). The V2 async path and V3 frame sampling need a longer render through the pipeline — see the manual follow-ups.',
-  },
-  {
     id: 'assemblyai',
     providerId: 'assemblyai',
     kind: 'adapter',
@@ -268,8 +241,7 @@ export const LIVE_PROVIDER_TESTS: readonly LiveProviderTest[] = [
 
 /** Things the harness cannot do by itself; printed in the report for the operator. */
 export const MANUAL_FOLLOW_UPS: readonly string[] = [
-  'Hive async (13.25): on staging, generate a project whose render is longer than 90 s; confirm its content_safety_tasks row reaches SETTLED via POST /api/studio/webhooks/hive.',
-  'GATE 3 end-to-end: `npm run gate3` against staging (Claude, one Runway clip, ElevenLabs, Shotstack, Hive).',
+  'GATE 3 end-to-end: `npm run gate3` against staging (Claude, one Runway clip, ElevenLabs, Shotstack).',
 ];
 
 export function missingEnv(

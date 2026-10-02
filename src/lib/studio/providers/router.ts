@@ -179,7 +179,10 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
   composition: ['shotstack', 'creatomate'], // 6.5 Composition
   // 6.5 Captions. 15.C1: OpenAI's hosted Whisper (whisper-1) is the fallback.
   transcription: ['assemblyai', 'openai'],
-  content_safety: ['hive', 'sightengine'], // 6.5 Content safety
+  // 6.5 Content safety. 20.21 (operator decision 2026-10-02): Hive was removed and no other
+  // content-safety provider is built, so nothing is routed here and the quality gate records the
+  // scan as skipped (queue/workers/run-quality-gate.ts). A new provider is added to this list.
+  content_safety: [],
   // 13.36: no inference host is chosen, so nothing is ever routed here; the media-analysis
   // adapter (providers/media-analysis.ts) reports unhealthy and is not registered.
   media_analysis: [],

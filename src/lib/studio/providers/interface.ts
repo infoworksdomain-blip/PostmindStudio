@@ -172,11 +172,6 @@ export interface ContentSafetyRequest extends ProviderRequestBase {
   /** Publicly fetchable (e.g. presigned) URL of the rendered video. */
   mediaUrl: string;
   durationSec: number;
-  /**
-   * BACKLOG 13.25: where the provider posts the result of an asynchronous scan. Required for
-   * media longer than the provider's synchronous limit (Hive: 90 s); ignored otherwise.
-   */
-  callbackUrl?: string;
 }
 
 export interface SfxRequest extends ProviderRequestBase {

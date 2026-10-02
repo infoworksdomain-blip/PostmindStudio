@@ -7,7 +7,6 @@ import { AssemblyAiAdapter } from './assemblyai';
 import { ElevenLabsAdapter } from './elevenlabs';
 import { ElevenLabsMusicAdapter } from './elevenlabs-music';
 import { HeyGenAdapter } from './heygen';
-import { HiveAdapter } from './hive';
 import type { ProviderAdapter } from './interface';
 import { LumaAdapter } from './luma';
 import { OpenAIAdapter } from './openai';
@@ -26,8 +25,9 @@ import { VeoAdapter } from './veo';
 //   Deprecation  RFC 9745 https://www.rfc-editor.org/rfc/rfc9745 (e.g. "@1735689599")
 //   Sunset       RFC 8594 https://www.rfc-editor.org/rfc/rfc8594 (an HTTP-date)
 //   Link         rel="deprecation" / rel="sunset" (both RFCs) — the provider's migration notes
-// Nothing is generated or billed. Hive's healthCheck makes no request (no unbilled endpoint),
-// so it is reported as "not probed" rather than healthy.
+// Nothing is generated or billed. An adapter whose healthCheck makes no request (no unbilled
+// endpoint) is listed in UNPROBED_PROVIDERS and reported as "not probed" rather than healthy
+// (none today: Hive, the only one, was removed in 20.21).
 
 export interface DeprecationSignal {
   providerId: string;
@@ -51,13 +51,12 @@ export const PROVIDER_CANARY_ENV: Record<string, string[]> = {
   elevenlabs: ['CANARY_ELEVENLABS_API_KEY'],
   'elevenlabs-music': ['CANARY_ELEVENLABS_API_KEY'],
   shotstack: ['CANARY_SHOTSTACK_API_KEY'],
-  hive: ['CANARY_HIVE_API_KEY'],
   assemblyai: ['CANARY_ASSEMBLYAI_API_KEY'],
   'storyblocks-audio': ['CANARY_STORYBLOCKS_PUBLIC_KEY', 'CANARY_STORYBLOCKS_PRIVATE_KEY'],
 };
 
 /** Adapters whose healthCheck() sends no request (reported as not probed). */
-export const UNPROBED_PROVIDERS: ReadonlySet<string> = new Set(['hive']);
+export const UNPROBED_PROVIDERS: ReadonlySet<string> = new Set<string>();
 
 function safeUrl(input: string | URL | Request): string {
   const raw = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -176,8 +175,6 @@ export function buildCanaryAdapter(
     case 'shotstack':
       // The staging key belongs to Shotstack's sandbox environment ("stage").
       return new ShotstackAdapter({ apiKey: key, environment: 'stage', fetchImpl });
-    case 'hive':
-      return new HiveAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
     case 'assemblyai':
       return new AssemblyAiAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
     case 'storyblocks-audio':

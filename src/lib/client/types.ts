@@ -71,7 +71,8 @@ export interface Script {
 
 export interface QualityIssue {
   code: string;
-  status: 'passed' | 'failed' | 'warning' | 'skipped';
+  /** `not_run`: the check did not apply or could not run (e.g. 20.21 content safety). */
+  status: 'passed' | 'failed' | 'warning' | 'skipped' | 'not_run';
   severity: string;
   /** English (older checks have only this). */
   detail: string;

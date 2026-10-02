@@ -158,7 +158,7 @@ const audit = (over: Partial<AuditResponse> = {}): AuditResponse & { ok: true } 
 });
 
 describe('SafetyAuditPanel', () => {
-  it('shows the summary with the Hive scan miss rate and records a pass', async () => {
+  it('shows the summary with the safety miss rate and records a pass', async () => {
     const user = userEvent.setup();
     const { calls } = mockFetch([
       { match: '/admin/safety-audit?', body: audit() },

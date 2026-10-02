@@ -1,12 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 import { setApiDeps } from '../../src/lib/studio/api/context';
+import type { QualityCheck } from '../../src/lib/studio/pipeline/quality-checks';
+import { openSafetyReview, SAFETY_REVIEW_ACTOR } from '../../src/lib/studio/pipeline/safety-review';
+import { runQualityGate } from '../../src/lib/studio/queue/workers/run-quality-gate';
+import { NO_PROVIDER_SCAN_DETAIL } from '../../src/lib/studio/services/safety-reviews';
 import { HeyGenAdapter } from '../../src/lib/studio/providers/heygen';
 import { LumaAdapter } from '../../src/lib/studio/providers/luma';
 import type { ProviderAdapter } from '../../src/lib/studio/providers/interface';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
 import { tenant } from '../helpers/api-harness';
-import { ScriptedAdapter } from '../helpers/scripted-adapter';
 import { SCRIPT_JSON } from '../helpers/pipeline-harness';
 import {
   approve,
@@ -28,8 +31,11 @@ import {
 //          Runway clip, keeps its narration and duration, is marked degraded → compose → gate →
 //          review, and HeyGen is held out of routing
 //   GF-04  HeyGen refuses the content → no degradation, the video fails as before
-//   GF-05  Hive rejects the (dummy) key → the render waits for a person's safety review instead
-//          of failing with a block
+//   GF-05  (20.21, Hive removed) no content-safety provider → the scan is skipped ("Not
+//          scanned") and the video goes straight on to the normal review: no Trust & Safety
+//          review, no block, no QUALITY_FAILED, no operator alert
+//   GF-06  (20.21) a run 20.19 parked behind a "no provider" Trust & Safety review is released on
+//          the worker's next quality-gate pass: not scanned → READY_FOR_REVIEW
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const HOOK_TIMEOUT_MS = 120_000;
@@ -370,36 +376,118 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
     ).toBe(false);
   });
 
-  it('GF-05 Hive rejects the key → a person reviews the render instead of a block', async () => {
+  it('GF-05 no content-safety provider → not scanned, straight on to review', async () => {
     const j = startJourney(db, 'gf05');
-    j.h.deps.registry = createProviderRegistry([
-      ...j.h.deps.registry.list().filter((a) => a.providerId !== 'hive'),
-      new ScriptedAdapter('hive', ['content_safety'], () => ({
-        state: 'failed',
-        error: { class: 'auth', message: '403 Forbidden', retryable: false },
-      })),
-    ]);
+    expect(j.h.deps.registry.getAdaptersByCapability('content_safety')).toEqual([]);
 
     const id = await createProject(j);
     const project = await generate(j, id);
-    // Not failed: the run waits for a Trust & Safety decision (13.17), still fail-closed.
-    expect(project.state).toBe('QUALITY_CHECKING');
+    expect(project.state).toBe('READY_FOR_REVIEW');
+    expect(project.errorReason).toBeNull();
     const stored = await db.videoProject.findUniqueOrThrow({ where: { id } });
-    expect((stored.metadata as { safetyReview?: unknown }).safetyReview).toMatchObject({
+    const metadata = stored.metadata as { safetyReview?: unknown; contentSafety?: unknown };
+    expect(metadata.safetyReview).toBeUndefined();
+    expect(metadata.contentSafety).toEqual({ state: 'skipped', reason: 'no_provider' });
+    expect(await db.safetyReview.count({ where: { projectId: id } })).toBe(0);
+    const renders = await db.videoRender.findMany({ where: { projectId: id } });
+    expect(renders.length).toBeGreaterThan(0);
+    for (const render of renders) {
+      expect(render.qualityCheckState).toBe('PASSED');
+      expect(render.qualityIssues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'content_safety',
+            status: 'not_run',
+            severity: 'info',
+            detailKey: 'safetyNotScanned',
+          }),
+        ]),
+      );
+    }
+    // No content-safety provider call was attempted (so no account alert can follow), and the
+    // creator got no safety-review message.
+    expect(
+      await db.providerJob.count({ where: { projectId: id, operation: 'content_safety' } }),
+    ).toBe(0);
+    expect(
+      await db.notification.count({ where: { kind: 'safety_review', organisationId: j.org } }),
+    ).toBe(0);
+  });
+
+  it('GF-06 a 20.19 no-provider safety hold is released on the next gate pass', async () => {
+    const j = startJourney(db, 'gf06');
+    const id = await createProject(j);
+    expect((await generate(j, id)).state).toBe('READY_FOR_REVIEW');
+    const ready = await db.videoProject.findUniqueOrThrow({ where: { id } });
+    const runId = (ready.metadata as { runId: string }).runId;
+    const renders = await db.videoRender.findMany({ where: { projectId: id } });
+
+    // Put the run back exactly where 20.19 left it: the scan "could not run" (review-level), the
+    // project paused in QUALITY_CHECKING behind a PENDING content review.
+    const legacy: QualityCheck = {
+      code: 'content_safety',
+      status: 'failed',
+      severity: 'error',
+      detail: NO_PROVIDER_SCAN_DETAIL,
+      detailKey: 'safetyScanUnavailable',
+      detailParams: { reason: 'no content-safety provider available' },
+    };
+    for (const render of renders) {
+      const checks = (render.qualityIssues as unknown as QualityCheck[]).map((c) =>
+        c.code === 'content_safety' ? legacy : c,
+      );
+      await db.videoRender.update({
+        where: { id: render.id },
+        data: {
+          qualityCheckState: 'FAILED',
+          qualityIssues: checks as unknown as Prisma.InputJsonValue,
+        },
+      });
+    }
+    await db.$executeRaw`UPDATE "studio"."video_projects" SET "state" = 'QUALITY_CHECKING', "completedAt" = NULL, "metadata" = "metadata" - 'contentSafety' WHERE "id" = ${id}`;
+    const review = await openSafetyReview(j.h.deps, {
+      organisationId: j.org,
+      projectId: id,
+      runId,
+      planTier: 'STANDARD',
       kind: 'content',
-      state: 'PENDING',
+      reason: renders.map((r) => `${r.targetPlatform}: ${legacy.detail}`).join('; '),
+      details: renders.map((r) => ({
+        renderId: r.id,
+        platform: r.targetPlatform,
+        detail: legacy.detail,
+      })),
+      renderIds: renders.map((r) => r.id),
     });
-    const [render] = await db.videoRender.findMany({ where: { projectId: id } });
-    expect(render?.qualityIssues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: 'content_safety',
-          status: 'failed',
-          severity: 'error',
-          detailKey: 'safetyScanUnavailable',
-        }),
-      ]),
+
+    const job = { projectId: id, organisationId: j.org, runId, planTier: 'STANDARD' as const };
+    await runQualityGate(job, j.h.deps);
+
+    const after = await db.videoProject.findUniqueOrThrow({ where: { id } });
+    expect(after.state).toBe('READY_FOR_REVIEW');
+    expect(after.metadata).toMatchObject({
+      safetyReview: { id: review.id, state: 'ALLOWED' },
+      contentSafety: { state: 'skipped', reason: 'no_provider' },
+    });
+    expect(await db.safetyReview.findUniqueOrThrow({ where: { id: review.id } })).toMatchObject({
+      state: 'ALLOWED',
+      decidedByUserId: SAFETY_REVIEW_ACTOR,
+    });
+    for (const render of await db.videoRender.findMany({ where: { projectId: id } })) {
+      expect(render.qualityCheckState).toBe('PASSED');
+      expect(render.qualityIssues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: 'content_safety', status: 'not_run' }),
+        ]),
+      );
+    }
+    expect(j.h.audits.some((a) => a.action === 'studio.safety_review.release')).toBe(true);
+
+    // A second pass changes nothing.
+    await runQualityGate(job, j.h.deps);
+    expect((await db.videoProject.findUniqueOrThrow({ where: { id } })).state).toBe(
+      'READY_FOR_REVIEW',
     );
-    expect(await j.h.deps.breaker.state('hive')).toBe('open');
+    await db.safetyReview.deleteMany({ where: { projectId: id } });
   });
 });

@@ -438,23 +438,24 @@ describe('quality checks (spec 13.1)', () => {
     expect(review).toMatchObject({ status: 'failed', severity: 'error' });
   });
 
-  it('fails closed when content safety could not run', () => {
-    const checks = evaluateQuality({ ...base, contentSafety: { unavailable: 'no provider' } });
+  it('fails closed when a configured provider could not scan', () => {
+    const checks = evaluateQuality({ ...base, contentSafety: { unavailable: 'HTTP 500' } });
     expect(hasContentSafetyBlock(checks)).toBe(true);
   });
 
-  it('20.19: with no content-safety provider at all, a person reviews instead of a block', () => {
-    const checks = evaluateQuality({
-      ...base,
-      contentSafety: { unavailable: 'no content-safety provider available', humanReview: true },
+  it('20.21: with no content-safety provider the scan is skipped and the gate passes', () => {
+    const checks = evaluateQuality({ ...base, contentSafety: { skipped: 'no_provider' } });
+    expect(checks.find((c) => c.code === 'content_safety')).toEqual({
+      code: 'content_safety',
+      status: 'not_run',
+      severity: 'info',
+      detail: 'Not scanned: no content-safety provider is configured',
+      detailKey: 'safetyNotScanned',
+      detailParams: { reason: 'no_provider' },
     });
     expect(hasContentSafetyBlock(checks)).toBe(false);
-    expect(qualityPassed(checks)).toBe(false); // still fail-closed: never "passed"
-    expect(contentSafetyReviewCheck(checks)).toMatchObject({
-      status: 'failed',
-      severity: 'error',
-      detailKey: 'safetyScanUnavailable',
-    });
+    expect(contentSafetyReviewCheck(checks)).toBeUndefined(); // no Trust & Safety review
+    expect(qualityPassed(checks)).toBe(true);
   });
 });
 

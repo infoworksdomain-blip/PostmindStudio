@@ -4,17 +4,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as publicationRoute from '../../src/app/api/studio/analytics/publications/[id]/route';
 import * as memoryRoute from '../../src/app/api/studio/businesses/[id]/style-memory/route';
 import * as memoryItemRoute from '../../src/app/api/studio/businesses/[id]/style-memory/[memoryId]/route';
-import * as hiveRoute from '../../src/app/api/studio/webhooks/hive/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
-import {
-  hashCallbackToken,
-  newCallbackToken,
-} from '../../src/lib/studio/pipeline/content-safety-async';
-import { call, installApi, rawCall, tenant } from '../helpers/api-harness';
+import { call, installApi, tenant } from '../helpers/api-harness';
 
 // Phase 13 track A4 routes: GET /analytics/publications/:id retention + demographics (13.28),
-// GET|DELETE /businesses/:id/style-memory (13.29) and POST /webhooks/hive (13.25) — auth,
-// validation, tenant isolation and audit.
+// GET|DELETE /businesses/:id/style-memory (13.29) — auth, validation, tenant isolation and audit.
+// (POST /webhooks/hive, 13.25, was removed with Hive in 20.21.)
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
@@ -107,7 +102,6 @@ describe.skipIf(!hasDb)('A4 routes', { timeout: 120_000 }, () => {
     await db.videoRender.deleteMany({ where: { projectId } });
     await db.videoProject.deleteMany({ where: { id: projectId } });
     await db.styleMemory.deleteMany({ where: { organisationId: { in: [org, otherOrg] } } });
-    await db.contentSafetyTask.deleteMany({ where: { organisationId: org } });
     await db.$disconnect();
   });
 
@@ -237,97 +231,6 @@ describe.skipIf(!hasDb)('A4 routes', { timeout: 120_000 }, () => {
         params: { id: 'biz-a4', memoryId },
       });
       expect(again.status).toBe(404);
-    });
-  });
-
-  describe('POST /webhooks/hive (13.25)', () => {
-    const token = newCallbackToken();
-    let taskId = '';
-
-    beforeAll(async () => {
-      const task = await db.contentSafetyTask.create({
-        data: {
-          organisationId: org,
-          projectId,
-          runId: 'run-a4',
-          renderId: `rnd-${randomUUID()}`,
-          planTier: 'STANDARD',
-          providerId: 'hive',
-          providerTaskId: 'hive-task-1',
-          callbackTokenHash: hashCallbackToken(token),
-          expiresAt: new Date(Date.now() + 3_600_000),
-        },
-      });
-      taskId = task.id;
-    });
-
-    const post = (query: string, body: unknown) =>
-      call(hiveRoute.POST, {
-        method: 'POST',
-        path: `/api/studio/webhooks/hive${query}`,
-        body,
-      });
-    const hiveBody = {
-      id: 'hive-task-1',
-      status: [
-        {
-          status: { code: '0', message: 'SUCCESS' },
-          response: { output: [{ time: 0, classes: [{ class: 'general_nsfw', score: 0.01 }] }] },
-        },
-      ],
-    };
-
-    it('refuses missing, malformed and unknown tokens with 404', async () => {
-      expect((await post('', hiveBody)).status).toBe(404);
-      expect((await post('?token=short', hiveBody)).status).toBe(404);
-      expect((await post(`?token=${newCallbackToken()}`, hiveBody)).status).toBe(404);
-    });
-
-    it('rejects a body for another task and non-JSON bodies', async () => {
-      expect((await post(`?token=${token}`, { ...hiveBody, id: 'someone-else' })).status).toBe(400);
-      const res = await rawCall(hiveRoute.POST, {
-        method: 'POST',
-        path: `/api/studio/webhooks/hive?token=${token}`,
-        body: 'not json',
-        headers: { 'content-type': 'application/json' },
-      });
-      expect(res.status).toBe(400);
-      expect((await post(`?token=${token}`, ['array'])).status).toBe(400);
-    });
-
-    it('rejects oversize bodies before reading them', async () => {
-      const res = await rawCall(hiveRoute.POST, {
-        method: 'POST',
-        path: `/api/studio/webhooks/hive?token=${token}`,
-        body: '{}',
-        headers: { 'content-type': 'application/json', 'content-length': String(26 * 1024 * 1024) },
-      });
-      expect(res.status).toBe(413);
-    });
-
-    it('stores the result, resumes the quality gate once, and audits', async () => {
-      const res = await post(`?token=${token}`, hiveBody);
-      expect(res.status).toBe(200);
-      expect(res.json).toEqual({ ok: true, received: true });
-      const task = await db.contentSafetyTask.findUniqueOrThrow({ where: { id: taskId } });
-      expect(task.state).toBe('CALLBACK_RECEIVED');
-      expect(task.result).toEqual(hiveBody);
-      expect(api.queue.history.at(-1)).toMatchObject({
-        name: 'run-quality-gate',
-        jobId: `run-quality-gate__${projectId}__run-a4__hive_${taskId}`,
-        data: { projectId, organisationId: org, runId: 'run-a4', planTier: 'STANDARD' },
-      });
-      expect(api.audits.at(-1)).toMatchObject({
-        actorUserId: 'system:hive',
-        action: 'studio.content_safety.hive_callback',
-        organisationId: org,
-        metadata: expect.objectContaining({ duplicate: false }),
-      });
-      const jobs = api.queue.history.length;
-      const again = await post(`?token=${token}`, hiveBody);
-      expect(again.status).toBe(200);
-      expect(api.queue.history.length).toBe(jobs);
-      expect(api.audits.at(-1)?.metadata).toMatchObject({ duplicate: true });
     });
   });
 });

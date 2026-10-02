@@ -9,7 +9,8 @@ import { projectLabel, projectNameParam } from '../../project-name';
 // fail the run closed now pause it for a Trust & Safety decision:
 //   script  — the pre-generation script-safety classifier says REVIEW (plan-project, before any
 //             Layer 3 spend; the plan is persisted, no shot is enqueued);
-//   content — Hive flags a review-level class on a render and nothing is block-level
+//   content — the content-safety provider flags a review-level class on a render and nothing is
+//             block-level (none is built since 20.21, so this kind is not opened today)
 //             (run-quality-gate; the project stays QUALITY_CHECKING).
 // The project keeps its pipeline state; metadata.safetyReview says why it is not moving, and the
 // stuck re-drive skips it. Staff decide with POST /admin/safety-reviews/:id/decision

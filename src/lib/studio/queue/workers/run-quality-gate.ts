@@ -1,22 +1,25 @@
 import type { Prisma, VideoRender } from '@prisma/client';
 import { NoProviderAvailableError, NotFoundError, ProviderError } from '../../../errors';
-import { usesAsyncHiveScan, type ContentSafetyScan } from '../../providers/hive';
+import type { ContentSafetyScan } from '../../providers/content-safety';
 import type { AspectRatio } from '../../providers/interface';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
   currentRunId,
   failProject,
+  mergeProjectMetadata,
   projectMetadata,
   transitionProject,
 } from '../../pipeline/project-state';
 import { runProvider } from '../../pipeline/provider-run';
-import { asyncContentSafety } from '../../pipeline/content-safety-async';
+import { planCandidates } from '../../providers/router';
 import {
   BLACK_FRAME_MAX_SEC,
   contentSafetyReviewCheck,
   evaluateQuality,
   hasContentSafetyBlock,
   qualityPassed,
+  summarise,
+  type ContentSafetyState,
   type QualityCheck,
   type QualityInputs,
 } from '../../pipeline/quality-checks';
@@ -24,30 +27,36 @@ import type { ProjectJobData } from '../queues';
 import { autoApproveIfTrusted } from '../../automation/auto-approve';
 import { notifyGenerationComplete } from '../../notifications/events';
 import { openSafetyReview, pendingSafetyReview } from '../../pipeline/safety-review';
+import { releaseNoProviderSafetyReview } from '../../services/safety-reviews';
 import { recordQualityGateOutcome } from '../../observability/slo';
 import { renderSyncChecks } from '../../pipeline/quality-brand-gate';
 
 // BACKLOG 3.7 — Layer 8 (spec 5.9 / 13.1). Every render of the run is measured with ffprobe /
-// ffmpeg, scanned for content safety, and evaluated fail-closed. All pass → READY_FOR_REVIEW;
-// otherwise QUALITY_FAILED with the reasons (force-approve for non-block failures is a Phase 4
-// API with the studio:render:force-approve capability).
+// ffmpeg, scanned for content safety when a content-safety provider exists, and evaluated
+// fail-closed. All pass → READY_FOR_REVIEW; otherwise QUALITY_FAILED with the reasons
+// (force-approve for non-block failures is a Phase 4 API with the studio:render:force-approve
+// capability).
+//
+// 20.21 (operator decision 2026-10-02, "remove Hive from dependency completely"): no
+// content-safety provider is built, so the scan is skipped ("Not scanned") and the run continues
+// to the normal review. No Trust & Safety review is opened for a missing provider, nothing is
+// blocked and no operator alert is sent.
 
 async function scanContentSafety(
   deps: PipelineDeps,
   data: ProjectJobData,
   render: VideoRender,
   url: string,
-  asyncOutcome?: QualityInputs['contentSafety'],
 ): Promise<QualityInputs['contentSafety']> {
-  // 13.25: renders over Hive's sync limit were scanned asynchronously before the media checks
-  // (V2 only; 20.6 V3 scans every render synchronously, sampling frames past 60 s).
-  if (usesAsyncHiveScan(render.durationSec, deps.config.hiveApiVersion)) {
-    return asyncOutcome ?? { unavailable: 'async content-safety scan has no result' };
-  }
+  const need = { kind: 'capability', capability: 'content_safety' } as const;
+  // No candidate at all (today: none is built) → skip without routing, so a cost-cap pause or a
+  // kill switch cannot fail a check that would not have run anyway.
+  if (planCandidates(need, data.planTier).providerIds.length === 0)
+    return { skipped: 'no_provider' };
   try {
     const run = await runProvider(
       {
-        need: { kind: 'capability', capability: 'content_safety' },
+        need,
         planTier: data.planTier,
         request: {
           capability: 'content_safety',
@@ -61,21 +70,12 @@ async function scanContentSafety(
     );
     return { scan: run.output.metadata as ContentSafetyScan };
   } catch (err) {
-    // Transient provider trouble → retry the job. Anything else → fail closed, not "passed".
-    // 20.6: a Hive rate limit (V3 self-serve keys: ~100 requests/day) is retryable too; the run
-    // stays QUALITY_CHECKING until the retry passes, and fails closed when retries run out.
-    if (err instanceof ProviderError && err.errorClass === 'rate_limited') {
-      deps.logger.warn(
-        { projectId: data.projectId, renderId: render.id, providerId: err.providerId },
-        `content-safety scan rate limited: ${err.message}`,
-      );
-    }
+    // Transient provider trouble → retry the job.
     if (err instanceof ProviderError && err.retryable) throw err;
-    // 20.19: no provider at all (none configured, or every one held for an account problem such
-    // as a rejected key — the operator was alerted once by runProvider) → a person reviews the
-    // render instead of the video failing with a block nobody can lift.
-    if (err instanceof NoProviderAvailableError)
-      return { unavailable: 'no content-safety provider available', humanReview: true };
+    // 20.21: no content-safety provider (none is built today; or a future one is not configured
+    // or held) → not scanned; the run continues to the normal review.
+    if (err instanceof NoProviderAvailableError) return { skipped: 'no_provider' };
+    // A configured provider that answered with a non-retryable error → fail closed (block).
     if (err instanceof ProviderError) return { unavailable: err.message };
     throw err;
   }
@@ -87,14 +87,13 @@ async function checkRender(
   render: VideoRender,
   targetDurationSec: number,
   project: { organisationId: string; businessId: string; brandKitId: string | null },
-  asyncOutcome?: QualityInputs['contentSafety'],
 ) {
   const url = await deps.storage.signedUrl(render.s3Bucket, render.s3Key);
   const [probe, blackIntervals, loudnessLufs, contentSafety] = await Promise.all([
     deps.media.probe(url),
     deps.media.blackIntervals(url, BLACK_FRAME_MAX_SEC),
     deps.media.integratedLoudness(url),
-    scanContentSafety(deps, data, render, url, asyncOutcome),
+    scanContentSafety(deps, data, render, url),
   ]);
   // 15.B2: audio/caption sync, watermark and brand-kit checks from the rendered timeline.
   const sync = await renderSyncChecks(deps, {
@@ -118,17 +117,7 @@ async function checkRender(
   });
 }
 
-export function summarise(results: Array<{ platform: string; checks: QualityCheck[] }>): string {
-  return results
-    .flatMap(({ platform, checks }) =>
-      checks
-        .filter((c) => c.status === 'failed')
-        .map(
-          (c) => `${platform}/${c.code}${c.severity === 'block' ? ' [BLOCK]' : ''}: ${c.detail}`,
-        ),
-    )
-    .join('; ');
-}
+const isSkippedSafety = (c: QualityCheck) => c.code === 'content_safety' && c.status === 'not_run';
 
 export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): Promise<void> {
   const log = deps.logger.child({
@@ -142,8 +131,16 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
   if (currentRunId(project) !== data.runId) return log.info('stale quality-gate job ignored');
   if (project.state !== 'QUALITY_CHECKING')
     return log.info({ state: project.state }, 'not awaiting quality checks; skipped');
-  if (pendingSafetyReview(project.metadata))
+  const pendingReview = pendingSafetyReview(project.metadata);
+  if (pendingReview) {
+    // 20.21: a review 20.19 opened only because no content-safety provider existed is released
+    // (the renders are recorded as not scanned) instead of waiting for staff.
+    const released = await releaseNoProviderSafetyReview(deps, pendingReview.id, {
+      afterReady: (job) => autoApproveIfTrusted(deps, job),
+    });
+    if (released === 'released') return log.info('no-provider safety hold released');
     return log.info('run is waiting for a content-safety review; skipped');
+  }
 
   const renderIds = Object.values(
     (projectMetadata(project.metadata).renders as Record<string, string>) ?? {},
@@ -159,31 +156,10 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
     ]),
   );
 
-  // 13.25: long renders go to Hive's async API first. While any scan is outstanding the run
-  // stays QUALITY_CHECKING; the Hive callback (or the timeout job) re-runs this gate.
-  const asyncOutcomes = new Map<string, QualityInputs['contentSafety']>();
-  let awaiting = 0;
-  for (const render of renders.filter((r) =>
-    usesAsyncHiveScan(r.durationSec, deps.config.hiveApiVersion),
-  )) {
-    const url = await deps.storage.signedUrl(render.s3Bucket, render.s3Key);
-    const outcome = await asyncContentSafety(deps, data, render, url);
-    if ('pending' in outcome) awaiting += 1;
-    else asyncOutcomes.set(render.id, outcome);
-  }
-  if (awaiting > 0) return log.info({ awaiting }, 'waiting for async content-safety callbacks');
-
   const results = await Promise.all(
     renders.map(async (render) => {
       const target = scripts.get(render.scriptId)?.targetDurationSec ?? render.durationSec;
-      const checks = await checkRender(
-        deps,
-        data,
-        render,
-        target,
-        project,
-        asyncOutcomes.get(render.id),
-      );
+      const checks = await checkRender(deps, data, render, target, project);
       await deps.db.videoRender.update({
         where: { id: render.id },
         data: {
@@ -195,6 +171,15 @@ export async function runQualityGate(data: ProjectJobData, deps: PipelineDeps): 
     }),
   );
 
+  // 20.21: record that the run's renders were not scanned (staff/admin read it; customers do not).
+  if (results.some((r) => r.checks.some(isSkippedSafety))) {
+    const contentSafety: ContentSafetyState = { state: 'skipped', reason: 'no_provider' };
+    await mergeProjectMetadata(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      patch: { contentSafety },
+    });
+  }
   const allPassed = results.every((r) => qualityPassed(r.checks));
   const blocked = results.some((r) => hasContentSafetyBlock(r.checks));
   // 13.17: a review-level content-safety flag (and nothing block-level) pauses the run for a

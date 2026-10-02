@@ -5,7 +5,7 @@ import { auditResultInput, recordAuditResult } from '@/lib/studio/services/safet
 
 // BACKLOG 14.11 — record a Trust & Safety audit verdict. POST { result: pass|miss, note? (required
 // for a miss) } → { item }. 409 once recorded. A miss notifies PostMind staff and counts towards
-// the period's "Hive scan miss rate". Audited (studio.safety_audit.record).
+// the period's "safety miss rate". Audited (studio.safety_audit.record).
 export const POST = withStudioRoute(
   StudioCapability.AdminModeration,
   async ({ req, deps, tenant, params, audit }) => {

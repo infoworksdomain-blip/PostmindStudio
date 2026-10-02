@@ -416,7 +416,7 @@
       "body": "Nota de Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Auditoria de Trust & Safety: falha de deteção do Hive",
+      "title": "Auditoria de Trust & Safety: falha de segurança",
       "body": "Um vídeo publicado no {platform} (organização {organisationId}, publicação {publicationId}) falhou a auditoria de {period}: {note}. Siga runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "Verificação de qualidade anulada.",
       "details": {
         "safetyScanUnavailable": "Não foi possível executar a análise: {reason}",
+        "safetyNotScanned": "Não analisado: não está configurada nenhuma análise de segurança do conteúdo.",
         "safetyBlocked": "Bloqueado: {classes}",
         "safetyReview": "Precisa de revisão: {classes}",
         "safetyPassed": "{count, plural, one {# fotograma analisado, nada assinalado.} many {# de fotogramas analisados, nada assinalado.} other {# fotogramas analisados, nada assinalado.}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "«{note}»",
       "review": {
         "title": "Revisão de segurança de conteúdo",
-        "description": "Execuções pausadas por um veredito REVIEW de segurança do roteiro ou por um alerta do Hive de nível revisão (espec. 13.2 / 16.4). Resultados de nível bloqueio nunca chegam a esta fila.",
+        "description": "Execuções pausadas por um veredito REVIEW de segurança do roteiro ou por um alerta de segurança do conteúdo de nível revisão (espec. 13.2 / 16.4). Resultados de nível bloqueio nunca chegam a esta fila.",
         "showAria": "Mostrar revisões",
         "filterWaiting": "Em espera",
         "filterWaitingCount": "Em espera ({count})",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Auditoria mensal de Trust & Safety",
-        "description": "Uma amostra aleatória dos vídeos publicados no mês passado, verificados de novo por uma pessoa. Uma falha é um vídeo que a análise do Hive deveria ter bloqueado ou enviado para revisão.",
+        "description": "Uma amostra aleatória dos vídeos publicados no mês passado, verificados de novo por uma pessoa. Uma falha é um vídeo que deveria ter sido bloqueado ou enviado para revisão.",
         "monthAria": "Mês da auditoria",
         "resultAria": "Resultado",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "Em espera",
         "passed": "Aprovados",
         "missed": "Falhas",
-        "missRate": "Taxa de falhas da análise do Hive",
+        "missRate": "Taxa de falhas de segurança",
         "missRateHint": "falhas ÷ revisados",
         "emptyNoSampleTitle": "Nenhuma amostra para este mês",
         "emptyNoSampleBody": "A amostra é sorteada no dia 1 às 06:00 UTC. Sorteie-a agora se o job não tiver sido executado.",

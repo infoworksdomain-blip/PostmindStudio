@@ -644,6 +644,7 @@
     "review.quality.forceApprove",
     "review.quality.overridden",
     "review.quality.details.safetyScanUnavailable",
+    "review.quality.details.safetyNotScanned",
     "review.quality.details.safetyBlocked",
     "review.quality.details.safetyReview",
     "review.quality.details.safetyPassed",

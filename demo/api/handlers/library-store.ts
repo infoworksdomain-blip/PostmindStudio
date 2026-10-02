@@ -97,7 +97,7 @@ const runs: IngestRun[] = [
       [
         'https://www.tiktok.com/@northernpantry/video/7390',
         'FAILED',
-        'moderation_rejected: Hive flagged alcohol branding',
+        'moderation_rejected: flagged alcohol branding',
         1,
         40,
       ],

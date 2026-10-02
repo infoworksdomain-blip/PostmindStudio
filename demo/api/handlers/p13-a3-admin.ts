@@ -179,15 +179,6 @@ route('GET', '/admin/providers', () => ({
       healthy: true,
     },
     {
-      id: 'hive',
-      configured: true,
-      breaker: 'closed',
-      errorRate1h: 0,
-      jobs1h: { succeeded: 57, failed: 0, running: 0 },
-      spendTodayPence: 85,
-      healthy: true,
-    },
-    {
       id: 'luma',
       configured: true,
       breaker: 'half_open',
