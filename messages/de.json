@@ -1066,10 +1066,20 @@
       "option": "Richtung {number}",
       "use": "Diese Richtung verwenden",
       "useAria": "Richtung {number} verwenden",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, muss eine Richtung wählen oder weitere Details ergänzen."
+    },
+    "needsInput": {
       "editLabel": "Ihr Briefing",
       "editSubmit": "Mit meinen Änderungen generieren",
-      "started": "Generierung gestartet.",
-      "noPermission": "Jemand, der Projekte bearbeiten darf, muss eine Richtung wählen oder weitere Details ergänzen."
+      "started": "Generierung gestartet."
+    },
+    "restricted": {
+      "title": "Eingeschränkte Themen prüfen",
+      "body": "Ihr Briefing berührt Themen, die Ihr Brand Kit oder Unternehmensprofil als eingeschränkt markiert. Fahren Sie trotzdem fort, wenn sie für dieses Video in Ordnung sind, oder bearbeiten Sie das Briefing, um sie wegzulassen.",
+      "topicsAria": "Gefundene eingeschränkte Themen",
+      "continue": "Trotzdem fortfahren",
+      "continueHint": "Das Video wird wie im Briefing erstellt, einschließlich dieser Themen.",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, muss fortfahren oder das Briefing ändern."
     }
   },
   "slideshow": {

@@ -1066,10 +1066,20 @@
       "option": "Direzione {number}",
       "use": "Usa questa direzione",
       "useAria": "Usa la direzione {number}",
+      "noPermission": "Una persona che può modificare i progetti deve scegliere una direzione o aggiungere dettagli."
+    },
+    "needsInput": {
       "editLabel": "Il tuo brief",
       "editSubmit": "Genera con le mie modifiche",
-      "started": "Generazione avviata.",
-      "noPermission": "Una persona che può modificare i progetti deve scegliere una direzione o aggiungere dettagli."
+      "started": "Generazione avviata."
+    },
+    "restricted": {
+      "title": "Controlla gli argomenti riservati",
+      "body": "Il tuo brief tocca argomenti che il brand kit o il profilo aziendale segnano come riservati. Continua comunque se vanno bene per questo video, oppure modifica il brief per toglierli.",
+      "topicsAria": "Argomenti riservati trovati",
+      "continue": "Continua comunque",
+      "continueHint": "Il video viene realizzato secondo il brief, inclusi questi argomenti.",
+      "noPermission": "Una persona che può modificare i progetti deve continuare o cambiare il brief."
     }
   },
   "slideshow": {

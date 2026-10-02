@@ -33,6 +33,8 @@ export const POST = withStudioRoute(
         planTier: run.planTier,
         // 20.18: a direction chosen after ideation found the brief too vague.
         ...(input.directionChosen && { directionChosen: true }),
+        // Spec 13.3: the owner confirmed the restricted topics ideation found.
+        ...(input.confirmRestrictedTopics && { confirmRestrictedTopics: true }),
       },
     );
     return { status: 202, body: { projectId: id, state: 'QUEUED', ...run } };

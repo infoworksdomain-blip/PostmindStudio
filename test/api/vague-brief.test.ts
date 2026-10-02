@@ -189,4 +189,67 @@ describe.skipIf(!hasDb)('vague brief → directions → generate (20.18)', { tim
       403,
     );
   });
+  // Spec 13.3: restricted topics — the same kind of dead end before 20.18.
+  describe('restricted topics → confirm or edit', () => {
+    const FLAGGED = { ...IDEATION_JSON, restrictedTopicsMentioned: ['politics', ' politics '] };
+
+    async function makeRestricted(): Promise<string> {
+      const id = await createProject();
+      options.ideation = FLAGGED;
+      expect((await generate(id, {})).status).toBe(202);
+      await plan();
+      return id;
+    }
+
+    it('exposes the topics on GET /projects/:id while the project waits in DRAFT', async () => {
+      const id = await makeRestricted();
+      const res = await call(projectRoute.GET, { token: 'reader', params: { id } });
+      const project = res.json.project as {
+        state: string;
+        errorReason: string;
+        pendingRestrictedTopics: string[];
+        directionOptions: string[];
+      };
+      expect(project.state).toBe('DRAFT');
+      expect(project.errorReason).toBe('restricted_topics');
+      expect(project.pendingRestrictedTopics).toEqual(['politics']);
+      expect(project.directionOptions).toEqual([]);
+    });
+
+    it('"Continue anyway" (confirmRestrictedTopics) reaches the script stage', async () => {
+      const id = await makeRestricted();
+      expect((await generate(id, { confirmRestrictedTopics: true }, 'reader')).status).toBe(403);
+      const res = await generate(id, { confirmRestrictedTopics: true });
+      expect(res.status).toBe(202);
+      expect(api.audits.at(-1)).toMatchObject({
+        action: 'studio.project.generate',
+        metadata: expect.objectContaining({ confirmRestrictedTopics: true }),
+      });
+      await plan();
+      const after = await db.videoProject.findUniqueOrThrow({
+        where: { id },
+        include: { scripts: true },
+      });
+      expect(after.state).toBe('ASSETS_QUEUED');
+      expect(after.scripts.length).toBeGreaterThan(0);
+      expect(after.metadata).toMatchObject({ restrictedTopicsConfirmed: true });
+      expect((after.metadata as Record<string, unknown>).pendingRestrictedTopics).toBeUndefined();
+      const detail = await call(projectRoute.GET, { token: 'owner', params: { id } });
+      expect(
+        (detail.json.project as { pendingRestrictedTopics: string[] }).pendingRestrictedTopics,
+      ).toEqual([]);
+    });
+
+    it('an edited brief is checked again and, without restricted topics, goes ahead', async () => {
+      const id = await makeRestricted();
+      options.ideation = IDEATION_JSON;
+      const res = await generate(id, { rawInput: 'An autumn offer for members' });
+      expect(res.status).toBe(202);
+      await plan();
+      const after = await db.videoProject.findUniqueOrThrow({ where: { id } });
+      expect(after.description).toBe('An autumn offer for members');
+      expect(after.state).toBe('ASSETS_QUEUED');
+      expect(after.metadata).not.toMatchObject({ restrictedTopicsConfirmed: true });
+    });
+  });
 });

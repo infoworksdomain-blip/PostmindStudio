@@ -1066,10 +1066,20 @@
       "option": "Piste {number}",
       "use": "Utiliser cette piste",
       "useAria": "Utiliser la piste {number}",
+      "noPermission": "Une personne autorisée à modifier les projets doit choisir une piste ou ajouter des détails."
+    },
+    "needsInput": {
       "editLabel": "Votre brief",
       "editSubmit": "Générer avec mes modifications",
-      "started": "Génération lancée.",
-      "noPermission": "Une personne autorisée à modifier les projets doit choisir une piste ou ajouter des détails."
+      "started": "Génération lancée."
+    },
+    "restricted": {
+      "title": "Vérifiez les sujets restreints",
+      "body": "Votre brief aborde des sujets que votre kit de marque ou votre profil d’entreprise marque comme restreints. Continuez quand même s’ils conviennent à cette vidéo, ou modifiez le brief pour les retirer.",
+      "topicsAria": "Sujets restreints trouvés",
+      "continue": "Continuer quand même",
+      "continueHint": "La vidéo est réalisée selon le brief, y compris ces sujets.",
+      "noPermission": "Une personne autorisée à modifier les projets doit continuer ou changer le brief."
     }
   },
   "slideshow": {

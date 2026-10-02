@@ -6,9 +6,11 @@ import { Watcher } from './watcher';
 
 // BACKLOG 20.18 — "video generation is not working" (operator, 2026-10-02): a vague brief ended in
 // DRAFT with nowhere to choose a direction. Through the real UI: the gentle hint on Create, the
-// projects-list reason linking to the project page, and the "choose a direction" panel (use a
-// suggestion, or edit the brief). The projects are seeded through Prisma; no provider is called
-// (with a queue the run is queued and never worked; without one the 502 is part of the scenario).
+// projects-list reason linking to the project page, the "choose a direction" panel (use a
+// suggestion, or edit the brief) and the restricted-topics panel (spec 13.3: continue anyway, or
+// edit the brief), the same dead end before 20.18. The projects are seeded through Prisma; no
+// provider is called (with a queue the run is queued and never worked; without one the 502 is part
+// of the scenario).
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 test.skip(!hasDb, 'DATABASE_URL is not set: the QA specs need the app’s database');
@@ -67,6 +69,45 @@ async function seedVagueProject(name: string): Promise<string> {
   return project.id;
 }
 
+const RESTRICTED_REASON = 'restricted_topics: user confirmation required (spec 13.3)';
+const TOPICS = ['politics', 'elections'];
+const RESTRICTED_BRIEF = 'Election day offer for our members';
+
+async function seedRestrictedProject(name: string): Promise<string> {
+  const project = await db.videoProject.create({
+    data: {
+      organisationId: account.organisationId,
+      businessId: account.businessId,
+      createdByUserId: account.userId,
+      name,
+      description: RESTRICTED_BRIEF,
+      state: 'DRAFT',
+      sourceType: 'BRIEF',
+      targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 15 }],
+      errorReason: RESTRICTED_REASON,
+      metadata: { runId: randomUUID(), pendingRestrictedTopics: TOPICS },
+    },
+  });
+  return project.id;
+}
+
+/** What a panel's generate click must leave behind (started, or rolled back without a queue). */
+interface Outcome {
+  panel: string;
+  sent: string;
+  /** Metadata the started run carries. */
+  started: Record<string, unknown>;
+  /** The brief and metadata a rolled-back click must keep. */
+  kept: { description: string; metadata: Record<string, unknown> };
+}
+
+const directionsOutcome = (sent: string): Outcome => ({
+  panel: 'Choose a direction',
+  sent,
+  started: { directionChosen: true },
+  kept: { description: 'space video', metadata: { directionOptions: DIRECTIONS } },
+});
+
 /** A Watcher with the answers that are normal here: a new business has no website profile yet. */
 function watch(page: Page): Watcher {
   const w = new Watcher(page);
@@ -84,7 +125,7 @@ async function expectGenerateOutcome(
   page: Page,
   w: Watcher,
   id: string,
-  sent: string,
+  outcome: Outcome,
 ): Promise<void> {
   if (queueUp) {
     await expect(page.getByText('Generation started.').first()).toBeVisible();
@@ -92,19 +133,19 @@ async function expectGenerateOutcome(
       .poll(async () => (await db.videoProject.findUniqueOrThrow({ where: { id } })).state)
       .not.toBe('DRAFT');
     const row = await db.videoProject.findUniqueOrThrow({ where: { id } });
-    expect(row.description).toBe(sent);
+    expect(row.description).toBe(outcome.sent);
     expect(row.errorReason).toBeNull();
-    expect(row.metadata).toMatchObject({ directionChosen: true });
+    expect(row.metadata).toMatchObject(outcome.started);
     return;
   }
   w.expect4xx(GENERATE, 502);
-  const panel = page.getByRole('region', { name: 'Choose a direction' });
+  const panel = page.getByRole('region', { name: outcome.panel });
   await expect(panel.getByRole('alert')).toBeVisible();
   const row = await db.videoProject.findUniqueOrThrow({ where: { id } });
   expect(row.state).toBe('DRAFT');
-  // Rolled back: the brief and the suggested directions are still there to choose from.
-  expect(row.description).toBe('space video');
-  expect(row.metadata).toMatchObject({ directionOptions: DIRECTIONS });
+  // Rolled back: the brief and what the panel lists are still there.
+  expect(row.description).toBe(outcome.kept.description);
+  expect(row.metadata).toMatchObject(outcome.kept.metadata);
 }
 
 test.beforeAll(async ({ browser, playwright }) => {
@@ -184,7 +225,7 @@ test('the projects list names the problem and opens the directions panel', async
   await expect(panel.getByTestId('brief-hint')).toBeVisible();
 
   await panel.getByRole('button', { name: 'Use direction 2' }).click();
-  await expectGenerateOutcome(page, w, id, DIRECTIONS[1] as string);
+  await expectGenerateOutcome(page, w, id, directionsOutcome(DIRECTIONS[1] as string));
   await w.check(`/projects/${id} after choosing`);
   report(w);
   await page.context().close();
@@ -203,7 +244,7 @@ test('the brief can be edited and generated from the panel', async ({ browser })
   await box.fill(edited);
   await expect(panel.getByTestId('brief-hint')).toHaveCount(0);
   await panel.getByRole('button', { name: 'Generate with my changes' }).click();
-  await expectGenerateOutcome(page, w, id, edited);
+  await expectGenerateOutcome(page, w, id, directionsOutcome(edited));
   report(w);
   await page.context().close();
 });
@@ -218,6 +259,52 @@ test('the panel fits a 375 px phone without sideways scrolling', async ({ browse
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
   );
   expect(overflow, 'horizontal overflow at 375px').toBe(false);
+  report(w);
+  await page.context().close();
+});
+
+test('restricted topics: the list links to the panel, which lists them; Continue anyway', async ({
+  browser,
+}) => {
+  const id = await seedRestrictedProject(`QA restricted ${run}`);
+  const page = await newPage(browser);
+  const w = watch(page);
+  await w.visit('/projects');
+  const row = page.locator(`a[href="/projects/${id}#restricted-topics"]`);
+  await expect(row).toContainText('The brief touches a restricted topic. Confirm it to continue.');
+  await row.click();
+  await expect(page).toHaveURL(new RegExp(`/projects/${id}#restricted-topics$`));
+  const panel = page.getByRole('region', { name: 'Check the restricted topics' });
+  const topics = panel.getByRole('list', { name: 'Restricted topics found' }).getByRole('listitem');
+  await expect(topics).toHaveText(TOPICS);
+  await expect(panel.getByLabel('Your brief')).toHaveValue(RESTRICTED_BRIEF);
+
+  await panel.getByRole('button', { name: 'Continue anyway' }).click();
+  await expectGenerateOutcome(page, w, id, {
+    panel: 'Check the restricted topics',
+    sent: RESTRICTED_BRIEF,
+    started: { restrictedTopicsConfirmed: true },
+    kept: { description: RESTRICTED_BRIEF, metadata: { pendingRestrictedTopics: TOPICS } },
+  });
+  report(w);
+  await page.context().close();
+});
+
+test('restricted topics: the brief can be edited and generated instead', async ({ browser }) => {
+  const id = await seedRestrictedProject(`QA restricted edit ${run}`);
+  const page = await newPage(browser);
+  const w = watch(page);
+  await w.visit(`/projects/${id}`);
+  const panel = page.getByRole('region', { name: 'Check the restricted topics' });
+  const edited = 'A members-only autumn offer with free delivery this weekend';
+  await panel.getByLabel('Your brief').fill(edited);
+  await panel.getByRole('button', { name: 'Generate with my changes' }).click();
+  await expectGenerateOutcome(page, w, id, {
+    panel: 'Check the restricted topics',
+    sent: edited,
+    started: {},
+    kept: { description: RESTRICTED_BRIEF, metadata: { pendingRestrictedTopics: TOPICS } },
+  });
   report(w);
   await page.context().close();
 });

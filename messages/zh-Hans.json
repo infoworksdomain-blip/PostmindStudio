@@ -1066,10 +1066,20 @@
       "option": "方向 {number}",
       "use": "使用此方向",
       "useAria": "使用方向 {number}",
+      "noPermission": "需要有项目编辑权限的人选择一个方向或补充更多细节。"
+    },
+    "needsInput": {
       "editLabel": "你的简报",
       "editSubmit": "按我的修改生成",
-      "started": "已开始生成。",
-      "noPermission": "需要有项目编辑权限的人选择一个方向或补充更多细节。"
+      "started": "已开始生成。"
+    },
+    "restricted": {
+      "title": "检查受限话题",
+      "body": "你的简报涉及品牌套件或企业资料中标记为受限的话题。如果这些话题适合本视频，可以继续；否则请编辑简报将其删除。",
+      "topicsAria": "发现的受限话题",
+      "continue": "仍然继续",
+      "continueHint": "将按简报制作视频，包括这些话题。",
+      "noPermission": "需要有项目编辑权限的人继续或修改简报。"
     }
   },
   "slideshow": {

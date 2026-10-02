@@ -1066,10 +1066,20 @@
       "option": "Direção {number}",
       "use": "Usar esta direção",
       "useAria": "Usar a direção {number}",
+      "noPermission": "Alguém que possa editar projetos precisa escolher uma direção ou adicionar mais detalhes."
+    },
+    "needsInput": {
       "editLabel": "Seu briefing",
       "editSubmit": "Gerar com minhas alterações",
-      "started": "Geração iniciada.",
-      "noPermission": "Alguém que possa editar projetos precisa escolher uma direção ou adicionar mais detalhes."
+      "started": "Geração iniciada."
+    },
+    "restricted": {
+      "title": "Confira os temas restritos",
+      "body": "Seu briefing toca em temas que seu kit de marca ou perfil da empresa marca como restritos. Continue mesmo assim se eles servirem para este vídeo, ou edite o briefing para tirá-los.",
+      "topicsAria": "Temas restritos encontrados",
+      "continue": "Continuar mesmo assim",
+      "continueHint": "O vídeo é feito conforme o briefing, incluindo esses temas.",
+      "noPermission": "Alguém que possa editar projetos precisa continuar ou mudar o briefing."
     }
   },
   "slideshow": {

@@ -25,6 +25,7 @@ import {
   forceActionable,
   VAGUE_BRIEF_REASON,
 } from '../../pipeline/vague-brief';
+import { pendingTopicsOf, RESTRICTED_TOPICS_REASON } from '../../pipeline/restricted-topics';
 import {
   blocksGeneration,
   buildScriptSafetyPrompt,
@@ -438,12 +439,12 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       runId: data.runId,
       from: ['PLANNING'],
       to: 'DRAFT',
-      data: { errorReason: 'restricted_topics: user confirmation required (spec 13.3)' },
+      data: { errorReason: RESTRICTED_TOPICS_REASON },
     });
     await mergeProjectMetadata(deps.db, {
       projectId: project.id,
       runId: data.runId,
-      patch: { pendingRestrictedTopics: brief.restrictedTopicsMentioned },
+      patch: { pendingRestrictedTopics: pendingTopicsOf(brief.restrictedTopicsMentioned) },
     });
     return log.info(
       { topics: brief.restrictedTopicsMentioned },

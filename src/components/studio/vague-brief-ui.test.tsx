@@ -90,6 +90,12 @@ describe('ProjectsList with a too-vague project', () => {
     createdAt: '2026-10-01T10:00:00.000Z',
   } as Project;
   const other = { ...vague, id: 'prj_ok', name: 'Bread', errorReason: null } as Project;
+  const restricted = {
+    ...vague,
+    id: 'prj_r',
+    name: 'Election offer',
+    errorReason: 'restricted_topics',
+  } as Project;
 
   it('shows the reason and links to the directions panel', async () => {
     mockFetch((req: RecordedRequest) => {
@@ -97,7 +103,7 @@ describe('ProjectsList with a too-vague project', () => {
         return ok({
           me: { capabilities: ['studio:project:read'], user: { platformRole: 'user' } },
         });
-      return ok({ data: [vague, other], nextCursor: null });
+      return ok({ data: [vague, other, restricted], nextCursor: null });
     });
     renderScreen(<ProjectsList />);
     const link = (await screen.findByText('space video')).closest('a');
@@ -108,6 +114,12 @@ describe('ProjectsList with a too-vague project', () => {
     const plain = (await screen.findByText('Bread')).closest('a');
     expect(plain).toHaveAttribute('href', '/projects/prj_ok');
     expect(within(plain as HTMLElement).queryByTestId('project-row-reason')).toBeNull();
+    // Spec 13.3: restricted topics waiting for confirmation link to their own panel.
+    const topics = (await screen.findByText('Election offer')).closest('a');
+    expect(topics).toHaveAttribute('href', '/projects/prj_r#restricted-topics');
+    expect(within(topics as HTMLElement).getByTestId('project-row-reason')).toHaveTextContent(
+      'The brief touches a restricted topic. Confirm it to continue.',
+    );
   });
 });
 

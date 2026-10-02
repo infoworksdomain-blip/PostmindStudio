@@ -2,7 +2,13 @@ import type { PrismaClient, VideoProject } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import type { JobQueue } from '../queue/enqueue';
 import { VAGUE_BRIEF_REASON } from '../pipeline/vague-brief';
-import { generateInput, generateProject, projectDirectionOptions } from './projects';
+import { RESTRICTED_TOPICS_REASON } from '../pipeline/restricted-topics';
+import {
+  generateInput,
+  generateProject,
+  projectDirectionOptions,
+  projectPendingRestrictedTopics,
+} from './projects';
 
 // BACKLOG 20.18 — generate accepts directionChosen and records it for the run; the project detail
 // exposes the suggested directions only while the project waits for a choice.
@@ -46,6 +52,26 @@ describe('projectDirectionOptions (20.18)', () => {
   });
 });
 
+describe('projectPendingRestrictedTopics (20.18, spec 13.3)', () => {
+  const base = {
+    state: 'DRAFT' as const,
+    errorReason: RESTRICTED_TOPICS_REASON,
+    metadata: { pendingRestrictedTopics: ['politics', ' politics ', 'alcohol'] },
+  };
+
+  it('returns the cleaned topics while the project waits for confirmation', () => {
+    expect(projectPendingRestrictedTopics(base)).toEqual(['politics', 'alcohol']);
+  });
+
+  it('returns [] once the project has moved on or waits for something else', () => {
+    expect(projectPendingRestrictedTopics({ ...base, state: 'QUEUED' })).toEqual([]);
+    expect(projectPendingRestrictedTopics({ ...base, errorReason: VAGUE_BRIEF_REASON })).toEqual(
+      [],
+    );
+    expect(projectPendingRestrictedTopics({ ...base, metadata: null })).toEqual([]);
+  });
+});
+
 describe('generateProject metadata (20.18)', () => {
   function fakeDb(project: Partial<VideoProject>) {
     const updateMany = vi.fn(async (_args: { data: { metadata: Record<string, unknown> } }) => ({
@@ -84,6 +110,17 @@ describe('generateProject metadata (20.18)', () => {
     expect(data.metadata.directionChosen).toBe(true);
     expect(data.metadata.directionOptions).toBeUndefined();
     expect(data.metadata.lastBriefVague).toBe(true);
+  });
+
+  it('confirming restricted topics records the confirmation and clears the pending list', async () => {
+    const { db, queue, updateMany } = fakeDb({
+      errorReason: RESTRICTED_TOPICS_REASON,
+      metadata: { runId: 'old', pendingRestrictedTopics: ['politics'] },
+    });
+    await generateProject({ db, queue }, tenant, 'p1', { confirmRestrictedTopics: true });
+    const data = updateMany.mock.calls[0]?.[0].data as { metadata: Record<string, unknown> };
+    expect(data.metadata.restrictedTopicsConfirmed).toBe(true);
+    expect(data.metadata.pendingRestrictedTopics).toBeUndefined();
   });
 
   it('a plain generate does not carry an earlier run’s directionChosen over', async () => {

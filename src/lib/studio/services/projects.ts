@@ -11,6 +11,7 @@ import { ConflictError, NotFoundError, UpstreamServiceError, ValidationError } f
 import type { TenantContext } from '../../tenant';
 import { ACTIVE_PIPELINE_STATES, projectMetadata } from '../pipeline/project-state';
 import { directionOptionsOf, isVagueBriefReason } from '../pipeline/vague-brief';
+import { isRestrictedTopicsReason, pendingTopicsOf } from '../pipeline/restricted-topics';
 import { createPrismaProviderJobRepository } from '../providers/job-repository';
 import type { ProviderRegistry } from '../providers/registry';
 import { cancelTracked } from '../providers/tracked';
@@ -435,7 +436,11 @@ export async function getProjectDetail(db: Db, organisationId: string, id: strin
     },
   });
   if (!project) throw new NotFoundError('Project not found');
-  return { ...project, directionOptions: projectDirectionOptions(project) };
+  return {
+    ...project,
+    directionOptions: projectDirectionOptions(project),
+    pendingRestrictedTopics: projectPendingRestrictedTopics(project),
+  };
 }
 
 /**
@@ -448,6 +453,18 @@ export function projectDirectionOptions(
 ): string[] {
   if (project.state !== 'DRAFT' || !isVagueBriefReason(project.errorReason)) return [];
   return directionOptionsOf(projectMetadata(project.metadata).directionOptions);
+}
+
+/**
+ * 20.18 (spec 13.3): the restricted topics ideation found, while the project waits in DRAFT for
+ * the owner to confirm them or change the brief (empty otherwise). They come from the
+ * organisation's own brand kit / business profile list, so they are shown to customers.
+ */
+export function projectPendingRestrictedTopics(
+  project: Pick<VideoProject, 'state' | 'errorReason' | 'metadata'>,
+): string[] {
+  if (project.state !== 'DRAFT' || !isRestrictedTopicsReason(project.errorReason)) return [];
+  return pendingTopicsOf(projectMetadata(project.metadata).pendingRestrictedTopics);
 }
 
 function storedPlatforms(targetFormats: Prisma.JsonValue): string[] {
@@ -669,6 +686,8 @@ export async function generateProject(
         renders: {},
         ...(input.confirmRestrictedTopics && { restrictedTopicsConfirmed: true }),
         directionOptions: undefined,
+        // 20.18: answered by this run (confirmed, or a new brief that ideation checks again).
+        pendingRestrictedTopics: undefined,
         // 20.18: per run, like preferredProviders (a later plain generate clears it).
         directionChosen: input.directionChosen === true ? true : undefined,
         // Per run: a new generate without preferences clears the previous run's.

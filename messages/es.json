@@ -1066,10 +1066,20 @@
       "option": "Dirección {number}",
       "use": "Usar esta dirección",
       "useAria": "Usar la dirección {number}",
+      "noPermission": "Alguien que pueda editar proyectos debe elegir una dirección o añadir más detalles."
+    },
+    "needsInput": {
       "editLabel": "Tu brief",
       "editSubmit": "Generar con mis cambios",
-      "started": "Generación iniciada.",
-      "noPermission": "Alguien que pueda editar proyectos debe elegir una dirección o añadir más detalles."
+      "started": "Generación iniciada."
+    },
+    "restricted": {
+      "title": "Revisa los temas restringidos",
+      "body": "Tu brief toca temas que tu kit de marca o tu perfil de empresa marcan como restringidos. Continúa de todos modos si son adecuados para este vídeo, o edita el brief para quitarlos.",
+      "topicsAria": "Temas restringidos encontrados",
+      "continue": "Continuar de todos modos",
+      "continueHint": "El vídeo se hace según el brief, incluidos estos temas.",
+      "noPermission": "Alguien que pueda editar proyectos debe continuar o cambiar el brief."
     }
   },
   "slideshow": {

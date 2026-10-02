@@ -1066,10 +1066,20 @@
       "option": "Direction {number}",
       "use": "Use this direction",
       "useAria": "Use direction {number}",
+      "noPermission": "Someone who can edit projects needs to choose a direction or add more detail."
+    },
+    "needsInput": {
       "editLabel": "Your brief",
       "editSubmit": "Generate with my changes",
-      "started": "Generation started.",
-      "noPermission": "Someone who can edit projects needs to choose a direction or add more detail."
+      "started": "Generation started."
+    },
+    "restricted": {
+      "title": "Check the restricted topics",
+      "body": "Your brief touches topics your brand kit or business profile marks as restricted. Continue anyway if they are fine for this video, or edit the brief to leave them out.",
+      "topicsAria": "Restricted topics found",
+      "continue": "Continue anyway",
+      "continueHint": "The video is made as briefed, including these topics.",
+      "noPermission": "Someone who can edit projects needs to continue or change the brief."
     }
   },
   "slideshow": {
