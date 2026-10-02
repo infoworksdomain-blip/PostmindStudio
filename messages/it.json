@@ -43,7 +43,8 @@
       "moreOptions": "Altre opzioni",
       "required": "Obbligatorio"
     },
-    "untitledVideo": "Video senza titolo"
+    "untitledVideo": "Video senza titolo",
+    "briefHint": "È piuttosto breve. Aggiungi a chi è rivolto, cosa dire o l’atmosfera che vuoi, e il risultato sarà migliore. Puoi comunque generare."
   },
   "shell": {
     "nav": {
@@ -1061,6 +1062,28 @@
       "retry": "Riprova",
       "retried": "{count, plural, one {# post programmato.} other {# post programmati.}}",
       "stillNone": "Ancora nessun orario libero: aggiungi orari di pubblicazione o scegli una data."
+    },
+    "directions": {
+      "title": "Scegli una direzione",
+      "body": "La tua richiesta è un po’ troppo vaga per fare un buon video. Scegli una di queste direzioni o aggiungi altri dettagli qui sotto.",
+      "optionsAria": "Direzioni suggerite",
+      "option": "Direzione {number}",
+      "use": "Usa questa direzione",
+      "useAria": "Usa la direzione {number}",
+      "noPermission": "Una persona che può modificare i progetti deve scegliere una direzione o aggiungere dettagli."
+    },
+    "needsInput": {
+      "editLabel": "Il tuo brief",
+      "editSubmit": "Genera con le mie modifiche",
+      "started": "Generazione avviata."
+    },
+    "restricted": {
+      "title": "Controlla gli argomenti riservati",
+      "body": "Il tuo brief tocca argomenti che il brand kit o il profilo aziendale segnano come riservati. Continua comunque se vanno bene per questo video, oppure modifica il brief per toglierli.",
+      "topicsAria": "Argomenti riservati trovati",
+      "continue": "Continua comunque",
+      "continueHint": "Il video viene realizzato secondo il brief, inclusi questi argomenti.",
+      "noPermission": "Una persona che può modificare i progetti deve continuare o cambiare il brief."
     }
   },
   "slideshow": {
@@ -2181,7 +2204,7 @@
       "notFoundTitle": "Riferimento non trovato",
       "notFoundBody": "Potrebbe essere stato ritirato dalla libreria.",
       "loading": "Caricamento del riferimento",
-      "previewAria": "Anteprima senza audio di {title}",
+      "previewAria": "Anteprima di {title}",
       "previewNote": "{minutes, plural, one {Anteprima a bassa risoluzione · il link scade tra # min} other {Anteprima a bassa risoluzione · il link scade tra # min}}",
       "tagsAria": "Tag",
       "facts": {
@@ -4653,6 +4676,10 @@
     "askOwner": "Solo un proprietario dell’organizzazione può modificare il piano o la fatturazione. Chiedi a un proprietario di farlo.",
     "lock": {
       "aria": "Richiede il piano {tier}"
+    },
+    "seatLimit": {
+      "title": "Tutti i posti del tuo piano sono occupati",
+      "body": "Il tuo piano non ha posti liberi per un’altra persona. Passa a un piano superiore o rimuovi prima qualcuno."
     }
   },
   "email": {

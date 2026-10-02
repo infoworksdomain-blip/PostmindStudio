@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { afterAll, describe, expect, it } from 'vitest';
 import { AuditAction } from '../../src/lib/audit-sink';
+import { createOrganisationActive } from '../../src/lib/auth/server-api';
 import {
   createPrismaIdentityStore,
   createStandaloneIdentityProvider,
@@ -19,6 +20,14 @@ import {
   TEST_ORIGIN,
   totpFromUri,
 } from '../helpers/auth-harness';
+
+/** Apply Set-Cookie header lines to a Cookie header value. */
+function cookieJar(previous: string, setCookies: string[]): string {
+  const headers = new Headers();
+  for (const c of setCookies) headers.append('set-cookie', c);
+  const res = new Response(null, { headers });
+  return cookiesFrom(res, previous);
+}
 
 // Phase 18 Track A (§2.3, §5.1–§5.6): Better Auth 1.7.6 over the studio schema, end to end through
 // its HTTP handler. Needs DATABASE_URL (PGlite server or Postgres with migrations applied).
@@ -473,6 +482,29 @@ describe.skipIf(!hasDb)('organisations + standalone identity (DB)', { timeout: 1
     expect(
       h.audits.some((a) => a.action === AuditAction.OrgCreated && a.organisationId === org.id),
     ).toBe(true);
+  });
+
+  it('a second organisation becomes the one the session cookie shows (QA 1)', async () => {
+    // Studio's POST /organisations calls auth.api server-side: the refreshed session cookie must
+    // come back with it, or the 60 s cookie cache keeps showing the previous organisation.
+    let cookies = await signUpVerified(h, h.email('two-orgs'), PASSWORD);
+    const first = await createOrganisationActive(h.auth.api, new Headers({ cookie: cookies }), {
+      name: 'First Bakery',
+      slug: `first-${Date.now()}`,
+      country: 'GB',
+      defaultLocale: 'en-GB',
+    });
+    cookies = cookieJar(cookies, first.setCookies);
+    const second = await createOrganisationActive(h.auth.api, new Headers({ cookie: cookies }), {
+      name: 'Second Bakery',
+      slug: `second-${Date.now()}`,
+      country: 'GB',
+      defaultLocale: 'en-GB',
+    });
+    cookies = cookieJar(cookies, second.setCookies);
+    const session = await h.auth.api.getSession({ headers: new Headers({ cookie: cookies }) });
+    expect(session?.session.activeOrganizationId).toBe(second.organisation.id);
+    expect(second.organisation.id).not.toBe(first.organisation.id);
   });
 
   it('refuses Better Auth organisation deletion (Studio runs its own purge flow)', async () => {

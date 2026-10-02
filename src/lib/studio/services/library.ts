@@ -253,7 +253,7 @@ export async function getLibraryVideo(deps: LibraryReadDeps, id: string) {
     ...cached.view,
     allowedModes: modesNow(cached.licence, nowMs),
     thumbnailUrl: await signThumbnail(deps.storage, bucket, thumbnailKey, nowMs),
-    // Only the low-res muted preview rendition is ever signed for users (A3.10); it stays
+    // Only the low-res preview rendition is ever signed for users (A3.10); it stays
     // short-lived and signed per request.
     previewUrl: await deps.storage.signedUrl(bucket, previewKey(key), PREVIEW_TTL_SEC),
     previewExpiresInSec: PREVIEW_TTL_SEC,

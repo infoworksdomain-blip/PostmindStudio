@@ -18,6 +18,20 @@ describe('page guard (Phase 18 §2.3)', () => {
     expect(signInRedirectPath('//evil.example', '')).toBe('/sign-in?next=%2Fprojects');
   });
 
+  it('sends a failed email-link redirect (/welcome?error=…) to the verify-email page, not a silent sign-in', () => {
+    // Better Auth sends an invalid or expired verification link to <callbackURL>?error=<CODE>.
+    expect(signInRedirectPath('/welcome', '?error=INVALID_TOKEN')).toBe(
+      '/verify-email?error=INVALID_TOKEN',
+    );
+    expect(signInRedirectPath('/welcome', '?error=token_expired')).toBe(
+      '/verify-email?error=token_expired',
+    );
+    expect(signInRedirectPath('/welcome', '')).toBe('/sign-in?next=%2Fwelcome');
+    expect(signInRedirectPath('/projects', '?error=INVALID_TOKEN')).toBe(
+      '/sign-in?next=%2Fprojects%3Ferror%3DINVALID_TOKEN',
+    );
+  });
+
   it('accepts only local paths as next (no open redirect, §5.9)', () => {
     expect(safeNextPath('/library?q=1')).toBe('/library?q=1');
     for (const bad of [

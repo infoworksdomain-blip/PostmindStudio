@@ -47,19 +47,56 @@ describe.skipIf(!hasFfmpeg)('ffmpeg scene detection + frame grabs', { timeout: 6
 
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
+  // BACKLOG 20.17: a source with sound (2 s of colour + a 440 Hz tone).
+  function clipWithSound(): string {
+    const file = join(dir, 'sound.mp4');
+    execFileSync(
+      ffmpeg,
+      [
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'color=c=green:s=360x640:r=30:d=2',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=440:duration=2',
+        '-c:v',
+        'libx264',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-shortest',
+        file,
+      ],
+      { stdio: 'ignore' },
+    );
+    return file;
+  }
+
   it('finds the cut', async () => {
     const cuts = await inspector.sceneChanges(clip, 0.3);
     expect(cuts).toHaveLength(1);
     expect(cuts[0]).toBeCloseTo(2, 0);
   });
 
-  it('renders a low-res muted preview rendition', async () => {
+  it('renders a valid silent low-res preview when the source has no audio', async () => {
     const bytes = await inspector.previewClip(clip, 180, 3);
     const file = join(dir, 'preview.mp4');
     writeFileSync(file, bytes);
     const probe = await inspector.probe(file);
     expect(probe).toMatchObject({ width: 180, height: 320, audioCodec: null, videoCodec: 'h264' });
     expect(probe.durationSec).toBeLessThanOrEqual(3.1);
+  });
+
+  it('keeps the sound as AAC in the preview when the source has audio', async () => {
+    const bytes = await inspector.previewClip(clipWithSound(), 180, 3);
+    const file = join(dir, 'preview-sound.mp4');
+    writeFileSync(file, bytes);
+    const probe = await inspector.probe(file);
+    expect(probe).toMatchObject({ width: 180, height: 320, audioCodec: 'aac', videoCodec: 'h264' });
   });
 
   it('grabs a scaled JPEG frame', async () => {

@@ -1,3 +1,4 @@
+import { invalidateIdentity } from '@/lib/identity';
 import { AuditAction } from '@/lib/audit-sink';
 import { ForbiddenError } from '@/lib/errors';
 import { requirePlatformStaff, StudioCapability } from '@/lib/rbac';
@@ -24,7 +25,7 @@ export const DELETE = withStudioRoute(
         reason: 'target_is_staff',
       });
     await resetUserTwoFactor(deps.db, userId);
-    deps.identity?.invalidate(userId);
+    await invalidateIdentity(userId, deps.identity);
     audit(AuditAction.TwoFactorDisabled, { type: 'user', id: userId }, { reason, byStaff: true });
     return { body: { reset: true } };
   },

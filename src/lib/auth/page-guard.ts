@@ -27,7 +27,17 @@ export function isProtectedPage(pathname: string): boolean {
 }
 
 /** Where to send a signed-out visitor; `next` is always a same-site relative path. */
+// Better Auth sends an invalid or expired email-verification link to <callbackURL>?error=<CODE>, and
+// the sign-up callback is /welcome. A signed-out visitor would be bounced to a bare sign-in page with
+// no hint that the link failed, so that one case goes to the verify-email screen, which explains it
+// and offers a new link.
 export function signInRedirectPath(pathname: string, search: string): string {
+  if (pathname === '/welcome') {
+    const error = new URLSearchParams(search).get('error');
+    if (error && /^[A-Za-z_]{1,40}$/.test(error)) {
+      return `/verify-email?error=${encodeURIComponent(error)}`;
+    }
+  }
   const target = `${pathname}${search}`;
   const safe = target.startsWith('/') && !target.startsWith('//') ? target : '/projects';
   return `/sign-in?next=${encodeURIComponent(safe)}`;

@@ -241,7 +241,11 @@ export function createStandaloneIdentityProvider(deps: StandaloneIdentityDeps): 
       const requestedOrg = headers.get(ORGANISATION_HEADER)?.trim() || undefined;
       // The staff-only context is cached apart: a workspace route must never be served it.
       const scope = options.staffWithoutOrganisation ? 'admin' : '';
-      const key = `${view.session.id}\u0000${requestedOrg ?? ''}\u0000${scope}`;
+      // The session's active organisation is part of the key: switching organisation (or creating
+      // one) changes it on the same session id, and the old organisation must not be served from
+      // the cache for the rest of the 30 s.
+      const active = view.session.activeOrganizationId ?? '';
+      const key = `${view.session.id}\u0000${requestedOrg ?? ''}\u0000${scope}\u0000${active}`;
       const cached = cache.get(key);
       if (cached && cached.expiresAt > now()) return cached.context;
       const context = await build(view, requestedOrg, options);

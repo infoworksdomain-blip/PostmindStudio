@@ -1,3 +1,4 @@
+import { invalidateIdentity } from '@/lib/identity';
 import { AuditAction } from '@/lib/audit-sink';
 import { reauthenticateRequest } from '@/lib/auth/reauth';
 import { studioModes } from '@/lib/mode';
@@ -42,7 +43,16 @@ export const DELETE = withStudioRoute(
     const { confirmName, password } = await parseBody(req, deleteOrganisationInput);
     if ((deps.modes ?? studioModes()).identity === 'standalone')
       await reauthenticateRequest(req, password);
+    const memberUserIds = (
+      await deps.db.member.findMany({
+        where: { organizationId: tenant.organisationId },
+        select: { userId: true },
+      })
+    ).map((m) => m.userId);
     const purge = await deleteOrganisation(deps, tenant, confirmName);
+    // Everyone loses access at once: tenant contexts are cached for 30 s per process, so drop the
+    // members' entries (the store no longer lists a deleted organisation).
+    for (const userId of memberUserIds) await invalidateIdentity(userId, deps.identity);
     audit(
       AuditAction.OrgDeleted,
       { type: 'organisation', id: tenant.organisationId },

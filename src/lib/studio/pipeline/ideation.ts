@@ -15,10 +15,20 @@ import {
 // 20.13: the same call also writes each target platform's caption and hashtag suggestions
 // (socialPosts), so a generated video has its post copy without a second Claude call; the
 // worker fits them to the platform and the hashtag policy (caption-suggestions.ts).
+// 20.18: ideation is decisive. With any topic and a business to anchor it, it picks the best
+// direction itself; actionable=false is kept for empty or meaningless requests, and never when
+// the owner has already chosen a direction (directionChosen) or was just asked to choose.
 
 export interface IdeationContext {
   rawInput: string;
   businessName?: string;
+  /** 20.18: the project's own name (a hint at the topic), when the user gave one. */
+  projectName?: string;
+  /**
+   * 20.18: the owner picked one of the suggested directions or rewrote the brief after being
+   * asked (or was asked on the previous run): the brief must be treated as actionable.
+   */
+  directionChosen?: boolean;
   brand?: {
     toneKeywords: string[];
     audienceProfile?: string | null;
@@ -51,7 +61,8 @@ export const IDEATION_SCHEMA = {
   properties: {
     actionable: {
       type: 'boolean',
-      description: 'false if the input is too vague to produce one clear video',
+      description:
+        'false only if the request is empty or meaningless and the business facts give nothing to build on',
     },
     directionOptions: {
       type: 'array',
@@ -94,14 +105,21 @@ export const IDEATION_SYSTEM_PROMPT = [
   'You are the ideation layer of PostMind Studio, which makes short-form and long-form marketing videos for small businesses.',
   "Turn the business owner's request into ONE concrete video brief.",
   'Be specific: a real hook a viewer would stop for, one key message, a clear audience.',
-  'If the request is too vague to act on, set actionable=false and give exactly three concrete, different directions the owner could choose from.',
+  'Be decisive. Short requests are normal: when the request names any topic (for example "space video" or "social media automation platform"), pick the best direction for this business yourself, using the business facts, known audience and brand tone, and set actionable=true.',
+  'Set actionable=false only when the request is genuinely empty or meaningless (for example "make a video", "hi", or a single generic word) and there are no business facts to build on. Then give exactly three concrete, different directions the owner could choose from, each one sentence.',
+  'If the request says the owner has already chosen a direction, always set actionable=true and return an empty directionOptions list.',
   'Never invent prices, statistics, offers or claims that the request does not contain.',
   'List any restricted topics the brief would touch; do not write the brief around them.',
 ].join('\n');
 
+/** 20.18: added to the request when the owner already chose (or rewrote) the direction. */
+export const DIRECTION_CHOSEN_INSTRUCTION =
+  'The owner has already chosen this direction (from earlier suggestions or by rewriting the request). Do not ask again: set actionable=true, leave directionOptions empty and write the best brief you can from it.';
+
 export function buildIdeationPrompt(ctx: IdeationContext): string {
   const lines = [
     `Business: ${ctx.businessName ?? 'not specified'}`,
+    ...(ctx.projectName ? [`Project name: ${ctx.projectName}`] : []),
     `Target platforms: ${ctx.targetPlatforms.join(', ')}`,
   ];
   if (ctx.brand) {
@@ -118,6 +136,7 @@ export function buildIdeationPrompt(ctx: IdeationContext): string {
   // 15.C5: the brief is written natively in the video's language (keywords and hashtags too).
   lines.push(languageInstruction(ctx.language ?? DEFAULT_LANGUAGE));
   if (ctx.social) lines.push('', ...socialCopyPromptLines(ctx.social));
+  if (ctx.directionChosen) lines.push('', DIRECTION_CHOSEN_INSTRUCTION);
   lines.push('', 'Owner request:', '"""', ctx.rawInput.trim(), '"""');
   return lines.join('\n');
 }

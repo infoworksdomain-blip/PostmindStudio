@@ -43,7 +43,8 @@
       "moreOptions": "Plus d’options",
       "required": "Obligatoire"
     },
-    "untitledVideo": "Vidéo sans titre"
+    "untitledVideo": "Vidéo sans titre",
+    "briefHint": "C’est assez court. Précisez à qui il s’adresse, ce qu’il doit dire ou l’ambiance souhaitée, et le résultat sera meilleur. Vous pouvez quand même générer."
   },
   "shell": {
     "nav": {
@@ -1061,6 +1062,28 @@
       "retry": "Réessayer",
       "retried": "{count, plural, one {# publication programmée.} other {# publications programmées.}}",
       "stillNone": "Toujours aucun créneau libre — ajoutez des heures de publication ou choisissez une date."
+    },
+    "directions": {
+      "title": "Choisissez une piste",
+      "body": "Votre demande est un peu trop vague pour faire une bonne vidéo. Choisissez l’une de ces pistes ou ajoutez des détails ci-dessous.",
+      "optionsAria": "Pistes proposées",
+      "option": "Piste {number}",
+      "use": "Utiliser cette piste",
+      "useAria": "Utiliser la piste {number}",
+      "noPermission": "Une personne autorisée à modifier les projets doit choisir une piste ou ajouter des détails."
+    },
+    "needsInput": {
+      "editLabel": "Votre brief",
+      "editSubmit": "Générer avec mes modifications",
+      "started": "Génération lancée."
+    },
+    "restricted": {
+      "title": "Vérifiez les sujets restreints",
+      "body": "Votre brief aborde des sujets que votre kit de marque ou votre profil d’entreprise marque comme restreints. Continuez quand même s’ils conviennent à cette vidéo, ou modifiez le brief pour les retirer.",
+      "topicsAria": "Sujets restreints trouvés",
+      "continue": "Continuer quand même",
+      "continueHint": "La vidéo est réalisée selon le brief, y compris ces sujets.",
+      "noPermission": "Une personne autorisée à modifier les projets doit continuer ou changer le brief."
     }
   },
   "slideshow": {
@@ -2181,7 +2204,7 @@
       "notFoundTitle": "Référence introuvable",
       "notFoundBody": "Elle a peut-être été retirée de la bibliothèque.",
       "loading": "Chargement de la référence",
-      "previewAria": "Aperçu muet de {title}",
+      "previewAria": "Aperçu de {title}",
       "previewNote": "{minutes, plural, one {Aperçu basse résolution · le lien expire dans # min} other {Aperçu basse résolution · le lien expire dans # min}}",
       "tagsAria": "Tags",
       "facts": {
@@ -4653,6 +4676,10 @@
     "askOwner": "Seul un propriétaire de l’organisation peut modifier la formule ou la facturation. Demandez à un propriétaire de le faire.",
     "lock": {
       "aria": "Nécessite la formule {tier}"
+    },
+    "seatLimit": {
+      "title": "Toutes les places de votre offre sont utilisées",
+      "body": "Votre offre n’a plus de place libre pour une autre personne. Passez à une offre supérieure ou retirez d’abord quelqu’un."
     }
   },
   "email": {
