@@ -23,7 +23,9 @@ import {
 
 /** Apply Set-Cookie header lines to a Cookie header value. */
 function cookieJar(previous: string, setCookies: string[]): string {
-  const res = new Response(null, { headers: setCookies.map((c) => ['set-cookie', c]) });
+  const headers = new Headers();
+  for (const c of setCookies) headers.append('set-cookie', c);
+  const res = new Response(null, { headers });
   return cookiesFrom(res, previous);
 }
 
