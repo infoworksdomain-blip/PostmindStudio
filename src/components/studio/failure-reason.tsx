@@ -125,6 +125,9 @@ export function useDescribeFailure(
           case 'scan_cost_cap':
           case 'scan_images_capped':
             return t(`codes.${p.code}`, { amount: f.pence(params.pence ?? null) });
+          case 'scan_pages_skipped':
+          case 'scan_images_skipped':
+            return t(`codes.${p.code}`, { count: params.count ?? 0 });
           default:
             return t(`codes.${p.code}`);
         }

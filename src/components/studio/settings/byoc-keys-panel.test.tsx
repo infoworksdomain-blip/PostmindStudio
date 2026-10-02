@@ -3,8 +3,26 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ProviderCredentialsResponse } from '@/lib/client/types';
-import { fail, mockFetch, ok, renderScreen } from '../publications/test-utils';
+import {
+  fail,
+  mockFetch as rawMockFetch,
+  ok,
+  renderScreen,
+  type FetchHandler,
+} from '../publications/test-utils';
 import { ByocKeysPanel } from './byoc-keys-panel';
+
+/** The panel asks for provider keys only once /me says the member may manage connections. */
+const withMe =
+  (handler: FetchHandler): FetchHandler =>
+  (req) =>
+    req.url.pathname === '/api/studio/me'
+      ? ok({
+          me: { capabilities: ['studio:connections:manage'], user: { platformRole: 'user' } },
+        })
+      : handler(req);
+
+const mockFetch = (handler: FetchHandler) => rawMockFetch(withMe(handler));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -35,10 +53,28 @@ describe('ByocKeysPanel', () => {
     expect(await screen.findByText(/not switched on/)).toBeInTheDocument();
   });
 
-  it('renders nothing for members without the capability', async () => {
-    const api = mockFetch(() => fail(403, 'Missing capability', 'forbidden'));
+  it('renders nothing, and asks for nothing, for members without the capability', async () => {
+    const api = rawMockFetch((req) =>
+      req.url.pathname === '/api/studio/me'
+        ? ok({ me: { capabilities: ['studio:project:read'], user: { platformRole: 'user' } } })
+        : fail(403, 'Missing capability', 'forbidden'),
+    );
     renderScreen(<ByocKeysPanel />);
-    await waitFor(() => expect(api.fn).toHaveBeenCalled());
+    await waitFor(() => expect(api.find('GET', '/me')).toHaveLength(1));
+    expect(screen.queryByText('Provider keys (BYOC)')).not.toBeInTheDocument();
+    expect(api.find('GET', '/provider-credentials')).toHaveLength(0);
+  });
+
+  it('still hides the panel if the server answers 403 anyway', async () => {
+    const api = rawMockFetch((req) =>
+      req.url.pathname === '/api/studio/me'
+        ? ok({
+            me: { capabilities: ['studio:connections:manage'], user: { platformRole: 'user' } },
+          })
+        : fail(403, 'Missing capability', 'forbidden'),
+    );
+    renderScreen(<ByocKeysPanel />);
+    await waitFor(() => expect(api.find('GET', '/provider-credentials')).toHaveLength(1));
     await waitFor(() => expect(screen.queryByText('Provider keys (BYOC)')).not.toBeInTheDocument());
   });
 
