@@ -67,6 +67,13 @@ async function seedVagueProject(name: string): Promise<string> {
   return project.id;
 }
 
+/** A Watcher with the answers that are normal here: a new business has no website profile yet. */
+function watch(page: Page): Watcher {
+  const w = new Watcher(page);
+  w.expect4xx(/\/api\/studio\/businesses\/[^/]+\/business-profile$/, 404);
+  return w;
+}
+
 function report(w: Watcher): void {
   if (w.issues.length) process.stdout.write(`QA ISSUES\n${JSON.stringify(w.issues, null, 2)}\n`);
   expect(w.issues).toEqual([]);
@@ -126,7 +133,7 @@ test.afterAll(async () => {
 
 test('Create shows a gentle hint for a short brief and still generates', async ({ browser }) => {
   const page = await newPage(browser);
-  const w = new Watcher(page);
+  const w = watch(page);
   if (!queueUp) w.expect4xx(GENERATE, 502);
   await w.visit('/new');
   const brief = page.locator('#create-brief');
@@ -157,7 +164,7 @@ test('Create shows a gentle hint for a short brief and still generates', async (
 test('the projects list names the problem and opens the directions panel', async ({ browser }) => {
   const id = await seedVagueProject(`QA vague list ${run}`);
   const page = await newPage(browser);
-  const w = new Watcher(page);
+  const w = watch(page);
   await w.visit('/projects');
   const row = page.locator(`a[href="/projects/${id}#directions"]`);
   await expect(row).toContainText(
@@ -186,7 +193,7 @@ test('the projects list names the problem and opens the directions panel', async
 test('the brief can be edited and generated from the panel', async ({ browser }) => {
   const id = await seedVagueProject(`QA vague edit ${run}`);
   const page = await newPage(browser);
-  const w = new Watcher(page);
+  const w = watch(page);
   await w.visit(`/projects/${id}`);
   const panel = page.getByRole('region', { name: 'Choose a direction' });
   const box = panel.getByLabel('Your brief');
@@ -204,7 +211,7 @@ test('the brief can be edited and generated from the panel', async ({ browser })
 test('the panel fits a 375 px phone without sideways scrolling', async ({ browser }) => {
   const id = await seedVagueProject(`QA vague mobile ${run}`);
   const page = await newPage(browser, 375);
-  const w = new Watcher(page);
+  const w = watch(page);
   await w.visit(`/projects/${id}`);
   await expect(page.getByRole('region', { name: 'Choose a direction' })).toBeVisible();
   const overflow = await page.evaluate(
