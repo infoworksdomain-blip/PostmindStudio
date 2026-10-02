@@ -65,7 +65,7 @@ Every video goes through the same 9 layers. Do not shortcut them.
 5. **Music + SFX** — Suno (primary), MusicGen (fallback), Storyblocks (library)
 6. **Composition** — Shotstack (primary), Creatomate (fallback)
 7. **Multi-format render** — one project → outputs for TikTok, Reels, Shorts, LinkedIn, etc.
-8. **Quality gate + review** — automated checks + Hive content safety + user approval
+8. **Quality gate + review** — automated checks + user approval (content safety is "Not scanned": Hive was removed in 20.21, operator decision 2026-10-02; no content-safety provider is used)
 9. **Publish + track** — per-platform publisher + analytics polling
 
 Each layer maps to specific service files under `src/lib/studio/`. See the spec's Section 5 for layer detail.
@@ -133,7 +133,7 @@ The operator has confirmed all external accounts and API approvals are in place:
 - YouTube Data API quota increase — approved
 - LinkedIn Marketing Developer Platform — approved
 - X API (Basic tier) — active
-- All AI provider accounts (Runway, Luma, HeyGen, ElevenLabs, Suno, Shotstack, AssemblyAI, OpenAI, Anthropic, Hive) — active
+- All AI provider accounts (Runway, Luma, HeyGen, ElevenLabs, Suno, Shotstack, AssemblyAI, OpenAI, Anthropic) — active (Hive is no longer used, 20.21)
 
 Credentials will be in `.env.local` (you don't have write access to it; the operator populates it). `.env.example` documents every variable and where to get it.
 

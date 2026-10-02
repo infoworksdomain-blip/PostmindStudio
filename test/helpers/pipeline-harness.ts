@@ -182,7 +182,6 @@ export interface HarnessOptions {
   runwayRespond?: (request: ProviderRequest) => ProviderPollResult;
   probe?: Partial<MediaProbe>;
   loudness?: number | null;
-  hiveMaxScores?: Record<string, number>;
   profile?: unknown;
   metrics?: MetricsRegistry;
   analysis?: unknown;
@@ -249,17 +248,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     }),
     30,
   );
-  const hive = new ScriptedAdapter('hive', ['content_safety'], () => ({
-    state: 'succeeded',
-    output: {
-      metadata: {
-        framesAnalysed: 15,
-        maxScores: options.hiveMaxScores ?? { general_nsfw: 0.01 },
-        flaggedFrames: [],
-        costPence: 1,
-      },
-    },
-  }));
+  // 20.21: no content-safety adapter (Hive removed; none is built), as in production.
 
   const { storage, objects } = memoryStorage();
   const assemblyai = new ScriptedAdapter('assemblyai', ['transcription'], () => ({
@@ -360,7 +349,6 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       runway,
       elevenlabs,
       shotstack,
-      hive,
       openai,
       ...(options.noTranscription ? [] : [assemblyai]),
     ]),
@@ -420,7 +408,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     attributions,
     oauthClients,
     meta,
-    adapters: { anthropic, runway, elevenlabs, shotstack, hive, openai, assemblyai },
+    adapters: { anthropic, runway, elevenlabs, shotstack, openai, assemblyai },
     objects,
     media,
     fetchImpl,

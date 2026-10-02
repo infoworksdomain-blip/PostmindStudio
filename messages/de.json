@@ -416,7 +416,7 @@
       "body": "Hinweis von Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Trust-&-Safety-Audit: Hive-Scan hat etwas übersehen",
+      "title": "Trust-&-Safety-Audit: Sicherheitsprüfung hat etwas übersehen",
       "body": "Ein veröffentlichtes {platform}-Video (Organisation {organisationId}, Veröffentlichung {publicationId}) hat das Audit {period} nicht bestanden: {note}. Folgen Sie runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "Qualitätsprüfung übergangen.",
       "details": {
         "safetyScanUnavailable": "Die Prüfung konnte nicht laufen: {reason}",
+        "safetyNotScanned": "Nicht geprüft: Es ist keine Inhaltssicherheitsprüfung eingerichtet.",
         "safetyBlocked": "Blockiert: {classes}",
         "safetyReview": "Prüfung nötig: {classes}",
         "safetyPassed": "{count, plural, one {# Bild geprüft, nichts markiert.} other {# Bilder geprüft, nichts markiert.}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "„{note}“",
       "review": {
         "title": "Prüfung der Inhaltssicherheit",
-        "description": "Läufe, die durch ein REVIEW-Urteil der Skriptsicherheit oder eine Hive-Markierung auf Prüfstufe angehalten wurden (Spez. 13.2 / 16.4). Ergebnisse auf Sperrstufe gelangen nie in diese Warteschlange.",
+        "description": "Läufe, die durch ein REVIEW-Urteil der Skriptsicherheit oder eine Inhaltssicherheits-Markierung auf Prüfstufe angehalten wurden (Spez. 13.2 / 16.4). Ergebnisse auf Sperrstufe gelangen nie in diese Warteschlange.",
         "showAria": "Prüfungen anzeigen",
         "filterWaiting": "Wartend",
         "filterWaitingCount": "Wartend ({count})",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Monatliches Trust-&-Safety-Audit",
-        "description": "Eine Zufallsstichprobe der im letzten Monat veröffentlichten Videos, von einer Person erneut geprüft. Ein Fehlgriff ist ein Video, das der Hive-Scan hätte sperren oder zur Prüfung senden müssen.",
+        "description": "Eine Zufallsstichprobe der im letzten Monat veröffentlichten Videos, von einer Person erneut geprüft. Ein Fehlgriff ist ein Video, das hätte gesperrt oder zur Prüfung gesendet werden müssen.",
         "monthAria": "Audit-Monat",
         "resultAria": "Ergebnis",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "Wartend",
         "passed": "Bestanden",
         "missed": "Fehlgriffe",
-        "missRate": "Fehlgriffquote des Hive-Scans",
+        "missRate": "Fehlgriffquote der Sicherheitsprüfung",
         "missRateHint": "Fehlgriffe ÷ geprüft",
         "emptyNoSampleTitle": "Keine Stichprobe für diesen Monat",
         "emptyNoSampleBody": "Die Stichprobe wird am 1. um 06:00 UTC gezogen. Ziehen Sie sie jetzt, falls der Job nicht gelaufen ist.",

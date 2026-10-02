@@ -416,7 +416,7 @@
       "body": "Nota de Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Auditoría de Trust & Safety: fallo de detección de Hive",
+      "title": "Auditoría de Trust & Safety: fallo de seguridad",
       "body": "Un vídeo publicado en {platform} (organización {organisationId}, publicación {publicationId}) no superó la auditoría de {period}: {note}. Sigue runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "Control de calidad anulado.",
       "details": {
         "safetyScanUnavailable": "No se pudo ejecutar el análisis: {reason}",
+        "safetyNotScanned": "Sin analizar: no hay ningún análisis de seguridad del contenido configurado.",
         "safetyBlocked": "Bloqueado: {classes}",
         "safetyReview": "Requiere revisión: {classes}",
         "safetyPassed": "{count, plural, one {# fotograma analizado, nada marcado.} many {# de fotogramas analizados, nada marcado.} other {# fotogramas analizados, nada marcado.}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "«{note}»",
       "review": {
         "title": "Revisión de seguridad del contenido",
-        "description": "Ejecuciones en pausa por un veredicto REVIEW de seguridad del guion o una alerta de Hive de nivel revisión (espec. 13.2 / 16.4). Los resultados de nivel bloqueo nunca llegan a esta cola.",
+        "description": "Ejecuciones en pausa por un veredicto REVIEW de seguridad del guion o una alerta de seguridad del contenido de nivel revisión (espec. 13.2 / 16.4). Los resultados de nivel bloqueo nunca llegan a esta cola.",
         "showAria": "Mostrar revisiones",
         "filterWaiting": "En espera",
         "filterWaitingCount": "En espera ({count})",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Auditoría mensual de Trust & Safety",
-        "description": "Una muestra aleatoria de los vídeos publicados el mes pasado, revisados de nuevo por una persona. Un fallo es un vídeo que el análisis de Hive debería haber bloqueado o enviado a revisión.",
+        "description": "Una muestra aleatoria de los vídeos publicados el mes pasado, revisados de nuevo por una persona. Un fallo es un vídeo que debería haberse bloqueado o enviado a revisión.",
         "monthAria": "Mes de la auditoría",
         "resultAria": "Resultado",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "En espera",
         "passed": "Aprobados",
         "missed": "Fallos",
-        "missRate": "Tasa de fallos del análisis de Hive",
+        "missRate": "Tasa de fallos de seguridad",
         "missRateHint": "fallos ÷ revisados",
         "emptyNoSampleTitle": "No hay muestra para este mes",
         "emptyNoSampleBody": "La muestra se extrae el día 1 a las 06:00 UTC. Extráela ahora si el trabajo no se ejecutó.",

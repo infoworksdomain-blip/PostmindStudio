@@ -27,7 +27,7 @@ import {
 
 // Phase 12 (spec 12.5 / 14.4) — cost caps and alerting end to end: real routes, real workers on
 // the inline queue, real Postgres, scripted providers (planning 1p per Claude call, Runway 45p a
-// clip, ElevenLabs 1p a line, Shotstack 30p, Hive 1p: ~127p for the harness's 3-shot brief).
+// clip, ElevenLabs 1p a line, Shotstack 30p: ~126p for the harness's 3-shot brief).
 //
 //   CC-01  A project pauses at 90% of its budget with a notification, then continues after the
 //          budget is raised (PATCH /projects/:id) and the project is regenerated.

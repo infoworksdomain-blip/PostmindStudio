@@ -5,6 +5,7 @@ import {
   formatPence,
   LIVE_PROVIDER_TESTS,
   liveSections,
+  MANUAL_FOLLOW_UPS,
   missingEnv,
   postTargets,
   testPostOptions,
@@ -26,7 +27,6 @@ describe('LIVE_PROVIDER_TESTS', () => {
       'elevenlabs-music',
       'elevenlabs-voice',
       'shotstack',
-      'hive',
       'assemblyai',
       'openai-image',
       'anthropic',
@@ -38,7 +38,7 @@ describe('LIVE_PROVIDER_TESTS', () => {
 
   it('runs the existing GATE 2 scripts where one exists', () => {
     expect(byId('runway')).toMatchObject({ kind: 'script', npmScript: 'gate2:runway' });
-    expect(byId('hive')?.kind).toBe('adapter');
+    expect(byId('assemblyai')?.kind).toBe('adapter');
   });
 
   it('builds requests from env (mirroring the scripts for the estimate)', () => {
@@ -47,27 +47,23 @@ describe('LIVE_PROVIDER_TESTS', () => {
       HEYGEN_TEST_AUDIO_SEC: '12',
     });
     expect(heygen).toMatchObject({ capability: 'avatar_video', durationSec: 12 });
-    const hive = byId('hive')?.request?.({
+    const assemblyai = byId('assemblyai')?.request?.({
       LIVE_TEST_MEDIA_URL: 'https://x/v.mp4',
-      LIVE_TEST_MEDIA_SEC: '300',
+      LIVE_TEST_MEDIA_SEC: '30',
     });
-    // The live Hive test stays on the synchronous path.
-    expect(hive).toMatchObject({ capability: 'content_safety', durationSec: 90 });
+    expect(assemblyai).toMatchObject({ capability: 'transcription', durationSec: 30 });
   });
 
   it('reports missing env', () => {
-    const hive = byId('hive');
-    expect(hive && missingEnv(hive, { HIVE_API_KEY: 'k' })).toEqual(['LIVE_TEST_MEDIA_URL']);
+    const assemblyai = byId('assemblyai');
+    expect(assemblyai && missingEnv(assemblyai, { ASSEMBLYAI_API_KEY: 'k' })).toEqual([
+      'LIVE_TEST_MEDIA_URL',
+    ]);
   });
 
-  it('20.6: Hive runs with a V2 or a V3 key, and V3 stays within one 60 s request', () => {
-    const hive = byId('hive');
-    const media = { LIVE_TEST_MEDIA_URL: 'https://x/v.mp4' };
-    expect(hive && missingEnv(hive, { ...media, HIVE_V3_SECRET_KEY: 'k' })).toEqual([]);
-    expect(hive && missingEnv(hive, media)).toEqual(['HIVE_API_KEY or HIVE_V3_SECRET_KEY']);
-    expect(
-      hive?.request?.({ ...media, LIVE_TEST_MEDIA_SEC: '300', HIVE_V3_SECRET_KEY: 'k' }),
-    ).toMatchObject({ durationSec: 60 });
+  it('20.21: has no Hive or other content-safety test (no provider is used)', () => {
+    expect(LIVE_PROVIDER_TESTS.filter((t) => /hive/i.test(`${t.id} ${t.providerId}`))).toEqual([]);
+    expect(MANUAL_FOLLOW_UPS.join(' ')).not.toMatch(/hive/i);
   });
 
   it('asks for the storage settings of STORAGE_PROVIDER (S3 or R2) for storage tests', () => {
@@ -108,7 +104,7 @@ describe('estimateLines', () => {
         skipReason: 'missing HEYGEN_API_KEY',
         estimatePence: null,
       },
-      { test: byId('hive') as PlannedTest['test'], estimatePence: null },
+      { test: byId('assemblyai') as PlannedTest['test'], estimatePence: null },
     ];
     const [tiktok, youtube] = postTargets();
     const text = estimateLines(tests, [
@@ -119,7 +115,7 @@ describe('estimateLines', () => {
         takedownSupported: true,
       },
     ]).join('\n');
-    expect(text).toContain('Total: ~£1.67 plus hive (no estimate)');
+    expect(text).toContain('Total: ~£1.67 plus assemblyai (no estimate)');
     expect(text).toContain('heygen: SKIPPED (missing HEYGEN_API_KEY)');
     expect(text).toContain('tiktok: post + MANUAL removal');
     expect(formatPence(5)).toBe('£0.05');

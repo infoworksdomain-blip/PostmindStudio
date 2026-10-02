@@ -134,13 +134,13 @@ must be inside its range ±15%.
 provider adapter's own read-only `healthCheck()` with a STAGING key
 (`src/lib/studio/providers/canary.ts`, `test/canary/providers.canary.ts`). Every `Deprecation`
 (RFC 9745), `Sunset` (RFC 8594) or `Link rel="deprecation"` header seen becomes a `::warning`
-annotation; the platform job logs the same headers from the platform APIs. Hive has no unbilled
-endpoint, so it is reported "not probed".
+annotation; the platform job logs the same headers from the platform APIs. An adapter with no
+unbilled endpoint would be reported "not probed" (none today; Hive was removed in 20.21).
 
 Secrets (repository → Settings → Secrets): `CANARY_ANTHROPIC_API_KEY`, `CANARY_OPENAI_API_KEY`,
 `CANARY_RUNWAY_API_KEY`, `CANARY_LUMA_API_KEY`, `CANARY_GOOGLE_GEMINI_API_KEY`, `CANARY_HEYGEN_API_KEY` + `CANARY_HEYGEN_AVATAR_ID`,
 `CANARY_ELEVENLABS_API_KEY`, `CANARY_SHOTSTACK_API_KEY` (Shotstack stage key),
-`CANARY_HIVE_API_KEY`, `CANARY_ASSEMBLYAI_API_KEY`, `CANARY_STORYBLOCKS_PUBLIC_KEY` +
+`CANARY_ASSEMBLYAI_API_KEY`, `CANARY_STORYBLOCKS_PUBLIC_KEY` +
 `CANARY_STORYBLOCKS_PRIVATE_KEY`. Providers without secrets are skipped.
 
 When a deprecation warning appears: read the provider's changelog at the `Link` target, open a

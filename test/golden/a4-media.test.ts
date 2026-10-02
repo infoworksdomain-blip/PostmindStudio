@@ -1,21 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import * as hiveRoute from '../../src/app/api/studio/webhooks/hive/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
 import type { RenderMastering } from '../../src/lib/studio/pipeline/mastering';
-import { HiveAdapter } from '../../src/lib/studio/providers/hive';
-import { createHiveResultReader } from '../../src/lib/studio/providers/hive-results';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
 import { StoryblocksAudioAdapter } from '../../src/lib/studio/providers/storyblocks-audio';
-import { call } from '../helpers/api-harness';
 import {
   briefBody,
   cleanupGolden,
   createProject,
-  drain,
   generate,
   getProject,
-  ORG_PREFIX,
   rendersOf,
   startJourney,
   type Journey,
@@ -23,12 +17,8 @@ import {
 
 // Phase 13 track A4 journeys, through the real routes and workers:
 //   A4-01  4-minute YouTube video: Layer 2 SFX cues → Storyblocks clips under the narration →
-//          quiet render mastered to −14 LUFS → Hive async moderation (callback via
-//          POST /webhooks/hive) → READY_FOR_REVIEW (long-form reaches review)
-//   A4-02  Hive never calls back → the timeout fails the content-safety check closed
-//   A4-03  No public callback URL → long renders fail closed, as before
-//   A4-04  20.6 Hive V3 (self-serve): no callback needed; the 4-minute render is checked as
-//          HIVE_V3_MAX_FRAMES sampled frames, one V3 request each → READY_FOR_REVIEW
+//          quiet render mastered to −14 LUFS → content safety "Not scanned" (20.21: Hive removed,
+//          no provider, no async callback) → READY_FOR_REVIEW (long-form reaches review)
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const LONG_SEC = 240;
@@ -51,39 +41,7 @@ const LONG_SCRIPT = {
   })),
 };
 
-const hiveTaskBody = (id: string) => ({
-  id,
-  project_id: 1,
-  status: [
-    {
-      status: { code: '0', message: 'SUCCESS' },
-      response: {
-        output: [0, 1, 2].map((time) => ({
-          time,
-          classes: [
-            { class: 'general_nsfw', score: 0.01 },
-            { class: 'no_blood', score: 0.99 },
-          ],
-        })),
-      },
-    },
-  ],
-});
-
-function wireA4(j: Journey, options: { callbackBase?: string; timeoutMs?: number } = {}) {
-  const hiveFetch = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
-    Response.json({
-      id: `hive-${j.org}`,
-      task_id: `hive-${j.org}`,
-      message: 'We received your task.',
-    }),
-  );
-  const hive = new HiveAdapter({
-    apiKey: 'hv',
-    usdToGbpRate: 0.75,
-    fetchImpl: hiveFetch as unknown as typeof fetch,
-    asyncResults: createHiveResultReader(async () => j.db),
-  });
+function wireA4(j: Journey) {
   const sfxFetch = vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
     if (url.includes('/api/v2/audio/search')) {
@@ -112,13 +70,7 @@ function wireA4(j: Journey, options: { callbackBase?: string; timeoutMs?: number
     bucket: 'assets',
     fetchImpl: sfxFetch as unknown as typeof fetch,
   });
-  j.h.deps.registry = createProviderRegistry([
-    ...j.h.deps.registry.list().filter((a) => a.providerId !== 'hive'),
-    hive,
-    sfx,
-  ]);
-  j.h.deps.config.hiveCallbackBaseUrl = options.callbackBase;
-  j.h.deps.config.hiveAsyncTimeoutMs = options.timeoutMs;
+  j.h.deps.registry = createProviderRegistry([...j.h.deps.registry.list(), sfx]);
   // The composed render is quiet; the mastered copy measures −14 LUFS.
   vi.mocked(j.h.media.integratedLoudness).mockImplementation(async (url: string) =>
     url.includes('/providers/mastered/') ? -14 : -25,
@@ -134,7 +86,7 @@ function wireA4(j: Journey, options: { callbackBase?: string; timeoutMs?: number
     master: vi.fn(async () => new Uint8Array([1, 2, 3, 4])),
   };
   j.h.deps.mastering = mastering;
-  return { hiveFetch, sfxFetch, mastering };
+  return { sfxFetch, mastering };
 }
 
 const longJourney = (db: PrismaClient, id: string) =>
@@ -154,30 +106,19 @@ describe.skipIf(!hasDb)('A4 media journeys', { timeout: 180_000 }, () => {
 
   afterAll(async () => {
     setApiDeps(undefined);
-    await db.contentSafetyTask.deleteMany({
-      where: { organisationId: { startsWith: ORG_PREFIX } },
-    });
     await cleanupGolden(db, since);
     await db.$disconnect();
   }, 120_000);
 
-  it('A4-01 long-form: SFX, mastering and Hive async moderation → ready for review', async () => {
+  it('A4-01 long-form: SFX, mastering, not scanned → ready for review', async () => {
     const j = longJourney(db, 'a401');
-    const { hiveFetch, sfxFetch, mastering } = wireA4(j, { callbackBase: 'https://studio.test' });
+    const { sfxFetch, mastering } = wireA4(j);
     const id = await createProject(j, longBrief());
 
-    // Generation stops at the quality gate, waiting for Hive.
-    expect((await generate(j, id)).state).toBe('QUALITY_CHECKING');
-    const task = await db.contentSafetyTask.findFirstOrThrow({ where: { projectId: id } });
-    expect(task).toMatchObject({ state: 'SUBMITTED', providerTaskId: `hive-${j.org}` });
-    expect(String(hiveFetch.mock.calls[0]?.[0])).toBe('https://api.thehive.ai/api/v2/task/async');
-    const form = hiveFetch.mock.calls[0]?.[1]?.body as FormData;
-    const callbackUrl = new URL(String(form.get('callback_url')));
-    expect(callbackUrl.origin + callbackUrl.pathname).toBe(
-      'https://studio.test/api/studio/webhooks/hive',
-    );
-    const token = callbackUrl.searchParams.get('token') ?? '';
-    expect(task.callbackTokenHash).not.toContain(token);
+    // 20.21: no content-safety provider, so nothing waits for a scan or a callback.
+    expect((await generate(j, id)).state).toBe('READY_FOR_REVIEW');
+    expect(await db.contentSafetyTask.count({ where: { projectId: id } })).toBe(0);
+    expect(await db.safetyReview.count({ where: { projectId: id } })).toBe(0);
 
     // SFX: two distinct cues fetched once each, laid at the start of their shots.
     expect(sfxFetch.mock.calls.filter(([u]) => String(u).includes('/audio/search'))).toHaveLength(
@@ -214,107 +155,12 @@ describe.skipIf(!hasDb)('A4 media journeys', { timeout: 180_000 }, () => {
       loudnessBeforeLufs: -25,
     });
 
-    // Hive calls back → the gate resumes → review.
-    const res = await call(hiveRoute.POST, {
-      method: 'POST',
-      path: `/api/studio/webhooks/hive?token=${token}`,
-      body: hiveTaskBody(`hive-${j.org}`),
-    });
-    expect(res.status).toBe(200);
-    await drain(j);
-    expect((await getProject(j, id)).state).toBe('READY_FOR_REVIEW');
-    const settled = await db.contentSafetyTask.findUniqueOrThrow({ where: { id: task.id } });
-    expect(settled.state).toBe('SETTLED');
-    const hiveJob = await db.providerJob.findFirstOrThrow({
-      where: { projectId: id, provider: 'hive' },
-    });
-    expect(hiveJob).toMatchObject({ state: 'SUCCEEDED', costPence: 1 });
     const checked = await db.videoRender.findUniqueOrThrow({ where: { id: render?.id ?? '' } });
     expect(checked.qualityCheckState).toBe('PASSED');
     expect(checked.qualityIssues).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ code: 'content_safety', status: 'passed' }),
+        expect.objectContaining({ code: 'content_safety', status: 'not_run' }),
         expect.objectContaining({ code: 'audio_present', status: 'passed' }),
-      ]),
-    );
-  });
-
-  it('A4-02 no callback within the timeout → content safety fails closed', async () => {
-    const j = longJourney(db, 'a402');
-    wireA4(j, { callbackBase: 'https://studio.test', timeoutMs: 1 });
-    const id = await createProject(j, longBrief());
-    const project = await generate(j, id);
-    expect(project.state).toBe('QUALITY_FAILED');
-    expect(project.errorReason).toContain('content_safety_block');
-    // The customer's API view carries the code only; the stored text names the cause.
-    const stored = await db.videoProject.findUniqueOrThrow({ where: { id } });
-    expect(stored.errorReason).toContain('no moderation callback');
-    const task = await db.contentSafetyTask.findFirstOrThrow({ where: { projectId: id } });
-    expect(task.state).toBe('EXPIRED');
-    const hiveJob = await db.providerJob.findFirstOrThrow({
-      where: { projectId: id, provider: 'hive' },
-    });
-    expect(hiveJob).toMatchObject({ state: 'CANCELLED', costPence: 0 });
-  });
-
-  it('A4-03 no public callback URL → long renders fail closed without calling Hive', async () => {
-    const j = longJourney(db, 'a403');
-    const { hiveFetch } = wireA4(j);
-    const id = await createProject(j, longBrief());
-    const project = await generate(j, id);
-    expect(project.state).toBe('QUALITY_FAILED');
-    const stored = await db.videoProject.findUniqueOrThrow({ where: { id } });
-    expect(stored.errorReason).toContain('STUDIO_PUBLIC_CALLBACK_BASE_URL');
-    expect(hiveFetch).not.toHaveBeenCalled();
-  });
-
-  it('A4-04 Hive V3: long render checked as sampled frames, no callback → ready for review', async () => {
-    const j = longJourney(db, 'a404');
-    wireA4(j);
-    const v3Fetch = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
-      Response.json({
-        task_id: 't',
-        model: 'hive/visual-moderation',
-        version: '1',
-        output: [
-          {
-            extra: [],
-            classes: [
-              { class_name: 'general_nsfw', value: 0.01 },
-              { class_name: 'no_gun', value: 0.99 },
-            ],
-          },
-        ],
-      }),
-    );
-    const frameJpeg = vi.fn(async () => new Uint8Array([0xff, 0xd8, 0xff]));
-    const hive = new HiveAdapter({
-      apiKey: 'v3-secret',
-      apiVersion: 'v3',
-      maxFrames: 4,
-      frameJpeg,
-      usdToGbpRate: 0.75,
-      fetchImpl: v3Fetch as unknown as typeof fetch,
-    });
-    j.h.deps.registry = createProviderRegistry([
-      ...j.h.deps.registry.list().filter((a) => a.providerId !== 'hive'),
-      hive,
-    ]);
-    j.h.deps.config.hiveApiVersion = 'v3';
-    const id = await createProject(j, longBrief());
-
-    expect((await generate(j, id)).state).toBe('READY_FOR_REVIEW');
-    expect(await db.contentSafetyTask.count({ where: { projectId: id } })).toBe(0);
-    expect(v3Fetch).toHaveBeenCalledTimes(4);
-    expect(String(v3Fetch.mock.calls[0]?.[0])).toBe(
-      'https://api.thehive.ai/api/v3/hive/visual-moderation',
-    );
-    expect(frameJpeg.mock.calls.map((c) => (c as unknown[])[1])).toEqual([30, 90, 150, 210]);
-    const [render] = await rendersOf(j, id);
-    const checked = await db.videoRender.findUniqueOrThrow({ where: { id: render?.id ?? '' } });
-    expect(checked.qualityIssues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: 'content_safety', status: 'passed' }),
       ]),
     );
   });

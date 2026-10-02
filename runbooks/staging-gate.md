@@ -51,7 +51,7 @@ Run the checks in this order. Each step says who runs it.
 `estimateCostPence`. Nothing is spent. Add `--confirm` to run the plan:
 
 - Every GATE 2 script: `npm run gate2:anthropic|runway|luma|heygen|elevenlabs|shotstack|router`.
-- Adapter tests for the providers that have no script: ElevenLabs Music, Hive (synchronous),
+- Adapter tests for the providers that have no script: ElevenLabs Music,
   AssemblyAI, OpenAI image and embedding, and Storyblocks SFX. These run through the same tracked
   harness, so rows appear in `provider_jobs`.
 - ElevenLabs Instant Voice Clone from `LIVE_TEST_VOICE_SAMPLE_PATH`, deleted straight away. Use a
@@ -65,10 +65,8 @@ Run the checks in this order. Each step says who runs it.
 `--only runway,tiktok` narrows the run. `--no-posts` and `--no-providers` skip one half. Tests
 whose env is missing are listed as SKIPPED, and the verdict is then INCOMPLETE.
 
-Follow up by hand, as the report lists: the Hive async path (a render over 90 s through the
-pipeline; with a V3 key instead, a render over 60 s exercises frame sampling) and `npm run gate3`.
-The Hive adapter test runs with `HIVE_API_KEY` (V2) or `HIVE_V3_SECRET_KEY` (V3: one of its ~100
-requests a day).
+Follow up by hand, as the report lists: `npm run gate3`. (20.21: there is no content-safety
+provider to test; Hive was removed.)
 
 ### 3 and 6. k6 (14.5)
 

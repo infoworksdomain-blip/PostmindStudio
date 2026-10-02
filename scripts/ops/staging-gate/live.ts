@@ -27,7 +27,7 @@ import { baseContext, NEEDS_SHELL_FOR_NPM, optionalEnv, out, runProcess, sleep }
 // 14.8 — `staging-gate.ts --live-providers [--confirm]` (npm run gate:live). Spends real money
 // and posts to real (test) accounts, so it prints the plan + cost estimate and refuses to run
 // without --confirm. Env: every provider key you want exercised, DATABASE_URL (staging:
-// provider_jobs rows), LIVE_TEST_MEDIA_URL (+ _SEC) for Hive/AssemblyAI, LIVE_TEST_VOICE_SAMPLE_PATH,
+// provider_jobs rows), LIVE_TEST_MEDIA_URL (+ _SEC) for AssemblyAI, LIVE_TEST_VOICE_SAMPLE_PATH,
 // LIVE_TEST_VIDEO_PATH + LIVE_TEST_VIDEO_URL (+ _SEC, _ASPECT) and LIVE_<PLATFORM>_ACCESS_TOKEN /
 // LIVE_<PLATFORM>_ACCOUNT_ID per platform test account (runbooks/staging-gate.md).
 

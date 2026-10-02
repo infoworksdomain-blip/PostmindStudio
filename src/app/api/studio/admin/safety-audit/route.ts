@@ -4,7 +4,7 @@ import { listSafetyAudit, listSafetyAuditQuery } from '@/lib/studio/services/saf
 
 // BACKLOG 14.11 — Trust & Safety monthly audit queue (Admin → Safety audit).
 // GET /api/studio/admin/safety-audit?period=YYYY-MM&result=pending|pass|miss&limit&cursor
-// (period defaults to last month) → { summary (incl. missRate = "Hive scan miss rate"),
+// (period defaults to last month) → { summary (incl. missRate = "safety miss rate"),
 // periods, data (with a signed preview of each render), hasMore, nextCursor }.
 export const GET = withStudioRoute(
   StudioCapability.AdminModeration,

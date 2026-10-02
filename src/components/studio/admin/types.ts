@@ -69,7 +69,6 @@ export const PROVIDER_IDS = [
   'assemblyai',
   'shotstack',
   'creatomate',
-  'hive',
   'sightengine',
 ] as const;
 

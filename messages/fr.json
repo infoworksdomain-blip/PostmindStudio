@@ -416,7 +416,7 @@
       "body": "Note de Trust & Safety : {note}"
     },
     "safetyAuditMiss": {
-      "title": "Audit Trust & Safety : contenu manqué par l’analyse Hive",
+      "title": "Audit Trust & Safety : contenu manqué par les contrôles de sécurité",
       "body": "Une vidéo {platform} publiée (organisation {organisationId}, publication {publicationId}) a échoué à l’audit {period} : {note}. Suivez runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "Contrôle qualité outrepassé.",
       "details": {
         "safetyScanUnavailable": "L’analyse n’a pas pu s’exécuter : {reason}",
+        "safetyNotScanned": "Non analysée : aucune analyse de sécurité du contenu n’est configurée.",
         "safetyBlocked": "Bloqué : {classes}",
         "safetyReview": "À examiner : {classes}",
         "safetyPassed": "{count, plural, one {# image analysée, rien de signalé.} many {# d’images analysées, rien de signalé.} other {# images analysées, rien de signalé.}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "« {note} »",
       "review": {
         "title": "Revue de sécurité du contenu",
-        "description": "Exécutions mises en pause par un verdict REVIEW de sécurité du script ou un signalement Hive de niveau revue (spéc. 13.2 / 16.4). Les résultats de niveau blocage n’arrivent jamais dans cette file.",
+        "description": "Exécutions mises en pause par un verdict REVIEW de sécurité du script ou un signalement de sécurité du contenu de niveau revue (spéc. 13.2 / 16.4). Les résultats de niveau blocage n’arrivent jamais dans cette file.",
         "showAria": "Afficher les revues",
         "filterWaiting": "En attente",
         "filterWaitingCount": "En attente ({count})",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Audit mensuel Trust & Safety",
-        "description": "Un échantillon aléatoire des vidéos publiées le mois dernier, revérifiées par une personne. Un raté est une vidéo que l’analyse Hive aurait dû bloquer ou envoyer en revue.",
+        "description": "Un échantillon aléatoire des vidéos publiées le mois dernier, revérifiées par une personne. Un raté est une vidéo qui aurait dû être bloquée ou envoyée en revue.",
         "monthAria": "Mois de l’audit",
         "resultAria": "Résultat",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "En attente",
         "passed": "Conformes",
         "missed": "Ratées",
-        "missRate": "Taux de ratés de l’analyse Hive",
+        "missRate": "Taux de ratés des contrôles de sécurité",
         "missRateHint": "ratées ÷ revues",
         "emptyNoSampleTitle": "Aucun échantillon pour ce mois",
         "emptyNoSampleBody": "L’échantillon est tiré le 1er à 06:00 UTC. Tirez-le maintenant si la tâche ne s’est pas exécutée.",

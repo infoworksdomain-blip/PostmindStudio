@@ -1,13 +1,13 @@
 {
   "description": "BACKLOG 13.31 weekly cost regression baseline: pence per golden journey at harness prices (test/cost/journeys.ts, USD->GBP 0.79). Update in the same PR as an intended price or pipeline change.",
-  "recordedAt": "2026-09-27",
+  "recordedAt": "2026-10-02",
   "journeysPence": {
-    "gp01-short-single-format": 166,
-    "gp02-short-three-formats": 485,
-    "long-form-youtube-4min": 2357,
-    "standard-30s-short": 377,
-    "inspire-30s-short": 378,
-    "template-30s-short": 378,
-    "slideshow-five-slides": 106
+    "gp01-short-single-format": 162,
+    "gp02-short-three-formats": 473,
+    "long-form-youtube-4min": 2300,
+    "standard-30s-short": 369,
+    "inspire-30s-short": 370,
+    "template-30s-short": 370,
+    "slideshow-five-slides": 98
   }
 }

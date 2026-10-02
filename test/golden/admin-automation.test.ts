@@ -33,7 +33,7 @@ import {
 //
 //   AA-01  Script safety REVIEW pauses planning before any asset spend → staff ALLOW → the run
 //          continues from the stored plan → READY_FOR_REVIEW (a person approves it)
-//   AA-02  A review-level content-safety flag pauses the quality gate → staff BLOCK → FAILED
+//   AA-02  A script-safety REVIEW pauses the run → staff BLOCK → FAILED
 //          with the note; the creator is told
 //   AA-03  Auto-publish outbox: approval writes the rows; a target whose account needs
 //          reconnecting is retried by the dispatcher job after the fix → PUBLISHED
@@ -117,12 +117,20 @@ describe.skipIf(!hasDb)(
       expect(await clipJobs()).toBeGreaterThan(0);
     });
 
-    it('AA-02 a review-level content flag pauses the gate; BLOCK fails with the note', async () => {
-      const j = journey('aa02', { hiveMaxScores: { general_suggestive: 0.95 } });
+    // 20.21: no content-safety provider exists, so a rendered video is never flagged; BLOCK is
+    // exercised on the script review (the same decision endpoint and failure path).
+    it('AA-02 a script REVIEW pauses the run; BLOCK fails it with the note', async () => {
+      const j = journey('aa02', {
+        safety: {
+          verdict: 'REVIEW',
+          categories: ['explicit_sexual'],
+          reason: 'suggestive wording',
+        },
+      });
       const id = await createProject(j);
-      expect((await generate(j, id)).state).toBe('QUALITY_CHECKING');
+      expect((await generate(j, id)).state).toBe('PLANNING');
       const review = await pendingReviewFor(id);
-      expect(review.kind).toBe('content');
+      expect(review.kind).toBe('script');
       const res = await decide(review.id, 'BLOCK', 'Not suitable for a bakery audience');
       expect(res.json).toMatchObject({
         review: { state: 'BLOCKED' },
@@ -130,7 +138,7 @@ describe.skipIf(!hasDb)(
       });
       const failed = await getProject(j, id);
       expect(failed.errorReason).toBe(
-        'content_safety_blocked_by_review: Not suitable for a bakery audience',
+        'script_safety_blocked_by_review: Not suitable for a bakery audience',
       );
       expect(
         await db.notification.count({

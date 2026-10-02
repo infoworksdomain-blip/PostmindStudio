@@ -2,7 +2,7 @@
 
 # Sub-processors
 
-**Last updated: 30 September 2026**
+**Last updated: 2 October 2026**
 
 This page lists the third parties that Postmind AI Ltd uses to process personal data when providing PostMind Studio (the **Service**). It is referred to in our [Data Processing Agreement](/legal/dpa) and our [Privacy Policy](/legal/privacy).
 
@@ -19,7 +19,7 @@ This page lists the third parties that Postmind AI Ltd uses to process personal 
 | Stripe                             | Payments, subscriptions, invoices, tax calculation and customer billing portal                  | Billing name, address, email, VAT number, payment method, payment history           | Stripe Payments Europe, Ltd. (Ireland) and Stripe, Inc. (United States)                                           | SCCs / DPF                                         |
 | Functional Software, Inc. (Sentry) | Error reporting, **only if enabled** by us                                                      | Technical error details, which may include internal user and organisation IDs       | United States (or EU region, depending on the account)                                                            | SCCs / DPF                                         |
 
-## 2. AI generation, transcription and content safety
+## 2. AI generation and transcription
 
 These providers receive the content needed for each step of making your videos. They process it to return a result to us, under business or API terms that we select so that, as far as those terms allow, they do not use it to train their models.
 
@@ -33,7 +33,6 @@ These providers receive the content needed for each step of making your videos. 
 | HeyGen                     | AI presenter (avatar) videos                                                                    | Scripts and voice-over audio                                                            | United States                                                                           | SCCs / DPF |
 | ElevenLabs                 | Voice-overs, music and sound; voice cloning on plans that include it                            | Script text; for voice cloning, the speaker's voice samples                             | United States                                                                           | SCCs / DPF |
 | Shotstack Pty Ltd          | Composition and rendering of the final videos                                                   | All media and text that make up a video, including images, video and voices of people   | Australia (company); rendering location as set out in Shotstack's data processing terms | SCCs       |
-| Castle Global, Inc. (Hive) | Automated content-safety checks                                                                 | Images, video frames and text being checked                                             | United States                                                                           | SCCs / DPF |
 | AssemblyAI, Inc.           | Speech transcription for captions and voice-consent checks                                      | Audio, including voice consent recordings                                               | European Union (EU region used in production); company in the United States             | SCCs / DPF |
 
 ## 3. Optional services

@@ -416,7 +416,7 @@
       "body": "Trust & Safety note: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Trust & Safety audit: Hive scan miss",
+      "title": "Trust & Safety audit: safety miss",
       "body": "A published {platform} video (organisation {organisationId}, publication {publicationId}) failed the {period} audit: {note}. Follow runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "Quality check overridden.",
       "details": {
         "safetyScanUnavailable": "The scan could not run: {reason}",
+        "safetyNotScanned": "Not scanned: no content-safety scan is set up.",
         "safetyBlocked": "Blocked: {classes}",
         "safetyReview": "Needs review: {classes}",
         "safetyPassed": "{count, plural, one {# frame scanned, nothing flagged.} other {# frames scanned, nothing flagged.}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "“{note}”",
       "review": {
         "title": "Content-safety review",
-        "description": "Runs paused by a script-safety REVIEW verdict or a review-level Hive flag (spec 13.2 / 16.4). Block-level results never reach this queue.",
+        "description": "Runs paused by a script-safety REVIEW verdict or a review-level content-safety flag (spec 13.2 / 16.4). Block-level results never reach this queue.",
         "showAria": "Show reviews",
         "filterWaiting": "Waiting",
         "filterWaitingCount": "Waiting ({count})",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Trust & Safety monthly audit",
-        "description": "A random sample of last month’s published videos, re-checked by a person. A miss is a video the Hive scan should have blocked or sent to review.",
+        "description": "A random sample of last month’s published videos, re-checked by a person. A miss is a video that should have been blocked or sent to review.",
         "monthAria": "Audit month",
         "resultAria": "Result",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "Waiting",
         "passed": "Passed",
         "missed": "Missed",
-        "missRate": "Hive scan miss rate",
+        "missRate": "Safety miss rate",
         "missRateHint": "missed ÷ reviewed",
         "emptyNoSampleTitle": "No sample for this month",
         "emptyNoSampleBody": "The sample is drawn on the 1st at 06:00 UTC. Draw it now if the job did not run.",

@@ -10,7 +10,7 @@ import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
 import { useCan } from '../use-can';
-import { humanCode, useQualityCheckLabel } from '../failure-reason';
+import { humanCode, useIsStaff, useQualityCheckLabel } from '../failure-reason';
 import { useAction } from './use-action';
 
 export { humanCode };
@@ -28,6 +28,7 @@ const STATUS = {
 /** 17.9: detail keys the catalogue knows (review.quality.details.<key>). */
 export const DETAIL_KEYS = [
   'safetyScanUnavailable',
+  'safetyNotScanned',
   'safetyBlocked',
   'safetyReview',
   'safetyPassed',
@@ -65,17 +66,27 @@ const SEVERITIES = ['block', 'error', 'warning', 'info'] as const;
 const oneOf = <T extends string>(list: readonly T[], value: string): value is T =>
   (list as readonly string[]).includes(value);
 
+/**
+ * 20.21: a content-safety scan that did not run (no provider is configured) is an operator
+ * matter; staff see a neutral "Not scanned", customers see nothing about it.
+ */
+export function isUnscannedSafety(issue: Pick<QualityIssue, 'code' | 'status'>): boolean {
+  return issue.code === 'content_safety' && issue.status === 'not_run';
+}
+
 const ORDER: Record<QualityIssue['status'], number> = {
   failed: 0,
   warning: 1,
   passed: 2,
   skipped: 3,
+  not_run: 3,
 };
 
 export function QualityPanel({ render, onChanged }: { render: Render; onChanged: () => void }) {
-  const issues = [...(render.qualityIssues ?? [])].sort(
-    (a, b) => ORDER[a.status] - ORDER[b.status],
-  );
+  const staff = useIsStaff();
+  const issues = (render.qualityIssues ?? [])
+    .filter((issue) => staff || !isUnscannedSafety(issue))
+    .sort((a, b) => ORDER[a.status] - ORDER[b.status]);
   const t = useTranslations('review.quality');
   const { pending, run } = useAction();
   const [note, setNote] = useState('');
@@ -124,7 +135,8 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
       {issues.length > 0 && (
         <ul className="flex flex-col gap-1">
           {issues.map((issue, i) => {
-            const status = issue.status in STATUS ? issue.status : 'skipped';
+            const status =
+              issue.status === 'not_run' || !(issue.status in STATUS) ? 'skipped' : issue.status;
             const s = STATUS[status];
             const Icon = s.icon;
             return (

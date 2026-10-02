@@ -113,7 +113,7 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
     ['music', ['elevenlabs-music', 'storyblocks-music', 'replicate']],
     ['transcription', ['assemblyai', 'openai']],
     ['composition', ['shotstack', 'creatomate']],
-    ['content_safety', ['hive', 'sightengine']],
+    ['content_safety', []],
   ] as const)('capability %s tries %o', (capability, ids) => {
     expect(planCandidates({ kind: 'capability', capability }, 'BASIC').providerIds).toEqual(ids);
   });

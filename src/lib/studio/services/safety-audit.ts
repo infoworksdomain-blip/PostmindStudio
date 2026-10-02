@@ -9,8 +9,8 @@ import type { AssetStorage } from '../storage';
 // scheduled job draws a random sample of N videos published the month before
 // (STUDIO_SAFETY_AUDIT_SAMPLE, default 50) into studio.safety_audit_items. Staff re-check each
 // one on Admin → Safety audit and record pass or miss (a miss: the published video should have
-// been blocked or sent to review, i.e. the Hive scan missed it). A miss notifies staff at once.
-// The period's misses / reviewed is the runbook metric "Hive scan miss rate".
+// been blocked or sent to review, i.e. the safety checks missed it). A miss notifies staff at once.
+// The period's misses / reviewed is the runbook metric "safety miss rate".
 
 export const SAFETY_AUDIT_SAMPLE_DEFAULT = 50;
 export const SAFETY_AUDIT_SAMPLE_MAX = 500;
@@ -140,7 +140,7 @@ export interface AuditSummary {
   pending: number;
   passed: number;
   missed: number;
-  /** "Hive scan miss rate": missed / (passed + missed); null until something is reviewed. */
+  /** "safety miss rate": missed / (passed + missed); null until something is reviewed. */
   missRate: number | null;
 }
 
@@ -278,7 +278,7 @@ export async function recordAuditResult(
     try {
       await deps.notifier.notifyStaff({
         kind: 'safety_review',
-        title: 'Trust & Safety audit: Hive scan miss',
+        title: 'Trust & Safety audit: safety miss',
         body: `A published ${row.platform} video (organisation ${row.organisationId}, publication ${row.publicationId}) failed the ${row.period} audit: ${row.note ?? ''}. Follow runbooks/content-safety-miss.md.`,
         link: '/admin?tab=safety-audit',
         dedupeKey: `safety-audit-miss:${row.id}`,

@@ -301,9 +301,9 @@ enum QualityCheckState {
 }
 
 // BACKLOG 13.25 — Hive async moderation for renders longer than Hive's 90 s sync limit. One row
-// per (render, run). Hive documents no callback signature, so each task carries an unguessable
-// per-task callback token (only its SHA-256 is stored) in the callback URL. `result` holds the
-// callback body (Hive's task object) until the quality gate settles it.
+// per (render, run), with a per-task callback token (only its SHA-256 is stored). LEGACY since
+// 20.21 (Hive removed, operator decision 2026-10-02): nothing writes or reads this table any more
+// except the business hard delete; it is kept (no destructive migration) for the rows it holds.
 model ContentSafetyTask {
   id                String                 @id @default(cuid())
   organisationId    String
@@ -1929,8 +1929,8 @@ model BetaFeedback {
 }
 
 // BACKLOG 14.11 — Trust & Safety monthly audit: published publications sampled for a human
-// re-check. result 'pending' until staff record 'pass' or 'miss' (a miss = Hive let through
-// content that should have been blocked or reviewed; runbook metric "Hive scan miss rate").
+// re-check. result 'pending' until staff record 'pass' or 'miss' (a miss = published content
+// that should have been blocked or reviewed; runbook metric "safety miss rate").
 model SafetyAuditItem {
   id               String    @id @default(cuid())
   period           String // 'YYYY-MM' (UTC) the sample was drawn for

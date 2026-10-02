@@ -62,7 +62,47 @@ describe('QualityPanel', () => {
     expect(screen.getByText('Checks are still running.')).toBeInTheDocument();
   });
 
+  describe('20.21: content safety not scanned', () => {
+    const render = makeRender({
+      qualityCheckState: 'PASSED',
+      qualityIssues: [
+        { code: 'duration_match', status: 'passed', severity: 'error', detail: 'OK' },
+        {
+          code: 'content_safety',
+          status: 'not_run',
+          severity: 'info',
+          detail: 'Not scanned: no content-safety provider is configured',
+          detailKey: 'safetyNotScanned',
+          detailParams: { reason: 'no_provider' },
+        },
+      ],
+    });
+    const me = (platformRole: string) => ({
+      method: 'GET',
+      match: '/me',
+      body: { me: { capabilities: [], user: { platformRole } } },
+    });
+
+    it('shows customers nothing about the scan', async () => {
+      const api = mockFetch([me('user')]);
+      renderWithSWR(<QualityPanel onChanged={vi.fn()} render={render} />);
+      await waitFor(() => expect(api.fetchMock).toHaveBeenCalled());
+      expect(screen.getAllByRole('listitem')).toHaveLength(1);
+      expect(screen.queryByText(/not scanned/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/content safety/i)).not.toBeInTheDocument();
+    });
+
+    it('shows staff a neutral "Not scanned"', async () => {
+      mockFetch([me('staff')]);
+      renderWithSWR(<QualityPanel onChanged={vi.fn()} render={render} />);
+      expect(
+        await screen.findByText('Not scanned: no content-safety scan is set up.'),
+      ).toBeInTheDocument();
+      expect(screen.getAllByRole('listitem')).toHaveLength(2);
+    });
+  });
+
   it('humanises check codes', () => {
-    expect(humanCode('safety.hive_block')).toBe('Safety hive block');
+    expect(humanCode('safety.provider_block')).toBe('Safety provider block');
   });
 });

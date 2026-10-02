@@ -416,7 +416,7 @@
       "body": "Nota di Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Audit Trust & Safety: contenuto sfuggito alla scansione Hive",
+      "title": "Audit Trust & Safety: contenuto sfuggito ai controlli di sicurezza",
       "body": "Un video {platform} pubblicato (organizzazione {organisationId}, pubblicazione {publicationId}) non ha superato l’audit {period}: {note}. Segui runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -887,6 +887,7 @@
       "overridden": "Controllo qualità ignorato.",
       "details": {
         "safetyScanUnavailable": "Non è stato possibile eseguire l’analisi: {reason}",
+        "safetyNotScanned": "Non analizzato: nessuna analisi di sicurezza dei contenuti è configurata.",
         "safetyBlocked": "Bloccato: {classes}",
         "safetyReview": "Da rivedere: {classes}",
         "safetyPassed": "{count, plural, one {# fotogramma analizzato, nessuna segnalazione.} many {# di fotogrammi analizzati, nessuna segnalazione.} other {# fotogrammi analizzati, nessuna segnalazione.}}",
@@ -3102,7 +3103,7 @@
       "quotedNote": "«{note}»",
       "review": {
         "title": "Revisione della sicurezza dei contenuti",
-        "description": "Esecuzioni messe in pausa da un verdetto REVIEW sulla sicurezza dello script o da una segnalazione Hive di livello revisione (spec. 13.2 / 16.4). I risultati di livello blocco non arrivano mai in questa coda.",
+        "description": "Esecuzioni messe in pausa da un verdetto REVIEW sulla sicurezza dello script o da una segnalazione di sicurezza dei contenuti di livello revisione (spec. 13.2 / 16.4). I risultati di livello blocco non arrivano mai in questa coda.",
         "showAria": "Mostra revisioni",
         "filterWaiting": "In attesa",
         "filterWaitingCount": "In attesa ({count})",
@@ -3140,7 +3141,7 @@
       },
       "audit": {
         "title": "Audit mensile Trust & Safety",
-        "description": "Un campione casuale dei video pubblicati il mese scorso, ricontrollati da una persona. Un mancato blocco è un video che la scansione Hive avrebbe dovuto bloccare o mandare in revisione.",
+        "description": "Un campione casuale dei video pubblicati il mese scorso, ricontrollati da una persona. Un mancato blocco è un video che avrebbe dovuto essere bloccato o mandato in revisione.",
         "monthAria": "Mese dell’audit",
         "resultAria": "Risultato",
         "filter": {
@@ -3155,7 +3156,7 @@
         "waiting": "In attesa",
         "passed": "Superati",
         "missed": "Mancati blocchi",
-        "missRate": "Tasso di mancati blocchi della scansione Hive",
+        "missRate": "Tasso di mancati blocchi dei controlli di sicurezza",
         "missRateHint": "mancati ÷ revisionati",
         "emptyNoSampleTitle": "Nessun campione per questo mese",
         "emptyNoSampleBody": "Il campione viene estratto il 1° del mese alle 06:00 UTC. Estrailo ora se il job non è partito.",

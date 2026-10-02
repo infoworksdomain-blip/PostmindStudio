@@ -93,8 +93,8 @@ const LAYERS: Layer[] = [
     n: 8,
     name: 'Quality gate + review',
     job: 'run-quality-gate',
-    what: 'Duration ±2 s, black frames > 500 ms, loudness −18…−10 LUFS, aspect, H.264/MP4, content safety; then human or trusted auto-approval.',
-    providers: [b('hive (sync ≤ 90 s, async + callback beyond)'), planned('sightengine')],
+    what: 'Duration ±2 s, black frames > 500 ms, loudness −18…−10 LUFS, aspect, H.264/MP4; content safety is recorded as “Not scanned” (no provider since 20.21); then human or trusted auto-approval.',
+    providers: [planned('content-safety provider (none: Hive removed 20.21)')],
   },
   {
     n: 9,

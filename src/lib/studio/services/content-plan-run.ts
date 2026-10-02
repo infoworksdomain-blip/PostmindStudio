@@ -52,8 +52,8 @@ import { monthWindow } from './tier-gates';
 //
 // Generation is throttled by the advance-content-plans job (every minute, and kicked right after
 // the request): at most STUDIO_CONTENT_PLAN_CONCURRENCY items of a plan generate at once, as
-// low-priority batch jobs; a platform-wide daily start limit protects the Hive V3 self-serve
-// allowance; the kill switch and the cost caps hold the plan (holdReason) without failing it.
+// low-priority batch jobs; an optional platform-wide daily start limit
+// (STUDIO_CONTENT_PLAN_DAILY_STARTS) caps provider usage; the kill switch and the cost caps hold the plan (holdReason) without failing it.
 // Everything is DB state, so a crashed worker or request resumes where it stopped.
 //
 // Review window: each item publishes at its time unless the owner removes it (the scheduled
@@ -69,8 +69,6 @@ export const MAX_PLAN_CONCURRENCY = 10;
 export const START_CUTOFF_MS = 45 * 60_000;
 /** Generating plans per organisation at once. */
 export const MAX_GENERATING_PLANS = 3;
-/** Default platform-wide daily starts with Hive V3 (about 100 scans a day, several per video). */
-export const HIVE_V3_DAILY_STARTS = 30;
 /**
  * Seconds of a planned video: DECISION 15 s, the short end of the "15 to 30 seconds" the plan
  * prompt asks for (least AI clip time, so the cheapest video), never past the tier's short length.
@@ -88,18 +86,14 @@ export function planConcurrency(env: Env = process.env): number {
 
 /**
  * STUDIO_CONTENT_PLAN_DAILY_STARTS: items started per UTC day across the platform. A positive
- * integer, or "unlimited". Unset: HIVE_V3_DAILY_STARTS when content safety runs on Hive V3,
- * otherwise unlimited.
+ * integer, or "unlimited". Unset: unlimited (20.21: the Hive V3 default of 30 went with Hive).
  */
-export function planDailyStartLimit(
-  env: Env = process.env,
-  hiveApiVersion?: string,
-): number | null {
+export function planDailyStartLimit(env: Env = process.env): number | null {
   const raw = env.STUDIO_CONTENT_PLAN_DAILY_STARTS?.trim().toLowerCase();
   if (raw === 'unlimited') return null;
   const n = Number(raw);
   if (raw && Number.isInteger(n) && n > 0) return n;
-  return hiveApiVersion === 'v3' ? HIVE_V3_DAILY_STARTS : null;
+  return null;
 }
 
 /** Removing a scheduled post cancels its publication: the POST /publications/:id/cancel right. */
@@ -480,7 +474,6 @@ export interface RunnerDeps {
   mailer?: AuthMailer;
   appUrl?: string;
   env?: Env;
-  hiveApiVersion?: string;
 }
 
 export interface AdvanceResult {
@@ -586,7 +579,7 @@ async function startItems(deps: RunnerDeps, plan: ContentPlan): Promise<number> 
     orderBy: [{ slotAt: 'asc' }, { position: 'asc' }],
   });
   let free = planConcurrency(deps.env) - items.filter((i) => i.status === 'GENERATING').length;
-  const limit = planDailyStartLimit(deps.env, deps.hiveApiVersion);
+  const limit = planDailyStartLimit(deps.env);
   if (limit !== null) {
     const today = await deps.db.contentPlanItem.count({
       where: { startedAt: { gte: utcDayStart(deps.now()) } },
