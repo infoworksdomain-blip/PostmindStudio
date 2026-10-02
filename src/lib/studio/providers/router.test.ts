@@ -6,6 +6,7 @@ import { HeyGenAdapter } from './heygen';
 import { LumaAdapter } from './luma';
 import { RunwayAdapter } from './runway';
 import { VeoAdapter } from './veo';
+import { SeedanceAdapter } from './seedance';
 import { createProviderRegistry } from './registry';
 import { planCandidates, routeProvider, type BudgetChecker, type RouteInput } from './router';
 import { StubAdapter } from './test-adapter';
@@ -46,9 +47,9 @@ const aiClip = (planTier: RouteInput['planTier'], extra: Partial<RouteInput> = {
 describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
     ['BASIC', ['fal', 'replicate']],
-    ['STANDARD', ['luma', 'runway', 'veo', 'kling']],
-    ['PLUS', ['runway', 'luma', 'veo', 'kling']],
-    ['ENTERPRISE', ['runway', 'luma', 'veo', 'kling']],
+    ['STANDARD', ['seedance', 'veo', 'runway', 'luma', 'kling']],
+    ['PLUS', ['seedance', 'veo', 'runway', 'luma', 'kling']],
+    ['ENTERPRISE', ['seedance', 'veo', 'runway', 'luma', 'kling']],
   ] as const)('AI_CLIP on %s tries %o', (tier, ids) => {
     expect(
       planCandidates({ kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 4 }, tier),
@@ -126,49 +127,53 @@ describe('routeProvider', () => {
     expect(decision.providerId).toBe('runway');
     expect(decision.adapter).toBe(runway);
     expect(decision.candidates).toEqual([
-      { providerId: 'luma', skipped: 'not_configured' },
+      { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway' },
     ]);
   });
 
   it('skips providers that lack the needed capability', async () => {
-    const luma = new StubAdapter('luma', ['image_to_video']);
-    const runway = new StubAdapter('runway', ['text_to_video']);
-    const decision = await routeProvider(aiClip('STANDARD'), deps([luma, runway]));
+    const first = new StubAdapter('seedance', ['image_to_video']);
+    const second = new StubAdapter('veo', ['text_to_video']);
+    const decision = await routeProvider(aiClip('STANDARD'), deps([first, second]));
     expect(decision.candidates[0]).toEqual({
-      providerId: 'luma',
+      providerId: 'seedance',
       skipped: 'capability_unsupported',
     });
-    expect(decision.providerId).toBe('runway');
+    expect(decision.providerId).toBe('veo');
   });
 
   it('falls back when the first choice has an open circuit breaker', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video']);
-    const runway = new StubAdapter('runway', ['text_to_video']);
-    const d = deps([luma, runway]);
-    for (let i = 0; i < 5; i += 1) d.breaker.recordFailure('luma');
+    const first = new StubAdapter('seedance', ['text_to_video']);
+    const second = new StubAdapter('veo', ['text_to_video']);
+    const d = deps([first, second]);
+    for (let i = 0; i < 5; i += 1) d.breaker.recordFailure('seedance');
     const decision = await routeProvider(aiClip('STANDARD'), d);
-    expect(decision.providerId).toBe('runway');
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'circuit_open' });
+    expect(decision.providerId).toBe('veo');
+    expect(decision.candidates[0]).toEqual({ providerId: 'seedance', skipped: 'circuit_open' });
   });
 
   it('skips a provider disabled by the level-4 kill switch', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video']);
-    const runway = new StubAdapter('runway', ['text_to_video']);
+    const first = new StubAdapter('seedance', ['text_to_video']);
+    const second = new StubAdapter('veo', ['text_to_video']);
     const killSwitch = {
       check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
-        providerId === 'luma'
-          ? { killed: true, level: 'provider', key: 'studio.disabledProvider.luma' }
+        providerId === 'seedance'
+          ? { killed: true, level: 'provider', key: 'studio.disabledProvider.seedance' }
           : { killed: false },
       ),
     };
-    const decision = await routeProvider(aiClip('STANDARD'), deps([luma, runway], { killSwitch }));
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'provider_disabled' });
+    const decision = await routeProvider(aiClip('STANDARD'), deps([first, second], { killSwitch }));
+    expect(decision.candidates[0]).toEqual({
+      providerId: 'seedance',
+      skipped: 'provider_disabled',
+    });
   });
 
   it('skips over-budget providers using the adapter cost estimate', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 500 });
-    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 50 });
+    const first = new StubAdapter('seedance', ['text_to_video'], { costPence: 500 });
+    const second = new StubAdapter('veo', ['text_to_video'], { costPence: 50 });
     const budget: BudgetChecker = {
       hasBudget: vi.fn(async ({ estimatedCostPence }) => estimatedCostPence < 100),
     };
@@ -181,23 +186,27 @@ describe('routeProvider', () => {
     };
     const decision = await routeProvider(
       aiClip('STANDARD', { request }),
-      deps([luma, runway], { budget }),
+      deps([first, second], { budget }),
     );
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'over_budget' });
+    expect(decision.candidates[0]).toEqual({ providerId: 'seedance', skipped: 'over_budget' });
     expect(budget.hasBudget).toHaveBeenCalledWith(
-      expect.objectContaining({ providerId: 'luma', estimatedCostPence: 500, projectId: 'proj-1' }),
+      expect.objectContaining({
+        providerId: 'seedance',
+        estimatedCostPence: 500,
+        projectId: 'proj-1',
+      }),
     );
   });
 
   it('skips providers too slow for the deadline', async () => {
-    const luma = new StubAdapter('luma', ['text_to_video'], { typicalLatencySec: 600 });
-    const runway = new StubAdapter('runway', ['text_to_video'], { typicalLatencySec: 60 });
+    const first = new StubAdapter('seedance', ['text_to_video'], { typicalLatencySec: 600 });
+    const second = new StubAdapter('veo', ['text_to_video'], { typicalLatencySec: 60 });
     const decision = await routeProvider(
       aiClip('STANDARD', { deadline: new Date(120_000) }),
-      deps([luma, runway]),
+      deps([first, second]),
     );
-    expect(decision.candidates[0]).toEqual({ providerId: 'luma', skipped: 'too_slow' });
-    expect(decision.providerId).toBe('runway');
+    expect(decision.candidates[0]).toEqual({ providerId: 'seedance', skipped: 'too_slow' });
+    expect(decision.providerId).toBe('veo');
   });
 
   it('raises NO_PROVIDER_AVAILABLE with every skip reason when all candidates fail', async () => {
@@ -211,9 +220,10 @@ describe('routeProvider', () => {
     expect(err.details).toEqual({
       capability: 'text_to_video',
       candidates: [
-        { providerId: 'luma', skipped: 'not_configured' },
-        { providerId: 'runway', skipped: 'circuit_open' },
+        { providerId: 'seedance', skipped: 'not_configured' },
         { providerId: 'veo', skipped: 'not_configured' },
+        { providerId: 'runway', skipped: 'circuit_open' },
+        { providerId: 'luma', skipped: 'not_configured' },
         { providerId: 'kling', skipped: 'not_configured' },
       ],
     });
@@ -281,6 +291,8 @@ describe('Luma and HeyGen fallbacks', () => {
       const decision = await routeProvider(aiClip(tier), d);
       expect(decision.providerId).toBe('luma');
       expect(decision.candidates).toEqual([
+        { providerId: 'seedance', skipped: 'not_configured' },
+        { providerId: 'veo', skipped: 'not_configured' },
         { providerId: 'runway', skipped: 'circuit_open' },
         { providerId: 'luma' },
       ]);
@@ -313,7 +325,7 @@ describe('Luma and HeyGen fallbacks', () => {
     };
     const decision = await routeProvider(aiClip('PLUS'), d);
     expect(decision.providerId).toBe('luma');
-    expect(decision.candidates[0]).toEqual({ providerId: 'runway', skipped: 'provider_disabled' });
+    expect(decision.candidates[2]).toEqual({ providerId: 'runway', skipped: 'provider_disabled' });
   });
 
   it('routes image-to-video clips to Luma too', async () => {
@@ -367,9 +379,9 @@ describe('Luma and HeyGen fallbacks', () => {
   });
 });
 
-// BACKLOG 20.20 — Google Veo is the third AI_CLIP option (after Runway and Luma) on every tier
-// that has AI clips, so it is a failover by default; shots over 8 s skip it.
-describe('Veo as the third AI_CLIP option', () => {
+// BACKLOG 20.20 / 20.23 — Google Veo is the second AI_CLIP option on every tier with AI clips
+// (seedance → veo → runway → luma since 20.23); shots over 8 s skip it.
+describe('Veo as the AI_CLIP fallback after Seedance', () => {
   const noFetch = (() => {
     throw new Error('routing must not call the provider');
   }) as unknown as typeof fetch;
@@ -385,48 +397,56 @@ describe('Veo as the third AI_CLIP option', () => {
   };
 
   it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
-    '%s: Runway and Luma healthy → Veo is not used',
+    '%s: without Seedance, Veo comes before Runway and Luma',
     async (tier) => {
       const decision = await routeProvider(aiClip(tier), real([runway(), luma(), veo()]));
-      expect(['runway', 'luma']).toContain(decision.providerId);
+      expect(decision.providerId).toBe('veo');
+      expect(decision.candidates).toEqual([
+        { providerId: 'seedance', skipped: 'not_configured' },
+        { providerId: 'veo' },
+      ]);
     },
   );
 
   it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
-    '%s: Runway and Luma breakers open → Veo takes the clip',
+    '%s: Veo breaker open → Runway, then Luma',
     async (tier) => {
       const d = real([runway(), luma(), veo()]);
+      await openBreaker(d, 'veo');
+      expect((await routeProvider(aiClip(tier), d)).providerId).toBe('runway');
       await openBreaker(d, 'runway');
-      await openBreaker(d, 'luma');
       const decision = await routeProvider(aiClip(tier), d);
-      expect(decision.providerId).toBe('veo');
-      expect(decision.candidates.map((c) => c.providerId)).toEqual(
-        tier === 'STANDARD' ? ['luma', 'runway', 'veo'] : ['runway', 'luma', 'veo'],
-      );
+      expect(decision.providerId).toBe('luma');
+      expect(decision.candidates.map((c) => c.providerId)).toEqual([
+        'seedance',
+        'veo',
+        'runway',
+        'luma',
+      ]);
     },
   );
 
-  it('Runway killed by the provider kill switch and Luma not configured → Veo', async () => {
+  it('Veo killed by the provider kill switch → Runway', async () => {
     const d = {
       ...real([runway(), veo()]),
       killSwitch: {
         check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
-          providerId === 'runway'
+          providerId === 'veo'
             ? { killed: true, level: 'provider', key: `studio.disabledProvider.${providerId}` }
             : { killed: false },
         ),
       },
     };
     const decision = await routeProvider(aiClip('PLUS'), d);
-    expect(decision.providerId).toBe('veo');
+    expect(decision.providerId).toBe('runway');
     expect(decision.candidates).toEqual([
-      { providerId: 'runway', skipped: 'provider_disabled' },
-      { providerId: 'luma', skipped: 'not_configured' },
-      { providerId: 'veo' },
+      { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'veo', skipped: 'provider_disabled' },
+      { providerId: 'runway' },
     ]);
   });
 
-  it('the Veo kill switch keeps it out of failover', async () => {
+  it('the Veo kill switch keeps it out of failover (Runway broken, no Luma)', async () => {
     const d = {
       ...real([runway(), veo()]),
       killSwitch: {
@@ -478,5 +498,160 @@ describe('Veo as the third AI_CLIP option', () => {
       d,
     );
     expect(decision).toMatchObject({ providerId: 'veo', capability: 'image_to_video' });
+  });
+});
+
+// BACKLOG 20.23 — BytePlus Seedance is the FIRST AI_CLIP option on every tier with AI clips
+// (operator-approved order seedance → veo → runway → luma); the tier picks the model (2.0 mini on
+// STANDARD, 2.5 on PLUS / ENTERPRISE and for shots over 15 s). Longer shots skip it.
+describe('Seedance AI_CLIP routing', () => {
+  const noFetch = (() => {
+    throw new Error('routing must not call the provider');
+  }) as unknown as typeof fetch;
+  const runway = () => new RunwayAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
+  const luma = () => new LumaAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
+  const veo = () => new VeoAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch });
+  const seedance = (options: Partial<ConstructorParameters<typeof SeedanceAdapter>[0]> = {}) =>
+    new SeedanceAdapter({ apiKey: 'k', usdToGbpRate: 0.75, fetchImpl: noFetch, ...options });
+  const all = () => [runway(), luma(), seedance(), veo()];
+  const real = (adapters: ProviderAdapter[]) => ({
+    ...deps([]),
+    registry: createProviderRegistry(adapters),
+  });
+  const openBreaker = async (d: ReturnType<typeof real>, id: string) => {
+    for (let i = 0; i < 5; i += 1) await d.breaker.recordFailure(id);
+  };
+  const clip = (planTier: RouteInput['planTier'], durationSec: number) =>
+    aiClip(planTier, {
+      need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec },
+      request: {
+        capability: 'text_to_video',
+        organisationId: 'org-1',
+        prompt: 'p',
+        durationSec,
+        aspectRatio: '9:16',
+        planTier,
+      },
+    });
+
+  it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)('%s: Seedance goes first', async (tier) => {
+    const decision = await routeProvider(clip(tier, 8), real(all()));
+    expect(decision.providerId).toBe('seedance');
+    expect(decision.candidates).toEqual([{ providerId: 'seedance' }]);
+  });
+
+  it('the tier picks the model: 2.0 mini on STANDARD, 2.5 on PLUS (budget sees each price)', async () => {
+    const sd = seedance();
+    expect(sd.modelFor(8, 'STANDARD')).toBe('dreamina-seedance-2-0-mini-260615');
+    expect(sd.modelFor(8, 'PLUS')).toBe('dreamina-seedance-2-5-260628');
+    expect(sd.modelFor(8, 'ENTERPRISE')).toBe('dreamina-seedance-2-5-260628');
+    expect(sd.modelFor(20, 'STANDARD')).toBe('dreamina-seedance-2-5-260628');
+    expect(sd.estimateCostPence(clip('PLUS', 8).request)).toBeGreaterThan(
+      sd.estimateCostPence(clip('STANDARD', 8).request),
+    );
+  });
+
+  it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)(
+    '%s: Seedance breaker open → Veo, then Runway, then Luma',
+    async (tier) => {
+      const d = real(all());
+      await openBreaker(d, 'seedance');
+      expect((await routeProvider(clip(tier, 8), d)).providerId).toBe('veo');
+      await openBreaker(d, 'veo');
+      expect((await routeProvider(clip(tier, 8), d)).providerId).toBe('runway');
+      await openBreaker(d, 'runway');
+      const decision = await routeProvider(clip(tier, 8), d);
+      expect(decision.providerId).toBe('luma');
+      expect(decision.candidates).toEqual([
+        { providerId: 'seedance', skipped: 'circuit_open' },
+        { providerId: 'veo', skipped: 'circuit_open' },
+        { providerId: 'runway', skipped: 'circuit_open' },
+        { providerId: 'luma' },
+      ]);
+    },
+  );
+
+  it('a Seedance account problem (excluded) → Veo', async () => {
+    const decision = await routeProvider(
+      aiClip('STANDARD', { excludeProviderIds: ['seedance'] }),
+      real(all()),
+    );
+    expect(decision.providerId).toBe('veo');
+    expect(decision.candidates[0]).toEqual({
+      providerId: 'seedance',
+      skipped: 'account_unavailable',
+    });
+  });
+
+  it('Runway / Luma / Veo account problems never block Seedance', async () => {
+    const d = real(all());
+    await openBreaker(d, 'veo');
+    const decision = await routeProvider(
+      aiClip('PLUS', { excludeProviderIds: ['runway', 'luma'] }),
+      d,
+    );
+    expect(decision.providerId).toBe('seedance');
+  });
+
+  it('the Seedance kill switch moves clips to Veo', async () => {
+    const d = {
+      ...real(all()),
+      killSwitch: {
+        check: vi.fn(async ({ providerId }: { providerId?: string }): Promise<KillSwitchStatus> =>
+          providerId === 'seedance'
+            ? { killed: true, level: 'provider', key: `studio.disabledProvider.${providerId}` }
+            : { killed: false },
+        ),
+      },
+    };
+    const decision = await routeProvider(aiClip('STANDARD'), d);
+    expect(decision.providerId).toBe('veo');
+    expect(decision.candidates[0]).toEqual({
+      providerId: 'seedance',
+      skipped: 'provider_disabled',
+    });
+  });
+
+  it('a 20 s shot stays on Seedance (2.5) while Veo would skip it', async () => {
+    const decision = await routeProvider(clip('STANDARD', 20), real([seedance(), veo()]));
+    expect(decision.providerId).toBe('seedance');
+  });
+
+  it('a 31 s shot skips Seedance as capability_unsupported', async () => {
+    const err = await routeProvider(clip('STANDARD', 31), real([seedance()])).catch(
+      (e: unknown) => e,
+    );
+    expect(err).toBeInstanceOf(NoProviderAvailableError);
+    expect((err as NoProviderAvailableError).details?.candidates).toContainEqual({
+      providerId: 'seedance',
+      skipped: 'capability_unsupported',
+    });
+  });
+
+  it('without a 30 s long model, a 16 s shot skips Seedance', async () => {
+    const short = seedance({ longModel: 'dreamina-seedance-2-0-fast-260128' });
+    const err = await routeProvider(clip('PLUS', 16), real([short])).catch((e: unknown) => e);
+    expect((err as NoProviderAvailableError).details?.candidates).toContainEqual({
+      providerId: 'seedance',
+      skipped: 'capability_unsupported',
+    });
+  });
+
+  it('a source frame routes Seedance as image_to_video', async () => {
+    const decision = await routeProvider(
+      aiClip('STANDARD', {
+        need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6, hasSourceImage: true },
+        request: {
+          capability: 'image_to_video',
+          organisationId: 'org-1',
+          prompt: 'p',
+          imageUrl: 'https://cdn.example/f.png',
+          durationSec: 6,
+          aspectRatio: '9:16',
+        },
+      }),
+      real([seedance()]),
+    );
+    expect(decision).toMatchObject({ providerId: 'seedance', capability: 'image_to_video' });
   });
 });

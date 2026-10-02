@@ -48,6 +48,7 @@ const LAYERS: Layer[] = [
       b('luma (ray-3.2)'),
       planned('kling'),
       b('veo (veo-3.1-fast-generate-preview)'),
+      b('seedance (dreamina-seedance-2-0-mini / 2-5)'),
       planned('fal'),
       planned('replicate'),
       b('heygen (avatar v3)'),
@@ -258,8 +259,8 @@ export function PipelineChapters() {
               head={['Tier', 'Candidates, in order']}
               rows={[
                 ['BASIC', 'fal → replicate'],
-                ['STANDARD', 'luma → runway → veo → kling'],
-                ['PLUS / ENTERPRISE', 'runway → luma → veo → kling'],
+                ['STANDARD', 'seedance (2.0 mini) → veo → runway → luma → kling'],
+                ['PLUS / ENTERPRISE', 'seedance (2.5) → veo → runway → luma → kling'],
                 ['Avatar (≤ STANDARD)', 'd-id → heygen'],
                 ['Stock footage', 'storyblocks → pexels'],
                 ['Image still', 'openai → fal'],

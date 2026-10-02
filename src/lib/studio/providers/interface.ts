@@ -65,6 +65,11 @@ interface ProviderRequestBase {
   organisationId: string;
   projectId?: string;
   shotId?: string;
+  /**
+   * 20.23: the plan tier of the operation, added by runProvider (pipeline/provider-run.ts) for
+   * adapters whose model depends on it (Seedance: 2.5 on PLUS / ENTERPRISE). Others ignore it.
+   */
+  planTier?: 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 }
 
 export interface TextGenerationRequest extends ProviderRequestBase {

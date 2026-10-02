@@ -13,6 +13,7 @@ import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-
 import { OpenAIAdapter, type OpenAIClientLike } from '../providers/openai';
 import { createProviderRegistry } from '../providers/registry';
 import { RunwayAdapter } from '../providers/runway';
+import { SeedanceAdapter } from '../providers/seedance';
 import { StubAdapter } from '../providers/test-adapter';
 import { describeError, isRetryable } from '../queue/workers/runtime';
 import { runProvider, type ProviderRunDeps } from './provider-run';
@@ -318,6 +319,8 @@ describe('runProvider account-problem failover (20.11)', () => {
     );
     expect(run.decision.providerId).toBe('luma');
     expect(run.decision.candidates).toEqual([
+      { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
     ]);
@@ -325,21 +328,18 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(run.fetchOutput).toBeUndefined();
   });
 
-  it('video (20.20): Runway out of credits and Luma over its limit → Veo, with its download', async () => {
-    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
-    runway.nextSubmit = async () => {
-      throw new ProviderError('runway', 'insufficient_credits', 'no credits', false, {
-        status: 402,
+  it('video (20.20 / 20.23): Seedance out of credits → Veo, with its download', async () => {
+    const seedance = new StubAdapter('seedance', ['text_to_video'], { costPence: 29 });
+    seedance.nextSubmit = async () => {
+      throw new ProviderError('seedance', 'insufficient_credits', 'overdue balance', false, {
+        status: 403,
       });
-    };
-    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
-    luma.nextSubmit = async () => {
-      throw new ProviderError('luma', 'account_limit', 'budget exhausted', false, { status: 429 });
     };
     const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
     const download = vi.fn(async () => new Response('mp4'));
     Object.assign(veo, { fetchOutput: download });
-    const { deps, breaker } = setup([runway, luma, veo]);
+    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
+    const { deps, breaker } = setup([seedance, veo, runway]);
     const run = await runProvider(
       {
         need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6 },
@@ -356,12 +356,11 @@ describe('runProvider account-problem failover (20.11)', () => {
     );
     expect(run.decision.providerId).toBe('veo');
     expect(run.decision.candidates).toEqual([
-      { providerId: 'runway', skipped: 'account_unavailable' },
-      { providerId: 'luma', skipped: 'account_unavailable' },
+      { providerId: 'seedance', skipped: 'account_unavailable' },
       { providerId: 'veo' },
     ]);
-    expect(breaker.accountHolds().runway?.errorClass).toBe('insufficient_credits');
-    expect(breaker.accountHolds().luma?.errorClass).toBe('account_limit');
+    expect(breaker.accountHolds().seedance?.errorClass).toBe('insufficient_credits');
+    expect(runway.submitCalls).toHaveLength(0);
     // Layer 3 downloads Veo's output with Veo's own (keyed) fetch.
     await run.fetchOutput?.('https://generativelanguage.googleapis.com/v1beta/files/x');
     expect(download).toHaveBeenCalledWith(
@@ -395,8 +394,10 @@ describe('runProvider account-problem failover (20.11)', () => {
     const { deps, breaker, rows } = setup([runway, luma]);
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('luma');
-    // 20.20: Veo now comes after Runway and Luma on PLUS, so Luma is reached first.
+    // 20.23: Seedance and Veo come first but are not configured in this test.
     expect(run.decision.candidates).toEqual([
+      { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
     ]);
@@ -422,6 +423,113 @@ describe('runProvider account-problem failover (20.11)', () => {
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('luma');
     expect(breaker.accountHolds().runway?.errorClass).toBe('insufficient_credits');
+  });
+
+  it('video (20.23): Seedance and Veo account problems on PLUS → Runway, then Luma', async () => {
+    const seedance = new StubAdapter('seedance', ['text_to_video'], { costPence: 52 });
+    seedance.nextSubmit = async () => {
+      throw new ProviderError('seedance', 'auth', 'model not activated', false, { status: 404 });
+    };
+    const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
+    veo.nextSubmit = async () => {
+      throw new ProviderError('veo', 'account_limit', 'spend cap', false, { status: 429 });
+    };
+    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    const { deps, breaker } = setup([seedance, veo, runway, luma]);
+    const run = await runProvider(clipRequest, deps);
+    expect(run.decision.providerId).toBe('runway');
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'seedance', skipped: 'account_unavailable' },
+      { providerId: 'veo', skipped: 'account_unavailable' },
+      { providerId: 'runway' },
+    ]);
+    expect(breaker.accountHolds().seedance?.errorClass).toBe('auth');
+    expect(breaker.accountHolds().veo?.errorClass).toBe('account_limit');
+    expect(luma.submitCalls).toHaveLength(0);
+    // Seedance clips are pre-signed URLs: Layer 3 copies them with a plain fetch.
+    expect(run.fetchOutput).toBeUndefined();
+  });
+
+  it('video (20.23): Runway and Luma account problems never reach Seedance (it goes first)', async () => {
+    const seedance = new StubAdapter('seedance', ['text_to_video'], { costPence: 52 });
+    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
+    runway.nextSubmit = async () => {
+      throw new ProviderError('runway', 'auth', 'bad key', false, { status: 401 });
+    };
+    const { deps } = setup([seedance, runway]);
+    const run = await runProvider(clipRequest, deps);
+    expect(run.decision.providerId).toBe('seedance');
+    expect(runway.submitCalls).toHaveLength(0);
+    // runProvider passes the plan tier to the adapter (PLUS → Seedance 2.5).
+    expect(seedance.submitCalls[0]).toMatchObject({ planTier: 'PLUS' });
+  });
+
+  it('video (20.23): the real Seedance adapter in arrears (403) on STANDARD fails over to Luma', async () => {
+    const http = fakeFetch(
+      json(
+        {
+          error: {
+            code: 'AccountOverdueError',
+            message: 'The request failed because your account has an overdue balance.',
+            type: 'Forbidden',
+          },
+        },
+        403,
+      ),
+    );
+    const seedance = new SeedanceAdapter({
+      apiKey: 'ark-key',
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    const { deps, breaker, rows } = setup([seedance, luma]);
+    const run = await runProvider({ ...clipRequest, planTier: 'STANDARD' }, deps);
+    expect(run.decision.providerId).toBe('luma');
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'seedance', skipped: 'account_unavailable' },
+      { providerId: 'veo', skipped: 'not_configured' },
+      { providerId: 'runway', skipped: 'not_configured' },
+      { providerId: 'luma' },
+    ]);
+    expect(breaker.accountHolds().seedance?.errorClass).toBe('insufficient_credits');
+    expect(rows.find((r) => r.provider === 'seedance')).toMatchObject({
+      errorClass: 'insufficient_credits',
+    });
+  });
+
+  it('video (20.23): a Seedance model that is not activated (404 ModelNotOpen) fails over too', async () => {
+    const http = fakeFetch(
+      json({ error: { code: 'ModelNotOpen', message: 'has not activated the model' } }, 404),
+    );
+    const seedance = new SeedanceAdapter({
+      apiKey: 'ark-key',
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    const { deps, breaker } = setup([seedance, luma]);
+    const run = await runProvider({ ...clipRequest, planTier: 'STANDARD' }, deps);
+    expect(run.decision.providerId).toBe('luma');
+    expect(breaker.accountHolds().seedance?.errorClass).toBe('auth');
+  });
+
+  it('video (20.23): a Seedance content refusal does not fail over', async () => {
+    const http = fakeFetch(
+      json({ error: { code: 'InputTextSensitiveContentDetected', message: 'sensitive' } }, 400),
+    );
+    const seedance = new SeedanceAdapter({
+      apiKey: 'ark-key',
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    const { deps } = setup([seedance, luma]);
+    await expect(runProvider({ ...clipRequest, planTier: 'STANDARD' }, deps)).rejects.toMatchObject(
+      { errorClass: 'content_policy' },
+    );
+    expect(luma.submitCalls).toHaveLength(0);
   });
 
   it('does not fail over for problems that are not about the account', async () => {

@@ -9,13 +9,22 @@
 ## What happens automatically
 
 - The router skips providers whose circuit is open and routes each shot to the next candidate for
-  its `visualTreatment` (spec 6.4). For example, Runway fails over to Luma and then Google Veo
-  (AI clips: STANDARD tries luma → runway → veo, PLUS/ENTERPRISE runway → luma → veo; Luma needs
-  `LUMA_API_KEY`, Veo `GOOGLE_GEMINI_API_KEY`; Veo renders at most 8 s, so 9–10 s shots skip it). AI
-  avatars have only HeyGen until D-ID is built: a HeyGen outage fails avatar shots.
-- Luma, Veo and HeyGen have no cancel endpoint. A job that times out keeps its `provider_jobs` row
+  its `visualTreatment` (spec 6.4). AI clips on every tier try seedance → veo → runway → luma
+  (STANDARD uses Seedance 2.0 mini, PLUS/ENTERPRISE Seedance 2.5). So a BytePlus Seedance outage
+  (or an empty BytePlus balance) moves clips to Google Veo, then Runway, then Luma. Keys: Seedance
+  `BYTEPLUS_API_KEY`, Veo `GOOGLE_GEMINI_API_KEY`, Runway `RUNWAY_API_KEY`, Luma `LUMA_API_KEY`. Veo renders at most 8 s, so 9–10 s shots skip it; Seedance renders
+  4–15 s (shorter shots get a 4 s clip the composer trims) and up to 30 s with Seedance 2.5. AI
+  avatars have only HeyGen until D-ID is built: when HeyGen is unavailable, avatar shots become
+  generated clips through the same AI clip order (20.19).
+- BytePlus suspends ModelArk 2 hours after the account goes into arrears (balance below zero):
+  Seedance then fails with `AccountOverdueError` (`insufficient_credits`), the account hold keeps
+  it out of routing and the ops alert names it. Top up at console.byteplus.com → Billing.
+- Luma, Veo and HeyGen have no cancel endpoint, and Seedance can cancel only a task that is still
+  queued (a running task cannot be stopped). A job that times out keeps its `provider_jobs` row
   RUNNING with its cost reservation, because the provider may still finish and bill it. Such
-  rows are expected after an outage; reconcile them against the provider dashboard.
+  rows are expected after an outage; reconcile them against the provider dashboard. Seedance
+  tasks expire after 1 hour in the BytePlus queue (`execution_expires_after`), so a stuck task is
+  not billed later.
 - An open breaker half-opens after 5 minutes and lets one probe through, platform-wide.
 - The breaker lives in Redis (`studio:breaker:<provider>` keys, DB 3), so five failures on any
   worker open it for all of them. If Redis is unavailable each process falls back to its own

@@ -1,6 +1,7 @@
 import { requiredEnvForModes } from '../env';
 import { studioModes, type StudioModes } from '../mode';
 import { isPersonGeneration, isVeoModel, VEO_MODELS } from '../studio/providers/veo';
+import { isArkBaseUrl, isSeedanceModel, SEEDANCE_MODELS } from '../studio/providers/seedance';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -302,6 +303,22 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
     isVeoModel(v) ? null : `must be one of ${Object.keys(VEO_MODELS).join(', ')} (or empty)`,
   VEO_PERSON_GENERATION: (v) =>
     isPersonGeneration(v) ? null : 'must be allow_adult or allow_all (or empty)',
+  // 20.23 BytePlus ModelArk (Seedance). BytePlus documents no key format; the operator's live key
+  // (2026-10-02) is a ~179-character token with dots, so only one unbroken token is checked.
+  BYTEPLUS_API_KEY: pattern(
+    /^[A-Za-z0-9._~+/=-]{32,}$/,
+    'must be the API key from the BytePlus ModelArk console (one unbroken string, no spaces)',
+  ),
+  SEEDANCE_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  SEEDANCE_LONG_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  BYTEPLUS_ARK_BASE_URL: (v) =>
+    isArkBaseUrl(v) ? null : 'must be https://ark.<region>.bytepluses.com/api/v3 (or empty)',
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.
