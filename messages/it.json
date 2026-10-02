@@ -43,7 +43,8 @@
       "moreOptions": "Altre opzioni",
       "required": "Obbligatorio"
     },
-    "untitledVideo": "Video senza titolo"
+    "untitledVideo": "Video senza titolo",
+    "briefHint": "È piuttosto breve. Aggiungi a chi è rivolto, cosa dire o l’atmosfera che vuoi, e il risultato sarà migliore. Puoi comunque generare."
   },
   "shell": {
     "nav": {
@@ -1057,6 +1058,18 @@
       "retry": "Riprova",
       "retried": "{count, plural, one {# post programmato.} other {# post programmati.}}",
       "stillNone": "Ancora nessun orario libero: aggiungi orari di pubblicazione o scegli una data."
+    },
+    "directions": {
+      "title": "Scegli una direzione",
+      "body": "La tua richiesta è un po’ troppo vaga per fare un buon video. Scegli una di queste direzioni o aggiungi altri dettagli qui sotto.",
+      "optionsAria": "Direzioni suggerite",
+      "option": "Direzione {number}",
+      "use": "Usa questa direzione",
+      "useAria": "Usa la direzione {number}",
+      "editLabel": "Il tuo brief",
+      "editSubmit": "Genera con le mie modifiche",
+      "started": "Generazione avviata.",
+      "noPermission": "Una persona che può modificare i progetti deve scegliere una direzione o aggiungere dettagli."
     }
   },
   "slideshow": {

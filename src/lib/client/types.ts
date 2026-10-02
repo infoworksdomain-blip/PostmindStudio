@@ -119,6 +119,8 @@ export interface Publication {
 }
 
 export interface ProjectDetail extends Project {
+  /** 20.18: directions ideation suggested while the brief is too vague (empty otherwise). */
+  directionOptions?: string[];
   brief: { hook: string; keyMessage: string; targetAudience: string; tone: string } | null;
   scripts: Array<Omit<Script, 'shots'> & { shots: ShotSummary[] }>;
   renders: Render[];

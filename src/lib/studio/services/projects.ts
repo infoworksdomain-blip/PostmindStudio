@@ -3,12 +3,14 @@ import {
   VideoProjectState as VideoProjectStateEnum,
   type Prisma,
   type PrismaClient,
+  type VideoProject,
   type VideoProjectState,
 } from '@prisma/client';
 import { z } from 'zod';
 import { ConflictError, NotFoundError, UpstreamServiceError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { ACTIVE_PIPELINE_STATES, projectMetadata } from '../pipeline/project-state';
+import { directionOptionsOf, isVagueBriefReason } from '../pipeline/vague-brief';
 import { createPrismaProviderJobRepository } from '../providers/job-repository';
 import type { ProviderRegistry } from '../providers/registry';
 import { cancelTracked } from '../providers/tracked';
@@ -195,6 +197,11 @@ export const generateInput = z.object({
   rawInput: z.string().trim().min(1).max(4_000).optional(),
   /** Spec 13.3: the user confirms restricted topics flagged at ideation. */
   confirmRestrictedTopics: z.boolean().optional(),
+  /**
+   * 20.18: the owner chose one of the suggested directions (or rewrote the brief) after ideation
+   * found it too vague. Stored for this run; ideation then treats the brief as actionable.
+   */
+  directionChosen: z.boolean().optional(),
   /** 15.C4 (spec 8.2): a lower quality tier for this run, and provider preferences. */
   ...generateOverridesInput,
 });
@@ -428,7 +435,19 @@ export async function getProjectDetail(db: Db, organisationId: string, id: strin
     },
   });
   if (!project) throw new NotFoundError('Project not found');
-  return project;
+  return { ...project, directionOptions: projectDirectionOptions(project) };
+}
+
+/**
+ * 20.18: the directions ideation suggested, while the project waits in DRAFT for the owner to
+ * choose one (empty otherwise). Studio's own model output for the owner's brief, not provider
+ * error text, so it is shown to customers.
+ */
+export function projectDirectionOptions(
+  project: Pick<VideoProject, 'state' | 'errorReason' | 'metadata'>,
+): string[] {
+  if (project.state !== 'DRAFT' || !isVagueBriefReason(project.errorReason)) return [];
+  return directionOptionsOf(projectMetadata(project.metadata).directionOptions);
 }
 
 function storedPlatforms(targetFormats: Prisma.JsonValue): string[] {
@@ -650,6 +669,8 @@ export async function generateProject(
         renders: {},
         ...(input.confirmRestrictedTopics && { restrictedTopicsConfirmed: true }),
         directionOptions: undefined,
+        // 20.18: per run, like preferredProviders (a later plain generate clears it).
+        directionChosen: input.directionChosen === true ? true : undefined,
         // Per run: a new generate without preferences clears the previous run's.
         preferredProviders: preferredProviders ?? undefined,
         ...(input.qualityTier && { qualityTierOverride: { requested: planTier, plan: orgTier } }),
@@ -672,7 +693,13 @@ export async function generateProject(
     // user could neither generate again nor cancel it as failed). Put it back and report 502.
     await deps.db.videoProject.updateMany({
       where: { id, organisationId: tenant.organisationId, state: 'QUEUED' },
-      data: { state: project.state, errorReason: project.errorReason },
+      // 20.18: the brief and metadata too, so a "choose a direction" project keeps its options.
+      data: {
+        state: project.state,
+        errorReason: project.errorReason,
+        description: project.description,
+        metadata: (project.metadata ?? {}) as Prisma.InputJsonValue,
+      },
     });
     throw new UpstreamServiceError('Generation could not be queued; try again shortly', {
       cause: err instanceof Error ? err.message : 'queue_unavailable',

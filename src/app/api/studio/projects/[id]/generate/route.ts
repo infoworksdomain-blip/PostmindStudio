@@ -28,7 +28,12 @@ export const POST = withStudioRoute(
     audit(
       'studio.project.generate',
       { type: 'video_project', id },
-      { runId: run.runId, planTier: run.planTier },
+      {
+        runId: run.runId,
+        planTier: run.planTier,
+        // 20.18: a direction chosen after ideation found the brief too vague.
+        ...(input.directionChosen && { directionChosen: true }),
+      },
     );
     return { status: 202, body: { projectId: id, state: 'QUEUED', ...run } };
   },

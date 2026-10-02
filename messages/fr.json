@@ -43,7 +43,8 @@
       "moreOptions": "Plus d’options",
       "required": "Obligatoire"
     },
-    "untitledVideo": "Vidéo sans titre"
+    "untitledVideo": "Vidéo sans titre",
+    "briefHint": "C’est assez court. Précisez à qui il s’adresse, ce qu’il doit dire ou l’ambiance souhaitée, et le résultat sera meilleur. Vous pouvez quand même générer."
   },
   "shell": {
     "nav": {
@@ -1057,6 +1058,18 @@
       "retry": "Réessayer",
       "retried": "{count, plural, one {# publication programmée.} other {# publications programmées.}}",
       "stillNone": "Toujours aucun créneau libre — ajoutez des heures de publication ou choisissez une date."
+    },
+    "directions": {
+      "title": "Choisissez une piste",
+      "body": "Votre demande est un peu trop vague pour faire une bonne vidéo. Choisissez l’une de ces pistes ou ajoutez des détails ci-dessous.",
+      "optionsAria": "Pistes proposées",
+      "option": "Piste {number}",
+      "use": "Utiliser cette piste",
+      "useAria": "Utiliser la piste {number}",
+      "editLabel": "Votre brief",
+      "editSubmit": "Générer avec mes modifications",
+      "started": "Génération lancée.",
+      "noPermission": "Une personne autorisée à modifier les projets doit choisir une piste ou ajouter des détails."
     }
   },
   "slideshow": {

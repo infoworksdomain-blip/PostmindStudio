@@ -29,6 +29,7 @@ import { ShotsTab } from './shots-tab';
 import { PUBLISHABLE } from './types';
 import { VariantCard } from './variant-card';
 import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
+import { DirectionsPanel, needsDirection } from './directions-panel';
 import { AutoResumeNote, FallbackNote, SafetyReviewNote } from './paused-notes';
 import { useProjectName } from '@/lib/client/use-project-name';
 
@@ -133,6 +134,8 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
       />
       <div className="flex flex-col gap-6">
         <PipelineStrip state={project.state} />
+        {/* 20.18: the brief was too vague — choose a suggested direction or add detail. */}
+        {needsDirection(project) && <DirectionsPanel project={project} onChanged={refresh} />}
         {project.errorReason &&
           ['FAILED', 'REJECTED', 'QUALITY_FAILED'].includes(project.state) && (
             <p

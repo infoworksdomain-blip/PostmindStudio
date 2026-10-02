@@ -43,7 +43,8 @@
       "moreOptions": "更多选项",
       "required": "必填"
     },
-    "untitledVideo": "未命名视频"
+    "untitledVideo": "未命名视频",
+    "briefHint": "内容有点短。补充一下面向谁、想表达什么或想要的感觉，我们会做得更好。你仍然可以直接生成。"
   },
   "shell": {
     "nav": {
@@ -1057,6 +1058,18 @@
       "retry": "重试",
       "retried": "{count, plural, other {已排期 # 条帖子。}}",
       "stillNone": "仍然没有空闲的发布时间——请添加发布时间或选择日期。"
+    },
+    "directions": {
+      "title": "选择一个方向",
+      "body": "你的要求有点太笼统，难以做出好视频。请从以下方向中选择一个，或在下方补充更多细节。",
+      "optionsAria": "建议的方向",
+      "option": "方向 {number}",
+      "use": "使用此方向",
+      "useAria": "使用方向 {number}",
+      "editLabel": "你的简报",
+      "editSubmit": "按我的修改生成",
+      "started": "已开始生成。",
+      "noPermission": "需要有项目编辑权限的人选择一个方向或补充更多细节。"
     }
   },
   "slideshow": {

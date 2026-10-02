@@ -12,6 +12,7 @@ import type { BrandKit, Project } from '@/lib/client/types';
 import type { ProjectTemplate } from '../automation/automation';
 import type { CreateProjectBody } from '../create/body';
 import { EmptyState, ErrorState } from '../primitives';
+import { BriefHint, briefHintDescribedBy } from '../brief-hint';
 
 // Step 3 — the first video from the built-in "Introduce yourself and what you do" template
 // (spec 14.5). The request body matches what the Create screen sends for a TEMPLATE project
@@ -139,9 +140,12 @@ export function FirstVideoStep({
               maxLength={BRIEF_MAX}
               rows={3}
               onChange={(e) => setBrief(e.target.value)}
+              aria-describedby={briefHintDescribedBy(brief, `${briefId}-hint`)}
               placeholder={t('briefPlaceholder')}
               className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
             />
+            {/* 20.18: a gentle nudge for a very short brief; Create still works. */}
+            <BriefHint text={brief} id={`${briefId}-hint`} />
           </div>
           <div>
             <Button onClick={() => void create()} disabled={creating}>
