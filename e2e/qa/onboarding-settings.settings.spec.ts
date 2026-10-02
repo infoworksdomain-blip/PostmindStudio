@@ -164,6 +164,8 @@ test.describe('organisation settings', () => {
       (await db.organization.findUniqueOrThrow({ where: { id: org.id } })).deletedAt,
     ).toBeNull();
     await shot(page, 'settings-delete-organisation');
+    // From here the user has no organisation: every workspace API answers 403 no_organisation.
+    w.noOrganisation = true;
     await dialog.getByLabel('Your password').fill(PASSWORD);
     await confirm.click();
     await expect(page).not.toHaveURL(/settings\/organisation/);
