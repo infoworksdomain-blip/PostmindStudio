@@ -43,7 +43,8 @@
       "moreOptions": "More options",
       "required": "Required"
     },
-    "untitledVideo": "Untitled video"
+    "untitledVideo": "Untitled video",
+    "briefHint": "This is quite short. Add who it’s for, what to say, or the feel you want, and we’ll make something better. You can still generate."
   },
   "shell": {
     "nav": {
@@ -1061,6 +1062,28 @@
       "retry": "Try again",
       "retried": "{count, plural, one {Scheduled # post.} other {Scheduled # posts.}}",
       "stillNone": "Still no free posting time — add posting times or pick a date."
+    },
+    "directions": {
+      "title": "Choose a direction",
+      "body": "Your request is a bit too vague to make a good video. Pick one of these directions, or add more detail below.",
+      "optionsAria": "Suggested directions",
+      "option": "Direction {number}",
+      "use": "Use this direction",
+      "useAria": "Use direction {number}",
+      "noPermission": "Someone who can edit projects needs to choose a direction or add more detail."
+    },
+    "needsInput": {
+      "editLabel": "Your brief",
+      "editSubmit": "Generate with my changes",
+      "started": "Generation started."
+    },
+    "restricted": {
+      "title": "Check the restricted topics",
+      "body": "Your brief touches topics your brand kit or business profile marks as restricted. Continue anyway if they are fine for this video, or edit the brief to leave them out.",
+      "topicsAria": "Restricted topics found",
+      "continue": "Continue anyway",
+      "continueHint": "The video is made as briefed, including these topics.",
+      "noPermission": "Someone who can edit projects needs to continue or change the brief."
     }
   },
   "slideshow": {

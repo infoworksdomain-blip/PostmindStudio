@@ -119,6 +119,10 @@ export interface Publication {
 }
 
 export interface ProjectDetail extends Project {
+  /** 20.18: directions ideation suggested while the brief is too vague (empty otherwise). */
+  directionOptions?: string[];
+  /** 20.18 (spec 13.3): restricted topics awaiting the owner's confirmation (empty otherwise). */
+  pendingRestrictedTopics?: string[];
   brief: { hook: string; keyMessage: string; targetAudience: string; tone: string } | null;
   scripts: Array<Omit<Script, 'shots'> & { shots: ShotSummary[] }>;
   renders: Render[];

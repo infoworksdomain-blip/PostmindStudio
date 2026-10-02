@@ -43,7 +43,8 @@
       "moreOptions": "Weitere Optionen",
       "required": "Pflichtfeld"
     },
-    "untitledVideo": "Unbenanntes Video"
+    "untitledVideo": "Unbenanntes Video",
+    "briefHint": "Das ist recht kurz. Ergänzen Sie, für wen es ist, was gesagt werden soll oder welche Stimmung Sie möchten – dann wird das Ergebnis besser. Sie können trotzdem generieren."
   },
   "shell": {
     "nav": {
@@ -1061,6 +1062,28 @@
       "retry": "Erneut versuchen",
       "retried": "{count, plural, one {# Beitrag eingeplant.} other {# Beiträge eingeplant.}}",
       "stillNone": "Immer noch keine freie Posting-Zeit — fügen Sie Posting-Zeiten hinzu oder wählen Sie ein Datum."
+    },
+    "directions": {
+      "title": "Richtung wählen",
+      "body": "Ihre Anfrage ist etwas zu vage für ein gutes Video. Wählen Sie eine dieser Richtungen oder ergänzen Sie unten weitere Details.",
+      "optionsAria": "Vorgeschlagene Richtungen",
+      "option": "Richtung {number}",
+      "use": "Diese Richtung verwenden",
+      "useAria": "Richtung {number} verwenden",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, muss eine Richtung wählen oder weitere Details ergänzen."
+    },
+    "needsInput": {
+      "editLabel": "Ihr Briefing",
+      "editSubmit": "Mit meinen Änderungen generieren",
+      "started": "Generierung gestartet."
+    },
+    "restricted": {
+      "title": "Eingeschränkte Themen prüfen",
+      "body": "Ihr Briefing berührt Themen, die Ihr Brand Kit oder Unternehmensprofil als eingeschränkt markiert. Fahren Sie trotzdem fort, wenn sie für dieses Video in Ordnung sind, oder bearbeiten Sie das Briefing, um sie wegzulassen.",
+      "topicsAria": "Gefundene eingeschränkte Themen",
+      "continue": "Trotzdem fortfahren",
+      "continueHint": "Das Video wird wie im Briefing erstellt, einschließlich dieser Themen.",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, muss fortfahren oder das Briefing ändern."
     }
   },
   "slideshow": {

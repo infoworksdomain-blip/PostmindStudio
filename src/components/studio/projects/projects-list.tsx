@@ -35,6 +35,12 @@ import type { Page, Project } from '@/lib/client/types';
 import { StudioCapability } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
+import { FailureReason } from '../failure-reason';
+import { DIRECTIONS_ANCHOR, needsDirection } from '../review/directions-panel';
+import {
+  needsTopicConfirmation,
+  RESTRICTED_TOPICS_ANCHOR,
+} from '../review/restricted-topics-panel';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { useCan } from '../use-can';
 import { useProjectName } from '@/lib/client/use-project-name';
@@ -182,10 +188,17 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
   const projectName = useProjectName();
   const name = projectName(project.name);
   const mayWrite = useCan(StudioCapability.ProjectWrite);
+  // 20.18: a project waiting for the owner (a brief too vague to plan, restricted topics to
+  // confirm) shows why and opens straight on the panel that resolves it.
+  const anchor = needsDirection(project)
+    ? DIRECTIONS_ANCHOR
+    : needsTopicConfirmation(project)
+      ? RESTRICTED_TOPICS_ANCHOR
+      : null;
   return (
     <li className="flex items-center gap-1 rounded-xl border border-transparent pe-2 transition-colors hover:border-border hover:bg-card">
       <Link
-        href={`/projects/${project.id}`}
+        href={`/projects/${project.id}${anchor ? `#${anchor}` : ''}`}
         className="group grid min-w-0 flex-1 grid-cols-[auto_1fr_auto] items-center gap-4 rounded-xl px-4 py-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_1fr_10rem_7rem_auto]"
       >
         <span className="grid size-10 place-items-center rounded-lg bg-secondary text-muted-foreground">
@@ -199,6 +212,14 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
               updated: f.relative(project.updatedAt),
             })}
           </span>
+          {anchor && (
+            <span
+              data-testid="project-row-reason"
+              className="block truncate text-xs text-amber-700 dark:text-amber-400"
+            >
+              <FailureReason reason={project.errorReason} />
+            </span>
+          )}
         </span>
         <span className="hidden md:block">
           <StateBadge {...state} />
