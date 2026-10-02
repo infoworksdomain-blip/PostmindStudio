@@ -71,6 +71,10 @@ export type QualityDetailKey = (typeof QUALITY_DETAIL_KEYS)[number];
 const round = (n: number, digits: number) => Number(n.toFixed(digits));
 
 export const DURATION_TOLERANCE_SEC = 2;
+/**
+ * Spec 13.1 "no black frames > 500 ms". An interval of exactly 0.5 s passes; anything longer
+ * fails. Detection thresholds and why they were kept: media-probe.ts (BLACKDETECT_*, 20.22).
+ */
 export const BLACK_FRAME_MAX_SEC = 0.5;
 export const LUFS_RANGE: [number, number] = [-18, -10];
 const ASPECT_TOLERANCE = 0.01;

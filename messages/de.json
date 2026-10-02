@@ -885,6 +885,9 @@
       "overrideLabel": "Fehlgeschlagene Prüfung übergehen – Begründung (Pflichtfeld, wird protokolliert)",
       "forceApprove": "Freigabe erzwingen",
       "overridden": "Qualitätsprüfung übergangen.",
+      "softFailureHint": "Diese Prüfungen sind nur Hinweise. Sehen Sie sich das Video an; wenn es passt, erzwingen Sie die Freigabe mit einer kurzen Begründung.",
+      "askToOverride": "Diese Prüfungen sind nur Hinweise. Sehen Sie sich das Video an; ein Inhaber oder Admin kann die Freigabe erzwingen.",
+      "blockedNoOverride": "Eine Sperre der Inhaltssicherheitsprüfung kann nur das PostMind-Team aufheben.",
       "details": {
         "safetyScanUnavailable": "Die Prüfung konnte nicht laufen: {reason}",
         "safetyNotScanned": "Nicht geprüft: Es ist keine Inhaltssicherheitsprüfung eingerichtet.",

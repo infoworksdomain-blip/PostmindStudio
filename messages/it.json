@@ -885,6 +885,9 @@
       "overrideLabel": "Ignora il controllo non superato: motivo (obbligatorio, registrato)",
       "forceApprove": "Forza l’approvazione",
       "overridden": "Controllo qualità ignorato.",
+      "softFailureHint": "Questi controlli sono indicativi. Guarda il video; se va bene, forza l’approvazione con un breve motivo.",
+      "askToOverride": "Questi controlli sono indicativi. Guarda il video; un proprietario o un amministratore può forzare l’approvazione.",
+      "blockedNoOverride": "Solo il team PostMind può rimuovere un blocco di sicurezza dei contenuti.",
       "details": {
         "safetyScanUnavailable": "Non è stato possibile eseguire l’analisi: {reason}",
         "safetyNotScanned": "Non analizzato: nessuna analisi di sicurezza dei contenuti è configurata.",

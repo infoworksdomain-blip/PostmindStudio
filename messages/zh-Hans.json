@@ -885,6 +885,9 @@
       "overrideLabel": "覆盖未通过的检查——原因（必填，将被审计）",
       "forceApprove": "强制批准",
       "overridden": "已覆盖质量检查结果。",
+      "softFailureHint": "这些检查仅供参考。请观看视频；如果没有问题，请填写简短原因后强制批准。",
+      "askToOverride": "这些检查仅供参考。请观看视频；所有者或管理员可以强制批准。",
+      "blockedNoOverride": "内容安全拦截只能由 PostMind 工作人员解除。",
       "details": {
         "safetyScanUnavailable": "扫描无法运行：{reason}",
         "safetyNotScanned": "未扫描：未设置内容安全扫描。",

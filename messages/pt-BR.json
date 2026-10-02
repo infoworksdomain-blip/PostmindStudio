@@ -885,6 +885,9 @@
       "overrideLabel": "Ignorar a verificação que falhou — motivo (obrigatório, fica registrado)",
       "forceApprove": "Forçar aprovação",
       "overridden": "Verificação de qualidade ignorada.",
+      "softFailureHint": "Essas verificações são orientativas. Assista ao vídeo; se estiver bom, force a aprovação com um motivo curto.",
+      "askToOverride": "Essas verificações são orientativas. Assista ao vídeo; um proprietário ou administrador pode forçar a aprovação.",
+      "blockedNoOverride": "Somente a equipe da PostMind pode remover um bloqueio de segurança de conteúdo.",
       "details": {
         "safetyScanUnavailable": "Não foi possível executar a análise: {reason}",
         "safetyNotScanned": "Não analisado: nenhuma análise de segurança do conteúdo está configurada.",
