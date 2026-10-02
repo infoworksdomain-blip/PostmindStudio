@@ -2204,7 +2204,7 @@
       "notFoundTitle": "No se encontró la referencia",
       "notFoundBody": "Puede que se haya retirado de la biblioteca.",
       "loading": "Cargando la referencia",
-      "previewAria": "Vista previa sin sonido de {title}",
+      "previewAria": "Vista previa de {title}",
       "previewNote": "{minutes, plural, one {Vista previa en baja resolución · el enlace caduca en # min} other {Vista previa en baja resolución · el enlace caduca en # min}}",
       "tagsAria": "Etiquetas",
       "facts": {

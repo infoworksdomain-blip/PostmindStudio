@@ -37,7 +37,11 @@ export interface MediaInspector {
   sceneChanges(url: string, threshold: number): Promise<number[]>;
   /** One JPEG frame at `atSec`, scaled to at most `maxWidth` wide. */
   frameJpeg(url: string, atSec: number, maxWidth: number): Promise<Uint8Array>;
-  /** Low-resolution, muted, length-capped H.264 rendition (library in-picker previews). */
+  /**
+   * Low-resolution, length-capped H.264 + AAC rendition (library previews, Addendum A3.10). Keeps
+   * the first audio stream (operator decision 2026-10-01, BACKLOG 20.17); a source without audio
+   * gives a valid silent rendition.
+   */
   previewClip(url: string, maxWidth: number, maxSec: number): Promise<Uint8Array>;
 }
 
@@ -200,6 +204,53 @@ export function parseSceneChanges(stderr: string): number[] {
   return [...times].sort((a, b) => a - b);
 }
 
+/** Output file name of previewClip inside its temporary directory. */
+export const PREVIEW_FILE = 'preview.mp4';
+
+/**
+ * ffmpeg arguments for a library preview rendition (Addendum A3.10: low-res, at most `maxSec`).
+ * BACKLOG 20.17 (operator decision 2026-10-01): previews keep their sound. `-map 0:a:0?` maps the
+ * first audio stream only when there is one (the trailing `?` makes the map optional, see
+ * ffmpeg's -map documentation), so a silent source still gives a valid video-only MP4; the
+ * `-c:a` options then apply to no stream and ffmpeg ignores them. AAC stereo at 96 kb/s is
+ * modest next to the video and plays in every browser; +faststart lets playback start before
+ * the whole file has arrived.
+ */
+export function previewClipArgs(url: string, maxWidth: number, maxSec: number): string[] {
+  return [
+    '-hide_banner',
+    '-nostdin',
+    '-i',
+    url,
+    '-t',
+    maxSec.toFixed(3),
+    '-map',
+    '0:v:0',
+    '-map',
+    '0:a:0?',
+    '-vf',
+    `scale='min(${Math.round(maxWidth)},iw)':-2,fps=15`,
+    '-c:v',
+    'libx264',
+    '-preset',
+    'veryfast',
+    '-crf',
+    '32',
+    '-pix_fmt',
+    'yuv420p',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '96k',
+    '-ac',
+    '2',
+    '-movflags',
+    '+faststart',
+    '-y',
+    PREVIEW_FILE,
+  ];
+}
+
 export function createFfmpegInspector(
   options: { ffmpegPath?: string; ffprobePath?: string; timeoutMs?: number } = {},
 ): MediaInspector {
@@ -318,37 +369,10 @@ export function createFfmpegInspector(
     async previewClip(url, maxWidth, maxSec) {
       const dir = await mkdtemp(join(tmpdir(), 'studio-preview-'));
       try {
-        const r = await run(
-          ffmpeg,
-          [
-            '-hide_banner',
-            '-nostdin',
-            '-i',
-            url,
-            '-t',
-            maxSec.toFixed(3),
-            '-an',
-            '-vf',
-            `scale='min(${Math.round(maxWidth)},iw)':-2,fps=15`,
-            '-c:v',
-            'libx264',
-            '-preset',
-            'veryfast',
-            '-crf',
-            '32',
-            '-pix_fmt',
-            'yuv420p',
-            '-movflags',
-            '+faststart',
-            '-y',
-            'preview.mp4',
-          ],
-          timeoutMs,
-          dir,
-        );
+        const r = await run(ffmpeg, previewClipArgs(url, maxWidth, maxSec), timeoutMs, dir);
         if (r.code !== 0)
           throw new ValidationError(`ffmpeg preview failed: ${r.stderr.slice(-500)}`);
-        return new Uint8Array(await readFile(join(dir, 'preview.mp4')));
+        return new Uint8Array(await readFile(join(dir, PREVIEW_FILE)));
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

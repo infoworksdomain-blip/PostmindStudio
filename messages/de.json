@@ -2204,7 +2204,7 @@
       "notFoundTitle": "Referenz nicht gefunden",
       "notFoundBody": "Sie wurde möglicherweise aus der Bibliothek entfernt.",
       "loading": "Referenz wird geladen",
-      "previewAria": "Stumme Vorschau von {title}",
+      "previewAria": "Vorschau von {title}",
       "previewNote": "{minutes, plural, one {Vorschau in niedriger Auflösung · Link läuft in # Min. ab} other {Vorschau in niedriger Auflösung · Link läuft in # Min. ab}}",
       "tagsAria": "Tags",
       "facts": {

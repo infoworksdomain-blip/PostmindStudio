@@ -2204,7 +2204,7 @@
       "notFoundTitle": "未找到参考视频",
       "notFoundBody": "它可能已从视频库下架。",
       "loading": "正在加载参考视频",
-      "previewAria": "{title} 的静音预览",
+      "previewAria": "{title} 的预览",
       "previewNote": "{minutes, plural, other {低清预览 · 链接将在 # 分钟后失效}}",
       "tagsAria": "标签",
       "facts": {
