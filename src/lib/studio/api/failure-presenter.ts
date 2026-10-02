@@ -30,6 +30,9 @@ function canonical(p: ParsedFailure): string {
       return params.pence === undefined
         ? code
         : `${code}: Stopped at the scan cost cap (${params.pence}p)${code === 'scan_images_capped' ? ': some images were not indexed' : ''}`;
+    case 'scan_pages_skipped':
+    case 'scan_images_skipped':
+      return params.count === undefined ? code : `${code}: ${params.count}`;
     default:
       if (p.cause) return `${code}: ${canonical(p.cause)}`;
       // Text written by Studio or a reviewer (a safety note, a rejection note) stays; a wrapper's

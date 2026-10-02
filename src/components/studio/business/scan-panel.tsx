@@ -19,6 +19,7 @@ import {
   useErrorMessage,
 } from '@/lib/client/api';
 import { useFormat, type Tone } from '@/lib/client/format';
+import { cn } from '@/lib/utils';
 import { FailureReason } from '../failure-reason';
 import { ErrorState, Section, StateBadge } from '../primitives';
 import { DomainVerificationCard } from './domain-verification';
@@ -135,8 +136,16 @@ function ScanProgress({ scanId, onSettled }: { scanId: string; onSettled: () => 
       )}
       {scan.robotsBlocked && <p className="mt-3 text-xs text-muted-foreground">{t('robots')}</p>}
       {scan.errors.length > 0 && (
-        <ul className="mt-3 list-disc ps-5 text-xs text-destructive">
-          {scan.errors.map((e) => (
+        // A finished scan's lines are notes about what it skipped (muted); a failed scan's are
+        // the reason it failed (red). Identical lines (rows stored before the worker coded them
+        // all read "This step failed") show once.
+        <ul
+          className={cn(
+            'mt-3 list-disc ps-5 text-xs',
+            scan.state === 'FAILED' ? 'text-destructive' : 'text-muted-foreground',
+          )}
+        >
+          {[...new Set(scan.errors)].map((e) => (
             <li key={e}>
               <FailureReason reason={e} plain />
             </li>

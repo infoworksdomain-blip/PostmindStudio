@@ -50,6 +50,8 @@ export const CALLBACK_ERROR_CODES = [
   // Phase 18 Meta connect: no publishable Page granted / the browser is another user's session.
   'meta_no_accounts',
   'wrong_user',
+  // The sign-in link was already used or has expired (a stale tab, a double click).
+  'state_expired',
 ] as const;
 
 export type CallbackErrorCode = (typeof CALLBACK_ERROR_CODES)[number];

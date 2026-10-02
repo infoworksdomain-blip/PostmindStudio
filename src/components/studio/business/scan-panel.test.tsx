@@ -163,4 +163,34 @@ describe('ScanPanel', () => {
     renderScreen(<ScanPanel businessId="biz_1" />);
     expect(await screen.findByRole('alert')).toHaveTextContent('History down');
   });
+
+  // QA 6: a finished scan reports what it skipped as one coded sentence per kind.
+  it('says what a finished scan skipped in plain sentences, once each', async () => {
+    mockFetch((req) =>
+      req.url.pathname.endsWith('/scans')
+        ? ok({ data: [SCAN] })
+        : ok({
+            scan: detail({
+              errors: [
+                'scan_pages_skipped: 1',
+                'scan_images_skipped: 3',
+                'stock_not_configured',
+                // rows stored before the worker coded its lines reach a customer as this
+                'unknown_failure',
+                'unknown_failure',
+                'unknown_failure',
+              ],
+            }),
+          }),
+    );
+    renderScreen(<ScanPanel businessId="biz_1" />);
+    expect(
+      await screen.findByText('1 page could not be read and was skipped.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('3 images on your site could not be downloaded and were skipped.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/no stock photo service is set up yet/)).toBeInTheDocument();
+    expect(screen.getAllByText(/This step failed/)).toHaveLength(1);
+  });
 });

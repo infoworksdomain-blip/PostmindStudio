@@ -1589,7 +1589,8 @@
         "images": "Libreria immagini",
         "learned": "Cosa ha imparato Studio",
         "hashtags": "Hashtag"
-      }
+      },
+      "readOnly": "Hai accesso di sola lettura a questa attività. Chiedi a un proprietario o a un amministratore di fare le modifiche."
     },
     "kits": {
       "intro": "Il kit predefinito si applica ai nuovi video. I copioni ne usano tono e pubblico; sovrimpressioni e composizione ne usano colori e font.",
@@ -1789,7 +1790,8 @@
       },
       "gridAria": "Libreria immagini",
       "newer": "Più recenti",
-      "older": "Meno recenti"
+      "older": "Meno recenti",
+      "stockNotConfigured": "Le foto d’archivio non sono ancora configurate, quindi non c’è nulla da aggiornare. Le foto del tuo sito, i caricamenti e le immagini generate funzionano ancora."
     },
     "profile": {
       "fields": {
@@ -2033,6 +2035,16 @@
         "planGeneric": "La clonazione vocale non è inclusa nel tuo piano. Passa a un piano superiore per clonare una voce; le voci stock restano disponibili.",
         "notConfigured": "La clonazione vocale non è ancora configurata su questo server ({message})."
       }
+    },
+    "details": {
+      "title": "Dettagli dell’attività",
+      "description": "Il nome mostrato nella barra superiore e l’indirizzo del sito web di questa attività.",
+      "name": "Nome dell’attività",
+      "domain": "Indirizzo del sito web (facoltativo)",
+      "domainHint": "Un nome host come leedssourdough.co.uk, senza https:// né percorso.",
+      "domainInvalid": "Usa un nome host come esempio.co.uk.",
+      "save": "Salva i dettagli",
+      "saved": "Dettagli dell’attività salvati"
     }
   },
   "connections": {
@@ -2046,7 +2058,8 @@
       "internal_error": "Qualcosa è andato storto nel completare il collegamento. Riprova.",
       "unknown": "Il collegamento non è stato completato ({code}). Riprova.",
       "meta_no_accounts": "Meta non ha condiviso nessuna Pagina Facebook su cui puoi pubblicare. Collegati di nuovo e scegli almeno una Pagina (e il relativo account Instagram) nella finestra di Meta.",
-      "wrong_user": "Questo collegamento è stato avviato da un altro utente di Studio. Ricomincia dopo aver effettuato l’accesso con il tuo account."
+      "wrong_user": "Questo collegamento è stato avviato da un altro utente di Studio. Ricomincia dopo aver effettuato l’accesso con il tuo account.",
+      "state_expired": "Quel link di accesso è già stato usato o è scaduto. Ricomincia il collegamento."
     },
     "dismiss": "Chiudi",
     "pickFirst": {
@@ -2100,7 +2113,8 @@
       "codeLabel": "Codice di conferma:",
       "unknownCode": "Non abbiamo trovato alcuna richiesta di eliminazione con questo codice di conferma. Controlla il link fornito da Facebook."
     },
-    "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore."
+    "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore.",
+    "readOnly": "Solo i proprietari e gli amministratori possono collegare o scollegare gli account."
   },
   "library": {
     "browse": {
@@ -3654,7 +3668,11 @@
       "scan_images_capped": "L’analisi ha raggiunto il limite di costo ({amount}): alcune immagini non sono state indicizzate per la ricerca.",
       "ownership_disputed": "Interrotto: la proprietà del sito è stata contestata.",
       "provider_failure": "{source} ha segnalato un problema: {problem}.",
-      "service_unavailable": "Il nostro servizio di IA è temporaneamente non disponibile, quindi l’operazione non è stata completata. Riprova più tardi: il nostro team è stato avvisato."
+      "service_unavailable": "Il nostro servizio di IA è temporaneamente non disponibile, quindi l’operazione non è stata completata. Riprova più tardi: il nostro team è stato avvisato.",
+      "scan_pages_skipped": "{count, plural, one {# pagina non è stata letta ed è stata saltata.} many {# pagine non sono state lette e sono state saltate.} other {# pagine non sono state lette e sono state saltate.}}",
+      "scan_images_skipped": "{count, plural, one {# immagine del tuo sito non è stata scaricata ed è stata saltata.} many {# immagini del tuo sito non sono state scaricate e sono state saltate.} other {# immagini del tuo sito non sono state scaricate e sono state saltate.}}",
+      "stock_not_configured": "Non è stato possibile aggiungere foto d’archivio: nessun servizio di foto è ancora configurato.",
+      "stock_unavailable": "Questa volta non è stato possibile aggiungere alcune foto d’archivio. Usa «Aggiorna foto» nella libreria immagini per riprovare."
     },
     "classes": {
       "rate_limited": "troppe richieste",

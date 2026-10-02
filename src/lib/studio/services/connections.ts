@@ -155,10 +155,12 @@ export async function completeOAuth(
   },
   query: { code?: string | null; state?: string | null; error?: string | null },
 ): Promise<CallbackOutcome> {
-  if (!query.state) throw new ValidationError('Missing OAuth state');
+  if (!query.state) throw new ValidationError('Missing OAuth state', { reason: 'state_expired' });
   const pending = await deps.oauthState.consume(query.state);
   if (!pending)
-    throw new ValidationError('OAuth state is unknown, expired or already used; start again');
+    throw new ValidationError('OAuth state is unknown, expired or already used; start again', {
+      reason: 'state_expired',
+    });
   if (query.error)
     throw new ValidationError(`The platform returned an error: ${query.error}`, {
       pending: { returnTo: pending.returnTo },
