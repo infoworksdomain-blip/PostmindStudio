@@ -951,6 +951,9 @@ model TextOverlay {
   alignment           String          @default("center")
   rotationDeg         Float           @default(0)
   effect              Json? // wave/glitch/karaoke
+  // 20.22: 'caption' = narration caption (overlays/voice-captions.ts, checked by caption_sync);
+  // 'on_screen' = headline/title/CTA/hook and other text (never checked against the narration).
+  kind                String          @default("on_screen")
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 

@@ -16,27 +16,43 @@ import {
 import { sampleWatermark } from './quality-watermark';
 import { fitOf } from './voice-fit';
 import { spokenWordsOf } from './word-timing';
-import { normaliseWord, type SpokenWord } from '../overlays/word-timing';
+import type { SpokenWord } from '../overlays/word-timing';
+import { mirrorsNarration } from '../overlays/kind';
 
 // BACKLOG 15.B2 — gathers what quality-sync.ts needs for one render (its composition summary,
 // the shots' narration fit and word timing, spoken-caption overlays, the brand kit) and runs the
 // four checks. Called by the quality gate (queue/workers/run-quality-gate.ts).
 
-/** Spoken captions: karaoke overlays and subtitle-group preset overlays (13.5/13.6/15.A4). */
 /**
- * Karaoke overlays always follow the narration. A subtitle-group overlay counts as a caption of
- * the voiceover only when most of its words are spoken in the shot; otherwise it is on-screen
- * text (a price, a hook) that is not meant to track speech.
+ * 20.22: caption_sync judges only overlays that mirror the voice-over — narration captions
+ * (text_overlays.kind = 'caption', written by overlays/voice-captions.ts) and karaoke overlays.
+ * It used to guess from the preset group and the share of spoken words, which held headline
+ * overlays on the subtitle_box preset (suggested for body shots) to the narration and ignored
+ * TikTok's narration captions (styled with the hook_tiktok_native preset): QA run 3 failed on
+ * "Meeting panic mode" / "AheadAI to the rescue" ("words not found in the narration").
  */
-function isSpokenCaption(
-  row: { animationIn: string; text: string; presetGroup?: string | null },
-  words: SpokenWord[],
-): boolean {
-  if (row.animationIn === 'karaokeHighlight') return true;
-  if (row.presetGroup !== 'subtitle' || words.length === 0) return false;
-  const spoken = new Set(words.map((w) => normaliseWord(w.text)));
-  const keys = row.text.split(/\s+/).map(normaliseWord).filter(Boolean);
-  return keys.length > 0 && keys.filter((k) => spoken.has(k)).length / keys.length >= 0.5;
+export function spokenCaptions(
+  shots: Array<{
+    overlays: Array<{
+      id: string;
+      kind: string;
+      animationIn: string;
+      text: string;
+      startAtSec: number;
+      endAtSec: number;
+    }>;
+    words: SpokenWord[];
+  }>,
+): SpokenCaption[] {
+  return shots.flatMap((shot) =>
+    shot.overlays.filter(mirrorsNarration).map((o) => ({
+      overlayId: o.id,
+      text: o.text,
+      startAtSec: o.startAtSec,
+      endAtSec: o.endAtSec,
+      words: shot.words,
+    })),
+  );
 }
 
 export interface RenderSyncResult {
@@ -77,34 +93,12 @@ export async function renderSyncChecks(
       fit: fitOf(voices.get(s.voiceAssetId as string)?.metadata ?? null),
     }));
 
-  const presetIds = [...new Set(shots.flatMap((s) => s.overlays.map((o) => o.presetId)))].filter(
-    (id): id is string => Boolean(id),
+  const captions = spokenCaptions(
+    shots.map((shot) => {
+      const voice = shot.voiceAssetId ? voices.get(shot.voiceAssetId) : undefined;
+      return { overlays: shot.overlays, words: voice ? spokenWordsOf(voice.metadata) : [] };
+    }),
   );
-  const presets = presetIds.length
-    ? new Map(
-        (
-          await deps.db.overlayPreset.findMany({
-            where: { id: { in: presetIds } },
-            select: { id: true, group: true },
-          })
-        ).map((p) => [p.id, p.group]),
-      )
-    : new Map<string, string>();
-  const captions: SpokenCaption[] = shots.flatMap((shot) => {
-    const voice = shot.voiceAssetId ? voices.get(shot.voiceAssetId) : undefined;
-    const words = voice ? spokenWordsOf(voice.metadata) : [];
-    return shot.overlays
-      .filter((o) =>
-        isSpokenCaption({ ...o, presetGroup: o.presetId ? presets.get(o.presetId) : null }, words),
-      )
-      .map((o) => ({
-        overlayId: o.id,
-        text: o.text,
-        startAtSec: o.startAtSec,
-        endAtSec: o.endAtSec,
-        words,
-      }));
-  });
 
   const kit = await resolveProjectBrandKit(deps.db, input.project);
   const palette = Array.isArray(kit?.colourPalette)

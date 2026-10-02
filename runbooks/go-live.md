@@ -466,9 +466,9 @@ Studio no longer uses Hive (operator decision 2026-10-02) or any other content-s
 - If an older settings file still has `HIVE_API_KEY`, `HIVE_V3_SECRET_KEY`, `HIVE_API_VERSION`, `HIVE_V3_MAX_FRAMES`, `HIVE_ASYNC_TIMEOUT_MIN` or `STUDIO_PUBLIC_CALLBACK_BASE_URL`, delete those lines. `npm run setup:check` lists them as `CHECK … is no longer used`; they never stop the check from passing.
 - **Check:** `npm run setup:check` shows no Hive line as missing.
 
-### 11.2 Google Veo: the third AI video provider (optional)
+### 11.2 Google Veo: the first AI video fallback (optional)
 
-Studio makes AI clips with Runway, then Luma, then Google Veo 3.1 when the first two cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips use Runway and Luma only.
+Studio makes AI clips with BytePlus Seedance first (11.3), then Google Veo 3.1, then Runway, then Luma, each taking over when the one before cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips skip it.
 
 - **Click:** [Google AI Studio](https://aistudio.google.com/apikey) (sign in with the company Google account) → **Get API key** / **Create API key** → choose or create a project.
 - **Billing (required):** Veo has no free tier. In AI Studio **Click:** **Set up billing** next to the project → link a billing account and add Prepay credit (at least $5), or choose Postpay if offered. With Prepay, every key of the project stops when the credit reaches $0: turn on auto-reload ([billing guide](https://ai.google.dev/gemini-api/docs/billing)).
@@ -477,6 +477,19 @@ Studio makes AI clips with Runway, then Luma, then Google Veo 3.1 when the first
 - Optional: `VEO_PERSON_GENERATION`. Leave empty: text-to-video then sends no `personGeneration` (the live API refuses `allow_adult` for text-to-video, checked 2026-10-02) and image-to-video always sends `allow_adult`. Set `allow_all` only for a server outside the EU, UK, Switzerland and the Middle East/North Africa.
 - Google keeps each clip for 2 days; Studio copies it to its own storage as soon as it is ready.
 - **Check:** `npm run setup:check` shows `OK GOOGLE_GEMINI_API_KEY` when the key is shaped right. The provider canary (`CANARY_GOOGLE_GEMINI_API_KEY`) and the staging gate (`--live-providers --only veo`) test it against Google.
+
+### 11.3 BytePlus Seedance: the main AI video provider (optional)
+
+Studio makes AI clips with BytePlus ModelArk Seedance first on every plan, then Veo, Runway and Luma. STANDARD plans use Seedance 2.0 mini (the cheapest); PLUS and Enterprise plans, and shots longer than 15 seconds, use Seedance 2.5. Seedance is optional; without its key the clips use the other providers.
+
+- **Click:** [console.byteplus.com](https://console.byteplus.com) (sign in with the company BytePlus account) → **ModelArk** → check that the region at the top is **ap-southeast-1** (Asia Pacific, Johor; Seedance runs only there) → **API keys** (API Key Management) → **Create API Key** → name it `postmind-studio` → **Create**. A key belongs to one region and one project: create it in the default project unless you use project spaces.
+- **Balance (required):** Seedance is billed from your prepaid BytePlus balance. **Click:** **Billing** → **Top up**. To activate the Seedance 2.0 and 2.5 models BytePlus requires one of: a balance above $30, an AI Savings Plan of $30 or more, or a Seedance resource pack. If the balance stays below zero for 2 hours, BytePlus suspends the models until you top up: keep a buffer.
+- **Activate the models:** ModelArk → **Model activation** → video generation → activate **Dreamina Seedance 2.0 mini** (STANDARD plans) and **Dreamina Seedance 2.5** (PLUS and Enterprise plans, and shots over 15 s). Activate **2.0 fast** or **2.0** as well if you set `SEEDANCE_MODEL` to one of them.
+- **Copy:** the API key (a long string with dots). **Paste into:** `BYTEPLUS_API_KEY`.
+- Optional: `SEEDANCE_MODEL` (empty = `dreamina-seedance-2-0-mini-260615`, list price $3.5 per million tokens, about $0.076 a second at 720p; `dreamina-seedance-2-0-fast-260128` $5.6; `dreamina-seedance-2-0-260128` $7.0; `dreamina-seedance-2-5-260628` $10.7). Studio estimates with list prices even while BytePlus runs a promotion (2.0 mini 60% off and 2.0 fast 25% off for enterprise accounts until 7 October 2026), so budgets still hold when it ends. Clips are 720p and silent (our narration and music are added later), billed by the whole second (minimum 4 s); a refused or failed clip is not billed.
+- Optional: `SEEDANCE_LONG_MODEL` (empty = `dreamina-seedance-2-5-260628`: PLUS and Enterprise plans and shots over 15 s, up to 30 s; list price $10.7 per million tokens, about $0.23 a second at 720p) and `BYTEPLUS_ARK_BASE_URL` (empty = `https://ark.ap-southeast.bytepluses.com/api/v3`).
+- BytePlus keeps each clip's download link for 24 hours; Studio copies the clip to its own storage as soon as it is ready. Seedance 2.x refuses source images that show real people's faces.
+- **Check:** `npm run setup:check` shows `OK BYTEPLUS_API_KEY` when the key is shaped right. The provider canary (`CANARY_BYTEPLUS_API_KEY`) and the staging gate (`--live-providers --only seedance`, one 4 s clip, about $0.30) test it against BytePlus.
 
 ## 12. Legal texts
 

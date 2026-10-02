@@ -885,6 +885,9 @@
       "overrideLabel": "Anular a verificação falhada — motivo (obrigatório, fica registado)",
       "forceApprove": "Forçar aprovação",
       "overridden": "Verificação de qualidade anulada.",
+      "softFailureHint": "Estas verificações são indicativas. Veja o vídeo; se estiver bem, force a aprovação com um motivo curto.",
+      "askToOverride": "Estas verificações são indicativas. Veja o vídeo; um proprietário ou administrador pode forçar a aprovação.",
+      "blockedNoOverride": "Só a equipa da PostMind pode levantar um bloqueio de segurança de conteúdo.",
       "details": {
         "safetyScanUnavailable": "Não foi possível executar a análise: {reason}",
         "safetyNotScanned": "Não analisado: não está configurada nenhuma análise de segurança do conteúdo.",

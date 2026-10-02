@@ -5,6 +5,7 @@ import { ProviderError, ValidationError } from '../../errors';
 import { createProviderRegistry } from '../providers/registry';
 import { StubAdapter } from '../providers/test-adapter';
 import { buildShotstackEdit, escapeHtml, outputDimensions, totalDuration } from './edl';
+import { DEFAULT_BACKDROP } from './edl-backdrop';
 import { buildIdeationPrompt, parseIdeationResult } from './ideation';
 import {
   frameFallbackTimes,
@@ -286,7 +287,8 @@ describe('Shotstack edit list', () => {
       timeline: { background: string; tracks: Array<{ clips: Array<{ asset: { css: string } }> }> };
     };
     expect(edit.timeline.tracks).toHaveLength(1);
-    expect(edit.timeline.background).toBe('#000000');
+    // 20.22: an invalid brand colour falls back to the neutral backdrop, never to black.
+    expect(edit.timeline.background).toBe(DEFAULT_BACKDROP);
     const css = edit.timeline.tracks[0]?.clips[0]?.asset.css ?? '';
     expect(css).toContain('#00ff00');
     expect(css).toContain("'Arial'");

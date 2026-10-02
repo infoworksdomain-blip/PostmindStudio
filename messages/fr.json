@@ -885,6 +885,9 @@
       "overrideLabel": "Outrepasser le contrôle en échec — motif (obligatoire, journalisé)",
       "forceApprove": "Forcer la validation",
       "overridden": "Contrôle qualité outrepassé.",
+      "softFailureHint": "Ces contrôles sont indicatifs. Regardez la vidéo ; si elle convient, forcez la validation avec un court motif.",
+      "askToOverride": "Ces contrôles sont indicatifs. Regardez la vidéo ; un propriétaire ou un administrateur peut forcer la validation.",
+      "blockedNoOverride": "Seule l’équipe PostMind peut lever un blocage de sécurité du contenu.",
       "details": {
         "safetyScanUnavailable": "L’analyse n’a pas pu s’exécuter : {reason}",
         "safetyNotScanned": "Non analysée : aucune analyse de sécurité du contenu n’est configurée.",

@@ -141,7 +141,7 @@ describe.skipIf(!hasDb)('Phase 15 Track C planning journeys', { timeout: 120_000
         where: { script: { projectId: id }, visualTreatment: 'AI_CLIP' },
       })
     ).providerRouting as { visual?: { candidates: Array<{ providerId: string }> } };
-    // STANDARD's list is luma, runway, kling: the preference moved runway to the front.
+    // STANDARD's list is seedance, veo, runway, luma, kling: the preference moved runway to the front.
     expect(routing.visual?.candidates[0]?.providerId).toBe('runway');
   });
 

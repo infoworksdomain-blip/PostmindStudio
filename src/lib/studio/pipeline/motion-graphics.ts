@@ -1,3 +1,4 @@
+import { backdropColour, readableTextColour } from './edl-backdrop';
 import { escapeHtml, HEX_COLOUR, roundSec } from './edl-time';
 
 // BACKLOG 15.B8 — MOTION_GRAPHICS shots (spec 4.5 "MOTION_GFX → Shotstack template", spec 5.3
@@ -19,10 +20,16 @@ export interface MotionPalette {
   accent: string;
 }
 
+/**
+ * Brand colours 1–3 as background, text and accent. 20.22: the background is never black (it was
+ * #111111 by default, which ffmpeg blackdetect reads as black once the text fades out): a dark
+ * brand colour is lifted, no colour gives the neutral backdrop (edl-backdrop.ts), and the text
+ * falls back to white or near-black when the brand's text colour would not read on it.
+ */
 export function motionPalette(colours: string[]): MotionPalette {
   const valid = colours.filter((c) => HEX_COLOUR.test(c));
-  const background = valid[0] ?? '#111111';
-  const text = valid[1] ?? '#ffffff';
+  const background = backdropColour(valid[0]);
+  const text = readableTextColour(background, valid[1] ?? '#FFFFFF');
   return { background, text, accent: valid[2] ?? text };
 }
 

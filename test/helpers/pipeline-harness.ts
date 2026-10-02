@@ -187,6 +187,8 @@ export interface HarnessOptions {
   analysis?: unknown;
   /** Omit the scripted AssemblyAI adapter (no transcription provider configured). */
   noTranscription?: boolean;
+  /** 20.22: the words the scripted AssemblyAI returns for every narration (default: one word). */
+  transcriptWords?: Array<{ text: string; startSec: number; endSec: number }>;
   sceneChanges?: number[];
   slideshowText?: unknown;
   /** 20.9: the month plan answer (default: monthPlanJson of the prompt). */
@@ -256,7 +258,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     output: {
       metadata: {
         text: 'Ever wondered how our bread is made? Subscribe for more.',
-        words: [{ text: 'Ever', startSec: 0.1, endSec: 0.4 }],
+        words: options.transcriptWords ?? [{ text: 'Ever', startSec: 0.1, endSec: 0.4 }],
         costPence: 1,
       },
     },

@@ -7,6 +7,7 @@ import { projectMetadata } from '../pipeline/project-state';
 import { spokenWordsOf } from '../pipeline/word-timing';
 import type { AssetStorage } from '../storage';
 import { captionLines, type CaptionLine } from './captions';
+import { CAPTION_KIND } from './kind';
 import { applyBrand, resolveStyle, type OverlayStyle } from './params';
 import { BUILT_IN_PRESETS } from './presets';
 
@@ -267,6 +268,8 @@ export async function ensureVoiceCaptions(
               startAtSec: line.startAtSec,
               endAtSec: line.endAtSec,
               sortOrder: Math.min(50 + i, 100),
+              // 20.22: the rows caption_sync holds to the narration (overlays/kind.ts).
+              kind: CAPTION_KIND,
               ...chosen.style,
               effect: (chosen.style.effect ?? undefined) as Prisma.InputJsonValue | undefined,
             },
