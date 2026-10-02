@@ -8,6 +8,7 @@ import {
   parseHiveV3MaxFrames,
   resolveHiveApiVersion,
 } from '../studio/providers/hive-config';
+import { isPersonGeneration, isVeoModel, VEO_MODELS } from '../studio/providers/veo';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -290,6 +291,17 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   STUDIO_SIGNUPS_ENABLED: (v) => (['true', 'false'].includes(v) ? null : 'must be true or false'),
   PG_BACKUPS: (v) => (['on', 'off'].includes(v) ? null : 'must be on or off'),
   PG_BACKUP_CIPHER_PASS: minLength(32),
+  // 20.20 Google Veo (Gemini API). Google does not document the key's format (standard and
+  // authorization keys exist, https://ai.google.dev/gemini-api/docs/api-key), so only its shape
+  // as one unbroken token is checked.
+  GOOGLE_GEMINI_API_KEY: pattern(
+    /^[A-Za-z0-9._-]{30,}$/,
+    'must be the API key from Google AI Studio (one unbroken string, no spaces)',
+  ),
+  VEO_MODEL: (v) =>
+    isVeoModel(v) ? null : `must be one of ${Object.keys(VEO_MODELS).join(', ')} (or empty)`,
+  VEO_PERSON_GENERATION: (v) =>
+    isPersonGeneration(v) ? null : 'must be allow_adult or allow_all (or empty)',
   HIVE_API_VERSION: (v) => (['v2', 'v3'].includes(v) ? null : 'must be v2 or v3 (or empty)'),
   HIVE_V3_MAX_FRAMES: (v) => {
     try {

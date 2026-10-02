@@ -15,8 +15,8 @@ const QUEUES = [
 ];
 const PROVIDERS_BY_TIER: Record<string, string[]> = {
   BASIC: ['fal', 'replicate'],
-  STANDARD: ['luma', 'runway', 'kling'],
-  PLUS: ['veo', 'runway', 'luma', 'kling'],
+  STANDARD: ['luma', 'runway', 'veo', 'kling'],
+  PLUS: ['runway', 'luma', 'veo', 'kling'],
 };
 const MIN = 60_000;
 const HOUR = 60 * MIN;

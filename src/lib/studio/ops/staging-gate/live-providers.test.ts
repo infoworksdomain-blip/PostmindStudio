@@ -20,6 +20,7 @@ describe('LIVE_PROVIDER_TESTS', () => {
     for (const id of [
       'runway',
       'luma',
+      'veo',
       'heygen',
       'elevenlabs',
       'elevenlabs-music',

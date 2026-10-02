@@ -14,6 +14,7 @@ import { OpenAIAdapter } from './openai';
 import { RunwayAdapter } from './runway';
 import { ShotstackAdapter } from './shotstack';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
+import { VeoAdapter } from './veo';
 
 // BACKLOG 15.D10 / spec §20 — "Every adapter has integration tests run daily; … staging
 // environment monitors deprecation warnings". The daily provider canary
@@ -45,6 +46,7 @@ export const PROVIDER_CANARY_ENV: Record<string, string[]> = {
   openai: ['CANARY_OPENAI_API_KEY'],
   runway: ['CANARY_RUNWAY_API_KEY'],
   luma: ['CANARY_LUMA_API_KEY'],
+  veo: ['CANARY_GOOGLE_GEMINI_API_KEY'],
   heygen: ['CANARY_HEYGEN_API_KEY', 'CANARY_HEYGEN_AVATAR_ID'],
   elevenlabs: ['CANARY_ELEVENLABS_API_KEY'],
   'elevenlabs-music': ['CANARY_ELEVENLABS_API_KEY'],
@@ -157,6 +159,9 @@ export function buildCanaryAdapter(
       return new RunwayAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
     case 'luma':
       return new LumaAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
+    case 'veo':
+      // healthCheck = models.get on the default Veo model (unbilled).
+      return new VeoAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
     case 'heygen':
       return new HeyGenAdapter({
         apiKey: key,

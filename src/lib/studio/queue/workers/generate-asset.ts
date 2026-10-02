@@ -118,7 +118,8 @@ async function recordAsset(
         fallbackContentType: fallback.contentType,
         providerId: run.decision.providerId,
       },
-      deps.fetch,
+      // 20.20: Veo outputs need the provider key to download (veo.ts fetchOutput).
+      run.fetchOutput ?? deps.fetch,
     );
     bucket = copied.bucket;
     key = copied.key;

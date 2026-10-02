@@ -422,3 +422,39 @@ describe('Hive content-safety key (20.6: V2 or V3)', () => {
     ).toEqual([]);
   });
 });
+
+describe('Google Veo settings (20.20)', () => {
+  it('are documented in the OPTIONAL section of the server example', () => {
+    const { optional, required } = exampleSections(EXAMPLE);
+    for (const key of ['GOOGLE_GEMINI_API_KEY', 'VEO_MODEL', 'VEO_PERSON_GENERATION']) {
+      expect(optional).toContain(key);
+      expect(required).not.toContain(key);
+    }
+  });
+
+  it('are optional: a file without them is ready', () => {
+    expect(check(filledFile()).ready).toBe(true);
+  });
+
+  it('a well-formed key, model and person setting pass', () => {
+    const text = filledFile('production', {
+      GOOGLE_GEMINI_API_KEY: 'FAKE-gemini-key-0123456789abcdefghij',
+      VEO_MODEL: 'veo-3.1-lite-generate-preview',
+      VEO_PERSON_GENERATION: 'allow_all',
+    });
+    const report = check(text);
+    expect(report.ready).toBe(true);
+    for (const key of ['GOOGLE_GEMINI_API_KEY', 'VEO_MODEL', 'VEO_PERSON_GENERATION']) {
+      expect(statusOf(text, key)).toEqual([]);
+    }
+  });
+
+  it.each([
+    ['GOOGLE_GEMINI_API_KEY', 'two words in the key here 0123456789'],
+    ['GOOGLE_GEMINI_API_KEY', 'short'],
+    ['VEO_MODEL', 'veo-2.0-generate-001'],
+    ['VEO_PERSON_GENERATION', 'dont_allow'],
+  ])('%s=%s is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+});

@@ -19,8 +19,12 @@ import type { ProviderRegistry } from './registry';
 //   - AI_CLIP on PLUS/ENTERPRISE (BACKLOG 13.32): Luma is added after Runway. 6.4 lists
 //     [Veo, Runway, Kling], but 6.1 requires a working fallback and the playbook names Luma
 //     the "text-to-video fallback" ("toggle Runway off; verify router fails over to Luma").
-//     Veo and Kling have no adapters yet, so without Luma an open Runway breaker would leave
-//     PLUS clips with no provider. STANDARD keeps the spec's Luma-first order.
+//     Kling has no adapter, so without Luma an open Runway breaker would leave PLUS clips with
+//     no provider. STANDARD keeps the spec's Luma-first order.
+//   - BACKLOG 20.20 (operator decision 2026-10-02): Google Veo 3.1 (providers/veo.ts) is the
+//     THIRD AI_CLIP option on STANDARD, PLUS and ENTERPRISE, after Runway and Luma, so it is a
+//     failover by default rather than the first choice 6.4 gives "Veo" on PLUS. Veo renders at
+//     most 8 s; longer shots skip it (supportsRequest → capability_unsupported).
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -141,6 +145,11 @@ export interface BudgetChecker {
 export interface RoutableAdapter extends ProviderAdapter {
   readonly typicalLatencySec?: number;
   estimateCostPence?(request: ProviderRequest): number;
+  /**
+   * 20.20: false when the adapter cannot serve this particular request (e.g. Veo renders at most
+   * 8 s), so the router moves on (`capability_unsupported`) instead of failing at submit.
+   */
+  supportsRequest?(request: ProviderRequest): boolean;
 }
 
 export interface RouterDeps {
@@ -179,8 +188,8 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
-  if (tier === 'STANDARD') return ['luma', 'runway', 'kling'];
-  return ['veo', 'runway', 'luma', 'kling'];
+  if (tier === 'STANDARD') return ['luma', 'runway', 'veo', 'kling'];
+  return ['runway', 'luma', 'veo', 'kling'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
@@ -230,6 +239,9 @@ async function skipReason(
 ): Promise<SkipReason | undefined> {
   if (!adapter) return 'not_configured';
   if (!adapter.capabilities.includes(capability)) return 'capability_unsupported';
+  if (adapter.supportsRequest && !adapter.supportsRequest(input.request)) {
+    return 'capability_unsupported';
+  }
   if (input.excludeProviderIds?.includes(adapter.providerId)) return 'account_unavailable';
 
   const kill = await deps.killSwitch.check({

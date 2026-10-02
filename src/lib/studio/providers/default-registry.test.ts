@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigurationError } from '../../errors';
 import type { HiveAdapter } from './hive';
+import { VeoAdapter } from './veo';
 import {
   buildAdaptersFromEnv,
   buildAdaptersFromKeys,
@@ -12,6 +13,7 @@ const KEYS = [
   'OPENAI_API_KEY',
   'RUNWAY_API_KEY',
   'LUMA_API_KEY',
+  'GOOGLE_GEMINI_API_KEY',
   'HEYGEN_API_KEY',
   'ELEVENLABS_API_KEY',
   'SHOTSTACK_API_KEY',
@@ -31,6 +33,8 @@ beforeEach(() => {
   vi.stubEnv('SHOTSTACK_ENVIRONMENT', '');
   vi.stubEnv('HEYGEN_AVATAR_ID', '');
   vi.stubEnv('OPENAI_TEXT_MODEL', '');
+  vi.stubEnv('VEO_MODEL', '');
+  vi.stubEnv('VEO_PERSON_GENERATION', '');
   for (const key of KEYS) vi.stubEnv(key, '');
   for (const key of ['HIVE_API_VERSION', 'HIVE_V3_SECRET_KEY', 'HIVE_V3_MAX_FRAMES'])
     vi.stubEnv(key, '');
@@ -51,6 +55,7 @@ describe('buildAdaptersFromEnv', () => {
       'openai',
       'runway',
       'luma',
+      'veo',
       'heygen',
       'elevenlabs',
       'elevenlabs-music',
@@ -161,5 +166,29 @@ describe('Hive API version (20.6)', () => {
   it('an organisation key without a version (BYOC) stays V2', () => {
     const [hive] = buildAdaptersFromKeys({ hive: { apiKey: 'org-key' } });
     expect((hive as HiveAdapter).apiVersion).toBe('v2');
+  });
+});
+
+describe('Google Veo (20.20)', () => {
+  it('registers Veo from GOOGLE_GEMINI_API_KEY with the documented defaults', () => {
+    vi.stubEnv('GOOGLE_GEMINI_API_KEY', 'test-key');
+    const [veo] = buildAdaptersFromEnv();
+    expect(veo).toBeInstanceOf(VeoAdapter);
+    expect((veo as VeoAdapter).model).toBe('veo-3.1-fast-generate-preview');
+    expect(providerKeysFromEnv().veo).toEqual({ apiKey: 'test-key' });
+  });
+
+  it('uses VEO_MODEL, and refuses a model without a price row', () => {
+    vi.stubEnv('GOOGLE_GEMINI_API_KEY', 'test-key');
+    vi.stubEnv('VEO_MODEL', 'veo-3.1-lite-generate-preview');
+    expect((buildAdaptersFromEnv()[0] as VeoAdapter).model).toBe('veo-3.1-lite-generate-preview');
+    vi.stubEnv('VEO_MODEL', 'veo-9-ultra');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('an organisation key (BYOC) builds Veo too', () => {
+    expect(buildAdaptersFromKeys({ veo: { apiKey: 'org-key' } }).map((a) => a.providerId)).toEqual([
+      'veo',
+    ]);
   });
 });

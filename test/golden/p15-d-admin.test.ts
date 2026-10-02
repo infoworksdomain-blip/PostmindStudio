@@ -103,7 +103,7 @@ describe.skipIf(!hasDb)('Phase 15 Track D admin journeys', { timeout: 120_000 },
       body: { providerId: 'heygen' },
     });
     expect(refused.status).toBe(400);
-    expect(refused.json.details).toMatchObject({ candidates: ['luma', 'runway', 'kling'] });
+    expect(refused.json.details).toMatchObject({ candidates: ['luma', 'runway', 'veo', 'kling'] });
 
     // Runway accepts the prompt again; Luma is preferred but not configured in this deployment,
     // so the router records it as skipped and falls back to Runway.

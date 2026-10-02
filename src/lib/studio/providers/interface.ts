@@ -233,4 +233,9 @@ export interface ProviderAdapter {
   poll(providerJobId: string): Promise<ProviderPollResult>;
   cancel(providerJobId: string): Promise<void>;
   healthCheck(): Promise<{ healthy: boolean; reason?: string }>;
+  /**
+   * 20.20: download the provider's own output URL when it needs the provider's credentials
+   * (Veo: the x-goog-api-key header). Layer 3 uses it instead of a plain fetch when present.
+   */
+  fetchOutput?(url: string): Promise<Response>;
 }

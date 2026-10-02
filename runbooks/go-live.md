@@ -471,6 +471,18 @@ Every video is checked by Hive before anyone can approve it. Nothing is publishe
   - **Copy:** the API key. **Paste into:** `HIVE_API_KEY`, and set `HIVE_API_VERSION=v2` (or clear `HIVE_V3_SECRET_KEY`). V2 checks every second of every video, with no daily cap beyond your contract.
 - **Check:** `npm run setup:check` shows `OK HIVE_V3_SECRET_KEY` (or `OK HIVE_API_KEY`). A `CHECK … is short for a V3 Secret Key` line usually means the Access Key ID was pasted instead of the Secret Key. A V3 key sent to the V2 address fails with "Invalid Auth Token": that is expected, the two kinds are not interchangeable.
 
+### 11.2 Google Veo: the third AI video provider (optional)
+
+Studio makes AI clips with Runway, then Luma, then Google Veo 3.1 when the first two cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips use Runway and Luma only.
+
+- **Click:** [Google AI Studio](https://aistudio.google.com/apikey) (sign in with the company Google account) → **Get API key** / **Create API key** → choose or create a project.
+- **Billing (required):** Veo has no free tier. In AI Studio **Click:** **Set up billing** next to the project → link a billing account and add Prepay credit (at least $5), or choose Postpay if offered. With Prepay, every key of the project stops when the credit reaches $0: turn on auto-reload ([billing guide](https://ai.google.dev/gemini-api/docs/billing)).
+- **Copy:** the API key. **Paste into:** `GOOGLE_GEMINI_API_KEY`.
+- Optional: `VEO_MODEL` (empty = `veo-3.1-fast-generate-preview`, $0.10 a second of video at 720p; `veo-3.1-generate-preview` $0.40; `veo-3.1-lite-generate-preview` $0.05). A 4, 6 or 8 second clip is billed by its length; a blocked clip is not billed.
+- Optional: `VEO_PERSON_GENERATION`. Leave empty (`allow_adult`): Google allows only that value for servers in the EU, UK, Switzerland and the Middle East/North Africa, and our server is in Germany. `allow_all` only for a server outside those regions.
+- Google keeps each clip for 2 days; Studio copies it to its own storage as soon as it is ready.
+- **Check:** `npm run setup:check` shows `OK GOOGLE_GEMINI_API_KEY` when the key is shaped right. The provider canary (`CANARY_GOOGLE_GEMINI_API_KEY`) and the staging gate (`--live-providers --only veo`) test it against Google.
+
 ## 12. Legal texts
 
 Details: [vps-deploy.md](vps-deploy.md) "Legal documents".

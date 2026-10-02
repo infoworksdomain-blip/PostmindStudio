@@ -20,6 +20,8 @@ export const BYOC_PROVIDERS = [
   { id: 'assemblyai', label: 'AssemblyAI', adapters: ['assemblyai'] },
   { id: 'runway', label: 'Runway', adapters: ['runway'] },
   { id: 'luma', label: 'Luma', adapters: ['luma'] },
+  // 20.20: a Gemini API key from Google AI Studio (billing enabled) backs the Veo adapter.
+  { id: 'veo', label: 'Google Veo (Gemini API)', adapters: ['veo'] },
   { id: 'heygen', label: 'HeyGen', adapters: ['heygen'] },
   { id: 'elevenlabs', label: 'ElevenLabs', adapters: ['elevenlabs', 'elevenlabs-music'] },
   { id: 'shotstack', label: 'Shotstack', adapters: ['shotstack'] },

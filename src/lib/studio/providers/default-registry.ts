@@ -14,6 +14,7 @@ import { createProviderRegistry, type ProviderRegistry } from './registry';
 import { AssemblyAiAdapter } from './assemblyai';
 import { RunwayAdapter } from './runway';
 import { LumaAdapter } from './luma';
+import { veoOptionsFromEnv, VeoAdapter } from './veo';
 import { HeyGenAdapter } from './heygen';
 import { ShotstackAdapter } from './shotstack';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
@@ -48,6 +49,7 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
     ['assemblyai', 'ASSEMBLYAI_API_KEY'],
     ['runway', 'RUNWAY_API_KEY'],
     ['luma', 'LUMA_API_KEY'],
+    ['veo', 'GOOGLE_GEMINI_API_KEY'],
     ['heygen', 'HEYGEN_API_KEY'],
     ['elevenlabs', 'ELEVENLABS_API_KEY'],
     ['shotstack', 'SHOTSTACK_API_KEY'],
@@ -125,6 +127,13 @@ export function buildAdaptersFromKeys(
   // BACKLOG 13.32: Luma is the AI_CLIP fallback for Runway (router.ts candidate lists).
   const lumaKey = keys.luma?.apiKey;
   if (lumaKey) adapters.push(new LumaAdapter({ apiKey: lumaKey, usdToGbpRate }));
+
+  // BACKLOG 20.20: Google Veo 3.1 (Gemini API) is the third AI_CLIP option after Runway and
+  // Luma (router.ts). VEO_MODEL / VEO_PERSON_GENERATION are optional (veo.ts defaults).
+  const veoKey = keys.veo?.apiKey;
+  if (veoKey) {
+    adapters.push(new VeoAdapter({ apiKey: veoKey, usdToGbpRate, ...veoOptionsFromEnv(env) }));
+  }
 
   // HeyGen renders AI_AVATAR shots with a stock (or brand) avatar look. Registering it makes
   // Layer 2 offer AI_AVATAR, so a key without an avatar is a configuration error, not a skip.

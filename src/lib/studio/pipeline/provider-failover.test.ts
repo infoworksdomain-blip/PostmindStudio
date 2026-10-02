@@ -318,11 +318,55 @@ describe('runProvider account-problem failover (20.11)', () => {
     );
     expect(run.decision.providerId).toBe('luma');
     expect(run.decision.candidates).toEqual([
-      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
     ]);
     expect(breaker.accountHolds().runway?.errorClass).toBe('auth');
+    expect(run.fetchOutput).toBeUndefined();
+  });
+
+  it('video (20.20): Runway out of credits and Luma over its limit → Veo, with its download', async () => {
+    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
+    runway.nextSubmit = async () => {
+      throw new ProviderError('runway', 'insufficient_credits', 'no credits', false, {
+        status: 402,
+      });
+    };
+    const luma = new StubAdapter('luma', ['text_to_video'], { costPence: 23 });
+    luma.nextSubmit = async () => {
+      throw new ProviderError('luma', 'account_limit', 'budget exhausted', false, { status: 429 });
+    };
+    const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
+    const download = vi.fn(async () => new Response('mp4'));
+    Object.assign(veo, { fetchOutput: download });
+    const { deps, breaker } = setup([runway, luma, veo]);
+    const run = await runProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6 },
+        planTier: 'PLUS',
+        request: {
+          capability: 'text_to_video',
+          organisationId: 'org-1',
+          prompt: 'bread',
+          durationSec: 6,
+          aspectRatio: '9:16',
+        },
+      },
+      deps,
+    );
+    expect(run.decision.providerId).toBe('veo');
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'runway', skipped: 'account_unavailable' },
+      { providerId: 'luma', skipped: 'account_unavailable' },
+      { providerId: 'veo' },
+    ]);
+    expect(breaker.accountHolds().runway?.errorClass).toBe('insufficient_credits');
+    expect(breaker.accountHolds().luma?.errorClass).toBe('account_limit');
+    // Layer 3 downloads Veo's output with Veo's own (keyed) fetch.
+    await run.fetchOutput?.('https://generativelanguage.googleapis.com/v1beta/files/x');
+    expect(download).toHaveBeenCalledWith(
+      'https://generativelanguage.googleapis.com/v1beta/files/x',
+    );
   });
 
   // 20.19 — production 2026-10-02: Runway's 400 { error } for an empty credit balance was
@@ -351,8 +395,8 @@ describe('runProvider account-problem failover (20.11)', () => {
     const { deps, breaker, rows } = setup([runway, luma]);
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('luma');
+    // 20.20: Veo now comes after Runway and Luma on PLUS, so Luma is reached first.
     expect(run.decision.candidates).toEqual([
-      { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
     ]);

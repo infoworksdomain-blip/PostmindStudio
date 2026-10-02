@@ -123,14 +123,14 @@ describe('preferred provider routing (shot regenerate)', () => {
   it('never adds a provider outside the tier candidate list', async () => {
     const adapters = [
       new StubAdapter('luma', ['text_to_video']),
-      new StubAdapter('veo', ['text_to_video']),
+      new StubAdapter('pika', ['text_to_video']),
     ];
     const decision = await routeProvider(
-      { need, planTier: 'STANDARD', organisationId: 'o', request, preferredProviderId: 'veo' },
+      { need, planTier: 'STANDARD', organisationId: 'o', request, preferredProviderId: 'pika' },
       deps(adapters),
     );
     expect(decision.providerId).toBe('luma');
-    expect(decision.candidates.map((c) => c.providerId)).not.toContain('veo');
+    expect(decision.candidates.map((c) => c.providerId)).not.toContain('pika');
   });
 });
 
