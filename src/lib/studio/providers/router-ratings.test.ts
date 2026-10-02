@@ -66,8 +66,8 @@ describe('router with provider ratings (P7)', () => {
   ];
 
   it('keeps the spec order without ratings', async () => {
-    // 20.23: seedance → veo → runway → luma → kling; Seedance and Veo are not registered here.
-    expect((await routeProvider(clip, deps(adapters()))).providerId).toBe('runway');
+    // 20.24: seedance → kling → veo → runway → luma; Seedance is not registered here.
+    expect((await routeProvider(clip, deps(adapters()))).providerId).toBe('kling');
   });
 
   it('tries the higher-rated Luma before Runway', async () => {

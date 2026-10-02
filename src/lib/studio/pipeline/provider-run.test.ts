@@ -167,7 +167,7 @@ describe('runProvider — Phase 15 Track C hooks', () => {
       ...both,
       providerRatings: { scoresFor: async () => Promise.reject(new Error('db down')) },
     });
-    // STANDARD spec order (20.23): seedance → veo → runway → luma; only the last two exist here.
+    // Spec order (20.23/20.24): seedance → kling → veo → runway → luma; only the last two exist here.
     expect(broken.decision.providerId).toBe('runway');
   });
 });

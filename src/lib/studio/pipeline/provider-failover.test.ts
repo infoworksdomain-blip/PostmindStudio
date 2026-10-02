@@ -8,6 +8,7 @@ import { ProviderError, ProvidersUnavailableError } from '../../errors';
 import { resetAccountAlertCache } from '../providers/account-alerts';
 import { AnthropicAdapter, type AnthropicClientLike } from '../providers/anthropic';
 import { createCircuitBreaker } from '../providers/circuit-breaker';
+import { KlingAdapter } from '../providers/kling';
 import type { ProviderAdapter } from '../providers/interface';
 import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-repository';
 import { OpenAIAdapter, type OpenAIClientLike } from '../providers/openai';
@@ -320,6 +321,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(run.decision.providerId).toBe('luma');
     expect(run.decision.candidates).toEqual([
       { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'kling', skipped: 'not_configured' },
       { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
@@ -357,6 +359,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(run.decision.providerId).toBe('veo');
     expect(run.decision.candidates).toEqual([
       { providerId: 'seedance', skipped: 'account_unavailable' },
+      { providerId: 'kling', skipped: 'not_configured' },
       { providerId: 'veo' },
     ]);
     expect(breaker.accountHolds().seedance?.errorClass).toBe('insufficient_credits');
@@ -366,6 +369,46 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(download).toHaveBeenCalledWith(
       'https://generativelanguage.googleapis.com/v1beta/files/x',
     );
+  });
+
+  it('video (20.24): Seedance out of credits and Kling over its account limit → Veo', async () => {
+    const seedance = new StubAdapter('seedance', ['text_to_video'], { costPence: 29 });
+    seedance.nextSubmit = async () => {
+      throw new ProviderError('seedance', 'insufficient_credits', 'overdue balance', false, {
+        status: 403,
+      });
+    };
+    const kling = new StubAdapter('kling', ['text_to_video'], { costPence: 32 });
+    kling.nextSubmit = async () => {
+      throw new ProviderError('kling', 'account_limit', '1100: Abnormal account status', false, {
+        status: 429,
+      });
+    };
+    const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
+    const runway = new StubAdapter('runway', ['text_to_video'], { costPence: 60 });
+    const { deps, breaker } = setup([seedance, kling, veo, runway]);
+    const run = await runProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 6 },
+        planTier: 'STANDARD',
+        request: {
+          capability: 'text_to_video',
+          organisationId: 'org-1',
+          prompt: 'bread',
+          durationSec: 6,
+          aspectRatio: '9:16',
+        },
+      },
+      deps,
+    );
+    expect(run.decision.providerId).toBe('veo');
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'seedance', skipped: 'account_unavailable' },
+      { providerId: 'kling', skipped: 'account_unavailable' },
+      { providerId: 'veo' },
+    ]);
+    expect(breaker.accountHolds().kling?.errorClass).toBe('account_limit');
+    expect(runway.submitCalls).toHaveLength(0);
   });
 
   // 20.19 — production 2026-10-02: Runway's 400 { error } for an empty credit balance was
@@ -394,9 +437,10 @@ describe('runProvider account-problem failover (20.11)', () => {
     const { deps, breaker, rows } = setup([runway, luma]);
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('luma');
-    // 20.23: Seedance and Veo come first but are not configured in this test.
+    // 20.23 / 20.24: Seedance, Kling and Veo come first but are not configured in this test.
     expect(run.decision.candidates).toEqual([
       { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'kling', skipped: 'not_configured' },
       { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'account_unavailable' },
       { providerId: 'luma' },
@@ -405,6 +449,31 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(rows.find((r) => r.provider === 'runway')).toMatchObject({
       errorClass: 'insufficient_credits',
       errorMessage: RUNWAY_NO_CREDITS,
+    });
+  });
+
+  it('video (20.24): the real Kling adapter 1102 "resource pack exhausted" fails over to Veo', async () => {
+    const http = fakeFetch(
+      json({ code: 1102, message: 'Resource pack exhausted', request_id: 'r' }, 429),
+    );
+    const kling = new KlingAdapter({
+      credentials: { kind: 'api_key', apiKey: 'kling_x' },
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const veo = new StubAdapter('veo', ['text_to_video'], { costPence: 45 });
+    const { deps, breaker, rows } = setup([kling, veo]);
+    const run = await runProvider(clipRequest, deps);
+    expect(run.decision.providerId).toBe('veo');
+    expect(run.decision.candidates).toEqual([
+      { providerId: 'seedance', skipped: 'not_configured' },
+      { providerId: 'kling', skipped: 'account_unavailable' },
+      { providerId: 'veo' },
+    ]);
+    expect(breaker.accountHolds().kling?.errorClass).toBe('insufficient_credits');
+    expect(rows.find((r) => r.provider === 'kling')).toMatchObject({
+      errorClass: 'insufficient_credits',
+      errorMessage: '1102: Resource pack exhausted',
     });
   });
 
@@ -441,6 +510,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(run.decision.providerId).toBe('runway');
     expect(run.decision.candidates).toEqual([
       { providerId: 'seedance', skipped: 'account_unavailable' },
+      { providerId: 'kling', skipped: 'not_configured' },
       { providerId: 'veo', skipped: 'account_unavailable' },
       { providerId: 'runway' },
     ]);
@@ -489,6 +559,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(run.decision.providerId).toBe('luma');
     expect(run.decision.candidates).toEqual([
       { providerId: 'seedance', skipped: 'account_unavailable' },
+      { providerId: 'kling', skipped: 'not_configured' },
       { providerId: 'veo', skipped: 'not_configured' },
       { providerId: 'runway', skipped: 'not_configured' },
       { providerId: 'luma' },

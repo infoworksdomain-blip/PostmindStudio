@@ -468,7 +468,7 @@ Studio no longer uses Hive (operator decision 2026-10-02) or any other content-s
 
 ### 11.2 Google Veo: the first AI video fallback (optional)
 
-Studio makes AI clips with BytePlus Seedance first (11.3), then Google Veo 3.1, then Runway, then Luma, each taking over when the one before cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips skip it.
+Studio makes AI clips with BytePlus Seedance first (11.3), then Kling 3.0 (11.4), then Google Veo 3.1, then Runway, then Luma, each taking over when the one before cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips skip it.
 
 - **Click:** [Google AI Studio](https://aistudio.google.com/apikey) (sign in with the company Google account) → **Get API key** / **Create API key** → choose or create a project.
 - **Billing (required):** Veo has no free tier. In AI Studio **Click:** **Set up billing** next to the project → link a billing account and add Prepay credit (at least $5), or choose Postpay if offered. With Prepay, every key of the project stops when the credit reaches $0: turn on auto-reload ([billing guide](https://ai.google.dev/gemini-api/docs/billing)).
@@ -480,7 +480,7 @@ Studio makes AI clips with BytePlus Seedance first (11.3), then Google Veo 3.1, 
 
 ### 11.3 BytePlus Seedance: the main AI video provider (optional)
 
-Studio makes AI clips with BytePlus ModelArk Seedance first on every plan, then Veo, Runway and Luma. STANDARD plans use Seedance 2.0 mini (the cheapest); PLUS and Enterprise plans, and shots longer than 15 seconds, use Seedance 2.5. Seedance is optional; without its key the clips use the other providers.
+Studio makes AI clips with BytePlus ModelArk Seedance first on every plan, then Kling (11.4), Veo, Runway and Luma. STANDARD plans use Seedance 2.0 mini (the cheapest); PLUS and Enterprise plans, and shots longer than 15 seconds, use Seedance 2.5. Seedance is optional; without its key the clips use the other providers.
 
 - **Click:** [console.byteplus.com](https://console.byteplus.com) (sign in with the company BytePlus account) → **ModelArk** → check that the region at the top is **ap-southeast-1** (Asia Pacific, Johor; Seedance runs only there) → **API keys** (API Key Management) → **Create API Key** → name it `postmind-studio` → **Create**. A key belongs to one region and one project: create it in the default project unless you use project spaces.
 - **Balance (required):** Seedance is billed from your prepaid BytePlus balance. **Click:** **Billing** → **Top up**. To activate the Seedance 2.0 and 2.5 models BytePlus requires one of: a balance above $30, an AI Savings Plan of $30 or more, or a Seedance resource pack. If the balance stays below zero for 2 hours, BytePlus suspends the models until you top up: keep a buffer.
@@ -490,6 +490,19 @@ Studio makes AI clips with BytePlus ModelArk Seedance first on every plan, then 
 - Optional: `SEEDANCE_LONG_MODEL` (empty = `dreamina-seedance-2-5-260628`: PLUS and Enterprise plans and shots over 15 s, up to 30 s; list price $10.7 per million tokens, about $0.23 a second at 720p) and `BYTEPLUS_ARK_BASE_URL` (empty = `https://ark.ap-southeast.bytepluses.com/api/v3`).
 - BytePlus keeps each clip's download link for 24 hours; Studio copies the clip to its own storage as soon as it is ready. Seedance 2.x refuses source images that show real people's faces.
 - **Check:** `npm run setup:check` shows `OK BYTEPLUS_API_KEY` when the key is shaped right. The provider canary (`CANARY_BYTEPLUS_API_KEY`) and the staging gate (`--live-providers --only seedance`, one 4 s clip, about $0.30) test it against BytePlus.
+### 11.4 Kling 3.0: the second AI video provider (optional)
+
+Studio makes AI clips with Seedance first (11.3), then Kling 3.0, then Google Veo, then Runway, then Luma (an outage, no credits, a usage limit or a shot a provider cannot do moves the clip to the next one). Kling is optional; without its key the clips go from Seedance to Veo. Kling bills from **prepaid resource packages**, not a card on file.
+
+- **Click:** [Kling AI developer platform](https://kling.ai/dev) → **Sign In** (company account) → **Purchase** ([pricing](https://kling.ai/dev/pricing)) → a **Video API** package (Standard Package 1: $700 for 5,000 units, valid 180 days, 20 clips at a time; larger packages are 10% cheaper per unit). The image packages do not cover video.
+- **Click:** **Console** ([API keys](https://kling.ai/dev/api-key)) → **+ Create a new API Key** → name it `studio-production` → confirm.
+- **Copy:** the API key (shown only once). **Paste into:** `KLING_API_KEY`. Studio sends it as `Authorization: Bearer <key>`.
+- Older accounts only: if the console gives you an **Access Key** and a **Secret Key** instead, paste them into `KLING_ACCESS_KEY` and `KLING_SECRET_KEY` (both, and leave `KLING_API_KEY` empty). Studio signs them into a 30-minute token for each call. Kling calls this pair "legacy"; create an API key when you can (the API key wins when both are set).
+- Optional: `KLING_RESOLUTION` (empty = `720p`, 0.6 units = $0.084 a second; `1080p` 0.8 units = $0.112). Clips are always requested **without sound** (sound would cost 0.9 / 1.2 units a second, and the composer mutes clip audio anyway). A 3 s clip is the shortest, so a 1–2 s shot is billed as 3 s; 15 s is the longest.
+- Optional: `KLING_MODEL` (only `kling-3.0`) and `KLING_BASE_URL` (empty = `https://api-singapore.klingai.com`, Kling's endpoint for servers outside China).
+- Kling deletes each clip after 30 days; Studio copies it to its own storage as soon as it is ready.
+- Watch the balance: Console → usage, or `GET /account/costs` (the canary's health call). When the package runs out or expires Kling answers code 1102 and Studio moves clips to Veo, Runway and Luma (after Seedance) and alerts the operator.
+- **Check:** `npm run setup:check` shows `OK KLING_API_KEY` (or `OK` for both halves of the pair; one half alone is reported) when the key is shaped right. The provider canary (`CANARY_KLING_API_KEY`) and the staging gate (`--live-providers --only kling`, one 3 s clip, about $0.25) test it against Kling.
 
 ## 12. Legal texts
 

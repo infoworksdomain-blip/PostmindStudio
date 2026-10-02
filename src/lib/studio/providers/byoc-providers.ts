@@ -24,6 +24,8 @@ export const BYOC_PROVIDERS = [
   { id: 'veo', label: 'Google Veo (Gemini API)', adapters: ['veo'] },
   // 20.23: a BytePlus ModelArk API key (ap-southeast-1, Seedance models activated).
   { id: 'seedance', label: 'BytePlus Seedance (ModelArk)', adapters: ['seedance'] },
+  // 20.24: a Kling AI API key (kling.ai/dev → Console → API Key) backs the Kling 3.0 adapter.
+  { id: 'kling', label: 'Kling AI', adapters: ['kling'] },
   { id: 'heygen', label: 'HeyGen', adapters: ['heygen'] },
   { id: 'elevenlabs', label: 'ElevenLabs', adapters: ['elevenlabs', 'elevenlabs-music'] },
   { id: 'shotstack', label: 'Shotstack', adapters: ['shotstack'] },

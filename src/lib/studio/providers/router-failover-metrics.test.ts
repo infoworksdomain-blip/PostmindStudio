@@ -43,11 +43,11 @@ describe('router failover metrics', () => {
       selected: await value('studio_provider_selected_total', { provider: 'luma' }),
     };
     const decision = await routeProvider(aiClip, {
-      // STANDARD AI_CLIP tries seedance → veo → runway → luma → kling; only runway and luma are
+      // STANDARD AI_CLIP tries seedance → kling → veo → runway → luma; only runway and luma are
       // registered here.
       registry: createProviderRegistry([
-        new StubAdapter('luma', ['text_to_video']),
         new StubAdapter('runway', ['text_to_video']),
+        new StubAdapter('luma', ['text_to_video']),
       ]),
       breaker,
       killSwitch: { check: vi.fn(async (): Promise<KillSwitchStatus> => ({ killed: false })) },
@@ -67,14 +67,14 @@ describe('router failover metrics', () => {
   });
 
   it('does not count a provider this deployment has not configured', async () => {
-    const before = await value('studio_provider_passed_over_total', { provider: 'luma' });
+    const before = await value('studio_provider_passed_over_total', { provider: 'runway' });
     await routeProvider(aiClip, {
-      registry: createProviderRegistry([new StubAdapter('runway', ['text_to_video'])]),
+      registry: createProviderRegistry([new StubAdapter('luma', ['text_to_video'])]),
       breaker: createCircuitBreaker(() => 0),
       killSwitch: { check: vi.fn(async (): Promise<KillSwitchStatus> => ({ killed: false })) },
       budget: { hasBudget: async () => true },
       now: () => 0,
     });
-    expect(await value('studio_provider_passed_over_total', { provider: 'luma' })).toBe(before);
+    expect(await value('studio_provider_passed_over_total', { provider: 'runway' })).toBe(before);
   });
 });

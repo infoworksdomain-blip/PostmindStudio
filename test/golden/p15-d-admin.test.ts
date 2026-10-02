@@ -104,7 +104,7 @@ describe.skipIf(!hasDb)('Phase 15 Track D admin journeys', { timeout: 120_000 },
     });
     expect(refused.status).toBe(400);
     expect(refused.json.details).toMatchObject({
-      candidates: ['seedance', 'veo', 'runway', 'luma', 'kling'],
+      candidates: ['seedance', 'kling', 'veo', 'runway', 'luma'],
     });
 
     // Runway accepts the prompt again; Luma is preferred but not configured in this deployment,

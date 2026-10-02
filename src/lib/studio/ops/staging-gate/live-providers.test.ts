@@ -23,6 +23,7 @@ describe('LIVE_PROVIDER_TESTS', () => {
       'luma',
       'veo',
       'seedance',
+      'kling',
       'heygen',
       'elevenlabs',
       'elevenlabs-music',

@@ -15,6 +15,7 @@ import { RunwayAdapter } from './runway';
 import { LumaAdapter } from './luma';
 import { veoOptionsFromEnv, VeoAdapter } from './veo';
 import { seedanceOptionsFromEnv, SeedanceAdapter } from './seedance';
+import { klingCredentialsFrom, klingOptionsFromEnv, KlingAdapter } from './kling';
 import { HeyGenAdapter } from './heygen';
 import { ShotstackAdapter } from './shotstack';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
@@ -60,6 +61,17 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
   const sbPublic = valueOf(env, 'STORYBLOCKS_API_PUBLIC_KEY');
   const sbPrivate = valueOf(env, 'STORYBLOCKS_API_PRIVATE_KEY');
   if (sbPublic && sbPrivate) keys.storyblocks = { apiKey: sbPublic, secondaryKey: sbPrivate };
+  // 20.24: KLING_API_KEY, or the legacy KLING_ACCESS_KEY + KLING_SECRET_KEY pair (the access key
+  // travels as apiKey and the secret as secondaryKey; half a pair is a ConfigurationError).
+  const kling = klingCredentialsFrom({
+    apiKey: valueOf(env, 'KLING_API_KEY'),
+    accessKey: valueOf(env, 'KLING_ACCESS_KEY'),
+    secretKey: valueOf(env, 'KLING_SECRET_KEY'),
+  });
+  if (kling?.kind === 'api_key') keys.kling = { apiKey: kling.apiKey };
+  if (kling?.kind === 'access_key') {
+    keys.kling = { apiKey: kling.accessKey, secondaryKey: kling.secretKey };
+  }
   return keys;
 }
 
@@ -123,7 +135,7 @@ export function buildAdaptersFromKeys(
   const lumaKey = keys.luma?.apiKey;
   if (lumaKey) adapters.push(new LumaAdapter({ apiKey: lumaKey, usdToGbpRate }));
 
-  // BACKLOG 20.20: Google Veo 3.1 (Gemini API), the AI_CLIP fallback after Seedance (router.ts,
+  // BACKLOG 20.20: Google Veo 3.1 (Gemini API), the AI_CLIP fallback after Seedance and Kling (router.ts,
   // order since 20.23). VEO_MODEL / VEO_PERSON_GENERATION are optional (veo.ts defaults).
   const veoKey = keys.veo?.apiKey;
   if (veoKey) {
@@ -138,6 +150,18 @@ export function buildAdaptersFromKeys(
     adapters.push(
       new SeedanceAdapter({ apiKey: seedanceKey, usdToGbpRate, ...seedanceOptionsFromEnv(env) }),
     );
+  }
+
+  // BACKLOG 20.24: Kling 3.0 (Kling AI API key). KLING_MODEL / KLING_RESOLUTION /
+  // KLING_BASE_URL are optional (kling.ts defaults); router.ts sets its place in the order. A
+  // secondary key means the legacy AccessKey (apiKey) + SecretKey (secondaryKey) JWT pair.
+  const klingKey = keys.kling?.apiKey;
+  if (klingKey) {
+    const klingSecret = keys.kling?.secondaryKey;
+    const credentials = klingSecret
+      ? { kind: 'access_key' as const, accessKey: klingKey, secretKey: klingSecret }
+      : { kind: 'api_key' as const, apiKey: klingKey };
+    adapters.push(new KlingAdapter({ credentials, usdToGbpRate, ...klingOptionsFromEnv(env) }));
   }
 
   // HeyGen renders AI_AVATAR shots with a stock (or brand) avatar look. Registering it makes

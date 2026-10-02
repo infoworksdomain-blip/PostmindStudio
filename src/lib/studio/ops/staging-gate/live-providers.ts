@@ -135,6 +135,22 @@ export const LIVE_PROVIDER_TESTS: readonly LiveProviderTest[] = [
     note: 'One 4 s 720p silent clip, the shortest Seedance renders (2.0 mini at list price: 86,400 tokens ≈ $0.30). The video URL is pre-signed for 24 hours.',
   },
   {
+    // 20.24: no GATE 2 script; built from env (KLING_API_KEY, KLING_RESOLUTION) and tracked.
+    id: 'kling',
+    providerId: 'kling',
+    kind: 'adapter',
+    requiredEnv: ['KLING_API_KEY'],
+    request: () => ({
+      capability: 'text_to_video',
+      organisationId: LIVE_ORG_ID,
+      prompt:
+        'Slow push-in on a golden sourdough loaf on a flour-dusted wooden counter, morning window light, steam rising.',
+      durationSec: 3,
+      aspectRatio: '9:16',
+    }),
+    note: 'One 3 s silent 720p clip, the shortest Kling 3.0 renders (1.8 units, $0.25). The output URL is copied to our bucket by a plain download.',
+  },
+  {
     id: 'heygen',
     providerId: 'heygen',
     kind: 'script',

@@ -33,7 +33,9 @@ import type { ProviderRegistry } from './registry';
 //     720p list, 4 s $0.30, 10 s $0.76), PLUS / ENTERPRISE and shots longer than that model's
 //     15 s use SEEDANCE_LONG_MODEL (2.5 by default, up to 30 s). runProvider passes the tier on the
 //     request. Shots longer than every configured Seedance model skip it (supportsRequest).
-//     `kling` stays in the lists unbuilt (not_configured); the Kling branch sets its position.
+//   - BACKLOG 20.24 (same approval): Kling 3.0 (providers/kling.ts) is SECOND, after Seedance
+//     and before Veo: seedance → kling → veo → runway → luma on every paid tier. Kling renders
+//     3–15 s (supportsRequest), always silent.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -200,8 +202,8 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
-  if (tier === 'STANDARD') return ['seedance', 'veo', 'runway', 'luma', 'kling'];
-  return ['seedance', 'veo', 'runway', 'luma', 'kling'];
+  // 20.23 / 20.24: every paid tier tries the same order; Seedance picks its model by tier.
+  return ['seedance', 'kling', 'veo', 'runway', 'luma'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
