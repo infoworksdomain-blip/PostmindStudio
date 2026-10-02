@@ -4631,6 +4631,10 @@
     "askOwner": "Nur Inhaber der Organisation können Tarif oder Abrechnung ändern. Bitten Sie einen Inhaber darum.",
     "lock": {
       "aria": "Erfordert den Tarif {tier}"
+    },
+    "seatLimit": {
+      "title": "Alle Plätze Ihres Tarifs sind belegt",
+      "body": "In Ihrem Tarif ist kein Platz für eine weitere Person frei. Wechseln Sie für mehr Plätze in einen größeren Tarif oder entfernen Sie zuerst jemanden."
     }
   },
   "email": {

@@ -4631,6 +4631,10 @@
     "askOwner": "Solo un proprietario dell’organizzazione può modificare il piano o la fatturazione. Chiedi a un proprietario di farlo.",
     "lock": {
       "aria": "Richiede il piano {tier}"
+    },
+    "seatLimit": {
+      "title": "Tutti i posti del tuo piano sono occupati",
+      "body": "Il tuo piano non ha posti liberi per un’altra persona. Passa a un piano superiore o rimuovi prima qualcuno."
     }
   },
   "email": {

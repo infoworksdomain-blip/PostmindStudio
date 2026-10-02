@@ -398,4 +398,29 @@ describe('WelcomeWizard', () => {
     // No onboarding state is read before the organisation exists.
     expect(api.find('GET', '/onboarding')).toHaveLength(0);
   });
+
+  it('forgets the previous organisation’s business when a new organisation is created', async () => {
+    // "New organisation" in the switcher: the remembered business belongs to the old one, so the
+    // wizard must ask for the new organisation’s first business, not reuse a foreign id.
+    window.localStorage.setItem('studio.businessId', 'biz_of_the_old_organisation');
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+    mockFetch((req) => {
+      const path = req.url.pathname;
+      if (path === '/api/studio/me') return fail(403, 'No organisation', 'no_organisation');
+      if (path === '/api/studio/organisations' && req.method === 'POST')
+        return {
+          status: 201,
+          body: { ok: true, organisation: { id: 'org_2', name: 'Second', slug: 's' } },
+        };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderScreen(<WelcomeWizard />, null);
+    await user.type(await screen.findByLabelText('Organisation name'), 'Second');
+    await user.selectOptions(screen.getByLabelText('Country'), 'GB');
+    await user.click(screen.getByRole('button', { name: 'Create organisation' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/welcome'));
+    expect(window.localStorage.getItem('studio.businessId')).toBeNull();
+  });
 });

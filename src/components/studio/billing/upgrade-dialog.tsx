@@ -124,6 +124,7 @@ function UpgradeActions({
       </Button>
       {event.code === 'plan_required' && link('/settings/billing', t('actions.choosePlan'))}
       {event.code === 'quota_exceeded' &&
+        !isSeatLimit(event) &&
         link('/settings/billing#topups', t('actions.buyTopUp'), 'outline')}
       {event.code === 'plan_tier' &&
         requiredTier === 'ENTERPRISE' &&
@@ -131,6 +132,11 @@ function UpgradeActions({
       {event.code !== 'plan_required' && upgradeButton()}
     </DialogFooter>
   );
+}
+
+/** A refused invitation because every seat is used: a plan limit, not the monthly allowance. */
+function isSeatLimit(event: UpgradeEvent): boolean {
+  return event.code === 'quota_exceeded' && event.details?.reason === 'seat_limit';
 }
 
 const COPY = {
@@ -153,7 +159,7 @@ export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose
   const plans = useApi<PlansResponse>(event.code === 'plan_tier' ? '/billing/plans' : null);
   const required = event.details?.requiredTier;
   const requiredTier = isPlanTier(required) ? required : null;
-  const copy = COPY[event.code];
+  const copy = isSeatLimit(event) ? 'seatLimit' : COPY[event.code];
   const title =
     copy === 'planTier'
       ? requiredTier

@@ -229,6 +229,17 @@ describe('StandaloneIdentityProvider (Phase 18 §2.2)', () => {
     expect(load).toHaveBeenCalledTimes(4);
   });
 
+  it('serves the new organisation right after the session switches its active one (not the cache)', async () => {
+    // Switching organisation (or creating one) changes the session's activeOrganizationId; the same
+    // session id must not keep getting the previous organisation for the rest of the 30 s.
+    let active = 'org-a';
+    const getSession = vi.fn(async () => session({ activeOrganizationId: active }));
+    const { provider } = setup({ deps: { getSession } });
+    expect((await provider.resolve(req())).organisationId).toBe('org-a');
+    active = 'org-b';
+    expect((await provider.resolve(req())).organisationId).toBe('org-b');
+  });
+
   it('expires a session 30 days after sign-in even while it is used (§2.3)', async () => {
     const fresh = setup({ view: session({ createdAt: new Date(NOW - 29 * 86_400_000) }) });
     await expect(fresh.provider.resolve(req())).resolves.toBeDefined();

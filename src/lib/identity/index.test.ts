@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { requireTenantContext, type TenantContext } from '../tenant';
 import { createCoreIdentityProvider } from './core';
-import { getIdentityProvider, setIdentityProvider } from './index';
+import { getIdentityProvider, invalidateIdentity, setIdentityProvider } from './index';
 
 afterEach(() => {
   setIdentityProvider(undefined);
@@ -26,6 +26,17 @@ describe('identity provider selection (Phase 18 §2.2)', () => {
     // 20.10: the admin-route option is passed through.
     await requireTenantContext(req, { staffWithoutOrganisation: true });
     expect(resolve).toHaveBeenLastCalledWith(req, { staffWithoutOrganisation: true });
+  });
+
+  it('invalidateIdentity reaches the process provider (ApiDeps carries none in production)', async () => {
+    const invalidate = vi.fn();
+    setIdentityProvider({ mode: 'standalone', resolve: vi.fn(), invalidate });
+    await invalidateIdentity('u1');
+    expect(invalidate).toHaveBeenCalledWith('u1');
+    const override = vi.fn();
+    await invalidateIdentity('u2', { mode: 'standalone', resolve: vi.fn(), invalidate: override });
+    expect(override).toHaveBeenCalledWith('u2');
+    expect(invalidate).toHaveBeenCalledTimes(1);
   });
 
   it('core mode wraps the Core resolver unchanged', async () => {

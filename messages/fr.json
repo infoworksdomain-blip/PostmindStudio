@@ -4631,6 +4631,10 @@
     "askOwner": "Seul un propriétaire de l’organisation peut modifier la formule ou la facturation. Demandez à un propriétaire de le faire.",
     "lock": {
       "aria": "Nécessite la formule {tier}"
+    },
+    "seatLimit": {
+      "title": "Toutes les places de votre offre sont utilisées",
+      "body": "Votre offre n’a plus de place libre pour une autre personne. Passez à une offre supérieure ou retirez d’abord quelqu’un."
     }
   },
   "email": {

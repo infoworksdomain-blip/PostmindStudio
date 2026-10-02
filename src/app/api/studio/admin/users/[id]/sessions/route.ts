@@ -1,3 +1,4 @@
+import { invalidateIdentity } from '@/lib/identity';
 import { AuditAction } from '@/lib/audit-sink';
 import { requirePlatformStaff, StudioCapability } from '@/lib/rbac';
 import { parseBody, withStudioRoute } from '@/lib/studio/api/route';
@@ -12,7 +13,7 @@ export const DELETE = withStudioRoute(
     const userId = params.id ?? '';
     const { reason } = await parseBody(req, reasonInput);
     const revoked = await revokeUserSessions(deps.db, userId);
-    deps.identity?.invalidate(userId);
+    await invalidateIdentity(userId, deps.identity);
     audit(AuditAction.SessionRevoked, { type: 'user', id: userId }, { reason, revoked, all: true });
     return { body: { revoked } };
   },

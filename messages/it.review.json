@@ -3497,6 +3497,8 @@
     "upgrade.actions.notNow",
     "upgrade.askOwner",
     "upgrade.lock.aria",
+    "upgrade.seatLimit.title",
+    "upgrade.seatLimit.body",
     "email.layout.brand",
     "email.layout.greeting",
     "email.layout.greetingAnonymous",

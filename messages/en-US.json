@@ -4631,6 +4631,10 @@
     "askOwner": "Only an organization owner can change the plan or billing. Ask an owner to do this.",
     "lock": {
       "aria": "Needs the {tier} plan"
+    },
+    "seatLimit": {
+      "title": "Every seat on your plan is in use",
+      "body": "Your plan has no free seat for another person. Upgrade for more seats, or remove someone first."
     }
   },
   "email": {

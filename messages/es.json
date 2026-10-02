@@ -4631,6 +4631,10 @@
     "askOwner": "Solo un propietario de la organización puede cambiar el plan o la facturación. Pídeselo a un propietario.",
     "lock": {
       "aria": "Requiere el plan {tier}"
+    },
+    "seatLimit": {
+      "title": "Todos los puestos de tu plan están en uso",
+      "body": "Tu plan no tiene ningún puesto libre para otra persona. Mejora el plan para tener más puestos o quita antes a alguien."
     }
   },
   "email": {

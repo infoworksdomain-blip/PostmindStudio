@@ -4631,6 +4631,10 @@
     "askOwner": "Só um proprietário da organização pode alterar o plano ou a cobrança. Peça a um proprietário para fazer isso.",
     "lock": {
       "aria": "Requer o plano {tier}"
+    },
+    "seatLimit": {
+      "title": "Todos os assentos do seu plano estão em uso",
+      "body": "Seu plano não tem assento livre para mais uma pessoa. Faça upgrade para ter mais assentos ou remova alguém antes."
     }
   },
   "email": {
