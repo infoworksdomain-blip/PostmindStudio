@@ -116,7 +116,14 @@ export interface QualityInputs {
   probe: MediaProbe;
   blackIntervals: BlackInterval[];
   loudnessLufs: number | null;
-  contentSafety: { scan: ContentSafetyScan } | { unavailable: string };
+  /**
+   * 20.19: `humanReview` = the scan could not run because no content-safety provider is available
+   * (not configured, account problem such as a rejected key, held). Instead of a block (which
+   * fails the video with no way forward) the check is review-level, so the run pauses for a
+   * Trust & Safety decision (13.17) — still fail-closed: nothing reaches review or publishing
+   * unchecked.
+   */
+  contentSafety: { scan: ContentSafetyScan } | { unavailable: string; humanReview?: boolean };
   /** 15.B2 audio_sync / caption_sync / watermark / brand_kit results (quality-sync.ts). */
   sync?: QualityCheck[];
 }
@@ -133,7 +140,7 @@ export function evaluateContentSafety(input: QualityInputs['contentSafety']): Qu
     return {
       code: 'content_safety',
       status: 'failed',
-      severity: 'block',
+      severity: input.humanReview ? 'error' : 'block',
       detail: `Scan could not run: ${input.unavailable}`,
       detailKey: 'safetyScanUnavailable',
       detailParams: { reason: input.unavailable },

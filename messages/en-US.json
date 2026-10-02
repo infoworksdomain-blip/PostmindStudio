@@ -846,6 +846,10 @@
       "item": "{layer}: made with {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "Presenter not available",
+      "note": "The presenter wasn’t available for this video, so those moments use video clips instead."
+    },
     "quality": {
       "title": "Quality check",
       "status": {

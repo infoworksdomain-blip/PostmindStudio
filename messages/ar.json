@@ -846,6 +846,10 @@
       "item": "{layer}: أُنشئ باستخدام {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "المقدّم غير متاح",
+      "note": "لم يكن المقدّم متاحًا لهذا الفيديو، لذا تُستخدم مقاطع فيديو بدلًا منه في تلك اللحظات."
+    },
     "quality": {
       "title": "فحص الجودة",
       "status": {
