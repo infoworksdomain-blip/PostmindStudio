@@ -82,12 +82,22 @@ export interface HeyGenAdapterOptions {
   now?: () => number;
 }
 
+// Error-code catalogue: https://developers.heygen.com/docs/error-codes (read 2026-10-02).
+// Payment / credit / quota: insufficient_credit, trial_limit_exceeded, subscription_required,
+// plan_upgrade_required (402) and quota_exceeded (429). Auth: unauthorized (401), forbidden,
+// insufficient_api_key_scope and phone_verification_required (403).
 const CREDIT_CODES = new Set([
   'insufficient_credit',
   'quota_exceeded',
   'trial_limit_exceeded',
   'subscription_required',
   'plan_upgrade_required',
+]);
+const AUTH_CODES = new Set([
+  'unauthorized',
+  'forbidden',
+  'insufficient_api_key_scope',
+  'phone_verification_required',
 ]);
 const POLICY_CODES = new Set(['content_policy_violation', 'avatar_not_usable']);
 const TRANSIENT_CODES = new Set([
@@ -109,16 +119,45 @@ const INVALID_CODES = new Set([
   'tts_text_invalid',
 ]);
 
-/** Map a code from HeyGen's error-code catalogue (sync `error.code` or async `failure_code`). */
-export function classifyHeyGenCode(code: string | null | undefined): {
+// BACKLOG 20.19 (production 2026-10-02): a v3 avatar render failed with
+//   failure_code "MOVIO_PAYMENT_INSUFFICIENT_CREDIT",
+//   failure_message "Insufficient credit. This operation requires 'api' credits."
+// That legacy upper-case code (Movio is HeyGen's former name) is NOT in the published catalogue
+// above, and VideoDetail.failure_code is a free string (OpenAPI VideoDetail, example
+// "rendering_failed"), so it was classified `unknown`: no account hold, no failover, no operator
+// alert. Codes are now matched case-insensitively, and an undocumented code is recognised as a
+// payment problem by the catalogue's own words (MOVIO_PAYMENT_*, *INSUFFICIENT_CREDIT*, *QUOTA*)
+// or, failing that, by an "insufficient credit" message; as an auth problem by *UNAUTHORIZED* /
+// *API_KEY*. Anything else stays `unknown`.
+const PAYMENT_PATTERN =
+  /(^movio_payment_|insufficient_credit|quota_exceeded|subscription_required)/;
+const AUTH_PATTERN = /(unauthori[sz]ed|invalid_api_key|api_key_invalid)/;
+const PAYMENT_MESSAGE = /insufficient (api )?credit/i;
+
+const CREDIT_CLASS = { class: 'insufficient_credits', retryable: false } as const;
+const AUTH_CLASS = { class: 'auth', retryable: false } as const;
+
+/**
+ * Map a code from HeyGen's error-code catalogue (sync `error.code` or async `failure_code`),
+ * plus the undocumented legacy codes seen in production; `message` is a last resort for codes
+ * the catalogue does not name.
+ */
+export function classifyHeyGenCode(
+  rawCode: string | null | undefined,
+  message?: string | null,
+): {
   class: ProviderErrorClass;
   retryable: boolean;
 } {
+  const code = rawCode?.trim().toLowerCase();
+  if (!code && message && PAYMENT_MESSAGE.test(message)) return { ...CREDIT_CLASS };
   if (!code || TRANSIENT_CODES.has(code)) return { class: 'provider_unavailable', retryable: true };
   if (code === 'rate_limit_exceeded') return { class: 'rate_limited', retryable: true };
   if (POLICY_CODES.has(code)) return { class: 'content_policy', retryable: false };
-  if (CREDIT_CODES.has(code)) return { class: 'insufficient_credits', retryable: false };
+  if (CREDIT_CODES.has(code) || PAYMENT_PATTERN.test(code)) return { ...CREDIT_CLASS };
+  if (AUTH_CODES.has(code) || AUTH_PATTERN.test(code)) return { ...AUTH_CLASS };
   if (INVALID_CODES.has(code)) return { class: 'invalid_request', retryable: false };
+  if (message && PAYMENT_MESSAGE.test(message)) return { ...CREDIT_CLASS };
   return { class: 'unknown', retryable: false };
 }
 
@@ -138,10 +177,11 @@ function heygenErrorMessage(body: unknown): string | undefined {
 
 /** Refine the HTTP status with the documented error code where it changes the class. */
 function classifyHeyGenError(status: number, body: unknown): ErrorClassification | undefined {
-  const code = errorBody(body)?.code;
+  const error = errorBody(body);
+  const code = error?.code?.trim().toLowerCase();
   if (!code || status >= 500 || status === 401 || status === 403) return undefined;
   if (code === 'rate_limit_exceeded' || code === 'request_in_progress') return undefined;
-  const classified = classifyHeyGenCode(code);
+  const classified = classifyHeyGenCode(code, error?.message);
   if (classified.class === 'unknown') return undefined;
   return { errorClass: classified.class, retryable: classified.retryable };
 }
@@ -236,7 +276,7 @@ export class HeyGenAdapter implements ProviderAdapter {
       return {
         state: 'failed',
         error: {
-          ...classifyHeyGenCode(video.failure_code),
+          ...classifyHeyGenCode(video.failure_code, video.failure_message),
           message: `${video.failure_code ?? 'failed'}: ${video.failure_message ?? 'HeyGen render failed'}`,
         },
       };

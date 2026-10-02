@@ -18,6 +18,7 @@ import { copyUrlToStorage } from './persist';
 import { ALLOWED_TRANSITIONS, canTransition, currentRunId, projectMetadata } from './project-state';
 import { jsonOutput } from './provider-run';
 import {
+  contentSafetyReviewCheck,
   evaluateContentSafety,
   evaluateQuality,
   hasContentSafetyBlock,
@@ -440,6 +441,20 @@ describe('quality checks (spec 13.1)', () => {
   it('fails closed when content safety could not run', () => {
     const checks = evaluateQuality({ ...base, contentSafety: { unavailable: 'no provider' } });
     expect(hasContentSafetyBlock(checks)).toBe(true);
+  });
+
+  it('20.19: with no content-safety provider at all, a person reviews instead of a block', () => {
+    const checks = evaluateQuality({
+      ...base,
+      contentSafety: { unavailable: 'no content-safety provider available', humanReview: true },
+    });
+    expect(hasContentSafetyBlock(checks)).toBe(false);
+    expect(qualityPassed(checks)).toBe(false); // still fail-closed: never "passed"
+    expect(contentSafetyReviewCheck(checks)).toMatchObject({
+      status: 'failed',
+      severity: 'error',
+      detailKey: 'safetyScanUnavailable',
+    });
   });
 });
 

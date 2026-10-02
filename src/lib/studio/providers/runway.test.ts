@@ -91,6 +91,18 @@ describe('RunwayAdapter.submit', () => {
     });
   });
 
+  it('20.19: maps the production "not enough credits" 400 to insufficient_credits', async () => {
+    const { runway } = adapter(
+      json({ error: 'You do not have enough credits to run this task.' }, 400),
+    );
+    await expect(runway.submit(t2v)).rejects.toMatchObject({
+      providerId: 'runway',
+      errorClass: 'insufficient_credits',
+      retryable: false,
+      message: 'You do not have enough credits to run this task.',
+    });
+  });
+
   it('maps network failures to retryable provider_unavailable', async () => {
     const { runway } = adapter(new TypeError('fetch failed'));
     await expect(runway.submit(t2v)).rejects.toMatchObject({
@@ -137,6 +149,21 @@ describe('RunwayAdapter.poll', () => {
         retryable: false,
         message: 'SAFETY.INPUT.TEXT: Moderation',
       },
+    });
+  });
+
+  it('20.19: a task that failed for lack of credits is insufficient_credits', async () => {
+    const { runway } = adapter(
+      json({
+        id: 't',
+        status: 'FAILED',
+        failure: 'You do not have enough credits to run this task.',
+        failureCode: null,
+      }),
+    );
+    await expect(runway.poll('t')).resolves.toMatchObject({
+      state: 'failed',
+      error: { class: 'insufficient_credits', retryable: false },
     });
   });
 
