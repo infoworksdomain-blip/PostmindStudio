@@ -479,7 +479,7 @@ Studio makes AI clips with Runway, then Luma, then Google Veo 3.1 when the first
 - **Billing (required):** Veo has no free tier. In AI Studio **Click:** **Set up billing** next to the project → link a billing account and add Prepay credit (at least $5), or choose Postpay if offered. With Prepay, every key of the project stops when the credit reaches $0: turn on auto-reload ([billing guide](https://ai.google.dev/gemini-api/docs/billing)).
 - **Copy:** the API key. **Paste into:** `GOOGLE_GEMINI_API_KEY`.
 - Optional: `VEO_MODEL` (empty = `veo-3.1-fast-generate-preview`, $0.10 a second of video at 720p; `veo-3.1-generate-preview` $0.40; `veo-3.1-lite-generate-preview` $0.05). A 4, 6 or 8 second clip is billed by its length; a blocked clip is not billed.
-- Optional: `VEO_PERSON_GENERATION`. Leave empty (`allow_adult`): Google allows only that value for servers in the EU, UK, Switzerland and the Middle East/North Africa, and our server is in Germany. `allow_all` only for a server outside those regions.
+- Optional: `VEO_PERSON_GENERATION`. Leave empty: text-to-video then sends no `personGeneration` (the live API refuses `allow_adult` for text-to-video, checked 2026-10-02) and image-to-video always sends `allow_adult`. Set `allow_all` only for a server outside the EU, UK, Switzerland and the Middle East/North Africa.
 - Google keeps each clip for 2 days; Studio copies it to its own storage as soon as it is ready.
 - **Check:** `npm run setup:check` shows `OK GOOGLE_GEMINI_API_KEY` when the key is shaped right. The provider canary (`CANARY_GOOGLE_GEMINI_API_KEY`) and the staging gate (`--live-providers --only veo`) test it against Google.
 
