@@ -1,5 +1,5 @@
 import {
-  classifyHttpStatus,
+  classifyHttpFailure,
   classifyNetworkError,
   providerError,
   type ErrorClassification,
@@ -109,8 +109,12 @@ export async function httpJson<T>(
   }
   if (!res.ok) {
     const message = options.errorMessage?.(body) ?? `HTTP ${res.status}`;
-    const classification =
-      options.classifyError?.(res.status, body) ?? classifyHttpStatus(res.status);
+    // 20.19: out-of-credit wording on a 4xx is an account problem (provider-errors.ts).
+    const classification = classifyHttpFailure(
+      res.status,
+      message,
+      options.classifyError?.(res.status, body),
+    );
     throw providerError(options.providerId, classification, message, {
       status: res.status,
     });

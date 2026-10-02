@@ -613,6 +613,8 @@
     "review.fallback.reasons.circuit_open",
     "review.fallback.item",
     "review.fallback.skipped",
+    "review.presenterFallback.aria",
+    "review.presenterFallback.note",
     "review.quality.title",
     "review.quality.status.passed",
     "review.quality.status.failed",
