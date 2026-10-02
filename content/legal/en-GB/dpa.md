@@ -2,7 +2,7 @@
 
 # Data Processing Agreement
 
-**Last updated: 30 September 2026**
+**Last updated: 2 October 2026**
 
 This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/legal/terms) (together with this DPA, the **Agreement**) between Postmind AI Ltd (**we**, **us**, the **Processor**) and the Customer (**you**, the **Controller**). It applies whenever we process Customer Personal Data on your behalf in providing PostMind Studio (the **Service**). It is accepted when you accept the Terms of Service; no separate signature is needed. Capitalised words not defined here have the meaning given in the Terms of Service.
 
@@ -133,7 +133,7 @@ This DPA is governed by the law of England and Wales, and the courts of England 
 5. **Authentication.** Passwords are stored as salted hashes and checked against known breached passwords using a privacy-preserving range query. Two-step verification is available to every user and required for our staff. Sessions expire after 14 days without use and after 30 days at most, and can be revoked. Sign-in and other sensitive endpoints are rate-limited.
 6. **Logging and monitoring.** Significant actions (such as sign-ins, membership changes, billing changes, publishing, voice consent, data exports and deletions, and staff actions) are written to an audit log. Service health is monitored and failures raise alerts. Error reporting, if enabled, excludes expected user errors.
 7. **Application security.** Input validation, origin and CSRF checks on authenticated requests, protection against server-side request forgery in website scanning, isolation of each Organisation's data in queries and storage paths, regular dependency updates and vulnerability checks, and automated tests in continuous integration.
-8. **Content safety.** Automated checks of generated and uploaded content by a specialist provider, with human review of flagged items, and a consent check before any cloned voice can be used.
+8. **Content safety.** Restricted-topic checks on briefs and scripts, the safety filters of the AI providers used to generate content, human review of flagged items, and a consent check before any cloned voice can be used.
 9. **Cost and abuse controls.** Per-organisation daily and monthly cost caps, rate limits and a service-wide pause switch that can stop generation quickly.
 10. **Backups and resilience.** Encrypted database backups (encrypted before they leave our server) with point-in-time recovery, and file backups, kept for up to 30 days and stored separately from the live systems, with restore procedures.
 11. **Deletion.** Automated deletion of Organisations' data after the periods in clause 8, including files in storage, with a record that deletion happened.

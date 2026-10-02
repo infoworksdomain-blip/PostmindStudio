@@ -2,7 +2,7 @@
 
 # Terms of Service
 
-**Last updated: 30 September 2026**
+**Last updated: 2 October 2026**
 
 These terms are a contract between Postmind AI Ltd and the business that signs up for PostMind Studio. Please read them carefully. They limit our liability (clause 17) and say how the contract can end (clause 14).
 
@@ -106,7 +106,7 @@ In the Agreement:
 - you have a lawful basis for any personal data you include in Inputs, and you have given any notices the law requires; and
 - your Inputs and your use of Outputs comply with the [Acceptable Use Policy](/legal/acceptable-use).
 
-8.6 **Content checks.** We may, but are not obliged to, check Customer Content automatically (including through our content-safety provider) and manually. Content that appears to breach the Acceptable Use Policy may be blocked, held for review or removed, and publishing may be held. We are not responsible for monitoring your content, and a lack of action by us does not mean content is lawful or suitable.
+8.6 **Content checks.** We may, but are not obliged to, check Customer Content automatically (for example through restricted-topic checks and our AI providers' safety filters) and manually. Content that appears to breach the Acceptable Use Policy may be blocked, held for review or removed, and publishing may be held. We are not responsible for monitoring your content, and a lack of action by us does not mean content is lawful or suitable.
 
 ## 9. AI-generated output
 
