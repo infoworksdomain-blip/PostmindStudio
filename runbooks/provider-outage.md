@@ -10,7 +10,8 @@
 
 - The router skips providers whose circuit is open and routes each shot to the next candidate for
   its `visualTreatment` (spec 6.4). AI clips on every tier try seedance → kling → veo → runway →
-  luma (STANDARD uses Seedance 2.0 mini, PLUS/ENTERPRISE Seedance 2.5). So a BytePlus Seedance
+  luma (BASIC: seedance → kling → veo; every tier uses Seedance 2.0 mini, 2.5 only for shots over
+  15 s, 20.25). So a BytePlus Seedance
   outage (or an empty BytePlus balance) moves clips to Kling 3.0, then Google Veo, then Runway, then
   Luma. Keys: Seedance `BYTEPLUS_API_KEY`, Kling `KLING_API_KEY`, Veo `GOOGLE_GEMINI_API_KEY`, Runway `RUNWAY_API_KEY`, Luma `LUMA_API_KEY`. Veo renders at most 8 s, so 9–10 s shots skip it; Seedance renders
   4–15 s (shorter shots get a 4 s clip the composer trims) and up to 30 s with Seedance 2.5. AI
