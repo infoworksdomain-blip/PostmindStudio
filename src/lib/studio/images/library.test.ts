@@ -15,6 +15,7 @@ import {
   generateLibraryImage,
   libraryDepsFrom,
   searchLibrary,
+  storeStockHit,
   type LibraryDeps,
 } from './library';
 
@@ -293,6 +294,48 @@ describe('buildStockLayer', () => {
       create: { businessId: 'biz-1', provider: 'pexels', query: 'bread', resultCount: 1 },
       update: { resultCount: 1, lastRunAt: expect.any(Date) },
     });
+  });
+
+  it('20.26: perQuery asks for and stores at most that many hits per query', async () => {
+    const { db } = fakeDb();
+    const hits = [1, 2, 3, 4].map((n) => storableHit({ providerImageId: String(n) }));
+    const source = stockSource('pixabay', { search: async () => hits });
+    await buildStockLayer(
+      libraryDeps(db, () => ({ primary: [source], fallback: [] })),
+      scope,
+      {
+        queries: ['bread'],
+        themes: [],
+        perQuery: 2,
+      },
+    );
+    expect(source.search).toHaveBeenCalledWith(expect.objectContaining({ perPage: 2 }));
+    expect(source.downloadUrl).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('storeStockHit (20.26, shared with slideshow population)', () => {
+  it('copies a storable hit and records a hotlink-only one, both with the licence note', async () => {
+    const { db, imageLibraryItem } = fakeDb();
+    const deps = libraryDeps(db, () => ({ primary: [], fallback: [] }));
+    const pexels = stockSource('pexels');
+    const stored = await storeStockHit(deps, scope, pexels, storableHit(), ['bread']);
+    expect(stored.status).not.toBe('skipped');
+    expect(pexels.downloadUrl).toHaveBeenCalledWith(storableHit(), {
+      userId: 'org-1',
+      projectId: 'biz-1',
+    });
+
+    const unsplash = stockSource('unsplash');
+    await storeStockHit(deps, scope, unsplash, hotlinkHit(), ['bread']);
+    expect(unsplash.downloadUrl).not.toHaveBeenCalled();
+    expect(imageLibraryItem.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          licenseNotes: expect.stringContaining('track:https://api.unsplash.com/photos/abc'),
+        }),
+      }),
+    );
   });
 });
 

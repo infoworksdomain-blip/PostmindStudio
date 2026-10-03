@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { backdropColour, DEFAULT_BACKDROP, isTooDark } from '../pipeline/edl-backdrop';
 import {
   buildSlideshowEdit,
   slideshowDuration,
@@ -331,22 +332,33 @@ describe('buildSlideshowEdit — HTML escaping', () => {
 });
 
 describe('buildSlideshowEdit — brand colours and fonts', () => {
-  it('uses a valid brand background colour for TEXT_CARD', () => {
+  it('uses a light enough brand background colour for TEXT_CARD and the timeline', () => {
+    const result = edit([slide({ slideType: 'TEXT_CARD', content: { text: 'hi' } })], {
+      brand: { backgroundColour: '#2266AA' },
+    });
+    const visual = tracksOf(result)[0]?.clips ?? [];
+    expect((visual[0]?.asset as { background?: string })?.background).toBe('#2266AA');
+    expect((result.timeline as { background: string }).background).toBe('#2266AA');
+  });
+
+  it('20.26: lifts a too-dark brand background colour instead of drawing it', () => {
     const result = edit([slide({ slideType: 'TEXT_CARD', content: { text: 'hi' } })], {
       brand: { backgroundColour: '#112233' },
     });
     const visual = tracksOf(result)[0]?.clips ?? [];
-    expect((visual[0]?.asset as { background?: string })?.background).toBe('#112233');
+    const fill = (visual[0]?.asset as { background?: string })?.background ?? '';
+    expect(fill).toBe(backdropColour('#112233'));
+    expect(isTooDark(fill)).toBe(false);
   });
 
-  it('falls back to #000000 for an invalid brand background colour', () => {
+  it('20.26: falls back to the slate backdrop (never black) for an invalid brand colour', () => {
     const result = edit([slide({ slideType: 'TEXT_CARD', content: { text: 'hi' } })], {
       brand: { backgroundColour: 'not-a-colour' },
     });
     const visual = tracksOf(result)[0]?.clips ?? [];
-    expect((visual[0]?.asset as { background?: string })?.background).toBe('#000000');
+    expect((visual[0]?.asset as { background?: string })?.background).toBe(DEFAULT_BACKDROP);
     const timeline = result.timeline as { background: string };
-    expect(timeline.background).toBe('#000000');
+    expect(timeline.background).toBe(DEFAULT_BACKDROP);
   });
 
   it('falls back to white text and Arial for an invalid text colour / font', () => {
@@ -355,7 +367,7 @@ describe('buildSlideshowEdit — brand colours and fonts', () => {
     });
     const visual = tracksOf(result)[0]?.clips ?? [];
     const css = (visual[0]?.asset as { css?: string })?.css ?? '';
-    expect(css).toContain('color: #ffffff');
+    expect(css).toContain('color: #FFFFFF'); // readable on the slate backdrop
     expect(css).toContain("font-family: 'Arial'");
   });
 

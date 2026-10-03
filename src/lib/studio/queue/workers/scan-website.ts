@@ -322,6 +322,7 @@ export async function refreshImageLibrary(
   const result = await buildStockLayer(libraryDeps(deps), data, {
     queries,
     themes: profile?.imageThemes ?? [],
+    ...(data.perQuery && { perQuery: data.perQuery }),
   });
   await embedMissing({ db: deps.db, providers: deps }, data);
   deps.logger.info({ businessId: data.businessId, ...result }, 'image library refreshed');

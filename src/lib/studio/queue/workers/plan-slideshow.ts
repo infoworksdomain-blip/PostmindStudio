@@ -18,6 +18,9 @@ import {
 } from '../../pipeline/script-safety';
 import { parseTargetFormats } from '../../pipeline/scripting';
 import { parseSlideContent, slideProblem, type SlideContent } from '../../slideshow/planner';
+import { fillSlideImages } from '../../slideshow/populate';
+import { libraryDepsFrom } from '../../images/library';
+import { unsplashUseReporter } from './populate-slideshow';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
 import { generateSlideshowCopy, routedGenerator } from '../../services/caption-suggestions';
@@ -29,6 +32,11 @@ import { generateSlideshowCopy, routedGenerator } from '../../services/caption-s
 // 20.13: one more text_generation call (through the router, cost-tracked) writes each platform's
 // caption and hashtags from the slides' text; a failure there is logged and never stops the
 // slideshow (publishing tops the hashtags up, and Publish can ask for suggestions again).
+
+// 20.26: image slides without an image are filled first (library → stock → generated within the
+// budget), and one that still has none but has text becomes a text card on the brand backdrop,
+// so a slideshow made from a topic alone (content plans) gets photos and never fails, or renders
+// black, for want of an image.
 
 const SAFETY_MAX_TOKENS = 1_000;
 
@@ -73,12 +81,52 @@ async function applyOverlayDefaultsOnce(
   if (created) log.info({ overlays: created }, 'template overlay defaults applied to slides');
 }
 
+/** 20.26: fill image slides that have no image before checking the slides are renderable. */
+async function fillMissingImages(
+  data: ProjectJobData,
+  deps: PipelineDeps,
+  project: VideoProject,
+  log: Logger,
+): Promise<void> {
+  const rows = await deps.db.slideshowSlide.findMany({
+    where: { projectId: project.id },
+    orderBy: { sortOrder: 'asc' },
+  });
+  const slides = rows.map((r) => ({ ...r, content: parseSlideContent(r.metadata) }));
+  if (!slides.some((s) => !s.imageAssetId && !s.content.pendingText)) return;
+  const topic = (projectMetadata(project.metadata).slideshow as { topic?: unknown } | undefined)
+    ?.topic;
+  const result = await fillSlideImages(
+    {
+      db: deps.db,
+      library: libraryDepsFrom(deps),
+      providers: deps,
+      reportStockUse: unsplashUseReporter(deps.fetch, process.env.UNSPLASH_ACCESS_KEY),
+    },
+    {
+      organisationId: data.organisationId,
+      businessId: project.businessId,
+      projectId: project.id,
+      planTier: data.planTier,
+    },
+    slides.filter((s) => !s.content.pendingText),
+    {
+      topic: typeof topic === 'string' ? topic : project.description,
+      aspectRatio: parseTargetFormats(project.targetFormats)[0]?.aspectRatio ?? '9:16',
+      textCardFallback: true,
+    },
+  );
+  if (result.imagesMatched + result.imagesStocked + result.imagesGenerated + result.textCards > 0)
+    log.info(result, 'slideshow images filled');
+}
+
 export async function planSlideshow(
   data: ProjectJobData,
   deps: PipelineDeps,
   project: VideoProject,
   log: Logger,
 ): Promise<void> {
+  await fillMissingImages(data, deps, project, log);
   const slides = await deps.db.slideshowSlide.findMany({
     where: { projectId: project.id },
     orderBy: { sortOrder: 'asc' },

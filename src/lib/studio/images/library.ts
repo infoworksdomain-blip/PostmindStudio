@@ -82,11 +82,58 @@ export function stockLicenceNote(hit: StockHit): string {
     .join('; ');
 }
 
+/**
+ * Store one stock hit in the business's library exactly as A6.3 Layer 2 does: a storable hit
+ * (Pexels, Storyblocks, Pixabay) is downloaded into our storage; a hotlink-only hit (Unsplash,
+ * whose guidelines forbid copies) is recorded with its URL. Both carry the licence/credit note.
+ */
+export async function storeStockHit(
+  deps: LibraryDeps,
+  scope: BusinessScope,
+  source: StockImageSource,
+  hit: StockHit,
+  tags: string[],
+): Promise<IngestOutcome> {
+  if (!hit.storable) {
+    return recordHotlinkedImage(deps.db, {
+      ...scope,
+      provider: hit.provider,
+      providerImageId: hit.providerImageId,
+      url: hit.imageUrl,
+      width: hit.width,
+      height: hit.height,
+      altText: hit.alt,
+      tags,
+      licenseNotes: stockLicenceNote(hit),
+      pageUrl: hit.pageUrl,
+    });
+  }
+  return ingestImage(deps, {
+    organisationId: scope.organisationId,
+    businessId: scope.businessId,
+    source: 'STOCK',
+    sourceUrl: hit.pageUrl ?? hit.imageUrl,
+    sourceProvider: hit.provider,
+    downloadUrl: await source.downloadUrl(hit, {
+      userId: scope.organisationId,
+      projectId: scope.businessId,
+    }),
+    altText: hit.alt,
+    tags,
+    licenseNotes: stockLicenceNote(hit),
+  });
+}
+
 /** A6.3 Layer 2: run each query against the stock sources, dedupe across queries, store. */
 export async function buildStockLayer(
   deps: LibraryDeps,
   scope: BusinessScope,
-  input: { queries: string[]; themes: string[] },
+  input: {
+    queries: string[];
+    themes: string[];
+    /** 20.26: hits stored per query (default 20; the automatic refresh asks for fewer). */
+    perQuery?: number;
+  },
 ): Promise<StockLayerResult> {
   const result: StockLayerResult = { created: 0, duplicates: 0, skipped: 0, errors: [] };
   const queries = [...new Set(input.queries.map((q) => q.trim()).filter(Boolean))].slice(
@@ -97,6 +144,7 @@ export async function buildStockLayer(
   const { primary, fallback } = deps.stock();
   const seen = new Set<string>();
   const ids = { userId: scope.organisationId, projectId: scope.businessId };
+  const perPage = Math.max(1, Math.min(STOCK_PER_QUERY, input.perQuery ?? STOCK_PER_QUERY));
 
   const tally = (outcome: IngestOutcome) => {
     if (outcome.status === 'created') result.created += 1;
@@ -111,7 +159,7 @@ export async function buildStockLayer(
       for (const source of sources) {
         let found: StockHit[];
         try {
-          found = await source.search({ query, perPage: STOCK_PER_QUERY, ...ids });
+          found = await source.search({ query, perPage, ...ids });
         } catch (err) {
           result.errors.push(`${source.provider} "${query}": ${publicErrorText(err)}`);
           continue;
@@ -133,42 +181,13 @@ export async function buildStockLayer(
           update: { resultCount: found.length, lastRunAt: new Date() },
         });
         hits += found.length;
-        for (const hit of found) {
+        for (const hit of found.slice(0, perPage)) {
           const key = `${hit.provider}:${hit.providerImageId}`;
           if (seen.has(key)) continue;
           seen.add(key);
           const tags = normaliseTags([query, ...input.themes.slice(0, 5)]);
           try {
-            if (!hit.storable) {
-              tally(
-                await recordHotlinkedImage(deps.db, {
-                  ...scope,
-                  provider: hit.provider,
-                  providerImageId: hit.providerImageId,
-                  url: hit.imageUrl,
-                  width: hit.width,
-                  height: hit.height,
-                  altText: hit.alt,
-                  tags,
-                  licenseNotes: stockLicenceNote(hit),
-                  pageUrl: hit.pageUrl,
-                }),
-              );
-              continue;
-            }
-            tally(
-              await ingestImage(deps, {
-                organisationId: scope.organisationId,
-                businessId: scope.businessId,
-                source: 'STOCK',
-                sourceUrl: hit.pageUrl ?? hit.imageUrl,
-                sourceProvider: hit.provider,
-                downloadUrl: await source.downloadUrl(hit, ids),
-                altText: hit.alt,
-                tags,
-                licenseNotes: stockLicenceNote(hit),
-              }),
-            );
+            tally(await storeStockHit(deps, scope, source, hit, tags));
           } catch (err) {
             result.errors.push(`${key}: ${publicErrorText(err)}`.slice(0, 300));
           }
