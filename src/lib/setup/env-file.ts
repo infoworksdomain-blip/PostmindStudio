@@ -311,6 +311,9 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   STUDIO_SIGNUPS_ENABLED: (v) => (['true', 'false'].includes(v) ? null : 'must be true or false'),
   PG_BACKUPS: (v) => (['on', 'off'].includes(v) ? null : 'must be on or off'),
   PG_BACKUP_CIPHER_PASS: minLength(32),
+  // 20.16: Pixabay documents no key format (https://pixabay.com/api/docs/, read 2026-10-01), so
+  // only a pasted space (two values, or a label copied with the key) is caught.
+  PIXABAY_API_KEY: (v) => (/\s/.test(v) ? 'must not contain spaces' : null),
   // 20.20 Google Veo (Gemini API). Google does not document the key's format (standard and
   // authorization keys exist, https://ai.google.dev/gemini-api/docs/api-key), so only its shape
   // as one unbroken token is checked.
@@ -457,7 +460,7 @@ export function checkEnvFile(input: CheckInput): CheckReport {
     if (reason) results.push({ key, status: 'malformed', reason });
   }
 
-  results.push(...pairChecks(record), ...crossChecks(record));
+  results.push(...pairChecks(record), ...crossChecks(record), ...stockChecks(record));
   for (const key of input.file.duplicates)
     results.push({ key, status: 'warn', reason: 'is set more than once; the last line wins' });
   for (const line of input.file.badLines)
@@ -542,6 +545,27 @@ function crossChecks(record: Record<string, string>): CheckResult[] {
       reason: `a whsec_ secret does not say which mode made it: check it belongs to the ${stripe[1]} mode endpoint, like the secret key`,
     });
   return out;
+}
+
+/** The stock image keys stockSourcesFromEnv (images/stock.ts) accepts; Storyblocks needs both. */
+export const STOCK_IMAGE_KEY_SETS: readonly (readonly string[])[] = [
+  ['PIXABAY_API_KEY'],
+  ['PEXELS_API_KEY'],
+  ['STORYBLOCKS_API_PUBLIC_KEY', 'STORYBLOCKS_API_PRIVATE_KEY'],
+  ['UNSPLASH_ACCESS_KEY'],
+];
+
+/** 20.16: without any stock key, website scans and slideshows add no stock images (a reminder). */
+function stockChecks(record: Record<string, string>): CheckResult[] {
+  if (STOCK_IMAGE_KEY_SETS.some((keys) => keys.every((k) => isSet(record, k)))) return [];
+  return [
+    {
+      key: 'stock images',
+      status: 'warn',
+      reason:
+        'no stock image key is set: set PIXABAY_API_KEY (free, runbooks/go-live.md 11.5), or PEXELS_API_KEY, STORYBLOCKS_API_*_KEY or UNSPLASH_ACCESS_KEY',
+    },
+  ];
 }
 
 function backupChecks(backup: ParsedEnvFile | null): CheckResult[] {

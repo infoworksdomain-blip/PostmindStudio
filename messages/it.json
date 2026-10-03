@@ -1777,6 +1777,7 @@
       "fallbackAlt": "Immagine della libreria",
       "noPreview": "Nessuna anteprima",
       "sourceMatch": "{source} · corrispondenza {percent}",
+      "stockCredit": "Immagini da {providers}",
       "deleteAria": "Elimina immagine: {alt}",
       "deleteConfirm": {
         "title": "Eliminare questa immagine?",
