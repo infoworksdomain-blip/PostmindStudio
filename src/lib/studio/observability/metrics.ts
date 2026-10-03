@@ -72,7 +72,7 @@ function build(): StudioMetrics {
     }),
     jobs: new Counter({
       name: 'studio_jobs_total',
-      help: 'Queue job attempts by outcome (succeeded | retrying | failed)',
+      help: 'Queue job attempts by outcome (succeeded | retrying | failed | deferred)',
       labelNames: ['job', 'outcome'],
       registers: [registry],
     }),

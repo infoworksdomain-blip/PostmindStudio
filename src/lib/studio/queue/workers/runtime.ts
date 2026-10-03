@@ -18,6 +18,8 @@ import {
 } from '../../../errors';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject } from '../../pipeline/project-state';
+import { noteProviderWait } from '../../pipeline/provider-wait';
+import { deferralFor } from '../rate-deferral';
 import { recordCostPause } from '../../services/auto-resume';
 import { featureGateFor, type Feature } from '../../services/features';
 import { checkJobAccess } from '../../billing/job-access';
@@ -277,6 +279,8 @@ export interface JobAttempt {
   /** Attempts already made before this one (BullMQ job.attemptsMade). */
   attemptsMade: number;
   maxAttempts: number;
+  /** 20.29: times this job was already delayed for a busy provider (rate-deferral.ts). */
+  deferrals?: number;
 }
 
 export async function executeJob<N extends JobName>(
@@ -316,10 +320,24 @@ export async function executeJob<N extends JobName>(
     record('succeeded');
   } catch (err) {
     // 15.C3: a full provider rate window is not a failure; the caller delays the job without
-    // spending an attempt (worker-host.ts moveToDelayed, drainInline sleeps).
-    if (err instanceof RateDeferredError) {
-      log.info({ providerId: err.providerId, retryAfterMs: err.retryAfterMs }, 'job deferred');
-      throw err;
+    // spending an attempt (worker-host.ts moveToDelayed, drainInline sleeps). 20.29: nor is a
+    // provider at its concurrency cap, or a provider's own "too many requests" (bounded).
+    const deferral = deferralFor(err, attempt.deferrals ?? 0);
+    if (deferral) {
+      metrics.jobs.inc({ job: name, outcome: 'deferred' });
+      log.info(
+        {
+          providerId: deferral.providerId,
+          retryAfterMs: deferral.retryAfterMs,
+          ...deferral.details,
+        },
+        'job deferred',
+      );
+      // 20.29: the project page says "queued, starting soon" while its work waits for a provider.
+      await noteProviderWait(deps, data, deferral.retryAfterMs).catch((noteErr: unknown) =>
+        log.warn({ err: noteErr }, 'could not record the provider wait'),
+      );
+      throw deferral;
     }
     const retryable = isRetryable(err);
     const final = !retryable || attempt.attemptsMade + 1 >= attempt.maxAttempts;
@@ -365,15 +383,21 @@ export async function drainInline(
   let executed = 0;
   const failedJobs: string[] = [];
   for (let job = queue.take(); job; job = queue.take()) {
+    let deferrals = 0;
     for (let attemptsMade = 0; ; attemptsMade += 1) {
       executed += 1;
       try {
-        await executeJob(job.name, job.data as never, deps, { attemptsMade, maxAttempts });
+        await executeJob(job.name, job.data as never, deps, {
+          attemptsMade,
+          maxAttempts,
+          deferrals,
+        });
         break;
       } catch (err) {
-        // 15.C3: wait out the rate window; the deferral does not count as an attempt.
+        // 15.C3 / 20.29: wait out the busy provider; the deferral does not count as an attempt.
         if (err instanceof RateDeferredError) {
           attemptsMade -= 1;
+          deferrals += 1;
           await deps.sleep(err.retryAfterMs);
           continue;
         }

@@ -5,6 +5,7 @@ import type { Logger } from 'pino';
 import type { KillSwitch } from '../kill-switch';
 import type { FeatureGate } from '../services/features';
 import type { CircuitBreaker } from '../providers/circuit-breaker';
+import type { ProviderConcurrencyLimiter } from '../providers/provider-concurrency';
 import type { ProviderRateLimiter } from '../providers/provider-rate';
 import type { ProviderRegistry } from '../providers/registry';
 import type { BudgetChecker, PlanTier } from '../providers/router';
@@ -97,6 +98,14 @@ export interface PipelineDeps {
   libraryCache?: LibraryCache;
   /** 15.C3 per-(organisation, provider) rate windows; absent = no Studio-side limits. */
   providerRates?: ProviderRateLimiter;
+  /** 20.29 per-provider in-flight caps (Seedance 3, Kling 20…); absent = no Studio-side caps. */
+  providerConcurrency?: ProviderConcurrencyLimiter;
+  /**
+   * 20.29 STUDIO_PROVIDER_OVERFLOW: when a provider's account is full, 'queue' (default) waits for
+   * a slot (cheapest); 'failover' tries the next provider for the capability first (faster under a
+   * burst, dearer: e.g. Kling instead of Seedance) and waits only when every candidate is full.
+   */
+  providerOverflow?: 'queue' | 'failover';
   /**
    * P1 BYOC: the organisation's own-key registry (Enterprise, STUDIO_BYOC_ENABLED); absent or
    * undefined for an organisation = the platform registry above.

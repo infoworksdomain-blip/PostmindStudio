@@ -35,6 +35,7 @@ import {
   AutoResumeNote,
   FallbackNote,
   PresenterFallbackNote,
+  QueuedNote,
   SafetyReviewNote,
 } from './paused-notes';
 import { useProjectName } from '@/lib/client/use-project-name';
@@ -140,6 +141,8 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
       />
       <div className="flex flex-col gap-6">
         <PipelineStrip state={project.state} />
+        {/* 20.29: work waiting for a busy video provider is queued, not stuck or failed. */}
+        <QueuedNote project={project} />
         {/* 20.18: the brief was too vague — choose a suggested direction or add detail. */}
         {needsDirection(project) && <DirectionsPanel project={project} onChanged={refresh} />}
         {/* 20.18 (spec 13.3): restricted topics found — continue anyway or edit the brief. */}
