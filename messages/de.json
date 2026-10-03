@@ -855,6 +855,10 @@
       "aria": "Moderator nicht verfügbar",
       "note": "Der Moderator war für dieses Video nicht verfügbar, daher werden an diesen Stellen stattdessen Videoclips verwendet."
     },
+    "queued": {
+      "aria": "In der Warteschlange",
+      "note": "In der Warteschlange: Gerade werden viele Videos erstellt, daher wartet Ihres, bis es an der Reihe ist, und startet bald. Sie müssen nichts tun."
+    },
     "quality": {
       "title": "Qualitätsprüfung",
       "status": {

@@ -855,6 +855,10 @@
       "aria": "Presenter not available",
       "note": "The presenter wasn’t available for this video, so those moments use video clips instead."
     },
+    "queued": {
+      "aria": "Queued",
+      "note": "Queued: lots of videos are being made right now, so yours is waiting its turn and will start soon. You don’t need to do anything."
+    },
     "quality": {
       "title": "Quality check",
       "status": {

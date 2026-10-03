@@ -1,0 +1,254 @@
+name: Load test
+
+# BACKLOG 20.29 (operator requests 2026-10-03) — manual only. Two jobs, both on throw-away CI
+# infrastructure with SIMULATED providers (STUDIO_FAKE_PROVIDERS=1): no production, no paid API.
+#   pipeline  the real pipeline (BullMQ on Redis 7, Postgres 17, FFmpeg) under bursts of N videos,
+#             scripts/load/pipeline-load.ts, one scenario at a time.
+#   api-200   the production stack (deploy/vps/compose.yml, the same container limits) with 200
+#             k6 users of mixed traffic plus a 100-user "generate" burst; the worker container runs
+#             the harness in --attach mode, so the generated videos are processed too.
+# Reports: the job summary and the "load-test-*" artifacts (runbooks/load-testing.md).
+
+on:
+  # A push to a load-test branch runs everything (workflow_dispatch needs the file on main first).
+  push:
+    branches: ['load-test/**']
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: 'pipeline scenarios (comma list, or "all")'
+        default: 'all'
+      run_api:
+        description: 'run the 200-user stack test'
+        type: boolean
+        default: true
+
+concurrency:
+  group: load-test-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  STUDIO_FAKE_PROVIDERS: '1'
+
+jobs:
+  pipeline:
+    # A push to load-test/api-* runs only the 200-user stack test.
+    if: ${{ !startsWith(github.ref_name, 'load-test/api') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: postmind
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U studio -d postmind"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      REDIS_URL: redis://localhost:6379/3
+      # connection_limit = the worker's pool on the VPS (WORKER_DB_CONNECTION_LIMIT default 10).
+      DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio&connection_limit=10&pool_timeout=20
+      STUDIO_MODE: standalone
+      APP_URL: http://127.0.0.1:3010
+      LOG_LEVEL: warn
+      # Placeholders only (not secrets): storage is the harness's local disk, nothing is billed or
+      # emailed (no publish or email queue runs).
+      STORAGE_PROVIDER: s3
+      AWS_REGION: eu-west-2
+      S3_BUCKET_ASSETS: lt-assets
+      S3_BUCKET_RENDERS: lt-renders
+      S3_BUCKET_THUMBNAILS: lt-thumbnails
+      S3_BUCKET_LIBRARY: lt-library
+      STUDIO_USD_TO_GBP_RATE: '0.79'
+      BETTER_AUTH_SECRET: ci-load-test-placeholder-secret-0123456789
+      STUDIO_UNSUBSCRIBE_SECRET: ci-load-test-placeholder-unsubscribe-0123
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+      RESEND_API_KEY: re_ci_placeholder
+      STUDIO_EMAIL_FROM: 'PostMind Studio CI <ci@example.test>'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy && npx prisma db seed
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Scenarios
+        env:
+          # A push to load-test/quick-* runs one small scenario (harness checks).
+          SCENARIOS: ${{ inputs.scenarios || (startsWith(github.ref_name, 'load-test/quick') && 'burst-10-2gb') || 'all' }}
+        run: |
+          mkdir -p ops/results/load-test
+          # name | videos | orgs | heavy share | worker sizing | extra env | assert
+          #   2gb = deploy/vps/.env.example today (orchestration 2, assets 3, one FFmpeg)
+          #   4gb = the recommended 4 GB / 3 vCPU sizing (runbooks/load-testing.md)
+          cat > "$RUNNER_TEMP/scenarios" <<'EOF'
+          burst-10-2gb|10|5|0.5|2gb||assert
+          burst-25-2gb|25|8|0.5|2gb||assert
+          burst-50-2gb|50|10|0.5|2gb||assert
+          burst-50-4gb|50|10|0.5|4gb||assert
+          burst-50-4gb-no-caps|50|10|0.5|4gb|STUDIO_PROVIDER_CONCURRENCY_SEEDANCE=off STUDIO_PROVIDER_CONCURRENCY_KLING=off|
+          burst-100-4gb-queue|100|40|0|4gb||assert
+          burst-100-4gb-failover|100|40|0|4gb|STUDIO_PROVIDER_OVERFLOW=failover|assert
+          burst-100-4gb-seedance10|100|40|0|4gb|STUDIO_PROVIDER_CONCURRENCY_SEEDANCE=10 LOAD_TEST_ACCOUNTS=seedance=10|assert
+          EOF
+          status=0
+          while IFS='|' read -r name videos orgs heavy sizing extra check; do
+            name="$(echo "$name" | xargs)"
+            [ -z "$name" ] && continue
+            if [ "$SCENARIOS" != "all" ] && ! printf ',%s,' "$SCENARIOS" | grep -q ",$name,"; then continue; fi
+            echo "::group::$name"
+            node -e "const R=require('ioredis');const r=new R(process.env.REDIS_URL);r.flushdb().then(()=>r.quit())"
+            if [ "$sizing" = "2gb" ]; then
+              sizing_env="WORKER_CONCURRENCY_ORCHESTRATION=2 WORKER_CONCURRENCY_ASSETS=3 STUDIO_FFMPEG_MAX_CONCURRENT=1"
+            else
+              sizing_env="WORKER_CONCURRENCY_ORCHESTRATION=4 WORKER_CONCURRENCY_ASSETS=12 STUDIO_FFMPEG_MAX_CONCURRENT=2"
+            fi
+            flags=""
+            [ "$check" = "assert" ] && flags="--assert"
+            # shellcheck disable=SC2086 # word splitting of the env assignments is intended
+            env $sizing_env $extra npx tsx scripts/load/pipeline-load.ts --scenario "$name" \
+              --videos "$videos" --orgs "$orgs" --heavy-share "$heavy" --time-scale 0.1 \
+              --timeout-min 60 --out ops/results/load-test $flags || status=1
+            echo "::endgroup::"
+            [ -f "ops/results/load-test/$name.md" ] && cat "ops/results/load-test/$name.md" >> "$GITHUB_STEP_SUMMARY"
+          done < "$RUNNER_TEMP/scenarios"
+          exit $status
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: load-test-pipeline
+          path: ops/results/load-test
+          retention-days: 30
+
+  api-200:
+    if: (github.event_name == 'push' && !startsWith(github.ref_name, 'load-test/quick')) || inputs.run_api
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        sizing: [current, 4gb]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build image
+        run: docker build -t postmind-studio:ci .
+      - name: Stack (deploy/vps/compose.yml, production-like, disposable)
+        env:
+          SIZING: ${{ matrix.sizing }}
+        run: |
+          eval "$(bash scripts/vps/ci-fixture.sh "$RUNNER_TEMP/vps")"
+          {
+            echo "export STUDIO_ENV_FILE=$STUDIO_ENV_FILE STUDIO_BACKUP_ENV_FILE=$STUDIO_BACKUP_ENV_FILE"
+            echo "export STUDIO_SECRETS_DIR=$STUDIO_SECRETS_DIR STUDIO_STATE_DIR=$STUDIO_STATE_DIR"
+            echo "export IMAGE_TAG=ci STUDIO_IMAGE=postmind-studio"
+          } > "$RUNNER_TEMP/stack.env"
+          if [ "$SIZING" = "4gb" ]; then
+            # The recommended 4 GB / 3 vCPU sizing (runbooks/load-testing.md "Sizing").
+            cat >> "$STUDIO_ENV_FILE" <<'EOF'
+          POSTGRES_MEM_LIMIT=768m
+          POSTGRES_CPUS=1
+          PG_SHARED_BUFFERS=192MB
+          PG_EFFECTIVE_CACHE_SIZE=1024MB
+          PG_WORK_MEM=8MB
+          PG_MAINTENANCE_WORK_MEM=128MB
+          PG_MAX_CONNECTIONS=60
+          REDIS_MEM_LIMIT=192m
+          REDIS_MAXMEMORY=128mb
+          WEB_MEM_LIMIT=1024m
+          WEB_CPUS=1.5
+          WEB_NODE_HEAP_MB=640
+          WEB_DB_CONNECTION_LIMIT=15
+          WORKER_MEM_LIMIT=1280m
+          WORKER_CPUS=1.5
+          WORKER_NODE_HEAP_MB=512
+          WORKER_DB_CONNECTION_LIMIT=15
+          WORKER_CONCURRENCY_ORCHESTRATION=4
+          WORKER_CONCURRENCY_ASSETS=12
+          STUDIO_FFMPEG_MAX_CONCURRENT=2
+          EOF
+          fi
+          # shellcheck disable=SC1091
+          . "$RUNNER_TEMP/stack.env"
+          vps() {
+            docker compose -p postmind-studio -f deploy/vps/compose.yml \
+              --env-file "$STUDIO_ENV_FILE" --env-file "$STUDIO_BACKUP_ENV_FILE" "$@"
+          }
+          docker network create studio-edge
+          vps build postgres
+          vps up -d --wait --wait-timeout 180 postgres redis
+          vps --profile migrate run --rm migrate
+          vps up -d --no-deps --wait --wait-timeout 240 web
+          chmod -R 0777 "$STUDIO_STATE_DIR/production/results"
+      - name: Seed 200 users in 40 organisations
+        run: |
+          . "$RUNNER_TEMP/stack.env"
+          docker compose -p postmind-studio -f deploy/vps/compose.yml --env-file "$STUDIO_ENV_FILE" \
+            --env-file "$STUDIO_BACKUP_ENV_FILE" --profile ops run --rm \
+            -e STUDIO_FAKE_PROVIDERS=1 -e STUDIO_FAKE_PROVIDERS_ALLOW_PRODUCTION=yes-this-is-a-disposable-stack \
+            ops node --import tsx scripts/load/seed-k6-accounts.ts --base-url http://web:3010 \
+            --orgs 40 --users-per-org 5 --out /app/ops/results/accounts.json
+      - name: 200 users (k6) while the worker processes the generated videos
+        env:
+          SIZING: ${{ matrix.sizing }}
+        run: |
+          . "$RUNNER_TEMP/stack.env"
+          res="$STUDIO_STATE_DIR/production/results"
+          vps() {
+            docker compose -p postmind-studio -f deploy/vps/compose.yml \
+              --env-file "$STUDIO_ENV_FILE" --env-file "$STUDIO_BACKUP_ENV_FILE" "$@"
+          }
+          ( while true; do docker stats --no-stream --format '{{json .}}' >> "$res/docker-stats.jsonl"; sleep 5; done ) &
+          stats=$!
+          # The worker container (its limits) runs the harness in --attach mode: simulated
+          # providers, real queue, real FFmpeg, consuming what the API enqueues.
+          vps run -d --no-deps --name lt-worker -v "$res:/app/ops/results" \
+            -e STUDIO_FAKE_PROVIDERS=1 -e STUDIO_FAKE_PROVIDERS_ALLOW_PRODUCTION=yes-this-is-a-disposable-stack \
+            worker node --import tsx scripts/load/pipeline-load.ts --attach \
+            --accounts /app/ops/results/accounts.json --done-file /app/ops/results/k6.done \
+            --scenario "api-200-$SIZING" --time-scale 0.05 --timeout-min 70 --out /app/ops/results
+          docker run --rm --network postmind-studio_default -v "$res:/results" \
+            -v "$PWD/load-test/k6:/scripts:ro" grafana/k6:0.54.0 run \
+            --summary-export "/results/k6-summary-$SIZING.json" \
+            -e BASE_URL=http://web:3010 -e ORIGIN=https://studio.ci.invalid \
+            -e ACCOUNTS=/results/accounts.json /scripts/studio-users.js 2>&1 | tee "$res/k6-$SIZING.txt" || true
+          touch "$res/k6.done"
+          timeout 4500 docker wait lt-worker || echo "harness still running at the job limit"
+          docker logs lt-worker > "$res/worker-$SIZING.log" 2>&1 || true
+          vps logs --no-color web > "$res/web-$SIZING.log" 2>&1 || true
+          kill "$stats" || true
+          {
+            echo "## api-200 ($SIZING)"
+            echo '```'
+            sed -n '/checks\.\|studio_\|http_req\|vus_max\|iterations/p' "$res/k6-$SIZING.txt" | tail -n 40
+            echo '```'
+            [ -f "$res/api-200-$SIZING.md" ] && cat "$res/api-200-$SIZING.md"
+            echo '### Peak container memory (docker stats)'
+            node -e "
+              const lines=require('fs').readFileSync('$res/docker-stats.jsonl','utf8').trim().split('\n').map(JSON.parse);
+              const toMb=s=>{const m=/([\d.]+)\s*([KMG]i?B)/.exec(s)||[];const f={KiB:1/1024,MiB:1,GiB:1024,kB:1/1000,MB:1,GB:1000}[m[2]]||0;return Number(m[1])*f};
+              const peak={};for(const l of lines){const mem=toMb(l.MemUsage.split('/')[0]);const cpu=parseFloat(l.CPUPerc);const p=peak[l.Name]||{mem:0,cpu:0,limit:l.MemUsage.split('/')[1].trim()};p.mem=Math.max(p.mem,mem);p.cpu=Math.max(p.cpu,cpu);peak[l.Name]=p}
+              console.log('| container | peak memory | limit | peak CPU |\n| --- | --- | --- | --- |');
+              for(const [n,p] of Object.entries(peak))console.log('| '+n+' | '+p.mem.toFixed(0)+' MiB | '+p.limit+' | '+p.cpu.toFixed(0)+'% |');
+            "
+          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p "$RUNNER_TEMP/out" && cp -r "$res"/. "$RUNNER_TEMP/out/"
+          rm -f "$RUNNER_TEMP/out/accounts.json"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: load-test-api-200-${{ matrix.sizing }}
+          path: ${{ runner.temp }}/out
+          retention-days: 30
