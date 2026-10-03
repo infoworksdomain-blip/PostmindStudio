@@ -1,4 +1,5 @@
 import { requireEnv } from '../src/lib/env';
+import { usdToGbpRateFromEnv } from '../src/lib/studio/providers/pricing';
 import { ShotstackAdapter } from '../src/lib/studio/providers/shotstack';
 import { createHarness, main, out, printJobRow, runTrackedJob, SMOKE_ORG_ID } from './lib/harness';
 
@@ -13,6 +14,7 @@ main(async () => {
     const adapter = new ShotstackAdapter({
       apiKey: requireEnv('SHOTSTACK_API_KEY'),
       environment: process.env.SHOTSTACK_ENVIRONMENT || 'stage',
+      usdToGbpRate: usdToGbpRateFromEnv(),
     });
 
     const health = await adapter.healthCheck();

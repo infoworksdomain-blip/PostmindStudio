@@ -16,6 +16,8 @@ import { ElevenLabsMusicAdapter } from '../../src/lib/studio/providers/elevenlab
 import type { ProviderAdapter, ProviderRequest } from '../../src/lib/studio/providers/interface';
 import { OpenAIAdapter } from '../../src/lib/studio/providers/openai';
 import { RunwayAdapter } from '../../src/lib/studio/providers/runway';
+import { SeedanceAdapter } from '../../src/lib/studio/providers/seedance';
+import { typicalVideoCalls, typicalVideoPlan } from '../../src/lib/studio/cost/video-estimate';
 import { ShotstackAdapter } from '../../src/lib/studio/providers/shotstack';
 import { StoryblocksAudioAdapter } from '../../src/lib/studio/providers/storyblocks-audio';
 import { memoryStorage } from '../helpers/memory-storage';
@@ -56,6 +58,7 @@ export function harnessAdapters(): Record<
       usdToGbpRate: rate,
     }),
     runway: new RunwayAdapter({ apiKey: 'offline', usdToGbpRate: rate }),
+    seedance: new SeedanceAdapter({ apiKey: 'offline', usdToGbpRate: rate }),
     elevenlabs: new ElevenLabsAdapter({
       apiKey: 'offline',
       storage,
@@ -68,7 +71,7 @@ export function harnessAdapters(): Record<
       bucket: 'assets',
       usdToGbpRate: rate,
     }),
-    shotstack: new ShotstackAdapter({ apiKey: 'offline', environment: 'v1' }),
+    shotstack: new ShotstackAdapter({ apiKey: 'offline', environment: 'v1', usdToGbpRate: rate }),
     assemblyai: new AssemblyAiAdapter({ apiKey: 'offline', usdToGbpRate: rate }),
     'storyblocks-audio': new StoryblocksAudioAdapter({
       publicKey: 'offline',
@@ -325,6 +328,10 @@ export const JOURNEYS: Record<string, PricedCall[]> = {
     ...assets(SHORT_30S),
     ...finishing(30, 1, false),
   ],
+  // 20.25: a typical 30 s short per tier under the AI clip budget (cost/video-estimate.ts).
+  'budgeted-30s-short-basic': typicalVideoCalls(typicalVideoPlan('BASIC', 30)),
+  'budgeted-30s-short-standard': typicalVideoCalls(typicalVideoPlan('STANDARD', 30)),
+  'budgeted-30s-short-plus': typicalVideoCalls(typicalVideoPlan('PLUS', 30)),
   // Slideshow (A5): generated stills, no narration model calls beyond planning.
   'slideshow-five-slides': [
     ...planning(1),

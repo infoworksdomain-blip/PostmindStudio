@@ -13,8 +13,12 @@ import type { PipelineDeps } from './deps';
 // refusal "falls back to … the closest stock match"):
 //   1. pgvector search of the library with the shot's scene description; the best stored match
 //      at or above the slideshow threshold (populate.ts MIN_SIMILARITY = 0.30) is used as-is;
-//   2. otherwise the image is generated as before and then ingested with source GENERATED;
-//   3. a generator refusal (content_policy) tries the configured stock sources for the scene.
+//   2. 20.25 (operator decision 2026-10-03, cheaper videos: "the business's own images, then
+//      stock"): otherwise the closest storable stock image for the scene (free);
+//   3. otherwise the image is generated as before and then ingested with source GENERATED;
+//   4. a generator refusal (content_policy) on a regenerated shot (which skips steps 1–2) tries
+//      the configured stock sources for the scene.
+// Shots the AI clip budget converted (clip-budget.ts) stop after step 2: the composer draws a card.
 // The library steps are best-effort: an embedding outage is a miss, never a failed shot.
 
 export interface StillScope {
@@ -114,13 +118,43 @@ function orientationOf(aspectRatio: string): 'landscape' | 'portrait' | 'square'
   return 'portrait';
 }
 
+/** Why a shot uses a stock image: a refused generation (15.W6) or stock before generating (20.25). */
+export type StockStillReason = 'refusal' | 'shot';
+
+const STOCK_LICENCE_NOTE: Record<StockStillReason, string> = {
+  refusal: 'used after an image generation refusal',
+  shot: 'used for a video shot',
+};
+
 /** 15.W6 buildable half: the closest storable stock image for the scene, ingested as STOCK. */
-export async function stockStillForRefusal(
+export function stockStillForRefusal(
   deps: PipelineDeps,
   scope: StillScope & { projectId: string },
   input: { query: string; aspectRatio: string },
 ): Promise<ImageLibraryItem | null> {
-  const { primary, fallback } = deps.scan.stock();
+  return stockStillForScene(deps, scope, input, 'refusal');
+}
+
+/**
+ * The closest storable stock image for the scene, ingested into the library as STOCK, or null.
+ * 20.25: before any generation, stock sources that cannot be built (no key) are a miss, never a
+ * failed shot.
+ */
+export async function stockStillForScene(
+  deps: PipelineDeps,
+  scope: StillScope & { projectId: string },
+  input: { query: string; aspectRatio: string },
+  reason: StockStillReason,
+): Promise<ImageLibraryItem | null> {
+  let sources: ReturnType<PipelineDeps['scan']['stock']>;
+  try {
+    sources = deps.scan.stock();
+  } catch (err) {
+    if (reason === 'refusal') throw err;
+    deps.logger.warn({ err: (err as Error).message }, 'stock image sources unavailable');
+    return null;
+  }
+  const { primary, fallback } = sources;
   const ids = { userId: scope.organisationId, projectId: scope.projectId };
   for (const source of [...primary, ...fallback]) {
     let hits: StockHit[];
@@ -148,7 +182,7 @@ export async function stockStillForRefusal(
         downloadUrl: await source.downloadUrl(hit, ids),
         altText: hit.alt,
         tags: [],
-        licenseNotes: `${stockLicenceNote(hit)}; used after an image generation refusal`,
+        licenseNotes: `${stockLicenceNote(hit)}; ${STOCK_LICENCE_NOTE[reason]}`,
       }).catch(() => null);
       if (outcome && outcome.status !== 'skipped') {
         const item = await deps.db.imageLibraryItem.findFirst({

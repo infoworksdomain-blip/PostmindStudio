@@ -12,6 +12,7 @@ function setup(...replies: Parameters<typeof fakeFetch>) {
     shotstack: new ShotstackAdapter({
       apiKey: 'ss-key',
       environment: 'stage',
+      usdToGbpRate: 0.75,
       fetchImpl: fake.fetch,
       now: () => NOW,
     }),
@@ -35,10 +36,29 @@ const composition = {
 };
 
 describe('ShotstackAdapter', () => {
+  it('estimates at the list price: $0.30 a rendered minute, whole seconds rounded down (20.25)', () => {
+    const { shotstack } = setup();
+    const at = (outputDurationSec: number) =>
+      shotstack.estimateCostPence({ ...composition, outputDurationSec });
+    expect(at(30)).toBe(12); // $0.15 → 11.25p → 12p
+    expect(at(30.9)).toBe(12); // rounded down to 30 s
+    expect(at(60)).toBe(23); // $0.30 → 22.5p → 23p
+    expect(at(180)).toBe(68); // $0.90 → 67.5p → 68p
+    expect(at(0.4)).toBe(1); // at least one second
+    expect(
+      shotstack.estimateCostPence({
+        capability: 'tts',
+        organisationId: 'o',
+        text: 'x',
+        voiceId: 'v',
+      }),
+    ).toBe(0);
+  });
+
   it('only accepts the documented environments', () => {
-    expect(() => new ShotstackAdapter({ apiKey: 'k', environment: 'prod' })).toThrow(
-      ConfigurationError,
-    );
+    expect(
+      () => new ShotstackAdapter({ apiKey: 'k', environment: 'prod', usdToGbpRate: 0.75 }),
+    ).toThrow(ConfigurationError);
   });
 
   it('POSTs the edit to /render and returns the render id', async () => {
@@ -61,7 +81,7 @@ describe('ShotstackAdapter', () => {
     });
     expect(submitted).toEqual({
       providerJobId: 'r-1',
-      estimatedCostPence: 60, // 30s * 2p (spec 6.5)
+      estimatedCostPence: 12, // 20.25: 0.5 min × $0.30 = $0.15 × 0.75 = 11.25p, rounded up
       estimatedReadyAt: new Date(NOW + 120_000),
     });
   });

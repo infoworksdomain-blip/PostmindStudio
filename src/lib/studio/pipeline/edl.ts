@@ -47,6 +47,22 @@ const VOICE_VOLUME = 1;
 export const MUSIC_UNDER_VOICE_VOLUME = 0.2;
 export const MUSIC_ALONE_VOLUME = 0.7;
 const CAPTION_HEIGHT_RATIO = 0.18;
+/**
+ * How clips and stills fill the frame (Clip `fit`, https://shotstack.io/docs/api/#tocs_clip, read
+ * 2026-10-03): "crop (default) - scale the asset to fill the viewport while maintaining the aspect
+ * ratio. The asset will be cropped if it exceeds the bounds of the viewport." whereas "cover -
+ * stretch the asset to fill the viewport without maintaining the aspect ratio". 20.25: `crop`, so
+ * a 9:16 clip in a 16:9 render or a landscape stock photo in 9:16 fills the frame undistorted (it
+ * was `cover`, which stretched them), and no letterbox bars reach blackdetect.
+ */
+export const MEDIA_FIT = 'crop';
+/**
+ * Ken Burns on stills (Shotstack clip `effect`; the slideshow planner uses the same names). 20.25:
+ * stills alternate a slow push in and pull out so a video with several image shots does not repeat
+ * one move. Both start or end at full size over the `crop` fill (MEDIA_FIT), so the frame is always
+ * filled (no letterbox bars for blackdetect); slides are not used here because they move the frame.
+ */
+export const STILL_EFFECTS = ['zoomIn', 'zoomOut'] as const;
 
 /** Pixel size of the layout per aspect ratio (short side 1080; 2160 for 4K presets). */
 export const outputDimensions = presetDimensions;
@@ -198,6 +214,8 @@ function visualClip(
   at: number,
   frame: { width: number; height: number },
   tracks: Tracks,
+  /** How many image shots came before this one (picks the Ken Burns move). */
+  stillIndex: number,
 ): void {
   const length = roundSec(shot.durationSec);
   const out = TRANSITION_MAP[shot.transitionOut ?? 'cut'];
@@ -241,8 +259,8 @@ function visualClip(
       asset: { type: 'image', src: shot.visualSrc },
       start,
       length,
-      fit: 'cover',
-      effect: 'zoomIn', // gentle Ken Burns on stills
+      fit: MEDIA_FIT,
+      effect: STILL_EFFECTS[stillIndex % STILL_EFFECTS.length], // gentle Ken Burns on stills
       ...transition,
     });
   } else {
@@ -255,7 +273,7 @@ function visualClip(
       },
       start,
       length,
-      fit: 'cover',
+      fit: MEDIA_FIT,
       ...transition,
     });
   }
@@ -336,8 +354,15 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
   const summaryShots: CompositionSummary['shots'] = [];
   const spans: MusicSpan[] = [];
   let start = introSec;
+  let stills = 0;
   for (const shot of input.shots) {
-    visualClip(input, shot, start, frame, tracks);
+    const isStill =
+      shot.visualKind === 'image' &&
+      Boolean(shot.visualSrc) &&
+      shot.visualTreatment !== 'TEXT_CARD' &&
+      shot.visualTreatment !== 'MOTION_GRAPHICS';
+    visualClip(input, shot, start, frame, tracks, stills);
+    if (isStill) stills += 1;
     const voiceClipSec = audioAndCaptions(input, shot, start, frame, tracks);
     summaryShots.push({
       shotId: shot.id ?? null,

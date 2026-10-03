@@ -16,8 +16,19 @@
 // SLIDESHOW) get £1.50 whatever their formats. "Library-referenced projects: default
 // costBudgetPence unchanged from AI video baseline" — they follow the short/long-form rule.
 
+import { TYPICAL_COST_PENCE_PER_VIDEO } from '../billing/catalogue';
+import type { PlanTier } from '../providers/router';
+
 export const DEFAULT_SHORT_FORM_BUDGET_PENCE = 350;
 export const DEFAULT_LONG_FORM_BUDGET_PENCE = 3_000;
+/**
+ * BACKLOG 20.25: with the organisation's plan tier, the default is at least this many times the
+ * catalogue's typical cost of one video on that tier, and never under the operator's £3.50 / £30.
+ * A production STANDARD video paused at "90% of its budget (£3.15 of £3.50)" before the AI clip
+ * budget; a normal video (≈ 40% of the typical cost per tier, cost/video-estimate.ts) must never
+ * reach the 90% pause, even with a regenerated shot or a pricier failover provider.
+ */
+export const BUDGET_TYPICAL_VIDEO_MULTIPLE = 2.5;
 export const DEFAULT_SLIDESHOW_BUDGET_PENCE = 150;
 export const SHORT_FORM_MAX_SEC = 180;
 export const YOUTUBE_LONG_FORM_MIN_SEC = 60;
@@ -42,12 +53,32 @@ export function isLongForm(formats: readonly BudgetFormat[]): boolean {
   });
 }
 
+function typicalCostPence(tier: PlanTier, kind: 'short' | 'long'): number {
+  return TYPICAL_COST_PENCE_PER_VIDEO[tier === 'ENTERPRISE' ? 'PLUS' : tier][kind];
+}
+
+/** 20.25: the short-form default for a tier (BASIC £3.50, STANDARD £4, PLUS / ENTERPRISE £6). */
+export function shortFormBudgetPence(tier?: PlanTier): number {
+  if (!tier) return DEFAULT_SHORT_FORM_BUDGET_PENCE;
+  const scaled = Math.ceil(typicalCostPence(tier, 'short') * BUDGET_TYPICAL_VIDEO_MULTIPLE);
+  return Math.max(DEFAULT_SHORT_FORM_BUDGET_PENCE, scaled);
+}
+
+/** 20.25: the long-form default for a tier (£30; PLUS / ENTERPRISE £45). */
+export function longFormBudgetPence(tier?: PlanTier): number {
+  if (!tier) return DEFAULT_LONG_FORM_BUDGET_PENCE;
+  const scaled = Math.ceil(typicalCostPence(tier, 'long') * BUDGET_TYPICAL_VIDEO_MULTIPLE);
+  return Math.max(DEFAULT_LONG_FORM_BUDGET_PENCE, scaled);
+}
+
+/** The per-project budget when the client sets none; `tier` = the organisation's plan tier. */
 export function defaultProjectBudgetPence(
   formats: readonly BudgetFormat[],
   sourceType?: string,
+  tier?: PlanTier,
 ): number {
   if (sourceType === 'SLIDESHOW') return DEFAULT_SLIDESHOW_BUDGET_PENCE;
-  return isLongForm(formats) ? DEFAULT_LONG_FORM_BUDGET_PENCE : DEFAULT_SHORT_FORM_BUDGET_PENCE;
+  return isLongForm(formats) ? longFormBudgetPence(tier) : shortFormBudgetPence(tier);
 }
 
 /** Stored targetFormats JSON → BudgetFormat[] (malformed entries are ignored). */

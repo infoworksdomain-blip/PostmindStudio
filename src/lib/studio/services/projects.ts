@@ -334,9 +334,14 @@ export async function createProject(
         targetFormats: toStoredFormats(formats),
         brandKitId: template?.brandKitId ?? input.brandKitId ?? null,
         templateId: input.templateId ?? null,
-        // Operator decision 2: no explicit budget → the short/long-form default.
+        // Operator decision 2: no explicit budget → the short/long-form default (20.25: per tier).
         costBudgetPence:
-          input.costBudgetPence ?? defaultProjectBudgetPence(formats, input.sourceType),
+          input.costBudgetPence ??
+          defaultProjectBudgetPence(
+            formats,
+            input.sourceType,
+            toPlanTier(tenant.organisation.planTier),
+          ),
         // 13.18: nothing chosen (client or template) → the organisation's default policy.
         reviewPolicy: (template ? template.reviewPolicy : input.reviewPolicy) ?? orgReviewPolicy,
         publishPolicy: template ? template.publishPolicy : input.publishPolicy,
@@ -631,7 +636,11 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
       templateId: source.templateId,
       costBudgetPence:
         source.costBudgetPence ??
-        defaultProjectBudgetPence(budgetFormatsFromJson(source.targetFormats), source.sourceType),
+        defaultProjectBudgetPence(
+          budgetFormatsFromJson(source.targetFormats),
+          source.sourceType,
+          toPlanTier(tenant.organisation.planTier),
+        ),
       reviewPolicy: source.reviewPolicy,
       publishPolicy: source.publishPolicy,
       language: source.language,

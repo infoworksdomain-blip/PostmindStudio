@@ -1,4 +1,4 @@
-import type { VisualTreatment } from '@prisma/client';
+import type { Prisma, VisualTreatment } from '@prisma/client';
 import { z } from 'zod';
 import { ProviderError, ValidationError } from '../../errors';
 import type { AspectRatio, ProviderCapability } from '../providers/interface';
@@ -63,6 +63,13 @@ export function availableTreatments(registry: ProviderRegistry): VisualTreatment
 
 export const TRANSITIONS = ['cut', 'fade', 'wipe', 'slide', 'zoom'] as const;
 
+/**
+ * 20.25: the storyboard beat a shot serves. The clip budget (clip-budget.ts) keeps AI clips on the
+ * hook, the call to action and the key demo first when the model writes too many.
+ */
+export const SHOT_BEATS = ['hook', 'demo', 'cta', 'other'] as const;
+export type ShotBeat = (typeof SHOT_BEATS)[number];
+
 /** Clip-length limits: AI clips 2–10s (Runway), everything else 1–10s. */
 export function shotDurationBounds(treatment: VisualTreatment): [number, number] {
   return treatment === 'AI_CLIP' ? [2, 10] : [1, 10];
@@ -103,6 +110,13 @@ export function scriptSchema(treatments: VisualTreatment[]) {
             },
             onScreenText: { type: 'string', description: 'short caption overlay, empty if none' },
             transitionOut: { type: 'string', enum: [...TRANSITIONS] },
+            // 20.25: optional, so earlier outputs stay valid; used only to rank AI clips.
+            beat: {
+              type: 'string',
+              enum: [...SHOT_BEATS],
+              description:
+                'the storyboard beat: hook (opening), demo (the key product moment), cta (call to action) or other',
+            },
             // 13.27: optional, so earlier outputs and models that omit it stay valid.
             sfxCue: {
               type: 'string',
@@ -125,6 +139,7 @@ const shotResult = z.object({
   onScreenText: z.string(),
   transitionOut: z.enum(TRANSITIONS),
   sfxCue: z.string().max(200).optional(),
+  beat: z.enum(SHOT_BEATS).optional(),
 });
 
 const scriptResult = z.object({ fullText: z.string(), shots: z.array(shotResult).min(1).max(120) });
@@ -140,18 +155,24 @@ export interface PlannedShot {
   transitionOut: string;
   /** 13.27: sound-effect cue for the shot's start; null/absent = none. */
   sfxCue?: string | null;
+  /** 20.25: the initial routing snapshot (e.g. `clipBudget` for a shot the budget converted). */
+  providerRouting?: Prisma.InputJsonValue;
 }
 
 export interface PlannedScript {
   fullText: string;
   shots: PlannedShot[];
+  /** 20.25: the beat the model gave each shot (same order as `shots`); never persisted. */
+  beats?: Array<ShotBeat | null>;
 }
 
 export const SCRIPT_SYSTEM_PROMPT = [
   'You are the script and storyboard layer of PostMind Studio.',
   'Write one script for the given platform and duration, split into shots that together last exactly the target duration.',
   'Open with the hook in the first shot. Keep one idea per shot. Speak naturally; roughly 2.5 spoken words per second.',
-  'AI_CLIP shots must be 2–10 seconds; other shots 1–10 seconds.',
+  'AI_CLIP shots must be 2–10 seconds (keep them to 2–4 seconds); other shots 1–10 seconds.',
+  'Respect the AI clip budget: AI_CLIP and AI_AVATAR shots together never exceed it. Spend them on the hook, the key demo moment and the call to action; every other shot uses a cheaper treatment.',
+  'Give every shot a beat: hook, demo, cta or other.',
   'AI_AVATAR shots are a presenter speaking to camera: they must have voiceover text.',
   'Use sound effects sparingly: at most one short sfxCue on a few key shots (the hook, a reveal, the call to action), otherwise leave it empty.',
   "Scene descriptions are prompts for a video/image generator: describe subject, setting, light and motion; never ask for text, logos or real people's likenesses in frame.",
@@ -193,12 +214,15 @@ export function buildScriptPrompt(input: {
   restrictedTopics: string[];
   /** 15.C5: BCP 47 language of the script (default en-GB). */
   language?: string;
+  /** 20.25: the most AI_CLIP + AI_AVATAR shots this script may use (clip-budget.ts). */
+  aiClipBudget?: number;
 }): string {
   const { brief, format } = input;
   return [
     `Platform: ${format.platform} (${format.aspectRatio})`,
     `Target duration: ${format.durationSec} seconds`,
     `Visual treatments available: ${input.treatments.join(', ')}`,
+    input.aiClipBudget === undefined ? '' : clipBudgetLine(input.aiClipBudget, input.treatments),
     input.restrictedTopics.length ? `Never mention: ${input.restrictedTopics.join(', ')}` : '',
     languageInstruction(input.language ?? DEFAULT_LANGUAGE),
     '',
@@ -214,6 +238,30 @@ export function buildScriptPrompt(input: {
   ]
     .filter((line) => line !== '')
     .join('\n');
+}
+
+const CHEAPER_TREATMENT_TEXT: Partial<Record<VisualTreatment, string>> = {
+  IMAGE_STILL:
+    "IMAGE_STILL (a photo with a slow pan or zoom; the business's own photos, then stock photos, are used first)",
+  STOCK_FOOTAGE: 'STOCK_FOOTAGE',
+  MOTION_GRAPHICS: 'MOTION_GRAPHICS',
+  TEXT_CARD: 'TEXT_CARD',
+};
+
+/** 20.25: the AI clip budget instruction for the script prompt. */
+export function clipBudgetLine(budget: number, treatments: VisualTreatment[]): string {
+  const ai = treatments.filter((t) => t === 'AI_CLIP' || t === 'AI_AVATAR');
+  if (ai.length === 0) return '';
+  const cheaper = treatments.flatMap((t) => CHEAPER_TREATMENT_TEXT[t] ?? []);
+  const others =
+    cheaper.length > 1 ? `${cheaper.slice(0, -1).join(', ')} or ${cheaper.at(-1)}` : cheaper[0];
+  return [
+    `AI clip budget: at most ${budget} shot(s) may use ${ai.join(' or ')} (counted together).`,
+    'Put them on the hook (first shot), the key demo moment and the call to action (last shot), and keep each AI_CLIP shot 2–4 seconds.',
+    others ? `Every other shot uses ${others}.` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 /**
@@ -291,7 +339,11 @@ export function normaliseScript(
       sfxCue: normaliseSfxCue(shot.sfxCue),
     };
   });
-  return { fullText: parsed.data.fullText.trim(), shots: fitDurations(shots, targetSec) };
+  return {
+    fullText: parsed.data.fullText.trim(),
+    shots: fitDurations(shots, targetSec),
+    beats: parsed.data.shots.map((shot) => shot.beat ?? null),
+  };
 }
 
 const MAX_SFX_CUE_CHARS = 60;
@@ -307,10 +359,18 @@ export function normaliseSfxCue(cue: string | undefined): string | null {
   return cleaned || null;
 }
 
-export function fitDurations(shots: PlannedShot[], targetSec: number): PlannedShot[] {
+export type DurationBounds = (shot: PlannedShot) => [number, number];
+
+const treatmentBounds: DurationBounds = (shot) => shotDurationBounds(shot.visualTreatment);
+
+export function fitDurations(
+  shots: PlannedShot[],
+  targetSec: number,
+  bounds: DurationBounds = treatmentBounds,
+): PlannedShot[] {
   const total = shots.reduce((sum, s) => sum + s.durationSec, 0);
   const scaled = shots.map((s) => {
-    const [min, max] = shotDurationBounds(s.visualTreatment);
+    const [min, max] = bounds(s);
     const d =
       Math.round(Math.min(max, Math.max(min, (s.durationSec * targetSec) / total)) * 10) / 10;
     return { ...s, durationSec: d };
@@ -325,7 +385,7 @@ export function fitDurations(shots: PlannedShot[], targetSec: number): PlannedSh
     if (Math.abs(remainder) < 0.05) break;
     const shot = scaled[i];
     if (!shot) continue;
-    const [min, max] = shotDurationBounds(shot.visualTreatment);
+    const [min, max] = bounds(shot);
     const next = Math.round(Math.min(max, Math.max(min, shot.durationSec + remainder)) * 10) / 10;
     remainder = Math.round((remainder - (next - shot.durationSec)) * 10) / 10;
     scaled[i] = { ...shot, durationSec: next };

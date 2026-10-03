@@ -47,6 +47,7 @@ type Script = {
     voiceoverText: string | null;
     assetId: string | null;
     voiceAssetId: string | null;
+    durationSec: number;
   }>;
 };
 
@@ -270,9 +271,11 @@ describe.skipIf(!hasDb)('create and review journeys (Phase 13 A1)', { timeout: 1
     expect(del.status).toBe(200);
     expect((del.json.script as { shots: unknown[] }).shots).toHaveLength(2);
 
-    // The re-render is 12 s now (15 s minus the deleted 3 s end card).
+    // The re-render is 15 s minus the deleted end card (20.25: the AI clips were kept to 4 s,
+    // so the card took up the time).
+    const remainingSec = 15 - script!.shots[2]!.durationSec;
     const probed = await j.h.media.probe('x');
-    vi.mocked(j.h.media.probe).mockResolvedValue({ ...probed, durationSec: 12 });
+    vi.mocked(j.h.media.probe).mockResolvedValue({ ...probed, durationSec: remainingSec });
     const [render] = await rendersOf(j, id);
     const { POST: rerender } = await import('../../src/app/api/studio/renders/[id]/rerender/route');
     expect(

@@ -36,6 +36,11 @@ import type { ProviderRegistry } from './registry';
 //   - BACKLOG 20.24 (same approval): Kling 3.0 (providers/kling.ts) is SECOND, after Seedance
 //     and before Veo: seedance → kling → veo → runway → luma on every paid tier. Kling renders
 //     3–15 s (supportsRequest), always silent.
+//   - BACKLOG 20.25 (operator decision 2026-10-03, cheaper videos): every tier uses Seedance 2.0
+//     mini; 2.5 only renders shots over 15 s (seedance.ts modelFor). BASIC AI clips route
+//     seedance → kling → veo, then the spec's fal / replicate slots: neither has an adapter, so
+//     BASIC AI_CLIP shots had no provider at all; BASIC asks Seedance for 480p (clip-budget.ts).
+//     Runway and Luma (the dearest per second) stay off BASIC.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -200,8 +205,9 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 };
 
 function aiClipCandidates(tier: PlanTier): string[] {
-  // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
-  if (tier === 'BASIC') return ['fal', 'replicate'];
+  // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier. 20.25: the
+  // cheap configured providers first (fal / replicate have no adapter).
+  if (tier === 'BASIC') return ['seedance', 'kling', 'veo', 'fal', 'replicate'];
   // 20.23 / 20.24: every paid tier tries the same order; Seedance picks its model by tier.
   return ['seedance', 'kling', 'veo', 'runway', 'luma'];
 }

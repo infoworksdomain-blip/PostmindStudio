@@ -27,6 +27,13 @@ export type ProviderCapability =
 
 export type AspectRatio = '9:16' | '16:9' | '1:1' | '4:5';
 
+/**
+ * 20.25: the resolution an AI clip is wanted at (pipeline/clip-budget.ts: 480p on BASIC, 720p
+ * otherwise). Only Seedance offers 480p and reads it; Kling and Veo render at their own
+ * resolution (720p by default, their minimum). Absent = the adapter's default.
+ */
+export type VideoResolution = '480p' | '720p';
+
 /** Classification used for retries and circuit-breaker accounting. */
 export type ProviderErrorClass =
   | 'rate_limited'
@@ -67,7 +74,8 @@ interface ProviderRequestBase {
   shotId?: string;
   /**
    * 20.23: the plan tier of the operation, added by runProvider (pipeline/provider-run.ts) for
-   * adapters whose model depends on it (Seedance: 2.5 on PLUS / ENTERPRISE). Others ignore it.
+   * adapters whose choices depend on it. No adapter reads it since 20.25 (Seedance picks its model
+   * by shot length on every tier); kept so a tier-aware adapter needs no pipeline change.
    */
   planTier?: 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 }
@@ -101,6 +109,7 @@ export interface TextToVideoRequest extends ProviderRequestBase {
   prompt: string;
   durationSec: number;
   aspectRatio: AspectRatio;
+  resolution?: VideoResolution;
 }
 
 export interface ImageToVideoRequest extends ProviderRequestBase {
@@ -109,6 +118,7 @@ export interface ImageToVideoRequest extends ProviderRequestBase {
   imageUrl: string;
   durationSec: number;
   aspectRatio: AspectRatio;
+  resolution?: VideoResolution;
 }
 
 export interface AvatarVideoRequest extends ProviderRequestBase {

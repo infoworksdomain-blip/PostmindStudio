@@ -116,13 +116,19 @@ export type SeedanceModel = keyof typeof SEEDANCE_MODELS;
  * DECISION (PROGRESS 20.23): Dreamina Seedance 2.0 mini is the default for STANDARD — generally
  * available (no preview label in the model list), the cheapest current model ($0.0756 per second
  * at 720p list, 2.0 fast is $0.121) and BytePlus's named replacement for the retired 1.5 pro.
- * Neither page claims a quality difference between mini and fast. PLUS / ENTERPRISE, and shots
- * longer than 15 s, use the long model (2.5, up to 30 s): see SeedanceAdapter.modelFor.
+ * Neither page claims a quality difference between mini and fast. Shots longer than 15 s use the
+ * long model (2.5, up to 30 s): see SeedanceAdapter.modelFor.
+ * DECISION (PROGRESS 20.25, operator decision 2026-10-03 "cheaper videos"): PLUS and ENTERPRISE
+ * use the default model too. 2.5 at 720p is $0.231 a second (70p for a 4 s clip), so PLUS's six
+ * clips alone would pass its 240p typical cost per video, and any tier's short would pass the
+ * 350p default project budget. The long model now serves only shots the default cannot render.
  */
 export const DEFAULT_SEEDANCE_MODEL: SeedanceModel = 'dreamina-seedance-2-0-mini-260615';
 export const DEFAULT_SEEDANCE_LONG_MODEL: SeedanceModel = 'dreamina-seedance-2-5-260628';
 
+/** The default output resolution; BASIC asks for 480p (request.resolution, 20.25). */
 export const RESOLUTION = '720p';
+export type SeedanceResolution = '480p' | '720p';
 const FPS = 24;
 const TOKENS_PER_PIXEL_FRAME = 1 / 1024;
 
@@ -143,6 +149,40 @@ const FRAME_720P: Record<SeedanceRatio, readonly [number, number]> = {
 };
 /** "adaptive" picks the first frame's ratio; estimate with the largest 720p frame (4:3, 3:4). */
 const ADAPTIVE_FRAME_PIXELS = 834 * 1112;
+/**
+ * 480p frame sizes (create-task "Width and height pixel values", read 2026-10-03): the 2.0 series
+ * (mini, fast, 2.0) and 2.5 differ only at 16:9 / 9:16. Every listed model offers 480p.
+ */
+const FRAME_480P_2_0: Record<SeedanceRatio, readonly [number, number]> = {
+  '16:9': [864, 496],
+  '9:16': [496, 864],
+  '1:1': [640, 640],
+  '3:4': [560, 752],
+};
+const FRAME_480P_2_5: Record<SeedanceRatio, readonly [number, number]> = {
+  '16:9': [854, 480],
+  '9:16': [480, 854],
+  '1:1': [640, 640],
+  '3:4': [560, 752],
+};
+/** The largest documented 480p frame (21:9, 992 × 432) for "adaptive" estimates. */
+const ADAPTIVE_480P_PIXELS = 992 * 432;
+
+/** Billed pixels per frame for a model, ratio and resolution. */
+export function seedanceFramePixels(
+  model: SeedanceModel,
+  ratio: SeedanceRatio | 'adaptive',
+  resolution: SeedanceResolution,
+): number {
+  if (resolution === '720p') {
+    return ratio === 'adaptive'
+      ? ADAPTIVE_FRAME_PIXELS
+      : FRAME_720P[ratio][0] * FRAME_720P[ratio][1];
+  }
+  if (ratio === 'adaptive') return ADAPTIVE_480P_PIXELS;
+  const table = model === 'dreamina-seedance-2-5-260628' ? FRAME_480P_2_5 : FRAME_480P_2_0;
+  return table[ratio][0] * table[ratio][1];
+}
 
 // Not a documented limit (BytePlus recommends ≤ 1,000 English words): a local guard only.
 const MAX_PROMPT_CHARS = 5000;
@@ -228,7 +268,7 @@ export function seedanceDuration(durationSec: number, model: SeedanceModel): num
   return Math.max(SEEDANCE_MODELS[model].minSec, Math.ceil(durationSec));
 }
 
-/** Billed tokens (model-pricing formula) for `seconds` of 720p output at a frame size. */
+/** Billed tokens (model-pricing formula) for `seconds` of output at a frame size. */
 export function seedanceTokens(seconds: number, pixels: number): number {
   return seconds * pixels * FPS * TOKENS_PER_PIXEL_FRAME;
 }
@@ -351,6 +391,11 @@ function isVideoRequest(request: ProviderRequest): request is VideoRequest {
   return request.capability === 'text_to_video' || request.capability === 'image_to_video';
 }
 
+/** 20.25: the requested resolution (480p on BASIC), else 720p; both are offered by every model. */
+export function seedanceResolution(request: VideoRequest): SeedanceResolution {
+  return request.resolution ?? RESOLUTION;
+}
+
 export class SeedanceAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
   readonly capabilities: readonly ProviderCapability[] = ['text_to_video', 'image_to_video'];
@@ -391,22 +436,20 @@ export class SeedanceAdapter implements ProviderAdapter {
   }
 
   /**
-   * The model for a shot (routing approved by the operator 2026-10-02): PLUS / ENTERPRISE use the
-   * long model (2.5 by default) whenever it renders that length; everyone else uses the default
-   * model, and the long model only for shots longer than the default can render (over 15 s, up
-   * to 30 s). Undefined when no configured model can render the shot.
+   * The model for a shot, on every plan tier (20.25: PLUS and ENTERPRISE no longer use 2.5 for
+   * every shot): the default model, and the long model (2.5 by default) only for shots longer
+   * than the default can render (over 15 s, up to 30 s). Undefined when no configured model can
+   * render the shot.
    */
-  modelFor(durationSec: number, planTier?: ProviderRequest['planTier']): SeedanceModel | undefined {
+  modelFor(durationSec: number): SeedanceModel | undefined {
     if (!Number.isFinite(durationSec) || durationSec <= 0) return undefined;
     const seconds = Math.ceil(durationSec);
     const fits = (model: SeedanceModel) => seconds <= SEEDANCE_MODELS[model].maxSec;
-    const premium = planTier === 'PLUS' || planTier === 'ENTERPRISE';
-    const order = premium ? [this.longModel, this.model] : [this.model, this.longModel];
-    return order.find(fits);
+    return [this.model, this.longModel].find(fits);
   }
 
   private modelForRequest(request: VideoRequest): SeedanceModel | undefined {
-    return this.modelFor(request.durationSec, request.planTier);
+    return this.modelFor(request.durationSec);
   }
 
   /** Router hint: shots longer than every configured model's maximum go to the next candidate. */
@@ -432,9 +475,11 @@ export class SeedanceAdapter implements ProviderAdapter {
     if (!isVideoRequest(request)) return 0;
     const model = this.modelForRequest(request);
     if (!model) return 0;
-    const ratio = this.ratioFor(request, model);
-    const pixels =
-      ratio === 'adaptive' ? ADAPTIVE_FRAME_PIXELS : FRAME_720P[ratio][0] * FRAME_720P[ratio][1];
+    const pixels = seedanceFramePixels(
+      model,
+      this.ratioFor(request, model),
+      seedanceResolution(request),
+    );
     const tokens = seedanceTokens(seedanceDuration(request.durationSec, model), pixels);
     return usdToPence(this.usdForTokens(tokens, model), this.options.usdToGbpRate);
   }
@@ -467,7 +512,7 @@ export class SeedanceAdapter implements ProviderAdapter {
       content,
       ratio: this.ratioFor(request, model),
       duration: seedanceDuration(request.durationSec, model),
-      resolution: RESOLUTION,
+      resolution: seedanceResolution(request),
       // The composer mutes generated clips (pipeline/edl.ts); our narration and music carry sound.
       generate_audio: false,
       watermark: false,

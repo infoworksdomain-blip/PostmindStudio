@@ -6,6 +6,8 @@ import {
   DEFAULT_SLIDESHOW_BUDGET_PENCE,
   defaultProjectBudgetPence,
   isLongForm,
+  longFormBudgetPence,
+  shortFormBudgetPence,
 } from './project-budget';
 
 describe('defaultProjectBudgetPence (operator decision 2)', () => {
@@ -47,6 +49,32 @@ describe('defaultProjectBudgetPence (operator decision 2)', () => {
     expect(isLongForm(stored)).toBe(true);
     expect(budgetFormatsFromJson({ not: 'an array' })).toEqual([]);
     expect(defaultProjectBudgetPence(budgetFormatsFromJson(null))).toBe(350);
+  });
+});
+
+describe('per-tier defaults (20.25: normal videos never reach the 90% pause)', () => {
+  it('short form: BASIC £3.50, STANDARD £4, PLUS and ENTERPRISE £6 (2.5 × the typical cost)', () => {
+    expect(shortFormBudgetPence('BASIC')).toBe(350);
+    expect(shortFormBudgetPence('STANDARD')).toBe(400);
+    expect(shortFormBudgetPence('PLUS')).toBe(600);
+    expect(shortFormBudgetPence('ENTERPRISE')).toBe(600);
+    expect(shortFormBudgetPence()).toBe(DEFAULT_SHORT_FORM_BUDGET_PENCE);
+  });
+
+  it('long form: £30, PLUS and ENTERPRISE £45', () => {
+    expect(longFormBudgetPence('BASIC')).toBe(3_000);
+    expect(longFormBudgetPence('STANDARD')).toBe(3_000);
+    expect(longFormBudgetPence('PLUS')).toBe(4_500);
+    expect(longFormBudgetPence('ENTERPRISE')).toBe(4_500);
+    expect(longFormBudgetPence()).toBe(DEFAULT_LONG_FORM_BUDGET_PENCE);
+  });
+
+  it('applies the tier by format and leaves slideshows at £1.50', () => {
+    const short = [{ platform: 'tiktok', durationSec: 30 }];
+    const long = [{ platform: 'youtube', durationSec: 360 }];
+    expect(defaultProjectBudgetPence(short, 'BRIEF', 'STANDARD')).toBe(400);
+    expect(defaultProjectBudgetPence(long, 'BRIEF', 'PLUS')).toBe(4_500);
+    expect(defaultProjectBudgetPence(short, 'SLIDESHOW', 'PLUS')).toBe(150);
   });
 });
 
