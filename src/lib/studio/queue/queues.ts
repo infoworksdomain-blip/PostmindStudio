@@ -57,6 +57,8 @@ export interface ScanJobData extends BusinessJobData {
 
 export interface LibraryRefreshJobData extends BusinessJobData {
   queries?: string[];
+  /** 20.26: stock images stored per query (the automatic refresh asks for fewer). */
+  perQuery?: number;
 }
 
 /** Video library ingestion (Feature A): platform-level, no project. runId = source hash. */
