@@ -109,6 +109,17 @@ async function createOrganisations(db: PrismaClient, count: number, tier: PlanTi
   return orgs;
 }
 
+/** "seedance=10,kling=40" → { seedance: 10, kling: 40 } (simulated account concurrency). */
+export function parseAccounts(raw: string): Record<string, number> {
+  return Object.fromEntries(
+    raw
+      .split(',')
+      .map((pair) => pair.split('=').map((s) => s.trim()))
+      .filter(([id, n]) => id && Number.isInteger(Number(n)) && Number(n) > 0)
+      .map(([id, n]) => [id ?? '', Number(n)]),
+  );
+}
+
 /** How many videos each organisation starts: one heavy organisation, the rest round-robin. */
 export function videosPerOrganisation(videos: number, orgs: number, heavyShare: number): number[] {
   const heavy = orgs > 1 ? Math.round(videos * heavyShare) : videos;
@@ -129,6 +140,8 @@ async function main(): Promise<void> {
       'time-scale': { type: 'string', default: '0.1' },
       'rate-limited-ratio': { type: 'string', default: '0.05' },
       'fail-ratio': { type: 'string', default: '0.02' },
+      // Simulated provider accounts, e.g. seedance=10 (a BytePlus enterprise account).
+      account: { type: 'string', default: process.env.LOAD_TEST_ACCOUNTS ?? '' },
       'timeout-min': { type: 'string', default: '60' },
       out: { type: 'string', default: 'ops/results/load-test' },
       attach: { type: 'boolean', default: false },
@@ -168,7 +181,7 @@ async function main(): Promise<void> {
     timeScale,
     rateLimitedRatio: Number(args['rate-limited-ratio']),
     failRatio: Number(args['fail-ratio']),
-    accountConcurrency: DEFAULT_ACCOUNT_CONCURRENCY,
+    accountConcurrency: { ...DEFAULT_ACCOUNT_CONCURRENCY, ...parseAccounts(args.account ?? '') },
     random: Math.random,
     now: Date.now,
   };
