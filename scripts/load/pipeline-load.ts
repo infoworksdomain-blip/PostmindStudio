@@ -173,6 +173,11 @@ async function main(): Promise<void> {
   const renderUrl = await putSample(media.render, 'render.mp4', 'video/mp4');
 
   // ---- pipeline deps: production wiring, providers / storage / fetch replaced ----------------
+  // Slot retries run in real time while provider latencies are scaled: scale the retry too, or the
+  // report would count 10–20 s real waits as 100–200 s simulated ones.
+  process.env.STUDIO_PROVIDER_SLOT_RETRY_MS ??= String(
+    Math.max(100, Math.round(10_000 * timeScale)),
+  );
   const db = new PrismaClient();
   const connection = redisConnectionFromEnv();
   const queue = createBullJobQueue(connection);
