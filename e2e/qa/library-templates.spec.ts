@@ -502,7 +502,7 @@ test('browse: grid, filters, search, pagination and empty states', async ({ page
   // The suggestions are category buttons, not reference cards.
   await expect(grid.getByRole('link', { name: new RegExp(titles.bakery) })).toHaveCount(0);
   await expect(grid.getByRole('link', { name: new RegExp(titles.gym) })).toHaveCount(0);
-  await expect(grid.getByRole('button', { name: /S/ }).first()).toBeVisible();
+  await expect(grid.locator('ul > li button').first()).toBeVisible();
   await w.settle();
   await page.getByRole('button', { name: 'Clear' }).click();
   // Empty filter state.
