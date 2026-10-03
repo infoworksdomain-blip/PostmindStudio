@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import {
   addMember,
   cleanWorld,
@@ -22,6 +22,8 @@ test.describe.configure({ mode: 'serial' });
 
 let db: Db;
 let world: World;
+/** The owner's signed-in cookies, captured on the first sign-in and reused by every test. */
+let ownerState: Awaited<ReturnType<BrowserContext['storageState']>> | undefined;
 const MOBILE = { width: 375, height: 812 };
 
 test.beforeAll(async ({ playwright }) => {
@@ -53,8 +55,20 @@ async function ownerPage(
   browser: Browser,
   options: { viewport?: { width: number; height: number }; dark?: boolean } = {},
 ): Promise<Page> {
-  // Sign-in is rate limited per client address (5 a minute) and the fixtures' addresses restart
-  // from the same sequence in every worker, so a 429 is waited out, not a failure.
+  // Sign-in is rate limited (5 a minute per client address), so the owner signs in once and every
+  // later test reuses that session's cookies instead of signing in again.
+  if (ownerState) {
+    const context = await browser.newContext({
+      baseURL,
+      locale: 'en-GB',
+      storageState: ownerState,
+      ...(options.viewport && { viewport: options.viewport }),
+    });
+    const reused = await context.newPage();
+    if (options.dark) await enableDarkTheme(reused);
+    return reused;
+  }
+  // A 429 on that first sign-in is waited out, not a failure.
   let page: Page | undefined;
   for (let attempt = 1; !page; attempt += 1) {
     try {
@@ -66,6 +80,7 @@ async function ownerPage(
       await new Promise((resolve) => setTimeout(resolve, 15_000));
     }
   }
+  ownerState = await page.context().storageState();
   if (options.dark) await enableDarkTheme(page);
   return page;
 }
