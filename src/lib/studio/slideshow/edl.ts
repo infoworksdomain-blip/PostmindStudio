@@ -8,6 +8,7 @@ import {
   outputDimensions,
   roundSec,
 } from '../pipeline/edl';
+import { backdropColour, readableTextColour } from '../pipeline/edl-backdrop';
 import type { AspectRatio } from '../providers/interface';
 import type { SlideContent } from './planner';
 
@@ -16,6 +17,28 @@ import type { SlideContent } from './planner';
 // documented clip `effect` values; BEFORE_AFTER is the before image, then the after image
 // revealed with a wipe, each labelled. Text is rendered with html assets until the overlay
 // engine (BACKLOG 8.3) replaces them.
+//
+// BACKLOG 20.26 (production, 2026-10-03): slideshows of plain text cards failed black_frames on
+// every 16:9 and 1:1 output (the whole video) while the 9:16 one passed. Two causes, both here:
+//   1. Backdrop. A card with no colour of its own (slide.backgroundColor NULL) and no brand
+//      background was drawn on #000000, and so was the timeline. Cards, image-less slides and the
+//      timeline now use the 20.22 backdrop rule (pipeline/edl-backdrop.ts): the brand background
+//      when its luma is ≥ 0.2, else the same hue lifted, else slate #3A4150. A colour the user
+//      picked for a slide is still drawn as chosen. Shotstack Edit API
+//      (https://shotstack.io/docs/api/, read 2026-10-03): Timeline `background` "Defaults to
+//      #000000 (black)"; HtmlAsset `background` is the colour "behind the HTML bounding box".
+//   2. Text size. Font sizes were a fraction of the frame HEIGHT, so landscape and square frames
+//      (1080 px high) drew text at 56 % of the portrait size (1920 px high). ffmpeg blackdetect
+//      counts a frame as black when 98 % of its pixels are (pic_th 0.98, media-probe.ts), so white
+//      text on a black card covered < 2 % of a 16:9 frame (black) but > 2 % of a 9:16 frame (not
+//      black). Text is now sized from the short side (`textBase`, identical on every aspect at
+//      1080p), and boxes that hold text are at least as tall as their text. HtmlAsset `width` /
+//      `height` are the bounding box in pixels: "Text will wrap to fill the bounding box" and
+//      "Text and elements will be masked if they exceed the height of the bounding box";
+//      `position` places the HTML "in one of nine predefined positions within the HTML area".
+// Images use `fit: 'crop'` (Shotstack's default: "scale the asset to fill the viewport while
+// maintaining the aspect ratio"); `cover` "stretch[es] the asset … without maintaining the aspect
+// ratio", which squashed landscape stock photos into portrait frames.
 
 export interface ResolvedSlide {
   slideType: SlideType;
@@ -50,30 +73,57 @@ const TRANSITION_IN: Record<string, string | undefined> = {
 };
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const SAFE_FONT = /^[A-Za-z0-9 -]{1,64}$/;
+/** Text over images sits on a dark shade, so it stays white (or the brand colour). */
+const OVERLAY_TEXT = '#ffffff';
+/** Line height used to size text boxes (the CSS below sets the same). */
+const LINE_HEIGHT = 1.25;
 
-function css(input: SlideshowEdlInput, px: number, extra = ''): string {
-  const colour =
-    input.brand?.textColour && HEX.test(input.brand.textColour)
-      ? input.brand.textColour
-      : '#ffffff';
+/** Font sizes (fractions of `textBase`), as the 9:16 layout has always drawn them. */
+export const SLIDE_TEXT = {
+  card: 0.05,
+  caption: 0.035,
+  quote: 0.04,
+  statistic: 0.09,
+  label: 0.04,
+  price: 0.04,
+} as const;
+
+/**
+ * The pixel size text is scaled from: the frame's long side when it is portrait, i.e. 16/9 of
+ * the short side. It is the same on every aspect at one resolution (1920 at 1080p), so a 16:9 or
+ * 1:1 output draws text exactly as large as the 9:16 one.
+ */
+export function textBase(frame: { width: number; height: number }): number {
+  return Math.round((Math.min(frame.width, frame.height) * 16) / 9);
+}
+
+function css(input: SlideshowEdlInput, px: number, colour: string, extra = ''): string {
   const font =
     input.brand?.fontFamily && SAFE_FONT.test(input.brand.fontFamily)
       ? input.brand.fontFamily
       : 'Arial';
-  return `p { font-family: '${font}', sans-serif; color: ${colour}; font-size: ${px}px; font-weight: 700; text-align: center; margin: 0; ${extra} } small { display: block; font-size: 0.55em; font-weight: 400; margin-top: 0.4em; }`;
+  return `p { font-family: '${font}', sans-serif; color: ${colour}; font-size: ${px}px; font-weight: 700; line-height: ${LINE_HEIGHT}; text-align: center; margin: 0; ${extra} } small { display: block; font-size: 0.55em; font-weight: 400; margin-top: 0.4em; }`;
+}
+
+interface Box {
+  width: number;
+  height: number;
+  position: string;
+  background?: string;
 }
 
 function html(
   input: SlideshowEdlInput,
   body: string,
   px: number,
-  box: { width: number; height: number; position: string; background?: string },
+  box: Box,
+  colour: string,
   extra = '',
 ) {
   return {
     type: 'html',
     html: `<p>${body}</p>`,
-    css: css(input, px, extra),
+    css: css(input, px, colour, extra),
     width: box.width,
     height: box.height,
     ...(box.background && { background: box.background }),
@@ -85,19 +135,40 @@ export function slideshowDuration(slides: ResolvedSlide[]): number {
   return roundSec(slides.reduce((sum, s) => sum + s.durationSec, 0));
 }
 
+/** The fill of a slide drawn without an image: the user's colour, else the brand backdrop. */
+export function slideBackdrop(slide: Pick<ResolvedSlide, 'backgroundColor'>, backdrop: string) {
+  return slide.backgroundColor && HEX.test(slide.backgroundColor)
+    ? slide.backgroundColor
+    : backdrop;
+}
+
 export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unknown> {
   const { width, height } = outputDimensions(input.aspectRatio);
-  const brandBg =
-    input.brand?.backgroundColour && HEX.test(input.brand.backgroundColour)
-      ? input.brand.backgroundColour
-      : '#000000';
+  const base = textBase({ width, height });
+  const backdrop = backdropColour(input.brand?.backgroundColour);
+  const overlayText =
+    input.brand?.textColour && HEX.test(input.brand.textColour)
+      ? input.brand.textColour
+      : OVERLAY_TEXT;
   const visual: Record<string, unknown>[] = [];
   const text: Record<string, unknown>[] = [];
   const full = { width, height, position: 'center' };
-  const band = {
+  const px = (ratio: number) => Math.round(base * ratio);
+  /** A box tall enough for `lines` lines of `size` px text (+ the shade's padding). */
+  const fit = (fraction: number, size: number, lines: number) =>
+    Math.min(
+      height,
+      Math.max(Math.round(height * fraction), Math.ceil(size * LINE_HEIGHT * lines * 1.3)),
+    );
+  const band: Box = {
     width: Math.round(width * 0.9),
-    height: Math.round(height * 0.2),
+    height: fit(0.2, px(SLIDE_TEXT.caption), 2),
     position: 'bottom',
+  };
+  const label: Box = {
+    width: Math.round(width * 0.5),
+    height: fit(0.08, px(SLIDE_TEXT.label), 1),
+    position: 'top',
   };
   const shade = 'background: rgba(0,0,0,0.45); padding: 0.3em;';
 
@@ -108,24 +179,31 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
     const transitionName = TRANSITION_IN[slide.transitionIn ?? 'cut'];
     const transition = transitionName ? { transition: { in: transitionName } } : {};
     const c = slide.content;
+    const fill = slideBackdrop(slide, backdrop);
     const image = (src: string, s: number, l: number, extra: Record<string, unknown> = {}) =>
       visual.push({
         asset: { type: 'image', src },
         start: roundSec(s),
         length: roundSec(l),
-        fit: 'cover',
+        fit: 'crop',
         ...extra,
       });
-    const card = (body: string, px: number, background: string) =>
+    const card = (body: string, size: number, s = start, l = slide.durationSec, t = transition) =>
       visual.push({
-        asset: html(input, body, px, { ...full, background }),
-        start: at,
-        length,
-        ...transition,
+        asset: html(
+          input,
+          body,
+          size,
+          { ...full, background: fill },
+          readableTextColour(fill, input.brand?.textColour),
+        ),
+        start: roundSec(s),
+        length: roundSec(l),
+        ...t,
       });
-    const overlay = (body: string, px: number, box = band, extra = shade) =>
+    const overlay = (body: string, size: number, box = band, extra = shade) =>
       text.push({
-        asset: html(input, body, px, box, extra),
+        asset: html(input, body, size, box, overlayText, extra),
         start: at,
         length,
         position: box.position,
@@ -133,57 +211,37 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
 
     switch (slide.slideType) {
       case 'TEXT_CARD':
-        card(
-          escapeHtml(c.text ?? ''),
-          Math.round(height * 0.05),
-          slide.backgroundColor && HEX.test(slide.backgroundColor)
-            ? slide.backgroundColor
-            : brandBg,
-        );
+        card(escapeHtml(c.text ?? ''), px(SLIDE_TEXT.card));
         break;
       case 'VIDEO_CLIP':
+        if (!slide.videoSrc) {
+          card('', 10);
+          break;
+        }
         visual.push({
           asset: { type: 'video', src: slide.videoSrc, volume: 0 },
           start: at,
           length,
-          fit: 'cover',
+          fit: 'crop',
           ...transition,
         });
         break;
       case 'BEFORE_AFTER': {
         const half = length / 2;
+        const wipe = { transition: { in: 'wipeLeft' } };
         if (slide.beforeSrc) image(slide.beforeSrc, start, half, transition);
-        if (slide.afterSrc)
-          image(slide.afterSrc, start + half, length - half, { transition: { in: 'wipeLeft' } });
+        else card('', 10, start, half);
+        if (slide.afterSrc) image(slide.afterSrc, start + half, length - half, wipe);
+        else card('', 10, start + half, length - half, wipe);
         text.push(
           {
-            asset: html(
-              input,
-              'BEFORE',
-              Math.round(height * 0.04),
-              {
-                width: Math.round(width * 0.5),
-                height: Math.round(height * 0.08),
-                position: 'top',
-              },
-              shade,
-            ),
+            asset: html(input, 'BEFORE', px(SLIDE_TEXT.label), label, overlayText, shade),
             start: at,
             length: roundSec(half),
             position: 'top',
           },
           {
-            asset: html(
-              input,
-              'AFTER',
-              Math.round(height * 0.04),
-              {
-                width: Math.round(width * 0.5),
-                height: Math.round(height * 0.08),
-                position: 'top',
-              },
-              shade,
-            ),
+            asset: html(input, 'AFTER', px(SLIDE_TEXT.label), label, overlayText, shade),
             start: roundSec(start + half),
             length: roundSec(length - half),
             position: 'top',
@@ -194,21 +252,12 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
       case 'QUOTE':
       case 'STATISTIC': {
         if (slide.imageSrc) image(slide.imageSrc, start, length, transition);
-        else
-          card(
-            '',
-            10,
-            slide.backgroundColor && HEX.test(slide.backgroundColor)
-              ? slide.backgroundColor
-              : brandBg,
-          );
+        else card('', 10);
         const body =
           slide.slideType === 'QUOTE'
             ? `“${escapeHtml(c.quote ?? '')}”${c.author ? `<small>— ${escapeHtml(c.author)}</small>` : ''}`
             : `${escapeHtml(c.value ?? '')}<small>${escapeHtml(c.label ?? '')}</small>`;
-        const px =
-          slide.slideType === 'QUOTE' ? Math.round(height * 0.04) : Math.round(height * 0.09);
-        overlay(body, px, {
+        overlay(body, px(slide.slideType === 'QUOTE' ? SLIDE_TEXT.quote : SLIDE_TEXT.statistic), {
           width: Math.round(width * 0.85),
           height: Math.round(height * 0.5),
           position: 'center',
@@ -217,14 +266,15 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
       }
       case 'PRODUCT': {
         if (slide.imageSrc) image(slide.imageSrc, start, length, transition);
+        else card('', 10);
         const features = (c.features ?? [])
           .map((f) => `<small>✓ ${escapeHtml(f)}</small>`)
           .join('');
-        overlay(`${escapeHtml(c.name ?? '')}${features}`, Math.round(height * 0.035));
+        overlay(`${escapeHtml(c.name ?? '')}${features}`, px(SLIDE_TEXT.caption));
         if (c.price) {
-          overlay(escapeHtml(c.price), Math.round(height * 0.04), {
+          overlay(escapeHtml(c.price), px(SLIDE_TEXT.price), {
             width: Math.round(width * 0.35),
-            height: Math.round(height * 0.08),
+            height: fit(0.08, px(SLIDE_TEXT.price), 1),
             position: 'topRight',
           });
         }
@@ -239,10 +289,15 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
               effect: slide.kenBurnsEffect ?? 'zoomIn',
             }),
           });
+        } else {
+          // 20.26: never an empty (black) frame; the caption still shows over the backdrop.
+          card('', 10);
         }
-        const label = [c.number ? `${c.number}.` : null, c.name, c.text].filter(Boolean).join(' ');
-        const caption = c.caption ?? (label || null);
-        if (caption && !slide.hasOverlays) overlay(escapeHtml(caption), Math.round(height * 0.035));
+        const caption = [c.number ? `${c.number}.` : null, c.name, c.text]
+          .filter(Boolean)
+          .join(' ');
+        const shown = c.caption ?? (caption || null);
+        if (shown && !slide.hasOverlays) overlay(escapeHtml(shown), px(SLIDE_TEXT.caption));
         break;
       }
     }
@@ -264,7 +319,8 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
     });
   }
   return {
-    timeline: { background: brandBg, tracks },
+    // 20.26: fades and gaps show the backdrop, never Shotstack's default black.
+    timeline: { background: backdrop, tracks },
     output: {
       format: 'mp4',
       resolution: OUTPUT_RESOLUTION,
