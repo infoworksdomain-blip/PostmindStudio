@@ -23,16 +23,16 @@
   --popover: oklch(0.995 0.003 80);
   --popover-foreground: oklch(0.2 0.012 60);
 
-  --primary: oklch(0.6 0.19 35); /* vermilion — record / primary action */
+  --primary: oklch(0.53 0.19 35);  /* 20.31: darkened from 0.6 so text-primary meets AA (4.5:1) on the cream and tinted backgrounds */ /* vermilion — record / primary action */
   --primary-foreground: oklch(0.985 0.005 80);
   --secondary: oklch(0.93 0.015 75);
   --secondary-foreground: oklch(0.25 0.015 60);
   --muted: oklch(0.945 0.01 78);
-  --muted-foreground: oklch(0.5 0.015 65);
+  --muted-foreground: oklch(0.47 0.015 65);
   --accent: oklch(0.92 0.03 190); /* pale teal wash */
   --accent-foreground: oklch(0.32 0.06 200);
-  --destructive: oklch(0.55 0.22 27);
-  --success: oklch(0.58 0.13 155);
+  --destructive: oklch(0.5 0.22 27);
+  --success: oklch(0.48 0.13 155);
   --warning: oklch(0.75 0.15 75);
 
   --border: oklch(0.88 0.012 75);
@@ -47,7 +47,7 @@
 
   --sidebar: oklch(0.955 0.012 78);
   --sidebar-foreground: oklch(0.25 0.015 60);
-  --sidebar-primary: oklch(0.6 0.19 35);
+  --sidebar-primary: oklch(0.53 0.19 35);
   --sidebar-primary-foreground: oklch(0.985 0.005 80);
   --sidebar-accent: oklch(0.91 0.02 78);
   --sidebar-accent-foreground: oklch(0.2 0.012 60);
@@ -71,7 +71,7 @@
   --muted-foreground: oklch(0.7 0.012 70);
   --accent: oklch(0.3 0.04 200);
   --accent-foreground: oklch(0.9 0.03 190);
-  --destructive: oklch(0.65 0.2 27);
+  --destructive: oklch(0.72 0.17 27); /* 20.31: text-destructive on destructive/10 was 3.9:1 */
   --success: oklch(0.68 0.13 155);
   --warning: oklch(0.8 0.14 80);
 

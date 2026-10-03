@@ -411,7 +411,8 @@ async function analyticsChecks(ctx: Ctx, world: World, project: VideoProject): P
 }
 
 /**
- * 29 s of slides (hook card, six photo slides at the 4 s maximum, closing card): a slideshow's
+ * 30 s of slides (hook card, five photo slides at the 4 s maximum, a 5 s quote, closing card; five
+ * is how many photos a run may generate, so none turns into a text card): a slideshow's
  * length is the sum of its slides, and the stub Shotstack render is 30 s, so the quality gate's
  * duration check (target ±2 s) passes. Photos are found by their query: library, stock, then generated.
  */
@@ -422,9 +423,8 @@ function slideshowSlides() {
     'Local flour',
     'Crackling crust',
     'Weekly delivery',
-    'No additives',
   ];
-  const effects = ['zoomIn', 'zoomOut', 'slideLeft', 'slideRight', 'slideUp', 'slideDown'] as const;
+  const effects = ['zoomIn', 'zoomOut', 'slideLeft', 'slideRight', 'slideUp'] as const;
   return [
     { slideType: 'TEXT_CARD', durationSec: 2.5, content: { role: 'hook', text: 'Why sourdough?' } },
     ...points.map((text, i) => ({
@@ -434,6 +434,11 @@ function slideshowSlides() {
       kenBurnsSpec: { effect: effects[i] },
       content: { role: 'body', text, imageQuery: text },
     })),
+    {
+      slideType: 'QUOTE',
+      durationSec: 5,
+      content: { quote: 'The best bread in Leeds.', author: 'A regular customer' },
+    },
     { slideType: 'TEXT_CARD', durationSec: 2.5, content: { role: 'cta', text: 'Order today' } },
   ];
 }
