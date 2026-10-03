@@ -5,6 +5,7 @@ import { BILLING_STATE_INFO, getBillingState } from '../billing-state';
 import { DEMO_ORG_ID, DEMO_USER_ID, DEMO_USER_NAME } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { OTHER_ORGS } from './admin-state';
+import { planSummary } from './admin-plan-state';
 import { ago, DAY } from './projects-store';
 
 const obj = (v: unknown): Record<string, unknown> =>
@@ -85,6 +86,22 @@ const ORGS: Org[] = [
     lookupKey: 'studio_basic_monthly',
   },
   {
+    // 20.27: the operator's own organisation on a Stripe trial, stuck just under the £15 trial
+    // cap. Open it to see the trial and end it with a Plus override.
+    id: OTHER_ORGS.platform,
+    name: 'PostMind (operator)',
+    slug: 'postmind-operator',
+    country: 'GB',
+    createdAt: ago(6 * DAY),
+    deletedAt: null,
+    members: 1,
+    tier: 'STANDARD',
+    access: 'full',
+    subscriptionStatus: 'trialing',
+    costThisMonthPence: 1_496,
+    lookupKey: 'studio_plus_monthly',
+  },
+  {
     id: OTHER_ORGS.kirkstall,
     name: 'Kirkstall Barbers',
     slug: 'kirkstall-barbers',
@@ -126,7 +143,13 @@ route('GET', '/admin/organisations', ({ query }) => {
   const data = ORGS.filter(
     (o) => !q || o.name.toLowerCase().includes(q) || o.slug.includes(q) || o.id === q,
   );
-  return { total: data.length, data: data.map(({ lookupKey: _k, ...o }) => o) };
+  // 20.27: plan resolved with staff overrides, and the trial state; one page of 50.
+  return {
+    total: data.length,
+    offset: 0,
+    pageSize: 50,
+    data: data.map(({ lookupKey: _k, ...o }) => ({ ...o, ...planSummary(o) })),
+  };
 });
 
 route('GET', '/admin/organisations/:id', ({ params }) => {
@@ -158,9 +181,7 @@ route('GET', '/admin/organisations/:id', ({ params }) => {
     businesses: 1,
     entitlement: o.tier
       ? {
-          tier: o.tier,
-          access: o.access,
-          source: o.subscriptionStatus === 'trialing' ? 'trial' : 'stripe',
+          ...planSummary(o),
           graceUntil: graceFor(o),
           trialStartedAt: o.subscriptionStatus === 'trialing' ? ago(5 * DAY) : null,
           everPaidAt: o.subscriptionStatus === 'trialing' ? null : ago(30 * DAY),
@@ -383,15 +404,18 @@ route('POST', '/admin/users/:id/impersonate', () => {
 
 // ------------------------------------------------------------------ legal readiness
 
+// Live's legal pages are published (finished text, no fill-in markers), so sign-up is open.
 route('GET', '/admin/legal-readiness', () => ({
   readiness: {
-    ready: false,
-    launchBlockers: ['terms', 'privacy'],
+    ready: true,
+    launchBlockers: [],
     docs: ['terms', 'privacy', 'cookies', 'acceptable-use', 'dpa', 'subprocessors'].map((doc) => ({
       doc,
       present: true,
-      placeholder: true,
+      placeholder: false,
+      state: 'ready',
+      unfilled: [],
     })),
   },
-  signups: { open: false, reason: 'legal_placeholder' },
+  signups: { open: true },
 }));

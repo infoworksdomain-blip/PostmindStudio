@@ -601,5 +601,49 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
     await w.settle();
     await w.check();
   }
+
+  // 20.27: staff end an organisation's trial and move it to PLUS from Organisations.
+  const trialOrg = `sweep-trial-${run}`;
+  const started = new Date();
+  await db.organization.create({
+    data: { id: trialOrg, name: `Sweep Trial ${run}`, slug: trialOrg },
+  });
+  await db.orgEntitlement.create({
+    data: {
+      organisationId: trialOrg,
+      tier: 'STANDARD',
+      access: 'full',
+      source: 'trial',
+      trialStartedAt: started,
+      overrides: {
+        derived: { tier: 'STANDARD', access: 'full', source: 'trial', status: 'trialing' },
+        trial: {
+          startedAt: started.toISOString(),
+          endsAt: new Date(started.getTime() + 14 * 86_400_000).toISOString(),
+          shortVideos: 5,
+          longVideos: 1,
+          dailyCostCapPence: 1_000,
+          totalCostCapPence: 1_500,
+        },
+      },
+    },
+  });
+  w.label('/admin organisations: end trial');
+  await page.getByRole('tab', { name: 'Organisations' }).click();
+  await page.getByLabel('Search organisations').fill(`Sweep Trial ${run}`);
+  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: `Open Sweep Trial ${run}` }).click();
+  await expect(page.getByText('Running: the trial’s caps apply now.')).toBeVisible();
+  const form = page.getByRole('form', { name: 'Set an override' });
+  await form.getByLabel('Tier').selectOption('PLUS');
+  await form.getByRole('checkbox', { name: 'End the trial now' }).check();
+  await form.getByLabel('Reason (required)').fill('Sweep: end the trial');
+  await form.getByRole('button', { name: 'Save override' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Yes, save' }).click();
+  await expect(page.getByText(/Ended by staff on/)).toBeVisible();
+  await w.settle();
+  await w.check();
+  const stored = await db.orgEntitlement.findUnique({ where: { organisationId: trialOrg } });
+  expect(stored).toMatchObject({ tier: 'PLUS', source: 'admin' });
   await report(w);
 });

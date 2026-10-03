@@ -31,15 +31,15 @@ const nextId = () =>
   `img-${(++seq).toString().padStart(3, '0')}-${Math.random().toString(36).slice(2, 7)}`;
 
 const LICENCE: Record<string, string> = {
-  pexels: 'Pexels License: free for commercial use, no attribution required',
-  storyblocks: 'Storyblocks Business licence (organisation subscription)',
+  // As the real app stores it (images/library.ts): Pixabay is the only stock provider in use.
+  pixabay: 'Pixabay Content License (https://pixabay.com/service/license-summary/)',
   'dalle-3': 'Generated with DALL·E 3 for this business; no third-party rights',
 };
 
 function fromSeed(s: ImageSeed, createdAt: number): StoredImage {
   const provider =
     s.source === 'STOCK'
-      ? (s.ref?.split(':')[0] ?? 'pexels')
+      ? (s.ref?.split(':')[0] ?? 'pixabay')
       : s.source === 'GENERATED'
         ? 'dalle-3'
         : s.source === 'SCRAPED'
@@ -54,8 +54,8 @@ function fromSeed(s: ImageSeed, createdAt: number): StoredImage {
     sourceUrl:
       s.source === 'SCRAPED'
         ? `${SITE}${s.ref ?? '/'}`
-        : s.source === 'STOCK' && s.ref?.startsWith('pexels:')
-          ? `https://www.pexels.com/photo/${s.ref.slice(7)}/`
+        : s.source === 'STOCK' && s.ref?.startsWith('pixabay:')
+          ? `https://pixabay.com/photos/id-${s.ref.slice(8)}/`
           : null,
     sourceProvider: provider,
     publicUrl: null,

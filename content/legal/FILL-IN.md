@@ -27,6 +27,8 @@ The drafts state the default values of these settings. If you change a setting i
 | Setting                                     | Default in the drafts                                                                                                | Where the text mentions it                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | `STUDIO_TRIAL_DAYS`                         | 14-day Standard trial                                                                                                | terms 6.2                                        |
+| Trial limits (`TRIAL` in `src/lib/studio/billing/catalogue.ts`) | 5 short + 1 long video, AI usage £10 a day and £15 in total | terms 6.2 |
+| Per-video budget (`src/lib/studio/cost/project-budget.ts`), AI clip budget (`pipeline/clip-budget.ts`) | Described without figures | terms 6.3 |
 | `STUDIO_BILLING_GRACE_DAYS`                 | 7 days of full access after a failed payment                                                                         | terms 7.5                                        |
 | `STUDIO_CANCELLED_RETENTION_DAYS`           | 90 days read-only after a paid subscription ends                                                                     | terms 15.2, privacy 8                            |
 | `STUDIO_PURGE_GRACE_DAYS`                   | 30 days between scheduling deletion and deleting                                                                     | terms 15.2, privacy 8, dpa 8.2                   |
@@ -37,6 +39,8 @@ The drafts state the default values of these settings. If you change a setting i
 | `AWS_REGION` (KMS)                          | London (eu-west-2)                                                                                                   | privacy 7.1, subprocessors                       |
 | `ASSEMBLYAI_REGION`                         | `eu`                                                                                                                 | subprocessors                                    |
 | `SENTRY_DSN`, `BROWSERLESS_API_KEY`         | Listed as "only if enabled"                                                                                          | subprocessors                                    |
+
+**Legal review comments (2026-10-03, BACKLOG 20.28).** The texts carry HTML comments starting `LEGAL REVIEW` (not shown on the website and not fill-in markers, so they do not close sign-up). Each one names a fact the solicitor should confirm, mainly the transfer safeguard for each provider outside the UK and EEA. Search the folder for `LEGAL REVIEW`.
 
 Also confirm each provider's current contracting entity, processing region and transfer mechanism on the Sub-processors page against its own data processing terms, and remove any provider whose key you do not set.
 

@@ -30,6 +30,8 @@ export const adminEntitlementInput = z
     limits: customLimitsSchema.optional(),
     monthlyPricePence: z.number().int().min(0).max(100_000_000).nullable().optional(),
     expiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** 20.27: end the running trial now (its allowance and cost caps stop for good). */
+    endTrial: z.boolean().optional(),
     reason: z.string().trim().min(3).max(500),
   })
   .strict();
@@ -40,7 +42,28 @@ export const adminEntitlementClearInput = z
   .object({ reason: z.string().trim().min(3).max(500) })
   .strict();
 
-type AdminDb = Pick<PrismaClient, 'orgEntitlement' | 'orgCostCap' | 'subscription'>;
+type AdminDb = Pick<
+  PrismaClient,
+  'orgEntitlement' | 'orgCostCap' | 'subscription' | 'providerUsage'
+>;
+
+/**
+ * The trial as staff see it (20.27). `state`: `running` = its caps apply now; `overridden` = a
+ * staff override is active, so its caps do not apply now but return when the override expires or
+ * is removed while Stripe still reports trialing; `ended` = staff ended it (never returns);
+ * `over` = Stripe no longer reports trialing.
+ */
+export interface AdminTrialView {
+  state: 'running' | 'overridden' | 'ended' | 'over';
+  startedAt: string;
+  endsAt: string | null;
+  endedAt: string | null;
+  endedByUserId: string | null;
+  dailyCostCapPence: number;
+  totalCostCapPence: number;
+  /** Provider spend since the trial's first day (UTC), the figure the £15 total is held against. */
+  spentPence: number;
+}
 
 function parseOrgId(id: string): string {
   const parsed = organisationIdParam.safeParse(id);
@@ -68,6 +91,8 @@ export interface AdminEntitlementView {
   } | null;
   admin: AdminOverride | null;
   limits: EntitlementOverrides['limits'] | null;
+  /** 20.27: the trial, if the organisation ever had one. */
+  trial: AdminTrialView | null;
   enterprise: { monthlyCapPence: number; minimumMonthlyPricePence: number };
   subscriptions: Array<{
     id: string;
@@ -77,6 +102,46 @@ export interface AdminEntitlementView {
     currentPeriodEnd: string | null;
     cancelAtPeriodEnd: boolean;
   }>;
+}
+
+function utcDay(at: Date): Date {
+  return new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()));
+}
+
+async function trialView(
+  db: AdminDb,
+  organisationId: string,
+  overrides: EntitlementOverrides,
+  effective: Entitlements,
+): Promise<AdminTrialView | null> {
+  const trial = overrides.trial;
+  if (!trial) return null;
+  const started = new Date(trial.startedAt);
+  const spent = Number.isNaN(started.getTime())
+    ? 0
+    : ((
+        await db.providerUsage.aggregate({
+          where: { organisationId, day: { gte: utcDay(started) } },
+          _sum: { costPence: true },
+        })
+      )._sum.costPence ?? 0);
+  const state: AdminTrialView['state'] = trial.endedAt
+    ? 'ended'
+    : effective.trial
+      ? 'running'
+      : overrides.derived?.source === 'trial'
+        ? 'overridden'
+        : 'over';
+  return {
+    state,
+    startedAt: trial.startedAt,
+    endsAt: trial.endsAt,
+    endedAt: trial.endedAt ?? null,
+    endedByUserId: trial.endedByUserId ?? null,
+    dailyCostCapPence: trial.dailyCostCapPence,
+    totalCostCapPence: trial.totalCostCapPence,
+    spentPence: spent,
+  };
 }
 
 export async function getAdminEntitlements(
@@ -121,6 +186,7 @@ export async function getAdminEntitlements(
       : null,
     admin: overrides.admin ?? null,
     limits: overrides.limits ?? null,
+    trial: await trialView(db, orgId, overrides, effective),
     enterprise: {
       monthlyCapPence,
       minimumMonthlyPricePence: enterpriseMinimumMonthlyPricePence(monthlyCapPence),
@@ -191,13 +257,16 @@ export async function putAdminEntitlements(
   input: AdminEntitlementInput,
   staffUserId: string,
   now: Date,
-): Promise<{ before: Entitlements; after: AdminEntitlementView }> {
+): Promise<{ before: Entitlements; after: AdminEntitlementView; trialEnded: boolean }> {
   const orgId = parseOrgId(organisationId);
   if (input.expiresAt && Date.parse(input.expiresAt) <= now.getTime())
     throw new ValidationError('expiresAt must be in the future');
   const beforeView = await getAdminEntitlements(db, orgId, now);
   const tier = input.tier ?? beforeView.effective.tier;
-  if (tier === 'ENTERPRISE') {
+  // 20.27: ending the trial with nothing else to change leaves any existing override as it is
+  // instead of writing a new, empty, never-expiring one.
+  const onlyEndTrial = Boolean(input.endTrial) && !hasOverrideChange(input);
+  if (tier === 'ENTERPRISE' && !onlyEndTrial) {
     const minimum = beforeView.enterprise.minimumMonthlyPricePence;
     if (input.monthlyPricePence == null)
       throw new ValidationError('An ENTERPRISE override needs the agreed monthly price', {
@@ -215,24 +284,61 @@ export async function putAdminEntitlements(
   }
   const row = await db.orgEntitlement.findUnique({ where: { organisationId: orgId } });
   const overrides = parseOverrides(row?.overrides);
-  const admin: AdminOverride = {
-    ...(input.tier && { tier: input.tier }),
-    ...(input.access && { access: input.access }),
-    expiresAt: input.expiresAt ?? null,
-    reason: input.reason,
-    setByUserId: staffUserId,
-    setAt: now.toISOString(),
-    monthlyPricePence: input.monthlyPricePence ?? null,
-  };
+  const trial = input.endTrial ? endedTrial(overrides, staffUserId, now) : overrides.trial;
+  const admin: AdminOverride | undefined = onlyEndTrial
+    ? overrides.admin
+    : {
+        ...(input.tier && { tier: input.tier }),
+        ...(input.access && { access: input.access }),
+        expiresAt: input.expiresAt ?? null,
+        reason: input.reason,
+        setByUserId: staffUserId,
+        setAt: now.toISOString(),
+        monthlyPricePence: input.monthlyPricePence ?? null,
+      };
   await writeOverrides(
     db,
     orgId,
-    { ...overrides, admin, ...(input.limits && { limits: input.limits }) },
+    {
+      ...overrides,
+      ...(admin && { admin }),
+      ...(input.limits && { limits: input.limits }),
+      ...(trial && { trial }),
+    },
     staffUserId,
     input.reason,
     now,
   );
-  return { before: beforeView.effective, after: await getAdminEntitlements(db, orgId, now) };
+  return {
+    before: beforeView.effective,
+    after: await getAdminEntitlements(db, orgId, now),
+    trialEnded: Boolean(input.endTrial),
+  };
+}
+
+/** Whether the PUT changes the override itself (anything besides endTrial and the reason). */
+function hasOverrideChange(input: AdminEntitlementInput): boolean {
+  return (
+    input.tier !== undefined ||
+    input.access !== undefined ||
+    input.limits !== undefined ||
+    input.monthlyPricePence != null ||
+    input.expiresAt != null
+  );
+}
+
+/** The stored trial marked as ended by staff; refused when there is no trial left to end. */
+function endedTrial(
+  overrides: EntitlementOverrides,
+  staffUserId: string,
+  now: Date,
+): NonNullable<EntitlementOverrides['trial']> {
+  const trial = overrides.trial;
+  if (!trial) throw new ValidationError('This organisation has no trial to end');
+  if (trial.endedAt) throw new ValidationError('This trial was already ended');
+  if (overrides.derived && overrides.derived.source !== 'trial')
+    throw new ValidationError('This organisation is no longer on a trial');
+  return { ...trial, endedAt: now.toISOString(), endedByUserId: staffUserId };
 }
 
 export async function clearAdminEntitlements(

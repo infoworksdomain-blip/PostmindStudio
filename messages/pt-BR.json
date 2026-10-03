@@ -225,6 +225,10 @@
         "body": "Assine novamente para continuar criando. Você ainda pode visualizar, baixar e exportar seus dados.",
         "deletesOn": "Se você não assinar novamente, a organização e seus dados serão excluídos após {date}.",
         "action": "Assinar novamente"
+      },
+      "createBlocked": {
+        "readOnly": "Sua conta está somente para leitura. Atualize o pagamento para criar vídeos.",
+        "readOnlyAction": "Atualizar pagamento"
       }
     }
   },
@@ -2164,7 +2168,9 @@
       "emptyTitle": "Nenhuma referência corresponde",
       "emptySearch": "Nada na biblioteca corresponde a essa busca. Tente outras palavras ou limpe a busca.",
       "emptyFilters": "Tente uma categoria mais ampla ou menos tags.",
-      "more": "Mais referências"
+      "more": "Mais referências",
+      "noCloseTitle": "Nenhum resultado próximo para “{query}”",
+      "noCloseBody": "Nada na biblioteca se aproxima dessa busca. Tente outras palavras ou explore uma categoria:"
     },
     "filters": {
       "formAria": "Filtrar a biblioteca",
@@ -3044,7 +3050,10 @@
         "overrideHelp": "Vazio = sem exceção (o limite do plano). Os workers aplicam a mudança em até 30 segundos.",
         "reason": "Motivo (registrado no log de auditoria)",
         "save": "Salvar limites de custo",
-        "savedToast": "Limites de custo salvos"
+        "savedToast": "Limites de custo salvos",
+        "clear": "Voltar ao padrão do plano",
+        "clearHelp": "Remove ambas as substituições para que os limites do nível do plano voltem a se aplicar. Usa o motivo acima.",
+        "clearedToast": "Os limites de custo voltaram ao padrão do plano"
       }
     },
     "redrive": {
@@ -4615,14 +4624,39 @@
           "expiresAt": "Expira em (opcional)",
           "reason": "Motivo (obrigatório)",
           "save": "Salvar substituição",
-          "saved": "Substituição salva"
+          "saved": "Substituição salva",
+          "endTrial": "Encerrar o teste agora",
+          "endTrialHelp": "A franquia do teste e os seus limites de custo de {daily} por dia / {total} no total deixam de valer para sempre, mesmo depois de esta substituição expirar ou ser removida; se aplicam os limites do plano (e qualquer substituição de limites de custo). A Stripe não é alterada: o teste dela termina, e é cobrado, na sua própria data.",
+          "trialNote": "Qualquer substituição salva pausa os limites do teste enquanto estiver ativa. Marque “Encerrar o teste agora” para removê-los para sempre."
         },
         "clear": {
           "title": "Remover a substituição",
           "description": "A organização volta a ter o que a assinatura da Stripe oferece.",
           "reason": "Motivo da remoção",
           "button": "Remover substituição",
-          "cleared": "Substituição removida"
+          "cleared": "Substituição removida",
+          "trialWarning": "A Stripe ainda mostra um teste: remover a substituição traz de volta os limites do teste. Para o evitar, salve primeiro uma substituição com “Encerrar o teste agora”."
+        },
+        "trial": {
+          "title": "Teste",
+          "state": {
+            "running": "Em andamento: os limites do teste se aplicam agora.",
+            "overridden": "Pausado pela substituição da equipe: os limites do teste voltam se a substituição expirar ou for removida enquanto a Stripe ainda mostrar um teste.",
+            "ended": "Encerrado pela equipe em {date}. Os seus limites não se aplicam mais.",
+            "over": "Terminado: a Stripe não mostra mais um teste."
+          },
+          "dates": "Início {start} · fim {end}",
+          "noEnd": "sem data de fim",
+          "spent": "Custo de IA desde o início do teste: {spent} de {total} (no máximo {daily} por dia)",
+          "meterAria": "Custo de IA do teste face ao limite total",
+          "capsNote": "Enquanto o teste está em andamento, os seus limites se aplicam em vez dos limites do plano e de qualquer substituição de limites de custo."
+        },
+        "confirm": {
+          "title": "Salvar esta substituição?",
+          "button": "Sim, salvar",
+          "accessNone": "O acesso Nenhum impede todos nesta organização de gerar, publicar e analisar.",
+          "accessReadOnly": "Somente leitura bloqueia qualquer alteração nesta organização exceto faturamento, configurações da conta e exportações.",
+          "endTrial": "Encerrar o teste não pode ser desfeito: os seus limites não voltarão a se aplicar a esta organização."
         }
       },
       "subscriptions": {
@@ -4871,7 +4905,19 @@
       "open": "Abrir",
       "openAria": "Abrir {name}",
       "byIdTitle": "Buscar por id",
-      "byIdHint": "Revise a política e os limites de custo de qualquer id de organização, incluindo os que pertencem ao PostMind Core."
+      "byIdHint": "Revise a política e os limites de custo de qualquer id de organização, incluindo os que pertencem ao PostMind Core.",
+      "trial": "Teste",
+      "trialState": {
+        "running": "Até {date}",
+        "runningNoDate": "Em andamento",
+        "overridden": "Pausado por substituição",
+        "ended": "Encerrado pela equipe"
+      },
+      "planHint": "Abra uma organização para alterar o plano, o acesso, o teste ou os limites de custo.",
+      "pagesAria": "Páginas de organizações",
+      "pageInfo": "{from}–{to} de {total}",
+      "previous": "Anterior",
+      "next": "Próxima"
     },
     "detail": {
       "back": "Todas as organizações",
@@ -4896,7 +4942,9 @@
       "subscriptionsTitle": "Assinaturas",
       "subscriptionsHint": "Somente leitura; altere planos no Stripe ou com uma substituição de direitos.",
       "noSubscription": "Sem assinatura.",
-      "cancelling": "Cancela no fim do período"
+      "cancelling": "Cancela no fim do período",
+      "planTitle": "Plano, acesso e teste",
+      "planHint": "Altere o nível ou o acesso, ou encerre o teste, com uma substituição da equipe. Cada alteração exige um motivo e fica registrada."
     },
     "status": {
       "trialing": "Teste",

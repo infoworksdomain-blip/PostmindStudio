@@ -208,15 +208,14 @@ function CostCapsForm({ orgId }: { orgId: string }) {
     setMonthly(toPounds(res.data?.override?.monthlyPence));
   }, [res.data]);
 
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
+  const put = async (dailyPence: number | null, monthlyPence: number | null, done: string) => {
     setPending(true);
     try {
       await api(path, {
         method: 'PUT',
-        body: { dailyPence: toPence(daily), monthlyPence: toPence(monthly), reason: reason.trim() },
+        body: { dailyPence, monthlyPence, reason: reason.trim() },
       });
-      toast.success(t('savedToast'));
+      toast.success(done);
       setReason('');
       await res.mutate();
     } catch (err) {
@@ -225,9 +224,18 @@ function CostCapsForm({ orgId }: { orgId: string }) {
       setPending(false);
     }
   };
+  const save = (e: FormEvent) => {
+    e.preventDefault();
+    void put(toPence(daily), toPence(monthly), t('savedToast'));
+  };
+  // 20.27: both overrides removed in one audited PUT (null clears a value).
+  const clear = () => void put(null, null, t('clearedToast'));
+  const reasonOk = reason.trim().length >= 3;
 
   if (res.error) return <ErrorState error={res.error} onRetry={() => void res.mutate()} />;
   if (!res.data) return <Skeleton aria-label={t('loadingAria')} className="h-40" />;
+  const own = res.data.override;
+  const hasOverride = Boolean(own && (own.dailyPence !== null || own.monthlyPence !== null));
   return (
     <form onSubmit={save} aria-label={t('formAria')} className="grid gap-4 text-sm">
       <div className="grid gap-1">
@@ -279,13 +287,59 @@ function CostCapsForm({ orgId }: { orgId: string }) {
           onChange={(e) => setReason(e.target.value)}
         />
       </div>
-      <div>
-        <Button type="submit" disabled={pending || reason.trim().length < 3}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={pending || !reasonOk}>
           {pending && <Loader2 className="animate-spin" />}
           {t('save')}
         </Button>
+        {hasOverride && (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending || !reasonOk}
+            onClick={clear}
+            aria-describedby="cap-clear-help"
+          >
+            {t('clear')}
+          </Button>
+        )}
       </div>
+      {hasOverride && (
+        <p id="cap-clear-help" className="text-xs text-muted-foreground">
+          {t('clearHelp')}
+        </p>
+      )}
     </form>
+  );
+}
+
+/** 13.18: one organisation's review policy. */
+export function PolicySection({ orgId }: { orgId: string }) {
+  const t = useTranslations('admin.organisations');
+  return (
+    <Section title={t('policy.title')} description={t('policy.description')}>
+      <PolicyForm orgId={orgId} />
+    </Section>
+  );
+}
+
+/** 13.19: one organisation's cost cap overrides. */
+export function CostCapsSection({ orgId }: { orgId: string }) {
+  const t = useTranslations('admin.organisations');
+  return (
+    <Section title={t('caps.title')} description={t('caps.description')}>
+      <CostCapsForm orgId={orgId} />
+    </Section>
+  );
+}
+
+/** 13.18 / 13.19: one organisation's review policy and cost caps, side by side. */
+export function OrganisationSettings({ orgId }: { orgId: string }) {
+  return (
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+      <PolicySection orgId={orgId} />
+      <CostCapsSection orgId={orgId} />
+    </div>
   );
 }
 
@@ -303,14 +357,14 @@ export function OrganisationPanel({ initialOrgId }: { initialOrgId?: string } = 
           setOrgId(input.trim() || null);
         }}
       >
-        <div className="grid gap-1.5">
+        <div className="grid w-full gap-1.5 sm:w-auto">
           <Label htmlFor="org-lookup">{t('orgIdLabel')}</Label>
           <Input
             id="org-lookup"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('orgIdPlaceholder')}
-            className="w-72"
+            className="w-full sm:w-72"
             maxLength={128}
           />
         </div>
@@ -318,16 +372,7 @@ export function OrganisationPanel({ initialOrgId }: { initialOrgId?: string } = 
           {t('open')}
         </Button>
       </form>
-      {orgId && (
-        <div className="grid gap-6 lg:grid-cols-2" key={orgId}>
-          <Section title={t('policy.title')} description={t('policy.description')}>
-            <PolicyForm orgId={orgId} />
-          </Section>
-          <Section title={t('caps.title')} description={t('caps.description')}>
-            <CostCapsForm orgId={orgId} />
-          </Section>
-        </div>
-      )}
+      {orgId && <OrganisationSettings key={orgId} orgId={orgId} />}
     </div>
   );
 }

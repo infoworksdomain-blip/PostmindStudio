@@ -12,14 +12,17 @@ import {
 } from './types';
 
 // BACKLOG 16.x — the approval workflow sentences ("Step 1 of 2 — waiting for client reviewer",
-// "Applies to business biz_1 · TikTok") built from the `approvals` catalogue. Suggested roles
+// "Applies to business Leeds Sourdough · TikTok") built from the `approvals` catalogue. Suggested roles
 // have translated, pluralised labels; any other role name is shown as typed.
 
 export interface ApprovalText {
   /** "admin" (one approver) or "2 client reviewers". */
   describeStep: (step: WorkflowStep) => string;
   /** One line describing which projects a workflow applies to. */
-  describeAppliesTo: (appliesTo: WorkflowAppliesTo) => string;
+  describeAppliesTo: (
+    appliesTo: WorkflowAppliesTo,
+    businessNames?: Readonly<Record<string, string>>,
+  ) => string;
   /** "Step 1 of 2 — waiting for client reviewer (1 of 2 approvals)". */
   stepIndicatorText: (status: ApprovalStatus) => string;
 }
@@ -33,13 +36,19 @@ export function useApprovalText(): ApprovalText {
         ? t(`roles.${name}`, { count })
         : t('roles.custom', { count, role: roleLabel(name) });
 
-    const describeAppliesTo = (appliesTo: WorkflowAppliesTo) => {
+    const describeAppliesTo = (
+      appliesTo: WorkflowAppliesTo,
+      businessNames: Readonly<Record<string, string>> = {},
+    ) => {
       const parts: string[] = [];
       if (appliesTo.businessIds.length)
         parts.push(
           t('appliesTo.businesses', {
             count: appliesTo.businessIds.length,
-            ids: f.list(appliesTo.businessIds, 'unit'),
+            ids: f.list(
+              appliesTo.businessIds.map((id) => businessNames[id] ?? id),
+              'unit',
+            ),
           }),
         );
       if (appliesTo.platforms.length)

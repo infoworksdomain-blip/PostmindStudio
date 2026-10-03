@@ -225,6 +225,10 @@
         "body": "重新订阅即可继续创作。您仍可查看、下载和导出您的数据。",
         "deletesOn": "如不重新订阅，该组织及其数据将在 {date} 之后被删除。",
         "action": "重新订阅"
+      },
+      "createBlocked": {
+        "readOnly": "您的账户为只读状态。请更新付款信息以创建视频。",
+        "readOnlyAction": "更新付款"
       }
     }
   },
@@ -2164,7 +2168,9 @@
       "emptyTitle": "没有匹配的参考视频",
       "emptySearch": "视频库中没有与该搜索匹配的内容。请换个词试试，或清除搜索。",
       "emptyFilters": "请尝试更宽泛的分类或减少标签。",
-      "more": "更多参考视频"
+      "more": "更多参考视频",
+      "noCloseTitle": "没有与“{query}”接近的结果",
+      "noCloseBody": "资料库中没有与该搜索接近的内容。请换个词，或浏览某个分类："
     },
     "filters": {
       "formAria": "筛选视频库",
@@ -3044,7 +3050,10 @@
         "overrideHelp": "留空 = 不覆盖（使用套餐等级的上限）。worker 会在 30 秒内应用更改。",
         "reason": "原因（记入审计日志）",
         "save": "保存费用上限",
-        "savedToast": "费用上限已保存"
+        "savedToast": "费用上限已保存",
+        "clear": "恢复为套餐默认值",
+        "clearHelp": "移除两项覆盖设置，使套餐级别的上限重新生效。使用上方的原因。",
+        "clearedToast": "费用上限已恢复为套餐默认值"
       }
     },
     "redrive": {
@@ -4615,14 +4624,39 @@
           "expiresAt": "到期时间（可选）",
           "reason": "原因（必填）",
           "save": "保存覆盖设置",
-          "saved": "覆盖设置已保存"
+          "saved": "覆盖设置已保存",
+          "endTrial": "立即结束试用",
+          "endTrialHelp": "试用额度及其每天 {daily} / 总计 {total} 的费用上限将永久停止，即使此覆盖设置到期或被移除也是如此；改为适用套餐上限（以及任何费用上限覆盖设置）。Stripe 不会改变：其试用仍在自己的日期结束并计费。",
+          "trialNote": "任何已保存的覆盖设置在生效期间都会暂停试用上限。勾选“立即结束试用”可永久停止这些上限。"
         },
         "clear": {
           "title": "移除覆盖设置",
           "description": "该组织将恢复为其 Stripe 订阅所提供的权益。",
           "reason": "移除原因",
           "button": "移除覆盖设置",
-          "cleared": "覆盖设置已移除"
+          "cleared": "覆盖设置已移除",
+          "trialWarning": "Stripe 仍显示试用：移除覆盖设置会恢复试用上限。若要保持关闭，请先保存一个勾选“立即结束试用”的覆盖设置。"
+        },
+        "trial": {
+          "title": "试用",
+          "state": {
+            "running": "进行中：试用上限当前生效。",
+            "overridden": "已因员工覆盖设置暂停：如果覆盖设置到期或被移除而 Stripe 仍显示试用，试用上限会恢复。",
+            "ended": "已由员工于 {date} 结束。其上限不再生效。",
+            "over": "已结束：Stripe 不再显示试用。"
+          },
+          "dates": "开始 {start} · 结束 {end}",
+          "noEnd": "无结束日期",
+          "spent": "试用开始以来的 AI 费用：{spent} / {total}（每天最多 {daily}）",
+          "meterAria": "试用 AI 费用相对其总上限",
+          "capsNote": "试用期间，适用试用上限，而不是套餐上限或任何费用上限覆盖设置。"
+        },
+        "confirm": {
+          "title": "保存此覆盖设置？",
+          "button": "是，保存",
+          "accessNone": "访问权限“无”会阻止此组织中的所有人生成、发布和扫描。",
+          "accessReadOnly": "只读会阻止此组织中除账单、账户设置和导出之外的所有更改。",
+          "endTrial": "结束试用无法撤销：其上限将不再适用于此组织。"
         }
       },
       "subscriptions": {
@@ -4871,7 +4905,19 @@
       "open": "打开",
       "openAria": "打开 {name}",
       "byIdTitle": "按 id 查找",
-      "byIdHint": "查看任意组织 id（包括 PostMind Core 持有的组织）的策略和费用上限。"
+      "byIdHint": "查看任意组织 id（包括 PostMind Core 持有的组织）的策略和费用上限。",
+      "trial": "试用",
+      "trialState": {
+        "running": "至 {date}",
+        "runningNoDate": "进行中",
+        "overridden": "因覆盖设置暂停",
+        "ended": "已由员工结束"
+      },
+      "planHint": "打开一个组织以更改其套餐、访问权限、试用或费用上限。",
+      "pagesAria": "组织分页",
+      "pageInfo": "第 {from}–{to} 个，共 {total} 个",
+      "previous": "上一页",
+      "next": "下一页"
     },
     "detail": {
       "back": "全部组织",
@@ -4896,7 +4942,9 @@
       "subscriptionsTitle": "订阅",
       "subscriptionsHint": "只读；请在 Stripe 中更改套餐，或使用权限覆盖。",
       "noSubscription": "暂无订阅。",
-      "cancelling": "将在当前周期结束时取消"
+      "cancelling": "将在当前周期结束时取消",
+      "planTitle": "套餐、访问权限和试用",
+      "planHint": "通过员工覆盖设置更改级别或访问权限，或结束试用。每次更改都需要原因并会被审计。"
     },
     "status": {
       "trialing": "试用中",
