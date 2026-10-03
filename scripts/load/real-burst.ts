@@ -80,8 +80,9 @@ async function main(): Promise<void> {
     throw new Error('the organisation needs full access (a plan) to generate');
   }
   const tier = entitlement.tier as PlanTier;
+  const typical = tier === 'ENTERPRISE' ? undefined : TYPICAL_COST_PENCE_PER_VIDEO[tier].short;
   out(
-    `${videos} × 30 s ${tier} shorts; typical ${TYPICAL_COST_PENCE_PER_VIDEO[tier].short}p each, capped at ${PER_VIDEO_BUDGET_PENCE}p (queue priority ${PLAN_CATALOGUE[tier].queuePriority})`,
+    `${videos} × 30 s ${tier} shorts; typical ${typical ?? '?'}p each, capped at ${PER_VIDEO_BUDGET_PENCE}p (queue priority ${PLAN_CATALOGUE[tier].queuePriority})`,
   );
   const queue = createBullJobQueue(redisConnectionFromEnv());
   const started = Date.now();

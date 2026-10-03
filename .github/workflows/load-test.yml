@@ -12,7 +12,7 @@ name: Load test
 on:
   # A push to a load-test branch runs everything (workflow_dispatch needs the file on main first).
   push:
-    branches: ['p20-load-test', 'load-test/**']
+    branches: ['load-test/**']
   workflow_dispatch:
     inputs:
       scenarios:
