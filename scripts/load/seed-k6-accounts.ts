@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { PrismaClient } from '@prisma/client';
-import { hashPassword } from 'better-auth/crypto';
+import { createArgon2Hasher } from '../../src/lib/auth/password';
 import { assertFakeProvidersAllowed } from '../../src/lib/studio/load-test/guard';
 
 // BACKLOG 20.29 — accounts for the 200-user k6 run (load-test/k6/studio-users.js), on a DISPOSABLE
@@ -55,7 +55,7 @@ async function main(): Promise<void> {
   const origin = (process.env.APP_URL ?? baseUrl).replace(/\/$/, '');
   const db = new PrismaClient();
   const run = randomUUID().slice(0, 6);
-  const passwordHash = await hashPassword(PASSWORD);
+  const passwordHash = await createArgon2Hasher().hash(PASSWORD);
   const accounts: Array<{
     email: string;
     cookie: string;
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
     }
     for (let u = 0; u < Number(args['users-per-org']); u += 1) {
       const email = `k6-${run}-${o}-${u}@example.test`;
-      // Users and their password credential are written directly (Better Auth's own scrypt hash):
+      // Users and their password credential are written directly (the app's argon2id hasher, src/lib/auth/password.ts):
       // a production-like stack keeps sign-up closed until the legal texts are filled in
       // (src/lib/legal/readiness.ts). Signing IN is the real endpoint, so the session is genuine.
       const user = await db.user.create({

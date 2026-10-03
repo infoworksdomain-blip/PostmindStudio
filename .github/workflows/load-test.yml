@@ -32,6 +32,8 @@ env:
 
 jobs:
   pipeline:
+    # A push to load-test/api-* runs only the 200-user stack test.
+    if: ${{ !startsWith(github.ref_name, 'load-test/api') }}
     runs-on: ubuntu-latest
     timeout-minutes: 240
     services:
