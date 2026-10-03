@@ -228,9 +228,7 @@
       },
       "createBlocked": {
         "readOnly": "Tu cuenta es de solo lectura. Actualiza el pago para crear vídeos.",
-        "noPlan": "Elige un plan para crear vídeos.",
-        "readOnlyAction": "Actualizar el pago",
-        "noPlanAction": "Ver planes"
+        "readOnlyAction": "Actualizar el pago"
       }
     }
   },

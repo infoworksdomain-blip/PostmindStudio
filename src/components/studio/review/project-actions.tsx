@@ -59,7 +59,7 @@ export function ProjectActions({
       {GENERATABLE.has(state) && state !== 'READY_FOR_REVIEW' && (
         <Button
           onClick={generate}
-          disabled={busy || block !== null}
+          disabled={busy || block === 'read_only'}
           aria-describedby={block ? ACCOUNT_BANNER_ID : undefined}
         >
           {pending === 'generate' ? (

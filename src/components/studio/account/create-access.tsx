@@ -4,18 +4,17 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useMe } from './use-me';
 
-// A read-only organisation (payment overdue, subscription ended) or one with no plan yet cannot
-// create or generate: the server answers 402 (src/lib/studio/billing/access-gate.ts). This
-// mirrors that on the screen, so the create buttons are disabled with a visible reason and a link
-// to billing instead of a click that appears to do nothing. The server stays the authority.
+// A read-only organisation (payment overdue, subscription ended) cannot create or generate: the
+// server answers 402 billing_required (src/lib/studio/billing/access-gate.ts) to every mutation.
+// This mirrors that on the screen: the create buttons are disabled, aria-describedby points at an
+// inline reason with a link to billing, instead of a click that appears to do nothing. The server
+// stays the authority. An organisation with no plan yet keeps its buttons: the click opens the
+// "choose a plan" dialog (billing/upgrade-dialog.tsx) and a slideshow draft still works.
 
-export type CreateBlock = 'read_only' | 'none';
-
-/** Why this organisation cannot create right now, or null (still loading counts as allowed). */
-export function useCreateBlock(): CreateBlock | null {
+/** True when this organisation is read-only (still loading counts as not blocked). */
+export function useCreateBlock(): 'read_only' | null {
   const { data } = useMe();
-  const access = data?.me?.plan?.access;
-  return access === 'read_only' || access === 'none' ? access : null;
+  return data?.me?.plan?.access === 'read_only' ? 'read_only' : null;
 }
 
 /** Id of the notice below, for aria-describedby on the disabled button. */
@@ -25,21 +24,20 @@ export function CreateBlockedNotice({
   block,
   className,
 }: {
-  block: CreateBlock | null;
+  block: 'read_only' | null;
   className?: string;
 }) {
   const t = useTranslations('shell.banners.createBlocked');
   if (!block) return null;
-  const readOnly = block === 'read_only';
   return (
     <p
       id={CREATE_BLOCK_NOTICE_ID}
       role="status"
       className={className ?? 'text-sm text-destructive'}
     >
-      {readOnly ? t('readOnly') : t('noPlan')}{' '}
+      {t('readOnly')}{' '}
       <Link href="/settings/billing" className="font-medium underline underline-offset-4">
-        {readOnly ? t('readOnlyAction') : t('noPlanAction')}
+        {t('readOnlyAction')}
       </Link>
     </p>
   );

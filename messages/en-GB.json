@@ -228,9 +228,7 @@
       },
       "createBlocked": {
         "readOnly": "Your account is read-only. Update payment to create videos.",
-        "noPlan": "Choose a plan to create videos.",
-        "readOnlyAction": "Update payment",
-        "noPlanAction": "See plans"
+        "readOnlyAction": "Update payment"
       }
     }
   },

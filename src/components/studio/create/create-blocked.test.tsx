@@ -50,15 +50,12 @@ describe('Create when the organisation cannot create', () => {
     expect(api.find('POST', '/projects')).toHaveLength(0);
   });
 
-  it('no plan yet: Generate is disabled and the notice offers the plans', async () => {
+  it('no plan yet: Generate stays enabled (the click opens the choose-a-plan dialog)', async () => {
     mockFetch([me('none')]);
     renderWithSWR(<CreateScreen initialReference={null} />);
-    expect(await screen.findByText(/Choose a plan to create videos/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Generate' })).toBeDisabled();
-    expect(screen.getByRole('link', { name: 'See plans' })).toHaveAttribute(
-      'href',
-      '/settings/billing',
-    );
+    await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Spring menu launch');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Generate' })).toBeEnabled());
+    expect(screen.queryByText(/read-only/)).not.toBeInTheDocument();
   });
 
   it('full access: Generate stays enabled and no notice is shown', async () => {

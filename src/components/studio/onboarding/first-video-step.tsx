@@ -157,7 +157,7 @@ export function FirstVideoStep({
           <div>
             <Button
               onClick={() => void create()}
-              disabled={creating || block !== null}
+              disabled={creating || block === 'read_only'}
               aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
             >
               {creating ? <Loader2 className="animate-spin" /> : <Clapperboard />}

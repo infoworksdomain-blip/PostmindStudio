@@ -228,9 +228,7 @@
       },
       "createBlocked": {
         "readOnly": "您的账户为只读状态。请更新付款信息以创建视频。",
-        "noPlan": "请选择套餐以创建视频。",
-        "readOnlyAction": "更新付款",
-        "noPlanAction": "查看套餐"
+        "readOnlyAction": "更新付款"
       }
     }
   },

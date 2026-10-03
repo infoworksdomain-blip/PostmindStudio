@@ -228,9 +228,7 @@
       },
       "createBlocked": {
         "readOnly": "Ihr Konto ist schreibgeschützt. Aktualisieren Sie die Zahlung, um Videos zu erstellen.",
-        "noPlan": "Wählen Sie einen Tarif, um Videos zu erstellen.",
-        "readOnlyAction": "Zahlung aktualisieren",
-        "noPlanAction": "Tarife ansehen"
+        "readOnlyAction": "Zahlung aktualisieren"
       }
     }
   },

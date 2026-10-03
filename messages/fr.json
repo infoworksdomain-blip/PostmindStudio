@@ -228,9 +228,7 @@
       },
       "createBlocked": {
         "readOnly": "Votre compte est en lecture seule. Mettez à jour votre paiement pour créer des vidéos.",
-        "noPlan": "Choisissez un forfait pour créer des vidéos.",
-        "readOnlyAction": "Mettre à jour le paiement",
-        "noPlanAction": "Voir les forfaits"
+        "readOnlyAction": "Mettre à jour le paiement"
       }
     }
   },

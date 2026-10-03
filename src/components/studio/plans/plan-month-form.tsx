@@ -293,7 +293,7 @@ export function PlanMonthForm() {
             <Button
               type="submit"
               size="lg"
-              disabled={submitting || block !== null}
+              disabled={submitting || block === 'read_only'}
               aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
             >
               {submitting ? <Loader2 className="animate-spin" /> : <CalendarRange />}
