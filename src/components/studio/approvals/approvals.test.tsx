@@ -57,7 +57,13 @@ describe('helpers', () => {
       'Client sign-off: rejected at step 2 of 2',
     );
     expect(stepIndicatorText(status({ workflow: null }))).toBe('');
-    expect(describeAppliesTo(CLIENT_SIGN_OFF.appliesTo)).toBe('Applies to business biz_1 · TikTok');
+    // While the business list loads, and when a business is gone, the raw id is never shown.
+    expect(describeAppliesTo(CLIENT_SIGN_OFF.appliesTo)).toBe(
+      'Applies to business a business · TikTok',
+    );
+    expect(describeAppliesTo(CLIENT_SIGN_OFF.appliesTo, {})).toBe(
+      'Applies to business a removed business · TikTok',
+    );
     expect(describeAppliesTo(CLIENT_SIGN_OFF.appliesTo, { biz_1: 'Leeds Sourdough' })).toBe(
       'Applies to business Leeds Sourdough · TikTok',
     );
@@ -96,14 +102,33 @@ describe('helpers', () => {
 
 describe('ApprovalWorkflowsScreen', () => {
   it('lists workflows with their ordered steps', async () => {
-    mockFetch([{ match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } }]);
+    mockFetch([
+      { match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } },
+      {
+        match: '/businesses',
+        body: { ok: true, data: [{ id: 'biz_1', name: 'Leeds Sourdough' }] },
+      },
+    ]);
     renderWithSWR(<ApprovalWorkflowsScreen />);
     const list = await screen.findByRole('list', { name: 'Approval workflows' });
     expect(within(list).getByText('Client sign-off')).toBeInTheDocument();
-    expect(within(list).getByText('Applies to business biz_1 · TikTok')).toBeInTheDocument();
+    expect(within(list).queryByText(/biz_1/)).not.toBeInTheDocument();
     const steps = within(list).getByRole('list', { name: 'Client sign-off steps' });
     expect(steps).toHaveTextContent(/Step 1:\s*admin/);
     expect(steps).toHaveTextContent(/Step 2:\s*2 client reviewers/);
+  });
+
+  it('says "a removed business" and warns when the business is not in the organisation', async () => {
+    mockFetch([
+      { match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } },
+      { match: '/businesses', body: { ok: true, data: [{ id: 'biz_2', name: 'Other Bakery' }] } },
+    ]);
+    renderWithSWR(<ApprovalWorkflowsScreen />);
+    expect(
+      await screen.findByText('Applies to business a removed business · TikTok'),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/no longer applies/);
+    expect(screen.queryByText(/biz_1/)).not.toBeInTheDocument();
   });
 
   it('shows the business name, not its id, on the card', async () => {
@@ -121,9 +146,13 @@ describe('ApprovalWorkflowsScreen', () => {
     expect(screen.queryByText(/biz_1/)).not.toBeInTheDocument();
   });
 
-  it('creates a two-step workflow', async () => {
+  it('creates a two-step workflow, picking the business by name', async () => {
     const { calls } = mockFetch([
       { match: '/approval-workflows', body: { ok: true, data: [] } },
+      {
+        match: '/businesses',
+        body: { ok: true, data: [{ id: 'biz_1', name: 'Leeds Sourdough' }] },
+      },
       {
         match: '/approval-workflows',
         method: 'POST',
@@ -141,7 +170,13 @@ describe('ApprovalWorkflowsScreen', () => {
     const approvers = within(form).getAllByLabelText('Approvers');
     await user.clear(approvers[1] as HTMLElement);
     await user.type(approvers[1] as HTMLElement, '2');
-    await user.type(within(form).getByLabelText('Business ids (comma-separated)'), 'biz_1');
+    const picker = within(form).getByRole('group', { name: 'Businesses' });
+    expect(within(form).queryByLabelText(/Business ids/)).not.toBeInTheDocument();
+    await user.click(await within(picker).findByRole('button', { name: 'Leeds Sourdough' }));
+    expect(within(picker).getByRole('button', { name: 'Leeds Sourdough' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await user.click(within(form).getByRole('button', { name: 'TikTok' }));
     await user.click(within(form).getByRole('button', { name: 'Create workflow' }));
     await waitFor(() =>
@@ -153,6 +188,29 @@ describe('ApprovalWorkflowsScreen', () => {
         ],
         appliesTo: { businessIds: ['biz_1'], platforms: ['tiktok'], tags: [] },
       }),
+    );
+  });
+
+  it('keeps a saved business the list no longer has, so it can be removed', async () => {
+    mockFetch([
+      { match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } },
+      { match: '/businesses', body: { ok: true, data: [{ id: 'biz_2', name: 'Other Bakery' }] } },
+    ]);
+    const user = userEvent.setup();
+    renderWithSWR(<ApprovalWorkflowsScreen />);
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
+    const picker = within(screen.getByRole('form', { name: 'Edit Client sign-off' })).getByRole(
+      'group',
+      { name: 'Businesses' },
+    );
+    const stale = within(picker).getByRole('button', { name: 'a removed business' });
+    expect(stale).toHaveAttribute('aria-pressed', 'true');
+    await user.click(stale);
+    // Unselected, the removed business drops out of the choices.
+    expect(within(picker).queryByRole('button', { name: 'a removed business' })).toBeNull();
+    expect(within(picker).getByRole('button', { name: 'Other Bakery' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
     );
   });
 
@@ -256,6 +314,10 @@ describe('approval workflows localisation', () => {
   it('renders the workflows screen and the step indicator in Simplified Chinese', async () => {
     mockFetch([
       { match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } },
+      {
+        match: '/businesses',
+        body: { ok: true, data: [{ id: 'biz_1', name: 'Leeds Sourdough' }] },
+      },
       { match: '/projects/prj_1/approval', body: { ok: true, approval: status() } },
     ]);
     renderWithSWR(
@@ -268,7 +330,7 @@ describe('approval workflows localisation', () => {
       ),
     );
     expect(await screen.findByRole('heading', { level: 1, name: '审批流程' })).toBeInTheDocument();
-    expect(await screen.findByText('适用于：商家 biz_1 · TikTok')).toBeInTheDocument();
+    expect(await screen.findByText('适用于：商家 Leeds Sourdough · TikTok')).toBeInTheDocument();
     const region = await screen.findByRole('region', { name: '审批步骤' });
     expect(within(region).getByRole('status')).toHaveTextContent(
       '第 2 步，共 2 步——等待客户审核人（已获 1/2 项批准）',

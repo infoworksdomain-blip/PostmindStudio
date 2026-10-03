@@ -118,7 +118,7 @@ export function MonthGrid({
                 aria-hidden
                 className={cn(
                   'tabular grid size-6 place-items-center self-end rounded-full text-xs',
-                  inMonth ? 'text-foreground' : 'text-muted-foreground/60',
+                  inMonth ? 'text-foreground' : 'text-muted-foreground',
                   isToday && 'bg-primary font-semibold text-primary-foreground',
                 )}
               >

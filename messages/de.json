@@ -3647,12 +3647,13 @@
       "addStep": "Schritt hinzufügen",
       "appliesTo": "Gilt für",
       "appliesToHelp": "Lassen Sie alles leer, damit der Workflow für jedes Projekt gilt. Passen mehrere Workflows, gewinnt der spezifischste (Unternehmen, dann Tags, dann Plattformen).",
-      "businessIds": "Unternehmens-IDs (durch Kommas getrennt)",
-      "addCurrentBusiness": "Aktuelles Unternehmen hinzufügen",
       "platforms": "Plattformen",
       "projectTags": "Projekt-Tags (durch Kommas getrennt)",
       "save": "Workflow speichern",
-      "create": "Workflow erstellen"
+      "create": "Workflow erstellen",
+      "businesses": "Unternehmen",
+      "businessesHelp": "Wählen Sie die Unternehmen, für die das gilt. Ohne Auswahl gilt es für alle Unternehmen.",
+      "noBusinesses": "Noch keine Unternehmen. Legen Sie eines auf der Seite „Unternehmen“ an."
     },
     "problems": {
       "name": "Geben Sie dem Workflow einen Namen.",
@@ -3673,7 +3674,10 @@
       "every": "Gilt für jedes Projekt",
       "some": "Gilt für {targets}",
       "businesses": "{count, plural, one {Unternehmen {ids}} other {Unternehmen {ids}}}",
-      "tagged": "mit Tag {tags}"
+      "tagged": "mit Tag {tags}",
+      "aBusiness": "ein Unternehmen",
+      "removedBusiness": "ein entferntes Unternehmen",
+      "removedWarning": "{count, plural, one {Dieses Unternehmen wurde entfernt; der Ablauf gilt dafür nicht mehr. Bearbeiten Sie den Ablauf und wählen Sie ein aktuelles Unternehmen.} other {Diese Unternehmen wurden entfernt; der Ablauf gilt dafür nicht mehr. Bearbeiten Sie den Ablauf und wählen Sie aktuelle Unternehmen.}}"
     },
     "indicator": {
       "regionAria": "Freigabeschritte",

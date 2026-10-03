@@ -27,8 +27,8 @@ const ROLE = /^[a-z][a-z0-9_:-]{0,63}$/;
 
 interface Props {
   initial?: ApprovalWorkflow;
-  /** The business selected in the top bar, offered as a one-click appliesTo entry. */
-  currentBusinessId?: string | null;
+  /** The organisation's businesses, offered as a picker (the stored value is each one's id). */
+  businesses: ReadonlyArray<{ id: string; name: string }>;
   saving: boolean;
   onSubmit: (input: WorkflowInput) => void;
   onCancel: () => void;
@@ -163,9 +163,10 @@ function StepRow({
   );
 }
 
-export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onCancel }: Props) {
+export function WorkflowForm({ initial, businesses, saving, onSubmit, onCancel }: Props) {
   const t = useTranslations('approvals.form');
   const tc = useTranslations('common.actions');
+  const tApplies = useTranslations('approvals.appliesTo');
   const f = useFormat();
   const problemMessage = useProblemMessage();
   const id = useId();
@@ -173,7 +174,7 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
   const [steps, setSteps] = useState<WorkflowStep[]>(
     initial?.steps ?? [{ role: 'admin', minApprovers: 1 }],
   );
-  const [businesses, setBusinesses] = useState(initial?.appliesTo.businessIds.join(', ') ?? '');
+  const [businessIds, setBusinessIds] = useState<string[]>(initial?.appliesTo.businessIds ?? []);
   const [tags, setTags] = useState(initial?.appliesTo.tags.join(', ') ?? '');
   const [platforms, setPlatforms] = useState<string[]>(initial?.appliesTo.platforms ?? []);
   const [problem, setProblem] = useState<WorkflowProblem | null>(null);
@@ -184,7 +185,7 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
       name: name.trim(),
       steps,
       appliesTo: {
-        businessIds: parseList(businesses),
+        businessIds,
         platforms,
         tags: parseList(tags).map((t) => t.toLowerCase()),
       },
@@ -194,6 +195,19 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
     if (!invalid) onSubmit(input);
   };
 
+  const toggleBusiness = (businessId: string) =>
+    setBusinessIds((cur) =>
+      cur.includes(businessId) ? cur.filter((x) => x !== businessId) : [...cur, businessId],
+    );
+  // A saved id the list no longer holds (a deleted business) stays visible, as "a removed business"
+  // (never its raw id), so it can be unselected.
+  const knownIds = new Set(businesses.map((b) => b.id));
+  const businessChoices = [
+    ...businesses,
+    ...businessIds
+      .filter((b) => !knownIds.has(b))
+      .map((b) => ({ id: b, name: tApplies('removedBusiness') })),
+  ];
   const togglePlatform = (p: string) =>
     setPlatforms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
 
@@ -245,26 +259,40 @@ export function WorkflowForm({ initial, currentBusinessId, saving, onSubmit, onC
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-1 text-sm font-medium">{t('appliesTo')}</legend>
         <p className="text-xs text-muted-foreground">{t('appliesToHelp')}</p>
-        <div className="flex flex-col gap-1">
-          <Label htmlFor={`${id}-biz`}>{t('businessIds')}</Label>
-          <div className="flex gap-2">
-            <Input
-              id={`${id}-biz`}
-              value={businesses}
-              onChange={(e) => setBusinesses(e.target.value)}
-            />
-            {currentBusinessId && !parseList(businesses).includes(currentBusinessId) && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  setBusinesses([...parseList(businesses), currentBusinessId].join(', '))
-                }
-              >
-                {t('addCurrentBusiness')}
-              </Button>
-            )}
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm" id={`${id}-businesses`}>
+            {t('businesses')}
+          </span>
+          {businessChoices.length === 0 ? (
+            <p className="text-xs text-muted-foreground">{t('noBusinesses')}</p>
+          ) : (
+            <div
+              role="group"
+              aria-labelledby={`${id}-businesses`}
+              className="flex flex-wrap gap-1.5"
+            >
+              {businessChoices.map((b) => {
+                const on = businessIds.includes(b.id);
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleBusiness(b.id)}
+                    className={cn(
+                      'rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
+                      on
+                        ? 'border-foreground bg-foreground text-background'
+                        : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+                    )}
+                  >
+                    {b.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">{t('businessesHelp')}</p>
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="text-sm" id={`${id}-platforms`}>

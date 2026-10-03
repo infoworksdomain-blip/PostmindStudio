@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { accessDecision } from '@/lib/studio/billing/access-gate';
+import {
+  accessDecision,
+  READ_ONLY_ALLOWLIST,
+  SPEND_ROUTES,
+} from '@/lib/studio/billing/access-gate';
 import { isLocale } from '@/lib/i18n/locales';
-import { demoAccessDecision } from '../../demo/api/billing-access';
+import {
+  demoAccessDecision,
+  READ_ONLY_ALLOWLIST as DEMO_READ_ONLY_ALLOWLIST,
+  SPEND_ROUTES as DEMO_SPEND_ROUTES,
+} from '../../demo/api/billing-access';
 import { isBillingStateId, parseCheckoutIntent } from '../../demo/api/billing-state';
 import { isKnownRoute, splitHref } from '../../demo/routes';
 import { FEATURE_SECTIONS, featureLinks } from '../../demo/tour/features-data';
@@ -104,7 +112,33 @@ describe('demo access gate', () => {
     '/businesses/b1/scan-website',
     '/admin/kill-switch',
     '/brand-kits',
+    // 20.9 month plans spend provider money like generate does (pass 2: the demo list lacked them).
+    '/content-plans',
+    '/content-plans/c1',
+    '/content-plans/c1/generate',
+    '/content-plans/c1/redraft',
+    '/content-plans/c1/cancel',
+    '/content-plans/c1/items',
+    '/content-plans/c1/items/i1/regenerate',
   ];
+  it('repeats the real route lists exactly (same patterns, same order)', () => {
+    expect(DEMO_SPEND_ROUTES.map((re) => re.source)).toEqual(SPEND_ROUTES.map((re) => re.source));
+    expect(DEMO_READ_ONLY_ALLOWLIST.map((re) => re.source)).toEqual(
+      READ_ONLY_ALLOWLIST.map((re) => re.source),
+    );
+  });
+
+  it('stops a plan-less demo organisation planning a month', () => {
+    expect(demoAccessDecision('none', 'POST', '/content-plans')).toEqual({
+      allowed: false,
+      code: 'plan_required',
+    });
+    expect(demoAccessDecision('read_only', 'POST', '/content-plans/c1/generate')).toEqual({
+      allowed: false,
+      code: 'billing_required',
+    });
+  });
+
   it.each(['full', 'read_only', 'none'] as const)(
     'matches the real accessDecision for access %s',
     (access) => {

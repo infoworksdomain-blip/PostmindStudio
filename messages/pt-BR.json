@@ -3647,12 +3647,13 @@
       "addStep": "Adicionar etapa",
       "appliesTo": "Aplica-se a",
       "appliesToHelp": "Deixe tudo vazio para aplicar a todos os projetos. Quando vários fluxos correspondem, vence o mais específico (negócio, depois tags, depois plataformas).",
-      "businessIds": "IDs de negócios (separados por vírgula)",
-      "addCurrentBusiness": "Adicionar o negócio atual",
       "platforms": "Plataformas",
       "projectTags": "Tags do projeto (separadas por vírgula)",
       "save": "Salvar fluxo",
-      "create": "Criar fluxo"
+      "create": "Criar fluxo",
+      "businesses": "Negócios",
+      "businessesHelp": "Escolha os negócios aos quais isso se aplica. Sem seleção, vale para todos.",
+      "noBusinesses": "Ainda não há negócios. Adicione um na página Negócio."
     },
     "problems": {
       "name": "Dê um nome ao fluxo.",
@@ -3673,7 +3674,10 @@
       "every": "Aplica-se a todos os projetos",
       "some": "Aplica-se a: {targets}",
       "businesses": "{count, plural, one {negócio {ids}} other {negócios {ids}}}",
-      "tagged": "com a tag {tags}"
+      "tagged": "com a tag {tags}",
+      "aBusiness": "um negócio",
+      "removedBusiness": "um negócio removido",
+      "removedWarning": "{count, plural, one {Esse negócio foi removido, então este fluxo não se aplica mais a ele. Edite o fluxo e escolha um negócio atual.} other {Esses negócios foram removidos, então este fluxo não se aplica mais a eles. Edite o fluxo e escolha negócios atuais.}}"
     },
     "indicator": {
       "regionAria": "Etapas de aprovação",

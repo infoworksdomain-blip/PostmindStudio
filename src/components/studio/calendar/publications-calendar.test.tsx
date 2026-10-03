@@ -149,7 +149,8 @@ describe('PublicationsCalendar', () => {
       return ok({ data: [pub(`p${n}`, {})], nextCursor: `c${n}` });
     });
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
-    expect(await screen.findByRole('status')).toHaveTextContent('Showing the first');
+    // The loading skeleton is a status too (labelled), so find the truncation notice by its text.
+    expect(await screen.findByText(/Showing the first/)).toHaveAttribute('role', 'status');
     expect(api.find('GET', '/publications')).toHaveLength(MAX_PAGES);
     expect(api.find('GET', '/publications')[1]!.url.searchParams.get('cursor')).toBe('c1');
   });

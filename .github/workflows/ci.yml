@@ -94,6 +94,83 @@ jobs:
             --shadow-database-url "$SHADOW_DATABASE_URL" \
             --exit-code
 
+  pipeline-e2e:
+    # BACKLOG 20.31: a STUBBED full-pipeline run on real Redis 7, Postgres 17 + pgvector and FFmpeg.
+    # The real workers, router, cost guard, quality gate and publishers run; every provider is the
+    # 20.29 simulation (STUDIO_FAKE_PROVIDERS=1, src/lib/studio/load-test/) and the social platforms
+    # answer a dummy key with 401. No paid API is called, nothing leaves the runner. One process
+    # per scenario (scripts/qa/pipeline-e2e.ts), Redis flushed between them. Runs in parallel with
+    # the other jobs (about 6 minutes), so it does not lengthen the pipeline.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: postmind
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U studio -d postmind"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      STUDIO_FAKE_PROVIDERS: '1'
+      REDIS_URL: redis://localhost:6379/3
+      DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio&connection_limit=10&pool_timeout=20
+      STUDIO_MODE: standalone
+      APP_URL: http://127.0.0.1:3010
+      LOG_LEVEL: warn
+      # Placeholders only (not secrets): storage is the harness's local disk; no mail is sent
+      # (no email worker runs).
+      STORAGE_PROVIDER: s3
+      AWS_REGION: eu-west-2
+      S3_BUCKET_ASSETS: pe-assets
+      S3_BUCKET_RENDERS: pe-renders
+      S3_BUCKET_THUMBNAILS: pe-thumbnails
+      S3_BUCKET_LIBRARY: pe-library
+      STUDIO_USD_TO_GBP_RATE: '0.79'
+      BETTER_AUTH_SECRET: ci-pipeline-e2e-placeholder-secret-0123456789
+      STUDIO_UNSUBSCRIBE_SECRET: ci-pipeline-e2e-placeholder-unsubscribe-01
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+      RESEND_API_KEY: re_ci_placeholder
+      STUDIO_EMAIL_FROM: 'PostMind Studio CI <ci@example.test>'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy && npx prisma db seed
+      - name: Install ffmpeg (Ubuntu repository)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+      - name: Stubbed pipeline scenarios
+        run: |
+          mkdir -p ops/results/pipeline-e2e
+          status=0
+          for scenario in full-brief slideshow failover-429 failover-credits cost-cap-project cost-cap-org; do
+            echo "::group::$scenario"
+            node -e "const R=require('ioredis');const r=new R(process.env.REDIS_URL);r.flushdb().then(()=>r.quit())"
+            npx tsx scripts/qa/pipeline-e2e.ts --scenario "$scenario" --timeout-min 6 || status=1
+            echo "::endgroup::"
+            [ -f "ops/results/pipeline-e2e/$scenario.md" ] && cat "ops/results/pipeline-e2e/$scenario.md" >> "$GITHUB_STEP_SUMMARY"
+          done
+          exit $status
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pipeline-e2e
+          path: ops/results/pipeline-e2e
+          retention-days: 14
+
   ops-config:
     # Phase 12 alerting: Prometheus rules parse and behave (promtool unit tests), and the
     # Alertmanager routing is valid and sends each severity to the right receiver.
@@ -392,7 +469,7 @@ jobs:
     # BuildKit provenance mode=max is attached as well
     # (https://docs.docker.com/build/ci/github-actions/attestations/).
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [verify, database, ops-config, docker, vps-config]
+    needs: [verify, database, pipeline-e2e, ops-config, docker, vps-config]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { ACCOUNT_BANNER_ID } from '../account/account-banners';
 import { useCreateBlock } from '../account/create-access';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Loader2, Play, RotateCw, Square, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -87,6 +87,8 @@ export function ApprovalBar({
   const { pending, run, busy } = useAction();
   const [mode, setMode] = useState<'approve' | 'reject' | null>(null);
   const [note, setNote] = useState('');
+  const approveRef = useRef<HTMLButtonElement>(null);
+  const rejectRef = useRef<HTMLButtonElement>(null);
   const canApprove = project.state === 'READY_FOR_REVIEW';
   const canReject = canApprove || project.state === 'QUALITY_FAILED';
   // The API answers 403 to anyone without studio:project:approve: say so instead of offering buttons.
@@ -101,6 +103,13 @@ export function ApprovalBar({
         {t('noPermission')}
       </section>
     );
+
+  /** Closes the note form (Back or Escape) and returns focus to the button that opened it. */
+  function close() {
+    const opener = mode === 'reject' ? rejectRef : approveRef;
+    setMode(null);
+    requestAnimationFrame(() => opener.current?.focus());
+  }
 
   async function submit() {
     if (!mode) return;
@@ -120,12 +129,21 @@ export function ApprovalBar({
     <section
       aria-label={t('aria')}
       className="flex flex-col gap-3 rounded-xl border border-foreground/15 bg-card p-4"
+      // Escape anywhere in the bar (the note, Back, or the Approve/Reject button that opened it,
+      // which keeps focus) closes the note form; not while the decision is saving.
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && mode && !busy) {
+          e.preventDefault();
+          close();
+        }
+      }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">{canApprove ? t('readyPrompt') : t('qualityFailedPrompt')}</p>
         <div className="flex gap-2">
           {canApprove && (
             <Button
+              ref={approveRef}
               onClick={() => setMode('approve')}
               aria-pressed={mode === 'approve'}
               disabled={busy}
@@ -134,6 +152,7 @@ export function ApprovalBar({
             </Button>
           )}
           <Button
+            ref={rejectRef}
             variant="destructive"
             onClick={() => setMode('reject')}
             aria-pressed={mode === 'reject'}
@@ -155,7 +174,7 @@ export function ApprovalBar({
             onChange={(e) => setNote(e.target.value)}
           />
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setMode(null)} disabled={busy}>
+            <Button variant="ghost" onClick={close} disabled={busy}>
               {t('back')}
             </Button>
             <Button

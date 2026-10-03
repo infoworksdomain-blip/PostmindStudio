@@ -140,7 +140,9 @@ function HeroVisual() {
         className="absolute inset-x-[6%] bottom-0 z-20 flex items-center justify-between gap-3 rounded-lg bg-foreground px-4 py-3 font-mono text-[0.7rem] tracking-widest text-background uppercase shadow-xl"
       >
         <span>{t('slate.scene')}</span>
-        <span className="text-primary">● {t('slate.take')}</span>
+        <span className="text-[oklch(0.75_0.16_38)] dark:text-[oklch(0.5_0.19_35)]">
+          ● {t('slate.take')}
+        </span>
         <span dir="ltr">00:00:30:00</span>
       </div>
     </div>

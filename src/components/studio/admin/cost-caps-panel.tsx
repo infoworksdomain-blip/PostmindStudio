@@ -198,8 +198,11 @@ export function CostCapsPanel() {
                 cap: capText(caps.globalDaily.capPence),
               })}
               <SourceTag source={caps.sources.globalDaily} />
+              {/* Inside the dd: a dl may hold only dt / dd groups (axe definition-list). */}
+              <div className="mt-1.5">
+                <Meter percent={caps.globalDaily.percent} label={t('globalMeterAria')} />
+              </div>
             </dd>
-            <Meter percent={caps.globalDaily.percent} label={t('globalMeterAria')} />
           </div>
           <div className="grid gap-1.5">
             <dt className="text-xs text-muted-foreground">{t('orgProviderDaily')}</dt>
