@@ -12,6 +12,7 @@ import {
   SCRIPT_SAFETY_SCHEMA,
   SCRIPT_SAFETY_SYSTEM_PROMPT,
 } from '../../pipeline/script-safety';
+import { aiClipBudget, applyClipBudget, isAiShot } from '../../pipeline/clip-budget';
 import {
   availableTreatments,
   buildScriptPrompt,
@@ -119,6 +120,9 @@ export async function regenerateScriptPlan(
   }));
   const pinnedSec = pinned.reduce((sum, p) => sum + p.shot.durationSec, 0);
   const writeSec = Math.max(1, format.durationSec - pinnedSec);
+  // 20.25: pinned AI shots spend the script's AI clip budget first; the rewrite gets the rest.
+  const pinnedAi = pinned.filter((p) => isAiShot(p.shot.visualTreatment)).length;
+  const budget = Math.max(0, aiClipBudget(data.planTier, format.durationSec) - pinnedAi);
 
   // Layer 2 only
   const run = await runProvider(
@@ -132,6 +136,7 @@ export async function regenerateScriptPlan(
           treatments,
           restrictedTopics,
           language: script.language,
+          aiClipBudget: budget,
         }),
         reference?.scriptSupplement(format.durationSec, treatments),
         pinnedShotsSupplement(pinnedContext, format.durationSec),
@@ -145,8 +150,15 @@ export async function regenerateScriptPlan(
     deps,
   );
   const normalised = normaliseScript(jsonOutput(run.output), treatments, writeSec);
-  const written =
-    reference && pinned.length === 0 ? reference.apply(normalised, format.durationSec) : normalised;
+  const templated = reference && pinned.length === 0;
+  const written = applyClipBudget(
+    templated ? reference.apply(normalised, format.durationSec) : normalised,
+    {
+      budget,
+      targetSec: templated ? format.durationSec : writeSec,
+      keepDurations: Boolean(templated && reference.blueprint),
+    },
+  ).plan;
   const merged = mergePinnedShots(written.shots, pinned);
   const texts = merged.map((m) => (m.kind === 'pinned' ? m.shot.shot : m.shot));
   const plan = {

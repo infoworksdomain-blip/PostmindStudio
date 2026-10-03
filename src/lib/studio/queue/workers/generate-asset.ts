@@ -21,13 +21,16 @@ import {
   reuseAssetForShot,
   type FingerprintInput,
 } from '../../pipeline/asset-reuse';
+import { aiClipResolution, clipBudgetOf } from '../../pipeline/clip-budget';
 import { fitNarration } from '../../pipeline/narration-fit';
+import { availableTreatments } from '../../pipeline/scripting';
 import { resolveProjectBrandKit } from '../../pipeline/brand-resolve';
 import {
   findLibraryStill,
   isGenerationRefusal,
   keepGeneratedStill,
   stockStillForRefusal,
+  stockStillForScene,
 } from '../../pipeline/still-image';
 import { selectStockVoice } from '../../pipeline/voice-fit';
 import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
@@ -272,6 +275,7 @@ async function generatePresenterlessClip(
         prompt,
         durationSec,
         aspectRatio: shot.script.targetAspectRatio as AspectRatio,
+        resolution: aiClipResolution(data.planTier),
       },
     },
     deps,
@@ -335,7 +339,7 @@ async function recordLibraryStill(
   deps: PipelineDeps,
   shot: ShotWithScript,
   item: { id: string; s3Bucket: string; s3Key: string; widthPx: number; heightPx: number },
-  how: 'library' | 'stock_after_refusal',
+  how: 'library' | 'stock' | 'stock_after_refusal',
 ): Promise<StoredAsset> {
   const asset = await deps.db.$transaction(async (tx) => {
     const created = await tx.videoAsset.create({
@@ -401,6 +405,16 @@ async function generateStill(
   const regenerating = Boolean((shot.providerRouting as Record<string, unknown> | null)?.visual);
   const hit = regenerating ? null : await findLibraryStill(deps, scope, shot.sceneDescription);
   if (hit) return recordLibraryStill(deps, shot, hit, 'library');
+  // 20.25: a free stock image before a paid generation (not on an explicit regenerate).
+  const stocked = regenerating
+    ? null
+    : await stockStillForScene(
+        deps,
+        { ...scope, projectId: data.projectId },
+        { query: shot.sceneDescription, aspectRatio },
+        'shot',
+      );
+  if (stocked) return recordLibraryStill(deps, shot, stocked, 'stock');
   let run: ProviderRunResult;
   try {
     run = await runProvider(
@@ -420,8 +434,9 @@ async function generateStill(
       deps,
     );
   } catch (err) {
-    // A11.4 / 15.W6: a refused generation falls back to the closest stock match.
-    if (!isGenerationRefusal(err)) throw err;
+    // A11.4 / 15.W6: a refused generation falls back to the closest stock match (already tried
+    // above unless the shot is being regenerated).
+    if (!isGenerationRefusal(err) || !regenerating) throw err;
     const stock = await stockStillForRefusal(
       deps,
       { ...scope, projectId: data.projectId },
@@ -453,6 +468,56 @@ async function generateStill(
   return stored;
 }
 
+/**
+ * BACKLOG 20.25: a shot the AI clip budget turned into a still (pipeline/clip-budget.ts). Never a
+ * paid generation: the business's own image, then a stock image, else the composer draws a
+ * motion-graphics card (a text card when Shotstack is not the composer) from the shot's text.
+ */
+async function budgetStill(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+): Promise<StoredAsset | null> {
+  const scope = {
+    organisationId: data.organisationId,
+    businessId: shot.script.project.businessId,
+    planTier: data.planTier,
+  };
+  const regenerating = Boolean((shot.providerRouting as Record<string, unknown> | null)?.visual);
+  const hit = regenerating ? null : await findLibraryStill(deps, scope, shot.sceneDescription);
+  if (hit) return recordLibraryStill(deps, shot, hit, 'library');
+  const stock = await stockStillForScene(
+    deps,
+    { ...scope, projectId: data.projectId },
+    { query: shot.sceneDescription, aspectRatio: shot.script.targetAspectRatio },
+    'shot',
+  );
+  if (stock) return recordLibraryStill(deps, shot, stock, 'stock');
+  const card = availableTreatments(deps.registry).includes('MOTION_GRAPHICS')
+    ? ('MOTION_GRAPHICS' as const)
+    : ('TEXT_CARD' as const);
+  const current = await deps.db.videoShot.findUniqueOrThrow({
+    where: { id: shot.id },
+    select: { providerRouting: true },
+  });
+  const visual = { providerId: 'composer', chosenBy: 'clip_budget_card', candidates: [] };
+  await deps.db.videoShot.update({
+    where: { id: shot.id },
+    data: {
+      visualTreatment: card,
+      providerRouting: {
+        ...((current.providerRouting as Record<string, unknown> | null) ?? {}),
+        visual,
+      } as Prisma.InputJsonValue,
+    },
+  });
+  deps.logger.info(
+    { projectId: data.projectId, shotId: shot.id, treatment: card },
+    'no library or stock image for a clip-budget shot; the composer draws a card',
+  );
+  return null;
+}
+
 async function generateVisual(
   deps: PipelineDeps,
   shot: ShotWithScript,
@@ -467,11 +532,14 @@ async function generateVisual(
     case 'MOTION_GRAPHICS':
       return null; // rendered by the composer from the shot's text (15.B8: motion cards)
     case 'AI_CLIP': {
+      // 20.25: BASIC clips at 480p (Seedance); a 480p clip is never reused for a 720p shot.
+      const resolution = aiClipResolution(data.planTier);
       const fingerprint: FingerprintInput = {
         capability: 'text_to_video',
         prompt,
         durationSec: shot.durationSec,
         aspectRatio,
+        ...(resolution === '480p' && { seed: `resolution:${resolution}` }),
       };
       const reused = await reuse(deps, shot, data, {
         kind: 'VIDEO_CLIP',
@@ -491,6 +559,7 @@ async function generateVisual(
             prompt,
             durationSec: shot.durationSec,
             aspectRatio,
+            resolution,
           },
         },
         deps,
@@ -505,7 +574,9 @@ async function generateVisual(
       );
     }
     case 'IMAGE_STILL':
-      return generateStill(deps, shot, data, prompt);
+      return clipBudgetOf(shot.providerRouting)
+        ? budgetStill(deps, shot, data)
+        : generateStill(deps, shot, data, prompt);
     case 'STOCK_FOOTAGE': {
       // Phase 15 (Track C): Storyblocks video, then Pexels video. The scene description is the
       // search text; the adapter returns the licence facts, kept in the asset's metadata.

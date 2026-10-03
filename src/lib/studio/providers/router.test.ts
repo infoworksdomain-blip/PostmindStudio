@@ -47,7 +47,8 @@ const aiClip = (planTier: RouteInput['planTier'], extra: Partial<RouteInput> = {
 
 describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
-    ['BASIC', ['fal', 'replicate']],
+    // 20.25: the cheap configured providers first; fal / replicate have no adapter.
+    ['BASIC', ['seedance', 'kling', 'veo', 'fal', 'replicate']],
     ['STANDARD', ['seedance', 'kling', 'veo', 'runway', 'luma']],
     ['PLUS', ['seedance', 'kling', 'veo', 'runway', 'luma']],
     ['ENTERPRISE', ['seedance', 'kling', 'veo', 'runway', 'luma']],
@@ -511,8 +512,8 @@ describe('Veo as the AI_CLIP fallback after Seedance', () => {
 });
 
 // BACKLOG 20.23 — BytePlus Seedance is the FIRST AI_CLIP option on every tier with AI clips
-// (operator-approved order seedance → kling → veo → runway → luma); the tier picks the model (2.0 mini on
-// STANDARD, 2.5 on PLUS / ENTERPRISE and for shots over 15 s). Longer shots skip it.
+// (operator-approved order seedance → kling → veo → runway → luma); 2.0 mini on every tier, 2.5 for
+// shots over 15 s (20.25). Longer shots skip it.
 describe('Seedance AI_CLIP routing', () => {
   const noFetch = (() => {
     throw new Error('routing must not call the provider');
@@ -543,19 +544,42 @@ describe('Seedance AI_CLIP routing', () => {
       },
     });
 
+  it('BASIC (20.25): Seedance first at 480p, then Kling and Veo; never Runway or Luma', async () => {
+    const d = real(all());
+    const basic = clip('BASIC', 4);
+    const request = { ...basic, request: { ...basic.request, resolution: '480p' as const } };
+    const decision = await routeProvider(request, d);
+    expect(decision.providerId).toBe('seedance');
+    await openBreaker(d, 'seedance');
+    expect((await routeProvider(request, d)).providerId).toBe('veo');
+    await openBreaker(d, 'veo');
+    await expect(routeProvider(request, d)).rejects.toMatchObject({
+      details: {
+        candidates: [
+          { providerId: 'seedance', skipped: 'circuit_open' },
+          { providerId: 'kling', skipped: 'not_configured' },
+          { providerId: 'veo', skipped: 'circuit_open' },
+          { providerId: 'fal', skipped: 'not_configured' },
+          { providerId: 'replicate', skipped: 'not_configured' },
+        ],
+      },
+    });
+  });
+
   it.each(['STANDARD', 'PLUS', 'ENTERPRISE'] as const)('%s: Seedance goes first', async (tier) => {
     const decision = await routeProvider(clip(tier, 8), real(all()));
     expect(decision.providerId).toBe('seedance');
     expect(decision.candidates).toEqual([{ providerId: 'seedance' }]);
   });
 
-  it('the tier picks the model: 2.0 mini on STANDARD, 2.5 on PLUS (budget sees each price)', async () => {
+  it('20.25: every tier gets 2.0 mini; 2.5 only for shots over 15 s (budget sees each price)', async () => {
     const sd = seedance();
-    expect(sd.modelFor(8, 'STANDARD')).toBe('dreamina-seedance-2-0-mini-260615');
-    expect(sd.modelFor(8, 'PLUS')).toBe('dreamina-seedance-2-5-260628');
-    expect(sd.modelFor(8, 'ENTERPRISE')).toBe('dreamina-seedance-2-5-260628');
-    expect(sd.modelFor(20, 'STANDARD')).toBe('dreamina-seedance-2-5-260628');
-    expect(sd.estimateCostPence(clip('PLUS', 8).request)).toBeGreaterThan(
+    expect(sd.modelFor(8)).toBe('dreamina-seedance-2-0-mini-260615');
+    expect(sd.modelFor(20)).toBe('dreamina-seedance-2-5-260628');
+    expect(sd.estimateCostPence(clip('PLUS', 8).request)).toBe(
+      sd.estimateCostPence(clip('STANDARD', 8).request),
+    );
+    expect(sd.estimateCostPence(clip('STANDARD', 20).request)).toBeGreaterThan(
       sd.estimateCostPence(clip('STANDARD', 8).request),
     );
   });

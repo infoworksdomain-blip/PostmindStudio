@@ -205,7 +205,8 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
         model: 'ray-3.2',
         type: 'video',
         aspect_ratio: '9:16',
-        video: { resolution: '720p', duration: '10s' }, // 6s shots render as 10s clips
+        // 20.25: the 6 s AI shots are kept to 4 s, which Luma renders as its 5 s minimum.
+        video: { resolution: '720p', duration: '5s' },
       });
     }
 
@@ -214,7 +215,7 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
     for (const shot of clips) {
       expect(shot.state).toBe('READY');
       expect(shot.asset?.source).toBe('luma:ray-3.2');
-      expect(shot.asset?.costPence).toBe(68); // $0.90 per 10s clip at 0.75 → 68p
+      expect(shot.asset?.costPence).toBe(23); // 20.25: a 5 s clip ($0.30) at 0.75 → 23p (was 68p for 10 s)
       expect(shot.providerRouting).toMatchObject({
         visual: {
           providerId: 'luma',
@@ -233,7 +234,7 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
       _sum: { costPence: true },
       _count: true,
     });
-    expect(spend).toMatchObject({ _count: 2, _sum: { costPence: 136 } });
+    expect(spend).toMatchObject({ _count: 2, _sum: { costPence: 46 } }); // 2 × 23p (20.25)
     await approve(j, id);
   });
 

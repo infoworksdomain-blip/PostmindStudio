@@ -47,6 +47,13 @@ const VOICE_VOLUME = 1;
 export const MUSIC_UNDER_VOICE_VOLUME = 0.2;
 export const MUSIC_ALONE_VOLUME = 0.7;
 const CAPTION_HEIGHT_RATIO = 0.18;
+/**
+ * Ken Burns on stills (Shotstack clip `effect`; the slideshow planner uses the same names). 20.25:
+ * stills alternate a slow push in and pull out so a video with several image shots does not repeat
+ * one move. Both start or end at full size over a `cover` fit, so the frame is always filled (no
+ * letterbox bars for blackdetect); slides are not used here because they move the frame.
+ */
+export const STILL_EFFECTS = ['zoomIn', 'zoomOut'] as const;
 
 /** Pixel size of the layout per aspect ratio (short side 1080; 2160 for 4K presets). */
 export const outputDimensions = presetDimensions;
@@ -198,6 +205,8 @@ function visualClip(
   at: number,
   frame: { width: number; height: number },
   tracks: Tracks,
+  /** How many image shots came before this one (picks the Ken Burns move). */
+  stillIndex: number,
 ): void {
   const length = roundSec(shot.durationSec);
   const out = TRANSITION_MAP[shot.transitionOut ?? 'cut'];
@@ -242,7 +251,7 @@ function visualClip(
       start,
       length,
       fit: 'cover',
-      effect: 'zoomIn', // gentle Ken Burns on stills
+      effect: STILL_EFFECTS[stillIndex % STILL_EFFECTS.length], // gentle Ken Burns on stills
       ...transition,
     });
   } else {
@@ -336,8 +345,15 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
   const summaryShots: CompositionSummary['shots'] = [];
   const spans: MusicSpan[] = [];
   let start = introSec;
+  let stills = 0;
   for (const shot of input.shots) {
-    visualClip(input, shot, start, frame, tracks);
+    const isStill =
+      shot.visualKind === 'image' &&
+      Boolean(shot.visualSrc) &&
+      shot.visualTreatment !== 'TEXT_CARD' &&
+      shot.visualTreatment !== 'MOTION_GRAPHICS';
+    visualClip(input, shot, start, frame, tracks, stills);
+    if (isStill) stills += 1;
     const voiceClipSec = audioAndCaptions(input, shot, start, frame, tracks);
     summaryShots.push({
       shotId: shot.id ?? null,

@@ -188,7 +188,12 @@ export function buildCanaryAdapter(
       return new ElevenLabsMusicAdapter({ apiKey: key, ...media });
     case 'shotstack':
       // The staging key belongs to Shotstack's sandbox environment ("stage").
-      return new ShotstackAdapter({ apiKey: key, environment: 'stage', fetchImpl });
+      return new ShotstackAdapter({
+        apiKey: key,
+        environment: 'stage',
+        usdToGbpRate: RATE,
+        fetchImpl,
+      });
     case 'assemblyai':
       return new AssemblyAiAdapter({ apiKey: key, usdToGbpRate: RATE, fetchImpl });
     case 'storyblocks-audio':

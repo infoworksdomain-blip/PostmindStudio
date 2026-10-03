@@ -8,6 +8,7 @@ import type {
   ProviderRequest,
   ProviderSubmitResult,
 } from './interface';
+import { usdToPence } from './pricing';
 import { providerError } from './provider-errors';
 
 // BACKLOG 2.8 — Shotstack composition (Layers 6–7). Studio builds the edit decision list
@@ -22,8 +23,15 @@ import { providerError } from './provider-errors';
 export const PROVIDER_ID = 'shotstack';
 const ENVIRONMENTS = ['stage', 'v1'] as const;
 export type ShotstackEnvironment = (typeof ENVIRONMENTS)[number];
-/** Spec 6.5: "Shotstack: £0.02 per output second". The API docs publish no per-second rate. */
-export const PENCE_PER_OUTPUT_SEC = 2;
+/**
+ * BACKLOG 20.25: Shotstack's list price (shotstack.io/pricing, read 2026-10-03): pay-as-you-go
+ * $0.30 per rendered minute (subscriptions from $0.20), "1 credit is equal to 1 minute of video,
+ * regardless of resolution", and a render is "rounded down to the second" (30 s = 0.5 credits).
+ * The spec 6.5 estimate (£0.02 per output second, 60p for a 30 s short) was 5× the list price
+ * and was what Studio recorded, since Shotstack reports no per-render cost. The pay-as-you-go
+ * rate is used so the estimate never undercounts on a subscription.
+ */
+export const USD_PER_RENDERED_MINUTE = 0.3;
 const TYPICAL_LATENCY_SEC = 120; // spec 5.1: 30s–5min per output
 const TIMEOUT_MS = 30_000;
 
@@ -56,6 +64,8 @@ interface RenderStatus {
 export interface ShotstackAdapterOptions {
   apiKey: string;
   environment: string;
+  /** STUDIO_USD_TO_GBP_RATE: Shotstack bills in USD. */
+  usdToGbpRate: number;
   fetchImpl?: typeof fetch;
   now?: () => number;
 }
@@ -110,9 +120,10 @@ export class ShotstackAdapter implements ProviderAdapter {
   }
 
   estimateCostPence(request: ProviderRequest): number {
-    return request.capability === 'composition'
-      ? Math.ceil(request.outputDurationSec * PENCE_PER_OUTPUT_SEC)
-      : 0;
+    if (request.capability !== 'composition') return 0;
+    // Billed by the whole second, rounded down (pricing FAQ); at least one second.
+    const seconds = Math.max(1, Math.floor(request.outputDurationSec));
+    return usdToPence((seconds / 60) * USD_PER_RENDERED_MINUTE, this.options.usdToGbpRate);
   }
 
   async submit(request: ProviderRequest): Promise<ProviderSubmitResult> {

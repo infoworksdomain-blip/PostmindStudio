@@ -207,6 +207,7 @@ export function buildAdaptersFromKeys(
       new ShotstackAdapter({
         apiKey: shotstackKey,
         environment: envValue('SHOTSTACK_ENVIRONMENT') ?? 'stage',
+        usdToGbpRate,
       }),
     );
   }

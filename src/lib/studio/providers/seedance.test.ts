@@ -14,6 +14,7 @@ import {
   isArkBaseUrl,
   SeedanceAdapter,
   seedanceDuration,
+  seedanceFramePixels,
   seedanceOptionsFromEnv,
   seedanceTokens,
   SEEDANCE_RATIO,
@@ -92,26 +93,56 @@ describe('format and model mapping', () => {
     expect(sd.modelFor(Number.NaN)).toBeUndefined();
   });
 
-  it('PLUS / ENTERPRISE use the long model (2.5) for every shot; STANDARD / BASIC the default', () => {
+  it('every tier uses the default model for shots it can render (20.25: no 2.5 on PLUS)', () => {
     const { sd } = adapter([]);
-    expect(sd.modelFor(5, 'PLUS')).toBe('dreamina-seedance-2-5-260628');
-    expect(sd.modelFor(5, 'ENTERPRISE')).toBe('dreamina-seedance-2-5-260628');
-    expect(sd.modelFor(5, 'STANDARD')).toBe('dreamina-seedance-2-0-mini-260615');
-    expect(sd.modelFor(5, 'BASIC')).toBe('dreamina-seedance-2-0-mini-260615');
-    expect(sd.modelFor(5)).toBe('dreamina-seedance-2-0-mini-260615');
-    expect(sd.buildBody({ ...t2v, planTier: 'PLUS' })).toMatchObject({
-      model: 'dreamina-seedance-2-5-260628',
-      duration: 5,
-      ratio: '9:16',
-    });
-    // 5 s 9:16 on 2.5: 108,000 tokens × $10.7/M = $1.1556 → 86.67p → 87p
-    expect(sd.estimateCostPence({ ...t2v, planTier: 'PLUS' })).toBe(87);
+    for (const planTier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(sd.buildBody({ ...t2v, planTier })).toMatchObject({
+        model: 'dreamina-seedance-2-0-mini-260615',
+        duration: 5,
+        ratio: '9:16',
+        resolution: '720p',
+      });
+      // 5 s 9:16 on 2.0 mini at 720p: 108,000 tokens × $3.5/M = $0.378 → 28.35p → 29p
+      expect(sd.estimateCostPence({ ...t2v, planTier })).toBe(29);
+    }
   });
 
-  it('PLUS with a 15 s long model: that model up to 15 s, nothing for 20 s', () => {
+  it('a 15 s long model: that model over 15 s is impossible, so nothing for 20 s', () => {
     const { sd } = adapter([], { longModel: 'dreamina-seedance-2-0-260128' });
-    expect(sd.modelFor(10, 'PLUS')).toBe('dreamina-seedance-2-0-260128');
-    expect(sd.modelFor(20, 'PLUS')).toBeUndefined();
+    expect(sd.modelFor(10)).toBe('dreamina-seedance-2-0-mini-260615');
+    expect(sd.modelFor(20)).toBeUndefined();
+  });
+
+  it('480p when asked (20.25 BASIC): the documented 480p frame and its smaller bill', () => {
+    const { sd } = adapter([]);
+    const basic = { ...t2v, durationSec: 4, resolution: '480p' as const };
+    expect(sd.buildBody(basic)).toMatchObject({ resolution: '480p', duration: 4 });
+    // 2.0 mini 9:16 480p = 496 × 864: 4 × 496 × 864 × 24 / 1024 = 40,176 tokens → $0.1406 → 11p
+    expect(sd.estimateCostPence(basic)).toBe(11);
+    // 720p (the default) is 86,400 tokens → $0.3024 → 23p
+    expect(sd.estimateCostPence({ ...basic, resolution: '720p' })).toBe(23);
+    expect(sd.estimateCostPence({ ...t2v, durationSec: 4 })).toBe(23);
+  });
+
+  it('480p frames differ between the 2.0 series and 2.5 (create-task pixel table)', () => {
+    expect(seedanceFramePixels('dreamina-seedance-2-0-mini-260615', '9:16', '480p')).toBe(
+      496 * 864,
+    );
+    expect(seedanceFramePixels('dreamina-seedance-2-0-fast-260128', '16:9', '480p')).toBe(
+      864 * 496,
+    );
+    expect(seedanceFramePixels('dreamina-seedance-2-5-260628', '9:16', '480p')).toBe(480 * 854);
+    expect(seedanceFramePixels('dreamina-seedance-2-5-260628', '1:1', '480p')).toBe(640 * 640);
+    expect(seedanceFramePixels('dreamina-seedance-2-0-mini-260615', '3:4', '480p')).toBe(560 * 752);
+    expect(seedanceFramePixels('dreamina-seedance-2-0-mini-260615', 'adaptive', '480p')).toBe(
+      992 * 432,
+    );
+    expect(seedanceFramePixels('dreamina-seedance-2-0-mini-260615', '9:16', '720p')).toBe(
+      720 * 1280,
+    );
+    expect(seedanceFramePixels('dreamina-seedance-2-5-260628', 'adaptive', '720p')).toBe(
+      834 * 1112,
+    );
   });
 
   it('a long-capable default model needs no long model', () => {

@@ -44,6 +44,7 @@ import {
   type PlannedScript,
   type TargetFormat,
 } from '../../pipeline/scripting';
+import { aiClipBudget, applyClipBudget } from '../../pipeline/clip-budget';
 import { styleMemorySupplement } from '../../services/style-memory';
 import { projectLanguages } from '../../languages';
 import { jobIds } from '../enqueue';
@@ -459,12 +460,21 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   const variants = languages.flatMap((language) => formats.map((format) => ({ format, language })));
   const scripts = await Promise.all(
     variants.map(async ({ format, language }) => {
+      // 20.25: the tier's AI clip budget for this length, stated in the prompt and enforced below.
+      const budget = aiClipBudget(data.planTier, format.durationSec);
       const run = await runProvider(
         textRequest(
           data,
           SCRIPT_SYSTEM_PROMPT,
           [
-            buildScriptPrompt({ brief, format, treatments, restrictedTopics, language }),
+            buildScriptPrompt({
+              brief,
+              format,
+              treatments,
+              restrictedTopics,
+              language,
+              aiClipBudget: budget,
+            }),
             reference?.scriptSupplement(format.durationSec, treatments),
             styleMemory,
           ]
@@ -475,14 +485,22 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
         ),
         deps,
       );
-      return {
-        format,
-        language,
-        plan: ((plan) => (reference ? reference.apply(plan, format.durationSec) : plan))(
-          normaliseScript(jsonOutput(run.output), treatments, format.durationSec),
-        ),
-        model: modelLabel(run),
-      };
+      const normalised = normaliseScript(jsonOutput(run.output), treatments, format.durationSec);
+      const budgeted = applyClipBudget(
+        reference ? reference.apply(normalised, format.durationSec) : normalised,
+        {
+          budget,
+          targetSec: format.durationSec,
+          // A TEMPLATE blueprint fixes the shot lengths.
+          keepDurations: Boolean(reference?.blueprint),
+        },
+      );
+      if (budgeted.converted > 0)
+        log.info(
+          { platform: format.platform, budget, converted: budgeted.converted },
+          'AI clip budget: extra AI shots planned as images',
+        );
+      return { format, language, plan: budgeted.plan, model: modelLabel(run) };
     }),
   );
 
