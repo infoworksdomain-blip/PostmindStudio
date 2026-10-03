@@ -17,24 +17,12 @@ import { DemoHttpError, route } from '../registry';
 import { ADMIN_ORGS, graceFor, syncDemoOrg, type AdminOrg } from './p18-admin';
 import { referencePrice } from './p18-billing';
 import { ago, DAY } from './projects-store';
+import { endedTrials, overrideActive, overrides, planSummary, trialView } from './admin-plan-state';
 
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 const bad = (message: string) => new DemoHttpError(400, 'validation_error', message);
 const future = (days: number) => new Date(Date.now() + days * DAY).toISOString();
-
-interface Override {
-  tier?: PlanTier;
-  access?: 'full' | 'read_only' | 'none';
-  limits?: Record<string, number | null>;
-  monthlyPricePence?: number | null;
-  expiresAt?: string | null;
-  reason: string;
-  setByUserId: string;
-  setAt: string;
-}
-
-const overrides = new Map<string, Override>();
 
 const ENTERPRISE_CAP = PLAN_CATALOGUE.ENTERPRISE.monthlyCostCapPence;
 
@@ -49,7 +37,7 @@ const isTier = (v: unknown): v is PlanTier =>
   v === 'BASIC' || v === 'STANDARD' || v === 'PLUS' || v === 'ENTERPRISE';
 
 function view(org: AdminOrg) {
-  const own = overrides.get(org.id);
+  const own = overrideActive(org.id);
   const tier: PlanTier = own?.tier ?? (isTier(org.tier) ? org.tier : 'BASIC');
   const access = own?.access ?? (org.access as 'full' | 'read_only' | 'none' | null) ?? 'none';
   const plan = PLAN_CATALOGUE[tier];
@@ -57,9 +45,7 @@ function view(org: AdminOrg) {
   const pick = (key: 'seats' | 'businesses' | 'storageGb', fallback: number | null) =>
     custom && key in custom ? (custom[key] ?? null) : fallback;
   const demoState = org.id === DEMO_ORG_ID ? BILLING_STATE_INFO[getBillingState()] : null;
-  const source = own
-    ? 'admin'
-    : (demoState?.source ?? (org.subscriptionStatus ? 'stripe' : 'none'));
+  const source = own ? 'admin' : (demoState?.source ?? planSummary(org).source);
   return {
     organisationId: org.id,
     effective: {
@@ -86,8 +72,9 @@ function view(org: AdminOrg) {
           updatedAt: ago(DAY),
         }
       : null,
-    admin: own ?? null,
+    admin: overrides.get(org.id) ?? null,
     limits: custom ?? null,
+    trial: trialView(org),
     enterprise: {
       monthlyCapPence: ENTERPRISE_CAP,
       minimumMonthlyPricePence: enterpriseMinimumMonthlyPricePence(ENTERPRISE_CAP),
@@ -122,6 +109,28 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
     throw bad('access: Invalid option');
   const tier = (input.tier as PlanTier | undefined) ?? (isTier(org.tier) ? org.tier : 'BASIC');
   const price = typeof input.monthlyPricePence === 'number' ? input.monthlyPricePence : null;
+  // 20.27: End the trial now (as billing/admin.ts: refused without a running trial; on its own it
+  // leaves the override as it is).
+  const endTrial = input.endTrial === true;
+  const onlyEndTrial =
+    endTrial &&
+    input.tier === undefined &&
+    access === undefined &&
+    input.limits === undefined &&
+    price === null &&
+    typeof input.expiresAt !== 'string';
+  if (endTrial) {
+    const trial = trialView(org);
+    if (!trial) throw bad('This organisation has no trial to end');
+    if (trial.state === 'ended') throw bad('This trial was already ended');
+  }
+  const markEnded = () =>
+    endTrial &&
+    endedTrials.set(org.id, { endedAt: new Date().toISOString(), endedByUserId: DEMO_USER_ID });
+  if (onlyEndTrial) {
+    markEnded();
+    return { entitlements: view(org) };
+  }
   if (tier === 'ENTERPRISE') {
     const minimum = enterpriseMinimumMonthlyPricePence(ENTERPRISE_CAP);
     if (price === null || price < minimum)
@@ -142,6 +151,7 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
     setByUserId: DEMO_USER_ID,
     setAt: new Date().toISOString(),
   });
+  markEnded();
   if (org.id === DEMO_ORG_ID && tier === 'ENTERPRISE') setBillingState('enterprise');
   return { entitlements: view(org) };
 });
