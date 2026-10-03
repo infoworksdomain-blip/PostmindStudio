@@ -196,6 +196,8 @@ async function main(): Promise<void> {
     publishing: { ...base.publishing, storage: local.storage },
     config: {
       ...base.config,
+      // Narration needs a voice; the simulated TTS accepts any id.
+      defaultVoiceId: base.config.defaultVoiceId ?? 'simulated-voice',
       providerPollIntervalMs: Math.max(250, Math.round(5_000 * timeScale)),
     },
   };

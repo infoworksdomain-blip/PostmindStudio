@@ -87,7 +87,8 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Scenarios
         env:
-          SCENARIOS: ${{ inputs.scenarios || 'all' }}
+          # A push to load-test/quick-* runs one small scenario (harness checks).
+          SCENARIOS: ${{ inputs.scenarios || (startsWith(github.ref_name, 'load-test/quick') && 'burst-10-2gb') || 'all' }}
         run: |
           mkdir -p ops/results/load-test
           # name | videos | orgs | heavy share | worker sizing | extra env | assert
@@ -132,7 +133,7 @@ jobs:
           retention-days: 30
 
   api-200:
-    if: github.event_name == 'push' || inputs.run_api
+    if: (github.event_name == 'push' && !startsWith(github.ref_name, 'load-test/quick')) || inputs.run_api
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
