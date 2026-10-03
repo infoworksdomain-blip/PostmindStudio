@@ -6,6 +6,14 @@ import { handle } from '../../demo/api/registry';
 // 20.18 — the demo mirrors live: a one-word brief is not turned into a rendered video; the project
 // rests in DRAFT with the "too vague" reason and three directions, and choosing one runs it.
 
+interface ProjectView {
+  id: string;
+  state: string;
+  errorReason: string | null;
+  directionOptions: string[];
+  scripts: unknown[];
+}
+
 async function api(path: string, method = 'GET', body?: unknown) {
   // The registry sleeps 120-500 ms per request; fake timers need to be pushed past it.
   const pending = handle(new URL(`https://studio.demo/api/studio${path}`), {
@@ -14,7 +22,7 @@ async function api(path: string, method = 'GET', body?: unknown) {
   });
   await vi.advanceTimersByTimeAsync(600);
   const res = await pending;
-  return { status: res.status, json: (await res.json()) as Record<string, any> };
+  return { status: res.status, json: (await res.json()) as { project: ProjectView } };
 }
 
 async function createProject(brief: string): Promise<string> {
@@ -25,7 +33,7 @@ async function createProject(brief: string): Promise<string> {
     targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 15 }],
   });
   expect(created.status).toBe(201);
-  return created.json.project.id as string;
+  return created.json.project.id;
 }
 
 describe('demo: vague brief (20.18)', () => {
