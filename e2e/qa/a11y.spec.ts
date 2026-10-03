@@ -12,7 +12,13 @@ import {
   type Db,
   type World,
 } from './fixtures';
-import { baseURL, PUBLIC_PAGES, staffPage, enableDarkTheme, WORKSPACE_PAGES } from './pass2.support';
+import {
+  baseURL,
+  PUBLIC_PAGES,
+  staffPage,
+  enableDarkTheme,
+  WORKSPACE_PAGES,
+} from './pass2.support';
 
 // 20.31 (QA pass 2) — accessibility: axe-core (WCAG 2.0 / 2.1 A and AA rules) over every main
 // screen, signed out and signed in, in the light and the dark theme. Serious and critical
