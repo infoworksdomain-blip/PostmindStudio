@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Construction, Languages } from 'lucide-react';
 import Markdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useTranslations } from 'next-intl';
 import { LEGAL_DOC_KEYS, type LegalDocKey } from './legal-doc-keys';
 import { safeLegalHref } from './legal-links';
@@ -10,6 +11,9 @@ import { safeLegalHref } from './legal-links';
 // the file can inject markup. A banner marks the repository placeholder; a note marks an
 // English fallback for a locale without its own file. Phase 20.4: a draft whose [[…]] fill-in
 // markers are not filled in yet (markers.ts) gets its own "draft" banner instead.
+
+// GitHub-flavoured Markdown so the pipe tables (sub-processors, retention, cookies) render as tables.
+const REMARK_PLUGINS = [remarkGfm];
 
 const components: Components = {
   h1: ({ children }) => (
@@ -110,7 +114,7 @@ export function LegalDocumentView({
           </p>
         )}
         <div lang={fallback ? 'en-GB' : undefined}>
-          <Markdown skipHtml components={components}>
+          <Markdown skipHtml remarkPlugins={REMARK_PLUGINS} components={components}>
             {markdown}
           </Markdown>
         </div>
