@@ -53,9 +53,19 @@ async function ownerPage(
   browser: Browser,
   options: { viewport?: { width: number; height: number }; dark?: boolean } = {},
 ): Promise<Page> {
-  const page = await signedInPage(browser, baseURL, emailFor('p2-resp'), {
-    viewport: options.viewport,
-  });
+  // Sign-in is rate limited per client address (5 a minute) and the fixtures' addresses restart
+  // from the same sequence in every worker, so a 429 is waited out, not a failure.
+  let page: Page | undefined;
+  for (let attempt = 1; !page; attempt += 1) {
+    try {
+      page = await signedInPage(browser, baseURL, emailFor('p2-resp'), {
+        viewport: options.viewport,
+      });
+    } catch (err) {
+      if (attempt >= 4 || !/429/.test(String(err))) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 15_000));
+    }
+  }
   if (options.dark) await enableDarkTheme(page);
   return page;
 }
