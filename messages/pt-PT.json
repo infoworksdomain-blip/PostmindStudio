@@ -3644,12 +3644,13 @@
       "addStep": "Adicionar passo",
       "appliesTo": "Aplica-se a",
       "appliesToHelp": "Deixe tudo vazio para se aplicar a todos os projetos. Quando vários circuitos correspondem, prevalece o mais específico (empresa, depois etiquetas, depois plataformas).",
-      "businessIds": "IDs de empresas (separados por vírgulas)",
-      "addCurrentBusiness": "Adicionar a empresa atual",
       "platforms": "Plataformas",
       "projectTags": "Etiquetas do projeto (separadas por vírgulas)",
       "save": "Guardar circuito",
-      "create": "Criar circuito"
+      "create": "Criar circuito",
+      "businesses": "Negócios",
+      "businessesHelp": "Escolha os negócios a que isto se aplica. Sem seleção, aplica-se a todos.",
+      "noBusinesses": "Ainda não há negócios. Adicione um na página Negócio."
     },
     "problems": {
       "name": "Atribua um nome ao circuito.",
@@ -3670,7 +3671,10 @@
       "every": "Aplica-se a todos os projetos",
       "some": "Aplica-se a: {targets}",
       "businesses": "{count, plural, one {empresa {ids}} other {empresas {ids}}}",
-      "tagged": "com a etiqueta {tags}"
+      "tagged": "com a etiqueta {tags}",
+      "aBusiness": "um negócio",
+      "removedBusiness": "um negócio removido",
+      "removedWarning": "{count, plural, one {Esse negócio foi removido, por isso este fluxo já não se aplica a ele. Edite o fluxo e escolha um negócio atual.} other {Esses negócios foram removidos, por isso este fluxo já não se aplica a eles. Edite o fluxo e escolha negócios atuais.}}"
     },
     "indicator": {
       "regionAria": "Passos de aprovação",

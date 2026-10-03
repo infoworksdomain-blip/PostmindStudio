@@ -3644,12 +3644,13 @@
       "addStep": "添加步骤",
       "appliesTo": "适用范围",
       "appliesToHelp": "全部留空即适用于所有项目。多个流程同时匹配时，以最具体的为准（商家优先，其次标签，最后平台）。",
-      "businessIds": "商家 ID（用逗号分隔）",
-      "addCurrentBusiness": "添加当前商家",
       "platforms": "平台",
       "projectTags": "项目标签（用逗号分隔）",
       "save": "保存流程",
-      "create": "创建流程"
+      "create": "创建流程",
+      "businesses": "商家",
+      "businessesHelp": "选择适用的商家。全部不选则适用于所有商家。",
+      "noBusinesses": "还没有商家。请在“商家”页面添加。"
     },
     "problems": {
       "name": "请为流程命名。",
@@ -3670,7 +3671,10 @@
       "every": "适用于所有项目",
       "some": "适用于：{targets}",
       "businesses": "{count, plural, other {商家 {ids}}}",
-      "tagged": "标签为 {tags}"
+      "tagged": "标签为 {tags}",
+      "aBusiness": "某个商家",
+      "removedBusiness": "已移除的商家",
+      "removedWarning": "{count, plural, other {该商家已被移除，因此此流程不再适用于它。请编辑流程，选择现有商家。}}"
     },
     "indicator": {
       "regionAria": "审批步骤",

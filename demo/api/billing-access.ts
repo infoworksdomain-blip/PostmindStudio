@@ -11,7 +11,7 @@ export type DemoAccessDecision =
 const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /** Mutations a read_only organisation may still make (path under /api/studio). */
-const READ_ONLY_ALLOWLIST: readonly RegExp[] = [
+export const READ_ONLY_ALLOWLIST: readonly RegExp[] = [
   /^\/billing(\/|$)/,
   /^\/account(\/|$)/,
   /^\/org(\/|$)/,
@@ -26,8 +26,12 @@ const READ_ONLY_ALLOWLIST: readonly RegExp[] = [
 ];
 
 /** Routes that spend provider money, publish or scan: closed to an organisation with no plan. */
-const SPEND_ROUTES: readonly RegExp[] = [
+export const SPEND_ROUTES: readonly RegExp[] = [
   /^\/projects\/[^/]+\/generate$/,
+  // 20.9 month plans: Claude writes the topics and generate makes every post.
+  /^\/content-plans$/,
+  /^\/content-plans\/[^/]+\/(generate|redraft)$/,
+  /^\/content-plans\/[^/]+\/items\/[^/]+\/regenerate$/,
   /^\/projects\/[^/]+\/auto-populate$/,
   /^\/projects\/[^/]+\/auto-publish(\/retry)?$/,
   /^\/projects\/[^/]+\/caption-suggestions$/,

@@ -70,7 +70,7 @@ const workflows: Workflow[] = [
       { role: 'admin', minApprovers: 1 },
       { role: 'client_reviewer', minApprovers: 2 },
     ],
-    appliesTo: { businessIds: ['biz-cafe-partners'], platforms: [], tags: [] },
+    appliesTo: { businessIds: ['biz-leeds-sourdough-market'], platforms: [], tags: [] },
     createdAt: '2026-09-02T09:00:00.000Z',
   },
 ];

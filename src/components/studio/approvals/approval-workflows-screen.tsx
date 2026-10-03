@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { useApprovalText } from './approval-text';
 import type { ApprovalWorkflow, WorkflowInput } from './types';
@@ -63,14 +62,15 @@ function WorkflowCard({
 }: {
   workflow: ApprovalWorkflow;
   /** Business id → name, so the card says "Leeds Sourdough", not the raw id. */
-  businessNames: Readonly<Record<string, string>>;
+  businessNames: Readonly<Record<string, string>> | undefined;
   busy: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }) {
   const t = useTranslations('approvals.card');
   const tc = useTranslations('common.actions');
-  const { describeAppliesTo } = useApprovalText();
+  const { describeAppliesTo, removedBusinessNote } = useApprovalText();
+  const removedNote = removedBusinessNote(workflow.appliesTo, businessNames);
   const [confirming, setConfirming] = useState(false);
   return (
     <li className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
@@ -80,6 +80,11 @@ function WorkflowCard({
           <p className="mt-0.5 text-xs text-muted-foreground">
             {describeAppliesTo(workflow.appliesTo, businessNames)}
           </p>
+          {removedNote && (
+            <p role="alert" className="mt-1 text-xs text-destructive">
+              {removedNote}
+            </p>
+          )}
         </div>
         <div className="flex gap-1.5">
           <Button variant="outline" size="sm" onClick={onEdit} disabled={busy}>
@@ -115,12 +120,12 @@ function WorkflowCard({
 export function ApprovalWorkflowsScreen() {
   const t = useTranslations('approvals.screen');
   const errorMessage = useErrorMessage();
-  const { businessId } = useBusiness();
   const res = useApi<{ data: ApprovalWorkflow[] }>('/approval-workflows');
   const businesses = useApi<{ data: Array<{ id: string; name: string }> }>('/businesses');
-  const businessNames = Object.fromEntries(
-    (businesses.data?.data ?? []).map((b) => [b.id, b.name]),
-  );
+  // undefined until the list has loaded, so a card never calls a business "removed" while loading.
+  const businessNames = businesses.data
+    ? Object.fromEntries(businesses.data.data.map((b) => [b.id, b.name]))
+    : undefined;
   const [editing, setEditing] = useState<Editing>(null);
   const [busy, setBusy] = useState(false);
 
@@ -184,7 +189,7 @@ export function ApprovalWorkflowsScreen() {
             <WorkflowForm
               key={editing.mode === 'edit' ? editing.workflow.id : 'new'}
               initial={editing.mode === 'edit' ? editing.workflow : undefined}
-              currentBusinessId={businessId}
+              businesses={businesses.data?.data ?? []}
               saving={busy}
               onSubmit={(input) => void save(input)}
               onCancel={() => setEditing(null)}

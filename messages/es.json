@@ -3644,12 +3644,13 @@
       "addStep": "Añadir paso",
       "appliesTo": "Se aplica a",
       "appliesToHelp": "Déjalo todo vacío para aplicarlo a todos los proyectos. Si coinciden varios flujos, gana el más específico (negocio, luego etiquetas, luego plataformas).",
-      "businessIds": "ID de negocios (separados por comas)",
-      "addCurrentBusiness": "Añadir el negocio actual",
       "platforms": "Plataformas",
       "projectTags": "Etiquetas del proyecto (separadas por comas)",
       "save": "Guardar flujo",
-      "create": "Crear flujo"
+      "create": "Crear flujo",
+      "businesses": "Negocios",
+      "businessesHelp": "Elige los negocios a los que se aplica. Si no eliges ninguno, se aplica a todos.",
+      "noBusinesses": "Aún no hay negocios. Añade uno en la página Negocio."
     },
     "problems": {
       "name": "Ponle un nombre al flujo.",
@@ -3670,7 +3671,10 @@
       "every": "Se aplica a todos los proyectos",
       "some": "Se aplica a: {targets}",
       "businesses": "{count, plural, one {negocio {ids}} other {negocios {ids}}}",
-      "tagged": "con la etiqueta {tags}"
+      "tagged": "con la etiqueta {tags}",
+      "aBusiness": "un negocio",
+      "removedBusiness": "un negocio eliminado",
+      "removedWarning": "{count, plural, one {Ese negocio se ha eliminado, así que este flujo ya no se aplica a él. Edita el flujo y elige un negocio actual.} other {Esos negocios se han eliminado, así que este flujo ya no se aplica a ellos. Edita el flujo y elige negocios actuales.}}"
     },
     "indicator": {
       "regionAria": "Pasos de aprobación",

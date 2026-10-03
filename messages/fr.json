@@ -3644,12 +3644,13 @@
       "addStep": "Ajouter une étape",
       "appliesTo": "S’applique à",
       "appliesToHelp": "Laissez tout vide pour l’appliquer à tous les projets. Si plusieurs circuits correspondent, le plus spécifique l’emporte (entreprise, puis tags, puis plateformes).",
-      "businessIds": "Identifiants d’entreprise (séparés par des virgules)",
-      "addCurrentBusiness": "Ajouter l’entreprise actuelle",
       "platforms": "Plateformes",
       "projectTags": "Tags de projet (séparés par des virgules)",
       "save": "Enregistrer le circuit",
-      "create": "Créer le circuit"
+      "create": "Créer le circuit",
+      "businesses": "Entreprises",
+      "businessesHelp": "Choisissez les entreprises concernées. Sans sélection, le flux s’applique à toutes.",
+      "noBusinesses": "Aucune entreprise pour l’instant. Ajoutez-en une sur la page Entreprise."
     },
     "problems": {
       "name": "Donnez un nom au circuit.",
@@ -3670,7 +3671,10 @@
       "every": "S’applique à tous les projets",
       "some": "S’applique à : {targets}",
       "businesses": "{count, plural, one {entreprise {ids}} other {entreprises {ids}}}",
-      "tagged": "tag {tags}"
+      "tagged": "tag {tags}",
+      "aBusiness": "une entreprise",
+      "removedBusiness": "une entreprise supprimée",
+      "removedWarning": "{count, plural, one {Cette entreprise a été supprimée : ce circuit ne s’y applique plus. Modifiez le circuit pour choisir une entreprise actuelle.} other {Ces entreprises ont été supprimées : ce circuit ne s’y applique plus. Modifiez le circuit pour choisir des entreprises actuelles.}}"
     },
     "indicator": {
       "regionAria": "Étapes de validation",

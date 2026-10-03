@@ -3644,12 +3644,13 @@
       "addStep": "Aggiungi passaggio",
       "appliesTo": "Si applica a",
       "appliesToHelp": "Lascia tutto vuoto per applicarlo a ogni progetto. Se più flussi corrispondono, vince il più specifico (attività, poi tag, poi piattaforme).",
-      "businessIds": "ID attività (separati da virgole)",
-      "addCurrentBusiness": "Aggiungi l’attività corrente",
       "platforms": "Piattaforme",
       "projectTags": "Tag del progetto (separati da virgole)",
       "save": "Salva flusso",
-      "create": "Crea flusso"
+      "create": "Crea flusso",
+      "businesses": "Attività",
+      "businessesHelp": "Scegli le attività a cui si applica. Senza selezione vale per tutte.",
+      "noBusinesses": "Ancora nessuna attività. Aggiungine una nella pagina Attività."
     },
     "problems": {
       "name": "Dai un nome al flusso.",
@@ -3670,7 +3671,10 @@
       "every": "Si applica a ogni progetto",
       "some": "Si applica a: {targets}",
       "businesses": "{count, plural, one {attività {ids}} other {attività {ids}}}",
-      "tagged": "con tag {tags}"
+      "tagged": "con tag {tags}",
+      "aBusiness": "un’attività",
+      "removedBusiness": "un’attività rimossa",
+      "removedWarning": "{count, plural, one {Quell’attività è stata rimossa, quindi questo flusso non vale più per essa. Modifica il flusso e scegli un’attività attuale.} other {Quelle attività sono state rimosse, quindi questo flusso non vale più per esse. Modifica il flusso e scegli attività attuali.}}"
     },
     "indicator": {
       "regionAria": "Passaggi di approvazione",

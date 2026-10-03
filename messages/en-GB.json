@@ -3644,12 +3644,13 @@
       "addStep": "Add step",
       "appliesTo": "Applies to",
       "appliesToHelp": "Leave everything empty for every project. When several workflows match, the most specific wins (business, then tags, then platforms).",
-      "businessIds": "Business ids (comma-separated)",
-      "addCurrentBusiness": "Add current business",
       "platforms": "Platforms",
       "projectTags": "Project tags (comma-separated)",
       "save": "Save workflow",
-      "create": "Create workflow"
+      "create": "Create workflow",
+      "businesses": "Businesses",
+      "businessesHelp": "Pick the businesses this applies to. Leave all unselected for every business.",
+      "noBusinesses": "No businesses yet. Add one on the Business page."
     },
     "problems": {
       "name": "Give the workflow a name.",
@@ -3670,7 +3671,10 @@
       "every": "Applies to every project",
       "some": "Applies to {targets}",
       "businesses": "{count, plural, one {business {ids}} other {businesses {ids}}}",
-      "tagged": "tagged {tags}"
+      "tagged": "tagged {tags}",
+      "aBusiness": "a business",
+      "removedBusiness": "a removed business",
+      "removedWarning": "{count, plural, one {That business has been removed, so this workflow no longer applies to it. Edit the workflow to pick a current business.} other {Those businesses have been removed, so this workflow no longer applies to them. Edit the workflow to pick current businesses.}}"
     },
     "indicator": {
       "regionAria": "Approval steps",

@@ -23,6 +23,11 @@ export interface ApprovalText {
     appliesTo: WorkflowAppliesTo,
     businessNames?: Readonly<Record<string, string>>,
   ) => string;
+  /** The warning for a workflow that points at businesses the organisation no longer has. */
+  removedBusinessNote: (
+    appliesTo: WorkflowAppliesTo,
+    businessNames?: Readonly<Record<string, string>>,
+  ) => string | null;
   /** "Step 1 of 2 — waiting for client reviewer (1 of 2 approvals)". */
   stepIndicatorText: (status: ApprovalStatus) => string;
 }
@@ -38,7 +43,7 @@ export function useApprovalText(): ApprovalText {
 
     const describeAppliesTo = (
       appliesTo: WorkflowAppliesTo,
-      businessNames: Readonly<Record<string, string>> = {},
+      businessNames?: Readonly<Record<string, string>>,
     ) => {
       const parts: string[] = [];
       if (appliesTo.businessIds.length)
@@ -46,7 +51,12 @@ export function useApprovalText(): ApprovalText {
           t('appliesTo.businesses', {
             count: appliesTo.businessIds.length,
             ids: f.list(
-              appliesTo.businessIds.map((id) => businessNames[id] ?? id),
+              // Never the raw id: a name, "a business" while the list loads, or "a removed business".
+              appliesTo.businessIds.map((id) =>
+                businessNames
+                  ? (businessNames[id] ?? t('appliesTo.removedBusiness'))
+                  : t('appliesTo.aBusiness'),
+              ),
               'unit',
             ),
           }),
@@ -58,6 +68,15 @@ export function useApprovalText(): ApprovalText {
       return parts.length
         ? t('appliesTo.some', { targets: parts.join(' · ') })
         : t('appliesTo.every');
+    };
+
+    const removedBusinessNote = (
+      appliesTo: WorkflowAppliesTo,
+      businessNames?: Readonly<Record<string, string>>,
+    ) => {
+      if (!businessNames) return null;
+      const removed = appliesTo.businessIds.filter((id) => !(id in businessNames)).length;
+      return removed ? t('appliesTo.removedWarning', { count: removed }) : null;
     };
 
     const stepIndicatorText = (status: ApprovalStatus) => {
@@ -84,6 +103,7 @@ export function useApprovalText(): ApprovalText {
     return {
       describeStep: (step) => role(step.role, step.minApprovers),
       describeAppliesTo,
+      removedBusinessNote,
       stepIndicatorText,
     };
   }, [t, f]);
