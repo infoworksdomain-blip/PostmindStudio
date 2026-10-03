@@ -3040,7 +3040,10 @@
         "overrideHelp": "Vuoto = nessuna deroga (il limite del piano). I worker applicano una modifica entro 30 secondi.",
         "reason": "Motivo (registrato nel log di audit)",
         "save": "Salva limiti di costo",
-        "savedToast": "Limiti di costo salvati"
+        "savedToast": "Limiti di costo salvati",
+        "clear": "Ripristina il valore del piano",
+        "clearHelp": "Rimuove entrambe le deroghe così tornano a valere i limiti del livello del piano. Usa il motivo sopra.",
+        "clearedToast": "I limiti di costo sono tornati al valore del piano"
       }
     },
     "redrive": {
@@ -4611,14 +4614,39 @@
           "expiresAt": "Scadenza (facoltativa)",
           "reason": "Motivo (obbligatorio)",
           "save": "Salva override",
-          "saved": "Override salvato"
+          "saved": "Override salvato",
+          "endTrial": "Termina la prova ora",
+          "endTrialHelp": "L’allowance della prova e i suoi limiti di costo di {daily} al giorno / {total} in totale cessano per sempre, anche quando questa deroga scade o viene rimossa; si applicano i limiti del piano (e qualsiasi deroga ai limiti di costo). Stripe non cambia: la sua prova termina, e viene addebitata, alla propria data.",
+          "trialNote": "Qualsiasi deroga salvata sospende i limiti della prova finché è attiva. Seleziona «Termina la prova ora» per eliminarli per sempre."
         },
         "clear": {
           "title": "Rimuovi l’override",
           "description": "L’organizzazione torna a ciò che le dà il suo abbonamento Stripe.",
           "reason": "Motivo della rimozione",
           "button": "Rimuovi override",
-          "cleared": "Override rimosso"
+          "cleared": "Override rimosso",
+          "trialWarning": "Stripe mostra ancora una prova: rimuovendo la deroga tornano i limiti della prova. Per evitarlo, salva prima una deroga con «Termina la prova ora»."
+        },
+        "trial": {
+          "title": "Prova",
+          "state": {
+            "running": "In corso: ora si applicano i limiti della prova.",
+            "overridden": "Sospesa dalla deroga dello staff: i limiti della prova tornano se la deroga scade o viene rimossa mentre Stripe mostra ancora una prova.",
+            "ended": "Terminata dallo staff il {date}. I suoi limiti non si applicano più.",
+            "over": "Conclusa: Stripe non mostra più una prova."
+          },
+          "dates": "Iniziata {start} · termina {end}",
+          "noEnd": "nessuna data di fine",
+          "spent": "Costo IA dall’inizio della prova: {spent} su {total} (al massimo {daily} al giorno)",
+          "meterAria": "Costo IA della prova rispetto al limite totale",
+          "capsNote": "Finché la prova è in corso, si applicano i suoi limiti invece di quelli del piano e di qualsiasi deroga ai limiti di costo."
+        },
+        "confirm": {
+          "title": "Salvare questa deroga?",
+          "button": "Sì, salva",
+          "accessNone": "L’accesso Nessuno impedisce a tutti in questa organizzazione di generare, pubblicare e analizzare.",
+          "accessReadOnly": "Sola lettura blocca ogni modifica in questa organizzazione tranne fatturazione, impostazioni dell’account ed esportazioni.",
+          "endTrial": "La fine della prova non si può annullare: i suoi limiti non si applicheranno più a questa organizzazione."
         }
       },
       "subscriptions": {
@@ -4867,7 +4895,19 @@
       "open": "Apri",
       "openAria": "Apri {name}",
       "byIdTitle": "Cerca per id",
-      "byIdHint": "Controlla le politiche e i tetti di costo per qualsiasi id di organizzazione, incluse quelle di PostMind Core."
+      "byIdHint": "Controlla le politiche e i tetti di costo per qualsiasi id di organizzazione, incluse quelle di PostMind Core.",
+      "trial": "Prova",
+      "trialState": {
+        "running": "Fino al {date}",
+        "runningNoDate": "In corso",
+        "overridden": "Sospesa da deroga",
+        "ended": "Terminata dallo staff"
+      },
+      "planHint": "Apri un’organizzazione per modificarne piano, accesso, prova o limiti di costo.",
+      "pagesAria": "Pagine delle organizzazioni",
+      "pageInfo": "{from}–{to} di {total}",
+      "previous": "Precedente",
+      "next": "Successiva"
     },
     "detail": {
       "back": "Tutte le organizzazioni",
@@ -4892,7 +4932,9 @@
       "subscriptionsTitle": "Abbonamenti",
       "subscriptionsHint": "Solo lettura; modifica i piani in Stripe o con una deroga ai diritti.",
       "noSubscription": "Nessun abbonamento.",
-      "cancelling": "Si annulla a fine periodo"
+      "cancelling": "Si annulla a fine periodo",
+      "planTitle": "Piano, accesso e prova",
+      "planHint": "Modifica il livello o l’accesso, o termina la prova, con una deroga dello staff. Ogni modifica richiede un motivo e viene registrata."
     },
     "status": {
       "trialing": "Prova",

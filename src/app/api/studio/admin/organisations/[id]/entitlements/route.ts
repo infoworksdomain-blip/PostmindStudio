@@ -12,7 +12,7 @@ import {
 // Phase 18 §P.3 / §P.4 — staff entitlement overrides (studio:admin:billing + platform staff).
 // GET  → effective entitlements, the stored row, the override, subscriptions, and the ENTERPRISE
 //        minimum monthly price for the organisation's monthly cost cap.
-// PUT  { tier?, access?, limits?, monthlyPricePence?, expiresAt?, reason } → the new view.
+// PUT  { tier?, access?, limits?, monthlyPricePence?, expiresAt?, endTrial?, reason } → the new view.
 //      ENTERPRISE needs monthlyPricePence ≥ the minimum (422 unprocessable, below_minimum_price).
 // DELETE { reason } → the override removed (the Stripe-derived value applies again).
 // Every change is audited (entitlement.override_set) with before / after and the reason; the
@@ -34,7 +34,7 @@ export const PUT = withStudioRoute(
   async ({ req, deps, tenant, params, audit }) => {
     requirePlatformStaff(tenant);
     const input = await parseBody(req, adminEntitlementInput);
-    const { before, after } = await putAdminEntitlements(
+    const { before, after, trialEnded } = await putAdminEntitlements(
       deps.db,
       params.id ?? '',
       input,
@@ -50,6 +50,8 @@ export const PUT = withStudioRoute(
         limits: input.limits ?? null,
         monthlyPricePence: input.monthlyPricePence ?? null,
         expiresAt: input.expiresAt ?? null,
+        // 20.27: staff ended the trial (its allowance and cost caps stop for good).
+        ...(trialEnded && { trialEnded: { endedAt: after.trial?.endedAt ?? null } }),
         reason: input.reason,
       },
     );

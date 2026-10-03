@@ -3040,7 +3040,10 @@
         "overrideHelp": "Vacío = sin excepción (el límite del plan). Los workers aplican un cambio en menos de 30 segundos.",
         "reason": "Motivo (se registra en el log de auditoría)",
         "save": "Guardar límites de coste",
-        "savedToast": "Límites de coste guardados"
+        "savedToast": "Límites de coste guardados",
+        "clear": "Volver al valor del plan",
+        "clearHelp": "Elimina ambas anulaciones para que vuelvan a aplicarse los límites del nivel del plan. Usa el motivo de arriba.",
+        "clearedToast": "Los límites de coste vuelven al valor del plan"
       }
     },
     "redrive": {
@@ -4611,14 +4614,39 @@
           "expiresAt": "Caduca (opcional)",
           "reason": "Motivo (obligatorio)",
           "save": "Guardar ajuste manual",
-          "saved": "Ajuste manual guardado"
+          "saved": "Ajuste manual guardado",
+          "endTrial": "Finalizar la prueba ahora",
+          "endTrialHelp": "La asignación de la prueba y sus límites de coste de {daily} al día / {total} en total dejan de aplicarse para siempre, incluso cuando esta anulación caduque o se elimine; se aplican los límites del plan (y cualquier anulación de límites de coste). Stripe no cambia: su prueba termina, y se factura, en su propia fecha.",
+          "trialNote": "Cualquier anulación guardada pausa los límites de la prueba mientras esté activa. Marque «Finalizar la prueba ahora» para quitarlos para siempre."
         },
         "clear": {
           "title": "Quitar el ajuste manual",
           "description": "La organización vuelve a lo que le da su suscripción de Stripe.",
           "reason": "Motivo para quitarlo",
           "button": "Quitar ajuste manual",
-          "cleared": "Ajuste manual quitado"
+          "cleared": "Ajuste manual quitado",
+          "trialWarning": "Stripe sigue mostrando una prueba: al eliminar la anulación vuelven los límites de la prueba. Para evitarlo, guarde antes una anulación con «Finalizar la prueba ahora»."
+        },
+        "trial": {
+          "title": "Prueba",
+          "state": {
+            "running": "En curso: ahora se aplican los límites de la prueba.",
+            "overridden": "En pausa por la anulación del personal: los límites de la prueba vuelven si la anulación caduca o se elimina mientras Stripe siga mostrando una prueba.",
+            "ended": "Finalizada por el personal el {date}. Sus límites ya no se aplican.",
+            "over": "Terminada: Stripe ya no muestra una prueba."
+          },
+          "dates": "Inicio {start} · fin {end}",
+          "noEnd": "sin fecha de fin",
+          "spent": "Coste de IA desde el inicio de la prueba: {spent} de {total} (como máximo {daily} al día)",
+          "meterAria": "Coste de IA de la prueba frente a su límite total",
+          "capsNote": "Mientras dure la prueba, se aplican sus límites en lugar de los del plan y de cualquier anulación de límites de coste."
+        },
+        "confirm": {
+          "title": "¿Guardar esta anulación?",
+          "button": "Sí, guardar",
+          "accessNone": "El acceso Ninguno impide a todos en esta organización generar, publicar y escanear.",
+          "accessReadOnly": "Solo lectura bloquea cualquier cambio en esta organización salvo facturación, ajustes de cuenta y exportaciones.",
+          "endTrial": "Finalizar la prueba no se puede deshacer: sus límites no volverán a aplicarse a esta organización."
         }
       },
       "subscriptions": {
@@ -4867,7 +4895,19 @@
       "open": "Abrir",
       "openAria": "Abrir {name}",
       "byIdTitle": "Buscar por id",
-      "byIdHint": "Revisa la política y los topes de coste de cualquier id de organización, incluidas las de PostMind Core."
+      "byIdHint": "Revisa la política y los topes de coste de cualquier id de organización, incluidas las de PostMind Core.",
+      "trial": "Prueba",
+      "trialState": {
+        "running": "Hasta el {date}",
+        "runningNoDate": "En curso",
+        "overridden": "En pausa por anulación",
+        "ended": "Finalizada por el personal"
+      },
+      "planHint": "Abra una organización para cambiar su plan, acceso, prueba o límites de coste.",
+      "pagesAria": "Páginas de organizaciones",
+      "pageInfo": "{from}–{to} de {total}",
+      "previous": "Anterior",
+      "next": "Siguiente"
     },
     "detail": {
       "back": "Todas las organizaciones",
@@ -4892,7 +4932,9 @@
       "subscriptionsTitle": "Suscripciones",
       "subscriptionsHint": "Solo lectura; cambia los planes en Stripe o con una anulación de derechos.",
       "noSubscription": "Sin suscripción.",
-      "cancelling": "Se cancela al final del periodo"
+      "cancelling": "Se cancela al final del periodo",
+      "planTitle": "Plan, acceso y prueba",
+      "planHint": "Cambie el nivel o el acceso, o finalice la prueba, con una anulación del personal. Cada cambio necesita un motivo y queda registrado."
     },
     "status": {
       "trialing": "Prueba",

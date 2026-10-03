@@ -3040,7 +3040,10 @@
         "overrideHelp": "Vazio = sem exceção (o limite do plano). Os workers aplicam a mudança em até 30 segundos.",
         "reason": "Motivo (registado no log de auditoria)",
         "save": "Guardar limites de custo",
-        "savedToast": "Limites de custo guardados"
+        "savedToast": "Limites de custo guardados",
+        "clear": "Voltar ao padrão do plano",
+        "clearHelp": "Remove ambas as substituições para que os limites do nível do plano voltem a aplicar-se. Usa o motivo acima.",
+        "clearedToast": "Os limites de custo voltaram ao padrão do plano"
       }
     },
     "redrive": {
@@ -4611,14 +4614,39 @@
           "expiresAt": "Expira a (opcional)",
           "reason": "Motivo (obrigatório)",
           "save": "Guardar substituição",
-          "saved": "Substituição guardada"
+          "saved": "Substituição guardada",
+          "endTrial": "Encerrar o teste agora",
+          "endTrialHelp": "A franquia do teste e os seus limites de custo de {daily} por dia / {total} no total deixam de valer para sempre, mesmo depois de esta substituição expirar ou ser removida; aplicam-se os limites do plano (e qualquer substituição de limites de custo). A Stripe não é alterada: o teste dela termina, e é cobrado, na sua própria data.",
+          "trialNote": "Qualquer substituição guardada pausa os limites do teste enquanto estiver ativa. Marque «Encerrar o teste agora» para os remover para sempre."
         },
         "clear": {
           "title": "Remover a substituição",
           "description": "A organização volta a ter o que a subscrição da Stripe lhe atribui.",
           "reason": "Motivo da remoção",
           "button": "Remover substituição",
-          "cleared": "Substituição removida"
+          "cleared": "Substituição removida",
+          "trialWarning": "A Stripe ainda mostra um teste: remover a substituição traz de volta os limites do teste. Para o evitar, guarde primeiro uma substituição com «Encerrar o teste agora»."
+        },
+        "trial": {
+          "title": "Teste",
+          "state": {
+            "running": "Em curso: os limites do teste aplicam-se agora.",
+            "overridden": "Pausado pela substituição da equipa: os limites do teste voltam se a substituição expirar ou for removida enquanto a Stripe ainda mostrar um teste.",
+            "ended": "Encerrado pela equipa em {date}. Os seus limites já não se aplicam.",
+            "over": "Terminado: a Stripe já não mostra um teste."
+          },
+          "dates": "Início {start} · fim {end}",
+          "noEnd": "sem data de fim",
+          "spent": "Custo de IA desde o início do teste: {spent} de {total} (no máximo {daily} por dia)",
+          "meterAria": "Custo de IA do teste face ao limite total",
+          "capsNote": "Enquanto o teste decorre, os seus limites aplicam-se em vez dos limites do plano e de qualquer substituição de limites de custo."
+        },
+        "confirm": {
+          "title": "Guardar esta substituição?",
+          "button": "Sim, guardar",
+          "accessNone": "O acesso Nenhum impede todos nesta organização de gerar, publicar e analisar.",
+          "accessReadOnly": "Só leitura bloqueia qualquer alteração nesta organização exceto faturação, definições da conta e exportações.",
+          "endTrial": "Encerrar o teste não pode ser desfeito: os seus limites não voltarão a aplicar-se a esta organização."
         }
       },
       "subscriptions": {
@@ -4867,7 +4895,19 @@
       "open": "Abrir",
       "openAria": "Abrir {name}",
       "byIdTitle": "Procurar por id",
-      "byIdHint": "Reveja a política e os limites de custo de qualquer id de organização, incluindo os pertencentes ao PostMind Core."
+      "byIdHint": "Reveja a política e os limites de custo de qualquer id de organização, incluindo os pertencentes ao PostMind Core.",
+      "trial": "Teste",
+      "trialState": {
+        "running": "Até {date}",
+        "runningNoDate": "Em curso",
+        "overridden": "Pausado por substituição",
+        "ended": "Encerrado pela equipa"
+      },
+      "planHint": "Abra uma organização para alterar o plano, o acesso, o teste ou os limites de custo.",
+      "pagesAria": "Páginas de organizações",
+      "pageInfo": "{from}–{to} de {total}",
+      "previous": "Anterior",
+      "next": "Seguinte"
     },
     "detail": {
       "back": "Todas as organizações",
@@ -4892,7 +4932,9 @@
       "subscriptionsTitle": "Subscrições",
       "subscriptionsHint": "Apenas de leitura; altere os planos no Stripe ou com uma substituição de direitos.",
       "noSubscription": "Sem subscrição.",
-      "cancelling": "Cancela no fim do período"
+      "cancelling": "Cancela no fim do período",
+      "planTitle": "Plano, acesso e teste",
+      "planHint": "Altere o nível ou o acesso, ou encerre o teste, com uma substituição da equipa. Cada alteração exige um motivo e fica registada."
     },
     "status": {
       "trialing": "Avaliação",

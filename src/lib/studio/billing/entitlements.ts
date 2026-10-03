@@ -160,6 +160,13 @@ export const trialStateSchema = z.object({
   longVideos: z.number().int(),
   dailyCostCapPence: z.number().int(),
   totalCostCapPence: z.number().int(),
+  /**
+   * 20.27: staff ended the trial early (Admin Centre). From then on the trial's allowance and
+   * cost caps never apply again, even while Stripe still reports `trialing` and after a staff
+   * override expires or is removed: the plan tier's caps (and any cost-cap override) apply.
+   */
+  endedAt: z.string().optional(),
+  endedByUserId: z.string().optional(),
 });
 
 export const overridesSchema = z.object({
@@ -269,7 +276,8 @@ export function resolveStoredEntitlements(row: StoredEntitlement, now: Date): En
     source = 'admin';
   }
   const custom = adminActive || tier === 'ENTERPRISE' ? overrides.limits : undefined;
-  const trial = source === 'trial' ? overrides.trial : undefined;
+  // An active staff override (source admin) or a trial staff ended (20.27) has no trial caps.
+  const trial = source === 'trial' && !overrides.trial?.endedAt ? overrides.trial : undefined;
   return {
     tier,
     access,

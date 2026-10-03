@@ -26,6 +26,7 @@ const view: AdminEntitlementsResponse['entitlements'] = {
   },
   admin: null,
   limits: null,
+  trial: null,
   enterprise: { monthlyCapPence: 110_000, minimumMonthlyPricePence: 141_600 },
   subscriptions: [
     {

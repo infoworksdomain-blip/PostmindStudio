@@ -29,6 +29,8 @@ const orgRow = {
   members: 3,
   tier: 'STANDARD',
   access: 'full',
+  source: 'stripe',
+  trial: null,
   subscriptionStatus: 'past_due',
   costThisMonthPence: 1234,
 };
@@ -53,6 +55,7 @@ const orgDetail = {
     tier: 'STANDARD',
     access: 'full',
     source: 'stripe',
+    trial: null,
     graceUntil: '2026-10-05T00:00:00Z',
     trialStartedAt: null,
     everPaidAt: '2026-09-01T00:00:00Z',
@@ -95,6 +98,7 @@ describe('OrganisationsTab', () => {
     const api = mockFetch([
       { match: '/admin/organisations/org_1/policy', body: { ok: false }, status: 404 },
       { match: '/admin/organisations/org_1/cost-caps', body: { ok: false }, status: 404 },
+      { match: '/admin/organisations/org_1/entitlements', body: { ok: false }, status: 404 },
       { match: '/admin/organisations/org_1', body: orgDetail },
       { match: '/admin/organisations', body: { ok: true, total: 1, data: [orgRow] } },
     ]);
