@@ -129,6 +129,14 @@ export function ApprovalBar({
     <section
       aria-label={t('aria')}
       className="flex flex-col gap-3 rounded-xl border border-foreground/15 bg-card p-4"
+      // Escape anywhere in the bar (the note, Back, or the Approve/Reject button that opened it,
+      // which keeps focus) closes the note form; not while the decision is saving.
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && mode && !busy) {
+          e.preventDefault();
+          close();
+        }
+      }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm">{canApprove ? t('readyPrompt') : t('qualityFailedPrompt')}</p>
@@ -155,15 +163,7 @@ export function ApprovalBar({
         </div>
       </div>
       {mode && (
-        <div
-          className="flex flex-col gap-2"
-          onKeyDown={(e) => {
-            if (e.key === 'Escape' && !busy) {
-              e.preventDefault();
-              close();
-            }
-          }}
-        >
+        <div className="flex flex-col gap-2">
           <label htmlFor="approval-note" className="text-xs font-medium text-muted-foreground">
             {mode === 'reject' ? t('rejectNote') : t('approveNote')}
           </label>
