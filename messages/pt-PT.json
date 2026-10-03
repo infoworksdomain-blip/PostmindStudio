@@ -225,6 +225,12 @@
         "body": "Volte a subscrever para continuar a criar. Ainda pode visualizar, descarregar e exportar os seus dados.",
         "deletesOn": "Se não voltar a subscrever, a organização e os seus dados serão eliminados após {date}.",
         "action": "Voltar a subscrever"
+      },
+      "createBlocked": {
+        "readOnly": "A sua conta está só de leitura. Atualize o pagamento para criar vídeos.",
+        "noPlan": "Escolha um plano para criar vídeos.",
+        "readOnlyAction": "Atualizar o pagamento",
+        "noPlanAction": "Ver planos"
       }
     }
   },

@@ -225,6 +225,12 @@
         "body": "Schließen Sie erneut ein Abonnement ab, um weiter zu erstellen. Sie können Ihre Daten weiterhin ansehen, herunterladen und exportieren.",
         "deletesOn": "Ohne neues Abonnement werden die Organisation und ihre Daten nach dem {date} gelöscht.",
         "action": "Erneut abonnieren"
+      },
+      "createBlocked": {
+        "readOnly": "Ihr Konto ist schreibgeschützt. Aktualisieren Sie die Zahlung, um Videos zu erstellen.",
+        "noPlan": "Wählen Sie einen Tarif, um Videos zu erstellen.",
+        "readOnlyAction": "Zahlung aktualisieren",
+        "noPlanAction": "Tarife ansehen"
       }
     }
   },

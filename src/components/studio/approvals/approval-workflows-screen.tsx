@@ -57,10 +57,13 @@ function StepChain({ workflow }: { workflow: ApprovalWorkflow }) {
 function WorkflowCard({
   workflow,
   busy,
+  businessNames,
   onEdit,
   onDelete,
 }: {
   workflow: ApprovalWorkflow;
+  /** Business id → name, so the card says "Leeds Sourdough", not the raw id. */
+  businessNames: Readonly<Record<string, string>>;
   busy: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -75,7 +78,7 @@ function WorkflowCard({
         <div>
           <h3 className="font-medium">{workflow.name}</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {describeAppliesTo(workflow.appliesTo)}
+            {describeAppliesTo(workflow.appliesTo, businessNames)}
           </p>
         </div>
         <div className="flex gap-1.5">
@@ -114,6 +117,10 @@ export function ApprovalWorkflowsScreen() {
   const errorMessage = useErrorMessage();
   const { businessId } = useBusiness();
   const res = useApi<{ data: ApprovalWorkflow[] }>('/approval-workflows');
+  const businesses = useApi<{ data: Array<{ id: string; name: string }> }>('/businesses');
+  const businessNames = Object.fromEntries(
+    (businesses.data?.data ?? []).map((b) => [b.id, b.name]),
+  );
   const [editing, setEditing] = useState<Editing>(null);
   const [busy, setBusy] = useState(false);
 
@@ -208,6 +215,7 @@ export function ApprovalWorkflowsScreen() {
           <ul className="flex flex-col gap-3" aria-label={t('listAria')}>
             {workflows.map((w) => (
               <WorkflowCard
+                businessNames={businessNames}
                 key={w.id}
                 workflow={w}
                 busy={busy}

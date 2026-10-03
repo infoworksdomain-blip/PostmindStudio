@@ -24,19 +24,25 @@ const TONE: Record<Tone, string> = {
   bad: 'border-destructive/30 bg-destructive/8 text-foreground',
 };
 
+/** Id of the billing banner, so a disabled create button can point at it (aria-describedby). */
+export const ACCOUNT_BANNER_ID = 'account-banner';
+
 function Banner({
   tone,
+  id,
   icon,
   children,
   action,
 }: {
   tone: Tone;
+  id?: string;
   icon: ReactNode;
   children: ReactNode;
   action?: ReactNode;
 }) {
   return (
     <div
+      id={id}
       role={tone === 'info' ? 'status' : 'alert'}
       className={cn(
         'mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-4 py-3 text-sm',
@@ -70,6 +76,7 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
     case 'read_only':
       return (
         <Banner
+          id={ACCOUNT_BANNER_ID}
           tone="bad"
           icon={<Lock className="size-4" />}
           action={<BillingLink>{t('readOnly.action')}</BillingLink>}
@@ -80,6 +87,7 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
     case 'cancelled':
       return (
         <Banner
+          id={ACCOUNT_BANNER_ID}
           tone="bad"
           icon={<Archive className="size-4" />}
           action={<BillingLink>{t('cancelled.action')}</BillingLink>}
@@ -98,6 +106,7 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
     case 'past_due':
       return (
         <Banner
+          id={ACCOUNT_BANNER_ID}
           tone="warn"
           icon={<AlertTriangle className="size-4" />}
           action={<BillingLink>{t('pastDue.action')}</BillingLink>}
@@ -113,6 +122,7 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
     case 'no_plan':
       return (
         <Banner
+          id={ACCOUNT_BANNER_ID}
           tone="info"
           icon={<Sparkles className="size-4" />}
           action={<BillingLink>{t('noPlan.action')}</BillingLink>}
@@ -124,6 +134,7 @@ export function BillingBanner({ banner, now }: { banner: AccountBanner; now: num
       const days = Math.max(0, Math.ceil((Date.parse(banner.endsAt) - now) / DAY_MS));
       return (
         <Banner
+          id={ACCOUNT_BANNER_ID}
           tone="info"
           icon={<Clock className="size-4" />}
           action={<BillingLink>{t('trial.action')}</BillingLink>}

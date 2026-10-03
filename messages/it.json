@@ -225,6 +225,12 @@
         "body": "Abbonati di nuovo per continuare a creare. Puoi ancora visualizzare, scaricare ed esportare i tuoi dati.",
         "deletesOn": "Se non ti abboni di nuovo, l’organizzazione e i suoi dati verranno eliminati dopo il {date}.",
         "action": "Abbonati di nuovo"
+      },
+      "createBlocked": {
+        "readOnly": "Il tuo account è in sola lettura. Aggiorna il pagamento per creare video.",
+        "noPlan": "Scegli un piano per creare video.",
+        "readOnlyAction": "Aggiorna il pagamento",
+        "noPlanAction": "Vedi i piani"
       }
     }
   },

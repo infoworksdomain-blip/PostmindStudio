@@ -5,6 +5,11 @@ import { useId, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowRight, Clapperboard, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import {
+  CREATE_BLOCK_NOTICE_ID,
+  CreateBlockedNotice,
+  useCreateBlock,
+} from '../account/create-access';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
@@ -36,6 +41,7 @@ export function FirstVideoStep({
 }) {
   const t = useTranslations('onboarding.firstVideo');
   const errorMessage = useErrorMessage();
+  const block = useCreateBlock();
   const briefId = useId();
   const templates = useApi<{ data: ProjectTemplate[] }>(projectId ? null : '/templates');
   const kits = useApi<{ data: BrandKit[] }>(projectId ? null : '/brand-kits', { businessId });
@@ -147,8 +153,13 @@ export function FirstVideoStep({
             {/* 20.18: a gentle nudge for a very short brief; Create still works. */}
             <BriefHint text={brief} id={`${briefId}-hint`} />
           </div>
+          <CreateBlockedNotice block={block} />
           <div>
-            <Button onClick={() => void create()} disabled={creating}>
+            <Button
+              onClick={() => void create()}
+              disabled={creating || block !== null}
+              aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
+            >
               {creating ? <Loader2 className="animate-spin" /> : <Clapperboard />}
               {t('create')}
             </Button>

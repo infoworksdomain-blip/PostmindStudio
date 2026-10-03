@@ -1,6 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { ACCOUNT_BANNER_ID } from '../account/account-banners';
+import { useCreateBlock } from '../account/create-access';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Loader2, Play, RotateCw, Square, X } from 'lucide-react';
@@ -28,6 +30,7 @@ export function ProjectActions({
   const { id, state } = project;
   // Generate and Cancel need studio:project:write; a viewer only reads.
   const mayWrite = useCan(StudioCapability.ProjectWrite);
+  const block = useCreateBlock();
   if (!mayWrite) return null;
 
   async function generate() {
@@ -54,7 +57,11 @@ export function ProjectActions({
         </Button>
       )}
       {GENERATABLE.has(state) && state !== 'READY_FOR_REVIEW' && (
-        <Button onClick={generate} disabled={busy}>
+        <Button
+          onClick={generate}
+          disabled={busy || block !== null}
+          aria-describedby={block ? ACCOUNT_BANNER_ID : undefined}
+        >
           {pending === 'generate' ? (
             <Loader2 className="animate-spin" />
           ) : state === 'DRAFT' ? (

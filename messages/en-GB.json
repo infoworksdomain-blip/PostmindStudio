@@ -225,6 +225,12 @@
         "body": "Subscribe again to keep creating. You can still view, download and export your data.",
         "deletesOn": "Unless you subscribe again, the organisation and its data will be deleted after {date}.",
         "action": "Subscribe again"
+      },
+      "createBlocked": {
+        "readOnly": "Your account is read-only. Update payment to create videos.",
+        "noPlan": "Choose a plan to create videos.",
+        "readOnlyAction": "Update payment",
+        "noPlanAction": "See plans"
       }
     }
   },

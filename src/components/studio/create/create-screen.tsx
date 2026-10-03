@@ -14,6 +14,11 @@ import type { BrandKit, MetaConnectInfo, PlatformConnection, Project } from '@/l
 import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
+import {
+  CREATE_BLOCK_NOTICE_ID,
+  CreateBlockedNotice,
+  useCreateBlock,
+} from '../account/create-access';
 import { TemplatePicker } from '../slideshow/template-picker';
 import {
   buildTargets,
@@ -111,6 +116,9 @@ export function CreateScreen({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [problems, setProblems] = useState<CreateProblem[]>([]);
+  // Read-only or no plan: the server answers 402; say so up front. A plan-less organisation may
+  // still draft a slideshow (it spends nothing until generated).
+  const createBlock = useCreateBlock();
 
   const kits = useApi<{ data: BrandKit[] }>(businessId ? '/brand-kits' : null, { businessId });
   const connections = useApi<{ data: PlatformConnection[]; meta?: MetaConnectInfo }>(
@@ -239,6 +247,8 @@ export function CreateScreen({
   }
 
   const isSlideshow = form.source === 'SLIDESHOW';
+  const block = createBlock === 'none' && isSlideshow ? null : createBlock;
+  const blocked = block !== null;
   const isUpload = form.source === 'UPLOAD';
   const templated = usesTemplate(state, reference);
   const chooseTemplate = (id: string | null) => {
@@ -358,7 +368,13 @@ export function CreateScreen({
           >
             {summary.join(' · ')} · <span className="underline">{t('options')}</span>
           </button>
-          <Button type="submit" size="lg" disabled={submitting || !ready} className="px-4">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={submitting || !ready || blocked}
+            aria-describedby={blocked ? CREATE_BLOCK_NOTICE_ID : undefined}
+            className="px-4"
+          >
             {submitting ? (
               <Loader2 className="animate-spin" />
             ) : (
@@ -368,6 +384,7 @@ export function CreateScreen({
           </Button>
         </div>
       </div>
+      <CreateBlockedNotice block={block} className="-mt-3 text-sm text-destructive" />
       {/* 20.18: a gentle nudge for a very short or generic brief; Generate still works. */}
       <BriefHint text={form.brief} id="create-brief-hint" className="-mt-3" />
       <AutoPublishOption

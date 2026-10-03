@@ -4,6 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import {
+  CREATE_BLOCK_NOTICE_ID,
+  CreateBlockedNotice,
+  useCreateBlock,
+} from '../account/create-access';
 import { toast } from 'sonner';
 import { Building2, CalendarRange, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,6 +46,7 @@ const POSTS_PER_DAY = [1, 2, 3, 4] as const;
 export function PlanMonthForm() {
   const t = useTranslations('plans.new');
   const tp = useTranslations('plans.new.problems');
+  const block = useCreateBlock();
   const f = useFormat();
   const router = useRouter();
   const errorMessage = useErrorMessage();
@@ -275,6 +281,7 @@ export function PlanMonthForm() {
             })}
           </div>
 
+          <CreateBlockedNotice block={block} />
           {problems.length > 0 && (
             <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
               {problems.map((p) => (
@@ -283,7 +290,12 @@ export function PlanMonthForm() {
             </ul>
           )}
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="lg" disabled={submitting}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={submitting || block !== null}
+              aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
+            >
               {submitting ? <Loader2 className="animate-spin" /> : <CalendarRange />}
               {submitting ? t('submitting') : t('submit')}
             </Button>

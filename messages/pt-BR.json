@@ -225,6 +225,12 @@
         "body": "Assine novamente para continuar criando. Você ainda pode visualizar, baixar e exportar seus dados.",
         "deletesOn": "Se você não assinar novamente, a organização e seus dados serão excluídos após {date}.",
         "action": "Assinar novamente"
+      },
+      "createBlocked": {
+        "readOnly": "Sua conta está somente para leitura. Atualize o pagamento para criar vídeos.",
+        "noPlan": "Escolha um plano para criar vídeos.",
+        "readOnlyAction": "Atualizar pagamento",
+        "noPlanAction": "Ver planos"
       }
     }
   },

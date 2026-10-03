@@ -225,6 +225,12 @@
         "body": "重新订阅即可继续创作。您仍可查看、下载和导出您的数据。",
         "deletesOn": "如不重新订阅，该组织及其数据将在 {date} 之后被删除。",
         "action": "重新订阅"
+      },
+      "createBlocked": {
+        "readOnly": "您的账户为只读状态。请更新付款信息以创建视频。",
+        "noPlan": "请选择套餐以创建视频。",
+        "readOnlyAction": "更新付款",
+        "noPlanAction": "查看套餐"
       }
     }
   },

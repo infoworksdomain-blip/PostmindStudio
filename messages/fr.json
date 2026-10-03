@@ -225,6 +225,12 @@
         "body": "Abonnez-vous à nouveau pour continuer à créer. Vous pouvez toujours consulter, télécharger et exporter vos données.",
         "deletesOn": "Sans nouvel abonnement, l’organisation et ses données seront supprimées après le {date}.",
         "action": "Se réabonner"
+      },
+      "createBlocked": {
+        "readOnly": "Votre compte est en lecture seule. Mettez à jour votre paiement pour créer des vidéos.",
+        "noPlan": "Choisissez un forfait pour créer des vidéos.",
+        "readOnlyAction": "Mettre à jour le paiement",
+        "noPlanAction": "Voir les forfaits"
       }
     }
   },
