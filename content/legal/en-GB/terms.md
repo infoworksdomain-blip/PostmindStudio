@@ -2,7 +2,7 @@
 
 # Terms of Service
 
-**Last updated: 2 October 2026**
+**Last updated: 3 October 2026**
 
 These terms are a contract between Postmind AI Ltd and the business that signs up for PostMind Studio. Please read them carefully. They limit our liability (clause 17) and say how the contract can end (clause 14).
 
@@ -45,7 +45,7 @@ In the Agreement:
 
 4.1 The Service helps you plan, generate, edit, review and publish short-form and long-form marketing videos, slideshows and related material. Depending on your Plan it includes: AI-assisted ideas and scripts; AI-generated and stock footage, images, voice-overs, music and sound effects; video composition and rendering in several formats; text overlays; brand kits; a scan of your own website to learn about your business and gather your images; access to a reference library of example videos for inspiration; review and approval workflows and share links for outside reviewers; scheduling and publishing to Connected Platforms; and performance analytics.
 
-4.2 The Service uses Third-Party Providers for much of this work. We choose, and may change, which provider handles each task. We will not change a provider in a way that materially reduces the overall functionality of your Plan during a paid period.
+4.2 The Service uses Third-Party Providers, including AI providers, for much of this work. We choose, and may change, which provider handles each task. Third-Party Providers may change their models, prices, terms or availability, or stop offering a service, so the kinds of Output available (for example AI video clips, AI presenters or particular voices), their quality and how long they take depend on them. When a provider is unavailable, the Service may use another provider, or use your own images, stock images or animated text cards instead of AI-generated footage. We will not change a provider in a way that materially reduces the overall functionality of your Plan during a paid period.
 
 4.3 We may improve and change the Service from time to time. If a change materially reduces the core features of your Plan during a paid period, we will tell you at least 30 days in advance where we reasonably can, and you may cancel under clause 14.3.
 
@@ -65,9 +65,9 @@ In the Agreement:
 
 6.1 **Plans.** The Basic, Standard and Plus Plans are available by self-service, billed monthly or annually. The Enterprise Plan is quoted individually and set out in an Order Form. What each Plan includes (for example videos per month, maximum video length, platforms, seats, businesses, storage, voice cloning, 4K rendering and priority) is shown on our [pricing page](/pricing) at the time you buy or renew.
 
-6.2 **Trial.** New organisations may be offered one free trial of the Standard Plan, normally 14 days. You must give a valid payment card to start the trial. A trial has its own limited allowance (currently 5 short videos and 1 long video) and a spending limit. Only one trial is available per organisation and per payment card; if we detect a repeat trial, the trial ends at once and the first payment is taken. **Unless you cancel before the trial ends, your subscription starts automatically and your card is charged the Fees for the Plan and billing period you chose.** If the trial ends and the first payment cannot be taken, you cannot create or publish content until you subscribe.
+6.2 **Trial.** New organisations may be offered one free trial of the Standard Plan, normally 14 days. You must give a valid payment card to start the trial. A trial has its own limited allowance (currently 5 short videos and 1 long video) and its own limits on AI usage (currently £10 a day and £15 in total for the whole trial); when one is reached, AI generation pauses until the next day (for the daily limit) or for the rest of the trial (for the total limit). Only one trial is available per organisation and per payment card; if we detect a repeat trial, the trial ends at once and the first payment is taken. **Unless you cancel before the trial ends, your subscription starts automatically and your card is charged the Fees for the Plan and billing period you chose.** If the trial ends and the first payment cannot be taken, you cannot create or publish content until you subscribe.
 
-6.3 **Allowances and cost caps.** Every Plan has monthly allowances and daily and monthly spending limits on AI generation (**cost caps**), which protect you and us from unexpected costs. When an allowance or a cost cap is reached, new generation pauses until the next day or billing period, until you buy Top-up Credits, or until you move to a higher Plan. Work already paid for is not lost when generation pauses. We tell you in the Service and by notification as you approach and reach these limits.
+6.3 **Allowances and cost caps.** Every Plan has monthly allowances and daily and monthly limits on AI usage (**cost caps**), which protect you and us from unexpected costs. Each video also has its own AI budget, set by default according to your Plan and the kind of video, and the Service limits how many AI-generated clips a video uses, filling other shots with your own images, stock images or animated text cards. When an allowance, a cost cap or a video's budget is reached, generation pauses until the next day or billing period, until you buy Top-up Credits or move to a higher Plan, or, for a video's own budget, until you review that video in the Service. Work already done is not lost when generation pauses. We tell you in the Service and by notification as you approach and reach these limits.
 
 6.4 **Fair use.** Where a Plan is described as unlimited, it is subject to fair use: use consistent with a single business's genuine marketing needs, within the cost caps in the Plan or Order Form. We may contact you, and if needed limit use, where your usage is far outside normal patterns for your Plan.
 
@@ -97,7 +97,7 @@ In the Agreement:
 
 8.3 **No training on your content.** We do not use your Customer Content to train our own or third-party general-purpose AI models. Our Third-Party Providers process Customer Content under their business or API terms, which we select so that, as far as those terms allow, they do not use it to train their models. We may use aggregated, de-identified usage information (for example how long renders take or which features are used) to run and improve the Service.
 
-8.4 **Stock and library material.** Outputs may include stock footage, images, music and sound effects licensed from third parties (for example Storyblocks or Pexels), and the Service may show you videos from our reference library. Such material remains owned by its licensors. You may use it only as part of the Outputs the Service produces and on the platforms and in the ways allowed by the relevant licence; you must not extract it and use it on its own, resell it or claim it as your own. Reference-library videos are provided for inspiration within the Service only and may not be downloaded, copied or republished.
+8.4 **Stock and library material.** Outputs may include stock footage, images, music and sound effects licensed from third parties (for example Pixabay), and the Service may show you videos from our reference library. Such material remains owned by its licensors. You may use it only as part of the Outputs the Service produces and on the platforms and in the ways allowed by the relevant licence; you must not extract it and use it on its own, resell it or claim it as your own. Reference-library videos are provided for inspiration within the Service only and may not be downloaded, copied or republished.
 
 8.5 **Your responsibilities for Inputs.** You are responsible for your Inputs and for having all the rights, permissions and consents needed for us to use them as the Agreement allows. In particular, you confirm that:
 
@@ -106,7 +106,9 @@ In the Agreement:
 - you have a lawful basis for any personal data you include in Inputs, and you have given any notices the law requires; and
 - your Inputs and your use of Outputs comply with the [Acceptable Use Policy](/legal/acceptable-use).
 
-8.6 **Content checks.** We may, but are not obliged to, check Customer Content automatically (for example through restricted-topic checks and our AI providers' safety filters) and manually. Content that appears to breach the Acceptable Use Policy may be blocked, held for review or removed, and publishing may be held. We are not responsible for monitoring your content, and a lack of action by us does not mean content is lawful or suitable.
+8.6 **Content checks.** **Customer Content, including finished videos, is not automatically scanned for safety or legality.** The Service runs restricted-topic checks on briefs and scripts, and our AI providers apply their own safety filters to what they generate, but these checks are limited and will not catch everything. We may also review content manually, for example when it is reported to us. Content that appears to breach the Acceptable Use Policy may be blocked, held for review or removed, and publishing may be held. We are not responsible for monitoring your content, and a lack of action by us does not mean content is lawful or suitable.
+
+8.7 **Approval before publishing.** You are responsible for reviewing and approving content before it is published. The Service lets you choose automatic approval (for example for trusted creators, under your Organisation's review settings, or when you choose "Generate and schedule" for a posting plan). If you turn it on, content may be published without anyone reviewing it first, and you remain responsible for that content as if you had approved it yourself.
 
 ## 9. AI-generated output
 
@@ -116,7 +118,7 @@ In the Agreement:
 - similar or identical Outputs may be produced for other customers, and we do not guarantee that any Output is unique, original, protectable by copyright or trade mark, or free from third-party rights; and
 - Outputs are not professional (for example legal, financial or medical) advice.
 
-9.2 **You must review every Output before you publish or otherwise use it**, and you are responsible for your decision to do so, including making sure that claims in your advertising are true and comply with the rules that apply to you (for example the CAP Code, consumer protection law and platform advertising policies).
+9.2 **You must review every Output before you publish or otherwise use it** (or accept the risk of not doing so where you choose automatic approval under clause 8.7), and you are responsible for your decision to do so, including making sure that claims in your advertising are true and comply with the rules that apply to you (for example the CAP Code, consumer protection law and platform advertising policies).
 
 9.3 Where a Connected Platform offers a label for AI-generated content, the Service applies it when publishing. Your brand kit may also add an on-screen "AI-generated" label. You must not remove or hide AI-content disclosures where the law or a Connected Platform requires them.
 

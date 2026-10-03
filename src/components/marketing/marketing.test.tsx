@@ -70,6 +70,23 @@ describe('LegalDocumentView', () => {
     );
   });
 
+  it('renders Markdown pipe tables as real tables', () => {
+    const tableMd =
+      '# Sub-processors\n\n| Provider | Purpose |\n| --- | --- |\n| Pixabay | Stock images |\n';
+    const { container } = render(
+      <LegalDocumentView
+        docKey="subprocessors"
+        markdown={tableMd}
+        placeholder={false}
+        fallback={false}
+      />,
+    );
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: 'Provider' })).toBeVisible();
+    expect(within(table).getByRole('cell', { name: 'Pixabay' })).toBeVisible();
+    expect(container.textContent).not.toContain('| --- |');
+  });
+
   it('links only http(s), mailto and relative targets; anything else is plain text', () => {
     const links = [
       '[web](https://example.com/a)',
