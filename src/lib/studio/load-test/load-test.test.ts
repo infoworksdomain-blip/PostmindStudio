@@ -10,6 +10,7 @@ import {
   simulatedEmbedding,
   simulatedText,
   SIM_SCRIPT,
+  variedScript,
   type SimulationProfile,
 } from './fake-providers';
 import {
@@ -173,9 +174,15 @@ describe('SimulatedAdapter', () => {
     const ask = (system: string) =>
       simulatedText({ capability: 'text_generation', organisationId: 'o', system, prompt: '' });
     expect(JSON.stringify(ask('You are the ideation layer'))).toContain('actionable');
-    expect(ask('the script and storyboard layer')).toMatchObject({
-      output: { metadata: { json: SIM_SCRIPT } },
+    // Every script differs (15.B6 asset reuse would otherwise serve clips from earlier videos).
+    const first = JSON.stringify(ask('the script and storyboard layer'));
+    expect(first).toContain('Golden loaf on a counter, take ');
+    expect(JSON.stringify(ask('the script and storyboard layer'))).not.toBe(first);
+    expect(variedScript('t').shots[5]).toMatchObject({
+      sceneDescription: 'Hands holding a warm loaf, take t-5',
+      voiceoverText: 'Subscribe today. (t)',
     });
+    expect(variedScript('t').shots[6]?.voiceoverText).toBe('');
     expect(JSON.stringify(ask('a social-media slideshow writer'))).toContain('items');
     expect(JSON.stringify(ask('anything else'))).toContain('ALLOW');
     expect(() =>

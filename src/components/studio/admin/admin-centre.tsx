@@ -1,11 +1,13 @@
 'use client';
 
 import { ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApi } from '@/lib/client/api';
+import { useMe } from '../account/use-me';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { CostReportPanel } from './cost-report-panel';
 import { DeadLetterPanel } from './dead-letter-panel';
@@ -32,6 +34,25 @@ import { isForbidden, type KillSwitchState } from './types';
 
 export function StaffOnly() {
   const t = useTranslations('admin.centre.staffOnly');
+  // Staff and superadmins get a 403 only while 2FA is off (capabilitiesForPlatformRole), so tell
+  // them that instead of "not on the staff list".
+  const platformRole = useMe().data?.me?.user?.platformRole;
+  if (platformRole === 'staff' || platformRole === 'superadmin')
+    return (
+      <EmptyState
+        icon={<ShieldAlert className="size-8" strokeWidth={1.5} />}
+        title={t('needs2faTitle')}
+        description={t('needs2faDescription')}
+        action={
+          <Link
+            href="/account/security"
+            className="font-medium underline underline-offset-4 hover:no-underline"
+          >
+            {t('needs2faAction')}
+          </Link>
+        }
+      />
+    );
   return (
     <EmptyState
       icon={<ShieldAlert className="size-8" strokeWidth={1.5} />}

@@ -222,6 +222,8 @@ async function runDecided(
     organisationId: input.request.organisationId,
     byoc: accountScope !== 'platform',
     leaseMs: deps.config.providerTimeoutMs + LEASE_MARGIN_MS,
+    // One waiter per shot (or project) and capability, however many times it asks.
+    waiterId: `${input.request.shotId ?? input.request.projectId ?? input.request.organisationId}:${input.request.capability}`,
   });
   if (slot && !slot.acquired) {
     // Nothing reaches the provider: give back a half-open trial slot the router may have claimed.

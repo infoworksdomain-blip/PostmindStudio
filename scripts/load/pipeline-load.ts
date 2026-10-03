@@ -109,6 +109,17 @@ async function createOrganisations(db: PrismaClient, count: number, tier: PlanTi
   return orgs;
 }
 
+/** "seedance=10,kling=40" → { seedance: 10, kling: 40 } (simulated account concurrency). */
+export function parseAccounts(raw: string): Record<string, number> {
+  return Object.fromEntries(
+    raw
+      .split(',')
+      .map((pair) => pair.split('=').map((s) => s.trim()))
+      .filter(([id, n]) => id && Number.isInteger(Number(n)) && Number(n) > 0)
+      .map(([id, n]) => [id ?? '', Number(n)]),
+  );
+}
+
 /** How many videos each organisation starts: one heavy organisation, the rest round-robin. */
 export function videosPerOrganisation(videos: number, orgs: number, heavyShare: number): number[] {
   const heavy = orgs > 1 ? Math.round(videos * heavyShare) : videos;
@@ -129,6 +140,8 @@ async function main(): Promise<void> {
       'time-scale': { type: 'string', default: '0.1' },
       'rate-limited-ratio': { type: 'string', default: '0.05' },
       'fail-ratio': { type: 'string', default: '0.02' },
+      // Simulated provider accounts, e.g. seedance=10 (a BytePlus enterprise account).
+      account: { type: 'string', default: process.env.LOAD_TEST_ACCOUNTS ?? '' },
       'timeout-min': { type: 'string', default: '60' },
       out: { type: 'string', default: 'ops/results/load-test' },
       attach: { type: 'boolean', default: false },
@@ -160,6 +173,11 @@ async function main(): Promise<void> {
   const renderUrl = await putSample(media.render, 'render.mp4', 'video/mp4');
 
   // ---- pipeline deps: production wiring, providers / storage / fetch replaced ----------------
+  // Slot retries run in real time while provider latencies are scaled: scale the retry too, or the
+  // report would count 10–20 s real waits as 100–200 s simulated ones.
+  process.env.STUDIO_PROVIDER_SLOT_RETRY_MS ??= String(
+    Math.max(100, Math.round(10_000 * timeScale)),
+  );
   const db = new PrismaClient();
   const connection = redisConnectionFromEnv();
   const queue = createBullJobQueue(connection);
@@ -168,7 +186,7 @@ async function main(): Promise<void> {
     timeScale,
     rateLimitedRatio: Number(args['rate-limited-ratio']),
     failRatio: Number(args['fail-ratio']),
-    accountConcurrency: DEFAULT_ACCOUNT_CONCURRENCY,
+    accountConcurrency: { ...DEFAULT_ACCOUNT_CONCURRENCY, ...parseAccounts(args.account ?? '') },
     random: Math.random,
     now: Date.now,
   };
@@ -472,8 +490,12 @@ export function assertions(
     /rate_limited|rate_deferred/.test(o.errorReason ?? ''),
   );
   if (rateFailures.length) problems.push(`${rateFailures.length} projects failed on a rate limit`);
-  if (summary.ready < summary.projects * 0.9) {
-    problems.push(`only ${summary.ready}/${summary.projects} projects reached review`);
+  // The cost guard pausing a heavy organisation at its daily cap is the guard working, not a
+  // pipeline failure: those runs are left out of the "reached review" bar.
+  const capped = outcomes.filter((o) => (o.errorReason ?? '').startsWith('cost_cap_paused')).length;
+  const expected = summary.projects - capped;
+  if (summary.ready < expected * 0.9) {
+    problems.push(`only ${summary.ready}/${expected} projects reached review`);
   }
   if (!outcomes.every((o) => READY_STATES.includes(o.finalState) || TERMINAL.has(o.finalState))) {
     problems.push('some projects never finished');

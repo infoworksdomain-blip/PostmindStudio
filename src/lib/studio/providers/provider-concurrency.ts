@@ -75,6 +75,8 @@ export interface ProviderConcurrencyLimiter {
     organisationId: string;
     byoc?: boolean;
     leaseMs: number;
+    /** Who is waiting (e.g. the shot): counted once while refused, to pace the retries. */
+    waiterId?: string;
   }): Promise<ConcurrencySlot>;
 }
 
@@ -122,13 +124,42 @@ export function concurrencyLimitsFromEnv(
   };
 }
 
-/** Jittered wait before the next try, so delayed jobs do not all wake in the same instant. */
-export function slotRetryMs(random: () => number = Math.random): number {
-  return SLOT_RETRY_MS + Math.floor(random() * SLOT_RETRY_MS);
+/** How long a refused waiter stays counted without asking again. */
+export const WAITER_TTL_MS = 5 * 60_000;
+/** Slowest polling: SLOT_RETRY_MS × this (plus jitter), with many waiters per slot. */
+export const MAX_RETRY_FACTOR = 6;
+export const SLOT_RETRY_ENV = 'STUDIO_PROVIDER_SLOT_RETRY_MS';
+
+/**
+ * Wait before the next try: `base` (+ up to `base` jitter so delayed jobs do not wake together),
+ * stretched with the queue — one step per two waiters per slot, at most MAX_RETRY_FACTOR × — so a
+ * long queue polls Redis and the database less often. With many waiters a freed slot is still
+ * taken within moments; with few, they ask again every 10–20 s.
+ */
+export function slotRetryMs(
+  random: () => number = Math.random,
+  waiters = 0,
+  max = 1,
+  base: number = SLOT_RETRY_MS,
+): number {
+  const factor = Math.min(MAX_RETRY_FACTOR, Math.max(1, Math.ceil(waiters / (2 * max))));
+  return base * factor + Math.floor(random() * base);
+}
+
+/** STUDIO_PROVIDER_SLOT_RETRY_MS (100–600000), else SLOT_RETRY_MS. */
+export function slotRetryBaseFromEnv(env: Readonly<Record<string, string | undefined>>): number {
+  const raw = env[SLOT_RETRY_ENV]?.trim();
+  if (!raw) return SLOT_RETRY_MS;
+  const n = Number(raw);
+  if (!/^\d+$/.test(raw) || n < 100 || n > 600_000) {
+    throw new ConfigurationError(`${SLOT_RETRY_ENV} must be a whole number of ms, 100–600000`);
+  }
+  return n;
 }
 
 interface SlotKeys {
   account: string;
+  waiting: string;
   /** Absent for BYOC (no share on an organisation's own account). */
   organisation?: string;
   max: number;
@@ -141,38 +172,68 @@ function slotKeys(
 ): SlotKeys {
   const base = `${CONCURRENCY_KEY_PREFIX}${input.providerId}`;
   return input.byoc
-    ? { account: `${base}:byoc:${input.organisationId}`, max: limit.max, share: limit.max }
+    ? {
+        account: `${base}:byoc:${input.organisationId}`,
+        waiting: `${base}:byoc:${input.organisationId}:waiting`,
+        max: limit.max,
+        share: limit.max,
+      }
     : {
         account: base,
+        waiting: `${base}:waiting`,
         organisation: `${base}:org:${input.organisationId}`,
         max: limit.max,
         share: limit.perOrganisation,
       };
 }
 
-// KEYS: the account's lease zset, the organisation's lease zset. ARGV: now, lease id, max, share,
-// lease expiry. Returns 1 = slot taken, 0 = the account is full, -1 = the organisation holds its
-// share. With one key (BYOC) only the account is checked.
+// KEYS: the account's lease zset, its waiting zset, [the organisation's lease zset]. ARGV: now,
+// lease id, max, share, lease expiry, waiter id, waiter expiry. Returns {code, waiters}: code 1 =
+// slot taken, 0 = the account is full, -1 = the organisation holds its share; waiters = how many
+// are waiting for this account (the caller paces its retry by it).
 export const ACQUIRE_SLOT_SCRIPT = `
 local now = tonumber(ARGV[1])
 local expiry = tonumber(ARGV[5])
-for i = 1, #KEYS do redis.call('ZREMRANGEBYSCORE', KEYS[i], '-inf', now) end
-if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[3]) then return 0 end
-if #KEYS > 1 and redis.call('ZCARD', KEYS[2]) >= tonumber(ARGV[4]) then return -1 end
-for i = 1, #KEYS do
-  redis.call('ZADD', KEYS[i], expiry, ARGV[2])
-  redis.call('PEXPIREAT', KEYS[i], expiry)
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
+redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', now)
+if #KEYS > 2 then redis.call('ZREMRANGEBYSCORE', KEYS[3], '-inf', now) end
+local code = 1
+if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[3]) then code = 0
+elseif #KEYS > 2 and redis.call('ZCARD', KEYS[3]) >= tonumber(ARGV[4]) then code = -1 end
+if code ~= 1 then
+  redis.call('ZADD', KEYS[2], tonumber(ARGV[7]), ARGV[6])
+  redis.call('PEXPIREAT', KEYS[2], tonumber(ARGV[7]))
+  return {code, redis.call('ZCARD', KEYS[2])}
 end
-return 1`;
+redis.call('ZREM', KEYS[2], ARGV[6])
+redis.call('ZADD', KEYS[1], expiry, ARGV[2])
+redis.call('PEXPIREAT', KEYS[1], expiry)
+if #KEYS > 2 then
+  redis.call('ZADD', KEYS[3], expiry, ARGV[2])
+  redis.call('PEXPIREAT', KEYS[3], expiry)
+end
+return {1, 0}`;
 
 export const RELEASE_SLOT_SCRIPT = `
 for i = 1, #KEYS do redis.call('ZREM', KEYS[i], ARGV[1]) end
 return 1`;
 
-function refused(code: number, random?: () => number): ConcurrencySlot {
+/** The script's {code, waiters} (a bare number from older doubles = the code, no waiters). */
+export function parseAcquireReply(reply: unknown): { code: number; waiters: number } {
+  if (Array.isArray(reply)) return { code: Number(reply[0]), waiters: Number(reply[1] ?? 0) || 0 };
+  return { code: Number(reply), waiters: 0 };
+}
+
+function refused(
+  code: number,
+  waiters: number,
+  max: number,
+  base: number,
+  random?: () => number,
+): ConcurrencySlot {
   return {
     acquired: false,
-    retryAfterMs: slotRetryMs(random),
+    retryAfterMs: slotRetryMs(random, waiters, max, base),
     reason: code === -1 ? 'organisation_share' : 'provider_full',
   };
 }
@@ -183,8 +244,11 @@ export function createRedisProviderConcurrencyLimiter(deps: {
   logger: Pick<Logger, 'warn'>;
   now?: () => number;
   random?: () => number;
+  /** SLOT_RETRY_MS unless set (the load-test harness scales it with its time scale). */
+  retryBaseMs?: number;
 }): ProviderConcurrencyLimiter {
   const now = deps.now ?? Date.now;
+  const base = deps.retryBaseMs ?? SLOT_RETRY_MS;
   let lastWarnAt = -Infinity;
   const warn = (err: unknown, providerId: string, what: string) => {
     const t = now();
@@ -198,23 +262,27 @@ export function createRedisProviderConcurrencyLimiter(deps: {
       const limit = deps.limits(input.providerId);
       if (!limit) return open;
       const keys = slotKeys(input, limit);
-      const keyList = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
       const lease = randomUUID();
       const t = now();
+      const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
       try {
-        const code = Number(
+        const { code, waiters } = parseAcquireReply(
           await deps.client.eval(
             ACQUIRE_SLOT_SCRIPT,
-            keyList.length,
-            ...keyList,
+            leaseKeys.length + 1,
+            keys.account,
+            keys.waiting,
+            ...(keys.organisation ? [keys.organisation] : []),
             String(t),
             lease,
             String(keys.max),
             String(keys.share),
             String(t + input.leaseMs),
+            input.waiterId ?? lease,
+            String(t + WAITER_TTL_MS),
           ),
         );
-        if (code !== 1) return refused(code, deps.random);
+        if (code !== 1) return refused(code, waiters, keys.max, base, deps.random);
       } catch (err) {
         warn(err, input.providerId, 'acquire');
         return open;
@@ -223,7 +291,7 @@ export function createRedisProviderConcurrencyLimiter(deps: {
         acquired: true,
         release: async () => {
           try {
-            await deps.client.eval(RELEASE_SLOT_SCRIPT, keyList.length, ...keyList, lease);
+            await deps.client.eval(RELEASE_SLOT_SCRIPT, leaseKeys.length, ...leaseKeys, lease);
           } catch (err) {
             // The lease expires on its own; a failed release only delays the next job.
             warn(err, input.providerId, 'release');
@@ -234,7 +302,7 @@ export function createRedisProviderConcurrencyLimiter(deps: {
   };
 }
 
-/** In-process limiter with the same rules (tests, the load-test harness, single-process tools). */
+/** In-process limiter with the same rules (tests, single-process tools). */
 export function createMemoryProviderConcurrencyLimiter(
   limits: (providerId: string) => ConcurrencyLimit | undefined,
   now: () => number = Date.now,
@@ -242,35 +310,39 @@ export function createMemoryProviderConcurrencyLimiter(
 ): ProviderConcurrencyLimiter & {
   inFlight(providerId: string, organisationId?: string): number;
 } {
-  const leases = new Map<string, ReadonlyMap<string, number>>();
+  const sets = new Map<string, ReadonlyMap<string, number>>();
   const live = (key: string): ReadonlyMap<string, number> => {
     const t = now();
     const kept = new Map(
-      [...(leases.get(key) ?? new Map<string, number>())].filter(([, e]) => e > t),
+      [...(sets.get(key) ?? new Map<string, number>())].filter(([, e]) => e > t),
     );
-    leases.set(key, kept);
+    sets.set(key, kept);
     return kept;
   };
+  const add = (key: string, id: string, expiry: number) =>
+    sets.set(key, new Map([...live(key), [id, expiry]]));
+  const remove = (key: string, id: string) =>
+    sets.set(key, new Map([...(sets.get(key) ?? [])].filter(([k]) => k !== id)));
   return {
     async acquire(input) {
       const limit = limits(input.providerId);
       if (!limit) return { acquired: true, release: async () => undefined };
       const keys = slotKeys(input, limit);
-      if (live(keys.account).size >= keys.max) return refused(0, random);
-      if (keys.organisation && live(keys.organisation).size >= keys.share) {
-        return refused(-1, random);
-      }
       const lease = randomUUID();
-      const keyList = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
-      for (const key of keyList) {
-        leases.set(key, new Map([...live(key), [lease, now() + input.leaseMs]]));
+      const waiter = input.waiterId ?? lease;
+      const full = live(keys.account).size >= keys.max;
+      const shareFull = !full && keys.organisation && live(keys.organisation).size >= keys.share;
+      if (full || shareFull) {
+        add(keys.waiting, waiter, now() + WAITER_TTL_MS);
+        return refused(full ? 0 : -1, live(keys.waiting).size, keys.max, SLOT_RETRY_MS, random);
       }
+      remove(keys.waiting, waiter);
+      const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
+      for (const key of leaseKeys) add(key, lease, now() + input.leaseMs);
       return {
         acquired: true,
         release: async () => {
-          for (const key of keyList) {
-            leases.set(key, new Map([...(leases.get(key) ?? [])].filter(([id]) => id !== lease)));
-          }
+          for (const key of leaseKeys) remove(key, lease);
         },
       };
     },
@@ -307,5 +379,11 @@ export function providerConcurrencyFromEnv(
 ): ProviderConcurrencyLimiter | undefined {
   if (!env.REDIS_URL?.trim()) return undefined;
   const limits = concurrencyLimitsFromEnv(env);
-  return createRedisProviderConcurrencyLimiter({ client: makeClient(), limits, logger });
+  const retryBaseMs = slotRetryBaseFromEnv(env);
+  return createRedisProviderConcurrencyLimiter({
+    client: makeClient(),
+    limits,
+    logger,
+    retryBaseMs,
+  });
 }

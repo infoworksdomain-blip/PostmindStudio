@@ -12,7 +12,7 @@ name: Load test
 on:
   # A push to a load-test branch runs everything (workflow_dispatch needs the file on main first).
   push:
-    branches: ['p20-load-test', 'load-test/**']
+    branches: ['load-test/**']
   workflow_dispatch:
     inputs:
       scenarios:
@@ -102,6 +102,7 @@ jobs:
           burst-50-4gb-no-caps|50|10|0.5|4gb|STUDIO_PROVIDER_CONCURRENCY_SEEDANCE=off STUDIO_PROVIDER_CONCURRENCY_KLING=off|
           burst-100-4gb-queue|100|40|0|4gb||assert
           burst-100-4gb-failover|100|40|0|4gb|STUDIO_PROVIDER_OVERFLOW=failover|assert
+          burst-100-4gb-seedance10|100|40|0|4gb|STUDIO_PROVIDER_CONCURRENCY_SEEDANCE=10 LOAD_TEST_ACCOUNTS=seedance=10|assert
           EOF
           status=0
           while IFS='|' read -r name videos orgs heavy sizing extra check; do

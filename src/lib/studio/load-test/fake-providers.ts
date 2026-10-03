@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { ProviderError } from '../../errors';
 import type {
   ProviderAdapter,
@@ -211,6 +212,22 @@ export const SIM_SCRIPT = {
   })),
 };
 
+/**
+ * SIM_SCRIPT with a fresh token in every prompt and line, as real scripts differ from video to
+ * video. Without it, 15.B6 asset reuse (pipeline/asset-reuse.ts: same organisation, same prompt)
+ * would serve most clips from earlier videos and the burst would look far cheaper and faster.
+ */
+export function variedScript(token: string = randomUUID().slice(0, 8)): typeof SIM_SCRIPT {
+  return {
+    fullText: `${SIM_SCRIPT.fullText} (${token})`,
+    shots: SIM_SCRIPT.shots.map((shot, i) => ({
+      ...shot,
+      sceneDescription: `${shot.sceneDescription}, take ${token}-${i}`,
+      voiceoverText: shot.voiceoverText ? `${shot.voiceoverText} (${token})` : '',
+    })),
+  };
+}
+
 function textResult(json: unknown): ProviderPollResult {
   return { state: 'succeeded', output: { metadata: { model: 'simulated', json, costPence: 1 } } };
 }
@@ -219,7 +236,7 @@ function textResult(json: unknown): ProviderPollResult {
 export function simulatedText(request: ProviderRequest): ProviderPollResult {
   if (request.capability !== 'text_generation') throw new Error('not a text request');
   if (request.system.includes('ideation layer')) return textResult(SIM_IDEATION);
-  if (request.system.includes('script and storyboard')) return textResult(SIM_SCRIPT);
+  if (request.system.includes('script and storyboard')) return textResult(variedScript());
   if (request.system.includes('social-media slideshow')) {
     return textResult({
       hook: '5 reasons people love our sourdough',

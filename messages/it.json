@@ -2506,7 +2506,10 @@
       "checkingAccess": "Verifica dell’accesso",
       "staffOnly": {
         "title": "Solo per lo staff PostMind",
-        "description": "Il Centro di amministrazione controlla l’intera piattaforma: blocchi di emergenza, corpus di riferimento e spesa per i fornitori. Il tuo account non è nell’elenco dello staff della piattaforma."
+        "description": "Il Centro di amministrazione controlla l’intera piattaforma: blocchi di emergenza, corpus di riferimento e spesa per i fornitori. Il tuo account non è nell’elenco dello staff della piattaforma.",
+        "needs2faTitle": "Attiva l’autenticazione a due fattori",
+        "needs2faDescription": "Il tuo account ha accesso come staff PostMind, ma gli strumenti dello staff si sbloccano solo con l’autenticazione a due fattori attiva. Attivala e torna all’Admin Centre.",
+        "needs2faAction": "Configura l’autenticazione a due fattori"
       },
       "tabs": {
         "killSwitch": "Blocco di emergenza",
