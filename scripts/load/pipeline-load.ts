@@ -263,18 +263,29 @@ async function main(): Promise<void> {
   const samples: Sample[] = [];
   const finishedAt = new Map<string, number>();
   const firstWaitAt = new Map<string, number>();
+  const harnessStart = new Date();
   const deadline = Date.now() + Number(args['timeout-min']) * 60_000;
+  // --attach: only runs the API started while the harness ran (not seeded or never-generated drafts).
+  const tracked = args.attach
+    ? {
+        organisationId: { in: trackedOrgs },
+        deletedAt: null,
+        createdAt: { gte: harnessStart },
+        state: { not: 'DRAFT' as const },
+      }
+    : { organisationId: { in: trackedOrgs }, deletedAt: null };
   let cpu = process.cpuUsage();
   let cpuAt = Date.now();
   for (;;) {
     await new Promise((r) => setTimeout(r, 5_000));
     const projects = await db.videoProject.findMany({
-      where: { organisationId: { in: trackedOrgs }, deletedAt: null },
+      where: tracked,
       select: { id: true, state: true, metadata: true, createdAt: true },
     });
     const now = Date.now();
     for (const p of projects) {
-      if (!startedAt.has(p.id)) startedAt.set(p.id, p.createdAt.getTime());
+      // Attached: the first sighting out of DRAFT (≤ 5 s after the generate call).
+      if (!startedAt.has(p.id)) startedAt.set(p.id, args.attach ? now : p.createdAt.getTime());
       if (TERMINAL.has(p.state) && !finishedAt.has(p.id)) finishedAt.set(p.id, now);
       const meta = p.metadata as { providerWait?: { at?: string } } | null;
       if (meta?.providerWait?.at && !firstWaitAt.has(p.id)) {
@@ -313,7 +324,7 @@ async function main(): Promise<void> {
 
   // ---- results --------------------------------------------------------------------------------
   const projects = await db.videoProject.findMany({
-    where: { organisationId: { in: trackedOrgs }, deletedAt: null },
+    where: tracked,
     select: {
       id: true,
       organisationId: true,
