@@ -2166,7 +2166,9 @@
       "emptyTitle": "Ninguna referencia coincide",
       "emptySearch": "Nada en la biblioteca coincide con esa búsqueda. Prueba con otras palabras o borra la búsqueda.",
       "emptyFilters": "Prueba con una categoría más amplia o menos etiquetas.",
-      "more": "Más referencias"
+      "more": "Más referencias",
+      "noCloseTitle": "No hay coincidencias cercanas para «{query}»",
+      "noCloseBody": "Nada en la biblioteca se parece a esta búsqueda. Prueba con otras palabras o explora una categoría:"
     },
     "filters": {
       "formAria": "Filtrar la biblioteca",

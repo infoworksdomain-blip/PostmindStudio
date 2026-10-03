@@ -2166,7 +2166,9 @@
       "emptyTitle": "没有匹配的参考视频",
       "emptySearch": "视频库中没有与该搜索匹配的内容。请换个词试试，或清除搜索。",
       "emptyFilters": "请尝试更宽泛的分类或减少标签。",
-      "more": "更多参考视频"
+      "more": "更多参考视频",
+      "noCloseTitle": "没有与“{query}”接近的结果",
+      "noCloseBody": "资料库中没有与该搜索接近的内容。请换个词，或浏览某个分类："
     },
     "filters": {
       "formAria": "筛选视频库",

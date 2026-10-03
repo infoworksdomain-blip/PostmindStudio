@@ -7,6 +7,7 @@ import { EMBEDDING_MODEL, PROVIDER_ID as OPENAI_PROVIDER_ID } from '../providers
 import type { PlanTier } from '../providers/router';
 import { vectorSql } from '../vector-sql';
 import { categoryLikeParams } from './category-filter';
+import { MIN_SIMILARITY } from './relevance';
 import { createUncachedLibraryCache, type LibraryCache } from './cache';
 
 // BACKLOG 13.8 — free-text library search (POST /library/search). The query is embedded with the
@@ -21,6 +22,7 @@ export const EMBEDDING_DIMENSIONS = 1536;
  * corpus is embedded with the same model); another provider's answer is used but not shared.
  */
 export const QUERY_EMBEDDING_MODEL = `${OPENAI_PROVIDER_ID}:${EMBEDDING_MODEL}:${EMBEDDING_DIMENSIONS}`;
+export { MIN_SIMILARITY };
 /** Boost when any query word appears in the title. */
 export const TITLE_BOOST = 0.1;
 /** Boost per query word that is one of the item's tags, capped at TAG_BOOST_CAP. */
@@ -157,6 +159,7 @@ export async function searchLibrary(
         AND (${filter.mood}::text IS NULL OR a."moodTag" ILIKE ${filter.mood}::text)
         AND l.tags @> ${filter.tags}::text[]
     ) ranked
+    WHERE (1 - ranked.distance) >= ${MIN_SIMILARITY} OR ranked.boost > 0
     ORDER BY (1 - ranked.distance + ranked.boost) DESC, ranked.id ASC
     LIMIT ${input.limit + 1} OFFSET ${offset}`;
   const page = rows.slice(0, input.limit);

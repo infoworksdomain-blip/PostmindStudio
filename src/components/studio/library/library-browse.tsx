@@ -19,6 +19,8 @@ import { VideoCard } from './video-card';
 // the length, mood and tag filters.
 
 const PAGE_SIZE = 24;
+/** Browse-a-category suggestions under "No close matches". */
+const MAX_SUGGESTED_CATEGORIES = 8;
 
 export function LibraryBrowse() {
   const t = useTranslations('library.browse');
@@ -31,6 +33,9 @@ export function LibraryBrowse() {
     [categories.data],
   );
 
+  const topCategories = categoryOptions
+    .filter((c) => c.depth === 0)
+    .slice(0, MAX_SUGGESTED_CATEGORIES);
   const duration = DURATION_FILTERS.find((d) => d.key === filters.duration);
   const tags = parseTags(filters.tags);
   const query = filters.search.trim();
@@ -100,8 +105,25 @@ export function LibraryBrowse() {
           {data && visible.length === 0 && (
             <EmptyState
               illustration="library"
-              title={t('emptyTitle')}
-              description={searching ? t('emptySearch') : t('emptyFilters')}
+              title={searching ? t('noCloseTitle', { query }) : t('emptyTitle')}
+              description={searching ? t('noCloseBody') : t('emptyFilters')}
+              action={
+                searching && topCategories.length > 0 ? (
+                  <ul className="flex flex-wrap justify-center gap-2">
+                    {topCategories.map((c) => (
+                      <li key={c.slug}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applyFilters({ ...filters, search: '', category: c.slug })}
+                        >
+                          {c.label}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : undefined
+              }
             />
           )}
           {data && visible.length > 0 && (

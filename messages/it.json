@@ -2166,7 +2166,9 @@
       "emptyTitle": "Nessun riferimento corrispondente",
       "emptySearch": "Nulla nella libreria corrisponde a questa ricerca. Prova con altre parole o cancella la ricerca.",
       "emptyFilters": "Prova una categoria più ampia o meno tag.",
-      "more": "Altri riferimenti"
+      "more": "Altri riferimenti",
+      "noCloseTitle": "Nessuna corrispondenza vicina per «{query}»",
+      "noCloseBody": "Nulla nella libreria è vicino a questa ricerca. Prova altre parole o sfoglia una categoria:"
     },
     "filters": {
       "formAria": "Filtra la libreria",

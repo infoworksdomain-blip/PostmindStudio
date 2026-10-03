@@ -2166,7 +2166,9 @@
       "emptyTitle": "Nenhuma referência corresponde",
       "emptySearch": "Nada na biblioteca corresponde a essa busca. Tente outras palavras ou limpe a busca.",
       "emptyFilters": "Tente uma categoria mais ampla ou menos tags.",
-      "more": "Mais referências"
+      "more": "Mais referências",
+      "noCloseTitle": "Nenhum resultado próximo para “{query}”",
+      "noCloseBody": "Nada na biblioteca se aproxima dessa busca. Tente outras palavras ou explore uma categoria:"
     },
     "filters": {
       "formAria": "Filtrar a biblioteca",

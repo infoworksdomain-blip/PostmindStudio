@@ -2166,7 +2166,9 @@
       "emptyTitle": "No references match",
       "emptySearch": "Nothing in the library matches that search. Try other words or clear the search.",
       "emptyFilters": "Try a broader category or fewer tags.",
-      "more": "More references"
+      "more": "More references",
+      "noCloseTitle": "No close matches for “{query}”",
+      "noCloseBody": "Nothing in the library is close to that search. Try other words, or browse a category:"
     },
     "filters": {
       "formAria": "Filter the library",

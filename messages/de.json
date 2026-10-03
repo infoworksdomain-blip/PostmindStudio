@@ -2166,7 +2166,9 @@
       "emptyTitle": "Keine passenden Referenzen",
       "emptySearch": "Nichts in der Bibliothek passt zu dieser Suche. Versuchen Sie andere Begriffe oder löschen Sie die Suche.",
       "emptyFilters": "Versuchen Sie eine allgemeinere Kategorie oder weniger Tags.",
-      "more": "Weitere Referenzen"
+      "more": "Weitere Referenzen",
+      "noCloseTitle": "Keine nahen Treffer für „{query}“",
+      "noCloseBody": "Nichts in der Bibliothek passt gut zu dieser Suche. Versuchen Sie andere Wörter oder stöbern Sie in einer Kategorie:"
     },
     "filters": {
       "formAria": "Bibliothek filtern",
