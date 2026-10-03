@@ -1,6 +1,7 @@
 // /projects endpoints for the demo (services/projects.ts shapes): list with state filters and
 // cursor pagination, create (brief / slideshow / library reference / template, auto-publish
 // targets), detail, edit (budget raise), archive, generate, cancel, reject, duplicate.
+import { directionOptionsOf, isVagueBriefReason } from '@/lib/studio/pipeline/vague-brief';
 import { isPlanTier } from '@/components/studio/billing/types';
 import type { TargetFormat } from '@/lib/client/types';
 import { tierAtLeast } from '@/lib/studio/billing/catalogue';
@@ -180,6 +181,11 @@ route('GET', '/projects/:id', ({ params }) => {
     project: {
       ...toProject(p),
       brief: p.brief && { ...p.brief, rawInput: p.description ?? '', callToAction: null },
+      // 20.18: the directions while the brief waits for the owner's choice (as live).
+      directionOptions:
+        p.state === 'DRAFT' && isVagueBriefReason(p.errorReason)
+          ? directionOptionsOf(p.metadata?.directionOptions)
+          : [],
       scripts: p.scripts.map(({ shots, ...s }) => ({
         ...s,
         shots: shots.map((x) => ({
@@ -266,7 +272,7 @@ route('POST', '/projects/:id/generate', ({ params, body }) => {
       `qualityTier ${tier} is above the organisation's ${orgTier} plan`,
     );
   if (rawInput) p.description = rawInput;
-  startFullRun(p);
+  startFullRun(p, { directionChosen: obj(body).directionChosen === true });
   return {
     status: 202,
     body: {
