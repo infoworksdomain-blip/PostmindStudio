@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import robots from './robots';
-import sitemap from './sitemap';
+import robots, { dynamic as robotsDynamic } from './robots';
+import sitemap, { dynamic as sitemapDynamic } from './sitemap';
 import { isProtectedPage } from '@/lib/auth/page-guard';
 import { LEGAL_DOCS } from '@/lib/legal/documents';
 import { siteOrigin } from '@/lib/seo/site';
@@ -35,6 +35,13 @@ describe('sitemap.xml', () => {
     expect(urls).toContain(`${origin}/pricing`);
     for (const doc of LEGAL_DOCS) expect(urls).toContain(`${origin}/legal/${doc}`);
     expect(urls).toHaveLength(2 + LEGAL_DOCS.length);
+  });
+});
+
+describe('runtime origin', () => {
+  it('renders robots and sitemap per request so the runtime APP_URL is used, not localhost', () => {
+    expect(robotsDynamic).toBe('force-dynamic');
+    expect(sitemapDynamic).toBe('force-dynamic');
   });
 });
 
