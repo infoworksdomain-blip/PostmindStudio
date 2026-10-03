@@ -1,10 +1,16 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { deploymentId } from './src/lib/deployment-id';
 
 // Studio is used mostly as an API server (same pattern as the Engagement service).
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Version-skew protection: when a tab built from an older deploy talks to a newer server, Next.js
+  // does a full reload instead of a client-side navigation
+  // (https://nextjs.org/docs/app/guides/self-hosting#version-skew, read 2026-10-03). The image
+  // build sets it to the commit SHA (Dockerfile ARG); unset locally and in tests.
+  deploymentId: deploymentId(process.env.STUDIO_DEPLOYMENT_ID),
   // Server-only packages are loaded at runtime in Node rather than bundled.
   serverExternalPackages: ['@prisma/client', 'bullmq', 'ioredis', 'pino', '@node-rs/argon2'],
   // BACKLOG 20.7: render fonts in public/fonts/ are fetched by Shotstack and the FFmpeg workers

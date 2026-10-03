@@ -417,6 +417,8 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE }}:${{ github.sha }}
+          # next.config.ts deploymentId: open tabs from an older deploy reload instead of breaking.
+          build-args: STUDIO_DEPLOYMENT_ID=${{ github.sha }}
           provenance: mode=max
           cache-from: type=gha
           cache-to: type=gha,mode=max
