@@ -2502,7 +2502,10 @@
       "checkingAccess": "正在检查访问权限",
       "staffOnly": {
         "title": "仅限 PostMind 员工",
-        "description": "管理中心控制整个平台——紧急停止开关、参考语料库和服务商支出。您的账号不在平台员工名单中。"
+        "description": "管理中心控制整个平台——紧急停止开关、参考语料库和服务商支出。您的账号不在平台员工名单中。",
+        "needs2faTitle": "开启双重身份验证",
+        "needs2faDescription": "你的账户拥有 PostMind 员工权限，但员工工具只有在开启双重身份验证后才能使用。请先开启，然后返回管理中心。",
+        "needs2faAction": "设置双重身份验证"
       },
       "tabs": {
         "killSwitch": "紧急停止",

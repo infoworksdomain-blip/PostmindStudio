@@ -2502,7 +2502,10 @@
       "checkingAccess": "Vérification de l’accès",
       "staffOnly": {
         "title": "Réservé à l’équipe PostMind",
-        "description": "Le Centre d’administration pilote toute la plateforme : coupe-circuits, corpus de référence et dépenses fournisseurs. Votre compte ne figure pas dans la liste du personnel de la plateforme."
+        "description": "Le Centre d’administration pilote toute la plateforme : coupe-circuits, corpus de référence et dépenses fournisseurs. Votre compte ne figure pas dans la liste du personnel de la plateforme.",
+        "needs2faTitle": "Activez l’authentification à deux facteurs",
+        "needs2faDescription": "Votre compte dispose d’un accès équipe PostMind, mais les outils de l’équipe ne s’ouvrent que si l’authentification à deux facteurs est activée. Activez-la, puis revenez à l’Admin Centre.",
+        "needs2faAction": "Configurer l’authentification à deux facteurs"
       },
       "tabs": {
         "killSwitch": "Coupe-circuit",

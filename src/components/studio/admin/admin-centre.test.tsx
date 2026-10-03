@@ -44,6 +44,35 @@ describe('AdminCentre access', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
+  it('tells staff without 2FA to turn it on, with a link to account security', async () => {
+    mockFetch([
+      { match: '/admin/kill-switch', status: 403, body: forbidden },
+      {
+        match: '/me',
+        body: {
+          ok: true,
+          me: {
+            user: { id: 'u1', name: 'Ops', email: null, platformRole: 'superadmin' },
+            organisation: { id: 'o1', name: 'Org', role: 'owner' },
+            organisations: [],
+            plan: null,
+            banner: null,
+            impersonating: false,
+            identityMode: 'standalone',
+            capabilities: [],
+          },
+        },
+      },
+    ]);
+    renderWithSWR(<AdminCentre />);
+    expect(await screen.findByText('Turn on two-factor authentication')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Set up two-factor authentication' })).toHaveAttribute(
+      'href',
+      '/account/security',
+    );
+    expect(screen.queryByText('PostMind staff only')).not.toBeInTheDocument();
+  });
+
   it('shows an error (not the staff state) for other failures', async () => {
     mockFetch([
       {

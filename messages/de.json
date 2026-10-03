@@ -2502,7 +2502,10 @@
       "checkingAccess": "Zugriff wird geprüft",
       "staffOnly": {
         "title": "Nur für das PostMind-Team",
-        "description": "Das Admin-Center steuert die gesamte Plattform – Not-Aus-Schalter, den Referenzkorpus und die Anbieterkosten. Ihr Konto steht nicht auf der Liste der Plattform-Mitarbeitenden."
+        "description": "Das Admin-Center steuert die gesamte Plattform – Not-Aus-Schalter, den Referenzkorpus und die Anbieterkosten. Ihr Konto steht nicht auf der Liste der Plattform-Mitarbeitenden.",
+        "needs2faTitle": "Zwei-Faktor-Authentifizierung aktivieren",
+        "needs2faDescription": "Ihr Konto hat PostMind-Mitarbeiterzugriff, aber die Mitarbeiterwerkzeuge sind nur bei aktivierter Zwei-Faktor-Authentifizierung verfügbar. Aktivieren Sie sie und kehren Sie dann zum Admin Centre zurück.",
+        "needs2faAction": "Zwei-Faktor-Authentifizierung einrichten"
       },
       "tabs": {
         "killSwitch": "Not-Aus",

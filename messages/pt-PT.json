@@ -2502,7 +2502,10 @@
       "checkingAccess": "A verificar o acesso",
       "staffOnly": {
         "title": "Apenas para a equipa PostMind",
-        "description": "O Centro de administração controla toda a plataforma: interruptores de emergência, o corpus de referência e os gastos com fornecedores. A sua conta não consta da lista da equipa da plataforma."
+        "description": "O Centro de administração controla toda a plataforma: interruptores de emergência, o corpus de referência e os gastos com fornecedores. A sua conta não consta da lista da equipa da plataforma.",
+        "needs2faTitle": "Ative a autenticação de dois fatores",
+        "needs2faDescription": "A sua conta tem acesso de equipa PostMind, mas as ferramentas da equipa só ficam disponíveis com a autenticação de dois fatores ativa. Ative-a e volte ao Admin Centre.",
+        "needs2faAction": "Configurar a autenticação de dois fatores"
       },
       "tabs": {
         "killSwitch": "Interruptor de emergência",

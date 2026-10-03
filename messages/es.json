@@ -2502,7 +2502,10 @@
       "checkingAccess": "Comprobando el acceso",
       "staffOnly": {
         "title": "Solo para el equipo de PostMind",
-        "description": "El Centro de administración controla toda la plataforma: interruptores de emergencia, el corpus de referencia y el gasto en proveedores. Tu cuenta no está en la lista del personal de la plataforma."
+        "description": "El Centro de administración controla toda la plataforma: interruptores de emergencia, el corpus de referencia y el gasto en proveedores. Tu cuenta no está en la lista del personal de la plataforma.",
+        "needs2faTitle": "Activa la autenticación en dos pasos",
+        "needs2faDescription": "Tu cuenta tiene acceso de personal de PostMind, pero las herramientas de personal solo se desbloquean con la autenticación en dos pasos activada. Actívala y vuelve al Admin Centre.",
+        "needs2faAction": "Configurar la autenticación en dos pasos"
       },
       "tabs": {
         "killSwitch": "Interruptor de emergencia",
