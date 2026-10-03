@@ -2506,7 +2506,10 @@
       "checkingAccess": "Checking access",
       "staffOnly": {
         "title": "PostMind staff only",
-        "description": "The Admin Center controls the whole platform — kill switches, the reference corpus and provider spend. Your account isn’t on the platform staff list."
+        "description": "The Admin Center controls the whole platform — kill switches, the reference corpus and provider spend. Your account isn’t on the platform staff list.",
+        "needs2faTitle": "Turn on two-factor authentication",
+        "needs2faDescription": "Your account has PostMind staff access, but staff tools only unlock while two-factor authentication is on. Turn it on, then come back to the Admin Center.",
+        "needs2faAction": "Set up two-factor authentication"
       },
       "tabs": {
         "killSwitch": "Kill switch",
