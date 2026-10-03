@@ -2,7 +2,7 @@
 
 # Acceptable Use Policy
 
-**Last updated: 2 October 2026**
+**Last updated: 3 October 2026**
 
 This policy sets out what you may not do with PostMind Studio (the **Service**), provided by Postmind AI Ltd. It forms part of our [Terms of Service](/legal/terms), and words with capitals have the meaning given there. It applies to the Customer and to every Authorised User, and to all Inputs, Outputs and publications.
 
@@ -35,6 +35,12 @@ You must not use the Service to create, upload, store, publish or share content 
 2.2 You may only clone a voice with the documented, informed consent of the speaker. The speaker must record the consent statement the Service shows, in their own voice, and the clone must only be used for the purposes they agreed to. You must not clone the voice of a public figure, a child, or anyone who has not consented, and you must not use a cloned voice to deceive, defraud or impersonate. If the speaker withdraws consent, you must delete the voice in the Service.
 
 2.3 You must not present AI-generated people, testimonials, reviews or endorsements as real, or invent customer experiences.
+
+2.4 **AI presenters and reference images.** AI presenter (avatar) videos use a presenter we provide. Where the Service lets you create a presenter from a photo or video, you may only use one of yourself, or of a person who has given you their documented, informed consent to be used in this way. You must not use images of real people, including public figures, as reference material for AI-generated video without their consent. Our main AI video provider refuses reference images that show real people's faces, and you must not try to get around this or any other provider's safety filter.
+
+<!-- LEGAL REVIEW (20.28, 2026-10-03): the operator's brief says HeyGen avatars use the customer's own photo. In the code today (src/lib/studio/providers/heygen.ts, default-registry.ts) every avatar video uses one presenter chosen by us (HEYGEN_AVATAR_ID); no customer photo upload for avatars was found. Clause 2.4 is written for a customer-photo presenter; confirm the wording when that feature ships, and that the stock presenter's own licence allows its use in customers' adverts. Seedance's refusal of real faces is from BytePlus's error codes (InputImageSensitiveContentDetected.PrivacyInformation), PROGRESS 20.23. -->
+
+2.5 You must not publish AI-generated people or presenters in a way that leads viewers to believe they are real people, where the law or a Connected Platform requires disclosure.
 
 ## 3. Elections, public health and deception
 
@@ -76,7 +82,7 @@ You must not:
 
 7.3 access the Service by automated means other than through the features and interfaces we provide, or scrape, crawl or copy the Service, its reference library or other customers' content;
 
-7.4 get around, disable or interfere with seat limits, allowances, rate limits, cost caps, trial restrictions, content-safety checks or other controls, including by creating several organisations or trials, or by sharing accounts;
+7.4 get around, disable or interfere with seat limits, allowances, rate limits, cost caps, video budgets, trial restrictions, restricted-topic checks, AI providers' safety filters or other controls, including by creating several organisations or trials, or by sharing accounts;
 
 7.5 overload the Service or act in a way that degrades it for others;
 
@@ -86,7 +92,7 @@ You must not:
 
 ## 8. How we check and enforce this policy
 
-8.1 We use automated checks, such as restricted-topic checks on briefs and scripts and the safety filters built into the AI providers we use, and we may review content manually. Content that may breach this policy can be blocked or held for human review before it is published, and flagged content is reviewed by people. We do not screen every item of content, and you remain responsible for what you approve and publish. We also act on reports from users, rights holders, Connected Platforms and authorities.
+8.1 We use limited automated checks: restricted-topic checks on briefs and scripts, and the safety filters built into the AI providers we use. We do not use a content-scanning service, and finished videos are not automatically scanned. We may review content manually, for example when it is reported to us, and content that may breach this policy can be blocked or held until a person has reviewed it. You remain responsible for reviewing and approving what you publish, including content published under automatic approval you have chosen. We also act on reports from users, rights holders, Connected Platforms and authorities.
 
 8.2 If we reasonably believe this policy has been breached, we may, depending on how serious it is: remove or refuse to publish content; ask a Connected Platform to remove it or remove it ourselves where the platform's API allows; restrict features (such as voice cloning or website scanning); suspend Authorised Users or the Organisation; end the Agreement under the [Terms of Service](/legal/terms); and report the matter to the police or other authorities. Where reasonable we will tell you what we have done and why, and give you a chance to respond.
 

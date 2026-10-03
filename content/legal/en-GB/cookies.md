@@ -1,8 +1,8 @@
-<!-- Draft prepared 2026-09-30 for PostMind Studio from the cookies the app actually sets (Better Auth with the "studio" prefix, the locale cookie, one local-storage key). Have a qualified solicitor review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one. If you add analytics, advertising or any other non-essential cookie, you must update this page and ask for consent first. -->
+<!-- Draft prepared 2026-09-30 for PostMind Studio from the cookies the app actually sets (Better Auth with the "studio" prefix, the locale cookie, two local-storage keys: studio.businessId and next-themes' default "theme" key, added 2026-10-03 in BACKLOG 20.28). Have a qualified solicitor review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one. If you add analytics, advertising or any other non-essential cookie, you must update this page and ask for consent first. -->
 
 # Cookie Policy
 
-**Last updated: 30 September 2026**
+**Last updated: 3 October 2026**
 
 This policy explains the cookies and similar technologies used by PostMind Studio (the **Service**), provided by Postmind AI Ltd. It should be read with our [Privacy Policy](/legal/privacy).
 
@@ -34,6 +34,7 @@ On our secure website the sign-in cookies' names begin with `__Secure-`, which t
 | Name                | Purpose                                                              | Duration                                 |
 | ------------------- | -------------------------------------------------------------------- | ---------------------------------------- |
 | `studio.businessId` | Remembers which of your businesses you last selected in the Service. | Until you clear your browser's site data |
+| `theme` | Remembers whether you chose the light or dark theme (or to follow your device's setting). | Until you clear your browser's site data |
 
 ## 5. Third parties
 
@@ -45,7 +46,7 @@ On our secure website the sign-in cookies' names begin with `__Secure-`, which t
 
 ## 6. Managing cookies
 
-You can block or delete cookies in your browser settings. If you block the cookies in section 3, you will not be able to sign in or use the Service. Deleting `studio.locale` resets your language choice. Guidance for common browsers is at [https://ico.org.uk/for-the-public/online/cookies/](https://ico.org.uk/for-the-public/online/cookies/).
+You can block or delete cookies in your browser settings. If you block the cookies in section 3, you will not be able to sign in or use the Service. Deleting `studio.locale` resets your language choice, and clearing your browser's site data resets the theme and the business you last selected. Guidance for common browsers is at [https://ico.org.uk/for-the-public/online/cookies/](https://ico.org.uk/for-the-public/online/cookies/).
 
 ## 7. Changes and contact
 

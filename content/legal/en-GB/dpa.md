@@ -2,7 +2,7 @@
 
 # Data Processing Agreement
 
-**Last updated: 2 October 2026**
+**Last updated: 3 October 2026**
 
 This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/legal/terms) (together with this DPA, the **Agreement**) between Postmind AI Ltd (**we**, **us**, the **Processor**) and the Customer (**you**, the **Controller**). It applies whenever we process Customer Personal Data on your behalf in providing PostMind Studio (the **Service**). It is accepted when you accept the Terms of Service; no separate signature is needed. Capitalised words not defined here have the meaning given in the Terms of Service.
 
@@ -46,7 +46,7 @@ This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/l
 
 ## 5. Sub-processors
 
-5.1 **General authorisation.** You give us general written authorisation to engage Sub-processors. Our current Sub-processors are listed on our [Sub-processors](/legal/subprocessors) page, which you have reviewed and approve.
+5.1 **General authorisation.** You give us general written authorisation to engage Sub-processors. Our current Sub-processors, including the AI providers that generate, transcribe and render content and the order in which video providers are used, are listed on our [Sub-processors](/legal/subprocessors) page, with the personal data each receives, where it processes it and the transfer safeguard we rely on. You have reviewed and approve that list.
 
 5.2 **Changes.** We will tell you of any intended addition or replacement of a Sub-processor at least 30 days in advance by updating the Sub-processors page and notifying your Organisation's owners by email or in the Service. In an emergency (for example to keep the Service running when a provider fails) the notice may be shorter, and we will give it as soon as we can.
 
@@ -74,11 +74,13 @@ This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/l
 
 ## 8. Deletion and return
 
-8.1 During the Agreement you can export and delete Customer Content in the Service at any time.
+8.1 During the Agreement you can export and delete Customer Content in the Service at any time. When you delete a project, its uploaded and generated files are deleted from storage 30 days later, and its finished videos 90 days later unless they were published (published videos are kept with the Organisation until it is deleted).
 
-8.2 When the Agreement ends, you can export Customer Content during the read-only period described in clause 15 of the [Terms of Service](/legal/terms). After that period, or after you delete your Organisation, we will delete Customer Personal Data from our live systems within 30 days, and it will expire from our encrypted backups within a further 30 days, unless the law requires us to keep it. This deletion is your instruction to us under Article 28(3)(g) of the UK GDPR.
+8.2 When the Agreement ends, you can export Customer Content during the read-only period described in clause 15 of the [Terms of Service](/legal/terms) (90 days after a paid subscription ends). After that period, or as soon as you delete your Organisation, the Organisation is scheduled for deletion: we stop processing for it at once, disconnect its Connected Platforms and wipe their tokens, and an automated daily job permanently deletes its Customer Personal Data, including its files in storage, from our live systems 30 days later. It then expires from our encrypted backups within a further 30 days, unless the law requires us to keep it. This deletion is your instruction to us under Article 28(3)(g) of the UK GDPR.
 
-8.3 We may keep records that we need as a controller (for example audit and billing records) as described in our [Privacy Policy](/legal/privacy).
+8.3 Copies of generated results held by our AI Sub-processors are deleted under their own terms, which set short retention periods (described on the [Sub-processors](/legal/subprocessors) page and in our [Privacy Policy](/legal/privacy)); we copy results into our own storage as soon as they are ready.
+
+8.4 We may keep records that we need as a controller (for example audit and billing records) as described in our [Privacy Policy](/legal/privacy).
 
 ## 9. Records, information and audits
 
@@ -90,11 +92,15 @@ This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/l
 
 ## 10. International transfers
 
-10.1 We host the Service and its database in the European Union (Finland). Files in Customer Content and encrypted database backups are stored in Cloudflare R2, whose global infrastructure may keep them outside the UK and EEA. Other Sub-processors process Customer Personal Data outside the UK and EEA, mainly in the United States. Locations are set out on the [Sub-processors](/legal/subprocessors) page.
+10.1 We host the Service and its database in the European Union (Finland). Files in Customer Content and encrypted database backups are stored in Cloudflare R2, whose global infrastructure may keep them outside the UK and EEA. Other Sub-processors process Customer Personal Data outside the UK and EEA: mainly in the United States, and also in Singapore and Malaysia (AI video generation) and Australia (video rendering). Locations are set out on the [Sub-processors](/legal/subprocessors) page.
 
-10.2 We will only make a Restricted Transfer, or allow a Sub-processor to make one, where it is protected by a transfer mechanism recognised by Data Protection Laws, such as the UK Extension to the EU–US Data Privacy Framework or the EU–US Data Privacy Framework for certified recipients, or the EU Standard Contractual Clauses with the UK International Data Transfer Addendum, or the UK International Data Transfer Agreement, together with any supplementary measures needed after a transfer risk assessment.
+10.2 We will only make a Restricted Transfer, or allow a Sub-processor to make one, where it is protected by a transfer mechanism recognised by Data Protection Laws. For a United States recipient certified under it, we rely on the UK Extension to the EU–US Data Privacy Framework (or, where the EU GDPR applies, the EU–US Data Privacy Framework). Otherwise, where required, we rely on the UK International Data Transfer Addendum to the EU Standard Contractual Clauses, or the UK International Data Transfer Agreement, together with any supplementary measures needed after a transfer risk assessment.
 
-10.3 To the extent that you, as a controller in the EEA, transfer Customer Personal Data to us in the UK, the transfer is covered by the European Commission's adequacy decision for the United Kingdom.
+<!-- LEGAL REVIEW (20.28, 2026-10-03): clause 10.2 states the mechanisms we rely on, not that signed IDTAs or Addenda exist. Confirm for each Sub-processor in Singapore, Malaysia, Australia and the United States (where not DPF-certified) that its DPA incorporates the UK Addendum or IDTA. -->
+
+10.3 Generated results are copied from AI Sub-processors into our own storage as soon as they are ready, which limits how long Customer Personal Data stays with them.
+
+10.4 To the extent that you, as a controller in the EEA, transfer Customer Personal Data to us in the UK, the transfer is covered by the European Commission's adequacy decision for the United Kingdom.
 
 ## 11. Liability and precedence
 
@@ -110,7 +116,7 @@ This DPA is governed by the law of England and Wales, and the courts of England 
 
 ## Annex 1: Details of the processing
 
-**Subject matter and purpose.** Providing the Service to you: generating, editing, storing, reviewing, rendering and publishing marketing videos, images, audio and text from your Inputs; scanning your own website to learn about your business and gather its images; checking content for safety; publishing to Connected Platforms at your instruction and reading back performance data; supporting you and keeping the Service secure.
+**Subject matter and purpose.** Providing the Service to you: generating, editing, storing, reviewing, rendering and publishing marketing videos, images, audio and text from your Inputs; scanning your own website to learn about your business and gather its images; restricted-topic checks on briefs and scripts; publishing to Connected Platforms at your instruction and reading back performance data; supporting you and keeping the Service secure.
 
 **Nature of the processing.** Collection, storage, organisation, structuring, adaptation, transcription, analysis, generation of derived content, transmission to Sub-processors and Connected Platforms, retrieval, disclosure by publishing at your instruction, and erasure.
 
@@ -126,16 +132,17 @@ This DPA is governed by the law of England and Wales, and the courts of England 
 
 ## Annex 2: Technical and organisational security measures
 
-1. **Hosting.** Application servers and databases run in a data centre in Helsinki, Finland (Hetzner). Files and encrypted database backups are stored in Cloudflare R2 object storage on Cloudflare's global infrastructure, covered by Cloudflare's data processing addendum and the transfer safeguards in clause 10. Servers are protected by a network firewall and a host firewall, and only web traffic and administrative SSH are allowed in.
+1. **Hosting.** Application servers and databases run in a data centre in Helsinki, Finland (Hetzner). Files and encrypted database backups are stored in Cloudflare R2 object storage in R2's default (global) location on Cloudflare's infrastructure, covered by Cloudflare's data processing addendum and the transfer safeguards in clause 10. Servers are protected by a network firewall and a host firewall, and only web traffic and administrative SSH are allowed in.
 2. **Encryption in transit.** All traffic to the Service uses HTTPS (TLS). Connections to Sub-processors use TLS.
-3. **Encryption at rest.** Stored files and backups are encrypted at rest by the storage provider. Connected Platform access tokens, voice profile identifiers and customer-supplied provider keys are protected with envelope encryption using a key held in AWS Key Management Service; the key never leaves AWS, and access to it is limited to the one application identity that needs it.
-4. **Access control.** Organisation roles limit what each Authorised User can see and do. Access to files uses short-lived signed links. Staff access to customer Organisations is limited to support and security purposes, time-limited and logged.
+3. **Encryption at rest.** Stored files and backups are encrypted at rest by the storage provider. Connected Platform access tokens, voice profile identifiers and customer-supplied provider keys are protected with envelope encryption using a key held in AWS Key Management Service in the London region (eu-west-2); the key never leaves AWS, and access to it is limited to the one application identity that needs it.
+4. **Access control.** Role-based access control: Organisation roles limit what each Authorised User can see and do. Access to files uses short-lived signed links. Staff access to customer Organisations is limited to support and security purposes, time-limited (at most 30 minutes per support session) and logged.
 5. **Authentication.** Passwords are stored as salted hashes and checked against known breached passwords using a privacy-preserving range query. Two-step verification is available to every user and required for our staff. Sessions expire after 14 days without use and after 30 days at most, and can be revoked. Sign-in and other sensitive endpoints are rate-limited.
 6. **Logging and monitoring.** Significant actions (such as sign-ins, membership changes, billing changes, publishing, voice consent, data exports and deletions, and staff actions) are written to an audit log. Service health is monitored and failures raise alerts. Error reporting, if enabled, excludes expected user errors.
 7. **Application security.** Input validation, origin and CSRF checks on authenticated requests, protection against server-side request forgery in website scanning, isolation of each Organisation's data in queries and storage paths, regular dependency updates and vulnerability checks, and automated tests in continuous integration.
-8. **Content safety.** Restricted-topic checks on briefs and scripts, the safety filters of the AI providers used to generate content, human review of flagged items, and a consent check before any cloned voice can be used.
-9. **Cost and abuse controls.** Per-organisation daily and monthly cost caps, rate limits and a service-wide pause switch that can stop generation quickly.
-10. **Backups and resilience.** Encrypted database backups (encrypted before they leave our server) with point-in-time recovery, and file backups, kept for up to 30 days and stored separately from the live systems, with restore procedures.
-11. **Deletion.** Automated deletion of Organisations' data after the periods in clause 8, including files in storage, with a record that deletion happened.
-12. **People.** Staff and contractors are bound by confidentiality, receive access only as needed for their role, and lose access promptly when they leave.
-13. **Sub-processor management.** Sub-processors are chosen for their security practices and bound by written data protection terms.
+8. **Content safety.** Restricted-topic checks on briefs and scripts, the safety filters of the AI providers used to generate content, review by people (the Customer's own review and approval, and our review of reported content), and a consent check before any cloned voice can be used. No content-scanning service is used, and finished videos are not automatically scanned.
+9. **Cost and abuse controls.** Per-organisation daily and monthly cost caps, a budget for each video, rate limits and a service-wide pause switch that can stop generation quickly.
+10. **Backups and resilience.** Database backups made with pgBackRest (continuous write-ahead-log archiving for point-in-time recovery, plus regular full and differential backups), encrypted with AES-256 on our server before they leave it and stored in a separate Cloudflare R2 backup bucket; copies of stored files in that separate bucket; all backups kept for up to 30 days, with restore procedures.
+11. **Provider copies.** Generated results are copied into our own storage as soon as they are ready, so AI Sub-processors need to keep them only for the short periods their own terms set.
+12. **Deletion.** Automated deletion of Organisations' data after the periods in clause 8, including files in storage, with a record that deletion happened.
+13. **People.** Staff and contractors are bound by confidentiality, receive access only as needed for their role, and lose access promptly when they leave.
+14. **Sub-processor management.** Sub-processors are chosen for their security practices and bound by written data protection terms.
