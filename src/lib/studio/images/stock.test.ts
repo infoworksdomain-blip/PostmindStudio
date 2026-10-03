@@ -2,11 +2,17 @@ import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { ConfigurationError, ProviderError } from '../../errors';
+import { createMemoryStockCache, STOCK_CACHE_TTL_MS } from './stock-cache';
 import {
   createPexelsSource,
+  createPixabaySource,
   createStoryblocksSource,
   createUnsplashSource,
   PEXELS_MAX_PER_PAGE,
+  PIXABAY_MAX_PER_PAGE,
+  PIXABAY_MIN_PER_PAGE,
+  pixabayCacheKey,
+  pixabaySearchParams,
   STORYBLOCKS_MAX_PER_PAGE,
   UNSPLASH_MAX_PER_PAGE,
   stockSourcesFromEnv,
@@ -444,6 +450,30 @@ describe('stockSourcesFromEnv', () => {
     expect(fallback.map((s) => s.provider)).toEqual(['unsplash']);
   });
 
+  it('20.16: Pixabay is the last primary (after Pexels and Storyblocks); Unsplash stays fallback', () => {
+    const { primary, fallback } = stockSourcesFromEnv(deps(fakeFetch().fetch), {
+      PEXELS_API_KEY: 'p',
+      STORYBLOCKS_API_PUBLIC_KEY: 'pub',
+      STORYBLOCKS_API_PRIVATE_KEY: 'priv',
+      PIXABAY_API_KEY: 'x',
+      UNSPLASH_ACCESS_KEY: 'u',
+    } as unknown as NodeJS.ProcessEnv);
+    expect(primary.map((s) => s.provider)).toEqual(['pexels', 'storyblocks', 'pixabay']);
+    expect(fallback.map((s) => s.provider)).toEqual(['unsplash']);
+  });
+
+  it('20.16: Pixabay alone is enough; a blank PIXABAY_API_KEY is not configured', () => {
+    const { primary } = stockSourcesFromEnv(deps(fakeFetch().fetch), {
+      PIXABAY_API_KEY: 'x',
+    } as unknown as NodeJS.ProcessEnv);
+    expect(primary.map((s) => s.provider)).toEqual(['pixabay']);
+    expect(() =>
+      stockSourcesFromEnv(deps(fakeFetch().fetch), {
+        PIXABAY_API_KEY: '  ',
+      } as unknown as NodeJS.ProcessEnv),
+    ).toThrow(/PIXABAY_API_KEY/);
+  });
+
   it('omits Storyblocks when only one of its two keys is set, alongside a configured Pexels', () => {
     const { primary, fallback } = stockSourcesFromEnv(deps(fakeFetch().fetch), {
       PEXELS_API_KEY: 'p',
@@ -465,5 +495,227 @@ describe('stockSourcesFromEnv', () => {
     } as unknown as NodeJS.ProcessEnv);
     expect(primary).toEqual([]);
     expect(fallback.map((s) => s.provider)).toEqual(['unsplash']);
+  });
+});
+
+// 20.16 — Pixabay (https://pixabay.com/api/docs/, read 2026-10-01). Responses are mocked.
+const PIXABAY_HIT = {
+  id: 195893,
+  pageURL: 'https://pixabay.com/en/blossom-bloom-flower-195893/',
+  type: 'photo',
+  tags: '  blossom, bloom, flower  ',
+  previewURL: 'https://cdn.pixabay.com/photo/2013/10/15/09/12/flower-195893_150.jpg',
+  webformatURL: 'https://pixabay.com/get/35bbf209e13e39d2_640.jpg',
+  largeImageURL: 'https://pixabay.com/get/ed6a99fd0a76647_1280.jpg',
+  imageWidth: 4000,
+  imageHeight: 2250,
+  user_id: 48777,
+  user: 'Josch13',
+};
+
+describe('createPixabaySource', () => {
+  it('builds the documented request: key, q, image_type=photo, safesearch=true, per_page', async () => {
+    const { fetch, requests } = fakeFetch(json({ total: 1, totalHits: 1, hits: [] }));
+    await createPixabaySource('pixabay-key', deps(fetch)).search({
+      ...baseSearch,
+      orientation: 'landscape',
+    });
+    const url = new URL(requests[0]?.url ?? '');
+    expect(`${url.origin}${url.pathname}`).toBe('https://pixabay.com/api/');
+    expect(url.searchParams.get('key')).toBe('pixabay-key');
+    expect(url.searchParams.get('q')).toBe('sourdough bread');
+    expect(url.searchParams.get('image_type')).toBe('photo');
+    expect(url.searchParams.get('safesearch')).toBe('true');
+    expect(url.searchParams.get('per_page')).toBe('10');
+    expect(url.searchParams.get('orientation')).toBe('horizontal');
+    expect(url.searchParams.has('min_width')).toBe(false);
+    // The key travels in the query string only: no auth header.
+    expect(requests[0]?.headers.authorization).toBeUndefined();
+  });
+
+  it('maps orientation (portrait → vertical, square → no filter) and passes min_width', () => {
+    expect(pixabaySearchParams({ ...baseSearch, orientation: 'portrait' }).get('orientation')).toBe(
+      'vertical',
+    );
+    expect(pixabaySearchParams({ ...baseSearch, orientation: 'square' }).has('orientation')).toBe(
+      false,
+    );
+    expect(pixabaySearchParams({ ...baseSearch, minWidth: 1080.6 }).get('min_width')).toBe('1080');
+  });
+
+  it('clamps per_page to the documented 3-200 and q to 100 characters', () => {
+    expect(pixabaySearchParams({ ...baseSearch, perPage: 1 }).get('per_page')).toBe(
+      String(PIXABAY_MIN_PER_PAGE),
+    );
+    expect(pixabaySearchParams({ ...baseSearch, perPage: 999 }).get('per_page')).toBe(
+      String(PIXABAY_MAX_PER_PAGE),
+    );
+    expect(pixabaySearchParams({ ...baseSearch, query: 'a'.repeat(150) }).get('q')).toHaveLength(
+      100,
+    );
+  });
+
+  it('maps a hit: 1280 px largeImageURL by default, storable, Pixabay user + page attribution', async () => {
+    const { fetch } = fakeFetch(json({ total: 1, totalHits: 1, hits: [PIXABAY_HIT] }));
+    const [hit] = await createPixabaySource('k', deps(fetch)).search(baseSearch);
+    expect(hit).toEqual({
+      provider: 'pixabay',
+      providerImageId: '195893',
+      imageUrl: 'https://pixabay.com/get/ed6a99fd0a76647_1280.jpg',
+      width: 1280,
+      height: 720,
+      alt: 'blossom, bloom, flower',
+      pageUrl: 'https://pixabay.com/en/blossom-bloom-flower-195893/',
+      attribution: { name: 'Josch13', url: 'https://pixabay.com/users/Josch13-48777/' },
+      storable: true,
+    });
+    // Never the 150 px search preview: that URL is only for transient display on Pixabay's terms.
+    expect(hit?.imageUrl).not.toBe(PIXABAY_HIT.previewURL);
+  });
+
+  it('uses the 640 px webformatURL when the caller needs at most 640 px', async () => {
+    const { fetch } = fakeFetch(json({ hits: [PIXABAY_HIT] }));
+    const [hit] = await createPixabaySource('k', deps(fetch)).search({
+      ...baseSearch,
+      minWidth: 600,
+    });
+    expect(hit).toMatchObject({ imageUrl: PIXABAY_HIT.webformatURL, width: 640, height: 360 });
+  });
+
+  it('falls back to webformatURL without largeImageURL, and skips hits with neither', async () => {
+    const { fetch } = fakeFetch(
+      json({
+        hits: [
+          {
+            id: 1,
+            webformatURL: 'https://pixabay.com/get/a_640.jpg',
+            imageWidth: 300,
+            imageHeight: 200,
+          },
+          { id: 2, pageURL: 'https://pixabay.com/x-2/' },
+        ],
+      }),
+    );
+    const hits = await createPixabaySource('k', deps(fetch)).search(baseSearch);
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toMatchObject({
+      imageUrl: 'https://pixabay.com/get/a_640.jpg',
+      width: 300,
+      height: 200,
+      alt: null,
+      pageUrl: null,
+      attribution: null,
+    });
+  });
+
+  it('downloadUrl returns the chosen image URL (downloaded into our storage, never hotlinked)', async () => {
+    const { fetch } = fakeFetch(json({ hits: [PIXABAY_HIT] }));
+    const source = createPixabaySource('k', deps(fetch));
+    const [hit] = await source.search(baseSearch);
+    if (!hit) throw new Error('expected a hit');
+    await expect(source.downloadUrl(hit, baseSearch)).resolves.toBe(PIXABAY_HIT.largeImageURL);
+  });
+
+  it('answers a repeated search from the 24 h cache without a second request', async () => {
+    let t = NOW_MS;
+    const cache = createMemoryStockCache({ now: () => t });
+    const { fetch, requests } = fakeFetch(json({ hits: [PIXABAY_HIT] }), json({ hits: [] }));
+    const source = createPixabaySource('k', { fetchImpl: fetch, now: () => t, cache });
+    const first = await source.search(baseSearch);
+    t += STOCK_CACHE_TTL_MS - 1;
+    const second = await source.search(baseSearch);
+    expect(requests).toHaveLength(1);
+    expect(second).toEqual(first);
+    t += 1; // 24 h later the entry has expired
+    await expect(source.search(baseSearch)).resolves.toEqual([]);
+    expect(requests).toHaveLength(2);
+  });
+
+  it('keys the cache by query and params, never by the API key', async () => {
+    const cache = createMemoryStockCache();
+    const { fetch, requests } = fakeFetch(json({ hits: [PIXABAY_HIT] }), json({ hits: [] }));
+    await createPixabaySource('key-one', { ...deps(fetch), cache }).search(baseSearch);
+    // Another key, same search: served from the cache (the key is not part of the cache key).
+    await createPixabaySource('key-two', { ...deps(fetch), cache }).search(baseSearch);
+    expect(requests).toHaveLength(1);
+    await createPixabaySource('key-one', { ...deps(fetch), cache }).search({
+      ...baseSearch,
+      orientation: 'portrait',
+    });
+    expect(requests).toHaveLength(2);
+
+    const key = pixabayCacheKey(pixabaySearchParams(baseSearch));
+    expect(key).toMatch(/^pixabay:[0-9a-f]{64}$/);
+    expect(key).not.toContain('key-one');
+    // Param order does not change the key.
+    const reordered = new URLSearchParams([...pixabaySearchParams(baseSearch).entries()].reverse());
+    expect(pixabayCacheKey(reordered)).toBe(key);
+  });
+
+  it('refetches over a corrupt cache entry', async () => {
+    const cache = createMemoryStockCache();
+    await cache.set(pixabayCacheKey(pixabaySearchParams(baseSearch)), '{not json', 60_000);
+    const { fetch, requests } = fakeFetch(json({ hits: [PIXABAY_HIT] }));
+    const hits = await createPixabaySource('k', { ...deps(fetch), cache }).search(baseSearch);
+    expect(requests).toHaveLength(1);
+    expect(hits).toHaveLength(1);
+  });
+
+  it('does not cache a failed request', async () => {
+    const cache = createMemoryStockCache();
+    const { fetch, requests } = fakeFetch(
+      new Response('API rate limit exceeded', { status: 429 }),
+      json({ hits: [PIXABAY_HIT] }),
+    );
+    const source = createPixabaySource('k', { ...deps(fetch), cache });
+    await expect(source.search(baseSearch)).rejects.toBeInstanceOf(ProviderError);
+    await expect(source.search(baseSearch)).resolves.toHaveLength(1);
+    expect(requests).toHaveLength(2);
+  });
+
+  it('maps 429 to rate_limited (retryable) without echoing the provider text', async () => {
+    const { fetch } = fakeFetch(new Response('API rate limit exceeded', { status: 429 }));
+    const err = await createPixabaySource('k', deps(fetch))
+      .search(baseSearch)
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({
+      providerId: 'pixabay',
+      errorClass: 'rate_limited',
+      retryable: true,
+    });
+    expect((err as Error).message).not.toContain('API rate limit exceeded');
+  });
+
+  it('maps 401/403 and a 400 naming the API key to auth (20.11 account error, not retried)', async () => {
+    for (const reply of [
+      new Response('', { status: 401 }),
+      new Response('', { status: 403 }),
+      new Response('[ERROR 400] Invalid or missing API key', { status: 400 }),
+    ]) {
+      const { fetch } = fakeFetch(reply);
+      await expect(createPixabaySource('k', deps(fetch)).search(baseSearch)).rejects.toMatchObject({
+        providerId: 'pixabay',
+        errorClass: 'auth',
+        retryable: false,
+      });
+    }
+  });
+
+  it('keeps any other 400 as invalid_request and 5xx as provider_unavailable', async () => {
+    const bad = fakeFetch(
+      new Response('[ERROR 400] "per_page" is out of valid range.', { status: 400 }),
+    );
+    await expect(
+      createPixabaySource('k', deps(bad.fetch)).search(baseSearch),
+    ).rejects.toMatchObject({
+      errorClass: 'invalid_request',
+    });
+    const down = fakeFetch(new Response('', { status: 503 }));
+    await expect(
+      createPixabaySource('k', deps(down.fetch)).search(baseSearch),
+    ).rejects.toMatchObject({
+      errorClass: 'provider_unavailable',
+      retryable: true,
+    });
   });
 });

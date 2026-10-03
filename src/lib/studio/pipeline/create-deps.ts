@@ -7,6 +7,7 @@ import { createStoredMetaCredentials } from '../platforms/meta-credentials';
 import { oauthClientFromEnv, oauthConfiguredFromEnv } from '../platforms/oauth';
 import { createMetricsRegistry } from '../analytics/fetchers';
 import { stockSourcesFromEnv } from '../images/stock';
+import { stockCacheFromEnv } from '../images/stock-cache';
 import { createEngagementClient } from '../platforms/publishing';
 import { triggerFieldsEnabled, withTriggerFields } from '../core/engagement-trigger';
 import { engagementEnabled, selectCoreSyncClients } from '../core/select';
@@ -159,7 +160,17 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
           })
         : undefined,
       headless: headlessRendererFromEnv(process.env, globalThis.fetch),
-      stock: () => stockSourcesFromEnv({ fetchImpl: globalThis.fetch, now: Date.now }),
+      // 20.16: stock searches are cached 24 h (Pixabay's terms), in Redis when REDIS_URL is set.
+      stock: () =>
+        stockSourcesFromEnv({
+          fetchImpl: globalThis.fetch,
+          now: Date.now,
+          cache: stockCacheFromEnv(
+            process.env,
+            () => createBreakerRedisClient(redisConnectionFromEnv()),
+            logger,
+          ),
+        }),
     },
     publishing: {
       db: input.db,

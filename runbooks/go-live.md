@@ -504,6 +504,16 @@ Studio makes AI clips with Seedance first (11.3), then Kling 3.0, then Google Ve
 - Watch the balance: Console → usage, or `GET /account/costs` (the canary's health call). When the package runs out or expires Kling answers code 1102 and Studio moves clips to Veo, Runway and Luma (after Seedance) and alerts the operator.
 - **Check:** `npm run setup:check` shows `OK KLING_API_KEY` (or `OK` for both halves of the pair; one half alone is reported) when the key is shaped right. The provider canary (`CANARY_KLING_API_KEY`) and the staging gate (`--live-providers --only kling`, one 3 s clip, about $0.25) test it against Kling.
 
+### 11.5 Stock images: Pixabay (free)
+
+Website scans, slideshows and the image library fill up with stock photos. Pexels no longer gives out free API keys and Unsplash approval takes 5–10 working days, so use **Pixabay**: free, and the key is shown straight away.
+
+- **Click:** log in (or sign up) at [pixabay.com](https://pixabay.com) → open [pixabay.com/api/docs](https://pixabay.com/api/docs/) → your key is shown under **Parameters** next to `key` (may be labelled differently; it only appears when you are logged in).
+- **Copy:** the key. **Paste into:** `PIXABAY_API_KEY`.
+- What Studio does with it: searches photos only, with safe search on; copies every chosen image into your own storage (Pixabay does not allow using its image links permanently); caches each search for 24 hours (Pixabay's rule); shows "Images from Pixabay" on those images in the library. Pixabay allows 100 searches a minute; a search over that limit is skipped (the next stock source is tried, if you have one) and the next refresh tries again.
+- If you also have keys for Pexels or Storyblocks, they are searched first; Unsplash (`UNSPLASH_ACCESS_KEY`) stays the last resort.
+- **Check:** `npm run setup:check` no longer shows `CHECK stock images`. After the deploy, **Refresh stock** in a business's image library adds images with the Pixabay credit.
+
 ## 12. Legal texts
 
 Details: [vps-deploy.md](vps-deploy.md) "Legal documents".

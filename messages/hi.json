@@ -1777,6 +1777,7 @@
       "fallbackAlt": "लाइब्रेरी इमेज",
       "noPreview": "कोई प्रीव्यू नहीं",
       "sourceMatch": "{source} · {percent} मेल",
+      "stockCredit": "{providers} से चित्र",
       "deleteAria": "इमेज हटाएँ: {alt}",
       "deleteConfirm": {
         "title": "यह इमेज हटाएँ?",
