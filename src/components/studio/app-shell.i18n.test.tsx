@@ -49,7 +49,8 @@ describe('AppShell localisation', () => {
     renderWithSWR(withLocale('en-GB', shell()));
     const nav = screen.getAllByRole('navigation', { name: 'Studio' })[0]!;
     expect(within(nav).getByRole('link', { name: 'Reference library' })).toBeInTheDocument();
-    expect(within(nav).getByText('PostMind staff')).toBeInTheDocument();
+    // /me is not mocked here, so the account is unknown: no staff section (it shows only to staff).
+    expect(within(nav).queryByText('PostMind staff')).not.toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: 'Notifications, 2 unread' }),
     ).toBeInTheDocument();
@@ -134,6 +135,24 @@ describe('AppShell staff navigation (Phase 18)', () => {
     renderWithSWR(withLocale('en-GB', shell()));
     const nav = screen.getAllByRole('navigation', { name: 'Studio' })[0]!;
     await waitFor(() => expect(within(nav).queryByText('PostMind staff')).not.toBeInTheDocument());
+    expect(within(nav).queryByRole('link', { name: /Admin/ })).not.toBeInTheDocument();
+  });
+
+  it('hides the staff section when /me fails for any reason, not only no_organisation', async () => {
+    mockFetch([
+      {
+        match: '/api/studio/me',
+        status: 403,
+        body: { ok: false, error: { code: 'plan_required', message: 'Choose a plan' } },
+      },
+      { match: '/notifications', body: { ok: true, unreadCount: 0, nextCursor: null, data: [] } },
+      { match: '/businesses', body: { ok: true, local: true, data: [] } },
+    ]);
+    renderWithSWR(withLocale('en-GB', shell()));
+    const nav = screen.getAllByRole('navigation', { name: 'Studio' })[0]!;
+    expect(await within(nav).findByRole('link', { name: 'Projects' })).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(within(nav).queryByText('PostMind staff')).not.toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: /Admin/ })).not.toBeInTheDocument();
   });
 

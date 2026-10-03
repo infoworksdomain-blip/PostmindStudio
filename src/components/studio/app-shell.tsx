@@ -71,12 +71,14 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations('shell.nav');
   const pathname = usePathname() ?? '';
   const me = useMe();
-  // Standalone knows the platform role (Phase 18): the staff group is hidden from everyone else,
-  // including a signed-in user with no organisation yet. Core mode has no role here, so the group
-  // shows as before and the admin routes enforce staff access themselves.
-  const hideStaff =
-    me.error?.code === 'no_organisation' ||
-    (me.data?.me.identityMode === 'standalone' && me.data.me.user.platformRole === 'user');
+  // Standalone knows the platform role (Phase 18): the staff group shows only once /me confirms a
+  // staff or superadmin account, so it never flashes while /me loads or appears when /me fails (a
+  // user with no organisation yet, a lapsed plan). Core mode has no role here, so the group shows
+  // as before and the admin routes enforce staff access themselves.
+  const role = me.data?.me.user.platformRole;
+  const showStaff =
+    me.data?.me.identityMode === 'core' || role === 'staff' || role === 'superadmin';
+  const hideStaff = !showStaff;
   const groups = [...new Set(NAV.map((n) => n.group))].filter((g) => !(g === 'staff' && hideStaff));
   return (
     <nav aria-label={t('ariaLabel')} className="flex flex-col gap-6">

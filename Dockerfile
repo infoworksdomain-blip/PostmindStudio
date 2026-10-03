@@ -25,6 +25,11 @@ FROM deps AS build
 WORKDIR /app
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Version-skew protection (next.config.ts deploymentId): CI passes the commit SHA, so a browser tab
+# left open across a deploy does a full reload instead of running the old build's code. Empty
+# (local builds) leaves it off.
+ARG STUDIO_DEPLOYMENT_ID=
+ENV STUDIO_DEPLOYMENT_ID=${STUDIO_DEPLOYMENT_ID}
 RUN npx prisma generate && npm run build
 
 # ---- runtime ----
