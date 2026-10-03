@@ -360,6 +360,17 @@ export const WHATS_NEW: WhatsNewGroup[] = [
           { href: '#/publications', label: 'Publications with their hashtags' },
         ],
       },
+      {
+        ref: '20.27',
+        title: 'Staff change a plan, access or cost caps, and end a trial',
+        line: 'Admin Centre → Organisations lists each organisation’s plan, access, trial and AI cost this month. Open one: “Plan, access and trial” sits beside Cost caps, with the trial’s AI cost against its £15 cap, an override form (tier, access, expiry, reason, “End the trial now”, with a confirmation) and Remove override. Cost caps gain “Clear back to plan default”.',
+        see: [
+          {
+            href: '#/admin?tab=organisations',
+            label: 'Admin: Organisations (open “PostMind (operator)”)',
+          },
+        ],
+      },
     ],
   },
 ];

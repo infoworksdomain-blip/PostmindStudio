@@ -210,6 +210,11 @@ const PHASE_18_GROUP: ScreenGroup = {
       scene: 'studio',
       links: [
         {
+          href: '#/admin?tab=organisations',
+          label: 'Organisations: plan, trial and cost caps',
+          note: 'Open “PostMind (operator)” (on a trial, £14.96 of its £15 cap): set Plus, tick “End the trial now”, add a reason and confirm; Cost caps sit beside it.',
+        },
+        {
           href: '#/admin?tab=users',
           label: 'Users tab',
           note: 'Open a user, ban with a reason, sign them out everywhere.',

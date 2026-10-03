@@ -3046,7 +3046,10 @@
         "overrideHelp": "Leer = keine Ausnahme (die Obergrenze der Tarifstufe). Worker übernehmen eine Änderung innerhalb von 30 Sekunden.",
         "reason": "Grund (wird im Audit-Log erfasst)",
         "save": "Kostenobergrenzen speichern",
-        "savedToast": "Kostenobergrenzen gespeichert"
+        "savedToast": "Kostenobergrenzen gespeichert",
+        "clear": "Auf Plan-Standard zurücksetzen",
+        "clearHelp": "Entfernt beide Overrides, sodass wieder die Obergrenzen der Planstufe gelten. Verwendet den Grund oben.",
+        "clearedToast": "Kostenobergrenzen sind wieder auf dem Plan-Standard"
       }
     },
     "redrive": {
@@ -4617,14 +4620,39 @@
           "expiresAt": "Läuft ab (optional)",
           "reason": "Grund (erforderlich)",
           "save": "Override speichern",
-          "saved": "Override gespeichert"
+          "saved": "Override gespeichert",
+          "endTrial": "Testphase jetzt beenden",
+          "endTrialHelp": "Das Kontingent der Testphase und ihre Kostenobergrenzen von {daily} pro Tag / {total} insgesamt entfallen dauerhaft, auch wenn dieser Override abläuft oder entfernt wird; es gelten die Obergrenzen des Plans (und ein etwaiger Kostenobergrenzen-Override). Stripe wird nicht geändert: Die Testphase dort endet und wird zu ihrem eigenen Datum abgerechnet.",
+          "trialNote": "Jeder gespeicherte Override pausiert die Obergrenzen der Testphase, solange er aktiv ist. Wählen Sie „Testphase jetzt beenden“, um sie dauerhaft aufzuheben."
         },
         "clear": {
           "title": "Override entfernen",
           "description": "Die Organisation erhält wieder, was ihr Stripe-Abonnement vorsieht.",
           "reason": "Grund für das Entfernen",
           "button": "Override entfernen",
-          "cleared": "Override entfernt"
+          "cleared": "Override entfernt",
+          "trialWarning": "Stripe zeigt noch eine Testphase: Wird der Override entfernt, gelten ihre Obergrenzen wieder. Damit sie entfallen, speichern Sie zuerst einen Override mit „Testphase jetzt beenden“."
+        },
+        "trial": {
+          "title": "Testphase",
+          "state": {
+            "running": "Läuft: Die Obergrenzen der Testphase gelten jetzt.",
+            "overridden": "Durch den Override pausiert: Die Obergrenzen der Testphase gelten wieder, wenn der Override abläuft oder entfernt wird, während Stripe noch eine Testphase zeigt.",
+            "ended": "Am {date} von Mitarbeitern beendet. Ihre Obergrenzen gelten nicht mehr.",
+            "over": "Vorbei: Stripe zeigt keine Testphase mehr."
+          },
+          "dates": "Begonnen {start} · endet {end}",
+          "noEnd": "kein Enddatum",
+          "spent": "KI-Kosten seit Beginn der Testphase: {spent} von {total} (höchstens {daily} pro Tag)",
+          "meterAria": "KI-Kosten der Testphase im Verhältnis zur Gesamtobergrenze",
+          "capsNote": "Solange die Testphase läuft, gelten ihre Obergrenzen statt der des Plans und statt eines Kostenobergrenzen-Overrides."
+        },
+        "confirm": {
+          "title": "Diesen Override speichern?",
+          "button": "Ja, speichern",
+          "accessNone": "Zugriff „Keiner“ hindert alle in dieser Organisation am Erstellen, Veröffentlichen und Scannen.",
+          "accessReadOnly": "„Nur lesen“ sperrt jede Änderung in dieser Organisation außer Abrechnung, Kontoeinstellungen und Exporten.",
+          "endTrial": "Das Beenden der Testphase lässt sich nicht rückgängig machen: Ihre Obergrenzen gelten für diese Organisation nie wieder."
         }
       },
       "subscriptions": {
@@ -4873,7 +4901,19 @@
       "open": "Öffnen",
       "openAria": "{name} öffnen",
       "byIdTitle": "Nach ID suchen",
-      "byIdHint": "Prüfen Sie Richtlinie und Kostenobergrenzen für jede Organisations-ID, auch für solche, die zu PostMind Core gehören."
+      "byIdHint": "Prüfen Sie Richtlinie und Kostenobergrenzen für jede Organisations-ID, auch für solche, die zu PostMind Core gehören.",
+      "trial": "Testphase",
+      "trialState": {
+        "running": "Bis {date}",
+        "runningNoDate": "Läuft",
+        "overridden": "Durch Override pausiert",
+        "ended": "Von Mitarbeitern beendet"
+      },
+      "planHint": "Öffnen Sie eine Organisation, um Plan, Zugriff, Testphase oder Kostenobergrenzen zu ändern.",
+      "pagesAria": "Seiten der Organisationen",
+      "pageInfo": "{from}–{to} von {total}",
+      "previous": "Zurück",
+      "next": "Weiter"
     },
     "detail": {
       "back": "Alle Organisationen",
@@ -4898,7 +4938,9 @@
       "subscriptionsTitle": "Abonnements",
       "subscriptionsHint": "Nur lesbar; Pläne werden in Stripe oder über eine Berechtigungsänderung geändert.",
       "noSubscription": "Kein Abonnement.",
-      "cancelling": "Wird zum Ende der Laufzeit gekündigt"
+      "cancelling": "Wird zum Ende der Laufzeit gekündigt",
+      "planTitle": "Plan, Zugriff und Testphase",
+      "planHint": "Ändern Sie Stufe oder Zugriff oder beenden Sie die Testphase mit einem Override. Jede Änderung braucht einen Grund und wird protokolliert."
     },
     "status": {
       "trialing": "Testphase",

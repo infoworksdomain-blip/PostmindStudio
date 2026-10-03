@@ -199,6 +199,86 @@ describe.skipIf(!hasDb)(
       ]);
     });
 
+    it('20.27: the list resolves overrides and shows the trial, a page at a time', async () => {
+      const trialOrg = `p18e-adm-trial-${run}`;
+      const lapsedOrg = `p18e-adm-lapsed-${run}`;
+      const derived = { tier: 'STANDARD', access: 'full', source: 'trial', status: 'trialing' };
+      const trial = {
+        startedAt: '2026-10-01T00:00:00.000Z',
+        endsAt: '2026-10-15T00:00:00.000Z',
+        shortVideos: 5,
+        longVideos: 1,
+        dailyCostCapPence: 1_000,
+        totalCostCapPence: 1_500,
+      };
+      const admin = { reason: 'ops', setByUserId: superId, setAt: '2026-10-01T00:00:00.000Z' };
+      await db.organization.createMany({
+        data: [
+          { id: trialOrg, name: `Trialbake ${run} one`, slug: trialOrg },
+          { id: lapsedOrg, name: `Trialbake ${run} two`, slug: lapsedOrg },
+        ],
+      });
+      await db.orgEntitlement.createMany({
+        data: [
+          {
+            organisationId: trialOrg,
+            tier: 'PLUS',
+            access: 'full',
+            source: 'admin',
+            overrides: { derived, trial, admin: { ...admin, tier: 'PLUS', expiresAt: null } },
+          },
+          {
+            // The stored columns still say PLUS, but the override expired: the list says STANDARD.
+            organisationId: lapsedOrg,
+            tier: 'PLUS',
+            access: 'full',
+            source: 'admin',
+            overrides: {
+              derived,
+              trial,
+              admin: { ...admin, tier: 'PLUS', expiresAt: '2026-01-01T00:00:00.000Z' },
+            },
+          },
+        ],
+      });
+      try {
+        const res = await call(orgsRoute.GET, {
+          token: 'superadmin',
+          path: `/api/studio/admin/organisations?q=trialbake ${run}`,
+        });
+        expect(res.json).toMatchObject({ total: 2, offset: 0, pageSize: 50 });
+        const rows = new Map((res.json.data as Array<{ id: string }>).map((r) => [r.id, r]));
+        expect(rows.get(trialOrg)).toMatchObject({
+          tier: 'PLUS',
+          source: 'admin',
+          trial: { state: 'overridden', endsAt: trial.endsAt },
+        });
+        expect(rows.get(lapsedOrg)).toMatchObject({
+          tier: 'STANDARD',
+          source: 'trial',
+          trial: { state: 'running', endsAt: trial.endsAt },
+        });
+        const page2 = await call(orgsRoute.GET, {
+          token: 'superadmin',
+          path: `/api/studio/admin/organisations?q=trialbake ${run}&offset=1`,
+        });
+        expect(page2.json).toMatchObject({ total: 2, offset: 1 });
+        expect(page2.json.data).toHaveLength(1);
+        const detail = await call(orgDetailRoute.GET, {
+          token: 'superadmin',
+          params: { id: trialOrg },
+        });
+        expect(detail.json).toMatchObject({
+          entitlement: { tier: 'PLUS', source: 'admin', trial: { state: 'overridden' } },
+        });
+      } finally {
+        await db.orgEntitlement.deleteMany({
+          where: { organisationId: { in: [trialOrg, lapsedOrg] } },
+        });
+        await db.organization.deleteMany({ where: { id: { in: [trialOrg, lapsedOrg] } } });
+      }
+    });
+
     it('shows one organisation with members and subscription; unknown id is 404', async () => {
       const res = await call(orgDetailRoute.GET, { token: 'superadmin', params: { id: org } });
       expect(res.json).toMatchObject({

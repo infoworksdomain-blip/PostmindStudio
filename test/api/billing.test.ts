@@ -14,6 +14,8 @@ import * as portalRoute from '../../src/app/api/studio/billing/portal/route';
 import * as generateRoute from '../../src/app/api/studio/projects/[id]/generate/route';
 import * as projectsRoute from '../../src/app/api/studio/projects/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
+import { capAdjustmentFor } from '../../src/lib/studio/billing/cost-adjustments';
+import { trialStateFor } from '../../src/lib/studio/billing/entitlements';
 import { createEntitlementsReader } from '../../src/lib/studio/billing/entitlements-reader';
 import { createPricingSource } from '../../src/lib/studio/billing/pricing';
 import { createBillingService } from '../../src/lib/studio/billing/service';
@@ -382,6 +384,137 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       expect(
         (cleared.json.entitlements as { effective: { source: string } }).effective.source,
       ).not.toBe('admin');
+    });
+
+    describe('20.27 trials', () => {
+      const started = new Date();
+      async function trialing() {
+        const trial = trialStateFor(started, new Date(started.getTime() + 14 * 86_400_000));
+        await db.orgEntitlement.create({
+          data: {
+            organisationId: org,
+            tier: 'STANDARD',
+            access: 'full',
+            source: 'trial',
+            trialStartedAt: started,
+            overrides: {
+              derived: { tier: 'STANDARD', access: 'full', source: 'trial', status: 'trialing' },
+              trial,
+            },
+          },
+        });
+        await db.providerUsage.create({
+          data: { organisationId: org, provider: 'seedance', day: started, costPence: 1_420 },
+        });
+      }
+      const put = (body: Record<string, unknown>) =>
+        call(entitlementsRoute.PUT, {
+          token: 'staff',
+          method: 'PUT',
+          path: path(),
+          params: { id: org },
+          body,
+        });
+      const caps = () =>
+        capAdjustmentFor(db, createEntitlementsReader({ db, ttlMs: 0 }), org, new Date());
+
+      it('GET shows the running trial and its AI cost so far; the cost guard applies its caps', async () => {
+        await trialing();
+        const res = await call(entitlementsRoute.GET, {
+          token: 'staff',
+          path: path(),
+          params: { id: org },
+        });
+        expect(res.json.entitlements).toMatchObject({
+          effective: { tier: 'STANDARD', source: 'trial' },
+          trial: {
+            state: 'running',
+            spentPence: 1_420,
+            dailyCostCapPence: 1_000,
+            totalCostCapPence: 1_500,
+            endedAt: null,
+          },
+        });
+        expect((await caps())?.trial).toEqual({ dailyPence: 1_000, monthlyPence: 1_500 });
+      });
+
+      it('an override pauses the trial; removing it brings the trial caps back', async () => {
+        await trialing();
+        const res = await put({ tier: 'PLUS', reason: 'Operator account' });
+        expect(res.json.entitlements).toMatchObject({
+          effective: { tier: 'PLUS', source: 'admin' },
+          trial: { state: 'overridden' },
+        });
+        expect((await caps())?.trial).toBeUndefined();
+        await call(entitlementsRoute.DELETE, {
+          token: 'staff',
+          method: 'DELETE',
+          path: path(),
+          params: { id: org },
+          body: { reason: 'Back to the trial' },
+        });
+        expect((await caps())?.trial).toEqual({ dailyPence: 1_000, monthlyPence: 1_500 });
+      });
+
+      it('End trial now: audited, no trial caps from then on, even after the override is removed', async () => {
+        await trialing();
+        const res = await put({ tier: 'PLUS', endTrial: true, reason: 'Operator account' });
+        expect(res.status).toBe(200);
+        expect(res.json.entitlements).toMatchObject({
+          effective: { tier: 'PLUS', source: 'admin' },
+          trial: { state: 'ended', endedByUserId: 'staff-1' },
+        });
+        expect(api.audits).toContainEqual(
+          expect.objectContaining({
+            action: 'entitlement.override_set',
+            metadata: expect.objectContaining({
+              trialEnded: { endedAt: expect.any(String) },
+              after: { tier: 'PLUS', access: 'full' },
+            }),
+          }),
+        );
+        expect((await caps())?.trial).toBeUndefined();
+        // Ending it twice is refused.
+        expect((await put({ endTrial: true, reason: 'Again' })).status).toBe(400);
+
+        await call(entitlementsRoute.DELETE, {
+          token: 'staff',
+          method: 'DELETE',
+          path: path(),
+          params: { id: org },
+          body: { reason: 'Plan set in Stripe' },
+        });
+        const after = await call(entitlementsRoute.GET, {
+          token: 'staff',
+          path: path(),
+          params: { id: org },
+        });
+        expect(after.json.entitlements).toMatchObject({
+          effective: { tier: 'STANDARD', source: 'trial' },
+          trial: { state: 'ended' },
+        });
+        expect(
+          (after.json.entitlements as { effective: { trial?: unknown } }).effective.trial,
+        ).toBe(undefined);
+        expect((await caps())?.trial).toBeUndefined();
+      });
+
+      it('End trial now on its own ends the trial without creating an override', async () => {
+        await trialing();
+        const res = await put({ endTrial: true, reason: 'Trial over early' });
+        expect(res.status).toBe(200);
+        expect(res.json.entitlements).toMatchObject({
+          effective: { tier: 'STANDARD', source: 'trial' },
+          admin: null,
+          trial: { state: 'ended' },
+        });
+        expect((await caps())?.trial).toBeUndefined();
+      });
+
+      it('End trial now is refused when there is no trial', async () => {
+        await entitle(org, 'PLUS', 'full');
+        expect((await put({ endTrial: true, reason: 'No trial here' })).status).toBe(400);
+      });
     });
 
     it('validates reason and expiry', async () => {

@@ -3046,7 +3046,10 @@
         "overrideHelp": "Vide = aucune dérogation (le plafond de la formule). Les workers appliquent une modification en moins de 30 secondes.",
         "reason": "Motif (consigné dans le journal d’audit)",
         "save": "Enregistrer les plafonds",
-        "savedToast": "Plafonds de coût enregistrés"
+        "savedToast": "Plafonds de coût enregistrés",
+        "clear": "Revenir à la valeur du forfait",
+        "clearHelp": "Retire les deux dérogations pour que les plafonds du niveau du forfait s’appliquent à nouveau. Utilise le motif ci-dessus.",
+        "clearedToast": "Les plafonds de coût sont revenus à la valeur du forfait"
       }
     },
     "redrive": {
@@ -4617,14 +4620,39 @@
           "expiresAt": "Expiration (facultatif)",
           "reason": "Motif (obligatoire)",
           "save": "Enregistrer la dérogation",
-          "saved": "Dérogation enregistrée"
+          "saved": "Dérogation enregistrée",
+          "endTrial": "Terminer l’essai maintenant",
+          "endTrialHelp": "Le quota de l’essai et ses plafonds de coût de {daily} par jour / {total} au total cessent définitivement, même après l’expiration ou le retrait de cette dérogation ; les plafonds du forfait (et toute dérogation de plafond de coût) s’appliquent. Stripe n’est pas modifié : son essai se termine, et est facturé, à sa propre date.",
+          "trialNote": "Toute dérogation enregistrée suspend les plafonds de l’essai tant qu’elle est active. Cochez « Terminer l’essai maintenant » pour les arrêter définitivement."
         },
         "clear": {
           "title": "Supprimer la dérogation",
           "description": "L’organisation revient aux droits accordés par son abonnement Stripe.",
           "reason": "Motif de la suppression",
           "button": "Supprimer la dérogation",
-          "cleared": "Dérogation supprimée"
+          "cleared": "Dérogation supprimée",
+          "trialWarning": "Stripe indique encore un essai : retirer la dérogation rétablit les plafonds de l’essai. Pour les écarter, enregistrez d’abord une dérogation avec « Terminer l’essai maintenant »."
+        },
+        "trial": {
+          "title": "Essai",
+          "state": {
+            "running": "En cours : les plafonds de l’essai s’appliquent maintenant.",
+            "overridden": "Suspendu par la dérogation : les plafonds de l’essai reviennent si la dérogation expire ou est retirée alors que Stripe indique encore un essai.",
+            "ended": "Terminé par l’équipe le {date}. Ses plafonds ne s’appliquent plus.",
+            "over": "Terminé : Stripe n’indique plus d’essai."
+          },
+          "dates": "Début {start} · fin {end}",
+          "noEnd": "pas de date de fin",
+          "spent": "Coût IA depuis le début de l’essai : {spent} sur {total} (au plus {daily} par jour)",
+          "meterAria": "Coût IA de l’essai par rapport à son plafond total",
+          "capsNote": "Pendant l’essai, ses plafonds s’appliquent à la place de ceux du forfait et de toute dérogation de plafond de coût."
+        },
+        "confirm": {
+          "title": "Enregistrer cette dérogation ?",
+          "button": "Oui, enregistrer",
+          "accessNone": "L’accès Aucun empêche tous les membres de cette organisation de générer, publier et analyser.",
+          "accessReadOnly": "Lecture seule bloque toute modification dans cette organisation, sauf la facturation, les paramètres du compte et les exports.",
+          "endTrial": "Terminer l’essai est irréversible : ses plafonds ne s’appliqueront plus jamais à cette organisation."
         }
       },
       "subscriptions": {
@@ -4873,7 +4901,19 @@
       "open": "Ouvrir",
       "openAria": "Ouvrir {name}",
       "byIdTitle": "Rechercher par id",
-      "byIdHint": "Consultez la politique et les plafonds de coûts de n’importe quelle organisation par son id, y compris celles gérées par PostMind Core."
+      "byIdHint": "Consultez la politique et les plafonds de coûts de n’importe quelle organisation par son id, y compris celles gérées par PostMind Core.",
+      "trial": "Essai",
+      "trialState": {
+        "running": "Jusqu’au {date}",
+        "runningNoDate": "En cours",
+        "overridden": "Suspendu par dérogation",
+        "ended": "Terminé par l’équipe"
+      },
+      "planHint": "Ouvrez une organisation pour modifier son forfait, son accès, son essai ou ses plafonds de coût.",
+      "pagesAria": "Pages des organisations",
+      "pageInfo": "{from}–{to} sur {total}",
+      "previous": "Précédent",
+      "next": "Suivant"
     },
     "detail": {
       "back": "Toutes les organisations",
@@ -4898,7 +4938,9 @@
       "subscriptionsTitle": "Abonnements",
       "subscriptionsHint": "Lecture seule ; modifiez les forfaits dans Stripe ou avec une dérogation de droits.",
       "noSubscription": "Aucun abonnement.",
-      "cancelling": "Annulation à la fin de la période"
+      "cancelling": "Annulation à la fin de la période",
+      "planTitle": "Forfait, accès et essai",
+      "planHint": "Modifiez le niveau ou l’accès, ou terminez l’essai, avec une dérogation de l’équipe. Chaque modification exige un motif et est journalisée."
     },
     "status": {
       "trialing": "Essai",

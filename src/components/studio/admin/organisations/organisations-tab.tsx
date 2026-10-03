@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,12 +18,22 @@ import {
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section, Stat } from '../../primitives';
-import { OrganisationPanel } from '../organisation-panel';
+import { PlanOverrideSection } from '../billing/entitlements-panel';
+import { CostCapsSection, OrganisationPanel, PolicySection } from '../organisation-panel';
 import { StatusBadge } from './status-badge';
 
 // Phase 18 §3 admin → Organisations: search every organisation (name, slug or id) with plan,
-// billing access, subscription status, members and cost this month; open one for its members,
-// entitlement and subscriptions, with the existing policy and cost-cap forms beneath.
+// access, trial, subscription status, members and AI cost this month, a page at a time; open one
+// for its members and subscriptions, then (20.27) its plan: effective entitlements, the trial,
+// the override form (tier, access, expiry, End the trial now, reason) and removing it, and the
+// review policy and cost-cap forms beneath.
+
+export type TrialState = 'running' | 'overridden' | 'ended';
+
+export interface AdminOrgTrial {
+  state: TrialState;
+  endsAt: string | null;
+}
 
 export interface AdminOrgRow {
   id: string;
@@ -35,6 +45,8 @@ export interface AdminOrgRow {
   members: number;
   tier: string | null;
   access: string | null;
+  source: string | null;
+  trial: AdminOrgTrial | null;
   subscriptionStatus: string | null;
   costThisMonthPence: number;
 }
@@ -42,6 +54,8 @@ export interface AdminOrgRow {
 export interface AdminOrgsResponse {
   ok: true;
   total: number;
+  offset: number;
+  pageSize: number;
   data: AdminOrgRow[];
 }
 
@@ -83,6 +97,7 @@ export interface AdminOrgDetail {
     tier: string;
     access: string;
     source: string;
+    trial: AdminOrgTrial | null;
     graceUntil: string | null;
     trialStartedAt: string | null;
     everPaidAt: string | null;
@@ -93,6 +108,22 @@ export interface AdminOrgDetail {
   costThisMonthPence: number;
 }
 
+/** The trial cell of the list: running until a date, paused by an override, or ended. */
+export function TrialLabel({ trial }: { trial: AdminOrgTrial | null }) {
+  const t = useTranslations('adminOrgs.list.trialState');
+  const f = useFormat();
+  if (!trial) return <span className="text-muted-foreground">–</span>;
+  if (trial.state === 'running')
+    return (
+      <span className="font-medium text-amber-700 dark:text-amber-400">
+        {trial.endsAt
+          ? t('running', { date: f.date(trial.endsAt, { dateStyle: 'medium' }) })
+          : t('runningNoDate')}
+      </span>
+    );
+  return <span className="text-muted-foreground">{t(trial.state)}</span>;
+}
+
 function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const t = useTranslations('adminOrgs.detail');
   const f = useFormat();
@@ -100,7 +131,7 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
     `/admin/organisations/${encodeURIComponent(id)}`,
   );
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <div>
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="rtl:-scale-x-100" /> {t('back')}
@@ -133,6 +164,11 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
                 value={
                   data.entitlement ? <StatusBadge value={data.entitlement.access} /> : t('none')
                 }
+                hint={
+                  data.entitlement?.trial ? (
+                    <TrialLabel trial={data.entitlement.trial} />
+                  ) : undefined
+                }
               />
               <Stat
                 label={t('members')}
@@ -151,7 +187,13 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
               </p>
             )}
           </Section>
-          <div className="grid gap-6 lg:grid-cols-2">
+          {/* 20.27: the plan override beside the cost caps (same card pattern), policy below. */}
+          <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
+            <PlanOverrideSection orgId={data.organisation.id} />
+            <CostCapsSection orgId={data.organisation.id} />
+          </div>
+          <PolicySection orgId={data.organisation.id} />
+          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
             <Section title={t('membersTitle')}>
               <ul className="divide-y divide-border text-sm">
                 {data.members.map((m) => (
@@ -192,7 +234,6 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
               )}
             </Section>
           </div>
-          <OrganisationPanel initialOrgId={data.organisation.id} />
         </>
       )}
     </div>
@@ -206,33 +247,146 @@ function sourceKey(source: string): (typeof SOURCES)[number] {
     : 'none';
 }
 
-export function OrganisationsTab() {
+function Pager({
+  data,
+  onOffset,
+}: {
+  data: AdminOrgsResponse;
+  onOffset: (offset: number) => void;
+}) {
   const t = useTranslations('adminOrgs.list');
   const f = useFormat();
+  const pageSize = data.pageSize || data.data.length || 1;
+  if (data.total <= pageSize) return null;
+  const from = data.offset + 1;
+  const to = data.offset + data.data.length;
+  return (
+    <nav aria-label={t('pagesAria')} className="flex flex-wrap items-center justify-between gap-3">
+      <span className="text-sm text-muted-foreground">
+        {t('pageInfo', { from: f.number(from), to: f.number(to), total: f.number(data.total) })}
+      </span>
+      <span className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={data.offset === 0}
+          onClick={() => onOffset(Math.max(0, data.offset - pageSize))}
+        >
+          <ChevronLeft className="rtl:-scale-x-100" /> {t('previous')}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={to >= data.total}
+          onClick={() => onOffset(data.offset + pageSize)}
+        >
+          {t('next')} <ChevronRight className="rtl:-scale-x-100" />
+        </Button>
+      </span>
+    </nav>
+  );
+}
+
+function OrganisationsTable({
+  data,
+  onOpen,
+}: {
+  data: AdminOrgsResponse;
+  onOpen: (id: string) => void;
+}) {
+  const t = useTranslations('adminOrgs.list');
+  const f = useFormat();
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('name')}</TableHead>
+            <TableHead>{t('plan')}</TableHead>
+            <TableHead>{t('status')}</TableHead>
+            <TableHead>{t('trial')}</TableHead>
+            <TableHead className="text-end">{t('members')}</TableHead>
+            <TableHead className="text-end">{t('cost')}</TableHead>
+            <TableHead>{t('created')}</TableHead>
+            <TableHead>
+              <span className="sr-only">{t('actions')}</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.data.map((o) => (
+            <TableRow key={o.id}>
+              <TableCell>
+                <span className="font-medium">{o.name}</span>
+                <span className="block font-mono text-xs text-muted-foreground" dir="ltr">
+                  {o.id}
+                </span>
+              </TableCell>
+              <TableCell>{o.tier ?? '–'}</TableCell>
+              <TableCell>
+                <span className="flex flex-wrap gap-1">
+                  {o.deletedAt && <StatusBadge value="deleted" />}
+                  {o.subscriptionStatus && <StatusBadge value={o.subscriptionStatus} />}
+                  {o.access && <StatusBadge value={o.access} />}
+                </span>
+              </TableCell>
+              <TableCell>
+                <TrialLabel trial={o.trial} />
+              </TableCell>
+              <TableCell className="text-end tabular-nums">{f.number(o.members)}</TableCell>
+              <TableCell className="text-end tabular-nums">
+                {f.pence(o.costThisMonthPence)}
+              </TableCell>
+              <TableCell className="text-muted-foreground">{f.date(o.createdAt)}</TableCell>
+              <TableCell className="text-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onOpen(o.id)}
+                  aria-label={t('openAria', { name: o.name })}
+                >
+                  {t('open')}
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+export function OrganisationsTab() {
+  const t = useTranslations('adminOrgs.list');
   const [input, setInput] = useState('');
   const [q, setQ] = useState('');
+  const [offset, setOffset] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
-  const { data, error, mutate } = useApi<AdminOrgsResponse>('/admin/organisations', { q });
+  const { data, error, mutate } = useApi<AdminOrgsResponse>('/admin/organisations', {
+    q,
+    offset,
+  });
 
   if (open) return <OrganisationDetail id={open} onBack={() => setOpen(null)} />;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
           setQ(input.trim());
+          setOffset(0);
         }}
       >
-        <div className="grid gap-1.5">
+        <div className="grid w-full gap-1.5 sm:w-auto">
           <Label htmlFor="admin-org-search">{t('search')}</Label>
           <Input
             id="admin-org-search"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-80"
+            className="w-full sm:w-80"
             maxLength={120}
           />
         </div>
@@ -247,58 +401,10 @@ export function OrganisationsTab() {
       ) : data.data.length === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <Section title={t('results', { count: data.total })}>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('name')}</TableHead>
-                  <TableHead>{t('plan')}</TableHead>
-                  <TableHead>{t('status')}</TableHead>
-                  <TableHead className="text-end">{t('members')}</TableHead>
-                  <TableHead className="text-end">{t('cost')}</TableHead>
-                  <TableHead>{t('created')}</TableHead>
-                  <TableHead>
-                    <span className="sr-only">{t('actions')}</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.data.map((o) => (
-                  <TableRow key={o.id}>
-                    <TableCell>
-                      <span className="font-medium">{o.name}</span>
-                      <span className="block font-mono text-xs text-muted-foreground" dir="ltr">
-                        {o.slug}
-                      </span>
-                    </TableCell>
-                    <TableCell>{o.tier ?? '–'}</TableCell>
-                    <TableCell>
-                      <span className="flex flex-wrap gap-1">
-                        {o.deletedAt && <StatusBadge value="deleted" />}
-                        {o.subscriptionStatus && <StatusBadge value={o.subscriptionStatus} />}
-                        {o.access && o.access !== 'full' && <StatusBadge value={o.access} />}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-end tabular-nums">{f.number(o.members)}</TableCell>
-                    <TableCell className="text-end tabular-nums">
-                      {f.pence(o.costThisMonthPence)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{f.date(o.createdAt)}</TableCell>
-                    <TableCell className="text-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setOpen(o.id)}
-                        aria-label={t('openAria', { name: o.name })}
-                      >
-                        {t('open')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        <Section title={t('results', { count: data.total })} description={t('planHint')}>
+          <div className="grid gap-4">
+            <OrganisationsTable data={data} onOpen={setOpen} />
+            <Pager data={data} onOffset={setOffset} />
           </div>
         </Section>
       )}
