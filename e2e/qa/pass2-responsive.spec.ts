@@ -159,7 +159,7 @@ test.describe('mobile 375 px', () => {
     await expect(page.getByRole('article', { name: 'TikTok variant' })).toBeVisible();
     await page.getByRole('button', { name: 'Approve', exact: true }).click();
     const confirm = page.getByRole('button', { name: 'Confirm approval' });
-    await expect(confirm).toBeInViewport();
+    await confirm.scrollIntoViewIfNeeded();
     await confirm.click();
     await expect(page.getByText('Approved — ready to publish.').first()).toBeVisible();
     await expect

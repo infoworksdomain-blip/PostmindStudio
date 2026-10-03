@@ -313,14 +313,10 @@ test.describe('Admin Centre', () => {
     await staff.getByRole('button', { name: `Open P2 Trial ${run}` }).click();
     await expect(staff.getByText('Running: the trial’s caps apply now.')).toBeVisible();
     const form = staff.getByRole('form', { name: 'Set an override' });
-    // A reason is required.
+    // Save stays disabled until a reason is given.
     await form.getByLabel('Tier').selectOption('PLUS');
     await form.getByRole('checkbox', { name: 'End the trial now' }).check();
-    await form.getByRole('button', { name: 'Save override' }).click();
-    await expect(staff.getByRole('dialog')).toHaveCount(0);
-    expect(
-      (await db.orgEntitlement.findUniqueOrThrow({ where: { organisationId: orgId } })).source,
-    ).toBe('trial');
+    await expect(form.getByRole('button', { name: 'Save override' })).toBeDisabled();
     await form.getByLabel('Reason (required)').fill('QA pass 2: end the trial');
     await form.getByRole('button', { name: 'Save override' }).click();
     await staff.getByRole('dialog').getByRole('button', { name: 'Yes, save' }).click();
