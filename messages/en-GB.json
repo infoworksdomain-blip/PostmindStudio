@@ -43,7 +43,8 @@
       "moreOptions": "More options",
       "required": "Required"
     },
-    "untitledVideo": "Untitled video"
+    "untitledVideo": "Untitled video",
+    "briefHint": "This is quite short. Add who it’s for, what to say, or the feel you want, and we’ll make something better. You can still generate."
   },
   "shell": {
     "nav": {
@@ -415,7 +416,7 @@
       "body": "Trust & Safety note: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Trust & Safety audit: Hive scan miss",
+      "title": "Trust & Safety audit: safety miss",
       "body": "A published {platform} video (organisation {organisationId}, publication {publicationId}) failed the {period} audit: {note}. Follow runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -846,6 +847,10 @@
       "item": "{layer}: made with {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "Presenter not available",
+      "note": "The presenter wasn’t available for this video, so those moments use video clips instead."
+    },
     "quality": {
       "title": "Quality check",
       "status": {
@@ -880,8 +885,12 @@
       "overrideLabel": "Override the failed check — reason (required, audited)",
       "forceApprove": "Force-approve",
       "overridden": "Quality check overridden.",
+      "softFailureHint": "These checks are advisory. Watch the video; if it looks right, force-approve it with a short reason.",
+      "askToOverride": "These checks are advisory. Watch the video; an owner or admin can force-approve it.",
+      "blockedNoOverride": "A content-safety block can only be cleared by PostMind staff.",
       "details": {
         "safetyScanUnavailable": "The scan could not run: {reason}",
+        "safetyNotScanned": "Not scanned: no content-safety scan is set up.",
         "safetyBlocked": "Blocked: {classes}",
         "safetyReview": "Needs review: {classes}",
         "safetyPassed": "{count, plural, one {# frame scanned, nothing flagged.} other {# frames scanned, nothing flagged.}}",
@@ -1057,6 +1066,28 @@
       "retry": "Try again",
       "retried": "{count, plural, one {Scheduled # post.} other {Scheduled # posts.}}",
       "stillNone": "Still no free posting time — add posting times or pick a date."
+    },
+    "directions": {
+      "title": "Choose a direction",
+      "body": "Your request is a bit too vague to make a good video. Pick one of these directions, or add more detail below.",
+      "optionsAria": "Suggested directions",
+      "option": "Direction {number}",
+      "use": "Use this direction",
+      "useAria": "Use direction {number}",
+      "noPermission": "Someone who can edit projects needs to choose a direction or add more detail."
+    },
+    "needsInput": {
+      "editLabel": "Your brief",
+      "editSubmit": "Generate with my changes",
+      "started": "Generation started."
+    },
+    "restricted": {
+      "title": "Check the restricted topics",
+      "body": "Your brief touches topics your brand kit or business profile marks as restricted. Continue anyway if they are fine for this video, or edit the brief to leave them out.",
+      "topicsAria": "Restricted topics found",
+      "continue": "Continue anyway",
+      "continueHint": "The video is made as briefed, including these topics.",
+      "noPermission": "Someone who can edit projects needs to continue or change the brief."
     }
   },
   "slideshow": {
@@ -1589,7 +1620,8 @@
         "images": "Image library",
         "learned": "What Studio has learned",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "You have view-only access to this business. Ask an owner or admin to make changes."
     },
     "kits": {
       "intro": "The default kit is applied to new videos. Scripts use its tone and audience; overlays and composition use its colours and fonts.",
@@ -1790,7 +1822,8 @@
       },
       "gridAria": "Image library",
       "newer": "Newer",
-      "older": "Older"
+      "older": "Older",
+      "stockNotConfigured": "Stock photos aren’t set up yet, so there is nothing to refresh. Your site photos, uploads and generated images still work."
     },
     "profile": {
       "fields": {
@@ -2034,6 +2067,16 @@
         "planGeneric": "Voice cloning isn’t included in your plan. Upgrade your plan to clone a voice; stock voices are still available.",
         "notConfigured": "Voice cloning isn’t set up on this server yet ({message})."
       }
+    },
+    "details": {
+      "title": "Business details",
+      "description": "The name shown in the top bar and this business’s website address.",
+      "name": "Business name",
+      "domain": "Website address (optional)",
+      "domainHint": "A host name such as leedssourdough.co.uk, without https:// or a path.",
+      "domainInvalid": "Use a host name such as example.co.uk.",
+      "save": "Save details",
+      "saved": "Business details saved"
     }
   },
   "connections": {
@@ -2047,7 +2090,8 @@
       "internal_error": "Something went wrong finishing the connection. Try again.",
       "unknown": "The connection did not complete ({code}). Try again.",
       "meta_no_accounts": "Meta did not share any Facebook Page you can publish to. Connect again and choose at least one Page (and its Instagram account) in the Meta window.",
-      "wrong_user": "This connection was started by a different Studio user. Start it again while signed in as yourself."
+      "wrong_user": "This connection was started by a different Studio user. Start it again while signed in as yourself.",
+      "state_expired": "That sign-in link was already used or has expired. Start connecting again."
     },
     "dismiss": "Dismiss",
     "pickFirst": {
@@ -2101,7 +2145,8 @@
       "codeLabel": "Confirmation code:",
       "unknownCode": "We could not find a deletion request with this confirmation code. Check the link Facebook gave you."
     },
-    "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator."
+    "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator.",
+    "readOnly": "Only owners and admins can connect or disconnect accounts."
   },
   "library": {
     "browse": {
@@ -2164,7 +2209,7 @@
       "notFoundTitle": "Reference not found",
       "notFoundBody": "It may have been retired from the library.",
       "loading": "Loading reference",
-      "previewAria": "Muted preview of {title}",
+      "previewAria": "Preview of {title}",
       "previewNote": "{minutes, plural, one {Low-res preview · link expires in # min} other {Low-res preview · link expires in # min}}",
       "tagsAria": "Tags",
       "facts": {
@@ -3062,7 +3107,7 @@
       "quotedNote": "“{note}”",
       "review": {
         "title": "Content-safety review",
-        "description": "Runs paused by a script-safety REVIEW verdict or a review-level Hive flag (spec 13.2 / 16.4). Block-level results never reach this queue.",
+        "description": "Runs paused by a script-safety REVIEW verdict or a review-level content-safety flag (spec 13.2 / 16.4). Block-level results never reach this queue.",
         "showAria": "Show reviews",
         "filterWaiting": "Waiting",
         "filterWaitingCount": "Waiting ({count})",
@@ -3100,7 +3145,7 @@
       },
       "audit": {
         "title": "Trust & Safety monthly audit",
-        "description": "A random sample of last month’s published videos, re-checked by a person. A miss is a video the Hive scan should have blocked or sent to review.",
+        "description": "A random sample of last month’s published videos, re-checked by a person. A miss is a video that should have been blocked or sent to review.",
         "monthAria": "Audit month",
         "resultAria": "Result",
         "filter": {
@@ -3115,7 +3160,7 @@
         "waiting": "Waiting",
         "passed": "Passed",
         "missed": "Missed",
-        "missRate": "Hive scan miss rate",
+        "missRate": "Safety miss rate",
         "missRateHint": "missed ÷ reviewed",
         "emptyNoSampleTitle": "No sample for this month",
         "emptyNoSampleBody": "The sample is drawn on the 1st at 06:00 UTC. Draw it now if the job did not run.",
@@ -3655,7 +3700,11 @@
       "scan_images_capped": "The scan reached its cost cap ({amount}): some images were not indexed for search.",
       "ownership_disputed": "Stopped: ownership of the website was disputed.",
       "provider_failure": "{source} reported a problem: {problem}.",
-      "service_unavailable": "Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted."
+      "service_unavailable": "Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted.",
+      "scan_pages_skipped": "{count, plural, one {# page could not be read and was skipped.} other {# pages could not be read and were skipped.}}",
+      "scan_images_skipped": "{count, plural, one {# image on your site could not be downloaded and was skipped.} other {# images on your site could not be downloaded and were skipped.}}",
+      "stock_not_configured": "Stock photos could not be added: no stock photo service is set up yet.",
+      "stock_unavailable": "Some stock photos could not be added this time. Use Refresh stock in the image library to try again."
     },
     "classes": {
       "rate_limited": "too many requests",
@@ -4632,6 +4681,10 @@
     "askOwner": "Only an organisation owner can change the plan or billing. Ask an owner to do this.",
     "lock": {
       "aria": "Needs the {tier} plan"
+    },
+    "seatLimit": {
+      "title": "Every seat on your plan is in use",
+      "body": "Your plan has no free seat for another person. Upgrade for more seats, or remove someone first."
     }
   },
   "email": {

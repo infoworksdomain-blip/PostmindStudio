@@ -36,6 +36,11 @@ export const FAILURE_CODES = [
   'no_pages',
   'scan_cost_cap',
   'scan_images_capped',
+  // A scan that finished: some pages / site images were skipped, or stock photos could not be added.
+  'scan_pages_skipped',
+  'scan_images_skipped',
+  'stock_not_configured',
+  'stock_unavailable',
   'ownership_disputed',
   'provider_failure',
   // 20.11: every provider for the job is out (account problem) or held; no provider text shown.
@@ -96,6 +101,8 @@ export interface ParsedFailure {
     shots?: number[];
     checks?: FailedCheck[];
     pence?: number;
+    /** How many pages / images a scan skipped. */
+    count?: number;
   };
   /** Text the server did not write (provider message, checker reason, reviewer note). */
   detail: string | null;
@@ -152,6 +159,10 @@ const SERVER_WORDED: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'no_pages',
   'scan_cost_cap',
   'scan_images_capped',
+  'scan_pages_skipped',
+  'scan_images_skipped',
+  'stock_not_configured',
+  'stock_unavailable',
   'ownership_disputed',
   'service_unavailable',
 ]);
@@ -210,6 +221,10 @@ function coded(code: FailureCode, rest: string): ParsedFailure {
   if (code === 'scan_cost_cap' || code === 'scan_images_capped') {
     const pence = SCAN_CAP.exec(rest)?.[1];
     return make(code, pence ? { pence: Number(pence) } : {});
+  }
+  if (code === 'scan_pages_skipped' || code === 'scan_images_skipped') {
+    const count = /^\s*(\d+)/.exec(rest)?.[1];
+    return make(code, count ? { count: Number(count) } : {});
   }
   return make(code, {}, SERVER_WORDED.has(code) ? null : rest);
 }

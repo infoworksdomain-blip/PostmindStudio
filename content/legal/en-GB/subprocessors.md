@@ -2,7 +2,7 @@
 
 # Sub-processors
 
-**Last updated: 30 September 2026**
+**Last updated: 2 October 2026**
 
 This page lists the third parties that Postmind AI Ltd uses to process personal data when providing PostMind Studio (the **Service**). It is referred to in our [Data Processing Agreement](/legal/dpa) and our [Privacy Policy](/legal/privacy).
 
@@ -19,7 +19,9 @@ This page lists the third parties that Postmind AI Ltd uses to process personal 
 | Stripe                             | Payments, subscriptions, invoices, tax calculation and customer billing portal                  | Billing name, address, email, VAT number, payment method, payment history           | Stripe Payments Europe, Ltd. (Ireland) and Stripe, Inc. (United States)                                           | SCCs / DPF                                         |
 | Functional Software, Inc. (Sentry) | Error reporting, **only if enabled** by us                                                      | Technical error details, which may include internal user and organisation IDs       | United States (or EU region, depending on the account)                                                            | SCCs / DPF                                         |
 
-## 2. AI generation, transcription and content safety
+## 2. AI generation and transcription
+
+<!-- LEGAL REVIEW (20.24, 2026-10-02): the Kling row was added from Kling's "Terms of API Paid Service" (https://kling.ai/document-api/guides/protocols/paid-service, effective 2026-04-21: contract with Kling AI Pte. Ltd. and its affiliates; Kling acts as a data processor, does not train on API data, and logs prompts and responses for 30 days). Confirm the registered address, where Kling processes API data (the API endpoint is in Singapore), whether a DPA with SCCs / the UK Addendum is available, and that Singapore (no UK adequacy) is covered before enabling KLING_API_KEY in production. -->
 
 These providers receive the content needed for each step of making your videos. They process it to return a result to us, under business or API terms that we select so that, as far as those terms allow, they do not use it to train their models.
 
@@ -29,10 +31,12 @@ These providers receive the content needed for each step of making your videos. 
 | OpenAI                     | Image generation, text generation and embeddings (for search), and fallback audio transcription | Prompts, text, images and audio you provide or that are generated                       | United States                                                                           | SCCs / DPF |
 | Runway AI, Inc.            | AI video clip generation                                                                        | Prompts and reference images                                                            | United States                                                                           | SCCs / DPF |
 | Luma AI, Inc.              | AI video clip generation                                                                        | Prompts and reference images                                                            | United States                                                                           | SCCs / DPF |
+| Kling AI Pte. Ltd. (Kling, a Kuaishou company) | AI video clip generation (second choice for AI clips, only if enabled by us); Kling keeps prompts and results for 30 days | Prompts and reference images | Singapore (company; API endpoint api-singapore.klingai.com); processing location as set out in Kling's terms | SCCs |
+| Google LLC (Gemini API, Veo) | AI video clip generation (backup provider, only if enabled by us) | Prompts and reference images | United States and other countries where Google processes Gemini API data | SCCs / DPF |
+| BytePlus Pte. Ltd. (ModelArk, Seedance) | AI video clip generation (main provider, **only if enabled** by us) | Prompts and reference images | Malaysia (Johor data centre); company in Singapore. Content stopped by BytePlus's safety filter is kept for up to 180 days in Malaysia | SCCs |
 | HeyGen                     | AI presenter (avatar) videos                                                                    | Scripts and voice-over audio                                                            | United States                                                                           | SCCs / DPF |
 | ElevenLabs                 | Voice-overs, music and sound; voice cloning on plans that include it                            | Script text; for voice cloning, the speaker's voice samples                             | United States                                                                           | SCCs / DPF |
 | Shotstack Pty Ltd          | Composition and rendering of the final videos                                                   | All media and text that make up a video, including images, video and voices of people   | Australia (company); rendering location as set out in Shotstack's data processing terms | SCCs       |
-| Castle Global, Inc. (Hive) | Automated content-safety checks                                                                 | Images, video frames and text being checked                                             | United States                                                                           | SCCs / DPF |
 | AssemblyAI, Inc.           | Speech transcription for captions and voice-consent checks                                      | Audio, including voice consent recordings                                               | European Union (EU region used in production); company in the United States             | SCCs / DPF |
 
 ## 3. Optional services

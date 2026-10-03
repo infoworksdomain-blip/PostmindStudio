@@ -118,11 +118,11 @@ export const PLATFORM_GAPS: NotBuiltItem[] = [
     group: 'Staging and people (GATE 12)',
     title: 'Live provider and posting runs',
     blocker: 'needs staging',
-    why: 'Built and ready to run: `npm run gate:live` (prints the cost estimate from the adapters’ estimators), then `npm run gate:live -- --confirm` (every GATE 2 script, adapter tests for Music, Hive, AssemblyAI, OpenAI, Storyblocks, a voice clone, and one post + takedown per platform); waiting for the operator with staging keys and platform test accounts (TikTok posts are removed by hand).',
+    why: 'Built and ready to run: `npm run gate:live` (prints the cost estimate from the adapters’ estimators), then `npm run gate:live -- --confirm` (every GATE 2 script, adapter tests for Music, AssemblyAI, OpenAI, Storyblocks, a voice clone, and one post + takedown per platform); waiting for the operator with staging keys and platform test accounts (TikTok posts are removed by hand).',
     source: 'PROGRESS GATE 2, 3, 5, 8; plans/phase-14.md 14.8; runbooks/staging-gate.md',
     plan: {
       screens: [],
-      endpoints: ['gate:live --confirm; Hive async + gate3 follow-ups by hand'],
+      endpoints: ['gate:live --confirm; gate3 follow-up by hand'],
       days: 1,
       dependsOn: 'staging keys, platform test accounts, hosted fonts (STUDIO_FONTS_BASE_URL)',
     },

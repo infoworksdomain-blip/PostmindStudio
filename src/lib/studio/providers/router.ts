@@ -19,8 +19,23 @@ import type { ProviderRegistry } from './registry';
 //   - AI_CLIP on PLUS/ENTERPRISE (BACKLOG 13.32): Luma is added after Runway. 6.4 lists
 //     [Veo, Runway, Kling], but 6.1 requires a working fallback and the playbook names Luma
 //     the "text-to-video fallback" ("toggle Runway off; verify router fails over to Luma").
-//     Veo and Kling have no adapters yet, so without Luma an open Runway breaker would leave
-//     PLUS clips with no provider. STANDARD keeps the spec's Luma-first order.
+//     Kling has no adapter, so without Luma an open Runway breaker would leave PLUS clips with
+//     no provider. STANDARD keeps the spec's Luma-first order.
+//   - BACKLOG 20.20 (operator decision 2026-10-02): Google Veo 3.1 (providers/veo.ts) is the
+//     THIRD AI_CLIP option on STANDARD, PLUS and ENTERPRISE, after Runway and Luma, so it is a
+//     failover by default rather than the first choice 6.4 gives "Veo" on PLUS. Veo renders at
+//     most 8 s; longer shots skip it (supportsRequest → capability_unsupported). The ORDER is
+//     superseded by 20.23 below.
+//   - BACKLOG 20.23 (operator decision 2026-10-02, routing approved the same day): BytePlus
+//     ModelArk Seedance (providers/seedance.ts) is the FIRST AI_CLIP option on STANDARD, PLUS and
+//     ENTERPRISE, then Veo 3.1 Fast, Runway and Luma as fallbacks. The tier picks the Seedance
+//     MODEL, not the order: STANDARD uses SEEDANCE_MODEL (2.0 mini by default: $0.0756 a second at
+//     720p list, 4 s $0.30, 10 s $0.76), PLUS / ENTERPRISE and shots longer than that model's
+//     15 s use SEEDANCE_LONG_MODEL (2.5 by default, up to 30 s). runProvider passes the tier on the
+//     request. Shots longer than every configured Seedance model skip it (supportsRequest).
+//   - BACKLOG 20.24 (same approval): Kling 3.0 (providers/kling.ts) is SECOND, after Seedance
+//     and before Veo: seedance → kling → veo → runway → luma on every paid tier. Kling renders
+//     3–15 s (supportsRequest), always silent.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 
@@ -141,6 +156,11 @@ export interface BudgetChecker {
 export interface RoutableAdapter extends ProviderAdapter {
   readonly typicalLatencySec?: number;
   estimateCostPence?(request: ProviderRequest): number;
+  /**
+   * 20.20: false when the adapter cannot serve this particular request (e.g. Veo renders at most
+   * 8 s), so the router moves on (`capability_unsupported`) instead of failing at submit.
+   */
+  supportsRequest?(request: ProviderRequest): boolean;
 }
 
 export interface RouterDeps {
@@ -170,7 +190,10 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
   composition: ['shotstack', 'creatomate'], // 6.5 Composition
   // 6.5 Captions. 15.C1: OpenAI's hosted Whisper (whisper-1) is the fallback.
   transcription: ['assemblyai', 'openai'],
-  content_safety: ['hive', 'sightengine'], // 6.5 Content safety
+  // 6.5 Content safety. 20.21 (operator decision 2026-10-02): Hive was removed and no other
+  // content-safety provider is built, so nothing is routed here and the quality gate records the
+  // scan as skipped (queue/workers/run-quality-gate.ts). A new provider is added to this list.
+  content_safety: [],
   // 13.36: no inference host is chosen, so nothing is ever routed here; the media-analysis
   // adapter (providers/media-analysis.ts) reports unhealthy and is not registered.
   media_analysis: [],
@@ -179,8 +202,8 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier.
   if (tier === 'BASIC') return ['fal', 'replicate'];
-  if (tier === 'STANDARD') return ['luma', 'runway', 'kling'];
-  return ['veo', 'runway', 'luma', 'kling'];
+  // 20.23 / 20.24: every paid tier tries the same order; Seedance picks its model by tier.
+  return ['seedance', 'kling', 'veo', 'runway', 'luma'];
 }
 
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
@@ -230,6 +253,9 @@ async function skipReason(
 ): Promise<SkipReason | undefined> {
   if (!adapter) return 'not_configured';
   if (!adapter.capabilities.includes(capability)) return 'capability_unsupported';
+  if (adapter.supportsRequest && !adapter.supportsRequest(input.request)) {
+    return 'capability_unsupported';
+  }
   if (input.excludeProviderIds?.includes(adapter.providerId)) return 'account_unavailable';
 
   const kill = await deps.killSwitch.check({

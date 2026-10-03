@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigurationError } from '../../errors';
-import type { HiveAdapter } from './hive';
+import { VeoAdapter } from './veo';
+import { SeedanceAdapter } from './seedance';
+import { KlingAdapter } from './kling';
 import {
   buildAdaptersFromEnv,
   buildAdaptersFromKeys,
@@ -12,10 +14,12 @@ const KEYS = [
   'OPENAI_API_KEY',
   'RUNWAY_API_KEY',
   'LUMA_API_KEY',
+  'GOOGLE_GEMINI_API_KEY',
+  'BYTEPLUS_API_KEY',
+  'KLING_API_KEY',
   'HEYGEN_API_KEY',
   'ELEVENLABS_API_KEY',
   'SHOTSTACK_API_KEY',
-  'HIVE_API_KEY',
   'STORYBLOCKS_API_PUBLIC_KEY',
   'STORYBLOCKS_API_PRIVATE_KEY',
   'PEXELS_API_KEY',
@@ -31,8 +35,26 @@ beforeEach(() => {
   vi.stubEnv('SHOTSTACK_ENVIRONMENT', '');
   vi.stubEnv('HEYGEN_AVATAR_ID', '');
   vi.stubEnv('OPENAI_TEXT_MODEL', '');
+  vi.stubEnv('VEO_MODEL', '');
+  vi.stubEnv('VEO_PERSON_GENERATION', '');
+  for (const key of [
+    'SEEDANCE_MODEL',
+    'SEEDANCE_LONG_MODEL',
+    'BYTEPLUS_ARK_BASE_URL',
+    'KLING_ACCESS_KEY',
+    'KLING_SECRET_KEY',
+    'KLING_MODEL',
+    'KLING_RESOLUTION',
+    'KLING_BASE_URL',
+  ])
+    vi.stubEnv(key, '');
   for (const key of KEYS) vi.stubEnv(key, '');
-  for (const key of ['HIVE_API_VERSION', 'HIVE_V3_SECRET_KEY', 'HIVE_V3_MAX_FRAMES'])
+  for (const key of [
+    'HIVE_API_KEY',
+    'HIVE_API_VERSION',
+    'HIVE_V3_SECRET_KEY',
+    'HIVE_V3_MAX_FRAMES',
+  ])
     vi.stubEnv(key, '');
 });
 
@@ -51,11 +73,13 @@ describe('buildAdaptersFromEnv', () => {
       'openai',
       'runway',
       'luma',
+      'veo',
+      'seedance',
+      'kling',
       'heygen',
       'elevenlabs',
       'elevenlabs-music',
       'shotstack',
-      'hive',
       'storyblocks-audio',
       'storyblocks-music',
       'storyblocks-video',
@@ -125,41 +149,112 @@ describe('buildAdaptersFromKeys', () => {
   });
 });
 
-describe('Hive API version (20.6)', () => {
-  const hiveOf = () =>
-    buildAdaptersFromEnv().find((a) => a.providerId === 'hive') as HiveAdapter | undefined;
-
-  it('registers a V3 adapter from HIVE_V3_SECRET_KEY alone', () => {
-    vi.stubEnv('HIVE_V3_SECRET_KEY', 'v3-secret');
-    expect(providerKeysFromEnv().hive).toEqual({ apiKey: 'v3-secret', apiVersion: 'v3' });
-    expect(hiveOf()?.apiVersion).toBe('v3');
-  });
-
-  it('keeps V2 for HIVE_API_KEY, and when both keys are set without HIVE_API_VERSION', () => {
-    vi.stubEnv('HIVE_API_KEY', 'v2-key');
-    expect(hiveOf()?.apiVersion).toBe('v2');
-    vi.stubEnv('HIVE_V3_SECRET_KEY', 'v3-secret');
-    expect(providerKeysFromEnv().hive).toEqual({ apiKey: 'v2-key', apiVersion: 'v2' });
-    vi.stubEnv('HIVE_API_VERSION', 'v3');
-    expect(providerKeysFromEnv().hive).toEqual({ apiKey: 'v3-secret', apiVersion: 'v3' });
-  });
-
-  it('registers no Hive adapter when the selected version has no key', () => {
-    vi.stubEnv('HIVE_API_KEY', 'v2-key');
-    vi.stubEnv('HIVE_API_VERSION', 'v3');
-    expect(hiveOf()).toBeUndefined();
-  });
-
-  it('rejects a bad HIVE_API_VERSION or HIVE_V3_MAX_FRAMES', () => {
-    vi.stubEnv('HIVE_V3_SECRET_KEY', 'v3-secret');
-    vi.stubEnv('HIVE_V3_MAX_FRAMES', '500');
-    expect(() => buildAdaptersFromEnv()).toThrow(/HIVE_V3_MAX_FRAMES/);
+describe('no Hive (20.21)', () => {
+  it('registers no content-safety adapter, even with the old Hive keys set', () => {
+    vi.stubEnv('HIVE_API_KEY', 'old-v2-key');
+    vi.stubEnv('HIVE_V3_SECRET_KEY', 'dummy-v3-secret');
     vi.stubEnv('HIVE_API_VERSION', 'v9');
-    expect(() => buildAdaptersFromEnv()).toThrow(/HIVE_API_VERSION/);
+    expect(buildAdaptersFromEnv()).toEqual([]);
+    expect(providerKeysFromEnv()).toEqual({});
+  });
+});
+
+describe('Google Veo (20.20)', () => {
+  it('registers Veo from GOOGLE_GEMINI_API_KEY with the documented defaults', () => {
+    vi.stubEnv('GOOGLE_GEMINI_API_KEY', 'test-key');
+    const [veo] = buildAdaptersFromEnv();
+    expect(veo).toBeInstanceOf(VeoAdapter);
+    expect((veo as VeoAdapter).model).toBe('veo-3.1-fast-generate-preview');
+    expect(providerKeysFromEnv().veo).toEqual({ apiKey: 'test-key' });
   });
 
-  it('an organisation key without a version (BYOC) stays V2', () => {
-    const [hive] = buildAdaptersFromKeys({ hive: { apiKey: 'org-key' } });
-    expect((hive as HiveAdapter).apiVersion).toBe('v2');
+  it('uses VEO_MODEL, and refuses a model without a price row', () => {
+    vi.stubEnv('GOOGLE_GEMINI_API_KEY', 'test-key');
+    vi.stubEnv('VEO_MODEL', 'veo-3.1-lite-generate-preview');
+    expect((buildAdaptersFromEnv()[0] as VeoAdapter).model).toBe('veo-3.1-lite-generate-preview');
+    vi.stubEnv('VEO_MODEL', 'veo-9-ultra');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('an organisation key (BYOC) builds Veo too', () => {
+    expect(buildAdaptersFromKeys({ veo: { apiKey: 'org-key' } }).map((a) => a.providerId)).toEqual([
+      'veo',
+    ]);
+  });
+});
+
+describe('BytePlus Seedance (20.23)', () => {
+  it('registers Seedance from BYTEPLUS_API_KEY with the documented defaults', () => {
+    vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
+    const [seedance] = buildAdaptersFromEnv();
+    expect(seedance).toBeInstanceOf(SeedanceAdapter);
+    expect(seedance).toMatchObject({
+      providerId: 'seedance',
+      model: 'dreamina-seedance-2-0-mini-260615',
+      longModel: 'dreamina-seedance-2-5-260628',
+      baseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3',
+    });
+    expect(providerKeysFromEnv().seedance).toEqual({ apiKey: 'test.key' });
+  });
+
+  it('uses SEEDANCE_MODEL / SEEDANCE_LONG_MODEL / BYTEPLUS_ARK_BASE_URL and refuses unknown values', () => {
+    vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
+    vi.stubEnv('SEEDANCE_MODEL', 'dreamina-seedance-2-0-fast-260128');
+    vi.stubEnv('SEEDANCE_LONG_MODEL', 'dreamina-seedance-2-5-260628');
+    vi.stubEnv('BYTEPLUS_ARK_BASE_URL', 'https://ark.eu-west.bytepluses.com/api/v3');
+    expect(buildAdaptersFromEnv()[0]).toMatchObject({
+      model: 'dreamina-seedance-2-0-fast-260128',
+      baseUrl: 'https://ark.eu-west.bytepluses.com/api/v3',
+    });
+    vi.stubEnv('SEEDANCE_MODEL', 'seedance-1-5-pro-251215');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('an organisation key (BYOC) builds Seedance too', () => {
+    expect(
+      buildAdaptersFromKeys({ seedance: { apiKey: 'org-key' } }).map((a) => a.providerId),
+    ).toEqual(['seedance']);
+  });
+});
+
+describe('Kling 3.0 (20.24)', () => {
+  it('registers Kling from KLING_API_KEY with the documented defaults', () => {
+    vi.stubEnv('KLING_API_KEY', 'test-key');
+    const [kling] = buildAdaptersFromEnv();
+    expect(kling).toBeInstanceOf(KlingAdapter);
+    expect(kling as KlingAdapter).toMatchObject({
+      model: 'kling-3.0',
+      resolution: '720p',
+      baseUrl: 'https://api-singapore.klingai.com',
+      authKind: 'api_key',
+    });
+    expect(providerKeysFromEnv().kling).toEqual({ apiKey: 'test-key' });
+  });
+
+  it('accepts the legacy AccessKey + SecretKey pair; the API key wins when both are set', () => {
+    vi.stubEnv('KLING_ACCESS_KEY', 'ak');
+    vi.stubEnv('KLING_SECRET_KEY', 'sk');
+    expect(providerKeysFromEnv().kling).toEqual({ apiKey: 'ak', secondaryKey: 'sk' });
+    expect((buildAdaptersFromEnv()[0] as KlingAdapter).authKind).toBe('access_key');
+    vi.stubEnv('KLING_API_KEY', 'key');
+    expect((buildAdaptersFromEnv()[0] as KlingAdapter).authKind).toBe('api_key');
+  });
+
+  it('half a legacy pair, an unknown resolution or a non-https base URL is refused', () => {
+    vi.stubEnv('KLING_ACCESS_KEY', 'ak');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+    vi.stubEnv('KLING_ACCESS_KEY', '');
+    vi.stubEnv('KLING_API_KEY', 'key');
+    vi.stubEnv('KLING_RESOLUTION', '4k');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+    vi.stubEnv('KLING_RESOLUTION', '1080p');
+    vi.stubEnv('KLING_BASE_URL', 'http://api.klingai.com');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('an organisation key (BYOC) builds Kling too', () => {
+    expect(
+      buildAdaptersFromKeys({ kling: { apiKey: 'org-key' } }).map((a) => a.providerId),
+    ).toEqual(['kling']);
   });
 });

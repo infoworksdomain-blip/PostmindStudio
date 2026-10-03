@@ -46,8 +46,9 @@ const LAYERS: Layer[] = [
       b('runway (gen4.5 / gen4_turbo)'),
       b('openai (gpt-image-2)'),
       b('luma (ray-3.2)'),
-      planned('kling'),
-      planned('veo'),
+      b('kling (kling-3.0, 720p, silent)'),
+      b('veo (veo-3.1-fast-generate-preview)'),
+      b('seedance (dreamina-seedance-2-0-mini / 2-5)'),
       planned('fal'),
       planned('replicate'),
       b('heygen (avatar v3)'),
@@ -93,8 +94,8 @@ const LAYERS: Layer[] = [
     n: 8,
     name: 'Quality gate + review',
     job: 'run-quality-gate',
-    what: 'Duration ±2 s, black frames > 500 ms, loudness −18…−10 LUFS, aspect, H.264/MP4, content safety; then human or trusted auto-approval.',
-    providers: [b('hive (sync ≤ 90 s, async + callback beyond)'), planned('sightengine')],
+    what: 'Duration ±2 s, black frames > 500 ms, loudness −18…−10 LUFS, aspect, H.264/MP4; content safety is recorded as “Not scanned” (no provider since 20.21); then human or trusted auto-approval.',
+    providers: [planned('content-safety provider (none: Hive removed 20.21)')],
   },
   {
     n: 9,
@@ -164,14 +165,15 @@ const QUEUE_ROWS: [string, string, number, number][] = [
 ];
 
 const ROUTER_SAMPLE = `// video_shots.providerRouting — the router's decision snapshot for one AI_CLIP shot,
-// STANDARD plan, Luma and Kling adapters not configured, Runway's breaker closed.
+// STANDARD plan, Seedance and Kling breakers open, a 10 s shot (Veo renders at most 8 s).
 {
   "providerId": "runway",
   "capability": "text_to_video",
   "candidates": [
-    { "providerId": "luma",   "skipped": "not_configured" },
-    { "providerId": "runway" },
-    { "providerId": "kling",  "skipped": "not_configured" }
+    { "providerId": "seedance", "skipped": "circuit_open" },
+    { "providerId": "kling",  "skipped": "circuit_open" },
+    { "providerId": "veo",    "skipped": "capability_unsupported" },
+    { "providerId": "runway" }
   ],
   "decidedAt": "2026-09-27T09:14:03.118Z"
 }
@@ -258,8 +260,8 @@ export function PipelineChapters() {
               head={['Tier', 'Candidates, in order']}
               rows={[
                 ['BASIC', 'fal → replicate'],
-                ['STANDARD', 'luma → runway → kling'],
-                ['PLUS / ENTERPRISE', 'veo → runway → luma → kling'],
+                ['STANDARD', 'seedance (2.0 mini) → kling → veo → runway → luma'],
+                ['PLUS / ENTERPRISE', 'seedance (2.5) → kling → veo → runway → luma'],
                 ['Avatar (≤ STANDARD)', 'd-id → heygen'],
                 ['Stock footage', 'storyblocks → pexels'],
                 ['Image still', 'openai → fal'],

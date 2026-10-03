@@ -43,7 +43,8 @@
       "moreOptions": "Altre opzioni",
       "required": "Obbligatorio"
     },
-    "untitledVideo": "Video senza titolo"
+    "untitledVideo": "Video senza titolo",
+    "briefHint": "È piuttosto breve. Aggiungi a chi è rivolto, cosa dire o l’atmosfera che vuoi, e il risultato sarà migliore. Puoi comunque generare."
   },
   "shell": {
     "nav": {
@@ -415,7 +416,7 @@
       "body": "Nota di Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Audit Trust & Safety: contenuto sfuggito alla scansione Hive",
+      "title": "Audit Trust & Safety: contenuto sfuggito ai controlli di sicurezza",
       "body": "Un video {platform} pubblicato (organizzazione {organisationId}, pubblicazione {publicationId}) non ha superato l’audit {period}: {note}. Segui runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -846,6 +847,10 @@
       "item": "{layer}: creato con {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "Presentatore non disponibile",
+      "note": "Il presentatore non era disponibile per questo video, quindi in quei momenti vengono usate delle clip video."
+    },
     "quality": {
       "title": "Controllo qualità",
       "status": {
@@ -880,8 +885,12 @@
       "overrideLabel": "Ignora il controllo non superato: motivo (obbligatorio, registrato)",
       "forceApprove": "Forza l’approvazione",
       "overridden": "Controllo qualità ignorato.",
+      "softFailureHint": "Questi controlli sono indicativi. Guarda il video; se va bene, forza l’approvazione con un breve motivo.",
+      "askToOverride": "Questi controlli sono indicativi. Guarda il video; un proprietario o un amministratore può forzare l’approvazione.",
+      "blockedNoOverride": "Solo il team PostMind può rimuovere un blocco di sicurezza dei contenuti.",
       "details": {
         "safetyScanUnavailable": "Non è stato possibile eseguire l’analisi: {reason}",
+        "safetyNotScanned": "Non analizzato: nessuna analisi di sicurezza dei contenuti è configurata.",
         "safetyBlocked": "Bloccato: {classes}",
         "safetyReview": "Da rivedere: {classes}",
         "safetyPassed": "{count, plural, one {# fotogramma analizzato, nessuna segnalazione.} many {# di fotogrammi analizzati, nessuna segnalazione.} other {# fotogrammi analizzati, nessuna segnalazione.}}",
@@ -1057,6 +1066,28 @@
       "retry": "Riprova",
       "retried": "{count, plural, one {# post programmato.} other {# post programmati.}}",
       "stillNone": "Ancora nessun orario libero: aggiungi orari di pubblicazione o scegli una data."
+    },
+    "directions": {
+      "title": "Scegli una direzione",
+      "body": "La tua richiesta è un po’ troppo vaga per fare un buon video. Scegli una di queste direzioni o aggiungi altri dettagli qui sotto.",
+      "optionsAria": "Direzioni suggerite",
+      "option": "Direzione {number}",
+      "use": "Usa questa direzione",
+      "useAria": "Usa la direzione {number}",
+      "noPermission": "Una persona che può modificare i progetti deve scegliere una direzione o aggiungere dettagli."
+    },
+    "needsInput": {
+      "editLabel": "Il tuo brief",
+      "editSubmit": "Genera con le mie modifiche",
+      "started": "Generazione avviata."
+    },
+    "restricted": {
+      "title": "Controlla gli argomenti riservati",
+      "body": "Il tuo brief tocca argomenti che il brand kit o il profilo aziendale segnano come riservati. Continua comunque se vanno bene per questo video, oppure modifica il brief per toglierli.",
+      "topicsAria": "Argomenti riservati trovati",
+      "continue": "Continua comunque",
+      "continueHint": "Il video viene realizzato secondo il brief, inclusi questi argomenti.",
+      "noPermission": "Una persona che può modificare i progetti deve continuare o cambiare il brief."
     }
   },
   "slideshow": {
@@ -1589,7 +1620,8 @@
         "images": "Libreria immagini",
         "learned": "Cosa ha imparato Studio",
         "hashtags": "Hashtag"
-      }
+      },
+      "readOnly": "Hai accesso di sola lettura a questa attività. Chiedi a un proprietario o a un amministratore di fare le modifiche."
     },
     "kits": {
       "intro": "Il kit predefinito si applica ai nuovi video. I copioni ne usano tono e pubblico; sovrimpressioni e composizione ne usano colori e font.",
@@ -1790,7 +1822,8 @@
       },
       "gridAria": "Libreria immagini",
       "newer": "Più recenti",
-      "older": "Meno recenti"
+      "older": "Meno recenti",
+      "stockNotConfigured": "Le foto d’archivio non sono ancora configurate, quindi non c’è nulla da aggiornare. Le foto del tuo sito, i caricamenti e le immagini generate funzionano ancora."
     },
     "profile": {
       "fields": {
@@ -2034,6 +2067,16 @@
         "planGeneric": "La clonazione vocale non è inclusa nel tuo piano. Passa a un piano superiore per clonare una voce; le voci stock restano disponibili.",
         "notConfigured": "La clonazione vocale non è ancora configurata su questo server ({message})."
       }
+    },
+    "details": {
+      "title": "Dettagli dell’attività",
+      "description": "Il nome mostrato nella barra superiore e l’indirizzo del sito web di questa attività.",
+      "name": "Nome dell’attività",
+      "domain": "Indirizzo del sito web (facoltativo)",
+      "domainHint": "Un nome host come leedssourdough.co.uk, senza https:// né percorso.",
+      "domainInvalid": "Usa un nome host come esempio.co.uk.",
+      "save": "Salva i dettagli",
+      "saved": "Dettagli dell’attività salvati"
     }
   },
   "connections": {
@@ -2047,7 +2090,8 @@
       "internal_error": "Qualcosa è andato storto nel completare il collegamento. Riprova.",
       "unknown": "Il collegamento non è stato completato ({code}). Riprova.",
       "meta_no_accounts": "Meta non ha condiviso nessuna Pagina Facebook su cui puoi pubblicare. Collegati di nuovo e scegli almeno una Pagina (e il relativo account Instagram) nella finestra di Meta.",
-      "wrong_user": "Questo collegamento è stato avviato da un altro utente di Studio. Ricomincia dopo aver effettuato l’accesso con il tuo account."
+      "wrong_user": "Questo collegamento è stato avviato da un altro utente di Studio. Ricomincia dopo aver effettuato l’accesso con il tuo account.",
+      "state_expired": "Quel link di accesso è già stato usato o è scaduto. Ricomincia il collegamento."
     },
     "dismiss": "Chiudi",
     "pickFirst": {
@@ -2101,7 +2145,8 @@
       "codeLabel": "Codice di conferma:",
       "unknownCode": "Non abbiamo trovato alcuna richiesta di eliminazione con questo codice di conferma. Controlla il link fornito da Facebook."
     },
-    "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore."
+    "notConfigured": "{platform} non è ancora disponibile: l’app {platform} di Studio deve ancora essere configurata. Rivolgiti al tuo amministratore.",
+    "readOnly": "Solo i proprietari e gli amministratori possono collegare o scollegare gli account."
   },
   "library": {
     "browse": {
@@ -2164,7 +2209,7 @@
       "notFoundTitle": "Riferimento non trovato",
       "notFoundBody": "Potrebbe essere stato ritirato dalla libreria.",
       "loading": "Caricamento del riferimento",
-      "previewAria": "Anteprima senza audio di {title}",
+      "previewAria": "Anteprima di {title}",
       "previewNote": "{minutes, plural, one {Anteprima a bassa risoluzione · il link scade tra # min} other {Anteprima a bassa risoluzione · il link scade tra # min}}",
       "tagsAria": "Tag",
       "facts": {
@@ -3062,7 +3107,7 @@
       "quotedNote": "«{note}»",
       "review": {
         "title": "Revisione della sicurezza dei contenuti",
-        "description": "Esecuzioni messe in pausa da un verdetto REVIEW sulla sicurezza dello script o da una segnalazione Hive di livello revisione (spec. 13.2 / 16.4). I risultati di livello blocco non arrivano mai in questa coda.",
+        "description": "Esecuzioni messe in pausa da un verdetto REVIEW sulla sicurezza dello script o da una segnalazione di sicurezza dei contenuti di livello revisione (spec. 13.2 / 16.4). I risultati di livello blocco non arrivano mai in questa coda.",
         "showAria": "Mostra revisioni",
         "filterWaiting": "In attesa",
         "filterWaitingCount": "In attesa ({count})",
@@ -3100,7 +3145,7 @@
       },
       "audit": {
         "title": "Audit mensile Trust & Safety",
-        "description": "Un campione casuale dei video pubblicati il mese scorso, ricontrollati da una persona. Un mancato blocco è un video che la scansione Hive avrebbe dovuto bloccare o mandare in revisione.",
+        "description": "Un campione casuale dei video pubblicati il mese scorso, ricontrollati da una persona. Un mancato blocco è un video che avrebbe dovuto essere bloccato o mandato in revisione.",
         "monthAria": "Mese dell’audit",
         "resultAria": "Risultato",
         "filter": {
@@ -3115,7 +3160,7 @@
         "waiting": "In attesa",
         "passed": "Superati",
         "missed": "Mancati blocchi",
-        "missRate": "Tasso di mancati blocchi della scansione Hive",
+        "missRate": "Tasso di mancati blocchi dei controlli di sicurezza",
         "missRateHint": "mancati ÷ revisionati",
         "emptyNoSampleTitle": "Nessun campione per questo mese",
         "emptyNoSampleBody": "Il campione viene estratto il 1° del mese alle 06:00 UTC. Estrailo ora se il job non è partito.",
@@ -3655,7 +3700,11 @@
       "scan_images_capped": "L’analisi ha raggiunto il limite di costo ({amount}): alcune immagini non sono state indicizzate per la ricerca.",
       "ownership_disputed": "Interrotto: la proprietà del sito è stata contestata.",
       "provider_failure": "{source} ha segnalato un problema: {problem}.",
-      "service_unavailable": "Il nostro servizio di IA è temporaneamente non disponibile, quindi l’operazione non è stata completata. Riprova più tardi: il nostro team è stato avvisato."
+      "service_unavailable": "Il nostro servizio di IA è temporaneamente non disponibile, quindi l’operazione non è stata completata. Riprova più tardi: il nostro team è stato avvisato.",
+      "scan_pages_skipped": "{count, plural, one {# pagina non è stata letta ed è stata saltata.} many {# pagine non sono state lette e sono state saltate.} other {# pagine non sono state lette e sono state saltate.}}",
+      "scan_images_skipped": "{count, plural, one {# immagine del tuo sito non è stata scaricata ed è stata saltata.} many {# immagini del tuo sito non sono state scaricate e sono state saltate.} other {# immagini del tuo sito non sono state scaricate e sono state saltate.}}",
+      "stock_not_configured": "Non è stato possibile aggiungere foto d’archivio: nessun servizio di foto è ancora configurato.",
+      "stock_unavailable": "Questa volta non è stato possibile aggiungere alcune foto d’archivio. Usa «Aggiorna foto» nella libreria immagini per riprovare."
     },
     "classes": {
       "rate_limited": "troppe richieste",
@@ -4632,6 +4681,10 @@
     "askOwner": "Solo un proprietario dell’organizzazione può modificare il piano o la fatturazione. Chiedi a un proprietario di farlo.",
     "lock": {
       "aria": "Richiede il piano {tier}"
+    },
+    "seatLimit": {
+      "title": "Tutti i posti del tuo piano sono occupati",
+      "body": "Il tuo piano non ha posti liberi per un’altra persona. Passa a un piano superiore o rimuovi prima qualcuno."
     }
   },
   "email": {

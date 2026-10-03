@@ -132,13 +132,14 @@
      targets, and reserves the allowance for each (`metadata.quotaSlot`, top-up credits used
      first-in first-out). The first post the allowance cannot cover stops the run: it and every
      later post are `SKIPPED` (reason `allowance`). `metadata.contentPlan.preApproved` is the
-     owner's approval of the plan: it waives **only** the trust threshold; content safety, script
-     safety, quality checks, ENTERPRISE and the organisation's policy still send a post to a person
+     owner's approval of the plan: it waives **only** the trust threshold; a flagged content-safety
+     scan (none runs today: 20.21, "Not scanned" does not hold a post), script safety, quality
+     checks, ENTERPRISE and the organisation's policy still send a post to a person
      (it shows as "Needs your review" or "Held by the safety check" and is never published).
    - **The runner** (`advance-content-plans`, every minute on studio-orchestration, kicked after
      generate) starts at most `STUDIO_CONTENT_PLAN_CONCURRENCY` (default 2) posts per plan at a
      time as low-priority batch jobs, earliest first, and at most `STUDIO_CONTENT_PLAN_DAILY_STARTS`
-     posts per UTC day across the platform (default 30 when Hive runs on V3, otherwise unlimited).
+     posts per UTC day across the platform (default unlimited).
      It holds a plan (`holdReason`) while the organisation is kill-switched, cost-capped or the
      daily limit is reached, and carries on by itself; a queued post whose time is under 45
      minutes away is skipped and its allowance given back. When every post is settled the plan
@@ -149,11 +150,10 @@
      publication cancelled, pending outbox rows dropped, `publishPolicy` back to MANUAL, the time
      freed). **Cancel plan** does that for every post not yet out.
    - **Costs and limits to watch:** a 30-day plan at 4 a day is up to 120 posts in one go. Each
-     render is one Hive scan (≤ 60 s); on Hive V3 (about 100 requests a day for the whole
-     platform, 429 fails closed) keep `STUDIO_CONTENT_PLAN_DAILY_STARTS` low enough to leave room
-     for ordinary videos (a post with 3 platforms is 3 renders). The organisation's daily cost cap
-     also paces a plan (BASIC £5 a day ≈ 3 videos). Plan posts' times count as held drip-queue
-     slots, so the drip queue never gives them to another video.
+     post with 3 platforms is 3 renders; `STUDIO_CONTENT_PLAN_DAILY_STARTS` can cap the platform's
+     daily starts if provider limits need it. The organisation's daily cost cap also paces a plan
+     (BASIC £5 a day ≈ 3 videos). Plan posts' times count as held drip-queue slots, so the drip
+     queue never gives them to another video.
    - **Stop one plan:** `POST /api/studio/content-plans/<id>/cancel` as the organisation, or the
      workspace kill switch (the runner holds; nothing new starts).
 

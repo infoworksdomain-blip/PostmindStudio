@@ -7,8 +7,9 @@ import { normaliseWord, type SpokenWord } from '../overlays/word-timing';
 // BACKLOG 15.B2 — the four §13.1 checks that were recorded as `not_run`:
 //   - audio_sync "Voiceover peaks align to shot boundaries": every narration clip on the timeline
 //     ends inside its shot (±5%, spec 5.5) and is never cut mid-word (15.B3 fit decisions);
-//   - caption_sync "Captions align to voiceover ±200ms": spoken captions (karaoke and subtitle
-//     overlays) start and end within 200 ms of the words they show (13.6 word timings);
+//   - caption_sync "Captions align to voiceover ±200ms": spoken captions (narration captions and
+//     karaoke overlays; never headline/title/CTA text, 20.22 overlays/kind.ts) start and end
+//     within 200 ms of the words they show (13.6 word timings);
 //   - watermark "Watermark visible in required frames": the kit's watermark covers every content
 //     frame on the timeline, and a frame sample at its rect matches the watermark image;
 //   - brand_kit "Colours, fonts, logo present": the kit's logo, font and palette are on the

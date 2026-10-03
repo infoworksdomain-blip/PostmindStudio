@@ -1,4 +1,3 @@
-import type { HiveApiVersion } from '../providers/hive-config';
 import type { EmailSendConfig } from '../../email/config';
 import type { EmailTransport } from '../../email/resend-client';
 import type { PrismaClient } from '@prisma/client';
@@ -26,6 +25,7 @@ import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
+import type { LibraryCache } from '../library/cache';
 import type { ThumbnailComposer } from '../services/thumbnail-composer';
 import type { BillingAccessLookup } from '../billing/job-access';
 import type { BillingJobDeps } from '../billing/wiring';
@@ -53,18 +53,6 @@ export interface PipelineConfig {
   libraryBucket?: string;
   /** STUDIO_CORPUS_S3_BUCKETS: buckets (or bucket/prefix) s3:// corpus sources may come from. */
   corpusS3Buckets?: AllowedCorpusBucket[];
-  /**
-   * 13.25: public https origin Hive posts async moderation results to
-   * (STUDIO_PUBLIC_CALLBACK_BASE_URL). Absent = renders > 90 s fail the content-safety check.
-   */
-  hiveCallbackBaseUrl?: string;
-  /** 13.25: how long to wait for a Hive callback before failing closed (default 2 h). */
-  hiveAsyncTimeoutMs?: number;
-  /**
-   * 20.6: the platform's Hive API (HIVE_API_VERSION; providers/hive-config.ts). v3 has no async
-   * API, so renders over 90 s are scanned synchronously (sampled frames). Absent = v2.
-   */
-  hiveApiVersion?: HiveApiVersion;
 }
 
 export interface PipelineDeps {
@@ -102,6 +90,11 @@ export interface PipelineDeps {
   thumbnails?: ThumbnailComposer;
   /** 13.26 loudness normalisation + H.264 re-encode after compose; absent = not mastered. */
   mastering?: RenderMastering;
+  /**
+   * 20.15: the shared library read cache; corpus workers bump its version when the catalogue
+   * changes. Absent = no cache (nothing to invalidate).
+   */
+  libraryCache?: LibraryCache;
   /** 15.C3 per-(organisation, provider) rate windows; absent = no Studio-side limits. */
   providerRates?: ProviderRateLimiter;
   /**

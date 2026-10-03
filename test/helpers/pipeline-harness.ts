@@ -182,12 +182,13 @@ export interface HarnessOptions {
   runwayRespond?: (request: ProviderRequest) => ProviderPollResult;
   probe?: Partial<MediaProbe>;
   loudness?: number | null;
-  hiveMaxScores?: Record<string, number>;
   profile?: unknown;
   metrics?: MetricsRegistry;
   analysis?: unknown;
   /** Omit the scripted AssemblyAI adapter (no transcription provider configured). */
   noTranscription?: boolean;
+  /** 20.22: the words the scripted AssemblyAI returns for every narration (default: one word). */
+  transcriptWords?: Array<{ text: string; startSec: number; endSec: number }>;
   sceneChanges?: number[];
   slideshowText?: unknown;
   /** 20.9: the month plan answer (default: monthPlanJson of the prompt). */
@@ -249,17 +250,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     }),
     30,
   );
-  const hive = new ScriptedAdapter('hive', ['content_safety'], () => ({
-    state: 'succeeded',
-    output: {
-      metadata: {
-        framesAnalysed: 15,
-        maxScores: options.hiveMaxScores ?? { general_nsfw: 0.01 },
-        flaggedFrames: [],
-        costPence: 1,
-      },
-    },
-  }));
+  // 20.21: no content-safety adapter (Hive removed; none is built), as in production.
 
   const { storage, objects } = memoryStorage();
   const assemblyai = new ScriptedAdapter('assemblyai', ['transcription'], () => ({
@@ -267,7 +258,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     output: {
       metadata: {
         text: 'Ever wondered how our bread is made? Subscribe for more.',
-        words: [{ text: 'Ever', startSec: 0.1, endSec: 0.4 }],
+        words: options.transcriptWords ?? [{ text: 'Ever', startSec: 0.1, endSec: 0.4 }],
         costPence: 1,
       },
     },
@@ -360,7 +351,6 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       runway,
       elevenlabs,
       shotstack,
-      hive,
       openai,
       ...(options.noTranscription ? [] : [assemblyai]),
     ]),
@@ -420,7 +410,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     attributions,
     oauthClients,
     meta,
-    adapters: { anthropic, runway, elevenlabs, shotstack, hive, openai, assemblyai },
+    adapters: { anthropic, runway, elevenlabs, shotstack, openai, assemblyai },
     objects,
     media,
     fetchImpl,

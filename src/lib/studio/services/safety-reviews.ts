@@ -12,11 +12,16 @@ import {
   projectMetadata,
   transitionProject,
 } from '../pipeline/project-state';
-import { qualityPassed, type QualityCheck } from '../pipeline/quality-checks';
-import type { SafetyReviewMarker } from '../pipeline/safety-review';
+import {
+  evaluateContentSafety,
+  qualityPassed,
+  summarise,
+  type ContentSafetyState,
+  type QualityCheck,
+} from '../pipeline/quality-checks';
+import { SAFETY_REVIEW_ACTOR, type SafetyReviewMarker } from '../pipeline/safety-review';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { ProjectJobData } from '../queue/queues';
-import { summarise } from '../queue/workers/run-quality-gate';
 import type { AssetStorage } from '../storage';
 import { toPlanTier } from './catalog';
 import { projectLabel, projectNameParam } from '../../project-name';
@@ -29,6 +34,11 @@ import { projectLabel, projectNameParam } from '../../project-name';
 // on a content review marks the flagged renders' content-safety check as allowed and finishes the
 // quality gate (READY_FOR_REVIEW, or QUALITY_FAILED when another check failed). A reviewed video
 // is never auto-approved: a person approves it. BLOCK fails the project with the note.
+//
+// 20.21: a content review that 20.19 opened only because no content-safety provider existed is
+// released without staff (releaseNoProviderSafetyReview): the flagged checks become "Not scanned"
+// and the quality gate finishes as it does today without a provider. Used by the worker's next
+// quality-gate pass and by scripts/ops/release-safety-holds.ts.
 
 export const SAFETY_REVIEW_STATES = ['PENDING', 'ALLOWED', 'BLOCKED'] as const;
 
@@ -163,12 +173,18 @@ function checksOf(value: Prisma.JsonValue | null): QualityCheck[] {
   return Array.isArray(value) ? (value as unknown as QualityCheck[]) : [];
 }
 
-/** Content ALLOW: clear the flagged checks, then finish the quality gate for this run. */
-async function resumeContent(
-  deps: SafetyReviewDeps,
+type FinishDeps = Pick<SafetyReviewDeps, 'db' | 'logger' | 'notifier' | 'now'>;
+
+/**
+ * Rewrite the flagged renders' checks with `rewrite`, then finish the quality gate for this run
+ * (READY_FOR_REVIEW, or QUALITY_FAILED when another check failed). True when the project reached
+ * READY_FOR_REVIEW.
+ */
+async function finishContentReview(
+  deps: FinishDeps,
   review: SafetyReview,
-  note: string,
-): Promise<void> {
+  rewrite: (check: QualityCheck) => QualityCheck,
+): Promise<boolean> {
   const renderIds = Object.values(
     (projectMetadata(
       (
@@ -186,19 +202,7 @@ async function resumeContent(
   for (const render of renders) {
     let checks = checksOf(render.qualityIssues);
     if (review.renderIds.includes(render.id)) {
-      checks = checks.map((c) =>
-        c.code === 'content_safety' && c.status === 'failed' && c.severity === 'error'
-          ? {
-              ...c,
-              status: 'passed',
-              severity: 'info',
-              detail: `Allowed by Trust & Safety review (${c.detail}): ${note}`.slice(0, 1_000),
-              // 17.9: shown in the reader's language; the reviewer's note stays as written.
-              detailKey: 'allowedByReview' as const,
-              detailParams: { note: note.slice(0, 1_000) },
-            }
-          : c,
-      );
+      checks = checks.map(rewrite);
       await deps.db.videoRender.update({
         where: { id: render.id },
         data: {
@@ -219,8 +223,139 @@ async function resumeContent(
       ? { completedAt: new Date(deps.now()), errorReason: null }
       : { errorReason: `quality_failed: ${summarise(results)}`.slice(0, 2_000) },
   });
-  // Spec 14.4 "Generation complete". No auto-approval: a reviewed video goes to a person.
+  // Spec 14.4 "Generation complete".
   if (moved && allPassed) await notifyGenerationComplete(deps, jobData(review));
+  return moved && allPassed;
+}
+
+/** Content ALLOW: clear the flagged checks, then finish the quality gate for this run. */
+async function resumeContent(
+  deps: SafetyReviewDeps,
+  review: SafetyReview,
+  note: string,
+): Promise<void> {
+  // No auto-approval: a reviewed video goes to a person.
+  await finishContentReview(deps, review, (c) =>
+    c.code === 'content_safety' && c.status === 'failed' && c.severity === 'error'
+      ? {
+          ...c,
+          status: 'passed',
+          severity: 'info',
+          detail: `Allowed by Trust & Safety review (${c.detail}): ${note}`.slice(0, 1_000),
+          // 17.9: shown in the reader's language; the reviewer's note stays as written.
+          detailKey: 'allowedByReview' as const,
+          detailParams: { note: note.slice(0, 1_000) },
+        }
+      : c,
+  );
+}
+
+/** The check detail 20.19 wrote when the scan could not run for want of a provider. */
+export const NO_PROVIDER_SCAN_DETAIL = 'Scan could not run: no content-safety provider available';
+
+export const NO_PROVIDER_RELEASE_NOTE =
+  'Released automatically: no content-safety provider is configured (20.21), so the video was not scanned.';
+
+const isNoProviderCheck = (c: QualityCheck) =>
+  c.code === 'content_safety' &&
+  c.status === 'failed' &&
+  c.severity === 'error' &&
+  c.detail === NO_PROVIDER_SCAN_DETAIL;
+
+/**
+ * 20.21: true for a content review whose every flagged render was flagged only because no
+ * content-safety provider existed (20.19). A review with any real flag is not one.
+ */
+export function isNoProviderSafetyReview(review: Pick<SafetyReview, 'kind' | 'details'>): boolean {
+  if (review.kind !== 'content' || !Array.isArray(review.details)) return false;
+  const details: unknown[] = review.details;
+  return (
+    details.length > 0 &&
+    details.every(
+      (d) =>
+        typeof d === 'object' &&
+        d !== null &&
+        (d as { detail?: unknown }).detail === NO_PROVIDER_SCAN_DETAIL,
+    )
+  );
+}
+
+export type ReleaseOutcome = 'released' | 'not_pending' | 'not_no_provider' | 'not_found';
+
+export interface ReleaseOptions {
+  /** Runs after the project reached READY_FOR_REVIEW (the worker passes auto-approval). */
+  afterReady?: (job: ProjectJobData) => Promise<unknown>;
+}
+
+/**
+ * 20.21: release one pending no-provider content review. The review is closed as ALLOWED by the
+ * system actor with NO_PROVIDER_RELEASE_NOTE (claimed atomically, so a staff decision and a
+ * release never both apply); for the run it paused, the flagged checks become "Not scanned"
+ * (not_run) and the quality gate finishes. The customer gets no safety-review message (there was
+ * no review), only the usual "Generation complete".
+ */
+export async function releaseNoProviderSafetyReview(
+  deps: Pick<SafetyReviewDeps, 'db' | 'logger' | 'notifier' | 'audit' | 'now'>,
+  id: string,
+  options: ReleaseOptions = {},
+): Promise<ReleaseOutcome> {
+  const existing = await deps.db.safetyReview.findUnique({ where: { id } });
+  if (!existing) return 'not_found';
+  if (existing.state !== 'PENDING') return 'not_pending';
+  if (!isNoProviderSafetyReview(existing)) return 'not_no_provider';
+  const decidedAt = new Date(deps.now());
+  const claimed = await deps.db.safetyReview.updateMany({
+    where: { id, state: 'PENDING' },
+    data: {
+      state: 'ALLOWED',
+      decidedByUserId: SAFETY_REVIEW_ACTOR,
+      decisionNote: NO_PROVIDER_RELEASE_NOTE,
+      decidedAt,
+    },
+  });
+  if (claimed.count === 0) return 'not_pending';
+  const review = await deps.db.safetyReview.findUniqueOrThrow({ where: { id } });
+
+  const project = await deps.db.videoProject.findUnique({ where: { id: review.projectId } });
+  const current = Boolean(project && !project.deletedAt && currentRunId(project) === review.runId);
+  let ready = false;
+  if (current) {
+    const marker: SafetyReviewMarker = {
+      id: review.id,
+      kind: 'content',
+      state: 'ALLOWED',
+      reason: review.reason,
+      at: decidedAt.toISOString(),
+      note: NO_PROVIDER_RELEASE_NOTE,
+    };
+    const contentSafety: ContentSafetyState = { state: 'skipped', reason: 'no_provider' };
+    await mergeProjectMetadata(deps.db, {
+      projectId: review.projectId,
+      runId: review.runId,
+      patch: { safetyReview: marker, contentSafety },
+    });
+    const skipped = evaluateContentSafety({ skipped: 'no_provider' });
+    ready = await finishContentReview(deps, review, (c) => (isNoProviderCheck(c) ? skipped : c));
+    if (ready && options.afterReady) await options.afterReady(jobData(review));
+  }
+  deps.audit({
+    actorUserId: SAFETY_REVIEW_ACTOR,
+    organisationId: review.organisationId,
+    action: 'studio.safety_review.release',
+    resource: { type: 'safety_review', id },
+    metadata: {
+      reason: 'no_provider',
+      projectId: review.projectId,
+      runId: review.runId,
+      runCurrent: current,
+      readyForReview: ready,
+    },
+  });
+  deps.logger.info(
+    { reviewId: id, projectId: review.projectId, runCurrent: current, readyForReview: ready },
+    'no-provider safety hold released',
+  );
+  return 'released';
 }
 
 export async function decideSafetyReview(

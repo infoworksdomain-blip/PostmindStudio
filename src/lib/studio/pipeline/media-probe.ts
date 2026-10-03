@@ -37,7 +37,11 @@ export interface MediaInspector {
   sceneChanges(url: string, threshold: number): Promise<number[]>;
   /** One JPEG frame at `atSec`, scaled to at most `maxWidth` wide. */
   frameJpeg(url: string, atSec: number, maxWidth: number): Promise<Uint8Array>;
-  /** Low-resolution, muted, length-capped H.264 rendition (library in-picker previews). */
+  /**
+   * Low-resolution, length-capped H.264 + AAC rendition (library previews, Addendum A3.10). Keeps
+   * the first audio stream (operator decision 2026-10-01, BACKLOG 20.17); a source without audio
+   * gives a valid silent rendition.
+   */
   previewClip(url: string, maxWidth: number, maxSec: number): Promise<Uint8Array>;
 }
 
@@ -149,10 +153,43 @@ export function parseFfprobe(json: string): MediaProbe {
   };
 }
 
+/**
+ * ffmpeg blackdetect thresholds (ffmpeg-filters "blackdetect"; libavfilter/vf_blackdetect.c),
+ * pinned here rather than left to the filter's defaults so a different ffmpeg build cannot move
+ * them. BACKLOG 20.22 reviewed them against the first production QUALITY_FAILED (QA run 3):
+ *   - pix_th 0.10 (the filter default): a pixel is black when its luma is under 10 % of the luma
+ *     range, 16 + 0.10 × 219 ≈ 38 on limited-range video. Dark but real footage (night scenes,
+ *     dark brand colours) stays above it; the composer keeps every card and the timeline
+ *     backdrop at luma ≥ 0.2 (edl-backdrop.ts), twice this threshold;
+ *   - pic_th 0.98 (the filter default): a frame counts as black only when 98 % of its pixels are,
+ *     so a black card is caught once its text has faded or is small, while a dark shot with any
+ *     lit subject is not;
+ *   - d = the shortest interval reported; the gate asks for BLACK_FRAME_MAX_SEC (spec 13.1:
+ *     black > 500 ms fails), so an intentional dip of up to half a second (a Shotstack
+ *     `fadeFast`, or the darkest part of a 1 s `fade`) is not a failure, while a real gap (an
+ *     empty or black card, a clip that ends early) is.
+ */
+export const BLACKDETECT_PIXEL_THRESHOLD = 0.1;
+export const BLACKDETECT_PICTURE_THRESHOLD = 0.98;
+
+/** The -vf argument for blackdetect reporting intervals of at least `minDurationSec`. */
+export function blackdetectFilter(minDurationSec: number): string {
+  if (!Number.isFinite(minDurationSec) || minDurationSec <= 0)
+    throw new ValidationError(`blackdetect needs a positive duration, got ${minDurationSec}`);
+  return `blackdetect=d=${minDurationSec}:pix_th=${BLACKDETECT_PIXEL_THRESHOLD}:pic_th=${BLACKDETECT_PICTURE_THRESHOLD}`;
+}
+
+// ffmpeg prints times with av_ts2timestr ("%.6g"), so a tiny value can appear as 1e-05.
+const TIME = String.raw`(\d+(?:\.\d+)?(?:e[-+]?\d+)?)`;
+const BLACK_LINE = new RegExp(
+  String.raw`black_start:\s*${TIME}\s+black_end:\s*${TIME}\s+black_duration:\s*${TIME}`,
+  'gi',
+);
+
+/** "[blackdetect @ 0x…] black_start:7.2 black_end:8 black_duration:0.8" lines, in order. */
 export function parseBlackdetect(stderr: string): BlackInterval[] {
   const intervals: BlackInterval[] = [];
-  const re = /black_start:\s*([\d.]+)\s+black_end:\s*([\d.]+)\s+black_duration:\s*([\d.]+)/g;
-  for (const m of stderr.matchAll(re)) {
+  for (const m of stderr.matchAll(BLACK_LINE)) {
     intervals.push({ startSec: Number(m[1]), endSec: Number(m[2]), durationSec: Number(m[3]) });
   }
   return intervals;
@@ -200,6 +237,53 @@ export function parseSceneChanges(stderr: string): number[] {
   return [...times].sort((a, b) => a - b);
 }
 
+/** Output file name of previewClip inside its temporary directory. */
+export const PREVIEW_FILE = 'preview.mp4';
+
+/**
+ * ffmpeg arguments for a library preview rendition (Addendum A3.10: low-res, at most `maxSec`).
+ * BACKLOG 20.17 (operator decision 2026-10-01): previews keep their sound. `-map 0:a:0?` maps the
+ * first audio stream only when there is one (the trailing `?` makes the map optional, see
+ * ffmpeg's -map documentation), so a silent source still gives a valid video-only MP4; the
+ * `-c:a` options then apply to no stream and ffmpeg ignores them. AAC stereo at 96 kb/s is
+ * modest next to the video and plays in every browser; +faststart lets playback start before
+ * the whole file has arrived.
+ */
+export function previewClipArgs(url: string, maxWidth: number, maxSec: number): string[] {
+  return [
+    '-hide_banner',
+    '-nostdin',
+    '-i',
+    url,
+    '-t',
+    maxSec.toFixed(3),
+    '-map',
+    '0:v:0',
+    '-map',
+    '0:a:0?',
+    '-vf',
+    `scale='min(${Math.round(maxWidth)},iw)':-2,fps=15`,
+    '-c:v',
+    'libx264',
+    '-preset',
+    'veryfast',
+    '-crf',
+    '32',
+    '-pix_fmt',
+    'yuv420p',
+    '-c:a',
+    'aac',
+    '-b:a',
+    '96k',
+    '-ac',
+    '2',
+    '-movflags',
+    '+faststart',
+    '-y',
+    PREVIEW_FILE,
+  ];
+}
+
 export function createFfmpegInspector(
   options: { ffmpegPath?: string; ffprobePath?: string; timeoutMs?: number } = {},
 ): MediaInspector {
@@ -226,7 +310,7 @@ export function createFfmpegInspector(
           '-i',
           url,
           '-vf',
-          `blackdetect=d=${minDurationSec}:pic_th=0.98`,
+          blackdetectFilter(minDurationSec),
           '-an',
           '-f',
           'null',
@@ -318,37 +402,10 @@ export function createFfmpegInspector(
     async previewClip(url, maxWidth, maxSec) {
       const dir = await mkdtemp(join(tmpdir(), 'studio-preview-'));
       try {
-        const r = await run(
-          ffmpeg,
-          [
-            '-hide_banner',
-            '-nostdin',
-            '-i',
-            url,
-            '-t',
-            maxSec.toFixed(3),
-            '-an',
-            '-vf',
-            `scale='min(${Math.round(maxWidth)},iw)':-2,fps=15`,
-            '-c:v',
-            'libx264',
-            '-preset',
-            'veryfast',
-            '-crf',
-            '32',
-            '-pix_fmt',
-            'yuv420p',
-            '-movflags',
-            '+faststart',
-            '-y',
-            'preview.mp4',
-          ],
-          timeoutMs,
-          dir,
-        );
+        const r = await run(ffmpeg, previewClipArgs(url, maxWidth, maxSec), timeoutMs, dir);
         if (r.code !== 0)
           throw new ValidationError(`ffmpeg preview failed: ${r.stderr.slice(-500)}`);
-        return new Uint8Array(await readFile(join(dir, 'preview.mp4')));
+        return new Uint8Array(await readFile(join(dir, PREVIEW_FILE)));
       } finally {
         await rm(dir, { recursive: true, force: true });
       }

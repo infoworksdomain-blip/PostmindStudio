@@ -10,7 +10,7 @@ import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
 import { useCan } from '../use-can';
-import { humanCode, useQualityCheckLabel } from '../failure-reason';
+import { humanCode, useIsStaff, useQualityCheckLabel } from '../failure-reason';
 import { useAction } from './use-action';
 
 export { humanCode };
@@ -28,6 +28,7 @@ const STATUS = {
 /** 17.9: detail keys the catalogue knows (review.quality.details.<key>). */
 export const DETAIL_KEYS = [
   'safetyScanUnavailable',
+  'safetyNotScanned',
   'safetyBlocked',
   'safetyReview',
   'safetyPassed',
@@ -65,23 +66,41 @@ const SEVERITIES = ['block', 'error', 'warning', 'info'] as const;
 const oneOf = <T extends string>(list: readonly T[], value: string): value is T =>
   (list as readonly string[]).includes(value);
 
+/**
+ * 20.21: a content-safety scan that did not run (no provider is configured) is an operator
+ * matter; staff see a neutral "Not scanned", customers see nothing about it.
+ */
+export function isUnscannedSafety(issue: Pick<QualityIssue, 'code' | 'status'>): boolean {
+  return issue.code === 'content_safety' && issue.status === 'not_run';
+}
+
+/** A failed check no customer may override (content-safety block, spec 13.5). */
+export function isHardFailure(issues: Array<Pick<QualityIssue, 'status' | 'severity'>>): boolean {
+  return issues.some((issue) => issue.status === 'failed' && issue.severity === 'block');
+}
+
 const ORDER: Record<QualityIssue['status'], number> = {
   failed: 0,
   warning: 1,
   passed: 2,
   skipped: 3,
+  not_run: 3,
 };
 
 export function QualityPanel({ render, onChanged }: { render: Render; onChanged: () => void }) {
-  const issues = [...(render.qualityIssues ?? [])].sort(
-    (a, b) => ORDER[a.status] - ORDER[b.status],
-  );
+  const staff = useIsStaff();
+  const issues = (render.qualityIssues ?? [])
+    .filter((issue) => staff || !isUnscannedSafety(issue))
+    .sort((a, b) => ORDER[a.status] - ORDER[b.status]);
   const t = useTranslations('review.quality');
   const { pending, run } = useAction();
   const [note, setNote] = useState('');
   const codeLabel = useQualityCheckLabel();
   const f = useFormat();
   const mayForceApprove = useCan(StudioCapability.RenderForceApprove);
+  // 20.22: every failed check except a content-safety block is a soft (force-approvable) failure;
+  // the server refuses to override a block (services/renders.ts), so no override is offered.
+  const blocked = isHardFailure(render.qualityIssues ?? []);
   // 17.9: the detail in the reader's language when the check carries a key; numbers in the
   // locale's digits (counts stay numeric for plurals); otherwise the stored English detail.
   const detailText = (issue: QualityIssue) => {
@@ -124,7 +143,8 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
       {issues.length > 0 && (
         <ul className="flex flex-col gap-1">
           {issues.map((issue, i) => {
-            const status = issue.status in STATUS ? issue.status : 'skipped';
+            const status =
+              issue.status === 'not_run' || !(issue.status in STATUS) ? 'skipped' : issue.status;
             const s = STATUS[status];
             const Icon = s.icon;
             return (
@@ -150,8 +170,15 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
       {render.qualityCheckState === 'FORCE_APPROVED' && (
         <p className="text-xs text-muted-foreground">{t('forceApproved')}</p>
       )}
-      {render.qualityCheckState === 'FAILED' && mayForceApprove && (
+      {render.qualityCheckState === 'FAILED' && blocked && (
+        <p className="text-xs text-muted-foreground">{t('blockedNoOverride')}</p>
+      )}
+      {render.qualityCheckState === 'FAILED' && !blocked && !mayForceApprove && (
+        <p className="text-xs text-muted-foreground">{t('askToOverride')}</p>
+      )}
+      {render.qualityCheckState === 'FAILED' && !blocked && mayForceApprove && (
         <div className="flex flex-col gap-2 rounded-lg border border-destructive/25 p-3">
+          <p className="text-xs text-muted-foreground">{t('softFailureHint')}</p>
           <label htmlFor={`force-${render.id}`} className="text-xs font-medium">
             {t('overrideLabel')}
           </label>

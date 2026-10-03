@@ -13,7 +13,6 @@ import { AnthropicAdapter } from '../../src/lib/studio/providers/anthropic';
 import { AssemblyAiAdapter } from '../../src/lib/studio/providers/assemblyai';
 import { ElevenLabsAdapter } from '../../src/lib/studio/providers/elevenlabs';
 import { ElevenLabsMusicAdapter } from '../../src/lib/studio/providers/elevenlabs-music';
-import { HiveAdapter } from '../../src/lib/studio/providers/hive';
 import type { ProviderAdapter, ProviderRequest } from '../../src/lib/studio/providers/interface';
 import { OpenAIAdapter } from '../../src/lib/studio/providers/openai';
 import { RunwayAdapter } from '../../src/lib/studio/providers/runway';
@@ -70,7 +69,6 @@ export function harnessAdapters(): Record<
       usdToGbpRate: rate,
     }),
     shotstack: new ShotstackAdapter({ apiKey: 'offline', environment: 'v1' }),
-    hive: new HiveAdapter({ apiKey: 'offline', usdToGbpRate: rate }),
     assemblyai: new AssemblyAiAdapter({ apiKey: 'offline', usdToGbpRate: rate }),
     'storyblocks-audio': new StoryblocksAudioAdapter({
       publicKey: 'offline',
@@ -173,15 +171,6 @@ function finishing(videoSec: number, formats: number, captions: boolean): Priced
     {
       providerId: 'shotstack',
       request: { ...base, capability: 'composition', edit: {}, outputDurationSec: videoSec },
-    },
-    {
-      providerId: 'hive',
-      request: {
-        ...base,
-        capability: 'content_safety',
-        mediaUrl: 'https://x',
-        durationSec: videoSec,
-      },
     },
   ];
   if (captions) {

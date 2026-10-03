@@ -20,6 +20,7 @@ const PROVIDER_IDS = [
   'openai',
   'runway',
   'veo',
+  'seedance',
   'luma',
   'kling',
   'pika',
@@ -39,7 +40,6 @@ const PROVIDER_IDS = [
   'assemblyai',
   'shotstack',
   'creatomate',
-  'hive',
   'sightengine',
 ];
 const PLATFORMS = [

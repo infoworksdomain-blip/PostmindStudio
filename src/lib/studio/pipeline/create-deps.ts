@@ -41,12 +41,15 @@ import { fontsBaseUrlFromEnv } from '../fonts-host';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { DEFAULT_PIPELINE_TIMING, type PipelineDeps } from './deps';
 import { createFfmpegInspector } from './media-probe';
-import { parseCallbackBaseUrl, parseHiveTimeoutMs } from './content-safety-async';
-import { resolveHiveApiVersion } from '../providers/hive-config';
 import { createFfmpegMastering } from './mastering';
 import { parseMusicMinTier } from './music';
 import { createProviderRatings, providerRatingsEnabled } from '../services/provider-ratings';
 import { parseCorpusBuckets } from '../library/corpus-source';
+import {
+  createLibraryCache,
+  createLibraryCacheRedisClient,
+  libraryCacheEnabled,
+} from '../library/cache';
 import { parseStockVoices } from './voice-fit';
 
 // Production wiring for pipeline processors (workers and scripts).
@@ -113,6 +116,13 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     storage,
     media: createFfmpegInspector(),
     mastering: createFfmpegMastering(),
+    // 20.15: shared library cache in Redis DB 3 (STUDIO_LIBRARY_CACHE=off disables it).
+    ...(libraryCacheEnabled() && {
+      libraryCache: createLibraryCache({
+        client: createLibraryCacheRedisClient(redisConnectionFromEnv()),
+        logger,
+      }),
+    }),
     // 15.C3: per-(organisation, provider) rate windows from STUDIO_PROVIDER_RATE_<ID>.
     providerRates: providerRateLimiterFromEnv(
       process.env,
@@ -130,9 +140,6 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       musicMinTier: parseMusicMinTier(process.env.STUDIO_MUSIC_MIN_TIER),
       libraryBucket: process.env.S3_BUCKET_LIBRARY?.trim() || undefined,
       corpusS3Buckets: parseCorpusBuckets(process.env.STUDIO_CORPUS_S3_BUCKETS),
-      hiveCallbackBaseUrl: parseCallbackBaseUrl(process.env.STUDIO_PUBLIC_CALLBACK_BASE_URL),
-      hiveAsyncTimeoutMs: parseHiveTimeoutMs(process.env.HIVE_ASYNC_TIMEOUT_MIN),
-      hiveApiVersion: resolveHiveApiVersion(process.env),
       ...DEFAULT_PIPELINE_TIMING,
     },
     fetch: globalThis.fetch,

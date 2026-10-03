@@ -20,10 +20,15 @@ export const BYOC_PROVIDERS = [
   { id: 'assemblyai', label: 'AssemblyAI', adapters: ['assemblyai'] },
   { id: 'runway', label: 'Runway', adapters: ['runway'] },
   { id: 'luma', label: 'Luma', adapters: ['luma'] },
+  // 20.20: a Gemini API key from Google AI Studio (billing enabled) backs the Veo adapter.
+  { id: 'veo', label: 'Google Veo (Gemini API)', adapters: ['veo'] },
+  // 20.23: a BytePlus ModelArk API key (ap-southeast-1, Seedance models activated).
+  { id: 'seedance', label: 'BytePlus Seedance (ModelArk)', adapters: ['seedance'] },
+  // 20.24: a Kling AI API key (kling.ai/dev → Console → API Key) backs the Kling 3.0 adapter.
+  { id: 'kling', label: 'Kling AI', adapters: ['kling'] },
   { id: 'heygen', label: 'HeyGen', adapters: ['heygen'] },
   { id: 'elevenlabs', label: 'ElevenLabs', adapters: ['elevenlabs', 'elevenlabs-music'] },
   { id: 'shotstack', label: 'Shotstack', adapters: ['shotstack'] },
-  { id: 'hive', label: 'Hive', adapters: ['hive'] },
   {
     id: 'storyblocks',
     label: 'Storyblocks',
@@ -50,12 +55,6 @@ export function byocProvider(id: ByocProviderId): ByocProviderInfo {
 export interface ProviderKey {
   apiKey: string;
   secondaryKey?: string;
-  /**
-   * 20.6 Hive only: which Hive API the key belongs to. The platform key's version comes from
-   * HIVE_API_VERSION (hive-config.ts); an organisation's own (BYOC) Hive key has none and is
-   * used as a V2 key, as before.
-   */
-  apiVersion?: 'v2' | 'v3';
 }
 
 export type ProviderKeyMap = Partial<Record<ByocProviderId, ProviderKey>>;

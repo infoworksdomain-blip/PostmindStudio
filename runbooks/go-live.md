@@ -454,32 +454,66 @@ Details: [meta-connect.md](meta-connect.md). This is **Studio's own** Meta app.
 
 The video, voice and publishing providers each need a key. Where each comes from is in [vps-deploy.md](vps-deploy.md) section 6 and [render-deploy.md](render-deploy.md) step 4.
 
-- **Paste into:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `ASSEMBLYAI_API_KEY`, `TIKTOK_CLIENT_KEY`/`_SECRET`, `YOUTUBE_CLIENT_ID`/`_SECRET`, `X_CLIENT_ID`/`_SECRET`, `LINKEDIN_CLIENT_ID`/`_SECRET`, and one Hive key (11.1).
+- **Paste into:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_DEFAULT_VOICE_ID`, `SHOTSTACK_API_KEY`, `ASSEMBLYAI_API_KEY`, `TIKTOK_CLIENT_KEY`/`_SECRET`, `YOUTUBE_CLIENT_ID`/`_SECRET`, `X_CLIENT_ID`/`_SECRET`, `LINKEDIN_CLIENT_ID`/`_SECRET`. No content-safety key is needed (11.1).
 - In the TikTok, YouTube (Google), X and LinkedIn developer portals register the redirect `https://studio.<your domain>/api/studio/platform-connections/oauth-callback?platform=<tiktok|youtube|x|linkedin>`.
 - Fonts: nothing to do. Studio serves the fonts its videos use from `https://studio.<your domain>/fonts`; leave `STUDIO_FONTS_BASE_URL` empty unless you host them on a CDN yourself.
 - Optional: `OPS_ALERT_WEBHOOK_URL` (a Slack incoming webhook for server alerts), `SENTRY_DSN` (error reports).
 
-### 11.1 Hive: the content-safety check (V2 or V3)
+### 11.1 Content safety: nothing to set
 
-Every video is checked by Hive before anyone can approve it. Nothing is published unchecked: if the check cannot run, the video is blocked. Hive has two kinds of key; fill in **one**.
+Studio no longer uses Hive (operator decision 2026-10-02) or any other content-safety service, so there is no key to create. Every video still goes through the automatic quality checks (length, black frames, sound, format) and then the normal review: the customer approves it, or it is approved automatically where the project's review settings allow. Staff see "Not scanned" for content safety in the quality panel.
 
-- **V3 (self-serve, works today).** Log in at thehive.ai → **Click:** **Service API Keys** in the left sidebar (may be labelled **API Keys**; it opens the **API Keys (V3)** window; direct link `https://thehive.ai/explore?api_keys=1`) → **Create API Key** if the list is empty. The table has two columns: **Access Key ID** (only a name for the key: do **not** use it) and **Secret Key**.
-  - **Copy:** the value in the **Secret Key** column.
-  - **Paste into:** `HIVE_V3_SECRET_KEY`. Leave `HIVE_API_KEY` empty (or set `HIVE_API_VERSION=v3`).
-  - Limits: Hive allows about **100 checks a day** on V3 and calls it "for developer testing ONLY". A video up to 60 seconds uses 1 check; a longer video uses `HIVE_V3_MAX_FRAMES` checks (default 10: ten still frames spread over the video, so short moments between them are not seen). When the day's checks run out, videos wait in "quality checking" and are retried; they are not published unchecked.
-- **V2 (Enterprise, after Hive Sales enables a project).** **Click:** thehive.ai → **Products** → **Models** → your **Visual Moderation** project → **Integration & API Keys**.
-  - **Copy:** the API key. **Paste into:** `HIVE_API_KEY`, and set `HIVE_API_VERSION=v2` (or clear `HIVE_V3_SECRET_KEY`). V2 checks every second of every video, with no daily cap beyond your contract.
-- **Check:** `npm run setup:check` shows `OK HIVE_V3_SECRET_KEY` (or `OK HIVE_API_KEY`). A `CHECK … is short for a V3 Secret Key` line usually means the Access Key ID was pasted instead of the Secret Key. A V3 key sent to the V2 address fails with "Invalid Auth Token": that is expected, the two kinds are not interchangeable.
+- If an older settings file still has `HIVE_API_KEY`, `HIVE_V3_SECRET_KEY`, `HIVE_API_VERSION`, `HIVE_V3_MAX_FRAMES`, `HIVE_ASYNC_TIMEOUT_MIN` or `STUDIO_PUBLIC_CALLBACK_BASE_URL`, delete those lines. `npm run setup:check` lists them as `CHECK … is no longer used`; they never stop the check from passing.
+- **Check:** `npm run setup:check` shows no Hive line as missing.
 
-### 11.2 Stock images: Pixabay (free)
+### 11.2 Google Veo: the first AI video fallback (optional)
 
-Website scans, slideshows and the image library fill up with stock photos. Pexels no longer gives out free API keys and Unsplash approval takes 5–10 working days, so use **Pixabay**: free, and the key is shown straight away.
+Studio makes AI clips with BytePlus Seedance first (11.3), then Kling 3.0 (11.4), then Google Veo 3.1, then Runway, then Luma, each taking over when the one before cannot (an outage, no credits, a usage limit). Veo is optional; without its key the clips skip it.
+
+- **Click:** [Google AI Studio](https://aistudio.google.com/apikey) (sign in with the company Google account) → **Get API key** / **Create API key** → choose or create a project.
+- **Billing (required):** Veo has no free tier. In AI Studio **Click:** **Set up billing** next to the project → link a billing account and add Prepay credit (at least $5), or choose Postpay if offered. With Prepay, every key of the project stops when the credit reaches $0: turn on auto-reload ([billing guide](https://ai.google.dev/gemini-api/docs/billing)).
+- **Copy:** the API key. **Paste into:** `GOOGLE_GEMINI_API_KEY`.
+- Optional: `VEO_MODEL` (empty = `veo-3.1-fast-generate-preview`, $0.10 a second of video at 720p; `veo-3.1-generate-preview` $0.40; `veo-3.1-lite-generate-preview` $0.05). A 4, 6 or 8 second clip is billed by its length; a blocked clip is not billed.
+- Optional: `VEO_PERSON_GENERATION`. Leave empty: text-to-video then sends no `personGeneration` (the live API refuses `allow_adult` for text-to-video, checked 2026-10-02) and image-to-video always sends `allow_adult`. Set `allow_all` only for a server outside the EU, UK, Switzerland and the Middle East/North Africa.
+- Google keeps each clip for 2 days; Studio copies it to its own storage as soon as it is ready.
+- **Check:** `npm run setup:check` shows `OK GOOGLE_GEMINI_API_KEY` when the key is shaped right. The provider canary (`CANARY_GOOGLE_GEMINI_API_KEY`) and the staging gate (`--live-providers --only veo`) test it against Google.
+
+### 11.3 BytePlus Seedance: the main AI video provider (optional)
+
+Studio makes AI clips with BytePlus ModelArk Seedance first on every plan, then Kling (11.4), Veo, Runway and Luma. STANDARD plans use Seedance 2.0 mini (the cheapest); PLUS and Enterprise plans, and shots longer than 15 seconds, use Seedance 2.5. Seedance is optional; without its key the clips use the other providers.
+
+- **Click:** [console.byteplus.com](https://console.byteplus.com) (sign in with the company BytePlus account) → **ModelArk** → check that the region at the top is **ap-southeast-1** (Asia Pacific, Johor; Seedance runs only there) → **API keys** (API Key Management) → **Create API Key** → name it `postmind-studio` → **Create**. A key belongs to one region and one project: create it in the default project unless you use project spaces.
+- **Balance (required):** Seedance is billed from your prepaid BytePlus balance. **Click:** **Billing** → **Top up**. To activate the Seedance 2.0 and 2.5 models BytePlus requires one of: a balance above $30, an AI Savings Plan of $30 or more, or a Seedance resource pack. If the balance stays below zero for 2 hours, BytePlus suspends the models until you top up: keep a buffer.
+- **Activate the models:** ModelArk → **Model activation** → video generation → activate **Dreamina Seedance 2.0 mini** (STANDARD plans) and **Dreamina Seedance 2.5** (PLUS and Enterprise plans, and shots over 15 s). Activate **2.0 fast** or **2.0** as well if you set `SEEDANCE_MODEL` to one of them.
+- **Copy:** the API key (a long string with dots). **Paste into:** `BYTEPLUS_API_KEY`.
+- Optional: `SEEDANCE_MODEL` (empty = `dreamina-seedance-2-0-mini-260615`, list price $3.5 per million tokens, about $0.076 a second at 720p; `dreamina-seedance-2-0-fast-260128` $5.6; `dreamina-seedance-2-0-260128` $7.0; `dreamina-seedance-2-5-260628` $10.7). Studio estimates with list prices even while BytePlus runs a promotion (2.0 mini 60% off and 2.0 fast 25% off for enterprise accounts until 7 October 2026), so budgets still hold when it ends. Clips are 720p and silent (our narration and music are added later), billed by the whole second (minimum 4 s); a refused or failed clip is not billed.
+- Optional: `SEEDANCE_LONG_MODEL` (empty = `dreamina-seedance-2-5-260628`: PLUS and Enterprise plans and shots over 15 s, up to 30 s; list price $10.7 per million tokens, about $0.23 a second at 720p) and `BYTEPLUS_ARK_BASE_URL` (empty = `https://ark.ap-southeast.bytepluses.com/api/v3`).
+- BytePlus keeps each clip's download link for 24 hours; Studio copies the clip to its own storage as soon as it is ready. Seedance 2.x refuses source images that show real people's faces.
+- **Check:** `npm run setup:check` shows `OK BYTEPLUS_API_KEY` when the key is shaped right. The provider canary (`CANARY_BYTEPLUS_API_KEY`) and the staging gate (`--live-providers --only seedance`, one 4 s clip, about $0.30) test it against BytePlus.
+### 11.4 Kling 3.0: the second AI video provider (optional)
+
+Studio makes AI clips with Seedance first (11.3), then Kling 3.0, then Google Veo, then Runway, then Luma (an outage, no credits, a usage limit or a shot a provider cannot do moves the clip to the next one). Kling is optional; without its key the clips go from Seedance to Veo. Kling bills from **prepaid resource packages**, not a card on file.
+
+- **Click:** [Kling AI developer platform](https://kling.ai/dev) → **Sign In** (company account) → **Purchase** ([pricing](https://kling.ai/dev/pricing)) → a **Video API** package (Standard Package 1: $700 for 5,000 units, valid 180 days, 20 clips at a time; larger packages are 10% cheaper per unit). The image packages do not cover video.
+- **Click:** **Console** ([API keys](https://kling.ai/dev/api-key)) → **+ Create a new API Key** → name it `studio-production` → confirm.
+- **Copy:** the API key (shown only once). **Paste into:** `KLING_API_KEY`. Studio sends it as `Authorization: Bearer <key>`.
+- Older accounts only: if the console gives you an **Access Key** and a **Secret Key** instead, paste them into `KLING_ACCESS_KEY` and `KLING_SECRET_KEY` (both, and leave `KLING_API_KEY` empty). Studio signs them into a 30-minute token for each call. Kling calls this pair "legacy"; create an API key when you can (the API key wins when both are set).
+- Optional: `KLING_RESOLUTION` (empty = `720p`, 0.6 units = $0.084 a second; `1080p` 0.8 units = $0.112). Clips are always requested **without sound** (sound would cost 0.9 / 1.2 units a second, and the composer mutes clip audio anyway). A 3 s clip is the shortest, so a 1–2 s shot is billed as 3 s; 15 s is the longest.
+- Optional: `KLING_MODEL` (only `kling-3.0`) and `KLING_BASE_URL` (empty = `https://api-singapore.klingai.com`, Kling's endpoint for servers outside China).
+- Kling deletes each clip after 30 days; Studio copies it to its own storage as soon as it is ready.
+- Watch the balance: Console → usage, or `GET /account/costs` (the canary's health call). When the package runs out or expires Kling answers code 1102 and Studio moves clips to Veo, Runway and Luma (after Seedance) and alerts the operator.
+- **Check:** `npm run setup:check` shows `OK KLING_API_KEY` (or `OK` for both halves of the pair; one half alone is reported) when the key is shaped right. The provider canary (`CANARY_KLING_API_KEY`) and the staging gate (`--live-providers --only kling`, one 3 s clip, about $0.25) test it against Kling.
+
+### 11.5 Stock images: Pixabay (free) and Unsplash
+
+Website scans, slideshows and the image library fill up with stock photos. Pexels no longer gives out free API keys, so use **Pixabay** (free, the key is shown straight away) and, once Unsplash has approved your app for production, **Unsplash** as well. Either one alone is enough; both together is best.
 
 - **Click:** log in (or sign up) at [pixabay.com](https://pixabay.com) → open [pixabay.com/api/docs](https://pixabay.com/api/docs/) → your key is shown under **Parameters** next to `key` (may be labelled differently; it only appears when you are logged in).
 - **Copy:** the key. **Paste into:** `PIXABAY_API_KEY`.
 - What Studio does with it: searches photos only, with safe search on; copies every chosen image into your own storage (Pixabay does not allow using its image links permanently); caches each search for 24 hours (Pixabay's rule); shows "Images from Pixabay" on those images in the library. Pixabay allows 100 searches a minute; a search over that limit is skipped (the next stock source is tried, if you have one) and the next refresh tries again.
-- If you also have keys for Pexels or Storyblocks, they are searched first; Unsplash (`UNSPLASH_ACCESS_KEY`) stays the last resort.
-- **Check:** `npm run setup:check` no longer shows `CHECK stock images`. After the deploy, **Refresh stock** in a business's image library adds images with the Pixabay credit.
+- **Unsplash (optional, after production approval):** in your Unsplash app's page (unsplash.com/oauth/applications) **Copy:** the **Access Key** (not the Secret key; may be labelled differently). **Paste into:** `UNSPLASH_ACCESS_KEY`.
+- Order: Pexels and Storyblocks (if you have keys) → Pixabay → Unsplash. Unsplash is searched only for a query where the others found nothing. Unsplash images are shown from Unsplash's own links (its rules require that, and each use is reported to Unsplash); Pixabay images are copied into your storage.
+- **Check:** `npm run setup:check` no longer shows `CHECK stock images`. After the deploy, **Refresh stock** in a business's image library no longer says stock photos are not set up, and adds images with the "Images from Pixabay" (or Unsplash) credit.
 
 ## 12. Legal texts
 
@@ -618,4 +652,3 @@ Every page below was read on 2026-09-29. Labels the documentation did not confir
 - Resend: [add a domain](https://resend.com/docs/add-a-domain), [regions](https://resend.com/docs/dashboard/domains/regions), [Cloudflare DNS](https://resend.com/docs/knowledge-base/cloudflare), [API keys](https://resend.com/docs/dashboard/api-keys/introduction), [create a webhook](https://resend.com/docs/webhooks/create-webhook), [verify webhooks](https://resend.com/docs/webhooks/verify-webhooks-requests), [event types](https://resend.com/docs/webhooks/event-types).
 - Google: [configure the OAuth consent screen](https://developers.google.com/workspace/guides/configure-oauth-consent), [OAuth for web server apps](https://developers.google.com/identity/protocols/oauth2/web-server), [publishing status](https://support.google.com/cloud/answer/15549945), [brand verification](https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification).
 - Meta: [create an app](https://developers.facebook.com/docs/development/create-an-app/), [Facebook Login for Business](https://developers.facebook.com/docs/facebook-login/facebook-login-for-business/), [login security](https://developers.facebook.com/docs/facebook-login/security/), [basic settings](https://developers.facebook.com/docs/development/create-an-app/app-dashboard/basic-settings), [advanced settings](https://developers.facebook.com/docs/development/create-an-app/app-dashboard/advanced-settings), [App Review submission](https://developers.facebook.com/docs/app-review/submission-guide), [business verification](https://developers.facebook.com/docs/development/release/business-verification), [app modes](https://developers.facebook.com/docs/development/build-and-test/app-modes).
-- Hive (read 2026-09-30): [Visual Moderation playground API docs (V3)](https://docs.thehive.ai/docs/visual-moderation-playground), [Visual Moderation overview (V3 vs V2)](https://docs.thehive.ai/docs/visual-content-moderation), [FAQ: V2 and V3](https://docs.thehive.ai/docs/frequently-asked-questions-faq), [V2 integration guide](https://docs.thehive.ai/docs/visual-moderation-api), [error codes](https://docs.thehive.ai/reference/error-codes).

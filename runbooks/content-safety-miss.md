@@ -2,31 +2,28 @@
 
 | | |
 | --- | --- |
-| **Metric** | Hive scan miss rate from the periodic human audit, plus user and platform reports. |
+| **Metric** | Safety miss rate from the monthly human audit, plus user and platform reports. |
 | **Threshold** | Any true miss. |
 | **Escalation** | Trust & Safety on-call (immediately), then Legal and the Founder for severe categories such as child safety. |
 
 ## Controls that exist
 
-- Every render passes the quality gate's Hive scan before review (spec 13.2). Renders over 90 s
-  use Hive's async API (13.25): the project waits in QUALITY_CHECKING for Hive's callback at
-  `POST /api/studio/webhooks/hive?token=…` (per-task token; Hive signs nothing). Fail closed: no
-  `STUDIO_PUBLIC_CALLBACK_BASE_URL`, a failed task, or no callback within
-  `HIVE_ASYNC_TIMEOUT_MIN` (default 120) blocks the render. Stuck long-form? Check
-  `studio.content_safety_tasks` (state, errorReason) and that the public ingress routes
-  `/api/studio/webhooks/hive` to Studio.
-- 20.6 Hive V3 (self-serve Secret Key: `HIVE_V3_SECRET_KEY`, `HIVE_API_VERSION=v3`) has no async
-  API: renders up to 60 s are one synchronous request (every second checked); longer renders are
-  checked as `HIVE_V3_MAX_FRAMES` (default 10) evenly spaced still frames, one request each, so
-  content between the samples is NOT checked. V3's default limit is about 100 requests a day
-  ("developer testing only", docs.thehive.ai/docs/visual-content-moderation): a 429 is logged
-  (`content-safety scan rate limited`), the gate job retries and the video stays unpublished; when
-  retries run out the run fails with `quality_gate_error`. Use a V2 Enterprise key for volume.
+- **No automated video scan (20.21, operator decision 2026-10-02: Hive removed).** Studio has no
+  content-safety provider, so the quality gate records content safety as **Not scanned**
+  (`content_safety` check `not_run`, `safetyNotScanned`; project `metadata.contentSafety =
+  { state: 'skipped', reason: 'no_provider' }`) and the video goes on to the normal review: the
+  creator's approval, or automatic approval where the project's review policy allows it. Staff
+  see "Not scanned" in the quality panel; customers see nothing about it. What still screens
+  content: the Layer 2 script-safety classifier (before any asset spend), the human review step,
+  this runbook's monthly audit, and user and platform reports.
+- The scan path is kept generic for a future provider (`content_safety` in
+  `src/lib/studio/providers/router.ts` is empty; a new adapter returns `ContentSafetyScan`,
+  `providers/content-safety.ts`). With a provider configured, the rules below apply again.
 - Block classes are hard-blocked at a score of 0.8 or above, and customers cannot force-approve
   them (spec 13.5).
 - Review-class content pauses the run for PostMind Trust & Safety (BACKLOG 13.17): a script-safety
-  REVIEW verdict pauses planning before any asset spend, and a review-level Hive class pauses the
-  quality gate. Admin Centre → **Safety review** (`GET /api/studio/admin/safety-reviews`) shows
+  REVIEW verdict pauses planning before any asset spend, and (with a content-safety provider) a
+  review-level class pauses the quality gate. Admin Centre → **Safety review** (`GET /api/studio/admin/safety-reviews`) shows
   the flag, a preview or the script; **Allow** (with a note) resumes the run and the video still
   needs a person's approval, **Block** fails the project with the note (the customer sees it).
   Decisions need `studio:admin:moderation` and are audited (`studio.safety_review.decide`).
@@ -34,11 +31,9 @@
 - Automatic approval (`AUTO_APPROVE`, trusted creators only) never applies to force-approved,
   flagged or script-`WARN` runs — see [review-publish-automation.md](review-publish-automation.md).
 - Publishing requires an approved render.
-- Languages (15.C5): the Hive scan is **visual** moderation only, so it is language-independent
-  but does not read on-screen text or narration in any language. Words (all 11 Studio languages)
-  are screened only by the Layer 2 script-safety classifier. Hive OCR Moderation lists all Studio
-  languages (https://docs.thehive.ai/docs/ocr-text-recognition-moderation, read 2026-09-28) but
-  is not integrated — **GAP** if a miss involves burned-in text or a non-English script.
+- Languages (15.C5): words (all 11 Studio languages) are screened only by the Layer 2
+  script-safety classifier; nothing reads burned-in text or narration in the rendered video —
+  **GAP** if a miss involves burned-in text.
 
 ## Steps
 
@@ -50,21 +45,38 @@
    `{"level":"workspace","target":"<orgId>","enabled":true}`.
 3. Preserve the evidence:
    - The render and its assets in S3.
-   - The Hive scores in `renders.qualityIssues`.
+   - The quality checks in `renders.qualityIssues` (content safety shows `not_run` today).
    - The audit trail.
 
    Do not delete anything until Legal has cleared it.
 4. For a severe category, follow the legal reporting obligations. Legal decides.
 5. Root cause:
-   - Was the scan skipped or errored? An `error` result can be force-approved, a `block` result
-     cannot.
+   - No video scan runs today (20.21). Was the script-safety verdict wrong, or did a person
+     approve it? With a provider configured: was the scan skipped or errored? An `error` result
+     can be force-approved, a `block` result cannot.
    - Was the threshold too permissive?
    - Was the category not covered? Adjust `SAFETY_*` in `src/lib/studio/pipeline/quality-checks.ts`
      with a test, and deploy.
 
+## Releasing runs parked by 20.19 (one-off, 20.21)
+
+Before 20.21, a video with no working content-safety provider (Hive's dummy key) paused in
+QUALITY_CHECKING behind a Trust & Safety review. After deploying 20.21, release them:
+
+```bash
+scripts/vps/compose.sh production run --rm ops node --import tsx scripts/ops/release-safety-holds.ts --dry-run
+scripts/vps/compose.sh production run --rm ops node --import tsx scripts/ops/release-safety-holds.ts
+```
+
+Only PENDING content reviews whose every flag reads "Scan could not run: no content-safety
+provider available" are released (closed by `system:studio-safety`, audited
+`studio.safety_review.release`); their renders become "Not scanned" and the quality gate
+finishes (review, or auto-approval where allowed). Reviews with a real flag stay in the queue.
+The worker also releases such a review on its next quality-gate pass. Safe to re-run.
+
 ## Monthly Trust & Safety audit (BACKLOG 14.11)
 
-The metric "Hive scan miss rate" comes from this audit.
+The metric "safety miss rate" comes from this audit.
 
 - **Sampling (automatic).** The `sample-safety-audit` job runs at 06:00 UTC on the 1st of each
   month (worker scheduler `sample-safety-audit-monthly`). It draws a uniform random sample of

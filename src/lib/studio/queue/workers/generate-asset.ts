@@ -1,5 +1,11 @@
 import type { AssetKind, Prisma, VideoShot } from '@prisma/client';
 import { ConfigurationError, NotFoundError, ValidationError } from '../../../errors';
+import {
+  avatarUnavailableReason,
+  DEGRADED_FROM_AVATAR,
+  degradedClipDurationSec,
+  degradedClipPrompt,
+} from '../../pipeline/avatar-fallback';
 import type { AspectRatio } from '../../providers/interface';
 import { providerOutputKey } from '../../storage';
 import type { PipelineDeps } from '../../pipeline/deps';
@@ -87,8 +93,10 @@ async function recordAsset(
   fallback: { extension: string; contentType: string },
   /** 15.B6: what determined the output (fingerprinted with the provider that made it). */
   fingerprint?: FingerprintInput,
+  /** 20.19: facts kept on both the asset's metadata and the shot's routing snapshot. */
+  extra: Record<string, unknown> = {},
 ): Promise<StoredAsset> {
-  const metadata = (run.output.metadata ?? {}) as Record<string, unknown>;
+  const metadata = { ...((run.output.metadata ?? {}) as Record<string, unknown>), ...extra };
   const organisationId = shot.script.project.organisationId;
   let bucket = typeof metadata.s3Bucket === 'string' ? metadata.s3Bucket : undefined;
   let key = typeof metadata.s3Key === 'string' ? metadata.s3Key : undefined;
@@ -110,7 +118,8 @@ async function recordAsset(
         fallbackContentType: fallback.contentType,
         providerId: run.decision.providerId,
       },
-      deps.fetch,
+      // 20.20: Veo outputs need the provider key to download (veo.ts fetchOutput).
+      run.fetchOutput ?? deps.fetch,
     );
     bucket = copied.bucket;
     key = copied.key;
@@ -158,13 +167,13 @@ async function recordAsset(
         [pointer]: created.id,
         providerRouting: {
           ...((current.providerRouting as Record<string, unknown> | null) ?? {}),
-          [routingKey]: routingSnapshot(run),
+          [routingKey]: { ...routingSnapshot(run), ...extra },
         } as Prisma.InputJsonValue,
       },
     });
     return created;
   });
-  return { assetId: asset.id, routing: routingSnapshot(run) };
+  return { assetId: asset.id, routing: { ...routingSnapshot(run), ...extra } };
 }
 
 /** Provider requested via POST /api/studio/shots/:id/regenerate, if any. */
@@ -197,24 +206,85 @@ async function generateAvatar(
     select: { s3Bucket: true, s3Key: true },
   });
   if (!voice?.s3Bucket || !voice.s3Key) throw new NotFoundError('Narration asset not found');
+  let run: ProviderRunResult;
+  try {
+    run = await runProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'AI_AVATAR', durationSec: shot.durationSec },
+        planTier: data.planTier,
+        preferredProviderId: preferredProvider(shot),
+        request: {
+          organisationId: data.organisationId,
+          projectId: data.projectId,
+          shotId: shot.id,
+          capability: 'avatar_video',
+          audioUrl: await deps.storage.signedUrl(voice.s3Bucket, voice.s3Key),
+          durationSec: shot.durationSec,
+          aspectRatio: shot.script.targetAspectRatio as AspectRatio,
+        },
+      },
+      deps,
+    );
+  } catch (err) {
+    // 20.19: no presenter available (account problem, hold, kill switch…) → a regular clip.
+    const reason = avatarUnavailableReason(err);
+    if (!reason) throw err;
+    return generatePresenterlessClip(deps, shot, data, reason);
+  }
+  return recordAsset(deps, shot, 'VIDEO_CLIP', run, { extension: 'mp4', contentType: 'video/mp4' });
+}
+
+/**
+ * BACKLOG 20.19 — an AI_AVATAR shot whose presenter is unavailable becomes a generated B-roll clip
+ * (text_to_video through the router, so cost tracking, budgets and the cost cap apply as for any
+ * AI_CLIP). The narration generated for the avatar stays the shot's voice track and the shot keeps
+ * its duration; the composer trims the clip to it. The degradation is recorded on the asset and
+ * the shot's routing snapshot (degradedFrom / degradedReason) for the review-screen note.
+ */
+async function generatePresenterlessClip(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+  reason: string,
+): Promise<StoredAsset> {
+  const kit = await resolveProjectBrandKit(deps.db, shot.script.project);
+  const prompt = degradedClipPrompt({
+    sceneDescription: shot.sceneDescription,
+    voiceoverText: shot.voiceoverText,
+    cameraDirection: shot.cameraDirection,
+    toneKeywords: kit?.toneKeywords ?? [],
+  });
+  const durationSec = degradedClipDurationSec(shot.durationSec);
+  deps.logger.warn(
+    { projectId: data.projectId, shotId: shot.id, reason },
+    'avatar presenter unavailable; shot degraded to a generated clip',
+  );
   const run = await runProvider(
     {
-      need: { kind: 'shot', visualTreatment: 'AI_AVATAR', durationSec: shot.durationSec },
+      need: { kind: 'shot', visualTreatment: 'AI_CLIP', durationSec },
       planTier: data.planTier,
-      preferredProviderId: preferredProvider(shot),
+      preferredProviderId: runPreferredProviders(shot.script.project.metadata, 'AI_CLIP'),
       request: {
         organisationId: data.organisationId,
         projectId: data.projectId,
         shotId: shot.id,
-        capability: 'avatar_video',
-        audioUrl: await deps.storage.signedUrl(voice.s3Bucket, voice.s3Key),
-        durationSec: shot.durationSec,
+        capability: 'text_to_video',
+        prompt,
+        durationSec,
         aspectRatio: shot.script.targetAspectRatio as AspectRatio,
       },
     },
     deps,
   );
-  return recordAsset(deps, shot, 'VIDEO_CLIP', run, { extension: 'mp4', contentType: 'video/mp4' });
+  return recordAsset(
+    deps,
+    shot,
+    'VIDEO_CLIP',
+    run,
+    { extension: 'mp4', contentType: 'video/mp4' },
+    undefined,
+    { degradedFrom: DEGRADED_FROM_AVATAR, degradedReason: reason },
+  );
 }
 
 /**

@@ -31,6 +31,11 @@ export interface ProviderRunResult {
   decision: RouteDecision;
   providerJobRowId: string;
   output: NonNullable<ProviderPollResult['output']>;
+  /**
+   * 20.20: how to download output.url when the provider requires its credentials for it (Veo);
+   * absent = a plain fetch of the (pre-signed) URL.
+   */
+  fetchOutput?: (url: string) => Promise<Response>;
 }
 
 export type ProviderRunDeps = Pick<
@@ -69,9 +74,15 @@ export interface RunProviderInput {
  * "temporarily unavailable" sentence) and one ops alert naming every provider.
  */
 export async function runProvider(
-  input: RunProviderInput,
+  rawInput: RunProviderInput,
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  // 20.23: adapters see the plan tier (Seedance picks its model by it); routing, cost estimates
+  // and the submit all use the same request.
+  const input: RunProviderInput = {
+    ...rawInput,
+    request: { ...rawInput.request, planTier: rawInput.planTier },
+  };
   const failures: ProviderAccountFailure[] = [];
   for (;;) {
     let decision: RouteDecision;
@@ -208,7 +219,13 @@ async function runDecided(
           true,
         );
       }
-      return { decision, providerJobRowId: submitted.jobId, output: result.output };
+      const fetchOutput = adapter.fetchOutput?.bind(adapter);
+      return {
+        decision,
+        providerJobRowId: submitted.jobId,
+        output: result.output,
+        ...(fetchOutput && { fetchOutput }),
+      };
     }
     if (result.state === 'failed') {
       const error = result.error ?? {

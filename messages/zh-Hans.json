@@ -43,7 +43,8 @@
       "moreOptions": "更多选项",
       "required": "必填"
     },
-    "untitledVideo": "未命名视频"
+    "untitledVideo": "未命名视频",
+    "briefHint": "内容有点短。补充一下面向谁、想表达什么或想要的感觉，我们会做得更好。你仍然可以直接生成。"
   },
   "shell": {
     "nav": {
@@ -415,7 +416,7 @@
       "body": "Trust & Safety 备注：{note}"
     },
     "safetyAuditMiss": {
-      "title": "Trust & Safety 审计：Hive 扫描漏检",
+      "title": "Trust & Safety 审计：安全检查漏检",
       "body": "一个已发布的 {platform} 视频（组织 {organisationId}，发布 {publicationId}）未通过 {period} 审计：{note}。请按照 runbooks/content-safety-miss.md 处理。"
     },
     "planQuotaNearing": {
@@ -846,6 +847,10 @@
       "item": "{layer}：由 {provider} 制作（{skipped}）",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "主持人不可用",
+      "note": "此视频的主持人不可用，因此这些片段改用了视频剪辑。"
+    },
     "quality": {
       "title": "质量检查",
       "status": {
@@ -880,8 +885,12 @@
       "overrideLabel": "覆盖未通过的检查——原因（必填，将被审计）",
       "forceApprove": "强制批准",
       "overridden": "已覆盖质量检查结果。",
+      "softFailureHint": "这些检查仅供参考。请观看视频；如果没有问题，请填写简短原因后强制批准。",
+      "askToOverride": "这些检查仅供参考。请观看视频；所有者或管理员可以强制批准。",
+      "blockedNoOverride": "内容安全拦截只能由 PostMind 工作人员解除。",
       "details": {
         "safetyScanUnavailable": "扫描无法运行：{reason}",
+        "safetyNotScanned": "未扫描：未设置内容安全扫描。",
         "safetyBlocked": "已阻止：{classes}",
         "safetyReview": "需要审核：{classes}",
         "safetyPassed": "{count, plural, other {已扫描 # 帧，未发现问题。}}",
@@ -1057,6 +1066,28 @@
       "retry": "重试",
       "retried": "{count, plural, other {已排期 # 条帖子。}}",
       "stillNone": "仍然没有空闲的发布时间——请添加发布时间或选择日期。"
+    },
+    "directions": {
+      "title": "选择一个方向",
+      "body": "你的要求有点太笼统，难以做出好视频。请从以下方向中选择一个，或在下方补充更多细节。",
+      "optionsAria": "建议的方向",
+      "option": "方向 {number}",
+      "use": "使用此方向",
+      "useAria": "使用方向 {number}",
+      "noPermission": "需要有项目编辑权限的人选择一个方向或补充更多细节。"
+    },
+    "needsInput": {
+      "editLabel": "你的简报",
+      "editSubmit": "按我的修改生成",
+      "started": "已开始生成。"
+    },
+    "restricted": {
+      "title": "检查受限话题",
+      "body": "你的简报涉及品牌套件或企业资料中标记为受限的话题。如果这些话题适合本视频，可以继续；否则请编辑简报将其删除。",
+      "topicsAria": "发现的受限话题",
+      "continue": "仍然继续",
+      "continueHint": "将按简报制作视频，包括这些话题。",
+      "noPermission": "需要有项目编辑权限的人继续或修改简报。"
     }
   },
   "slideshow": {
@@ -1589,7 +1620,8 @@
         "images": "图片库",
         "learned": "Studio 学到的内容",
         "hashtags": "话题标签"
-      }
+      },
+      "readOnly": "你对此业务只有查看权限。如需更改，请联系所有者或管理员。"
     },
     "kits": {
       "intro": "默认套件会应用于新视频。脚本使用其语气和受众；叠加层和画面构图使用其颜色和字体。",
@@ -1790,7 +1822,8 @@
       },
       "gridAria": "图片库",
       "newer": "较新",
-      "older": "较早"
+      "older": "较早",
+      "stockNotConfigured": "图库照片尚未设置，因此没有可刷新的内容。你网站上的照片、上传的图片和生成的图片仍可使用。"
     },
     "profile": {
       "fields": {
@@ -2034,6 +2067,16 @@
         "planGeneric": "您的套餐不包含声音克隆功能。升级套餐即可克隆声音；素材库配音仍可使用。",
         "notConfigured": "此服务器尚未设置声音克隆功能（{message}）。"
       }
+    },
+    "details": {
+      "title": "业务详情",
+      "description": "顶部栏中显示的名称，以及此业务的网站地址。",
+      "name": "业务名称",
+      "domain": "网站地址（可选）",
+      "domainHint": "主机名，例如 leedssourdough.co.uk，不含 https:// 或路径。",
+      "domainInvalid": "请使用主机名，例如 example.co.uk。",
+      "save": "保存详情",
+      "saved": "业务详情已保存"
     }
   },
   "connections": {
@@ -2047,7 +2090,8 @@
       "internal_error": "完成连接时出错，请重试。",
       "unknown": "连接未完成（{code}）。请重试。",
       "meta_no_accounts": "Meta 未共享任何你可以发布内容的 Facebook 公共主页。请重新连接，并在 Meta 窗口中至少选择一个公共主页（及其 Instagram 账号）。",
-      "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。"
+      "wrong_user": "此连接由另一位 Studio 用户发起。请以你自己的账号登录后重新开始。",
+      "state_expired": "该登录链接已被使用或已过期。请重新开始连接。"
     },
     "dismiss": "关闭",
     "pickFirst": {
@@ -2101,7 +2145,8 @@
       "codeLabel": "确认码：",
       "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
     },
-    "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。"
+    "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。",
+    "readOnly": "只有所有者和管理员可以连接或断开账号。"
   },
   "library": {
     "browse": {
@@ -2164,7 +2209,7 @@
       "notFoundTitle": "未找到参考视频",
       "notFoundBody": "它可能已从视频库下架。",
       "loading": "正在加载参考视频",
-      "previewAria": "{title} 的静音预览",
+      "previewAria": "{title} 的预览",
       "previewNote": "{minutes, plural, other {低清预览 · 链接将在 # 分钟后失效}}",
       "tagsAria": "标签",
       "facts": {
@@ -3062,7 +3107,7 @@
       "quotedNote": "“{note}”",
       "review": {
         "title": "内容安全审核",
-        "description": "因脚本安全 REVIEW 判定或审核级 Hive 标记而暂停的运行（规范 13.2 / 16.4）。拦截级结果不会进入此队列。",
+        "description": "因脚本安全 REVIEW 判定或审核级内容安全标记而暂停的运行（规范 13.2 / 16.4）。拦截级结果不会进入此队列。",
         "showAria": "显示审核",
         "filterWaiting": "等待中",
         "filterWaitingCount": "等待中（{count}）",
@@ -3100,7 +3145,7 @@
       },
       "audit": {
         "title": "Trust & Safety 月度审计",
-        "description": "从上个月发布的视频中随机抽样，由人工复查。漏检是指 Hive 扫描本应拦截或送审的视频。",
+        "description": "从上个月发布的视频中随机抽样，由人工复查。漏检是指本应被拦截或送审的视频。",
         "monthAria": "审计月份",
         "resultAria": "结果",
         "filter": {
@@ -3115,7 +3160,7 @@
         "waiting": "等待中",
         "passed": "通过",
         "missed": "漏检",
-        "missRate": "Hive 扫描漏检率",
+        "missRate": "安全检查漏检率",
         "missRateHint": "漏检 ÷ 已复查",
         "emptyNoSampleTitle": "本月暂无样本",
         "emptyNoSampleBody": "样本在每月 1 日 06:00 UTC 抽取。如果任务未运行，请立即抽取。",
@@ -3655,7 +3700,11 @@
       "scan_images_capped": "扫描已达到费用上限（{amount}）：部分图片未编入搜索索引。",
       "ownership_disputed": "已停止：网站所有权存在争议。",
       "provider_failure": "{source} 报告了问题：{problem}。",
-      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。"
+      "service_unavailable": "我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。",
+      "scan_pages_skipped": "{count, plural, other {有 # 个页面无法读取，已跳过。}}",
+      "scan_images_skipped": "{count, plural, other {你网站上有 # 张图片无法下载，已跳过。}}",
+      "stock_not_configured": "无法添加图库照片：尚未设置图库照片服务。",
+      "stock_unavailable": "这次有些图库照片无法添加。请在图片库中点击“刷新图库”重试。"
     },
     "classes": {
       "rate_limited": "请求过多",
@@ -4632,6 +4681,10 @@
     "askOwner": "只有组织所有者可以更改套餐或账单。请联系所有者操作。",
     "lock": {
       "aria": "需要 {tier} 套餐"
+    },
+    "seatLimit": {
+      "title": "您套餐中的席位已全部占用",
+      "body": "您的套餐没有空闲席位可再添加成员。请升级以获得更多席位，或先移除某位成员。"
     }
   },
   "email": {

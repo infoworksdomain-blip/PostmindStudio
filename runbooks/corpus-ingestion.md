@@ -235,6 +235,114 @@ SSRF guard.
   customers) most of its room.
 - The tool prints the estimate before anything is submitted.
 
+## Library caching (20.15)
+
+The reference library is the same for every customer, so user reads are cached once for
+everyone in Studio's Redis (DB 3). Code: `src/lib/studio/library/cache.ts`.
+
+What is cached:
+
+| Read | Key parts | TTL |
+| --- | --- | --- |
+| Category tree | none | 15 min |
+| Browse page (`GET /library/videos`) | every filter: category, tags (sorted), duration, mood, cursor, limit | 15 min |
+| Detail (`GET /library/videos/:id`) | id (the trimmed allow-list shape only) | 15 min |
+| Similar | id, limit | 15 min |
+| Blueprint | id | 15 min |
+| Search page (`POST /library/search`) | normalised query, category, duration, mood, tags, cursor, limit | 15 min |
+| Recommended | organisation, business, category, limit | 1 h |
+| Query embedding | sha256(model + normalised query) | 30 days |
+
+- Every key carries the catalogue version (`studio:library:version`). Any catalogue change
+  INCRs it, so the next read is fresh. Nothing is scanned or deleted; old keys expire.
+- What bumps it: ingest worker (success and final failure), re-analysis worker, admin edit
+  (`PATCH /admin/library/videos/:id`, including licence changes), bulk review, retire, and
+  `npm run db:seed` (taxonomy). Staff reads (`/admin/library/*`, including
+  `/admin/library/categories`) are never cached.
+- Licence expiry is not frozen in the cache: the raw licence terms are cached and the allowed
+  modes are worked out on every response.
+- Signed URLs are never cached. Thumbnails are signed as of the start of the UTC day, valid for
+  25 h, so the URL stays the same all day and the browser keeps the image (`Cache-Control:
+  public, max-age=604800, immutable`, set at upload). Previews stay 10-minute, per request.
+- GET library responses carry `Cache-Control: private, max-age=60`.
+- Redis down or erroring: reads go to the database, a warning is logged at most once a minute,
+  and no request fails. A failed version bump is logged ("version bump failed"); cached reads
+  can then be up to 15 minutes old.
+- Metrics: `studio_library_cache_total{cache, result="hit|miss|error"}`.
+- Off switch: `STUDIO_LIBRARY_CACHE=off` (every read goes to the database).
+
+After a database restore or a manual SQL change to the library tables, bump the version by
+hand:
+
+```bash
+redis-cli -u "$REDIS_URL" INCR studio:library:version
+```
+
+### Thumbnail Cache-Control backfill (one-off)
+
+Thumbnails ingested before 20.15 have no Cache-Control. Run once per environment, with the
+storage env of that environment (STORAGE_PROVIDER, R2_* or AWS_*, S3_BUCKET_LIBRARY):
+
+```bash
+npx tsx scripts/library/set-thumbnail-cache-headers.ts --dry-run    # counts only, writes nothing
+npx tsx scripts/library/set-thumbnail-cache-headers.ts --limit 20   # trial batch
+npx tsx scripts/library/set-thumbnail-cache-headers.ts              # everything
+```
+
+It copies each `library/<hash>-thumb.jpg` onto itself (CopyObject, MetadataDirective REPLACE),
+keeping Content-Type and user metadata. Objects that already have the header are skipped, so it
+is safe to re-run. It exits 1 if any object failed; the failed keys are logged.
+
+### Preview sound: rebuilding existing previews (one-off, 20.17)
+
+Since 20.17 (operator decision 2026-10-01) library previews keep their sound: H.264 + AAC
+stereo at 96 kb/s, still 360 px wide, at most 30 seconds, with no download control, signed per
+request for 10 minutes. New ingests get sound automatically. Previews made before 20.17 are
+silent until they are rebuilt with `scripts/library/rebuild-previews.ts`.
+
+For every library item that is not retired, the script signs the stored source (`s3Bucket` /
+`s3Key`), runs ffmpeg and overwrites `library/<hash>-preview.mp4` with `Content-Type: video/mp4`
+and `Cache-Control: public, max-age=604800, immutable`, the same as ingest. Overwriting the key
+is safe: previews are only reached through 10-minute signed URLs, so browsers do not keep an old
+copy. It makes no AI or provider calls (storage, ffprobe and ffmpeg only). Users still never get
+the source file.
+
+Run it on production from the VPS, one step at a time:
+
+```bash
+# 1. Count only: nothing is encoded or written.
+bash scripts/vps/compose.sh production run --rm -T ops npx tsx scripts/library/rebuild-previews.ts --dry-run
+# 2. Trial batch: rebuild 5 previews, then open a few library items and press play.
+bash scripts/vps/compose.sh production run --rm -T ops npx tsx scripts/library/rebuild-previews.ts --limit 5
+# 3. Full run: rebuild every preview that is still silent.
+bash scripts/vps/compose.sh production run --rm -T ops npx tsx scripts/library/rebuild-previews.ts --only-missing-audio
+```
+
+Flags:
+
+- `--dry-run` counts and writes nothing (with `--only-missing-audio` it still runs ffprobe, which
+  only reads).
+- `--limit N` stops after N items.
+- `--concurrency N` sets how many items are encoded at once (default 2, at most 8). It is capped by
+  `STUDIO_FFMPEG_MAX_CONCURRENT`, which is 1 in the VPS example env, so the run encodes one at a
+  time unless you add `-e STUDIO_FFMPEG_MAX_CONCURRENT=2` after `run` (it is passed to
+  `docker compose run`). The ops
+  container is limited to 1 CPU and 512 MB, so keep 1 or 2 on the 4 GB server.
+- `--only-missing-audio` uses ffprobe to skip items whose preview already has an audio stream, and
+  items whose source has no audio at all (a rebuild would still be silent). Use it for the full
+  run and for any re-run after failures: it carries on where the last run stopped.
+
+Every item is logged (`library preview`, with the outcome). A failed item is logged with its id
+and key and the run carries on. At the end there is one summary line (`examined`, `rebuilt`,
+`skippedHasAudio`, `skippedSourceSilent`, `failed`, and the first 20 failures). The script exits 1
+if any item failed; run it again with `--only-missing-audio` to retry only those.
+
+Timing is not measured yet: each item reads the source and encodes at most 30 seconds of 360 px
+video, so expect seconds per item rather than minutes; the `--limit 5` run shows the real rate
+(compare the first and last log times) before the full run of about 430 items. The
+library cache does not need a version bump: it stores no preview data, and preview URLs are
+signed per request.
+
 ## Verification
 
 - `counts.SUCCEEDED + counts.DUPLICATE` reaches the manifest's valid-row count.

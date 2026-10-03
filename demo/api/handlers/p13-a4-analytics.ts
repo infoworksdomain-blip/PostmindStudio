@@ -1,7 +1,6 @@
 // Phase 13 track A4 demo handlers: per-publication analytics with YouTube retention and audience
-// (13.28), style memory (13.29) and the Hive async moderation callback (13.25). Shapes match
-// src/lib/studio/services/analytics.ts publicationAnalytics, services/style-memory.ts and
-// api/hive-webhook.ts.
+// (13.28) and style memory (13.29). Shapes match src/lib/studio/services/analytics.ts
+// publicationAnalytics and services/style-memory.ts.
 import { DEMO_BUSINESS_ID, PROJECTS } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { countsAt, livePosts, type Counts } from './analytics-model';
@@ -175,14 +174,6 @@ route('DELETE', '/businesses/:id/style-memory/:memoryId', ({ params }) => {
   if (!found) throw new DemoHttpError(404, 'not_found', 'Style memory not found');
   memories = memories.filter((m) => m.id !== params.memoryId);
   return { deleted: true };
-});
-
-// ---------------------------------------------------------------- Hive callback (13.25)
-
-route('POST', '/webhooks/hive', ({ query }) => {
-  if (!/^[A-Za-z0-9_-]{43}$/.test(query.get('token') ?? ''))
-    throw new DemoHttpError(404, 'not_found', 'Not found');
-  return { received: true };
 });
 
 // ---------------------------------------------------------------- SFX on review (13.27)

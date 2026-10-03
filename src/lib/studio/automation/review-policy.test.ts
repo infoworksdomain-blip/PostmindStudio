@@ -132,6 +132,29 @@ describe('decideAutoApproval', () => {
     });
   });
 
+  it('20.21: a scan skipped for want of a provider follows the review policy', () => {
+    const skipped = cleanRender({
+      qualityIssues: [
+        passed('duration_match'),
+        {
+          code: 'content_safety',
+          status: 'not_run',
+          severity: 'info',
+          detail: 'Not scanned: no content-safety provider is configured',
+          detailKey: 'safetyNotScanned',
+          detailParams: { reason: 'no_provider' },
+        },
+      ] as never,
+    });
+    expect(decideAutoApproval(input({ renders: [skipped] }))).toEqual({
+      decision: 'auto_approve',
+    });
+    // Still needs a person when the creator is not trusted yet.
+    expect(decideAutoApproval(input({ renders: [skipped], humanApprovedCount: 0 }))).toMatchObject({
+      code: 'not_trusted',
+    });
+  });
+
   it('needs review when any check failed or a render did not pass', () => {
     const failed = cleanRender({
       qualityIssues: [

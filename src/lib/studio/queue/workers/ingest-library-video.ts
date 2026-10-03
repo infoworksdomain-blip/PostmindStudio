@@ -22,6 +22,8 @@ export async function ingestLibraryVideoJob(
     new Date(deps.now()),
   );
   const result = await ingestLibraryVideo(deps, data.item, data.planTier);
+  // 20.15: a new item (browse, search, similar) — and a retry that finished a half-written one.
+  await deps.libraryCache?.bump('ingest');
   await markFinished(deps.db, data.runId, result, new Date(deps.now()));
   deps.logger.info(
     { sourceUrl: data.item.sourceUrl, ...result },
@@ -37,5 +39,7 @@ export async function onIngestLibraryVideoFailed(
   // Failed jobs stay in BullMQ's failed set (dead-letter); the run row records the reason and a
   // resubmission through POST /admin/library/ingest re-enqueues it under a fresh job id.
   deps.logger.error({ sourceUrl: data.item.sourceUrl, reason }, 'library ingestion failed');
+  // 20.15: the item row may exist without its embedding (it then shows in browse): stay exact.
+  await deps.libraryCache?.bump('ingest-failed');
   await markFailed(deps.db, data.runId, reason, new Date(deps.now()));
 }

@@ -8,8 +8,17 @@ import { vector } from '@electric-sql/pglite-pgvector';
 
 const MIGRATIONS_DIR = join(__dirname, '..', '..', '..', 'prisma', 'migrations');
 
+/** Runs one committed migration (by directory name) against `db`. */
+export async function applyMigration(db: PGlite, name: string): Promise<void> {
+  await db.exec(readFileSync(join(MIGRATIONS_DIR, name, 'migration.sql'), 'utf8'));
+}
+
 export async function createMigratedDb(
-  options: { preinstallVectorIn?: 'public' } = {},
+  options: {
+    preinstallVectorIn?: 'public';
+    /** Stop before this migration (directory name), to test it against older data. */
+    before?: string;
+  } = {},
 ): Promise<PGlite> {
   const db = await PGlite.create({ extensions: { vector } });
   // Simulates the shared cluster where PostMind Core installed pgvector before Studio arrived.
@@ -20,9 +29,8 @@ export async function createMigratedDb(
   const migrations = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
-    .sort();
-  for (const name of migrations) {
-    await db.exec(readFileSync(join(MIGRATIONS_DIR, name, 'migration.sql'), 'utf8'));
-  }
+    .sort()
+    .filter((name) => !options.before || name < options.before);
+  for (const name of migrations) await applyMigration(db, name);
   return db;
 }

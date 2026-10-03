@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 import { studioModes } from '../mode';
 import type { IdentityProvider } from './provider';
 
@@ -24,6 +25,23 @@ export function getIdentityProvider(): Promise<IdentityProvider> {
     throw err;
   });
   return provider;
+}
+
+/**
+ * Drop a user's cached tenant context (role change, ban, organisation deleted). ApiDeps carries no
+ * identity provider in production, so routes reach the process's provider here; tests pass their own.
+ */
+export async function invalidateIdentity(
+  userId: string,
+  override?: IdentityProvider,
+): Promise<void> {
+  try {
+    (override ?? (await getIdentityProvider())).invalidate(userId);
+  } catch (err) {
+    // Best effort: a cached context lives 30 s at most, so a provider that cannot be built here
+    // must not fail the request that already changed the data.
+    logger.warn({ err, userId }, 'could not drop the cached tenant context');
+  }
 }
 
 /** Test hook: install a provider (pass undefined to reset). */

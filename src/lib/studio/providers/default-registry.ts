@@ -5,7 +5,6 @@ import { assetsBucket, getAssetStorage } from '../storage';
 import { AnthropicAdapter } from './anthropic';
 import { ElevenLabsAdapter } from './elevenlabs';
 import { ElevenLabsMusicAdapter } from './elevenlabs-music';
-import { HiveAdapter } from './hive';
 import type { ProviderAdapter } from './interface';
 import type { ByocProviderId, ProviderKeyMap } from './byoc-providers';
 import { OpenAIAdapter } from './openai';
@@ -14,15 +13,15 @@ import { createProviderRegistry, type ProviderRegistry } from './registry';
 import { AssemblyAiAdapter } from './assemblyai';
 import { RunwayAdapter } from './runway';
 import { LumaAdapter } from './luma';
+import { veoOptionsFromEnv, VeoAdapter } from './veo';
+import { seedanceOptionsFromEnv, SeedanceAdapter } from './seedance';
+import { klingCredentialsFrom, klingOptionsFromEnv, KlingAdapter } from './kling';
 import { HeyGenAdapter } from './heygen';
 import { ShotstackAdapter } from './shotstack';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
 import { StoryblocksMusicAdapter } from './storyblocks-music';
 import { StoryblocksVideoAdapter } from './storyblocks-video';
 import { PexelsVideoAdapter } from './pexels-video';
-import { createHiveResultReader } from './hive-results';
-import { hiveKeyFromEnv, parseHiveV3MaxFrames } from './hive-config';
-import { createFfmpegInspector } from '../pipeline/media-probe';
 
 // Explicit SDK timeouts (the SDK default is 10 minutes). OpenAI's image guide says complex
 // prompts "may take up to 2 minutes", hence the longer OpenAI budget.
@@ -48,6 +47,8 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
     ['assemblyai', 'ASSEMBLYAI_API_KEY'],
     ['runway', 'RUNWAY_API_KEY'],
     ['luma', 'LUMA_API_KEY'],
+    ['veo', 'GOOGLE_GEMINI_API_KEY'],
+    ['seedance', 'BYTEPLUS_API_KEY'],
     ['heygen', 'HEYGEN_API_KEY'],
     ['elevenlabs', 'ELEVENLABS_API_KEY'],
     ['shotstack', 'SHOTSTACK_API_KEY'],
@@ -57,12 +58,20 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
     const apiKey = valueOf(env, name);
     if (apiKey) keys[id] = { apiKey };
   }
-  // 20.6: HIVE_API_KEY (V2) or HIVE_V3_SECRET_KEY (V3), per HIVE_API_VERSION (hive-config.ts).
-  const hive = hiveKeyFromEnv(env);
-  if (hive.apiKey) keys.hive = { apiKey: hive.apiKey, apiVersion: hive.version };
   const sbPublic = valueOf(env, 'STORYBLOCKS_API_PUBLIC_KEY');
   const sbPrivate = valueOf(env, 'STORYBLOCKS_API_PRIVATE_KEY');
   if (sbPublic && sbPrivate) keys.storyblocks = { apiKey: sbPublic, secondaryKey: sbPrivate };
+  // 20.24: KLING_API_KEY, or the legacy KLING_ACCESS_KEY + KLING_SECRET_KEY pair (the access key
+  // travels as apiKey and the secret as secondaryKey; half a pair is a ConfigurationError).
+  const kling = klingCredentialsFrom({
+    apiKey: valueOf(env, 'KLING_API_KEY'),
+    accessKey: valueOf(env, 'KLING_ACCESS_KEY'),
+    secretKey: valueOf(env, 'KLING_SECRET_KEY'),
+  });
+  if (kling?.kind === 'api_key') keys.kling = { apiKey: kling.apiKey };
+  if (kling?.kind === 'access_key') {
+    keys.kling = { apiKey: kling.accessKey, secondaryKey: kling.secretKey };
+  }
   return keys;
 }
 
@@ -126,6 +135,35 @@ export function buildAdaptersFromKeys(
   const lumaKey = keys.luma?.apiKey;
   if (lumaKey) adapters.push(new LumaAdapter({ apiKey: lumaKey, usdToGbpRate }));
 
+  // BACKLOG 20.20: Google Veo 3.1 (Gemini API), the AI_CLIP fallback after Seedance and Kling (router.ts,
+  // order since 20.23). VEO_MODEL / VEO_PERSON_GENERATION are optional (veo.ts defaults).
+  const veoKey = keys.veo?.apiKey;
+  if (veoKey) {
+    adapters.push(new VeoAdapter({ apiKey: veoKey, usdToGbpRate, ...veoOptionsFromEnv(env) }));
+  }
+
+  // BACKLOG 20.23: BytePlus ModelArk Seedance — the first AI_CLIP option on every tier
+  // (router.ts). SEEDANCE_MODEL, SEEDANCE_LONG_MODEL and BYTEPLUS_ARK_BASE_URL are optional
+  // (seedance.ts defaults).
+  const seedanceKey = keys.seedance?.apiKey;
+  if (seedanceKey) {
+    adapters.push(
+      new SeedanceAdapter({ apiKey: seedanceKey, usdToGbpRate, ...seedanceOptionsFromEnv(env) }),
+    );
+  }
+
+  // BACKLOG 20.24: Kling 3.0 (Kling AI API key). KLING_MODEL / KLING_RESOLUTION /
+  // KLING_BASE_URL are optional (kling.ts defaults); router.ts sets its place in the order. A
+  // secondary key means the legacy AccessKey (apiKey) + SecretKey (secondaryKey) JWT pair.
+  const klingKey = keys.kling?.apiKey;
+  if (klingKey) {
+    const klingSecret = keys.kling?.secondaryKey;
+    const credentials = klingSecret
+      ? { kind: 'access_key' as const, accessKey: klingKey, secretKey: klingSecret }
+      : { kind: 'api_key' as const, apiKey: klingKey };
+    adapters.push(new KlingAdapter({ credentials, usdToGbpRate, ...klingOptionsFromEnv(env) }));
+  }
+
   // HeyGen renders AI_AVATAR shots with a stock (or brand) avatar look. Registering it makes
   // Layer 2 offer AI_AVATAR, so a key without an avatar is a configuration error, not a skip.
   const heygenKey = keys.heygen?.apiKey;
@@ -169,26 +207,6 @@ export function buildAdaptersFromKeys(
       new ShotstackAdapter({
         apiKey: shotstackKey,
         environment: envValue('SHOTSTACK_ENVIRONMENT') ?? 'stage',
-      }),
-    );
-  }
-
-  const hiveKey = keys.hive?.apiKey;
-  if (hiveKey) {
-    const apiVersion = keys.hive?.apiVersion ?? 'v2';
-    adapters.push(
-      new HiveAdapter({
-        apiKey: hiveKey,
-        apiVersion,
-        // 20.6: V3 scans renders over 60 s as sampled frames (ffmpeg, in the worker).
-        ...(apiVersion === 'v3' && {
-          maxFrames: parseHiveV3MaxFrames(envValue('HIVE_V3_MAX_FRAMES')),
-          frameJpeg: (url: string, atSec: number, maxWidth: number) =>
-            createFfmpegInspector().frameJpeg(url, atSec, maxWidth),
-        }),
-        usdToGbpRate,
-        // 13.25: async callbacks are stored by POST /api/studio/webhooks/hive.
-        asyncResults: createHiveResultReader(async () => (await import('../../prisma')).prisma),
       }),
     );
   }

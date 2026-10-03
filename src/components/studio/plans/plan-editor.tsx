@@ -25,6 +25,7 @@ import { Field, NativeSelect } from '../review/field';
 import { CappedNotice, ItemMeta } from './plan-parts';
 import { ItemCopyEditor } from './item-copy';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
+import { BriefHint, briefHintDescribedBy } from '../brief-hint';
 import {
   groupByDay,
   kindCounts,
@@ -365,7 +366,10 @@ export function ItemForm({
           rows={3}
           value={brief}
           onChange={(e) => setBrief(e.target.value)}
+          aria-describedby={briefHintDescribedBy(brief, id('brief-hint'))}
         />
+        {/* 20.18: a gentle nudge for a very short brief; Save still works. */}
+        <BriefHint text={brief} id={id('brief-hint')} className="mt-2" />
       </Field>
       {kind === 'SLIDESHOW' && (
         <div className="grid gap-3 sm:grid-cols-2">

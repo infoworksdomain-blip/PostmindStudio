@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
+import { api, ApiError, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { NativeSelect } from '../publications/native-select';
 
@@ -97,7 +97,8 @@ export function RefreshLibraryButton({ businessId }: { businessId: string }) {
       });
       toast.success(t('refreshStarted', { count: res.queries.length }));
     } catch (err) {
-      toast.error(errorMessage(err));
+      const unset = err instanceof ApiError && err.details?.reason === 'stock_not_configured';
+      toast.error(unset ? t('stockNotConfigured') : errorMessage(err));
     } finally {
       setBusy(false);
     }

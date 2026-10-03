@@ -12,10 +12,10 @@ import {
   exampleSections,
   formatReport,
   GENERATED_SECRET_KEYS,
-  HIVE_ONE_OF_KEYS,
   parseEnvFile,
   prefillValues,
   R2_ACCOUNT_ID,
+  RETIRED_KEYS,
   renderBackupTemplate,
   renderTemplate,
   requiredKeys,
@@ -56,7 +56,6 @@ const FILLED: Record<string, string> = {
   ELEVENLABS_API_KEY: 'fake-elevenlabs-key-value',
   ELEVENLABS_DEFAULT_VOICE_ID: 'fakevoiceid',
   SHOTSTACK_API_KEY: 'fake-shotstack-key-value',
-  HIVE_API_KEY: 'fake-hive-key-value',
   ASSEMBLYAI_API_KEY: 'fake-assemblyai-key-value',
   STUDIO_FONTS_BASE_URL: 'https://fonts.example.com/studio/',
   META_APP_ID: '1234567890',
@@ -109,11 +108,7 @@ describe('the required list cannot drift', () => {
   it('includes every key of the REQUIRED section of deploy/vps/.env.example', () => {
     const { required } = exampleSections(EXAMPLE);
     expect(required.length).toBeGreaterThan(30);
-    // 20.6: the Hive keys are one-of (checked by hiveChecks), not each required.
-    expect(required).toEqual(expect.arrayContaining([...HIVE_ONE_OF_KEYS]));
-    const each = required.filter((k) => !HIVE_ONE_OF_KEYS.includes(k));
-    expect(req().sort()).toEqual(expect.arrayContaining(each));
-    for (const key of HIVE_ONE_OF_KEYS) expect(req()).not.toContain(key);
+    expect(req().sort()).toEqual(expect.arrayContaining(required));
   });
 
   it.each([
@@ -161,7 +156,7 @@ describe('the required list cannot drift', () => {
 
   it('the keys it leaves to compose really are set by deploy/vps/compose.yml', () => {
     const compose = read('deploy/vps/compose.yml');
-    for (const key of ['DATABASE_URL', 'REDIS_URL', 'APP_URL', 'STUDIO_PUBLIC_CALLBACK_BASE_URL'])
+    for (const key of ['DATABASE_URL', 'REDIS_URL', 'APP_URL'])
       expect(compose, key).toMatch(new RegExp(`\\b${key}:`));
   });
 
@@ -382,69 +377,181 @@ describe('checkEnvFile', () => {
   });
 });
 
-describe('Hive content-safety key (20.6: V2 or V3)', () => {
-  const withHive = (values: Record<string, string>) =>
-    filledFile('production', { HIVE_API_KEY: '', ...values });
-  const hiveResults = (text: string) =>
-    check(text).results.filter((r) => r.key.startsWith('HIVE_'));
+describe('no content-safety key (20.21: Hive removed)', () => {
+  const retired = (text: string) => check(text).results.filter((r) => RETIRED_KEYS.includes(r.key));
 
-  it('a V2 key alone is ready (the template default)', () => {
+  it('no Hive key is required or documented in the server example', () => {
+    for (const modes of [standalone, core])
+      for (const key of RETIRED_KEYS) expect(req(modes)).not.toContain(key);
+    const { required, optional } = exampleSections(EXAMPLE);
+    expect([...required, ...optional].filter((k) => k.startsWith('HIVE_'))).toEqual([]);
+    expect(EXAMPLE).not.toMatch(/HIVE_|STUDIO_PUBLIC_CALLBACK_BASE_URL/);
+  });
+
+  it('a file without any Hive setting is ready, with no Hive warning or error', () => {
     const text = filledFile();
-    expect(hiveResults(text)).toEqual([{ key: 'HIVE_API_KEY', status: 'ok' }]);
+    expect(text).not.toContain('HIVE_');
+    expect(retired(text)).toEqual([]);
+    expect(check(text).ready).toBe(true);
+    expect(formatReport(check(text))).not.toMatch(/hive/i);
+  });
+
+  it('leftover Hive lines (the old dummy key) are only a reminder to delete them', () => {
+    const leftovers = [
+      "HIVE_V3_SECRET_KEY='dummy-v3-secret-key-000000'",
+      'HIVE_API_VERSION=v3',
+      "STUDIO_PUBLIC_CALLBACK_BASE_URL='https://studio.example.com'",
+    ];
+    const text = `${filledFile()}${leftovers.join('\n')}\n`;
+    const r = retired(text);
+    expect(r.map((x) => x.key).sort()).toEqual([
+      'HIVE_API_VERSION',
+      'HIVE_V3_SECRET_KEY',
+      'STUDIO_PUBLIC_CALLBACK_BASE_URL',
+    ]);
+    expect(r.every((x) => x.status === 'warn' && /no longer used/.test(x.reason ?? ''))).toBe(true);
     expect(check(text).ready).toBe(true);
   });
+});
 
-  it('a V3 Secret Key alone is ready (HIVE_API_VERSION may stay empty)', () => {
-    const text = withHive({ HIVE_V3_SECRET_KEY: 'fakeV3SecretKeyValue000000' });
-    expect(hiveResults(text)).toEqual([{ key: 'HIVE_V3_SECRET_KEY', status: 'ok' }]);
-    expect(check(text).ready).toBe(true);
+describe('Google Veo settings (20.20)', () => {
+  it('are documented in the OPTIONAL section of the server example', () => {
+    const { optional, required } = exampleSections(EXAMPLE);
+    for (const key of ['GOOGLE_GEMINI_API_KEY', 'VEO_MODEL', 'VEO_PERSON_GENERATION']) {
+      expect(optional).toContain(key);
+      expect(required).not.toContain(key);
+    }
   });
 
-  it('neither key → missing, naming both', () => {
-    const r = hiveResults(withHive({}));
-    expect(r).toEqual([expect.objectContaining({ key: 'HIVE_API_KEY', status: 'missing' })]);
-    expect(r[0]?.reason).toContain('HIVE_V3_SECRET_KEY');
-    expect(check(withHive({})).ready).toBe(false);
+  it('are optional: a file without them is ready', () => {
+    expect(check(filledFile()).ready).toBe(true);
   });
 
-  it('HIVE_API_VERSION=v3 needs the V3 key; the unused V2 key is a reminder', () => {
-    const noV3 = filledFile('production', { HIVE_API_VERSION: 'v3' });
-    expect(statusOf(noV3, 'HIVE_V3_SECRET_KEY')).toEqual(['missing']);
-    const both = filledFile('production', {
-      HIVE_API_VERSION: 'v3',
-      HIVE_V3_SECRET_KEY: 'fakeV3SecretKeyValue000000',
+  it('a well-formed key, model and person setting pass', () => {
+    const text = filledFile('production', {
+      GOOGLE_GEMINI_API_KEY: 'FAKE-gemini-key-0123456789abcdefghij',
+      VEO_MODEL: 'veo-3.1-lite-generate-preview',
+      VEO_PERSON_GENERATION: 'allow_all',
     });
-    expect(statusOf(both, 'HIVE_V3_SECRET_KEY')).toEqual(['ok']);
-    expect(statusOf(both, 'HIVE_API_KEY')).toEqual(['warn']);
-    expect(check(both).ready).toBe(true);
-  });
-
-  it('a short V3 value (likely the Access Key ID) is a reminder; spaces are wrong', () => {
-    expect(
-      statusOf(withHive({ HIVE_V3_SECRET_KEY: 'accessKeyId0000000' }), 'HIVE_V3_SECRET_KEY'),
-    ).toEqual(['ok', 'warn']);
-    expect(
-      statusOf(
-        withHive({ HIVE_V3_SECRET_KEY: 'two words here long enough' }),
-        'HIVE_V3_SECRET_KEY',
-      ),
-    ).toEqual(['malformed']);
-    expect(
-      statusOf(withHive({ HIVE_V3_SECRET_KEY: '<paste here>' }), 'HIVE_V3_SECRET_KEY'),
-    ).toEqual(['malformed']);
+    const report = check(text);
+    expect(report.ready).toBe(true);
+    for (const key of ['GOOGLE_GEMINI_API_KEY', 'VEO_MODEL', 'VEO_PERSON_GENERATION']) {
+      expect(statusOf(text, key)).toEqual([]);
+    }
   });
 
   it.each([
-    ['HIVE_API_VERSION', 'v4', 'malformed'],
-    ['HIVE_V3_MAX_FRAMES', '0', 'malformed'],
-    ['HIVE_V3_MAX_FRAMES', '61', 'malformed'],
-  ])('%s=%s → %s', (key, value, status) => {
-    expect(statusOf(filledFile('production', { [key]: value }), key)).toContain(status);
+    ['GOOGLE_GEMINI_API_KEY', 'two words in the key here 0123456789'],
+    ['GOOGLE_GEMINI_API_KEY', 'short'],
+    ['VEO_MODEL', 'veo-2.0-generate-001'],
+    ['VEO_PERSON_GENERATION', 'dont_allow'],
+  ])('%s=%s is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+});
+
+describe('BytePlus Seedance settings (20.23)', () => {
+  const KEYS = [
+    'BYTEPLUS_API_KEY',
+    'SEEDANCE_MODEL',
+    'SEEDANCE_LONG_MODEL',
+    'BYTEPLUS_ARK_BASE_URL',
+  ];
+  // Shape of the operator's real key (2026-10-02): ~179 characters with dots. Fake value.
+  const LONG_DOTTED_KEY = `FAKE.${'a1B2c3D4e5'.repeat(17)}.sig-_xyz`;
+
+  it('are documented in the OPTIONAL section of the server example', () => {
+    const { optional, required } = exampleSections(EXAMPLE);
+    for (const key of KEYS) {
+      expect(optional).toContain(key);
+      expect(required).not.toContain(key);
+    }
   });
 
-  it('HIVE_V3_MAX_FRAMES=20 is fine', () => {
-    expect(
-      statusOf(filledFile('production', { HIVE_V3_MAX_FRAMES: '20' }), 'HIVE_V3_MAX_FRAMES'),
-    ).toEqual([]);
+  it('are optional: a file without them is ready', () => {
+    expect(check(filledFile()).ready).toBe(true);
+  });
+
+  it('a long dotted key, the models and the base URL pass', () => {
+    expect(LONG_DOTTED_KEY.length).toBeGreaterThan(170);
+    const text = filledFile('production', {
+      BYTEPLUS_API_KEY: LONG_DOTTED_KEY,
+      SEEDANCE_MODEL: 'dreamina-seedance-2-0-fast-260128',
+      SEEDANCE_LONG_MODEL: 'dreamina-seedance-2-5-260628',
+      BYTEPLUS_ARK_BASE_URL: 'https://ark.ap-southeast.bytepluses.com/api/v3',
+    });
+    expect(check(text).ready).toBe(true);
+    for (const key of KEYS) expect(statusOf(text, key)).toEqual([]);
+  });
+
+  it.each([
+    ['BYTEPLUS_API_KEY', 'two words in the key here 0123456789abcdef'],
+    ['BYTEPLUS_API_KEY', 'short.key'],
+    ['SEEDANCE_MODEL', 'seedance-1-5-pro-251215'],
+    ['SEEDANCE_LONG_MODEL', 'dreamina-seedance-9'],
+    ['BYTEPLUS_ARK_BASE_URL', 'https://example.com/api/v3'],
+  ])('%s=%s is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+});
+
+describe('Kling settings (20.24)', () => {
+  const KEYS = [
+    'KLING_API_KEY',
+    'KLING_ACCESS_KEY',
+    'KLING_SECRET_KEY',
+    'KLING_MODEL',
+    'KLING_RESOLUTION',
+    'KLING_BASE_URL',
+  ];
+
+  it('are documented in the OPTIONAL section of the server example', () => {
+    const { optional, required } = exampleSections(EXAMPLE);
+    for (const key of KEYS) {
+      expect(optional).toContain(key);
+      expect(required).not.toContain(key);
+    }
+  });
+
+  it('are optional: a file without them is ready', () => {
+    expect(check(filledFile()).ready).toBe(true);
+  });
+
+  it('a well-formed key, model, resolution and base URL pass', () => {
+    const text = filledFile('production', {
+      KLING_API_KEY: 'FAKE-kling-key-0123456789abcdef',
+      KLING_MODEL: 'kling-3.0',
+      KLING_RESOLUTION: '1080p',
+      KLING_BASE_URL: 'https://api-singapore.klingai.com',
+    });
+    expect(check(text).ready).toBe(true);
+    for (const key of KEYS) expect(statusOf(text, key)).toEqual([]);
+  });
+
+  it('the legacy AccessKey + SecretKey pair passes when both are set', () => {
+    const text = filledFile('production', {
+      KLING_ACCESS_KEY: 'FAKE-access-key-0123',
+      KLING_SECRET_KEY: 'FAKE-secret-key-4567',
+    });
+    expect(check(text).ready).toBe(true);
+    expect(statusOf(text, 'KLING_ACCESS_KEY')).toEqual([]);
+    expect(statusOf(text, 'KLING_SECRET_KEY')).toEqual([]);
+  });
+
+  it.each([
+    ['KLING_ACCESS_KEY', 'FAKE-access-key-0123'],
+    ['KLING_SECRET_KEY', 'FAKE-secret-key-4567'],
+  ])('%s without the other half of the pair is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+
+  it.each([
+    ['KLING_API_KEY', 'two words in the key here 0123456789'],
+    ['KLING_API_KEY', 'short'],
+    ['KLING_MODEL', 'kling-v2-6'],
+    ['KLING_RESOLUTION', '4k'],
+    ['KLING_BASE_URL', 'http://api-singapore.klingai.com'],
+  ])('%s=%s is malformed', (key, value) => {
+    expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
   });
 });

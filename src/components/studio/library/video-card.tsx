@@ -12,7 +12,7 @@ import { EmptyIllustration } from '../empty-illustration';
 
 // One reference video in a grid. List results carry only a thumbnail (A3.10: the preview
 // rendition is signed per detail request), so hovering/focusing for a moment fetches the detail
-// and plays the muted, low-res preview in place.
+// and plays the low-res preview in place, muted (the detail player has sound, 20.17).
 
 const HOVER_DELAY_MS = 350;
 

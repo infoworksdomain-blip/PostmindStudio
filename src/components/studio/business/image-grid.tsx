@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
+import { WriteGate } from '../write-gate';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import type { ImageSource, LibraryImage } from './types';
 
@@ -86,14 +87,16 @@ function ImageTile({
           {provider && <p className="opacity-80">{t('stockCredit', { providers: provider })}</p>}
           {image.tags.length > 0 && <p className="truncate opacity-80">{image.tags.join(', ')}</p>}
         </div>
-        <Button
-          variant="secondary"
-          size="icon-xs"
-          aria-label={t('deleteAria', { alt })}
-          onClick={() => setConfirming(true)}
-        >
-          <Trash2 />
-        </Button>
+        <WriteGate>
+          <Button
+            variant="secondary"
+            size="icon-xs"
+            aria-label={t('deleteAria', { alt })}
+            onClick={() => setConfirming(true)}
+          >
+            <Trash2 />
+          </Button>
+        </WriteGate>
       </div>
       <ConfirmDialog
         open={confirming}

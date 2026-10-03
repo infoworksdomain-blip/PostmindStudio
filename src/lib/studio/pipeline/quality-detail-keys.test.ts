@@ -79,7 +79,7 @@ describe('quality detail keys', () => {
     const checks = checksWith({
       blackIntervals: [{ startSec: 1, endSec: 2.5, durationSec: 1.5 }],
       loudnessLufs: null,
-      contentSafety: { unavailable: 'hive is not configured' },
+      contentSafety: { unavailable: 'HTTP 500 from the provider' },
     });
     expect(byCode(checks, 'black_frames')).toMatchObject({
       detailKey: 'blackFrames',
@@ -88,8 +88,20 @@ describe('quality detail keys', () => {
     expect(byCode(checks, 'audio_present')).toMatchObject({ detailKey: 'noAudio' });
     expect(byCode(checks, 'content_safety')).toMatchObject({
       detailKey: 'safetyScanUnavailable',
-      detailParams: { reason: 'hive is not configured' },
+      detailParams: { reason: 'HTTP 500 from the provider' },
     });
+  });
+
+  it('20.21: keys a skipped scan as safetyNotScanned', () => {
+    expect(
+      byCode(checksWith({ contentSafety: { skipped: 'no_provider' } }), 'content_safety'),
+    ).toEqual(
+      expect.objectContaining({
+        status: 'not_run',
+        detailKey: 'safetyNotScanned',
+        detailParams: { reason: 'no_provider' },
+      }),
+    );
   });
 
   it('keys the 15.B2 timeline checks', () => {

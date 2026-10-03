@@ -2,7 +2,7 @@
 
 # Acceptable Use Policy
 
-**Last updated: 30 September 2026**
+**Last updated: 2 October 2026**
 
 This policy sets out what you may not do with PostMind Studio (the **Service**), provided by Postmind AI Ltd. It forms part of our [Terms of Service](/legal/terms), and words with capitals have the meaning given there. It applies to the Customer and to every Authorised User, and to all Inputs, Outputs and publications.
 
@@ -86,7 +86,7 @@ You must not:
 
 ## 8. How we check and enforce this policy
 
-8.1 We use automated tools, including our content-safety provider, to check generated and uploaded content. Content that may breach this policy can be blocked or held for human review before it is published, and flagged content is reviewed by people. We also act on reports from users, rights holders, Connected Platforms and authorities.
+8.1 We use automated checks, such as restricted-topic checks on briefs and scripts and the safety filters built into the AI providers we use, and we may review content manually. Content that may breach this policy can be blocked or held for human review before it is published, and flagged content is reviewed by people. We do not screen every item of content, and you remain responsible for what you approve and publish. We also act on reports from users, rights holders, Connected Platforms and authorities.
 
 8.2 If we reasonably believe this policy has been breached, we may, depending on how serious it is: remove or refuse to publish content; ask a Connected Platform to remove it or remove it ourselves where the platform's API allows; restrict features (such as voice cloning or website scanning); suspend Authorised Users or the Organisation; end the Agreement under the [Terms of Service](/legal/terms); and report the matter to the police or other authorities. Where reasonable we will tell you what we have done and why, and give you a chance to respond.
 

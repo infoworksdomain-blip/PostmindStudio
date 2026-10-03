@@ -43,7 +43,8 @@
       "moreOptions": "Mais opções",
       "required": "Obrigatório"
     },
-    "untitledVideo": "Vídeo sem título"
+    "untitledVideo": "Vídeo sem título",
+    "briefHint": "Está bem curto. Diga para quem é, o que dizer ou o clima que você quer, e o resultado fica melhor. Você ainda pode gerar."
   },
   "shell": {
     "nav": {
@@ -415,7 +416,7 @@
       "body": "Nota de Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Auditoria de Trust & Safety: falha de detecção do Hive",
+      "title": "Auditoria de Trust & Safety: falha de segurança",
       "body": "Um vídeo publicado no {platform} (organização {organisationId}, publicação {publicationId}) foi reprovado na auditoria de {period}: {note}. Siga runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -846,6 +847,10 @@
       "item": "{layer}: feito com {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "Apresentador indisponível",
+      "note": "O apresentador não estava disponível para este vídeo, então esses momentos usam clipes de vídeo."
+    },
     "quality": {
       "title": "Verificação de qualidade",
       "status": {
@@ -880,8 +885,12 @@
       "overrideLabel": "Ignorar a verificação que falhou — motivo (obrigatório, fica registrado)",
       "forceApprove": "Forçar aprovação",
       "overridden": "Verificação de qualidade ignorada.",
+      "softFailureHint": "Essas verificações são orientativas. Assista ao vídeo; se estiver bom, force a aprovação com um motivo curto.",
+      "askToOverride": "Essas verificações são orientativas. Assista ao vídeo; um proprietário ou administrador pode forçar a aprovação.",
+      "blockedNoOverride": "Somente a equipe da PostMind pode remover um bloqueio de segurança de conteúdo.",
       "details": {
         "safetyScanUnavailable": "Não foi possível executar a análise: {reason}",
+        "safetyNotScanned": "Não analisado: nenhuma análise de segurança do conteúdo está configurada.",
         "safetyBlocked": "Bloqueado: {classes}",
         "safetyReview": "Precisa de revisão: {classes}",
         "safetyPassed": "{count, plural, one {# quadro analisado, nada sinalizado.} many {# de quadros analisados, nada sinalizado.} other {# quadros analisados, nada sinalizado.}}",
@@ -1057,6 +1066,28 @@
       "retry": "Tentar de novo",
       "retried": "{count, plural, one {# publicação agendada.} other {# publicações agendadas.}}",
       "stillNone": "Ainda não há horário livre — adicione horários de postagem ou escolha uma data."
+    },
+    "directions": {
+      "title": "Escolha uma direção",
+      "body": "Seu pedido está um pouco vago demais para fazer um bom vídeo. Escolha uma destas direções ou adicione mais detalhes abaixo.",
+      "optionsAria": "Direções sugeridas",
+      "option": "Direção {number}",
+      "use": "Usar esta direção",
+      "useAria": "Usar a direção {number}",
+      "noPermission": "Alguém que possa editar projetos precisa escolher uma direção ou adicionar mais detalhes."
+    },
+    "needsInput": {
+      "editLabel": "Seu briefing",
+      "editSubmit": "Gerar com minhas alterações",
+      "started": "Geração iniciada."
+    },
+    "restricted": {
+      "title": "Confira os temas restritos",
+      "body": "Seu briefing toca em temas que seu kit de marca ou perfil da empresa marca como restritos. Continue mesmo assim se eles servirem para este vídeo, ou edite o briefing para tirá-los.",
+      "topicsAria": "Temas restritos encontrados",
+      "continue": "Continuar mesmo assim",
+      "continueHint": "O vídeo é feito conforme o briefing, incluindo esses temas.",
+      "noPermission": "Alguém que possa editar projetos precisa continuar ou mudar o briefing."
     }
   },
   "slideshow": {
@@ -1589,7 +1620,8 @@
         "images": "Biblioteca de imagens",
         "learned": "O que o Studio aprendeu",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Você tem acesso somente para leitura a este negócio. Peça a um proprietário ou administrador para fazer as alterações."
     },
     "kits": {
       "intro": "O kit padrão é aplicado aos novos vídeos. Os roteiros usam o tom e o público dele; as sobreposições e a composição usam as cores e as fontes.",
@@ -1790,7 +1822,8 @@
       },
       "gridAria": "Biblioteca de imagens",
       "newer": "Mais recentes",
-      "older": "Mais antigas"
+      "older": "Mais antigas",
+      "stockNotConfigured": "As fotos de banco de imagens ainda não estão configuradas, então não há nada para atualizar. As fotos do seu site, os envios e as imagens geradas continuam funcionando."
     },
     "profile": {
       "fields": {
@@ -2034,6 +2067,16 @@
         "planGeneric": "A clonagem de voz não está incluída no seu plano. Faça upgrade do plano para clonar uma voz; as vozes de banco continuam disponíveis.",
         "notConfigured": "A clonagem de voz ainda não está configurada neste servidor ({message})."
       }
+    },
+    "details": {
+      "title": "Dados do negócio",
+      "description": "O nome mostrado na barra superior e o endereço do site deste negócio.",
+      "name": "Nome do negócio",
+      "domain": "Endereço do site (opcional)",
+      "domainHint": "Um nome de host como leedssourdough.co.uk, sem https:// nem caminho.",
+      "domainInvalid": "Use um nome de host como exemplo.co.uk.",
+      "save": "Salvar dados",
+      "saved": "Dados do negócio salvos"
     }
   },
   "connections": {
@@ -2047,7 +2090,8 @@
       "internal_error": "Algo deu errado ao concluir a conexão. Tente novamente.",
       "unknown": "A conexão não foi concluída ({code}). Tente novamente.",
       "meta_no_accounts": "A Meta não compartilhou nenhuma Página do Facebook em que você possa publicar. Conecte de novo e escolha pelo menos uma Página (e a conta do Instagram dela) na janela da Meta.",
-      "wrong_user": "Esta conexão foi iniciada por outro usuário do Studio. Comece de novo com a sua própria sessão."
+      "wrong_user": "Esta conexão foi iniciada por outro usuário do Studio. Comece de novo com a sua própria sessão.",
+      "state_expired": "Esse link de login já foi usado ou expirou. Comece a conexão de novo."
     },
     "dismiss": "Dispensar",
     "pickFirst": {
@@ -2101,7 +2145,8 @@
       "codeLabel": "Código de confirmação:",
       "unknownCode": "Não encontramos nenhuma solicitação de exclusão com este código de confirmação. Confira o link que o Facebook forneceu."
     },
-    "notConfigured": "O {platform} ainda não está disponível: o app do {platform} do Studio ainda precisa ser configurado. Fale com o seu administrador."
+    "notConfigured": "O {platform} ainda não está disponível: o app do {platform} do Studio ainda precisa ser configurado. Fale com o seu administrador.",
+    "readOnly": "Somente proprietários e administradores podem conectar ou desconectar contas."
   },
   "library": {
     "browse": {
@@ -2164,7 +2209,7 @@
       "notFoundTitle": "Referência não encontrada",
       "notFoundBody": "Ela pode ter sido retirada da biblioteca.",
       "loading": "Carregando a referência",
-      "previewAria": "Prévia sem som de {title}",
+      "previewAria": "Prévia de {title}",
       "previewNote": "{minutes, plural, one {Prévia em baixa resolução · o link expira em # min} other {Prévia em baixa resolução · o link expira em # min}}",
       "tagsAria": "Tags",
       "facts": {
@@ -3062,7 +3107,7 @@
       "quotedNote": "“{note}”",
       "review": {
         "title": "Revisão de segurança de conteúdo",
-        "description": "Execuções pausadas por um veredito REVIEW de segurança do roteiro ou por um alerta do Hive de nível revisão (espec. 13.2 / 16.4). Resultados de nível bloqueio nunca chegam a esta fila.",
+        "description": "Execuções pausadas por um veredito REVIEW de segurança do roteiro ou por um alerta de segurança do conteúdo de nível revisão (espec. 13.2 / 16.4). Resultados de nível bloqueio nunca chegam a esta fila.",
         "showAria": "Mostrar revisões",
         "filterWaiting": "Aguardando",
         "filterWaitingCount": "Aguardando ({count})",
@@ -3100,7 +3145,7 @@
       },
       "audit": {
         "title": "Auditoria mensal de Trust & Safety",
-        "description": "Uma amostra aleatória dos vídeos publicados no mês passado, verificados de novo por uma pessoa. Uma falha é um vídeo que a análise do Hive deveria ter bloqueado ou enviado para revisão.",
+        "description": "Uma amostra aleatória dos vídeos publicados no mês passado, verificados de novo por uma pessoa. Uma falha é um vídeo que deveria ter sido bloqueado ou enviado para revisão.",
         "monthAria": "Mês da auditoria",
         "resultAria": "Resultado",
         "filter": {
@@ -3115,7 +3160,7 @@
         "waiting": "Aguardando",
         "passed": "Aprovados",
         "missed": "Falhas",
-        "missRate": "Taxa de falhas da análise do Hive",
+        "missRate": "Taxa de falhas de segurança",
         "missRateHint": "falhas ÷ revisados",
         "emptyNoSampleTitle": "Nenhuma amostra para este mês",
         "emptyNoSampleBody": "A amostra é sorteada no dia 1º às 06:00 UTC. Sorteie agora se o job não rodou.",
@@ -3655,7 +3700,11 @@
       "scan_images_capped": "A análise atingiu o limite de custo ({amount}): algumas imagens não foram indexadas para busca.",
       "ownership_disputed": "Interrompido: a propriedade do site foi contestada.",
       "provider_failure": "{source} informou um problema: {problem}.",
-      "service_unavailable": "Nosso serviço de IA está temporariamente indisponível, por isso não foi possível concluir. Tente novamente mais tarde — nossa equipe já foi avisada."
+      "service_unavailable": "Nosso serviço de IA está temporariamente indisponível, por isso não foi possível concluir. Tente novamente mais tarde — nossa equipe já foi avisada.",
+      "scan_pages_skipped": "{count, plural, one {Não foi possível ler # página e ela foi ignorada.} many {Não foi possível ler # páginas e elas foram ignoradas.} other {Não foi possível ler # páginas e elas foram ignoradas.}}",
+      "scan_images_skipped": "{count, plural, one {Não foi possível baixar # imagem do seu site e ela foi ignorada.} many {Não foi possível baixar # imagens do seu site e elas foram ignoradas.} other {Não foi possível baixar # imagens do seu site e elas foram ignoradas.}}",
+      "stock_not_configured": "Não foi possível adicionar fotos de banco de imagens: ainda não há nenhum serviço de fotos configurado.",
+      "stock_unavailable": "Desta vez não foi possível adicionar algumas fotos de banco de imagens. Use «Atualizar fotos» na biblioteca de imagens para tentar de novo."
     },
     "classes": {
       "rate_limited": "solicitações demais",
@@ -4632,6 +4681,10 @@
     "askOwner": "Só um proprietário da organização pode alterar o plano ou a cobrança. Peça a um proprietário para fazer isso.",
     "lock": {
       "aria": "Requer o plano {tier}"
+    },
+    "seatLimit": {
+      "title": "Todos os assentos do seu plano estão em uso",
+      "body": "Seu plano não tem assento livre para mais uma pessoa. Faça upgrade para ter mais assentos ou remova alguém antes."
     }
   },
   "email": {

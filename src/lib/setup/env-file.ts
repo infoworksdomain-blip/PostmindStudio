@@ -1,13 +1,13 @@
 import { requiredEnvForModes } from '../env';
 import { studioModes, type StudioModes } from '../mode';
+import { isPersonGeneration, isVeoModel, VEO_MODELS } from '../studio/providers/veo';
+import { isArkBaseUrl, isSeedanceModel, SEEDANCE_MODELS } from '../studio/providers/seedance';
 import {
-  HIVE_V2_KEY_ENV,
-  HIVE_V3_KEY_ENV,
-  HIVE_VERSION_ENV,
-  hiveKeyEnv,
-  parseHiveV3MaxFrames,
-  resolveHiveApiVersion,
-} from '../studio/providers/hive-config';
+  isKlingBaseUrl,
+  isKlingModel,
+  isKlingResolution,
+  KLING_MODELS,
+} from '../studio/providers/kling';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -19,9 +19,8 @@ import {
 //   - requiredEnvForModes() from src/lib/env.ts (what assertStartupEnv refuses to start without),
 //     minus the keys deploy/vps/compose.yml sets itself (COMPOSE_SET_KEYS).
 // src/lib/setup/env-file.test.ts pins both, plus deploy.sh's preflight keys.
-// 20.6: the Hive lines of the REQUIRED section are one-of: HIVE_API_KEY (V2) or HIVE_V3_SECRET_KEY
-// (V3), chosen by HIVE_API_VERSION exactly as the worker chooses (providers/hive-config.ts). They
-// are left out of requiredKeys() and checked by hiveChecks() instead.
+// 20.21: Hive was removed (operator decision 2026-10-02); no content-safety key is required, and
+// a leftover HIVE_* line is reported as a warning to delete (RETIRED_KEYS), never as an error.
 //
 // Reports carry key names and reasons only. No function here returns or formats a value.
 
@@ -115,15 +114,24 @@ export function stagingOverrides(exampleText: string): Record<string, string> {
   return out;
 }
 
-/** 20.6: REQUIRED-section keys where one of the set is needed (see hiveChecks). */
-export const HIVE_ONE_OF_KEYS: readonly string[] = [HIVE_V2_KEY_ENV, HIVE_V3_KEY_ENV];
+/**
+ * 20.21: settings Studio no longer reads (Hive content safety and its async callbacks). Set in a
+ * server file they only earn a "no longer used; remove it" warning.
+ */
+export const RETIRED_KEYS: readonly string[] = [
+  'HIVE_API_KEY',
+  'HIVE_V3_SECRET_KEY',
+  'HIVE_API_VERSION',
+  'HIVE_V3_MAX_FRAMES',
+  'HIVE_ASYNC_TIMEOUT_MIN',
+  'STUDIO_PUBLIC_CALLBACK_BASE_URL',
+];
 
 /** Set by deploy/vps/compose.yml from other keys; the operator never writes them. */
 export const COMPOSE_SET_KEYS: readonly string[] = [
   'DATABASE_URL',
   'REDIS_URL',
   'APP_URL',
-  'STUDIO_PUBLIC_CALLBACK_BASE_URL',
   'NODE_ENV',
   'SENTRY_ENVIRONMENT',
 ];
@@ -166,7 +174,7 @@ export function requiredKeys(input: RequiredKeysInput): string[] {
     [...(input.modes.mode === 'core' ? standalone : core)].filter((k) => !own.has(k)),
   );
   const keys = [...required, ...forMode].filter(
-    (k) => !COMPOSE_SET_KEYS.includes(k) && !otherModeOnly.has(k) && !HIVE_ONE_OF_KEYS.includes(k),
+    (k) => !COMPOSE_SET_KEYS.includes(k) && !otherModeOnly.has(k),
   );
   // deploy.sh preflight: core mode also needs the staff organisation ids.
   if (input.modes.mode === 'core') keys.push('STUDIO_PLATFORM_ORG_IDS');
@@ -193,6 +201,19 @@ const minLength =
   (n: number): Validator =>
   (v) =>
     v.length >= n ? null : `must be at least ${n} characters`;
+
+/** 20.24: one half of Kling's legacy AccessKey + SecretKey pair; the other half must be set. */
+function klingPairHalf(
+  value: string,
+  otherHalf: string | undefined,
+  label: 'Access' | 'Secret',
+  otherName: 'ACCESS' | 'SECRET',
+): string | null {
+  if (!/^[^\s'"]{8,}$/.test(value)) {
+    return `must be the ${label} Key from the Kling AI console (one unbroken string, no spaces)`;
+  }
+  return otherHalf ? null : `needs KLING_${otherName}_KEY too (or use KLING_API_KEY instead)`;
+}
 
 const pattern =
   (re: RegExp, reason: string): Validator =>
@@ -293,15 +314,47 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   // 20.16: Pixabay documents no key format (https://pixabay.com/api/docs/, read 2026-10-01), so
   // only a pasted space (two values, or a label copied with the key) is caught.
   PIXABAY_API_KEY: (v) => (/\s/.test(v) ? 'must not contain spaces' : null),
-  HIVE_API_VERSION: (v) => (['v2', 'v3'].includes(v) ? null : 'must be v2 or v3 (or empty)'),
-  HIVE_V3_MAX_FRAMES: (v) => {
-    try {
-      parseHiveV3MaxFrames(v);
-      return null;
-    } catch {
-      return 'must be a whole number from 1 to 60';
-    }
-  },
+  // 20.20 Google Veo (Gemini API). Google does not document the key's format (standard and
+  // authorization keys exist, https://ai.google.dev/gemini-api/docs/api-key), so only its shape
+  // as one unbroken token is checked.
+  GOOGLE_GEMINI_API_KEY: pattern(
+    /^[A-Za-z0-9._-]{30,}$/,
+    'must be the API key from Google AI Studio (one unbroken string, no spaces)',
+  ),
+  VEO_MODEL: (v) =>
+    isVeoModel(v) ? null : `must be one of ${Object.keys(VEO_MODELS).join(', ')} (or empty)`,
+  VEO_PERSON_GENERATION: (v) =>
+    isPersonGeneration(v) ? null : 'must be allow_adult or allow_all (or empty)',
+  // 20.23 BytePlus ModelArk (Seedance). BytePlus documents no key format; the operator's live key
+  // (2026-10-02) is a ~179-character token with dots, so only one unbroken token is checked.
+  BYTEPLUS_API_KEY: pattern(
+    /^[A-Za-z0-9._~+/=-]{32,}$/,
+    'must be the API key from the BytePlus ModelArk console (one unbroken string, no spaces)',
+  ),
+  SEEDANCE_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  SEEDANCE_LONG_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  BYTEPLUS_ARK_BASE_URL: (v) =>
+    isArkBaseUrl(v) ? null : 'must be https://ark.<region>.bytepluses.com/api/v3 (or empty)',
+  // 20.24 Kling 3.0. Kling does not document the API key's format, so only its shape as one
+  // unbroken token is checked (https://kling.ai/document-api/api/get-started/authentication).
+  KLING_API_KEY: pattern(
+    /^[^\s'"]{20,}$/,
+    'must be the API key from the Kling AI console (one unbroken string, no spaces)',
+  ),
+  // The legacy pair works only together (kling.ts klingCredentialsFrom).
+  KLING_ACCESS_KEY: (v, env) => klingPairHalf(v, env.KLING_SECRET_KEY, 'Access', 'SECRET'),
+  KLING_SECRET_KEY: (v, env) => klingPairHalf(v, env.KLING_ACCESS_KEY, 'Secret', 'ACCESS'),
+  KLING_MODEL: (v) =>
+    isKlingModel(v) ? null : `must be one of ${Object.keys(KLING_MODELS).join(', ')} (or empty)`,
+  KLING_RESOLUTION: (v) => (isKlingResolution(v) ? null : 'must be 720p or 1080p (or empty)'),
+  KLING_BASE_URL: (v) =>
+    isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.
@@ -394,18 +447,20 @@ export function checkEnvFile(input: CheckInput): CheckReport {
   const requiredSet = new Set(required);
   for (const [key, entry] of input.file.entries) {
     if (requiredSet.has(key) || entry.value.trim() === '') continue;
-    if (key === HIVE_V2_KEY_ENV || key === HIVE_V3_KEY_ENV) continue; // hiveChecks
+    if (RETIRED_KEYS.includes(key)) {
+      results.push({
+        key,
+        status: 'warn',
+        reason: 'is no longer used (Hive was removed); delete it',
+      });
+      continue;
+    }
 
     const reason = checkValue(key, entry, record);
     if (reason) results.push({ key, status: 'malformed', reason });
   }
 
-  results.push(
-    ...hiveChecks(input.file, record),
-    ...pairChecks(record),
-    ...crossChecks(record),
-    ...stockChecks(record),
-  );
+  results.push(...pairChecks(record), ...crossChecks(record), ...stockChecks(record));
   for (const key of input.file.duplicates)
     results.push({ key, status: 'warn', reason: 'is set more than once; the last line wins' });
   for (const line of input.file.badLines)
@@ -451,53 +506,6 @@ function pairChecks(record: Record<string, string>): CheckResult[] {
       .filter((k) => !isSet(record, k))
       .map((key) => ({ key, status, reason: `${what} needs ${keys.join(', ')} together` }));
   });
-}
-
-/** A V3 Secret Key shorter than this is probably the Access Key ID pasted by mistake. */
-const HIVE_V3_SECRET_MIN_LENGTH = 20;
-
-/**
- * 20.6: content safety needs ONE Hive key: the one HIVE_API_VERSION selects (empty = v3 when only
- * HIVE_V3_SECRET_KEY is set, else v2). The same rule as the worker (hive-config.ts).
- */
-function hiveChecks(file: ParsedEnvFile, record: Record<string, string>): CheckResult[] {
-  let version;
-  try {
-    version = resolveHiveApiVersion(record);
-  } catch {
-    return []; // HIVE_API_VERSION itself is reported by its validator.
-  }
-  const key = hiveKeyEnv(version);
-  const entry = file.entries.get(key);
-  if (!entry || entry.value.trim() === '') {
-    return [
-      {
-        key,
-        status: 'missing',
-        reason: `content safety needs ${HIVE_V2_KEY_ENV} (Hive V2) or ${HIVE_V3_KEY_ENV} (Hive V3); ${HIVE_VERSION_ENV} selects ${version}`,
-      },
-    ];
-  }
-  const reason = checkValue(key, entry, record);
-  if (reason) return [{ key, status: 'malformed', reason }];
-  const value = entry.value.trim();
-  if (/\s/.test(value)) return [{ key, status: 'malformed', reason: 'must not contain spaces' }];
-  const out: CheckResult[] = [{ key, status: 'ok' }];
-  if (version === 'v3' && value.length < HIVE_V3_SECRET_MIN_LENGTH)
-    out.push({
-      key,
-      status: 'warn',
-      reason:
-        'is short for a V3 Secret Key: check you pasted the "Secret Key" column, not the "Access Key ID"',
-    });
-  const other = version === 'v3' ? HIVE_V2_KEY_ENV : HIVE_V3_KEY_ENV;
-  if (isSet(record, other))
-    out.push({
-      key: other,
-      status: 'warn',
-      reason: `is set but not used: ${HIVE_VERSION_ENV} selects ${version} (${key})`,
-    });
-  return out;
 }
 
 function crossChecks(record: Record<string, string>): CheckResult[] {
@@ -555,7 +563,7 @@ function stockChecks(record: Record<string, string>): CheckResult[] {
       key: 'stock images',
       status: 'warn',
       reason:
-        'no stock image key is set: set PIXABAY_API_KEY (free, runbooks/go-live.md 11.2), or PEXELS_API_KEY, STORYBLOCKS_API_*_KEY or UNSPLASH_ACCESS_KEY',
+        'no stock image key is set: set PIXABAY_API_KEY (free, runbooks/go-live.md 11.5), or PEXELS_API_KEY, STORYBLOCKS_API_*_KEY or UNSPLASH_ACCESS_KEY',
     },
   ];
 }

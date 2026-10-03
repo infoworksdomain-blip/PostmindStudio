@@ -1,5 +1,5 @@
 import type { AspectRatio } from '../providers/interface';
-import type { ContentSafetyScan } from '../providers/hive';
+import type { ContentSafetyScan } from '../providers/content-safety';
 import type { BlackInterval, MediaProbe } from './media-probe';
 
 // Layer 8 auto-check panel (spec 13.1). Pure evaluation: given measurements, decide pass/fail.
@@ -30,6 +30,7 @@ export interface QualityCheck {
 
 export const QUALITY_DETAIL_KEYS = [
   'safetyScanUnavailable',
+  'safetyNotScanned',
   'safetyBlocked',
   'safetyReview',
   'safetyPassed',
@@ -70,12 +71,17 @@ export type QualityDetailKey = (typeof QUALITY_DETAIL_KEYS)[number];
 const round = (n: number, digits: number) => Number(n.toFixed(digits));
 
 export const DURATION_TOLERANCE_SEC = 2;
+/**
+ * Spec 13.1 "no black frames > 500 ms". An interval of exactly 0.5 s passes; anything longer
+ * fails. Detection thresholds and why they were kept: media-probe.ts (BLACKDETECT_*, 20.22).
+ */
 export const BLACK_FRAME_MAX_SEC = 0.5;
 export const LUFS_RANGE: [number, number] = [-18, -10];
 const ASPECT_TOLERANCE = 0.01;
 
-// Content-safety policy (spec 13.2 categories; "conservative in v1.0"). Hive class names from
-// docs.thehive.ai. Scores are per-head probabilities in [0, 1].
+// Content-safety policy (spec 13.2 categories; "conservative in v1.0"). The class names follow
+// the taxonomy of the former provider (Hive, removed in 20.21); a future provider maps its labels
+// onto them. Scores are per-class probabilities in [0, 1].
 export const SAFETY_BLOCK_THRESHOLD = 0.8;
 export const SAFETY_REVIEW_THRESHOLD = 0.8;
 export const SAFETY_BLOCK_CLASSES = [
@@ -116,10 +122,29 @@ export interface QualityInputs {
   probe: MediaProbe;
   blackIntervals: BlackInterval[];
   loudnessLufs: number | null;
-  contentSafety: { scan: ContentSafetyScan } | { unavailable: string };
+  /**
+   * 20.21 (operator decision 2026-10-02): `skipped` = no content-safety provider is configured or
+   * available, so nothing was scanned. Recorded as `not_run` ("Not scanned") and the run continues
+   * to the normal review; no Trust & Safety review, no block. A provider that is configured but
+   * answers with a non-retryable error is still a block (`unavailable`), as before.
+   */
+  contentSafety:
+    { scan: ContentSafetyScan } | { unavailable: string } | { skipped: ContentSafetySkipReason };
   /** 15.B2 audio_sync / caption_sync / watermark / brand_kit results (quality-sync.ts). */
   sync?: QualityCheck[];
 }
+
+/** Why a render was not scanned (20.21). */
+export type ContentSafetySkipReason = 'no_provider';
+
+/** metadata.contentSafety on a project whose renders were not scanned (20.21). */
+export interface ContentSafetyState {
+  state: 'skipped';
+  reason: ContentSafetySkipReason;
+}
+
+export const CONTENT_SAFETY_SKIPPED_DETAIL =
+  'Not scanned: no content-safety provider is configured';
 
 const RATIO_VALUE: Record<AspectRatio, number> = {
   '9:16': 9 / 16,
@@ -129,6 +154,16 @@ const RATIO_VALUE: Record<AspectRatio, number> = {
 };
 
 export function evaluateContentSafety(input: QualityInputs['contentSafety']): QualityCheck {
+  if ('skipped' in input) {
+    return {
+      code: 'content_safety',
+      status: 'not_run',
+      severity: 'info',
+      detail: CONTENT_SAFETY_SKIPPED_DETAIL,
+      detailKey: 'safetyNotScanned',
+      detailParams: { reason: input.skipped },
+    };
+  }
   if ('unavailable' in input) {
     return {
       code: 'content_safety',
@@ -272,6 +307,19 @@ export function evaluateQuality(input: QualityInputs): QualityCheck[] {
     checks.push({ code, status: 'not_run', severity: 'info', detail: reason, detailKey });
   }
   return checks;
+}
+
+/** The failed checks of every render as one line (project errorReason, logs). */
+export function summarise(results: Array<{ platform: string; checks: QualityCheck[] }>): string {
+  return results
+    .flatMap(({ platform, checks }) =>
+      checks
+        .filter((c) => c.status === 'failed')
+        .map(
+          (c) => `${platform}/${c.code}${c.severity === 'block' ? ' [BLOCK]' : ''}: ${c.detail}`,
+        ),
+    )
+    .join('; ');
 }
 
 export function qualityPassed(checks: QualityCheck[]): boolean {

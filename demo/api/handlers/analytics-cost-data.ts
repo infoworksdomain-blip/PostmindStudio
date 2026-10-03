@@ -29,7 +29,6 @@ const VIDEO_MIX: Array<[string, number, number, 'plan' | 'make']> = [
   ['elevenlabs', 3, 54, 'make'],
   ['elevenlabs-music', 1, 38, 'make'],
   ['shotstack', 3, 126, 'make'],
-  ['hive', 3, 9, 'make'],
 ];
 
 const rows: LedgerRow[] = [];
@@ -81,7 +80,7 @@ function project(
 
 // Leeds Sourdough — matches the projects' states in ids.ts.
 project(PROJECTS.meetTheBakers.id, 15, 15, 0.4, {
-  skip: ['runway', 'luma', 'elevenlabs', 'elevenlabs-music', 'shotstack', 'hive'],
+  skip: ['runway', 'luma', 'elevenlabs', 'elevenlabs-music', 'shotstack'],
 });
 project(PROJECTS.morningRitual.id, 11, 10, 0.9);
 project(PROJECTS.sourdoughClass.id, 9, 8, 1.1, { failed: { runway: 1 } });
@@ -96,9 +95,8 @@ add(DEMO_ORG_ID, PROJECTS.loyaltyCard.id, 1, 'openai', 2, 16);
 // Business scans and weekly content suggestions (no project).
 for (let d = 0; d < 90; d += 1) {
   if (d % 7 === 1) add(DEMO_ORG_ID, null, d, 'anthropic', 3, 24 + (d % 5) * 3);
-  // Daily caption/hashtag suggestions and moderation checks on scheduled posts.
+  // Daily caption/hashtag suggestions on scheduled posts.
   if (d % 3 !== 2) add(DEMO_ORG_ID, null, d, 'anthropic', 2 + (d % 3), 9 + ((d * 7) % 11));
-  if (d % 4 === 0) add(DEMO_ORG_ID, null, d, 'hive', 2, 3);
 }
 add(DEMO_ORG_ID, null, 20, 'openai', 4, 32);
 
@@ -114,15 +112,15 @@ function prng(seed: number) {
 }
 
 const ORG_PROFILES: Array<[string, number, string[]]> = [
-  [OTHER_ORGS.harrogate, 1500, ['runway', 'luma', 'elevenlabs', 'shotstack', 'anthropic', 'hive']],
+  [OTHER_ORGS.harrogate, 1500, ['runway', 'luma', 'elevenlabs', 'shotstack', 'anthropic']],
   [
     OTHER_ORGS.york,
     4200,
-    ['runway', 'luma', 'kling', 'elevenlabs', 'elevenlabs-music', 'shotstack', 'anthropic', 'hive'],
+    ['runway', 'luma', 'kling', 'elevenlabs', 'elevenlabs-music', 'shotstack', 'anthropic'],
   ],
   [OTHER_ORGS.bramley, 600, ['pika', 'elevenlabs', 'shotstack', 'anthropic']],
   [OTHER_ORGS.kirkstall, 450, ['luma', 'elevenlabs', 'creatomate', 'anthropic']],
-  [OTHER_ORGS.platform, 2600, ['anthropic', 'openai', 'assemblyai', 'hive']],
+  [OTHER_ORGS.platform, 2600, ['anthropic', 'openai', 'assemblyai']],
 ];
 const SHARE: Record<string, number> = {
   runway: 0.5,
@@ -136,7 +134,6 @@ const SHARE: Record<string, number> = {
   anthropic: 0.08,
   openai: 0.25,
   assemblyai: 0.3,
-  hive: 0.02,
 };
 ORG_PROFILES.forEach(([org, daily, providers], oi) => {
   const rnd = prng(97 + oi * 31);

@@ -15,6 +15,10 @@ import { SYSTEM_ACTOR_PREFIX } from './approval';
 //     ALLOW (WARN / REVIEW always go to a person). Checks recorded as `not_run` (features not
 //     built yet: watermark, caption sync, …) do not block — they are shown to a human reviewer
 //     the same way and never claim to have passed.
+//   - 20.21 (operator decision 2026-10-02, Hive removed): content safety recorded as `not_run`
+//     ("Not scanned": no content-safety provider is configured) follows the project's review
+//     policy like any other not-run check, so trusted creators and month plans keep auto-approval.
+//     A flagged or failed scan, or no content-safety check at all, still goes to a person.
 
 export const DEFAULT_TRUST_THRESHOLD = 10;
 export const MAX_TRUST_THRESHOLD = 1_000;
@@ -110,7 +114,7 @@ function renderProblem(render: RenderForDecision): ReviewDecision | null {
       platform: where,
     });
   const safety = checks.find((c) => c.code === 'content_safety');
-  if (!safety || safety.status !== 'passed')
+  if (!safety || (safety.status !== 'passed' && safety.status !== 'not_run'))
     return review(
       'content_safety_flag',
       `Needs review: the ${where} variant's content-safety scan ${safety ? 'flagged it' : 'did not run'}`,

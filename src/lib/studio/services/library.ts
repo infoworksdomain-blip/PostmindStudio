@@ -20,9 +20,18 @@ import {
 } from '../library/ingest-runs';
 import { categorySlugFilter } from '../library/category-filter';
 import { buildBlueprint, effectiveAllowedModes, styleSignature } from '../library/blueprint';
+import {
+  createUncachedLibraryCache,
+  LIBRARY_CACHE_TTL_SEC,
+  LIBRARY_RECOMMENDED_TTL_SEC,
+  normaliseQuery,
+  type Jsonified,
+  type LibraryCache,
+} from '../library/cache';
 import { searchLibrary } from '../library/search';
 import { recommendedVideos, similarVideos } from '../library/similarity';
 import { categoryTree } from '../library/taxonomy';
+import { signThumbnail } from '../library/thumbnail-signing';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
@@ -33,6 +42,8 @@ import { toPlanTier } from './catalog';
 // BACKLOG 9.6 / Addendum A3.9 — library endpoints for users (browse, detail, similar,
 // recommended, categories, blueprint) and staff (ingest, edit, retire). A3.10: users never get
 // a download of a reference video — only a thumbnail and a short-lived in-picker preview.
+// 20.15: user reads go through the shared library cache (library/cache.ts); every staff write
+// here bumps the catalogue version so the next read sees it.
 
 type Db = PrismaClient;
 
@@ -42,8 +53,30 @@ type Db = PrismaClient;
  * video_library_licenses row, matching free-text search (BACKLOG 15.D7).
  */
 export const USABLE_LIBRARY_ITEM = { retiredAt: null, license: { isNot: null } } as const;
-const THUMB_TTL_SEC = 60 * 60;
 const PREVIEW_TTL_SEC = 10 * 60;
+
+/**
+ * 20.15: browser cache for GET library responses. Private (they sit behind sign-in, so no shared
+ * cache may keep them) and short (a staff edit shows within a minute even in an open tab).
+ */
+export const LIBRARY_RESPONSE_HEADERS: Readonly<Record<string, string>> = {
+  'cache-control': 'private, max-age=60',
+};
+
+/**
+ * 20.15: what the user-facing library reads need. `cache` absent = every read goes to the
+ * database (tests, no Redis); `now` drives the thumbnail signing window (default Date.now).
+ */
+export interface LibraryReadDeps {
+  db: Db;
+  storage: AssetStorage;
+  cache?: LibraryCache;
+  now?: () => number;
+}
+
+const UNCACHED = createUncachedLibraryCache();
+const cacheOf = (deps: { cache?: LibraryCache }) => deps.cache ?? UNCACHED;
+const nowOf = (deps: { now?: () => number }) => (deps.now ?? Date.now)();
 
 export const listLibraryQuery = z.object({
   category: z.string().trim().max(200).optional(),
@@ -63,6 +96,7 @@ export const listLibraryQuery = z.object({
   cursor: z.string().max(64).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(24),
 });
+type ListQuery = z.infer<typeof listLibraryQuery>;
 
 const summary = {
   id: true,
@@ -81,19 +115,65 @@ const summary = {
 
 type SummaryRow = Prisma.VideoLibraryItemGetPayload<{ select: typeof summary }>;
 
-async function present(storage: AssetStorage, row: SummaryRow) {
-  const { s3Bucket, thumbnailS3Key, license, ...rest } = row;
+/** The licence fields user reads need; cached raw, so expiry is judged per response. */
+type LicenceTerms = { allowedModes: string[]; licenseExpires: Date | null } | null;
+
+/** Modes for a cached (JSON) licence: expired licences allow nothing (effectiveAllowedModes). */
+function modesNow(licence: Jsonified<LicenceTerms>, nowMs: number): string[] {
+  return effectiveAllowedModes(
+    licence && {
+      allowedModes: licence.allowedModes,
+      licenseExpires: licence.licenseExpires ? new Date(licence.licenseExpires) : null,
+    },
+    nowMs,
+  );
+}
+
+function licenceTerms(
+  license: { allowedModes: string[]; licenseExpires: Date | null } | null,
+): LicenceTerms {
+  return license
+    ? { allowedModes: license.allowedModes, licenseExpires: license.licenseExpires }
+    : null;
+}
+
+/** A summary as cached: no signed URL, raw licence terms, the storage location for signing. */
+function unsigned(row: SummaryRow) {
+  const { license, ...rest } = row;
+  return { ...rest, licence: licenceTerms(license) };
+}
+
+/** Sign at the edge: drop the storage location, add the window-stable thumbnail URL. */
+type CachedSummary = {
+  s3Bucket: string;
+  thumbnailS3Key: string;
+  licence: Jsonified<LicenceTerms>;
+};
+
+async function signSummary<T extends CachedSummary>(storage: AssetStorage, row: T, nowMs: number) {
+  const { s3Bucket, thumbnailS3Key, licence, ...rest } = row;
   return {
     ...rest,
-    allowedModes: effectiveAllowedModes(license, Date.now()),
-    thumbnailUrl: await storage.signedUrl(s3Bucket, thumbnailS3Key, THUMB_TTL_SEC),
+    allowedModes: modesNow(licence, nowMs),
+    thumbnailUrl: await signThumbnail(storage, s3Bucket, thumbnailS3Key, nowMs),
   };
 }
 
-export async function listLibraryVideos(
-  deps: { db: Db; storage: AssetStorage },
-  query: z.infer<typeof listLibraryQuery>,
-) {
+function signRows<T extends CachedSummary>(deps: LibraryReadDeps, rows: T[]) {
+  const nowMs = nowOf(deps);
+  return Promise.all(rows.map((r) => signSummary(deps.storage, r, nowMs)));
+}
+
+/** The list cache key: tags deduplicated and sorted (hasEvery ignores their order). */
+export function listCacheKey(query: ListQuery): Record<string, unknown> {
+  return {
+    ...query,
+    mood: query.mood?.toLowerCase(),
+    tags: query.tags?.length ? [...new Set(query.tags)].sort() : undefined,
+  };
+}
+
+async function loadListPage(db: Db, query: ListQuery) {
   const where: Prisma.VideoLibraryItemWhereInput = {
     ...USABLE_LIBRARY_ITEM,
     ...(query.category && { category: categorySlugFilter(query.category) }),
@@ -106,7 +186,7 @@ export async function listLibraryVideos(
     }),
     ...(query.mood && { analysis: { moodTag: { contains: query.mood, mode: 'insensitive' } } }),
   };
-  const rows = await deps.db.videoLibraryItem.findMany({
+  const rows = await db.videoLibraryItem.findMany({
     where,
     select: summary,
     orderBy: [{ ingestedAt: 'desc' }, { id: 'desc' }],
@@ -115,65 +195,82 @@ export async function listLibraryVideos(
   });
   const page = rows.slice(0, query.limit);
   return {
-    data: await Promise.all(page.map((r) => present(deps.storage, r))),
+    rows: page.map(unsigned),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
 
-export async function getLibraryVideo(deps: { db: Db; storage: AssetStorage }, id: string) {
-  const item = await deps.db.videoLibraryItem.findFirst({
+export async function listLibraryVideos(deps: LibraryReadDeps, query: ListQuery) {
+  const page = await cacheOf(deps).read('list', listCacheKey(query), LIBRARY_CACHE_TTL_SEC, () =>
+    loadListPage(deps.db, query),
+  );
+  return { data: await signRows(deps, page.rows), nextCursor: page.nextCursor };
+}
+
+async function loadDetail(db: Db, id: string) {
+  const item = await db.videoLibraryItem.findFirst({
     where: { id, ...USABLE_LIBRARY_ITEM },
     include: { analysis: true, license: true, category: { select: { slug: true, name: true } } },
   });
   if (!item) throw new NotFoundError('Library video not found');
   const { analysis, license } = item;
   // A3.10: an explicit allow-list. Users get the structure summary, never the reference's own
-  // content (transcript, per-shot text, overlay timeline) nor staff / source fields.
+  // content (transcript, per-shot text, overlay timeline) nor staff / source fields. 20.15: this
+  // trimmed shape is what is cached, plus the storage location (for signing, never returned)
+  // and the raw licence terms (modes are judged per response, so an expiry is never stale).
   return {
-    id: item.id,
-    title: item.title,
-    description: item.description,
-    tags: item.tags,
-    durationSec: item.durationSec,
-    aspectRatio: item.aspectRatio,
-    sourcePlatform: item.sourcePlatform,
-    ingestedAt: item.ingestedAt,
-    category: item.category,
-    analysis: analysis && {
-      shotCount: analysis.shotCount,
-      hookPattern: analysis.hookPattern,
-      structurePattern: analysis.structurePattern,
-      ctaPattern: analysis.ctaPattern,
-      paceTag: analysis.paceTag,
-      moodTag: analysis.moodTag,
+    view: {
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      tags: item.tags,
+      durationSec: item.durationSec,
+      aspectRatio: item.aspectRatio,
+      sourcePlatform: item.sourcePlatform,
+      ingestedAt: item.ingestedAt,
+      category: item.category,
+      analysis: analysis && {
+        shotCount: analysis.shotCount,
+        hookPattern: analysis.hookPattern,
+        structurePattern: analysis.structurePattern,
+        ctaPattern: analysis.ctaPattern,
+        paceTag: analysis.paceTag,
+        moodTag: analysis.moodTag,
+      },
     },
-    allowedModes: effectiveAllowedModes(license, Date.now()),
-    thumbnailUrl: await deps.storage.signedUrl(item.s3Bucket, item.thumbnailS3Key, THUMB_TTL_SEC),
-    // Only the low-res muted preview rendition is ever signed for users (A3.10).
-    previewUrl: await deps.storage.signedUrl(
-      item.s3Bucket,
-      previewKey(item.s3Key),
-      PREVIEW_TTL_SEC,
-    ),
+    licence: licenceTerms(license),
+    storage: { bucket: item.s3Bucket, key: item.s3Key, thumbnailKey: item.thumbnailS3Key },
+  };
+}
+
+export async function getLibraryVideo(deps: LibraryReadDeps, id: string) {
+  const cached = await cacheOf(deps).read('detail', { id }, LIBRARY_CACHE_TTL_SEC, () =>
+    loadDetail(deps.db, id),
+  );
+  const nowMs = nowOf(deps);
+  const { bucket, key, thumbnailKey } = cached.storage;
+  return {
+    ...cached.view,
+    allowedModes: modesNow(cached.licence, nowMs),
+    thumbnailUrl: await signThumbnail(deps.storage, bucket, thumbnailKey, nowMs),
+    // Only the low-res preview rendition is ever signed for users (A3.10); it stays
+    // short-lived and signed per request.
+    previewUrl: await deps.storage.signedUrl(bucket, previewKey(key), PREVIEW_TTL_SEC),
     previewExpiresInSec: PREVIEW_TTL_SEC,
   };
 }
 
-async function hydrate(
-  deps: { db: Db; storage: AssetStorage },
-  hits: Array<{ id: string; similarity: number }>,
-) {
-  const rows = await deps.db.videoLibraryItem.findMany({
+/** Summaries (unsigned) for ranked hits, in hit order; retired / unlicensed rows drop out. */
+async function hydrateRows(db: Db, hits: Array<{ id: string; similarity: number }>) {
+  const rows = await db.videoLibraryItem.findMany({
     where: { id: { in: hits.map((h) => h.id) }, ...USABLE_LIBRARY_ITEM },
     select: summary,
   });
   const byId = new Map(rows.map((r) => [r.id, r]));
-  const out = [];
-  for (const hit of hits) {
+  return hits.flatMap((hit) => {
     const row = byId.get(hit.id);
-    if (row) out.push({ ...(await present(deps.storage, row)), similarity: hit.similarity });
-  }
-  return out;
+    return row ? [{ ...unsigned(row), similarity: hit.similarity }] : [];
+  });
 }
 
 export const similarInput = z
@@ -181,11 +278,17 @@ export const similarInput = z
   .strict();
 
 export async function similarLibraryVideos(
-  deps: { db: Db; storage: AssetStorage },
+  deps: LibraryReadDeps,
   id: string,
   input: z.infer<typeof similarInput>,
 ) {
-  return { data: await hydrate(deps, await similarVideos(deps.db, id, input.limit)) };
+  const rows = await cacheOf(deps).read(
+    'similar',
+    { id, limit: input.limit },
+    LIBRARY_CACHE_TTL_SEC,
+    async () => hydrateRows(deps.db, await similarVideos(deps.db, id, input.limit)),
+  );
+  return { data: await signRows(deps, rows) };
 }
 
 export const recommendedQuery = z.object({
@@ -194,21 +297,39 @@ export const recommendedQuery = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(12),
 });
 
+/**
+ * Nearest to the business profile. 20.15: cached per (organisation, business, category, limit)
+ * and catalogue version for LIBRARY_RECOMMENDED_TTL_SEC, so a repeat view makes no embedding call.
+ */
 export async function recommendedLibraryVideos(
-  deps: { db: Db; storage: AssetStorage; providers: ProviderRunDeps },
+  deps: LibraryReadDeps & { providers: ProviderRunDeps },
   tenant: TenantContext,
   query: z.infer<typeof recommendedQuery>,
 ) {
-  const hits = await recommendedVideos(
-    deps,
+  const businessId = parseBusinessId(query.businessId);
+  const rows = await cacheOf(deps).read(
+    'recommended',
     {
       organisationId: tenant.organisationId,
-      businessId: parseBusinessId(query.businessId),
-      planTier: toPlanTier(tenant.organisation.planTier),
+      businessId,
+      category: query.category,
+      limit: query.limit,
     },
-    { limit: query.limit, categorySlug: query.category },
+    LIBRARY_RECOMMENDED_TTL_SEC,
+    async () => {
+      const hits = await recommendedVideos(
+        deps,
+        {
+          organisationId: tenant.organisationId,
+          businessId,
+          planTier: toPlanTier(tenant.organisation.planTier),
+        },
+        { limit: query.limit, categorySlug: query.category },
+      );
+      return hydrateRows(deps.db, hits);
+    },
   );
-  return { data: await hydrate(deps, hits) };
+  return { data: await signRows(deps, rows) };
 }
 
 export const searchLibraryInput = z
@@ -224,45 +345,86 @@ export const searchLibraryInput = z
   })
   .strict();
 
-/** POST /library/search (BACKLOG 13.8): embedding + pgvector + keyword boost, offset cursor. */
+/**
+ * POST /library/search (BACKLOG 13.8): embedding + pgvector + keyword boost, offset cursor.
+ * 20.15: the page is cached per (normalised query, every filter, limit, cursor) and catalogue
+ * version; the query embedding separately for 30 days (a repeated query never pays again).
+ */
 export async function searchLibraryVideos(
-  deps: { db: Db; storage: AssetStorage; providers: ProviderRunDeps },
+  deps: LibraryReadDeps & { providers: ProviderRunDeps },
   tenant: TenantContext,
   input: z.infer<typeof searchLibraryInput>,
 ) {
-  const page = await searchLibrary(
-    deps,
+  const q = normaliseQuery(input.q);
+  const page = await cacheOf(deps).read(
+    'search',
     {
-      organisationId: tenant.organisationId,
-      planTier: toPlanTier(tenant.organisation.planTier),
+      q,
+      categorySlug: input.categorySlug,
+      durationMin: input.durationMin,
+      durationMax: input.durationMax,
+      mood: input.mood?.toLowerCase(),
+      tags: input.tags?.length ? [...new Set(input.tags)].sort() : undefined,
+      limit: input.limit,
+      cursor: input.cursor ?? null,
     },
-    input,
+    LIBRARY_CACHE_TTL_SEC,
+    async () => {
+      const found = await searchLibrary(
+        { db: deps.db, providers: deps.providers, cache: cacheOf(deps) },
+        {
+          organisationId: tenant.organisationId,
+          planTier: toPlanTier(tenant.organisation.planTier),
+        },
+        { ...input, q },
+      );
+      const scores = new Map(found.hits.map((h) => [h.id, h.score]));
+      const rows = await hydrateRows(deps.db, found.hits);
+      return {
+        rows: rows.map((row) => ({ ...row, score: scores.get(row.id) ?? row.similarity })),
+        nextCursor: found.nextCursor,
+      };
+    },
   );
-  const items = await hydrate(deps, page.hits);
-  const scores = new Map(page.hits.map((h) => [h.id, h.score]));
-  return {
-    data: items.map((item) => ({ ...item, score: scores.get(item.id) ?? item.similarity })),
-    nextCursor: page.nextCursor,
-  };
+  return { data: await signRows(deps, page.rows), nextCursor: page.nextCursor };
 }
 
-export function libraryCategories(db: Db) {
-  return categoryTree(db);
+export function libraryCategories(db: Db, cache?: LibraryCache) {
+  return cacheOf({ cache }).read('categories', {}, LIBRARY_CACHE_TTL_SEC, () => categoryTree(db));
 }
 
-/** GET /library/blueprint/:id — what TEMPLATE mode would apply (and INSPIRE's signature). */
-export async function libraryBlueprint(db: Db, id: string) {
+async function loadBlueprint(db: Db, id: string) {
   const item = await db.videoLibraryItem.findFirst({
     where: { id, ...USABLE_LIBRARY_ITEM },
     include: { analysis: true, license: true },
   });
   if (!item?.analysis) throw new NotFoundError('Library video not found');
-  const modes = effectiveAllowedModes(item.license, Date.now());
+  const licence = licenceTerms(item.license);
   return {
     libraryVideoId: item.id,
-    allowedModes: modes,
-    blueprint: modes.includes('TEMPLATE') ? buildBlueprint(item.analysis) : null,
+    licence,
+    // Built whenever the licence terms allow TEMPLATE; withheld per response once expired.
+    blueprint: licence?.allowedModes.includes('TEMPLATE') ? buildBlueprint(item.analysis) : null,
     styleSignature: styleSignature(item.analysis),
+  };
+}
+
+/** GET /library/blueprint/:id — what TEMPLATE mode would apply (and INSPIRE's signature). */
+export async function libraryBlueprint(
+  db: Db,
+  id: string,
+  cache?: LibraryCache,
+  now: () => number = Date.now,
+) {
+  const cached = await cacheOf({ cache }).read('blueprint', { id }, LIBRARY_CACHE_TTL_SEC, () =>
+    loadBlueprint(db, id),
+  );
+  const modes = modesNow(cached.licence, now());
+  return {
+    libraryVideoId: cached.libraryVideoId,
+    allowedModes: modes,
+    blueprint: modes.includes('TEMPLATE') ? cached.blueprint : null,
+    styleSignature: cached.styleSignature,
   };
 }
 
@@ -353,10 +515,12 @@ export const adminPatchInput = z
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
 
+/** 20.15: `cache` gets a version bump after the write (metadata, category or licence). */
 export async function adminPatchLibraryVideo(
   db: Db,
   id: string,
   input: z.infer<typeof adminPatchInput>,
+  cache?: LibraryCache,
 ) {
   const item = await db.videoLibraryItem.findUnique({ where: { id }, include: { license: true } });
   if (!item) throw new NotFoundError('Library video not found');
@@ -366,7 +530,7 @@ export async function adminPatchLibraryVideo(
     if (!category) throw new ValidationError('Unknown category slug');
     categoryId = category.id;
   }
-  return db.$transaction(async (tx) => {
+  const updated = await db.$transaction(async (tx) => {
     const updated = await tx.videoLibraryItem.update({
       where: { id },
       data: {
@@ -406,13 +570,20 @@ export async function adminPatchLibraryVideo(
     }
     return updated;
   });
+  const licenceChanged =
+    input.licenseScenario !== undefined ||
+    input.licenseExpires !== undefined ||
+    input.licenseSource !== undefined;
+  await cache?.bump(licenceChanged ? 'admin-licence-change' : 'admin-edit');
+  return updated;
 }
 
 /** A3.8: hide from search, keep history (projects that referenced it keep working records). */
-export async function retireLibraryVideo(db: Db, id: string, now: number) {
+export async function retireLibraryVideo(db: Db, id: string, now: number, cache?: LibraryCache) {
   const updated = await db.videoLibraryItem.updateMany({
     where: { id, retiredAt: null },
     data: { retiredAt: new Date(now) },
   });
   if (updated.count === 0) throw new NotFoundError('Library video not found or already retired');
+  await cache?.bump('retire');
 }

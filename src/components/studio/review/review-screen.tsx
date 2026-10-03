@@ -29,7 +29,14 @@ import { ShotsTab } from './shots-tab';
 import { PUBLISHABLE } from './types';
 import { VariantCard } from './variant-card';
 import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
-import { AutoResumeNote, FallbackNote, SafetyReviewNote } from './paused-notes';
+import { DirectionsPanel, needsDirection } from './directions-panel';
+import { needsTopicConfirmation, RestrictedTopicsPanel } from './restricted-topics-panel';
+import {
+  AutoResumeNote,
+  FallbackNote,
+  PresenterFallbackNote,
+  SafetyReviewNote,
+} from './paused-notes';
 import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.4 — Review (spec 14.2): one screen, all variants. Polls every 4 s while the
@@ -133,6 +140,12 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
       />
       <div className="flex flex-col gap-6">
         <PipelineStrip state={project.state} />
+        {/* 20.18: the brief was too vague — choose a suggested direction or add detail. */}
+        {needsDirection(project) && <DirectionsPanel project={project} onChanged={refresh} />}
+        {/* 20.18 (spec 13.3): restricted topics found — continue anyway or edit the brief. */}
+        {needsTopicConfirmation(project) && (
+          <RestrictedTopicsPanel project={project} onChanged={refresh} />
+        )}
         {project.errorReason &&
           ['FAILED', 'REJECTED', 'QUALITY_FAILED'].includes(project.state) && (
             <p
@@ -146,6 +159,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         <AutoResumeNote project={project} onChanged={refresh} />
         <SafetyReviewNote project={project} />
         <FallbackNote project={project} />
+        <PresenterFallbackNote project={project} />
         <ApprovalStepIndicator project={project} />
         <ApprovalBar project={project} onChanged={refresh} />
         <AutomationPanel project={project} onChanged={refresh} />

@@ -2,7 +2,7 @@
 
 # Privacy Policy
 
-**Last updated: 30 September 2026**
+**Last updated: 2 October 2026**
 
 This policy explains how Postmind AI Ltd collects and uses personal data when you use PostMind Studio (the **Service**) or visit our website, and the rights you have. Words with capitals, such as **Customer**, **Organisation**, **Authorised User** and **Customer Content**, have the meaning given in our [Terms of Service](/legal/terms).
 
@@ -47,7 +47,7 @@ This policy explains how Postmind AI Ltd collects and uses personal data when yo
 | Taking payment, preventing repeat free trials, invoicing and keeping accounting records                                                                    | Billing data                                                   | Performance of contract; legal obligation (tax and company law); legitimate interests in preventing trial abuse                     |
 | Sending service emails (sign-in links, verification, security alerts, billing, generation and publishing notifications)                                    | Account data, communications                                   | Performance of contract; legitimate interests in keeping you informed about your account                                            |
 | Security: preventing fraud and abuse, rate limiting, two-step verification, detecting and investigating incidents, audit logging                           | Usage, device and security data                                | Legitimate interests in keeping the Service and our Customers secure; legal obligation (security of processing)                     |
-| Content safety: automated checks of content for material that breaches our [Acceptable Use Policy](/legal/acceptable-use), human review of flagged content | Content                                                        | Legitimate interests in preventing illegal and harmful content; legal obligation where the law requires us to act                   |
+| Content safety: automated checks of briefs, scripts and other content for material that breaches our [Acceptable Use Policy](/legal/acceptable-use), including our AI providers' safety filters, and human review of flagged content | Content                                                        | Legitimate interests in preventing illegal and harmful content; legal obligation where the law requires us to act                   |
 | Customer support and answering your questions                                                                                                              | Account data, communications, content you share with support   | Performance of contract; legitimate interests                                                                                       |
 | Improving and maintaining the Service, using aggregated or de-identified information                                                                       | Usage data                                                     | Legitimate interests in improving the Service                                                                                       |
 | Complying with the law, responding to lawful requests, and establishing or defending legal claims                                                          | Any relevant data                                              | Legal obligation; legitimate interests                                                                                              |
@@ -60,9 +60,9 @@ This policy explains how Postmind AI Ltd collects and uses personal data when yo
 
 ## 5. AI processing and automated decisions
 
-5.1 The Service sends your prompts, briefs and other Inputs to AI providers to generate scripts, images, video, voice-overs and music, to transcribe audio and to check content safety. We use these providers under business or API terms, which we select so that, as far as those terms allow, they do not use your content to train their models. We do not use Customer Content to train AI models ourselves.
+5.1 The Service sends your prompts, briefs and other Inputs to AI providers to generate scripts, images, video, voice-overs and music and to transcribe audio. These providers also apply their own safety filters to what they generate. We use these providers under business or API terms, which we select so that, as far as those terms allow, they do not use your content to train their models. We do not use Customer Content to train AI models ourselves.
 
-5.2 We do not make decisions about individuals based solely on automated processing that have legal or similarly significant effects. Automated content-safety checks can hold a video for human review; a person at the Customer or at our company decides what happens next. Generating content with AI is not a decision about you.
+5.2 We do not make decisions about individuals based solely on automated processing that have legal or similarly significant effects. Automated checks, such as restricted-topic checks, can hold a video for human review; a person at the Customer or at our company decides what happens next. Generating content with AI is not a decision about you.
 
 ## 6. Who we share personal data with
 

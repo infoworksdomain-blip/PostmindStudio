@@ -65,6 +65,11 @@ interface ProviderRequestBase {
   organisationId: string;
   projectId?: string;
   shotId?: string;
+  /**
+   * 20.23: the plan tier of the operation, added by runProvider (pipeline/provider-run.ts) for
+   * adapters whose model depends on it (Seedance: 2.5 on PLUS / ENTERPRISE). Others ignore it.
+   */
+  planTier?: 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
 }
 
 export interface TextGenerationRequest extends ProviderRequestBase {
@@ -172,11 +177,6 @@ export interface ContentSafetyRequest extends ProviderRequestBase {
   /** Publicly fetchable (e.g. presigned) URL of the rendered video. */
   mediaUrl: string;
   durationSec: number;
-  /**
-   * BACKLOG 13.25: where the provider posts the result of an asynchronous scan. Required for
-   * media longer than the provider's synchronous limit (Hive: 90 s); ignored otherwise.
-   */
-  callbackUrl?: string;
 }
 
 export interface SfxRequest extends ProviderRequestBase {
@@ -233,4 +233,9 @@ export interface ProviderAdapter {
   poll(providerJobId: string): Promise<ProviderPollResult>;
   cancel(providerJobId: string): Promise<void>;
   healthCheck(): Promise<{ healthy: boolean; reason?: string }>;
+  /**
+   * 20.20: download the provider's own output URL when it needs the provider's credentials
+   * (Veo: the x-goog-api-key header). Layer 3 uses it instead of a plain fetch when present.
+   */
+  fetchOutput?(url: string): Promise<Response>;
 }

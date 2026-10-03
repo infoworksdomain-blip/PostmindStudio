@@ -95,7 +95,7 @@ describe.skipIf(!hasDb)('Track C project inputs API', { timeout: 60_000 }, () =>
     const above = await gen({ qualityTier: 'PLUS' });
     expect(above.status).toBe(422);
     expect(above.json).toMatchObject({ error: 'unprocessable' });
-    expect((await gen({ preferredProviders: { AI_CLIP: ['veo'] } })).status).toBe(400); // PLUS-only
+    expect((await gen({ preferredProviders: { AI_CLIP: ['pika'] } })).status).toBe(400); // not a candidate
     expect((await gen({ preferredProviders: { TEXT_CARD: ['x'] } })).status).toBe(400);
     expect((await gen({ qualityTier: 'BASIC' }, 'stranger')).status).toBe(404);
 

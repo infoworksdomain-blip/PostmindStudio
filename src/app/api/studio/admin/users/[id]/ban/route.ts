@@ -1,3 +1,4 @@
+import { invalidateIdentity } from '@/lib/identity';
 import { StudioCapability, requirePlatformStaff } from '@/lib/rbac';
 import { ForbiddenError } from '@/lib/errors';
 import { parseBody, withStudioRoute } from '@/lib/studio/api/route';
@@ -18,7 +19,7 @@ export const POST = withStudioRoute(
         reason: 'target_is_staff',
       });
     const { sessionsRevoked } = await setUserBan(deps.db, userId, input);
-    deps.identity?.invalidate(userId);
+    await invalidateIdentity(userId, deps.identity);
     audit(
       input.banned ? 'staff.user_banned' : 'staff.user_unbanned',
       { type: 'user', id: userId },

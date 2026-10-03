@@ -103,13 +103,24 @@ export async function failExport(db: Db, id: string, reason: string): Promise<vo
   });
 }
 
-export async function listExports(db: Db, organisationId: string): Promise<ExportView[]> {
+export async function listExports(
+  db: Db,
+  organisationId: string,
+  now: number = Date.now(),
+): Promise<ExportView[]> {
   const rows = await db.dataExport.findMany({
     where: { organisationId },
     orderBy: { createdAt: 'desc' },
     take: 20,
   });
-  return rows.map(view);
+  // A READY export whose link has run out is EXPIRED here too (getExport says so on download), so
+  // the list never offers a Download that can only fail.
+  return rows.map((row) => {
+    const out = view(row);
+    return row.state === 'READY' && row.expiresAt && row.expiresAt.getTime() <= now
+      ? { ...out, state: 'EXPIRED' }
+      : out;
+  });
 }
 
 export async function getExport(

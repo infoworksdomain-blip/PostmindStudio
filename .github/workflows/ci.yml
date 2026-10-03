@@ -260,7 +260,13 @@ jobs:
       STUDIO_UNSUBSCRIBE_SECRET: ci-e2e-placeholder-unsubscribe-0123456789ab
       STRIPE_SECRET_KEY: sk_test_ci_placeholder
       STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
-      STUDIO_EMAIL_PROVIDER: none
+      # The sign-up / reset / invite specs (e2e/qa/onboarding-settings.*) read each email from
+      # studio.email_outbox, so the Resend outbox mailer is on; the placeholders are never used to
+      # send (no worker runs in this job and nothing calls api.resend.com).
+      STUDIO_EMAIL_PROVIDER: resend
+      RESEND_API_KEY: re_ci_placeholder
+      RESEND_WEBHOOK_SECRET: whsec_ci_resend_placeholder
+      STUDIO_EMAIL_FROM: 'PostMind Studio CI <ci@example.test>'
       # next start runs with NODE_ENV=production, where sign-up stays closed while the terms or
       # privacy text is a placeholder (src/lib/legal/readiness.ts). CI reads stand-in texts instead.
       STUDIO_LEGAL_CONTENT_DIR: /tmp/e2e-legal
@@ -278,6 +284,19 @@ jobs:
       STUDIO_USD_TO_GBP_RATE: '0.79'
       # QA specs (e2e/qa): object storage is a local stub (e2e/qa/s3-stub.mjs), never a real bucket.
       AWS_ENDPOINT_URL_S3: http://127.0.0.1:3199
+      # e2e/qa/business-images.spec.ts (Connections): TikTok, YouTube and X look "set up" so their
+      # Connect buttons exist; the browser is stopped at the platform's authorise URL and no token
+      # exchange happens. LinkedIn and Meta are deliberately left unset: the spec checks the
+      # "not available yet" notes. Placeholders, not secrets.
+      TIKTOK_CLIENT_KEY: ci-placeholder
+      TIKTOK_CLIENT_SECRET: ci-placeholder
+      TIKTOK_REDIRECT_URI: http://127.0.0.1:3102/api/studio/platform-connections/oauth-callback
+      YOUTUBE_CLIENT_ID: ci-placeholder
+      YOUTUBE_CLIENT_SECRET: ci-placeholder
+      YOUTUBE_REDIRECT_URI: http://127.0.0.1:3102/api/studio/platform-connections/oauth-callback
+      X_CLIENT_ID: ci-placeholder
+      X_CLIENT_SECRET: ci-placeholder
+      X_REDIRECT_URI: http://127.0.0.1:3102/api/studio/platform-connections/oauth-callback
     steps:
       - uses: actions/checkout@v7
       - name: Stand-in legal texts (CI only)

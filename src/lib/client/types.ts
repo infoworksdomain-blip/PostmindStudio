@@ -71,7 +71,8 @@ export interface Script {
 
 export interface QualityIssue {
   code: string;
-  status: 'passed' | 'failed' | 'warning' | 'skipped';
+  /** `not_run`: the check did not apply or could not run (e.g. 20.21 content safety). */
+  status: 'passed' | 'failed' | 'warning' | 'skipped' | 'not_run';
   severity: string;
   /** English (older checks have only this). */
   detail: string;
@@ -119,6 +120,10 @@ export interface Publication {
 }
 
 export interface ProjectDetail extends Project {
+  /** 20.18: directions ideation suggested while the brief is too vague (empty otherwise). */
+  directionOptions?: string[];
+  /** 20.18 (spec 13.3): restricted topics awaiting the owner's confirmation (empty otherwise). */
+  pendingRestrictedTopics?: string[];
   brief: { hook: string; keyMessage: string; targetAudience: string; tone: string } | null;
   scripts: Array<Omit<Script, 'shots'> & { shots: ShotSummary[] }>;
   renders: Render[];

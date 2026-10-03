@@ -10,7 +10,7 @@ import type {
   ProviderSubmitResult,
 } from './interface';
 import { usdToPence } from './pricing';
-import { providerError } from './provider-errors';
+import { isOutOfCreditMessage, providerError } from './provider-errors';
 
 // BACKLOG 2.6 — Runway (Layer 3 AI_CLIP). Contract from docs.dev.runwayml.com (read
 // 2026-09-27; decoded from the API reference's OpenAPI spec):
@@ -210,7 +210,10 @@ export class RunwayAdapter implements ProviderAdapter {
         };
       }
       case 'FAILED': {
-        const classified = classifyFailureCode(task.failureCode);
+        // 20.19: a task that fails for lack of credits is an account problem, whatever its code.
+        const classified = isOutOfCreditMessage(task.failure)
+          ? { class: 'insufficient_credits' as const, retryable: false }
+          : classifyFailureCode(task.failureCode);
         const credits = task.cost?.credits;
         return {
           state: 'failed',

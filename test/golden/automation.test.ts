@@ -30,7 +30,7 @@ import {
 //   GA-01  AUTO_APPROVE, untrusted creator → stays in review with "first N videos"
 //   GA-02  AUTO_APPROVE, trusted creator → approved by the system → auto-published; a bad
 //          target (connection needs reconnecting) is recorded and doesn't block the good one
-//   GA-03  Force-approved, content-flagged and script-WARN runs are never auto-approved
+//   GA-03  Force-approved and script-WARN runs are never auto-approved
 //   GA-04  Human approval with AUTO_ON_APPROVAL publishes to the stored targets
 //   GA-05  Save a project as a template → new project from it inherits the structure and
 //          publish defaults → approve → auto-published; templates are org-isolated
@@ -174,7 +174,7 @@ describe.skipIf(!hasDb)('automation journeys (Phase 12, track A)', { timeout: 12
     ).toBe(2);
   });
 
-  it('GA-03 force-approved, flagged and script-WARN runs are never auto-approved', async () => {
+  it('GA-03 force-approved and script-WARN runs are never auto-approved', async () => {
     vi.stubEnv('STUDIO_AUTO_APPROVE_TRUST_THRESHOLD', '1');
     // Quality failure → force-approve → back in review, but never approved automatically.
     const forced = startJourney(db, 'ga03a', { loudness: -30 });
@@ -191,17 +191,6 @@ describe.skipIf(!hasDb)('automation journeys (Phase 12, track A)', { timeout: 12
     expect(res.status).toBe(200);
     expect((await getProject(forced, forcedId)).state).toBe('READY_FOR_REVIEW');
     expect(await db.approvalTask.count({ where: { projectId: forcedId } })).toBe(0);
-
-    // Content-safety "review"-level flag → paused for a Trust & Safety review (13.17: it used to
-    // be QUALITY_FAILED), no approval.
-    const flagged = startJourney(db, 'ga03b', { hiveMaxScores: { general_suggestive: 0.95 } });
-    await priorApprovals(flagged, 1);
-    const flaggedId = await createProject(flagged, briefBody({ reviewPolicy: 'AUTO_APPROVE' }));
-    expect((await generate(flagged, flaggedId)).state).toBe('QUALITY_CHECKING');
-    expect(await db.safetyReview.count({ where: { projectId: flaggedId, state: 'PENDING' } })).toBe(
-      1,
-    );
-    expect(await db.approvalTask.count({ where: { projectId: flaggedId } })).toBe(0);
 
     // Script safety WARN passes generation but always goes to a person.
     const warned = startJourney(db, 'ga03c', {

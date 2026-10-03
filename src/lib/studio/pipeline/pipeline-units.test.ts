@@ -5,6 +5,7 @@ import { ProviderError, ValidationError } from '../../errors';
 import { createProviderRegistry } from '../providers/registry';
 import { StubAdapter } from '../providers/test-adapter';
 import { buildShotstackEdit, escapeHtml, outputDimensions, totalDuration } from './edl';
+import { DEFAULT_BACKDROP } from './edl-backdrop';
 import { buildIdeationPrompt, parseIdeationResult } from './ideation';
 import {
   frameFallbackTimes,
@@ -18,6 +19,7 @@ import { copyUrlToStorage } from './persist';
 import { ALLOWED_TRANSITIONS, canTransition, currentRunId, projectMetadata } from './project-state';
 import { jsonOutput } from './provider-run';
 import {
+  contentSafetyReviewCheck,
   evaluateContentSafety,
   evaluateQuality,
   hasContentSafetyBlock,
@@ -285,7 +287,8 @@ describe('Shotstack edit list', () => {
       timeline: { background: string; tracks: Array<{ clips: Array<{ asset: { css: string } }> }> };
     };
     expect(edit.timeline.tracks).toHaveLength(1);
-    expect(edit.timeline.background).toBe('#000000');
+    // 20.22: an invalid brand colour falls back to the neutral backdrop, never to black.
+    expect(edit.timeline.background).toBe(DEFAULT_BACKDROP);
     const css = edit.timeline.tracks[0]?.clips[0]?.asset.css ?? '';
     expect(css).toContain('#00ff00');
     expect(css).toContain("'Arial'");
@@ -437,9 +440,24 @@ describe('quality checks (spec 13.1)', () => {
     expect(review).toMatchObject({ status: 'failed', severity: 'error' });
   });
 
-  it('fails closed when content safety could not run', () => {
-    const checks = evaluateQuality({ ...base, contentSafety: { unavailable: 'no provider' } });
+  it('fails closed when a configured provider could not scan', () => {
+    const checks = evaluateQuality({ ...base, contentSafety: { unavailable: 'HTTP 500' } });
     expect(hasContentSafetyBlock(checks)).toBe(true);
+  });
+
+  it('20.21: with no content-safety provider the scan is skipped and the gate passes', () => {
+    const checks = evaluateQuality({ ...base, contentSafety: { skipped: 'no_provider' } });
+    expect(checks.find((c) => c.code === 'content_safety')).toEqual({
+      code: 'content_safety',
+      status: 'not_run',
+      severity: 'info',
+      detail: 'Not scanned: no content-safety provider is configured',
+      detailKey: 'safetyNotScanned',
+      detailParams: { reason: 'no_provider' },
+    });
+    expect(hasContentSafetyBlock(checks)).toBe(false);
+    expect(contentSafetyReviewCheck(checks)).toBeUndefined(); // no Trust & Safety review
+    expect(qualityPassed(checks)).toBe(true);
   });
 });
 

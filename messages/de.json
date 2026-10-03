@@ -43,7 +43,8 @@
       "moreOptions": "Weitere Optionen",
       "required": "Pflichtfeld"
     },
-    "untitledVideo": "Unbenanntes Video"
+    "untitledVideo": "Unbenanntes Video",
+    "briefHint": "Das ist recht kurz. Ergänzen Sie, für wen es ist, was gesagt werden soll oder welche Stimmung Sie möchten – dann wird das Ergebnis besser. Sie können trotzdem generieren."
   },
   "shell": {
     "nav": {
@@ -415,7 +416,7 @@
       "body": "Hinweis von Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Trust-&-Safety-Audit: Hive-Scan hat etwas übersehen",
+      "title": "Trust-&-Safety-Audit: Sicherheitsprüfung hat etwas übersehen",
       "body": "Ein veröffentlichtes {platform}-Video (Organisation {organisationId}, Veröffentlichung {publicationId}) hat das Audit {period} nicht bestanden: {note}. Folgen Sie runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -846,6 +847,10 @@
       "item": "{layer}: erstellt mit {provider} ({skipped})",
       "skipped": "{provider}: {reason}"
     },
+    "presenterFallback": {
+      "aria": "Moderator nicht verfügbar",
+      "note": "Der Moderator war für dieses Video nicht verfügbar, daher werden an diesen Stellen stattdessen Videoclips verwendet."
+    },
     "quality": {
       "title": "Qualitätsprüfung",
       "status": {
@@ -880,8 +885,12 @@
       "overrideLabel": "Fehlgeschlagene Prüfung übergehen – Begründung (Pflichtfeld, wird protokolliert)",
       "forceApprove": "Freigabe erzwingen",
       "overridden": "Qualitätsprüfung übergangen.",
+      "softFailureHint": "Diese Prüfungen sind nur Hinweise. Sehen Sie sich das Video an; wenn es passt, erzwingen Sie die Freigabe mit einer kurzen Begründung.",
+      "askToOverride": "Diese Prüfungen sind nur Hinweise. Sehen Sie sich das Video an; ein Inhaber oder Admin kann die Freigabe erzwingen.",
+      "blockedNoOverride": "Eine Sperre der Inhaltssicherheitsprüfung kann nur das PostMind-Team aufheben.",
       "details": {
         "safetyScanUnavailable": "Die Prüfung konnte nicht laufen: {reason}",
+        "safetyNotScanned": "Nicht geprüft: Es ist keine Inhaltssicherheitsprüfung eingerichtet.",
         "safetyBlocked": "Blockiert: {classes}",
         "safetyReview": "Prüfung nötig: {classes}",
         "safetyPassed": "{count, plural, one {# Bild geprüft, nichts markiert.} other {# Bilder geprüft, nichts markiert.}}",
@@ -1057,6 +1066,28 @@
       "retry": "Erneut versuchen",
       "retried": "{count, plural, one {# Beitrag eingeplant.} other {# Beiträge eingeplant.}}",
       "stillNone": "Immer noch keine freie Posting-Zeit — fügen Sie Posting-Zeiten hinzu oder wählen Sie ein Datum."
+    },
+    "directions": {
+      "title": "Richtung wählen",
+      "body": "Ihre Anfrage ist etwas zu vage für ein gutes Video. Wählen Sie eine dieser Richtungen oder ergänzen Sie unten weitere Details.",
+      "optionsAria": "Vorgeschlagene Richtungen",
+      "option": "Richtung {number}",
+      "use": "Diese Richtung verwenden",
+      "useAria": "Richtung {number} verwenden",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, muss eine Richtung wählen oder weitere Details ergänzen."
+    },
+    "needsInput": {
+      "editLabel": "Ihr Briefing",
+      "editSubmit": "Mit meinen Änderungen generieren",
+      "started": "Generierung gestartet."
+    },
+    "restricted": {
+      "title": "Eingeschränkte Themen prüfen",
+      "body": "Ihr Briefing berührt Themen, die Ihr Brand Kit oder Unternehmensprofil als eingeschränkt markiert. Fahren Sie trotzdem fort, wenn sie für dieses Video in Ordnung sind, oder bearbeiten Sie das Briefing, um sie wegzulassen.",
+      "topicsAria": "Gefundene eingeschränkte Themen",
+      "continue": "Trotzdem fortfahren",
+      "continueHint": "Das Video wird wie im Briefing erstellt, einschließlich dieser Themen.",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, muss fortfahren oder das Briefing ändern."
     }
   },
   "slideshow": {
@@ -1589,7 +1620,8 @@
         "images": "Bildbibliothek",
         "learned": "Was Studio gelernt hat",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Sie haben nur Lesezugriff auf dieses Unternehmen. Bitten Sie einen Inhaber oder Administrator um Änderungen."
     },
     "kits": {
       "intro": "Das Standard-Kit wird auf neue Videos angewendet. Skripte übernehmen seinen Ton und seine Zielgruppe, Einblendungen und Bildgestaltung seine Farben und Schriften.",
@@ -1790,7 +1822,8 @@
       },
       "gridAria": "Bildbibliothek",
       "newer": "Neuere",
-      "older": "Ältere"
+      "older": "Ältere",
+      "stockNotConfigured": "Stockfotos sind noch nicht eingerichtet, deshalb gibt es nichts zu aktualisieren. Fotos Ihrer Website, Uploads und generierte Bilder funktionieren weiterhin."
     },
     "profile": {
       "fields": {
@@ -2034,6 +2067,16 @@
         "planGeneric": "Das Klonen von Stimmen ist in Ihrem Tarif nicht enthalten. Wechseln Sie in einen höheren Tarif, um eine Stimme zu klonen; Stock-Stimmen stehen weiterhin zur Verfügung.",
         "notConfigured": "Das Klonen von Stimmen ist auf diesem Server noch nicht eingerichtet ({message})."
       }
+    },
+    "details": {
+      "title": "Unternehmensdaten",
+      "description": "Der Name in der oberen Leiste und die Website-Adresse dieses Unternehmens.",
+      "name": "Name des Unternehmens",
+      "domain": "Website-Adresse (optional)",
+      "domainHint": "Ein Hostname wie leedssourdough.co.uk, ohne https:// und ohne Pfad.",
+      "domainInvalid": "Verwenden Sie einen Hostnamen wie beispiel.co.uk.",
+      "save": "Daten speichern",
+      "saved": "Unternehmensdaten gespeichert"
     }
   },
   "connections": {
@@ -2047,7 +2090,8 @@
       "internal_error": "Beim Abschließen der Verbindung ist etwas schiefgelaufen. Versuchen Sie es erneut.",
       "unknown": "Die Verbindung wurde nicht abgeschlossen ({code}). Versuchen Sie es erneut.",
       "meta_no_accounts": "Meta hat keine Facebook-Seite freigegeben, auf der du veröffentlichen kannst. Verbinde dich erneut und wähle im Meta-Fenster mindestens eine Seite (und ihr Instagram-Konto) aus.",
-      "wrong_user": "Diese Verbindung wurde von einem anderen Studio-Nutzer gestartet. Starte sie erneut, während du mit deinem eigenen Konto angemeldet bist."
+      "wrong_user": "Diese Verbindung wurde von einem anderen Studio-Nutzer gestartet. Starte sie erneut, während du mit deinem eigenen Konto angemeldet bist.",
+      "state_expired": "Dieser Anmeldelink wurde bereits verwendet oder ist abgelaufen. Starten Sie die Verbindung erneut."
     },
     "dismiss": "Ausblenden",
     "pickFirst": {
@@ -2101,7 +2145,8 @@
       "codeLabel": "Bestätigungscode:",
       "unknownCode": "Zu diesem Bestätigungscode wurde keine Löschanfrage gefunden. Prüfe den Link, den du von Facebook erhalten hast."
     },
-    "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration."
+    "notConfigured": "{platform} ist noch nicht verfügbar: Die {platform}-App von Studio muss noch eingerichtet werden. Wende dich an deine Administration.",
+    "readOnly": "Nur Inhaber und Administratoren können Konten verbinden oder trennen."
   },
   "library": {
     "browse": {
@@ -2164,7 +2209,7 @@
       "notFoundTitle": "Referenz nicht gefunden",
       "notFoundBody": "Sie wurde möglicherweise aus der Bibliothek entfernt.",
       "loading": "Referenz wird geladen",
-      "previewAria": "Stumme Vorschau von {title}",
+      "previewAria": "Vorschau von {title}",
       "previewNote": "{minutes, plural, one {Vorschau in niedriger Auflösung · Link läuft in # Min. ab} other {Vorschau in niedriger Auflösung · Link läuft in # Min. ab}}",
       "tagsAria": "Tags",
       "facts": {
@@ -3062,7 +3107,7 @@
       "quotedNote": "„{note}“",
       "review": {
         "title": "Prüfung der Inhaltssicherheit",
-        "description": "Läufe, die durch ein REVIEW-Urteil der Skriptsicherheit oder eine Hive-Markierung auf Prüfstufe angehalten wurden (Spez. 13.2 / 16.4). Ergebnisse auf Sperrstufe gelangen nie in diese Warteschlange.",
+        "description": "Läufe, die durch ein REVIEW-Urteil der Skriptsicherheit oder eine Inhaltssicherheits-Markierung auf Prüfstufe angehalten wurden (Spez. 13.2 / 16.4). Ergebnisse auf Sperrstufe gelangen nie in diese Warteschlange.",
         "showAria": "Prüfungen anzeigen",
         "filterWaiting": "Wartend",
         "filterWaitingCount": "Wartend ({count})",
@@ -3100,7 +3145,7 @@
       },
       "audit": {
         "title": "Monatliches Trust-&-Safety-Audit",
-        "description": "Eine Zufallsstichprobe der im letzten Monat veröffentlichten Videos, von einer Person erneut geprüft. Ein Fehlgriff ist ein Video, das der Hive-Scan hätte sperren oder zur Prüfung senden müssen.",
+        "description": "Eine Zufallsstichprobe der im letzten Monat veröffentlichten Videos, von einer Person erneut geprüft. Ein Fehlgriff ist ein Video, das hätte gesperrt oder zur Prüfung gesendet werden müssen.",
         "monthAria": "Audit-Monat",
         "resultAria": "Ergebnis",
         "filter": {
@@ -3115,7 +3160,7 @@
         "waiting": "Wartend",
         "passed": "Bestanden",
         "missed": "Fehlgriffe",
-        "missRate": "Fehlgriffquote des Hive-Scans",
+        "missRate": "Fehlgriffquote der Sicherheitsprüfung",
         "missRateHint": "Fehlgriffe ÷ geprüft",
         "emptyNoSampleTitle": "Keine Stichprobe für diesen Monat",
         "emptyNoSampleBody": "Die Stichprobe wird am 1. um 06:00 UTC gezogen. Ziehen Sie sie jetzt, falls der Job nicht gelaufen ist.",
@@ -3655,7 +3700,11 @@
       "scan_images_capped": "Der Scan hat seine Kostenobergrenze ({amount}) erreicht: Einige Bilder wurden nicht für die Suche indexiert.",
       "ownership_disputed": "Gestoppt: Die Inhaberschaft der Website wurde angefochten.",
       "provider_failure": "{source} hat ein Problem gemeldet: {problem}.",
-      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt."
+      "service_unavailable": "Unser KI-Dienst ist vorübergehend nicht verfügbar, daher konnte dies nicht abgeschlossen werden. Bitte versuchen Sie es später erneut – unser Team wurde benachrichtigt.",
+      "scan_pages_skipped": "{count, plural, one {# Seite konnte nicht gelesen werden und wurde übersprungen.} other {# Seiten konnten nicht gelesen werden und wurden übersprungen.}}",
+      "scan_images_skipped": "{count, plural, one {# Bild Ihrer Website konnte nicht heruntergeladen werden und wurde übersprungen.} other {# Bilder Ihrer Website konnten nicht heruntergeladen werden und wurden übersprungen.}}",
+      "stock_not_configured": "Stockfotos konnten nicht hinzugefügt werden: Es ist noch kein Stockfoto-Dienst eingerichtet.",
+      "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",
@@ -4632,6 +4681,10 @@
     "askOwner": "Nur Inhaber der Organisation können Tarif oder Abrechnung ändern. Bitten Sie einen Inhaber darum.",
     "lock": {
       "aria": "Erfordert den Tarif {tier}"
+    },
+    "seatLimit": {
+      "title": "Alle Plätze Ihres Tarifs sind belegt",
+      "body": "In Ihrem Tarif ist kein Platz für eine weitere Person frei. Wechseln Sie für mehr Plätze in einen größeren Tarif oder entfernen Sie zuerst jemanden."
     }
   },
   "email": {

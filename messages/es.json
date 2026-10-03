@@ -43,7 +43,8 @@
       "moreOptions": "Más opciones",
       "required": "Obligatorio"
     },
-    "untitledVideo": "Vídeo sin título"
+    "untitledVideo": "Vídeo sin título",
+    "briefHint": "Es bastante breve. Añade para quién es, qué decir o el tono que buscas, y el resultado será mejor. Aun así puedes generar."
   },
   "shell": {
     "nav": {
@@ -415,7 +416,7 @@
       "body": "Nota de Trust & Safety: {note}"
     },
     "safetyAuditMiss": {
-      "title": "Auditoría de Trust & Safety: fallo de detección de Hive",
+      "title": "Auditoría de Trust & Safety: fallo de seguridad",
       "body": "Un vídeo publicado en {platform} (organización {organisationId}, publicación {publicationId}) no superó la auditoría de {period}: {note}. Sigue runbooks/content-safety-miss.md."
     },
     "planQuotaNearing": {
@@ -846,6 +847,10 @@
       "item": "{layer}: creado con {provider} ({skipped})",
       "skipped": "{provider} {reason}"
     },
+    "presenterFallback": {
+      "aria": "Presentador no disponible",
+      "note": "El presentador no estaba disponible para este vídeo, así que en esos momentos se usan clips de vídeo."
+    },
     "quality": {
       "title": "Control de calidad",
       "status": {
@@ -880,8 +885,12 @@
       "overrideLabel": "Anular el control no superado: motivo (obligatorio, queda registrado)",
       "forceApprove": "Forzar aprobación",
       "overridden": "Control de calidad anulado.",
+      "softFailureHint": "Estos controles son orientativos. Mira el vídeo y, si está bien, fuerza la aprobación con un motivo breve.",
+      "askToOverride": "Estos controles son orientativos. Mira el vídeo; un propietario o administrador puede forzar la aprobación.",
+      "blockedNoOverride": "Solo el equipo de PostMind puede levantar un bloqueo de seguridad de contenido.",
       "details": {
         "safetyScanUnavailable": "No se pudo ejecutar el análisis: {reason}",
+        "safetyNotScanned": "Sin analizar: no hay ningún análisis de seguridad del contenido configurado.",
         "safetyBlocked": "Bloqueado: {classes}",
         "safetyReview": "Requiere revisión: {classes}",
         "safetyPassed": "{count, plural, one {# fotograma analizado, nada marcado.} many {# de fotogramas analizados, nada marcado.} other {# fotogramas analizados, nada marcado.}}",
@@ -1057,6 +1066,28 @@
       "retry": "Volver a intentarlo",
       "retried": "{count, plural, one {# publicación programada.} other {# publicaciones programadas.}}",
       "stillNone": "Sigue sin haber horas de publicación libres: añade horas o elige una fecha."
+    },
+    "directions": {
+      "title": "Elige una dirección",
+      "body": "Tu solicitud es un poco vaga para hacer un buen vídeo. Elige una de estas direcciones o añade más detalles abajo.",
+      "optionsAria": "Direcciones sugeridas",
+      "option": "Dirección {number}",
+      "use": "Usar esta dirección",
+      "useAria": "Usar la dirección {number}",
+      "noPermission": "Alguien que pueda editar proyectos debe elegir una dirección o añadir más detalles."
+    },
+    "needsInput": {
+      "editLabel": "Tu brief",
+      "editSubmit": "Generar con mis cambios",
+      "started": "Generación iniciada."
+    },
+    "restricted": {
+      "title": "Revisa los temas restringidos",
+      "body": "Tu brief toca temas que tu kit de marca o tu perfil de empresa marcan como restringidos. Continúa de todos modos si son adecuados para este vídeo, o edita el brief para quitarlos.",
+      "topicsAria": "Temas restringidos encontrados",
+      "continue": "Continuar de todos modos",
+      "continueHint": "El vídeo se hace según el brief, incluidos estos temas.",
+      "noPermission": "Alguien que pueda editar proyectos debe continuar o cambiar el brief."
     }
   },
   "slideshow": {
@@ -1589,7 +1620,8 @@
         "images": "Biblioteca de imágenes",
         "learned": "Lo que Studio ha aprendido",
         "hashtags": "Hashtags"
-      }
+      },
+      "readOnly": "Tienes acceso de solo lectura a este negocio. Pide a un propietario o administrador que haga los cambios."
     },
     "kits": {
       "intro": "El kit predeterminado se aplica a los vídeos nuevos. Los guiones usan su tono y su público; los textos superpuestos y la composición, sus colores y fuentes.",
@@ -1790,7 +1822,8 @@
       },
       "gridAria": "Biblioteca de imágenes",
       "newer": "Más recientes",
-      "older": "Más antiguas"
+      "older": "Más antiguas",
+      "stockNotConfigured": "Las fotos de archivo aún no están configuradas, así que no hay nada que actualizar. Las fotos de tu web, las subidas y las imágenes generadas siguen funcionando."
     },
     "profile": {
       "fields": {
@@ -2034,6 +2067,16 @@
         "planGeneric": "Tu plan no incluye la clonación de voz. Mejora tu plan para clonar una voz; las voces de stock siguen disponibles.",
         "notConfigured": "La clonación de voz aún no está configurada en este servidor ({message})."
       }
+    },
+    "details": {
+      "title": "Datos del negocio",
+      "description": "El nombre que se muestra en la barra superior y la dirección web de este negocio.",
+      "name": "Nombre del negocio",
+      "domain": "Dirección web (opcional)",
+      "domainHint": "Un nombre de host como leedssourdough.co.uk, sin https:// ni ruta.",
+      "domainInvalid": "Usa un nombre de host como ejemplo.co.uk.",
+      "save": "Guardar datos",
+      "saved": "Datos del negocio guardados"
     }
   },
   "connections": {
@@ -2047,7 +2090,8 @@
       "internal_error": "Algo ha fallado al terminar la conexión. Vuelve a intentarlo.",
       "unknown": "La conexión no se completó ({code}). Vuelve a intentarlo.",
       "meta_no_accounts": "Meta no compartió ninguna página de Facebook en la que puedas publicar. Vuelve a conectar y elige al menos una página (y su cuenta de Instagram) en la ventana de Meta.",
-      "wrong_user": "Otro usuario de Studio inició esta conexión. Vuelve a empezar con tu propia sesión iniciada."
+      "wrong_user": "Otro usuario de Studio inició esta conexión. Vuelve a empezar con tu propia sesión iniciada.",
+      "state_expired": "Ese enlace de inicio de sesión ya se usó o ha caducado. Vuelve a empezar la conexión."
     },
     "dismiss": "Descartar",
     "pickFirst": {
@@ -2101,7 +2145,8 @@
       "codeLabel": "Código de confirmación:",
       "unknownCode": "No encontramos ninguna solicitud de eliminación con este código de confirmación. Revisa el enlace que te dio Facebook."
     },
-    "notConfigured": "{platform} aún no está disponible: la aplicación de {platform} de Studio todavía necesita su configuración. Consulta a tu administrador."
+    "notConfigured": "{platform} aún no está disponible: la aplicación de {platform} de Studio todavía necesita su configuración. Consulta a tu administrador.",
+    "readOnly": "Solo los propietarios y administradores pueden conectar o desconectar cuentas."
   },
   "library": {
     "browse": {
@@ -2164,7 +2209,7 @@
       "notFoundTitle": "No se encontró la referencia",
       "notFoundBody": "Puede que se haya retirado de la biblioteca.",
       "loading": "Cargando la referencia",
-      "previewAria": "Vista previa sin sonido de {title}",
+      "previewAria": "Vista previa de {title}",
       "previewNote": "{minutes, plural, one {Vista previa en baja resolución · el enlace caduca en # min} other {Vista previa en baja resolución · el enlace caduca en # min}}",
       "tagsAria": "Etiquetas",
       "facts": {
@@ -3062,7 +3107,7 @@
       "quotedNote": "«{note}»",
       "review": {
         "title": "Revisión de seguridad del contenido",
-        "description": "Ejecuciones en pausa por un veredicto REVIEW de seguridad del guion o una alerta de Hive de nivel revisión (espec. 13.2 / 16.4). Los resultados de nivel bloqueo nunca llegan a esta cola.",
+        "description": "Ejecuciones en pausa por un veredicto REVIEW de seguridad del guion o una alerta de seguridad del contenido de nivel revisión (espec. 13.2 / 16.4). Los resultados de nivel bloqueo nunca llegan a esta cola.",
         "showAria": "Mostrar revisiones",
         "filterWaiting": "En espera",
         "filterWaitingCount": "En espera ({count})",
@@ -3100,7 +3145,7 @@
       },
       "audit": {
         "title": "Auditoría mensual de Trust & Safety",
-        "description": "Una muestra aleatoria de los vídeos publicados el mes pasado, revisados de nuevo por una persona. Un fallo es un vídeo que el análisis de Hive debería haber bloqueado o enviado a revisión.",
+        "description": "Una muestra aleatoria de los vídeos publicados el mes pasado, revisados de nuevo por una persona. Un fallo es un vídeo que debería haberse bloqueado o enviado a revisión.",
         "monthAria": "Mes de la auditoría",
         "resultAria": "Resultado",
         "filter": {
@@ -3115,7 +3160,7 @@
         "waiting": "En espera",
         "passed": "Aprobados",
         "missed": "Fallos",
-        "missRate": "Tasa de fallos del análisis de Hive",
+        "missRate": "Tasa de fallos de seguridad",
         "missRateHint": "fallos ÷ revisados",
         "emptyNoSampleTitle": "No hay muestra para este mes",
         "emptyNoSampleBody": "La muestra se extrae el día 1 a las 06:00 UTC. Extráela ahora si el trabajo no se ejecutó.",
@@ -3655,7 +3700,11 @@
       "scan_images_capped": "El análisis alcanzó su límite de coste ({amount}): algunas imágenes no se indexaron para la búsqueda.",
       "ownership_disputed": "Detenido: se ha disputado la propiedad del sitio web.",
       "provider_failure": "{source} ha informado de un problema: {problem}.",
-      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente, así que no se pudo completar. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado."
+      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente, así que no se pudo completar. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado.",
+      "scan_pages_skipped": "{count, plural, one {No se pudo leer # página y se omitió.} many {No se pudieron leer # páginas y se omitieron.} other {No se pudieron leer # páginas y se omitieron.}}",
+      "scan_images_skipped": "{count, plural, one {No se pudo descargar # imagen de tu web y se omitió.} many {No se pudieron descargar # imágenes de tu web y se omitieron.} other {No se pudieron descargar # imágenes de tu web y se omitieron.}}",
+      "stock_not_configured": "No se pudieron añadir fotos de archivo: todavía no hay ningún servicio de fotos configurado.",
+      "stock_unavailable": "Esta vez no se pudieron añadir algunas fotos de archivo. Usa «Actualizar fotos» en la biblioteca de imágenes para volver a intentarlo."
     },
     "classes": {
       "rate_limited": "demasiadas solicitudes",
@@ -4632,6 +4681,10 @@
     "askOwner": "Solo un propietario de la organización puede cambiar el plan o la facturación. Pídeselo a un propietario.",
     "lock": {
       "aria": "Requiere el plan {tier}"
+    },
+    "seatLimit": {
+      "title": "Todos los puestos de tu plan están en uso",
+      "body": "Tu plan no tiene ningún puesto libre para otra persona. Mejora el plan para tener más puestos o quita antes a alguien."
     }
   },
   "email": {

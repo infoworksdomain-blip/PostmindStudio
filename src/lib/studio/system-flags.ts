@@ -25,6 +25,7 @@ export const PROVIDER_IDS = [
   'openai',
   'runway',
   'veo',
+  'seedance',
   'luma',
   'kling',
   'pika',
@@ -44,7 +45,6 @@ export const PROVIDER_IDS = [
   'assemblyai',
   'shotstack',
   'creatomate',
-  'hive',
   'sightengine',
 ] as const;
 

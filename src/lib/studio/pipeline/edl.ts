@@ -12,6 +12,7 @@ import {
 } from './edl-brand';
 import { duckedMusicClips, type MusicSpan } from './edl-music';
 import { escapeHtml, HEX_COLOUR, roundSec, SAFE_FONT } from './edl-time';
+import { backdropColour, readableTextColour } from './edl-backdrop';
 import type { CompositionSummary } from './composition-summary';
 import { aiLabelClip } from './ai-label';
 import { fontFamilyFor, isRtl, scriptOf } from '../i18n/scripts';
@@ -133,7 +134,11 @@ function brandColours(input: EdlInput) {
       ? input.brand.fontFamily
       : 'Arial';
   const font = script === 'latin' ? brandFont : fontFamilyFor(script, 700);
-  return { background, text, font, rtl: isRtl(input.language) };
+  // 20.22: cards and the timeline sit on a non-black backdrop (edl-backdrop.ts); the brand's own
+  // colours are still what the summary records for the brand_kit check.
+  const backdrop = backdropColour(input.brand?.backgroundColour);
+  const cardText = readableTextColour(backdrop, input.brand?.textColour);
+  return { background, text, font, rtl: isRtl(input.language), backdrop, cardText };
 }
 
 /** `<p>` with `dir="rtl"` for right-to-left languages (HTML's own bidi attribute). */
@@ -141,9 +146,14 @@ function para(input: EdlInput, text: string): string {
   return `<p${isRtl(input.language) ? ' dir="rtl"' : ''}>${escapeHtml(text)}</p>`;
 }
 
-function style(input: EdlInput, fontPx: number, background = 'transparent'): string {
-  const { text, font } = brandColours(input);
-  return `p { font-family: '${font}', sans-serif; color: ${text}; font-size: ${fontPx}px; font-weight: 700; text-align: center; margin: 0; background: ${background}; }`;
+function style(
+  input: EdlInput,
+  fontPx: number,
+  background = 'transparent',
+  colour = brandColours(input).text,
+): string {
+  const { font } = brandColours(input);
+  return `p { font-family: '${font}', sans-serif; color: ${colour}; font-size: ${fontPx}px; font-weight: 700; text-align: center; margin: 0; background: ${background}; }`;
 }
 
 export function totalDuration(shots: EdlShot[]): number {
@@ -215,10 +225,11 @@ function visualClip(
       asset: {
         type: 'html',
         html: para(input, text),
-        css: style(input, Math.round(frame.height * 0.05)),
+        css: style(input, Math.round(frame.height * 0.05), 'transparent', colours.cardText),
         width: frame.width,
         height: frame.height,
-        background: colours.background,
+        // 20.22: a designed, non-black fill for the whole frame (HtmlAsset `background`).
+        background: colours.backdrop,
         position: 'center',
       },
       start,
@@ -405,7 +416,8 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
   const fontSources = [...new Set(input.brand?.fontSources ?? [])];
   const edit: Record<string, unknown> = {
     timeline: {
-      background: colours.background,
+      // 20.22: what a fade dips to and what shows when a clip ends early; never black.
+      background: colours.backdrop,
       ...(fontSources.length && { fonts: fontSources.map((src) => ({ src })) }),
       tracks: out,
     },
@@ -444,6 +456,7 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
       fontSources,
       textColour: colours.text,
       backgroundColour: colours.background,
+      backdropColour: colours.backdrop,
     },
   };
   return { edit, summary };

@@ -21,6 +21,12 @@ import {
 import { jsonOutput, runProvider, type ProviderRunResult } from '../../pipeline/provider-run';
 import { openSafetyReview, pendingSafetyReview } from '../../pipeline/safety-review';
 import {
+  directionOptionsOf,
+  forceActionable,
+  VAGUE_BRIEF_REASON,
+} from '../../pipeline/vague-brief';
+import { pendingTopicsOf, RESTRICTED_TOPICS_REASON } from '../../pipeline/restricted-topics';
+import {
   blocksGeneration,
   buildScriptSafetyPrompt,
   needsSafetyReview,
@@ -345,6 +351,11 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
 
   // Layer 1 — ideation (20.13: and the post copy, in the same call)
   const copy = await copyContextFor(deps, project, log);
+  const metadata = projectMetadata(project.metadata);
+  const hints = metadata.briefHints as IdeationHints | undefined;
+  // 20.18: the owner chose a direction (or rewrote the brief) on the project page, or this run
+  // follows a "too vague" answer: ideation must not ask again.
+  const directionChosen = metadata.directionChosen === true || metadata.lastBriefVague === true;
   const ideationRun = await runProvider(
     textRequest(
       data,
@@ -352,11 +363,14 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       [
         buildIdeationPrompt({
           rawInput,
-          // 17.9: an unnamed project sends no name (never the "Untitled video" placeholder).
-          businessName: realProjectName(project.name),
+          // 20.18: the business's own name (the project name was sent here before, which read as
+          // the business). 17.9: an unnamed project sends no name, never "Untitled video".
+          businessName: copy?.facts.businessName ?? undefined,
+          projectName: realProjectName(project.name),
           targetPlatforms: formats.map((f) => f.platform),
-          hints: projectMetadata(project.metadata).briefHints as IdeationHints | undefined,
+          hints,
           language: project.language,
+          directionChosen,
           ...(copy && {
             social: {
               platforms: formatPlatforms(project.targetFormats),
@@ -383,23 +397,40 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     ),
     deps,
   );
-  const brief = parseIdeationResult(jsonOutput(ideationRun.output));
+  const answer = parseIdeationResult(jsonOutput(ideationRun.output));
 
-  if (!brief.actionable) {
+  if (!answer.actionable && !directionChosen) {
     await transitionProject(deps.db, {
       projectId: project.id,
       runId: data.runId,
       from: ['PLANNING'],
       to: 'DRAFT',
-      data: { errorReason: 'brief_too_vague: choose one of the suggested directions' },
+      data: { errorReason: VAGUE_BRIEF_REASON },
     });
     await mergeProjectMetadata(deps.db, {
       projectId: project.id,
       runId: data.runId,
-      patch: { directionOptions: brief.directionOptions.slice(0, 3) },
+      patch: {
+        directionOptions: directionOptionsOf(answer.directionOptions),
+        lastBriefVague: true,
+      },
     });
     return log.info('brief too vague; returned direction options to the user');
   }
+  // 20.18: never "too vague" twice in a row — a second such answer becomes a brief.
+  if (!answer.actionable)
+    log.warn('ideation asked for a direction again after one was chosen; using the best direction');
+  const brief = forceActionable(answer, {
+    briefText,
+    audience: hints?.targetAudience ?? brandKit?.audienceProfile,
+    toneKeywords: brandKit?.toneKeywords,
+  });
+  if (metadata.lastBriefVague === true)
+    await mergeProjectMetadata(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      patch: { lastBriefVague: false },
+    });
 
   const confirmed = projectMetadata(project.metadata).restrictedTopicsConfirmed === true;
   if (brief.restrictedTopicsMentioned.length > 0 && !confirmed) {
@@ -408,12 +439,12 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       runId: data.runId,
       from: ['PLANNING'],
       to: 'DRAFT',
-      data: { errorReason: 'restricted_topics: user confirmation required (spec 13.3)' },
+      data: { errorReason: RESTRICTED_TOPICS_REASON },
     });
     await mergeProjectMetadata(deps.db, {
       projectId: project.id,
       runId: data.runId,
-      patch: { pendingRestrictedTopics: brief.restrictedTopicsMentioned },
+      patch: { pendingRestrictedTopics: pendingTopicsOf(brief.restrictedTopicsMentioned) },
     });
     return log.info(
       { topics: brief.restrictedTopicsMentioned },

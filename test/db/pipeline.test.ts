@@ -102,7 +102,16 @@ describe.skipIf(!hasDb)('generation pipeline on real Postgres', { timeout: 60_00
     });
     const checks = project.renders[0]?.qualityIssues as Array<{ code: string; status: string }>;
     expect(checks.filter((c) => c.status === 'failed')).toEqual([]);
-    expect(checks.find((c) => c.code === 'content_safety')?.status).toBe('passed');
+    // 20.21: no content-safety provider → not scanned, recorded, and the gate still passes.
+    expect(checks.find((c) => c.code === 'content_safety')).toMatchObject({
+      status: 'not_run',
+      detailKey: 'safetyNotScanned',
+    });
+    expect((project.metadata as { contentSafety?: unknown }).contentSafety).toEqual({
+      state: 'skipped',
+      reason: 'no_provider',
+    });
+    expect(await db.safetyReview.count({ where: { projectId: project.id } })).toBe(0);
 
     // Shotstack received an edit with one video clip per AI shot and narration.
     const edit = (
@@ -117,7 +126,7 @@ describe.skipIf(!hasDb)('generation pipeline on real Postgres', { timeout: 60_00
     expect(jobs.every((j) => j.state === 'SUCCEEDED')).toBe(true);
     expect(new Set(jobs.map((j) => j.provider))).toEqual(
       // assemblyai: narration is transcribed for word-level caption timing (13.6).
-      new Set(['anthropic', 'runway', 'elevenlabs', 'assemblyai', 'shotstack', 'hive']),
+      new Set(['anthropic', 'runway', 'elevenlabs', 'assemblyai', 'shotstack']),
     );
     expect(project.costActualPence).toBe(jobs.reduce((sum, j) => sum + j.costPence, 0));
   });
@@ -172,12 +181,6 @@ describe.skipIf(!hasDb)('generation pipeline on real Postgres', { timeout: 60_00
     expect(project.state).toBe('QUALITY_FAILED');
     expect(project.errorReason).toContain('audio_present');
     expect(project.renders[0]?.qualityCheckState).toBe('FAILED');
-  });
-
-  it('flags a content-safety BLOCK distinctly', async () => {
-    const { project } = await run({ hiveMaxScores: { general_nsfw: 0.97 } });
-    expect(project.state).toBe('QUALITY_FAILED');
-    expect(project.errorReason).toContain('content_safety_block');
   });
 
   it('honours a workspace freeze: the run fails without calling providers', async () => {
