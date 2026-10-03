@@ -338,3 +338,31 @@ describe('PlansList', () => {
     expect(within(link).getByText('Scheduled')).toBeInTheDocument();
   });
 });
+
+describe('PlanMonthForm when the organisation cannot create', () => {
+  it('disables "Draft my month" and links to billing while read-only', async () => {
+    mockFetch((req) => {
+      if (req.url.pathname.endsWith('/content-plans/defaults')) return ok({ defaults: DEFAULTS });
+      if (req.url.pathname.endsWith('/platform-connections')) return ok({ data: [CONNECTION] });
+      if (req.url.pathname.endsWith('/me'))
+        return ok({
+          me: {
+            user: { id: 'u1', name: 'A', email: 'a@b.c', platformRole: 'user' },
+            organisation: { id: 'o1', name: 'Org', role: 'owner' },
+            organisations: [],
+            plan: { tier: 'STANDARD', access: 'read_only', source: 'stripe' },
+            banner: null,
+            impersonating: false,
+            identityMode: 'standalone',
+            capabilities: [],
+          },
+        });
+      return undefined;
+    });
+    renderScreen(<PlanMonthForm />);
+    const notice = await screen.findByText(/Your account is read-only\. Update payment/);
+    const button = screen.getByRole('button', { name: 'Draft my month' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-describedby', notice.closest('p')!.id);
+  });
+});

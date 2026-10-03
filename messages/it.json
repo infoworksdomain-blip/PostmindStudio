@@ -225,6 +225,10 @@
         "body": "Abbonati di nuovo per continuare a creare. Puoi ancora visualizzare, scaricare ed esportare i tuoi dati.",
         "deletesOn": "Se non ti abboni di nuovo, l’organizzazione e i suoi dati verranno eliminati dopo il {date}.",
         "action": "Abbonati di nuovo"
+      },
+      "createBlocked": {
+        "readOnly": "Il tuo account è in sola lettura. Aggiorna il pagamento per creare video.",
+        "readOnlyAction": "Aggiorna il pagamento"
       }
     }
   },
@@ -2160,7 +2164,9 @@
       "emptyTitle": "Nessun riferimento corrispondente",
       "emptySearch": "Nulla nella libreria corrisponde a questa ricerca. Prova con altre parole o cancella la ricerca.",
       "emptyFilters": "Prova una categoria più ampia o meno tag.",
-      "more": "Altri riferimenti"
+      "more": "Altri riferimenti",
+      "noCloseTitle": "Nessuna corrispondenza vicina per «{query}»",
+      "noCloseBody": "Nulla nella libreria è vicino a questa ricerca. Prova altre parole o sfoglia una categoria:"
     },
     "filters": {
       "formAria": "Filtra la libreria",

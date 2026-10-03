@@ -225,6 +225,10 @@
         "body": "Volte a subscrever para continuar a criar. Ainda pode visualizar, descarregar e exportar os seus dados.",
         "deletesOn": "Se não voltar a subscrever, a organização e os seus dados serão eliminados após {date}.",
         "action": "Voltar a subscrever"
+      },
+      "createBlocked": {
+        "readOnly": "A sua conta está só de leitura. Atualize o pagamento para criar vídeos.",
+        "readOnlyAction": "Atualizar o pagamento"
       }
     }
   },
@@ -2160,7 +2164,9 @@
       "emptyTitle": "Nenhuma referência corresponde",
       "emptySearch": "Nada na biblioteca corresponde a essa pesquisa. Experimente outras palavras ou limpe a pesquisa.",
       "emptyFilters": "Experimente uma categoria mais abrangente ou menos etiquetas.",
-      "more": "Mais referências"
+      "more": "Mais referências",
+      "noCloseTitle": "Sem resultados próximos para “{query}”",
+      "noCloseBody": "Nada na biblioteca se aproxima desta pesquisa. Tente outras palavras ou explore uma categoria:"
     },
     "filters": {
       "formAria": "Filtrar a biblioteca",

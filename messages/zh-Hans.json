@@ -225,6 +225,10 @@
         "body": "重新订阅即可继续创作。您仍可查看、下载和导出您的数据。",
         "deletesOn": "如不重新订阅，该组织及其数据将在 {date} 之后被删除。",
         "action": "重新订阅"
+      },
+      "createBlocked": {
+        "readOnly": "您的账户为只读状态。请更新付款信息以创建视频。",
+        "readOnlyAction": "更新付款"
       }
     }
   },
@@ -2160,7 +2164,9 @@
       "emptyTitle": "没有匹配的参考视频",
       "emptySearch": "视频库中没有与该搜索匹配的内容。请换个词试试，或清除搜索。",
       "emptyFilters": "请尝试更宽泛的分类或减少标签。",
-      "more": "更多参考视频"
+      "more": "更多参考视频",
+      "noCloseTitle": "没有与“{query}”接近的结果",
+      "noCloseBody": "资料库中没有与该搜索接近的内容。请换个词，或浏览某个分类："
     },
     "filters": {
       "formAria": "筛选视频库",

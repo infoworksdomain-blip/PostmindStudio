@@ -58,6 +58,9 @@ describe('helpers', () => {
     );
     expect(stepIndicatorText(status({ workflow: null }))).toBe('');
     expect(describeAppliesTo(CLIENT_SIGN_OFF.appliesTo)).toBe('Applies to business biz_1 · TikTok');
+    expect(describeAppliesTo(CLIENT_SIGN_OFF.appliesTo, { biz_1: 'Leeds Sourdough' })).toBe(
+      'Applies to business Leeds Sourdough · TikTok',
+    );
     expect(describeAppliesTo({ businessIds: [], platforms: [], tags: [] })).toBe(
       'Applies to every project',
     );
@@ -101,6 +104,21 @@ describe('ApprovalWorkflowsScreen', () => {
     const steps = within(list).getByRole('list', { name: 'Client sign-off steps' });
     expect(steps).toHaveTextContent(/Step 1:\s*admin/);
     expect(steps).toHaveTextContent(/Step 2:\s*2 client reviewers/);
+  });
+
+  it('shows the business name, not its id, on the card', async () => {
+    mockFetch([
+      { match: '/approval-workflows', body: { ok: true, data: [CLIENT_SIGN_OFF] } },
+      {
+        match: '/businesses',
+        body: { ok: true, data: [{ id: 'biz_1', name: 'Leeds Sourdough' }] },
+      },
+    ]);
+    renderWithSWR(<ApprovalWorkflowsScreen />);
+    expect(
+      await screen.findByText('Applies to business Leeds Sourdough · TikTok'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/biz_1/)).not.toBeInTheDocument();
   });
 
   it('creates a two-step workflow', async () => {

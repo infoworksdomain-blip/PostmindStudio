@@ -404,15 +404,18 @@ route('POST', '/admin/users/:id/impersonate', () => {
 
 // ------------------------------------------------------------------ legal readiness
 
+// Live's legal pages are published (finished text, no fill-in markers), so sign-up is open.
 route('GET', '/admin/legal-readiness', () => ({
   readiness: {
-    ready: false,
-    launchBlockers: ['terms', 'privacy'],
+    ready: true,
+    launchBlockers: [],
     docs: ['terms', 'privacy', 'cookies', 'acceptable-use', 'dpa', 'subprocessors'].map((doc) => ({
       doc,
       present: true,
-      placeholder: true,
+      placeholder: false,
+      state: 'ready',
+      unfilled: [],
     })),
   },
-  signups: { open: false, reason: 'legal_placeholder' },
+  signups: { open: true },
 }));

@@ -225,6 +225,10 @@
         "body": "Schließen Sie erneut ein Abonnement ab, um weiter zu erstellen. Sie können Ihre Daten weiterhin ansehen, herunterladen und exportieren.",
         "deletesOn": "Ohne neues Abonnement werden die Organisation und ihre Daten nach dem {date} gelöscht.",
         "action": "Erneut abonnieren"
+      },
+      "createBlocked": {
+        "readOnly": "Ihr Konto ist schreibgeschützt. Aktualisieren Sie die Zahlung, um Videos zu erstellen.",
+        "readOnlyAction": "Zahlung aktualisieren"
       }
     }
   },
@@ -2160,7 +2164,9 @@
       "emptyTitle": "Keine passenden Referenzen",
       "emptySearch": "Nichts in der Bibliothek passt zu dieser Suche. Versuchen Sie andere Begriffe oder löschen Sie die Suche.",
       "emptyFilters": "Versuchen Sie eine allgemeinere Kategorie oder weniger Tags.",
-      "more": "Weitere Referenzen"
+      "more": "Weitere Referenzen",
+      "noCloseTitle": "Keine nahen Treffer für „{query}“",
+      "noCloseBody": "Nichts in der Bibliothek passt gut zu dieser Suche. Versuchen Sie andere Wörter oder stöbern Sie in einer Kategorie:"
     },
     "filters": {
       "formAria": "Bibliothek filtern",

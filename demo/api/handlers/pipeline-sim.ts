@@ -2,6 +2,8 @@
 // (QUEUED → PLANNING → ASSETS_GENERATING → RENDERING → QUALITY_CHECKING → READY_FOR_REVIEW) over
 // ~20 s while scripts, shots and renders appear — the Review screen polls every 4 s. Also shot
 // re-runs, re-renders with overlays, slideshow auto-populate and the project budget pause.
+import { isVagueBrief } from '@/lib/client/brief-hint';
+import { VAGUE_BRIEF_REASON, directionOptionsOf } from '@/lib/studio/pipeline/vague-brief';
 import { CONTENT, contentForBrief, type ProjectContent } from './projects-content';
 import { approve } from './projects-publish';
 import { uploadContent } from './p13-a1-uploads';
@@ -139,11 +141,50 @@ function readyShot(script: ScriptRec, index: number): void {
   });
 }
 
+/**
+ * 20.18: three directions for a brief that is too vague (live: ideation writes them from the
+ * business profile; the demo builds them from the brief itself).
+ */
+export function demoDirectionOptions(brief: string): string[] {
+  const topic = brief.replace(/\s+/g, ' ').trim() || 'your business';
+  return directionOptionsOf([
+    `A short, friendly intro to ${topic} for new local customers`,
+    `Three quick tips about ${topic} that your customers will want to save`,
+    `A behind-the-scenes look at ${topic} with a clear call to action`,
+  ]);
+}
+
+/** Live's rule (brief-hint.ts; ideation never asks twice in a row) for a BRIEF project. */
+function needsDirection(p: ProjectRec, directionChosen: boolean): boolean {
+  if (p.sourceType !== 'BRIEF' || directionChosen || p.metadata?.lastBriefVague === true)
+    return false;
+  return isVagueBrief(p.description);
+}
+
 /** POST /projects/:id/generate — a full run from the brief (or the slides). */
-export function startFullRun(p: ProjectRec): void {
+export function startFullRun(p: ProjectRec, opts: { directionChosen?: boolean } = {}): void {
   const run = newRun(p);
   const content = contentFor(p);
   touch(p, { state: 'QUEUED', errorReason: null, completedAt: null });
+  if (needsDirection(p, opts.directionChosen === true)) {
+    // Live: planning runs ideation, which answers "too vague"; the project rests in DRAFT.
+    at(p, run, 1.5, () => touch(p, { state: 'PLANNING' }));
+    at(p, run, 3, () => {
+      setMeta(p, {
+        directionOptions: demoDirectionOptions(p.description ?? ''),
+        lastBriefVague: true,
+      });
+      runs.delete(p.id);
+      timers.delete(p.id);
+      touch(p, { state: 'DRAFT', errorReason: VAGUE_BRIEF_REASON });
+    });
+    return;
+  }
+  setMeta(p, {
+    directionOptions: [],
+    lastBriefVague: false,
+    ...(opts.directionChosen && { directionChosen: true }),
+  });
   p.renders = [];
   p.scripts = [];
   at(p, run, 1.5, () => touch(p, { state: 'PLANNING' }));

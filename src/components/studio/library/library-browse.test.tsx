@@ -129,6 +129,25 @@ describe('LibraryBrowse', () => {
     expect(post?.body).toEqual({ q: 'moody gym', categorySlug: 'food', limit: 24, cursor: null });
   });
 
+  it('says "No close matches" with categories to browse, not unrelated videos', async () => {
+    const user = userEvent.setup();
+    mockFetch([
+      { match: '/library/categories', body: categories },
+      { match: '/library/videos', body: { ok: true, data: [summary()], nextCursor: null } },
+      { match: '/library/search', method: 'POST', body: { ok: true, data: [], nextCursor: null } },
+    ]);
+    renderWithSWR(<LibraryBrowse />);
+    await screen.findByRole('link', { name: /Morning coffee/ });
+    await user.type(screen.getByLabelText('Search the library'), 'luxury cars');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(await screen.findByText('No close matches for “luxury cars”')).toBeInTheDocument();
+    expect(screen.queryByText(/% match/)).not.toBeInTheDocument();
+    // Suggestions: the top-level categories; one click leaves the search and browses it.
+    await user.click(screen.getByRole('button', { name: 'Food' }));
+    expect(await screen.findByRole('link', { name: /Morning coffee/ })).toBeInTheDocument();
+    expect(screen.queryByText(/No close matches/)).not.toBeInTheDocument();
+  });
+
   it('sends the length, mood and tag filters with a search and says they apply', async () => {
     const user = userEvent.setup();
     const { calls } = mockFetch([

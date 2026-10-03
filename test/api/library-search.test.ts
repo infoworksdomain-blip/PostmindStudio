@@ -156,12 +156,26 @@ describe.skipIf(!hasDb)('POST /library/search', { timeout: 60_000 }, () => {
     expect(order[0]).toBe(ids.bakery);
     expect(order).not.toContain(ids.retired);
     expect(order).not.toContain(ids.unlicensed);
-    expect(order.indexOf(ids.bread as string)).toBeLessThan(order.indexOf(ids.gym as string));
+    expect(order).toContain(ids.bread);
+    // 20.18: the relevance floor drops an unrelated item instead of listing it last.
+    expect(order).not.toContain(ids.gym);
     const top = data[0];
     expect(top?.score).toBeGreaterThan(top?.similarity ?? 1); // title + tag boost
     expect(top?.thumbnailUrl).toContain('https://');
     // The query went through the provider router (tracked provider job for the organisation).
     expect(await db.providerJob.count({ where: { organisationId: org } })).toBeGreaterThan(0);
+  });
+
+  it('returns nothing, not the nearest items, when no item is close to the query', async () => {
+    const none = await search({ q: 'luxury cars supercar showroom', limit: 10 });
+    expect(none.status).toBe(200);
+    const data = none.json.data as Array<{ id: string }>;
+    for (const key of ['bakery', 'bread', 'gym'])
+      expect(data.map((d) => d.id)).not.toContain(ids[key]);
+    expect(none.json.nextCursor).toBeNull();
+    // A word in the title or tags still counts as a match even when the embedding is far off.
+    const boosted = await search({ q: 'pov', categorySlug: `t${RUN}`, limit: 10 });
+    expect((boosted.json.data as Array<{ id: string }>).map((d) => d.id)).toContain(ids.bakery);
   });
 
   it('filters by category prefix and pages with a cursor', async () => {

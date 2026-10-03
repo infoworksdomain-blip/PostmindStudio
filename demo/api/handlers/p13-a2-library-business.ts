@@ -6,6 +6,7 @@
 import type { Publication } from '@/lib/client/types';
 import { DEMO_BUSINESS_ID } from '../ids';
 import { DemoHttpError, route } from '../registry';
+import { isRelevant } from '@/lib/studio/library/relevance';
 import { present } from './library';
 import { enqueueIngest, ingestRuns } from './library-store';
 import { getPublication, updatePublication } from './publications-store';
@@ -43,12 +44,17 @@ route('POST', '/library/search', async ({ body }) => {
         .toLowerCase();
       const hits = words.filter((w) => text.includes(w)).length;
       const tagHits = words.filter((w) => v.tags.includes(w)).length;
-      // A stand-in for embedding similarity: word overlap on the analysed description.
-      const similarity = Math.round(Math.min(0.94, 0.42 + hits * 0.11) * 1000) / 1000;
+      // A stand-in for embedding similarity: word overlap on the analysed description. No overlap
+      // is a weak (unrelated) similarity, like a real embedding of an unrelated text.
+      const similarity =
+        hits === 0 ? 0.12 : Math.round(Math.min(0.94, 0.42 + hits * 0.11) * 1000) / 1000;
       const title = words.some((w) => v.title.toLowerCase().includes(w)) ? 0.1 : 0;
-      const score = Math.round((similarity + title + Math.min(0.15, tagHits * 0.05)) * 1e4) / 1e4;
-      return { v, similarity, score };
+      const boost = title + Math.min(0.15, tagHits * 0.05);
+      const score = Math.round((similarity + boost) * 1e4) / 1e4;
+      return { v, similarity, score, boost };
     })
+    // The same relevance floor as live (library/relevance.ts).
+    .filter(({ similarity, boost }) => isRelevant(similarity, boost))
     .sort((a, b) => b.score - a.score || a.v.id.localeCompare(b.v.id));
   const page = ranked.slice(offset, offset + limit);
   const next = offset + limit;
