@@ -42,6 +42,14 @@ describe('pipeline-load', () => {
     expect(assertions(summarise(outcomes), providers, outcomes)).toEqual([]);
   });
 
+  it('does not count cost-guard pauses as pipeline failures', () => {
+    const outcomes = [
+      ...Array.from({ length: 6 }, () => outcome('READY_FOR_REVIEW')),
+      ...Array.from({ length: 4 }, () => outcome('FAILED', 'cost_cap_paused: daily cap')),
+    ];
+    expect(assertions(summarise(outcomes), {}, outcomes)).toEqual([]);
+  });
+
   it('flags caps broken, rate-limit failures and unfinished work', () => {
     const outcomes = [
       ...Array.from({ length: 8 }, () => outcome('READY_FOR_REVIEW')),

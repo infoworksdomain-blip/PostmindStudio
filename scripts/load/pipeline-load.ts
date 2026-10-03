@@ -490,8 +490,12 @@ export function assertions(
     /rate_limited|rate_deferred/.test(o.errorReason ?? ''),
   );
   if (rateFailures.length) problems.push(`${rateFailures.length} projects failed on a rate limit`);
-  if (summary.ready < summary.projects * 0.9) {
-    problems.push(`only ${summary.ready}/${summary.projects} projects reached review`);
+  // The cost guard pausing a heavy organisation at its daily cap is the guard working, not a
+  // pipeline failure: those runs are left out of the "reached review" bar.
+  const capped = outcomes.filter((o) => (o.errorReason ?? '').startsWith('cost_cap_paused')).length;
+  const expected = summary.projects - capped;
+  if (summary.ready < expected * 0.9) {
+    problems.push(`only ${summary.ready}/${expected} projects reached review`);
   }
   if (!outcomes.every((o) => READY_STATES.includes(o.finalState) || TERMINAL.has(o.finalState))) {
     problems.push('some projects never finished');
