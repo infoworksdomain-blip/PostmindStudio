@@ -10,9 +10,9 @@ import { Field, NativeSelect } from '../review/field';
 import type { CreateState, QualityTier, ReviewPolicy } from './body';
 import { PlanningAdvancedOptions, type WorkflowOption } from './create-planning-options';
 import {
-  DEFAULT_LONG_FORM_BUDGET_PENCE,
-  DEFAULT_SHORT_FORM_BUDGET_PENCE,
   defaultProjectBudgetPence,
+  longFormBudgetPence,
+  shortFormBudgetPence,
 } from '@/lib/studio/cost/project-budget';
 import { buildFormats, PLATFORM_OPTIONS, type Length } from './formats';
 
@@ -25,16 +25,21 @@ type AdvancedT = ReturnType<typeof useTranslations<'create.options.advanced'>>;
 
 /** The budget the server applies when the field is left blank (cost/project-budget.ts). A
  *  template's formats are only known server-side, so its placeholder names both defaults. */
-function budgetPlaceholder(state: CreateState, t: AdvancedT, f: StudioFormat): string {
+function budgetPlaceholder(
+  state: CreateState,
+  t: AdvancedT,
+  f: StudioFormat,
+  planTier: QualityTier | undefined,
+): string {
   if (state.projectTemplate) {
     return t('budgetPlaceholderTemplate', {
-      short: f.pence(DEFAULT_SHORT_FORM_BUDGET_PENCE),
-      long: f.pence(DEFAULT_LONG_FORM_BUDGET_PENCE),
+      short: f.pence(shortFormBudgetPence(planTier)),
+      long: f.pence(longFormBudgetPence(planTier)),
     });
   }
   const formats = buildFormats(state.platforms, state.length);
   return t('budgetPlaceholder', {
-    amount: f.pence(defaultProjectBudgetPence(formats, state.source)),
+    amount: f.pence(defaultProjectBudgetPence(formats, state.source, planTier)),
   });
 }
 
@@ -193,8 +198,8 @@ export function AdvancedOptions({
             id="create-budget"
             label={t('budget')}
             hint={t('budgetHint', {
-              short: f.pence(DEFAULT_SHORT_FORM_BUDGET_PENCE),
-              long: f.pence(DEFAULT_LONG_FORM_BUDGET_PENCE),
+              short: f.pence(shortFormBudgetPence(planTier)),
+              long: f.pence(longFormBudgetPence(planTier)),
             })}
           >
             <Input
@@ -202,7 +207,7 @@ export function AdvancedOptions({
               inputMode="decimal"
               value={state.budgetPounds}
               onChange={(e) => onChange({ budgetPounds: e.target.value })}
-              placeholder={budgetPlaceholder(state, t, f)}
+              placeholder={budgetPlaceholder(state, t, f, planTier)}
             />
           </Field>
           <Field id="create-review" label={t('approval')}>

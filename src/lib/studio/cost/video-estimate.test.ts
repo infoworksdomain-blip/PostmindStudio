@@ -13,7 +13,11 @@ import { OpenAIAdapter } from '../providers/openai';
 import { SeedanceAdapter } from '../providers/seedance';
 import { ShotstackAdapter } from '../providers/shotstack';
 import { VeoAdapter } from '../providers/veo';
-import { DEFAULT_LONG_FORM_BUDGET_PENCE, DEFAULT_SHORT_FORM_BUDGET_PENCE } from './project-budget';
+import {
+  DEFAULT_SHORT_FORM_BUDGET_PENCE,
+  longFormBudgetPence,
+  shortFormBudgetPence,
+} from './project-budget';
 import {
   estimateVideoCostPence,
   typicalVideoCalls,
@@ -135,14 +139,19 @@ describe('20.25 typical 30 s short per tier at list prices', () => {
       for (const rate of [0.75, 0.79]) {
         const { totalPence } = estimate(tier, rate, longSec);
         expect(totalPence).toBeLessThanOrEqual(TYPICAL_COST_PENCE_PER_VIDEO[tier].long);
-        expect(totalPence).toBeLessThan(DEFAULT_LONG_FORM_BUDGET_PENCE);
+        expect(totalPence).toBeLessThan(longFormBudgetPence(tier) * 0.9);
       }
     }
   });
 
-  it('every tier keeps a short well inside the default per-project budget', () => {
+  it('a typical short stays under half of the tier default budget (never near the 90% pause)', () => {
     for (const tier of TIERS) {
-      expect(estimate(tier, 0.79).totalPence).toBeLessThan(DEFAULT_SHORT_FORM_BUDGET_PENCE);
+      expect(DEFAULT_SHORT_FORM_BUDGET_PENCE).toBeLessThanOrEqual(shortFormBudgetPence(tier));
+      expect(estimate(tier, 0.79).totalPence).toBeLessThan(shortFormBudgetPence(tier) / 2);
+      // Even on the dearest failover (Veo), a short stays below the pause.
+      expect(estimate(tier, 0.79, 30, 'veo').totalPence).toBeLessThan(
+        shortFormBudgetPence(tier) * 0.9,
+      );
     }
   });
 

@@ -9,10 +9,7 @@ import {
 import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { costCapsFromEnv, utcMonthKey, utcMonthRange, type CostCaps } from '../cost/caps';
 import { resolveOrgCap } from '../cost/org-overrides';
-import {
-  DEFAULT_SHORT_FORM_BUDGET_PENCE,
-  DEFAULT_SLIDESHOW_BUDGET_PENCE,
-} from '../cost/project-budget';
+import { DEFAULT_SLIDESHOW_BUDGET_PENCE, shortFormBudgetPence } from '../cost/project-budget';
 import type { PlanTier } from '../providers/router';
 import {
   entitlementQuota,
@@ -63,14 +60,14 @@ export function typicalItemCostPence(kind: PlanKind, tier: PlanTier): number {
 }
 
 /** The per-project budget cap of one post (the most it can cost before it pauses). */
-export function maxItemCostPence(kind: PlanKind): number {
-  return kind === 'VIDEO' ? DEFAULT_SHORT_FORM_BUDGET_PENCE : DEFAULT_SLIDESHOW_BUDGET_PENCE;
+export function maxItemCostPence(kind: PlanKind, tier?: PlanTier): number {
+  return kind === 'VIDEO' ? shortFormBudgetPence(tier) : DEFAULT_SLIDESHOW_BUDGET_PENCE;
 }
 
 export function estimateCost(kinds: PlanKind[], tier: PlanTier) {
   return {
     typicalPence: kinds.reduce((sum, k) => sum + typicalItemCostPence(k, tier), 0),
-    maxPence: kinds.reduce((sum, k) => sum + maxItemCostPence(k), 0),
+    maxPence: kinds.reduce((sum, k) => sum + maxItemCostPence(k, tier), 0),
   };
 }
 
