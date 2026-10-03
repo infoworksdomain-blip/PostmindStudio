@@ -96,6 +96,21 @@ describe('ReviewScreen', () => {
     expect(toast.success).toHaveBeenCalledWith('Approved — ready to publish.');
   });
 
+  it('Escape closes the reject form without rejecting and focus returns to Reject', async () => {
+    const api = mockFetch(
+      routes(makeProject(), [
+        { method: 'POST', match: '/projects/proj_1/reject', body: { ok: true } },
+      ]),
+    );
+    renderWithSWR(<ReviewScreen projectId="proj_1" />);
+    const reject = await screen.findByRole('button', { name: 'Reject' });
+    await userEvent.click(reject);
+    await userEvent.type(screen.getByLabelText(/What needs to change/), 'Draft{Escape}');
+    expect(screen.queryByRole('button', { name: 'Confirm rejection' })).not.toBeInTheDocument();
+    await waitFor(() => expect(reject).toHaveFocus());
+    expect(api.find('POST', '/projects/proj_1/reject')).toHaveLength(0);
+  });
+
   it('requires a note to reject', async () => {
     const api = mockFetch(
       routes(makeProject(), [
