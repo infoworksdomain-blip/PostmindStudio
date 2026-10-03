@@ -23,7 +23,8 @@
   --popover: oklch(0.995 0.003 80);
   --popover-foreground: oklch(0.2 0.012 60);
 
-  --primary: oklch(0.53 0.19 35);  /* 20.31: darkened from 0.6 so text-primary meets AA (4.5:1) on the cream and tinted backgrounds */ /* vermilion — record / primary action */
+  /* vermilion — record / primary action. 20.31: darkened from L 0.6 so text-primary meets AA (4.5:1). */
+  --primary: oklch(0.53 0.19 35);
   --primary-foreground: oklch(0.985 0.005 80);
   --secondary: oklch(0.93 0.015 75);
   --secondary-foreground: oklch(0.25 0.015 60);
