@@ -1,9 +1,10 @@
 import type { ImageLibraryItem, PrismaClient } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProviderError } from '../../errors';
+import { NoProviderAvailableError, ProviderError } from '../../errors';
 import type { LibraryDeps } from '../images/library';
 import type { ProviderRunDeps } from '../pipeline/provider-run';
 import {
+  fillSlideImages,
   MAX_GENERATIONS_PER_ORG_PER_DAY,
   MAX_GENERATIONS_PER_RUN,
   MIN_SIMILARITY,
@@ -17,13 +18,20 @@ vi.mock('../images/library', () => ({
   generateLibraryImage: vi.fn(),
 }));
 vi.mock('../pipeline/provider-run', () => ({ runProvider: vi.fn() }));
+vi.mock('./slide-images', () => ({
+  stockImageForSlide: vi.fn(async () => null),
+  embedNewImages: vi.fn(async () => undefined),
+}));
 
 import { generateLibraryImage, searchLibrary } from '../images/library';
 import { runProvider } from '../pipeline/provider-run';
+import { embedNewImages, stockImageForSlide } from './slide-images';
 
 const searchLibraryMock = searchLibrary as unknown as ReturnType<typeof vi.fn>;
 const generateLibraryImageMock = generateLibraryImage as unknown as ReturnType<typeof vi.fn>;
 const runProviderMock = runProvider as unknown as ReturnType<typeof vi.fn>;
+const stockMock = stockImageForSlide as unknown as ReturnType<typeof vi.fn>;
+const embedMock = embedNewImages as unknown as ReturnType<typeof vi.fn>;
 
 const scope: PopulateScope = {
   organisationId: 'org-1',
@@ -80,7 +88,7 @@ function fakeDb(
 function deps(db: PrismaClient, overrides: Partial<PopulateDeps> = {}): PopulateDeps {
   return {
     db,
-    library: {} as unknown as LibraryDeps,
+    library: { logger: { warn: vi.fn() } } as unknown as LibraryDeps,
     providers: {} as unknown as ProviderRunDeps,
     reportStockUse: vi.fn(async () => undefined),
     ...overrides,
@@ -99,6 +107,9 @@ beforeEach(() => {
   searchLibraryMock.mockReset();
   generateLibraryImageMock.mockReset();
   runProviderMock.mockReset();
+  stockMock.mockReset();
+  stockMock.mockResolvedValue(null);
+  embedMock.mockClear();
 });
 
 describe('populateSlideshow — text writing', () => {
@@ -457,7 +468,14 @@ describe('populateSlideshow — image generation', () => {
 
     expect(searchLibraryMock).not.toHaveBeenCalled();
     expect(generateLibraryImageMock).not.toHaveBeenCalled();
-    expect(result).toEqual({ textWritten: 0, imagesMatched: 0, imagesGenerated: 0, unfilled: 0 });
+    expect(result).toEqual({
+      textWritten: 0,
+      imagesMatched: 0,
+      imagesStocked: 0,
+      imagesGenerated: 0,
+      textCards: 0,
+      unfilled: 0,
+    });
   });
 
   it('calls reportStockUse once per chosen image, passing the updated library item', async () => {
@@ -500,5 +518,158 @@ describe('populateSlideshow — image generation', () => {
       'bakery bread coffee',
       expect.any(Number),
     );
+  });
+});
+
+// BACKLOG 20.26 — production 2026-10-03: a business library with one image left every slide a
+// text card. Population now goes library → stock (Pixabay, then Unsplash) → AI image within the
+// budget → (generation runs only) a text card on the brand backdrop.
+describe('fillSlideImages — 20.26 on-demand stock and fallbacks', () => {
+  const photo = (id: string, text: string) => {
+    const metadata = { role: 'body', text, imageQuery: text };
+    return {
+      id,
+      sortOrder: 0,
+      slideType: 'IMAGE_KENBURNS',
+      imageAssetId: null,
+      metadata,
+      content: metadata as { role: 'body'; text: string; imageQuery: string },
+    };
+  };
+  const options = { topic: '3 Steps to Nail Your Meeting Opener', aspectRatio: '16:9' as const };
+  const calls = (mock: ReturnType<typeof vi.fn>) => mock.mock.calls.map((c) => c[0] as unknown);
+
+  it('empty library → stock fetched for each slide → the slides get those images', async () => {
+    const rows = [photo('b1', 'Open with the outcome'), photo('b2', 'Name the decision')];
+    const { db, slideshowSlide } = fakeDb(rows);
+    searchLibraryMock.mockResolvedValue([]);
+    stockMock
+      .mockResolvedValueOnce({ id: 'stock-1', provider: 'pixabay' })
+      .mockResolvedValueOnce({ id: 'stock-2', provider: 'pixabay' });
+
+    const result = await fillSlideImages(deps(db), scope, rows, {
+      ...options,
+      textCardFallback: true,
+    });
+
+    expect(result).toMatchObject({ imagesMatched: 0, imagesStocked: 2, imagesGenerated: 0 });
+    expect(stockMock).toHaveBeenNthCalledWith(1, expect.anything(), scope, {
+      query: 'Open with the outcome',
+      aspectRatio: '16:9',
+      exclude: expect.any(Set),
+    });
+    // The second search excludes the image the first slide took.
+    const second = stockMock.mock.calls[1]?.[2] as { exclude: Set<string> };
+    expect([...second.exclude]).toEqual(['stock-1']);
+    expect(calls(slideshowSlide.update)).toEqual([
+      { where: { id: 'b1' }, data: { imageAssetId: 'stock-1' } },
+      { where: { id: 'b2' }, data: { imageAssetId: 'stock-2' } },
+    ]);
+    expect(generateLibraryImageMock).not.toHaveBeenCalled();
+    expect(embedMock).toHaveBeenCalledTimes(1); // new stock rows become searchable
+  });
+
+  it('the business library is tried before stock', async () => {
+    const rows = [photo('b1', 'Open with the outcome')];
+    const { db } = fakeDb(rows);
+    searchLibraryMock.mockResolvedValue([{ id: 'own-1', similarity: 0.8 }]);
+
+    const result = await fillSlideImages(deps(db), scope, rows, options);
+
+    expect(result.imagesMatched).toBe(1);
+    expect(stockMock).not.toHaveBeenCalled();
+  });
+
+  it('stock fails → an AI image is generated within the budget', async () => {
+    const rows = [photo('b1', 'Open with the outcome')];
+    const { db, slideshowSlide } = fakeDb(rows);
+    searchLibraryMock.mockResolvedValue([]);
+    stockMock.mockResolvedValue(null); // every stock source failed or found nothing
+    generateLibraryImageMock.mockResolvedValue({ status: 'created', id: 'gen-1' });
+
+    const result = await fillSlideImages(deps(db), scope, rows, {
+      ...options,
+      textCardFallback: true,
+    });
+
+    expect(result).toMatchObject({ imagesStocked: 0, imagesGenerated: 1, textCards: 0 });
+    expect(generateLibraryImageMock).toHaveBeenCalledWith(expect.anything(), scope, {
+      prompt: 'Open with the outcome',
+      aspectRatio: '16:9',
+    });
+    expect(slideshowSlide.update).toHaveBeenCalledWith({
+      where: { id: 'b1' },
+      data: { imageAssetId: 'gen-1' },
+    });
+  });
+
+  it('stock and AI both fail → a text card (the EDL draws it on the brand backdrop)', async () => {
+    const rows = [{ ...photo('b1', 'Open with the outcome'), durationSec: 3.5 }];
+    const { db, slideshowSlide } = fakeDb(rows);
+    searchLibraryMock.mockRejectedValue(new NoProviderAvailableError('embedding'));
+    generateLibraryImageMock.mockRejectedValue(
+      new ProviderError('openai', 'insufficient_credits', 'out of credit', false),
+    );
+
+    const result = await fillSlideImages(deps(db), scope, rows, {
+      ...options,
+      textCardFallback: true,
+    });
+
+    expect(result).toMatchObject({ imagesGenerated: 0, textCards: 1, unfilled: 0 });
+    const update = calls(slideshowSlide.update)[0] as {
+      where: { id: string };
+      data: Record<string, unknown>;
+    };
+    expect(update.where.id).toBe('b1');
+    expect(update.data).toMatchObject({
+      slideType: 'TEXT_CARD',
+      durationSec: 2.5, // clamped to the text-card range
+      metadata: { role: 'body', text: 'Open with the outcome' },
+    });
+    expect(update.data).not.toHaveProperty('backgroundColor'); // null → the brand backdrop
+  });
+
+  it('an exhausted generation budget also ends in a text card, never an extra AI image', async () => {
+    const rows = [photo('b1', 'Open with the outcome')];
+    const { db } = fakeDb(rows, null, MAX_GENERATIONS_PER_ORG_PER_DAY);
+    searchLibraryMock.mockResolvedValue([]);
+
+    const result = await fillSlideImages(deps(db), scope, rows, {
+      ...options,
+      textCardFallback: true,
+    });
+
+    expect(generateLibraryImageMock).not.toHaveBeenCalled();
+    expect(result.textCards).toBe(1);
+  });
+
+  it('without textCardFallback (manual auto-populate) the slide stays unfilled and errors surface', async () => {
+    const rows = [photo('b1', 'Open with the outcome')];
+    const { db, slideshowSlide } = fakeDb(rows);
+    searchLibraryMock.mockResolvedValue([]);
+    generateLibraryImageMock.mockResolvedValue({ status: 'skipped', reason: 'filtered' });
+
+    const result = await fillSlideImages(deps(db), scope, rows, options);
+    expect(result).toMatchObject({ textCards: 0, unfilled: 1 });
+    expect(slideshowSlide.update).not.toHaveBeenCalled();
+
+    searchLibraryMock.mockRejectedValue(new NoProviderAvailableError('embedding'));
+    await expect(fillSlideImages(deps(db), scope, rows, options)).rejects.toBeInstanceOf(
+      NoProviderAvailableError,
+    );
+  });
+
+  it('an imageless slide without text is left for the user (no empty text card)', async () => {
+    const rows = [{ ...photo('b1', ''), content: { role: 'body' as const, imageQuery: 'bread' } }];
+    const { db, slideshowSlide } = fakeDb(rows, null, MAX_GENERATIONS_PER_ORG_PER_DAY);
+    searchLibraryMock.mockResolvedValue([]);
+
+    const result = await fillSlideImages(deps(db), scope, rows, {
+      ...options,
+      textCardFallback: true,
+    });
+    expect(result).toMatchObject({ textCards: 0, unfilled: 1 });
+    expect(slideshowSlide.update).not.toHaveBeenCalled();
   });
 });

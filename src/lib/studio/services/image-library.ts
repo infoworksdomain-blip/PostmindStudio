@@ -239,3 +239,104 @@ export async function requestLibraryRefresh(
   await deps.queue.add('refresh-image-library', data, { jobId: jobIds.refreshImageLibrary(data) });
   return { queued: true, queries: input.queries ?? profile?.imageSearchQueries ?? [] };
 }
+
+// BACKLOG 20.26 — automatic stock refresh when a business profile is saved, so a business's image
+// library is not empty when its first slideshow is made (production 2026-10-03: one image).
+// DECISION (20.26): run on profile save only, not on business creation: a new business has a
+// name and no profile, so there are no image queries to search with, and the website scan that
+// creates the profile already runs the stock layer (A6.3). The refresh is kept cheap:
+//   - only while the library is thin (< AUTO_STOCK_LIBRARY_TARGET images);
+//   - the first AUTO_STOCK_QUERIES profile queries, AUTO_STOCK_PER_QUERY images each;
+//   - at most once per business per AUTO_STOCK_INTERVAL_MS (any stock search of the business in
+//     that window counts, manual or automatic; the jobId repeats within the day);
+//   - inside the organisation's hourly refresh cap shared with "Refresh stock";
+//   - Pixabay searches are cached for 24 h (images/stock-cache.ts).
+// It never fails the save: every reason not to refresh is returned, and errors are logged.
+
+export const AUTO_STOCK_QUERIES = 3;
+export const AUTO_STOCK_PER_QUERY = 6;
+export const AUTO_STOCK_LIBRARY_TARGET = 20;
+export const AUTO_STOCK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+/** Profile fields whose edit can change which stock photos suit the business. */
+export const STOCK_RELEVANT_FIELDS = [
+  'industry',
+  'subNiche',
+  'products',
+  'services',
+  'imageThemes',
+  'imageSearchQueries',
+] as const;
+
+export type AutoStockOutcome =
+  | 'queued'
+  | 'not_relevant'
+  | 'not_configured'
+  | 'no_queries'
+  | 'library_full'
+  | 'recent'
+  | 'rate_limited'
+  | 'failed';
+
+export async function autoRefreshStock(
+  deps: {
+    db: PrismaClient;
+    queue: JobQueue;
+    now: () => number;
+    library: Pick<LibraryDeps, 'stock' | 'logger'>;
+  },
+  tenant: TenantContext,
+  input: { businessId: string; changedFields: readonly string[] },
+): Promise<AutoStockOutcome> {
+  if (!input.changedFields.some((f) => (STOCK_RELEVANT_FIELDS as readonly string[]).includes(f)))
+    return 'not_relevant';
+  try {
+    deps.library.stock();
+  } catch {
+    return 'not_configured';
+  }
+  try {
+    return await queueAutoRefresh(deps, tenant, input.businessId);
+  } catch (err) {
+    deps.library.logger.warn(
+      { businessId: input.businessId, err: (err as Error).message },
+      'automatic stock refresh not queued',
+    );
+    return 'failed';
+  }
+}
+
+async function queueAutoRefresh(
+  deps: { db: PrismaClient; queue: JobQueue; now: () => number },
+  tenant: TenantContext,
+  businessId: string,
+): Promise<AutoStockOutcome> {
+  const scope = { organisationId: tenant.organisationId, businessId };
+  const profile = await deps.db.businessProfile.findFirst({
+    where: scope,
+    select: { imageSearchQueries: true },
+  });
+  const queries = profile?.imageSearchQueries.slice(0, AUTO_STOCK_QUERIES) ?? [];
+  if (queries.length === 0) return 'no_queries';
+  if ((await deps.db.imageLibraryItem.count({ where: scope })) >= AUTO_STOCK_LIBRARY_TARGET)
+    return 'library_full';
+  const searchedRecently = await deps.db.imageLibraryQuery.count({
+    where: { businessId, lastRunAt: { gte: new Date(deps.now() - AUTO_STOCK_INTERVAL_MS) } },
+  });
+  if (searchedRecently > 0) return 'recent';
+  const orgRecent = await deps.db.imageLibraryQuery.count({
+    where: {
+      businessId: { in: await orgBusinessIds(deps.db, tenant.organisationId) },
+      lastRunAt: { gte: new Date(deps.now() - 60 * 60 * 1000) },
+    },
+  });
+  if (orgRecent >= MAX_REFRESH_QUERIES_PER_ORG_PER_HOUR) return 'rate_limited';
+  const data = {
+    ...scope,
+    runId: `auto-${new Date(deps.now()).toISOString().slice(0, 10)}`,
+    planTier: toPlanTier(tenant.organisation.planTier),
+    queries,
+    perQuery: AUTO_STOCK_PER_QUERY,
+  };
+  await deps.queue.add('refresh-image-library', data, { jobId: jobIds.refreshImageLibrary(data) });
+  return 'queued';
+}
