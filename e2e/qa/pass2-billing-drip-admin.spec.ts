@@ -214,6 +214,8 @@ test.describe('calendar drip queue', () => {
   test('back to a daily schedule: posts a day, and a day can be skipped', async () => {
     await owner.goto('/calendar');
     const drip = owner.getByRole('region', { name: 'Drip queue' });
+    // Wait for the saved schedule to load (weekly, from the test above) before changing it.
+    await expect(drip.getByRole('radio', { name: 'Times a week' })).toBeChecked();
     await drip.getByRole('radio', { name: 'Every day' }).check({ force: true });
     await drip.getByLabel('Posts a day').selectOption('2');
     await drip.getByRole('checkbox', { name: 'Sunday' }).uncheck({ force: true });
@@ -233,6 +235,8 @@ test.describe('Admin Centre', () => {
   test('every tab loads without an error banner', async () => {
     test.setTimeout(240_000);
     const w = watch(staff);
+    // Staff have no organisation: the workspace endpoints behind the shell answer 403.
+    w.expect4xx(/[/]api[/]studio[/]/, 403);
     await w.visit('/admin');
     await expect(staff.getByRole('heading', { name: 'Admin Centre' })).toBeVisible();
     const tabs = (await staff.getByRole('tab').allInnerTexts()).map((t) => t.trim());
@@ -301,6 +305,7 @@ test.describe('Admin Centre', () => {
       },
     });
     const w = watch(staff);
+    w.expect4xx(/[/]api[/]studio[/]/, 403);
     await w.visit('/admin');
     await staff.getByRole('tab', { name: 'Organisations' }).click();
     await staff.getByLabel('Search organisations').fill(`P2 Trial ${run}`);

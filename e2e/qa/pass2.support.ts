@@ -113,7 +113,7 @@ export const noHorizontalScroll = (page: Page): Promise<boolean> =>
 export function watch(page: Page): Watcher {
   const w = new Watcher(page);
   w.expect4xx(
-    /\/api\/studio\/(?:.*\/)?(?:business-profile|library\/recommended|domain-verification)$/,
+    /\/api\/studio\/(?:.*\/)?(?:business-profile|library\/recommended|domain-verification)([?].*)?$/,
     404,
   );
   return w;
