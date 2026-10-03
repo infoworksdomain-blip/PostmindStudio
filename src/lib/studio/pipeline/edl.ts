@@ -48,10 +48,19 @@ export const MUSIC_UNDER_VOICE_VOLUME = 0.2;
 export const MUSIC_ALONE_VOLUME = 0.7;
 const CAPTION_HEIGHT_RATIO = 0.18;
 /**
+ * How clips and stills fill the frame (Clip `fit`, https://shotstack.io/docs/api/#tocs_clip, read
+ * 2026-10-03): "crop (default) - scale the asset to fill the viewport while maintaining the aspect
+ * ratio. The asset will be cropped if it exceeds the bounds of the viewport." whereas "cover -
+ * stretch the asset to fill the viewport without maintaining the aspect ratio". 20.25: `crop`, so
+ * a 9:16 clip in a 16:9 render or a landscape stock photo in 9:16 fills the frame undistorted (it
+ * was `cover`, which stretched them), and no letterbox bars reach blackdetect.
+ */
+export const MEDIA_FIT = 'crop';
+/**
  * Ken Burns on stills (Shotstack clip `effect`; the slideshow planner uses the same names). 20.25:
  * stills alternate a slow push in and pull out so a video with several image shots does not repeat
- * one move. Both start or end at full size over a `cover` fit, so the frame is always filled (no
- * letterbox bars for blackdetect); slides are not used here because they move the frame.
+ * one move. Both start or end at full size over the `crop` fill (MEDIA_FIT), so the frame is always
+ * filled (no letterbox bars for blackdetect); slides are not used here because they move the frame.
  */
 export const STILL_EFFECTS = ['zoomIn', 'zoomOut'] as const;
 
@@ -250,7 +259,7 @@ function visualClip(
       asset: { type: 'image', src: shot.visualSrc },
       start,
       length,
-      fit: 'cover',
+      fit: MEDIA_FIT,
       effect: STILL_EFFECTS[stillIndex % STILL_EFFECTS.length], // gentle Ken Burns on stills
       ...transition,
     });
@@ -264,7 +273,7 @@ function visualClip(
       },
       start,
       length,
-      fit: 'cover',
+      fit: MEDIA_FIT,
       ...transition,
     });
   }

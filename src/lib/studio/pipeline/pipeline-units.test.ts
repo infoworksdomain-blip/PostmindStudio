@@ -260,7 +260,7 @@ describe('Shotstack edit list', () => {
     ]);
     expect(visual?.clips[0]).toMatchObject({
       asset: { type: 'video', volume: 0 },
-      fit: 'cover',
+      fit: 'crop', // 20.25: aspect-preserving fill (Shotstack "cover" stretches)
       transition: { out: 'fade' },
     });
     expect(visual?.clips[1]).toMatchObject({ asset: { type: 'image' }, effect: 'zoomIn' });

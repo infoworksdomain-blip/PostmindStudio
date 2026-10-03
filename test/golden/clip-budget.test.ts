@@ -157,14 +157,14 @@ describe.skipIf(!hasDb)('golden: AI clip budget (20.25)', { timeout: 180_000 }, 
     expect(converted.find((s) => s.sortOrder === 8)?.visualTreatment).toBe('IMAGE_STILL');
     expect(converted.filter((s) => s.visualTreatment === 'MOTION_GRAPHICS')).toHaveLength(5);
 
-    // The edit: stills fill the frame (cover) with alternating Ken Burns moves.
+    // The edit: stills fill the frame without distortion (crop) with alternating Ken Burns moves.
     const edit = (j.h.adapters.shotstack.requests.at(-1) as unknown as { edit: Edit }).edit;
     const stills = edit.timeline.tracks
       .flatMap((t) => t.clips)
       .filter((c) => c.asset.type === 'image' && c.length > 1);
     expect(stills.length).toBeGreaterThan(0);
     for (const still of stills) {
-      expect(still.fit).toBe('cover');
+      expect(still.fit).toBe('crop');
       expect(['zoomIn', 'zoomOut']).toContain(still.effect);
     }
     if (stills.length > 1) expect(new Set(stills.map((s) => s.effect)).size).toBe(2);

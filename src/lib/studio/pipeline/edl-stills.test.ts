@@ -1,11 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { buildShotstackComposition, STILL_EFFECTS, type EdlShot } from './edl';
+import type { AspectRatio } from '../providers/interface';
+import {
+  buildShotstackComposition,
+  MEDIA_FIT,
+  outputDimensions,
+  STILL_EFFECTS,
+  type EdlShot,
+} from './edl';
 import { isTooDark } from './edl-backdrop';
 
 // BACKLOG 20.25 — a video mixing AI clips with image and motion-graphics shots (the AI clip
-// budget's cheaper shots). Stills must fill the frame (fit "cover", a Ken Burns move that never
-// shrinks the picture below the frame) so blackdetect sees no letterbox bars, and cards sit on a
-// full-frame, non-black fill.
+// budget's cheaper shots). Clips and stills fill the frame WITHOUT distortion: Shotstack's Clip
+// `fit` "crop (default) - scale the asset to fill the viewport while maintaining the aspect ratio"
+// (https://shotstack.io/docs/api/#tocs_clip; "cover" stretches without keeping it), with a Ken
+// Burns move that never shrinks the picture below the frame, so blackdetect sees no letterbox
+// bars; cards sit on a full-frame, non-black fill.
 
 type Clip = { asset: Record<string, unknown>; start: number; length: number } & Record<
   string,
@@ -60,14 +69,15 @@ describe('EDL for image + motion shots (20.25)', () => {
   const { edit, summary } = buildShotstackComposition({ aspectRatio: '9:16', shots: SHOTS });
   const clips = clipsOf(edit);
 
-  it('stills fill the frame (cover) and alternate a push in and a pull out', () => {
+  it('stills fill the frame (crop) and alternate a push in and a pull out', () => {
     const stills = clips.filter((c) => c.asset.type === 'image');
     expect(stills.map((c) => c.asset.src)).toEqual([
       'https://s/a.png',
       'https://s/b.png',
       'https://s/c.png',
     ]);
-    expect(stills.map((c) => c.fit)).toEqual(['cover', 'cover', 'cover']);
+    expect(stills.map((c) => c.fit)).toEqual(['crop', 'crop', 'crop']);
+    expect(MEDIA_FIT).toBe('crop');
     expect(stills.map((c) => c.effect)).toEqual(['zoomIn', 'zoomOut', 'zoomIn']);
     expect(STILL_EFFECTS).toEqual(['zoomIn', 'zoomOut']);
     // Stills start and end where their shots do (4–7, 10–13, 13–16 s).
@@ -78,11 +88,39 @@ describe('EDL for image + motion shots (20.25)', () => {
     ]);
   });
 
-  it('every visual clip with media fills the frame; nothing is letterboxed', () => {
-    for (const clip of clips.filter((c) => c.asset.type === 'image' || c.asset.type === 'video')) {
-      expect(clip.fit).toBe('cover');
-    }
-  });
+  it.each(['9:16', '16:9', '1:1', '4:5'] as const)(
+    '%s render: every clip and still keeps its aspect ratio and fills the frame (crop)',
+    (aspectRatio: AspectRatio) => {
+      // Mixed sources: portrait and landscape clips, an avatar, an upload and stills of any shape.
+      const shots: EdlShot[] = [
+        ...SHOTS,
+        {
+          durationSec: 3,
+          visualTreatment: 'AI_AVATAR',
+          visualSrc: 'https://s/av.mp4',
+          visualKind: 'video',
+        },
+        {
+          durationSec: 3,
+          visualTreatment: 'USER_UPLOAD',
+          visualSrc: 'https://s/up.mp4',
+          visualKind: 'video',
+          keepSourceAudio: true,
+        },
+      ];
+      const built = buildShotstackComposition({ aspectRatio, shots });
+      const media = clipsOf(built.edit).filter(
+        (c) => c.asset.type === 'image' || c.asset.type === 'video',
+      );
+      expect(media).toHaveLength(7);
+      for (const clip of media) expect(clip.fit).toBe('crop');
+      expect(media.some((c) => c.fit === 'cover' || c.fit === 'contain')).toBe(false);
+      expect(built.summary.frame).toEqual(outputDimensions(aspectRatio));
+      expect((built.edit as { output: { aspectRatio: string } }).output.aspectRatio).toBe(
+        aspectRatio,
+      );
+    },
+  );
 
   it('the motion-graphics and text cards are full-frame, non-black fills', () => {
     const frame = summary.frame;
