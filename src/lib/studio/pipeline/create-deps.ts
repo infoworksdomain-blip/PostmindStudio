@@ -31,6 +31,10 @@ import {
   createBreakerRedisClient,
   getSharedCircuitBreaker,
 } from '../providers/circuit-breaker-redis';
+import {
+  providerConcurrencyFromEnv,
+  providerOverflowFromEnv,
+} from '../providers/provider-concurrency';
 import { providerRateLimiterFromEnv } from '../providers/provider-rate';
 import { redisConnectionFromEnv } from '../queue/redis';
 import { getProviderRegistry } from '../providers/default-registry';
@@ -129,6 +133,13 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       () => createBreakerRedisClient(redisConnectionFromEnv()),
       logger,
     ),
+    // 20.29: in-flight caps per provider (STUDIO_PROVIDER_CONCURRENCY_<ID>; Seedance 3, Kling 20).
+    providerConcurrency: providerConcurrencyFromEnv(
+      process.env,
+      () => createBreakerRedisClient(redisConnectionFromEnv()),
+      logger,
+    ),
+    providerOverflow: providerOverflowFromEnv(process.env),
     logger,
     config: {
       assetsBucket: assetsBucket(),

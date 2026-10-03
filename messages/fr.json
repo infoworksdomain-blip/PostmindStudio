@@ -851,6 +851,10 @@
       "aria": "Présentateur indisponible",
       "note": "Le présentateur n’était pas disponible pour cette vidéo : ces moments utilisent donc des clips vidéo à la place."
     },
+    "queued": {
+      "aria": "En file d’attente",
+      "note": "En file d’attente : beaucoup de vidéos sont en cours de création, la vôtre attend son tour et commencera bientôt. Vous n’avez rien à faire."
+    },
     "quality": {
       "title": "Contrôle qualité",
       "status": {

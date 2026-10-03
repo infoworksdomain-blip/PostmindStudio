@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { Info, PauseCircle, ShieldAlert } from 'lucide-react';
+import { Clock, Info, PauseCircle, ShieldAlert } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
@@ -176,6 +176,46 @@ export function FallbackNote({ project }: { project: ProjectDetail }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+// 20.29 — the run's work is waiting for a busy video provider (many videos at once): the worker
+// delayed it rather than failing it and recorded metadata.providerWait { at, retryAt }. While the
+// run is in progress and the last wait is recent, say so plainly: "queued, starts soon".
+
+const WAITING_STATES = new Set([
+  'QUEUED',
+  'PLANNING',
+  'ASSETS_QUEUED',
+  'ASSETS_GENERATING',
+  'RENDERING',
+  'QUALITY_CHECKING',
+]);
+/** A wait whose retry time is older than this is stale (the work has started since). */
+export const PROVIDER_WAIT_FRESH_MS = 3 * 60_000;
+
+export function waitingForProvider(
+  project: Pick<ProjectDetail, 'state' | 'metadata'>,
+  now: number = Date.now(),
+): boolean {
+  if (!WAITING_STATES.has(project.state)) return false;
+  const wait = record(project.metadata?.providerWait);
+  const retryAt = typeof wait?.retryAt === 'string' ? Date.parse(wait.retryAt) : Number.NaN;
+  return Number.isFinite(retryAt) && now - retryAt < PROVIDER_WAIT_FRESH_MS;
+}
+
+export function QueuedNote({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.queued');
+  if (!waitingForProvider(project)) return null;
+  return (
+    <p
+      role="status"
+      aria-label={t('aria')}
+      className="flex items-start gap-2 rounded-xl border border-foreground/15 bg-card px-3 py-2 text-sm"
+    >
+      <Clock className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+      {t('note')}
+    </p>
   );
 }
 

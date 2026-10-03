@@ -5,6 +5,7 @@ import { createCircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderAdapter } from '../providers/interface';
 import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-repository';
 import { LumaAdapter } from '../providers/luma';
+import { createMemoryProviderConcurrencyLimiter } from '../providers/provider-concurrency';
 import { createProviderRegistry } from '../providers/registry';
 import { StubAdapter } from '../providers/test-adapter';
 import { runProvider, type ProviderRunDeps } from './provider-run';
@@ -140,6 +141,80 @@ describe('runProvider — Phase 15 Track C hooks', () => {
     expect(acquire).toHaveBeenCalledWith({ providerId: 'luma', organisationId: 'org-1' });
     expect(stub.submitCalls).toHaveLength(0);
     expect(rows.size).toBe(0);
+  });
+
+  it('20.29: a provider at its in-flight cap defers before any submit', async () => {
+    const stub = new StubAdapter('luma', ['text_to_video']);
+    const { deps, rows } = setup(stub);
+    const providerConcurrency = createMemoryProviderConcurrencyLimiter(() => ({
+      max: 1,
+      perOrganisation: 1,
+    }));
+    const held = await providerConcurrency.acquire({
+      providerId: 'luma',
+      organisationId: 'org-2',
+      leaseMs: 60_000,
+    });
+    const err = await runProvider(clip, { ...deps, providerConcurrency }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RateDeferredError);
+    expect(err).toMatchObject({ providerId: 'luma', details: { reason: 'provider_full' } });
+    expect(stub.submitCalls).toHaveLength(0);
+    expect(rows.size).toBe(0);
+    if (held.acquired) await held.release();
+    await runProvider(clip, { ...deps, providerConcurrency });
+    expect(stub.submitCalls).toHaveLength(1);
+    // The slot is given back when the provider job ends.
+    expect(providerConcurrency.inFlight('luma')).toBe(0);
+  });
+
+  it('20.29: the slot is given back when the provider fails too', async () => {
+    const stub = new StubAdapter('luma', ['text_to_video']);
+    stub.nextPoll = async () => ({
+      state: 'failed',
+      error: { class: 'unknown', message: 'boom', retryable: true },
+    });
+    const { deps } = setup(stub);
+    const providerConcurrency = createMemoryProviderConcurrencyLimiter(() => ({
+      max: 1,
+      perOrganisation: 1,
+    }));
+    await expect(runProvider(clip, { ...deps, providerConcurrency })).rejects.toBeInstanceOf(
+      ProviderError,
+    );
+    expect(providerConcurrency.inFlight('luma')).toBe(0);
+  });
+
+  it('20.29 overflow=failover: a full provider hands the work to the next one', async () => {
+    const runway = new StubAdapter('runway', ['text_to_video']);
+    const luma = new StubAdapter('luma', ['text_to_video']);
+    const { deps } = setup(runway);
+    const providerConcurrency = createMemoryProviderConcurrencyLimiter((id) =>
+      id === 'runway' ? { max: 1, perOrganisation: 1 } : undefined,
+    );
+    await providerConcurrency.acquire({ providerId: 'runway', organisationId: 'x', leaseMs: 9e5 });
+    const both = { ...deps, registry: createProviderRegistry([runway, luma]), providerConcurrency };
+    const queued = await runProvider(clip, both).catch((e: unknown) => e);
+    expect(queued).toBeInstanceOf(RateDeferredError); // default: queue for the cheaper provider
+    const result = await runProvider(clip, { ...both, providerOverflow: 'failover' });
+    expect(result.decision.providerId).toBe('luma');
+    expect(runway.submitCalls).toHaveLength(0);
+  });
+
+  it('20.29 overflow=failover: waits when every candidate is full', async () => {
+    const runway = new StubAdapter('runway', ['text_to_video']);
+    const { deps } = setup(runway);
+    const providerConcurrency = createMemoryProviderConcurrencyLimiter(() => ({
+      max: 1,
+      perOrganisation: 1,
+    }));
+    await providerConcurrency.acquire({ providerId: 'runway', organisationId: 'x', leaseMs: 9e5 });
+    const err = await runProvider(clip, {
+      ...deps,
+      providerConcurrency,
+      providerOverflow: 'failover',
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RateDeferredError);
+    expect(err).toMatchObject({ providerId: 'runway' });
   });
 
   it('P1: routes over the organisation registry when one is returned', async () => {

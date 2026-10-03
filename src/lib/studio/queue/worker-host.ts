@@ -2,6 +2,7 @@ import { DelayedError, Worker, type ConnectionOptions } from 'bullmq';
 import { RateDeferredError } from '../../errors';
 import type { PipelineDeps } from '../pipeline/deps';
 import { QUEUES, retryDelayMs, type JobDataMap, type JobName, type QueueName } from './queues';
+import { deferralsOf } from './rate-deferral';
 import { queuePrefix } from './redis';
 import { executeJob } from './workers/runtime';
 
@@ -90,6 +91,7 @@ export function startWorkers(input: {
           await executeJob(job.name as JobName, job.data as JobDataMap[JobName], input.deps, {
             attemptsMade: job.attemptsMade,
             maxAttempts: job.opts.attempts ?? 1,
+            deferrals: deferralsOf(job),
           });
         } catch (err) {
           await deferIfRateLimited(err, job, token, input.deps.now);

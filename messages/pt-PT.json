@@ -851,6 +851,10 @@
       "aria": "Apresentador indisponível",
       "note": "O apresentador não estava disponível para este vídeo, por isso esses momentos usam clipes de vídeo."
     },
+    "queued": {
+      "aria": "Em fila",
+      "note": "Em fila: estão a ser criados muitos vídeos neste momento, por isso o seu aguarda a vez e vai começar em breve. Não precisa de fazer nada."
+    },
     "quality": {
       "title": "Verificação de qualidade",
       "status": {

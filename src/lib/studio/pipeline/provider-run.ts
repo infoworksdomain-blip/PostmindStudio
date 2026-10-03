@@ -13,6 +13,7 @@ import {
   type AccountAlertDeps,
 } from '../providers/account-alerts';
 import { isAccountProviderError, retryAtOf } from '../providers/account-errors';
+import { LEASE_MARGIN_MS } from '../providers/provider-concurrency';
 import type { ProviderPollResult, ProviderRequest } from '../providers/interface';
 import {
   routeProvider,
@@ -49,6 +50,8 @@ export type ProviderRunDeps = Pick<
   | 'now'
   | 'sleep'
   | 'providerRates'
+  | 'providerConcurrency'
+  | 'providerOverflow'
   | 'registryFor'
   | 'providerRatings'
   | 'notifier'
@@ -84,15 +87,16 @@ export async function runProvider(
     request: { ...rawInput.request, planTier: rawInput.planTier },
   };
   const failures: ProviderAccountFailure[] = [];
+  // 20.29 overflow (STUDIO_PROVIDER_OVERFLOW=failover): providers found at their in-flight cap in
+  // this call, and the first such deferral (thrown when no other provider can take the work).
+  const busy: string[] = [];
+  let firstDeferral: RateDeferredError | undefined;
   for (;;) {
-    let decision: RouteDecision;
+    let decision: RoutedDecision;
     try {
-      decision = await route(
-        input,
-        failures.map((f) => f.providerId),
-        deps,
-      );
+      decision = await route(input, [...failures.map((f) => f.providerId), ...busy], deps);
     } catch (err) {
+      if (err instanceof NoProviderAvailableError && firstDeferral) throw firstDeferral;
       if (err instanceof NoProviderAvailableError && failures.length > 0) {
         const capability = (err.details?.capability as string | undefined) ?? input.need.kind;
         await safely(deps, () =>
@@ -105,6 +109,11 @@ export async function runProvider(
     try {
       return await runDecided(decision, input, deps);
     } catch (err) {
+      if (deps.providerOverflow === 'failover' && isProviderFull(err)) {
+        busy.push(decision.providerId);
+        firstDeferral ??= err;
+        continue;
+      }
       if (!isAccountProviderError(err) || err.providerId !== decision.providerId) throw err;
       const failure: ProviderAccountFailure = {
         providerId: decision.providerId,
@@ -121,6 +130,11 @@ export async function runProvider(
       );
     }
   }
+}
+
+/** A deferral because the provider's ACCOUNT is full (not an organisation's fair share). */
+function isProviderFull(err: unknown): err is RateDeferredError {
+  return err instanceof RateDeferredError && err.details?.reason === 'provider_full';
 }
 
 /** Alerting must never change the outcome of the operation it reports on. */
@@ -141,23 +155,28 @@ function alertDeps(deps: ProviderRunDeps): AccountAlertDeps {
   };
 }
 
+/** A route decision plus whose account it runs on (20.29 concurrency slots are per account). */
+type RoutedDecision = RouteDecision & { accountScope: string };
+
 async function route(
   input: RunProviderInput,
   excludeProviderIds: readonly string[],
   deps: ProviderRunDeps,
-): Promise<RouteDecision> {
+): Promise<RoutedDecision> {
   const providerScope = {
     organisationId: input.request.organisationId,
     projectId: input.request.projectId,
   };
   // P1 BYOC: an Enterprise organisation with its own keys routes over its own registry.
-  const registry = (await deps.registryFor?.(providerScope)) ?? deps.registry;
+  const own = await deps.registryFor?.(providerScope);
+  const registry = own ?? deps.registry;
+  const accountScope = own ? input.request.organisationId : 'platform';
   // P7: ratings only reorder the tier's candidates; they are advisory, so a failed lookup
   // routes in the spec's order rather than failing the job.
   const providerScores = await deps.providerRatings
     ?.scoresFor(providerScope)
     .catch(() => undefined);
-  return routeProvider(
+  const decision = await routeProvider(
     {
       need: input.need,
       planTier: input.planTier,
@@ -177,13 +196,15 @@ async function route(
       now: deps.now,
     },
   );
+  return { ...decision, accountScope };
 }
 
 async function runDecided(
-  decision: RouteDecision,
+  routed: RoutedDecision,
   input: RunProviderInput,
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  const { accountScope, ...decision } = routed;
   const { adapter } = decision;
   // 15.C3 (spec 11.4): a full rate window delays the job (worker-host moveToDelayed) instead of
   // failing it or spending an attempt.
@@ -194,6 +215,32 @@ async function runDecided(
     });
     if (!slot.allowed) throw new RateDeferredError(adapter.providerId, slot.retryAfterMs);
   }
+  // 20.29: the provider's account is at its in-flight cap: wait for a slot the same way.
+  // An organisation may hold only its share of the platform account's slots (fairness).
+  const slot = await deps.providerConcurrency?.acquire({
+    providerId: adapter.providerId,
+    organisationId: input.request.organisationId,
+    byoc: accountScope !== 'platform',
+    leaseMs: deps.config.providerTimeoutMs + LEASE_MARGIN_MS,
+  });
+  if (slot && !slot.acquired) {
+    // Nothing reaches the provider: give back a half-open trial slot the router may have claimed.
+    await deps.breaker.releaseTrial(adapter.providerId);
+    throw new RateDeferredError(adapter.providerId, slot.retryAfterMs, { reason: slot.reason });
+  }
+  try {
+    return await submitAndPoll(decision, input, deps);
+  } finally {
+    await slot?.release();
+  }
+}
+
+async function submitAndPoll(
+  decision: RouteDecision,
+  input: RunProviderInput,
+  deps: ProviderRunDeps,
+): Promise<ProviderRunResult> {
+  const { adapter } = decision;
   const scope = { organisationId: input.request.organisationId };
   // Spec 12.5 alerts: evaluated after the reservation (submit) and after settlement (terminal).
   const recordSpend = () =>

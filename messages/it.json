@@ -851,6 +851,10 @@
       "aria": "Presentatore non disponibile",
       "note": "Il presentatore non era disponibile per questo video, quindi in quei momenti vengono usate delle clip video."
     },
+    "queued": {
+      "aria": "In coda",
+      "note": "In coda: in questo momento si stanno creando molti video, quindi il tuo attende il suo turno e inizierà a breve. Non devi fare nulla."
+    },
     "quality": {
       "title": "Controllo qualità",
       "status": {

@@ -851,6 +851,10 @@
       "aria": "Presentador no disponible",
       "note": "El presentador no estaba disponible para este vídeo, así que en esos momentos se usan clips de vídeo."
     },
+    "queued": {
+      "aria": "En cola",
+      "note": "En cola: ahora mismo se están creando muchos vídeos, así que el tuyo espera su turno y empezará pronto. No hace falta que hagas nada."
+    },
     "quality": {
       "title": "Control de calidad",
       "status": {
