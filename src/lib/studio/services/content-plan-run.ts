@@ -131,6 +131,11 @@ function slideText(item: Pick<ContentPlanItem, 'slides' | 'title'>): SlideText {
   };
 }
 
+/** 20.26: photo slides last as long as the text cards did (2.5 s, the Ken Burns minimum). */
+export const PLAN_PHOTO_SLIDE_SEC = 2.5;
+/** Ken Burns moves cycled across a plan slideshow's photo slides (Shotstack clip `effect`). */
+export const KEN_BURNS_CYCLE = ['zoomIn', 'slideLeft', 'zoomOut', 'slideRight'] as const;
+
 /** The POST /projects body for one item (validated by createProjectInput like any other). */
 export function projectBodyFor(
   plan: Pick<ContentPlan, 'businessId' | 'platforms' | 'language' | 'brandKitId' | 'targets'>,
@@ -164,9 +169,23 @@ export function projectBodyFor(
     ...(plan.brandKitId && { brandKitId: plan.brandKitId }),
   };
   if (item.kind === 'SLIDESHOW') {
-    const card = (role: 'hook' | 'body' | 'cta', value: string) => ({
+    const card = (role: 'hook' | 'cta', value: string) => ({
       slideType: 'TEXT_CARD' as const,
       content: { role, text: value.slice(0, 300) },
+    });
+    // 20.26: each point is a photo slide (its text as the caption) with a Ken Burns move; the
+    // image is found when the slideshow is generated (plan-slideshow.ts: library, then stock,
+    // then a generated image), and a point with no image left becomes a text card.
+    const photo = (value: string, index: number) => ({
+      slideType: 'IMAGE_KENBURNS' as const,
+      durationSec: PLAN_PHOTO_SLIDE_SEC,
+      transitionIn: 'fade' as const,
+      kenBurnsSpec: { effect: KEN_BURNS_CYCLE[index % KEN_BURNS_CYCLE.length]! },
+      content: {
+        role: 'body' as const,
+        text: value.slice(0, 300),
+        imageQuery: value.slice(0, 300),
+      },
     });
     return {
       ...common,
@@ -175,7 +194,7 @@ export function projectBodyFor(
         topic: item.title.slice(0, 500),
         slides: [
           card('hook', text.hook),
-          ...text.points.map((p) => card('body', p)),
+          ...text.points.map(photo),
           ...(text.cta ? [card('cta', text.cta)] : []),
         ],
       },
