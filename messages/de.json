@@ -1777,6 +1777,7 @@
       "fallbackAlt": "Bild aus der Bibliothek",
       "noPreview": "Keine Vorschau",
       "sourceMatch": "{source} · {percent} Übereinstimmung",
+      "stockCredit": "Bilder von {providers}",
       "deleteAria": "Bild löschen: {alt}",
       "deleteConfirm": {
         "title": "Dieses Bild löschen?",

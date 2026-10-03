@@ -17,8 +17,9 @@ export const flagKeys = {
   platform: (platform: string) => `studio.kill_switch.platform.${platform}`,
 } as const;
 
-// Every external provider named in spec Section 6 (and Addendum A6 for Unsplash) that has its
-// own credentials in .env.example. Each gets a level-4 kill-switch entry (spec 6.7).
+// Every external provider named in spec Section 6 (and Addendum A6 for Unsplash, 20.16 for
+// Pixabay) that has its own credentials in .env.example. Each gets a level-4 kill-switch entry
+// (spec 6.7).
 export const PROVIDER_IDS = [
   'anthropic',
   'openai',
@@ -40,6 +41,7 @@ export const PROVIDER_IDS = [
   'storyblocks',
   'pexels',
   'unsplash',
+  'pixabay',
   'assemblyai',
   'shotstack',
   'creatomate',

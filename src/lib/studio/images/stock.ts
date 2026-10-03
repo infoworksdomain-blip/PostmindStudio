@@ -1,5 +1,6 @@
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { ConfigurationError, ProviderError } from '../../errors';
+import { STOCK_CACHE_TTL_MS, type StockSearchCache } from './stock-cache';
 
 // BACKLOG 6.4 / Addendum A6.3 Layer 2 — stock images matching the business niche.
 // Shapes follow the vendors' current docs (checked 2026-09-27):
@@ -10,8 +11,14 @@ import { ConfigurationError, ProviderError } from '../../errors';
 //    REQUIRE hotlinking its URLs and forbid copying images to our own storage, so Unsplash hits
 //    are marked `storable: false` and kept as hotlinks, and each use must be reported to
 //    links.download_location (see trackUse).
+//  - Pixabay  https://pixabay.com/api/docs/ (read 2026-10-01; GET https://pixabay.com/api/?key=...).
+//    The terms forbid permanent hotlinking ("If you intend to use the images, please download
+//    them to your server first"), require responses to be cached for 24 hours, and require
+//    showing users where images come from whenever search results are displayed. Pixabay hits
+//    are therefore `storable: true` (copied into our storage like Pexels) and searches go through
+//    a 24 h cache (stock-cache.ts).
 
-export type StockProviderId = 'pexels' | 'storyblocks' | 'unsplash';
+export type StockProviderId = 'pexels' | 'storyblocks' | 'unsplash' | 'pixabay';
 
 export interface StockHit {
   provider: StockProviderId;
@@ -33,6 +40,11 @@ export interface StockSearch {
   query: string;
   perPage: number;
   orientation?: 'landscape' | 'portrait' | 'square';
+  /**
+   * Smallest useful width in px. Pixabay uses it for `min_width` and to pick its 640 px
+   * webformatURL instead of the 1280 px largeImageURL; other sources ignore it.
+   */
+  minWidth?: number;
   /** Opaque ids Storyblocks requires for licence tracking (never names or emails). */
   userId: string;
   projectId: string;
@@ -48,15 +60,30 @@ export interface StockImageSource {
 interface Deps {
   fetchImpl: typeof fetch;
   now: () => number;
+  /** Search-response cache (required by Pixabay's terms; other sources do not use it). */
+  cache?: StockSearchCache;
 }
 
 const TIMEOUT_MS = 20_000;
+
+/** Optional per-provider refinement of an HTTP error class from the response's text body. */
+type ErrorBodyClassifier = (status: number, body: string) => string | null;
+
+const MAX_ERROR_BODY_CHARS = 500;
+
+function errorClassForStatus(status: number): string {
+  if (status === 429) return 'rate_limited';
+  if (status === 401 || status === 403) return 'auth';
+  if (status >= 500) return 'provider_unavailable';
+  return 'invalid_request';
+}
 
 async function getJson(
   provider: StockProviderId,
   url: string,
   deps: Deps,
   headers: Record<string, string> = {},
+  classifyBody?: ErrorBodyClassifier,
 ): Promise<unknown> {
   let res: Response;
   try {
@@ -67,15 +94,14 @@ async function getJson(
     });
   }
   if (!res.ok) {
-    const errorClass =
-      res.status === 429
-        ? 'rate_limited'
-        : res.status === 401 || res.status === 403
-          ? 'auth'
-          : res.status >= 500
-            ? 'provider_unavailable'
-            : 'invalid_request';
-    await res.body?.cancel();
+    let errorClass = errorClassForStatus(res.status);
+    if (classifyBody) {
+      // The body is only classified, never echoed (20.11: no raw provider text for customers).
+      const text = (await res.text().catch(() => '')).slice(0, MAX_ERROR_BODY_CHARS);
+      errorClass = classifyBody(res.status, text) ?? errorClass;
+    } else {
+      await res.body?.cancel();
+    }
     throw new ProviderError(
       provider,
       errorClass,
@@ -279,7 +305,151 @@ export async function trackUnsplashUse(
   await res.body?.cancel();
 }
 
-/** Configured stock sources in priority order (A6.3: Pexels + Storyblocks primary, Unsplash fallback). */
+// ---------------------------------------------------------------- Pixabay
+
+// https://pixabay.com/api/docs/ (read 2026-10-01): GET https://pixabay.com/api/ with key, q
+// ("Max 100 characters"), image_type (all|photo|illustration|vector), orientation
+// (all|horizontal|vertical), safesearch, per_page (3-200, default 20), min_width, min_height,
+// order, page, lang. Hits: id, pageURL, tags, previewURL (150 px), webformatURL (640 px, "URL
+// valid for 24 hours"), largeImageURL ("Scaled image with a maximum width/height of 1280px"),
+// imageWidth/imageHeight (the original's size), user, user_id; profile pages are
+// https://pixabay.com/users/{USERNAME}-{ID}/. fullHDURL / imageURL need full API access and are
+// not used. Rate limit: 100 requests per 60 s per key, HTTP 429 when exceeded.
+
+const PIXABAY_API_URL = 'https://pixabay.com/api/';
+export const PIXABAY_MIN_PER_PAGE = 3;
+export const PIXABAY_MAX_PER_PAGE = 200;
+export const PIXABAY_MAX_QUERY_CHARS = 100;
+export const PIXABAY_WEBFORMAT_MAX_PX = 640;
+export const PIXABAY_LARGE_MAX_PX = 1280;
+export const PIXABAY_LICENCE_URL = 'https://pixabay.com/service/license-summary/';
+
+const PIXABAY_ORIENTATION: Record<NonNullable<StockSearch['orientation']>, string | null> = {
+  landscape: 'horizontal',
+  portrait: 'vertical',
+  square: null, // Pixabay has no square filter: "all"
+};
+
+interface PixabayImage {
+  id: number;
+  pageURL?: string;
+  tags?: string;
+  webformatURL?: string;
+  largeImageURL?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  user?: string;
+  user_id?: number;
+}
+
+/** The documented search params without the key (the key is added only to the request URL). */
+export function pixabaySearchParams(input: StockSearch): URLSearchParams {
+  const perPage = Math.floor(input.perPage);
+  const params = new URLSearchParams({
+    q: input.query.trim().slice(0, PIXABAY_MAX_QUERY_CHARS),
+    image_type: 'photo',
+    safesearch: 'true',
+    per_page: String(Math.min(PIXABAY_MAX_PER_PAGE, Math.max(PIXABAY_MIN_PER_PAGE, perPage))),
+  });
+  const orientation = input.orientation ? PIXABAY_ORIENTATION[input.orientation] : null;
+  if (orientation) params.set('orientation', orientation);
+  if (input.minWidth && input.minWidth > 0) {
+    params.set('min_width', String(Math.floor(input.minWidth)));
+  }
+  return params;
+}
+
+/** Cache key: provider + a hash of the key-less params (never the API key itself). */
+export function pixabayCacheKey(params: URLSearchParams): string {
+  const sorted = new URLSearchParams([...params.entries()].sort(([a], [b]) => a.localeCompare(b)));
+  return `pixabay:${createHash('sha256').update(sorted.toString()).digest('hex')}`;
+}
+
+/**
+ * Pixabay documents only the 429 error ("HTTP error status codes with plain text descriptions").
+ * An invalid or missing key is answered with HTTP 400 whose text names the API key (observed,
+ * not documented), which is an account problem (20.11 `auth`), not a bad request.
+ */
+const classifyPixabayError: ErrorBodyClassifier = (status, body) =>
+  status === 400 && /api key/i.test(body) ? 'auth' : null;
+
+function scaledSize(width: number, height: number, maxPx: number) {
+  const scale = Math.min(1, maxPx / Math.max(width, height, 1));
+  return { width: Math.round(width * scale), height: Math.round(height * scale) };
+}
+
+function pixabayAttribution(image: PixabayImage): StockHit['attribution'] {
+  const user = image.user?.trim();
+  if (!user) return null;
+  const url =
+    image.user_id !== undefined
+      ? `https://pixabay.com/users/${encodeURIComponent(user)}-${image.user_id}/`
+      : null;
+  return { name: user, url };
+}
+
+function mapPixabayImage(image: PixabayImage, minWidth: number | undefined): StockHit | null {
+  // The 640 px webformatURL is enough when the caller needs at most that width; else 1280 px.
+  const medium = Boolean(minWidth && minWidth <= PIXABAY_WEBFORMAT_MAX_PX && image.webformatURL);
+  const useLarge = !medium && Boolean(image.largeImageURL);
+  const imageUrl = useLarge ? image.largeImageURL : image.webformatURL;
+  if (!imageUrl) return null;
+  const maxPx = useLarge ? PIXABAY_LARGE_MAX_PX : PIXABAY_WEBFORMAT_MAX_PX;
+  return {
+    provider: 'pixabay',
+    providerImageId: String(image.id),
+    imageUrl,
+    ...scaledSize(image.imageWidth ?? 0, image.imageHeight ?? 0, maxPx),
+    alt: image.tags?.trim() || null,
+    pageUrl: image.pageURL ?? null,
+    attribution: pixabayAttribution(image),
+    // Never hotlinked: the image is downloaded into our storage before use (Pixabay's terms).
+    storable: true,
+  };
+}
+
+async function pixabayHits(
+  apiKey: string,
+  params: URLSearchParams,
+  deps: Deps,
+): Promise<PixabayImage[]> {
+  const cacheKey = pixabayCacheKey(params);
+  const cached = await deps.cache?.get(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached) as PixabayImage[];
+    } catch {
+      // A corrupt entry is refetched and overwritten below.
+    }
+  }
+  const url = `${PIXABAY_API_URL}?${new URLSearchParams({ key: apiKey })}&${params}`;
+  const body = (await getJson('pixabay', url, deps, {}, classifyPixabayError)) as {
+    hits?: PixabayImage[];
+  };
+  const hits = body.hits ?? [];
+  await deps.cache?.set(cacheKey, JSON.stringify(hits), STOCK_CACHE_TTL_MS);
+  return hits;
+}
+
+export function createPixabaySource(apiKey: string, deps: Deps): StockImageSource {
+  return {
+    provider: 'pixabay',
+    async search(input) {
+      const hits = await pixabayHits(apiKey, pixabaySearchParams(input), deps);
+      return hits
+        .map((image) => mapPixabayImage(image, input.minWidth))
+        .filter((hit): hit is StockHit => hit !== null);
+    },
+    async downloadUrl(hit) {
+      return hit.imageUrl;
+    },
+  };
+}
+
+/**
+ * Configured stock sources in priority order (A6.3: Pexels + Storyblocks primary, Unsplash
+ * fallback; 20.16: Pixabay is the last primary, after the existing ones).
+ */
 export function stockSourcesFromEnv(
   deps: Deps,
   env: Record<string, string | undefined> = process.env,
@@ -297,12 +467,14 @@ export function stockSourcesFromEnv(
       ),
     );
   }
+  const pixabayKey = env.PIXABAY_API_KEY?.trim();
+  if (pixabayKey) primary.push(createPixabaySource(pixabayKey, deps));
   const fallback = env.UNSPLASH_ACCESS_KEY
     ? [createUnsplashSource(env.UNSPLASH_ACCESS_KEY, deps)]
     : [];
   if (primary.length === 0 && fallback.length === 0) {
     throw new ConfigurationError(
-      'No stock image provider configured (PEXELS_API_KEY, STORYBLOCKS_API_*_KEY or UNSPLASH_ACCESS_KEY)',
+      'No stock image provider configured: set PIXABAY_API_KEY (free), PEXELS_API_KEY, STORYBLOCKS_API_PUBLIC_KEY + STORYBLOCKS_API_PRIVATE_KEY or UNSPLASH_ACCESS_KEY',
     );
   }
   return { primary, fallback };

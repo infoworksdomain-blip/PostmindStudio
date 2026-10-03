@@ -1,7 +1,7 @@
 import type { ImageLibraryItem } from '@prisma/client';
 import { NoProviderAvailableError, ProviderError } from '../../errors';
 import { ingestImage } from '../images/ingest';
-import { embedMissing, libraryDepsFrom, searchLibrary } from '../images/library';
+import { embedMissing, libraryDepsFrom, searchLibrary, stockLicenceNote } from '../images/library';
 import type { StockHit } from '../images/stock';
 import type { PlanTier } from '../providers/router';
 import { MIN_SIMILARITY } from '../slideshow/populate';
@@ -148,7 +148,7 @@ export async function stockStillForRefusal(
         downloadUrl: await source.downloadUrl(hit, ids),
         altText: hit.alt,
         tags: [],
-        licenseNotes: `Stock (${hit.provider}) used after an image generation refusal`,
+        licenseNotes: `${stockLicenceNote(hit)}; used after an image generation refusal`,
       }).catch(() => null);
       if (outcome && outcome.status !== 'skipped') {
         const item = await deps.db.imageLibraryItem.findFirst({

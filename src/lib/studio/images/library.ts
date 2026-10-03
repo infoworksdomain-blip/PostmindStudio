@@ -16,7 +16,7 @@ import {
   vectorLiteral,
   type IngestOutcome,
 } from './ingest';
-import type { StockHit, StockImageSource } from './stock';
+import { PIXABAY_LICENCE_URL, type StockHit, type StockImageSource } from './stock';
 import { vectorSql } from '../vector-sql';
 
 // BACKLOG 6.4 / 6.7 — image-library operations shared by the scan worker and the API:
@@ -63,7 +63,8 @@ export interface StockLayerResult {
   errors: string[];
 }
 
-function licenceNote(hit: StockHit): string {
+/** The licence / attribution note stored with a stock image (image_library.licenseNotes). */
+export function stockLicenceNote(hit: StockHit): string {
   const credit = hit.attribution
     ? `Photo by ${hit.attribution.name}${hit.attribution.url ? ` (${hit.attribution.url})` : ''}`
     : null;
@@ -71,8 +72,12 @@ function licenceNote(hit: StockHit): string {
     pexels: 'Pexels licence (https://www.pexels.com/license/)',
     storyblocks: 'Storyblocks licence (per agreement)',
     unsplash: 'Unsplash licence — hotlink only; report use to download_location',
+    // 20.16: copied into our storage (no hotlinking); credit Pixabay, the user and the page.
+    pixabay: `Pixabay Content License (${PIXABAY_LICENCE_URL})`,
   };
-  return [terms[hit.provider], credit, hit.trackUseUrl ? `track:${hit.trackUseUrl}` : null]
+  const page =
+    hit.provider === 'pixabay' && hit.pageUrl ? `Image from Pixabay: ${hit.pageUrl}` : null;
+  return [terms[hit.provider], credit, page, hit.trackUseUrl ? `track:${hit.trackUseUrl}` : null]
     .filter(Boolean)
     .join('; ');
 }
@@ -145,7 +150,7 @@ export async function buildStockLayer(
                   height: hit.height,
                   altText: hit.alt,
                   tags,
-                  licenseNotes: licenceNote(hit),
+                  licenseNotes: stockLicenceNote(hit),
                   pageUrl: hit.pageUrl,
                 }),
               );
@@ -161,7 +166,7 @@ export async function buildStockLayer(
                 downloadUrl: await source.downloadUrl(hit, ids),
                 altText: hit.alt,
                 tags,
-                licenseNotes: licenceNote(hit),
+                licenseNotes: stockLicenceNote(hit),
               }),
             );
           } catch (err) {

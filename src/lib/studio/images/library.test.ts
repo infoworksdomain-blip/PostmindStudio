@@ -1,11 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { fakePng } from '../../../../test/helpers/png';
 import { memoryStorage } from '../../../../test/helpers/memory-storage';
 import { NotFoundError, ProviderError, ValidationError } from '../../errors';
 import type { ProviderRunResult } from '../pipeline/provider-run';
-import type { StockHit, StockImageSource } from './stock';
+import { createPixabaySource, type StockHit, type StockImageSource } from './stock';
 import {
   EMBEDDING_DIMENSIONS,
   buildStockLayer,
@@ -228,6 +229,53 @@ describe('buildStockLayer', () => {
         data: expect.objectContaining({ source: 'STOCK', sourceProvider: 'pexels' }),
       }),
     );
+  });
+
+  it('20.16: copies a Pixabay hit into our storage (no hotlink) with Pixabay, user and page credit', async () => {
+    const { db, imageLibraryItem } = fakeDb();
+    const api = fakeFetch(
+      json({
+        hits: [
+          {
+            id: 7,
+            pageURL: 'https://pixabay.com/photos/bread-7/',
+            tags: 'bread, bakery',
+            previewURL: 'https://cdn.pixabay.com/photo/bread-7_150.jpg',
+            webformatURL: 'https://pixabay.com/get/bread-7_640.jpg',
+            largeImageURL: 'https://pixabay.com/get/bread-7_1280.jpg',
+            imageWidth: 2000,
+            imageHeight: 2000,
+            user: 'Baker',
+            user_id: 99,
+          },
+        ],
+      }),
+    );
+    const source = createPixabaySource('k', { fetchImpl: api.fetch, now: () => 0 });
+    const deps = libraryDeps(db, () => ({ primary: [source], fallback: [] }));
+    const result = await buildStockLayer(deps, scope, { queries: ['bread'], themes: [] });
+
+    expect(result).toMatchObject({ created: 1, errors: [] });
+    // The image bytes are fetched from the 1280 px URL and stored by us.
+    const download = (deps.fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(String(download?.[0])).toBe('https://pixabay.com/get/bread-7_1280.jpg');
+    const data = (
+      imageLibraryItem.create.mock.calls[0] as unknown as [{ data: Record<string, unknown> }]
+    )[0].data;
+    expect(data).toMatchObject({
+      source: 'STOCK',
+      sourceProvider: 'pixabay',
+      sourceUrl: 'https://pixabay.com/photos/bread-7/',
+      s3Bucket: 'studio-library-assets',
+    });
+    expect(String(data.s3Key)).toMatch(/^orgs\/org-1\/businesses\/biz-1\/images\//);
+    expect(data.licenseNotes).toBe(
+      'Pixabay Content License (https://pixabay.com/service/license-summary/); ' +
+        'Photo by Baker (https://pixabay.com/users/Baker-99/); ' +
+        'Image from Pixabay: https://pixabay.com/photos/bread-7/',
+    );
+    // Never the hotlink path.
+    expect(imageLibraryItem.upsert).not.toHaveBeenCalled();
   });
 
   it('upserts the query record with the result count for each provider/query pair', async () => {
