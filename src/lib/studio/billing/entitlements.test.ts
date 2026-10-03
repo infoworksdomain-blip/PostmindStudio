@@ -206,6 +206,32 @@ describe('resolveStoredEntitlements', () => {
     expect(ent.subscriptionStatus).toBe('trialing');
   });
 
+  it('20.27: an active staff override pauses the trial; a trial staff ended never returns', () => {
+    const trial = trialStateFor(now, new Date('2026-10-10T00:00:00Z'));
+    const derived = { tier: 'STANDARD', access: 'full', source: 'trial', status: 'trialing' };
+    const admin = {
+      tier: 'PLUS' as const,
+      reason: 'operator',
+      setByUserId: 'staff-1',
+      setAt: now.toISOString(),
+      expiresAt: '2026-10-01T00:00:00Z',
+    };
+    const overridden = resolveStoredEntitlements(row({ derived, trial, admin }), now);
+    expect(overridden).toMatchObject({ tier: 'PLUS', source: 'admin' });
+    expect(overridden.trial).toBeUndefined();
+    // The override expired while Stripe still trials: the trial caps come back.
+    const later = new Date('2026-10-02T00:00:00Z');
+    expect(resolveStoredEntitlements(row({ derived, trial, admin }), later).trial).toEqual(trial);
+    // Ended by staff: no trial, with or without the override, and the trial tier's catalogue.
+    const ended = { ...trial, endedAt: now.toISOString(), endedByUserId: 'staff-1' };
+    expect(resolveStoredEntitlements(row({ derived, trial: ended, admin }), later)).toMatchObject({
+      tier: 'STANDARD',
+      source: 'trial',
+    });
+    expect(resolveStoredEntitlements(row({ derived, trial: ended }), later).trial).toBeUndefined();
+    expect(parseOverrides({ trial: ended }).trial?.endedAt).toBe(now.toISOString());
+  });
+
   it('falls back to the columns and ignores malformed JSON (never trusted)', () => {
     expect(parseOverrides('nonsense')).toEqual({});
     expect(parseOverrides({ admin: { tier: 'GOLD' } })).toEqual({});

@@ -3040,7 +3040,10 @@
         "overrideHelp": "Empty = no override (the plan tier’s cap). Workers apply a change within 30 seconds.",
         "reason": "Reason (recorded in the audit log)",
         "save": "Save cost caps",
-        "savedToast": "Cost caps saved"
+        "savedToast": "Cost caps saved",
+        "clear": "Clear back to plan default",
+        "clearHelp": "Removes both overrides so the plan tier’s caps apply again. Uses the reason above.",
+        "clearedToast": "Cost caps are back to the plan default"
       }
     },
     "redrive": {
@@ -4611,14 +4614,39 @@
           "expiresAt": "Expires (optional)",
           "reason": "Reason (required)",
           "save": "Save override",
-          "saved": "Override saved"
+          "saved": "Override saved",
+          "endTrial": "End the trial now",
+          "endTrialHelp": "The trial’s allowance and its {daily} a day / {total} total cost caps stop for good, even after this override expires or is removed; the plan’s caps (and any cost-cap override) apply. Stripe is not changed: its trial still ends, and bills, on its own date.",
+          "trialNote": "Any saved override pauses the trial’s caps while it is active. Tick “End the trial now” to stop them for good."
         },
         "clear": {
           "title": "Remove the override",
           "description": "The organisation goes back to what its Stripe subscription gives it.",
           "reason": "Reason for removing",
           "button": "Remove override",
-          "cleared": "Override removed"
+          "cleared": "Override removed",
+          "trialWarning": "Stripe still shows a trial: removing the override brings the trial’s caps back. To keep them off, first save an override with “End the trial now”."
+        },
+        "trial": {
+          "title": "Trial",
+          "state": {
+            "running": "Running: the trial’s caps apply now.",
+            "overridden": "Paused by the staff override: the trial’s caps come back if the override expires or is removed while Stripe still shows a trial.",
+            "ended": "Ended by staff on {date}. Its caps no longer apply.",
+            "over": "Over: Stripe no longer shows a trial."
+          },
+          "dates": "Started {start} · ends {end}",
+          "noEnd": "no end date",
+          "spent": "AI cost since the trial started: {spent} of {total} (at most {daily} a day)",
+          "meterAria": "Trial AI cost against its total cap",
+          "capsNote": "While the trial runs, its caps apply instead of the plan’s caps and any cost-cap override."
+        },
+        "confirm": {
+          "title": "Save this override?",
+          "button": "Yes, save",
+          "accessNone": "Access None stops everyone in this organisation from generating, publishing and scanning.",
+          "accessReadOnly": "Read-only blocks every change in this organisation except billing, account settings and exports.",
+          "endTrial": "Ending the trial cannot be undone: its caps will not apply to this organisation again."
         }
       },
       "subscriptions": {
@@ -4867,7 +4895,19 @@
       "open": "Open",
       "openAria": "Open {name}",
       "byIdTitle": "Look up by id",
-      "byIdHint": "Review policy and cost caps for any organisation id, including ones held by PostMind Core."
+      "byIdHint": "Review policy and cost caps for any organisation id, including ones held by PostMind Core.",
+      "trial": "Trial",
+      "trialState": {
+        "running": "Until {date}",
+        "runningNoDate": "Running",
+        "overridden": "Paused by override",
+        "ended": "Ended by staff"
+      },
+      "planHint": "Open an organisation to change its plan, access, trial or cost caps.",
+      "pagesAria": "Organisation pages",
+      "pageInfo": "{from}–{to} of {total}",
+      "previous": "Previous",
+      "next": "Next"
     },
     "detail": {
       "back": "All organisations",
@@ -4892,7 +4932,9 @@
       "subscriptionsTitle": "Subscriptions",
       "subscriptionsHint": "Read-only; change plans in Stripe or with an entitlement override.",
       "noSubscription": "No subscription.",
-      "cancelling": "Cancels at period end"
+      "cancelling": "Cancels at period end",
+      "planTitle": "Plan, access and trial",
+      "planHint": "Change the tier or access, or end the trial, with a staff override. Every change needs a reason and is audited."
     },
     "status": {
       "trialing": "Trial",

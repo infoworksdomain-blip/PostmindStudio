@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { NotFoundError } from '../../errors';
+import { parseOverrides, resolveStoredEntitlements } from '../billing/entitlements';
 import { utcMonthRange } from '../cost/caps';
 
 // Phase 18 §3 admin tabs (PostMind staff, standalone mode): Organisations (search, plan, status,
@@ -67,7 +68,8 @@ export async function searchOrganisations(
   const [orgs, total] = await Promise.all([
     db.organization.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      // id breaks ties so paging never repeats or skips organisations created together.
+      orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       skip: query.offset,
       take: PAGE,
       include: { _count: { select: { members: true } } },
@@ -88,19 +90,53 @@ export async function searchOrganisations(
   for (const s of subscriptions) if (!sub.has(s.organisationId)) sub.set(s.organisationId, s);
   return {
     total,
-    data: orgs.map((o) => ({
-      id: o.id,
-      name: o.name,
-      slug: o.slug,
-      country: o.country,
-      createdAt: o.createdAt.toISOString(),
-      deletedAt: o.deletedAt?.toISOString() ?? null,
-      members: o._count.members,
-      tier: ent.get(o.id)?.tier ?? null,
-      access: ent.get(o.id)?.access ?? null,
-      subscriptionStatus: sub.get(o.id)?.status ?? null,
-      costThisMonthPence: spend.get(o.id) ?? 0,
-    })),
+    offset: query.offset,
+    pageSize: PAGE,
+    data: orgs.map((o) => {
+      const plan = planSummary(ent.get(o.id), new Date(now));
+      return {
+        id: o.id,
+        name: o.name,
+        slug: o.slug,
+        country: o.country,
+        createdAt: o.createdAt.toISOString(),
+        deletedAt: o.deletedAt?.toISOString() ?? null,
+        members: o._count.members,
+        ...plan,
+        subscriptionStatus: sub.get(o.id)?.status ?? null,
+        costThisMonthPence: spend.get(o.id) ?? 0,
+      };
+    }),
+  };
+}
+
+type EntitlementRow = Awaited<ReturnType<PrismaClient['orgEntitlement']['findMany']>>[number];
+
+/**
+ * 20.27: the plan as it applies now (admin override expiry and the grace clock resolved, as the
+ * EntitlementsReader does), and the trial's state: running (its caps apply), overridden (a staff
+ * override is active), ended (staff ended it) or null (no trial, or Stripe no longer trialing).
+ */
+export function planSummary(row: EntitlementRow | undefined, now: Date) {
+  if (!row) return { tier: null, access: null, source: null, trial: null };
+  const effective = resolveStoredEntitlements(row, now);
+  const overrides = parseOverrides(row.overrides);
+  const trialing = overrides.derived?.source === 'trial';
+  const trial = overrides.trial;
+  const state = !trial
+    ? null
+    : trial.endedAt
+      ? ('ended' as const)
+      : effective.trial
+        ? ('running' as const)
+        : trialing
+          ? ('overridden' as const)
+          : null;
+  return {
+    tier: effective.tier,
+    access: effective.access,
+    source: effective.source,
+    trial: state && trial ? { state, endsAt: trial.endsAt } : null,
   };
 }
 
@@ -123,6 +159,7 @@ export async function organisationDetail(db: PrismaClient, organisationId: strin
     db.business.count({ where: { organisationId: org.id, deletedAt: null } }),
     monthSpend(db, [org.id], now),
   ]);
+  const plan = planSummary(entitlement ?? undefined, new Date(now));
   return {
     organisation: {
       id: org.id,
@@ -145,9 +182,11 @@ export async function organisationDetail(db: PrismaClient, organisationId: strin
     pendingInvitations: invitations,
     businesses,
     entitlement: entitlement && {
-      tier: entitlement.tier,
-      access: entitlement.access,
-      source: entitlement.source,
+      // Resolved at read time (override expiry, grace clock), like the list.
+      tier: plan.tier ?? entitlement.tier,
+      access: plan.access ?? entitlement.access,
+      source: plan.source ?? entitlement.source,
+      trial: plan.trial,
       graceUntil: entitlement.graceUntil?.toISOString() ?? null,
       trialStartedAt: entitlement.trialStartedAt?.toISOString() ?? null,
       everPaidAt: entitlement.everPaidAt?.toISOString() ?? null,
