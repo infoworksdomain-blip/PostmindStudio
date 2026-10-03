@@ -504,15 +504,16 @@ Studio makes AI clips with Seedance first (11.3), then Kling 3.0, then Google Ve
 - Watch the balance: Console → usage, or `GET /account/costs` (the canary's health call). When the package runs out or expires Kling answers code 1102 and Studio moves clips to Veo, Runway and Luma (after Seedance) and alerts the operator.
 - **Check:** `npm run setup:check` shows `OK KLING_API_KEY` (or `OK` for both halves of the pair; one half alone is reported) when the key is shaped right. The provider canary (`CANARY_KLING_API_KEY`) and the staging gate (`--live-providers --only kling`, one 3 s clip, about $0.25) test it against Kling.
 
-### 11.5 Stock images: Pixabay (free)
+### 11.5 Stock images: Pixabay (free) and Unsplash
 
-Website scans, slideshows and the image library fill up with stock photos. Pexels no longer gives out free API keys and Unsplash approval takes 5–10 working days, so use **Pixabay**: free, and the key is shown straight away.
+Website scans, slideshows and the image library fill up with stock photos. Pexels no longer gives out free API keys, so use **Pixabay** (free, the key is shown straight away) and, once Unsplash has approved your app for production, **Unsplash** as well. Either one alone is enough; both together is best.
 
 - **Click:** log in (or sign up) at [pixabay.com](https://pixabay.com) → open [pixabay.com/api/docs](https://pixabay.com/api/docs/) → your key is shown under **Parameters** next to `key` (may be labelled differently; it only appears when you are logged in).
 - **Copy:** the key. **Paste into:** `PIXABAY_API_KEY`.
 - What Studio does with it: searches photos only, with safe search on; copies every chosen image into your own storage (Pixabay does not allow using its image links permanently); caches each search for 24 hours (Pixabay's rule); shows "Images from Pixabay" on those images in the library. Pixabay allows 100 searches a minute; a search over that limit is skipped (the next stock source is tried, if you have one) and the next refresh tries again.
-- If you also have keys for Pexels or Storyblocks, they are searched first; Unsplash (`UNSPLASH_ACCESS_KEY`) stays the last resort.
-- **Check:** `npm run setup:check` no longer shows `CHECK stock images`. After the deploy, **Refresh stock** in a business's image library adds images with the Pixabay credit.
+- **Unsplash (optional, after production approval):** in your Unsplash app's page (unsplash.com/oauth/applications) **Copy:** the **Access Key** (not the Secret key; may be labelled differently). **Paste into:** `UNSPLASH_ACCESS_KEY`.
+- Order: Pexels and Storyblocks (if you have keys) → Pixabay → Unsplash. Unsplash is searched only for a query where the others found nothing. Unsplash images are shown from Unsplash's own links (its rules require that, and each use is reported to Unsplash); Pixabay images are copied into your storage.
+- **Check:** `npm run setup:check` no longer shows `CHECK stock images`. After the deploy, **Refresh stock** in a business's image library no longer says stock photos are not set up, and adds images with the "Images from Pixabay" (or Unsplash) credit.
 
 ## 12. Legal texts
 

@@ -6,6 +6,7 @@ import * as initRoute from '../../src/app/api/studio/platform-connections/oauth-
 import * as refreshRoute from '../../src/app/api/studio/image-library/refresh/route';
 import { ConfigurationError } from '../../src/lib/errors';
 import { setApiDeps } from '../../src/lib/studio/api/context';
+import { stockSourcesFromEnv } from '../../src/lib/studio/images/stock';
 import type { OAuthClient, OAuthPlatform } from '../../src/lib/studio/platforms/oauth';
 import { APP_URL, call, installApi, rawCall, tenant } from '../helpers/api-harness';
 import { createHarness } from '../helpers/pipeline-harness';
@@ -117,6 +118,26 @@ describe.skipIf(!hasDb)('QA 6: connections callback and stock refresh', { timeou
       });
       // Customers never read setting names.
       expect(JSON.stringify(res.json)).not.toMatch(/PEXELS|API_KEY/);
+    });
+
+    // 20.16: production said "Stock photos aren't set up yet" with PIXABAY_API_KEY set, because
+    // main had no Pixabay source. The real env → sources wiring must accept Pixabay alone, and
+    // Pixabay together with Unsplash.
+    it.each([
+      [{ PIXABAY_API_KEY: 'fake-pixabay-key' }],
+      [{ PIXABAY_API_KEY: 'fake-pixabay-key', UNSPLASH_ACCESS_KEY: 'fake-unsplash-key' }],
+      [{ UNSPLASH_ACCESS_KEY: 'fake-unsplash-key' }],
+    ])('queues the refresh (202, not 501) with only %j set', async (env) => {
+      const h = createHarness(db);
+      h.deps.scan.stock = () =>
+        stockSourcesFromEnv({ fetchImpl: vi.fn() as unknown as typeof fetch, now: Date.now }, env);
+      installApi(db, tokens, { queue: h.queue, publishing: h.deps.publishing, pipeline: h.deps });
+      const res = await call(refreshRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: { businessId: `biz-${randomUUID()}`, queries: ['sourdough'] },
+      });
+      expect(res.status).toBe(202);
     });
 
     it('queues the refresh when a stock provider is set up', async () => {

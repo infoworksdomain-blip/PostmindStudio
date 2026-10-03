@@ -311,6 +311,9 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   STUDIO_SIGNUPS_ENABLED: (v) => (['true', 'false'].includes(v) ? null : 'must be true or false'),
   PG_BACKUPS: (v) => (['on', 'off'].includes(v) ? null : 'must be on or off'),
   PG_BACKUP_CIPHER_PASS: minLength(32),
+  // 20.16: Pixabay documents no key format (https://pixabay.com/api/docs/, read 2026-10-01), so
+  // only a pasted space (two values, or a label copied with the key) is caught.
+  PIXABAY_API_KEY: (v) => (/\s/.test(v) ? 'must not contain spaces' : null),
   // 20.20 Google Veo (Gemini API). Google does not document the key's format (standard and
   // authorization keys exist, https://ai.google.dev/gemini-api/docs/api-key), so only its shape
   // as one unbroken token is checked.
@@ -352,9 +355,6 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   KLING_RESOLUTION: (v) => (isKlingResolution(v) ? null : 'must be 720p or 1080p (or empty)'),
   KLING_BASE_URL: (v) =>
     isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
-  // 20.16: Pixabay documents no key format (https://pixabay.com/api/docs/, read 2026-10-01), so
-  // only a pasted space (two values, or a label copied with the key) is caught.
-  PIXABAY_API_KEY: (v) => (/\s/.test(v) ? 'must not contain spaces' : null),
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.
