@@ -10,8 +10,7 @@ import {
   type Db,
   type World,
 } from './fixtures';
-import { baseURL } from './pass2.support';
-import { Watcher } from './watcher';
+import { baseURL, watch } from './pass2.support';
 
 // 20.31 (QA pass 2) — Approvals and "Plan my month" through the real UI against a Prisma-seeded
 // organisation: the business picker (no raw ids), a workflow that points at a removed business,
@@ -26,7 +25,7 @@ let world: World;
 const pages = {} as Record<'owner' | 'admin' | 'publisher', Page>;
 const ROLES = ['owner', 'admin', 'publisher'] as const;
 
-async function expectClean(w: Watcher): Promise<void> {
+async function expectClean(w: ReturnType<typeof watch>): Promise<void> {
   expect(w.issues).toEqual([]);
 }
 
@@ -65,7 +64,7 @@ test.afterAll(async () => {
 test.describe('approval workflows', () => {
   test('the business is picked by name, saved by id, shown by name, and can be changed', async () => {
     const page = pages.owner;
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/approvals');
     await page.getByRole('button', { name: 'New workflow' }).first().click();
     const form = page.getByRole('form', { name: 'New approval workflow' });
@@ -124,7 +123,7 @@ test.describe('approval workflows', () => {
         appliesTo: { businessIds: [gone], platforms: [], tags: [] },
       },
     });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/approvals');
     await expect(page.getByText('Applies to business a removed business')).toBeVisible();
     await expect(page.getByRole('alert').filter({ hasText: 'no longer applies' })).toBeVisible();
@@ -159,7 +158,7 @@ test.describe('approval workflows', () => {
     });
     const project = world.projects.review3;
     const publisher = pages.publisher;
-    const wp = new Watcher(publisher);
+    const wp = watch(publisher);
     await wp.visit(`/projects/${project}`);
     await expect(publisher.getByRole('region', { name: 'Approval steps' })).toContainText(
       /Step 1 of 2/,
@@ -171,7 +170,7 @@ test.describe('approval workflows', () => {
     );
 
     const admin = pages.admin;
-    const wa = new Watcher(admin);
+    const wa = watch(admin);
     await wa.visit(`/projects/${project}`);
     await admin.getByRole('button', { name: 'Reject' }).click();
     await expect(admin.getByRole('button', { name: 'Confirm rejection' })).toBeDisabled();
@@ -249,7 +248,7 @@ test.describe('Plan my month', () => {
       },
     });
     planId = plan.id;
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/plans');
     await expect(page.getByRole('heading', { name: 'Month plans' }).first()).toBeVisible();
     const row = page.getByRole('link').filter({ hasText: '3 posts' }).first();
@@ -266,7 +265,7 @@ test.describe('Plan my month', () => {
 
   test('discarding a draft needs a confirmation and removes it from the list', async () => {
     const page = pages.owner;
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit(`/plans/${planId}`);
     await page.getByRole('button', { name: 'Discard plan' }).click();
     const dialog = page.getByRole('alertdialog').or(page.getByRole('dialog'));

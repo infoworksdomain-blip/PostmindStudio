@@ -12,7 +12,7 @@ import {
   type Db,
   type World,
 } from './fixtures';
-import { baseURL, PUBLIC_PAGES, staffPage, useDarkTheme, WORKSPACE_PAGES } from './pass2.support';
+import { baseURL, PUBLIC_PAGES, staffPage, enableDarkTheme, WORKSPACE_PAGES } from './pass2.support';
 
 // 20.31 (QA pass 2) — accessibility: axe-core (WCAG 2.0 / 2.1 A and AA rules) over every main
 // screen, signed out and signed in, in the light and the dark theme. Serious and critical
@@ -105,7 +105,7 @@ for (const theme of ['light', 'dark'] as const) {
       test.setTimeout(240_000);
       const context = await browser.newContext({ baseURL, locale: 'en-GB' });
       const page = await context.newPage();
-      if (theme === 'dark') await useDarkTheme(page);
+      if (theme === 'dark') await enableDarkTheme(page);
       const blocking: Finding[] = [];
       for (const path of PUBLIC_PAGES) {
         await visit(page, path);
@@ -117,7 +117,7 @@ for (const theme of ['light', 'dark'] as const) {
 
     test(`signed-in pages have no serious or critical violations`, async () => {
       test.setTimeout(420_000);
-      if (theme === 'dark') await useDarkTheme(owner);
+      if (theme === 'dark') await enableDarkTheme(owner);
       const blocking: Finding[] = [];
       const paths = [
         ...WORKSPACE_PAGES,
@@ -136,7 +136,7 @@ for (const theme of ['light', 'dark'] as const) {
     test(`the Admin Centre tabs have no serious or critical violations`, async () => {
       test.setTimeout(300_000);
       const page = staff as Page;
-      if (theme === 'dark') await useDarkTheme(page);
+      if (theme === 'dark') await enableDarkTheme(page);
       await visit(page, '/admin');
       const names = (await page.getByRole('tab').allInnerTexts()).map((n) => n.trim());
       expect(names.length).toBeGreaterThan(3);

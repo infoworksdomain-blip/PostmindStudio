@@ -12,8 +12,7 @@ import {
   type Db,
   type World,
 } from './fixtures';
-import { baseURL, staffPage } from './pass2.support';
-import { Watcher } from './watcher';
+import { baseURL, staffPage, watch } from './pass2.support';
 
 // 20.31 (QA pass 2) — billing pages (plan picker, annual toggle, top-ups, the Stripe portal link
 // in test mode), the calendar's drip queue, and the Admin Centre (every tab loads; Organisations
@@ -115,7 +114,7 @@ test.describe('billing pages', () => {
 
   test('the current plan, usage meters and an empty invoice list', async () => {
     test.setTimeout(120_000);
-    const w = new Watcher(owner);
+    const w = watch(owner);
     await w.visit('/settings/billing');
     await expect(owner.getByRole('heading', { name: 'Billing', level: 1 })).toBeVisible();
     await expect(owner.getByText('Standard plan', { exact: true })).toBeVisible({
@@ -131,7 +130,7 @@ test.describe('billing pages', () => {
 
   test('the plan picker lists three plans and the annual toggle changes every price', async () => {
     await mockAmounts(owner);
-    const w = new Watcher(owner);
+    const w = watch(owner);
     w.expect4xx(/\/api\/studio\/billing\//, 400, 402, 409, 500, 501, 502, 503);
     await w.visit('/settings/billing');
     const picker = owner
@@ -194,7 +193,7 @@ test.describe('billing pages', () => {
 
 test.describe('calendar drip queue', () => {
   test('set a weekly schedule, save it, and it is still there after a reload', async () => {
-    const w = new Watcher(owner);
+    const w = watch(owner);
     await w.visit('/calendar');
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     await expect(drip).toBeVisible();
@@ -217,7 +216,7 @@ test.describe('calendar drip queue', () => {
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     await drip.getByRole('radio', { name: 'Every day' }).check({ force: true });
     await drip.getByLabel('Posts a day').selectOption('2');
-    await drip.getByRole('checkbox', { name: 'Sunday' }).uncheck();
+    await drip.getByRole('checkbox', { name: 'Sunday' }).uncheck({ force: true });
     await expect(drip.getByRole('checkbox', { name: 'Sunday' })).not.toBeChecked();
     await drip.getByRole('button', { name: 'Save schedule' }).click();
     await expect(owner.getByText('Drip queue saved.').first()).toBeVisible();
@@ -233,7 +232,7 @@ test.describe('calendar drip queue', () => {
 test.describe('Admin Centre', () => {
   test('every tab loads without an error banner', async () => {
     test.setTimeout(240_000);
-    const w = new Watcher(staff);
+    const w = watch(staff);
     await w.visit('/admin');
     await expect(staff.getByRole('heading', { name: 'Admin Centre' })).toBeVisible();
     const tabs = (await staff.getByRole('tab').allInnerTexts()).map((t) => t.trim());
@@ -301,7 +300,7 @@ test.describe('Admin Centre', () => {
         },
       },
     });
-    const w = new Watcher(staff);
+    const w = watch(staff);
     await w.visit('/admin');
     await staff.getByRole('tab', { name: 'Organisations' }).click();
     await staff.getByLabel('Search organisations').fill(`P2 Trial ${run}`);

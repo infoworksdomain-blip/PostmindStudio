@@ -1,6 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { expect, type Browser, type Page } from '@playwright/test';
 import { createUser, password, run, signedInPage, type Db } from './fixtures';
+import { Watcher } from './watcher';
 
 // 20.31 (QA pass 2): helpers shared by the accessibility, per-screen and mobile / dark / keyboard
 // specs. Accounts come from fixtures.ts (real sign-up API, Prisma-seeded organisation).
@@ -99,7 +100,7 @@ export async function staffPage(
 }
 
 /** Make the next navigations of this page's context use the dark theme (next-themes key). */
-export async function useDarkTheme(page: Page): Promise<void> {
+export async function enableDarkTheme(page: Page): Promise<void> {
   await page.context().addInitScript(() => window.localStorage.setItem('theme', 'dark'));
 }
 
@@ -107,3 +108,13 @@ export const noHorizontalScroll = (page: Page): Promise<boolean> =>
   page.evaluate(
     () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
   );
+
+/** An error watcher that knows the 404s a business with no website scan answers on purpose. */
+export function watch(page: Page): Watcher {
+  const w = new Watcher(page);
+  w.expect4xx(
+    /\/api\/studio\/(?:.*\/)?(?:business-profile|library\/recommended|domain-verification)$/,
+    404,
+  );
+  return w;
+}

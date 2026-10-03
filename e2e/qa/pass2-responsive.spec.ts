@@ -10,8 +10,7 @@ import {
   type Db,
   type World,
 } from './fixtures';
-import { baseURL, noHorizontalScroll, useDarkTheme } from './pass2.support';
-import { Watcher } from './watcher';
+import { baseURL, enableDarkTheme, noHorizontalScroll, watch } from './pass2.support';
 
 // 20.31 (QA pass 2) — the key flows (create, project review / approve, library search, business &
 // images, settings) at 375 px, in the dark theme, and with the keyboard only. Providers are never
@@ -57,7 +56,7 @@ async function ownerPage(
   const page = await signedInPage(browser, baseURL, emailFor('p2-resp'), {
     viewport: options.viewport,
   });
-  if (options.dark) await useDarkTheme(page);
+  if (options.dark) await enableDarkTheme(page);
   return page;
 }
 
@@ -116,7 +115,7 @@ test.describe('mobile 375 px', () => {
   }) => {
     test.setTimeout(180_000);
     const page = await ownerPage(browser, { viewport: MOBILE });
-    const w = new Watcher(page);
+    const w = watch(page);
     for (const [, path, heading] of KEY_PAGES(world)) {
       await w.visit(path);
       if (path === '/new') await expect(page.locator('#create-brief')).toBeVisible();
@@ -137,7 +136,7 @@ test.describe('mobile 375 px', () => {
     browser,
   }) => {
     const page = await ownerPage(browser, { viewport: MOBILE });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/new');
     await page.locator('#create-brief').fill('Mobile test: spring menu launches Friday');
     const generate = page.getByRole('button', { name: 'Generate' });
@@ -155,7 +154,7 @@ test.describe('mobile 375 px', () => {
     browser,
   }) => {
     const page = await ownerPage(browser, { viewport: MOBILE });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit(`/projects/${world.projects.review}`);
     await expect(page.getByRole('article', { name: 'TikTok variant' })).toBeVisible();
     await page.getByRole('button', { name: 'Approve', exact: true }).click();
@@ -175,7 +174,7 @@ test.describe('mobile 375 px', () => {
 
   test('library: the search box and filters stack, and a search answers', async ({ browser }) => {
     const page = await ownerPage(browser, { viewport: MOBILE });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/library');
     const search = page.getByRole('searchbox', { name: 'Search the library' });
     await search.fill('sourdough');
@@ -190,7 +189,7 @@ test.describe('mobile 375 px', () => {
 
   test('business & images: the six tabs can all be reached', async ({ browser }) => {
     const page = await ownerPage(browser, { viewport: MOBILE });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/business');
     for (const name of [
       'Profile',
@@ -212,7 +211,7 @@ test.describe('mobile 375 px', () => {
 
   test('settings: the organisation form saves from a phone', async ({ browser }) => {
     const page = await ownerPage(browser, { viewport: MOBILE });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/settings/organisation');
     const name = page.getByRole('textbox', { name: 'Organisation name' });
     const current = await name.inputValue();
@@ -237,7 +236,7 @@ test.describe('dark theme', () => {
   }) => {
     test.setTimeout(180_000);
     const page = await ownerPage(browser, { dark: true });
-    const w = new Watcher(page);
+    const w = watch(page);
     for (const [, path, heading] of KEY_PAGES(world)) {
       await w.visit(path);
       await expect(page.locator('html')).toHaveClass(/dark/);
@@ -255,7 +254,7 @@ test.describe('dark theme', () => {
     browser,
   }) => {
     const page = await ownerPage(browser, { dark: true });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit(`/projects/${world.projects.review2}`);
     await expect(page.locator('html')).toHaveClass(/dark/);
     await page.getByRole('button', { name: 'Reject' }).click();
@@ -269,7 +268,7 @@ test.describe('dark theme', () => {
     browser,
   }) => {
     const page = await ownerPage(browser, { dark: true });
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/library');
     await page.getByRole('searchbox', { name: 'Search the library' }).fill('bakery');
     await page.getByRole('button', { name: 'Apply' }).click();
@@ -291,7 +290,7 @@ test.describe('dark theme', () => {
 test.describe('keyboard only', () => {
   test('create: reach the brief, type, reach Generate, press Enter', async ({ browser }) => {
     const page = await ownerPage(browser);
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit('/new');
     await tabTo(page, (f) => f.id === 'create-brief');
     await page.keyboard.type('Keyboard only: our new loyalty card');
@@ -309,7 +308,7 @@ test.describe('keyboard only', () => {
     browser,
   }) => {
     const page = await ownerPage(browser);
-    const w = new Watcher(page);
+    const w = watch(page);
     await w.visit(`/projects/${world.projects.review3}`);
     await tabTo(page, (f) => f.tag === 'button' && f.name === 'Approve');
     await page.keyboard.press('Enter');
