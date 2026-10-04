@@ -27,7 +27,8 @@ function byTier(pick: (tier: PlanTier) => number): Readonly<Record<PlanTier, num
 }
 
 /**
- * Price list 2026-09-30: £5 / £15 / £45 / £150 per organisation per UTC day. Phase 18 §P.3: read
+ * Price list 2026-09-30: £5 / £15 / £45 / £150 per organisation per UTC day; 21.3 raised STANDARD
+ * to £20 and PLUS to £90 (full Seedance 2.0 model, 1080p on PLUS). Phase 18 §P.3: read
  * from the plan catalogue (billing/catalogue.ts); the env overrides below still win.
  */
 export const DEFAULT_ORG_DAILY_CAP_PENCE = byTier((t) => PLAN_CATALOGUE[t].dailyCostCapPence);

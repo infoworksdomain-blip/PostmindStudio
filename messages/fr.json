@@ -3953,7 +3953,8 @@
       "noLongVideos": "Aucune vidéo longue",
       "seats": "{count, plural, one {# utilisateur} other {# utilisateurs}}",
       "businesses": "{count, plural, one {# entreprise} other {# entreprises}}",
-      "unlimitedVideos": "Vidéos illimitées (usage raisonnable)"
+      "unlimitedVideos": "Vidéos illimitées (usage raisonnable)",
+      "videoQuality": "Qualité vidéo : {quality}"
     },
     "enterprise": {
       "price": "Tarif sur mesure",
@@ -3995,7 +3996,8 @@
         "dnsDomainVerification": "Vérification de domaine",
         "seats": "Utilisateurs",
         "businesses": "Entreprises",
-        "storage": "Stockage"
+        "storage": "Stockage",
+        "videoQuality": "Qualité des vidéos IA"
       },
       "values": {
         "longVideos": "{count} × jusqu’à {minutes} min",
@@ -4013,7 +4015,12 @@
           "ai_generation": "Images de banque, du site web et IA",
           "byoc_generation": "Images IA avec vos propres clés"
         },
-        "storage": "{gb} GB"
+        "storage": "{gb} GB",
+        "videoQuality": {
+          "sd": "SD (480p)",
+          "hd": "HD standard (720p)",
+          "fullHd": "Full HD (1080p)"
+        }
       }
     },
     "topUps": {

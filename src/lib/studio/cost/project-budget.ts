@@ -29,6 +29,21 @@ export const DEFAULT_LONG_FORM_BUDGET_PENCE = 3_000;
  * reach the 90% pause, even with a regenerated shot or a pricier failover provider.
  */
 export const BUDGET_TYPICAL_VIDEO_MULTIPLE = 2.5;
+/**
+ * 21.3 (operator decision 2026-10-04, tiered video models): STANDARD now renders AI clips on the
+ * full Seedance 2.0 at 720p and PLUS / ENTERPRISE at 1080p, which costs more than the catalogue's
+ * typical cost per video (§P.2, unchanged pending the operator's pricing decision). These floors
+ * keep a normal video under half its budget at the cautious USD→GBP 0.79 (cost/video-estimate.ts,
+ * tested there): STANDARD short ≈ 241p → £5; PLUS short (6 clips at 1080p) ≈ 763p → £16; PLUS
+ * long (6 min, 50 clips at 1080p) ≈ 6,448p → £130 (2 ×, as the long-form pause rule is 90%).
+ */
+export const TIER_BUDGET_FLOOR_PENCE: Readonly<Record<PlanTier, { short: number; long: number }>> =
+  {
+    BASIC: { short: 0, long: 0 },
+    STANDARD: { short: 500, long: 0 },
+    PLUS: { short: 1_600, long: 13_000 },
+    ENTERPRISE: { short: 1_600, long: 13_000 },
+  };
 export const DEFAULT_SLIDESHOW_BUDGET_PENCE = 150;
 export const SHORT_FORM_MAX_SEC = 180;
 export const YOUTUBE_LONG_FORM_MIN_SEC = 60;
@@ -57,18 +72,18 @@ function typicalCostPence(tier: PlanTier, kind: 'short' | 'long'): number {
   return TYPICAL_COST_PENCE_PER_VIDEO[tier === 'ENTERPRISE' ? 'PLUS' : tier][kind];
 }
 
-/** 20.25: the short-form default for a tier (BASIC £3.50, STANDARD £4, PLUS / ENTERPRISE £6). */
+/** 20.25 / 21.3: the short-form default for a tier (BASIC £3.50, STANDARD £5, PLUS / ENTERPRISE £16). */
 export function shortFormBudgetPence(tier?: PlanTier): number {
   if (!tier) return DEFAULT_SHORT_FORM_BUDGET_PENCE;
   const scaled = Math.ceil(typicalCostPence(tier, 'short') * BUDGET_TYPICAL_VIDEO_MULTIPLE);
-  return Math.max(DEFAULT_SHORT_FORM_BUDGET_PENCE, scaled);
+  return Math.max(DEFAULT_SHORT_FORM_BUDGET_PENCE, scaled, TIER_BUDGET_FLOOR_PENCE[tier].short);
 }
 
-/** 20.25: the long-form default for a tier (£30; PLUS / ENTERPRISE £45). */
+/** 20.25 / 21.3: the long-form default for a tier (£30; PLUS / ENTERPRISE £130). */
 export function longFormBudgetPence(tier?: PlanTier): number {
   if (!tier) return DEFAULT_LONG_FORM_BUDGET_PENCE;
   const scaled = Math.ceil(typicalCostPence(tier, 'long') * BUDGET_TYPICAL_VIDEO_MULTIPLE);
-  return Math.max(DEFAULT_LONG_FORM_BUDGET_PENCE, scaled);
+  return Math.max(DEFAULT_LONG_FORM_BUDGET_PENCE, scaled, TIER_BUDGET_FLOOR_PENCE[tier].long);
 }
 
 /** The per-project budget when the client sets none; `tier` = the organisation's plan tier. */

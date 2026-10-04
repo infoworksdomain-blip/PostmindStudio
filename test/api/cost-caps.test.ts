@@ -115,8 +115,8 @@ describe.skipIf(!hasDb)('admin cost caps API', { timeout: 60_000 }, () => {
     // Env override, code defaults (unset / blank) and an explicit "none".
     expect(body.caps.orgDailyByTier).toEqual({
       BASIC: 800,
-      STANDARD: 1_500,
-      PLUS: 4_500,
+      STANDARD: 2_000,
+      PLUS: 9_000,
       ENTERPRISE: null,
     });
     expect(body.caps.orgMonthlyByTier).toEqual({

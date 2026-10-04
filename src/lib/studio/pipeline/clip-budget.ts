@@ -1,4 +1,5 @@
 import type { VisualTreatment } from '@prisma/client';
+import { PLAN_CATALOGUE } from '../billing/catalogue';
 import type { VideoResolution } from '../providers/interface';
 import type { PlanTier } from '../providers/router';
 import {
@@ -22,7 +23,8 @@ import {
 //     across the video;
 //   - AI_CLIP shots are kept to AI_CLIP_MAX_SEC (the providers' minimum clip lengths are 3–4 s,
 //     so a longer shot only adds paid seconds) unless the script cannot fill its length otherwise;
-//   - BASIC clips render at 480p where the provider offers it (Seedance), the other tiers at 720p.
+//   - BASIC clips render at 480p where the provider offers it (Seedance), the other tiers at 720p
+//     (21.3, operator decision 2026-10-04: PLUS and ENTERPRISE at 1080p on the full Seedance 2.0).
 
 /** Roughly one AI clip per this many seconds of video (30 s: BASIC 3, STANDARD 4, PLUS 6). */
 export const SECONDS_PER_AI_CLIP: Readonly<Record<PlanTier, number>> = {
@@ -41,12 +43,16 @@ export const FULL_RATE_SEC = 60;
 export const MIN_AI_CLIPS = 2;
 /** The longest AI_CLIP shot the budget keeps (Seedance and Veo bill at least 4 s, Kling 3 s). */
 export const AI_CLIP_MAX_SEC = 4;
-/** The resolution AI clips are requested at; adapters without it use their minimum (720p). */
+/**
+ * The resolution AI clips are requested at (21.3: the plan catalogue's aiVideoResolution, BASIC
+ * 480p, STANDARD 720p, PLUS / ENTERPRISE 1080p). Only Seedance reads it; Kling and Veo use their
+ * own configured resolution (720p by default).
+ */
 export const AI_CLIP_RESOLUTION: Readonly<Record<PlanTier, VideoResolution>> = {
-  BASIC: '480p',
-  STANDARD: '720p',
-  PLUS: '720p',
-  ENTERPRISE: '720p',
+  BASIC: PLAN_CATALOGUE.BASIC.aiVideoResolution,
+  STANDARD: PLAN_CATALOGUE.STANDARD.aiVideoResolution,
+  PLUS: PLAN_CATALOGUE.PLUS.aiVideoResolution,
+  ENTERPRISE: PLAN_CATALOGUE.ENTERPRISE.aiVideoResolution,
 };
 
 const AI_TREATMENTS: ReadonlySet<VisualTreatment> = new Set<VisualTreatment>([

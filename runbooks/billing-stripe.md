@@ -93,11 +93,13 @@ Margin = (price × 0.9555 − fixed fee − infra − provider cost) / price, pe
 | Tier | Short / long a month | Monthly cap | Daily cap | Full allowance at typical cost |
 |---|---|---|---|---|
 | BASIC | 20 / 0 | £20 | £5 | 20 × £0.90 = £18 |
-| STANDARD | 40 / 1 (≤ 3 min) | £73 | £15 | 40 × £1.60 + 1 × £9 = £73 |
-| PLUS | 80 / 4 (≤ 6 min) | £264 | £45 | 80 × £2.40 + 4 × £18 = £264 |
+| STANDARD | 40 / 1 (≤ 3 min) | £73 | £20 (21.3; was £15) | 40 × £1.60 + 1 × £9 = £73 |
+| PLUS | 80 / 4 (≤ 6 min) | £264 | £90 (21.3; was £45) | 80 × £2.40 + 4 × £18 = £264 |
 | ENTERPRISE | unlimited (fair use) | £1,100 | £150 | custom |
 
 Each monthly cap covers the whole allowance at the typical per-video cost, so a customer is not paused before using what they paid for (`catalogue.test.ts` guards this).
+
+> **21.3 tiered video models (2026-10-04), OPERATOR DECISION PENDING.** STANDARD now renders AI clips on the full Seedance 2.0 at 720p and PLUS / Enterprise at 1080p. A typical 30 s short now costs STANDARD £2.33 and PLUS £7.27 (6 clips at 1080p) at USD→GBP 0.75 (£2.41 / £7.63 at 0.79); long form STANDARD 3 min £13.57, PLUS 6 min £61.37. The §P.2 figures above (typical costs, monthly caps, top-up headroom, margins) are **unchanged** because raising the caps to hold the allowance would take STANDARD and PLUS below the 15 % margin-at-cap rule (PLUS below zero). Until the operator decides, the unchanged monthly caps hold about 31 of STANDARD's 40 shorts and 36 of PLUS's 80. Only the per-video budgets (STANDARD £5, PLUS / Enterprise £16 short, £130 long) and the daily caps (STANDARD £20, PLUS £90) were raised so a normal video is not paused. The monthly caps can be raised without a release with `STUDIO_ORG_MONTHLY_CAP_PENCE_<TIER>` (or per organisation in Admin → Organisations → Cost caps). See PROGRESS 21.3 for the arithmetic and options.
 
 | Plan | Price | Net per month | Typical cost | Margin typical | Margin at cap |
 |---|---|---|---|---|---|

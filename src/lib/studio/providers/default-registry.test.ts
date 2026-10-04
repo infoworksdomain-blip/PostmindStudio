@@ -191,10 +191,21 @@ describe('BytePlus Seedance (20.23)', () => {
     expect(seedance).toMatchObject({
       providerId: 'seedance',
       model: 'dreamina-seedance-2-0-mini-260615',
+      fullModel: 'dreamina-seedance-2-0-260128',
       longModel: 'dreamina-seedance-2-5-260628',
       baseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3',
     });
     expect(providerKeysFromEnv().seedance).toEqual({ apiKey: 'test.key' });
+  });
+
+  it('21.3 SEEDANCE_FULL_MODEL sets the STANDARD / PLUS / ENTERPRISE model', () => {
+    vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
+    vi.stubEnv('SEEDANCE_FULL_MODEL', 'dreamina-seedance-2-0-mini-260615');
+    expect(buildAdaptersFromEnv()[0]).toMatchObject({
+      fullModel: 'dreamina-seedance-2-0-mini-260615',
+    });
+    vi.stubEnv('SEEDANCE_FULL_MODEL', 'dreamina-seedance-2-0-pro');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
   });
 
   it('uses SEEDANCE_MODEL / SEEDANCE_LONG_MODEL / BYTEPLUS_ARK_BASE_URL and refuses unknown values', () => {

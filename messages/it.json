@@ -3953,7 +3953,8 @@
       "noLongVideos": "Nessun video lungo",
       "seats": "{count, plural, one {# utente} other {# utenti}}",
       "businesses": "{count, plural, one {# attività} other {# attività}}",
-      "unlimitedVideos": "Video illimitati (uso corretto)"
+      "unlimitedVideos": "Video illimitati (uso corretto)",
+      "videoQuality": "Qualità video: {quality}"
     },
     "enterprise": {
       "price": "Prezzo personalizzato",
@@ -3995,7 +3996,8 @@
         "dnsDomainVerification": "Verifica del dominio",
         "seats": "Utenti",
         "businesses": "Attività",
-        "storage": "Spazio di archiviazione"
+        "storage": "Spazio di archiviazione",
+        "videoQuality": "Qualità dei video IA"
       },
       "values": {
         "longVideos": "{count} × fino a {minutes} min",
@@ -4013,7 +4015,12 @@
           "ai_generation": "Immagini stock, dal sito web e IA",
           "byoc_generation": "Immagini IA con le tue chiavi"
         },
-        "storage": "{gb} GB"
+        "storage": "{gb} GB",
+        "videoQuality": {
+          "sd": "SD (480p)",
+          "hd": "HD standard (720p)",
+          "fullHd": "Full HD (1080p)"
+        }
       }
     },
     "topUps": {

@@ -335,6 +335,11 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
     isSeedanceModel(v)
       ? null
       : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  // 21.3: STANDARD / PLUS / ENTERPRISE's model (empty = dreamina-seedance-2-0-260128).
+  SEEDANCE_FULL_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
   SEEDANCE_LONG_MODEL: (v) =>
     isSeedanceModel(v)
       ? null

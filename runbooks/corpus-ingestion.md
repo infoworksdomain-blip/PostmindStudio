@@ -221,8 +221,8 @@ SSRF guard.
   thumbnail per video.
 - Corpus jobs bill the `postmind-platform` organisation at `STUDIO_LIBRARY_PLAN_TIER` (default
   STANDARD). The cost guard applies that tier's org caps to it:
-  - STANDARD: £15 per day and £73 per month (price list 2026-09-30). That stops a full run after
-    about 300–750 videos a day and 1,460–3,650 a month.
+  - STANDARD: £20 per day (21.3; £15 before) and £73 per month (price list 2026-09-30). That
+    stops a full run after about 400–1,000 videos a day and 1,460–3,650 a month.
   - **For 9.3, set `STUDIO_LIBRARY_PLAN_TIER=ENTERPRISE`**: £150 per day and £1,100 per month.
     That is about 3,000–7,500 videos a day and 22,000–55,000 a month, so a 50k run can need
     more than one month at the defaults.

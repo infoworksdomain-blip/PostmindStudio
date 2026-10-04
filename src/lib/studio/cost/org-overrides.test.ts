@@ -25,7 +25,7 @@ describe('resolveOrgCap', () => {
     });
     expect(resolveOrgCap('daily', caps, 'PLUS', null)).toEqual({ pence: 9_000, source: 'env' });
     expect(resolveOrgCap('daily', caps, 'STANDARD', null)).toEqual({
-      pence: 1_500,
+      pence: 2_000,
       source: 'default',
     });
     // A null column is "no override" for that period only.
@@ -45,7 +45,7 @@ describe('resolveOrgCap', () => {
   it('lists every tier for admin views', () => {
     expect(resolveOrgCapByTier('daily', caps, null)).toEqual({
       BASIC: { pence: 500, source: 'default' },
-      STANDARD: { pence: 1_500, source: 'default' },
+      STANDARD: { pence: 2_000, source: 'default' },
       PLUS: { pence: 9_000, source: 'env' },
       ENTERPRISE: { pence: 15_000, source: 'default' },
     });

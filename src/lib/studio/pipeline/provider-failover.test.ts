@@ -531,12 +531,12 @@ describe('runProvider account-problem failover (20.11)', () => {
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('seedance');
     expect(runway.submitCalls).toHaveLength(0);
-    // runProvider passes the plan tier to the adapter (PLUS → Seedance 2.5).
+    // runProvider passes the plan tier to the adapter (21.3: PLUS → Seedance 2.0 at 1080p).
     expect(seedance.submitCalls[0]).toMatchObject({ planTier: 'PLUS' });
   });
 
-  it('video (20.23): the real Seedance adapter in arrears (403) on STANDARD fails over to Luma', async () => {
-    const http = fakeFetch(
+  it('video (20.23 / 21.3): Seedance in arrears on STANDARD: 2.0, then Mini, then Luma', async () => {
+    const overdue = () =>
       json(
         {
           error: {
@@ -546,8 +546,9 @@ describe('runProvider account-problem failover (20.11)', () => {
           },
         },
         403,
-      ),
-    );
+      );
+    // The whole account is overdue: the full model and the Mini fallback are both refused.
+    const http = fakeFetch(overdue(), overdue());
     const seedance = new SeedanceAdapter({
       apiKey: 'ark-key',
       usdToGbpRate: 0.75,
@@ -568,12 +569,54 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(rows.find((r) => r.provider === 'seedance')).toMatchObject({
       errorClass: 'insufficient_credits',
     });
+    expect(http.requests.map((r) => (r.body as { model: string }).model)).toEqual([
+      'dreamina-seedance-2-0-260128',
+      'dreamina-seedance-2-0-mini-260615',
+    ]);
   });
 
-  it('video (20.23): a Seedance model that is not activated (404 ModelNotOpen) fails over too', async () => {
+  it('video (21.3): Seedance 2.0 not activated on PLUS → Mini takes the clip, no failover', async () => {
     const http = fakeFetch(
       json({ error: { code: 'ModelNotOpen', message: 'has not activated the model' } }, 404),
+      json({ id: 'cgt-mini-ok' }),
+      json({
+        id: 'cgt-mini-ok',
+        model: 'dreamina-seedance-2-0-mini-260615',
+        status: 'succeeded',
+        content: { video_url: 'https://ark-out.example/mini.mp4' },
+        usage: { completion_tokens: 108_000 },
+        resolution: '720p',
+      }),
     );
+    const seedance = new SeedanceAdapter({
+      apiKey: 'ark-key',
+      usdToGbpRate: 0.75,
+      fetchImpl: http.fetch,
+    });
+    const kling = new StubAdapter('kling', ['text_to_video'], { costPence: 26 });
+    const { deps, breaker } = setup([seedance, kling]);
+    const run = await runProvider(
+      {
+        ...clipRequest,
+        planTier: 'PLUS',
+        request: { ...clipRequest.request, resolution: '1080p' as const },
+      },
+      deps,
+    );
+    expect(run.decision.providerId).toBe('seedance');
+    expect(kling.submitCalls).toHaveLength(0);
+    expect(breaker.accountHolds().seedance).toBeUndefined();
+    // Two submits (2.0 refused, Mini accepted), then the poll.
+    expect(http.requests.filter((r) => r.method === 'POST').map((r) => r.body)).toMatchObject([
+      { model: 'dreamina-seedance-2-0-260128', resolution: '1080p' },
+      { model: 'dreamina-seedance-2-0-mini-260615', resolution: '720p' },
+    ]);
+  });
+
+  it('video (20.23 / 21.3): not activated (ModelNotOpen) on 2.0 and Mini fails over too', async () => {
+    const notOpen = () =>
+      json({ error: { code: 'ModelNotOpen', message: 'has not activated the model' } }, 404);
+    const http = fakeFetch(notOpen(), notOpen());
     const seedance = new SeedanceAdapter({
       apiKey: 'ark-key',
       usdToGbpRate: 0.75,
