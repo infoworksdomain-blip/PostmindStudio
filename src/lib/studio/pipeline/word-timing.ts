@@ -5,6 +5,7 @@ import {
   NoProviderAvailableError,
 } from '../../errors';
 import type { PlanTier } from '../providers/router';
+import { respellToScript } from '../overlays/script-spelling';
 import { parseSpokenWords, type SpokenWord } from '../overlays/word-timing';
 import type { PipelineDeps } from './deps';
 import { runProvider } from './provider-run';
@@ -129,7 +130,7 @@ export async function ensureWordTiming(
   if (!asset) return null;
   const existing = wordTimingOf(asset.metadata);
   if (existing) return existing;
-  const timing = await transcribeWords(deps, {
+  const transcribed = await transcribeWords(deps, {
     organisationId: input.organisationId,
     projectId: asset.projectId,
     planTier: input.planTier,
@@ -137,6 +138,19 @@ export async function ensureWordTiming(
     durationSec: asset.durationSec ?? 1,
     languageCode: await spokenLanguageOf(deps, asset),
   });
+  // Narration was generated from the shot's script line, so its words keep the script's spelling
+  // (brand names the transcript splits, e.g. "a head AI" for "AheadAI"); overlays/script-spelling.ts.
+  const narratedShot =
+    transcribed.status === 'ok'
+      ? await deps.db.videoShot.findFirst({
+          where: { voiceAssetId: asset.id },
+          select: { voiceoverText: true },
+        })
+      : null;
+  const timing: WordTiming =
+    transcribed.status === 'ok' && narratedShot?.voiceoverText
+      ? { ...transcribed, words: respellToScript(transcribed.words, narratedShot.voiceoverText) }
+      : transcribed;
   const base =
     asset.metadata && typeof asset.metadata === 'object' && !Array.isArray(asset.metadata)
       ? (asset.metadata as Record<string, unknown>)
