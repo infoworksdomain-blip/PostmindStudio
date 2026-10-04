@@ -442,7 +442,8 @@ export function CreateScreen({
       )}
       {showOptions && (
         <div id="create-options" className="flex flex-col gap-5">
-          <div role="radiogroup" aria-label={t('sourcesAria')} className="flex gap-1.5">
+          {/* 21.4 added a fourth source (UGC): wrap so the row never overflows a 375 px phone. */}
+          <div role="radiogroup" aria-label={t('sourcesAria')} className="flex flex-wrap gap-1.5">
             {SOURCES.map(({ key, icon: Icon }) => (
               <button
                 key={key}
