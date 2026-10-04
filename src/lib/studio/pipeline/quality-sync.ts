@@ -1,7 +1,7 @@
 import type { QualityCheck } from './quality-checks';
 import type { CompositionSummary } from './composition-summary';
 import type { FitDecision } from './voice-fit';
-import { FIT_TOLERANCE } from './voice-fit';
+import { FIT_SLACK_SEC, FIT_TOLERANCE } from './voice-fit';
 import { normaliseWord, type SpokenWord } from '../overlays/word-timing';
 
 // BACKLOG 15.B2 — the four §13.1 checks that were recorded as `not_run`:
@@ -67,7 +67,7 @@ export function evaluateAudioSync(
       if (!fit.wordBoundary) problem('narration cut without word timing');
       return;
     }
-    if (fit.voiceSec > shot.lengthSec * (1 + FIT_TOLERANCE) || fit.voiceSec > clip + 0.05)
+    if (fit.voiceSec > shot.lengthSec * (1 + FIT_TOLERANCE) || fit.voiceSec > clip + FIT_SLACK_SEC)
       problem(`${fit.voiceSec.toFixed(2)}s of narration in a ${shot.lengthSec.toFixed(2)}s shot`);
   });
   return problems.length

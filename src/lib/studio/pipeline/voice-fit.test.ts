@@ -25,9 +25,27 @@ const base = {
 };
 
 describe('decideFit', () => {
-  it('accepts narration within +5% of the shot', () => {
-    expect(decideFit({ ...base, voiceSec: 2.9, shotSec: 2.8, treatment: 'AI_CLIP' }).strategy).toBe(
+  it('accepts narration that ends inside the shot, with 0.05 s of rounding', () => {
+    expect(decideFit({ ...base, voiceSec: 2.6, shotSec: 2.8, treatment: 'AI_CLIP' }).strategy).toBe(
       'fits',
+    );
+    expect(
+      decideFit({ ...base, voiceSec: 2.84, shotSec: 2.8, treatment: 'AI_CLIP' }).strategy,
+    ).toBe('fits');
+  });
+
+  it('does not let narration overrun its shot inside the ±5% pace band (2026-10-04)', () => {
+    // Production: 3.09 s of narration in a 3.00 s still was called "fits", the composer cut the
+    // voice clip at 3.00 s and audio_sync failed the render. A still is held longer instead.
+    expect(
+      decideFit({ ...base, voiceSec: 3.09, shotSec: 3, treatment: 'IMAGE_STILL' }),
+    ).toMatchObject({ strategy: 'extend', newShotSec: 3.3 });
+    // A video shot cannot be held, so the line is regenerated slightly faster.
+    expect(decideFit({ ...base, voiceSec: 2.9, shotSec: 2.8, treatment: 'AI_CLIP' })).toMatchObject(
+      {
+        strategy: 'speed',
+        speed: 1.06,
+      },
     );
   });
 
