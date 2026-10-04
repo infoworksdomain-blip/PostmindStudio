@@ -146,6 +146,10 @@
         "share_comment": "Feedback em um link de pré-visualização",
         "plan_quota": "Alertas de uso do plano (80% e 100%)",
         "connection_needs_reconnect": "Contas que precisam ser reconectadas"
+      },
+      "limitKinds": {
+        "cost_alert": "Alertas de limite de uso",
+        "cost_paused": "Criação de vídeos pausada em um limite"
       }
     },
     "usage": {
@@ -171,7 +175,14 @@
       "scansUnlimited": "análises de site para {scanned} de empresas ilimitadas",
       "resets": "renova em {date}",
       "enforced": "limites aplicados",
-      "notEnforced": "limites ainda não aplicados"
+      "notEnforced": "limites ainda não aplicados",
+      "videos": "Vídeos",
+      "videosThisPeriod": "{period, select, week {Vídeos nesta semana} other {Vídeos neste mês}}",
+      "moreFrom": "Mais vídeos são incluídos a partir de {date}.",
+      "planExceededTitle": "{period, select, week {Você usou os vídeos desta semana} other {Você usou os vídeos deste mês}}",
+      "planWarningTitle": "{period, select, week {Você está perto do limite de vídeos desta semana} other {Você está perto do limite de vídeos deste mês}}",
+      "planBlockedBody": "Novos vídeos estão pausados até {date}. Adicione um canal ou compre um pacote de vídeos para continuar criando.",
+      "planResetBody": "Mais vídeos são incluídos a partir de {date}. Adicione um canal ou compre um pacote de vídeos para ter mais."
     },
     "pageTitle": {
       "library": "Biblioteca de referência",
@@ -193,7 +204,7 @@
       "security": "Segurança e login",
       "signOut": "Sair",
       "signOutFailed": "Não foi possível sair. Tente novamente.",
-      "billing": "Cobrança"
+      "billing": "Seu plano"
     },
     "banners": {
       "readOnly": {
@@ -243,8 +254,8 @@
       "unauthorized": "Sua sessão do PostMind expirou. Faça login novamente.",
       "forbidden": "Você não tem permissão para fazer isso.",
       "feature_disabled": "Este recurso não está ativado para a sua organização.",
-      "plan_tier": "Seu plano não inclui isso. Faça upgrade do plano para usar.",
-      "quota_exceeded": "Você atingiu o limite do seu plano neste mês. Faça upgrade do plano para continuar criando.",
+      "plan_tier": "Este recurso não está incluído no seu plano.",
+      "quota_exceeded": "Você usou os vídeos do seu plano por enquanto. Adicione um canal ou compre um pacote de vídeos para continuar criando.",
       "not_found": "Não encontramos isso. Talvez tenha sido excluído.",
       "conflict": "Isso mudou enquanto você trabalhava. Atualize a página e tente novamente.",
       "validation_error": "Alguns dados não são válidos. Confira e tente novamente.",
@@ -256,7 +267,7 @@
       "provider_error": "Um provedor de geração teve um problema. Tente novamente em instantes.",
       "platform_error": "A rede social teve um problema. Tente novamente em instantes.",
       "no_provider_available": "Nenhum provedor pode assumir este trabalho agora. Tente novamente mais tarde.",
-      "cost_cap_paused": "A geração está pausada porque um orçamento foi atingido.",
+      "cost_cap_paused": "A geração está pausada porque um limite foi atingido.",
       "upstream_error": "Um serviço conectado teve um problema. Tente novamente em instantes.",
       "configuration_error": "O Studio ainda não está totalmente configurado para isso. Fale com o suporte do PostMind.",
       "not_implemented": "Isso ainda não está disponível.",
@@ -268,7 +279,8 @@
       "service_unavailable": "Nosso serviço de IA está temporariamente indisponível. Tente novamente mais tarde — nossa equipe já foi avisada.",
       "auto_publish_account_required": "Escolha uma conta conectada para publicar ou desative a publicação automática e o agendamento.",
       "auto_publish_account_unavailable": "Uma conta escolhida não está mais conectada. Conecte-a de novo ou escolha outra conta.",
-      "queue_unavailable": "A publicação está temporariamente indisponível. Nada foi publicado nem salvo; tente de novo em instantes."
+      "queue_unavailable": "A publicação está temporariamente indisponível. Nada foi publicado nem salvo; tente de novo em instantes.",
+      "channel_limit": "Seu plano não inclui um canal para esta plataforma. Adicione um canal em Seu plano para publicar aqui."
     }
   },
   "primitives": {
@@ -462,6 +474,44 @@
     "providersUnavailable": {
       "title": "Nenhum provedor de {capability} disponível",
       "body": "Todos os provedores de {capability} falharam por um problema de conta: {providers}. Os clientes veem “temporariamente indisponível” até que uma dessas contas seja corrigida."
+    },
+    "videoAllowanceNearing": {
+      "title": "{threshold, number}% dos vídeos {period, select, week {desta semana} other {deste mês}} usados",
+      "body": "{used, number} de {limit, number} vídeos criados {period, select, week {nesta semana} other {neste mês}}. Mais vídeos são incluídos no início {period, select, week {da próxima semana} other {do próximo mês}}."
+    },
+    "videoAllowanceUsed": {
+      "title": "{period, select, week {Os vídeos desta semana} other {Os vídeos deste mês}} foram usados",
+      "body": "{used, number} de {limit, number} vídeos criados {period, select, week {nesta semana} other {neste mês}}. Mais vídeos são incluídos no início {period, select, week {da próxima semana} other {do próximo mês}}.{blocked, select, yes { Para criar mais antes disso, adicione um canal ou compre um pacote de vídeos.} other {}}"
+    },
+    "costPlain": {
+      "projectAlert": {
+        "title": "“{name}” está perto do limite de segurança",
+        "body": "Se atingir o limite, o Studio pausa o vídeo. Você pode continuar pela página do projeto, e nada do que já foi feito se perde."
+      },
+      "projectPaused": {
+        "title": "“{name}” parou no limite de segurança",
+        "body": "Abra o projeto e clique em “Continuar criando este vídeo” para concluí-lo. Nada do que já foi feito se perde."
+      },
+      "dailyAlert": {
+        "title": "Perto do limite de hoje para criar vídeos",
+        "body": "Novos vídeos pausam quando o limite é atingido e continuam depois da meia-noite UTC. As publicações não são afetadas."
+      },
+      "dailyPaused": {
+        "title": "A criação de vídeos está pausada até amanhã",
+        "body": "O limite de hoje foi atingido. Novos vídeos continuam depois da meia-noite UTC. As publicações não são afetadas."
+      },
+      "monthlyAlert": {
+        "title": "Perto do limite deste mês para criar vídeos",
+        "body": "Novos vídeos pausam quando o limite é atingido e continuam no dia 1º (UTC). As publicações não são afetadas."
+      },
+      "monthlyPaused": {
+        "title": "A criação de vídeos está pausada até o próximo mês",
+        "body": "O limite deste mês foi atingido. Novos vídeos continuam no dia 1º (UTC), ou compre um pacote de vídeos para continuar agora. As publicações não são afetadas."
+      },
+      "generic": {
+        "title": "Um limite para criar vídeos foi atingido",
+        "body": "O Studio pausou novos vídeos por enquanto. As publicações não são afetadas."
+      }
     }
   },
   "create": {
@@ -681,7 +731,8 @@
       "generate": "Gerar",
       "generateAgain": "Gerar de novo",
       "started": "Geração iniciada.",
-      "cancelled": "Cancelado — {amount} foram gastos nesta execução."
+      "cancelled": "Cancelado — {amount} foram gastos nesta execução.",
+      "cancelledPlain": "Cancelado."
     },
     "approval": {
       "aria": "Aprovação",
@@ -781,7 +832,11 @@
       "newBudget": "Novo orçamento (£)",
       "raise": "Aumentar orçamento",
       "tooLow": "Digite um valor acima de {budget} (até {max}).",
-      "raised": "Orçamento aumentado para {amount}. Clique em “{action}” para continuar."
+      "raised": "Orçamento aumentado para {amount}. Clique em “{action}” para continuar.",
+      "limitAria": "Vídeo pausado no limite de segurança",
+      "limitReached": "Este vídeo parou no limite de segurança. Nada do que já foi feito se perde.",
+      "carryOn": "Continuar criando este vídeo",
+      "carriedOn": "Pronto para continuar. Clique em “{action}” para concluir o vídeo."
     },
     "music": {
       "aria": "Música",
@@ -830,7 +885,10 @@
       "resumeToggle": "Retomar automaticamente",
       "willResume": "Será retomado automaticamente",
       "resumeTurnedOff": "Retomada automática desativada",
-      "safety": "Pausado para uma revisão de segurança de conteúdo pela equipe de Trust & Safety da PostMind. A geração continua automaticamente se for permitido; você será avisado em qualquer caso."
+      "safety": "Pausado para uma revisão de segurança de conteúdo pela equipe de Trust & Safety da PostMind. A geração continua automaticamente se for permitido; você será avisado em qualquer caso.",
+      "limitAria": "Pausado em um limite",
+      "dailyLimit": "Pausado: sua organização atingiu o limite de hoje para criar vídeos.",
+      "monthlyLimit": "Pausado: sua organização atingiu o limite deste mês para criar vídeos."
     },
     "fallback": {
       "aria": "Provedor alternativo usado",
@@ -2155,7 +2213,11 @@
       "unknownCode": "Não encontramos nenhuma solicitação de exclusão com este código de confirmação. Confira o link que o Facebook forneceu."
     },
     "notConfigured": "O {platform} ainda não está disponível: o app do {platform} do Studio ainda precisa ser configurado. Fale com o seu administrador.",
-    "readOnly": "Somente proprietários e administradores podem conectar ou desconectar contas."
+    "readOnly": "Somente proprietários e administradores podem conectar ou desconectar contas.",
+    "channelLimit": {
+      "body": "{count, plural, one {Seu plano inclui # canal,} many {Seu plano inclui # canais,} other {Seu plano inclui # canais,}} então {blockedCount, plural, one {{blocked} está conectado, mas não vai publicar.} many {{blocked} estão conectados, mas não vão publicar.} other {{blocked} estão conectados, mas não vão publicar.}}",
+      "action": "Adicionar um canal"
+    }
   },
   "library": {
     "browse": {
@@ -2301,7 +2363,8 @@
       "title": "Análises",
       "description": "Como seus vídeos publicados estão se saindo e quanto custou produzi-los.",
       "rangeLabel": "Período",
-      "rangeOption": "{days, plural, one {# dia} other {# dias}}"
+      "rangeOption": "{days, plural, one {# dia} other {# dias}}",
+      "descriptionNoCost": "Como seus vídeos publicados estão se saindo."
     },
     "metrics": {
       "views": "Visualizações",
@@ -3708,7 +3771,7 @@
       "script_regenerate_failed": "Não foi possível gerar o roteiro de novo: ele ou o briefing não existe mais.",
       "asset_generation_failed": "{count, plural, =0 {Não foi possível gerar algumas cenas.} one {Não foi possível gerar a cena {shots}.} other {Não foi possível gerar as cenas {shots}.}}",
       "composition_failed": "Falha ao montar o vídeo.",
-      "cost_cap_paused": "Geração pausada porque um orçamento foi atingido.",
+      "cost_cap_paused": "Geração pausada porque um limite foi atingido.",
       "kill_switch": "{level, select, global {Pausado: o PostMind interrompeu a geração e a publicação em todo lugar.} workspace {Pausado: o PostMind interrompeu a geração para sua organização.} project {Pausado: o PostMind interrompeu este projeto.} provider {Pausado: o PostMind interrompeu um dos provedores de geração.} platform {Pausado: o PostMind interrompeu a publicação nesta plataforma.} other {Pausado por um interruptor de emergência do PostMind.}}",
       "rejected": "Recusado por um revisor.",
       "business_deleted": "Interrompido: a empresa foi excluída.",
@@ -3745,7 +3808,11 @@
       "unknown": "erro desconhecido",
       "account_limit": "um limite de uso foi atingido"
     },
-    "generic": "Esta etapa falhou. Tente de novo ou fale com o suporte se continuar."
+    "generic": "Esta etapa falhou. Tente de novo ou fale com o suporte se continuar.",
+    "limits": {
+      "scan_cost_cap": "A análise parou no limite.",
+      "scan_images_capped": "A análise atingiu o limite: algumas imagens não foram indexadas para busca."
+    }
   },
   "marketing": {
     "meta": {
@@ -3834,10 +3901,6 @@
         "title": "Um calendário que publica por você",
         "body": "Planeje o próximo mês, arraste publicações para novos horários e deixe o Studio publicar no momento certo para cada plataforma."
       },
-      "budget": {
-        "title": "Custos que você vê",
-        "body": "Limites mensais e tetos de gastos aparecem antes, então não há cobranças surpresa."
-      },
       "languages": {
         "title": "Onze idiomas",
         "body": "Trabalhe em inglês, francês, espanhol, árabe, alemão, italiano, português, hindi ou chinês, e crie vídeos para os clientes no idioma deles."
@@ -3845,6 +3908,10 @@
       "library": {
         "title": "Ideias na hora que você precisa",
         "body": "Explore uma biblioteca de vídeos curtos que já funcionaram e use um deles como ponto de partida para o seu."
+      },
+      "pricing": {
+        "title": "Um preço simples por canal",
+        "body": "Pague um preço fixo para cada canal social que você conectar, com vídeos incluídos. Sem medidores para acompanhar e sem cobranças surpresa."
       }
     },
     "closing": {
@@ -3907,8 +3974,8 @@
       "analytics": {
         "tab": "Análises",
         "title": "Veja o que funcionou",
-        "body": "Visualizações, tempo de exibição, engajamento e o custo de cada vídeo em um só lugar, para o próximo briefing ser melhor.",
-        "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento, gastos e um gráfico de atividade diária"
+        "body": "Visualizações, tempo de exibição e engajamento de cada vídeo em um só lugar, para o próximo briefing ser melhor.",
+        "alt": "A página de análises: visualizações em 30 dias, tempo de exibição, engajamento e um gráfico de atividade diária"
       }
     }
   },
@@ -3918,135 +3985,67 @@
     },
     "hero": {
       "eyebrow": "Preços",
-      "title": "Planos que crescem com a sua produção de vídeos",
-      "description": "Todos os planos incluem roteiros com IA, renderização em vários formatos e publicação nas suas contas conectadas."
+      "title": "Um plano simples: você paga por canal",
+      "description": "Escolha em quantas plataformas sociais você publica e com que frequência paga. Cada canal inclui 8 vídeos curtos em HD por mês."
     },
-    "interval": {
-      "label": "Período de cobrança",
-      "month": "Mensal",
-      "year": "Anual"
+    "plan": {
+      "title": "Monte seu plano"
     },
-    "exclVat": "Preços sem IVA.",
-    "unavailable": "Não foi possível mostrar os preços agora. Tente novamente em instantes.",
-    "priceUnavailable": "Preço indisponível",
-    "perMonth": "{amount} / mês",
-    "perYear": "{amount} / ano",
-    "annualSaving": "Economize {amount} por ano",
-    "trialNote": "Experimente o {tier} grátis por {days, plural, one {# dia} other {# dias}}, com {short} vídeos curtos e {long} vídeo longo incluídos. Cartão obrigatório; cancele quando quiser.",
-    "popular": "Mais popular",
-    "tiers": {
-      "BASIC": {
-        "tagline": "Para um único negócio começando com vídeos curtos."
-      },
-      "STANDARD": {
-        "tagline": "Para equipes em crescimento que publicam todo dia, com música e vídeos longos."
-      },
-      "PLUS": {
-        "tagline": "Para agências e marcas que precisam de clonagem de voz, 4K e imagens com IA."
-      },
-      "ENTERPRISE": {
-        "tagline": "Limites personalizados, suas próprias chaves de provedor e conteúdo white-label."
-      }
-    },
-    "highlights": {
-      "shortVideos": "{count, plural, one {# vídeo curto por mês} other {# vídeos curtos por mês}}",
-      "longVideos": "{count, plural, one {# vídeo longo por mês} other {# vídeos longos por mês}}",
-      "noLongVideos": "Sem vídeos longos",
-      "seats": "{count, plural, one {# usuário} other {# usuários}}",
-      "businesses": "{count, plural, one {# negócio} other {# negócios}}",
-      "unlimitedVideos": "Vídeos ilimitados (uso justo)"
-    },
-    "enterprise": {
-      "price": "Preço personalizado",
-      "contact": "Fale com vendas",
-      "contactAria": "Enviar e-mail para a equipe de vendas sobre o Enterprise",
-      "noContact": "Pergunte ao seu gerente de conta PostMind sobre o Enterprise."
-    },
+    "unavailable": "Não é possível mostrar os preços agora. Tente novamente em instantes.",
+    "trialNote": "Teste grátis por {days, plural, one {# dia} many {# dias} other {# dias}} com {videos} vídeos. Cartão obrigatório; cancele quando quiser antes do fim do teste e você não paga nada.",
     "cta": {
       "trial": "Começar teste grátis",
-      "choose": "Escolher plano",
-      "chooseAria": "Escolher o plano {tier}"
+      "start": "Começar"
     },
-    "compare": {
-      "title": "Compare os planos",
-      "caption": "Comparação de planos",
-      "feature": "Recurso",
-      "included": "Incluído",
-      "notIncluded": "Não incluído",
-      "unlimited": "Ilimitado",
-      "rows": {
-        "shortVideos": "Vídeos curtos por mês (até 30 s)",
-        "longVideos": "Vídeos longos por mês",
-        "platforms": "Plataformas",
-        "dailyCostCap": "Orçamento diário de geração",
-        "monthlyCostCap": "Orçamento mensal de geração",
-        "queuePriority": "Prioridade na fila de renderização",
-        "musicAndSfx": "Música e efeitos sonoros",
-        "voiceClone": "Clone da voz da marca",
-        "renders4k": "Renderização em 4K",
-        "imageLibrary": "Biblioteca de imagens",
-        "generatedImages": "Imagens geradas por negócio por mês",
-        "scanBusinesses": "Análises de site (negócios)",
-        "libraryInspire": "Biblioteca de referências: modo Inspiração",
-        "libraryTemplate": "Biblioteca de referências: modo Modelo",
-        "customPresets": "Predefinições de sobreposição e modelos de slideshow personalizados",
-        "approvalWorkflows": "Fluxos de aprovação em várias etapas",
-        "byocProviderKeys": "Suas próprias chaves de provedor",
-        "whiteLabel": "Conteúdo white-label",
-        "dnsDomainVerification": "Verificação de domínio",
-        "seats": "Usuários",
-        "businesses": "Negócios",
-        "storage": "Armazenamento"
-      },
-      "values": {
-        "longVideos": "{count} × até {minutes} min",
-        "platforms": {
-          "tiktok_instagram_plus_one": "TikTok, Instagram e mais 1",
-          "all": "Todas as 8"
-        },
-        "queuePriority": {
-          "normal": "Padrão",
-          "high": "Alta"
-        },
-        "imageLibrary": {
-          "stock": "Imagens de banco",
-          "stock_scrape": "Imagens de banco e do site",
-          "ai_generation": "Imagens de banco, do site e com IA",
-          "byoc_generation": "Imagens com IA usando suas chaves"
-        },
-        "storage": "{gb} GB"
+    "included": {
+      "title": "Todos os planos incluem",
+      "items": {
+        "videos": "8 vídeos curtos por canal todo mês, feitos para você a partir de um briefing curto",
+        "hd": "Vídeo HD, legendas e música",
+        "platforms": "Publicação no TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn e X",
+        "scheduling": "Um calendário de conteúdo e agendamento automático",
+        "brand": "Seu kit de marca em todos os vídeos",
+        "library": "Biblioteca de vídeos de referência para ter ideias"
       }
     },
+    "packs": {
+      "title": "Precisa de mais vídeos?",
+      "description": "Compre um pacote avulso de vídeos HD quando quiser. Os vídeos de pacote funcionam em qualquer canal, são usados depois dos vídeos do seu plano e valem por 3 meses."
+    },
     "topUps": {
-      "title": "Pacotes extras",
-      "description": "Precisa de mais este mês? Compre um pacote avulso. Os créditos são usados depois da franquia do plano, dos mais antigos para os mais novos.",
-      "short": "{quantity, plural, one {# vídeo curto} other {# vídeos curtos}}",
-      "long": "{quantity, plural, one {# vídeo longo} other {# vídeos longos}}",
-      "forTier": "Para planos {tier}",
-      "validity": "Válido por {months} meses"
+      "short": "{quantity, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}}",
+      "long": "{quantity, plural, one {# vídeo longo} many {# vídeos longos} other {# vídeos longos}}"
     },
     "faq": {
       "title": "Perguntas",
       "items": {
-        "trial": {
-          "q": "Como funciona o teste grátis?",
-          "a": "O teste do Standard exige cartão. Você só será cobrado quando o teste terminar e pode cancelar antes disso. Cada organização pode fazer um teste."
+        "channel": {
+          "q": "O que é um canal?",
+          "a": "Um canal é uma plataforma social em que você publica, como TikTok ou Instagram. Pague de 1 a 6 canais. Você pode conectar mais contas, mas só os canais pagos publicam."
+        },
+        "period": {
+          "q": "Semanal, mensal ou anual?",
+          "a": "O mensal custa {monthly} por canal. O semanal custa {weekly} por canal por semana, o que sai mais caro ao longo de um mês. O anual custa {yearly} por canal, pago adiantado: 2 meses grátis. Os vídeos são incluídos toda semana nos planos semanais e todo mês nos planos mensais e anuais."
         },
         "change": {
-          "q": "Posso mudar de plano depois?",
-          "a": "Sim. Upgrades valem na hora e são cobrados proporcionalmente. Downgrades valem no fim do período de cobrança, e nada é excluído."
+          "q": "Posso alterar meu plano depois?",
+          "a": "Sim, em Seu plano. Adicionar canais ou mudar para um período mais longo vale na hora; você paga só a diferença pelo restante do período. Remover canais ou mudar para um período mais curto vale no fim do período já pago."
         },
         "limit": {
-          "q": "O que acontece quando atinjo meu limite?",
-          "a": "Novos vídeos ficam pausados até sua franquia ser renovada no início do mês seguinte. Você pode fazer upgrade ou comprar um pacote extra para continuar."
+          "q": "O que acontece quando eu usar meus vídeos?",
+          "a": "Novos vídeos ficam pausados até que mais vídeos sejam incluídos no início da próxima semana ou do próximo mês. Adicione um canal ou compre um pacote de vídeos para continuar na hora."
+        },
+        "packs": {
+          "q": "Como funcionam os pacotes de vídeos?",
+          "a": "Um pacote de 5 ou 15 vídeos HD é uma compra avulsa. Os vídeos de pacote funcionam em qualquer canal, são usados depois dos vídeos do seu plano e valem por 3 meses."
         },
         "vat": {
           "q": "Os preços incluem IVA?",
-          "a": "Não. Os preços não incluem IVA, que é adicionado no checkout quando aplicável."
+          "a": "Não. Os preços não incluem IVA, que é adicionado no pagamento quando aplicável."
         },
         "cancel": {
           "q": "O que acontece se eu cancelar?",
-          "a": "Você mantém o acesso até o fim do período pago. Depois disso, sua conta fica somente leitura: você ainda pode ver, exportar e baixar seu trabalho."
+          "a": "Seu plano termina no fim do período já pago, e você pode mudar de ideia até lá. Depois disso, sua conta passa a ser somente leitura: você ainda pode visualizar, exportar e baixar seu trabalho. Não reembolsamos períodos usados parcialmente."
         }
       }
     }
@@ -4271,7 +4270,7 @@
       "aria": "Configurações",
       "organisation": "Organização",
       "members": "Membros",
-      "billing": "Cobrança",
+      "billing": "Seu plano",
       "audit": "Registro de auditoria"
     },
     "page": {
@@ -4454,12 +4453,12 @@
   },
   "billing": {
     "meta": {
-      "title": "Cobrança"
+      "title": "Seu plano"
     },
     "header": {
       "eyebrow": "Configurações",
-      "title": "Cobrança",
-      "description": "Seu plano, uso, créditos extras e faturas."
+      "title": "Seu plano",
+      "description": "Seus canais, vídeos, pacotes de vídeos, dados de pagamento e faturas."
     },
     "loading": "Carregando cobrança",
     "notEnabled": {
@@ -4469,13 +4468,11 @@
     "banners": {
       "checkoutSuccess": "Obrigado! Seu plano está sendo configurado e vai aparecer aqui em instantes.",
       "checkoutCancelled": "O checkout foi cancelado. Você não foi cobrado.",
-      "topupSuccess": "Pacote extra comprado. Os créditos vão aparecer aqui em instantes.",
-      "topupCancelled": "Compra do pacote extra cancelada. Você não foi cobrado.",
+      "topupSuccess": "Pacote de vídeos comprado. Os vídeos vão aparecer aqui em instantes.",
+      "topupCancelled": "Compra do pacote de vídeos cancelada. Você não foi cobrado.",
       "dismiss": "Fechar"
     },
     "plan": {
-      "title": "Plano atual",
-      "tierName": "Plano {tier}",
       "noPlan": "Sem plano",
       "status": {
         "trialing": "Teste grátis",
@@ -4492,41 +4489,33 @@
       "graceLeft": "{days, plural, one {Falta # dia} other {Faltam # dias}}",
       "readOnly": "Sua conta está em modo somente leitura. Você ainda pode ver, exportar e baixar seu trabalho, mas não pode criar nem publicar até a cobrança ser regularizada.",
       "none": "Sua organização ainda não tem um plano. Escolha um abaixo para começar a criar.",
-      "interval": {
-        "month": "Cobrança mensal",
-        "year": "Cobrança anual"
-      },
       "adminSource": "Plano personalizado definido pela equipe PostMind.",
-      "manage": "Gerenciar cobrança",
-      "manageHelp": "Mude de plano, atualize a forma de pagamento, baixe recibos ou cancele no portal seguro da Stripe.",
-      "askOwner": "Só um proprietário da organização pode alterar a cobrança. Peça a um proprietário se precisar de outro plano.",
+      "manage": "Abrir o portal de cobrança",
+      "manageHelp": "Atualize seu cartão, endereço de cobrança ou número fiscal e baixe suas faturas no portal seguro do Stripe.",
+      "askOwner": "Só um proprietário da organização pode alterar o plano. Fale com um proprietário se você precisar de algo diferente.",
       "checkoutUnavailable": "O checkout online não está disponível no momento.",
-      "alreadySubscribed": "Sua organização já tem uma assinatura. Use Gerenciar cobrança para alterá-la."
+      "alreadySubscribed": "Sua organização já tem um plano. Altere-o nesta página.",
+      "detailsTitle": "Forma de pagamento e faturas"
     },
     "usage": {
-      "title": "Uso neste mês",
-      "description": "As franquias de vídeo são renovadas no primeiro dia de cada mês (UTC).",
+      "title": "Equipe e armazenamento",
       "seats": "Usuários",
       "businesses": "Negócios",
       "storage": "Armazenamento",
       "storageUsed": "{used} GB de {limit} GB",
       "storageUnlimited": "{used} GB usados",
       "storageOver": "Você ultrapassou seu limite de armazenamento. Nada é excluído, mas considere liberar espaço ou fazer upgrade.",
-      "cost": "Gasto com geração",
-      "costOf": "{spent} de {cap}",
-      "costNoCap": "{spent} (sem limite)",
-      "costHeadroom": "Seu limite inclui {amount} extras de créditos adicionais.",
       "usedOf": "{used} de {limit}",
-      "usedUnlimited": "{used} (ilimitado)"
+      "usedUnlimited": "{used} (ilimitado)",
+      "descriptionLimits": "Limites incluídos no seu plano."
     },
     "credits": {
-      "title": "Créditos extras",
-      "description": "Os créditos são usados depois da franquia mensal, dos mais antigos para os mais novos, e valem por 12 meses.",
-      "short": "{count, plural, =0 {Nenhum crédito de vídeo curto} one {# crédito de vídeo curto} other {# créditos de vídeo curto}}",
-      "long": "{count, plural, =0 {Nenhum crédito de vídeo longo} one {# crédito de vídeo longo} other {# créditos de vídeo longo}}",
+      "title": "Pacotes de vídeos",
+      "description": "Pacotes avulsos de vídeos HD para qualquer canal. Os vídeos de pacote são usados depois dos vídeos do seu plano e valem por 3 meses.",
       "buy": "Comprar",
       "buyAria": "Comprar {pack} por {amount}",
-      "noPacks": "Os pacotes extras estão disponíveis nos planos Basic, Standard e Plus."
+      "noPacks": "Escolha um plano primeiro para comprar pacotes de vídeos.",
+      "videosLeft": "{count, plural, =0 {Nenhum vídeo de pacote restante} one {# vídeo de pacote restante} many {# vídeos de pacote restantes} other {# vídeos de pacote restantes}}"
     },
     "invoices": {
       "title": "Faturas",
@@ -4551,11 +4540,12 @@
       }
     },
     "picker": {
-      "title": "Escolha um plano",
-      "description": "Escolha um plano e pague com segurança pela Stripe. Preços sem IVA.",
+      "title": "Escolha seu plano",
+      "description": "Escolha quantos canais você quer e com que frequência pagar. Você paga com segurança pelo Stripe; os preços não incluem IVA.",
       "trial": "Começar teste grátis",
-      "choose": "Escolher {tier}",
-      "redirecting": "Abrindo checkout seguro…"
+      "redirecting": "Abrindo checkout seguro…",
+      "subscribe": "Continuar para o pagamento",
+      "trialNote": "Teste grátis por {days, plural, one {# dia} many {# dias} other {# dias}}, com {videos} vídeos. Cancele antes do fim do teste e você não paga nada."
     },
     "subscriptionStatus": {
       "active": "Ativa",
@@ -4605,7 +4595,6 @@
         "overridePrice": "Preço acordado: {amount} por mês",
         "subscriptions": "Assinaturas",
         "noSubscriptions": "Nenhuma assinatura.",
-        "subscriptionLine": "{tier} · {interval} · termina em {date}",
         "form": {
           "title": "Definir uma substituição",
           "tier": "Nível",
@@ -4635,7 +4624,12 @@
           "saved": "Substituição salva",
           "endTrial": "Encerrar o teste agora",
           "endTrialHelp": "A franquia do teste e os seus limites de custo de {daily} por dia / {total} no total deixam de valer para sempre, mesmo depois de esta substituição expirar ou ser removida; se aplicam os limites do plano (e qualquer substituição de limites de custo). A Stripe não é alterada: o teste dela termina, e é cobrado, na sua própria data.",
-          "trialNote": "Qualquer substituição salva pausa os limites do teste enquanto estiver ativa. Marque “Encerrar o teste agora” para removê-los para sempre."
+          "trialNote": "Qualquer substituição salva pausa os limites do teste enquanto estiver ativa. Marque “Encerrar o teste agora” para removê-los para sempre.",
+          "channelPlan": "Plano por canais",
+          "channelPlanHelp": "Os canais (de 1 a 6 plataformas sociais) definem a franquia de vídeos, os limites de custo e quantas plataformas podem ser conectadas; o intervalo define com que frequência a franquia é liberada. “Manter atual” usa os valores da assinatura da Stripe. Não é usado com Enterprise.",
+          "channels": "Canais",
+          "channelsOption": "{count, plural, one {# canal} many {# canais} other {# canais}}",
+          "interval": "Intervalo de cobrança"
         },
         "clear": {
           "title": "Remover a substituição",
@@ -4665,7 +4659,19 @@
           "accessNone": "O acesso Nenhum impede todos nesta organização de gerar, publicar e analisar.",
           "accessReadOnly": "Somente leitura bloqueia qualquer alteração nesta organização exceto faturamento, configurações da conta e exportações.",
           "endTrial": "Encerrar o teste não pode ser desfeito: os seus limites não voltarão a se aplicar a esta organização."
-        }
+        },
+        "channelPlan": "Plano por canais",
+        "noChannelPlan": "Sem plano por canais",
+        "channelPlanValue": "{count, plural, one {# canal} many {# canais} other {# canais}} · {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}",
+        "channelPlanSource": "{source, select, admin {(definido pela equipe)} other {(da Stripe)}}",
+        "intervalValues": {
+          "week": "Semanal",
+          "month": "Mensal",
+          "year": "Anual"
+        },
+        "overrideChannels": "Canais: {count, plural, one {# canal} many {# canais} other {# canais}}",
+        "overrideInterval": "Cobrança {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}",
+        "subscriptionChannelLine": "{tier} · {count, plural, one {# canal} many {# canais} other {# canais}} · {interval} · termina em {date}"
       },
       "subscriptions": {
         "title": "Assinaturas",
@@ -4695,18 +4701,85 @@
         "unknownTier": "Desconhecido",
         "empty": "Nenhuma assinatura encontrada."
       }
+    },
+    "yourPlan": {
+      "summary": {
+        "title": "Seu plano",
+        "headline": "{count, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}",
+        "legacy": "Migrado do seu plano anterior.",
+        "pending": "A partir de {date}: {count, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}.",
+        "keepCurrent": "Manter meu plano atual",
+        "paymentPending": "Sua última alteração está aguardando pagamento. Atualize sua forma de pagamento para aplicá-la."
+      },
+      "videos": {
+        "title": "{period, select, week {Vídeos nesta semana} other {Vídeos neste mês}}",
+        "description": "Todo vídeo que você inicia conta, inclusive os que ainda estão sendo criados.",
+        "used": "{period, select, week {Usados nesta semana} other {Usados neste mês}}",
+        "moreFrom": "Mais vídeos são incluídos a partir de {date}.",
+        "packsLeft": "{count, plural, =0 {Nenhum vídeo de pacote restante} one {# vídeo de pacote restante} many {# vídeos de pacote restantes} other {# vídeos de pacote restantes}}"
+      },
+      "channels": {
+        "title": "Seus canais",
+        "description": "{count, plural, one {Seu plano publica em # canal.} many {Seu plano publica em # canais.} other {Seu plano publica em # canais.}}",
+        "noneConnected": "Nenhum canal conectado ainda.",
+        "connect": "Conectar contas",
+        "publishing": "Publicando em: {list}.",
+        "blocked": "{count, plural, one {{list} está conectado, mas não publica: seu plano não tem mais canais disponíveis.} many {{list} estão conectados, mas não publicam: seu plano não tem mais canais disponíveis.} other {{list} estão conectados, mas não publicam: seu plano não tem mais canais disponíveis.}}",
+        "addChannel": "Adicionar um canal",
+        "spare": "{count, plural, one {Você pode conectar mais # canal.} many {Você pode conectar mais # canais.} other {Você pode conectar mais # canais.}}"
+      },
+      "change": {
+        "title": "Alterar seu plano",
+        "description": "Adicione ou remova canais, ou mude a frequência de pagamento. Você verá o novo preço e quando ele começa a valer antes de qualquer mudança.",
+        "previewing": "Calculando o novo preço…",
+        "previewFailed": "Não conseguimos calcular o novo preço. Tente novamente em instantes.",
+        "appliesNow": "Novo preço: {price}. Vale agora: você paga {due} hoje pelo restante deste período.",
+        "appliesLater": "Novo preço: {price}. Vale a partir de {date}. Nada a pagar agora.",
+        "nowRule": "Mais canais e períodos mais longos valem na hora, e você paga só a diferença.",
+        "laterRule": "Menos canais e períodos mais curtos valem no fim do período já pago, então você mantém o que pagou até lá.",
+        "review": "Revisar alteração",
+        "reset": "Recomeçar",
+        "confirmTitle": "Confirme seu novo plano",
+        "confirmFrom": "Atual: {channels, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}",
+        "confirmTo": "Novo: {channels, plural, one {# canal} many {# canais} other {# canais}}, {period, select, week {semanal} month {mensal} other {anual}}",
+        "cancel": "Voltar",
+        "confirm": "Confirmar alteração",
+        "confirmPay": "Pagar {amount} e alterar",
+        "managedByStaff": "Seu plano foi configurado pela equipe da PostMind. Fale com o suporte para alterá-lo.",
+        "blockedCancelling": "Seu plano está programado para terminar. Mantenha seu plano primeiro e depois você poderá alterá-lo.",
+        "blockedPayment": "Atualize sua forma de pagamento primeiro. Você poderá alterar seu plano quando o pagamento estiver em dia."
+      },
+      "cancel": {
+        "title": "Cancelar seu plano",
+        "body": "Seu plano continua ativo até o fim do período já pago. Você pode mudar de ideia até lá.",
+        "cancel": "Cancelar plano",
+        "ends": "Seu plano vai terminar no fim deste período.",
+        "endsOn": "Seu plano termina em {date}. Você mantém acesso total até lá.",
+        "resume": "Manter meu plano",
+        "confirmTitle": "Cancelar seu plano?",
+        "confirmBody": "Seu plano vai terminar no fim deste período. Seu trabalho continua disponível para visualizar, exportar e baixar. Não reembolsamos períodos usados parcialmente.",
+        "confirmBodyDate": "Seu plano vai terminar em {date}. Até lá, nada muda. Depois disso, sua conta passa a ser somente leitura: seu trabalho continua disponível para visualizar, exportar e baixar. Não reembolsamos períodos usados parcialmente.",
+        "keep": "Manter meu plano",
+        "confirm": "Cancelar plano"
+      },
+      "toasts": {
+        "applied": "Seu plano foi alterado.",
+        "scheduled": "Pronto. Seu plano muda no fim deste período.",
+        "paymentRequired": "Seu pagamento não foi aprovado, então nada mudou. Atualize sua forma de pagamento e tente novamente.",
+        "cancelled": "Seu plano vai terminar no fim deste período.",
+        "resumed": "Seu plano vai continuar.",
+        "kept": "Você vai continuar no seu plano atual."
+      }
     }
   },
   "upgrade": {
     "planTier": {
-      "title": "Faça upgrade para o {tier}",
-      "body": "Este recurso está incluído a partir do plano {tier}.",
-      "price": "O {tier} custa {amount} por mês, sem IVA.",
-      "enterprise": "O Enterprise é contratado com nossa equipe de vendas."
+      "title": "Não incluído no seu plano",
+      "body": "Este recurso não faz parte do seu plano."
     },
     "quota": {
-      "title": "Você atingiu o limite deste mês",
-      "body": "Faça upgrade para ter uma franquia mensal maior ou compre um pacote extra para continuar este mês."
+      "title": "Você usou os vídeos do seu plano por enquanto",
+      "body": "Adicione um canal para ter mais vídeos por semana ou por mês, ou compre um pacote de vídeos para continuar hoje mesmo."
     },
     "planRequired": {
       "title": "Escolha um plano para começar a criar",
@@ -4717,20 +4790,26 @@
       "body": "Sua conta está em modo somente leitura por causa de um problema de cobrança. Atualize sua forma de pagamento para recuperar o acesso total."
     },
     "actions": {
-      "upgrade": "Fazer upgrade",
-      "buyTopUp": "Comprar pacote extra",
       "choosePlan": "Escolher um plano",
       "updatePayment": "Atualizar forma de pagamento",
-      "viewPlans": "Ver planos",
-      "notNow": "Agora não"
+      "notNow": "Agora não",
+      "addChannel": "Adicionar um canal",
+      "buyPack": "Comprar um pacote de vídeos",
+      "viewPlan": "Ver o plano",
+      "manageMembers": "Gerenciar membros"
     },
     "askOwner": "Só um proprietário da organização pode alterar o plano ou a cobrança. Peça a um proprietário para fazer isso.",
     "lock": {
-      "aria": "Requer o plano {tier}"
+      "notIncluded": "Fora do seu plano",
+      "notIncludedAria": "Não incluído no seu plano"
     },
     "seatLimit": {
       "title": "Todos os assentos do seu plano estão em uso",
-      "body": "Seu plano não tem assento livre para mais uma pessoa. Faça upgrade para ter mais assentos ou remova alguém antes."
+      "body": "Seu plano não tem vaga livre para outra pessoa. Remova alguém primeiro ou fale com o suporte."
+    },
+    "channelLimit": {
+      "title": "Adicione um canal para publicar aqui",
+      "body": "{count, plural, one {Seu plano inclui # canal} many {Seu plano inclui # canais} other {Seu plano inclui # canais}}: {list}. Adicione um canal para publicar também em {platform}."
     }
   },
   "email": {
@@ -4846,10 +4925,10 @@
         "cta": "Abrir faturamento"
       },
       "topupReceipt": {
-        "subject": "Sua recarga está pronta: {packName}",
-        "heading": "Recarga adicionada",
-        "body": "Obrigado. A recarga {packName} foi adicionada à sua organização e já pode ser usada. O Stripe envia o recibo separadamente.",
-        "cta": "Ver uso"
+        "subject": "Seu pacote de vídeos está pronto: {packName}",
+        "heading": "Pacote de vídeos adicionado",
+        "body": "Obrigado. Seu pacote {packName} foi adicionado. Use-o em qualquer canal em até 3 meses. O Stripe envia o recibo separadamente.",
+        "cta": "Abrir Seu plano"
       },
       "accountDeletionScheduled": {
         "subject": "Sua conta será excluída",
@@ -4925,7 +5004,8 @@
       "pagesAria": "Páginas de organizações",
       "pageInfo": "{from}–{to} de {total}",
       "previous": "Anterior",
-      "next": "Próxima"
+      "next": "Próxima",
+      "channelPlan": "{count, plural, one {# canal} many {# canais} other {# canais}} · {interval, select, week {semanal} month {mensal} year {anual} other {{interval}}}"
     },
     "detail": {
       "back": "Todas as organizações",
@@ -5125,16 +5205,20 @@
       "unlimited": "Seu plano não tem limite mensal de vídeos",
       "spend": "Limite de gastos: {spent} usados de {cap}",
       "noCap": "Sem limite de gastos mensal",
-      "topUp": "Adicionar uma recarga"
+      "topUp": "Adicionar uma recarga",
+      "buyPack": "Comprar um pacote de vídeos"
     },
     "capped": {
       "allowance": "Este plano tem {count, plural, one {# publicação} other {# publicações}} em vez de {requested}: é o que sua cota cobre este mês. <link>Adicione uma recarga</link> para planejar mais.",
-      "cost_cap": "Este plano tem {count, plural, one {# publicação} other {# publicações}} em vez de {requested}: mais passaria do limite de gastos deste mês. <link>Adicione uma recarga</link> para aumentá-lo."
+      "cost_cap": "Este plano tem {count, plural, one {# publicação} other {# publicações}} em vez de {requested}: mais passaria do limite de gastos deste mês. <link>Adicione uma recarga</link> para aumentá-lo.",
+      "allowancePack": "Este plano tem {count, plural, one {# publicação} many {# publicações} other {# publicações}} em vez de {requested}: é o que sua cota cobre este mês. <link>Compre um pacote de vídeos</link> para planejar mais.",
+      "monthLimit": "Este plano tem {count, plural, one {# publicação} many {# publicações} other {# publicações}} em vez de {requested}: mais do que isso passaria do limite deste mês. <link>Compre um pacote de vídeos</link> para planejar mais."
     },
     "hold": {
       "kill_switch": "O Studio pausou a geração por enquanto. Suas publicações continuam automaticamente depois.",
       "cost_cap": "Pausado: o limite de gastos deste mês foi atingido. Continua quando o limite for reiniciado ou você adicionar uma recarga.",
-      "daily_limit": "Pausado até amanhã: o limite de hoje para planos mensais foi atingido. O restante continua automaticamente."
+      "daily_limit": "Pausado até amanhã: o limite de hoje para planos mensais foi atingido. O restante continua automaticamente.",
+      "monthLimit": "Pausado: o limite deste mês foi atingido. Continua quando o limite for reiniciado ou você comprar um pacote de vídeos."
     },
     "drafting": {
       "title": "Preparando seu mês",
@@ -5357,6 +5441,45 @@
       "open": "Legenda",
       "openAria": "Legenda e hashtags de {title}",
       "close": "Fechar"
+    }
+  },
+  "channelPlan": {
+    "interval": {
+      "label": "Frequência de pagamento",
+      "week": "Semanal",
+      "month": "Mensal",
+      "year": "Anual"
+    },
+    "channels": {
+      "label": "Canais",
+      "fewer": "Remover um canal",
+      "more": "Adicionar um canal",
+      "value": "{count, plural, one {# canal} many {# canais} other {# canais}}",
+      "hint": "Um canal é uma plataforma social em que você publica: TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn ou X."
+    },
+    "total": {
+      "week": "{amount} por semana",
+      "month": "{amount} por mês",
+      "year": "{amount} por ano"
+    },
+    "perChannel": {
+      "week": "{amount} por canal por semana",
+      "month": "{amount} por canal por mês",
+      "year": "{amount} por canal por ano"
+    },
+    "included": {
+      "week": "{count, plural, one {# vídeo incluído} many {# vídeos incluídos} other {# vídeos incluídos}} por semana ({perChannel} por canal)",
+      "month": "{count, plural, one {# vídeo incluído} many {# vídeos incluídos} other {# vídeos incluídos}} por mês ({perChannel} por canal)",
+      "year": "{count, plural, one {# vídeo incluído} many {# vídeos incluídos} other {# vídeos incluídos}} por ano ({perChannel} por canal a cada mês)"
+    },
+    "hd": "Vídeos curtos em HD",
+    "exclVat": "sem IVA",
+    "yearlySaving": "2 meses grátis: você economiza {amount} por ano",
+    "weeklyNote": "O plano semanal custa mais que o mensal. Pague por mês ou por ano para economizar.",
+    "priceUnavailable": "Preço indisponível",
+    "packs": {
+      "name": "{quantity, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}}",
+      "validity": "Use em qualquer canal em até {months, plural, one {# mês} many {# meses} other {# meses}}"
     }
   }
 }

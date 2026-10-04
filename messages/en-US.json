@@ -146,6 +146,10 @@
         "share_comment": "Feedback on a preview link",
         "plan_quota": "Plan usage alerts (80% and 100%)",
         "connection_needs_reconnect": "Accounts that need reconnecting"
+      },
+      "limitKinds": {
+        "cost_alert": "Usage limit alerts",
+        "cost_paused": "Video-making paused at a limit"
       }
     },
     "usage": {
@@ -171,7 +175,14 @@
       "scansUnlimited": "website scans for {scanned} of unlimited businesses",
       "resets": "resets {date}",
       "enforced": "limits enforced",
-      "notEnforced": "limits not enforced yet"
+      "notEnforced": "limits not enforced yet",
+      "videos": "Videos",
+      "videosThisPeriod": "{period, select, week {Videos this week} other {Videos this month}}",
+      "moreFrom": "More videos are included starting {date}.",
+      "planExceededTitle": "{period, select, week {You’ve used this week’s videos} other {You’ve used this month’s videos}}",
+      "planWarningTitle": "{period, select, week {You’re close to this week’s video limit} other {You’re close to this month’s video limit}}",
+      "planBlockedBody": "New videos are paused until {date}. Add a channel or buy a video pack to keep creating.",
+      "planResetBody": "More videos are included starting {date}. Add a channel or buy a video pack for more."
     },
     "pageTitle": {
       "library": "Reference library",
@@ -193,7 +204,7 @@
       "security": "Security and sign-in",
       "signOut": "Sign out",
       "signOutFailed": "Could not sign you out. Try again.",
-      "billing": "Billing"
+      "billing": "Your plan"
     },
     "banners": {
       "readOnly": {
@@ -243,8 +254,8 @@
       "unauthorized": "Your PostMind session has expired. Sign in again.",
       "forbidden": "You don’t have permission to do that.",
       "feature_disabled": "This feature isn’t switched on for your organization.",
-      "plan_tier": "Your plan doesn’t include this. Upgrade your plan to use it.",
-      "quota_exceeded": "You’ve reached your plan’s limit for this month. Upgrade your plan to keep creating.",
+      "plan_tier": "This feature isn’t included in your plan.",
+      "quota_exceeded": "You’ve used your plan’s videos for now. Add a channel or buy a video pack to keep creating.",
       "not_found": "We couldn’t find that. It may have been deleted.",
       "conflict": "That changed while you were working on it. Refresh and try again.",
       "validation_error": "Some of the details aren’t valid. Check them and try again.",
@@ -256,7 +267,7 @@
       "provider_error": "A generation provider had a problem. Try again in a moment.",
       "platform_error": "The social platform had a problem. Try again in a moment.",
       "no_provider_available": "No provider can take this job right now. Try again later.",
-      "cost_cap_paused": "Generation is paused because a budget was reached.",
+      "cost_cap_paused": "Generation is paused because a limit was reached.",
       "upstream_error": "A connected service had a problem. Try again in a moment.",
       "configuration_error": "Studio isn’t fully set up for this yet. Contact PostMind support.",
       "not_implemented": "This isn’t available yet.",
@@ -268,7 +279,8 @@
       "service_unavailable": "Our AI service is temporarily unavailable. Please try again later — our team has been alerted.",
       "auto_publish_account_required": "Choose a connected account to post to, or turn auto-publish and the schedule off.",
       "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account.",
-      "queue_unavailable": "Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment."
+      "queue_unavailable": "Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment.",
+      "channel_limit": "Your plan doesn’t include a channel for this platform. Add a channel on Your plan to publish here."
     }
   },
   "primitives": {
@@ -462,6 +474,44 @@
     "providersUnavailable": {
       "title": "No {capability} provider available",
       "body": "Every {capability} provider failed with an account problem: {providers}. Customers see “temporarily unavailable” until one of these accounts is fixed."
+    },
+    "videoAllowanceNearing": {
+      "title": "{threshold, number}% of {period, select, week {this week’s} other {this month’s}} videos used",
+      "body": "{used, number} of {limit, number} videos made {period, select, week {this week} other {this month}}. More are included at the start of next {period, select, week {week} other {month}}."
+    },
+    "videoAllowanceUsed": {
+      "title": "{period, select, week {This week’s} other {This month’s}} videos are used",
+      "body": "{used, number} of {limit, number} videos made {period, select, week {this week} other {this month}}. More are included at the start of next {period, select, week {week} other {month}}.{blocked, select, yes { To make more before then, add a channel or buy a video pack.} other {}}"
+    },
+    "costPlain": {
+      "projectAlert": {
+        "title": "“{name}” is close to its safety limit",
+        "body": "If it reaches the limit, Studio pauses the video. You can continue from the project page, and nothing already made is lost."
+      },
+      "projectPaused": {
+        "title": "“{name}” stopped at its safety limit",
+        "body": "Open the project and press “Continue making this video” to finish it. Nothing already made is lost."
+      },
+      "dailyAlert": {
+        "title": "Close to today’s limit for making videos",
+        "body": "New videos pause when the limit is reached and resume after midnight UTC. Publishing is not affected."
+      },
+      "dailyPaused": {
+        "title": "Making videos is paused until tomorrow",
+        "body": "Today’s limit has been reached. New videos resume after midnight UTC. Publishing is not affected."
+      },
+      "monthlyAlert": {
+        "title": "Close to this month’s limit for making videos",
+        "body": "New videos pause when the limit is reached and resume on the 1st (UTC). Publishing is not affected."
+      },
+      "monthlyPaused": {
+        "title": "Making videos is paused until next month",
+        "body": "This month’s limit has been reached. New videos resume on the 1st (UTC), or buy a video pack to continue now. Publishing is not affected."
+      },
+      "generic": {
+        "title": "A limit for making videos was reached",
+        "body": "Studio has paused new videos for now. Publishing is not affected."
+      }
     }
   },
   "create": {
@@ -681,7 +731,8 @@
       "generate": "Generate",
       "generateAgain": "Generate again",
       "started": "Generation started.",
-      "cancelled": "Canceled — {amount} was spent on this run."
+      "cancelled": "Canceled — {amount} was spent on this run.",
+      "cancelledPlain": "Canceled."
     },
     "approval": {
       "aria": "Approval",
@@ -781,7 +832,11 @@
       "newBudget": "New budget (£)",
       "raise": "Raise budget",
       "tooLow": "Enter more than {budget} (up to {max}).",
-      "raised": "Budget raised to {amount}. Press “{action}” to continue."
+      "raised": "Budget raised to {amount}. Press “{action}” to continue.",
+      "limitAria": "Video paused at its safety limit",
+      "limitReached": "This video stopped at its safety limit. Nothing already made is lost.",
+      "carryOn": "Continue making this video",
+      "carriedOn": "Ready to continue. Press “{action}” to finish the video."
     },
     "music": {
       "aria": "Music",
@@ -830,7 +885,10 @@
       "resumeToggle": "Resume automatically",
       "willResume": "Will resume automatically",
       "resumeTurnedOff": "Automatic resume turned off",
-      "safety": "Paused for a content-safety review by PostMind’s Trust & Safety team. Generation continues automatically if it is allowed; you will be notified either way."
+      "safety": "Paused for a content-safety review by PostMind’s Trust & Safety team. Generation continues automatically if it is allowed; you will be notified either way.",
+      "limitAria": "Paused at a limit",
+      "dailyLimit": "Paused: your organization has reached today’s limit for making videos.",
+      "monthlyLimit": "Paused: your organization has reached this month’s limit for making videos."
     },
     "fallback": {
       "aria": "Fallback provider used",
@@ -2155,7 +2213,11 @@
       "unknownCode": "We could not find a deletion request with this confirmation code. Check the link Facebook gave you."
     },
     "notConfigured": "{platform} is not available yet: Studio’s {platform} app still needs its settings. Ask your administrator.",
-    "readOnly": "Only owners and admins can connect or disconnect accounts."
+    "readOnly": "Only owners and admins can connect or disconnect accounts.",
+    "channelLimit": {
+      "body": "{count, plural, one {Your plan includes # channel,} other {Your plan includes # channels,}} so {blockedCount, plural, one {{blocked} is connected but won’t publish.} other {{blocked} are connected but won’t publish.}}",
+      "action": "Add a channel"
+    }
   },
   "library": {
     "browse": {
@@ -2301,7 +2363,8 @@
       "title": "Analytics",
       "description": "How your published videos are doing, and what they cost to make.",
       "rangeLabel": "Date range",
-      "rangeOption": "{days, plural, one {# day} other {# days}}"
+      "rangeOption": "{days, plural, one {# day} other {# days}}",
+      "descriptionNoCost": "How your published videos are doing."
     },
     "metrics": {
       "views": "Views",
@@ -3708,7 +3771,7 @@
       "script_regenerate_failed": "The script could not be regenerated: it or its brief no longer exists.",
       "asset_generation_failed": "{count, plural, =0 {Some shots could not be generated.} one {Shot {shots} could not be generated.} other {Shots {shots} could not be generated.}}",
       "composition_failed": "Putting the video together failed.",
-      "cost_cap_paused": "Generation paused because a budget was reached.",
+      "cost_cap_paused": "Generation paused because a limit was reached.",
       "kill_switch": "{level, select, global {Paused: PostMind has stopped generation and publishing everywhere.} workspace {Paused: PostMind has stopped generation for your organization.} project {Paused: PostMind has stopped this project.} provider {Paused: PostMind has stopped one of the generation providers.} platform {Paused: PostMind has stopped publishing to this platform.} other {Paused by a PostMind kill switch.}}",
       "rejected": "Rejected by a reviewer.",
       "business_deleted": "Stopped: the business was deleted.",
@@ -3745,7 +3808,11 @@
       "unknown": "an unknown error",
       "account_limit": "a usage limit was reached"
     },
-    "generic": "This step failed. Try again, or contact support if it keeps happening."
+    "generic": "This step failed. Try again, or contact support if it keeps happening.",
+    "limits": {
+      "scan_cost_cap": "The scan stopped at its limit.",
+      "scan_images_capped": "The scan reached its limit: some images were not indexed for search."
+    }
   },
   "marketing": {
     "meta": {
@@ -3834,10 +3901,6 @@
         "title": "A calendar that posts for you",
         "body": "Plan the month ahead, drag posts to new slots and let Studio publish at the right time for each platform."
       },
-      "budget": {
-        "title": "Costs you can see",
-        "body": "Monthly allowances and spending caps are shown up front, so there are no surprise bills."
-      },
       "languages": {
         "title": "Eleven languages",
         "body": "Work in English, French, Spanish, Arabic, German, Italian, Portuguese, Hindi or Chinese, and make videos for customers in theirs."
@@ -3845,6 +3908,10 @@
       "library": {
         "title": "Ideas when you need them",
         "body": "Browse a library of proven short videos and use one as the starting point for your own."
+      },
+      "pricing": {
+        "title": "One simple price per channel",
+        "body": "Pay a fixed price for each social channel you connect, with videos included. No meters to watch and no surprise bills."
       }
     },
     "closing": {
@@ -3907,8 +3974,8 @@
       "analytics": {
         "tab": "Analytics",
         "title": "See what worked",
-        "body": "Views, watch time, engagement and what each video cost, in one place, so the next brief is better.",
-        "alt": "The analytics page: views over 30 days, watch time, engagement, spend and a daily activity chart"
+        "body": "Views, watch time and engagement for every video, in one place, so the next brief is better.",
+        "alt": "The analytics page: views over 30 days, watch time, engagement and a daily activity chart"
       }
     }
   },
@@ -3918,127 +3985,59 @@
     },
     "hero": {
       "eyebrow": "Pricing",
-      "title": "Plans that grow with your video output",
-      "description": "Every plan includes AI scripts, multi-format renders and publishing to your connected accounts."
+      "title": "One simple plan: pay per channel",
+      "description": "Choose how many social platforms you publish to and how often you pay. Every channel includes 8 short HD videos a month."
     },
-    "interval": {
-      "label": "Billing period",
-      "month": "Monthly",
-      "year": "Annual"
+    "plan": {
+      "title": "Build your plan"
     },
-    "exclVat": "Prices exclude VAT.",
     "unavailable": "Prices can’t be shown right now. Please try again shortly.",
-    "priceUnavailable": "Price unavailable",
-    "perMonth": "{amount} / month",
-    "perYear": "{amount} / year",
-    "annualSaving": "Save {amount} a year",
-    "trialNote": "Try {tier} free for {days, plural, one {# day} other {# days}}, with {short} short videos and {long} long video included. Card required; cancel any time.",
-    "popular": "Most popular",
-    "tiers": {
-      "BASIC": {
-        "tagline": "For a single business getting started with short-form video."
-      },
-      "STANDARD": {
-        "tagline": "For growing teams publishing every day, with music and long-form."
-      },
-      "PLUS": {
-        "tagline": "For agencies and brands that need voice cloning, 4K and AI images."
-      },
-      "ENTERPRISE": {
-        "tagline": "Custom limits, your own provider keys and white-label outputs."
-      }
-    },
-    "highlights": {
-      "shortVideos": "{count, plural, one {# short video a month} other {# short videos a month}}",
-      "longVideos": "{count, plural, one {# long video a month} other {# long videos a month}}",
-      "noLongVideos": "No long videos",
-      "seats": "{count, plural, one {# seat} other {# seats}}",
-      "businesses": "{count, plural, one {# business} other {# businesses}}",
-      "unlimitedVideos": "Unlimited videos (fair use)"
-    },
-    "enterprise": {
-      "price": "Custom pricing",
-      "contact": "Contact sales",
-      "contactAria": "Email the sales team about Enterprise",
-      "noContact": "Ask your PostMind account manager about Enterprise."
-    },
+    "trialNote": "Try it free for {days, plural, one {# day} other {# days}} with {videos} videos. Card required; cancel anytime before the trial ends and you pay nothing.",
     "cta": {
       "trial": "Start free trial",
-      "choose": "Choose plan",
-      "chooseAria": "Choose the {tier} plan"
+      "start": "Get started"
     },
-    "compare": {
-      "title": "Compare plans",
-      "caption": "Plan comparison",
-      "feature": "Feature",
-      "included": "Included",
-      "notIncluded": "Not included",
-      "unlimited": "Unlimited",
-      "rows": {
-        "shortVideos": "Short videos a month (up to 30 s)",
-        "longVideos": "Long videos a month",
-        "platforms": "Platforms",
-        "dailyCostCap": "Daily generation budget",
-        "monthlyCostCap": "Monthly generation budget",
-        "queuePriority": "Render queue priority",
-        "musicAndSfx": "Music and sound effects",
-        "voiceClone": "Brand voice clone",
-        "renders4k": "4K renders",
-        "imageLibrary": "Image library",
-        "generatedImages": "Generated images per business a month",
-        "scanBusinesses": "Website scans (businesses)",
-        "libraryInspire": "Reference library: Inspire mode",
-        "libraryTemplate": "Reference library: Template mode",
-        "customPresets": "Custom overlay presets and slideshow templates",
-        "approvalWorkflows": "Multi-step approval workflows",
-        "byocProviderKeys": "Your own provider keys",
-        "whiteLabel": "White-label outputs",
-        "dnsDomainVerification": "Domain verification",
-        "seats": "Seats",
-        "businesses": "Businesses",
-        "storage": "Storage"
-      },
-      "values": {
-        "longVideos": "{count} × up to {minutes} min",
-        "platforms": {
-          "tiktok_instagram_plus_one": "TikTok, Instagram and 1 more",
-          "all": "All 8"
-        },
-        "queuePriority": {
-          "normal": "Standard",
-          "high": "High"
-        },
-        "imageLibrary": {
-          "stock": "Stock images",
-          "stock_scrape": "Stock and website images",
-          "ai_generation": "Stock, website and AI images",
-          "byoc_generation": "AI images with your own keys"
-        },
-        "storage": "{gb} GB"
+    "included": {
+      "title": "Every plan includes",
+      "items": {
+        "videos": "8 short videos per channel each month, made for you from a short brief",
+        "hd": "HD video, captions and music",
+        "platforms": "Publishing to TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn and X",
+        "scheduling": "A content calendar and automatic scheduling",
+        "brand": "Your brand kit on every video",
+        "library": "Reference video library for ideas"
       }
     },
+    "packs": {
+      "title": "Need more videos?",
+      "description": "Buy a one-time HD video pack at any time. Pack videos work on any channel, are used after your plan’s videos, and last 3 months."
+    },
     "topUps": {
-      "title": "Top-up packs",
-      "description": "Need more this month? Buy a one-off pack. Credits are used after your plan allowance, oldest first.",
-      "short": "{quantity, plural, one {# short video} other {# short videos}}",
-      "long": "{quantity, plural, one {# long video} other {# long videos}}",
-      "forTier": "For {tier} plans",
-      "validity": "Valid for {months} months"
+      "short": "{quantity, plural, one {# HD video} other {# HD videos}}",
+      "long": "{quantity, plural, one {# long video} other {# long videos}}"
     },
     "faq": {
       "title": "Questions",
       "items": {
-        "trial": {
-          "q": "How does the free trial work?",
-          "a": "The Standard trial needs a card. You won’t be charged until the trial ends, and you can cancel before then. Each organization can have one trial."
+        "channel": {
+          "q": "What is a channel?",
+          "a": "A channel is one social platform you publish to, such as TikTok or Instagram. Pay for 1 to 6 channels. You can connect more accounts, but only the channels you pay for publish."
+        },
+        "period": {
+          "q": "Weekly, monthly or yearly?",
+          "a": "Monthly is {monthly} per channel. Weekly is {weekly} per channel a week, which costs more over a month. Yearly is {yearly} per channel, paid upfront: 2 months free. Videos are included each week on weekly plans and each month on monthly and yearly plans."
         },
         "change": {
-          "q": "Can I change plan later?",
-          "a": "Yes. Upgrades apply straight away and are charged prorated. Downgrades apply at the end of your billing period, and nothing is deleted."
+          "q": "Can I change my plan later?",
+          "a": "Yes, on Your plan. Adding channels or moving to a longer period applies right away; you pay only the difference for the rest of the period. Removing channels or moving to a shorter period applies at the end of the period you’ve paid for."
         },
         "limit": {
-          "q": "What happens when I reach my limit?",
-          "a": "New videos pause until your allowance resets at the start of the next month. You can upgrade or buy a top-up pack to keep going."
+          "q": "What happens when I’ve used my videos?",
+          "a": "New videos pause until more are included at the start of the next week or month. Add a channel or buy a video pack to keep going right away."
+        },
+        "packs": {
+          "q": "How do video packs work?",
+          "a": "A pack of 5 or 15 HD videos is a one-time purchase. Pack videos work on any channel, are used after your plan’s videos, and last 3 months."
         },
         "vat": {
           "q": "Do prices include VAT?",
@@ -4046,7 +4045,7 @@
         },
         "cancel": {
           "q": "What happens if I cancel?",
-          "a": "You keep access until the end of the period you paid for. After that your account becomes read-only: you can still view, export and download your work."
+          "a": "Your plan ends at the end of the period you’ve paid for, and you can change your mind until then. After that your account becomes read-only: you can still view, export and download your work. We don’t refund partially used periods."
         }
       }
     }
@@ -4271,7 +4270,7 @@
       "aria": "Settings",
       "organisation": "Organization",
       "members": "Members",
-      "billing": "Billing",
+      "billing": "Your plan",
       "audit": "Audit log"
     },
     "page": {
@@ -4454,12 +4453,12 @@
   },
   "billing": {
     "meta": {
-      "title": "Billing"
+      "title": "Your plan"
     },
     "header": {
       "eyebrow": "Settings",
-      "title": "Billing",
-      "description": "Your plan, usage, top-up credits and invoices."
+      "title": "Your plan",
+      "description": "Your channels, videos, video packs, payment details and invoices."
     },
     "loading": "Loading billing",
     "notEnabled": {
@@ -4469,13 +4468,11 @@
     "banners": {
       "checkoutSuccess": "Thank you. Your plan is being set up and will appear here in a moment.",
       "checkoutCancelled": "Checkout was canceled. You haven’t been charged.",
-      "topupSuccess": "Top-up bought. The credits will appear here in a moment.",
-      "topupCancelled": "Top-up canceled. You haven’t been charged.",
+      "topupSuccess": "Video pack purchased. The videos will appear here in a moment.",
+      "topupCancelled": "Video pack purchase canceled. You haven’t been charged.",
       "dismiss": "Dismiss"
     },
     "plan": {
-      "title": "Current plan",
-      "tierName": "{tier} plan",
       "noPlan": "No plan",
       "status": {
         "trialing": "Free trial",
@@ -4492,41 +4489,33 @@
       "graceLeft": "{days, plural, one {# day left} other {# days left}}",
       "readOnly": "Your account is read-only. You can still view, export and download your work, but you can’t create or publish until billing is sorted.",
       "none": "Your organization doesn’t have a plan yet. Choose one below to start creating.",
-      "interval": {
-        "month": "Billed monthly",
-        "year": "Billed annually"
-      },
       "adminSource": "Custom plan set by PostMind staff.",
-      "manage": "Manage billing",
-      "manageHelp": "Change plan, update your payment method, download receipts or cancel in the secure Stripe portal.",
-      "askOwner": "Only an organization owner can change billing. Ask an owner if you need a different plan.",
+      "manage": "Open billing portal",
+      "manageHelp": "Update your card, billing address or tax ID and download invoices in the secure Stripe portal.",
+      "askOwner": "Only an organization owner can change the plan. Ask an owner if you need something different.",
       "checkoutUnavailable": "Online checkout isn’t available at the moment.",
-      "alreadySubscribed": "Your organization already has a subscription. Use Manage billing to change it."
+      "alreadySubscribed": "Your organization already has a plan. Change it on this page.",
+      "detailsTitle": "Payment method and invoices"
     },
     "usage": {
-      "title": "Usage this month",
-      "description": "Video allowances reset on the first day of each month (UTC).",
+      "title": "Team and storage",
       "seats": "Seats",
       "businesses": "Businesses",
       "storage": "Storage",
       "storageUsed": "{used} GB of {limit} GB",
       "storageUnlimited": "{used} GB used",
       "storageOver": "You’re over your storage allowance. Nothing is deleted, but consider tidying up or upgrading.",
-      "cost": "Generation spend",
-      "costOf": "{spent} of {cap}",
-      "costNoCap": "{spent} (no cap)",
-      "costHeadroom": "Your cap includes {amount} extra from top-up credits.",
       "usedOf": "{used} of {limit}",
-      "usedUnlimited": "{used} (unlimited)"
+      "usedUnlimited": "{used} (unlimited)",
+      "descriptionLimits": "Limits that come with your plan."
     },
     "credits": {
-      "title": "Top-ups",
-      "description": "Credits are used after your monthly allowance, oldest first, and last 12 months.",
-      "short": "{count, plural, =0 {No short video credits} one {# short video credit} other {# short video credits}}",
-      "long": "{count, plural, =0 {No long video credits} one {# long video credit} other {# long video credits}}",
+      "title": "Video packs",
+      "description": "One-time HD video packs for any channel. Pack videos are used after your plan’s videos and last 3 months.",
       "buy": "Buy",
       "buyAria": "Buy {pack} for {amount}",
-      "noPacks": "Top-up packs are available on the Basic, Standard and Plus plans."
+      "noPacks": "Choose a plan first to buy video packs.",
+      "videosLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}"
     },
     "invoices": {
       "title": "Invoices",
@@ -4551,11 +4540,12 @@
       }
     },
     "picker": {
-      "title": "Choose a plan",
-      "description": "Pick a plan and pay securely with Stripe. Prices exclude VAT.",
+      "title": "Choose your plan",
+      "description": "Pick how many channels and how often to pay. You pay securely with Stripe; prices exclude VAT.",
       "trial": "Start free trial",
-      "choose": "Choose {tier}",
-      "redirecting": "Opening secure checkout…"
+      "redirecting": "Opening secure checkout…",
+      "subscribe": "Continue to payment",
+      "trialNote": "Your first {days, plural, one {# day is} other {# days are}} free, with {videos} videos. Cancel before the trial ends and you pay nothing."
     },
     "subscriptionStatus": {
       "active": "Active",
@@ -4605,7 +4595,6 @@
         "overridePrice": "Agreed price: {amount} a month",
         "subscriptions": "Subscriptions",
         "noSubscriptions": "No subscriptions.",
-        "subscriptionLine": "{tier} · {interval} · ends {date}",
         "form": {
           "title": "Set an override",
           "tier": "Tier",
@@ -4635,7 +4624,12 @@
           "saved": "Override saved",
           "endTrial": "End the trial now",
           "endTrialHelp": "The trial’s allowance and its {daily} a day / {total} total cost caps stop for good, even after this override expires or is removed; the plan’s caps (and any cost-cap override) apply. Stripe is not changed: its trial still ends, and bills, on its own date.",
-          "trialNote": "Any saved override pauses the trial’s caps while it is active. Tick “End the trial now” to stop them for good."
+          "trialNote": "Any saved override pauses the trial’s caps while it is active. Tick “End the trial now” to stop them for good.",
+          "channelPlan": "Channel plan",
+          "channelPlanHelp": "Channels (1 to 6 social platforms) set the video allowance, the cost caps and how many platforms can be connected; the interval sets how often the allowance is released. Keep current uses the Stripe subscription’s values. Not used with Enterprise.",
+          "channels": "Channels",
+          "channelsOption": "{count, plural, one {# channel} other {# channels}}",
+          "interval": "Billing interval"
         },
         "clear": {
           "title": "Remove the override",
@@ -4665,7 +4659,19 @@
           "accessNone": "Access None stops everyone in this organization from generating, publishing and scanning.",
           "accessReadOnly": "Read-only blocks every change in this organization except billing, account settings and exports.",
           "endTrial": "Ending the trial cannot be undone: its caps will not apply to this organization again."
-        }
+        },
+        "channelPlan": "Channel plan",
+        "noChannelPlan": "No channel plan",
+        "channelPlanValue": "{count, plural, one {# channel} other {# channels}} · {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}",
+        "channelPlanSource": "{source, select, admin {(set by staff)} other {(from Stripe)}}",
+        "intervalValues": {
+          "week": "Weekly",
+          "month": "Monthly",
+          "year": "Yearly"
+        },
+        "overrideChannels": "Channels: {count, plural, one {# channel} other {# channels}}",
+        "overrideInterval": "Billed {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}",
+        "subscriptionChannelLine": "{tier} · {count, plural, one {# channel} other {# channels}} · {interval} · ends {date}"
       },
       "subscriptions": {
         "title": "Subscriptions",
@@ -4695,18 +4701,85 @@
         "unknownTier": "Unknown",
         "empty": "No subscriptions match."
       }
+    },
+    "yourPlan": {
+      "summary": {
+        "title": "Your plan",
+        "headline": "{count, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}",
+        "legacy": "Moved over from your previous plan.",
+        "pending": "Starting {date}: {count, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}.",
+        "keepCurrent": "Keep my current plan",
+        "paymentPending": "Your last change is waiting for payment. Update your payment method to apply it."
+      },
+      "videos": {
+        "title": "{period, select, week {Videos this week} other {Videos this month}}",
+        "description": "Every video you start counts, including ones still being made.",
+        "used": "{period, select, week {Used this week} other {Used this month}}",
+        "moreFrom": "More videos are included starting {date}.",
+        "packsLeft": "{count, plural, =0 {No pack videos left} one {# pack video left} other {# pack videos left}}"
+      },
+      "channels": {
+        "title": "Your channels",
+        "description": "{count, plural, one {Your plan publishes to # channel.} other {Your plan publishes to # channels.}}",
+        "noneConnected": "No channels connected yet.",
+        "connect": "Connect accounts",
+        "publishing": "Publishing to: {list}.",
+        "blocked": "{count, plural, one {{list} is connected but doesn’t publish: your plan has no channel left for it.} other {{list} are connected but don’t publish: your plan has no channels left for them.}}",
+        "addChannel": "Add a channel",
+        "spare": "{count, plural, one {You can connect # more channel.} other {You can connect # more channels.}}"
+      },
+      "change": {
+        "title": "Change your plan",
+        "description": "Add or remove channels, or change how often you pay. You’ll see the new price and when it applies before anything changes.",
+        "previewing": "Calculating the new price…",
+        "previewFailed": "We couldn’t calculate the new price. Try again in a moment.",
+        "appliesNow": "New price: {price}. Applies now: you pay {due} today for the rest of this period.",
+        "appliesLater": "New price: {price}. Applies on {date}. Nothing to pay now.",
+        "nowRule": "More channels and longer periods apply right away, and you only pay the difference.",
+        "laterRule": "Fewer channels and shorter periods apply at the end of the period you’ve paid for, so you keep what you’ve paid for until then.",
+        "review": "Review change",
+        "reset": "Start over",
+        "confirmTitle": "Confirm your new plan",
+        "confirmFrom": "Now: {channels, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}",
+        "confirmTo": "New: {channels, plural, one {# channel} other {# channels}}, {period, select, week {weekly} month {monthly} other {yearly}}",
+        "cancel": "Go back",
+        "confirm": "Confirm change",
+        "confirmPay": "Pay {amount} and change",
+        "managedByStaff": "Your plan was set up by PostMind staff. Contact support to change it.",
+        "blockedCancelling": "Your plan is set to end. Keep your plan first, then you can change it.",
+        "blockedPayment": "Update your payment method first. You can change your plan once your payment is up to date."
+      },
+      "cancel": {
+        "title": "Cancel your plan",
+        "body": "Your plan stays active until the end of the period you’ve paid for. You can change your mind until then.",
+        "cancel": "Cancel plan",
+        "ends": "Your plan is set to end at the end of this period.",
+        "endsOn": "Your plan ends on {date}. You keep full access until then.",
+        "resume": "Keep my plan",
+        "confirmTitle": "Cancel your plan?",
+        "confirmBody": "Your plan will end at the end of this period. Your work stays available to view, export and download. We don’t refund partially used periods.",
+        "confirmBodyDate": "Your plan will end on {date}. Until then nothing changes. After that your account becomes read-only: your work stays available to view, export and download. We don’t refund partially used periods.",
+        "keep": "Keep my plan",
+        "confirm": "Cancel plan"
+      },
+      "toasts": {
+        "applied": "Your plan has been changed.",
+        "scheduled": "Done. Your plan changes at the end of this period.",
+        "paymentRequired": "Your payment didn’t go through, so nothing has changed. Update your payment method and try again.",
+        "cancelled": "Your plan will end at the end of this period.",
+        "resumed": "Your plan will continue.",
+        "kept": "You’ll stay on your current plan."
+      }
     }
   },
   "upgrade": {
     "planTier": {
-      "title": "Upgrade to {tier}",
-      "body": "This feature is included from the {tier} plan.",
-      "price": "{tier} is {amount} a month, excl. VAT.",
-      "enterprise": "Enterprise is arranged with our sales team."
+      "title": "Not included in your plan",
+      "body": "This feature isn’t part of your plan."
     },
     "quota": {
-      "title": "You’ve reached this month’s limit",
-      "body": "Upgrade for a bigger monthly allowance, or buy a top-up pack to keep going this month."
+      "title": "You’ve used your plan’s videos for now",
+      "body": "Add a channel for more videos each week or month, or buy a video pack to keep going today."
     },
     "planRequired": {
       "title": "Choose a plan to start creating",
@@ -4717,20 +4790,26 @@
       "body": "Your account is read-only because of a billing problem. Update your payment method to restore full access."
     },
     "actions": {
-      "upgrade": "Upgrade",
-      "buyTopUp": "Buy top-up",
       "choosePlan": "Choose a plan",
       "updatePayment": "Update payment method",
-      "viewPlans": "View plans",
-      "notNow": "Not now"
+      "notNow": "Not now",
+      "addChannel": "Add a channel",
+      "buyPack": "Buy a video pack",
+      "viewPlan": "See the plan",
+      "manageMembers": "Manage members"
     },
     "askOwner": "Only an organization owner can change the plan or billing. Ask an owner to do this.",
     "lock": {
-      "aria": "Needs the {tier} plan"
+      "notIncluded": "Not in your plan",
+      "notIncludedAria": "Not included in your plan"
     },
     "seatLimit": {
       "title": "Every seat on your plan is in use",
-      "body": "Your plan has no free seat for another person. Upgrade for more seats, or remove someone first."
+      "body": "Your plan has no free seat for another person. Remove someone first, or contact support."
+    },
+    "channelLimit": {
+      "title": "Add a channel to publish here",
+      "body": "{count, plural, one {Your plan includes # channel} other {Your plan includes # channels}}: {list}. Add a channel to publish to {platform} too."
     }
   },
   "email": {
@@ -4846,10 +4925,10 @@
         "cta": "Open billing settings"
       },
       "topupReceipt": {
-        "subject": "Your top-up is ready: {packName}",
-        "heading": "Top-up added",
-        "body": "Thank you. The {packName} top-up has been added to your organization and is ready to use. Stripe sends the receipt separately.",
-        "cta": "View usage"
+        "subject": "Your video pack is ready: {packName}",
+        "heading": "Video pack added",
+        "body": "Thank you. Your {packName} pack has been added. Use it on any channel within 3 months. Stripe sends the receipt separately.",
+        "cta": "Open Your plan"
       },
       "accountDeletionScheduled": {
         "subject": "Your account will be deleted",
@@ -4925,7 +5004,8 @@
       "pagesAria": "Organization pages",
       "pageInfo": "{from}–{to} of {total}",
       "previous": "Previous",
-      "next": "Next"
+      "next": "Next",
+      "channelPlan": "{count, plural, one {# channel} other {# channels}} · {interval, select, week {weekly} month {monthly} year {yearly} other {{interval}}}"
     },
     "detail": {
       "back": "All organizations",
@@ -5125,16 +5205,20 @@
       "unlimited": "No monthly video limit on your plan",
       "spend": "Spending limit: {spent} of {cap} used",
       "noCap": "No monthly spending limit",
-      "topUp": "Add a top-up"
+      "topUp": "Add a top-up",
+      "buyPack": "Buy a video pack"
     },
     "capped": {
       "allowance": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: that is what your allowance covers this month. <link>Add a top-up</link> to plan more.",
-      "cost_cap": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: more would go past this month’s spending limit. <link>Add a top-up</link> to raise it."
+      "cost_cap": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: more would go past this month’s spending limit. <link>Add a top-up</link> to raise it.",
+      "allowancePack": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: that is what your allowance covers this month. <link>Buy a video pack</link> to plan more.",
+      "monthLimit": "This plan has {count, plural, one {# post} other {# posts}} instead of {requested}: more would go past this month’s limit. <link>Buy a video pack</link> to plan more."
     },
     "hold": {
       "kill_switch": "Generation is paused by Studio for now. Your posts carry on automatically when it resumes.",
       "cost_cap": "Paused: this month’s spending limit has been reached. It carries on when the limit resets or you add a top-up.",
-      "daily_limit": "Paused until tomorrow: today’s limit for month plans has been reached. The rest carry on automatically."
+      "daily_limit": "Paused until tomorrow: today’s limit for month plans has been reached. The rest carry on automatically.",
+      "monthLimit": "Paused: this month’s limit has been reached. It resumes when the limit resets or you buy a video pack."
     },
     "drafting": {
       "title": "Drafting your month",
@@ -5357,6 +5441,45 @@
       "open": "Caption",
       "openAria": "Caption and hashtags for {title}",
       "close": "Close"
+    }
+  },
+  "channelPlan": {
+    "interval": {
+      "label": "How often you pay",
+      "week": "Weekly",
+      "month": "Monthly",
+      "year": "Yearly"
+    },
+    "channels": {
+      "label": "Channels",
+      "fewer": "Remove a channel",
+      "more": "Add a channel",
+      "value": "{count, plural, one {# channel} other {# channels}}",
+      "hint": "A channel is one social platform you publish to: TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn or X."
+    },
+    "total": {
+      "week": "{amount} a week",
+      "month": "{amount} a month",
+      "year": "{amount} a year"
+    },
+    "perChannel": {
+      "week": "{amount} per channel a week",
+      "month": "{amount} per channel a month",
+      "year": "{amount} per channel a year"
+    },
+    "included": {
+      "week": "{count, plural, one {# video} other {# videos}} a week included ({perChannel} per channel)",
+      "month": "{count, plural, one {# video} other {# videos}} a month included ({perChannel} per channel)",
+      "year": "{count, plural, one {# video} other {# videos}} a year included ({perChannel} per channel each month)"
+    },
+    "hd": "Short videos in HD",
+    "exclVat": "excl. VAT",
+    "yearlySaving": "2 months free: you save {amount} a year",
+    "weeklyNote": "Weekly costs more than monthly. Pay monthly or yearly to save.",
+    "priceUnavailable": "Price unavailable",
+    "packs": {
+      "name": "{quantity, plural, one {# HD video} other {# HD videos}}",
+      "validity": "Use on any channel within {months, plural, one {# month} other {# months}}"
     }
   }
 }

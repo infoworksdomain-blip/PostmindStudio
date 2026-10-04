@@ -12,6 +12,7 @@ import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/ap
 import { useFormat } from '@/lib/client/format';
 import type { BrandKit, MetaConnectInfo, PlatformConnection, Project } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
+import { useShowCosts } from '../account/use-show-costs';
 import { useBusiness } from '../business-context';
 import { EmptyState } from '../primitives';
 import {
@@ -128,6 +129,7 @@ export function CreateScreen({
   const usage = useApi<{ usage: { planTier: QualityTier } }>('/usage');
   const workflows = useApi<{ data: WorkflowOption[] }>('/approval-workflows');
   const planTier = usage.data?.usage.planTier;
+  const showCosts = useShowCosts();
   // "Use template" on /templates: pick that project template once the list is here (a template
   // deleted meanwhile is simply not applied).
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -467,6 +469,7 @@ export function CreateScreen({
             planTier={planTier}
             workflows={workflows.data?.data}
             canSchedule={!connections.data || publishable.length > 0}
+            showCosts={showCosts}
           />
         </div>
       )}

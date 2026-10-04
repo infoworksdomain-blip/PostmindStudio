@@ -18,6 +18,7 @@ import { useFormat } from '@/lib/client/format';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { connectionsFor, publishablePlatforms } from '../automation/automation';
+import { useShowCosts } from '../account/use-show-costs';
 import { useBusiness } from '../business-context';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultZone } from '../calendar/drip-queue';
@@ -48,6 +49,8 @@ export function PlanMonthForm() {
   const tp = useTranslations('plans.new.problems');
   const block = useCreateBlock();
   const f = useFormat();
+  // Operator decision 2026-10-04: what a post typically costs to make is for platform staff only.
+  const showCosts = useShowCosts();
   const router = useRouter();
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
@@ -306,12 +309,14 @@ export function PlanMonthForm() {
         </div>
         <aside className="flex flex-col gap-3">
           <AllowancePanel allowance={d.allowance} cost={d.cost} />
-          <p className="text-xs text-muted-foreground">
-            {t('costHint', {
-              video: f.pence(d.typicalCostPence.VIDEO),
-              slideshow: f.pence(d.typicalCostPence.SLIDESHOW),
-            })}
-          </p>
+          {showCosts && (
+            <p className="text-xs text-muted-foreground" data-testid="plan-cost-hint">
+              {t('costHint', {
+                video: f.pence(d.typicalCostPence.VIDEO),
+                slideshow: f.pence(d.typicalCostPence.SLIDESHOW),
+              })}
+            </p>
+          )}
         </aside>
       </form>
     </>

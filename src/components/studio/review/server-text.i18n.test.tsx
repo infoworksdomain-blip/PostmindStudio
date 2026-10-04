@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { withLocale } from '../../../../test/i18n-wrapper';
 import { FailureReason } from '../failure-reason';
@@ -37,9 +37,6 @@ describe('FailureReason', () => {
     expect(reason('zh-Hans', 'composition_failed: shotstack/rate_limited: Too Many Requests')).toBe(
       '视频合成失败。 Shotstack 报告了问题：请求过多。',
     );
-    expect(reason('zh-Hans', 'scan_cost_cap: Stopped at the scan cost cap (50p)')).toMatch(
-      /^扫描已在费用上限（.*0\.50.*）处停止。$/,
-    );
     expect(
       reason(
         'zh-Hans',
@@ -52,6 +49,39 @@ describe('FailureReason', () => {
         'quality_failed: tiktok/audio_present: no audio stream; tiktok/codec: vp9 (x) in webm',
       ),
     ).toBe('2 项质量检查未通过：TikTok – 音频存在和TikTok – 编码格式。');
+  });
+
+  // Staff only (operator decision 2026-10-04). Rendered in en-GB: until /me answers the reader is
+  // treated as a customer, and the customer sentence (failures.limits.*) is not yet in zh-Hans.
+  it('shows staff the scan cost cap amount', async () => {
+    mockFetch([
+      {
+        match: '/me',
+        body: { ok: true, me: { capabilities: [], user: { platformRole: 'staff' } } },
+      },
+    ]);
+    const { container } = renderWithSWR(
+      <FailureReason reason="scan_cost_cap: Stopped at the scan cost cap (50p)" />,
+    );
+    await waitFor(() =>
+      expect(container.textContent ?? '').toBe('The scan stopped at its cost cap (£0.50).'),
+    );
+  });
+
+  // Operator decision 2026-10-04 (failures.limits.* from .i18n-tmp/frag-costs/en-GB.json).
+  it('never shows a customer the scan cost cap amount', async () => {
+    const api = mockFetch([
+      {
+        match: '/me',
+        body: { ok: true, me: { capabilities: [], user: { platformRole: 'user' } } },
+      },
+    ]);
+    const { container } = renderWithSWR(
+      <FailureReason reason="scan_images_capped: Stopped at the scan cost cap (50p): some images were not indexed" />,
+    );
+    await waitFor(() => expect(api.find('GET', '/me')).toHaveLength(1));
+    expect(container.textContent).not.toMatch(/£|0\.50|50p|cost/i);
+    expect(container.textContent).toMatch(/images/i);
   });
 
   it('20.11: account problems read as a friendly unavailable sentence in every locale', () => {

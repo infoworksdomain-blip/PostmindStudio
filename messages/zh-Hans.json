@@ -146,6 +146,10 @@
         "share_comment": "预览链接收到反馈",
         "plan_quota": "套餐用量提醒（80% 和 100%）",
         "connection_needs_reconnect": "需要重新连接的账号"
+      },
+      "limitKinds": {
+        "cost_alert": "用量上限提醒",
+        "cost_paused": "视频制作因达到上限而暂停"
       }
     },
     "usage": {
@@ -171,7 +175,14 @@
       "scansUnlimited": "网站扫描：{scanned} 个商家（不限）",
       "resets": "{date} 重置",
       "enforced": "已启用额度限制",
-      "notEnforced": "尚未启用额度限制"
+      "notEnforced": "尚未启用额度限制",
+      "videos": "视频",
+      "videosThisPeriod": "{period, select, week {本周视频} other {本月视频}}",
+      "moreFrom": "自 {date} 起将包含更多视频。",
+      "planExceededTitle": "{period, select, week {本周视频已用完} other {本月视频已用完}}",
+      "planWarningTitle": "{period, select, week {即将达到本周视频上限} other {即将达到本月视频上限}}",
+      "planBlockedBody": "新视频已暂停，直到 {date}。添加频道或购买视频包即可继续制作。",
+      "planResetBody": "自 {date} 起将包含更多视频。添加频道或购买视频包可获得更多视频。"
     },
     "pageTitle": {
       "library": "参考视频库",
@@ -193,7 +204,7 @@
       "security": "安全与登录",
       "signOut": "退出登录",
       "signOutFailed": "无法退出登录，请重试。",
-      "billing": "账单"
+      "billing": "我的套餐"
     },
     "banners": {
       "readOnly": {
@@ -243,8 +254,8 @@
       "unauthorized": "您的 PostMind 会话已过期，请重新登录。",
       "forbidden": "您无权执行此操作。",
       "feature_disabled": "您的组织尚未开通此功能。",
-      "plan_tier": "您的套餐不包含此功能。请升级套餐后使用。",
-      "quota_exceeded": "您已达到本月套餐额度上限。升级套餐即可继续创作。",
+      "plan_tier": "此功能不包含在您的套餐中。",
+      "quota_exceeded": "您的套餐视频暂时已用完。添加频道或购买视频包即可继续制作。",
       "not_found": "未找到该内容，可能已被删除。",
       "conflict": "在您操作期间内容已发生变化。请刷新后重试。",
       "validation_error": "部分信息无效，请检查后重试。",
@@ -256,7 +267,7 @@
       "provider_error": "生成服务提供商出现问题，请稍后再试。",
       "platform_error": "社交平台出现问题，请稍后再试。",
       "no_provider_available": "目前没有可处理此任务的服务提供商，请稍后再试。",
-      "cost_cap_paused": "已达到预算上限，生成已暂停。",
+      "cost_cap_paused": "已达到上限，生成已暂停。",
       "upstream_error": "已连接的服务出现问题，请稍后再试。",
       "configuration_error": "Studio 尚未完成此功能的配置，请联系 PostMind 支持团队。",
       "not_implemented": "此功能暂不可用。",
@@ -268,7 +279,8 @@
       "service_unavailable": "我们的 AI 服务暂时不可用。请稍后再试——我们的团队已收到通知。",
       "auto_publish_account_required": "请选择要发布到的已连接账号，或关闭自动发布和排期。",
       "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。",
-      "queue_unavailable": "发布功能暂时不可用。没有发布或保存任何内容；请稍后再试。"
+      "queue_unavailable": "发布功能暂时不可用。没有发布或保存任何内容；请稍后再试。",
+      "channel_limit": "您的套餐不包含此平台的频道。请在“我的套餐”中添加频道后在此发布。"
     }
   },
   "primitives": {
@@ -462,6 +474,44 @@
     "providersUnavailable": {
       "title": "没有可用的 {capability} 提供商",
       "body": "所有 {capability} 提供商都因账户问题而失败：{providers}。在其中一个账户修复之前，客户会看到“暂时不可用”。"
+    },
+    "videoAllowanceNearing": {
+      "title": "{period, select, week {本周} other {本月}}视频已使用 {threshold, number}%",
+      "body": "{period, select, week {本周} other {本月}}已制作 {used, number} / {limit, number} 个视频。{period, select, week {下周} other {下月}}开始时将包含更多视频。"
+    },
+    "videoAllowanceUsed": {
+      "title": "{period, select, week {本周} other {本月}}视频已用完",
+      "body": "{period, select, week {本周} other {本月}}已制作 {used, number} / {limit, number} 个视频。{period, select, week {下周} other {下月}}开始时将包含更多视频。{blocked, select, yes {如需在此之前制作更多视频，请添加频道或购买视频包。} other {}}"
+    },
+    "costPlain": {
+      "projectAlert": {
+        "title": "“{name}”即将达到安全上限",
+        "body": "达到上限后，Studio 会暂停该视频。您可以在项目页面继续，已制作的内容不会丢失。"
+      },
+      "projectPaused": {
+        "title": "“{name}”已在安全上限处停止",
+        "body": "打开项目并点击“继续制作此视频”即可完成。已制作的内容不会丢失。"
+      },
+      "dailyAlert": {
+        "title": "即将达到今日的视频制作上限",
+        "body": "达到上限后，新视频会暂停，并在 UTC 午夜后继续。发布不受影响。"
+      },
+      "dailyPaused": {
+        "title": "视频制作已暂停至明天",
+        "body": "已达到今日上限。新视频将在 UTC 午夜后继续。发布不受影响。"
+      },
+      "monthlyAlert": {
+        "title": "即将达到本月的视频制作上限",
+        "body": "达到上限后，新视频会暂停，并在下月 1 日（UTC）继续。发布不受影响。"
+      },
+      "monthlyPaused": {
+        "title": "视频制作已暂停至下个月",
+        "body": "已达到本月上限。新视频将在下月 1 日（UTC）继续，您也可以购买视频包立即继续。发布不受影响。"
+      },
+      "generic": {
+        "title": "已达到视频制作上限",
+        "body": "Studio 已暂时暂停新视频。发布不受影响。"
+      }
     }
   },
   "create": {
@@ -681,7 +731,8 @@
       "generate": "生成",
       "generateAgain": "重新生成",
       "started": "已开始生成。",
-      "cancelled": "已取消——本次运行花费了 {amount}。"
+      "cancelled": "已取消——本次运行花费了 {amount}。",
+      "cancelledPlain": "已取消。"
     },
     "approval": {
       "aria": "审批",
@@ -781,7 +832,11 @@
       "newBudget": "新预算（£）",
       "raise": "提高预算",
       "tooLow": "请输入大于 {budget} 的金额（最高 {max}）。",
-      "raised": "预算已提高至 {amount}。请点击“{action}”继续。"
+      "raised": "预算已提高至 {amount}。请点击“{action}”继续。",
+      "limitAria": "视频已在安全上限处暂停",
+      "limitReached": "此视频已在安全上限处停止。已制作的内容不会丢失。",
+      "carryOn": "继续制作此视频",
+      "carriedOn": "可以继续了。请点击“{action}”完成视频。"
     },
     "music": {
       "aria": "音乐",
@@ -830,7 +885,10 @@
       "resumeToggle": "自动恢复",
       "willResume": "将自动恢复",
       "resumeTurnedOff": "已关闭自动恢复",
-      "safety": "已暂停，等待 PostMind 的 Trust & Safety 团队进行内容安全审核。如获准许，生成将自动继续；无论结果如何，您都会收到通知。"
+      "safety": "已暂停，等待 PostMind 的 Trust & Safety 团队进行内容安全审核。如获准许，生成将自动继续；无论结果如何，您都会收到通知。",
+      "limitAria": "已因达到上限而暂停",
+      "dailyLimit": "已暂停：您的组织已达到今日的视频制作上限。",
+      "monthlyLimit": "已暂停：您的组织已达到本月的视频制作上限。"
     },
     "fallback": {
       "aria": "已使用备用服务商",
@@ -2155,7 +2213,11 @@
       "unknownCode": "未找到与此确认码对应的删除请求。请检查 Facebook 提供的链接。"
     },
     "notConfigured": "{platform} 暂不可用：Studio 的 {platform} 应用尚未完成设置。请联系你的管理员。",
-    "readOnly": "只有所有者和管理员可以连接或断开账号。"
+    "readOnly": "只有所有者和管理员可以连接或断开账号。",
+    "channelLimit": {
+      "body": "{count, plural, other {您的套餐包含 # 个频道，}}因此{blockedCount, plural, other { {blocked} 已连接但不会发布。}}",
+      "action": "添加频道"
+    }
   },
   "library": {
     "browse": {
@@ -2301,7 +2363,8 @@
       "title": "数据分析",
       "description": "查看已发布视频的表现及制作成本。",
       "rangeLabel": "日期范围",
-      "rangeOption": "{days, plural, other {# 天}}"
+      "rangeOption": "{days, plural, other {# 天}}",
+      "descriptionNoCost": "查看已发布视频的表现。"
     },
     "metrics": {
       "views": "播放量",
@@ -3708,7 +3771,7 @@
       "script_regenerate_failed": "无法重新生成脚本：脚本或其简报已不存在。",
       "asset_generation_failed": "{count, plural, =0 {部分镜头未能生成。} other {镜头 {shots} 未能生成。}}",
       "composition_failed": "视频合成失败。",
-      "cost_cap_paused": "已达到预算，生成已暂停。",
+      "cost_cap_paused": "已达到上限，生成已暂停。",
       "kill_switch": "{level, select, global {已暂停：PostMind 已在所有地方停止生成和发布。} workspace {已暂停：PostMind 已停止你所在组织的生成。} project {已暂停：PostMind 已停止此项目。} provider {已暂停：PostMind 已停止某个生成服务商。} platform {已暂停：PostMind 已停止向此平台发布。} other {已被 PostMind 紧急开关暂停。}}",
       "rejected": "已被审核人拒绝。",
       "business_deleted": "已停止：该商家已被删除。",
@@ -3745,7 +3808,11 @@
       "unknown": "未知错误",
       "account_limit": "已达到用量上限"
     },
-    "generic": "此步骤失败。请重试，如果持续出现请联系支持。"
+    "generic": "此步骤失败。请重试，如果持续出现请联系支持。",
+    "limits": {
+      "scan_cost_cap": "扫描已在上限处停止。",
+      "scan_images_capped": "扫描已达到上限：部分图片未编入搜索索引。"
+    }
   },
   "marketing": {
     "meta": {
@@ -3834,10 +3901,6 @@
         "title": "自动为您发布的日历",
         "body": "规划接下来的一个月，将帖子拖到新的时间段，让 Studio 在每个平台的最佳时机自动发布。"
       },
-      "budget": {
-        "title": "费用一目了然",
-        "body": "每月额度和消费上限提前展示，不会出现意外账单。"
-      },
       "languages": {
         "title": "支持十一种语言",
         "body": "使用英语、法语、西班牙语、阿拉伯语、德语、意大利语、葡萄牙语、印地语或中文工作，并为使用相应语言的客户制作视频。"
@@ -3845,6 +3908,10 @@
       "library": {
         "title": "灵感随取随用",
         "body": "浏览经过验证的短视频案例库，以其中一个作为您自己创作的起点。"
+      },
+      "pricing": {
+        "title": "每个频道一个简单价格",
+        "body": "每连接一个社交频道，支付一个固定价格，并包含视频。无需盯着用量计数，也不会有意外账单。"
       }
     },
     "closing": {
@@ -3907,8 +3974,8 @@
       "analytics": {
         "tab": "数据分析",
         "title": "看看哪些内容有效",
-        "body": "播放量、观看时长、互动以及每条视频的成本集中在一处，让下一份简报更好。",
-        "alt": "数据分析页面：30 天播放量、观看时长、互动、花费和每日活动图表"
+        "body": "每条视频的播放量、观看时长和互动集中在一处，让下一份简报更好。",
+        "alt": "数据分析页面：30 天播放量、观看时长、互动和每日活动图表"
       }
     }
   },
@@ -3918,127 +3985,59 @@
     },
     "hero": {
       "eyebrow": "价格",
-      "title": "随视频产量一起成长的套餐",
-      "description": "每个套餐均包含 AI 脚本、多格式渲染，以及发布到已连接的账号。"
+      "title": "一个简单的套餐：按频道付费",
+      "description": "选择您要发布的社交平台数量和付款周期。每个频道每月包含 8 个 HD 短视频。"
     },
-    "interval": {
-      "label": "计费周期",
-      "month": "按月",
-      "year": "按年"
+    "plan": {
+      "title": "定制您的套餐"
     },
-    "exclVat": "价格不含增值税。",
-    "unavailable": "暂时无法显示价格，请稍后重试。",
-    "priceUnavailable": "价格暂不可用",
-    "perMonth": "{amount}/月",
-    "perYear": "{amount}/年",
-    "annualSaving": "每年节省 {amount}",
-    "trialNote": "免费试用 {tier} {days, plural, other {# 天}}，包含 {short} 个短视频和 {long} 个长视频。需绑定银行卡，可随时取消。",
-    "popular": "最受欢迎",
-    "tiers": {
-      "BASIC": {
-        "tagline": "适合刚开始制作短视频的单个商家。"
-      },
-      "STANDARD": {
-        "tagline": "适合每天发布内容的成长型团队，含音乐和长视频。"
-      },
-      "PLUS": {
-        "tagline": "适合需要声音克隆、4K 和 AI 图片的代理机构和品牌。"
-      },
-      "ENTERPRISE": {
-        "tagline": "自定义额度、自有服务商密钥和白标输出。"
-      }
-    },
-    "highlights": {
-      "shortVideos": "{count, plural, other {每月 # 个短视频}}",
-      "longVideos": "{count, plural, other {每月 # 个长视频}}",
-      "noLongVideos": "不含长视频",
-      "seats": "{count, plural, other {# 个席位}}",
-      "businesses": "{count, plural, other {# 个商家}}",
-      "unlimitedVideos": "视频不限量（合理使用）"
-    },
-    "enterprise": {
-      "price": "定制价格",
-      "contact": "联系销售",
-      "contactAria": "发送邮件向销售团队咨询 Enterprise",
-      "noContact": "请向您的 PostMind 客户经理咨询 Enterprise。"
-    },
+    "unavailable": "暂时无法显示价格。请稍后重试。",
+    "trialNote": "免费试用 {days, plural, other {# 天}}，含 {videos} 个视频。需要绑定银行卡；在试用期结束前随时取消，无需支付任何费用。",
     "cta": {
       "trial": "开始免费试用",
-      "choose": "选择套餐",
-      "chooseAria": "选择 {tier} 套餐"
+      "start": "立即开始"
     },
-    "compare": {
-      "title": "套餐对比",
-      "caption": "套餐对比",
-      "feature": "功能",
-      "included": "包含",
-      "notIncluded": "不包含",
-      "unlimited": "不限",
-      "rows": {
-        "shortVideos": "每月短视频数（最长 30 秒）",
-        "longVideos": "每月长视频数",
-        "platforms": "平台",
-        "dailyCostCap": "每日生成预算",
-        "monthlyCostCap": "每月生成预算",
-        "queuePriority": "渲染队列优先级",
-        "musicAndSfx": "音乐和音效",
-        "voiceClone": "品牌声音克隆",
-        "renders4k": "4K 渲染",
-        "imageLibrary": "图片库",
-        "generatedImages": "每个商家每月生成图片数",
-        "scanBusinesses": "网站扫描（商家数）",
-        "libraryInspire": "参考库：灵感模式",
-        "libraryTemplate": "参考库：模板模式",
-        "customPresets": "自定义叠加预设和幻灯片模板",
-        "approvalWorkflows": "多步骤审批流程",
-        "byocProviderKeys": "自有服务商密钥",
-        "whiteLabel": "白标输出",
-        "dnsDomainVerification": "域名验证",
-        "seats": "席位",
-        "businesses": "商家",
-        "storage": "存储空间"
-      },
-      "values": {
-        "longVideos": "{count} 个 × 最长 {minutes} 分钟",
-        "platforms": {
-          "tiktok_instagram_plus_one": "TikTok、Instagram 及另外 1 个",
-          "all": "全部 8 个"
-        },
-        "queuePriority": {
-          "normal": "标准",
-          "high": "高"
-        },
-        "imageLibrary": {
-          "stock": "图库图片",
-          "stock_scrape": "图库和网站图片",
-          "ai_generation": "图库、网站和 AI 图片",
-          "byoc_generation": "使用自有密钥的 AI 图片"
-        },
-        "storage": "{gb} GB"
+    "included": {
+      "title": "每个套餐均包含",
+      "items": {
+        "videos": "每个频道每月 8 个短视频，根据简短需求为您制作",
+        "hd": "HD 视频、字幕和音乐",
+        "platforms": "发布到 TikTok、Instagram、YouTube Shorts、Facebook、LinkedIn 和 X",
+        "scheduling": "内容日历和自动排期",
+        "brand": "每个视频都应用您的品牌套件",
+        "library": "提供灵感的参考视频库"
       }
     },
+    "packs": {
+      "title": "需要更多视频？",
+      "description": "随时购买一次性 HD 视频包。视频包中的视频适用于任意频道，在套餐视频用完后使用，有效期 3 个月。"
+    },
     "topUps": {
-      "title": "加购包",
-      "description": "本月需要更多额度？购买一次性加购包。额度会在套餐配额用完后使用，先到期的先用。",
-      "short": "{quantity, plural, other {# 个短视频}}",
-      "long": "{quantity, plural, other {# 个长视频}}",
-      "forTier": "适用于 {tier} 套餐",
-      "validity": "有效期 {months} 个月"
+      "short": "{quantity, plural, other {# 个 HD 视频}}",
+      "long": "{quantity, plural, other {# 个长视频}}"
     },
     "faq": {
       "title": "常见问题",
       "items": {
-        "trial": {
-          "q": "免费试用如何运作？",
-          "a": "Standard 试用需要绑定银行卡。试用结束前不会扣费，您可以在此之前取消。每个组织仅可试用一次。"
+        "channel": {
+          "q": "什么是频道？",
+          "a": "一个频道指您发布内容的一个社交平台，例如 TikTok 或 Instagram。可购买 1 到 6 个频道。您可以连接更多账户，但只有已付费的频道会发布内容。"
+        },
+        "period": {
+          "q": "按周、按月还是按年？",
+          "a": "按月付费为每个频道 {monthly}。按周付费为每个频道每周 {weekly}，按月累计会更贵。按年付费为每个频道 {yearly}，需预先支付：免费 2 个月。按周套餐每周包含视频，按月和按年套餐每月包含视频。"
         },
         "change": {
-          "q": "之后可以更换套餐吗？",
-          "a": "可以。升级立即生效，并按比例计费。降级在当前计费周期结束时生效，且不会删除任何内容。"
+          "q": "以后可以更改套餐吗？",
+          "a": "可以，在“我的套餐”中更改。增加频道或改为更长周期会立即生效，您只需支付本周期剩余时间的差价。减少频道或改为更短周期将在已付费周期结束时生效。"
         },
         "limit": {
-          "q": "达到额度上限后会怎样？",
-          "a": "新视频将暂停生成，直到下月初配额重置。您可以升级套餐或购买加购包继续使用。"
+          "q": "视频用完后会怎样？",
+          "a": "新视频将暂停，直到下周或下月开始时包含更多视频。添加频道或购买视频包即可立即继续。"
+        },
+        "packs": {
+          "q": "视频包如何使用？",
+          "a": "5 个或 15 个 HD 视频的视频包为一次性购买。视频包中的视频适用于任意频道，在套餐视频用完后使用，有效期 3 个月。"
         },
         "vat": {
           "q": "价格含增值税吗？",
@@ -4046,7 +4045,7 @@
         },
         "cancel": {
           "q": "取消后会怎样？",
-          "a": "在已付费周期结束前，您可以继续使用。之后账号将变为只读：您仍可查看、导出和下载您的作品。"
+          "a": "您的套餐将在已付费周期结束时终止，在此之前您可以随时改变主意。之后您的账户将变为只读：您仍可查看、导出和下载您的作品。未用完的周期不予退款。"
         }
       }
     }
@@ -4271,7 +4270,7 @@
       "aria": "设置",
       "organisation": "组织",
       "members": "成员",
-      "billing": "账单",
+      "billing": "我的套餐",
       "audit": "审计日志"
     },
     "page": {
@@ -4454,12 +4453,12 @@
   },
   "billing": {
     "meta": {
-      "title": "账单"
+      "title": "我的套餐"
     },
     "header": {
       "eyebrow": "设置",
-      "title": "账单",
-      "description": "您的套餐、用量、加购额度和发票。"
+      "title": "我的套餐",
+      "description": "您的频道、视频、视频包、付款信息和发票。"
     },
     "loading": "正在加载账单",
     "notEnabled": {
@@ -4469,13 +4468,11 @@
     "banners": {
       "checkoutSuccess": "感谢购买。正在为您开通套餐，稍后将显示在此处。",
       "checkoutCancelled": "结账已取消，未产生任何费用。",
-      "topupSuccess": "加购成功，额度稍后将显示在此处。",
-      "topupCancelled": "加购已取消，未产生任何费用。",
+      "topupSuccess": "已购买视频包。视频很快会显示在这里。",
+      "topupCancelled": "已取消购买视频包。您没有被扣款。",
       "dismiss": "关闭"
     },
     "plan": {
-      "title": "当前套餐",
-      "tierName": "{tier} 套餐",
       "noPlan": "无套餐",
       "status": {
         "trialing": "免费试用",
@@ -4492,41 +4489,33 @@
       "graceLeft": "{days, plural, other {剩余 # 天}}",
       "readOnly": "您的账号目前为只读。您仍可查看、导出和下载作品，但在账单问题解决前无法创建或发布。",
       "none": "您的组织尚未订阅套餐。请在下方选择一个套餐开始创作。",
-      "interval": {
-        "month": "按月计费",
-        "year": "按年计费"
-      },
       "adminSource": "由 PostMind 工作人员设置的定制套餐。",
-      "manage": "管理账单",
-      "manageHelp": "在安全的 Stripe 门户中更换套餐、更新付款方式、下载收据或取消订阅。",
-      "askOwner": "只有组织所有者可以更改账单。如需其他套餐，请联系所有者。",
+      "manage": "打开账单门户",
+      "manageHelp": "在安全的 Stripe 门户中更新银行卡、账单地址或税号，并下载发票。",
+      "askOwner": "只有组织所有者可以更改套餐。如需调整，请联系所有者。",
       "checkoutUnavailable": "暂时无法在线结账。",
-      "alreadySubscribed": "您的组织已有订阅。请通过“管理账单”进行更改。"
+      "alreadySubscribed": "您的组织已有套餐。请在此页面更改。",
+      "detailsTitle": "付款方式和发票"
     },
     "usage": {
-      "title": "本月用量",
-      "description": "视频配额于每月第一天（UTC）重置。",
+      "title": "团队和存储",
       "seats": "席位",
       "businesses": "商家",
       "storage": "存储空间",
       "storageUsed": "已用 {used} GB，共 {limit} GB",
       "storageUnlimited": "已用 {used} GB",
       "storageOver": "您的存储空间已超出配额。不会删除任何内容，但建议清理或升级。",
-      "cost": "生成支出",
-      "costOf": "{spent} / {cap}",
-      "costNoCap": "{spent}（无上限）",
-      "costHeadroom": "您的上限包含来自加购额度的 {amount}。",
       "usedOf": "{used} / {limit}",
-      "usedUnlimited": "{used}（不限）"
+      "usedUnlimited": "{used}（不限）",
+      "descriptionLimits": "您的套餐所含的限额。"
     },
     "credits": {
-      "title": "加购额度",
-      "description": "额度会在每月配额用完后使用，先到期的先用，有效期 12 个月。",
-      "short": "{count, plural, =0 {无短视频额度} other {# 个短视频额度}}",
-      "long": "{count, plural, =0 {无长视频额度} other {# 个长视频额度}}",
+      "title": "视频包",
+      "description": "一次性购买的高清（HD）视频包，适用于任意频道。视频包中的视频在套餐视频用完后使用，有效期 3 个月。",
       "buy": "购买",
       "buyAria": "以 {amount} 购买{pack}",
-      "noPacks": "Basic、Standard 和 Plus 套餐可购买加购包。"
+      "noPacks": "请先选择套餐，然后再购买视频包。",
+      "videosLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}"
     },
     "invoices": {
       "title": "发票",
@@ -4552,10 +4541,11 @@
     },
     "picker": {
       "title": "选择套餐",
-      "description": "选择套餐，通过 Stripe 安全付款。价格不含增值税。",
+      "description": "选择频道数量和付款周期。通过 Stripe 安全付款；价格不含增值税。",
       "trial": "开始免费试用",
-      "choose": "选择 {tier}",
-      "redirecting": "正在打开安全结账页面…"
+      "redirecting": "正在打开安全结账页面…",
+      "subscribe": "继续付款",
+      "trialNote": "前 {days, plural, other {# 天}}免费，含 {videos} 个视频。在试用期结束前取消，无需支付任何费用。"
     },
     "subscriptionStatus": {
       "active": "有效",
@@ -4605,7 +4595,6 @@
         "overridePrice": "约定价格：每月 {amount}",
         "subscriptions": "订阅",
         "noSubscriptions": "无订阅。",
-        "subscriptionLine": "{tier} · {interval} · {date} 结束",
         "form": {
           "title": "设置覆盖",
           "tier": "档位",
@@ -4635,7 +4624,12 @@
           "saved": "覆盖设置已保存",
           "endTrial": "立即结束试用",
           "endTrialHelp": "试用额度及其每天 {daily} / 总计 {total} 的费用上限将永久停止，即使此覆盖设置到期或被移除也是如此；改为适用套餐上限（以及任何费用上限覆盖设置）。Stripe 不会改变：其试用仍在自己的日期结束并计费。",
-          "trialNote": "任何已保存的覆盖设置在生效期间都会暂停试用上限。勾选“立即结束试用”可永久停止这些上限。"
+          "trialNote": "任何已保存的覆盖设置在生效期间都会暂停试用上限。勾选“立即结束试用”可永久停止这些上限。",
+          "channelPlan": "频道套餐",
+          "channelPlanHelp": "频道数（1 到 6 个社交平台）决定视频额度、费用上限以及可连接的平台数量；周期决定额度的发放频率。“保持当前”使用 Stripe 订阅的值。不适用于 Enterprise。",
+          "channels": "频道",
+          "channelsOption": "{count, plural, other {# 个频道}}",
+          "interval": "计费周期"
         },
         "clear": {
           "title": "移除覆盖设置",
@@ -4665,7 +4659,19 @@
           "accessNone": "访问权限“无”会阻止此组织中的所有人生成、发布和扫描。",
           "accessReadOnly": "只读会阻止此组织中除账单、账户设置和导出之外的所有更改。",
           "endTrial": "结束试用无法撤销：其上限将不再适用于此组织。"
-        }
+        },
+        "channelPlan": "频道套餐",
+        "noChannelPlan": "无频道套餐",
+        "channelPlanValue": "{count, plural, other {# 个频道}} · {interval, select, week {按周} month {按月} year {按年} other {{interval}}}",
+        "channelPlanSource": "{source, select, admin {（由工作人员设置）} other {（来自 Stripe）}}",
+        "intervalValues": {
+          "week": "按周",
+          "month": "按月",
+          "year": "按年"
+        },
+        "overrideChannels": "频道：{count, plural, other {# 个频道}}",
+        "overrideInterval": "{interval, select, week {按周} month {按月} year {按年} other {{interval}}}计费",
+        "subscriptionChannelLine": "{tier} · {count, plural, other {# 个频道}} · {interval} · {date} 结束"
       },
       "subscriptions": {
         "title": "订阅",
@@ -4695,18 +4701,85 @@
         "unknownTier": "未知",
         "empty": "没有匹配的订阅。"
       }
+    },
+    "yourPlan": {
+      "summary": {
+        "title": "我的套餐",
+        "headline": "{count, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
+        "legacy": "已从您之前的套餐迁移。",
+        "pending": "自 {date} 起：{count, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}。",
+        "keepCurrent": "保留当前套餐",
+        "paymentPending": "您的上一次更改正在等待付款。请更新付款方式以使其生效。"
+      },
+      "videos": {
+        "title": "{period, select, week {本周视频} other {本月视频}}",
+        "description": "您开始制作的每个视频都会计入，包括仍在制作中的视频。",
+        "used": "{period, select, week {本周已用} other {本月已用}}",
+        "moreFrom": "自 {date} 起将包含更多视频。",
+        "packsLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}"
+      },
+      "channels": {
+        "title": "您的频道",
+        "description": "{count, plural, other {您的套餐可发布到 # 个频道。}}",
+        "noneConnected": "尚未连接任何频道。",
+        "connect": "连接账户",
+        "publishing": "正在发布到：{list}。",
+        "blocked": "{count, plural, other {{list} 已连接但不会发布：您的套餐没有剩余频道名额。}}",
+        "addChannel": "添加频道",
+        "spare": "{count, plural, other {您还可以连接 # 个频道。}}"
+      },
+      "change": {
+        "title": "更改套餐",
+        "description": "添加或移除频道，或更改付款周期。在任何更改生效前，您都会看到新价格及生效时间。",
+        "previewing": "正在计算新价格…",
+        "previewFailed": "无法计算新价格。请稍后重试。",
+        "appliesNow": "新价格：{price}。立即生效：今天需为本周期剩余时间支付 {due}。",
+        "appliesLater": "新价格：{price}。将于 {date} 生效。现在无需付款。",
+        "nowRule": "增加频道或延长周期会立即生效，您只需支付差价。",
+        "laterRule": "减少频道或缩短周期将在已付费周期结束时生效，在此之前您可继续使用已付费的内容。",
+        "review": "查看更改",
+        "reset": "重新开始",
+        "confirmTitle": "确认新套餐",
+        "confirmFrom": "当前：{channels, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
+        "confirmTo": "新套餐：{channels, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}",
+        "cancel": "返回",
+        "confirm": "确认更改",
+        "confirmPay": "支付 {amount} 并更改",
+        "managedByStaff": "您的套餐由 PostMind 工作人员设置。如需更改，请联系客服。",
+        "blockedCancelling": "您的套餐即将结束。请先保留套餐，然后再进行更改。",
+        "blockedPayment": "请先更新付款方式。付款恢复正常后即可更改套餐。"
+      },
+      "cancel": {
+        "title": "取消套餐",
+        "body": "您的套餐将保持有效，直到已付费周期结束。在此之前您可以随时改变主意。",
+        "cancel": "取消套餐",
+        "ends": "您的套餐将在本周期结束时终止。",
+        "endsOn": "您的套餐将于 {date} 结束。在此之前您可以继续使用全部功能。",
+        "resume": "保留我的套餐",
+        "confirmTitle": "要取消套餐吗？",
+        "confirmBody": "您的套餐将在本周期结束时终止。您的作品仍可查看、导出和下载。未用完的周期不予退款。",
+        "confirmBodyDate": "您的套餐将于 {date} 结束。在此之前一切不变。之后您的账户将变为只读：您的作品仍可查看、导出和下载。未用完的周期不予退款。",
+        "keep": "保留我的套餐",
+        "confirm": "取消套餐"
+      },
+      "toasts": {
+        "applied": "您的套餐已更改。",
+        "scheduled": "已完成。您的套餐将在本周期结束时更改。",
+        "paymentRequired": "付款未成功，因此没有任何更改。请更新付款方式后重试。",
+        "cancelled": "您的套餐将在本周期结束时终止。",
+        "resumed": "您的套餐将继续有效。",
+        "kept": "您将继续使用当前套餐。"
+      }
     }
   },
   "upgrade": {
     "planTier": {
-      "title": "升级到 {tier}",
-      "body": "此功能从 {tier} 套餐起提供。",
-      "price": "{tier} 每月 {amount}，不含增值税。",
-      "enterprise": "Enterprise 需与我们的销售团队洽谈。"
+      "title": "不包含在您的套餐中",
+      "body": "此功能不属于您的套餐。"
     },
     "quota": {
-      "title": "您已达到本月额度上限",
-      "body": "升级可获得更多每月配额，也可购买加购包在本月继续使用。"
+      "title": "您的套餐视频暂时已用完",
+      "body": "添加频道可每周或每月获得更多视频，或购买视频包今天就继续制作。"
     },
     "planRequired": {
       "title": "选择套餐开始创作",
@@ -4717,20 +4790,26 @@
       "body": "由于账单问题，您的账号目前为只读。请更新付款方式以恢复全部功能。"
     },
     "actions": {
-      "upgrade": "升级",
-      "buyTopUp": "购买加购包",
       "choosePlan": "选择套餐",
       "updatePayment": "更新付款方式",
-      "viewPlans": "查看套餐",
-      "notNow": "暂不"
+      "notNow": "暂不",
+      "addChannel": "添加频道",
+      "buyPack": "购买视频包",
+      "viewPlan": "查看套餐",
+      "manageMembers": "管理成员"
     },
     "askOwner": "只有组织所有者可以更改套餐或账单。请联系所有者操作。",
     "lock": {
-      "aria": "需要 {tier} 套餐"
+      "notIncluded": "套餐不含",
+      "notIncludedAria": "不包含在您的套餐中"
     },
     "seatLimit": {
       "title": "您套餐中的席位已全部占用",
-      "body": "您的套餐没有空闲席位可再添加成员。请升级以获得更多席位，或先移除某位成员。"
+      "body": "您的套餐没有空余席位可再添加成员。请先移除一位成员，或联系客服。"
+    },
+    "channelLimit": {
+      "title": "添加频道即可在此发布",
+      "body": "{count, plural, other {您的套餐包含 # 个频道}}：{list}。添加一个频道，即可同时发布到 {platform}。"
     }
   },
   "email": {
@@ -4846,10 +4925,10 @@
         "cta": "打开账单"
       },
       "topupReceipt": {
-        "subject": "您的加量包已到账：{packName}",
-        "heading": "加量包已添加",
-        "body": "感谢您的购买。{packName} 加量包已添加到您的组织，现在即可使用。收据将由 Stripe 另行发送。",
-        "cta": "查看用量"
+        "subject": "您的视频包已就绪：{packName}",
+        "heading": "视频包已添加",
+        "body": "感谢您的购买。您的 {packName} 视频包已添加，可在 3 个月内用于任意频道。Stripe 会另行发送收据。",
+        "cta": "打开我的套餐"
       },
       "accountDeletionScheduled": {
         "subject": "您的账户将被删除",
@@ -4925,7 +5004,8 @@
       "pagesAria": "组织分页",
       "pageInfo": "第 {from}–{to} 个，共 {total} 个",
       "previous": "上一页",
-      "next": "下一页"
+      "next": "下一页",
+      "channelPlan": "{count, plural, other {# 个频道}} · {interval, select, week {按周} month {按月} year {按年} other {{interval}}}"
     },
     "detail": {
       "back": "全部组织",
@@ -5125,16 +5205,20 @@
       "unlimited": "你的套餐没有每月视频上限",
       "spend": "支出上限：已用 {spent}，共 {cap}",
       "noCap": "没有每月支出上限",
-      "topUp": "购买充值包"
+      "topUp": "购买充值包",
+      "buyPack": "购买视频包"
     },
     "capped": {
       "allowance": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：这是你本月额度能覆盖的数量。<link>购买充值包</link>即可规划更多。",
-      "cost_cap": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：再多就会超出本月的支出上限。<link>购买充值包</link>即可提高上限。"
+      "cost_cap": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：再多就会超出本月的支出上限。<link>购买充值包</link>即可提高上限。",
+      "allowancePack": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：这是您本月额度能覆盖的数量。<link>购买视频包</link>即可规划更多。",
+      "monthLimit": "此计划只有 {count, plural, other {# 条帖子}}，而不是 {requested} 条：再多就会超出本月上限。<link>购买视频包</link>即可规划更多。"
     },
     "hold": {
       "kill_switch": "Studio 暂时暂停了生成。恢复后你的帖子会自动继续。",
       "cost_cap": "已暂停：本月支出上限已用完。上限重置或你购买充值包后会继续。",
-      "daily_limit": "暂停到明天：今天的月度计划上限已用完。其余帖子会自动继续。"
+      "daily_limit": "暂停到明天：今天的月度计划上限已用完。其余帖子会自动继续。",
+      "monthLimit": "已暂停：已达到本月上限。上限重置或您购买视频包后会继续。"
     },
     "drafting": {
       "title": "正在起草你的一个月",
@@ -5357,6 +5441,45 @@
       "open": "文案",
       "openAria": "{title} 的文案和话题标签",
       "close": "关闭"
+    }
+  },
+  "channelPlan": {
+    "interval": {
+      "label": "付款周期",
+      "week": "按周",
+      "month": "按月",
+      "year": "按年"
+    },
+    "channels": {
+      "label": "频道",
+      "fewer": "减少一个频道",
+      "more": "添加一个频道",
+      "value": "{count, plural, other {# 个频道}}",
+      "hint": "一个频道指您发布内容的一个社交平台：TikTok、Instagram、YouTube Shorts、Facebook、LinkedIn 或 X。"
+    },
+    "total": {
+      "week": "每周 {amount}",
+      "month": "每月 {amount}",
+      "year": "每年 {amount}"
+    },
+    "perChannel": {
+      "week": "每个频道每周 {amount}",
+      "month": "每个频道每月 {amount}",
+      "year": "每个频道每年 {amount}"
+    },
+    "included": {
+      "week": "每周包含 {count, plural, other {# 个视频}}（每个频道 {perChannel} 个）",
+      "month": "每月包含 {count, plural, other {# 个视频}}（每个频道 {perChannel} 个）",
+      "year": "每年包含 {count, plural, other {# 个视频}}（每个频道每月 {perChannel} 个）"
+    },
+    "hd": "高清（HD）短视频",
+    "exclVat": "不含增值税",
+    "yearlySaving": "免费 2 个月：每年节省 {amount}",
+    "weeklyNote": "按周付费比按月更贵。按月或按年付费更划算。",
+    "priceUnavailable": "暂无价格",
+    "packs": {
+      "name": "{quantity, plural, other {# 个 HD 视频}}",
+      "validity": "可在 {months, plural, other {# 个月}}内用于任意频道"
     }
   }
 }

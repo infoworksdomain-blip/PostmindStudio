@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { CalendarDays, Clapperboard, Layers } from 'lucide-react';
 import { useFormat, type Tone } from '@/lib/client/format';
 import { CALENDAR_DAY_IDS, type CalendarDayId } from '@/lib/studio/content-plans/calendar-days';
+import { useShowCosts } from '../account/use-show-costs';
 import { StateBadge } from '../primitives';
 import {
   PLAN_ANGLES,
@@ -21,7 +22,9 @@ import {
 } from './plan-model';
 
 // 20.9 — small pieces shared by the month-plan screens: status badges, an item's when / format /
-// angle line, the allowance and spending panel, and the notices (capped, held, paused).
+// angle line, the allowance panel, and the notices (capped, held, paused). Spending figures are for
+// platform staff only and the notices speak of "this month's limit", never spend (operator
+// decision 2026-10-04).
 
 const ITEM_TONE: Record<ItemStatus, Tone> = {
   PLANNED: 'neutral',
@@ -103,10 +106,11 @@ export function KindLabel({ kind }: { kind: ItemKind }) {
   return <>{t(kind)}</>;
 }
 
-/** The month's allowance and spending, with the top-up link when either is short. */
+/** The month's allowance (and, for staff, spending), with the link to buy a video pack. */
 export function AllowancePanel({ allowance, cost }: { allowance: PlanAllowance; cost: PlanCost }) {
   const t = useTranslations('plans.allowance');
   const f = useFormat();
+  const showCosts = useShowCosts();
   return (
     <section
       aria-labelledby="plan-allowance"
@@ -125,17 +129,19 @@ export function AllowancePanel({ allowance, cost }: { allowance: PlanAllowance; 
               })}
           {allowance.credits > 0 && <> {t('credits', { count: allowance.credits })}</>}
         </li>
-        <li>
-          {cost.capPence === null
-            ? t('noCap')
-            : t('spend', { spent: f.pence(cost.spentPence), cap: f.pence(cost.capPence) })}
-        </li>
+        {showCosts && (
+          <li data-testid="plan-spend">
+            {cost.capPence === null
+              ? t('noCap')
+              : t('spend', { spent: f.pence(cost.spentPence), cap: f.pence(cost.capPence) })}
+          </li>
+        )}
       </ul>
       <Link
         href="/settings/billing#topups"
         className="mt-2 inline-block text-xs underline underline-offset-2"
       >
-        {t('topUp')}
+        {t('buyPack')}
       </Link>
     </section>
   );
@@ -149,10 +155,11 @@ export function CappedNotice({
 }) {
   const t = useTranslations('plans.capped');
   if (!plan.cappedReason) return null;
+  const key = plan.cappedReason === 'cost_cap' ? 'monthLimit' : 'allowancePack';
   const count = plan.items.filter((i) => i.status !== 'REMOVED' && i.status !== 'SKIPPED').length;
   return (
     <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
-      {t.rich(plan.cappedReason, {
+      {t.rich(key, {
         count,
         requested: plan.requestedCount,
         link: (chunks) => (
@@ -170,7 +177,7 @@ export function HoldNotice({ reason }: { reason: Plan['holdReason'] }) {
   if (!reason) return null;
   return (
     <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
-      {t(reason)}
+      {t(reason === 'cost_cap' ? 'monthLimit' : reason)}
     </p>
   );
 }

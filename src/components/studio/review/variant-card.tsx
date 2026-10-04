@@ -10,6 +10,7 @@ import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/ap
 import { useFormat, type Tone } from '@/lib/client/format';
 import type { Render } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
+import { useShowCosts } from '../account/use-show-costs';
 import { StateBadge } from '../primitives';
 import { QualityPanel } from './quality-panel';
 import { VariantThumbnail } from './variant-thumbnail';
@@ -77,6 +78,8 @@ export function VariantCard({
 }) {
   const t = useTranslations('review.variant');
   const f = useFormat();
+  // Operator decision 2026-10-04: what a render cost is for platform staff only.
+  const showCosts = useShowCosts();
   const errorMessage = useErrorMessage();
   const [downloading, setDownloading] = useState(false);
   const [rerendering, setRerendering] = useState(false);
@@ -126,8 +129,8 @@ export function VariantCard({
               {f.platform(render.targetPlatform)}
             </h3>
             <p className="tabular mt-1 text-xs text-muted-foreground">
-              {render.aspectRatio} · {render.resolution} · {f.duration(render.durationSec)} ·{' '}
-              {f.pence(render.costPence)}
+              {render.aspectRatio} · {render.resolution} · {f.duration(render.durationSec)}
+              {showCosts && <> · {f.pence(render.costPence)}</>}
             </p>
           </div>
           <span className="flex flex-wrap gap-1.5">

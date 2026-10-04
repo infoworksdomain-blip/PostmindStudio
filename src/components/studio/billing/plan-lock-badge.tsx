@@ -49,23 +49,22 @@ export function PlanLockBadge({
   className?: string;
 }) {
   const t = useTranslations('upgrade.lock');
-  const tTier = useTranslations('shell.usage.tiers');
   const current = usePlanTier();
   const required = requiredTier ?? (feature ? minTierForFeature(feature) : undefined);
   if (!required || !current || tierAtLeast(current, required)) return null;
-  const tier = tTier(required);
+  // 21.5: one per-channel plan for customers, so no tier name: "Not in your plan".
   return (
     <span
       data-slot="plan-lock-badge"
-      title={t('aria', { tier })}
+      title={t('notIncludedAria')}
       className={cn(
         'inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 align-middle text-[0.7rem] font-medium text-primary',
         className,
       )}
     >
       <Lock className="size-3" strokeWidth={2} aria-hidden />
-      <span aria-hidden>{tier}</span>
-      <span className="sr-only">{t('aria', { tier })}</span>
+      <span aria-hidden>{t('notIncluded')}</span>
+      <span className="sr-only">{t('notIncludedAria')}</span>
     </span>
   );
 }

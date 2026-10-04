@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { ACTIVE_STATES, useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
+import { useShowCosts } from '../account/use-show-costs';
 import { useBusiness } from '../business-context';
 import { FailureReason } from '../failure-reason';
 import { ErrorState, PageHeader, Section, StateBadge } from '../primitives';
@@ -74,6 +75,7 @@ function tabsFor(project: ProjectDetail, label: (key: TabKey) => string): TabDef
 export function ReviewScreen({ projectId }: { projectId: string }) {
   const t = useTranslations('review.screen');
   const f = useFormat();
+  const showCosts = useShowCosts();
   const projectName = useProjectName();
   const { businessId } = useBusiness();
   const { data, error, isLoading, mutate } = useApi<{ project: ProjectDetail }>(
@@ -127,10 +129,13 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StateBadge {...state} />
-            <span className="tabular">
-              {t('spent', { amount: f.pence(project.costActualPence) })}
-            </span>
-            {project.costBudgetPence !== null && (
+            {/* Operator decision 2026-10-04: spend and budget are for platform staff only. */}
+            {showCosts && (
+              <span className="tabular" data-testid="project-spent">
+                {t('spent', { amount: f.pence(project.costActualPence) })}
+              </span>
+            )}
+            {showCosts && project.costBudgetPence !== null && (
               <span className="tabular">
                 {t('ofBudget', { amount: f.pence(project.costBudgetPence) })}
               </span>

@@ -722,8 +722,11 @@ test.describe('image library', () => {
     await page.context().close();
   });
 
-  test('generate: validation on Plus and a plan lock on Basic', async ({ browser }) => {
-    // Plus: the form validates and can be cancelled. It is never submitted here: that would call
+  test('generate: validation on a full plan and a plan lock on a lower internal tier', async ({
+    browser,
+  }) => {
+    // PLUS / BASIC below are internal tiers seeded for the gate (21.5: customers never see them).
+    // PLUS: the form validates and can be cancelled. It is never submitted here: that would call
     // the real image provider with a placeholder key, and the 401 would hold the provider for
     // every later spec (generation success and failure are covered by vitest).
     const page = await newPage(browser, ownerState);
@@ -750,7 +753,8 @@ test.describe('image library', () => {
     ).toBe(0);
     await page.context().close();
 
-    // Basic: a plan lock beside the button and the upgrade dialog when it is used.
+    // BASIC: a plan lock beside the button and the upgrade dialog when it is used. 21.5: the
+    // dialog says it is not in the plan (or the plan's videos are used) and never names a tier.
     const basicPage = await newPage(browser, basicState);
     const bw = new Watcher(basicPage, [
       { method: 'POST', url: /image-library\/generate$/, status: 403 },
@@ -762,12 +766,12 @@ test.describe('image library', () => {
       .getByRole('dialog')
       .getByRole('button', { name: 'Generate', exact: true })
       .click();
-    await expect(
-      basicPage
-        .getByRole('dialog')
-        .filter({ hasText: /plan|upgrade/i })
-        .first(),
-    ).toBeVisible();
+    const upgrade = basicPage
+      .getByRole('dialog')
+      .filter({ hasText: /Not included in your plan|You’ve used your plan’s videos/ })
+      .first();
+    await expect(upgrade).toBeVisible();
+    await expect(upgrade).not.toContainText(/\b(Basic|Standard|Plus|Enterprise)\b/);
     bw.assertClean();
     await basicPage.context().close();
   });

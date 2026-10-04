@@ -1,19 +1,22 @@
 'use client';
 
+import Link from 'next/link';
 import { Download, ExternalLink, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useApi } from '@/lib/client/api';
 import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
-import { MeterRow, UsageMeters, type UsageResponse } from '../usage-meter';
+import { MeterRow, type UsageResponse } from '../usage-meter';
 import { Section, StateBadge } from '../primitives';
-import { useTopUpName } from './plan-cards';
+import { channelList } from './channel-labels';
+import { usePackName } from './channel-picker';
 import type { CheckoutIntent } from './use-billing-actions';
 import type { BillingResponse, InvoicesResponse, PricingView } from './types';
 
-// Phase 18 §3 /settings/billing — usage against every plan limit, top-up credits and packs, and
-// the Stripe invoice list.
+// Phase 18 §3 / 21.5 Your plan (/settings/billing) — videos used against the allowance, the
+// connected channels, seats / businesses / storage, the HD video packs and the Stripe invoices.
+// No generation cost is shown to customers.
 
 type Billing = BillingResponse['billing'];
 
@@ -56,35 +59,63 @@ function countMeter(meter: { used: number; limit: number | null }) {
   };
 }
 
-export function UsageSection({ billing }: { billing: Billing }) {
-  const t = useTranslations('billing.usage');
+/** 21.5: videos used against the plan's allowance this week / month, and pack videos left. */
+export function AllowanceSection({ billing }: { billing: Billing }) {
+  const t = useTranslations('billing.yourPlan.videos');
   const f = useFormat();
   const usage = useApi<UsageResponse>('/usage');
-  const { storage, cost, seats, businesses } = billing.usage;
-  const usedGb = f.number(Number(storage.usedBytes) / GB, { maximumFractionDigits: 1 });
-  const storageText =
-    storage.limitGb === null
-      ? t('storageUnlimited', { used: usedGb })
-      : t('storageUsed', { used: usedGb, limit: f.number(storage.limitGb) });
-  const costText =
-    cost.capPence === null
-      ? t('costNoCap', { spent: f.pence(cost.spentPence) })
-      : t('costOf', { spent: f.pence(cost.spentPence), cap: f.pence(cost.capPence) });
-  const costPercent = cost.capPence ? Math.round((cost.spentPence / cost.capPence) * 100) : null;
+  const u = usage.data?.usage;
+  const period = u?.period ?? 'month';
   return (
-    <Section title={t('title')} description={t('description')}>
-      <div className="grid gap-5">
-        {usage.data && <UsageMeters usage={usage.data.usage} />}
-        <MeterRow label={t('seats')} meter={countMeter(seats)} />
-        <MeterRow label={t('businesses')} meter={countMeter(businesses)} />
-        <Meter label={t('storage')} text={storageText} percent={storage.percent} />
-        {storage.percent !== null && storage.percent >= 100 && (
-          <p className="rounded-md bg-warning/10 p-2 text-xs">{t('storageOver')}</p>
+    <Section title={t('title', { period })} description={t('description')}>
+      <div className="grid gap-4 text-sm">
+        {u ? (
+          <>
+            <MeterRow label={t('used', { period })} meter={u.videos.short} />
+            <p className="text-muted-foreground">
+              {t('moreFrom', {
+                date: f.date(u.resetsAt, { day: 'numeric', month: 'long', timeZone: 'UTC' }),
+              })}
+            </p>
+          </>
+        ) : (
+          <div className="h-10" aria-hidden />
         )}
-        <Meter label={t('cost')} text={costText} percent={costPercent} />
-        {cost.headroomPence > 0 && (
-          <p className="text-xs text-muted-foreground">
-            {t('costHeadroom', { amount: f.pence(cost.headroomPence) })}
+        <p>{t('packsLeft', { count: billing.credits.short })}</p>
+      </div>
+    </Section>
+  );
+}
+
+/** 21.5: the connected platforms against the paid channels. */
+export function ChannelsSection({ billing }: { billing: Billing }) {
+  const t = useTranslations('billing.yourPlan.channels');
+  const usage = billing.channels;
+  if (!usage) return null;
+  return (
+    <Section title={t('title')} description={t('description', { count: usage.paid })}>
+      <div className="grid gap-2 text-sm">
+        {usage.connected.length === 0 ? (
+          <p className="text-muted-foreground">
+            {t('noneConnected')}{' '}
+            <Link className="font-medium underline underline-offset-4" href="/connections">
+              {t('connect')}
+            </Link>
+          </p>
+        ) : (
+          <p>{t('publishing', { list: channelList(usage.allowed) })}</p>
+        )}
+        {usage.blocked.length > 0 && (
+          <p role="alert" className="rounded-md border border-warning/50 bg-warning/10 p-3">
+            {t('blocked', { list: channelList(usage.blocked), count: usage.blocked.length })}{' '}
+            <a className="font-medium underline underline-offset-4" href="#change">
+              {t('addChannel')}
+            </a>
+          </p>
+        )}
+        {usage.connected.length > 0 && usage.connected.length < usage.paid && (
+          <p className="text-muted-foreground">
+            {t('spare', { count: usage.paid - usage.connected.length })}
           </p>
         )}
       </div>
@@ -92,6 +123,31 @@ export function UsageSection({ billing }: { billing: Billing }) {
   );
 }
 
+/** Seats, businesses and storage (no cost or budget figures for customers, 21.5). */
+export function UsageSection({ billing }: { billing: Billing }) {
+  const t = useTranslations('billing.usage');
+  const f = useFormat();
+  const { storage, seats, businesses } = billing.usage;
+  const usedGb = f.number(Number(storage.usedBytes) / GB, { maximumFractionDigits: 1 });
+  const storageText =
+    storage.limitGb === null
+      ? t('storageUnlimited', { used: usedGb })
+      : t('storageUsed', { used: usedGb, limit: f.number(storage.limitGb) });
+  return (
+    <Section title={t('title')} description={t('descriptionLimits')}>
+      <div className="grid gap-5">
+        <MeterRow label={t('seats')} meter={countMeter(seats)} />
+        <MeterRow label={t('businesses')} meter={countMeter(businesses)} />
+        <Meter label={t('storage')} text={storageText} percent={storage.percent} />
+        {storage.percent !== null && storage.percent >= 100 && (
+          <p className="rounded-md bg-warning/10 p-2 text-xs">{t('storageOver')}</p>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+/** 21.5: one-off HD video packs, any channel, valid 3 months. */
 export function TopUpsSection({
   billing,
   pricing,
@@ -104,22 +160,17 @@ export function TopUpsSection({
   onBuy: (intent: CheckoutIntent, pendingKey: string) => void;
 }) {
   const t = useTranslations('billing.credits');
-  const tp = useTranslations('pricing');
+  const tp = useTranslations('channelPlan');
   const f = useFormat();
-  const name = useTopUpName();
-  const { tier, access } = billing.entitlements;
-  // Only packs for the organisation's own tier (BASIC has no long pack); none without a plan.
-  const packs =
-    access === 'none' ? [] : (pricing?.topUps ?? []).filter((pack) => pack.tier === tier);
+  const name = usePackName();
+  // Packs need a plan to spend them on; none without one.
+  const packs = billing.entitlements.access === 'none' ? [] : (pricing?.topUps ?? []);
   const canBuy = billing.canManage && billing.checkoutEnabled;
   return (
     <section id="topups" className="scroll-mt-20">
       <Section title={t('title')} description={t('description')}>
         <div className="grid gap-4">
-          <ul className="grid gap-1 text-sm">
-            <li>{t('short', { count: billing.credits.short })}</li>
-            <li>{t('long', { count: billing.credits.long })}</li>
-          </ul>
+          <p className="text-sm">{t('videosLeft', { count: billing.credits.short })}</p>
           {packs.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('noPacks')}</p>
           ) : (
@@ -135,6 +186,9 @@ export function TopUpsSection({
                       <span className="font-medium">{name(pack)}</span>
                       <span className="text-muted-foreground">
                         {amount ?? tp('priceUnavailable')}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {tp('packs.validity', { months: pack.validMonths })}
                       </span>
                     </div>
                     {canBuy && (
@@ -163,7 +217,6 @@ export function TopUpsSection({
     </section>
   );
 }
-
 const INVOICE_STATUSES = ['draft', 'open', 'paid', 'uncollectible', 'void'] as const;
 type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 const isInvoiceStatus = (s: string): s is InvoiceStatus =>

@@ -7,7 +7,8 @@ import { mockFetch, renderWithSWR, type MockRoute } from '../library/test-helper
 import { billing, pricingView } from './test-fixtures';
 import { UpgradeDialogHost } from './upgrade-dialog';
 
-// Phase 18 §3 — api() emits plan / billing blocks on the upgrade bus; the host opens the dialog.
+// Phase 18 §3 / 21.5 — api() emits plan / billing / channel blocks on the upgrade bus; the host
+// opens the dialog. No tier names (one per-channel plan).
 
 const nav = vi.hoisted(() => ({ navigateTo: vi.fn() }));
 vi.mock('./navigate', () => ({ navigateTo: nav.navigateTo }));
@@ -47,57 +48,39 @@ describe('UpgradeDialogHost', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('plan_tier names the required tier and its price; an owner without a subscription goes to Checkout', async () => {
-    const user = userEvent.setup();
-    const calls = mockFetch(
-      routes(billing({ subscription: null }), [
-        gated(403, 'plan_tier', { requiredTier: 'PLUS' }),
-        {
-          match: '/billing/checkout',
-          method: 'POST',
-          body: { ok: true, url: 'https://checkout.stripe.test/p' },
-        },
-      ]),
-    );
+  it('plan_tier never names a tier: "not included in your plan" (21.5)', async () => {
+    mockFetch(routes(billing(), [gated(403, 'plan_tier', { requiredTier: 'PLUS' })]));
     renderWithSWR(<UpgradeDialogHost />);
     await block();
-    const dialog = await screen.findByRole('dialog', { name: 'Upgrade to Plus' });
-    expect(dialog).toHaveTextContent('This feature is included from the Plus plan.');
-    expect(await screen.findByText('Plus is £349.00 a month, excl. VAT.')).toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: 'Upgrade' }));
-    await waitFor(() =>
-      expect(nav.navigateTo).toHaveBeenCalledWith('https://checkout.stripe.test/p'),
-    );
-    expect(calls.calls.find((c) => c.url.endsWith('/billing/checkout'))?.body).toEqual({
-      kind: 'subscription',
-      tier: 'PLUS',
-      interval: 'month',
-      locale: 'en-GB',
-    });
+    const dialog = await screen.findByRole('dialog', { name: 'Not included in your plan' });
+    expect(dialog).toHaveTextContent('This feature isn’t part of your plan.');
+    expect(dialog).not.toHaveTextContent(/Plus|Standard|Basic|£/);
+    expect(screen.getByRole('link', { name: 'See the plan' })).toHaveAttribute('href', '/pricing');
   });
 
-  it('plan_tier with a live subscription upgrades in the Customer Portal', async () => {
-    const user = userEvent.setup();
+  it('channel_limit names the paid channels and links to add a channel (21.5)', async () => {
     mockFetch(
       routes(billing(), [
-        gated(403, 'plan_tier', { requiredTier: 'PLUS' }),
-        {
-          match: '/billing/portal',
-          method: 'POST',
-          body: { ok: true, url: 'https://portal.stripe.test/u' },
-        },
+        gated(403, 'channel_limit', {
+          channels: 2,
+          platform: 'youtube',
+          allowedPlatforms: ['tiktok', 'instagram'],
+        }),
       ]),
     );
     renderWithSWR(<UpgradeDialogHost />);
     await block();
-    await screen.findByRole('dialog', { name: 'Upgrade to Plus' });
-    await user.click(await screen.findByRole('button', { name: 'Upgrade' }));
-    await waitFor(() =>
-      expect(nav.navigateTo).toHaveBeenCalledWith('https://portal.stripe.test/u'),
+    const dialog = await screen.findByRole('dialog', { name: 'Add a channel to publish here' });
+    expect(dialog).toHaveTextContent(
+      /Your plan includes 2 channels: TikTok, Instagram\. Add a channel to publish to .+ too\./,
+    );
+    expect(screen.getByRole('link', { name: 'Add a channel' })).toHaveAttribute(
+      'href',
+      '/settings/billing#change',
     );
   });
 
-  it('a seat limit is not a monthly limit: seat wording, upgrade, no top-up', async () => {
+  it('a seat limit is not a monthly limit: seat wording, members, no video pack', async () => {
     mockFetch(
       routes(billing(), [
         gated(403, 'quota_exceeded', { reason: 'seat_limit', used: 2, limit: 2 }),
@@ -107,24 +90,29 @@ describe('UpgradeDialogHost', () => {
     await block();
     const dialog = await screen.findByRole('dialog', { name: 'Every seat on your plan is in use' });
     expect(dialog).not.toHaveTextContent('month');
-    expect(screen.queryByRole('link', { name: 'Buy top-up' })).toBeNull();
-    expect(await screen.findByRole('button', { name: 'Upgrade' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Buy a video pack' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Manage members' })).toHaveAttribute(
+      'href',
+      '/settings/members',
+    );
   });
 
-  it('quota_exceeded offers upgrade and a top-up', async () => {
+  it('quota_exceeded offers a video pack or another channel', async () => {
     mockFetch(routes(billing(), [gated(403, 'quota_exceeded')]));
     renderWithSWR(<UpgradeDialogHost />);
     await block();
     expect(
-      await screen.findByRole('dialog', { name: 'You’ve reached this month’s limit' }),
+      await screen.findByRole('dialog', { name: 'You’ve used your plan’s videos for now' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Buy top-up' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Buy a video pack' })).toHaveAttribute(
       'href',
       '/settings/billing#topups',
     );
-    expect(await screen.findByRole('button', { name: 'Upgrade' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add a channel' })).toHaveAttribute(
+      'href',
+      '/settings/billing#change',
+    );
   });
-
   it('plan_required links to choosing a plan', async () => {
     mockFetch(routes(billing({ subscription: null }), [gated(402, 'plan_required')]));
     renderWithSWR(<UpgradeDialogHost />);
