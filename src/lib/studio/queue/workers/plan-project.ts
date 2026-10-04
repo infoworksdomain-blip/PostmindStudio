@@ -83,8 +83,12 @@ export const MAX_PLANNING_OUTPUT_TOKENS = 16_000;
 export function ideationMaxTokens(platformCount: number): number {
   return Math.min(MAX_PLANNING_OUTPUT_TOKENS, 3_000 + 900 * Math.max(1, platformCount));
 }
-/** One script per format and language, so the script budget does not grow with the format count. */
-const SCRIPT_MAX_TOKENS = 8_000;
+/**
+ * One script per format and language, so the script budget does not grow with the format count.
+ * 8 000 cut a 30 s TikTok script off mid-JSON after 70 s of generation (production QA run 11,
+ * 2026-10-04, "output_truncated: Output hit max_tokens (8000)"); scripts now get the planning cap.
+ */
+export const SCRIPT_MAX_TOKENS = MAX_PLANNING_OUTPUT_TOKENS;
 const SAFETY_MAX_TOKENS = 1_000;
 const SUPPORTED_SOURCES = new Set(['BRIEF', 'POSTMIND_CONTENT', 'LIBRARY_REFERENCE', 'TEMPLATE']);
 

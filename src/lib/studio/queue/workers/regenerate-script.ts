@@ -33,6 +33,7 @@ import {
   createSuggestedOverlays,
   enqueueShots,
   loadBrandKit,
+  MAX_PLANNING_OUTPUT_TOKENS,
   modelLabel,
   textRequest,
 } from './plan-project';
@@ -43,7 +44,8 @@ import {
 // fans out generate-asset for the new shots; the project's other scripts are untouched and keep
 // their renders (services/scripts.ts keeps them in metadata.renders).
 
-const SCRIPT_MAX_TOKENS = 8_000;
+// The same script output budget as plan-project (raised from 8 000 after QA run 11).
+const SCRIPT_MAX_TOKENS = MAX_PLANNING_OUTPUT_TOKENS;
 const SAFETY_MAX_TOKENS = 1_000;
 
 /** The owner's rewrite instruction, fenced so it reads as data, not as system text. */
