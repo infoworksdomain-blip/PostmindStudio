@@ -523,7 +523,8 @@
       "heading": {
         "BRIEF": "What’s the video about?",
         "SLIDESHOW": "What’s the slideshow about?",
-        "UPLOAD": "Upload your video"
+        "UPLOAD": "Upload your video",
+        "UGC": "What should the actor talk about?"
       },
       "uploadChoose": "Choose a video",
       "uploadReplace": "Replace the video",
@@ -540,7 +541,8 @@
       "sources": {
         "BRIEF": "Video",
         "SLIDESHOW": "Slideshow",
-        "UPLOAD": "Upload a video"
+        "UPLOAD": "Upload a video",
+        "UGC": "UGC actor"
       },
       "templatedNote": "Platforms and length come from the template. Your text above is optional — it adds specifics to the template’s outline.",
       "noBusiness": {
@@ -571,7 +573,10 @@
       "budgetRange": "Budget must be between {min} and {max}.",
       "scheduleTooFar": "Schedule no more than {days, number} days ahead.",
       "autoPublishNoMatchingAccount": "None of your connected accounts posts to the platforms you chose. Add {platforms}, connect another account, or turn auto-publish off.",
-      "scheduleNeedsAccount": "A scheduled post is published automatically, so it needs a connected account for one of the chosen platforms. Connect one, or clear the schedule."
+      "scheduleNeedsAccount": "A scheduled post is published automatically, so it needs a connected account for one of the chosen platforms. Connect one, or clear the schedule.",
+      "ugcEnglishOnly": "UGC actors speak English for now: choose English as the video language.",
+      "ugcShortOnly": "UGC actor videos are short: choose Short.",
+      "ugcRealPerson": "UGC actors are generated people. They can’t imitate, look like or sound like a real person or celebrity: describe the kind of person you want instead."
     },
     "options": {
       "platforms": "Platforms",
@@ -684,6 +689,40 @@
         "empty": "The file is empty.",
         "tooLarge": "Videos can be at most {max, number} MB."
       }
+    },
+    "ugc": {
+      "title": "UGC actor",
+      "intro": "A generated actor talks to camera about your product, like a review filmed on a phone.",
+      "allowance": "UGC video · uses {count, number} of your videos",
+      "product": "Product (optional)",
+      "productPlaceholder": "e.g. Oat latte kit",
+      "productImage": "Product photo (optional)",
+      "productImageHint": "The actor holds this product. Pick one of your own photos.",
+      "look": "Actor look (optional)",
+      "age": "Age",
+      "gender": "Person",
+      "setting": "Setting",
+      "any": "Any",
+      "ages": {
+        "18-24": "18–24",
+        "25-34": "25–34",
+        "35-44": "35–44",
+        "45-60": "45–60"
+      },
+      "genders": {
+        "woman": "Woman",
+        "man": "Man"
+      },
+      "settings": {
+        "kitchen": "Kitchen",
+        "living_room": "Living room",
+        "car": "In the car",
+        "outdoors": "Outdoors",
+        "bathroom": "Bathroom",
+        "desk": "At a desk",
+        "shop": "Shop counter"
+      },
+      "disclosure": "Actors are AI-generated people, never real ones, and every UGC video carries the AI-generated label. A brief that asks for a real person or celebrity is refused."
     }
   },
   "review": {
@@ -1072,7 +1111,8 @@
         "MOTION_GRAPHICS": "motion graphics",
         "USER_UPLOAD": "user upload",
         "TEXT_CARD": "text card",
-        "TRANSITION": "transition"
+        "TRANSITION": "transition",
+        "UGC_ACTOR": "ugc actor"
       }
     },
     "swap": {
@@ -1155,6 +1195,15 @@
       "continue": "Continue anyway",
       "continueHint": "The video is made as briefed, including these topics.",
       "noPermission": "Someone who can edit projects needs to continue or change the brief."
+    },
+    "ugcRefused": {
+      "title": "Describe the actor without naming a real person",
+      "body": "UGC actors are generated people. They can’t imitate, look like or sound like a real person, celebrity or public figure. Rewrite the brief and generate again.",
+      "noPermission": "Someone who can edit projects can rewrite the brief."
+    },
+    "actorFallback": {
+      "aria": "Actor not available",
+      "note": "The actor wasn’t available for some moments of this video, so they use narrated clips instead."
     }
   },
   "slideshow": {
@@ -3788,7 +3837,8 @@
       "scan_pages_skipped": "{count, plural, one {# page could not be read and was skipped.} other {# pages could not be read and were skipped.}}",
       "scan_images_skipped": "{count, plural, one {# image on your site could not be downloaded and was skipped.} other {# images on your site could not be downloaded and were skipped.}}",
       "stock_not_configured": "Stock photos could not be added: no stock photo service is set up yet.",
-      "stock_unavailable": "Some stock photos could not be added this time. Use Refresh stock in the image library to try again."
+      "stock_unavailable": "Some stock photos could not be added this time. Use Refresh stock in the image library to try again.",
+      "ugc_real_person_refused": "This UGC brief asked for a real person or celebrity. Actors are generated people: describe the kind of person you want instead."
     },
     "classes": {
       "rate_limited": "too many requests",
@@ -5196,7 +5246,9 @@
       },
       "noAccountsNotice": "No connected accounts: the posts are made and saved for your review instead of being scheduled. Connect an account to have them posted at their times.",
       "someWithoutAccount": "Made but not posted automatically (no connected account): {platforms}.",
-      "connectAccount": "Connect an account"
+      "connectAccount": "Connect an account",
+      "ugcActors": "Make testimonial and product videos with UGC actors",
+      "ugcActorsHint": "A generated actor talks about your product. Each of these videos uses {count, number} of your videos. English only."
     },
     "allowance": {
       "title": "This month",

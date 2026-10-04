@@ -66,6 +66,15 @@ export function evaluateAudioSync(
       return;
     }
     const clip = shot.voiceClipSec ?? 0;
+    // 21.4: a UGC actor's line is the clip's own audio, which cannot be trimmed or re-paced: it
+    // passes when the last spoken word ends inside the shot.
+    if (shot.speech === 'clip') {
+      if (fit.voiceSec > shot.lengthSec + FIT_SLACK_SEC)
+        problem(
+          `the actor's line runs ${fit.voiceSec.toFixed(2)}s in a ${shot.lengthSec.toFixed(2)}s shot`,
+        );
+      return;
+    }
     if (fit.strategy === 'trim') {
       if (!fit.wordBoundary) problem('narration cut without word timing');
       else {

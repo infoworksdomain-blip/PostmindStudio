@@ -26,7 +26,7 @@ import { goldenWebsite } from './website-fixture';
 // generates at most four AI clips (each requested at ≤ 4 s, 720p); the other shots become the
 // business's / stock images with a Ken Burns move, or a motion-graphics card when no image is
 // found; no image is generated; and the video passes the quality gate to READY_FOR_REVIEW.
-// A BASIC short asks the provider for 480p.
+// A BASIC short asks the provider for 720p (21.3; 480p before).
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const HOOK_TIMEOUT_MS = 120_000;
@@ -213,7 +213,7 @@ describe.skipIf(!hasDb)('golden: AI clip budget (20.25)', { timeout: 180_000 }, 
     );
   });
 
-  it('CB-02 BASIC 15 s short: two AI clips, requested at 480p', async () => {
+  it('CB-02 BASIC 15 s short: two AI clips, requested at 720p (21.3)', async () => {
     const j = startJourney(db, 'cb02', {
       script: allAiScript(5, 3),
       transcriptWords: WORDS,
@@ -242,7 +242,8 @@ describe.skipIf(!hasDb)('golden: AI clip budget (20.25)', { timeout: 180_000 }, 
     const done = await getProject(j, id);
     expect(done.state, done.errorReason ?? '').toBe('READY_FOR_REVIEW');
     expect(seedance.requests).toHaveLength(2);
-    for (const r of seedance.requests) expect(r).toMatchObject({ resolution: '480p' });
+    // 21.3: every tier asks for 720p HD (BASIC's 480p is dropped).
+    for (const r of seedance.requests) expect(r).toMatchObject({ resolution: '720p' });
     expect(j.h.adapters.runway.requests).toEqual([]);
   });
 });

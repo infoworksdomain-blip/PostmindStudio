@@ -20,6 +20,7 @@ The gate still works: if a fill-in marker (two square brackets around a name) is
 - **Hosting:** Hetzner Online GmbH, Helsinki, Finland (EU), data centre `hel1` (privacy 7.1, dpa 10.1 and Annex 2, subprocessors).
 - **International transfers:** for every provider that processes personal data in the United States, Singapore, Malaysia or Australia, the texts state the European Commission's Standard Contractual Clauses with the UK International Data Transfer Addendum, as incorporated in that provider's data processing terms, together with a transfer risk assessment kept on file (privacy 7.2, dpa 10.2, subprocessors). No Data Privacy Framework certification is claimed. Keep the transfer risk assessments on file and refresh them when a provider or its terms change.
 - **AI presenters:** HeyGen shots use one licensed stock presenter chosen by us (`HEYGEN_AVATAR_ID`); there is no customer photo upload (acceptable-use 2.4, subprocessors). Reword 2.4 if customer-photo presenters are ever added.
+- **UGC actors (21.4):** generated people from Google Veo (Gemini API), never real or look-alike people; briefs asking for a real person are refused and every UGC video carries the AI label (acceptable-use 2.6; sub-processors Veo row; privacy 5.1).
 
 ## Facts in the texts that come from settings
 

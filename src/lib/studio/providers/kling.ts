@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { ConfigurationError, NotImplementedError, ProviderError } from '../../errors';
 import { httpJson } from './http';
 import type {
+  ActorVideoRequest,
   AspectRatio,
   ProviderAdapter,
   ProviderCapability,
@@ -78,6 +79,21 @@ export const KLING_MODELS = {
 } as const;
 export type KlingModel = keyof typeof KLING_MODELS;
 export const DEFAULT_KLING_MODEL: KlingModel = 'kling-3.0';
+
+/**
+ * BACKLOG 21.4 — UGC actor clips (`actor_video`) WITH native audio, opt-in (KLING_UGC_ACTOR=1):
+ * pricing page (https://kling.ai/document-api/pricing/base/video, read 2026-10-04), "Kling 3.0 …
+ * Native Audio" without voice control: 720p 0.9 units = $0.126/s, 1080p 1.2 units = $0.168/s.
+ * settings.audio "native" is documented on the text-to-video page; how to write dialogue and how
+ * well lips follow it are NOT documented, so this is the fallback behind Veo and stays off until
+ * the operator has judged a few clips (plans/phase-21-ugc.md). The product image is not sent:
+ * text-to-video has no reference input and a first frame would open the clip on the photo.
+ */
+export const KLING_NATIVE_AUDIO_USD_PER_SEC: Readonly<Record<'720p' | '1080p', number>> = {
+  '720p': 0.126,
+  '1080p': 0.168,
+};
+export const KLING_UGC_ACTOR_ENV = 'KLING_UGC_ACTOR';
 
 /** 4k (3.0 units/s = $0.42/s) is documented but deliberately not offered. */
 export const KLING_RESOLUTIONS = ['720p', '1080p'] as const;
@@ -197,7 +213,11 @@ export function klingDuration(durationSec: number): number {
  */
 export function klingOptionsFromEnv(
   env: Record<string, string | undefined>,
-): Pick<KlingAdapterOptions, 'model' | 'resolution' | 'baseUrl'> {
+): Pick<KlingAdapterOptions, 'model' | 'resolution' | 'baseUrl' | 'actorVideo'> {
+  const actor = env[KLING_UGC_ACTOR_ENV]?.trim() ?? '';
+  if (actor && actor !== '0' && actor !== '1') {
+    throw new ConfigurationError(`${KLING_UGC_ACTOR_ENV} must be 1, 0 or empty`);
+  }
   const model = env[KLING_MODEL_ENV]?.trim() ?? '';
   const resolution = env[KLING_RESOLUTION_ENV]?.trim() ?? '';
   const baseUrl = env[KLING_BASE_URL_ENV]?.trim() ?? '';
@@ -218,6 +238,7 @@ export function klingOptionsFromEnv(
     ...(model && { model: model as KlingModel }),
     ...(resolution && { resolution: resolution as KlingResolution }),
     ...(baseUrl && { baseUrl: baseUrl.replace(/\/$/, '') }),
+    ...(actor === '1' && { actorVideo: true }),
   };
 }
 
@@ -227,6 +248,8 @@ export interface KlingAdapterOptions {
   model?: KlingModel;
   resolution?: KlingResolution;
   baseUrl?: string;
+  /** 21.4: also make UGC actor clips with native audio (KLING_UGC_ACTOR=1). */
+  actorVideo?: boolean;
   fetchImpl?: typeof fetch;
   now?: () => number;
 }
@@ -333,7 +356,7 @@ const TASK_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 export class KlingAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
-  readonly capabilities: readonly ProviderCapability[] = ['text_to_video', 'image_to_video'];
+  readonly capabilities: readonly ProviderCapability[];
   readonly typicalLatencySec = TYPICAL_LATENCY_SEC;
   readonly model: KlingModel;
   readonly resolution: KlingResolution;
@@ -348,6 +371,9 @@ export class KlingAdapter implements ProviderAdapter {
     this.resolution = options.resolution ?? DEFAULT_KLING_RESOLUTION;
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
     this.authKind = options.credentials.kind;
+    this.capabilities = options.actorVideo
+      ? ['text_to_video', 'image_to_video', 'actor_video']
+      : ['text_to_video', 'image_to_video'];
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? Date.now;
   }
@@ -393,6 +419,14 @@ export class KlingAdapter implements ProviderAdapter {
 
   /** Router hint: Kling 3.0 renders 3–15 s; shorter shots render 3 s and are trimmed. */
   supportsRequest(request: ProviderRequest): boolean {
+    if (request.capability === 'actor_video') {
+      return (
+        Boolean(this.options.actorVideo) &&
+        request.spokenLine.trim().length > 0 &&
+        request.durationSec >= MIN_SHOT_SEC &&
+        request.durationSec <= MAX_CLIP_SEC
+      );
+    }
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') {
       return false;
     }
@@ -400,6 +434,12 @@ export class KlingAdapter implements ProviderAdapter {
   }
 
   estimateCostPence(request: ProviderRequest): number {
+    if (request.capability === 'actor_video') {
+      return usdToPence(
+        klingDuration(request.durationSec) * KLING_NATIVE_AUDIO_USD_PER_SEC[this.resolution],
+        this.options.usdToGbpRate,
+      );
+    }
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') return 0;
     return usdToPence(
       klingDuration(request.durationSec) * this.usdPerSec(),
@@ -409,6 +449,7 @@ export class KlingAdapter implements ProviderAdapter {
 
   /** The create-task path and body for a shot (exported shape for tests and reviews). */
   buildRequest(request: ProviderRequest): { path: string; body: Record<string, unknown> } {
+    if (request.capability === 'actor_video') return this.buildActorRequest(request);
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') {
       throw this.invalid(`Kling adapter does not support ${request.capability}`);
     }
@@ -447,6 +488,38 @@ export class KlingAdapter implements ProviderAdapter {
         ],
         settings,
         options,
+      },
+    };
+  }
+
+  /**
+   * 21.4: a UGC actor clip as text-to-video with settings.audio "native". The line is quoted in
+   * the prompt (Kling documents no dialogue syntax; quoting is the common convention).
+   */
+  private buildActorRequest(request: ActorVideoRequest): {
+    path: string;
+    body: Record<string, unknown>;
+  } {
+    if (!this.supportsRequest(request)) {
+      throw this.invalid('Kling actor clips are off (KLING_UGC_ACTOR) or the shot is invalid');
+    }
+    const line = request.spokenLine.replace(/\s+/g, ' ').replace(/"/g, "'").trim();
+    const prompt = `${request.prompt.trim()}\nThe person speaks directly to the camera and says: "${line}"`;
+    if (prompt.length > MAX_PROMPT_CHARS) {
+      throw this.invalid(`Kling prompts must be 1–${MAX_PROMPT_CHARS} characters`);
+    }
+    return {
+      path: `/text-to-video/${this.model}`,
+      body: {
+        prompt,
+        settings: {
+          multi_shot: false,
+          audio: 'native',
+          resolution: this.resolution,
+          duration: klingDuration(request.durationSec),
+          aspect_ratio: KLING_RATIO[request.aspectRatio],
+        },
+        options: { watermark_info: { enabled: false } },
       },
     };
   }

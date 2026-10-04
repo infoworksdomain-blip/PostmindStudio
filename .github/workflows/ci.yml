@@ -156,7 +156,7 @@ jobs:
         run: |
           mkdir -p ops/results/pipeline-e2e
           status=0
-          for scenario in full-brief slideshow failover-429 failover-credits cost-cap-project cost-cap-org; do
+          for scenario in full-brief slideshow failover-429 failover-credits cost-cap-project cost-cap-org ugc-actor; do
             echo "::group::$scenario"
             node -e "const R=require('ioredis');const r=new R(process.env.REDIS_URL);r.flushdb().then(()=>r.quit())"
             npx tsx scripts/qa/pipeline-e2e.ts --scenario "$scenario" --timeout-min 6 || status=1

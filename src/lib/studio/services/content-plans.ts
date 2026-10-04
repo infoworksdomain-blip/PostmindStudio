@@ -45,6 +45,8 @@ import { DEFAULT_LANGUAGE, languageInput } from '../languages';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { MAX_SCHEDULE_AHEAD_DAYS } from '../schedule-window';
+import { planUsesUgcActors } from '../ugc/plan-month';
+import { isUgcLanguage } from '../ugc/style';
 import { businessIdParam } from './businesses';
 import { PLATFORMS, toPlanTier } from './catalog';
 import { heldSlots, parseSlots } from './drip-queue';
@@ -92,6 +94,11 @@ export const createPlanInput = z
     timezone: timezone.optional(),
     language: languageInput.optional(),
     brandKitId: z.string().trim().min(1).max(64).optional(),
+    /**
+     * 21.4: make the plan's testimonial and product videos as UGC actor videos (STANDARD and
+     * above, English). Stored in metadata.ugcActors; content-plan-run.ts projectBodyFor applies it.
+     */
+    ugcActors: z.boolean().default(false),
   })
   .strict();
 
@@ -194,6 +201,7 @@ export function publicPlan(plan: PlanWithItems) {
     })),
     language: plan.language,
     brandKitId: plan.brandKitId,
+    ugcActors: planUsesUgcActors(plan),
     requestedCount: plan.requestedCount,
     cappedReason: plan.cappedReason,
     holdReason: plan.holdReason,
@@ -346,6 +354,10 @@ export async function createPlan(
   await assertDraftQuota(deps.db, tenant.organisationId, now);
   assertPlatformsAllowed(tier, input.platforms, deps.env);
   await assertTargets(deps.db, tenant, input.platforms, input.targets);
+  if (input.ugcActors) {
+    if (!isUgcLanguage(input.language ?? DEFAULT_LANGUAGE))
+      throw new ValidationError('UGC actors speak English only for now', { field: 'language' });
+  }
   if (input.brandKitId) {
     const kit = await deps.db.brandKit.findFirst({
       where: { id: input.brandKitId, organisationId: tenant.organisationId },
@@ -434,7 +446,7 @@ export async function createPlan(
       planTier: tier,
       requestedCount: skeleton.length,
       cappedReason: capped.cappedReason,
-      metadata: { draftRunId: runId },
+      metadata: { draftRunId: runId, ...(input.ugcActors && { ugcActors: true }) },
       items: {
         create: skeleton.slice(0, capped.count).map((s, position) => ({
           organisationId: tenant.organisationId,

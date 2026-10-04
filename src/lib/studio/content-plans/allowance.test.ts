@@ -31,11 +31,11 @@ describe('20.9 plan allowance and cost', () => {
     expect(typicalItemCostPence('VIDEO', 'ENTERPRISE')).toBe(240);
     expect(typicalItemCostPence('SLIDESHOW', 'BASIC')).toBe(DEFAULT_SLIDESHOW_BUDGET_PENCE);
     expect(maxItemCostPence('VIDEO')).toBe(DEFAULT_SHORT_FORM_BUDGET_PENCE);
-    // 20.25: a video's "up to" is its tier's default project budget (STANDARD £4).
-    expect(maxItemCostPence('VIDEO', 'STANDARD')).toBe(400);
+    // 20.25 / 21.3: a video's "up to" is its tier's default project budget (STANDARD £5).
+    expect(maxItemCostPence('VIDEO', 'STANDARD')).toBe(500);
     expect(estimateCost(['VIDEO', 'SLIDESHOW'], 'STANDARD')).toEqual({
       typicalPence: 241 + DEFAULT_SLIDESHOW_BUDGET_PENCE,
-      maxPence: 400 + DEFAULT_SLIDESHOW_BUDGET_PENCE,
+      maxPence: 500 + DEFAULT_SLIDESHOW_BUDGET_PENCE,
     });
   });
 

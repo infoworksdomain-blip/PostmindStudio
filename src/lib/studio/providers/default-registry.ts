@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { ConfigurationError } from '../../errors';
+import { logger } from '../../logger';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { AnthropicAdapter } from './anthropic';
 import { ElevenLabsAdapter } from './elevenlabs';
@@ -143,12 +144,22 @@ export function buildAdaptersFromKeys(
   }
 
   // BACKLOG 20.23: BytePlus ModelArk Seedance — the first AI_CLIP option on every tier
-  // (router.ts). SEEDANCE_MODEL, SEEDANCE_LONG_MODEL and BYTEPLUS_ARK_BASE_URL are optional
-  // (seedance.ts defaults).
+  // (router.ts). SEEDANCE_MODEL, SEEDANCE_FULL_MODEL (21.3), SEEDANCE_LONG_MODEL and
+  // BYTEPLUS_ARK_BASE_URL are optional (seedance.ts defaults). A full-model refusal that falls
+  // back to Mini is logged for the operator (the account alert fires only if Mini fails too).
   const seedanceKey = keys.seedance?.apiKey;
   if (seedanceKey) {
     adapters.push(
-      new SeedanceAdapter({ apiKey: seedanceKey, usdToGbpRate, ...seedanceOptionsFromEnv(env) }),
+      new SeedanceAdapter({
+        apiKey: seedanceKey,
+        usdToGbpRate,
+        ...seedanceOptionsFromEnv(env),
+        onFullModelFallback: (event) =>
+          logger.warn(
+            { providerId: 'seedance', ...event },
+            'Seedance full model refused; using the default model (activate or top up in ModelArk)',
+          ),
+      }),
     );
   }
 

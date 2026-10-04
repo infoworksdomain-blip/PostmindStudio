@@ -523,7 +523,8 @@
       "heading": {
         "BRIEF": "视频的主题是什么？",
         "SLIDESHOW": "幻灯片的主题是什么？",
-        "UPLOAD": "上传您的视频"
+        "UPLOAD": "上传您的视频",
+        "UGC": "演员应该讲些什么？"
       },
       "uploadChoose": "选择视频",
       "uploadReplace": "替换视频",
@@ -540,7 +541,8 @@
       "sources": {
         "BRIEF": "视频",
         "SLIDESHOW": "幻灯片",
-        "UPLOAD": "上传视频"
+        "UPLOAD": "上传视频",
+        "UGC": "UGC 演员"
       },
       "templatedNote": "平台和时长由模板决定。上方文字为选填，可为模板大纲补充具体内容。",
       "noBusiness": {
@@ -571,7 +573,10 @@
       "budgetRange": "预算必须介于 {min} 和 {max} 之间。",
       "scheduleTooFar": "最多只能提前 {days, number} 天排期。",
       "autoPublishNoMatchingAccount": "您已连接的账号都不能发布到所选平台。请添加 {platforms}、连接其他账号，或关闭自动发布。",
-      "scheduleNeedsAccount": "排期的帖子会自动发布，因此需要为所选平台之一连接账号。请连接一个账号，或清除排期。"
+      "scheduleNeedsAccount": "排期的帖子会自动发布，因此需要为所选平台之一连接账号。请连接一个账号，或清除排期。",
+      "ugcEnglishOnly": "UGC 演员目前只说英语：请将视频语言设为英语。",
+      "ugcShortOnly": "UGC 演员视频为短视频：请选择“短”。",
+      "ugcRealPerson": "UGC 演员是生成的人物，不能模仿真人或名人，也不能长得像或听起来像他们：请改为描述您想要的人物类型。"
     },
     "options": {
       "platforms": "平台",
@@ -684,6 +689,40 @@
         "empty": "文件为空。",
         "tooLarge": "视频最大为 {max, number} MB。"
       }
+    },
+    "ugc": {
+      "title": "UGC 演员",
+      "intro": "由 AI 生成的演员对着镜头介绍您的产品，就像用手机拍摄的测评。",
+      "allowance": "UGC 视频 · 占用 {count, number} 个视频额度",
+      "product": "产品（可选）",
+      "productPlaceholder": "例如：燕麦拿铁套装",
+      "productImage": "产品照片（可选）",
+      "productImageHint": "演员会手持此产品。请从您自己的照片中选择一张。",
+      "look": "演员形象（可选）",
+      "age": "年龄",
+      "gender": "人物",
+      "setting": "场景",
+      "any": "不限",
+      "ages": {
+        "18-24": "18–24",
+        "25-34": "25–34",
+        "35-44": "35–44",
+        "45-60": "45–60"
+      },
+      "genders": {
+        "woman": "女性",
+        "man": "男性"
+      },
+      "settings": {
+        "kitchen": "厨房",
+        "living_room": "客厅",
+        "car": "车内",
+        "outdoors": "户外",
+        "bathroom": "浴室",
+        "desk": "书桌前",
+        "shop": "店铺柜台"
+      },
+      "disclosure": "演员均为 AI 生成的人物，绝非真人，每个 UGC 视频都带有“AI 生成”标签。要求真人或名人的需求说明会被拒绝。"
     }
   },
   "review": {
@@ -1072,7 +1111,8 @@
         "MOTION_GRAPHICS": "动态图形",
         "USER_UPLOAD": "用户上传",
         "TEXT_CARD": "文字卡片",
-        "TRANSITION": "转场"
+        "TRANSITION": "转场",
+        "UGC_ACTOR": "UGC 演员"
       }
     },
     "swap": {
@@ -1155,6 +1195,15 @@
       "continue": "仍然继续",
       "continueHint": "将按简报制作视频，包括这些话题。",
       "noPermission": "需要有项目编辑权限的人继续或修改简报。"
+    },
+    "ugcRefused": {
+      "title": "描述演员时请勿提及真人姓名",
+      "body": "UGC 演员是生成的人物，不能模仿真人、名人或公众人物，也不能长得像或听起来像他们。请重写需求说明后重新生成。",
+      "noPermission": "有权编辑项目的成员可以重写需求说明。"
+    },
+    "actorFallback": {
+      "aria": "演员不可用",
+      "note": "此视频的部分片段中演员不可用，因此这些片段改用带旁白的视频片段。"
     }
   },
   "slideshow": {
@@ -3788,7 +3837,8 @@
       "scan_pages_skipped": "{count, plural, other {有 # 个页面无法读取，已跳过。}}",
       "scan_images_skipped": "{count, plural, other {你网站上有 # 张图片无法下载，已跳过。}}",
       "stock_not_configured": "无法添加图库照片：尚未设置图库照片服务。",
-      "stock_unavailable": "这次有些图库照片无法添加。请在图片库中点击“刷新图库”重试。"
+      "stock_unavailable": "这次有些图库照片无法添加。请在图片库中点击“刷新图库”重试。",
+      "ugc_real_person_refused": "此 UGC 需求说明要求真人或名人。演员是生成的人物：请改为描述您想要的人物类型。"
     },
     "classes": {
       "rate_limited": "请求过多",
@@ -5196,7 +5246,9 @@
       },
       "noAccountsNotice": "没有已连接的账号：帖子会制作完成并保存以供您审核，而不会排期发布。连接账号后，帖子会按时发布。",
       "someWithoutAccount": "会制作但不会自动发布（没有已连接的账号）：{platforms}。",
-      "connectAccount": "连接账号"
+      "connectAccount": "连接账号",
+      "ugcActors": "用 UGC 演员制作推荐和产品视频",
+      "ugcActorsHint": "由 AI 生成的演员介绍您的产品。每个此类视频占用 {count, number} 个视频额度。仅限英语。"
     },
     "allowance": {
       "title": "本月",

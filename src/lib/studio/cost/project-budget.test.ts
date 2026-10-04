@@ -8,6 +8,7 @@ import {
   isLongForm,
   longFormBudgetPence,
   shortFormBudgetPence,
+  TIER_BUDGET_FLOOR_PENCE,
 } from './project-budget';
 
 describe('defaultProjectBudgetPence (operator decision 2)', () => {
@@ -52,16 +53,16 @@ describe('defaultProjectBudgetPence (operator decision 2)', () => {
   });
 });
 
-describe('per-tier defaults (20.25: normal videos never reach the 90% pause)', () => {
-  it('short form: BASIC £3.50, STANDARD £4, PLUS and ENTERPRISE £6 (2.5 × the typical cost)', () => {
-    expect(shortFormBudgetPence('BASIC')).toBe(350);
-    expect(shortFormBudgetPence('STANDARD')).toBe(400);
-    expect(shortFormBudgetPence('PLUS')).toBe(600);
-    expect(shortFormBudgetPence('ENTERPRISE')).toBe(600);
+describe('per-tier defaults (20.25 / 21.3: normal videos never reach the 90% pause)', () => {
+  it('short form (21.3 full model at 720p): BASIC and STANDARD £5, PLUS and ENTERPRISE £7', () => {
+    expect(shortFormBudgetPence('BASIC')).toBe(500);
+    expect(shortFormBudgetPence('STANDARD')).toBe(500);
+    expect(shortFormBudgetPence('PLUS')).toBe(700);
+    expect(shortFormBudgetPence('ENTERPRISE')).toBe(700);
     expect(shortFormBudgetPence()).toBe(DEFAULT_SHORT_FORM_BUDGET_PENCE);
   });
 
-  it('long form: £30, PLUS and ENTERPRISE £45', () => {
+  it('long form: £30, PLUS and ENTERPRISE £45 (unchanged by 21.3)', () => {
     expect(longFormBudgetPence('BASIC')).toBe(3_000);
     expect(longFormBudgetPence('STANDARD')).toBe(3_000);
     expect(longFormBudgetPence('PLUS')).toBe(4_500);
@@ -69,10 +70,17 @@ describe('per-tier defaults (20.25: normal videos never reach the 90% pause)', (
     expect(longFormBudgetPence()).toBe(DEFAULT_LONG_FORM_BUDGET_PENCE);
   });
 
+  it('the floors raise only the short-form defaults', () => {
+    for (const tier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(TIER_BUDGET_FLOOR_PENCE[tier].long).toBe(0);
+    }
+    expect(TIER_BUDGET_FLOOR_PENCE.ENTERPRISE).toEqual(TIER_BUDGET_FLOOR_PENCE.PLUS);
+  });
+
   it('applies the tier by format and leaves slideshows at £1.50', () => {
     const short = [{ platform: 'tiktok', durationSec: 30 }];
     const long = [{ platform: 'youtube', durationSec: 360 }];
-    expect(defaultProjectBudgetPence(short, 'BRIEF', 'STANDARD')).toBe(400);
+    expect(defaultProjectBudgetPence(short, 'BRIEF', 'STANDARD')).toBe(500);
     expect(defaultProjectBudgetPence(long, 'BRIEF', 'PLUS')).toBe(4_500);
     expect(defaultProjectBudgetPence(short, 'SLIDESHOW', 'PLUS')).toBe(150);
   });

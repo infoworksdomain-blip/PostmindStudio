@@ -26,6 +26,8 @@ export const compositionSummarySchema = z.object({
       treatment: z.string(),
       /** Length of the narration clip laid on the timeline (null = no narration). */
       voiceClipSec: z.number().nullable(),
+      /** 21.4: 'clip' = the speech is the clip's own audio (a UGC actor); absent = narration. */
+      speech: z.literal('clip').optional(),
     }),
   ),
   brand: z.object({

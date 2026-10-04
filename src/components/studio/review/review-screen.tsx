@@ -32,9 +32,11 @@ import { VariantCard } from './variant-card';
 import { BudgetRaise, isProjectBudgetPause } from './budget-raise';
 import { DirectionsPanel, needsDirection } from './directions-panel';
 import { needsTopicConfirmation, RestrictedTopicsPanel } from './restricted-topics-panel';
+import { needsUgcRewrite, UgcRefusedPanel } from './ugc-refused-panel';
 import {
   AutoResumeNote,
   FallbackNote,
+  ActorFallbackNote,
   PresenterFallbackNote,
   QueuedNote,
   SafetyReviewNote,
@@ -151,6 +153,8 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         {/* 20.18: the brief was too vague — choose a suggested direction or add detail. */}
         {needsDirection(project) && <DirectionsPanel project={project} onChanged={refresh} />}
         {/* 20.18 (spec 13.3): restricted topics found — continue anyway or edit the brief. */}
+        {/* 21.4: a UGC brief asked for a real person — rewrite it. */}
+        {needsUgcRewrite(project) && <UgcRefusedPanel project={project} onChanged={refresh} />}
         {needsTopicConfirmation(project) && (
           <RestrictedTopicsPanel project={project} onChanged={refresh} />
         )}
@@ -168,6 +172,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         <SafetyReviewNote project={project} />
         <FallbackNote project={project} />
         <PresenterFallbackNote project={project} />
+        <ActorFallbackNote project={project} />
         <ApprovalStepIndicator project={project} />
         <ApprovalBar project={project} onChanged={refresh} />
         <AutomationPanel project={project} onChanged={refresh} />

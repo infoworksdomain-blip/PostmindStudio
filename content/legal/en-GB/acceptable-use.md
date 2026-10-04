@@ -40,6 +40,8 @@ You must not use the Service to create, upload, store, publish or share content 
 
 2.5 You must not publish AI-generated people or presenters in a way that leads viewers to believe they are real people, where the law or a Connected Platform requires disclosure.
 
+2.6 **UGC actor videos.** The actors in UGC actor videos are AI-generated people made by our provider for each video; they are not real people and are not modelled on anyone. You must not ask for an actor who is, imitates, looks like or sounds like a real, identifiable person, including a celebrity, a public figure or yourself; the Service refuses such briefs. UGC actor videos always carry the AI-generated label, and you must not present an actor's review or testimonial as that of a real customer.
+
 ## 3. Elections, public health and deception
 
 3.1 You must not create or publish content that is intended to mislead people about elections, referendums or voting (for example how, when or where to vote, or who is eligible), content that impersonates candidates, parties, officials or public bodies, or undisclosed paid political advertising.

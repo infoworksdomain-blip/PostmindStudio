@@ -374,8 +374,38 @@ export const WHATS_NEW: WhatsNewGroup[] = [
     ],
   },
   {
-    id: 'phase-21-5',
+    id: 'phase-21',
     index: '07',
+    title: 'Phase 21 — UGC actor videos',
+    intro:
+      'A generated creator talks to camera about your product, like a review filmed on a phone. The actor speaks every line with lips in sync; there is no separate voice-over.',
+    scene: 'kitchen',
+    items: [
+      {
+        ref: '21.4',
+        title: 'UGC actor on Create',
+        line: 'Create → Options → “UGC actor”: optionally name the product, pick its photo from your image library and choose the actor’s age, person and setting. A UGC video uses 2 of your videos. Briefs that ask for a real person or celebrity are refused.',
+        see: [{ href: '#/new', label: 'Create: Options, then “UGC actor”' }],
+      },
+      {
+        ref: '21.4',
+        title: 'A UGC video ready for review',
+        line: 'Three actor clips (the same generated person each time), a product still and an end card, captioned from what the actor says, with the AI-generated label on.',
+        see: [
+          { href: project(PROJECTS.ugcReview.id), label: 'Review: Creator review: the bread box' },
+        ],
+      },
+      {
+        ref: '21.4',
+        title: 'UGC in Plan my month',
+        line: 'Tick “Make testimonial and product videos with UGC actors” and the plan’s testimonial and product videos are made with actors.',
+        see: [{ href: '#/plans/new', label: 'Plan my month' }],
+      },
+    ],
+  },
+  {
+    id: 'phase-21-5',
+    index: '08',
     title: 'Phase 21.5 — One plan, paid per channel',
     intro:
       'The tiers are gone: customers pay £29 per channel a month (1–6 social platforms) with 8 short HD videos per channel, weekly or yearly if they prefer, and buy HD video packs when they need more. Customers never see generation cost.',

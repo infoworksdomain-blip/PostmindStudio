@@ -45,6 +45,8 @@ export const FAILURE_CODES = [
   'provider_failure',
   // 20.11: every provider for the job is out (account problem) or held; no provider text shown.
   'service_unavailable',
+  // 21.4: a UGC actor brief asked for a real person or celebrity (ugc/real-person.ts).
+  'ugc_real_person_refused',
 ] as const;
 
 export type FailureCode = (typeof FAILURE_CODES)[number];
@@ -165,6 +167,7 @@ const SERVER_WORDED: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'stock_unavailable',
   'ownership_disputed',
   'service_unavailable',
+  'ugc_real_person_refused',
 ]);
 
 /**
