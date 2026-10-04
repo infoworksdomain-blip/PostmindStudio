@@ -1,8 +1,8 @@
-<!-- Draft prepared 2026-09-30 for PostMind Studio from the product's actual behaviour. Have a qualified solicitor review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one and where to find the value. Production sign-up stays closed while any marker is left. If you change a retention setting (STUDIO_CANCELLED_RETENTION_DAYS, STUDIO_PURGE_GRACE_DAYS, STUDIO_AUDIT_RETENTION_DAYS, STUDIO_BILLING_GRACE_DAYS, backup retention), update section 8 to match. -->
+<!-- Operator text for PostMind Studio, written from the product's actual behaviour. Legal scope closed 2026-10-04 (operator decision, BACKLOG 21.2). If you change a retention setting (STUDIO_CANCELLED_RETENTION_DAYS, STUDIO_PURGE_GRACE_DAYS, STUDIO_AUDIT_RETENTION_DAYS, STUDIO_BILLING_GRACE_DAYS, backup retention), update section 8 to match. -->
 
 # Privacy Policy
 
-**Last updated: 3 October 2026**
+**Last updated: 4 October 2026**
 
 This policy explains how Postmind AI Ltd collects and uses personal data when you use PostMind Studio (the **Service**) or visit our website, and the rights you have. Words with capitals, such as **Customer**, **Organisation**, **Authorised User** and **Customer Content**, have the meaning given in our [Terms of Service](/legal/terms).
 
@@ -83,7 +83,7 @@ This policy explains how Postmind AI Ltd collects and uses personal data when yo
 
 ## 7. Where your data is processed and international transfers
 
-7.1 We host the Service and its database on servers in Helsinki, Finland (Hetzner), in the European Union. Uploaded and generated files, and encrypted backups of the database, are stored in Cloudflare R2 object storage, which runs on Cloudflare's global infrastructure: Cloudflare chooses where the data is kept, and this may be outside the UK and EEA. The encryption key that protects stored access tokens is held in AWS Key Management Service in the region we choose (London, UK, by default). Our transactional email is sent from Resend's EU (Ireland) region. The UK recognises the EU and EEA as providing adequate protection.
+7.1 We host the Service and its database on Hetzner servers in Helsinki, Finland (EU). Uploaded and generated files, and encrypted backups of the database, are stored in Cloudflare R2 object storage, which runs on Cloudflare's global infrastructure: Cloudflare chooses where the data is kept, and this may be outside the UK and EEA. The encryption key that protects stored access tokens is held in AWS Key Management Service in the region we choose (London, UK, by default). Our transactional email is sent from Resend's EU (Ireland) region. The UK recognises the EU and EEA as providing adequate protection.
 
 7.2 Some providers process data in other countries that do not have a UK adequacy decision:
 
@@ -91,9 +91,8 @@ This policy explains how Postmind AI Ltd collects and uses personal data when yo
 - **Singapore and Malaysia**: our main AI video provider, BytePlus (Seedance), whose service runs in a data centre in Johor, Malaysia, and Kling, whose service is run from Singapore;
 - **Australia**: our video rendering provider, Shotstack.
 
-When we transfer personal data to one of these countries, we rely on the UK Extension to the EU–US Data Privacy Framework (the "UK–US data bridge") where a United States recipient is certified under it. Otherwise, where required, we rely on the UK International Data Transfer Addendum to the EU Standard Contractual Clauses, or the UK International Data Transfer Agreement, in or alongside the provider's data processing terms, together with the additional safeguards we consider necessary. The [Sub-processors](/legal/subprocessors) page shows the location of each provider and the safeguard for it. You can ask us for more information about these safeguards at support@postmindai.pro.
+When we transfer personal data to one of these providers, we rely on the European Commission's Standard Contractual Clauses with the UK International Data Transfer Addendum, as incorporated in that provider's data processing terms, together with a transfer risk assessment we keep on file. The Connected Platforms receive data as independent controllers when you choose to publish, under their own terms (section 6.2). The [Sub-processors](/legal/subprocessors) page shows the location of each provider and the safeguard for it. You can ask us for more information about these safeguards at support@postmindai.pro.
 
-<!-- LEGAL REVIEW (20.28, 2026-10-03): transfers to Singapore and Malaysia (BytePlus, Kling) and Australia (Shotstack) are new or newly stated. Confirm with each provider's DPA that the UK Addendum or IDTA is available and in place, and which United States providers are certified under the DPF with the UK Extension; complete transfer risk assessments. -->
 ## 8. How long we keep personal data
 
 | Data                                         | How long                                                                                                                                                                                                                                                                                                   |

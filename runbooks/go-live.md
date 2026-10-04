@@ -88,7 +88,7 @@ Details: [vps-deploy.md](vps-deploy.md) sections 1 and 2.
 ### 2.3 Create the server with your SSH key and firewall
 
 - **Click:** **Servers** (left menu) → **Add server**. Choose:
-  - **Location:** Falkenstein or Nuremberg (Germany).
+  - **Location:** Helsinki (hel1), Finland (EU). Production runs there and the legal pages say so; another location means updating privacy 7.1, DPA 10.1 and Annex 2, and the Sub-processors page first.
   - **Image:** Ubuntu 26.04 (24.04 also works).
   - **Type:** CPX12 (shared x86, 1 vCPU, 2 GB). Not the ARM "CAX" types. If CPX12 is unavailable, pick the next x86 size.
   - **Networking:** public IPv4 on (IPv6 optional).

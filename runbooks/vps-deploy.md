@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **What** | PostMind Studio on ONE Hetzner Cloud server in Germany, with Docker Compose: Caddy (HTTPS), web, one worker for every queue, Postgres 17 + pgvector, Valkey, backups to Cloudflare R2. Staging can run on the same server when you need it. |
+| **What** | PostMind Studio on ONE Hetzner Cloud server in Helsinki, Finland (EU, `hel1`), with Docker Compose: Caddy (HTTPS), web, one worker for every queue, Postgres 17 + pgvector, Valkey, backups to Cloudflare R2. Staging can run on the same server when you need it. |
 | **Check** | `https://<domain>/api/health/ready` = 200; `bash scripts/vps/healthcheck.sh production` says OK; the nightly backup timer succeeds. |
 | **Who** | The operator (Hetzner and Cloudflare consoles, the server, legal text, Stripe, Resend, Google and Meta apps), DevOps (KMS and R2 keys). The Core team only when `STUDIO_MODE=core` (Core URLs and tokens). |
 
@@ -56,8 +56,8 @@ Internet ─► Cloudflare DNS ─► Hetzner Cloud Firewall (22, 80, 443) ─�
 ## 1. Pick the server
 
 **Default: Hetzner CPX12** — 1 shared AMD vCPU, 2 GB RAM, 40 GB NVMe
-([Regular Performance](https://www.hetzner.com/cloud/regular-performance/)), location **Falkenstein
-(fsn1)** or **Nuremberg (nbg1)**, with a public IPv4. Check the current price and whether the type
+([Regular Performance](https://www.hetzner.com/cloud/regular-performance/)), location **Helsinki
+(hel1)**, Finland (EU), where production runs and which the legal pages state, with a public IPv4. Check the current price and whether the type
 can be ordered on Hetzner's site: on 2026-09-29 the product pages showed many sizes as "currently
 unavailable", and the locations page says "Cloud instances may occasionally be unavailable for
 ordering". This runbook quotes no prices.
@@ -120,7 +120,7 @@ In the [Hetzner Console](https://console.hetzner.com):
    - TCP 80 and TCP 443 — any IPv4/IPv6 (Let's Encrypt must reach 80);
    - UDP 443 — any (HTTP/3; optional).
    Leave outbound empty (all allowed). The firewall is enforced on the network, outside the server.
-2. **Servers → Add Server**: location Falkenstein or Nuremberg; image **Ubuntu 26.04** (or 24.04); type
+2. **Servers → Add Server**: location Helsinki (hel1); image **Ubuntu 26.04** (or 24.04); type
    **CPX12**; networking: public IPv4 (and IPv6 if you like); **SSH key: add yours now** — Hetzner:
    "After the server has been created, it is no longer possible to add an SSH key via the Hetzner
    Console"; Firewalls: `studio`; Backups: optional (see section 11); name `postmind-studio-1`.

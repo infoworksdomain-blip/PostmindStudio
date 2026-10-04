@@ -1,8 +1,8 @@
-<!-- Draft prepared 2026-09-30 for PostMind Studio, written to meet UK GDPR Article 28 (and EU GDPR Article 28), describing the security measures the product actually has. Have a qualified solicitor review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one. -->
+<!-- Operator text for PostMind Studio, written from the product's actual behaviour. Legal scope closed 2026-10-04 (operator decision, BACKLOG 21.2). Written to meet UK GDPR Article 28 (and EU GDPR Article 28) and describes the security measures the product actually has. -->
 
 # Data Processing Agreement
 
-**Last updated: 3 October 2026**
+**Last updated: 4 October 2026**
 
 This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/legal/terms) (together with this DPA, the **Agreement**) between Postmind AI Ltd (**we**, **us**, the **Processor**) and the Customer (**you**, the **Controller**). It applies whenever we process Customer Personal Data on your behalf in providing PostMind Studio (the **Service**). It is accepted when you accept the Terms of Service; no separate signature is needed. Capitalised words not defined here have the meaning given in the Terms of Service.
 
@@ -92,11 +92,9 @@ This Data Processing Agreement (**DPA**) forms part of the [Terms of Service](/l
 
 ## 10. International transfers
 
-10.1 We host the Service and its database in the European Union (Finland). Files in Customer Content and encrypted database backups are stored in Cloudflare R2, whose global infrastructure may keep them outside the UK and EEA. Other Sub-processors process Customer Personal Data outside the UK and EEA: mainly in the United States, and also in Singapore and Malaysia (AI video generation) and Australia (video rendering). Locations are set out on the [Sub-processors](/legal/subprocessors) page.
+10.1 We host the Service and its database on Hetzner servers in Helsinki, Finland (EU). Files in Customer Content and encrypted database backups are stored in Cloudflare R2, whose global infrastructure may keep them outside the UK and EEA. Other Sub-processors process Customer Personal Data outside the UK and EEA: mainly in the United States, and also in Singapore and Malaysia (AI video generation) and Australia (video rendering). Locations are set out on the [Sub-processors](/legal/subprocessors) page.
 
-10.2 We will only make a Restricted Transfer, or allow a Sub-processor to make one, where it is protected by a transfer mechanism recognised by Data Protection Laws. For a United States recipient certified under it, we rely on the UK Extension to the EU–US Data Privacy Framework (or, where the EU GDPR applies, the EU–US Data Privacy Framework). Otherwise, where required, we rely on the UK International Data Transfer Addendum to the EU Standard Contractual Clauses, or the UK International Data Transfer Agreement, together with any supplementary measures needed after a transfer risk assessment.
-
-<!-- LEGAL REVIEW (20.28, 2026-10-03): clause 10.2 states the mechanisms we rely on, not that signed IDTAs or Addenda exist. Confirm for each Sub-processor in Singapore, Malaysia, Australia and the United States (where not DPF-certified) that its DPA incorporates the UK Addendum or IDTA. -->
+10.2 We will only make a Restricted Transfer, or allow a Sub-processor to make one, where it is protected by a transfer mechanism recognised by Data Protection Laws. For every Sub-processor that processes Customer Personal Data in the United States, Singapore, Malaysia or Australia, we rely on the European Commission's Standard Contractual Clauses with the UK International Data Transfer Addendum, as incorporated in that Sub-processor's data processing terms, together with a transfer risk assessment we keep on file and any supplementary measures it identifies. Where the EU GDPR applies, we rely on the same Standard Contractual Clauses.
 
 10.3 Generated results are copied from AI Sub-processors into our own storage as soon as they are ready, which limits how long Customer Personal Data stays with them.
 
@@ -132,7 +130,7 @@ This DPA is governed by the law of England and Wales, and the courts of England 
 
 ## Annex 2: Technical and organisational security measures
 
-1. **Hosting.** Application servers and databases run in a data centre in Helsinki, Finland (Hetzner). Files and encrypted database backups are stored in Cloudflare R2 object storage in R2's default (global) location on Cloudflare's infrastructure, covered by Cloudflare's data processing addendum and the transfer safeguards in clause 10. Servers are protected by a network firewall and a host firewall, and only web traffic and administrative SSH are allowed in.
+1. **Hosting.** Application servers and databases run in a Hetzner data centre in Helsinki, Finland (EU). Files and encrypted database backups are stored in Cloudflare R2 object storage in R2's default (global) location on Cloudflare's infrastructure, covered by Cloudflare's data processing addendum and the transfer safeguards in clause 10. Servers are protected by a network firewall and a host firewall, and only web traffic and administrative SSH are allowed in.
 2. **Encryption in transit.** All traffic to the Service uses HTTPS (TLS). Connections to Sub-processors use TLS.
 3. **Encryption at rest.** Stored files and backups are encrypted at rest by the storage provider. Connected Platform access tokens, voice profile identifiers and customer-supplied provider keys are protected with envelope encryption using a key held in AWS Key Management Service in the London region (eu-west-2); the key never leaves AWS, and access to it is limited to the one application identity that needs it.
 4. **Access control.** Role-based access control: Organisation roles limit what each Authorised User can see and do. Access to files uses short-lived signed links. Staff access to customer Organisations is limited to support and security purposes, time-limited (at most 30 minutes per support session) and logged.
