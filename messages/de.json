@@ -473,7 +473,8 @@
       "heading": {
         "BRIEF": "Worum geht es in dem Video?",
         "SLIDESHOW": "Worum geht es in der Diashow?",
-        "UPLOAD": "Laden Sie Ihr Video hoch"
+        "UPLOAD": "Laden Sie Ihr Video hoch",
+        "UGC": "Worüber soll der Darsteller sprechen?"
       },
       "uploadChoose": "Video auswählen",
       "uploadReplace": "Video ersetzen",
@@ -490,7 +491,8 @@
       "sources": {
         "BRIEF": "Video",
         "SLIDESHOW": "Diashow",
-        "UPLOAD": "Video hochladen"
+        "UPLOAD": "Video hochladen",
+        "UGC": "UGC-Darsteller"
       },
       "templatedNote": "Plattformen und Länge werden von der Vorlage vorgegeben. Ihr Text oben ist optional – er ergänzt die Gliederung der Vorlage um Details.",
       "noBusiness": {
@@ -521,7 +523,10 @@
       "budgetRange": "Das Budget muss zwischen {min} und {max} liegen.",
       "scheduleTooFar": "Planen Sie höchstens {days, number} Tage im Voraus.",
       "autoPublishNoMatchingAccount": "Keines Ihrer verbundenen Konten postet auf den gewählten Plattformen. Fügen Sie {platforms} hinzu, verbinden Sie ein weiteres Konto oder deaktivieren Sie die automatische Veröffentlichung.",
-      "scheduleNeedsAccount": "Ein geplanter Beitrag wird automatisch veröffentlicht und braucht daher ein verbundenes Konto für eine der gewählten Plattformen. Verbinden Sie eines oder entfernen Sie den Termin."
+      "scheduleNeedsAccount": "Ein geplanter Beitrag wird automatisch veröffentlicht und braucht daher ein verbundenes Konto für eine der gewählten Plattformen. Verbinden Sie eines oder entfernen Sie den Termin.",
+      "ugcEnglishOnly": "UGC-Darsteller sprechen vorerst nur Englisch: Wählen Sie Englisch als Videosprache.",
+      "ugcShortOnly": "UGC-Darstellervideos sind kurz: Wählen Sie „Kurz“.",
+      "ugcRealPerson": "UGC-Darsteller sind generierte Personen. Sie können keine echte Person oder keinen Prominenten nachahmen, ihnen ähneln oder wie sie klingen: Beschreiben Sie stattdessen, welche Art von Person Sie möchten."
     },
     "options": {
       "platforms": "Plattformen",
@@ -634,6 +639,40 @@
         "empty": "Die Datei ist leer.",
         "tooLarge": "Videos dürfen höchstens {max, number} MB groß sein."
       }
+    },
+    "ugc": {
+      "title": "UGC-Darsteller",
+      "intro": "Ein generierter Darsteller spricht in die Kamera über Ihr Produkt, wie eine mit dem Handy gefilmte Bewertung.",
+      "allowance": "UGC-Video · verbraucht {count, number} Ihrer Videos",
+      "product": "Produkt (optional)",
+      "productPlaceholder": "z. B. Hafer-Latte-Set",
+      "productImage": "Produktfoto (optional)",
+      "productImageHint": "Der Darsteller hält dieses Produkt. Wählen Sie eines Ihrer eigenen Fotos.",
+      "look": "Aussehen des Darstellers (optional)",
+      "age": "Alter",
+      "gender": "Person",
+      "setting": "Umgebung",
+      "any": "Beliebig",
+      "ages": {
+        "18-24": "18–24",
+        "25-34": "25–34",
+        "35-44": "35–44",
+        "45-60": "45–60"
+      },
+      "genders": {
+        "woman": "Frau",
+        "man": "Mann"
+      },
+      "settings": {
+        "kitchen": "Küche",
+        "living_room": "Wohnzimmer",
+        "car": "Im Auto",
+        "outdoors": "Draußen",
+        "bathroom": "Badezimmer",
+        "desk": "Am Schreibtisch",
+        "shop": "Ladentheke"
+      },
+      "disclosure": "Darsteller sind KI-generierte Personen, niemals echte, und jedes UGC-Video trägt den Hinweis „KI-generiert“. Ein Briefing, das eine echte Person oder einen Prominenten verlangt, wird abgelehnt."
     }
   },
   "review": {
@@ -1013,7 +1052,8 @@
         "MOTION_GRAPHICS": "Motion Graphics",
         "USER_UPLOAD": "eigener Upload",
         "TEXT_CARD": "Texttafel",
-        "TRANSITION": "Übergang"
+        "TRANSITION": "Übergang",
+        "UGC_ACTOR": "UGC-Darsteller"
       }
     },
     "swap": {
@@ -1096,6 +1136,15 @@
       "continue": "Trotzdem fortfahren",
       "continueHint": "Das Video wird wie im Briefing erstellt, einschließlich dieser Themen.",
       "noPermission": "Jemand, der Projekte bearbeiten darf, muss fortfahren oder das Briefing ändern."
+    },
+    "ugcRefused": {
+      "title": "Beschreiben Sie den Darsteller, ohne eine echte Person zu nennen",
+      "body": "UGC-Darsteller sind generierte Personen. Sie können keine echte Person, keinen Prominenten und keine Person des öffentlichen Lebens nachahmen, ihnen ähneln oder wie sie klingen. Formulieren Sie das Briefing neu und generieren Sie erneut.",
+      "noPermission": "Jemand, der Projekte bearbeiten darf, kann das Briefing neu formulieren."
+    },
+    "actorFallback": {
+      "aria": "Darsteller nicht verfügbar",
+      "note": "Der Darsteller war für einige Momente dieses Videos nicht verfügbar, daher werden dort Clips mit Sprecherstimme verwendet."
     }
   },
   "slideshow": {
@@ -3724,7 +3773,8 @@
       "scan_pages_skipped": "{count, plural, one {# Seite konnte nicht gelesen werden und wurde übersprungen.} other {# Seiten konnten nicht gelesen werden und wurden übersprungen.}}",
       "scan_images_skipped": "{count, plural, one {# Bild Ihrer Website konnte nicht heruntergeladen werden und wurde übersprungen.} other {# Bilder Ihrer Website konnten nicht heruntergeladen werden und wurden übersprungen.}}",
       "stock_not_configured": "Stockfotos konnten nicht hinzugefügt werden: Es ist noch kein Stockfoto-Dienst eingerichtet.",
-      "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut."
+      "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut.",
+      "ugc_real_person_refused": "Dieses UGC-Briefing verlangte eine echte Person oder einen Prominenten. Darsteller sind generierte Personen: Beschreiben Sie stattdessen, welche Art von Person Sie möchten."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",
@@ -5115,7 +5165,9 @@
       },
       "noAccountsNotice": "Keine verbundenen Konten: Die Beiträge werden erstellt und zu Ihrer Prüfung gespeichert, statt eingeplant zu werden. Verbinden Sie ein Konto, damit sie zu ihrer Zeit gepostet werden.",
       "someWithoutAccount": "Erstellt, aber nicht automatisch gepostet (kein verbundenes Konto): {platforms}.",
-      "connectAccount": "Konto verbinden"
+      "connectAccount": "Konto verbinden",
+      "ugcActors": "Erfahrungsberichte und Produktvideos mit UGC-Darstellern erstellen",
+      "ugcActorsHint": "Ein generierter Darsteller spricht über Ihr Produkt. Jedes dieser Videos verbraucht {count, number} Ihrer Videos. Nur auf Englisch."
     },
     "allowance": {
       "title": "Dieser Monat",

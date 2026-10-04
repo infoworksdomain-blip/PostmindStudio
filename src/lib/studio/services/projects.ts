@@ -7,13 +7,7 @@ import {
   type VideoProjectState,
 } from '@prisma/client';
 import { z } from 'zod';
-import {
-  ConflictError,
-  NotFoundError,
-  PlanTierError,
-  UpstreamServiceError,
-  ValidationError,
-} from '../../errors';
+import { ConflictError, NotFoundError, UpstreamServiceError, ValidationError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import { ACTIVE_PIPELINE_STATES, projectMetadata } from '../pipeline/project-state';
 import { directionOptionsOf, isVagueBriefReason } from '../pipeline/vague-brief';

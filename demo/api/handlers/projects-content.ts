@@ -10,7 +10,8 @@ export type Treatment =
   | 'MOTION_GRAPHICS'
   | 'USER_UPLOAD'
   | 'TEXT_CARD'
-  | 'TRANSITION';
+  | 'TRANSITION'
+  | 'UGC_ACTOR';
 
 export interface ShotContent {
   scene: string;
@@ -47,6 +48,56 @@ const shot = (
 ): ShotContent => ({ treatment, durationSec, kind, scene, camera, voiceover, onScreen });
 
 export const CONTENT: Record<string, ProjectContent> = {
+  // 21.4: a UGC actor video. A generated creator (never a real person) speaks every line on
+  // camera; Veo's own audio is the narration, so no voice-over asset exists for those shots.
+  'prj-ugc-bread-box': {
+    scene: 'kitchen',
+    brief: {
+      hook: 'Okay, my mornings used to be chaos.',
+      keyMessage: 'The weekly bread box turns up fresh every Friday, no queue, no stale loaf.',
+      targetAudience: 'Busy professionals in Leeds who love good bread',
+      tone: 'Warm, honest, conversational',
+    },
+    shots: [
+      shot(
+        'UGC_ACTOR',
+        8,
+        'kitchen',
+        'Holds the bread box up to the phone and smiles.',
+        'Handheld selfie, arm’s length',
+        'Okay, my mornings used to be chaos. Then this box turned up.',
+        null,
+      ),
+      shot(
+        'IMAGE_STILL',
+        3,
+        'sourdough',
+        'The bread box with a sourdough loaf and two buns.',
+        null,
+        null,
+        'Fresh every Friday',
+      ),
+      shot(
+        'UGC_ACTOR',
+        8,
+        'kitchen',
+        'Tears a warm loaf open and shows the crumb to the camera.',
+        'Close selfie',
+        'Look at that crumb. It still smells like the bakery when it arrives.',
+        null,
+      ),
+      shot(
+        'UGC_ACTOR',
+        8,
+        'kitchen',
+        'Points at the camera, relaxed and smiling.',
+        'Handheld selfie',
+        'Honestly, just try one week. The link is right below.',
+        null,
+      ),
+      shot('TEXT_CARD', 3, 'street', 'End card.', null, null, 'Leeds Sourdough · bread box'),
+    ],
+  },
   'prj-spring-menu': {
     scene: 'flatlay',
     brief: {

@@ -355,6 +355,8 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   KLING_RESOLUTION: (v) => (isKlingResolution(v) ? null : 'must be 720p or 1080p (or empty)'),
   KLING_BASE_URL: (v) =>
     isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
+  // 21.4: Kling actor clips with native audio (kling.ts klingOptionsFromEnv).
+  KLING_UGC_ACTOR: (v) => (v === '0' || v === '1' ? null : 'must be 1, 0 or empty'),
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.

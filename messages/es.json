@@ -473,7 +473,8 @@
       "heading": {
         "BRIEF": "¿De qué trata el vídeo?",
         "SLIDESHOW": "¿De qué trata la presentación?",
-        "UPLOAD": "Sube tu vídeo"
+        "UPLOAD": "Sube tu vídeo",
+        "UGC": "¿De qué debe hablar el actor?"
       },
       "uploadChoose": "Elegir un vídeo",
       "uploadReplace": "Sustituir el vídeo",
@@ -490,7 +491,8 @@
       "sources": {
         "BRIEF": "Vídeo",
         "SLIDESHOW": "Presentación",
-        "UPLOAD": "Subir un vídeo"
+        "UPLOAD": "Subir un vídeo",
+        "UGC": "Actor UGC"
       },
       "templatedNote": "Las plataformas y la duración vienen de la plantilla. Tu texto de arriba es opcional: añade detalles al esquema de la plantilla.",
       "noBusiness": {
@@ -521,7 +523,10 @@
       "budgetRange": "El presupuesto debe estar entre {min} y {max}.",
       "scheduleTooFar": "Programa como máximo con {days, number} días de antelación.",
       "autoPublishNoMatchingAccount": "Ninguna de tus cuentas conectadas publica en las plataformas elegidas. Añade {platforms}, conecta otra cuenta o desactiva la publicación automática.",
-      "scheduleNeedsAccount": "Una publicación programada sale automáticamente, así que necesita una cuenta conectada para alguna de las plataformas elegidas. Conecta una o quita la programación."
+      "scheduleNeedsAccount": "Una publicación programada sale automáticamente, así que necesita una cuenta conectada para alguna de las plataformas elegidas. Conecta una o quita la programación.",
+      "ugcEnglishOnly": "Por ahora los actores UGC solo hablan inglés: elige inglés como idioma del vídeo.",
+      "ugcShortOnly": "Los vídeos con actores UGC son cortos: elige Corto.",
+      "ugcRealPerson": "Los actores UGC son personas generadas. No pueden imitar a una persona real o a un famoso, parecerse a ellos ni sonar como ellos: describe el tipo de persona que quieres."
     },
     "options": {
       "platforms": "Plataformas",
@@ -634,6 +639,40 @@
         "empty": "El archivo está vacío.",
         "tooLarge": "Los vídeos pueden ocupar como máximo {max, number} MB."
       }
+    },
+    "ugc": {
+      "title": "Actor UGC",
+      "intro": "Un actor generado habla a cámara sobre tu producto, como una reseña grabada con el móvil.",
+      "allowance": "Vídeo UGC · usa {count, number} de tus vídeos",
+      "product": "Producto (opcional)",
+      "productPlaceholder": "p. ej., kit de latte de avena",
+      "productImage": "Foto del producto (opcional)",
+      "productImageHint": "El actor sostiene este producto. Elige una de tus propias fotos.",
+      "look": "Aspecto del actor (opcional)",
+      "age": "Edad",
+      "gender": "Persona",
+      "setting": "Entorno",
+      "any": "Cualquiera",
+      "ages": {
+        "18-24": "18–24",
+        "25-34": "25–34",
+        "35-44": "35–44",
+        "45-60": "45–60"
+      },
+      "genders": {
+        "woman": "Mujer",
+        "man": "Hombre"
+      },
+      "settings": {
+        "kitchen": "Cocina",
+        "living_room": "Salón",
+        "car": "En el coche",
+        "outdoors": "Al aire libre",
+        "bathroom": "Baño",
+        "desk": "En un escritorio",
+        "shop": "Mostrador de tienda"
+      },
+      "disclosure": "Los actores son personas generadas por IA, nunca reales, y cada vídeo UGC lleva la etiqueta de generado por IA. Se rechaza cualquier briefing que pida una persona real o un famoso."
     }
   },
   "review": {
@@ -1013,7 +1052,8 @@
         "MOTION_GRAPHICS": "gráficos animados",
         "USER_UPLOAD": "archivo subido",
         "TEXT_CARD": "tarjeta de texto",
-        "TRANSITION": "transición"
+        "TRANSITION": "transición",
+        "UGC_ACTOR": "actor UGC"
       }
     },
     "swap": {
@@ -1096,6 +1136,15 @@
       "continue": "Continuar de todos modos",
       "continueHint": "El vídeo se hace según el brief, incluidos estos temas.",
       "noPermission": "Alguien que pueda editar proyectos debe continuar o cambiar el brief."
+    },
+    "ugcRefused": {
+      "title": "Describe al actor sin nombrar a una persona real",
+      "body": "Los actores UGC son personas generadas. No pueden imitar a una persona real, a un famoso o a una figura pública, parecerse a ellos ni sonar como ellos. Reescribe el briefing y vuelve a generar.",
+      "noPermission": "Alguien que pueda editar proyectos puede reescribir el briefing."
+    },
+    "actorFallback": {
+      "aria": "Actor no disponible",
+      "note": "El actor no estuvo disponible en algunos momentos de este vídeo, así que se usan clips con locución."
     }
   },
   "slideshow": {
@@ -3724,7 +3773,8 @@
       "scan_pages_skipped": "{count, plural, one {No se pudo leer # página y se omitió.} many {No se pudieron leer # páginas y se omitieron.} other {No se pudieron leer # páginas y se omitieron.}}",
       "scan_images_skipped": "{count, plural, one {No se pudo descargar # imagen de tu web y se omitió.} many {No se pudieron descargar # imágenes de tu web y se omitieron.} other {No se pudieron descargar # imágenes de tu web y se omitieron.}}",
       "stock_not_configured": "No se pudieron añadir fotos de archivo: todavía no hay ningún servicio de fotos configurado.",
-      "stock_unavailable": "Esta vez no se pudieron añadir algunas fotos de archivo. Usa «Actualizar fotos» en la biblioteca de imágenes para volver a intentarlo."
+      "stock_unavailable": "Esta vez no se pudieron añadir algunas fotos de archivo. Usa «Actualizar fotos» en la biblioteca de imágenes para volver a intentarlo.",
+      "ugc_real_person_refused": "Este briefing UGC pedía una persona real o un famoso. Los actores son personas generadas: describe el tipo de persona que quieres."
     },
     "classes": {
       "rate_limited": "demasiadas solicitudes",
@@ -5115,7 +5165,9 @@
       },
       "noAccountsNotice": "Sin cuentas conectadas: las publicaciones se crean y se guardan para que las revises en lugar de programarse. Conecta una cuenta para que salgan a su hora.",
       "someWithoutAccount": "Se crean pero no se publican automáticamente (sin cuenta conectada): {platforms}.",
-      "connectAccount": "Conectar una cuenta"
+      "connectAccount": "Conectar una cuenta",
+      "ugcActors": "Hacer vídeos de testimonios y de producto con actores UGC",
+      "ugcActorsHint": "Un actor generado habla de tu producto. Cada uno de estos vídeos usa {count, number} de tus vídeos. Solo en inglés."
     },
     "allowance": {
       "title": "Este mes",

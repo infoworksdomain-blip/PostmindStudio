@@ -213,6 +213,36 @@ export const SIM_SCRIPT = {
 };
 
 /**
+ * 21.4: a 30 s UGC actor script (three actor clips that the UGC rules snap to 8 s with a product
+ * image, or 6 s without; a product still and an end card take the rest).
+ */
+export const SIM_UGC_SCRIPT = {
+  fullText: 'Mornings were chaos. This sourdough box fixed that. Try it.',
+  shots: [
+    [
+      'UGC_ACTOR',
+      6,
+      'hook',
+      'holds the bread box up to the phone',
+      'Okay, mornings used to be chaos.',
+    ],
+    ['IMAGE_STILL', 4, 'demo', 'The sourdough box on a doorstep', ''],
+    ['UGC_ACTOR', 6, 'demo', 'tears a warm loaf open', 'Now fresh sourdough just turns up.'],
+    ['UGC_ACTOR', 6, 'cta', 'points at the camera and smiles', 'Honestly, try it. Link below.'],
+    ['TEXT_CARD', 8, 'cta', 'End card', ''],
+  ].map(([visualTreatment, durationSec, beat, sceneDescription, voiceoverText]) => ({
+    durationSec,
+    visualTreatment,
+    beat,
+    sceneDescription,
+    cameraDirection: 'handheld selfie',
+    voiceoverText,
+    onScreenText: visualTreatment === 'TEXT_CARD' ? 'Subscribe today' : '',
+    transitionOut: 'cut',
+  })),
+};
+
+/**
  * SIM_SCRIPT with a fresh token in every prompt and line, as real scripts differ from video to
  * video. Without it, 15.B6 asset reuse (pipeline/asset-reuse.ts: same organisation, same prompt)
  * would serve most clips from earlier videos and the burst would look far cheaper and faster.
@@ -236,6 +266,12 @@ function textResult(json: unknown): ProviderPollResult {
 export function simulatedText(request: ProviderRequest): ProviderPollResult {
   if (request.capability !== 'text_generation') throw new Error('not a text request');
   if (request.system.includes('ideation layer')) return textResult(SIM_IDEATION);
+  // 21.4: a UGC actor video's script (its prompt carries the UGC supplement).
+  if (
+    request.system.includes('script and storyboard') &&
+    request.prompt.includes('UGC ACTOR VIDEO')
+  )
+    return textResult(SIM_UGC_SCRIPT);
   if (request.system.includes('script and storyboard')) return textResult(variedScript());
   if (request.system.includes('social-media slideshow')) {
     return textResult({
@@ -294,17 +330,24 @@ export function createSimulatedRegistry(input: {
       },
     };
   };
+  // 21.4: Veo also makes UGC actor clips (actor_video), as the real adapter does.
   const video = (id: string, costPence: number) =>
-    new SimulatedAdapter(id, ['text_to_video', 'image_to_video'], {
-      latencySec: [30, 180],
-      costPence,
-      respond: async () => ({
-        state: 'succeeded',
-        output: { url: media.clipUrl, metadata: { model: id, costPence } },
-      }),
-      profile,
-      flaky: true,
-    });
+    new SimulatedAdapter(
+      id,
+      id === 'veo'
+        ? ['text_to_video', 'image_to_video', 'actor_video']
+        : ['text_to_video', 'image_to_video'],
+      {
+        latencySec: [30, 180],
+        costPence,
+        respond: async () => ({
+          state: 'succeeded',
+          output: { url: media.clipUrl, metadata: { model: id, costPence } },
+        }),
+        profile,
+        flaky: true,
+      },
+    );
   const adapters = [
     new SimulatedAdapter('anthropic', ['text_generation'], {
       latencySec: [2, 8],
