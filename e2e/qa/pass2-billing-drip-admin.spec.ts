@@ -127,7 +127,8 @@ test.describe('public pricing', () => {
     await more.click();
     await expect(plan.getByText('4 channels', { exact: true })).toBeVisible();
     await expect(plan.getByText('32 videos a month included (8 per channel)')).toBeVisible();
-    for (let i = 0; i < 3; i += 1) await more.click();
+    // 4 → 6: two more clicks; a third would hit the (correctly) disabled button at the maximum.
+    for (let i = 0; i < 2; i += 1) await more.click();
     await expect(plan.getByText('6 channels', { exact: true })).toBeVisible();
     await expect(more).toBeDisabled();
     for (let i = 0; i < 5; i += 1) await fewer.click();
