@@ -956,6 +956,7 @@
         "noNarration": "未检查：视频没有配音。",
         "audioSyncFailed": "{count, plural, other {配音超出了镜头 {shots} 的长度。}}",
         "audioSyncPassed": "{count, plural, other {配音与全部 # 个镜头匹配。}}",
+        "audioSyncShortened": "{count, plural, other {需要审核：镜头 {shots} 的配音被缩短了。}}",
         "noSpokenCaptions": "未检查：视频没有口播字幕。",
         "captionSyncFailed": "{count, plural, other {# 条字幕与配音不同步。}}",
         "captionSyncPassed": "{count, plural, other {# 条字幕与配音相差在 ±{ms} 毫秒以内。}}",

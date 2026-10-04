@@ -75,14 +75,76 @@ describe('audio_sync', () => {
       ]).detail,
     ).toContain('without word timing');
     expect(evaluateAudioSync(summary(), [{ shotId: 's1', fit: null }]).status).toBe('failed');
-    expect(
-      evaluateAudioSync(summary(), [
+  });
+
+  it('warns (no auto-approval) when narration had to be shortened, even at a clean boundary (21.1)', () => {
+    const word = evaluateAudioSync(summary(), [
+      {
+        shotId: 's1',
+        fit: { strategy: 'trim', voiceSec: 4, shotSec: 3, trimSec: 2.7, wordBoundary: true },
+      },
+    ]);
+    expect(word).toMatchObject({
+      status: 'warning',
+      severity: 'info',
+      detailKey: 'audioSyncShortened',
+      detailParams: { count: 1, shots: '1' },
+    });
+    expect(word.detail).toContain('shot 1: narration shortened at a word boundary');
+    const sentence = evaluateAudioSync(summary(), [
+      {
+        shotId: 's1',
+        fit: {
+          strategy: 'trim',
+          voiceSec: 4,
+          shotSec: 3,
+          trimSec: 1.6,
+          wordBoundary: true,
+          sentenceBoundary: true,
+        },
+      },
+    ]);
+    expect(sentence.detail).toContain('at a sentence end');
+    // The shortened line does not hide a real failure elsewhere.
+    const both = evaluateAudioSync(
+      summary({
+        shots: [
+          { shotId: 's1', startSec: 0, lengthSec: 3, treatment: 'AI_CLIP', voiceClipSec: 2.7 },
+          { shotId: 's2', startSec: 3, lengthSec: 3, treatment: 'AI_CLIP', voiceClipSec: 3 },
+        ],
+      }),
+      [
         {
           shotId: 's1',
           fit: { strategy: 'trim', voiceSec: 4, shotSec: 3, trimSec: 2.7, wordBoundary: true },
         },
-      ]).status,
-    ).toBe('passed');
+        { shotId: 's2', fit: null },
+      ],
+    );
+    expect(both).toMatchObject({
+      status: 'failed',
+      detailKey: 'audioSyncFailed',
+      detailParams: { count: 1, shots: '2' },
+    });
+    expect(both.detail).toContain('shot 1: narration shortened');
+  });
+
+  it('passes narration whose shot was lengthened by the rebalance (21.1)', () => {
+    const check = evaluateAudioSync(
+      summary({
+        shots: [
+          { shotId: 's1', startSec: 0, lengthSec: 3, treatment: 'IMAGE_STILL', voiceClipSec: 3 },
+          { shotId: 's2', startSec: 3, lengthSec: 2.5, treatment: 'TEXT_CARD', voiceClipSec: null },
+        ],
+      }),
+      [
+        {
+          shotId: 's1',
+          fit: { strategy: 'rebalance', voiceSec: 2.741, shotSec: 2.5, newShotSec: 3 },
+        },
+      ],
+    );
+    expect(check.status).toBe('passed');
   });
 
   it('does not run without narration or a summary', () => {
@@ -247,5 +309,41 @@ describe('watermark', () => {
   it('pearson is 1 for identical and 0 for flat input', () => {
     expect(pearson([1, 2, 3], [1, 2, 3])).toBeCloseTo(1);
     expect(pearson([1, 1, 1], [1, 2, 3])).toBe(0);
+  });
+});
+
+describe('caption_sync with a repeated word (production QA run 10, 2026-10-04)', () => {
+  const words = [
+    { text: 'Ahead', startSec: 0.098, endSec: 0.343 },
+    { text: 'AI', startSec: 0.343, endSec: 0.605 },
+    { text: 'syncs', startSec: 0.605, endSec: 0.933 },
+    { text: 'your', startSec: 0.933, endSec: 1.08 },
+    { text: 'calendar', startSec: 1.08, endSec: 1.473 },
+    { text: 'and', startSec: 1.506, endSec: 1.572 },
+    { text: 'drafts', startSec: 1.654, endSec: 1.916 },
+    { text: 'your', startSec: 1.916, endSec: 2.079 },
+    { text: 'opener', startSec: 2.145, endSec: 2.325 },
+    { text: 'instantly.', startSec: 2.407, endSec: 2.816 },
+  ];
+
+  it('matches the occurrence nearest the caption, not the first one', () => {
+    const check = evaluateCaptionSync([
+      {
+        overlayId: 'a',
+        text: 'Ahead AI syncs your calendar and drafts',
+        startAtSec: 0.098,
+        endAtSec: 1.916,
+        words,
+      },
+      { overlayId: 'b', text: 'your opener instantly.', startAtSec: 1.916, endAtSec: 2.816, words },
+    ]);
+    expect(check.status).toBe('passed');
+  });
+
+  it('still fails a caption that really is late', () => {
+    const check = evaluateCaptionSync([
+      { overlayId: 'b', text: 'your opener instantly.', startAtSec: 2.4, endAtSec: 3.3, words },
+    ]);
+    expect(check.status).toBe('failed');
   });
 });

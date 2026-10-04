@@ -956,6 +956,7 @@
         "noNarration": "Non verificato: il video non ha voce fuori campo.",
         "audioSyncFailed": "{count, plural, one {La voce fuori campo non rientra nell’inquadratura {shots}.} many {La voce fuori campo non rientra nelle inquadrature {shots}.} other {La voce fuori campo non rientra nelle inquadrature {shots}.}}",
         "audioSyncPassed": "{count, plural, one {La voce fuori campo rientra nella sua inquadratura.} many {La voce fuori campo rientra in tutte le # inquadrature.} other {La voce fuori campo rientra in tutte le # inquadrature.}}",
+        "audioSyncShortened": "{count, plural, one {Da rivedere: la voce fuori campo è stata accorciata nell’inquadratura {shots}.} many {Da rivedere: la voce fuori campo è stata accorciata nelle inquadrature {shots}.} other {Da rivedere: la voce fuori campo è stata accorciata nelle inquadrature {shots}.}}",
         "noSpokenCaptions": "Non verificato: il video non ha sottotitoli parlati.",
         "captionSyncFailed": "{count, plural, one {# sottotitolo non è sincronizzato con la voce fuori campo.} many {# di sottotitoli non sono sincronizzati con la voce fuori campo.} other {# sottotitoli non sono sincronizzati con la voce fuori campo.}}",
         "captionSyncPassed": "{count, plural, one {# sottotitolo entro ±{ms} ms dalla voce fuori campo.} many {# di sottotitoli entro ±{ms} ms dalla voce fuori campo.} other {# sottotitoli entro ±{ms} ms dalla voce fuori campo.}}",

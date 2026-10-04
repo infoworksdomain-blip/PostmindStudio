@@ -956,6 +956,7 @@
         "noNarration": "जाँच नहीं हुई: वीडियो में वॉइसओवर नहीं है।",
         "audioSyncFailed": "{count, plural, one {वॉइसओवर शॉट {shots} में फ़िट नहीं होता।} other {वॉइसओवर शॉट {shots} में फ़िट नहीं होता।}}",
         "audioSyncPassed": "{count, plural, one {वॉइसओवर अपने शॉट में फ़िट होता है।} other {वॉइसओवर सभी # शॉट में फ़िट होता है।}}",
+        "audioSyncShortened": "{count, plural, one {समीक्षा ज़रूरी: शॉट {shots} में वॉइसओवर छोटा किया गया।} other {समीक्षा ज़रूरी: शॉट {shots} में वॉइसओवर छोटा किया गया।}}",
         "noSpokenCaptions": "जाँच नहीं हुई: वीडियो में बोले गए कैप्शन नहीं हैं।",
         "captionSyncFailed": "{count, plural, one {# कैप्शन वॉइसओवर के साथ सिंक में नहीं है।} other {# कैप्शन वॉइसओवर के साथ सिंक में नहीं हैं।}}",
         "captionSyncPassed": "{count, plural, one {# कैप्शन वॉइसओवर से ±{ms} ms के अंदर।} other {# कैप्शन वॉइसओवर से ±{ms} ms के अंदर।}}",

@@ -956,6 +956,7 @@
         "noNarration": "Não verificado: o vídeo não tem narração.",
         "audioSyncFailed": "{count, plural, one {A narração não cabe no plano {shots}.} many {A narração não cabe nos planos {shots}.} other {A narração não cabe nos planos {shots}.}}",
         "audioSyncPassed": "{count, plural, one {A narração cabe no plano.} many {A narração cabe em todos os # planos.} other {A narração cabe em todos os # planos.}}",
+        "audioSyncShortened": "{count, plural, one {Precisa de revisão: a narração foi encurtada no plano {shots}.} many {Precisa de revisão: a narração foi encurtada nos planos {shots}.} other {Precisa de revisão: a narração foi encurtada nos planos {shots}.}}",
         "noSpokenCaptions": "Não verificado: o vídeo não tem legendas faladas.",
         "captionSyncFailed": "{count, plural, one {# legenda está dessincronizada da narração.} many {# de legendas estão dessincronizadas da narração.} other {# legendas estão dessincronizadas da narração.}}",
         "captionSyncPassed": "{count, plural, one {# legenda a ±{ms} ms da narração.} many {# de legendas a ±{ms} ms da narração.} other {# legendas a ±{ms} ms da narração.}}",

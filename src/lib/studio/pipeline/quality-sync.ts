@@ -7,6 +7,7 @@ import { normaliseWord, type SpokenWord } from '../overlays/word-timing';
 // BACKLOG 15.B2 — the four §13.1 checks that were recorded as `not_run`:
 //   - audio_sync "Voiceover peaks align to shot boundaries": every narration clip on the timeline
 //     ends inside its shot (±5%, spec 5.5) and is never cut mid-word (15.B3 fit decisions);
+//     narration shortened at a sentence or word boundary is a `warning` (21.1);
 //   - caption_sync "Captions align to voiceover ±200ms": spoken captions (narration captions and
 //     karaoke overlays; never headline/title/CTA text, 20.22 overlays/kind.ts) start and end
 //     within 200 ms of the words they show (13.6 word timings);
@@ -51,6 +52,8 @@ export function evaluateAudioSync(
   const fits = new Map(narration.map((n) => [n.shotId, n.fit]));
   const problems: string[] = [];
   const badShots: number[] = [];
+  const shortened: string[] = [];
+  const shortenedShots: number[] = [];
   voiced.forEach((shot) => {
     const fit = fits.get(shot.shotId as string) ?? null;
     const number = summary.shots.indexOf(shot) + 1;
@@ -74,19 +77,38 @@ export function evaluateAudioSync(
     }
     if (fit.strategy === 'trim') {
       if (!fit.wordBoundary) problem('narration cut without word timing');
+      else {
+        // 21.1: a clean cut, but the viewer does not hear the whole line (words are dropped).
+        const at = fit.sentenceBoundary ? 'a sentence end' : 'a word boundary';
+        shortened.push(`shot ${number}: narration shortened at ${at}`);
+        shortenedShots.push(number);
+      }
       return;
     }
     if (fit.voiceSec > shot.lengthSec * (1 + FIT_TOLERANCE) || fit.voiceSec > clip + FIT_SLACK_SEC)
       problem(`${fit.voiceSec.toFixed(2)}s of narration in a ${shot.lengthSec.toFixed(2)}s shot`);
   });
-  return problems.length
+  if (problems.length)
+    return {
+      code,
+      status: 'failed',
+      severity: 'error',
+      detail: [...problems, ...shortened].join('; '),
+      detailKey: 'audioSyncFailed',
+      detailParams: { count: badShots.length, shots: badShots.join(', ') },
+    };
+  // 21.1 DECISION: narration that had to be shortened (rebalancing could not give its shot
+  // enough time) is a `warning`, like brand_kit's "User review required": it does not fail the
+  // gate — the cut is clean and the video is usable — but it keeps the video from auto-approval
+  // (automation/review-policy.ts), so a person hears the shortened line before it is published.
+  return shortened.length
     ? {
         code,
-        status: 'failed',
-        severity: 'error',
-        detail: problems.join('; '),
-        detailKey: 'audioSyncFailed',
-        detailParams: { count: badShots.length, shots: badShots.join(', ') },
+        status: 'warning',
+        severity: 'info',
+        detail: shortened.join('; '),
+        detailKey: 'audioSyncShortened',
+        detailParams: { count: shortenedShots.length, shots: shortenedShots.join(', ') },
       }
     : {
         code,
@@ -117,15 +139,30 @@ export function matchCaption(
   const window = caption.words.filter(
     (w) => w.endSec > caption.startAtSec - 1 && w.startSec < caption.endAtSec + 1,
   );
-  const firstIdx = window.findIndex((w) => normaliseWord(w.text) === keys[0]);
-  if (firstIdx < 0) return null;
-  let lastIdx = -1;
-  for (let j = window.length - 1; j >= firstIdx; j -= 1) {
-    if (normaliseWord(window[j]?.text ?? '') === keys.at(-1)) {
-      lastIdx = j;
-      break;
+  // A word can be spoken more than once in the window ("syncs your calendar and drafts your
+  // opener"), so take the occurrence nearest the caption's own start/end, not the first one.
+  // Production QA run 10 (2026-10-04): the first "your" gave a false 983 ms drift.
+  const nearest = (
+    from: number,
+    key: string | undefined,
+    atSec: number,
+    pick: (w: SpokenWord) => number,
+  ) => {
+    let best = -1;
+    for (let j = from; j < window.length; j += 1) {
+      const w = window[j] as SpokenWord;
+      if (normaliseWord(w.text) !== key) continue;
+      if (
+        best < 0 ||
+        Math.abs(pick(w) - atSec) < Math.abs(pick(window[best] as SpokenWord) - atSec)
+      )
+        best = j;
     }
-  }
+    return best;
+  };
+  const firstIdx = nearest(0, keys[0], caption.startAtSec, (w) => w.startSec);
+  if (firstIdx < 0) return null;
+  const lastIdx = nearest(firstIdx, keys.at(-1), caption.endAtSec, (w) => w.endSec);
   if (lastIdx < 0) return null;
   return { first: window[firstIdx] as SpokenWord, last: window[lastIdx] as SpokenWord };
 }

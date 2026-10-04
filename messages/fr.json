@@ -956,6 +956,7 @@
         "noNarration": "Non vérifié : la vidéo n’a pas de voix off.",
         "audioSyncFailed": "{count, plural, one {La voix off ne tient pas dans le plan {shots}.} many {La voix off ne tient pas dans les plans {shots}.} other {La voix off ne tient pas dans les plans {shots}.}}",
         "audioSyncPassed": "{count, plural, one {La voix off tient dans son plan.} many {La voix off tient dans les # plans.} other {La voix off tient dans les # plans.}}",
+        "audioSyncShortened": "{count, plural, one {À examiner : la voix off a été raccourcie dans le plan {shots}.} many {À examiner : la voix off a été raccourcie dans les plans {shots}.} other {À examiner : la voix off a été raccourcie dans les plans {shots}.}}",
         "noSpokenCaptions": "Non vérifié : la vidéo n’a pas de sous-titres parlés.",
         "captionSyncFailed": "{count, plural, one {# sous-titre est décalé par rapport à la voix off.} many {# de sous-titres sont décalés par rapport à la voix off.} other {# sous-titres sont décalés par rapport à la voix off.}}",
         "captionSyncPassed": "{count, plural, one {# sous-titre à ±{ms} ms de la voix off.} many {# de sous-titres à ±{ms} ms de la voix off.} other {# sous-titres à ±{ms} ms de la voix off.}}",

@@ -49,6 +49,7 @@ export const QUALITY_DETAIL_KEYS = [
   'noNarration',
   'audioSyncFailed',
   'audioSyncPassed',
+  'audioSyncShortened',
   'noSpokenCaptions',
   'captionSyncFailed',
   'captionSyncPassed',

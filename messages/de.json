@@ -956,6 +956,7 @@
         "noNarration": "Nicht geprüft: Das Video hat kein Voiceover.",
         "audioSyncFailed": "{count, plural, one {Das Voiceover passt nicht in Einstellung {shots}.} other {Das Voiceover passt nicht in die Einstellungen {shots}.}}",
         "audioSyncPassed": "{count, plural, one {Das Voiceover passt in seine Einstellung.} other {Das Voiceover passt in alle # Einstellungen.}}",
+        "audioSyncShortened": "{count, plural, one {Prüfung nötig: Das Voiceover wurde in Einstellung {shots} gekürzt.} other {Prüfung nötig: Das Voiceover wurde in den Einstellungen {shots} gekürzt.}}",
         "noSpokenCaptions": "Nicht geprüft: Das Video hat keine gesprochenen Untertitel.",
         "captionSyncFailed": "{count, plural, one {# Untertitel ist nicht synchron zum Voiceover.} other {# Untertitel sind nicht synchron zum Voiceover.}}",
         "captionSyncPassed": "{count, plural, one {# Untertitel innerhalb von ±{ms} ms zum Voiceover.} other {# Untertitel innerhalb von ±{ms} ms zum Voiceover.}}",

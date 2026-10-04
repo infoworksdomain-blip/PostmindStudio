@@ -36,6 +36,7 @@ import {
   modelLabel,
   textRequest,
 } from './plan-project';
+import { SCRIPT_MAX_TOKENS } from '../../pipeline/token-budgets';
 
 // Phase 13.1 â€” POST /scripts/:id/regenerate (spec 8.4): a new run from Layer 2 for ONE script,
 // reusing the Layer 1 brief stored in video_briefs (no ideation spend). The rewrite goes through
@@ -43,7 +44,6 @@ import {
 // fans out generate-asset for the new shots; the project's other scripts are untouched and keep
 // their renders (services/scripts.ts keeps them in metadata.renders).
 
-const SCRIPT_MAX_TOKENS = 8_000;
 const SAFETY_MAX_TOKENS = 1_000;
 
 /** The owner's rewrite instruction, fenced so it reads as data, not as system text. */
