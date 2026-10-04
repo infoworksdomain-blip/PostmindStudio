@@ -27,9 +27,9 @@ describe('checkout parameters (pure)', () => {
     locale: 'pt-PT',
   };
 
-  it('subscription: tax, tax ids, address, card always, metadata, trial when given', () => {
+  it('channels: quantity = channels, tax, tax ids, address, card always, metadata, trial', () => {
     const params = checkoutParams({
-      request: { ...base, intent: { kind: 'subscription', tier: 'STANDARD', interval: 'month' } },
+      request: { ...base, intent: { kind: 'channels', channels: 3, interval: 'month' } },
       customer: 'cus_1',
       priceLookup: { priceId: 'price_std' },
       trialPeriodDays: 14,
@@ -40,7 +40,7 @@ describe('checkout parameters (pure)', () => {
       customer: 'cus_1',
       client_reference_id: 'org-1',
       locale: 'pt',
-      line_items: [{ price: 'price_std', quantity: 1 }],
+      line_items: [{ price: 'price_std', quantity: 3 }],
       automatic_tax: { enabled: true },
       tax_id_collection: { enabled: true },
       billing_address_collection: 'required',
@@ -54,7 +54,7 @@ describe('checkout parameters (pure)', () => {
 
   it('no trial_period_days when the org is not eligible', () => {
     const params = checkoutParams({
-      request: { ...base, intent: { kind: 'subscription', tier: 'STANDARD', interval: 'year' } },
+      request: { ...base, intent: { kind: 'channels', channels: 1, interval: 'week' } },
       customer: 'cus_1',
       priceLookup: { priceId: 'p' },
       trialPeriodDays: null,
@@ -63,9 +63,9 @@ describe('checkout parameters (pure)', () => {
     expect(params.subscription_data).toEqual({ metadata: { organisationId: 'org-1' } });
   });
 
-  it('top-up: one-time payment with the pack in metadata and an invoice', () => {
+  it('video pack: one-time payment (quantity 1) with the pack in metadata and an invoice', () => {
     const params = checkoutParams({
-      request: { ...base, intent: { kind: 'topup', lookupKey: 'studio_topup_long2_plus' } },
+      request: { ...base, intent: { kind: 'topup', lookupKey: 'studio_pack_hd15' } },
       customer: 'cus_1',
       priceLookup: { priceId: 'price_pack' },
       trialPeriodDays: null,
@@ -74,8 +74,9 @@ describe('checkout parameters (pure)', () => {
     expect(params).toMatchObject({
       mode: 'payment',
       automatic_tax: { enabled: true },
-      metadata: { studio_topup: 'studio_topup_long2_plus', organisationId: 'org-1' },
+      metadata: { studio_topup: 'studio_pack_hd15', organisationId: 'org-1' },
       invoice_creation: { enabled: true },
+      line_items: [{ price: 'price_pack', quantity: 1 }],
     });
     expect((params as Stripe.Checkout.SessionCreateParams).subscription_data).toBeUndefined();
   });
@@ -114,11 +115,11 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
       appUrl: 'https://studio.test',
       env: { STRIPE_PORTAL_CONFIGURATION_ID: 'bpc_123' },
     });
-  const subscribe = (tier: 'BASIC' | 'STANDARD' | 'PLUS' = 'STANDARD') =>
+  const subscribe = (channels = 2, interval: 'week' | 'month' | 'year' = 'month') =>
     service().createCheckout({
       organisationId: org,
       userId: 'u1',
-      intent: { kind: 'subscription', tier, interval: 'month' },
+      intent: { kind: 'channels', channels, interval },
       locale: 'en-GB',
     });
   const lastCheckout = () => {
@@ -139,14 +140,14 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
     await db.$disconnect();
   });
 
-  it('creates the customer once, offers the STANDARD trial once, and audits', async () => {
-    const { url } = await subscribe('STANDARD');
+  it('creates the customer once, offers the trial once, sells channels as the quantity, and audits', async () => {
+    const { url } = await subscribe(2);
     expect(url).toMatch(/^https:\/\/checkout\.stripe\.test\//);
     const customer = await db.billingCustomer.findUnique({ where: { organisationId: org } });
     expect(customer?.stripeCustomerId).toBe(`cus_${org}`);
     expect(lastCheckout().params.subscription_data?.trial_period_days).toBe(14);
     expect(lastCheckout().params.line_items).toEqual([
-      { price: 'price_studio_standard_monthly', quantity: 1 },
+      { price: 'price_studio_channel_monthly', quantity: 2 },
     ]);
     expect(audits).toContainEqual(
       expect.objectContaining({ action: 'billing.checkout_started', organisationId: org }),
@@ -154,19 +155,22 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
 
     // A double click (same nonce) reuses the same idempotency key → the same session.
     const firstKey = lastCheckout().key;
-    await subscribe('STANDARD');
+    await subscribe(2);
     expect(lastCheckout().key).toBe(firstKey);
     expect(fake.calls.filter((c) => c.method === 'createCustomer')).toHaveLength(1);
 
     // After a completed checkout the nonce rotates: a deliberate new checkout is a new session.
     await rotateCheckoutNonce(db, org);
-    await subscribe('STANDARD');
+    await subscribe(2);
     expect(lastCheckout().key).not.toBe(firstKey);
   });
 
-  it('no trial on BASIC / PLUS, nor for an org that trialled or paid before', async () => {
-    await subscribe('BASIC');
-    expect(lastCheckout().params.subscription_data?.trial_period_days).toBeUndefined();
+  it('the trial works on every period but not for an org that trialled or paid before', async () => {
+    await subscribe(1, 'week');
+    expect(lastCheckout().params.subscription_data?.trial_period_days).toBe(14);
+    expect(lastCheckout().params.line_items).toEqual([
+      { price: 'price_studio_channel_weekly', quantity: 1 },
+    ]);
     await db.orgEntitlement.create({
       data: {
         organisationId: org,
@@ -176,11 +180,16 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
         trialStartedAt: new Date('2026-01-01T00:00:00Z'),
       },
     });
-    await subscribe('STANDARD');
+    await subscribe(6, 'year');
     expect(lastCheckout().params.subscription_data?.trial_period_days).toBeUndefined();
   });
 
-  it('refuses a second subscription (plan changes go through the portal)', async () => {
+  it('refuses fewer than 1 or more than 6 channels', async () => {
+    await expect(subscribe(0)).rejects.toBeInstanceOf(ValidationError);
+    await expect(subscribe(7)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('refuses a second subscription (plan changes happen on Your plan)', async () => {
     await db.subscription.create({
       data: { id: `sub_${org}`, organisationId: org, stripeCustomerId: 'cus', status: 'active' },
     });
@@ -196,12 +205,21 @@ describe.skipIf(!hasDb)('billing service (Stripe fake, real Postgres)', { timeou
         locale: 'en-GB',
       }),
     ).rejects.toBeInstanceOf(ValidationError);
-    fake.prices = fake.prices.filter((p) => p.lookupKey !== 'studio_topup_short10_plus');
+    // The old per-tier top-ups are no longer sold.
     await expect(
       service().createCheckout({
         organisationId: org,
         userId: 'u1',
         intent: { kind: 'topup', lookupKey: 'studio_topup_short10_plus' },
+        locale: 'en-GB',
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    fake.prices = fake.prices.filter((p) => p.lookupKey !== 'studio_pack_hd5');
+    await expect(
+      service().createCheckout({
+        organisationId: org,
+        userId: 'u1',
+        intent: { kind: 'topup', lookupKey: 'studio_pack_hd5' },
         locale: 'en-GB',
       }),
     ).rejects.toBeInstanceOf(NotFoundError);

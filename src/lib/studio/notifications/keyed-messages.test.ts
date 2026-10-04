@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_MESSAGES } from '../../i18n/all-messages';
 import { LOCALES } from '../../i18n/locales';
 import { alertMessage, type CapUsage } from '../cost/guard';
-import { quotaMessage } from '../services/plan-quotas';
+import { channelAllowanceNotice, quotaMessage } from '../services/plan-quotas';
 import type { NotificationMessage } from './notifier';
 
 // BACKLOG 16.5 — the cost, safety-review and plan-quota notifications carry a message key + ICU
@@ -104,6 +104,19 @@ const SAMPLES: NotificationMessage[] = [
   quotaMessage('BASIC', 'short', 80, { used: 8, limit: 10 }, false),
   quotaMessage('ENTERPRISE', 'long', 100, { used: 2, limit: 2 }, false),
   quotaMessage('BASIC', 'long', 100, { used: 2, limit: 2 }, true),
+  // 21.5: the per-channel allowance notices (week and month).
+  channelAllowanceNotice(
+    { period: 'week', resetsAt: '2026-10-05T00:00:00Z' },
+    { used: 5, limit: 6 },
+    80,
+    false,
+  ).message,
+  channelAllowanceNotice(
+    { period: 'month', resetsAt: '2026-11-01T00:00:00Z' },
+    { used: 24, limit: 24 },
+    100,
+    true,
+  ).message,
 ];
 
 describe('keyed notifications render in every locale', () => {
@@ -115,7 +128,8 @@ describe('keyed notifications render in every locale', () => {
     });
     for (const m of SAMPLES) {
       for (const part of ['title', 'body'] as const) {
-        const text = t(`${m.key}.${part}`, m.params ?? {});
+        const key = m.key as Exclude<NotificationMessage['key'], 'costPlain'>;
+        const text = t(`${key}.${part}`, m.params ?? {});
         expect(text, `${locale} ${m.key}.${part}`).not.toMatch(/[{}]/);
         expect(text.length).toBeGreaterThan(3);
       }

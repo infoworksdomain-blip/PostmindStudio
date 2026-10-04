@@ -16,7 +16,34 @@ import { listPricesByLookupKeys } from './stripe-lookup';
 //   - prices by lookup key: GET /v1/prices?lookup_keys[]=…&expand[]=data.product
 //     https://docs.stripe.com/api/prices/list (read 2026-09-29)
 
-export type Interval = 'month' | 'year';
+//   21.5 plan changes (read 2026-10-04):
+//   - preview: POST /v1/invoices/create_preview with subscription + subscription_details.items
+//     ({id, price, quantity}), proration_behavior and proration_date
+//     https://docs.stripe.com/api/invoices/create_preview,
+//     https://docs.stripe.com/billing/subscriptions/prorations#preview-proration
+//   - change now: subscriptions.update items[{id, price, quantity}] (quantity must be repeated:
+//     "Updating a subscription price automatically reverts the quantity to … 1"),
+//     proration_behavior=always_invoice + the previewed proration_date,
+//     payment_behavior=pending_if_incomplete (applied only once the invoice is paid)
+//     https://docs.stripe.com/billing/subscriptions/change-price,
+//     https://docs.stripe.com/billing/subscriptions/pending-updates
+//   - change at period end: subscription_schedules.create {from_subscription}, then update with
+//     the current phase (its start/end, items and settings) + a next phase; end_behavior=release
+//     https://docs.stripe.com/billing/subscriptions/subscription-schedules (Schedule an upgrade
+//     or downgrade for an existing subscription); release: POST …/release
+//   - cancel / resume: subscriptions.update cancel_at_period_end=true|false
+//     https://docs.stripe.com/billing/subscriptions/cancel
+
+export type Interval = 'week' | 'month' | 'year';
+
+/** 21.5: the change a subscription schedule will apply when the current period ends. */
+export interface PendingPlanChange {
+  quantity: number;
+  priceId: string | null;
+  /** null when the phase's price was not expanded (reconcile re-fetches it). */
+  lookupKey: string | null;
+  effectiveAt: Date;
+}
 
 /** A subscription as Studio stores it (re-fetched from the API on every event). */
 export interface SubscriptionState {
@@ -25,6 +52,13 @@ export interface SubscriptionState {
   status: string;
   lookupKey: string | null;
   priceId: string | null;
+  /** 21.5: the (single) subscription item, needed to change its price or quantity. */
+  itemId: string | null;
+  /** 21.5: an attached subscription schedule (a change waiting for the end of the period). */
+  scheduleId: string | null;
+  pendingChange: PendingPlanChange | null;
+  /** 21.5: an immediate change waiting for its invoice to be paid (pending_update). */
+  hasPendingUpdate: boolean;
   /** product.metadata.studio_tier — how ENTERPRISE (no lookup key) subscriptions are mapped. */
   productTier: string | null;
   interval: Interval | null;
@@ -81,6 +115,25 @@ export interface PriceState {
   taxBehavior: string | null;
 }
 
+/** 21.5: what `invoices.createPreview` says a change would invoice now. */
+export interface PlanChangePreview {
+  /** What the customer pays now (after any customer balance), in the invoice currency. */
+  amountDuePence: number;
+  totalPence: number;
+  /** Tax included in `totalPence` (Stripe Tax; 0 when not applicable). */
+  taxPence: number;
+  currency: string;
+  /** The proration time the preview used; pass it to the update so the amounts match. */
+  prorationDate: number;
+}
+
+export interface PlanItemChange {
+  subscriptionId: string;
+  itemId: string;
+  priceId: string;
+  quantity: number;
+}
+
 export interface StripeGateway {
   createCustomer(
     input: { organisationId: string; name?: string; email?: string },
@@ -110,6 +163,35 @@ export interface StripeGateway {
   retrieveCharge(id: string): Promise<ChargeState>;
   retrieveEvent(id: string): Promise<Stripe.Event>;
   markCustomerDeleted(customerId: string): Promise<void>;
+  /** 21.5: the invoice an immediate change would raise now (always_invoice proration). */
+  previewPlanChange(
+    change: PlanItemChange & { customerId: string; prorationDate: number },
+  ): Promise<PlanChangePreview>;
+  /**
+   * 21.5: apply a change now. `prorationDate` null = no proration (a trialing subscription:
+   * nothing is charged until the trial ends). Returns the subscription as Stripe now has it.
+   */
+  changePlanNow(
+    change: PlanItemChange & { prorationDate: number | null },
+    idempotencyKey: string,
+  ): Promise<SubscriptionState>;
+  /** 21.5: schedule a change for the end of the current period (replacing any earlier one). */
+  schedulePlanChange(
+    change: PlanItemChange & {
+      scheduleId: string | null;
+      interval: Interval;
+      organisationId: string;
+    },
+    idempotencyKey: string,
+  ): Promise<void>;
+  /** 21.5: drop a scheduled change (release the schedule; the subscription stays as it is). */
+  releaseSchedule(scheduleId: string, idempotencyKey: string): Promise<void>;
+  /** 21.5: cancel at the end of the period (true) or keep the subscription (false). */
+  setCancelAtPeriodEnd(
+    subscriptionId: string,
+    cancel: boolean,
+    idempotencyKey: string,
+  ): Promise<void>;
 }
 
 // ------------------------------------------------------------------ conversion (pure)
@@ -124,7 +206,35 @@ function date(seconds: number | null | undefined): Date | null {
 }
 
 function interval(value: string | null | undefined): Interval | null {
-  return value === 'month' || value === 'year' ? value : null;
+  return value === 'week' || value === 'month' || value === 'year' ? value : null;
+}
+
+/**
+ * 21.5: the next phase of an attached schedule = the change waiting for the end of the period.
+ * Only an expanded schedule that is not released or finished counts; its phase that starts when
+ * the current phase ends (or the first future phase) holds the new price and quantity.
+ */
+export function pendingChangeOf(
+  schedule: Stripe.Subscription['schedule'],
+  now: Date,
+): PendingPlanChange | null {
+  if (!schedule || typeof schedule === 'string') return null;
+  if (schedule.status !== 'active' && schedule.status !== 'not_started') return null;
+  const nowSec = Math.floor(now.getTime() / 1000);
+  const boundary = schedule.current_phase?.end_date ?? nowSec;
+  const next =
+    schedule.phases.find((p) => p.start_date === boundary) ??
+    schedule.phases.find((p) => p.start_date > nowSec);
+  const item = next?.items[0];
+  if (!next || !item) return null;
+  const price = item.price;
+  const lookupKey = typeof price === 'string' || price.deleted ? null : (price.lookup_key ?? null);
+  return {
+    quantity: item.quantity ?? 1,
+    priceId: typeof price === 'string' ? price : price.id,
+    lookupKey,
+    effectiveAt: new Date(next.start_date * 1000),
+  };
 }
 
 function productTierOf(product: Stripe.Price['product'] | null | undefined): string | null {
@@ -132,7 +242,10 @@ function productTierOf(product: Stripe.Price['product'] | null | undefined): str
   return product.metadata?.studio_tier?.trim().toUpperCase() || null;
 }
 
-export function toSubscriptionState(sub: Stripe.Subscription): SubscriptionState {
+export function toSubscriptionState(
+  sub: Stripe.Subscription,
+  now: Date = new Date(),
+): SubscriptionState {
   const item = sub.items.data[0];
   const price = item?.price;
   return {
@@ -141,6 +254,10 @@ export function toSubscriptionState(sub: Stripe.Subscription): SubscriptionState
     status: sub.status,
     lookupKey: price?.lookup_key ?? null,
     priceId: price?.id ?? null,
+    itemId: item?.id ?? null,
+    scheduleId: idOf(sub.schedule),
+    pendingChange: pendingChangeOf(sub.schedule, now),
+    hasPendingUpdate: Boolean(sub.pending_update),
     productTier: productTierOf(price?.product),
     interval: interval(price?.recurring?.interval),
     unitAmountPence: price?.unit_amount ?? null,
@@ -208,6 +325,80 @@ export function toPriceState(price: Stripe.Price): PriceState {
   };
 }
 
+export function toPlanChangePreview(inv: Stripe.Invoice, prorationDate: number): PlanChangePreview {
+  return {
+    amountDuePence: inv.amount_due,
+    totalPence: inv.total,
+    taxPence: (inv.total_taxes ?? []).reduce((sum, t) => sum + t.amount, 0),
+    currency: inv.currency,
+    prorationDate,
+  };
+}
+
+/** The params of an immediate change (pending_if_incomplete: applied once the invoice is paid). */
+export function changeNowParams(
+  change: PlanItemChange & { prorationDate: number | null },
+): Stripe.SubscriptionUpdateParams {
+  const items = [{ id: change.itemId, price: change.priceId, quantity: change.quantity }];
+  if (change.prorationDate === null) return { items, proration_behavior: 'none' };
+  return {
+    items,
+    proration_behavior: 'always_invoice',
+    proration_date: change.prorationDate,
+    payment_behavior: 'pending_if_incomplete',
+  };
+}
+
+type SchedulePhase = Stripe.SubscriptionSchedule.Phase;
+
+/** The settings a phase must repeat (Stripe unsets omitted parameters on a schedule update). */
+function phaseSettings(phase: SchedulePhase, organisationId: string) {
+  const paymentMethod = idOf(phase.default_payment_method);
+  return {
+    ...(phase.automatic_tax && { automatic_tax: { enabled: phase.automatic_tax.enabled } }),
+    ...(paymentMethod && { default_payment_method: paymentMethod }),
+    metadata: { ...(phase.metadata ?? {}), organisationId },
+  };
+}
+
+/**
+ * The schedule update that keeps the current phase as it is (dates, items, tax, payment method,
+ * trial) and adds one phase with the new price and quantity, starting when the current period
+ * ends; end_behavior=release hands the subscription back afterwards.
+ */
+export function schedulePhasesParams(
+  schedule: Pick<Stripe.SubscriptionSchedule, 'phases' | 'current_phase'>,
+  next: { priceId: string; quantity: number; interval: Interval },
+  organisationId: string,
+): Stripe.SubscriptionScheduleUpdateParams {
+  const current =
+    schedule.phases.find((p) => p.start_date === schedule.current_phase?.start_date) ??
+    schedule.phases[0];
+  if (!current) throw new UpstreamServiceError('Stripe schedule has no current phase');
+  const settings = phaseSettings(current, organisationId);
+  return {
+    end_behavior: 'release',
+    proration_behavior: 'none',
+    phases: [
+      {
+        items: current.items.map((item) => ({
+          price: idOf(item.price) ?? '',
+          quantity: item.quantity ?? 1,
+        })),
+        start_date: current.start_date,
+        end_date: current.end_date,
+        ...(current.trial_end && { trial_end: current.trial_end }),
+        ...settings,
+      },
+      {
+        items: [{ price: next.priceId, quantity: next.quantity }],
+        duration: { interval: next.interval, interval_count: 1 },
+        ...settings,
+      },
+    ],
+  };
+}
+
 // ------------------------------------------------------------------ the real adapter
 
 function upstream(action: string, err: unknown): UpstreamServiceError {
@@ -234,7 +425,8 @@ function isMissing(err: unknown): boolean {
   return e.code === 'resource_missing' || e.statusCode === 404;
 }
 
-const SUBSCRIPTION_EXPAND = ['items.data.price.product'];
+/** 21.5: the schedule's phase prices too, so a pending change carries its lookup key. */
+const SUBSCRIPTION_EXPAND = ['items.data.price.product', 'schedule.phases.items.price'];
 const LIST_PAGE = 100;
 /** prices.list for the public pricing page (see listPrices). */
 const PRICES_TIMEOUT_MS = 4_000;
@@ -287,7 +479,7 @@ export function createStripeGateway(stripe: Stripe): StripeGateway {
         for await (const sub of stripe.subscriptions.list({
           status: 'all',
           limit: LIST_PAGE,
-          expand: ['data.items.data.price.product'],
+          expand: ['data.items.data.price.product', 'data.schedule'],
         })) {
           yield toSubscriptionState(sub);
         }
@@ -352,6 +544,69 @@ export function createStripeGateway(stripe: Stripe): StripeGateway {
     markCustomerDeleted: (customerId) =>
       call('customers.update', async () => {
         await stripe.customers.update(customerId, { metadata: { studio_deleted: 'true' } });
+      }),
+    previewPlanChange: (change) =>
+      call('invoices.createPreview', async () =>
+        toPlanChangePreview(
+          await stripe.invoices.createPreview({
+            customer: change.customerId,
+            subscription: change.subscriptionId,
+            subscription_details: {
+              items: [{ id: change.itemId, price: change.priceId, quantity: change.quantity }],
+              proration_behavior: 'always_invoice',
+              proration_date: change.prorationDate,
+            },
+          }),
+          change.prorationDate,
+        ),
+      ),
+    changePlanNow: (change, idempotencyKey) =>
+      call('subscriptions.update', async () =>
+        toSubscriptionState(
+          await stripe.subscriptions.update(
+            change.subscriptionId,
+            { ...changeNowParams(change), expand: SUBSCRIPTION_EXPAND },
+            { idempotencyKey },
+          ),
+        ),
+      ),
+    schedulePlanChange: (change, idempotencyKey) =>
+      call('subscription_schedules.update', async () => {
+        // One pending change at a time: an earlier schedule is released first, so the new
+        // schedule starts from the subscription exactly as it is now.
+        if (change.scheduleId)
+          await stripe.subscriptionSchedules.release(
+            change.scheduleId,
+            {},
+            {
+              idempotencyKey: `${idempotencyKey}:release`,
+            },
+          );
+        const schedule = await stripe.subscriptionSchedules.create(
+          { from_subscription: change.subscriptionId },
+          { idempotencyKey: `${idempotencyKey}:create` },
+        );
+        await stripe.subscriptionSchedules.update(
+          schedule.id,
+          schedulePhasesParams(
+            schedule,
+            { priceId: change.priceId, quantity: change.quantity, interval: change.interval },
+            change.organisationId,
+          ),
+          { idempotencyKey: `${idempotencyKey}:update` },
+        );
+      }),
+    releaseSchedule: (scheduleId, idempotencyKey) =>
+      call('subscription_schedules.release', async () => {
+        await stripe.subscriptionSchedules.release(scheduleId, {}, { idempotencyKey });
+      }),
+    setCancelAtPeriodEnd: (subscriptionId, cancel, idempotencyKey) =>
+      call('subscriptions.update', async () => {
+        await stripe.subscriptions.update(
+          subscriptionId,
+          { cancel_at_period_end: cancel },
+          { idempotencyKey },
+        );
       }),
   };
 }

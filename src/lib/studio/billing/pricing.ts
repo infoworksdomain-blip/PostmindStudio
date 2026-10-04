@@ -1,24 +1,22 @@
 import type { Logger } from 'pino';
+import { allLookupKeys, CATALOGUE_VERSION, TOP_UP_PACKS, TRIAL, type TopUpPack } from './catalogue';
 import {
-  allLookupKeys,
-  CATALOGUE_VERSION,
-  PLAN_CATALOGUE,
-  TIER_ORDER,
-  TOP_UP_PACKS,
-  TRIAL,
-  type BillingInterval,
-  type PlanDefinition,
-  type TopUpPack,
-} from './catalogue';
+  CHANNEL_INTERVALS,
+  CHANNEL_LOOKUP_KEYS,
+  MAX_CHANNELS,
+  MIN_CHANNELS,
+  VIDEOS_PER_CHANNEL_PER_PERIOD,
+  type ChannelInterval,
+} from './channel-plan';
 import { trialDays } from './entitlements';
 import type { PriceState, StripeGateway } from './gateway';
-import type { PlanTier } from '../providers/router';
 
-// Phase 18 §2.7 / §P.4 — what /pricing, the upgrade dialog and /settings/billing show. Amounts
-// come from Stripe by lookup key (prices.list lookup_keys + expand data.product), cached for
-// 10 minutes, so the operator changes a price in Stripe (new Price + transfer_lookup_key) with no
-// deploy. Everything else comes from the catalogue. A missing or non-GBP price shows as
-// "unavailable" rather than a made-up number.
+// Phase 18 §2.7 / 21.5 — what /pricing, sign-up plan selection, the upgrade dialog and "Your plan"
+// show: the per-channel price of each interval (weekly, monthly, yearly), the videos included and
+// the HD video packs. Amounts come from Stripe by lookup key (prices.list lookup_keys + expand
+// data.product), cached for 10 minutes, so the operator changes a price in Stripe (new Price +
+// transfer_lookup_key) with no deploy. A missing or non-GBP price shows as "unavailable" rather
+// than a made-up number. Never any generation cost (21.5: costs are internal).
 
 export const PRICING_CACHE_TTL_MS = 10 * 60_000;
 export const PRICING_CURRENCY = 'gbp';
@@ -29,18 +27,17 @@ export interface PriceView {
   unitAmountPence: number | null;
 }
 
-export interface PlanPricingView {
-  tier: PlanTier;
-  selfServe: boolean;
-  displayOrder: number;
-  trialDays: number;
-  prices: Partial<Record<BillingInterval, PriceView>>;
-  /** Annual saving versus 12 monthly payments, in pence (null when either price is missing). */
-  annualSavingPence: number | null;
-  features: PlanDefinition;
+export interface ChannelIntervalView extends PriceView {
+  interval: ChannelInterval;
+  /** Videos included per channel per billing period (2 a week, 8 a month, 96 a year). */
+  videosPerChannel: number;
 }
 
-export interface TopUpPricingView extends TopUpPack {
+/** A pack as customers see it (no internal cost-cap headroom). */
+export interface TopUpPricingView extends Pick<
+  TopUpPack,
+  'lookupKey' | 'kind' | 'quantity' | 'validMonths'
+> {
   unitAmountPence: number | null;
 }
 
@@ -49,9 +46,14 @@ export interface PricingView {
   currency: typeof PRICING_CURRENCY;
   /** False when Stripe could not be read (prices show as unavailable). */
   available: boolean;
-  plans: PlanPricingView[];
+  channels: { min: number; max: number };
+  /** The per-channel price of each interval, weekly → yearly. */
+  intervals: ChannelIntervalView[];
+  /** 12 months on monthly minus a year on yearly, per channel (null when a price is missing). */
+  yearlySavingPerChannelPence: number | null;
+  /** HD video packs (any channel, valid 3 months). */
   topUps: TopUpPricingView[];
-  trial: { tier: PlanTier; days: number; shortVideos: number; longVideos: number };
+  trial: { days: number; videos: number };
   fetchedAt: string;
 }
 
@@ -68,38 +70,29 @@ export function buildPricingView(
   env: Record<string, string | undefined> = process.env,
 ): PricingView {
   const byKey = new Map((prices ?? []).flatMap((p) => (p.lookupKey ? [[p.lookupKey, p]] : [])));
-  const days = trialDays(env);
-  const plans = TIER_ORDER.map((tier): PlanPricingView => {
-    const plan = PLAN_CATALOGUE[tier];
-    const entries = Object.entries(plan.lookupKeys) as [BillingInterval, string][];
-    const views = Object.fromEntries(entries.map(([i, key]) => [i, priceFor(byKey, key)]));
-    const month = views.month?.unitAmountPence;
-    const year = views.year?.unitAmountPence;
-    return {
-      tier,
-      selfServe: plan.selfServe,
-      displayOrder: plan.displayOrder,
-      trialDays: plan.trialDays > 0 ? days : 0,
-      prices: views,
-      annualSavingPence: month != null && year != null ? Math.max(0, month * 12 - year) : null,
-      features: plan,
-    };
-  });
+  const intervals = CHANNEL_INTERVALS.map((interval): ChannelIntervalView => ({
+    interval,
+    ...priceFor(byKey, CHANNEL_LOOKUP_KEYS[interval]),
+    videosPerChannel: VIDEOS_PER_CHANNEL_PER_PERIOD[interval],
+  }));
+  const month = intervals.find((i) => i.interval === 'month')?.unitAmountPence ?? null;
+  const year = intervals.find((i) => i.interval === 'year')?.unitAmountPence ?? null;
   return {
     catalogueVersion: CATALOGUE_VERSION,
     currency: PRICING_CURRENCY,
     available: prices !== null,
-    plans,
+    channels: { min: MIN_CHANNELS, max: MAX_CHANNELS },
+    intervals,
+    yearlySavingPerChannelPence:
+      month !== null && year !== null ? Math.max(0, month * 12 - year) : null,
     topUps: TOP_UP_PACKS.map((pack) => ({
-      ...pack,
+      lookupKey: pack.lookupKey,
+      kind: pack.kind,
+      quantity: pack.quantity,
+      validMonths: pack.validMonths,
       unitAmountPence: priceFor(byKey, pack.lookupKey).unitAmountPence,
     })),
-    trial: {
-      tier: TRIAL.tier,
-      days,
-      shortVideos: TRIAL.shortVideos,
-      longVideos: TRIAL.longVideos,
-    },
+    trial: { days: trialDays(env), videos: TRIAL.shortVideos },
     fetchedAt: now.toISOString(),
   };
 }

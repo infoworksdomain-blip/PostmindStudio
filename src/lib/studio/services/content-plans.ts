@@ -408,8 +408,8 @@ export async function createPlan(
   if (capped.count === 0)
     throw new QuotaExceededError(
       capped.cappedReason === 'cost_cap'
-        ? 'This month’s spending limit leaves no room for more posts; add a top-up to plan your month'
-        : 'Your plan has no videos left this month; add a top-up to plan your month',
+        ? 'This month’s limit leaves no room for more posts; buy a video pack to plan your month'
+        : 'Your plan has no videos left for now; add a channel or buy a video pack to plan your month',
       { cappedReason: capped.cappedReason, allowance, cost },
     );
   const runId = randomUUID();

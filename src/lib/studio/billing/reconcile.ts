@@ -67,8 +67,14 @@ export async function reconcileSubscriptions(deps: WebhookDeps): Promise<Reconci
     organisationsRecomputed: 0,
   };
   const touched = new Set<string>();
-  for await (const state of deps.gateway.listSubscriptions()) {
+  for await (const listed of deps.gateway.listSubscriptions()) {
     result.seen += 1;
+    // 21.5: the list cannot expand a schedule's phase prices (too deep), so a subscription with
+    // a scheduled change is re-fetched to know which price (interval) the change moves to.
+    const state =
+      listed.pendingChange && !listed.pendingChange.lookupKey
+        ? ((await deps.gateway.retrieveSubscription(listed.id)) ?? listed)
+        : listed;
     const synced = await syncSubscription(deps, state, 'reconcile');
     if (synced) {
       result.stored += 1;

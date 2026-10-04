@@ -51,9 +51,15 @@ describe('errorMessage by locale', () => {
     );
   });
 
-  it('translates plan gates outside English and keeps their upgrade text in English', () => {
+  it('21.5: a plan gate never shows the server text (it names internal tiers)', () => {
     const err = new ApiError(403, 'plan_tier', 'Slideshows need the Plus plan.');
-    expect(errorMessage(err, enGB)).toBe('Slideshows need the Plus plan.');
+    expect(errorMessage(err, enGB)).toBe(ALL_MESSAGES['en-GB'].errors.codes.plan_tier);
+    expect(errorMessage(new ApiError(403, 'quota_exceeded', 'Your plan includes 8.'), enGB)).toBe(
+      'Your plan includes 8.',
+    );
+    expect(errorMessage(new ApiError(403, 'channel_limit', 'Add a channel.'), fr)).toBe(
+      ALL_MESSAGES.fr.errors.codes.channel_limit,
+    );
     expect(errorMessage(err, fr)).toBe(ALL_MESSAGES.fr.errors.codes.plan_tier);
   });
 

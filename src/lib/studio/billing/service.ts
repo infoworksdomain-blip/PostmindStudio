@@ -5,10 +5,18 @@ import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
 import { AuditAction } from '../../audit-sink';
 import { ConflictError, NotFoundError, ValidationError } from '../../errors';
-import { lookupKeyFor, PLAN_CATALOGUE, topUpPackForLookupKey } from './catalogue';
+import { PLAN_CATALOGUE, sellableTopUpPack } from './catalogue';
+import { assertChannelCount, CHANNEL_LOOKUP_KEYS, CHANNEL_PLAN_TIER } from './channel-plan';
 import type { BillingInvoice, BillingService, CheckoutRequest } from './contracts';
 import { trialDays } from './entitlements';
 import type { StripeGateway } from './gateway';
+import {
+  cancelPlan,
+  cancelScheduledChange,
+  changePlan,
+  previewPlanChange,
+  resumePlan,
+} from './plan-change';
 import { governingSubscription } from './sync';
 
 // Phase 18 §2.7 — Checkout, Customer Portal, invoices and cancellation for deletion.
@@ -128,11 +136,13 @@ export function checkoutParams(input: {
   appUrl: string;
 }): Stripe.Checkout.SessionCreateParams {
   const { request } = input;
+  // 21.5: the subscription's one item has quantity = channels; a pack is bought once.
+  const quantity = request.intent.kind === 'channels' ? request.intent.channels : 1;
   const common = {
     customer: input.customer,
     client_reference_id: request.organisationId,
     locale: stripeLocale(request.locale),
-    line_items: [{ price: input.priceLookup.priceId, quantity: 1 }],
+    line_items: [{ price: input.priceLookup.priceId, quantity }],
     automatic_tax: { enabled: true },
     tax_id_collection: { enabled: true },
     billing_address_collection: 'required' as const,
@@ -180,9 +190,10 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
       let lookupKey: string;
       let intentLabel: string;
       let trialPeriodDays: number | null = null;
-      if (request.intent.kind === 'subscription') {
-        const key = lookupKeyFor(request.intent.tier, request.intent.interval);
-        if (!key) throw new ValidationError('That plan cannot be bought online');
+      if (request.intent.kind === 'channels') {
+        assertChannelCount(request.intent.channels);
+        const key = CHANNEL_LOOKUP_KEYS[request.intent.interval];
+        if (!key) throw new ValidationError('That billing period cannot be bought online');
         const current = governingSubscription(
           await deps.db.subscription.findMany({
             where: { organisationId: request.organisationId },
@@ -190,18 +201,18 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
         );
         if (current && ACTIVE_STATUSES.has(current.status)) {
           throw new ConflictError(
-            'This organisation already has a subscription; change the plan from Manage billing',
+            'This organisation already has a subscription; change it on Your plan',
             { subscriptionStatus: current.status },
           );
         }
         lookupKey = key;
-        intentLabel = `sub_${key}`;
-        const planTrial = PLAN_CATALOGUE[request.intent.tier].trialDays > 0;
+        intentLabel = `sub_${key}_${request.intent.channels}`;
+        const planTrial = PLAN_CATALOGUE[CHANNEL_PLAN_TIER].trialDays > 0;
         const days = trialDays(deps.env);
         if (planTrial && days > 0 && (await trialEligible(deps.db, request.organisationId)))
           trialPeriodDays = days;
       } else {
-        const pack = topUpPackForLookupKey(request.intent.lookupKey);
+        const pack = sellableTopUpPack(request.intent.lookupKey);
         if (!pack) throw new ValidationError('Unknown top-up pack');
         lookupKey = pack.lookupKey;
         intentLabel = `topup_${pack.lookupKey}`;
@@ -229,7 +240,11 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
         organisationId: request.organisationId,
         action: AuditAction.BillingCheckoutStarted,
         resource: { type: 'checkout_session', id: session.id },
-        metadata: { lookupKey, trialPeriodDays },
+        metadata: {
+          lookupKey,
+          trialPeriodDays,
+          ...(request.intent.kind === 'channels' && { channels: request.intent.channels }),
+        },
       });
       return { url: session.url };
     },
@@ -277,6 +292,13 @@ export function createBillingService(deps: BillingServiceDeps): BillingService {
         metadata: { change: 'cancelled_for_deletion', subscriptions: rows.map((r) => r.id) },
       });
     },
+
+    // 21.5 Your plan (billing/plan-change.ts).
+    previewPlanChange: (organisationId, next) => previewPlanChange(deps, organisationId, next),
+    changePlan: (input) => changePlan(deps, input),
+    cancelPlan: (input) => cancelPlan(deps, input),
+    resumePlan: (input) => resumePlan(deps, input),
+    cancelScheduledChange: (input) => cancelScheduledChange(deps, input),
   };
 }
 

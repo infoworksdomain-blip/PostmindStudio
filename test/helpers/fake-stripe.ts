@@ -3,11 +3,16 @@ import pino from 'pino';
 import type { PrismaClient } from '@prisma/client';
 import type { AuditEntry } from '../../src/lib/audit';
 import { createMemoryAuthMailer } from '../../src/lib/email/auth-mailer';
-import { REFERENCE_PRICES_PENCE, planForLookupKey } from '../../src/lib/studio/billing/catalogue';
+import {
+  LEGACY_REFERENCE_PRICES_PENCE,
+  REFERENCE_PRICES_PENCE,
+  planForLookupKey,
+} from '../../src/lib/studio/billing/catalogue';
 import type {
   ChargeState,
   CheckoutSessionState,
   InvoiceState,
+  PlanChangePreview,
   PriceState,
   StripeGateway,
   SubscriptionState,
@@ -36,6 +41,10 @@ export interface FakeStripe extends StripeGateway {
   fingerprints: Map<string, string>;
   calls: Array<{ method: string; args: unknown[] }>;
   failNext?: { method: string; error: Error };
+  /** 21.5: what the next invoices.createPreview answers (amount due now). */
+  previewAmountPence: number;
+  /** 21.5: the next immediate change's invoice is declined (pending_update, nothing applied). */
+  declineNextChange?: boolean;
   /** Put a subscription in place (a test clock moving it). */
   setSubscription(
     state: Partial<SubscriptionState> & { id: string; customerId: string },
@@ -54,14 +63,20 @@ const nextId = (prefix: string) => `${prefix}_${Date.now().toString(36)}${(seq +
 export function subscriptionState(
   partial: Partial<SubscriptionState> & { id: string; customerId: string },
 ): SubscriptionState {
-  const lookupKey = partial.lookupKey === undefined ? 'studio_standard_monthly' : partial.lookupKey;
+  const lookupKey = partial.lookupKey === undefined ? 'studio_channel_monthly' : partial.lookupKey;
   return {
     status: 'active',
     lookupKey,
     priceId: `price_${lookupKey ?? 'custom'}`,
+    itemId: `si_${partial.id}`,
+    scheduleId: null,
+    pendingChange: null,
+    hasPendingUpdate: false,
     productTier: null,
     interval: (lookupKey && planForLookupKey(lookupKey)?.interval) || 'month',
-    unitAmountPence: lookupKey ? (REFERENCE_PRICES_PENCE[lookupKey] ?? null) : null,
+    unitAmountPence: lookupKey
+      ? (REFERENCE_PRICES_PENCE[lookupKey] ?? LEGACY_REFERENCE_PRICES_PENCE[lookupKey] ?? null)
+      : null,
     quantity: 1,
     currency: 'gbp',
     currentPeriodStart: new Date('2026-09-01T00:00:00Z'),
@@ -76,17 +91,19 @@ export function subscriptionState(
 }
 
 export function referencePrices(): PriceState[] {
-  return Object.entries(REFERENCE_PRICES_PENCE).map(([lookupKey, amount]) => ({
-    id: `price_${lookupKey}`,
-    lookupKey,
-    unitAmountPence: amount,
-    currency: 'gbp',
-    interval: planForLookupKey(lookupKey)?.interval ?? null,
-    active: true,
-    productName: lookupKey,
-    productTier: null,
-    taxBehavior: 'exclusive',
-  }));
+  return Object.entries({ ...REFERENCE_PRICES_PENCE, ...LEGACY_REFERENCE_PRICES_PENCE }).map(
+    ([lookupKey, amount]) => ({
+      id: `price_${lookupKey}`,
+      lookupKey,
+      unitAmountPence: amount,
+      currency: 'gbp',
+      interval: planForLookupKey(lookupKey)?.interval ?? null,
+      active: true,
+      productName: lookupKey,
+      productTier: null,
+      taxBehavior: 'exclusive',
+    }),
+  );
 }
 
 export function createFakeStripe(): FakeStripe {
@@ -99,6 +116,7 @@ export function createFakeStripe(): FakeStripe {
     prices: referencePrices(),
     fingerprints: new Map(),
     calls: [],
+    previewAmountPence: 1_234,
     setSubscription(partial) {
       const state = subscriptionState(partial);
       fake.subscriptions.set(state.id, state);
@@ -206,6 +224,69 @@ export function createFakeStripe(): FakeStripe {
     },
     async markCustomerDeleted(customerId) {
       fake.calls.push({ method: 'markCustomerDeleted', args: [customerId] });
+    },
+    async previewPlanChange(change): Promise<PlanChangePreview> {
+      fake.calls.push({ method: 'previewPlanChange', args: [change] });
+      return {
+        amountDuePence: fake.previewAmountPence,
+        totalPence: fake.previewAmountPence,
+        taxPence: 0,
+        currency: 'gbp',
+        prorationDate: change.prorationDate,
+      };
+    },
+    async changePlanNow(change, idempotencyKey) {
+      fake.calls.push({ method: 'changePlanNow', args: [change, idempotencyKey] });
+      const s = fake.subscriptions.get(change.subscriptionId);
+      if (!s) throw new Error(`no subscription ${change.subscriptionId}`);
+      if (fake.declineNextChange) {
+        fake.declineNextChange = false;
+        const pending = { ...s, hasPendingUpdate: true };
+        fake.subscriptions.set(s.id, pending);
+        return pending;
+      }
+      const price = fake.prices.find((p) => p.id === change.priceId);
+      const next: SubscriptionState = {
+        ...s,
+        priceId: change.priceId,
+        lookupKey: price?.lookupKey ?? s.lookupKey,
+        interval: price?.interval ?? s.interval,
+        unitAmountPence: price?.unitAmountPence ?? s.unitAmountPence,
+        quantity: change.quantity,
+        hasPendingUpdate: false,
+      };
+      fake.subscriptions.set(s.id, next);
+      return next;
+    },
+    async schedulePlanChange(change, idempotencyKey) {
+      fake.calls.push({ method: 'schedulePlanChange', args: [change, idempotencyKey] });
+      const s = fake.subscriptions.get(change.subscriptionId);
+      if (!s) throw new Error(`no subscription ${change.subscriptionId}`);
+      const price = fake.prices.find((p) => p.id === change.priceId);
+      fake.subscriptions.set(s.id, {
+        ...s,
+        scheduleId: nextId('sub_sched'),
+        pendingChange: {
+          quantity: change.quantity,
+          priceId: change.priceId,
+          lookupKey: price?.lookupKey ?? null,
+          effectiveAt: s.currentPeriodEnd ?? new Date(),
+        },
+      });
+    },
+    async releaseSchedule(scheduleId, idempotencyKey) {
+      fake.calls.push({ method: 'releaseSchedule', args: [scheduleId, idempotencyKey] });
+      for (const s of fake.subscriptions.values())
+        if (s.scheduleId === scheduleId)
+          fake.subscriptions.set(s.id, { ...s, scheduleId: null, pendingChange: null });
+    },
+    async setCancelAtPeriodEnd(subscriptionId, cancel, idempotencyKey) {
+      fake.calls.push({
+        method: 'setCancelAtPeriodEnd',
+        args: [subscriptionId, cancel, idempotencyKey],
+      });
+      const s = fake.subscriptions.get(subscriptionId);
+      if (s) fake.subscriptions.set(subscriptionId, { ...s, cancelAtPeriodEnd: cancel });
     },
   };
   return fake;

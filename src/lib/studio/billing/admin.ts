@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { UnprocessableError, ValidationError } from '../../errors';
 import type { PlanTier } from '../providers/router';
 import { enterpriseMinimumMonthlyPricePence, PLAN_CATALOGUE, TIER_ORDER } from './catalogue';
+import { MAX_CHANNELS, MIN_CHANNELS } from './channel-plan';
 import {
   customLimitsSchema,
   parseOverrides,
@@ -27,6 +28,9 @@ export const adminEntitlementInput = z
   .object({
     tier: z.enum(['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE']).optional(),
     access: z.enum(['full', 'read_only', 'none']).optional(),
+    /** 21.5: the channel count and interval staff give the organisation (allowance, caps, limit). */
+    channels: z.number().int().min(MIN_CHANNELS).max(MAX_CHANNELS).optional(),
+    interval: z.enum(['week', 'month', 'year']).optional(),
     limits: customLimitsSchema.optional(),
     monthlyPricePence: z.number().int().min(0).max(100_000_000).nullable().optional(),
     expiresAt: z.iso.datetime({ offset: true }).nullable().optional(),
@@ -99,6 +103,8 @@ export interface AdminEntitlementView {
     status: string;
     tier: PlanTier | null;
     interval: string | null;
+    /** 21.5: channels on a channel price (the item quantity). */
+    quantity: number;
     currentPeriodEnd: string | null;
     cancelAtPeriodEnd: boolean;
   }>;
@@ -196,6 +202,7 @@ export async function getAdminEntitlements(
       status: s.status,
       tier: tierOfSubscription(s) ?? null,
       interval: s.interval,
+      quantity: s.quantity,
       currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,
       cancelAtPeriodEnd: s.cancelAtPeriodEnd,
     })),
@@ -290,6 +297,8 @@ export async function putAdminEntitlements(
     : {
         ...(input.tier && { tier: input.tier }),
         ...(input.access && { access: input.access }),
+        ...(input.channels !== undefined && { channels: input.channels }),
+        ...(input.interval && { interval: input.interval }),
         expiresAt: input.expiresAt ?? null,
         reason: input.reason,
         setByUserId: staffUserId,
@@ -321,6 +330,8 @@ function hasOverrideChange(input: AdminEntitlementInput): boolean {
   return (
     input.tier !== undefined ||
     input.access !== undefined ||
+    input.channels !== undefined ||
+    input.interval !== undefined ||
     input.limits !== undefined ||
     input.monthlyPricePence != null ||
     input.expiresAt != null
@@ -373,7 +384,7 @@ export const adminSubscriptionsQuery = z.object({
 
 const MRR_STATUSES = new Set(['active', 'past_due']);
 
-/** Monthly recurring revenue of one subscription in pence (annual ÷ 12), ex-VAT. */
+/** Monthly recurring revenue of one subscription in pence (annual ÷ 12, weekly × 52 ÷ 12), ex-VAT. */
 export function monthlyRevenuePence(sub: {
   status: string;
   unitAmountPence: number | null;
@@ -382,7 +393,9 @@ export function monthlyRevenuePence(sub: {
 }): number {
   if (!MRR_STATUSES.has(sub.status) || sub.unitAmountPence == null) return 0;
   const total = sub.unitAmountPence * sub.quantity;
-  return sub.interval === 'year' ? Math.round(total / 12) : total;
+  if (sub.interval === 'year') return Math.round(total / 12);
+  if (sub.interval === 'week') return Math.round((total * 52) / 12);
+  return total;
 }
 
 export async function listAdminSubscriptions(

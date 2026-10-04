@@ -1,26 +1,20 @@
 import { ConfigurationError } from '../../src/lib/errors';
 import { logger } from '../../src/lib/logger';
-import { selfServeTiers } from '../../src/lib/studio/billing/catalogue';
 import { createStripeClient } from '../../src/lib/studio/billing/stripe-client';
-import { listPricesByLookupKeys } from '../../src/lib/studio/billing/stripe-lookup';
-import {
-  cataloguePrices,
-  portalConfigurationParams,
-  productIdForTier,
-} from '../../src/lib/studio/billing/stripe-setup';
+import { portalConfigurationParams } from '../../src/lib/studio/billing/stripe-setup';
 
-// Phase 18 §2.7 — create (or update) the Stripe Customer Portal configuration Studio uses:
-// payment methods, invoices and tax ids; plan switching among the 3 self-serve products
-// (upgrades invoiced at once — proration always_invoice; downgrades and shorter intervals at the
-// end of the period); cancel at period end with a reason survey.
+// Phase 18 §2.7 / 21.5 — create (or update) the Stripe Customer Portal configuration Studio uses:
+// payment methods, invoices, billing details and tax ids ONLY. Changing channels or the billing
+// interval, cancelling and resuming happen on Studio's "Your plan" page (/settings/billing), so
+// the portal's subscription update and cancel features are turned off.
 //
 //   STRIPE_SECRET_KEY=… APP_URL=https://studio.example.com npx tsx scripts/billing/portal-config.ts
 //     [--update <bpc_…>]   (default: STRIPE_PORTAL_CONFIGURATION_ID if set, else create)
 //
 // Prints the configuration id: put it in STRIPE_PORTAL_CONFIGURATION_ID. Works in test and live
-// mode (run once per mode). Prices are looked up by the catalogue's lookup keys, so run
-// seed-stripe-test.ts (test) or create the prices (live) first.
-// https://docs.stripe.com/api/customer_portal/configurations/create (read 2026-09-29)
+// mode (run once per mode). Re-run it with --update after upgrading to 21.5 so an existing
+// configuration stops offering the old tier switching.
+// https://docs.stripe.com/api/customer_portal/configurations/create (read 2026-09-29, 2026-10-04)
 
 async function main(): Promise<void> {
   const key = process.env.STRIPE_SECRET_KEY?.trim();
@@ -30,32 +24,9 @@ async function main(): Promise<void> {
   const flag = process.argv.indexOf('--update');
   const updateId =
     (flag >= 0 ? process.argv[flag + 1] : undefined) ??
-    process.env.STRIPE_PORTAL_CONFIGURATION_ID?.trim() ??
-    undefined;
+    (process.env.STRIPE_PORTAL_CONFIGURATION_ID?.trim() || undefined);
   const stripe = createStripeClient(key);
-  const recurring = cataloguePrices().filter((p) => p.interval !== null);
-  const prices = await listPricesByLookupKeys(
-    stripe.prices,
-    recurring.map((p) => p.lookupKey),
-    { active: true },
-  );
-  const products = selfServeTiers().map((tier) => {
-    const productId = productIdForTier(tier);
-    const keys = new Set(
-      recurring.filter((p) => p.productId === productId).map((p) => p.lookupKey),
-    );
-    const priceIds = prices.filter((p) => keys.has(p.lookup_key ?? '')).map((p) => p.id);
-    if (priceIds.length !== keys.size)
-      throw new ConfigurationError(
-        `Missing prices for ${productId}: expected lookup keys ${[...keys].join(', ')}`,
-      );
-    const product = prices.find((p) => keys.has(p.lookup_key ?? ''))?.product;
-    return {
-      productId: typeof product === 'string' ? product : (product?.id ?? productId),
-      priceIds,
-    };
-  });
-  const params = portalConfigurationParams({ appUrl, products });
+  const params = portalConfigurationParams({ appUrl });
   const config = updateId
     ? await stripe.billingPortal.configurations.update(updateId, params)
     : await stripe.billingPortal.configurations.create(params);

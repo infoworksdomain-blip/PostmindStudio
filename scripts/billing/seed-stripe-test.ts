@@ -13,19 +13,22 @@ import {
 import { createStripeClient, isTestModeKey } from '../../src/lib/studio/billing/stripe-client';
 import { listPricesByLookupKeys } from '../../src/lib/studio/billing/stripe-lookup';
 
-// Phase 18 §2.7 / §P.2 — create the Studio catalogue in a Stripe TEST-mode account:
-//   4 products (studio_basic / _standard / _plus / _enterprise, metadata studio_tier, tax code
-//   SaaS business use), 6 recurring GBP prices with lookup keys studio_<tier>_<monthly|yearly>,
-//   5 top-up products with one-time prices studio_topup_*; all tax_behavior=exclusive, amounts
-//   from §P.2 (catalogue REFERENCE_PRICES_PENCE).
+// Phase 18 §2.7 / 21.5 — create the Studio catalogue in a Stripe TEST-mode account:
+//   the channel product (studio_channel, metadata studio_tier=STANDARD, tax code SaaS business
+//   use) with three recurring per-unit GBP prices — studio_channel_weekly £9.50/week,
+//   studio_channel_monthly £29/month, studio_channel_yearly £290/year — where the subscription
+//   item's quantity is the number of channels (1–6); and the HD video packs studio_pack_hd5 (£15,
+//   5 videos) and studio_pack_hd15 (£39, 15 videos), each a product with a one-time price. All
+//   tax_behavior=exclusive; amounts from catalogue REFERENCE_PRICES_PENCE (channel-plan.ts).
 //
 //   STRIPE_SECRET_KEY=sk_test_… npx tsx scripts/billing/seed-stripe-test.ts [--dry-run]
 //
 // Idempotent: an existing product is left alone; a lookup key whose active price already has the
 // right amount, currency and interval is left alone; otherwise a new price is created with
-// transfer_lookup_key=true (the key moves; the old price keeps its subscribers). Refuses live keys:
-// in live mode the operator creates prices in the dashboard (runbooks/billing-stripe.md).
-
+// transfer_lookup_key=true (the key moves; the old price keeps its subscribers). The old tier
+// prices (studio_<tier>_<interval>, studio_topup_*) are not touched: archive them in the
+// dashboard once scripts/billing/migrate-channel-plans.ts has moved every subscription. Refuses
+// live keys: in live mode the operator creates prices in the dashboard (runbooks/billing-stripe.md).
 async function ensureProduct(stripe: Stripe, spec: ProductSpec, dryRun: boolean) {
   try {
     const existing = await stripe.products.retrieve(spec.id);
