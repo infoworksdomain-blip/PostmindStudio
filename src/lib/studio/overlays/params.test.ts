@@ -299,13 +299,20 @@ describe('applyBrand', () => {
     const style = validStyle({ backgroundType: 'box', backgroundColor: '#000000' });
     const result = applyBrand(style, {
       primary: '#111111',
-      secondary: '#222222',
+      secondary: '#EEEEEE',
       fontFamily: 'Lato',
     });
     expect(result).toMatchObject({
       fontFamily: 'Lato',
-      fillColor: '#222222',
+      fillColor: '#EEEEEE',
       backgroundColor: '#111111',
     });
+  });
+
+  it('never leaves brand text unreadable on the brand box (QA run 9)', () => {
+    const style = validStyle({ backgroundType: 'box', backgroundColor: '#000000' });
+    const result = applyBrand(style, { primary: '#111111', secondary: '#222222' });
+    expect(result.backgroundColor).toBe('#111111');
+    expect(result.fillColor).not.toBe('#222222');
   });
 });

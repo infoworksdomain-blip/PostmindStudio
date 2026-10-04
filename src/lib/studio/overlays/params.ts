@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { readableTextColour } from '../pipeline/edl-backdrop';
+import { HEX_COLOUR } from '../pipeline/edl-time';
 
 // BACKLOG 8.1 / Addendum A4.2 + A4.4 — overlay parameters. One schema shared by overlays
 // (text + timing + style) and presets (style only), mirroring the text_overlays columns.
@@ -161,11 +163,26 @@ export function applyBrand(
     brand.fontFamily && /^[A-Za-z0-9 -]{1,64}$/.test(brand.fontFamily)
       ? brand.fontFamily
       : undefined;
-  return {
+  const branded: OverlayStyle = {
     ...style,
     ...(font && { fontFamily: font }),
     ...(secondary && { fillColor: secondary }),
     ...(primary && style.backgroundType !== 'none' && { backgroundColor: primary }),
     ...(primary && style.strokeColor && { strokeColor: primary }),
   };
+  return withReadableText(branded);
+}
+
+/**
+ * Text on a box must stay readable whatever the brand colours are: when the text colour does not
+ * reach WCAG AA (4.5:1) against the box, it becomes white or near-black, whichever contrasts
+ * more (edl-backdrop readableTextColour, the rule text cards already use). Production QA run 9
+ * (2026-10-04): a near-black brand primary as the box and a dark-navy secondary as the text made
+ * every caption and hook unreadable.
+ */
+export function withReadableText(style: OverlayStyle): OverlayStyle {
+  const box = style.backgroundType !== 'none' ? style.backgroundColor : null;
+  if (!box || !HEX_COLOUR.test(box)) return style;
+  const fill = readableTextColour(box, style.fillColor);
+  return fill === style.fillColor ? style : { ...style, fillColor: fill };
 }
