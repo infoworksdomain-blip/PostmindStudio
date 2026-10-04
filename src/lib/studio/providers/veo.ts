@@ -1,6 +1,7 @@
 import { ConfigurationError, NotImplementedError, ProviderError } from '../../errors';
 import { httpJson } from './http';
 import type {
+  ActorVideoRequest,
   AspectRatio,
   ProviderAdapter,
   ProviderCapability,
@@ -65,6 +66,23 @@ import {
 // while the official SDK sends `image: { bytesBase64Encoded, mimeType }` for the Gemini API. We
 // follow the SDK (the shape every SDK user sends); flagged in PROGRESS.md as unconfirmed.
 
+// BACKLOG 21.4 (UGC actors, operator request 2026-10-04) adds `actor_video`: a generated actor
+// speaks the shot's line, and the clip's NATIVE audio is the narration (the composer keeps it).
+// Contract re-read 2026-10-04 from https://ai.google.dev/gemini-api/docs/veo (page updated
+// 2026-09-17) and https://ai.google.dev/gemini-api/docs/pricing:
+//   - Prompt guide, Dialogue: "Use quotes for specific speech" (example: Man: "…"); the model
+//     generates "a synchronized soundtrack". Lip-sync accuracy is NOT documented: quality is
+//     judged by the operator on the first real clips (plans/phase-21-ugc.md).
+//   - English is "fully supported"; other languages "have not been evaluated" (English only).
+//   - `referenceImages`: "up to three asset images of a single person, character, or product",
+//     REST { image, referenceType: "asset" } in the instance; durationSeconds "must be 8" with
+//     reference images; personGeneration "allow_adult" only with reference images.
+//   - `seed` "is also available for Veo 3 models. It doesn't guarantee determinism, but slightly
+//     improves it": every clip of a project sends the project's seed.
+//   - Audio is "Always on"; "All prices include default video with audio" ($0.10/s Fast 720p).
+// The reference image is encoded like the start frame ({ bytesBase64Encoded, mimeType }, the
+// official SDK's shape; the REST samples write inlineData): the same DOC DISCREPANCY as above.
+
 export const PROVIDER_ID = 'veo';
 export const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const API_HOST = 'generativelanguage.googleapis.com';
@@ -118,6 +136,31 @@ export type PersonGeneration = 'allow_adult' | 'allow_all';
  * (https://ai.google.dev/gemini-api/docs/veo, read 2026-10-02).
  */
 export const IMAGE_TO_VIDEO_PERSON_GENERATION: PersonGeneration = 'allow_adult';
+/** "Reference images: allow_adult only" (21.4 actor clips with the product image). */
+export const REFERENCE_IMAGES_PERSON_GENERATION: PersonGeneration = 'allow_adult';
+/** "durationSeconds … must be "8" when using … reference images". */
+export const REFERENCE_IMAGES_DURATION: VeoDuration = 8;
+/** A spoken line longer than this cannot be said naturally in an 8 s clip. */
+export const MAX_SPOKEN_LINE_CHARS = 300;
+/** A seed must fit Veo's unsigned 32-bit field; ours never exceed 2^31-1 (ugc/style.ts). */
+const MAX_SEED = 2 ** 32 - 1;
+
+/** 21.4: the actor clip's length (8 s whenever the product image is a reference). */
+export function actorDuration(request: {
+  durationSec: number;
+  productImageUrl?: string;
+}): VeoDuration {
+  return request.productImageUrl ? REFERENCE_IMAGES_DURATION : veoDuration(request.durationSec);
+}
+
+/**
+ * 21.4: the documented dialogue form (prompt guide: "Use quotes for specific speech"). Double
+ * quotes inside the line would close the quote early, so they become single quotes.
+ */
+export function withDialogue(prompt: string, spokenLine: string): string {
+  const line = spokenLine.replace(/\s+/g, ' ').replace(/"/g, "'").trim();
+  return `${prompt.trim()}\nThe person speaks directly to the camera and says: "${line}"`;
+}
 
 export function isVeoModel(value: string): value is VeoModel {
   return Object.hasOwn(VEO_MODELS, value);
@@ -345,7 +388,11 @@ const OPERATION_NAME = /^models\/[a-z0-9.-]+\/operations\/[A-Za-z0-9_.-]+$/;
 
 export class VeoAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
-  readonly capabilities: readonly ProviderCapability[] = ['text_to_video', 'image_to_video'];
+  readonly capabilities: readonly ProviderCapability[] = [
+    'text_to_video',
+    'image_to_video',
+    'actor_video',
+  ];
   readonly typicalLatencySec = TYPICAL_LATENCY_SEC;
   readonly model: VeoModel;
 
@@ -383,6 +430,16 @@ export class VeoAdapter implements ProviderAdapter {
 
   /** Router hint: Veo renders at most 8 s, so longer shots go to the next candidate. */
   supportsRequest(request: ProviderRequest): boolean {
+    if (request.capability === 'actor_video') {
+      return (
+        request.durationSec >= MIN_DURATION_SEC &&
+        request.durationSec <= MAX_DURATION_SEC &&
+        request.spokenLine.trim().length > 0 &&
+        request.spokenLine.length <= MAX_SPOKEN_LINE_CHARS &&
+        // English only: the docs have not evaluated other languages (21.4).
+        /^en(-|$)/i.test(request.languageCode)
+      );
+    }
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') {
       return false;
     }
@@ -390,12 +447,14 @@ export class VeoAdapter implements ProviderAdapter {
   }
 
   estimateCostPence(request: ProviderRequest): number {
+    if (request.capability === 'actor_video') return this.secondsPence(actorDuration(request));
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') return 0;
     return this.secondsPence(veoDuration(request.durationSec));
   }
 
   /** The predictLongRunning body for a shot (exported shape for tests and reviews). */
   async buildBody(request: ProviderRequest): Promise<Record<string, unknown>> {
+    if (request.capability === 'actor_video') return this.buildActorBody(request);
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') {
       throw this.invalid(`Veo adapter does not support ${request.capability}`);
     }
@@ -422,6 +481,47 @@ export class VeoAdapter implements ProviderAdapter {
         durationSeconds: veoDuration(request.durationSec),
         resolution: RESOLUTION,
         ...(person && { personGeneration: person }),
+        sampleCount: 1,
+      },
+    };
+  }
+
+  /**
+   * 21.4: a UGC actor clip. The line goes in quotes after the scene; the product image (when
+   * chosen) is an "asset" reference image, which fixes the clip at 8 s and allow_adult. Without
+   * it this is text-to-video and follows personGenerationFor('text_to_video', …).
+   */
+  private async buildActorBody(request: ActorVideoRequest): Promise<Record<string, unknown>> {
+    if (!this.supportsRequest(request)) {
+      throw this.invalid(
+        `Veo actor clips need an English line of 1–${MAX_SPOKEN_LINE_CHARS} characters and a ${MIN_DURATION_SEC}–${MAX_DURATION_SEC}s shot`,
+      );
+    }
+    const prompt = withDialogue(request.prompt, request.spokenLine);
+    if (request.prompt.trim().length < 1 || prompt.length > MAX_PROMPT_CHARS) {
+      throw this.invalid(`Veo prompts must be 1–${MAX_PROMPT_CHARS} characters`);
+    }
+    const instance: Record<string, unknown> = { prompt };
+    if (request.productImageUrl) {
+      instance.referenceImages = [
+        { image: await this.fetchImage(request.productImageUrl), referenceType: 'asset' },
+      ];
+    }
+    const person = request.productImageUrl
+      ? REFERENCE_IMAGES_PERSON_GENERATION
+      : personGenerationFor('text_to_video', this.personGeneration);
+    const seed =
+      request.seed !== undefined && Number.isInteger(request.seed) && request.seed >= 0
+        ? Math.min(MAX_SEED, request.seed)
+        : undefined;
+    return {
+      instances: [instance],
+      parameters: {
+        aspectRatio: VEO_RATIO[request.aspectRatio],
+        durationSeconds: actorDuration(request),
+        resolution: RESOLUTION,
+        ...(person && { personGeneration: person }),
+        ...(seed !== undefined && { seed }),
         sampleCount: 1,
       },
     };
@@ -507,7 +607,8 @@ export class VeoAdapter implements ProviderAdapter {
           operationName: providerJobId,
           model: this.model,
           resolution: RESOLUTION,
-          audio: 'native (muted by the composer)',
+          // Muted by the composer, except a UGC actor clip's (21.4): its speech is the narration.
+          audio: 'native',
           watermark: 'SynthID',
           // Docs: "Generated videos are stored on the server for 2 days"; Layer 3 copies the
           // clip into our bucket at once (generate-asset.ts recordAsset via fetchOutput).

@@ -12,9 +12,9 @@ import {
   SCRIPT_SAFETY_SCHEMA,
   SCRIPT_SAFETY_SYSTEM_PROMPT,
 } from '../../pipeline/script-safety';
-import { aiClipBudget, applyClipBudget, isAiShot } from '../../pipeline/clip-budget';
+import { isAiShot } from '../../pipeline/clip-budget';
+import { scriptLayerMode } from '../../ugc/script-layer';
 import {
-  availableTreatments,
   buildScriptPrompt,
   mergePinnedShots,
   normaliseScript,
@@ -38,7 +38,7 @@ import {
 } from './plan-project';
 import { SCRIPT_MAX_TOKENS } from '../../pipeline/token-budgets';
 
-// Phase 13.1 — POST /scripts/:id/regenerate (spec 8.4): a new run from Layer 2 for ONE script,
+// Phase 13.1 â€” POST /scripts/:id/regenerate (spec 8.4): a new run from Layer 2 for ONE script,
 // reusing the Layer 1 brief stored in video_briefs (no ideation spend). The rewrite goes through
 // the same pre-generation safety gate, replaces that script's shots and suggested overlays, and
 // fans out generate-asset for the new shots; the project's other scripts are untouched and keep
@@ -102,7 +102,13 @@ export async function regenerateScriptPlan(
   const reference =
     (await loadReferenceGuide(deps.db, project, deps.now())) ??
     (await loadTemplateGuide(deps.db, project));
-  const treatments = availableTreatments(deps.registry);
+  // 21.4: a UGC actor video keeps its style, rules and actor clip budget on a rewrite.
+  const mode = scriptLayerMode({
+    metadata: project.metadata,
+    tier: data.planTier,
+    registry: deps.registry,
+  });
+  const treatments = mode.treatments;
   // 15.C9: pinned shots stay (assets and position); Layer 2 writes only the others.
   const currentShots = await deps.db.videoShot.findMany({
     where: { scriptId: script.id },
@@ -121,8 +127,10 @@ export async function regenerateScriptPlan(
   const pinnedSec = pinned.reduce((sum, p) => sum + p.shot.durationSec, 0);
   const writeSec = Math.max(1, format.durationSec - pinnedSec);
   // 20.25: pinned AI shots spend the script's AI clip budget first; the rewrite gets the rest.
-  const pinnedAi = pinned.filter((p) => isAiShot(p.shot.visualTreatment)).length;
-  const budget = Math.max(0, aiClipBudget(data.planTier, format.durationSec) - pinnedAi);
+  const pinnedAi = pinned.filter((p) =>
+    mode.ugc ? p.shot.visualTreatment === 'UGC_ACTOR' : isAiShot(p.shot.visualTreatment),
+  ).length;
+  const budget = Math.max(0, mode.budget(format.durationSec) - pinnedAi);
 
   // Layer 2 only
   const run = await runProvider(
@@ -136,9 +144,10 @@ export async function regenerateScriptPlan(
           treatments,
           restrictedTopics,
           language: script.language,
-          aiClipBudget: budget,
+          aiClipBudget: mode.ugc ? undefined : budget,
         }),
         reference?.scriptSupplement(format.durationSec, treatments),
+        mode.supplement(format.durationSec, budget),
         pinnedShotsSupplement(pinnedContext, format.durationSec),
         instructionSupplement(regeneration.instruction),
       ]
@@ -151,7 +160,7 @@ export async function regenerateScriptPlan(
   );
   const normalised = normaliseScript(jsonOutput(run.output), treatments, writeSec);
   const templated = reference && pinned.length === 0;
-  const written = applyClipBudget(
+  const written = mode.apply(
     templated ? reference.apply(normalised, format.durationSec) : normalised,
     {
       budget,
@@ -172,7 +181,7 @@ export async function regenerateScriptPlan(
     shots: texts,
   };
 
-  // Pre-generation safety gate — before any Layer 3 spend
+  // Pre-generation safety gate â€” before any Layer 3 spend
   const safetyRun = await runProvider(
     textRequest(
       data,

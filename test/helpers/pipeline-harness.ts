@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { vi } from 'vitest';
 import {
@@ -197,6 +197,10 @@ export interface HarnessOptions {
   pageFetch?: typeof fetch;
   renderer?: PageRenderer;
   stockSources?: StockImageSource[];
+  /** 21.4: register a scripted Veo that makes UGC actor clips (actor_video). */
+  actor?: boolean;
+  /** 21.4: the scripted Veo actor's answer (default: a clip). */
+  actorRespond?: (request: ProviderRequest) => ProviderPollResult;
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -249,6 +253,20 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       },
     }),
     30,
+  );
+  // 21.4: a scripted Veo for UGC actor clips (the clip's own audio is the narration).
+  const veo = new ScriptedAdapter(
+    'veo',
+    ['actor_video'],
+    options.actorRespond ??
+      (() => ({
+        state: 'succeeded',
+        output: {
+          url: 'https://veo.invalid/actor.mp4',
+          metadata: { audio: 'native', costPence: 45 },
+        },
+      })),
+    45,
   );
   // 20.21: no content-safety adapter (Hive removed; none is built), as in production.
 
@@ -353,6 +371,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       shotstack,
       openai,
       ...(options.noTranscription ? [] : [assemblyai]),
+      ...(options.actor ? [veo] : []),
     ]),
     breaker,
     killSwitch,
@@ -410,7 +429,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     attributions,
     oauthClients,
     meta,
-    adapters: { anthropic, runway, elevenlabs, shotstack, openai, assemblyai },
+    adapters: { anthropic, runway, elevenlabs, shotstack, openai, assemblyai, veo },
     objects,
     media,
     fetchImpl,
@@ -419,7 +438,13 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
 
 export async function createProject(
   db: PrismaClient,
-  overrides: { organisationId: string; description?: string; costBudgetPence?: number | null },
+  overrides: {
+    organisationId: string;
+    description?: string;
+    costBudgetPence?: number | null;
+    /** 21.4: extra project metadata (e.g. the UGC style). */
+    metadata?: Record<string, unknown>;
+  },
 ) {
   const runId = randomUUID();
   const project = await db.videoProject.create({
@@ -433,7 +458,7 @@ export async function createProject(
       sourceType: 'BRIEF',
       targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 15 }],
       costBudgetPence: overrides.costBudgetPence ?? null,
-      metadata: { runId },
+      metadata: { ...overrides.metadata, runId } as Prisma.InputJsonObject,
     },
   });
   return { project, runId };

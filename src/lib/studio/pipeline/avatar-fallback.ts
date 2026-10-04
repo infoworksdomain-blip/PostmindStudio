@@ -16,6 +16,11 @@ import { isAccountProviderError } from '../providers/account-errors';
 // (or pause) the shot as before.
 
 export const DEGRADED_FROM_AVATAR = 'avatar_video';
+/**
+ * 21.4: a UGC_ACTOR shot with no actor provider available degrades the same way (generate-asset.ts
+ * generateActor): its line is narrated by the brand voice over a generated B-roll clip.
+ */
+export const DEGRADED_FROM_ACTOR = 'actor_video';
 
 /** Runway clips are 2–10 s (scripting.ts shotDurationBounds); the composer trims to the shot. */
 const CLIP_MIN_SEC = 2;

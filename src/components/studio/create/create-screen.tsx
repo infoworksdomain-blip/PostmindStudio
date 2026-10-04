@@ -6,9 +6,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { ArrowRight, CalendarRange, Clapperboard, Layers, Loader2, Upload } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarRange,
+  Clapperboard,
+  Layers,
+  Loader2,
+  Upload,
+  UserRound,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { api, ApiError, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { BrandKit, MetaConnectInfo, PlatformConnection, Project } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
@@ -33,6 +41,7 @@ import {
   buildCreateBody,
   MAX_BUDGET_POUNDS,
   buildGenerateBody,
+  EMPTY_UGC,
   publishPlatforms,
   usesTemplate,
   validateCreate,
@@ -48,6 +57,7 @@ import { AdvancedOptions, BrandKitSelect, LengthToggle, PlatformChips } from './
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultPlatforms, PLATFORM_OPTIONS } from './formats';
 import { ProjectTemplatePicker } from './project-template-picker';
+import { UgcOptions } from './ugc-options';
 import { ReferenceBanner } from './reference-banner';
 import { ReferencePreview } from './reference-preview';
 import { VideoUploadField } from '../uploads/video-upload-field';
@@ -75,12 +85,15 @@ const INITIAL: FormState = {
   autoPublish: null,
   autoPublishAccounts: {},
   upload: null,
+  ugc: EMPTY_UGC,
 };
 
 const SOURCES: Array<{ key: CreateSource; icon: typeof Clapperboard }> = [
   { key: 'BRIEF', icon: Clapperboard },
   { key: 'SLIDESHOW', icon: Layers },
   { key: 'UPLOAD', icon: Upload },
+  // 21.4: a generated actor talks about the product (UGC style).
+  { key: 'UGC', icon: UserRound },
 ];
 
 const WHOLE_POUNDS: Intl.NumberFormatOptions = {
@@ -116,6 +129,8 @@ export function CreateScreen({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [problems, setProblems] = useState<CreateProblem[]>([]);
+  // 21.4: the server refused a UGC brief that asks for a real person.
+  const [refusal, setRefusal] = useState(false);
   // Read-only: every mutation answers 402, so Generate is disabled with the reason beside it.
   const block = useCreateBlock();
 
@@ -188,6 +203,7 @@ export function CreateScreen({
     if (kit !== undefined) setBrandKitId(kit);
     setForm((f) => ({ ...f, ...rest }));
     setProblems([]);
+    setRefusal(false);
   };
 
   if (ready && !businessId) {
@@ -215,6 +231,7 @@ export function CreateScreen({
     setSubmitting(true);
     try {
       const body = buildCreateBody(state, businessId, form.source === 'BRIEF' ? reference : null);
+      setRefusal(false);
       const { project } = await api<{ project: Project }>('/projects', {
         method: 'POST',
         body,
@@ -240,13 +257,16 @@ export function CreateScreen({
       }
       router.push(`/projects/${project.id}`);
     } catch (err) {
-      toast.error(errorMessage(err));
+      if (err instanceof ApiError && err.details?.reason === 'ugc_real_person_refused')
+        setRefusal(true);
+      else toast.error(errorMessage(err));
       setSubmitting(false);
     }
   }
 
   const isSlideshow = form.source === 'SLIDESHOW';
   const isUpload = form.source === 'UPLOAD';
+  const isUgc = form.source === 'UGC';
   const templated = usesTemplate(state, reference);
   const chooseTemplate = (id: string | null) => {
     const found = templates.data?.data.find((x) => x.id === id);
@@ -329,7 +349,7 @@ export function CreateScreen({
           <p className="text-xs text-muted-foreground">{t('uploadNote')}</p>
         </div>
       )}
-      {reference && !isSlideshow && !isUpload && (
+      {reference && !isSlideshow && !isUpload && !isUgc && (
         <>
           <ReferenceBanner
             reference={reference}
@@ -401,6 +421,18 @@ export function CreateScreen({
         metaConnect={connections.data?.meta?.connect}
         businessId={businessId}
       />
+      {isUgc && (
+        <UgcOptions
+          businessId={businessId}
+          value={form.ugc ?? EMPTY_UGC}
+          onChange={(ugc) => patch({ ugc })}
+        />
+      )}
+      {refusal && (
+        <p role="alert" className="text-sm text-destructive">
+          {tp('ugcRealPerson')}
+        </p>
+      )}
       {problems.length > 0 && (
         <ul role="alert" className="flex flex-col gap-1 text-sm text-destructive">
           {problems.map((p) => (
@@ -410,7 +442,8 @@ export function CreateScreen({
       )}
       {showOptions && (
         <div id="create-options" className="flex flex-col gap-5">
-          <div role="radiogroup" aria-label={t('sourcesAria')} className="flex gap-1.5">
+          {/* 21.4 added a fourth source (UGC): wrap so the row never overflows a 375 px phone. */}
+          <div role="radiogroup" aria-label={t('sourcesAria')} className="flex flex-wrap gap-1.5">
             {SOURCES.map(({ key, icon: Icon }) => (
               <button
                 key={key}
@@ -438,7 +471,7 @@ export function CreateScreen({
               onChange={(templateId) => patch({ templateId })}
             />
           )}
-          {!isSlideshow && !isUpload && !reference && (
+          {!isSlideshow && !isUpload && !isUgc && !reference && (
             <ProjectTemplatePicker
               templates={templates.data?.data}
               error={templates.error}

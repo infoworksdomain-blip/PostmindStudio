@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { UGC_VIDEO_ALLOWANCE_UNITS } from '@/lib/studio/ugc/allowance';
 import {
   CREATE_BLOCK_NOTICE_ID,
   CreateBlockedNotice,
@@ -244,6 +245,28 @@ export function PlanMonthForm() {
             </p>
             <p className="text-xs text-muted-foreground">{t('mixHint')}</p>
           </div>
+
+          {/* 21.4: a plan's testimonial and product videos as UGC actor videos. */}
+          {form.videoShare > 0 && (
+            <div className="flex items-start gap-2">
+              <input
+                id="plan-ugc"
+                type="checkbox"
+                checked={Boolean(form.ugcActors)}
+                onChange={(e) => patch({ ugcActors: e.target.checked })}
+                aria-describedby="plan-ugc-hint"
+                className="mt-0.5 size-4 accent-foreground"
+              />
+              <div className="flex flex-col gap-0.5">
+                <label htmlFor="plan-ugc" className="text-sm">
+                  {t('ugcActors')}
+                </label>
+                <p id="plan-ugc-hint" className="text-xs text-muted-foreground">
+                  {t('ugcActorsHint', { count: UGC_VIDEO_ALLOWANCE_UNITS })}
+                </p>
+              </div>
+            </div>
+          )}
 
           <PlatformChips
             value={form.platforms}

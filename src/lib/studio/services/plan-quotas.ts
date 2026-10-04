@@ -8,6 +8,7 @@ import { budgetFormatsFromJson } from '../cost/project-budget';
 import { notifySafely, type NotificationMessage, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
+import { allowanceUnitsOf } from '../ugc/allowance';
 import { PLAN_CATALOGUE, TIER_ORDER as CATALOGUE_TIERS } from '../billing/catalogue';
 import { consumeCredit } from '../billing/credits';
 import type { Entitlements, EntitlementsReader } from '../billing/entitlements-reader';
@@ -170,6 +171,8 @@ function familyOf(platform: string): string {
 export interface QuotaProject {
   sourceType: string;
   targetFormats: Prisma.JsonValue;
+  /** 21.4: read for the allowance units (a UGC actor video uses more than one video). */
+  metadata?: Prisma.JsonValue | null;
 }
 
 function longestSec(project: QuotaProject): number {
@@ -294,7 +297,8 @@ export function generateViolations(input: {
   if (input.alreadyCounted || out.some((v) => v.code === 'long_not_included')) return out;
   const kind = videoKind(project, quota);
   const limit = kind === 'short' ? quota.shortVideos : quota.longVideos;
-  if (limit !== null && usage[kind] >= limit) {
+  // 21.4: room for the whole video (a UGC actor video uses more than one).
+  if (limit !== null && usage[kind] + allowanceUnitsOf(project.metadata) > limit) {
     out.push({
       code: kind === 'short' ? 'short_quota' : 'long_quota',
       message: `The ${tierLabel(tier)} plan includes ${limit} ${kind} videos a month and ${
@@ -323,7 +327,9 @@ export async function monthlyVideoUsage(
   });
   const usage: VideoUsage = { short: 0, long: 0 };
   for (const row of rows) {
-    if (countedIn(row.metadata, month)) usage[videoKind(row, quota)] += 1;
+    // 21.4: a UGC actor video uses UGC_VIDEO_ALLOWANCE_UNITS videos (ugc/allowance.ts).
+    if (countedIn(row.metadata, month))
+      usage[videoKind(row, quota)] += allowanceUnitsOf(row.metadata);
   }
   return usage;
 }
@@ -467,6 +473,7 @@ async function checkGenerateQuotaLocked(
         month: month.key,
         kind,
         now: new Date(now),
+        units: allowanceUnitsOf(project.metadata),
       });
       if (use) {
         creditUseId = use.id;
@@ -526,6 +533,7 @@ export async function releaseQuotaReservation(
         select: { metadata: true },
       });
       if (!project) return;
+      const units = allowanceUnitsOf(project.metadata);
       // generationStart this month means the run did start: keep the slot.
       if (generatedAt(project.metadata)?.toISOString().slice(0, 7) === reservation.month) return;
       const rest = Object.fromEntries(
@@ -541,7 +549,7 @@ export async function releaseQuotaReservation(
           await tx.usageCreditUse.delete({ where: { id: use.id } });
           await tx.usageCredit.update({
             where: { id: use.creditId },
-            data: { remaining: { increment: 1 } },
+            data: { remaining: { increment: units } },
           });
         }
       }

@@ -16,6 +16,7 @@ export type ProviderCapability =
   | 'text_to_video' // Layer 3: AI_CLIP shots without a source frame
   | 'image_to_video' // Layer 3: AI_CLIP shots from a source frame
   | 'avatar_video' // Layer 3: AI_AVATAR shots
+  | 'actor_video' // Layer 3: UGC_ACTOR shots (21.4: a generated actor speaks the line, with audio)
   | 'stock_footage' // Layer 3: STOCK_FOOTAGE shots
   | 'tts' // Layer 4
   | 'music' // Layer 5
@@ -136,6 +137,26 @@ export interface AvatarVideoRequest extends ProviderRequestBase {
   aspectRatio: AspectRatio;
 }
 
+/**
+ * 21.4 — a UGC_ACTOR shot: a generated (never real) person speaks `spokenLine` to camera. The
+ * clip's own audio is the shot's narration, so adapters must return video WITH speech.
+ */
+export interface ActorVideoRequest extends ProviderRequestBase {
+  capability: 'actor_video';
+  /** Scene, framing and the actor's look, without the spoken line (pipeline/ugc/prompt.ts). */
+  prompt: string;
+  /** The exact words the actor says (one short line). */
+  spokenLine: string;
+  /** BCP 47 language of the line. */
+  languageCode: string;
+  durationSec: number;
+  aspectRatio: AspectRatio;
+  /** Publicly fetchable (e.g. presigned) URL of the business's product image, when chosen. */
+  productImageUrl?: string;
+  /** Same value for every clip of a project, so providers that take a seed keep the look. */
+  seed?: number;
+}
+
 export interface StockFootageRequest extends ProviderRequestBase {
   capability: 'stock_footage';
   /** The shot's scene description; adapters reduce it to search keywords. */
@@ -216,6 +237,7 @@ export type ProviderRequest =
   | TextToVideoRequest
   | ImageToVideoRequest
   | AvatarVideoRequest
+  | ActorVideoRequest
   | StockFootageRequest
   | TtsRequest
   | MusicRequest

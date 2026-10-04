@@ -72,6 +72,8 @@ export type ShotBeat = (typeof SHOT_BEATS)[number];
 
 /** Clip-length limits: AI clips 2–10s (Runway), everything else 1–10s. */
 export function shotDurationBounds(treatment: VisualTreatment): [number, number] {
+  // 21.4: actor clips are 4–8 s (Veo); ugc/plan.ts then snaps them to an exact clip length.
+  if (treatment === 'UGC_ACTOR') return [4, 8];
   return treatment === 'AI_CLIP' ? [2, 10] : [1, 10];
 }
 
@@ -317,12 +319,13 @@ export function normaliseScript(
       );
     }
     const treatment = shot.visualTreatment as VisualTreatment;
-    // The avatar lip-syncs to the shot's narration (generate-asset.ts), so it must have some.
-    if (treatment === 'AI_AVATAR' && !shot.voiceoverText.trim()) {
+    // The avatar lip-syncs to the shot's narration (generate-asset.ts), and a UGC actor speaks
+    // it (21.4), so both must have some.
+    if ((treatment === 'AI_AVATAR' || treatment === 'UGC_ACTOR') && !shot.voiceoverText.trim()) {
       throw new ProviderError(
         'text_generation',
         'unknown',
-        'Script has an AI_AVATAR shot without voiceover text',
+        `Script has an ${treatment} shot without voiceover text`,
         true,
       );
     }

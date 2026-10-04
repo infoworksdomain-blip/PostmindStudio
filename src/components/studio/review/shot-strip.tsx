@@ -26,6 +26,7 @@ const TREATMENTS = [
   'USER_UPLOAD',
   'TEXT_CARD',
   'TRANSITION',
+  'UGC_ACTOR',
 ] as const;
 const SHOT_STATES = ['PLANNED', 'QUEUED', 'GENERATING', 'READY', 'FAILED', 'SKIPPED'] as const;
 const oneOf = <T extends string>(list: readonly T[], value: string): value is T =>

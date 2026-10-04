@@ -28,6 +28,8 @@ export const PROJECTS = {
   christmas: { id: 'prj-christmas-preorders', name: 'Christmas pre-orders open' },
   /** DRAFT. */
   meetTheBakers: { id: 'prj-meet-the-bakers', name: 'Meet the bakers' },
+  /** 21.4: a UGC actor video READY_FOR_REVIEW (a generated creator reviews the bread box). */
+  ugcReview: { id: 'prj-ugc-bread-box', name: 'Creator review: the bread box' },
 } as const;
 
 /**
