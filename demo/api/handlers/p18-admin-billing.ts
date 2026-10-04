@@ -17,7 +17,19 @@ import { DemoHttpError, route } from '../registry';
 import { ADMIN_ORGS, graceFor, syncDemoOrg, type AdminOrg } from './p18-admin';
 import { referencePrice } from './p18-billing';
 import { ago, DAY } from './projects-store';
-import { endedTrials, overrideActive, overrides, planSummary, trialView } from './admin-plan-state';
+import {
+  channelPlanOf,
+  endedTrials,
+  overrideActive,
+  overrides,
+  planSummary,
+  trialView,
+} from './admin-plan-state';
+import {
+  channelIntervalForLookupKey,
+  isChannelInterval,
+  isValidChannelCount,
+} from '@/lib/studio/billing/channel-plan';
 
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
@@ -46,6 +58,7 @@ function view(org: AdminOrg) {
     custom && key in custom ? (custom[key] ?? null) : fallback;
   const demoState = org.id === DEMO_ORG_ID ? BILLING_STATE_INFO[getBillingState()] : null;
   const source = own ? 'admin' : (demoState?.source ?? planSummary(org).source);
+  const channelPlan = channelPlanOf(org);
   return {
     organisationId: org.id,
     effective: {
@@ -60,6 +73,7 @@ function view(org: AdminOrg) {
       },
       ...(custom && { custom }),
       ...(org.subscriptionStatus && { subscriptionStatus: org.subscriptionStatus }),
+      ...(channelPlan && { channelPlan }),
     },
     stored: org.tier
       ? {
@@ -85,7 +99,8 @@ function view(org: AdminOrg) {
             id: `sub_${org.slug}`,
             status: org.subscriptionStatus,
             tier: org.lookupKey ? (planForLookupKey(org.lookupKey)?.tier ?? null) : tier,
-            interval: org.lookupKey?.endsWith('yearly') ? 'year' : 'month',
+            interval: channelIntervalForLookupKey(org.lookupKey) ?? 'month',
+            quantity: org.channels ?? 1,
             currentPeriodEnd: future(20),
             cancelAtPeriodEnd: false,
           },
@@ -104,6 +119,10 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
   const reason = String(input.reason ?? '').trim();
   if (reason.length < 3) throw bad('reason: Too small');
   if (input.tier !== undefined && !isTier(input.tier)) throw bad('tier: Invalid option');
+  if (input.channels !== undefined && !isValidChannelCount(input.channels))
+    throw bad('channels: Choose between 1 and 6 channels');
+  if (input.interval !== undefined && !isChannelInterval(input.interval))
+    throw bad('interval: Invalid option');
   const access = input.access;
   if (access !== undefined && access !== 'full' && access !== 'read_only' && access !== 'none')
     throw bad('access: Invalid option');
@@ -117,6 +136,8 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
     input.tier === undefined &&
     access === undefined &&
     input.limits === undefined &&
+    input.channels === undefined &&
+    input.interval === undefined &&
     price === null &&
     typeof input.expiresAt !== 'string';
   if (endTrial) {
@@ -143,6 +164,8 @@ route('PUT', '/admin/organisations/:id/entitlements', ({ params, body }) => {
   }
   overrides.set(org.id, {
     ...(input.tier !== undefined && { tier }),
+    ...(isValidChannelCount(input.channels) && { channels: input.channels }),
+    ...(isChannelInterval(input.interval) && { interval: input.interval }),
     ...(access !== undefined && { access }),
     ...(input.limits !== undefined && { limits: obj(input.limits) as Record<string, number> }),
     monthlyPricePence: tier === 'ENTERPRISE' ? price : null,
@@ -161,7 +184,7 @@ route('DELETE', '/admin/organisations/:id/entitlements', ({ params, body }) => {
   if (String(obj(body).reason ?? '').trim().length < 3) throw bad('reason: Too small');
   overrides.delete(org.id);
   if (org.id === DEMO_ORG_ID && getBillingState() === 'enterprise')
-    setBillingState('active_standard');
+    setBillingState('active_monthly');
   syncDemoOrg();
   return { entitlements: view(org) };
 });
@@ -176,16 +199,19 @@ route('GET', '/admin/billing/subscriptions', ({ query }) => {
     const plan = o.lookupKey ? planForLookupKey(o.lookupKey) : undefined;
     const tier: PlanTier | null = own?.tier ?? plan?.tier ?? (isTier(o.tier) ? o.tier : null);
     const interval = plan?.interval ?? 'month';
+    // 21.5: a channel price is per channel (quantity = channels).
     const amount =
       tier === 'ENTERPRISE'
         ? (own?.monthlyPricePence ?? ENTERPRISE_LIST_PRICE_PENCE)
         : o.lookupKey
-          ? referencePrice(o.lookupKey)
+          ? referencePrice(o.lookupKey) * (o.channels ?? 1)
           : 0;
     const mrrPence = MRR_STATUSES.has(o.subscriptionStatus ?? '')
       ? interval === 'year'
         ? Math.round(amount / 12)
-        : amount
+        : interval === 'week'
+          ? Math.round((amount * 52) / 12)
+          : amount
       : 0;
     return {
       id: `sub_${o.slug}`,

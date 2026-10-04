@@ -1,5 +1,6 @@
 import { isLocale, localeCookieString, type Locale } from '@/lib/i18n/locales';
 import { DEMO_PLAN_PARAM, isBillingStateId, setBillingState } from './api/billing-state';
+import { roleForPath, setViewerRole } from './api/viewer-role';
 import { setLocationFilter } from './router';
 
 // Tour links may carry `?demoPlan=<state>` (switch the demo's billing state) and `?lang=<locale>`
@@ -21,6 +22,8 @@ export function onLanguageParam(listener: (locale: Locale) => void): () => void 
 
 export function installTourParams(): void {
   setLocationFilter((location) => {
+    // 21.5: customers never see generation cost; the Admin Centre is viewed as staff.
+    setViewerRole(roleForPath(location.pathname));
     const query = new URLSearchParams(location.search);
     const plan = query.get(DEMO_PLAN_PARAM);
     const lang = query.get(LANG_PARAM);

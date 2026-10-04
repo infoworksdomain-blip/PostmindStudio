@@ -109,7 +109,7 @@ const CORE_WORKFLOWS: Workflow[] = [
         cta: 'Business & images',
       },
       {
-        text: 'Save the structure as a template (a Standard feature: on Basic it carries a lock badge), then find it under Templates.',
+        text: 'Save the structure as a template (included in every plan), then find it under Templates.',
         href: '#/templates',
         cta: 'Templates',
       },
@@ -156,8 +156,8 @@ const CORE_WORKFLOWS: Workflow[] = [
     caption: 'Our morning ritual',
     steps: [
       {
-        text: `Start from a library reference: “${ritualRef.title}” in TEMPLATE mode. TEMPLATE is a Plus feature, so this link switches the demo to Active: Plus.`,
-        href: withPlan(`#/new?reference=${ritualRef.id}&mode=TEMPLATE`, 'active_plus'),
+        text: `Start from a library reference: “${ritualRef.title}” in TEMPLATE mode. TEMPLATE is not part of the per-channel plan (Enterprise only), so this link switches the demo to Enterprise.`,
+        href: withPlan(`#/new?reference=${ritualRef.id}&mode=TEMPLATE`, 'enterprise'),
         cta: 'Create from reference',
       },
       {

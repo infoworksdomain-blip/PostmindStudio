@@ -8,6 +8,7 @@
 import { limits, meBilling } from '../billing-state';
 import { DEMO_ORG_ID, DEMO_USER_ID, DEMO_USER_NAME } from '../ids';
 import { DemoHttpError, route } from '../registry';
+import { platformRole } from '../viewer-role';
 import { OTHER_ORGS } from './admin-state';
 import { ago, DAY, HOUR } from './projects-store';
 
@@ -39,7 +40,8 @@ route('GET', '/me', () => ({
       id: DEMO_USER_ID,
       name: DEMO_USER_NAME,
       email: 'amara@leedssourdough.example',
-      platformRole: 'superadmin',
+      // A customer on the app screens (no generation cost shown), staff in the Admin Centre.
+      platformRole: platformRole(),
     },
     organisation: { id: org.id, name: org.name, role: yourRole() },
     organisations: [

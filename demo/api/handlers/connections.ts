@@ -47,6 +47,9 @@ function conn(
   return { organisationId: DEMO_ORG_ID, connectedByUserId: DEMO_USER_ID, ...c };
 }
 
+// 21.5: the connection dates set the channel order (the platforms connected first publish):
+// TikTok, Instagram and YouTube are inside the default 3-channel plan; Facebook, X and LinkedIn
+// show "add a channel" until the plan has more channels.
 const rows: DemoConnection[] = [
   conn({
     id: CONNECTIONS.tiktok.id,
@@ -57,7 +60,7 @@ const rows: DemoConnection[] = [
     accessTokenExpiresAt: iso(18 * HOUR),
     scopes: SCOPES.tiktok,
     state: 'active',
-    connectedAt: iso(-94 * DAY),
+    connectedAt: iso(-150 * DAY),
     statusCheckedAt: iso(-5 * HOUR),
     statusCheckOutcome: 'ok',
   }),
@@ -70,7 +73,7 @@ const rows: DemoConnection[] = [
     accessTokenExpiresAt: iso(42 * 60_000),
     scopes: SCOPES.youtube,
     state: 'active',
-    connectedAt: iso(-88 * DAY),
+    connectedAt: iso(-110 * DAY),
     statusCheckedAt: iso(-11 * HOUR),
     statusCheckOutcome: 'ok',
   }),
@@ -97,7 +100,7 @@ const rows: DemoConnection[] = [
     accessTokenExpiresAt: iso(-6 * DAY),
     scopes: SCOPES.x,
     state: 'needs_reconnect',
-    connectedAt: iso(-140 * DAY),
+    connectedAt: iso(-60 * DAY),
     statusCheckedAt: iso(-7 * HOUR),
     statusCheckOutcome: 'needs_reconnect',
   }),
@@ -125,7 +128,7 @@ const rows: DemoConnection[] = [
     accessTokenExpiresAt: null,
     scopes: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
     state: 'active',
-    connectedAt: iso(-120 * DAY),
+    connectedAt: iso(-90 * DAY),
     connectedVia: 'studio',
     // The last check could not reach Facebook (a transient error): recorded, state unchanged.
     statusCheckedAt: iso(-3 * HOUR),

@@ -1,14 +1,16 @@
 import { useState, type ReactNode } from 'react';
 import { FlaskConical } from 'lucide-react';
-import { PLAN_CATALOGUE, TOP_UP_PACKS } from '@/lib/studio/billing/catalogue';
+import { TOP_UP_PACKS } from '@/lib/studio/billing/catalogue';
+import {
+  CHANNEL_LOOKUP_KEYS,
+  VIDEOS_PER_CHANNEL_PER_PERIOD,
+  type ChannelInterval,
+} from '@/lib/studio/billing/channel-plan';
 import { Button } from '@/components/ui/button';
 import { useBillingState } from './billing-switcher';
 import {
   completeCheckout,
-  isCancelling,
   parseCheckoutIntent,
-  portalCancel,
-  portalChangePlan,
   portalUpdatePayment,
   startsTrial,
   BILLING_STATE_INFO,
@@ -20,19 +22,30 @@ import { navigate } from '../router';
 // #/demo-checkout — what the demo shows where the live app sends the browser to Stripe Checkout
 // or the Customer Portal. It is plainly a simulation: its own neutral styling (no Stripe branding),
 // no card or bank fields, and one "Complete demo payment" button that does what the paid webhook
-// would (the plan starts, or the top-up credits arrive), then returns to /settings/billing.
-
-const TIER_NAME = { BASIC: 'Basic', STANDARD: 'Standard', PLUS: 'Plus' } as const;
+// would (the channel plan starts, or the video-pack credits arrive), then returns to
+// /settings/billing. 21.5: plan changes and cancelling happen on Your plan, so the simulated
+// portal only covers the payment method and invoices.
 
 const money = (pence: number) =>
   new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(pence / 100);
 
+const PER: Readonly<Record<ChannelInterval, string>> = {
+  week: 'week',
+  month: 'month',
+  year: 'year',
+};
+const BILLED: Readonly<Record<ChannelInterval, string>> = {
+  week: 'weekly',
+  month: 'monthly',
+  year: 'yearly, paid upfront',
+};
+
 function packName(lookupKey: string): string {
   const pack = TOP_UP_PACKS.find((p) => p.lookupKey === lookupKey);
-  if (!pack) return lookupKey;
-  const what = pack.kind === 'short' ? 'short videos' : 'long videos';
-  return `${pack.quantity} ${what} top-up (${TIER_NAME[pack.tier as keyof typeof TIER_NAME] ?? pack.tier})`;
+  return pack ? `HD video pack: ${pack.quantity} videos, any channel` : lookupKey;
 }
+
+const channelsText = (n: number) => `${n} ${n === 1 ? 'channel' : 'channels'}`;
 
 function Frame({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -71,34 +84,34 @@ function Line({ label, value }: { label: string; value: string }) {
   );
 }
 
+function checkoutLines(intent: Exclude<DemoCheckoutIntent, { kind: 'portal' }>) {
+  if (intent.kind === 'topup') {
+    const pack = TOP_UP_PACKS.find((p) => p.lookupKey === intent.lookupKey);
+    return [
+      ['Item', packName(intent.lookupKey)],
+      ['Price (one-off, excl. VAT)', money(referencePrice(intent.lookupKey))],
+      ['Videos valid for', `${pack?.validMonths ?? 3} months`],
+    ] as Array<[string, string]>;
+  }
+  const { channels, interval } = intent;
+  const per = PER[interval];
+  const unit = referencePrice(CHANNEL_LOOKUP_KEYS[interval]);
+  const total = money(unit * channels);
+  const videos = VIDEOS_PER_CHANNEL_PER_PERIOD[interval] * channels;
+  const lines: Array<[string, string]> = [
+    ['Plan', `${channelsText(channels)}, billed ${BILLED[interval]}`],
+    ['Price per channel (excl. VAT)', `${money(unit)} a ${per}`],
+    [`Total per ${per} (excl. VAT)`, total],
+    ['Videos included', `${videos} a ${per}`],
+  ];
+  if (startsTrial())
+    lines.push(['Due today', money(0)], ['Trial', `14 days with 5 videos, then ${total} a ${per}`]);
+  return lines;
+}
+
 function Checkout({ intent }: { intent: Exclude<DemoCheckoutIntent, { kind: 'portal' }> }) {
   const [busy, setBusy] = useState(false);
   const back = intent.kind === 'topup' ? 'topup' : 'checkout';
-  let lines: Array<[string, string]>;
-  if (intent.kind === 'topup') {
-    lines = [
-      ['Item', packName(intent.lookupKey)],
-      ['Price (one-off, excl. VAT)', money(referencePrice(intent.lookupKey))],
-      ['Credits valid for', '12 months'],
-    ];
-  } else {
-    const key = PLAN_CATALOGUE[intent.tier].lookupKeys[intent.interval] ?? '';
-    const price = money(referencePrice(key));
-    const per = intent.interval === 'year' ? 'year' : 'month';
-    lines = [
-      [
-        'Plan',
-        `${TIER_NAME[intent.tier]}, billed ${intent.interval === 'year' ? 'annually' : 'monthly'}`,
-      ],
-      [`Price per ${per} (excl. VAT)`, price],
-      ...(startsTrial(intent.tier)
-        ? ([
-            ['Due today', money(0)],
-            ['Trial', `14 days, then ${price} a ${per}`],
-          ] as Array<[string, string]>)
-        : []),
-    ];
-  }
   const complete = () => {
     setBusy(true);
     const kind = completeCheckout(intent);
@@ -110,7 +123,7 @@ function Checkout({ intent }: { intent: Exclude<DemoCheckoutIntent, { kind: 'por
         For Leeds Sourdough Ltd (sample organisation). In the live app this step is Stripe Checkout.
       </p>
       <dl className="mt-5">
-        {lines.map(([label, value]) => (
+        {checkoutLines(intent).map(([label, value]) => (
           <Line key={label} label={label} value={value} />
         ))}
       </dl>
@@ -132,7 +145,6 @@ function Checkout({ intent }: { intent: Exclude<DemoCheckoutIntent, { kind: 'por
 function Portal() {
   const state = useBillingState();
   const info = BILLING_STATE_INFO[state];
-  const cancelling = isCancelling();
   const done = (fn: () => void) => () => {
     fn();
     navigate('/settings/billing');
@@ -159,49 +171,18 @@ function Portal() {
             Update payment method (simulated)
           </Button>
         </div>
-        {state !== 'enterprise' && (
-          <div className="grid gap-2">
-            <h2 className="text-sm font-semibold">Change plan</h2>
-            <p className="text-sm text-muted-foreground">
-              Upgrades apply now and are charged pro rata; downgrades apply at the end of the
-              period.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(['BASIC', 'STANDARD', 'PLUS'] as const).map((tier) => (
-                <Button
-                  key={tier}
-                  variant="outline"
-                  size="sm"
-                  disabled={!unpaid && info.tier === tier}
-                  onClick={done(() => portalChangePlan(tier))}
-                >
-                  Switch to {TIER_NAME[tier]}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-        {info.status === 'active' && state !== 'enterprise' && (
-          <div className="grid gap-2">
-            <h2 className="text-sm font-semibold">Cancel plan</h2>
-            <p className="text-sm text-muted-foreground">
-              Full access until the end of the period, then read-only; the data is kept for 90 days.
-            </p>
-            <Button
-              variant="outline"
-              className="justify-self-start"
-              disabled={cancelling}
-              onClick={done(portalCancel)}
-            >
-              {cancelling ? 'Cancels at period end' : 'Cancel at period end'}
-            </Button>
-          </div>
-        )}
+        <div className="grid gap-2">
+          <h2 className="text-sm font-semibold">Invoices</h2>
+          <p className="text-sm text-muted-foreground">
+            Past invoices are listed on Your plan. Channels, how often you pay and cancelling are
+            changed there too, not in this portal.
+          </p>
+        </div>
         <a
           href="#/settings/billing"
           className="justify-self-start text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          Back to billing
+          Back to Your plan
         </a>
       </div>
     </Frame>
@@ -214,9 +195,9 @@ export function DemoCheckout({ search }: { search: URLSearchParams }) {
     return (
       <Frame title="Demo checkout (simulated)">
         <p className="mt-3 text-sm text-muted-foreground">
-          Nothing to pay for here. Choose a plan or a top-up on{' '}
+          Nothing to pay for here. Choose your channels or a video pack on{' '}
           <a className="underline underline-offset-4" href="#/settings/billing">
-            Billing
+            Your plan
           </a>
           .
         </p>

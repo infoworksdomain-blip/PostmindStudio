@@ -1,7 +1,10 @@
 // 15.D2 / decision P3 — plan usage sample handlers (GET /usage and the staff view
 // GET /admin/organisations/:id/usage), shaped like src/lib/studio/services/plan-quotas.ts.
-// The demo organisation is on Standard at 83 % of its short videos, so the app-shell banner shows.
-import { currentTier, videoQuota } from '../billing-state';
+// 21.5: a per-channel plan reports `channelPlan: true` and the window its allowance counts in
+// (`period`: an ISO week for a weekly plan, else the calendar month). The demo organisation is on
+// 3 channels monthly at 20 of its 24 videos (83 %).
+import { allowanceWindowFor } from '@/lib/studio/billing/channel-plan';
+import { allowancePeriod, currentPlan, currentTier, videoQuota } from '../billing-state';
 import { DemoHttpError, route } from '../registry';
 
 const TIERS = ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const;
@@ -30,17 +33,29 @@ function meter(used: number, limit: number | null, maxDurationSec: number | null
   return { used, limit, percent, maxDurationSec };
 }
 
+interface Allowance {
+  limits?: { short: number | null; long: number | null };
+  period?: 'week' | 'month';
+  /** A per-channel plan: no long videos (max 0 s). */
+  channelPlan?: boolean;
+}
+
 function view(
   organisationId: string,
   tier: Tier,
   used: { short: number; long: number },
   businessId?: string | null,
-  limits?: { short: number | null; long: number | null },
+  allowance: Allowance = {},
 ) {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-  const q = { ...QUOTAS[tier], ...limits };
+  const now = Date.now();
+  const period = allowance.period ?? 'month';
+  const window = allowanceWindowFor(period, now);
+  const month = allowanceWindowFor('month', now);
+  const q = {
+    ...QUOTAS[tier],
+    ...allowance.limits,
+    ...(allowance.channelPlan && { longMax: 0 }),
+  };
   const videos = {
     short: meter(used.short, q.short, q.shortMax),
     long: meter(used.long, q.long, q.longMax),
@@ -54,9 +69,11 @@ function view(
     planTier: tier,
     // Phase 18: quotas are enforced under Stripe billing; the demo's request gate enforces them.
     mode: 'enforce',
-    month: start.toISOString().slice(0, 7),
-    periodStart: start.toISOString(),
-    resetsAt: end.toISOString(),
+    month: window.key,
+    period,
+    ...(allowance.channelPlan && { channelPlan: true }),
+    periodStart: window.start.toISOString(),
+    resetsAt: window.end.toISOString(),
     thresholds: [80, 100],
     status: worst >= 100 ? 'exceeded' : worst >= 80 ? 'warning' : 'ok',
     videos,
@@ -68,18 +85,19 @@ function view(
     ...(businessId && {
       imageGeneration: {
         businessId,
-        month: start.toISOString().slice(0, 7),
+        month: month.key,
         used: 12,
         cap: IMAGE_CAP[tier],
         remaining: IMAGE_CAP[tier] - 12,
-        resetsAt: end.toISOString(),
+        resetsAt: month.end.toISOString(),
       },
     }),
   };
 }
 
-// The demo organisation's tier and monthly use follow the demo bar's plan switcher
-// (../billing-state.ts): Standard at 33 of 40 by default, Basic at its limit, a trial at 3 of 5.
+// The demo organisation's allowance and use follow the demo bar's plan switcher
+// (../billing-state.ts): 3 channels at 20 of 24 by default, 1 channel at its limit, a weekly
+// plan per ISO week, a trial at 3 of 5.
 route('GET', '/usage', ({ query }) => {
   const { short, long } = videoQuota();
   return {
@@ -88,7 +106,11 @@ route('GET', '/usage', ({ query }) => {
       currentTier(),
       { short: short.used, long: long.used },
       query.get('businessId'),
-      { short: short.limit, long: long.limit },
+      {
+        limits: { short: short.limit, long: long.limit },
+        period: allowancePeriod(),
+        channelPlan: currentPlan() !== null,
+      },
     ),
   };
 });

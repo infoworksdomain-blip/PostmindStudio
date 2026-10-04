@@ -29,7 +29,7 @@ import {
 } from '@/lib/studio/content-plans/slots';
 import { presetSlots } from '@/lib/studio/drip-presets';
 import { upcomingSlots } from '@/lib/studio/services/drip-queue';
-import { billingOverview, videoQuota } from '../billing-state';
+import { billingOverview, internalCostThisMonth, videoQuota } from '../billing-state';
 import { CONNECTIONS, DEMO_BUSINESS_ID } from '../ids';
 import { demoHashtags } from '../hashtags-data';
 import { DemoHttpError, route } from '../registry';
@@ -250,9 +250,10 @@ function allowance() {
   return { mode: 'enforce' as const, limit: short.limit, used: short.used, credits, remaining };
 }
 
+/** The plan's internal cost figures (the real API sends them; customer screens never show them). */
 function cost() {
-  const overview = billingOverview(1).usage.cost;
-  return { capPence: overview.capPence, spentPence: overview.spentPence, creditHeadroomPence: 175 };
+  const { capPence, spentPence } = internalCostThisMonth();
+  return { capPence, spentPence, creditHeadroomPence: 250 };
 }
 
 // ------------------------------------------------------------------ simulation
@@ -554,7 +555,7 @@ route('POST', '/content-plans', ({ body }) => {
     throw new DemoHttpError(
       403,
       'quota_exceeded',
-      'Your plan has no videos left this month; add a top-up to plan your month',
+      'Your plan has no videos left this month; buy a video pack to plan your month',
     );
   const plan: DemoPlan = {
     id: nextId('plan'),
