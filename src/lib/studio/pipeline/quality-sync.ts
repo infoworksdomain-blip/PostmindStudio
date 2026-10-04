@@ -108,15 +108,30 @@ export function matchCaption(
   const window = caption.words.filter(
     (w) => w.endSec > caption.startAtSec - 1 && w.startSec < caption.endAtSec + 1,
   );
-  const firstIdx = window.findIndex((w) => normaliseWord(w.text) === keys[0]);
-  if (firstIdx < 0) return null;
-  let lastIdx = -1;
-  for (let j = window.length - 1; j >= firstIdx; j -= 1) {
-    if (normaliseWord(window[j]?.text ?? '') === keys.at(-1)) {
-      lastIdx = j;
-      break;
+  // A word can be spoken more than once in the window ("syncs your calendar and drafts your
+  // opener"), so take the occurrence nearest the caption's own start/end, not the first one.
+  // Production QA run 10 (2026-10-04): the first "your" gave a false 983 ms drift.
+  const nearest = (
+    from: number,
+    key: string | undefined,
+    atSec: number,
+    pick: (w: SpokenWord) => number,
+  ) => {
+    let best = -1;
+    for (let j = from; j < window.length; j += 1) {
+      const w = window[j] as SpokenWord;
+      if (normaliseWord(w.text) !== key) continue;
+      if (
+        best < 0 ||
+        Math.abs(pick(w) - atSec) < Math.abs(pick(window[best] as SpokenWord) - atSec)
+      )
+        best = j;
     }
-  }
+    return best;
+  };
+  const firstIdx = nearest(0, keys[0], caption.startAtSec, (w) => w.startSec);
+  if (firstIdx < 0) return null;
+  const lastIdx = nearest(firstIdx, keys.at(-1), caption.endAtSec, (w) => w.endSec);
   if (lastIdx < 0) return null;
   return { first: window[firstIdx] as SpokenWord, last: window[lastIdx] as SpokenWord };
 }

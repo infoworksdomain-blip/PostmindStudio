@@ -249,3 +249,39 @@ describe('watermark', () => {
     expect(pearson([1, 1, 1], [1, 2, 3])).toBe(0);
   });
 });
+
+describe('caption_sync with a repeated word (production QA run 10, 2026-10-04)', () => {
+  const words = [
+    { text: 'Ahead', startSec: 0.098, endSec: 0.343 },
+    { text: 'AI', startSec: 0.343, endSec: 0.605 },
+    { text: 'syncs', startSec: 0.605, endSec: 0.933 },
+    { text: 'your', startSec: 0.933, endSec: 1.08 },
+    { text: 'calendar', startSec: 1.08, endSec: 1.473 },
+    { text: 'and', startSec: 1.506, endSec: 1.572 },
+    { text: 'drafts', startSec: 1.654, endSec: 1.916 },
+    { text: 'your', startSec: 1.916, endSec: 2.079 },
+    { text: 'opener', startSec: 2.145, endSec: 2.325 },
+    { text: 'instantly.', startSec: 2.407, endSec: 2.816 },
+  ];
+
+  it('matches the occurrence nearest the caption, not the first one', () => {
+    const check = evaluateCaptionSync([
+      {
+        overlayId: 'a',
+        text: 'Ahead AI syncs your calendar and drafts',
+        startAtSec: 0.098,
+        endAtSec: 1.916,
+        words,
+      },
+      { overlayId: 'b', text: 'your opener instantly.', startAtSec: 1.916, endAtSec: 2.816, words },
+    ]);
+    expect(check.status).toBe('passed');
+  });
+
+  it('still fails a caption that really is late', () => {
+    const check = evaluateCaptionSync([
+      { overlayId: 'b', text: 'your opener instantly.', startAtSec: 2.4, endAtSec: 3.3, words },
+    ]);
+    expect(check.status).toBe('failed');
+  });
+});
