@@ -44,6 +44,11 @@ import {
   type PlannedScript,
   type TargetFormat,
 } from '../../pipeline/scripting';
+import {
+  ideationMaxTokens,
+  MAX_PLANNING_OUTPUT_TOKENS,
+  SCRIPT_MAX_TOKENS,
+} from '../../pipeline/token-budgets';
 import { aiClipBudget, applyClipBudget } from '../../pipeline/clip-budget';
 import { styleMemorySupplement } from '../../services/style-memory';
 import { projectLanguages } from '../../languages';
@@ -73,22 +78,9 @@ import type { Logger } from 'pino';
 // safety (spec 13.2), persistence of briefs/scripts/shots, and fan-out of one generate-asset job
 // per shot (spec 4.5 step 3).
 
-/**
- * The ideation output budget grows with the number of target platforms: since 20.13 ideation also drafts a
- * caption and hashtags per platform. A fixed 4 000 cut a
- * nine-platform brief off mid-JSON (production 2026-10-03, "output_truncated: Output hit max_tokens
- * (4000)"). Capped at 16 000, the default output limit of the OpenAI fallback (openai-text.ts).
- */
-export const MAX_PLANNING_OUTPUT_TOKENS = 16_000;
-export function ideationMaxTokens(platformCount: number): number {
-  return Math.min(MAX_PLANNING_OUTPUT_TOKENS, 3_000 + 900 * Math.max(1, platformCount));
-}
-/**
- * One script per format and language, so the script budget does not grow with the format count.
- * 8 000 cut a 30 s TikTok script off mid-JSON after 70 s of generation (production QA run 11,
- * 2026-10-04, "output_truncated: Output hit max_tokens (8000)"); scripts now get the planning cap.
- */
-export const SCRIPT_MAX_TOKENS = MAX_PLANNING_OUTPUT_TOKENS;
+// Planning output budgets live in a leaf module (pipeline/token-budgets.ts) so regenerate-script
+// can share them without a circular import; re-exported here for existing importers.
+export { ideationMaxTokens, MAX_PLANNING_OUTPUT_TOKENS, SCRIPT_MAX_TOKENS };
 const SAFETY_MAX_TOKENS = 1_000;
 const SUPPORTED_SOURCES = new Set(['BRIEF', 'POSTMIND_CONTENT', 'LIBRARY_REFERENCE', 'TEMPLATE']);
 
