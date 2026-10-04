@@ -28,10 +28,10 @@ export type ProviderCapability =
 export type AspectRatio = '9:16' | '16:9' | '1:1' | '4:5';
 
 /**
- * 20.25 / 21.3: the resolution an AI clip is wanted at, by plan tier (billing/catalogue.ts
- * aiVideoResolution: BASIC 480p, STANDARD 720p, PLUS / ENTERPRISE 1080p). Only Seedance reads it
- * (capped at what the chosen model offers: 2.0 mini and fast stop at 720p); Kling and Veo render
- * at their own configured resolution (720p by default). Absent = the adapter's default.
+ * 20.25 / 21.3: the resolution an AI clip is wanted at (pipeline/clip-budget.ts: 720p HD on every
+ * tier since 21.3). Only Seedance reads it (capped at what the chosen model offers: 2.0 mini and
+ * fast stop at 720p; STUDIO_SEEDANCE_RESOLUTION can override it); Kling and Veo render at their
+ * own configured resolution (720p by default). Absent = the adapter's default.
  */
 export type VideoResolution = '480p' | '720p' | '1080p';
 

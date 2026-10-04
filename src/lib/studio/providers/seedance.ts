@@ -136,21 +136,21 @@ export type SeedanceModel = keyof typeof SEEDANCE_MODELS;
  * DECISION (PROGRESS 20.23): Dreamina Seedance 2.0 mini is the default model — generally
  * available (no preview label in the model list), the cheapest current model ($0.0756 per second
  * at 720p list, 2.0 fast is $0.121) and BytePlus's named replacement for the retired 1.5 pro.
- * Since 21.3 it serves BASIC (and any request without a plan tier) and is the fallback when the
- * full model is not activated or out of credit. Shots longer than 15 s use the long model (2.5,
- * up to 30 s): see SeedanceAdapter.modelFor.
- * DECISION (PROGRESS 21.3, operator decision 2026-10-04 "tiered video models"): STANDARD,
- * PLUS and ENTERPRISE use the full Seedance 2.0 model (DEFAULT_SEEDANCE_FULL_MODEL); the plan
- * tier's resolution (pipeline/clip-budget.ts: STANDARD 720p, PLUS / ENTERPRISE 1080p) comes on
- * the request.
+ * Since 21.3 it serves only requests without a plan tier and is the fallback when the full model
+ * is not activated or out of credit. Shots longer than 15 s use the long model (2.5, up to 30 s):
+ * see SeedanceAdapter.modelFor.
+ * DECISION (PROGRESS 21.3, operator decision 2026-10-04: one per-channel subscription with HD
+ * video, mapped to the internal STANDARD tier): every plan tier (BASIC kept on it for safety) uses
+ * the full Seedance 2.0 model (DEFAULT_SEEDANCE_FULL_MODEL) at 720p. 1080p is reachable only
+ * through STUDIO_SEEDANCE_RESOLUTION (seedanceOptionsFromEnv), which no plan sets.
  */
 export const DEFAULT_SEEDANCE_MODEL: SeedanceModel = 'dreamina-seedance-2-0-mini-260615';
 export const DEFAULT_SEEDANCE_FULL_MODEL: SeedanceModel = 'dreamina-seedance-2-0-260128';
 export const DEFAULT_SEEDANCE_LONG_MODEL: SeedanceModel = 'dreamina-seedance-2-5-260628';
 
-/** Which configured model each plan tier uses for shots up to 15 s (21.3). */
+/** Which configured model each plan tier uses for shots up to 15 s (21.3: the full model on all). */
 export const SEEDANCE_TIER_MODEL: Readonly<Record<PlanTier, 'default' | 'full'>> = {
-  BASIC: 'default',
+  BASIC: 'full',
   STANDARD: 'full',
   PLUS: 'full',
   ENTERPRISE: 'full',
@@ -168,7 +168,7 @@ const FULL_MODEL_FALLBACK_CLASSES: ReadonlySet<string> = new Set<ProviderErrorCl
   'insufficient_credits',
 ]);
 
-/** The default output resolution; the plan tier asks for 480p / 720p / 1080p (request.resolution). */
+/** The default output resolution (pipeline/clip-budget.ts asks every tier for 720p). */
 export const RESOLUTION = '720p';
 const FPS = 24;
 const TOKENS_PER_PIXEL_FRAME = 1 / 1024;
@@ -260,6 +260,7 @@ export const SEEDANCE_MODEL_ENV = 'SEEDANCE_MODEL';
 export const SEEDANCE_FULL_MODEL_ENV = 'SEEDANCE_FULL_MODEL';
 export const SEEDANCE_LONG_MODEL_ENV = 'SEEDANCE_LONG_MODEL';
 export const SEEDANCE_BASE_URL_ENV = 'BYTEPLUS_ARK_BASE_URL';
+export const SEEDANCE_RESOLUTION_ENV = 'STUDIO_SEEDANCE_RESOLUTION';
 
 export function isSeedanceModel(value: string): value is SeedanceModel {
   return Object.hasOwn(SEEDANCE_MODELS, value);
@@ -285,11 +286,17 @@ export function isArkBaseUrl(value: string): boolean {
 export interface SeedanceAdapterOptions {
   apiKey: string;
   usdToGbpRate: number;
-  /** BASIC's model and the fallback when the full model is refused (default 2.0 mini). */
+  /** The model for requests without a plan tier and the fallback (default 2.0 mini). */
   model?: SeedanceModel;
-  /** STANDARD / PLUS / ENTERPRISE's model (21.3, default the full Seedance 2.0). */
+  /** Every plan tier's model (21.3, default the full Seedance 2.0). */
   fullModel?: SeedanceModel;
   longModel?: SeedanceModel;
+  /**
+   * Operator override of the clip resolution (STUDIO_SEEDANCE_RESOLUTION, 21.3): replaces the
+   * requested resolution on every shot, still capped at what the model offers. Unset = the request
+   * (720p from pipeline/clip-budget.ts). The 1080p path exists for a later premium offer.
+   */
+  resolution?: SeedanceResolution;
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   now?: () => number;
@@ -319,17 +326,25 @@ function envModel(env: Record<string, string | undefined>, name: string): Seedan
  * optional). An unknown value is a configuration error, never a silent default: a model without a
  * price row could not be budget-checked, and the key must only ever be sent to a ModelArk host.
  * SEEDANCE_FULL_MODEL=dreamina-seedance-2-0-mini-260615 puts every tier back on Mini (21.3).
+ * STUDIO_SEEDANCE_RESOLUTION (480p | 720p | 1080p, empty = 720p from the request) overrides the
+ * clip resolution for every shot (21.3; 1080p bills $7.7/M on Seedance 2.0).
  */
 export function seedanceOptionsFromEnv(
   env: Record<string, string | undefined>,
-): Pick<SeedanceAdapterOptions, 'model' | 'fullModel' | 'longModel' | 'baseUrl'> {
+): Pick<SeedanceAdapterOptions, 'model' | 'fullModel' | 'longModel' | 'baseUrl' | 'resolution'> {
   const model = envModel(env, SEEDANCE_MODEL_ENV);
   const fullModel = envModel(env, SEEDANCE_FULL_MODEL_ENV);
   const longModel = envModel(env, SEEDANCE_LONG_MODEL_ENV);
   const baseUrl = env[SEEDANCE_BASE_URL_ENV]?.trim() ?? '';
+  const resolution = env[SEEDANCE_RESOLUTION_ENV]?.trim() ?? '';
   if (baseUrl && !isArkBaseUrl(baseUrl)) {
     throw new ConfigurationError(
       `${SEEDANCE_BASE_URL_ENV} must be https://ark.<region>.bytepluses.com/api/v3 (or empty)`,
+    );
+  }
+  if (resolution && !isSeedanceResolution(resolution)) {
+    throw new ConfigurationError(
+      `${SEEDANCE_RESOLUTION_ENV} must be 480p, 720p or 1080p (or empty)`,
     );
   }
   return {
@@ -337,6 +352,7 @@ export function seedanceOptionsFromEnv(
     ...(fullModel && { fullModel }),
     ...(longModel && { longModel }),
     ...(baseUrl && { baseUrl: baseUrl.replace(/\/+$/, '') }),
+    ...(isSeedanceResolution(resolution) && { resolution }),
   };
 }
 
@@ -469,15 +485,16 @@ function isVideoRequest(request: ProviderRequest): request is VideoRequest {
 }
 
 /**
- * The plan tier's resolution (request.resolution: BASIC 480p, STANDARD 720p, PLUS / ENTERPRISE
- * 1080p), else 720p, capped at the best the model offers: a 1080p shot that lands on 2.0 mini or
- * fast (the Mini fallback, or SEEDANCE_FULL_MODEL set to one of them) is asked for at 720p.
+ * The operator override (STUDIO_SEEDANCE_RESOLUTION), else the requested resolution (720p on every
+ * tier since 21.3), else 720p, capped at the best the model offers: a 1080p shot that lands on
+ * 2.0 mini or fast (the Mini fallback, or SEEDANCE_FULL_MODEL set to one of them) asks for 720p.
  */
 export function seedanceResolution(
   request: VideoRequest,
   model: SeedanceModel,
+  override?: SeedanceResolution,
 ): SeedanceResolution {
-  const wanted: SeedanceResolution = request.resolution ?? RESOLUTION;
+  const wanted: SeedanceResolution = override ?? request.resolution ?? RESOLUTION;
   const offered: readonly SeedanceResolution[] = SEEDANCE_MODELS[model].resolutions;
   if (offered.includes(wanted)) return wanted;
   return offered.includes(RESOLUTION) ? RESOLUTION : (offered[0] ?? RESOLUTION);
@@ -553,8 +570,8 @@ export class SeedanceAdapter implements ProviderAdapter {
   }
 
   /**
-   * The model for a shot (21.3): the plan tier's model (BASIC 2.0 mini; STANDARD, PLUS and
-   * ENTERPRISE the full 2.0, or Mini while the full model is skipped after a refusal), and the
+   * The model for a shot (21.3): the plan tier's model (the full 2.0 on every tier, or Mini
+   * while the full model is skipped after a refusal; Mini without a tier), and the
    * long model (2.5 by default) only for shots longer than that model can render (over 15 s, up to
    * 30 s). Undefined when no configured model can render the shot.
    */
@@ -596,7 +613,7 @@ export class SeedanceAdapter implements ProviderAdapter {
   }
 
   private costPenceFor(request: VideoRequest, model: SeedanceModel): number {
-    const resolution = seedanceResolution(request, model);
+    const resolution = seedanceResolution(request, model, this.options.resolution);
     const pixels = seedanceFramePixels(model, this.ratioFor(request, model), resolution);
     const tokens = seedanceTokens(seedanceDuration(request.durationSec, model), pixels);
     return usdToPence(this.usdForTokens(tokens, model, resolution), this.options.usdToGbpRate);
@@ -641,7 +658,7 @@ export class SeedanceAdapter implements ProviderAdapter {
       content,
       ratio: this.ratioFor(request, model),
       duration: seedanceDuration(request.durationSec, model),
-      resolution: seedanceResolution(request, model),
+      resolution: seedanceResolution(request, model, this.options.resolution),
       // The composer mutes generated clips (pipeline/edl.ts); our narration and music carry sound.
       generate_audio: false,
       watermark: false,

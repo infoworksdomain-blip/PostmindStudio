@@ -100,20 +100,19 @@ describe('format and model mapping', () => {
     expect(sd.modelFor(Number.NaN)).toBeUndefined();
   });
 
-  it('21.3: BASIC (and no tier) on 2.0 mini; STANDARD, PLUS and ENTERPRISE on the full 2.0', () => {
+  it('21.3: every plan tier on the full Seedance 2.0; Mini only without a tier', () => {
     const { sd } = adapter([]);
     expect(sd.model).toBe(DEFAULT_SEEDANCE_MODEL);
     expect(sd.fullModel).toBe('dreamina-seedance-2-0-260128');
     expect(DEFAULT_SEEDANCE_FULL_MODEL).toBe('dreamina-seedance-2-0-260128');
     expect(SEEDANCE_TIER_MODEL).toEqual({
-      BASIC: 'default',
+      BASIC: 'full',
       STANDARD: 'full',
       PLUS: 'full',
       ENTERPRISE: 'full',
     });
     expect(sd.modelFor(4)).toBe('dreamina-seedance-2-0-mini-260615');
-    expect(sd.modelFor(4, 'BASIC')).toBe('dreamina-seedance-2-0-mini-260615');
-    for (const planTier of ['STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+    for (const planTier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
       expect(sd.modelFor(4, planTier)).toBe('dreamina-seedance-2-0-260128');
       expect(sd.modelFor(15, planTier)).toBe('dreamina-seedance-2-0-260128');
       // 2.0 stops at 15 s like Mini: 16–30 s shots stay on 2.5 on every tier.
@@ -122,32 +121,44 @@ describe('format and model mapping', () => {
     }
   });
 
-  it('21.3 request body per tier: model and the tier resolution (480p / 720p / 1080p)', () => {
+  it('21.3 request body: the full 2.0 at 720p HD on every tier (STANDARD = the channel plan)', () => {
     const { sd } = adapter([]);
-    const shot = { ...t2v, durationSec: 4 };
-    expect(sd.buildBody({ ...shot, planTier: 'BASIC', resolution: '480p' })).toMatchObject({
-      model: 'dreamina-seedance-2-0-mini-260615',
-      resolution: '480p',
-      duration: 4,
-      ratio: '9:16',
-    });
-    expect(sd.buildBody({ ...shot, planTier: 'STANDARD', resolution: '720p' })).toMatchObject({
-      model: 'dreamina-seedance-2-0-260128',
-      resolution: '720p',
-    });
-    for (const planTier of ['PLUS', 'ENTERPRISE'] as const) {
-      expect(sd.buildBody({ ...shot, planTier, resolution: '1080p' })).toMatchObject({
+    for (const planTier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(sd.buildBody({ ...t2v, durationSec: 4, planTier, resolution: '720p' })).toMatchObject({
         model: 'dreamina-seedance-2-0-260128',
-        resolution: '1080p',
+        resolution: '720p',
         duration: 4,
         ratio: '9:16',
         generate_audio: false,
+        watermark: false,
       });
     }
-    // A 20 s PLUS shot goes to 2.5, which also offers 1080p.
-    expect(
-      sd.buildBody({ ...t2v, durationSec: 20, planTier: 'PLUS', resolution: '1080p' }),
-    ).toMatchObject({ model: 'dreamina-seedance-2-5-260628', resolution: '1080p' });
+  });
+
+  it('21.3 1080p only through STUDIO_SEEDANCE_RESOLUTION (no plan asks for it)', () => {
+    const { sd } = adapter([], { resolution: '1080p' });
+    const standard = {
+      ...t2v,
+      durationSec: 4,
+      planTier: 'STANDARD' as const,
+      resolution: '720p' as const,
+    };
+    expect(sd.buildBody(standard)).toMatchObject({
+      model: 'dreamina-seedance-2-0-260128',
+      resolution: '1080p',
+    });
+    // 194,400 tokens × $7.7/M = $1.4969 → 112.27p → 113p
+    expect(sd.estimateCostPence(standard)).toBe(113);
+    // A 20 s shot goes to 2.5, which also offers 1080p.
+    expect(sd.buildBody({ ...standard, durationSec: 20 })).toMatchObject({
+      model: 'dreamina-seedance-2-5-260628',
+      resolution: '1080p',
+    });
+    // The Mini fallback model is capped at 720p.
+    expect(sd.buildBody({ ...standard, planTier: undefined })).toMatchObject({
+      model: 'dreamina-seedance-2-0-mini-260615',
+      resolution: '720p',
+    });
   });
 
   it('21.3 resolution is capped at what the model offers (mini / fast stop at 720p)', () => {
@@ -156,6 +167,13 @@ describe('format and model mapping', () => {
     expect(seedanceResolution(plus, 'dreamina-seedance-2-0-mini-260615')).toBe('720p');
     expect(seedanceResolution(plus, 'dreamina-seedance-2-0-fast-260128')).toBe('720p');
     expect(seedanceResolution({ ...t2v }, 'dreamina-seedance-2-0-260128')).toBe('720p');
+    // The operator override wins over the request.
+    expect(
+      seedanceResolution({ ...t2v, resolution: '720p' }, 'dreamina-seedance-2-0-260128', '1080p'),
+    ).toBe('1080p');
+    expect(seedanceResolution({ ...t2v }, 'dreamina-seedance-2-0-mini-260615', '1080p')).toBe(
+      '720p',
+    );
     expect(SEEDANCE_MODELS['dreamina-seedance-2-0-mini-260615'].resolutions).toEqual([
       '480p',
       '720p',
@@ -286,7 +304,16 @@ describe('seedanceOptionsFromEnv', () => {
     expect(seedanceOptionsFromEnv({ SEEDANCE_FULL_MODEL: '' })).toEqual({});
   });
 
+  it('21.3 reads STUDIO_SEEDANCE_RESOLUTION (empty = the request, 720p)', () => {
+    expect(seedanceOptionsFromEnv({ STUDIO_SEEDANCE_RESOLUTION: '1080p' })).toEqual({
+      resolution: '1080p',
+    });
+    expect(seedanceOptionsFromEnv({ STUDIO_SEEDANCE_RESOLUTION: ' ' })).toEqual({});
+  });
+
   it.each([
+    ['STUDIO_SEEDANCE_RESOLUTION', '4k'],
+    ['STUDIO_SEEDANCE_RESOLUTION', '1080'],
     ['SEEDANCE_MODEL', 'seedance-1-5-pro-251215'], // retired, no price row
     ['SEEDANCE_FULL_MODEL', 'dreamina-seedance-2-0-pro'],
     ['SEEDANCE_LONG_MODEL', 'dreamina-seedance-9'],
@@ -341,19 +368,17 @@ describe('cost estimate (list prices, 720p, tokens = s × w × h × 24 / 1024)',
     expect((tokens * 7.7) / 1e6).toBeCloseTo(1.87, 2);
   });
 
-  it('21.3 cost per tier for a 4 s 9:16 clip at 0.75 (list prices)', () => {
+  it('21.3 cost of a 9:16 HD clip on the full 2.0 at 0.75 (list prices)', () => {
     const { sd } = adapter([]);
-    const shot = { ...t2v, durationSec: 4 };
-    // BASIC: mini 480p 40,176 tokens × $3.5/M = $0.1406 → 10.55p → 11p
-    expect(sd.estimateCostPence({ ...shot, planTier: 'BASIC', resolution: '480p' })).toBe(11);
-    // STANDARD: 2.0 720p 86,400 tokens × $7.0/M = $0.6048 → 45.36p → 46p
-    expect(sd.estimateCostPence({ ...shot, planTier: 'STANDARD', resolution: '720p' })).toBe(46);
-    // PLUS / ENTERPRISE: 2.0 1080p 194,400 tokens × $7.7/M = $1.4969 → 112.27p → 113p
-    for (const planTier of ['PLUS', 'ENTERPRISE'] as const) {
-      expect(sd.estimateCostPence({ ...shot, planTier, resolution: '1080p' })).toBe(113);
+    const shot = { ...t2v, durationSec: 4, resolution: '720p' as const };
+    // 4 s 720p: 86,400 tokens × $7.0/M = $0.6048 → 45.36p → 46p on every tier
+    for (const planTier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(sd.estimateCostPence({ ...shot, planTier })).toBe(46);
     }
-    // A 5 s PLUS clip: 243,000 tokens × $7.7/M = $1.8711 → 140.33p → 141p
-    expect(sd.estimateCostPence({ ...t2v, planTier: 'PLUS', resolution: '1080p' })).toBe(141);
+    // 5 s 720p: 108,000 tokens × $7.0/M = $0.756 → 56.7p → 57p
+    expect(sd.estimateCostPence({ ...shot, durationSec: 5, planTier: 'STANDARD' })).toBe(57);
+    // A 1080p request (the code path is kept): 194,400 tokens × $7.7/M → 113p
+    expect(sd.estimateCostPence({ ...shot, planTier: 'STANDARD', resolution: '1080p' })).toBe(113);
   });
 
   it('4:5 is priced as 3:4 (834×1112); unsupported requests cost nothing', () => {
@@ -467,11 +492,12 @@ describe('SeedanceAdapter.submit', () => {
 });
 
 describe('21.3 Mini fallback when the full model is refused', () => {
+  // The channel subscription maps to STANDARD: the full 2.0 at 720p.
   const plus = {
     ...t2v,
     durationSec: 4,
-    planTier: 'PLUS' as const,
-    resolution: '1080p' as const,
+    planTier: 'STANDARD' as const,
+    resolution: '720p' as const,
   };
 
   function withEvents(replies: Parameters<typeof fakeFetch>, nowRef = { now: NOW }) {
@@ -495,7 +521,7 @@ describe('21.3 Mini fallback when the full model is refused', () => {
       'dreamina-seedance-2-0-260128',
       'dreamina-seedance-2-0-mini-260615',
     ]);
-    expect(requests[0]?.body).toMatchObject({ resolution: '1080p' });
+    expect(requests[0]?.body).toMatchObject({ resolution: '720p' });
     expect(requests[1]?.body).toMatchObject({ resolution: '720p', duration: 4, ratio: '9:16' });
     // Mini 720p 4 s: 86,400 tokens × $3.5/M = $0.3024 → 23p (the estimate follows the model used)
     expect(submitted).toMatchObject({ providerJobId: TASK, estimatedCostPence: 23 });
@@ -516,7 +542,7 @@ describe('21.3 Mini fallback when the full model is refused', () => {
     ]);
     await sd.submit(plus);
     expect(sd.fullModelSkipped()).toBe(true);
-    expect(sd.modelFor(4, 'PLUS')).toBe('dreamina-seedance-2-0-mini-260615');
+    expect(sd.modelFor(4, 'STANDARD')).toBe('dreamina-seedance-2-0-mini-260615');
     // While skipped, the estimate (budget reservation) is Mini's.
     expect(sd.estimateCostPence(plus)).toBe(23);
     await sd.submit(plus);
@@ -555,9 +581,9 @@ describe('21.3 Mini fallback when the full model is refused', () => {
     expect(sd.fullModelSkipped()).toBe(false);
   });
 
-  it('BASIC (already Mini) and long shots on 2.5 never fall back', async () => {
+  it('a request without a plan tier (already Mini) and long shots on 2.5 never fall back', async () => {
     const basic = withEvents([arkError('ModelNotOpen', 'not activated', 404)]);
-    await expect(basic.sd.submit({ ...plus, planTier: 'BASIC' })).rejects.toMatchObject({
+    await expect(basic.sd.submit({ ...plus, planTier: undefined })).rejects.toMatchObject({
       errorClass: 'auth',
     });
     expect(basic.requests).toHaveLength(1);

@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useFormat } from '@/lib/client/format';
-import type { VideoResolution } from '@/lib/studio/providers/interface';
 import { cn } from '@/lib/utils';
 import type { BillingInterval, PlanPricingView, TopUpPricingView } from './types';
 
@@ -77,33 +76,17 @@ export function PlanPrice({
   );
 }
 
-/** 21.3: the message key for a plan's AI video quality ("Full HD (1080p)" …). */
-export const VIDEO_QUALITY_KEY: Readonly<Record<VideoResolution, 'sd' | 'hd' | 'fullHd'>> = {
-  '480p': 'sd',
-  '720p': 'hd',
-  '1080p': 'fullHd',
-};
-
-/** "Standard HD (720p)" etc. for a plan's AI video clips (pricing.compare.values.videoQuality). */
-export function useVideoQualityLabel(): (resolution: VideoResolution) => string {
-  const t = useTranslations('pricing.compare.values.videoQuality');
-  return (resolution) => t(VIDEO_QUALITY_KEY[resolution]);
-}
-
 export function PlanHighlights({ plan }: { plan: PlanPricingView }) {
   const t = useTranslations('pricing.highlights');
-  const quality = useVideoQualityLabel();
   const p = plan.features;
-  const videoQuality = t('videoQuality', { quality: quality(p.aiVideoResolution) });
   const items: string[] =
     p.shortVideosPerMonth === null
-      ? [t('unlimitedVideos'), videoQuality]
+      ? [t('unlimitedVideos')]
       : [
           t('shortVideos', { count: p.shortVideosPerMonth }),
           p.longVideosPerMonth
             ? t('longVideos', { count: p.longVideosPerMonth })
             : t('noLongVideos'),
-          videoQuality,
           ...(p.seats === null ? [] : [t('seats', { count: p.seats })]),
           ...(p.businesses === null ? [] : [t('businesses', { count: p.businesses })]),
         ];

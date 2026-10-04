@@ -62,25 +62,6 @@ describe('PricingScreen', () => {
     ).toBeInTheDocument();
   });
 
-  it('21.3 shows each plan’s AI video quality on the cards and in the table', () => {
-    render(<PricingScreen pricing={pricingView()} />);
-    expect(within(card('Basic')).getByText('Video quality: SD (480p)')).toBeInTheDocument();
-    expect(
-      within(card('Standard')).getByText('Video quality: Standard HD (720p)'),
-    ).toBeInTheDocument();
-    expect(within(card('Plus')).getByText('Video quality: Full HD (1080p)')).toBeInTheDocument();
-    expect(
-      within(card('Enterprise')).getByText('Video quality: Full HD (1080p)'),
-    ).toBeInTheDocument();
-    const table = screen.getByRole('table', { name: 'Plan comparison' });
-    const row = within(table).getByRole('row', { name: /AI video quality/ });
-    expect(
-      within(row)
-        .getAllByRole('cell')
-        .map((c) => c.textContent),
-    ).toEqual(['SD (480p)', 'Standard HD (720p)', 'Full HD (1080p)', 'Full HD (1080p)']);
-  });
-
   it('builds the comparison table from the catalogue with accessible ticks', () => {
     render(<PricingScreen pricing={pricingView()} />);
     const table = screen.getByRole('table', { name: 'Plan comparison' });

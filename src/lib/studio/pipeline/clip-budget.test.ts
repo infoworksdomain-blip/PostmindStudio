@@ -1,6 +1,5 @@
 import type { VisualTreatment } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
-import { PLAN_CATALOGUE } from '../billing/catalogue';
 import {
   AI_CLIP_MAX_SEC,
   aiClipBudget,
@@ -80,14 +79,9 @@ describe('aiClipBudget (20.25 per-tier budgets)', () => {
     expect(aiClipBudget('BASIC', 120)).toBe(12); // BASIC's own rate (10 s) is already slower than 8 s
   });
 
-  it('resolution per tier (21.3): BASIC 480p, STANDARD 720p, PLUS and ENTERPRISE 1080p', () => {
-    expect(aiClipResolution('BASIC')).toBe('480p');
-    expect(aiClipResolution('STANDARD')).toBe('720p');
-    expect(aiClipResolution('PLUS')).toBe('1080p');
-    expect(aiClipResolution('ENTERPRISE')).toBe('1080p');
-    // The plan catalogue is the source (shown on the pricing page).
+  it('resolution per tier (21.3): 720p HD on every tier (BASIC no longer 480p)', () => {
     for (const tier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
-      expect(aiClipResolution(tier)).toBe(PLAN_CATALOGUE[tier].aiVideoResolution);
+      expect(aiClipResolution(tier)).toBe('720p');
     }
   });
 });

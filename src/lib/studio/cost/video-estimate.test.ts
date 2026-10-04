@@ -73,12 +73,12 @@ function estimate(tier: (typeof TIERS)[number], rate: number, durationSec = 30, 
 }
 
 describe('typicalVideoPlan', () => {
-  it('a 30 s short: 10 shots, AI clips by tier, 480p on BASIC, music from STANDARD', () => {
+  it('a 30 s short: 10 shots, AI clips by tier, 720p HD on every tier (21.3), music from STANDARD', () => {
     expect(typicalVideoPlan('BASIC', 30)).toMatchObject({
       shots: 10,
       aiClips: 3,
       aiClipSec: 4,
-      resolution: '480p',
+      resolution: '720p',
       generatedStills: 1,
       music: false,
     });
@@ -87,8 +87,8 @@ describe('typicalVideoPlan', () => {
       resolution: '720p',
       music: true,
     });
-    expect(typicalVideoPlan('PLUS', 30)).toMatchObject({ aiClips: 6, resolution: '1080p' });
-    expect(typicalVideoPlan('ENTERPRISE', 30)).toMatchObject({ aiClips: 6, resolution: '1080p' });
+    expect(typicalVideoPlan('PLUS', 30)).toMatchObject({ aiClips: 6, resolution: '720p' });
+    expect(typicalVideoPlan('ENTERPRISE', 30)).toMatchObject({ aiClips: 6, resolution: '720p' });
   });
 
   it('never plans more AI clips than shots', () => {
@@ -120,62 +120,36 @@ describe('estimateVideoCostPence', () => {
   });
 });
 
-describe('21.3 typical 30 s short per tier at list prices (tiered video models)', () => {
-  it('the typical short per tier (BASIC Mini 480p, STANDARD 2.0 720p, PLUS 2.0 1080p)', () => {
-    expect(TIERS.map((t) => estimate(t, 0.75).totalPence)).toEqual([76, 233, 727]);
-    expect(TIERS.map((t) => estimate(t, 0.79).totalPence)).toEqual([79, 241, 763]);
-  });
-
-  it("BASIC stays within the catalogue's typical cost (unchanged by 21.3)", () => {
-    for (const rate of [0.75, 0.79]) {
-      expect(estimate('BASIC', rate).totalPence).toBeLessThanOrEqual(
-        TYPICAL_COST_PENCE_PER_VIDEO.BASIC.short,
-      );
-    }
-  });
-
-  it('OPERATOR DECISION PENDING: STANDARD and PLUS now exceed the §P.2 typical cost', () => {
-    // The §P.2 figures (and the prices, caps and top-ups sized from them) are unchanged; see
-    // PROGRESS 21.3. If they are revised, update this test with them.
-    expect(estimate('STANDARD', 0.75).totalPence).toBeGreaterThan(
-      TYPICAL_COST_PENCE_PER_VIDEO.STANDARD.short,
-    );
-    expect(estimate('PLUS', 0.75).totalPence).toBeGreaterThan(
-      TYPICAL_COST_PENCE_PER_VIDEO.PLUS.short,
-    );
+describe('21.3 typical 30 s short at list prices (full Seedance 2.0 at 720p HD on every tier)', () => {
+  it('STANDARD (the per-channel subscription) costs about £2.33 (£2.41 at 0.79)', () => {
+    expect(TIERS.map((t) => estimate(t, 0.75).totalPence)).toEqual([181, 233, 325]);
+    expect(TIERS.map((t) => estimate(t, 0.79).totalPence)).toEqual([187, 241, 337]);
   });
 
   it('prices the parts as expected at 0.75 (the production rate)', () => {
-    // 4 s 9:16 clips: BASIC Mini 480p 40,176 tokens × $3.5/M → 11p; STANDARD 2.0 720p 86,400 ×
-    // $7.0/M → 46p; PLUS 2.0 1080p 194,400 × $7.7/M → 113p.
-    expect(estimate('BASIC', 0.75).byProvider.seedance).toBe(3 * 11);
+    // A 4 s 9:16 720p clip on the full 2.0: 86,400 tokens × $7.0/M = $0.6048 → 46p.
+    expect(estimate('BASIC', 0.75).byProvider.seedance).toBe(3 * 46);
     expect(estimate('STANDARD', 0.75).byProvider.seedance).toBe(4 * 46);
-    expect(estimate('PLUS', 0.75).byProvider.seedance).toBe(6 * 113);
-    // Everything else (script, voice, timing, music, one still, render) ≈ 49p on STANDARD / PLUS.
+    expect(estimate('PLUS', 0.75).byProvider.seedance).toBe(6 * 46);
+    // Everything else (script, voice, timing, music, one still, render) is 49p on STANDARD.
     expect(estimate('STANDARD', 0.75).totalPence - 4 * 46).toBe(49);
-    expect(estimate('PLUS', 0.75).totalPence - 6 * 113).toBe(49);
     // Shotstack: 30 s = 0.5 credit × $0.30 = $0.15 → 12p (was 60p at the spec's 2p a second).
     expect(estimate('STANDARD', 0.75).byProvider.shotstack).toBe(12);
     expect(estimate('BASIC', 0.75).byProvider['elevenlabs-music']).toBeUndefined();
   });
 
-  it('the Mini fallback costs what the tiers cost before 21.3 (PLUS at 720p)', () => {
-    expect(estimate('STANDARD', 0.75, 30, 'seedance-mini').totalPence).toBe(141);
-    expect(estimate('PLUS', 0.75, 30, 'seedance-mini').totalPence).toBe(187);
+  it('OPERATOR NOTE: the full model costs more than the §P.2 typical cost per short', () => {
+    // §P.2 (prices, caps, top-ups) is unchanged here; the billing rework (per-channel plan)
+    // owns it. If those figures change, update this test with them.
+    for (const tier of TIERS) {
+      expect(estimate(tier, 0.75).totalPence).toBeGreaterThan(
+        TYPICAL_COST_PENCE_PER_VIDEO[tier].short,
+      );
+    }
   });
 
-  it('long form (the longest each plan allows) stays below the 90% pause of its budget', () => {
-    expect(estimate('STANDARD', 0.79, 180).totalPence).toBe(1_411);
-    expect(estimate('PLUS', 0.79, 360).totalPence).toBe(6_448);
-    for (const tier of ['STANDARD', 'PLUS'] as const) {
-      const longSec = PLAN_CATALOGUE[tier].longMaxSec ?? 0;
-      for (const rate of [0.75, 0.79]) {
-        for (const clip of ['seedance', 'seedance-mini', 'kling', 'veo']) {
-          const { totalPence } = estimate(tier, rate, longSec, clip);
-          expect(totalPence, `${tier} ${clip}`).toBeLessThan(longFormBudgetPence(tier) * 0.9);
-        }
-      }
-    }
+  it('the Mini fallback costs what the tiers cost before 21.3 at 720p', () => {
+    expect(estimate('STANDARD', 0.75, 30, 'seedance-mini').totalPence).toBe(141);
   });
 
   it('a typical short stays under half of the tier default budget (never near the 90% pause)', () => {
@@ -191,40 +165,36 @@ describe('21.3 typical 30 s short per tier at list prices (tiered video models)'
     }
   });
 
-  it('a normal video fits the daily cap: a long video and two shorts on STANDARD, a long and three on PLUS', () => {
-    const day = (tier: 'STANDARD' | 'PLUS', shorts: number) =>
-      estimate(tier, 0.79, PLAN_CATALOGUE[tier].longMaxSec ?? 0).totalPence +
-      shorts * estimate(tier, 0.79).totalPence;
-    expect(day('STANDARD', 2)).toBeLessThanOrEqual(PLAN_CATALOGUE.STANDARD.dailyCostCapPence);
-    expect(day('PLUS', 3)).toBeLessThanOrEqual(PLAN_CATALOGUE.PLUS.dailyCostCapPence);
-    // BASIC: its whole daily cap still holds 6 typical shorts.
-    expect(6 * estimate('BASIC', 0.79).totalPence).toBeLessThanOrEqual(
-      PLAN_CATALOGUE.BASIC.dailyCostCapPence,
-    );
-  });
-
-  it('monthly caps: BASIC holds its allowance; STANDARD and PLUS do not (operator decision)', () => {
-    const shortsInCap = (tier: (typeof TIERS)[number]) =>
-      Math.floor(PLAN_CATALOGUE[tier].monthlyCostCapPence / estimate(tier, 0.75).totalPence);
-    const plan = PLAN_CATALOGUE.BASIC;
-    expect(
-      (plan.shortVideosPerMonth ?? 0) * estimate('BASIC', 0.75).totalPence,
-    ).toBeLessThanOrEqual(plan.monthlyCostCapPence);
-    // Shorts alone (no long video) that fit the unchanged monthly caps: 31 of 40, 36 of 80.
-    expect(shortsInCap('STANDARD')).toBe(31);
-    expect(shortsInCap('PLUS')).toBe(36);
-  });
-
-  it('Kling and Veo now cost less than Seedance 2.0 on STANDARD / PLUS (more on BASIC)', () => {
-    for (const clip of ['kling', 'veo']) {
-      expect(estimate('BASIC', 0.75, 30, clip).totalPence).toBeGreaterThan(
-        estimate('BASIC', 0.75).totalPence,
-      );
-      for (const tier of ['STANDARD', 'PLUS'] as const) {
-        expect(estimate(tier, 0.75, 30, clip).totalPence).toBeLessThan(
-          estimate(tier, 0.75).totalPence,
-        );
+  it('long form (the longest each plan allows) stays below the 90% pause of its budget', () => {
+    for (const tier of ['STANDARD', 'PLUS'] as const) {
+      const longSec = PLAN_CATALOGUE[tier].longMaxSec ?? 0;
+      for (const rate of [0.75, 0.79]) {
+        for (const clip of ['seedance', 'seedance-mini', 'kling', 'veo']) {
+          const { totalPence } = estimate(tier, rate, longSec, clip);
+          expect(totalPence, `${tier} ${clip}`).toBeLessThan(longFormBudgetPence(tier) * 0.9);
+        }
       }
+    }
+  });
+
+  it('daily caps (unchanged) still hold several normal shorts a day', () => {
+    // STANDARD £15: 6 shorts; BASIC £5: 2 shorts; PLUS £45: 13 shorts (at 0.79).
+    expect(
+      Math.floor(PLAN_CATALOGUE.STANDARD.dailyCostCapPence / estimate('STANDARD', 0.79).totalPence),
+    ).toBe(6);
+    expect(
+      Math.floor(PLAN_CATALOGUE.BASIC.dailyCostCapPence / estimate('BASIC', 0.79).totalPence),
+    ).toBe(2);
+    expect(
+      Math.floor(PLAN_CATALOGUE.PLUS.dailyCostCapPence / estimate('PLUS', 0.79).totalPence),
+    ).toBe(13);
+  });
+
+  it('Kling (720p) now costs less than Seedance 2.0; Veo 3.1 Fast too', () => {
+    for (const clip of ['kling', 'veo']) {
+      expect(estimate('STANDARD', 0.75, 30, clip).totalPence).toBeLessThan(
+        estimate('STANDARD', 0.75).totalPence,
+      );
     }
   });
 });

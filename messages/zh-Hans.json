@@ -3953,8 +3953,7 @@
       "noLongVideos": "不含长视频",
       "seats": "{count, plural, other {# 个席位}}",
       "businesses": "{count, plural, other {# 个商家}}",
-      "unlimitedVideos": "视频不限量（合理使用）",
-      "videoQuality": "视频画质：{quality}"
+      "unlimitedVideos": "视频不限量（合理使用）"
     },
     "enterprise": {
       "price": "定制价格",
@@ -3996,8 +3995,7 @@
         "dnsDomainVerification": "域名验证",
         "seats": "席位",
         "businesses": "商家",
-        "storage": "存储空间",
-        "videoQuality": "AI 视频画质"
+        "storage": "存储空间"
       },
       "values": {
         "longVideos": "{count} 个 × 最长 {minutes} 分钟",
@@ -4015,12 +4013,7 @@
           "ai_generation": "图库、网站和 AI 图片",
           "byoc_generation": "使用自有密钥的 AI 图片"
         },
-        "storage": "{gb} GB",
-        "videoQuality": {
-          "sd": "标清 (480p)",
-          "hd": "标准高清 (720p)",
-          "fullHd": "全高清 (1080p)"
-        }
+        "storage": "{gb} GB"
       }
     },
     "topUps": {

@@ -76,8 +76,8 @@ X-Studio-Signature: v1=HMAC-SHA256(STUDIO_NOTIFY_WEBHOOK_SECRET, "1790500215.<ra
 
 const TIERS: [string, string, string][] = [
   ['BASIC', '£5', '£20'],
-  ['STANDARD', '£20', '£73'],
-  ['PLUS', '£90', '£264'],
+  ['STANDARD', '£15', '£73'],
+  ['PLUS', '£45', '£264'],
   ['ENTERPRISE', '£150', '£1,100'],
 ];
 

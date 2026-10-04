@@ -3953,8 +3953,7 @@
       "noLongVideos": "بدون فيديوهات طويلة",
       "seats": "{count, plural, zero {# مقعد} one {# مقعد} two {# مقعدان} few {# مقاعد} many {# مقعدًا} other {# مقعد}}",
       "businesses": "{count, plural, zero {# نشاط تجاري} one {# نشاط تجاري} two {# نشاطان تجاريان} few {# أنشطة تجارية} many {# نشاطًا تجاريًا} other {# نشاط تجاري}}",
-      "unlimitedVideos": "فيديوهات غير محدودة (استخدام عادل)",
-      "videoQuality": "جودة الفيديو: {quality}"
+      "unlimitedVideos": "فيديوهات غير محدودة (استخدام عادل)"
     },
     "enterprise": {
       "price": "تسعير مخصص",
@@ -3996,8 +3995,7 @@
         "dnsDomainVerification": "التحقق من النطاق",
         "seats": "المقاعد",
         "businesses": "الأنشطة التجارية",
-        "storage": "مساحة التخزين",
-        "videoQuality": "جودة فيديو الذكاء الاصطناعي"
+        "storage": "مساحة التخزين"
       },
       "values": {
         "longVideos": "{count} × حتى {minutes} دقيقة",
@@ -4015,12 +4013,7 @@
           "ai_generation": "صور جاهزة وصور من موقعك وصور بالذكاء الاصطناعي",
           "byoc_generation": "صور بالذكاء الاصطناعي بمفاتيحك الخاصة"
         },
-        "storage": "{gb} GB",
-        "videoQuality": {
-          "sd": "دقة قياسية SD (480p)",
-          "hd": "دقة عالية HD (720p)",
-          "fullHd": "دقة عالية كاملة Full HD (1080p)"
-        }
+        "storage": "{gb} GB"
       }
     },
     "topUps": {

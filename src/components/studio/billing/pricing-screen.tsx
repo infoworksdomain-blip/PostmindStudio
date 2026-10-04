@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
 import type { PlanDefinition } from '@/lib/studio/billing/catalogue';
 import { PageHeader } from '../primitives';
-import { IntervalToggle, PlanCards, useTopUpName, useVideoQualityLabel } from './plan-cards';
+import { IntervalToggle, PlanCards, useTopUpName } from './plan-cards';
 import type { BillingInterval, PlanPricingView, PricingView } from './types';
 
 // Phase 18 §3 / §P.4 — /pricing: tier cards with a monthly / annual switch (annual shows the
@@ -19,7 +19,6 @@ import type { BillingInterval, PlanPricingView, PricingView } from './types';
 type RowKey =
   | 'shortVideos'
   | 'longVideos'
-  | 'videoQuality'
   | 'platforms'
   | 'dailyCostCap'
   | 'monthlyCostCap'
@@ -71,7 +70,6 @@ const BOOL_ROWS: readonly BoolFlag[] = [
 const ROW_ORDER: readonly RowKey[] = [
   'shortVideos',
   'longVideos',
-  'videoQuality',
   'platforms',
   'dailyCostCap',
   'monthlyCostCap',
@@ -101,7 +99,6 @@ function isBoolRow(key: RowKey): key is BoolFlag {
 function useCell(): (key: RowKey, p: PlanDefinition) => Cell {
   const t = useTranslations('pricing.compare.values');
   const f = useFormat();
-  const quality = useVideoQualityLabel();
   const count = (n: number | null): Cell =>
     n === null ? { kind: 'unlimited' } : { kind: 'text', text: f.number(n) };
   return (key, p) => {
@@ -119,8 +116,6 @@ function useCell(): (key: RowKey, p: PlanDefinition) => Cell {
             minutes: Math.round((p.longMaxSec ?? 0) / 60),
           }),
         };
-      case 'videoQuality':
-        return { kind: 'text', text: quality(p.aiVideoResolution) };
       case 'platforms':
         return { kind: 'text', text: t(`platforms.${p.platforms}`) };
       case 'dailyCostCap':

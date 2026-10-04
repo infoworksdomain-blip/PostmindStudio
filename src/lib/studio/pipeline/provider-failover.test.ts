@@ -531,7 +531,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     const run = await runProvider(clipRequest, deps);
     expect(run.decision.providerId).toBe('seedance');
     expect(runway.submitCalls).toHaveLength(0);
-    // runProvider passes the plan tier to the adapter (21.3: PLUS → Seedance 2.0 at 1080p).
+    // runProvider passes the plan tier to the adapter (21.3: every tier → the full Seedance 2.0).
     expect(seedance.submitCalls[0]).toMatchObject({ planTier: 'PLUS' });
   });
 
@@ -575,7 +575,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     ]);
   });
 
-  it('video (21.3): Seedance 2.0 not activated on PLUS → Mini takes the clip, no failover', async () => {
+  it('video (21.3): Seedance 2.0 not activated on STANDARD → Mini takes the clip, no failover', async () => {
     const http = fakeFetch(
       json({ error: { code: 'ModelNotOpen', message: 'has not activated the model' } }, 404),
       json({ id: 'cgt-mini-ok' }),
@@ -598,8 +598,8 @@ describe('runProvider account-problem failover (20.11)', () => {
     const run = await runProvider(
       {
         ...clipRequest,
-        planTier: 'PLUS',
-        request: { ...clipRequest.request, resolution: '1080p' as const },
+        planTier: 'STANDARD',
+        request: { ...clipRequest.request, resolution: '720p' as const },
       },
       deps,
     );
@@ -608,7 +608,7 @@ describe('runProvider account-problem failover (20.11)', () => {
     expect(breaker.accountHolds().seedance).toBeUndefined();
     // Two submits (2.0 refused, Mini accepted), then the poll.
     expect(http.requests.filter((r) => r.method === 'POST').map((r) => r.body)).toMatchObject([
-      { model: 'dreamina-seedance-2-0-260128', resolution: '1080p' },
+      { model: 'dreamina-seedance-2-0-260128', resolution: '720p' },
       { model: 'dreamina-seedance-2-0-mini-260615', resolution: '720p' },
     ]);
   });

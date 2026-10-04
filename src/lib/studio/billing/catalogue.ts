@@ -1,4 +1,3 @@
-import type { VideoResolution } from '../providers/interface';
 import type { PlanTier } from '../providers/router';
 
 // Phase 18 §P.1 / §P.3 — the plan catalogue: the single source of truth for what each tier
@@ -30,13 +29,6 @@ export interface PlanDefinition {
   musicAndSfx: boolean;
   voiceClone: boolean;
   renders4k: boolean;
-  /**
-   * 21.3 (operator decision 2026-10-04): the resolution AI video clips are generated at, shown on
-   * the plan cards and comparison table. BASIC 480p on Seedance 2.0 mini (20.25), STANDARD 720p,
-   * PLUS / ENTERPRISE 1080p on the full Seedance 2.0 (providers/seedance.ts). The finished video
-   * is rendered at the platform preset (1080p; 4K on PLUS) whatever the clips' resolution.
-   */
-  aiVideoResolution: VideoResolution;
   imageLibrary: ImageLibraryLevel;
   generatedImagesPerBusinessPerMonth: number;
   scanBusinesses: number | null;
@@ -83,7 +75,6 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     musicAndSfx: false,
     voiceClone: false,
     renders4k: false,
-    aiVideoResolution: '480p',
     imageLibrary: 'stock',
     generatedImagesPerBusinessPerMonth: 20,
     scanBusinesses: 1,
@@ -108,15 +99,12 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     longVideosPerMonth: 1,
     longMaxSec: 180,
     platforms: 'all',
-    // 21.3: £20 (was £15) so a long video on the full Seedance 2.0 (≈ £14.11 at 0.79) and two
-    // shorts fit in one day.
-    dailyCostCapPence: 2_000,
+    dailyCostCapPence: 1_500,
     monthlyCostCapPence: 7_300,
     queuePriority: 'normal',
     musicAndSfx: true,
     voiceClone: false,
     renders4k: false,
-    aiVideoResolution: '720p',
     imageLibrary: 'stock_scrape',
     generatedImagesPerBusinessPerMonth: 50,
     scanBusinesses: 3,
@@ -142,15 +130,12 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     longVideosPerMonth: 4,
     longMaxSec: 360,
     platforms: 'all',
-    // 21.3: £90 (was £45) so a 6-minute video at 1080p (≈ £64.48 at 0.79) and three shorts
-    // (≈ £7.63 each) fit in one day.
-    dailyCostCapPence: 9_000,
+    dailyCostCapPence: 4_500,
     monthlyCostCapPence: 26_400,
     queuePriority: 'high',
     musicAndSfx: true,
     voiceClone: true,
     renders4k: true,
-    aiVideoResolution: '1080p',
     imageLibrary: 'ai_generation',
     generatedImagesPerBusinessPerMonth: 200,
     scanBusinesses: 10,
@@ -181,7 +166,6 @@ export const PLAN_CATALOGUE: Readonly<Record<PlanTier, PlanDefinition>> = {
     musicAndSfx: true,
     voiceClone: true,
     renders4k: true,
-    aiVideoResolution: '1080p',
     imageLibrary: 'byoc_generation',
     generatedImagesPerBusinessPerMonth: 1_000,
     scanBusinesses: null,

@@ -3953,8 +3953,7 @@
       "noLongVideos": "कोई लॉन्ग वीडियो नहीं",
       "seats": "{count, plural, one {# सीट} other {# सीटें}}",
       "businesses": "{count, plural, one {# व्यवसाय} other {# व्यवसाय}}",
-      "unlimitedVideos": "असीमित वीडियो (उचित उपयोग)",
-      "videoQuality": "वीडियो क्वालिटी: {quality}"
+      "unlimitedVideos": "असीमित वीडियो (उचित उपयोग)"
     },
     "enterprise": {
       "price": "कस्टम कीमत",
@@ -3996,8 +3995,7 @@
         "dnsDomainVerification": "डोमेन सत्यापन",
         "seats": "सीटें",
         "businesses": "व्यवसाय",
-        "storage": "स्टोरेज",
-        "videoQuality": "AI वीडियो क्वालिटी"
+        "storage": "स्टोरेज"
       },
       "values": {
         "longVideos": "{count} × {minutes} मिनट तक",
@@ -4015,12 +4013,7 @@
           "ai_generation": "स्टॉक, वेबसाइट और AI इमेज",
           "byoc_generation": "आपकी अपनी कुंजियों से AI इमेज"
         },
-        "storage": "{gb} GB",
-        "videoQuality": {
-          "sd": "SD (480p)",
-          "hd": "स्टैंडर्ड HD (720p)",
-          "fullHd": "फ़ुल HD (1080p)"
-        }
+        "storage": "{gb} GB"
       }
     },
     "topUps": {

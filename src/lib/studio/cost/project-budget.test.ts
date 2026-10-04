@@ -54,25 +54,26 @@ describe('defaultProjectBudgetPence (operator decision 2)', () => {
 });
 
 describe('per-tier defaults (20.25 / 21.3: normal videos never reach the 90% pause)', () => {
-  it('short form: BASIC £3.50, STANDARD £5, PLUS and ENTERPRISE £16 (21.3 full-model floors)', () => {
-    expect(shortFormBudgetPence('BASIC')).toBe(350);
+  it('short form (21.3 full model at 720p): BASIC and STANDARD £5, PLUS and ENTERPRISE £7', () => {
+    expect(shortFormBudgetPence('BASIC')).toBe(500);
     expect(shortFormBudgetPence('STANDARD')).toBe(500);
-    expect(shortFormBudgetPence('PLUS')).toBe(1_600);
-    expect(shortFormBudgetPence('ENTERPRISE')).toBe(1_600);
+    expect(shortFormBudgetPence('PLUS')).toBe(700);
+    expect(shortFormBudgetPence('ENTERPRISE')).toBe(700);
     expect(shortFormBudgetPence()).toBe(DEFAULT_SHORT_FORM_BUDGET_PENCE);
   });
 
-  it('long form: £30, PLUS and ENTERPRISE £130 (21.3: 1080p clips)', () => {
+  it('long form: £30, PLUS and ENTERPRISE £45 (unchanged by 21.3)', () => {
     expect(longFormBudgetPence('BASIC')).toBe(3_000);
     expect(longFormBudgetPence('STANDARD')).toBe(3_000);
-    expect(longFormBudgetPence('PLUS')).toBe(13_000);
-    expect(longFormBudgetPence('ENTERPRISE')).toBe(13_000);
+    expect(longFormBudgetPence('PLUS')).toBe(4_500);
+    expect(longFormBudgetPence('ENTERPRISE')).toBe(4_500);
     expect(longFormBudgetPence()).toBe(DEFAULT_LONG_FORM_BUDGET_PENCE);
   });
 
-  it('the floors win over 2.5 × the catalogue typical cost only where the model needs it', () => {
-    expect(TIER_BUDGET_FLOOR_PENCE.BASIC).toEqual({ short: 0, long: 0 });
-    expect(TIER_BUDGET_FLOOR_PENCE.STANDARD.long).toBe(0);
+  it('the floors raise only the short-form defaults', () => {
+    for (const tier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(TIER_BUDGET_FLOOR_PENCE[tier].long).toBe(0);
+    }
     expect(TIER_BUDGET_FLOOR_PENCE.ENTERPRISE).toEqual(TIER_BUDGET_FLOOR_PENCE.PLUS);
   });
 
@@ -80,7 +81,7 @@ describe('per-tier defaults (20.25 / 21.3: normal videos never reach the 90% pau
     const short = [{ platform: 'tiktok', durationSec: 30 }];
     const long = [{ platform: 'youtube', durationSec: 360 }];
     expect(defaultProjectBudgetPence(short, 'BRIEF', 'STANDARD')).toBe(500);
-    expect(defaultProjectBudgetPence(long, 'BRIEF', 'PLUS')).toBe(13_000);
+    expect(defaultProjectBudgetPence(long, 'BRIEF', 'PLUS')).toBe(4_500);
     expect(defaultProjectBudgetPence(short, 'SLIDESHOW', 'PLUS')).toBe(150);
   });
 });

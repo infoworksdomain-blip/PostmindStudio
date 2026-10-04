@@ -532,8 +532,8 @@ async function generateVisual(
     case 'MOTION_GRAPHICS':
       return null; // rendered by the composer from the shot's text (15.B8: motion cards)
     case 'AI_CLIP': {
-      // 20.25 / 21.3: clips by plan tier (BASIC 480p, STANDARD 720p, PLUS 1080p); a clip is never
-      // reused for a shot at another resolution (720p keeps the pre-20.25 fingerprint).
+      // 20.25 / 21.3: clips by plan tier (720p on every tier since 21.3); a clip is never reused for
+      // a shot at another requested resolution (720p keeps the pre-20.25 fingerprint).
       const resolution = aiClipResolution(data.planTier);
       const fingerprint: FingerprintInput = {
         capability: 'text_to_video',

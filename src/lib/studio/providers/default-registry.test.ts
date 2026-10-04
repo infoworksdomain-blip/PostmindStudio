@@ -198,7 +198,26 @@ describe('BytePlus Seedance (20.23)', () => {
     expect(providerKeysFromEnv().seedance).toEqual({ apiKey: 'test.key' });
   });
 
-  it('21.3 SEEDANCE_FULL_MODEL sets the STANDARD / PLUS / ENTERPRISE model', () => {
+  it('21.3 STUDIO_SEEDANCE_RESOLUTION reaches the adapter (1080p only on purpose)', () => {
+    vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
+    vi.stubEnv('STUDIO_SEEDANCE_RESOLUTION', '1080p');
+    const [seedance] = buildAdaptersFromEnv();
+    expect(
+      (seedance as SeedanceAdapter).buildBody({
+        capability: 'text_to_video',
+        organisationId: 'o',
+        prompt: 'p',
+        durationSec: 4,
+        aspectRatio: '9:16',
+        planTier: 'STANDARD',
+        resolution: '720p',
+      }),
+    ).toMatchObject({ model: 'dreamina-seedance-2-0-260128', resolution: '1080p' });
+    vi.stubEnv('STUDIO_SEEDANCE_RESOLUTION', '4k');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
+  });
+
+  it('21.3 SEEDANCE_FULL_MODEL sets every plan tier model', () => {
     vi.stubEnv('BYTEPLUS_API_KEY', 'test.key');
     vi.stubEnv('SEEDANCE_FULL_MODEL', 'dreamina-seedance-2-0-mini-260615');
     expect(buildAdaptersFromEnv()[0]).toMatchObject({
