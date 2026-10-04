@@ -109,8 +109,8 @@ export interface EdlShot {
   keepSourceAudio?: boolean;
   /**
    * 21.4: the clip's own audio IS the narration (a UGC actor speaking its line): the clip plays
-   * at full level, counts as voiced (music ducks, the headline moves to the top) and the summary
-   * records it as clip speech for audio_sync.
+   * at full level, counts as voiced (music ducks) and the summary records it as clip speech for
+   * audio_sync. 21.4a: a UGC_ACTOR shot draws no headline box (it would cover the face).
    */
   clipSpeech?: boolean;
   onScreenText?: string | null;
@@ -315,7 +315,11 @@ function audioAndCaptions(
   const start = roundSec(at);
   const hasOwnText =
     shot.visualTreatment === 'TEXT_CARD' || shot.visualTreatment === 'MOTION_GRAPHICS';
-  if (shot.onScreenText && !hasOwnText) {
+  // 21.4a (production 2026-10-04): an actor clip is a selfie, and the top headline sat on the
+  // face. Its words are already the burned-in captions, so it gets no headline box at all (an
+  // owner who wants a label adds an overlay, which they place themselves).
+  const coversFace = shot.visualTreatment === 'UGC_ACTOR';
+  if (shot.onScreenText && !hasOwnText && !coversFace) {
     // A voiced shot carries burned-in narration captions in the lower third (voice-captions.ts,
     // anchorY 0.7), so its headline moves to the top, below the AI label and the platform's top
     // bar; QA run 9 showed the two boxes drawn over each other.

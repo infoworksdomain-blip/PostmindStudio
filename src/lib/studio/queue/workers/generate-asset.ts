@@ -36,6 +36,7 @@ import {
 import { selectStockVoice } from '../../pipeline/voice-fit';
 import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
 import { timeClipSpeech } from '../../ugc/clip-speech';
+import { ensureActorPortrait } from '../../ugc/portrait';
 import { actorClipPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
 import { jobIds } from '../enqueue';
@@ -268,7 +269,8 @@ async function ugcProductImage(
  * BACKLOG 21.4 — a UGC_ACTOR shot: a generated actor speaks the shot's line to camera, with the
  * provider's own audio (Veo first, router.ts ACTOR_CANDIDATES). The same actor description and
  * seed go to every clip of the project, and the business's product image (when chosen) goes as a
- * reference so the product is in view. With no actor provider available (account problem, hold,
+ * reference so the product is in view. 21.4a: so does the project's actor portrait
+ * (ugc/portrait.ts), the same image for every clip. With no actor provider available (account problem, hold,
  * kill switch, nothing configured) the shot degrades like an avatar shot: the line is narrated by
  * the brand voice over a generated B-roll clip (degradedFrom 'actor_video').
  */
@@ -286,6 +288,20 @@ async function generateActor(
   const productImageUrl = product
     ? await deps.storage.signedUrl(product.s3Bucket, product.s3Key)
     : undefined;
+  // 21.4a: the project's one actor portrait (made by the first actor shot that asks, reused by
+  // every other clip and every regenerated clip), so the actor stays the same person. Not made
+  // when no actor provider is configured at all (the shot degrades to narrated B-roll).
+  const portrait =
+    deps.registry.getAdaptersByCapability('actor_video').length > 0
+      ? await ensureActorPortrait(deps, {
+          projectId: data.projectId,
+          organisationId: data.organisationId,
+          runId: data.runId,
+          planTier: data.planTier,
+          style: ugc,
+          shotId: shot.id,
+        })
+      : null;
   let run: ProviderRunResult;
   try {
     run = await runProvider(
@@ -303,12 +319,14 @@ async function generateActor(
             sceneDescription: shot.sceneDescription,
             cameraDirection: shot.cameraDirection,
             productReference: Boolean(productImageUrl),
+            actorReference: Boolean(portrait),
           }),
           spokenLine: shot.voiceoverText,
           languageCode: shot.script.language,
           durationSec: shot.durationSec,
           aspectRatio: shot.script.targetAspectRatio as AspectRatio,
           ...(productImageUrl && { productImageUrl }),
+          ...(portrait && { actorImageUrl: portrait.url }),
           seed: ugc.seed,
         },
       },
@@ -327,7 +345,11 @@ async function generateActor(
     run,
     { extension: 'mp4', contentType: 'video/mp4' },
     undefined,
-    { speech: 'clip', ...(product && { productImageId: product.id }) },
+    {
+      speech: 'clip',
+      ...(product && { productImageId: product.id }),
+      ...(portrait && { actorImageAssetId: portrait.assetId }),
+    },
   );
 }
 

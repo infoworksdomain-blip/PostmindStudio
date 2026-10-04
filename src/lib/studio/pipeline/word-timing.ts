@@ -140,10 +140,18 @@ export async function ensureWordTiming(
   });
   // Narration was generated from the shot's script line, so its words keep the script's spelling
   // (brand names the transcript splits, e.g. "a head AI" for "AheadAI"); overlays/script-spelling.ts.
+  // 21.4a: a UGC actor clip speaks the shot's line too, so its transcript is re-spelt the same way.
+  // All-or-nothing: an actor who repeats or changes a word ("calls, calls.") keeps the transcript,
+  // so captions always show what was actually said.
   const narratedShot =
     transcribed.status === 'ok'
       ? await deps.db.videoShot.findFirst({
-          where: { voiceAssetId: asset.id },
+          where: {
+            OR: [
+              { voiceAssetId: asset.id },
+              { assetId: asset.id, visualTreatment: 'UGC_ACTOR', voiceAssetId: null },
+            ],
+          },
           select: { voiceoverText: true },
         })
       : null;

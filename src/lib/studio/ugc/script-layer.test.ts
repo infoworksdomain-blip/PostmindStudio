@@ -64,6 +64,18 @@ describe('scriptLayerMode (21.4)', () => {
     expect(applied.plan.shots[0]?.durationSec).toBe(8);
   });
 
+  it('21.4a: without a product photo, the actor portrait still forces 8 s clips when an image generator exists', () => {
+    const noProduct = { ugc: newUgcStyle({}, 5) } as unknown as Prisma.JsonObject;
+    const mode = scriptLayerMode({ metadata: noProduct, tier: 'STANDARD', registry: all });
+    expect(mode.supplement(30, 3)).toContain('each lasts exactly one of: 8 s (at most 16 words).');
+    const noImages = scriptLayerMode({
+      metadata: noProduct,
+      tier: 'STANDARD',
+      registry: registry(['actor_video', 'composition']),
+    });
+    expect(noImages.supplement(30, 3)).toContain('4 s (at most 7 words), 6 s');
+  });
+
   it('no tier gate: a legacy BASIC organisation plans UGC at the STANDARD clip rate', () => {
     expect(activeUgcStyle(ugc)).not.toBeNull();
     const mode = scriptLayerMode({ metadata: ugc, tier: 'BASIC', registry: all });

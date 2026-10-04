@@ -32,6 +32,7 @@ import {
 import { makeSampleMedia, readSample } from '../../src/lib/studio/load-test/sample-media';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
 import type { ProviderAdapter } from '../../src/lib/studio/providers/interface';
+import { ACTOR_PORTRAIT_ROLE } from '../../src/lib/studio/ugc/portrait';
 import {
   createProject,
   createProjectInput,
@@ -57,7 +58,8 @@ import {
 //   cost-cap-project  the project's own budget is tiny: the run pauses (cost_cap_paused)
 //   cost-cap-org      the organisation's daily cap is tiny: the run pauses (cost_cap_paused)
 //   ugc-actor         21.4: a UGC actor video: actor clips from (simulated) Veo speak their lines,
-//                     no ElevenLabs voice, clip speech captioned and kept in the edit, gate passed
+//                     no ElevenLabs voice, clip speech captioned and kept in the edit, gate passed;
+//                     21.4a: one actor portrait made once and sent to every (parallel) actor clip
 
 const TERMINAL = new Set([
   'READY_FOR_REVIEW',
@@ -550,6 +552,16 @@ async function ugcActor(ctx: Ctx): Promise<Check[]> {
   const actors = shots.filter((s) => s.visualTreatment === 'UGC_ACTOR');
   const renders = await ctx.db.videoRender.findMany({ where: { projectId } });
   const summary = renders[0]?.composition as { shots?: Array<{ speech?: string }> } | undefined;
+  // 21.4a: one actor portrait for the project, shared by every actor clip (parallel jobs wait).
+  const assets = await ctx.db.videoAsset.findMany({ where: { projectId } });
+  const portraits = assets.filter(
+    (a) => (a.metadata as { role?: string } | null)?.role === ACTOR_PORTRAIT_ROLE,
+  );
+  const clipPortraits = new Set(
+    assets
+      .filter((a) => actors.some((s) => s.assetId === a.id))
+      .map((a) => (a.metadata as { actorImageAssetId?: string } | null)?.actorImageAssetId),
+  );
   return [
     verify(
       'run reached review',
@@ -561,6 +573,11 @@ async function ugcActor(ctx: Ctx): Promise<Check[]> {
       countOf(rows, { provider: 'veo', operation: 'actor_video', state: 'SUCCEEDED' }) ===
         actors.length && actors.length >= 2,
       describeJobs(rows.filter((r) => r.provider === 'veo')),
+    ),
+    verify(
+      'one actor portrait, sent to every actor clip (21.4a)',
+      portraits.length === 1 && clipPortraits.size === 1 && clipPortraits.has(portraits[0]?.id),
+      `portraits ${portraits.length}; clips use ${JSON.stringify([...clipPortraits])}`,
     ),
     verify(
       'no ElevenLabs voice for actor shots (the clip is the narration)',

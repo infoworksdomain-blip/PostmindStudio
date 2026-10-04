@@ -106,9 +106,44 @@ our own script, so they are a second phase if Veo's lip-sync disappoints.
 
 ## E. Known limits / follow-ups
 
-- Each clip is a separate generation: the same described person and seed keep the look close but
-  voice and face may drift between clips. A follow-up could pass the first clip's frame as a
-  reference image (Veo allows up to 3; the product uses one).
+- ~~Each clip is a separate generation: the face may drift between clips.~~ Confirmed in
+  production (2026-10-04, clip 3 was a different woman) and fixed in **21.4a** (section F).
+  The VOICE may still drift between clips: Veo documents no voice reference.
+
+## F. 21.4a — one actor, a clear face (production 2026-10-04)
+
+Docs re-read 2026-10-04 (https://ai.google.dev/gemini-api/docs/veo, updated 2026-09-17):
+"Veo 3.1 now accepts up to 3 reference images … Provide images of a person, character, or product
+to preserve the subject's appearance in the output video"; `referenceImages` with
+`referenceType: "asset"`, "Up to three images" on Veo 3.1 & 3.1 Fast ("n/a" on Lite);
+`durationSeconds` "must be 8" with reference images; `personGeneration` "allow_adult" only with
+reference images; `aspectRatio` 16:9 / 9:16 with no reference restriction; audio "Always on".
+Image-to-video (a first frame) is also documented, but it opens every clip on the same still and
+cannot carry the product reference too, so references were chosen (option a).
+
+- **Portrait** (`ugc/portrait.ts`): one per project, from the stored actor presets + seed only (no
+  owner text, "fictional person who does not exist … not anyone famous", real-person check), through
+  the IMAGE_STILL route (OpenAI gpt-image-2 first, 9:16). Stored as a project IMAGE asset (role
+  `ugc_actor_portrait`), recorded at `metadata.ugc.actorImage` with the actor description (a new
+  look makes a new portrait). Made by the first actor shot under a compare-and-set claim; the
+  other shots wait (RateDeferredError, no attempt used); a claim older than 5 min is taken over.
+- **Clips**: Veo `referenceImages` = [portrait, product] (≤ 3), 8 s, allow_adult; the prompt points
+  at the reference portrait. Actor clips are planned at 8 s whenever an image generator exists.
+  Regenerated clips reuse the stored portrait. Kling (`KLING_UGC_ACTOR`): image-to-video with the
+  portrait as `first_frame` and `audio: native` on 9:16 / 4:5 (documented on
+  kling.ai/document-api/api/video/3-0-omni/image-to-video); Kling's subject reference ("Element",
+  made through the Element Management API) is not built.
+- **No portrait** (refusal, no image provider, account problem, a non-PNG/JPEG image): recorded as
+  `unavailable` for the run; clips go on with the description and seed (the 21.4 behaviour).
+- **Labels**: no suggested label on actor shots except the opening hook (≤ 40 characters, 3.6 %,
+  anchorY 0.11: below the AI label at the top, above the face); no composer headline on actor
+  shots; the script prompt asks for empty onScreenText on actor shots.
+- **"calls, calls."**: the actor said it twice (captions are the clip's transcript; re-spelling
+  never adds words). The prompt now says the line is spoken exactly once, then the actor stops and
+  smiles; clip transcripts are re-spelt to the script line (all-or-nothing).
+- **Cost**: + one image per UGC video (estimate 4p; the charged cost comes from OpenAI's usage).
+- **To confirm on the first live run**: Veo Fast with two references + 9:16 + audio; that the
+  portrait keeps the face across clips; the actor no longer repeats words.
 - DOC DISCREPANCY (as in 20.20): the REST samples write images as `inlineData`, the official SDK
   as `{ bytesBase64Encoded, mimeType }`; we follow the SDK. Confirm on the first live run.
 - An actor line that runs past its clip fails audio_sync (a clip cannot be re-paced); the script

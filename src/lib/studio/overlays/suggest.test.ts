@@ -4,6 +4,9 @@ import {
   shotRole,
   suggestOverlays,
   suggestionRows,
+  UGC_HOOK_ANCHOR_Y,
+  UGC_HOOK_FONT_PCT,
+  UGC_HOOK_MAX_CHARS,
   VOICED_LABEL_ANCHOR_Y,
   type SuggestShot,
 } from './suggest';
@@ -51,6 +54,71 @@ describe('label placement and cards (production QA run 10, 2026-10-04)', () => {
   it('adds no label to a motion-graphics card, which draws its own text', () => {
     const shots = suggestOverlays(three('Spoken line.', 'MOTION_GRAPHICS'), null);
     expect(shots.map((s) => s.shotId)).toEqual(['a', 'c']);
+  });
+});
+
+describe('UGC actor shots keep the face clear (21.4a, production 2026-10-04)', () => {
+  const ugc = (hook: string): SuggestShot[] => [
+    {
+      id: 'actor-hook',
+      sortOrder: 0,
+      durationSec: 8,
+      onScreenText: hook,
+      visualTreatment: 'UGC_ACTOR',
+      voiceoverText: 'I used to dread client calls.',
+    },
+    {
+      id: 'actor-body',
+      sortOrder: 1,
+      durationSec: 8,
+      onScreenText: 'dreaded client calls',
+      visualTreatment: 'UGC_ACTOR',
+      voiceoverText: 'Then I found this.',
+    },
+    {
+      id: 'still',
+      sortOrder: 2,
+      durationSec: 3,
+      onScreenText: 'Book in seconds',
+      visualTreatment: 'IMAGE_STILL',
+      voiceoverText: null,
+    },
+    {
+      id: 'actor-cta',
+      sortOrder: 3,
+      durationSec: 8,
+      onScreenText: 'not anymore though',
+      visualTreatment: 'UGC_ACTOR',
+      voiceoverText: 'Link below.',
+    },
+  ];
+
+  it('adds no label to body or CTA actor shots; B-roll keeps its label', () => {
+    const shots = suggestOverlays(ugc('Client calls?'), null);
+    expect(shots.map((s) => s.shotId)).toEqual(['actor-hook', 'still']);
+    expect(
+      shots.some((s) => s.style.anchorY === VOICED_LABEL_ANCHOR_Y && s.shotId !== 'still'),
+    ).toBe(false);
+  });
+
+  it('the opening hook is small, in the top band above the face and below the AI label', () => {
+    const [hook] = suggestOverlays(ugc('Client calls?'), null);
+    expect(hook?.style.anchorY).toBe(UGC_HOOK_ANCHOR_Y);
+    expect(hook?.style.anchorY).toBeLessThan(VOICED_LABEL_ANCHOR_Y);
+    expect(hook?.style.anchorY).toBeGreaterThan(0.06);
+    expect(hook?.style.fontSizePct).toBe(UGC_HOOK_FONT_PCT);
+    expect(hook?.presetName).toBe(BUILT_IN_PRESETS.find((p) => p.key === ROLE_PRESET.hook)?.name);
+  });
+
+  it('a hook too long to fit the band on one line is left to the captions', () => {
+    const shots = suggestOverlays(ugc('x'.repeat(UGC_HOOK_MAX_CHARS + 1)), null);
+    expect(shots.map((s) => s.shotId)).toEqual(['still']);
+  });
+
+  it('a template preset never moves a label onto an actor shot', () => {
+    const shots = suggestOverlays(ugc('Client calls?'), null, () => 'subtitle_box');
+    expect(shots.find((s) => s.shotId === 'actor-body')).toBeUndefined();
+    expect(shots[0]?.style.anchorY).toBe(UGC_HOOK_ANCHOR_Y);
   });
 });
 
