@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { ConfigurationError } from '../../errors';
-import { ShotstackAdapter } from './shotstack';
+import { classifyRenderFailure, ShotstackAdapter } from './shotstack';
 
 // Fixtures follow shotstack.io/docs/api (render envelope and status values).
 const NOW = Date.parse('2026-09-27T12:00:00Z');
@@ -145,7 +145,19 @@ describe('ShotstackAdapter', () => {
     );
     await expect(shotstack.poll('r-1')).resolves.toMatchObject({
       state: 'failed',
-      error: { message: 'Asset 404' },
+      error: { message: 'Asset 404', class: 'unknown', retryable: false },
+    });
+  });
+
+  it('marks a render that failed fetching our assets as retryable (production 2026-10-04)', async () => {
+    const error =
+      '5 asset(s) failed to download. First error: An error occurred downloading file - Connection timeout: https://example.r2.cloudflarestorage.com/intermediates/voice.mp3';
+    const { shotstack } = setup(
+      json({ success: true, message: 'OK', response: { id: 'r-2', status: 'failed', error } }),
+    );
+    await expect(shotstack.poll('r-2')).resolves.toMatchObject({
+      state: 'failed',
+      error: { message: error, class: 'timeout', retryable: true },
     });
   });
 
@@ -177,4 +189,23 @@ describe('ShotstackAdapter', () => {
       }),
     ).toBe(0);
   });
+});
+
+describe('classifyRenderFailure', () => {
+  it.each([
+    'An error occurred downloading file - Connection timeout: https://x/y.mp3',
+    '3 asset(s) failed to download',
+    'socket hang up',
+    'Upstream returned 503',
+    'connect ETIMEDOUT 1.2.3.4:443',
+  ])('treats "%s" as transient', (message) => {
+    expect(classifyRenderFailure(message)).toEqual({ class: 'timeout', retryable: true });
+  });
+
+  it.each(['Asset 404', 'Invalid edit: timeline.tracks is required', 'Unsupported codec'])(
+    'does not retry "%s"',
+    (message) => {
+      expect(classifyRenderFailure(message)).toEqual({ class: 'unknown', retryable: false });
+    },
+  );
 });
