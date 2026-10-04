@@ -44,6 +44,24 @@ const RUNNING_STATES = new Set([
   'saving',
 ]);
 
+/**
+ * A failed render caused by fetching our assets (Shotstack downloads every clip, voice and font
+ * from storage) or by a transient network fault is worth retrying; anything else (a bad edit, an
+ * unsupported asset) is not. Production 2026-10-04: "5 asset(s) failed to download … Connection
+ * timeout" from R2 failed a whole project after its clips were paid for.
+ */
+const TRANSIENT_RENDER_FAILURE =
+  /failed to download|error occurred downloading|connection (timeout|timed out|reset|refused)|timed? ?out|ETIMEDOUT|ECONNRESET|socket hang up|temporarily unavailable|\b50[234]\b/i;
+
+export function classifyRenderFailure(message: string): {
+  class: 'timeout' | 'unknown';
+  retryable: boolean;
+} {
+  return TRANSIENT_RENDER_FAILURE.test(message)
+    ? { class: 'timeout', retryable: true }
+    : { class: 'unknown', retryable: false };
+}
+
 interface ShotstackEnvelope<T> {
   success: boolean;
   message: string;
@@ -179,14 +197,8 @@ export class ShotstackAdapter implements ProviderAdapter {
         },
       };
     }
-    return {
-      state: 'failed',
-      error: {
-        class: 'unknown',
-        message: render.error ?? `Shotstack render ended with status ${render.status}`,
-        retryable: false,
-      },
-    };
+    const message = render.error ?? `Shotstack render ended with status ${render.status}`;
+    return { state: 'failed', error: { ...classifyRenderFailure(message), message } };
   }
 
   /**
