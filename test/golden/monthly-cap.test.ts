@@ -112,8 +112,8 @@ describe.skipIf(!hasDb)(
     it('MC-01 projects without a budget get the short-form / long-form default', async () => {
       const { j } = guardedJourney('mc01');
       const short = await createProject(j);
-      // 20.25: the organisation's tier sets the default (the harness tenant is STANDARD: £4).
-      expect(await budgetOf(short)).toBe(400);
+      // 20.25: the organisation's tier sets the default (the harness tenant is STANDARD: £5).
+      expect(await budgetOf(short)).toBe(500);
 
       const long = await createProject(
         j,

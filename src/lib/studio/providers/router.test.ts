@@ -544,10 +544,10 @@ describe('Seedance AI_CLIP routing', () => {
       },
     });
 
-  it('BASIC (20.25): Seedance first at 480p, then Kling and Veo; never Runway or Luma', async () => {
+  it('BASIC (20.25): Seedance first, then Kling and Veo; never Runway or Luma', async () => {
     const d = real(all());
     const basic = clip('BASIC', 4);
-    const request = { ...basic, request: { ...basic.request, resolution: '480p' as const } };
+    const request = { ...basic, request: { ...basic.request, resolution: '720p' as const } };
     const decision = await routeProvider(request, d);
     expect(decision.providerId).toBe('seedance');
     await openBreaker(d, 'seedance');

@@ -477,9 +477,13 @@ describe('BytePlus Seedance settings (20.23)', () => {
     const text = filledFile('production', {
       BYTEPLUS_API_KEY: LONG_DOTTED_KEY,
       SEEDANCE_MODEL: 'dreamina-seedance-2-0-fast-260128',
+      SEEDANCE_FULL_MODEL: 'dreamina-seedance-2-0-260128',
       SEEDANCE_LONG_MODEL: 'dreamina-seedance-2-5-260628',
       BYTEPLUS_ARK_BASE_URL: 'https://ark.ap-southeast.bytepluses.com/api/v3',
     });
+    expect(statusOf(text, 'SEEDANCE_FULL_MODEL')).toEqual([]);
+    const hd = filledFile('production', { STUDIO_SEEDANCE_RESOLUTION: '1080p' });
+    expect(statusOf(hd, 'STUDIO_SEEDANCE_RESOLUTION')).toEqual([]);
     expect(check(text).ready).toBe(true);
     for (const key of KEYS) expect(statusOf(text, key)).toEqual([]);
   });
@@ -489,6 +493,8 @@ describe('BytePlus Seedance settings (20.23)', () => {
     ['BYTEPLUS_API_KEY', 'short.key'],
     ['SEEDANCE_MODEL', 'seedance-1-5-pro-251215'],
     ['SEEDANCE_LONG_MODEL', 'dreamina-seedance-9'],
+    ['SEEDANCE_FULL_MODEL', 'dreamina-seedance-2-0-pro'],
+    ['STUDIO_SEEDANCE_RESOLUTION', '4k'],
     ['BYTEPLUS_ARK_BASE_URL', 'https://example.com/api/v3'],
   ])('%s=%s is malformed', (key, value) => {
     expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);

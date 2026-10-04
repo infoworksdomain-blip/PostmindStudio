@@ -335,6 +335,14 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
     isSeedanceModel(v)
       ? null
       : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  // 21.3: every plan's clip resolution override (empty = 720p HD; 1080p only on purpose).
+  STUDIO_SEEDANCE_RESOLUTION: (v) =>
+    v === '480p' || v === '720p' || v === '1080p' ? null : 'must be 480p, 720p or 1080p (or empty)',
+  // 21.3: every plan tier's model (empty = dreamina-seedance-2-0-260128).
+  SEEDANCE_FULL_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
   SEEDANCE_LONG_MODEL: (v) =>
     isSeedanceModel(v)
       ? null

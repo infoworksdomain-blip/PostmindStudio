@@ -39,7 +39,7 @@ import type { ProviderRegistry } from './registry';
 //   - BACKLOG 20.25 (operator decision 2026-10-03, cheaper videos): every tier uses Seedance 2.0
 //     mini; 2.5 only renders shots over 15 s (seedance.ts modelFor). BASIC AI clips route
 //     seedance → kling → veo, then the spec's fal / replicate slots: neither has an adapter, so
-//     BASIC AI_CLIP shots had no provider at all; BASIC asks Seedance for 480p (clip-budget.ts).
+//     BASIC AI_CLIP shots had no provider at all; every tier asks Seedance for 720p (clip-budget.ts, 21.3).
 //     Runway and Luma (the dearest per second) stay off BASIC.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
