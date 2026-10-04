@@ -17,6 +17,7 @@ import {
   type PublishingDeps,
 } from '../platforms/publishing';
 import { checkFormat, PLATFORM_RULES } from '../platforms/rules';
+import { carouselComposition, carouselPublishProblems } from '../carousel/publishing';
 import { currentRunId } from '../pipeline/project-state';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { PublishJobData } from '../queue/queues';
@@ -205,13 +206,22 @@ export async function createPublication(
   if (render.qualityCheckState !== 'PASSED' && render.qualityCheckState !== 'FORCE_APPROVED') {
     throw new ConflictError(`Render quality check is ${render.qualityCheckState}`);
   }
-  const sizeBytes = await deps.storage.size(render.s3Bucket, render.s3Key);
-  const problems = checkFormat(input.platform, {
-    aspectRatio: render.aspectRatio,
-    durationSec: render.durationSec,
-    sizeBytes,
-  });
-  if (problems.length) throw new ValidationError('Render does not fit this platform', { problems });
+  // 21.6: a carousel render is a set of slide images with its own platform rules.
+  const carousel = carouselComposition(render.composition);
+  if (carousel) {
+    const problems = carouselPublishProblems(input.platform, carousel.slides.length);
+    if (problems.length)
+      throw new ValidationError('This carousel cannot be published there', { problems });
+  } else {
+    const sizeBytes = await deps.storage.size(render.s3Bucket, render.s3Key);
+    const problems = checkFormat(input.platform, {
+      aspectRatio: render.aspectRatio,
+      durationSec: render.durationSec,
+      sizeBytes,
+    });
+    if (problems.length)
+      throw new ValidationError('Render does not fit this platform', { problems });
+  }
   // 20.13: the business + always hashtags are added and the list topped up to ≥ 5; a person's
   // request that still has too few (or too many) is a 400 (post-copy.ts).
   const copy = await preparePublicationCopy(db, render.project, input.platform, {

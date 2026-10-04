@@ -196,7 +196,7 @@ export async function populateSlideshow(
   return { ...images, textWritten, unfilled: images.unfilled + unwritten };
 }
 
-async function generationBudget(deps: PopulateDeps, scope: PopulateScope): Promise<number> {
+export async function generationBudget(deps: PopulateDeps, scope: PopulateScope): Promise<number> {
   const generatedToday = await deps.db.imageLibraryItem.count({
     where: {
       organisationId: scope.organisationId,
@@ -217,7 +217,7 @@ async function generationBudget(deps: PopulateDeps, scope: PopulateScope): Promi
 }
 
 /** Library search for one slide; with `bestEffort`, an embedding outage is a miss. */
-async function libraryMatch(
+export async function libraryMatch(
   deps: PopulateDeps,
   scope: PopulateScope,
   input: { query: string; used: ReadonlySet<string>; bestEffort: boolean },
@@ -236,7 +236,7 @@ async function libraryMatch(
 }
 
 /** A generated image for the slide within the budget, or undefined. */
-async function generatedImage(
+export async function generatedImage(
   deps: PopulateDeps,
   scope: PopulateScope,
   input: { query: string; aspectRatio: AspectRatio; bestEffort: boolean },

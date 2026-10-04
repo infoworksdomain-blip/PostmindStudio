@@ -22,7 +22,13 @@ export interface Project {
   description: string | null;
   state: string;
   sourceType:
-    'BRIEF' | 'POSTMIND_CONTENT' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE' | 'UPLOAD';
+    | 'BRIEF'
+    | 'POSTMIND_CONTENT'
+    | 'SLIDESHOW'
+    | 'LIBRARY_REFERENCE'
+    | 'TEMPLATE'
+    | 'UPLOAD'
+    | 'CAROUSEL';
   referenceVideoId: string | null;
   referenceMode: 'TEMPLATE' | 'INSPIRE' | null;
   targetFormats: TargetFormat[];
@@ -93,6 +99,8 @@ export interface Render {
   qualityIssues: QualityIssue[] | null;
   costPence: number;
   createdAt: string;
+  /** What the render is made of; 21.6 carousels: { kind: 'carousel', slides, aiGenerated, … }. */
+  composition?: unknown;
 }
 
 export interface Publication {

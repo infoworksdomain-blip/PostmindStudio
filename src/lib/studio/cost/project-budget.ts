@@ -30,6 +30,11 @@ export const DEFAULT_LONG_FORM_BUDGET_PENCE = 3_000;
  */
 export const BUDGET_TYPICAL_VIDEO_MULTIPLE = 2.5;
 export const DEFAULT_SLIDESHOW_BUDGET_PENCE = 150;
+/**
+ * 21.6: a carousel's AI cost is one thread (Claude), one safety check, one caption call and at
+ * most MAX_GENERATIONS_PER_RUN generated pictures, like a slideshow: the same £1.50 default.
+ */
+export const DEFAULT_CAROUSEL_BUDGET_PENCE = DEFAULT_SLIDESHOW_BUDGET_PENCE;
 export const SHORT_FORM_MAX_SEC = 180;
 export const YOUTUBE_LONG_FORM_MIN_SEC = 60;
 
@@ -78,6 +83,7 @@ export function defaultProjectBudgetPence(
   tier?: PlanTier,
 ): number {
   if (sourceType === 'SLIDESHOW') return DEFAULT_SLIDESHOW_BUDGET_PENCE;
+  if (sourceType === 'CAROUSEL') return DEFAULT_CAROUSEL_BUDGET_PENCE;
   return isLongForm(formats) ? longFormBudgetPence(tier) : shortFormBudgetPence(tier);
 }
 

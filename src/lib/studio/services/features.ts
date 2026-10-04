@@ -21,7 +21,7 @@ import { FLAG_OFF, FLAG_ON } from '../system-flags';
 // 403 `feature_disabled`. Staff admin routes (library ingestion etc.) are never gated, so staff can
 // keep curating while a feature is off for users.
 
-export const FEATURES = ['library', 'overlays', 'slideshow', 'image-library'] as const;
+export const FEATURES = ['library', 'overlays', 'slideshow', 'image-library', 'carousels'] as const;
 export type Feature = (typeof FEATURES)[number];
 
 const ENV_VARS: Record<Feature, string> = {
@@ -29,6 +29,7 @@ const ENV_VARS: Record<Feature, string> = {
   overlays: 'FEATURE_OVERLAYS_ENABLED',
   slideshow: 'FEATURE_SLIDESHOW_ENABLED',
   'image-library': 'FEATURE_IMAGE_LIBRARY_ENABLED',
+  carousels: 'FEATURE_CAROUSELS_ENABLED', // 21.6
 };
 
 export const featureKeys = {
@@ -138,6 +139,7 @@ export function featureGateFor(db: Pick<PrismaClient, 'systemFlag'>): FeatureGat
 export function featureForProjectSource(sourceType: string): Feature | null {
   if (sourceType === 'SLIDESHOW') return 'slideshow';
   if (sourceType === 'LIBRARY_REFERENCE') return 'library';
+  if (sourceType === 'CAROUSEL') return 'carousels';
   return null;
 }
 

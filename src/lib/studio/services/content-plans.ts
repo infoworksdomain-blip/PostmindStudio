@@ -51,8 +51,8 @@ import { heldSlots, parseSlots } from './drip-queue';
 import { tierQuota, videoLimitViolations } from './plan-quotas';
 import { loadPlanContext, writeTopics, type PlanGenerator } from './content-plan-draft';
 
-// 20.9 — "Plan my month" (operator request 2026-09-30): the owner picks a window (default the
-// next free day for 30 days, at most 31), posts a day (1–4, or the business's posting times), the
+// 20.9 â€” "Plan my month" (operator request 2026-09-30): the owner picks a window (default the
+// next free day for 30 days, at most 31), posts a day (1â€“4, or the business's posting times), the
 // video/slideshow split and the platforms; Studio lays out the slots (content-plans/slots.ts),
 // the varied mix (mix.ts), caps the count at the remaining allowance and cost cap (allowance.ts)
 // and has Claude write the topics in the background (draft-content-plan job). The owner edits the
@@ -84,7 +84,7 @@ export const createPlanInput = z
     videoShare: z.number().int().min(0).max(100).default(DEFAULT_VIDEO_SHARE),
     platforms: z.array(z.enum(PLATFORMS)).min(1).max(PLATFORMS.length),
     /**
-     * 20.12: the accounts the posts go to — none, or some of the platforms, is allowed. A
+     * 20.12: the accounts the posts go to â€” none, or some of the platforms, is allowed. A
      * platform without an account is still rendered; with no account at all every post is made
      * and saved for review instead of being scheduled (content-plan-run.ts projectBodyFor).
      */
@@ -116,7 +116,7 @@ export const updateItemInput = z
   .object({
     title: z.string().trim().min(1).max(120).optional(),
     brief: z.string().trim().min(1).max(600).optional(),
-    kind: z.enum(['VIDEO', 'SLIDESHOW']).optional(),
+    kind: z.enum(['VIDEO', 'SLIDESHOW', 'CAROUSEL']).optional(),
     slides: slidesInput.optional(),
   })
   .strict()
@@ -126,7 +126,7 @@ export const addItemInput = z
   .object({
     /** An instant inside the plan's window, at least PLAN_MIN_LEAD_MS ahead. */
     slotAt: z.iso.datetime({ offset: true }),
-    kind: z.enum(['VIDEO', 'SLIDESHOW']),
+    kind: z.enum(['VIDEO', 'SLIDESHOW', 'CAROUSEL']),
     title: z.string().trim().min(1).max(120),
     brief: z.string().trim().min(1).max(600),
     slides: slidesInput.optional(),
@@ -240,7 +240,7 @@ async function latestActiveWindowEnd(
   return latest?.windowEnd.getTime();
 }
 
-/** GET /content-plans/defaults — what the "Plan my month" form starts from. */
+/** GET /content-plans/defaults â€” what the "Plan my month" form starts from. */
 export async function planDefaults(
   deps: PlanDeps,
   tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
@@ -270,6 +270,7 @@ export async function planDefaults(
     typicalCostPence: {
       VIDEO: estimateCost(['VIDEO'], tier).typicalPence,
       SLIDESHOW: estimateCost(['SLIDESHOW'], tier).typicalPence,
+      CAROUSEL: estimateCost(['CAROUSEL'], tier).typicalPence,
     },
   };
 }
@@ -334,7 +335,7 @@ async function candidateSlots(
   return dripSlotsInWindow(slots, window, zone);
 }
 
-/** POST /content-plans — lay out the month and start the background draft. */
+/** POST /content-plans â€” lay out the month and start the background draft. */
 export async function createPlan(
   deps: PlanDeps,
   tenant: Pick<TenantContext, 'organisationId' | 'userId' | 'capabilities' | 'organisation'>,
@@ -408,7 +409,7 @@ export async function createPlan(
   if (capped.count === 0)
     throw new QuotaExceededError(
       capped.cappedReason === 'cost_cap'
-        ? 'This month’s spending limit leaves no room for more posts; add a top-up to plan your month'
+        ? 'This monthâ€™s spending limit leaves no room for more posts; add a top-up to plan your month'
         : 'Your plan has no videos left this month; add a top-up to plan your month',
       { cappedReason: capped.cappedReason, allowance, cost },
     );
@@ -468,7 +469,7 @@ async function enqueueDraft(queue: JobQueue, plan: ContentPlan, runId: string, t
   await queue.add('draft-content-plan', data, { jobId: jobIds.draftContentPlan(data) });
 }
 
-/** POST /content-plans/:id/redraft — write the items that still have no topic (after a failure). */
+/** POST /content-plans/:id/redraft â€” write the items that still have no topic (after a failure). */
 export async function redraftPlan(deps: PlanDeps, organisationId: string, id: string) {
   const plan = await findPlan(deps.db, organisationId, id);
   if (plan.status !== 'DRAFT')
@@ -544,7 +545,7 @@ export async function updateDraftItem(
   });
 }
 
-/** POST /content-plans/:id/items — add a post at a free time inside the window (≤ 4 a day). */
+/** POST /content-plans/:id/items â€” add a post at a free time inside the window (â‰¤ 4 a day). */
 export async function addDraftItem(
   deps: Pick<PlanDeps, 'db' | 'now'>,
   plan: PlanWithItems,
@@ -555,7 +556,7 @@ export async function addDraftItem(
   const now = deps.now();
   const { windowStart, windowEnd } = plan;
   if (at < windowStart.getTime() || at >= windowEnd.getTime())
-    throw new ValidationError('The time must be inside the plan’s dates');
+    throw new ValidationError('The time must be inside the planâ€™s dates');
   if (availableSlots([at], [], now).length === 0)
     throw new ValidationError('The time is too soon to generate the post first');
   const live = liveItems(plan.items);
@@ -604,7 +605,7 @@ export async function deleteDraftItem(db: Db, plan: PlanWithItems, itemId: strin
 }
 
 /**
- * POST /content-plans/:id/reorder — the post times stay where they are and the topics move: the
+ * POST /content-plans/:id/reorder â€” the post times stay where they are and the topics move: the
  * n-th id in `itemIds` takes the n-th earliest time (every draft item exactly once).
  */
 export async function reorderDraft(
@@ -629,7 +630,7 @@ export async function reorderDraft(
   );
 }
 
-/** POST /content-plans/:id/items/:itemId/regenerate — one new topic for one draft item. */
+/** POST /content-plans/:id/items/:itemId/regenerate â€” one new topic for one draft item. */
 export async function regenerateDraftItem(
   deps: Pick<PlanDeps, 'db' | 'now'> & { generate: PlanGenerator },
   plan: PlanWithItems,

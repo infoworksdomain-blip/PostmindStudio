@@ -102,6 +102,7 @@ enum VideoSourceType {
   UPLOAD
   LIBRARY_REFERENCE // A7.2
   SLIDESHOW // A7.2
+  CAROUSEL // 21.6: post-card image carousel (metadata.carousel)
 
   @@schema("studio")
 }
@@ -1849,6 +1850,7 @@ enum ContentPlanStatus {
 enum ContentPlanItemKind {
   VIDEO
   SLIDESHOW
+  CAROUSEL // 21.6
 
   @@schema("studio")
 }

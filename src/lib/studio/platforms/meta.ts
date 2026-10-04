@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { PlatformError, type PlatformErrorClass } from '../../errors';
 import { asBody, platformRequest, pollUntil } from './http';
 import type {
+  CarouselPublishRequest,
   PlatformPublisher,
   PublishRequest,
   PublishResult,
@@ -241,6 +242,15 @@ export class InstagramReelPublisher extends MetaPublisher {
       },
     );
 
+    return this.publishContainer(igUser, containerId, token);
+  }
+
+  private async publishContainer(
+    igUser: string,
+    containerId: string,
+    token: string,
+    extra: Record<string, unknown> = {},
+  ): Promise<PublishResult> {
     const published = await this.graph<{ id?: string }>(`/${igUser}/media_publish`, token, {
       method: 'POST',
       params: { creation_id: containerId },
@@ -262,10 +272,95 @@ export class InstagramReelPublisher extends MetaPublisher {
         containerId,
         shortcode: media.body.shortcode ?? null,
         timestamp: media.body.timestamp ?? null,
+        ...extra,
       },
     };
   }
+
+  /**
+   * 21.6 carousel post. Content Publishing guide (Updated Jun 30, 2026) and IG User Media
+   * reference (Updated Sep 28, 2026), read 2026-10-04:
+   * https://developers.facebook.com/docs/instagram-platform/content-publishing/ and
+   * https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media
+   *   1. one item container per image: POST /{ig-user}/media {image_url, is_carousel_item=true}
+   *      (JPEG only, 4:5 to 1.91:1, width 320–1440);
+   *   2. the carousel container: POST /{ig-user}/media {media_type=CAROUSEL, children=<ids,
+   *      comma separated, at most 10>, caption}; is_ai_generated goes on the carousel container
+   *      only ("Setting this parameter on carousel children will result in an error");
+   *   3. GET /{container}?fields=status_code until FINISHED, then POST /{ig-user}/media_publish
+   *      {creation_id}.
+   */
+  async publishCarousel(request: CarouselPublishRequest): Promise<PublishResult> {
+    const token = request.accessToken;
+    const igUser = encodeURIComponent(request.accountId);
+    if (request.slides.length < 2 || request.slides.length > INSTAGRAM_CAROUSEL_MAX)
+      throw new PlatformError(
+        'instagram',
+        'invalid_media',
+        `Instagram carousels take 2 to ${INSTAGRAM_CAROUSEL_MAX} images (this one has ${request.slides.length})`,
+        false,
+      );
+    const children: string[] = [];
+    for (const slide of request.slides) {
+      const item = await this.graph<{ id?: string }>(`/${igUser}/media`, token, {
+        method: 'POST',
+        // alt_text is documented for single image posts only, so it is not sent on carousel items.
+        params: { image_url: slide.jpegUrl, is_carousel_item: 'true' },
+      });
+      if (!item.body.id)
+        throw new PlatformError('instagram', 'unknown', 'Item container returned no id', true);
+      children.push(item.body.id);
+    }
+    const container = await this.graph<{ id?: string }>(`/${igUser}/media`, token, {
+      method: 'POST',
+      params: {
+        media_type: 'CAROUSEL',
+        children: children.join(','),
+        caption: request.text,
+        ...(request.aiGenerated && { is_ai_generated: 'true' }),
+      },
+    });
+    const containerId = container.body.id;
+    if (!containerId)
+      throw new PlatformError('instagram', 'unknown', 'Carousel container returned no id', true);
+    await this.waitForContainer(containerId, token);
+    return this.publishContainer(igUser, containerId, token, { children });
+  }
+
+  private async waitForContainer(containerId: string, token: string): Promise<void> {
+    await pollUntil(
+      async () => {
+        const res = await this.graph<{ status_code?: string; status?: string }>(
+          `/${encodeURIComponent(containerId)}`,
+          token,
+          { params: { fields: 'status_code,status' } },
+        );
+        const code = res.body.status_code;
+        if (code === 'ERROR')
+          throw new PlatformError(
+            'instagram',
+            'invalid_media',
+            `Container error: ${res.body.status ?? 'unknown'}`,
+            false,
+          );
+        if (code === 'EXPIRED')
+          throw new PlatformError('instagram', 'unavailable', 'Container expired', true);
+        return code === 'FINISHED' ? code : undefined;
+      },
+      {
+        intervalMs: 60_000,
+        timeoutMs: 5 * 60_000,
+        platform: 'instagram',
+        what: 'Instagram carousel processing',
+        sleep: this.deps.sleep,
+        now: this.deps.now,
+      },
+    );
+  }
 }
+
+/** Instagram: "Carousels are limited to 10 images, videos, or a mix of the two." */
+export const INSTAGRAM_CAROUSEL_MAX = 10;
 
 export class FacebookReelPublisher extends MetaPublisher {
   readonly platform = 'facebook' as const;
@@ -472,6 +567,44 @@ export class FacebookFeedPublisher extends MetaPublisher {
       // No documented permalink for a Page video id (Video reference fields), so none is guessed.
       platformUrl: null,
       metadata: { uploadSessionId: sessionId },
+    };
+  }
+
+  /**
+   * 21.6 multi-photo Page post. Page Photos reference v26.0, read 2026-10-04
+   * (https://developers.facebook.com/docs/graph-api/reference/page/photos/): each photo is
+   * uploaded unpublished (POST /{page-id}/photos url=…, published=false; Meta keeps it about 24
+   * hours), then one feed post attaches them: POST /{page-id}/feed message=…,
+   * attached_media[i]={"media_fbid":"<photo id>"}. The post URL is https://www.facebook.com/{post id}
+   * (Pages API "Posts" guide, Page Post URLs, read 2026-10-04:
+   * https://developers.facebook.com/docs/pages-api/posts).
+   */
+  async publishCarousel(request: CarouselPublishRequest): Promise<PublishResult> {
+    const token = request.accessToken;
+    const page = encodeURIComponent(request.accountId);
+    const photoIds: string[] = [];
+    for (const slide of request.slides) {
+      const photo = await this.graph<{ id?: string }>(`/${page}/photos`, token, {
+        method: 'POST',
+        params: { url: slide.jpegUrl, published: 'false' },
+      });
+      if (!photo.body.id)
+        throw new PlatformError('facebook', 'unknown', 'Photo upload returned no id', true);
+      photoIds.push(photo.body.id);
+    }
+    const attached = Object.fromEntries(
+      photoIds.map((id, i) => [`attached_media[${i}]`, JSON.stringify({ media_fbid: id })]),
+    );
+    const post = await this.graph<{ id?: string }>(`/${page}/feed`, token, {
+      method: 'POST',
+      params: { message: request.text, ...attached },
+    });
+    const postId = post.body.id;
+    if (!postId) throw new PlatformError('facebook', 'unknown', 'Feed post returned no id', true);
+    return {
+      platformPostId: postId,
+      platformUrl: `https://www.facebook.com/${encodeURIComponent(postId)}`,
+      metadata: { photoIds },
     };
   }
 }

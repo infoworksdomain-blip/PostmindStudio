@@ -5,6 +5,7 @@ import { QuotaExceededError, ValidationError } from '../../errors';
 import { logger as rootLogger } from '../../logger';
 import type { TenantContext } from '../../tenant';
 import { budgetFormatsFromJson } from '../cost/project-budget';
+import { CAROUSEL_ALLOWANCE_UNITS } from '../carousel/constants';
 import { notifySafely, type NotificationMessage, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
@@ -49,6 +50,7 @@ import {
 //     limited to the tier's long-video length ("× 3min" / "× 6min"). Basic has no long videos.
 //   · Slideshows count as short videos and are exempt from the length limit (A10.4 prices them
 //     separately from AI video).
+//   · 21.6: a carousel counts as CAROUSEL_ALLOWANCE_UNITS short videos (operator 2026-10-04: 1).
 //   · "TikTok + IG + 1 more" is checked per video: TikTok, Instagram (Reels / feed) and at most
 //     one other platform family (YouTube, Facebook, LinkedIn, X).
 //   · Checks are advisory under concurrency: two generate calls racing may both pass the last slot.
@@ -179,8 +181,14 @@ function longestSec(project: QuotaProject): number {
   );
 }
 
+/** How many videos of the allowance one generation of `project` uses (21.6). */
+export function allowanceUnits(project: Pick<QuotaProject, 'sourceType'>): number {
+  return project.sourceType === 'CAROUSEL' ? CAROUSEL_ALLOWANCE_UNITS : 1;
+}
+
 export function videoKind(project: QuotaProject, quota: TierQuota): VideoKind {
-  if (project.sourceType === 'SLIDESHOW') return 'short';
+  // Slideshows and (21.6) carousels are short videos whatever their formats say.
+  if (project.sourceType === 'SLIDESHOW' || project.sourceType === 'CAROUSEL') return 'short';
   return longestSec(project) > quota.shortMaxSec ? 'long' : 'short';
 }
 
@@ -262,10 +270,13 @@ export function videoLimitViolations(
     }
   }
   if (quota.platforms === 'tiktok_instagram_plus_one') {
-    const platforms = [
-      ...budgetFormatsFromJson(project.targetFormats).map((f) => f.platform),
-      ...extraPlatforms,
-    ];
+    // 21.6: a carousel's stored formats list every network it could go to; only the networks it
+    // is actually published to count.
+    const formatPlatforms =
+      project.sourceType === 'CAROUSEL'
+        ? []
+        : budgetFormatsFromJson(project.targetFormats).map((f) => f.platform);
+    const platforms = [...formatPlatforms, ...extraPlatforms];
     const extra = new Set(
       platforms.map(familyOf).filter((family) => !BASIC_INCLUDED_FAMILIES.has(family)),
     );
@@ -323,7 +334,7 @@ export async function monthlyVideoUsage(
   });
   const usage: VideoUsage = { short: 0, long: 0 };
   for (const row of rows) {
-    if (countedIn(row.metadata, month)) usage[videoKind(row, quota)] += 1;
+    if (countedIn(row.metadata, month)) usage[videoKind(row, quota)] += allowanceUnits(row);
   }
   return usage;
 }

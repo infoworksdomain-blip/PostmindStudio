@@ -53,9 +53,33 @@ export interface TakedownRequest {
   platformPostId: string;
 }
 
+/** 21.6: one rendered carousel slide (1080×1350), as JPEG (Instagram, TikTok) or PNG. */
+export interface CarouselSlideSource {
+  /** Time-limited URL of the JPEG (platforms that pull by URL). */
+  jpegUrl: string;
+  /** The JPEG's bytes (platforms that take an upload, e.g. LinkedIn). */
+  readJpeg(): Promise<Uint8Array>;
+  width: number;
+  height: number;
+  /** Alt text: the slide's words. */
+  altText: string;
+}
+
+/** 21.6: a carousel (post-card images) publish; same copy and credentials as a video. */
+export interface CarouselPublishRequest extends Omit<
+  PublishRequest,
+  'video' | 'thumbnail' | 'captions' | 'aiGenerated'
+> {
+  slides: CarouselSlideSource[];
+  /** True when any slide's picture was AI-generated (the platform's AI label is then set). */
+  aiGenerated: boolean;
+}
+
 export interface PlatformPublisher {
   readonly platform: Platform;
   publish(request: PublishRequest): Promise<PublishResult>;
+  /** 21.6: publish a carousel of images; absent = the platform takes no carousels from Studio. */
+  publishCarousel?(request: CarouselPublishRequest): Promise<PublishResult>;
   /** Delete the post where the platform documents a delete API; absent = not supported. */
   takedown?(request: TakedownRequest): Promise<void>;
 }

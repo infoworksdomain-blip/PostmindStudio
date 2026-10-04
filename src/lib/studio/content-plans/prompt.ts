@@ -17,6 +17,13 @@ export const PLAN_PROMPT_FILE = join('prompts', 'month-plan.md');
 export const PLAN_CHUNK_SIZE = 20;
 export const PLAN_MAX_TOKENS = 8_000;
 
+/** How a slot's format is named in the prompt (21.6: carousels are post-card image carousels). */
+const KIND_WORD: Readonly<Record<PlanKind, string>> = {
+  VIDEO: 'video',
+  SLIDESHOW: 'slideshow',
+  CAROUSEL: 'image carousel of short posts',
+};
+
 let cachedSystem: string | undefined;
 
 /** The system prompt (prompts/month-plan.md), read once per process. */
@@ -137,9 +144,7 @@ export function buildPlanPrompt(input: PlanPromptInput): string {
   lines.push('', `Write exactly ${input.slots.length} posts, one per slot, in this order:`);
   for (const s of input.slots) {
     const day = s.calendarDay ? ` (${calendarDayName(s.calendarDay) ?? s.calendarDay})` : '';
-    lines.push(
-      `${s.index}. ${s.dateLabel} — ${s.kind === 'VIDEO' ? 'video' : 'slideshow'} — angle: ${s.angle}${day}`,
-    );
+    lines.push(`${s.index}. ${s.dateLabel} — ${KIND_WORD[s.kind]} — angle: ${s.angle}${day}`);
   }
   lines.push(
     '',

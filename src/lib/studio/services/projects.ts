@@ -19,6 +19,9 @@ import { jobIds, type JobQueue } from '../queue/enqueue';
 import type { ProjectJobData } from '../queue/queues';
 import { assertModeAllowed } from '../library/blueprint';
 import { slideshowInput } from '../slideshow/planner';
+import { carouselCreateInput, readCarousel } from '../carousel/document';
+import { CAROUSEL_TARGET_FORMATS } from '../carousel/publishing';
+import { initialCarousel } from './carousels';
 import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
 import { assertTierGate } from './tier-gates';
 import { budgetFormatsFromJson, defaultProjectBudgetPence } from '../cost/project-budget';
@@ -83,8 +86,18 @@ const projectFields = z.object({
     .transform((v) => (isUntitledName(v) ? null : (v as string))),
   businessId: z.string().trim().min(1).max(128),
   sourceType: z
-    .enum(['BRIEF', 'POSTMIND_CONTENT', 'SLIDESHOW', 'LIBRARY_REFERENCE', 'TEMPLATE', 'UPLOAD'])
+    .enum([
+      'BRIEF',
+      'POSTMIND_CONTENT',
+      'SLIDESHOW',
+      'LIBRARY_REFERENCE',
+      'TEMPLATE',
+      'UPLOAD',
+      'CAROUSEL',
+    ])
     .default('BRIEF'),
+  /** 21.6 CAROUSEL: theme, number of posts, an optional pasted thread and handle. */
+  carousel: carouselCreateInput.optional(),
   /** UPLOAD (13.5): a READY source-video upload (POST /uploads, then /uploads/:id/complete). */
   uploadId: z.string().trim().min(1).max(64).optional(),
   /** LIBRARY_REFERENCE (A3.9): the reference video and how it is used. */
@@ -146,9 +159,18 @@ export const createProjectInput = projectFields.superRefine((v, ctx) => {
       path: ['uploadId'],
       message: 'uploadId is required for UPLOAD projects',
     });
-  if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(v.sourceType) && !v.brief)
+  if (v.sourceType === 'CAROUSEL' && !v.carousel)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['carousel'],
+      message: 'carousel is required for CAROUSEL projects',
+    });
+  // 21.6: a carousel needs a brief unless the owner pasted the thread itself.
+  const pastedThread = v.sourceType === 'CAROUSEL' && Boolean(v.carousel?.thread?.trim());
+  if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(v.sourceType) && !v.brief && !pastedThread)
     ctx.addIssue({ code: 'custom', path: ['brief'], message: 'brief is required' });
-  if (v.sourceType !== 'TEMPLATE' && !v.targetFormats)
+  // A carousel's destinations are fixed (CAROUSEL_COPY_FORMATS); it takes no targetFormats.
+  if (!['TEMPLATE', 'CAROUSEL'].includes(v.sourceType) && !v.targetFormats)
     ctx.addIssue({ code: 'custom', path: ['targetFormats'], message: 'targetFormats is required' });
 });
 
@@ -292,7 +314,10 @@ export async function createProject(
           variables: input.templateVariables,
         })
       : null;
-  const formats = template?.targetFormats ?? input.targetFormats ?? [];
+  const formats =
+    input.sourceType === 'CAROUSEL'
+      ? CAROUSEL_TARGET_FORMATS
+      : (template?.targetFormats ?? input.targetFormats ?? []);
   const targets = template?.autoPublishTargets ?? input.autoPublish?.targets ?? [];
   // 20.12: auto-publish / a schedule the request asked for needs an account to post to (a
   // template's own publish defaults are the template's business).
@@ -311,6 +336,16 @@ export async function createProject(
           { organisationId: tenant.organisationId, businessId: input.businessId },
           input.slideshow,
         )
+      : undefined;
+  const carousel =
+    input.sourceType === 'CAROUSEL' && input.carousel
+      ? await initialCarousel(db, {
+          organisationId: tenant.organisationId,
+          businessId: input.businessId,
+          brandKitId: input.brandKitId,
+          language: input.language ?? DEFAULT_LANGUAGE,
+          carousel: input.carousel,
+        })
       : undefined;
   const orgReviewPolicy = await defaultReviewPolicyFor(db, tenant.organisationId);
   return db.$transaction(async (tx) => {
@@ -364,6 +399,7 @@ export async function createProject(
           }),
           ...(targets.length > 0 && { autoPublish: { targets } }),
           ...(template && { template: { id: template.templateId } }),
+          ...(carousel && { carousel }),
         } as Prisma.InputJsonValue,
       },
     });
@@ -620,6 +656,8 @@ export async function setProjectArchived(
 export async function duplicateProject(db: Db, tenant: TenantContext, id: string) {
   const source = await findProject(db, tenant.organisationId, id);
   const hints = projectMetadata(source.metadata).briefHints;
+  const stored = readCarousel(source.metadata);
+  const carouselCopy = stored ? { ...stored, rewrites: 0 } : null;
   return db.videoProject.create({
     data: {
       organisationId: source.organisationId,
@@ -650,6 +688,8 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
           languages: projectMetadata(source.metadata).languages as Prisma.InputJsonValue,
         }),
         ...(hints ? { briefHints: hints as Prisma.InputJsonValue } : {}),
+        // 21.6: a carousel's copy keeps its posts, pictures and look (rewrite count starts again).
+        ...(carouselCopy && { carousel: carouselCopy as unknown as Prisma.InputJsonValue }),
       },
     },
   });

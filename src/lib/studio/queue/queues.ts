@@ -153,6 +153,8 @@ export interface JobDataMap {
   'fire-scheduled-publication': PublishJobData;
   'scan-website': ScanJobData;
   'populate-slideshow': ProjectJobData;
+  /** 21.6: render a carousel's slides (sharp, in-process) and run its quality checks. */
+  'render-carousel': ProjectJobData;
   'ingest-library-video': LibraryIngestJobData;
   /** 15.D7: re-run analysis + embedding on a stored corpus item (POST /admin/library/reanalyse). */
   'reanalyse-library-video': LibraryReanalyseJobData;
@@ -229,6 +231,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
+  'render-carousel': QUEUES.orchestration,
   'ingest-library-video': QUEUES.library,
   'reanalyse-library-video': QUEUES.library,
   'poll-publication-analytics': QUEUES.analytics,

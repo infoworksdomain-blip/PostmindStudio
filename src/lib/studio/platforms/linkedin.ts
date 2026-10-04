@@ -1,6 +1,7 @@
 import { PlatformError } from '../../errors';
 import { asBody, platformRequest, pollUntil } from './http';
 import type {
+  CarouselPublishRequest,
   PlatformPublisher,
   PublishRequest,
   PublishResult,
@@ -22,6 +23,8 @@ import type {
 
 export const API = 'https://api.linkedin.com/rest';
 export const LINKEDIN_VERSION = '202609';
+/** MultiImage API: "Minimum of 2 images and maximum of 20 images." */
+export const LINKEDIN_MULTI_IMAGE_MAX = 20;
 
 function describe(body: unknown) {
   const b = body as { message?: string; serviceErrorCode?: number; code?: string } | undefined;
@@ -162,18 +165,34 @@ export class LinkedInPublisher implements PlatformPublisher {
       },
     );
 
+    return this.createPost(
+      token,
+      owner,
+      buildCommentary(request.caption, request.hashtags),
+      { media: { title: request.title ?? '', id: videoUrn } },
+      { videoUrn },
+    );
+  }
+
+  private async createPost(
+    token: string,
+    owner: string,
+    commentary: string,
+    content: Record<string, unknown>,
+    metadata: Record<string, unknown>,
+  ): Promise<PublishResult> {
     const post = await this.rest<unknown>('/posts', token, {
       method: 'POST',
       body: {
         author: owner,
-        commentary: buildCommentary(request.caption, request.hashtags),
+        commentary,
         visibility: 'PUBLIC',
         distribution: {
           feedDistribution: 'MAIN_FEED',
           targetEntities: [],
           thirdPartyDistributionChannels: [],
         },
-        content: { media: { title: request.title ?? '', id: videoUrn } },
+        content,
         lifecycleState: 'PUBLISHED',
         isReshareDisabledByAuthor: false,
       },
@@ -186,8 +205,61 @@ export class LinkedInPublisher implements PlatformPublisher {
       platformUrl: postUrn.startsWith('urn:li:ugcPost:')
         ? `https://www.linkedin.com/feed/update/${postUrn}/`
         : null,
-      metadata: { videoUrn },
+      metadata,
     };
+  }
+
+  /**
+   * 21.6 multi-image post (li-lms-2026-09, read 2026-10-04):
+   *   Images API (last updated 06/24/2026)
+   *   https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/images-api
+   *     POST /rest/images?action=initializeUpload {initializeUploadRequest:{owner}}
+   *       → value{uploadUrl, image (urn:li:image:…), uploadUrlExpiresAt}; JPG, GIF or PNG
+   *   Upload: "Use a PUT method to upload the image", with the OAuth token in Authorization
+   *   (Assets API "Upload the Image", https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/vector-asset-api)
+   *   MultiImage API (last updated 04/30/2026)
+   *   https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/multiimage-post-api
+   *     POST /rest/posts {…, content:{multiImage:{images:[{id, altText}]}}}; 2 to 20 images.
+   */
+  async publishCarousel(request: CarouselPublishRequest): Promise<PublishResult> {
+    const token = request.accessToken;
+    const owner = request.accountId;
+    if (request.slides.length < 2 || request.slides.length > LINKEDIN_MULTI_IMAGE_MAX)
+      throw new PlatformError(
+        'linkedin',
+        'invalid_media',
+        `LinkedIn multi-image posts take 2 to ${LINKEDIN_MULTI_IMAGE_MAX} images (this one has ${request.slides.length})`,
+        false,
+      );
+    const images: Array<{ id: string; altText: string }> = [];
+    for (const slide of request.slides) {
+      const init = await this.rest<{ value?: { uploadUrl?: string; image?: string } }>(
+        '/images?action=initializeUpload',
+        token,
+        { method: 'POST', body: { initializeUploadRequest: { owner } } },
+      );
+      const { uploadUrl, image } = init.body.value ?? {};
+      if (!uploadUrl || !image)
+        throw new PlatformError('linkedin', 'unknown', 'Image upload was not initialised', true);
+      await platformRequest<unknown>(
+        uploadUrl,
+        {
+          method: 'PUT',
+          headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
+          body: asBody(await slide.readJpeg()),
+        },
+        { platform: 'linkedin', fetchImpl: this.deps.fetchImpl, timeoutMs: 2 * 60_000 },
+      );
+      // altText: "recommended length is less than 120 characters" (max 4,086).
+      images.push({ id: image, altText: slide.altText.slice(0, 120) });
+    }
+    return this.createPost(
+      token,
+      owner,
+      buildCommentary(request.caption, request.hashtags),
+      { multiImage: { images } },
+      { imageUrns: images.map((i) => i.id) },
+    );
   }
 
   /** DELETE /rest/posts/{urn} → 204 (idempotent: an already-deleted post also returns 204). */
