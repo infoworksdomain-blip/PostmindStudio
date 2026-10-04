@@ -917,6 +917,7 @@
         "noNarration": "Not checked: the video has no voiceover.",
         "audioSyncFailed": "{count, plural, one {The voiceover does not fit shot {shots}.} other {The voiceover does not fit shots {shots}.}}",
         "audioSyncPassed": "{count, plural, one {The voiceover fits its shot.} other {The voiceover fits all # shots.}}",
+        "audioSyncShortened": "{count, plural, one {Review needed: the voiceover was shortened on shot {shots}.} other {Review needed: the voiceover was shortened on shots {shots}.}}",
         "noSpokenCaptions": "Not checked: the video has no spoken captions.",
         "captionSyncFailed": "{count, plural, one {# caption is out of sync with the voiceover.} other {# captions are out of sync with the voiceover.}}",
         "captionSyncPassed": "{count, plural, one {# caption within ±{ms} ms of the voiceover.} other {# captions within ±{ms} ms of the voiceover.}}",

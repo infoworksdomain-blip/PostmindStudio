@@ -917,6 +917,7 @@
         "noNarration": "Sin comprobar: el vídeo no tiene locución.",
         "audioSyncFailed": "{count, plural, one {La locución no cabe en la toma {shots}.} many {La locución no cabe en las tomas {shots}.} other {La locución no cabe en las tomas {shots}.}}",
         "audioSyncPassed": "{count, plural, one {La locución cabe en su toma.} many {La locución cabe en las # tomas.} other {La locución cabe en las # tomas.}}",
+        "audioSyncShortened": "{count, plural, one {Requiere revisión: se acortó la locución en la toma {shots}.} many {Requiere revisión: se acortó la locución en las tomas {shots}.} other {Requiere revisión: se acortó la locución en las tomas {shots}.}}",
         "noSpokenCaptions": "Sin comprobar: el vídeo no tiene subtítulos hablados.",
         "captionSyncFailed": "{count, plural, one {# subtítulo no está sincronizado con la locución.} many {# de subtítulos no están sincronizados con la locución.} other {# subtítulos no están sincronizados con la locución.}}",
         "captionSyncPassed": "{count, plural, one {# subtítulo a ±{ms} ms de la locución.} many {# de subtítulos a ±{ms} ms de la locución.} other {# subtítulos a ±{ms} ms de la locución.}}",

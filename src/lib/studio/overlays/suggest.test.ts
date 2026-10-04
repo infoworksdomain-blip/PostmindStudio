@@ -1,6 +1,58 @@
 import { describe, expect, it } from 'vitest';
 import { BUILT_IN_PRESETS, ROLE_PRESET } from './presets';
-import { shotRole, suggestOverlays, suggestionRows, type SuggestShot } from './suggest';
+import {
+  shotRole,
+  suggestOverlays,
+  suggestionRows,
+  VOICED_LABEL_ANCHOR_Y,
+  type SuggestShot,
+} from './suggest';
+
+describe('label placement and cards (production QA run 10, 2026-10-04)', () => {
+  const three = (voiceoverText: string | null, treatment = 'IMAGE_STILL') => [
+    {
+      id: 'a',
+      sortOrder: 0,
+      durationSec: 3,
+      onScreenText: 'Hook',
+      visualTreatment: 'AI_CLIP',
+      voiceoverText,
+    },
+    {
+      id: 'b',
+      sortOrder: 1,
+      durationSec: 3,
+      onScreenText: 'Notes everywhere.',
+      visualTreatment: treatment,
+      voiceoverText,
+    },
+    {
+      id: 'c',
+      sortOrder: 2,
+      durationSec: 3,
+      onScreenText: 'Try it free',
+      visualTreatment: 'AI_CLIP',
+      voiceoverText,
+    },
+  ];
+
+  it('puts body and CTA labels of voiced shots above the narration captions; the hook stays', () => {
+    const [hook, body, cta] = suggestOverlays(three('Spoken line.'), null);
+    expect(body?.style.anchorY).toBe(VOICED_LABEL_ANCHOR_Y);
+    expect(cta?.style.anchorY).toBe(VOICED_LABEL_ANCHOR_Y);
+    expect(hook?.style.anchorY).not.toBe(VOICED_LABEL_ANCHOR_Y);
+  });
+
+  it('keeps the preset position on unvoiced shots', () => {
+    const [, body] = suggestOverlays(three(null), null);
+    expect(body?.style.anchorY).not.toBe(VOICED_LABEL_ANCHOR_Y);
+  });
+
+  it('adds no label to a motion-graphics card, which draws its own text', () => {
+    const shots = suggestOverlays(three('Spoken line.', 'MOTION_GRAPHICS'), null);
+    expect(shots.map((s) => s.shotId)).toEqual(['a', 'c']);
+  });
+});
 
 function shot(overrides: Partial<SuggestShot> = {}): SuggestShot {
   return {

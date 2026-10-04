@@ -670,6 +670,7 @@
     "review.quality.details.noNarration",
     "review.quality.details.audioSyncFailed",
     "review.quality.details.audioSyncPassed",
+    "review.quality.details.audioSyncShortened",
     "review.quality.details.noSpokenCaptions",
     "review.quality.details.captionSyncFailed",
     "review.quality.details.captionSyncPassed",

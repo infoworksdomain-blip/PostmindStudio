@@ -6,12 +6,25 @@ import { decideFit, narrationSec, type FitDecision } from './voice-fit';
 import { ensureWordTiming, spokenWordsOf } from './word-timing';
 
 // BACKLOG 15.B3 — apply the voice-fit decision (voice-fit.ts) to one shot after Layer 4:
-// extend the shot, regenerate the narration faster (once), or trim it at a word boundary.
-// The decision is stored on the narration asset as metadata.fit (the composer reads trimSec;
-// the quality gate's audio_sync check reads the whole decision).
+// extend the shot, regenerate the narration faster (once), or trim it at a sentence or word
+// boundary. The decision is stored on the narration asset as metadata.fit (the composer reads
+// trimSec; the quality gate's audio_sync check reads the whole decision). A trim made here is
+// provisional: 21.1's rebalance (narration-rebalance.ts) revisits it before composition, when the
+// other shots of the script are measured too.
 
 /** Margin kept inside the ±2 s duration check when shots are extended. */
 const EXTEND_MARGIN_SEC = 0.5;
+
+/**
+ * Seconds the script may still grow by and stay inside the ±2 s duration check (with
+ * EXTEND_MARGIN_SEC kept back). Shared by voice fit's "extend" and 21.1's rebalance.
+ */
+export function scriptGrowBudgetSec(targetDurationSec: number, shotsTotalSec: number): number {
+  return Math.max(
+    0,
+    targetDurationSec + DURATION_TOLERANCE_SEC - EXTEND_MARGIN_SEC - shotsTotalSec,
+  );
+}
 
 async function measure(
   deps: PipelineDeps,
@@ -67,11 +80,10 @@ export async function fitNarration(
   if (!shot?.voiceAssetId) return null;
   const routing = (shot.providerRouting as Record<string, unknown> | null) ?? {};
   const voiceRouting = routing.voice as { providerId?: unknown } | undefined;
-  const budget =
-    shot.script.targetDurationSec +
-    DURATION_TOLERANCE_SEC -
-    EXTEND_MARGIN_SEC -
-    shot.script.shots.reduce((sum, s) => sum + s.durationSec, 0);
+  const budget = scriptGrowBudgetSec(
+    shot.script.targetDurationSec,
+    shot.script.shots.reduce((sum, s) => sum + s.durationSec, 0),
+  );
 
   let assetId = shot.voiceAssetId;
   let alreadySped = false;
@@ -86,7 +98,7 @@ export async function fitNarration(
       shotSec: shot.durationSec,
       treatment: shot.visualTreatment,
       words,
-      extendBudgetSec: Math.max(0, budget),
+      extendBudgetSec: budget,
       canSpeedUp: voiceRouting?.providerId === 'elevenlabs',
       alreadySped,
     });

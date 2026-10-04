@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import { applyBrand, resolveStyle, type OverlayStyle } from './params';
 import { BUILT_IN_PRESETS, ROLE_PRESET } from './presets';
+import { showsOwnText } from './voice-captions';
 
 // BACKLOG 8.5 / Addendum A4.5 — when Layer 2 produces a script, every shot's onScreenText
 // becomes a proposed overlay with a preset chosen by the shot's role: first shot → hook,
@@ -12,7 +13,16 @@ export interface SuggestShot {
   durationSec: number;
   onScreenText: string | null;
   visualTreatment: string;
+  /** The shot's narration; a voiced shot gets burned-in captions in the lower third. */
+  voiceoverText?: string | null;
 }
+
+/**
+ * Where a voiced shot's body or CTA label sits: the upper area, clear of the burned-in narration
+ * captions (voice-captions.ts, anchorY 0.7) and below the AI label and platform top bar. Production
+ * QA run 10 (2026-10-04): subtitle-box labels at 0.78 overlapped those captions.
+ */
+export const VOICED_LABEL_ANCHOR_Y = 0.2;
 
 export type ShotRole = 'hook' | 'body' | 'cta';
 
@@ -40,18 +50,24 @@ export function suggestOverlays(
   const ordered = [...shots].sort((a, b) => a.sortOrder - b.sortOrder);
   return ordered.flatMap((shot, index) => {
     const text = shot.onScreenText?.trim();
-    if (!text || shot.visualTreatment === 'TEXT_CARD') return [];
-    const key = presetForShot?.(index) ?? ROLE_PRESET[shotRole(index, ordered.length)];
+    // Text and motion-graphics cards draw their own text; a label would repeat it (QA run 10).
+    if (!text || showsOwnText(shot.visualTreatment)) return [];
+    const role = shotRole(index, ordered.length);
+    const key = presetForShot?.(index) ?? ROLE_PRESET[role];
     const preset = BUILT_IN_PRESETS.find((p) => p.key === key);
     if (!preset) return [];
     const base = resolveStyle(preset.parameters);
+    const branded = preset.brandSubstitution ? applyBrand(base, brand) : base;
+    const voiced = Boolean(shot.voiceoverText?.trim());
+    const style =
+      voiced && role !== 'hook' ? { ...branded, anchorY: VOICED_LABEL_ANCHOR_Y } : branded;
     return [
       {
         shotId: shot.id,
         text: text.slice(0, 500),
         startAtSec: 0,
         endAtSec: Math.max(0.5, shot.durationSec),
-        style: preset.brandSubstitution ? applyBrand(base, brand) : base,
+        style,
         presetName: preset.name,
       },
     ];
