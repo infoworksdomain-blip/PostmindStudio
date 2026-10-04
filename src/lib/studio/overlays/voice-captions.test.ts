@@ -37,7 +37,7 @@ describe('captions for trimmed narration (production QA run 8, 2026-10-04)', () 
     const lines = narrationLines(heard, 2.5);
     const last = lines.at(-1)!;
     expect(last.text).toBe('hours to');
-    const match = matchCaption({ ...last, words });
+    const match = matchCaption({ ...last, overlayId: 'ov-1', words });
     expect(match).not.toBeNull();
     expect(Math.abs(last.endAtSec - match!.last.endSec)).toBeLessThanOrEqual(
       CAPTION_SYNC_TOLERANCE_SEC,
