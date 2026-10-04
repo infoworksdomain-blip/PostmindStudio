@@ -403,4 +403,54 @@ export const WHATS_NEW: WhatsNewGroup[] = [
       },
     ],
   },
+  {
+    id: 'phase-21-5',
+    index: '08',
+    title: 'Phase 21.5 — One plan, paid per channel',
+    intro:
+      'The tiers are gone: customers pay £29 per channel a month (1–6 social platforms) with 8 short HD videos per channel, weekly or yearly if they prefer, and buy HD video packs when they need more. Customers never see generation cost.',
+    scene: 'market',
+    items: [
+      {
+        ref: '21.5',
+        title: 'Pricing per channel',
+        line: 'Pick 1–6 channels and how often to pay: £29 a month per channel (8 videos), £9.50 a week (2 videos a week) or £290 a year paid upfront (8 videos released each month: 2 months free). Prices exclude VAT; the trial is 14 days with 5 videos.',
+        see: [{ href: '#/pricing', label: 'Pricing' }],
+      },
+      {
+        ref: '21.5',
+        title: 'Your plan',
+        line: 'Change channels or how often you pay with a preview first: more channels or a longer period apply now and you pay the difference; fewer or shorter apply at the end of the period (“Keep my current plan” undoes it). Cancel at the end of the period and change your mind until then.',
+        see: [
+          { href: '#/settings/billing?demoPlan=active_monthly#change', label: 'Change your plan' },
+          { href: '#/settings/billing?demoPlan=active_weekly', label: 'A weekly plan' },
+        ],
+      },
+      {
+        ref: '21.5',
+        title: 'Channel limit',
+        line: 'Connect as many platforms as you like; only the channels you pay for publish (the ones connected first). Publishing to another opens “Add a channel to publish here”.',
+        see: [
+          { href: '#/connections?demoPlan=active_monthly', label: 'Connections on 3 channels' },
+        ],
+      },
+      {
+        ref: '21.5',
+        title: 'HD video packs',
+        line: 'One-off packs of 5 videos (£15) or 15 videos (£39) for any channel, used after the plan’s videos and valid 3 months.',
+        see: [
+          { href: '#/settings/billing?demoPlan=allowance_used#topups', label: 'Buy a video pack' },
+        ],
+      },
+      {
+        ref: '21.5',
+        title: 'No costs for customers',
+        line: 'Per-video prices, spend and budgets are shown to PostMind staff only; customers see their videos left instead. The demo shows the app as the customer and the Admin Centre as staff.',
+        see: [
+          { href: '#/projects', label: 'Projects as the customer' },
+          { href: '#/admin?tab=cost', label: 'Cost report (staff)' },
+        ],
+      },
+    ],
+  },
 ];

@@ -44,6 +44,13 @@ export const HANDLED_EVENTS = [
   'customer.subscription.paused',
   'customer.subscription.resumed',
   'customer.subscription.trial_will_end',
+  // 21.5: a change scheduled for the end of the period (Your plan downgrades) is a subscription
+  // schedule; its events re-fetch the subscription so the pending change shows (or goes).
+  'subscription_schedule.created',
+  'subscription_schedule.updated',
+  'subscription_schedule.released',
+  'subscription_schedule.canceled',
+  'subscription_schedule.completed',
   'invoice.paid',
   'invoice.payment_failed',
   'invoice.payment_action_required',
@@ -247,6 +254,16 @@ export async function processStripeEvent(deps: WebhookDeps, event: Stripe.Event)
           `billing:canceled:${id}`,
         );
       }
+      return;
+    }
+    case 'subscription_schedule.created':
+    case 'subscription_schedule.updated':
+    case 'subscription_schedule.released':
+    case 'subscription_schedule.canceled':
+    case 'subscription_schedule.completed': {
+      // A released schedule names its subscription in released_subscription.
+      const subscriptionId = idOf(obj.subscription) ?? idOf(obj.released_subscription);
+      await syncById(deps, subscriptionId, event.type);
       return;
     }
     case 'customer.subscription.trial_will_end': {

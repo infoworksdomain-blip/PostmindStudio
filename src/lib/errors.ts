@@ -80,6 +80,16 @@ export class QuotaExceededError extends StudioError {
   readonly code = 'quota_exceeded';
 }
 
+/**
+ * 21.5: the organisation publishes to more platforms than the channels it pays for; this one is
+ * past the limit. The UI shows "add a channel" (upgrade dialog), not a failure. details:
+ * { channels, platform, allowedPlatforms }.
+ */
+export class ChannelLimitError extends StudioError {
+  readonly status = 403;
+  readonly code = 'channel_limit';
+}
+
 export class NotFoundError extends StudioError {
   readonly status = 404;
   readonly code = 'not_found';

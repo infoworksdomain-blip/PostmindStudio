@@ -1,10 +1,15 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
-import { topUpPackForLookupKey, TOP_UP_PACKS, type TopUpPack } from './catalogue';
+import {
+  LEGACY_TOP_UP_PACKS,
+  topUpPackForLookupKey,
+  TOP_UP_PACKS,
+  type TopUpPack,
+} from './catalogue';
 import type { ChargeState, CheckoutSessionState } from './gateway';
 
 // Phase 18 §P.3 top-up packs. A paid Checkout session (mode=payment) inserts one usage_credits
 // row per pack (unique per session, so a replayed webhook never credits twice). Credits are
-// valid for 12 months, used first-in first-out, and only once the plan allowance is used up:
+// valid for the pack's months (21.5 HD packs: 3), used first-in first-out, and only once the plan allowance is used up:
 // checkGenerateQuota (services/plan-quotas.ts) consumes one inside the per-(org, month) quota lock
 // and records a usage_credit_uses row, unique per (project, month), so a retried generate never
 // spends twice. Each consumed credit raises that month's cost cap by the pack's worst-case
@@ -146,7 +151,10 @@ export async function consumeCredit(
   return null;
 }
 
-const HEADROOM_BY_PACK = new Map(TOP_UP_PACKS.map((p) => [p.lookupKey, p]));
+// 21.5: legacy packs bought before the HD packs keep their headroom until they expire.
+const HEADROOM_BY_PACK = new Map(
+  [...TOP_UP_PACKS, ...LEGACY_TOP_UP_PACKS].map((p) => [p.lookupKey, p]),
+);
 
 /** Extra monthly cost-cap headroom from the credits consumed in `month` ('YYYY-MM'). */
 export async function creditHeadroomPence(

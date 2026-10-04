@@ -21,13 +21,15 @@ const LINKS = [
   { href: '#/tour/whats-new', path: '/tour/whats-new', label: 'What’s new', short: 'New' },
   { href: '#/tour/system', path: '/tour/system', label: 'Behind the scenes', short: 'Behind' },
   { href: '#/tour/not-built', path: '/tour/not-built', label: 'Not built yet', short: 'Not built' },
+  // 21.5: the app screens are seen as the customer (no costs); the Admin Centre as PostMind staff.
+  { href: '#/admin', path: '/admin', label: 'Admin (staff view)', short: 'Admin' },
 ] as const;
 
 export function useSignedIn(): boolean {
   return useSyncExternalStore(subscribeSession, isSignedIn, isSignedIn);
 }
 
-/** Back to the start: the signed-out landing page, Active Standard, fresh sample data (reloads). */
+/** Back to the start: the signed-out landing page, 3 channels monthly, fresh sample data (reloads). */
 function resetDemo(): void {
   setBillingState(DEFAULT_BILLING_STATE);
   setSignedIn(false);
@@ -116,7 +118,7 @@ export function DemoBar() {
         <button
           type="button"
           onClick={resetDemo}
-          title="Reset demo: the signed-out landing page, Active Standard, fresh sample data"
+          title="Reset demo: the signed-out landing page, 3 channels monthly, fresh sample data"
           className="inline-flex items-center gap-1 rounded px-2 py-1 text-background/75 transition-colors hover:bg-background/10 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
         >
           <RotateCcw aria-hidden className="size-3" /> Reset demo

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   adminOverrideActive,
+  channelPlanOfSubscription,
   entitlementsFromSubscription,
   graceDays,
   graceEndsAt,
@@ -134,7 +135,7 @@ describe('grace and trial settings', () => {
   it('trial state carries the §P.1 allowance and caps', () => {
     expect(trialStateFor(now, null)).toMatchObject({
       shortVideos: 5,
-      longVideos: 1,
+      longVideos: 0,
       dailyCostCapPence: 1_000,
       totalCostCapPence: 1_500,
       endsAt: null,
@@ -237,5 +238,141 @@ describe('resolveStoredEntitlements', () => {
     expect(parseOverrides({ admin: { tier: 'GOLD' } })).toEqual({});
     const ent = resolveStoredEntitlements(row({ derived: 42 }, { access: 'weird' }), now);
     expect(ent).toMatchObject({ tier: 'PLUS', access: 'none', source: 'stripe' });
+  });
+});
+
+describe('21.5 per-channel plan entitlements (quantity + interval)', () => {
+  const channel = (status: string, lookupKey: string, quantity: number): SubscriptionFacts => ({
+    status,
+    lookupKey,
+    productTier: null,
+    trialEnd: null,
+    quantity,
+  });
+
+  it('a channel price is STANDARD with its quantity as the channels and its interval', () => {
+    for (const [key, interval] of [
+      ['studio_channel_weekly', 'week'],
+      ['studio_channel_monthly', 'month'],
+      ['studio_channel_yearly', 'year'],
+    ] as const) {
+      const d = entitlementsFromSubscription({
+        subscription: channel('active', key, 4),
+        now,
+        graceUntil: null,
+        everPaid: true,
+      });
+      expect(d).toMatchObject({
+        tier: 'STANDARD',
+        access: 'full',
+        channelPlan: { channels: 4, interval },
+      });
+    }
+    expect(
+      entitlementsFromSubscription({
+        subscription: channel('trialing', 'studio_channel_monthly', 2),
+        now,
+        graceUntil: null,
+        everPaid: false,
+      }),
+    ).toMatchObject({ tier: 'STANDARD', source: 'trial', channelPlan: { channels: 2 } });
+  });
+
+  it('legacy tier prices and ended subscriptions have no channel plan', () => {
+    expect(
+      entitlementsFromSubscription({
+        subscription: sub('active'),
+        now,
+        graceUntil: null,
+        everPaid: true,
+      }).channelPlan,
+    ).toBeNull();
+    expect(
+      entitlementsFromSubscription({
+        subscription: channel('canceled', 'studio_channel_monthly', 3),
+        now,
+        graceUntil: null,
+        everPaid: true,
+      }).channelPlan,
+    ).toBeNull();
+    expect(channelPlanOfSubscription({ lookupKey: 'studio_channel_monthly', quantity: 0 })).toEqual(
+      {
+        channels: 1,
+        interval: 'month',
+      },
+    );
+  });
+
+  const stored = (overrides: unknown): StoredEntitlement => ({
+    organisationId: 'org-1',
+    tier: 'STANDARD',
+    access: 'full',
+    source: 'stripe',
+    graceUntil: null,
+    overrides,
+    everPaidAt: now,
+  });
+  const derived = {
+    tier: 'STANDARD',
+    access: 'full',
+    source: 'stripe',
+    status: 'active',
+    channels: 3,
+    interval: 'month',
+  } as const;
+
+  it('reads the stored channels and interval', () => {
+    expect(resolveStoredEntitlements(stored({ derived }), now).channelPlan).toEqual({
+      channels: 3,
+      interval: 'month',
+      source: 'stripe',
+    });
+  });
+
+  it('a staff override sets the channels and / or interval; expired overrides stop applying', () => {
+    const admin = {
+      channels: 6,
+      reason: 'goodwill',
+      setByUserId: 'staff-1',
+      setAt: now.toISOString(),
+      expiresAt: null,
+    };
+    expect(resolveStoredEntitlements(stored({ derived, admin }), now).channelPlan).toEqual({
+      channels: 6,
+      interval: 'month',
+      source: 'admin',
+    });
+    expect(
+      resolveStoredEntitlements(
+        stored({
+          derived: { ...derived, channels: undefined, interval: undefined },
+          admin: { ...admin, interval: 'week' },
+        }),
+        now,
+      ).channelPlan,
+    ).toEqual({ channels: 6, interval: 'week', source: 'admin' });
+    const expired = { ...admin, expiresAt: '2026-09-01T00:00:00Z' };
+    expect(
+      resolveStoredEntitlements(stored({ derived, admin: expired }), now).channelPlan?.channels,
+    ).toBe(3);
+  });
+
+  it('ENTERPRISE (staff tier) has no channel plan; no channels stored means none', () => {
+    const admin = {
+      tier: 'ENTERPRISE' as const,
+      reason: 'deal',
+      setByUserId: 'staff-1',
+      setAt: now.toISOString(),
+      expiresAt: null,
+    };
+    expect(resolveStoredEntitlements(stored({ derived, admin }), now).channelPlan).toBeUndefined();
+    expect(
+      resolveStoredEntitlements(
+        stored({
+          derived: { tier: 'STANDARD', access: 'full', source: 'stripe', status: 'active' },
+        }),
+        now,
+      ).channelPlan,
+    ).toBeUndefined();
   });
 });

@@ -57,7 +57,7 @@ describe('entitlementQuota (pure)', () => {
     const trial = trialStateFor(new Date(NOW), null);
     expect(entitlementQuota(base, { ...NO_PLAN_ENTITLEMENTS, trial })).toMatchObject({
       shortVideos: 5,
-      longVideos: 1,
+      longVideos: 0,
       longMaxSec: 180,
     });
   });

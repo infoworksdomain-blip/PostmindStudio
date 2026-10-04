@@ -1,7 +1,11 @@
 // Phase 18 Track E sample handlers: the admin Organisations, Users and Subscriptions tabs and the
 // legal-readiness warning. Shapes match services/admin-directory.ts and lib/legal/readiness.ts.
 // Subscriptions are Track C's data (studio.subscriptions), shown read-only.
-import { BILLING_STATE_INFO, getBillingState } from '../billing-state';
+import {
+  CHANNEL_LOOKUP_KEYS,
+  channelIntervalForLookupKey,
+} from '@/lib/studio/billing/channel-plan';
+import { BILLING_STATE_INFO, currentPlan, getBillingState } from '../billing-state';
 import { DEMO_ORG_ID, DEMO_USER_ID, DEMO_USER_NAME } from '../ids';
 import { DemoHttpError, route } from '../registry';
 import { OTHER_ORGS } from './admin-state';
@@ -26,6 +30,8 @@ interface Org {
   subscriptionStatus: string | null;
   costThisMonthPence: number;
   lookupKey: string | null;
+  /** 21.5: channels on a channel price (the subscription item's quantity). */
+  channels: number | null;
 }
 
 const ORGS: Org[] = [
@@ -41,7 +47,8 @@ const ORGS: Org[] = [
     access: 'full',
     subscriptionStatus: 'trialing',
     costThisMonthPence: 1840,
-    lookupKey: 'studio_standard_monthly',
+    lookupKey: 'studio_channel_monthly',
+    channels: 3,
   },
   {
     id: OTHER_ORGS.harrogate,
@@ -51,11 +58,12 @@ const ORGS: Org[] = [
     createdAt: ago(80 * DAY),
     deletedAt: null,
     members: 3,
-    tier: 'PLUS',
+    tier: 'STANDARD',
     access: 'full',
     subscriptionStatus: 'active',
     costThisMonthPence: 6420,
-    lookupKey: 'studio_plus_yearly',
+    lookupKey: 'studio_channel_yearly',
+    channels: 6,
   },
   {
     id: OTHER_ORGS.bramley,
@@ -65,11 +73,12 @@ const ORGS: Org[] = [
     createdAt: ago(60 * DAY),
     deletedAt: null,
     members: 2,
-    tier: 'BASIC',
+    tier: 'STANDARD',
     access: 'full',
     subscriptionStatus: 'past_due',
     costThisMonthPence: 910,
-    lookupKey: 'studio_basic_monthly',
+    lookupKey: 'studio_channel_weekly',
+    channels: 1,
   },
   {
     id: OTHER_ORGS.york,
@@ -79,11 +88,12 @@ const ORGS: Org[] = [
     createdAt: ago(45 * DAY),
     deletedAt: null,
     members: 1,
-    tier: 'BASIC',
+    tier: 'STANDARD',
     access: 'read_only',
     subscriptionStatus: 'unpaid',
     costThisMonthPence: 0,
-    lookupKey: 'studio_basic_monthly',
+    lookupKey: 'studio_channel_monthly',
+    channels: 1,
   },
   {
     // 20.27: the operator's own organisation on a Stripe trial, stuck just under the £15 trial
@@ -99,7 +109,8 @@ const ORGS: Org[] = [
     access: 'full',
     subscriptionStatus: 'trialing',
     costThisMonthPence: 1_496,
-    lookupKey: 'studio_plus_monthly',
+    lookupKey: 'studio_channel_monthly',
+    channels: 2,
   },
   {
     id: OTHER_ORGS.kirkstall,
@@ -114,6 +125,7 @@ const ORGS: Org[] = [
     subscriptionStatus: null,
     costThisMonthPence: 0,
     lookupKey: null,
+    channels: null,
   },
 ];
 
@@ -129,10 +141,9 @@ export function syncDemoOrg(): void {
   row.tier = state === 'no_plan' ? null : info.tier;
   row.access = info.access;
   row.subscriptionStatus = info.status;
-  row.lookupKey =
-    info.tier === 'ENTERPRISE' || state === 'no_plan'
-      ? null
-      : `studio_${info.tier.toLowerCase()}_monthly`;
+  const plan = currentPlan();
+  row.lookupKey = plan ? CHANNEL_LOOKUP_KEYS[plan.interval] : null;
+  row.channels = plan?.channels ?? null;
 }
 
 export const graceFor = (o: Org) => (o.subscriptionStatus === 'past_due' ? future(4) : null);
@@ -148,7 +159,10 @@ route('GET', '/admin/organisations', ({ query }) => {
     total: data.length,
     offset: 0,
     pageSize: 50,
-    data: data.map(({ lookupKey: _k, ...o }) => ({ ...o, ...planSummary(o) })),
+    data: data.map((row) => {
+      const { lookupKey: _k, channels: _c, ...o } = row;
+      return { ...o, ...planSummary(row) };
+    }),
   };
 });
 
@@ -196,7 +210,8 @@ route('GET', '/admin/organisations/:id', ({ params }) => {
             organisationId: o.id,
             status: o.subscriptionStatus,
             lookupKey: o.lookupKey,
-            interval: o.lookupKey?.endsWith('yearly') ? 'year' : 'month',
+            interval: channelIntervalForLookupKey(o.lookupKey) ?? 'month',
+            quantity: o.channels ?? 1,
             currentPeriodEnd: future(20),
             cancelAtPeriodEnd: false,
             trialEnd: o.subscriptionStatus === 'trialing' ? future(9) : null,
@@ -225,7 +240,8 @@ route('GET', '/admin/subscriptions', ({ query }) => {
       organisationName: o.name,
       status: o.subscriptionStatus,
       lookupKey: o.lookupKey,
-      interval: o.lookupKey?.endsWith('yearly') ? 'year' : 'month',
+      interval: channelIntervalForLookupKey(o.lookupKey) ?? 'month',
+      quantity: o.channels ?? 1,
       currentPeriodEnd: future(20),
       cancelAtPeriodEnd: o.id === OTHER_ORGS.harrogate,
       trialEnd: o.subscriptionStatus === 'trialing' ? future(9) : null,

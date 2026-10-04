@@ -13,6 +13,7 @@ import { hardNavigate } from '@/lib/client/navigate';
 import { StudioCapability } from '@/lib/rbac';
 import { useBusiness } from '../business-context';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
+import { ChannelLimitNotice } from './channel-limit-notice';
 import { MetaPlatformCard } from './meta-platform-card';
 import { PlatformCard } from './platform-card';
 import { useCan } from '../use-can';
@@ -145,6 +146,7 @@ export function ConnectionsScreen({
         title={t('title')}
         description={metaInfo?.connect === 'studio' ? t('descriptionStandalone') : t('description')}
       />
+      <ChannelLimitNotice />
       {notice && (
         <div
           role={notice.tone === 'bad' ? 'alert' : 'status'}

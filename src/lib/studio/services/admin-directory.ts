@@ -116,9 +116,10 @@ type EntitlementRow = Awaited<ReturnType<PrismaClient['orgEntitlement']['findMan
  * 20.27: the plan as it applies now (admin override expiry and the grace clock resolved, as the
  * EntitlementsReader does), and the trial's state: running (its caps apply), overridden (a staff
  * override is active), ended (staff ended it) or null (no trial, or Stripe no longer trialing).
+ * 21.5: and the channel plan in force (channels, interval, set by staff or Stripe), or null.
  */
 export function planSummary(row: EntitlementRow | undefined, now: Date) {
-  if (!row) return { tier: null, access: null, source: null, trial: null };
+  if (!row) return { tier: null, access: null, source: null, trial: null, channelPlan: null };
   const effective = resolveStoredEntitlements(row, now);
   const overrides = parseOverrides(row.overrides);
   const trialing = overrides.derived?.source === 'trial';
@@ -137,6 +138,13 @@ export function planSummary(row: EntitlementRow | undefined, now: Date) {
     access: effective.access,
     source: effective.source,
     trial: state && trial ? { state, endsAt: trial.endsAt } : null,
+    channelPlan: effective.channelPlan
+      ? {
+          channels: effective.channelPlan.channels,
+          interval: effective.channelPlan.interval,
+          source: effective.channelPlan.source,
+        }
+      : null,
   };
 }
 
@@ -187,6 +195,7 @@ export async function organisationDetail(db: PrismaClient, organisationId: strin
       access: plan.access ?? entitlement.access,
       source: plan.source ?? entitlement.source,
       trial: plan.trial,
+      channelPlan: plan.channelPlan,
       graceUntil: entitlement.graceUntil?.toISOString() ?? null,
       trialStartedAt: entitlement.trialStartedAt?.toISOString() ?? null,
       everPaidAt: entitlement.everPaidAt?.toISOString() ?? null,

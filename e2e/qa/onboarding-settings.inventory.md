@@ -22,11 +22,11 @@ States covered per screen where they exist: empty, loading, error, success, perm
 | `/settings/organisation` | `settings/organisation-settings.tsx`               | settings   |
 | `/settings/members`      | `settings/members-screen.tsx`                      | settings   |
 | `/settings/audit`        | `settings/audit-screen.tsx`                        | settings   |
-| `/settings/billing`      | `billing/billing-screen.tsx`                       | settings   |
+| `/settings/billing` (Your plan) | `billing/billing-screen.tsx`, `plan-change-section.tsx` | settings |
 | `/account/profile`       | `account/profile-screen.tsx`                       | account    |
 | `/account/security`      | `account/security/*`                               | account    |
 | `/account/export`        | `account/export-screen.tsx`                        | account    |
-| `/pricing` (plan cards)  | `billing/pricing-screen.tsx` (billing entry point) | settings   |
+| `/pricing` (channel plan) | `billing/pricing-screen.tsx`, `channel-picker.tsx` | settings, pass2-billing |
 | 404 / signed-out redirect| `not-found.tsx`, `middleware.ts` page guard        | auth       |
 | App shell header         | `app-shell.tsx`, `account-menu.tsx`, language/theme | account    |
 | Account banners          | `account/account-banners.tsx`                      | settings   |
@@ -42,15 +42,21 @@ finished and "setup skipped" states, step indicator, Back / Skip this step / Con
 Finish / Resume setup.
 
 Dialogs (7): transfer ownership (password), delete organisation (type name + password), remove
-member / leave (confirm), upgrade dialog (plan_tier, quota_exceeded, plan_required,
-billing_required), feedback dialog (header), organisation switcher menu, user menu.
+member / leave (confirm), upgrade dialog (plan_tier, quota_exceeded, channel_limit,
+plan_required, billing_required; no tier names), confirm your new plan, cancel your plan, feedback
+dialog (header), organisation switcher menu, user menu.
 
 Sections of `/account/security` (5): password, two-step verification (enrol, confirm, backup codes,
 regenerate, disable), sign-in methods, sessions (list, revoke one, revoke others), delete account.
 
-Billing screen sections (6): plan summary (6 statuses: none, trialing, active, past_due,
-read_only, cancelling), plan picker with Monthly/Annual toggle, usage, top-ups, invoices, return
-banners (`?checkout=success|cancelled`, `?topup=success|cancelled`).
+Your plan sections (21.5 per-channel plan): plan summary ("3 channels, monthly", 6 statuses: none,
+trialing, active, past_due, read_only, cancelling; a change waiting for the period end with "Keep my
+current plan"), choose your plan (no plan: channel stepper 1-6, Weekly/Monthly/Yearly, Checkout
+with channels), videos this week / month, change your plan (preview: applies now with the amount
+due, or at the period end with nothing to pay now; confirm dialog), your channels, video packs (5 /
+15 HD videos, Buy), cancel your plan / keep my plan, team and storage (no cost figures), payment
+method and invoices (Open billing portal), invoices, return banners
+(`?checkout=success|cancelled`, `?topup=success|cancelled`).
 
 ## API routes exercised (through the UI, plus negative direct calls)
 
@@ -65,7 +71,9 @@ Studio: `GET/PATCH/DELETE /org`, `POST /org/transfer-ownership`, `POST /organisa
 `GET /onboarding`, `PATCH /onboarding`, `GET/POST /businesses`, `GET/POST /brand-kits`,
 `POST /brand-kits/extract`, `GET /templates`, `POST /projects`, `POST /projects/:id/generate`,
 `GET/PUT /businesses/:id/drip-queue`, `GET /billing`, `GET /billing/plans`,
-`GET /billing/invoices`, `POST /billing/checkout`, `POST /billing/portal`, `GET /me`,
+`GET /billing/invoices`, `POST /billing/checkout`, `POST /billing/portal`,
+`GET /billing/plan/preview`, `POST /billing/plan`, `POST /billing/plan/cancel`,
+`POST /billing/plan/resume`, `DELETE /billing/plan/scheduled`, `GET /me`,
 `GET/DELETE /account/sessions`, `DELETE /account/sessions/:id`, `POST /account/delete`,
 `GET/POST /account/export`, `GET /account/export/:id`, `GET /usage`.
 
@@ -96,9 +104,11 @@ Organisation (edit, validation, logo https only, read-only for non-managers, tra
 with wrong / right password, delete with name + password), Members (invite each role, duplicate,
 invalid, seat limit with and without a plan, resend, revoke, role change, owner protection, remove,
 leave, last owner, viewer sees no controls), Audit (events appear, category filter, load more,
-empty), Billing (every plan status, picker, annual toggle, checkout and portal redirects with a
-mocked Stripe answer, error toast when Stripe is not configured, return banners, non-owner view),
-Upgrade dialog (all four codes, Not now, links), account banners.
+empty), Your plan (every plan status, the no-plan picker with channels and period from the
+/pricing link, Checkout with channels against a mocked Stripe answer, return banners, non-owner view
+with no Stripe or plan-change buttons and 403 from the API), Upgrade dialog (all five codes incl.
+channel_limit, no tier names, Not now, links), account banners. Plan change, video packs, cancel /
+keep and 375 px are in `pass2-billing-drip-admin.spec.ts`.
 
 ### Account (account spec)
 Profile (name, email language, email change two-step approval, validation), Security (password

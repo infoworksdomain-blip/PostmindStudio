@@ -31,6 +31,7 @@ const orgRow = {
   access: 'full',
   source: 'stripe',
   trial: null,
+  channelPlan: { channels: 2, interval: 'week', source: 'stripe' },
   subscriptionStatus: 'past_due',
   costThisMonthPence: 1234,
 };
@@ -56,6 +57,7 @@ const orgDetail = {
     access: 'full',
     source: 'stripe',
     trial: null,
+    channelPlan: { channels: 2, interval: 'week', source: 'stripe' },
     graceUntil: '2026-10-05T00:00:00Z',
     trialStartedAt: null,
     everPaidAt: '2026-09-01T00:00:00Z',
@@ -106,6 +108,10 @@ describe('OrganisationsTab', () => {
     renderWithSWR(<OrganisationsTab />);
     expect(await screen.findByText('Crumb & Co')).toBeVisible();
     expect(screen.getByText('Past due')).toBeVisible();
+    // 21.5: an organisation on a channel plan shows its channels beside the tier.
+    expect(screen.getByRole('row', { name: /Crumb & Co/ })).toHaveTextContent(
+      '2 channels · weekly',
+    );
     await user.type(screen.getByLabelText('Search organisations'), 'crumb');
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await waitFor(() => expect(api.calls.some((c) => c.url.includes('q=crumb'))).toBe(true));
@@ -113,6 +119,7 @@ describe('OrganisationsTab', () => {
     expect(await screen.findByText('ada@example.test')).toBeVisible();
     expect(screen.getByText('studio_standard_monthly')).toBeVisible();
     expect(screen.getByText(/Payment grace period ends/)).toBeVisible();
+    expect(screen.getByTestId('org-channel-plan')).toHaveTextContent('2 channels · weekly');
     await user.click(screen.getByRole('button', { name: /All organisations/ }));
     expect(await screen.findByLabelText('Search organisations')).toBeVisible();
   });

@@ -156,6 +156,63 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
     });
   });
 
+  describe('21.5 channels and scheduled changes', () => {
+    it('reads the quantity and interval of a channel subscription (customer.subscription.updated)', async () => {
+      const id = `sub_${org}`;
+      fake.setSubscription({
+        id,
+        customerId: customer,
+        lookupKey: 'studio_channel_weekly',
+        priceId: 'price_studio_channel_weekly',
+        interval: 'week',
+        quantity: 4,
+      });
+      await send('customer.subscription.updated', { id });
+      expect(await db.subscription.findUnique({ where: { id } })).toMatchObject({
+        quantity: 4,
+        interval: 'week',
+        lookupKey: 'studio_channel_weekly',
+      });
+      expect((await entitlement()).channelPlan).toEqual({
+        channels: 4,
+        interval: 'week',
+        source: 'stripe',
+      });
+    });
+
+    it('subscription_schedule events store and clear the change waiting for the period end', async () => {
+      const id = `sub_${org}`;
+      const state = fake.setSubscription({ id, customerId: customer, quantity: 3 });
+      await send('customer.subscription.created', { id });
+      fake.subscriptions.set(id, {
+        ...state,
+        scheduleId: 'sub_sched_1',
+        pendingChange: {
+          quantity: 1,
+          priceId: 'price_studio_channel_yearly',
+          lookupKey: 'studio_channel_yearly',
+          effectiveAt: new Date('2026-10-01T00:00:00Z'),
+        },
+      });
+      await send('subscription_schedule.updated', { id: 'sub_sched_1', subscription: id });
+      expect(await db.subscription.findUnique({ where: { id } })).toMatchObject({
+        scheduleId: 'sub_sched_1',
+        pendingQuantity: 1,
+        pendingLookupKey: 'studio_channel_yearly',
+      });
+      fake.subscriptions.set(id, { ...state, scheduleId: null, pendingChange: null });
+      await send('subscription_schedule.released', {
+        id: 'sub_sched_1',
+        subscription: null,
+        released_subscription: id,
+      });
+      expect(await db.subscription.findUnique({ where: { id } })).toMatchObject({
+        scheduleId: null,
+        pendingQuantity: null,
+      });
+    });
+  });
+
   describe('lifecycle events', () => {
     it('payment failed → grace (full access, banner) → read_only when grace ends → paid restores', async () => {
       const id = `sub_${org}`;
@@ -228,7 +285,7 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
       await send('customer.subscription.created', { id: first });
       const ent = await entitlement();
       expect(ent).toMatchObject({ tier: 'STANDARD', access: 'full', source: 'trial' });
-      expect(ent.trial).toMatchObject({ shortVideos: 5, longVideos: 1, totalCostCapPence: 1_500 });
+      expect(ent.trial).toMatchObject({ shortVideos: 5, longVideos: 0, totalCostCapPence: 1_500 });
       expect(
         await db.trialFingerprint.findUnique({ where: { fingerprint: `fp_${org}` } }),
       ).toMatchObject({
@@ -276,7 +333,8 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
           template: 'trialEnding',
           to: `${userId}@t.test`,
           locale: 'fr',
-          params: { planName: 'Standard', trialEndsAt: '2026-10-02T00:00:00.000Z' },
+          // 21.5: the per-channel plan is named by the product, never a tier.
+          params: { planName: 'PostMind Studio', trialEndsAt: '2026-10-02T00:00:00.000Z' },
         }),
       ]);
       await db.member.deleteMany({ where: { organizationId: org } });

@@ -141,10 +141,17 @@ describe('21.3 typical 30 s short at list prices (full Seedance 2.0 at 720p HD o
   it('OPERATOR NOTE: the full model costs more than the §P.2 typical cost per short', () => {
     // §P.2 (prices, caps, top-ups) is unchanged here; the billing rework (per-channel plan)
     // owns it. If those figures change, update this test with them.
+    // 21.5 (billing rework): STANDARD, the tier every channel subscription uses, now carries the
+    // full-model figure (241p), so its typical cost covers the estimate; the legacy tiers do not.
     for (const tier of TIERS) {
-      expect(estimate(tier, 0.75).totalPence).toBeGreaterThan(
-        TYPICAL_COST_PENCE_PER_VIDEO[tier].short,
-      );
+      if (tier === 'STANDARD')
+        expect(estimate(tier, 0.75).totalPence).toBeLessThanOrEqual(
+          TYPICAL_COST_PENCE_PER_VIDEO[tier].short,
+        );
+      else
+        expect(estimate(tier, 0.75).totalPence).toBeGreaterThan(
+          TYPICAL_COST_PENCE_PER_VIDEO[tier].short,
+        );
     }
   });
 

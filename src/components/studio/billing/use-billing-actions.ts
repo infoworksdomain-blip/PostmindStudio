@@ -5,23 +5,29 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { api, ApiError, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { navigateTo } from './navigate';
-import type { BillingInterval, SelfServeTier } from './types';
+import type { ChannelInterval, PlanChangeOutcome } from './types';
 
-// Phase 18 §2.7 — the two ways the browser leaves for Stripe: Checkout (a new subscription or a
-// one-off top-up) and the Customer Portal (payment method, plan change, cancel). Both answer
-// { url } and the page navigates there. Owner only (studio:billing:manage); the screens hide the
-// buttons for everyone else.
+// Phase 18 §2.7 / 21.5 — what the billing screens ask the server to do:
+//   - Checkout (leaves for Stripe): a new per-channel subscription or a one-off video pack;
+//   - the Customer Portal (leaves for Stripe): payment method and invoices only;
+//   - Your plan (stays in Studio): change channels / interval, cancel, resume, keep the current
+//     plan instead of a scheduled change. Each sends an Idempotency-Key, so a double click is one
+//     change.
+// Owner only (studio:billing:manage); the screens hide the buttons for everyone else.
 
 export type CheckoutIntent =
-  | { kind: 'subscription'; tier: SelfServeTier; interval: BillingInterval }
+  | { kind: 'channels'; channels: number; interval: ChannelInterval }
   | { kind: 'topup'; lookupKey: string };
 
-export function useBillingActions(options: { onConflict?: () => void } = {}) {
+export function useBillingActions(
+  options: { onConflict?: () => void; onChanged?: () => void } = {},
+) {
   const t = useTranslations('billing.plan');
+  const tPlan = useTranslations('billing.yourPlan.toasts');
   const locale = useLocale();
   const errorMessage = useErrorMessage();
   const [pending, setPending] = useState<string | null>(null);
-  const { onConflict } = options;
+  const { onConflict, onChanged } = options;
 
   const checkout = useCallback(
     async (intent: CheckoutIntent, pendingKey: string) => {
@@ -58,5 +64,86 @@ export function useBillingActions(options: { onConflict?: () => void } = {}) {
     }
   }, [errorMessage]);
 
-  return { pending, checkout, portal };
+  /** Runs one Your-plan request; true when it succeeded (the page then reloads its data). */
+  const run = useCallback(
+    async <T>(key: string, request: () => Promise<T>, done: (result: T) => void) => {
+      setPending(key);
+      try {
+        const result = await request();
+        done(result);
+        onChanged?.();
+        return true;
+      } catch (err) {
+        toast.error(errorMessage(err));
+        onChanged?.();
+        return false;
+      } finally {
+        setPending(null);
+      }
+    },
+    [errorMessage, onChanged],
+  );
+
+  const changePlan = useCallback(
+    (next: { channels: number; interval: ChannelInterval }, prorationDate: number | null) =>
+      run(
+        'change',
+        () =>
+          api<{ outcome: PlanChangeOutcome }>('/billing/plan', {
+            method: 'POST',
+            body: { ...next, prorationDate },
+            idempotencyKey: newIdempotencyKey(),
+          }),
+        ({ outcome }) => {
+          if (outcome.status === 'payment_required') toast.error(tPlan('paymentRequired'));
+          else if (outcome.status === 'scheduled') toast.success(tPlan('scheduled'));
+          else toast.success(tPlan('applied'));
+        },
+      ),
+    [run, tPlan],
+  );
+
+  const cancelPlan = useCallback(
+    () =>
+      run(
+        'cancel',
+        () =>
+          api<{ endsAt: string | null }>('/billing/plan/cancel', {
+            method: 'POST',
+            idempotencyKey: newIdempotencyKey(),
+          }),
+        () => toast.success(tPlan('cancelled')),
+      ),
+    [run, tPlan],
+  );
+
+  const resumePlan = useCallback(
+    () =>
+      run(
+        'resume',
+        () =>
+          api<{ resumed: boolean }>('/billing/plan/resume', {
+            method: 'POST',
+            idempotencyKey: newIdempotencyKey(),
+          }),
+        () => toast.success(tPlan('resumed')),
+      ),
+    [run, tPlan],
+  );
+
+  const keepCurrentPlan = useCallback(
+    () =>
+      run(
+        'keep',
+        () =>
+          api<{ cancelled: boolean }>('/billing/plan/scheduled', {
+            method: 'DELETE',
+            idempotencyKey: newIdempotencyKey(),
+          }),
+        () => toast.success(tPlan('kept')),
+      ),
+    [run, tPlan],
+  );
+
+  return { pending, checkout, portal, changePlan, cancelPlan, resumePlan, keepCurrentPlan };
 }

@@ -34,6 +34,7 @@ const view: AdminEntitlementsResponse['entitlements'] = {
       status: 'active',
       tier: 'PLUS',
       interval: 'month',
+      quantity: 1,
       currentPeriodEnd: '2026-10-20T00:00:00.000Z',
       cancelAtPeriodEnd: false,
     },
@@ -59,7 +60,7 @@ describe('EntitlementsPanel', () => {
     await openOrg();
     expect(screen.getByText('Stripe')).toBeInTheDocument();
     expect(screen.getByText('No staff override.')).toBeInTheDocument();
-    expect(screen.getByText(/Plus · Monthly · ends 20 Oct 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/Plus · 1 channel · Monthly · ends 20 Oct 2026/)).toBeInTheDocument();
   });
 
   it('blocks an ENTERPRISE save below the minimum price, then PUTs the right body', async () => {
@@ -102,6 +103,75 @@ describe('EntitlementsPanel', () => {
       expiresAt: null,
       reason: 'Signed enterprise deal',
     });
+  });
+
+  it('21.5: sets a channel plan (channels + interval) and shows it as set by staff', async () => {
+    const onChannels: AdminEntitlementsResponse['entitlements'] = {
+      ...view,
+      effective: {
+        ...view.effective,
+        tier: 'STANDARD',
+        channelPlan: { channels: 3, interval: 'month', source: 'stripe' },
+      },
+      subscriptions: [{ ...view.subscriptions[0]!, tier: 'STANDARD', quantity: 3 }],
+    };
+    const staffSet: AdminEntitlementsResponse['entitlements'] = {
+      ...onChannels,
+      effective: {
+        ...onChannels.effective,
+        source: 'admin',
+        channelPlan: { channels: 4, interval: 'week', source: 'admin' },
+      },
+      admin: {
+        channels: 4,
+        interval: 'week',
+        reason: 'Agency pilot',
+        setByUserId: 'staff_1',
+        setAt: '2026-10-04T09:00:00.000Z',
+        expiresAt: null,
+        monthlyPricePence: null,
+      },
+    };
+    const api = mockFetch([
+      { match: PATH, method: 'PUT', body: { ok: true, entitlements: staffSet } },
+      { match: PATH, body: { ok: true, entitlements: onChannels } },
+    ]);
+    const user = await openOrg();
+    expect(screen.getByTestId('channel-plan')).toHaveTextContent(
+      '3 channels · monthly (from Stripe)',
+    );
+    expect(
+      screen.getByText(/Standard · 3 channels · Monthly · ends 20 Oct 2026/),
+    ).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Channels'), '4');
+    await user.selectOptions(screen.getByLabelText('Billing interval'), 'week');
+    await user.type(screen.getByLabelText('Reason (required)'), 'Agency pilot');
+    await user.click(screen.getByRole('button', { name: 'Save override' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')?.body).toEqual({
+      channels: 4,
+      interval: 'week',
+      expiresAt: null,
+      reason: 'Agency pilot',
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('channel-plan')).toHaveTextContent(
+        '4 channels · weekly (set by staff)',
+      ),
+    );
+    expect(screen.getByText('Channels: 4 channels')).toBeInTheDocument();
+    expect(screen.getByText('Billed weekly')).toBeInTheDocument();
+  });
+
+  it('21.5: an Enterprise override hides the channel plan fields and sends none', async () => {
+    mockFetch([{ match: PATH, body: { ok: true, entitlements: view } }]);
+    const user = await openOrg();
+    expect(screen.getByText('No channel plan')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Channels'), '2');
+    await user.selectOptions(screen.getByLabelText('Tier'), 'ENTERPRISE');
+    expect(screen.queryByLabelText('Channels')).toBeNull();
+    expect(screen.queryByLabelText('Billing interval')).toBeNull();
   });
 
   it('removes an override with a reason', async () => {
@@ -172,7 +242,7 @@ describe('SubscriptionsPanel', () => {
     const byStatus = screen.getByRole('list', { name: 'Subscriptions by status' });
     expect(within(byStatus).getByText('Past due').closest('li')).toHaveTextContent('1');
     const row = screen.getByRole('row', { name: /Acme Coffee/ });
-    expect(row).toHaveTextContent('Annual');
+    expect(row).toHaveTextContent('Yearly');
     expect(row).toHaveTextContent('£290.83');
     expect(row).toHaveTextContent('Cancelling');
 

@@ -7,7 +7,7 @@ import {
   CalendarClock,
   ShieldCheck,
   Languages,
-  PiggyBank,
+  BadgePoundSterling,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -270,7 +270,8 @@ const FEATURES = [
   { key: 'brand', icon: Palette },
   { key: 'approvals', icon: ShieldCheck },
   { key: 'calendar', icon: CalendarClock },
-  { key: 'budget', icon: PiggyBank },
+  // Operator decision 2026-10-04: no cost caps or spend in customer copy; pricing is per channel.
+  { key: 'pricing', icon: BadgePoundSterling },
   { key: 'languages', icon: Languages },
   { key: 'library', icon: Clapperboard },
 ] as const;

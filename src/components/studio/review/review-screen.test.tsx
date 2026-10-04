@@ -13,6 +13,17 @@ vi.mock('next/navigation', () => ({
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
 
+const meAs = (platformRole: string): MockRoute => ({
+  match: '/me',
+  body: {
+    ok: true,
+    me: {
+      capabilities: ['studio:project:read', 'studio:project:write'],
+      user: { platformRole },
+    },
+  },
+});
+
 function routes(project: ProjectDetail, extra: MockRoute[] = []): MockRoute[] {
   return [
     ...extra,
@@ -30,6 +41,49 @@ beforeEach(() => {
   toast.error.mockReset();
 });
 afterEach(() => vi.unstubAllGlobals());
+
+describe('ReviewScreen costs (operator decision 2026-10-04)', () => {
+  it('shows customers no spend, budget or render cost', async () => {
+    const api = mockFetch(
+      routes(makeProject({ costBudgetPence: 350, renders: [makeRender()] }), [meAs('user')]),
+    );
+    renderWithSWR(<ReviewScreen projectId="proj_1" />);
+    await screen.findByRole('article', { name: 'TikTok variant' });
+    await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
+    expect(screen.queryByTestId('project-spent')).not.toBeInTheDocument();
+    expect(screen.queryByText(/£/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/spent|budget/i)).not.toBeInTheDocument();
+  });
+
+  it('shows staff the spend, the budget and each render’s cost', async () => {
+    mockFetch(
+      routes(makeProject({ costBudgetPence: 350, renders: [makeRender()] }), [meAs('staff')]),
+    );
+    renderWithSWR(<ReviewScreen projectId="proj_1" />);
+    expect(await screen.findByTestId('project-spent')).toHaveTextContent('£4.50 spent');
+    expect(screen.getByText('of £3.50 budget')).toBeInTheDocument();
+    const variant = screen.getByRole('article', { name: 'TikTok variant' });
+    expect(variant).toHaveTextContent('£1.20');
+  });
+
+  // Needs review.actions.cancelledPlain from .i18n-tmp/frag-costs/en-GB.json.
+  it('tells a customer the run was cancelled without saying what it cost', async () => {
+    const api = mockFetch(
+      routes(makeProject({ state: 'RENDERING', renders: [] }), [
+        meAs('user'),
+        {
+          method: 'POST',
+          match: '/projects/proj_1/cancel',
+          body: { ok: true, projectId: 'proj_1', state: 'FAILED', costIncurredPence: 250 },
+        },
+      ]),
+    );
+    renderWithSWR(<ReviewScreen projectId="proj_1" />);
+    await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
+    await userEvent.click(await screen.findByRole('button', { name: /Cancel/ }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Cancelled.'));
+  });
+});
 
 describe('ReviewScreen', () => {
   it('shows a loading state, then the project and its variants', async () => {
@@ -142,10 +196,11 @@ describe('ReviewScreen', () => {
     );
   });
 
-  it('offers cancel while the pipeline is working', async () => {
+  it('offers cancel while the pipeline is working (staff see what the run cost)', async () => {
     const project = makeProject({ state: 'RENDERING', renders: [] });
     const api = mockFetch(
       routes(project, [
+        meAs('staff'),
         {
           method: 'POST',
           match: '/projects/proj_1/cancel',

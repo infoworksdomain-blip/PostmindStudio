@@ -20,11 +20,12 @@ describe('PlanLockBadge', () => {
     expect(minTierForFeature('byocProviderKeys')).toBe('ENTERPRISE');
   });
 
-  it('shows the required tier with accessible text when the plan is below it', async () => {
+  it('says "Not in your plan" (21.5: never a tier name) when the plan is below the feature', async () => {
     mockFetch([usage('STANDARD')]);
     renderWithSWR(<PlanLockBadge feature="voiceClone" />);
-    expect(await screen.findByText('Needs the Plus plan')).toHaveClass('sr-only');
-    expect(screen.getByText('Plus')).toHaveAttribute('aria-hidden');
+    expect(await screen.findByText('Not included in your plan')).toHaveClass('sr-only');
+    expect(screen.getByText('Not in your plan')).toHaveAttribute('aria-hidden');
+    expect(screen.queryByText(/Plus/)).toBeNull();
   });
 
   it('renders nothing when the plan already includes the feature', async () => {
@@ -38,7 +39,7 @@ describe('PlanLockBadge', () => {
   it('accepts an explicit required tier', async () => {
     mockFetch([usage('PLUS')]);
     renderWithSWR(<PlanLockBadge requiredTier="ENTERPRISE" />);
-    expect(await screen.findByText('Needs the Enterprise plan')).toBeInTheDocument();
+    expect(await screen.findByText('Not included in your plan')).toBeInTheDocument();
   });
 
   it('renders nothing while the tier is unknown', () => {

@@ -16,6 +16,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PricingPage() {
   const pricing = await pricingSourceFromEnv(logger).get();
-  const salesEmail = process.env.STUDIO_SALES_EMAIL?.trim() || null;
-  return <PricingScreen pricing={pricing} salesEmail={salesEmail} />;
+  return <PricingScreen pricing={pricing} />;
 }

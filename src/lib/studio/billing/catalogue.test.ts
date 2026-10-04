@@ -13,6 +13,12 @@ import { DEFAULT_VOICE_CLONE_MIN_TIER } from '../services/voice-profiles';
 import {
   allLookupKeys,
   CATALOGUE_VERSION,
+  channelGrossMargin,
+  channelPlanMonthlyEquivalentPence,
+  channelTypicalSpendPence,
+  LEGACY_REFERENCE_PRICES_PENCE,
+  LEGACY_TOP_UP_PACKS,
+  legacyLookupKeys,
   ENTERPRISE_LIST_PRICE_PENCE,
   enterpriseMinimumMonthlyPricePence,
   fullAllowanceTypicalCostPence,
@@ -24,11 +30,13 @@ import {
   PLAN_CATALOGUE,
   planForLookupKey,
   REFERENCE_PRICES_PENCE,
+  sellableTopUpPack,
   selfServeTiers,
   TIER_ORDER,
   tierAtLeast,
   TOP_UP_PACKS,
   topUpMarginAtWorstCase,
+  TRIAL,
   TYPICAL_COST_PENCE_PER_VIDEO,
   topUpPackForLookupKey,
 } from './catalogue';
@@ -101,131 +109,144 @@ describe('PLAN_CATALOGUE (Phase 18 §P.1)', () => {
     expect(lookupKeyFor('PLUS', 'year')).toBe('studio_plus_yearly');
   });
 
-  it('maps every self-serve lookup key back to its tier and interval', () => {
+  it('maps lookup keys back to tier and interval: channel prices are STANDARD (21.5)', () => {
+    expect(planForLookupKey('studio_channel_monthly')).toEqual({
+      tier: 'STANDARD',
+      interval: 'month',
+      channelPlan: true,
+    });
+    expect(planForLookupKey('studio_channel_weekly')?.interval).toBe('week');
+    expect(planForLookupKey('studio_channel_yearly')?.interval).toBe('year');
+    // Legacy keys still resolve (old test-mode subscriptions until the ops migration).
     expect(planForLookupKey('studio_standard_yearly')).toEqual({
       tier: 'STANDARD',
       interval: 'year',
+      channelPlan: false,
     });
-    expect(planForLookupKey('studio_basic_monthly')).toEqual({ tier: 'BASIC', interval: 'month' });
+    expect(planForLookupKey('studio_basic_monthly')?.tier).toBe('BASIC');
     expect(planForLookupKey('studio_enterprise_monthly')).toBeUndefined();
-    const keys = allLookupKeys();
-    expect(new Set(keys).size).toBe(keys.length);
-    expect(keys).toHaveLength(11);
-    expect(Object.keys(REFERENCE_PRICES_PENCE).sort()).toEqual([...keys].sort());
+    expect(legacyLookupKeys()).toHaveLength(6);
   });
 
-  it('only offers the trial on STANDARD and no long-video pack on BASIC', () => {
+  it('sells only the three channel prices and the two HD packs', () => {
+    const keys = allLookupKeys();
+    expect(keys).toEqual([
+      'studio_channel_weekly',
+      'studio_channel_monthly',
+      'studio_channel_yearly',
+      'studio_pack_hd5',
+      'studio_pack_hd15',
+    ]);
+    expect(Object.keys(REFERENCE_PRICES_PENCE).sort()).toEqual([...keys].sort());
+    for (const key of legacyLookupKeys()) expect(keys).not.toContain(key);
+  });
+
+  it('only offers the trial on STANDARD; the trial has no long video', () => {
     expect(
       Object.values(PLAN_CATALOGUE)
         .filter((p) => p.trialDays > 0)
         .map((p) => p.tier),
     ).toEqual(['STANDARD']);
-    expect(TOP_UP_PACKS.some((p) => p.tier === 'BASIC' && p.kind === 'long')).toBe(false);
+    expect(TRIAL).toMatchObject({ tier: 'STANDARD', shortVideos: 5, longVideos: 0 });
+  });
+
+  it('packs: 5 and 15 HD videos, any channel, valid 3 months; legacy packs still resolve', () => {
+    expect(
+      TOP_UP_PACKS.map((p) => [p.lookupKey, p.kind, p.quantity, p.validMonths, p.tier]),
+    ).toEqual([
+      ['studio_pack_hd5', 'short', 5, 3, 'STANDARD'],
+      ['studio_pack_hd15', 'short', 15, 3, 'STANDARD'],
+    ]);
+    expect(sellableTopUpPack('studio_pack_hd15')?.quantity).toBe(15);
+    expect(sellableTopUpPack('studio_topup_long2_plus')).toBeUndefined();
     expect(topUpPackForLookupKey('studio_topup_long2_plus')?.quantity).toBe(2);
+    expect(LEGACY_TOP_UP_PACKS).toHaveLength(5);
     expect(topUpPackForLookupKey('nope')).toBeUndefined();
   });
 });
 
-describe('§P.2 unit economics (price list 2026-09-30)', () => {
-  const margin = (key: string) => {
-    const plan = planForLookupKey(key);
-    if (!plan) throw new Error(key);
-    return grossMarginAtCap({ ...plan, pricePence: REFERENCE_PRICES_PENCE[key] ?? 0 });
-  };
-  const typical = (key: string) => {
-    const plan = planForLookupKey(key);
-    if (!plan || plan.tier === 'ENTERPRISE') throw new Error(key);
-    return grossMarginTypical({
-      tier: plan.tier,
-      interval: plan.interval,
-      pricePence: REFERENCE_PRICES_PENCE[key] ?? 0,
+describe('21.5 channel plan unit economics (internal)', () => {
+  const at = (channels: number, interval: 'week' | 'month' | 'year') =>
+    channelGrossMargin({ channels, interval });
+  const typical = (channels: number, interval: 'week' | 'month' | 'year') =>
+    channelGrossMargin({
+      channels,
+      interval,
+      spendPence: channelTypicalSpendPence(channels, interval),
     });
-  };
-  const monthlyKeys = selfServeTiers().map((t) => lookupKeyFor(t, 'month') ?? '');
 
-  it('holds the 2026-09-30 reference prices (annual = 10 × monthly)', () => {
-    expect(CATALOGUE_VERSION).toBe('2026-09-30');
+  it('holds the 2026-10-04 reference prices', () => {
+    expect(CATALOGUE_VERSION).toBe('2026-10-04');
     expect(REFERENCE_PRICES_PENCE).toEqual({
-      studio_basic_monthly: 2_900,
-      studio_basic_yearly: 29_000,
-      studio_standard_monthly: 9_900,
-      studio_standard_yearly: 99_000,
-      studio_plus_monthly: 34_900,
-      studio_plus_yearly: 349_000,
-      studio_topup_short10_basic: 1_500,
-      studio_topup_short10_standard: 2_500,
-      studio_topup_short10_plus: 3_500,
-      studio_topup_long2_standard: 2_900,
-      studio_topup_long2_plus: 5_500,
+      studio_channel_weekly: 950,
+      studio_channel_monthly: 2_900,
+      studio_channel_yearly: 29_000,
+      studio_pack_hd5: 1_500,
+      studio_pack_hd15: 3_900,
     });
-    for (const tier of selfServeTiers())
-      expect(REFERENCE_PRICES_PENCE[lookupKeyFor(tier, 'year') ?? '']).toBe(
-        10 * (REFERENCE_PRICES_PENCE[lookupKeyFor(tier, 'month') ?? ''] ?? 0),
-      );
-    expect(TOP_UP_PACKS.map((p) => [p.lookupKey, p.capHeadroomPencePerCredit])).toEqual([
-      ['studio_topup_short10_basic', 100],
-      ['studio_topup_short10_standard', 175],
-      ['studio_topup_short10_plus', 265],
-      ['studio_topup_long2_standard', 1_000],
-      ['studio_topup_long2_plus', 2_000],
-    ]);
+    expect(channelPlanMonthlyEquivalentPence(1, 'week')).toBeCloseTo(4_116.67, 1);
+    expect(channelPlanMonthlyEquivalentPence(1, 'year')).toBeCloseTo(2_416.67, 1);
   });
 
-  it('matches the runbook table (margin at the cap and at typical use)', () => {
-    expect(margin('studio_basic_monthly')).toBeCloseTo(0.19, 3);
-    expect(margin('studio_standard_monthly')).toBeCloseTo(0.1757, 3);
-    expect(margin('studio_plus_monthly')).toBeCloseTo(0.1756, 3);
-    expect(margin('studio_basic_yearly')).toBeCloseTo(0.0445, 3);
-    expect(margin('studio_standard_yearly')).toBeCloseTo(0.022, 3);
-    expect(margin('studio_plus_yearly')).toBeCloseTo(0.0202, 3);
-    expect(typical('studio_basic_monthly')).toBeCloseTo(0.5693, 3);
-    expect(typical('studio_standard_monthly')).toBeCloseTo(0.5444, 3);
-    expect(typical('studio_plus_monthly')).toBeCloseTo(0.5538, 3);
-    expect(typical('studio_basic_yearly')).toBeCloseTo(0.4996, 3);
-    expect(typical('studio_standard_yearly')).toBeCloseTo(0.4644, 3);
-    expect(typical('studio_plus_yearly')).toBeCloseTo(0.4741, 3);
+  it('guard: every channel count and interval keeps ≥ 35 % at typical use (241p a short)', () => {
+    for (const interval of ['week', 'month', 'year'] as const)
+      for (let channels = 1; channels <= 6; channels += 1)
+        expect(typical(channels, interval), `${channels} ${interval}`).toBeGreaterThanOrEqual(0.35);
+    expect(typical(1, 'month')).toBeCloseTo(0.478, 2);
+    expect(typical(1, 'week')).toBeCloseTo(0.584, 2);
+    expect(typical(1, 'year')).toBeCloseTo(0.39, 2);
   });
 
-  it('guard: every monthly plan keeps ≥ 50 % at typical use and ≥ 15 % at its cost cap', () => {
-    for (const key of monthlyKeys) {
-      expect(typical(key), key).toBeGreaterThanOrEqual(0.5);
-      expect(margin(key), key).toBeGreaterThanOrEqual(0.15);
-    }
+  it('pins the margin at the internal cost cap (runbook §5: yearly and 1-channel monthly are negative at the cap)', () => {
+    expect(at(1, 'month')).toBeCloseTo(-0.02, 2);
+    expect(at(2, 'month')).toBeCloseTo(0.052, 2);
+    expect(at(6, 'month')).toBeCloseTo(0.1, 2);
+    expect(at(1, 'week')).toBeCloseTo(0.105, 2);
+    expect(at(1, 'year')).toBeLessThan(0);
+    // Weekly carries its 30 % premium: positive at the cap for every channel count.
+    for (let channels = 1; channels <= 6; channels += 1)
+      expect(at(channels, 'week')).toBeGreaterThan(0);
   });
 
-  it('every self-serve price stays positive at the cap', () => {
-    for (const tier of selfServeTiers())
-      for (const key of Object.values(PLAN_CATALOGUE[tier].lookupKeys))
-        expect(margin(key), key).toBeGreaterThan(0);
-  });
-
-  it('guard: the monthly cost cap covers the whole allowance at the typical per-video cost', () => {
-    // Otherwise a customer is paused before they have used the videos they paid for.
-    expect(selfServeTiers().map((t) => fullAllowanceTypicalCostPence(t))).toEqual([
-      1_800, 7_300, 26_400,
-    ]);
-    for (const tier of selfServeTiers())
-      expect(PLAN_CATALOGUE[tier].monthlyCostCapPence, tier).toBeGreaterThanOrEqual(
-        fullAllowanceTypicalCostPence(tier),
-      );
-  });
-
-  it('every top-up pack stays above 15 % in the worst case', () => {
+  it('pins the pack margins when every credit spends its whole £2.50 headroom (runbook §5)', () => {
     const margins = TOP_UP_PACKS.map((pack) =>
       topUpMarginAtWorstCase(pack, REFERENCE_PRICES_PENCE[pack.lookupKey] ?? 0),
     );
-    for (const [i, m] of margins.entries())
-      expect(m, TOP_UP_PACKS[i]?.lookupKey).toBeGreaterThan(0.15);
-    expect(margins.map((m) => Math.round(m * 1000) / 1000)).toEqual([
-      0.276, 0.248, 0.193, 0.259, 0.225,
-    ]);
+    // The 15 pack (£39) is slightly below cost at the worst case: reported to the operator.
+    expect(margins.map((m) => Math.round(m * 1000) / 1000)).toEqual([0.109, -0.011]);
   });
 
-  it('every top-up credit adds at least its typical per-video cost to the cap', () => {
-    for (const pack of TOP_UP_PACKS) {
-      const typicalCost = TYPICAL_COST_PENCE_PER_VIDEO[pack.tier][pack.kind];
-      expect(pack.capHeadroomPencePerCredit, pack.lookupKey).toBeGreaterThanOrEqual(typicalCost);
-    }
+  it('every pack credit adds at least the STANDARD typical per-video cost to the cap', () => {
+    for (const pack of TOP_UP_PACKS)
+      expect(pack.capHeadroomPencePerCredit).toBeGreaterThanOrEqual(
+        TYPICAL_COST_PENCE_PER_VIDEO.STANDARD.short,
+      );
+  });
+});
+
+describe('§P.2 legacy tier economics (2026-09-30 list, kept for ENTERPRISE and staff overrides)', () => {
+  const margin = (key: string) => {
+    const plan = planForLookupKey(key);
+    if (!plan || plan.interval === 'week') throw new Error(key);
+    return grossMarginAtCap({
+      tier: plan.tier,
+      interval: plan.interval,
+      pricePence: LEGACY_REFERENCE_PRICES_PENCE[key] ?? 0,
+    });
+  };
+
+  it('keeps the old monthly tier numbers for reference', () => {
+    expect(lookupKeyFor('PLUS', 'year')).toBe('studio_plus_yearly');
+    expect(margin('studio_basic_monthly')).toBeCloseTo(0.19, 3);
+    expect(margin('studio_standard_monthly')).toBeCloseTo(0.1757, 3);
+    expect(grossMarginTypical({ tier: 'BASIC', interval: 'month', pricePence: 2_900 })).toBeCloseTo(
+      0.5693,
+      3,
+    );
+    // STANDARD now at 241p a short (Seedance 2.0 full, 720p).
+    expect(selfServeTiers().map((t) => fullAllowanceTypicalCostPence(t))).toEqual([
+      1_800, 10_540, 26_400,
+    ]);
   });
 
   it('ENTERPRISE minimum price keeps 15 % at a custom cap (£1,100 cap → £1,416)', () => {
@@ -244,14 +265,12 @@ describe('§P.2 unit economics (price list 2026-09-30)', () => {
         }),
       ).toBeGreaterThanOrEqual(0.15);
     }
-    // The list price "from £1,500" is at or above the default minimum.
     expect(ENTERPRISE_LIST_PRICE_PENCE).toBe(150_000);
     expect(ENTERPRISE_LIST_PRICE_PENCE).toBeGreaterThanOrEqual(
       enterpriseMinimumMonthlyPricePence(defaultCap),
     );
   });
 });
-
 describe('createStubEntitlementsReader', () => {
   it('answers "no plan"', async () => {
     const reader = createStubEntitlementsReader();

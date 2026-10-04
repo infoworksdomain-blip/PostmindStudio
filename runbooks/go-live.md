@@ -347,7 +347,8 @@ npx tsx scripts/billing/seed-stripe-test.ts
 ```
 
   It refuses live keys.
-- **Check:** Stripe → **Product catalogue** (may be labelled differently) shows `studio_basic`, `studio_standard`, `studio_plus`, `studio_enterprise` and the top-up packs, all in GBP.
+- **Check:** Stripe → **Product catalogue** (may be labelled differently) shows the channel product `studio_channel` with 3 prices (lookup keys `studio_channel_weekly` £9.50, `studio_channel_monthly` £29, `studio_channel_yearly` £290, each per channel) and the 2 HD video pack prices (`studio_pack_hd5` £15, `studio_pack_hd15` £39), all in GBP.
+- **Old tier prices:** if this account already had the earlier tier prices (`studio_basic_*`, `studio_standard_*`, `studio_plus_*`, `studio_topup_*`), run `npx tsx scripts/billing/migrate-channel-plans.ts` (dry run, then `--apply`; see [billing-stripe.md](billing-stripe.md)) to move their subscriptions to channels, then archive those old prices in the dashboard. The seed script leaves them alone.
 
 ### 8.3 Customer portal
 

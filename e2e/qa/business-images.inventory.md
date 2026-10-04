@@ -18,7 +18,7 @@ Vitest already covers the API layer (`test/api/website-scan.test.ts`, `brand-kit
 | --- | --- | --- |
 | Header | `business-picker.tsx`, `business-context.tsx` | select (one per business), add-business form (name), cancel, duplicate-name 409, plan-limit 403, localStorage persistence, first-business form when none exist, core-mode typed id |
 | Profile | `profile-panel.tsx`, `profile-review-notice.tsx` | loading, 404 empty (go to scan), error + retry, 11 editable fields, dirty/invalid/discard/save, needs-review banner + confirm, edited-by-you caption |
-| Website scan | `scan-panel.tsx`, `scan-schedule.tsx`, `domain-verification.tsx`, `dispute-ownership.tsx` | URL field, ownership checkbox gate, render policy text, start (202), already-running 409 (follows running scan), 402 plan gate, 429 quota, bad URL 400; progress card (QUEUED, RUNNING, SUCCEEDED, FAILED), robots blocked, per-source library counts, warnings list, history list, schedule line, DNS verification (Enterprise), "I don't own this site" |
+| Website scan | `scan-panel.tsx`, `scan-schedule.tsx`, `domain-verification.tsx`, `dispute-ownership.tsx` | URL field, ownership checkbox gate, render policy text, start (202), already-running 409 (follows running scan), 402 plan gate, 429 quota, bad URL 400; progress card (QUEUED, RUNNING, SUCCEEDED, FAILED), robots blocked, per-source library counts, warnings list, history list, schedule line, DNS verification (internal ENTERPRISE tier), "I don't own this site" |
 | Brand | `brand-kits-panel.tsx`, `brand-kit-form.tsx`, `brand-kit-media.tsx`, `voice-kit-select.tsx`, `voice-profiles-panel.tsx` (+ clone dialog, consent recorder, samples input, profile card) | list, empty, create/edit dialog (name, palette hex, fonts, tone, audience, CTAs, restricted), validation problems, make default, delete confirm, logo / watermark / intro / outro / font upload (presigned PUT), AI-label switch, voice per kit, voice clones |
 | Hashtags | `hashtags/business-hashtags-panel.tsx`, `hashtag-editor.tsx` | business hashtag (derived default, custom, invalid), always-hashtags chips (add, duplicate, too many, reorder, remove), save |
 | Image library | `image-library-panel.tsx`, `image-grid.tsx`, `image-library-actions.tsx` | source filter, tag filter, cursor paging, loading skeleton, empty (all / filtered), thumbnails (stored + hotlinked + no preview), semantic search (+ clear, no matches), upload (15 MB client limit, duplicate, server rejection), generate dialog (plan lock, validation, provider failure), refresh stock (no stock key), delete confirm |
@@ -55,7 +55,8 @@ Playwright tests in `business-images.spec.ts` (each `test` names the flow), 2 sk
 
 ## Roles
 
-Owner, viewer (read only), Basic plan (generation locked), no plan (scan stops at the upgrade dialog). A viewer sees every write
+Owner, viewer (read only), internal BASIC tier (generation locked; the upgrade dialog says "Not
+included in your plan" and names no tier, 21.5), no plan (scan stops at the upgrade dialog). A viewer sees every write
 control disabled with a note saying why (`WriteGate`, `useCan`); the API still refuses what the role may not do.
 
 ## Not in this repo yet

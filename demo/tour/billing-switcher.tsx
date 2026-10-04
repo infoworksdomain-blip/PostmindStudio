@@ -11,11 +11,12 @@ import {
   subscribeUsage,
   type BillingStateId,
 } from '../api/billing-state';
+import { subscribeViewerRole } from '../api/viewer-role';
 
-// The demo's plan switcher: Trial, Active (Basic / Standard / Plus), Past due, Read-only, No plan,
-// Enterprise and Cancelled. It drives the sample API's /me, /billing, /usage and request gate
+// The demo's plan switcher (21.5 per-channel plan): Trial, Active (3 channels monthly, 2 weekly,
+// 6 yearly), Allowance used up, Past due, Read-only, No plan, Enterprise and Cancelled. It drives the sample API's /me, /billing, /usage and request gate
 // (demo/api/billing-state.ts), so the account banner, the billing page, the upgrade dialog and the
-// lock badges change as soon as it is switched. Default: Active Standard.
+// lock badges change as soon as it is switched. Default: 3 channels, monthly.
 
 export function useBillingState(): BillingStateId {
   return useSyncExternalStore(subscribeBillingState, getBillingState, getBillingState);
@@ -31,6 +32,14 @@ export function useRevalidateOnBillingChange(): void {
   useEffect(
     () =>
       subscribeBillingState(() => {
+        void mutate(() => true, undefined, { revalidate: true });
+      }),
+    [],
+  );
+  // 21.5: entering or leaving the Admin Centre switches /me between staff and customer (costs).
+  useEffect(
+    () =>
+      subscribeViewerRole(() => {
         void mutate(() => true, undefined, { revalidate: true });
       }),
     [],
@@ -113,9 +122,13 @@ export function BillingStatesPanel() {
       <p className="mt-3 text-xs text-muted-foreground">
         Then open{' '}
         <a className="underline underline-offset-4" href="#/settings/billing">
-          Billing
+          Your plan
         </a>
         ,{' '}
+        <a className="underline underline-offset-4" href="#/connections">
+          Connections
+        </a>{' '}
+        (which platforms publish),{' '}
         <a className="underline underline-offset-4" href="#/projects">
           any app screen
         </a>{' '}
@@ -123,8 +136,8 @@ export function BillingStatesPanel() {
         <a className="underline underline-offset-4" href="#/business">
           Business → Brand
         </a>{' '}
-        (lock badges). The choice is kept like the language; “Reset demo” in the bar puts it back to
-        Active Standard.
+        (“Not in your plan” badges). The choice is kept like the language; “Reset demo” in the bar
+        puts it back to 3 channels, monthly.
       </p>
     </div>
   );

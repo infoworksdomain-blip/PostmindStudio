@@ -34,7 +34,8 @@ Shell: `UsageBanner`/`UsageMeters` (`usage-meter`), `UpgradeDialog` (`billing/up
 2. Heading changes with the source (video / slideshow / upload)
 3. "Plan my month" link
 4. Options toggle (summary line: platforms, length, auto-publish, brand kit)
-5. Source radios: Video, Slideshow, Upload (Basic plan defaults to Slideshow)
+5. Source radios: Video, Slideshow, Upload (the internal BASIC tier defaults to Slideshow; tier
+   names are never shown to customers, 21.5)
 6. Slideshow template picker (required for slideshow)
 7. Project template picker (video only, hidden with a reference); template replaces platforms/length
 8. Platform chips (9 render platforms incl. Instagram and Facebook feed); at least one
@@ -59,7 +60,8 @@ Shell: `UsageBanner`/`UsageMeters` (`usage-meter`), `UpgradeDialog` (`billing/up
 25. No-business empty state with link to /business
 26. Toasts: slideshowDrafted, generatingScript, generatingUpload, draftNotStarted(error)
 27. Redirect to `/projects/:id` after create (even if generate is refused)
-28. Upgrade dialog on 402 plan_required / 403 quota_exceeded / 403 plan_tier
+28. Upgrade dialog on 402 plan_required / 403 quota_exceeded / 403 plan_tier (21.5: no tier
+    names; "Buy a video pack" / "Add a channel")
 29. Usage banner (80 % warning, exceeded, enforce)
 30. Avatar (HeyGen) presenter: there is **no Create form control**; the presenter is chosen by the
     scripting layer (`AI_AVATAR` visual treatment) and routed to HeyGen/D-ID by the provider
@@ -70,7 +72,8 @@ Shell: `UsageBanner`/`UsageMeters` (`usage-meter`), `UpgradeDialog` (`billing/up
 
 Start date, days (1..31), posts a day radios 1-4, "use my posting times" (disabled without
 times), video/slideshow mix slider (0-100 step 5), platform chips, account select per platform,
-submit "Draft my month", estimate line, allowance panel (limit/credits/spend cap/top-up link),
+submit "Draft my month", estimate line, allowance panel (limit/pack credits/"buy a video pack"
+link to `/settings/billing#topups`; the spend line only for staff, 21.5),
 typical cost hint, defaults error with retry, no-business state, problems list (startRequired,
 daysRange, platformRequired, accountRequired).
 Editor (DRAFT): summary and cost estimate, review window note, capped notice, draft error +

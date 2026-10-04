@@ -106,12 +106,13 @@ async function main(): Promise<void> {
       invoice_settings: { default_payment_method: good.id },
     });
     const [price] = (
-      await stripe.prices.list({ lookup_keys: ['studio_standard_monthly'], active: true })
+      await stripe.prices.list({ lookup_keys: ['studio_channel_monthly'], active: true })
     ).data;
-    if (!price) throw new ConfigurationError('Run seed-stripe-test.ts first (no standard price)');
+    if (!price) throw new ConfigurationError('Run seed-stripe-test.ts first (no channel price)');
+    // 21.5: a per-channel subscription, 2 channels (quantity = channels).
     const sub = await stripe.subscriptions.create({
       customer: customer.id,
-      items: [{ price: price.id }],
+      items: [{ price: price.id, quantity: 2 }],
       trial_period_days: 14,
       metadata: { organisationId: orgId },
     });

@@ -2,6 +2,10 @@ import { createTranslator } from 'next-intl';
 import { DEFAULT_LOCALE, isLocale } from '../../i18n/locales';
 import { loadMessages } from '../../i18n/messages';
 import type { TopUpPack } from './catalogue';
+import { CHANNEL_PLAN_TIER, channelIntervalForLookupKey } from './channel-plan';
+
+/** The product name (never translated, Phase 16 rule). */
+export const PRODUCT_NAME = 'PostMind Studio';
 
 // Params for the billing emails (src/emails/catalogue.ts: topupReceipt, trialEnding, …). The
 // template renders them in the owner's locale, so a param that is itself words (a pack name) is
@@ -29,6 +33,8 @@ export async function topUpPackName(
 export function planDisplayName(tierOrLookupKey: string | null | undefined): string | null {
   const raw = tierOrLookupKey?.trim();
   if (!raw) return null;
+  // 21.5: the per-channel plan has no tier name for customers: the product name.
+  if (channelIntervalForLookupKey(raw) || raw === CHANNEL_PLAN_TIER) return PRODUCT_NAME;
   const tier = raw.startsWith('studio_') ? (raw.split('_')[1] ?? '') : raw;
   if (!tier) return null;
   return tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();

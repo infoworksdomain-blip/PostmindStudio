@@ -69,8 +69,18 @@ export function isLongForm(formats: readonly BudgetFormat[]): boolean {
   });
 }
 
+/**
+ * 21.5: the per-video budget basis stays the 20.25 one (STANDARD short 160p) while the catalogue's
+ * typical cost moved to Seedance 2.0 full (241p); the per-video budget defaults are owned by
+ * the p21-tiered-models branch, which sets them explicitly — keep its values on merge.
+ */
+const BUDGET_BASIS_PENCE = {
+  ...TYPICAL_COST_PENCE_PER_VIDEO,
+  STANDARD: { ...TYPICAL_COST_PENCE_PER_VIDEO.STANDARD, short: 160 },
+} as const;
+
 function typicalCostPence(tier: PlanTier, kind: 'short' | 'long'): number {
-  return TYPICAL_COST_PENCE_PER_VIDEO[tier === 'ENTERPRISE' ? 'PLUS' : tier][kind];
+  return BUDGET_BASIS_PENCE[tier === 'ENTERPRISE' ? 'PLUS' : tier][kind];
 }
 
 /** 20.25 / 21.3: the short-form default for a tier (BASIC / STANDARD £5, PLUS / ENTERPRISE £7). */
