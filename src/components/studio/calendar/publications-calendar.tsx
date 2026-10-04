@@ -7,6 +7,7 @@ import { CalendarRange, ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormat } from '@/lib/client/format';
+import { useHydrated } from '@/lib/client/use-hydrated';
 import { ErrorState, PageHeader } from '../primitives';
 import {
   dayKey,
@@ -36,6 +37,9 @@ import { MAX_PAGES, PAGE_LIMIT, useCalendarPublications } from './use-calendar-p
 // Scheduled posts can be dragged to another day or moved with the move dialog (13.9).
 // 20.3: open drip-queue slots of the active business show as dashed markers for the visible
 // range, with a "Next 30 days" summary above the grid (GET …/drip-queue/upcoming).
+
+/** Keeps the line's height while it waits for hydration (no layout shift). */
+const PLACEHOLDER = ' ';
 
 export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   const t = useTranslations('calendar');
@@ -67,7 +71,14 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
     void summary.mutate();
     void visible.mutate();
   };
-  const title = formatMonth(month, f.locale);
+  // The month and the viewer's time zone are the browser's: the server renders in its own zone
+  // (UTC in production), so both lines wait for hydration or a visitor elsewhere gets React
+  // error #418 (hydration mismatch) on every calendar load.
+  const hydrated = useHydrated();
+  const title = hydrated ? formatMonth(month, f.locale) : PLACEHOLDER;
+  const zoneLine = hydrated
+    ? t('timeZone', { zone: zoneLabel(new Date(month.year, month.month, 15), f.locale) })
+    : PLACEHOLDER;
   const [moving, setMoving] = useState<Publication | null>(null);
   const { move, pending } = useReschedule(() => void mutate());
   const { retry, retrying } = useRetryPublication(() => void mutate());
@@ -142,9 +153,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
       </div>
 
       <MonthAheadSummary upcoming={summary.data?.upcoming ?? undefined} />
-      <p className="mb-3 text-xs text-muted-foreground">
-        {t('timeZone', { zone: zoneLabel(new Date(month.year, month.month, 15), f.locale) })}
-      </p>
+      <p className="mb-3 text-xs text-muted-foreground">{zoneLine}</p>
       {error && <ErrorState error={error} onRetry={() => void mutate()} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-[32rem] rounded-xl" />}
       {data && (

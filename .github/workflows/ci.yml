@@ -326,6 +326,11 @@ jobs:
     env:
       DATABASE_URL: postgresql://studio:studio@localhost:5432/postmind?schema=studio
       REDIS_URL: redis://localhost:6379/3
+      # The specs seed library references straight into Postgres, which never bumps the library
+      # read cache (20.15), so a spec that opened /library first left an empty browse page cached
+      # for 15 minutes and library-templates "browse" failed intermittently. The cache has its own
+      # unit tests (src/lib/studio/library/cache.test.ts); e2e reads the database directly.
+      STUDIO_LIBRARY_CACHE: 'off'
       STUDIO_MODE: standalone
       APP_URL: http://127.0.0.1:3102
       BETTER_AUTH_URL: http://127.0.0.1:3102
