@@ -9,7 +9,10 @@ import type { SpokenWord } from '../overlays/word-timing';
 // Fit, after TTS (generate-asset.ts):
 //   1. measure the narration: the end of the last spoken word (13.6 word timing), else the
 //      file's probed duration;
-//   2. within +5% of the shot → nothing to do;
+//   2. ends inside the shot (FIT_SLACK_SEC of rounding allowed) → nothing to do. The ±5% is the
+//      pace target, not a licence to overrun: the composer stops the voice clip at the shot end,
+//      so a 3.09 s line in a 3.00 s shot lost its last word and failed audio_sync (2026-10-04);
+//      any longer narration goes to steps 3–5;
 //   3. a shot whose picture can simply stay on screen longer (still image, text card, motion
 //      card) is extended, while the script stays inside the ±2 s duration check;
 //   4. otherwise the narration is regenerated faster with ElevenLabs voice_settings.speed
@@ -18,6 +21,11 @@ import type { SpokenWord } from '../overlays/word-timing';
 //      when there is no word timing) and the composer stops the voice clip there.
 
 export const FIT_TOLERANCE = 0.05;
+/**
+ * How far narration may run past its shot and still count as fitting: the same margin
+ * quality-sync.ts allows between the narration and its voice clip on the timeline.
+ */
+export const FIT_SLACK_SEC = 0.05;
 /** ElevenLabs' documented maximum speaking rate (providers/elevenlabs.ts MAX_SPEED). */
 export const MAX_FIT_SPEED = 1.2;
 /** Head-room kept after the last word when a shot is extended or narration trimmed. */
@@ -74,7 +82,7 @@ export function decideFit(input: {
 }): FitDecision {
   const { voiceSec, shotSec } = input;
   if (voiceSec === null) return { strategy: 'unmeasured', voiceSec, shotSec };
-  if (voiceSec <= shotSec * (1 + FIT_TOLERANCE)) return { strategy: 'fits', voiceSec, shotSec };
+  if (voiceSec <= shotSec + FIT_SLACK_SEC) return { strategy: 'fits', voiceSec, shotSec };
   const newShotSec = Math.ceil((voiceSec + TAIL_SEC) * 10) / 10;
   if (EXTENDABLE_TREATMENTS.has(input.treatment) && newShotSec - shotSec <= input.extendBudgetSec)
     return { strategy: 'extend', voiceSec, shotSec, newShotSec };
