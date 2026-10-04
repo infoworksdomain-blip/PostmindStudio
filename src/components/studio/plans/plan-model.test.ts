@@ -57,7 +57,7 @@ describe('20.9 plan model', () => {
       item('b', '2026-10-01T09:00:00Z', { kind: 'SLIDESHOW', title: '' }),
       item('c', '2026-10-01T10:00:00Z', { status: 'REMOVED' }),
     ];
-    expect(kindCounts(items)).toEqual({ VIDEO: 2, SLIDESHOW: 1 });
+    expect(kindCounts(items)).toEqual({ VIDEO: 2, SLIDESHOW: 1, CAROUSEL: 0 });
     expect(writtenCount(items)).toBe(2);
     expect(liveItems(items).map((i) => i.id)).toEqual(['a', 'b']);
   });

@@ -473,7 +473,8 @@
       "heading": {
         "BRIEF": "De quoi parle la vidéo ?",
         "SLIDESHOW": "De quoi parle le diaporama ?",
-        "UPLOAD": "Importez votre vidéo"
+        "UPLOAD": "Importez votre vidéo",
+        "CAROUSEL": "De quoi parle le carrousel ?"
       },
       "uploadChoose": "Choisir une vidéo",
       "uploadReplace": "Remplacer la vidéo",
@@ -490,7 +491,8 @@
       "sources": {
         "BRIEF": "Vidéo",
         "SLIDESHOW": "Diaporama",
-        "UPLOAD": "Importer une vidéo"
+        "UPLOAD": "Importer une vidéo",
+        "CAROUSEL": "Carrousel (cartes de posts)"
       },
       "templatedNote": "Les plateformes et la durée sont définies par le modèle. Le texte ci-dessus est facultatif : il précise la trame du modèle.",
       "noBusiness": {
@@ -502,11 +504,14 @@
         "slideshowDrafted": "Diaporama préparé — vérifiez les diapositives, puis lancez la génération.",
         "generatingUpload": "Génération en cours — Studio sous-titre votre vidéo.",
         "generatingScript": "Génération en cours — Studio rédige le script.",
-        "draftNotStarted": "Enregistré comme brouillon, mais la génération n’a pas démarré : {error}"
+        "draftNotStarted": "Enregistré comme brouillon, mais la génération n’a pas démarré : {error}",
+        "generatingCarousel": "Rédaction de votre carrousel…"
       },
       "planMonth": "Ou planifiez tout un mois de vidéos et de diaporamas",
       "summaryNoAccounts": "aucun compte connecté : enregistré pour relecture",
-      "summaryForReview": "enregistré pour relecture"
+      "summaryForReview": "enregistré pour relecture",
+      "createCarousel": "Créer le carrousel",
+      "summaryCarousel": "{count} posts · cartes {theme, select, dark {sombres} other {claires}}"
     },
     "problems": {
       "businessRequired": "Choisissez d’abord une entreprise.",
@@ -521,7 +526,9 @@
       "budgetRange": "Le budget doit être compris entre {min} et {max}.",
       "scheduleTooFar": "Programmez au maximum {days, number} jours à l’avance.",
       "autoPublishNoMatchingAccount": "Aucun de vos comptes connectés ne publie sur les plateformes choisies. Ajoutez {platforms}, connectez un autre compte ou désactivez la publication automatique.",
-      "scheduleNeedsAccount": "Une publication programmée part automatiquement : il faut donc un compte connecté pour l’une des plateformes choisies. Connectez-en un ou effacez la programmation."
+      "scheduleNeedsAccount": "Une publication programmée part automatiquement : il faut donc un compte connecté pour l’une des plateformes choisies. Connectez-en un ou effacez la programmation.",
+      "carouselBriefRequired": "Décrivez le carrousel ou collez un fil.",
+      "carouselThreadTooLong": "Le fil collé est trop long."
     },
     "options": {
       "platforms": "Plateformes",
@@ -634,6 +641,20 @@
         "empty": "Le fichier est vide.",
         "tooLarge": "Les vidéos ne doivent pas dépasser {max, number} Mo."
       }
+    },
+    "carousel": {
+      "legend": "Carrousel",
+      "intro": "Des cartes de posts au nom et avec le logo de votre entreprise, un post par diapositive (deux posts courts peuvent partager une diapositive). Studio rédige le fil à partir de votre description, ou utilise celui que vous collez.",
+      "theme": "Apparence",
+      "themes": {
+        "light": "Claire",
+        "dark": "Sombre"
+      },
+      "posts": "Nombre de posts",
+      "postsValue": "{count} posts",
+      "thread": "Votre fil (facultatif)",
+      "threadPlaceholder": "Collez un fil : séparez les posts par une ligne ---, ou numérotez-les 1/, 2/, 3/…",
+      "threadHint": "Laissez vide et Studio rédige le fil. Le premier post est l’accroche, le dernier l’appel à l’action."
     }
   },
   "review": {
@@ -649,7 +670,8 @@
         "LIBRARY_REFERENCE": "À partir d’une vidéo de référence",
         "POSTMIND_CONTENT": "À partir de contenu PostMind",
         "TEMPLATE": "À partir d’un modèle",
-        "UPLOAD": "Votre vidéo"
+        "UPLOAD": "Votre vidéo",
+        "CAROUSEL": "Carrousel"
       },
       "loading": "Chargement du projet",
       "spent": "{amount} dépensés",
@@ -662,7 +684,8 @@
         "shots": "Plans",
         "overlays": "Incrustations",
         "script": "Script",
-        "publish": "Publier"
+        "publish": "Publier",
+        "carousel": "Carrousel"
       },
       "variantsWorking": "Les variantes apparaissent ici à mesure que le rendu de chaque format se termine.",
       "variantsNone": "Aucune variante rendue pour le moment.",
@@ -681,7 +704,8 @@
       "generate": "Générer",
       "generateAgain": "Générer à nouveau",
       "started": "Génération lancée.",
-      "cancelled": "Annulé — {amount} ont été dépensés pour cette exécution."
+      "cancelled": "Annulé — {amount} ont été dépensés pour cette exécution.",
+      "cancelledNoCost": "Annulé."
     },
     "approval": {
       "aria": "Validation",
@@ -2655,7 +2679,8 @@
         "library": "Bibliothèque de vidéos de référence",
         "overlays": "Textes en surimpression",
         "slideshow": "Diaporamas",
-        "imageLibrary": "Bibliothèque d’images"
+        "imageLibrary": "Bibliothèque d’images",
+        "carousels": "Carrousels"
       },
       "offByEnvironment": "Désactivée par l’environnement (FEATURE_*_ENABLED)",
       "turnOffGlobally": "Désactiver globalement",
@@ -3725,7 +3750,9 @@
       "scan_pages_skipped": "{count, plural, one {# page n’a pas pu être lue et a été ignorée.} many {# pages n’ont pas pu être lues et ont été ignorées.} other {# pages n’ont pas pu être lues et ont été ignorées.}}",
       "scan_images_skipped": "{count, plural, one {# image de votre site n’a pas pu être téléchargée et a été ignorée.} many {# images de votre site n’ont pas pu être téléchargées et ont été ignorées.} other {# images de votre site n’ont pas pu être téléchargées et ont été ignorées.}}",
       "stock_not_configured": "Les photos de banque d’images n’ont pas pu être ajoutées : aucun service de photos n’est encore configuré.",
-      "stock_unavailable": "Certaines photos de banque d’images n’ont pas pu être ajoutées cette fois. Utilisez « Actualiser les photos » dans la bibliothèque d’images pour réessayer."
+      "stock_unavailable": "Certaines photos de banque d’images n’ont pas pu être ajoutées cette fois. Utilisez « Actualiser les photos » dans la bibliothèque d’images pour réessayer.",
+      "carousel_incomplete": "Le carrousel n’a pas pu être créé : il n’a aucun post.",
+      "carousel_render_error": "Le dessin des diapositives du carrousel a échoué."
     },
     "classes": {
       "rate_limited": "trop de requêtes",
@@ -5172,7 +5199,8 @@
     },
     "kind": {
       "VIDEO": "Vidéo",
-      "SLIDESHOW": "Diaporama"
+      "SLIDESHOW": "Diaporama",
+      "CAROUSEL": "Carrousel"
     },
     "calendarDay": {
       "new_year": "Jour de l’An",
@@ -5357,6 +5385,108 @@
       "open": "Légende",
       "openAria": "Légende et hashtags de {title}",
       "close": "Fermer"
+    }
+  },
+  "carousel": {
+    "editor": {
+      "loading": "Chargement du carrousel…",
+      "postsTitle": "Posts",
+      "postsDescription": "Chaque post devient une carte. Le premier est l’accroche, le dernier l’appel à l’action.",
+      "readOnly": "Ce carrousel ne peut pas être modifié pour l’instant (il est en cours de création, approuvé ou publié). Dupliquez le projet pour le changer.",
+      "displayName": "Nom sur les cartes",
+      "handle": "Identifiant",
+      "theme": "Apparence",
+      "themes": {
+        "light": "Claire",
+        "dark": "Sombre"
+      },
+      "noPosts": "Studio rédige les posts. Ils apparaîtront ici dès qu’ils seront prêts.",
+      "postLabel": "Post {n}",
+      "roles": {
+        "hook": "Accroche",
+        "body": "Post",
+        "cta": "Appel à l’action"
+      },
+      "onSlides": "diapositive {slides}",
+      "moveUp": "Monter le post {n}",
+      "moveDown": "Descendre le post {n}",
+      "remove": "Supprimer le post {n}",
+      "characters": "{count} / {max} caractères",
+      "pictureChosen": "Image choisie",
+      "hookNeedsPicture": "L’accroche fonctionne mieux avec une image.",
+      "noPicture": "Pas d’image",
+      "changePicture": "Changer d’image",
+      "addPicture": "Ajouter une image",
+      "removePicture": "Retirer l’image",
+      "waterfall": "Ligne la plus courte d’abord",
+      "rewritePost": "Réécrire avec l’IA",
+      "pictureFor": "Image du post {n}",
+      "addPost": "Ajouter un post",
+      "rewriteThread": "Réécrire tout le fil",
+      "rewritesLeft": "{count, plural, =0 {Plus de réécriture IA} one {# réécriture IA restante} many {# réécritures IA restantes} other {# réécritures IA restantes}}",
+      "save": "Enregistrer",
+      "saveAndRender": "Enregistrer et refaire le rendu",
+      "renderAgain": "Refaire le rendu",
+      "downloadAll": "Télécharger toutes les diapositives (ZIP)",
+      "unsavedNote": "Enregistrez et refaites le rendu pour mettre à jour les diapositives publiées.",
+      "saved": "Carrousel enregistré.",
+      "rendering": "Rendu des diapositives…",
+      "postRewritten": "Post réécrit.",
+      "threadRewritten": "Fil réécrit."
+    },
+    "preview": {
+      "title": "Aperçu",
+      "description": "Exactement l’aspect des diapositives. Il se met à jour pendant la saisie.",
+      "slideAlt": "Diapositive {n} sur {total}",
+      "slideCaption": "Diapositive {n} sur {total} · {kind, select, pair {deux posts} other {un post}}",
+      "rendering": "Dessin de l’aperçu…",
+      "empty": "Écrivez un post pour voir l’aperçu.",
+      "breakdown": "Diapositives",
+      "selectSlide": "Afficher la diapositive {n}",
+      "overTen": "Instagram accepte 10 diapositives au maximum. Ce carrousel en a plus, il ne peut donc pas aller sur Instagram.",
+      "removedCharacters": "{count, plural, one {# émoji ou symbole n’est pas affiché sur les diapositives} many {# émojis ou symboles ne sont pas affichés sur les diapositives} other {# émojis ou symboles ne sont pas affichés sur les diapositives}} (la police des diapositives ne peut pas les dessiner).",
+      "issue": "Diapositive {n} : {problem}",
+      "issues": {
+        "text_outside_safe_area": "le texte touche le bord",
+        "content_overflow": "trop de contenu sur une diapositive",
+        "image_stretched": "une image est déformée",
+        "low_contrast": "le texte est difficile à lire",
+        "hook_without_image": "l’accroche n’a pas d’image"
+      },
+      "aiLabel": "Certaines images sont générées par IA : les posts sont donc signalés comme générés par IA quand le réseau le permet.",
+      "renderedTitle": "Diapositives rendues (PNG)",
+      "slidePng": "Diapositive {n}"
+    },
+    "publish": {
+      "noRender": "Faites d’abord le rendu du carrousel.",
+      "failed": "{network} : {error}",
+      "scheduled": "{count, plural, one {# post programmé} many {# posts programmés} other {# posts programmés}}",
+      "published": "{count, plural, one {# post en cours de publication} many {# posts en cours de publication} other {# posts en cours de publication}}",
+      "caption": "Légende",
+      "captionHint": "Chaque réseau reçoit ses propres hashtags.",
+      "schedule": "Publier le (facultatif)",
+      "scheduleErrors": {
+        "inPast": "Choisissez une heure dans le futur.",
+        "tooFar": "Choisissez une heure dans les 180 jours."
+      },
+      "scheduleButton": "{count, plural, one {Programmer # post} many {Programmer # posts} other {Programmer # posts}}",
+      "publishButton": "{count, plural, one {Publier # post} many {Publier # posts} other {Publier # posts}}",
+      "aiLabel": "Certaines images sont générées par IA : les posts sont donc signalés comme générés par IA quand le réseau le permet.",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "linkedin": "LinkedIn",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "x": "X"
+      },
+      "notConnected": "Aucun compte connecté. <link>En connecter un</link>",
+      "unsupported": {
+        "too_many_slides": "Accepte {max} diapositives au maximum. Retirez des posts pour publier ici.",
+        "too_few_slides": "Nécessite au moins {max} diapositives.",
+        "youtube_video_only": "YouTube ne publie que des vidéos. Téléchargez plutôt les diapositives.",
+        "x_not_built": "Studio ne peut pas encore publier de carrousels sur X. Téléchargez plutôt les diapositives."
+      }
     }
   }
 }

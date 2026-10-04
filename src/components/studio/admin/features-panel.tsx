@@ -17,7 +17,13 @@ import { ReasonDialog } from './reason-dialog';
 // seconds via SystemFlag toggle". GET|PUT /admin/features. Other processes pick a change up
 // within propagationSec (30 s flag cache).
 
-export const FEATURE_NAMES = ['library', 'overlays', 'slideshow', 'image-library'] as const;
+export const FEATURE_NAMES = [
+  'library',
+  'overlays',
+  'slideshow',
+  'image-library',
+  'carousels',
+] as const;
 export type FeatureName = (typeof FEATURE_NAMES)[number];
 
 /** Feature id → catalogue key under admin.features.names. */
@@ -26,6 +32,7 @@ const FEATURE_KEY = {
   overlays: 'overlays',
   slideshow: 'slideshow',
   'image-library': 'imageLibrary',
+  carousels: 'carousels',
 } as const satisfies Record<FeatureName, string>;
 
 export interface FeaturesResponse {

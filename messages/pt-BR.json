@@ -473,7 +473,8 @@
       "heading": {
         "BRIEF": "Sobre o que é o vídeo?",
         "SLIDESHOW": "Sobre o que é a apresentação de slides?",
-        "UPLOAD": "Envie seu vídeo"
+        "UPLOAD": "Envie seu vídeo",
+        "CAROUSEL": "Sobre o que é o carrossel?"
       },
       "uploadChoose": "Escolher um vídeo",
       "uploadReplace": "Substituir o vídeo",
@@ -490,7 +491,8 @@
       "sources": {
         "BRIEF": "Vídeo",
         "SLIDESHOW": "Apresentação de slides",
-        "UPLOAD": "Enviar um vídeo"
+        "UPLOAD": "Enviar um vídeo",
+        "CAROUSEL": "Carrossel (cartões de post)"
       },
       "templatedNote": "As plataformas e a duração vêm do modelo. O texto acima é opcional — ele acrescenta detalhes ao roteiro do modelo.",
       "noBusiness": {
@@ -502,11 +504,14 @@
         "slideshowDrafted": "Rascunho da apresentação criado — confira os slides e depois gere.",
         "generatingUpload": "Gerando — o Studio está legendando seu vídeo.",
         "generatingScript": "Gerando — o Studio está escrevendo o roteiro.",
-        "draftNotStarted": "Salvo como rascunho, mas a geração não começou: {error}"
+        "draftNotStarted": "Salvo como rascunho, mas a geração não começou: {error}",
+        "generatingCarousel": "Escrevendo seu carrossel…"
       },
       "planMonth": "Ou planeje um mês inteiro de vídeos e apresentações",
       "summaryNoAccounts": "nenhuma conta conectada: salvo para revisão",
-      "summaryForReview": "salvo para revisão"
+      "summaryForReview": "salvo para revisão",
+      "createCarousel": "Criar carrossel",
+      "summaryCarousel": "{count} posts · cartões {theme, select, dark {escuros} other {claros}}"
     },
     "problems": {
       "businessRequired": "Escolha uma empresa primeiro.",
@@ -521,7 +526,9 @@
       "budgetRange": "O orçamento deve ficar entre {min} e {max}.",
       "scheduleTooFar": "Agende com no máximo {days, number} dias de antecedência.",
       "autoPublishNoMatchingAccount": "Nenhuma das suas contas conectadas publica nas plataformas escolhidas. Adicione {platforms}, conecte outra conta ou desative a publicação automática.",
-      "scheduleNeedsAccount": "Uma publicação agendada sai automaticamente, então precisa de uma conta conectada para uma das plataformas escolhidas. Conecte uma ou remova o agendamento."
+      "scheduleNeedsAccount": "Uma publicação agendada sai automaticamente, então precisa de uma conta conectada para uma das plataformas escolhidas. Conecte uma ou remova o agendamento.",
+      "carouselBriefRequired": "Descreva o carrossel ou cole uma thread.",
+      "carouselThreadTooLong": "A thread colada é longa demais."
     },
     "options": {
       "platforms": "Plataformas",
@@ -634,6 +641,20 @@
         "empty": "O arquivo está vazio.",
         "tooLarge": "Os vídeos podem ter no máximo {max, number} MB."
       }
+    },
+    "carousel": {
+      "legend": "Carrossel",
+      "intro": "Cartões de post com o nome e o logo da sua empresa, um post por slide (dois posts curtos podem dividir um slide). O Studio escreve a thread a partir da sua descrição ou usa a que você colar.",
+      "theme": "Visual",
+      "themes": {
+        "light": "Claro",
+        "dark": "Escuro"
+      },
+      "posts": "Número de posts",
+      "postsValue": "{count} posts",
+      "thread": "Sua thread (opcional)",
+      "threadPlaceholder": "Cole uma thread: separe os posts com uma linha ---, ou numere-os 1/, 2/, 3/…",
+      "threadHint": "Deixe vazio e o Studio escreve a thread. O primeiro post é o gancho; o último, a chamada para ação."
     }
   },
   "review": {
@@ -649,7 +670,8 @@
         "LIBRARY_REFERENCE": "A partir de um vídeo de referência",
         "POSTMIND_CONTENT": "A partir de conteúdo do PostMind",
         "TEMPLATE": "A partir de um modelo",
-        "UPLOAD": "Seu vídeo"
+        "UPLOAD": "Seu vídeo",
+        "CAROUSEL": "Carrossel"
       },
       "loading": "Carregando projeto",
       "spent": "{amount} gastos",
@@ -662,7 +684,8 @@
         "shots": "Cenas",
         "overlays": "Sobreposições",
         "script": "Roteiro",
-        "publish": "Publicar"
+        "publish": "Publicar",
+        "carousel": "Carrossel"
       },
       "variantsWorking": "As variantes aparecem aqui à medida que cada formato termina de renderizar.",
       "variantsNone": "Nenhuma variante renderizada ainda.",
@@ -681,7 +704,8 @@
       "generate": "Gerar",
       "generateAgain": "Gerar de novo",
       "started": "Geração iniciada.",
-      "cancelled": "Cancelado — {amount} foram gastos nesta execução."
+      "cancelled": "Cancelado — {amount} foram gastos nesta execução.",
+      "cancelledNoCost": "Cancelado."
     },
     "approval": {
       "aria": "Aprovação",
@@ -2655,7 +2679,8 @@
         "library": "Biblioteca de vídeos de referência",
         "overlays": "Textos sobrepostos",
         "slideshow": "Apresentações de slides",
-        "imageLibrary": "Biblioteca de imagens"
+        "imageLibrary": "Biblioteca de imagens",
+        "carousels": "Carrosséis"
       },
       "offByEnvironment": "Desativado pelo ambiente (FEATURE_*_ENABLED)",
       "turnOffGlobally": "Desativar globalmente",
@@ -3725,7 +3750,9 @@
       "scan_pages_skipped": "{count, plural, one {Não foi possível ler # página e ela foi ignorada.} many {Não foi possível ler # páginas e elas foram ignoradas.} other {Não foi possível ler # páginas e elas foram ignoradas.}}",
       "scan_images_skipped": "{count, plural, one {Não foi possível baixar # imagem do seu site e ela foi ignorada.} many {Não foi possível baixar # imagens do seu site e elas foram ignoradas.} other {Não foi possível baixar # imagens do seu site e elas foram ignoradas.}}",
       "stock_not_configured": "Não foi possível adicionar fotos de banco de imagens: ainda não há nenhum serviço de fotos configurado.",
-      "stock_unavailable": "Desta vez não foi possível adicionar algumas fotos de banco de imagens. Use «Atualizar fotos» na biblioteca de imagens para tentar de novo."
+      "stock_unavailable": "Desta vez não foi possível adicionar algumas fotos de banco de imagens. Use «Atualizar fotos» na biblioteca de imagens para tentar de novo.",
+      "carousel_incomplete": "Não foi possível criar o carrossel: ele não tem posts.",
+      "carousel_render_error": "Falha ao desenhar os slides do carrossel."
     },
     "classes": {
       "rate_limited": "solicitações demais",
@@ -5172,7 +5199,8 @@
     },
     "kind": {
       "VIDEO": "Vídeo",
-      "SLIDESHOW": "Apresentação"
+      "SLIDESHOW": "Apresentação",
+      "CAROUSEL": "Carrossel"
     },
     "calendarDay": {
       "new_year": "Ano-Novo",
@@ -5357,6 +5385,108 @@
       "open": "Legenda",
       "openAria": "Legenda e hashtags de {title}",
       "close": "Fechar"
+    }
+  },
+  "carousel": {
+    "editor": {
+      "loading": "Carregando o carrossel…",
+      "postsTitle": "Posts",
+      "postsDescription": "Cada post vira um cartão. O primeiro é o gancho; o último, a chamada para ação.",
+      "readOnly": "Este carrossel não pode ser editado agora (está sendo criado, foi aprovado ou publicado). Duplique o projeto para alterá-lo.",
+      "displayName": "Nome nos cartões",
+      "handle": "Usuário",
+      "theme": "Visual",
+      "themes": {
+        "light": "Claro",
+        "dark": "Escuro"
+      },
+      "noPosts": "O Studio está escrevendo os posts. Eles aparecem aqui quando estiverem prontos.",
+      "postLabel": "Post {n}",
+      "roles": {
+        "hook": "Gancho",
+        "body": "Post",
+        "cta": "Chamada para ação"
+      },
+      "onSlides": "slide {slides}",
+      "moveUp": "Mover o post {n} para cima",
+      "moveDown": "Mover o post {n} para baixo",
+      "remove": "Excluir o post {n}",
+      "characters": "{count} / {max} caracteres",
+      "pictureChosen": "Imagem escolhida",
+      "hookNeedsPicture": "O gancho funciona melhor com uma imagem.",
+      "noPicture": "Sem imagem",
+      "changePicture": "Trocar imagem",
+      "addPicture": "Adicionar imagem",
+      "removePicture": "Remover imagem",
+      "waterfall": "Linha mais curta primeiro",
+      "rewritePost": "Reescrever com IA",
+      "pictureFor": "Imagem do post {n}",
+      "addPost": "Adicionar um post",
+      "rewriteThread": "Reescrever a thread toda",
+      "rewritesLeft": "{count, plural, =0 {Nenhuma reescrita com IA restante} one {# reescrita com IA restante} other {# reescritas com IA restantes}}",
+      "save": "Salvar",
+      "saveAndRender": "Salvar e renderizar de novo",
+      "renderAgain": "Renderizar de novo",
+      "downloadAll": "Baixar todos os slides (ZIP)",
+      "unsavedNote": "Salve e renderize de novo para atualizar os slides que você publica.",
+      "saved": "Carrossel salvo.",
+      "rendering": "Renderizando os slides…",
+      "postRewritten": "Post reescrito.",
+      "threadRewritten": "Thread reescrita."
+    },
+    "preview": {
+      "title": "Prévia",
+      "description": "Exatamente como os slides vão ficar. Atualiza enquanto você digita.",
+      "slideAlt": "Slide {n} de {total}",
+      "slideCaption": "Slide {n} de {total} · {kind, select, pair {dois posts} other {um post}}",
+      "rendering": "Desenhando a prévia…",
+      "empty": "Escreva um post para ver a prévia.",
+      "breakdown": "Slides",
+      "selectSlide": "Mostrar o slide {n}",
+      "overTen": "O Instagram aceita no máximo 10 slides. Este carrossel tem mais, então não pode ir para o Instagram.",
+      "removedCharacters": "{count, plural, one {# emoji ou símbolo não aparece nos slides} other {# emojis ou símbolos não aparecem nos slides}} (a fonte dos slides não consegue desenhá-los).",
+      "issue": "Slide {n}: {problem}",
+      "issues": {
+        "text_outside_safe_area": "o texto encosta na borda",
+        "content_overflow": "conteúdo demais em um slide",
+        "image_stretched": "uma imagem está distorcida",
+        "low_contrast": "o texto está difícil de ler",
+        "hook_without_image": "o gancho não tem imagem"
+      },
+      "aiLabel": "Algumas imagens são geradas por IA, então os posts são marcados como gerados por IA onde a rede permite.",
+      "renderedTitle": "Slides renderizados (PNG)",
+      "slidePng": "Slide {n}"
+    },
+    "publish": {
+      "noRender": "Renderize o carrossel primeiro.",
+      "failed": "{network}: {error}",
+      "scheduled": "{count, plural, one {# post agendado} other {# posts agendados}}",
+      "published": "{count, plural, one {# post sendo publicado} other {# posts sendo publicados}}",
+      "caption": "Legenda",
+      "captionHint": "Cada rede recebe as próprias hashtags.",
+      "schedule": "Publicar em (opcional)",
+      "scheduleErrors": {
+        "inPast": "Escolha um horário no futuro.",
+        "tooFar": "Escolha um horário dentro de 180 dias."
+      },
+      "scheduleButton": "{count, plural, one {Agendar # post} other {Agendar # posts}}",
+      "publishButton": "{count, plural, one {Publicar # post} other {Publicar # posts}}",
+      "aiLabel": "Algumas imagens são geradas por IA, então os posts são marcados como gerados por IA onde a rede permite.",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "linkedin": "LinkedIn",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "x": "X"
+      },
+      "notConnected": "Nenhuma conta conectada. <link>Conecte uma</link>",
+      "unsupported": {
+        "too_many_slides": "Aceita no máximo {max} slides. Remova posts para publicar aqui.",
+        "too_few_slides": "Precisa de pelo menos {max} slides.",
+        "youtube_video_only": "O YouTube publica apenas vídeos. Baixe os slides.",
+        "x_not_built": "O Studio ainda não publica carrosséis no X. Baixe os slides."
+      }
     }
   }
 }

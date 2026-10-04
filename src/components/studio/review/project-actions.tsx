@@ -45,7 +45,12 @@ export function ProjectActions({
     const result = await run<{ costIncurredPence: number }>('cancel', `/projects/${id}/cancel`);
     if (result) {
       onChanged();
-      toast.success(t('cancelled', { amount: f.pence(result.costIncurredPence) }));
+      // 21.6: carousels never show a £ cost.
+      toast.success(
+        project.sourceType === 'CAROUSEL'
+          ? t('cancelledNoCost')
+          : t('cancelled', { amount: f.pence(result.costIncurredPence) }),
+      );
     }
   }
 

@@ -473,7 +473,8 @@
       "heading": {
         "BRIEF": "Worum geht es in dem Video?",
         "SLIDESHOW": "Worum geht es in der Diashow?",
-        "UPLOAD": "Laden Sie Ihr Video hoch"
+        "UPLOAD": "Laden Sie Ihr Video hoch",
+        "CAROUSEL": "Worum geht es im Karussell?"
       },
       "uploadChoose": "Video auswählen",
       "uploadReplace": "Video ersetzen",
@@ -490,7 +491,8 @@
       "sources": {
         "BRIEF": "Video",
         "SLIDESHOW": "Diashow",
-        "UPLOAD": "Video hochladen"
+        "UPLOAD": "Video hochladen",
+        "CAROUSEL": "Karussell (Post-Karten)"
       },
       "templatedNote": "Plattformen und Länge werden von der Vorlage vorgegeben. Ihr Text oben ist optional – er ergänzt die Gliederung der Vorlage um Details.",
       "noBusiness": {
@@ -502,11 +504,14 @@
         "slideshowDrafted": "Diashow entworfen – prüfen Sie die Folien und starten Sie dann die Generierung.",
         "generatingUpload": "Wird generiert – Studio untertitelt Ihr Video.",
         "generatingScript": "Wird generiert – Studio schreibt das Skript.",
-        "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}"
+        "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}",
+        "generatingCarousel": "Dein Karussell wird geschrieben …"
       },
       "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows",
       "summaryNoAccounts": "keine verbundenen Konten: zur Prüfung gespeichert",
-      "summaryForReview": "zur Prüfung gespeichert"
+      "summaryForReview": "zur Prüfung gespeichert",
+      "createCarousel": "Karussell erstellen",
+      "summaryCarousel": "{count} Posts · {theme, select, dark {dunkle} other {helle}} Karten"
     },
     "problems": {
       "businessRequired": "Wählen Sie zuerst ein Unternehmen aus.",
@@ -521,7 +526,9 @@
       "budgetRange": "Das Budget muss zwischen {min} und {max} liegen.",
       "scheduleTooFar": "Planen Sie höchstens {days, number} Tage im Voraus.",
       "autoPublishNoMatchingAccount": "Keines Ihrer verbundenen Konten postet auf den gewählten Plattformen. Fügen Sie {platforms} hinzu, verbinden Sie ein weiteres Konto oder deaktivieren Sie die automatische Veröffentlichung.",
-      "scheduleNeedsAccount": "Ein geplanter Beitrag wird automatisch veröffentlicht und braucht daher ein verbundenes Konto für eine der gewählten Plattformen. Verbinden Sie eines oder entfernen Sie den Termin."
+      "scheduleNeedsAccount": "Ein geplanter Beitrag wird automatisch veröffentlicht und braucht daher ein verbundenes Konto für eine der gewählten Plattformen. Verbinden Sie eines oder entfernen Sie den Termin.",
+      "carouselBriefRequired": "Beschreibe das Karussell oder füge einen Thread ein.",
+      "carouselThreadTooLong": "Der eingefügte Thread ist zu lang."
     },
     "options": {
       "platforms": "Plattformen",
@@ -634,6 +641,20 @@
         "empty": "Die Datei ist leer.",
         "tooLarge": "Videos dürfen höchstens {max, number} MB groß sein."
       }
+    },
+    "carousel": {
+      "legend": "Karussell",
+      "intro": "Post-Karten mit Namen und Logo deines Unternehmens, ein Post pro Folie (zwei kurze Posts können sich eine Folie teilen). Studio schreibt den Thread aus deiner Beschreibung oder nutzt einen, den du einfügst.",
+      "theme": "Look",
+      "themes": {
+        "light": "Hell",
+        "dark": "Dunkel"
+      },
+      "posts": "Anzahl der Posts",
+      "postsValue": "{count} Posts",
+      "thread": "Dein Thread (optional)",
+      "threadPlaceholder": "Thread einfügen: Posts mit einer Zeile --- trennen oder als 1/, 2/, 3/ … nummerieren",
+      "threadHint": "Leer lassen, dann schreibt Studio den Thread. Der erste Post ist der Hook, der letzte der Call to Action."
     }
   },
   "review": {
@@ -649,7 +670,8 @@
         "LIBRARY_REFERENCE": "Aus einem Referenzvideo",
         "POSTMIND_CONTENT": "Aus PostMind-Inhalten",
         "TEMPLATE": "Aus einer Vorlage",
-        "UPLOAD": "Ihr Video"
+        "UPLOAD": "Ihr Video",
+        "CAROUSEL": "Karussell"
       },
       "loading": "Projekt wird geladen",
       "spent": "{amount} ausgegeben",
@@ -662,7 +684,8 @@
         "shots": "Szenen",
         "overlays": "Einblendungen",
         "script": "Skript",
-        "publish": "Veröffentlichen"
+        "publish": "Veröffentlichen",
+        "carousel": "Karussell"
       },
       "variantsWorking": "Varianten erscheinen hier, sobald das Rendering des jeweiligen Formats abgeschlossen ist.",
       "variantsNone": "Noch keine Varianten gerendert.",
@@ -681,7 +704,8 @@
       "generate": "Generieren",
       "generateAgain": "Erneut generieren",
       "started": "Generierung gestartet.",
-      "cancelled": "Abgebrochen – für diesen Durchlauf wurden {amount} ausgegeben."
+      "cancelled": "Abgebrochen – für diesen Durchlauf wurden {amount} ausgegeben.",
+      "cancelledNoCost": "Abgebrochen."
     },
     "approval": {
       "aria": "Freigabe",
@@ -2655,7 +2679,8 @@
         "library": "Referenzvideo-Bibliothek",
         "overlays": "Texteinblendungen",
         "slideshow": "Diashows",
-        "imageLibrary": "Bildbibliothek"
+        "imageLibrary": "Bildbibliothek",
+        "carousels": "Karussells"
       },
       "offByEnvironment": "Durch Umgebung deaktiviert (FEATURE_*_ENABLED)",
       "turnOffGlobally": "Global ausschalten",
@@ -3725,7 +3750,9 @@
       "scan_pages_skipped": "{count, plural, one {# Seite konnte nicht gelesen werden und wurde übersprungen.} other {# Seiten konnten nicht gelesen werden und wurden übersprungen.}}",
       "scan_images_skipped": "{count, plural, one {# Bild Ihrer Website konnte nicht heruntergeladen werden und wurde übersprungen.} other {# Bilder Ihrer Website konnten nicht heruntergeladen werden und wurden übersprungen.}}",
       "stock_not_configured": "Stockfotos konnten nicht hinzugefügt werden: Es ist noch kein Stockfoto-Dienst eingerichtet.",
-      "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut."
+      "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut.",
+      "carousel_incomplete": "Das Karussell konnte nicht erstellt werden: Es hat keine Posts.",
+      "carousel_render_error": "Das Zeichnen der Karussell-Folien ist fehlgeschlagen."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",
@@ -5172,7 +5199,8 @@
     },
     "kind": {
       "VIDEO": "Video",
-      "SLIDESHOW": "Diashow"
+      "SLIDESHOW": "Diashow",
+      "CAROUSEL": "Karussell"
     },
     "calendarDay": {
       "new_year": "Neujahr",
@@ -5357,6 +5385,108 @@
       "open": "Text",
       "openAria": "Text und Hashtags für {title}",
       "close": "Schließen"
+    }
+  },
+  "carousel": {
+    "editor": {
+      "loading": "Karussell wird geladen …",
+      "postsTitle": "Posts",
+      "postsDescription": "Jeder Post wird zu einer Karte. Der erste ist der Hook, der letzte der Call to Action.",
+      "readOnly": "Dieses Karussell kann gerade nicht bearbeitet werden (es wird erstellt, ist freigegeben oder veröffentlicht). Dupliziere das Projekt, um es zu ändern.",
+      "displayName": "Name auf den Karten",
+      "handle": "Handle",
+      "theme": "Look",
+      "themes": {
+        "light": "Hell",
+        "dark": "Dunkel"
+      },
+      "noPosts": "Studio schreibt die Posts. Sie erscheinen hier, sobald sie fertig sind.",
+      "postLabel": "Post {n}",
+      "roles": {
+        "hook": "Hook",
+        "body": "Post",
+        "cta": "Call to Action"
+      },
+      "onSlides": "Folie {slides}",
+      "moveUp": "Post {n} nach oben",
+      "moveDown": "Post {n} nach unten",
+      "remove": "Post {n} löschen",
+      "characters": "{count} / {max} Zeichen",
+      "pictureChosen": "Bild ausgewählt",
+      "hookNeedsPicture": "Der Hook wirkt mit einem Bild am besten.",
+      "noPicture": "Kein Bild",
+      "changePicture": "Bild ändern",
+      "addPicture": "Bild hinzufügen",
+      "removePicture": "Bild entfernen",
+      "waterfall": "Kürzeste Zeile zuerst",
+      "rewritePost": "Mit KI umschreiben",
+      "pictureFor": "Bild für Post {n}",
+      "addPost": "Post hinzufügen",
+      "rewriteThread": "Ganzen Thread umschreiben",
+      "rewritesLeft": "{count, plural, =0 {Keine KI-Umschreibungen mehr} one {Noch # KI-Umschreibung} other {Noch # KI-Umschreibungen}}",
+      "save": "Speichern",
+      "saveAndRender": "Speichern und neu rendern",
+      "renderAgain": "Neu rendern",
+      "downloadAll": "Alle Folien herunterladen (ZIP)",
+      "unsavedNote": "Speichere und rendere neu, damit die veröffentlichten Folien aktualisiert werden.",
+      "saved": "Karussell gespeichert.",
+      "rendering": "Folien werden gerendert …",
+      "postRewritten": "Post umgeschrieben.",
+      "threadRewritten": "Thread umgeschrieben."
+    },
+    "preview": {
+      "title": "Vorschau",
+      "description": "Genau so sehen die Folien aus. Die Vorschau aktualisiert sich beim Tippen.",
+      "slideAlt": "Folie {n} von {total}",
+      "slideCaption": "Folie {n} von {total} · {kind, select, pair {zwei Posts} other {ein Post}}",
+      "rendering": "Vorschau wird gezeichnet …",
+      "empty": "Schreibe einen Post, um die Vorschau zu sehen.",
+      "breakdown": "Folien",
+      "selectSlide": "Folie {n} anzeigen",
+      "overTen": "Instagram nimmt höchstens 10 Folien. Dieses Karussell hat mehr und kann daher nicht auf Instagram.",
+      "removedCharacters": "{count, plural, one {# Emoji oder Symbol wird auf den Folien nicht angezeigt} other {# Emojis oder Symbole werden auf den Folien nicht angezeigt}} (die Folienschrift kann sie nicht darstellen).",
+      "issue": "Folie {n}: {problem}",
+      "issues": {
+        "text_outside_safe_area": "Text reicht bis an den Rand",
+        "content_overflow": "zu viel auf einer Folie",
+        "image_stretched": "ein Bild ist verzerrt",
+        "low_contrast": "Text ist schwer lesbar",
+        "hook_without_image": "der Hook hat kein Bild"
+      },
+      "aiLabel": "Einige Bilder sind KI-generiert, daher werden die Posts als KI-generiert gekennzeichnet, wo das Netzwerk es erlaubt.",
+      "renderedTitle": "Gerenderte Folien (PNG)",
+      "slidePng": "Folie {n}"
+    },
+    "publish": {
+      "noRender": "Rendere das Karussell zuerst.",
+      "failed": "{network}: {error}",
+      "scheduled": "{count, plural, one {# Post geplant} other {# Posts geplant}}",
+      "published": "{count, plural, one {# Post wird veröffentlicht} other {# Posts werden veröffentlicht}}",
+      "caption": "Beschreibung",
+      "captionHint": "Jedes Netzwerk bekommt eigene Hashtags.",
+      "schedule": "Veröffentlichen am (optional)",
+      "scheduleErrors": {
+        "inPast": "Wähle einen Zeitpunkt in der Zukunft.",
+        "tooFar": "Wähle einen Zeitpunkt innerhalb von 180 Tagen."
+      },
+      "scheduleButton": "{count, plural, one {# Post planen} other {# Posts planen}}",
+      "publishButton": "{count, plural, one {# Post veröffentlichen} other {# Posts veröffentlichen}}",
+      "aiLabel": "Einige Bilder sind KI-generiert, daher werden die Posts als KI-generiert gekennzeichnet, wo das Netzwerk es erlaubt.",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "linkedin": "LinkedIn",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "x": "X"
+      },
+      "notConnected": "Kein Konto verbunden. <link>Eines verbinden</link>",
+      "unsupported": {
+        "too_many_slides": "Nimmt höchstens {max} Folien. Entferne Posts, um hier zu veröffentlichen.",
+        "too_few_slides": "Braucht mindestens {max} Folien.",
+        "youtube_video_only": "YouTube veröffentlicht nur Videos. Lade stattdessen die Folien herunter.",
+        "x_not_built": "Studio kann noch keine Karussells auf X posten. Lade stattdessen die Folien herunter."
+      }
     }
   }
 }

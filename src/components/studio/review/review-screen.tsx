@@ -14,6 +14,8 @@ import { FailureReason } from '../failure-reason';
 import { ErrorState, PageHeader, Section, StateBadge } from '../primitives';
 import { OverlayEditor } from '../overlays/overlay-editor';
 import { SlideshowBuilder } from '../slideshow/slideshow-builder';
+import { CarouselEditor } from '../carousel/carousel-editor';
+import { CarouselPublishPanel } from '../carousel/carousel-publish-panel';
 import { AutomationPanel } from './automation-panel';
 import { MusicStatus } from './music-status';
 import { SfxStatus } from './sfx-status';
@@ -52,12 +54,23 @@ const SOURCES = [
   'POSTMIND_CONTENT',
   'TEMPLATE',
   'UPLOAD',
+  'CAROUSEL',
 ] as const;
 type SourceKey = (typeof SOURCES)[number];
 const isSource = (s: string): s is SourceKey => (SOURCES as readonly string[]).includes(s);
 
-const TAB_KEYS = ['slides', 'variants', 'shots', 'overlays', 'script', 'publish'] as const;
+const TAB_KEYS = [
+  'slides',
+  'carousel',
+  'variants',
+  'shots',
+  'overlays',
+  'script',
+  'publish',
+] as const;
 type TabKey = (typeof TAB_KEYS)[number];
+/** 21.6: a carousel has its editor (with preview and downloads) and Publish. */
+const CAROUSEL_TABS: readonly TabKey[] = ['carousel', 'publish'];
 
 /** 13.1 / 13.2: renders made before the latest script or shot edits. */
 export function staleRenderIds(project: ProjectDetail): Set<string> {
@@ -66,9 +79,13 @@ export function staleRenderIds(project: ProjectDetail): Set<string> {
 }
 
 function tabsFor(project: ProjectDetail, label: (key: TabKey) => string): TabDef[] {
-  return TAB_KEYS.filter((key) => key !== 'slides' || project.sourceType === 'SLIDESHOW').map(
-    (key) => ({ key, label: label(key) }),
-  );
+  const keys =
+    project.sourceType === 'CAROUSEL'
+      ? CAROUSEL_TABS
+      : TAB_KEYS.filter(
+          (key) => key !== 'carousel' && (key !== 'slides' || project.sourceType === 'SLIDESHOW'),
+        );
+  return keys.map((key) => ({ key, label: label(key) }));
 }
 
 export function ReviewScreen({ projectId }: { projectId: string }) {
@@ -117,6 +134,7 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
   const active = tab && tabs.some((t) => t.key === tab) ? tab : (tabs[0]?.key ?? 'variants');
   const state = f.projectState(project.state);
   const working = ACTIVE_STATES.has(project.state);
+  const isCarousel = project.sourceType === 'CAROUSEL';
 
   return (
     <>
@@ -127,10 +145,13 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StateBadge {...state} />
-            <span className="tabular">
-              {t('spent', { amount: f.pence(project.costActualPence) })}
-            </span>
-            {project.costBudgetPence !== null && (
+            {/* 21.6: a carousel never shows a £ cost (operator 2026-10-04). */}
+            {!isCarousel && (
+              <span className="tabular">
+                {t('spent', { amount: f.pence(project.costActualPence) })}
+              </span>
+            )}
+            {!isCarousel && project.costBudgetPence !== null && (
               <span className="tabular">
                 {t('ofBudget', { amount: f.pence(project.costBudgetPence) })}
               </span>
@@ -158,7 +179,9 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
               <FailureReason reason={project.errorReason} />
             </p>
           )}
-        {isProjectBudgetPause(project) && <BudgetRaise project={project} onChanged={refresh} />}
+        {isProjectBudgetPause(project) && !isCarousel && (
+          <BudgetRaise project={project} onChanged={refresh} />
+        )}
         <AutoResumeNote project={project} onChanged={refresh} />
         <SafetyReviewNote project={project} />
         <FallbackNote project={project} />
@@ -168,12 +191,20 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
         <AutomationPanel project={project} onChanged={refresh} />
         <MusicStatus project={project} />
         <SfxStatus project={project} />
-        {project.renders.length > 0 && <ShareLinksPanel projectId={project.id} />}
+        {project.renders.length > 0 && !isCarousel && <ShareLinksPanel projectId={project.id} />}
         <div>
           <ReviewTabs tabs={tabs} active={active} onChange={setTab} />
           <TabPanel tab={active}>
             {active === 'slides' && (
               <SlideshowBuilder project={project} businessId={businessId} onChanged={refresh} />
+            )}
+            {active === 'carousel' && (
+              <CarouselEditor
+                projectId={project.id}
+                projectState={project.state}
+                businessId={businessId}
+                onChanged={refresh}
+              />
             )}
             {active === 'variants' &&
               (project.renders.length === 0 ? (
@@ -204,7 +235,15 @@ export function ReviewScreen({ projectId }: { projectId: string }) {
               <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
                 <Section title={t('publishTitle')} description={t('publishDescription')}>
                   {PUBLISHABLE.has(project.state) ? (
-                    <PublishPanel project={project} businessId={businessId} onChanged={refresh} />
+                    isCarousel ? (
+                      <CarouselPublishPanel
+                        project={project}
+                        businessId={businessId}
+                        onChanged={refresh}
+                      />
+                    ) : (
+                      <PublishPanel project={project} businessId={businessId} onChanged={refresh} />
+                    )
                   ) : (
                     <p className="text-sm text-muted-foreground">{t('approveFirst')}</p>
                   )}

@@ -16,6 +16,7 @@ const state = (patch: Partial<FeaturesResponse['features']> = {}): FeaturesRespo
       overlays: { global: true, environment: true, disabledFor: [] },
       slideshow: { global: true, environment: true, disabledFor: ['org_9'] },
       'image-library': { global: true, environment: false, disabledFor: [] },
+      carousels: { global: true, environment: true, disabledFor: [] },
       ...patch,
     },
   }) as FeaturesResponse;

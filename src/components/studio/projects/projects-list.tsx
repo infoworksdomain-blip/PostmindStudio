@@ -225,7 +225,8 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
           <StateBadge {...state} />
         </span>
         <span className="tabular hidden text-end text-sm text-muted-foreground md:block">
-          {f.pence(project.costActualPence)}
+          {/* 21.6: carousels never show a £ cost. */}
+          {project.sourceType === 'CAROUSEL' ? null : f.pence(project.costActualPence)}
         </span>
         <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
       </Link>
