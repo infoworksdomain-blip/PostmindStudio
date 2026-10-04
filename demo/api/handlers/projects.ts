@@ -27,6 +27,7 @@ import {
 import { publicationsForProject } from './publications-store';
 import { draftSlides, slidesByProject } from './slideshow-data';
 import { findProjectTemplate } from './templates';
+import { carouselFormats, carouselMetadata } from './p21-carousels';
 
 seedProjects();
 startPublicationSync();
@@ -103,7 +104,13 @@ route('POST', '/projects', ({ body }) => {
   const startAt = str(b.scheduledStartAt);
   if (startAt && Date.parse(startAt) - Date.now() > 180 * 86_400_000)
     throw bad('scheduledStartAt must be at most 180 days from now');
-  if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(sourceType) && !rawInput)
+  // 21.6: a carousel needs a brief or a pasted thread.
+  const carouselThread = str(obj(b.carousel).thread)?.trim();
+  if (
+    !['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(sourceType) &&
+    !rawInput &&
+    !(sourceType === 'CAROUSEL' && carouselThread)
+  )
     throw bad('brief is required');
   // 13.5: an UPLOAD project claims a completed source-video upload (p13-a1-uploads.ts).
   const upload = sourceType === 'UPLOAD' ? claimUpload(str(b.uploadId)) : null;
@@ -117,7 +124,9 @@ route('POST', '/projects', ({ body }) => {
         aspectRatio: f.aspectRatio as TargetFormat['aspectRatio'],
         duration: f.duration,
       }))
-    : formatsFrom(b.targetFormats);
+    : sourceType === 'CAROUSEL'
+      ? carouselFormats()
+      : formatsFrom(b.targetFormats);
   const defaults = template?.publishDefaults ?? null;
   const targets = (obj(b.autoPublish).targets as unknown[] | undefined) ?? defaults?.targets ?? [];
   const publishPolicy = str(b.publishPolicy) ?? defaults?.publishPolicy ?? 'MANUAL';
@@ -155,6 +164,7 @@ route('POST', '/projects', ({ body }) => {
       }),
       ...(targets.length > 0 && { autoPublish: { targets } }),
       ...(template && { template: { id: template.id } }),
+      ...(sourceType === 'CAROUSEL' && carouselMetadata(b, str(b.language) ?? 'en-GB')),
       ...(upload && {
         upload: { id: upload.id, fileName: upload.fileName, durationSec: upload.durationSec },
       }),

@@ -108,6 +108,20 @@ export function addLibraryImages(seeds: ImageSeed[]): number {
   return added;
 }
 
+/** 21.6: the business's library pictures (newest first), as the image picker shows them. */
+export function libraryImages(businessId = DEMO_BUSINESS_ID): LibraryImage[] {
+  return images
+    .filter((i) => i.businessId === businessId)
+    .sort(newestFirst)
+    .map(present);
+}
+
+/** 21.6: one library picture by id, or null. */
+export function libraryImage(id: string): LibraryImage | null {
+  const img = images.find((i) => i.id === id);
+  return img ? present(img) : null;
+}
+
 /** Library size per source for a business (GET /scans/:id). */
 export function librarySizeBySource(businessId: string): Partial<Record<string, number>> {
   const out: Record<string, number> = {};
