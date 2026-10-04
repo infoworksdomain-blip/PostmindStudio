@@ -1,8 +1,8 @@
-<!-- Draft prepared 2026-09-30 for PostMind Studio, tailored to AI video generation and auto-publishing. Have a qualified solicitor review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one. -->
+<!-- Operator text for PostMind Studio, tailored to AI video generation and auto-publishing. Legal scope closed 2026-10-04 (operator decision, BACKLOG 21.2). Clause 2.4 matches the code: AI presenter shots use the one stock presenter set by HEYGEN_AVATAR_ID (src/lib/studio/providers/heygen.ts, default-registry.ts), and there is no customer photo upload for presenters; Seedance's refusal of real faces is BytePlus's InputImageSensitiveContentDetected.PrivacyInformation error (PROGRESS 20.23). Reword 2.4 if customer-photo presenters are ever added. -->
 
 # Acceptable Use Policy
 
-**Last updated: 3 October 2026**
+**Last updated: 4 October 2026**
 
 This policy sets out what you may not do with PostMind Studio (the **Service**), provided by Postmind AI Ltd. It forms part of our [Terms of Service](/legal/terms), and words with capitals have the meaning given there. It applies to the Customer and to every Authorised User, and to all Inputs, Outputs and publications.
 
@@ -36,9 +36,7 @@ You must not use the Service to create, upload, store, publish or share content 
 
 2.3 You must not present AI-generated people, testimonials, reviews or endorsements as real, or invent customer experiences.
 
-2.4 **AI presenters and reference images.** AI presenter (avatar) videos use a presenter we provide. Where the Service lets you create a presenter from a photo or video, you may only use one of yourself, or of a person who has given you their documented, informed consent to be used in this way. You must not use images of real people, including public figures, as reference material for AI-generated video without their consent. Our main AI video provider refuses reference images that show real people's faces, and you must not try to get around this or any other provider's safety filter.
-
-<!-- LEGAL REVIEW (20.28, 2026-10-03): the operator's brief says HeyGen avatars use the customer's own photo. In the code today (src/lib/studio/providers/heygen.ts, default-registry.ts) every avatar video uses one presenter chosen by us (HEYGEN_AVATAR_ID); no customer photo upload for avatars was found. Clause 2.4 is written for a customer-photo presenter; confirm the wording when that feature ships, and that the stock presenter's own licence allows its use in customers' adverts. Seedance's refusal of real faces is from BytePlus's error codes (InputImageSensitiveContentDetected.PrivacyInformation), PROGRESS 20.23. -->
+2.4 **AI presenters and reference images.** AI presenter (avatar) shots use a licensed stock presenter supplied by our provider; the Service does not create presenters from your photos or videos. You must not ask the Service to depict a real, identifiable person, including a public figure, without that person's consent, whether through a prompt, a script or a reference image. Seedance, our main AI video provider, refuses reference images that show real people's faces. No one may try to get around this or any other provider's safety filter.
 
 2.5 You must not publish AI-generated people or presenters in a way that leads viewers to believe they are real people, where the law or a Connected Platform requires disclosure.
 

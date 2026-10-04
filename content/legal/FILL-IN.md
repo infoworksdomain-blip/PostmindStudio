@@ -1,30 +1,31 @@
-# Legal texts: details to fill in
+# Legal texts: all details filled in
 
-The six drafts in `content/legal/en-GB/` (terms, privacy, cookies, acceptable-use, dpa, subprocessors) were prepared on 2026-09-30 from what PostMind Studio actually does. Before launch:
+**Status (4 October 2026): every detail is filled in and the legal scope is closed** (operator decision 2026-10-04, BACKLOG 21.2). The six texts in `content/legal/en-GB/` (terms, privacy, cookies, acceptable-use, dpa, subprocessors) are the operator's finished text: they contain no fill-in markers and no review notes, and `npx tsx scripts/legal/check-ready.ts` (or `npm run setup:check -- .secrets/production.env`) reports every document as `ok`, so production sign-up is not held back by the legal gate.
 
-1. Replace every marker below with your own details, everywhere it appears (search the folder for `[[`).
-2. Have a qualified solicitor (England and Wales) review all six texts.
-3. Check with `npx tsx scripts/legal/check-ready.ts` (or `npm run setup:check -- .secrets/production.env`): each document must say `ok`.
+The gate still works: if a fill-in marker (two square brackets around a name) is ever added back to the Terms of Service or the Privacy Policy, public sign-up closes in production until it is filled in; the other four documents show a "draft" banner and an Admin Centre warning.
 
-**While any marker is left in the Terms of Service or the Privacy Policy, public sign-up stays closed in production.** The other four documents only show a warning in the Admin Centre, but the pages show a "draft" banner until they are filled in too.
+## Details used
 
-**Filled on 30 September 2026** (checked against Companies House, company 17332378): `[[COMPANY LEGAL NAME]]` = Postmind AI Ltd, `[[COMPANY NUMBER]]` = 17332378, `[[REGISTERED ADDRESS]]` = 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom; `[[CONTACT EMAIL]]` and `[[PRIVACY EMAIL]]` = support@postmindai.pro. `[[DPO OR PRIVACY LEAD]]` = a director of Postmind AI Ltd (no DPO appointed). `[[ICO REGISTRATION NUMBER]]`: removed on 30 September 2026 at the operator's request (the privacy policy states the company registration instead). Add a sentence with the ICO number here if the company registers for the data protection fee.
+| Detail | Value | Appears in |
+| --- | --- | --- |
+| Company legal name | Postmind AI Ltd (same value as `STUDIO_LEGAL_ENTITY_NAME`, shown in the footer) | All six |
+| Company number | 17332378 (checked against Companies House on 30 September 2026) | terms, privacy |
+| Registered address | 61 Bridge Street, Kington, Herefordshire, HR5 3DJ, United Kingdom | terms, privacy |
+| Contact and privacy email | support@postmindai.pro | All six |
+| Privacy lead | A director of Postmind AI Ltd (no DPO appointed) | privacy |
+| ICO registration number | Not stated (removed on 30 September 2026 at the operator's request; the privacy policy states the company registration instead). Add a sentence with the number if the company registers for the data protection fee. | — |
 
-| Marker                        | What to write                                                                                                                                                                                                             | Where to find it                                                                                                                                                                                                                                                                   | Appears in                           |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `[[COMPANY LEGAL NAME]]`      | Your company's exact registered name, e.g. "Example Media Ltd". Use the same value for `STUDIO_LEGAL_ENTITY_NAME` (shown in the footer).                                                                                  | Companies House: [find-and-update.company-information.service.gov.uk](https://find-and-update.company-information.service.gov.uk)                                                                                                                                                  | All six                              |
-| `[[COMPANY NUMBER]]`          | Your 8-character company registration number                                                                                                                                                                              | Companies House (as above), or your certificate of incorporation                                                                                                                                                                                                                   | terms, privacy                       |
-| `[[REGISTERED ADDRESS]]`      | Your registered office address, in full                                                                                                                                                                                   | Companies House (as above)                                                                                                                                                                                                                                                         | terms, privacy                       |
-| `[[ICO REGISTRATION NUMBER]]` | Your data protection fee registration number (e.g. ZA123456). Most businesses that process personal data must pay the fee.                                                                                                | ICO register of fee payers: [ico.org.uk/ESDWebPages/Search](https://ico.org.uk/ESDWebPages/Search); to register: [ico.org.uk/for-organisations/data-protection-fee](https://ico.org.uk/for-organisations/data-protection-fee/)                                                     | privacy                              |
-| `[[CONTACT EMAIL]]`           | The address for customers, notices, abuse reports and security reports (e.g. legal@ or support@ your domain). It should be monitored every working day.                                                                   | Your own mailbox; it may be the same as `STUDIO_SUPPORT_EMAIL`                                                                                                                                                                                                                     | terms, acceptable-use                |
-| `[[PRIVACY EMAIL]]`           | The address for data protection requests and sub-processor objections (e.g. privacy@ your domain)                                                                                                                         | Your own mailbox                                                                                                                                                                                                                                                                   | privacy, cookies, dpa, subprocessors |
-| `[[DPO OR PRIVACY LEAD]]`     | The name or role of the person responsible for data protection, e.g. "our Data Protection Officer, Jane Smith" or "our privacy lead, the Head of Operations". You only need a formal DPO in the cases set out by the ICO. | Your own decision; ICO guidance: [ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/accountability-and-governance/data-protection-officers](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/accountability-and-governance/data-protection-officers/) | privacy                              |
+## Decisions recorded when the scope was closed (2026-10-04)
 
-## Facts in the drafts that come from settings
+- **Hosting:** Hetzner Online GmbH, Helsinki, Finland (EU), data centre `hel1` (privacy 7.1, dpa 10.1 and Annex 2, subprocessors).
+- **International transfers:** for every provider that processes personal data in the United States, Singapore, Malaysia or Australia, the texts state the European Commission's Standard Contractual Clauses with the UK International Data Transfer Addendum, as incorporated in that provider's data processing terms, together with a transfer risk assessment kept on file (privacy 7.2, dpa 10.2, subprocessors). No Data Privacy Framework certification is claimed. Keep the transfer risk assessments on file and refresh them when a provider or its terms change.
+- **AI presenters:** HeyGen shots use one licensed stock presenter chosen by us (`HEYGEN_AVATAR_ID`); there is no customer photo upload (acceptable-use 2.4, subprocessors). Reword 2.4 if customer-photo presenters are ever added.
 
-The drafts state the default values of these settings. If you change a setting in `production.env`, change the text too.
+## Facts in the texts that come from settings
 
-| Setting                                     | Default in the drafts                                                                                                | Where the text mentions it                       |
+The texts state the default values of these settings. If you change a setting in `production.env`, change the text too.
+
+| Setting                                     | Default in the texts                                                                                                 | Where the text mentions it                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | `STUDIO_TRIAL_DAYS`                         | 14-day Standard trial                                                                                                | terms 6.2                                        |
 | Trial limits (`TRIAL` in `src/lib/studio/billing/catalogue.ts`) | 5 short + 1 long video, AI usage £10 a day and £15 in total | terms 6.2 |
@@ -35,13 +36,11 @@ The drafts state the default values of these settings. If you change a setting i
 | `STUDIO_AUDIT_RETENTION_DAYS`               | Audit log kept 2 years                                                                                               | privacy 8                                        |
 | `PG_BACKUP_RETENTION_DAYS`, storage backups | Backups gone within 30 days                                                                                          | terms 15.3, privacy 8, dpa 8.2 and Annex 2       |
 | `R2_JURISDICTION` (production R2 buckets)   | Default (global) jurisdiction: files and backups may be stored outside the UK and EEA (operator decision 2026-09-30) | privacy 7, dpa 10.1 and Annex 2, subprocessors   |
-| Hetzner location                            | Helsinki, Finland                                                                                                    | privacy 7.1, dpa 10.1 and Annex 2, subprocessors |
+| Hetzner location                            | Helsinki, Finland (EU), `hel1`                                                                                       | privacy 7.1, dpa 10.1 and Annex 2, subprocessors |
 | `AWS_REGION` (KMS)                          | London (eu-west-2)                                                                                                   | privacy 7.1, subprocessors                       |
 | `ASSEMBLYAI_REGION`                         | `eu`                                                                                                                 | subprocessors                                    |
 | `SENTRY_DSN`, `BROWSERLESS_API_KEY`         | Listed as "only if enabled"                                                                                          | subprocessors                                    |
 
-**Legal review comments (2026-10-03, BACKLOG 20.28).** The texts carry HTML comments starting `LEGAL REVIEW` (not shown on the website and not fill-in markers, so they do not close sign-up). Each one names a fact the solicitor should confirm, mainly the transfer safeguard for each provider outside the UK and EEA. Search the folder for `LEGAL REVIEW`.
+Keep each provider's contracting entity, processing region and transfer terms on the Sub-processors page in step with its own data processing terms, and remove any provider whose key you do not set.
 
-Also confirm each provider's current contracting entity, processing region and transfer mechanism on the Sub-processors page against its own data processing terms, and remove any provider whose key you do not set.
-
-The HTML comment at the top of each draft is not shown on the website. Translations (`content/legal/<locale>/`) are optional; a locale without its own file shows the English text with a note.
+The HTML comment at the top of each text is not shown on the website. Translations (`content/legal/<locale>/`) are optional; a locale without its own file shows the English text with a note.
