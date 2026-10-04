@@ -91,6 +91,11 @@ export function withoutOnScreenDuplicates(
   });
 }
 
+/** Shots whose picture is their own on-screen text (the composer draws onScreenText big). */
+export function showsOwnText(treatment: string): boolean {
+  return treatment === 'TEXT_CARD' || treatment === 'MOTION_GRAPHICS';
+}
+
 /** Where burned-in narration sits: above the lower UI band (like/comment rails, captions). */
 const CAPTION_ANCHOR_Y = 0.7;
 const TIKTOK_FONT_PCT = 4;
@@ -260,9 +265,10 @@ export async function ensureVoiceCaptions(
           where: { shotId: shot.id, id: { notIn: previous?.overlayIds ?? [] } },
           select: { text: true, startAtSec: true, endAtSec: true },
         });
-        // A TEXT_CARD shot shows its own text (onScreenText) for the whole shot.
+        // TEXT_CARD and MOTION_GRAPHICS shots show their own text (onScreenText) for the whole
+        // shot, so a caption repeating it is dropped (QA run 9: "Sound familiar?" twice).
         const card =
-          shot.visualTreatment === 'TEXT_CARD' && shot.onScreenText
+          showsOwnText(shot.visualTreatment) && shot.onScreenText
             ? [{ text: shot.onScreenText, startAtSec: 0, endAtSec: shot.durationSec }]
             : [];
         const lines = withoutOnScreenDuplicates(narrationLines(shot.words, shot.durationSec), [

@@ -1,8 +1,8 @@
-<!-- Draft prepared 2026-09-30 for PostMind Studio from the cookies the app actually sets (Better Auth with the "studio" prefix, the locale cookie, two local-storage keys: studio.businessId and next-themes' default "theme" key, added 2026-10-03 in BACKLOG 20.28). Have a qualified solicitor review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one. If you add analytics, advertising or any other non-essential cookie, you must update this page and ask for consent first. -->
+<!-- Operator text for PostMind Studio, written from the cookies the app actually sets (Better Auth with the "studio" prefix, the locale cookie, two local-storage keys: studio.businessId and next-themes' default "theme" key). Legal scope closed 2026-10-04 (operator decision, BACKLOG 21.2). If you add analytics, advertising or any other non-essential cookie, you must update this page and ask for consent first. -->
 
 # Cookie Policy
 
-**Last updated: 3 October 2026**
+**Last updated: 4 October 2026**
 
 This policy explains the cookies and similar technologies used by PostMind Studio (the **Service**), provided by Postmind AI Ltd. It should be read with our [Privacy Policy](/legal/privacy).
 

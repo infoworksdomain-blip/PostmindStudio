@@ -75,12 +75,13 @@ describe('suggestOverlays', () => {
 
   it('applies brand substitution only when the chosen preset allows it', () => {
     const hookPreset = BUILT_IN_PRESETS.find((p) => p.key === ROLE_PRESET.hook);
-    const brand = { primary: '#111111', secondary: '#222222', fontFamily: 'Poppins' };
+    // A secondary that reads on the near-black primary box, so the readability rule keeps it.
+    const brand = { primary: '#111111', secondary: '#EEEEEE', fontFamily: 'Poppins' };
     const [suggestion] = suggestOverlays([shot({ sortOrder: 0 })], brand);
     if (hookPreset?.brandSubstitution) {
-      expect(suggestion?.style.fillColor).toBe('#222222');
+      expect(suggestion?.style.fillColor).toBe('#EEEEEE');
     } else {
-      expect(suggestion?.style.fillColor).not.toBe('#222222');
+      expect(suggestion?.style.fillColor).not.toBe('#EEEEEE');
     }
   });
 

@@ -1,8 +1,8 @@
-<!-- Draft prepared 2026-09-30 for PostMind Studio from the product's actual behaviour. Have a qualified solicitor (England and Wales) review it before relying on it, and fill in every double-bracket marker: content/legal/FILL-IN.md lists each one and where to find the value. Production sign-up stays closed while any marker is left. -->
+<!-- Operator text for PostMind Studio, written from the product's actual behaviour (England and Wales). Legal scope closed 2026-10-04 (operator decision, BACKLOG 21.2). If you change a setting listed in content/legal/FILL-IN.md, update the text to match. -->
 
 # Terms of Service
 
-**Last updated: 3 October 2026**
+**Last updated: 4 October 2026**
 
 These terms are a contract between Postmind AI Ltd and the business that signs up for PostMind Studio. Please read them carefully. They limit our liability (clause 17) and say how the contract can end (clause 14).
 
