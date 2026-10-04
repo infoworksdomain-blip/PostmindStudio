@@ -96,8 +96,17 @@ export interface CreditUse {
  */
 export async function consumeCredit(
   tx: CreditDb,
-  input: { organisationId: string; projectId: string; month: string; kind: CreditKind; now: Date },
+  input: {
+    organisationId: string;
+    projectId: string;
+    month: string;
+    kind: CreditKind;
+    now: Date;
+    /** 21.4: videos this generation uses (a UGC actor video uses 2; ugc/allowance.ts). */
+    units?: number;
+  },
 ): Promise<CreditUse | null> {
+  const units = Math.max(1, Math.floor(input.units ?? 1));
   const existing = await tx.usageCreditUse.findUnique({
     where: { projectId_month: { projectId: input.projectId, month: input.month } },
   });
@@ -110,7 +119,7 @@ export async function consumeCredit(
     where: {
       organisationId: input.organisationId,
       kind: input.kind,
-      remaining: { gt: 0 },
+      remaining: { gte: units },
       refundedAt: null,
       expiresAt: { gt: input.now },
     },
@@ -119,8 +128,8 @@ export async function consumeCredit(
   });
   for (const credit of candidates) {
     const taken = await tx.usageCredit.updateMany({
-      where: { id: credit.id, remaining: { gt: 0 } },
-      data: { remaining: { decrement: 1 } },
+      where: { id: credit.id, remaining: { gte: units } },
+      data: { remaining: { decrement: units } },
     });
     if (taken.count === 0) continue;
     const use = await tx.usageCreditUse.create({

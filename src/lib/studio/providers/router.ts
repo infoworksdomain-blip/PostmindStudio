@@ -58,7 +58,12 @@ export type RouteNeed =
       kind: 'capability';
       capability: Exclude<
         ProviderCapability,
-        'text_to_video' | 'image_to_video' | 'avatar_video' | 'stock_footage' | 'text_to_image'
+        | 'text_to_video'
+        | 'image_to_video'
+        | 'avatar_video'
+        | 'actor_video'
+        | 'stock_footage'
+        | 'text_to_image'
       >;
     };
 
@@ -212,6 +217,15 @@ function aiClipCandidates(tier: PlanTier): string[] {
   return ['seedance', 'kling', 'veo', 'runway', 'luma'];
 }
 
+/**
+ * BACKLOG 21.4 (UGC actors, operator request 2026-10-04): Google Veo 3.1 through the Gemini API
+ * (the key Studio already has, dialogue in quotes with native audio) makes UGC_ACTOR clips; Kling
+ * 3.0 with native audio is the opt-in fallback (KLING_UGC_ACTOR=1, providers/kling.ts). The same
+ * order on every tier: UGC is open to every active subscriber (operator decision 2026-10-04,
+ * per-channel subscriptions; a UGC video uses more of the allowance instead, ugc/allowance.ts).
+ */
+export const ACTOR_CANDIDATES: readonly string[] = ['veo', 'kling'];
+
 function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
   if (brandHasCustomAvatar) return ['heygen'];
   return TIER_RANK[tier] <= TIER_RANK.STANDARD ? ['d-id', 'heygen'] : ['heygen', 'd-id'];
@@ -232,6 +246,8 @@ export function planCandidates(need: RouteNeed, tier: PlanTier): CandidatePlan {
         capability: 'avatar_video',
         providerIds: avatarCandidates(tier, need.brandHasCustomAvatar ?? false),
       };
+    case 'UGC_ACTOR':
+      return { capability: 'actor_video', providerIds: [...ACTOR_CANDIDATES] };
     case 'STOCK_FOOTAGE':
       // Phase 15 (13.38 correction): Storyblocks video catalogue, then Pexels videos.
       return { capability: 'stock_footage', providerIds: ['storyblocks-video', 'pexels-video'] };

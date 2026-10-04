@@ -18,6 +18,7 @@ import { fitOf } from './voice-fit';
 import { spokenWordsOf } from './word-timing';
 import type { SpokenWord } from '../overlays/word-timing';
 import { mirrorsNarration } from '../overlays/kind';
+import { speechAssetIdOf } from '../ugc/clip-speech';
 
 // BACKLOG 15.B2 — gathers what quality-sync.ts needs for one render (its composition summary,
 // the shots' narration fit and word timing, spoken-caption overlays, the brand kit) and runs the
@@ -77,7 +78,8 @@ export async function renderSyncChecks(
     },
   });
   const shots = script?.shots ?? [];
-  const voiceIds = shots.map((s) => s.voiceAssetId).filter((id): id is string => Boolean(id));
+  // 21.4: a UGC actor clip's own audio is its speech (ugc/clip-speech.ts).
+  const voiceIds = shots.map(speechAssetIdOf).filter((id): id is string => Boolean(id));
   const voices = new Map(
     (
       await deps.db.videoAsset.findMany({
@@ -86,16 +88,15 @@ export async function renderSyncChecks(
     ).map((a) => [a.id, a]),
   );
 
-  const narration = shots
-    .filter((s) => s.voiceAssetId)
-    .map((s) => ({
-      shotId: s.id,
-      fit: fitOf(voices.get(s.voiceAssetId as string)?.metadata ?? null),
-    }));
+  const narration = shots.flatMap((s) => {
+    const speech = speechAssetIdOf(s);
+    return speech ? [{ shotId: s.id, fit: fitOf(voices.get(speech)?.metadata ?? null) }] : [];
+  });
 
   const captions = spokenCaptions(
     shots.map((shot) => {
-      const voice = shot.voiceAssetId ? voices.get(shot.voiceAssetId) : undefined;
+      const speech = speechAssetIdOf(shot);
+      const voice = speech ? voices.get(speech) : undefined;
       return { overlays: shot.overlays, words: voice ? spokenWordsOf(voice.metadata) : [] };
     }),
   );

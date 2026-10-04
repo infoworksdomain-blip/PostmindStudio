@@ -206,6 +206,8 @@ enum VisualTreatment {
   USER_UPLOAD
   TEXT_CARD
   TRANSITION
+  // 21.4: a generated actor speaking its line to camera; the clip's own audio is the narration.
+  UGC_ACTOR
 
   @@schema("studio")
 }

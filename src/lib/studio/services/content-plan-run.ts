@@ -39,6 +39,7 @@ import {
   type QuotaReservation,
 } from './plan-quotas';
 import { cancelProject, createProject, createProjectInput, generateProject } from './projects';
+import { ugcForPlanItem } from '../ugc/plan-month';
 import { cancelPublication } from './publications';
 import { monthWindow } from './tier-gates';
 
@@ -138,8 +139,11 @@ export const KEN_BURNS_CYCLE = ['zoomIn', 'slideLeft', 'zoomOut', 'slideRight'] 
 
 /** The POST /projects body for one item (validated by createProjectInput like any other). */
 export function projectBodyFor(
-  plan: Pick<ContentPlan, 'businessId' | 'platforms' | 'language' | 'brandKitId' | 'targets'>,
-  item: Pick<ContentPlanItem, 'kind' | 'title' | 'brief' | 'slides' | 'slotAt'>,
+  plan: Pick<
+    ContentPlan,
+    'businessId' | 'platforms' | 'language' | 'brandKitId' | 'targets' | 'metadata'
+  >,
+  item: Pick<ContentPlanItem, 'kind' | 'title' | 'brief' | 'slides' | 'slotAt' | 'angle'>,
   shortMaxSec: number,
 ): z.input<typeof createProjectInput> {
   const durationSec = Math.max(5, Math.min(PLAN_VIDEO_SEC, shortMaxSec));
@@ -200,9 +204,12 @@ export function projectBodyFor(
       },
     };
   }
+  // 21.4: testimonial and product videos of a plan with UGC actors on (ugc/plan-month.ts).
+  const ugc = ugcForPlanItem(plan, item);
   return {
     ...common,
     sourceType: 'BRIEF',
+    ...(ugc && { ugc }),
     brief: {
       rawInput: `${item.title}\n\n${item.brief}`.slice(0, 4_000),
       ...(text.cta && { callToAction: text.cta.slice(0, 200) }),
@@ -238,7 +245,8 @@ export async function prepareItem(
   }
   let projectId = item.projectId;
   if (!projectId) {
-    const quota = tierQuota(toPlanTier(tenant.organisation.planTier), deps.env);
+    const tier = toPlanTier(tenant.organisation.planTier);
+    const quota = tierQuota(tier, deps.env);
     const input = createProjectInput.parse(projectBodyFor(plan, item, quota.shortMaxSec));
     const project = await createProject(deps.db, tenant, input, now);
     await mergeMetadata(deps.db, project.id, {

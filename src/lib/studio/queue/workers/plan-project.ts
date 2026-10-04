@@ -6,6 +6,7 @@ import {
   IDEATION_SCHEMA,
   IDEATION_SYSTEM_PROMPT,
   parseIdeationResult,
+  UGC_IDEATION_SCHEMA,
   type IdeationContext,
   type IdeationResult,
 } from '../../pipeline/ideation';
@@ -35,7 +36,6 @@ import {
   SCRIPT_SAFETY_SYSTEM_PROMPT,
 } from '../../pipeline/script-safety';
 import {
-  availableTreatments,
   buildScriptPrompt,
   normaliseScript,
   parseTargetFormats,
@@ -44,7 +44,9 @@ import {
   type PlannedScript,
   type TargetFormat,
 } from '../../pipeline/scripting';
-import { aiClipBudget, applyClipBudget } from '../../pipeline/clip-budget';
+import { scriptLayerMode } from '../../ugc/script-layer';
+import { ugcIdeationSupplement } from '../../ugc/prompt';
+import { checkRealPersonRequest, UGC_REAL_PERSON_REASON } from '../../ugc/real-person';
 import { styleMemorySupplement } from '../../services/style-memory';
 import { projectLanguages } from '../../languages';
 import { jobIds } from '../enqueue';
@@ -295,6 +297,25 @@ async function storeIdeationCopy(
   }
 }
 
+/**
+ * 21.4: a UGC brief that asks the actor to be or resemble a real person stops before any
+ * generation spend; the project goes back to DRAFT with a reason the project page explains.
+ */
+async function refuseRealPerson(
+  deps: PipelineDeps,
+  data: ProjectJobData,
+  log: Logger,
+): Promise<void> {
+  await transitionProject(deps.db, {
+    projectId: data.projectId,
+    runId: data.runId,
+    from: ['PLANNING'],
+    to: 'DRAFT',
+    data: { errorReason: UGC_REAL_PERSON_REASON },
+  });
+  log.warn('UGC brief asked for a real person; refused before Layer 2');
+}
+
 export async function planProject(data: ProjectJobData, deps: PipelineDeps): Promise<void> {
   const log = deps.logger.child({
     projectId: data.projectId,
@@ -342,14 +363,26 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   const briefText =
     project.description?.trim() || String(projectMetadata(project.metadata).brief ?? '').trim();
   if (!briefText) throw new ValidationError('Project has no brief text (description)');
+  // 21.4: a UGC actor video (STANDARD and above) — Layer 2 rules, prompts and budget in one place.
+  const mode = scriptLayerMode({
+    metadata: project.metadata,
+    tier: data.planTier,
+    registry: deps.registry,
+  });
+  if (mode.ugc && checkRealPersonRequest(briefText, mode.ugc.product.name).refused)
+    return refuseRealPerson(deps, data, log);
   // Feature A: a reference video's blueprint (TEMPLATE) or style (INSPIRE) shapes Layers 1–2;
   // a project template's shot blueprint shapes Layer 2 the same way (spec 7.12 / 8.6).
   const reference =
     (await loadReferenceGuide(deps.db, project, deps.now())) ??
     (await loadTemplateGuide(deps.db, project));
-  const rawInput = reference?.ideationSupplement
-    ? `${briefText}\n\n${reference.ideationSupplement}`
-    : briefText;
+  const rawInput = [
+    briefText,
+    reference?.ideationSupplement,
+    mode.ugc ? ugcIdeationSupplement(mode.ugc) : undefined,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
   const formats = parseTargetFormats(project.targetFormats);
   const brandKit = await loadBrandKit(deps, project);
   const restrictedTopics = brandKit?.restrictedTopics ?? [];
@@ -403,12 +436,13 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       ]
         .filter(Boolean)
         .join('\n\n'),
-      IDEATION_SCHEMA,
+      mode.ugc ? UGC_IDEATION_SCHEMA : IDEATION_SCHEMA,
       ideationMaxTokens(formats.length),
     ),
     deps,
   );
   const answer = parseIdeationResult(jsonOutput(ideationRun.output));
+  if (mode.ugc && answer.realPersonRequested === true) return refuseRealPerson(deps, data, log);
 
   if (!answer.actionable && !directionChosen) {
     await transitionProject(deps.db, {
@@ -465,13 +499,14 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
 
   // Layer 2 — one script per target format and language (15.C5: extra languages each get a
   // full variant set, written natively in that language).
-  const treatments = availableTreatments(deps.registry);
+  const treatments = mode.treatments;
   const languages = projectLanguages(project.language, projectMetadata(project.metadata).languages);
   const variants = languages.flatMap((language) => formats.map((format) => ({ format, language })));
   const scripts = await Promise.all(
     variants.map(async ({ format, language }) => {
-      // 20.25: the tier's AI clip budget for this length, stated in the prompt and enforced below.
-      const budget = aiClipBudget(data.planTier, format.durationSec);
+      // 20.25: the tier's AI clip budget for this length, stated in the prompt and enforced below
+      // (21.4: actor clips for a UGC video).
+      const budget = mode.budget(format.durationSec);
       const run = await runProvider(
         textRequest(
           data,
@@ -483,9 +518,10 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
               treatments,
               restrictedTopics,
               language,
-              aiClipBudget: budget,
+              aiClipBudget: mode.ugc ? undefined : budget,
             }),
             reference?.scriptSupplement(format.durationSec, treatments),
+            mode.supplement(format.durationSec, budget),
             styleMemory,
           ]
             .filter(Boolean)
@@ -496,7 +532,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
         deps,
       );
       const normalised = normaliseScript(jsonOutput(run.output), treatments, format.durationSec);
-      const budgeted = applyClipBudget(
+      const budgeted = mode.apply(
         reference ? reference.apply(normalised, format.durationSec) : normalised,
         {
           budget,

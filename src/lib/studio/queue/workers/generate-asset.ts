@@ -2,6 +2,7 @@ import type { AssetKind, Prisma, VideoShot } from '@prisma/client';
 import { ConfigurationError, NotFoundError, ValidationError } from '../../../errors';
 import {
   avatarUnavailableReason,
+  DEGRADED_FROM_ACTOR,
   DEGRADED_FROM_AVATAR,
   degradedClipDurationSec,
   degradedClipPrompt,
@@ -34,6 +35,9 @@ import {
 } from '../../pipeline/still-image';
 import { selectStockVoice } from '../../pipeline/voice-fit';
 import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
+import { timeClipSpeech } from '../../ugc/clip-speech';
+import { actorClipPrompt } from '../../ugc/prompt';
+import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
 import { jobIds } from '../enqueue';
 import type { GenerateAssetJobData, ProjectJobData } from '../queues';
 
@@ -237,6 +241,96 @@ async function generateAvatar(
   return recordAsset(deps, shot, 'VIDEO_CLIP', run, { extension: 'mp4', contentType: 'video/mp4' });
 }
 
+/** 21.4: the UGC product image (an image_library row of the project's business), if chosen. */
+async function ugcProductImage(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  ugc: UgcStyle,
+): Promise<{
+  id: string;
+  s3Bucket: string;
+  s3Key: string;
+  widthPx: number;
+  heightPx: number;
+} | null> {
+  if (!ugc.product.imageId) return null;
+  return deps.db.imageLibraryItem.findFirst({
+    where: {
+      id: ugc.product.imageId,
+      organisationId: shot.script.project.organisationId,
+      businessId: shot.script.project.businessId,
+    },
+    select: { id: true, s3Bucket: true, s3Key: true, widthPx: true, heightPx: true },
+  });
+}
+
+/**
+ * BACKLOG 21.4 — a UGC_ACTOR shot: a generated actor speaks the shot's line to camera, with the
+ * provider's own audio (Veo first, router.ts ACTOR_CANDIDATES). The same actor description and
+ * seed go to every clip of the project, and the business's product image (when chosen) goes as a
+ * reference so the product is in view. With no actor provider available (account problem, hold,
+ * kill switch, nothing configured) the shot degrades like an avatar shot: the line is narrated by
+ * the brand voice over a generated B-roll clip (degradedFrom 'actor_video').
+ */
+async function generateActor(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+  ugc: UgcStyle,
+): Promise<StoredAsset> {
+  if (!shot.voiceoverText) throw new ValidationError('UGC_ACTOR shots need a line to speak');
+  // A retry after a degraded attempt already narrated the line: finish the degraded shot.
+  if (shot.voiceAssetId)
+    return generatePresenterlessClip(deps, shot, data, 'retry', DEGRADED_FROM_ACTOR);
+  const product = await ugcProductImage(deps, shot, ugc);
+  const productImageUrl = product
+    ? await deps.storage.signedUrl(product.s3Bucket, product.s3Key)
+    : undefined;
+  let run: ProviderRunResult;
+  try {
+    run = await runProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'UGC_ACTOR', durationSec: shot.durationSec },
+        planTier: data.planTier,
+        preferredProviderId: preferredProvider(shot),
+        request: {
+          organisationId: data.organisationId,
+          projectId: data.projectId,
+          shotId: shot.id,
+          capability: 'actor_video',
+          prompt: actorClipPrompt({
+            style: ugc,
+            sceneDescription: shot.sceneDescription,
+            cameraDirection: shot.cameraDirection,
+            productReference: Boolean(productImageUrl),
+          }),
+          spokenLine: shot.voiceoverText,
+          languageCode: shot.script.language,
+          durationSec: shot.durationSec,
+          aspectRatio: shot.script.targetAspectRatio as AspectRatio,
+          ...(productImageUrl && { productImageUrl }),
+          seed: ugc.seed,
+        },
+      },
+      deps,
+    );
+  } catch (err) {
+    const reason = avatarUnavailableReason(err);
+    if (!reason) throw err;
+    await generateVoice(deps, shot, data);
+    return generatePresenterlessClip(deps, shot, data, reason, DEGRADED_FROM_ACTOR);
+  }
+  return recordAsset(
+    deps,
+    shot,
+    'VIDEO_CLIP',
+    run,
+    { extension: 'mp4', contentType: 'video/mp4' },
+    undefined,
+    { speech: 'clip', ...(product && { productImageId: product.id }) },
+  );
+}
+
 /**
  * BACKLOG 20.19 — an AI_AVATAR shot whose presenter is unavailable becomes a generated B-roll clip
  * (text_to_video through the router, so cost tracking, budgets and the cost cap apply as for any
@@ -249,6 +343,8 @@ async function generatePresenterlessClip(
   shot: ShotWithScript,
   data: GenerateAssetJobData,
   reason: string,
+  /** 21.4: 'actor_video' for a UGC actor shot that had no actor provider. */
+  degradedFrom: string = DEGRADED_FROM_AVATAR,
 ): Promise<StoredAsset> {
   const kit = await resolveProjectBrandKit(deps.db, shot.script.project);
   const prompt = degradedClipPrompt({
@@ -259,8 +355,8 @@ async function generatePresenterlessClip(
   });
   const durationSec = degradedClipDurationSec(shot.durationSec);
   deps.logger.warn(
-    { projectId: data.projectId, shotId: shot.id, reason },
-    'avatar presenter unavailable; shot degraded to a generated clip',
+    { projectId: data.projectId, shotId: shot.id, reason, degradedFrom },
+    'presenter or actor unavailable; shot degraded to a generated clip',
   );
   const run = await runProvider(
     {
@@ -287,7 +383,7 @@ async function generatePresenterlessClip(
     run,
     { extension: 'mp4', contentType: 'video/mp4' },
     undefined,
-    { degradedFrom: DEGRADED_FROM_AVATAR, degradedReason: reason },
+    { degradedFrom, degradedReason: reason },
   );
 }
 
@@ -573,10 +669,20 @@ async function generateVisual(
         fingerprint,
       );
     }
-    case 'IMAGE_STILL':
+    case 'IMAGE_STILL': {
+      // 21.4: a UGC video's stills are the owner's product photo when one was chosen.
+      const ugc = ugcStyleOf(shot.script.project.metadata);
+      const product = ugc ? await ugcProductImage(deps, shot, ugc) : null;
+      if (product) return recordLibraryStill(deps, shot, product, 'library');
       return clipBudgetOf(shot.providerRouting)
         ? budgetStill(deps, shot, data)
         : generateStill(deps, shot, data, prompt);
+    }
+    case 'UGC_ACTOR': {
+      const ugc = ugcStyleOf(shot.script.project.metadata);
+      if (!ugc) throw new ValidationError('UGC_ACTOR shot in a project without the UGC style');
+      return generateActor(deps, shot, data, ugc);
+    }
     case 'STOCK_FOOTAGE': {
       // Phase 15 (Track C): Storyblocks video, then Pexels video. The scene description is the
       // search text; the adapter returns the licence facts, kept in the asset's metadata.
@@ -751,8 +857,16 @@ export async function generateAsset(data: GenerateAssetJobData, deps: PipelineDe
     voiceAssetId = (await generateVoice(deps, shot, data))?.assetId ?? null;
   }
   if (!shot.assetId) await generateVisual(deps, shot, data, voiceAssetId);
-  if (!voiceFirst && !shot.voiceAssetId) await generateVoice(deps, shot, data);
+  // 21.4: an actor clip speaks its own line (a degraded one was narrated in generateActor).
+  const actor = shot.visualTreatment === 'UGC_ACTOR';
+  if (!voiceFirst && !actor && !shot.voiceAssetId) await generateVoice(deps, shot, data);
   await timeNarration(deps, shot.id, data);
+  if (actor)
+    await timeClipSpeech(deps, {
+      shotId: shot.id,
+      organisationId: data.organisationId,
+      planTier: data.planTier,
+    });
   // 15.B3: extend the shot, speak faster (once) or trim at a word boundary when it runs over.
   await fitNarration(deps, {
     shotId: shot.id,
