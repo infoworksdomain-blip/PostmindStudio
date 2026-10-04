@@ -30,10 +30,10 @@ import {
 // real routes, real workers on the inline queue, real Postgres, scripted providers (~127p for
 // the harness's 3-shot brief).
 //
-//   MC-01  A project created without a budget gets the Â£3.50 short-form default; a YouTube
-//          long-form one (directly or from a template) gets Â£30; an explicit budget wins and is
+//   MC-01  A project created without a budget gets the £3.50 short-form default; a YouTube
+//          long-form one (directly or from a template) gets £30; an explicit budget wins and is
 //          kept by duplicate; a pre-existing project without a budget is left alone.
-//   MC-02  Month-to-date spend crosses 80% of the STANDARD monthly cap (Â£73) during a run:
+//   MC-02  Month-to-date spend crosses 80% of the STANDARD monthly cap (£73) during a run:
 //          one ORG_MONTHLY alert (period YYYY-MM) and one org-wide notification.
 //   MC-03  At 100% generation pauses as cost_cap_paused (org monthly), while publishing an
 //          already generated video still goes out.
@@ -112,7 +112,7 @@ describe.skipIf(!hasDb)(
     it('MC-01 projects without a budget get the short-form / long-form default', async () => {
       const { j } = guardedJourney('mc01');
       const short = await createProject(j);
-      // 20.25: the organisation's tier sets the default (the harness tenant is STANDARD: Â£4).
+      // 20.25: the organisation's tier sets the default (the harness tenant is STANDARD: £5).
       expect(await budgetOf(short)).toBe(500);
 
       const long = await createProject(
@@ -183,7 +183,7 @@ describe.skipIf(!hasDb)(
 
     it('MC-02 the monthly 80% alert fires once during a run; generation completes', async () => {
       const { j } = guardedJourney('mc02');
-      // 5,790p this month + ~127p of generation crosses 5,840p (80% of Â£73) mid-run.
+      // 5,790p this month + ~127p of generation crosses 5,840p (80% of £73) mid-run.
       await seedMonthToDate(j.org, 5_790);
       const id = await createProject(j);
       const done = await generate(j, id);
@@ -198,7 +198,7 @@ describe.skipIf(!hasDb)(
       expect(costNotes).toEqual([
         expect.objectContaining({
           kind: 'cost_alert',
-          title: '80% of this monthâ€™s generation budget used',
+          title: '80% of this month’s generation budget used',
           link: '/analytics',
         }),
       ]);
@@ -221,7 +221,7 @@ describe.skipIf(!hasDb)(
 
       expect((await monthlyAlerts(j.org)).map((a) => a.threshold)).toEqual([80, 100]);
       const pausedNote = (await notifications()).find((n) => n.kind === 'cost_paused');
-      expect(pausedNote?.title).toBe('Generation paused: this monthâ€™s generation budget is spent');
+      expect(pausedNote?.title).toBe('Generation paused: this month’s generation budget is spent');
       expect(pausedNote?.body).toContain('publishing is not affected');
       expect(
         await db.notification.findFirst({ where: { organisationId: j.org, kind: 'cost_paused' } }),
