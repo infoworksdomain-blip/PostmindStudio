@@ -47,6 +47,25 @@ const VOICE_VOLUME = 1;
 export const MUSIC_UNDER_VOICE_VOLUME = 0.2;
 export const MUSIC_ALONE_VOLUME = 0.7;
 const CAPTION_HEIGHT_RATIO = 0.18;
+/** The on-screen-text caption box: 45% black over the picture. */
+const CAPTION_BOX_ALPHA = 0.45;
+/**
+ * What that box looks like over a dark picture (45% black over a dark frame): the brand's text
+ * colour is used only if it reads clearly on it, else white (QA run 9: dark navy was unreadable).
+ */
+const CAPTION_BOX_EFFECTIVE = '#1F1F1F';
+/** How far below the top edge a moved headline sits (Shotstack offset; negative = down). */
+export const TOP_HEADLINE_OFFSET_Y = -0.1;
+
+/** Where a shot's on-screen headline goes: the bottom, unless narration captions use that band. */
+export function onScreenTextPlacement(voiced: boolean): {
+  position: 'top' | 'bottom';
+  offset?: { x: number; y: number };
+} {
+  return voiced
+    ? { position: 'top', offset: { x: 0, y: TOP_HEADLINE_OFFSET_Y } }
+    : { position: 'bottom' };
+}
 /**
  * How clips and stills fill the frame (Clip `fit`, https://shotstack.io/docs/api/#tocs_clip, read
  * 2026-10-03): "crop (default) - scale the asset to fill the viewport while maintaining the aspect
@@ -291,18 +310,28 @@ function audioAndCaptions(
   const hasOwnText =
     shot.visualTreatment === 'TEXT_CARD' || shot.visualTreatment === 'MOTION_GRAPHICS';
   if (shot.onScreenText && !hasOwnText) {
+    // A voiced shot carries burned-in narration captions in the lower third (voice-captions.ts,
+    // anchorY 0.7), so its headline moves to the top, below the AI label and the platform's top
+    // bar; QA run 9 showed the two boxes drawn over each other.
+    const placement = onScreenTextPlacement(Boolean(shot.voiceSrc));
     tracks.captions.push({
       asset: {
         type: 'html',
         html: para(input, shot.onScreenText),
-        css: style(input, Math.round(frame.height * 0.035), 'rgba(0,0,0,0.45)'),
+        css: style(
+          input,
+          Math.round(frame.height * 0.035),
+          `rgba(0,0,0,${CAPTION_BOX_ALPHA})`,
+          readableTextColour(CAPTION_BOX_EFFECTIVE, input.brand?.textColour),
+        ),
         width: Math.round(frame.width * 0.9),
         height: Math.round(frame.height * CAPTION_HEIGHT_RATIO),
-        position: 'bottom',
+        position: placement.position,
       },
       start,
       length,
-      position: 'bottom',
+      position: placement.position,
+      ...(placement.offset && { offset: placement.offset }),
     });
   }
   if (shot.sfxSrc) {
