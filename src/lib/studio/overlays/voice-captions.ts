@@ -4,6 +4,7 @@ import { NotFoundError } from '../../errors';
 import { mergeMetadata } from '../automation/approval';
 import { resolveProjectBrandKit } from '../pipeline/brand-resolve';
 import { projectMetadata } from '../pipeline/project-state';
+import { voiceTrimSecOf } from '../pipeline/voice-fit';
 import { spokenWordsOf } from '../pipeline/word-timing';
 import type { AssetStorage } from '../storage';
 import { captionLines, type CaptionLine } from './captions';
@@ -183,11 +184,26 @@ async function loadShots(db: Db, scriptId: string, organisationId: string) {
         select: { id: true, metadata: true },
       })
     : [];
-  const words = new Map(assets.map((a) => [a.id, spokenWordsOf(a.metadata)]));
+  const words = new Map(
+    assets.map((a) => [a.id, audibleWords(spokenWordsOf(a.metadata), voiceTrimSecOf(a.metadata))]),
+  );
   return shots.map((s) => ({
     ...s,
     words: s.voiceAssetId ? (words.get(s.voiceAssetId) ?? []) : [],
   }));
+}
+
+/**
+ * The words a viewer actually hears: when the narration was trimmed to fit its shot (voice-fit
+ * "trim"), the composer stops the voice clip at trimSec, so words ending after it are never heard
+ * and must not stretch a caption. Production QA run 8 (2026-10-04): a caption held on for a cut
+ * word failed caption_sync by 241 ms.
+ */
+export function audibleWords<W extends { endSec: number }>(
+  words: W[],
+  trimSec: number | null,
+): W[] {
+  return trimSec === null ? words : words.filter((w) => w.endSec <= trimSec + 0.001);
 }
 
 /**

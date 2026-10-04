@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { CAPTION_SYNC_TOLERANCE_SEC, matchCaption } from '../pipeline/quality-sync';
 import {
+  audibleWords,
   captionModeFor,
   captionStyle,
   narrationLines,
@@ -7,6 +9,44 @@ import {
   toSrt,
   withoutOnScreenDuplicates,
 } from './voice-captions';
+
+describe('captions for trimmed narration (production QA run 8, 2026-10-04)', () => {
+  // The 2.5 s still's narration, sped up once and then trimmed at 2.415 s (after "to"): "prep."
+  // is cut, yet the caption showed it and stayed up to 2.5 s, 241 ms past the last heard word.
+  const words = [
+    { text: 'Walk', startSec: 0.097, endSec: 0.358 },
+    { text: 'into', startSec: 0.358, endSec: 0.489 },
+    { text: 'every', startSec: 0.603, endSec: 0.815 },
+    { text: 'call', startSec: 0.93, endSec: 1.142 },
+    { text: 'like', startSec: 1.256, endSec: 1.435 },
+    { text: "you've", startSec: 1.484, endSec: 1.631 },
+    { text: 'had', startSec: 1.648, endSec: 1.794 },
+    { text: 'hours', startSec: 1.974, endSec: 2.121 },
+    { text: 'to', startSec: 2.235, endSec: 2.365 },
+    { text: 'prep.', startSec: 2.382, endSec: 2.741 },
+  ];
+
+  it('drops words the trim cuts off, and keeps every word when there is no trim', () => {
+    expect(audibleWords(words, 2.415).map((w) => w.text)).not.toContain('prep.');
+    expect(audibleWords(words, 2.415)).toHaveLength(9);
+    expect(audibleWords(words, null)).toHaveLength(10);
+  });
+
+  it('captions only what is heard, inside the caption_sync tolerance', () => {
+    const heard = audibleWords(words, 2.415);
+    const lines = narrationLines(heard, 2.5);
+    const last = lines.at(-1)!;
+    expect(last.text).toBe('hours to');
+    const match = matchCaption({ ...last, overlayId: 'ov-1', words });
+    expect(match).not.toBeNull();
+    expect(Math.abs(last.endAtSec - match!.last.endSec)).toBeLessThanOrEqual(
+      CAPTION_SYNC_TOLERANCE_SEC,
+    );
+    expect(Math.abs(last.startAtSec - match!.first.startSec)).toBeLessThanOrEqual(
+      CAPTION_SYNC_TOLERANCE_SEC,
+    );
+  });
+});
 
 describe('voice captions (15.A4)', () => {
   it('does not burn in a line the hook overlay already shows at the same time', () => {
