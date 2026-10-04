@@ -7,6 +7,7 @@ import { normaliseWord, type SpokenWord } from '../overlays/word-timing';
 // BACKLOG 15.B2 — the four §13.1 checks that were recorded as `not_run`:
 //   - audio_sync "Voiceover peaks align to shot boundaries": every narration clip on the timeline
 //     ends inside its shot (±5%, spec 5.5) and is never cut mid-word (15.B3 fit decisions);
+//     narration shortened at a sentence or word boundary is a `warning` (21.1);
 //   - caption_sync "Captions align to voiceover ±200ms": spoken captions (narration captions and
 //     karaoke overlays; never headline/title/CTA text, 20.22 overlays/kind.ts) start and end
 //     within 200 ms of the words they show (13.6 word timings);
@@ -51,6 +52,8 @@ export function evaluateAudioSync(
   const fits = new Map(narration.map((n) => [n.shotId, n.fit]));
   const problems: string[] = [];
   const badShots: number[] = [];
+  const shortened: string[] = [];
+  const shortenedShots: number[] = [];
   voiced.forEach((shot) => {
     const fit = fits.get(shot.shotId as string) ?? null;
     const number = summary.shots.indexOf(shot) + 1;
@@ -65,19 +68,38 @@ export function evaluateAudioSync(
     const clip = shot.voiceClipSec ?? 0;
     if (fit.strategy === 'trim') {
       if (!fit.wordBoundary) problem('narration cut without word timing');
+      else {
+        // 21.1: a clean cut, but the viewer does not hear the whole line (words are dropped).
+        const at = fit.sentenceBoundary ? 'a sentence end' : 'a word boundary';
+        shortened.push(`shot ${number}: narration shortened at ${at}`);
+        shortenedShots.push(number);
+      }
       return;
     }
     if (fit.voiceSec > shot.lengthSec * (1 + FIT_TOLERANCE) || fit.voiceSec > clip + FIT_SLACK_SEC)
       problem(`${fit.voiceSec.toFixed(2)}s of narration in a ${shot.lengthSec.toFixed(2)}s shot`);
   });
-  return problems.length
+  if (problems.length)
+    return {
+      code,
+      status: 'failed',
+      severity: 'error',
+      detail: [...problems, ...shortened].join('; '),
+      detailKey: 'audioSyncFailed',
+      detailParams: { count: badShots.length, shots: badShots.join(', ') },
+    };
+  // 21.1 DECISION: narration that had to be shortened (rebalancing could not give its shot
+  // enough time) is a `warning`, like brand_kit's "User review required": it does not fail the
+  // gate — the cut is clean and the video is usable — but it keeps the video from auto-approval
+  // (automation/review-policy.ts), so a person hears the shortened line before it is published.
+  return shortened.length
     ? {
         code,
-        status: 'failed',
-        severity: 'error',
-        detail: problems.join('; '),
-        detailKey: 'audioSyncFailed',
-        detailParams: { count: badShots.length, shots: badShots.join(', ') },
+        status: 'warning',
+        severity: 'info',
+        detail: shortened.join('; '),
+        detailKey: 'audioSyncShortened',
+        detailParams: { count: shortenedShots.length, shots: shortenedShots.join(', ') },
       }
     : {
         code,

@@ -17,8 +17,14 @@ import type { SpokenWord } from '../overlays/word-timing';
 //      card) is extended, while the script stays inside the ±2 s duration check;
 //   4. otherwise the narration is regenerated faster with ElevenLabs voice_settings.speed
 //      (documented, max 1.2), once;
-//   5. otherwise it is trimmed at the last word that ends inside the shot (or at the shot end
-//      when there is no word timing) and the composer stops the voice clip there.
+//   5. otherwise it is trimmed — provisionally — at the end of the last sentence that ends inside
+//      the shot, else at the last word that does (or at the shot end when there is no word
+//      timing), and the composer stops the voice clip there.
+// 21.1: step 5 is only the fallback. Before composition, once every shot of the run is measured,
+// shot-rebalance.ts / narration-rebalance.ts lengthen a trimmed shot whose picture can play
+// longer and take the time back from other shots' slack (strategy "rebalance"), so the line is
+// heard whole. Only what cannot be absorbed stays trimmed, and the quality gate's audio_sync
+// check reports it as a `warning` (quality-sync.ts), which keeps the video from auto-approval.
 
 export const FIT_TOLERANCE = 0.05;
 /**
@@ -36,13 +42,13 @@ export const EXTENDABLE_TREATMENTS: ReadonlySet<VisualTreatment> = new Set<Visua
   'MOTION_GRAPHICS',
 ]);
 
-export type FitStrategy = 'fits' | 'extend' | 'speed' | 'trim' | 'unmeasured';
+export type FitStrategy = 'fits' | 'extend' | 'speed' | 'trim' | 'rebalance' | 'unmeasured';
 
 export interface FitDecision {
   strategy: FitStrategy;
   voiceSec: number | null;
   shotSec: number;
-  /** extend: the shot's new length. */
+  /** extend / rebalance: the shot's new length. */
   newShotSec?: number;
   /** speed: the rate to regenerate at. */
   speed?: number;
@@ -50,8 +56,21 @@ export interface FitDecision {
   trimSec?: number;
   /** trim: whether the cut falls on a word boundary (false = no word timing). */
   wordBoundary?: boolean;
+  /** trim: whether the cut falls at the end of a sentence (21.1). */
+  sentenceBoundary?: boolean;
+  /** trim: how many spoken words the cut drops (21.1). */
+  droppedWords?: number;
+  /** rebalance: the shots that gave up time, and how much (21.1). */
+  donors?: Array<{ shotId: string; sec: number }>;
+  /** rebalance: seconds taken from the script's duration-check head-room (21.1). */
+  budgetSec?: number;
   /** The narration was regenerated faster before this decision. */
   speedApplied?: boolean;
+}
+
+/** The shot length that holds `voiceSec` of narration plus TAIL_SEC, rounded up to 0.1 s. */
+export function fittedShotSec(voiceSec: number): number {
+  return Math.ceil(Math.round((voiceSec + TAIL_SEC) * 1000) / 100) / 10;
 }
 
 /** How long the narration actually speaks for. */
@@ -61,11 +80,36 @@ export function narrationSec(words: SpokenWord[], probedSec: number | null): num
   return probedSec !== null && probedSec > 0 ? probedSec : null;
 }
 
-/** Stop point at the last word ending inside the shot, or null when no word does. */
-export function trimAtWordBoundary(words: SpokenWord[], shotSec: number): number | null {
-  const inside = words.filter((w) => w.endSec <= shotSec - 0.05);
+/** Stop point just after the last word (matching `keep`) ending inside the shot, or null. */
+function trimAfter(
+  words: SpokenWord[],
+  shotSec: number,
+  keep: (word: SpokenWord) => boolean,
+): number | null {
+  const inside = words.filter((w) => w.endSec <= shotSec - 0.05 && keep(w));
   const last = inside.reduce((max, w) => Math.max(max, w.endSec), 0);
   return last > 0 ? Math.min(shotSec, Math.round((last + 0.05) * 1000) / 1000) : null;
+}
+
+/** Stop point at the last word ending inside the shot, or null when no word does. */
+export function trimAtWordBoundary(words: SpokenWord[], shotSec: number): number | null {
+  return trimAfter(words, shotSec, () => true);
+}
+
+/**
+ * A word that ends a sentence: terminal punctuation (Latin . ! ? …, CJK 。！？, Arabic ؟,
+ * Devanagari danda ।), optionally followed by closing quotes or brackets. AssemblyAI keeps
+ * punctuation on its words ("prep."), which is what the word timings store.
+ */
+const SENTENCE_END = /[.!?…。！？؟।]["'”’»)\]]*$/u;
+
+export function endsSentence(word: string): boolean {
+  return SENTENCE_END.test(word.trim());
+}
+
+/** 21.1: stop point at the end of the last whole sentence inside the shot, or null. */
+export function trimAtSentenceBoundary(words: SpokenWord[], shotSec: number): number | null {
+  return trimAfter(words, shotSec, (w) => endsSentence(w.text));
 }
 
 export function decideFit(input: {
@@ -83,19 +127,32 @@ export function decideFit(input: {
   const { voiceSec, shotSec } = input;
   if (voiceSec === null) return { strategy: 'unmeasured', voiceSec, shotSec };
   if (voiceSec <= shotSec + FIT_SLACK_SEC) return { strategy: 'fits', voiceSec, shotSec };
-  const newShotSec = Math.ceil((voiceSec + TAIL_SEC) * 10) / 10;
+  const newShotSec = fittedShotSec(voiceSec);
   if (EXTENDABLE_TREATMENTS.has(input.treatment) && newShotSec - shotSec <= input.extendBudgetSec)
     return { strategy: 'extend', voiceSec, shotSec, newShotSec };
   const speed = Math.ceil((voiceSec / shotSec) * 1.02 * 100) / 100;
   if (input.canSpeedUp && !input.alreadySped && speed <= MAX_FIT_SPEED)
     return { strategy: 'speed', voiceSec, shotSec, speed };
-  const atWord = trimAtWordBoundary(input.words, shotSec);
+  return trimDecision(input.words, voiceSec, shotSec);
+}
+
+/**
+ * The (provisional) trim: at the end of the last sentence inside the shot when there is one, so
+ * the viewer never hears a sentence cut off; else at the last whole word; else (no word timing)
+ * at the shot end.
+ */
+export function trimDecision(words: SpokenWord[], voiceSec: number, shotSec: number): FitDecision {
+  const atSentence = trimAtSentenceBoundary(words, shotSec);
+  const atWord = atSentence ?? trimAtWordBoundary(words, shotSec);
+  const trimSec = atWord ?? shotSec;
   return {
     strategy: 'trim',
     voiceSec,
     shotSec,
-    trimSec: atWord ?? shotSec,
+    trimSec,
     wordBoundary: atWord !== null,
+    sentenceBoundary: atSentence !== null,
+    droppedWords: words.filter((w) => w.endSec > trimSec + 0.001).length,
   };
 }
 

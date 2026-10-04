@@ -32,6 +32,7 @@ import { edlHash } from '../../pipeline/edl-hash';
 import { fallbackFrom, shotFallbacks, type FallbackNotice } from '../../pipeline/fallback-notice';
 import { degradedShotsOf } from '../../pipeline/avatar-fallback';
 import { voiceTrimSecOf } from '../../pipeline/voice-fit';
+import { rebalanceNarration } from '../../pipeline/narration-rebalance';
 import { copyUrlToStorage } from '../../pipeline/persist';
 import {
   currentRunId,
@@ -67,6 +68,9 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     organisationId: data.organisationId,
     runId: data.runId,
   });
+  // 21.1: narration that overran its shot gets time from other shots' slack before anything is
+  // trimmed (shot lengths change here, so captions and the edit below are built from them).
+  await rebalanceNarration(deps, data);
   // 15.A4 (Track A): burned-in narration captions as editable overlays before the edit is built.
   await ensureVoiceCaptions(deps, data);
   const project = await deps.db.videoProject.findUnique({

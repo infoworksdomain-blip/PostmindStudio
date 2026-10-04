@@ -75,14 +75,76 @@ describe('audio_sync', () => {
       ]).detail,
     ).toContain('without word timing');
     expect(evaluateAudioSync(summary(), [{ shotId: 's1', fit: null }]).status).toBe('failed');
-    expect(
-      evaluateAudioSync(summary(), [
+  });
+
+  it('warns (no auto-approval) when narration had to be shortened, even at a clean boundary (21.1)', () => {
+    const word = evaluateAudioSync(summary(), [
+      {
+        shotId: 's1',
+        fit: { strategy: 'trim', voiceSec: 4, shotSec: 3, trimSec: 2.7, wordBoundary: true },
+      },
+    ]);
+    expect(word).toMatchObject({
+      status: 'warning',
+      severity: 'info',
+      detailKey: 'audioSyncShortened',
+      detailParams: { count: 1, shots: '1' },
+    });
+    expect(word.detail).toContain('shot 1: narration shortened at a word boundary');
+    const sentence = evaluateAudioSync(summary(), [
+      {
+        shotId: 's1',
+        fit: {
+          strategy: 'trim',
+          voiceSec: 4,
+          shotSec: 3,
+          trimSec: 1.6,
+          wordBoundary: true,
+          sentenceBoundary: true,
+        },
+      },
+    ]);
+    expect(sentence.detail).toContain('at a sentence end');
+    // The shortened line does not hide a real failure elsewhere.
+    const both = evaluateAudioSync(
+      summary({
+        shots: [
+          { shotId: 's1', startSec: 0, lengthSec: 3, treatment: 'AI_CLIP', voiceClipSec: 2.7 },
+          { shotId: 's2', startSec: 3, lengthSec: 3, treatment: 'AI_CLIP', voiceClipSec: 3 },
+        ],
+      }),
+      [
         {
           shotId: 's1',
           fit: { strategy: 'trim', voiceSec: 4, shotSec: 3, trimSec: 2.7, wordBoundary: true },
         },
-      ]).status,
-    ).toBe('passed');
+        { shotId: 's2', fit: null },
+      ],
+    );
+    expect(both).toMatchObject({
+      status: 'failed',
+      detailKey: 'audioSyncFailed',
+      detailParams: { count: 1, shots: '2' },
+    });
+    expect(both.detail).toContain('shot 1: narration shortened');
+  });
+
+  it('passes narration whose shot was lengthened by the rebalance (21.1)', () => {
+    const check = evaluateAudioSync(
+      summary({
+        shots: [
+          { shotId: 's1', startSec: 0, lengthSec: 3, treatment: 'IMAGE_STILL', voiceClipSec: 3 },
+          { shotId: 's2', startSec: 3, lengthSec: 2.5, treatment: 'TEXT_CARD', voiceClipSec: null },
+        ],
+      }),
+      [
+        {
+          shotId: 's1',
+          fit: { strategy: 'rebalance', voiceSec: 2.741, shotSec: 2.5, newShotSec: 3 },
+        },
+      ],
+    );
+    expect(check.status).toBe('passed');
   });
 
   it('does not run without narration or a summary', () => {

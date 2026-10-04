@@ -47,6 +47,7 @@ export const DETAIL_KEYS = [
   'noNarration',
   'audioSyncFailed',
   'audioSyncPassed',
+  'audioSyncShortened',
   'noSpokenCaptions',
   'captionSyncFailed',
   'captionSyncPassed',
