@@ -15,7 +15,7 @@ export type ItemStatus =
   | 'FAILED'
   | 'SKIPPED'
   | 'REMOVED';
-export type ItemKind = 'VIDEO' | 'SLIDESHOW';
+export type ItemKind = 'VIDEO' | 'SLIDESHOW' | 'CAROUSEL';
 
 export const ITEM_STATUSES: readonly ItemStatus[] = [
   'PLANNED',
@@ -164,6 +164,7 @@ export function kindCounts(items: readonly PlanItem[]): Record<ItemKind, number>
   return {
     VIDEO: items.filter((i) => i.kind === 'VIDEO').length,
     SLIDESHOW: items.filter((i) => i.kind === 'SLIDESHOW').length,
+    CAROUSEL: items.filter((i) => i.kind === 'CAROUSEL').length,
   };
 }
 

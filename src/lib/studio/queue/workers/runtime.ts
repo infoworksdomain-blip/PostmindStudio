@@ -83,6 +83,7 @@ import {
   rollUpAnalyticsJob,
 } from './poll-analytics';
 import { onPopulateSlideshowFailed, populateSlideshowJob } from './populate-slideshow';
+import { onRenderCarouselFailed, renderCarousel } from './render-carousel';
 import { onRunQualityGateFailed, runQualityGate } from './run-quality-gate';
 import {
   onRefreshImageLibraryFailed,
@@ -130,6 +131,7 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'fire-scheduled-publication': fireScheduledPublication,
   'scan-website': scanWebsite,
   'populate-slideshow': populateSlideshowJob,
+  'render-carousel': renderCarousel,
   'ingest-library-video': ingestLibraryVideoJob,
   'reanalyse-library-video': reanalyseLibraryVideoJob,
   'poll-publication-analytics': pollPublicationAnalytics,
@@ -175,6 +177,7 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'fire-scheduled-publication': onFireScheduledFailed,
   'scan-website': onScanWebsiteFailed,
   'populate-slideshow': onPopulateSlideshowFailed,
+  'render-carousel': onRenderCarouselFailed,
   'ingest-library-video': onIngestLibraryVideoFailed,
   'reanalyse-library-video': onReanalyseLibraryVideoFailed,
   'poll-publication-analytics': onPollPublicationAnalyticsFailed,
@@ -227,6 +230,7 @@ export const KILL_SWITCH_EXEMPT: ReadonlySet<JobName> = new Set<JobName>([
 export const JOB_FEATURES: Partial<Record<JobName, Feature>> = {
   'populate-slideshow': 'slideshow',
   'refresh-image-library': 'image-library',
+  'render-carousel': 'carousels',
 };
 
 export function isRetryable(err: unknown): boolean {

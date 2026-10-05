@@ -25,7 +25,8 @@ const ROTATION: readonly PlanAngle[] = [
   'testimonial',
 ];
 
-export type PlanKind = 'VIDEO' | 'SLIDESHOW';
+/** 21.6: CAROUSEL items are chosen per item in the plan editor (the mix stays video/slideshow). */
+export type PlanKind = 'VIDEO' | 'SLIDESHOW' | 'CAROUSEL';
 
 export const DEFAULT_VIDEO_SHARE = 50;
 

@@ -2,7 +2,7 @@
 // per-organisation overrides, mirroring src/lib/studio/services/features.ts.
 import { DemoHttpError, route } from '../registry';
 
-const FEATURES = ['library', 'overlays', 'slideshow', 'image-library'] as const;
+const FEATURES = ['library', 'overlays', 'slideshow', 'image-library', 'carousels'] as const;
 type Feature = (typeof FEATURES)[number];
 
 const state: Record<Feature, { global: boolean; environment: boolean; disabledFor: string[] }> = {
@@ -10,6 +10,7 @@ const state: Record<Feature, { global: boolean; environment: boolean; disabledFo
   overlays: { global: true, environment: true, disabledFor: [] },
   slideshow: { global: true, environment: true, disabledFor: ['org_pilot_bakery'] },
   'image-library': { global: true, environment: true, disabledFor: [] },
+  carousels: { global: true, environment: true, disabledFor: [] },
 };
 
 const snapshot = () => ({ features: structuredClone(state), propagationSec: 30 });

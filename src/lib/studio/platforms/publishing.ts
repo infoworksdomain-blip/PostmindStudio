@@ -4,7 +4,8 @@ import { NotFoundError, PlatformError } from '../../errors';
 import type { DataKeyProvider } from '../crypto/envelope';
 import type { Platform } from '../services/catalog';
 import type { AssetStorage } from '../storage';
-import type { VideoSource } from './interface';
+import type { CarouselComposition } from '../carousel/publishing';
+import type { CarouselSlideSource, VideoSource } from './interface';
 import type { MetaCredentialSource } from './meta';
 import type { OAuthClient, OAuthPlatform } from './oauth';
 import type { PublisherRegistry } from './registry';
@@ -152,6 +153,26 @@ export async function videoSource(
     signedUrl: await deps.storage.signedUrl(render.s3Bucket, render.s3Key, PUBLISH_URL_TTL_SEC),
     read: (start, end) => deps.storage.readRange(render.s3Bucket, render.s3Key, start, end),
   };
+}
+
+/** 21.6: the slides of a carousel render, as signed JPEG URLs and lazily-read JPEG bytes. */
+export async function carouselSlideSources(
+  deps: Pick<PublishingDeps, 'storage'>,
+  composition: CarouselComposition,
+): Promise<CarouselSlideSource[]> {
+  const out: CarouselSlideSource[] = [];
+  for (const slide of [...composition.slides].sort((a, b) => a.index - b.index)) {
+    const size = await deps.storage.size(composition.bucket, slide.jpegKey);
+    if (size <= 0) throw new NotFoundError(`Carousel slide ${slide.index + 1} is missing`);
+    out.push({
+      jpegUrl: await deps.storage.signedUrl(composition.bucket, slide.jpegKey, PUBLISH_URL_TTL_SEC),
+      readJpeg: () => deps.storage.readRange(composition.bucket, slide.jpegKey, 0, size - 1),
+      width: slide.width,
+      height: slide.height,
+      altText: slide.altText,
+    });
+  }
+  return out;
 }
 
 /**

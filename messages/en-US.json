@@ -524,7 +524,8 @@
         "BRIEF": "What’s the video about?",
         "SLIDESHOW": "What’s the slideshow about?",
         "UPLOAD": "Upload your video",
-        "UGC": "What should the actor talk about?"
+        "UGC": "What should the actor talk about?",
+        "CAROUSEL": "What’s the carousel about?"
       },
       "uploadChoose": "Choose a video",
       "uploadReplace": "Replace the video",
@@ -542,7 +543,8 @@
         "BRIEF": "Video",
         "SLIDESHOW": "Slideshow",
         "UPLOAD": "Upload a video",
-        "UGC": "UGC actor"
+        "UGC": "UGC actor",
+        "CAROUSEL": "Carousel (post cards)"
       },
       "templatedNote": "Platforms and length come from the template. Your text above is optional — it adds specifics to the template’s outline.",
       "noBusiness": {
@@ -554,11 +556,14 @@
         "slideshowDrafted": "Slideshow drafted — check the slides, then generate.",
         "generatingUpload": "Generating — Studio is captioning your video.",
         "generatingScript": "Generating — Studio is writing the script.",
-        "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}"
+        "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}",
+        "generatingCarousel": "Writing your carousel…"
       },
       "planMonth": "Or plan a whole month of videos and slideshows",
       "summaryNoAccounts": "no connected accounts: saved for review",
-      "summaryForReview": "saved for review"
+      "summaryForReview": "saved for review",
+      "createCarousel": "Create carousel",
+      "summaryCarousel": "{count} posts · {theme, select, dark {dark} other {light}} cards"
     },
     "problems": {
       "businessRequired": "Choose a business first.",
@@ -576,7 +581,9 @@
       "scheduleNeedsAccount": "A scheduled post is published automatically, so it needs a connected account for one of the chosen platforms. Connect one, or clear the schedule.",
       "ugcEnglishOnly": "UGC actors speak English for now: choose English as the video language.",
       "ugcShortOnly": "UGC actor videos are short: choose Short.",
-      "ugcRealPerson": "UGC actors are generated people. They can’t imitate, look like or sound like a real person or celebrity: describe the kind of person you want instead."
+      "ugcRealPerson": "UGC actors are generated people. They can’t imitate, look like or sound like a real person or celebrity: describe the kind of person you want instead.",
+      "carouselBriefRequired": "Describe the carousel or paste a thread.",
+      "carouselThreadTooLong": "The pasted thread is too long."
     },
     "options": {
       "platforms": "Platforms",
@@ -723,6 +730,20 @@
         "shop": "Shop counter"
       },
       "disclosure": "Actors are AI-generated people, never real ones, and every UGC video carries the AI-generated label. A brief that asks for a real person or celebrity is refused."
+    },
+    "carousel": {
+      "legend": "Carousel",
+      "intro": "Post cards with your business’s name and logo, one post per slide (two short posts may share a slide). Studio writes the thread from your description, or uses one you paste.",
+      "theme": "Look",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "posts": "Number of posts",
+      "postsValue": "{count} posts",
+      "thread": "Your thread (optional)",
+      "threadPlaceholder": "Paste a thread: separate posts with a line of ---, or number them 1/, 2/, 3/…",
+      "threadHint": "Leave it empty and Studio writes the thread. The first post is the hook, the last the call to action."
     }
   },
   "review": {
@@ -738,7 +759,8 @@
         "LIBRARY_REFERENCE": "From a reference video",
         "POSTMIND_CONTENT": "From PostMind content",
         "TEMPLATE": "From a template",
-        "UPLOAD": "Your video"
+        "UPLOAD": "Your video",
+        "CAROUSEL": "Carousel"
       },
       "loading": "Loading project",
       "spent": "{amount} spent",
@@ -751,7 +773,8 @@
         "shots": "Shots",
         "overlays": "Overlays",
         "script": "Script",
-        "publish": "Publish"
+        "publish": "Publish",
+        "carousel": "Carousel"
       },
       "variantsWorking": "Variants appear here as each format finishes rendering.",
       "variantsNone": "No variants rendered yet.",
@@ -2767,7 +2790,8 @@
         "library": "Reference video library",
         "overlays": "Text overlays",
         "slideshow": "Slideshows",
-        "imageLibrary": "Image library"
+        "imageLibrary": "Image library",
+        "carousels": "Carousels"
       },
       "offByEnvironment": "Off by environment (FEATURE_*_ENABLED)",
       "turnOffGlobally": "Turn off globally",
@@ -3838,7 +3862,9 @@
       "scan_images_skipped": "{count, plural, one {# image on your site could not be downloaded and was skipped.} other {# images on your site could not be downloaded and were skipped.}}",
       "stock_not_configured": "Stock photos could not be added: no stock photo service is set up yet.",
       "stock_unavailable": "Some stock photos could not be added this time. Use Refresh stock in the image library to try again.",
-      "ugc_real_person_refused": "This UGC brief asked for a real person or celebrity. Actors are generated people: describe the kind of person you want instead."
+      "ugc_real_person_refused": "This UGC brief asked for a real person or celebrity. Actors are generated people: describe the kind of person you want instead.",
+      "carousel_incomplete": "The carousel could not be made: it has no posts.",
+      "carousel_render_error": "Drawing the carousel’s slides failed."
     },
     "classes": {
       "rate_limited": "too many requests",
@@ -5308,7 +5334,8 @@
     },
     "kind": {
       "VIDEO": "Video",
-      "SLIDESHOW": "Slideshow"
+      "SLIDESHOW": "Slideshow",
+      "CAROUSEL": "Carousel"
     },
     "calendarDay": {
       "new_year": "New Year’s Day",
@@ -5532,6 +5559,108 @@
     "packs": {
       "name": "{quantity, plural, one {# HD video} other {# HD videos}}",
       "validity": "Use on any channel within {months, plural, one {# month} other {# months}}"
+    }
+  },
+  "carousel": {
+    "editor": {
+      "loading": "Loading the carousel…",
+      "postsTitle": "Posts",
+      "postsDescription": "Each post becomes a card. The first is the hook, the last the call to action.",
+      "readOnly": "This carousel can’t be edited right now (it is being made, approved or published). Duplicate the project to change it.",
+      "displayName": "Name on the cards",
+      "handle": "Handle",
+      "theme": "Look",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "noPosts": "Studio is writing the posts. They appear here when they are ready.",
+      "postLabel": "Post {n}",
+      "roles": {
+        "hook": "Hook",
+        "body": "Post",
+        "cta": "Call to action"
+      },
+      "onSlides": "slide {slides}",
+      "moveUp": "Move post {n} up",
+      "moveDown": "Move post {n} down",
+      "remove": "Delete post {n}",
+      "characters": "{count} / {max} characters",
+      "pictureChosen": "Picture chosen",
+      "hookNeedsPicture": "The hook works best with a picture.",
+      "noPicture": "No picture",
+      "changePicture": "Change picture",
+      "addPicture": "Add picture",
+      "removePicture": "Remove picture",
+      "waterfall": "Shortest line first",
+      "rewritePost": "Rewrite with AI",
+      "pictureFor": "Picture for post {n}",
+      "addPost": "Add a post",
+      "rewriteThread": "Rewrite the whole thread",
+      "rewritesLeft": "{count, plural, =0 {No AI rewrites left} one {# AI rewrite left} other {# AI rewrites left}}",
+      "save": "Save",
+      "saveAndRender": "Save and render again",
+      "renderAgain": "Render again",
+      "downloadAll": "Download all slides (ZIP)",
+      "unsavedNote": "Save and render again to update the slides you publish.",
+      "saved": "Carousel saved.",
+      "rendering": "Rendering the slides…",
+      "postRewritten": "Post rewritten.",
+      "threadRewritten": "Thread rewritten."
+    },
+    "preview": {
+      "title": "Preview",
+      "description": "Exactly how the slides will look. It updates as you type.",
+      "slideAlt": "Slide {n} of {total}",
+      "slideCaption": "Slide {n} of {total} · {kind, select, pair {two posts} other {one post}}",
+      "rendering": "Drawing the preview…",
+      "empty": "Write a post to see the preview.",
+      "breakdown": "Slides",
+      "selectSlide": "Show slide {n}",
+      "overTen": "Instagram takes at most 10 slides. This carousel has more, so it can’t go to Instagram.",
+      "removedCharacters": "{count, plural, one {# emoji or symbol isn’t shown on the slides} other {# emoji or symbols aren’t shown on the slides}} (the slide font can’t draw them).",
+      "issue": "Slide {n}: {problem}",
+      "issues": {
+        "text_outside_safe_area": "text reaches the edge",
+        "content_overflow": "too much on one slide",
+        "image_stretched": "a picture is stretched",
+        "low_contrast": "text is hard to read",
+        "hook_without_image": "the hook has no picture"
+      },
+      "aiLabel": "Some pictures are AI-generated, so the posts are labeled as AI-generated where the network allows it.",
+      "renderedTitle": "Rendered slides (PNG)",
+      "slidePng": "Slide {n}"
+    },
+    "publish": {
+      "noRender": "Render the carousel first.",
+      "failed": "{network}: {error}",
+      "scheduled": "{count, plural, one {# post scheduled} other {# posts scheduled}}",
+      "published": "{count, plural, one {# post is being published} other {# posts are being published}}",
+      "caption": "Caption",
+      "captionHint": "Each network gets its own hashtags.",
+      "schedule": "Publish at (optional)",
+      "scheduleErrors": {
+        "inPast": "Pick a time in the future.",
+        "tooFar": "Pick a time within 180 days."
+      },
+      "scheduleButton": "{count, plural, one {Schedule # post} other {Schedule # posts}}",
+      "publishButton": "{count, plural, one {Publish # post} other {Publish # posts}}",
+      "aiLabel": "Some pictures are AI-generated, so the posts are labeled as AI-generated where the network allows it.",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "linkedin": "LinkedIn",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "x": "X"
+      },
+      "notConnected": "No account connected. <link>Connect one</link>",
+      "unsupported": {
+        "too_many_slides": "Takes at most {max} slides. Remove posts to publish here.",
+        "too_few_slides": "Needs at least {max} slides.",
+        "youtube_video_only": "YouTube posts videos only. Download the slides instead.",
+        "x_not_built": "Studio can’t post carousels to X yet. Download the slides instead."
+      }
     }
   }
 }

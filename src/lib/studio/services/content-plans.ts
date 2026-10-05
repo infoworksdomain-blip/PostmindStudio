@@ -123,7 +123,7 @@ export const updateItemInput = z
   .object({
     title: z.string().trim().min(1).max(120).optional(),
     brief: z.string().trim().min(1).max(600).optional(),
-    kind: z.enum(['VIDEO', 'SLIDESHOW']).optional(),
+    kind: z.enum(['VIDEO', 'SLIDESHOW', 'CAROUSEL']).optional(),
     slides: slidesInput.optional(),
   })
   .strict()
@@ -133,7 +133,7 @@ export const addItemInput = z
   .object({
     /** An instant inside the plan's window, at least PLAN_MIN_LEAD_MS ahead. */
     slotAt: z.iso.datetime({ offset: true }),
-    kind: z.enum(['VIDEO', 'SLIDESHOW']),
+    kind: z.enum(['VIDEO', 'SLIDESHOW', 'CAROUSEL']),
     title: z.string().trim().min(1).max(120),
     brief: z.string().trim().min(1).max(600),
     slides: slidesInput.optional(),
@@ -278,6 +278,7 @@ export async function planDefaults(
     typicalCostPence: {
       VIDEO: estimateCost(['VIDEO'], tier).typicalPence,
       SLIDESHOW: estimateCost(['SLIDESHOW'], tier).typicalPence,
+      CAROUSEL: estimateCost(['CAROUSEL'], tier).typicalPence,
     },
   };
 }

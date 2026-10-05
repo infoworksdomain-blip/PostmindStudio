@@ -524,7 +524,8 @@
         "BRIEF": "视频的主题是什么？",
         "SLIDESHOW": "幻灯片的主题是什么？",
         "UPLOAD": "上传您的视频",
-        "UGC": "演员应该讲些什么？"
+        "UGC": "演员应该讲些什么？",
+        "CAROUSEL": "这组轮播图讲什么？"
       },
       "uploadChoose": "选择视频",
       "uploadReplace": "替换视频",
@@ -542,7 +543,8 @@
         "BRIEF": "视频",
         "SLIDESHOW": "幻灯片",
         "UPLOAD": "上传视频",
-        "UGC": "UGC 演员"
+        "UGC": "UGC 演员",
+        "CAROUSEL": "轮播图（帖子卡片）"
       },
       "templatedNote": "平台和时长由模板决定。上方文字为选填，可为模板大纲补充具体内容。",
       "noBusiness": {
@@ -554,11 +556,14 @@
         "slideshowDrafted": "幻灯片草稿已生成——请检查幻灯片，然后生成。",
         "generatingUpload": "正在生成——Studio 正在为您的视频添加字幕。",
         "generatingScript": "正在生成——Studio 正在撰写脚本。",
-        "draftNotStarted": "已保存为草稿，但未能开始生成：{error}"
+        "draftNotStarted": "已保存为草稿，但未能开始生成：{error}",
+        "generatingCarousel": "正在撰写您的轮播图…"
       },
       "planMonth": "或者规划一整个月的视频和幻灯片",
       "summaryNoAccounts": "没有已连接的账号：保存以供审核",
-      "summaryForReview": "保存以供审核"
+      "summaryForReview": "保存以供审核",
+      "createCarousel": "创建轮播图",
+      "summaryCarousel": "{count} 条帖子 · {theme, select, dark {深色} other {浅色}}卡片"
     },
     "problems": {
       "businessRequired": "请先选择商家。",
@@ -576,7 +581,9 @@
       "scheduleNeedsAccount": "排期的帖子会自动发布，因此需要为所选平台之一连接账号。请连接一个账号，或清除排期。",
       "ugcEnglishOnly": "UGC 演员目前只说英语：请将视频语言设为英语。",
       "ugcShortOnly": "UGC 演员视频为短视频：请选择“短”。",
-      "ugcRealPerson": "UGC 演员是生成的人物，不能模仿真人或名人，也不能长得像或听起来像他们：请改为描述您想要的人物类型。"
+      "ugcRealPerson": "UGC 演员是生成的人物，不能模仿真人或名人，也不能长得像或听起来像他们：请改为描述您想要的人物类型。",
+      "carouselBriefRequired": "请描述轮播图，或粘贴一组串文。",
+      "carouselThreadTooLong": "粘贴的串文太长。"
     },
     "options": {
       "platforms": "平台",
@@ -723,6 +730,20 @@
         "shop": "店铺柜台"
       },
       "disclosure": "演员均为 AI 生成的人物，绝非真人，每个 UGC 视频都带有“AI 生成”标签。要求真人或名人的需求说明会被拒绝。"
+    },
+    "carousel": {
+      "legend": "轮播图",
+      "intro": "带有您企业名称和标志的帖子卡片，每张幻灯片一条帖子（两条短帖可共用一张幻灯片）。Studio 会根据您的描述撰写串文，或使用您粘贴的串文。",
+      "theme": "外观",
+      "themes": {
+        "light": "浅色",
+        "dark": "深色"
+      },
+      "posts": "帖子数量",
+      "postsValue": "{count} 条帖子",
+      "thread": "您的串文（可选）",
+      "threadPlaceholder": "粘贴串文：用一行 --- 分隔帖子，或编号为 1/、2/、3/…",
+      "threadHint": "留空则由 Studio 撰写串文。第一条帖子是开头钩子，最后一条是行动号召。"
     }
   },
   "review": {
@@ -738,7 +759,8 @@
         "LIBRARY_REFERENCE": "来自参考视频",
         "POSTMIND_CONTENT": "来自 PostMind 内容",
         "TEMPLATE": "来自模板",
-        "UPLOAD": "您的视频"
+        "UPLOAD": "您的视频",
+        "CAROUSEL": "轮播图"
       },
       "loading": "正在加载项目",
       "spent": "已花费 {amount}",
@@ -751,7 +773,8 @@
         "shots": "镜头",
         "overlays": "叠加层",
         "script": "脚本",
-        "publish": "发布"
+        "publish": "发布",
+        "carousel": "轮播图"
       },
       "variantsWorking": "每种格式渲染完成后，对应版本会显示在这里。",
       "variantsNone": "尚未渲染任何版本。",
@@ -2767,7 +2790,8 @@
         "library": "参考视频库",
         "overlays": "文字叠加",
         "slideshow": "幻灯片",
-        "imageLibrary": "图片库"
+        "imageLibrary": "图片库",
+        "carousels": "轮播图"
       },
       "offByEnvironment": "已被环境关闭（FEATURE_*_ENABLED）",
       "turnOffGlobally": "全局关闭",
@@ -3838,7 +3862,9 @@
       "scan_images_skipped": "{count, plural, other {你网站上有 # 张图片无法下载，已跳过。}}",
       "stock_not_configured": "无法添加图库照片：尚未设置图库照片服务。",
       "stock_unavailable": "这次有些图库照片无法添加。请在图片库中点击“刷新图库”重试。",
-      "ugc_real_person_refused": "此 UGC 需求说明要求真人或名人。演员是生成的人物：请改为描述您想要的人物类型。"
+      "ugc_real_person_refused": "此 UGC 需求说明要求真人或名人。演员是生成的人物：请改为描述您想要的人物类型。",
+      "carousel_incomplete": "无法制作轮播图：其中没有帖子。",
+      "carousel_render_error": "绘制轮播图幻灯片失败。"
     },
     "classes": {
       "rate_limited": "请求过多",
@@ -5308,7 +5334,8 @@
     },
     "kind": {
       "VIDEO": "视频",
-      "SLIDESHOW": "幻灯片"
+      "SLIDESHOW": "幻灯片",
+      "CAROUSEL": "轮播图"
     },
     "calendarDay": {
       "new_year": "元旦",
@@ -5532,6 +5559,108 @@
     "packs": {
       "name": "{quantity, plural, other {# 个 HD 视频}}",
       "validity": "可在 {months, plural, other {# 个月}}内用于任意频道"
+    }
+  },
+  "carousel": {
+    "editor": {
+      "loading": "正在加载轮播图…",
+      "postsTitle": "帖子",
+      "postsDescription": "每条帖子都会成为一张卡片。第一条是开头钩子，最后一条是行动号召。",
+      "readOnly": "此轮播图现在无法编辑（正在制作、已批准或已发布）。如需修改，请复制该项目。",
+      "displayName": "卡片上的名称",
+      "handle": "账号名",
+      "theme": "外观",
+      "themes": {
+        "light": "浅色",
+        "dark": "深色"
+      },
+      "noPosts": "Studio 正在撰写帖子，完成后会显示在这里。",
+      "postLabel": "帖子 {n}",
+      "roles": {
+        "hook": "开头钩子",
+        "body": "帖子",
+        "cta": "行动号召"
+      },
+      "onSlides": "幻灯片 {slides}",
+      "moveUp": "将帖子 {n} 上移",
+      "moveDown": "将帖子 {n} 下移",
+      "remove": "删除帖子 {n}",
+      "characters": "{count} / {max} 个字符",
+      "pictureChosen": "已选择图片",
+      "hookNeedsPicture": "开头钩子配上图片效果最好。",
+      "noPicture": "无图片",
+      "changePicture": "更换图片",
+      "addPicture": "添加图片",
+      "removePicture": "移除图片",
+      "waterfall": "最短的行在前",
+      "rewritePost": "用 AI 改写",
+      "pictureFor": "帖子 {n} 的图片",
+      "addPost": "添加帖子",
+      "rewriteThread": "改写整组串文",
+      "rewritesLeft": "{count, plural, =0 {AI 改写次数已用完} other {还剩 # 次 AI 改写}}",
+      "save": "保存",
+      "saveAndRender": "保存并重新渲染",
+      "renderAgain": "重新渲染",
+      "downloadAll": "下载全部幻灯片（ZIP）",
+      "unsavedNote": "保存并重新渲染，才能更新要发布的幻灯片。",
+      "saved": "轮播图已保存。",
+      "rendering": "正在渲染幻灯片…",
+      "postRewritten": "帖子已改写。",
+      "threadRewritten": "串文已改写。"
+    },
+    "preview": {
+      "title": "预览",
+      "description": "幻灯片的最终效果。输入时会实时更新。",
+      "slideAlt": "第 {n} 张，共 {total} 张",
+      "slideCaption": "第 {n} 张，共 {total} 张 · {kind, select, pair {两条帖子} other {一条帖子}}",
+      "rendering": "正在绘制预览…",
+      "empty": "写一条帖子即可查看预览。",
+      "breakdown": "幻灯片",
+      "selectSlide": "显示第 {n} 张幻灯片",
+      "overTen": "Instagram 最多接受 10 张幻灯片。此轮播图超过了这个数量，因此无法发布到 Instagram。",
+      "removedCharacters": "{count, plural, other {有 # 个表情符号或符号不会显示在幻灯片上}}（幻灯片字体无法绘制它们）。",
+      "issue": "第 {n} 张幻灯片：{problem}",
+      "issues": {
+        "text_outside_safe_area": "文字碰到了边缘",
+        "content_overflow": "一张幻灯片上的内容太多",
+        "image_stretched": "有图片被拉伸",
+        "low_contrast": "文字难以阅读",
+        "hook_without_image": "开头钩子没有图片"
+      },
+      "aiLabel": "部分图片由 AI 生成，因此在平台允许的情况下，帖子会标注为 AI 生成。",
+      "renderedTitle": "已渲染的幻灯片（PNG）",
+      "slidePng": "第 {n} 张"
+    },
+    "publish": {
+      "noRender": "请先渲染轮播图。",
+      "failed": "{network}：{error}",
+      "scheduled": "{count, plural, other {已排期 # 条帖子}}",
+      "published": "{count, plural, other {正在发布 # 条帖子}}",
+      "caption": "文案",
+      "captionHint": "每个平台使用各自的话题标签。",
+      "schedule": "发布时间（可选）",
+      "scheduleErrors": {
+        "inPast": "请选择将来的时间。",
+        "tooFar": "请选择 180 天以内的时间。"
+      },
+      "scheduleButton": "{count, plural, other {排期 # 条帖子}}",
+      "publishButton": "{count, plural, other {发布 # 条帖子}}",
+      "aiLabel": "部分图片由 AI 生成，因此在平台允许的情况下，帖子会标注为 AI 生成。",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "linkedin": "LinkedIn",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "x": "X"
+      },
+      "notConnected": "未连接账号。<link>连接一个</link>",
+      "unsupported": {
+        "too_many_slides": "最多接受 {max} 张幻灯片。请删除部分帖子后再发布到这里。",
+        "too_few_slides": "至少需要 {max} 张幻灯片。",
+        "youtube_video_only": "YouTube 只发布视频。请改为下载幻灯片。",
+        "x_not_built": "Studio 暂时无法向 X 发布轮播图。请改为下载幻灯片。"
+      }
     }
   }
 }

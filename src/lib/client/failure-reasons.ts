@@ -21,6 +21,9 @@ export const FAILURE_CODES = [
   'quality_gate_error',
   'planning_failed',
   'slideshow_incomplete',
+  // 21.6 carousels: no settings / posts, or the slide render failed (wraps the cause).
+  'carousel_incomplete',
+  'carousel_render_error',
   'upload_missing',
   'script_regenerate_failed',
   'asset_generation_failed',
@@ -153,6 +156,7 @@ const SERVER_WORDED: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'brief_too_vague',
   'restricted_topics',
   'slideshow_incomplete',
+  'carousel_incomplete',
   'upload_missing',
   'script_regenerate_failed',
   'cost_cap_paused',
@@ -185,6 +189,7 @@ const WRAPPERS: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'planning_failed',
   'composition_failed',
   'quality_gate_error',
+  'carousel_render_error',
   'scheduling_failed',
 ]);
 

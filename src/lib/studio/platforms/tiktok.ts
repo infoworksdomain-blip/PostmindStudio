@@ -1,6 +1,12 @@
 import { PlatformError, type PlatformErrorClass } from '../../errors';
 import { asBody, platformRequest, pollUntil } from './http';
-import type { PlatformPublisher, PublishRequest, PublishResult, PublisherDeps } from './interface';
+import type {
+  CarouselPublishRequest,
+  PlatformPublisher,
+  PublishRequest,
+  PublishResult,
+  PublisherDeps,
+} from './interface';
 
 // BACKLOG 5.2 — TikTok Content Posting API, Direct Post with FILE_UPLOAD (spec 9.2).
 // Contract (developers.tiktok.com, read 2026-09-27):
@@ -23,6 +29,8 @@ const STATUS_TIMEOUT_MS = 10 * 60_000; // …up to 10 minutes
 /** Direct Post needs video.publish; the inbox upload (15.A2) needs video.upload. */
 export const DIRECT_POST_SCOPE = 'video.publish';
 export const UPLOAD_SCOPE = 'video.upload';
+/** Photo posts: photo_images takes "up to 35" URLs. */
+export const TIKTOK_PHOTO_MAX = 35;
 // The inbox init takes source_info only (no post_info), so is_aigc cannot be set by API on this
 // path: the note asks the creator to switch TikTok's AI-generated content label on (operator
 // decision P6: AI labels always on).
@@ -244,6 +252,98 @@ export class TikTokPublisher implements PlatformPublisher {
         inboxReason: reason,
         inboxStatus: status.status ?? null,
         note: TIKTOK_INBOX_NOTE,
+      },
+    };
+  }
+
+  /**
+   * 21.6 photo post. Content Posting API, "Photo Post" reference and media transfer guide, read
+   * 2026-10-04: https://developers.tiktok.com/doc/content-posting-api-reference-photo-post and
+   * https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide
+   *   POST /v2/post/publish/content/init/ {media_type:"PHOTO", post_mode:"DIRECT_POST"|"MEDIA_UPLOAD",
+   *        post_info:{title (≤90), description (≤4000), privacy_level, disable_comment,
+   *        auto_add_music}, source_info:{source:"PULL_FROM_URL", photo_images:[≤35 URLs],
+   *        photo_cover_index}} → data.publish_id; then status/fetch as for video.
+   *   Images: JPEG or WebP, ≤20 MB, ≤1080p; the URLs must be on a domain or URL prefix verified
+   *   for the app in the TikTok developer portal (else url_ownership_unverified). DIRECT_POST
+   *   needs video.publish; MEDIA_UPLOAD (to the creator's inbox) needs video.upload.
+   */
+  async publishCarousel(request: CarouselPublishRequest): Promise<PublishResult> {
+    const token = request.accessToken;
+    if (request.slides.length < 1 || request.slides.length > TIKTOK_PHOTO_MAX)
+      throw new PlatformError(
+        'tiktok',
+        'invalid_media',
+        `TikTok photo posts take 1 to ${TIKTOK_PHOTO_MAX} images (this one has ${request.slides.length})`,
+        false,
+      );
+    const sourceInfo = {
+      source: 'PULL_FROM_URL',
+      photo_images: request.slides.map((s) => s.jpegUrl),
+      photo_cover_index: 0,
+    };
+    const title = [...(request.caption.split('\n')[0] ?? '')].slice(0, 90).join('');
+    const description = [...request.text].slice(0, 4000).join('');
+    let mode: 'direct' | 'inbox' = TikTokPublisher.modeFor(request.grantedScopes);
+    let privacyLevel: string | undefined;
+    if (mode === 'direct') {
+      const creator = (
+        await this.post<{ privacy_level_options?: string[] }>(
+          '/v2/post/publish/creator_info/query/',
+          token,
+          {},
+        )
+      ).body.data;
+      const options = creator?.privacy_level_options ?? [];
+      const requested =
+        typeof request.options?.privacyLevel === 'string'
+          ? request.options.privacyLevel
+          : 'PUBLIC_TO_EVERYONE';
+      privacyLevel = options.includes(requested) ? requested : options[0];
+      if (!privacyLevel) mode = 'inbox';
+    }
+    const body =
+      mode === 'direct'
+        ? {
+            media_type: 'PHOTO',
+            post_mode: 'DIRECT_POST',
+            post_info: {
+              title,
+              description,
+              privacy_level: privacyLevel,
+              disable_comment: false,
+              auto_add_music: true,
+            },
+            source_info: sourceInfo,
+            ...(request.aiGenerated && { is_aigc: true }),
+          }
+        : {
+            media_type: 'PHOTO',
+            post_mode: 'MEDIA_UPLOAD',
+            post_info: { title, description },
+            source_info: sourceInfo,
+            ...(request.aiGenerated && { is_aigc: true }),
+          };
+    const init = (
+      await this.post<{ publish_id?: string }>('/v2/post/publish/content/init/', token, body)
+    ).body.data;
+    if (!init?.publish_id)
+      throw new PlatformError('tiktok', 'unknown', 'Photo init returned no publish_id', true);
+    const status = await this.waitFor(
+      init.publish_id,
+      token,
+      mode === 'direct' ? ['PUBLISH_COMPLETE'] : ['SEND_TO_USER_INBOX', 'PUBLISH_COMPLETE'],
+    );
+    const postId = status.publicaly_available_post_id?.[0];
+    return {
+      platformPostId: postId !== undefined ? String(postId) : init.publish_id,
+      platformUrl: null,
+      metadata: {
+        publishId: init.publish_id,
+        tiktokMode: mode,
+        mediaType: 'PHOTO',
+        ...(privacyLevel && { privacyLevel }),
+        ...(mode === 'inbox' && { note: TIKTOK_INBOX_NOTE }),
       },
     };
   }

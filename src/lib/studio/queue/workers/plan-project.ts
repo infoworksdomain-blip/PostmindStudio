@@ -56,6 +56,7 @@ import { styleMemorySupplement } from '../../services/style-memory';
 import { projectLanguages } from '../../languages';
 import { jobIds } from '../enqueue';
 import { planSlideshow } from './plan-slideshow';
+import { planCarousel } from './plan-carousel';
 import { planUpload } from './plan-upload';
 import { regenerateScriptPlan } from './regenerate-script';
 import { scriptRegeneration } from '../../services/scripts';
@@ -333,6 +334,11 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     await deps.queue.add('compose-video', data, { jobId: jobIds.composeVideo(data) });
     return log.info('slideshow/upload already planned; composition re-enqueued');
   }
+  // 21.6: a planned carousel only needs its render job.
+  if (project.state === 'ASSETS_QUEUED' && project.sourceType === 'CAROUSEL') {
+    await deps.queue.add('render-carousel', data, { jobId: jobIds.renderCarousel(data) });
+    return log.info('carousel already planned; render re-enqueued');
+  }
   if (project.state === 'ASSETS_QUEUED') {
     const count = await enqueueShots(deps, data);
     return log.info({ shots: count }, 'plan already persisted; shots re-enqueued');
@@ -348,6 +354,8 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   }
 
   if (project.sourceType === 'SLIDESHOW') return planSlideshow(data, deps, project, log);
+  // 21.6: a carousel writes (or keeps) its thread, picks pictures, then renders slides itself.
+  if (project.sourceType === 'CAROUSEL') return planCarousel(data, deps, project, log);
   // Phase 13.5: an uploaded video skips Layers 1–3 (plan-upload.ts).
   if (project.sourceType === 'UPLOAD') return planUpload(data, deps, project, log);
   // Phase 13.1: POST /scripts/:id/regenerate — Layer 2 only, reusing the stored brief.

@@ -31,6 +31,8 @@ import {
   type ProjectSnapshot,
 } from '../content-plans/status';
 import { toPlanTier, type Platform } from './catalog';
+import { DEFAULT_POSTS } from '../carousel/constants';
+import { CAROUSEL_PLATFORMS } from '../carousel/publishing';
 import { findPlan, planTargets, type PlanWithItems, type updateItemInput } from './content-plans';
 import {
   checkGenerateQuota,
@@ -153,7 +155,11 @@ export function projectBodyFor(
     durationSec,
   }));
   const text = slideText(item);
-  const targets = planTargets(plan);
+  // 21.6: a carousel goes only to the plan's networks that take carousels (feed, LinkedIn, TikTok).
+  const targets = planTargets(plan).filter(
+    (target) =>
+      item.kind !== 'CAROUSEL' || CAROUSEL_PLATFORMS.includes(target.platform as Platform),
+  );
   // 20.12 DECISION: a plan with no connected account cannot auto-post, so its posts are made
   // and saved for review (REQUIRE_APPROVAL, MANUAL, no time) instead of failing to schedule.
   const posting = targets.length > 0;
@@ -172,6 +178,20 @@ export function projectBodyFor(
       : { reviewPolicy: 'REQUIRE_APPROVAL' as const, publishPolicy: 'MANUAL' as const }),
     ...(plan.brandKitId && { brandKitId: plan.brandKitId }),
   };
+  if (item.kind === 'CAROUSEL') {
+    // 21.6: Studio writes the thread from the item's title and brief when it is generated.
+    const { targetFormats: _formats, ...rest } = common;
+    void _formats;
+    return {
+      ...rest,
+      sourceType: 'CAROUSEL',
+      brief: {
+        rawInput: `${item.title}\n\n${item.brief}`.slice(0, 4_000),
+        ...(text.cta && { callToAction: text.cta.slice(0, 200) }),
+      },
+      carousel: { theme: 'light', postCount: DEFAULT_POSTS },
+    };
+  }
   if (item.kind === 'SLIDESHOW') {
     const card = (role: 'hook' | 'cta', value: string) => ({
       slideType: 'TEXT_CARD' as const,

@@ -362,6 +362,7 @@ export function ItemForm({
           >
             <option value="VIDEO">{tk('VIDEO')}</option>
             <option value="SLIDESHOW">{tk('SLIDESHOW')}</option>
+            <option value="CAROUSEL">{tk('CAROUSEL')}</option>
           </NativeSelect>
         </Field>
       </div>

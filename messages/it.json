@@ -524,7 +524,8 @@
         "BRIEF": "Di cosa parla il video?",
         "SLIDESHOW": "Di cosa parla la presentazione?",
         "UPLOAD": "Carica il tuo video",
-        "UGC": "Di cosa deve parlare l’attore?"
+        "UGC": "Di cosa deve parlare l’attore?",
+        "CAROUSEL": "Di cosa parla il carosello?"
       },
       "uploadChoose": "Scegli un video",
       "uploadReplace": "Sostituisci il video",
@@ -542,7 +543,8 @@
         "BRIEF": "Video",
         "SLIDESHOW": "Presentazione",
         "UPLOAD": "Carica un video",
-        "UGC": "Attore UGC"
+        "UGC": "Attore UGC",
+        "CAROUSEL": "Carosello (schede post)"
       },
       "templatedNote": "Piattaforme e durata dipendono dal modello. Il testo qui sopra è facoltativo: aggiunge dettagli alla struttura del modello.",
       "noBusiness": {
@@ -554,11 +556,14 @@
         "slideshowDrafted": "Bozza della presentazione pronta: controlla le slide, poi genera.",
         "generatingUpload": "Generazione in corso: Studio sta sottotitolando il tuo video.",
         "generatingScript": "Generazione in corso: Studio sta scrivendo il copione.",
-        "draftNotStarted": "Salvato come bozza, ma la generazione non è partita: {error}"
+        "draftNotStarted": "Salvato come bozza, ma la generazione non è partita: {error}",
+        "generatingCarousel": "Sto scrivendo il tuo carosello…"
       },
       "planMonth": "Oppure pianifica un mese intero di video e slideshow",
       "summaryNoAccounts": "nessun account collegato: salvato per la revisione",
-      "summaryForReview": "salvato per la revisione"
+      "summaryForReview": "salvato per la revisione",
+      "createCarousel": "Crea carosello",
+      "summaryCarousel": "{count} post · schede {theme, select, dark {scure} other {chiare}}"
     },
     "problems": {
       "businessRequired": "Prima scegli un’attività.",
@@ -576,7 +581,9 @@
       "scheduleNeedsAccount": "Un post programmato viene pubblicato automaticamente, quindi serve un account collegato per una delle piattaforme scelte. Collegane uno oppure togli la programmazione.",
       "ugcEnglishOnly": "Per ora gli attori UGC parlano solo inglese: scegli l’inglese come lingua del video.",
       "ugcShortOnly": "I video con attori UGC sono brevi: scegli Breve.",
-      "ugcRealPerson": "Gli attori UGC sono persone generate. Non possono imitare una persona reale o una celebrità, somigliarle o avere la sua voce: descrivi invece il tipo di persona che desideri."
+      "ugcRealPerson": "Gli attori UGC sono persone generate. Non possono imitare una persona reale o una celebrità, somigliarle o avere la sua voce: descrivi invece il tipo di persona che desideri.",
+      "carouselBriefRequired": "Descrivi il carosello o incolla un thread.",
+      "carouselThreadTooLong": "Il thread incollato è troppo lungo."
     },
     "options": {
       "platforms": "Piattaforme",
@@ -723,6 +730,20 @@
         "shop": "Bancone del negozio"
       },
       "disclosure": "Gli attori sono persone generate dall’IA, mai reali, e ogni video UGC riporta l’etichetta «generato con IA». Un brief che chiede una persona reale o una celebrità viene rifiutato."
+    },
+    "carousel": {
+      "legend": "Carosello",
+      "intro": "Schede post con il nome e il logo della tua attività, un post per slide (due post brevi possono condividere una slide). Studio scrive il thread dalla tua descrizione o usa quello che incolli.",
+      "theme": "Aspetto",
+      "themes": {
+        "light": "Chiaro",
+        "dark": "Scuro"
+      },
+      "posts": "Numero di post",
+      "postsValue": "{count} post",
+      "thread": "Il tuo thread (facoltativo)",
+      "threadPlaceholder": "Incolla un thread: separa i post con una riga ---, oppure numerali 1/, 2/, 3/…",
+      "threadHint": "Lascialo vuoto e Studio scrive il thread. Il primo post è il gancio, l’ultimo l’invito all’azione."
     }
   },
   "review": {
@@ -738,7 +759,8 @@
         "LIBRARY_REFERENCE": "Da un video di riferimento",
         "POSTMIND_CONTENT": "Da contenuti PostMind",
         "TEMPLATE": "Da un modello",
-        "UPLOAD": "Il tuo video"
+        "UPLOAD": "Il tuo video",
+        "CAROUSEL": "Carosello"
       },
       "loading": "Caricamento progetto",
       "spent": "{amount} spesi",
@@ -751,7 +773,8 @@
         "shots": "Scene",
         "overlays": "Sovrimpressioni",
         "script": "Copione",
-        "publish": "Pubblica"
+        "publish": "Pubblica",
+        "carousel": "Carosello"
       },
       "variantsWorking": "Le varianti compaiono qui man mano che il rendering di ogni formato termina.",
       "variantsNone": "Nessuna variante ancora renderizzata.",
@@ -2767,7 +2790,8 @@
         "library": "Libreria di video di riferimento",
         "overlays": "Testi in sovraimpressione",
         "slideshow": "Presentazioni",
-        "imageLibrary": "Libreria di immagini"
+        "imageLibrary": "Libreria di immagini",
+        "carousels": "Caroselli"
       },
       "offByEnvironment": "Disattivata dall’ambiente (FEATURE_*_ENABLED)",
       "turnOffGlobally": "Disattiva globalmente",
@@ -3838,7 +3862,9 @@
       "scan_images_skipped": "{count, plural, one {# immagine del tuo sito non è stata scaricata ed è stata saltata.} many {# immagini del tuo sito non sono state scaricate e sono state saltate.} other {# immagini del tuo sito non sono state scaricate e sono state saltate.}}",
       "stock_not_configured": "Non è stato possibile aggiungere foto d’archivio: nessun servizio di foto è ancora configurato.",
       "stock_unavailable": "Questa volta non è stato possibile aggiungere alcune foto d’archivio. Usa «Aggiorna foto» nella libreria immagini per riprovare.",
-      "ugc_real_person_refused": "Questo brief UGC chiedeva una persona reale o una celebrità. Gli attori sono persone generate: descrivi invece il tipo di persona che desideri."
+      "ugc_real_person_refused": "Questo brief UGC chiedeva una persona reale o una celebrità. Gli attori sono persone generate: descrivi invece il tipo di persona che desideri.",
+      "carousel_incomplete": "Non è stato possibile creare il carosello: non ha post.",
+      "carousel_render_error": "Il disegno delle slide del carosello non è riuscito."
     },
     "classes": {
       "rate_limited": "troppe richieste",
@@ -5308,7 +5334,8 @@
     },
     "kind": {
       "VIDEO": "Video",
-      "SLIDESHOW": "Slideshow"
+      "SLIDESHOW": "Slideshow",
+      "CAROUSEL": "Carosello"
     },
     "calendarDay": {
       "new_year": "Capodanno",
@@ -5532,6 +5559,108 @@
     "packs": {
       "name": "{quantity, plural, one {# video HD} many {# video HD} other {# video HD}}",
       "validity": "Da usare su qualsiasi canale entro {months, plural, one {# mese} many {# mesi} other {# mesi}}"
+    }
+  },
+  "carousel": {
+    "editor": {
+      "loading": "Caricamento del carosello…",
+      "postsTitle": "Post",
+      "postsDescription": "Ogni post diventa una scheda. Il primo è il gancio, l’ultimo l’invito all’azione.",
+      "readOnly": "Questo carosello non si può modificare ora (è in creazione, approvato o pubblicato). Duplica il progetto per cambiarlo.",
+      "displayName": "Nome sulle schede",
+      "handle": "Handle",
+      "theme": "Aspetto",
+      "themes": {
+        "light": "Chiaro",
+        "dark": "Scuro"
+      },
+      "noPosts": "Studio sta scrivendo i post. Appariranno qui quando saranno pronti.",
+      "postLabel": "Post {n}",
+      "roles": {
+        "hook": "Gancio",
+        "body": "Post",
+        "cta": "Invito all’azione"
+      },
+      "onSlides": "slide {slides}",
+      "moveUp": "Sposta su il post {n}",
+      "moveDown": "Sposta giù il post {n}",
+      "remove": "Elimina il post {n}",
+      "characters": "{count} / {max} caratteri",
+      "pictureChosen": "Immagine scelta",
+      "hookNeedsPicture": "Il gancio funziona meglio con un’immagine.",
+      "noPicture": "Nessuna immagine",
+      "changePicture": "Cambia immagine",
+      "addPicture": "Aggiungi immagine",
+      "removePicture": "Rimuovi immagine",
+      "waterfall": "Prima la riga più corta",
+      "rewritePost": "Riscrivi con l’IA",
+      "pictureFor": "Immagine del post {n}",
+      "addPost": "Aggiungi un post",
+      "rewriteThread": "Riscrivi tutto il thread",
+      "rewritesLeft": "{count, plural, =0 {Nessuna riscrittura IA rimasta} one {# riscrittura IA rimasta} many {# riscritture IA rimaste} other {# riscritture IA rimaste}}",
+      "save": "Salva",
+      "saveAndRender": "Salva e rigenera",
+      "renderAgain": "Rigenera",
+      "downloadAll": "Scarica tutte le slide (ZIP)",
+      "unsavedNote": "Salva e rigenera per aggiornare le slide che pubblichi.",
+      "saved": "Carosello salvato.",
+      "rendering": "Generazione delle slide…",
+      "postRewritten": "Post riscritto.",
+      "threadRewritten": "Thread riscritto."
+    },
+    "preview": {
+      "title": "Anteprima",
+      "description": "Esattamente come appariranno le slide. Si aggiorna mentre scrivi.",
+      "slideAlt": "Slide {n} di {total}",
+      "slideCaption": "Slide {n} di {total} · {kind, select, pair {due post} other {un post}}",
+      "rendering": "Disegno dell’anteprima…",
+      "empty": "Scrivi un post per vedere l’anteprima.",
+      "breakdown": "Slide",
+      "selectSlide": "Mostra la slide {n}",
+      "overTen": "Instagram accetta al massimo 10 slide. Questo carosello ne ha di più, quindi non può andare su Instagram.",
+      "removedCharacters": "{count, plural, one {# emoji o simbolo non è mostrato nelle slide} many {# emoji o simboli non sono mostrati nelle slide} other {# emoji o simboli non sono mostrati nelle slide}} (il carattere delle slide non può disegnarli).",
+      "issue": "Slide {n}: {problem}",
+      "issues": {
+        "text_outside_safe_area": "il testo arriva al bordo",
+        "content_overflow": "troppo contenuto in una slide",
+        "image_stretched": "un’immagine è deformata",
+        "low_contrast": "il testo è difficile da leggere",
+        "hook_without_image": "il gancio non ha un’immagine"
+      },
+      "aiLabel": "Alcune immagini sono generate dall’IA, quindi i post sono etichettati come generati dall’IA dove la rete lo consente.",
+      "renderedTitle": "Slide generate (PNG)",
+      "slidePng": "Slide {n}"
+    },
+    "publish": {
+      "noRender": "Genera prima il carosello.",
+      "failed": "{network}: {error}",
+      "scheduled": "{count, plural, one {# post programmato} many {# post programmati} other {# post programmati}}",
+      "published": "{count, plural, one {# post in pubblicazione} many {# post in pubblicazione} other {# post in pubblicazione}}",
+      "caption": "Didascalia",
+      "captionHint": "Ogni rete riceve i propri hashtag.",
+      "schedule": "Pubblica il (facoltativo)",
+      "scheduleErrors": {
+        "inPast": "Scegli un orario futuro.",
+        "tooFar": "Scegli un orario entro 180 giorni."
+      },
+      "scheduleButton": "{count, plural, one {Programma # post} many {Programma # post} other {Programma # post}}",
+      "publishButton": "{count, plural, one {Pubblica # post} many {Pubblica # post} other {Pubblica # post}}",
+      "aiLabel": "Alcune immagini sono generate dall’IA, quindi i post sono etichettati come generati dall’IA dove la rete lo consente.",
+      "networks": {
+        "instagram": "Instagram",
+        "facebook": "Facebook",
+        "linkedin": "LinkedIn",
+        "tiktok": "TikTok",
+        "youtube": "YouTube",
+        "x": "X"
+      },
+      "notConnected": "Nessun account collegato. <link>Collegane uno</link>",
+      "unsupported": {
+        "too_many_slides": "Accetta al massimo {max} slide. Rimuovi dei post per pubblicare qui.",
+        "too_few_slides": "Servono almeno {max} slide.",
+        "youtube_video_only": "YouTube pubblica solo video. Scarica invece le slide.",
+        "x_not_built": "Studio non può ancora pubblicare caroselli su X. Scarica invece le slide."
+      }
     }
   }
 }

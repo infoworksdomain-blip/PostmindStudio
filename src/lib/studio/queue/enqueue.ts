@@ -50,6 +50,8 @@ export const jobIds = {
   pollAnalytics: (d: JobDataMap['poll-publication-analytics']) =>
     `poll-analytics__${d.publicationId}__${d.pollNumber}`,
   rollUpAnalytics: (d: JobDataMap['roll-up-analytics']) => `roll-up-analytics__${d.runId}`,
+  renderCarousel: (d: JobDataMap['render-carousel']) =>
+    `render-carousel__${d.projectId}__${d.runId}`,
   populateSlideshow: (d: JobDataMap['populate-slideshow']) =>
     `populate-slideshow__${d.projectId}__${d.runId}`,
   refreshImageLibrary: (d: JobDataMap['refresh-image-library']) =>

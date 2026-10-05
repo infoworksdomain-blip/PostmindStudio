@@ -10,6 +10,7 @@ import {
   ArrowRight,
   CalendarRange,
   Clapperboard,
+  GalleryHorizontal,
   Layers,
   Loader2,
   Upload,
@@ -39,6 +40,7 @@ import {
 import { AutoPublishOption } from './auto-publish-option';
 import {
   BRIEF_MAX,
+  CAROUSEL_POSTS_DEFAULT,
   buildCreateBody,
   MAX_BUDGET_POUNDS,
   buildGenerateBody,
@@ -64,6 +66,7 @@ import { ReferencePreview } from './reference-preview';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { ProfileReviewNotice } from '../business/profile-review-notice';
 import { BriefHint, briefHintDescribedBy } from '../brief-hint';
+import { CarouselOptions } from './carousel-options';
 
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
 // business's connections and default brand kit; options sit behind progressive disclosure.
@@ -92,6 +95,7 @@ const INITIAL: FormState = {
 const SOURCES: Array<{ key: CreateSource; icon: typeof Clapperboard }> = [
   { key: 'BRIEF', icon: Clapperboard },
   { key: 'SLIDESHOW', icon: Layers },
+  { key: 'CAROUSEL', icon: GalleryHorizontal },
   { key: 'UPLOAD', icon: Upload },
   // 21.4: a generated actor talks about the product (UGC style).
   { key: 'UGC', icon: UserRound },
@@ -251,7 +255,9 @@ export function CreateScreen({
           toast.success(
             body.sourceType === 'UPLOAD'
               ? t('toast.generatingUpload')
-              : t('toast.generatingScript'),
+              : body.sourceType === 'CAROUSEL'
+                ? t('toast.generatingCarousel')
+                : t('toast.generatingScript'),
           );
         } catch (err) {
           toast.error(t('toast.draftNotStarted', { error: errorMessage(err) }));
@@ -269,6 +275,8 @@ export function CreateScreen({
   const isSlideshow = form.source === 'SLIDESHOW';
   const isUpload = form.source === 'UPLOAD';
   const isUgc = form.source === 'UGC';
+  // 21.6: a carousel picks its networks when it is published.
+  const isCarousel = form.source === 'CAROUSEL';
   const templated = usesTemplate(state, reference);
   const chooseTemplate = (id: string | null) => {
     const found = templates.data?.data.find((x) => x.id === id);
@@ -304,21 +312,32 @@ export function CreateScreen({
     return tp(p);
   };
   // The options summary: separate facts joined with a middle dot (a list, not a sentence).
-  const summary = [
-    templated && form.projectTemplate
-      ? t('summaryTemplate', { name: form.projectTemplate.name })
-      : `${t('summaryPlatforms', { count: state.platforms.length })} · ${tl(form.length)}`,
-    !connections.data
-      ? null
-      : !hasAccounts
-        ? t('summaryNoAccounts')
-        : state.autoPublish
-          ? t('summaryAutoPublish', {
-              count: buildTargets(publishPlatforms(state), accounts).length,
-            })
-          : t('summaryForReview'),
-    state.brandKitId ? t('summaryBrandKit') : null,
-  ].filter(Boolean);
+  const summary = isCarousel
+    ? [
+        t('summaryCarousel', {
+          count: form.carouselPosts ?? CAROUSEL_POSTS_DEFAULT,
+          theme: form.carouselTheme ?? 'light',
+        }),
+        state.brandKitId ? t('summaryBrandKit') : null,
+      ].filter(Boolean)
+    : videoSummary();
+  function videoSummary() {
+    return [
+      templated && form.projectTemplate
+        ? t('summaryTemplate', { name: form.projectTemplate.name })
+        : `${t('summaryPlatforms', { count: state.platforms.length })} · ${tl(form.length)}`,
+      !connections.data
+        ? null
+        : !hasAccounts
+          ? t('summaryNoAccounts')
+          : state.autoPublish
+            ? t('summaryAutoPublish', {
+                count: buildTargets(publishPlatforms(state), accounts).length,
+              })
+            : t('summaryForReview'),
+      state.brandKitId ? t('summaryBrandKit') : null,
+    ].filter(Boolean);
+  }
   return (
     <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-col gap-6 pt-4 md:pt-10">
       <div>
@@ -351,7 +370,7 @@ export function CreateScreen({
           <p className="text-xs text-muted-foreground">{t('uploadNote')}</p>
         </div>
       )}
-      {reference && !isSlideshow && !isUpload && !isUgc && (
+      {reference && !isSlideshow && !isUpload && !isUgc && !isCarousel && (
         <>
           <ReferenceBanner
             reference={reference}
@@ -399,30 +418,32 @@ export function CreateScreen({
             ) : (
               <ArrowRight className="rtl:-scale-x-100" />
             )}
-            {isSlideshow ? t('createSlideshow') : t('generate')}
+            {isSlideshow ? t('createSlideshow') : isCarousel ? t('createCarousel') : t('generate')}
           </Button>
         </div>
       </div>
       <CreateBlockedNotice block={block} className="-mt-3 text-sm text-destructive" />
       {/* 20.18: a gentle nudge for a very short or generic brief; Generate still works. */}
       <BriefHint text={form.brief} id="create-brief-hint" className="-mt-3" />
-      <AutoPublishOption
-        source={form.source}
-        enabled={state.autoPublish}
-        onToggle={(on) => patch({ autoPublish: on })}
-        platforms={publishPlatforms(state)}
-        accounts={accounts}
-        onAccount={(platform, connectionId) =>
-          patch({
-            autoPublishAccounts: { ...form.autoPublishAccounts, [platform]: connectionId },
-            // Picking accounts settles the toggle: un-picking them all asks, never silently stops.
-            autoPublish: form.autoPublish ?? state.autoPublish,
-          })
-        }
-        connections={connectionList}
-        metaConnect={connections.data?.meta?.connect}
-        businessId={businessId}
-      />
+      {!isCarousel && (
+        <AutoPublishOption
+          source={form.source}
+          enabled={state.autoPublish}
+          onToggle={(on) => patch({ autoPublish: on })}
+          platforms={publishPlatforms(state)}
+          accounts={accounts}
+          onAccount={(platform, connectionId) =>
+            patch({
+              autoPublishAccounts: { ...form.autoPublishAccounts, [platform]: connectionId },
+              // Picking accounts settles the toggle: un-picking them all asks, never silently stops.
+              autoPublish: form.autoPublish ?? state.autoPublish,
+            })
+          }
+          connections={connectionList}
+          metaConnect={connections.data?.meta?.connect}
+          businessId={businessId}
+        />
+      )}
       {isUgc && (
         <UgcOptions
           businessId={businessId}
@@ -473,7 +494,8 @@ export function CreateScreen({
               onChange={(templateId) => patch({ templateId })}
             />
           )}
-          {!isSlideshow && !isUpload && !isUgc && !reference && (
+          {isCarousel && <CarouselOptions state={form} onChange={patch} />}
+          {!isSlideshow && !isUpload && !isUgc && !isCarousel && !reference && (
             <ProjectTemplatePicker
               templates={templates.data?.data}
               error={templates.error}
@@ -482,7 +504,7 @@ export function CreateScreen({
               onChange={chooseTemplate}
             />
           )}
-          {templated ? (
+          {isCarousel ? null : templated ? (
             <p className="text-xs text-muted-foreground">{t('templatedNote')}</p>
           ) : (
             <PlatformChips value={state.platforms} onChange={patch} />
@@ -490,20 +512,22 @@ export function CreateScreen({
           {/* 20.13: the hashtags every post carries (Business settings → Hashtags). */}
           <BusinessHashtagsNote businessId={businessId} />
           <div className="grid gap-5 sm:grid-cols-2">
-            {!templated && <LengthToggle value={form.length} onChange={patch} />}
+            {!templated && !isCarousel && <LengthToggle value={form.length} onChange={patch} />}
             <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />
           </div>
           <LanguageOptions state={state} onChange={patch} />
-          <AdvancedOptions
-            state={state}
-            onChange={patch}
-            open={showAdvanced}
-            onToggle={() => setShowAdvanced((v) => !v)}
-            planTier={planTier}
-            workflows={workflows.data?.data}
-            canSchedule={!connections.data || publishable.length > 0}
-            showCosts={showCosts}
-          />
+          {!isCarousel && (
+            <AdvancedOptions
+              state={state}
+              onChange={patch}
+              open={showAdvanced}
+              onToggle={() => setShowAdvanced((v) => !v)}
+              planTier={planTier}
+              workflows={workflows.data?.data}
+              canSchedule={!connections.data || publishable.length > 0}
+              showCosts={showCosts}
+            />
+          )}
         </div>
       )}
     </form>

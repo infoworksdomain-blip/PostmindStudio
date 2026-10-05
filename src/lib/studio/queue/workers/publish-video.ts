@@ -8,11 +8,13 @@ import type { PipelineDeps } from '../../pipeline/deps';
 import { notifyPublicationFailed } from '../../notifications/events';
 import { recordPublished, recordPublishFailed } from '../../observability/slo';
 import {
+  carouselSlideSources,
   noteCredentialFailure,
   publicationMetadata,
   resolveCredentials,
   videoSource,
 } from '../../platforms/publishing';
+import { carouselComposition } from '../../carousel/publishing';
 import type { Platform } from '../../services/catalog';
 import { jobIds } from '../enqueue';
 import type { PublishJobData } from '../queues';
@@ -196,11 +198,18 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
       false,
     );
   }
+  // 21.6: a carousel render publishes its slides as images; everything else is a video.
+  const carousel = carouselComposition(publication.render.composition);
+  const publisher = deps.publishing.publishers[platform];
+  if (carousel && !publisher?.publishCarousel)
+    throw new PlatformError(platform, 'invalid_request', `${platform} takes no carousels`, false);
   const { accessToken, accountId, scopes } = await resolveCredentials(deps.publishing, publication);
-  const video = await videoSource(deps.publishing, publication.render);
-  const extras = isYouTube(platform)
-    ? await youtubeExtras(deps, publication.render, data.organisationId)
-    : {};
+  const video = carousel ? null : await videoSource(deps.publishing, publication.render);
+  const slides = carousel ? await carouselSlideSources(deps.publishing, carousel) : null;
+  const extras =
+    !carousel && isYouTube(platform)
+      ? await youtubeExtras(deps, publication.render, data.organisationId)
+      : {};
   const setMetadata = (value: Record<string, unknown>) =>
     deps.db.videoPublication.update({
       where: { id: publication.id },
@@ -209,20 +218,28 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
   await setMetadata({ ...meta, uploadStartedAt: new Date(deps.now()).toISOString() });
 
   let result: Awaited<ReturnType<(typeof deps.publishing.publishers)[Platform]['publish']>>;
+  const common = {
+    text: publication.caption ?? '',
+    caption: meta.rawCaption ?? publication.caption ?? '',
+    hashtags: publication.hashtags,
+    title: meta.title,
+    accessToken,
+    accountId,
+    options: meta.options,
+    ...(scopes && { grantedScopes: scopes }),
+  };
   try {
-    result = await deps.publishing.publishers[platform].publish({
-      video,
-      text: publication.caption ?? '',
-      caption: meta.rawCaption ?? publication.caption ?? '',
-      hashtags: publication.hashtags,
-      title: meta.title,
-      accessToken,
-      accountId,
-      aiGenerated: true,
-      options: meta.options,
-      ...(scopes && { grantedScopes: scopes }),
-      ...extras,
-    });
+    if (carousel && slides && publisher.publishCarousel) {
+      result = await publisher.publishCarousel({
+        ...common,
+        slides,
+        aiGenerated: carousel.aiGenerated,
+      });
+    } else if (video) {
+      result = await publisher.publish({ ...common, video, aiGenerated: true, ...extras });
+    } else {
+      throw new PlatformError(platform, 'invalid_request', 'Nothing to publish', false);
+    }
   } catch (err) {
     // 15.A9: YouTube quota refusal → back off to the next quota window (nothing was uploaded).
     if (

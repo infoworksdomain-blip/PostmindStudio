@@ -31,7 +31,7 @@ const DEFAULTS: PlanDefaults = {
   planTier: 'STANDARD',
   allowance: { mode: 'enforce', limit: 40, used: 10, credits: 5, remaining: 35 },
   cost: { capPence: 7_300, spentPence: 500, creditHeadroomPence: 175 },
-  typicalCostPence: { VIDEO: 160, SLIDESHOW: 150 },
+  typicalCostPence: { VIDEO: 160, SLIDESHOW: 150, CAROUSEL: 150 },
 };
 
 const CONNECTION = {

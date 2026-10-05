@@ -7,6 +7,7 @@ import { VAGUE_BRIEF_REASON, directionOptionsOf } from '@/lib/studio/pipeline/va
 import { CONTENT, contentForBrief, type ProjectContent } from './projects-content';
 import { approve } from './projects-publish';
 import { uploadContent } from './p13-a1-uploads';
+import { startCarouselRun } from './p21-carousels';
 import {
   buildRender,
   buildScripts,
@@ -163,6 +164,11 @@ function needsDirection(p: ProjectRec, directionChosen: boolean): boolean {
 
 /** POST /projects/:id/generate — a full run from the brief (or the slides). */
 export function startFullRun(p: ProjectRec, opts: { directionChosen?: boolean } = {}): void {
+  // 21.6: a carousel writes its thread, picks pictures and renders slides (p21-carousels.ts).
+  if (p.sourceType === 'CAROUSEL') {
+    stopRun(p.id);
+    return startCarouselRun(p);
+  }
   const run = newRun(p);
   const content = contentFor(p);
   touch(p, { state: 'QUEUED', errorReason: null, completedAt: null });

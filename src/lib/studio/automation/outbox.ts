@@ -14,6 +14,8 @@ import {
 } from '../services/drip-queue';
 import { storedTargets, type AutoPublishTarget } from './targets';
 import { projectLabel, projectNameParam } from '../../project-name';
+import { CAROUSEL_PLATFORMS, CAROUSEL_RENDER_PLATFORM } from '../carousel/publishing';
+import type { Platform } from '../services/catalog';
 
 // BACKLOG 13.21 — auto-publish outbox. Approval and auto-publish used to be two steps: a process
 // dying between them left an APPROVED project with nothing posted. Now the approval transaction
@@ -421,5 +423,12 @@ export function renderIdFor(
   const ids = Object.values(
     (projectMetadata(metadata).renders as Record<string, string> | undefined) ?? {},
   );
-  return renders.find((r) => ids.includes(r.id) && r.targetPlatform === platform)?.id;
+  const current = renders.filter((r) => ids.includes(r.id));
+  return (
+    current.find((r) => r.targetPlatform === platform)?.id ??
+    // 21.6: one carousel render serves every network a carousel can go to.
+    (CAROUSEL_PLATFORMS.includes(platform as Platform)
+      ? current.find((r) => r.targetPlatform === CAROUSEL_RENDER_PLATFORM)?.id
+      : undefined)
+  );
 }

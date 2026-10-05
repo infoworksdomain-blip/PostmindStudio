@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { CalendarDays, Clapperboard, Layers } from 'lucide-react';
+import { CalendarDays, Clapperboard, GalleryHorizontal, Layers } from 'lucide-react';
 import { useFormat, type Tone } from '@/lib/client/format';
 import { CALENDAR_DAY_IDS, type CalendarDayId } from '@/lib/studio/content-plans/calendar-days';
 import { useShowCosts } from '../account/use-show-costs';
@@ -65,7 +65,8 @@ const isAngle = (value: string): value is PlanAngle =>
 export function ItemMeta({ item, timezone }: { item: PlanItem; timezone: string }) {
   const t = useTranslations('plans');
   const f = useFormat();
-  const Icon = item.kind === 'VIDEO' ? Clapperboard : Layers;
+  const Icon =
+    item.kind === 'VIDEO' ? Clapperboard : item.kind === 'CAROUSEL' ? GalleryHorizontal : Layers;
   return (
     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
       <time dateTime={item.slotAt} className="tabular font-medium text-foreground">

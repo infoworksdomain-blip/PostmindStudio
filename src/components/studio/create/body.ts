@@ -5,7 +5,14 @@ import { buildFormats, nameFromBrief, type Length, type TargetFormatInput } from
 // Builds the POST /api/studio/projects body (services/projects.ts createProjectInput) from the
 // Create screen's state. Pure, so the rules the API enforces are unit-tested here too.
 
-export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD' | 'UGC';
+export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD' | 'UGC' | 'CAROUSEL';
+export type CarouselTheme = 'light' | 'dark';
+
+/** 21.6: the carousel options on Create (carousel/constants.ts MIN_POSTS..MAX_POSTS). */
+export const CAROUSEL_POSTS_MIN = 3;
+export const CAROUSEL_POSTS_MAX = 12;
+export const CAROUSEL_POSTS_DEFAULT = 7;
+export const CAROUSEL_THREAD_MAX = 7_200;
 
 /** 21.4: the Create screen's UGC actor choices ('' = Studio picks; ugc/style.ts presets). */
 export interface UgcChoice {
@@ -73,6 +80,10 @@ export interface CreateState {
   qualityTier?: QualityTier | '';
   /** 15.C4: an approval workflow (15.D3); '' = the organisation's matching rule. */
   approvalWorkflowId?: string;
+  /** 21.6 carousels: look, number of posts, and a thread the owner already wrote. */
+  carouselTheme?: CarouselTheme;
+  carouselPosts?: number;
+  carouselThread?: string;
   /** 21.4: the UGC actor choices (source 'UGC'). */
   ugc?: UgcChoice;
 }
@@ -86,7 +97,8 @@ export interface CreateProjectBody {
   /** 17.9: omitted when there is nothing to name the project after (stored as null). */
   name?: string;
   businessId: string;
-  sourceType: 'BRIEF' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE' | 'UPLOAD';
+  sourceType: 'BRIEF' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE' | 'UPLOAD' | 'CAROUSEL';
+  carousel?: { theme: CarouselTheme; postCount: number; thread?: string };
   uploadId?: string;
   /** Omitted for TEMPLATE projects: the template's formats apply. */
   targetFormats?: TargetFormatInput[];
@@ -119,6 +131,8 @@ export type CreateProblem =
   | 'autoPublishAccountRequired'
   | 'autoPublishNoMatchingAccount'
   | 'slideshowTemplateRequired'
+  | 'carouselBriefRequired'
+  | 'carouselThreadTooLong'
   | 'scheduleInPast'
   | 'scheduleTooFar'
   | 'scheduleNeedsAutoPublish'
@@ -143,6 +157,7 @@ export function validateCreate(
   publishable?: readonly string[],
 ): CreateProblem[] {
   const problems: CreateProblem[] = [];
+  if (state.source === 'CAROUSEL') return validateCarousel(state, businessId);
   const templated = usesTemplate(state);
   if (!businessId) problems.push('businessRequired');
   const uploading = state.source === 'UPLOAD';
@@ -189,6 +204,44 @@ export function validateCreate(
   return problems;
 }
 
+/**
+ * 21.6: a carousel needs a brief or a pasted thread; it has no platforms, length or budget to
+ * choose (it is published, and its networks picked, from the carousel editor).
+ */
+function validateCarousel(state: CreateState, businessId: string | null): CreateProblem[] {
+  const problems: CreateProblem[] = [];
+  if (!businessId) problems.push('businessRequired');
+  if (!state.brief.trim() && !state.carouselThread?.trim()) problems.push('carouselBriefRequired');
+  if (state.brief.length > BRIEF_MAX) problems.push('briefTooLong');
+  if ((state.carouselThread?.length ?? 0) > CAROUSEL_THREAD_MAX)
+    problems.push('carouselThreadTooLong');
+  return problems;
+}
+
+function carouselBody(state: CreateState, businessId: string): CreateProjectBody {
+  const rawInput = state.brief.trim();
+  const thread = state.carouselThread?.trim();
+  const posts = Math.min(
+    CAROUSEL_POSTS_MAX,
+    Math.max(CAROUSEL_POSTS_MIN, Math.round(state.carouselPosts ?? CAROUSEL_POSTS_DEFAULT)),
+  );
+  return {
+    ...optionalName(nameFromBrief(rawInput || thread || '')),
+    businessId,
+    sourceType: 'CAROUSEL',
+    carousel: {
+      theme: state.carouselTheme ?? 'light',
+      postCount: posts,
+      ...(thread && { thread }),
+    },
+    ...(rawInput && { brief: { rawInput } }),
+    ...(state.brandKitId && { brandKitId: state.brandKitId }),
+    ...(state.reviewPolicy && { reviewPolicy: state.reviewPolicy }),
+    ...(state.language && { language: state.language }),
+    ...(state.approvalWorkflowId && { approvalWorkflowId: state.approvalWorkflowId }),
+  };
+}
+
 /** A template applies to video projects without a library reference. */
 export function usesTemplate(state: CreateState, reference: Reference | null = null): boolean {
   return state.source === 'BRIEF' && state.projectTemplate !== null && reference === null;
@@ -208,6 +261,7 @@ export function buildCreateBody(
   businessId: string,
   reference: Reference | null,
 ): CreateProjectBody {
+  if (state.source === 'CAROUSEL') return carouselBody(state, businessId);
   const rawInput = state.brief.trim();
   const template = usesTemplate(state, reference) ? state.projectTemplate : null;
   const body: CreateProjectBody = {
