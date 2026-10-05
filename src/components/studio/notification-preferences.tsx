@@ -104,7 +104,11 @@ function PreferencesTable() {
         </thead>
         <tbody>
           {PREFERENCE_KINDS.map((kind) => {
-            const label = t(`kinds.${kind}`);
+            // Operator decision 2026-10-04: cost notifications are worded as limits, not budgets.
+            const label =
+              kind === 'cost_alert' || kind === 'cost_paused'
+                ? t(`limitKinds.${kind}`)
+                : t(`kinds.${kind}`);
             const pref = res.data?.preferences[kind] ?? { inApp: true, email: false };
             return (
               <tr key={kind} className="border-t border-border/60">

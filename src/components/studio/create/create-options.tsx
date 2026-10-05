@@ -147,6 +147,7 @@ export function AdvancedOptions({
   planTier,
   workflows,
   canSchedule = true,
+  showCosts = false,
 }: {
   state: CreateState;
   onChange: Patch;
@@ -157,6 +158,9 @@ export function AdvancedOptions({
   workflows?: WorkflowOption[];
   /** 20.12: false when no connected account can post (a schedule posts automatically). */
   canSchedule?: boolean;
+  /** Operator decision 2026-10-04: only platform staff see (and set) the per-project budget;
+   *  customers leave it blank and the server applies the default (cost/project-budget.ts). */
+  showCosts?: boolean;
 }) {
   const t = useTranslations('create.options.advanced');
   const f = useFormat();
@@ -194,22 +198,24 @@ export function AdvancedOptions({
               placeholder={t('ctaPlaceholder')}
             />
           </Field>
-          <Field
-            id="create-budget"
-            label={t('budget')}
-            hint={t('budgetHint', {
-              short: f.pence(shortFormBudgetPence(planTier)),
-              long: f.pence(longFormBudgetPence(planTier)),
-            })}
-          >
-            <Input
+          {showCosts && (
+            <Field
               id="create-budget"
-              inputMode="decimal"
-              value={state.budgetPounds}
-              onChange={(e) => onChange({ budgetPounds: e.target.value })}
-              placeholder={budgetPlaceholder(state, t, f, planTier)}
-            />
-          </Field>
+              label={t('budget')}
+              hint={t('budgetHint', {
+                short: f.pence(shortFormBudgetPence(planTier)),
+                long: f.pence(longFormBudgetPence(planTier)),
+              })}
+            >
+              <Input
+                id="create-budget"
+                inputMode="decimal"
+                value={state.budgetPounds}
+                onChange={(e) => onChange({ budgetPounds: e.target.value })}
+                placeholder={budgetPlaceholder(state, t, f, planTier)}
+              />
+            </Field>
+          )}
           <Field id="create-review" label={t('approval')}>
             <NativeSelect
               id="create-review"

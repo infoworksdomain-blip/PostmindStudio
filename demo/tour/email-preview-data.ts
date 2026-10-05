@@ -25,7 +25,8 @@ export const EMAIL_PREVIEWS: Partial<
   },
   trialEnding: {
     title: 'Trial ends in 3 days',
-    params: { name: 'Amara', planName: 'Standard', trialEndsAt: at(3) },
+    // 21.5: the per-channel plan is named by the product (email-params.ts planDisplayName).
+    params: { name: 'Amara', planName: 'PostMind Studio', trialEndsAt: at(3) },
   },
   monthPlanned: {
     title: 'Plan my month: every post is scheduled (the one summary email)',
@@ -39,8 +40,8 @@ export const EMAIL_PREVIEWS: Partial<
     },
   },
   topupReceipt: {
-    title: 'Top-up receipt',
-    params: { name: 'Amara', packName: '10 short videos (Standard)' },
+    title: 'Video pack receipt',
+    params: { name: 'Amara', packName: '5 HD videos' },
   },
   invite: {
     title: 'Invitation to join an organisation',

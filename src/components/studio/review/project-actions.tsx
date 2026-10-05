@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { ACCOUNT_BANNER_ID } from '../account/account-banners';
 import { useCreateBlock } from '../account/create-access';
+import { useShowCosts } from '../account/use-show-costs';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Check, Loader2, Play, RotateCw, Square, X } from 'lucide-react';
@@ -31,6 +32,8 @@ export function ProjectActions({
   // Generate and Cancel need studio:project:write; a viewer only reads.
   const mayWrite = useCan(StudioCapability.ProjectWrite);
   const block = useCreateBlock();
+  // Operator decision 2026-10-04: what the run cost is for platform staff only.
+  const showCosts = useShowCosts();
   if (!mayWrite) return null;
 
   async function generate() {
@@ -45,7 +48,11 @@ export function ProjectActions({
     const result = await run<{ costIncurredPence: number }>('cancel', `/projects/${id}/cancel`);
     if (result) {
       onChanged();
-      toast.success(t('cancelled', { amount: f.pence(result.costIncurredPence) }));
+      toast.success(
+        showCosts
+          ? t('cancelled', { amount: f.pence(result.costIncurredPence) })
+          : t('cancelledPlain'),
+      );
     }
   }
 

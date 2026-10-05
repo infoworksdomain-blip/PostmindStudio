@@ -74,7 +74,8 @@ describe('NotificationPreferencesButton: email delivery (Phase 18)', () => {
     expect(
       await within(dialog).findByText('Choose what reaches you, in the app and by email.'),
     ).toBeInTheDocument();
-    await within(dialog).findByRole('switch', { name: 'Budget alerts: email' });
+    // shell.preferences.limitKinds (.i18n-tmp/frag-costs/en-GB.json): limits, not budgets.
+    await within(dialog).findByRole('switch', { name: 'Usage limit alerts: email' });
     expect(within(dialog).queryByText(/pending setup/i)).toBeNull();
   });
 

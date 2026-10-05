@@ -81,12 +81,10 @@ test.describe('Create /new with a plan', () => {
     await expect(alert).toContainText('Pick at least one platform.');
     await page.getByRole('checkbox', { name: 'TikTok' }).setChecked(true, { force: true });
 
-    // Budget out of range, then a schedule in the past.
+    // 21.5: generation cost is never shown to customers, so the per-video budget field is staff-only
+    // (create-options showCosts); this owner sees the advanced options without it.
     await page.getByRole('button', { name: 'Advanced options' }).click();
-    await page.locator('#create-budget').fill('abc');
-    await page.getByRole('button', { name: 'Generate' }).click();
-    await expect(alert).toContainText('Budget must be between');
-    await page.locator('#create-budget').fill('');
+    await expect(page.locator('#create-budget')).toHaveCount(0);
 
     // Too-long brief is capped by maxlength (4000).
     await page.locator('#create-brief').fill('x'.repeat(4_100));

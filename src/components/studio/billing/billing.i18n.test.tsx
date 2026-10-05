@@ -9,10 +9,10 @@ import type { ReactNode } from 'react';
 import { mockFetch } from '../library/test-helpers';
 import { BillingScreen } from './billing-screen';
 import { PricingScreen } from './pricing-screen';
-import { billing, pricingView } from './test-fixtures';
+import { billing, pricingView, usage } from './test-fixtures';
 import { UpgradeDialogHost } from './upgrade-dialog';
 
-// Phase 18 §3 — pricing, billing and the upgrade dialog render from the ar (RTL) and zh-Hans
+// Phase 18 §3 / 21.5 — pricing, Your plan and the upgrade dialog render from the ar (RTL) and zh-Hans
 // catalogues (a missing key throws).
 
 vi.mock('next/navigation', () => ({
@@ -40,6 +40,7 @@ function mockBillingApi() {
     },
     { match: '/api/studio/billing/plans', body: { ok: true, pricing: pricingView() } },
     { match: '/api/studio/billing/invoices', body: { ok: true, invoices: [] } },
+    { match: '/api/studio/usage', body: { ok: true, ...usage() } },
     { match: /\/api\/studio\/billing$/, body: { ok: true, billing: billing() } },
   ]);
 }
@@ -54,9 +55,9 @@ describe.each(['ar', 'zh-Hans'] as const)('billing screens in %s', (locale) => {
     expect(
       screen.getByRole('heading', { level: 1, name: m.pricing.hero.title }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: m.pricing.interval.year })).toBeInTheDocument();
-    expect(screen.getByRole('table', { name: m.pricing.compare.caption })).toBeInTheDocument();
-    expect(screen.getByText(m.pricing.exclVat)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: m.channelPlan.interval.year })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: m.channelPlan.channels.more })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: m.pricing.faq.title })).toBeInTheDocument();
     await waitFor(() =>
       expect(document.documentElement).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr'),
     );
@@ -67,6 +68,7 @@ describe.each(['ar', 'zh-Hans'] as const)('billing screens in %s', (locale) => {
     mockBillingApi();
     render(withLocale(locale, swr(<BillingScreen />)));
     expect(await screen.findByRole('button', { name: m.billing.plan.manage })).toBeInTheDocument();
+    expect(screen.getByText(m.billing.yourPlan.change.title)).toBeInTheDocument();
     expect(screen.getByText(m.billing.banners.topupSuccess)).toBeInTheDocument();
     expect(screen.getByText(m.billing.plan.status.active)).toBeInTheDocument();
   });

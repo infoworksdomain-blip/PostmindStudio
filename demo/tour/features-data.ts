@@ -76,13 +76,13 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         title: 'Draft briefs and budgets',
         description:
-          'Save a brief as a draft; each project has a cost budget and pauses at 90% until raised.',
+          'Save a brief as a draft; each project pauses at a safety limit until you carry on (staff see and set the budget).',
         href: p(PROJECTS.christmas.id),
         phase: '13.20',
       },
       {
         title: 'Quality tier per run',
-        description: 'Generate a run on a lower tier than the plan to save cost.',
+        description: 'Generate a run at a lower quality setting than the plan’s.',
         href: p(PROJECTS.meetTheBakers.id),
         phase: '15.C4',
       },
@@ -122,7 +122,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         title: 'Approval workflows',
         description:
-          'Multi-step sign-off by role and count, per business, platform or tag (Standard and up).',
+          'Multi-step sign-off by role and count, per business, platform or tag (every plan).',
         href: '#/approvals',
         phase: '15.D3',
       },
@@ -175,7 +175,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         title: 'INSPIRE and TEMPLATE modes',
         description:
-          'Borrow a reference’s feel (Standard) or copy its structure (Plus, with a lock badge below).',
+          'Borrow a reference’s feel (every plan) or copy its structure (Enterprise; “Not in your plan” badge otherwise).',
         href: `#/new?reference=${firstRef.id}&mode=TEMPLATE`,
         phase: 'v1.1, 18.C',
       },
@@ -271,7 +271,8 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       },
       {
         title: 'Spend by provider',
-        description: 'What the AI providers cost this period.',
+        description:
+          'What the AI providers cost this period (staff only: customers never see generation cost).',
         href: '#/analytics',
         phase: '13.19',
       },
@@ -303,14 +304,14 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         title: 'Image library',
         description:
-          'Scraped, stock, uploaded and generated images with semantic search (generation on Plus).',
+          'Scraped, stock, uploaded and generated images with semantic search (generation on Enterprise).',
         href: '#/business',
         phase: 'v1.1',
       },
       {
         title: 'Brand voice',
-        description: 'Clone a voice with recorded consent for narration (Plus).',
-        href: withPlan('#/business', 'active_plus'),
+        description: 'Clone a voice with recorded consent for narration (Enterprise).',
+        href: withPlan('#/business', 'enterprise'),
         phase: '13.13',
       },
       {
@@ -359,52 +360,64 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     features: [
       {
         title: 'Pricing page',
-        description:
-          'Basic, Standard, Plus and Enterprise with a monthly / annual toggle, the comparison table, top-ups and FAQ.',
+        description: `One plan, paid per channel: 1–6 channels at ${PRICE_TEXT.channelMonthly} a month each (8 videos per channel), weekly or yearly (2 months free), HD video packs and FAQ.`,
         href: '#/pricing',
-        phase: '18.C',
+        phase: '21.5',
       },
       {
-        title: 'Billing settings',
+        title: 'Your plan',
         description:
-          'Plan and status, renewal, usage against every limit, credits, top-ups and invoices.',
+          'Channels and how often you pay, renewal, videos used this week or month, which platforms publish, video packs and invoices.',
         href: '#/settings/billing',
-        phase: '18.C',
+        phase: '21.5',
+      },
+      {
+        title: 'Change or cancel the plan',
+        description:
+          'More channels or a longer period apply now (pay the difference); fewer or shorter apply at the end of the period. Cancel at the end of the period, or keep the plan.',
+        href: withPlan('#/settings/billing#change', 'active_monthly'),
+        phase: '21.5',
       },
       {
         title: 'Checkout (simulated here)',
         description:
-          'Choose a plan or top-up; the demo’s own clearly labelled checkout stands in for Stripe.',
+          'Choose channels or a video pack; the demo’s own clearly labelled checkout stands in for Stripe.',
         href: withPlan('#/settings/billing', 'no_plan'),
-        phase: '18.C',
+        phase: '21.5',
       },
       {
-        title: '14-day Standard trial',
+        title: '14-day trial',
         description:
-          'One trial per organisation with its own allowance and cost caps; a banner counts down.',
+          'One trial per organisation, card required, with 5 videos; a banner counts down.',
         href: withPlan('#/projects', 'trial'),
         phase: '18.C',
       },
       {
         title: 'Upgrade dialog',
         description:
-          'Opens on plan_tier, quota_exceeded, plan_required and billing_required with the right next step.',
-        href: withPlan(p(PROJECTS.meetTheBakers.id), 'active_basic'),
-        phase: '18.C',
+          'Opens on plan_tier, quota_exceeded, channel_limit, plan_required and billing_required with the right next step (add a channel, buy a video pack, choose a plan, update payment).',
+        href: withPlan(p(PROJECTS.meetTheBakers.id), 'allowance_used'),
+        phase: '21.5',
       },
       {
-        title: 'Lock badges',
+        title: 'Channel limit',
         description:
-          'Voice clone, TEMPLATE mode, image generation, BYOC and custom presets show the plan they need.',
-        href: withPlan('#/business', 'active_standard'),
-        phase: '18.C',
+          'Connect as many platforms as you like; only the paid channels (connected first) publish, the rest show “add a channel”.',
+        href: withPlan('#/connections', 'active_monthly'),
+        phase: '21.5',
       },
       {
-        title: 'Top-up packs',
+        title: '“Not in your plan” badges',
         description:
-          'One-off video credits, used after the plan allowance; they raise that month’s cost cap.',
-        href: withPlan('#/settings/billing', 'active_basic'),
-        phase: '18.C',
+          'Voice clone, TEMPLATE mode, image generation and BYOC are not part of the per-channel plan (Enterprise).',
+        href: withPlan('#/business', 'active_monthly'),
+        phase: '21.5',
+      },
+      {
+        title: 'HD video packs',
+        description: `One-off packs of 5 (${PRICE_TEXT.packHd5}) or 15 (${PRICE_TEXT.packHd15}) videos for any channel, used after the plan’s videos, valid 3 months.`,
+        href: withPlan('#/settings/billing#topups', 'allowance_used'),
+        phase: '21.5',
       },
       {
         title: 'Past due and read-only',
@@ -422,7 +435,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         title: 'Billing emails',
         description:
-          'Trial ending, payment failed, cancelled, top-up receipt, retention notice, in the reader’s language.',
+          'Trial ending, payment failed, cancelled, video pack receipt, retention notice, in the reader’s language.',
         href: '#/tour/email/paymentFailed',
         phase: '18.B',
       },

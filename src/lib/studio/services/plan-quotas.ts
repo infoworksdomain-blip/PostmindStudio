@@ -10,6 +10,13 @@ import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
 import { allowanceUnitsOf } from '../ugc/allowance';
 import { PLAN_CATALOGUE, TIER_ORDER as CATALOGUE_TIERS } from '../billing/catalogue';
+import {
+  ALLOWANCE_WINDOW,
+  allowancePerWindow,
+  allowanceWindowFor,
+  isoWeekWindow,
+  isWeekWindowKey,
+} from '../billing/channel-plan';
 import { consumeCredit } from '../billing/credits';
 import type { Entitlements, EntitlementsReader } from '../billing/entitlements-reader';
 import { withQuotaLock } from '../billing/quota-lock';
@@ -69,6 +76,10 @@ export interface TierQuota {
   /** Longest long video; null = unlimited. */
   longMaxSec: number | null;
   platforms: PlatformRule;
+  /** 21.5: the allowance is a per-channel plan's (messages say "your plan", not a tier). */
+  channelPlan?: boolean;
+  /** 21.5: the window the allowance counts in (default month). */
+  period?: 'week' | 'month';
 }
 
 /** Phase 18 §P.3: the defaults come from the plan catalogue (env overrides still win). */
@@ -115,16 +126,40 @@ export function entitlementQuota(base: TierQuota, entitlements?: Entitlements): 
       ...base,
       shortVideos: entitlements.trial.shortVideos,
       longVideos: entitlements.trial.longVideos,
+      ...(entitlements.channelPlan && { longMaxSec: 0 }),
     };
   }
+  // 21.5: a per-channel plan includes 8 videos per channel a month (2 a week weekly; yearly 8 a
+  // calendar month) and no long videos; staff custom limits still win below.
+  const plan = entitlements.channelPlan;
+  const withChannels: TierQuota = plan
+    ? {
+        ...base,
+        shortVideos: allowancePerWindow(plan.channels, plan.interval),
+        longVideos: 0,
+        longMaxSec: 0,
+        channelPlan: true,
+        period: ALLOWANCE_WINDOW[plan.interval],
+      }
+    : base;
   const custom = entitlements.custom;
-  if (!custom) return base;
+  if (!custom) return withChannels;
   return {
-    ...base,
+    ...withChannels,
     ...(custom.shortVideos !== undefined && { shortVideos: custom.shortVideos }),
     ...(custom.longVideos !== undefined && { longVideos: custom.longVideos }),
     ...(custom.longMaxSec !== undefined && { longMaxSec: custom.longMaxSec }),
   };
+}
+
+/**
+ * 21.5: the window the allowance is counted in: an ISO week for a weekly channel plan, the
+ * calendar month (UTC) for everything else (monthly, yearly — 8 a month — trials, tiers).
+ */
+export function allowanceWindow(entitlements: Entitlements | undefined, now: number): MonthWindow {
+  const plan = entitlements?.channelPlan;
+  const kind = plan && !entitlements?.trial ? ALLOWANCE_WINDOW[plan.interval] : 'month';
+  return allowanceWindowFor(kind, now);
 }
 
 function envCount(env: Env, name: string, fallback: number | null): number | null {
@@ -249,18 +284,18 @@ export function videoLimitViolations(
 ): QuotaViolation[] {
   const out: QuotaViolation[] = [];
   const kind = videoKind(project, quota);
-  const plan = tierLabel(tier);
+  const plan = planText(quota, tier);
   if (kind === 'long' && project.sourceType !== 'SLIDESHOW') {
     const sec = longestSec(project);
     if (quota.longVideos === 0 || quota.longMaxSec === 0) {
       out.push({
         code: 'long_not_included',
-        message: `The ${plan} plan includes videos up to ${quota.shortMaxSec} s; this one is ${sec} s`,
+        message: `${plan} includes videos up to ${quota.shortMaxSec} s; this one is ${sec} s`,
       });
     } else if (quota.longMaxSec !== null && sec > quota.longMaxSec) {
       out.push({
         code: 'duration',
-        message: `The ${plan} plan includes long videos up to ${quota.longMaxSec} s; this one is ${sec} s`,
+        message: `${plan} includes long videos up to ${quota.longMaxSec} s; this one is ${sec} s`,
       });
     }
   }
@@ -275,7 +310,7 @@ export function videoLimitViolations(
     if (extra.size > BASIC_EXTRA_FAMILIES) {
       out.push({
         code: 'platforms',
-        message: `The ${plan} plan publishes to TikTok, Instagram and one more platform; this video targets ${[
+        message: `${plan} publishes to TikTok, Instagram and one more platform; this video targets ${[
           ...extra,
         ].join(', ')}`,
       });
@@ -301,7 +336,7 @@ export function generateViolations(input: {
   if (limit !== null && usage[kind] + allowanceUnitsOf(project.metadata) > limit) {
     out.push({
       code: kind === 'short' ? 'short_quota' : 'long_quota',
-      message: `The ${tierLabel(tier)} plan includes ${limit} ${kind} videos a month and ${
+      message: `${planText(quota, tier)} includes ${limit} ${kind} videos a ${quota.period ?? 'month'} and ${
         usage[kind]
       } have been generated`,
     });
@@ -338,9 +373,15 @@ function nextTier(tier: PlanTier): PlanTier | undefined {
   return TIER_ORDER[TIER_ORDER.indexOf(tier) + 1];
 }
 
-function upgradeHint(tier: PlanTier): string {
+function upgradeHint(tier: PlanTier, quota?: Pick<TierQuota, 'channelPlan'>): string {
+  if (quota?.channelPlan) return ' Add a channel or buy a video pack for more.';
   const next = nextTier(tier);
   return next ? ` Upgrade to ${tierLabel(next)} for more.` : '';
+}
+
+/** "Your plan" for a per-channel plan (21.5: no tier names for customers), else "The X plan". */
+function planText(quota: Pick<TierQuota, 'channelPlan'>, tier: PlanTier): string {
+  return quota.channelPlan ? 'Your plan' : `The ${tierLabel(tier)} plan`;
 }
 
 /**
@@ -452,7 +493,10 @@ async function checkGenerateQuotaLocked(
   const entitlements = await reader.forOrganisation(tenant.organisationId);
   const quota = entitlementQuota(tierQuota(tier, env), entitlements);
   const now = deps.now();
-  const month = monthWindow(now);
+  // 21.5: the allowance window (ISO week for weekly plans); top-up credit uses stay keyed by the
+  // calendar month, where their cost-cap headroom is counted (credits.ts creditHeadroomPence).
+  const month = allowanceWindow(entitlements, now);
+  const creditMonth = monthWindow(now).key;
   const db = deps.db as PrismaClient;
   return withQuotaLock(db, tenant.organisationId, month.key, async (tx) => {
     const project = await tx.videoProject.findFirst({
@@ -470,7 +514,7 @@ async function checkGenerateQuotaLocked(
       const use = await consumeCredit(tx, {
         organisationId: tenant.organisationId,
         projectId,
-        month: month.key,
+        month: creditMonth,
         kind,
         now: new Date(now),
         units: allowanceUnitsOf(project.metadata),
@@ -484,7 +528,7 @@ async function checkGenerateQuotaLocked(
         );
       }
     }
-    raise(deps, mode, tier, violations, { projectId, month: month.key, usage });
+    raise(deps, mode, tier, violations, { projectId, month: month.key, usage }, quota);
     if (!alreadyCounted) {
       const slot: QuotaSlot = {
         month: month.key,
@@ -516,6 +560,12 @@ async function checkGenerateQuotaLocked(
   });
 }
 
+/** The key of the window (of the same kind as `like`: ISO week or month) holding `at`. */
+function windowKeyOf(at: Date | null, like: string): string | null {
+  if (!at) return null;
+  return isWeekWindowKey(like) ? isoWeekWindow(at.getTime()).key : at.toISOString().slice(0, 7);
+}
+
 /**
  * The generation did not start after a locked check (generateProject threw): give the slot and
  * any credit it spent back. Never throws (the original error is what the caller reports).
@@ -534,8 +584,9 @@ export async function releaseQuotaReservation(
       });
       if (!project) return;
       const units = allowanceUnitsOf(project.metadata);
-      // generationStart this month means the run did start: keep the slot.
-      if (generatedAt(project.metadata)?.toISOString().slice(0, 7) === reservation.month) return;
+      // generationStart in the reserved window means the run did start: keep the slot.
+      if (windowKeyOf(generatedAt(project.metadata), reservation.month) === reservation.month)
+        return;
       const rest = Object.fromEntries(
         Object.entries(projectMetadata(project.metadata)).filter(([k]) => k !== 'quotaSlot'),
       );
@@ -586,6 +637,7 @@ function raise(
   tier: PlanTier,
   violations: QuotaViolation[],
   context: Record<string, unknown>,
+  quota?: Pick<TierQuota, 'channelPlan'>,
 ): void {
   if (violations.length === 0) return;
   if (mode === 'warn') {
@@ -593,8 +645,14 @@ function raise(
     return;
   }
   throw new QuotaExceededError(
-    `${violations.map((v) => v.message).join('. ')}.${upgradeHint(tier)}`,
-    { planTier: tier, mode, violations, ...context },
+    `${violations.map((v) => v.message).join('. ')}.${upgradeHint(tier, quota)}`,
+    {
+      planTier: tier,
+      mode,
+      violations,
+      ...context,
+      ...(quota?.channelPlan && { channelPlan: true }),
+    },
   );
 }
 
@@ -613,7 +671,12 @@ export interface UsageView {
   organisationId: string;
   planTier: PlanTier;
   mode: QuotaMode;
+  /** The allowance window's key: 'YYYY-MM', or 'YYYY-Www' for a weekly channel plan (21.5). */
   month: string;
+  /** 21.5: the allowance window (a weekly channel plan counts per ISO week). */
+  period: 'week' | 'month';
+  /** 21.5: the allowance is a per-channel plan's. */
+  channelPlan?: boolean;
   periodStart: string;
   resetsAt: string;
   thresholds: readonly number[];
@@ -660,7 +723,7 @@ export async function usageView(
 ): Promise<UsageView> {
   const env = deps.env ?? process.env;
   const quota = entitlementQuota(tierQuota(tier, env), entitlements);
-  const month = monthWindow(deps.now());
+  const month = allowanceWindow(entitlements, deps.now());
   const [usage, businessesScanned, imageGeneration] = await Promise.all([
     monthlyVideoUsage(deps.db, organisationId, quota, month),
     scannedBusinessCount(deps.db, organisationId),
@@ -682,6 +745,8 @@ export async function usageView(
     planTier: tier,
     mode: quotaMode(env, entitlements ? 'enforce' : 'warn'),
     month: month.key,
+    period: quota.period ?? 'month',
+    ...(quota.channelPlan && { channelPlan: true }),
     periodStart: month.start.toISOString(),
     resetsAt: month.end.toISOString(),
     thresholds: QUOTA_THRESHOLDS,
@@ -690,6 +755,46 @@ export async function usageView(
     platforms: { rule: quota.platforms, description: PLATFORM_DESCRIPTION[quota.platforms] },
     scans: { businessesScanned, limit: SCANNED_BUSINESS_LIMITS[tier] },
     ...(imageGeneration && { imageGeneration }),
+  };
+}
+
+/**
+ * 21.5: the allowance notice for a per-channel plan: no tier names, the week or month, and the
+ * two ways to keep going (add a channel, buy a video pack). Localised through
+ * notifications.videoAllowanceNearing / videoAllowanceUsed.
+ */
+export function channelAllowanceNotice(
+  view: Pick<UsageView, 'period' | 'resetsAt'>,
+  m: Pick<QuotaMeter, 'used' | 'limit'>,
+  threshold: number,
+  blocked: boolean,
+): { title: string; body: string; message: NotificationMessage } {
+  const period = view.period;
+  const limit = m.limit ?? 0;
+  const resets = view.resetsAt.slice(0, 10);
+  if (threshold < 100)
+    return {
+      title: `${threshold}% of this ${period}'s videos used`,
+      body: `${m.used} of ${limit} videos made this ${period}. More are included from ${resets}.`,
+      message: {
+        key: 'videoAllowanceNearing',
+        params: { threshold, used: m.used, limit, period },
+      },
+    };
+  return {
+    title: `All of this ${period}'s videos used`,
+    body: `${m.used} of ${limit} videos made this ${period}. More are included from ${resets}.${
+      blocked ? ' To make more before then, add a channel or buy a video pack.' : ''
+    }`,
+    message: {
+      key: 'videoAllowanceUsed',
+      params: {
+        used: m.used,
+        limit,
+        period,
+        blocked: blocked ? 'yes' : 'no',
+      },
+    },
   };
 }
 
@@ -710,29 +815,37 @@ export async function notifyQuotaThresholds(
     now: () => number;
     env?: Env;
     notifier?: Notifier;
+    /** 21.5: the organisation's entitlements (the channel plan's allowance and window). */
+    entitlements?: EntitlementsReader;
   },
   tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
 ): Promise<number> {
   const tier = toPlanTier(tenant.organisation.planTier);
   let sent = 0;
   try {
-    const view = await usageView(deps, tenant.organisationId, tier);
+    const entitlements = await deps.entitlements?.forOrganisation(tenant.organisationId);
+    const view = await usageView(deps, tenant.organisationId, tier, undefined, entitlements);
     for (const kind of ['short', 'long'] as const) {
       const m = view.videos[kind];
       for (const threshold of reachedThresholds(m)) {
+        const blocked = view.mode === 'enforce' && threshold >= 100;
         await notifySafely(deps, {
           organisationId: tenant.organisationId,
           kind: 'plan_quota',
-          title:
-            threshold >= 100
-              ? `${tierLabel(tier)} plan: ${kind} videos used up for ${view.month}`
-              : `${tierLabel(tier)} plan: ${threshold}% of ${kind} videos used`,
-          body: `${m.used} of ${m.limit} ${kind} videos generated in ${view.month}. The allowance resets on ${view.resetsAt.slice(
-            0,
-            10,
-          )}.${view.mode === 'enforce' && threshold >= 100 ? ' New generations are blocked until then.' : ''}${upgradeHint(tier)}`,
+          ...(view.channelPlan
+            ? channelAllowanceNotice(view, m, threshold, blocked)
+            : {
+                title:
+                  threshold >= 100
+                    ? `${tierLabel(tier)} plan: ${kind} videos used up for ${view.month}`
+                    : `${tierLabel(tier)} plan: ${threshold}% of ${kind} videos used`,
+                body: `${m.used} of ${m.limit} ${kind} videos generated in ${view.month}. The allowance resets on ${view.resetsAt.slice(
+                  0,
+                  10,
+                )}.${blocked ? ' New generations are blocked until then.' : ''}${upgradeHint(tier)}`,
+                message: quotaMessage(tier, kind, threshold, m, view.mode === 'enforce'),
+              }),
           dedupeKey: `plan-quota:${view.month}:${kind}:${threshold}`,
-          message: quotaMessage(tier, kind, threshold, m, view.mode === 'enforce'),
         });
         sent += 1;
       }

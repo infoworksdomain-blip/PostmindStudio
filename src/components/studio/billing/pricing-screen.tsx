@@ -2,238 +2,73 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Check, Mail, Minus } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
-import type { PlanDefinition } from '@/lib/studio/billing/catalogue';
 import { PageHeader } from '../primitives';
-import { IntervalToggle, PlanCards, useTopUpName } from './plan-cards';
-import type { BillingInterval, PlanPricingView, PricingView } from './types';
+import { ChannelPicker, usePackName, type ChannelChoice } from './channel-picker';
+import type { PricingView } from './types';
 
-// Phase 18 §3 / §P.4 — /pricing: tier cards with a monthly / annual switch (annual shows the
-// saving), "excl. VAT", the trial note, the comparison table built from the plan catalogue (the
-// same data the server gates read), top-up packs and an FAQ. Amounts come from Stripe through
-// PricingView; when Stripe is unreachable every amount reads "price unavailable".
+// Phase 18 §3 / 21.5 — public /pricing: ONE plan. Choose how many channels (social platforms,
+// 1–6) and how often to pay (weekly, monthly, yearly); the page shows the total for the period,
+// "8 videos per channel per month included", what every plan includes, the HD video packs and an
+// FAQ. Amounts come from Stripe through PricingView; when Stripe is unreachable every amount reads
+// "Price unavailable". "Start free trial" goes to sign-up, then to Your plan with the same choice.
+// No generation cost or budget is shown.
 
-type RowKey =
-  | 'shortVideos'
-  | 'longVideos'
-  | 'platforms'
-  | 'dailyCostCap'
-  | 'monthlyCostCap'
-  | 'queuePriority'
-  | 'musicAndSfx'
-  | 'voiceClone'
-  | 'renders4k'
-  | 'imageLibrary'
-  | 'generatedImages'
-  | 'scanBusinesses'
-  | 'libraryInspire'
-  | 'libraryTemplate'
-  | 'customPresets'
-  | 'approvalWorkflows'
-  | 'byocProviderKeys'
-  | 'whiteLabel'
-  | 'dnsDomainVerification'
-  | 'seats'
-  | 'businesses'
-  | 'storage';
+const INCLUDED = ['videos', 'hd', 'platforms', 'scheduling', 'brand', 'library'] as const;
+const FAQ = ['channel', 'period', 'change', 'limit', 'packs', 'vat', 'cancel'] as const;
 
-type Cell = { kind: 'bool'; on: boolean } | { kind: 'text'; text: string } | { kind: 'unlimited' };
-
-type BoolFlag =
-  | 'musicAndSfx'
-  | 'voiceClone'
-  | 'renders4k'
-  | 'libraryInspire'
-  | 'libraryTemplate'
-  | 'customPresets'
-  | 'approvalWorkflows'
-  | 'byocProviderKeys'
-  | 'whiteLabel'
-  | 'dnsDomainVerification';
-
-const BOOL_ROWS: readonly BoolFlag[] = [
-  'musicAndSfx',
-  'voiceClone',
-  'renders4k',
-  'libraryInspire',
-  'libraryTemplate',
-  'customPresets',
-  'approvalWorkflows',
-  'byocProviderKeys',
-  'whiteLabel',
-  'dnsDomainVerification',
-];
-
-const ROW_ORDER: readonly RowKey[] = [
-  'shortVideos',
-  'longVideos',
-  'platforms',
-  'dailyCostCap',
-  'monthlyCostCap',
-  'queuePriority',
-  'musicAndSfx',
-  'voiceClone',
-  'renders4k',
-  'imageLibrary',
-  'generatedImages',
-  'scanBusinesses',
-  'libraryInspire',
-  'libraryTemplate',
-  'customPresets',
-  'approvalWorkflows',
-  'byocProviderKeys',
-  'whiteLabel',
-  'dnsDomainVerification',
-  'seats',
-  'businesses',
-  'storage',
-];
-
-function isBoolRow(key: RowKey): key is BoolFlag {
-  return (BOOL_ROWS as readonly string[]).includes(key);
+/** Where "Start" goes: sign up, then Your plan with the channels and period already chosen. */
+export function signUpHref(choice: ChannelChoice): string {
+  const next = `/settings/billing?channels=${choice.channels}&interval=${choice.interval}`;
+  return `/sign-up?next=${encodeURIComponent(next)}`;
 }
 
-function useCell(): (key: RowKey, p: PlanDefinition) => Cell {
-  const t = useTranslations('pricing.compare.values');
-  const f = useFormat();
-  const count = (n: number | null): Cell =>
-    n === null ? { kind: 'unlimited' } : { kind: 'text', text: f.number(n) };
-  return (key, p) => {
-    if (isBoolRow(key)) return { kind: 'bool', on: p[key] };
-    switch (key) {
-      case 'shortVideos':
-        return count(p.shortVideosPerMonth);
-      case 'longVideos':
-        if (p.longVideosPerMonth === null) return { kind: 'unlimited' };
-        if (!p.longVideosPerMonth) return { kind: 'bool', on: false };
-        return {
-          kind: 'text',
-          text: t('longVideos', {
-            count: p.longVideosPerMonth,
-            minutes: Math.round((p.longMaxSec ?? 0) / 60),
-          }),
-        };
-      case 'platforms':
-        return { kind: 'text', text: t(`platforms.${p.platforms}`) };
-      case 'dailyCostCap':
-        return { kind: 'text', text: f.pence(p.dailyCostCapPence) };
-      case 'monthlyCostCap':
-        return { kind: 'text', text: f.pence(p.monthlyCostCapPence) };
-      case 'queuePriority':
-        return { kind: 'text', text: t(`queuePriority.${p.queuePriority}`) };
-      case 'imageLibrary':
-        return { kind: 'text', text: t(`imageLibrary.${p.imageLibrary}`) };
-      case 'generatedImages':
-        return count(p.generatedImagesPerBusinessPerMonth);
-      case 'scanBusinesses':
-        return count(p.scanBusinesses);
-      case 'seats':
-        return count(p.seats);
-      case 'businesses':
-        return count(p.businesses);
-      case 'storage':
-        return p.storageGb === null
-          ? { kind: 'unlimited' }
-          : { kind: 'text', text: t('storage', { gb: f.number(p.storageGb) }) };
-    }
-  };
-}
-
-function CellView({ cell }: { cell: Cell }) {
-  const t = useTranslations('pricing.compare');
-  if (cell.kind === 'text') return <>{cell.text}</>;
-  if (cell.kind === 'unlimited') return <>{t('unlimited')}</>;
-  return cell.on ? (
-    <>
-      <Check className="inline size-4 text-primary" aria-hidden />
-      <span className="sr-only">{t('included')}</span>
-    </>
-  ) : (
-    <>
-      <Minus className="inline size-4 text-muted-foreground" aria-hidden />
-      <span className="sr-only">{t('notIncluded')}</span>
-    </>
-  );
-}
-
-export function ComparisonTable({ plans }: { plans: readonly PlanPricingView[] }) {
-  const t = useTranslations('pricing.compare');
-  const tTier = useTranslations('shell.usage.tiers');
-  const cellFor = useCell();
-  const sorted = [...plans].sort((a, b) => a.displayOrder - b.displayOrder);
+function Included() {
+  const t = useTranslations('pricing.included');
   return (
-    <section aria-labelledby="compare-heading" className="grid grid-cols-[minmax(0,1fr)] gap-4">
-      <h2 id="compare-heading" className="font-display text-3xl leading-none">
+    <section aria-labelledby="included-heading" className="grid gap-4">
+      <h2 id="included-heading" className="font-display text-3xl leading-none">
         {t('title')}
       </h2>
-      <div className="relative overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[40rem] text-sm">
-          <caption className="sr-only">{t('caption')}</caption>
-          <thead className="bg-muted/50">
-            <tr>
-              <th scope="col" className="px-4 py-3 text-start font-medium">
-                {t('feature')}
-              </th>
-              {sorted.map((plan) => (
-                <th key={plan.tier} scope="col" className="px-4 py-3 text-start font-medium">
-                  {tTier(plan.tier)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ROW_ORDER.map((key) => (
-              <tr key={key} className="border-t border-border">
-                <th
-                  scope="row"
-                  className="px-4 py-2.5 text-start font-normal text-muted-foreground"
-                >
-                  {t(`rows.${key}`)}
-                </th>
-                {sorted.map((plan) => (
-                  <td key={plan.tier} className="px-4 py-2.5 tabular-nums">
-                    <CellView cell={cellFor(key, plan.features)} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ul className="grid gap-2 text-sm sm:grid-cols-2">
+        {INCLUDED.map((item) => (
+          <li key={item} className="flex items-start gap-2">
+            <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+            {t(`items.${item}`)}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
 
-function TopUpList({ pricing }: { pricing: PricingView }) {
-  const t = useTranslations('pricing');
-  const tTier = useTranslations('shell.usage.tiers');
+function Packs({ pricing }: { pricing: PricingView }) {
+  const t = useTranslations('pricing.packs');
+  const tPlan = useTranslations('channelPlan');
   const f = useFormat();
-  const name = useTopUpName();
+  const name = usePackName();
   return (
-    <section aria-labelledby="topups-heading" className="grid gap-4">
+    <section aria-labelledby="packs-heading" className="grid gap-4">
       <div className="grid gap-1.5">
-        <h2 id="topups-heading" className="font-display text-3xl leading-none">
-          {t('topUps.title')}
+        <h2 id="packs-heading" className="font-display text-3xl leading-none">
+          {t('title')}
         </h2>
-        <p className="max-w-2xl text-sm text-muted-foreground">{t('topUps.description')}</p>
+        <p className="max-w-2xl text-sm text-muted-foreground">{t('description')}</p>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {pricing.topUps.map((pack) => (
           <li key={pack.lookupKey} className="grid gap-1 rounded-xl border border-border p-4">
             <p className="font-medium">{name(pack)}</p>
-            <p className="text-xs text-muted-foreground">
-              {t('topUps.forTier', { tier: tTier(pack.tier) })}
-            </p>
             <p className="font-display text-2xl tabular-nums">
               {pack.unitAmountPence === null
-                ? t('priceUnavailable')
+                ? tPlan('priceUnavailable')
                 : f.pence(pack.unitAmountPence)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {t('topUps.validity', { months: pack.validMonths })}
+              {tPlan('packs.validity', { months: pack.validMonths })}
             </p>
           </li>
         ))}
@@ -242,10 +77,15 @@ function TopUpList({ pricing }: { pricing: PricingView }) {
   );
 }
 
-const FAQ = ['trial', 'change', 'limit', 'vat', 'cancel'] as const;
-
-function Faq() {
+function Faq({ pricing }: { pricing: PricingView }) {
   const t = useTranslations('pricing.faq');
+  const tPlan = useTranslations('channelPlan');
+  const f = useFormat();
+  const amount = (interval: 'week' | 'month' | 'year') => {
+    const pence = pricing.intervals.find((i) => i.interval === interval)?.unitAmountPence;
+    return pence == null ? tPlan('priceUnavailable') : f.pence(pence);
+  };
+  const prices = { weekly: amount('week'), monthly: amount('month'), yearly: amount('year') };
   return (
     <section aria-labelledby="faq-heading" className="grid gap-4">
       <h2 id="faq-heading" className="font-display text-3xl leading-none">
@@ -255,7 +95,9 @@ function Faq() {
         {FAQ.map((item) => (
           <details key={item} className="group p-4">
             <summary className="cursor-pointer font-medium">{t(`items.${item}.q`)}</summary>
-            <p className="mt-2 text-sm text-muted-foreground">{t(`items.${item}.a`)}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {item === 'period' ? t('items.period.a', prices) : t(`items.${item}.a`)}
+            </p>
           </details>
         ))}
       </div>
@@ -263,55 +105,24 @@ function Faq() {
   );
 }
 
-function SignUpCta({ plan, interval }: { plan: PlanPricingView; interval: BillingInterval }) {
-  const t = useTranslations('pricing.cta');
-  const tTier = useTranslations('shell.usage.tiers');
-  const href = `/sign-up?plan=${plan.tier}&interval=${interval}`;
-  const trial = plan.trialDays > 0;
-  return (
-    <Button asChild className="w-full" variant={trial ? 'default' : 'outline'}>
-      <Link
-        href={href}
-        aria-label={trial ? undefined : t('chooseAria', { tier: tTier(plan.tier) })}
-      >
-        {trial ? t('trial') : t('choose')}
-        <ArrowRight className="rtl:-scale-x-100" aria-hidden />
-      </Link>
-    </Button>
-  );
-}
-
-function EnterpriseCta({ salesEmail }: { salesEmail?: string | null }) {
-  const t = useTranslations('pricing.enterprise');
-  if (!salesEmail) return <p className="text-sm text-muted-foreground">{t('noContact')}</p>;
-  return (
-    <Button asChild className="w-full" variant="outline">
-      <a href={`mailto:${salesEmail}`} aria-label={t('contactAria')}>
-        <Mail aria-hidden /> {t('contact')}
-      </a>
-    </Button>
-  );
-}
-
-export function PricingScreen({
-  pricing,
-  salesEmail,
-}: {
-  pricing: PricingView;
-  salesEmail?: string | null;
-}) {
+export function PricingScreen({ pricing }: { pricing: PricingView }) {
   const t = useTranslations('pricing');
-  const tTier = useTranslations('shell.usage.tiers');
-  const [interval, setBillingInterval] = useState<BillingInterval>('month');
+  const [choice, setChoice] = useState<ChannelChoice>({ channels: 3, interval: 'month' });
+  const trial = pricing.trial.days > 0;
   return (
-    <div className="mx-auto grid w-full max-w-7xl grid-cols-[minmax(0,1fr)] gap-12 px-4 py-10 md:px-8 md:py-16">
+    <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] gap-12 px-4 py-10 md:px-8 md:py-16">
       <PageHeader
         eyebrow={t('hero.eyebrow')}
         title={t('hero.title')}
         description={t('hero.description')}
-        actions={<IntervalToggle value={interval} onChange={setBillingInterval} />}
       />
-      <div className="grid gap-6">
+      <section
+        aria-labelledby="plan-heading"
+        className="grid gap-6 rounded-2xl border border-primary bg-card p-5 shadow-lg shadow-primary/10 md:p-8"
+      >
+        <h2 id="plan-heading" className="font-display text-2xl leading-none">
+          {t('plan.title')}
+        </h2>
         {!pricing.available && (
           <p
             role="status"
@@ -320,34 +131,24 @@ export function PricingScreen({
             {t('unavailable')}
           </p>
         )}
-        <PlanCards
-          plans={pricing.plans}
-          interval={interval}
-          cta={(plan) =>
-            plan.selfServe ? (
-              <SignUpCta plan={plan} interval={interval} />
-            ) : (
-              <EnterpriseCta salesEmail={salesEmail} />
-            )
-          }
-        />
-        <div className="grid gap-1 text-sm text-muted-foreground">
-          <p>{t('exclVat')}</p>
-          {pricing.trial.days > 0 && (
-            <p>
-              {t('trialNote', {
-                tier: tTier(pricing.trial.tier),
-                days: pricing.trial.days,
-                short: pricing.trial.shortVideos,
-                long: pricing.trial.longVideos,
-              })}
+        <ChannelPicker id="pricing" value={choice} onChange={setChoice} pricing={pricing} />
+        <div className="grid gap-2">
+          <Button asChild size="lg" className="w-full sm:w-auto sm:justify-self-start">
+            <Link href={signUpHref(choice)}>
+              {trial ? t('cta.trial') : t('cta.start')}
+              <ArrowRight className="rtl:-scale-x-100" aria-hidden />
+            </Link>
+          </Button>
+          {trial && (
+            <p className="text-sm text-muted-foreground">
+              {t('trialNote', { days: pricing.trial.days, videos: pricing.trial.videos })}
             </p>
           )}
         </div>
-      </div>
-      <ComparisonTable plans={pricing.plans} />
-      <TopUpList pricing={pricing} />
-      <Faq />
+      </section>
+      <Included />
+      <Packs pricing={pricing} />
+      <Faq pricing={pricing} />
     </div>
   );
 }

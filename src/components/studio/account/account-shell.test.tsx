@@ -71,7 +71,7 @@ describe('AccountControls', () => {
     renderWithSWR(controls());
     await user.click(await screen.findByRole('button', { name: 'Account menu for Ada Baker' }));
     expect(screen.getByText('ada@example.test')).toBeVisible();
-    expect(screen.getByRole('menuitem', { name: /Billing/ })).toHaveAttribute(
+    expect(screen.getByRole('menuitem', { name: /Your plan/ })).toHaveAttribute(
       'href',
       '/settings/billing',
     );

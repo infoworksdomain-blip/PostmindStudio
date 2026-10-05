@@ -12,8 +12,9 @@ describe('Stripe lookup-key batching (prices.list takes at most 10 lookup_keys)'
     expect(lookupKeyBatches([])).toEqual([]);
   });
 
-  it('the catalogue has more keys than one request allows, so batching is needed', () => {
-    expect(allLookupKeys().length).toBeGreaterThan(STRIPE_MAX_LOOKUP_KEYS);
+  it('21.5: the catalogue fits in one request today; batching stays for growth', () => {
+    expect(allLookupKeys().length).toBeLessThanOrEqual(STRIPE_MAX_LOOKUP_KEYS);
+    expect(lookupKeyBatches(allLookupKeys())).toHaveLength(1);
   });
 
   it('lists every batch and combines the prices, passing params and request options through', async () => {
@@ -21,7 +22,7 @@ describe('Stripe lookup-key batching (prices.list takes at most 10 lookup_keys)'
       data: (params.lookup_keys ?? []).map((key) => ({ id: `price_${key}`, lookup_key: key })),
     }));
     const prices = { list } as unknown as Pick<Stripe.PriceResource, 'list'>;
-    const keys = allLookupKeys();
+    const keys = [...allLookupKeys(), ...Array.from({ length: 12 }, (_, i) => `extra_${i}`)];
     const result = await listPricesByLookupKeys(
       prices,
       keys,

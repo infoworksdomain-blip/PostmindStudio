@@ -33,10 +33,10 @@ const project = (overrides: Partial<Project> = {}): Project =>
 const WRITER = ['studio:project:read', 'studio:project:write'];
 const READER = ['studio:project:read'];
 
-function serve(rows: Project[], capabilities: string[] = WRITER) {
+function serve(rows: Project[], capabilities: string[] = WRITER, platformRole = 'user') {
   return mockFetch((req: RecordedRequest) => {
     if (req.url.pathname === '/api/studio/me')
-      return ok({ me: { capabilities, user: { platformRole: 'user' } } });
+      return ok({ me: { capabilities, user: { platformRole } } });
     if (req.method === 'GET' && req.url.pathname === '/api/studio/projects')
       return ok({ data: rows, nextCursor: null });
     return ok({ project: rows[0], archived: true });
@@ -95,6 +95,23 @@ describe('ProjectsList search and filters', () => {
     await screen.findByText('Sourdough launch');
     await user.click(screen.getByRole('tab', { name: 'Archived' }));
     expect(nav.replace).toHaveBeenCalledWith('/projects?filter=archived', { scroll: false });
+  });
+});
+
+describe('ProjectsList cost column (operator decision 2026-10-04)', () => {
+  it('never shows customers what a video cost to make', async () => {
+    const api = serve([project({ costActualPence: 1_234 })]);
+    renderScreen(<ProjectsList />);
+    await screen.findByText('Sourdough launch');
+    await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
+    expect(screen.queryByTestId('project-row-cost')).not.toBeInTheDocument();
+    expect(screen.queryByText('£12.34')).not.toBeInTheDocument();
+  });
+
+  it.each(['staff', 'superadmin'])('shows %s the cost of each video', async (role) => {
+    serve([project({ costActualPence: 1_234 })], WRITER, role);
+    renderScreen(<ProjectsList />);
+    expect(await screen.findByTestId('project-row-cost')).toHaveTextContent('£12.34');
   });
 });
 

@@ -7,7 +7,7 @@ import { ErrorState, Stat } from '../primitives';
 import type { CostResponse, OverviewResponse } from './types';
 
 // Headline numbers for the window: views lead (largest), then watch time, engagement and
-// spend. Totals come from each publication's latest snapshot (services/analytics.ts).
+// (staff only) spend. Totals come from each publication's latest snapshot (services/analytics.ts).
 
 export function engagementTotal(t: OverviewResponse['totals']): number {
   return t.likes + t.comments + t.shares + t.saves;
@@ -24,7 +24,8 @@ export function OverviewStrip({
   cost,
 }: {
   overview: { data?: OverviewResponse; error?: unknown; isLoading: boolean; retry: () => void };
-  cost: { data?: CostResponse; error?: unknown };
+  /** Staff only (operator decision 2026-10-04): without it the spend figure is not shown. */
+  cost?: { data?: CostResponse; error?: unknown };
 }) {
   const t = useTranslations('analytics.overview');
   const tf = useTranslations('format');
@@ -35,7 +36,6 @@ export function OverviewStrip({
 
   const { totals, publications, projectsCreated, days } = overview.data;
   const rate = engagementRate(totals);
-  const spend = cost.data ? f.pence(cost.data.totalPence) : cost.error ? tf('none') : t('pending');
   return (
     <div className="grid gap-6 border-y border-border/70 py-6 md:grid-cols-[1.3fr_2fr] md:gap-10">
       <div>
@@ -61,7 +61,15 @@ export function OverviewStrip({
           value={f.count(totals.shares)}
           hint={t('savesHint', { saves: totals.saves, formatted: f.count(totals.saves) })}
         />
-        <Stat label={t('spend')} value={spend} hint={t('spendHint')} />
+        {cost && (
+          <Stat
+            label={t('spend')}
+            value={
+              cost.data ? f.pence(cost.data.totalPence) : cost.error ? tf('none') : t('pending')
+            }
+            hint={t('spendHint')}
+          />
+        )}
       </div>
     </div>
   );

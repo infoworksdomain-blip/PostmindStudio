@@ -35,6 +35,13 @@ export interface AdminOrgTrial {
   endsAt: string | null;
 }
 
+/** 21.5: the per-channel plan in force (staff override or Stripe), null when there is none. */
+export interface AdminOrgChannelPlan {
+  channels: number;
+  interval: 'week' | 'month' | 'year';
+  source: 'stripe' | 'admin';
+}
+
 export interface AdminOrgRow {
   id: string;
   name: string;
@@ -47,6 +54,8 @@ export interface AdminOrgRow {
   access: string | null;
   source: string | null;
   trial: AdminOrgTrial | null;
+  /** Optional: absent from responses written before 21.5. */
+  channelPlan?: AdminOrgChannelPlan | null;
   subscriptionStatus: string | null;
   costThisMonthPence: number;
 }
@@ -98,6 +107,7 @@ export interface AdminOrgDetail {
     access: string;
     source: string;
     trial: AdminOrgTrial | null;
+    channelPlan?: AdminOrgChannelPlan | null;
     graceUntil: string | null;
     trialStartedAt: string | null;
     everPaidAt: string | null;
@@ -122,6 +132,17 @@ export function TrialLabel({ trial }: { trial: AdminOrgTrial | null }) {
       </span>
     );
   return <span className="text-muted-foreground">{t(trial.state)}</span>;
+}
+
+/** 21.5: "3 channels · monthly" for an organisation on a channel plan, nothing otherwise. */
+export function ChannelPlanLabel({ plan }: { plan: AdminOrgChannelPlan | null | undefined }) {
+  const t = useTranslations('adminOrgs.list');
+  if (!plan) return null;
+  return (
+    <span className="block text-xs text-muted-foreground" data-testid="org-channel-plan">
+      {t('channelPlan', { count: plan.channels, interval: plan.interval })}
+    </span>
+  );
 }
 
 function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) {
@@ -156,7 +177,12 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
                 label={t('plan')}
                 value={data.entitlement?.tier ?? t('none')}
                 hint={
-                  data.entitlement ? t(`sources.${sourceKey(data.entitlement.source)}`) : undefined
+                  data.entitlement ? (
+                    <>
+                      {t(`sources.${sourceKey(data.entitlement.source)}`)}
+                      <ChannelPlanLabel plan={data.entitlement.channelPlan} />
+                    </>
+                  ) : undefined
                 }
               />
               <Stat
@@ -322,7 +348,10 @@ function OrganisationsTable({
                   {o.id}
                 </span>
               </TableCell>
-              <TableCell>{o.tier ?? '–'}</TableCell>
+              <TableCell>
+                {o.tier ?? '–'}
+                <ChannelPlanLabel plan={o.channelPlan} />
+              </TableCell>
               <TableCell>
                 <span className="flex flex-wrap gap-1">
                   {o.deletedAt && <StatusBadge value="deleted" />}

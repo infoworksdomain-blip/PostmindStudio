@@ -24,7 +24,7 @@ function HowTo() {
     ],
     [
       '“Reset demo” to start again.',
-      'The button in the demo bar starts again on the landing page, signed out, on Active Standard, with fresh sample data dated relative to today (a reload does the same but keeps the plan). “Enter app as sample user” skips signing in.',
+      'The button in the demo bar starts again on the landing page, signed out, on 3 channels monthly, with fresh sample data dated relative to today (a reload does the same but keeps the plan). “Enter app as sample user” skips signing in.',
     ],
   ] as const;
   return (
@@ -294,7 +294,7 @@ export function TourHome() {
         id="plans"
         index="02"
         title="Plan and billing state"
-        description="The sample organisation is on Active: Standard. Switch it to see the trial, past-due, read-only and no-plan banners, the billing page and the plan gates. The same switch is in the demo bar."
+        description="The sample organisation pays for 3 channels, monthly (£29 per channel, 8 videos each). Switch it to see the trial, weekly and yearly plans, used-up videos, past-due, read-only and no-plan banners, Your plan and the plan gates. The same switch is in the demo bar."
       >
         <BillingStatesPanel />
       </Chapter>

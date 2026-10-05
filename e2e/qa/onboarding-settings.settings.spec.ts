@@ -20,10 +20,12 @@ import {
   waitForEmail,
   Watcher,
 } from './onboarding-settings.support';
+import { BillingMock, gbp } from './billing.mocks';
 
-// QA agent 1 — /settings/organisation, /settings/members, /settings/audit, /settings/billing and
-// the upgrade dialog. Stripe is never called: checkout and portal answers are mocked in the
-// browser, and the plan states are seeded in studio.org_entitlements / subscriptions.
+// QA agent 1 — /settings/organisation, /settings/members, /settings/audit, /settings/billing
+// ("Your plan", 21.5 per-channel plan) and the upgrade dialog. Stripe is never called: the
+// Your-plan endpoints, checkout and portal answers are mocked in the browser (billing.mocks.ts),
+// and the plan states are seeded in studio.org_entitlements / subscriptions.
 
 test.describe.configure({ timeout: 300_000 });
 test.skip(!hasDb, 'DATABASE_URL is not set: these specs need the app’s database');
@@ -491,73 +493,67 @@ test.describe('audit log', () => {
 });
 
 test.describe('billing and the upgrade dialog', () => {
-  test('no plan: the picker shows plans, annual toggle, checkout redirects, Stripe errors are shown', async ({
+  test('no plan: choose channels and how often to pay, checkout with channels, return banners', async ({
     page,
     context,
   }) => {
     const w = new Watcher(page);
     w.allow(/\/api\/studio\/billing\//, 400, 402, 409, 500, 501, 502, 503);
     await ownerWithOrg(context, db, 'bill1');
-    // Stripe is a placeholder here, so the catalogue has no amounts; give the plans some in the
-    // browser (the amounts come from Stripe prices in production).
-    await page.route('**/api/studio/billing/plans', async (route) => {
-      const res = await route.fetch();
-      const json = (await res.json()) as {
-        pricing: {
-          available: boolean;
-          plans: Array<{ prices: Record<string, { unitAmountPence: number | null } | undefined> }>;
-        };
-      };
-      json.pricing.available = true;
-      json.pricing.plans.forEach((plan, i) => {
-        for (const [interval, price] of Object.entries(plan.prices)) {
-          if (price) price.unitAmountPence = (i + 1) * 1_000 * (interval === 'year' ? 10 : 1);
-        }
-      });
-      await route.fulfill({ response: res, json });
-    });
-    await w.visit(page, '/settings/billing');
+    // Stripe is a placeholder here, so the Your-plan endpoints are answered in the browser with
+    // test amounts (in production they come from Stripe prices); checkout returns a URL.
+    const origin = new URL(test.info().project.use.baseURL ?? 'http://127.0.0.1:3102').origin;
+    const mock = new BillingMock(null, origin);
+    await mock.install(page);
+    // A link from /pricing (via sign-up) arrives with the choice already made.
+    await w.visit(page, '/settings/billing?channels=2&interval=week');
     await expect(page.getByText('Your organisation doesn’t have a plan yet.')).toBeVisible();
+    await expect(page.getByText('No plan', { exact: true }).first()).toBeVisible();
     await shot(page, 'settings-billing-no-plan');
-    // Unmocked: Stripe is a placeholder here, so the page shows a toast instead of navigating.
-    const picker = page.locator('section').filter({
-      has: page.getByRole('heading', { name: 'Choose a plan' }),
-    });
-    const monthly = await picker.getByText(/£\d+/).first().innerText();
-    await page
-      .getByRole('radio', { name: 'Annual' })
-      .or(page.getByRole('button', { name: 'Annual' }))
-      .first()
-      .click();
-    const annual = await picker.getByText(/£\d+/).first().innerText();
-    expect(annual).not.toBe(monthly);
-    // Mock Stripe's answer: checkout sends the browser to the returned URL.
-    await page.route('**/api/studio/billing/checkout', async (route) => {
-      const body = route.request().postDataJSON() as {
-        kind: string;
-        tier: string;
-        interval: string;
-      };
-      expect(body.kind).toBe('subscription');
-      expect(body.interval).toBe('year');
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          url: `${new URL(page.url()).origin}/settings/billing?checkout=success`,
-        }),
-      });
-    });
-    await page
-      .getByRole('button', { name: /Start .*trial|Choose / })
-      .first()
-      .click();
+    const picker = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Choose your plan', exact: true }) })
+      .last();
+    await expect(picker.getByText('2 channels', { exact: true })).toBeVisible();
+    const period = picker.getByRole('radiogroup', { name: 'How often you pay' });
+    await expect(period.getByRole('radio', { name: 'Weekly' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(picker.getByText(`${gbp(1_800)} a week`, { exact: true })).toBeVisible();
+    // No tier cards, no old toggle.
+    await expect(page.getByRole('button', { name: /^Choose (Basic|Standard|Plus)/ })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('radio', { name: 'Annual' })).toHaveCount(0);
+    // Change the choice: 3 channels, yearly (2 months free).
+    await picker.getByRole('button', { name: 'Add a channel' }).click();
+    await period.getByRole('radio', { name: 'Yearly' }).click();
+    await expect(picker.getByText('3 channels', { exact: true })).toBeVisible();
+    await expect(picker.getByText(`${gbp(87_000)} a year`, { exact: true })).toBeVisible();
+    await expect(picker.getByText(/^2 months free: you save/)).toBeVisible();
+    // Video packs need a plan first.
+    await expect(page.getByText('Choose a plan first to buy video packs.')).toBeVisible();
+    // Checkout asks for the channels and the period; the browser follows the returned URL.
+    await picker.getByRole('button', { name: /^(Start free trial|Continue to payment)$/ }).click();
     await expect(page).toHaveURL(/checkout=success/);
-    await expect(page.getByRole('status').filter({ hasText: /./ }).first()).toBeVisible();
+    expect(mock.sent('POST', '/billing/checkout')[0]?.body).toMatchObject({
+      kind: 'channels',
+      channels: 3,
+      interval: 'year',
+      locale: expect.any(String),
+    });
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Your plan is being set up' }),
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Dismiss' }).click();
-    for (const q of ['checkout=cancelled', 'topup=success', 'topup=cancelled']) {
+    for (const [q, text] of [
+      ['checkout=cancelled', 'Checkout was cancelled.'],
+      ['topup=success', 'Video pack bought.'],
+      ['topup=cancelled', 'Video pack purchase cancelled.'],
+    ] as const) {
       await page.goto(`/settings/billing?${q}`);
-      await expect(page.getByRole('status').filter({ hasText: /./ }).first()).toBeVisible();
+      await expect(page.getByRole('status').filter({ hasText: text })).toBeVisible();
     }
     await w.assertClean();
   });
@@ -568,26 +564,29 @@ test.describe('billing and the upgrade dialog', () => {
     const cases: Array<{
       label: string;
       seed: (orgId: string) => Promise<void>;
-      expect: RegExp;
+      expect: Array<string | RegExp>;
     }> = [
       {
         label: 'active',
-        seed: (o) => givePlan(db, o, 'STANDARD', { source: 'admin' }),
-        expect: /Standard/,
+        seed: (o) => givePlan(db, o, 'STANDARD', { source: 'admin', channels: 3 }),
+        expect: ['3 channels, monthly', 'Custom plan set by PostMind staff.'],
       },
       {
         label: 'past due',
         seed: (o) =>
           givePlan(db, o, 'STANDARD', {
             source: 'stripe',
+            channels: 2,
+            interval: 'year',
             graceUntil: new Date(Date.now() + 3 * 86_400_000),
           }),
-        expect: /Standard/,
+        expect: ['2 channels, yearly', 'Payment failed', /We couldn’t take your last payment/],
       },
       {
         label: 'read only',
-        seed: (o) => givePlan(db, o, 'STANDARD', { access: 'read_only', source: 'stripe' }),
-        expect: /read-only|Read-only|read only/i,
+        seed: (o) =>
+          givePlan(db, o, 'STANDARD', { access: 'read_only', source: 'stripe', channels: 1 }),
+        expect: ['Read-only', /Your account is read-only/],
       },
     ];
     for (const c of cases) {
@@ -596,7 +595,17 @@ test.describe('billing and the upgrade dialog', () => {
       await c.seed(org.id);
       const p = await ctx.newPage();
       await p.goto('/settings/billing');
-      await expect(p.getByText(c.expect).first()).toBeVisible();
+      for (const text of c.expect) {
+        await expect(
+          (typeof text === 'string'
+            ? p.getByText(text, { exact: true })
+            : p.getByText(text)
+          ).first(),
+        ).toBeVisible();
+      }
+      // Customers never see the internal tier or a cost figure.
+      await expect(p.getByText(/^(Basic|Standard|Plus|Enterprise) plan$/)).toHaveCount(0);
+      await expect(p.getByText('Generation spend')).toHaveCount(0);
       await shot(p, `settings-billing-${c.label.replace(' ', '-')}`);
       await ctx.close();
     }
@@ -609,7 +618,7 @@ test.describe('billing and the upgrade dialog', () => {
     browser,
   }) => {
     const { org } = await ownerWithOrg(context, db, 'bill3');
-    await givePlan(db, org.id, 'STANDARD');
+    await givePlan(db, org.id, 'STANDARD', { channels: 3 });
     const admin = await newCtx(browser, '10.244.1.1');
     const user = await createUser(admin, db, 'bill3-admin');
     await addMember(db, org.id, user.id, 'admin');
@@ -617,48 +626,86 @@ test.describe('billing and the upgrade dialog', () => {
     await setActiveOrg(db, user.id, org.id);
     const p = await admin.newPage();
     await p.goto('/settings/billing');
+    await expect(p.getByText('3 channels, monthly', { exact: true })).toBeVisible();
     await expect(p.getByText(/organisation owner|ask an owner/i).first()).toBeVisible();
-    await expect(p.getByRole('button', { name: 'Manage billing' })).toHaveCount(0);
+    for (const name of ['Open billing portal', 'Review change', 'Cancel plan', 'Manage billing']) {
+      await expect(p.getByRole('button', { name })).toHaveCount(0);
+    }
+    await expect(p.getByRole('button', { name: /^Buy \d+ HD videos/ })).toHaveCount(0);
     expect((await admin.request.post('/api/studio/billing/portal', { data: {} })).status()).toBe(
       403,
     );
     expect(
       (
         await admin.request.post('/api/studio/billing/checkout', {
-          data: { kind: 'subscription', tier: 'BASIC', interval: 'month' },
+          data: { kind: 'channels', channels: 1, interval: 'month' },
         })
       ).status(),
     ).toBe(403);
+    expect(
+      (
+        await admin.request.post('/api/studio/billing/plan', {
+          data: { channels: 4, interval: 'month', prorationDate: null },
+        })
+      ).status(),
+    ).toBe(403);
+    expect((await admin.request.post('/api/studio/billing/plan/cancel')).status()).toBe(403);
     await admin.close();
   });
 
-  test('the upgrade dialog: plan required, billing required, top-up, tier; Not now closes', async ({
+  test('the upgrade dialog: plan required, billing required, videos used, not in plan, channel limit; Not now closes', async ({
     page,
     context,
   }) => {
     const { org } = await ownerWithOrg(context, db, 'bill4', { business: true });
     void org;
     await page.goto('/library');
-    const cases: Array<{ code: string; status: number; title: RegExp; action: RegExp }> = [
+    // 21.5: no tier is ever named. billing_required offers "Update payment method" only when
+    // Stripe checkout is on (owners); here it may be off, so that case checks the copy only.
+    const cases: Array<{
+      code: string;
+      status: number;
+      title: RegExp;
+      body?: RegExp;
+      details?: Record<string, unknown>;
+      links: Array<{ name: RegExp; href: string }>;
+    }> = [
       {
         code: 'plan_required',
         status: 402,
         title: /Choose a plan to start creating/,
-        action: /Choose a plan/,
+        links: [{ name: /^Choose a plan$/, href: '/settings/billing' }],
       },
       {
         code: 'billing_required',
         status: 402,
         title: /Update your payment method/,
-        action: /Update payment method|Upgrade/,
+        links: [],
       },
       {
         code: 'quota_exceeded',
         status: 403,
-        title: /reached this month’s limit/,
-        action: /Buy top-up/,
+        title: /You’ve used your plan’s videos for now/,
+        links: [
+          { name: /^Buy a video pack$/, href: '/settings/billing#topups' },
+          { name: /^Add a channel$/, href: '/settings/billing#change' },
+        ],
       },
-      { code: 'plan_tier', status: 403, title: /Upgrade/, action: /Upgrade|View plans/ },
+      {
+        code: 'plan_tier',
+        status: 403,
+        title: /Not included in your plan/,
+        details: { requiredTier: 'PLUS' },
+        links: [{ name: /^See the plan$/, href: '/pricing' }],
+      },
+      {
+        code: 'channel_limit',
+        status: 403,
+        title: /Add a channel to publish here/,
+        body: /Your plan includes 1 channel: TikTok\. Add a channel to publish to Instagram too\./,
+        details: { channels: 1, platform: 'instagram', allowedPlatforms: ['tiktok'] },
+        links: [{ name: /^Add a channel$/, href: '/settings/billing#change' }],
+      },
     ];
     for (const c of cases) {
       await page.route('**/api/studio/templates**', (route) =>
@@ -669,7 +716,7 @@ test.describe('billing and the upgrade dialog', () => {
             ok: false,
             error: c.code,
             message: c.code,
-            details: { requiredTier: 'PLUS' },
+            details: c.details ?? {},
           }),
         }),
       );
@@ -677,12 +724,16 @@ test.describe('billing and the upgrade dialog', () => {
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible();
       await expect(dialog).toContainText(c.title);
-      await expect(
-        dialog
-          .getByRole('link', { name: c.action })
-          .or(dialog.getByRole('button', { name: c.action }))
-          .first(),
-      ).toBeVisible();
+      if (c.body) await expect(dialog).toContainText(c.body);
+      for (const link of c.links) {
+        await expect(dialog.getByRole('link', { name: link.name })).toHaveAttribute(
+          'href',
+          link.href,
+        );
+      }
+      // No tier names, no "Upgrade" to a tier, no top-ups.
+      await expect(dialog).not.toContainText(/\b(Basic|Standard|Plus|Enterprise)\b/);
+      await expect(dialog).not.toContainText(/top-up/i);
       await shot(page, `upgrade-dialog-${c.code}`);
       await dialog.getByRole('button', { name: 'Not now' }).click();
       await expect(dialog).toHaveCount(0);
@@ -694,8 +745,10 @@ test.describe('billing and the upgrade dialog', () => {
     const { org } = await ownerWithOrg(context, db, 'bill5');
     await givePlan(db, org.id, 'STANDARD', {
       source: 'stripe',
+      channels: 2,
       graceUntil: new Date(Date.now() + 2 * 86_400_000),
     });
+    // 21.5: a per-channel subscription (2 channels, monthly) whose last payment failed.
     await db.subscription.create({
       data: {
         id: `sub_qa1_${randomUUID().slice(0, 8)}`,
@@ -703,7 +756,8 @@ test.describe('billing and the upgrade dialog', () => {
         stripeCustomerId: 'cus_qa1',
         status: 'past_due',
         interval: 'month',
-        lookupKey: 'studio_standard_month',
+        lookupKey: 'studio_channel_monthly',
+        quantity: 2,
       },
     });
     await page.goto('/projects');

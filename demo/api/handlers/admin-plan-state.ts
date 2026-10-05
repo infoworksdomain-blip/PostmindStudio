@@ -3,11 +3,18 @@
 // follow src/lib/studio/billing/admin.ts (AdminTrialView) and services/admin-directory.ts
 // (planSummary). Kept in its own module so neither handler file imports the other.
 import { TRIAL } from '@/lib/studio/billing/catalogue';
+import {
+  channelIntervalForLookupKey,
+  type ChannelInterval,
+} from '@/lib/studio/billing/channel-plan';
 import type { PlanTier } from '@/components/studio/billing/types';
 import { ago, DAY } from './projects-store';
 
 export interface DemoOverride {
   tier?: PlanTier;
+  /** 21.5: staff give channels and an interval (allowance, caps, channel limit). */
+  channels?: number;
+  interval?: ChannelInterval;
   access?: 'full' | 'read_only' | 'none';
   limits?: Record<string, number | null>;
   monthlyPricePence?: number | null;
@@ -24,6 +31,9 @@ export interface PlanOrg {
   access: string | null;
   subscriptionStatus: string | null;
   costThisMonthPence: number;
+  /** 21.5: the channel price's lookup key and its quantity (channels). */
+  lookupKey?: string | null;
+  channels?: number | null;
 }
 
 export const overrides = new Map<string, DemoOverride>();
@@ -66,11 +76,28 @@ export function trialView(org: PlanOrg) {
   };
 }
 
-/** Plan, access, source and trial as the list and detail show them (planSummary). */
+/** The channel plan in force: a staff override's, else the subscription's (null without one). */
+export function channelPlanOf(org: PlanOrg) {
+  const own = overrideActive(org.id);
+  if (own?.channels !== undefined)
+    return {
+      channels: own.channels,
+      interval: own.interval ?? channelIntervalForLookupKey(org.lookupKey) ?? 'month',
+      source: 'admin' as const,
+    };
+  const interval = channelIntervalForLookupKey(org.lookupKey);
+  const lapsed = org.subscriptionStatus === 'canceled' || org.subscriptionStatus === null;
+  return interval && org.channels && !lapsed
+    ? { channels: org.channels, interval, source: 'stripe' as const }
+    : null;
+}
+
+/** Plan, access, source, trial and channel plan as the list and detail show them (planSummary). */
 export function planSummary(org: PlanOrg) {
   const own = overrideActive(org.id);
   const trial = trialView(org);
   return {
+    channelPlan: channelPlanOf(org),
     tier: own?.tier ?? (isTier(org.tier) ? org.tier : null),
     access: own?.access ?? org.access,
     source: own

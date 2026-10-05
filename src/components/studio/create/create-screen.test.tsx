@@ -109,8 +109,13 @@ describe('CreateScreen', () => {
     expect(api.find('POST', '/projects')).toHaveLength(0);
   });
 
-  it('applies options: platforms, length, no brand kit, advanced budget', async () => {
-    const api = mockFetch(routes());
+  const meAs = (platformRole: string): MockRoute => ({
+    match: '/me',
+    body: { ok: true, me: { capabilities: [], user: { platformRole } } },
+  });
+
+  it('applies options: platforms, length, no brand kit, advanced budget (staff)', async () => {
+    const api = mockFetch(routes([meAs('staff')]));
     renderWithSWR(<CreateScreen initialReference={null} />);
     await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Launch');
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
@@ -132,6 +137,22 @@ describe('CreateScreen', () => {
     expect(body.brandKitId).toBeUndefined();
     expect(body.costBudgetPence).toBe(1250);
     expect(body.reviewPolicy).toBe('AUTO_APPROVE');
+  });
+
+  it('hides the budget from customers and leaves it to the server default', async () => {
+    const api = mockFetch(routes([meAs('user')]));
+    renderWithSWR(<CreateScreen initialReference={null} />);
+    await userEvent.type(screen.getByLabelText('What’s the video about?'), 'Launch');
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
+    await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
+    expect(screen.getByLabelText('Approval')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Budget/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/£/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    const body = api.find('POST', '/projects')[0]?.body as Record<string, unknown>;
+    expect(body.costBudgetPence).toBeUndefined();
   });
 
   it('creates a slideshow from a template without starting generation', async () => {

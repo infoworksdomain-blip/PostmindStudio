@@ -8,6 +8,7 @@ import {
 } from '../billing/catalogue';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { costCapsFromEnv, utcMonthKey, utcMonthRange, type CostCaps } from '../cost/caps';
+import { effectiveOrgCaps } from '../cost/guard';
 import { resolveOrgCap } from '../cost/org-overrides';
 import { DEFAULT_SLIDESHOW_BUDGET_PENCE, shortFormBudgetPence } from '../cost/project-budget';
 import type { PlanTier } from '../providers/router';
@@ -71,10 +72,15 @@ export function estimateCost(kinds: PlanKind[], tier: PlanTier) {
   };
 }
 
-/** Cap headroom one top-up credit of the tier's short pack adds (0 when there is no pack). */
-export function creditHeadroomPerItem(tier: PlanTier): number {
-  const pack = TOP_UP_PACKS.find((p) => p.tier === selfServe(tier) && p.kind === 'short');
-  return pack?.capHeadroomPencePerCredit ?? 0;
+/**
+ * Cap headroom one video-pack credit adds. 21.5: the HD packs work on any plan and channel, so
+ * the smallest pack headroom is used whatever the tier (0 when nothing is for sale).
+ */
+export function creditHeadroomPerItem(_tier?: PlanTier): number {
+  const headrooms = TOP_UP_PACKS.filter((p) => p.kind === 'short').map(
+    (p) => p.capHeadroomPencePerCredit,
+  );
+  return headrooms.length ? Math.min(...headrooms) : 0;
 }
 
 /**
@@ -152,18 +158,24 @@ export async function loadPlanAllowance(
     mode === 'warn' || limit === null ? null : Math.max(0, limit - used) + credits.short;
   const caps = deps.caps ?? costCapsFromEnv(env);
   const override = await deps.db.orgCostCap.findUnique({ where: { organisationId } });
-  const adjustment =
-    deps.entitlements && (await capAdjustmentFor(deps.db, deps.entitlements, organisationId, at));
-  const base = resolveOrgCap('monthly', caps, tier, override).pence;
-  const headroom = adjustment
-    ? adjustment.monthlyHeadroomPence
+  const adjustment = deps.entitlements
+    ? await capAdjustmentFor(deps.db, deps.entitlements, organisationId, at)
+    : null;
+  // Without billing entitlements (core mode) top-up headroom is still counted.
+  const headroom = deps.entitlements
+    ? (adjustment?.monthlyHeadroomPence ?? 0)
     : await creditHeadroomPence(deps.db, organisationId, utcMonthKey(at));
   const capPence =
-    adjustment && adjustment.trial
-      ? adjustment.trial.monthlyPence
-      : base === undefined
-        ? null
-        : base + headroom;
+    effectiveOrgCaps(
+      {
+        dailyPence: undefined,
+        monthlyPence: resolveOrgCap('monthly', caps, tier, null).pence,
+      },
+      override,
+      adjustment
+        ? { ...adjustment, monthlyHeadroomPence: headroom }
+        : { monthlyHeadroomPence: headroom },
+    ).monthlyPence ?? null;
   const { start, end } = utcMonthRange(at);
   const spent = await deps.db.providerUsage.aggregate({
     where: { organisationId, day: { gte: start, lt: end } },

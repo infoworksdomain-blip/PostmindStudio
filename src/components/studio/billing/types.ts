@@ -9,8 +9,10 @@ import type { PlanTier } from '@/lib/studio/providers/router';
 // bundled into the browser.
 
 export type { PlanTier, PricingView };
-export type { PlanPricingView, TopUpPricingView } from '@/lib/studio/billing/pricing';
-export type { BillingInterval, SelfServeTier } from '@/lib/studio/billing/catalogue';
+export type { ChannelIntervalView, TopUpPricingView } from '@/lib/studio/billing/pricing';
+export type { ChannelInterval } from '@/lib/studio/billing/channel-plan';
+export type { PlanChangePreviewView, PlanChangeOutcome } from '@/lib/studio/billing/plan-change';
+export type { PlanView } from '@/lib/studio/billing/overview';
 
 /** GET /api/studio/billing */
 export interface BillingResponse {
@@ -20,6 +22,11 @@ export interface BillingResponse {
 /** GET /api/studio/billing/plans */
 export interface PlansResponse {
   pricing: PricingView;
+}
+
+/** GET /api/studio/billing/plan/preview (21.5) */
+export interface PlanPreviewResponse {
+  preview: import('@/lib/studio/billing/plan-change').PlanChangePreviewView;
 }
 
 /** GET /api/studio/billing/invoices */

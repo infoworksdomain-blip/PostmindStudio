@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import type { PlanTier } from '../providers/router';
 import type { TenantAccess } from '../../tenant';
+import type { ChannelInterval } from './channel-plan';
 import { resolveStoredEntitlements, type CustomLimits, type TrialState } from './entitlements';
 
 // Phase 18 §P.3 — the one place Studio reads an organisation's tier and access. Track C builds
@@ -29,6 +30,17 @@ export interface Entitlements {
   trial?: TrialState;
   /** Track C: the Stripe status the entitlement came from (banners). */
   subscriptionStatus?: string;
+  /**
+   * 21.5: the per-channel plan in force (Stripe quantity + interval, or a staff override). Absent
+   * on legacy tier subscriptions, ENTERPRISE and organisations without a plan.
+   */
+  channelPlan?: ChannelPlanEntitlement;
+}
+
+export interface ChannelPlanEntitlement {
+  channels: number;
+  interval: ChannelInterval;
+  source: 'stripe' | 'admin';
 }
 
 export interface EntitlementsReader {

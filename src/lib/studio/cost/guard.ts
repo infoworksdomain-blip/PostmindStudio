@@ -84,6 +84,33 @@ export interface CapAdjustment {
   monthlyHeadroomPence: number;
   /** While trialing: these replace the daily and monthly caps. */
   trial?: { dailyPence: number; monthlyPence: number };
+  /**
+   * 21.5: a per-channel plan's own caps (channel-plan.ts channelCostCapsPence: they scale with
+   * the channels). They replace the tier's default; a staff cost-cap override still wins.
+   */
+  plan?: { dailyPence: number; monthlyPence: number };
+}
+
+/**
+ * The organisation's effective caps: trial > staff override (org_cost_caps) > channel plan >
+ * the tier's env / catalogue default. The monthly cap gets the top-up headroom on top (not a
+ * trial's: the trial cap is the whole trial's budget).
+ */
+export function effectiveOrgCaps(
+  tierCaps: { dailyPence: number | undefined; monthlyPence: number | undefined },
+  override: { dailyPence: number | null; monthlyPence: number | null } | null,
+  adjustment: CapAdjustment | null,
+): { dailyPence: number | undefined; monthlyPence: number | undefined } {
+  if (adjustment?.trial)
+    return { dailyPence: adjustment.trial.dailyPence, monthlyPence: adjustment.trial.monthlyPence };
+  const daily = override?.dailyPence ?? adjustment?.plan?.dailyPence ?? tierCaps.dailyPence;
+  const baseMonthly =
+    override?.monthlyPence ?? adjustment?.plan?.monthlyPence ?? tierCaps.monthlyPence;
+  return {
+    dailyPence: daily,
+    monthlyPence:
+      baseMonthly === undefined ? undefined : baseMonthly + (adjustment?.monthlyHeadroomPence ?? 0),
+  };
 }
 
 export type CapAdjustmentLookup = (
@@ -265,10 +292,15 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
     // 13.19: organisation override > env > default (cost/org-overrides.ts).
     const override = (await deps.overrides?.(scope.organisationId)) ?? null;
     const adjustment = (await deps.adjustments?.(scope.organisationId, today)) ?? null;
-    const orgCap =
-      adjustment?.trial?.dailyPence ??
-      override?.dailyPence ??
-      deps.caps.orgDailyPenceByTier[scope.planTier];
+    const caps = effectiveOrgCaps(
+      {
+        dailyPence: deps.caps.orgDailyPenceByTier[scope.planTier],
+        monthlyPence: deps.caps.orgMonthlyPenceByTier?.[scope.planTier],
+      },
+      override,
+      adjustment,
+    );
+    const orgCap = caps.dailyPence;
     if (orgCap !== undefined) {
       const sum = await deps.db.providerUsage.aggregate({
         where: { organisationId: scope.organisationId, day },
@@ -284,12 +316,7 @@ export function createCostGuard(deps: CostGuardDeps): CostGuard {
         thresholds: DAILY_THRESHOLDS,
       });
     }
-    const baseMonthly = override?.monthlyPence ?? deps.caps.orgMonthlyPenceByTier?.[scope.planTier];
-    const monthlyCap =
-      adjustment?.trial?.monthlyPence ??
-      (baseMonthly === undefined
-        ? undefined
-        : baseMonthly + (adjustment?.monthlyHeadroomPence ?? 0));
+    const monthlyCap = caps.monthlyPence;
     if (monthlyCap !== undefined) {
       // Served by the provider_usage(organisationId, day) index: one org, one month of days.
       const { start, end } = utcMonthRange(today);

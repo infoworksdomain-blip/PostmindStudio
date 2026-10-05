@@ -142,8 +142,7 @@ export function publicPage(pathname: string, search = new URLSearchParams()): Re
   let body: ReactNode | null = null;
   // The app's "/" is the landing page; "/landing" is kept for older tour links.
   if (pathname === '/' || pathname === '/landing') body = <LandingPage />;
-  else if (pathname === '/pricing')
-    body = <PricingScreen pricing={demoPricing()} salesEmail="sales@leeds-sourdough.example" />;
+  else if (pathname === '/pricing') body = <PricingScreen pricing={demoPricing()} />;
   else {
     const legal = matchPath('/legal/:doc', pathname);
     if (legal) body = <LegalPage doc={legal.doc ?? ''} />;

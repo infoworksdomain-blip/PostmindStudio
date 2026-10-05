@@ -77,7 +77,7 @@ export function WorkflowsPage() {
         id="plans"
         index="00"
         title="Plan and billing state"
-        description="The demo organisation starts on Active: Standard. Switch it here or in the demo bar; the banner, billing page, gates and lock badges follow."
+        description="The demo organisation starts on 3 channels, monthly. Switch it here or in the demo bar; the banner, Your plan, gates and badges follow."
       >
         <BillingStatesPanel />
       </Chapter>

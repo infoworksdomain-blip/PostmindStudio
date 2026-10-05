@@ -22,7 +22,16 @@ export interface Me {
   user: { id: string; name: string | null; email: string | null; platformRole: string };
   organisation: MeOrganisation;
   organisations: MeOrganisation[];
-  plan: { tier: string; access: string; source: string } | null;
+  plan: {
+    tier: string;
+    access: string;
+    source: string;
+    /** 21.5: the per-channel plan. */
+    channels?: number;
+    interval?: string;
+  } | null;
+  /** 21.5: connected platforms past the paid channels (null without a channel plan). */
+  channels?: { paid: number; connected: string[]; blocked: string[] } | null;
   banner: AccountBanner | null;
   impersonating: boolean;
   identityMode: 'standalone' | 'core';

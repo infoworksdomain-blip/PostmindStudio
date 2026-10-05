@@ -45,6 +45,7 @@ describe('planSummary', () => {
       access: null,
       source: null,
       trial: null,
+      channelPlan: null,
     });
   });
 
@@ -73,5 +74,25 @@ describe('planSummary', () => {
       source: 'stripe',
       trial: null,
     });
+  });
+
+  it('21.5: the channel plan from Stripe, a staff override of it, and none on Enterprise', () => {
+    const paid = { ...derived, source: 'stripe', status: 'active', channels: 3, interval: 'month' };
+    expect(planSummary(row({ derived: paid }), now).channelPlan).toEqual({
+      channels: 3,
+      interval: 'month',
+      source: 'stripe',
+    });
+    const staff = { ...admin, tier: undefined, channels: 5, interval: 'week' };
+    expect(planSummary(row({ derived: paid, admin: staff }), now).channelPlan).toEqual({
+      channels: 5,
+      interval: 'week',
+      source: 'admin',
+    });
+    const enterprise = { ...admin, tier: 'ENTERPRISE', monthlyPricePence: 150_000 };
+    expect(planSummary(row({ derived: paid, admin: enterprise }), now).channelPlan).toBeNull();
+    // A legacy tier subscription has no channel plan.
+    const legacy = { ...derived, source: 'stripe', status: 'active' };
+    expect(planSummary(row({ derived: legacy }), now).channelPlan).toBeNull();
   });
 });

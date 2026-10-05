@@ -48,9 +48,17 @@ const cost: CostResponse = {
   byDay: [{ day: '2026-09-26', costPence: 1_234 }],
 };
 
+const me = (platformRole: string): MockRoute => ({
+  match: /\/api\/studio\/me$/,
+  body: { ok: true, me: { capabilities: [], user: { platformRole } } },
+});
+
+// Spend is staff-only (operator decision 2026-10-04): these tests view the page as staff unless they
+// pass a customer /me first (the first matching route wins).
 function routes(over: MockRoute[] = []): MockRoute[] {
   return [
     ...over,
+    me('staff'),
     { match: '/analytics/overview', body: overview },
     {
       match: '/analytics/timeseries',
@@ -203,6 +211,21 @@ describe('AnalyticsDashboard', () => {
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Analytics store unavailable');
     expect(within(alert).getByRole('button', { name: /Retry/ })).toBeInTheDocument();
+  });
+});
+
+describe('AnalyticsDashboard for customers (operator decision 2026-10-04)', () => {
+  it('shows no spend figure, spend section or cost wording, and never asks for costs', async () => {
+    const { calls } = mockFetch(routes([me('user')]));
+    renderWithSWR(<AnalyticsDashboard />);
+    expect(await screen.findByText(/^12.4k$/i)).toBeInTheDocument();
+    await screen.findByRole('list', { name: 'Views by platform' });
+    expect(screen.getByText('3.2% of views')).toBeInTheDocument();
+    expect(screen.queryByText('Spend')).not.toBeInTheDocument();
+    expect(screen.queryByText(/£/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/cost/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Spend by provider' })).not.toBeInTheDocument();
+    expect(calls.some((c) => c.url.includes('/analytics/cost'))).toBe(false);
   });
 });
 

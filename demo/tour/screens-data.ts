@@ -70,7 +70,7 @@ export const PROJECT_STATES: DeepLink[] = [
   {
     href: p(PROJECTS.christmas.id),
     label: PROJECTS.christmas.name,
-    note: 'Budget paused (cost_cap_paused at 90% of its budget): Raise budget, then Generate again.',
+    note: 'Paused at its safety limit: “Carry on making this video”, then Generate again (staff see the budget figures).',
   },
   {
     href: p(PROJECTS.meetTheBakers.id),
@@ -127,7 +127,7 @@ const PHASE_18_GROUP: ScreenGroup = {
       title: 'Pricing',
       href: '#/pricing',
       summary:
-        'Plan cards with a monthly / annual toggle, the comparison table and top-up packs. Prices here are the reference amounts; the live page reads them from Stripe.',
+        'One plan, paid per channel: choose 1–6 channels and weekly, monthly or yearly, see the price and the videos included, the HD video packs and the questions. Prices here are the reference amounts; the live page reads them from Stripe.',
       scene: 'market',
     },
     {
@@ -170,16 +170,21 @@ const PHASE_18_GROUP: ScreenGroup = {
       ],
     },
     {
-      title: 'Billing',
+      title: 'Your plan',
       href: '#/settings/billing',
       summary:
-        'Plan and renewal date, usage meters against the plan limits, top-up credits and packs, invoices and “Manage billing”. The plan follows the demo bar’s plan switcher; checkout and the billing portal open a clearly labelled simulated page (no card details), never Stripe.',
+        'Channels and how often you pay, renewal date, videos used this week or month, which connected platforms publish, video packs, change the plan (upgrade now with the amount due, downgrade at the end of the period), cancel or keep the plan, and invoices. The plan follows the demo bar’s plan switcher; checkout and the billing portal open a clearly labelled simulated page (no card details), never Stripe.',
       scene: 'coffee',
       links: [
         {
           href: '#/settings/billing?demoPlan=no_plan',
           label: 'No plan: the plan picker',
-          note: 'Choose a plan or start the 14-day Standard trial, then the simulated checkout.',
+          note: 'Choose channels and how often to pay, start the 14-day trial (5 videos), then the simulated checkout.',
+        },
+        {
+          href: '#/settings/billing?demoPlan=active_monthly#change',
+          label: 'Change your plan',
+          note: 'Add channels (applies now, amount due today) or remove some (applies at the end of the period).',
         },
         {
           href: '#/settings/billing?demoPlan=past_due',
@@ -212,7 +217,7 @@ const PHASE_18_GROUP: ScreenGroup = {
         {
           href: '#/admin?tab=organisations',
           label: 'Organisations: plan, trial and cost caps',
-          note: 'Open “PostMind (operator)” (on a trial, £14.96 of its £15 cap): set Plus, tick “End the trial now”, add a reason and confirm; Cost caps sit beside it.',
+          note: 'Open “PostMind (operator)” (on a trial, £14.96 of its £15 cap): set a plan, tick “End the trial now”, add a reason and confirm; Cost caps sit beside it.',
         },
         {
           href: '#/admin?tab=users',
@@ -347,7 +352,7 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
         scene: 'flatlay',
         tryIt: [
           'Profile tab: edit the tone and audience Studio writes with.',
-          'Website scan tab: confirm ownership and scan the bakery’s website (progress polls every 3 s); the statement is sent as {locale, messageKey, text} and checked (17.8); the last scan stopped at its cost cap (translated reason); see the next automatic rescan, verify the domain with a DNS TXT record, or report a site you do not own.',
+          'Website scan tab: confirm ownership and scan the bakery’s website (progress polls every 3 s); the statement is sent as {locale, messageKey, text} and checked (17.8); the last scan stopped at its limit (translated reason); see the next automatic rescan, verify the domain with a DNS TXT record, or report a site you do not own.',
           'Brand kits tab: the main kit and a Christmas 2026 kit; set the default.',
           'Image library tab: filter by source, semantic search, generate an image.',
         ],
@@ -406,4 +411,4 @@ export const SCREEN_GROUPS: ScreenGroup[] = [
 ];
 
 export const BELL_NOTE =
-  'The bell in the top bar lists in-app notifications in the reader’s language (cost alerts, generation complete, approval waiting, publication failed, safety reviews, plan quota, “Reconnect your X account”, and one for an untitled project). One old row has no message key and stays in its stored English. Mark one or all as read.';
+  'The bell in the top bar lists in-app notifications in the reader’s language (limit alerts, with cost figures for staff only, generation complete, approval waiting, publication failed, safety reviews, plan quota, “Reconnect your X account”, and one for an untitled project). One old row has no message key and stays in its stored English. Mark one or all as read.';
