@@ -168,6 +168,19 @@ describe.each(ASPECTS)('20.26 slideshow EDL at %s', (aspect) => {
   });
 });
 
+describe('21.7 wrapped text keeps its line spacing (production 2026-10-05)', () => {
+  // Project cmuvt44l10000nx07n03akrdq: every wrapped TEXT_CARD drew all its lines on one baseline
+  // ("5 ways to walk into client calls prepared" piled into one row) on 9:16, 16:9 and 1:1. The
+  // CSS had a unitless `line-height: 1.25`; Shotstack's HtmlAsset renderer does not apply it as a
+  // multiplier (its docs only show a percentage). The video composer (pipeline/edl.ts) sets no
+  // line-height and wraps correctly, so slideshow text does the same.
+  it.each(ASPECTS)('%s: no unitless line-height in any text style', (aspect) => {
+    for (const clip of build(aspect, PRODUCTION).clips) {
+      expect(clip.asset.css ?? '').not.toMatch(/line-height:\s*[\d.]+\s*(;|\}|$)/);
+    }
+  });
+});
+
 describe('20.26 text size does not depend on the aspect ratio', () => {
   it('uses the same text base on every 1080p aspect', () => {
     expect(new Set(ASPECTS.map((a) => textBase(outputDimensions(a))))).toEqual(new Set([1920]));
