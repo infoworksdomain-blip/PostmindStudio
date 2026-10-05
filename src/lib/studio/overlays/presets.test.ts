@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { presetParameters, resolveStyle, overlayStyle } from './params';
-import { BUILT_IN_PRESETS, PRESET_GROUPS, ROLE_PRESET } from './presets';
+import {
+  BUILT_IN_PRESETS,
+  PRESET_GROUPS,
+  ROLE_PRESET,
+  UGC_CAPTION_PRESET,
+  UGC_HOOK_PRESET,
+} from './presets';
 
 const A4_3_GROUP_NAMES = ['hook', 'subtitle', 'cta', 'quote', 'statistic', 'story', 'brand'];
 
@@ -68,6 +74,52 @@ describe('BUILT_IN_PRESETS', () => {
     for (const preset of BUILT_IN_PRESETS) {
       expect(preset.name.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('TikTok classic presets for UGC videos (21.4b)', () => {
+  const byKey = (key: string) => BUILT_IN_PRESETS.find((p) => p.key === key);
+
+  it('captions: white, thin black outline, no box or shadow, small, lower-middle, no fades', () => {
+    const preset = byKey(UGC_CAPTION_PRESET);
+    expect(preset?.group).toBe('subtitle');
+    expect(preset?.brandSubstitution).toBe(false);
+    const style = resolveStyle(preset?.parameters);
+    expect(style).toMatchObject({
+      fillColor: '#FFFFFF',
+      strokeColor: '#000000',
+      strokeWidthPx: 3,
+      shadowColor: null,
+      backgroundType: 'none',
+      backgroundColor: null,
+      fontSizePct: 3.6,
+      anchorY: 0.7,
+      animationIn: 'none',
+      animationOut: 'none',
+    });
+    expect(style.fontWeight).toBeGreaterThanOrEqual(700);
+    expect(style.fontWeight).toBeLessThanOrEqual(800);
+  });
+
+  it('hook: the same look, a little larger, in the top band', () => {
+    const preset = byKey(UGC_HOOK_PRESET);
+    expect(preset?.group).toBe('hook');
+    expect(preset?.brandSubstitution).toBe(false);
+    expect(resolveStyle(preset?.parameters)).toMatchObject({
+      backgroundType: 'none',
+      strokeColor: '#000000',
+      fillColor: '#FFFFFF',
+      fontSizePct: 4.2,
+      anchorY: 0.11,
+    });
+  });
+
+  it('ordinary videos keep their role presets', () => {
+    expect(ROLE_PRESET).toEqual({
+      hook: 'hook_tiktok_native',
+      body: 'subtitle_box',
+      cta: 'cta_pulse_button',
+    });
   });
 });
 

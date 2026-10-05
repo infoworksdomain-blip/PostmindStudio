@@ -1,7 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { CAPTION_PRESET_KEY, captionLines, captionRows } from './captions';
+import {
+  CAPTION_PRESET_KEY,
+  captionLines,
+  captionRows,
+  oneShortLine,
+  UGC_LABEL_MAX_CHARS,
+} from './captions';
 
 const w = (text: string, startSec: number, endSec: number) => ({ text, startSec, endSec });
+
+describe('oneShortLine (21.4b UGC B-roll labels)', () => {
+  it('keeps a short line, takes the first clause of a long one, else cuts at a word', () => {
+    expect(oneShortLine('  Fresh   every Friday ')).toBe('Fresh every Friday');
+    expect(oneShortLine('Two minutes, done. Then I sit down and enjoy the whole thing.')).toBe(
+      'Two minutes, done.',
+    );
+    const cut = oneShortLine('And honestly the best part is it remembers every client I have');
+    expect(cut).toBe('And honestly the best part is it…');
+    expect((cut ?? '').length).toBeLessThanOrEqual(UGC_LABEL_MAX_CHARS);
+    expect(oneShortLine('')).toBeNull();
+    expect(oneShortLine(null)).toBeNull();
+  });
+
+  it('caps word count per caption line when asked (UGC chunks)', () => {
+    const words = 'one two three four five six seven eight'
+      .split(' ')
+      .map((t, i) => w(t, i * 0.2, i * 0.2 + 0.15));
+    expect(captionLines(words, 5, 6).map((l) => l.text)).toEqual([
+      'one two three four five six',
+      'seven eight',
+    ]);
+  });
+});
 
 describe('captionLines', () => {
   it('breaks at sentence ends and keeps lines short', () => {

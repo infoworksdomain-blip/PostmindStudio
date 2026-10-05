@@ -201,8 +201,8 @@ export interface HarnessOptions {
   actor?: boolean;
   /** 21.4: the scripted Veo actor's answer (default: a clip). */
   actorRespond?: (request: ProviderRequest) => ProviderPollResult;
-  /** 21.4a: the scripted OpenAI image answer (default: a stored PNG). */
-  imageRespond?: (request: ProviderRequest) => ProviderPollResult;
+  /** 21.4a: the scripted OpenAI image answer (default, or when it returns null: a stored PNG). */
+  imageRespond?: (request: ProviderRequest) => ProviderPollResult | null;
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -294,7 +294,8 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       };
     }
     if (request.capability !== 'text_to_image') throw new Error('unexpected');
-    if (options.imageRespond) return options.imageRespond(request);
+    const scripted = options.imageRespond?.(request) ?? null;
+    if (scripted) return scripted;
     generated += 1;
     const stored = await storage.put({
       bucket: 'assets',

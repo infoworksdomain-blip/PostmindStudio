@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { BUILT_IN_PRESETS, ROLE_PRESET } from './presets';
+import { UGC_LABEL_MAX_CHARS } from './captions';
+import { BUILT_IN_PRESETS, ROLE_PRESET, UGC_CAPTION_PRESET, UGC_HOOK_PRESET } from './presets';
 import {
   shotRole,
   suggestOverlays,
@@ -107,7 +108,14 @@ describe('UGC actor shots keep the face clear (21.4a, production 2026-10-04)', (
     expect(hook?.style.anchorY).toBeLessThan(VOICED_LABEL_ANCHOR_Y);
     expect(hook?.style.anchorY).toBeGreaterThan(0.06);
     expect(hook?.style.fontSizePct).toBe(UGC_HOOK_FONT_PCT);
-    expect(hook?.presetName).toBe(BUILT_IN_PRESETS.find((p) => p.key === ROLE_PRESET.hook)?.name);
+    // 21.4b: the outlined, box-less hook (not the rounded white box of hook_tiktok_native).
+    expect(hook?.presetName).toBe(BUILT_IN_PRESETS.find((p) => p.key === UGC_HOOK_PRESET)?.name);
+    expect(hook?.style).toMatchObject({
+      backgroundType: 'none',
+      backgroundColor: null,
+      fillColor: '#FFFFFF',
+      strokeColor: '#000000',
+    });
   });
 
   it('a hook too long to fit the band on one line is left to the captions', () => {
@@ -119,6 +127,63 @@ describe('UGC actor shots keep the face clear (21.4a, production 2026-10-04)', (
     const shots = suggestOverlays(ugc('Client calls?'), null, () => 'subtitle_box');
     expect(shots.find((s) => s.shotId === 'actor-body')).toBeUndefined();
     expect(shots[0]?.style.anchorY).toBe(UGC_HOOK_ANCHOR_Y);
+  });
+});
+
+describe('UGC labels in the native caption look (21.4b, production 2026-10-05)', () => {
+  const ugcShots: SuggestShot[] = [
+    {
+      id: 'actor-hook',
+      sortOrder: 0,
+      durationSec: 8,
+      onScreenText: 'Client calls?',
+      visualTreatment: 'UGC_ACTOR',
+      voiceoverText: 'I used to dread client calls.',
+    },
+    {
+      id: 'still',
+      sortOrder: 1,
+      durationSec: 3,
+      onScreenText: 'Preps your opener before every single call, so you never freeze',
+      visualTreatment: 'IMAGE_STILL',
+      voiceoverText: null,
+    },
+    {
+      id: 'actor-cta',
+      sortOrder: 2,
+      durationSec: 8,
+      onScreenText: null,
+      visualTreatment: 'UGC_ACTOR',
+      voiceoverText: 'Link below.',
+    },
+  ];
+  const brand = { primary: '#0A0A23', secondary: '#101040', fontFamily: 'Lora' };
+
+  it('B-roll gets one short outlined line where the captions sit, never a box or the brand colours', () => {
+    const shots = suggestOverlays(ugcShots, brand, () => 'subtitle_box', { ugc: true });
+    const still = shots.find((s) => s.shotId === 'still');
+    expect(still?.presetName).toBe(
+      BUILT_IN_PRESETS.find((p) => p.key === UGC_CAPTION_PRESET)?.name,
+    );
+    expect(still?.text.length).toBeLessThanOrEqual(UGC_LABEL_MAX_CHARS);
+    expect(still?.text).toBe('Preps your opener before every single…');
+    expect(still?.style).toMatchObject({
+      backgroundType: 'none',
+      backgroundColor: null,
+      fillColor: '#FFFFFF',
+      strokeColor: '#000000',
+      fontFamily: 'Montserrat',
+      anchorY: 0.7,
+    });
+    for (const s of shots) expect(s.style.backgroundType).toBe('none');
+  });
+
+  it('an ordinary video keeps its boxed body label', () => {
+    const ordinary = ugcShots.map((s) => ({ ...s, visualTreatment: 'IMAGE_STILL' }));
+    const still = suggestOverlays(ordinary, null).find((s) => s.shotId === 'still');
+    expect(still?.text).toBe(ordinary[1]?.onScreenText);
+    expect(still?.presetName).toBe(BUILT_IN_PRESETS.find((p) => p.key === ROLE_PRESET.body)?.name);
+    expect(still?.style.backgroundType).toBe('box');
   });
 });
 

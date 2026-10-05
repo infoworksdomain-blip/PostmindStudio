@@ -6,6 +6,7 @@ import {
   actorClipLength,
   actorClipSeconds,
   applyUgcPlan,
+  fitUgcDurations,
   ugcTreatments,
   ugcUsesReferenceImage,
 } from './plan';
@@ -83,21 +84,90 @@ describe('ugcTreatments', () => {
   const registry = (actors: number) => ({
     getAdaptersByCapability: () => Array.from({ length: actors }, () => ({}) as never),
   });
-  it('actors when a provider can make them, then the cheap B-roll the platform offers', () => {
-    const general: VisualTreatment[] = [
-      'AI_CLIP',
-      'IMAGE_STILL',
-      'AI_AVATAR',
-      'TEXT_CARD',
-      'MOTION_GRAPHICS',
-    ];
-    expect(ugcTreatments(registry(1), general)).toEqual([
+  it('21.4b: actors when a provider can make them, then product stills only (never a card)', () => {
+    expect(ugcTreatments(registry(1))).toEqual(['UGC_ACTOR', 'IMAGE_STILL']);
+    expect(ugcTreatments(registry(0))).toEqual(['IMAGE_STILL']);
+    for (const t of ugcTreatments(registry(1))) {
+      expect(t).not.toBe('TEXT_CARD');
+      expect(t).not.toBe('MOTION_GRAPHICS');
+    }
+  });
+});
+
+describe('UGC B-roll is product footage, never a poster (21.4b)', () => {
+  const plan: PlannedScript = {
+    fullText: 'x',
+    shots: [
+      shot('UGC_ACTOR', 8, 'Okay, client calls used to wreck me.'),
+      shot('MOTION_GRAPHICS', 3, null, 'Preps your opener'),
+      shot('UGC_ACTOR', 8, 'Now I just open the app first.'),
+      shot('TEXT_CARD', 4, null, 'Closes with confidence'),
+      shot('UGC_ACTOR', 8, 'Try it, link below.'),
+    ],
+    beats: ['hook', 'demo', 'demo', 'other', 'cta'],
+  };
+
+  it('never yields TEXT_CARD or MOTION_GRAPHICS; B-roll is 2–3 s with one short line', () => {
+    const { plan: out } = applyUgcPlan(plan, { budget: 3, targetSec: 30, clipSeconds: [8] });
+    expect(out.shots.map((s) => s.visualTreatment)).toEqual([
       'UGC_ACTOR',
       'IMAGE_STILL',
-      'TEXT_CARD',
-      'MOTION_GRAPHICS',
+      'UGC_ACTOR',
+      'IMAGE_STILL',
+      'UGC_ACTOR',
     ]);
-    expect(ugcTreatments(registry(0), ['TEXT_CARD'])).toEqual(['TEXT_CARD']);
+    for (const s of out.shots.filter((x) => x.visualTreatment !== 'UGC_ACTOR')) {
+      expect(s.durationSec).toBeGreaterThanOrEqual(2);
+      expect(s.durationSec).toBeLessThanOrEqual(3);
+      expect(s.voiceoverText).toBeNull();
+    }
+    expect(out.shots[1]?.onScreenText).toBe('Preps your opener');
+    expect(sum(out)).toBe(30);
+  });
+
+  it('an actor shot over the budget becomes a 2–3 s product still with its line shortened', () => {
+    const long: PlannedScript = {
+      ...plan,
+      shots: [
+        ...plan.shots.slice(0, 4),
+        shot('UGC_ACTOR', 8, 'And honestly the best part is it remembers every client I have'),
+        plan.shots[4] as PlannedShot,
+      ],
+      beats: ['hook', 'demo', 'demo', 'other', 'other', 'cta'],
+    };
+    const { plan: out, converted } = applyUgcPlan(long, {
+      budget: 3,
+      targetSec: 32,
+      clipSeconds: [8],
+    });
+    expect(converted).toBe(1);
+    const still = out.shots[4];
+    expect(still?.visualTreatment).toBe('IMAGE_STILL');
+    expect(still?.durationSec).toBeGreaterThanOrEqual(2);
+    expect(still?.durationSec).toBeLessThanOrEqual(3);
+    expect((still?.onScreenText ?? '').length).toBeLessThanOrEqual(40);
+    expect(out.shots.some((s) => s.visualTreatment === 'TEXT_CARD')).toBe(false);
+  });
+
+  it('widens B-roll only when 2–3 s cannot fill the video next to short actor clips', () => {
+    const shots = fitUgcDurations(
+      [
+        { ...shot('UGC_ACTOR', 4, 'Hi.'), durationSec: 4 },
+        shot('IMAGE_STILL', 3, null, 'x'),
+        { ...shot('UGC_ACTOR', 4, 'Bye.'), durationSec: 4 },
+      ],
+      15,
+    );
+    expect(shots.map((s) => s.durationSec)).toEqual([4, 7, 4]);
+    const tight = fitUgcDurations(
+      [
+        shot('UGC_ACTOR', 8, 'Hi.'),
+        shot('IMAGE_STILL', 6, null, 'x'),
+        shot('UGC_ACTOR', 8, 'Bye.'),
+      ],
+      19,
+    );
+    expect(tight.map((s) => s.durationSec)).toEqual([8, 3, 8]);
   });
 });
 
@@ -131,6 +201,7 @@ describe('applyUgcPlan', () => {
     expect(treatments[0]).toBe('UGC_ACTOR'); // hook
     expect(treatments[5]).toBe('UGC_ACTOR'); // call to action
     expect(treatments[3]).toBe('IMAGE_STILL'); // the "other" actor shot over budget
+    expect(treatments[4]).toBe('IMAGE_STILL'); // 21.4b: the card became product B-roll
     expect(out.shots[3]?.providerRouting).toMatchObject({
       clipBudget: { convertedFrom: 'UGC_ACTOR', budget: 3 },
     });

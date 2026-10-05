@@ -68,12 +68,13 @@ export const CONTENT: Record<string, ProjectContent> = {
         'Okay, my mornings used to be chaos. Then this box turned up.',
         null,
       ),
+      // 21.4b: B-roll is 2–3 s of the product in use, phone-camera style, one short line at most.
       shot(
         'IMAGE_STILL',
         3,
         'sourdough',
-        'The bread box with a sourdough loaf and two buns.',
-        null,
+        'Hands lift a sourdough loaf out of the bread box, close-up.',
+        'Close-up, handheld',
         null,
         'Fresh every Friday',
       ),
@@ -87,6 +88,15 @@ export const CONTENT: Record<string, ProjectContent> = {
         null,
       ),
       shot(
+        'IMAGE_STILL',
+        3,
+        'sourdough',
+        'Hands slice the loaf on a wooden board, close-up.',
+        'Close-up, handheld',
+        null,
+        null,
+      ),
+      shot(
         'UGC_ACTOR',
         8,
         'kitchen',
@@ -95,7 +105,6 @@ export const CONTENT: Record<string, ProjectContent> = {
         'Honestly, just try one week. The link is right below.',
         null,
       ),
-      shot('TEXT_CARD', 3, 'street', 'End card.', null, null, 'Leeds Sourdough · bread box'),
     ],
   },
   'prj-spring-menu': {

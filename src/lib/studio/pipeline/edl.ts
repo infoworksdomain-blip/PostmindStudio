@@ -82,6 +82,8 @@ export const MEDIA_FIT = 'crop';
  * filled (no letterbox bars for blackdetect); slides are not used here because they move the frame.
  */
 export const STILL_EFFECTS = ['zoomIn', 'zoomOut'] as const;
+/** 21.4b: the one move on a UGC video's product B-roll: a slow push in, full frame (MEDIA_FIT). */
+export const UGC_STILL_EFFECT = 'zoomIn';
 
 /** Pixel size of the layout per aspect ratio (short side 1080; 2160 for 4K presets). */
 export const outputDimensions = presetDimensions;
@@ -156,6 +158,12 @@ export interface EdlInput {
   aiLabel?: boolean;
   /** P2: a platform end card for non-white-label outputs (never set for white-label). */
   platformCard?: BrandMedia['outro'];
+  /**
+   * 21.4b: a UGC video (metadata.ugc). No shot gets the boxed headline: its words are styled
+   * overlays in the native outlined look (overlays/suggest.ts) or the actor's captions, and the
+   * 45% black box over B-roll is what made production UGC video 2 look like a poster.
+   */
+  ugc?: boolean;
 }
 
 function brandColours(input: EdlInput) {
@@ -285,7 +293,9 @@ function visualClip(
       start,
       length,
       fit: MEDIA_FIT,
-      effect: STILL_EFFECTS[stillIndex % STILL_EFFECTS.length], // gentle Ken Burns on stills
+      // Gentle Ken Burns on stills. 21.4b: UGC B-roll always pushes in (a phone moving closer to
+      // the product), never pulls out.
+      effect: input.ugc ? UGC_STILL_EFFECT : STILL_EFFECTS[stillIndex % STILL_EFFECTS.length],
       ...transition,
     });
   } else {
@@ -319,7 +329,7 @@ function audioAndCaptions(
   // face. Its words are already the burned-in captions, so it gets no headline box at all (an
   // owner who wants a label adds an overlay, which they place themselves).
   const coversFace = shot.visualTreatment === 'UGC_ACTOR';
-  if (shot.onScreenText && !hasOwnText && !coversFace) {
+  if (shot.onScreenText && !hasOwnText && !coversFace && !input.ugc) {
     // A voiced shot carries burned-in narration captions in the lower third (voice-captions.ts,
     // anchorY 0.7), so its headline moves to the top, below the AI label and the platform's top
     // bar; QA run 9 showed the two boxes drawn over each other.

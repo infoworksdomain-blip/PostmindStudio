@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CAPTION_SYNC_TOLERANCE_SEC, matchCaption } from '../pipeline/quality-sync';
+import { UGC_CAPTION_MAX_WORDS } from './captions';
 import {
   audibleWords,
   captionModeFor,
@@ -99,6 +100,35 @@ describe('voice captions (15.A4)', () => {
     expect(tiktok?.style.fontSizePct).toBe(4);
     expect(reel?.presetName).toBe('Box Background');
     expect(reel?.style.anchorY).toBe(0.7);
+  });
+
+  it('21.4b: a UGC video uses the box-less outlined TikTok classic look on every platform', () => {
+    const brand = { primary: '#0A0A23', secondary: '#101040', fontFamily: 'Lora' };
+    for (const platform of ['tiktok', 'instagram_reel', 'youtube_short', 'facebook']) {
+      const chosen = captionStyle(platform, brand, { ugc: true });
+      expect(chosen?.presetName).toBe('TikTok Classic');
+      // Readability comes from the stroke: the brand never recolours it, the text stays white.
+      expect(chosen?.style).toMatchObject({
+        backgroundType: 'none',
+        backgroundColor: null,
+        fillColor: '#FFFFFF',
+        strokeColor: '#000000',
+        fontFamily: 'Montserrat',
+        fontSizePct: 3.6,
+        anchorY: 0.7,
+      });
+    }
+  });
+
+  it('21.4b: UGC captions are chunks of at most 6 words', () => {
+    const said = 'so I tried this for a week and honestly my mornings feel calmer now'
+      .split(' ')
+      .map((text, i) => ({ text, startSec: i * 0.3, endSec: i * 0.3 + 0.25 }));
+    const ugc = narrationLines(said, 8, UGC_CAPTION_MAX_WORDS);
+    expect(ugc.every((l) => l.text.split(' ').length <= 6)).toBe(true);
+    expect(ugc.map((l) => l.text).join(' ')).toBe(said.map((w) => w.text).join(' '));
+    // Ordinary narration keeps its 7-word lines.
+    expect(narrationLines(said, 8)[0]?.text.split(' ')).toHaveLength(7);
   });
 
   it('places each shot’s lines on the video timeline', () => {
