@@ -12,6 +12,8 @@ describe('isOutOfCreditMessage', () => {
     'insufficient funds on the account',
     'You are out of credits.',
     'Credit balance is exhausted',
+    // Shotstack render status, production 2026-10-05
+    "Your render request could not be processed because it exceeds one or more plan limits. '0.28' credits required, you have '0.01' credits left.",
   ])('recognises %j', (message) => {
     expect(isOutOfCreditMessage(message)).toBe(true);
   });
@@ -20,6 +22,7 @@ describe('isOutOfCreditMessage', () => {
     'Invalid ratio for this model',
     'promptText must be at most 1000 characters',
     'credits must be a positive integer',
+    'Render exceeds the maximum duration for your plan',
     '',
     undefined,
   ])('ignores %j', (message) => {

@@ -202,6 +202,18 @@ describe('classifyRenderFailure', () => {
     expect(classifyRenderFailure(message)).toEqual({ class: 'timeout', retryable: true });
   });
 
+  it('treats an exhausted Shotstack credit balance as an account problem (production 2026-10-05)', () => {
+    expect(
+      classifyRenderFailure(
+        "Your render request could not be processed because it exceeds one or more plan limits. '0.28' credits required, you have '0.01' credits left.",
+      ),
+    ).toEqual({ class: 'insufficient_credits', retryable: false });
+    expect(classifyRenderFailure('You do not have enough credits')).toEqual({
+      class: 'insufficient_credits',
+      retryable: false,
+    });
+  });
+
   it.each(['Asset 404', 'Invalid edit: timeline.tracks is required', 'Unsupported codec'])(
     'does not retry "%s"',
     (message) => {

@@ -9,7 +9,7 @@ import type {
   ProviderSubmitResult,
 } from './interface';
 import { usdToPence } from './pricing';
-import { providerError } from './provider-errors';
+import { isOutOfCreditMessage, providerError } from './provider-errors';
 
 // BACKLOG 2.8 — Shotstack composition (Layers 6–7). Studio builds the edit decision list
 // (Phase 3.6) and POSTs it; Shotstack renders. Contract from shotstack.io/docs/api (read
@@ -54,9 +54,11 @@ const TRANSIENT_RENDER_FAILURE =
   /failed to download|error occurred downloading|connection (timeout|timed out|reset|refused)|timed? ?out|ETIMEDOUT|ECONNRESET|socket hang up|temporarily unavailable|\b50[234]\b/i;
 
 export function classifyRenderFailure(message: string): {
-  class: 'timeout' | 'unknown';
+  class: 'timeout' | 'insufficient_credits' | 'unknown';
   retryable: boolean;
 } {
+  // An empty Shotstack balance is an account problem (account hold + staff alert), not a bad edit.
+  if (isOutOfCreditMessage(message)) return { class: 'insufficient_credits', retryable: false };
   return TRANSIENT_RENDER_FAILURE.test(message)
     ? { class: 'timeout', retryable: true }
     : { class: 'unknown', retryable: false };
