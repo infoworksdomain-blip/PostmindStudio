@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { ProviderError } from '../../errors';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import type { ActorVideoRequest } from './interface';
-import { actorDuration, DEFAULT_VEO_MODEL, VeoAdapter, withDialogue } from './veo';
+import {
+  actorDuration,
+  actorReferenceUrls,
+  DEFAULT_VEO_MODEL,
+  MAX_REFERENCE_IMAGES,
+  VeoAdapter,
+  withDialogue,
+} from './veo';
 
 // BACKLOG 21.4 — Veo 3.1 actor clips (UGC). Request shapes follow
 // https://ai.google.dev/gemini-api/docs/veo (read 2026-10-04): dialogue in quotes, `referenceImages`
@@ -114,10 +121,96 @@ describe('Veo actor clips (21.4)', () => {
     });
   });
 
+  it('21.4a: the actor portrait goes first as an asset reference, then the product; 8 s, allow_adult, 9:16', async () => {
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+    const { veo, requests } = adapter([
+      new Response(jpeg, { status: 200, headers: { 'Content-Type': 'image/jpeg' } }),
+      new Response(png, { status: 200, headers: { 'Content-Type': 'image/png' } }),
+      json(running),
+    ]);
+    const submitted = await veo.submit({
+      ...actor,
+      actorImageUrl: 'https://cdn.example/actor.jpg',
+      productImageUrl: 'https://cdn.example/product.png',
+    });
+    expect(requests.map((r) => r.url).slice(0, 2)).toEqual([
+      'https://cdn.example/actor.jpg',
+      'https://cdn.example/product.png',
+    ]);
+    expect(requests[2]?.body).toEqual({
+      instances: [
+        {
+          prompt: expect.stringContaining('says: "'),
+          referenceImages: [
+            {
+              image: {
+                bytesBase64Encoded: Buffer.from(jpeg).toString('base64'),
+                mimeType: 'image/jpeg',
+              },
+              referenceType: 'asset',
+            },
+            {
+              image: {
+                bytesBase64Encoded: Buffer.from(png).toString('base64'),
+                mimeType: 'image/png',
+              },
+              referenceType: 'asset',
+            },
+          ],
+        },
+      ],
+      parameters: {
+        aspectRatio: '9:16',
+        durationSeconds: 8,
+        resolution: '720p',
+        personGeneration: 'allow_adult',
+        seed: 4242,
+        sampleCount: 1,
+      },
+    });
+    // 8 s × $0.10 × 0.75 = 60p, the same as with the product alone.
+    expect(submitted.estimatedCostPence).toBe(60);
+  });
+
+  it('21.4a: the actor portrait alone is one reference (8 s) and stays within the 3 allowed', async () => {
+    const { veo, requests } = adapter([
+      new Response(png, { status: 200, headers: { 'Content-Type': 'image/png' } }),
+      json(running),
+    ]);
+    await veo.submit({ ...actor, actorImageUrl: 'https://cdn.example/actor.png' });
+    const body = requests[1]?.body as {
+      instances: Array<{ referenceImages: unknown[] }>;
+      parameters: Record<string, unknown>;
+    };
+    expect(body.instances[0]?.referenceImages).toHaveLength(1);
+    expect(body.parameters).toMatchObject({ durationSeconds: 8, personGeneration: 'allow_adult' });
+    expect(
+      actorReferenceUrls({ actorImageUrl: 'https://a', productImageUrl: 'https://p' }).length,
+    ).toBeLessThanOrEqual(MAX_REFERENCE_IMAGES);
+  });
+
+  it('21.4a: Veo Lite documents no reference images, so a referenced actor clip is not offered to it', () => {
+    const lite = adapter([], { model: 'veo-3.1-lite-generate-preview' }).veo;
+    expect(lite.supportsRequest(actor)).toBe(true);
+    expect(lite.supportsRequest({ ...actor, actorImageUrl: 'https://cdn.example/a.png' })).toBe(
+      false,
+    );
+  });
+
+  it('a failed portrait download stops before Veo is called', async () => {
+    const { veo, requests } = adapter([new Response('gone', { status: 404 })]);
+    await expect(
+      veo.submit({ ...actor, actorImageUrl: 'https://cdn.example/actor.png' }),
+    ).rejects.toMatchObject({ errorClass: 'invalid_request' });
+    expect(requests).toHaveLength(1);
+  });
+
   it('prices the clip length Veo renders (8 s with a reference) at the list price', () => {
     const { veo } = adapter([]);
     expect(actorDuration({ durationSec: 4 })).toBe(4);
     expect(actorDuration({ durationSec: 4, productImageUrl: 'https://x/p.png' })).toBe(8);
+    expect(actorDuration({ durationSec: 4, actorImageUrl: 'https://x/a.png' })).toBe(8);
+    expect(veo.estimateCostPence({ ...actor, actorImageUrl: 'https://x/a.png' })).toBe(60);
     expect(veo.estimateCostPence({ ...actor, durationSec: 4 })).toBe(30);
     expect(veo.estimateCostPence({ ...actor, productImageUrl: 'https://x/p.png' })).toBe(60);
     const standard = adapter([], { model: 'veo-3.1-generate-preview' }).veo;

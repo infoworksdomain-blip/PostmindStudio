@@ -201,6 +201,8 @@ export interface HarnessOptions {
   actor?: boolean;
   /** 21.4: the scripted Veo actor's answer (default: a clip). */
   actorRespond?: (request: ProviderRequest) => ProviderPollResult;
+  /** 21.4a: the scripted OpenAI image answer (default: a stored PNG). */
+  imageRespond?: (request: ProviderRequest) => ProviderPollResult;
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -292,6 +294,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       };
     }
     if (request.capability !== 'text_to_image') throw new Error('unexpected');
+    if (options.imageRespond) return options.imageRespond(request);
     generated += 1;
     const stored = await storage.put({
       bucket: 'assets',
@@ -444,6 +447,8 @@ export async function createProject(
     costBudgetPence?: number | null;
     /** 21.4: extra project metadata (e.g. the UGC style). */
     metadata?: Record<string, unknown>;
+    /** 21.4a: the TikTok format's length (default 15 s). */
+    durationSec?: number;
   },
 ) {
   const runId = randomUUID();
@@ -456,7 +461,9 @@ export async function createProject(
       description: overrides.description ?? 'Launch video for our sourdough subscription',
       state: 'QUEUED',
       sourceType: 'BRIEF',
-      targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 15 }],
+      targetFormats: [
+        { platform: 'tiktok', aspectRatio: '9:16', duration: overrides.durationSec ?? 15 },
+      ],
       costBudgetPence: overrides.costBudgetPence ?? null,
       metadata: { ...overrides.metadata, runId } as Prisma.InputJsonObject,
     },

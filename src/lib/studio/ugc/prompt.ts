@@ -14,6 +14,13 @@ export const ACTOR_WORDS_PER_SEC = 2.3;
 /** Silence kept around a line inside its clip (start breath + end hold). */
 export const ACTOR_LINE_PADDING_SEC = 0.8;
 
+/** 21.4a: the actor portrait is selfie-shaped (1024×1536 from OpenAI; Kling's 9:16 first frame). */
+export const PORTRAIT_ASPECT = '9:16' as const;
+
+/** 21.4a: the line is spoken once, word for word; spare time is silent, not filled with words. */
+export const ACTOR_LINE_ONCE =
+  'They say their line exactly once, word for word, without repeating or adding any words; when the line is finished they stop talking and smile at the camera until the clip ends.';
+
 function clean(text: string | null | undefined, max: number): string {
   return (text ?? '').replace(/\s+/g, ' ').replace(/"/g, "'").trim().slice(0, max);
 }
@@ -54,6 +61,8 @@ export function ugcScriptSupplement(input: {
     'Structure: hook in the first 2 seconds, then the problem, the product, the result, and a call to action.',
     `UGC_ACTOR shots are the creator speaking their voiceoverText on camera. Use between 2 and ${input.actorClipBudget} UGC_ACTOR shots; each lasts exactly one of: ${lengths}. Keep every line short and natural, with contractions and no lists.`,
     'The first and last shots are UGC_ACTOR shots (hook and call to action).',
+    // 21.4a: labels over a selfie cover the face; the actor's words are captioned anyway.
+    'UGC_ACTOR shots have an empty onScreenText (their words are captioned, and a label would cover the face), except the first shot, which may have a hook label of at most 4 words.',
     others.length
       ? `Other shots (${others.join(', ')}) are short product B-roll or a closing card: they have NO voiceoverText (the creator’s voice is only in UGC_ACTOR shots); put any words for them in onScreenText.`
       : '',
@@ -75,18 +84,26 @@ export function actorClipPrompt(input: {
   cameraDirection?: string | null;
   /** True when the product image goes to the provider as a reference. */
   productReference: boolean;
+  /** 21.4a: true when the project's actor portrait goes to the provider (ugc/portrait.ts). */
+  actorReference?: boolean;
 }): string {
   const { style } = input;
   const product = clean(style.product.name, 120);
   const scene = clean(input.sceneDescription, 400);
   const camera = clean(input.cameraDirection, 120);
+  const person = input.actorReference
+    ? `The person on camera is the same person as in the reference portrait (${actorDescription(style)}), a fictional person, with the same face, hair and clothes, in ${SETTING_TEXT[style.actor.setting]}.`
+    : `The person on camera is ${actorDescription(style)}, a fictional person, in ${SETTING_TEXT[style.actor.setting]}.`;
   return [
     'Vertical selfie-style smartphone video, handheld with slight natural camera shake, natural daylight, authentic user-generated content look.',
-    `The person on camera is ${actorDescription(style)}, a fictional person, in ${SETTING_TEXT[style.actor.setting]}.`,
+    person,
     'They look into the phone camera and talk naturally and warmly, like a creator recommending something to a friend; their lip movements match their words exactly.',
+    // 21.4a (production 2026-10-04: "calls, calls."): an 8 s clip holds a short line with time
+    // to spare, and the actor filled it by repeating a word.
+    ACTOR_LINE_ONCE,
     scene && `Action: ${scene}.`,
     input.productReference
-      ? `They hold the product from the reference image${product ? ` (${product})` : ''} clearly in view of the camera.`
+      ? `They hold the product from the product reference image${product ? ` (${product})` : ''} clearly in view of the camera.`
       : product
         ? `${product} is in view where it fits.`
         : '',

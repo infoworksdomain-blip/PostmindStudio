@@ -17,11 +17,28 @@ import { ACTOR_LINE_PADDING_SEC, ACTOR_WORDS_PER_SEC } from './prompt';
 
 /** Veo 3.1 durationSeconds "4", "6" or "8" (https://ai.google.dev/gemini-api/docs/veo, 2026-10-04). */
 export const ACTOR_CLIP_SECONDS = [4, 6, 8] as const;
-/** "must be "8" when using … reference images" (same page): a product reference forces 8 s. */
+/**
+ * "must be "8" when using … reference images" (same page): a product reference forces 8 s, and so
+ * does the actor portrait (21.4a, ugc/portrait.ts).
+ */
 export const ACTOR_CLIP_SECONDS_WITH_PRODUCT = [8] as const;
+/** 21.4a: the same lengths, named for what forces them (any reference image). */
+export const ACTOR_CLIP_SECONDS_WITH_REFERENCE = ACTOR_CLIP_SECONDS_WITH_PRODUCT;
 
-export function actorClipSeconds(hasProductImage: boolean): readonly number[] {
-  return hasProductImage ? ACTOR_CLIP_SECONDS_WITH_PRODUCT : ACTOR_CLIP_SECONDS;
+export function actorClipSeconds(hasReferenceImage: boolean): readonly number[] {
+  return hasReferenceImage ? ACTOR_CLIP_SECONDS_WITH_REFERENCE : ACTOR_CLIP_SECONDS;
+}
+
+/**
+ * 21.4a: actor clips will carry a reference image (so must be 8 s) when the owner chose a product
+ * photo or an image generator can make the actor portrait. If the portrait later turns out to be
+ * unavailable, 8 s is still a length Veo renders without references.
+ */
+export function ugcUsesReferenceImage(
+  productImageId: string | null,
+  registry: Pick<ProviderRegistry, 'getAdaptersByCapability'>,
+): boolean {
+  return Boolean(productImageId) || registry.getAdaptersByCapability('text_to_image').length > 0;
 }
 
 /**

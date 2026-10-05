@@ -495,6 +495,17 @@ export class KlingAdapter implements ProviderAdapter {
   /**
    * 21.4: a UGC actor clip as text-to-video with settings.audio "native". The line is quoted in
    * the prompt (Kling documents no dialogue syntax; quoting is the common convention).
+   *
+   * 21.4a: with the project's actor portrait and a portrait format (9:16 / 4:5), image-to-video
+   * with the portrait as `first_frame` and audio "native", so every Kling clip starts on the same
+   * person. Read 2026-10-04 from https://kling.ai/document-api/api/video/3-0-omni/image-to-video:
+   * contents types "prompt, first frame, last frame, Element"; first_frame `url` "via URL or
+   * Base64", .jpg/.jpeg/.png, ≤ 50MB, ≥ 300px, aspect ratio 1:2.5 to 2.5:1; settings.audio
+   * "native" | "off" on the same page (its example combines first_frame with audio "native").
+   * The output follows the frame (no aspect_ratio), so a landscape or square video keeps
+   * text-to-video (a 2:3 portrait would be cropped hard). Kling's documented subject reference is
+   * an "Element" (element_id from the Element Management API): not built (a second paid object per
+   * project); noted in plans/phase-21-ugc.md.
    */
   private buildActorRequest(request: ActorVideoRequest): {
     path: string;
@@ -507,6 +518,24 @@ export class KlingAdapter implements ProviderAdapter {
     const prompt = `${request.prompt.trim()}\nThe person speaks directly to the camera and says: "${line}"`;
     if (prompt.length > MAX_PROMPT_CHARS) {
       throw this.invalid(`Kling prompts must be 1–${MAX_PROMPT_CHARS} characters`);
+    }
+    if (request.actorImageUrl && KLING_RATIO[request.aspectRatio] === '9:16') {
+      return {
+        path: `/image-to-video/${this.model}`,
+        body: {
+          contents: [
+            { type: 'prompt', text: prompt },
+            { type: 'first_frame', url: this.frameUrl(request.actorImageUrl) },
+          ],
+          settings: {
+            multi_shot: false,
+            audio: 'native',
+            resolution: this.resolution,
+            duration: klingDuration(request.durationSec),
+          },
+          options: { watermark_info: { enabled: false } },
+        },
+      };
     }
     return {
       path: `/text-to-video/${this.model}`,

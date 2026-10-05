@@ -7,6 +7,7 @@ import { AssemblyAiAdapter } from '../providers/assemblyai';
 import { ElevenLabsMusicAdapter } from '../providers/elevenlabs-music';
 import type { ProviderRequest } from '../providers/interface';
 import { KlingAdapter } from '../providers/kling';
+import { IMAGE_ESTIMATE_PENCE, OpenAIAdapter, type OpenAIClientLike } from '../providers/openai';
 import { ShotstackAdapter } from '../providers/shotstack';
 import { VeoAdapter } from '../providers/veo';
 import { typicalUgcVideoCalls, ugcProjectBudgetPence, UGC_BUDGET_PENCE } from './cost';
@@ -40,6 +41,13 @@ function price(rate: number) {
       usdToGbpRate: rate,
     }),
     shotstack: new ShotstackAdapter({ apiKey: 'offline', environment: 'v1', usdToGbpRate: rate }),
+    // Pricing only: no client call is made.
+    openai: new OpenAIAdapter({
+      client: {} as unknown as OpenAIClientLike,
+      storage,
+      bucket: 'assets',
+      usdToGbpRate: rate,
+    }),
   };
   return (call: PricedCall) => {
     const adapter = all[call.providerId];
@@ -54,6 +62,11 @@ describe('typical UGC video cost (21.4)', () => {
     expect(calls.filter((c) => c.request.capability === 'actor_video')).toHaveLength(3);
     expect(calls.filter((c) => c.request.capability === 'transcription')).toHaveLength(3);
     expect(calls.some((c) => c.request.capability === 'tts')).toBe(false);
+    // 21.4a: one actor portrait per video, whatever the number of clips.
+    expect(calls.filter((c) => c.request.capability === 'text_to_image')).toHaveLength(1);
+    expect(
+      typicalUgcVideoCalls('PLUS', 60).filter((c) => c.request.capability === 'text_to_image'),
+    ).toHaveLength(1);
     // A fourth 8 s clip would not fit a 30 s short; PLUS buys more on longer videos.
     expect(typicalUgcVideoCalls('PLUS', 30).filter((c) => c.providerId === 'veo')).toHaveLength(3);
     expect(typicalUgcVideoCalls('PLUS', 60).filter((c) => c.providerId === 'veo')).toHaveLength(7);
@@ -62,6 +75,7 @@ describe('typical UGC video cost (21.4)', () => {
   it('Veo 3.1 Fast actors: 30 s £1.80 + the rest ≈ £2.30; a 45 s PLUS video £3.00 + the rest', () => {
     const standard = estimateVideoCostPence(typicalUgcVideoCalls('STANDARD', 30), price(0.75));
     expect(standard.byProvider.veo).toBe(180); // 24 s × $0.10 × 0.75
+    expect(standard.byProvider.openai).toBe(IMAGE_ESTIMATE_PENCE); // 21.4a: the actor portrait
     expect(standard.totalPence).toBeGreaterThan(190);
     expect(standard.totalPence).toBeLessThanOrEqual(240);
     const plus = estimateVideoCostPence(typicalUgcVideoCalls('PLUS', 45), price(0.75));
@@ -76,7 +90,8 @@ describe('typical UGC video cost (21.4)', () => {
           typicalUgcVideoCalls(tier, 30, provider),
           price(0.79),
         ).totalPence;
-        expect(cost / ugcProjectBudgetPence(tier)).toBeLessThanOrEqual(0.45);
+        // 21.4a: + the actor portrait (4p) puts the worst case (Kling at 0.79) at ≈ 45.3%.
+        expect(cost / ugcProjectBudgetPence(tier)).toBeLessThanOrEqual(0.46);
       }
     }
   });

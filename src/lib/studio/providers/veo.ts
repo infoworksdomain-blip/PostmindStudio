@@ -82,6 +82,22 @@ import {
 //   - Audio is "Always on"; "All prices include default video with audio" ($0.10/s Fast 720p).
 // The reference image is encoded like the start frame ({ bytesBase64Encoded, mimeType }, the
 // official SDK's shape; the REST samples write inlineData): the same DOC DISCREPANCY as above.
+//
+// BACKLOG 21.4a (production 2026-10-04: the actor changed between clips 2 and 3). Re-read
+// 2026-10-04 from https://ai.google.dev/gemini-api/docs/veo (page "Last updated 2026-09-17"):
+//   - "Using reference images": "Veo 3.1 now accepts up to 3 reference images to guide your
+//     generated video's content. Provide images of a person, character, or product to preserve the
+//     subject's appearance in the output video." The sample sends a person ("woman_image") and
+//     two products together, each { image, referenceType: "asset" } in instances[0].referenceImages.
+//   - Parameter table, "Veo 3.1 & Veo 3.1 Fast" column: referenceImages "Up to three images";
+//     durationSeconds "Must be "8" when using extension, reference images or with 1080p and 4k";
+//     personGeneration "Image-to-video, Interpolation, & Reference images: "allow_adult" only";
+//     aspectRatio "16:9" | "9:16" with no reference-image restriction; audio "Always on".
+//     (The Lite column marks referenceImages "n/a": actor clips must not use VEO_MODEL Lite.)
+//   So the project's actor portrait (ugc/portrait.ts) goes first and the product image second:
+//   at most 2 of the 3 references, 8 s, allow_adult, 9:16 and native audio on the Fast model.
+//   UNCONFIRMED until the first live run: whether 9:16 + references + audio behave together on
+//   Fast (the docs do not say otherwise); the sample uses veo-3.1-generate-preview.
 
 export const PROVIDER_ID = 'veo';
 export const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
@@ -145,12 +161,28 @@ export const MAX_SPOKEN_LINE_CHARS = 300;
 /** A seed must fit Veo's unsigned 32-bit field; ours never exceed 2^31-1 (ugc/style.ts). */
 const MAX_SEED = 2 ** 32 - 1;
 
-/** 21.4: the actor clip's length (8 s whenever the product image is a reference). */
+/** "Up to three images" (docs/veo parameter table, Veo 3.1 & 3.1 Fast). */
+export const MAX_REFERENCE_IMAGES = 3;
+
+/** 21.4a: the reference images of an actor clip, in order: the actor first, then the product. */
+export function actorReferenceUrls(request: {
+  actorImageUrl?: string;
+  productImageUrl?: string;
+}): string[] {
+  return [request.actorImageUrl, request.productImageUrl]
+    .filter((u): u is string => Boolean(u))
+    .slice(0, MAX_REFERENCE_IMAGES);
+}
+
+/** 21.4: the actor clip's length (8 s whenever any reference image is sent). */
 export function actorDuration(request: {
   durationSec: number;
   productImageUrl?: string;
+  actorImageUrl?: string;
 }): VeoDuration {
-  return request.productImageUrl ? REFERENCE_IMAGES_DURATION : veoDuration(request.durationSec);
+  return actorReferenceUrls(request).length > 0
+    ? REFERENCE_IMAGES_DURATION
+    : veoDuration(request.durationSec);
 }
 
 /**
@@ -437,7 +469,9 @@ export class VeoAdapter implements ProviderAdapter {
         request.spokenLine.trim().length > 0 &&
         request.spokenLine.length <= MAX_SPOKEN_LINE_CHARS &&
         // English only: the docs have not evaluated other languages (21.4).
-        /^en(-|$)/i.test(request.languageCode)
+        /^en(-|$)/i.test(request.languageCode) &&
+        // 21.4a: Lite documents no referenceImages ("n/a"), so a clip with a reference goes on.
+        (actorReferenceUrls(request).length === 0 || this.model !== 'veo-3.1-lite-generate-preview')
       );
     }
     if (request.capability !== 'text_to_video' && request.capability !== 'image_to_video') {
@@ -487,9 +521,10 @@ export class VeoAdapter implements ProviderAdapter {
   }
 
   /**
-   * 21.4: a UGC actor clip. The line goes in quotes after the scene; the product image (when
-   * chosen) is an "asset" reference image, which fixes the clip at 8 s and allow_adult. Without
-   * it this is text-to-video and follows personGenerationFor('text_to_video', …).
+   * 21.4: a UGC actor clip. The line goes in quotes after the scene. 21.4a: the actor portrait
+   * and the product image (when present) are "asset" reference images (actor first), which fixes
+   * the clip at 8 s and allow_adult. Without either this is text-to-video and follows
+   * personGenerationFor('text_to_video', …).
    */
   private async buildActorBody(request: ActorVideoRequest): Promise<Record<string, unknown>> {
     if (!this.supportsRequest(request)) {
@@ -502,14 +537,19 @@ export class VeoAdapter implements ProviderAdapter {
       throw this.invalid(`Veo prompts must be 1–${MAX_PROMPT_CHARS} characters`);
     }
     const instance: Record<string, unknown> = { prompt };
-    if (request.productImageUrl) {
-      instance.referenceImages = [
-        { image: await this.fetchImage(request.productImageUrl), referenceType: 'asset' },
-      ];
+    const references = actorReferenceUrls(request);
+    if (references.length > 0) {
+      // Sequential: a failed download stops before any other is fetched.
+      const images: Array<Record<string, unknown>> = [];
+      for (const url of references) {
+        images.push({ image: await this.fetchImage(url), referenceType: 'asset' });
+      }
+      instance.referenceImages = images;
     }
-    const person = request.productImageUrl
-      ? REFERENCE_IMAGES_PERSON_GENERATION
-      : personGenerationFor('text_to_video', this.personGeneration);
+    const person =
+      references.length > 0
+        ? REFERENCE_IMAGES_PERSON_GENERATION
+        : personGenerationFor('text_to_video', this.personGeneration);
     const seed =
       request.seed !== undefined && Number.isInteger(request.seed) && request.seed >= 0
         ? Math.min(MAX_SEED, request.seed)

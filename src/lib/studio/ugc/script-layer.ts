@@ -3,7 +3,13 @@ import type { PlanTier } from '../providers/router';
 import type { ProviderRegistry } from '../providers/registry';
 import { aiClipBudget, applyClipBudget } from '../pipeline/clip-budget';
 import { availableTreatments, type PlannedScript } from '../pipeline/scripting';
-import { actorClipBudget, actorClipSeconds, applyUgcPlan, ugcTreatments } from './plan';
+import {
+  actorClipBudget,
+  actorClipSeconds,
+  applyUgcPlan,
+  ugcTreatments,
+  ugcUsesReferenceImage,
+} from './plan';
 import { ugcScriptSupplement } from './prompt';
 import { ugcStyleOf, type UgcStyle } from './style';
 
@@ -48,7 +54,7 @@ export function scriptLayerMode(input: {
     };
   }
   const treatments = ugcTreatments(input.registry, general);
-  const clipSeconds = actorClipSeconds(Boolean(ugc.product.imageId));
+  const clipSeconds = actorClipSeconds(ugcUsesReferenceImage(ugc.product.imageId, input.registry));
   return {
     ugc,
     treatments,

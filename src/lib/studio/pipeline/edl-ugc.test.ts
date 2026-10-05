@@ -65,9 +65,30 @@ describe('UGC actor clips in the edit (21.4)', () => {
     expect(audio[0]).toMatchObject({ start: 11 });
   });
 
-  it('moves the actor shot’s headline to the top (captions use the lower band)', () => {
+  it('21.4a: draws no headline box over the actor’s face (the words are captioned)', () => {
     const headline = clips(composition().edit).find((c) =>
       String(c.asset.html ?? '').includes('Mornings, sorted'),
+    );
+    expect(headline).toBeUndefined();
+  });
+
+  it('a narrated B-roll shot in the same video still gets its headline at the top', () => {
+    const edit = buildShotstackComposition({
+      aspectRatio: '9:16',
+      shots: [
+        {
+          id: 'broll',
+          durationSec: 4,
+          visualTreatment: 'AI_CLIP',
+          visualSrc: 'https://s3.test/ai.mp4',
+          visualKind: 'video',
+          voiceSrc: 'https://s3.test/voice.mp3',
+          onScreenText: 'Two minutes, done',
+        },
+      ],
+    }).edit;
+    const headline = clips(edit).find((c) =>
+      String(c.asset.html ?? '').includes('Two minutes, done'),
     );
     expect(headline).toMatchObject({ position: 'top', offset: { x: 0, y: TOP_HEADLINE_OFFSET_Y } });
   });
