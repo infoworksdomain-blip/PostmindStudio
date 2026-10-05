@@ -207,6 +207,8 @@ enum VisualTreatment {
   USER_UPLOAD
   TEXT_CARD
   TRANSITION
+  // 21.4: a generated actor speaking its line to camera; the clip's own audio is the narration.
+  UGC_ACTOR
 
   @@schema("studio")
 }
@@ -2195,8 +2197,8 @@ model Subscription {
   organisationId     String
   stripeCustomerId   String
   status             String // Stripe status: trialing | active | past_due | unpaid | canceled | ...
-  lookupKey          String? // studio_<tier>_<interval>
-  interval           String? // month | year
+  lookupKey          String? // studio_channel_<weekly|monthly|yearly> (21.5); legacy studio_<tier>_<interval>
+  interval           String? // week | month | year
   currentPeriodStart DateTime?
   currentPeriodEnd   DateTime?
   cancelAtPeriodEnd  Boolean   @default(false)
@@ -2207,7 +2209,15 @@ model Subscription {
   productTier        String?
   unitAmountPence    Int?
   currency           String?
+  /// 21.5: on a channel price, the number of paid channels (1–6).
   quantity           Int       @default(1)
+  /// 21.5 (migration 20261008010000): the change waiting for the end of the period (Stripe
+  /// subscription schedule, next phase) and an upgrade waiting for its payment (pending_update).
+  scheduleId         String?
+  pendingQuantity    Int?
+  pendingLookupKey   String?
+  pendingEffectiveAt DateTime?
+  pendingUpdate      Boolean   @default(false)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

@@ -22,12 +22,27 @@ const base: CreateState = {
 
 function renderOptions(over: Partial<CreateState>) {
   render(
-    <AdvancedOptions state={{ ...base, ...over }} onChange={vi.fn()} open onToggle={vi.fn()} />,
+    <AdvancedOptions
+      state={{ ...base, ...over }}
+      onChange={vi.fn()}
+      open
+      onToggle={vi.fn()}
+      showCosts
+    />,
   );
   return screen.getByLabelText('Budget cap (£)');
 }
 
-describe('AdvancedOptions budget default (operator decision 2)', () => {
+describe('AdvancedOptions budget for customers (operator decision 2026-10-04)', () => {
+  it('has no budget field, hint or amount unless the viewer is platform staff', () => {
+    render(<AdvancedOptions state={base} onChange={vi.fn()} open onToggle={vi.fn()} />);
+    expect(screen.getByLabelText('Approval')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Budget/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/£/)).not.toBeInTheDocument();
+  });
+});
+
+describe('AdvancedOptions budget default for staff (operator decision 2)', () => {
   it('shows the short-form default for short videos, with how the pause and raise work', () => {
     expect(renderOptions({})).toHaveAttribute('placeholder', 'Default £3.50');
     expect(screen.getByText(/Generation pauses at 90% of this/)).toHaveTextContent(

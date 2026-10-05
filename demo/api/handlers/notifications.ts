@@ -68,20 +68,14 @@ const PHASE_17: DemoNotification[] = [
   {
     id: 'ntf-quota-nearing',
     kind: 'plan_quota',
-    title: 'Standard plan: 80% of short videos used',
-    body: '32 of 40 short videos generated this month. The allowance resets at the start of next month (UTC). Upgrade to Plus for more.',
-    link: '/analytics',
+    // 21.5: the per-channel plan's notice (plan-quotas.ts channelAllowanceNotice): no tier names.
+    title: "80% of this month's videos used",
+    body: '20 of 24 videos made this month. More are included from the 1st of next month.',
+    link: '/settings/billing',
     readAt: null,
     createdAt: ago(2 * DAY),
-    messageKey: 'planQuotaNearing',
-    messageParams: {
-      tier: 'Standard',
-      kind: 'short',
-      threshold: 80,
-      used: 32,
-      limit: 40,
-      nextTier: 'Plus',
-    },
+    messageKey: 'videoAllowanceNearing',
+    messageParams: { threshold: 80, used: 20, limit: 24, period: 'month' },
   },
 ];
 

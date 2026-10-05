@@ -165,8 +165,11 @@ export function errorMessage(err: unknown, target: ErrorLocale | null = activeCa
   const english = !target || target.locale.toLowerCase().startsWith('en');
   if (err instanceof ApiError) {
     if (err.status === 401) return errors.sessionExpired;
-    // 15.D2 / P3: plan gates and quotas carry their own upgrade message.
-    if (err.status === 403 && (err.code === 'plan_tier' || err.code === 'quota_exceeded'))
+    // 21.5: a plan gate's server text names internal tiers; customers see the catalogue sentence.
+    if (err.status === 403 && err.code === 'plan_tier')
+      return codeMessage(errors, err.code) ?? err.message;
+    // 15.D2 / P3: quotas and the channel limit (21.5) carry their own message.
+    if (err.status === 403 && (err.code === 'quota_exceeded' || err.code === 'channel_limit'))
       return english ? err.message : (codeMessage(errors, err.code) ?? err.message);
     if (err.status === 403) return errors.forbidden;
     if (err.status === 429) return errors.rateLimited;

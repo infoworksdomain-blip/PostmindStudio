@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import {
   VideoProjectState as VideoProjectStateEnum,
   type Prisma,
@@ -46,6 +46,9 @@ import {
 } from './generate-overrides';
 import { isUntitledName } from '../../project-name';
 import { isBeyondScheduleWindow, MAX_SCHEDULE_AHEAD_DAYS } from '../schedule-window';
+import { MAX_UGC_SEED, newUgcStyle, ugcInput, ugcStyleOf } from '../ugc/style';
+import { ugcProjectBudgetPence } from '../ugc/cost';
+import { assertNoRealPerson, assertUgcProductImage, assertUgcShape } from '../ugc/validate';
 
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
@@ -132,6 +135,8 @@ const projectFields = z.object({
   languages: extraLanguagesInput.optional(),
   /** 15.C4 (spec 14.1): an approval workflow chosen at create (15.D3 reads metadata). */
   approvalWorkflowId: z.string().trim().min(1).max(64).optional(),
+  /** 21.4: the "UGC actor" style (STANDARD and above): product and actor look, all optional. */
+  ugc: ugcInput.optional(),
 });
 
 export const createProjectInput = projectFields.superRefine((v, ctx) => {
@@ -287,6 +292,21 @@ export async function createProject(
   assertScheduledStartAt(input.scheduledStartAt, now);
   await assertBrandKit(db, tenant.organisationId, input.brandKitId);
   await assertWorkflow(db, tenant.organisationId, input.approvalWorkflowId);
+  if (input.ugc) {
+    // 21.4: every active subscriber; short-form, English, from a brief, never a real person.
+    assertUgcShape({
+      sourceType: input.sourceType,
+      formats: input.targetFormats ?? [],
+      language: input.language,
+      languages: input.languages,
+    });
+    assertNoRealPerson(input.brief?.rawInput, input.ugc.product?.name);
+    await assertUgcProductImage(
+      db,
+      { organisationId: tenant.organisationId, businessId: input.businessId },
+      input.ugc,
+    );
+  }
   if (input.sourceType === 'LIBRARY_REFERENCE' && input.referenceVideoId && input.referenceMode) {
     // 15.D2 / A10.3: INSPIRE is Standard and above, TEMPLATE Plus and above.
     assertTierGate(
@@ -372,11 +392,13 @@ export async function createProject(
         // Operator decision 2: no explicit budget → the short/long-form default (20.25: per tier).
         costBudgetPence:
           input.costBudgetPence ??
-          defaultProjectBudgetPence(
-            formats,
-            input.sourceType,
-            toPlanTier(tenant.organisation.planTier),
-          ),
+          (input.ugc
+            ? ugcProjectBudgetPence(toPlanTier(tenant.organisation.planTier))
+            : defaultProjectBudgetPence(
+                formats,
+                input.sourceType,
+                toPlanTier(tenant.organisation.planTier),
+              )),
         // 13.18: nothing chosen (client or template) → the organisation's default policy.
         reviewPolicy: (template ? template.reviewPolicy : input.reviewPolicy) ?? orgReviewPolicy,
         publishPolicy: template ? template.publishPolicy : input.publishPolicy,
@@ -400,6 +422,12 @@ export async function createProject(
           ...(targets.length > 0 && { autoPublish: { targets } }),
           ...(template && { template: { id: template.templateId } }),
           ...(carousel && { carousel }),
+          ...(input.ugc && {
+            ugc: newUgcStyle(
+              input.ugc,
+              randomInt(0, MAX_UGC_SEED),
+            ) as unknown as Prisma.InputJsonObject,
+          }),
         } as Prisma.InputJsonValue,
       },
     });
@@ -535,6 +563,20 @@ export async function updateProject(
   }
   await assertBrandKit(db, organisationId, input.brandKitId);
   await assertWorkflow(db, organisationId, input.approvalWorkflowId);
+  if (ugcStyleOf(project.metadata)) {
+    // 21.4: an edited UGC project still meets the style's rules.
+    assertUgcShape({
+      sourceType: project.sourceType,
+      formats: input.targetFormats ?? budgetFormatsFromJson(project.targetFormats),
+      language: input.language ?? project.language,
+      languages:
+        input.languages ??
+        (Array.isArray(projectMetadata(project.metadata).languages)
+          ? (projectMetadata(project.metadata).languages as string[])
+          : []),
+    });
+    assertNoRealPerson(input.brief?.rawInput);
+  }
   if (input.autoPublish) {
     assertMayConfigureTargets(tenant, input.autoPublish.targets);
     await validateTargets(
@@ -690,6 +732,10 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
         ...(hints ? { briefHints: hints as Prisma.InputJsonValue } : {}),
         // 21.6: a carousel's copy keeps its posts, pictures and look (rewrite count starts again).
         ...(carouselCopy && { carousel: carouselCopy as unknown as Prisma.InputJsonValue }),
+        // 21.4: a copy of a UGC video is a UGC video with the same actor.
+        ...(ugcStyleOf(source.metadata) && {
+          ugc: ugcStyleOf(source.metadata) as unknown as Prisma.InputJsonValue,
+        }),
       },
     },
   });
@@ -713,6 +759,10 @@ export async function generateProject(
   const orgTier = toPlanTier(tenant.organisation.planTier);
   const planTier = effectiveTier(orgTier, input.qualityTier);
   const preferredProviders = validatePreferredProviders(input.preferredProviders, planTier);
+  if (ugcStyleOf(project.metadata)) {
+    // 21.4: a new brief is checked like the first one.
+    assertNoRealPerson(input.rawInput);
+  }
   const metadata = projectMetadata(project.metadata);
   const updated = await deps.db.videoProject.updateMany({
     where: {

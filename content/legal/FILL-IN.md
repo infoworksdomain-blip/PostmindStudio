@@ -20,6 +20,7 @@ The gate still works: if a fill-in marker (two square brackets around a name) is
 - **Hosting:** Hetzner Online GmbH, Helsinki, Finland (EU), data centre `hel1` (privacy 7.1, dpa 10.1 and Annex 2, subprocessors).
 - **International transfers:** for every provider that processes personal data in the United States, Singapore, Malaysia or Australia, the texts state the European Commission's Standard Contractual Clauses with the UK International Data Transfer Addendum, as incorporated in that provider's data processing terms, together with a transfer risk assessment kept on file (privacy 7.2, dpa 10.2, subprocessors). No Data Privacy Framework certification is claimed. Keep the transfer risk assessments on file and refresh them when a provider or its terms change.
 - **AI presenters:** HeyGen shots use one licensed stock presenter chosen by us (`HEYGEN_AVATAR_ID`); there is no customer photo upload (acceptable-use 2.4, subprocessors). Reword 2.4 if customer-photo presenters are ever added.
+- **UGC actors (21.4):** generated people from Google Veo (Gemini API), never real or look-alike people; briefs asking for a real person are refused and every UGC video carries the AI label (acceptable-use 2.6; sub-processors Veo row; privacy 5.1).
 
 ## Facts in the texts that come from settings
 
@@ -27,9 +28,11 @@ The texts state the default values of these settings. If you change a setting in
 
 | Setting                                     | Default in the texts                                                                                                 | Where the text mentions it                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `STUDIO_TRIAL_DAYS`                         | 14-day Standard trial                                                                                                | terms 6.2                                        |
-| Trial limits (`TRIAL` in `src/lib/studio/billing/catalogue.ts`) | 5 short + 1 long video, AI usage £10 a day and £15 in total | terms 6.2 |
-| Per-video budget (`src/lib/studio/cost/project-budget.ts`), AI clip budget (`pipeline/clip-budget.ts`) | Described without figures | terms 6.3 |
+| `STUDIO_TRIAL_DAYS`                         | 14-day trial                                                                                                         | terms 6.2                                        |
+| Trial limits (`TRIAL` in `src/lib/studio/billing/catalogue.ts`) | 5 short videos, no long video. The trial's AI usage limits (£10 a day, £15 in total) are internal and not stated (21.5: no costs shown to customers) | terms 6.2 |
+| Channel plan (`src/lib/studio/billing/channel-plan.ts`) | 1 to 6 Channels; weekly, monthly or yearly (yearly paid upfront); 8 videos per Channel a month, 2 a week on weekly, 96 a year released 8 a month on yearly; upgrades now (prorated), downgrades at period end; no long videos. Prices are on the pricing page only | terms 3, 6.1, 6.3, 6.6, 7.2, 7.4 |
+| Video packs (`TOP_UP_PACKS` in `src/lib/studio/billing/catalogue.ts`) | 5 or 15 HD videos, any Channel, used after the plan's videos, valid 3 months | terms 6.5 |
+| Cost caps, per-video budget (`src/lib/studio/cost/project-budget.ts`), AI clip budget (`pipeline/clip-budget.ts`) | Described as internal usage limits, without figures | terms 6.3, acceptable-use 7.4, dpa Annex 2 |
 | `STUDIO_BILLING_GRACE_DAYS`                 | 7 days of full access after a failed payment                                                                         | terms 7.5                                        |
 | `STUDIO_CANCELLED_RETENTION_DAYS`           | 90 days read-only after a paid subscription ends                                                                     | terms 15.2, privacy 8                            |
 | `STUDIO_PURGE_GRACE_DAYS`                   | 30 days between scheduling deletion and deleting                                                                     | terms 15.2, privacy 8, dpa 8.2                   |

@@ -14,11 +14,18 @@ import { useFormat } from '@/lib/client/format';
 import type { CustomLimits } from '@/lib/studio/billing/entitlements';
 import { ErrorState, Section } from '../../primitives';
 import { selectClass } from '../../library/library-filters';
-import { PLAN_TIERS, type AdminEntitlementsResponse, type PlanTier } from '../../billing/types';
+import {
+  PLAN_TIERS,
+  type AdminEntitlementsResponse,
+  type ChannelInterval,
+  type PlanTier,
+} from '../../billing/types';
 import { ConfirmDialog } from '../confirm-dialog';
 import {
   ACCESS,
+  CHANNEL_INTERVALS,
   EntitlementsSummary,
+  isChannelInterval,
   trialCanEnd,
   type Access,
   type EntitlementView as View,
@@ -26,7 +33,8 @@ import {
 
 // Phase 18 §P.3 / §P.4 — staff entitlement overrides for one organisation
 // (GET|PUT|DELETE /admin/organisations/:id/entitlements): the effective plan, the trial, the
-// stored row, the current override, subscriptions; a form to set tier, access, custom limits, the
+// stored row, the current override, subscriptions; a form to set tier, access, the channel plan
+// (21.5: channels 1–6 and weekly / monthly / yearly, not for ENTERPRISE), custom limits, the
 // ENTERPRISE agreed monthly price (checked live against the minimum for the organisation's
 // monthly cost cap, and blocked here before the server's 422), an optional expiry, "End the trial
 // now" (20.27) and a required reason; and removing the override (reason required). Access
@@ -47,6 +55,8 @@ type LimitKey = (typeof LIMIT_KEYS)[number];
 /** generatedImagesPerBusinessPerMonth cannot be unlimited (the schema has no null for it). */
 const NO_UNLIMITED: ReadonlySet<LimitKey> = new Set(['generatedImagesPerBusinessPerMonth']);
 const MIN_REASON = 3;
+/** 21.5: the channel plan's range (MIN_CHANNELS / MAX_CHANNELS in billing/channel-plan.ts). */
+const CHANNEL_COUNTS = [1, 2, 3, 4, 5, 6] as const;
 
 interface LimitDraft {
   value: string;
@@ -123,6 +133,66 @@ function LimitsFieldset({
   );
 }
 
+/** 21.5: the channel count (1–6) and billing interval staff give the organisation. */
+function ChannelPlanFields({
+  channels,
+  interval,
+  onChannels,
+  onInterval,
+}: {
+  channels: string;
+  interval: ChannelInterval | '';
+  onChannels: (value: string) => void;
+  onInterval: (value: ChannelInterval | '') => void;
+}) {
+  const t = useTranslations('billing.admin.entitlements.form');
+  const ta = useTranslations('billing.admin.entitlements');
+  return (
+    <fieldset className="grid gap-3">
+      <legend className="font-medium">{t('channelPlan')}</legend>
+      <p id="ent-channel-plan-help" className="text-xs text-muted-foreground">
+        {t('channelPlanHelp')}
+      </p>
+      <div className="flex flex-wrap gap-4">
+        <div className="grid gap-1.5">
+          <Label htmlFor="ent-channels">{t('channels')}</Label>
+          <select
+            id="ent-channels"
+            className={selectClass}
+            value={channels}
+            aria-describedby="ent-channel-plan-help"
+            onChange={(e) => onChannels(e.target.value)}
+          >
+            <option value="">{t('keep')}</option>
+            {CHANNEL_COUNTS.map((n) => (
+              <option key={n} value={String(n)}>
+                {t('channelsOption', { count: n })}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="ent-interval">{t('interval')}</Label>
+          <select
+            id="ent-interval"
+            className={selectClass}
+            value={interval}
+            aria-describedby="ent-channel-plan-help"
+            onChange={(e) => onInterval(isChannelInterval(e.target.value) ? e.target.value : '')}
+          >
+            <option value="">{t('keep')}</option>
+            {CHANNEL_INTERVALS.map((i) => (
+              <option key={i} value={i}>
+                {ta(`intervalValues.${i}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </fieldset>
+  );
+}
+
 /** What the confirmation says, or null when the change needs none. */
 function useConfirmText(): (access: Access | '', endTrial: boolean) => string | null {
   const t = useTranslations('billing.admin.entitlements.confirm');
@@ -154,6 +224,8 @@ function OverrideForm({
   const confirmText = useConfirmText();
   const [tier, setTier] = useState<PlanTier | ''>('');
   const [access, setAccess] = useState<Access | ''>('');
+  const [channels, setChannels] = useState('');
+  const [billingInterval, setBillingInterval] = useState<ChannelInterval | ''>('');
   const [limits, setLimits] = useState(emptyLimits);
   const [price, setPrice] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -185,6 +257,9 @@ function OverrideForm({
         body: {
           ...(tier && { tier }),
           ...(access && { access }),
+          // ENTERPRISE has no channel plan (custom limits instead), so none is sent with it.
+          ...(!enterprise && channels && { channels: Number(channels) }),
+          ...(!enterprise && billingInterval && { interval: billingInterval }),
           ...(limitsBody && { limits: limitsBody }),
           ...(enterprise && { monthlyPricePence: pricePence }),
           expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
@@ -253,6 +328,14 @@ function OverrideForm({
             </select>
           </div>
         </div>
+        {!enterprise && (
+          <ChannelPlanFields
+            channels={channels}
+            interval={billingInterval}
+            onChannels={setChannels}
+            onInterval={setBillingInterval}
+          />
+        )}
         {canEndTrial && view.trial && (
           <div className="grid gap-1.5 rounded-lg border border-border p-3">
             <label className="flex items-center gap-2 font-medium">

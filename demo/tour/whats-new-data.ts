@@ -373,4 +373,84 @@ export const WHATS_NEW: WhatsNewGroup[] = [
       },
     ],
   },
+  {
+    id: 'phase-21',
+    index: '07',
+    title: 'Phase 21 — UGC actor videos',
+    intro:
+      'A generated creator talks to camera about your product, like a review filmed on a phone. The actor speaks every line with lips in sync; there is no separate voice-over.',
+    scene: 'kitchen',
+    items: [
+      {
+        ref: '21.4',
+        title: 'UGC actor on Create',
+        line: 'Create → Options → “UGC actor”: optionally name the product, pick its photo from your image library and choose the actor’s age, person and setting. A UGC video uses 2 of your videos. Briefs that ask for a real person or celebrity are refused.',
+        see: [{ href: '#/new', label: 'Create: Options, then “UGC actor”' }],
+      },
+      {
+        ref: '21.4',
+        title: 'A UGC video ready for review',
+        line: 'Three actor clips (the same generated person each time), a product still and an end card, captioned from what the actor says, with the AI-generated label on.',
+        see: [
+          { href: project(PROJECTS.ugcReview.id), label: 'Review: Creator review: the bread box' },
+        ],
+      },
+      {
+        ref: '21.4',
+        title: 'UGC in Plan my month',
+        line: 'Tick “Make testimonial and product videos with UGC actors” and the plan’s testimonial and product videos are made with actors.',
+        see: [{ href: '#/plans/new', label: 'Plan my month' }],
+      },
+    ],
+  },
+  {
+    id: 'phase-21-5',
+    index: '08',
+    title: 'Phase 21.5 — One plan, paid per channel',
+    intro:
+      'The tiers are gone: customers pay £29 per channel a month (1–6 social platforms) with 8 short HD videos per channel, weekly or yearly if they prefer, and buy HD video packs when they need more. Customers never see generation cost.',
+    scene: 'market',
+    items: [
+      {
+        ref: '21.5',
+        title: 'Pricing per channel',
+        line: 'Pick 1–6 channels and how often to pay: £29 a month per channel (8 videos), £9.50 a week (2 videos a week) or £290 a year paid upfront (8 videos released each month: 2 months free). Prices exclude VAT; the trial is 14 days with 5 videos.',
+        see: [{ href: '#/pricing', label: 'Pricing' }],
+      },
+      {
+        ref: '21.5',
+        title: 'Your plan',
+        line: 'Change channels or how often you pay with a preview first: more channels or a longer period apply now and you pay the difference; fewer or shorter apply at the end of the period (“Keep my current plan” undoes it). Cancel at the end of the period and change your mind until then.',
+        see: [
+          { href: '#/settings/billing?demoPlan=active_monthly#change', label: 'Change your plan' },
+          { href: '#/settings/billing?demoPlan=active_weekly', label: 'A weekly plan' },
+        ],
+      },
+      {
+        ref: '21.5',
+        title: 'Channel limit',
+        line: 'Connect as many platforms as you like; only the channels you pay for publish (the ones connected first). Publishing to another opens “Add a channel to publish here”.',
+        see: [
+          { href: '#/connections?demoPlan=active_monthly', label: 'Connections on 3 channels' },
+        ],
+      },
+      {
+        ref: '21.5',
+        title: 'HD video packs',
+        line: 'One-off packs of 5 videos (£15) or 15 videos (£39) for any channel, used after the plan’s videos and valid 3 months.',
+        see: [
+          { href: '#/settings/billing?demoPlan=allowance_used#topups', label: 'Buy a video pack' },
+        ],
+      },
+      {
+        ref: '21.5',
+        title: 'No costs for customers',
+        line: 'Per-video prices, spend and budgets are shown to PostMind staff only; customers see their videos left instead. The demo shows the app as the customer and the Admin Centre as staff.',
+        see: [
+          { href: '#/projects', label: 'Projects as the customer' },
+          { href: '#/admin?tab=cost', label: 'Cost report (staff)' },
+        ],
+      },
+    ],
+  },
 ];

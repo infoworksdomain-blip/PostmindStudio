@@ -7,6 +7,7 @@ import { projectMetadata } from '../pipeline/project-state';
 import { voiceTrimSecOf } from '../pipeline/voice-fit';
 import { spokenWordsOf } from '../pipeline/word-timing';
 import type { AssetStorage } from '../storage';
+import { speechAssetIdOf } from '../ugc/clip-speech';
 import { captionLines, type CaptionLine } from './captions';
 import { CAPTION_KIND } from './kind';
 import { applyBrand, resolveStyle, type OverlayStyle } from './params';
@@ -178,11 +179,14 @@ async function loadShots(db: Db, scriptId: string, organisationId: string) {
       sortOrder: true,
       durationSec: true,
       voiceAssetId: true,
+      assetId: true,
       visualTreatment: true,
       onScreenText: true,
     },
   });
-  const ids = shots.flatMap((s) => (s.voiceAssetId ? [s.voiceAssetId] : []));
+  // 21.4: a UGC actor clip's own speech is captioned like narration (ugc/clip-speech.ts).
+  const withSpeech = shots.map((s) => ({ ...s, speechAssetId: speechAssetIdOf(s) }));
+  const ids = withSpeech.flatMap((s) => (s.speechAssetId ? [s.speechAssetId] : []));
   const assets = ids.length
     ? await db.videoAsset.findMany({
         where: { id: { in: ids }, organisationId },
@@ -192,9 +196,9 @@ async function loadShots(db: Db, scriptId: string, organisationId: string) {
   const words = new Map(
     assets.map((a) => [a.id, audibleWords(spokenWordsOf(a.metadata), voiceTrimSecOf(a.metadata))]),
   );
-  return shots.map((s) => ({
+  return withSpeech.map((s) => ({
     ...s,
-    words: s.voiceAssetId ? (words.get(s.voiceAssetId) ?? []) : [],
+    words: s.speechAssetId ? (words.get(s.speechAssetId) ?? []) : [],
   }));
 }
 
@@ -258,9 +262,10 @@ export async function ensureVoiceCaptions(
       const chosen = captionStyle(script.targetPlatform, brand);
       if (!chosen) continue;
       for (const shot of await loadShots(deps.db, script.id, input.organisationId)) {
-        if (!shot.voiceAssetId || shot.visualTreatment === 'USER_UPLOAD') continue;
+        const speechId = shot.speechAssetId;
+        if (!speechId || shot.visualTreatment === 'USER_UPLOAD') continue;
         const previous = records[shot.id];
-        if (previous?.voiceAssetId === shot.voiceAssetId) continue;
+        if (previous?.voiceAssetId === speechId) continue;
         const onScreen = await deps.db.textOverlay.findMany({
           where: { shotId: shot.id, id: { notIn: previous?.overlayIds ?? [] } },
           select: { text: true, startAtSec: true, endAtSec: true },
@@ -299,7 +304,7 @@ export async function ensureVoiceCaptions(
           });
           created.push(row.id);
         }
-        records[shot.id] = { voiceAssetId: shot.voiceAssetId, overlayIds: created };
+        records[shot.id] = { voiceAssetId: speechId, overlayIds: created };
         written += created.length;
         changed = true;
       }

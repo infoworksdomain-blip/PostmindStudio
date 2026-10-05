@@ -52,6 +52,8 @@ import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
 import { ensureVoiceCaptions } from '../../overlays/voice-captions';
 import { resolveSlides } from '../../slideshow/resolve';
+import { clipSpeaks, speechAssetIdOf } from '../../ugc/clip-speech';
+import { ugcStyleOf } from '../../ugc/style';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
 
@@ -86,6 +88,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     throw new NotFoundError('Project not found');
   if (currentRunId(project) !== data.runId) return log.info('stale compose-video job ignored');
 
+  const ugcVideo = ugcStyleOf(project.metadata) !== null;
   const failed = project.scripts.flatMap((s) => s.shots).filter((shot) => shot.state === 'FAILED');
   if (failed.length > 0) {
     await failProject(deps.db, {
@@ -238,6 +241,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           voiceSrc: voice?.url,
           // 13.5: an uploaded clip carries its own audio (no narration is generated for it).
           keepSourceAudio: shot.visualTreatment === 'USER_UPLOAD' && !shot.voiceAssetId,
+          // 21.4: a UGC actor clip's own audio is the narration.
+          clipSpeech: clipSpeaks(shot),
           // Styled overlays (Feature B) replace the plain caption when the shot has any.
           onScreenText: shot.overlays.length ? null : shot.onScreenText,
           transitionOut: shot.transitionOut,
@@ -255,7 +260,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
         fontSources: brandKit.fonts.fontSources,
       },
       brandMedia: brandKit.media,
-      aiLabel: brandKit.aiLabel,
+      // 21.4: a video with a generated actor always carries the AI-generated label.
+      aiLabel: brandKit.aiLabel || ugcVideo,
       platformCard,
       language: script.language,
       preset,
@@ -267,8 +273,9 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       const at = offset;
       offset += shot.durationSec;
       // 13.6: karaoke follows the narration's spoken words (or an uploaded clip's own speech).
-      const spokenFrom = shot.voiceAssetId
-        ? assets.get(shot.voiceAssetId)
+      const speechId = speechAssetIdOf(shot);
+      const spokenFrom = speechId
+        ? assets.get(speechId)
         : shot.visualTreatment === 'USER_UPLOAD' && shot.assetId
           ? assets.get(shot.assetId)
           : undefined;

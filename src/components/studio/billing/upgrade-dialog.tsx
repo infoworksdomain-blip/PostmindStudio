@@ -14,74 +14,38 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useApi } from '@/lib/client/api';
-import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
 import { subscribeUpgrade, type UpgradeEvent } from '@/lib/client/upgrade-events';
-import {
-  isLiveSubscription,
-  isPlanTier,
-  type BillingResponse,
-  type PlanTier,
-  type PlansResponse,
-} from './types';
+import { channelLabel, channelList } from './channel-labels';
+import type { BillingResponse } from './types';
 import { useBillingActions } from './use-billing-actions';
 import { useCan } from '../use-can';
 import { useMe } from '../account/use-me';
 
-// Phase 18 §3 / §P.4 — the global upgrade dialog. api() emits every plan / billing block on the
-// upgrade bus (src/lib/client/upgrade-events.ts); this host (mounted once in AppShell) opens:
-//   403 plan_tier        → names details.requiredTier and its monthly price; "Upgrade" goes to
-//                          Checkout (no subscription) or the Customer Portal (plan change)
-//   403 quota_exceeded   → upgrade, or buy a top-up (/settings/billing#topups)
+// Phase 18 §3 / §P.4 / 21.5 — the global upgrade dialog. api() emits every plan / billing block
+// on the upgrade bus (src/lib/client/upgrade-events.ts); this host (mounted once in AppShell)
+// opens. 21.5: there is one per-channel plan, so no tier is ever named:
+//   403 plan_tier        → "not included in your plan" (an internal-tier feature)
+//   403 quota_exceeded   → add a channel (Your plan) or buy a video pack
+//   403 channel_limit    → add a channel to publish to this platform
 //   402 plan_required    → choose a plan (/settings/billing)
 //   402 billing_required → "Update payment method" (Customer Portal)
-// Only owners (canManage) get the Stripe buttons; everyone else is asked to find an owner.
+// Only owners (canManage) get the Stripe button; everyone else is asked to find an owner.
 
 type Billing = BillingResponse['billing'];
-
-function PlanTierBody({
-  tier,
-  plans,
-}: {
-  tier: PlanTier | null;
-  plans: PlansResponse | undefined;
-}) {
-  const t = useTranslations('upgrade.planTier');
-  const tTier = useTranslations('shell.usage.tiers');
-  const f = useFormat();
-  if (!tier) return null;
-  const name = tTier(tier);
-  const amount = plans?.pricing.plans.find((p) => p.tier === tier)?.prices.month?.unitAmountPence;
-  return (
-    <>
-      <p>{t('body', { tier: name })}</p>
-      {tier === 'ENTERPRISE' ? (
-        <p>{t('enterprise')}</p>
-      ) : (
-        amount != null && (
-          <p className="font-medium">{t('price', { tier: name, amount: f.pence(amount) })}</p>
-        )
-      )}
-    </>
-  );
-}
 
 function UpgradeActions({
   event,
   billing,
-  requiredTier,
   onClose,
 }: {
   event: UpgradeEvent;
   billing: Billing | undefined;
-  requiredTier: PlanTier | null;
   onClose: () => void;
 }) {
   const t = useTranslations('upgrade');
-  const { pending, checkout, portal } = useBillingActions();
+  const { pending, portal } = useBillingActions();
   const owner = Boolean(billing?.canManage && billing.checkoutEnabled);
-  const live = isLiveSubscription(billing?.subscription?.status);
-  const spinner = (key: string) => pending === key && <Loader2 className="animate-spin" />;
   const link = (href: string, label: string, variant: 'default' | 'outline' = 'default') => (
     <Button asChild variant={variant}>
       <Link href={href} onClick={onClose}>
@@ -89,34 +53,6 @@ function UpgradeActions({
       </Link>
     </Button>
   );
-
-  const upgradeButton = () => {
-    if (!owner) return null;
-    if (live || event.code === 'billing_required')
-      return (
-        <Button onClick={() => void portal()} disabled={pending !== null}>
-          {spinner('portal')}
-          {event.code === 'billing_required' ? t('actions.updatePayment') : t('actions.upgrade')}
-        </Button>
-      );
-    if (requiredTier && requiredTier !== 'ENTERPRISE')
-      return (
-        <Button
-          onClick={() =>
-            void checkout(
-              { kind: 'subscription', tier: requiredTier, interval: 'month' },
-              'upgrade',
-            )
-          }
-          disabled={pending !== null}
-        >
-          {spinner('upgrade')}
-          {t('actions.upgrade')}
-        </Button>
-      );
-    return link('/settings/billing', t('actions.upgrade'));
-  };
-
   return (
     <DialogFooter>
       <Button variant="ghost" onClick={onClose}>
@@ -125,11 +61,18 @@ function UpgradeActions({
       {event.code === 'plan_required' && link('/settings/billing', t('actions.choosePlan'))}
       {event.code === 'quota_exceeded' &&
         !isSeatLimit(event) &&
-        link('/settings/billing#topups', t('actions.buyTopUp'), 'outline')}
-      {event.code === 'plan_tier' &&
-        requiredTier === 'ENTERPRISE' &&
-        link('/pricing', t('actions.viewPlans'), 'outline')}
-      {event.code !== 'plan_required' && upgradeButton()}
+        link('/settings/billing#topups', t('actions.buyPack'), 'outline')}
+      {(event.code === 'quota_exceeded' || event.code === 'channel_limit') &&
+        !isSeatLimit(event) &&
+        link('/settings/billing#change', t('actions.addChannel'))}
+      {isSeatLimit(event) && link('/settings/members', t('actions.manageMembers'))}
+      {event.code === 'plan_tier' && link('/pricing', t('actions.viewPlan'), 'outline')}
+      {event.code === 'billing_required' && owner && (
+        <Button onClick={() => void portal()} disabled={pending !== null}>
+          {pending === 'portal' && <Loader2 className="animate-spin" />}
+          {t('actions.updatePayment')}
+        </Button>
+      )}
     </DialogFooter>
   );
 }
@@ -142,13 +85,31 @@ function isSeatLimit(event: UpgradeEvent): boolean {
 const COPY = {
   plan_tier: 'planTier',
   quota_exceeded: 'quota',
+  channel_limit: 'channelLimit',
   plan_required: 'planRequired',
   billing_required: 'billingRequired',
 } as const;
 
+function ChannelLimitBody({ event }: { event: UpgradeEvent }) {
+  const t = useTranslations('upgrade.channelLimit');
+  const channels = Number(event.details?.channels ?? 0);
+  const platform = typeof event.details?.platform === 'string' ? event.details.platform : '';
+  const allowed = Array.isArray(event.details?.allowedPlatforms)
+    ? event.details.allowedPlatforms.filter((p): p is string => typeof p === 'string')
+    : [];
+  return (
+    <p>
+      {t('body', {
+        count: channels,
+        list: channelList(allowed),
+        platform: channelLabel(platform),
+      })}
+    </p>
+  );
+}
+
 export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose: () => void }) {
   const t = useTranslations('upgrade');
-  const tTier = useTranslations('shell.usage.tiers');
   // Billing details are only readable with studio:billing:read (owner, admin); others are told to
   // ask an owner without a request the API would refuse.
   const meKnown = Boolean(useMe().data);
@@ -156,26 +117,17 @@ export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose
   const billing = useApi<BillingResponse>(mayReadBilling ? '/billing' : null, undefined, {
     shouldRetryOnError: false,
   });
-  const plans = useApi<PlansResponse>(event.code === 'plan_tier' ? '/billing/plans' : null);
-  const required = event.details?.requiredTier;
-  const requiredTier = isPlanTier(required) ? required : null;
   const copy = isSeatLimit(event) ? 'seatLimit' : COPY[event.code];
-  const title =
-    copy === 'planTier'
-      ? requiredTier
-        ? t('planTier.title', { tier: tTier(requiredTier) })
-        : t('actions.upgrade')
-      : t(`${copy}.title`);
   const data = billing.data?.billing;
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>{t(`${copy}.title`)}</DialogTitle>
           <DialogDescription asChild>
             <div className="grid gap-2">
-              {copy === 'planTier' ? (
-                <PlanTierBody tier={requiredTier} plans={plans.data} />
+              {copy === 'channelLimit' ? (
+                <ChannelLimitBody event={event} />
               ) : (
                 <p>{t(`${copy}.body`)}</p>
               )}
@@ -184,17 +136,11 @@ export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose
             </div>
           </DialogDescription>
         </DialogHeader>
-        <UpgradeActions
-          event={event}
-          billing={data}
-          requiredTier={requiredTier}
-          onClose={onClose}
-        />
+        <UpgradeActions event={event} billing={data} onClose={onClose} />
       </DialogContent>
     </Dialog>
   );
 }
-
 /** Mounted once in AppShell: opens the upgrade dialog for every plan / billing block. */
 export function UpgradeDialogHost() {
   const [event, setEvent] = useState<UpgradeEvent | null>(null);
@@ -202,23 +148,23 @@ export function UpgradeDialogHost() {
   if (!event) return null;
   return (
     <UpgradeDialog
-      key={`${event.code}-${String(event.details?.requiredTier ?? '')}`}
+      key={`${event.code}-${String(event.details?.requiredTier ?? event.details?.platform ?? '')}`}
       event={event}
       onClose={() => setEvent(null)}
     />
   );
 }
 
-/** "Upgrade" and "Buy top-up" on the usage banner (usage-meter.tsx). */
+/** "Add a channel" and "Buy a video pack" on the usage banner (usage-meter.tsx). */
 export function UsageBannerActions() {
   const t = useTranslations('upgrade.actions');
   return (
     <div className="mt-3 flex flex-wrap gap-2">
       <Button asChild size="sm">
-        <Link href="/settings/billing">{t('upgrade')}</Link>
+        <Link href="/settings/billing#change">{t('addChannel')}</Link>
       </Button>
       <Button asChild size="sm" variant="outline">
-        <Link href="/settings/billing#topups">{t('buyTopUp')}</Link>
+        <Link href="/settings/billing#topups">{t('buyPack')}</Link>
       </Button>
     </div>
   );

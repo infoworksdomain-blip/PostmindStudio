@@ -16,6 +16,7 @@ import {
   resolveCredentials,
   type PublishingDeps,
 } from '../platforms/publishing';
+import { assertChannelAllowed } from '../billing/channels';
 import { checkFormat, PLATFORM_RULES } from '../platforms/rules';
 import { carouselComposition, carouselPublishProblems } from '../carousel/publishing';
 import { currentRunId } from '../pipeline/project-state';
@@ -262,6 +263,8 @@ export async function createPublication(
     );
   if (connection.state !== 'active')
     throw new ConflictError(`The ${rules.connectionPlatform} connection needs reconnecting`);
+  // 21.5: only the channels the organisation pays for publish (billing/channels.ts).
+  await assertChannelAllowed(db, orgId, rules.connectionPlatform, new Date(deps.now()));
   const platformAccountId = connection.platformAccountId;
   const connectionId = connection.id;
 

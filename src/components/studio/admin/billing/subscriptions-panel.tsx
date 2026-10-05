@@ -14,9 +14,10 @@ import {
   type AdminSubscriptionsResponse,
   type SubscriptionStatus,
 } from '../../billing/types';
+import { isChannelInterval } from './entitlements-summary';
 
 // Phase 18 §P.4 — staff subscriptions list (GET /admin/billing/subscriptions?status=&limit=):
-// total MRR (active + past due, annual ÷ 12, ex-VAT), counts by tier and by status, a status
+// total MRR (active + past due, annual ÷ 12, weekly × 52 ÷ 12, ex-VAT), counts by tier and by status, a status
 // filter, and each subscription with its organisation, tier, interval, MRR, period end and
 // whether it cancels at period end.
 
@@ -35,7 +36,7 @@ export function SubscriptionsPanel() {
   const t = useTranslations('billing.admin.subscriptions');
   const tStatus = useTranslations('billing.subscriptionStatus');
   const tTier = useTranslations('shell.usage.tiers');
-  const tInterval = useTranslations('pricing.interval');
+  const tInterval = useTranslations('billing.admin.entitlements.intervalValues');
   const f = useFormat();
   const [status, setStatus] = useState<SubscriptionStatus | ''>('');
   const res = useApi<AdminSubscriptionsResponse>('/admin/billing/subscriptions', {
@@ -43,8 +44,7 @@ export function SubscriptionsPanel() {
     limit: 100,
   });
   const statusLabel = (s: string) => (isSubscriptionStatus(s) ? tStatus(s) : s);
-  const intervalLabel = (i: string | null) =>
-    i === 'month' || i === 'year' ? tInterval(i) : (i ?? '—');
+  const intervalLabel = (i: string | null) => (isChannelInterval(i) ? tInterval(i) : (i ?? '—'));
 
   if (res.error) return <ErrorState error={res.error} onRetry={() => void res.mutate()} />;
   if (!res.data) return <Skeleton aria-label={t('loading')} className="h-64 rounded-xl" />;

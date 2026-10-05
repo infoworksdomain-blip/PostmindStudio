@@ -226,6 +226,8 @@ export interface PlanFormState {
   videoShare: number;
   platforms: string[];
   accounts: Record<string, string>;
+  /** 21.4: testimonial and product videos made with UGC actors (each uses 2 videos). */
+  ugcActors?: boolean;
 }
 
 /**
@@ -262,5 +264,6 @@ export function buildPlanBody(state: PlanFormState, businessId: string, timezone
       state.accounts[platform] ? [{ platform, connectionId: state.accounts[platform] }] : [],
     ),
     timezone,
+    ...(state.ugcActors && { ugcActors: true }),
   };
 }

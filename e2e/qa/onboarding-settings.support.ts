@@ -342,21 +342,58 @@ export async function setActiveOrg(db: Db, userId: string, orgId: string | null)
   await db.session.updateMany({ where: { userId }, data: { activeOrganizationId: orgId } });
 }
 
-/** A plan for the organisation (read by the app within 30 s of its first read: set it first). */
+/**
+ * A plan for the organisation (read by the app within 30 s of its first read: set it first).
+ * `tier` is the internal tier (routing, gates); customers never see it. 21.5: pass `channels`
+ * (and `interval`) for a per-channel plan — a staff override when the source is admin, otherwise
+ * what a Stripe subscription would have stored (status active, or past_due with `graceUntil`).
+ */
 export async function givePlan(
   db: Db,
   orgId: string,
   tier: 'BASIC' | 'STANDARD' | 'PLUS' = 'STANDARD',
-  extra: { access?: 'full' | 'read_only'; source?: string; graceUntil?: Date } = {},
+  extra: {
+    access?: 'full' | 'read_only';
+    source?: string;
+    graceUntil?: Date;
+    channels?: number;
+    interval?: 'week' | 'month' | 'year';
+  } = {},
 ): Promise<void> {
+  const access = extra.access ?? 'full';
+  const source = extra.source ?? 'admin';
+  const plan = extra.channels
+    ? { channels: extra.channels, interval: extra.interval ?? 'month' }
+    : undefined;
+  const overrides = !plan
+    ? undefined
+    : source === 'admin'
+      ? {
+          admin: {
+            ...plan,
+            reason: 'QA seed',
+            setByUserId: 'qa',
+            setAt: new Date().toISOString(),
+          },
+        }
+      : {
+          derived: {
+            ...plan,
+            tier,
+            access,
+            source: 'stripe',
+            status: extra.graceUntil ? 'past_due' : 'active',
+          },
+        };
   await db.orgEntitlement.upsert({
     where: { organisationId: orgId },
     create: {
       organisationId: orgId,
       tier,
-      access: extra.access ?? 'full',
-      source: extra.source ?? 'admin',
+      access,
+      source,
       graceUntil: extra.graceUntil ?? null,
+      ...(overrides && { overrides }),
     },
     update: {},
   });

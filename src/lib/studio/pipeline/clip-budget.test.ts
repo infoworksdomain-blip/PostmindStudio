@@ -79,11 +79,10 @@ describe('aiClipBudget (20.25 per-tier budgets)', () => {
     expect(aiClipBudget('BASIC', 120)).toBe(12); // BASIC's own rate (10 s) is already slower than 8 s
   });
 
-  it('resolution per tier: 480p on BASIC, 720p otherwise', () => {
-    expect(aiClipResolution('BASIC')).toBe('480p');
-    expect(aiClipResolution('STANDARD')).toBe('720p');
-    expect(aiClipResolution('PLUS')).toBe('720p');
-    expect(aiClipResolution('ENTERPRISE')).toBe('720p');
+  it('resolution per tier (21.3): 720p HD on every tier (BASIC no longer 480p)', () => {
+    for (const tier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(aiClipResolution(tier)).toBe('720p');
+    }
   });
 });
 

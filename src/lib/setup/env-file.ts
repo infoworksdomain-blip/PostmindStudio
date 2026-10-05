@@ -335,6 +335,14 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
     isSeedanceModel(v)
       ? null
       : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
+  // 21.3: every plan's clip resolution override (empty = 720p HD; 1080p only on purpose).
+  STUDIO_SEEDANCE_RESOLUTION: (v) =>
+    v === '480p' || v === '720p' || v === '1080p' ? null : 'must be 480p, 720p or 1080p (or empty)',
+  // 21.3: every plan tier's model (empty = dreamina-seedance-2-0-260128).
+  SEEDANCE_FULL_MODEL: (v) =>
+    isSeedanceModel(v)
+      ? null
+      : `must be one of ${Object.keys(SEEDANCE_MODELS).join(', ')} (or empty)`,
   SEEDANCE_LONG_MODEL: (v) =>
     isSeedanceModel(v)
       ? null
@@ -355,6 +363,8 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   KLING_RESOLUTION: (v) => (isKlingResolution(v) ? null : 'must be 720p or 1080p (or empty)'),
   KLING_BASE_URL: (v) =>
     isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
+  // 21.4: Kling actor clips with native audio (kling.ts klingOptionsFromEnv).
+  KLING_UGC_ACTOR: (v) => (v === '0' || v === '1' ? null : 'must be 1, 0 or empty'),
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.

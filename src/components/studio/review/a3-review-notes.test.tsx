@@ -106,6 +106,9 @@ describe('AutoResumeNote', () => {
     const user = userEvent.setup();
     renderWithSWR(<AutoResumeNote project={project({})} onChanged={onChanged} />);
     expect(screen.getByText(/resumes automatically at 00:05 UTC/)).toBeInTheDocument();
+    // Operator decision 2026-10-04: a limit, never a budget or spend (review.paused.dailyLimit,
+    // from .i18n-tmp/frag-costs/en-GB.json until merged).
+    expect(document.body).not.toHaveTextContent(/budget|spen[dt]/i);
     await user.click(screen.getByRole('switch', { name: 'Resume automatically' }));
     await waitFor(() => expect(calls[0]?.body).toEqual({ autoResume: false }));
     expect(onChanged).toHaveBeenCalled();

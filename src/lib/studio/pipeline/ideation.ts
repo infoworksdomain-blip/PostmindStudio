@@ -84,7 +84,27 @@ export const IDEATION_SCHEMA = {
   },
 } as const;
 
+/**
+ * 21.4: the ideation schema for a UGC actor video adds one flag: the request asks the generated
+ * actor to be, look like or sound like a real, identifiable person. The run then stops before
+ * Layer 2 (ugc/real-person.ts UGC_REAL_PERSON_REASON).
+ */
+export const UGC_IDEATION_SCHEMA = {
+  ...IDEATION_SCHEMA,
+  required: [...IDEATION_SCHEMA.required, 'realPersonRequested'],
+  properties: {
+    ...IDEATION_SCHEMA.properties,
+    realPersonRequested: {
+      type: 'boolean',
+      description:
+        'true if the request asks the actor to be, imitate, look like or sound like a real identifiable person (a celebrity, public figure, influencer, or anyone named)',
+    },
+  },
+} as const;
+
 const ideationResult = z.object({
+  /** 21.4: only in UGC_IDEATION_SCHEMA answers. */
+  realPersonRequested: z.boolean().optional(),
   actionable: z.boolean(),
   directionOptions: z.array(z.string()),
   hook: z.string(),

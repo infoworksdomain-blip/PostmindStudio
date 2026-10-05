@@ -16,6 +16,7 @@ export type ProviderCapability =
   | 'text_to_video' // Layer 3: AI_CLIP shots without a source frame
   | 'image_to_video' // Layer 3: AI_CLIP shots from a source frame
   | 'avatar_video' // Layer 3: AI_AVATAR shots
+  | 'actor_video' // Layer 3: UGC_ACTOR shots (21.4: a generated actor speaks the line, with audio)
   | 'stock_footage' // Layer 3: STOCK_FOOTAGE shots
   | 'tts' // Layer 4
   | 'music' // Layer 5
@@ -28,11 +29,12 @@ export type ProviderCapability =
 export type AspectRatio = '9:16' | '16:9' | '1:1' | '4:5';
 
 /**
- * 20.25: the resolution an AI clip is wanted at (pipeline/clip-budget.ts: 480p on BASIC, 720p
- * otherwise). Only Seedance offers 480p and reads it; Kling and Veo render at their own
- * resolution (720p by default, their minimum). Absent = the adapter's default.
+ * 20.25 / 21.3: the resolution an AI clip is wanted at (pipeline/clip-budget.ts: 720p HD on every
+ * tier since 21.3). Only Seedance reads it (capped at what the chosen model offers: 2.0 mini and
+ * fast stop at 720p; STUDIO_SEEDANCE_RESOLUTION can override it); Kling and Veo render at their
+ * own configured resolution (720p by default). Absent = the adapter's default.
  */
-export type VideoResolution = '480p' | '720p';
+export type VideoResolution = '480p' | '720p' | '1080p';
 
 /** Classification used for retries and circuit-breaker accounting. */
 export type ProviderErrorClass =
@@ -135,6 +137,26 @@ export interface AvatarVideoRequest extends ProviderRequestBase {
   aspectRatio: AspectRatio;
 }
 
+/**
+ * 21.4 — a UGC_ACTOR shot: a generated (never real) person speaks `spokenLine` to camera. The
+ * clip's own audio is the shot's narration, so adapters must return video WITH speech.
+ */
+export interface ActorVideoRequest extends ProviderRequestBase {
+  capability: 'actor_video';
+  /** Scene, framing and the actor's look, without the spoken line (pipeline/ugc/prompt.ts). */
+  prompt: string;
+  /** The exact words the actor says (one short line). */
+  spokenLine: string;
+  /** BCP 47 language of the line. */
+  languageCode: string;
+  durationSec: number;
+  aspectRatio: AspectRatio;
+  /** Publicly fetchable (e.g. presigned) URL of the business's product image, when chosen. */
+  productImageUrl?: string;
+  /** Same value for every clip of a project, so providers that take a seed keep the look. */
+  seed?: number;
+}
+
 export interface StockFootageRequest extends ProviderRequestBase {
   capability: 'stock_footage';
   /** The shot's scene description; adapters reduce it to search keywords. */
@@ -215,6 +237,7 @@ export type ProviderRequest =
   | TextToVideoRequest
   | ImageToVideoRequest
   | AvatarVideoRequest
+  | ActorVideoRequest
   | StockFootageRequest
   | TtsRequest
   | MusicRequest

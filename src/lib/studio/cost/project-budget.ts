@@ -29,6 +29,22 @@ export const DEFAULT_LONG_FORM_BUDGET_PENCE = 3_000;
  * reach the 90% pause, even with a regenerated shot or a pricier failover provider.
  */
 export const BUDGET_TYPICAL_VIDEO_MULTIPLE = 2.5;
+/**
+ * 21.3 (operator decision 2026-10-04: one per-channel subscription, HD video, mapped to the
+ * internal STANDARD tier): every tier renders AI clips on the full Seedance 2.0 at 720p, which
+ * costs more than the catalogue's §P.2 typical cost per video. These floors keep a normal 30 s
+ * short under half its budget at the cautious USD→GBP 0.79 (cost/video-estimate.ts, tested there):
+ * STANDARD ≈ 241p (4 clips) → £5; BASIC ≈ 187p (3 clips) → £5; PLUS / ENTERPRISE ≈ 337p (6 clips)
+ * → £7. Long form keeps 2.5 × the catalogue typical cost (STANDARD 3 min ≈ 1,411p < 90% of £30;
+ * PLUS 6 min ≈ 2,917p < 90% of £45).
+ */
+export const TIER_BUDGET_FLOOR_PENCE: Readonly<Record<PlanTier, { short: number; long: number }>> =
+  {
+    BASIC: { short: 500, long: 0 },
+    STANDARD: { short: 500, long: 0 },
+    PLUS: { short: 700, long: 0 },
+    ENTERPRISE: { short: 700, long: 0 },
+  };
 export const DEFAULT_SLIDESHOW_BUDGET_PENCE = 150;
 /**
  * 21.6: a carousel's AI cost is one thread (Claude), one safety check, one caption call and at
@@ -58,22 +74,32 @@ export function isLongForm(formats: readonly BudgetFormat[]): boolean {
   });
 }
 
+/**
+ * 21.5: the per-video budget basis stays the 20.25 one (STANDARD short 160p) while the catalogue's
+ * typical cost moved to Seedance 2.0 full (241p); the per-video budget defaults are owned by
+ * the p21-tiered-models branch, which sets them explicitly — keep its values on merge.
+ */
+const BUDGET_BASIS_PENCE = {
+  ...TYPICAL_COST_PENCE_PER_VIDEO,
+  STANDARD: { ...TYPICAL_COST_PENCE_PER_VIDEO.STANDARD, short: 160 },
+} as const;
+
 function typicalCostPence(tier: PlanTier, kind: 'short' | 'long'): number {
-  return TYPICAL_COST_PENCE_PER_VIDEO[tier === 'ENTERPRISE' ? 'PLUS' : tier][kind];
+  return BUDGET_BASIS_PENCE[tier === 'ENTERPRISE' ? 'PLUS' : tier][kind];
 }
 
-/** 20.25: the short-form default for a tier (BASIC £3.50, STANDARD £4, PLUS / ENTERPRISE £6). */
+/** 20.25 / 21.3: the short-form default for a tier (BASIC / STANDARD £5, PLUS / ENTERPRISE £7). */
 export function shortFormBudgetPence(tier?: PlanTier): number {
   if (!tier) return DEFAULT_SHORT_FORM_BUDGET_PENCE;
   const scaled = Math.ceil(typicalCostPence(tier, 'short') * BUDGET_TYPICAL_VIDEO_MULTIPLE);
-  return Math.max(DEFAULT_SHORT_FORM_BUDGET_PENCE, scaled);
+  return Math.max(DEFAULT_SHORT_FORM_BUDGET_PENCE, scaled, TIER_BUDGET_FLOOR_PENCE[tier].short);
 }
 
 /** 20.25: the long-form default for a tier (£30; PLUS / ENTERPRISE £45). */
 export function longFormBudgetPence(tier?: PlanTier): number {
   if (!tier) return DEFAULT_LONG_FORM_BUDGET_PENCE;
   const scaled = Math.ceil(typicalCostPence(tier, 'long') * BUDGET_TYPICAL_VIDEO_MULTIPLE);
-  return Math.max(DEFAULT_LONG_FORM_BUDGET_PENCE, scaled);
+  return Math.max(DEFAULT_LONG_FORM_BUDGET_PENCE, scaled, TIER_BUDGET_FLOOR_PENCE[tier].long);
 }
 
 /** The per-project budget when the client sets none; `tier` = the organisation's plan tier. */

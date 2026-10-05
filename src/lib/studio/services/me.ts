@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import { studioModes, type StudioModes } from '../../mode';
 import type { TenantContext } from '../../tenant';
 import { ConfigurationError } from '../../errors';
+import { loadChannelUsage } from '../billing/channels';
 import { ENDED_STATUSES, parseOverrides } from '../billing/entitlements';
 import type { Entitlements, EntitlementsReader } from '../billing/entitlements-reader';
 import { cancelledRetentionDays } from '../billing/retention';
@@ -36,7 +37,19 @@ export interface MeView {
   };
   organisation: MeOrganisation;
   organisations: MeOrganisation[];
-  plan: { tier: string; access: string; source: string } | null;
+  plan: {
+    tier: string;
+    access: string;
+    source: string;
+    /** 21.5: the per-channel plan (absent without one). */
+    channels?: number;
+    interval?: string;
+  } | null;
+  /**
+   * 21.5: connected platforms past the paid channels (they do not publish until a channel is
+   * added). null without a channel plan.
+   */
+  channels: { paid: number; connected: string[]; blocked: string[] } | null;
   banner: AccountBanner | null;
   impersonating: boolean;
   /** Standalone shows sign-out and the organisation switcher; core mode signs in through Core. */
@@ -145,6 +158,9 @@ export async function getMe(
         })
       : Promise.resolve(null),
   ]);
+  const usage = entitlements?.channelPlan
+    ? await loadChannelUsage(db, tenant.organisationId, entitlements.channelPlan.channels)
+    : null;
   const names = new Map(orgs.map((o) => [o.id, o.name]));
   const roleIn = (orgId: string) =>
     tenant.memberships.find((m) => m.organisationId === orgId)?.role ?? null;
@@ -164,7 +180,18 @@ export async function getMe(
     // Deleted organisations (not in `names`) are left out of the switcher, except the active one.
     organisations: orgIds.filter((id) => names.has(id)).map(toOrg),
     plan: entitlements
-      ? { tier: entitlements.tier, access: entitlements.access, source: entitlements.source }
+      ? {
+          tier: entitlements.tier,
+          access: entitlements.access,
+          source: entitlements.source,
+          ...(entitlements.channelPlan && {
+            channels: entitlements.channelPlan.channels,
+            interval: entitlements.channelPlan.interval,
+          }),
+        }
+      : null,
+    channels: usage
+      ? { paid: usage.paid, connected: usage.connected, blocked: usage.blocked }
       : null,
     banner: accountBanner(
       entitlements,

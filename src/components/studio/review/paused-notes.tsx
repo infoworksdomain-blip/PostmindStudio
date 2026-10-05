@@ -6,10 +6,12 @@ import { Clock, Info, PauseCircle, ShieldAlert } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
+import { useShowCosts } from '../account/use-show-costs';
 import { useAction } from './use-action';
 
 // Review screen notes for runs that are paused rather than broken:
-//   - 13.20: the organisation's daily / monthly generation budget paused the run; it resumes
+//   - 13.20: the organisation's daily / monthly generation limit paused the run (worded as a limit,
+//     never a budget or spend: operator decision 2026-10-04); it resumes
 //     automatically after the rollover (00:05 UTC; monthly on the 1st) unless turned off here
 //     (PATCH /projects/:id { autoResume }).
 //   - 13.17: the run waits for PostMind's content-safety review.
@@ -55,12 +57,12 @@ export function AutoResumeNote({
 
   return (
     <section
-      aria-label={t('aria')}
+      aria-label={t('limitAria')}
       className="flex flex-col gap-2 rounded-xl border border-foreground/15 bg-card p-4 text-sm"
     >
       <p className="flex items-start gap-2">
         <PauseCircle className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} />
-        {scope === 'org_daily' ? t('daily') : t('monthly')}{' '}
+        {scope === 'org_daily' ? t('dailyLimit') : t('monthlyLimit')}{' '}
         {enabled
           ? scope === 'org_daily'
             ? t('resumesDaily')
@@ -145,6 +147,9 @@ export function fallbacksOf(metadata: ProjectDetail['metadata']): FallbackItem[]
 export function FallbackNote({ project }: { project: ProjectDetail }) {
   const t = useTranslations('review.fallback');
   const f = useFormat();
+  // Which providers were passed over and why ("over budget", "no cost estimate") is for platform
+  // staff only (operator decision 2026-10-04); customers read the one-sentence notice.
+  const showDetail = useShowCosts();
   const items = fallbacksOf(project.metadata);
   if (items.length === 0) return null;
   const layerLabel = (layer: string) => (oneOf(LAYERS, layer) ? t(`layers.${layer}`) : layer);
@@ -160,21 +165,23 @@ export function FallbackNote({ project }: { project: ProjectDetail }) {
         <Info className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
         {t('intro', { layers: f.list(layers) })}
       </p>
-      <ul className="ps-6 text-xs text-muted-foreground">
-        {items.map((i, n) => (
-          <li key={`${i.layer}-${i.shotId ?? n}`}>
-            {t('item', {
-              layer: layerLabel(i.layer),
-              provider: i.usedProviderId,
-              skipped: f.list(
-                i.skipped.map((s) =>
-                  t('skipped', { provider: s.providerId, reason: reasonLabel(s.reason) }),
+      {showDetail && (
+        <ul className="ps-6 text-xs text-muted-foreground">
+          {items.map((i, n) => (
+            <li key={`${i.layer}-${i.shotId ?? n}`}>
+              {t('item', {
+                layer: layerLabel(i.layer),
+                provider: i.usedProviderId,
+                skipped: f.list(
+                  i.skipped.map((s) =>
+                    t('skipped', { provider: s.providerId, reason: reasonLabel(s.reason) }),
+                  ),
                 ),
-              ),
-            })}
-          </li>
-        ))}
-      </ul>
+              })}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -224,13 +231,37 @@ export function QueuedNote({ project }: { project: ProjectDetail }) {
 // compose-video records metadata.degradedShots[]; the customer sees one gentle sentence (no
 // provider names or reasons — those stay in the shot's routing for staff).
 
-export function degradedPresenterShots(metadata: ProjectDetail['metadata']): string[] {
+function degradedShots(metadata: ProjectDetail['metadata'], from: string): string[] {
   const list = metadata?.degradedShots;
   if (!Array.isArray(list)) return [];
   return list.flatMap((v) => {
     const r = record(v);
-    return r && r.degradedFrom === 'avatar_video' && typeof r.shotId === 'string' ? [r.shotId] : [];
+    return r && r.degradedFrom === from && typeof r.shotId === 'string' ? [r.shotId] : [];
   });
+}
+
+export function degradedPresenterShots(metadata: ProjectDetail['metadata']): string[] {
+  return degradedShots(metadata, 'avatar_video');
+}
+
+/** 21.4: UGC actor shots made as narrated clips because no actor provider was available. */
+export function degradedActorShots(metadata: ProjectDetail['metadata']): string[] {
+  return degradedShots(metadata, 'actor_video');
+}
+
+export function ActorFallbackNote({ project }: { project: ProjectDetail }) {
+  const t = useTranslations('review.actorFallback');
+  if (degradedActorShots(project.metadata).length === 0) return null;
+  return (
+    <p
+      role="note"
+      aria-label={t('aria')}
+      className="flex items-start gap-2 rounded-xl border border-foreground/15 bg-card px-3 py-2 text-sm"
+    >
+      <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+      {t('note')}
+    </p>
+  );
 }
 
 export function PresenterFallbackNote({ project }: { project: ProjectDetail }) {

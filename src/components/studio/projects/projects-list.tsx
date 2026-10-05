@@ -43,6 +43,7 @@ import {
 } from '../review/restricted-topics-panel';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import { useCan } from '../use-can';
+import { useShowCosts } from '../account/use-show-costs';
 import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.5 — Manage: projects list, filtered by state (spec 14.3), searched by name or brief,
@@ -188,6 +189,8 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
   const projectName = useProjectName();
   const name = projectName(project.name);
   const mayWrite = useCan(StudioCapability.ProjectWrite);
+  // Operator decision 2026-10-04: what a video cost to make is for platform staff only.
+  const showCosts = useShowCosts();
   // 20.18: a project waiting for the owner (a brief too vague to plan, restricted topics to
   // confirm) shows why and opens straight on the panel that resolves it.
   const anchor = needsDirection(project)
@@ -199,7 +202,12 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
     <li className="flex items-center gap-1 rounded-xl border border-transparent pe-2 transition-colors hover:border-border hover:bg-card">
       <Link
         href={`/projects/${project.id}${anchor ? `#${anchor}` : ''}`}
-        className="group grid min-w-0 flex-1 grid-cols-[auto_1fr_auto] items-center gap-4 rounded-xl px-4 py-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_1fr_10rem_7rem_auto]"
+        className={cn(
+          'group grid min-w-0 flex-1 grid-cols-[auto_1fr_auto] items-center gap-4 rounded-xl px-4 py-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+          showCosts
+            ? 'md:grid-cols-[auto_1fr_10rem_7rem_auto]'
+            : 'md:grid-cols-[auto_1fr_10rem_auto]',
+        )}
       >
         <span className="grid size-10 place-items-center rounded-lg bg-secondary text-muted-foreground">
           <Icon className="size-5" strokeWidth={1.5} />
@@ -224,10 +232,14 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
         <span className="hidden md:block">
           <StateBadge {...state} />
         </span>
-        <span className="tabular hidden text-end text-sm text-muted-foreground md:block">
-          {/* 21.6: carousels never show a £ cost. */}
-          {project.sourceType === 'CAROUSEL' ? null : f.pence(project.costActualPence)}
-        </span>
+        {showCosts && (
+          <span
+            data-testid="project-row-cost"
+            className="tabular hidden text-end text-sm text-muted-foreground md:block"
+          >
+            {f.pence(project.costActualPence)}
+          </span>
+        )}
         <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5" />
       </Link>
       {mayWrite && <RowMenu project={project} name={name} onChanged={onChanged} />}

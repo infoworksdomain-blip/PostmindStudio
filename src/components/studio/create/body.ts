@@ -5,7 +5,7 @@ import { buildFormats, nameFromBrief, type Length, type TargetFormatInput } from
 // Builds the POST /api/studio/projects body (services/projects.ts createProjectInput) from the
 // Create screen's state. Pure, so the rules the API enforces are unit-tested here too.
 
-export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD' | 'CAROUSEL';
+export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD' | 'UGC' | 'CAROUSEL';
 export type CarouselTheme = 'light' | 'dark';
 
 /** 21.6: the carousel options on Create (carousel/constants.ts MIN_POSTS..MAX_POSTS). */
@@ -13,6 +13,29 @@ export const CAROUSEL_POSTS_MIN = 3;
 export const CAROUSEL_POSTS_MAX = 12;
 export const CAROUSEL_POSTS_DEFAULT = 7;
 export const CAROUSEL_THREAD_MAX = 7_200;
+
+/** 21.4: the Create screen's UGC actor choices ('' = Studio picks; ugc/style.ts presets). */
+export interface UgcChoice {
+  productName: string;
+  productImageId: string | null;
+  ageRange: '' | '18-24' | '25-34' | '35-44' | '45-60';
+  gender: '' | 'woman' | 'man';
+  setting: '' | 'kitchen' | 'living_room' | 'car' | 'outdoors' | 'bathroom' | 'desk' | 'shop';
+}
+
+export const EMPTY_UGC: UgcChoice = {
+  productName: '',
+  productImageId: null,
+  ageRange: '',
+  gender: '',
+  setting: '',
+};
+
+/** The POST /projects ugc body (services/projects.ts, ugc/style.ts ugcInput). */
+export interface UgcBody {
+  product?: { name?: string; imageId?: string };
+  actor?: { ageRange?: string; gender?: string; setting?: string };
+}
 export type ReferenceMode = 'TEMPLATE' | 'INSPIRE';
 export type ReviewPolicy = 'AUTO_APPROVE' | 'REQUIRE_APPROVAL';
 export type QualityTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
@@ -61,6 +84,8 @@ export interface CreateState {
   carouselTheme?: CarouselTheme;
   carouselPosts?: number;
   carouselThread?: string;
+  /** 21.4: the UGC actor choices (source 'UGC'). */
+  ugc?: UgcChoice;
 }
 
 export interface Reference {
@@ -84,6 +109,7 @@ export interface CreateProjectBody {
   languages?: string[];
   approvalWorkflowId?: string;
   autoPublish?: { targets: AutoPublishTarget[] };
+  ugc?: UgcBody;
   brief?: { rawInput: string; targetAudience?: string; callToAction?: string };
   slideshow?: { templateId: string; topic?: string };
   referenceVideoId?: string;
@@ -111,7 +137,9 @@ export type CreateProblem =
   | 'scheduleTooFar'
   | 'scheduleNeedsAutoPublish'
   | 'scheduleNeedsAccount'
-  | 'budgetRange';
+  | 'budgetRange'
+  | 'ugcEnglishOnly'
+  | 'ugcShortOnly';
 
 export const MAX_BUDGET_POUNDS = 100_000;
 
@@ -161,6 +189,12 @@ export function validateCreate(
     if (!Number.isFinite(at) || at <= now) problems.push('scheduleInPast');
     else if (isBeyondScheduleWindow(at, now)) problems.push('scheduleTooFar');
     else if (problem) problems.push(problem);
+  }
+  if (state.source === 'UGC') {
+    // 21.4: actors speak English only for now, in short-form videos (ugc/validate.ts).
+    const languages = [state.language || 'en-GB', ...(state.extraLanguages ?? [])];
+    if (!languages.every((l) => l === 'en-GB' || l === 'en-US')) problems.push('ugcEnglishOnly');
+    if (state.length !== 'short') problems.push('ugcShortOnly');
   }
   if (state.budgetPounds.trim()) {
     const value = Number(state.budgetPounds);
@@ -263,7 +297,8 @@ export function buildCreateBody(
       ...(state.targetAudience.trim() && { targetAudience: state.targetAudience.trim() }),
       ...(state.callToAction.trim() && { callToAction: state.callToAction.trim() }),
     };
-    if (reference) {
+    if (state.source === 'UGC') body.ugc = ugcBody(state.ugc ?? EMPTY_UGC);
+    else if (reference) {
       body.sourceType = 'LIBRARY_REFERENCE';
       body.referenceVideoId = reference.id;
       body.referenceMode = reference.mode;
@@ -296,6 +331,24 @@ export function buildCreateBody(
     };
   }
   return body;
+}
+
+/** 21.4: only the choices the owner made (the server picks the rest from the project's seed). */
+export function ugcBody(choice: UgcChoice): UgcBody {
+  const name = choice.productName.trim().slice(0, 120);
+  const product = {
+    ...(name && { name }),
+    ...(choice.productImageId && { imageId: choice.productImageId }),
+  };
+  const actor = {
+    ...(choice.ageRange && { ageRange: choice.ageRange }),
+    ...(choice.gender && { gender: choice.gender }),
+    ...(choice.setting && { setting: choice.setting }),
+  };
+  return {
+    ...(Object.keys(product).length > 0 && { product }),
+    ...(Object.keys(actor).length > 0 && { actor }),
+  };
 }
 
 /** 15.C4: the POST /projects/:id/generate body (a lower tier for this run, when chosen). */

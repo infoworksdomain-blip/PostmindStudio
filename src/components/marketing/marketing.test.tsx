@@ -14,6 +14,16 @@ vi.mock('next/navigation', () => ({ usePathname: () => '/' }));
 afterEach(() => vi.unstubAllGlobals());
 
 describe('LandingPage', () => {
+  // Operator decision 2026-10-04 (marketing.features.pricing from .i18n-tmp/frag-costs/en-GB.json).
+  it('promises one simple price per channel, never budgets, spend or cost caps', () => {
+    render(<LandingPage />);
+    const features = screen
+      .getByRole('heading', { name: /one-person marketing team/ })
+      .closest('section') as HTMLElement;
+    expect(within(features).getByText('One simple price per channel')).toBeInTheDocument();
+    expect(features).not.toHaveTextContent(/budget|spending|cost/i);
+  });
+
   it('tells the SME story and sends visitors to sign-up and pricing', () => {
     render(
       <MarketingShell entityName="Crumb Ltd">

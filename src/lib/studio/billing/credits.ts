@@ -1,10 +1,15 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
-import { topUpPackForLookupKey, TOP_UP_PACKS, type TopUpPack } from './catalogue';
+import {
+  LEGACY_TOP_UP_PACKS,
+  topUpPackForLookupKey,
+  TOP_UP_PACKS,
+  type TopUpPack,
+} from './catalogue';
 import type { ChargeState, CheckoutSessionState } from './gateway';
 
 // Phase 18 §P.3 top-up packs. A paid Checkout session (mode=payment) inserts one usage_credits
 // row per pack (unique per session, so a replayed webhook never credits twice). Credits are
-// valid for 12 months, used first-in first-out, and only once the plan allowance is used up:
+// valid for the pack's months (21.5 HD packs: 3), used first-in first-out, and only once the plan allowance is used up:
 // checkGenerateQuota (services/plan-quotas.ts) consumes one inside the per-(org, month) quota lock
 // and records a usage_credit_uses row, unique per (project, month), so a retried generate never
 // spends twice. Each consumed credit raises that month's cost cap by the pack's worst-case
@@ -96,8 +101,17 @@ export interface CreditUse {
  */
 export async function consumeCredit(
   tx: CreditDb,
-  input: { organisationId: string; projectId: string; month: string; kind: CreditKind; now: Date },
+  input: {
+    organisationId: string;
+    projectId: string;
+    month: string;
+    kind: CreditKind;
+    now: Date;
+    /** 21.4: videos this generation uses (a UGC actor video uses 2; ugc/allowance.ts). */
+    units?: number;
+  },
 ): Promise<CreditUse | null> {
+  const units = Math.max(1, Math.floor(input.units ?? 1));
   const existing = await tx.usageCreditUse.findUnique({
     where: { projectId_month: { projectId: input.projectId, month: input.month } },
   });
@@ -110,7 +124,7 @@ export async function consumeCredit(
     where: {
       organisationId: input.organisationId,
       kind: input.kind,
-      remaining: { gt: 0 },
+      remaining: { gte: units },
       refundedAt: null,
       expiresAt: { gt: input.now },
     },
@@ -119,8 +133,8 @@ export async function consumeCredit(
   });
   for (const credit of candidates) {
     const taken = await tx.usageCredit.updateMany({
-      where: { id: credit.id, remaining: { gt: 0 } },
-      data: { remaining: { decrement: 1 } },
+      where: { id: credit.id, remaining: { gte: units } },
+      data: { remaining: { decrement: units } },
     });
     if (taken.count === 0) continue;
     const use = await tx.usageCreditUse.create({
@@ -137,7 +151,10 @@ export async function consumeCredit(
   return null;
 }
 
-const HEADROOM_BY_PACK = new Map(TOP_UP_PACKS.map((p) => [p.lookupKey, p]));
+// 21.5: legacy packs bought before the HD packs keep their headroom until they expire.
+const HEADROOM_BY_PACK = new Map(
+  [...TOP_UP_PACKS, ...LEGACY_TOP_UP_PACKS].map((p) => [p.lookupKey, p]),
+);
 
 /** Extra monthly cost-cap headroom from the credits consumed in `month` ('YYYY-MM'). */
 export async function creditHeadroomPence(

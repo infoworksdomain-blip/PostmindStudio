@@ -175,7 +175,8 @@ function shotRec(
     onScreenText: c.onScreen,
     transitionOut: c.transitionOut ?? (index === 0 ? 'cut' : 'fade'),
     assetId: ready ? `${id}-clip` : null,
-    voiceAssetId: ready && c.voiceover ? `${id}-voice` : null,
+    // 21.4: a UGC actor clip speaks its own line, so it has no separate voice-over asset.
+    voiceAssetId: ready && c.voiceover && c.treatment !== 'UGC_ACTOR' ? `${id}-voice` : null,
     kind: c.kind,
     assets: ready ? shotAssets(id, c) : [],
   };
@@ -195,13 +196,15 @@ export function shotAssets(
       source:
         c.treatment === 'AI_AVATAR'
           ? 'heygen:avatar-v3'
-          : still
-            ? 'studio:compose'
-            : 'runway:gen-4-turbo',
+          : c.treatment === 'UGC_ACTOR'
+            ? 'veo:veo-3.1-fast-generate-preview'
+            : still
+              ? 'studio:compose'
+              : 'runway:gen-4-turbo',
       publicUrl: null,
     },
   ];
-  if (c.voiceover)
+  if (c.voiceover && c.treatment !== 'UGC_ACTOR')
     assets.push({
       id: `${shotId}-voice`,
       kind: 'AUDIO_VOICE',

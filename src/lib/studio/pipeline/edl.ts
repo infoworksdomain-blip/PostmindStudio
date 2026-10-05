@@ -107,6 +107,12 @@ export interface EdlShot {
   voiceTrimSec?: number | null;
   /** 13.5: play the clip's own audio (uploaded videos); otherwise the clip is muted. */
   keepSourceAudio?: boolean;
+  /**
+   * 21.4: the clip's own audio IS the narration (a UGC actor speaking its line): the clip plays
+   * at full level, counts as voiced (music ducks, the headline moves to the top) and the summary
+   * records it as clip speech for audio_sync.
+   */
+  clipSpeech?: boolean;
   onScreenText?: string | null;
   transitionOut?: string | null;
   /** For TEXT_CARD shots: the card text (falls back to onScreenText). */
@@ -288,7 +294,7 @@ function visualClip(
       asset: {
         type: 'video',
         src: shot.visualSrc,
-        volume: shot.keepSourceAudio ? SOURCE_AUDIO_VOLUME : 0,
+        volume: shot.keepSourceAudio || shot.clipSpeech ? SOURCE_AUDIO_VOLUME : 0,
       },
       start,
       length,
@@ -313,7 +319,7 @@ function audioAndCaptions(
     // A voiced shot carries burned-in narration captions in the lower third (voice-captions.ts,
     // anchorY 0.7), so its headline moves to the top, below the AI label and the platform's top
     // bar; QA run 9 showed the two boxes drawn over each other.
-    const placement = onScreenTextPlacement(Boolean(shot.voiceSrc));
+    const placement = onScreenTextPlacement(Boolean(shot.voiceSrc) || Boolean(shot.clipSpeech));
     tracks.captions.push({
       asset: {
         type: 'html',
@@ -346,6 +352,8 @@ function audioAndCaptions(
       length: roundSec(sfxLength),
     });
   }
+  // 21.4: the actor's speech is the clip itself, laid for the whole shot.
+  if (shot.clipSpeech && !shot.voiceSrc) return length;
   if (!shot.voiceSrc) return null;
   const clipSec =
     shot.voiceTrimSec && shot.voiceTrimSec > 0
@@ -399,11 +407,12 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
       lengthSec: roundSec(shot.durationSec),
       treatment: shot.visualTreatment,
       voiceClipSec,
+      ...(shot.clipSpeech && !shot.voiceSrc && { speech: 'clip' as const }),
     });
     spans.push({
       startSec: start,
       endSec: start + shot.durationSec,
-      volume: shot.voiceSrc ? 1 : 0,
+      volume: shot.voiceSrc || shot.clipSpeech ? 1 : 0,
     });
     start += shot.durationSec;
   }
@@ -450,7 +459,7 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
   }
   if (input.musicSrc) {
     // 15.B4: duck under narrated shots; full bed where nothing is said (cards, silent shots).
-    const narrated = tracks.voice.length > 0;
+    const narrated = tracks.voice.length > 0 || input.shots.some((s) => s.clipSpeech);
     const level = (voiced: boolean) =>
       narrated && voiced ? MUSIC_UNDER_VOICE_VOLUME : MUSIC_ALONE_VOLUME;
     const bed: MusicSpan[] = [

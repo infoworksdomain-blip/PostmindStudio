@@ -5,57 +5,55 @@ import {
   portalConfigurationParams,
   priceCreateParams,
   priceMatches,
-  productIdForTier,
 } from './stripe-setup';
 import { isTestModeKey, STRIPE_API_VERSION } from './stripe-client';
 
-describe('seed catalogue (scripts/billing/seed-stripe-test.ts)', () => {
-  it('creates 4 plan products and 5 top-up products with studio_tier metadata', () => {
+describe('seed catalogue (scripts/billing/seed-stripe-test.ts, 21.5)', () => {
+  it('creates the channel product (STANDARD) and one product per HD video pack', () => {
     const products = catalogueProducts();
     expect(products.map((p) => p.id)).toEqual([
-      'studio_basic',
-      'studio_standard',
-      'studio_plus',
-      'studio_enterprise',
-      'studio_topup_short10_basic',
-      'studio_topup_short10_standard',
-      'studio_topup_short10_plus',
-      'studio_topup_long2_standard',
-      'studio_topup_long2_plus',
+      'studio_channel',
+      'studio_pack_hd5',
+      'studio_pack_hd15',
     ]);
-    expect(products.find((p) => p.id === 'studio_enterprise')?.metadata.studio_tier).toBe(
-      'ENTERPRISE',
-    );
+    expect(products[0]?.metadata).toEqual({
+      studio_tier: 'STANDARD',
+      studio_catalogue: 'channel_plan',
+    });
+    expect(products[2]?.metadata).toMatchObject({
+      studio_catalogue: 'video_pack',
+      studio_pack_videos: '15',
+      studio_pack_valid_months: '3',
+    });
   });
 
-  it('creates exactly the §P.2 prices: 6 recurring + 5 one-time, GBP, tax exclusive', () => {
+  it('creates 3 per-unit recurring prices (quantity = channels) and 2 one-time packs, GBP, tax exclusive', () => {
     const specs = cataloguePrices();
-    expect(specs.filter((s) => s.interval).map((s) => [s.lookupKey, s.unitAmountPence])).toEqual([
-      ['studio_basic_monthly', 2_900],
-      ['studio_basic_yearly', 29_000],
-      ['studio_standard_monthly', 9_900],
-      ['studio_standard_yearly', 99_000],
-      ['studio_plus_monthly', 34_900],
-      ['studio_plus_yearly', 349_000],
+    expect(specs.map((s) => [s.lookupKey, s.unitAmountPence, s.interval])).toEqual([
+      ['studio_channel_weekly', 950, 'week'],
+      ['studio_channel_monthly', 2_900, 'month'],
+      ['studio_channel_yearly', 29_000, 'year'],
+      ['studio_pack_hd5', 1_500, null],
+      ['studio_pack_hd15', 3_900, null],
     ]);
-    expect(specs.filter((s) => !s.interval)).toHaveLength(5);
-    const monthly = priceCreateParams(specs[0]!);
-    expect(monthly).toMatchObject({
-      product: 'studio_basic',
+    const weekly = priceCreateParams(specs[0]!);
+    expect(weekly).toEqual({
+      product: 'studio_channel',
       currency: 'gbp',
-      unit_amount: 2_900,
-      lookup_key: 'studio_basic_monthly',
+      unit_amount: 950,
+      lookup_key: 'studio_channel_weekly',
       transfer_lookup_key: true,
       tax_behavior: 'exclusive',
-      recurring: { interval: 'month' },
+      recurring: { interval: 'week', usage_type: 'licensed' },
+      metadata: { studio_lookup_key: 'studio_channel_weekly' },
     });
-    const topup = priceCreateParams(specs.find((s) => s.lookupKey === 'studio_topup_long2_plus')!);
-    expect(topup.recurring).toBeUndefined();
-    expect(topup.unit_amount).toBe(5_500);
+    const pack = priceCreateParams(specs.find((s) => s.lookupKey === 'studio_pack_hd15')!);
+    expect(pack.recurring).toBeUndefined();
+    expect(pack).toMatchObject({ product: 'studio_pack_hd15', unit_amount: 3_900 });
   });
 
   it('leaves a matching price alone and replaces a changed one', () => {
-    const spec = cataloguePrices()[0]!;
+    const spec = cataloguePrices()[1]!;
     const same = {
       unitAmountPence: 2_900,
       currency: 'gbp',
@@ -64,6 +62,7 @@ describe('seed catalogue (scripts/billing/seed-stripe-test.ts)', () => {
     };
     expect(priceMatches(same, spec)).toBe(true);
     expect(priceMatches({ ...same, unitAmountPence: 6_900 }, spec)).toBe(false);
+    expect(priceMatches({ ...same, interval: 'year' }, spec)).toBe(false);
     expect(priceMatches({ ...same, active: false }, spec)).toBe(false);
     expect(priceMatches({ ...same, currency: 'usd' }, spec)).toBe(false);
   });
@@ -76,12 +75,9 @@ describe('seed catalogue (scripts/billing/seed-stripe-test.ts)', () => {
   });
 });
 
-describe('portal configuration (scripts/billing/portal-config.ts)', () => {
-  it('matches §2.7: invoices, payment methods, tax ids, plan switching, cancel at period end', () => {
-    const params = portalConfigurationParams({
-      appUrl: 'https://studio.example.com',
-      products: [{ productId: productIdForTier('PLUS'), priceIds: ['price_a', 'price_b'] }],
-    });
+describe('portal configuration (scripts/billing/portal-config.ts, 21.5)', () => {
+  it('payment methods, invoices, billing details and tax ids only; plan changes stay in Studio', () => {
+    const params = portalConfigurationParams({ appUrl: 'https://studio.example.com' });
     expect(params.default_return_url).toBe('https://studio.example.com/settings/billing');
     expect(params.business_profile?.terms_of_service_url).toBe(
       'https://studio.example.com/legal/terms',
@@ -89,18 +85,7 @@ describe('portal configuration (scripts/billing/portal-config.ts)', () => {
     expect(params.features.invoice_history?.enabled).toBe(true);
     expect(params.features.payment_method_update?.enabled).toBe(true);
     expect(params.features.customer_update?.allowed_updates).toContain('tax_id');
-    expect(params.features.subscription_cancel).toMatchObject({
-      enabled: true,
-      mode: 'at_period_end',
-      cancellation_reason: { enabled: true },
-    });
-    expect(params.features.subscription_update).toMatchObject({
-      enabled: true,
-      proration_behavior: 'always_invoice',
-      schedule_at_period_end: {
-        conditions: [{ type: 'decreasing_item_amount' }, { type: 'shortening_interval' }],
-      },
-      products: [{ product: 'studio_plus', prices: ['price_a', 'price_b'] }],
-    });
+    expect(params.features.subscription_cancel).toEqual({ enabled: false });
+    expect(params.features.subscription_update).toEqual({ enabled: false });
   });
 });

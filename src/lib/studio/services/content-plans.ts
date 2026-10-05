@@ -45,14 +45,16 @@ import { DEFAULT_LANGUAGE, languageInput } from '../languages';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { MAX_SCHEDULE_AHEAD_DAYS } from '../schedule-window';
+import { planUsesUgcActors } from '../ugc/plan-month';
+import { isUgcLanguage } from '../ugc/style';
 import { businessIdParam } from './businesses';
 import { PLATFORMS, toPlanTier } from './catalog';
 import { heldSlots, parseSlots } from './drip-queue';
 import { tierQuota, videoLimitViolations } from './plan-quotas';
 import { loadPlanContext, writeTopics, type PlanGenerator } from './content-plan-draft';
 
-// 20.9 â€” "Plan my month" (operator request 2026-09-30): the owner picks a window (default the
-// next free day for 30 days, at most 31), posts a day (1â€“4, or the business's posting times), the
+// 20.9 — "Plan my month" (operator request 2026-09-30): the owner picks a window (default the
+// next free day for 30 days, at most 31), posts a day (1–4, or the business's posting times), the
 // video/slideshow split and the platforms; Studio lays out the slots (content-plans/slots.ts),
 // the varied mix (mix.ts), caps the count at the remaining allowance and cost cap (allowance.ts)
 // and has Claude write the topics in the background (draft-content-plan job). The owner edits the
@@ -84,7 +86,7 @@ export const createPlanInput = z
     videoShare: z.number().int().min(0).max(100).default(DEFAULT_VIDEO_SHARE),
     platforms: z.array(z.enum(PLATFORMS)).min(1).max(PLATFORMS.length),
     /**
-     * 20.12: the accounts the posts go to â€” none, or some of the platforms, is allowed. A
+     * 20.12: the accounts the posts go to — none, or some of the platforms, is allowed. A
      * platform without an account is still rendered; with no account at all every post is made
      * and saved for review instead of being scheduled (content-plan-run.ts projectBodyFor).
      */
@@ -92,6 +94,11 @@ export const createPlanInput = z
     timezone: timezone.optional(),
     language: languageInput.optional(),
     brandKitId: z.string().trim().min(1).max(64).optional(),
+    /**
+     * 21.4: make the plan's testimonial and product videos as UGC actor videos (STANDARD and
+     * above, English). Stored in metadata.ugcActors; content-plan-run.ts projectBodyFor applies it.
+     */
+    ugcActors: z.boolean().default(false),
   })
   .strict();
 
@@ -194,6 +201,7 @@ export function publicPlan(plan: PlanWithItems) {
     })),
     language: plan.language,
     brandKitId: plan.brandKitId,
+    ugcActors: planUsesUgcActors(plan),
     requestedCount: plan.requestedCount,
     cappedReason: plan.cappedReason,
     holdReason: plan.holdReason,
@@ -240,7 +248,7 @@ async function latestActiveWindowEnd(
   return latest?.windowEnd.getTime();
 }
 
-/** GET /content-plans/defaults â€” what the "Plan my month" form starts from. */
+/** GET /content-plans/defaults — what the "Plan my month" form starts from. */
 export async function planDefaults(
   deps: PlanDeps,
   tenant: Pick<TenantContext, 'organisationId' | 'organisation'>,
@@ -335,7 +343,7 @@ async function candidateSlots(
   return dripSlotsInWindow(slots, window, zone);
 }
 
-/** POST /content-plans â€” lay out the month and start the background draft. */
+/** POST /content-plans — lay out the month and start the background draft. */
 export async function createPlan(
   deps: PlanDeps,
   tenant: Pick<TenantContext, 'organisationId' | 'userId' | 'capabilities' | 'organisation'>,
@@ -347,6 +355,10 @@ export async function createPlan(
   await assertDraftQuota(deps.db, tenant.organisationId, now);
   assertPlatformsAllowed(tier, input.platforms, deps.env);
   await assertTargets(deps.db, tenant, input.platforms, input.targets);
+  if (input.ugcActors) {
+    if (!isUgcLanguage(input.language ?? DEFAULT_LANGUAGE))
+      throw new ValidationError('UGC actors speak English only for now', { field: 'language' });
+  }
   if (input.brandKitId) {
     const kit = await deps.db.brandKit.findFirst({
       where: { id: input.brandKitId, organisationId: tenant.organisationId },
@@ -409,8 +421,8 @@ export async function createPlan(
   if (capped.count === 0)
     throw new QuotaExceededError(
       capped.cappedReason === 'cost_cap'
-        ? 'This monthâ€™s spending limit leaves no room for more posts; add a top-up to plan your month'
-        : 'Your plan has no videos left this month; add a top-up to plan your month',
+        ? 'This month’s limit leaves no room for more posts; buy a video pack to plan your month'
+        : 'Your plan has no videos left for now; add a channel or buy a video pack to plan your month',
       { cappedReason: capped.cappedReason, allowance, cost },
     );
   const runId = randomUUID();
@@ -435,7 +447,7 @@ export async function createPlan(
       planTier: tier,
       requestedCount: skeleton.length,
       cappedReason: capped.cappedReason,
-      metadata: { draftRunId: runId },
+      metadata: { draftRunId: runId, ...(input.ugcActors && { ugcActors: true }) },
       items: {
         create: skeleton.slice(0, capped.count).map((s, position) => ({
           organisationId: tenant.organisationId,
@@ -469,7 +481,7 @@ async function enqueueDraft(queue: JobQueue, plan: ContentPlan, runId: string, t
   await queue.add('draft-content-plan', data, { jobId: jobIds.draftContentPlan(data) });
 }
 
-/** POST /content-plans/:id/redraft â€” write the items that still have no topic (after a failure). */
+/** POST /content-plans/:id/redraft — write the items that still have no topic (after a failure). */
 export async function redraftPlan(deps: PlanDeps, organisationId: string, id: string) {
   const plan = await findPlan(deps.db, organisationId, id);
   if (plan.status !== 'DRAFT')
@@ -545,7 +557,7 @@ export async function updateDraftItem(
   });
 }
 
-/** POST /content-plans/:id/items â€” add a post at a free time inside the window (â‰¤ 4 a day). */
+/** POST /content-plans/:id/items — add a post at a free time inside the window (≤ 4 a day). */
 export async function addDraftItem(
   deps: Pick<PlanDeps, 'db' | 'now'>,
   plan: PlanWithItems,
@@ -556,7 +568,7 @@ export async function addDraftItem(
   const now = deps.now();
   const { windowStart, windowEnd } = plan;
   if (at < windowStart.getTime() || at >= windowEnd.getTime())
-    throw new ValidationError('The time must be inside the planâ€™s dates');
+    throw new ValidationError('The time must be inside the plan’s dates');
   if (availableSlots([at], [], now).length === 0)
     throw new ValidationError('The time is too soon to generate the post first');
   const live = liveItems(plan.items);
@@ -605,7 +617,7 @@ export async function deleteDraftItem(db: Db, plan: PlanWithItems, itemId: strin
 }
 
 /**
- * POST /content-plans/:id/reorder â€” the post times stay where they are and the topics move: the
+ * POST /content-plans/:id/reorder — the post times stay where they are and the topics move: the
  * n-th id in `itemIds` takes the n-th earliest time (every draft item exactly once).
  */
 export async function reorderDraft(
@@ -630,7 +642,7 @@ export async function reorderDraft(
   );
 }
 
-/** POST /content-plans/:id/items/:itemId/regenerate â€” one new topic for one draft item. */
+/** POST /content-plans/:id/items/:itemId/regenerate — one new topic for one draft item. */
 export async function regenerateDraftItem(
   deps: Pick<PlanDeps, 'db' | 'now'> & { generate: PlanGenerator },
   plan: PlanWithItems,

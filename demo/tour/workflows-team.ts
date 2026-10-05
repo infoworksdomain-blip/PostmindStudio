@@ -16,8 +16,8 @@ export const TEAM_WORKFLOWS: Workflow[] = [
     caption: 'Welcome, Jo',
     steps: [
       {
-        text: 'Members on Standard: 4 people and Sam’s pending invitation use all 5 seats, so the invite form is off and the seat meter offers “Upgrade”.',
-        href: withPlan('#/settings/members', 'active_standard'),
+        text: 'Members: the plan has 5 seats; 4 people and Sam’s pending invitation use them all, so the invite form is off and the seat meter says every seat is in use.',
+        href: withPlan('#/settings/members', 'active_monthly'),
         cta: 'Members',
       },
       {
@@ -41,9 +41,9 @@ export const TEAM_WORKFLOWS: Workflow[] = [
         cta: 'Roles',
       },
       {
-        text: 'On Basic (2 seats) the organisation is over its seats: nobody is removed, new invites are refused until it fits or upgrades.',
-        href: withPlan('#/settings/members', 'active_basic'),
-        cta: 'Seat limit',
+        text: 'Every channel plan has 5 seats; more are arranged with sales (Enterprise, 40 seats here), so the invite form opens again.',
+        href: withPlan('#/settings/members', 'enterprise'),
+        cta: 'More seats',
       },
     ],
   },
@@ -60,6 +60,11 @@ export const TEAM_WORKFLOWS: Workflow[] = [
         text: 'Connections: each account with “Access checked <date>” from the daily check.',
         href: '#/connections',
         cta: 'Connections',
+      },
+      {
+        text: 'Channels: the plan pays for 3, so the platforms connected first (TikTok, Instagram, YouTube) publish; Facebook, X and LinkedIn stay connected but show “add a channel”. Publishing to one of them opens “Add a channel to publish here”.',
+        href: '#/connections',
+        cta: 'Channel limit',
       },
       {
         text: 'Connect TikTok (or YouTube, LinkedIn): the demo’s OAuth round trip comes straight back with the “connected” notice.',
@@ -86,25 +91,25 @@ export const TEAM_WORKFLOWS: Workflow[] = [
   {
     id: 'brand-voice',
     title: 'Brand voice',
-    outcome: 'The owner clones her own voice, with recorded consent, for narration (Plus).',
+    outcome: 'The owner clones her own voice, with recorded consent, for narration (Enterprise).',
     area: 'team',
     scene: 'studio',
     caption: 'In Amara’s voice',
     steps: [
       {
-        text: 'Business → Brand tab → Voice profiles: on Standard the heading carries a “Plus” lock badge.',
-        href: withPlan('#/business', 'active_standard'),
+        text: 'Business → Brand tab → Voice profiles: voice cloning is not part of the per-channel plan, so the heading carries a “Not in your plan” badge.',
+        href: withPlan('#/business', 'active_monthly'),
         cta: 'Voice (locked)',
       },
       {
-        text: 'Try “Add voice” anyway: the server answers 403 plan_tier and the upgrade dialog names Plus.',
+        text: 'Try “Add voice” anyway: the server answers 403 plan_tier and the dialog says it is not included in your plan.',
         href: '#/business',
         cta: 'Blocked',
       },
       {
-        text: 'On Plus: name the voice, record the speaker reading the consent statement, add 1–5 samples, tick consent and save.',
-        href: withPlan('#/business', 'active_plus'),
-        cta: 'Clone on Plus',
+        text: 'On Enterprise: name the voice, record the speaker reading the consent statement, add 1–5 samples, tick consent and save.',
+        href: withPlan('#/business', 'enterprise'),
+        cta: 'Clone on Enterprise',
       },
       {
         text: 'Preview the voice with a line of text; set it on a brand kit so narration uses it.',

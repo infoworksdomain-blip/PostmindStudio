@@ -347,6 +347,40 @@ function meetTheBakers(): ProjectRec {
   });
 }
 
+/**
+ * 21.4: a UGC actor video ready for review: a generated creator speaks every line (Veo's own
+ * audio), a product still and an end card; the AI-generated label is always on.
+ */
+function ugcReview(): ProjectRec {
+  const { id, name } = PROJECTS.ugcReview;
+  const p = seeded(
+    baseProject(id, name, {
+      state: 'READY_FOR_REVIEW',
+      scene: 'kitchen',
+      targetFormats: vertical(['tiktok', 'instagram_reel'], 30),
+      costActualPence: 231,
+      costBudgetPence: 600,
+      createdAt: ago(3 * HOUR),
+      updatedAt: ago(70 * MIN),
+      completedAt: ago(70 * MIN),
+      metadata: {
+        ugc: {
+          style: 'UGC_ACTOR',
+          product: { name: 'Weekly bread box', imageId: null },
+          actor: { ageRange: '25-34', gender: 'woman', setting: 'kitchen' },
+          seed: 1_048_576,
+        },
+        music: { status: 'generated', reused: false, durationSec: 30 },
+      },
+    }),
+  );
+  return withRenders(
+    p,
+    { tiktok: `${id}-render-tiktok`, instagram_reel: `${id}-render-reels` },
+    { createdAt: ago(70 * MIN) },
+  );
+}
+
 export function seedProjects(): void {
   [
     spring,
@@ -358,5 +392,6 @@ export function seedProjects(): void {
     wholesale,
     christmas,
     meetTheBakers,
+    ugcReview,
   ].forEach((make) => putProject(make()));
 }

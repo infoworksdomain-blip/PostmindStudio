@@ -128,19 +128,24 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
     ).toBe(403);
   });
 
-  it('GET /billing/plans: amounts come from Stripe by lookup key', async () => {
+  it('GET /billing/plans: per-channel amounts come from Stripe by lookup key (21.5)', async () => {
     const res = await call(plansRoute.GET, { token: 'member', path: '/api/studio/billing/plans' });
     expect(res.status).toBe(200);
     const pricing = res.json.pricing as {
-      plans: Array<{ tier: string; prices: { month?: { unitAmountPence: number } } }>;
+      intervals: Array<{ interval: string; unitAmountPence: number }>;
+      topUps: Array<{ lookupKey: string; unitAmountPence: number }>;
     };
-    expect(pricing.plans.find((p) => p.tier === 'PLUS')?.prices.month?.unitAmountPence).toBe(
-      34_900,
-    );
+    expect(pricing.intervals.map((i) => [i.interval, i.unitAmountPence])).toEqual([
+      ['week', 950],
+      ['month', 2_900],
+      ['year', 29_000],
+    ]);
+    expect(pricing.topUps.map((p) => p.lookupKey)).toEqual(['studio_pack_hd5', 'studio_pack_hd15']);
+    expect(JSON.stringify(pricing)).not.toMatch(/capHeadroom|costPence/);
   });
 
   it('checkout: owner only, validated, returns the Stripe URL; the trial is offered once', async () => {
-    const body = { kind: 'subscription', tier: 'STANDARD', interval: 'month' };
+    const body = { kind: 'channels', channels: 3, interval: 'month' };
     expect(
       (
         await call(checkoutRoute.POST, {
@@ -157,7 +162,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
           token: 'owner',
           method: 'POST',
           path: '/api/studio/billing/checkout',
-          body: { ...body, tier: 'ENTERPRISE' },
+          body: { ...body, channels: 7 },
         })
       ).status,
     ).toBe(400);
@@ -181,8 +186,10 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
     expect(res.json.url).toMatch(/^https:\/\/checkout\.stripe\.test\//);
     const params = fake.calls.find((c) => c.method === 'createCheckoutSession')?.args[0] as {
       client_reference_id: string;
+      line_items: unknown;
     };
     expect(params.client_reference_id).toBe(org);
+    expect(params.line_items).toEqual([{ price: 'price_studio_channel_monthly', quantity: 3 }]);
   });
 
   it('portal and invoices are scoped to the caller’s own organisation', async () => {
@@ -190,7 +197,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       token: 'owner',
       method: 'POST',
       path: '/api/studio/billing/checkout',
-      body: { kind: 'subscription', tier: 'BASIC', interval: 'year' },
+      body: { kind: 'channels', channels: 1, interval: 'year' },
     });
     const portal = await call(portalRoute.POST, {
       token: 'owner',
@@ -229,7 +236,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
       token: 'owner',
       method: 'POST',
       path: '/api/studio/billing/checkout',
-      body: { kind: 'subscription', tier: 'BASIC', interval: 'month' },
+      body: { kind: 'channels', channels: 1, interval: 'month' },
     });
     expect(res.status).toBe(501);
   });
@@ -291,7 +298,7 @@ describe.skipIf(!hasDb)('billing API', { timeout: 90_000 }, () => {
         token: 'owner',
         method: 'POST',
         path: '/api/studio/billing/checkout',
-        body: { kind: 'topup', lookupKey: 'studio_topup_short10_plus' },
+        body: { kind: 'topup', lookupKey: 'studio_pack_hd5' },
       });
       expect(checkout.status).toBe(200);
     });

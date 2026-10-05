@@ -24,6 +24,10 @@ export interface UsageResponse {
     planTier: 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
     mode: 'warn' | 'enforce';
     month: string;
+    /** 21.5: the allowance window (a weekly channel plan counts per ISO week). */
+    period?: 'week' | 'month';
+    /** 21.5: a per-channel plan (no tier names, no long videos). */
+    channelPlan?: boolean;
     periodStart: string;
     resetsAt: string;
     thresholds: number[];
@@ -78,6 +82,19 @@ export function UsageMeters({ usage }: { usage: UsageResponse['usage'] }) {
   const short = usage.videos.short.maxDurationSec;
   const long = usage.videos.long.maxDurationSec;
   const tier = t(`tiers.${usage.planTier}`);
+  // 21.5: a per-channel plan shows videos per week or month, never a tier name or long videos.
+  if (usage.channelPlan)
+    return (
+      <div className="grid gap-4">
+        <MeterRow
+          label={t('videosThisPeriod', { period: usage.period ?? 'month' })}
+          meter={usage.videos.short}
+        />
+        <p className="text-xs text-muted-foreground">
+          {t('moreFrom', { date: resetDate(usage.resetsAt) })}
+        </p>
+      </div>
+    );
   const summary = [
     t('planName', { tier }),
     usage.platforms.description,
@@ -122,21 +139,41 @@ export function UsageBanner() {
     >
       <Gauge className="size-6 text-muted-foreground" strokeWidth={1.5} aria-hidden />
       <div className="text-sm">
-        <p className="font-medium">
-          {exceeded
-            ? t('exceededTitle', { tier: t(`tiers.${usage.planTier}`) })
-            : t('warningTitle', { tier: t(`tiers.${usage.planTier}`) })}
-        </p>
-        <p className="text-muted-foreground">
-          {blocked
-            ? t('blockedBody', { date: resetDate(usage.resetsAt) })
-            : t('resetBody', { date: resetDate(usage.resetsAt) })}
-        </p>
+        {usage.channelPlan ? (
+          <>
+            <p className="font-medium">
+              {exceeded
+                ? t('planExceededTitle', { period: usage.period ?? 'month' })
+                : t('planWarningTitle', { period: usage.period ?? 'month' })}
+            </p>
+            <p className="text-muted-foreground">
+              {blocked
+                ? t('planBlockedBody', { date: resetDate(usage.resetsAt) })
+                : t('planResetBody', { date: resetDate(usage.resetsAt) })}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-medium">
+              {exceeded
+                ? t('exceededTitle', { tier: t(`tiers.${usage.planTier}`) })
+                : t('warningTitle', { tier: t(`tiers.${usage.planTier}`) })}
+            </p>
+            <p className="text-muted-foreground">
+              {blocked
+                ? t('blockedBody', { date: resetDate(usage.resetsAt) })
+                : t('resetBody', { date: resetDate(usage.resetsAt) })}
+            </p>
+          </>
+        )}
         <UsageBannerActions />
       </div>
       <div className="grid gap-3">
-        <MeterRow label={t('shortVideos')} meter={usage.videos.short} />
-        {usage.videos.long.limit !== 0 && (
+        <MeterRow
+          label={usage.channelPlan ? t('videos') : t('shortVideos')}
+          meter={usage.videos.short}
+        />
+        {usage.videos.long.limit !== 0 && !usage.channelPlan && (
           <MeterRow label={t('longVideos')} meter={usage.videos.long} />
         )}
       </div>

@@ -327,6 +327,81 @@ describe('PlanScreen', () => {
   });
 });
 
+// Operator decision 2026-10-04: generation cost is never shown to customers; platform staff still
+// see it. The customer tests need plans.allowance.buyPack, plans.capped.monthLimit /
+// allowancePack and plans.hold.monthLimit from .i18n-tmp/frag-costs/en-GB.json.
+describe('month plans: costs for staff only', () => {
+  const me = (platformRole: string) =>
+    ok({ me: { capabilities: [], user: { id: 'u1', name: 'A', email: 'a@b.c', platformRole } } });
+
+  function serveForm(platformRole: string) {
+    return mockFetch((req) => {
+      if (req.url.pathname.endsWith('/me')) return me(platformRole);
+      if (req.url.pathname.endsWith('/content-plans/defaults')) return ok({ defaults: DEFAULTS });
+      if (req.url.pathname.endsWith('/platform-connections')) return ok({ data: [CONNECTION] });
+      return undefined;
+    });
+  }
+
+  function servePlan(platformRole: string, patch: Partial<Plan> = {}) {
+    return mockFetch((req) =>
+      req.url.pathname.endsWith('/me') ? me(platformRole) : ok({ plan: plan(patch) }),
+    );
+  }
+
+  it('the month form shows customers the allowance and a video pack link, never spending', async () => {
+    const api = serveForm('user');
+    renderScreen(<PlanMonthForm />);
+    await screen.findByLabelText('Start date');
+    await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
+    expect(screen.getByText(/30 videos left of 40/)).toBeInTheDocument();
+    expect(screen.queryByTestId('plan-spend')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('plan-cost-hint')).not.toBeInTheDocument();
+    expect(screen.queryByText(/£|spending|cost/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Buy a video pack' })).toHaveAttribute(
+      'href',
+      '/settings/billing#topups',
+    );
+  });
+
+  it('the month form shows staff the spending limit and typical cost', async () => {
+    serveForm('staff');
+    renderScreen(<PlanMonthForm />);
+    expect(await screen.findByTestId('plan-spend')).toHaveTextContent(
+      'Spending limit: £5.00 of £73.00 used',
+    );
+    expect(screen.getByTestId('plan-cost-hint')).toHaveTextContent('about £1.60 a video');
+  });
+
+  it('the draft editor gives customers the allowance use without a cost estimate', async () => {
+    const api = servePlan('user');
+    renderScreen(<PlanScreen planId="plan_1" />);
+    await screen.findByRole('heading', { name: '4 posts: 2 videos and 2 slideshows' });
+    await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
+    expect(screen.getByText(/Uses 4 videos of this month’s allowance/)).toBeInTheDocument();
+    expect(screen.queryByText(/Estimated cost|£/)).not.toBeInTheDocument();
+  });
+
+  it('the draft editor shows staff the cost estimate', async () => {
+    servePlan('superadmin');
+    renderScreen(<PlanScreen planId="plan_1" />);
+    expect(
+      await screen.findByText(/Estimated cost to make: about £6.20 \(at most £10.00\)/),
+    ).toBeInTheDocument();
+  });
+
+  it('says a capped plan hit this month’s limit, with a link to buy a video pack', async () => {
+    servePlan('user', { cappedReason: 'cost_cap', requestedCount: 6 });
+    renderScreen(<PlanScreen planId="plan_1" />);
+    const notice = await screen.findByText(/this month’s limit/);
+    expect(notice).not.toHaveTextContent(/spend|top-up/i);
+    expect(within(notice).getByRole('link', { name: 'Buy a video pack' })).toHaveAttribute(
+      'href',
+      '/settings/billing#topups',
+    );
+  });
+});
+
 describe('PlansList', () => {
   it('lists the business plans with their status', async () => {
     const { items: _items, ...summary } = plan({ status: 'SCHEDULED' });

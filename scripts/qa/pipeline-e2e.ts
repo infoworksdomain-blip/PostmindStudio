@@ -56,6 +56,8 @@ import {
 //   failover-credits  Seedance is out of credit; the same call fails over to Kling at once
 //   cost-cap-project  the project's own budget is tiny: the run pauses (cost_cap_paused)
 //   cost-cap-org      the organisation's daily cap is tiny: the run pauses (cost_cap_paused)
+//   ugc-actor         21.4: a UGC actor video: actor clips from (simulated) Veo speak their lines,
+//                     no ElevenLabs voice, clip speech captioned and kept in the edit, gate passed
 
 const TERMINAL = new Set([
   'READY_FOR_REVIEW',
@@ -73,6 +75,7 @@ const SCENARIOS = [
   'failover-credits',
   'cost-cap-project',
   'cost-cap-org',
+  'ugc-actor',
 ] as const;
 type ScenarioName = (typeof SCENARIOS)[number];
 
@@ -530,6 +533,59 @@ async function failover(ctx: Ctx, fault: ProviderFault): Promise<Check[]> {
   return checks;
 }
 
+/** 21.4: a UGC actor video end to end on the stubbed pipeline. */
+async function ugcActor(ctx: Ctx): Promise<Check[]> {
+  const world = await createWorld(ctx, 'ugc');
+  const projectId = await startProject(ctx, world, {
+    name: 'QA UGC actor',
+    brief: { rawInput: 'A friendly creator reviews our weekly sourdough box' },
+    ugc: { product: { name: 'Sourdough box' }, actor: { gender: 'woman', setting: 'kitchen' } },
+  });
+  const run = await waitFor(ctx, projectId, (p) => TERMINAL.has(p.state));
+  const rows = await providerJobs(ctx, world.organisationId);
+  const shots = await ctx.db.videoShot.findMany({
+    where: { script: { projectId } },
+    orderBy: { sortOrder: 'asc' },
+  });
+  const actors = shots.filter((s) => s.visualTreatment === 'UGC_ACTOR');
+  const renders = await ctx.db.videoRender.findMany({ where: { projectId } });
+  const summary = renders[0]?.composition as { shots?: Array<{ speech?: string }> } | undefined;
+  return [
+    verify(
+      'run reached review',
+      run.project.state === 'READY_FOR_REVIEW',
+      `trail ${run.trail.join(' > ')}; ${run.project.errorReason ?? ''}`,
+    ),
+    verify(
+      'actor clips came from Veo (actor_video)',
+      countOf(rows, { provider: 'veo', operation: 'actor_video', state: 'SUCCEEDED' }) ===
+        actors.length && actors.length >= 2,
+      describeJobs(rows.filter((r) => r.provider === 'veo')),
+    ),
+    verify(
+      'no ElevenLabs voice for actor shots (the clip is the narration)',
+      countOf(rows, { provider: 'elevenlabs', operation: 'tts' }) === 0 &&
+        actors.every((s) => s.voiceAssetId === null),
+      describeJobs(rows.filter((r) => r.provider === 'elevenlabs')),
+    ),
+    verify(
+      'each actor clip was transcribed for captions',
+      countOf(rows, { provider: 'assemblyai', operation: 'transcription' }) >= actors.length,
+      describeJobs(rows.filter((r) => r.provider === 'assemblyai')),
+    ),
+    verify(
+      'the edit keeps the actor clips speaking',
+      (summary?.shots ?? []).filter((s) => s.speech === 'clip').length === actors.length,
+      JSON.stringify(summary?.shots?.map((s) => s.speech ?? '-')),
+    ),
+    verify(
+      'rendered and passed the quality gate',
+      renders.length > 0 && renders.every((r) => r.qualityCheckState === 'PASSED'),
+      renders.map((r) => r.qualityCheckState).join(' '),
+    ),
+  ];
+}
+
 async function costCap(ctx: Ctx, kind: 'project' | 'org'): Promise<Check[]> {
   const world = await createWorld(ctx, kind === 'project' ? 'cap-p' : 'cap-o');
   const projectId = await startProject(ctx, world, {
@@ -724,6 +780,7 @@ async function main(): Promise<void> {
       'failover-credits': (c) => failover(c, 'insufficient_credits'),
       'cost-cap-project': (c) => costCap(c, 'project'),
       'cost-cap-org': (c) => costCap(c, 'org'),
+      'ugc-actor': ugcActor,
     };
     checks = await runner[scenario](ctx);
   } catch (err) {

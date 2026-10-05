@@ -273,15 +273,15 @@ The PostMind Studio team
 --
 This is a service email about your PostMind Studio account. It is sent even if you have turned off other emails.
 ",
-  "topupReceipt": "Subject: Your top-up is ready: 10 short videos
+  "topupReceipt": "Subject: Your video pack is ready: 10 short videos
 
-Top-up added
+Video pack added
 
 Hi,
 
-Thank you. The 10 short videos top-up has been added to your organisation and is ready to use. Stripe sends the receipt separately.
+Thank you. Your 10 short videos pack has been added. Use it on any channel within 3 months. Stripe sends the receipt separately.
 
-View usage: https://studio.example.com/settings/billing
+Open Your plan: https://studio.example.com/settings/billing
 
 The PostMind Studio team
 

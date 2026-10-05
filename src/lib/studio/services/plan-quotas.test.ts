@@ -3,10 +3,14 @@ import type { PrismaClient } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import { QuotaExceededError } from '../../errors';
 import type { NotificationInput, Notifier } from '../notifications/notifier';
+import type { Entitlements } from '../billing/entitlements-reader';
 import {
+  allowanceWindow,
+  channelAllowanceNotice,
   checkGenerateQuota,
   checkPublishQuota,
   DEFAULT_TIER_QUOTAS,
+  entitlementQuota,
   generateViolations,
   monthlyVideoUsage,
   notifyQuotaThresholds,
@@ -359,5 +363,147 @@ describe('usage view and threshold alerts', () => {
       ),
     ).resolves.toBe(0);
     expect(error).toHaveBeenCalled();
+  });
+});
+
+describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; yearly 8 a month)', () => {
+  const channelEnt = (channels: number, interval: 'week' | 'month' | 'year'): Entitlements => ({
+    tier: 'STANDARD',
+    access: 'full',
+    source: 'stripe',
+    limits: { seats: 5, businesses: 3, storageGb: 100 },
+    channelPlan: { channels, interval, source: 'stripe' },
+  });
+  const base = tierQuota('STANDARD', {});
+
+  it('the allowance is channels × the per-window videos, with no long videos', () => {
+    expect(entitlementQuota(base, channelEnt(3, 'month'))).toMatchObject({
+      shortVideos: 24,
+      longVideos: 0,
+      longMaxSec: 0,
+      channelPlan: true,
+      period: 'month',
+    });
+    expect(entitlementQuota(base, channelEnt(3, 'year'))).toMatchObject({
+      shortVideos: 24,
+      period: 'month',
+    });
+    expect(entitlementQuota(base, channelEnt(3, 'week'))).toMatchObject({
+      shortVideos: 6,
+      period: 'week',
+    });
+  });
+
+  it('staff custom limits still win; a trial keeps its own allowance', () => {
+    expect(
+      entitlementQuota(base, { ...channelEnt(2, 'month'), custom: { shortVideos: 50 } })
+        .shortVideos,
+    ).toBe(50);
+    const trial = {
+      startedAt: '2026-09-20T00:00:00Z',
+      endsAt: '2026-10-04T00:00:00Z',
+      shortVideos: 5,
+      longVideos: 0,
+      dailyCostCapPence: 1_000,
+      totalCostCapPence: 1_500,
+    };
+    expect(entitlementQuota(base, { ...channelEnt(6, 'month'), trial })).toMatchObject({
+      shortVideos: 5,
+      longVideos: 0,
+      longMaxSec: 0,
+    });
+  });
+
+  it('weekly plans count per ISO week; everything else per calendar month', () => {
+    // Monday 28 September 2026 is the start of W40.
+    expect(allowanceWindow(channelEnt(1, 'week'), SEPT)).toEqual({
+      key: '2026-W40',
+      start: new Date('2026-09-28T00:00:00Z'),
+      end: new Date('2026-10-05T00:00:00Z'),
+    });
+    expect(allowanceWindow(channelEnt(1, 'year'), SEPT).key).toBe('2026-09');
+    expect(allowanceWindow(undefined, SEPT).key).toBe('2026-09');
+  });
+
+  it('a long video is not part of the channel plan', () => {
+    const quota = entitlementQuota(base, channelEnt(1, 'month'));
+    expect(videoLimitViolations(row('l', 120, null) as never, quota, 'STANDARD')).toEqual([
+      expect.objectContaining({
+        code: 'long_not_included',
+        message: expect.stringMatching(/^Your plan/),
+      }),
+    ]);
+  });
+
+  it('usage counts the weekly window and says so; messages never name a tier', async () => {
+    const rows = [
+      row('a', 20, '2026-09-28T09:00:00Z'), // this week
+      row('b', 20, '2026-09-27T09:00:00Z'), // last week (same month)
+    ];
+    const view = await usageView(
+      { db: fakeDb(rows) as never, now: () => SEPT, env: {} },
+      'org-1',
+      'STANDARD',
+      undefined,
+      channelEnt(1, 'week'),
+    );
+    expect(view).toMatchObject({
+      month: '2026-W40',
+      period: 'week',
+      channelPlan: true,
+      resetsAt: '2026-10-05T00:00:00.000Z',
+      videos: { short: { used: 1, limit: 2 } },
+    });
+    const violations = generateViolations({
+      project: row('c', 20, null) as never,
+      alreadyCounted: false,
+      usage: { short: 2, long: 0 },
+      quota: entitlementQuota(base, channelEnt(1, 'week')),
+      tier: 'STANDARD',
+    });
+    expect(violations[0]?.message).toBe(
+      'Your plan includes 2 short videos a week and 2 have been generated',
+    );
+  });
+
+  it('enforce answers quota_exceeded with "add a channel or buy a video pack"', async () => {
+    const rows = Array.from({ length: 8 }, (_, i) => row(`p${i}`, 20, '2026-09-05T00:00:00Z'));
+    const target = row('new', 20, null);
+    const db: Record<string, unknown> = fakeDb([...rows, target], {
+      $executeRaw: async () => 0,
+      usageCreditUse: { findUnique: async () => null },
+      usageCredit: { findMany: async () => [] },
+    });
+    db.$transaction = async (fn: (tx: unknown) => unknown) => fn(db);
+    const reader = {
+      forOrganisation: async () => channelEnt(1, 'month'),
+      invalidate: () => undefined,
+    };
+    const err = await checkGenerateQuota(
+      { db: db as never, logger, now: () => SEPT, env: {}, entitlements: reader },
+      tenantOn('STANDARD'),
+      'new',
+    ).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(QuotaExceededError);
+    expect((err as Error).message).toMatch(/Add a channel or buy a video pack for more\.$/);
+    expect((err as QuotaExceededError).details).toMatchObject({ channelPlan: true });
+  });
+
+  it('allowance notices name the week or month and the ways to keep going', () => {
+    const view = { period: 'week' as const, resetsAt: '2026-10-05T00:00:00.000Z' };
+    expect(channelAllowanceNotice(view, { used: 5, limit: 6 }, 80, false)).toMatchObject({
+      title: "80% of this week's videos used",
+      message: {
+        key: 'videoAllowanceNearing',
+        params: { threshold: 80, used: 5, limit: 6, period: 'week' },
+      },
+    });
+    expect(channelAllowanceNotice(view, { used: 6, limit: 6 }, 100, true)).toMatchObject({
+      title: "All of this week's videos used",
+      message: { key: 'videoAllowanceUsed', params: { blocked: 'yes', period: 'week' } },
+    });
+    expect(channelAllowanceNotice(view, { used: 6, limit: 6 }, 100, true).body).toMatch(
+      /add a channel or buy a video pack/,
+    );
   });
 });

@@ -5,8 +5,8 @@ import { defaultProjectBudgetPence, DEFAULT_CAROUSEL_BUDGET_PENCE } from '../cos
 import { createProjectInput } from '../services/projects';
 import { projectBodyFor } from '../services/content-plan-run';
 import { featureForProjectSource } from '../services/features';
+import { allowanceUnitsOf } from '../ugc/allowance';
 import {
-  allowanceUnits,
   DEFAULT_TIER_QUOTAS,
   monthlyVideoUsage,
   videoKind,
@@ -30,14 +30,18 @@ const carouselProject = {
 describe('allowance', () => {
   it('counts a carousel as CAROUSEL_ALLOWANCE_UNITS (1) short video', async () => {
     expect(CAROUSEL_ALLOWANCE_UNITS).toBe(1);
-    expect(allowanceUnits(carouselProject)).toBe(1);
+    expect(allowanceUnitsOf({ carousel: { version: 1 } })).toBe(CAROUSEL_ALLOWANCE_UNITS);
+    expect(allowanceUnitsOf({})).toBe(1);
     expect(videoKind(carouselProject, DEFAULT_TIER_QUOTAS.BASIC)).toBe('short');
     const now = Date.parse('2026-10-04T12:00:00Z');
     const month = monthWindow(now);
     const db = {
       videoProject: {
         findMany: vi.fn(async () => [
-          { ...carouselProject, metadata: { generationStart: { at: '2026-10-02T09:00:00Z' } } },
+          {
+            ...carouselProject,
+            metadata: { carousel: { version: 1 }, generationStart: { at: '2026-10-02T09:00:00Z' } },
+          },
           {
             sourceType: 'BRIEF',
             targetFormats: [{ platform: 'tiktok', duration: 15 }],
@@ -106,6 +110,7 @@ describe('month plans', () => {
         platforms: ['tiktok', 'youtube_short'],
         language: 'de',
         brandKitId: null,
+        metadata: null,
         targets: [
           { platform: 'tiktok', connectionId: 'c1' },
           { platform: 'youtube_short', connectionId: 'c2' },
@@ -113,6 +118,7 @@ describe('month plans', () => {
       },
       {
         kind: 'CAROUSEL',
+        angle: 'how_to',
         title: 'Bread tips',
         brief: 'Five ways to keep bread fresh',
         slides: null,

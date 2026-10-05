@@ -106,6 +106,13 @@ function subscriptionData(state: SubscriptionState, organisationId: string, now:
     unitAmountPence: state.unitAmountPence,
     currency: state.currency,
     quantity: state.quantity,
+    // 21.5: the change scheduled for the end of the period (a subscription schedule's next
+    // phase) and an upgrade waiting for its payment (pending_update).
+    scheduleId: state.scheduleId,
+    pendingQuantity: state.pendingChange?.quantity ?? null,
+    pendingLookupKey: state.pendingChange?.lookupKey ?? null,
+    pendingEffectiveAt: state.pendingChange?.effectiveAt ?? null,
+    pendingUpdate: state.hasPendingUpdate,
     stripeUpdatedAt: now,
   };
 }
@@ -188,6 +195,10 @@ export async function recomputeEntitlements(
       access: derived.access,
       source: derived.source,
       status: derived.status,
+      ...(derived.channelPlan && {
+        channels: derived.channelPlan.channels,
+        interval: derived.channelPlan.interval,
+      }),
     },
     ...(trialing &&
       trialStartedAt && {
@@ -222,7 +233,15 @@ export async function recomputeEntitlements(
     update: row,
   });
   invalidateEntitlements(organisationId);
-  if (!before || before.tier !== effective.tier || before.access !== effective.access) {
+  const channelsChanged =
+    before?.channelPlan?.channels !== effective.channelPlan?.channels ||
+    before?.channelPlan?.interval !== effective.channelPlan?.interval;
+  if (
+    !before ||
+    before.tier !== effective.tier ||
+    before.access !== effective.access ||
+    channelsChanged
+  ) {
     deps.audit({
       actorUserId: STRIPE_ACTOR,
       organisationId,
@@ -231,8 +250,21 @@ export async function recomputeEntitlements(
       metadata: {
         cause,
         status: derived.status,
-        from: before ? { tier: before.tier, access: before.access } : null,
-        to: { tier: effective.tier, access: effective.access, source: effective.source },
+        from: before
+          ? {
+              tier: before.tier,
+              access: before.access,
+              channels: before.channelPlan?.channels ?? null,
+              interval: before.channelPlan?.interval ?? null,
+            }
+          : null,
+        to: {
+          tier: effective.tier,
+          access: effective.access,
+          source: effective.source,
+          channels: effective.channelPlan?.channels ?? null,
+          interval: effective.channelPlan?.interval ?? null,
+        },
       },
     });
   }

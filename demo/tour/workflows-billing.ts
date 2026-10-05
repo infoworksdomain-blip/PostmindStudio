@@ -2,9 +2,12 @@ import { PROJECTS } from '../api/ids';
 import { PRICE_TEXT } from './price-text';
 import { projectHref as p, withPlan, type Workflow } from './workflow-types';
 
-// Phase 18 workflows: sign-up to the first video, subscribing, limits and upgrades, a failed
-// payment, and cancelling. The payment steps use the demo's own "Demo checkout (simulated)" page
-// (no card details, one "Complete demo payment" button); `withPlan` links set the billing state.
+// Phase 18 / 21.5 workflows: sign-up to the first video, subscribing, using up the videos (video
+// packs, adding a channel, the channel limit), changing the plan (upgrade now, downgrade at the end
+// of the period), a failed payment, and cancelling. One plan, paid per channel: £29 per channel a
+// month with 8 videos per channel. The payment steps use the demo's own "Demo checkout
+// (simulated)" page (no card details, one "Complete demo payment" button); `withPlan` links set
+// the billing state.
 
 const draft = p(PROJECTS.meetTheBakers.id);
 
@@ -13,7 +16,7 @@ export const BILLING_WORKFLOWS: Workflow[] = [
     id: 'signup-first-video',
     title: 'Sign up to the first video',
     outcome:
-      'A visitor finds Studio, signs up, sets up the bakery and starts the free Standard trial to generate.',
+      'A visitor finds Studio, picks how many channels to pay for, signs up, sets up the bakery and starts the free trial to generate.',
     area: 'billing',
     scene: 'storefront',
     caption: 'Leeds Sourdough, est. 2019',
@@ -24,13 +27,13 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Homepage',
       },
       {
-        text: 'Compare the plans; flip Monthly / Annual (annual shows the saving). On Standard press “Start free trial”.',
+        text: `One plan, paid per channel: choose 3 channels and Monthly (${PRICE_TEXT.channelMonthly} per channel, 24 videos a month included), then press “Start free trial”.`,
         href: '#/pricing',
         cta: 'Pricing',
       },
       {
         text: 'Sign up as Amara Okafor, amara@leedssourdough.example, with a long password: watch the strength meter, then “Create account”.',
-        href: '#/sign-up?plan=STANDARD&interval=month',
+        href: '#/sign-up?next=%2Fsettings%2Fbilling%3Fchannels%3D3%26interval%3Dmonth',
         cta: 'Sign up',
       },
       {
@@ -54,8 +57,8 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Generate (no plan)',
       },
       {
-        text: 'On Billing press “Start free trial” on Standard (14 days, £0 today), then “Complete demo payment” on the simulated checkout: the banner counts down 14 days and Generate works.',
-        href: withPlan('#/settings/billing', 'no_plan'),
+        text: 'On Your plan choose 3 channels, Monthly, and press “Start free trial” (14 days with 5 videos, £0 today), then “Complete demo payment” on the simulated checkout: the banner counts down 14 days and Generate works.',
+        href: withPlan('#/settings/billing?channels=3&interval=month', 'no_plan'),
         cta: 'Start the trial',
       },
     ],
@@ -63,86 +66,123 @@ export const BILLING_WORKFLOWS: Workflow[] = [
   {
     id: 'start-subscription',
     title: 'Start a subscription',
-    outcome: 'An organisation without a plan picks Plus, billed annually, and pays once.',
+    outcome:
+      'A returning organisation (its trial already used) picks 6 channels, billed yearly, and pays once upfront.',
     area: 'billing',
     scene: 'coffee',
-    caption: 'Plus, billed yearly',
+    caption: '6 channels, yearly',
     steps: [
       {
-        text: 'Pricing: toggle Annual to see the yearly prices and the saving (“Save £418.00 a year” on Standard); the comparison table below lists every limit.',
+        text: `Pricing: switch to Yearly (${PRICE_TEXT.channelYearly} per channel, paid upfront: 2 months free) and Weekly (${PRICE_TEXT.channelWeekly} per channel a week, dearer over a month). The video packs and the questions are below.`,
         href: '#/pricing',
         cta: 'Pricing',
       },
       {
-        text: 'Billing without a plan shows the plan picker. Switch its toggle to Annual and press “Choose Plus”.',
-        href: withPlan('#/settings/billing', 'no_plan'),
+        text: 'Your plan after an earlier plan ended shows the plan picker. Choose 6 channels and Yearly, then “Continue to payment”.',
+        href: withPlan('#/settings/billing', 'cancelled'),
         cta: 'Plan picker',
       },
       {
-        text: 'The clearly labelled “Demo checkout (simulated)” page: plan, annual price, no card fields. Press “Complete demo payment”.',
-        href: '#/demo-checkout?kind=subscription&tier=PLUS&interval=year',
+        text: 'The clearly labelled “Demo checkout (simulated)” page: 6 channels, the yearly price, 576 videos a year included, no card fields. Press “Complete demo payment”.',
+        href: '#/demo-checkout?kind=channels&channels=6&interval=year',
         cta: 'Demo checkout',
       },
       {
-        text: 'Back on Billing: “Your plan is active”, Plus, billed annually, the renewal date, usage meters against the Plus limits.',
+        text: 'Back on Your plan: 6 channels, yearly, the renewal date, and 48 videos this month (8 per channel, released each month).',
         href: '#/settings/billing',
         cta: 'Active plan',
       },
       {
-        text: 'Scroll to Invoices: the paid invoices at the plan’s price (PDF links in the live app).',
-        href: '#/settings/billing',
-        cta: 'Invoices',
+        text: 'Your channels: all six connected platforms publish, so nothing shows “add a channel”.',
+        href: '#/connections',
+        cta: 'Every platform publishes',
       },
       {
-        text: 'Plus unlocks voice clone, TEMPLATE mode and AI images: the lock badges are gone on Business → Brand.',
-        href: '#/business',
-        cta: 'No more locks',
+        text: 'Scroll to Invoices: the paid invoice at the plan’s price (PDF links in the live app).',
+        href: '#/settings/billing',
+        cta: 'Invoices',
       },
     ],
   },
   {
     id: 'limit-upgrade',
-    title: 'Hit a limit and upgrade',
+    title: 'Use up the videos, buy a pack, add a channel',
     outcome:
-      'A Basic organisation runs out of videos, buys a top-up, then meets a Plus feature and upgrades.',
+      'A 1-channel organisation runs out of videos, buys an HD video pack, then adds a channel; with 3 channels the fourth platform asks for another.',
     area: 'billing',
     scene: 'market',
-    caption: '20 of 20 used',
+    caption: '8 of 8 used',
     steps: [
       {
-        text: 'On Basic this month’s 20 short videos are used: the usage banner says so with “Upgrade” and “Buy top-up”.',
-        href: withPlan('#/projects', 'active_basic'),
-        cta: 'Basic, at the limit',
+        text: 'On 1 channel all 8 videos this month are made: the usage banner says so.',
+        href: withPlan('#/projects', 'allowance_used'),
+        cta: '1 channel, all used',
       },
       {
-        text: 'Press Generate on the draft: 403 quota_exceeded opens the upgrade dialog with Upgrade or “Buy top-up”.',
+        text: 'Press Generate on the draft: 403 quota_exceeded opens the dialog with “Add a channel” or “Buy a video pack”.',
         href: draft,
         cta: 'Generate',
       },
       {
-        text: `“Buy top-up” (in the dialog or the banner) opens Billing at the top-up packs: press Buy on “10 short videos” (${PRICE_TEXT.basicShortTopUp}), then “Complete demo payment” on the simulated checkout.`,
+        text: `“Buy a video pack” opens Your plan at the video packs: press Buy on “5 HD videos” (${PRICE_TEXT.packHd5}; 15 are ${PRICE_TEXT.packHd15}), then “Complete demo payment” on the simulated checkout.`,
         href: '#/settings/billing#topups',
-        cta: 'Buy a top-up',
+        cta: 'Buy a video pack',
       },
       {
-        text: 'Billing now shows 10 short-video credits; they are used only after the plan’s allowance.',
-        href: '#/settings/billing',
-        cta: 'Credits shown',
-      },
-      {
-        text: 'Generate again: it runs on a credit (9 left).',
+        text: 'Your plan now shows 5 pack videos left: they work on any channel, are used after the plan’s videos and last 3 months. Generate again: it runs on a pack video (4 left).',
         href: draft,
-        cta: 'Generate on a credit',
+        cta: 'Generate on a pack video',
       },
       {
-        text: 'Back on Standard, Business → Brand: Voice profiles carry a “Plus” lock badge. Add a voice: 403 plan_tier names Plus and its price, with Upgrade.',
-        href: withPlan('#/business', 'active_standard'),
-        cta: 'Locked feature',
+        text: 'Change your plan: add a channel (2 channels). More channels apply now: the preview shows the new monthly price and the amount due today for the rest of the period. Confirm.',
+        href: '#/settings/billing#change',
+        cta: 'Add a channel',
       },
       {
-        text: 'Upgrade opens the simulated billing portal (the plan is live): “Switch to Plus”. The badge disappears.',
-        href: '#/demo-checkout?kind=portal',
-        cta: 'Upgrade',
+        text: 'On 3 channels, six platforms are connected but only the first three (TikTok, Instagram, YouTube) publish. Connections and Your plan say Facebook, X and LinkedIn need another channel.',
+        href: withPlan('#/connections', 'active_monthly'),
+        cta: 'Channel limit',
+      },
+      {
+        text: 'Business → Brand: voice profiles carry a “Not in your plan” badge (an Enterprise feature, arranged with sales). Adding a voice answers 403 plan_tier.',
+        href: '#/business',
+        cta: 'Not in your plan',
+      },
+    ],
+  },
+  {
+    id: 'change-plan',
+    title: 'Change channels and how often you pay',
+    outcome:
+      'The owner adds channels (applies now, pays the difference), removes some (applies at the end of the period), keeps the current plan, and moves to yearly.',
+    area: 'billing',
+    scene: 'kitchen',
+    caption: '3 channels, monthly',
+    steps: [
+      {
+        text: 'Your plan: 3 channels, monthly, 20 of 24 videos used this month, renewal date. Under “Change your plan” add two channels (5): the preview says it applies now and what is due today.',
+        href: withPlan('#/settings/billing#change', 'active_monthly'),
+        cta: 'Upgrade preview',
+      },
+      {
+        text: '“Review change”, then “Pay … and change”: the plan is 5 channels at once and 40 videos a month are included.',
+        href: '#/settings/billing#change',
+        cta: 'Upgrade now',
+      },
+      {
+        text: 'Now remove channels down to 2: the preview says it applies at the end of the period, nothing to pay now. Confirm: Your plan shows “From <date>: 2 channels, monthly”.',
+        href: '#/settings/billing#change',
+        cta: 'Downgrade later',
+      },
+      {
+        text: 'Changed your mind? Press “Keep my current plan”: the scheduled change is dropped.',
+        href: '#/settings/billing',
+        cta: 'Keep my plan',
+      },
+      {
+        text: 'On a weekly plan (2 channels, 4 videos a week, counted Monday to Sunday) switch to Yearly: a longer period applies now and the new yearly period starts today.',
+        href: withPlan('#/settings/billing#change', 'active_weekly'),
+        cta: 'Weekly to yearly',
       },
     ],
   },
@@ -161,9 +201,9 @@ export const BILLING_WORKFLOWS: Workflow[] = [
         cta: 'Past-due banner',
       },
       {
-        text: 'Billing: status “Past due” with the days of grace left, and the latest invoice open.',
+        text: 'Your plan: status “Payment failed” with the days of grace left, and the latest invoice open. Plan changes wait until the payment is sorted.',
         href: '#/settings/billing',
-        cta: 'Billing',
+        cta: 'Your plan',
       },
       {
         text: 'The email owners get (rendered by the real template).',
@@ -191,14 +231,14 @@ export const BILLING_WORKFLOWS: Workflow[] = [
     id: 'cancel-retention',
     title: 'Cancel, data retention and leaving',
     outcome:
-      'The owner cancels; the organisation turns read-only, is kept 90 days, then deleted; the account can be deleted too.',
+      'The owner cancels at the end of the period (undoable until then); the organisation turns read-only, is kept 90 days, then deleted; the account can be deleted too.',
     area: 'billing',
     scene: 'kitchen',
     caption: 'Closing the shop',
     steps: [
       {
-        text: 'Billing → “Manage billing” opens the simulated portal. Press “Cancel at period end”: Billing shows “Cancels on …”.',
-        href: withPlan('#/demo-checkout?kind=portal', 'active_standard'),
+        text: 'Your plan → “Cancel plan” and confirm: “Your plan ends on …”, with full access until then. “Keep my plan” undoes it any time before. No refund for the part-used period.',
+        href: withPlan('#/settings/billing', 'active_monthly'),
         cta: 'Cancel the plan',
       },
       {

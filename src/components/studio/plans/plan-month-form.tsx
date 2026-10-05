@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+import { UGC_VIDEO_ALLOWANCE_UNITS } from '@/lib/studio/ugc/allowance';
 import {
   CREATE_BLOCK_NOTICE_ID,
   CreateBlockedNotice,
@@ -18,6 +19,7 @@ import { useFormat } from '@/lib/client/format';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { connectionsFor, publishablePlatforms } from '../automation/automation';
+import { useShowCosts } from '../account/use-show-costs';
 import { useBusiness } from '../business-context';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import { defaultZone } from '../calendar/drip-queue';
@@ -48,6 +50,8 @@ export function PlanMonthForm() {
   const tp = useTranslations('plans.new.problems');
   const block = useCreateBlock();
   const f = useFormat();
+  // Operator decision 2026-10-04: what a post typically costs to make is for platform staff only.
+  const showCosts = useShowCosts();
   const router = useRouter();
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
@@ -245,6 +249,28 @@ export function PlanMonthForm() {
             <p className="text-xs text-muted-foreground">{t('mixHint')}</p>
           </div>
 
+          {/* 21.4: a plan's testimonial and product videos as UGC actor videos. */}
+          {form.videoShare > 0 && (
+            <div className="flex items-start gap-2">
+              <input
+                id="plan-ugc"
+                type="checkbox"
+                checked={Boolean(form.ugcActors)}
+                onChange={(e) => patch({ ugcActors: e.target.checked })}
+                aria-describedby="plan-ugc-hint"
+                className="mt-0.5 size-4 accent-foreground"
+              />
+              <div className="flex flex-col gap-0.5">
+                <label htmlFor="plan-ugc" className="text-sm">
+                  {t('ugcActors')}
+                </label>
+                <p id="plan-ugc-hint" className="text-xs text-muted-foreground">
+                  {t('ugcActorsHint', { count: UGC_VIDEO_ALLOWANCE_UNITS })}
+                </p>
+              </div>
+            </div>
+          )}
+
           <PlatformChips
             value={form.platforms}
             onChange={(next) => next.platforms && patch({ platforms: next.platforms })}
@@ -306,12 +332,14 @@ export function PlanMonthForm() {
         </div>
         <aside className="flex flex-col gap-3">
           <AllowancePanel allowance={d.allowance} cost={d.cost} />
-          <p className="text-xs text-muted-foreground">
-            {t('costHint', {
-              video: f.pence(d.typicalCostPence.VIDEO),
-              slideshow: f.pence(d.typicalCostPence.SLIDESHOW),
-            })}
-          </p>
+          {showCosts && (
+            <p className="text-xs text-muted-foreground" data-testid="plan-cost-hint">
+              {t('costHint', {
+                video: f.pence(d.typicalCostPence.VIDEO),
+                slideshow: f.pence(d.typicalCostPence.SLIDESHOW),
+              })}
+            </p>
+          )}
         </aside>
       </form>
     </>

@@ -124,7 +124,10 @@ export function useDescribeFailure(
             });
           case 'scan_cost_cap':
           case 'scan_images_capped':
-            return t(`codes.${p.code}`, { amount: f.pence(params.pence ?? null) });
+            // Operator decision 2026-10-04: the cap's amount is for platform staff only.
+            return staff
+              ? t(`codes.${p.code}`, { amount: f.pence(params.pence ?? null) })
+              : t(`limits.${p.code}`);
           case 'scan_pages_skipped':
           case 'scan_images_skipped':
             return t(`codes.${p.code}`, { count: params.count ?? 0 });

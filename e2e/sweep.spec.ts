@@ -469,18 +469,22 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await expect(page.getByText(/Deleted “Client sign-off”/).first()).toBeVisible();
   await w.check('/approvals create+delete');
 
-  // Settings: organisation save, billing period toggle, members.
+  // Settings: organisation save, Your plan (21.5: channels and how often you pay), members.
   await w.visit('/settings/organisation');
   await page.getByRole('button', { name: 'Save' }).first().click();
   await w.settle();
   await w.check('/settings/organisation save');
   await w.visit('/settings/billing');
-  await page
-    .getByRole('radio', { name: 'Annual' })
-    .or(page.getByRole('button', { name: 'Annual' }))
-    .first()
-    .click();
-  await w.check('/settings/billing annual');
+  await expect(page.getByRole('heading', { name: 'Your plan', level: 1 })).toBeVisible();
+  const period = page.getByRole('radiogroup', { name: 'How often you pay' }).first();
+  await period.getByRole('radio', { name: 'Yearly' }).click();
+  await expect(period.getByRole('radio', { name: 'Yearly' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await page.getByRole('button', { name: 'Add a channel' }).first().click();
+  await w.settle();
+  await w.check('/settings/billing yearly, channels');
   await w.visit('/settings/members');
 
   // Account: profile save, delete-account section untouched, export page.

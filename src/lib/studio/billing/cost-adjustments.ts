@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { utcMonthKey, utcMonthRange } from '../cost/caps';
 import type { CapAdjustment, CapAdjustmentLookup } from '../cost/guard';
+import { channelCostCapsPence } from './channel-plan';
 import { creditHeadroomPence } from './credits';
 import type { EntitlementsReader } from './entitlements-reader';
 
@@ -10,7 +11,9 @@ import type { EntitlementsReader } from './entitlements-reader';
 //     stopped by the cap they paid for;
 //   - trial: £10 a day and £15 for the WHOLE trial (§P.1). The trial can span two calendar
 //     months, so the monthly cap during a trial is £15 minus what the trial already spent in
-//     earlier months.
+//     earlier months;
+//   - 21.5 channel plan: daily and monthly caps sized to the plan's allowance (channels ×
+//     ~£2.50 a video + 25 % headroom, channel-plan.ts), replacing the STANDARD tier default.
 
 type AdjustmentDb = Pick<PrismaClient, 'usageCreditUse' | 'usageCredit' | 'providerUsage'>;
 
@@ -45,7 +48,12 @@ export async function capAdjustmentFor(
     };
   }
   const headroom = await creditHeadroomPence(db, organisationId, utcMonthKey(at));
-  return headroom > 0 ? { monthlyHeadroomPence: headroom } : null;
+  // 21.5: a per-channel plan's caps scale with its channels (internal; never shown to customers).
+  const plan = ent.channelPlan
+    ? channelCostCapsPence(ent.channelPlan.channels, ent.channelPlan.interval)
+    : undefined;
+  if (headroom === 0 && !plan) return null;
+  return { monthlyHeadroomPence: headroom, ...(plan && { plan }) };
 }
 
 /**
