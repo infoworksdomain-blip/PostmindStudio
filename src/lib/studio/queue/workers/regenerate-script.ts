@@ -38,7 +38,7 @@ import {
 } from './plan-project';
 import { SCRIPT_MAX_TOKENS } from '../../pipeline/token-budgets';
 
-// Phase 13.1 â€” POST /scripts/:id/regenerate (spec 8.4): a new run from Layer 2 for ONE script,
+// Phase 13.1 — POST /scripts/:id/regenerate (spec 8.4): a new run from Layer 2 for ONE script,
 // reusing the Layer 1 brief stored in video_briefs (no ideation spend). The rewrite goes through
 // the same pre-generation safety gate, replaces that script's shots and suggested overlays, and
 // fans out generate-asset for the new shots; the project's other scripts are untouched and keep
@@ -181,7 +181,7 @@ export async function regenerateScriptPlan(
     shots: texts,
   };
 
-  // Pre-generation safety gate â€” before any Layer 3 spend
+  // Pre-generation safety gate — before any Layer 3 spend
   const safetyRun = await runProvider(
     textRequest(
       data,
