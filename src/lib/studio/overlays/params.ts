@@ -179,6 +179,9 @@ export function applyBrand(
  * more (edl-backdrop readableTextColour, the rule text cards already use). Production QA run 9
  * (2026-10-04): a near-black brand primary as the box and a dark-navy secondary as the text made
  * every caption and hook unreadable.
+ * 21.4b: a box-less style (backgroundType 'none', e.g. the outlined TikTok classic captions of UGC
+ * videos) is left as it is: its readability comes from the stroke, and there is no box colour to
+ * measure against, so the text is never swapped to near-black.
  */
 export function withReadableText(style: OverlayStyle): OverlayStyle {
   const box = style.backgroundType !== 'none' ? style.backgroundColor : null;

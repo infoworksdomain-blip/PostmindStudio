@@ -8,6 +8,7 @@ import {
   overlayTiming,
   presetParameters,
   resolveStyle,
+  withReadableText,
   type OverlayStyle,
 } from './params';
 
@@ -236,6 +237,34 @@ describe('resolveStyle', () => {
   it('does not mutate DEFAULT_STYLE', () => {
     resolveStyle({ fontFamily: 'Anton' });
     expect(DEFAULT_STYLE.fontFamily).toBe('Montserrat');
+  });
+});
+
+describe('withReadableText on a box-less outlined style (21.4b)', () => {
+  const outlined = validStyle({
+    fillColor: '#FFFFFF',
+    strokeColor: '#000000',
+    strokeWidthPx: 3,
+    backgroundType: 'none',
+    backgroundColor: null,
+  });
+
+  it('leaves white text with a black stroke alone (no box to contrast with)', () => {
+    expect(withReadableText(outlined)).toEqual(outlined);
+  });
+
+  it('ignores a stale box colour when there is no box', () => {
+    const stale = { ...outlined, backgroundColor: '#FFFFFF' };
+    expect(withReadableText(stale).fillColor).toBe('#FFFFFF');
+  });
+
+  it('still fixes text on a real box', () => {
+    const boxed = validStyle({
+      backgroundType: 'box',
+      backgroundColor: '#FFFFFF',
+      fillColor: '#FFFFFF',
+    });
+    expect(withReadableText(boxed).fillColor).not.toBe('#FFFFFF');
   });
 });
 

@@ -248,7 +248,7 @@ export async function regenerateScriptPlan(
       }
     }
     const shots = await tx.videoShot.findMany({ where: { id: { in: created } } });
-    await createSuggestedOverlays(tx, shots, brandKit, reference);
+    await createSuggestedOverlays(tx, shots, brandKit, reference, { ugc: mode.ugc !== null });
   });
   await transitionProject(deps.db, {
     projectId: project.id,

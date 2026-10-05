@@ -63,8 +63,9 @@ export function ugcScriptSupplement(input: {
     'The first and last shots are UGC_ACTOR shots (hook and call to action).',
     // 21.4a: labels over a selfie cover the face; the actor's words are captioned anyway.
     'UGC_ACTOR shots have an empty onScreenText (their words are captioned, and a label would cover the face), except the first shot, which may have a hook label of at most 4 words.',
+    // 21.4b: B-roll is product footage, the way Fastlane's UGC videos cut away (2026-10-05).
     others.length
-      ? `Other shots (${others.join(', ')}) are short product B-roll or a closing card: they have NO voiceoverText (the creator’s voice is only in UGC_ACTOR shots); put any words for them in onScreenText.`
+      ? `${others.join(', ')} shots are product B-roll: the product being used, shown close-up like a phone-camera photo (sceneDescription describes hands holding or using the product, no person's face). Each lasts 2 to 3 seconds; put at most one B-roll shot between two UGC_ACTOR shots. They have NO voiceoverText (the creator’s voice is only in UGC_ACTOR shots); onScreenText is empty or one short line of at most 5 words. Never a title card, text card or graphic.`
       : '',
     'sceneDescription for a UGC_ACTOR shot says what the creator does (e.g. holds the product up to the camera, points at it, smiles); never describe their face or name a real person.',
     product ? `The product is "${product}"; show it in the creator’s hand where it fits.` : '',
@@ -72,6 +73,23 @@ export function ugcScriptSupplement(input: {
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+/**
+ * 21.4b: the image prompt for a UGC B-roll still that has to be generated (no product photo, no
+ * library match): the product in use, close-up, like a phone photo, in the actor's setting.
+ */
+export function ugcStillPrompt(input: { style: UgcStyle; sceneDescription: string }): string {
+  const product = clean(input.style.product.name, 120);
+  const scene = clean(input.sceneDescription, 400);
+  return [
+    `Vertical phone-camera photo of hands using ${product ? `"${product}"` : 'the product'}, close-up, handheld, natural light, in ${SETTING_TEXT[input.style.actor.setting]}.`,
+    scene && `Scene: ${scene}.`,
+    'Authentic, unposed user-generated look, slight motion blur is fine; no face in frame.',
+    'No text, captions, logos, watermarks or graphics.',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }
 
 /**

@@ -580,6 +580,15 @@ async function ugcActor(ctx: Ctx): Promise<Check[]> {
       `portraits ${portraits.length}; clips use ${JSON.stringify([...clipPortraits])}`,
     ),
     verify(
+      'B-roll is 2–3 s product stills, never a card (21.4b)',
+      shots.every(
+        (s) =>
+          s.visualTreatment === 'UGC_ACTOR' ||
+          (s.visualTreatment === 'IMAGE_STILL' && s.durationSec >= 2 && s.durationSec <= 3),
+      ),
+      JSON.stringify(shots.map((s) => [s.visualTreatment, s.durationSec])),
+    ),
+    verify(
       'no ElevenLabs voice for actor shots (the clip is the narration)',
       countOf(rows, { provider: 'elevenlabs', operation: 'tts' }) === 0 &&
         actors.every((s) => s.voiceAssetId === null),

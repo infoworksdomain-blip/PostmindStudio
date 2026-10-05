@@ -47,6 +47,7 @@ import {
 import { scriptLayerMode } from '../../ugc/script-layer';
 import { ugcIdeationSupplement } from '../../ugc/prompt';
 import { checkRealPersonRequest, UGC_REAL_PERSON_REASON } from '../../ugc/real-person';
+import { ugcStyleOf } from '../../ugc/style';
 import {
   ideationMaxTokens,
   MAX_PLANNING_OUTPUT_TOKENS,
@@ -191,7 +192,9 @@ async function persistPlan(
     }
     // Layer 2 also proposes styled overlays for every shot's on-screen text (A4.5).
     const shots = await tx.videoShot.findMany({ where: { script: { projectId: project.id } } });
-    await createSuggestedOverlays(tx, shots, brandKit, reference);
+    await createSuggestedOverlays(tx, shots, brandKit, reference, {
+      ugc: ugcStyleOf(project.metadata) !== null,
+    });
   });
 }
 
@@ -201,6 +204,8 @@ export async function createSuggestedOverlays(
   shots: VideoShot[],
   brandKit: BrandKit | null,
   reference: ReferenceGuide | null,
+  /** 21.4b: a UGC video's labels use the native outlined look (overlays/suggest.ts). */
+  options: { ugc?: boolean } = {},
 ): Promise<void> {
   const presets = await tx.overlayPreset.findMany({
     where: { scope: 'BUILT_IN', name: { in: BUILT_IN_PRESETS.map((p) => p.name) } },
@@ -222,6 +227,7 @@ export async function createSuggestedOverlays(
         shots.filter((s) => s.scriptId === scriptId),
         brand,
         reference ? (index) => reference.presetForShot(index) : undefined,
+        options,
       ),
       new Map(presets.map((p) => [p.name, p.id])),
     ),

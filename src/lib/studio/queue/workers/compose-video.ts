@@ -262,6 +262,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       brandMedia: brandKit.media,
       // 21.4: a video with a generated actor always carries the AI-generated label.
       aiLabel: brandKit.aiLabel || ugcVideo,
+      // 21.4b: no boxed headlines in a UGC video (its labels are native-look overlays).
+      ugc: ugcVideo,
       platformCard,
       language: script.language,
       preset,
