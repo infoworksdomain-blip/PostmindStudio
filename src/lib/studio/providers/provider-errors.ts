@@ -60,8 +60,10 @@ export function publicErrorText(err: unknown): string {
 // Several providers report an empty balance as a plain 400 / 422 with only a sentence, so a 4xx
 // that would otherwise be invalid_request / unknown is an account problem when its message says
 // the balance is gone. Conservative on purpose: only out-of-credit wording, never generic text.
+// Production 2026-10-05: a Shotstack render ended "failed" with "… exceeds one or more plan limits.
+// '0.28' credits required, you have '0.01' credits left." (required-vs-left credit wording).
 const OUT_OF_CREDIT_MESSAGE =
-  /\b(?:not have enough credits?|not enough credits?|insufficient (?:api )?(?:credits?|balance|funds)|out of credits?|no (?:remaining )?credits? (?:left|remaining)|credit balance (?:is )?(?:exhausted|too low|insufficient))\b/i;
+  /\b(?:not have enough credits?|not enough credits?|insufficient (?:api )?(?:credits?|balance|funds)|out of credits?|no (?:remaining )?credits? (?:left|remaining)|credit balance (?:is )?(?:exhausted|too low|insufficient)|credits? required,? you have\b[^\n]{0,40}?\bcredits? left)/i;
 
 /** True when a provider's message says the account has no credit / balance left. */
 export function isOutOfCreditMessage(message: string | null | undefined): boolean {
