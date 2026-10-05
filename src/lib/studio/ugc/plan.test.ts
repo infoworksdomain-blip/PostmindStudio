@@ -7,6 +7,7 @@ import {
   actorClipSeconds,
   applyUgcPlan,
   ugcTreatments,
+  ugcUsesReferenceImage,
 } from './plan';
 
 function shot(
@@ -29,6 +30,19 @@ function shot(
 
 const sum = (plan: PlannedScript) =>
   Math.round(plan.shots.reduce((t, s) => t + s.durationSec, 0) * 10) / 10;
+
+describe('reference images force 8 s actor clips (21.4a)', () => {
+  const reg = (has: boolean) => ({
+    getAdaptersByCapability: () => (has ? [{}] : []) as never[],
+  });
+  it('a product photo or an image generator (the actor portrait) means references', () => {
+    expect(ugcUsesReferenceImage('img-1', reg(false))).toBe(true);
+    expect(ugcUsesReferenceImage(null, reg(true))).toBe(true);
+    expect(ugcUsesReferenceImage(null, reg(false))).toBe(false);
+    expect(actorClipSeconds(true)).toEqual([8]);
+    expect(actorClipSeconds(false)).toEqual([4, 6, 8]);
+  });
+});
 
 describe('actor clip budget (21.4)', () => {
   it.each([

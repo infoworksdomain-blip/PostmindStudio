@@ -72,4 +72,47 @@ describe('Kling actor clips (21.4, opt-in)', () => {
     // 0.9 units × $0.14 = $0.126/s × 6 s = $0.756 × 0.75 = 56.7 → 57p.
     expect(submitted.estimatedCostPence).toBe(57);
   });
+
+  it('21.4a: with the actor portrait (9:16), image-to-video from that first frame with native audio', async () => {
+    const { kling, requests } = adapter(true, [
+      json({ code: 0, data: { id: 'task_2', status: 'submitted' } }),
+    ]);
+    const submitted = await kling.submit({
+      ...actor,
+      actorImageUrl: 'https://cdn.example/actor.png',
+    });
+    expect(requests[0]).toMatchObject({
+      url: 'https://api-singapore.klingai.com/image-to-video/kling-3.0',
+      body: {
+        contents: [
+          { type: 'prompt', text: expect.stringContaining("says: \"This 'one' app") },
+          { type: 'first_frame', url: 'https://cdn.example/actor.png' },
+        ],
+        settings: { multi_shot: false, audio: 'native', resolution: '720p', duration: 6 },
+      },
+    });
+    const body = requests[0]?.body as { settings: Record<string, unknown> };
+    expect(body.settings).not.toHaveProperty('aspect_ratio');
+    expect(JSON.stringify(requests[0]?.body)).not.toContain('product.png');
+    // Same native-audio price as text-to-video.
+    expect(submitted.estimatedCostPence).toBe(57);
+  });
+
+  it('21.4a: a landscape video keeps text-to-video (the portrait frame would be cropped hard)', () => {
+    const { kling } = adapter(true);
+    const built = kling.buildRequest({
+      ...actor,
+      aspectRatio: '16:9',
+      actorImageUrl: 'https://cdn.example/actor.png',
+    });
+    expect(built.path).toBe('/text-to-video/kling-3.0');
+    expect(JSON.stringify(built.body)).not.toContain('actor.png');
+  });
+
+  it('21.4a: refuses a non-https portrait URL', () => {
+    const { kling } = adapter(true);
+    expect(() =>
+      kling.buildRequest({ ...actor, actorImageUrl: 'http://cdn.example/actor.png' }),
+    ).toThrow(/https/);
+  });
 });

@@ -7,6 +7,7 @@ import { TYPICAL_TEXT_OUTPUT_TOKENS, TYPICAL_USER_PROMPT_CHARS } from '../cost/v
 import type { AspectRatio } from '../providers/interface';
 import type { PlanTier } from '../providers/router';
 import { ACTOR_CLIP_SECONDS_WITH_PRODUCT, actorClipBudget } from './plan';
+import { PORTRAIT_ASPECT } from './prompt';
 
 // BACKLOG 21.4 — what one UGC actor video costs at list price, and its default project budget.
 // The shape of a typical 30 s UGC short (ugc/plan.ts): the tier's actor clips at 8 s each (the
@@ -67,6 +68,17 @@ export function typicalUgcVideoCalls(
     textCall(IDEATION_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.ideation),
     textCall(SCRIPT_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.script),
     textCall(SCRIPT_SAFETY_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.safety),
+    // 21.4a: the actor portrait, once per project (ugc/portrait.ts; OpenAI's estimate is spec 6.5's
+    // 4p a still; the charged cost is recorded from its reported usage).
+    {
+      providerId: 'openai',
+      request: {
+        ...IDS,
+        capability: 'text_to_image',
+        prompt: 'actor portrait',
+        aspectRatio: PORTRAIT_ASPECT,
+      },
+    },
   ];
   for (let i = 0; i < clips; i += 1) {
     calls.push({

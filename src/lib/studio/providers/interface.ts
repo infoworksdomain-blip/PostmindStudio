@@ -153,6 +153,12 @@ export interface ActorVideoRequest extends ProviderRequestBase {
   aspectRatio: AspectRatio;
   /** Publicly fetchable (e.g. presigned) URL of the business's product image, when chosen. */
   productImageUrl?: string;
+  /**
+   * 21.4a: publicly fetchable (e.g. presigned) URL of the project's generated actor portrait
+   * (ugc/portrait.ts), the same image for every clip so the actor stays one person. Veo sends it
+   * as a subject reference image; Kling uses it as the first frame (portrait formats only).
+   */
+  actorImageUrl?: string;
   /** Same value for every clip of a project, so providers that take a seed keep the look. */
   seed?: number;
 }

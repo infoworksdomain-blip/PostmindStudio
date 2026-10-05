@@ -8,7 +8,7 @@ import * as autoPublishRoute from '../../src/app/api/studio/projects/[id]/auto-p
 import * as retryRoute from '../../src/app/api/studio/projects/[id]/auto-publish/retry/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
 import { sealTokens } from '../../src/lib/studio/platforms/tokens';
-import { upcomingSlots } from '../../src/lib/studio/services/drip-queue';
+import { DRIP_HORIZON_DAYS, upcomingSlots } from '../../src/lib/studio/services/drip-queue';
 import { call, installApi, tenant } from '../helpers/api-harness';
 import { createHarness } from '../helpers/pipeline-harness';
 
@@ -303,7 +303,10 @@ describe.skipIf(!hasDb)('20.3 month-ahead scheduling API', { timeout: 90_000 }, 
         targetFormats: [],
       },
     });
-    const slots = upcomingSlots(monday, Date.now());
+    // Hold a week past the horizon: the scheduler measures its 8 weeks from its own "now" (+ the
+    // 2-minute lead) in the slot's timezone, so a run that crosses midnight in London between this
+    // line and the approval sees one more Monday (CI on main, 2026-10-04 23:59 BST: 30 Nov offered).
+    const slots = upcomingSlots(monday, Date.now(), DRIP_HORIZON_DAYS + 7);
     await db.autoPublishOutbox.createMany({
       data: slots.map((at, i) => ({
         organisationId: org,

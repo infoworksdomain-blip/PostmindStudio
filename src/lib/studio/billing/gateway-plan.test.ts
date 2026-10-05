@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 import { describe, expect, it } from 'vitest';
 import {
   changeNowParams,
+  createStripeGateway,
   pendingChangeOf,
   schedulePhasesParams,
   toPlanChangePreview,
@@ -213,5 +214,48 @@ describe('toPlanChangePreview', () => {
     expect(
       toPlanChangePreview({ ...inv, total_taxes: null } as unknown as Stripe.Invoice, 1).taxPence,
     ).toBe(0);
+  });
+});
+
+describe('listSubscriptions (Stripe expands at most 4 levels)', () => {
+  it('lists ids without deep expansion, then retrieves each subscription fully expanded', async () => {
+    const depth = (path: string) => path.split('.').length;
+    const calls: Array<{ op: string; expand?: string[] }> = [];
+    const sub = (id: string) =>
+      ({
+        id,
+        object: 'subscription',
+        status: 'active',
+        customer: 'cus_1',
+        metadata: { organisationId: 'org-1' },
+        items: { data: [] },
+        schedule: null,
+        pending_update: null,
+        cancel_at_period_end: false,
+      }) as unknown as Stripe.Subscription;
+    const fake = {
+      subscriptions: {
+        list: (params: { expand?: string[] }) => {
+          calls.push({ op: 'list', expand: params.expand });
+          if ((params.expand ?? []).some((p) => depth(p) > 4))
+            throw new Error('property_expansion_max_depth');
+          return (async function* () {
+            yield sub('sub_1');
+            yield sub('sub_2');
+          })();
+        },
+        retrieve: async (id: string, params: { expand?: string[] }) => {
+          calls.push({ op: 'retrieve', expand: params.expand });
+          if ((params.expand ?? []).some((p) => depth(p) > 4))
+            throw new Error('property_expansion_max_depth');
+          return sub(id);
+        },
+      },
+    } as unknown as Stripe;
+    const ids: string[] = [];
+    for await (const s of createStripeGateway(fake).listSubscriptions()) ids.push(s.id);
+    expect(ids).toEqual(['sub_1', 'sub_2']);
+    expect(calls.filter((c) => c.op === 'retrieve')).toHaveLength(2);
+    expect(calls.find((c) => c.op === 'retrieve')?.expand).toContain('items.data.price.product');
   });
 });

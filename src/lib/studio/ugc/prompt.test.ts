@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { actorClipPrompt, maxWordsFor, ugcIdeationSupplement, ugcScriptSupplement } from './prompt';
+import {
+  ACTOR_LINE_ONCE,
+  actorClipPrompt,
+  maxWordsFor,
+  ugcIdeationSupplement,
+  ugcScriptSupplement,
+} from './prompt';
 import { actorDescription, newUgcStyle } from './style';
 
 const style = newUgcStyle(
@@ -59,13 +65,38 @@ describe('UGC prompts (21.4)', () => {
     );
     expect(prompt).toContain('a bright, lived-in home kitchen');
     expect(prompt).toContain('lip movements match their words');
-    expect(prompt).toContain("product from the reference image (Oat 'barista' latte kit)");
+    expect(prompt).toContain("product from the product reference image (Oat 'barista' latte kit)");
+    expect(prompt).toContain(ACTOR_LINE_ONCE);
     expect(prompt).toContain('Action: holds the jar up and smiles.');
     expect(prompt).toContain('Camera: close selfie.');
     expect(prompt).toContain('no music');
     expect(prompt).toContain('No subtitles');
     // The spoken line is the adapter's job (each provider has its own dialogue form).
     expect(prompt).not.toContain('says:');
+  });
+
+  it('21.4a: with the actor portrait the clip points at it and keeps the same description', () => {
+    const prompt = actorClipPrompt({
+      style,
+      sceneDescription: 'waves',
+      productReference: false,
+      actorReference: true,
+    });
+    expect(prompt).toContain(
+      `the same person as in the reference portrait (${actorDescription(style)}), a fictional person, with the same face, hair and clothes`,
+    );
+    expect(prompt).toContain('exactly once, word for word, without repeating');
+  });
+
+  it('21.4a: script supplement keeps labels off actor shots except a short hook', () => {
+    const text = ugcScriptSupplement({
+      style,
+      clipSeconds: [8],
+      actorClipBudget: 3,
+      treatments: ['UGC_ACTOR', 'IMAGE_STILL'],
+    });
+    expect(text).toContain('UGC_ACTOR shots have an empty onScreenText');
+    expect(text).toContain('hook label of at most 4 words');
   });
 
   it('without a product image the product is named in view; without a product nothing is said', () => {

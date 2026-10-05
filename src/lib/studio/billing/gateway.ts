@@ -475,13 +475,15 @@ export function createStripeGateway(stripe: Stripe): StripeGateway {
       }
     },
     async *listSubscriptions() {
+      // Stripe expands at most 4 levels, and a list's own `data.` counts as one, so
+      // `data.items.data.price.product` (5) is refused ("property_expansion_max_depth", seen on
+      // the 21.5 migration, 2026-10-05; https://docs.stripe.com/expand, read 2026-10-05). List the
+      // ids, then retrieve each with the same expansion as a single read (4 levels).
       try {
-        for await (const sub of stripe.subscriptions.list({
-          status: 'all',
-          limit: LIST_PAGE,
-          expand: ['data.items.data.price.product', 'data.schedule'],
-        })) {
-          yield toSubscriptionState(sub);
+        for await (const sub of stripe.subscriptions.list({ status: 'all', limit: LIST_PAGE })) {
+          yield toSubscriptionState(
+            await stripe.subscriptions.retrieve(sub.id, { expand: SUBSCRIPTION_EXPAND }),
+          );
         }
       } catch (err) {
         throw upstream('subscriptions.list', err);
