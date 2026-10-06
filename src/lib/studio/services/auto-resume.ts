@@ -88,6 +88,7 @@ const STAGE_BY_JOB: Partial<Record<JobName, 'planning' | 'assets'>> = {
   'plan-project': 'planning',
   'generate-asset': 'assets',
   'compose-video': 'assets',
+  'poll-render': 'assets',
   'run-quality-gate': 'assets',
 };
 

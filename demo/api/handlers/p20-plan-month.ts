@@ -99,6 +99,11 @@ interface DemoPlan {
   items: DemoItem[];
   /** Reads left before the next simulated step (drafting / generating). */
   reads: number;
+  /**
+   * 23.6: the seeded plan shows rolling generation (later posts wait for their creation time);
+   * plans made in the demo fast-forward so they finish within a few reads.
+   */
+  rolling?: boolean;
 }
 
 const bad = (message: string) => new DemoHttpError(400, 'validation_error', message);
@@ -199,6 +204,15 @@ function counts(items: DemoItem[]): Record<ItemStatus, number> {
 const live = (items: DemoItem[]) =>
   items.filter((i) => i.status !== 'REMOVED' && i.status !== 'SKIPPED');
 
+/** 23.6 rolling generation: a queued post is only made in the 72 hours before its slot. */
+const CREATE_LEAD_MS = 72 * HOUR;
+
+function createsAt(plan: DemoPlan, item: DemoItem, now = Date.now()): string | null {
+  if (!plan.rolling || item.status !== 'QUEUED') return null;
+  const at = Date.parse(item.slotAt) - CREATE_LEAD_MS;
+  return at > now ? new Date(at).toISOString() : null;
+}
+
 function publicPlan(p: DemoPlan) {
   const window = planWindow(parseLocalDate(p.startDate), p.days, ZONE);
   const kinds = live(p.items).map((i) => i.kind);
@@ -239,7 +253,11 @@ function publicPlan(p: DemoPlan) {
     },
     items: [...p.items]
       .sort((a, b) => a.slotAt.localeCompare(b.slotAt))
-      .map((i) => ({ ...i, postCopy: i.title ? itemCopy(i, p.platforms) : null })),
+      .map((i) => ({
+        ...i,
+        postCopy: i.title ? itemCopy(i, p.platforms) : null,
+        createsAt: createsAt(p, i),
+      })),
   };
 }
 
@@ -361,8 +379,8 @@ function advance(plan: DemoPlan): void {
   if (plan.status !== 'GENERATING') return;
   for (const item of plan.items.filter((i) => i.status === 'GENERATING').slice(0, 2))
     schedule(plan, item);
-  for (const item of plan.items.filter((i) => i.status === 'QUEUED').slice(0, 2))
-    item.status = 'GENERATING';
+  const due = plan.items.filter((i) => i.status === 'QUEUED' && createsAt(plan, i) === null);
+  for (const item of due.slice(0, 2)) item.status = 'GENERATING';
   if (plan.items.every((i) => !['QUEUED', 'GENERATING'].includes(i.status))) {
     plan.status = 'SCHEDULED';
     plan.scheduledAt = nowIso();
@@ -400,6 +418,7 @@ function seed(): void {
     cancelledAt: null,
     items: [],
     reads: 2,
+    rolling: true,
   };
   plan.items = skeleton.map((s, position) => {
     const item: DemoItem = {

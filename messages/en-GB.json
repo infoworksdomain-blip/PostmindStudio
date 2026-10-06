@@ -5646,7 +5646,9 @@
       "remove": "Remove",
       "removeAria": "Remove “{title}”",
       "removeConfirm": "Its post is cancelled and the time is freed. The rest of the plan carries on.",
-      "removedToast": "Post removed"
+      "removedToast": "Post removed",
+      "createsAt": "Scheduled to be created on {date}",
+      "createsLater": "{count, plural, one {# more post will be created closer to its post time.} other {# more posts will be created closer to their post time.}}"
     },
     "list": {
       "title": "Month plans",

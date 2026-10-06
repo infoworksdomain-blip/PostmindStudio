@@ -1,16 +1,8 @@
 import type { Prisma } from '@prisma/client';
-import { ConflictError, NotFoundError, ProviderError } from '../../../errors';
+import { NotFoundError } from '../../../errors';
 import type { CompositionSummary } from '../../pipeline/composition-summary';
 import type { RenderPreset } from '../../pipeline/render-presets';
-
-/** Thrown inside the render transaction to roll it back when the run was superseded. */
-class StaleRunError extends ConflictError {
-  constructor() {
-    super('Run superseded');
-  }
-}
 import type { AspectRatio } from '../../providers/interface';
-import { providerOutputKey } from '../../storage';
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
   buildShotstackComposition,
@@ -29,11 +21,10 @@ import {
 import { parseRenderOptions, resolvePreset, withPreset } from '../../pipeline/render-presets';
 import { findCachedRender, withEdlHash } from '../../pipeline/compose-cache';
 import { edlHash } from '../../pipeline/edl-hash';
-import { fallbackFrom, shotFallbacks, type FallbackNotice } from '../../pipeline/fallback-notice';
+import { shotFallbacks, type FallbackNotice } from '../../pipeline/fallback-notice';
 import { degradedShotsOf } from '../../pipeline/avatar-fallback';
 import { voiceTrimSecOf } from '../../pipeline/voice-fit';
 import { rebalanceNarration } from '../../pipeline/narration-rebalance';
-import { copyUrlToStorage } from '../../pipeline/persist';
 import {
   currentRunId,
   failProject,
@@ -43,18 +34,24 @@ import {
   transitionProject,
 } from '../../pipeline/project-state';
 import { produceMusic } from '../../pipeline/music';
-import { masterStoredRender, type MasteringReport } from '../../pipeline/mastering';
 import { produceSfx, type SfxClip } from '../../pipeline/sfx';
 import { spokenWordsOf } from '../../pipeline/word-timing';
 import { slideOverlayPlacements } from '../../slideshow/slide-overlays';
-import { runProvider } from '../../pipeline/provider-run';
+import {
+  cancelPendingRenders,
+  completeComposition,
+  nextPollDelayMs,
+  schedulePoll,
+  StaleRunError,
+  submitRender,
+} from '../../pipeline/render-async';
+import { pendingRendersOf } from '../../pipeline/render-state';
 import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../overlays/compose';
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
 import { ensureVoiceCaptions } from '../../overlays/voice-captions';
 import { resolveSlides } from '../../slideshow/resolve';
 import { clipSpeaks, speechAssetIdOf } from '../../ugc/clip-speech';
 import { ugcStyleOf } from '../../ugc/style';
-import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
 import { readHookDemo } from '../../formats/hook-demo';
 import { hookDemoEdl } from '../../formats/hook-demo-edl';
@@ -226,7 +223,6 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     return url ? { sfxSrc: url, sfxDurationSec: clip.durationSec } : {};
   };
 
-  const masteringReports: Record<string, MasteringReport> = {};
   const cacheHits: Array<{ scriptId: string; renderId: string }> = [];
   // 15.B9: generations that used a fallback provider (shown on the review screen).
   const fallbacks: FallbackNotice[] = project.scripts.flatMap((s) =>
@@ -356,17 +352,16 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     return mergeOverlayTrack(edit, track);
   };
 
-  // 23.1: two phases. (1) Every variant's edit is built (and composition-cache hits recorded);
-  // (2) every remaining render is submitted to the composer at once and all are awaited
-  // together. A failed variant no longer abandons the others mid-render (before 23.1 the first
-  // rejection ended the job while the other renders kept running unawaited, and the retry
-  // submitted them again): each finished render is recorded, then the first failure is
-  // rethrown so the retry redoes only the failed variants (metadata.renders skips the rest).
-  // Provider concurrency caps (STUDIO_PROVIDER_CONCURRENCY_SHOTSTACK, 20.29) still apply per
-  // render inside runProvider.
+  // 23.1 / 23.6: two phases. (1) Every variant's edit is built (and composition-cache hits
+  // recorded); (2) every remaining render is submitted to the composer at once. Variants already
+  // rendered (metadata.renders) or still rendering (metadata.pendingRenders, an earlier attempt)
+  // are skipped, so a retry re-submits only the failed ones. Provider concurrency caps
+  // (STUDIO_PROVIDER_CONCURRENCY_SHOTSTACK, 20.29) apply per render at submit.
+  const pending = pendingRendersOf(project.metadata);
+  const submitted = new Set<string>();
   const prepared = await Promise.all(
     project.scripts
-      .filter((script) => !renders[script.id])
+      .filter((script) => !renders[script.id] && !pending[script.id])
       .map(async (script) => {
         const aspectRatio = script.targetAspectRatio as AspectRatio;
         const chosen = resolvePreset({
@@ -445,95 +440,36 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   });
   if (prepared === 'stale') return log.info('run superseded during composition; renders discarded');
 
+  // 15.B6 cache hits and 15.B9 fallback notices are recorded per run (the composer's own fallback
+  // is appended when its render is recorded); 20.19: shots whose avatar presenter was unavailable
+  // and became a generated clip.
+  await mergeProjectMetadata(deps.db, {
+    projectId: project.id,
+    runId: data.runId,
+    patch: {
+      compositionCache: cacheHits,
+      fallbacks,
+      degradedShots: degradedShotsOf(project.scripts.flatMap((s) => s.shots)),
+    },
+  });
+
+  // 23.6: every remaining render is SUBMITTED and this job ends; poll-render (render-async.ts)
+  // stores, masters and records each one when it is done, then hands the run to the quality gate.
+  // A renderer that returns the file at once (a local renderer) calls finishRender here instead.
   const settled = await Promise.allSettled(
     prepared
       .filter((p): p is NonNullable<typeof p> => p !== null)
       .map(async ({ script, aspectRatio, edit, outputDurationSec, composition }) => {
-        const run = await runProvider(
-          {
-            need: { kind: 'capability', capability: 'composition' },
-            planTier: data.planTier,
-            request: {
-              capability: 'composition',
-              organisationId: data.organisationId,
-              projectId: data.projectId,
-              edit,
-              outputDurationSec,
-            },
-          },
-          deps,
-        );
-        if (!run.output.url) {
-          throw new ProviderError(
-            run.decision.providerId,
-            'unknown',
-            'Composer returned no render URL',
-            true,
-          );
-        }
-        const stored = await copyUrlToStorage(
-          deps.storage,
-          {
-            url: run.output.url,
-            bucket: deps.config.rendersBucket,
-            key: providerOutputKey({
-              organisationId: data.organisationId,
-              projectId: data.projectId,
-              providerId: run.decision.providerId,
-              extension: 'mp4',
-            }),
-            fallbackContentType: 'video/mp4',
-            providerId: run.decision.providerId,
-          },
-          deps.fetch,
-        );
-        // 13.26: loudness normalisation / H.264 re-encode when the gate would fail the render.
-        const mastered = await masterStoredRender(deps, {
-          stored,
-          probe: await deps.media.probe(stored.url),
-          organisationId: data.organisationId,
-          projectId: data.projectId,
+        const recorded = await submitRender(deps, data, {
+          scriptId: script.id,
+          targetPlatform: script.targetPlatform,
+          aspectRatio,
+          edit,
+          outputDurationSec,
+          composition: composition as Prisma.JsonValue,
         });
-        masteringReports[script.id] = mastered.report;
-        const probe = mastered.probe;
-        const job = await deps.db.providerJob.findUnique({
-          where: { id: run.providerJobRowId },
-          select: { costPence: true },
-        });
-        const metadata = (run.output.metadata ?? {}) as { renderId?: string };
-        const composerFallback = fallbackFrom(run.decision, 'composition');
-        if (composerFallback) fallbacks.push(composerFallback);
-        // The render row and its pointer in metadata.renders commit together: a retry after a
-        // crash either sees the pointer (skips this script) or finds neither.
-        const render = await deps.db.$transaction(async (tx) => {
-          const created = await tx.videoRender.create({
-            data: {
-              projectId: project.id,
-              scriptId: script.id,
-              targetPlatform: script.targetPlatform,
-              aspectRatio,
-              resolution: `${probe.width}x${probe.height}`,
-              durationSec: probe.durationSec,
-              fps: Math.round(probe.fps),
-              bitrateKbps: probe.bitRateKbps,
-              s3Bucket: mastered.stored.bucket,
-              s3Key: mastered.stored.key,
-              composerJobId: metadata.renderId ?? null,
-              qualityCheckState: 'PENDING',
-              costPence: job?.costPence ?? 0,
-              composition: composition as Prisma.InputJsonValue,
-            },
-          });
-          const recorded = await recordRunRender(tx, {
-            projectId: project.id,
-            runId: data.runId,
-            scriptId: script.id,
-            renderId: created.id,
-          });
-          if (!recorded) throw new StaleRunError();
-          return created;
-        });
-        renders[script.id] = render.id;
+        if (!recorded) throw new StaleRunError();
+        submitted.add(script.id);
       }),
   );
   const failures = settled
@@ -542,43 +478,34 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   if (failures.some((err) => err instanceof StaleRunError)) {
     return log.info('run superseded during composition; renders discarded');
   }
+  const waiting = Object.values(
+    pendingRendersOf(
+      (
+        await deps.db.videoProject.findUnique({
+          where: { id: project.id },
+          select: { metadata: true },
+        })
+      )?.metadata ?? null,
+    ),
+  );
+  if (waiting.length > 0) {
+    // A new chain per compose run: its polls cover every pending render of the run.
+    const delay = await nextPollDelayMs(deps, data, waiting);
+    await schedulePoll(deps, data, `c${deps.now()}`, 1, delay);
+  }
   if (failures.length > 0) {
     log.warn(
-      { failed: failures.length, recorded: settled.length - failures.length },
-      'some renders failed; finished renders are kept for the retry',
+      { failed: failures.length, submitted: submitted.size },
+      'some renders could not be submitted; submitted ones continue, the rest are retried',
     );
     throw failures[0];
   }
-  if (Object.keys(masteringReports).length > 0) {
-    await mergeProjectMetadata(deps.db, {
-      projectId: project.id,
-      runId: data.runId,
-      patch: { mastering: masteringReports },
-    });
+  if (waiting.length > 0) {
+    return log.info({ submitted: submitted.size, pending: waiting.length }, 'renders submitted');
   }
-  // 13.1 / 13.2: the new renders reflect every script and shot edit made so far.
-  // 15.B6 cache hits and 15.B9 fallback notices are recorded per run.
-  await mergeProjectMetadata(deps.db, {
-    projectId: project.id,
-    runId: data.runId,
-    // 20.19: shots whose avatar presenter was unavailable and became a generated clip.
-    patch: {
-      staleRenders: [],
-      compositionCache: cacheHits,
-      fallbacks,
-      degradedShots: degradedShotsOf(project.scripts.flatMap((s) => s.shots)),
-    },
-  });
-  await transitionProject(deps.db, {
-    projectId: project.id,
-    runId: data.runId,
-    from: ['RENDERING'],
-    to: 'QUALITY_CHECKING',
-  });
-  await deps.queue.add('run-quality-gate', data, { jobId: jobIds.runQualityGate(data) });
-  // 15.A3 (Track A): generated thumbnail candidates (non-blocking, own job).
-  await deps.queue.add('generate-thumbnail', data, { jobId: jobIds.generateThumbnail(data) });
-  log.info({ renders: Object.keys(renders).length }, 'renders complete; quality gate enqueued');
+  // Every variant came from the composition cache (or a renderer that returned at once).
+  if (await completeComposition(deps, data))
+    log.info({ renders: Object.keys(renders).length }, 'renders complete; quality gate enqueued');
 }
 
 /** Slideshow edits get the brand font sources too (timeline.fonts). */
@@ -600,6 +527,8 @@ export async function onComposeVideoFailed(
   deps: PipelineDeps,
   reason: string,
 ): Promise<void> {
+  // 23.6: renders this run already submitted are stopped (their reservations released).
+  await cancelPendingRenders(deps, data);
   await failProject(deps.db, {
     projectId: data.projectId,
     runId: data.runId,

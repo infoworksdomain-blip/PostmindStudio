@@ -5646,7 +5646,9 @@
       "remove": "移除",
       "removeAria": "移除“{title}”",
       "removeConfirm": "它的发布会被取消，时间也会释放。计划的其余部分照常进行。",
-      "removedToast": "帖子已移除"
+      "removedToast": "帖子已移除",
+      "createsAt": "计划于 {date} 创建",
+      "createsLater": "{count, plural, other {另有 # 条帖子将在临近发布时间时创建。}}"
     },
     "list": {
       "title": "月度计划",

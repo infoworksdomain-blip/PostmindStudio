@@ -8,6 +8,11 @@ import { requiredAtStartup } from '../helpers/required-env';
 // Deployment: Render — render.yaml checked against the code and runbooks/render-deploy.md.
 
 const ROOT = join(__dirname, '..', '..');
+/**
+ * 23.6: the render lane runs inside the orchestration service (worker-host.ts withRenderLane: a
+ * worker that runs studio-orchestration also runs studio-render), so it has no service of its own.
+ */
+const SERVICE_QUEUES = Object.values(QUEUES).filter((q) => q !== QUEUES.render);
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
 type EnvVar = {
@@ -158,7 +163,7 @@ describe('render.yaml — datastores', () => {
 describe('render.yaml — app services', () => {
   it.each(ENV_NAMES)('%s: one private service per worker queue', (name) => {
     const e = env(name);
-    for (const queue of Object.values(QUEUES)) {
+    for (const queue of SERVICE_QUEUES) {
       const workers = e.services.filter((s) =>
         s.dockerCommand?.endsWith(`npx tsx scripts/worker.ts ${queue}`),
       );
@@ -192,7 +197,7 @@ describe('render.yaml — app services', () => {
   it.each(ENV_NAMES)('%s: every app service gets its database, Key Value and groups', (name) => {
     const e = env(name);
     const apps = appServices(e);
-    expect(apps).toHaveLength(1 + Object.keys(QUEUES).length);
+    expect(apps).toHaveLength(1 + SERVICE_QUEUES.length);
     for (const s of apps) {
       expect(s.runtime, s.name).toBe('docker');
       const vars = s.envVars ?? [];
@@ -353,7 +358,7 @@ describe('render.yaml — monitoring', () => {
       expect.arrayContaining(['studio-web', 'studio-worker', 'studio-readiness']),
     );
     const worker = config.scrape_configs.find((j) => j.job_name === 'studio-worker')!;
-    expect(worker.dns_sd_configs?.[0]?.names).toHaveLength(Object.keys(QUEUES).length);
+    expect(worker.dns_sd_configs?.[0]?.names).toHaveLength(SERVICE_QUEUES.length);
     expect(worker.dns_sd_configs?.[0]?.port).toBe(9464);
     expect(config.rule_files).toEqual([
       '/etc/prometheus/rules/studio-alerts.yml',

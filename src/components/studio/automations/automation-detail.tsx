@@ -24,7 +24,7 @@ import { StudioCapability } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
 import type { FormatKey } from '../blitz/blitz-model';
 import { ErrorState, PageHeader, StateBadge } from '../primitives';
-import { ReasonText } from '../plans/plan-parts';
+import { CreatesAtText, ReasonText } from '../plans/plan-parts';
 import { WriteGate } from '../write-gate';
 import { useCan } from '../use-can';
 import { CadenceText } from './automations-list';
@@ -261,6 +261,7 @@ function PeriodCalendar({
   const tb = useTranslations('blitz.deck');
   const tp = useTranslations('plans');
   const f = useFormat();
+  const now = Date.now();
   const byDay = new Map<string, AutomationSlot[]>();
   for (const item of period.items) {
     const day = f.date(item.slotAt, {
@@ -327,6 +328,7 @@ function PeriodCalendar({
                     ) : (
                       <p className="text-sm font-medium">{item.title || t('detail.untitled')}</p>
                     )}
+                    <CreatesAtText item={item} timezone={period.timezone} now={now} />
                     <ReasonText reason={item.statusReason} />
                     {item.downloadOnly.length > 0 && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">

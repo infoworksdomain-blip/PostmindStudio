@@ -15,15 +15,22 @@ import { InlineJobQueue, jobIds } from './enqueue';
 import {
   DEFAULT_JOB_OPTIONS,
   JOB_QUEUE,
+  jobPriority,
   priorityFor,
   PRIORITY,
   QUEUES,
   retryDelayMs,
 } from './queues';
 import { queuePrefix, redisConnectionFromUrl } from './redis';
-import { concurrencyFor, DEFAULT_CONCURRENCY } from './worker-host';
+import {
+  concurrencyFor,
+  DEFAULT_CONCURRENCY,
+  PIPELINE_QUEUES,
+  withRenderLane,
+} from './worker-host';
 import {
   describeError,
+  drainInline,
   executeJob,
   FAILURE_HANDLERS,
   isRetryable,
@@ -66,8 +73,80 @@ describe('queue policy (spec 11)', () => {
     expect(JOB_QUEUE['run-quality-gate']).toBe(QUEUES.orchestration);
   });
 
+  it('23.6: renders run on their own lane; planning and the runners stay on orchestration', () => {
+    for (const name of ['compose-video', 'poll-render', 'render-carousel'] as const)
+      expect(JOB_QUEUE[name]).toBe(QUEUES.render);
+    for (const name of [
+      'plan-project',
+      'draft-content-plan',
+      'advance-content-plans',
+      'advance-automations',
+      'refill-blitz-queue',
+    ] as const)
+      expect(JOB_QUEUE[name]).toBe(QUEUES.orchestration);
+    expect(DEFAULT_CONCURRENCY[QUEUES.render]).toBe(3);
+    expect(concurrencyFor(QUEUES.render, { WORKER_CONCURRENCY_RENDER: '5' })).toBe(5);
+    expect(PIPELINE_QUEUES).toContain(QUEUES.render);
+  });
+
+  it('23.6: a worker listing orchestration also takes the render lane unless separated', () => {
+    expect(withRenderLane([QUEUES.orchestration, QUEUES.assets], {})).toEqual([
+      QUEUES.orchestration,
+      QUEUES.assets,
+      QUEUES.render,
+    ]);
+    expect(withRenderLane([QUEUES.assets], {})).toEqual([QUEUES.assets]);
+    expect(withRenderLane([QUEUES.orchestration, QUEUES.render], {})).toHaveLength(2);
+    expect(withRenderLane([QUEUES.orchestration], { STUDIO_RENDER_LANE: 'separate' })).toEqual([
+      QUEUES.orchestration,
+    ]);
+  });
+
+  it('23.6: the plan, automation and Blitz runners run at high priority', () => {
+    const data = { organisationId: 'o', runId: 'r', planTier: 'STANDARD' as const };
+    expect(jobPriority('advance-content-plans', data)).toBe(PRIORITY.high);
+    expect(jobPriority('advance-automations', data)).toBe(PRIORITY.high);
+    expect(jobPriority('plan-project', { ...data, batch: true })).toBe(PRIORITY.low);
+    expect(jobPriority('plan-project', data)).toBe(PRIORITY.normal);
+  });
+
+  it('23.6: drainInline waits out a render poll delay; promote runs it at once', async () => {
+    const queue = new InlineJobQueue();
+    const data = { projectId: 'p', organisationId: 'o', runId: 'r', planTier: 'STANDARD' as const };
+    await queue.add(
+      'poll-render',
+      { ...data, chain: 'c', poll: 1 },
+      { jobId: 'a', delayMs: 20_000 },
+    );
+    expect(queue.pending[0]?.delayMs).toBe(20_000);
+    expect(await queue.promote('poll-render', 'a')).toBe(true);
+    expect(queue.pending[0]?.delayMs).toBeUndefined();
+    expect(await queue.promote('poll-render', 'a')).toBe(false);
+    const slept: number[] = [];
+    vi.spyOn(PROCESSORS, 'poll-render').mockResolvedValue();
+    await queue.add(
+      'poll-render',
+      { ...data, chain: 'c', poll: 2 },
+      { jobId: 'b', delayMs: 5_000 },
+    );
+    queue.take(); // 'a' (promoted) is not delayed
+    await drainInline(queue, {
+      logger: pino({ level: 'silent' }),
+      killSwitch: { assertNotKilled: vi.fn(async () => undefined) },
+      sleep: async (ms: number) => {
+        slept.push(ms);
+      },
+    } as unknown as PipelineDeps);
+    expect(slept).toEqual([5_000]);
+  });
+
   it('retries 5 times with 5s→2min exponential backoff and keeps failures', () => {
-    expect(DEFAULT_JOB_OPTIONS).toMatchObject({ attempts: 6, removeOnFail: false });
+    // 23.6: failures stay for operator action, capped per queue; successes kept 6 h / 1 000.
+    expect(DEFAULT_JOB_OPTIONS).toMatchObject({
+      attempts: 6,
+      removeOnComplete: { age: 6 * 60 * 60, count: 1_000 },
+      removeOnFail: { count: 5_000 },
+    });
     expect([1, 2, 3, 4, 5, 6, 7].map(retryDelayMs)).toEqual([
       5000, 10000, 20000, 40000, 80000, 120000, 120000,
     ]);

@@ -12,8 +12,21 @@ import { ConfirmDialog } from '../publications/confirm-dialog';
 import { Stat } from '../primitives';
 import { ItemForm } from './plan-editor';
 import { ItemCopyEditor } from './item-copy';
-import { CappedNotice, HoldNotice, ItemMeta, ItemStatusBadge, ReasonText } from './plan-parts';
-import { canChangeScheduled, groupByDay, type Plan, type PlanItem } from './plan-model';
+import {
+  CappedNotice,
+  CreatesAtText,
+  HoldNotice,
+  ItemMeta,
+  ItemStatusBadge,
+  ReasonText,
+} from './plan-parts';
+import {
+  canChangeScheduled,
+  createsLaterCount,
+  groupByDay,
+  type Plan,
+  type PlanItem,
+} from './plan-model';
 
 type Method = 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -32,7 +45,9 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
   const [cancelling, setCancelling] = useState(false);
   const now = Date.now();
   const open = plan.status === 'GENERATING' || plan.status === 'SCHEDULED';
-  const generating = plan.counts.GENERATING + plan.counts.QUEUED;
+  // 23.6: queued posts waiting for their creation time are not being made yet.
+  const waiting = createsLaterCount(plan.items, now);
+  const generating = plan.counts.GENERATING + Math.max(0, plan.counts.QUEUED - waiting);
 
   async function call(path: string, method: Method, body?: unknown, success?: string) {
     try {
@@ -73,6 +88,9 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
         </p>
       )}
       {open && <p className="text-sm text-muted-foreground">{t('reviewWindow')}</p>}
+      {waiting > 0 && (
+        <p className="text-xs text-muted-foreground">{t('createsLater', { count: waiting })}</p>
+      )}
 
       <ol aria-label={t('daysAria')} className="flex flex-col gap-6">
         {groupByDay(plan.items, plan.timezone).map(({ day, items }) => (
@@ -86,6 +104,7 @@ export function PlanView({ plan, onChange }: { plan: Plan; onChange: () => Promi
                   key={item.id}
                   plan={plan}
                   item={item}
+                  now={now}
                   changeable={open && canChangeScheduled(item, now)}
                   call={call}
                 />
@@ -121,11 +140,13 @@ type Call = (path: string, method: Method, body?: unknown, success?: string) => 
 function ItemRow({
   plan,
   item,
+  now,
   changeable,
   call,
 }: {
   plan: Plan;
   item: PlanItem;
+  now: number;
   changeable: boolean;
   call: Call;
 }) {
@@ -148,6 +169,7 @@ function ItemRow({
         <div className="min-w-0">
           <ItemMeta item={item} timezone={plan.timezone} />
           <p className="mt-1 font-medium">{item.title}</p>
+          <CreatesAtText item={item} timezone={plan.timezone} now={now} />
           <ReasonText reason={item.statusReason} />
         </div>
         <ItemStatusBadge status={item.status} />

@@ -528,6 +528,63 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
     expect((await getPlan(plan.id)).plan.holdReason).toBe('daily_limit');
   });
 
+  it('23.6 rolling: only the first posts and the 72 h window start; the tick starts the rest later', async () => {
+    vi.stubEnv('STUDIO_CONTENT_PLAN_CONCURRENCY', '10');
+    // At most 3 plans generate per organisation: set the earlier tests' plans aside (restored at
+    // the end; the last test relies on them).
+    const aside = await db.contentPlan.findMany({
+      where: { organisationId: org, status: { in: ['GENERATING', 'SCHEDULED'] } },
+      select: { id: true, status: true },
+    });
+    await db.contentPlan.updateMany({
+      where: { id: { in: aside.map((a) => a.id) } },
+      data: { status: 'CANCELLED' },
+    });
+    const restore = async (mine: string) => {
+      // Cancelled and out of today's draft quota (MAX_PLAN_DRAFTS_PER_DAY) for the later tests.
+      await db.contentPlan.update({
+        where: { id: mine },
+        data: { status: 'CANCELLED', createdAt: new Date(Date.now() - 2 * 24 * HOUR) },
+      });
+      for (const a of aside)
+        await db.contentPlan.update({ where: { id: a.id }, data: { status: a.status } });
+    };
+    const plan = await drafted({ days: 10, postsPerDay: 3, videoShare: 0 });
+    await generate(plan.id);
+    h.queue.pending.splice(0);
+    const now = Date.now();
+    const items = (await getPlan(plan.id)).plan.items;
+    expect(items).toHaveLength(30);
+    const windowEnd = now + 72 * HOUR;
+    const due = items.filter((i, n) => n < 3 || Date.parse(i.slotAt) <= windowEnd);
+    expect(due.length).toBeLessThan(items.length);
+
+    expect((await advanceContentPlans(runner(), { planId: plan.id })).started).toBe(due.length);
+    const after = (await getPlan(plan.id)).plan;
+    const waiting = after.items.filter((i) => i.status === 'QUEUED');
+    expect(waiting).toHaveLength(items.length - due.length);
+    // The calendar's "Scheduled to be created on": the slot minus the 72 h window.
+    for (const item of waiting) {
+      const createsAt = (item as Item & { createsAt: string | null }).createsAt;
+      expect(Date.parse(createsAt!)).toBe(Date.parse(item.slotAt) - 72 * HOUR);
+    }
+    // The first three run at normal priority (the owner sees them at once), the rest as batch.
+    const planJobs = h.queue.pending.filter((j) => j.name === 'plan-project');
+    const batchOf = (projectId: string | null) =>
+      (planJobs.find((j) => j.data.projectId === projectId)?.data as { batch?: boolean })?.batch;
+    expect(due.slice(0, 3).map((i) => batchOf(i.projectId) ?? false)).toEqual([
+      false,
+      false,
+      false,
+    ]);
+    if (due.length > 3) expect(batchOf(due[3]!.projectId)).toBe(true);
+
+    // Four days later the next posts have entered the window: the periodic tick starts them.
+    const later = runner({ now: () => now + 4 * 24 * HOUR });
+    expect((await advanceContentPlans(later, { planId: plan.id })).started).toBeGreaterThan(0);
+    await restore(plan.id);
+  });
+
   it('syncs held, ready and failed posts from their projects', async () => {
     // At most 3 generating plans per organisation (429): earlier tests left 3 running.
     const blocked = await drafted({ days: 1, postsPerDay: 3 });

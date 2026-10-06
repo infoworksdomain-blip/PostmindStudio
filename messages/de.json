@@ -5646,7 +5646,9 @@
       "remove": "Entfernen",
       "removeAria": "„{title}“ entfernen",
       "removeConfirm": "Seine Veröffentlichung wird abgebrochen und die Zeit freigegeben. Der Rest des Plans läuft weiter.",
-      "removedToast": "Beitrag entfernt"
+      "removedToast": "Beitrag entfernt",
+      "createsAt": "Erstellung geplant für {date}",
+      "createsLater": "{count, plural, one {# weiterer Beitrag wird kurz vor seiner Veröffentlichungszeit erstellt.} other {# weitere Beiträge werden kurz vor ihrer Veröffentlichungszeit erstellt.}}"
     },
     "list": {
       "title": "Monatspläne",

@@ -365,6 +365,8 @@ interface DemoAutomation {
   insight: unknown;
 }
 
+const CREATE_LEAD_MS = 72 * HOUR;
+
 function slotsFor(start: number, count: number, reviewing: boolean) {
   const titles = [
     ['carousel', '3 reasons your sourdough is flat'],
@@ -377,10 +379,14 @@ function slotsFor(start: number, count: number, reviewing: boolean) {
   ] as const;
   return Array.from({ length: count }, (_, i) => {
     const [format, title] = titles[i % titles.length]!;
+    const slotMs = start + i * DAY + 12 * HOUR;
+    // 23.6 rolling generation: a post is only made in the 72 hours before its slot.
+    const createsAtMs = slotMs - CREATE_LEAD_MS;
+    const waiting = !reviewing && createsAtMs > Date.now();
     return {
       id: `slot-${start}-${i}`,
       position: i,
-      slotAt: new Date(start + i * DAY + 12 * HOUR).toISOString(),
+      slotAt: new Date(slotMs).toISOString(),
       kind: format === 'carousel' ? 'CAROUSEL' : 'SLIDESHOW',
       format,
       angle: 'Weekend bakes',
@@ -394,9 +400,10 @@ function slotsFor(start: number, count: number, reviewing: boolean) {
       },
       calendarDay: null,
       postCopy: null,
-      status: reviewing ? 'PLANNED' : i < 2 ? 'POSTED' : 'SCHEDULED',
+      status: reviewing ? 'PLANNED' : waiting ? 'QUEUED' : i < 2 ? 'POSTED' : 'SCHEDULED',
       statusReason: null,
-      projectId: reviewing ? null : PROJECTS.fiveBakes.id,
+      projectId: reviewing || waiting ? null : PROJECTS.fiveBakes.id,
+      createsAt: waiting ? new Date(createsAtMs).toISOString() : null,
       reviewed: false,
       downloadOnly: format === 'carousel' ? ['tiktok'] : [],
     };
