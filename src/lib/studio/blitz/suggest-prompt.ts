@@ -4,15 +4,22 @@ import { z } from 'zod';
 import { ProviderError } from '../../errors';
 import { buildPlanPrompt, type PlanBusinessFacts } from '../content-plans/prompt';
 import { DEFAULT_LANGUAGE } from '../languages';
+import { MAX_PLANNING_OUTPUT_TOKENS } from '../pipeline/token-budgets';
 import type { FormatKey } from './formats';
 
 // 22.4 — the Blitz writing prompt (prompts/blitz-suggestions.md, read once per process). One
-// Claude call writes every card of a refill: each card arrives with its format, angle, hook
-// framework, whether it may name the business and an optional reference to remix, so the model
-// only writes copy. Business text is fenced as data (the month-plan facts block is reused).
+// Claude call writes up to BLITZ_CARDS_PER_CALL cards of a refill: each card arrives with its
+// format, angle, hook framework, whether it may name the business and an optional reference to
+// remix, so the model only writes copy. Business text is fenced as data (the month-plan facts
+// block is reused).
 
 export const BLITZ_PROMPT_FILE = join('prompts', 'blitz-suggestions.md');
-export const BLITZ_MAX_TOKENS = 8_000;
+/**
+ * Production 2026-10-06: five cards in one 8 000-token answer were truncated. Each call now writes
+ * at most three cards with the planning cap (pipeline/token-budgets.ts).
+ */
+export const BLITZ_MAX_TOKENS = MAX_PLANNING_OUTPUT_TOKENS;
+export const BLITZ_CARDS_PER_CALL = 3;
 
 /** The research's hook types (plans/research-fastlane-2026-10-05.md "Copywriting"). */
 export const HOOK_TYPES = [

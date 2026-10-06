@@ -21,6 +21,7 @@ import {
 } from '../blitz/mix';
 import { projectBodyForCard } from '../blitz/project-body';
 import {
+  BLITZ_CARDS_PER_CALL,
   BLITZ_MAX_TOKENS,
   BLITZ_OUTPUT_SCHEMA,
   blitzSystemPrompt,
@@ -492,23 +493,7 @@ export async function refillBlitzQueue(
     },
     now,
   );
-  const answer = await deps.generate({
-    system: blitzSystemPrompt(),
-    prompt: buildSuggestPrompt({
-      facts: context.facts,
-      cards: planned,
-      recentPosts: context.recentPosts,
-      language,
-      styleMemory: context.styleMemory,
-      fixedHashtags: [
-        ...(context.policy?.business ? [context.policy.business] : []),
-        ...(context.policy?.always ?? []),
-      ],
-    }),
-    outputSchema: BLITZ_OUTPUT_SCHEMA,
-    maxTokens: BLITZ_MAX_TOKENS,
-  });
-  const written = parseSuggestResult(answer.json, planned.length);
+  const written = await writeCards(deps, planned, context, language, log);
   const seen = await recentFingerprints(deps.db, business, now);
   const platforms = await connectedPlatforms(deps.db, business);
   const previewImageId = planned.some((p) => !isPremade(p.format))
@@ -554,6 +539,62 @@ export async function refillBlitzQueue(
   }
   log.info({ ...result, need }, 'blitz queue refilled');
   return result;
+}
+
+/**
+ * Production 2026-10-06 ("anthropic/output_truncated: Output hit max_tokens (8000)"): five cards of
+ * up to eight 220-character posts each, with picture queries, captions and hashtags, do not fit one
+ * answer. Cards are written BLITZ_CARDS_PER_CALL at a time, each call with the planning cap; a batch
+ * that fails leaves only its own cards unwritten (counted as failed), unless every batch fails.
+ */
+async function writeCards(
+  deps: RefillDeps,
+  planned: Planned[],
+  context: Awaited<ReturnType<typeof loadPlanContext>>,
+  language: string,
+  log: Logger,
+): Promise<Array<WrittenCard | null>> {
+  // Each batch is numbered from 1 (the prompt lists `index.` and the answer is matched on it).
+  const batches = chunk(planned, BLITZ_CARDS_PER_CALL).map((batch) =>
+    batch.map((card, i) => ({ ...card, index: i + 1 })),
+  );
+  const out: Array<WrittenCard | null> = [];
+  let lastError: unknown = null;
+  let succeeded = 0;
+  for (const batch of batches) {
+    try {
+      const answer = await deps.generate({
+        system: blitzSystemPrompt(),
+        prompt: buildSuggestPrompt({
+          facts: context.facts,
+          cards: batch,
+          recentPosts: context.recentPosts,
+          language,
+          styleMemory: context.styleMemory,
+          fixedHashtags: [
+            ...(context.policy?.business ? [context.policy.business] : []),
+            ...(context.policy?.always ?? []),
+          ],
+        }),
+        outputSchema: BLITZ_OUTPUT_SCHEMA,
+        maxTokens: BLITZ_MAX_TOKENS,
+      });
+      out.push(...parseSuggestResult(answer.json, batch.length));
+      succeeded += 1;
+    } catch (err) {
+      lastError = err;
+      log.warn({ err, cards: batch.length }, 'blitz batch could not be written');
+      out.push(...batch.map(() => null));
+    }
+  }
+  if (succeeded === 0 && lastError) throw lastError;
+  return out;
+}
+
+function chunk<T>(items: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
 
 function cardCopy(
