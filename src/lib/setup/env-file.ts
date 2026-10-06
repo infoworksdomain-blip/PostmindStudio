@@ -365,6 +365,9 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
     isKlingBaseUrl(v) ? null : 'must be an https origin such as https://api-singapore.klingai.com',
   // 21.4: Kling actor clips with native audio (kling.ts klingOptionsFromEnv).
   KLING_UGC_ACTOR: (v) => (v === '0' || v === '1' ? null : 'must be 1, 0 or empty'),
+  // 21.4c: the burned-in text check on UGC actor clips (ugc/clip-text-guard.ts).
+  STUDIO_CLIP_TEXT_GUARD: (v) =>
+    v === 'true' || v === 'false' ? null : 'must be true, false or empty',
 };
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.

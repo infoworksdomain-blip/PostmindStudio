@@ -64,6 +64,7 @@ export const QUALITY_DETAIL_KEYS = [
   'brandKitPresent',
   'forceApproved',
   'allowedByReview',
+  'clipTextBurnedIn',
 ] as const;
 
 export type QualityDetailKey = (typeof QUALITY_DETAIL_KEYS)[number];

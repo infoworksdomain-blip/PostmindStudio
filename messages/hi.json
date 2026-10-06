@@ -1004,7 +1004,8 @@
         "caption_sync": "कैप्शन सिंक",
         "watermark": "वॉटरमार्क",
         "brand_kit": "ब्रांड किट",
-        "force_approved": "ज़बरदस्ती स्वीकृत"
+        "force_approved": "ज़बरदस्ती स्वीकृत",
+        "clip_text": "बनाए गए क्लिप में टेक्स्ट"
       },
       "severity": {
         "block": "ब्लॉक",
@@ -1056,7 +1057,8 @@
         "brandKitMissing": "{count, plural, one {समीक्षा ज़रूरी: वीडियो में # ब्रांड तत्व नहीं है।} other {समीक्षा ज़रूरी: वीडियो में # ब्रांड तत्व नहीं हैं।}}",
         "brandKitPresent": "रंग, फ़ॉन्ट और लोगो मौजूद हैं।",
         "forceApproved": "विफल जाँचों के बावजूद स्वीकृत: {note}",
-        "allowedByReview": "PostMind की Trust & Safety समीक्षा ने अनुमति दी: {note}"
+        "allowedByReview": "PostMind की Trust & Safety समीक्षा ने अनुमति दी: {note}",
+        "clipTextBurnedIn": "{count, plural, one {समीक्षा ज़रूरी: एक बार दोबारा बनाने के बाद भी शॉट {shots} के बनाए गए क्लिप में उसके अपने सबटाइटल या टेक्स्ट जड़े हुए हैं।} other {समीक्षा ज़रूरी: एक बार दोबारा बनाने के बाद भी शॉट {shots} के बनाए गए क्लिप में उनके अपने सबटाइटल या टेक्स्ट जड़े हुए हैं।}}"
       }
     },
     "saveTemplate": {

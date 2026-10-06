@@ -1,4 +1,5 @@
 import { ConfigurationError, NotImplementedError, ProviderError } from '../../errors';
+import { withDialogue } from './dialogue';
 import { httpJson } from './http';
 import type {
   ActorVideoRequest,
@@ -186,13 +187,10 @@ export function actorDuration(request: {
 }
 
 /**
- * 21.4: the documented dialogue form (prompt guide: "Use quotes for specific speech"). Double
- * quotes inside the line would close the quote early, so they become single quotes.
+ * 21.4: the documented dialogue form (prompt guide: "Use quotes for specific speech"). 21.4c: the
+ * no-text instruction follows the line (dialogue.ts), shared with Kling.
  */
-export function withDialogue(prompt: string, spokenLine: string): string {
-  const line = spokenLine.replace(/\s+/g, ' ').replace(/"/g, "'").trim();
-  return `${prompt.trim()}\nThe person speaks directly to the camera and says: "${line}"`;
-}
+export { withDialogue };
 
 export function isVeoModel(value: string): value is VeoModel {
   return Object.hasOwn(VEO_MODELS, value);

@@ -1004,7 +1004,8 @@
         "caption_sync": "Synchronisation des sous-titres",
         "watermark": "Filigrane",
         "brand_kit": "Kit de marque",
-        "force_approved": "Validé manuellement"
+        "force_approved": "Validé manuellement",
+        "clip_text": "Texte dans les clips générés"
       },
       "severity": {
         "block": "bloquant",
@@ -1056,7 +1057,8 @@
         "brandKitMissing": "{count, plural, one {À examiner : # élément de marque manque dans la vidéo.} many {À examiner : # d’éléments de marque manquent dans la vidéo.} other {À examiner : # éléments de marque manquent dans la vidéo.}}",
         "brandKitPresent": "Couleurs, polices et logo présents.",
         "forceApproved": "Validé malgré des contrôles en échec : {note}",
-        "allowedByReview": "Autorisé par l’équipe Trust & Safety de PostMind : {note}"
+        "allowedByReview": "Autorisé par l’équipe Trust & Safety de PostMind : {note}",
+        "clipTextBurnedIn": "{count, plural, one {À examiner : le clip généré du plan {shots} contient ses propres sous-titres ou du texte incrustés, même après un nouvel essai.} many {À examiner : les clips générés des plans {shots} contiennent leurs propres sous-titres ou du texte incrustés, même après un nouvel essai.} other {À examiner : les clips générés des plans {shots} contiennent leurs propres sous-titres ou du texte incrustés, même après un nouvel essai.}}"
       }
     },
     "saveTemplate": {
