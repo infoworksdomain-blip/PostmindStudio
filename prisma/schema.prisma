@@ -2527,8 +2527,14 @@ model UsageCredit {
   organisationId          String
   kind                    String // short | long
   packLookupKey           String // studio_topup_short10_basic ...
+  /// Legacy (videos): written at purchase only since 23.3; the *Quarters columns are the balance.
   quantity                Int
+  /// Legacy (videos): written at purchase only since 23.3; read remainingQuarters.
   remaining               Int
+  /// 23.3: the pack in quarters of a video (5 videos = 20; a quick post uses 1, a video 4).
+  quantityQuarters        Int
+  /// 23.3: what is left, in quarters of a video (spent first-in first-out).
+  remainingQuarters       Int
   stripeCheckoutSessionId String?   @unique
   stripePaymentIntentId   String?
   purchasedAt             DateTime  @default(now())
@@ -2549,6 +2555,8 @@ model UsageCreditUse {
   projectId      String
   month          String // 'YYYY-MM' (UTC)
   kind           String // short | long
+  /// 23.3: quarters of a video this use took from the credit (quick post 1, video 4, UGC 8).
+  quarters       Int      @default(4)
   createdAt      DateTime @default(now())
 
   @@unique([projectId, month])

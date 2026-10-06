@@ -12,6 +12,7 @@ import {
   WALL_TEXT_MAX_WORDS,
   tidyWallText,
 } from './copy-prompt';
+import { QUICK_POST_QUARTERS } from '../billing/allowance-units';
 import { wordCount } from './hook-demo';
 
 // BACKLOG 22.2 — "Wall of text" (Fastlane research, operator request 2026-10-05): one calm,
@@ -52,8 +53,8 @@ export function wallShownSec(chosenSec: number, text: string | null | undefined)
   const readSec = Math.ceil(wordCount(text) / WALL_READING_WORDS_PER_SEC);
   return Math.min(WALL_MAX_SEC, Math.max(chosen, readSec));
 }
-/** 22.2: a wall-of-text video counts as one video of the allowance (allowanceUnitsOf → 1). */
-export const WALL_OF_TEXT_ALLOWANCE_UNITS = 1;
+/** 23.3: a wall-of-text video counts as ¼ of a video (allowanceQuartersOf → 1 quarter). */
+export const WALL_OF_TEXT_ALLOWANCE_QUARTERS = QUICK_POST_QUARTERS;
 
 /**
  * Stock search text per mood. Stock searches take keywords (stock-footage.ts footageKeywords), so

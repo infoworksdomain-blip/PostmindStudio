@@ -17,6 +17,8 @@ import {
 } from '../../src/lib/studio/services/automations';
 import { putMix } from '../../src/lib/studio/services/content-mix';
 import { draftPlan, type PlanGenerator } from '../../src/lib/studio/services/content-plan-draft';
+import { monthlyQuarterUsage, tierQuota } from '../../src/lib/studio/services/plan-quotas';
+import { monthWindow } from '../../src/lib/studio/services/tier-gates';
 import { tenant } from '../helpers/api-harness';
 
 // 22.5 automations on Postgres: start (mix snapshot, cheapest formats, YouTube / TikTok rules),
@@ -344,6 +346,42 @@ describe.skipIf(!hasDb)('22.5 automations', { timeout: 240_000 }, () => {
     expect((await db.automation.findUniqueOrThrow({ where: { id: b.id } })).pauseReason).toBe(
       'allowance',
     );
+  });
+
+  it('23.3: quick posts use ¼ of a video, so a small allowance keeps four times as many slots', async () => {
+    const used = (
+      await monthlyQuarterUsage(db, org, tierQuota('STANDARD'), monthWindow(Date.now()))
+    ).short;
+    // Two whole videos left beyond what is used: 8 or more quarters.
+    const limit = Math.ceil(used / 4) + 2;
+    const left = limit * 4 - used;
+    const entitlements = {
+      forOrganisation: async () => ({
+        tier: 'STANDARD',
+        access: 'full',
+        source: 'stripe',
+        limits: { seats: 5, businesses: 1, storageGb: 25 },
+        custom: { shortVideos: limit },
+      }),
+      invalidate: () => undefined,
+    };
+    const a = await create({ cadence: { mode: 'per_day', postsPerDay: 3 } });
+    const { automation } = await startAutomation(
+      { ...deps(), entitlements: entitlements as never },
+      owner,
+      a.id,
+    );
+    const plan = await db.contentPlan.findFirstOrThrow({
+      where: { id: automation.currentPlanId! },
+      include: { items: true },
+    });
+    const kept = plan.items.filter((i) => i.status !== 'SKIPPED');
+    // Every default format is a quick post (1 quarter each).
+    expect(kept.every((i) => i.format !== 'ai_video' && i.format !== 'ugc')).toBe(true);
+    expect(kept.length).toBe(Math.min(plan.items.length, left));
+    expect(kept.length).toBeGreaterThan(2);
+    if (plan.items.length > left) expect(plan.cappedReason).toBe('allowance');
+    await db.automation.update({ where: { id: a.id }, data: { status: 'CANCELLED' } });
   });
 
   it('paid formats are only used once the owner raises their weight', async () => {

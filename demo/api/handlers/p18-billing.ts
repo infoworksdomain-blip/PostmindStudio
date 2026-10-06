@@ -11,6 +11,7 @@
 import { pricingView } from '@/components/studio/billing/test-fixtures';
 import type { PricingView } from '@/components/studio/billing/types';
 import { TOP_UP_PACKS } from '@/lib/studio/billing/catalogue';
+import { allowanceQuartersOf, type AllowanceProject } from '@/lib/studio/ugc/allowance';
 import {
   isChannelInterval,
   isValidChannelCount,
@@ -29,9 +30,11 @@ import {
   setConnectionLookup,
   setConnectionPlatformLookup,
   setPriceLookup,
+  setProjectQuartersLookup,
 } from '../billing-state';
 import { DemoHttpError, route } from '../registry';
 import { listConnections } from './connections';
+import { allProjects } from './projects-store';
 import { seatsUsed } from './p18-org';
 
 let pricing: PricingView | undefined;
@@ -60,6 +63,12 @@ setConnectionLookup(() =>
   })),
 );
 setConnectionPlatformLookup((id) => listConnections().find((c) => c.id === id)?.platform ?? null);
+// 23.3: a quick post (carousel, slideshow, wall of text, hook + demo) uses ¼ of a video.
+setProjectQuartersLookup((id) => {
+  const project = allProjects().find((p) => p.id === id);
+  const metadata = (project?.metadata ?? null) as AllowanceProject['metadata'];
+  return allowanceQuartersOf({ sourceType: project?.sourceType, metadata });
+});
 
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};

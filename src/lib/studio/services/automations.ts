@@ -12,12 +12,16 @@ import {
 } from '../automation/targets';
 import { channelPlanForOrganisation } from '../billing/channels';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
-import { allocateFormats, allowanceUnitsFor, keepCheapestFirst } from '../blitz/allocate';
+import { allocateFormats, allowanceQuartersFor, keepCheapestFirst } from '../blitz/allocate';
 import { availableFormats, FORMATS, platformsFor, type FormatKey } from '../blitz/formats';
 import { effectiveAngleWeight, pickWeighted, type MixPreferences } from '../blitz/mix';
 import { tiktokPhotoPostsVerified } from '../blitz/targets';
-import { capItems, loadPlanAllowance, typicalItemCostPence } from '../content-plans/allowance';
-import { type PlanKind } from '../content-plans/mix';
+import {
+  capItems,
+  loadPlanAllowance,
+  typicalItemCostPence,
+  type CapItem,
+} from '../content-plans/allowance';
 import {
   availableSlots,
   dailySlots,
@@ -388,16 +392,15 @@ export async function draftPeriod(
   );
   if (formats.length === 0) return { plan: null, reason: 'no_formats' };
 
-  // The allowance and the cost cap, in allowance units, counted cheapest first.
+  // The allowance and the cost cap, counted cheapest first; 23.3: in quarters of a video (a
+  // carousel, slideshow, wall of text or hook + demo uses ¼).
   const { allowance, cost } = await loadPlanAllowance(deps, automation.organisationId, tier);
-  const unitKinds: PlanKind[] = [...formats]
+  const cheapestFirst: CapItem[] = [...formats]
     .sort((a, b) => FORMATS[a].costRank - FORMATS[b].costRank)
-    .flatMap((f) =>
-      Array.from({ length: allowanceUnitsFor(f) }, () => FORMATS[f].planKind ?? 'VIDEO'),
-    );
-  const capped = capItems(unitKinds, tier, allowance, cost);
+    .map((f) => ({ kind: FORMATS[f].planKind ?? 'VIDEO', quarters: allowanceQuartersFor(f) }));
+  const capped = capItems(cheapestFirst, tier, allowance, cost);
   const kept = new Set(
-    keepCheapestFirst(formats, capped.count, {
+    keepCheapestFirst(formats, capped.quarters, {
       ceilingPence: automation.costCeilingPence,
       typicalPence: (f) => typicalItemCostPence(FORMATS[f].planKind ?? 'VIDEO', tier),
     }),

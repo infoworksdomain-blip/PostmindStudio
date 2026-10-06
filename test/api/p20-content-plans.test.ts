@@ -302,7 +302,8 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
   it('caps the draft at the remaining allowance, and refuses when nothing is left', async () => {
     vi.stubEnv('STUDIO_QUOTA_MODE', 'enforce');
     vi.stubEnv('STUDIO_QUOTA_STANDARD_SHORT', '2');
-    const res = await create();
+    // All videos (23.3: slideshows would count ¼ each; see the next test).
+    const res = await create({ videoShare: 100 });
     expect(res.status).toBe(202);
     const plan = res.json.plan as Plan;
     expect(plan.items).toHaveLength(2);
@@ -314,10 +315,24 @@ describe.skipIf(!hasDb)('20.9 month plans API', { timeout: 180_000 }, () => {
     expect(refused.json).toMatchObject({ error: 'quota_exceeded' });
   });
 
+  it('23.3: slideshows count ¼ of a video, so one video of allowance covers four of them', async () => {
+    vi.stubEnv('STUDIO_QUOTA_MODE', 'enforce');
+    vi.stubEnv('STUDIO_QUOTA_STANDARD_SHORT', '1');
+    const res = await create({ videoShare: 0 });
+    expect(res.status).toBe(202);
+    const plan = res.json.plan as Plan;
+    expect(plan.items).toHaveLength(4);
+    expect(plan).toMatchObject({ requestedCount: 6, cappedReason: 'allowance' });
+    expect(res.json.allowance).toMatchObject({ limit: 1, used: 0, remaining: 1 });
+    // Not counted against the drafts-per-day limit the later tests rely on.
+    await drain();
+    await db.contentPlan.delete({ where: { id: plan.id } });
+  });
+
   it('stops cleanly at the allowance when generating: later posts are skipped', async () => {
     vi.stubEnv('STUDIO_QUOTA_MODE', 'enforce');
     vi.stubEnv('STUDIO_QUOTA_STANDARD_SHORT', '3');
-    const plan = await drafted({ days: 3, postsPerDay: 1 });
+    const plan = await drafted({ days: 3, postsPerDay: 1, videoShare: 100 });
     expect(plan.items).toHaveLength(3);
     // Another video uses one of the three meanwhile.
     const other = await call(projectsRoute.POST, {

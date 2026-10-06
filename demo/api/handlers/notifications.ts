@@ -70,12 +70,13 @@ const PHASE_17: DemoNotification[] = [
     kind: 'plan_quota',
     // 21.5: the per-channel plan's notice (plan-quotas.ts channelAllowanceNotice): no tier names.
     title: "80% of this month's videos used",
-    body: '20 of 24 videos made this month. More are included from the 1st of next month.',
+    // 23.3: two carousels counted ¼ each.
+    body: '19.5 of 24 videos made this month. More are included from the 1st of next month.',
     link: '/settings/billing',
     readAt: null,
     createdAt: ago(2 * DAY),
     messageKey: 'videoAllowanceNearing',
-    messageParams: { threshold: 80, used: 20, limit: 24, period: 'month' },
+    messageParams: { threshold: 80, used: 19.5, limit: 24, period: 'month' },
   },
 ];
 

@@ -478,4 +478,5 @@ Plan: `plans/phase-19.md`. Operator instruction (2026-09-29): complete everythin
 
 ## Phase 23 — Speed and quality (operator request 2026-10-06)
 
+- [x] **23.3** Cheap posts count ¼: carousels, slideshows, wall of text and hook + demo use a quarter of a video of the allowance and of HD video packs (AI video 1, UGC 2), so a channel's 8 HD videos a month give up to 32 quick posts; counted in integer quarters (expand-only migration for pack balances), shown as videos (5.5 of 8) with the ¼ rule on usage, Your plan, Plan my month, the upgrade dialog and /pricing in 11 locales; terms and runbook updated; demo
 - [x] **23.1** Render speed: Shotstack render callbacks (per-render HMAC token, authenticated rate-limited idempotent route that always re-checks the render with Shotstack, Redis wake flag; polling kept as a 20 s fallback, was 5 s), all multi-format renders submitted together and awaited with allSettled (a failed variant no longer abandons or re-renders the finished ones), and a platform music library (prompt key + duration bucket, rotation over up to 5 tracks per key, `music.status: 'reused'` at cost 0; expand-only `music_library_tracks`)

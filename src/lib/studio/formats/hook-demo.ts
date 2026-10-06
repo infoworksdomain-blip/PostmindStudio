@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { QUICK_POST_QUARTERS } from '../billing/allowance-units';
 
 // BACKLOG 22.1 — "Hook + demo" (operator request 2026-10-05: "Review how Fastlane generates their
 // videos and replicate the video generation process"). Fastlane's main format, from its public
@@ -44,8 +45,8 @@ export const DEMO_MIN_SEC = 2;
 export const HOOK_LINE_MAX_WORDS = 9;
 export const HOOK_LINE_MAX_CHARS = 80;
 
-/** 22.1: a hook + demo video counts as one video of the allowance (allowanceUnitsOf → 1). */
-export const HOOK_DEMO_ALLOWANCE_UNITS = 1;
+/** 23.3: a hook + demo video counts as ¼ of a video (allowanceQuartersOf → 1 quarter). */
+export const HOOK_DEMO_ALLOWANCE_QUARTERS = QUICK_POST_QUARTERS;
 
 const EMOJI = /\p{Extended_Pictographic}/u;
 

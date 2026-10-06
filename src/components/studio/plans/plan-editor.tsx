@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
+import { planKindQuarters, quartersToVideos } from '@/lib/studio/billing/allowance-units';
 import { useRouter } from 'next/navigation';
 import { useShowCosts } from '../account/use-show-costs';
 import { ConfirmDialog } from '../publications/confirm-dialog';
@@ -110,7 +111,9 @@ export function PlanEditor({ plan, onChange }: { plan: Plan; onChange: Change })
               })}{' '}
             </>
           )}
-          {t('allowanceUse', { count: items.length })}
+          {t('allowanceUse', {
+            count: quartersToVideos(items.reduce((n, i) => n + planKindQuarters(i.kind), 0)),
+          })}
         </p>
         <p className="text-xs text-muted-foreground">
           {noAccounts ? t('noAccountsWindow') : t('reviewWindow')}

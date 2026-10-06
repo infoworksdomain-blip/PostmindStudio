@@ -6,6 +6,7 @@ import {
   type TopUpPack,
 } from './catalogue';
 import type { ChargeState, CheckoutSessionState } from './gateway';
+import { quartersToVideos, VIDEO_QUARTERS, videosToQuarters } from './allowance-units';
 
 // Phase 18 §P.3 top-up packs. A paid Checkout session (mode=payment) inserts one usage_credits
 // row per pack (unique per session, so a replayed webhook never credits twice). Credits are
@@ -14,6 +15,11 @@ import type { ChargeState, CheckoutSessionState } from './gateway';
 // and records a usage_credit_uses row, unique per (project, month), so a retried generate never
 // spends twice. Each consumed credit raises that month's cost cap by the pack's worst-case
 // allowance (creditHeadroomPence → cost/guard.ts), so paid credits are never blocked by the cap.
+//
+// 23.3: pack balances are counted in QUARTERS of a video (billing/allowance-units.ts): a pack of
+// 5 videos holds 20 quarters; a quick post (carousel, slideshow, wall of text, hook + demo) takes
+// 1, a video 4, a UGC actor video 8. The legacy video columns (quantity, remaining) are written at
+// purchase only.
 
 export type CreditKind = 'short' | 'long';
 
@@ -57,6 +63,8 @@ export async function creditTopUp(
         packLookupKey: pack.lookupKey,
         quantity: pack.quantity,
         remaining: pack.quantity,
+        quantityQuarters: videosToQuarters(pack.quantity),
+        remainingQuarters: videosToQuarters(pack.quantity),
         stripeCheckoutSessionId: session.id,
         stripePaymentIntentId: session.paymentIntentId,
         purchasedAt: now,
@@ -70,22 +78,41 @@ export async function creditTopUp(
   }
 }
 
-/** Credits the organisation can still use, by kind (the settings page and the upgrade dialog). */
-export async function availableCredits(
+/** 23.3: pack quarters the organisation can still use, by kind (integers). */
+export async function availableCreditQuarters(
   db: Pick<PrismaClient, 'usageCredit'>,
   organisationId: string,
   now: Date,
 ): Promise<Record<CreditKind, number>> {
   const rows = await db.usageCredit.groupBy({
     by: ['kind'],
-    where: { organisationId, remaining: { gt: 0 }, refundedAt: null, expiresAt: { gt: now } },
-    _sum: { remaining: true },
+    where: {
+      organisationId,
+      remainingQuarters: { gt: 0 },
+      refundedAt: null,
+      expiresAt: { gt: now },
+    },
+    _sum: { remainingQuarters: true },
   });
   const out: Record<CreditKind, number> = { short: 0, long: 0 };
   for (const row of rows) {
-    if (row.kind === 'short' || row.kind === 'long') out[row.kind] = row._sum.remaining ?? 0;
+    if (row.kind === 'short' || row.kind === 'long')
+      out[row.kind] = row._sum.remainingQuarters ?? 0;
   }
   return out;
+}
+
+/**
+ * Pack videos the organisation can still use, by kind (the settings page and the upgrade
+ * dialog). 23.3: a whole or quarter number of videos (4.75 after three quick posts on 5 videos).
+ */
+export async function availableCredits(
+  db: Pick<PrismaClient, 'usageCredit'>,
+  organisationId: string,
+  now: Date,
+): Promise<Record<CreditKind, number>> {
+  const quarters = await availableCreditQuarters(db, organisationId, now);
+  return { short: quartersToVideos(quarters.short), long: quartersToVideos(quarters.long) };
 }
 
 export interface CreditUse {
@@ -95,9 +122,9 @@ export interface CreditUse {
 }
 
 /**
- * Consume one credit of `kind` for (project, month), first-in first-out. Returns the existing use
- * when the project already consumed one this month (a retried generate), null when none is left.
- * Call inside the quota lock's transaction.
+ * Consume `quarters` of one credit of `kind` for (project, month), first-in first-out. Returns the
+ * existing use when the project already consumed one this month (a retried generate), null when
+ * no single pack has enough left. Call inside the quota lock's transaction.
  */
 export async function consumeCredit(
   tx: CreditDb,
@@ -107,11 +134,14 @@ export async function consumeCredit(
     month: string;
     kind: CreditKind;
     now: Date;
-    /** 21.4: videos this generation uses (a UGC actor video uses 2; ugc/allowance.ts). */
-    units?: number;
+    /**
+     * 23.3: quarters of a video this generation uses (ugc/allowance.ts allowanceQuartersOf: a
+     * quick post 1, a video 4 — the default —, a UGC actor video 8).
+     */
+    quarters?: number;
   },
 ): Promise<CreditUse | null> {
-  const units = Math.max(1, Math.floor(input.units ?? 1));
+  const units = Math.max(1, Math.floor(input.quarters ?? VIDEO_QUARTERS));
   const existing = await tx.usageCreditUse.findUnique({
     where: { projectId_month: { projectId: input.projectId, month: input.month } },
   });
@@ -124,7 +154,7 @@ export async function consumeCredit(
     where: {
       organisationId: input.organisationId,
       kind: input.kind,
-      remaining: { gte: units },
+      remainingQuarters: { gte: units },
       refundedAt: null,
       expiresAt: { gt: input.now },
     },
@@ -133,8 +163,8 @@ export async function consumeCredit(
   });
   for (const credit of candidates) {
     const taken = await tx.usageCredit.updateMany({
-      where: { id: credit.id, remaining: { gte: units } },
-      data: { remaining: { decrement: units } },
+      where: { id: credit.id, remainingQuarters: { gte: units } },
+      data: { remainingQuarters: { decrement: units } },
     });
     if (taken.count === 0) continue;
     const use = await tx.usageCreditUse.create({
@@ -144,6 +174,7 @@ export async function consumeCredit(
         projectId: input.projectId,
         month: input.month,
         kind: input.kind,
+        quarters: units,
       },
     });
     return { id: use.id, creditId: credit.id, reused: false };
@@ -191,18 +222,26 @@ export async function refundTopUpCredits(
   });
   if (!credit) return null;
   const share = charge.amount > 0 ? Math.min(1, charge.amountRefunded / charge.amount) : 1;
-  const refundedCredits = Math.ceil(credit.quantity * share);
-  const spent = await db.usageCreditUse.count({ where: { creditId: credit.id } });
+  // 23.3: in quarters of a video; a spent use took its own quarters (a quick post 1, a video 4).
+  const refundedQuarters = Math.ceil(credit.quantityQuarters * share);
+  const spent = await db.usageCreditUse.aggregate({
+    where: { creditId: credit.id },
+    _sum: { quarters: true },
+  });
   const newRemaining = Math.min(
-    credit.remaining,
-    Math.max(0, credit.quantity - refundedCredits - spent),
+    credit.remainingQuarters,
+    Math.max(0, credit.quantityQuarters - refundedQuarters - (spent._sum.quarters ?? 0)),
   );
   await db.usageCredit.update({
     where: { id: credit.id },
     data: {
-      remaining: newRemaining,
+      remainingQuarters: newRemaining,
       ...(charge.refunded && { refundedAt: credit.refundedAt ?? now }),
     },
   });
-  return { creditId: credit.id, removed: credit.remaining - newRemaining };
+  // `removed` is in pack videos (a quarter number: 1.25 = 5 quarters).
+  return {
+    creditId: credit.id,
+    removed: quartersToVideos(credit.remainingQuarters - newRemaining),
+  };
 }

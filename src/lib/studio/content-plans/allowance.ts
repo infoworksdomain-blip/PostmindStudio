@@ -1,5 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
-import { availableCredits, creditHeadroomPence } from '../billing/credits';
+import { limitInQuarters, planKindQuarters, quartersToVideos } from '../billing/allowance-units';
+import { availableCreditQuarters, creditHeadroomPence } from '../billing/credits';
+import { UGC_VIDEO_QUARTERS } from '../ugc/allowance';
 import { capAdjustmentFor } from '../billing/cost-adjustments';
 import {
   TOP_UP_PACKS,
@@ -36,10 +38,34 @@ export interface PlanAllowance {
   mode: QuotaMode;
   /** Short videos this month: null limit = unlimited. */
   limit: number | null;
+  /** Videos used (23.3: a quarter number, 5.5). */
   used: number;
+  /** Pack videos left (a quarter number). */
   credits: number;
-  /** What may still be generated this month; null = no limit (warn mode or unlimited plan). */
+  /** Videos that may still be generated this month; null = no limit (warn mode or unlimited). */
   remaining: number | null;
+  /** 23.3: the same in integer quarters of a video (a quick post 1, a video 4). */
+  quarters: { limit: number | null; used: number; credits: number; remaining: number | null };
+}
+
+/** 23.3: one post a month plan or automation wants to make, and what it uses of the allowance. */
+export interface CapItem {
+  kind: PlanKind;
+  /** Quarters of a video (ugc/allowance.ts: a quick post 1, a video 4, a UGC actor video 8). */
+  quarters: number;
+}
+
+/**
+ * 23.3: what a month-plan item of `kind` uses: a slideshow or carousel is a quick post (¼), a
+ * video one video — two for a UGC actor video.
+ */
+export function planItemQuarters(kind: PlanKind, ugcActor = false): number {
+  return kind === 'VIDEO' && ugcActor ? UGC_VIDEO_QUARTERS : planKindQuarters(kind);
+}
+
+/** Month-plan kinds as cap items (planItemQuarters). */
+export function capItemsOf(kinds: readonly PlanKind[]): CapItem[] {
+  return kinds.map((kind) => ({ kind, quarters: planItemQuarters(kind) }));
 }
 
 export interface PlanCost {
@@ -83,39 +109,60 @@ export function creditHeadroomPerItem(_tier?: PlanTier): number {
   return headrooms.length ? Math.min(...headrooms) : 0;
 }
 
+/** How many leading items fit `quartersLeft` (null = no limit). */
+function itemsWithin(items: readonly CapItem[], quartersLeft: number | null): number {
+  if (quartersLeft === null) return items.length;
+  let used = 0;
+  let count = 0;
+  for (const item of items) {
+    if (used + item.quarters > quartersLeft) break;
+    used += item.quarters;
+    count += 1;
+  }
+  return count;
+}
+
+const quartersOf = (items: readonly CapItem[]) => items.reduce((n, i) => n + i.quarters, 0);
+
 /**
- * How many of `kinds` (in slot order) the month can take, and why fewer when it cannot. Items
- * past the plan allowance use top-up credits first; each credit raises the cost cap by its
- * headroom, so the cost check counts that too.
+ * How many of `items` (in slot order) the month can take, and why fewer when it cannot. 23.3:
+ * counted in quarters of a video (a quick post uses ¼). Items past the plan allowance use top-up
+ * credits first; each credit raises the cost cap by its headroom, so the cost check counts that
+ * too. `quarters` is what the kept items use of the allowance.
  */
 export function capItems(
-  kinds: PlanKind[],
+  items: readonly CapItem[],
   tier: PlanTier,
   allowance: PlanAllowance,
   cost: PlanCost,
-): { count: number; cappedReason: CappedReason | null } {
-  const byAllowance =
-    allowance.remaining === null ? kinds.length : Math.min(kinds.length, allowance.remaining);
+): { count: number; quarters: number; cappedReason: CappedReason | null } {
+  const byAllowance = itemsWithin(items, allowance.quarters.remaining);
   if (cost.capPence === null)
     return {
       count: byAllowance,
-      cappedReason: byAllowance < kinds.length ? 'allowance' : null,
+      quarters: quartersOf(items.slice(0, byAllowance)),
+      cappedReason: byAllowance < items.length ? 'allowance' : null,
     };
   const planLeft =
-    allowance.limit === null ? Infinity : Math.max(0, allowance.limit - allowance.used);
+    allowance.quarters.limit === null
+      ? Infinity
+      : Math.max(0, allowance.quarters.limit - allowance.quarters.used);
   let spent = cost.spentPence;
   let cap = cost.capPence;
   let count = 0;
-  for (const [i, kind] of kinds.slice(0, byAllowance).entries()) {
+  let quarters = 0;
+  for (const item of items.slice(0, byAllowance)) {
     // Items beyond the plan allowance spend a top-up credit, which raises this month's cap.
-    if (allowance.mode === 'enforce' && i >= planLeft) cap += cost.creditHeadroomPence;
-    const next = spent + typicalItemCostPence(kind, tier);
+    if (allowance.mode === 'enforce' && quarters + item.quarters > planLeft)
+      cap += cost.creditHeadroomPence;
+    const next = spent + typicalItemCostPence(item.kind, tier);
     if (next > cap) break;
     spent = next;
     count += 1;
+    quarters += item.quarters;
   }
-  if (count < byAllowance) return { count, cappedReason: 'cost_cap' };
-  return { count, cappedReason: count < kinds.length ? 'allowance' : null };
+  if (count < byAllowance) return { count, quarters, cappedReason: 'cost_cap' };
+  return { count, quarters, cappedReason: count < items.length ? 'allowance' : null };
 }
 
 type AllowanceDb = Pick<
@@ -148,14 +195,16 @@ export async function loadPlanAllowance(
     : undefined;
   const [usage, credits] = await Promise.all([
     usageView(deps, organisationId, tier, undefined, entitlements),
-    availableCredits(deps.db, organisationId, at),
+    availableCreditQuarters(deps.db, organisationId, at),
   ]);
   const quota = entitlementQuota(tierQuota(tier, env), entitlements);
   const mode = quotaMode(env, entitlements ? 'enforce' : 'warn');
-  const used = usage.videos.short.used;
+  // 23.3: counted in quarters of a video; the video fields are for display.
+  const usedQ = usage.videos.short.usedQuarters;
   const limit = quota.shortVideos;
-  const remaining =
-    mode === 'warn' || limit === null ? null : Math.max(0, limit - used) + credits.short;
+  const limitQ = limitInQuarters(limit);
+  const remainingQ =
+    mode === 'warn' || limitQ === null ? null : Math.max(0, limitQ - usedQ) + credits.short;
   const caps = deps.caps ?? costCapsFromEnv(env);
   const override = await deps.db.orgCostCap.findUnique({ where: { organisationId } });
   const adjustment = deps.entitlements
@@ -182,7 +231,14 @@ export async function loadPlanAllowance(
     _sum: { costPence: true },
   });
   return {
-    allowance: { mode, limit, used, credits: credits.short, remaining },
+    allowance: {
+      mode,
+      limit,
+      used: quartersToVideos(usedQ),
+      credits: quartersToVideos(credits.short),
+      remaining: remainingQ === null ? null : quartersToVideos(remainingQ),
+      quarters: { limit: limitQ, used: usedQ, credits: credits.short, remaining: remainingQ },
+    },
     cost: {
       capPence,
       spentPence: spent._sum.costPence ?? 0,

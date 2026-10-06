@@ -8,12 +8,23 @@
 //   GET/POST /automations, POST /automations/estimate, GET /automations/:id,
 //   POST /automations/:id/:action, POST /automations/:id/slots/:itemId
 // Nothing here renders or posts: the cards use the demo's sample pictures and video.
+import {
+  QUICK_POST_QUARTERS,
+  quartersToVideos,
+  VIDEO_QUARTERS,
+} from '@/lib/studio/billing/allowance-units';
 import { sampleVideo, sceneImage, type SceneKind } from '../../media';
 import { DemoHttpError, route } from '../registry';
 import { PROJECTS } from '../ids';
 
 type Format = 'carousel' | 'slideshow' | 'ai_video' | 'ugc';
 const HOUR = 3_600_000;
+
+/** 23.3 (blitz/allocate.ts FORMAT_ALLOWANCE_QUARTERS): videos of the plan a kept card uses. */
+function allowanceVideos(format: Format): number {
+  if (format === 'ugc') return 2;
+  return quartersToVideos(format === 'ai_video' ? VIDEO_QUARTERS : QUICK_POST_QUARTERS);
+}
 const DAY = 24 * HOUR;
 
 interface DemoAngle {
@@ -95,7 +106,8 @@ function card(
     posterUrl: null as string | null,
     previewImageUrl: preview ? sceneImage('flatlay', 540, 960) : null,
     remix: null as unknown,
-    allowanceUnits: format === 'ugc' ? 2 : 1,
+    // 23.3: a carousel or slideshow uses ¼ of a video, an AI video 1, a UGC video 2.
+    allowanceUnits: allowanceVideos(format),
     createdAt: new Date(Date.now() - HOUR).toISOString(),
     ...extra,
   };
@@ -493,7 +505,8 @@ route('POST', '/automations/estimate', ({ body }) => {
       ongoing: Boolean(b.duration?.startsWith('ongoing')),
       split: { carousel: carousels, slideshow: posts - carousels },
       paidPosts: 0,
-      allowanceUnits: posts,
+      // 23.3: carousels and slideshows are quick posts (¼ of a video each).
+      allowanceUnits: posts / 4,
     },
   };
 });

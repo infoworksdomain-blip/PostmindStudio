@@ -21,6 +21,7 @@ import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { calendarDaysBetween } from '../content-plans/calendar-days';
 import {
   capItems,
+  capItemsOf,
   estimateCost,
   loadPlanAllowance,
   type PlanAllowance,
@@ -412,12 +413,8 @@ export async function createPlan(
     timezone: zone,
   });
   const { allowance, cost } = await loadPlanAllowance(deps, tenant.organisationId, tier);
-  const capped = capItems(
-    skeleton.map((s) => s.kind),
-    tier,
-    allowance,
-    cost,
-  );
+  // 23.3: slideshows and carousels use ¼ of a video, videos a whole one.
+  const capped = capItems(capItemsOf(skeleton.map((s) => s.kind)), tier, allowance, cost);
   if (capped.count === 0)
     throw new QuotaExceededError(
       capped.cappedReason === 'cost_cap'
