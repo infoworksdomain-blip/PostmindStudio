@@ -17,7 +17,12 @@ const TYPES: Record<string, string> = {
   'video/quicktime': 'mov',
   'video/webm': 'webm',
 };
-const MAX_BYTES = { source_video: 524_288_000, slide_clip: 209_715_200 } as const;
+const MAX_BYTES = {
+  source_video: 524_288_000,
+  slide_clip: 209_715_200,
+  // 22.1: a demo video for the business's demo bank (hook + demo videos).
+  demo_video: 524_288_000,
+} as const;
 const SLIDE_EDITABLE = new Set([
   'DRAFT',
   'FAILED',
@@ -28,7 +33,11 @@ const SLIDE_EDITABLE = new Set([
 
 export interface DemoUpload {
   id: string;
-  kind: 'source_video' | 'slide_clip';
+  kind: 'source_video' | 'slide_clip' | 'demo_video';
+  /** 22.1: the business a demo video belongs to. */
+  businessId?: string | null;
+  /** 22.1: when it was completed (the bank lists the newest first). */
+  completedAt?: string | null;
   state: 'PENDING' | 'READY' | 'FAILED';
   fileName: string;
   contentType: string;
@@ -56,8 +65,16 @@ route('POST', '/uploads', ({ body }) => {
   // 15.B1 (Track B): brand-kit media kinds.
   if (isBrandUploadRequest(b)) return createBrandUpload(b);
   const kind =
-    b.kind === 'slide_clip' ? 'slide_clip' : b.kind === 'source_video' ? 'source_video' : null;
-  if (!kind) throw bad('kind must be source_video or slide_clip');
+    b.kind === 'slide_clip'
+      ? 'slide_clip'
+      : b.kind === 'source_video'
+        ? 'source_video'
+        : b.kind === 'demo_video'
+          ? 'demo_video'
+          : null;
+  if (!kind) throw bad('kind must be source_video, slide_clip or demo_video');
+  if (kind === 'demo_video' && typeof b.businessId !== 'string')
+    throw bad('businessId is required');
   const contentType = typeof b.contentType === 'string' ? b.contentType : '';
   if (!TYPES[contentType])
     throw bad('contentType must be video/mp4, video/quicktime or video/webm');
@@ -89,6 +106,7 @@ route('POST', '/uploads', ({ body }) => {
   const upload: DemoUpload = {
     id,
     kind,
+    businessId: typeof b.businessId === 'string' ? b.businessId : null,
     state: 'PENDING',
     fileName,
     contentType,
@@ -140,6 +158,7 @@ route('POST', '/uploads/:id/complete', ({ params }) => {
     upload.height = 1920;
     upload.sizeBytes = upload.declaredBytes;
     upload.state = 'READY';
+    upload.completedAt = new Date().toISOString();
     if (upload.kind === 'slide_clip') upload.assetId = newId('ast');
   }
   return {
@@ -167,6 +186,39 @@ export function claimUpload(uploadId: string | undefined): DemoUpload {
     throw new DemoHttpError(409, 'conflict', 'This upload is already used by a project');
   upload.assetId = newId('ast');
   return upload;
+}
+
+/** 22.1: the business's READY demo videos, newest first (GET /uploads/demo-videos). */
+export function demoVideos(businessId: string | null) {
+  return [...uploads.values()]
+    .filter((u) => u.kind === 'demo_video' && u.state === 'READY' && u.businessId === businessId)
+    .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''))
+    .map(present);
+}
+
+/** 22.1: a seeded demo video, so Create → Hook + demo works before anything is uploaded. */
+export function seedDemoVideo(businessId: string): void {
+  const id = 'upl-demo-order-ahead';
+  if (uploads.has(id)) return;
+  uploads.set(id, {
+    id,
+    kind: 'demo_video',
+    businessId,
+    completedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+    state: 'READY',
+    fileName: 'order-ahead-app-demo.mp4',
+    contentType: 'video/mp4',
+    sizeBytes: 18_400_000,
+    declaredBytes: 18_400_000,
+    durationSec: 34,
+    width: 1080,
+    height: 1920,
+    projectId: null,
+    assetId: null,
+    errorReason: null,
+    expiresAt: new Date().toISOString(),
+    received: true,
+  });
 }
 
 /** The demo pipeline's "plan" for an UPLOAD project: one USER_UPLOAD shot, captions from speech. */

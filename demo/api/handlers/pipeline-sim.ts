@@ -8,6 +8,7 @@ import { CONTENT, contentForBrief, type ProjectContent } from './projects-conten
 import { approve } from './projects-publish';
 import { uploadContent } from './p13-a1-uploads';
 import { startCarouselRun } from './p21-carousels';
+import { hookDemoContent, wallOfTextContent } from './p22-formats';
 import {
   buildRender,
   buildScripts,
@@ -77,6 +78,9 @@ export function contentFor(p: ProjectRec): ProjectContent {
   if (p.sourceType === 'SLIDESHOW')
     return { scene: p.scene, brief: null, shots: slidesToShots(p.id) };
   if (p.sourceType === 'UPLOAD') return uploadContent(p);
+  // 22.1 / 22.2: a reaction hook + the demo; one text block over a calm background.
+  if (p.sourceType === 'HOOK_DEMO') return hookDemoContent(p);
+  if (p.sourceType === 'WALL_OF_TEXT') return wallOfTextContent(p);
   return CONTENT[p.id] ?? contentForBrief(p.description ?? p.name ?? '');
 }
 
