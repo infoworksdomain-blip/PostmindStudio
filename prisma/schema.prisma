@@ -103,6 +103,8 @@ enum VideoSourceType {
   LIBRARY_REFERENCE // A7.2
   SLIDESHOW // A7.2
   CAROUSEL // 21.6: post-card image carousel (metadata.carousel)
+  HOOK_DEMO // 22.1: reaction hook clip + the business's own demo video (metadata.hookDemo)
+  WALL_OF_TEXT // 22.2: one text block over a calm background video (metadata.wallOfText)
 
   @@schema("studio")
 }
@@ -1576,6 +1578,7 @@ enum UploadKind {
   BRAND_WATERMARK
   BRAND_CARD
   BRAND_FONT
+  DEMO_VIDEO // 22.1: the business's product/app demo bank (reused by hook + demo videos)
 
   @@schema("studio")
 }

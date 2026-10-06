@@ -121,6 +121,15 @@ export class AutoPublishAccountUnavailableError extends StudioError {
   readonly code = 'auto_publish_account_unavailable';
 }
 
+/**
+ * 22.1: a hook + demo video needs one of the business's own demo videos, and it has none (or the
+ * chosen one is not a ready demo video of this business). Same code as Fastlane's API.
+ */
+export class NoDemoVideoError extends StudioError {
+  readonly status = 422;
+  readonly code = 'no_demo_video';
+}
+
 /** 15.C4: well-formed but not allowed for this organisation (e.g. a tier above its plan). */
 export class UnprocessableError extends StudioError {
   readonly status = 422;

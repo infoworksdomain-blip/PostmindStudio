@@ -282,7 +282,8 @@
       "auto_publish_account_required": "Wählen Sie ein verbundenes Konto zum Posten aus, oder deaktivieren Sie die automatische Veröffentlichung und den Termin.",
       "auto_publish_account_unavailable": "Ein gewähltes Konto ist nicht mehr verbunden. Verbinden Sie es erneut oder wählen Sie ein anderes Konto.",
       "queue_unavailable": "Das Veröffentlichen ist vorübergehend nicht verfügbar. Es wurde nichts gepostet oder gespeichert; versuchen Sie es gleich noch einmal.",
-      "channel_limit": "Ihr Tarif enthält keinen Kanal für diese Plattform. Fügen Sie unter Ihr Tarif einen Kanal hinzu, um hier zu veröffentlichen."
+      "channel_limit": "Ihr Tarif enthält keinen Kanal für diese Plattform. Fügen Sie unter Ihr Tarif einen Kanal hinzu, um hier zu veröffentlichen.",
+      "no_demo_video": "Lade zuerst ein Demovideo deines Produkts oder deiner App hoch."
     }
   },
   "primitives": {
@@ -539,7 +540,9 @@
         "SLIDESHOW": "Worum geht es in der Diashow?",
         "UPLOAD": "Laden Sie Ihr Video hoch",
         "UGC": "Worüber soll der Darsteller sprechen?",
-        "CAROUSEL": "Worum geht es im Karussell?"
+        "CAROUSEL": "Worum geht es im Karussell?",
+        "HOOK_DEMO": "Was zeigt deine Demo?",
+        "WALL_OF_TEXT": "Was soll im Text stehen?"
       },
       "uploadChoose": "Video auswählen",
       "uploadReplace": "Video ersetzen",
@@ -558,7 +561,9 @@
         "SLIDESHOW": "Diashow",
         "UPLOAD": "Video hochladen",
         "UGC": "UGC-Darsteller",
-        "CAROUSEL": "Karussell (Post-Karten)"
+        "CAROUSEL": "Karussell (Post-Karten)",
+        "HOOK_DEMO": "Hook + Demo",
+        "WALL_OF_TEXT": "Textwand"
       },
       "templatedNote": "Plattformen und Länge werden von der Vorlage vorgegeben. Ihr Text oben ist optional – er ergänzt die Gliederung der Vorlage um Details.",
       "noBusiness": {
@@ -571,13 +576,15 @@
         "generatingUpload": "Wird generiert – Studio untertitelt Ihr Video.",
         "generatingScript": "Wird generiert – Studio schreibt das Skript.",
         "draftNotStarted": "Als Entwurf gespeichert, aber die Generierung wurde nicht gestartet: {error}",
-        "generatingCarousel": "Dein Karussell wird geschrieben …"
+        "generatingCarousel": "Dein Karussell wird geschrieben …",
+        "generatingFormat": "Wird erstellt – Studio schreibt den Text und erstellt dein Video."
       },
       "planMonth": "Oder planen Sie einen ganzen Monat mit Videos und Diashows",
       "summaryNoAccounts": "keine verbundenen Konten: zur Prüfung gespeichert",
       "summaryForReview": "zur Prüfung gespeichert",
       "createCarousel": "Karussell erstellen",
-      "summaryCarousel": "{count} Posts · {theme, select, dark {dunkle} other {helle}} Karten"
+      "summaryCarousel": "{count} Posts · {theme, select, dark {dunkle} other {helle}} Karten",
+      "summarySeconds": "{count, number} s"
     },
     "problems": {
       "businessRequired": "Wählen Sie zuerst ein Unternehmen aus.",
@@ -597,7 +604,11 @@
       "ugcShortOnly": "UGC-Darstellervideos sind kurz: Wählen Sie „Kurz“.",
       "ugcRealPerson": "UGC-Darsteller sind generierte Personen. Sie können keine echte Person oder keinen Prominenten nachahmen, ihnen ähneln oder wie sie klingen: Beschreiben Sie stattdessen, welche Art von Person Sie möchten.",
       "carouselBriefRequired": "Beschreibe das Karussell oder füge einen Thread ein.",
-      "carouselThreadTooLong": "Der eingefügte Thread ist zu lang."
+      "carouselThreadTooLong": "Der eingefügte Thread ist zu lang.",
+      "demoRequired": "Lade zuerst ein Demovideo deines Produkts oder deiner App hoch: Ein Hook-+-Demo-Video zeigt nach dem Hook deine eigene Demo.",
+      "hookLineTooLong": "Halte die Hook-Zeile bei höchstens {max, number} Wörtern.",
+      "wallTextRequired": "Beschreibe das Video oder schreib den Text selbst.",
+      "wallTextTooLong": "Halte den Text bei höchstens {max, number} Wörtern und 10 Zeilen."
     },
     "options": {
       "platforms": "Plattformen",
@@ -763,6 +774,57 @@
       "thread": "Dein Thread (optional)",
       "threadPlaceholder": "Thread einfügen: Posts mit einer Zeile --- trennen oder als 1/, 2/, 3/ … nummerieren",
       "threadHint": "Leer lassen, dann schreibt Studio den Thread. Der erste Post ist der Hook, der letzte der Call to Action."
+    },
+    "hookDemo": {
+      "title": "Hook + Demo",
+      "intro": "Eine kurze Reaktion in die Kamera mit einer Textzeile, direkt danach dein eigenes Demovideo.",
+      "demo": "Demovideo",
+      "noDemo": "Noch keine Demovideos. Lade eine Bildschirmaufnahme oder ein Handyvideo deines Produkts oder deiner App hoch.",
+      "upload": "Demovideo hochladen",
+      "uploadAnother": "Weiteres Demovideo hochladen",
+      "demoHint": "Demovideos werden für dieses Unternehmen gespeichert und können wiederverwendet werden. Studio nutzt die ersten Sekunden, die in ein 10–20-Sekunden-Video passen.",
+      "hookLine": "Hook-Zeile (optional)",
+      "hookLinePlaceholder": "z. B. Ich nehme keine Buchungen mehr per Telefon an",
+      "hookLineHint": "{count, number} von {max, number} Wörtern. Leer lassen, dann schreibt Studio eine.",
+      "hookSource": "Hook",
+      "hookSources": {
+        "ai_creator": "Reaktion eines KI-Creators",
+        "library": "Reaktionsclip aus der Bibliothek"
+      },
+      "reaction": "Reaktion",
+      "reactions": {
+        "surprised": "Überrascht",
+        "curious": "Neugierig",
+        "wait_what": "„Moment, was?“"
+      },
+      "layout": "Layout",
+      "layouts": {
+        "sequential": "Hook, dann Demo",
+        "stacked": "Hook über der Demo, dann Demo"
+      },
+      "audioMix": "Ton",
+      "audioMixes": {
+        "balanced": "Musik und Demo-Ton",
+        "demo": "Demo-Ton zuerst",
+        "music": "Nur Musik"
+      },
+      "disclosure": "Die Reaktion zeigt eine KI-generierte Person, nie eine echte, und das Video trägt den Hinweis „KI-generiert“. Es zählt als ein Video deines Kontingents."
+    },
+    "wallOfText": {
+      "title": "Textwand",
+      "intro": "Ein Textblock über einem ruhigen Hintergrundvideo mit Musik, die ganze Zeit sichtbar.",
+      "text": "Text (optional)",
+      "textPlaceholder": "Eine kurze Liste oder Aussage, ein Gedanke pro Zeile. Leer lassen, dann schreibt Studio ihn aus deiner Beschreibung.",
+      "textHint": "{count, number} von {max, number} Wörtern",
+      "background": "Hintergrund",
+      "backgrounds": {
+        "calm": "Ruhig",
+        "nature": "Natur",
+        "city": "Lichter der Stadt",
+        "abstract": "Abstrakt"
+      },
+      "length": "Länge",
+      "seconds": "{count, number} s"
     }
   },
   "review": {
@@ -779,7 +841,9 @@
         "POSTMIND_CONTENT": "Aus PostMind-Inhalten",
         "TEMPLATE": "Aus einer Vorlage",
         "UPLOAD": "Ihr Video",
-        "CAROUSEL": "Karussell"
+        "CAROUSEL": "Karussell",
+        "HOOK_DEMO": "Hook + Demo",
+        "WALL_OF_TEXT": "Textwand"
       },
       "loading": "Projekt wird geladen",
       "spent": "{amount} ausgegeben",
@@ -3976,7 +4040,11 @@
       "stock_unavailable": "Einige Stockfotos konnten diesmal nicht hinzugefügt werden. Mit „Stockfotos aktualisieren“ in der Bildbibliothek versuchen Sie es erneut.",
       "ugc_real_person_refused": "Dieses UGC-Briefing verlangte eine echte Person oder einen Prominenten. Darsteller sind generierte Personen: Beschreiben Sie stattdessen, welche Art von Person Sie möchten.",
       "carousel_incomplete": "Das Karussell konnte nicht erstellt werden: Es hat keine Posts.",
-      "carousel_render_error": "Das Zeichnen der Karussell-Folien ist fehlgeschlagen."
+      "carousel_render_error": "Das Zeichnen der Karussell-Folien ist fehlgeschlagen.",
+      "no_demo_video": "Das Demovideo ist nicht mehr verfügbar: Wähle ein anderes oder lade eines hoch.",
+      "hook_clip_unavailable": "Der Hook-Clip konnte nicht erstellt werden: Gerade ist kein KI-Creator verfügbar und die Bibliothek hat keinen passenden Reaktionsclip. Versuche es später erneut.",
+      "wall_of_text_invalid": "Die Textwand hat keine Einstellungen: Erstelle sie neu.",
+      "no_background_video": "Für diese Textwand wurde kein Hintergrundvideo gefunden. Wähle einen anderen Hintergrund oder versuche es später erneut."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",

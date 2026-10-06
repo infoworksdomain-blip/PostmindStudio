@@ -5,8 +5,51 @@ import { buildFormats, nameFromBrief, type Length, type TargetFormatInput } from
 // Builds the POST /api/studio/projects body (services/projects.ts createProjectInput) from the
 // Create screen's state. Pure, so the rules the API enforces are unit-tested here too.
 
-export type CreateSource = 'BRIEF' | 'SLIDESHOW' | 'UPLOAD' | 'UGC' | 'CAROUSEL';
+export type CreateSource =
+  'BRIEF' | 'SLIDESHOW' | 'UPLOAD' | 'UGC' | 'CAROUSEL' | 'HOOK_DEMO' | 'WALL_OF_TEXT';
 export type CarouselTheme = 'light' | 'dark';
+
+/** 22.1: the Create screen's hook + demo choices (formats/hook-demo.ts). */
+export interface HookDemoChoice {
+  demoUploadId: string | null;
+  hookLine: string;
+  hookSource: 'ai_creator' | 'library';
+  reaction: 'surprised' | 'curious' | 'wait_what';
+  layout: 'sequential' | 'stacked';
+  audioMix: 'demo' | 'balanced' | 'music';
+}
+
+export const EMPTY_HOOK_DEMO: HookDemoChoice = {
+  demoUploadId: null,
+  hookLine: '',
+  hookSource: 'ai_creator',
+  reaction: 'surprised',
+  layout: 'sequential',
+  audioMix: 'balanced',
+};
+
+/** 22.2: the Create screen's wall-of-text choices (formats/wall-of-text.ts). */
+export interface WallOfTextChoice {
+  text: string;
+  background: 'calm' | 'nature' | 'city' | 'abstract';
+  durationSec: number;
+}
+
+export const EMPTY_WALL_OF_TEXT: WallOfTextChoice = {
+  text: '',
+  background: 'calm',
+  durationSec: 8,
+};
+export const HOOK_LINE_MAX_WORDS = 12;
+export const WALL_TEXT_MAX_WORDS = 60;
+export const WALL_TEXT_MAX_LINES = 10;
+/** formats/copy-prompt.ts WALL_TEXT_MAX_CHARS (the overlay API's text limit). */
+export const WALL_TEXT_MAX_CHARS = 500;
+export const WALL_SECONDS = [6, 8, 10, 12] as const;
+
+export function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
 
 /** 21.6: the carousel options on Create (carousel/constants.ts MIN_POSTS..MAX_POSTS). */
 export const CAROUSEL_POSTS_MIN = 3;
@@ -92,6 +135,9 @@ export interface CreateState {
   carouselThread?: string;
   /** 21.4: the UGC actor choices (source 'UGC'). */
   ugc?: UgcChoice;
+  /** 22.1 / 22.2: the Fastlane-style formats' choices. */
+  hookDemo?: HookDemoChoice;
+  wallOfText?: WallOfTextChoice;
 }
 
 export interface Reference {
@@ -103,8 +149,21 @@ export interface CreateProjectBody {
   /** 17.9: omitted when there is nothing to name the project after (stored as null). */
   name?: string;
   businessId: string;
-  sourceType: 'BRIEF' | 'SLIDESHOW' | 'LIBRARY_REFERENCE' | 'TEMPLATE' | 'UPLOAD' | 'CAROUSEL';
+  sourceType:
+    | 'BRIEF'
+    | 'SLIDESHOW'
+    | 'LIBRARY_REFERENCE'
+    | 'TEMPLATE'
+    | 'UPLOAD'
+    | 'CAROUSEL'
+    | 'HOOK_DEMO'
+    | 'WALL_OF_TEXT';
   carousel?: { theme: CarouselTheme; postCount: number; thread?: string };
+  hookDemo?: Omit<HookDemoChoice, 'demoUploadId' | 'hookLine'> & {
+    demoUploadId: string;
+    hookLine?: string;
+  };
+  wallOfText?: Omit<WallOfTextChoice, 'text'> & { text?: string };
   uploadId?: string;
   /** Omitted for TEMPLATE projects: the template's formats apply. */
   targetFormats?: TargetFormatInput[];
@@ -145,7 +204,11 @@ export type CreateProblem =
   | 'scheduleNeedsAccount'
   | 'budgetRange'
   | 'ugcEnglishOnly'
-  | 'ugcShortOnly';
+  | 'ugcShortOnly'
+  | 'demoRequired'
+  | 'hookLineTooLong'
+  | 'wallTextRequired'
+  | 'wallTextTooLong';
 
 export const MAX_BUDGET_POUNDS = 100_000;
 
@@ -168,7 +231,14 @@ export function validateCreate(
   if (!businessId) problems.push('businessRequired');
   const uploading = state.source === 'UPLOAD';
   if (uploading && !state.upload) problems.push('uploadRequired');
-  if (!state.brief.trim() && !templated && !uploading) problems.push('briefRequired');
+  // 22.1: a hook + demo video needs a demo video; the brief is optional (the business profile
+  // and the demo are enough). 22.2: a wall of text needs a brief or its own text block.
+  const hookDemo = state.source === 'HOOK_DEMO';
+  const wall = state.source === 'WALL_OF_TEXT';
+  if (hookDemo) problems.push(...validateHookDemo(state.hookDemo ?? EMPTY_HOOK_DEMO));
+  if (wall) problems.push(...validateWall(state));
+  if (!state.brief.trim() && !templated && !uploading && !hookDemo && !wall)
+    problems.push('briefRequired');
   if (state.brief.length > BRIEF_MAX) problems.push('briefTooLong');
   if (state.platforms.length === 0 && !templated) problems.push('platformRequired');
   const matching = publishable
@@ -208,6 +278,53 @@ export function validateCreate(
       problems.push('budgetRange');
   }
   return problems;
+}
+
+function validateHookDemo(choice: HookDemoChoice): CreateProblem[] {
+  return [
+    ...(choice.demoUploadId ? [] : (['demoRequired'] as const)),
+    ...(countWords(choice.hookLine) > HOOK_LINE_MAX_WORDS ? (['hookLineTooLong'] as const) : []),
+  ];
+}
+
+function validateWall(state: CreateState): CreateProblem[] {
+  const text = state.wallOfText?.text ?? '';
+  const lines = text.split(/\r?\n/).filter((l) => l.trim()).length;
+  return [
+    ...(!state.brief.trim() && !text.trim() ? (['wallTextRequired'] as const) : []),
+    ...(countWords(text) > WALL_TEXT_MAX_WORDS || lines > WALL_TEXT_MAX_LINES
+      ? (['wallTextTooLong'] as const)
+      : []),
+  ];
+}
+
+/** 22.1 / 22.2: the format's own settings in the POST /projects body. */
+function formatFields(state: CreateState): Partial<CreateProjectBody> {
+  if (state.source === 'HOOK_DEMO') {
+    const choice = state.hookDemo ?? EMPTY_HOOK_DEMO;
+    const hookLine = choice.hookLine.trim();
+    return {
+      sourceType: 'HOOK_DEMO',
+      hookDemo: {
+        demoUploadId: choice.demoUploadId ?? '',
+        ...(hookLine && { hookLine }),
+        hookSource: choice.hookSource,
+        reaction: choice.reaction,
+        layout: choice.layout,
+        audioMix: choice.audioMix,
+      },
+    };
+  }
+  const choice = state.wallOfText ?? EMPTY_WALL_OF_TEXT;
+  const text = choice.text.trim();
+  return {
+    sourceType: 'WALL_OF_TEXT',
+    wallOfText: {
+      ...(text && { text }),
+      background: choice.background,
+      durationSec: choice.durationSec,
+    },
+  };
 }
 
 /**
@@ -285,6 +402,18 @@ export function buildCreateBody(
         optionalName(nameFromBrief(state.upload.fileName.replace(/\.[a-z0-9]+$/i, ''))),
       );
     if (rawInput) body.brief = { rawInput };
+  } else if (state.source === 'HOOK_DEMO' || state.source === 'WALL_OF_TEXT') {
+    Object.assign(body, formatFields(state));
+    if (rawInput)
+      body.brief = {
+        rawInput,
+        ...(state.targetAudience.trim() && { targetAudience: state.targetAudience.trim() }),
+        ...(state.callToAction.trim() && { callToAction: state.callToAction.trim() }),
+      };
+    else {
+      const own = state.source === 'HOOK_DEMO' ? state.hookDemo?.hookLine : state.wallOfText?.text;
+      Object.assign(body, optionalName(nameFromBrief(own?.split('\n')[0] ?? '')));
+    }
   } else if (state.source === 'SLIDESHOW' && state.templateId) {
     body.sourceType = 'SLIDESHOW';
     body.slideshow = { templateId: state.templateId, topic: rawInput.slice(0, 500) };

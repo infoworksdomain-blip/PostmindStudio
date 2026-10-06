@@ -282,7 +282,8 @@
       "auto_publish_account_required": "请选择要发布到的已连接账号，或关闭自动发布和排期。",
       "auto_publish_account_unavailable": "所选的某个账号已不再连接。请重新连接，或选择其他账号。",
       "queue_unavailable": "发布功能暂时不可用。没有发布或保存任何内容；请稍后再试。",
-      "channel_limit": "您的套餐不包含此平台的频道。请在“我的套餐”中添加频道后在此发布。"
+      "channel_limit": "您的套餐不包含此平台的频道。请在“我的套餐”中添加频道后在此发布。",
+      "no_demo_video": "请先上传产品或应用的演示视频。"
     }
   },
   "primitives": {
@@ -539,7 +540,9 @@
         "SLIDESHOW": "幻灯片的主题是什么？",
         "UPLOAD": "上传您的视频",
         "UGC": "演员应该讲些什么？",
-        "CAROUSEL": "这组轮播图讲什么？"
+        "CAROUSEL": "这组轮播图讲什么？",
+        "HOOK_DEMO": "你的演示视频展示什么？",
+        "WALL_OF_TEXT": "文字要说什么？"
       },
       "uploadChoose": "选择视频",
       "uploadReplace": "替换视频",
@@ -558,7 +561,9 @@
         "SLIDESHOW": "幻灯片",
         "UPLOAD": "上传视频",
         "UGC": "UGC 演员",
-        "CAROUSEL": "轮播图（帖子卡片）"
+        "CAROUSEL": "轮播图（帖子卡片）",
+        "HOOK_DEMO": "钩子 + 演示",
+        "WALL_OF_TEXT": "文字墙"
       },
       "templatedNote": "平台和时长由模板决定。上方文字为选填，可为模板大纲补充具体内容。",
       "noBusiness": {
@@ -571,13 +576,15 @@
         "generatingUpload": "正在生成——Studio 正在为您的视频添加字幕。",
         "generatingScript": "正在生成——Studio 正在撰写脚本。",
         "draftNotStarted": "已保存为草稿，但未能开始生成：{error}",
-        "generatingCarousel": "正在撰写您的轮播图…"
+        "generatingCarousel": "正在撰写您的轮播图…",
+        "generatingFormat": "正在生成：Studio 正在撰写文字并制作你的视频。"
       },
       "planMonth": "或者规划一整个月的视频和幻灯片",
       "summaryNoAccounts": "没有已连接的账号：保存以供审核",
       "summaryForReview": "保存以供审核",
       "createCarousel": "创建轮播图",
-      "summaryCarousel": "{count} 条帖子 · {theme, select, dark {深色} other {浅色}}卡片"
+      "summaryCarousel": "{count} 条帖子 · {theme, select, dark {深色} other {浅色}}卡片",
+      "summarySeconds": "{count, number} 秒"
     },
     "problems": {
       "businessRequired": "请先选择商家。",
@@ -597,7 +604,11 @@
       "ugcShortOnly": "UGC 演员视频为短视频：请选择“短”。",
       "ugcRealPerson": "UGC 演员是生成的人物，不能模仿真人或名人，也不能长得像或听起来像他们：请改为描述您想要的人物类型。",
       "carouselBriefRequired": "请描述轮播图，或粘贴一组串文。",
-      "carouselThreadTooLong": "粘贴的串文太长。"
+      "carouselThreadTooLong": "粘贴的串文太长。",
+      "demoRequired": "请先上传产品或应用的演示视频：钩子 + 演示视频会在钩子之后播放你自己的演示。",
+      "hookLineTooLong": "钩子文案最多 {max, number} 个词。",
+      "wallTextRequired": "请描述视频，或自己写好文字。",
+      "wallTextTooLong": "文字最多 {max, number} 个词、10 行。"
     },
     "options": {
       "platforms": "平台",
@@ -763,6 +774,57 @@
       "thread": "您的串文（可选）",
       "threadPlaceholder": "粘贴串文：用一行 --- 分隔帖子，或编号为 1/、2/、3/…",
       "threadHint": "留空则由 Studio 撰写串文。第一条帖子是开头钩子，最后一条是行动号召。"
+    },
+    "hookDemo": {
+      "title": "钩子 + 演示",
+      "intro": "先是一个对着镜头的快速反应和一行文字，紧接着播放你自己的演示视频。",
+      "demo": "演示视频",
+      "noDemo": "还没有演示视频。请上传产品或应用的录屏，或手持手机拍摄的视频。",
+      "upload": "上传演示视频",
+      "uploadAnother": "再上传一个演示视频",
+      "demoHint": "演示视频会为该商家保存，可以重复使用。Studio 会截取开头能放进 10–20 秒视频的部分。",
+      "hookLine": "钩子文案（可选）",
+      "hookLinePlaceholder": "例如：我不再用电话接受预订了",
+      "hookLineHint": "{count, number}/{max, number} 个词。留空则由 Studio 撰写。",
+      "hookSource": "钩子",
+      "hookSources": {
+        "ai_creator": "AI 创作者的反应",
+        "library": "素材库中的反应片段"
+      },
+      "reaction": "反应",
+      "reactions": {
+        "surprised": "惊讶",
+        "curious": "好奇",
+        "wait_what": "“等等，什么？”"
+      },
+      "layout": "布局",
+      "layouts": {
+        "sequential": "先钩子，再演示",
+        "stacked": "钩子在演示上方，然后演示"
+      },
+      "audioMix": "声音",
+      "audioMixes": {
+        "balanced": "音乐和演示原声",
+        "demo": "演示原声为主",
+        "music": "仅音乐"
+      },
+      "disclosure": "反应中的人物由 AI 生成，绝非真人，视频会带有“AI 生成”标签。计为你额度中的一个视频。"
+    },
+    "wallOfText": {
+      "title": "文字墙",
+      "intro": "在舒缓的背景视频和音乐上显示一整段文字，全程可见。",
+      "text": "文字（可选）",
+      "textPlaceholder": "一个简短清单或一句话，每行一个要点。留空则由 Studio 根据你的描述撰写。",
+      "textHint": "{count, number}/{max, number} 个词",
+      "background": "背景",
+      "backgrounds": {
+        "calm": "舒缓",
+        "nature": "自然",
+        "city": "城市灯光",
+        "abstract": "抽象"
+      },
+      "length": "时长",
+      "seconds": "{count, number} 秒"
     }
   },
   "review": {
@@ -779,7 +841,9 @@
         "POSTMIND_CONTENT": "来自 PostMind 内容",
         "TEMPLATE": "来自模板",
         "UPLOAD": "您的视频",
-        "CAROUSEL": "轮播图"
+        "CAROUSEL": "轮播图",
+        "HOOK_DEMO": "钩子 + 演示",
+        "WALL_OF_TEXT": "文字墙"
       },
       "loading": "正在加载项目",
       "spent": "已花费 {amount}",
@@ -3976,7 +4040,11 @@
       "stock_unavailable": "这次有些图库照片无法添加。请在图片库中点击“刷新图库”重试。",
       "ugc_real_person_refused": "此 UGC 需求说明要求真人或名人。演员是生成的人物：请改为描述您想要的人物类型。",
       "carousel_incomplete": "无法制作轮播图：其中没有帖子。",
-      "carousel_render_error": "绘制轮播图幻灯片失败。"
+      "carousel_render_error": "绘制轮播图幻灯片失败。",
+      "no_demo_video": "演示视频已不可用：请选择或上传另一个。",
+      "hook_clip_unavailable": "无法制作钩子片段：目前没有可用的 AI 创作者，素材库中也没有可用的反应片段。请稍后再试。",
+      "wall_of_text_invalid": "文字墙没有设置：请重新创建。",
+      "no_background_video": "没有找到适合此文字墙的背景视频。请换一个背景，或稍后再试。"
     },
     "classes": {
       "rate_limited": "请求过多",

@@ -56,6 +56,13 @@ import { clipSpeaks, speechAssetIdOf } from '../../ugc/clip-speech';
 import { ugcStyleOf } from '../../ugc/style';
 import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
+import { readHookDemo } from '../../formats/hook-demo';
+import { hookDemoEdl } from '../../formats/hook-demo-edl';
+
+/** width ÷ height of a stored asset, when it was probed (uploads; library clips are not). */
+function aspectOf(asset: { widthPx: number | null; heightPx: number | null } | undefined) {
+  return asset?.widthPx && asset.heightPx ? asset.widthPx / asset.heightPx : null;
+}
 
 // BACKLOG 3.6 — Layers 5–7 (spec 4.5 step 6): music (ElevenLabs Music, pipeline/music.ts), Shotstack edit list per script,
 // render, copy the MP4 into the renders bucket, probe it, record video_renders, then hand off to
@@ -89,6 +96,7 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   if (currentRunId(project) !== data.runId) return log.info('stale compose-video job ignored');
 
   const ugcVideo = ugcStyleOf(project.metadata) !== null;
+  const hookDemo = project.sourceType === 'HOOK_DEMO' ? readHookDemo(project.metadata) : null;
   const failed = project.scripts.flatMap((s) => s.shots).filter((shot) => shot.state === 'FAILED');
   if (failed.length > 0) {
     await failProject(deps.db, {
@@ -251,17 +259,31 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
         };
       }),
     );
+    // 22.1: a hook + demo script: silent hook, the demo's audio at the mix, the stacked layout.
+    const hookLayout = hookDemo
+      ? hookDemoEdl(shots, {
+          doc: hookDemo,
+          aspectRatio,
+          frame: outputDimensions(aspectRatio, preset.resolution),
+          demoAspect: aspectOf(assets.get(scriptShots[1]?.assetId ?? '')),
+          hookAspect: aspectOf(assets.get(scriptShots[0]?.assetId ?? '')),
+          hookFromLibrary:
+            assets.get(scriptShots[0]?.assetId ?? '')?.source.startsWith('library:') ?? false,
+        })
+      : null;
     const composition = buildShotstackComposition({
       aspectRatio,
-      shots,
+      shots: hookLayout?.shots ?? shots,
+      ...(hookLayout && { musicUnderSpeechVolume: hookLayout.musicUnderSpeechVolume }),
       brand: {
         ...brand,
         fontFamily: brandKit.fonts.fontFamily ?? undefined,
         fontSources: brandKit.fonts.fontSources,
       },
       brandMedia: brandKit.media,
-      // 21.4: a video with a generated actor always carries the AI-generated label.
-      aiLabel: brandKit.aiLabel || ugcVideo,
+      // 21.4: a video with a generated actor always carries the AI-generated label (22.1: so
+      // does a hook + demo video whose hook is a generated person).
+      aiLabel: brandKit.aiLabel || ugcVideo || Boolean(hookLayout?.aiHook),
       // 21.4b: no boxed headlines in a UGC video (its labels are native-look overlays).
       ugc: ugcVideo,
       platformCard,

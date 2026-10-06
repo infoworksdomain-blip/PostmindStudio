@@ -90,7 +90,8 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
   });
 
   it.each([
-    ['STOCK_FOOTAGE', 'stock_footage', ['storyblocks-video', 'pexels-video']],
+    // 22.2: Pixabay videos last (wall-of-text backgrounds prefer it explicitly).
+    ['STOCK_FOOTAGE', 'stock_footage', ['storyblocks-video', 'pexels-video', 'pixabay']],
     ['IMAGE_STILL', 'text_to_image', ['openai', 'fal', 'ideogram']],
   ] as const)('%s → %s %o', (treatment, capability, ids) => {
     expect(

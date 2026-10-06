@@ -40,6 +40,9 @@ import { guardActorClip } from '../../ugc/clip-text-guard';
 import { ensureActorPortrait } from '../../ugc/portrait';
 import { actorClipPrompt, ugcStillPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
+import { hookClipMarkerOf } from '../../formats/hook-clip';
+import { noBackgroundVideo, readWallOfText } from '../../formats/wall-of-text';
+import { generateHookClip } from './generate-hook-clip';
 import { jobIds } from '../enqueue';
 import type { GenerateAssetJobData, ProjectJobData } from '../queues';
 
@@ -710,6 +713,20 @@ async function generateVisual(
     case 'MOTION_GRAPHICS':
       return null; // rendered by the composer from the shot's text (15.B8: motion cards)
     case 'AI_CLIP': {
+      // 22.1: the hook of a hook + demo video is a silent reaction clip (generate-hook-clip.ts).
+      const hook = hookClipMarkerOf(shot.providerRouting);
+      if (hook)
+        return generateHookClip(deps, shot, data, hook, (run, extra) =>
+          recordAsset(
+            deps,
+            shot,
+            'VIDEO_CLIP',
+            run,
+            { extension: 'mp4', contentType: 'video/mp4' },
+            undefined,
+            extra,
+          ),
+        );
       // 20.25 / 21.3: clips by plan tier (720p on every tier since 21.3); a clip is never reused for
       // a shot at another requested resolution (720p keeps the pre-20.25 fingerprint).
       const resolution = aiClipResolution(data.planTier);
@@ -767,6 +784,7 @@ async function generateVisual(
     case 'STOCK_FOOTAGE': {
       // Phase 15 (Track C): Storyblocks video, then Pexels video. The scene description is the
       // search text; the adapter returns the licence facts, kept in the asset's metadata.
+      // 22.2: a wall-of-text background asks Pixabay first (its plan sets preferredProviderId).
       const run = await runProvider(
         {
           need: { kind: 'shot', visualTreatment: 'STOCK_FOOTAGE', durationSec: shot.durationSec },
@@ -781,7 +799,9 @@ async function generateVisual(
           },
         },
         deps,
-      );
+      ).catch((err: unknown) => {
+        throw readWallOfText(shot.script.project.metadata) ? noBackgroundVideo(err) : err;
+      });
       return recordAsset(deps, shot, 'VIDEO_CLIP', run, {
         extension: 'mp4',
         contentType: 'video/mp4',

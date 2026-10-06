@@ -5,6 +5,9 @@ import type { Platform } from '../services/catalog';
 import type { createProjectInput } from '../services/projects';
 import { NotImplementedError } from '../../errors';
 import type { FormatKey } from './formats';
+import { tidyHookLine, tidyWallText } from '../formats/copy-prompt';
+import { wordCount } from '../formats/hook-demo';
+import { WALL_MAX_SEC, WALL_MIN_SEC } from '../formats/wall-of-text';
 
 /** The month plans' photo-slide length and Ken Burns cycle (content-plan-run.ts, 20.26). */
 const PLAN_PHOTO_SLIDE_SEC = 2.5;
@@ -143,8 +146,46 @@ export function projectBodyForCard(
         },
         ...(format === 'ugc' && { ugc: {} }),
       };
+    case 'wall_of_text':
+      return {
+        ...common,
+        sourceType: 'WALL_OF_TEXT',
+        targetFormats: targetFormats(options.platforms, wallSec(durationSec)),
+        brief: { rawInput: briefText(copy) },
+        wallOfText: wallOfTextFor(copy, wallSec(durationSec)),
+      };
+    case 'hook_demo':
+      return {
+        ...common,
+        sourceType: 'HOOK_DEMO',
+        targetFormats: targetFormats(options.platforms, durationSec),
+        brief: { rawInput: briefText(copy) },
+        hookDemo: hookDemoFor(copy),
+      };
     default:
-      // wall_of_text / hook_demo register their own builders when 22.1 lands.
       throw new NotImplementedError(`No project builder for format ${format}`);
   }
+}
+
+/** 22.2: a wall of text lasts 6–12 s (the card's video length clamped into it). */
+const wallSec = (sec: number) => Math.min(WALL_MAX_SEC, Math.max(WALL_MIN_SEC, Math.round(sec)));
+
+/** 22.2: the card's hook and lines as the block (≤ 60 words, one idea per line, no emoji). */
+export function wallOfTextFor(copy: CardCopy, durationSec: number) {
+  const text = tidyWallText([copy.hook, ...copy.body.map((b) => `- ${b}`)].join('\n'));
+  return { ...(wordCount(text) >= 3 && { text }), background: 'calm' as const, durationSec };
+}
+
+/**
+ * 22.1: the card's hook as the hook line (≤ 12 words, one line), the business's newest demo,
+ * and a LIBRARY reaction hook: a card is made before anyone keeps it, so it never pays for a
+ * generated clip (formats/availability.ts offers the format only when such a clip exists).
+ */
+export function hookDemoFor(copy: CardCopy) {
+  const hookLine = tidyHookLine(copy.hook);
+  return {
+    ...(wordCount(hookLine) >= 2 && { hookLine }),
+    hookSource: 'library' as const,
+    allowGeneratedHook: false,
+  };
 }

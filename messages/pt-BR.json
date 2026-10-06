@@ -282,7 +282,8 @@
       "auto_publish_account_required": "Escolha uma conta conectada para publicar ou desative a publicação automática e o agendamento.",
       "auto_publish_account_unavailable": "Uma conta escolhida não está mais conectada. Conecte-a de novo ou escolha outra conta.",
       "queue_unavailable": "A publicação está temporariamente indisponível. Nada foi publicado nem salvo; tente de novo em instantes.",
-      "channel_limit": "Seu plano não inclui um canal para esta plataforma. Adicione um canal em Seu plano para publicar aqui."
+      "channel_limit": "Seu plano não inclui um canal para esta plataforma. Adicione um canal em Seu plano para publicar aqui.",
+      "no_demo_video": "Primeiro envie um vídeo de demonstração do seu produto ou app."
     }
   },
   "primitives": {
@@ -539,7 +540,9 @@
         "SLIDESHOW": "Sobre o que é a apresentação de slides?",
         "UPLOAD": "Envie seu vídeo",
         "UGC": "Sobre o que o ator deve falar?",
-        "CAROUSEL": "Sobre o que é o carrossel?"
+        "CAROUSEL": "Sobre o que é o carrossel?",
+        "HOOK_DEMO": "O que sua demo mostra?",
+        "WALL_OF_TEXT": "O que o texto deve dizer?"
       },
       "uploadChoose": "Escolher um vídeo",
       "uploadReplace": "Substituir o vídeo",
@@ -558,7 +561,9 @@
         "SLIDESHOW": "Apresentação de slides",
         "UPLOAD": "Enviar um vídeo",
         "UGC": "Ator UGC",
-        "CAROUSEL": "Carrossel (cartões de post)"
+        "CAROUSEL": "Carrossel (cartões de post)",
+        "HOOK_DEMO": "Gancho + demo",
+        "WALL_OF_TEXT": "Parede de texto"
       },
       "templatedNote": "As plataformas e a duração vêm do modelo. O texto acima é opcional — ele acrescenta detalhes ao roteiro do modelo.",
       "noBusiness": {
@@ -571,13 +576,15 @@
         "generatingUpload": "Gerando — o Studio está legendando seu vídeo.",
         "generatingScript": "Gerando — o Studio está escrevendo o roteiro.",
         "draftNotStarted": "Salvo como rascunho, mas a geração não começou: {error}",
-        "generatingCarousel": "Escrevendo seu carrossel…"
+        "generatingCarousel": "Escrevendo seu carrossel…",
+        "generatingFormat": "Gerando: o Studio está escrevendo o texto e criando seu vídeo."
       },
       "planMonth": "Ou planeje um mês inteiro de vídeos e apresentações",
       "summaryNoAccounts": "nenhuma conta conectada: salvo para revisão",
       "summaryForReview": "salvo para revisão",
       "createCarousel": "Criar carrossel",
-      "summaryCarousel": "{count} posts · cartões {theme, select, dark {escuros} other {claros}}"
+      "summaryCarousel": "{count} posts · cartões {theme, select, dark {escuros} other {claros}}",
+      "summarySeconds": "{count, number} s"
     },
     "problems": {
       "businessRequired": "Escolha uma empresa primeiro.",
@@ -597,7 +604,11 @@
       "ugcShortOnly": "Vídeos com atores UGC são curtos: escolha Curto.",
       "ugcRealPerson": "Os atores UGC são pessoas geradas. Eles não podem imitar uma pessoa real ou uma celebridade, parecer com ela ou ter a voz dela: descreva o tipo de pessoa que você quer.",
       "carouselBriefRequired": "Descreva o carrossel ou cole uma thread.",
-      "carouselThreadTooLong": "A thread colada é longa demais."
+      "carouselThreadTooLong": "A thread colada é longa demais.",
+      "demoRequired": "Primeiro envie um vídeo de demonstração do seu produto ou app: um vídeo gancho + demo mostra sua própria demo depois do gancho.",
+      "hookLineTooLong": "Use no máximo {max, number} palavras no gancho.",
+      "wallTextRequired": "Descreva o vídeo ou escreva o texto você mesmo.",
+      "wallTextTooLong": "Use no máximo {max, number} palavras e 10 linhas no texto."
     },
     "options": {
       "platforms": "Plataformas",
@@ -763,6 +774,57 @@
       "thread": "Sua thread (opcional)",
       "threadPlaceholder": "Cole uma thread: separe os posts com uma linha ---, ou numere-os 1/, 2/, 3/…",
       "threadHint": "Deixe vazio e o Studio escreve a thread. O primeiro post é o gancho; o último, a chamada para ação."
+    },
+    "hookDemo": {
+      "title": "Gancho + demo",
+      "intro": "Uma reação rápida para a câmera com uma linha de texto e, logo em seguida, seu próprio vídeo de demonstração.",
+      "demo": "Vídeo de demonstração",
+      "noDemo": "Ainda não há vídeos de demonstração. Envie uma gravação de tela ou um vídeo feito com o celular na mão do seu produto ou app.",
+      "upload": "Enviar um vídeo de demonstração",
+      "uploadAnother": "Enviar outro vídeo de demonstração",
+      "demoHint": "Os vídeos de demonstração ficam salvos para este negócio e podem ser reutilizados. O Studio usa os primeiros segundos que cabem em um vídeo de 10 a 20 segundos.",
+      "hookLine": "Frase de gancho (opcional)",
+      "hookLinePlaceholder": "ex.: Parei de aceitar reservas por telefone",
+      "hookLineHint": "{count, number} de {max, number} palavras. Deixe vazio e o Studio escreve uma.",
+      "hookSource": "Gancho",
+      "hookSources": {
+        "ai_creator": "Reação de um criador de IA",
+        "library": "Clipe de reação da biblioteca"
+      },
+      "reaction": "Reação",
+      "reactions": {
+        "surprised": "Surpresa",
+        "curious": "Curiosidade",
+        "wait_what": "“Pera, o quê?”"
+      },
+      "layout": "Layout",
+      "layouts": {
+        "sequential": "Gancho e depois demo",
+        "stacked": "Gancho acima da demo e depois demo"
+      },
+      "audioMix": "Som",
+      "audioMixes": {
+        "balanced": "Música e som da demo",
+        "demo": "Som da demo primeiro",
+        "music": "Só música"
+      },
+      "disclosure": "A reação é uma pessoa gerada por IA, nunca uma pessoa real, e o vídeo leva o selo de gerado por IA. Usa um vídeo da sua cota."
+    },
+    "wallOfText": {
+      "title": "Parede de texto",
+      "intro": "Um bloco de texto sobre um vídeo de fundo tranquilo com música, na tela o tempo todo.",
+      "text": "Texto (opcional)",
+      "textPlaceholder": "Uma lista curta ou uma frase, uma ideia por linha. Deixe vazio e o Studio escreve a partir da sua descrição.",
+      "textHint": "{count, number} de {max, number} palavras",
+      "background": "Fundo",
+      "backgrounds": {
+        "calm": "Tranquilo",
+        "nature": "Natureza",
+        "city": "Luzes da cidade",
+        "abstract": "Abstrato"
+      },
+      "length": "Duração",
+      "seconds": "{count, number} s"
     }
   },
   "review": {
@@ -779,7 +841,9 @@
         "POSTMIND_CONTENT": "A partir de conteúdo do PostMind",
         "TEMPLATE": "A partir de um modelo",
         "UPLOAD": "Seu vídeo",
-        "CAROUSEL": "Carrossel"
+        "CAROUSEL": "Carrossel",
+        "HOOK_DEMO": "Gancho + demo",
+        "WALL_OF_TEXT": "Parede de texto"
       },
       "loading": "Carregando projeto",
       "spent": "{amount} gastos",
@@ -3976,7 +4040,11 @@
       "stock_unavailable": "Desta vez não foi possível adicionar algumas fotos de banco de imagens. Use «Atualizar fotos» na biblioteca de imagens para tentar de novo.",
       "ugc_real_person_refused": "Este briefing UGC pediu uma pessoa real ou uma celebridade. Os atores são pessoas geradas: descreva o tipo de pessoa que você quer.",
       "carousel_incomplete": "Não foi possível criar o carrossel: ele não tem posts.",
-      "carousel_render_error": "Falha ao desenhar os slides do carrossel."
+      "carousel_render_error": "Falha ao desenhar os slides do carrossel.",
+      "no_demo_video": "O vídeo de demonstração não está mais disponível: escolha ou envie outro.",
+      "hook_clip_unavailable": "Não foi possível criar o clipe de gancho: nenhum criador de IA está disponível agora e a biblioteca não tem um clipe de reação para usar. Tente novamente mais tarde.",
+      "wall_of_text_invalid": "A parede de texto não tem configurações: crie-a novamente.",
+      "no_background_video": "Nenhum vídeo de fundo foi encontrado para esta parede de texto. Tente outro fundo ou tente novamente mais tarde."
     },
     "classes": {
       "rate_limited": "solicitações demais",

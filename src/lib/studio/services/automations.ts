@@ -32,6 +32,7 @@ import { PLATFORM_RULES } from '../platforms/rules';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { isUgcLanguage } from '../ugc/style';
+import { canMakeHookDemoCard, hookDemoReadiness } from '../formats/availability';
 import { assertMayScheduleForOwner } from './content-plan-run';
 import { listAngles } from './angles';
 import { businessIdParam } from './businesses';
@@ -257,9 +258,10 @@ export async function updateAutomation(
 /** Formats the automation may use: available, switched on, with a network that takes them. */
 export async function allowedFormats(
   db: PrismaClient,
-  automation: Pick<Automation, 'organisationId' | 'platforms' | 'language'>,
+  automation: Pick<Automation, 'organisationId' | 'businessId' | 'platforms' | 'language'>,
   mix: MixPreferences,
   env?: Record<string, string | undefined>,
+  now: Date = new Date(),
 ): Promise<FormatKey[]> {
   const gate = featureGateFor(db);
   const feature: Partial<Record<FormatKey, Feature>> = {
@@ -270,6 +272,19 @@ export async function allowedFormats(
   for (const key of availableFormats()) {
     if ((mix.formatWeights[key] ?? 0) <= 0) continue;
     if (key === 'ugc' && !isUgcLanguage(automation.language)) continue;
+    // 22.1: a hook + demo slot needs a demo video and a licensed library hook clip (a slot is
+    // made unattended, so it never pays for a generated reaction clip).
+    if (
+      key === 'hook_demo' &&
+      !canMakeHookDemoCard(
+        await hookDemoReadiness(db, {
+          organisationId: automation.organisationId,
+          businessId: automation.businessId,
+          now,
+        }),
+      )
+    )
+      continue;
     const f = feature[key];
     if (f && !(await gate.status(f, automation.organisationId)).enabled) continue;
     let platforms = platformsFor(key, automation.platforms);

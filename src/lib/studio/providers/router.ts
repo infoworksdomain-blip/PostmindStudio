@@ -249,8 +249,12 @@ export function planCandidates(need: RouteNeed, tier: PlanTier): CandidatePlan {
     case 'UGC_ACTOR':
       return { capability: 'actor_video', providerIds: [...ACTOR_CANDIDATES] };
     case 'STOCK_FOOTAGE':
-      // Phase 15 (13.38 correction): Storyblocks video catalogue, then Pexels videos.
-      return { capability: 'stock_footage', providerIds: ['storyblocks-video', 'pexels-video'] };
+      // Phase 15 (13.38 correction): Storyblocks video catalogue, then Pexels videos. 22.2:
+      // then Pixabay videos (wall-of-text backgrounds ask for Pixabay first, generate-asset.ts).
+      return {
+        capability: 'stock_footage',
+        providerIds: ['storyblocks-video', 'pexels-video', 'pixabay'],
+      };
     case 'IMAGE_STILL':
       // 15.W6 (spec 6.5 / A6.5 "DALL-E 3 or Ideogram"): the Ideogram slot is last and is only
       // eligible when an Ideogram adapter is registered, which default-registry never does until

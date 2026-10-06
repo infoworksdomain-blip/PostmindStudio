@@ -18,18 +18,18 @@ describe('blitz format registry', () => {
     ]);
   });
 
-  it('does not offer HOOK_DEMO / WALL_OF_TEXT until their source type exists AND a builder registers', () => {
+  it('22.1 / 22.2: offers wall of text and hook + demo once their source types exist', () => {
+    // Without the enum values they are not offered.
     expect(availableFormats(['BRIEF', 'CAROUSEL', 'SLIDESHOW'])).not.toContain('wall_of_text');
-    // The enum value alone is not enough.
-    expect(availableFormats(['BRIEF', 'CAROUSEL', 'SLIDESHOW', 'WALL_OF_TEXT'])).not.toContain(
-      'wall_of_text',
-    );
+    expect(
+      availableFormats(['BRIEF', 'CAROUSEL', 'SLIDESHOW', 'WALL_OF_TEXT', 'HOOK_DEMO']),
+    ).toEqual(['carousel', 'slideshow', 'wall_of_text', 'hook_demo', 'ai_video', 'ugc']);
+    // Both ship their builder now; registering again changes nothing.
     registerFormatBuilder('wall_of_text');
-    expect(availableFormats(['BRIEF', 'CAROUSEL', 'SLIDESHOW', 'WALL_OF_TEXT'])).toContain(
-      'wall_of_text',
-    );
-    // A registered builder without the enum value is still not offered.
-    expect(availableFormats(['BRIEF', 'CAROUSEL', 'SLIDESHOW'])).not.toContain('wall_of_text');
+    expect(availableFormats()).toContain('hook_demo');
+    expect(isPremade('wall_of_text') && isPremade('hook_demo')).toBe(true);
+    expect(FORMATS.wall_of_text.planKind).toBe('VIDEO');
+    expect(FORMATS.hook_demo.needsDemoVideo).toBe(true);
   });
 
   it('defaults paid formats to weight 0', () => {

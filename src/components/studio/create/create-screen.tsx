@@ -7,12 +7,14 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
+  AlignCenter,
   ArrowRight,
   CalendarRange,
   Clapperboard,
   GalleryHorizontal,
   Layers,
   Loader2,
+  MonitorPlay,
   Upload,
   UserRound,
 } from 'lucide-react';
@@ -44,7 +46,11 @@ import {
   buildCreateBody,
   MAX_BUDGET_POUNDS,
   buildGenerateBody,
+  EMPTY_HOOK_DEMO,
   EMPTY_UGC,
+  EMPTY_WALL_OF_TEXT,
+  HOOK_LINE_MAX_WORDS,
+  WALL_TEXT_MAX_WORDS,
   publishPlatforms,
   usesTemplate,
   validateCreate,
@@ -67,6 +73,9 @@ import { VideoUploadField } from '../uploads/video-upload-field';
 import { ProfileReviewNotice } from '../business/profile-review-notice';
 import { BriefHint, briefHintDescribedBy } from '../brief-hint';
 import { CarouselOptions } from './carousel-options';
+import { HookDemoOptions } from './hook-demo-options';
+import { TARGET_DEFAULT_SEC as HOOK_DEMO_TARGET_SEC } from '@/lib/studio/formats/hook-demo';
+import { WallOfTextOptions } from './wall-of-text-options';
 
 // BACKLOG 10.3 — Create (spec 14.1): one text box, one button. Defaults are pre-filled from the
 // business's connections and default brand kit; options sit behind progressive disclosure.
@@ -90,6 +99,8 @@ const INITIAL: FormState = {
   autoPublishAccounts: {},
   upload: null,
   ugc: EMPTY_UGC,
+  hookDemo: EMPTY_HOOK_DEMO,
+  wallOfText: EMPTY_WALL_OF_TEXT,
 };
 
 const SOURCES: Array<{ key: CreateSource; icon: typeof Clapperboard }> = [
@@ -99,6 +110,10 @@ const SOURCES: Array<{ key: CreateSource; icon: typeof Clapperboard }> = [
   { key: 'UPLOAD', icon: Upload },
   // 21.4: a generated actor talks about the product (UGC style).
   { key: 'UGC', icon: UserRound },
+  // 22.1: a reaction hook, then the business's own demo video (Fastlane's main format).
+  { key: 'HOOK_DEMO', icon: MonitorPlay },
+  // 22.2: one block of text over a calm background video.
+  { key: 'WALL_OF_TEXT', icon: AlignCenter },
 ];
 
 const WHOLE_POUNDS: Intl.NumberFormatOptions = {
@@ -257,7 +272,9 @@ export function CreateScreen({
               ? t('toast.generatingUpload')
               : body.sourceType === 'CAROUSEL'
                 ? t('toast.generatingCarousel')
-                : t('toast.generatingScript'),
+                : body.sourceType === 'HOOK_DEMO' || body.sourceType === 'WALL_OF_TEXT'
+                  ? t('toast.generatingFormat')
+                  : t('toast.generatingScript'),
           );
         } catch (err) {
           toast.error(t('toast.draftNotStarted', { error: errorMessage(err) }));
@@ -267,6 +284,9 @@ export function CreateScreen({
     } catch (err) {
       if (err instanceof ApiError && err.details?.reason === 'ugc_real_person_refused')
         setRefusal(true);
+      // 22.1: the business has no (usable) demo video: say so beside the form.
+      else if (err instanceof ApiError && err.code === 'no_demo_video')
+        setProblems(['demoRequired']);
       else toast.error(errorMessage(err));
       setSubmitting(false);
     }
@@ -277,6 +297,10 @@ export function CreateScreen({
   const isUgc = form.source === 'UGC';
   // 21.6: a carousel picks its networks when it is published.
   const isCarousel = form.source === 'CAROUSEL';
+  // 22.1 / 22.2: fixed-length formats with their own settings (no template, no length choice).
+  const isHookDemo = form.source === 'HOOK_DEMO';
+  const isWall = form.source === 'WALL_OF_TEXT';
+  const isFormat = isHookDemo || isWall;
   const templated = usesTemplate(state, reference);
   const chooseTemplate = (id: string | null) => {
     const found = templates.data?.data.find((x) => x.id === id);
@@ -304,6 +328,8 @@ export function CreateScreen({
     if (p === 'autoPublishNoMatchingAccount')
       return tp(p, { platforms: f.list(publishable.map((x) => f.platform(x))) });
     if (p === 'scheduleTooFar') return tp('scheduleTooFar', { days: MAX_SCHEDULE_AHEAD_DAYS });
+    if (p === 'hookLineTooLong') return tp('hookLineTooLong', { max: HOOK_LINE_MAX_WORDS });
+    if (p === 'wallTextTooLong') return tp('wallTextTooLong', { max: WALL_TEXT_MAX_WORDS });
     if (p === 'budgetRange')
       return tp('budgetRange', {
         min: f.number(0, WHOLE_POUNDS),
@@ -325,7 +351,16 @@ export function CreateScreen({
     return [
       templated && form.projectTemplate
         ? t('summaryTemplate', { name: form.projectTemplate.name })
-        : `${t('summaryPlatforms', { count: state.platforms.length })} · ${tl(form.length)}`,
+        : `${t('summaryPlatforms', { count: state.platforms.length })} · ${
+            isFormat
+              ? t('summarySeconds', {
+                  // 22.1: up to 15 s (the demo may be shorter); 22.2: the chosen length.
+                  count: isWall
+                    ? (form.wallOfText?.durationSec ?? EMPTY_WALL_OF_TEXT.durationSec)
+                    : HOOK_DEMO_TARGET_SEC,
+                })
+              : tl(form.length)
+          }`,
       !connections.data
         ? null
         : !hasAccounts
@@ -370,7 +405,7 @@ export function CreateScreen({
           <p className="text-xs text-muted-foreground">{t('uploadNote')}</p>
         </div>
       )}
-      {reference && !isSlideshow && !isUpload && !isUgc && !isCarousel && (
+      {reference && !isSlideshow && !isUpload && !isUgc && !isCarousel && !isFormat && (
         <>
           <ReferenceBanner
             reference={reference}
@@ -451,6 +486,19 @@ export function CreateScreen({
           onChange={(ugc) => patch({ ugc })}
         />
       )}
+      {isHookDemo && (
+        <HookDemoOptions
+          businessId={businessId}
+          value={form.hookDemo ?? EMPTY_HOOK_DEMO}
+          onChange={(hookDemo) => patch({ hookDemo })}
+        />
+      )}
+      {isWall && (
+        <WallOfTextOptions
+          value={form.wallOfText ?? EMPTY_WALL_OF_TEXT}
+          onChange={(wallOfText) => patch({ wallOfText })}
+        />
+      )}
       {refusal && (
         <p role="alert" className="text-sm text-destructive">
           {tp('ugcRealPerson')}
@@ -495,7 +543,7 @@ export function CreateScreen({
             />
           )}
           {isCarousel && <CarouselOptions state={form} onChange={patch} />}
-          {!isSlideshow && !isUpload && !isUgc && !isCarousel && !reference && (
+          {!isSlideshow && !isUpload && !isUgc && !isCarousel && !isFormat && !reference && (
             <ProjectTemplatePicker
               templates={templates.data?.data}
               error={templates.error}
@@ -512,7 +560,9 @@ export function CreateScreen({
           {/* 20.13: the hashtags every post carries (Business settings → Hashtags). */}
           <BusinessHashtagsNote businessId={businessId} />
           <div className="grid gap-5 sm:grid-cols-2">
-            {!templated && !isCarousel && <LengthToggle value={form.length} onChange={patch} />}
+            {!templated && !isCarousel && !isFormat && (
+              <LengthToggle value={form.length} onChange={patch} />
+            )}
             <BrandKitSelect kits={kits.data?.data} value={state.brandKitId} onChange={patch} />
           </div>
           <LanguageOptions state={state} onChange={patch} />

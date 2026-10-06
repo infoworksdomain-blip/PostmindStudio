@@ -28,7 +28,9 @@ export interface Project {
     | 'LIBRARY_REFERENCE'
     | 'TEMPLATE'
     | 'UPLOAD'
-    | 'CAROUSEL';
+    | 'CAROUSEL'
+    | 'HOOK_DEMO'
+    | 'WALL_OF_TEXT';
   referenceVideoId: string | null;
   referenceMode: 'TEMPLATE' | 'INSPIRE' | null;
   targetFormats: TargetFormat[];

@@ -5,6 +5,7 @@ import {
   type PrismaClient,
   type VideoProject,
   type VideoProjectState,
+  type VideoUpload,
 } from '@prisma/client';
 import { z } from 'zod';
 import { ConflictError, NotFoundError, UpstreamServiceError, ValidationError } from '../../errors';
@@ -26,7 +27,14 @@ import { targetFormatInput, toPlanTier, toStoredFormats } from './catalog';
 import { assertTierGate } from './tier-gates';
 import { budgetFormatsFromJson, defaultProjectBudgetPence } from '../cost/project-budget';
 import { insertSlides, planSlideshowSlides } from './slideshows';
-import { attachSourceUpload } from './uploads';
+import { attachDemoUpload, attachSourceUpload } from './uploads';
+import { resolveDemoUpload } from './demo-videos';
+import { hookDemoCreateInput, newHookDemoDocument, readHookDemo } from '../formats/hook-demo';
+import {
+  newWallOfTextDocument,
+  readWallOfText,
+  wallOfTextCreateInput,
+} from '../formats/wall-of-text';
 import { applyTemplate } from './templates';
 import { defaultReviewPolicyFor } from './org-policy';
 import { approveWithWorkflow, rejectWithWorkflow } from './approval-workflows';
@@ -102,10 +110,16 @@ const projectFields = z.object({
       'TEMPLATE',
       'UPLOAD',
       'CAROUSEL',
+      'HOOK_DEMO',
+      'WALL_OF_TEXT',
     ])
     .default('BRIEF'),
   /** 21.6 CAROUSEL: theme, number of posts, an optional pasted thread and handle. */
   carousel: carouselCreateInput.optional(),
+  /** 22.1 HOOK_DEMO: the demo video (default: the business's newest), hook line and layout. */
+  hookDemo: hookDemoCreateInput.optional(),
+  /** 22.2 WALL_OF_TEXT: the text block (default: Claude writes it), background and length. */
+  wallOfText: wallOfTextCreateInput.optional(),
   /** UPLOAD (13.5): a READY source-video upload (POST /uploads, then /uploads/:id/complete). */
   uploadId: z.string().trim().min(1).max(64).optional(),
   /** LIBRARY_REFERENCE (A3.9): the reference video and how it is used. */
@@ -175,9 +189,31 @@ export const createProjectInput = projectFields.superRefine((v, ctx) => {
       path: ['carousel'],
       message: 'carousel is required for CAROUSEL projects',
     });
+  if (v.hookDemo && v.sourceType !== 'HOOK_DEMO')
+    ctx.addIssue({
+      code: 'custom',
+      path: ['hookDemo'],
+      message: 'hookDemo is only for HOOK_DEMO projects',
+    });
+  if (v.wallOfText && v.sourceType !== 'WALL_OF_TEXT')
+    ctx.addIssue({
+      code: 'custom',
+      path: ['wallOfText'],
+      message: 'wallOfText is only for WALL_OF_TEXT projects',
+    });
+  if (v.ugc && (v.sourceType === 'HOOK_DEMO' || v.sourceType === 'WALL_OF_TEXT'))
+    ctx.addIssue({ code: 'custom', path: ['ugc'], message: 'ugc is not used by this format' });
   // 21.6: a carousel needs a brief unless the owner pasted the thread itself.
   const pastedThread = v.sourceType === 'CAROUSEL' && Boolean(v.carousel?.thread?.trim());
-  if (!['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(v.sourceType) && !v.brief && !pastedThread)
+  // 22.2: a wall of text needs a brief unless the owner wrote the text block itself.
+  const ownText = v.sourceType === 'WALL_OF_TEXT' && Boolean(v.wallOfText?.text?.trim());
+  // 22.1: a hook + demo video can be made from the business profile and the demo alone.
+  if (
+    !['SLIDESHOW', 'TEMPLATE', 'UPLOAD', 'HOOK_DEMO'].includes(v.sourceType) &&
+    !v.brief &&
+    !pastedThread &&
+    !ownText
+  )
     ctx.addIssue({ code: 'custom', path: ['brief'], message: 'brief is required' });
   // A carousel's destinations are fixed (CAROUSEL_COPY_FORMATS); it takes no targetFormats.
   if (!['TEMPLATE', 'CAROUSEL'].includes(v.sourceType) && !v.targetFormats)
@@ -347,10 +383,29 @@ export async function createProject(
           variables: input.templateVariables,
         })
       : null;
+  // 22.1 / 22.2: the format's own settings (defaults applied when the body left them out).
+  const hookDemo =
+    input.sourceType === 'HOOK_DEMO' ? hookDemoCreateInput.parse(input.hookDemo ?? {}) : null;
+  const wallOfText =
+    input.sourceType === 'WALL_OF_TEXT'
+      ? wallOfTextCreateInput.parse(input.wallOfText ?? {})
+      : null;
+  // 22.1: no demo video, no hook + demo video (no_demo_video), checked before anything is stored.
+  const demoUpload = hookDemo
+    ? await resolveDemoUpload(db, {
+        organisationId: tenant.organisationId,
+        businessId: input.businessId,
+        demoUploadId: hookDemo.demoUploadId,
+      })
+    : null;
+  // These formats have a fixed length (the hook + demo target, the wall-of-text duration).
+  const fixedSec = hookDemo?.targetSec ?? wallOfText?.durationSec;
   const formats =
     input.sourceType === 'CAROUSEL'
       ? CAROUSEL_TARGET_FORMATS
-      : (template?.targetFormats ?? input.targetFormats ?? []);
+      : (template?.targetFormats ?? input.targetFormats ?? []).map((f) =>
+          fixedSec ? { ...f, durationSec: fixedSec } : f,
+        );
   const targets = template?.autoPublishTargets ?? input.autoPublish?.targets ?? [];
   // 20.12: auto-publish / a schedule the request asked for needs an account to post to (a
   // template's own publish defaults are the template's business).
@@ -392,9 +447,12 @@ export async function createProject(
           template?.description ?? input.brief?.rawInput ?? input.slideshow?.topic ?? null,
         state: 'DRAFT',
         sourceType: input.sourceType,
-        // UPLOAD: sourceRef is the upload (plan-upload.ts reads its asset from there).
+        // UPLOAD: sourceRef is the upload (plan-upload.ts reads its asset from there). 22.1: a
+        // hook + demo project's is its demo video (for reference; the bank keeps the upload).
         sourceRef:
-          input.sourceType === 'UPLOAD' ? (input.uploadId ?? null) : (input.sourceRef ?? null),
+          input.sourceType === 'UPLOAD'
+            ? (input.uploadId ?? null)
+            : (input.sourceRef ?? demoUpload?.id ?? null),
         ...(input.sourceType === 'LIBRARY_REFERENCE' && {
           referenceVideoId: input.referenceVideoId ?? null,
           referenceMode: input.referenceMode ?? null,
@@ -435,6 +493,7 @@ export async function createProject(
           ...(targets.length > 0 && { autoPublish: { targets } }),
           ...(template && { template: { id: template.templateId } }),
           ...(carousel && { carousel }),
+          ...(wallOfText && { wallOfText: newWallOfTextDocument(wallOfText) }),
           ...(input.ugc && {
             ugc: ugcMetadata(
               newUgcStyle(input.ugc, randomInt(0, MAX_UGC_SEED), creator),
@@ -458,7 +517,27 @@ export async function createProject(
         uploadId: input.uploadId,
         projectId: project.id,
       });
+    if (hookDemo && demoUpload) return attachHookDemo(tx, project, hookDemo, demoUpload);
     return project;
+  });
+}
+
+/** 22.1: the project's own asset of the demo video, then metadata.hookDemo pointing at it. */
+async function attachHookDemo(
+  tx: Prisma.TransactionClient,
+  project: VideoProject,
+  input: z.infer<typeof hookDemoCreateInput>,
+  demo: VideoUpload,
+): Promise<VideoProject> {
+  const { assetId } = await attachDemoUpload(tx, demo, project.id);
+  return tx.videoProject.update({
+    where: { id: project.id },
+    data: {
+      metadata: {
+        ...projectMetadata(project.metadata),
+        hookDemo: newHookDemoDocument(input, { uploadId: demo.id, assetId }),
+      } as Prisma.InputJsonValue,
+    },
   });
 }
 
@@ -720,47 +799,79 @@ export async function setProjectArchived(
 
 export async function duplicateProject(db: Db, tenant: TenantContext, id: string) {
   const source = await findProject(db, tenant.organisationId, id);
+  // 22.1: a copy of a hook + demo video uses the same demo video (its own asset row on it).
+  const hookDemo = readHookDemo(source.metadata);
+  const demoUpload = hookDemo
+    ? await resolveDemoUpload(db, {
+        organisationId: source.organisationId,
+        businessId: source.businessId,
+        demoUploadId: hookDemo.demoUploadId,
+      })
+    : null;
+  const data = duplicateData(source, tenant);
+  if (!hookDemo || !demoUpload) return db.videoProject.create({ data });
+  return db.$transaction(async (tx) => {
+    const copy = await tx.videoProject.create({ data });
+    const { assetId } = await attachDemoUpload(tx, demoUpload, copy.id);
+    return tx.videoProject.update({
+      where: { id: copy.id },
+      data: {
+        metadata: {
+          ...projectMetadata(copy.metadata),
+          hookDemo: { ...hookDemo, demoAssetId: assetId, writtenHookLine: null },
+        } as Prisma.InputJsonValue,
+      },
+    });
+  });
+}
+
+/** The copy's row (DRAFT, same brief, formats, look and format settings). */
+function duplicateData(
+  source: VideoProject,
+  tenant: TenantContext,
+): Prisma.VideoProjectUncheckedCreateInput {
   const hints = projectMetadata(source.metadata).briefHints;
   const stored = readCarousel(source.metadata);
   const carouselCopy = stored ? { ...stored, rewrites: 0 } : null;
   const ugcCopy = ugcStyleOf(source.metadata);
-  return db.videoProject.create({
-    data: {
-      organisationId: source.organisationId,
-      businessId: source.businessId,
-      createdByUserId: tenant.userId,
-      // 17.9: an unnamed project's copy stays unnamed (no English words stored).
-      name: isUntitledName(source.name) ? null : `${source.name} (copy)`.slice(0, 200),
-      description: source.description,
-      state: 'DRAFT',
-      sourceType: source.sourceType,
-      sourceRef: source.sourceRef,
-      targetFormats: source.targetFormats as Prisma.InputJsonValue,
-      brandKitId: source.brandKitId,
-      templateId: source.templateId,
-      costBudgetPence:
-        source.costBudgetPence ??
-        defaultProjectBudgetPence(
-          budgetFormatsFromJson(source.targetFormats),
-          source.sourceType,
-          toPlanTier(tenant.organisation.planTier),
-        ),
-      reviewPolicy: source.reviewPolicy,
-      publishPolicy: source.publishPolicy,
-      language: source.language,
-      metadata: {
-        duplicatedFrom: source.id,
-        ...(Array.isArray(projectMetadata(source.metadata).languages) && {
-          languages: projectMetadata(source.metadata).languages as Prisma.InputJsonValue,
-        }),
-        ...(hints ? { briefHints: hints as Prisma.InputJsonValue } : {}),
-        // 21.6: a carousel's copy keeps its posts, pictures and look (rewrite count starts again).
-        ...(carouselCopy && { carousel: carouselCopy as unknown as Prisma.InputJsonValue }),
-        // 21.4: a copy of a UGC video is a UGC video with the same actor (22.3: and creator).
-        ...(ugcCopy && { ugc: ugcMetadata(ugcCopy) as unknown as Prisma.InputJsonValue }),
-      },
+  const wallOfText = readWallOfText(source.metadata);
+  return {
+    organisationId: source.organisationId,
+    businessId: source.businessId,
+    createdByUserId: tenant.userId,
+    // 17.9: an unnamed project's copy stays unnamed (no English words stored).
+    name: isUntitledName(source.name) ? null : `${source.name} (copy)`.slice(0, 200),
+    description: source.description,
+    state: 'DRAFT',
+    sourceType: source.sourceType,
+    sourceRef: source.sourceRef,
+    targetFormats: source.targetFormats as Prisma.InputJsonValue,
+    brandKitId: source.brandKitId,
+    templateId: source.templateId,
+    costBudgetPence:
+      source.costBudgetPence ??
+      defaultProjectBudgetPence(
+        budgetFormatsFromJson(source.targetFormats),
+        source.sourceType,
+        toPlanTier(tenant.organisation.planTier),
+      ),
+    reviewPolicy: source.reviewPolicy,
+    publishPolicy: source.publishPolicy,
+    language: source.language,
+    metadata: {
+      duplicatedFrom: source.id,
+      ...(Array.isArray(projectMetadata(source.metadata).languages) && {
+        languages: projectMetadata(source.metadata).languages as Prisma.InputJsonValue,
+      }),
+      ...(hints ? { briefHints: hints as Prisma.InputJsonValue } : {}),
+      // 21.6: a carousel's copy keeps its posts, pictures and look (rewrite count starts again).
+      ...(carouselCopy && { carousel: carouselCopy as unknown as Prisma.InputJsonValue }),
+      // 21.4: a copy of a UGC video is a UGC video with the same actor (22.3: and creator).
+      ...(ugcCopy && { ugc: ugcMetadata(ugcCopy) as unknown as Prisma.InputJsonValue }),
+      // 22.2: a wall of text keeps its text block, background and length.
+      ...(wallOfText && { wallOfText: { ...wallOfText, writtenText: null } }),
     },
-  });
+  };
 }
 
 /** Start a new run: new runId (older jobs become no-ops), state QUEUED, enqueue plan-project. */

@@ -151,8 +151,12 @@ describe.skipIf(!hasDb)('22.5 automations', { timeout: 240_000 }, () => {
     expect(plan.automationId).toBe(a.id);
     expect(plan.status).toBe('DRAFTING');
     const formats = new Set(plan.items.map((i) => i.format));
-    // Only the cheap formats (paid ones are 0 by default).
-    expect([...formats].every((f) => f === 'carousel' || f === 'slideshow')).toBe(true);
+    // Only the cheap formats (paid ones are 0 by default). 22.2: a wall of text is cheap too; a
+    // hook + demo needs a demo video and a library hook clip, which this business has not got.
+    expect(
+      [...formats].every((f) => f === 'carousel' || f === 'slideshow' || f === 'wall_of_text'),
+    ).toBe(true);
+    expect(formats.has('hook_demo')).toBe(false);
     expect(plan.items.every((i) => i.angle.startsWith('Starter care'))).toBe(true);
     expect(queue.pending.some((j) => j.name === 'draft-content-plan')).toBe(true);
     // The writer is told the angle.

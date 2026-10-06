@@ -355,7 +355,8 @@ describe.skipIf(!hasDb)('22.4 Blitz', { timeout: 180_000 }, () => {
 
   it('keeping a paid preview card is what generates it', async () => {
     await putMix(db, scope(), 'user-1', {
-      formatWeights: { carousel: 0, slideshow: 0, ai_video: 100 },
+      // 22.1 / 22.2: the new pre-made formats off too, so every card is a paid preview.
+      formatWeights: { carousel: 0, slideshow: 0, wall_of_text: 0, hook_demo: 0, ai_video: 100 },
     });
     await refillBlitzQueue(refillDeps(fakeGenerator()), refillScope());
     const card = await db.blitzSuggestion.findFirstOrThrow({

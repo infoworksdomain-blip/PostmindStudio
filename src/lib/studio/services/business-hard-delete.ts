@@ -66,14 +66,28 @@ export async function unsharedAssetObjects(db: Db, projectIds: string[]): Promis
   });
   const refs = assets.map((a) => ({ bucket: a.s3Bucket, key: a.s3Key })).filter(isStored);
   if (refs.length === 0) return [];
-  const shared = await db.videoAsset.findMany({
-    where: {
-      projectId: { notIn: projectIds },
-      s3Key: { in: [...new Set(refs.map((r) => r.key))] },
-    },
-    select: { s3Bucket: true, s3Key: true },
-  });
-  const keep = new Set(shared.map((s) => `${s.s3Bucket}\u0000${s.s3Key}`));
+  const keys = [...new Set(refs.map((r) => r.key))];
+  const [shared, demos, library] = await Promise.all([
+    db.videoAsset.findMany({
+      where: { projectId: { notIn: projectIds }, s3Key: { in: keys } },
+      select: { s3Bucket: true, s3Key: true },
+    }),
+    // 22.1: a hook + demo project's demo asset is the business's demo-bank upload, which other
+    // projects use too; the bank owns the object (a business delete removes it as an upload).
+    db.videoUpload.findMany({
+      where: { kind: 'DEMO_VIDEO', s3Key: { in: keys } },
+      select: { s3Bucket: true, s3Key: true },
+    }),
+    // 22.1 / 22.2: a FOOTAGE-licensed library video used as a hook or background belongs to the
+    // reference library, never to the project (formats/footage.ts).
+    db.videoLibraryItem.findMany({
+      where: { s3Key: { in: keys } },
+      select: { s3Bucket: true, s3Key: true },
+    }),
+  ]);
+  const keep = new Set(
+    [...shared, ...demos, ...library].map((s) => `${s.s3Bucket}\u0000${s.s3Key}`),
+  );
   return refs.filter((r) => !keep.has(`${r.bucket}\u0000${r.key}`));
 }
 

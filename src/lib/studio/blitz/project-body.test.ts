@@ -65,9 +65,33 @@ describe('card → project body', () => {
     expect(ugc.ugc).toEqual({});
   });
 
-  it('refuses formats whose builder has not landed', () => {
-    expect(() =>
-      projectBodyForCard('hook_demo', copy, { ...options, platforms: ['tiktok'] }),
-    ).toThrow(/No project builder/);
+  it('22.2 wall of text: the hook and lines as the block, 6–12 s, calm background', () => {
+    const body = createProjectInput.parse(
+      projectBodyForCard('wall_of_text', copy, { ...options, platforms: ['tiktok'] }),
+    );
+    expect(body.sourceType).toBe('WALL_OF_TEXT');
+    expect(body.wallOfText).toEqual({
+      text: 'Flat sourdough? Here is why.\n- Under-proved dough\n- Weak starter\n- Too much water',
+      background: 'calm',
+      durationSec: 12,
+    });
+    expect(body.targetFormats?.[0]?.durationSec).toBe(12);
+  });
+
+  it('22.1 hook + demo: the hook line and a library hook, never a paid generated clip', () => {
+    const body = createProjectInput.parse(
+      projectBodyForCard('hook_demo', copy, {
+        ...options,
+        platforms: ['tiktok'],
+        sourceRef: 'blitz:s2',
+      }),
+    );
+    expect(body.sourceType).toBe('HOOK_DEMO');
+    expect(body.hookDemo).toMatchObject({
+      hookLine: 'Flat sourdough? Here is why.',
+      hookSource: 'library',
+      allowGeneratedHook: false,
+    });
+    expect(body.sourceRef).toBe('blitz:s2');
   });
 });

@@ -49,6 +49,8 @@ import './p20-plan-month';
 import './p20-captions-hashtags';
 // Phase 21.6: carousels (post cards): a seeded carousel, its editor and Create → Carousel.
 import './p21-carousels';
+// Phase 22: Fastlane-style formats (hook + demo with a demo-video bank, wall of text).
+import './p22-formats';
 // Phase 22.3: reusable AI creators (two seeded creators, the Creators tab and the Create picker).
 import './p22-creators';
 // Phase 22.4 / 22.5: Blitz (a deck of carousel, slideshow and preview cards) and Automations.

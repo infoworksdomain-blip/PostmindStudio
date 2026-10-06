@@ -161,6 +161,12 @@ export interface ActorVideoRequest extends ProviderRequestBase {
   actorImageUrl?: string;
   /** Same value for every clip of a project, so providers that take a seed keep the look. */
   seed?: number;
+  /**
+   * 22.1: a silent reaction clip (the hook of a hook + demo video): `spokenLine` is empty and the
+   * actor says nothing. Only adapters that can make a clip without dialogue accept it (Veo); the
+   * composer mutes the clip either way.
+   */
+  silent?: boolean;
 }
 
 export interface StockFootageRequest extends ProviderRequestBase {

@@ -282,7 +282,8 @@
       "auto_publish_account_required": "Choose a connected account to post to, or turn auto-publish and the schedule off.",
       "auto_publish_account_unavailable": "A chosen account is no longer connected. Reconnect it or choose another account.",
       "queue_unavailable": "Publishing is temporarily unavailable. Nothing was posted or kept; try again in a moment.",
-      "channel_limit": "Your plan doesn’t include a channel for this platform. Add a channel on Your plan to publish here."
+      "channel_limit": "Your plan doesn’t include a channel for this platform. Add a channel on Your plan to publish here.",
+      "no_demo_video": "Upload a demo video of your product or app first."
     }
   },
   "primitives": {
@@ -539,7 +540,9 @@
         "SLIDESHOW": "What’s the slideshow about?",
         "UPLOAD": "Upload your video",
         "UGC": "What should the actor talk about?",
-        "CAROUSEL": "What’s the carousel about?"
+        "CAROUSEL": "What’s the carousel about?",
+        "HOOK_DEMO": "What does your demo show?",
+        "WALL_OF_TEXT": "What should the text say?"
       },
       "uploadChoose": "Choose a video",
       "uploadReplace": "Replace the video",
@@ -558,7 +561,9 @@
         "SLIDESHOW": "Slideshow",
         "UPLOAD": "Upload a video",
         "UGC": "UGC actor",
-        "CAROUSEL": "Carousel (post cards)"
+        "CAROUSEL": "Carousel (post cards)",
+        "HOOK_DEMO": "Hook + demo",
+        "WALL_OF_TEXT": "Wall of text"
       },
       "templatedNote": "Platforms and length come from the template. Your text above is optional — it adds specifics to the template’s outline.",
       "noBusiness": {
@@ -571,13 +576,15 @@
         "generatingUpload": "Generating — Studio is captioning your video.",
         "generatingScript": "Generating — Studio is writing the script.",
         "draftNotStarted": "Saved as a draft, but generation didn’t start: {error}",
-        "generatingCarousel": "Writing your carousel…"
+        "generatingCarousel": "Writing your carousel…",
+        "generatingFormat": "Generating — Studio is writing the text and making your video."
       },
       "planMonth": "Or plan a whole month of videos and slideshows",
       "summaryNoAccounts": "no connected accounts: saved for review",
       "summaryForReview": "saved for review",
       "createCarousel": "Create carousel",
-      "summaryCarousel": "{count} posts · {theme, select, dark {dark} other {light}} cards"
+      "summaryCarousel": "{count} posts · {theme, select, dark {dark} other {light}} cards",
+      "summarySeconds": "{count, number} s"
     },
     "problems": {
       "businessRequired": "Choose a business first.",
@@ -597,7 +604,11 @@
       "ugcShortOnly": "UGC actor videos are short: choose Short.",
       "ugcRealPerson": "UGC actors are generated people. They can’t imitate, look like or sound like a real person or celebrity: describe the kind of person you want instead.",
       "carouselBriefRequired": "Describe the carousel or paste a thread.",
-      "carouselThreadTooLong": "The pasted thread is too long."
+      "carouselThreadTooLong": "The pasted thread is too long.",
+      "demoRequired": "Upload a demo video of your product or app first: a hook + demo video shows your own demo after the hook.",
+      "hookLineTooLong": "Keep the hook line to {max, number} words or fewer.",
+      "wallTextRequired": "Describe the video or write the text yourself.",
+      "wallTextTooLong": "Keep the text to {max, number} words and 10 lines or fewer."
     },
     "options": {
       "platforms": "Platforms",
@@ -763,6 +774,57 @@
       "thread": "Your thread (optional)",
       "threadPlaceholder": "Paste a thread: separate posts with a line of ---, or number them 1/, 2/, 3/…",
       "threadHint": "Leave it empty and Studio writes the thread. The first post is the hook, the last the call to action."
+    },
+    "hookDemo": {
+      "title": "Hook + demo",
+      "intro": "A quick reaction to camera with one line of text, then your own demo video straight after.",
+      "demo": "Demo video",
+      "noDemo": "No demo videos yet. Upload a screen recording or a phone-in-hand video of your product or app.",
+      "upload": "Upload a demo video",
+      "uploadAnother": "Upload another demo video",
+      "demoHint": "Demo videos are kept for this business and can be used again. Studio uses the first seconds that fit a 10–20 second video.",
+      "hookLine": "Hook line (optional)",
+      "hookLinePlaceholder": "e.g. I stopped taking bookings by phone",
+      "hookLineHint": "{count, number} of {max, number} words. Leave it empty and Studio writes one.",
+      "hookSource": "Hook",
+      "hookSources": {
+        "ai_creator": "AI creator reaction",
+        "library": "Reaction clip from the library"
+      },
+      "reaction": "Reaction",
+      "reactions": {
+        "surprised": "Surprised",
+        "curious": "Curious",
+        "wait_what": "“Wait, what?”"
+      },
+      "layout": "Layout",
+      "layouts": {
+        "sequential": "Hook, then demo",
+        "stacked": "Hook above the demo, then demo"
+      },
+      "audioMix": "Sound",
+      "audioMixes": {
+        "balanced": "Music and demo sound",
+        "demo": "Demo sound first",
+        "music": "Music only"
+      },
+      "disclosure": "The reaction is an AI-generated person, never a real one, and the video carries the AI-generated label. It uses one video of your allowance."
+    },
+    "wallOfText": {
+      "title": "Wall of text",
+      "intro": "One block of text over a calm background video with music, on screen the whole time.",
+      "text": "Text (optional)",
+      "textPlaceholder": "A short list or statement, one idea per line. Leave it empty and Studio writes it from your description.",
+      "textHint": "{count, number} of {max, number} words",
+      "background": "Background",
+      "backgrounds": {
+        "calm": "Calm",
+        "nature": "Nature",
+        "city": "City lights",
+        "abstract": "Abstract"
+      },
+      "length": "Length",
+      "seconds": "{count, number} s"
     }
   },
   "review": {
@@ -779,7 +841,9 @@
         "POSTMIND_CONTENT": "From PostMind content",
         "TEMPLATE": "From a template",
         "UPLOAD": "Your video",
-        "CAROUSEL": "Carousel"
+        "CAROUSEL": "Carousel",
+        "HOOK_DEMO": "Hook + demo",
+        "WALL_OF_TEXT": "Wall of text"
       },
       "loading": "Loading project",
       "spent": "{amount} spent",
@@ -3976,7 +4040,11 @@
       "stock_unavailable": "Some stock photos could not be added this time. Use Refresh stock in the image library to try again.",
       "ugc_real_person_refused": "This UGC brief asked for a real person or celebrity. Actors are generated people: describe the kind of person you want instead.",
       "carousel_incomplete": "The carousel could not be made: it has no posts.",
-      "carousel_render_error": "Drawing the carousel’s slides failed."
+      "carousel_render_error": "Drawing the carousel’s slides failed.",
+      "no_demo_video": "The demo video is no longer available: choose or upload another one.",
+      "hook_clip_unavailable": "The hook clip could not be made: no AI creator is available right now and the library has no reaction clip to use. Try again later.",
+      "wall_of_text_invalid": "The wall of text has no settings: create it again.",
+      "no_background_video": "No background video was found for this wall of text. Try another background, or try again later."
     },
     "classes": {
       "rate_limited": "too many requests",

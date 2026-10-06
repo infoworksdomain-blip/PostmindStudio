@@ -38,6 +38,7 @@ import { PLATFORM_RULES } from '../platforms/rules';
 import type { PlanTier } from '../providers/router';
 import { jobIds, type JobQueue } from '../queue/enqueue';
 import { isUgcLanguage } from '../ugc/style';
+import { canMakeHookDemoCard, hookDemoReadiness } from '../formats/availability';
 import { listAngles, suggestAngles, type BusinessScope } from './angles';
 import { PLATFORMS, type Platform } from './catalog';
 import {
@@ -274,7 +275,12 @@ async function remixCandidates(db: PrismaClient, now: number) {
   });
 }
 
-async function enabledFormats(db: PrismaClient, organisationId: string, language: string) {
+async function enabledFormats(
+  db: PrismaClient,
+  scope: { organisationId: string; businessId: string },
+  language: string,
+  now: Date,
+) {
   const gate = featureGateFor(db);
   const feature: Partial<Record<FormatKey, Feature>> = {
     carousel: 'carousels',
@@ -283,8 +289,12 @@ async function enabledFormats(db: PrismaClient, organisationId: string, language
   const out: FormatKey[] = [];
   for (const key of availableFormats()) {
     const f = feature[key];
-    if (f && !(await gate.status(f, organisationId)).enabled) continue;
+    if (f && !(await gate.status(f, scope.organisationId)).enabled) continue;
     if (key === 'ugc' && !isUgcLanguage(language)) continue;
+    // 22.1: a pre-made hook + demo card needs a demo video and a licensed library hook clip
+    // (never a paid generated clip for a card nobody kept).
+    if (key === 'hook_demo' && !canMakeHookDemoCard(await hookDemoReadiness(db, { ...scope, now })))
+      continue;
     out.push(key);
   }
   return out;
@@ -441,7 +451,7 @@ export async function refillBlitzQueue(
     getMix(deps.db, business),
     businessLanguage(deps.db, business),
   ]);
-  const formats = (await enabledFormats(deps.db, scope.organisationId, language)).filter(
+  const formats = (await enabledFormats(deps.db, scope, language, new Date(now))).filter(
     (f) => caps.premadeAllowed || !isPremade(f),
   );
   const live = formats.filter((f) => (mix.formatWeights[f] ?? 0) > 0);

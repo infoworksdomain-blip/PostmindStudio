@@ -263,6 +263,8 @@ describe('local storage and the simulated registry', () => {
         'assemblyai',
         'openai',
         'shotstack',
+        // 22.2: stock footage for wall-of-text backgrounds.
+        'pixabay',
       ]);
       const tts = registry.getAdapter('elevenlabs');
       const job = await tts.submit({
@@ -283,7 +285,9 @@ describe('local storage and the simulated registry', () => {
 
   it('builds the sample media from FFmpeg test sources', () => {
     const commands = sampleMediaCommands('/tmp/x', 'ff');
-    expect(commands).toHaveLength(5);
+    // 22.1 / 22.2: plus a 15 s and an 8 s render.
+    expect(commands).toHaveLength(7);
+    expect(commands[5]?.[1].join(' ')).toContain('duration=15');
     expect(commands.every(([bin]) => bin === 'ff')).toBe(true);
     expect(commands[1]?.[1].join(' ')).toContain('1080x1920');
   });

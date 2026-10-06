@@ -58,6 +58,9 @@ const SOURCES = [
   'TEMPLATE',
   'UPLOAD',
   'CAROUSEL',
+  // 22.1 / 22.2: reviewed like any video (shots, overlays, renders, publish).
+  'HOOK_DEMO',
+  'WALL_OF_TEXT',
 ] as const;
 type SourceKey = (typeof SOURCES)[number];
 const isSource = (s: string): s is SourceKey => (SOURCES as readonly string[]).includes(s);

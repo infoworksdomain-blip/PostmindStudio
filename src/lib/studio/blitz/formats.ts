@@ -73,7 +73,8 @@ export const FORMATS: Readonly<Record<FormatKey, FormatEntry>> = {
     tier: 'premade',
     costRank: 3,
     defaultWeight: 15,
-    planKind: null,
+    // 22.2: a video project (WALL_OF_TEXT) in month plans.
+    planKind: 'VIDEO',
     platforms: NOT_YOUTUBE,
   },
   hook_demo: {
@@ -82,7 +83,9 @@ export const FORMATS: Readonly<Record<FormatKey, FormatEntry>> = {
     tier: 'premade',
     costRank: 4,
     defaultWeight: 15,
-    planKind: null,
+    // 22.1: a video project (HOOK_DEMO); offered per business only with a demo video and a
+    // licensed library hook clip (formats/availability.ts).
+    planKind: 'VIDEO',
     needsDemoVideo: true,
     platforms: ANY,
   },
@@ -106,8 +109,15 @@ export const FORMATS: Readonly<Record<FormatKey, FormatEntry>> = {
   },
 };
 
-/** Formats whose builder ships with this branch (the others wait for their phase). */
-const BUILT_IN: ReadonlySet<FormatKey> = new Set(['carousel', 'slideshow', 'ai_video', 'ugc']);
+/** Formats whose builder ships in blitz/project-body.ts (22.1 / 22.2 added theirs). */
+const BUILT_IN: ReadonlySet<FormatKey> = new Set([
+  'carousel',
+  'slideshow',
+  'wall_of_text',
+  'hook_demo',
+  'ai_video',
+  'ugc',
+]);
 const registered = new Set<FormatKey>();
 
 /**

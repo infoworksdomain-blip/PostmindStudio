@@ -28,6 +28,7 @@ import { publicationsForProject } from './publications-store';
 import { draftSlides, slidesByProject } from './slideshow-data';
 import { findProjectTemplate } from './templates';
 import { carouselFormats, carouselMetadata } from './p21-carousels';
+import { formatProject } from './p22-formats';
 
 seedProjects();
 startPublicationSync();
@@ -107,11 +108,18 @@ route('POST', '/projects', ({ body }) => {
   // 21.6: a carousel needs a brief or a pasted thread.
   const carouselThread = str(obj(b.carousel).thread)?.trim();
   if (
-    !['SLIDESHOW', 'TEMPLATE', 'UPLOAD'].includes(sourceType) &&
+    !['SLIDESHOW', 'TEMPLATE', 'UPLOAD', 'HOOK_DEMO', 'WALL_OF_TEXT'].includes(sourceType) &&
     !rawInput &&
     !(sourceType === 'CAROUSEL' && carouselThread)
   )
     throw bad('brief is required');
+  // 22.1 / 22.2: the format's own settings and fixed length (p22-formats.ts).
+  const format = formatProject(
+    b,
+    sourceType,
+    str(b.businessId) ?? DEMO_BUSINESS_ID,
+    Boolean(rawInput),
+  );
   // 13.5: an UPLOAD project claims a completed source-video upload (p13-a1-uploads.ts).
   const upload = sourceType === 'UPLOAD' ? claimUpload(str(b.uploadId)) : null;
   const referenceVideoId = str(b.referenceVideoId) ?? null;
@@ -126,7 +134,9 @@ route('POST', '/projects', ({ body }) => {
       }))
     : sourceType === 'CAROUSEL'
       ? carouselFormats()
-      : formatsFrom(b.targetFormats);
+      : formatsFrom(b.targetFormats).map((f) =>
+          format ? { ...f, duration: format.durationSec } : f,
+        );
   const defaults = template?.publishDefaults ?? null;
   const targets = (obj(b.autoPublish).targets as unknown[] | undefined) ?? defaults?.targets ?? [];
   const publishPolicy = str(b.publishPolicy) ?? defaults?.publishPolicy ?? 'MANUAL';
@@ -165,6 +175,7 @@ route('POST', '/projects', ({ body }) => {
       ...(targets.length > 0 && { autoPublish: { targets } }),
       ...(template && { template: { id: template.id } }),
       ...(sourceType === 'CAROUSEL' && carouselMetadata(b, str(b.language) ?? 'en-GB')),
+      ...(format && format.metadata),
       ...(upload && {
         upload: { id: upload.id, fileName: upload.fileName, durationSec: upload.durationSec },
       }),

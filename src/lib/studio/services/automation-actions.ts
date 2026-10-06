@@ -166,7 +166,12 @@ export async function estimateAutomation(
     mix,
     await allowedFormats(
       deps.db,
-      { organisationId: tenant.organisationId, platforms: input.platforms, language: 'en-GB' },
+      {
+        organisationId: tenant.organisationId,
+        businessId: input.businessId,
+        platforms: input.platforms,
+        language: 'en-GB',
+      },
       mix,
       deps.env,
     ),
