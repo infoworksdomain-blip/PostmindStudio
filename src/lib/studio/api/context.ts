@@ -32,6 +32,7 @@ import type { BillingService } from '../billing/contracts';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
 import type { BusinessGuard } from '../core/select';
 import type { MetaConnectDeps } from '../services/meta-connect';
+import type { ProjectEventBus } from '../live/events';
 
 // Dependencies for /api/studio route handlers. Built lazily from env in production; tests
 // install their own with setApiDeps().
@@ -107,6 +108,8 @@ export interface ApiDeps {
   businessGuard?: BusinessGuard;
   /** Track D (§2.10): Studio's own Meta connect; absent = built from env on first use. */
   metaConnect?: MetaConnectDeps;
+  /** 24.2: live project status bus (Redis pub/sub); absent = the SSE route answers 503. */
+  liveEvents?: ProjectEventBus;
   logger: Logger;
   now: () => number;
 }
@@ -158,6 +161,15 @@ async function buildFromEnv(): Promise<ApiDeps> {
   }
   const connection = redis.redisConnectionFromEnv();
   const queue = enqueue.createBullJobQueue(connection);
+  // 24.2: live status over Redis pub/sub; API-side transitions announce on the same bus.
+  const liveBus = await import('../live/redis-bus');
+  const liveAnnounce = await import('../live/announce');
+  const liveEvents = liveBus.createRedisProjectEventBus({
+    connect: liveBus.redisPubSubConnector(connection),
+    prefix: redis.queuePrefix(),
+    logger,
+  });
+  liveAnnounce.setProjectEventBus(liveEvents);
   // Reuse the worker wiring for publishing so API takedowns and workers share one code path.
   const pipeline = createDeps.createPipelineDeps({ db: prisma, queue });
   return {
@@ -205,6 +217,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
     core: { businesses: select.selectBusinessDirectory(modes, prisma) },
     businessGuard: select.selectBusinessGuard(modes, prisma),
     metaConnect: select.selectMetaConnect(modes),
+    liveEvents,
     // Phase 18 Track C: modes, entitlements (tier + access gate) and the Stripe billing service.
     ...billingWiring.billingApiDepsFromEnv({
       db: prisma,

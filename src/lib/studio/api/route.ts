@@ -45,6 +45,11 @@ export interface RouteResult {
   setCookies?: string[];
   /** 20.15: extra response headers on success, e.g. Cache-Control (not stored for replays). */
   headers?: Record<string, string>;
+  /**
+   * 24.2: a non-JSON response (a Server-Sent Events stream) returned as is, after the same
+   * tenant / capability / rate-limit checks; `body` is ignored. GET routes only.
+   */
+  raw?: Response;
 }
 
 type Handler = (ctx: RouteContext) => Promise<RouteResult>;
@@ -169,6 +174,10 @@ export function withStudioRoute(
               metadata: { ...metadata, correlationId },
             }),
         });
+        if (result.raw && !idem) {
+          result.raw.headers.set('x-correlation-id', correlationId);
+          return result.raw;
+        }
         const status = result.status ?? 200;
         const safeBody = JSON.parse(
           JSON.stringify(

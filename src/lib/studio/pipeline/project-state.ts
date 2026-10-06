@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient, VideoProjectState } from '@prisma/client';
+import { announceProjectChange } from '../live/announce';
 
 // Project lifecycle (spec 4.5 / 7.3). Transitions are compare-and-set on the current state, so
 // concurrent workers can't move a project backwards or double-advance it.
@@ -89,7 +90,10 @@ export async function transitionProject(
     },
     data: { ...input.data, state: input.to },
   });
-  return result.count === 1;
+  const moved = result.count === 1;
+  // 24.2: live calendar status (SSE). Best effort, never awaited by the pipeline.
+  if (moved) void announceProjectChange(db, { projectId: input.projectId });
+  return moved;
 }
 
 /** Fail the project for this run from any active pipeline state. */

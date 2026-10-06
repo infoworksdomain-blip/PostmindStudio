@@ -144,6 +144,8 @@ export async function rawCall(
     body?: unknown;
     params?: Record<string, string>;
     headers?: Record<string, string>;
+    /** 24.2: abort a streaming response (SSE) like a closed browser tab. */
+    signal?: AbortSignal;
   } = {},
 ): Promise<Response> {
   const headers: Record<string, string> = { ...options.headers };
@@ -159,6 +161,7 @@ export async function rawCall(
         : typeof options.body === 'string' || options.body instanceof Uint8Array
           ? (options.body as BodyInit)
           : JSON.stringify(options.body),
+    ...(options.signal && { signal: options.signal }),
   });
   return handler(req, { params: Promise.resolve(options.params ?? {}) });
 }

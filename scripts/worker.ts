@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { logger } from '../src/lib/logger';
 import { createPipelineDeps } from '../src/lib/studio/pipeline/create-deps';
 import { createBullJobQueue } from '../src/lib/studio/queue/enqueue';
+import { setProjectEventBus } from '../src/lib/studio/live/announce';
+import { createRedisProjectEventBus, redisPubSubConnector } from '../src/lib/studio/live/redis-bus';
 import { QUEUES, type QueueName } from '../src/lib/studio/queue/queues';
 import { redisConnectionFromEnv } from '../src/lib/studio/queue/redis';
 import { createServer } from 'node:http';
@@ -62,6 +64,14 @@ async function main(): Promise<void> {
   const db = new PrismaClient();
   const queue = createBullJobQueue(connection);
   const deps = createPipelineDeps({ db, queue });
+  // 24.2: project status changes go to the web process's SSE streams over Redis pub/sub.
+  setProjectEventBus(
+    createRedisProjectEventBus({
+      connect: redisPubSubConnector(connection),
+      prefix: queuePrefix(),
+      logger,
+    }),
+  );
   const workers = startWorkers({
     connection,
     deps,
