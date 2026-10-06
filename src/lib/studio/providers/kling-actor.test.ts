@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ConfigurationError } from '../../errors';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
+import { NO_ON_SCREEN_TEXT } from './dialogue';
 import type { ActorVideoRequest } from './interface';
 import { KlingAdapter, klingOptionsFromEnv } from './kling';
 
@@ -57,8 +58,7 @@ describe('Kling actor clips (21.4, opt-in)', () => {
     expect(requests[0]).toMatchObject({
       url: 'https://api-singapore.klingai.com/text-to-video/kling-3.0',
       body: {
-        prompt:
-          'Selfie video of a man around forty at a desk.\nThe person speaks directly to the camera and says: "This \'one\' app saves me an hour a day."',
+        prompt: `Selfie video of a man around forty at a desk.\nThe person speaks directly to the camera and says: "This 'one' app saves me an hour a day."\n${NO_ON_SCREEN_TEXT}`,
         settings: {
           multi_shot: false,
           audio: 'native',
@@ -91,8 +91,13 @@ describe('Kling actor clips (21.4, opt-in)', () => {
         settings: { multi_shot: false, audio: 'native', resolution: '720p', duration: 6 },
       },
     });
-    const body = requests[0]?.body as { settings: Record<string, unknown> };
+    const body = requests[0]?.body as {
+      settings: Record<string, unknown>;
+      contents: Array<{ type: string; text?: string }>;
+    };
     expect(body.settings).not.toHaveProperty('aspect_ratio');
+    // 21.4c: the no-text instruction is the prompt's last sentence, after the line.
+    expect(body.contents[0]?.text?.endsWith(NO_ON_SCREEN_TEXT)).toBe(true);
     expect(JSON.stringify(requests[0]?.body)).not.toContain('product.png');
     // Same native-audio price as text-to-video.
     expect(submitted.estimatedCostPence).toBe(57);

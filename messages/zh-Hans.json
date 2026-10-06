@@ -1018,7 +1018,8 @@
         "caption_sync": "字幕同步",
         "watermark": "水印",
         "brand_kit": "品牌套件",
-        "force_approved": "强制批准"
+        "force_approved": "强制批准",
+        "clip_text": "生成片段中的文字"
       },
       "severity": {
         "block": "阻止",
@@ -1070,7 +1071,8 @@
         "brandKitMissing": "{count, plural, other {需要审核：视频缺少 # 个品牌元素。}}",
         "brandKitPresent": "颜色、字体和标志均已包含。",
         "forceApproved": "检查未通过但已批准：{note}",
-        "allowedByReview": "已获 PostMind 信任与安全审核放行：{note}"
+        "allowedByReview": "已获 PostMind 信任与安全审核放行：{note}",
+        "clipTextBurnedIn": "{count, plural, other {需要审核：即使重试一次后，镜头 {shots} 的生成片段仍带有自带的字幕或文字。}}"
       }
     },
     "saveTemplate": {

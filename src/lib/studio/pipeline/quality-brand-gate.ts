@@ -19,6 +19,7 @@ import { spokenWordsOf } from './word-timing';
 import type { SpokenWord } from '../overlays/word-timing';
 import { mirrorsNarration } from '../overlays/kind';
 import { speechAssetIdOf } from '../ugc/clip-speech';
+import { clipTextOf, evaluateClipText } from '../ugc/clip-text-guard';
 
 // BACKLOG 15.B2 — gathers what quality-sync.ts needs for one render (its composition summary,
 // the shots' narration fit and word timing, spoken-caption overlays, the brand kit) and runs the
@@ -146,6 +147,9 @@ export async function renderSyncChecks(
     }
   }
 
+  // 21.4c: actor clips kept with burned-in text (ugc/clip-text-guard.ts) need a person's review.
+  const clipText = await clipTextCheck(deps, input.project.organisationId, shots);
+
   return {
     summary,
     checks: [
@@ -153,6 +157,35 @@ export async function renderSyncChecks(
       evaluateWatermark(summary, expected, sample),
       evaluateCaptionSync(captions),
       evaluateBrandKit(summary, expected),
+      ...(clipText ? [clipText] : []),
     ],
   };
+}
+
+async function clipTextCheck(
+  deps: PipelineDeps,
+  organisationId: string,
+  shots: ReadonlyArray<{ visualTreatment: string; assetId: string | null }>,
+): Promise<QualityCheck | null> {
+  const actorShots = shots
+    .map((shot, index) => ({ shot, number: index + 1 }))
+    .filter(({ shot }) => shot.visualTreatment === 'UGC_ACTOR' && shot.assetId);
+  if (actorShots.length === 0) return null;
+  const assets = new Map(
+    (
+      await deps.db.videoAsset.findMany({
+        where: {
+          id: { in: actorShots.map(({ shot }) => shot.assetId as string) },
+          organisationId,
+        },
+        select: { id: true, metadata: true },
+      })
+    ).map((a) => [a.id, a.metadata]),
+  );
+  return evaluateClipText(
+    actorShots.map(({ shot, number }) => ({
+      number,
+      clipText: clipTextOf(assets.get(shot.assetId as string)),
+    })),
+  );
 }
