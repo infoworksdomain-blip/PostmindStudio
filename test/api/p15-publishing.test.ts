@@ -45,7 +45,8 @@ describe.skipIf(!hasDb)('Phase 15 Track A publishing API', { timeout: 90_000 }, 
   let api: ReturnType<typeof installApi>;
 
   beforeEach(() => {
-    h = createHarness(db, { safety: SUGGESTIONS });
+    // 23.2: the caption call has its own scripted answer (it used to reach the catch-all reply).
+    h = createHarness(db, { postCopy: SUGGESTIONS });
     api = installApi(db, tokens, {
       queue: h.queue,
       publishing: h.deps.publishing,

@@ -180,6 +180,8 @@ export interface HarnessOptions {
   ideation?: unknown;
   script?: unknown;
   safety?: unknown;
+  /** 23.2: the caption call's answer ({ suggestions: [...] }). */
+  postCopy?: unknown;
   runwayRespond?: (request: ProviderRequest) => ProviderPollResult;
   probe?: Partial<MediaProbe>;
   loudness?: number | null;
@@ -223,12 +225,15 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.ideation ?? IDEATION_JSON);
     if (request.system.includes('script and storyboard'))
       return textResult(options.script ?? SCRIPT_JSON);
-    // 23.2: the post copy is its own (light) call; it answers with the ideation fixture's posts.
+    // 23.2: the caption call (plan-project's post copy, "Suggest captions", slideshow copy)
+    // answers `postCopy`, else the ideation fixture's socialPosts (the copy ideation used to write).
     if (request.system.includes('per-platform social captions'))
-      return textResult({
-        suggestions:
-          (options.ideation as { socialPosts?: unknown[] } | undefined)?.socialPosts ?? [],
-      });
+      return textResult(
+        options.postCopy ?? {
+          suggestions:
+            (options.ideation as { socialPosts?: unknown[] } | undefined)?.socialPosts ?? [],
+        },
+      );
     if (request.system.includes('social-media slideshow'))
       return textResult(options.slideshowText ?? SLIDESHOW_TEXT_JSON);
     if (request.system.includes('analyse short-form marketing videos'))
