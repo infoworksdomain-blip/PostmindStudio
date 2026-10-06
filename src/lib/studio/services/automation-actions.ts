@@ -7,7 +7,7 @@ import type { TenantContext } from '../../tenant';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
 import { allocateFormats, allowanceVideosFor } from '../blitz/allocate';
 import { FORMATS, type FormatKey } from '../blitz/formats';
-import { typicalItemCostPence } from '../content-plans/allowance';
+import { typicalFormatCostPence } from '../content-plans/allowance';
 import type { ProviderRegistry } from '../providers/registry';
 import type { JobQueue } from '../queue/enqueue';
 import { downloadOnlyPlatforms } from './automation-items';
@@ -187,10 +187,7 @@ export async function estimateAutomation(
     paidPosts: formats.filter((f) => FORMATS[f].tier === 'preview').length,
     // 23.3: videos of the allowance (a quarter number: quick posts use ¼).
     allowanceUnits: allowanceVideosFor(formats),
-    estimatePence: formats.reduce(
-      (sum, f) => sum + typicalItemCostPence(FORMATS[f].planKind ?? 'VIDEO', tier),
-      0,
-    ),
+    estimatePence: formats.reduce((sum, f) => sum + typicalFormatCostPence(f, tier), 0),
   };
 }
 

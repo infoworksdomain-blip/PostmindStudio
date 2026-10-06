@@ -10,10 +10,14 @@ import {
   planItemQuarters,
   estimateCost,
   maxItemCostPence,
+  TYPICAL_FORMAT_COST_PENCE,
+  typicalFormatCostPence,
   typicalItemCostPence,
+  type CapItem,
   type PlanAllowance,
   type PlanCost,
 } from './allowance';
+import type { FormatKey } from '../blitz/formats';
 import type { PlanKind } from './mix';
 
 const kinds = (n: number, kind: PlanKind = 'VIDEO') =>
@@ -35,16 +39,19 @@ const enforce = (limit: number, used: number, credits = 0): PlanAllowance => ({
 const noCap: PlanCost = { capPence: null, spentPence: 0, creditHeadroomPence: 0 };
 
 describe('20.9 plan allowance and cost', () => {
-  it('uses the catalogue typical cost for videos and the budget cap for slideshows', () => {
+  it('uses the catalogue typical cost for videos and the measured cost for slideshows', () => {
     // 21.5: STANDARD at Seedance 2.0 full, 720p (~241p a short).
     expect(typicalItemCostPence('VIDEO', 'STANDARD')).toBe(241);
     expect(typicalItemCostPence('VIDEO', 'ENTERPRISE')).toBe(240);
-    expect(typicalItemCostPence('SLIDESHOW', 'BASIC')).toBe(DEFAULT_SLIDESHOW_BUDGET_PENCE);
+    // 23.4: a slideshow typically costs ~30p; its "up to" stays the slideshow budget cap.
+    expect(typicalItemCostPence('SLIDESHOW', 'BASIC')).toBe(30);
+    expect(typicalItemCostPence('CAROUSEL', 'BASIC')).toBe(5);
+    expect(maxItemCostPence('SLIDESHOW')).toBe(DEFAULT_SLIDESHOW_BUDGET_PENCE);
     expect(maxItemCostPence('VIDEO')).toBe(DEFAULT_SHORT_FORM_BUDGET_PENCE);
     // 20.25 / 21.3: a video's "up to" is its tier's default project budget (STANDARD £5).
     expect(maxItemCostPence('VIDEO', 'STANDARD')).toBe(500);
     expect(estimateCost(['VIDEO', 'SLIDESHOW'], 'STANDARD')).toEqual({
-      typicalPence: 241 + DEFAULT_SLIDESHOW_BUDGET_PENCE,
+      typicalPence: 241 + 30,
       maxPence: 500 + DEFAULT_SLIDESHOW_BUDGET_PENCE,
     });
   });
@@ -106,6 +113,68 @@ describe('20.9 plan allowance and cost', () => {
   });
 });
 
+describe('23.4 per-format typical costs', () => {
+  it('prices each format at its measured typical cost (production 2026-10-06)', () => {
+    expect(typicalFormatCostPence('carousel', 'STANDARD')).toBe(5);
+    expect(typicalFormatCostPence('wall_of_text', 'STANDARD')).toBe(15);
+    expect(typicalFormatCostPence('slideshow', 'STANDARD')).toBe(30);
+    expect(typicalFormatCostPence('hook_demo', 'STANDARD')).toBe(50);
+    // AI video and UGC keep the catalogue's typical cost per short video.
+    expect(typicalFormatCostPence('ai_video', 'STANDARD')).toBe(241);
+    expect(typicalFormatCostPence('ugc', 'STANDARD')).toBe(241);
+    // A format beats the kind: a wall of text is a VIDEO item but costs ~15p.
+    expect(typicalItemCostPence('VIDEO', 'STANDARD', 'wall_of_text')).toBe(15);
+    expect(typicalItemCostPence('VIDEO', 'STANDARD', null)).toBe(241);
+    expect(TYPICAL_FORMAT_COST_PENCE.carousel).toBeLessThan(TYPICAL_FORMAT_COST_PENCE.hook_demo);
+  });
+
+  it('keeps a cheap 84-post month under a £100 cap with £36 spent (was cut to cost_cap)', () => {
+    const cost: PlanCost = { capPence: 10_000, spentPence: 3_600, creditHeadroomPence: 250 };
+    const unlimited: PlanAllowance = {
+      mode: 'warn',
+      limit: null,
+      used: 0,
+      credits: 0,
+      remaining: null,
+      quarters: { limit: null, used: 0, credits: 0, remaining: null },
+    };
+    const formats: FormatKey[] = [
+      ...Array<FormatKey>(30).fill('carousel'),
+      ...Array<FormatKey>(30).fill('slideshow'),
+      ...Array<FormatKey>(12).fill('wall_of_text'),
+      ...Array<FormatKey>(12).fill('hook_demo'),
+    ];
+    const items: CapItem[] = formats.map((format) => ({
+      kind: format === 'carousel' ? 'CAROUSEL' : format === 'slideshow' ? 'SLIDESHOW' : 'VIDEO',
+      quarters: 1,
+      format,
+    }));
+    expect(capItems(items, 'STANDARD', unlimited, cost)).toEqual({
+      count: 84,
+      quarters: 84,
+      cappedReason: null,
+    });
+    // Without formats (the old per-kind pricing) the same month was cut short.
+    const byKind = items.map(({ kind, quarters }) => ({ kind, quarters }));
+    expect(capItems(byKind, 'STANDARD', unlimited, cost).cappedReason).toBe('cost_cap');
+  });
+
+  it('still enforces the cap at the format costs', () => {
+    // 100p left: 20 carousels at 5p fit, the 21st does not.
+    const cost: PlanCost = { capPence: 1_100, spentPence: 1_000, creditHeadroomPence: 0 };
+    const items: CapItem[] = Array.from({ length: 30 }, () => ({
+      kind: 'CAROUSEL',
+      quarters: 1,
+      format: 'carousel',
+    }));
+    expect(capItems(items, 'STANDARD', enforce(40, 0), cost)).toEqual({
+      count: 20,
+      quarters: 20,
+      cappedReason: 'cost_cap',
+    });
+  });
+});
+
 describe('23.3 quick posts count as a quarter of a video', () => {
   it('counts slideshows and carousels as 1 quarter, videos 4, UGC videos 8', () => {
     expect(planItemQuarters('SLIDESHOW')).toBe(1);
@@ -137,7 +206,7 @@ describe('23.3 quick posts count as a quarter of a video', () => {
     // 8 videos, 7.5 used, 1 pack video. A slideshow (1) and a slideshow (1) fill the plan; the
     // video after them (4) is paid by the pack, which raises the cap by its headroom.
     // The cap leaves 100p after the slideshows: the 241p video fits only with the 250p headroom.
-    const capPence = 300 + 2 * DEFAULT_SLIDESHOW_BUDGET_PENCE + 100;
+    const capPence = 300 + 2 * typicalItemCostPence('SLIDESHOW', 'STANDARD') + 100;
     const cost: PlanCost = { capPence, spentPence: 300, creditHeadroomPence: 250 };
     const items = capItemsOf(['SLIDESHOW', 'SLIDESHOW', 'VIDEO']);
     const capped = capItems(items, 'STANDARD', enforce(8, 7.5, 1), cost);
