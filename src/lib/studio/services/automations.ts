@@ -486,11 +486,13 @@ export async function kickAutomation(queue: JobQueue, id: string, now: number): 
 }
 
 async function firstStart(deps: AutomationDeps, automation: Automation) {
+  // Only plans that will actually post hold the calendar. Production 2026-10-06: a month plan
+  // drafted and never generated (DRAFT) pushed a new one-week automation four weeks out.
   const latest = await deps.db.contentPlan.findFirst({
     where: {
       organisationId: automation.organisationId,
       businessId: automation.businessId,
-      status: { in: ['DRAFT', 'GENERATING', 'SCHEDULED'] },
+      status: { in: ['GENERATING', 'SCHEDULED'] },
     },
     orderBy: { windowEnd: 'desc' },
     select: { windowEnd: true },
