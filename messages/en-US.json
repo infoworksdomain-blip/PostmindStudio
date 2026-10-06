@@ -6119,7 +6119,8 @@
         "plan_missing": "Paused: its current period could not be found.",
         "no_free_slots": "Paused: there are no free posting times in the next period.",
         "no_formats": "Paused: none of its networks takes the formats in your content mix.",
-        "cost_cap": "Paused: this month’s limit has been reached."
+        "cost_cap": "Paused: this month’s limit has been reached.",
+        "draft_failed": "Paused: its posts could not be written after several tries. Resume to try again."
       },
       "upgrade": "Add videos",
       "insightTitle": "Top post this week",

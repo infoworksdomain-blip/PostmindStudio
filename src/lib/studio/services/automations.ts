@@ -19,7 +19,7 @@ import { tiktokPhotoPostsVerified } from '../blitz/targets';
 import {
   capItems,
   loadPlanAllowance,
-  typicalItemCostPence,
+  typicalFormatCostPence,
   type CapItem,
 } from '../content-plans/allowance';
 import {
@@ -397,12 +397,16 @@ export async function draftPeriod(
   const { allowance, cost } = await loadPlanAllowance(deps, automation.organisationId, tier);
   const cheapestFirst: CapItem[] = [...formats]
     .sort((a, b) => FORMATS[a].costRank - FORMATS[b].costRank)
-    .map((f) => ({ kind: FORMATS[f].planKind ?? 'VIDEO', quarters: allowanceQuartersFor(f) }));
+    .map((f) => ({
+      kind: FORMATS[f].planKind ?? 'VIDEO',
+      quarters: allowanceQuartersFor(f),
+      format: f,
+    }));
   const capped = capItems(cheapestFirst, tier, allowance, cost);
   const kept = new Set(
     keepCheapestFirst(formats, capped.quarters, {
       ceilingPence: automation.costCeilingPence,
-      typicalPence: (f) => typicalItemCostPence(FORMATS[f].planKind ?? 'VIDEO', tier),
+      typicalPence: (f) => typicalFormatCostPence(f, tier),
     }),
   );
   if (kept.size === 0) return { plan: null, reason: capped.cappedReason ?? 'cost_cap' };
@@ -563,14 +567,23 @@ function startRefusal(reason: PeriodDraft['reason']): string {
   }
 }
 
-async function setPlanPaused(db: PrismaClient, planId: string | null, paused: boolean) {
+async function setPlanPaused(
+  db: PrismaClient,
+  planId: string | null,
+  paused: boolean,
+  reset: Record<string, unknown> = {},
+) {
   if (!planId) return;
   const plan = await db.contentPlan.findUnique({
     where: { id: planId },
     select: { metadata: true },
   });
   if (!plan) return;
-  const metadata = { ...((plan.metadata as Record<string, unknown> | null) ?? {}), paused };
+  const metadata = {
+    ...((plan.metadata as Record<string, unknown> | null) ?? {}),
+    paused,
+    ...reset,
+  };
   await db.contentPlan.update({
     where: { id: planId },
     data: { metadata: metadata as Prisma.InputJsonValue },
@@ -618,7 +631,13 @@ export async function resumeAutomation(
     });
   const from = (automation.metadata as { pausedFrom?: string } | null)?.pausedFrom;
   const status = from === 'GENERATING' || from === 'REVIEW' ? from : 'ACTIVE';
-  await setPlanPaused(deps.db, automation.currentPlanId, false);
+  // 23.4: resuming after draft_failed gives the period's draft its attempts again.
+  await setPlanPaused(
+    deps.db,
+    automation.currentPlanId,
+    false,
+    automation.pauseReason === 'draft_failed' ? { redraftAttempts: 0 } : {},
+  );
   const updated = await deps.db.automation.update({
     where: { id },
     data: {
