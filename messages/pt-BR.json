@@ -729,7 +729,12 @@
         "desk": "Em uma mesa de trabalho",
         "shop": "Balcão de loja"
       },
-      "disclosure": "Os atores são pessoas geradas por IA, nunca reais, e todo vídeo UGC leva o selo de gerado por IA. Um briefing que peça uma pessoa real ou uma celebridade é recusado."
+      "disclosure": "Os atores são pessoas geradas por IA, nunca reais, e todo vídeo UGC leva o selo de gerado por IA. Um briefing que peça uma pessoa real ou uma celebridade é recusado.",
+      "creator": "Criador",
+      "creatorOneOff": "Novo ator avulso",
+      "creatorHint": "Escolha um criador para manter o mesmo rosto nos seus vídeos.",
+      "creatorManage": "Gerenciar criadores",
+      "creatorPortraitAlt": "Retrato de {name}"
     },
     "carousel": {
       "legend": "Carrossel",
@@ -1760,7 +1765,8 @@
         "brand": "Kits de marca",
         "images": "Biblioteca de imagens",
         "learned": "O que o Studio aprendeu",
-        "hashtags": "Hashtags"
+        "hashtags": "Hashtags",
+        "creators": "Criadores"
       },
       "readOnly": "Você tem acesso somente para leitura a este negócio. Peça a um proprietário ou administrador para fazer as alterações."
     },
@@ -2218,6 +2224,95 @@
       "domainInvalid": "Use um nome de host como exemplo.co.uk.",
       "save": "Salvar dados",
       "saved": "Dados do negócio salvos"
+    },
+    "creators": {
+      "title": "Criadores",
+      "intro": "Crie um criador com IA uma vez e use o mesmo rosto em todo vídeo UGC. Até {max, number} por negócio.",
+      "create": "Novo criador",
+      "count": "{count, number} de {max, number}",
+      "full": "Este negócio já tem o máximo de criadores. Aposente um para criar outro.",
+      "loading": "Carregando criadores",
+      "listAria": "Criadores",
+      "empty": {
+        "title": "Nenhum criador ainda",
+        "body": "Crie um criador para manter o mesmo rosto nos seus vídeos UGC."
+      },
+      "status": {
+        "DRAFT": "Ainda sem retrato",
+        "READY": "Pronto",
+        "RETIRED": "Aposentado"
+      },
+      "default": "Padrão do plano do mês",
+      "makeDefault": "Usar nos planos do mês",
+      "makeDefaultAria": "Usar {name} nos planos do mês",
+      "regenerate": "Gerar novamente",
+      "regenerateAria": "Gerar novamente o retrato de {name}",
+      "rename": "Renomear",
+      "renameAria": "Renomear {name}",
+      "retire": "Aposentar",
+      "retireAria": "Aposentar {name}",
+      "uses": "Vídeos: {count, number}",
+      "uploaded": "Foto enviada (consentimento confirmado)",
+      "portraitAlt": "Retrato de {name}",
+      "portraitError": "Não foi possível criar um retrato desta vez. Tente Gerar novamente.",
+      "created": "{name} está pronto",
+      "createdDraft": "{name} foi salvo, mas ainda não foi possível criar um retrato. Tente Gerar novamente.",
+      "regenerated": "Novo retrato para {name}",
+      "renamed": "Renomeado para {name}",
+      "defaultSet": "{name} agora é usado nos vídeos UGC do plano do mês",
+      "retired": "{name} aposentado",
+      "retireConfirm": {
+        "title": "Aposentar {name}?",
+        "body": "Ele não será oferecido para novos vídeos. Os vídeos já feitos mantêm o rosto.",
+        "confirm": "Aposentar"
+      },
+      "dialog": {
+        "title": "Novo criador",
+        "description": "O Studio cria um retrato com essas escolhas e usa o mesmo rosto em todo vídeo que escolher este criador.",
+        "modeAria": "Como criar o retrato",
+        "modeGenerate": "Gerar uma pessoa",
+        "modeUpload": "Enviar uma foto",
+        "name": "Nome",
+        "namePlaceholder": "ex.: Maya",
+        "appearance": "Aparência (opcional)",
+        "appearancePlaceholder": "ex.: cabelo curto cacheado, óculos redondos, jaqueta jeans",
+        "voiceTone": "Como fala (opcional)",
+        "voiceTonePlaceholder": "ex.: caloroso e animado",
+        "generateNote": "Apenas pessoas geradas: nunca uma pessoa real, celebridade ou sósia.",
+        "photo": "Foto (PNG ou JPEG, até 10 MB)",
+        "consent": "Confirmo que a pessoa nesta foto deu seu consentimento e que tenho os direitos para que sua imagem seja usada para gerar vídeos para este negócio.",
+        "problems": {
+          "name": "Dê um nome ao criador.",
+          "photo": "Escolha uma foto para enviar.",
+          "photoType": "A foto deve ser uma imagem PNG ou JPEG.",
+          "photoSize": "A foto deve ter no máximo 10 MB.",
+          "consent": "Marque a caixa para confirmar que você tem o consentimento da pessoa e os direitos."
+        },
+        "cancel": "Cancelar",
+        "submitGenerate": "Criar e gerar retrato",
+        "submitUpload": "Criar a partir da foto"
+      },
+      "regenerateDialog": {
+        "title": "Gerar {name} novamente",
+        "description": "Crie um novo retrato. Os vídeos já feitos mantêm o que usaram.",
+        "label": "Alterações (opcional)",
+        "placeholder": "ex.: um sorriso maior, um suéter verde",
+        "cancel": "Cancelar",
+        "submit": "Gerar novamente"
+      },
+      "renameDialog": {
+        "title": "Renomear {name}",
+        "description": "O nome só aparece para sua equipe.",
+        "label": "Nome",
+        "placeholder": "ex.: Maya",
+        "cancel": "Cancelar",
+        "submit": "Salvar"
+      },
+      "errors": {
+        "limit": "Este negócio já tem {max, number} criadores. Aposente um primeiro.",
+        "realPerson": "Os criadores são pessoas geradas. Eles não podem imitar, se parecer ou soar como uma pessoa real ou celebridade.",
+        "dailyCap": "Você criou muitos retratos hoje. Tente novamente mais tarde."
+      }
     }
   },
   "connections": {

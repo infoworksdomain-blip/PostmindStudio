@@ -64,6 +64,7 @@ export async function bucketsFor(
     UNION SELECT DISTINCT "s3Bucket" FROM "studio"."image_library" WHERE "organisationId" = ${organisationId}
     UNION SELECT DISTINCT "s3Bucket" FROM "studio"."video_uploads" WHERE "organisationId" = ${organisationId}
     UNION SELECT DISTINCT "consentS3Bucket" FROM "studio"."voice_profiles" WHERE "organisationId" = ${organisationId}
+    UNION SELECT DISTINCT "s3Bucket" FROM "studio"."creator_portraits" WHERE "organisationId" = ${organisationId}
     UNION SELECT DISTINCT "s3Bucket" FROM "studio"."data_exports" WHERE "organisationId" = ${organisationId}`;
   const fromRows = rows.flatMap((r) => (r.bucket?.trim() ? [r.bucket.trim()] : []));
   return [...new Set([...configured, ...fromRows])].sort();

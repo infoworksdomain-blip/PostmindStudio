@@ -121,6 +121,92 @@ describe('Create: UGC actor (21.4)', () => {
   );
 });
 
+describe('Create: UGC creator picker (22.3)', () => {
+  const creator = (over: Record<string, unknown>) => ({
+    businessId: 'biz_1',
+    gender: 'woman',
+    ageRange: '25-34',
+    setting: 'kitchen',
+    appearance: null,
+    voiceTone: null,
+    status: 'READY',
+    isDefault: false,
+    lastUsedAt: null,
+    portraitError: null,
+    portraitSource: 'GENERATED',
+    portraitUrl: 'https://cdn.test/face.png',
+    createdAt: '2026-10-01T00:00:00Z',
+    retiredAt: null,
+    ...over,
+  });
+  const creators: MockRoute = {
+    match: '/businesses/biz_1/creators',
+    body: {
+      ok: true,
+      data: [
+        creator({ id: 'cr_maya', name: 'Maya', useCount: 5 }),
+        creator({ id: 'cr_tom', name: 'Tom', useCount: 1, gender: 'man' }),
+        creator({ id: 'cr_draft', name: 'Draft', useCount: 0, status: 'DRAFT', portraitUrl: null }),
+      ],
+    },
+  };
+
+  it(
+    'defaults to the most used creator, hides the one-off look and sends its id',
+    { timeout: 60_000 },
+    async () => {
+      const api = mockFetch(routes([creators]));
+      renderWithSWR(<CreateScreen initialReference={null} />);
+      await chooseUgc();
+      const picker = await screen.findByLabelText('Creator');
+      await waitFor(() => expect(picker).toHaveValue('cr_maya'));
+      // READY creators and the one-off actor are offered; a creator with no portrait is not.
+      expect(
+        within(picker)
+          .getAllByRole('option')
+          .map((o) => o.textContent),
+      ).toEqual(['Maya', 'Tom', 'New one-off actor']);
+      expect(screen.getByRole('img', { name: 'Portrait of Maya' })).toBeInTheDocument();
+      expect(screen.queryByLabelText('Age')).not.toBeInTheDocument();
+      await userEvent.selectOptions(picker, 'cr_tom');
+      await userEvent.type(screen.getByLabelText('What should the actor talk about?'), 'Latte kit');
+      await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
+      await waitFor(() => expect(push).toHaveBeenCalledWith('/projects/p9'));
+      const [create] = api.find('POST', '/projects');
+      expect((create?.body as { ugc: unknown }).ugc).toEqual({ creatorId: 'cr_tom' });
+    },
+  );
+
+  it(
+    '"New one-off actor" brings back the look presets (today’s behaviour)',
+    { timeout: 60_000 },
+    async () => {
+      const api = mockFetch(routes([creators]));
+      renderWithSWR(<CreateScreen initialReference={null} />);
+      await chooseUgc();
+      const picker = await screen.findByLabelText('Creator');
+      await waitFor(() => expect(picker).toHaveValue('cr_maya'));
+      await userEvent.selectOptions(picker, 'one-off');
+      await userEvent.selectOptions(screen.getByLabelText('Person'), 'man');
+      await userEvent.type(screen.getByLabelText('What should the actor talk about?'), 'Kit');
+      await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
+      await waitFor(() => expect(push).toHaveBeenCalledWith('/projects/p9'));
+      const [create] = api.find('POST', '/projects');
+      expect((create?.body as { ugc: unknown }).ugc).toEqual({ actor: { gender: 'man' } });
+    },
+  );
+
+  it('a creator replaces the actor look in the body', () => {
+    expect(ugcBody({ ...EMPTY_UGC, gender: 'man', productName: 'Kit', creatorId: 'cr_1' })).toEqual(
+      {
+        product: { name: 'Kit' },
+        creatorId: 'cr_1',
+      },
+    );
+    expect(ugcBody({ ...EMPTY_UGC, creatorId: null })).toEqual({});
+  });
+});
+
 describe('UGC body and validation', () => {
   const base: CreateState = {
     brief: 'Review our kit',
