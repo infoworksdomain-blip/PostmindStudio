@@ -1,43 +1,44 @@
 import type { Prisma } from '@prisma/client';
+import { ValidationError } from '../../errors';
 import { ON_SCREEN_KIND } from '../overlays/kind';
-import { resolveStyle, type OverlayStyle, type PresetParameters } from '../overlays/params';
+import { resolveStyle, type OverlayStyle } from '../overlays/params';
+import { BUILT_IN_PRESETS, UGC_CAPTION_PRESET, UGC_HOOK_PRESET } from '../overlays/presets';
 
 // BACKLOG 22.1 / 22.2 (operator request 2026-10-05, Fastlane research) — the "TikTok classic"
-// text look both formats use: white Montserrat 600–700 with a 2–3 px black stroke, no background
-// box and no soft shadow, placed inside the platform safe area. It is a style of its own (not a
-// built-in preset row): the overlay keeps it as its own columns, so the owner can still edit the
-// text, timing and style on the Review screen like any overlay.
+// text look both formats use: white Montserrat with a 3 px black stroke, no background box and no
+// soft shadow, placed inside the platform safe area. It is built on the existing built-in presets
+// (21.4b: `hook_tiktok_classic` for the hook line, `subtitle_tiktok_classic` for the text block)
+// with this format's size, weight (600–700) and position; the overlay records the preset, so the
+// owner can still edit the text, timing and style on the Review screen like any overlay.
 //
 // The overlay is rendered as a Shotstack `rich-text` asset (overlays/shotstack.ts): font, stroke
 // and line height are rich-text fields, not HTML CSS, so the HtmlAsset unitless `line-height`
-// problem (PR #109) does not apply; no line height is set here either way.
+// problem (PR #109) does not apply.
+
+export const HOOK_CAPTION_PRESET = UGC_HOOK_PRESET;
+export const WALL_TEXT_PRESET = UGC_CAPTION_PRESET;
+
+function preset(key: string) {
+  const found = BUILT_IN_PRESETS.find((p) => p.key === key);
+  if (!found) throw new ValidationError(`Built-in overlay preset ${key} is missing`);
+  return found;
+}
+
+/** The preset row's name (text_overlays.presetId points at the seeded row with this name). */
+export const presetName = (key: string): string => preset(key).name;
 
 /** Stroke around the letters (px at 1080 wide), the classic TikTok outline. */
 export const CLASSIC_STROKE_PX = 3;
 
-const CLASSIC: PresetParameters = {
-  fontFamily: 'Montserrat',
-  fontWeight: 700,
-  fillColor: '#FFFFFF',
+const FORMAT_LOOK = {
   strokeColor: '#000000',
   strokeWidthPx: CLASSIC_STROKE_PX,
-  // Stroke instead of a scrim or a box for contrast (the format's look).
   shadowColor: null,
-  shadowBlurPx: null,
-  shadowOffsetXPx: null,
-  shadowOffsetYPx: null,
   backgroundType: 'none',
   backgroundColor: null,
-  backgroundPaddingPx: null,
-  backgroundRadiusPx: null,
   alignment: 'center',
   anchorX: 0.5,
-  animationIn: 'none',
-  animationOut: 'none',
-  animationInMs: 0,
-  animationOutMs: 0,
-  lineHeight: null,
-};
+} as const;
 
 /**
  * 22.1: the hook line. Upper-middle of the frame (below the AI label and the platform's top bar,
@@ -58,14 +59,15 @@ export function wallTextFontPct(words: number): number {
 }
 
 export function hookCaptionStyle(stacked: boolean): OverlayStyle {
-  return resolveStyle(CLASSIC, {
+  return resolveStyle(preset(HOOK_CAPTION_PRESET).parameters, FORMAT_LOOK, {
+    fontWeight: 700,
     fontSizePct: HOOK_CAPTION_FONT_PCT,
     anchorY: stacked ? STACKED_HOOK_CAPTION_ANCHOR_Y : HOOK_CAPTION_ANCHOR_Y,
   });
 }
 
 export function wallTextStyle(words: number): OverlayStyle {
-  return resolveStyle(CLASSIC, {
+  return resolveStyle(preset(WALL_TEXT_PRESET).parameters, FORMAT_LOOK, {
     fontWeight: 600,
     fontSizePct: wallTextFontPct(words),
     anchorY: WALL_TEXT_ANCHOR_Y,
@@ -82,12 +84,13 @@ export function classicOverlayRow(input: {
   startAtSec: number;
   endAtSec: number;
   style: OverlayStyle;
+  presetId?: string | null;
   lang?: string;
 }): Prisma.TextOverlayCreateManyInput {
   const { effect, ...style } = input.style;
   return {
     shotId: input.shotId,
-    presetId: null,
+    presetId: input.presetId ?? null,
     text: input.text,
     ...(input.lang && { lang: input.lang }),
     startAtSec: input.startAtSec,
@@ -97,4 +100,16 @@ export function classicOverlayRow(input: {
     ...style,
     effect: (effect ?? undefined) as Prisma.InputJsonValue | undefined,
   };
+}
+
+/** The seeded built-in preset row's id for a key, or null when presets are not seeded. */
+export async function builtInPresetId(
+  tx: Pick<Prisma.TransactionClient, 'overlayPreset'>,
+  key: string,
+): Promise<string | null> {
+  const row = await tx.overlayPreset.findFirst({
+    where: { scope: 'BUILT_IN', name: presetName(key) },
+    select: { id: true },
+  });
+  return row?.id ?? null;
 }

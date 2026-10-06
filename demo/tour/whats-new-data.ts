@@ -390,7 +390,7 @@ export const WHATS_NEW: WhatsNewGroup[] = [
       {
         ref: '21.4',
         title: 'A UGC video ready for review',
-        line: 'Three actor clips (the same generated person each time), a product still and an end card, captioned from what the actor says, with the AI-generated label on.',
+        line: 'Three actor clips (the same generated person each time) with short close-ups of the product in use between them, captioned TikTok-style (white text with a black outline, no box) from what the actor says, with the AI-generated label on.',
         see: [
           { href: project(PROJECTS.ugcReview.id), label: 'Review: Creator review: the bread box' },
         ],

@@ -37,7 +37,7 @@ import { selectStockVoice } from '../../pipeline/voice-fit';
 import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
 import { timeClipSpeech } from '../../ugc/clip-speech';
 import { ensureActorPortrait } from '../../ugc/portrait';
-import { actorClipPrompt } from '../../ugc/prompt';
+import { actorClipPrompt, ugcStillPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
 import { hookClipMarkerOf } from '../../formats/hook-clip';
 import { generateHookClip } from './generate-hook-clip';
@@ -500,11 +500,19 @@ async function recordLibraryStill(
   return { assetId: asset.id, routing: { imageLibraryId: item.id, chosenBy: how } };
 }
 
+/**
+ * The IMAGE_STILL route: an identical earlier generation, the business's image library, a free
+ * stock image, then a paid generation (budgets, caps, kill switch and cost tracking through
+ * runProvider). 21.4b: UGC B-roll skips the stock search (`stock: false`, ugcStill): generic stock
+ * photos were the "poster" between actor shots. Stock is then only the last resort when the
+ * generator refuses the prompt (the shot would otherwise fail).
+ */
 async function generateStill(
   deps: PipelineDeps,
   shot: ShotWithScript,
   data: GenerateAssetJobData,
   prompt: string,
+  options: { stock: boolean } = { stock: true },
 ): Promise<StoredAsset> {
   const aspectRatio = shot.script.targetAspectRatio as AspectRatio;
   const scope = {
@@ -526,14 +534,15 @@ async function generateStill(
   const hit = regenerating ? null : await findLibraryStill(deps, scope, shot.sceneDescription);
   if (hit) return recordLibraryStill(deps, shot, hit, 'library');
   // 20.25: a free stock image before a paid generation (not on an explicit regenerate).
-  const stocked = regenerating
-    ? null
-    : await stockStillForScene(
-        deps,
-        { ...scope, projectId: data.projectId },
-        { query: shot.sceneDescription, aspectRatio },
-        'shot',
-      );
+  const stocked =
+    regenerating || !options.stock
+      ? null
+      : await stockStillForScene(
+          deps,
+          { ...scope, projectId: data.projectId },
+          { query: shot.sceneDescription, aspectRatio },
+          'shot',
+        );
   if (stocked) return recordLibraryStill(deps, shot, stocked, 'stock');
   let run: ProviderRunResult;
   try {
@@ -555,8 +564,8 @@ async function generateStill(
     );
   } catch (err) {
     // A11.4 / 15.W6: a refused generation falls back to the closest stock match (already tried
-    // above unless the shot is being regenerated).
-    if (!isGenerationRefusal(err) || !regenerating) throw err;
+    // above unless the shot is being regenerated, or stock was skipped for UGC B-roll).
+    if (!isGenerationRefusal(err) || (!regenerating && options.stock)) throw err;
     const stock = await stockStillForRefusal(
       deps,
       { ...scope, projectId: data.projectId },
@@ -638,6 +647,25 @@ async function budgetStill(
   return null;
 }
 
+/**
+ * 21.4 / 21.4b: a UGC video's B-roll still, product footage rather than a poster: the owner's
+ * product photo; else the business's image library (generateStill); else a generated phone-camera
+ * photo of hands using the product (ugcStillPrompt, the IMAGE_STILL route), never generic stock
+ * first. A shot the actor clip budget turned into a still (ugc/plan.ts toProductStill) takes the
+ * same route instead of budgetStill's stock-or-card fallback, so a UGC video never shows a card.
+ */
+async function ugcStill(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+  ugc: UgcStyle,
+): Promise<StoredAsset> {
+  const product = await ugcProductImage(deps, shot, ugc);
+  if (product) return recordLibraryStill(deps, shot, product, 'library');
+  const prompt = ugcStillPrompt({ style: ugc, sceneDescription: shot.sceneDescription });
+  return generateStill(deps, shot, data, prompt, { stock: false });
+}
+
 async function generateVisual(
   deps: PipelineDeps,
   shot: ShotWithScript,
@@ -709,10 +737,8 @@ async function generateVisual(
       );
     }
     case 'IMAGE_STILL': {
-      // 21.4: a UGC video's stills are the owner's product photo when one was chosen.
       const ugc = ugcStyleOf(shot.script.project.metadata);
-      const product = ugc ? await ugcProductImage(deps, shot, ugc) : null;
-      if (product) return recordLibraryStill(deps, shot, product, 'library');
+      if (ugc) return ugcStill(deps, shot, data, ugc);
       return clipBudgetOf(shot.providerRouting)
         ? budgetStill(deps, shot, data)
         : generateStill(deps, shot, data, prompt);

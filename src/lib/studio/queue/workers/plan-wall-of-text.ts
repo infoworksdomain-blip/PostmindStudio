@@ -3,7 +3,12 @@ import type { Logger } from 'pino';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject, mergeProjectMetadata } from '../../pipeline/project-state';
 import { parseTargetFormats } from '../../pipeline/scripting';
-import { classicOverlayRow, wallTextStyle } from '../../formats/caption-style';
+import {
+  builtInPresetId,
+  classicOverlayRow,
+  WALL_TEXT_PRESET,
+  wallTextStyle,
+} from '../../formats/caption-style';
 import {
   buildWallTextPrompt,
   parseWallText,
@@ -71,6 +76,7 @@ export async function planWallOfText(
     await tx.textOverlay.deleteMany({ where: { shot: { script: { projectId: project.id } } } });
     await tx.videoShot.deleteMany({ where: { script: { projectId: project.id } } });
     await tx.videoScript.deleteMany({ where: { projectId: project.id } });
+    const wallPresetId = await builtInPresetId(tx, WALL_TEXT_PRESET);
     const libraryAsset = clip
       ? await tx.videoAsset.create({
           data: {
@@ -124,6 +130,7 @@ export async function planWallOfText(
           startAtSec: 0,
           endAtSec: doc.durationSec,
           style: wallTextStyle(wordCount(text)),
+          presetId: wallPresetId,
           lang: project.language,
         }),
       });

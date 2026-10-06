@@ -19,8 +19,39 @@ export interface CaptionLine {
   endAtSec: number;
 }
 
+/** 21.4b: a UGC caption shows at most this many words (TikTok's short, native caption chunks). */
+export const UGC_CAPTION_MAX_WORDS = 6;
+
+/** 21.4b: the longest on-screen label of a UGC B-roll shot (one short line of the native look). */
+export const UGC_LABEL_MAX_CHARS = 40;
+
+/**
+ * 21.4b: text as one short on-screen line: its first sentence or clause when that fits, otherwise
+ * cut at a word boundary with an ellipsis. Empty input gives null.
+ */
+export function oneShortLine(
+  text: string | null | undefined,
+  maxChars: number = UGC_LABEL_MAX_CHARS,
+): string | null {
+  const clean = (text ?? '').replace(/\s+/g, ' ').trim();
+  if (!clean) return null;
+  if (clean.length <= maxChars) return clean;
+  const sentence = clean.match(/^.*?[.!?…](?=\s|$)/u)?.[0];
+  if (sentence && sentence.length <= maxChars) return sentence;
+  const clause = clean.match(/^.*?[,;:—–](?=\s|$)/u)?.[0];
+  if (clause && clause.length <= maxChars && clause.split(' ').length >= 2)
+    return clause.replace(/[,;:—–]$/u, '');
+  const cut = clean.slice(0, maxChars - 1);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > 0 ? cut.slice(0, space) : cut).replace(/[\s,;:.—–-]+$/u, '')}…`;
+}
+
 /** Group spoken words into caption lines within [0, maxEndSec). */
-export function captionLines(words: SpokenWord[], maxEndSec: number): CaptionLine[] {
+export function captionLines(
+  words: SpokenWord[],
+  maxEndSec: number,
+  maxWords: number = MAX_WORDS,
+): CaptionLine[] {
   const usable = words
     .filter((w) => w.text.trim() && w.startSec < maxEndSec && w.endSec > 0)
     .sort((a, b) => a.startSec - b.startSec);
@@ -46,7 +77,11 @@ export function captionLines(words: SpokenWord[], maxEndSec: number): CaptionLin
   };
   for (const word of usable) {
     const first = current[0];
-    if (first && (current.length >= MAX_WORDS || word.endSec - first.startSec > MAX_SEC)) flush();
+    if (
+      first &&
+      (current.length >= Math.max(1, maxWords) || word.endSec - first.startSec > MAX_SEC)
+    )
+      flush();
     current.push(word);
     if (SENTENCE_END.test(word.text.trim())) flush();
   }

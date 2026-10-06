@@ -3,7 +3,12 @@ import type { Logger } from 'pino';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject, mergeProjectMetadata } from '../../pipeline/project-state';
 import { parseTargetFormats } from '../../pipeline/scripting';
-import { classicOverlayRow, hookCaptionStyle } from '../../formats/caption-style';
+import {
+  builtInPresetId,
+  classicOverlayRow,
+  HOOK_CAPTION_PRESET,
+  hookCaptionStyle,
+} from '../../formats/caption-style';
 import {
   buildHookLinePrompt,
   HOOK_LINE_OUTPUT_SCHEMA,
@@ -142,6 +147,7 @@ export async function planHookDemo(
             },
           })
         : null;
+    const hookPresetId = await builtInPresetId(tx, HOOK_CAPTION_PRESET);
     // One generated clip per aspect ratio: the first script of a ratio leads, the rest reuse it.
     const leaders = new Map<string, string>();
     for (const format of formats) {
@@ -210,6 +216,7 @@ export async function planHookDemo(
           startAtSec: 0,
           endAtSec: timing.hookSec,
           style: hookCaptionStyle(stacked),
+          presetId: hookPresetId,
           lang: project.language,
         }),
       });

@@ -284,6 +284,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       // 21.4: a video with a generated actor always carries the AI-generated label (22.1: so
       // does a hook + demo video whose hook is a generated person).
       aiLabel: brandKit.aiLabel || ugcVideo || Boolean(hookLayout?.aiHook),
+      // 21.4b: no boxed headlines in a UGC video (its labels are native-look overlays).
+      ugc: ugcVideo,
       platformCard,
       language: script.language,
       preset,

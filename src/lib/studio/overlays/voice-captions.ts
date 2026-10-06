@@ -8,10 +8,11 @@ import { voiceTrimSecOf } from '../pipeline/voice-fit';
 import { spokenWordsOf } from '../pipeline/word-timing';
 import type { AssetStorage } from '../storage';
 import { speechAssetIdOf } from '../ugc/clip-speech';
-import { captionLines, type CaptionLine } from './captions';
+import { captionLines, UGC_CAPTION_MAX_WORDS, type CaptionLine } from './captions';
 import { CAPTION_KIND } from './kind';
 import { applyBrand, resolveStyle, type OverlayStyle } from './params';
-import { BUILT_IN_PRESETS } from './presets';
+import { BUILT_IN_PRESETS, UGC_CAPTION_PRESET } from './presets';
+import { ugcStyleOf } from '../ugc/style';
 
 // 15.A4 — narration captions per format (spec 3.1 "Captions: auto-generated in any supported
 // voice language; user-editable"; 5.8 "YouTube gets uploaded as SRT alongside the video").
@@ -20,6 +21,8 @@ import { BUILT_IN_PRESETS } from './presets';
 //   - Reels, Shorts, Facebook, Instagram/Facebook feed, LinkedIn, X: burned in as editable
 //     text_overlays rows on the shots (subtitle_box preset, lifted above the platform UI);
 //   - TikTok: burned in with a TikTok-native look (the hook_tiktok_native preset's styling);
+//   - 21.4b: a UGC video (metadata.ugc) on any burned-in platform: TikTok's classic look (white,
+//     black outline, no box; subtitle_tiktok_classic) in chunks of at most 6 words;
 //   - YouTube long-form: not burned in; an SRT is written next to the render and uploaded with
 //     captions.insert when publishing (platforms/youtube.ts).
 // DECISION (Phase 15): LinkedIn and X are muted-autoplay feeds, so they are burned in too.
@@ -47,8 +50,10 @@ const END_HOLD_SEC = 0.1;
 export function narrationLines(
   words: Array<{ text: string; startSec: number; endSec: number }>,
   maxEndSec: number,
+  /** 21.4b: UGC captions are shorter chunks (UGC_CAPTION_MAX_WORDS). */
+  maxWords?: number,
 ): CaptionLine[] {
-  return captionLines(words, maxEndSec).map((line) => {
+  return captionLines(words, maxEndSec, maxWords).map((line) => {
     const spoken = words.filter(
       (w) => w.startSec >= line.startAtSec - 0.001 && w.startSec < line.endAtSec,
     );
@@ -101,16 +106,26 @@ export function showsOwnText(treatment: string): boolean {
 const CAPTION_ANCHOR_Y = 0.7;
 const TIKTOK_FONT_PCT = 4;
 
+/**
+ * The burned-in caption style of a platform. 21.4b: a UGC video (metadata.ugc) uses TikTok's
+ * classic outlined, box-less captions on every platform (presets.ts TIKTOK_CLASSIC): the dark box
+ * of subtitle_box sat across the creator's chest (production UGC video 2, 2026-10-05).
+ */
 export function captionStyle(
   platform: string,
   brand: { primary?: string; secondary?: string; fontFamily?: string } | null,
+  options: { ugc?: boolean } = {},
 ): { style: OverlayStyle; presetName: string } | null {
-  const key = platform === 'tiktok' ? 'hook_tiktok_native' : 'subtitle_box';
+  const key = options.ugc
+    ? UGC_CAPTION_PRESET
+    : platform === 'tiktok'
+      ? 'hook_tiktok_native'
+      : 'subtitle_box';
   const preset = BUILT_IN_PRESETS.find((p) => p.key === key);
   if (!preset) return null;
   const base = resolveStyle(preset.parameters, {
     anchorY: CAPTION_ANCHOR_Y,
-    ...(platform === 'tiktok' && { fontSizePct: TIKTOK_FONT_PCT }),
+    ...(platform === 'tiktok' && !options.ugc && { fontSizePct: TIKTOK_FONT_PCT }),
   });
   return {
     style: preset.brandSubstitution ? applyBrand(base, brand) : base,
@@ -251,15 +266,21 @@ export async function ensureVoiceCaptions(
       ? { primary: palette[0], secondary: palette[1], fontFamily: kit.fontPrimary ?? undefined }
       : null;
     const presets = await deps.db.overlayPreset.findMany({
-      where: { scope: 'BUILT_IN', name: { in: ['Box Background', 'TikTok Native'] } },
+      where: {
+        scope: 'BUILT_IN',
+        name: { in: ['Box Background', 'TikTok Native', 'TikTok Classic'] },
+      },
       select: { id: true, name: true },
     });
     const presetId = new Map(presets.map((p) => [p.name, p.id]));
+    // 21.4b: a UGC video's captions are TikTok's classic outlined look, in short chunks.
+    const ugc = ugcStyleOf(project.metadata) !== null;
+    const maxWords = ugc ? UGC_CAPTION_MAX_WORDS : undefined;
     let written = 0;
     let changed = false;
     for (const script of project.scripts) {
       if (captionModeFor(script.targetPlatform) !== 'burn') continue;
-      const chosen = captionStyle(script.targetPlatform, brand);
+      const chosen = captionStyle(script.targetPlatform, brand, { ugc });
       if (!chosen) continue;
       for (const shot of await loadShots(deps.db, script.id, input.organisationId)) {
         const speechId = shot.speechAssetId;
@@ -276,10 +297,10 @@ export async function ensureVoiceCaptions(
           showsOwnText(shot.visualTreatment) && shot.onScreenText
             ? [{ text: shot.onScreenText, startAtSec: 0, endAtSec: shot.durationSec }]
             : [];
-        const lines = withoutOnScreenDuplicates(narrationLines(shot.words, shot.durationSec), [
-          ...onScreen,
-          ...card,
-        ]);
+        const lines = withoutOnScreenDuplicates(
+          narrationLines(shot.words, shot.durationSec, maxWords),
+          [...onScreen, ...card],
+        );
         if (previous?.overlayIds.length)
           await deps.db.textOverlay.deleteMany({
             where: { id: { in: previous.overlayIds }, shotId: shot.id },

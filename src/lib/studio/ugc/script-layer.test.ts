@@ -37,10 +37,11 @@ describe('scriptLayerMode (21.4)', () => {
     expect(mode.supplement(30, 4)).toBeUndefined();
   });
 
-  it('a UGC video: actors and cheap B-roll only, actor budget, UGC prompt, 8 s clips with a product', () => {
+  it('a UGC video: actors and product stills only, actor budget, UGC prompt, 8 s clips with a product', () => {
     const mode = scriptLayerMode({ metadata: ugc, tier: 'STANDARD', registry: all });
     expect(mode.ugc?.style).toBe('UGC_ACTOR');
-    expect(mode.treatments).toEqual(['UGC_ACTOR', 'IMAGE_STILL', 'TEXT_CARD', 'MOTION_GRAPHICS']);
+    // 21.4b: no TEXT_CARD / MOTION_GRAPHICS in a UGC script.
+    expect(mode.treatments).toEqual(['UGC_ACTOR', 'IMAGE_STILL']);
     expect(mode.budget(30)).toBe(3);
     expect(mode.supplement(30, 3)).toContain('8 s (at most 16 words)');
     const applied = mode.apply(

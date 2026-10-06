@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { overlayClip, type OverlayRow } from '../overlays/shotstack';
+import { suggestOverlays } from '../overlays/suggest';
+import { captionStyle } from '../overlays/voice-captions';
 import {
   buildShotstackComposition,
+  MEDIA_FIT,
   MUSIC_UNDER_VOICE_VOLUME,
   SOURCE_AUDIO_VOLUME,
   TOP_HEADLINE_OFFSET_Y,
+  UGC_STILL_EFFECT,
 } from './edl';
 import { evaluateAudioSync } from './quality-sync';
 
@@ -111,6 +116,117 @@ describe('UGC actor clips in the edit (21.4)', () => {
     expect(summary.shots[1]).toMatchObject({ voiceClipSec: null });
     expect(summary.shots[1]).not.toHaveProperty('speech');
     expect(summary.shots[2]).not.toHaveProperty('speech');
+  });
+});
+
+describe('21.4b: a UGC edit has no boxes over the creator or the B-roll', () => {
+  const ugcShots = [
+    {
+      id: 'actor-1',
+      durationSec: 8,
+      visualTreatment: 'UGC_ACTOR' as const,
+      visualSrc: 'https://s3.test/actor.mp4',
+      visualKind: 'video' as const,
+      clipSpeech: true,
+      onScreenText: 'Client calls?',
+    },
+    {
+      id: 'still-1',
+      durationSec: 3,
+      visualTreatment: 'IMAGE_STILL' as const,
+      visualSrc: 'https://s3.test/product.png',
+      visualKind: 'image' as const,
+      onScreenText: 'Preps your opener',
+    },
+    {
+      id: 'still-2',
+      durationSec: 2,
+      visualTreatment: 'IMAGE_STILL' as const,
+      visualSrc: 'https://s3.test/product-2.png',
+      visualKind: 'image' as const,
+    },
+  ];
+  const built = buildShotstackComposition({
+    aspectRatio: '9:16',
+    shots: ugcShots,
+    aiLabel: true,
+    ugc: true,
+  });
+
+  /** The overlays a UGC project gets: suggested labels plus the actor's captions. */
+  const overlays = (): OverlayRow[] => {
+    const labels = suggestOverlays(
+      ugcShots.map((s, i) => ({
+        ...s,
+        sortOrder: i,
+        voiceoverText: null,
+        onScreenText: s.onScreenText ?? null,
+      })),
+      { primary: '#111111', secondary: '#1A1A40', fontFamily: 'Lora' },
+      () => 'subtitle_box',
+      { ugc: true },
+    );
+    const caption = captionStyle('tiktok', { primary: '#111111' }, { ugc: true });
+    return [
+      ...labels.map((l, i) => ({
+        id: `label-${i}`,
+        text: l.text,
+        startAtSec: 0,
+        endAtSec: 2,
+        ...l.style,
+      })),
+      ...(caption
+        ? [
+            {
+              id: 'cap',
+              text: 'used to dread client',
+              startAtSec: 0.2,
+              endAtSec: 1.4,
+              ...caption.style,
+            },
+          ]
+        : []),
+    ];
+  };
+
+  it('draws no headline HTML box on any UGC shot (the AI label is the only HTML asset)', () => {
+    const html = clips(built.edit).filter((c) => c.asset.type === 'html');
+    // The one HTML asset is the required AI-generated label (left as it is).
+    expect(html).toHaveLength(1);
+    expect(built.summary.brand.aiLabel).toBe(true);
+    expect(html.every((c) => !String(c.asset.html).includes('Preps your opener'))).toBe(true);
+    expect(html.every((c) => !String(c.asset.html).includes('Client calls?'))).toBe(true);
+  });
+
+  it('labels and captions become outlined rich-text with no background', () => {
+    const frame = { width: 1080, height: 1920 };
+    const rows = overlays();
+    expect(rows.length).toBeGreaterThanOrEqual(3);
+    for (const row of rows) {
+      const clip = overlayClip(row, { frame, offsetSec: 0 }) as { asset: Record<string, unknown> };
+      expect(clip.asset.type).toBe('rich-text');
+      expect(clip.asset.background).toBeUndefined();
+      expect(clip.asset.stroke).toEqual({ width: 3, color: '#000000', opacity: 1 });
+      expect((clip.asset.font as { color: string }).color).toBe('#ffffff');
+    }
+  });
+
+  it('every UGC still pushes in, full frame', () => {
+    const stills = clips(built.edit).filter((c) => c.asset.type === 'image');
+    expect(stills).toHaveLength(2);
+    for (const s of stills) expect(s).toMatchObject({ fit: MEDIA_FIT, effect: UGC_STILL_EFFECT });
+  });
+
+  it('an ordinary video keeps its boxed headline and alternating Ken Burns', () => {
+    const plain = buildShotstackComposition({ aspectRatio: '9:16', shots: ugcShots.slice(1) });
+    const headline = clips(plain.edit).find((c) =>
+      String(c.asset.html ?? '').includes('Preps your opener'),
+    );
+    expect(String(headline?.asset.css)).toContain('rgba(0,0,0,0.45)');
+    const effects = clips(plain.edit)
+      .filter((c) => c.asset.type === 'image')
+      .map((c) => c.effect);
+    expect(effects).toEqual(['zoomIn', 'zoomOut']);
   });
 });
 

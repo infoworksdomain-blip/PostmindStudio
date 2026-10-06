@@ -197,7 +197,6 @@ describe('TikTok-classic captions (22.1 / 22.2)', () => {
         backgroundType: 'none',
         backgroundColor: null,
         shadowColor: null,
-        lineHeight: null,
       });
       expect(style.fontWeight).toBeGreaterThanOrEqual(600);
       expect(style.fontWeight).toBeLessThanOrEqual(700);
