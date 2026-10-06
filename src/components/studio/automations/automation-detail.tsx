@@ -122,7 +122,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
   const a = data.automation;
   const reason =
     a.pauseReason && (PAUSE_REASONS as readonly string[]).includes(a.pauseReason)
-      ? a.pauseReason
+      ? (a.pauseReason as (typeof PAUSE_REASONS)[number])
       : null;
   return (
     <>

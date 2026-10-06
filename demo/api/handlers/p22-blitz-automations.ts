@@ -373,7 +373,7 @@ function slotsFor(start: number, count: number, reviewing: boolean) {
       format,
       angle: 'Weekend bakes',
       angleId: 'ang-weekend',
-      title,
+      title: title as string,
       brief: '',
       slides: {
         hook: title,

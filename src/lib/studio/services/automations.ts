@@ -297,11 +297,6 @@ function candidateSlots(automation: Automation, start: ReturnType<typeof localDa
     : weeklySlots(start, days, cadence.postsPerWeek, automation.timezone);
 }
 
-function readMix(snapshot: Prisma.JsonValue | null, fallback: MixPreferences): MixPreferences {
-  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return fallback;
-  return { ...fallback, ...(snapshot as unknown as Partial<MixPreferences>) };
-}
-
 /** Angle per slot: weighted, never the same angle twice in a row when there is a choice. */
 function pickAngles(
   count: number,

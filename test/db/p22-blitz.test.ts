@@ -21,7 +21,6 @@ import { tenant } from '../helpers/api-harness';
 const hasDb = Boolean(process.env.DATABASE_URL);
 const logger = pino({ level: 'silent' });
 
-let topicCounter = 0;
 /** Writes as many cards as the prompt asks for, each on a fresh topic unless `repeat`. */
 function fakeGenerator(options: { repeat?: boolean } = {}): PlanGenerator & { calls: number } {
   const fn = (async (request) => {
@@ -49,7 +48,6 @@ function fakeGenerator(options: { repeat?: boolean } = {}): PlanGenerator & { ca
     return {
       json: {
         cards: Array.from({ length: count }, (_, i) => {
-          topicCounter += 1;
           // Distinct words per card (fingerprints compare meaningful words).
           const word = () => `w${randomUUID().replace(/-/g, '').slice(0, 10)}`;
           const topic = options.repeat ? 'same sourdough topic' : `${word()} ${word()} ${word()}`;
