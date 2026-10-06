@@ -11,7 +11,7 @@ import {
 import { hasModelPricing, MODEL_PRICING_USD_PER_MTOK } from '../studio/providers/anthropic-models';
 import { parseTaskModels } from '../studio/providers/text-tasks';
 import { parseConcurrency } from '../studio/providers/provider-concurrency';
-import { parseFalVideoModels } from '../studio/providers/fal';
+import { parseFalVideoModels } from '../studio/providers/fal-config';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it

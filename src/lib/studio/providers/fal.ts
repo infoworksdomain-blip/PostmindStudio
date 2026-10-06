@@ -1,6 +1,6 @@
 import { ConfigurationError, NotImplementedError, ProviderError } from '../../errors';
+import { FAL_KEY_ENV, type Env } from './fal-config';
 import {
-  FAL_VIDEO_MODEL_KEYS,
   FAL_VIDEO_MODELS,
   falEndpointFor,
   isFalVideoModelKey,
@@ -18,7 +18,9 @@ import type {
   ProviderRequest,
   ProviderSubmitResult,
 } from './interface';
+import { logger } from '../../logger';
 import { classifyFalErrorType, classifyFalHttpError, falErrorMessage } from './fal-errors';
+import { checkFalOutputUrl } from './fal-output';
 import { usdToPence } from './pricing';
 import { providerError } from './provider-errors';
 
@@ -31,7 +33,8 @@ import { providerError } from './provider-errors';
 //   POST /{endpoint-id} <model input> → { request_id, status_url, response_url, cancel_url, … }
 //   GET  /{endpoint-id}/requests/{id}/status → status IN_QUEUE | IN_PROGRESS | COMPLETED,
 //        response_url; on COMPLETED a failed request carries `error` and `error_type`
-//   GET  response_url (/{endpoint-id}/requests/{id}/response) → { video: { url, … } }
+//   GET  /{endpoint-id}/requests/{id}/response → { video: { url, … } } (always this built path;
+//        a returned response_url is never followed)
 //   PUT  /{endpoint-id}/requests/{id}/cancel → 202 CANCELLATION_REQUESTED | 400 ALREADY_COMPLETED
 //   GET  https://api.fal.ai/v1/models/pricing?endpoint_id=… — an authenticated read, used as the
 //        health check (no generation, no charge).
@@ -49,8 +52,7 @@ import { providerError } from './provider-errors';
 export const PROVIDER_ID = 'fal';
 export const QUEUE_BASE_URL = 'https://queue.fal.run';
 export const PLATFORM_BASE_URL = 'https://api.fal.ai/v1';
-export const FAL_MODELS_ENV = 'STUDIO_FAL_VIDEO_MODELS';
-export const FAL_KEY_ENV = 'FAL_KEY';
+export { FAL_KEY_ENV, FAL_MODELS_ENV, falOptionsFromEnv, parseFalVideoModels } from './fal-config';
 // Not documented by fal; a 5–10 s clip is expected within a few minutes.
 const TYPICAL_LATENCY_SEC = 180;
 const TIMEOUT_MS = 30_000;
@@ -64,7 +66,6 @@ interface FalSubmitResponse {
 interface FalStatusResponse {
   status?: string;
   request_id?: string;
-  response_url?: string;
   error?: string | null;
   error_type?: string | null;
 }
@@ -183,10 +184,15 @@ export class FalAdapter implements ProviderAdapter {
     });
     const requestId = body?.request_id;
     if (typeof requestId !== 'string' || !REQUEST_ID.test(requestId)) {
+      // The request may be queued and billed already: never resubmit; log for reconciliation.
+      logger.warn(
+        { providerId: PROVIDER_ID, model: plan.model, endpointId: plan.endpointId },
+        'fal queue submit returned no usable request_id; check fal usage before retrying',
+      );
       throw providerError(
         PROVIDER_ID,
-        { errorClass: 'unknown', retryable: true },
-        'fal queue submit returned no request_id',
+        { errorClass: 'unknown', retryable: false },
+        `fal queue submit for ${plan.endpointId} returned no request_id`,
       );
     }
     return {
@@ -218,7 +224,9 @@ export class FalAdapter implements ProviderAdapter {
       return failed('invalid_request', `Not a fal job id: ${providerJobId}`, false);
     }
     const status = await this.status(job);
-    if (status === 'not_found') return failed('result_expired', 'fal request not found', true);
+    // fal does not document when a request disappears or whether regenerating is billed again,
+    // so a missing request is not retried automatically (a retry would submit and pay again).
+    if (status === 'not_found') return failed('result_expired', 'fal request not found', false);
     switch (status.status) {
       case 'IN_QUEUE':
       case 'IN_PROGRESS':
@@ -232,7 +240,7 @@ export class FalAdapter implements ProviderAdapter {
             classified.retryable,
           );
         }
-        return this.result(job, status.response_url);
+        return this.result(job);
       default:
         return failed(
           'unknown',
@@ -242,21 +250,21 @@ export class FalAdapter implements ProviderAdapter {
     }
   }
 
-  /** Fetch the finished output (response_url from the status body when it is fal's queue). */
-  private async result(job: ParsedJobId, responseUrl: string | undefined) {
-    const url =
-      typeof responseUrl === 'string' && responseUrl.startsWith(`${QUEUE_BASE_URL}/`)
-        ? responseUrl
-        : `${this.requestBase(job)}/response`;
-    const { body } = await this.request<FalVideoOutput>(url, { method: 'GET' });
-    const videoUrl = body?.video?.url;
-    if (typeof videoUrl !== 'string' || !videoUrl.startsWith('https://')) {
-      return failed('unknown', 'fal request completed without a video URL', true);
-    }
+  /**
+   * Fetch the finished output from the documented path built from the known endpoint id. The
+   * status body's response_url is never followed (the key must only go to known paths), and the
+   * clip URL must be on fal's CDN (fal-output.ts), else the poll fails without retrying.
+   */
+  private async result(job: ParsedJobId) {
+    const { body } = await this.request<FalVideoOutput>(`${this.requestBase(job)}/response`, {
+      method: 'GET',
+    });
+    const checked = checkFalOutputUrl(body?.video?.url);
+    if (!checked.ok) return failed('unknown', checked.reason, false);
     const result: ProviderPollResult = {
       state: 'succeeded',
       output: {
-        url: videoUrl,
+        url: checked.url,
         metadata: {
           requestId: job.requestId,
           model: job.model,
@@ -290,9 +298,12 @@ export class FalAdapter implements ProviderAdapter {
     try {
       await this.request<unknown>(`${this.requestBase(job)}/cancel`, { method: 'PUT' });
     } catch (err) {
-      // 400 ALREADY_COMPLETED / 404 NOT_FOUND: nothing left to cancel.
-      const code = err instanceof ProviderError ? err.details?.status : undefined;
-      if (code === 400 || code === 404) return;
+      // Docs: 400 { status: "ALREADY_COMPLETED" } and 404 { status: "NOT_FOUND" } mean nothing is
+      // left to cancel (falErrorMessage reads `status`). Any other 400 is a real error.
+      if (!(err instanceof ProviderError)) throw err;
+      const code = err.details?.status;
+      if (code === 404) return;
+      if (code === 400 && err.message === 'ALREADY_COMPLETED') return;
       throw err;
     }
   }
@@ -329,48 +340,6 @@ function assertHttpsUrl(value: string, adapter: FalAdapter): void {
     throw adapter.invalid('fal source frame URL is not a URL');
   }
   if (parsed.protocol !== 'https:') throw adapter.invalid('fal source frames must be https URLs');
-}
-
-type Env = Record<string, string | undefined>;
-
-/**
- * STUDIO_FAL_VIDEO_MODELS: comma-separated model keys in preference order; empty = fal is off.
- * An unknown or repeated key is a ConfigurationError (a typo must not silently disable a model).
- */
-export function parseFalVideoModels(raw: string | undefined): FalVideoModelKey[] {
-  const keys = (raw ?? '')
-    .split(',')
-    .map((k) => k.trim())
-    .filter((k) => k !== '');
-  const out: FalVideoModelKey[] = [];
-  for (const key of keys) {
-    if (!isFalVideoModelKey(key)) {
-      throw new ConfigurationError(
-        `${FAL_MODELS_ENV}: unknown fal model "${key}" (one of ${FAL_VIDEO_MODEL_KEYS.join(', ')})`,
-      );
-    }
-    if (out.includes(key)) {
-      throw new ConfigurationError(`${FAL_MODELS_ENV}: "${key}" is listed twice`);
-    }
-    out.push(key);
-  }
-  return out;
-}
-
-/**
- * The fal adapter's settings from env, or undefined when fal is off (no models listed). Models
- * listed without FAL_KEY is a ConfigurationError, so an opt-in never silently does nothing.
- */
-export function falOptionsFromEnv(
-  env: Env,
-): { apiKey: string; models: FalVideoModelKey[] } | undefined {
-  const models = parseFalVideoModels(env[FAL_MODELS_ENV]);
-  if (models.length === 0) return undefined;
-  const apiKey = env[FAL_KEY_ENV]?.trim();
-  if (!apiKey) {
-    throw new ConfigurationError(`${FAL_MODELS_ENV} is set but ${FAL_KEY_ENV} is empty`);
-  }
-  return { apiKey, models };
 }
 
 /**

@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NotImplementedError, ProviderError } from '../../errors';
+import { logger } from '../../logger';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { FalAdapter, falJobId } from './fal';
 import type { FalVideoModelKey } from './fal-models';
@@ -165,9 +166,21 @@ describe('FalAdapter.submit', () => {
     expect(requests).toHaveLength(0);
   });
 
-  it('fails retryably when the queue answers without a request id', async () => {
+  it('does not retry (and logs for reconciliation) when the queue answers without a request id', async () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
     const { fal } = adapter(['minimax-h3-max'], json({}));
-    await expect(fal.submit(t2v)).rejects.toMatchObject({ errorClass: 'unknown', retryable: true });
+    await expect(fal.submit(t2v)).rejects.toMatchObject({
+      errorClass: 'unknown',
+      retryable: false,
+    });
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: 'minimax-h3-max',
+        endpointId: 'minimax/h3-max/text-to-video',
+      }),
+      expect.stringContaining('request_id'),
+    );
+    warn.mockRestore();
   });
 
   it.each([
@@ -204,7 +217,7 @@ describe('FalAdapter.poll', () => {
     expect(requests[0]).toMatchObject({ url: `${base}/status`, method: 'GET' });
   });
 
-  it('fetches the result from response_url and returns the video URL', async () => {
+  it('fetches the result from the built response path and returns the video URL', async () => {
     const { fal, requests } = adapter(
       ['minimax-h3-max'],
       json({ status: 'COMPLETED', request_id: REQ_ID, response_url: `${base}/response` }),
@@ -233,16 +246,6 @@ describe('FalAdapter.poll', () => {
     expect(requests[1]?.url).toBe(`${base}/response`);
   });
 
-  it('builds the response URL itself when the status omits or misplaces it', async () => {
-    const { fal, requests } = adapter(
-      ['minimax-h3-max'],
-      json({ status: 'COMPLETED', response_url: 'https://evil.example/steal' }),
-      json({ video: { url: 'https://v3.fal.media/files/y.mp4' } }),
-    );
-    expect((await fal.poll(jobId)).state).toBe('succeeded');
-    expect(requests[1]?.url).toBe(`${base}/response`);
-  });
-
   it('fails a completed request that carries an error, classified by error_type', async () => {
     const { fal } = adapter(
       ['minimax-h3-max'],
@@ -254,7 +257,7 @@ describe('FalAdapter.poll', () => {
     });
   });
 
-  it('fails when the result has no https video URL', async () => {
+  it('fails when the result has no video URL', async () => {
     const { fal } = adapter(
       ['minimax-h3-max'],
       json({ status: 'COMPLETED' }),
@@ -262,7 +265,7 @@ describe('FalAdapter.poll', () => {
     );
     expect(await fal.poll(jobId)).toMatchObject({
       state: 'failed',
-      error: { class: 'unknown', retryable: true },
+      error: { class: 'unknown', retryable: false },
     });
   });
 
@@ -279,7 +282,8 @@ describe('FalAdapter.poll', () => {
     const gone = adapter(['minimax-h3-max'], json({ detail: 'Not found' }, 404));
     expect(await gone.fal.poll(jobId)).toMatchObject({
       state: 'failed',
-      error: { class: 'result_expired', retryable: true },
+      // not retried: a regenerate would submit (and pay) again
+      error: { class: 'result_expired', retryable: false },
     });
     const odd = adapter(['minimax-h3-max'], json({ status: 'PAUSED' }));
     expect(await odd.fal.poll(jobId)).toMatchObject({
@@ -320,6 +324,28 @@ describe('FalAdapter.cancel', () => {
     await expect(done.fal.cancel(jobId)).resolves.toBeUndefined();
     expect(done.requests).toHaveLength(1);
   });
+
+  it('treats 404 NOT_FOUND as nothing to cancel', async () => {
+    const { fal } = adapter(
+      ['ltx-2.3-fast'],
+      json({ status: 'IN_QUEUE' }),
+      json({ status: 'NOT_FOUND' }, 404),
+    );
+    await expect(fal.cancel(jobId)).resolves.toBeUndefined();
+  });
+
+  it.each([
+    [400, { detail: 'Bad request' }, 'invalid_request'],
+    [400, {}, 'invalid_request'],
+    [401, { detail: 'Invalid key' }, 'auth'],
+    [503, { detail: 'down' }, 'provider_unavailable'],
+  ])(
+    'throws on a cancel HTTP %i %j that is not ALREADY_COMPLETED',
+    async (status, body, errorClass) => {
+      const { fal } = adapter(['ltx-2.3-fast'], json({ status: 'IN_QUEUE' }), json(body, status));
+      await expect(fal.cancel(jobId)).rejects.toMatchObject({ errorClass, details: { status } });
+    },
+  );
 
   it('refuses to claim a running request was cancelled', async () => {
     const { fal } = adapter(['ltx-2.3-fast'], json({ status: 'IN_PROGRESS' }));

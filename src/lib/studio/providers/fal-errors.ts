@@ -67,7 +67,10 @@ export function falErrorMessage(body: unknown): string | undefined {
     return items.map((i) => `${String(i.type ?? 'error')}: ${String(i.msg ?? '')}`).join('; ');
   }
   const error = (body as { error?: unknown }).error;
-  return typeof error === 'string' ? error : undefined;
+  if (typeof error === 'string') return error;
+  // Queue cancel answers 400 { status: "ALREADY_COMPLETED" } / 404 { status: "NOT_FOUND" }.
+  const status = (body as { status?: unknown }).status;
+  return typeof status === 'string' ? status : undefined;
 }
 
 /** HTTP refinements on top of classifyHttpStatus (provider-errors.ts). */
