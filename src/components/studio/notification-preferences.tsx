@@ -32,7 +32,8 @@ export type PreferenceKind =
   | 'safety_review'
   | 'share_comment'
   | 'plan_quota'
-  | 'connection_needs_reconnect';
+  | 'connection_needs_reconnect'
+  | 'tiktok_draft';
 
 export interface PreferencesResponse {
   preferences: Record<string, { inApp: boolean; email: boolean }>;
@@ -52,6 +53,7 @@ export const PREFERENCE_KINDS: readonly PreferenceKind[] = [
   'share_comment',
   'plan_quota',
   'connection_needs_reconnect',
+  'tiktok_draft',
 ];
 
 function PreferencesTable() {

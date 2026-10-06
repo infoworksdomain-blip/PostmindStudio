@@ -199,6 +199,8 @@ export function ConnectionsScreen({
                 configured={data.configured?.[p.id] ?? true}
                 onConnect={() => void connect(p.id)}
                 onDisconnect={disconnect}
+                // 22.7: only members who manage connections see the TikTok posting setting.
+                onSettingsChanged={mayManage ? () => mutate() : undefined}
               />
             ))}
             {META_PLATFORMS.map((p) => (

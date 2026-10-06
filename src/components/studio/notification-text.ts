@@ -41,6 +41,7 @@ const PROJECT_NAME_KEYS: ReadonlySet<string> = new Set([
   'safetyReviewOpened',
   'safetyReviewAllowed',
   'safetyReviewBlocked',
+  'tiktokDraftSent',
 ]);
 
 /** Customer wording (notifications.costPlain.*) for each cost notification key. */

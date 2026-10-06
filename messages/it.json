@@ -147,7 +147,8 @@
         "safety_review": "Revisioni di sicurezza dei contenuti",
         "share_comment": "Feedback su un link di anteprima",
         "plan_quota": "Avvisi sull’utilizzo del piano (80% e 100%)",
-        "connection_needs_reconnect": "Account da ricollegare"
+        "connection_needs_reconnect": "Account da ricollegare",
+        "tiktok_draft": "Bozze di TikTok da completare nell’app"
       },
       "limitKinds": {
         "cost_alert": "Avvisi sui limiti di utilizzo",
@@ -527,6 +528,10 @@
     "automationInsight": {
       "title": "Il tuo post migliore della settimana: {title}",
       "body": "Creane altri simili da «{name}» per vedere più spesso questo formato e questa angolazione."
+    },
+    "tiktokDraftSent": {
+      "title": "“{name}” è nelle tue bozze di TikTok",
+      "body": "Apri l’app TikTok, aggiungi un suono di tendenza, completa la pubblicazione dalla notifica e lascia attiva l’etichetta “Contenuto generato dall’IA”."
     }
   },
   "create": {
@@ -1697,6 +1702,13 @@
     },
     "confirmDialog": {
       "keep": "Mantieni"
+    },
+    "tiktokDrafts": {
+      "badge": "Inviato alle bozze di TikTok",
+      "sentOn": "Inviato alle bozze di TikTok {date}",
+      "draftsNote": "Inviato alle bozze di TikTok — completa nell’app: aggiungi un suono di tendenza, pubblica e lascia attiva l’etichetta “Contenuto generato dall’IA”.",
+      "inboxNote": "Inviato alla tua casella di TikTok — completa nell’app e lascia attiva l’etichetta “Contenuto generato dall’IA”.",
+      "reconnectNote": "Ricollega TikTok per inviare bozze: questo account non ha consentito i caricamenti, quindi il post è stato pubblicato direttamente."
     }
   },
   "calendar": {
@@ -2465,6 +2477,17 @@
     "channelLimit": {
       "body": "{count, plural, one {Il tuo piano include # canale,} many {Il tuo piano include # canali,} other {Il tuo piano include # canali,}} quindi {blockedCount, plural, one {{blocked} è collegato ma non pubblicherà.} many {{blocked} sono collegati ma non pubblicheranno.} other {{blocked} sono collegati ma non pubblicheranno.}}",
       "action": "Aggiungi un canale"
+    },
+    "tiktokPostMode": {
+      "legend": "Come questo account pubblica su TikTok",
+      "drafts": "Invia alle bozze di TikTok",
+      "draftsHint": "Aggiungi un suono di tendenza nell’app TikTok, poi pubblica.",
+      "direct": "Pubblica direttamente",
+      "directHint": "Va online su TikTok senza aprire l’app.",
+      "note": "Le bozze di TikTok ti permettono di aggiungere un suono di tendenza prima di pubblicare.",
+      "reconnect": "Ricollega TikTok per inviare bozze. Nel frattempo, i post vengono pubblicati direttamente.",
+      "saved": "Preferenza di pubblicazione su TikTok salvata",
+      "goesToDrafts": "TikTok: va nelle tue bozze di TikTok. Aggiungi un suono di tendenza nell’app, poi pubblica."
     }
   },
   "library": {

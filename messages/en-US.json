@@ -147,7 +147,8 @@
         "safety_review": "Content-safety reviews",
         "share_comment": "Feedback on a preview link",
         "plan_quota": "Plan usage alerts (80% and 100%)",
-        "connection_needs_reconnect": "Accounts that need reconnecting"
+        "connection_needs_reconnect": "Accounts that need reconnecting",
+        "tiktok_draft": "TikTok drafts to finish in the app"
       },
       "limitKinds": {
         "cost_alert": "Usage limit alerts",
@@ -527,6 +528,10 @@
     "automationInsight": {
       "title": "Your top post this week: {title}",
       "body": "Make more like it from “{name}” to see more of its format and angle."
+    },
+    "tiktokDraftSent": {
+      "title": "“{name}” is in your TikTok drafts",
+      "body": "Open the TikTok app, add a trending sound, finish posting from the notification, and keep the “AI-generated content” label switched on."
     }
   },
   "create": {
@@ -1697,6 +1702,13 @@
     },
     "confirmDialog": {
       "keep": "Keep it"
+    },
+    "tiktokDrafts": {
+      "badge": "Sent to TikTok drafts",
+      "sentOn": "Sent to TikTok drafts {date}",
+      "draftsNote": "Sent to TikTok drafts — finish in the app: add a trending sound, post it, and keep the “AI-generated content” label switched on.",
+      "inboxNote": "Sent to your TikTok inbox — finish in the app and keep the “AI-generated content” label switched on.",
+      "reconnectNote": "Reconnect TikTok to send drafts: this account did not allow uploads, so the post went out directly."
     }
   },
   "calendar": {
@@ -2465,6 +2477,17 @@
     "channelLimit": {
       "body": "{count, plural, one {Your plan includes # channel,} other {Your plan includes # channels,}} so {blockedCount, plural, one {{blocked} is connected but won’t publish.} other {{blocked} are connected but won’t publish.}}",
       "action": "Add a channel"
+    },
+    "tiktokPostMode": {
+      "legend": "How this account posts to TikTok",
+      "drafts": "Send to TikTok drafts",
+      "draftsHint": "Add a trending sound in the TikTok app, then post.",
+      "direct": "Post directly",
+      "directHint": "Goes live on TikTok without opening the app.",
+      "note": "TikTok drafts let you add a trending sound before posting.",
+      "reconnect": "Reconnect TikTok to send drafts. Until then, posts go out directly.",
+      "saved": "TikTok posting preference saved",
+      "goesToDrafts": "TikTok: goes to your TikTok drafts. Add a trending sound in the app, then post."
     }
   },
   "library": {

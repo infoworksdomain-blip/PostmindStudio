@@ -147,7 +147,8 @@
         "safety_review": "内容安全审核",
         "share_comment": "预览链接收到反馈",
         "plan_quota": "套餐用量提醒（80% 和 100%）",
-        "connection_needs_reconnect": "需要重新连接的账号"
+        "connection_needs_reconnect": "需要重新连接的账号",
+        "tiktok_draft": "需在应用中完成的 TikTok 草稿"
       },
       "limitKinds": {
         "cost_alert": "用量上限提醒",
@@ -527,6 +528,10 @@
     "automationInsight": {
       "title": "本周表现最好的帖子：{title}",
       "body": "在“{name}”中多做一些类似内容，以后会更常看到这种形式和角度。"
+    },
+    "tiktokDraftSent": {
+      "title": "“{name}”已在你的 TikTok 草稿中",
+      "body": "打开 TikTok 应用，添加热门音乐，从通知中完成发布，并保持“AI 生成内容”标签开启。"
     }
   },
   "create": {
@@ -1697,6 +1702,13 @@
     },
     "confirmDialog": {
       "keep": "保留"
+    },
+    "tiktokDrafts": {
+      "badge": "已发送到 TikTok 草稿",
+      "sentOn": "已发送到 TikTok 草稿 {date}",
+      "draftsNote": "已发送到 TikTok 草稿——请在应用中完成：添加热门音乐、发布，并保持“AI 生成内容”标签开启。",
+      "inboxNote": "已发送到你的 TikTok 收件箱——请在应用中完成，并保持“AI 生成内容”标签开启。",
+      "reconnectNote": "重新连接 TikTok 才能发送草稿：此账号未允许上传，因此帖子已直接发布。"
     }
   },
   "calendar": {
@@ -2465,6 +2477,17 @@
     "channelLimit": {
       "body": "{count, plural, other {您的套餐包含 # 个频道，}}因此{blockedCount, plural, other { {blocked} 已连接但不会发布。}}",
       "action": "添加频道"
+    },
+    "tiktokPostMode": {
+      "legend": "此账号如何发布到 TikTok",
+      "drafts": "发送到 TikTok 草稿",
+      "draftsHint": "在 TikTok 应用中添加热门音乐，然后发布。",
+      "direct": "直接发布",
+      "directHint": "无需打开应用即可在 TikTok 上线。",
+      "note": "TikTok 草稿让你在发布前添加热门音乐。",
+      "reconnect": "重新连接 TikTok 才能发送草稿。在此之前，帖子将直接发布。",
+      "saved": "TikTok 发布偏好已保存",
+      "goesToDrafts": "TikTok：进入你的 TikTok 草稿。在应用中添加热门音乐，然后发布。"
     }
   },
   "library": {
