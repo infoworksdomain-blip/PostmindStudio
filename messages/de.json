@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Das Zeichnen der Karussell-Folien ist fehlgeschlagen.",
       "no_demo_video": "Das Demovideo ist nicht mehr verfügbar: Wähle ein anderes oder lade eines hoch.",
       "hook_clip_unavailable": "Der Hook-Clip konnte nicht erstellt werden: Gerade ist kein KI-Creator verfügbar und die Bibliothek hat keinen passenden Reaktionsclip. Versuche es später erneut.",
-      "wall_of_text_invalid": "Die Textwand hat keine Einstellungen: Erstelle sie neu."
+      "wall_of_text_invalid": "Die Textwand hat keine Einstellungen: Erstelle sie neu.",
+      "no_background_video": "Für diese Textwand wurde kein Hintergrundvideo gefunden. Wähle einen anderen Hintergrund oder versuche es später erneut."
     },
     "classes": {
       "rate_limited": "zu viele Anfragen",

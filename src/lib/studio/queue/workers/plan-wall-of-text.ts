@@ -18,8 +18,10 @@ import {
 import { findFootageClip } from '../../formats/footage';
 import { wordCount } from '../../formats/hook-demo';
 import {
+  NO_BACKGROUND_VIDEO,
   readWallOfText,
   WALL_BACKGROUND_QUERIES,
+  WALL_STOCK_PROVIDER,
   WALL_LIBRARY_CATEGORIES,
 } from '../../formats/wall-of-text';
 import type { ProjectJobData } from '../queues';
@@ -72,6 +74,15 @@ export async function planWallOfText(
     seed: project.id,
     now: new Date(deps.now()),
   });
+  // No licensed library clip and no stock video source at all: say so before anything is made.
+  if (!clip && deps.registry.getAdaptersByCapability('stock_footage').length === 0) {
+    await failProject(deps.db, {
+      projectId: project.id,
+      runId: data.runId,
+      reason: NO_BACKGROUND_VIDEO,
+    });
+    return log.warn('no background video source; project failed');
+  }
   await deps.db.$transaction(async (tx) => {
     await tx.textOverlay.deleteMany({ where: { shot: { script: { projectId: project.id } } } });
     await tx.videoShot.deleteMany({ where: { script: { projectId: project.id } } });
@@ -119,7 +130,11 @@ export async function planWallOfText(
                 state: 'READY' as const,
                 providerRouting: { visual: { providerId: 'video-library' } },
               }
-            : { state: 'QUEUED' as const }),
+            : {
+                state: 'QUEUED' as const,
+                // Pixabay first (the stock source production has), then the router's order.
+                providerRouting: { preferredProviderId: WALL_STOCK_PROVIDER },
+              }),
         },
       });
       // ONE text block for the whole video (TikTok-classic, no box).

@@ -9,7 +9,13 @@ import {
   readHookDemo,
 } from './hook-demo';
 import { allowanceUnitsOf } from '../ugc/allowance';
-import { WALL_OF_TEXT_ALLOWANCE_UNITS, newWallOfTextDocument } from './wall-of-text';
+import {
+  NO_BACKGROUND_VIDEO,
+  noBackgroundVideo,
+  WALL_OF_TEXT_ALLOWANCE_UNITS,
+  newWallOfTextDocument,
+} from './wall-of-text';
+import { ProviderError, RateDeferredError, ValidationError } from '../../errors';
 
 // BACKLOG 22.1 — hook + demo input, stored document, timing and audio mix.
 
@@ -109,6 +115,18 @@ describe('audio mix and layout', () => {
     expect(effectiveLayout('stacked', '16:9')).toBe('sequential');
     expect(effectiveLayout('stacked', '1:1')).toBe('sequential');
     expect(effectiveLayout('sequential', '9:16')).toBe('sequential');
+  });
+});
+
+describe('noBackgroundVideo (22.2)', () => {
+  it('turns "nothing found / nothing configured" into no_background_video, keeps retryable errors', () => {
+    const noMatch = new ProviderError('pixabay', 'invalid_request', 'no match', false);
+    expect(noBackgroundVideo(noMatch)).toBeInstanceOf(ValidationError);
+    expect((noBackgroundVideo(noMatch) as Error).message).toBe(NO_BACKGROUND_VIDEO);
+    const busy = new ProviderError('pixabay', 'rate_limited', 'busy', true);
+    expect(noBackgroundVideo(busy)).toBe(busy);
+    const deferred = new RateDeferredError('pixabay', 1_000);
+    expect(noBackgroundVideo(deferred)).toBe(deferred);
   });
 });
 

@@ -23,6 +23,10 @@ import { StoryblocksAudioAdapter } from './storyblocks-audio';
 import { StoryblocksMusicAdapter } from './storyblocks-music';
 import { StoryblocksVideoAdapter } from './storyblocks-video';
 import { PexelsVideoAdapter } from './pexels-video';
+import { PixabayVideoAdapter } from './pixabay-video';
+import { stockCacheFromEnv } from '../images/stock-cache';
+import { createBreakerRedisClient } from './circuit-breaker-redis';
+import { redisConnectionFromEnv } from '../queue/redis';
 
 // Explicit SDK timeouts (the SDK default is 10 minutes). OpenAI's image guide says complex
 // prompts "may take up to 2 minutes", hence the longer OpenAI budget.
@@ -254,6 +258,20 @@ export function buildAdaptersFromKeys(
   // Phase 15 (13.38 correction): STOCK_FOOTAGE fallback, the key the stock image source uses.
   const pexelsKey = keys.pexels?.apiKey;
   if (pexelsKey) adapters.push(new PexelsVideoAdapter({ apiKey: pexelsKey }));
+  // 22.2: Pixabay videos, the platform's free PIXABAY_API_KEY (the key Pixabay images use), with
+  // the shared 24 h stock search cache Pixabay's terms require.
+  const pixabayKey = envValue('PIXABAY_API_KEY')?.trim();
+  if (pixabayKey)
+    adapters.push(
+      new PixabayVideoAdapter({
+        apiKey: pixabayKey,
+        cache: stockCacheFromEnv(
+          env,
+          () => createBreakerRedisClient(redisConnectionFromEnv()),
+          logger,
+        ),
+      }),
+    );
 
   return adapters;
 }

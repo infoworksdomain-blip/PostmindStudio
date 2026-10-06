@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Falhou o desenho dos diapositivos do carrossel.",
       "no_demo_video": "O vídeo de demonstração já não está disponível: escolha ou carregue outro.",
       "hook_clip_unavailable": "Não foi possível criar o clip de gancho: neste momento não há nenhum criador de IA disponível e a biblioteca não tem um clip de reação utilizável. Tente mais tarde.",
-      "wall_of_text_invalid": "A parede de texto não tem definições: crie-a novamente."
+      "wall_of_text_invalid": "A parede de texto não tem definições: crie-a novamente.",
+      "no_background_video": "Não foi encontrado nenhum vídeo de fundo para esta parede de texto. Experimente outro fundo ou tente mais tarde."
     },
     "classes": {
       "rate_limited": "demasiados pedidos",

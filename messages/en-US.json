@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Drawing the carousel’s slides failed.",
       "no_demo_video": "The demo video is no longer available: choose or upload another one.",
       "hook_clip_unavailable": "The hook clip could not be made: no AI creator is available right now and the library has no reaction clip to use. Try again later.",
-      "wall_of_text_invalid": "The wall of text has no settings: create it again."
+      "wall_of_text_invalid": "The wall of text has no settings: create it again.",
+      "no_background_video": "No background video was found for this wall of text. Try another background, or try again later."
     },
     "classes": {
       "rate_limited": "too many requests",

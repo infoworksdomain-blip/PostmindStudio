@@ -1,6 +1,6 @@
 import type { AspectRatio } from './interface';
 
-// Shared helpers for the Layer 3 STOCK_FOOTAGE adapters (storyblocks-video.ts, pexels-video.ts).
+// Shared helpers for the Layer 3 STOCK_FOOTAGE adapters (storyblocks-video.ts, pexels-video.ts, pixabay-video.ts).
 // A stock search takes keywords, not a generator prompt, so the shot's scene description is
 // reduced to its content words.
 
@@ -74,7 +74,7 @@ export function footageOrientation(aspect: AspectRatio): 'vertical' | 'horizonta
 /** Licence facts stored on the asset (video_assets.metadata.licence) for every stock clip. */
 export interface StockLicence {
   /** Which licence governs the clip. */
-  licence: 'storyblocks-api' | 'pexels';
+  licence: 'storyblocks-api' | 'pexels' | 'pixabay';
   licenceUrl: string;
   /** Neither licence requires on-video attribution; credit is still recorded. */
   attributionRequired: false;

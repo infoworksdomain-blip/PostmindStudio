@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Falha ao desenhar os slides do carrossel.",
       "no_demo_video": "O vídeo de demonstração não está mais disponível: escolha ou envie outro.",
       "hook_clip_unavailable": "Não foi possível criar o clipe de gancho: nenhum criador de IA está disponível agora e a biblioteca não tem um clipe de reação para usar. Tente novamente mais tarde.",
-      "wall_of_text_invalid": "A parede de texto não tem configurações: crie-a novamente."
+      "wall_of_text_invalid": "A parede de texto não tem configurações: crie-a novamente.",
+      "no_background_video": "Nenhum vídeo de fundo foi encontrado para esta parede de texto. Tente outro fundo ou tente novamente mais tarde."
     },
     "classes": {
       "rate_limited": "solicitações demais",

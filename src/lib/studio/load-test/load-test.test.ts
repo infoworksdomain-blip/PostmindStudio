@@ -264,7 +264,7 @@ describe('local storage and the simulated registry', () => {
         'openai',
         'shotstack',
         // 22.2: stock footage for wall-of-text backgrounds.
-        'pexels-video',
+        'pixabay',
       ]);
       const tts = registry.getAdapter('elevenlabs');
       const job = await tts.submit({

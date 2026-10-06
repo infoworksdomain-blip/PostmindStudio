@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Le dessin des diapositives du carrousel a échoué.",
       "no_demo_video": "La vidéo de démonstration n’est plus disponible : choisissez-en ou importez-en une autre.",
       "hook_clip_unavailable": "Le clip d’accroche n’a pas pu être créé : aucun créateur IA n’est disponible pour le moment et la bibliothèque n’a pas de clip de réaction utilisable. Réessayez plus tard.",
-      "wall_of_text_invalid": "Le mur de texte n’a pas de réglages : recréez-le."
+      "wall_of_text_invalid": "Le mur de texte n’a pas de réglages : recréez-le.",
+      "no_background_video": "Aucune vidéo d’arrière-plan n’a été trouvée pour ce mur de texte. Essayez un autre arrière-plan ou réessayez plus tard."
     },
     "classes": {
       "rate_limited": "trop de requêtes",

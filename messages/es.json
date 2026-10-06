@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Falló el dibujo de las diapositivas del carrusel.",
       "no_demo_video": "El vídeo de demostración ya no está disponible: elige o sube otro.",
       "hook_clip_unavailable": "No se pudo crear el clip de gancho: ahora no hay ningún creador con IA disponible y la biblioteca no tiene un clip de reacción. Inténtalo más tarde.",
-      "wall_of_text_invalid": "El muro de texto no tiene ajustes: créalo de nuevo."
+      "wall_of_text_invalid": "El muro de texto no tiene ajustes: créalo de nuevo.",
+      "no_background_video": "No se encontró ningún vídeo de fondo para este muro de texto. Prueba otro fondo o inténtalo más tarde."
     },
     "classes": {
       "rate_limited": "demasiadas solicitudes",

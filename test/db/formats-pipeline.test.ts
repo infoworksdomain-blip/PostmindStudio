@@ -201,11 +201,67 @@ describe.skipIf(!hasDb)(
         endAtSec: 8,
         backgroundType: 'none',
       });
+      // Pixabay videos are the only stock source (as in production) and the one asked.
+      expect(h.adapters.stockVideo.providerId).toBe('pixabay');
       expect(h.adapters.stockVideo.requests).toHaveLength(1);
-      expect(h.adapters.stockVideo.requests[0]).toMatchObject({ capability: 'stock_footage' });
+      expect(h.adapters.stockVideo.requests[0]).toMatchObject({
+        capability: 'stock_footage',
+        query: 'nature forest water',
+        durationSec: 8,
+      });
+      expect(shots[0]?.providerRouting).toMatchObject({ visual: { providerId: 'pixabay' } });
       expect(h.adapters.runway.requests).toHaveLength(0);
       expect(h.adapters.elevenlabs.requests).toHaveLength(0);
       expect(after.renders[0]?.qualityCheckState).toBe('PASSED');
+    });
+
+    it('wall of text with no library clip and no stock source fails with no_background_video', async () => {
+      const h = createHarness(db, { stock: false });
+      const { project, runId } = await createProject(db, {
+        organisationId: org,
+        sourceType: 'WALL_OF_TEXT',
+        description: 'Three habits that save an hour a day',
+        targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 8 }],
+      });
+      await db.videoProject.update({
+        where: { id: project.id },
+        data: {
+          metadata: {
+            runId,
+            wallOfText: newWallOfTextDocument({ background: 'calm', durationSec: 8 }),
+          },
+        },
+      });
+      const after = await drain(h, project.id, runId);
+      expect(after.state).toBe('FAILED');
+      expect(after.errorReason).toMatch(/^no_background_video/);
+      expect(after.scripts).toHaveLength(0);
+    });
+
+    it('wall of text whose stock search finds nothing fails with no_background_video', async () => {
+      const h = createHarness(db, { stock: true });
+      h.adapters.stockVideo.respond = () => ({
+        state: 'failed',
+        error: { class: 'invalid_request', message: 'no match', retryable: false },
+      });
+      const { project, runId } = await createProject(db, {
+        organisationId: org,
+        sourceType: 'WALL_OF_TEXT',
+        description: 'Three habits that save an hour a day',
+        targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 8 }],
+      });
+      await db.videoProject.update({
+        where: { id: project.id },
+        data: {
+          metadata: {
+            runId,
+            wallOfText: newWallOfTextDocument({ background: 'city', durationSec: 8 }),
+          },
+        },
+      });
+      const after = await drain(h, project.id, runId);
+      expect(after.state).toBe('FAILED');
+      expect(after.scripts[0]?.shots[0]?.errorReason).toMatch(/^no_background_video/);
     });
   },
 );

@@ -4026,7 +4026,8 @@
       "carousel_render_error": "Il disegno delle slide del carosello non è riuscito.",
       "no_demo_video": "Il video dimostrativo non è più disponibile: scegline o caricane un altro.",
       "hook_clip_unavailable": "Non è stato possibile creare la clip hook: al momento nessun creator IA è disponibile e la libreria non ha una clip di reazione utilizzabile. Riprova più tardi.",
-      "wall_of_text_invalid": "Il muro di testo non ha impostazioni: crealo di nuovo."
+      "wall_of_text_invalid": "Il muro di testo non ha impostazioni: crealo di nuovo.",
+      "no_background_video": "Non è stato trovato alcun video di sfondo per questo muro di testo. Prova un altro sfondo o riprova più tardi."
     },
     "classes": {
       "rate_limited": "troppe richieste",

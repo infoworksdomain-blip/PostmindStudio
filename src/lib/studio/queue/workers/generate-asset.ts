@@ -40,6 +40,7 @@ import { ensureActorPortrait } from '../../ugc/portrait';
 import { actorClipPrompt, ugcStillPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
 import { hookClipMarkerOf } from '../../formats/hook-clip';
+import { noBackgroundVideo, readWallOfText } from '../../formats/wall-of-text';
 import { generateHookClip } from './generate-hook-clip';
 import { jobIds } from '../enqueue';
 import type { GenerateAssetJobData, ProjectJobData } from '../queues';
@@ -754,6 +755,7 @@ async function generateVisual(
     case 'STOCK_FOOTAGE': {
       // Phase 15 (Track C): Storyblocks video, then Pexels video. The scene description is the
       // search text; the adapter returns the licence facts, kept in the asset's metadata.
+      // 22.2: a wall-of-text background asks Pixabay first (its plan sets preferredProviderId).
       const run = await runProvider(
         {
           need: { kind: 'shot', visualTreatment: 'STOCK_FOOTAGE', durationSec: shot.durationSec },
@@ -768,7 +770,9 @@ async function generateVisual(
           },
         },
         deps,
-      );
+      ).catch((err: unknown) => {
+        throw readWallOfText(shot.script.project.metadata) ? noBackgroundVideo(err) : err;
+      });
       return recordAsset(deps, shot, 'VIDEO_CLIP', run, {
         extension: 'mp4',
         contentType: 'video/mp4',

@@ -55,6 +55,8 @@ export const FAILURE_CODES = [
   'no_demo_video',
   'hook_clip_unavailable',
   'wall_of_text_invalid',
+  // 22.2: no licensed library video and no stock video for a wall-of-text background.
+  'no_background_video',
 ] as const;
 
 export type FailureCode = (typeof FAILURE_CODES)[number];
@@ -180,6 +182,7 @@ const SERVER_WORDED: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'no_demo_video',
   'hook_clip_unavailable',
   'wall_of_text_invalid',
+  'no_background_video',
 ]);
 
 /**

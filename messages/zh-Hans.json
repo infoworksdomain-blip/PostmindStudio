@@ -4026,7 +4026,8 @@
       "carousel_render_error": "绘制轮播图幻灯片失败。",
       "no_demo_video": "演示视频已不可用：请选择或上传另一个。",
       "hook_clip_unavailable": "无法制作钩子片段：目前没有可用的 AI 创作者，素材库中也没有可用的反应片段。请稍后再试。",
-      "wall_of_text_invalid": "文字墙没有设置：请重新创建。"
+      "wall_of_text_invalid": "文字墙没有设置：请重新创建。",
+      "no_background_video": "没有找到适合此文字墙的背景视频。请换一个背景，或稍后再试。"
     },
     "classes": {
       "rate_limited": "请求过多",

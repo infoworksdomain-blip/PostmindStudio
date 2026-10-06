@@ -719,7 +719,7 @@ async function wallOfText(ctx: Ctx): Promise<Check[]> {
     ),
     verify(
       'the background is stock footage; no AI clip or voice was bought',
-      countOf(rows, { provider: 'pexels-video', state: 'SUCCEEDED' }) === 1 &&
+      countOf(rows, { provider: 'pixabay', state: 'SUCCEEDED' }) === 1 &&
         countOf(rows, { operation: 'text_to_video' }) === 0 &&
         countOf(rows, { operation: 'tts' }) === 0,
       describeJobs(rows),

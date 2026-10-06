@@ -1,6 +1,12 @@
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import {
+  NoProviderAvailableError,
+  ProviderError,
+  RateDeferredError,
+  ValidationError,
+} from '../../errors';
+import {
   WALL_TEXT_MAX_CHARS,
   WALL_TEXT_MAX_LINES,
   WALL_TEXT_MAX_WORDS,
@@ -31,13 +37,19 @@ export const WALL_DEFAULT_SEC = 8;
 /** 22.2: a wall-of-text video counts as one video of the allowance (allowanceUnitsOf → 1). */
 export const WALL_OF_TEXT_ALLOWANCE_UNITS = 1;
 
-/** Stock search text per mood: calm, faceless, no on-screen text (the block is the text). */
+/**
+ * Stock search text per mood. Stock searches take keywords (stock-footage.ts footageKeywords), so
+ * these are short content words only — "no people" would search FOR people.
+ */
 export const WALL_BACKGROUND_QUERIES: Record<WallBackground, string> = {
-  calm: 'calm aesthetic slow motion background, soft light, no people, no text',
-  nature: 'peaceful nature landscape slow motion, water or forest, no people, no text',
-  city: 'city at night slow motion lights, aerial, no faces, no text',
-  abstract: 'abstract soft gradient motion background, slow, no text',
+  calm: 'calm clouds sky',
+  nature: 'nature forest water',
+  city: 'city night lights',
+  abstract: 'abstract background',
 };
+
+/** 22.2: the stock source asked first for a wall-of-text background (production has its key). */
+export const WALL_STOCK_PROVIDER = 'pixabay';
 
 /** Reference-library category slug fragments per mood (formats/footage.ts). */
 export const WALL_LIBRARY_CATEGORIES: Record<WallBackground, string[]> = {
@@ -88,6 +100,22 @@ export function readWallOfText(
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
   const parsed = wallOfTextDocument.safeParse((metadata as Record<string, unknown>).wallOfText);
   return parsed.success ? parsed.data : null;
+}
+
+export const NO_BACKGROUND_VIDEO =
+  'no_background_video: no licensed library video and no stock video matched this background';
+
+/**
+ * 22.2: a wall-of-text background that no stock source could provide (none configured, or no
+ * clip long enough matched) fails with a clear reason; a retryable provider problem (rate limit,
+ * outage) and a deferral are passed on unchanged so the job retries or waits.
+ */
+export function noBackgroundVideo(err: unknown): unknown {
+  if (err instanceof RateDeferredError) return err;
+  if (err instanceof ProviderError && err.retryable) return err;
+  if (err instanceof NoProviderAvailableError || err instanceof ProviderError)
+    return new ValidationError(NO_BACKGROUND_VIDEO, { cause: err.message });
+  return err;
 }
 
 export function newWallOfTextDocument(input: WallOfTextCreateInput): WallOfTextDocument {

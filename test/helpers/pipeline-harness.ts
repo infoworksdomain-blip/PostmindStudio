@@ -206,7 +206,7 @@ export interface HarnessOptions {
   /** 22.1: the hook line answer; 22.2: the wall-of-text answer. */
   hookLine?: unknown;
   wallText?: unknown;
-  /** 22.2: register a scripted stock-footage adapter (Pexels video). */
+  /** 22.2: register a scripted stock-footage adapter (Pixabay videos, the one production has). */
   stock?: boolean;
 }
 
@@ -285,11 +285,11 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     45,
   );
   // 22.2: scripted stock footage (a wall of text's background).
-  const stockVideo = new ScriptedAdapter('pexels-video', ['stock_footage'], () => ({
+  const stockVideo = new ScriptedAdapter('pixabay', ['stock_footage'], () => ({
     state: 'succeeded',
     output: {
-      url: 'https://pexels.invalid/calm.mp4',
-      metadata: { licence: 'Pexels', costPence: 0 },
+      url: 'https://cdn.pixabay.invalid/calm.mp4',
+      metadata: { licence: 'Pixabay', costPence: 0 },
     },
   }));
   // 20.21: no content-safety adapter (Hive removed; none is built), as in production.

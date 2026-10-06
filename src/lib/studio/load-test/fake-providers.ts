@@ -439,12 +439,12 @@ export function createSimulatedRegistry(input: {
       flaky: true,
     }),
     // 22.2: stock footage (a wall of text's background) is the sample clip.
-    new SimulatedAdapter('pexels-video', ['stock_footage'], {
+    new SimulatedAdapter('pixabay', ['stock_footage'], {
       latencySec: [1, 3],
       costPence: 0,
       respond: async () => ({
         state: 'succeeded',
-        output: { url: media.clipUrl, metadata: { model: 'pexels-video', costPence: 0 } },
+        output: { url: media.clipUrl, metadata: { model: 'pixabay-video', costPence: 0 } },
       }),
       profile,
     }),
