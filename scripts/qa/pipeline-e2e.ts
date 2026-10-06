@@ -914,7 +914,13 @@ async function main(): Promise<void> {
   };
 
   // 23.6: compose / render jobs run on their own lane.
-  const queues = [QUEUES.orchestration, QUEUES.render, QUEUES.assets, QUEUES.publish, QUEUES.analytics];
+  const queues = [
+    QUEUES.orchestration,
+    QUEUES.render,
+    QUEUES.assets,
+    QUEUES.publish,
+    QUEUES.analytics,
+  ];
   const workers: Worker[] = startWorkers({ connection, deps, queues });
   const watch = queues.map((name) => new Queue(name, { connection, prefix: queuePrefix() }));
   const ctx: Ctx = {
