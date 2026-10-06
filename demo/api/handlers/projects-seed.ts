@@ -349,7 +349,8 @@ function meetTheBakers(): ProjectRec {
 
 /**
  * 21.4: a UGC actor video ready for review: a generated creator speaks every line (Veo's own
- * audio), a product still and an end card; the AI-generated label is always on.
+ * audio), with 2–3 s product B-roll stills between the actor shots (21.4b: no cards); the
+ * AI-generated label is always on.
  */
 function ugcReview(): ProjectRec {
   const { id, name } = PROJECTS.ugcReview;

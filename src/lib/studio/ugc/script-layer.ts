@@ -53,7 +53,7 @@ export function scriptLayerMode(input: {
       apply: (plan, options) => applyClipBudget(plan, options),
     };
   }
-  const treatments = ugcTreatments(input.registry, general);
+  const treatments = ugcTreatments(input.registry);
   const clipSeconds = actorClipSeconds(ugcUsesReferenceImage(ugc.product.imageId, input.registry));
   return {
     ugc,

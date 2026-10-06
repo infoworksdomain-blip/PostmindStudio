@@ -3,6 +3,7 @@ import type { PlanTier } from '../providers/router';
 import type { ProviderRegistry } from '../providers/registry';
 import { BUDGET_TREATMENT, CLIP_BUDGET_KEY, beatOf } from '../pipeline/clip-budget';
 import { fitDurations, type PlannedScript, type PlannedShot } from '../pipeline/scripting';
+import { oneShortLine } from '../overlays/captions';
 import { ACTOR_LINE_PADDING_SEC, ACTOR_WORDS_PER_SEC } from './prompt';
 
 // BACKLOG 21.4 — the UGC script after Layer 2: which treatments it may use, how many actor clips
@@ -14,6 +15,9 @@ import { ACTOR_LINE_PADDING_SEC, ACTOR_WORDS_PER_SEC } from './prompt';
 //   - only actor shots speak: a B-roll shot's voiceover would need a second, different voice
 //     (ElevenLabs) in the same video, so it is moved on screen too;
 //   - the other shots absorb the time so the script still lasts its target.
+// 21.4b (production UGC video 2, 2026-10-05: "the poster in between does not work"): the only
+// B-roll is a 2–3 s product still with at most one short line; a TEXT_CARD or MOTION_GRAPHICS
+// shot (or any other kind) in a UGC script becomes that still, so a UGC video never has a card.
 
 /** Veo 3.1 durationSeconds "4", "6" or "8" (https://ai.google.dev/gemini-api/docs/veo, 2026-10-04). */
 export const ACTOR_CLIP_SECONDS = [4, 6, 8] as const;
@@ -61,20 +65,46 @@ export function actorClipBudget(tier: PlanTier, durationSec: number): number {
   return Math.min(MAX_ACTOR_CLIPS, Math.max(MIN_ACTOR_CLIPS, n));
 }
 
-/** Treatments a UGC script may use: actors when a provider can make them, then cheap B-roll. */
+/**
+ * The one B-roll treatment of a UGC video (21.4b): a product still, the product being used, shot
+ * like a phone photo (generate-asset.ts ugcStill: the owner's product photo, the business's
+ * library, else a generated image). Fastlane's UGC videos (2026-10-05) show product footage
+ * between actor shots and never a title card or motion-graphics card, so UGC scripts get neither.
+ */
+export const UGC_BROLL_TREATMENT: VisualTreatment = 'IMAGE_STILL';
+/** B-roll between two actor shots lasts 2–3 s (one caption's worth, no dead air). */
+export const UGC_BROLL_SECONDS: readonly [number, number] = [2, 3];
+/**
+ * Wider B-roll limits used only when 2–3 s B-roll cannot fill the video next to its actor clips
+ * (e.g. 4–6 s clips without a reference image): first up to 5 s, then the general 1–10 s, so the
+ * script still lasts its target and passes the ±2 s duration check.
+ */
+const UGC_BROLL_FALLBACK_SECONDS: ReadonlyArray<readonly [number, number]> = [
+  [2, 5],
+  [1, 10],
+];
+
+/**
+ * Treatments a UGC script may use: actors when a provider can make them, then product B-roll.
+ * The product still is always offered (the owner's product photo and the business's library need
+ * no provider), and TEXT_CARD / MOTION_GRAPHICS never are (21.4b).
+ */
 export function ugcTreatments(
   registry: Pick<ProviderRegistry, 'getAdaptersByCapability'>,
-  general: readonly VisualTreatment[],
 ): VisualTreatment[] {
   const actors = registry.getAdaptersByCapability('actor_video').length > 0;
-  const broll = general.filter(
-    (t) => t === 'IMAGE_STILL' || t === 'TEXT_CARD' || t === 'MOTION_GRAPHICS',
-  );
-  return [...(actors ? (['UGC_ACTOR'] as const) : []), ...broll];
+  return [...(actors ? (['UGC_ACTOR'] as const) : []), UGC_BROLL_TREATMENT];
 }
 
 function wordCount(text: string | null): number {
   return (text ?? '').split(/\s+/).filter(Boolean).length;
+}
+
+/** 21.4b: a card or any other non-actor shot of a UGC script becomes product B-roll. */
+function asBroll(shot: PlannedShot): PlannedShot {
+  return shot.visualTreatment === UGC_BROLL_TREATMENT
+    ? shot
+    : { ...shot, visualTreatment: UGC_BROLL_TREATMENT };
 }
 
 /** The shortest allowed clip that holds the line (and is at least what the script asked for). */
@@ -90,15 +120,16 @@ export function actorClipLength(
   return sorted.find((s) => s >= needed - 0.25) ?? (sorted.at(-1) as number);
 }
 
-/** The line as a short on-screen caption (when a shot cannot speak it). */
+/**
+ * The shot's words as one short on-screen line (when a shot cannot speak its line). 21.4b: B-roll
+ * carries at most one short line in the native caption look, never a paragraph.
+ */
 function onScreen(shot: PlannedShot): string | null {
-  if (shot.onScreenText) return shot.onScreenText;
-  const line = (shot.voiceoverText ?? '').trim();
-  return line ? line.slice(0, 80) : null;
+  return oneShortLine(shot.onScreenText) ?? oneShortLine(shot.voiceoverText);
 }
 
 function silenced(shot: PlannedShot): PlannedShot {
-  return shot.voiceoverText ? { ...shot, voiceoverText: null, onScreenText: onScreen(shot) } : shot;
+  return { ...shot, voiceoverText: null, onScreenText: onScreen(shot) };
 }
 
 function toProductStill(shot: PlannedShot, budget: number): PlannedShot {
@@ -111,12 +142,31 @@ function toProductStill(shot: PlannedShot, budget: number): PlannedShot {
   return silenced({
     ...shot,
     visualTreatment: BUDGET_TREATMENT,
-    durationSec: Math.min(5, Math.max(2, shot.durationSec)),
+    durationSec: Math.min(UGC_BROLL_SECONDS[1], Math.max(UGC_BROLL_SECONDS[0], shot.durationSec)),
     providerRouting: {
       ...routing,
       [CLIP_BUDGET_KEY]: { convertedFrom: 'UGC_ACTOR', budget },
     },
   });
+}
+
+const total = (shots: PlannedShot[]) => shots.reduce((t, s) => t + s.durationSec, 0);
+
+/**
+ * Actor clips keep their exact length; B-roll takes the rest of the target at 2–3 s a shot, or,
+ * only when that cannot reach the target, the wider fallback limits (UGC_BROLL_FALLBACK_SECONDS).
+ */
+export function fitUgcDurations(shots: PlannedShot[], targetSec: number): PlannedShot[] {
+  const fit = (broll: readonly [number, number]) =>
+    fitDurations(shots, targetSec, (shot) =>
+      shot.visualTreatment === 'UGC_ACTOR' ? [shot.durationSec, shot.durationSec] : [...broll],
+    );
+  let fitted = fit(UGC_BROLL_SECONDS);
+  for (const wider of UGC_BROLL_FALLBACK_SECONDS) {
+    if (Math.abs(total(fitted) - targetSec) < 0.05) break;
+    fitted = fit(wider);
+  }
+  return fitted;
 }
 
 export interface UgcPlanResult {
@@ -151,16 +201,14 @@ export function applyUgcPlan(
   }
   let converted = 0;
   const shots = plan.shots.map((shot, i) => {
-    if (shot.visualTreatment !== 'UGC_ACTOR') return silenced(shot);
+    if (shot.visualTreatment !== 'UGC_ACTOR') return silenced(asBroll(shot));
     if (!kept.has(i) || !shot.voiceoverText) {
       converted += 1;
       return toProductStill(shot, input.budget);
     }
     return { ...shot, durationSec: actorClipLength(shot, input.clipSeconds) };
   });
-  const fitted = fitDurations(shots, input.targetSec, (shot) =>
-    shot.visualTreatment === 'UGC_ACTOR' ? [shot.durationSec, shot.durationSec] : [1, 10],
-  );
+  const fitted = fitUgcDurations(shots, input.targetSec);
   return {
     plan: { ...plan, shots: fitted },
     actorShots: fitted.filter((s) => s.visualTreatment === 'UGC_ACTOR').length,

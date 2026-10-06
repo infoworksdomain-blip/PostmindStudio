@@ -213,8 +213,9 @@ export const SIM_SCRIPT = {
 };
 
 /**
- * 21.4: a 30 s UGC actor script (three actor clips that the UGC rules snap to 8 s with a product
- * image, or 6 s without; a product still and an end card take the rest).
+ * 21.4: a 30 s UGC actor script (three actor clips that the UGC rules snap to 8 s with a reference
+ * image, or 6 s without). 21.4b: between them, 2–3 s product B-roll stills (hands using the
+ * product, one short line), never a text or motion-graphics card.
  */
 export const SIM_UGC_SCRIPT = {
   fullText: 'Mornings were chaos. This sourdough box fixed that. Try it.',
@@ -225,19 +226,27 @@ export const SIM_UGC_SCRIPT = {
       'hook',
       'holds the bread box up to the phone',
       'Okay, mornings used to be chaos.',
+      '',
     ],
-    ['IMAGE_STILL', 4, 'demo', 'The sourdough box on a doorstep', ''],
-    ['UGC_ACTOR', 6, 'demo', 'tears a warm loaf open', 'Now fresh sourdough just turns up.'],
-    ['UGC_ACTOR', 6, 'cta', 'points at the camera and smiles', 'Honestly, try it. Link below.'],
-    ['TEXT_CARD', 8, 'cta', 'End card', ''],
-  ].map(([visualTreatment, durationSec, beat, sceneDescription, voiceoverText]) => ({
+    [
+      'IMAGE_STILL',
+      3,
+      'demo',
+      'Hands lift a sourdough loaf out of the box',
+      '',
+      'Fresh every Friday',
+    ],
+    ['UGC_ACTOR', 6, 'demo', 'tears a warm loaf open', 'Now fresh sourdough just turns up.', ''],
+    ['IMAGE_STILL', 3, 'other', 'Hands slice the loaf on a wooden board', '', ''],
+    ['UGC_ACTOR', 6, 'cta', 'points at the camera and smiles', 'Honestly, try it. Link below.', ''],
+  ].map(([visualTreatment, durationSec, beat, sceneDescription, voiceoverText, onScreenText]) => ({
     durationSec,
     visualTreatment,
     beat,
     sceneDescription,
-    cameraDirection: 'handheld selfie',
+    cameraDirection: visualTreatment === 'UGC_ACTOR' ? 'handheld selfie' : 'close-up, handheld',
     voiceoverText,
-    onScreenText: visualTreatment === 'TEXT_CARD' ? 'Subscribe today' : '',
+    onScreenText,
     transitionOut: 'cut',
   })),
 };

@@ -36,6 +36,33 @@ const hook = (key: string, name: string, parameters: PresetParameters): BuiltInP
   brandSubstitution: true,
 });
 
+/**
+ * BACKLOG 21.4b — TikTok's classic caption look, as seen frame by frame in Fastlane's UGC showcase
+ * videos (2026-10-05): white text with a thin black outline, NO background box, small (about
+ * 3.5–4% of the frame height), placed where the face stays clear. Readability comes from the
+ * stroke, so the brand kit never recolours it (brandSubstitution false: a brand secondary as the
+ * fill with no box behind it could be unreadable). The stroke is 3 px like hook_bold_centre (the
+ * presets' widths are in output pixels at the 1080-wide layout). Cuts in and out with no fade, the
+ * way the platform's own captions change.
+ */
+const TIKTOK_CLASSIC: PresetParameters = {
+  fontFamily: 'Montserrat',
+  fontWeight: 800,
+  fontSizePct: 3.6,
+  lineHeight: 1.15,
+  anchorY: 0.7,
+  fillColor: '#FFFFFF',
+  strokeColor: '#000000',
+  strokeWidthPx: 3,
+  shadowColor: null,
+  backgroundType: 'none',
+  backgroundColor: null,
+  backgroundPaddingPx: null,
+  backgroundRadiusPx: null,
+  animationIn: 'none',
+  animationOut: 'none',
+};
+
 export const BUILT_IN_PRESETS: BuiltInPreset[] = [
   // Hook — first 1–2 seconds
   hook('hook_bold_centre', 'Bold Centre', {
@@ -75,7 +102,22 @@ export const BUILT_IN_PRESETS: BuiltInPreset[] = [
     backgroundPaddingPx: 14,
     backgroundRadiusPx: 12,
   }),
+  // 21.4b: the opening hook of a UGC video, in the same box-less outlined look as its captions.
+  {
+    key: 'hook_tiktok_classic',
+    name: 'TikTok Classic Hook',
+    group: 'hook',
+    parameters: { ...TIKTOK_CLASSIC, fontSizePct: 4.2, anchorY: 0.11, animationIn: 'fadeIn' },
+    brandSubstitution: false,
+  },
   // Subtitle — voiceover captioning
+  {
+    key: 'subtitle_tiktok_classic',
+    name: 'TikTok Classic',
+    group: 'subtitle',
+    parameters: TIKTOK_CLASSIC,
+    brandSubstitution: false,
+  },
   {
     key: 'subtitle_clean_lower',
     name: 'Clean Lower',
@@ -442,3 +484,8 @@ export const ROLE_PRESET: Record<'hook' | 'body' | 'cta', string> = {
   body: 'subtitle_box',
   cta: 'cta_pulse_button',
 };
+
+/** 21.4b: every caption and label of a UGC video (projects with metadata.ugc). */
+export const UGC_CAPTION_PRESET = 'subtitle_tiktok_classic';
+/** 21.4b: the opening hook label on a UGC video's first actor shot. */
+export const UGC_HOOK_PRESET = 'hook_tiktok_classic';

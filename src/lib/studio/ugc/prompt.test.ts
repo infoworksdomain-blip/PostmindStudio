@@ -5,6 +5,7 @@ import {
   maxWordsFor,
   ugcIdeationSupplement,
   ugcScriptSupplement,
+  ugcStillPrompt,
 } from './prompt';
 import { actorDescription, newUgcStyle } from './style';
 
@@ -39,7 +40,7 @@ describe('UGC prompts (21.4)', () => {
       style,
       clipSeconds: [8],
       actorClipBudget: 3,
-      treatments: ['UGC_ACTOR', 'IMAGE_STILL', 'TEXT_CARD'],
+      treatments: ['UGC_ACTOR', 'IMAGE_STILL'],
     });
     expect(text).toContain('first person, conversational');
     expect(text).toContain(
@@ -47,9 +48,26 @@ describe('UGC prompts (21.4)', () => {
     );
     expect(text).toContain('between 2 and 3 UGC_ACTOR shots');
     expect(text).toContain('8 s (at most 16 words)');
-    expect(text).toContain('Other shots (IMAGE_STILL, TEXT_CARD) are short product B-roll');
+    // 21.4b: B-roll is the product in use, phone-camera style, 2–3 s, one between actor shots.
+    expect(text).toContain('IMAGE_STILL shots are product B-roll: the product being used');
+    expect(text).toContain('like a phone-camera photo');
+    expect(text).toContain('Each lasts 2 to 3 seconds');
+    expect(text).toContain('at most one B-roll shot between two UGC_ACTOR shots');
+    expect(text).toContain('Never a title card, text card or graphic');
+    expect(text).not.toContain('closing card');
     expect(text).toContain('NO voiceoverText');
     expect(text).toContain('Never say "I am a real customer"');
+  });
+
+  it('21.4b: a generated B-roll still is a phone photo of hands using the product, no text', () => {
+    const prompt = ugcStillPrompt({ style, sceneDescription: 'pours the latte into a mug' });
+    expect(prompt).toContain(`phone-camera photo of hands using "Oat 'barista' latte kit"`);
+    expect(prompt).toContain('a bright, lived-in home kitchen');
+    expect(prompt).toContain('Scene: pours the latte into a mug.');
+    expect(prompt).toContain('No text, captions, logos');
+    expect(ugcStillPrompt({ style: newUgcStyle({}, 3), sceneDescription: '' })).toContain(
+      'hands using the product',
+    );
   });
 
   it('actor clip prompt: selfie framing, the fixed actor, setting, product reference, no music or text', () => {

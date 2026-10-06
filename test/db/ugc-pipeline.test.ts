@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { TenantContext } from '../../src/lib/tenant';
 import { UGC_HOOK_ANCHOR_Y } from '../../src/lib/studio/overlays/suggest';
+import type { StockImageSource } from '../../src/lib/studio/images/stock';
 import type { ActorVideoRequest } from '../../src/lib/studio/providers/interface';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import type { ProjectJobData } from '../../src/lib/studio/queue/queues';
@@ -39,9 +40,10 @@ const UGC_SCRIPT = {
     },
     {
       durationSec: 3,
-      visualTreatment: 'TEXT_CARD',
+      // 21.4b: UGC B-roll is a product still (TEXT_CARD / MOTION_GRAPHICS are not offered).
+      visualTreatment: 'IMAGE_STILL',
       beat: 'demo',
-      sceneDescription: 'card',
+      sceneDescription: 'hands pour the oat latte into a mug',
       cameraDirection: '',
       voiceoverText: 'Two minutes, done.',
       onScreenText: '',
@@ -77,13 +79,23 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     await db.videoAsset.deleteMany({ where: { projectId: { in: ids } } });
     await db.providerJob.deleteMany({ where: { organisationId: org } });
     await db.providerUsage.deleteMany({ where: { organisationId: org } });
+    await db.imageLibraryItem.deleteMany({ where: { organisationId: org } });
     await db.videoProject.deleteMany({ where: { id: { in: ids } } });
     await db.creatorPortrait.deleteMany({ where: { organisationId: org } });
     await db.creator.deleteMany({ where: { organisationId: org } });
     await db.$disconnect();
   });
 
-  async function run(options: Parameters<typeof createHarness>[1]) {
+  type Harness = ReturnType<typeof createHarness>;
+  const imagePrompts = (h: Harness) =>
+    h.adapters.openai.requests.flatMap((r) => (r.capability === 'text_to_image' ? [r.prompt] : []));
+  /** The image requests for the actor portrait (21.4b: B-roll stills may be generated too). */
+  const portraitRequests = (h: Harness) =>
+    h.adapters.openai.requests.filter(
+      (r) => r.capability === 'text_to_image' && r.prompt === actorPortraitPrompt(style),
+    );
+
+  async function run(options: Parameters<typeof createHarness>[1], ugcStyle = style) {
     const h = createHarness(db, {
       script: UGC_SCRIPT,
       ideation: { ...IDEATION_JSON, realPersonRequested: false },
@@ -98,7 +110,7 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     const { project, runId } = await createProject(db, {
       organisationId: org,
       description: 'A creator reviews our oat latte kit',
-      metadata: { ugc: style },
+      metadata: { ugc: ugcStyle },
       // 21.4a: the actor portrait is a reference image, so actor clips are 8 s.
       durationSec: 24,
     });
@@ -127,13 +139,14 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     const { h, after, assets } = await run({ actor: true });
     expect(after.state).toBe('READY_FOR_REVIEW');
     const shots = after.scripts[0]?.shots ?? [];
-    // 21.4a: 8 s actor clips (the portrait is a reference image); the card absorbs the rest.
+    // 21.4a: 8 s actor clips (the portrait is a reference image). 21.4b: B-roll is 2–3 s unless,
+    // as in this 24 s two-actor script, nothing else can fill the video.
     expect(shots.map((s) => [s.visualTreatment, s.durationSec])).toEqual([
       ['UGC_ACTOR', 8],
-      ['TEXT_CARD', 8],
+      ['IMAGE_STILL', 8],
       ['UGC_ACTOR', 8],
     ]);
-    // Only actors speak: the card's line went on screen.
+    // Only actors speak: the B-roll's line went on screen.
     expect(shots[1]?.voiceoverText).toBeNull();
     expect(shots[1]?.onScreenText).toBe('Two minutes, done.');
 
@@ -176,8 +189,9 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     const portrait = portraits[0];
     expect(portrait).toMatchObject({ kind: 'IMAGE', shotId: null, costPence: 4 });
     expect((portrait?.metadata as { prompt: string }).prompt).toBe(actorPortraitPrompt(style));
-    // The image generator was asked once, with the preset-only portrait prompt.
-    const images = h.adapters.openai.requests.filter((r) => r.capability === 'text_to_image');
+    // The image generator was asked once for the portrait, with the preset-only portrait prompt
+    // (21.4b: the B-roll still may be generated too, with its own prompt).
+    const images = portraitRequests(h);
     expect(images).toHaveLength(1);
     expect(images[0]).toMatchObject({ prompt: actorPortraitPrompt(style), aspectRatio: '9:16' });
     // Every actor clip carries the same portrait URL and points at it in the prompt.
@@ -209,8 +223,7 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     } as unknown as TenantContext;
     await regenerateShot({ db, queue: h.queue }, tenant, shot?.id ?? 'missing', {});
     await drainInline(h.queue, h.deps);
-    const images = h.adapters.openai.requests.filter((r) => r.capability === 'text_to_image');
-    expect(images).toHaveLength(1);
+    expect(portraitRequests(h)).toHaveLength(1);
     const requests = h.adapters.veo.requests as ActorVideoRequest[];
     expect(requests).toHaveLength(3);
     expect(new Set(requests.map((r) => r.actorImageUrl)).size).toBe(1);
@@ -319,19 +332,21 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
   it('21.4a: a refused portrait does not stop the video; clips go on without one', async () => {
     const { h, after, assets } = await run({
       actor: true,
-      imageRespond: () => ({
-        state: 'failed',
-        error: { class: 'content_policy', message: 'refused', retryable: false },
-      }),
+      // Only the portrait is refused; the B-roll still is generated as usual.
+      imageRespond: (request) =>
+        request.capability === 'text_to_image' && request.prompt === actorPortraitPrompt(style)
+          ? {
+              state: 'failed',
+              error: { class: 'content_policy', message: 'refused', retryable: false },
+            }
+          : null,
     });
     expect(after.state).toBe('READY_FOR_REVIEW');
     const requests = h.adapters.veo.requests as ActorVideoRequest[];
     expect(requests).toHaveLength(2);
     expect(requests.every((r) => r.actorImageUrl === undefined)).toBe(true);
     // Asked once for the run, not once per clip.
-    expect(h.adapters.openai.requests.filter((r) => r.capability === 'text_to_image')).toHaveLength(
-      1,
-    );
+    expect(portraitRequests(h)).toHaveLength(1);
     expect(actorImageOf(after.metadata).state).toMatchObject({
       state: 'unavailable',
       reason: 'content_policy',
@@ -359,6 +374,103 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
       ['Client calls?', UGC_HOOK_ANCHOR_Y],
     ]);
     expect(labels(2)).toHaveLength(0);
+  });
+
+  it('21.4b: native outlined captions and labels, no box, and product B-roll without stock', async () => {
+    const { after, h, assets } = await run({
+      actor: true,
+      script: {
+        ...UGC_SCRIPT,
+        shots: [
+          { ...UGC_SCRIPT.shots[0], onScreenText: 'Client calls?' },
+          ...UGC_SCRIPT.shots.slice(1),
+        ],
+      },
+    });
+    const shots = after.scripts[0]?.shots ?? [];
+    const overlays = shots.flatMap((s) => s.overlays);
+    expect(overlays.length).toBeGreaterThan(0);
+    for (const o of overlays) {
+      expect(o.backgroundType).toBe('none');
+      expect(o.backgroundColor).toBeNull();
+      expect(o.fillColor).toBe('#FFFFFF');
+      expect(o.strokeColor).toBe('#000000');
+    }
+    // The hook label is a little larger than the captions; the B-roll line sits with them.
+    const hook = shots[0]?.overlays.find((o) => o.kind !== 'caption');
+    expect(hook).toMatchObject({ text: 'Client calls?', fontSizePct: 4.2, anchorY: 0.11 });
+    const broll = shots[1]?.overlays ?? [];
+    expect(broll.map((o) => [o.text, o.anchorY])).toEqual([['Two minutes, done.', 0.7]]);
+    // The B-roll still was generated as a phone photo of the product in use (no stock search).
+    const still = assets.find((a) => a.shotId === shots[1]?.id && a.kind === 'IMAGE');
+    expect(still).toBeDefined();
+    const stillPrompts = imagePrompts(h).filter((p) => p !== actorPortraitPrompt(style));
+    for (const prompt of stillPrompts) expect(prompt).toContain('phone-camera photo of hands');
+    // No boxed headline in the edit: the B-roll line is never an HTML asset (the AI label is).
+    const edit = JSON.stringify(h.adapters.shotstack.requests[0]);
+    expect(edit).not.toMatch(/"html":"<p[^"]*>Two minutes, done/);
+    expect(edit).not.toMatch(/"html":"<p[^"]*>Client calls\?/);
+  });
+
+  /** A stock source that records its searches and finds nothing. */
+  function spyStock(): { source: StockImageSource; queries: string[] } {
+    const queries: string[] = [];
+    return {
+      queries,
+      source: {
+        provider: 'pexels',
+        search: async (input) => {
+          queries.push(input.query);
+          return [];
+        },
+        downloadUrl: async () => {
+          throw new Error('no stock download expected');
+        },
+      },
+    };
+  }
+
+  it('21.4b: B-roll without a product photo comes from the library or a generated image, never stock', async () => {
+    const stock = spyStock();
+    const { after, assets } = await run({ actor: true, stockSources: [stock.source] });
+    expect(after.state).toBe('READY_FOR_REVIEW');
+    const broll = after.scripts[0]?.shots[1];
+    expect(stock.queries.filter((q) => q.includes('oat latte'))).toEqual([]);
+    const still = assets.find((a) => a.id === broll?.assetId);
+    expect(still?.source).toMatch(/^(openai|image-library:)/);
+    expect((still?.metadata as { chosenBy?: string } | null)?.chosenBy ?? 'generated').not.toMatch(
+      /stock/,
+    );
+  });
+
+  it('21.4b: the owner’s product photo is the B-roll still first', async () => {
+    const product = await db.imageLibraryItem.create({
+      data: {
+        organisationId: org,
+        businessId: 'biz-1',
+        source: 'UPLOAD',
+        s3Bucket: 'assets',
+        s3Key: `orgs/${org}/product-photo.png`,
+        widthPx: 1024,
+        heightPx: 1024,
+        fileSizeBytes: 1_000,
+        tags: [],
+        fingerprint: randomUUID(),
+      },
+    });
+    const stock = spyStock();
+    const withPhoto = newUgcStyle({ product: { name: 'Oat latte kit', imageId: product.id } }, 7);
+    const { after, assets, h } = await run(
+      { actor: true, stockSources: [stock.source] },
+      withPhoto,
+    );
+    expect(after.state).toBe('READY_FOR_REVIEW');
+    const broll = after.scripts[0]?.shots[1];
+    const still = assets.find((a) => a.id === broll?.assetId);
+    expect(still?.source).toBe(`image-library:${product.id}`);
+    expect(stock.queries).toEqual([]);
+    // No image was generated for the B-roll (only the portrait may be).
+    expect(imagePrompts(h).filter((p) => p !== actorPortraitPrompt(withPhoto))).toEqual([]);
   });
 
   it('composes the clip audio at full level, with the AI label, and passes audio and caption sync', async () => {
@@ -419,13 +531,13 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
           {
             ...UGC_SCRIPT.shots[1],
             durationSec: 15,
-            visualTreatment: 'TEXT_CARD',
+            visualTreatment: 'IMAGE_STILL',
             onScreenText: 'Oat kit',
           },
         ],
       },
     });
-    expect(after.scripts[0]?.shots.map((s) => s.visualTreatment)).toEqual(['TEXT_CARD']);
+    expect(after.scripts[0]?.shots.map((s) => s.visualTreatment)).toEqual(['IMAGE_STILL']);
     expect(h.adapters.veo.requests).toHaveLength(0);
   });
 });

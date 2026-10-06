@@ -75,7 +75,11 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 const SAFE_FONT = /^[A-Za-z0-9 -]{1,64}$/;
 /** Text over images sits on a dark shade, so it stays white (or the brand colour). */
 const OVERLAY_TEXT = '#ffffff';
-/** Line height used to size text boxes (the CSS below sets the same). */
+/**
+ * Line height used to size text boxes only. 21.7 (production 2026-10-05): the CSS must NOT set
+ * it — a unitless `line-height` made Shotstack draw every wrapped line on one baseline. The
+ * renderer's default spacing is ≤ this, so boxes sized with it still hold their lines.
+ */
 const LINE_HEIGHT = 1.25;
 
 /** Font sizes (fractions of `textBase`), as the 9:16 layout has always drawn them. */
@@ -102,7 +106,7 @@ function css(input: SlideshowEdlInput, px: number, colour: string, extra = ''): 
     input.brand?.fontFamily && SAFE_FONT.test(input.brand.fontFamily)
       ? input.brand.fontFamily
       : 'Arial';
-  return `p { font-family: '${font}', sans-serif; color: ${colour}; font-size: ${px}px; font-weight: 700; line-height: ${LINE_HEIGHT}; text-align: center; margin: 0; ${extra} } small { display: block; font-size: 0.55em; font-weight: 400; margin-top: 0.4em; }`;
+  return `p { font-family: '${font}', sans-serif; color: ${colour}; font-size: ${px}px; font-weight: 700; text-align: center; margin: 0; ${extra} } small { display: block; font-size: 0.55em; font-weight: 400; margin-top: 0.4em; }`;
 }
 
 interface Box {
