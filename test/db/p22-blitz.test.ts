@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { QuotaExceededError } from '../../src/lib/errors';
+import { ProviderError, QuotaExceededError } from '../../src/lib/errors';
+import { MAX_PLANNING_OUTPUT_TOKENS } from '../../src/lib/studio/pipeline/token-budgets';
 import { BLITZ_DAILY_RENDER_CAP, BLITZ_QUEUE_SIZE } from '../../src/lib/studio/blitz/constants';
 import { InlineJobQueue } from '../../src/lib/studio/queue/enqueue';
 import { createAngle, suggestAngles, updateAngle } from '../../src/lib/studio/services/angles';
@@ -185,6 +186,53 @@ describe.skipIf(!hasDb)('22.4 Blitz', { timeout: 180_000 }, () => {
     expect(usage.short).toBe(0);
     // A full deck is not refilled again.
     expect((await refillBlitzQueue(refillDeps(generate), refillScope())).created).toBe(0);
+  });
+
+  it('refill: cards are written at most three per call with the planning token cap (production 2026-10-06)', async () => {
+    await putMix(db, scope(), 'user-1', {
+      formatWeights: { carousel: 0, slideshow: 0, ai_video: 100 },
+    });
+    const seen: Array<{ cards: number; maxTokens: number | undefined }> = [];
+    const inner = fakeGenerator();
+    const generate = (async (request) => {
+      const cards = Number(/Write exactly (\d+) cards/.exec(request.prompt)?.[1] ?? 0);
+      if (cards) {
+        seen.push({ cards, maxTokens: request.maxTokens });
+        // Every batch is numbered from 1.
+        expect(request.prompt).toMatch(/\n1\. /);
+        expect(request.prompt).not.toMatch(new RegExp(`\\n${cards + 1}\\. `));
+      }
+      return inner(request);
+    }) as PlanGenerator;
+    const result = await refillBlitzQueue(refillDeps(generate), refillScope());
+    expect(result.created).toBe(BLITZ_QUEUE_SIZE);
+    expect(seen.map((s) => s.cards)).toEqual([3, BLITZ_QUEUE_SIZE - 3]);
+    expect(seen.every((s) => s.maxTokens === MAX_PLANNING_OUTPUT_TOKENS)).toBe(true);
+  });
+
+  it('refill: a batch that fails leaves the other cards (only an all-batch failure throws)', async () => {
+    await putMix(db, scope(), 'user-1', {
+      formatWeights: { carousel: 0, slideshow: 0, ai_video: 100 },
+    });
+    const inner = fakeGenerator();
+    let call = 0;
+    const generate = (async (request) => {
+      if (/Write exactly \d+ cards/.test(request.prompt) && call++ === 0)
+        throw new ProviderError('anthropic', 'output_truncated', 'Output hit max_tokens', false);
+      return inner(request);
+    }) as PlanGenerator;
+    const result = await refillBlitzQueue(refillDeps(generate), refillScope());
+    expect(result.created).toBe(BLITZ_QUEUE_SIZE - 3);
+    expect(result.failed).toBe(3);
+    const failing = (async (request) => {
+      if (/Write exactly \d+ cards/.test(request.prompt))
+        throw new ProviderError('anthropic', 'output_truncated', 'Output hit max_tokens', false);
+      return inner(request);
+    }) as PlanGenerator;
+    await db.blitzSuggestion.deleteMany({ where: scope() });
+    await expect(refillBlitzQueue(refillDeps(failing), refillScope())).rejects.toThrow(
+      /max_tokens/,
+    );
   });
 
   it('refill: duplicates of recent cards are rejected (no_unique_content)', async () => {
