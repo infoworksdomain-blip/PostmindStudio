@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CalendarRange, ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,17 @@ import { MoveToDialog, useReschedule } from './reschedule';
 import { useRetryPublication } from './retry';
 import type { Publication } from '@/lib/client/types';
 import { MAX_PAGES, PAGE_LIMIT, useCalendarPublications } from './use-calendar-publications';
+import { IN_PROGRESS_STAGES } from '@/lib/studio/live/eta';
+import { idsKey } from '../live/live-model';
+import { LiveProjectsProvider } from '../live/live-projects-context';
+import { useDebounced } from '../live/use-debounced';
+import { useLiveProjects } from '../live/use-live-projects';
+import { PostPanel, type PanelTarget } from './post-panel';
+
+/** 24.2: refresh the month this long after the last live event that changed a post. */
+const LIVE_REFRESH_DEBOUNCE_MS = 1_000;
+/** 24.2: while live status is unavailable, the month refreshes itself this often. */
+const FALLBACK_REFRESH_MS = 60_000;
 
 // BACKLOG 10.5 — Manage: calendar of scheduled and published videos (spec 14.3), from
 // GET /publications with a from/to window. Month grid on desktop, agenda list on phones.
@@ -49,15 +60,33 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   const days = useMemo(() => monthGrid(month), [month]);
   const range = useMemo(() => gridWindow(month), [month]);
   const today = dayKey(new Date());
+  const [polling, setPolling] = useState(false);
   const { data, error, isLoading, isValidating, mutate } = useCalendarPublications(
     range.from,
     range.to,
+    polling ? FALLBACK_REFRESH_MS : 0,
   );
   const byDay = useMemo(() => groupByDay(data?.publications ?? []), [data]);
   const { businessId } = useBusiness();
   const [openedAt] = useState(() => Date.now());
   const summary = useUpcomingSlots(businessId, summaryWindow(openedAt), openedAt);
-  const visible = useUpcomingSlots(businessId, range, openedAt);
+  const visible = useUpcomingSlots(businessId, range, openedAt, polling ? FALLBACK_REFRESH_MS : 0);
+  // 24.2: live status of every post on screen; a post that finishes, fails or posts refreshes
+  // the month (debounced) instead of the calendar polling.
+  const liveIds = idsKey([
+    ...(data?.publications ?? []).map((p) => p.projectId),
+    ...(visible.data?.upcoming?.planned ?? []).map((p) => p.projectId),
+  ]);
+  const refreshSoon = useDebounced(() => {
+    void mutate();
+    void visible.mutate();
+  }, LIVE_REFRESH_DEBOUNCE_MS);
+  const live = useLiveProjects(liveIds, (event) => {
+    if (!event.stage || !IN_PROGRESS_STAGES.has(event.stage)) refreshSoon();
+  });
+  const livePolling = live.mode === 'polling';
+  useEffect(() => setPolling(livePolling), [livePolling]);
+  const [panel, setPanel] = useState<PanelTarget | null>(null);
   const openByDay = useMemo(
     () => groupOpenByDay(visible.data?.upcoming?.openSlots ?? []),
     [visible.data],
@@ -87,6 +116,8 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
     pendingId: pending,
     onRetry: (p) => void retry(p),
     retryingId: retrying,
+    onOpen: (publication) => setPanel({ kind: 'publication', publication }),
+    onOpenPlanned: (post) => setPanel({ kind: 'planned', post }),
     onDropOnDay: (id, day) => {
       const publication = data?.publications.find((p) => p.id === id);
       if (!publication?.scheduledFor) return;
@@ -96,7 +127,7 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
   };
 
   return (
-    <>
+    <LiveProjectsProvider value={live}>
       <PageHeader
         eyebrow={tn('manage')}
         title={t('title')}
@@ -203,7 +234,19 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
           />
         </>
       )}
+      <PostPanel
+        target={panel}
+        onClose={() => setPanel(null)}
+        onReschedule={(publication) => {
+          setPanel(null);
+          setMoving(publication);
+        }}
+        onChanged={() => {
+          void mutate();
+          refreshSlots();
+        }}
+      />
       <DripQueuePanel onSaved={refreshSlots} />
-    </>
+    </LiveProjectsProvider>
   );
 }

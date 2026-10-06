@@ -11,9 +11,12 @@ import { canMove, DRAG_TYPE } from './reschedule';
 import { canRetry } from './retry';
 import { useProjectName } from '@/lib/client/use-project-name';
 import { usePublicationBadge } from '../publications/tiktok-draft';
+import { useLiveStatus } from '../live/live-projects-context';
+import { StatusChip } from '../live/status-chip';
 
 // One publication on the calendar: a thin state-coloured rule, time, platform and video name.
-// Links to the project. A scheduled one can be dragged to another day (13.9) or moved with its
+// 24.2: opens the side panel (onOpen) with a live status chip; without onOpen it links to the
+// project. A scheduled one can be dragged to another day (13.9) or moved with its
 // "Move to" button (keyboard and phone alternative to dragging).
 
 const RULE: Record<string, string> = {
@@ -28,6 +31,7 @@ export function CalendarEvent({
   compact = false,
   onMove,
   onRetry,
+  onOpen,
   busy = false,
 }: {
   publication: Publication;
@@ -36,6 +40,8 @@ export function CalendarEvent({
   onMove?: (publication: Publication) => void;
   /** Retries a failed publication; failed ones only. Absent = no retry button. */
   onRetry?: (publication: Publication) => void;
+  /** 24.2: opens the side panel; absent = the card links to the project page. */
+  onOpen?: (publication: Publication) => void;
   busy?: boolean;
 }) {
   const t = useTranslations('calendar.event');
@@ -48,21 +54,20 @@ export function CalendarEvent({
   const projectName = useProjectName();
   const name = projectName(publication.project?.name);
   const movable = Boolean(onMove) && canMove(publication);
-  const link = (
-    <Link
-      href={`/projects/${publication.projectId}`}
-      title={t('title', { name, platform, state })}
-      aria-label={
-        time ? t('ariaAt', { name, platform, state, time }) : t('aria', { name, platform, state })
-      }
-      className={cn(
-        'block min-w-0 rounded-sm border-s-2 bg-secondary/60 transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-        RULE[publication.state] ?? 'border-s-border',
-        compact ? 'px-1.5 py-0.5 text-[0.7rem] leading-tight' : 'px-3 py-2 text-sm',
-        movable && 'flex-1 cursor-grab active:cursor-grabbing',
-        busy && 'opacity-50',
-      )}
-    >
+  const live = useLiveStatus(publication.projectId); // 24.2
+  const label = time
+    ? t('ariaAt', { name, platform, state, time })
+    : t('aria', { name, platform, state });
+  const className = cn(
+    'block min-w-0 rounded-sm border-s-2 bg-secondary/60 text-start transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+    RULE[publication.state] ?? 'border-s-border',
+    compact ? 'px-1.5 py-0.5 text-[0.7rem] leading-tight' : 'px-3 py-2 text-sm',
+    movable && 'flex-1 cursor-grab active:cursor-grabbing',
+    onOpen && !movable && 'w-full',
+    busy && 'opacity-50',
+  );
+  const content = (
+    <>
       <span className="flex items-baseline gap-1.5">
         {publication.state === 'FAILED' && (
           <AlertTriangle aria-hidden className="size-3 shrink-0 self-center text-destructive" />
@@ -75,6 +80,33 @@ export function CalendarEvent({
           {t('meta', { platform, state })}
         </span>
       )}
+      <StatusChip
+        live={live}
+        publicationState={publication.state}
+        compact={compact}
+        className="mt-0.5"
+      />
+    </>
+  );
+  const link = onOpen ? (
+    <button
+      type="button"
+      title={t('title', { name, platform, state })}
+      aria-label={label}
+      aria-haspopup="dialog"
+      onClick={() => onOpen(publication)}
+      className={className}
+    >
+      {content}
+    </button>
+  ) : (
+    <Link
+      href={`/projects/${publication.projectId}`}
+      title={t('title', { name, platform, state })}
+      aria-label={label}
+      className={className}
+    >
+      {content}
     </Link>
   );
   if (onRetry && canRetry(publication)) {
