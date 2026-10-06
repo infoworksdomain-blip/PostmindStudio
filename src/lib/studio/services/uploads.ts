@@ -39,6 +39,9 @@ export const UPLOAD_VIDEO_EXTENSION: Record<(typeof UPLOAD_CONTENT_TYPES)[number
 export const UPLOAD_LIMITS = {
   source_video: { maxBytes: 500 * 1024 * 1024, minSec: 1, maxSec: 600 },
   slide_clip: { maxBytes: 200 * 1024 * 1024, minSec: 0.5, maxSec: 120 },
+  // 22.1: a demo video for hook + demo videos (a screen recording or phone-in-hand footage);
+  // at most 5 minutes (a video uses its first seconds; services/demo-videos.ts).
+  demo_video: { maxBytes: 500 * 1024 * 1024, minSec: 2, maxSec: 300 },
 } as const;
 export const PUT_URL_TTL_SEC = 15 * 60;
 const SAFE_SEGMENT = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,127}$/;
@@ -52,7 +55,7 @@ const ALL_CONTENT_TYPES = [
 
 export const createUploadInput = z
   .object({
-    kind: z.enum(['source_video', 'slide_clip', ...BRAND_KINDS]),
+    kind: z.enum(['source_video', 'slide_clip', 'demo_video', ...BRAND_KINDS]),
     contentType: z.enum(ALL_CONTENT_TYPES),
     sizeBytes: z.number().int().positive(),
     fileName: z
@@ -61,7 +64,10 @@ export const createUploadInput = z
       .min(1)
       .max(200)
       .regex(/^[^/\\\u0000-\u001f]+$/, 'fileName must be a plain file name'),
-    /** source_video: the business the video is for (optional; checked again on project use). */
+    /**
+     * source_video: the business the video is for (optional; checked again on project use).
+     * demo_video: required — a demo belongs to one business's demo bank (22.1).
+     */
     businessId: z.string().trim().min(1).max(128).optional(),
     /** slide_clip: the slideshow project the clip belongs to. */
     projectId: z.string().trim().min(1).max(64).optional(),
@@ -72,6 +78,8 @@ export const createUploadInput = z
   .superRefine((v, ctx) => {
     if (v.kind === 'slide_clip' && !v.projectId)
       ctx.addIssue({ code: 'custom', path: ['projectId'], message: 'projectId is required' });
+    if (v.kind === 'demo_video' && !v.businessId)
+      ctx.addIssue({ code: 'custom', path: ['businessId'], message: 'businessId is required' });
     if (isBrandKind(v.kind)) {
       const problem = brandCreateProblem({ ...v, kind: v.kind });
       if (problem) ctx.addIssue({ code: 'custom', path: ['kind'], message: problem });
@@ -150,7 +158,9 @@ export async function createUpload(
         ? UPLOAD_KIND_ENUM[brand]
         : input.kind === 'source_video'
           ? 'SOURCE_VIDEO'
-          : 'SLIDE_CLIP',
+          : input.kind === 'demo_video'
+            ? 'DEMO_VIDEO'
+            : 'SLIDE_CLIP',
       projectId: input.kind === 'slide_clip' ? (input.projectId ?? null) : null,
       fileName: input.fileName,
       contentType: input.contentType,
@@ -203,7 +213,12 @@ export async function completeUpload(
   if (upload.state === 'READY') return completed(deps.db, upload);
   if (isBrandUploadKind(upload.kind)) return completeBrandUpload(deps, upload);
 
-  const kind: Kind = upload.kind === 'SOURCE_VIDEO' ? 'source_video' : 'slide_clip';
+  const kind: Kind =
+    upload.kind === 'SOURCE_VIDEO'
+      ? 'source_video'
+      : upload.kind === 'DEMO_VIDEO'
+        ? 'demo_video'
+        : 'slide_clip';
   let size: number;
   try {
     size = await deps.uploads.storage.size(upload.s3Bucket, upload.s3Key);
@@ -347,6 +362,26 @@ async function createUploadAsset(
       },
     },
   });
+}
+
+/**
+ * 22.1: a demo video of the business's demo bank becomes a video asset of a hook + demo project.
+ * Unlike a source video it is never claimed: the same demo serves any number of projects (each
+ * gets its own asset row on the same object; retention keeps objects a demo upload still owns,
+ * business-hard-delete.ts unsharedAssetObjects). Runs inside the project-creation transaction.
+ */
+export async function attachDemoUpload(
+  tx: Tx,
+  upload: VideoUpload,
+  projectId: string,
+): Promise<{ assetId: string }> {
+  const asset = await createUploadAsset(tx, upload, projectId, {
+    durationSec: upload.durationSec,
+    width: upload.widthPx,
+    height: upload.heightPx,
+    sizeBytes: upload.sizeBytes === null ? null : Number(upload.sizeBytes),
+  });
+  return { assetId: asset.id };
 }
 
 /**

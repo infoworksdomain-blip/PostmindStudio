@@ -422,6 +422,8 @@ export class KlingAdapter implements ProviderAdapter {
     if (request.capability === 'actor_video') {
       return (
         Boolean(this.options.actorVideo) &&
+        // 22.1: Kling's actor path is native-audio dialogue only; silent reaction clips go to Veo.
+        !request.silent &&
         request.spokenLine.trim().length > 0 &&
         request.durationSec >= MIN_SHOT_SEC &&
         request.durationSec <= MAX_CLIP_SEC

@@ -203,6 +203,11 @@ export interface HarnessOptions {
   actorRespond?: (request: ProviderRequest) => ProviderPollResult;
   /** 21.4a: the scripted OpenAI image answer (default: a stored PNG). */
   imageRespond?: (request: ProviderRequest) => ProviderPollResult;
+  /** 22.1: the hook line answer; 22.2: the wall-of-text answer. */
+  hookLine?: unknown;
+  wallText?: unknown;
+  /** 22.2: register a scripted stock-footage adapter (Pexels video). */
+  stock?: boolean;
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -220,6 +225,15 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.profile ?? PROFILE_JSON);
     if (request.system.includes('month content planner'))
       return textResult(options.monthPlan ?? monthPlanJson(request.prompt));
+    // 22.1 / 22.2: a hook + demo video's hook line and a wall of text's block.
+    if (request.system.includes('ONE line of on-screen text'))
+      return textResult(
+        options.hookLine ?? { hookLine: 'Still taking bookings by phone?', framework: 'question' },
+      );
+    if (request.system.includes('"wall of text"'))
+      return textResult(
+        options.wallText ?? { text: 'Three habits\n- Plan tomorrow tonight\n- Batch errands' },
+      );
     return textResult(options.safety ?? SAFETY_ALLOW);
   });
   const runway = new ScriptedAdapter(
@@ -270,6 +284,14 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       })),
     45,
   );
+  // 22.2: scripted stock footage (a wall of text's background).
+  const stockVideo = new ScriptedAdapter('pexels-video', ['stock_footage'], () => ({
+    state: 'succeeded',
+    output: {
+      url: 'https://pexels.invalid/calm.mp4',
+      metadata: { licence: 'Pexels', costPence: 0 },
+    },
+  }));
   // 20.21: no content-safety adapter (Hive removed; none is built), as in production.
 
   const { storage, objects } = memoryStorage();
@@ -375,6 +397,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       openai,
       ...(options.noTranscription ? [] : [assemblyai]),
       ...(options.actor ? [veo] : []),
+      ...(options.stock ? [stockVideo] : []),
     ]),
     breaker,
     killSwitch,
@@ -432,7 +455,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     attributions,
     oauthClients,
     meta,
-    adapters: { anthropic, runway, elevenlabs, shotstack, openai, assemblyai, veo },
+    adapters: { anthropic, runway, elevenlabs, shotstack, openai, assemblyai, veo, stockVideo },
     objects,
     media,
     fetchImpl,
@@ -449,6 +472,10 @@ export async function createProject(
     metadata?: Record<string, unknown>;
     /** 21.4a: the TikTok format's length (default 15 s). */
     durationSec?: number;
+    /** 22.1 / 22.2: another source type (default BRIEF). */
+    sourceType?: 'BRIEF' | 'HOOK_DEMO' | 'WALL_OF_TEXT';
+    /** 22.1: target formats (default one TikTok format). */
+    targetFormats?: Array<{ platform: string; aspectRatio: string; duration: number }>;
   },
 ) {
   const runId = randomUUID();
@@ -460,8 +487,8 @@ export async function createProject(
       name: 'Leeds Sourdough Co',
       description: overrides.description ?? 'Launch video for our sourdough subscription',
       state: 'QUEUED',
-      sourceType: 'BRIEF',
-      targetFormats: [
+      sourceType: overrides.sourceType ?? 'BRIEF',
+      targetFormats: overrides.targetFormats ?? [
         { platform: 'tiktok', aspectRatio: '9:16', duration: overrides.durationSec ?? 15 },
       ],
       costBudgetPence: overrides.costBudgetPence ?? null,

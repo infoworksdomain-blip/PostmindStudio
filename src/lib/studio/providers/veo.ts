@@ -98,6 +98,11 @@ import {
 //   at most 2 of the 3 references, 8 s, allow_adult, 9:16 and native audio on the Fast model.
 //   UNCONFIRMED until the first live run: whether 9:16 + references + audio behave together on
 //   Fast (the docs do not say otherwise); the sample uses veo-3.1-generate-preview.
+//
+// BACKLOG 22.1 (hook + demo, 2026-10-05): a SILENT actor clip (`silent: true`, empty line) is the
+// same predictLongRunning body with the scene prompt only — no quoted dialogue, and the prompt
+// says nobody speaks. No new request field: audio stays "Always on" (docs/veo parameter table,
+// re-read 2026-10-05) and the composer mutes the clip (volume 0).
 
 export const PROVIDER_ID = 'veo';
 export const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
@@ -463,13 +468,17 @@ export class VeoAdapter implements ProviderAdapter {
   /** Router hint: Veo renders at most 8 s, so longer shots go to the next candidate. */
   supportsRequest(request: ProviderRequest): boolean {
     if (request.capability === 'actor_video') {
+      // 22.1: a silent reaction clip has no line (and so no language to evaluate).
+      const lineOk = request.silent
+        ? request.spokenLine.trim().length === 0
+        : request.spokenLine.trim().length > 0 &&
+          request.spokenLine.length <= MAX_SPOKEN_LINE_CHARS &&
+          // English only: the docs have not evaluated other languages (21.4).
+          /^en(-|$)/i.test(request.languageCode);
       return (
         request.durationSec >= MIN_DURATION_SEC &&
         request.durationSec <= MAX_DURATION_SEC &&
-        request.spokenLine.trim().length > 0 &&
-        request.spokenLine.length <= MAX_SPOKEN_LINE_CHARS &&
-        // English only: the docs have not evaluated other languages (21.4).
-        /^en(-|$)/i.test(request.languageCode) &&
+        lineOk &&
         // 21.4a: Lite documents no referenceImages ("n/a"), so a clip with a reference goes on.
         (actorReferenceUrls(request).length === 0 || this.model !== 'veo-3.1-lite-generate-preview')
       );
@@ -529,10 +538,14 @@ export class VeoAdapter implements ProviderAdapter {
   private async buildActorBody(request: ActorVideoRequest): Promise<Record<string, unknown>> {
     if (!this.supportsRequest(request)) {
       throw this.invalid(
-        `Veo actor clips need an English line of 1–${MAX_SPOKEN_LINE_CHARS} characters and a ${MIN_DURATION_SEC}–${MAX_DURATION_SEC}s shot`,
+        `Veo actor clips need an English line of 1–${MAX_SPOKEN_LINE_CHARS} characters (none for a silent clip) and a ${MIN_DURATION_SEC}–${MAX_DURATION_SEC}s shot`,
       );
     }
-    const prompt = withDialogue(request.prompt, request.spokenLine);
+    // 22.1: a silent clip sends the scene prompt alone (it already says nobody speaks); the body
+    // is otherwise identical (same documented fields, no new parameter).
+    const prompt = request.silent
+      ? request.prompt.trim()
+      : withDialogue(request.prompt, request.spokenLine);
     if (request.prompt.trim().length < 1 || prompt.length > MAX_PROMPT_CHARS) {
       throw this.invalid(`Veo prompts must be 1–${MAX_PROMPT_CHARS} characters`);
     }

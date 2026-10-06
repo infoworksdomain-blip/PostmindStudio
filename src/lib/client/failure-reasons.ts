@@ -50,6 +50,11 @@ export const FAILURE_CODES = [
   'service_unavailable',
   // 21.4: a UGC actor brief asked for a real person or celebrity (ugc/real-person.ts).
   'ugc_real_person_refused',
+  // 22.1: a hook + demo video lost its demo, or no hook clip could be made (no AI creator, no
+  // licensed library clip). 22.2: a wall of text without its settings.
+  'no_demo_video',
+  'hook_clip_unavailable',
+  'wall_of_text_invalid',
 ] as const;
 
 export type FailureCode = (typeof FAILURE_CODES)[number];
@@ -172,6 +177,9 @@ const SERVER_WORDED: ReadonlySet<FailureCode> = new Set<FailureCode>([
   'ownership_disputed',
   'service_unavailable',
   'ugc_real_person_refused',
+  'no_demo_video',
+  'hook_clip_unavailable',
+  'wall_of_text_invalid',
 ]);
 
 /**

@@ -11,6 +11,7 @@ import {
   type BrandMedia,
 } from './edl-brand';
 import { duckedMusicClips, type MusicSpan } from './edl-music';
+import { halfFrameClip, type Crop } from './edl-stacked';
 import { escapeHtml, HEX_COLOUR, roundSec, SAFE_FONT } from './edl-time';
 import { backdropColour, readableTextColour } from './edl-backdrop';
 import type { CompositionSummary } from './composition-summary';
@@ -121,6 +122,22 @@ export interface EdlShot {
   sfxSrc?: string;
   /** Length of the SFX file, when known; the clip is capped at SFX_MAX_SEC and the shot. */
   sfxDurationSec?: number | null;
+  /** 22.1: level of the clip's own audio when it is kept (keepSourceAudio); default 1. */
+  sourceAudioVolume?: number;
+  /** 22.1: start the clip this many seconds in (Shotstack VideoAsset `trim`). */
+  trimSec?: number;
+  /**
+   * 22.1 stacked hook + demo: this (hook) shot fills the top half of the frame while the next
+   * shot's clip plays in the bottom half (pipeline/edl-stacked.ts); the next shot then starts
+   * `trimSec` in, so the demo runs on without a jump.
+   */
+  stackedTop?: { hookCrop: Crop; bottomSrc: string; bottomCrop: Crop; bottomVolume: number };
+}
+
+/** 22.1: the clip's own audio is part of the mix (an uploaded demo at a level above 0). */
+function playsSourceAudio(shot: EdlShot): boolean {
+  if (shot.stackedTop) return shot.stackedTop.bottomVolume > 0;
+  return Boolean(shot.keepSourceAudio) && (shot.sourceAudioVolume ?? SOURCE_AUDIO_VOLUME) > 0;
 }
 
 /** 13.27 SFX level under narration (Shotstack AudioAsset volume 0–1; ≈ −6 dB). */
@@ -156,6 +173,8 @@ export interface EdlInput {
   aiLabel?: boolean;
   /** P2: a platform end card for non-white-label outputs (never set for white-label). */
   platformCard?: BrandMedia['outro'];
+  /** 22.1: the music level under narration or a demo's own audio (default MUSIC_UNDER_VOICE_VOLUME). */
+  musicUnderSpeechVolume?: number;
 }
 
 function brandColours(input: EdlInput) {
@@ -231,6 +250,8 @@ interface Tracks {
   captions: Record<string, unknown>[];
   voice: Record<string, unknown>[];
   sfx: Record<string, unknown>[];
+  /** 22.1: the bottom half of a stacked hook + demo (under the hook in time, beside it in space). */
+  stackBottom: Record<string, unknown>[];
 }
 
 function visualClip(
@@ -288,13 +309,42 @@ function visualClip(
       effect: STILL_EFFECTS[stillIndex % STILL_EFFECTS.length], // gentle Ken Burns on stills
       ...transition,
     });
+  } else if (shot.stackedTop) {
+    // 22.1: hook on top (muted), the next shot's clip below, both for the hook's length.
+    tracks.visual.push({
+      ...halfFrameClip({
+        src: shot.visualSrc,
+        half: 'top',
+        startSec: at,
+        lengthSec: shot.durationSec,
+        crop: shot.stackedTop.hookCrop,
+        volume: 0,
+      }),
+      ...transition,
+    });
+    tracks.stackBottom.push(
+      halfFrameClip({
+        src: shot.stackedTop.bottomSrc,
+        half: 'bottom',
+        startSec: at,
+        lengthSec: shot.durationSec,
+        crop: shot.stackedTop.bottomCrop,
+        volume: shot.stackedTop.bottomVolume,
+      }),
+    );
   } else {
+    const volume = shot.keepSourceAudio
+      ? (shot.sourceAudioVolume ?? SOURCE_AUDIO_VOLUME)
+      : shot.clipSpeech
+        ? SOURCE_AUDIO_VOLUME
+        : 0;
     tracks.visual.push({
       // Narration + music carry the audio, except for an uploaded clip's own soundtrack.
       asset: {
         type: 'video',
         src: shot.visualSrc,
-        volume: shot.keepSourceAudio || shot.clipSpeech ? SOURCE_AUDIO_VOLUME : 0,
+        volume,
+        ...(shot.trimSec && shot.trimSec > 0 && { trim: roundSec(shot.trimSec) }),
       },
       start,
       length,
@@ -388,6 +438,7 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
     captions: [],
     voice: [],
     sfx: [],
+    stackBottom: [],
   };
   const introSec = cardSec(media.intro);
   if (media.intro) tracks.visual.push(cardClip(media.intro, 0, 'intro'));
@@ -416,7 +467,7 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
     spans.push({
       startSec: start,
       endSec: start + shot.durationSec,
-      volume: shot.voiceSrc || shot.clipSpeech ? 1 : 0,
+      volume: shot.voiceSrc || shot.clipSpeech || playsSourceAudio(shot) ? 1 : 0,
     });
     start += shot.durationSec;
   }
@@ -455,6 +506,7 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
     watermark,
     logo,
     tracks.visual,
+    tracks.stackBottom,
     tracks.voice,
     // 13.27: effects sit under the narration and above the music bed.
     tracks.sfx,
@@ -463,9 +515,11 @@ export function buildShotstackComposition(input: EdlInput): ShotstackComposition
   }
   if (input.musicSrc) {
     // 15.B4: duck under narrated shots; full bed where nothing is said (cards, silent shots).
-    const narrated = tracks.voice.length > 0 || input.shots.some((s) => s.clipSpeech);
-    const level = (voiced: boolean) =>
-      narrated && voiced ? MUSIC_UNDER_VOICE_VOLUME : MUSIC_ALONE_VOLUME;
+    // 22.1: a demo's own audio (a voice-over, app sounds) ducks the bed like narration does.
+    const narrated =
+      tracks.voice.length > 0 || input.shots.some((s) => s.clipSpeech || playsSourceAudio(s));
+    const under = input.musicUnderSpeechVolume ?? MUSIC_UNDER_VOICE_VOLUME;
+    const level = (voiced: boolean) => (narrated && voiced ? under : MUSIC_ALONE_VOLUME);
     const bed: MusicSpan[] = [
       { startSec: 0, endSec: introSec, volume: level(false) },
       ...spans.map((s) => ({ ...s, volume: level(s.volume === 1) })),

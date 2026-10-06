@@ -273,6 +273,13 @@ export function simulatedText(request: ProviderRequest): ProviderPollResult {
   )
     return textResult(SIM_UGC_SCRIPT);
   if (request.system.includes('script and storyboard')) return textResult(variedScript());
+  // 22.1 / 22.2: the hook line of a hook + demo video and the block of a wall of text.
+  if (request.system.includes('ONE line of on-screen text'))
+    return textResult({ hookLine: 'Still taking bookings by phone?', framework: 'question' });
+  if (request.system.includes('"wall of text"'))
+    return textResult({
+      text: 'Three things our regulars know\n- Bread is best before noon\n- Sourdough keeps for days\n- Freeze it sliced',
+    });
   if (request.system.includes('social-media slideshow')) {
     return textResult({
       hook: '5 reasons people love our sourdough',
@@ -288,6 +295,8 @@ export function simulatedText(request: ProviderRequest): ProviderPollResult {
 export interface SampleMediaUrls {
   clipUrl: string;
   renderUrl: string;
+  /** 22.1 / 22.2: renders of other whole-second lengths (the 30 s render covers the rest). */
+  shortRenderUrls?: Record<number, string>;
   voice: Uint8Array;
   music: Uint8Array;
   png: Uint8Array;
@@ -407,12 +416,28 @@ export function createSimulatedRegistry(input: {
     new SimulatedAdapter('shotstack', ['composition'], {
       latencySec: [20, 60],
       costPence: 12,
-      respond: async () => ({
+      respond: async (r) => ({
         state: 'succeeded',
-        output: { url: media.renderUrl, metadata: { renderId: 'simulated', costPence: 12 } },
+        output: {
+          url:
+            (r.capability === 'composition' &&
+              media.shortRenderUrls?.[Math.round(r.outputDurationSec)]) ||
+            media.renderUrl,
+          metadata: { renderId: 'simulated', costPence: 12 },
+        },
       }),
       profile,
       flaky: true,
+    }),
+    // 22.2: stock footage (a wall of text's background) is the sample clip.
+    new SimulatedAdapter('pexels-video', ['stock_footage'], {
+      latencySec: [1, 3],
+      costPence: 0,
+      respond: async () => ({
+        state: 'succeeded',
+        output: { url: media.clipUrl, metadata: { model: 'pexels-video', costPence: 0 } },
+      }),
+      profile,
     }),
   ];
   return { registry: createProviderRegistry(adapters), adapters };

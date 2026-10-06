@@ -156,6 +156,27 @@ function waveTweens(overlay: OverlayRow, baseY: number): Record<string, unknown>
   return tweens;
 }
 
+/** Average glyph advance of the overlay fonts as a share of the font size (a slight over-estimate). */
+const AVG_GLYPH_EM = 0.56;
+/** Line box height for the estimate (rich-text's default spacing, generous). */
+const LINE_BOX_EM = 1.3;
+
+/**
+ * The text box height: room for four lines (every overlay before 22.2), or more when the text
+ * needs it. 22.2: a wall-of-text block has up to 10 lines that also wrap, and rich-text draws
+ * nothing outside its box, so the box grows with the estimated wrapped line count.
+ */
+export function overlayBoxHeight(text: string, font: number, frame: FrameSize): number {
+  const width = Math.round(frame.width * 0.9);
+  const perLine = Math.max(1, Math.floor(width / (font * AVG_GLYPH_EM)));
+  const lines = text
+    .split(/\r?\n/)
+    .reduce((n, line) => n + Math.max(1, Math.ceil([...line].length / perLine)), 0);
+  return Math.round(
+    Math.min(frame.height, Math.max(font * 4 + 40, Math.ceil(lines * font * LINE_BOX_EM) + 40)),
+  );
+}
+
 export function overlayClip(
   overlay: OverlayRow,
   input: { frame: FrameSize; offsetSec: number },
@@ -173,7 +194,7 @@ export function overlayClip(
     start,
     length,
     width: Math.round(input.frame.width * 0.9),
-    height: Math.round(Math.min(input.frame.height, fontPx(overlay, input.frame) * 4 + 40)),
+    height: overlayBoxHeight(overlay.text, fontPx(overlay, input.frame), input.frame),
     position: 'center',
     offset: { x, y: wave ?? y },
     ...(overlay.rotationDeg !== 0 && { transform: { rotate: { angle: overlay.rotationDeg } } }),

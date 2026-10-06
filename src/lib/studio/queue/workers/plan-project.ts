@@ -58,6 +58,9 @@ import { jobIds } from '../enqueue';
 import { planSlideshow } from './plan-slideshow';
 import { planCarousel } from './plan-carousel';
 import { planUpload } from './plan-upload';
+import { planHookDemo } from './plan-hook-demo';
+import { planWallOfText } from './plan-wall-of-text';
+import { resumeAssets } from './format-plan-common';
 import { regenerateScriptPlan } from './regenerate-script';
 import { scriptRegeneration } from '../../services/scripts';
 import { loadReferenceGuide, type ReferenceGuide } from '../../library/reference';
@@ -339,6 +342,14 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     await deps.queue.add('render-carousel', data, { jobId: jobIds.renderCarousel(data) });
     return log.info('carousel already planned; render re-enqueued');
   }
+  // 22.1 / 22.2: their shots may all be READY already (a demo, a library clip): compose then.
+  if (
+    project.state === 'ASSETS_QUEUED' &&
+    (project.sourceType === 'HOOK_DEMO' || project.sourceType === 'WALL_OF_TEXT')
+  ) {
+    const count = await resumeAssets(deps, data);
+    return log.info({ shots: count }, 'format already planned; shots or composition re-enqueued');
+  }
   if (project.state === 'ASSETS_QUEUED') {
     const count = await enqueueShots(deps, data);
     return log.info({ shots: count }, 'plan already persisted; shots re-enqueued');
@@ -358,6 +369,9 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   if (project.sourceType === 'CAROUSEL') return planCarousel(data, deps, project, log);
   // Phase 13.5: an uploaded video skips Layers 1–3 (plan-upload.ts).
   if (project.sourceType === 'UPLOAD') return planUpload(data, deps, project, log);
+  // 22.1 / 22.2: the Fastlane-style formats write one line or block, then a fixed shot plan.
+  if (project.sourceType === 'HOOK_DEMO') return planHookDemo(data, deps, project, log);
+  if (project.sourceType === 'WALL_OF_TEXT') return planWallOfText(data, deps, project, log);
   // Phase 13.1: POST /scripts/:id/regenerate — Layer 2 only, reusing the stored brief.
   const regeneration = scriptRegeneration(project.metadata, data.runId);
   if (regeneration) return regenerateScriptPlan(data, deps, project, regeneration, log);

@@ -39,6 +39,8 @@ import { timeClipSpeech } from '../../ugc/clip-speech';
 import { ensureActorPortrait } from '../../ugc/portrait';
 import { actorClipPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
+import { hookClipMarkerOf } from '../../formats/hook-clip';
+import { generateHookClip } from './generate-hook-clip';
 import { jobIds } from '../enqueue';
 import type { GenerateAssetJobData, ProjectJobData } from '../queues';
 
@@ -650,6 +652,20 @@ async function generateVisual(
     case 'MOTION_GRAPHICS':
       return null; // rendered by the composer from the shot's text (15.B8: motion cards)
     case 'AI_CLIP': {
+      // 22.1: the hook of a hook + demo video is a silent reaction clip (generate-hook-clip.ts).
+      const hook = hookClipMarkerOf(shot.providerRouting);
+      if (hook)
+        return generateHookClip(deps, shot, data, hook, (run, extra) =>
+          recordAsset(
+            deps,
+            shot,
+            'VIDEO_CLIP',
+            run,
+            { extension: 'mp4', contentType: 'video/mp4' },
+            undefined,
+            extra,
+          ),
+        );
       // 20.25 / 21.3: clips by plan tier (720p on every tier since 21.3); a clip is never reused for
       // a shot at another requested resolution (720p keeps the pre-20.25 fingerprint).
       const resolution = aiClipResolution(data.planTier);

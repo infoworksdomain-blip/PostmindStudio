@@ -60,6 +60,9 @@ import {
 //   ugc-actor         21.4: a UGC actor video: actor clips from (simulated) Veo speak their lines,
 //                     no ElevenLabs voice, clip speech captioned and kept in the edit, gate passed;
 //                     21.4a: one actor portrait made once and sent to every (parallel) actor clip
+//   hook-demo         22.1: a hook + demo video from the business's demo bank: one silent Veo
+//                     reaction clip, Claude's hook line as the one caption, the demo, AI label, gate
+//   wall-of-text      22.2: Claude's text block over stock footage with music; no AI clip, no voice
 
 const TERMINAL = new Set([
   'READY_FOR_REVIEW',
@@ -78,6 +81,8 @@ const SCENARIOS = [
   'cost-cap-project',
   'cost-cap-org',
   'ugc-actor',
+  'hook-demo',
+  'wall-of-text',
 ] as const;
 type ScenarioName = (typeof SCENARIOS)[number];
 
@@ -603,6 +608,126 @@ async function ugcActor(ctx: Ctx): Promise<Check[]> {
   ];
 }
 
+/** 22.1: a hook + demo video: one silent reaction clip (Veo actor_video), then the demo. */
+async function hookDemo(ctx: Ctx): Promise<Check[]> {
+  const world = await createWorld(ctx, 'hook');
+  // The business's demo bank: one READY demo video (the 15 s sample render, which has audio).
+  const demo = await ctx.db.videoUpload.create({
+    data: {
+      organisationId: world.organisationId,
+      businessId: world.businessId,
+      createdByUserId: 'qa-pipeline',
+      kind: 'DEMO_VIDEO',
+      fileName: 'booking-app-demo.mp4',
+      contentType: 'video/mp4',
+      declaredBytes: BigInt(1_000_000),
+      s3Bucket: 'samples',
+      s3Key: 'render-15.mp4',
+      state: 'READY',
+      durationSec: 15,
+      widthPx: 1080,
+      heightPx: 1920,
+      expiresAt: new Date(Date.now() + 3_600_000),
+      completedAt: new Date(),
+    },
+  });
+  const projectId = await startProject(ctx, world, {
+    name: 'QA hook + demo',
+    sourceType: 'HOOK_DEMO',
+    hookDemo: { demoUploadId: demo.id },
+  });
+  const run = await waitFor(ctx, projectId, (p) => TERMINAL.has(p.state));
+  const rows = await providerJobs(ctx, world.organisationId);
+  const shots = await ctx.db.videoShot.findMany({
+    where: { script: { projectId } },
+    orderBy: { sortOrder: 'asc' },
+    include: { overlays: true },
+  });
+  const renders = await ctx.db.videoRender.findMany({ where: { projectId } });
+  const summary = renders[0]?.composition as
+    { shots?: Array<{ treatment: string }>; brand?: { aiLabel?: boolean } } | undefined;
+  return [
+    verify(
+      'run reached review',
+      run.project.state === 'READY_FOR_REVIEW',
+      `trail ${run.trail.join(' > ')}; ${run.project.errorReason ?? ''}`,
+    ),
+    verify(
+      'hook clip, then the demo',
+      shots.map((s) => s.visualTreatment).join(',') === 'AI_CLIP,USER_UPLOAD',
+      shots.map((s) => `${s.visualTreatment}:${s.durationSec}s`).join(' '),
+    ),
+    verify(
+      'one silent reaction clip from Veo (actor_video), no narration',
+      countOf(rows, { provider: 'veo', operation: 'actor_video', state: 'SUCCEEDED' }) === 1 &&
+        countOf(rows, { provider: 'elevenlabs', operation: 'tts' }) === 0,
+      describeJobs(rows),
+    ),
+    verify(
+      'Claude wrote the hook line; it is the only caption, on the hook',
+      shots[0]?.overlays.length === 1 && shots[1]?.overlays.length === 0,
+      shots[0]?.overlays[0]?.text ?? 'none',
+    ),
+    verify(
+      'the AI-generated label is on',
+      summary?.brand?.aiLabel === true,
+      JSON.stringify(summary?.brand ?? {}),
+    ),
+    verify(
+      'rendered and passed the quality gate',
+      renders.length > 0 && renders.every((r) => r.qualityCheckState === 'PASSED'),
+      renders.map((r) => r.qualityCheckState).join(' '),
+    ),
+  ];
+}
+
+/** 22.2: a wall of text: stock background, one text block, music, no AI clip bought. */
+async function wallOfText(ctx: Ctx): Promise<Check[]> {
+  const world = await createWorld(ctx, 'wall');
+  const projectId = await startProject(ctx, world, {
+    name: 'QA wall of text',
+    sourceType: 'WALL_OF_TEXT',
+    brief: { rawInput: 'Three tips for keeping sourdough fresh' },
+    wallOfText: { background: 'calm' },
+  });
+  const run = await waitFor(ctx, projectId, (p) => TERMINAL.has(p.state));
+  const rows = await providerJobs(ctx, world.organisationId);
+  const shots = await ctx.db.videoShot.findMany({
+    where: { script: { projectId } },
+    include: { overlays: true },
+  });
+  const renders = await ctx.db.videoRender.findMany({ where: { projectId } });
+  return [
+    verify(
+      'run reached review',
+      run.project.state === 'READY_FOR_REVIEW',
+      `trail ${run.trail.join(' > ')}; ${run.project.errorReason ?? ''}`,
+    ),
+    verify(
+      'one background shot with one text block',
+      shots.length === 1 && shots[0]?.overlays.length === 1,
+      shots.map((s) => `${s.visualTreatment}:${s.overlays.length}`).join(' '),
+    ),
+    verify(
+      'the background is stock footage; no AI clip or voice was bought',
+      countOf(rows, { provider: 'pexels-video', state: 'SUCCEEDED' }) === 1 &&
+        countOf(rows, { operation: 'text_to_video' }) === 0 &&
+        countOf(rows, { operation: 'tts' }) === 0,
+      describeJobs(rows),
+    ),
+    verify(
+      'music (stub)',
+      countOf(rows, { provider: 'elevenlabs-music', state: 'SUCCEEDED' }) > 0,
+      describeJobs(rows.filter((r) => r.provider === 'elevenlabs-music')),
+    ),
+    verify(
+      'rendered and passed the quality gate',
+      renders.length > 0 && renders.every((r) => r.qualityCheckState === 'PASSED'),
+      renders.map((r) => r.qualityCheckState).join(' '),
+    ),
+  ];
+}
+
 async function costCap(ctx: Ctx, kind: 'project' | 'org'): Promise<Check[]> {
   const world = await createWorld(ctx, kind === 'project' ? 'cap-p' : 'cap-o');
   const projectId = await startProject(ctx, world, {
@@ -723,6 +848,10 @@ async function main(): Promise<void> {
       .url;
   const clipUrl = await put(media.clip, 'clip.mp4', 'video/mp4');
   const renderUrl = await put(media.render, 'render.mp4', 'video/mp4');
+  // 22.1 / 22.2: renders of the formats' own lengths (the 15 s one is also the QA demo video).
+  const shortRenderUrls: Record<number, string> = {};
+  for (const [sec, path] of Object.entries(media.shortRenders))
+    shortRenderUrls[Number(sec)] = await put(path, `render-${sec}.mp4`, 'video/mp4');
 
   const db = new PrismaClient();
   const connection = redisConnectionFromEnv();
@@ -741,6 +870,7 @@ async function main(): Promise<void> {
     media: {
       clipUrl,
       renderUrl,
+      shortRenderUrls,
       voice: await readSample(media.voice),
       music: await readSample(media.music),
       png: await readSample(media.still),
@@ -798,6 +928,8 @@ async function main(): Promise<void> {
       'cost-cap-project': (c) => costCap(c, 'project'),
       'cost-cap-org': (c) => costCap(c, 'org'),
       'ugc-actor': ugcActor,
+      'hook-demo': hookDemo,
+      'wall-of-text': wallOfText,
     };
     checks = await runner[scenario](ctx);
   } catch (err) {
