@@ -14,7 +14,30 @@ import {
   noBackgroundVideo,
   WALL_OF_TEXT_ALLOWANCE_UNITS,
   newWallOfTextDocument,
+  wallShownSec,
 } from './wall-of-text';
+import { HOOK_CAPTION_FONT_PCT, hookCaptionStyle, wallTextFontPct } from './caption-style';
+import { BUILT_IN_PRESETS } from '../overlays/presets';
+
+describe('22.6 production QA polish', () => {
+  it('the hook caption uses the classic hook preset size (4.2 %), not 5.2 %', () => {
+    const classic = BUILT_IN_PRESETS.find((p) => p.key === 'hook_tiktok_classic');
+    expect(HOOK_CAPTION_FONT_PCT).toBe(4.2);
+    expect(classic?.parameters.fontSizePct).toBe(HOOK_CAPTION_FONT_PCT);
+    expect(hookCaptionStyle(false).fontSizePct).toBe(4.2);
+  });
+
+  it('a block stays on screen long enough to read (3.5 words/s), up to 12 s', () => {
+    const words = (n: number) => Array.from({ length: n }, (_, i) => `w${i}`).join(' ');
+    expect(wallShownSec(8, words(20))).toBe(8);
+    expect(wallShownSec(8, words(35))).toBe(10);
+    expect(wallShownSec(8, words(60))).toBe(12);
+    expect(wallShownSec(12, words(10))).toBe(12);
+    expect(wallShownSec(8, null)).toBe(8);
+    // Longer text gets time, never a smaller font than the length table already gives.
+    expect(wallTextFontPct(60)).toBe(3.3);
+  });
+});
 import { ProviderError, RateDeferredError, ValidationError } from '../../errors';
 
 // BACKLOG 22.1 — hook + demo input, stored document, timing and audio mix.
@@ -31,13 +54,13 @@ describe('hookDemoCreateInput', () => {
     });
   });
 
-  it('accepts a hook line of up to 12 words', () => {
-    const hookLine = 'one two three four five six seven eight nine ten eleven twelve';
+  it('accepts a hook line of up to 9 words (22.6)', () => {
+    const hookLine = 'one two three four five six seven eight nine';
     expect(hookDemoCreateInput.parse({ hookLine }).hookLine).toBe(hookLine);
   });
 
   it.each([
-    ['13 words', 'one two three four five six seven eight nine ten eleven twelve thirteen'],
+    ['10 words', 'one two three four five six seven eight nine ten'],
     ['two lines', 'first line\nsecond line'],
     ['an emoji', 'This app is fire 🔥'],
     ['nothing', '   '],

@@ -37,8 +37,12 @@ export const TARGET_MAX_SEC = 20;
 export const TARGET_DEFAULT_SEC = 15;
 /** A demo shorter than this cannot follow a hook meaningfully. */
 export const DEMO_MIN_SEC = 2;
-export const HOOK_LINE_MAX_WORDS = 12;
-export const HOOK_LINE_MAX_CHARS = 100;
+/**
+ * 22.6 (production QA 2026-10-06): 12 words at the old hook size wrapped to five lines over the
+ * creator's face; 9 words at 4.2 % (caption-style.ts) stays on one or two lines.
+ */
+export const HOOK_LINE_MAX_WORDS = 9;
+export const HOOK_LINE_MAX_CHARS = 80;
 
 /** 22.1: a hook + demo video counts as one video of the allowance (allowanceUnitsOf → 1). */
 export const HOOK_DEMO_ALLOWANCE_UNITS = 1;
@@ -49,7 +53,7 @@ export function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/** The owner's hook line: one line, at most 12 words, no emoji. */
+/** The owner's hook line: one line, at most HOOK_LINE_MAX_WORDS words, no emoji. */
 export const hookLineInput = z
   .string()
   .trim()

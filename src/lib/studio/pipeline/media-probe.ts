@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ConfigurationError, ValidationError } from '../../errors';
+import { cropdetectFilter, parseCropdetect, type CropBounds } from './letterbox';
 import { ffmpegLimiter, type ConcurrencyLimiter } from './process-limit';
 
 // Media inspection for Layer 7 (render metadata) and Layer 8 auto-checks (spec 13.1), via the
@@ -43,6 +44,15 @@ export interface MediaInspector {
    * gives a valid silent rendition.
    */
   previewClip(url: string, maxWidth: number, maxSec: number): Promise<Uint8Array>;
+  /**
+   * 22.6: the picture area inside any black bars over the first `maxSec` (ffmpeg cropdetect,
+   * pipeline/letterbox.ts), with the frame size; null when cropdetect printed nothing. Optional so
+   * inspectors without it (test fakes) simply skip bar detection.
+   */
+  cropBounds?(
+    url: string,
+    maxSec: number,
+  ): Promise<{ bounds: CropBounds; frame: { width: number; height: number } } | null>;
 }
 
 const DEFAULT_TIMEOUT_MS = 5 * 60_000;
@@ -291,15 +301,45 @@ export function createFfmpegInspector(
   const ffprobe = options.ffprobePath ?? process.env.FFPROBE_PATH ?? 'ffprobe';
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
+  const probe = async (url: string) => {
+    const r = await run(
+      ffprobe,
+      ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', url],
+      timeoutMs,
+    );
+    if (r.code !== 0) throw new ValidationError(`ffprobe failed: ${r.stderr.slice(-500)}`);
+    return parseFfprobe(r.stdout);
+  };
+
   return {
-    async probe(url) {
+    probe,
+    async cropBounds(url, maxSec) {
+      const { width, height } = await probe(url);
       const r = await run(
-        ffprobe,
-        ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', url],
+        ffmpeg,
+        [
+          '-hide_banner',
+          '-nostdin',
+          '-nostats',
+          '-t',
+          maxSec.toFixed(3),
+          '-i',
+          url,
+          '-an',
+          '-sn',
+          '-dn',
+          '-vf',
+          cropdetectFilter(),
+          '-f',
+          'null',
+          '-',
+        ],
         timeoutMs,
       );
-      if (r.code !== 0) throw new ValidationError(`ffprobe failed: ${r.stderr.slice(-500)}`);
-      return parseFfprobe(r.stdout);
+      if (r.code !== 0)
+        throw new ValidationError(`ffmpeg cropdetect failed: ${r.stderr.slice(-500)}`);
+      const bounds = parseCropdetect(r.stderr);
+      return bounds ? { bounds, frame: { width, height } } : null;
     },
     async blackIntervals(url, minDurationSec) {
       const r = await run(

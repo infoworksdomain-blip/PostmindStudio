@@ -152,6 +152,44 @@ describe.skipIf(!hasDb)(
       });
     });
 
+    it('22.6: a Veo hook with a black band is measured when stored and cropped in the edit', async () => {
+      const h = createHarness(db, {
+        actor: true,
+        probe: { durationSec: 15 },
+        cropBounds: {
+          bounds: { x1: 0, x2: 719, y1: 128, y2: 1279 },
+          frame: { width: 720, height: 1280 },
+        },
+      });
+      const { project, runId, demo } = await hookDemoProject();
+      const after = await drain(h, project.id, runId);
+      expect(after.state).toBe('READY_FOR_REVIEW');
+      const hookAsset = await db.videoAsset.findUniqueOrThrow({
+        where: { id: after.scripts[0]?.shots[0]?.assetId ?? '' },
+      });
+      const band = { top: 0.105, bottom: 0, left: 0, right: 0 };
+      expect(hookAsset.metadata).toMatchObject({ letterbox: band });
+      // The demo upload was measured at composition and the result kept.
+      expect(
+        (await db.videoAsset.findUniqueOrThrow({ where: { id: demo.id } })).metadata,
+      ).toMatchObject({ letterbox: band });
+      const request = h.adapters.shotstack.requests[0] as unknown as {
+        edit: {
+          timeline: {
+            tracks: Array<{ clips: Array<{ asset: Record<string, unknown>; fit?: string }> }>;
+          };
+        };
+      };
+      const videoClips = request.edit.timeline.tracks
+        .flatMap((t) => t.clips)
+        .filter((c) => c.asset.type === 'video');
+      expect(videoClips.length).toBeGreaterThan(0);
+      for (const clip of videoClips) {
+        expect(clip.asset.crop).toEqual(band);
+        expect(clip.fit).toBe('crop');
+      }
+    });
+
     it('hook + demo: the owner’s hook line is used as written (no Claude call for it)', async () => {
       const h = createHarness(db, { actor: true, probe: { durationSec: 15 } });
       const { project, runId } = await hookDemoProject({ hookLine: 'Two taps. Table booked.' });
@@ -222,6 +260,41 @@ describe.skipIf(!hasDb)(
       expect(h.adapters.runway.requests).toHaveLength(0);
       expect(h.adapters.elevenlabs.requests).toHaveLength(0);
       expect(after.renders[0]?.qualityCheckState).toBe('PASSED');
+    });
+
+    it('22.6: an owner’s long block gets the time to read it (8 s chosen → 12 s)', async () => {
+      const h = createHarness(db, { stock: true, probe: { durationSec: 12 } });
+      const { project, runId } = await createProject(db, {
+        organisationId: org,
+        sourceType: 'WALL_OF_TEXT',
+        description: 'Ten habits',
+        targetFormats: [{ platform: 'tiktok', aspectRatio: '9:16', duration: 12 }],
+      });
+      // 56 words: 16 s at 3.5 words/s, so the most there is (12 s).
+      const text = Array.from({ length: 8 }, (_, i) => `- habit ${i + 1} kept every day`).join(
+        '\n',
+      );
+      await db.videoProject.update({
+        where: { id: project.id },
+        data: {
+          metadata: {
+            runId,
+            wallOfText: newWallOfTextDocument({ text, background: 'calm', durationSec: 8 }),
+          },
+        },
+      });
+      const after = await drain(h, project.id, runId);
+      expect(after.state).toBe('READY_FOR_REVIEW');
+      expect(after.scripts[0]?.targetDurationSec).toBe(12);
+      const shot = after.scripts[0]?.shots[0];
+      expect(shot?.durationSec).toBe(12);
+      expect(shot?.overlays[0]).toMatchObject({ endAtSec: 12 });
+      // Claude was not asked for a block (the owner wrote it).
+      expect(
+        h.adapters.anthropic.requests.filter(
+          (r) => r.capability === 'text_generation' && r.system.includes('wall of text'),
+        ),
+      ).toHaveLength(0);
     });
 
     it('wall of text with no library clip and no stock source fails with no_background_video', async () => {

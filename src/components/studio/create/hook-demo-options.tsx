@@ -9,7 +9,7 @@ import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { Field, NativeSelect } from '../review/field';
 import { VideoUploadField } from '../uploads/video-upload-field';
-import { countWords, HOOK_LINE_MAX_WORDS, type HookDemoChoice } from './body';
+import { countWords, HOOK_LINE_MAX_CHARS, HOOK_LINE_MAX_WORDS, type HookDemoChoice } from './body';
 
 // BACKLOG 22.1 — Create → "Hook + demo": the business's demo-video bank (pick one, or upload a
 // new demo: a screen recording or phone-in-hand footage), an optional hook line (else Studio
@@ -117,7 +117,7 @@ export function HookDemoOptions({
         <Input
           id="create-hook-line"
           value={value.hookLine}
-          maxLength={100}
+          maxLength={HOOK_LINE_MAX_CHARS}
           placeholder={t('hookLinePlaceholder')}
           aria-describedby="create-hook-line-hint"
           onChange={(e) => set({ hookLine: e.target.value.replace(/[\r\n]+/g, ' ') })}

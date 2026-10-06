@@ -186,6 +186,61 @@ describe('hook + demo, stacked (22.1)', () => {
   });
 });
 
+describe('baked-in black bars (22.6)', () => {
+  const BARS = { top: 0.105, bottom: 0, left: 0, right: 0 };
+  const shot = (over: Partial<EdlShot> = {}): EdlShot => ({
+    id: 'clip',
+    durationSec: 4,
+    visualTreatment: 'AI_CLIP',
+    visualSrc: 'https://s3.test/veo.mp4',
+    visualKind: 'video',
+    ...over,
+  });
+
+  it('crops a clip with bars and lets fit: crop fill the frame', () => {
+    const { edit } = buildShotstackComposition({
+      aspectRatio: '9:16',
+      shots: [shot({ sourceCrop: BARS })],
+    });
+    const [clip] = videos(edit);
+    expect(clip?.asset.crop).toEqual(BARS);
+    expect(clip?.fit).toBe('crop');
+  });
+
+  it('emits no crop for a clip without bars (the edit is unchanged)', () => {
+    const plain = buildShotstackComposition({ aspectRatio: '9:16', shots: [shot()] }).edit;
+    const zero = buildShotstackComposition({
+      aspectRatio: '9:16',
+      shots: [shot({ sourceCrop: { top: 0, bottom: 0, left: 0, right: 0 } })],
+    }).edit;
+    expect(videos(plain)[0]?.asset).not.toHaveProperty('crop');
+    expect(zero).toEqual(plain);
+  });
+
+  it('a stacked hook half is cut from the picture inside its bars', () => {
+    const shots = baseShots().map((s, i) => (i === 0 ? { ...s, sourceCrop: BARS } : s));
+    const layout = hookDemoEdl(shots, {
+      doc: doc({ layout: 'stacked' }),
+      aspectRatio: '9:16',
+      frame,
+      demoAspect: 9 / 16,
+      hookAspect: 9 / 16,
+      hookFromLibrary: false,
+    });
+    const crop = layout.shots[0]?.stackedTop?.hookCrop;
+    // The bar is removed first, then the rest is trimmed evenly to the half-frame shape.
+    expect(crop?.top).toBeGreaterThan(0.25 + 0.05);
+    expect((crop?.top ?? 0) - BARS.top).toBeCloseTo(crop?.bottom ?? 0, 3);
+    // The demo half has no bars: the plain half-frame crop.
+    expect(layout.shots[0]?.stackedTop?.bottomCrop).toEqual({
+      top: 0.25,
+      bottom: 0.25,
+      left: 0,
+      right: 0,
+    });
+  });
+});
+
 describe('TikTok-classic captions (22.1 / 22.2)', () => {
   it('white text, black stroke, no background box and no shadow', () => {
     for (const style of [hookCaptionStyle(false), wallTextStyle(40)]) {

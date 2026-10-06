@@ -40,7 +40,9 @@ export const EMPTY_WALL_OF_TEXT: WallOfTextChoice = {
   background: 'calm',
   durationSec: 8,
 };
-export const HOOK_LINE_MAX_WORDS = 12;
+/** formats/hook-demo.ts HOOK_LINE_MAX_WORDS / HOOK_LINE_MAX_CHARS (22.6: 9 words, 80 chars). */
+export const HOOK_LINE_MAX_WORDS = 9;
+export const HOOK_LINE_MAX_CHARS = 80;
 export const WALL_TEXT_MAX_WORDS = 60;
 export const WALL_TEXT_MAX_LINES = 10;
 /** formats/copy-prompt.ts WALL_TEXT_MAX_CHARS (the overlay API's text limit). */

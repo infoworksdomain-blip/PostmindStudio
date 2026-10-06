@@ -30,7 +30,7 @@ const context = {
 };
 
 describe('hook line prompt', () => {
-  it('names the eight hook frameworks and the 12-word limit', () => {
+  it('names the eight hook frameworks and the 9-word limit (22.6)', () => {
     for (const framework of HOOK_LINE_FRAMEWORKS)
       expect(HOOK_LINE_SYSTEM_PROMPT).toContain(`- ${framework}:`);
     expect(HOOK_LINE_FRAMEWORKS).toEqual([
@@ -43,7 +43,7 @@ describe('hook line prompt', () => {
       'story_open',
       'pattern_interrupt',
     ]);
-    expect(HOOK_LINE_SYSTEM_PROMPT).toContain('at most 12 words');
+    expect(HOOK_LINE_SYSTEM_PROMPT).toContain('5–8 words, never more than 9');
     expect(HOOK_LINE_OUTPUT_SCHEMA.properties.framework.enum).toEqual([...HOOK_LINE_FRAMEWORKS]);
   });
 
@@ -72,15 +72,31 @@ describe('hook line prompt', () => {
 });
 
 describe('parseHookLine', () => {
-  it('returns a tidy line of at most 12 words', () => {
+  it('returns a tidy line of at most 9 words', () => {
     const answer = parseHookLine({
       hookLine:
         '"I stopped taking bookings by phone and this happened next week honestly wow" 🔥 #app',
       framework: 'story_open',
     });
     expect(answer.framework).toBe('story_open');
-    expect(wordCount(answer.hookLine)).toBeLessThanOrEqual(12);
+    expect(wordCount(answer.hookLine)).toBeLessThanOrEqual(9);
+    expect(answer.hookLine).toBe('I stopped taking bookings by phone and this happened');
     expect(answer.hookLine).not.toMatch(/["🔥#]/u);
+  });
+
+  it('a cut line does not end on a linking word', () => {
+    expect(
+      tidyHookLine('Every restaurant owner should try this simple trick for the busy season'),
+    ).toBe('Every restaurant owner should try this simple trick');
+  });
+
+  it('shortens a long line at a clause end within the limit (22.6)', () => {
+    expect(
+      tidyHookLine('Stop answering the phone, this app takes every booking for you overnight'),
+    ).toBe('Stop answering the phone');
+    expect(tidyHookLine('POV: you never miss a booking again')).toBe(
+      'POV: you never miss a booking again',
+    );
   });
 
   it('a broken answer is a retryable provider error', () => {
@@ -94,8 +110,9 @@ describe('parseHookLine', () => {
 });
 
 describe('wall of text', () => {
-  it('asks for 8–60 words on separate lines, no emoji', () => {
-    expect(WALL_TEXT_SYSTEM_PROMPT).toContain('8–60 words');
+  it('asks for 8–35 words on at most 6 short lines, no emoji (22.6)', () => {
+    expect(WALL_TEXT_SYSTEM_PROMPT).toContain('8–35 words in total, never more');
+    expect(WALL_TEXT_SYSTEM_PROMPT).toContain('at most 6 lines');
     expect(WALL_TEXT_SYSTEM_PROMPT).toContain('no emoji');
     expect(buildWallTextPrompt(context)).toContain('Business: Tabletime');
   });
@@ -113,6 +130,17 @@ describe('wall of text', () => {
     const text = tidyWallText([line, line, line].join('\n'));
     expect(wordCount(text)).toBe(60);
     expect(text.split('\n')).toHaveLength(3);
+  });
+
+  it('holds a block Claude wrote to 35 words and 6 lines (production QA: 60 words in 8 s)', () => {
+    const sixty = Array.from({ length: 10 }, (_, i) => `- idea ${i + 1} in six short words`).join(
+      '\n',
+    );
+    const text = parseWallText({ text: sixty });
+    expect(wordCount(text)).toBeLessThanOrEqual(35);
+    expect(text.split('\n').length).toBeLessThanOrEqual(6);
+    // The owner's own block keeps the 60-word limit.
+    expect(wordCount(tidyWallText(sixty))).toBe(60);
   });
 
   it('parseWallText refuses an empty block (retryable)', () => {

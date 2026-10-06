@@ -65,6 +65,21 @@ describe('card → project body', () => {
     expect(ugc.ugc).toEqual({});
   });
 
+  it('22.6 wall of text from long card copy: ≤ 35 words, ≤ 6 lines, time to read it', () => {
+    const long = {
+      ...copy,
+      body: Array.from({ length: 8 }, (_, i) => `Reason number ${i + 1} explained in detail`),
+    };
+    const body = createProjectInput.parse(
+      projectBodyForCard('wall_of_text', long, { ...options, platforms: ['tiktok'] }),
+    );
+    const text = body.wallOfText?.text ?? '';
+    expect(text.split(/\s+/).length).toBeLessThanOrEqual(35);
+    expect(text.split('\n').length).toBeLessThanOrEqual(6);
+    expect(body.wallOfText?.durationSec).toBe(12);
+    expect(body.targetFormats?.[0]?.durationSec).toBe(12);
+  });
+
   it('22.2 wall of text: the hook and lines as the block, 6–12 s, calm background', () => {
     const body = createProjectInput.parse(
       projectBodyForCard('wall_of_text', copy, { ...options, platforms: ['tiktok'] }),

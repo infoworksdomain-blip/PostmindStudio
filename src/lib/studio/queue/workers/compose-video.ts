@@ -58,6 +58,7 @@ import { jobIds } from '../enqueue';
 import type { ProjectJobData } from '../queues';
 import { readHookDemo } from '../../formats/hook-demo';
 import { hookDemoEdl } from '../../formats/hook-demo-edl';
+import { clipLetterboxes } from '../../pipeline/letterbox-assets';
 
 /** width ÷ height of a stored asset, when it was probed (uploads; library clips are not). */
 function aspectOf(asset: { widthPx: number | null; heightPx: number | null } | undefined) {
@@ -127,6 +128,8 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
       })
     ).map((a) => [a.id, a]),
   );
+  // 22.6: black bars baked into a clip are cropped off (measured once per asset, letterbox.ts).
+  const clipBars = await clipLetterboxes(deps, assets.values());
   const signed = async (id: string | null) => {
     const asset = id ? assets.get(id) : undefined;
     return asset
@@ -246,6 +249,10 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           visualTreatment: shot.visualTreatment,
           visualSrc: visual?.url,
           visualKind: visual?.kind === 'IMAGE' ? ('image' as const) : ('video' as const),
+          ...(shot.assetId &&
+            clipBars.has(shot.assetId) && {
+              sourceCrop: clipBars.get(shot.assetId),
+            }),
           voiceSrc: voice?.url,
           // 13.5: an uploaded clip carries its own audio (no narration is generated for it).
           keepSourceAudio: shot.visualTreatment === 'USER_UPLOAD' && !shot.voiceAssetId,

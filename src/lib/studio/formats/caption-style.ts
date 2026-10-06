@@ -47,7 +47,12 @@ const FORMAT_LOOK = {
  */
 export const HOOK_CAPTION_ANCHOR_Y = 0.2;
 export const STACKED_HOOK_CAPTION_ANCHOR_Y = 0.5;
-export const HOOK_CAPTION_FONT_PCT = 5.2;
+/**
+ * 22.6 (production QA 2026-10-06): 5.2 % wrapped a hook line to five lines over the creator's
+ * hair; the hook is now the classic preset's own 4.2 % and at most HOOK_LINE_MAX_WORDS words, so
+ * it stays on one or two lines.
+ */
+export const HOOK_CAPTION_FONT_PCT = 4.2;
 
 /** 22.2: the wall-of-text block, centred a little above the middle (clear of the caption bar). */
 export const WALL_TEXT_ANCHOR_Y = 0.45;
