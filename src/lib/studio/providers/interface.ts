@@ -290,4 +290,10 @@ export interface ProviderAdapter {
    * (Veo: the x-goog-api-key header). Layer 3 uses it instead of a plain fetch when present.
    */
   fetchOutput?(url: string): Promise<Response>;
+  /**
+   * 23.1: the adapter's own poll cadence when the provider calls back on completion (Shotstack
+   * render callbacks): polling is then only the fallback for a lost callback. Used only when the
+   * worker can be woken (PipelineDeps.providerWake); otherwise config.providerPollIntervalMs.
+   */
+  readonly callbackPollIntervalMs?: number;
 }

@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
 import { NativeSelect } from './native-select';
 import { PublicationActions } from './publication-actions';
+import { TikTokPublicationNote, usePublicationBadge } from './tiktok-draft';
 import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 10.5 — Manage: every publication across platforms (spec 14.3), filtered by state and
@@ -74,7 +75,8 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
   const tf = useTranslations('format');
   const f = useFormat();
   const projectName = useProjectName();
-  const state = f.publicationState(p.state);
+  const badgeFor = usePublicationBadge();
+  const state = badgeFor(p);
   const platform = f.platform(p.platform);
   const when = whenOf(p);
   const date = f.date(when.iso);
@@ -93,9 +95,7 @@ function PublicationRow({ p, onChanged }: { p: Publication; onChanged: () => voi
         {p.state === 'FAILED' && p.errorReason && (
           <FailureReason reason={p.errorReason} className="mt-1 block text-xs text-destructive" />
         )}
-        {p.metadata?.tiktokMode === 'inbox' && typeof p.metadata.note === 'string' && (
-          <span className="mt-1 block text-xs text-muted-foreground">{p.metadata.note}</span>
-        )}
+        <TikTokPublicationNote publication={p} />
       </TableCell>
       <TableCell className="hidden md:table-cell">{platform}</TableCell>
       <TableCell>

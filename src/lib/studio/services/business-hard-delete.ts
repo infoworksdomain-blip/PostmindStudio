@@ -67,7 +67,7 @@ export async function unsharedAssetObjects(db: Db, projectIds: string[]): Promis
   const refs = assets.map((a) => ({ bucket: a.s3Bucket, key: a.s3Key })).filter(isStored);
   if (refs.length === 0) return [];
   const keys = [...new Set(refs.map((r) => r.key))];
-  const [shared, demos, library] = await Promise.all([
+  const [shared, demos, library, music] = await Promise.all([
     db.videoAsset.findMany({
       where: { projectId: { notIn: projectIds }, s3Key: { in: keys } },
       select: { s3Bucket: true, s3Key: true },
@@ -84,9 +84,14 @@ export async function unsharedAssetObjects(db: Db, projectIds: string[]): Promis
       where: { s3Key: { in: keys } },
       select: { s3Bucket: true, s3Key: true },
     }),
+    // 23.1: a reused music bed belongs to the platform music library, never to the project.
+    db.musicLibraryTrack.findMany({
+      where: { s3Key: { in: keys } },
+      select: { s3Bucket: true, s3Key: true },
+    }),
   ]);
   const keep = new Set(
-    [...shared, ...demos, ...library].map((s) => `${s.s3Bucket}\u0000${s.s3Key}`),
+    [...shared, ...demos, ...library, ...music].map((s) => `${s.s3Bucket}\u0000${s.s3Key}`),
   );
   return refs.filter((r) => !keep.has(`${r.bucket}\u0000${r.key}`));
 }

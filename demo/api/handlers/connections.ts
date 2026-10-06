@@ -63,6 +63,8 @@ const rows: DemoConnection[] = [
     connectedAt: iso(-150 * DAY),
     statusCheckedAt: iso(-5 * HOUR),
     statusCheckOutcome: 'ok',
+    // 22.7: this account sends posts to the TikTok drafts (the Connections card shows the choice).
+    tiktokPostMode: 'drafts',
   }),
   conn({
     id: CONNECTIONS.youtube.id,
@@ -205,6 +207,8 @@ function completeConnect(platform: OAuthPlatform, businessId: string): void {
         platformAccountId: account.accountId,
         platformAccountName: account.name,
         ...fresh,
+        // 22.7: a new TikTok connection sends drafts by default.
+        ...(platform === 'tiktok' && { tiktokPostMode: 'drafts' as const }),
       }),
     );
 }
@@ -224,6 +228,29 @@ route('POST', '/platform-connections/oauth-init', ({ body }) => {
   const businessId = typeof input.businessId === 'string' ? input.businessId : DEMO_BUSINESS_ID;
   completeConnect(platform as OAuthPlatform, businessId);
   return { authorizeUrl: `#/connections?connected=${platform}` };
+});
+
+/** 22.7: PATCH { tiktokPostMode } — TikTok connections only (services/connections.ts). */
+route('PATCH', '/platform-connections/:id', ({ params, body }) => {
+  const i = rows.findIndex((r) => r.id === params.id && r.state !== 'revoked');
+  const row = rows[i];
+  if (!row) throw new DemoHttpError(404, 'not_found', 'Connection not found');
+  const mode = (body as { tiktokPostMode?: unknown } | undefined)?.tiktokPostMode;
+  if (mode !== 'direct' && mode !== 'drafts')
+    throw new DemoHttpError(400, 'validation_error', 'Invalid request body', {
+      problems: ['tiktokPostMode: Invalid option: expected one of "direct"|"drafts"'],
+    });
+  if (row.platform !== 'tiktok')
+    throw new DemoHttpError(
+      400,
+      'validation_error',
+      'Only TikTok connections have a posting preference',
+    );
+  rows[i] = { ...row, tiktokPostMode: mode };
+  return {
+    connection: { ...rows[i], scopes: [...row.scopes] },
+    uploadGranted: row.scopes.includes('video.upload'),
+  };
 });
 
 route('DELETE', '/platform-connections/:id', ({ params }) => {

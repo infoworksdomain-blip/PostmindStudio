@@ -356,7 +356,15 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
     return mergeOverlayTrack(edit, track);
   };
 
-  const outcome = await Promise.all(
+  // 23.1: two phases. (1) Every variant's edit is built (and composition-cache hits recorded);
+  // (2) every remaining render is submitted to the composer at once and all are awaited
+  // together. A failed variant no longer abandons the others mid-render (before 23.1 the first
+  // rejection ended the job while the other renders kept running unawaited, and the retry
+  // submitted them again): each finished render is recorded, then the first failure is
+  // rethrown so the retry redoes only the failed variants (metadata.renders skips the rest).
+  // Provider concurrency caps (STUDIO_PROVIDER_CONCURRENCY_SHOTSTACK, 20.29) still apply per
+  // render inside runProvider.
+  const prepared = await Promise.all(
     project.scripts
       .filter((script) => !renders[script.id])
       .map(async (script) => {
@@ -427,8 +435,20 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
           if (!recorded) throw new StaleRunError();
           renders[script.id] = cached.id;
           cacheHits.push({ scriptId: script.id, renderId: cached.id });
-          return;
+          return null;
         }
+        return { script, aspectRatio, edit, outputDurationSec, composition };
+      }),
+  ).catch((err: unknown) => {
+    if (err instanceof StaleRunError) return 'stale' as const;
+    throw err;
+  });
+  if (prepared === 'stale') return log.info('run superseded during composition; renders discarded');
+
+  const settled = await Promise.allSettled(
+    prepared
+      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .map(async ({ script, aspectRatio, edit, outputDurationSec, composition }) => {
         const run = await runProvider(
           {
             need: { kind: 'capability', capability: 'composition' },
@@ -515,11 +535,20 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
         });
         renders[script.id] = render.id;
       }),
-  ).catch((err: unknown) => {
-    if (err instanceof StaleRunError) return 'stale';
-    throw err;
-  });
-  if (outcome === 'stale') return log.info('run superseded during composition; renders discarded');
+  );
+  const failures = settled
+    .filter((s): s is PromiseRejectedResult => s.status === 'rejected')
+    .map((s): unknown => s.reason);
+  if (failures.some((err) => err instanceof StaleRunError)) {
+    return log.info('run superseded during composition; renders discarded');
+  }
+  if (failures.length > 0) {
+    log.warn(
+      { failed: failures.length, recorded: settled.length - failures.length },
+      'some renders failed; finished renders are kept for the retry',
+    );
+    throw failures[0];
+  }
   if (Object.keys(masteringReports).length > 0) {
     await mergeProjectMetadata(deps.db, {
       projectId: project.id,

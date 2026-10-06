@@ -31,6 +31,8 @@ export interface PublishRequest {
   accountId: string;
   /** OAuth scopes the connection granted (Studio OAuth platforms); absent = unknown (Meta). */
   grantedScopes?: string[];
+  /** 22.7: the TikTok connection's posting preference; absent = direct (other platforms ignore it). */
+  tiktokPostMode?: 'direct' | 'drafts';
   /** 15.A3: custom thumbnail set after upload (YouTube thumbnails.set). */
   thumbnail?: { bytes: Uint8Array; contentType: 'image/jpeg' | 'image/png' };
   /** 15.A4: caption track uploaded after the video (YouTube captions.insert). */

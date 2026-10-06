@@ -164,6 +164,8 @@ export interface PlatformConnection {
   statusCheckOutcome?: 'ok' | 'needs_reconnect' | 'unreachable' | null;
   /** Phase 18: 'core' (PostMind pushed it), 'studio' (Studio's own OAuth), null (pre-Phase 18). */
   connectedVia?: 'core' | 'studio' | null;
+  /** 22.7 (TikTok only): 'drafts' sends posts to the TikTok inbox; 'direct' / null post directly. */
+  tiktokPostMode?: 'direct' | 'drafts' | null;
 }
 
 /** Phase 18 §2.10: how Instagram / Facebook are connected (GET /platform-connections `meta`). */

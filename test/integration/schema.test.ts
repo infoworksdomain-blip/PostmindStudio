@@ -104,6 +104,8 @@ const EXPECTED_TABLES = [
   'content_mix_preferences',
   'blitz_suggestions',
   'automations',
+  // Phase 23.1 — music reuse
+  'music_library_tracks',
 ];
 
 let db: PGlite;
