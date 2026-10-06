@@ -3,6 +3,7 @@ import { ConfigurationError } from '../../errors';
 import { VeoAdapter } from './veo';
 import { SeedanceAdapter } from './seedance';
 import { KlingAdapter } from './kling';
+import { FalAdapter } from './fal';
 import {
   buildAdaptersFromEnv,
   buildAdaptersFromKeys,
@@ -46,6 +47,8 @@ beforeEach(() => {
     'KLING_MODEL',
     'KLING_RESOLUTION',
     'KLING_BASE_URL',
+    'FAL_KEY',
+    'STUDIO_FAL_VIDEO_MODELS',
   ])
     vi.stubEnv(key, '');
   for (const key of KEYS) vi.stubEnv(key, '');
@@ -85,6 +88,26 @@ describe('buildAdaptersFromEnv', () => {
       'storyblocks-video',
       'pexels-video',
     ]);
+  });
+
+  it('24.1: registers fal only when STUDIO_FAL_VIDEO_MODELS opts in', () => {
+    vi.stubEnv('FAL_KEY', 'fal-test-key');
+    expect(buildAdaptersFromEnv()).toEqual([]);
+    vi.stubEnv('STUDIO_FAL_VIDEO_MODELS', 'ltx-2.3-fast,minimax-h3-max');
+    const adapters = buildAdaptersFromEnv();
+    expect(adapters.map((a) => a.providerId)).toEqual(['fal']);
+    expect(adapters[0]).toBeInstanceOf(FalAdapter);
+    expect((adapters[0] as FalAdapter).models).toEqual(['ltx-2.3-fast', 'minimax-h3-max']);
+    // Platform key only: an organisation's BYOC key map never builds fal.
+    expect(buildAdaptersFromKeys({}).map((a) => a.providerId)).toEqual([]);
+  });
+
+  it('24.1: fal models without FAL_KEY, or an unknown model, is a configuration error', () => {
+    vi.stubEnv('STUDIO_FAL_VIDEO_MODELS', 'ltx-2.3-fast');
+    expect(() => buildAdaptersFromEnv()).toThrow(/FAL_KEY/);
+    vi.stubEnv('FAL_KEY', 'fal-test-key');
+    vi.stubEnv('STUDIO_FAL_VIDEO_MODELS', 'sora-2');
+    expect(() => buildAdaptersFromEnv()).toThrow(ConfigurationError);
   });
 
   it('requires a HeyGen avatar look with the HeyGen key', () => {

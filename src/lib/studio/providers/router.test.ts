@@ -53,11 +53,12 @@ const aiClip = (planTier: RouteInput['planTier'], extra: Partial<RouteInput> = {
 
 describe('planCandidates (spec 6.4 / 6.5)', () => {
   it.each([
-    // 20.25: the cheap configured providers first; fal / replicate have no adapter.
+    // 20.25: the cheap configured providers first. 24.1: fal is registered only on opt-in
+    // (STUDIO_FAL_VIDEO_MODELS) and is the last resort on paid tiers; replicate has no adapter.
     ['BASIC', ['seedance', 'kling', 'veo', 'fal', 'replicate']],
-    ['STANDARD', ['seedance', 'kling', 'veo', 'runway', 'luma']],
-    ['PLUS', ['seedance', 'kling', 'veo', 'runway', 'luma']],
-    ['ENTERPRISE', ['seedance', 'kling', 'veo', 'runway', 'luma']],
+    ['STANDARD', ['seedance', 'kling', 'veo', 'runway', 'luma', 'fal']],
+    ['PLUS', ['seedance', 'kling', 'veo', 'runway', 'luma', 'fal']],
+    ['ENTERPRISE', ['seedance', 'kling', 'veo', 'runway', 'luma', 'fal']],
   ] as const)('AI_CLIP on %s tries %o', (tier, ids) => {
     expect(
       planCandidates({ kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 4 }, tier),
@@ -236,6 +237,7 @@ describe('routeProvider', () => {
         { providerId: 'veo', skipped: 'not_configured' },
         { providerId: 'runway', skipped: 'circuit_open' },
         { providerId: 'luma', skipped: 'not_configured' },
+        { providerId: 'fal', skipped: 'not_configured' },
       ],
     });
   });
