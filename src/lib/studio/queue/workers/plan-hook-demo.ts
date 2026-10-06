@@ -20,6 +20,7 @@ import {
   type HookDemoDocument,
 } from '../../formats/hook-demo';
 import type { ProjectJobData } from '../queues';
+import { canMakeSilentHook } from './generate-hook-clip';
 import {
   formatCopyContext,
   passesTextSafety,
@@ -66,7 +67,7 @@ async function hookSourceFor(
   doc: HookDemoDocument,
   minSec: number,
 ): Promise<{ kind: 'ai' } | { kind: 'library'; clip: FootageClip } | { kind: 'none' }> {
-  const canGenerate = deps.registry.getAdaptersByCapability('actor_video').length > 0;
+  const canGenerate = canMakeSilentHook(deps.registry);
   const aspect = parseTargetFormats(project.targetFormats)[0]?.aspectRatio ?? '9:16';
   const library = () =>
     findFootageClip(deps.db, {
@@ -108,8 +109,10 @@ export async function planHookDemo(
   const hookLine = await hookLineFor(deps, data, project, doc, demoName, log);
   if (!(await passesTextSafety(deps, data, project, [hookLine], log))) return;
 
-  const timing = hookDemoTiming({ targetSec: doc.targetSec, demoDurationSec: demo.durationSec });
-  const source = await hookSourceFor(deps, project, doc, timing.hookSec);
+  const demoSec = demo.durationSec;
+  const timingFor = (stacked: boolean) =>
+    hookDemoTiming({ targetSec: doc.targetSec, demoDurationSec: demoSec, stacked });
+  const source = await hookSourceFor(deps, project, doc, timingFor(false).hookSec);
   if (source.kind === 'none') {
     await failProject(deps.db, {
       projectId: project.id,
@@ -142,6 +145,9 @@ export async function planHookDemo(
     // One generated clip per aspect ratio: the first script of a ratio leads, the rest reuse it.
     const leaders = new Map<string, string>();
     for (const format of formats) {
+      const stacked = effectiveLayout(doc.layout, format.aspectRatio) === 'stacked';
+      // A stacked demo already plays under the hook: the full-frame part is what is left after it.
+      const timing = timingFor(stacked);
       const script = await tx.videoScript.create({
         data: {
           projectId: project.id,
@@ -196,7 +202,6 @@ export async function planHookDemo(
           state: 'READY',
         },
       });
-      const stacked = effectiveLayout(doc.layout, format.aspectRatio) === 'stacked';
       // ONE caption, on the hook only (TikTok-classic: white, black stroke, no box).
       await tx.textOverlay.create({
         data: classicOverlayRow({
@@ -224,7 +229,7 @@ export async function planHookDemo(
   );
   const queued = await startAssets(deps, data);
   log.info(
-    { formats: formats.length, hookSource: source.kind, queued, ...timing },
+    { formats: formats.length, hookSource: source.kind, queued, ...timingFor(false) },
     'hook + demo planned',
   );
 }

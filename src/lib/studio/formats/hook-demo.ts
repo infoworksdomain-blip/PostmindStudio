@@ -128,18 +128,21 @@ export interface HookDemoTiming {
 /**
  * The hook's and the demo's lengths. The hook is 3 s (clamped to 1.5–4 s); the demo plays from its
  * start for the rest of the target (10–20 s), or its whole length when it is shorter. The total is
- * a whole number of seconds (scripts store a whole-second target for the duration check).
+ * a whole number of seconds (scripts store a whole-second target for the duration check). In a
+ * stacked layout the demo already plays under the hook, so the full-frame part starts `hookSec`
+ * into the file and only the rest of the demo is available after the hook.
  */
 export function hookDemoTiming(input: {
   targetSec: number;
   demoDurationSec: number;
   hookSec?: number;
+  stacked?: boolean;
 }): HookDemoTiming {
   const hookSec = round3(
     Math.min(HOOK_MAX_SEC, Math.max(HOOK_MIN_SEC, input.hookSec ?? HOOK_DEFAULT_SEC)),
   );
   const target = Math.min(TARGET_MAX_SEC, Math.max(TARGET_MIN_SEC, Math.round(input.targetSec)));
-  const available = Math.max(0, input.demoDurationSec);
+  const available = Math.max(0, input.demoDurationSec - (input.stacked ? hookSec : 0));
   const rawTotal = Math.min(target, hookSec + available);
   const totalSec = Math.max(Math.ceil(hookSec), Math.floor(rawTotal));
   return { hookSec, demoSec: round3(totalSec - hookSec), totalSec };

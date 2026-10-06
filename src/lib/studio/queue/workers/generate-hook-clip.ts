@@ -4,7 +4,9 @@ import { avatarUnavailableReason } from '../../pipeline/avatar-fallback';
 import type { PipelineDeps } from '../../pipeline/deps';
 import { runProvider, type ProviderRunResult } from '../../pipeline/provider-run';
 import { reuseAssetForShot } from '../../pipeline/asset-reuse';
-import type { AspectRatio } from '../../providers/interface';
+import type { ActorVideoRequest, AspectRatio } from '../../providers/interface';
+import type { ProviderRegistry } from '../../providers/registry';
+import type { RoutableAdapter } from '../../providers/router';
 import { actorImageOf } from '../../ugc/portrait';
 import { findFootageClip, HOOK_LIBRARY_CATEGORIES } from '../../formats/footage';
 import {
@@ -40,6 +42,32 @@ export interface HookShot extends VideoShot {
 interface Stored {
   assetId: string;
   routing: Record<string, unknown>;
+}
+
+/** The silent reaction request (without the per-project ids) that a hook clip sends. */
+function silentHookRequest(aspectRatio: AspectRatio, prompt: string): ActorVideoRequest {
+  return {
+    organisationId: '',
+    capability: 'actor_video',
+    prompt,
+    spokenLine: '',
+    silent: true,
+    // No speech: the language only matters to adapters that speak a line.
+    languageCode: 'en',
+    durationSec: HOOK_CLIP_SEC,
+    aspectRatio,
+  };
+}
+
+/**
+ * True when a registered actor_video adapter can make a SILENT clip (Veo; Kling's actor path is
+ * dialogue-only and refuses it), so plans do not count a Kling-only setup as an AI creator.
+ */
+export function canMakeSilentHook(registry: ProviderRegistry): boolean {
+  const probe = silentHookRequest('9:16', 'probe');
+  return registry
+    .getAdaptersByCapability('actor_video')
+    .some((a) => (a as RoutableAdapter).supportsRequest?.(probe) ?? true);
 }
 
 /** The project's ready actor portrait (21.4a), when one exists: the same person in the hook. */
@@ -167,8 +195,7 @@ export async function generateHookClip(
   record: (run: ProviderRunResult, extra: Record<string, unknown>) => Promise<Stored>,
 ): Promise<Stored> {
   if (marker.leaderShotId) return followLeader(deps, shot, marker.leaderShotId);
-  if (deps.registry.getAdaptersByCapability('actor_video').length === 0)
-    return libraryHookClip(deps, shot, 'not_configured');
+  if (!canMakeSilentHook(deps.registry)) return libraryHookClip(deps, shot, 'not_configured');
   const actorImageUrl = await portraitUrl(deps, shot);
   let run: ProviderRunResult;
   try {
@@ -177,20 +204,13 @@ export async function generateHookClip(
         need: { kind: 'shot', visualTreatment: 'UGC_ACTOR', durationSec: HOOK_CLIP_SEC },
         planTier: data.planTier,
         request: {
+          ...silentHookRequest(
+            shot.script.targetAspectRatio as AspectRatio,
+            hookClipPrompt({ reaction: marker.reaction, actorReference: Boolean(actorImageUrl) }),
+          ),
           organisationId: data.organisationId,
           projectId: data.projectId,
           shotId: shot.id,
-          capability: 'actor_video',
-          prompt: hookClipPrompt({
-            reaction: marker.reaction,
-            actorReference: Boolean(actorImageUrl),
-          }),
-          spokenLine: '',
-          silent: true,
-          // No speech: the language only matters to adapters that speak a line.
-          languageCode: 'en',
-          durationSec: HOOK_CLIP_SEC,
-          aspectRatio: shot.script.targetAspectRatio as AspectRatio,
           ...(actorImageUrl && { actorImageUrl }),
         },
       },

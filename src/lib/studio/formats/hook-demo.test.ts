@@ -74,6 +74,16 @@ describe('hookDemoTiming', () => {
     });
   });
 
+  it('stacked: the full-frame demo never runs past the end of the file', () => {
+    // An 8 s demo: 3 s play under the hook, 5 s are left for the full-frame part.
+    expect(hookDemoTiming({ targetSec: 15, demoDurationSec: 8, stacked: true })).toEqual({
+      hookSec: 3,
+      demoSec: 5,
+      totalSec: 8,
+    });
+    expect(hookDemoTiming({ targetSec: 15, demoDurationSec: 8 })).toMatchObject({ demoSec: 8 });
+  });
+
   it('clamps the hook to 1.5–4 s and the target to 10–20 s', () => {
     expect(hookDemoTiming({ targetSec: 30, demoDurationSec: 60, hookSec: 9 })).toMatchObject({
       hookSec: 4,
