@@ -84,3 +84,33 @@ describe('PricingScreen (21.5)', () => {
     expect(screen.getByText('£93.00 a month')).toBeInTheDocument();
   });
 });
+
+describe('PricingScreen: quick posts count ¼ (23.3)', () => {
+  it('says each channel’s videos can be up to 4× as many quick posts, in the card and the FAQ', async () => {
+    const user = userEvent.setup();
+    render(<PricingScreen pricing={pricingView()} />);
+    expect(
+      screen.getByText(
+        'Every channel includes 8 short HD videos a month, or up to 32 quick posts.',
+        { exact: false },
+      ),
+    ).toBeInTheDocument();
+    // The plan card: 3 channels monthly = 24 videos or 96 quick posts.
+    expect(
+      screen.getByText('Or up to 96 quick posts: carousels, slideshows and text videos count as ¼'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Or up to 32 quick posts per channel a month: carousels, slideshows and text videos count as ¼ of a video',
+      ),
+    ).toBeInTheDocument();
+    await user.click(screen.getByText('Do carousels and slideshows count as a whole video?'));
+    expect(
+      screen.getByText(/so a channel’s 8 videos a month can be up to 32 quick posts/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Weekly' }));
+    expect(
+      screen.getByText('Or up to 24 quick posts: carousels, slideshows and text videos count as ¼'),
+    ).toBeInTheDocument();
+  });
+});

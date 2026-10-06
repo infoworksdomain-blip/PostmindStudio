@@ -32,6 +32,7 @@ export interface BlitzCard {
   posterUrl: string | null;
   previewImageUrl: string | null;
   remix: { id: string; title: string; thumbnailUrl: string | null; durationSec: number } | null;
+  /** Videos of the plan a keep uses: 23.3 0.25 for a quick post, 1 for an AI video, 2 for UGC. */
   allowanceUnits: number;
   createdAt: string;
 }

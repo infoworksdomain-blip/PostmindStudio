@@ -12,7 +12,8 @@ import {
   DEFAULT_TIER_QUOTAS,
   entitlementQuota,
   generateViolations,
-  monthlyVideoUsage,
+  meter,
+  monthlyQuarterUsage,
   notifyQuotaThresholds,
   quotaMode,
   reachedThresholds,
@@ -155,7 +156,7 @@ describe('classification and per-video limits', () => {
 
   it('counts the quota only for a video not already counted this month', () => {
     const project = { sourceType: 'BRIEF', targetFormats: fmt(20) };
-    const full = { short: 20, long: 0 };
+    const full = { short: 80, long: 0 }; // quarters: 20 videos
     expect(
       generateViolations({
         project,
@@ -195,14 +196,14 @@ describe('monthly counting (UTC month boundary)', () => {
       row('never', 20, null),
       row('other-org', 20, '2026-09-10T00:00:00Z', { organisationId: 'org-2' }),
     ]);
-    const usage = await monthlyVideoUsage(
+    const usage = await monthlyQuarterUsage(
       db as never,
       'org-1',
       DEFAULT_TIER_QUOTAS.STANDARD,
       monthWindow(SEPT),
     );
-    expect(usage).toEqual({ short: 1, long: 1 });
-    const oct = await monthlyVideoUsage(
+    expect(usage).toEqual({ short: 4, long: 4 }); // one video each, in quarters
+    const oct = await monthlyQuarterUsage(
       db as never,
       'org-1',
       DEFAULT_TIER_QUOTAS.STANDARD,
@@ -307,7 +308,10 @@ describe('usage view and threshold alerts', () => {
       resetsAt: '2026-10-01T00:00:00.000Z',
       mode: 'warn',
       status: 'warning',
-      videos: { short: { used: 17, limit: 20, percent: 85 }, long: { used: 0, limit: 0 } },
+      videos: {
+        short: { used: 17, limit: 20, percent: 85, usedQuarters: 68, limitQuarters: 80 },
+        long: { used: 0, limit: 0 },
+      },
       scans: { businessesScanned: 1, limit: 1 },
       imageGeneration: { businessId: 'b1', used: 3, cap: 20 },
     });
@@ -457,12 +461,12 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
     const violations = generateViolations({
       project: row('c', 20, null) as never,
       alreadyCounted: false,
-      usage: { short: 2, long: 0 },
+      usage: { short: 8, long: 0 }, // quarters: 2 videos
       quota: entitlementQuota(base, channelEnt(1, 'week')),
       tier: 'STANDARD',
     });
     expect(violations[0]?.message).toBe(
-      'Your plan includes 2 short videos a week and 2 have been generated',
+      'Your plan includes 2 short videos a week and 2 have been used',
     );
   });
 
@@ -505,5 +509,65 @@ describe('21.5 per-channel allowance (8 a channel a month; weekly 2 a week; year
     expect(channelAllowanceNotice(view, { used: 6, limit: 6 }, 100, true).body).toMatch(
       /add a channel or buy a video pack/,
     );
+  });
+});
+
+describe('23.3 quick posts count as a quarter of a video', () => {
+  const channelMonth: Entitlements = {
+    tier: 'STANDARD',
+    access: 'full',
+    source: 'stripe',
+    limits: { seats: 5, businesses: 3, storageGb: 100 },
+    channelPlan: { channels: 1, interval: 'month', source: 'stripe' },
+  };
+  const quick = (id: string, sourceType: string) =>
+    row(id, 20, '2026-09-05T00:00:00Z', { sourceType });
+
+  it('shows videos used as a quarter number and percent from the quarters', async () => {
+    const rows = [
+      row('v1', 20, '2026-09-05T00:00:00Z'),
+      quick('c1', 'CAROUSEL'),
+      quick('s1', 'SLIDESHOW'),
+      quick('w1', 'WALL_OF_TEXT'),
+      quick('h1', 'HOOK_DEMO'),
+      quick('c2', 'CAROUSEL'),
+    ];
+    const view = await usageView(
+      { db: fakeDb(rows) as never, now: () => SEPT, env: {} },
+      'org-1',
+      'STANDARD',
+      undefined,
+      channelMonth,
+    );
+    // 4 + 5 × 1 = 9 quarters = 2.25 videos of 8 (32 quarters).
+    expect(view.videos.short).toMatchObject({
+      used: 2.25,
+      limit: 8,
+      usedQuarters: 9,
+      limitQuarters: 32,
+      percent: 28,
+    });
+    expect(view.status).toBe('ok');
+  });
+
+  it('fits 32 quick posts in a channel month and then says the allowance is used', async () => {
+    const rows = Array.from({ length: 32 }, (_, i) => quick(`c${i}`, 'CAROUSEL'));
+    const view = await usageView(
+      { db: fakeDb(rows) as never, now: () => SEPT, env: {} },
+      'org-1',
+      'STANDARD',
+      undefined,
+      channelMonth,
+    );
+    expect(view.videos.short).toMatchObject({ used: 8, limit: 8, percent: 100 });
+    expect(view.status).toBe('exceeded');
+    const notice = channelAllowanceNotice(view, view.videos.short, 100, true);
+    expect(notice.body).toMatch(/^8 of 8 videos made this month/);
+  });
+
+  it('meter: quarter limits, zero limits and unlimited', () => {
+    expect(meter(22, 8, 30)).toMatchObject({ used: 5.5, percent: 69, usedQuarters: 22 });
+    expect(meter(1, 0, 30)).toMatchObject({ used: 0.25, percent: 100, limitQuarters: 0 });
+    expect(meter(3, null, 30)).toMatchObject({ used: 0.75, percent: null, limitQuarters: null });
   });
 });

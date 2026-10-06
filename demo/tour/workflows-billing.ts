@@ -160,7 +160,7 @@ export const BILLING_WORKFLOWS: Workflow[] = [
     caption: '3 channels, monthly',
     steps: [
       {
-        text: 'Your plan: 3 channels, monthly, 20 of 24 videos used this month, renewal date. Under “Change your plan” add two channels (5): the preview says it applies now and what is due today.',
+        text: 'Your plan: 3 channels, monthly, 19.5 of 24 videos used this month (carousels, slideshows and text videos count ¼), renewal date. Under “Change your plan” add two channels (5): the preview says it applies now and what is due today.',
         href: withPlan('#/settings/billing#change', 'active_monthly'),
         cta: 'Upgrade preview',
       },

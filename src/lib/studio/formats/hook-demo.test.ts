@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   AUDIO_MIX_LEVELS,
   effectiveLayout,
-  HOOK_DEMO_ALLOWANCE_UNITS,
+  HOOK_DEMO_ALLOWANCE_QUARTERS,
   hookDemoCreateInput,
   hookDemoTiming,
   newHookDemoDocument,
   readHookDemo,
 } from './hook-demo';
-import { allowanceUnitsOf } from '../ugc/allowance';
+import { allowanceQuartersOf } from '../ugc/allowance';
 import {
   NO_BACKGROUND_VIDEO,
   noBackgroundVideo,
-  WALL_OF_TEXT_ALLOWANCE_UNITS,
+  WALL_OF_TEXT_ALLOWANCE_QUARTERS,
   newWallOfTextDocument,
   wallShownSec,
 } from './wall-of-text';
@@ -154,19 +154,20 @@ describe('noBackgroundVideo (22.2)', () => {
   });
 });
 
-describe('allowance units (22.1 / 22.2)', () => {
-  it('a hook + demo video and a wall of text each use one video', () => {
+describe('allowance quarters (22.1 / 22.2, 23.3)', () => {
+  it('a hook + demo video and a wall of text each use a quarter of a video', () => {
     const doc = newHookDemoDocument(hookDemoCreateInput.parse({}), {
       uploadId: 'u',
       assetId: 'a',
     });
-    expect(allowanceUnitsOf({ hookDemo: doc })).toBe(HOOK_DEMO_ALLOWANCE_UNITS);
+    expect(allowanceQuartersOf({ metadata: { hookDemo: doc } })).toBe(HOOK_DEMO_ALLOWANCE_QUARTERS);
     expect(
-      allowanceUnitsOf({
-        wallOfText: newWallOfTextDocument({ background: 'calm', durationSec: 8 }),
+      allowanceQuartersOf({
+        sourceType: 'WALL_OF_TEXT',
+        metadata: { wallOfText: newWallOfTextDocument({ background: 'calm', durationSec: 8 }) },
       }),
-    ).toBe(WALL_OF_TEXT_ALLOWANCE_UNITS);
-    expect(HOOK_DEMO_ALLOWANCE_UNITS).toBe(1);
-    expect(WALL_OF_TEXT_ALLOWANCE_UNITS).toBe(1);
+    ).toBe(WALL_OF_TEXT_ALLOWANCE_QUARTERS);
+    expect(HOOK_DEMO_ALLOWANCE_QUARTERS).toBe(1);
+    expect(WALL_OF_TEXT_ALLOWANCE_QUARTERS).toBe(1);
   });
 });

@@ -5,15 +5,15 @@ import { defaultProjectBudgetPence, DEFAULT_CAROUSEL_BUDGET_PENCE } from '../cos
 import { createProjectInput } from '../services/projects';
 import { projectBodyFor } from '../services/content-plan-run';
 import { featureForProjectSource } from '../services/features';
-import { allowanceUnitsOf } from '../ugc/allowance';
+import { allowanceQuartersOf } from '../ugc/allowance';
 import {
   DEFAULT_TIER_QUOTAS,
-  monthlyVideoUsage,
+  monthlyQuarterUsage,
   videoKind,
   videoLimitViolations,
 } from '../services/plan-quotas';
 import { monthWindow } from '../services/tier-gates';
-import { CAROUSEL_ALLOWANCE_UNITS } from './constants';
+import { CAROUSEL_ALLOWANCE_QUARTERS } from './constants';
 import { CAROUSEL_TARGET_FORMATS } from './publishing';
 
 // 21.6: where carousels plug into existing Studio services.
@@ -28,10 +28,12 @@ const carouselProject = {
 };
 
 describe('allowance', () => {
-  it('counts a carousel as CAROUSEL_ALLOWANCE_UNITS (1) short video', async () => {
-    expect(CAROUSEL_ALLOWANCE_UNITS).toBe(1);
-    expect(allowanceUnitsOf({ carousel: { version: 1 } })).toBe(CAROUSEL_ALLOWANCE_UNITS);
-    expect(allowanceUnitsOf({})).toBe(1);
+  it('counts a carousel as a quarter of a short video (23.3)', async () => {
+    expect(CAROUSEL_ALLOWANCE_QUARTERS).toBe(1);
+    expect(allowanceQuartersOf({ metadata: { carousel: { version: 1 } } })).toBe(
+      CAROUSEL_ALLOWANCE_QUARTERS,
+    );
+    expect(allowanceQuartersOf({ metadata: {} })).toBe(4);
     expect(videoKind(carouselProject, DEFAULT_TIER_QUOTAS.BASIC)).toBe('short');
     const now = Date.parse('2026-10-04T12:00:00Z');
     const month = monthWindow(now);
@@ -51,8 +53,8 @@ describe('allowance', () => {
       },
     };
     await expect(
-      monthlyVideoUsage(db as never, 'org_1', DEFAULT_TIER_QUOTAS.BASIC, month),
-    ).resolves.toEqual({ short: 2, long: 0 });
+      monthlyQuarterUsage(db as never, 'org_1', DEFAULT_TIER_QUOTAS.BASIC, month),
+    ).resolves.toEqual({ short: 5, long: 0 }); // a carousel (1 quarter) + a video (4 quarters)
   });
 
   it('counts only the networks a carousel is published to against the Basic platform rule', () => {

@@ -4,6 +4,7 @@ import { Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
+import { videosToQuarters } from '@/lib/studio/billing/allowance-units';
 import { cn } from '@/lib/utils';
 import type { ChannelInterval, PricingView } from './types';
 
@@ -149,6 +150,7 @@ export function ChoiceSummary({
       )}
       <ul className="grid gap-1 text-sm">
         <li>{t(`included.${choice.interval}`, { count: included, perChannel: perWindow })}</li>
+        <li>{t('quickPosts', { count: videosToQuarters(included) })}</li>
         <li>{t('hd')}</li>
         {saving !== null && saving > 0 && (
           <li className="font-medium text-success">

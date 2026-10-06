@@ -359,7 +359,13 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
       await send('checkout.session.completed', { id: session }); // a second event id, same session
       const credits = await db.usageCredit.findMany({ where: { organisationId: org } });
       expect(credits).toHaveLength(1);
-      expect(credits[0]).toMatchObject({ kind: 'short', quantity: 10, remaining: 10 });
+      expect(credits[0]).toMatchObject({
+        kind: 'short',
+        quantity: 10,
+        remaining: 10,
+        quantityQuarters: 40,
+        remainingQuarters: 40,
+      });
       expect(deps.audits.filter((a) => a.action === 'billing.topup_purchased')).toHaveLength(1);
 
       fake.charges.set(`ch_${org}`, {
@@ -372,7 +378,7 @@ describe.skipIf(!hasDb)('stripe webhook', { timeout: 60_000 }, () => {
       });
       await send('charge.refunded', { id: `ch_${org}` });
       const after = await db.usageCredit.findFirst({ where: { organisationId: org } });
-      expect(after?.remaining).toBe(0);
+      expect(after?.remainingQuarters).toBe(0);
       expect(after?.refundedAt).not.toBeNull();
     });
 

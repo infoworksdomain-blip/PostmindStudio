@@ -185,7 +185,8 @@
       "planExceededTitle": "{period, select, week {Você usou os vídeos desta semana} other {Você usou os vídeos deste mês}}",
       "planWarningTitle": "{period, select, week {Você está perto do limite de vídeos desta semana} other {Você está perto do limite de vídeos deste mês}}",
       "planBlockedBody": "Novos vídeos estão pausados até {date}. Adicione um canal ou compre um pacote de vídeos para continuar criando.",
-      "planResetBody": "Mais vídeos são incluídos a partir de {date}. Adicione um canal ou compre um pacote de vídeos para ter mais."
+      "planResetBody": "Mais vídeos são incluídos a partir de {date}. Adicione um canal ou compre um pacote de vídeos para ter mais.",
+      "quickPostsNote": "Carrosséis, apresentações, muros de texto e vídeos de gancho e demo contam como ¼ de vídeo."
     },
     "pageTitle": {
       "library": "Biblioteca de referência",
@@ -813,7 +814,7 @@
         "demo": "Som da demo primeiro",
         "music": "Só música"
       },
-      "disclosure": "A reação é uma pessoa gerada por IA, nunca uma pessoa real, e o vídeo leva o selo de gerado por IA. Usa um vídeo da sua cota."
+      "disclosure": "A reação é uma pessoa gerada por IA, nunca uma pessoa real, e o vídeo leva o selo de gerado por IA. Usa ¼ de vídeo da sua cota."
     },
     "wallOfText": {
       "title": "Parede de texto",
@@ -4265,7 +4266,7 @@
     "hero": {
       "eyebrow": "Preços",
       "title": "Um plano simples: você paga por canal",
-      "description": "Escolha em quantas plataformas sociais você publica e com que frequência paga. Cada canal inclui 8 vídeos curtos em HD por mês."
+      "description": "Escolha em quantas plataformas sociais você publica e com que frequência paga. Cada canal inclui 8 vídeos curtos em HD por mês, ou até 32 posts rápidos."
     },
     "plan": {
       "title": "Monte seu plano"
@@ -4284,7 +4285,8 @@
         "platforms": "Publicação no TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn e X",
         "scheduling": "Um calendário de conteúdo e agendamento automático",
         "brand": "Seu kit de marca em todos os vídeos",
-        "library": "Biblioteca de vídeos de referência para ter ideias"
+        "library": "Biblioteca de vídeos de referência para ter ideias",
+        "quickPosts": "Ou até 32 posts rápidos por canal por mês: carrosséis, apresentações e vídeos de texto contam como ¼ de vídeo"
       }
     },
     "packs": {
@@ -4325,6 +4327,10 @@
         "cancel": {
           "q": "O que acontece se eu cancelar?",
           "a": "Seu plano termina no fim do período já pago, e você pode mudar de ideia até lá. Depois disso, sua conta passa a ser somente leitura: você ainda pode visualizar, exportar e baixar seu trabalho. Não reembolsamos períodos usados parcialmente."
+        },
+        "quickPosts": {
+          "q": "Carrosséis e apresentações contam como um vídeo inteiro?",
+          "a": "Não. Carrosséis, apresentações, muros de texto e vídeos de gancho e demo são posts rápidos e contam como ¼ de vídeo, então os 8 vídeos por mês de um canal podem virar até 32 posts rápidos. Um vídeo com IA conta como 1 vídeo e um vídeo com ator UGC como 2. Os vídeos dos pacotes são contados do mesmo jeito."
         }
       }
     }
@@ -5058,7 +5064,8 @@
     },
     "quota": {
       "title": "Você usou os vídeos do seu plano por enquanto",
-      "body": "Adicione um canal para ter mais vídeos por semana ou por mês, ou compre um pacote de vídeos para continuar hoje mesmo."
+      "body": "Adicione um canal para ter mais vídeos por semana ou por mês, ou compre um pacote de vídeos para continuar hoje mesmo.",
+      "quickPosts": "Posts rápidos rendem mais: carrosséis, apresentações, muros de texto e vídeos de gancho e demo contam como ¼ de vídeo."
     },
     "planRequired": {
       "title": "Escolha um plano para começar a criar",
@@ -5765,7 +5772,8 @@
     "packs": {
       "name": "{quantity, plural, one {# vídeo HD} many {# vídeos HD} other {# vídeos HD}}",
       "validity": "Use em qualquer canal em até {months, plural, one {# mês} many {# meses} other {# meses}}"
-    }
+    },
+    "quickPosts": "Ou até {count, number} posts rápidos: carrosséis, apresentações e vídeos de texto contam como ¼"
   },
   "carousel": {
     "editor": {
@@ -5927,7 +5935,8 @@
       "soundOff": "Silenciar",
       "beats": "Roteiro",
       "stillAlt": "Uma imagem da sua biblioteca",
-      "mentionsBusiness": "Cita sua empresa"
+      "mentionsBusiness": "Cita sua empresa",
+      "allowanceQuick": "Usa ¼ de vídeo do seu plano se você mantiver"
     },
     "keep": {
       "title": "Manter",

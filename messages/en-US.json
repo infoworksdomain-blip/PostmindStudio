@@ -185,7 +185,8 @@
       "planExceededTitle": "{period, select, week {You’ve used this week’s videos} other {You’ve used this month’s videos}}",
       "planWarningTitle": "{period, select, week {You’re close to this week’s video limit} other {You’re close to this month’s video limit}}",
       "planBlockedBody": "New videos are paused until {date}. Add a channel or buy a video pack to keep creating.",
-      "planResetBody": "More videos are included starting {date}. Add a channel or buy a video pack for more."
+      "planResetBody": "More videos are included starting {date}. Add a channel or buy a video pack for more.",
+      "quickPostsNote": "Carousels, slideshows, wall of text and hook + demo videos count as ¼ of a video."
     },
     "pageTitle": {
       "library": "Reference library",
@@ -813,7 +814,7 @@
         "demo": "Demo sound first",
         "music": "Music only"
       },
-      "disclosure": "The reaction is an AI-generated person, never a real one, and the video carries the AI-generated label. It uses one video of your allowance."
+      "disclosure": "The reaction is an AI-generated person, never a real one, and the video carries the AI-generated label. It uses ¼ of a video from your allowance."
     },
     "wallOfText": {
       "title": "Wall of text",
@@ -4265,7 +4266,7 @@
     "hero": {
       "eyebrow": "Pricing",
       "title": "One simple plan: pay per channel",
-      "description": "Choose how many social platforms you publish to and how often you pay. Every channel includes 8 short HD videos a month."
+      "description": "Choose how many social platforms you publish to and how often you pay. Every channel includes 8 short HD videos a month, or up to 32 quick posts."
     },
     "plan": {
       "title": "Build your plan"
@@ -4284,7 +4285,8 @@
         "platforms": "Publishing to TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn and X",
         "scheduling": "A content calendar and automatic scheduling",
         "brand": "Your brand kit on every video",
-        "library": "Reference video library for ideas"
+        "library": "Reference video library for ideas",
+        "quickPosts": "Or up to 32 quick posts per channel a month: carousels, slideshows and text videos count as ¼ of a video"
       }
     },
     "packs": {
@@ -4325,6 +4327,10 @@
         "cancel": {
           "q": "What happens if I cancel?",
           "a": "Your plan ends at the end of the period you’ve paid for, and you can change your mind until then. After that your account becomes read-only: you can still view, export and download your work. We don’t refund partially used periods."
+        },
+        "quickPosts": {
+          "q": "Do carousels and slideshows count as a whole video?",
+          "a": "No. Carousels, slideshows, wall of text and hook + demo videos are quick posts and count as ¼ of a video, so a channel’s 8 videos a month can be up to 32 quick posts. An AI video counts as 1 video and a UGC actor video as 2. Video pack videos are counted the same way."
         }
       }
     }
@@ -5058,7 +5064,8 @@
     },
     "quota": {
       "title": "You’ve used your plan’s videos for now",
-      "body": "Add a channel for more videos each week or month, or buy a video pack to keep going today."
+      "body": "Add a channel for more videos each week or month, or buy a video pack to keep going today.",
+      "quickPosts": "Quick posts go further: carousels, slideshows, wall of text and hook + demo videos count as ¼ of a video."
     },
     "planRequired": {
       "title": "Choose a plan to start creating",
@@ -5765,7 +5772,8 @@
     "packs": {
       "name": "{quantity, plural, one {# HD video} other {# HD videos}}",
       "validity": "Use on any channel within {months, plural, one {# month} other {# months}}"
-    }
+    },
+    "quickPosts": "Or up to {count, number} quick posts: carousels, slideshows and text videos count as ¼"
   },
   "carousel": {
     "editor": {
@@ -5927,7 +5935,8 @@
       "soundOff": "Mute",
       "beats": "Script",
       "stillAlt": "A picture from your library",
-      "mentionsBusiness": "Names your business"
+      "mentionsBusiness": "Names your business",
+      "allowanceQuick": "Uses ¼ of a video of your plan when kept"
     },
     "keep": {
       "title": "Keep it",

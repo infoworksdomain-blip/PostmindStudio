@@ -1,3 +1,5 @@
+import { QUICK_POST_QUARTERS, quartersToVideos, VIDEO_QUARTERS } from '../billing/allowance-units';
+import { UGC_VIDEO_QUARTERS } from '../ugc/allowance';
 import { FORMATS, type FormatKey } from './formats';
 import { effectiveFormatWeight, type MixPreferences } from './mix';
 
@@ -7,9 +9,27 @@ import { effectiveFormatWeight, type MixPreferences } from './mix';
 // the MOST EXPENSIVE ones are dropped first (cheapest first: carousels, slideshows, then any paid
 // format the owner switched on). Pure and deterministic.
 
-/** Units of the allowance a format uses when it is generated (ugc/allowance.ts: UGC = 2). */
-export function allowanceUnitsFor(format: FormatKey): number {
-  return format === 'ugc' ? 2 : 1;
+/**
+ * 23.3: quarters of a video of the allowance a format uses when it is generated
+ * (ugc/allowance.ts allowanceQuartersOf): carousel, slideshow, wall of text and hook + demo are
+ * quick posts (1 = ¼ of a video), an AI video 4, a UGC actor video 8.
+ */
+export const FORMAT_ALLOWANCE_QUARTERS: Readonly<Record<FormatKey, number>> = Object.freeze({
+  carousel: QUICK_POST_QUARTERS,
+  slideshow: QUICK_POST_QUARTERS,
+  wall_of_text: QUICK_POST_QUARTERS,
+  hook_demo: QUICK_POST_QUARTERS,
+  ai_video: VIDEO_QUARTERS,
+  ugc: UGC_VIDEO_QUARTERS,
+});
+
+export function allowanceQuartersFor(format: FormatKey): number {
+  return FORMAT_ALLOWANCE_QUARTERS[format];
+}
+
+/** What the formats use of the allowance, in videos for display (a quarter number). */
+export function allowanceVideosFor(formats: readonly FormatKey[]): number {
+  return quartersToVideos(formats.reduce((n, f) => n + allowanceQuartersFor(f), 0));
 }
 
 /** Slot counts per format by weight (largest remainder; ties to the cheaper format). */
@@ -63,23 +83,23 @@ export function allocateFormats(
 }
 
 /**
- * The slot indexes that fit `units` of allowance (and the optional pence ceiling at each
- * format's typical cost): the cheapest formats are kept first; ties keep the earlier slot.
- * Returns the kept indexes in slot order.
+ * The slot indexes that fit `quarters` of allowance (23.3: quarters of a video; null = no limit)
+ * and the optional pence ceiling at each format's typical cost: the cheapest formats are kept
+ * first; ties keep the earlier slot. Returns the kept indexes in slot order.
  */
 export function keepCheapestFirst(
   formats: readonly FormatKey[],
-  units: number | null,
+  quarters: number | null,
   options: { ceilingPence?: number | null; typicalPence?: (format: FormatKey) => number } = {},
 ): number[] {
   const order = formats
     .map((format, index) => ({ format, index }))
     .sort((a, b) => FORMATS[a.format].costRank - FORMATS[b.format].costRank || a.index - b.index);
-  let unitsLeft = units ?? Infinity;
+  let unitsLeft = quarters ?? Infinity;
   let pence = 0;
   const kept: number[] = [];
   for (const { format, index } of order) {
-    const need = allowanceUnitsFor(format);
+    const need = allowanceQuartersFor(format);
     if (need > unitsLeft) continue;
     const cost = options.typicalPence?.(format) ?? 0;
     if (options.ceilingPence != null && pence + cost > options.ceilingPence) continue;

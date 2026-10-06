@@ -8,7 +8,8 @@ import { budgetFormatsFromJson } from '../cost/project-budget';
 import { notifySafely, type NotificationMessage, type Notifier } from '../notifications/notifier';
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
-import { allowanceUnitsOf } from '../ugc/allowance';
+import { allowanceQuartersOf } from '../ugc/allowance';
+import { formatVideos, limitInQuarters, quartersToVideos } from '../billing/allowance-units';
 import { isUnkeptBlitz } from '../blitz/constants';
 import { PLAN_CATALOGUE, TIER_ORDER as CATALOGUE_TIERS } from '../billing/catalogue';
 import {
@@ -58,7 +59,10 @@ import {
 //     limited to the tier's long-video length ("× 3min" / "× 6min"). Basic has no long videos.
 //   · Slideshows count as short videos and are exempt from the length limit (A10.4 prices them
 //     separately from AI video).
-//   · 21.6: a carousel counts as CAROUSEL_ALLOWANCE_UNITS short videos (operator 2026-10-04: 1).
+//   · 23.3 (operator 2026-10-06): usage is counted in integer QUARTERS of a video
+//     (billing/allowance-units.ts): a carousel, slideshow, wall of text or hook + demo uses 1, a
+//     video 4, a UGC actor video 8. Limits stay in videos and are compared in quarters; the usage
+//     view shows videos (5.5 of 8).
 //   · "TikTok + IG + 1 more" is checked per video: TikTok, Instagram (Reels / feed) and at most
 //     one other platform family (YouTube, Facebook, LinkedIn, X).
 //   · Checks are advisory under concurrency: two generate calls racing may both pass the last slot.
@@ -278,7 +282,8 @@ export interface QuotaViolation {
   message: string;
 }
 
-export interface VideoUsage {
+/** 23.3: allowance used per kind, in integer quarters of a video (a video = 4). */
+export interface QuarterUsage {
   short: number;
   long: number;
 }
@@ -334,7 +339,8 @@ export function videoLimitViolations(
 export function generateViolations(input: {
   project: QuotaProject;
   alreadyCounted: boolean;
-  usage: VideoUsage;
+  /** In quarters of a video (monthlyQuarterUsage). */
+  usage: QuarterUsage;
   quota: TierQuota;
   tier: PlanTier;
 }): QuotaViolation[] {
@@ -343,13 +349,14 @@ export function generateViolations(input: {
   if (input.alreadyCounted || out.some((v) => v.code === 'long_not_included')) return out;
   const kind = videoKind(project, quota);
   const limit = kind === 'short' ? quota.shortVideos : quota.longVideos;
-  // 21.4: room for the whole video (a UGC actor video uses more than one).
-  if (limit !== null && usage[kind] + allowanceUnitsOf(project.metadata) > limit) {
+  const limitQuarters = limitInQuarters(limit);
+  // 21.4 / 23.3: room for the whole post, in quarters (a quick post 1, a video 4, UGC 8).
+  if (limitQuarters !== null && usage[kind] + allowanceQuartersOf(project) > limitQuarters) {
     out.push({
       code: kind === 'short' ? 'short_quota' : 'long_quota',
-      message: `${planText(quota, tier)} includes ${limit} ${kind} videos a ${quota.period ?? 'month'} and ${
-        usage[kind]
-      } have been generated`,
+      message: `${planText(quota, tier)} includes ${limit} ${kind} videos a ${quota.period ?? 'month'} and ${formatVideos(
+        usage[kind],
+      )} have been used`,
     });
   }
   return out;
@@ -359,24 +366,26 @@ export function generateViolations(input: {
 
 type QuotaDb = Pick<PrismaClient, 'videoProject'>;
 
-/** Projects of the organisation whose generation started in `month`, by kind. */
-export async function monthlyVideoUsage(
+/**
+ * Allowance used by the organisation's projects counted in `month` (the allowance window), by
+ * kind, in integer QUARTERS of a video (23.3).
+ */
+export async function monthlyQuarterUsage(
   db: QuotaDb,
   organisationId: string,
   quota: TierQuota,
   month: MonthWindow,
-): Promise<VideoUsage> {
+): Promise<QuarterUsage> {
   // generate updates the row, so every project generated this month has updatedAt ≥ its start.
   const rows = await db.videoProject.findMany({
     where: { organisationId, updatedAt: { gte: month.start } },
     select: { sourceType: true, targetFormats: true, metadata: true },
   });
-  const usage: VideoUsage = { short: 0, long: 0 };
+  const usage: QuarterUsage = { short: 0, long: 0 };
   for (const row of rows) {
-    // 21.4 / 21.6: a UGC actor video uses UGC_VIDEO_ALLOWANCE_UNITS videos and a carousel
-    // CAROUSEL_ALLOWANCE_UNITS (ugc/allowance.ts).
-    if (countedIn(row.metadata, month))
-      usage[videoKind(row, quota)] += allowanceUnitsOf(row.metadata);
+    // 21.4 / 23.3: a UGC actor video uses 8 quarters, a quick post 1, a video 4
+    // (ugc/allowance.ts allowanceQuartersOf).
+    if (countedIn(row.metadata, month)) usage[videoKind(row, quota)] += allowanceQuartersOf(row);
   }
   return usage;
 }
@@ -473,7 +482,7 @@ export async function checkGenerateQuota(
   });
   if (!project) return { violations: [], mode };
   const month = monthWindow(deps.now());
-  const usage = await monthlyVideoUsage(deps.db, tenant.organisationId, quota, month);
+  const usage = await monthlyQuarterUsage(deps.db, tenant.organisationId, quota, month);
   const violations = generateViolations({
     project,
     alreadyCounted: countedIn(project.metadata, month),
@@ -481,7 +490,7 @@ export async function checkGenerateQuota(
     quota,
     tier,
   });
-  raise(deps, mode, tier, violations, { projectId, month: month.key, usage });
+  raise(deps, mode, tier, violations, { projectId, month: month.key, usageQuarters: usage });
   return { violations, mode };
 }
 
@@ -517,7 +526,7 @@ async function checkGenerateQuotaLocked(
     });
     if (!project) return { violations: [], mode };
     const alreadyCounted = countedIn(project.metadata, month);
-    const usage = await monthlyVideoUsage(tx, tenant.organisationId, quota, month);
+    const usage = await monthlyQuarterUsage(tx, tenant.organisationId, quota, month);
     let violations = generateViolations({ project, alreadyCounted, usage, quota, tier });
     const kind = videoKind(project, quota);
     let creditUseId = quotaSlotOf(project.metadata)?.creditUseId;
@@ -529,7 +538,7 @@ async function checkGenerateQuotaLocked(
         month: creditMonth,
         kind,
         now: new Date(now),
-        units: allowanceUnitsOf(project.metadata),
+        quarters: allowanceQuartersOf(project),
       });
       if (use) {
         creditUseId = use.id;
@@ -540,7 +549,14 @@ async function checkGenerateQuotaLocked(
         );
       }
     }
-    raise(deps, mode, tier, violations, { projectId, month: month.key, usage }, quota);
+    raise(
+      deps,
+      mode,
+      tier,
+      violations,
+      { projectId, month: month.key, usageQuarters: usage },
+      quota,
+    );
     if (!alreadyCounted) {
       const slot: QuotaSlot = {
         month: month.key,
@@ -595,7 +611,6 @@ export async function releaseQuotaReservation(
         select: { metadata: true },
       });
       if (!project) return;
-      const units = allowanceUnitsOf(project.metadata);
       // generationStart in the reserved window means the run did start: keep the slot.
       if (windowKeyOf(generatedAt(project.metadata), reservation.month) === reservation.month)
         return;
@@ -610,9 +625,10 @@ export async function releaseQuotaReservation(
         const use = await tx.usageCreditUse.findUnique({ where: { id: reservation.creditUseId } });
         if (use) {
           await tx.usageCreditUse.delete({ where: { id: use.id } });
+          // 23.3: exactly the quarters this use took (a quick post 1, a video 4, UGC 8).
           await tx.usageCredit.update({
             where: { id: use.creditId },
-            data: { remaining: { increment: units } },
+            data: { remainingQuarters: { increment: use.quarters } },
           });
         }
       }
@@ -671,10 +687,15 @@ function raise(
 // ------------------------------------------------------------------ usage view + notifications
 
 export interface QuotaMeter {
+  /** Videos used: 23.3 a quarter number (5.5 = five videos and two quick posts). */
   used: number;
+  /** Videos included; null = unlimited. */
   limit: number | null;
   percent: number | null;
   maxDurationSec: number | null;
+  /** 23.3: the same in integer quarters of a video (exact; a quick post 1, a video 4). */
+  usedQuarters: number;
+  limitQuarters: number | null;
 }
 
 export type QuotaStatus = 'ok' | 'warning' | 'exceeded';
@@ -699,13 +720,28 @@ export interface UsageView {
   imageGeneration?: ImageGenerationUsage;
 }
 
-function meter(used: number, limit: number | null, maxDurationSec: number | null): QuotaMeter {
-  const percent = limit === null ? null : limit === 0 ? (used > 0 ? 100 : 0) : (used / limit) * 100;
+/** A meter from used quarters and a limit in videos (23.3). */
+export function meter(
+  usedQuarters: number,
+  limit: number | null,
+  maxDurationSec: number | null,
+): QuotaMeter {
+  const limitQuarters = limitInQuarters(limit);
+  const percent =
+    limitQuarters === null
+      ? null
+      : limitQuarters === 0
+        ? usedQuarters > 0
+          ? 100
+          : 0
+        : (usedQuarters / limitQuarters) * 100;
   return {
-    used,
+    used: quartersToVideos(usedQuarters),
     limit,
     percent: percent === null ? null : Math.round(percent),
     maxDurationSec,
+    usedQuarters,
+    limitQuarters,
   };
 }
 
@@ -737,7 +773,7 @@ export async function usageView(
   const quota = entitlementQuota(tierQuota(tier, env), entitlements);
   const month = allowanceWindow(entitlements, deps.now());
   const [usage, businessesScanned, imageGeneration] = await Promise.all([
-    monthlyVideoUsage(deps.db, organisationId, quota, month),
+    monthlyQuarterUsage(deps.db, organisationId, quota, month),
     scannedBusinessCount(deps.db, organisationId),
     businessId
       ? imageGenerationUsage(

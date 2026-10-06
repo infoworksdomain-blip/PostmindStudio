@@ -16,6 +16,9 @@ export interface QuotaMeterView {
   limit: number | null;
   percent: number | null;
   maxDurationSec: number | null;
+  /** 23.3: exact usage in quarters of a video (a quick post uses 1, a video 4). */
+  usedQuarters?: number;
+  limitQuarters?: number | null;
 }
 
 export interface UsageResponse {
@@ -91,7 +94,7 @@ export function UsageMeters({ usage }: { usage: UsageResponse['usage'] }) {
           meter={usage.videos.short}
         />
         <p className="text-xs text-muted-foreground">
-          {t('moreFrom', { date: resetDate(usage.resetsAt) })}
+          {t('moreFrom', { date: resetDate(usage.resetsAt) })} {t('quickPostsNote')}
         </p>
       </div>
     );
@@ -166,6 +169,7 @@ export function UsageBanner() {
             </p>
           </>
         )}
+        {usage.channelPlan && <p className="text-muted-foreground">{t('quickPostsNote')}</p>}
         <UsageBannerActions />
       </div>
       <div className="grid gap-3">

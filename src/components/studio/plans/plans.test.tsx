@@ -378,7 +378,8 @@ describe('month plans: costs for staff only', () => {
     renderScreen(<PlanScreen planId="plan_1" />);
     await screen.findByRole('heading', { name: '4 posts: 2 videos and 2 slideshows' });
     await waitFor(() => expect(api.find('GET', '/me').length).toBeGreaterThan(0));
-    expect(screen.getByText(/Uses 4 videos of this month’s allowance/)).toBeInTheDocument();
+    // 23.3: two videos (1 each) and two slideshows (¼ each).
+    expect(screen.getByText(/Uses 2.5 videos of this month’s allowance/)).toBeInTheDocument();
     expect(screen.queryByText(/Estimated cost|£/)).not.toBeInTheDocument();
   });
 

@@ -2,8 +2,13 @@
 // "instagram-thread-carousel" (SKILL.md reviewed by the operator 2026-10-04), reimplemented natively;
 // see plans/phase-21-carousels.md.
 
-/** A carousel counts as this many "videos" against the plan allowance (operator 2026-10-04). */
-export const CAROUSEL_ALLOWANCE_UNITS = 1;
+import { QUICK_POST_QUARTERS } from '../billing/allowance-units';
+
+/**
+ * 23.3: a carousel counts as ¼ of a video against the plan allowance, in quarters of a video
+ * (operator 2026-10-06; billing/allowance-units.ts).
+ */
+export const CAROUSEL_ALLOWANCE_QUARTERS = QUICK_POST_QUARTERS;
 
 /** Instagram 4:5 portrait. */
 export const SLIDE_WIDTH = 1080;

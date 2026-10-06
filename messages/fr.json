@@ -185,7 +185,8 @@
       "planExceededTitle": "{period, select, week {Vous avez utilisé les vidéos de cette semaine} other {Vous avez utilisé les vidéos de ce mois-ci}}",
       "planWarningTitle": "{period, select, week {Vous approchez de la limite de vidéos de cette semaine} other {Vous approchez de la limite de vidéos de ce mois-ci}}",
       "planBlockedBody": "Les nouvelles vidéos sont en pause jusqu’au {date}. Ajoutez un canal ou achetez un pack de vidéos pour continuer à créer.",
-      "planResetBody": "D’autres vidéos sont incluses à partir du {date}. Ajoutez un canal ou achetez un pack de vidéos pour en avoir plus."
+      "planResetBody": "D’autres vidéos sont incluses à partir du {date}. Ajoutez un canal ou achetez un pack de vidéos pour en avoir plus.",
+      "quickPostsNote": "Les carrousels, les diaporamas, les murs de texte et les vidéos accroche et démo comptent pour ¼ de vidéo."
     },
     "pageTitle": {
       "library": "Bibliothèque de référence",
@@ -813,7 +814,7 @@
         "demo": "Son de la démo d’abord",
         "music": "Musique seule"
       },
-      "disclosure": "La réaction montre une personne générée par IA, jamais une vraie, et la vidéo porte la mention « générée par IA ». Elle compte pour une vidéo de votre quota."
+      "disclosure": "La réaction montre une personne générée par IA, jamais une vraie, et la vidéo porte la mention « générée par IA ». Elle compte pour ¼ de vidéo de votre quota."
     },
     "wallOfText": {
       "title": "Mur de texte",
@@ -4265,7 +4266,7 @@
     "hero": {
       "eyebrow": "Tarifs",
       "title": "Un abonnement simple : vous payez par canal",
-      "description": "Choisissez le nombre de plateformes sociales sur lesquelles vous publiez et la fréquence de paiement. Chaque canal inclut 8 vidéos HD courtes par mois."
+      "description": "Choisissez le nombre de plateformes sociales sur lesquelles vous publiez et la fréquence de paiement. Chaque canal inclut 8 vidéos HD courtes par mois, ou jusqu’à 32 publications rapides."
     },
     "plan": {
       "title": "Composez votre abonnement"
@@ -4284,7 +4285,8 @@
         "platforms": "Publication sur TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn et X",
         "scheduling": "Un calendrier de contenus et une programmation automatique",
         "brand": "Votre charte de marque sur chaque vidéo",
-        "library": "Une vidéothèque de référence pour trouver des idées"
+        "library": "Une vidéothèque de référence pour trouver des idées",
+        "quickPosts": "Ou jusqu’à 32 publications rapides par canal et par mois : les carrousels, les diaporamas et les vidéos texte comptent pour ¼ de vidéo"
       }
     },
     "packs": {
@@ -4325,6 +4327,10 @@
         "cancel": {
           "q": "Que se passe-t-il si je résilie ?",
           "a": "Votre abonnement prend fin à la fin de la période payée, et vous pouvez changer d’avis d’ici là. Ensuite, votre compte passe en lecture seule : vous pouvez toujours consulter, exporter et télécharger vos contenus. Les périodes entamées ne sont pas remboursées."
+        },
+        "quickPosts": {
+          "q": "Les carrousels et les diaporamas comptent-ils comme une vidéo entière ?",
+          "a": "Non. Les carrousels, les diaporamas, les murs de texte et les vidéos accroche et démo sont des publications rapides et comptent pour ¼ de vidéo : les 8 vidéos par mois d’un canal peuvent donc devenir jusqu’à 32 publications rapides. Une vidéo IA compte pour 1 vidéo et une vidéo avec acteur UGC pour 2. Les vidéos des packs sont comptées de la même façon."
         }
       }
     }
@@ -5058,7 +5064,8 @@
     },
     "quota": {
       "title": "Vous avez utilisé les vidéos de votre abonnement pour le moment",
-      "body": "Ajoutez un canal pour avoir plus de vidéos chaque semaine ou chaque mois, ou achetez un pack de vidéos pour continuer dès aujourd’hui."
+      "body": "Ajoutez un canal pour avoir plus de vidéos chaque semaine ou chaque mois, ou achetez un pack de vidéos pour continuer dès aujourd’hui.",
+      "quickPosts": "Les publications rapides vont plus loin : les carrousels, les diaporamas, les murs de texte et les vidéos accroche et démo comptent pour ¼ de vidéo."
     },
     "planRequired": {
       "title": "Choisissez une formule pour commencer à créer",
@@ -5765,7 +5772,8 @@
     "packs": {
       "name": "{quantity, plural, one {# vidéo HD} many {# vidéos HD} other {# vidéos HD}}",
       "validity": "À utiliser sur n’importe quel canal dans un délai de {months, plural, one {# mois} many {# mois} other {# mois}}"
-    }
+    },
+    "quickPosts": "Ou jusqu’à {count, number} publications rapides : les carrousels, les diaporamas et les vidéos texte comptent pour ¼"
   },
   "carousel": {
     "editor": {
@@ -5927,7 +5935,8 @@
       "soundOff": "Couper le son",
       "beats": "Script",
       "stillAlt": "Une image de votre bibliothèque",
-      "mentionsBusiness": "Cite votre entreprise"
+      "mentionsBusiness": "Cite votre entreprise",
+      "allowanceQuick": "Utilise ¼ de vidéo de votre offre si vous la gardez"
     },
     "keep": {
       "title": "La garder",

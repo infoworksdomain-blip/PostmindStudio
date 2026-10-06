@@ -208,10 +208,10 @@ describe.skipIf(!hasDb)('top-up credits and the locked quota check', { timeout: 
       },
       new Date(NOW),
     );
-    // 2 credits, 1 spent, 50 % refunded (1 credit) → nothing unused left.
+    // 2 credits, 1 spent, 50 % refunded (1 credit) → nothing unused left (23.3: in quarters).
     expect(half).toMatchObject({ removed: 1 });
     expect(
-      (await db.usageCredit.findUniqueOrThrow({ where: { id: fresh.creditId } })).remaining,
+      (await db.usageCredit.findUniqueOrThrow({ where: { id: fresh.creditId } })).remainingQuarters,
     ).toBe(0);
     expect(
       await refundTopUpCredits(

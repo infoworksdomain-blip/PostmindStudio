@@ -451,6 +451,15 @@ export const WHATS_NEW: WhatsNewGroup[] = [
           { href: '#/admin?tab=cost', label: 'Cost report (staff)' },
         ],
       },
+      {
+        ref: '23.3',
+        title: 'Quick posts count ¼',
+        line: 'Carousels, slideshows, wall of text and hook + demo count as a quarter of a video, so each channel’s 8 videos a month can be up to 32 quick posts (packs count the same way).',
+        see: [
+          { href: '#/settings/billing', label: 'Your plan: videos used' },
+          { href: '#/pricing', label: 'Pricing' },
+        ],
+      },
     ],
   },
 ];

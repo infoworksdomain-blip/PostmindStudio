@@ -79,7 +79,11 @@ export function BlitzCardView({
           </span>
         </p>
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
-          <span>{t('allowance', { units: card.allowanceUnits })}</span>
+          <span>
+            {card.allowanceUnits < 1
+              ? t('allowanceQuick')
+              : t('allowance', { units: card.allowanceUnits })}
+          </span>
           {card.remix && onShowRemix && (
             <button
               type="button"
