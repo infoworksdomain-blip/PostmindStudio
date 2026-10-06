@@ -10,6 +10,7 @@ import { StateBadge } from '../primitives';
 import { CheckedLine } from './checked-line';
 import { ConfirmDialog } from '../publications/confirm-dialog';
 import type { OAUTH_PLATFORMS } from './platforms';
+import { TikTokPostModeSetting } from './tiktok-post-mode';
 
 // One platform row: its connected accounts (with a visible needs-reconnect state), a connect
 // button and per-account disconnect behind a confirmation.
@@ -23,6 +24,7 @@ export function AccountRow({
   canReconnect = true,
   onReconnect,
   onDisconnect,
+  onSettingsChanged,
 }: {
   connection: PlatformConnection;
   label: string;
@@ -31,6 +33,8 @@ export function AccountRow({
   canReconnect?: boolean;
   onReconnect: () => void;
   onDisconnect: () => Promise<boolean>;
+  /** 22.7: refresh after a setting changed (TikTok posting preference); absent = no settings. */
+  onSettingsChanged?: () => void | Promise<unknown>;
 }) {
   const t = useTranslations('connections');
   const f = useFormat();
@@ -52,6 +56,9 @@ export function AccountRow({
           {stale ? t('stale') : t('connectedOn', { date: f.date(connection.connectedAt) })}
         </p>
         {!stale && <CheckedLine connection={connection} />}
+        {connection.platform === 'tiktok' && onSettingsChanged && (
+          <TikTokPostModeSetting connection={connection} onChanged={onSettingsChanged} />
+        )}
       </div>
       <div className="flex items-center gap-1">
         {stale && canReconnect && (
@@ -87,6 +94,7 @@ export function PlatformCard({
   configured = true,
   onConnect,
   onDisconnect,
+  onSettingsChanged,
 }: {
   platform: PlatformInfo;
   connections: PlatformConnection[];
@@ -95,6 +103,7 @@ export function PlatformCard({
   configured?: boolean;
   onConnect: () => void;
   onDisconnect: (connection: PlatformConnection) => Promise<boolean>;
+  onSettingsChanged?: () => void | Promise<unknown>;
 }) {
   const t = useTranslations('connections');
   const connected = connections.length > 0;
@@ -121,6 +130,7 @@ export function PlatformCard({
                 canReconnect={configured}
                 onReconnect={onConnect}
                 onDisconnect={() => onDisconnect(c)}
+                onSettingsChanged={onSettingsChanged}
               />
             ))}
           </ul>

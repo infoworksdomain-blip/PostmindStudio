@@ -89,6 +89,41 @@ describe('BlitzScreen', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Kept and scheduled.'));
   });
 
+  it('22.7: the keep sheet says a TikTok copy goes to the TikTok drafts', async () => {
+    mockFetch((req) => {
+      if (req.url.pathname === '/api/studio/blitz') return ok({ deck: deck([card('a')]) });
+      if (req.url.pathname === '/api/studio/platform-connections')
+        return ok({
+          data: [
+            {
+              id: 'con_tt',
+              businessId: 'biz_1',
+              platform: 'tiktok',
+              platformAccountId: 'tt',
+              platformAccountName: '@bakery',
+              accessTokenExpiresAt: null,
+              scopes: ['video.publish', 'video.upload'],
+              state: 'active',
+              connectedAt: '2026-10-06T10:00:00.000Z',
+              tiktokPostMode: 'drafts',
+            },
+          ],
+        });
+      return undefined;
+    });
+    renderScreen(<BlitzScreen />);
+    await screen.findByText('Card a');
+    fireEvent.click(screen.getByRole('button', { name: 'Keep this post' }));
+    expect(
+      await screen.findByText(
+        'TikTok: goes to your TikTok drafts. Add a trending sound in the app, then post.',
+      ),
+    ).toBeInTheDocument();
+    // "Edit first" posts nothing, so the hint goes away.
+    fireEvent.click(screen.getByRole('radio', { name: /Edit/ }));
+    expect(screen.queryByText(/goes to your TikTok drafts/)).not.toBeInTheDocument();
+  });
+
   it('skips with a reason and says what it learned', async () => {
     const api = mockFetch((req) => {
       if (req.url.pathname === '/api/studio/blitz')

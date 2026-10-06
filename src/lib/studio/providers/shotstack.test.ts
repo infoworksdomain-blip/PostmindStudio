@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { ConfigurationError } from '../../errors';
-import { classifyRenderFailure, ShotstackAdapter } from './shotstack';
+import { renderCallbackFromEnv, verifyRenderCallbackToken } from './render-callback';
+import { CALLBACK_FALLBACK_POLL_MS, classifyRenderFailure, ShotstackAdapter } from './shotstack';
 
 // Fixtures follow shotstack.io/docs/api (render envelope and status values).
 const NOW = Date.parse('2026-09-27T12:00:00Z');
@@ -220,4 +221,59 @@ describe('classifyRenderFailure', () => {
       expect(classifyRenderFailure(message)).toEqual({ class: 'unknown', retryable: false });
     },
   );
+});
+
+describe('ShotstackAdapter render callbacks (23.1)', () => {
+  const created = () =>
+    json(
+      {
+        success: true,
+        message: 'Created',
+        response: { id: 'r-1', message: 'Render Successfully Queued' },
+      },
+      201,
+    );
+  const callback = renderCallbackFromEnv({
+    APP_URL: 'https://studio.example.com',
+    STUDIO_RENDER_CALLBACK_SECRET: 'c'.repeat(40),
+  })!;
+
+  it('sends a per-render callback URL with the edit and polls every 20 s as the fallback', async () => {
+    const fake = fakeFetch(created(), created());
+    const shotstack = new ShotstackAdapter({
+      apiKey: 'ss-key',
+      environment: 'stage',
+      usdToGbpRate: 0.75,
+      fetchImpl: fake.fetch,
+      now: () => NOW,
+      callback,
+    });
+    await shotstack.submit(composition);
+    await shotstack.submit(composition);
+    const bodies = fake.requests.map((r) => r.body as Record<string, unknown>);
+    for (const body of bodies) {
+      expect(body).toMatchObject(edit);
+      const url = new URL(String(body.callback));
+      expect(`${url.origin}${url.pathname}`).toBe(
+        'https://studio.example.com/api/studio/webhooks/shotstack',
+      );
+      expect(
+        verifyRenderCallbackToken(
+          callback.secret,
+          url.searchParams.get('n'),
+          url.searchParams.get('s'),
+        ),
+      ).toBe(true);
+    }
+    expect(bodies[0]?.callback).not.toBe(bodies[1]?.callback);
+    expect(shotstack.callbackPollIntervalMs).toBe(CALLBACK_FALLBACK_POLL_MS);
+    expect(composition.edit).not.toHaveProperty('callback'); // the request is not mutated
+  });
+
+  it('sends no callback and keeps the pipeline cadence without one', async () => {
+    const { shotstack, requests } = setup(created());
+    await shotstack.submit(composition);
+    expect(requests[0]?.body).not.toHaveProperty('callback');
+    expect(shotstack.callbackPollIntervalMs).toBeUndefined();
+  });
 });

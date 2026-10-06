@@ -13,6 +13,7 @@ import type { OAuthStateStore } from '../platforms/oauth-state';
 import type { PublishingDeps } from '../platforms/publishing';
 import type { CircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderRegistry } from '../providers/registry';
+import type { ProviderWake } from '../providers/provider-wake';
 import type { InspectableQueue } from '../services/admin-health';
 import type { DeadLetterQueue } from '../services/dead-letter';
 import type { UploadDeps } from '../uploads/signer';
@@ -51,6 +52,8 @@ export interface ApiDeps {
   publicRateLimiter?: RateLimiter;
   /** Phase 18: per-IP limit for provider webhooks (Resend, Stripe); absent = unlimited (tests). */
   webhookRateLimiter?: RateLimiter;
+  /** 23.1: wake flags the Shotstack render callback sets; absent = callbacks are ignored. */
+  providerWake?: ProviderWake;
   /** Social publishing: publishers, credentials (takedown uses them synchronously). */
   publishing: PublishingDeps;
   oauthState: OAuthStateStore;
@@ -185,6 +188,7 @@ async function buildFromEnv(): Promise<ApiDeps> {
       rateLimit.webhookRateLimitsFromEnv(),
       { onStoreError: (err) => logger.warn({ err }, 'rate limiter unavailable; failing open') },
     ),
+    providerWake: pipeline.providerWake,
     publishing: pipeline.publishing,
     oauthState: oauthState.createRedisOAuthStateStore(connection),
     library: library.libraryDepsFrom(pipeline),

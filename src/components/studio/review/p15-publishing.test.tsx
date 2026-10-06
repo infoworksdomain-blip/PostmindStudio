@@ -172,6 +172,22 @@ describe('Publications list (15.A8 / 15.A2)', () => {
               metadata: { tiktokMode: 'inbox', note: 'Sent to your TikTok inbox.' },
               latestMetrics: null,
             },
+            // 22.7: the connection chose TikTok drafts.
+            {
+              ...base,
+              id: 'pub_3',
+              state: 'PUBLISHED',
+              metadata: { tiktokMode: 'inbox', inboxReason: 'drafts', note: 'x' },
+              latestMetrics: null,
+            },
+            // 22.7: drafts chosen but the account lacked video.upload (posted directly).
+            {
+              ...base,
+              id: 'pub_4',
+              state: 'PUBLISHED',
+              metadata: { tiktokMode: 'direct', draftsUnavailable: 'missing_scope' },
+              latestMetrics: null,
+            },
           ],
           nextCursor: null,
         },
@@ -180,7 +196,24 @@ describe('Publications list (15.A8 / 15.A2)', () => {
     renderWithSWR(<PublicationsList />);
     expect(await screen.findByRole('columnheader', { name: 'Views' })).toBeInTheDocument();
     expect(screen.getByText('4,200')).toBeInTheDocument();
-    expect(screen.getByText('Sent to your TikTok inbox.')).toBeInTheDocument();
+    // The note is shown in the reader's language (not the stored English text).
+    expect(
+      screen.getByText(
+        'Sent to your TikTok inbox — finish in the app and keep the “AI-generated content” label switched on.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Sent to TikTok drafts — finish in the app: add a trending sound, post it, and keep the “AI-generated content” label switched on.',
+      ),
+    ).toBeInTheDocument();
+    // A post in the TikTok inbox is never shown as live.
+    expect(screen.getAllByText('Sent to TikTok drafts')).toHaveLength(2);
+    expect(
+      screen.getByText(
+        'Reconnect TikTok to send drafts: this account did not allow uploads, so the post went out directly.',
+      ),
+    ).toBeInTheDocument();
   });
 });
 

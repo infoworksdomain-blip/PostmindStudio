@@ -10,6 +10,13 @@ import { minTierFor, tierAtLeast } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 import type { PipelineDeps } from './deps';
 import { buildMusicPrompt, type MusicPromptInput } from './music-prompt';
+import {
+  addToLibrary,
+  dropLibraryTrack,
+  LIBRARY_SOURCE_PROVIDERS,
+  musicBucketSec,
+  pickLibraryTrack,
+} from './music-library';
 import { mergeProjectMetadata } from './project-state';
 import { runProvider } from './provider-run';
 
@@ -31,19 +38,30 @@ import { runProvider } from './provider-run';
 //     reached"). Reuse: a stored AUDIO_MUSIC asset of this project with the same prompt key
 //     and at least the needed length is reused (re-render, retry, regenerate with same tone),
 //     so a track is never paid for twice.
+//   - 23.1: across videos, a platform music library (music-library.ts) keyed by prompt key and
+//     duration bucket: once a key has STUDIO_MUSIC_LIBRARY_SIZE tracks (default 5) a video reuses
+//     the least recently used one (metadata.music.status 'reused', no provider call, cost 0);
+//     until then it generates at the bucket's full length and adds the track. Studio has no
+//     brand-kit music override or business music upload today; upload videos keep their own
+//     soundtrack (compose-video never asks for music for them).
 
 /** Phase 18 §P.3: from the plan catalogue (STUDIO_MUSIC_MIN_TIER still overrides). */
 export const DEFAULT_MUSIC_MIN_TIER: PlanTier = minTierFor('musicAndSfx');
 const LONG_FORM_SEC = 60;
 const REASON_MAX = 300;
 
-export type MusicStatus = 'generated' | 'off_for_plan' | 'failed';
+/** 23.1: 'reused' = a track from the music library (music-library.ts), no provider call. */
+export type MusicStatus = 'generated' | 'reused' | 'off_for_plan' | 'failed';
 
 export interface MusicMetadata {
   status: MusicStatus;
   runId: string;
   assetId?: string;
   providerId?: string;
+  /** 23.1: the music library track used (reused) or added (generated). */
+  libraryTrackId?: string;
+  /** 23.1: provider cost of this run's music (0 when reused). */
+  costPence?: number;
   durationSec?: number;
   reused?: boolean;
   promptKey?: string;
@@ -201,68 +219,20 @@ export async function produceMusic(
       };
     }
 
-    const run = await runProvider(
-      {
-        need: { kind: 'capability', capability: 'music' },
-        planTier,
-        request: {
-          capability: 'music',
-          organisationId: project.organisationId,
-          projectId: project.id,
-          prompt: built.prompt,
-          durationSec: requestSec,
-        },
-      },
-      deps,
-    );
-    const meta = (run.output.metadata ?? {}) as {
-      s3Bucket?: unknown;
-      s3Key?: unknown;
-      bytes?: unknown;
-      durationSec?: unknown;
-      model?: unknown;
-    };
-    if (typeof meta.s3Bucket !== 'string' || typeof meta.s3Key !== 'string') {
-      throw new ProviderError(
-        run.decision.providerId,
-        'unknown',
-        'Music had no stored file',
-        false,
-      );
+    // 23.1: a track from the music library when the key already has enough of them.
+    const library = deps.config.musicLibrary?.enabled ? deps.config.musicLibrary : undefined;
+    const bucketSec = library ? musicBucketSec(requestSec) : requestSec;
+    if (library) {
+      const reused = await reuseLibraryTrack(deps, {
+        project,
+        runId,
+        built,
+        bucketSec,
+        size: library.size,
+      });
+      if (reused) return reused;
     }
-    const durationSec = typeof meta.durationSec === 'number' ? meta.durationSec : requestSec;
-    const job = await deps.db.providerJob.findUnique({
-      where: { id: run.providerJobRowId },
-      select: { costPence: true },
-    });
-    const asset = await deps.db.videoAsset.create({
-      data: {
-        organisationId: project.organisationId,
-        projectId: project.id,
-        shotId: null,
-        kind: 'AUDIO_MUSIC',
-        source: `${run.decision.providerId}${typeof meta.model === 'string' ? `:${meta.model}` : ''}`,
-        s3Bucket: meta.s3Bucket,
-        s3Key: meta.s3Key,
-        durationSec,
-        fileSizeBytes: typeof meta.bytes === 'number' ? BigInt(meta.bytes) : null,
-        fingerprint: built.key,
-        providerJobId: run.providerJobRowId,
-        costPence: job?.costPence ?? 0,
-        metadata: { prompt: built.prompt, descriptors: built.descriptors },
-      },
-    });
-    await record(deps, project.id, {
-      status: 'generated',
-      runId,
-      assetId: asset.id,
-      providerId: run.decision.providerId,
-      durationSec,
-      reused: false,
-      promptKey: built.key,
-      descriptors: built.descriptors,
-    });
-    return { bucket: asset.s3Bucket, key: asset.s3Key, durationSec };
+    return await generateTrack(deps, { project, runId, planTier, built, requestSec, bucketSec });
   } catch (err) {
     // A paused budget or an engaged kill switch stops the whole run, like any provider call.
     if (err instanceof CostCapPausedError || err instanceof KillSwitchTriggeredError) throw err;
@@ -276,4 +246,180 @@ export async function produceMusic(
     });
     return null;
   }
+}
+
+type BuiltPrompt = ReturnType<typeof buildMusicPrompt>;
+type StoredTrack = { bucket: string; key: string; durationSec: number };
+
+/** 23.1: the next library track for the key as this project's music asset (no provider call). */
+async function reuseLibraryTrack(
+  deps: PipelineDeps,
+  input: {
+    project: MusicProject;
+    runId: string;
+    built: BuiltPrompt;
+    bucketSec: number;
+    size: number;
+  },
+): Promise<StoredTrack | null> {
+  const { project, built } = input;
+  const track = await pickLibraryTrack(deps, {
+    promptKey: built.key,
+    bucketSec: input.bucketSec,
+    size: input.size,
+  });
+  if (!track) return null;
+  try {
+    await deps.storage.size(track.s3Bucket, track.s3Key);
+  } catch (err) {
+    deps.logger.warn({ err, trackId: track.id }, 'music library track missing; dropped');
+    await dropLibraryTrack(deps.db, track.id);
+    return null;
+  }
+  const asset = await deps.db.videoAsset.create({
+    data: {
+      organisationId: project.organisationId,
+      projectId: project.id,
+      shotId: null,
+      kind: 'AUDIO_MUSIC',
+      source: `music-library:${track.id}`,
+      s3Bucket: track.s3Bucket,
+      s3Key: track.s3Key,
+      durationSec: track.durationSec,
+      fingerprint: built.key,
+      providerJobId: null,
+      costPence: 0,
+      metadata: {
+        prompt: built.prompt,
+        descriptors: built.descriptors,
+        libraryTrackId: track.id,
+        generatedBy: track.source,
+      },
+    },
+  });
+  await record(deps, project.id, {
+    status: 'reused',
+    runId: input.runId,
+    assetId: asset.id,
+    providerId: 'music-library',
+    libraryTrackId: track.id,
+    costPence: 0,
+    durationSec: track.durationSec,
+    reused: true,
+    promptKey: built.key,
+    descriptors: built.descriptors,
+  });
+  return { bucket: track.s3Bucket, key: track.s3Key, durationSec: track.durationSec };
+}
+
+/** Generate the run's track (Layer 5 as before 23.1) and, with the library on, add it there. */
+async function generateTrack(
+  deps: PipelineDeps,
+  input: {
+    project: MusicProject;
+    runId: string;
+    planTier: PlanTier;
+    built: BuiltPrompt;
+    requestSec: number;
+    /** = requestSec without the library; the bucket's full length with it. */
+    bucketSec: number;
+  },
+): Promise<StoredTrack> {
+  const { project, runId, planTier, built } = input;
+  const requestSec = input.bucketSec;
+  const run = await runProvider(
+    {
+      need: { kind: 'capability', capability: 'music' },
+      planTier,
+      request: {
+        capability: 'music',
+        organisationId: project.organisationId,
+        projectId: project.id,
+        prompt: built.prompt,
+        durationSec: requestSec,
+      },
+    },
+    deps,
+  );
+  const meta = (run.output.metadata ?? {}) as {
+    s3Bucket?: unknown;
+    s3Key?: unknown;
+    bytes?: unknown;
+    durationSec?: unknown;
+    model?: unknown;
+  };
+  if (typeof meta.s3Bucket !== 'string' || typeof meta.s3Key !== 'string') {
+    throw new ProviderError(run.decision.providerId, 'unknown', 'Music had no stored file', false);
+  }
+  const durationSec = typeof meta.durationSec === 'number' ? meta.durationSec : requestSec;
+  const job = await deps.db.providerJob.findUnique({
+    where: { id: run.providerJobRowId },
+    select: { costPence: true },
+  });
+  const asset = await deps.db.videoAsset.create({
+    data: {
+      organisationId: project.organisationId,
+      projectId: project.id,
+      shotId: null,
+      kind: 'AUDIO_MUSIC',
+      source: `${run.decision.providerId}${typeof meta.model === 'string' ? `:${meta.model}` : ''}`,
+      s3Bucket: meta.s3Bucket,
+      s3Key: meta.s3Key,
+      durationSec,
+      fileSizeBytes: typeof meta.bytes === 'number' ? BigInt(meta.bytes) : null,
+      fingerprint: built.key,
+      providerJobId: run.providerJobRowId,
+      costPence: job?.costPence ?? 0,
+      metadata: { prompt: built.prompt, descriptors: built.descriptors },
+    },
+  });
+  const added = (await libraryContribution(deps, project, run.decision.providerId))
+    ? await addToLibrary(
+        {
+          db: deps.db,
+          storage: deps.storage,
+          logger: deps.logger,
+          bucket: deps.config.assetsBucket,
+        },
+        {
+          promptKey: built.key,
+          bucketSec: input.bucketSec,
+          durationSec,
+          from: { bucket: asset.s3Bucket, key: asset.s3Key },
+          source: asset.source,
+          providerJobId: run.providerJobRowId,
+          costPence: asset.costPence,
+        },
+      )
+    : null;
+  await record(deps, project.id, {
+    status: 'generated',
+    runId,
+    assetId: asset.id,
+    providerId: run.decision.providerId,
+    durationSec,
+    reused: false,
+    promptKey: built.key,
+    descriptors: built.descriptors,
+    ...(added && { libraryTrackId: added.id }),
+  });
+  return { bucket: asset.s3Bucket, key: asset.s3Key, durationSec };
+}
+
+/**
+ * 23.1: a generation joins the library only when the library is on, it is generated music we
+ * own (ElevenLabs Music, not a Storyblocks pick) and it ran on the platform account (not a BYOC
+ * organisation's own keys).
+ */
+async function libraryContribution(
+  deps: PipelineDeps,
+  project: MusicProject,
+  providerId: string,
+): Promise<boolean> {
+  if (!deps.config.musicLibrary?.enabled || !LIBRARY_SOURCE_PROVIDERS.has(providerId)) return false;
+  const own = await deps.registryFor?.({
+    organisationId: project.organisationId,
+    projectId: project.id,
+  });
+  return own === undefined;
 }

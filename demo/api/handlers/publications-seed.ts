@@ -74,7 +74,16 @@ interface Spec {
   retryCount?: number;
   /** Scheduled ahead (true) or published straight away. */
   scheduled?: boolean;
+  /** Per-platform extras (22.7: a TikTok post sent to the TikTok drafts). */
+  metadata?: Record<string, unknown>;
 }
+
+/** 22.7: what the worker stores for a post sent to the creator's TikTok drafts. */
+const TIKTOK_DRAFT_METADATA = {
+  tiktokMode: 'inbox',
+  inboxReason: 'drafts',
+  note: 'Sent to your TikTok drafts. Open the TikTok app, add a trending sound, finish posting from the notification, and keep the "AI-generated content" label switched on.',
+};
 
 function row(s: Spec): Publication {
   const live = s.state === 'PUBLISHED' || s.state === 'TAKEN_DOWN';
@@ -99,6 +108,7 @@ function row(s: Spec): Publication {
     retryCount: s.retryCount ?? 0,
     createdAt: before(s.when, scheduled ? 5 * DAY : 20 * 60_000),
     project: { id: s.project.id, name: s.project.name },
+    ...(s.metadata && { metadata: s.metadata }),
   };
 }
 
@@ -368,6 +378,8 @@ const CATALOGUE: Spec[] = [
     when: at(-33, 19, 0),
     caption: 'Guess the hydration. Wrong answers only. (It’s 78%.)',
     hashtags: ['sourdough', 'bakingtok'],
+    // 22.7: shows "Sent to TikTok drafts" (finish it in the TikTok app).
+    metadata: TIKTOK_DRAFT_METADATA,
   },
   {
     id: 'pub-class-shorts-teaser',

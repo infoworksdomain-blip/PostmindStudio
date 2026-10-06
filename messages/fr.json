@@ -147,7 +147,8 @@
         "safety_review": "Contrôles de sécurité du contenu",
         "share_comment": "Avis sur un lien d’aperçu",
         "plan_quota": "Alertes d’utilisation de la formule (80 % et 100 %)",
-        "connection_needs_reconnect": "Comptes à reconnecter"
+        "connection_needs_reconnect": "Comptes à reconnecter",
+        "tiktok_draft": "Brouillons TikTok à terminer dans l’app"
       },
       "limitKinds": {
         "cost_alert": "Alertes de limite d’utilisation",
@@ -528,6 +529,10 @@
     "automationInsight": {
       "title": "Votre meilleure publication de la semaine : {title}",
       "body": "Créez-en d’autres dans « {name} » pour voir plus souvent ce format et cet angle."
+    },
+    "tiktokDraftSent": {
+      "title": "« {name} » est dans vos brouillons TikTok",
+      "body": "Ouvrez l’app TikTok, ajoutez un son tendance, terminez la publication depuis la notification et laissez l’étiquette « Contenu généré par l’IA » activée."
     }
   },
   "create": {
@@ -1698,6 +1703,13 @@
     },
     "confirmDialog": {
       "keep": "La conserver"
+    },
+    "tiktokDrafts": {
+      "badge": "Envoyé dans les brouillons TikTok",
+      "sentOn": "Envoyé dans les brouillons TikTok {date}",
+      "draftsNote": "Envoyé dans les brouillons TikTok — terminez dans l’app : ajoutez un son tendance, publiez et laissez l’étiquette « Contenu généré par l’IA » activée.",
+      "inboxNote": "Envoyé dans votre boîte de réception TikTok — terminez dans l’app et laissez l’étiquette « Contenu généré par l’IA » activée.",
+      "reconnectNote": "Reconnectez TikTok pour envoyer des brouillons : ce compte n’autorise pas les envois, la publication est donc partie directement."
     }
   },
   "calendar": {
@@ -2466,6 +2478,17 @@
     "channelLimit": {
       "body": "{count, plural, one {Votre abonnement inclut # canal,} many {Votre abonnement inclut # canaux,} other {Votre abonnement inclut # canaux,}} donc {blockedCount, plural, one {{blocked} est connecté mais ne publiera pas.} many {{blocked} sont connectés mais ne publieront pas.} other {{blocked} sont connectés mais ne publieront pas.}}",
       "action": "Ajouter un canal"
+    },
+    "tiktokPostMode": {
+      "legend": "Comment ce compte publie sur TikTok",
+      "drafts": "Envoyer dans les brouillons TikTok",
+      "draftsHint": "Ajoutez un son tendance dans l’app TikTok, puis publiez.",
+      "direct": "Publier directement",
+      "directHint": "Publié sur TikTok sans ouvrir l’app.",
+      "note": "Les brouillons TikTok vous permettent d’ajouter un son tendance avant de publier.",
+      "reconnect": "Reconnectez TikTok pour envoyer des brouillons. En attendant, les publications partent directement.",
+      "saved": "Préférence de publication TikTok enregistrée",
+      "goesToDrafts": "TikTok : va dans vos brouillons TikTok. Ajoutez un son tendance dans l’app, puis publiez."
     }
   },
   "library": {

@@ -36,6 +36,29 @@ export const TIKTOK_PHOTO_MAX = 35;
 // decision P6: AI labels always on).
 export const TIKTOK_INBOX_NOTE =
   'Sent to your TikTok inbox. Open the TikTok app, finish posting from the notification, and keep the "AI-generated content" label switched on.';
+/** 22.7: the connection chose TikTok drafts (same inbox upload, chosen rather than a fallback). */
+export const TIKTOK_DRAFTS_NOTE =
+  'Sent to your TikTok drafts. Open the TikTok app, add a trending sound, finish posting from the notification, and keep the "AI-generated content" label switched on.';
+/** 22.7: drafts were chosen but the connection lacks video.upload, so it was posted directly. */
+export const TIKTOK_DRAFTS_RECONNECT_NOTE =
+  'Reconnect TikTok to send drafts: this account did not grant the upload permission, so the post went out directly.';
+
+/** 22.7: a TikTok connection's posting preference (platform_connections.tiktokPostMode). */
+export type TikTokPostMode = 'direct' | 'drafts';
+export const TIKTOK_POST_MODES: readonly TikTokPostMode[] = ['direct', 'drafts'];
+/** New TikTok connections send drafts (Fastlane's default); NULL rows (pre-22.7) post directly. */
+export const DEFAULT_NEW_TIKTOK_POST_MODE: TikTokPostMode = 'drafts';
+
+export function tiktokPostModeOf(stored: string | null | undefined): TikTokPostMode {
+  return stored === 'drafts' ? 'drafts' : 'direct';
+}
+
+/** Drafts need video.upload; unknown scopes (undefined) are tried and TikTok refuses cleanly. */
+export function canSendDrafts(grantedScopes: string[] | undefined): boolean {
+  return !grantedScopes || grantedScopes.includes(UPLOAD_SCOPE);
+}
+
+type InboxReason = 'scope' | 'privacy_options' | 'drafts';
 
 interface TikTokEnvelope<T> {
   data?: T;
@@ -129,10 +152,31 @@ export class TikTokPublisher implements PlatformPublisher {
       : 'direct';
   }
 
+  /**
+   * 22.7: how this request goes out. Drafts chosen and video.upload granted → the inbox upload;
+   * drafts chosen without video.upload → direct, flagged so the result says "Reconnect TikTok to
+   * send drafts" (never silent); otherwise the 15.A2 scope rule.
+   */
+  static planFor(request: Pick<PublishRequest, 'grantedScopes' | 'tiktokPostMode'>): {
+    mode: 'direct' | 'inbox';
+    reason?: InboxReason;
+    draftsUnavailable: boolean;
+  } {
+    const wantsDrafts = request.tiktokPostMode === 'drafts';
+    if (wantsDrafts && canSendDrafts(request.grantedScopes))
+      return { mode: 'inbox', reason: 'drafts', draftsUnavailable: false };
+    const mode = TikTokPublisher.modeFor(request.grantedScopes);
+    return {
+      mode,
+      ...(mode === 'inbox' && { reason: 'scope' as const }),
+      draftsUnavailable: wantsDrafts,
+    };
+  }
+
   async publish(request: PublishRequest): Promise<PublishResult> {
     const token = request.accessToken;
-    if (TikTokPublisher.modeFor(request.grantedScopes) === 'inbox')
-      return this.publishToInbox(request, 'scope');
+    const route = TikTokPublisher.planFor(request);
+    if (route.mode === 'inbox') return this.publishToInbox(request, route.reason ?? 'scope');
     const creator = (
       await this.post<{
         privacy_level_options?: string[];
@@ -206,6 +250,7 @@ export class TikTokPublisher implements PlatformPublisher {
         creatorUsername: creator?.creator_username ?? null,
         publiclyAvailable: postId !== undefined,
         tiktokMode: 'direct',
+        ...draftsFallback(route.draftsUnavailable),
       },
     };
   }
@@ -217,10 +262,14 @@ export class TikTokPublisher implements PlatformPublisher {
    * complete the draft post using TikTok's editing flow"). Read 2026-09-28:
    * https://developers.tiktok.com/doc/content-posting-api-reference-upload-video
    * https://developers.tiktok.com/doc/content-posting-api-reference-get-video-status
+   * 22.7 (re-read 2026-10-06): the same endpoint is the "Send to TikTok drafts" path. Its body is
+   * `source_info` only (source FILE_UPLOAD with video_size, chunk_size, total_chunk_count, or
+   * PULL_FROM_URL with video_url); there is no post_info, so no title, privacy or is_aigc. "Users
+   * must click inbox notifications to continue editing and complete posting."
    */
   private async publishToInbox(
     request: PublishRequest,
-    reason: 'scope' | 'privacy_options',
+    reason: InboxReason,
   ): Promise<PublishResult> {
     const token = request.accessToken;
     const plan = planChunks(request.video.sizeBytes);
@@ -251,7 +300,7 @@ export class TikTokPublisher implements PlatformPublisher {
         tiktokMode: 'inbox',
         inboxReason: reason,
         inboxStatus: status.status ?? null,
-        note: TIKTOK_INBOX_NOTE,
+        note: reason === 'drafts' ? TIKTOK_DRAFTS_NOTE : TIKTOK_INBOX_NOTE,
       },
     };
   }
@@ -284,7 +333,12 @@ export class TikTokPublisher implements PlatformPublisher {
     };
     const title = [...(request.caption.split('\n')[0] ?? '')].slice(0, 90).join('');
     const description = [...request.text].slice(0, 4000).join('');
-    let mode: 'direct' | 'inbox' = TikTokPublisher.modeFor(request.grantedScopes);
+    // 22.7: drafts → post_mode MEDIA_UPLOAD (photo post reference, re-read 2026-10-06: "Upload
+    // content to TikTok for users to complete the post using TikTok's editing flow. Users will
+    // receive an inbox notification"; scope video.upload; title and description are carried into
+    // the editing flow).
+    const route = TikTokPublisher.planFor(request);
+    let mode: 'direct' | 'inbox' = route.mode;
     let privacyLevel: string | undefined;
     if (mode === 'direct') {
       const creator = (
@@ -343,7 +397,11 @@ export class TikTokPublisher implements PlatformPublisher {
         tiktokMode: mode,
         mediaType: 'PHOTO',
         ...(privacyLevel && { privacyLevel }),
-        ...(mode === 'inbox' && { note: TIKTOK_INBOX_NOTE }),
+        ...(mode === 'inbox' && {
+          inboxReason: route.reason ?? 'privacy_options',
+          note: route.reason === 'drafts' ? TIKTOK_DRAFTS_NOTE : TIKTOK_INBOX_NOTE,
+        }),
+        ...(mode === 'direct' && draftsFallback(route.draftsUnavailable)),
       },
     };
   }
@@ -402,6 +460,13 @@ export class TikTokPublisher implements PlatformPublisher {
       },
     );
   }
+}
+
+/** 22.7: drafts were chosen but could not be used (no video.upload): say so in the result. */
+function draftsFallback(unavailable: boolean): Record<string, string> {
+  return unavailable
+    ? { draftsUnavailable: 'missing_scope', draftsNote: TIKTOK_DRAFTS_RECONNECT_NOTE }
+    : {};
 }
 
 function sourceInfo(videoSize: number, plan: ReturnType<typeof planChunks>) {

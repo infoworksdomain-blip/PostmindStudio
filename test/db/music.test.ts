@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { afterAll, describe, expect, it } from 'vitest';
+import type { ProviderPollResult } from '../../src/lib/studio/providers/interface';
 import type { PlanTier } from '../../src/lib/studio/providers/router';
 import { createProviderRegistry } from '../../src/lib/studio/providers/registry';
 import type { ProjectJobData } from '../../src/lib/studio/queue/queues';
@@ -153,6 +154,162 @@ describe.skipIf(!hasDb)('Layer 5 music on real Postgres', { timeout: 60_000 }, (
     expect(musicMeta(after.metadata)).toMatchObject({
       status: 'failed',
       reason: expect.stringContaining('No provider available for music'),
+    });
+  });
+
+  describe('23.1 music library', () => {
+    const libraryKeys = new Set<string>();
+    afterAll(async () => {
+      await db.musicLibraryTrack.deleteMany({ where: { promptKey: { in: [...libraryKeys] } } });
+    });
+
+    /** One harness (one storage) for every video, with the library on at `size` tracks a key. */
+    async function libraryHarness(size: number) {
+      const h = createHarness(db);
+      // Like the real adapter, the double stores the generated file (the library copies it).
+      const stored = musicDouble();
+      const music = musicDouble((request) => {
+        const result = stored.respond(request) as ProviderPollResult;
+        const meta = result.output?.metadata as { s3Bucket: string; s3Key: string };
+        h.objects.set(`${meta.s3Bucket}/${meta.s3Key}`, {
+          body: new Uint8Array([0x49, 0x44, 0x33]),
+          contentType: 'audio/mpeg',
+        });
+        return result;
+      });
+      h.deps.registry = createProviderRegistry([...h.deps.registry.list(), music]);
+      h.deps.config = { ...h.deps.config, musicLibrary: { enabled: true, size } };
+      const video = async () => {
+        const org = `${PREFIX}-lib-${randomUUID().slice(0, 6)}`;
+        const { project, runId } = await createProject(db, { organisationId: org });
+        const job: ProjectJobData = {
+          projectId: project.id,
+          organisationId: org,
+          runId,
+          planTier: 'STANDARD',
+        };
+        await h.queue.add('plan-project', job);
+        expect((await drainInline(h.queue, h.deps)).failedJobs).toEqual([]);
+        const after = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+        expect(after.state).toBe('READY_FOR_REVIEW');
+        const meta = musicMeta(after.metadata) ?? {};
+        if (typeof meta.promptKey === 'string') libraryKeys.add(meta.promptKey);
+        return { project: after, job, meta };
+      };
+      // Earlier runs of this suite may have left tracks for the fixture's prompt key.
+      const clear = async (promptKey: string) =>
+        db.musicLibraryTrack.deleteMany({ where: { promptKey } });
+      return { h, music, video, clear };
+    }
+
+    it(
+      'generates until the key has N tracks, then reuses them in rotation at no cost',
+      { timeout: 240_000 },
+      async () => {
+        const lib = await libraryHarness(2);
+        const first = await lib.video();
+        const key = String(first.meta.promptKey);
+        // Start from an empty library for this key (the first video may have reused a leftover).
+        await lib.clear(key);
+        const callsBefore = lib.music.requests.length;
+
+        const a = await lib.video();
+        const b = await lib.video();
+        expect(lib.music.requests.length - callsBefore).toBe(2);
+        expect(a.meta).toMatchObject({ status: 'generated', reused: false });
+        expect(b.meta).toMatchObject({ status: 'generated', reused: false });
+        const tracks = await db.musicLibraryTrack.findMany({ where: { promptKey: key } });
+        expect(tracks).toHaveLength(2);
+        expect(tracks.every((t) => t.s3Key.startsWith(`music-library/${key}/`))).toBe(true);
+        expect(tracks.map((t) => t.bucketSec)).toEqual([15, 15]);
+
+        const c = await lib.video();
+        const d = await lib.video();
+        expect(lib.music.requests.length - callsBefore).toBe(2); // no new ElevenLabs call
+        for (const reused of [c, d]) {
+          expect(reused.meta).toMatchObject({
+            status: 'reused',
+            reused: true,
+            providerId: 'music-library',
+            costPence: 0,
+          });
+          const asset = await db.videoAsset.findFirstOrThrow({
+            where: { projectId: reused.project.id, kind: 'AUDIO_MUSIC' },
+          });
+          expect(asset).toMatchObject({ costPence: 0, providerJobId: null });
+          expect(
+            await db.providerJob.count({
+              where: { projectId: reused.project.id, provider: 'elevenlabs-music' },
+            }),
+          ).toBe(0);
+          // The reused bed is the library object, laid under the edit as before.
+          const audio = lastEditTracks(lib.h).at(-1)?.clips[0]?.asset;
+          expect(audio?.type).toBe('audio');
+        }
+        // Rotation: the two videos got different tracks (least recently used first).
+        expect(c.meta.libraryTrackId).not.toBe(d.meta.libraryTrackId);
+        expect(new Set([c.meta.libraryTrackId, d.meta.libraryTrackId])).toEqual(
+          new Set(tracks.map((t) => t.id)),
+        );
+      },
+    );
+
+    it("a re-render keeps the project's own track before the library (and pays nothing)", async () => {
+      const lib = await libraryHarness(1);
+      const { project, job, meta } = await lib.video();
+      const calls = lib.music.requests.length;
+      const runId = randomUUID();
+      await db.videoProject.update({
+        where: { id: project.id },
+        data: {
+          state: 'ASSETS_QUEUED',
+          metadata: { ...(project.metadata as object), runId, renders: {} },
+        },
+      });
+      await lib.h.queue.add('compose-video', { ...job, runId });
+      expect((await drainInline(lib.h.queue, lib.h.deps)).failedJobs).toEqual([]);
+      const after = await db.videoProject.findUniqueOrThrow({ where: { id: project.id } });
+      expect(lib.music.requests.length).toBe(calls);
+      expect(musicMeta(after.metadata)).toMatchObject({ reused: true, assetId: meta.assetId });
+      expect(
+        await db.videoAsset.count({ where: { projectId: project.id, kind: 'AUDIO_MUSIC' } }),
+      ).toBe(1);
+    });
+
+    it('a library track whose object is gone is dropped and a new one generated', async () => {
+      const lib = await libraryHarness(1);
+      const first = await lib.video();
+      const key = String(first.meta.promptKey);
+      await lib.clear(key);
+      await db.musicLibraryTrack.create({
+        data: {
+          promptKey: key,
+          bucketSec: 15,
+          durationSec: 15,
+          s3Bucket: 'assets',
+          s3Key: `music-library/${key}/${randomUUID()}.mp3`, // never stored
+          source: 'elevenlabs-music:music_v2_5',
+        },
+      });
+      const calls = lib.music.requests.length;
+      const next = await lib.video();
+      expect(lib.music.requests.length).toBe(calls + 1);
+      expect(next.meta).toMatchObject({ status: 'generated', reused: false });
+      const tracks = await db.musicLibraryTrack.findMany({ where: { promptKey: key } });
+      expect(tracks).toHaveLength(1);
+      expect(tracks[0]?.id).toBe(next.meta.libraryTrackId);
+    });
+
+    it("a BYOC organisation's own-key generations never join the shared library", async () => {
+      const lib = await libraryHarness(5);
+      lib.h.deps.registryFor = async () => lib.h.deps.registry;
+      const first = await lib.video();
+      const key = String(first.meta.promptKey);
+      await lib.clear(key);
+      const next = await lib.video();
+      expect(next.meta).toMatchObject({ status: 'generated' });
+      expect(next.meta.libraryTrackId).toBeUndefined();
+      expect(await db.musicLibraryTrack.count({ where: { promptKey: key } })).toBe(0);
     });
   });
 

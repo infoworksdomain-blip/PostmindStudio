@@ -147,7 +147,8 @@
         "safety_review": "Revisões de segurança de conteúdo",
         "share_comment": "Feedback em um link de pré-visualização",
         "plan_quota": "Alertas de uso do plano (80% e 100%)",
-        "connection_needs_reconnect": "Contas que precisam ser reconectadas"
+        "connection_needs_reconnect": "Contas que precisam ser reconectadas",
+        "tiktok_draft": "Rascunhos do TikTok para finalizar no app"
       },
       "limitKinds": {
         "cost_alert": "Alertas de limite de uso",
@@ -528,6 +529,10 @@
     "automationInsight": {
       "title": "Sua melhor publicação da semana: {title}",
       "body": "Crie mais como ela em “{name}” para ver mais desse formato e dessa abordagem."
+    },
+    "tiktokDraftSent": {
+      "title": "“{name}” está nos seus rascunhos do TikTok",
+      "body": "Abra o app do TikTok, adicione um som em alta, finalize a publicação pela notificação e mantenha o rótulo “Conteúdo gerado por IA” ativado."
     }
   },
   "create": {
@@ -1698,6 +1703,13 @@
     },
     "confirmDialog": {
       "keep": "Manter"
+    },
+    "tiktokDrafts": {
+      "badge": "Enviado para rascunhos do TikTok",
+      "sentOn": "Enviado para rascunhos do TikTok {date}",
+      "draftsNote": "Enviado para rascunhos do TikTok — finalize no app: adicione um som em alta, publique e mantenha o rótulo “Conteúdo gerado por IA” ativado.",
+      "inboxNote": "Enviado para sua caixa de entrada do TikTok — finalize no app e mantenha o rótulo “Conteúdo gerado por IA” ativado.",
+      "reconnectNote": "Reconecte o TikTok para enviar rascunhos: esta conta não permitiu envios, então a publicação saiu diretamente."
     }
   },
   "calendar": {
@@ -2466,6 +2478,17 @@
     "channelLimit": {
       "body": "{count, plural, one {Seu plano inclui # canal,} many {Seu plano inclui # canais,} other {Seu plano inclui # canais,}} então {blockedCount, plural, one {{blocked} está conectado, mas não vai publicar.} many {{blocked} estão conectados, mas não vão publicar.} other {{blocked} estão conectados, mas não vão publicar.}}",
       "action": "Adicionar um canal"
+    },
+    "tiktokPostMode": {
+      "legend": "Como esta conta publica no TikTok",
+      "drafts": "Enviar para rascunhos do TikTok",
+      "draftsHint": "Adicione um som em alta no app do TikTok e publique.",
+      "direct": "Publicar diretamente",
+      "directHint": "Vai ao ar no TikTok sem abrir o app.",
+      "note": "Os rascunhos do TikTok permitem adicionar um som em alta antes de publicar.",
+      "reconnect": "Reconecte o TikTok para enviar rascunhos. Até lá, as publicações saem diretamente.",
+      "saved": "Preferência de publicação no TikTok salva",
+      "goesToDrafts": "TikTok: vai para seus rascunhos do TikTok. Adicione um som em alta no app e publique."
     }
   },
   "library": {

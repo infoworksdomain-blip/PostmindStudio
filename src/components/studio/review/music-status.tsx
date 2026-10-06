@@ -19,10 +19,11 @@ export function readMusic(metadata: unknown): MusicState | null {
   const music = (metadata as { music?: unknown }).music;
   if (!music || typeof music !== 'object') return null;
   const m = music as Record<string, unknown>;
-  if (m.status === 'generated')
+  // 23.1: a track reused from the music library reads like any other reused track.
+  if (m.status === 'generated' || m.status === 'reused')
     return {
       status: 'generated',
-      reused: m.reused === true,
+      reused: m.status === 'reused' || m.reused === true,
       durationSec: typeof m.durationSec === 'number' ? m.durationSec : null,
     };
   if (m.status === 'off_for_plan') return { status: 'off_for_plan' };

@@ -8,7 +8,7 @@ import {
   GRAPH_HOST,
   InstagramReelPublisher,
 } from './meta';
-import { API as TIKTOK_API, TikTokPublisher } from './tiktok';
+import { API as TIKTOK_API, TIKTOK_DRAFTS_NOTE, TikTokPublisher } from './tiktok';
 
 // 21.6: carousel request shapes per platform (docs cited in each publisher).
 
@@ -221,6 +221,54 @@ describe('TikTok photo post', () => {
       description: 'Seven things\n\n#bread #cake',
     });
     expect(body.is_aigc).toBeUndefined();
+  });
+
+  it('22.7: sends a draft photo post (post_mode MEDIA_UPLOAD) when the connection chose drafts', async () => {
+    const { fetch, requests } = fakeFetch(
+      json({ data: { publish_id: 'pub-d' } }),
+      json({ data: { status: 'SEND_TO_USER_INBOX' } }),
+    );
+    const result = await new TikTokPublisher(deps(fetch)).publishCarousel(
+      request(2, {
+        grantedScopes: ['user.info.basic', 'video.publish', 'video.upload'],
+        tiktokPostMode: 'drafts',
+      }),
+    );
+    // No creator_info query: the documented draft mode needs no privacy level.
+    expect(requests).toHaveLength(2);
+    expect(requests[0]?.url).toBe(`${TIKTOK_API}/v2/post/publish/content/init/`);
+    expect(requests[0]?.body).toEqual({
+      media_type: 'PHOTO',
+      post_mode: 'MEDIA_UPLOAD',
+      post_info: { title: 'Seven things', description: 'Seven things\n\n#bread #cake' },
+      source_info: {
+        source: 'PULL_FROM_URL',
+        photo_images: ['https://cdn.example/slide-1.jpg', 'https://cdn.example/slide-2.jpg'],
+        photo_cover_index: 0,
+      },
+      is_aigc: true,
+    });
+    expect(result.metadata).toMatchObject({
+      tiktokMode: 'inbox',
+      inboxReason: 'drafts',
+      note: TIKTOK_DRAFTS_NOTE,
+    });
+  });
+
+  it('22.7: posts photos directly and flags the reconnect when drafts lack video.upload', async () => {
+    const { fetch, requests } = fakeFetch(
+      json({ data: { privacy_level_options: ['PUBLIC_TO_EVERYONE'] } }),
+      json({ data: { publish_id: 'pub-e' } }),
+      json({ data: { status: 'PUBLISH_COMPLETE' } }),
+    );
+    const result = await new TikTokPublisher(deps(fetch)).publishCarousel(
+      request(2, { grantedScopes: ['video.publish'], tiktokPostMode: 'drafts' }),
+    );
+    expect((requests[1]?.body as { post_mode: string }).post_mode).toBe('DIRECT_POST');
+    expect(result.metadata).toMatchObject({
+      tiktokMode: 'direct',
+      draftsUnavailable: 'missing_scope',
+    });
   });
 
   it('reports an unverified URL domain as a non-retryable request error', async () => {
