@@ -7,6 +7,7 @@ import type { FeatureGate } from '../services/features';
 import type { CircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderConcurrencyLimiter } from '../providers/provider-concurrency';
 import type { ProviderRateLimiter } from '../providers/provider-rate';
+import type { ProviderWake } from '../providers/provider-wake';
 import type { ProviderRegistry } from '../providers/registry';
 import type { BudgetChecker, PlanTier } from '../providers/router';
 import type { TrackingDeps } from '../providers/tracked';
@@ -25,6 +26,7 @@ import type { AssetStorage } from '../storage';
 import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
+import type { MusicLibrarySettings } from './music-library';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
 import type { LibraryCache } from '../library/cache';
 import type { ThumbnailComposer } from '../services/thumbnail-composer';
@@ -50,6 +52,11 @@ export interface PipelineConfig {
   fontsBaseUrl?: string;
   /** Lowest plan tier that gets a generated music track (STUDIO_MUSIC_MIN_TIER; music.ts). */
   musicMinTier?: PlanTier;
+  /**
+   * 23.1: the reusable music library (STUDIO_MUSIC_LIBRARY / _SIZE; music-library.ts). Absent =
+   * off (every run generates its own track).
+   */
+  musicLibrary?: MusicLibrarySettings;
   /** Video library corpus bucket (S3_BUCKET_LIBRARY); Feature A ingestion only. */
   libraryBucket?: string;
   /** STUDIO_CORPUS_S3_BUCKETS: buckets (or bucket/prefix) s3:// corpus sources may come from. */
@@ -111,6 +118,11 @@ export interface PipelineDeps {
    * burst, dearer: e.g. Kling instead of Seedance) and waits only when every candidate is full.
    */
   providerOverflow?: 'queue' | 'failover';
+  /**
+   * 23.1: wake flags set by provider callbacks (Shotstack renders); absent (no Redis) = providers
+   * that call back are polled at providerPollIntervalMs like every other provider.
+   */
+  providerWake?: ProviderWake;
   /**
    * P1 BYOC: the organisation's own-key registry (Enterprise, STUDIO_BYOC_ENABLED); absent or
    * undefined for an organisation = the platform registry above.
