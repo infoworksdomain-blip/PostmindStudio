@@ -59,6 +59,7 @@ import type { ProjectJobData } from '../queues';
 import { readHookDemo } from '../../formats/hook-demo';
 import { hookDemoEdl } from '../../formats/hook-demo-edl';
 import { clipLetterboxes } from '../../pipeline/letterbox-assets';
+import { renderLocalVariants } from '../../render/local/compose-local';
 
 /** width ÷ height of a stored asset, when it was probed (uploads; library clips are not). */
 function aspectOf(asset: { widthPx: number | null; heightPx: number | null } | undefined) {
@@ -445,9 +446,21 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   });
   if (prepared === 'stale') return log.info('run superseded during composition; renders discarded');
 
+  // 23.5 renderer seam: slideshows and walls of text are rendered locally with ffmpeg
+  // (render/local/compose-local.ts); a variant it does not make goes to the composer below.
+  const local = await renderLocalVariants(deps, {
+    project,
+    runId: data.runId,
+    variants: prepared.filter((p): p is NonNullable<typeof p> => p !== null),
+    log,
+    renders,
+    masteringReports,
+  });
+  if (local.stale) return log.info('run superseded during composition; renders discarded');
+
   const settled = await Promise.allSettled(
     prepared
-      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .filter((p): p is NonNullable<typeof p> => p !== null && local.remaining.includes(p))
       .map(async ({ script, aspectRatio, edit, outputDurationSec, composition }) => {
         const run = await runProvider(
           {
