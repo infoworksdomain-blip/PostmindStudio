@@ -54,6 +54,11 @@ export interface PipelineConfig {
   libraryBucket?: string;
   /** STUDIO_CORPUS_S3_BUCKETS: buckets (or bucket/prefix) s3:// corpus sources may come from. */
   corpusS3Buckets?: AllowedCorpusBucket[];
+  /**
+   * 21.4c: check UGC actor clips for burned-in text (ugc/clip-text-guard.ts). Absent = the
+   * STUDIO_CLIP_TEXT_GUARD environment value (unset = on; "false" = off).
+   */
+  clipTextGuard?: boolean;
 }
 
 export interface PipelineDeps {

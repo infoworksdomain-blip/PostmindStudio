@@ -29,6 +29,7 @@ import { fakePublisherRegistry } from './fake-publishers';
 import { memoryStorage } from './memory-storage';
 import { fakeEmbedding, fakePng } from './png';
 import { ScriptedAdapter } from './scripted-adapter';
+import { CLIP_TEXT_SYSTEM } from '../../src/lib/studio/ugc/clip-text-guard';
 
 // Wires the real pipeline (real Postgres via Prisma, real router/tracking/kill switch/budget)
 // to scripted provider doubles, in-memory storage, a fake media inspector and an inline queue.
@@ -208,9 +209,12 @@ export interface HarnessOptions {
   wallText?: unknown;
   /** 22.2: register a scripted stock-footage adapter (Pixabay videos, the one production has). */
   stock?: boolean;
+  /** 21.4c: whether the n-th (1-based) burned-in text check finds text (default: never). */
+  clipText?: (call: number) => boolean;
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
+  let clipTextCalls = 0;
   const anthropic = new ScriptedAdapter('anthropic', ['text_generation'], (request) => {
     if (request.capability !== 'text_generation') throw new Error('unexpected');
     if (request.system.includes('ideation layer'))
@@ -234,6 +238,18 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(
         options.wallText ?? { text: 'Three habits\n- Plan tomorrow tonight\n- Batch errands' },
       );
+    // 21.4c: the burned-in text check on actor clips (default: no text in any frame).
+    if (request.system === CLIP_TEXT_SYSTEM) {
+      clipTextCalls += 1;
+      const frames = request.images?.length ?? 0;
+      const withText = options.clipText?.(clipTextCalls) ?? false;
+      return textResult({
+        frames: Array.from({ length: frames }, (_, i) => ({
+          frame: i + 1,
+          answer: withText && i === 1 ? 'yes' : 'no',
+        })),
+      });
+    }
     return textResult(options.safety ?? SAFETY_ALLOW);
   });
   const runway = new ScriptedAdapter(

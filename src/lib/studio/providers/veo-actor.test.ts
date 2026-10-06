@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ProviderError } from '../../errors';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
+import { NO_ON_SCREEN_TEXT } from './dialogue';
 import type { ActorVideoRequest } from './interface';
 import {
   actorDuration,
@@ -49,10 +50,20 @@ const actor: ActorVideoRequest = {
 };
 
 describe('Veo actor clips (21.4)', () => {
-  it('quotes the spoken line in the documented dialogue form', () => {
+  it('quotes the spoken line in the documented dialogue form, then forbids on-screen text', () => {
     expect(withDialogue(' Scene. ', '  Hi   "there" ')).toBe(
-      'Scene.\nThe person speaks directly to the camera and says: "Hi \'there\'"',
+      `Scene.\nThe person speaks directly to the camera and says: "Hi 'there'"\n${NO_ON_SCREEN_TEXT}`,
     );
+  });
+
+  it('21.4c: the actor prompt ENDS with the no-text instruction, after the line', async () => {
+    const { veo } = adapter([]);
+    const body = (await veo.buildBody(actor)) as { instances: Array<{ prompt: string }> };
+    const prompt = body.instances[0]?.prompt ?? '';
+    expect(prompt.endsWith(NO_ON_SCREEN_TEXT)).toBe(true);
+    expect(prompt.indexOf('says: "')).toBeLessThan(prompt.indexOf(NO_ON_SCREEN_TEXT));
+    // A prompt change only: no negativePrompt (Veo 3.1 documents none, read 2026-10-06).
+    expect(JSON.stringify(body)).not.toContain('negativePrompt');
   });
 
   it('declares actor_video and supports English lines of 1–8 s only', () => {
@@ -76,8 +87,7 @@ describe('Veo actor clips (21.4)', () => {
       body: {
         instances: [
           {
-            prompt:
-              'Vertical selfie-style video of a woman around thirty in a kitchen.\nThe person speaks directly to the camera and says: "Honestly, this \'little\' jar changed my mornings."',
+            prompt: `Vertical selfie-style video of a woman around thirty in a kitchen.\nThe person speaks directly to the camera and says: "Honestly, this 'little' jar changed my mornings."\n${NO_ON_SCREEN_TEXT}`,
           },
         ],
         parameters: {

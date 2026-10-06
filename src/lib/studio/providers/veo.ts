@@ -1,4 +1,5 @@
 import { ConfigurationError, NotImplementedError, ProviderError } from '../../errors';
+import { NO_ON_SCREEN_TEXT, withDialogue } from './dialogue';
 import { httpJson } from './http';
 import type {
   ActorVideoRequest,
@@ -100,8 +101,8 @@ import {
 //   Fast (the docs do not say otherwise); the sample uses veo-3.1-generate-preview.
 //
 // BACKLOG 22.1 (hook + demo, 2026-10-05): a SILENT actor clip (`silent: true`, empty line) is the
-// same predictLongRunning body with the scene prompt only — no quoted dialogue, and the prompt
-// says nobody speaks. No new request field: audio stays "Always on" (docs/veo parameter table,
+// same predictLongRunning body with the scene prompt — no quoted dialogue, the prompt says nobody
+// speaks, and it ends with NO_ON_SCREEN_TEXT like every actor clip (21.4c). No new request field: audio stays "Always on" (docs/veo parameter table,
 // re-read 2026-10-05) and the composer mutes the clip (volume 0).
 
 export const PROVIDER_ID = 'veo';
@@ -191,13 +192,10 @@ export function actorDuration(request: {
 }
 
 /**
- * 21.4: the documented dialogue form (prompt guide: "Use quotes for specific speech"). Double
- * quotes inside the line would close the quote early, so they become single quotes.
+ * 21.4: the documented dialogue form (prompt guide: "Use quotes for specific speech"). 21.4c: the
+ * no-text instruction follows the line (dialogue.ts), shared with Kling.
  */
-export function withDialogue(prompt: string, spokenLine: string): string {
-  const line = spokenLine.replace(/\s+/g, ' ').replace(/"/g, "'").trim();
-  return `${prompt.trim()}\nThe person speaks directly to the camera and says: "${line}"`;
-}
+export { withDialogue };
 
 export function isVeoModel(value: string): value is VeoModel {
   return Object.hasOwn(VEO_MODELS, value);
@@ -543,8 +541,9 @@ export class VeoAdapter implements ProviderAdapter {
     }
     // 22.1: a silent clip sends the scene prompt alone (it already says nobody speaks); the body
     // is otherwise identical (same documented fields, no new parameter).
+    // 21.4c: the no-on-screen-text instruction is always the last sentence (silent clips too).
     const prompt = request.silent
-      ? request.prompt.trim()
+      ? `${request.prompt.trim()}\n${NO_ON_SCREEN_TEXT}`
       : withDialogue(request.prompt, request.spokenLine);
     if (request.prompt.trim().length < 1 || prompt.length > MAX_PROMPT_CHARS) {
       throw this.invalid(`Veo prompts must be 1–${MAX_PROMPT_CHARS} characters`);

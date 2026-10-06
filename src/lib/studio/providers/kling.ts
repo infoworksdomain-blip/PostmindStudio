@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { ConfigurationError, NotImplementedError, ProviderError } from '../../errors';
+import { withDialogue } from './dialogue';
 import { httpJson } from './http';
 import type {
   ActorVideoRequest,
@@ -516,8 +517,8 @@ export class KlingAdapter implements ProviderAdapter {
     if (!this.supportsRequest(request)) {
       throw this.invalid('Kling actor clips are off (KLING_UGC_ACTOR) or the shot is invalid');
     }
-    const line = request.spokenLine.replace(/\s+/g, ' ').replace(/"/g, "'").trim();
-    const prompt = `${request.prompt.trim()}\nThe person speaks directly to the camera and says: "${line}"`;
+    // 21.4c: the quoted line, then the no-text instruction last (dialogue.ts).
+    const prompt = withDialogue(request.prompt, request.spokenLine);
     if (prompt.length > MAX_PROMPT_CHARS) {
       throw this.invalid(`Kling prompts must be 1–${MAX_PROMPT_CHARS} characters`);
     }

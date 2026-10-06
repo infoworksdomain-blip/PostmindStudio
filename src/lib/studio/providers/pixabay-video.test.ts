@@ -120,8 +120,11 @@ describe('rankPixabayHits', () => {
 
 describe('PixabayVideoAdapter', () => {
   it('finds a portrait clip, records the licence and the Pixabay credit, costs 0p', async () => {
-    const fetchImpl = vi.fn(async () => ok({ hits: [hit(1), portrait(2)] }));
-    const adapter = new PixabayVideoAdapter({ apiKey: 'k-123', fetchImpl });
+    const fetchImpl = vi.fn(async (_url: string) => ok({ hits: [hit(1), portrait(2)] }));
+    const adapter = new PixabayVideoAdapter({
+      apiKey: 'k-123',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
     const job = await adapter.submit(request);
     expect(job.estimatedCostPence).toBe(0);
     const result = await adapter.poll(job.providerJobId);

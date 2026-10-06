@@ -1068,7 +1068,8 @@
         "caption_sync": "Untertitel-Synchronität",
         "watermark": "Wasserzeichen",
         "brand_kit": "Brand-Kit",
-        "force_approved": "Manuell freigegeben"
+        "force_approved": "Manuell freigegeben",
+        "clip_text": "Text in generierten Clips"
       },
       "severity": {
         "block": "blockierend",
@@ -1120,7 +1121,8 @@
         "brandKitMissing": "{count, plural, one {Prüfung nötig: # Markenelement fehlt im Video.} other {Prüfung nötig: # Markenelemente fehlen im Video.}}",
         "brandKitPresent": "Farben, Schriften und Logo sind vorhanden.",
         "forceApproved": "Trotz fehlgeschlagener Prüfungen freigegeben: {note}",
-        "allowedByReview": "Von der Trust-&-Safety-Prüfung von PostMind zugelassen: {note}"
+        "allowedByReview": "Von der Trust-&-Safety-Prüfung von PostMind zugelassen: {note}",
+        "clipTextBurnedIn": "{count, plural, one {Prüfung nötig: Der generierte Clip von Einstellung {shots} enthält auch nach einem neuen Versuch eingebrannte Untertitel oder Text.} other {Prüfung nötig: Die generierten Clips der Einstellungen {shots} enthalten auch nach einem neuen Versuch eingebrannte Untertitel oder Text.}}"
       }
     },
     "saveTemplate": {

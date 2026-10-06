@@ -7,6 +7,8 @@ import type { ProjectJobData } from '../../src/lib/studio/queue/queues';
 import { hookDemoCreateInput, newHookDemoDocument } from '../../src/lib/studio/formats/hook-demo';
 import { newWallOfTextDocument } from '../../src/lib/studio/formats/wall-of-text';
 import { HOOK_CAPTION_ANCHOR_Y } from '../../src/lib/studio/formats/caption-style';
+import { NO_ON_SCREEN_TEXT } from '../../src/lib/studio/providers/dialogue';
+import { VeoAdapter } from '../../src/lib/studio/providers/veo';
 import { createHarness, createProject } from '../helpers/pipeline-harness';
 
 // BACKLOG 22.1 / 22.2 — both Fastlane-style formats through the real pipeline on real Postgres
@@ -126,6 +128,13 @@ describe.skipIf(!hasDb)(
         aspectRatio: '9:16',
       });
       expect(requests[0]?.prompt).toContain('does not speak');
+      // 21.4c: the Veo body ends with the no-on-screen-text instruction (silent clips too).
+      const veo = new VeoAdapter({ apiKey: 'k', usdToGbpRate: 0.79 });
+      const body = (await veo.buildBody(requests[0] as ActorVideoRequest)) as {
+        instances: Array<{ prompt: string }>;
+      };
+      expect(body.instances[0]?.prompt.endsWith(NO_ON_SCREEN_TEXT)).toBe(true);
+      expect(body.instances[0]?.prompt).not.toContain('says: "');
       expect(requests[0]?.prompt).not.toContain('Still taking bookings');
       // No narration for either shot.
       expect(h.adapters.elevenlabs.requests).toHaveLength(0);
