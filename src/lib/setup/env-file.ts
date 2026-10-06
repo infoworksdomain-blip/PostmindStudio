@@ -371,6 +371,8 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   // 21.4c: the burned-in text check on UGC actor clips (ugc/clip-text-guard.ts).
   STUDIO_CLIP_TEXT_GUARD: (v) =>
     v === 'true' || v === 'false' ? null : 'must be true, false or empty',
+  // 23.5: Studio's own ffmpeg renderer for slideshows and walls of text (render/local/config.ts).
+  STUDIO_LOCAL_RENDER: (v) => (v === 'on' || v === 'off' ? null : 'must be on, off or empty'),
   // 23.2: per-task Claude models (providers/text-tasks.ts); every model needs a price row.
   ANTHROPIC_MODEL: (v) => anthropicModel(v),
   ANTHROPIC_LIGHT_MODEL: (v) => (v === 'off' ? null : anthropicModel(v)),

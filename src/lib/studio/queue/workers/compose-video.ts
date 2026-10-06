@@ -45,7 +45,8 @@ import {
   StaleRunError,
   submitRender,
 } from '../../pipeline/render-async';
-import { pendingRendersOf } from '../../pipeline/render-state';
+import { MASTERING_KEY, pendingRendersOf, setRunEntry } from '../../pipeline/render-state';
+import type { MasteringReport } from '../../pipeline/mastering';
 import { buildOverlayTrack, mergeOverlayTrack, type PlacedOverlay } from '../../overlays/compose';
 import { buildSlideshowEdit, slideshowDuration } from '../../slideshow/edl';
 import { ensureVoiceCaptions } from '../../overlays/voice-captions';
@@ -56,6 +57,7 @@ import type { ProjectJobData } from '../queues';
 import { readHookDemo } from '../../formats/hook-demo';
 import { hookDemoEdl } from '../../formats/hook-demo-edl';
 import { clipLetterboxes } from '../../pipeline/letterbox-assets';
+import { renderLocalVariants } from '../../render/local/compose-local';
 
 /** width ÷ height of a stored asset, when it was probed (uploads; library clips are not). */
 function aspectOf(asset: { widthPx: number | null; heightPx: number | null } | undefined) {
@@ -456,9 +458,34 @@ export async function composeVideo(data: ProjectJobData, deps: PipelineDeps): Pr
   // 23.6: every remaining render is SUBMITTED and this job ends; poll-render (render-async.ts)
   // stores, masters and records each one when it is done, then hands the run to the quality gate.
   // A renderer that returns the file at once (a local renderer) calls finishRender here instead.
+  // 23.5 renderer seam: slideshows and walls of text are rendered locally with ffmpeg
+  // (render/local/compose-local.ts), recorded at once; a variant it does not make is submitted below.
+  const masteringReports: Record<string, MasteringReport> = {};
+  const local = await renderLocalVariants(deps, {
+    project,
+    runId: data.runId,
+    variants: prepared.filter((p): p is NonNullable<typeof p> => p !== null),
+    log,
+    renders,
+    masteringReports,
+  });
+  if (local.stale) return log.info('run superseded during composition; renders discarded');
+  for (const [scriptId, report] of Object.entries(masteringReports)) {
+    const run = { projectId: project.id, runId: data.runId };
+    if (
+      !(await setRunEntry(deps.db, {
+        ...run,
+        key: MASTERING_KEY,
+        entryKey: scriptId,
+        value: report,
+      }))
+    )
+      return log.info('run superseded during composition; renders discarded');
+  }
+
   const settled = await Promise.allSettled(
     prepared
-      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .filter((p): p is NonNullable<typeof p> => p !== null && local.remaining.includes(p))
       .map(async ({ script, aspectRatio, edit, outputDurationSec, composition }) => {
         const recorded = await submitRender(deps, data, {
           scriptId: script.id,

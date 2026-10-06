@@ -47,6 +47,8 @@ import { assetsBucket, getAssetStorage } from '../storage';
 import { DEFAULT_PIPELINE_TIMING, type PipelineDeps } from './deps';
 import { createFfmpegInspector } from './media-probe';
 import { createFfmpegMastering } from './mastering';
+import { localRenderEnabled } from '../render/local/config';
+import { createLocalRenderer } from '../render/local/renderer';
 import { parseMusicMinTier } from './music';
 import { musicLibraryFromEnv } from './music-library';
 import { createProviderRatings, providerRatingsEnabled } from '../services/provider-ratings';
@@ -122,6 +124,8 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
     storage,
     media: createFfmpegInspector(),
     mastering: createFfmpegMastering(),
+    // 23.5: slideshows and walls of text rendered with ffmpeg here (STUDIO_LOCAL_RENDER=off: Shotstack).
+    ...(localRenderEnabled() && { localRenderer: createLocalRenderer() }),
     // 20.15: shared library cache in Redis DB 3 (STUDIO_LIBRARY_CACHE=off disables it).
     ...(libraryCacheEnabled() && {
       libraryCache: createLibraryCache({
