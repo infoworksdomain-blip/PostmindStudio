@@ -1,4 +1,4 @@
-import type { ImageLibraryItem } from '@prisma/client';
+import type { ImageLibraryItem, ImageSource } from '@prisma/client';
 import { NoProviderAvailableError, ProviderError } from '../../errors';
 import { ingestImage } from '../images/ingest';
 import { embedMissing, libraryDepsFrom, searchLibrary, stockLicenceNote } from '../images/library';
@@ -36,6 +36,12 @@ export async function findLibraryStill(
   deps: PipelineDeps,
   scope: StillScope,
   query: string,
+  /**
+   * Only these library sources (default: any). UGC B-roll asks for the business's own pictures
+   * (UPLOAD, SCRAPED): production 2026-10-06 showed a generic stock image imported into the
+   * library as the "product in use" shot of a UGC video.
+   */
+  sources?: readonly ImageSource[],
 ): Promise<ImageLibraryItem | null> {
   const text = query.trim();
   if (!text) return null;
@@ -58,6 +64,7 @@ export async function findLibraryStill(
       organisationId: scope.organisationId,
       // Hotlink-only stock (Unsplash) has no stored copy and cannot be composed.
       NOT: { s3Key: '' },
+      ...(sources && { source: { in: [...sources] } }),
     },
   });
   const byId = new Map(items.map((i) => [i.id, i]));

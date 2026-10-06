@@ -542,7 +542,7 @@ async function generateStill(
   shot: ShotWithScript,
   data: GenerateAssetJobData,
   prompt: string,
-  options: { stock: boolean } = { stock: true },
+  options: { stock: boolean; ownImagesOnly?: boolean } = { stock: true },
 ): Promise<StoredAsset> {
   const aspectRatio = shot.script.targetAspectRatio as AspectRatio;
   const scope = {
@@ -561,7 +561,14 @@ async function generateStill(
   if (reused) return reused;
   // A6.5: the business's image library before any generator (not on an explicit regenerate).
   const regenerating = Boolean((shot.providerRouting as Record<string, unknown> | null)?.visual);
-  const hit = regenerating ? null : await findLibraryStill(deps, scope, shot.sceneDescription);
+  const hit = regenerating
+    ? null
+    : await findLibraryStill(
+        deps,
+        scope,
+        shot.sceneDescription,
+        options.ownImagesOnly ? OWN_IMAGE_SOURCES : undefined,
+      );
   if (hit) return recordLibraryStill(deps, shot, hit, 'library');
   // 20.25: a free stock image before a paid generation (not on an explicit regenerate).
   const stocked =
@@ -693,8 +700,11 @@ async function ugcStill(
   const product = await ugcProductImage(deps, shot, ugc);
   if (product) return recordLibraryStill(deps, shot, product, 'library');
   const prompt = ugcStillPrompt({ style: ugc, sceneDescription: shot.sceneDescription });
-  return generateStill(deps, shot, data, prompt, { stock: false });
+  return generateStill(deps, shot, data, prompt, { stock: false, ownImagesOnly: true });
 }
+
+/** The business's own pictures (its uploads and website images), never imported stock. */
+const OWN_IMAGE_SOURCES = ['UPLOAD', 'SCRAPED'] as const;
 
 async function generateVisual(
   deps: PipelineDeps,
