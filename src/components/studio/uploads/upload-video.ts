@@ -5,12 +5,14 @@ import { api, ApiError, newIdempotencyKey } from '@/lib/client/api';
 // Studio to check and probe it (POST /uploads/:id/complete). The file never passes through
 // Studio's servers.
 
-export type UploadKind = 'source_video' | 'slide_clip';
+/** 22.1: demo_video is a demo for the business's demo bank (hook + demo videos). */
+export type UploadKind = 'source_video' | 'slide_clip' | 'demo_video';
 
 export const UPLOAD_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'] as const;
 export const UPLOAD_MAX_BYTES: Record<UploadKind, number> = {
   source_video: 500 * 1024 * 1024,
   slide_clip: 200 * 1024 * 1024,
+  demo_video: 500 * 1024 * 1024,
 };
 
 export interface UploadResult {

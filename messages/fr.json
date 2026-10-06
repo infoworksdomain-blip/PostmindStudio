@@ -280,7 +280,8 @@
       "auto_publish_account_required": "Choisissez un compte connecté sur lequel publier, ou désactivez la publication automatique et la programmation.",
       "auto_publish_account_unavailable": "Un compte choisi n’est plus connecté. Reconnectez-le ou choisissez un autre compte.",
       "queue_unavailable": "La publication est temporairement indisponible. Rien n’a été publié ni conservé ; réessayez dans un instant.",
-      "channel_limit": "Votre abonnement n’inclut pas de canal pour cette plateforme. Ajoutez un canal dans Votre abonnement pour publier ici."
+      "channel_limit": "Votre abonnement n’inclut pas de canal pour cette plateforme. Ajoutez un canal dans Votre abonnement pour publier ici.",
+      "no_demo_video": "Importez d’abord une vidéo de démonstration de votre produit ou de votre app."
     }
   },
   "primitives": {
@@ -525,7 +526,9 @@
         "SLIDESHOW": "De quoi parle le diaporama ?",
         "UPLOAD": "Importez votre vidéo",
         "UGC": "De quoi l’acteur doit-il parler ?",
-        "CAROUSEL": "De quoi parle le carrousel ?"
+        "CAROUSEL": "De quoi parle le carrousel ?",
+        "HOOK_DEMO": "Que montre votre démo ?",
+        "WALL_OF_TEXT": "Que doit dire le texte ?"
       },
       "uploadChoose": "Choisir une vidéo",
       "uploadReplace": "Remplacer la vidéo",
@@ -544,7 +547,9 @@
         "SLIDESHOW": "Diaporama",
         "UPLOAD": "Importer une vidéo",
         "UGC": "Acteur UGC",
-        "CAROUSEL": "Carrousel (cartes de posts)"
+        "CAROUSEL": "Carrousel (cartes de posts)",
+        "HOOK_DEMO": "Accroche + démo",
+        "WALL_OF_TEXT": "Mur de texte"
       },
       "templatedNote": "Les plateformes et la durée sont définies par le modèle. Le texte ci-dessus est facultatif : il précise la trame du modèle.",
       "noBusiness": {
@@ -557,13 +562,15 @@
         "generatingUpload": "Génération en cours — Studio sous-titre votre vidéo.",
         "generatingScript": "Génération en cours — Studio rédige le script.",
         "draftNotStarted": "Enregistré comme brouillon, mais la génération n’a pas démarré : {error}",
-        "generatingCarousel": "Rédaction de votre carrousel…"
+        "generatingCarousel": "Rédaction de votre carrousel…",
+        "generatingFormat": "Génération en cours : Studio rédige le texte et crée votre vidéo."
       },
       "planMonth": "Ou planifiez tout un mois de vidéos et de diaporamas",
       "summaryNoAccounts": "aucun compte connecté : enregistré pour relecture",
       "summaryForReview": "enregistré pour relecture",
       "createCarousel": "Créer le carrousel",
-      "summaryCarousel": "{count} posts · cartes {theme, select, dark {sombres} other {claires}}"
+      "summaryCarousel": "{count} posts · cartes {theme, select, dark {sombres} other {claires}}",
+      "summarySeconds": "{count, number} s"
     },
     "problems": {
       "businessRequired": "Choisissez d’abord une entreprise.",
@@ -583,7 +590,11 @@
       "ugcShortOnly": "Les vidéos avec acteur UGC sont courtes : choisissez Courte.",
       "ugcRealPerson": "Les acteurs UGC sont des personnes générées. Ils ne peuvent pas imiter une personne réelle ou une célébrité, lui ressembler ni avoir sa voix : décrivez plutôt le type de personne souhaité.",
       "carouselBriefRequired": "Décrivez le carrousel ou collez un fil.",
-      "carouselThreadTooLong": "Le fil collé est trop long."
+      "carouselThreadTooLong": "Le fil collé est trop long.",
+      "demoRequired": "Importez d’abord une vidéo de démonstration de votre produit ou de votre app : une vidéo accroche + démo montre votre propre démo après l’accroche.",
+      "hookLineTooLong": "L’accroche doit compter {max, number} mots au maximum.",
+      "wallTextRequired": "Décrivez la vidéo ou écrivez le texte vous-même.",
+      "wallTextTooLong": "Le texte doit compter {max, number} mots et 10 lignes au maximum."
     },
     "options": {
       "platforms": "Plateformes",
@@ -744,6 +755,57 @@
       "thread": "Votre fil (facultatif)",
       "threadPlaceholder": "Collez un fil : séparez les posts par une ligne ---, ou numérotez-les 1/, 2/, 3/…",
       "threadHint": "Laissez vide et Studio rédige le fil. Le premier post est l’accroche, le dernier l’appel à l’action."
+    },
+    "hookDemo": {
+      "title": "Accroche + démo",
+      "intro": "Une réaction rapide face caméra avec une ligne de texte, puis votre propre vidéo de démonstration juste après.",
+      "demo": "Vidéo de démonstration",
+      "noDemo": "Aucune vidéo de démonstration pour l’instant. Importez un enregistrement d’écran ou une vidéo filmée au téléphone de votre produit ou de votre app.",
+      "upload": "Importer une vidéo de démonstration",
+      "uploadAnother": "Importer une autre vidéo de démonstration",
+      "demoHint": "Les vidéos de démonstration sont conservées pour cette entreprise et réutilisables. Studio utilise les premières secondes qui tiennent dans une vidéo de 10 à 20 secondes.",
+      "hookLine": "Phrase d’accroche (facultatif)",
+      "hookLinePlaceholder": "ex. : J’ai arrêté de prendre les réservations par téléphone",
+      "hookLineHint": "{count, number} mots sur {max, number}. Laissez vide et Studio en écrira une.",
+      "hookSource": "Accroche",
+      "hookSources": {
+        "ai_creator": "Réaction d’un créateur IA",
+        "library": "Clip de réaction de la bibliothèque"
+      },
+      "reaction": "Réaction",
+      "reactions": {
+        "surprised": "Surpris",
+        "curious": "Curieux",
+        "wait_what": "« Attends, quoi ? »"
+      },
+      "layout": "Mise en page",
+      "layouts": {
+        "sequential": "Accroche, puis démo",
+        "stacked": "Accroche au-dessus de la démo, puis démo"
+      },
+      "audioMix": "Son",
+      "audioMixes": {
+        "balanced": "Musique et son de la démo",
+        "demo": "Son de la démo d’abord",
+        "music": "Musique seule"
+      },
+      "disclosure": "La réaction montre une personne générée par IA, jamais une vraie, et la vidéo porte la mention « générée par IA ». Elle compte pour une vidéo de votre quota."
+    },
+    "wallOfText": {
+      "title": "Mur de texte",
+      "intro": "Un bloc de texte sur une vidéo de fond apaisante avec de la musique, affiché tout du long.",
+      "text": "Texte (facultatif)",
+      "textPlaceholder": "Une courte liste ou une affirmation, une idée par ligne. Laissez vide et Studio l’écrira à partir de votre description.",
+      "textHint": "{count, number} mots sur {max, number}",
+      "background": "Arrière-plan",
+      "backgrounds": {
+        "calm": "Apaisant",
+        "nature": "Nature",
+        "city": "Lumières de la ville",
+        "abstract": "Abstrait"
+      },
+      "length": "Durée",
+      "seconds": "{count, number} s"
     }
   },
   "review": {
@@ -760,7 +822,9 @@
         "POSTMIND_CONTENT": "À partir de contenu PostMind",
         "TEMPLATE": "À partir d’un modèle",
         "UPLOAD": "Votre vidéo",
-        "CAROUSEL": "Carrousel"
+        "CAROUSEL": "Carrousel",
+        "HOOK_DEMO": "Accroche + démo",
+        "WALL_OF_TEXT": "Mur de texte"
       },
       "loading": "Chargement du projet",
       "spent": "{amount} dépensés",
@@ -3864,7 +3928,10 @@
       "stock_unavailable": "Certaines photos de banque d’images n’ont pas pu être ajoutées cette fois. Utilisez « Actualiser les photos » dans la bibliothèque d’images pour réessayer.",
       "ugc_real_person_refused": "Ce brief UGC demandait une personne réelle ou une célébrité. Les acteurs sont des personnes générées : décrivez plutôt le type de personne souhaité.",
       "carousel_incomplete": "Le carrousel n’a pas pu être créé : il n’a aucun post.",
-      "carousel_render_error": "Le dessin des diapositives du carrousel a échoué."
+      "carousel_render_error": "Le dessin des diapositives du carrousel a échoué.",
+      "no_demo_video": "La vidéo de démonstration n’est plus disponible : choisissez-en ou importez-en une autre.",
+      "hook_clip_unavailable": "Le clip d’accroche n’a pas pu être créé : aucun créateur IA n’est disponible pour le moment et la bibliothèque n’a pas de clip de réaction utilisable. Réessayez plus tard.",
+      "wall_of_text_invalid": "Le mur de texte n’a pas de réglages : recréez-le."
     },
     "classes": {
       "rate_limited": "trop de requêtes",
