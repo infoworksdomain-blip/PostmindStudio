@@ -71,7 +71,9 @@
         "approvals": "Freigabe-Workflows",
         "export": "Daten exportieren",
         "admin": "Administration",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "blitz": "Blitz",
+        "automations": "Automatisierungen"
       }
     },
     "theme": {
@@ -513,6 +515,18 @@
         "title": "Ein Limit für die Videoerstellung wurde erreicht",
         "body": "Studio hat neue Videos vorerst pausiert. Das Veröffentlichen ist nicht betroffen."
       }
+    },
+    "automationReview": {
+      "title": "„{name}“ kann geprüft werden",
+      "body": "Behalten, tauschen oder bearbeiten Sie die Beiträge und geben Sie sie frei, um den Zeitraum zu planen."
+    },
+    "automationPaused": {
+      "title": "„{name}“ ist pausiert",
+      "body": "Es werden keine neuen Beiträge erstellt. Öffnen Sie die Automatisierung, um den Grund zu sehen und fortzufahren."
+    },
+    "automationInsight": {
+      "title": "Ihr bester Beitrag diese Woche: {title}",
+      "body": "Erstellen Sie in „{name}“ mehr davon, um dieses Format und diesen Blickwinkel öfter zu sehen."
     }
   },
   "create": {
@@ -1830,7 +1844,8 @@
         "images": "Bildbibliothek",
         "learned": "Was Studio gelernt hat",
         "hashtags": "Hashtags",
-        "creators": "Creator"
+        "creators": "Creator",
+        "angles": "Blickwinkel"
       },
       "readOnly": "Sie haben nur Lesezugriff auf dieses Unternehmen. Bitten Sie einen Inhaber oder Administrator um Änderungen."
     },
@@ -5461,7 +5476,8 @@
       "kill_switch": "Studio hat die Erstellung vorerst pausiert. Ihre Beiträge laufen danach automatisch weiter.",
       "cost_cap": "Pausiert: Das Ausgabenlimit dieses Monats ist erreicht. Es geht weiter, wenn das Limit zurückgesetzt wird oder Sie eine Aufladung hinzufügen.",
       "daily_limit": "Bis morgen pausiert: Das heutige Limit für Monatspläne ist erreicht. Der Rest läuft automatisch weiter.",
-      "monthLimit": "Pausiert: Das Limit dieses Monats ist erreicht. Es geht weiter, wenn das Limit zurückgesetzt wird oder Sie ein Videopaket kaufen."
+      "monthLimit": "Pausiert: Das Limit dieses Monats ist erreicht. Es geht weiter, wenn das Limit zurückgesetzt wird oder Sie ein Videopaket kaufen.",
+      "paused": "Pausiert: Die Automatisierung ist pausiert. Bereits erstellte Beiträge werden trotzdem veröffentlicht."
     },
     "drafting": {
       "title": "Ihr Monat wird entworfen",
@@ -5534,7 +5550,9 @@
       "publish_failed": "Die Veröffentlichung ist fehlgeschlagen. Öffnen Sie ihn, um es erneut zu versuchen.",
       "safety_review": "Wartet auf eine Sicherheitsprüfung.",
       "content_safety_flag": "Die Inhaltssicherheitsprüfung hat ihn markiert.",
-      "script_safety_flag": "Die Skriptsicherheitsprüfung hat ihn markiert."
+      "script_safety_flag": "Die Skriptsicherheitsprüfung hat ihn markiert.",
+      "no_unique_content": "Zu ähnlich zu einem aktuellen Beitrag, daher weggelassen.",
+      "cap_reached": "Nicht durch die Videos Ihres Tarifs für diesen Zeitraum abgedeckt."
     },
     "editor": {
       "title": "Ihr Monat: {start} – {end}",
@@ -5826,6 +5844,275 @@
         "youtube_video_only": "YouTube veröffentlicht nur Videos. Lade stattdessen die Folien herunter.",
         "x_not_built": "Studio kann noch keine Karussells auf X posten. Lade stattdessen die Folien herunter."
       }
+    }
+  },
+  "blitz": {
+    "page": {
+      "title": "Blitz",
+      "description": "Wischen Sie durch fertige Beiträge. Behalten Sie, was Ihnen gefällt, und überspringen Sie den Rest.",
+      "settings": "Blickwinkel und Mix",
+      "pickTitle": "Wählen Sie zuerst ein Unternehmen",
+      "pickBody": "Blitz erstellt Beiträge für jeweils ein Unternehmen. Wählen Sie oben auf der Seite eines aus."
+    },
+    "deck": {
+      "loading": "Ihre Karten werden geladen …",
+      "rendering": "{count, plural, one {# weitere Karte wird erstellt} other {# weitere Karten werden erstellt}}",
+      "swipesLeft": "{count, plural, one {Heute noch # Wisch} other {Heute noch # Wische}}",
+      "cardLabel": "{format}: {title}",
+      "roleDeck": "Kartenstapel",
+      "actions": "Kartenaktionen",
+      "empty": "Keine Karten",
+      "keepLabel": "Diesen Beitrag behalten",
+      "skipLabel": "Diesen Beitrag überspringen",
+      "editLabel": "Diesen Beitrag behalten und zuerst bearbeiten",
+      "stampKeep": "Behalten",
+      "stampSkip": "Weg",
+      "keyboardHintLtr": "Ziehen Sie die Karte oder nutzen Sie → zum Behalten, ← zum Überspringen und ↑ zum Bearbeiten.",
+      "keyboardHintRtl": "Ziehen Sie die Karte oder nutzen Sie ← zum Behalten, → zum Überspringen und ↑ zum Bearbeiten.",
+      "why": "Warum das funktioniert",
+      "tier": {
+        "premade": "Bereit zum Posten",
+        "preview": "Vorschau: wird erstellt, wenn Sie sie behalten"
+      },
+      "format": {
+        "carousel": "Karussell",
+        "slideshow": "Diashow",
+        "wall_of_text": "Textwand",
+        "hook_demo": "Hook und Demo",
+        "ai_video": "KI-Video",
+        "ugc": "Creator-Video"
+      },
+      "formatPlural": {
+        "carousel": "Karussells",
+        "slideshow": "Diashows",
+        "wall_of_text": "Textwände",
+        "hook_demo": "Hook-und-Demo-Videos",
+        "ai_video": "KI-Videos",
+        "ugc": "Creator-Videos"
+      },
+      "allowance": "{units, plural, one {Verbraucht beim Behalten # Video Ihres Tarifs} other {Verbraucht beim Behalten # Videos Ihres Tarifs}}",
+      "remix": {
+        "title": "Remix von",
+        "show": "Quelle zeigen",
+        "seconds": "{seconds} s",
+        "note": "Übernommen werden nur Aufbau und Tempo, nie Worte oder Aufnahmen."
+      },
+      "slide": "Folie {n} von {total}",
+      "prevSlide": "Vorherige Folie",
+      "nextSlide": "Nächste Folie",
+      "soundOn": "Für Ton tippen",
+      "soundOff": "Stumm",
+      "beats": "Skript",
+      "stillAlt": "Ein Bild aus Ihrer Bibliothek",
+      "mentionsBusiness": "Nennt Ihr Unternehmen"
+    },
+    "keep": {
+      "title": "Behalten",
+      "schedule": "Im nächsten freien Termin planen",
+      "scheduleHint": "Wird zu Ihrer nächsten freien Posting-Zeit veröffentlicht.",
+      "post_now": "Jetzt posten",
+      "post_nowHint": "Wird sofort in Ihren verbundenen Konten veröffentlicht.",
+      "edit": "Zuerst bearbeiten",
+      "editHint": "Öffnet den Beitrag, damit Sie Text und Bilder ändern können.",
+      "cancel": "Abbrechen",
+      "confirm": "Behalten",
+      "previewNote": "{units, plural, one {Er wird jetzt erstellt und verbraucht # Video Ihres Tarifs.} other {Er wird jetzt erstellt und verbraucht # Videos Ihres Tarifs.}}"
+    },
+    "skip": {
+      "title": "Warum überspringen? (optional)",
+      "reasons": {
+        "not_my_style": "Nicht mein Stil",
+        "wrong_topic": "Falsches Thema",
+        "too_salesy": "Zu werblich",
+        "seen_it": "Schon gesehen"
+      }
+    },
+    "toast": {
+      "scheduled": "Behalten und für {when} geplant.",
+      "scheduledSoon": "Behalten und geplant.",
+      "posting": "Behalten: wird jetzt gepostet.",
+      "awaitingApproval": "Behalten: wartet auf Freigabe.",
+      "noAccounts": "Behalten. Verbinden Sie ein Konto, um ihn zu posten; er ist unter Projekte gespeichert.",
+      "edit": "Behalten: wird zum Bearbeiten geöffnet.",
+      "downloadOnly": "Für TikTok gibt es diesen vorerst nur als Download (Fotobeiträge sind noch nicht eingerichtet).",
+      "fewerFormat": "Sie sehen weniger {format}.",
+      "fewerAngle": "Sie sehen weniger „{angle}“.",
+      "lessSalesy": "Sie sehen weniger Beiträge, die Ihr Unternehmen nennen.",
+      "atLimit": "Notiert. Das ist schon so niedrig wie möglich."
+    },
+    "end": {
+      "emptyTitle": "Das war’s für den Moment",
+      "emptyBody": "Neue Karten sind unterwegs. Schauen Sie später wieder vorbei oder erstellen Sie jetzt mehr.",
+      "capsTitle": "Das war’s für heute",
+      "capsBody": "Sie haben die fertigen Beiträge von heute gesehen. Morgen gibt es mehr.",
+      "swipesTitle": "Keine Wische mehr für heute",
+      "swipesBody": "Morgen können Sie weiterwischen.",
+      "more": "Mehr erstellen",
+      "queued": "Weitere Karten sind unterwegs."
+    },
+    "angles": {
+      "title": "Blickwinkel",
+      "description": "Die Themen Ihrer Beiträge. Blitz und Automatisierungen wählen daraus, so oft Sie es für jeden wünschen.",
+      "add": "Blickwinkel hinzufügen",
+      "titleLabel": "Titel",
+      "descriptionLabel": "Worum es geht",
+      "audienceLabel": "Für wen",
+      "weightLabel": "Wie oft",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "edit": "Bearbeiten",
+      "retire": "Zurückziehen",
+      "restore": "Zurückholen",
+      "suggest": "Blickwinkel vorschlagen",
+      "suggesting": "Vorschläge werden erstellt …",
+      "empty": "Noch keine Blickwinkel",
+      "emptyBody": "Fügen Sie einen hinzu oder lassen Sie Studio welche aus Ihrem Unternehmensprofil vorschlagen.",
+      "count": "{count} von {max} Blickwinkeln",
+      "ai": "Vorgeschlagen",
+      "forAudience": "Für {audience}",
+      "suggested": "{count, plural, one {# neuer Blickwinkel hinzugefügt} other {# neue Blickwinkel hinzugefügt}}",
+      "noneNew": "Keine neuen Blickwinkel: Jede Idee stand schon auf Ihrer Liste.",
+      "retiredTitle": "{count, plural, one {# zurückgezogener Blickwinkel} other {# zurückgezogene Blickwinkel}}"
+    },
+    "mix": {
+      "title": "Content-Mix",
+      "description": "Was Blitz und Automatisierungen erstellen. Günstige Formate sind fertig, bevor Sie sie sehen; kostenpflichtige werden nur erstellt, wenn Sie eines behalten.",
+      "formats": "Formate",
+      "paidFormat": "{format} (verbraucht die Videos Ihres Tarifs)",
+      "paidNote": "Kostenpflichtige Formate bleiben aus, bis Sie sie hochregeln.",
+      "remix": "Beliebte Strukturen remixen",
+      "mention": "Unternehmen nennen",
+      "mentionShort": "Unternehmen nennen",
+      "save": "Mix speichern",
+      "saved": "Content-Mix gespeichert.",
+      "nudges": "Aus Ihren Wischen gelernt",
+      "noNudges": "Noch nichts. Gründe fürs Überspringen und Behaltenes passen das nach und nach an.",
+      "reset": "Gelerntes von Blitz löschen",
+      "percent": "{value} %"
+    }
+  },
+  "automations": {
+    "list": {
+      "title": "Automatisierungen",
+      "description": "Beiträge, die jede Woche oder jeden Monat für Sie erstellt und gepostet werden, zuerst mit den günstigsten Formaten.",
+      "new": "Neue Automatisierung",
+      "pickTitle": "Wählen Sie zuerst ein Unternehmen",
+      "pickBody": "Eine Automatisierung postet für ein Unternehmen. Wählen Sie oben auf der Seite eines aus.",
+      "loading": "Automatisierungen werden geladen …",
+      "empty": "Noch keine Automatisierungen",
+      "emptyBody": "Richten Sie eine ein, und Studio erstellt und postet jede Woche Ihre Inhalte."
+    },
+    "status": {
+      "DRAFT": "Entwurf",
+      "GENERATING": "Beiträge werden geschrieben",
+      "REVIEW": "Bereit zur Prüfung",
+      "ACTIVE": "Aktiv",
+      "PAUSED": "Pausiert",
+      "COMPLETED": "Abgeschlossen",
+      "CANCELLED": "Abgebrochen"
+    },
+    "cadence": {
+      "perDay": "{count, plural, one {# Beitrag pro Tag} other {# Beiträge pro Tag}}",
+      "perWeek": "{count, plural, one {# Beitrag pro Woche} other {# Beiträge pro Woche}}"
+    },
+    "duration": {
+      "one_week": "1 Woche",
+      "four_weeks": "4 Wochen",
+      "ongoing_weekly": "Jede Woche",
+      "ongoing_monthly": "Jeden Monat"
+    },
+    "approval": {
+      "review": "Zuerst in Blitz prüfen",
+      "reviewHint": "Sie behalten, tauschen oder bearbeiten jeden Beitrag, bevor er geplant wird. Bis zur Freigabe wird nichts erstellt.",
+      "auto": "Automatisch freigeben und posten",
+      "autoHint": "Beiträge werden erstellt und zu ihrer Zeit veröffentlicht; Sie können jeden noch entfernen."
+    },
+    "wizard": {
+      "title": "Neue Automatisierung",
+      "progress": "Schritte",
+      "steps": {
+        "channels": "Kanäle",
+        "cadence": "Rhythmus",
+        "mix": "Mix",
+        "approval": "Freigabe",
+        "summary": "Zusammenfassung"
+      },
+      "channelsTitle": "Wo soll gepostet werden?",
+      "channelsHint": "Wählen Sie die Netzwerke, in denen gepostet wird, im Rahmen der Kanäle Ihres Tarifs.",
+      "noAccount": "{platform} ist nicht verbunden: Die Beiträge werden stattdessen zur Prüfung gespeichert.",
+      "cadenceTitle": "Wie oft?",
+      "mode": {
+        "per_day": "Beiträge pro Tag",
+        "per_dayHint": "1 bis 3 Beiträge pro Tag in jedem Netzwerk.",
+        "per_week": "Beiträge pro Woche",
+        "per_weekHint": "Über die Woche verteilt."
+      },
+      "durationTitle": "Wie lange?",
+      "mixTitle": "Was erstellt wird",
+      "mixHint": "Sie nutzt den Content-Mix und die Blickwinkel Ihres Unternehmens.",
+      "mixLink": "Content-Mix bearbeiten",
+      "lowestCost": "Zuerst mit den günstigsten Formaten erstellt: Karussells und Diashows brauchen keine kostenpflichtige Videogenerierung.",
+      "approvalTitle": "Vor dem Posten",
+      "summaryTitle": "Zusammenfassung",
+      "name": "Name (optional)",
+      "estimating": "Wird berechnet …",
+      "summaryPostsLabel": "Beiträge",
+      "summaryPosts": "{count, plural, one {# Beitrag alle {days} Tage} other {# Beiträge alle {days} Tage}}",
+      "summarySplitLabel": "Formate",
+      "summarySplit": "{format}: {count}",
+      "allowanceLabel": "Ihr Tarif",
+      "allowance": "{count, plural, one {Verbraucht bis zu # Video pro Zeitraum} other {Verbraucht bis zu # Videos pro Zeitraum}}",
+      "paidPosts": "{count, plural, one {# Beitrag nutzt ein kostenpflichtiges Format.} other {# Beiträge nutzen ein kostenpflichtiges Format.}}",
+      "staffEstimate": "Team: übliche Anbieterkosten {amount} pro Zeitraum",
+      "back": "Zurück",
+      "next": "Weiter",
+      "create": "Erstellen und starten",
+      "started": "Automatisierung gestartet. Die ersten Beiträge werden geschrieben."
+    },
+    "detail": {
+      "back": "Alle Automatisierungen",
+      "start": "Starten",
+      "review": "In Blitz prüfen",
+      "approve": "Freigeben und planen",
+      "approved": "Freigegeben. Die Beiträge werden erstellt und geplant.",
+      "pause": "Pausieren",
+      "resume": "Fortsetzen",
+      "cancel": "Automatisierung abbrechen",
+      "cancelConfirm": "Diese Automatisierung abbrechen? Noch nicht veröffentlichte Beiträge werden abgebrochen.",
+      "pauseReason": {
+        "owner": "Von Ihnen pausiert. Bereits erstellte Beiträge werden trotzdem veröffentlicht.",
+        "allowance": "Die Videos Ihres Tarifs sind aufgebraucht. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket und setzen Sie dann fort.",
+        "billing": "Pausiert, weil die Abrechnung Aufmerksamkeit braucht.",
+        "owner_left": "Pausiert, weil die Person, die sie eingerichtet hat, die Organisation verlassen hat.",
+        "plan_missing": "Pausiert: Der aktuelle Zeitraum wurde nicht gefunden.",
+        "no_free_slots": "Pausiert: Im nächsten Zeitraum gibt es keine freien Posting-Zeiten.",
+        "no_formats": "Pausiert: Keines der Netzwerke nimmt die Formate Ihres Content-Mix an.",
+        "cost_cap": "Pausiert: Das Limit dieses Monats ist erreicht."
+      },
+      "upgrade": "Videos hinzufügen",
+      "insightTitle": "Bester Beitrag diese Woche",
+      "insightBody": "„{title}“: {views, number} Aufrufe",
+      "moreLikeThis": "Mehr davon erstellen",
+      "moreDone": "Sie sehen mehr von diesem Format und Blickwinkel.",
+      "noPeriods": "Noch nichts geplant.",
+      "period": "Zeitraum {n}",
+      "writing": "Beiträge werden geschrieben …",
+      "reviewed": "Behalten",
+      "untitled": "Wird geschrieben",
+      "downloadOnly": "Nur als Download auf {platforms}",
+      "reroll": "Neues Thema",
+      "rerolled": "Ein neues Thema ist da.",
+      "remove": "Entfernen",
+      "keep": "Behalten"
+    },
+    "review": {
+      "title": "Prüfung: {name}",
+      "loading": "Prüfung",
+      "description": "Behalten oder überspringen Sie jeden Beitrag. Bis zur Freigabe wird nichts erstellt oder berechnet.",
+      "back": "Zurück zur Automatisierung",
+      "notInReview": "Diese Automatisierung wartet nicht auf eine Prüfung.",
+      "done": "Alles geprüft",
+      "doneBody": "Geben Sie frei, um die Beiträge zu erstellen und zu ihrer Zeit zu planen."
     }
   }
 }

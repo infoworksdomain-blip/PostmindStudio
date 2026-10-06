@@ -27,6 +27,7 @@ describe('hookDemoCreateInput', () => {
       layout: 'sequential',
       audioMix: 'balanced',
       targetSec: 15,
+      allowGeneratedHook: true,
     });
   });
 

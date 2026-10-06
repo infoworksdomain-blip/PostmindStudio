@@ -71,7 +71,9 @@
         "approvals": "Flussi di approvazione",
         "export": "Esporta dati",
         "admin": "Amministrazione",
-        "settings": "Impostazioni"
+        "settings": "Impostazioni",
+        "blitz": "Blitz",
+        "automations": "Automazioni"
       }
     },
     "theme": {
@@ -513,6 +515,18 @@
         "title": "È stato raggiunto un limite per la creazione di video",
         "body": "Studio ha messo in pausa i nuovi video per ora. La pubblicazione non è interessata."
       }
+    },
+    "automationReview": {
+      "title": "«{name}» è pronta da rivedere",
+      "body": "Tieni, sostituisci o modifica i post, poi approvali per programmare il periodo."
+    },
+    "automationPaused": {
+      "title": "«{name}» è in pausa",
+      "body": "Ha smesso di creare post. Aprila per vedere il motivo e riprenderla."
+    },
+    "automationInsight": {
+      "title": "Il tuo post migliore della settimana: {title}",
+      "body": "Creane altri simili da «{name}» per vedere più spesso questo formato e questa angolazione."
     }
   },
   "create": {
@@ -1830,7 +1844,8 @@
         "images": "Libreria immagini",
         "learned": "Cosa ha imparato Studio",
         "hashtags": "Hashtag",
-        "creators": "Creator"
+        "creators": "Creator",
+        "angles": "Angolazioni"
       },
       "readOnly": "Hai accesso di sola lettura a questa attività. Chiedi a un proprietario o a un amministratore di fare le modifiche."
     },
@@ -5461,7 +5476,8 @@
       "kill_switch": "Studio ha messo in pausa la generazione per ora. I tuoi post ripartiranno automaticamente.",
       "cost_cap": "In pausa: è stato raggiunto il limite di spesa di questo mese. Riparte quando il limite si azzera o aggiungi una ricarica.",
       "daily_limit": "In pausa fino a domani: è stato raggiunto il limite di oggi per i piani mensili. Il resto ripartirà automaticamente.",
-      "monthLimit": "In pausa: è stato raggiunto il limite di questo mese. Riparte quando il limite si azzera o acquisti un pacchetto video."
+      "monthLimit": "In pausa: è stato raggiunto il limite di questo mese. Riparte quando il limite si azzera o acquisti un pacchetto video.",
+      "paused": "In pausa: la sua automazione è in pausa. I post già creati vengono pubblicati comunque."
     },
     "drafting": {
       "title": "Preparazione del tuo mese",
@@ -5534,7 +5550,9 @@
       "publish_failed": "La pubblicazione non è riuscita. Aprilo per riprovare.",
       "safety_review": "In attesa di una revisione di sicurezza.",
       "content_safety_flag": "Il controllo di sicurezza dei contenuti l’ha segnalato.",
-      "script_safety_flag": "Il controllo di sicurezza del copione l’ha segnalato."
+      "script_safety_flag": "Il controllo di sicurezza del copione l’ha segnalato.",
+      "no_unique_content": "Troppo simile a un post recente, quindi è stato escluso.",
+      "cap_reached": "Non coperto dai video del tuo piano per questo periodo."
     },
     "editor": {
       "title": "Il tuo mese: {start} – {end}",
@@ -5826,6 +5844,275 @@
         "youtube_video_only": "YouTube pubblica solo video. Scarica invece le slide.",
         "x_not_built": "Studio non può ancora pubblicare caroselli su X. Scarica invece le slide."
       }
+    }
+  },
+  "blitz": {
+    "page": {
+      "title": "Blitz",
+      "description": "Scorri post già pronti. Tieni quelli che ti piacciono e salta gli altri.",
+      "settings": "Angolazioni e mix",
+      "pickTitle": "Scegli prima un’attività",
+      "pickBody": "Blitz crea post per un’attività alla volta. Scegline una in alto nella pagina."
+    },
+    "deck": {
+      "loading": "Caricamento delle schede…",
+      "rendering": "{count, plural, one {È in preparazione # altra scheda} other {Sono in preparazione altre # schede}}",
+      "swipesLeft": "{count, plural, one {Ti resta # swipe oggi} other {Ti restano # swipe oggi}}",
+      "cardLabel": "{format}: {title}",
+      "roleDeck": "mazzo di schede",
+      "actions": "Azioni sulla scheda",
+      "empty": "Nessuna scheda",
+      "keepLabel": "Tieni questo post",
+      "skipLabel": "Salta questo post",
+      "editLabel": "Tieni questo post e modificalo prima",
+      "stampKeep": "Sì",
+      "stampSkip": "No",
+      "keyboardHintLtr": "Trascina la scheda oppure usa → per tenere, ← per saltare e ↑ per modificare prima.",
+      "keyboardHintRtl": "Trascina la scheda oppure usa ← per tenere, → per saltare e ↑ per modificare prima.",
+      "why": "Perché funziona",
+      "tier": {
+        "premade": "Pronto da pubblicare",
+        "preview": "Anteprima: viene creato se lo tieni"
+      },
+      "format": {
+        "carousel": "Carosello",
+        "slideshow": "Slideshow",
+        "wall_of_text": "Muro di testo",
+        "hook_demo": "Gancio e demo",
+        "ai_video": "Video IA",
+        "ugc": "Video di creator"
+      },
+      "formatPlural": {
+        "carousel": "caroselli",
+        "slideshow": "slideshow",
+        "wall_of_text": "muri di testo",
+        "hook_demo": "video con gancio e demo",
+        "ai_video": "video IA",
+        "ugc": "video di creator"
+      },
+      "allowance": "{units, plural, one {Usa # video del tuo piano se lo tieni} other {Usa # video del tuo piano se lo tieni}}",
+      "remix": {
+        "title": "Remix di",
+        "show": "Mostra l’originale",
+        "seconds": "{seconds} s",
+        "note": "Si riprendono solo struttura e ritmo, mai le parole o le immagini."
+      },
+      "slide": "Slide {n} di {total}",
+      "prevSlide": "Slide precedente",
+      "nextSlide": "Slide successiva",
+      "soundOn": "Tocca per l’audio",
+      "soundOff": "Disattiva audio",
+      "beats": "Copione",
+      "stillAlt": "Un’immagine della tua libreria",
+      "mentionsBusiness": "Nomina la tua attività"
+    },
+    "keep": {
+      "title": "Tienilo",
+      "schedule": "Programma nel prossimo spazio libero",
+      "scheduleHint": "Pubblicato al tuo prossimo orario di pubblicazione libero.",
+      "post_now": "Pubblica ora",
+      "post_nowHint": "Pubblicato subito sui tuoi account collegati.",
+      "edit": "Modifica prima",
+      "editHint": "Lo apre per cambiare testo e immagini.",
+      "cancel": "Annulla",
+      "confirm": "Tieni",
+      "previewNote": "{units, plural, one {Viene creato ora e usa # video del tuo piano.} other {Viene creato ora e usa # video del tuo piano.}}"
+    },
+    "skip": {
+      "title": "Perché lo salti? (facoltativo)",
+      "reasons": {
+        "not_my_style": "Non è il mio stile",
+        "wrong_topic": "Argomento sbagliato",
+        "too_salesy": "Troppo commerciale",
+        "seen_it": "Già visto"
+      }
+    },
+    "toast": {
+      "scheduled": "Tenuto e programmato per il {when}.",
+      "scheduledSoon": "Tenuto e programmato.",
+      "posting": "Tenuto: pubblicazione in corso.",
+      "awaitingApproval": "Tenuto: in attesa di approvazione.",
+      "noAccounts": "Tenuto. Collega un account per pubblicarlo; è salvato in Progetti.",
+      "edit": "Tenuto: lo apriamo per la modifica.",
+      "downloadOnly": "Per TikTok questo è solo da scaricare, per ora (i post fotografici non sono ancora configurati).",
+      "fewerFormat": "Vedrai meno {format}.",
+      "fewerAngle": "Vedrai meno «{angle}».",
+      "lessSalesy": "Vedrai meno post che nominano la tua attività.",
+      "atLimit": "Preso nota. È già al minimo."
+    },
+    "end": {
+      "emptyTitle": "Per ora è tutto",
+      "emptyBody": "Stanno arrivando nuove schede. Torna più tardi o creane altre ora.",
+      "capsTitle": "Per oggi è tutto",
+      "capsBody": "Hai visto i post pronti di oggi. Torna domani per vederne altri.",
+      "swipesTitle": "Swipe finiti per oggi",
+      "swipesBody": "Torna domani per continuare.",
+      "more": "Creane altri",
+      "queued": "Stanno arrivando altre schede."
+    },
+    "angles": {
+      "title": "Angolazioni",
+      "description": "I temi dei tuoi post. Blitz e le automazioni li scelgono con la frequenza che vuoi per ciascuno.",
+      "add": "Aggiungi un’angolazione",
+      "titleLabel": "Titolo",
+      "descriptionLabel": "Di cosa parla",
+      "audienceLabel": "A chi si rivolge",
+      "weightLabel": "Frequenza",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "edit": "Modifica",
+      "retire": "Ritira",
+      "restore": "Ripristina",
+      "suggest": "Suggerisci angolazioni",
+      "suggesting": "Suggerimenti in corso…",
+      "empty": "Ancora nessuna angolazione",
+      "emptyBody": "Aggiungine una o lascia che Studio ne suggerisca alcune dal profilo della tua attività.",
+      "count": "{count} di {max} angolazioni",
+      "ai": "Suggerita",
+      "forAudience": "Per {audience}",
+      "suggested": "{count, plural, one {# nuova angolazione aggiunta} other {# nuove angolazioni aggiunte}}",
+      "noneNew": "Nessuna nuova angolazione: ogni idea era già nel tuo elenco.",
+      "retiredTitle": "{count, plural, one {# angolazione ritirata} other {# angolazioni ritirate}}"
+    },
+    "mix": {
+      "title": "Mix di contenuti",
+      "description": "Cosa creano Blitz e le automazioni. I formati economici sono pronti prima che tu li veda; quelli a pagamento vengono creati solo quando ne tieni uno.",
+      "formats": "Formati",
+      "paidFormat": "{format} (usa i video del tuo piano)",
+      "paidNote": "I formati a pagamento restano spenti finché non li alzi.",
+      "remix": "Riprendi strutture popolari",
+      "mention": "Nomina l’attività",
+      "mentionShort": "Nominare l’attività",
+      "save": "Salva il mix",
+      "saved": "Mix di contenuti salvato.",
+      "nudges": "Imparato dai tuoi swipe",
+      "noNudges": "Ancora niente. I motivi per saltare e ciò che tieni lo regolano a poco a poco.",
+      "reset": "Cancella ciò che Blitz ha imparato",
+      "percent": "{value}%"
+    }
+  },
+  "automations": {
+    "list": {
+      "title": "Automazioni",
+      "description": "Post creati e pubblicati per te ogni settimana o ogni mese, partendo dai formati più economici.",
+      "new": "Nuova automazione",
+      "pickTitle": "Scegli prima un’attività",
+      "pickBody": "Un’automazione pubblica per un’attività. Scegline una in alto nella pagina.",
+      "loading": "Caricamento delle automazioni…",
+      "empty": "Ancora nessuna automazione",
+      "emptyBody": "Configurane una e Studio creerà e pubblicherà i tuoi contenuti ogni settimana."
+    },
+    "status": {
+      "DRAFT": "Bozza",
+      "GENERATING": "Scrittura dei post",
+      "REVIEW": "Da rivedere",
+      "ACTIVE": "Attiva",
+      "PAUSED": "In pausa",
+      "COMPLETED": "Completata",
+      "CANCELLED": "Annullata"
+    },
+    "cadence": {
+      "perDay": "{count, plural, one {# post al giorno} other {# post al giorno}}",
+      "perWeek": "{count, plural, one {# post a settimana} other {# post a settimana}}"
+    },
+    "duration": {
+      "one_week": "1 settimana",
+      "four_weeks": "4 settimane",
+      "ongoing_weekly": "Ogni settimana",
+      "ongoing_monthly": "Ogni mese"
+    },
+    "approval": {
+      "review": "Rivedi prima in Blitz",
+      "reviewHint": "Tieni, sostituisci o modifichi ogni post prima che venga programmato. Non viene creato nulla finché non approvi.",
+      "auto": "Approva e pubblica in automatico",
+      "autoHint": "I post vengono creati e pubblicati ai loro orari; puoi comunque rimuoverne qualsiasi."
+    },
+    "wizard": {
+      "title": "Nuova automazione",
+      "progress": "Passaggi",
+      "steps": {
+        "channels": "Canali",
+        "cadence": "Frequenza",
+        "mix": "Mix",
+        "approval": "Approvazione",
+        "summary": "Riepilogo"
+      },
+      "channelsTitle": "Dove pubblicare?",
+      "channelsHint": "Scegli le reti su cui pubblica, entro i canali del tuo piano.",
+      "noAccount": "{platform} non è collegato: i suoi post vengono salvati per la revisione.",
+      "cadenceTitle": "Con quale frequenza?",
+      "mode": {
+        "per_day": "Post al giorno",
+        "per_dayHint": "Da 1 a 3 post al giorno su ogni rete.",
+        "per_week": "Post a settimana",
+        "per_weekHint": "Distribuiti nella settimana."
+      },
+      "durationTitle": "Per quanto tempo?",
+      "mixTitle": "Cosa creare",
+      "mixHint": "Usa il mix di contenuti e le angolazioni della tua attività.",
+      "mixLink": "Modifica il mix di contenuti",
+      "lowestCost": "Creata partendo dai formati più economici: caroselli e slideshow non richiedono generazione video a pagamento.",
+      "approvalTitle": "Prima di pubblicare",
+      "summaryTitle": "Riepilogo",
+      "name": "Nome (facoltativo)",
+      "estimating": "Calcolo in corso…",
+      "summaryPostsLabel": "Post",
+      "summaryPosts": "{count, plural, one {# post ogni {days} giorni} other {# post ogni {days} giorni}}",
+      "summarySplitLabel": "Formati",
+      "summarySplit": "{format}: {count}",
+      "allowanceLabel": "Il tuo piano",
+      "allowance": "{count, plural, one {Usa fino a # video per periodo} other {Usa fino a # video per periodo}}",
+      "paidPosts": "{count, plural, one {# post usa un formato a pagamento.} other {# post usano un formato a pagamento.}}",
+      "staffEstimate": "Staff: costo tipico dei fornitori {amount} per periodo",
+      "back": "Indietro",
+      "next": "Avanti",
+      "create": "Crea e avvia",
+      "started": "Automazione avviata. Si stanno scrivendo i primi post."
+    },
+    "detail": {
+      "back": "Tutte le automazioni",
+      "start": "Avvia",
+      "review": "Rivedi in Blitz",
+      "approve": "Approva e programma",
+      "approved": "Approvata. I post vengono creati e programmati.",
+      "pause": "Metti in pausa",
+      "resume": "Riprendi",
+      "cancel": "Annulla l’automazione",
+      "cancelConfirm": "Annullare questa automazione? I post non ancora pubblicati vengono annullati.",
+      "pauseReason": {
+        "owner": "Messa in pausa da te. I post già creati vengono pubblicati comunque.",
+        "allowance": "I video del tuo piano sono esauriti. Aggiungi un canale o acquista un pacchetto di video, poi riprendi.",
+        "billing": "In pausa perché la fatturazione richiede attenzione.",
+        "owner_left": "In pausa perché la persona che l’ha configurata ha lasciato l’organizzazione.",
+        "plan_missing": "In pausa: non si trova il periodo in corso.",
+        "no_free_slots": "In pausa: non ci sono orari di pubblicazione liberi nel prossimo periodo.",
+        "no_formats": "In pausa: nessuna delle sue reti accetta i formati del tuo mix di contenuti.",
+        "cost_cap": "In pausa: è stato raggiunto il limite di questo mese."
+      },
+      "upgrade": "Aggiungi video",
+      "insightTitle": "Il post migliore della settimana",
+      "insightBody": "«{title}»: {views, number} visualizzazioni",
+      "moreLikeThis": "Creane altri simili",
+      "moreDone": "Vedrai più spesso questo formato e questa angolazione.",
+      "noPeriods": "Ancora niente di pianificato.",
+      "period": "Periodo {n}",
+      "writing": "Scrittura dei post…",
+      "reviewed": "Tenuto",
+      "untitled": "In scrittura",
+      "downloadOnly": "Solo da scaricare su {platforms}",
+      "reroll": "Nuovo argomento",
+      "rerolled": "È arrivato un nuovo argomento.",
+      "remove": "Rimuovi",
+      "keep": "Tieni"
+    },
+    "review": {
+      "title": "Revisione: {name}",
+      "loading": "Revisione",
+      "description": "Tieni o salta ogni post. Non viene creato né addebitato nulla finché non approvi.",
+      "back": "Torna all’automazione",
+      "notInReview": "Questa automazione non è in attesa di revisione.",
+      "done": "Tutto rivisto",
+      "doneBody": "Approva per creare i post e programmarli ai loro orari."
     }
   }
 }

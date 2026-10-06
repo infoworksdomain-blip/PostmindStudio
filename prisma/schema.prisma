@@ -1872,12 +1872,15 @@ model ContentPlan {
   completedAt         DateTime?
   cancelledAt         DateTime?
   metadata            Json?
+  /// 22.5: the automation this plan is one period of (null = a hand-made month plan).
+  automationId        String?
   items               ContentPlanItem[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
   @@index([organisationId, businessId, createdAt])
   @@index([status, updatedAt])
+  @@index([automationId])
   @@map("content_plans")
   @@schema("studio")
 }
@@ -1909,6 +1912,12 @@ model ContentPlanItem {
   /// The allowance reservation (plan-quotas.ts QuotaReservation minus ids), set at generate.
   quotaReservation Json?
   startedAt        DateTime?
+  /// 22.5: the Blitz format key (blitz/formats.ts: carousel, slideshow, ai_video, ugc, …).
+  format           String?
+  /// 22.5: the business angle (content_angles) the post was written for.
+  angleId          String?
+  /// 22.5: normalised title + hook tokens, for the 90-day duplicate check (blitz/fingerprint.ts).
+  fingerprint      String?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
 
@@ -1950,6 +1959,158 @@ enum ContentPlanItemStatus {
   SKIPPED
   REMOVED
 
+  @@schema("studio")
+}
+
+// DERIVED — 22.4 Blitz (operator request 2026-10-05, plans/phase-22-blitz-automations.md):
+// content angles per business (Fastlane: title, description, target audience, weight; ≤ 100).
+model ContentAngle {
+  id              String    @id @default(cuid())
+  organisationId  String
+  businessId      String
+  title           String
+  description     String    @default("")
+  targetAudience  String    @default("")
+  /// 0–100: how often the angle is picked (skip reasons nudge it within bounds).
+  weight          Int       @default(50)
+  /// owner | ai
+  source          String    @default("owner")
+  retiredAt       DateTime?
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([organisationId, businessId, retiredAt])
+  @@map("content_angles")
+  @@schema("studio")
+}
+
+// 22.4: the business's content mix (format weights, remix %, mention-business %, caption-style
+// weights, creator chance) and the bounded nudges swipes and skip reasons made to it.
+model ContentMixPreference {
+  id                     String   @id @default(cuid())
+  organisationId         String
+  businessId             String
+  /// { <format key>: 0–100 } set by the owner (blitz/formats.ts defaults when absent).
+  formatWeights          Json
+  remixPercent           Int      @default(20)
+  mentionBusinessPercent Int      @default(30)
+  /// { <caption preset id>: 0–100 } or null (only presets that exist are used).
+  captionStyleWeights    Json?
+  creatorChance          Int      @default(0)
+  /// Bounded nudges from swipes / skip reasons / "make more like this" (blitz/mix.ts).
+  adjustments            Json?
+  updatedByUserId        String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@unique([organisationId, businessId])
+  @@map("content_mix_preferences")
+  @@schema("studio")
+}
+
+enum BlitzSuggestionStatus {
+  RENDERING
+  READY
+  KEPT
+  SKIPPED
+  FAILED
+  EXPIRED
+
+  @@schema("studio")
+}
+
+// 22.4: one Blitz card. Cheap formats are rendered before they are shown (projectId = the
+// render project, not counted against the allowance until kept); paid formats are a preview
+// that only generates after a keep.
+model BlitzSuggestion {
+  id                 String                @id @default(cuid())
+  organisationId     String
+  businessId         String
+  angleId            String?
+  /// blitz/formats.ts key
+  format             String
+  status             BlitzSuggestionStatus
+  /// { title, hook, body[], cta, hookFramework, captions { <platform>: { caption, hashtags[] } } }
+  copy               Json
+  whyItWorks         String
+  mentionBusiness    Boolean               @default(false)
+  /// Reference-library video the card remixes (shown beside it).
+  remixLibraryItemId String?
+  remixMode          String?
+  /// Library image shown on a preview card.
+  previewImageId     String?
+  fingerprint        String
+  projectId          String?
+  failureReason      String?
+  skipReason         String?
+  decidedAt          DateTime?
+  decidedByUserId    String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([organisationId, businessId, status])
+  @@index([organisationId, businessId, createdAt])
+  @@index([projectId])
+  @@map("blitz_suggestions")
+  @@schema("studio")
+}
+
+enum AutomationStatus {
+  DRAFT
+  GENERATING
+  REVIEW
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+
+  @@schema("studio")
+}
+
+// 22.5: weekly / monthly auto generation and posting. Each period is a content_plans row
+// (automationId) run by the month-plan machinery; the automation drafts it from the snapshot of
+// the content mix, cheapest formats first, and rolls the next period over when ongoing.
+model Automation {
+  id                String           @id @default(cuid())
+  organisationId    String
+  businessId        String
+  createdByUserId   String
+  name              String
+  status            AutomationStatus @default(DRAFT)
+  /// { mode: 'per_day', postsPerDay 1–3 } | { mode: 'per_week', postsPerWeek 1–21 }
+  cadence           Json
+  /// one_week | four_weeks | ongoing_weekly | ongoing_monthly
+  duration          String
+  platforms         String[]
+  /// AutoPublishTarget[] (automation/targets.ts)
+  targets           Json
+  /// review | auto
+  approvalMode      String           @default("review")
+  /// The content mix at activation (formats, remix %, mention %, caption styles, creator chance).
+  mixSnapshot       Json?
+  /// Internal ceiling per period (pence; never shown to customers).
+  costCeilingPence  Int?
+  timezone          String
+  language          String           @default("en-GB")
+  planTier          String?
+  /// Capabilities of the person who activated it (re-checked against membership each run).
+  capabilities      String[]
+  currentPlanId     String?
+  periodIndex       Int              @default(0)
+  pauseReason       String?
+  activatedAt       DateTime?
+  pausedAt          DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  lastInsightAt     DateTime?
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([organisationId, businessId, createdAt])
+  @@index([status, updatedAt])
+  @@map("automations")
   @@schema("studio")
 }
 

@@ -271,6 +271,11 @@ export async function hardDeleteBusiness(
     // 22.3: reusable creators (portraits first).
     creator_portraits: (await tx.creatorPortrait.deleteMany({ where: scope })).count,
     creators: (await tx.creator.deleteMany({ where: scope })).count,
+    // 22.4 / 22.5: Blitz cards, angles, the content mix and automations.
+    blitz_suggestions: (await tx.blitzSuggestion.deleteMany({ where: scope })).count,
+    content_angles: (await tx.contentAngle.deleteMany({ where: scope })).count,
+    content_mix_preferences: (await tx.contentMixPreference.deleteMany({ where: scope })).count,
+    automations: (await tx.automation.deleteMany({ where: scope })).count,
   }));
   return { projects: projectIds.length, rows: { ...rows, ...business }, objects };
 }

@@ -42,6 +42,7 @@ import {
 } from './plan-quotas';
 import { cancelProject, createProject, createProjectInput, generateProject } from './projects';
 import { ugcForPlanItem } from '../ugc/plan-month';
+import { automationItemBody } from './automation-items';
 import { defaultCreatorId } from './creators';
 import { cancelPublication } from './publications';
 import { monthWindow } from './tier-gates';
@@ -145,10 +146,17 @@ export function projectBodyFor(
   plan: Pick<
     ContentPlan,
     'businessId' | 'platforms' | 'language' | 'brandKitId' | 'targets' | 'metadata'
-  >,
-  item: Pick<ContentPlanItem, 'kind' | 'title' | 'brief' | 'slides' | 'slotAt' | 'angle'>,
+  > &
+    Partial<Pick<ContentPlan, 'automationId'>>,
+  item: Pick<ContentPlanItem, 'kind' | 'title' | 'brief' | 'slides' | 'slotAt' | 'angle'> &
+    Partial<Pick<ContentPlanItem, 'format'>>,
   shortMaxSec: number,
 ): z.input<typeof createProjectInput> {
+  // 22.5: an automation slot is made in its format and posted only where the format goes.
+  if (plan.automationId && item.format) {
+    const body = automationItemBody(plan, { ...item, format: item.format }, shortMaxSec);
+    if (body) return body;
+  }
   const durationSec = Math.max(5, Math.min(PLAN_VIDEO_SEC, shortMaxSec));
   const targetFormats = plan.platforms.map((platform) => ({
     platform: platform as Platform,
@@ -628,6 +636,11 @@ async function startItems(deps: RunnerDeps, plan: ContentPlan): Promise<number> 
   const kill = await deps.killSwitch.check(scope);
   if (kill.killed) {
     await hold(deps.db, plan, 'kill_switch');
+    return 0;
+  }
+  // 22.5: a paused automation starts no new generation (posts already made still go out).
+  if ((plan.metadata as { paused?: unknown } | null)?.paused === true) {
+    await hold(deps.db, plan, 'paused');
     return 0;
   }
   try {

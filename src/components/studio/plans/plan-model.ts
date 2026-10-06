@@ -52,6 +52,9 @@ export const REASON_KEYS = [
   'safety_review',
   'content_safety_flag',
   'script_safety_flag',
+  // 22.5 automation slots.
+  'no_unique_content',
+  'cap_reached',
 ] as const;
 export type ReasonKey = (typeof REASON_KEYS)[number];
 
@@ -95,7 +98,8 @@ export interface Plan {
   targets?: Array<{ platform: string; connectionId: string | null }>;
   requestedCount: number;
   cappedReason: 'allowance' | 'cost_cap' | null;
-  holdReason: 'kill_switch' | 'cost_cap' | 'daily_limit' | null;
+  /** 22.5: 'paused' = the plan's automation is paused. */
+  holdReason: 'kill_switch' | 'cost_cap' | 'daily_limit' | 'paused' | null;
   draftError: string | null;
   createdAt: string;
   scheduledAt: string | null;

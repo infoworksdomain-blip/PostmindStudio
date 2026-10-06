@@ -42,6 +42,13 @@ export const SPEND_ROUTES: readonly RegExp[] = [
   /^\/content-plans$/,
   /^\/content-plans\/[^/]+\/(generate|redraft)$/,
   /^\/content-plans\/[^/]+\/items\/[^/]+\/regenerate$/,
+  // 22.4 / 22.5: Blitz cards are written and rendered, kept cards generate, automations make posts.
+  /^\/blitz$/,
+  /^\/blitz\/refill$/,
+  /^\/blitz\/suggestions\/[^/]+\/decision$/,
+  /^\/businesses\/[^/]+\/angles\/suggest$/,
+  /^\/automations\/[^/]+\/(start|approve|resume)$/,
+  /^\/automations\/[^/]+\/slots\/[^/]+$/,
   /^\/projects\/[^/]+\/auto-populate$/,
   /^\/projects\/[^/]+\/auto-publish(\/retry)?$/,
   /^\/projects\/[^/]+\/caption-suggestions$/,

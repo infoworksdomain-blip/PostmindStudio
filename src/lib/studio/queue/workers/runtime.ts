@@ -31,6 +31,8 @@ import { autoResumePaused, onAutoResumePausedFailed } from './auto-resume';
 import { dispatchAutoPublish, onDispatchAutoPublishFailed } from './dispatch-auto-publish';
 import { draftContentPlan, onDraftContentPlanFailed } from './draft-content-plan';
 import { advanceContentPlansJob, onAdvanceContentPlansFailed } from './advance-content-plans';
+import { onRefillBlitzQueueFailed, refillBlitzQueueJob } from './refill-blitz-queue';
+import { advanceAutomationsJob, onAdvanceAutomationsFailed } from './advance-automations';
 import {
   hardDeletePurgedOrgs,
   onDataRetentionFailed,
@@ -165,6 +167,8 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'sweep-email-outbox': sweepEmailOutbox,
   'draft-content-plan': draftContentPlan,
   'advance-content-plans': advanceContentPlansJob,
+  'refill-blitz-queue': refillBlitzQueueJob,
+  'advance-automations': advanceAutomationsJob,
 };
 
 export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
@@ -211,6 +215,8 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'sweep-email-outbox': onSweepEmailOutboxFailed,
   'draft-content-plan': onDraftContentPlanFailed,
   'advance-content-plans': onAdvanceContentPlansFailed,
+  'refill-blitz-queue': onRefillBlitzQueueFailed,
+  'advance-automations': onAdvanceAutomationsFailed,
 };
 
 /**

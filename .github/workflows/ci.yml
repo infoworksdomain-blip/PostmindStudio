@@ -80,7 +80,8 @@ jobs:
           # + content_plans + content_plan_items (Phase 20.9 "Plan my month")
           # + business_hashtag_settings (Phase 20.13 captions and hashtags)
           # + creators + creator_portraits (Phase 22.3 reusable AI creators)
-          test "$count" -eq 83
+          # + content_angles + content_mix_preferences + blitz_suggestions + automations (22.4 / 22.5)
+          test "$count" -eq 87
       - name: Install ffmpeg (Ubuntu repository)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg

@@ -72,7 +72,8 @@ async function hookSourceFor(
   doc: HookDemoDocument,
   minSec: number,
 ): Promise<{ kind: 'ai' } | { kind: 'library'; clip: FootageClip } | { kind: 'none' }> {
-  const canGenerate = canMakeSilentHook(deps.registry);
+  // 22.4 / 22.5: a Blitz card or automation slot never pays for a generated hook clip.
+  const canGenerate = doc.allowGeneratedHook !== false && canMakeSilentHook(deps.registry);
   const aspect = parseTargetFormats(project.targetFormats)[0]?.aspectRatio ?? '9:16';
   const library = () =>
     findFootageClip(deps.db, {

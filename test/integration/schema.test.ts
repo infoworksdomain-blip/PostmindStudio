@@ -99,6 +99,11 @@ const EXPECTED_TABLES = [
   // Phase 22.3 — reusable AI creators
   'creators',
   'creator_portraits',
+  // Phase 22.4 / 22.5 — Blitz and automations
+  'content_angles',
+  'content_mix_preferences',
+  'blitz_suggestions',
+  'automations',
 ];
 
 let db: PGlite;

@@ -73,6 +73,11 @@ export const hookDemoCreateInput = z
     layout: z.enum(HOOK_LAYOUTS).default('sequential'),
     audioMix: z.enum(AUDIO_MIXES).default('balanced'),
     targetSec: z.number().int().min(TARGET_MIN_SEC).max(TARGET_MAX_SEC).default(TARGET_DEFAULT_SEC),
+    /**
+     * 22.4 / 22.5: false for Blitz cards and automation slots, which are made before anyone
+     * keeps them: the hook must come from the library, never from a paid generated clip.
+     */
+    allowGeneratedHook: z.boolean().default(true),
   })
   .strict();
 export type HookDemoCreateInput = z.infer<typeof hookDemoCreateInput>;
@@ -89,6 +94,8 @@ export const hookDemoDocument = z.object({
   targetSec: z.number().int().min(TARGET_MIN_SEC).max(TARGET_MAX_SEC),
   /** The line the last run put on screen (the owner's, or the one Claude wrote). */
   writtenHookLine: z.string().nullable().optional(),
+  /** 22.4 / 22.5: false = library hook only (absent on older rows = allowed). */
+  allowGeneratedHook: z.boolean().optional(),
 });
 export type HookDemoDocument = z.infer<typeof hookDemoDocument>;
 
@@ -114,6 +121,7 @@ export function newHookDemoDocument(
     audioMix: input.audioMix,
     targetSec: input.targetSec,
     writtenHookLine: null,
+    allowGeneratedHook: input.allowGeneratedHook,
   };
 }
 
