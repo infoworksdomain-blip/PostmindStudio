@@ -78,3 +78,41 @@ describe('UsagePanel (admin)', () => {
     expect(api.calls.at(-1)?.url).toContain('tier=PLUS');
   });
 });
+
+describe('23.3 quick posts count as a quarter of a video', () => {
+  it('shows a channel plan’s quarter videos and says what counts as ¼', async () => {
+    mockFetch([
+      {
+        match: '/usage',
+        body: {
+          ok: true,
+          usage: usage(0, {
+            channelPlan: true,
+            period: 'month',
+            mode: 'enforce',
+            status: 'warning',
+            videos: {
+              short: {
+                used: 19.5,
+                limit: 24,
+                percent: 81,
+                maxDurationSec: 30,
+                usedQuarters: 78,
+                limitQuarters: 96,
+              },
+              long: { used: 0, limit: 0, percent: 0, maxDurationSec: 0 },
+            },
+          }),
+        },
+      },
+    ]);
+    renderWithSWR(<UsageBanner />);
+    expect(await screen.findByText('19.5 of 24')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Carousels, slideshows, wall of text and hook + demo videos count as ¼ of a video.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('meter', { name: 'Videos' })).toHaveAttribute('aria-valuenow', '19.5');
+  });
+});

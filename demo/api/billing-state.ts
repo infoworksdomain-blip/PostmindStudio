@@ -11,6 +11,8 @@
 // 21.5: customers buy ONE plan, £29 per channel a month with 8 videos per channel (weekly: 2 per
 // channel a week; yearly: 96 a year released as 8 a month). Every channel subscription is the
 // internal tier STANDARD. Generation cost is never part of a customer-facing answer here.
+// 23.3: carousels, slideshows, wall of text and hook + demo use ¼ of a video (allowance and packs).
+import { quartersToVideos, VIDEO_QUARTERS } from '@/lib/studio/billing/allowance-units';
 import {
   CATALOGUE_VERSION,
   ENTERPRISE_LIST_PRICE_PENCE,
@@ -106,8 +108,8 @@ export const BILLING_STATE_INFO: Record<BillingStateId, StateInfo> = {
     source: 'stripe',
     status: 'active',
     plan: THREE_MONTHLY,
-    used: 20,
-    note: 'The default: 20 of 24 videos this month. Six platforms connected, the first three publish.',
+    used: 19.5,
+    note: 'The default: 19.5 of 24 videos this month (two carousels counted ¼ each). Six platforms connected, the first three publish.',
   },
   allowance_used: {
     label: 'Allowance used up',
@@ -223,7 +225,7 @@ let cancelAtPeriodEnd = false;
 let periodStartedAt: number | null = null;
 /** Started in the demo checkout just now: one invoice, dated today (none earlier). */
 let freshSubscription = false;
-/** Videos generated in this page load (on top of each state's sample usage). */
+/** Videos generated in this page load (on top of each state's sample usage; 23.3: ¼ steps). */
 let generatedShort = 0;
 const credits = { short: 0, long: 0 };
 const listeners = new Set<() => void>();
@@ -775,9 +777,11 @@ function featureGate(method: string, path: string, body: unknown): void {
 function quotaGate(method: string, path: string): void {
   if (method !== 'POST' || !/^\/projects\/[^/]+\/generate$/.test(path)) return;
   const { short } = videoQuota();
-  if (short.limit !== null && short.used >= short.limit) {
-    if (credits.short > 0) {
-      credits.short -= 1;
+  // 23.3: a quick post uses ¼ of a video (quarters are exact in floating point).
+  const videos = quartersToVideos(projectQuarters(path.split('/')[2] ?? ''));
+  if (short.limit !== null && short.used + videos > short.limit) {
+    if (credits.short >= videos) {
+      credits.short -= videos;
       emitUsage();
       return;
     }
@@ -789,8 +793,15 @@ function quotaGate(method: string, path: string): void {
       { resource: 'short_videos', used: short.used, limit: short.limit, channelPlan: true },
     );
   }
-  generatedShort += 1;
+  generatedShort += videos;
   emitUsage();
+}
+
+/** 23.3: quarters of a video a demo project uses (p18-billing.ts looks the project up). */
+let projectQuarters: (projectId: string) => number = () => VIDEO_QUARTERS;
+
+export function setProjectQuartersLookup(lookup: (projectId: string) => number): void {
+  projectQuarters = lookup;
 }
 
 let connectionPlatform: (connectionId: string) => string | null = () => null;

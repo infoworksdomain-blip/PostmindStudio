@@ -1,5 +1,10 @@
 import type { Prisma } from '@prisma/client';
-import { CAROUSEL_ALLOWANCE_UNITS } from '../carousel/constants';
+import {
+  isQuickPostSourceType,
+  QUARTERS_PER_VIDEO,
+  QUICK_POST_QUARTERS,
+  VIDEO_QUARTERS,
+} from '../billing/allowance-units';
 import { ugcStyleOf } from './style';
 
 // BACKLOG 21.4 (operator decision 2026-10-04, per-channel subscriptions): a UGC actor video is
@@ -14,21 +19,42 @@ import { ugcStyleOf } from './style';
 //     text, transcription, music and Shotstack ≈ 50p → ≈ 230p; on the Kling fallback ≈ 280p, and a
 //     60 s UGC video ≈ 480p;
 //   - 230 / 141 ≈ 1.6 and 480 / 220 ≈ 2.2, so one UGC video uses 2 videos.
+//
+// 23.3 (operator decision 2026-10-06): quick posts — carousels, slideshows, wall of text and
+// hook + demo — count as ¼ of a video. Allowance is counted in integer quarters of a video
+// (billing/allowance-units.ts).
 export const UGC_VIDEO_ALLOWANCE_UNITS = 2;
 
-/** 21.6: a carousel project keeps its posts in metadata.carousel (carousel/document.ts). */
-function isCarousel(metadata: Prisma.JsonValue | null | undefined): boolean {
+/** 23.3: what a UGC actor video uses, in quarters of a video. */
+export const UGC_VIDEO_QUARTERS = UGC_VIDEO_ALLOWANCE_UNITS * QUARTERS_PER_VIDEO;
+
+function hasObject(metadata: Prisma.JsonValue | null | undefined, key: string): boolean {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return false;
-  const carousel = (metadata as Record<string, unknown>).carousel;
-  return typeof carousel === 'object' && carousel !== null && !Array.isArray(carousel);
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** The project fields the allowance reads. */
+export interface AllowanceProject {
+  sourceType?: string | null;
+  metadata?: Prisma.JsonValue | null;
 }
 
 /**
- * How many videos of the allowance (or of a pack) a project uses when it is generated: a UGC
- * actor video UGC_VIDEO_ALLOWANCE_UNITS, a carousel CAROUSEL_ALLOWANCE_UNITS (21.6), else 1.
+ * 23.3: how many QUARTERS of a video of the allowance (or of a pack) a project uses when it is
+ * generated: a UGC actor video UGC_VIDEO_QUARTERS (8), a quick post — carousel (21.6: its posts
+ * live in metadata.carousel), slideshow, wall of text (metadata.wallOfText), hook + demo
+ * (metadata.hookDemo) — QUICK_POST_QUARTERS (1), any other video VIDEO_QUARTERS (4).
  */
-export function allowanceUnitsOf(metadata: Prisma.JsonValue | null | undefined): number {
-  if (ugcStyleOf(metadata)) return UGC_VIDEO_ALLOWANCE_UNITS;
-  if (isCarousel(metadata)) return CAROUSEL_ALLOWANCE_UNITS;
-  return 1;
+export function allowanceQuartersOf(project: AllowanceProject): number {
+  const { metadata, sourceType } = project;
+  if (ugcStyleOf(metadata)) return UGC_VIDEO_QUARTERS;
+  if (
+    isQuickPostSourceType(sourceType) ||
+    hasObject(metadata, 'carousel') ||
+    hasObject(metadata, 'wallOfText') ||
+    hasObject(metadata, 'hookDemo')
+  )
+    return QUICK_POST_QUARTERS;
+  return VIDEO_QUARTERS;
 }

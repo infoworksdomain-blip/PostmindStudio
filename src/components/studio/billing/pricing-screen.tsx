@@ -17,8 +17,26 @@ import type { PricingView } from './types';
 // "Price unavailable". "Start free trial" goes to sign-up, then to Your plan with the same choice.
 // No generation cost or budget is shown.
 
-const INCLUDED = ['videos', 'hd', 'platforms', 'scheduling', 'brand', 'library'] as const;
-const FAQ = ['channel', 'period', 'change', 'limit', 'packs', 'vat', 'cancel'] as const;
+// 23.3: quick posts (carousels, slideshows, text videos) count as ¼ of a video.
+const INCLUDED = [
+  'videos',
+  'quickPosts',
+  'hd',
+  'platforms',
+  'scheduling',
+  'brand',
+  'library',
+] as const;
+const FAQ = [
+  'channel',
+  'period',
+  'change',
+  'quickPosts',
+  'limit',
+  'packs',
+  'vat',
+  'cancel',
+] as const;
 
 /** Where "Start" goes: sign up, then Your plan with the channels and period already chosen. */
 export function signUpHref(choice: ChannelChoice): string {

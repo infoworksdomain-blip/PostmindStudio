@@ -184,7 +184,8 @@
       "planExceededTitle": "{period, select, week {本周视频已用完} other {本月视频已用完}}",
       "planWarningTitle": "{period, select, week {即将达到本周视频上限} other {即将达到本月视频上限}}",
       "planBlockedBody": "新视频已暂停，直到 {date}。添加频道或购买视频包即可继续制作。",
-      "planResetBody": "自 {date} 起将包含更多视频。添加频道或购买视频包可获得更多视频。"
+      "planResetBody": "自 {date} 起将包含更多视频。添加频道或购买视频包可获得更多视频。",
+      "quickPostsNote": "轮播图、幻灯片视频、文字墙和钩子 + 演示视频各计为 ¼ 个视频。"
     },
     "pageTitle": {
       "library": "参考视频库",
@@ -808,7 +809,7 @@
         "demo": "演示原声为主",
         "music": "仅音乐"
       },
-      "disclosure": "反应中的人物由 AI 生成，绝非真人，视频会带有“AI 生成”标签。计为你额度中的一个视频。"
+      "disclosure": "反应中的人物由 AI 生成，绝非真人，视频会带有“AI 生成”标签。计为你额度中的 ¼ 个视频。"
     },
     "wallOfText": {
       "title": "文字墙",
@@ -4242,7 +4243,7 @@
     "hero": {
       "eyebrow": "价格",
       "title": "一个简单的套餐：按频道付费",
-      "description": "选择您要发布的社交平台数量和付款周期。每个频道每月包含 8 个 HD 短视频。"
+      "description": "选择您要发布的社交平台数量和付款周期。每个频道每月包含 8 个 HD 短视频，或最多 32 条快速帖子。"
     },
     "plan": {
       "title": "定制您的套餐"
@@ -4261,7 +4262,8 @@
         "platforms": "发布到 TikTok、Instagram、YouTube Shorts、Facebook、LinkedIn 和 X",
         "scheduling": "内容日历和自动排期",
         "brand": "每个视频都应用您的品牌套件",
-        "library": "提供灵感的参考视频库"
+        "library": "提供灵感的参考视频库",
+        "quickPosts": "或每个频道每月最多 32 条快速帖子：轮播图、幻灯片视频和文字视频各计为 ¼ 个视频"
       }
     },
     "packs": {
@@ -4302,6 +4304,10 @@
         "cancel": {
           "q": "取消后会怎样？",
           "a": "您的套餐将在已付费周期结束时终止，在此之前您可以随时改变主意。之后您的账户将变为只读：您仍可查看、导出和下载您的作品。未用完的周期不予退款。"
+        },
+        "quickPosts": {
+          "q": "轮播图和幻灯片视频算一个完整视频吗？",
+          "a": "不算。轮播图、幻灯片视频、文字墙和钩子 + 演示视频属于快速帖子，各计为 ¼ 个视频，因此一个频道每月的 8 个视频最多可以变成 32 条快速帖子。AI 视频计为 1 个视频，UGC 演员视频计为 2 个。视频包中的视频也按同样方式计算。"
         }
       }
     }
@@ -5035,7 +5041,8 @@
     },
     "quota": {
       "title": "您的套餐视频暂时已用完",
-      "body": "添加频道可每周或每月获得更多视频，或购买视频包今天就继续制作。"
+      "body": "添加频道可每周或每月获得更多视频，或购买视频包今天就继续制作。",
+      "quickPosts": "快速帖子更省额度：轮播图、幻灯片视频、文字墙和钩子 + 演示视频各计为 ¼ 个视频。"
     },
     "planRequired": {
       "title": "选择套餐开始创作",
@@ -5742,7 +5749,8 @@
     "packs": {
       "name": "{quantity, plural, other {# 个 HD 视频}}",
       "validity": "可在 {months, plural, other {# 个月}}内用于任意频道"
-    }
+    },
+    "quickPosts": "或最多 {count, number} 条快速帖子：轮播图、幻灯片视频和文字视频各计为 ¼"
   },
   "carousel": {
     "editor": {
@@ -5904,7 +5912,8 @@
       "soundOff": "静音",
       "beats": "脚本",
       "stillAlt": "来自你图库的一张图片",
-      "mentionsBusiness": "提到了你的商家"
+      "mentionsBusiness": "提到了你的商家",
+      "allowanceQuick": "保留后使用套餐中的 ¼ 个视频"
     },
     "keep": {
       "title": "保留",

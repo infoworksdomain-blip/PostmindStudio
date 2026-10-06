@@ -2,7 +2,8 @@
 // GET /admin/organisations/:id/usage), shaped like src/lib/studio/services/plan-quotas.ts.
 // 21.5: a per-channel plan reports `channelPlan: true` and the window its allowance counts in
 // (`period`: an ISO week for a weekly plan, else the calendar month). The demo organisation is on
-// 3 channels monthly at 20 of its 24 videos (83 %).
+// 3 channels monthly at 19.5 of its 24 videos (81 %; 23.3: two carousels counted ¼ each).
+import { videosToQuarters } from '@/lib/studio/billing/allowance-units';
 import { allowanceWindowFor } from '@/lib/studio/billing/channel-plan';
 import { allowancePeriod, currentPlan, currentTier, videoQuota } from '../billing-state';
 import { DemoHttpError, route } from '../registry';
@@ -30,7 +31,15 @@ const IMAGE_CAP: Record<Tier, number> = { BASIC: 20, STANDARD: 50, PLUS: 200, EN
 function meter(used: number, limit: number | null, maxDurationSec: number | null) {
   const percent =
     limit === null ? null : Math.round(limit === 0 ? (used > 0 ? 100 : 0) : (used / limit) * 100);
-  return { used, limit, percent, maxDurationSec };
+  // 23.3: like plan-quotas.ts, the exact use in quarters of a video.
+  return {
+    used,
+    limit,
+    percent,
+    maxDurationSec,
+    usedQuarters: videosToQuarters(used),
+    limitQuarters: limit === null ? null : videosToQuarters(limit),
+  };
 }
 
 interface Allowance {
@@ -96,7 +105,7 @@ function view(
 }
 
 // The demo organisation's allowance and use follow the demo bar's plan switcher
-// (../billing-state.ts): 3 channels at 20 of 24 by default, 1 channel at its limit, a weekly
+// (../billing-state.ts): 3 channels at 19.5 of 24 by default (23.3: carousels count ¼), 1 channel at its limit, a weekly
 // plan per ISO week, a trial at 3 of 5.
 route('GET', '/usage', ({ query }) => {
   const { short, long } = videoQuota();

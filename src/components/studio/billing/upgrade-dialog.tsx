@@ -131,6 +131,7 @@ export function UpgradeDialog({ event, onClose }: { event: UpgradeEvent; onClose
               ) : (
                 <p>{t(`${copy}.body`)}</p>
               )}
+              {copy === 'quota' && <p>{t('quota.quickPosts')}</p>}
               {((data && !data.canManage) || (meKnown && !mayReadBilling)) &&
                 event.code !== 'plan_required' && <p>{t('askOwner')}</p>}
             </div>

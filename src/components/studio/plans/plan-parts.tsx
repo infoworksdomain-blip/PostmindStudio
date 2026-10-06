@@ -110,6 +110,7 @@ export function KindLabel({ kind }: { kind: ItemKind }) {
 /** The month's allowance (and, for staff, spending), with the link to buy a video pack. */
 export function AllowancePanel({ allowance, cost }: { allowance: PlanAllowance; cost: PlanCost }) {
   const t = useTranslations('plans.allowance');
+  const tUsage = useTranslations('shell.usage');
   const f = useFormat();
   const showCosts = useShowCosts();
   return (
@@ -130,6 +131,7 @@ export function AllowancePanel({ allowance, cost }: { allowance: PlanAllowance; 
               })}
           {allowance.credits > 0 && <> {t('credits', { count: allowance.credits })}</>}
         </li>
+        <li>{tUsage('quickPostsNote')}</li>
         {showCosts && (
           <li data-testid="plan-spend">
             {cost.capPence === null

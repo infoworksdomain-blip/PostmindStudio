@@ -11,7 +11,7 @@ import { decide, getDeck } from '../../src/lib/studio/services/blitz';
 import { refillBlitzQueue } from '../../src/lib/studio/services/blitz-refill';
 import { getMix, putMix } from '../../src/lib/studio/services/content-mix';
 import type { PlanGenerator } from '../../src/lib/studio/services/content-plan-draft';
-import { monthlyVideoUsage, tierQuota } from '../../src/lib/studio/services/plan-quotas';
+import { monthlyQuarterUsage, tierQuota } from '../../src/lib/studio/services/plan-quotas';
 import { monthWindow } from '../../src/lib/studio/services/tier-gates';
 import { memoryStorage } from '../helpers/memory-storage';
 import { tenant } from '../helpers/api-harness';
@@ -182,7 +182,7 @@ describe.skipIf(!hasDb)('22.4 Blitz', { timeout: 180_000 }, () => {
     expect(projects.every((p) => p.sourceType === 'CAROUSEL')).toBe(true);
     // A card counts when it is kept, not when it is shown.
     const quota = tierQuota('STANDARD');
-    const usage = await monthlyVideoUsage(db, org, quota, monthWindow(Date.now()));
+    const usage = await monthlyQuarterUsage(db, org, quota, monthWindow(Date.now()));
     expect(usage.short).toBe(0);
     // A full deck is not refilled again.
     expect((await refillBlitzQueue(refillDeps(generate), refillScope())).created).toBe(0);
@@ -315,6 +315,14 @@ describe.skipIf(!hasDb)('22.4 Blitz', { timeout: 180_000 }, () => {
     const project = await db.videoProject.findUniqueOrThrow({ where: { id: first!.projectId! } });
     expect(project.sourceRef).toBeNull();
     expect((project.metadata as { blitz?: { state?: string } }).blitz?.state).toBe('kept');
+    // 23.3: the kept card is a quick post (carousel / slideshow / text): ¼ of a video, 1 quarter.
+    const kept1 = await monthlyQuarterUsage(
+      db,
+      org,
+      tierQuota('STANDARD'),
+      monthWindow(Date.now()),
+    );
+    expect(kept1.short).toBe(1);
     // No account connected: scheduling keeps the card and says so.
     const noAccount = await decide({ ...apiDeps(), entitlements: undefined }, owner, second!.id, {
       action: 'keep',

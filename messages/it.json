@@ -184,7 +184,8 @@
       "planExceededTitle": "{period, select, week {Hai usato i video di questa settimana} other {Hai usato i video di questo mese}}",
       "planWarningTitle": "{period, select, week {Sei vicino al limite di video di questa settimana} other {Sei vicino al limite di video di questo mese}}",
       "planBlockedBody": "I nuovi video sono in pausa fino al {date}. Aggiungi un canale o acquista un pacchetto video per continuare a creare.",
-      "planResetBody": "Altri video sono inclusi dal {date}. Aggiungi un canale o acquista un pacchetto video per averne di più."
+      "planResetBody": "Altri video sono inclusi dal {date}. Aggiungi un canale o acquista un pacchetto video per averne di più.",
+      "quickPostsNote": "Caroselli, slideshow, muri di testo e video con gancio e demo contano come ¼ di video."
     },
     "pageTitle": {
       "library": "Libreria di riferimento",
@@ -808,7 +809,7 @@
         "demo": "Prima l’audio della demo",
         "music": "Solo musica"
       },
-      "disclosure": "La reazione è una persona generata dall’IA, mai reale, e il video porta l’etichetta «generato con IA». Usa un video della tua disponibilità."
+      "disclosure": "La reazione è una persona generata dall’IA, mai reale, e il video porta l’etichetta «generato con IA». Usa ¼ di video della tua disponibilità."
     },
     "wallOfText": {
       "title": "Muro di testo",
@@ -4242,7 +4243,7 @@
     "hero": {
       "eyebrow": "Prezzi",
       "title": "Un piano semplice: paghi per canale",
-      "description": "Scegli su quante piattaforme social pubblichi e ogni quanto pagare. Ogni canale include 8 video brevi in HD al mese."
+      "description": "Scegli su quante piattaforme social pubblichi e ogni quanto pagare. Ogni canale include 8 video brevi in HD al mese, oppure fino a 32 post rapidi."
     },
     "plan": {
       "title": "Crea il tuo piano"
@@ -4261,7 +4262,8 @@
         "platforms": "Pubblicazione su TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn e X",
         "scheduling": "Un calendario dei contenuti e la programmazione automatica",
         "brand": "Il tuo brand kit su ogni video",
-        "library": "Libreria di video di riferimento per trovare idee"
+        "library": "Libreria di video di riferimento per trovare idee",
+        "quickPosts": "Oppure fino a 32 post rapidi per canale al mese: caroselli, slideshow e video di testo contano come ¼ di video"
       }
     },
     "packs": {
@@ -4302,6 +4304,10 @@
         "cancel": {
           "q": "Cosa succede se annullo?",
           "a": "Il tuo piano termina alla fine del periodo già pagato e fino ad allora puoi cambiare idea. Dopo, il tuo account sarà in sola lettura: potrai comunque visualizzare, esportare e scaricare i tuoi contenuti. Non rimborsiamo i periodi utilizzati in parte."
+        },
+        "quickPosts": {
+          "q": "Caroselli e slideshow contano come un video intero?",
+          "a": "No. Caroselli, slideshow, muri di testo e video con gancio e demo sono post rapidi e contano come ¼ di video, quindi gli 8 video al mese di un canale possono diventare fino a 32 post rapidi. Un video con IA conta come 1 video e un video con attore UGC come 2. I video dei pacchetti si contano allo stesso modo."
         }
       }
     }
@@ -5035,7 +5041,8 @@
     },
     "quota": {
       "title": "Per ora hai usato i video del tuo piano",
-      "body": "Aggiungi un canale per avere più video ogni settimana o mese, oppure acquista un pacchetto video per continuare già oggi."
+      "body": "Aggiungi un canale per avere più video ogni settimana o mese, oppure acquista un pacchetto video per continuare già oggi.",
+      "quickPosts": "I post rapidi rendono di più: caroselli, slideshow, muri di testo e video con gancio e demo contano come ¼ di video."
     },
     "planRequired": {
       "title": "Scegli un piano per iniziare a creare",
@@ -5742,7 +5749,8 @@
     "packs": {
       "name": "{quantity, plural, one {# video HD} many {# video HD} other {# video HD}}",
       "validity": "Da usare su qualsiasi canale entro {months, plural, one {# mese} many {# mesi} other {# mesi}}"
-    }
+    },
+    "quickPosts": "Oppure fino a {count, number} post rapidi: caroselli, slideshow e video di testo contano come ¼"
   },
   "carousel": {
     "editor": {
@@ -5904,7 +5912,8 @@
       "soundOff": "Disattiva audio",
       "beats": "Copione",
       "stillAlt": "Un’immagine della tua libreria",
-      "mentionsBusiness": "Nomina la tua attività"
+      "mentionsBusiness": "Nomina la tua attività",
+      "allowanceQuick": "Usa ¼ di video del tuo piano se lo tieni"
     },
     "keep": {
       "title": "Tienilo",

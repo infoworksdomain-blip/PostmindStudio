@@ -184,7 +184,8 @@
       "planExceededTitle": "{period, select, week {Sie haben die Videos dieser Woche aufgebraucht} other {Sie haben die Videos dieses Monats aufgebraucht}}",
       "planWarningTitle": "{period, select, week {Sie haben das Videolimit dieser Woche fast erreicht} other {Sie haben das Videolimit dieses Monats fast erreicht}}",
       "planBlockedBody": "Neue Videos sind bis {date} pausiert. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um weiter zu erstellen.",
-      "planResetBody": "Ab {date} sind weitere Videos enthalten. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um mehr zu erhalten."
+      "planResetBody": "Ab {date} sind weitere Videos enthalten. Fügen Sie einen Kanal hinzu oder kaufen Sie ein Videopaket, um mehr zu erhalten.",
+      "quickPostsNote": "Karussells, Diashows, Textwände und Hook-und-Demo-Videos zählen als ¼ Video."
     },
     "pageTitle": {
       "library": "Referenzbibliothek",
@@ -808,7 +809,7 @@
         "demo": "Demo-Ton zuerst",
         "music": "Nur Musik"
       },
-      "disclosure": "Die Reaktion zeigt eine KI-generierte Person, nie eine echte, und das Video trägt den Hinweis „KI-generiert“. Es zählt als ein Video deines Kontingents."
+      "disclosure": "Die Reaktion zeigt eine KI-generierte Person, nie eine echte, und das Video trägt den Hinweis „KI-generiert“. Es zählt als ¼ Video deines Kontingents."
     },
     "wallOfText": {
       "title": "Textwand",
@@ -4242,7 +4243,7 @@
     "hero": {
       "eyebrow": "Preise",
       "title": "Ein einfacher Tarif: Sie zahlen pro Kanal",
-      "description": "Wählen Sie, auf wie vielen sozialen Plattformen Sie veröffentlichen und wie oft Sie zahlen. Jeder Kanal enthält 8 kurze HD-Videos pro Monat."
+      "description": "Wählen Sie, auf wie vielen sozialen Plattformen Sie veröffentlichen und wie oft Sie zahlen. Jeder Kanal enthält 8 kurze HD-Videos pro Monat oder bis zu 32 schnelle Beiträge."
     },
     "plan": {
       "title": "Stellen Sie Ihren Tarif zusammen"
@@ -4261,7 +4262,8 @@
         "platforms": "Veröffentlichung auf TikTok, Instagram, YouTube Shorts, Facebook, LinkedIn und X",
         "scheduling": "Ein Content-Kalender und automatische Planung",
         "brand": "Ihr Brand Kit in jedem Video",
-        "library": "Referenz-Videobibliothek für Ideen"
+        "library": "Referenz-Videobibliothek für Ideen",
+        "quickPosts": "Oder bis zu 32 schnelle Beiträge pro Kanal und Monat: Karussells, Diashows und Textvideos zählen als ¼ Video"
       }
     },
     "packs": {
@@ -4302,6 +4304,10 @@
         "cancel": {
           "q": "Was passiert, wenn ich kündige?",
           "a": "Ihr Tarif endet zum Ende des bezahlten Zeitraums, und bis dahin können Sie es sich anders überlegen. Danach ist Ihr Konto schreibgeschützt: Sie können Ihre Inhalte weiterhin ansehen, exportieren und herunterladen. Angebrochene Zeiträume erstatten wir nicht."
+        },
+        "quickPosts": {
+          "q": "Zählen Karussells und Diashows als ganzes Video?",
+          "a": "Nein. Karussells, Diashows, Textwände und Hook-und-Demo-Videos sind schnelle Beiträge und zählen als ¼ Video. Die 8 Videos eines Kanals pro Monat reichen also für bis zu 32 schnelle Beiträge. Ein KI-Video zählt als 1 Video, ein UGC-Darsteller-Video als 2. Videos aus Videopaketen werden genauso gezählt."
         }
       }
     }
@@ -5035,7 +5041,8 @@
     },
     "quota": {
       "title": "Sie haben die Videos Ihres Tarifs vorerst aufgebraucht",
-      "body": "Fügen Sie einen Kanal hinzu, um mehr Videos pro Woche oder Monat zu erhalten, oder kaufen Sie ein Videopaket, um noch heute weiterzumachen."
+      "body": "Fügen Sie einen Kanal hinzu, um mehr Videos pro Woche oder Monat zu erhalten, oder kaufen Sie ein Videopaket, um noch heute weiterzumachen.",
+      "quickPosts": "Schnelle Beiträge reichen weiter: Karussells, Diashows, Textwände und Hook-und-Demo-Videos zählen als ¼ Video."
     },
     "planRequired": {
       "title": "Wählen Sie einen Tarif, um loszulegen",
@@ -5742,7 +5749,8 @@
     "packs": {
       "name": "{quantity, plural, one {# HD-Video} other {# HD-Videos}}",
       "validity": "Innerhalb von {months, plural, one {# Monat} other {# Monaten}} für jeden Kanal nutzbar"
-    }
+    },
+    "quickPosts": "Oder bis zu {count, number} schnelle Beiträge: Karussells, Diashows und Textvideos zählen als ¼"
   },
   "carousel": {
     "editor": {
@@ -5904,7 +5912,8 @@
       "soundOff": "Stumm",
       "beats": "Skript",
       "stillAlt": "Ein Bild aus Ihrer Bibliothek",
-      "mentionsBusiness": "Nennt Ihr Unternehmen"
+      "mentionsBusiness": "Nennt Ihr Unternehmen",
+      "allowanceQuick": "Verbraucht beim Behalten ¼ Video Ihres Tarifs"
     },
     "keep": {
       "title": "Behalten",

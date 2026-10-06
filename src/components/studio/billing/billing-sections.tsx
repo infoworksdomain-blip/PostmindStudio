@@ -62,6 +62,7 @@ function countMeter(meter: { used: number; limit: number | null }) {
 /** 21.5: videos used against the plan's allowance this week / month, and pack videos left. */
 export function AllowanceSection({ billing }: { billing: Billing }) {
   const t = useTranslations('billing.yourPlan.videos');
+  const tUsage = useTranslations('shell.usage');
   const f = useFormat();
   const usage = useApi<UsageResponse>('/usage');
   const u = usage.data?.usage;
@@ -82,6 +83,7 @@ export function AllowanceSection({ billing }: { billing: Billing }) {
           <div className="h-10" aria-hidden />
         )}
         <p>{t('packsLeft', { count: billing.credits.short })}</p>
+        <p className="text-muted-foreground">{tUsage('quickPostsNote')}</p>
       </div>
     </Section>
   );

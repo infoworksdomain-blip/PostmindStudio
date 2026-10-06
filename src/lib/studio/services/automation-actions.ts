@@ -5,7 +5,7 @@ import type { AuditEntry } from '../../audit';
 import { ConflictError, NotFoundError } from '../../errors';
 import type { TenantContext } from '../../tenant';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
-import { allocateFormats } from '../blitz/allocate';
+import { allocateFormats, allowanceVideosFor } from '../blitz/allocate';
 import { FORMATS, type FormatKey } from '../blitz/formats';
 import { typicalItemCostPence } from '../content-plans/allowance';
 import type { ProviderRegistry } from '../providers/registry';
@@ -185,7 +185,8 @@ export async function estimateAutomation(
     ongoing: isOngoing(input.duration),
     split,
     paidPosts: formats.filter((f) => FORMATS[f].tier === 'preview').length,
-    allowanceUnits: formats.reduce((n, f) => n + (f === 'ugc' ? 2 : 1), 0),
+    // 23.3: videos of the allowance (a quarter number: quick posts use ¼).
+    allowanceUnits: allowanceVideosFor(formats),
     estimatePence: formats.reduce(
       (sum, f) => sum + typicalItemCostPence(FORMATS[f].planKind ?? 'VIDEO', tier),
       0,

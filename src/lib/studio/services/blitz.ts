@@ -8,6 +8,7 @@ import type { TenantContext } from '../../tenant';
 import { mergeMetadata } from '../automation/approval';
 import { publishOnApproval } from '../automation/auto-publish';
 import type { EntitlementsReader } from '../billing/entitlements-reader';
+import { allowanceVideosFor } from '../blitz/allocate';
 import { BLITZ_DAILY_SWIPES, BLITZ_QUEUE_SIZE } from '../blitz/constants';
 import { FORMATS, isFormatKey, isPremade, type FormatKey } from '../blitz/formats';
 import { SKIP_REASONS, type NudgeNotice } from '../blitz/mix';
@@ -109,7 +110,9 @@ export interface CardView {
   /** Preview cards: a still from the business's library. */
   previewImageUrl: string | null;
   remix: { id: string; title: string; thumbnailUrl: string | null; durationSec: number } | null;
-  /** Videos of the allowance a keep uses (1, or 2 for a UGC video). */
+  /**
+   * Videos of the allowance a keep uses: 23.3 a quick post ¼ (0.25), an AI video 1, a UGC video 2.
+   */
   allowanceUnits: number;
   createdAt: string;
 }
@@ -192,7 +195,7 @@ async function cardView(
     posterUrl,
     previewImageUrl,
     remix,
-    allowanceUnits: s.format === 'ugc' ? 2 : 1,
+    allowanceUnits: isFormatKey(s.format) ? allowanceVideosFor([s.format]) : 1,
     createdAt: s.createdAt.toISOString(),
   };
 }
