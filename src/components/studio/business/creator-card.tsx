@@ -54,7 +54,7 @@ export function CreatorCard({
             {creator.portraitError ? t('portraitError') : t('status.DRAFT')}
           </div>
         )}
-        <div className="absolute top-2 left-2 flex flex-wrap gap-1.5">
+        <div className="absolute top-2 start-2 flex flex-wrap gap-1.5">
           <StateBadge label={t(`status.${creator.status}`)} tone={STATUS_TONE[creator.status]} />
           {creator.isDefault && <StateBadge label={t('default')} tone="good" />}
         </div>
