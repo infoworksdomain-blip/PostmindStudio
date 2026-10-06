@@ -6119,7 +6119,8 @@
         "plan_missing": "En pausa: no se encuentra su periodo actual.",
         "no_free_slots": "En pausa: no hay horas de publicación libres en el próximo periodo.",
         "no_formats": "En pausa: ninguna de sus redes admite los formatos de tu mezcla de contenido.",
-        "cost_cap": "En pausa: se ha alcanzado el límite de este mes."
+        "cost_cap": "En pausa: se ha alcanzado el límite de este mes.",
+        "draft_failed": "En pausa: no se pudieron redactar sus publicaciones tras varios intentos. Reanúdala para volver a intentarlo."
       },
       "upgrade": "Añadir vídeos",
       "insightTitle": "Mejor publicación de la semana",

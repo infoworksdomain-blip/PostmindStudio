@@ -6119,7 +6119,8 @@
         "plan_missing": "Pausada: o período atual não foi encontrado.",
         "no_free_slots": "Pausada: não há horários de publicação livres no próximo período.",
         "no_formats": "Pausada: nenhuma das redes aceita os formatos do seu mix de conteúdo.",
-        "cost_cap": "Pausada: o limite deste mês foi atingido."
+        "cost_cap": "Pausada: o limite deste mês foi atingido.",
+        "draft_failed": "Pausada: não foi possível escrever os posts após várias tentativas. Retome para tentar de novo."
       },
       "upgrade": "Adicionar vídeos",
       "insightTitle": "Melhor publicação da semana",

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { Automation, ContentPlan, Prisma, PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import type { AuditEntry } from '../../audit';
@@ -11,7 +12,7 @@ import { isFormatKey } from '../blitz/formats';
 import type { KillSwitch } from '../kill-switch';
 import { loadPlanAllowance } from '../content-plans/allowance';
 import { notifySafely, type Notifier } from '../notifications/notifier';
-import type { JobQueue } from '../queue/enqueue';
+import { jobIds, type JobQueue } from '../queue/enqueue';
 import { recentFingerprints } from './blitz-refill';
 import { generatePlan } from './content-plan-run';
 import { loadPlanContext, writeTopics, type PlanGenerator } from './content-plan-draft';
@@ -41,6 +42,10 @@ import { toPlanTier } from './catalog';
 
 const DAY_MS = 86_400_000;
 const BATCH = 50;
+/** 23.4: drafts of a period's missing posts before the automation pauses with draft_failed. */
+export const MAX_REDRAFT_ATTEMPTS = 3;
+/** 23.4: a period still DRAFTING after this long lost its draft job (it is drafted again). */
+export const DRAFT_STALE_MS = 60 * 60_000;
 export const AUTOMATION_RUNNER_SCHEDULE = '*/5 * * * *';
 export const INSIGHT_EVERY_DAYS = 7;
 
@@ -300,8 +305,16 @@ async function advanceOne(deps: AutomationRunDeps, a: Automation): Promise<Outco
   }
 
   if (a.status === 'GENERATING') {
-    if (plan.status === 'DRAFTING') return null;
+    if (plan.status === 'DRAFTING') {
+      // The draft job is still running — or was lost (queue outage, deploy): draft again.
+      if (deps.now() - plan.updatedAt.getTime() < DRAFT_STALE_MS) return null;
+      return redraftOrPause(deps, a, plan, log, 'stale');
+    }
     if (plan.status === 'DRAFT') {
+      // 23.4 (production 2026-10-06): posts the draft could not write are drafted again here
+      // instead of generatePlan refusing the plan every five minutes ("Some posts have no topic").
+      if (await hasUnwrittenPosts(deps.db, plan.id))
+        return redraftOrPause(deps, a, plan, log, 'missing');
       if ((plan.metadata as { deduped?: unknown } | null)?.deduped !== true) {
         const generate = deps.generator(a.organisationId, a.planTier ?? 'STANDARD');
         const dupes = await dedupePlan({ db: deps.db, now: deps.now, generate }, plan);
@@ -340,6 +353,62 @@ async function advanceOne(deps: AutomationRunDeps, a: Automation): Promise<Outco
   }
   if (plan.windowEnd.getTime() - AUTOMATION_PERIOD_LEAD_DAYS * DAY_MS > deps.now()) return null;
   return rollOver(deps, a, plan);
+}
+
+/** A planned post of the plan still has no topic (the draft could not write it). */
+async function hasUnwrittenPosts(
+  db: Pick<PrismaClient, 'contentPlanItem'>,
+  planId: string,
+): Promise<boolean> {
+  const n = await db.contentPlanItem.count({
+    where: { planId, status: 'PLANNED', OR: [{ title: '' }, { brief: '' }] },
+  });
+  return n > 0;
+}
+
+/**
+ * 23.4 — self-healing draft: queue draft-content-plan again for the posts that are still missing
+ * (the job writes only those), at most MAX_REDRAFT_ATTEMPTS times per period; then PAUSE with
+ * draft_failed and tell the owner, instead of retrying forever. Resuming starts the count again.
+ */
+async function redraftOrPause(
+  deps: AutomationRunDeps,
+  a: Automation,
+  plan: ContentPlan,
+  log: Logger,
+  why: 'missing' | 'stale',
+): Promise<Outcome> {
+  const metadata = (plan.metadata as Record<string, unknown> | null) ?? {};
+  const attempts = typeof metadata.redraftAttempts === 'number' ? metadata.redraftAttempts : 0;
+  if (attempts >= MAX_REDRAFT_ATTEMPTS) {
+    log.warn({ planId: plan.id, attempts }, 'automation period could not be drafted; pausing');
+    return pause(deps, a, 'draft_failed');
+  }
+  const runId = randomUUID();
+  const moved = await deps.db.contentPlan.updateMany({
+    where: { id: plan.id, status: plan.status, updatedAt: plan.updatedAt },
+    data: {
+      status: 'DRAFTING',
+      draftError: null,
+      metadata: {
+        ...metadata,
+        draftRunId: runId,
+        redraftAttempts: attempts + 1,
+      } as Prisma.InputJsonValue,
+    },
+  });
+  if (moved.count === 0) return null;
+  const data = {
+    organisationId: plan.organisationId,
+    planId: plan.id,
+    runId,
+    planTier: toPlanTier(plan.planTier ?? a.planTier ?? undefined),
+  };
+  // If the queue is down the plan stays DRAFTING and is picked up again once stale.
+  await deps.queue.add('draft-content-plan', data, { jobId: jobIds.draftContentPlan(data) });
+  audit(deps, a, 'studio.automation.redraft', { planId: plan.id, attempt: attempts + 1, why });
+  log.info({ planId: plan.id, attempt: attempts + 1, why }, 'automation period drafted again');
+  return null;
 }
 
 /** Approve the period's plan as the owner (generatePlan) → ACTIVE. */

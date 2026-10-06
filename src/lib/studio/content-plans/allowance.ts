@@ -21,6 +21,7 @@ import {
   usageView,
   type QuotaMode,
 } from '../services/plan-quotas';
+import type { FormatKey } from '../blitz/formats';
 import type { PlanKind } from './mix';
 
 // 20.9 — how many posts a month plan may generate: never more than the organisation's remaining
@@ -29,10 +30,11 @@ import type { PlanKind } from './mix';
 // under the monthly cost cap (cost/guard.ts caps, org overrides, top-up headroom, trial caps).
 // When either cuts the month short, the draft says so (cappedReason) and the UI offers a top-up.
 //
-// DECISION: costs are estimates. Videos use the catalogue's typical cost per short video for the
-// tier (billing/catalogue.ts TYPICAL_COST_PENCE_PER_VIDEO, ENTERPRISE as PLUS); slideshows have no
-// catalogued typical cost, so their per-project cap (DEFAULT_SLIDESHOW_BUDGET_PENCE) is used,
-// which overstates them. "Up to" is every item's per-project budget cap.
+// DECISION: costs are estimates, per FORMAT (23.4). AI and UGC videos use the catalogue's typical
+// cost per short video for the tier (billing/catalogue.ts TYPICAL_COST_PENCE_PER_VIDEO, ENTERPRISE
+// as PLUS); the cheap formats use TYPICAL_FORMAT_COST_PENCE (measured on production). Month-plan
+// items map their kind to a format (VIDEO → an AI video, SLIDESHOW → slideshow, CAROUSEL →
+// carousel). "Up to" is every item's per-project budget cap (maxItemCostPence), a separate concept.
 
 export interface PlanAllowance {
   mode: QuotaMode;
@@ -53,6 +55,8 @@ export interface CapItem {
   kind: PlanKind;
   /** Quarters of a video (ugc/allowance.ts: a quick post 1, a video 4, a UGC actor video 8). */
   quarters: number;
+  /** 23.4: the format (automations), which sets the typical cost; month plans go by kind. */
+  format?: FormatKey;
 }
 
 /**
@@ -80,10 +84,45 @@ export type CappedReason = 'allowance' | 'cost_cap';
 
 const selfServe = (tier: PlanTier): SelfServeTier => (tier === 'ENTERPRISE' ? 'PLUS' : tier);
 
-/** Typical provider cost of one post (see the DECISION above). */
-export function typicalItemCostPence(kind: PlanKind, tier: PlanTier): number {
-  const video = TYPICAL_COST_PENCE_PER_VIDEO[selfServe(tier)].short;
-  return kind === 'VIDEO' ? video : DEFAULT_SLIDESHOW_BUDGET_PENCE;
+/**
+ * 23.4 — typical provider cost of the cheap formats, rounded up from what they really cost on
+ * production (provider_usage, 2026-10-04…06): carousel 3–4p, wall of text 8–15p, slideshow
+ * 17–25p, hook + demo 41p. Before 23.4 every non-video post was priced at the slideshow budget
+ * cap (150p) and a wall of text or hook + demo at a whole AI video (~241p), so a month of cheap
+ * posts was cut short with "cost_cap" far below the real limit (production 2026-10-06: 84 slots
+ * under a £100 cap with £36 spent). AI video (~180p measured) and UGC (144–209p) keep the
+ * catalogue's typical cost per short video.
+ */
+export const TYPICAL_FORMAT_COST_PENCE: Readonly<
+  Record<Exclude<FormatKey, 'ai_video' | 'ugc'>, number>
+> = {
+  carousel: 5,
+  wall_of_text: 15,
+  slideshow: 30,
+  hook_demo: 50,
+};
+
+/** The format a month-plan item of `kind` is made as (hand-made month plans have no format). */
+const KIND_FORMAT: Readonly<Record<PlanKind, FormatKey>> = {
+  VIDEO: 'ai_video',
+  SLIDESHOW: 'slideshow',
+  CAROUSEL: 'carousel',
+};
+
+/** Typical provider cost of one post of `format` (see the DECISION above). */
+export function typicalFormatCostPence(format: FormatKey, tier: PlanTier): number {
+  if (format === 'ai_video' || format === 'ugc')
+    return TYPICAL_COST_PENCE_PER_VIDEO[selfServe(tier)].short;
+  return TYPICAL_FORMAT_COST_PENCE[format];
+}
+
+/** Typical provider cost of one post: its format's, else its kind's format (KIND_FORMAT). */
+export function typicalItemCostPence(
+  kind: PlanKind,
+  tier: PlanTier,
+  format?: FormatKey | null,
+): number {
+  return typicalFormatCostPence(format ?? KIND_FORMAT[kind], tier);
 }
 
 /** The per-project budget cap of one post (the most it can cost before it pauses). */
@@ -155,7 +194,7 @@ export function capItems(
     // Items beyond the plan allowance spend a top-up credit, which raises this month's cap.
     if (allowance.mode === 'enforce' && quarters + item.quarters > planLeft)
       cap += cost.creditHeadroomPence;
-    const next = spent + typicalItemCostPence(item.kind, tier);
+    const next = spent + typicalItemCostPence(item.kind, tier, item.format);
     if (next > cap) break;
     spent = next;
     count += 1;

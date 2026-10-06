@@ -6119,7 +6119,8 @@
         "plan_missing": "En pause : sa période en cours est introuvable.",
         "no_free_slots": "En pause : aucun horaire de publication libre sur la prochaine période.",
         "no_formats": "En pause : aucun de ses réseaux n’accepte les formats de votre mix de contenu.",
-        "cost_cap": "En pause : la limite de ce mois est atteinte."
+        "cost_cap": "En pause : la limite de ce mois est atteinte.",
+        "draft_failed": "En pause : ses publications n’ont pas pu être rédigées après plusieurs essais. Reprenez pour réessayer."
       },
       "upgrade": "Ajouter des vidéos",
       "insightTitle": "Meilleure publication de la semaine",

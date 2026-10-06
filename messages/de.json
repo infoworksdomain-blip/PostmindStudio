@@ -6119,7 +6119,8 @@
         "plan_missing": "Pausiert: Der aktuelle Zeitraum wurde nicht gefunden.",
         "no_free_slots": "Pausiert: Im nächsten Zeitraum gibt es keine freien Posting-Zeiten.",
         "no_formats": "Pausiert: Keines der Netzwerke nimmt die Formate Ihres Content-Mix an.",
-        "cost_cap": "Pausiert: Das Limit dieses Monats ist erreicht."
+        "cost_cap": "Pausiert: Das Limit dieses Monats ist erreicht.",
+        "draft_failed": "Pausiert: Die Beiträge konnten nach mehreren Versuchen nicht geschrieben werden. Fortsetzen, um es erneut zu versuchen."
       },
       "upgrade": "Videos hinzufügen",
       "insightTitle": "Bester Beitrag diese Woche",

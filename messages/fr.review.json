@@ -4649,6 +4649,7 @@
     "automations.detail.pauseReason.no_free_slots",
     "automations.detail.pauseReason.no_formats",
     "automations.detail.pauseReason.cost_cap",
+    "automations.detail.pauseReason.draft_failed",
     "automations.detail.upgrade",
     "automations.detail.insightTitle",
     "automations.detail.insightBody",

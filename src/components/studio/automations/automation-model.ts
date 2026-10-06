@@ -104,4 +104,5 @@ export const PAUSE_REASONS = [
   'no_free_slots',
   'no_formats',
   'cost_cap',
+  'draft_failed',
 ] as const;
