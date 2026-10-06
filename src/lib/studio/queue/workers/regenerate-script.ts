@@ -155,6 +155,7 @@ export async function regenerateScriptPlan(
         .join('\n\n'),
       scriptSchema(treatments),
       SCRIPT_MAX_TOKENS,
+      'script',
     ),
     deps,
   );
@@ -195,6 +196,7 @@ export async function regenerateScriptPlan(
       ]),
       SCRIPT_SAFETY_SCHEMA,
       SAFETY_MAX_TOKENS,
+      'script_safety',
     ),
     deps,
   );

@@ -33,9 +33,10 @@ import { languageInstruction } from '../languages';
 // captionSuggestions until the brief, formats, language or the business hashtags change, or the
 // caller asks to refresh. Captions and hashtags are written in the project's language (15.C5).
 // 20.13: every suggestion carries the business hashtag and the owner's always-hashtags first and
-// at least five hashtags (hashtags/policy.ts); videos get their suggestions from the ideation
-// call itself (plan-project.ts) and slideshows from one call when they are planned
-// (plan-slideshow.ts), both stored here in the same cache, so this route usually answers from it.
+// at least five hashtags (hashtags/policy.ts); videos get their suggestions while they are planned
+// (plan-project.ts; 23.2: a light post_copy call from the brief, in parallel with Layer 2) and
+// slideshows from one call when they are planned (plan-slideshow.ts), both stored here in the same
+// cache, so this route usually answers from it. 23.2: every call here is a light task (Haiku).
 
 export { PLATFORM_GUIDANCE };
 
@@ -53,6 +54,17 @@ export const OUTPUT_JSON_SCHEMA: Record<string, unknown> = {
   required: ['suggestions'],
   properties: { suggestions: SOCIAL_POSTS_JSON_SCHEMA },
 };
+
+/** Output budget of one post-copy call (every target platform's caption + hashtags). */
+export const POST_COPY_MAX_TOKENS = 3_000;
+
+/** 23.2: the model's suggestions (plan-project's post_copy call), or a retryable ProviderError. */
+export function parseCaptionOutput(json: unknown): SocialPost[] {
+  const parsed = outputSchema.safeParse(json);
+  if (!parsed.success)
+    throw new ProviderError('text_generation', 'unknown', 'Post copy failed validation', true);
+  return parsed.data.suggestions;
+}
 
 export const captionSuggestionsInput = z.object({ refresh: z.boolean().default(false) }).strict();
 
@@ -81,11 +93,13 @@ export function routedGenerator(
         planTier: toPlanTier(scope.planTier),
         request: {
           capability: 'text_generation',
+          // 23.2: captions + hashtags are a light task (providers/text-tasks.ts).
+          task: 'post_copy',
           organisationId: scope.organisationId,
           projectId: scope.projectId,
           system: request.system,
           prompt: request.prompt,
-          maxTokens: 3_000,
+          maxTokens: POST_COPY_MAX_TOKENS,
           outputSchema: request.outputSchema,
         },
       },

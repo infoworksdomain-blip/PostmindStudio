@@ -1,9 +1,6 @@
 import { PLAN_CATALOGUE } from '../billing/catalogue';
-import { IDEATION_SYSTEM_PROMPT } from '../pipeline/ideation';
-import { SCRIPT_SAFETY_SYSTEM_PROMPT } from '../pipeline/script-safety';
-import { SCRIPT_SYSTEM_PROMPT } from '../pipeline/scripting';
 import type { PricedCall } from '../cost/video-estimate';
-import { TYPICAL_TEXT_OUTPUT_TOKENS, TYPICAL_USER_PROMPT_CHARS } from '../cost/video-estimate';
+import { typicalPlanningCalls } from '../cost/video-estimate';
 import type { AspectRatio } from '../providers/interface';
 import type { PlanTier } from '../providers/router';
 import { ACTOR_CLIP_SECONDS_WITH_PRODUCT, actorClipBudget } from './plan';
@@ -12,7 +9,7 @@ import { PORTRAIT_ASPECT } from './prompt';
 // BACKLOG 21.4 — what one UGC actor video costs at list price, and its default project budget.
 // The shape of a typical 30 s UGC short (ugc/plan.ts): the tier's actor clips at 8 s each (the
 // product image is a reference, so Veo renders 8 s), a product still or closing card in the gap
-// (no paid generation), each clip transcribed once for captions (no ElevenLabs voice), three
+// (no paid generation), each clip transcribed once for captions (no ElevenLabs voice), four
 // Layer 1–2 text calls, music (STANDARD and above) and one composition. Prices come from the
 // adapters' own estimators (cost/video-estimate.ts estimateVideoCostPence).
 //
@@ -42,19 +39,6 @@ export function ugcProjectBudgetPence(tier: PlanTier): number {
 
 const IDS = { organisationId: 'estimate', projectId: 'estimate' } as const;
 
-function textCall(system: string, maxTokens: number): PricedCall {
-  return {
-    providerId: 'anthropic',
-    request: {
-      ...IDS,
-      capability: 'text_generation',
-      system,
-      prompt: 'x'.repeat(TYPICAL_USER_PROMPT_CHARS),
-      maxTokens,
-    },
-  };
-}
-
 /** The provider requests of a typical UGC run (`actorProvider`: veo, or kling to price failover). */
 export function typicalUgcVideoCalls(
   tier: PlanTier,
@@ -65,9 +49,8 @@ export function typicalUgcVideoCalls(
   const clipSec = ACTOR_CLIP_SECONDS_WITH_PRODUCT[0];
   const clips = Math.min(actorClipBudget(tier, durationSec), Math.floor(durationSec / clipSec));
   const calls: PricedCall[] = [
-    textCall(IDEATION_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.ideation),
-    textCall(SCRIPT_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.script),
-    textCall(SCRIPT_SAFETY_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.safety),
+    // 23.2: ideation, script, safety and post copy, each on its task's model.
+    ...typicalPlanningCalls(),
     // 21.4a: the actor portrait, once per project (ugc/portrait.ts; OpenAI's estimate is spec 6.5's
     // 4p a still; the charged cost is recorded from its reported usage).
     {

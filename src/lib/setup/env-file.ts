@@ -8,6 +8,9 @@ import {
   isKlingResolution,
   KLING_MODELS,
 } from '../studio/providers/kling';
+import { hasModelPricing, MODEL_PRICING_USD_PER_MTOK } from '../studio/providers/anthropic-models';
+import { parseTaskModels } from '../studio/providers/text-tasks';
+import { parseConcurrency } from '../studio/providers/provider-concurrency';
 
 // Phase 19.2 — the go-live settings file (runbooks/go-live.md): parse a server env file
 // (/etc/postmind-studio/<env>.env, the format of deploy/vps/.env.example), work out which keys it
@@ -368,7 +371,42 @@ export const VALIDATORS: Readonly<Record<string, Validator>> = {
   // 21.4c: the burned-in text check on UGC actor clips (ugc/clip-text-guard.ts).
   STUDIO_CLIP_TEXT_GUARD: (v) =>
     v === 'true' || v === 'false' ? null : 'must be true, false or empty',
+  // 23.2: per-task Claude models (providers/text-tasks.ts); every model needs a price row.
+  ANTHROPIC_MODEL: (v) => anthropicModel(v),
+  ANTHROPIC_LIGHT_MODEL: (v) => (v === 'off' ? null : anthropicModel(v)),
+  ANTHROPIC_TASK_MODELS: (v) => {
+    try {
+      const unpriced = Object.values(parseTaskModels(v)).find((m) => !hasModelPricing(m));
+      return unpriced ? anthropicModel(unpriced) : null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'must be "task=model,…"';
+    }
+  },
+  // 23.2: narration word timings from ElevenLabs (providers/elevenlabs.ts).
+  ELEVENLABS_WORD_TIMINGS: (v) =>
+    ['on', 'off', 'true', 'false'].includes(v.toLowerCase()) ? null : 'must be on, off or empty',
+  // 20.29 / 23.2: provider in-flight caps (providers/provider-concurrency.ts).
+  STUDIO_PROVIDER_CONCURRENCY_SEEDANCE: concurrency('STUDIO_PROVIDER_CONCURRENCY_SEEDANCE'),
+  STUDIO_PROVIDER_CONCURRENCY_KLING: concurrency('STUDIO_PROVIDER_CONCURRENCY_KLING'),
+  STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS: concurrency('STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS'),
 };
+
+function anthropicModel(model: string): string | null {
+  return hasModelPricing(model)
+    ? null
+    : `must be a priced Claude model: ${Object.keys(MODEL_PRICING_USD_PER_MTOK).join(', ')}`;
+}
+
+function concurrency(name: string): Validator {
+  return (v) => {
+    try {
+      parseConcurrency(v, name);
+      return null;
+    } catch {
+      return 'must be "<max>[,org=<share>]" (max 1–1000, share 1–max), 0 or off';
+    }
+  };
+}
 
 // A value that is still an instruction instead of a setting, e.g. <paste here> or CHANGE_ME.
 const PLACEHOLDER = /^<.*>$|^(changeme|change_me|todo|xxx+|placeholder)$/i;

@@ -4,6 +4,7 @@ import {
   ACQUIRE_SLOT_SCRIPT,
   concurrencyEnvName,
   concurrencyLimitsFromEnv,
+  concurrencyPoolOf,
   createMemoryProviderConcurrencyLimiter,
   createRedisProviderConcurrencyLimiter,
   defaultShare,
@@ -31,10 +32,12 @@ describe('concurrency limits from env', () => {
     );
   });
 
-  it('has documented defaults for Seedance and Kling only', () => {
+  it('has documented defaults for Seedance, Kling and ElevenLabs only', () => {
     const limits = concurrencyLimitsFromEnv({});
     expect(limits('seedance')).toEqual({ max: 3, perOrganisation: 2 });
     expect(limits('kling')).toEqual({ max: 20, perOrganisation: 10 });
+    // 23.2: the ElevenLabs plan's 5 concurrent requests.
+    expect(limits('elevenlabs')).toEqual({ max: 5, perOrganisation: 3 });
     expect(limits('veo')).toBeUndefined();
   });
 
@@ -89,6 +92,69 @@ describe('concurrency limits from env', () => {
     expect(parseAcquireReply([0, 12])).toEqual({ code: 0, waiters: 12 });
     expect(parseAcquireReply([1])).toEqual({ code: 1, waiters: 0 });
     expect(parseAcquireReply(-1)).toEqual({ code: -1, waiters: 0 });
+  });
+});
+
+describe('23.2 ElevenLabs account pool (speech + music)', () => {
+  const limits = concurrencyLimitsFromEnv({});
+
+  it('bounds speech and music together at 5: the 6th call waits for a slot', async () => {
+    const limiter = createMemoryProviderConcurrencyLimiter(limits);
+    expect(concurrencyPoolOf('elevenlabs-music')).toBe('elevenlabs');
+    const calls = [
+      ['elevenlabs', 'org-a'],
+      ['elevenlabs', 'org-b'],
+      ['elevenlabs-music', 'org-c'],
+      ['elevenlabs', 'org-d'],
+      ['elevenlabs-music', 'org-e'],
+    ] as const;
+    const slots = await Promise.all(
+      calls.map(([providerId, organisationId]) =>
+        limiter.acquire({ providerId, organisationId, leaseMs: LEASE }),
+      ),
+    );
+    expect(slots.every((s) => s.acquired)).toBe(true);
+    expect(limiter.inFlight('elevenlabs')).toBe(5);
+    expect(limiter.inFlight('elevenlabs-music')).toBe(5);
+
+    const sixth = await limiter.acquire({
+      providerId: 'elevenlabs',
+      organisationId: 'org-f',
+      leaseMs: LEASE,
+    });
+    expect(sixth).toMatchObject({ acquired: false, reason: 'provider_full' });
+    expect(sixth.acquired ? 0 : sixth.retryAfterMs).toBeGreaterThan(0);
+
+    // A finished call frees its slot for the waiter.
+    const first = slots[0];
+    if (first?.acquired) await first.release();
+    const retried = await limiter.acquire({
+      providerId: 'elevenlabs-music',
+      organisationId: 'org-f',
+      leaseMs: LEASE,
+    });
+    expect(retried.acquired).toBe(true);
+  });
+
+  it('keeps one organisation to its share of the 5 (3)', async () => {
+    const limiter = createMemoryProviderConcurrencyLimiter(limits);
+    for (let i = 0; i < 3; i += 1)
+      expect(
+        (await limiter.acquire({ providerId: 'elevenlabs', organisationId: 'o', leaseMs: LEASE }))
+          .acquired,
+      ).toBe(true);
+    expect(
+      await limiter.acquire({
+        providerId: 'elevenlabs-music',
+        organisationId: 'o',
+        leaseMs: LEASE,
+      }),
+    ).toMatchObject({ acquired: false, reason: 'organisation_share' });
+  });
+
+  it('STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS raises the pool for both', () => {
+    const raised = concurrencyLimitsFromEnv({ STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS: '10' });
+    expect(raised(concurrencyPoolOf('elevenlabs-music'))).toEqual({ max: 10, perOrganisation: 5 });
   });
 });
 

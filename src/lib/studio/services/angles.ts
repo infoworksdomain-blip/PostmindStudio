@@ -248,6 +248,8 @@ export async function suggestAngles(
   );
   const titles = existing.map((a) => a.title);
   const result = await deps.generate({
+    // 23.2: short angle titles + one line each, a light task (Haiku).
+    task: 'blitz_angles',
     system: ANGLE_SYSTEM_PROMPT,
     prompt: buildAnglePrompt(context.facts, titles, room),
     outputSchema: ANGLE_OUTPUT_SCHEMA,

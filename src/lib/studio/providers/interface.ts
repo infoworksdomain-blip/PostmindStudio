@@ -9,6 +9,8 @@
 // it reports it as `metadata.costPence` (integer pence). Otherwise the submit-time estimate
 // stands. See tracked.ts.
 
+import type { TextTask } from './text-tasks';
+
 export type ProviderCapability =
   | 'text_generation' // Layers 1–2: ideation, script + storyboard
   | 'embedding' // library + image-library similarity search
@@ -84,6 +86,11 @@ interface ProviderRequestBase {
 
 export interface TextGenerationRequest extends ProviderRequestBase {
   capability: 'text_generation';
+  /**
+   * 23.2: what the call is for; picks the Claude model (text-tasks.ts: light tasks run on Haiku).
+   * Absent = a standard task (the planning model).
+   */
+  task?: TextTask;
   system: string;
   prompt: string;
   maxTokens?: number;

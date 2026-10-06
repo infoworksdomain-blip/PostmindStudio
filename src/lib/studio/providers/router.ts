@@ -15,7 +15,10 @@ import type { ProviderRegistry } from './registry';
 // DECISIONS beyond the spec text (flag at GATE 2):
 //   - BASIC plan AI_CLIP shots over 5s: 6.4 defines no list, so they use the cheap-tier list.
 //   - AI_AVATAR: 6.1 requires a fallback for every shot type, so D-ID and HeyGen back each
-//     other up (except a brand's custom HeyGen avatar, which cannot move provider).
+//     other up (except a brand's custom HeyGen avatar, which cannot move provider). 23.2: both
+//     are now the back-up behind the actor route (presenterRoute) and HeyGen is tried before D-ID
+//     on every tier.
+//   - 23.2 confirms AI_CLIP: Seedance stays first (seedance → kling → veo → …), unchanged.
 //   - AI_CLIP on PLUS/ENTERPRISE (BACKLOG 13.32): Luma is added after Runway. 6.4 lists
 //     [Veo, Runway, Kling], but 6.1 requires a working fallback and the playbook names Luma
 //     the "text-to-video fallback" ("toggle Runway off; verify router fails over to Luma").
@@ -43,8 +46,6 @@ import type { ProviderRegistry } from './registry';
 //     Runway and Luma (the dearest per second) stay off BASIC.
 
 export type PlanTier = 'BASIC' | 'STANDARD' | 'PLUS' | 'ENTERPRISE';
-
-const TIER_RANK: Record<PlanTier, number> = { BASIC: 0, STANDARD: 1, PLUS: 2, ENTERPRISE: 3 };
 
 export type RouteNeed =
   | {
@@ -226,9 +227,39 @@ function aiClipCandidates(tier: PlanTier): string[] {
  */
 export const ACTOR_CANDIDATES: readonly string[] = ['veo', 'kling'];
 
-function avatarCandidates(tier: PlanTier, brandHasCustomAvatar: boolean): string[] {
+/**
+ * BACKLOG 23.2 (operator decision 2026-10-06: "HeyGen should be used as a back-up; we have
+ * Seedance and other models that are better and cost less"): HeyGen and D-ID are the LAST-RESORT
+ * presenter providers. An AI_AVATAR shot first tries the actor route (presenterRoute below:
+ * actor_video, Veo then Kling, the presenter speaking the line natively; ugc/presenter.ts) and only
+ * then this avatar_video list, HeyGen before D-ID on every tier (D-ID has no adapter). A brand's
+ * own custom HeyGen avatar cannot move provider, so it keeps HeyGen alone, first.
+ */
+export const AVATAR_FALLBACK_CANDIDATES: readonly string[] = ['heygen', 'd-id'];
+
+function avatarCandidates(brandHasCustomAvatar: boolean): string[] {
   if (brandHasCustomAvatar) return ['heygen'];
-  return TIER_RANK[tier] <= TIER_RANK.STANDARD ? ['d-id', 'heygen'] : ['heygen', 'd-id'];
+  return [...AVATAR_FALLBACK_CANDIDATES];
+}
+
+/** One stage of a presenter shot's route: a capability and its providers, in order. */
+export interface PresenterStage {
+  capability: 'actor_video' | 'avatar_video';
+  providerIds: string[];
+}
+
+/**
+ * 23.2: the full order an AI_AVATAR shot tries, across two capabilities (the request shapes
+ * differ, so generate-asset.ts runs each stage through the router in turn): the actor route
+ * (veo, kling), then the avatar providers (heygen, d-id). A brand's custom HeyGen avatar → heygen.
+ */
+export function presenterRoute(brandHasCustomAvatar = false): PresenterStage[] {
+  if (brandHasCustomAvatar)
+    return [{ capability: 'avatar_video', providerIds: avatarCandidates(true) }];
+  return [
+    { capability: 'actor_video', providerIds: [...ACTOR_CANDIDATES] },
+    { capability: 'avatar_video', providerIds: avatarCandidates(false) },
+  ];
 }
 
 export function planCandidates(need: RouteNeed, tier: PlanTier): CandidatePlan {
@@ -244,7 +275,7 @@ export function planCandidates(need: RouteNeed, tier: PlanTier): CandidatePlan {
     case 'AI_AVATAR':
       return {
         capability: 'avatar_video',
-        providerIds: avatarCandidates(tier, need.brandHasCustomAvatar ?? false),
+        providerIds: avatarCandidates(need.brandHasCustomAvatar ?? false),
       };
     case 'UGC_ACTOR':
       return { capability: 'actor_video', providerIds: [...ACTOR_CANDIDATES] };

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ProviderError } from '../../errors';
 import { DEFAULT_LANGUAGE, languageInstruction } from '../languages';
 import {
+  businessContextLines,
   SOCIAL_POSTS_JSON_SCHEMA,
   socialCopyPromptLines,
   socialPostSchema,
@@ -41,6 +42,11 @@ export interface IdeationContext {
   language?: string;
   /** 20.13: caption + hashtag instructions (business hashtags, facts, UK moments). */
   social?: SocialCopyContext;
+  /**
+   * 23.2: the business facts, restricted topics and UK moments WITHOUT the caption instructions
+   * (used when `social` is absent: plan-project writes the post copy in its own, parallel call).
+   */
+  business?: Pick<SocialCopyContext, 'facts' | 'restrictedTopics' | 'moments'>;
 }
 
 export const IDEATION_SCHEMA = {
@@ -102,6 +108,28 @@ export const UGC_IDEATION_SCHEMA = {
   },
 } as const;
 
+/** 23.2: the schema without socialPosts (plan-project writes the post copy in its own call). */
+function withoutSocialPosts<
+  S extends { required: readonly string[]; properties: Record<string, unknown> },
+>(
+  schema: S,
+): Omit<S, 'required' | 'properties'> & {
+  required: string[];
+  properties: Record<string, unknown>;
+} {
+  const properties = Object.fromEntries(
+    Object.entries(schema.properties).filter(([key]) => key !== 'socialPosts'),
+  );
+  return {
+    ...schema,
+    required: schema.required.filter((key) => key !== 'socialPosts'),
+    properties,
+  };
+}
+
+export const IDEATION_BRIEF_SCHEMA = withoutSocialPosts(IDEATION_SCHEMA);
+export const UGC_IDEATION_BRIEF_SCHEMA = withoutSocialPosts(UGC_IDEATION_SCHEMA);
+
 const ideationResult = z.object({
   /** 21.4: only in UGC_IDEATION_SCHEMA answers. */
   realPersonRequested: z.boolean().optional(),
@@ -156,6 +184,10 @@ export function buildIdeationPrompt(ctx: IdeationContext): string {
   // 15.C5: the brief is written natively in the video's language (keywords and hashtags too).
   lines.push(languageInstruction(ctx.language ?? DEFAULT_LANGUAGE));
   if (ctx.social) lines.push('', ...socialCopyPromptLines(ctx.social));
+  else if (ctx.business) {
+    const business = businessContextLines(ctx.business);
+    if (business.length) lines.push('', ...business);
+  }
   if (ctx.directionChosen) lines.push('', DIRECTION_CHOSEN_INSTRUCTION);
   lines.push('', 'Owner request:', '"""', ctx.rawInput.trim(), '"""');
   return lines.join('\n');

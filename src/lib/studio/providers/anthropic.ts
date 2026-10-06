@@ -12,27 +12,28 @@ import { usdToPence } from './pricing';
 import { parseRegainAt } from './account-errors';
 import { classifyHttpStatus, providerError, type ErrorClassification } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
+import { DEFAULT_MODEL, hasModelPricing, MODEL_PRICING_USD_PER_MTOK } from './anthropic-models';
+import {
+  DEFAULT_LIGHT_MODEL,
+  modelForTask,
+  modelsOf,
+  type TextModelMap,
+  type TextTask,
+} from './text-tasks';
 
 // BACKLOG 2.4 — Claude for Layers 1–2 (spec 5.2 / 5.3: "Claude Sonnet by default").
 // The Messages API is synchronous, so submit() makes the one Claude call and poll() returns
 // the parked result. Cost is exact: computed from the response's token usage.
+// 23.2: the model is chosen per call from the request's task (text-tasks.ts): light tasks run on
+// Claude Haiku 4.5 by default, and cost is priced at the model that actually ran.
 
 /** Vision input costs about (w/28)×(h/28) tokens; 1600 bounds a ≤1120×1120 image. */
 const IMAGE_TOKENS_UPPER_BOUND = 1_600;
 
 export const PROVIDER_ID = 'anthropic';
-export const DEFAULT_MODEL = 'claude-sonnet-5';
+export { DEFAULT_MODEL, MODEL_PRICING_USD_PER_MTOK };
 const DEFAULT_MAX_TOKENS = 16_000;
 
-/** USD per million tokens (Anthropic first-party rates). Add a row before switching models. */
-export const MODEL_PRICING_USD_PER_MTOK: Readonly<
-  Record<string, { input: number; output: number }>
-> = {
-  'claude-sonnet-5': { input: 2, output: 10 },
-  'claude-opus-5': { input: 5, output: 25 },
-  'claude-haiku-4-5': { input: 1, output: 5 },
-  'claude-sonnet-4-6': { input: 3, output: 15 },
-};
 const CACHE_WRITE_MULTIPLIER = 1.25;
 const CACHE_READ_MULTIPLIER = 0.1;
 
@@ -46,7 +47,12 @@ export interface AnthropicClientLike {
 
 export interface AnthropicAdapterOptions {
   client: AnthropicClientLike;
+  /** The standard-tier model (ANTHROPIC_MODEL); default DEFAULT_MODEL. */
   model?: string;
+  /** 23.2: the light-tier model (ANTHROPIC_LIGHT_MODEL); default Claude Haiku 4.5. */
+  lightModel?: string;
+  /** 23.2: per-task overrides (ANTHROPIC_TASK_MODELS). */
+  taskModels?: TextModelMap['overrides'];
   usdToGbpRate: number;
   now?: () => number;
 }
@@ -145,6 +151,7 @@ export class AnthropicAdapter implements ProviderAdapter {
 
   private readonly client: AnthropicClientLike;
   private readonly model: string;
+  private readonly models: TextModelMap;
   private readonly usdToGbpRate: number;
   private readonly now: () => number;
   private readonly results: SyncJobStore;
@@ -152,12 +159,24 @@ export class AnthropicAdapter implements ProviderAdapter {
   constructor(options: AnthropicAdapterOptions) {
     this.client = options.client;
     this.model = options.model ?? DEFAULT_MODEL;
-    if (!MODEL_PRICING_USD_PER_MTOK[this.model]) {
-      throw new ConfigurationError(`No pricing configured for Anthropic model ${this.model}`);
+    this.models = {
+      standard: this.model,
+      light: options.lightModel ?? DEFAULT_LIGHT_MODEL,
+      overrides: options.taskModels ?? {},
+    };
+    for (const model of modelsOf(this.models)) {
+      if (!hasModelPricing(model)) {
+        throw new ConfigurationError(`No pricing configured for Anthropic model ${model}`);
+      }
     }
     this.usdToGbpRate = options.usdToGbpRate;
     this.now = options.now ?? Date.now;
     this.results = new SyncJobStore(PROVIDER_ID, this.now);
+  }
+
+  /** 23.2: the model a request runs on (its task's tier, or the standard model). */
+  modelFor(request: { task?: TextTask }): string {
+    return modelForTask(this.models, request.task);
   }
 
   /**
@@ -166,7 +185,7 @@ export class AnthropicAdapter implements ProviderAdapter {
    */
   estimateCostPence(request: ProviderRequest): number {
     if (request.capability !== 'text_generation') return 0;
-    const price = MODEL_PRICING_USD_PER_MTOK[this.model] ?? { input: 0, output: 0 };
+    const price = MODEL_PRICING_USD_PER_MTOK[this.modelFor(request)] ?? { input: 0, output: 0 };
     const inputTokens =
       Math.ceil((request.system.length + request.prompt.length) / 4) +
       (request.images?.length ?? 0) * IMAGE_TOKENS_UPPER_BOUND;
@@ -185,8 +204,9 @@ export class AnthropicAdapter implements ProviderAdapter {
         `Anthropic adapter does not support ${request.capability}`,
       );
     }
-    const message = await this.callClaude(request);
-    const costPence = usdToPence(computeCostUsd(this.model, message.usage), this.usdToGbpRate);
+    const model = this.modelFor(request);
+    const message = await this.callClaude(request, model);
+    const costPence = usdToPence(computeCostUsd(model, message.usage), this.usdToGbpRate);
     const result = this.toPollResult(message, request, costPence);
     return {
       providerJobId: this.results.put(result),
@@ -214,10 +234,13 @@ export class AnthropicAdapter implements ProviderAdapter {
     }
   }
 
-  private async callClaude(request: TextGenerationRequest): Promise<Anthropic.Message> {
+  private async callClaude(
+    request: TextGenerationRequest,
+    model: string,
+  ): Promise<Anthropic.Message> {
     try {
       return await this.client.messages.create({
-        model: this.model,
+        model,
         max_tokens: request.maxTokens ?? DEFAULT_MAX_TOKENS,
         system: request.system,
         messages: [

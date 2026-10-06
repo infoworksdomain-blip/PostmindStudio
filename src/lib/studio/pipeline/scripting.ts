@@ -52,7 +52,13 @@ export function availableTreatments(registry: ProviderRegistry): VisualTreatment
   const provided = (
     Object.entries(TREATMENT_CAPABILITY) as Array<[VisualTreatment, ProviderCapability]>
   )
-    .filter(([, capability]) => registry.getAdaptersByCapability(capability).length > 0)
+    .filter(
+      ([treatment, capability]) =>
+        registry.getAdaptersByCapability(capability).length > 0 ||
+        // 23.2: a presenter is made by an actor provider first (HeyGen is the back-up), so
+        // AI_AVATAR is offered whenever either kind of provider is configured.
+        (treatment === 'AI_AVATAR' && registry.getAdaptersByCapability('actor_video').length > 0),
+    )
     .map(([treatment]) => treatment);
   // 15.B8: MOTION_GRAPHICS cards are rendered by Shotstack itself (pipeline/motion-graphics.ts).
   const motion = registry
@@ -176,6 +182,9 @@ export const SCRIPT_SYSTEM_PROMPT = [
   'Respect the AI clip budget: AI_CLIP and AI_AVATAR shots together never exceed it. Spend them on the hook, the key demo moment and the call to action; every other shot uses a cheaper treatment.',
   'Give every shot a beat: hook, demo, cta or other.',
   'AI_AVATAR shots are a presenter speaking to camera: they must have voiceover text.',
+  // 23.2: presenters are made as creator-style actor clips first (ugc/presenter.ts), which need a
+  // short line that fits one 4–8 s clip; a longer line falls back to the dearer avatar provider.
+  'Write AI_AVATAR shots as a creator-style presenter talking to the phone camera: each lasts 4 to 8 seconds with ONE short, natural line that fits it (4 s: at most 7 words, 6 s: at most 11, 8 s: at most 16), and its sceneDescription says what the presenter does and where (never their face, never a real or named person).',
   'Use sound effects sparingly: at most one short sfxCue on a few key shots (the hook, a reveal, the call to action), otherwise leave it empty.',
   "Scene descriptions are prompts for a video/image generator: describe subject, setting, light and motion; never ask for text, logos or real people's likenesses in frame.",
   'Only use the visual treatments offered. Never invent prices, statistics or claims absent from the brief.',

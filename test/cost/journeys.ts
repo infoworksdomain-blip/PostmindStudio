@@ -19,6 +19,11 @@ import { RunwayAdapter } from '../../src/lib/studio/providers/runway';
 import { SeedanceAdapter } from '../../src/lib/studio/providers/seedance';
 import { typicalVideoCalls, typicalVideoPlan } from '../../src/lib/studio/cost/video-estimate';
 import { ShotstackAdapter } from '../../src/lib/studio/providers/shotstack';
+import type { TextTask } from '../../src/lib/studio/providers/text-tasks';
+import {
+  POST_COPY_MAX_TOKENS,
+  SYSTEM_PROMPT as CAPTION_SYSTEM_PROMPT,
+} from '../../src/lib/studio/services/caption-suggestions';
 import { StoryblocksAudioAdapter } from '../../src/lib/studio/providers/storyblocks-audio';
 import { memoryStorage } from '../helpers/memory-storage';
 
@@ -97,11 +102,12 @@ interface PlanningSupplement {
 }
 
 function planning(formats: number, supplement: PlanningSupplement = {}): PricedCall[] {
-  const text = (system: string, maxTokens: number, extra?: string): PricedCall => ({
+  const text = (system: string, maxTokens: number, task: TextTask, extra?: string): PricedCall => ({
     providerId: 'anthropic',
     request: {
       ...base,
       capability: 'text_generation',
+      task,
       system,
       prompt: extra
         ? `${userPrompt}
@@ -111,12 +117,16 @@ ${extra}`
       maxTokens,
     },
   });
+  // 23.2: one safety check per script (light model) and the post copy (light model).
   return [
-    text(IDEATION_SYSTEM_PROMPT, IDEATION_MAX_TOKENS, supplement.ideation),
+    text(IDEATION_SYSTEM_PROMPT, IDEATION_MAX_TOKENS, 'ideation', supplement.ideation),
     ...Array.from({ length: formats }, () =>
-      text(SCRIPT_SYSTEM_PROMPT, SCRIPT_MAX_TOKENS, supplement.script),
+      text(SCRIPT_SYSTEM_PROMPT, SCRIPT_MAX_TOKENS, 'script', supplement.script),
     ),
-    text(SCRIPT_SAFETY_SYSTEM_PROMPT, SAFETY_MAX_TOKENS),
+    ...Array.from({ length: formats }, () =>
+      text(SCRIPT_SAFETY_SYSTEM_PROMPT, SAFETY_MAX_TOKENS, 'script_safety'),
+    ),
+    text(CAPTION_SYSTEM_PROMPT, POST_COPY_MAX_TOKENS, 'post_copy'),
   ];
 }
 

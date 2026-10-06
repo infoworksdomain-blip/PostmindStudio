@@ -21,9 +21,20 @@ export interface SpeechShot {
   assetId: string | null;
 }
 
-/** The shot's picture speaks its own line (an actor clip, not a degraded one). */
+/**
+ * The shot's picture speaks its own line (an actor clip, not a degraded one). 23.2: so does a
+ * presenter (AI_AVATAR) shot made by the actor route (ugc/presenter.ts); a presenter made by
+ * HeyGen / D-ID, or degraded to B-roll, always has its narration asset: that route narrates
+ * before it renders (generate-asset.ts generatePresenter; an AI_AVATAR shot without voiceover text
+ * is rejected by the script layer and by generateAvatar), so "AI_AVATAR, a visual and no narration"
+ * only ever means an actor-route clip.
+ */
 export function clipSpeaks(shot: SpeechShot): boolean {
-  return shot.visualTreatment === 'UGC_ACTOR' && !shot.voiceAssetId && Boolean(shot.assetId);
+  return (
+    (shot.visualTreatment === 'UGC_ACTOR' || shot.visualTreatment === 'AI_AVATAR') &&
+    !shot.voiceAssetId &&
+    Boolean(shot.assetId)
+  );
 }
 
 /** The asset whose audio is the shot's speech: the narration, else a speaking clip. */

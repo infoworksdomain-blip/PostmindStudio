@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fakeFetch, json } from '../../../../test/helpers/fake-fetch';
 import { memoryStorage } from '../../../../test/helpers/memory-storage';
 import { ConfigurationError } from '../../errors';
-import { ElevenLabsAdapter } from './elevenlabs';
+import { ElevenLabsAdapter, wordTimingsFromEnv } from './elevenlabs';
 
 // Fixtures follow elevenlabs.io/docs/api-reference/text-to-speech/convert: raw audio body,
 // `character-cost` / `request-id` response headers, `{ detail: { code, message } }` errors.
@@ -15,6 +15,10 @@ function audio(
 }
 
 function setup(...replies: Parameters<typeof fakeFetch>) {
+  return setupWith({ wordTimings: false }, ...replies);
+}
+
+function setupWith(options: { wordTimings?: boolean }, ...replies: Parameters<typeof fakeFetch>) {
   const fake = fakeFetch(...replies);
   const { storage, objects } = memoryStorage();
   const adapter = new ElevenLabsAdapter({
@@ -23,6 +27,7 @@ function setup(...replies: Parameters<typeof fakeFetch>) {
     bucket: 'studio-assets-dev',
     usdToGbpRate: 0.75,
     fetchImpl: fake.fetch,
+    ...options,
   });
   return { adapter, requests: fake.requests, objects };
 }
@@ -176,6 +181,7 @@ describe('ElevenLabsAdapter', () => {
       bucket: 'studio-assets-dev',
       usdToGbpRate: 0.75,
       model: 'eleven_flash_v2_5',
+      wordTimings: false,
       fetchImpl: fake.fetch,
     });
     await adapter.submit({ ...tts, text: 'مرحبا', languageCode: 'ar' });
@@ -183,5 +189,77 @@ describe('ElevenLabsAdapter', () => {
       model_id: 'eleven_flash_v2_5',
       language_code: 'ar',
     });
+  });
+});
+
+// 23.2: "Create speech with timing" (POST /v1/text-to-speech/{voice_id}/with-timestamps,
+// elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps, read 2026-10-06).
+function timed(text: string, overrides: Record<string, unknown> = {}) {
+  const characters = [...text];
+  return json({
+    audio_base64: Buffer.from(MP3).toString('base64'),
+    alignment: {
+      characters,
+      character_start_times_seconds: characters.map((_, i) => i / 10),
+      character_end_times_seconds: characters.map((_, i) => (i + 1) / 10),
+    },
+    normalized_alignment: null,
+    ...overrides,
+  });
+}
+
+describe('ElevenLabsAdapter with word timings (23.2)', () => {
+  it('posts to /with-timestamps, stores the decoded MP3 and returns the narration words', async () => {
+    const { adapter, requests, objects } = setupWith({}, timed(tts.text));
+    const { providerJobId } = await adapter.submit(tts);
+    expect(requests[0]).toMatchObject({
+      url: 'https://api.elevenlabs.io/v1/text-to-speech/voice%2Fabc/with-timestamps?output_format=mp3_44100_128',
+      method: 'POST',
+      body: { text: tts.text, model_id: 'eleven_multilingual_v2' },
+    });
+    const metadata = (await adapter.poll(providerJobId)).output?.metadata as {
+      s3Key: string;
+      alignedWords: Array<{ text: string; startSec: number; endSec: number }>;
+    };
+    expect(objects.get(`studio-assets-dev/${metadata.s3Key}`)?.body).toEqual(MP3);
+    expect(metadata.alignedWords.map((w) => w.text)).toEqual([
+      'Fresh',
+      'bread,',
+      'every',
+      'morning,',
+      'from',
+      'our',
+      'family',
+      'oven.',
+    ]);
+    expect(metadata.alignedWords[0]).toEqual({ text: 'Fresh', startSec: 0, endSec: 0.5 });
+  });
+
+  it('keeps the audio but no words when the alignment is missing or does not match the text', async () => {
+    for (const reply of [timed(tts.text, { alignment: null }), timed('Something else entirely')]) {
+      const { adapter } = setupWith({}, reply);
+      const { providerJobId } = await adapter.submit(tts);
+      const metadata = (await adapter.poll(providerJobId)).output?.metadata as Record<
+        string,
+        unknown
+      >;
+      expect(metadata.bytes).toBe(MP3.byteLength);
+      expect(metadata).not.toHaveProperty('alignedWords');
+    }
+  });
+
+  it('fails retryably on an empty or non-JSON body', async () => {
+    const empty = setupWith({}, json({ audio_base64: '' }));
+    await expect(empty.adapter.submit(tts)).rejects.toMatchObject({ retryable: true });
+    const garbled = setupWith({}, new Response('not json', { status: 200 }));
+    await expect(garbled.adapter.submit(tts)).rejects.toMatchObject({ retryable: true });
+  });
+
+  it('ELEVENLABS_WORD_TIMINGS: on by default, off goes back to the plain endpoint', () => {
+    expect(wordTimingsFromEnv({})).toBe(true);
+    expect(wordTimingsFromEnv({ ELEVENLABS_WORD_TIMINGS: 'off' })).toBe(false);
+    expect(() => wordTimingsFromEnv({ ELEVENLABS_WORD_TIMINGS: 'maybe' })).toThrow(
+      ConfigurationError,
+    );
   });
 });

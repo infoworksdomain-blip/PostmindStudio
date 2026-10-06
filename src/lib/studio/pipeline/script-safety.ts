@@ -95,6 +95,56 @@ export function escalatePublicFigure(result: ScriptSafetyResult): ScriptSafetyRe
   };
 }
 
+const VERDICT_RANK: Readonly<Record<ScriptSafetyResult['verdict'], number>> = {
+  ALLOW: 0,
+  WARN: 1,
+  REVIEW: 2,
+  BLOCK: 3,
+};
+
+/**
+ * 23.2: one verdict for a run whose scripts were classified one call per script (each script's
+ * check runs as soon as that script is written, in parallel with the others): the most severe
+ * verdict, every category, and the reasons behind that verdict.
+ */
+export function combineScriptSafety(results: readonly ScriptSafetyResult[]): ScriptSafetyResult {
+  if (results.length === 0) return { verdict: 'ALLOW', categories: [], reason: '' };
+  const worst = results.reduce((a, b) =>
+    VERDICT_RANK[b.verdict] > VERDICT_RANK[a.verdict] ? b : a,
+  ).verdict;
+  const reasons = results
+    .filter((r) => r.verdict === worst)
+    .map((r) => r.reason.trim())
+    .filter(Boolean);
+  return {
+    verdict: worst,
+    categories: [...new Set(results.flatMap((r) => r.categories))],
+    reason: [...new Set(reasons)].join(' '),
+  };
+}
+
+/**
+ * 23.2: write every script in parallel and check each one as soon as it is written (its check
+ * does not wait for the other scripts). Rejects with the first failure, like Promise.all; the
+ * caller's job retry runs the whole plan again (nothing is persisted before the verdict).
+ */
+export async function scriptsWithSafety<V, S>(
+  variants: readonly V[],
+  write: (variant: V) => Promise<S>,
+  check: (script: S) => Promise<ScriptSafetyResult>,
+): Promise<{ scripts: S[]; safety: ScriptSafetyResult }> {
+  const planned = await Promise.all(
+    variants.map(async (variant) => {
+      const script = await write(variant);
+      return { script, safety: await check(script) };
+    }),
+  );
+  return {
+    scripts: planned.map((p) => p.script),
+    safety: combineScriptSafety(planned.map((p) => p.safety)),
+  };
+}
+
 /** True when the run must stop before any asset is generated (BLOCK fails, REVIEW pauses). */
 export function blocksGeneration(result: ScriptSafetyResult): boolean {
   return result.verdict === 'BLOCK' || result.verdict === 'REVIEW';

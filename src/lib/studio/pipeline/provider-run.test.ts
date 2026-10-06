@@ -5,7 +5,10 @@ import { createCircuitBreaker } from '../providers/circuit-breaker';
 import type { ProviderAdapter } from '../providers/interface';
 import type { ProviderJobRecord, ProviderJobRepository } from '../providers/job-repository';
 import { LumaAdapter } from '../providers/luma';
-import { createMemoryProviderConcurrencyLimiter } from '../providers/provider-concurrency';
+import {
+  concurrencyLimitsFromEnv,
+  createMemoryProviderConcurrencyLimiter,
+} from '../providers/provider-concurrency';
 import { createProviderRegistry } from '../providers/registry';
 import { StubAdapter } from '../providers/test-adapter';
 import { runProvider, type ProviderRunDeps } from './provider-run';
@@ -244,5 +247,54 @@ describe('runProvider — Phase 15 Track C hooks', () => {
     });
     // Spec order (20.23/20.24): seedance → kling → veo → runway → luma; only the last two exist here.
     expect(broken.decision.providerId).toBe('runway');
+  });
+});
+
+describe('23.2 ElevenLabs concurrency (plan limit 5, speech + music)', () => {
+  it('runs 5 calls at once and defers the 6th instead of letting ElevenLabs refuse it', async () => {
+    const tts = new StubAdapter('elevenlabs', ['tts']);
+    let open = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    tts.nextSubmit = async () => {
+      open += 1;
+      await gate;
+      return {
+        providerJobId: `stub_${open}`,
+        estimatedCostPence: 0,
+        estimatedReadyAt: new Date(0),
+      };
+    };
+    const { deps } = setup(tts);
+    const providerConcurrency = createMemoryProviderConcurrencyLimiter(
+      concurrencyLimitsFromEnv({}),
+    );
+    const run = (i: number) =>
+      runProvider(
+        {
+          need: { kind: 'capability', capability: 'tts' },
+          planTier: 'STANDARD',
+          request: {
+            capability: 'tts',
+            organisationId: `org-${i}`,
+            shotId: `shot-${i}`,
+            text: 'Hello',
+            voiceId: 'v',
+          },
+        },
+        { ...deps, providerConcurrency },
+      );
+    const five = [1, 2, 3, 4, 5].map(run);
+    await vi.waitFor(() => expect(open).toBe(5));
+    expect(providerConcurrency.inFlight('elevenlabs')).toBe(5);
+    const sixth = await run(6).catch((e: unknown) => e);
+    expect(sixth).toBeInstanceOf(RateDeferredError);
+    expect(open).toBe(5); // the 6th never reached ElevenLabs
+    release();
+    await Promise.all(five);
+    expect(providerConcurrency.inFlight('elevenlabs')).toBe(0);
+    await expect(run(6)).resolves.toMatchObject({ decision: { providerId: 'elevenlabs' } });
   });
 });

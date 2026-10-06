@@ -297,6 +297,7 @@ export async function analyseContent(
       planTier,
       request: {
         capability: 'text_generation',
+        task: 'library_analysis',
         organisationId: PLATFORM_ORG,
         system: ANALYSIS_SYSTEM_PROMPT,
         prompt: buildAnalysisPrompt({

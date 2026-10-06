@@ -86,6 +86,12 @@ const actorImageSchema = z.discriminatedUnion('state', [
 
 export type ActorImageState = z.infer<typeof actorImageSchema>;
 
+/** A stored actorImage value, parsed (null if absent or not a known state). */
+export function parseActorImageState(raw: unknown): ActorImageState | null {
+  const parsed = actorImageSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
 /** metadata.ugc.actorImage as stored (raw, for compare-and-set) and parsed (null if absent/bad). */
 export function actorImageOf(metadata: Prisma.JsonValue | null | undefined): {
   raw: Prisma.JsonValue | null;

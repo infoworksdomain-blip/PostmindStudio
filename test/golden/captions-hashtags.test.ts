@@ -19,8 +19,8 @@ import {
   startJourney,
 } from './journey-kit';
 
-// 20.13 golden: generate → approve → auto-publish. The ideation call writes the post copy in
-// the same Claude call; the auto-published post carries the business hashtag first, the owner's
+// 20.13 golden: generate → approve → auto-publish. 23.2: the post copy is written by its own
+// light call from the brief (in parallel with Layer 2); the auto-published post carries the business hashtag first, the owner's
 // "always" hashtag, then the generated ones — at least five — through the real routes, workers
 // and publish worker (inline queue).
 
@@ -76,12 +76,21 @@ describe.skipIf(!hasDb)('captions and hashtags journey (20.13)', { timeout: 120_
     );
     expect((await generate(j, id)).state).toBe('READY_FOR_REVIEW');
 
-    // The ideation prompt asked for the copy and named the hashtags Studio adds itself.
+    // 23.2: the post copy is its own light call (Haiku), written from the brief alongside Layer 2;
+    // its prompt names the hashtags Studio adds itself. Ideation no longer writes the copy.
+    const postCopy = j.h.adapters.anthropic.requests.find((r) =>
+      'system' in r ? r.system.includes('per-platform social captions') : false,
+    );
+    expect(postCopy).toMatchObject({ task: 'post_copy' });
+    expect(postCopy && 'prompt' in postCopy ? postCopy.prompt : '').toContain(
+      'do not repeat them: #AheadAI #LeedsEats',
+    );
     const ideation = j.h.adapters.anthropic.requests.find((r) =>
       'system' in r ? r.system.includes('ideation layer') : false,
     );
-    expect(ideation && 'prompt' in ideation ? ideation.prompt : '').toContain(
-      'do not repeat them: #AheadAI #LeedsEats',
+    expect(ideation).toMatchObject({ task: 'ideation' });
+    expect(ideation && 'prompt' in ideation ? ideation.prompt : '').not.toContain(
+      'Social posts: write one caption',
     );
     const meta = (await db.videoProject.findUniqueOrThrow({ where: { id } })).metadata as {
       captionSuggestions?: { source: string; suggestions: Record<string, { hashtags: string[] }> };

@@ -153,6 +153,7 @@ export async function planSlideshow(
         planTier: data.planTier,
         request: {
           capability: 'text_generation',
+          task: 'script_safety',
           organisationId: data.organisationId,
           projectId: data.projectId,
           system: SCRIPT_SAFETY_SYSTEM_PROMPT,
