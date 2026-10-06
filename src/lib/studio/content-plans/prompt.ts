@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import { ProviderError } from '../../errors';
 import { DEFAULT_LANGUAGE, languageInstruction } from '../languages';
+import { MAX_PLANNING_OUTPUT_TOKENS } from '../pipeline/token-budgets';
 import { calendarDayName, type PlanAngle, type PlanKind } from './mix';
 
 // 20.9 — the month-planning prompt (one Claude call per chunk of slots). The system prompt lives
@@ -13,9 +14,20 @@ import { calendarDayName, type PlanAngle, type PlanKind } from './mix';
 // already chosen (mix.ts), so the model writes topics only.
 
 export const PLAN_PROMPT_FILE = join('prompts', 'month-plan.md');
-/** Slots per Claude call: keeps each answer well under the output limit. */
-export const PLAN_CHUNK_SIZE = 20;
-export const PLAN_MAX_TOKENS = 8_000;
+
+/**
+ * 23.4 — production 2026-10-06 ("Output hit max_tokens (8000)"): a chunk of 20 posts, each with a
+ * title, brief (≤ 600 chars), hook, up to 5 points, CTA, caption (≤ 600 chars) and hashtags, did
+ * not fit one answer, and an 84-post month was left with untitled posts. A post is about 500–800
+ * output tokens in English; PLAN_ITEM_OUTPUT_TOKENS doubles the upper end for languages that
+ * tokenise less densely (Arabic, Hindi), so a batch always fits the planning cap.
+ */
+export const PLAN_MAX_TOKENS = MAX_PLANNING_OUTPUT_TOKENS;
+export const PLAN_ITEM_OUTPUT_TOKENS = 1_600;
+/** Slots per Claude call: 16 000 / 1 600 = 10. */
+export const PLAN_BATCH_SIZE = Math.floor(PLAN_MAX_TOKENS / PLAN_ITEM_OUTPUT_TOKENS);
+/** Batches written at once (bounded, so a month drafts quickly without hitting rate limits). */
+export const PLAN_PARALLEL_BATCHES = 3;
 
 /** How a slot's format is named in the prompt (21.6: carousels are post-card image carousels). */
 const KIND_WORD: Readonly<Record<PlanKind, string>> = {
