@@ -169,7 +169,8 @@ export interface CarouselView {
   readonly render: CarouselRenderView | null;
 }
 
-async function latestRender(
+/** The carousel's latest render with signed slide URLs (22.4: also the Blitz card preview). */
+export async function latestRender(
   db: Db,
   storage: AssetStorage,
   project: Pick<VideoProject, 'id' | 'metadata'>,

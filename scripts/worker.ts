@@ -38,6 +38,7 @@ import { ACCOUNT_CHECK_SCHEDULE } from '../src/lib/studio/services/account-statu
 import { AUDIT_RETENTION_SCHEDULE } from '../src/lib/studio/services/audit-retention';
 import { EMAIL_SWEEP_SCHEDULE } from '../src/lib/studio/queue/workers/send-email';
 import { CONTENT_PLAN_RUNNER_SCHEDULE } from '../src/lib/studio/services/content-plan-run';
+import { AUTOMATION_RUNNER_SCHEDULE } from '../src/lib/studio/services/automation-run';
 
 // BACKLOG 3.10 — worker process entry point, run separately from the Next.js server:
 //   npm run worker                          # all pipeline queues
@@ -260,6 +261,15 @@ async function main(): Promise<void> {
     {
       name: 'advance-content-plans',
       data: { organisationId: 'postmind-platform', runId: 'content-plans', planTier: 'STANDARD' },
+    },
+  );
+  // 22.5 — the automation runner (review / activate / weekly rollover / insights), every 5 min.
+  await orchestration.upsertJobScheduler(
+    'advance-automations',
+    { pattern: AUTOMATION_RUNNER_SCHEDULE, tz: 'UTC' },
+    {
+      name: 'advance-automations',
+      data: { organisationId: 'postmind-platform', runId: 'automations', planTier: 'STANDARD' },
     },
   );
   await publish.upsertJobScheduler(

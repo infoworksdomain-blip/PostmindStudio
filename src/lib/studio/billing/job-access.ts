@@ -26,6 +26,8 @@ export const GATED_JOBS: Partial<Record<JobName, JobGate>> = {
   'draft-content-plan': 'spend',
   'rescan-website': 'spend',
   'refresh-image-library': 'spend',
+  // 22.4: Blitz cards are written and pre-rendered only for organisations with full access.
+  'refill-blitz-queue': 'spend',
   'publish-video': 'publish',
   'fire-scheduled-publication': 'publish',
 };

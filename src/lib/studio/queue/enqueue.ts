@@ -72,6 +72,11 @@ export const jobIds = {
   /** 20.9: a kick of one plan, at most one a second. */
   advanceContentPlan: (planId: string, now: number) =>
     `advance-content-plans__${planId}__${Math.floor(now / 1_000)}`,
+  /** 22.4: one refill per business per debounce window. */
+  refillBlitz: (businessId: string, window: number) => `refill-blitz__${businessId}__${window}`,
+  /** 22.5: a kick of one automation, at most one a second. */
+  advanceAutomation: (automationId: string, now: number) =>
+    `advance-automations__${automationId}__${Math.floor(now / 1_000)}`,
 };
 
 export function createBullJobQueue(

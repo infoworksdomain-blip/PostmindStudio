@@ -50,6 +50,9 @@ import { MAX_UGC_SEED, newUgcStyle, ugcInput, ugcStyleOf } from '../ugc/style';
 import { ugcProjectBudgetPence } from '../ugc/cost';
 import { assertNoRealPerson, assertUgcProductImage, assertUgcShape } from '../ugc/validate';
 
+/** 22.4: sourceRef of a Blitz render project while its card waits for a swipe. */
+export const BLITZ_SOURCE_REF_PREFIX = 'blitz:';
+
 // Project lifecycle services behind /api/studio/projects (spec 8.2, BACKLOG 4.1–4.8).
 // Every query is scoped by organisationId; another organisation's project is simply not found.
 
@@ -466,6 +469,10 @@ export async function listProjects(
     ];
   }
   if (query.businessId) where.businessId = query.businessId;
+  // 22.4: Blitz cards rendered ahead of a swipe (sourceRef "blitz:<id>") are not projects yet.
+  where.AND = [
+    { OR: [{ sourceRef: null }, { NOT: { sourceRef: { startsWith: BLITZ_SOURCE_REF_PREFIX } } }] },
+  ];
   if (query.days) where.createdAt = { gte: new Date(now - query.days * 86_400_000) };
   const rows = await db.videoProject.findMany({
     where,

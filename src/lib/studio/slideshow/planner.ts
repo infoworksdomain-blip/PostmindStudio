@@ -35,6 +35,12 @@ export const slideContent = z
     pendingText: z.boolean().optional(),
     /** What auto-populate searches the image library for. */
     imageQuery: z.string().trim().max(300).optional(),
+    /**
+     * 22.4: a hook / closing slide drawn as large centred text over its photo, dimmed (Blitz and
+     * automation slideshows, the Fastlane look) instead of a flat text card. Without a photo it
+     * falls back to the text card on the brand backdrop.
+     */
+    headline: z.boolean().optional(),
   })
   .strict();
 export type SlideContent = z.infer<typeof slideContent>;

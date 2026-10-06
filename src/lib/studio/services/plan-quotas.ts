@@ -9,6 +9,7 @@ import { notifySafely, type NotificationMessage, type Notifier } from '../notifi
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
 import { allowanceUnitsOf } from '../ugc/allowance';
+import { isUnkeptBlitz } from '../blitz/constants';
 import { PLAN_CATALOGUE, TIER_ORDER as CATALOGUE_TIERS } from '../billing/catalogue';
 import {
   ALLOWANCE_WINDOW,
@@ -259,9 +260,14 @@ export function quotaSlotOf(metadata: Prisma.JsonValue | null): QuotaSlot | null
   };
 }
 
-/** Counted in `month`: generation started in it, or a slot was reserved in it. */
+/**
+ * Counted in `month`: generation started in it, or a slot was reserved in it. 22.4: a Blitz
+ * pre-made render nobody has kept yet is not counted by its generation (a card counts when it is
+ * kept, not when it is shown); keeping it reserves a slot, which counts.
+ */
 function countedIn(metadata: Prisma.JsonValue | null, month: MonthWindow): boolean {
-  return inMonth(generatedAt(metadata), month) || quotaSlotOf(metadata)?.month === month.key;
+  if (quotaSlotOf(metadata)?.month === month.key) return true;
+  return !isUnkeptBlitz(metadata) && inMonth(generatedAt(metadata), month);
 }
 
 export type ViolationCode =
@@ -470,7 +476,7 @@ export async function checkGenerateQuota(
   const usage = await monthlyVideoUsage(deps.db, tenant.organisationId, quota, month);
   const violations = generateViolations({
     project,
-    alreadyCounted: inMonth(generatedAt(project.metadata), month),
+    alreadyCounted: countedIn(project.metadata, month),
     usage,
     quota,
     tier,
