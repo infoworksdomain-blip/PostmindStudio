@@ -10,6 +10,7 @@ import { useCan } from '../use-can';
 import { WriteGate } from '../write-gate';
 import { EmptyState, PageHeader } from '../primitives';
 import { BusinessHashtagsPanel } from '../hashtags/business-hashtags-panel';
+import { AnglesPanel } from './angles-panel';
 import { BusinessDetailsCard } from './business-details-card';
 import { BrandKitsPanel } from './brand-kits-panel';
 import { CreatorsPanel } from './creators-panel';
@@ -24,10 +25,12 @@ import { VoiceProfilesPanel } from './voice-profiles-panel';
 // 20.13: the Hashtags tab (business hashtag + always-include hashtags); ?tab=<tab> opens a tab.
 
 // 22.3: the Creators tab (reusable AI creators for UGC videos; ?tab=creators from Create).
+// 22.4: the Angles tab (content angles and the content mix used by Blitz and automations).
 export const BUSINESS_TABS = [
   'profile',
   'scan',
   'brand',
+  'angles',
   'creators',
   'hashtags',
   'images',
@@ -89,6 +92,11 @@ export function BusinessScreen() {
             <WriteGate>
               <BrandKitsPanel businessId={businessId} />
               <VoiceProfilesPanel businessId={businessId} />
+            </WriteGate>
+          </TabsContent>
+          <TabsContent value="angles">
+            <WriteGate>
+              <AnglesPanel businessId={businessId} />
             </WriteGate>
           </TabsContent>
           <TabsContent value="creators">

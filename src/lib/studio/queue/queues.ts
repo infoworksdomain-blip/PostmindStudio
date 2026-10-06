@@ -142,6 +142,23 @@ export interface AdvancePlansJobData extends RollUpJobData {
   planId?: string;
 }
 
+/** 22.5: the automation runner (every 5 minutes, platform-level); automationId = kick one now. */
+export interface AdvanceAutomationsJobData extends RollUpJobData {
+  automationId?: string;
+}
+
+/** 22.4: top a business's Blitz deck up to BLITZ_QUEUE_SIZE cards (runId = the debounce window). */
+export interface BlitzRefillJobData {
+  organisationId: string;
+  businessId: string;
+  /** Whose Blitz asked for it (the render projects' creator). */
+  userId: string;
+  runId: string;
+  planTier: PlanTier;
+  projectId?: undefined;
+  batch?: boolean;
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
@@ -217,6 +234,10 @@ export interface JobDataMap {
   'draft-content-plan': ContentPlanJobData;
   /** 20.9: start throttled month-plan items, track their status, send the summary (every minute). */
   'advance-content-plans': AdvancePlansJobData;
+  /** 22.4: write (and pre-render the cheap formats of) new Blitz cards for one business. */
+  'refill-blitz-queue': BlitzRefillJobData;
+  /** 22.5: draft, review, activate and roll over automations (every 5 minutes, platform-level). */
+  'advance-automations': AdvanceAutomationsJobData;
 }
 
 export type JobName = keyof JobDataMap;
@@ -265,6 +286,8 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'sweep-email-outbox': QUEUES.email,
   'draft-content-plan': QUEUES.orchestration,
   'advance-content-plans': QUEUES.orchestration,
+  'refill-blitz-queue': QUEUES.orchestration,
+  'advance-automations': QUEUES.orchestration,
 };
 
 export const MAX_RETRIES = 5;

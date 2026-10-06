@@ -71,7 +71,9 @@
         "approvals": "Flujos de aprobación",
         "export": "Exportar datos",
         "admin": "Administración",
-        "settings": "Ajustes"
+        "settings": "Ajustes",
+        "blitz": "Blitz",
+        "automations": "Automatizaciones"
       }
     },
     "theme": {
@@ -512,6 +514,18 @@
         "title": "Se ha alcanzado un límite para crear vídeos",
         "body": "Studio ha puesto en pausa los vídeos nuevos por ahora. La publicación no se ve afectada."
       }
+    },
+    "automationReview": {
+      "title": "«{name}» está lista para revisar",
+      "body": "Conserva, cambia o edita las publicaciones y apruébalas para programar el periodo."
+    },
+    "automationPaused": {
+      "title": "«{name}» está en pausa",
+      "body": "Ha dejado de crear publicaciones. Ábrela para ver el motivo y reanudarla."
+    },
+    "automationInsight": {
+      "title": "Tu mejor publicación de la semana: {title}",
+      "body": "Crea más como esta desde «{name}» para ver más de su formato y enfoque."
     }
   },
   "create": {
@@ -1766,7 +1780,8 @@
         "images": "Biblioteca de imágenes",
         "learned": "Lo que Studio ha aprendido",
         "hashtags": "Hashtags",
-        "creators": "Creadores"
+        "creators": "Creadores",
+        "angles": "Enfoques"
       },
       "readOnly": "Tienes acceso de solo lectura a este negocio. Pide a un propietario o administrador que haga los cambios."
     },
@@ -5393,7 +5408,8 @@
       "kill_switch": "Studio ha pausado la generación por ahora. Tus publicaciones continuarán automáticamente.",
       "cost_cap": "En pausa: se ha alcanzado el límite de gasto de este mes. Continuará cuando el límite se restablezca o añadas una recarga.",
       "daily_limit": "En pausa hasta mañana: se ha alcanzado el límite de hoy para los planes mensuales. El resto continuará automáticamente.",
-      "monthLimit": "En pausa: se ha alcanzado el límite de este mes. Continuará cuando el límite se restablezca o compres un pack de vídeos."
+      "monthLimit": "En pausa: se ha alcanzado el límite de este mes. Continuará cuando el límite se restablezca o compres un pack de vídeos.",
+      "paused": "En pausa: su automatización está en pausa. Las publicaciones ya creadas se publican igualmente."
     },
     "drafting": {
       "title": "Preparando tu mes",
@@ -5466,7 +5482,9 @@
       "publish_failed": "La publicación falló. Ábrela para volver a intentarlo.",
       "safety_review": "Esperando una revisión de seguridad.",
       "content_safety_flag": "El control de seguridad del contenido la marcó.",
-      "script_safety_flag": "El control de seguridad del guion la marcó."
+      "script_safety_flag": "El control de seguridad del guion la marcó.",
+      "no_unique_content": "Demasiado parecida a una publicación reciente, así que se ha descartado.",
+      "cap_reached": "No la cubren los vídeos de tu plan para este periodo."
     },
     "editor": {
       "title": "Tu mes: {start} – {end}",
@@ -5758,6 +5776,275 @@
         "youtube_video_only": "YouTube solo publica vídeos. Descarga las diapositivas.",
         "x_not_built": "Studio aún no puede publicar carruseles en X. Descarga las diapositivas."
       }
+    }
+  },
+  "blitz": {
+    "page": {
+      "title": "Blitz",
+      "description": "Desliza publicaciones listas. Quédate con las que te gusten y descarta el resto.",
+      "settings": "Enfoques y mezcla",
+      "pickTitle": "Elige primero un negocio",
+      "pickBody": "Blitz crea publicaciones para un negocio cada vez. Elige uno en la parte superior de la página."
+    },
+    "deck": {
+      "loading": "Cargando tus tarjetas…",
+      "rendering": "{count, plural, one {Se está creando # tarjeta más} other {Se están creando # tarjetas más}}",
+      "swipesLeft": "{count, plural, one {Te queda # deslizamiento hoy} other {Te quedan # deslizamientos hoy}}",
+      "cardLabel": "{format}: {title}",
+      "roleDeck": "mazo de tarjetas",
+      "actions": "Acciones de la tarjeta",
+      "empty": "No hay tarjetas",
+      "keepLabel": "Conservar esta publicación",
+      "skipLabel": "Descartar esta publicación",
+      "editLabel": "Conservar esta publicación y editarla primero",
+      "stampKeep": "Sí",
+      "stampSkip": "No",
+      "keyboardHintLtr": "Arrastra la tarjeta o usa → para conservar, ← para descartar y ↑ para editar primero.",
+      "keyboardHintRtl": "Arrastra la tarjeta o usa ← para conservar, → para descartar y ↑ para editar primero.",
+      "why": "Por qué funciona",
+      "tier": {
+        "premade": "Lista para publicar",
+        "preview": "Vista previa: se crea si la conservas"
+      },
+      "format": {
+        "carousel": "Carrusel",
+        "slideshow": "Presentación",
+        "wall_of_text": "Muro de texto",
+        "hook_demo": "Gancho y demo",
+        "ai_video": "Vídeo con IA",
+        "ugc": "Vídeo de creador"
+      },
+      "formatPlural": {
+        "carousel": "carruseles",
+        "slideshow": "presentaciones",
+        "wall_of_text": "muros de texto",
+        "hook_demo": "vídeos de gancho y demo",
+        "ai_video": "vídeos con IA",
+        "ugc": "vídeos de creador"
+      },
+      "allowance": "{units, plural, one {Usa # vídeo de tu plan si la conservas} other {Usa # vídeos de tu plan si la conservas}}",
+      "remix": {
+        "title": "Remezcla de",
+        "show": "Ver el original",
+        "seconds": "{seconds} s",
+        "note": "Solo se toman su estructura y su ritmo, nunca sus palabras ni sus imágenes."
+      },
+      "slide": "Diapositiva {n} de {total}",
+      "prevSlide": "Diapositiva anterior",
+      "nextSlide": "Diapositiva siguiente",
+      "soundOn": "Toca para activar el sonido",
+      "soundOff": "Silenciar",
+      "beats": "Guion",
+      "stillAlt": "Una imagen de tu biblioteca",
+      "mentionsBusiness": "Nombra tu negocio"
+    },
+    "keep": {
+      "title": "Conservarla",
+      "schedule": "Programar en el próximo hueco libre",
+      "scheduleHint": "Se publica en tu próxima hora de publicación libre.",
+      "post_now": "Publicar ahora",
+      "post_nowHint": "Se publica enseguida en tus cuentas conectadas.",
+      "edit": "Editar primero",
+      "editHint": "La abre para cambiar el texto y las imágenes.",
+      "cancel": "Cancelar",
+      "confirm": "Conservar",
+      "previewNote": "{units, plural, one {Se crea ahora y usa # vídeo de tu plan.} other {Se crea ahora y usa # vídeos de tu plan.}}"
+    },
+    "skip": {
+      "title": "¿Por qué la descartas? (opcional)",
+      "reasons": {
+        "not_my_style": "No es mi estilo",
+        "wrong_topic": "Tema equivocado",
+        "too_salesy": "Demasiado comercial",
+        "seen_it": "Ya lo he visto"
+      }
+    },
+    "toast": {
+      "scheduled": "Conservada y programada para el {when}.",
+      "scheduledSoon": "Conservada y programada.",
+      "posting": "Conservada: publicándose ahora.",
+      "awaitingApproval": "Conservada: pendiente de aprobación.",
+      "noAccounts": "Conservada. Conecta una cuenta para publicarla; está guardada en Proyectos.",
+      "edit": "Conservada: abriéndola para editarla.",
+      "downloadOnly": "En TikTok, esta es solo para descargar por ahora (las publicaciones de fotos aún no están configuradas).",
+      "fewerFormat": "Verás menos {format}.",
+      "fewerAngle": "Verás menos «{angle}».",
+      "lessSalesy": "Verás menos publicaciones que nombran tu negocio.",
+      "atLimit": "Anotado. Ya está en el mínimo."
+    },
+    "end": {
+      "emptyTitle": "Eso es todo por ahora",
+      "emptyBody": "Vienen más tarjetas. Vuelve más tarde o crea más ahora.",
+      "capsTitle": "Eso es todo por hoy",
+      "capsBody": "Ya has visto las publicaciones listas de hoy. Vuelve mañana para ver más.",
+      "swipesTitle": "No quedan deslizamientos hoy",
+      "swipesBody": "Vuelve mañana para seguir.",
+      "more": "Crear más",
+      "queued": "Vienen más tarjetas."
+    },
+    "angles": {
+      "title": "Enfoques",
+      "description": "Los temas de tus publicaciones. Blitz y las automatizaciones los eligen según la frecuencia que quieras para cada uno.",
+      "add": "Añadir un enfoque",
+      "titleLabel": "Título",
+      "descriptionLabel": "De qué trata",
+      "audienceLabel": "Para quién es",
+      "weightLabel": "Frecuencia",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "edit": "Editar",
+      "retire": "Retirar",
+      "restore": "Recuperar",
+      "suggest": "Sugerir enfoques",
+      "suggesting": "Sugiriendo…",
+      "empty": "Aún no hay enfoques",
+      "emptyBody": "Añade uno o deja que Studio sugiera algunos a partir del perfil de tu negocio.",
+      "count": "{count} de {max} enfoques",
+      "ai": "Sugerido",
+      "forAudience": "Para {audience}",
+      "suggested": "{count, plural, one {# enfoque nuevo añadido} other {# enfoques nuevos añadidos}}",
+      "noneNew": "No hay enfoques nuevos: todas las ideas ya estaban en tu lista.",
+      "retiredTitle": "{count, plural, one {# enfoque retirado} other {# enfoques retirados}}"
+    },
+    "mix": {
+      "title": "Mezcla de contenido",
+      "description": "Lo que crean Blitz y las automatizaciones. Los formatos baratos están listos antes de que los veas; los de pago solo se crean cuando conservas uno.",
+      "formats": "Formatos",
+      "paidFormat": "{format} (usa los vídeos de tu plan)",
+      "paidNote": "Los formatos de pago siguen desactivados hasta que los subas.",
+      "remix": "Remezclar estructuras populares",
+      "mention": "Nombrar el negocio",
+      "mentionShort": "Nombrar el negocio",
+      "save": "Guardar la mezcla",
+      "saved": "Mezcla de contenido guardada.",
+      "nudges": "Aprendido de tus deslizamientos",
+      "noNudges": "Nada todavía. Los motivos para descartar y lo que conservas lo ajustan poco a poco.",
+      "reset": "Borrar lo que ha aprendido Blitz",
+      "percent": "{value} %"
+    }
+  },
+  "automations": {
+    "list": {
+      "title": "Automatizaciones",
+      "description": "Publicaciones creadas y publicadas por ti cada semana o cada mes, empezando por los formatos más baratos.",
+      "new": "Nueva automatización",
+      "pickTitle": "Elige primero un negocio",
+      "pickBody": "Una automatización publica para un negocio. Elige uno en la parte superior de la página.",
+      "loading": "Cargando automatizaciones…",
+      "empty": "Aún no hay automatizaciones",
+      "emptyBody": "Configura una y Studio creará y publicará tu contenido cada semana."
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "GENERATING": "Redactando publicaciones",
+      "REVIEW": "Lista para revisar",
+      "ACTIVE": "Activa",
+      "PAUSED": "En pausa",
+      "COMPLETED": "Completada",
+      "CANCELLED": "Cancelada"
+    },
+    "cadence": {
+      "perDay": "{count, plural, one {# publicación al día} other {# publicaciones al día}}",
+      "perWeek": "{count, plural, one {# publicación a la semana} other {# publicaciones a la semana}}"
+    },
+    "duration": {
+      "one_week": "1 semana",
+      "four_weeks": "4 semanas",
+      "ongoing_weekly": "Cada semana",
+      "ongoing_monthly": "Cada mes"
+    },
+    "approval": {
+      "review": "Revisar primero en Blitz",
+      "reviewHint": "Conservas, cambias o editas cada publicación antes de programarla. No se crea nada hasta que apruebas.",
+      "auto": "Aprobar y publicar automáticamente",
+      "autoHint": "Las publicaciones se crean y salen a su hora; aún puedes quitar cualquiera."
+    },
+    "wizard": {
+      "title": "Nueva automatización",
+      "progress": "Pasos",
+      "steps": {
+        "channels": "Canales",
+        "cadence": "Frecuencia",
+        "mix": "Mezcla",
+        "approval": "Aprobación",
+        "summary": "Resumen"
+      },
+      "channelsTitle": "¿Dónde publica?",
+      "channelsHint": "Elige las redes en las que publica, dentro de los canales de tu plan.",
+      "noAccount": "{platform} no está conectado: sus publicaciones se guardan para revisarlas.",
+      "cadenceTitle": "¿Con qué frecuencia?",
+      "mode": {
+        "per_day": "Publicaciones al día",
+        "per_dayHint": "De 1 a 3 publicaciones al día en cada red.",
+        "per_week": "Publicaciones a la semana",
+        "per_weekHint": "Repartidas a lo largo de la semana."
+      },
+      "durationTitle": "¿Durante cuánto tiempo?",
+      "mixTitle": "Qué crear",
+      "mixHint": "Usa la mezcla de contenido y los enfoques de tu negocio.",
+      "mixLink": "Editar la mezcla de contenido",
+      "lowestCost": "Se crea con los formatos más baratos primero: los carruseles y las presentaciones no necesitan generación de vídeo de pago.",
+      "approvalTitle": "Antes de publicar",
+      "summaryTitle": "Resumen",
+      "name": "Nombre (opcional)",
+      "estimating": "Calculando…",
+      "summaryPostsLabel": "Publicaciones",
+      "summaryPosts": "{count, plural, one {# publicación cada {days} días} other {# publicaciones cada {days} días}}",
+      "summarySplitLabel": "Formatos",
+      "summarySplit": "{format}: {count}",
+      "allowanceLabel": "Tu plan",
+      "allowance": "{count, plural, one {Usa hasta # vídeo por periodo} other {Usa hasta # vídeos por periodo}}",
+      "paidPosts": "{count, plural, one {# publicación usa un formato de pago.} other {# publicaciones usan un formato de pago.}}",
+      "staffEstimate": "Equipo: coste habitual de proveedores {amount} por periodo",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "create": "Crear e iniciar",
+      "started": "Automatización iniciada. Se están redactando sus primeras publicaciones."
+    },
+    "detail": {
+      "back": "Todas las automatizaciones",
+      "start": "Iniciar",
+      "review": "Revisar en Blitz",
+      "approve": "Aprobar y programar",
+      "approved": "Aprobada. Se están creando y programando las publicaciones.",
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "cancel": "Cancelar la automatización",
+      "cancelConfirm": "¿Cancelar esta automatización? Se cancelan las publicaciones que aún no han salido.",
+      "pauseReason": {
+        "owner": "La has pausado tú. Las publicaciones ya creadas se publican igualmente.",
+        "allowance": "Se han agotado los vídeos de tu plan. Añade un canal o compra un paquete de vídeos y reanúdala.",
+        "billing": "En pausa porque la facturación necesita atención.",
+        "owner_left": "En pausa porque la persona que la configuró ha dejado la organización.",
+        "plan_missing": "En pausa: no se encuentra su periodo actual.",
+        "no_free_slots": "En pausa: no hay horas de publicación libres en el próximo periodo.",
+        "no_formats": "En pausa: ninguna de sus redes admite los formatos de tu mezcla de contenido.",
+        "cost_cap": "En pausa: se ha alcanzado el límite de este mes."
+      },
+      "upgrade": "Añadir vídeos",
+      "insightTitle": "Mejor publicación de la semana",
+      "insightBody": "«{title}»: {views, number} visualizaciones",
+      "moreLikeThis": "Crear más como esta",
+      "moreDone": "Verás más de este formato y este enfoque.",
+      "noPeriods": "Aún no hay nada planificado.",
+      "period": "Periodo {n}",
+      "writing": "Redactando las publicaciones…",
+      "reviewed": "Conservada",
+      "untitled": "Redactándose",
+      "downloadOnly": "Solo para descargar en {platforms}",
+      "reroll": "Tema nuevo",
+      "rerolled": "Ya hay un tema nuevo.",
+      "remove": "Quitar",
+      "keep": "Conservar"
+    },
+    "review": {
+      "title": "Revisión: {name}",
+      "loading": "Revisión",
+      "description": "Conserva o descarta cada publicación. No se crea ni se cobra nada hasta que apruebas.",
+      "back": "Volver a la automatización",
+      "notInReview": "Esta automatización no está pendiente de revisión.",
+      "done": "Todo revisado",
+      "doneBody": "Aprueba para crear las publicaciones y programarlas a su hora."
     }
   }
 }

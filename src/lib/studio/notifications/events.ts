@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
+import { isUnkeptBlitz } from '../blitz/constants';
 import { currentRunId } from '../pipeline/project-state';
 import { notifierFor, notifySafely, type Notifier } from './notifier';
 import { projectLabel, projectNameParam } from '../../project-name';
@@ -38,9 +39,10 @@ async function generationComplete(
 ): Promise<void> {
   const project = await host.db.videoProject.findFirst({
     where: { id: input.projectId, organisationId: input.organisationId },
-    select: { name: true, state: true, createdByUserId: true },
+    select: { name: true, state: true, createdByUserId: true, metadata: true },
   });
-  if (!project) return;
+  // 22.4: a Blitz card rendered ahead of a swipe is not "ready for review" yet.
+  if (!project || isUnkeptBlitz(project.metadata)) return;
   const autoApproved = project.state === 'APPROVED' || project.state === 'PUBLISHING';
   await notifySafely(host, {
     organisationId: input.organisationId,
@@ -132,6 +134,7 @@ export async function notifyPendingApprovals(host: Host): Promise<{ notified: nu
   const notifier = notifierFor(host);
   let notified = 0;
   for (const project of projects) {
+    if (isUnkeptBlitz(project.metadata)) continue;
     const runId = currentRunId(project) ?? 'unknown';
     try {
       const { created } = await notifier.notify({

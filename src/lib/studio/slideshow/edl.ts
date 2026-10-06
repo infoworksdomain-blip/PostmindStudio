@@ -76,6 +76,12 @@ const SAFE_FONT = /^[A-Za-z0-9 -]{1,64}$/;
 /** Text over images sits on a dark shade, so it stays white (or the brand colour). */
 const OVERLAY_TEXT = '#ffffff';
 /**
+ * 22.4: the shade over a headline slide's photo: the HtmlAsset `background`, 50 % black.
+ * Shotstack's HtmlAsset background takes hex with the alpha FIRST ("#80ffffff", opposite to
+ * HTML; Edit API reference, HtmlAsset.background, read 2026-10-06).
+ */
+export const HEADLINE_DIM = '#80000000';
+/**
  * Line height used to size text boxes only. 21.7 (production 2026-10-05): the CSS must NOT set
  * it — a unitless `line-height` made Shotstack draw every wrapped line on one baseline. The
  * renderer's default spacing is ≤ this, so boxes sized with it still hold their lines.
@@ -175,6 +181,71 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
     position: 'top',
   };
   const shade = 'background: rgba(0,0,0,0.45); padding: 0.3em;';
+  /** 22.4: full-frame dimming layers under headline text (their own track, above the photos). */
+  const dims: Record<string, unknown>[] = [];
+
+  /**
+   * 22.4: a hook / closing slide as large centred text over its photo, dimmed (Fastlane's
+   * look, operator brief 2026-10-06: the flat grey hook/CTA card looked poster-like). No photo →
+   * the ordinary text card on the backdrop.
+   */
+  const headlineSlide = (
+    slide: ResolvedSlide,
+    at: number,
+    length: number,
+    transition: Record<string, unknown>,
+  ) => {
+    const body = escapeHtml(slide.content.text ?? slide.content.caption ?? '');
+    if (!slide.imageSrc) {
+      visual.push({
+        asset: html(
+          input,
+          body,
+          px(SLIDE_TEXT.card),
+          { ...full, background: slideBackdrop(slide, backdrop) },
+          readableTextColour(slideBackdrop(slide, backdrop), input.brand?.textColour),
+        ),
+        start: at,
+        length,
+        ...transition,
+      });
+      return;
+    }
+    visual.push({
+      asset: { type: 'image', src: slide.imageSrc },
+      start: at,
+      length,
+      fit: 'crop',
+      ...transition,
+      ...(slide.slideType === 'IMAGE_KENBURNS' && { effect: slide.kenBurnsEffect ?? 'zoomIn' }),
+    });
+    dims.push({
+      asset: {
+        type: 'html',
+        html: '<p></p>',
+        css: 'p { margin: 0; }',
+        width,
+        height,
+        background: HEADLINE_DIM,
+      },
+      start: at,
+      length,
+      position: 'center',
+    });
+    const size = px(SLIDE_TEXT.card);
+    text.push({
+      asset: html(
+        input,
+        body,
+        size,
+        { width: Math.round(width * 0.86), height: fit(0.5, size, 4), position: 'center' },
+        OVERLAY_TEXT,
+      ),
+      start: at,
+      length,
+      position: 'center',
+    });
+  };
 
   let start = 0;
   for (const slide of input.slides) {
@@ -286,6 +357,10 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
       }
       case 'IMAGE_STILL':
       case 'IMAGE_KENBURNS': {
+        if (c.headline && !slide.hasOverlays) {
+          headlineSlide(slide, at, length, transition);
+          break;
+        }
         if (slide.imageSrc) {
           image(slide.imageSrc, start, length, {
             ...transition,
@@ -310,6 +385,7 @@ export function buildSlideshowEdit(input: SlideshowEdlInput): Record<string, unk
 
   const tracks: Array<{ clips: Record<string, unknown>[] }> = [];
   if (text.length) tracks.push({ clips: text });
+  if (dims.length) tracks.push({ clips: dims });
   tracks.push({ clips: visual });
   if (input.musicSrc) {
     // Slideshows have no narration, so the music is the only audio.

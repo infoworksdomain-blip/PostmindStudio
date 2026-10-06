@@ -148,6 +148,14 @@ async function collectBrand(db: Db, org: string, c: Collector) {
       take,
     }),
   );
+  // 22.4 / 22.5: angles, the content mix, Blitz cards and automations.
+  c.add('content_angles', await db.contentAngle.findMany({ where: scope, take }));
+  c.add('content_mix_preferences', await db.contentMixPreference.findMany({ where: scope, take }));
+  c.add('blitz_suggestions', await db.blitzSuggestion.findMany({ where: scope, take }));
+  c.add(
+    'automations',
+    await db.automation.findMany({ where: scope, omit: { costCeilingPence: true }, take }),
+  );
   c.add(
     'style_memories',
     await db.styleMemory.findMany({ where: { ...scope, deletedAt: null }, take }),

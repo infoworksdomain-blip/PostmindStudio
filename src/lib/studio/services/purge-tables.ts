@@ -160,6 +160,11 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   // 22.3: reusable creators and their portraits (objects sit under the orgs/<id>/ prefix).
   org('creator_portraits', 'CreatorPortrait'),
   org('creators', 'Creator'),
+  // 22.4 / 22.5: Blitz cards, angles, the content mix and automations.
+  org('blitz_suggestions', 'BlitzSuggestion'),
+  org('content_angles', 'ContentAngle'),
+  org('content_mix_preferences', 'ContentMixPreference'),
+  org('automations', 'Automation'),
   org('templates', 'Template'),
   org('overlay_presets', 'OverlayPreset'),
   org('slideshow_templates', 'SlideshowTemplate'),

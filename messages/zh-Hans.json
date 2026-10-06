@@ -71,7 +71,9 @@
         "approvals": "审批流程",
         "export": "导出数据",
         "admin": "管理后台",
-        "settings": "设置"
+        "settings": "设置",
+        "blitz": "Blitz 快刷",
+        "automations": "自动化"
       }
     },
     "theme": {
@@ -512,6 +514,18 @@
         "title": "已达到视频制作上限",
         "body": "Studio 已暂时暂停新视频。发布不受影响。"
       }
+    },
+    "automationReview": {
+      "title": "“{name}”可以审核了",
+      "body": "保留、替换或编辑这些帖子，然后批准即可排期本期内容。"
+    },
+    "automationPaused": {
+      "title": "“{name}”已暂停",
+      "body": "它已停止制作新帖子。打开即可查看原因并恢复。"
+    },
+    "automationInsight": {
+      "title": "本周表现最好的帖子：{title}",
+      "body": "在“{name}”中多做一些类似内容，以后会更常看到这种形式和角度。"
     }
   },
   "create": {
@@ -1766,7 +1780,8 @@
         "images": "图片库",
         "learned": "Studio 学到的内容",
         "hashtags": "话题标签",
-        "creators": "创作者"
+        "creators": "创作者",
+        "angles": "内容角度"
       },
       "readOnly": "你对此业务只有查看权限。如需更改，请联系所有者或管理员。"
     },
@@ -5393,7 +5408,8 @@
       "kill_switch": "Studio 暂时暂停了生成。恢复后你的帖子会自动继续。",
       "cost_cap": "已暂停：本月支出上限已用完。上限重置或你购买充值包后会继续。",
       "daily_limit": "暂停到明天：今天的月度计划上限已用完。其余帖子会自动继续。",
-      "monthLimit": "已暂停：已达到本月上限。上限重置或您购买视频包后会继续。"
+      "monthLimit": "已暂停：已达到本月上限。上限重置或您购买视频包后会继续。",
+      "paused": "已暂停：所属自动化已暂停。已制作好的帖子仍会照常发布。"
     },
     "drafting": {
       "title": "正在起草你的一个月",
@@ -5466,7 +5482,9 @@
       "publish_failed": "发布失败。打开它即可重试。",
       "safety_review": "正在等待安全审核。",
       "content_safety_flag": "内容安全检查标记了它。",
-      "script_safety_flag": "脚本安全检查标记了它。"
+      "script_safety_flag": "脚本安全检查标记了它。",
+      "no_unique_content": "与最近的帖子过于相似，已略过。",
+      "cap_reached": "本期套餐中的视频额度不足以覆盖。"
     },
     "editor": {
       "title": "你的一个月：{start} – {end}",
@@ -5758,6 +5776,275 @@
         "youtube_video_only": "YouTube 只发布视频。请改为下载幻灯片。",
         "x_not_built": "Studio 暂时无法向 X 发布轮播图。请改为下载幻灯片。"
       }
+    }
+  },
+  "blitz": {
+    "page": {
+      "title": "Blitz 快刷",
+      "description": "滑动浏览已做好的帖子。喜欢的保留，其余跳过。",
+      "settings": "角度与组合",
+      "pickTitle": "请先选择一个商家",
+      "pickBody": "Blitz 每次为一个商家制作帖子。请在页面顶部选择一个。"
+    },
+    "deck": {
+      "loading": "正在加载卡片…",
+      "rendering": "{count, plural, other {还有 # 张卡片正在制作}}",
+      "swipesLeft": "{count, plural, other {今天还可滑动 # 次}}",
+      "cardLabel": "{format}：{title}",
+      "roleDeck": "卡片堆",
+      "actions": "卡片操作",
+      "empty": "没有卡片",
+      "keepLabel": "保留这条帖子",
+      "skipLabel": "跳过这条帖子",
+      "editLabel": "保留这条帖子并先编辑",
+      "stampKeep": "保留",
+      "stampSkip": "跳过",
+      "keyboardHintLtr": "拖动卡片，或按 → 保留、← 跳过、↑ 先编辑。",
+      "keyboardHintRtl": "拖动卡片，或按 ← 保留、→ 跳过、↑ 先编辑。",
+      "why": "为什么有效",
+      "tier": {
+        "premade": "可直接发布",
+        "preview": "预览：保留后才会制作"
+      },
+      "format": {
+        "carousel": "轮播图",
+        "slideshow": "幻灯片视频",
+        "wall_of_text": "文字墙",
+        "hook_demo": "开场钩子 + 演示",
+        "ai_video": "AI 视频",
+        "ugc": "创作者视频"
+      },
+      "formatPlural": {
+        "carousel": "轮播图",
+        "slideshow": "幻灯片视频",
+        "wall_of_text": "文字墙",
+        "hook_demo": "钩子 + 演示视频",
+        "ai_video": "AI 视频",
+        "ugc": "创作者视频"
+      },
+      "allowance": "{units, plural, other {保留后使用套餐中的 # 个视频}}",
+      "remix": {
+        "title": "改编自",
+        "show": "查看原作",
+        "seconds": "{seconds} 秒",
+        "note": "只借用结构和节奏，绝不使用其文字或画面。"
+      },
+      "slide": "第 {n} 张，共 {total} 张",
+      "prevSlide": "上一张",
+      "nextSlide": "下一张",
+      "soundOn": "点按开启声音",
+      "soundOff": "静音",
+      "beats": "脚本",
+      "stillAlt": "来自你图库的一张图片",
+      "mentionsBusiness": "提到了你的商家"
+    },
+    "keep": {
+      "title": "保留",
+      "schedule": "排到下一个空闲时段",
+      "scheduleHint": "在你下一个空闲的发布时间发布。",
+      "post_now": "立即发布",
+      "post_nowHint": "立即发布到你已连接的账号。",
+      "edit": "先编辑",
+      "editHint": "打开后可修改文字和图片。",
+      "cancel": "取消",
+      "confirm": "保留",
+      "previewNote": "{units, plural, other {现在开始制作，使用套餐中的 # 个视频。}}"
+    },
+    "skip": {
+      "title": "为什么跳过？（可选）",
+      "reasons": {
+        "not_my_style": "不是我的风格",
+        "wrong_topic": "话题不对",
+        "too_salesy": "太像广告",
+        "seen_it": "看过了"
+      }
+    },
+    "toast": {
+      "scheduled": "已保留，排期于 {when}。",
+      "scheduledSoon": "已保留并排期。",
+      "posting": "已保留：正在发布。",
+      "awaitingApproval": "已保留：等待批准。",
+      "noAccounts": "已保留。连接账号后即可发布；它已保存在“项目”中。",
+      "edit": "已保留：正在打开以便编辑。",
+      "downloadOnly": "TikTok 暂时只能下载这条（图片帖子尚未设置）。",
+      "fewerFormat": "你会看到更少的{format}。",
+      "fewerAngle": "你会更少看到“{angle}”。",
+      "lessSalesy": "你会看到更少提及你商家的帖子。",
+      "atLimit": "已记下。这项已经是最低了。"
+    },
+    "end": {
+      "emptyTitle": "暂时就这些",
+      "emptyBody": "新卡片正在路上。稍后再来，或现在再做一些。",
+      "capsTitle": "今天就这些",
+      "capsBody": "今天的现成帖子你都看过了。明天再来看更多。",
+      "swipesTitle": "今天的滑动次数用完了",
+      "swipesBody": "明天再来继续滑动。",
+      "more": "再做一些",
+      "queued": "更多卡片正在路上。"
+    },
+    "angles": {
+      "title": "内容角度",
+      "description": "你帖子的主题。Blitz 和自动化会按你为每个角度设置的频率来选择。",
+      "add": "添加角度",
+      "titleLabel": "标题",
+      "descriptionLabel": "讲什么",
+      "audienceLabel": "面向谁",
+      "weightLabel": "频率",
+      "save": "保存",
+      "cancel": "取消",
+      "edit": "编辑",
+      "retire": "停用",
+      "restore": "恢复",
+      "suggest": "推荐角度",
+      "suggesting": "正在推荐…",
+      "empty": "还没有角度",
+      "emptyBody": "添加一个，或让 Studio 根据你的商家资料推荐一些。",
+      "count": "{count}/{max} 个角度",
+      "ai": "推荐",
+      "forAudience": "面向{audience}",
+      "suggested": "{count, plural, other {已添加 # 个新角度}}",
+      "noneNew": "没有新角度：所有想法都已在你的列表里。",
+      "retiredTitle": "{count, plural, other {# 个已停用角度}}"
+    },
+    "mix": {
+      "title": "内容组合",
+      "description": "Blitz 和自动化要制作的内容。低成本形式在你看到之前就已做好；付费形式只有在你保留时才会制作。",
+      "formats": "形式",
+      "paidFormat": "{format}（使用套餐中的视频）",
+      "paidNote": "付费形式在你调高之前一直关闭。",
+      "remix": "改编热门结构",
+      "mention": "提及商家",
+      "mentionShort": "提及商家",
+      "save": "保存组合",
+      "saved": "内容组合已保存。",
+      "nudges": "从你的滑动中学到的",
+      "noNudges": "暂时没有。跳过原因和保留的内容会一点点调整它。",
+      "reset": "清除 Blitz 学到的内容",
+      "percent": "{value}%"
+    }
+  },
+  "automations": {
+    "list": {
+      "title": "自动化",
+      "description": "每周或每月为你制作并发布帖子，优先使用成本最低的形式。",
+      "new": "新建自动化",
+      "pickTitle": "请先选择一个商家",
+      "pickBody": "一个自动化为一个商家发布内容。请在页面顶部选择一个。",
+      "loading": "正在加载自动化…",
+      "empty": "还没有自动化",
+      "emptyBody": "设置一个，Studio 就会每周为你制作并发布内容。"
+    },
+    "status": {
+      "DRAFT": "草稿",
+      "GENERATING": "正在撰写帖子",
+      "REVIEW": "待审核",
+      "ACTIVE": "运行中",
+      "PAUSED": "已暂停",
+      "COMPLETED": "已完成",
+      "CANCELLED": "已取消"
+    },
+    "cadence": {
+      "perDay": "{count, plural, other {每天 # 条}}",
+      "perWeek": "{count, plural, other {每周 # 条}}"
+    },
+    "duration": {
+      "one_week": "1 周",
+      "four_weeks": "4 周",
+      "ongoing_weekly": "每周",
+      "ongoing_monthly": "每月"
+    },
+    "approval": {
+      "review": "先在 Blitz 中审核",
+      "reviewHint": "每条帖子排期前由你保留、替换或编辑。你批准之前不会制作任何内容。",
+      "auto": "自动批准并发布",
+      "autoHint": "帖子会按时制作并发布；你仍可删除任意一条。"
+    },
+    "wizard": {
+      "title": "新建自动化",
+      "progress": "步骤",
+      "steps": {
+        "channels": "渠道",
+        "cadence": "频率",
+        "mix": "组合",
+        "approval": "审批",
+        "summary": "汇总"
+      },
+      "channelsTitle": "发布到哪里？",
+      "channelsHint": "在你套餐的渠道数量内选择要发布的平台。",
+      "noAccount": "{platform} 未连接：其帖子会先保存以供审核。",
+      "cadenceTitle": "多久发一次？",
+      "mode": {
+        "per_day": "每天发布数",
+        "per_dayHint": "每个平台每天 1 到 3 条。",
+        "per_week": "每周发布数",
+        "per_weekHint": "分散在一周内。"
+      },
+      "durationTitle": "持续多久？",
+      "mixTitle": "制作什么",
+      "mixHint": "使用你商家的内容组合和角度。",
+      "mixLink": "编辑内容组合",
+      "lowestCost": "优先使用成本最低的形式：轮播图和幻灯片视频不需要付费视频生成。",
+      "approvalTitle": "发布之前",
+      "summaryTitle": "汇总",
+      "name": "名称（可选）",
+      "estimating": "正在计算…",
+      "summaryPostsLabel": "帖子",
+      "summaryPosts": "{count, plural, other {每 {days} 天 # 条帖子}}",
+      "summarySplitLabel": "形式",
+      "summarySplit": "{format}：{count}",
+      "allowanceLabel": "你的套餐",
+      "allowance": "{count, plural, other {每期最多使用 # 个视频}}",
+      "paidPosts": "{count, plural, other {有 # 条帖子使用付费形式。}}",
+      "staffEstimate": "员工：每期典型服务成本 {amount}",
+      "back": "上一步",
+      "next": "下一步",
+      "create": "创建并开始",
+      "started": "自动化已开始。正在撰写第一批帖子。"
+    },
+    "detail": {
+      "back": "所有自动化",
+      "start": "开始",
+      "review": "在 Blitz 中审核",
+      "approve": "批准并排期",
+      "approved": "已批准。帖子正在制作并排期。",
+      "pause": "暂停",
+      "resume": "恢复",
+      "cancel": "取消自动化",
+      "cancelConfirm": "要取消这个自动化吗？尚未发布的帖子将被取消。",
+      "pauseReason": {
+        "owner": "由你暂停。已制作好的帖子仍会照常发布。",
+        "allowance": "你套餐中的视频已用完。添加渠道或购买视频包后即可恢复。",
+        "billing": "因账单需要处理而暂停。",
+        "owner_left": "因设置它的人已离开组织而暂停。",
+        "plan_missing": "已暂停：找不到当前这一期。",
+        "no_free_slots": "已暂停：下一期没有空闲的发布时间。",
+        "no_formats": "已暂停：所选平台都不支持你内容组合中的形式。",
+        "cost_cap": "已暂停：已达到本月上限。"
+      },
+      "upgrade": "增加视频",
+      "insightTitle": "本周最佳帖子",
+      "insightBody": "“{title}”：{views, number} 次观看",
+      "moreLikeThis": "多做类似内容",
+      "moreDone": "你会更常看到这种形式和角度。",
+      "noPeriods": "还没有任何计划。",
+      "period": "第 {n} 期",
+      "writing": "正在撰写帖子…",
+      "reviewed": "已保留",
+      "untitled": "撰写中",
+      "downloadOnly": "在 {platforms} 上仅可下载",
+      "reroll": "换个话题",
+      "rerolled": "已换成新话题。",
+      "remove": "删除",
+      "keep": "保留"
+    },
+    "review": {
+      "title": "审核：{name}",
+      "loading": "审核",
+      "description": "逐条保留或跳过。你批准之前不会制作或收取任何费用。",
+      "back": "返回自动化",
+      "notInReview": "这个自动化目前不需要审核。",
+      "done": "全部审核完毕",
+      "doneBody": "批准后即会制作帖子并按时排期。"
     }
   }
 }

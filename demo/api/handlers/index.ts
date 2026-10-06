@@ -51,6 +51,8 @@ import './p20-captions-hashtags';
 import './p21-carousels';
 // Phase 22.3: reusable AI creators (two seeded creators, the Creators tab and the Create picker).
 import './p22-creators';
+// Phase 22.4 / 22.5: Blitz (a deck of carousel, slideshow and preview cards) and Automations.
+import './p22-blitz-automations';
 // Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
 // and sample data for Track C's billing contract.
 import './p18-org';
