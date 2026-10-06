@@ -49,6 +49,8 @@ import './p20-plan-month';
 import './p20-captions-hashtags';
 // Phase 21.6: carousels (post cards): a seeded carousel, its editor and Create → Carousel.
 import './p21-carousels';
+// Phase 22.4 / 22.5: Blitz (a deck of carousel, slideshow and preview cards) and Automations.
+import './p22-blitz-automations';
 // Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
 // and sample data for Track C's billing contract.
 import './p18-org';

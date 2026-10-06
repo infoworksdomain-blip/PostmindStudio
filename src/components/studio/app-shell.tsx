@@ -12,6 +12,7 @@ import {
   Download,
   Clapperboard,
   Film,
+  Layers,
   LayoutTemplate,
   Library,
   Link2,
@@ -19,6 +20,7 @@ import {
   Menu,
   Moon,
   Plus,
+  Repeat,
   Send,
   Settings,
   ShieldAlert,
@@ -48,10 +50,14 @@ import { UpgradeDialogHost } from './billing/upgrade-dialog';
 
 export const NAV = [
   { href: '/new', key: 'create', icon: Plus, group: 'make' },
+  // 22.4: swipe through ready-made posts.
+  { href: '/blitz', key: 'blitz', icon: Layers, group: 'make' },
   { href: '/projects', key: 'projects', icon: Clapperboard, group: 'make' },
   { href: '/library', key: 'library', icon: Library, group: 'make' },
   { href: '/templates', key: 'templates', icon: LayoutTemplate, group: 'make' },
   { href: '/publications', key: 'publications', icon: Send, group: 'manage' },
+  // 22.5: weekly / monthly auto generation and posting.
+  { href: '/automations', key: 'automations', icon: Repeat, group: 'manage' },
   { href: '/calendar', key: 'calendar', icon: CalendarDays, group: 'manage' },
   { href: '/analytics', key: 'analytics', icon: BarChart3, group: 'manage' },
   { href: '/business', key: 'business', icon: Building2, group: 'setup' },

@@ -15,6 +15,10 @@ import { PublicationsCalendar } from '@/components/studio/calendar/publications-
 import { PlanMonthForm } from '@/components/studio/plans/plan-month-form';
 import { PlanScreen } from '@/components/studio/plans/plan-screen';
 import { PlansList } from '@/components/studio/plans/plans-list';
+import { AutomationDetailScreen } from '@/components/studio/automations/automation-detail';
+import { AutomationsList } from '@/components/studio/automations/automations-list';
+import { AutomationWizard } from '@/components/studio/automations/automation-wizard';
+import { BlitzScreen } from '@/components/studio/blitz/blitz-screen';
 import { ConnectionsScreen } from '@/components/studio/connections/connections-screen';
 import { ApprovalWorkflowsScreen } from '@/components/studio/approvals/approval-workflows-screen';
 import { parseReference } from '@/components/studio/create/body';
@@ -78,6 +82,11 @@ const RENDER: Record<AppPath, Render> = {
   '/plans': () => <PlansList />,
   '/plans/new': () => <PlanMonthForm />,
   '/plans/:id': (p) => <PlanScreen planId={p.id ?? ''} />,
+  // 22.4 Blitz, 22.5 Automations.
+  '/blitz': () => <BlitzScreen />,
+  '/automations': () => <AutomationsList />,
+  '/automations/new': () => <AutomationWizard />,
+  '/automations/:id': (p) => <AutomationDetailScreen automationId={p.id ?? ''} />,
   '/analytics': () => <AnalyticsDashboard />,
   '/analytics/publications/:id': (p) => <PublicationAnalytics publicationId={p.id ?? ''} />,
   '/business': () => <BusinessScreen />,

@@ -71,7 +71,9 @@
         "approvals": "Approval workflows",
         "export": "Export data",
         "admin": "Admin",
-        "settings": "Settings"
+        "settings": "Settings",
+        "blitz": "Blitz",
+        "automations": "Automations"
       }
     },
     "theme": {
@@ -512,6 +514,18 @@
         "title": "A limit for making videos was reached",
         "body": "Studio has paused new videos for now. Publishing is not affected."
       }
+    },
+    "automationReview": {
+      "title": "“{name}” is ready to review",
+      "body": "Keep, swap or edit the posts, then approve them to schedule the period."
+    },
+    "automationPaused": {
+      "title": "“{name}” is paused",
+      "body": "It stopped making new posts. Open it to see why and to resume."
+    },
+    "automationInsight": {
+      "title": "Your top post this week: {title}",
+      "body": "Make more like it from “{name}” to see more of its format and angle."
     }
   },
   "create": {
@@ -1758,7 +1772,8 @@
         "brand": "Brand kits",
         "images": "Image library",
         "learned": "What Studio has learned",
-        "hashtags": "Hashtags"
+        "hashtags": "Hashtags",
+        "angles": "Angles"
       },
       "readOnly": "You have view-only access to this business. Ask an owner or admin to make changes."
     },
@@ -5296,7 +5311,8 @@
       "kill_switch": "Generation is paused by Studio for now. Your posts carry on automatically when it resumes.",
       "cost_cap": "Paused: this month’s spending limit has been reached. It carries on when the limit resets or you add a top-up.",
       "daily_limit": "Paused until tomorrow: today’s limit for month plans has been reached. The rest carry on automatically.",
-      "monthLimit": "Paused: this month’s limit has been reached. It resumes when the limit resets or you buy a video pack."
+      "monthLimit": "Paused: this month’s limit has been reached. It resumes when the limit resets or you buy a video pack.",
+      "paused": "Paused: its automation is paused. Posts already made still go out."
     },
     "drafting": {
       "title": "Drafting your month",
@@ -5369,7 +5385,9 @@
       "publish_failed": "Publishing failed. Open it to try again.",
       "safety_review": "Waiting for a safety review.",
       "content_safety_flag": "The content safety check flagged it.",
-      "script_safety_flag": "The script safety check flagged it."
+      "script_safety_flag": "The script safety check flagged it.",
+      "no_unique_content": "Too close to a recent post, so it was left out.",
+      "cap_reached": "Not covered by your plan’s videos for this period."
     },
     "editor": {
       "title": "Your month: {start} – {end}",
@@ -5661,6 +5679,275 @@
         "youtube_video_only": "YouTube posts videos only. Download the slides instead.",
         "x_not_built": "Studio can’t post carousels to X yet. Download the slides instead."
       }
+    }
+  },
+  "blitz": {
+    "page": {
+      "title": "Blitz",
+      "description": "Swipe through ready-made posts. Keep the ones you like; skip the rest.",
+      "settings": "Angles and mix",
+      "pickTitle": "Choose a business first",
+      "pickBody": "Blitz makes posts for one business at a time. Pick one at the top of the page."
+    },
+    "deck": {
+      "loading": "Loading your cards…",
+      "rendering": "{count, plural, one {# more card is being made} other {# more cards are being made}}",
+      "swipesLeft": "{count, plural, one {# swipe left today} other {# swipes left today}}",
+      "cardLabel": "{format}: {title}",
+      "roleDeck": "card deck",
+      "actions": "Card actions",
+      "empty": "No cards",
+      "keepLabel": "Keep this post",
+      "skipLabel": "Skip this post",
+      "editLabel": "Keep this post and edit it first",
+      "stampKeep": "Keep",
+      "stampSkip": "Skip",
+      "keyboardHintLtr": "Drag the card, or use → to keep, ← to skip and ↑ to edit first.",
+      "keyboardHintRtl": "Drag the card, or use ← to keep, → to skip and ↑ to edit first.",
+      "why": "Why this works",
+      "tier": {
+        "premade": "Ready to post",
+        "preview": "Preview: made when you keep it"
+      },
+      "format": {
+        "carousel": "Carousel",
+        "slideshow": "Slideshow",
+        "wall_of_text": "Wall of text",
+        "hook_demo": "Hook and demo",
+        "ai_video": "AI video",
+        "ugc": "Creator video"
+      },
+      "formatPlural": {
+        "carousel": "carousels",
+        "slideshow": "slideshows",
+        "wall_of_text": "walls of text",
+        "hook_demo": "hook and demo videos",
+        "ai_video": "AI videos",
+        "ugc": "creator videos"
+      },
+      "allowance": "{units, plural, one {Uses # video of your plan when kept} other {Uses # videos of your plan when kept}}",
+      "remix": {
+        "title": "Remixing",
+        "show": "Show the source",
+        "seconds": "{seconds} s",
+        "note": "Only its structure and pace are used, never its words or footage."
+      },
+      "slide": "Slide {n} of {total}",
+      "prevSlide": "Previous slide",
+      "nextSlide": "Next slide",
+      "soundOn": "Tap for sound",
+      "soundOff": "Mute",
+      "beats": "Script",
+      "stillAlt": "A picture from your library",
+      "mentionsBusiness": "Names your business"
+    },
+    "keep": {
+      "title": "Keep it",
+      "schedule": "Schedule next free slot",
+      "scheduleHint": "Posts at your next free posting time.",
+      "post_now": "Post now",
+      "post_nowHint": "Posts to your connected accounts straight away.",
+      "edit": "Edit first",
+      "editHint": "Opens it so you can change the text and pictures.",
+      "cancel": "Cancel",
+      "confirm": "Keep",
+      "previewNote": "{units, plural, one {This is made now and uses # video of your plan.} other {This is made now and uses # videos of your plan.}}"
+    },
+    "skip": {
+      "title": "Why skip it? (optional)",
+      "reasons": {
+        "not_my_style": "Not my style",
+        "wrong_topic": "Wrong topic",
+        "too_salesy": "Too salesy",
+        "seen_it": "Seen it"
+      }
+    },
+    "toast": {
+      "scheduled": "Kept and scheduled for {when}.",
+      "scheduledSoon": "Kept and scheduled.",
+      "posting": "Kept: posting now.",
+      "awaitingApproval": "Kept: waiting for approval.",
+      "noAccounts": "Kept. Connect an account to post it; it is saved in Projects.",
+      "edit": "Kept: opening it to edit.",
+      "downloadOnly": "TikTok gets this one as a download for now (photo posts are not set up yet).",
+      "fewerFormat": "You’ll see fewer {format}.",
+      "fewerAngle": "You’ll see less of “{angle}”.",
+      "lessSalesy": "You’ll see fewer posts that name your business.",
+      "atLimit": "Noted. That is already as low as it goes."
+    },
+    "end": {
+      "emptyTitle": "That’s the deck for now",
+      "emptyBody": "New cards are on their way. Come back later, or make more now.",
+      "capsTitle": "That’s today’s cards",
+      "capsBody": "You’ve seen today’s ready-made posts. Come back tomorrow for more.",
+      "swipesTitle": "That’s today’s swipes",
+      "swipesBody": "Come back tomorrow to keep swiping.",
+      "more": "Generate more",
+      "queued": "More cards are on their way."
+    },
+    "angles": {
+      "title": "Angles",
+      "description": "The themes your posts take. Blitz and automations pick from them by how often you want each.",
+      "add": "Add an angle",
+      "titleLabel": "Title",
+      "descriptionLabel": "What it is about",
+      "audienceLabel": "Who it is for",
+      "weightLabel": "How often",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "retire": "Retire",
+      "restore": "Bring back",
+      "suggest": "Suggest angles",
+      "suggesting": "Suggesting…",
+      "empty": "No angles yet",
+      "emptyBody": "Add one, or let Studio suggest some from your business profile.",
+      "count": "{count} of {max} angles",
+      "ai": "Suggested",
+      "forAudience": "For {audience}",
+      "suggested": "{count, plural, one {# new angle added} other {# new angles added}}",
+      "noneNew": "No new angles: every idea was already on your list.",
+      "retiredTitle": "{count, plural, one {# retired angle} other {# retired angles}}"
+    },
+    "mix": {
+      "title": "Content mix",
+      "description": "What Blitz and automations make. Cheap formats are ready to post before you see them; paid formats are only made when you keep one.",
+      "formats": "Formats",
+      "paidFormat": "{format} (uses your plan’s videos)",
+      "paidNote": "Paid formats stay off until you turn them up.",
+      "remix": "Remix popular structures",
+      "mention": "Name the business",
+      "mentionShort": "Naming the business",
+      "save": "Save mix",
+      "saved": "Content mix saved.",
+      "nudges": "Learned from your swipes",
+      "noNudges": "Nothing yet. Skip reasons and keeps adjust this a little at a time.",
+      "reset": "Clear what Blitz learned",
+      "percent": "{value}%"
+    }
+  },
+  "automations": {
+    "list": {
+      "title": "Automations",
+      "description": "Posts made and posted for you every week or month, with the lowest-cost formats first.",
+      "new": "New automation",
+      "pickTitle": "Choose a business first",
+      "pickBody": "An automation posts for one business. Pick one at the top of the page.",
+      "loading": "Loading automations…",
+      "empty": "No automations yet",
+      "emptyBody": "Set one up and Studio makes and posts your content every week."
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "GENERATING": "Writing posts",
+      "REVIEW": "Ready to review",
+      "ACTIVE": "Active",
+      "PAUSED": "Paused",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Canceled"
+    },
+    "cadence": {
+      "perDay": "{count, plural, one {# post a day} other {# posts a day}}",
+      "perWeek": "{count, plural, one {# post a week} other {# posts a week}}"
+    },
+    "duration": {
+      "one_week": "1 week",
+      "four_weeks": "4 weeks",
+      "ongoing_weekly": "Every week",
+      "ongoing_monthly": "Every month"
+    },
+    "approval": {
+      "review": "Review in Blitz first",
+      "reviewHint": "You keep, swap or edit each post before it is scheduled. Nothing is made until you approve.",
+      "auto": "Auto-approve and post",
+      "autoHint": "Posts are made and go out at their times; you can still remove any."
+    },
+    "wizard": {
+      "title": "New automation",
+      "progress": "Steps",
+      "steps": {
+        "channels": "Channels",
+        "cadence": "Cadence",
+        "mix": "Mix",
+        "approval": "Approval",
+        "summary": "Summary"
+      },
+      "channelsTitle": "Where should it post?",
+      "channelsHint": "Choose the networks it posts to, within your plan’s channels.",
+      "noAccount": "{platform} is not connected: its posts are saved for review instead.",
+      "cadenceTitle": "How often?",
+      "mode": {
+        "per_day": "Posts a day",
+        "per_dayHint": "1 to 3 posts a day on each network.",
+        "per_week": "Posts a week",
+        "per_weekHint": "Spread through the week."
+      },
+      "durationTitle": "For how long?",
+      "mixTitle": "What to make",
+      "mixHint": "It uses your business’s content mix and angles.",
+      "mixLink": "Edit the content mix",
+      "lowestCost": "Made with the lowest-cost formats first: carousels and slideshows need no paid video generation.",
+      "approvalTitle": "Before posting",
+      "summaryTitle": "Summary",
+      "name": "Name (optional)",
+      "estimating": "Working it out…",
+      "summaryPostsLabel": "Posts",
+      "summaryPosts": "{count, plural, one {# post every {days} days} other {# posts every {days} days}}",
+      "summarySplitLabel": "Formats",
+      "summarySplit": "{format}: {count}",
+      "allowanceLabel": "Your plan",
+      "allowance": "{count, plural, one {Uses up to # video per period} other {Uses up to # videos per period}}",
+      "paidPosts": "{count, plural, one {# post uses a paid format.} other {# posts use a paid format.}}",
+      "staffEstimate": "Staff: typical provider cost {amount} per period",
+      "back": "Back",
+      "next": "Next",
+      "create": "Create and start",
+      "started": "Automation started. Its first posts are being written."
+    },
+    "detail": {
+      "back": "All automations",
+      "start": "Start",
+      "review": "Review in Blitz",
+      "approve": "Approve and schedule",
+      "approved": "Approved. The posts are being made and scheduled.",
+      "pause": "Pause",
+      "resume": "Resume",
+      "cancel": "Cancel automation",
+      "cancelConfirm": "Cancel this automation? Posts not yet out are canceled.",
+      "pauseReason": {
+        "owner": "Paused by you. Posts already made still go out.",
+        "allowance": "Your plan’s videos are used up. Add a channel or buy a video pack, then resume.",
+        "billing": "Paused because billing needs attention.",
+        "owner_left": "Paused because the person who set it up left the organization.",
+        "plan_missing": "Paused: its current period could not be found.",
+        "no_free_slots": "Paused: there are no free posting times in the next period.",
+        "no_formats": "Paused: none of its networks takes the formats in your content mix.",
+        "cost_cap": "Paused: this month’s limit has been reached."
+      },
+      "upgrade": "Add videos",
+      "insightTitle": "Top post this week",
+      "insightBody": "“{title}”: {views, number} views",
+      "moreLikeThis": "Make more like this",
+      "moreDone": "You’ll see more of this format and angle.",
+      "noPeriods": "Nothing planned yet.",
+      "period": "Period {n}",
+      "writing": "Writing the posts…",
+      "reviewed": "Kept",
+      "untitled": "Being written",
+      "downloadOnly": "Download only on {platforms}",
+      "reroll": "New topic",
+      "rerolled": "A new topic is in.",
+      "remove": "Remove",
+      "keep": "Keep"
+    },
+    "review": {
+      "title": "Review: {name}",
+      "loading": "Review",
+      "description": "Keep or skip each post. Nothing is made or charged until you approve.",
+      "back": "Back to the automation",
+      "notInReview": "This automation is not waiting for a review.",
+      "done": "All reviewed",
+      "doneBody": "Approve to make the posts and schedule them at their times."
     }
   }
 }
