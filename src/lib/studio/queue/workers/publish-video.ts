@@ -5,7 +5,7 @@ import { ensureRenderSrt } from '../../overlays/voice-captions';
 import type { PublishRequest } from '../../platforms/interface';
 import { readThumbnail } from '../../services/thumbnails';
 import type { PipelineDeps } from '../../pipeline/deps';
-import { notifyPublicationFailed } from '../../notifications/events';
+import { notifyPublicationFailed, notifyTikTokDraftSent } from '../../notifications/events';
 import { recordPublished, recordPublishFailed } from '../../observability/slo';
 import {
   carouselSlideSources,
@@ -203,7 +203,10 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
   const publisher = deps.publishing.publishers[platform];
   if (carousel && !publisher?.publishCarousel)
     throw new PlatformError(platform, 'invalid_request', `${platform} takes no carousels`, false);
-  const { accessToken, accountId, scopes } = await resolveCredentials(deps.publishing, publication);
+  const { accessToken, accountId, scopes, tiktokPostMode } = await resolveCredentials(
+    deps.publishing,
+    publication,
+  );
   const video = carousel ? null : await videoSource(deps.publishing, publication.render);
   const slides = carousel ? await carouselSlideSources(deps.publishing, carousel) : null;
   const extras =
@@ -227,6 +230,7 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
     accountId,
     options: meta.options,
     ...(scopes && { grantedScopes: scopes }),
+    ...(tiktokPostMode && { tiktokPostMode }),
   };
   try {
     if (carousel && slides && publisher.publishCarousel) {
@@ -269,10 +273,20 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
         metadata: {
           ...meta,
           result: result.metadata,
-          // 15.A2: an inbox upload is finished by the creator in the TikTok app.
+          // 15.A2: an inbox upload is finished by the creator in the TikTok app; 22.7 adds why
+          // (inboxReason 'drafts' = the connection chose TikTok drafts) so the UI can say
+          // "Sent to TikTok drafts" instead of "Published".
           ...(result.metadata.tiktokMode === 'inbox' && {
             tiktokMode: 'inbox',
             note: result.metadata.note,
+            ...(typeof result.metadata.inboxReason === 'string' && {
+              inboxReason: result.metadata.inboxReason,
+            }),
+          }),
+          // 22.7: drafts were chosen but the connection lacks video.upload (posted directly).
+          ...(typeof result.metadata.draftsUnavailable === 'string' && {
+            draftsUnavailable: result.metadata.draftsUnavailable,
+            draftsNote: result.metadata.draftsNote,
           }),
         } as Prisma.InputJsonValue,
       },
@@ -301,6 +315,14 @@ export async function publishVideo(data: PublishJobData, deps: PipelineDeps): Pr
     platformPostId: result.platformPostId,
   });
   await rollUpProject(deps, publication.projectId, data.organisationId);
+  // 22.7: a TikTok inbox upload is not live yet: tell the creator to finish it in the app (with
+  // the AI-label reminder, since the inbox init cannot set is_aigc).
+  if (result.metadata.tiktokMode === 'inbox')
+    await notifyTikTokDraftSent(deps, {
+      publicationId: publication.id,
+      organisationId: data.organisationId,
+      projectId: publication.projectId,
+    });
   // Spec 15.2: metrics polling starts 30 s after publish.
   const poll = { ...data, pollNumber: 0 };
   await deps.queue.add('poll-publication-analytics', poll, {

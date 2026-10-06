@@ -667,6 +667,7 @@ const KINDS = [
   'milestone',
   'share_comment',
   'plan_quota',
+  'tiktok_draft',
 ] as const;
 
 const prefs = new Map<string, { inApp: boolean; email: boolean }>(

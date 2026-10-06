@@ -781,6 +781,10 @@ model PlatformConnection {
   /// Page / IG account (Studio's own OAuth only; NULL otherwise). The deauthorise and
   /// data-deletion callbacks name that id, so this is how they find the rows to revoke.
   metaUserId            String?
+  /// BACKLOG 22.7: TikTok only — 'drafts' sends every post to the creator's TikTok inbox as a
+  /// draft (they add a trending sound and publish in the app); 'direct' or NULL posts directly.
+  /// New TikTok connections are created with 'drafts'; rows from before 22.7 stay NULL (direct).
+  tiktokPostMode        String?
 
   @@unique([organisationId, platform, platformAccountId])
   @@index([state, statusCheckedAt])

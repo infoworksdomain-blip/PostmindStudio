@@ -185,4 +185,97 @@ describe.skipIf(!hasDb)('platform connections API', { timeout: 60_000 }, () => {
     const unchecked = await call(listRoute.GET, { token: 'reader' });
     expect((unchecked.json.configured as Record<string, boolean>).youtube).toBe(true);
   });
+
+  describe('22.7 TikTok drafts preference', () => {
+    const connectAs = async (accountId: string) => {
+      const client = fakeClient('tiktok');
+      client.fetchAccount = vi.fn(async () => ({ id: accountId, name: accountId }));
+      api.oauthClients.set('tiktok', client);
+      const started = await init({ platform: 'tiktok', businessId: 'biz-1' });
+      const res = await callback(
+        `code=c-${accountId}&state=${stateOf(started.json.authorizeUrl as string)}`,
+      );
+      expect(res.status).toBeLessThan(400);
+      return db.platformConnection.findFirstOrThrow({
+        where: { organisationId: org, platform: 'tiktok', platformAccountId: accountId },
+      });
+    };
+    const patch = (id: string, body: unknown, token = 'owner') =>
+      call(connectionRoute.PATCH, { method: 'PATCH', token, params: { id }, body });
+
+    it('defaults a NEW TikTok connection to drafts and keeps an existing one on direct', async () => {
+      const fresh = await connectAs(`tt-new-${randomUUID()}`);
+      expect(fresh.tiktokPostMode).toBe('drafts');
+
+      // A connection from before 22.7 (NULL = direct) keeps posting directly when reconnected.
+      const oldId = `tt-old-${randomUUID()}`;
+      await db.platformConnection.create({
+        data: {
+          organisationId: org,
+          businessId: 'biz-1',
+          platform: 'tiktok',
+          platformAccountId: oldId,
+          platformAccountName: 'old',
+          encryptedAccessToken: '',
+          scopes: ['video.publish'],
+          state: 'needs_reconnect',
+          connectedByUserId: 'u',
+        },
+      });
+      const reconnected = await connectAs(oldId);
+      expect(reconnected.state).toBe('active');
+      expect(reconnected.tiktokPostMode).toBeNull();
+
+      const listed = await call(listRoute.GET, { token: 'reader' });
+      const rows = listed.json.data as Array<{ id: string; tiktokPostMode: string | null }>;
+      expect(rows.find((r) => r.id === fresh.id)?.tiktokPostMode).toBe('drafts');
+      expect(rows.find((r) => r.id === reconnected.id)?.tiktokPostMode).toBeNull();
+    });
+
+    it('PATCH changes the preference (tenant → capability → validation) and audits it', async () => {
+      const row = await connectAs(`tt-patch-${randomUUID()}`);
+
+      expect((await patch(row.id, { tiktokPostMode: 'direct' }, 'reader')).status).toBe(403);
+      expect((await patch(row.id, { tiktokPostMode: 'direct' }, 'stranger')).status).toBe(404);
+      expect((await patch(row.id, { tiktokPostMode: 'inbox' })).status).toBe(400);
+      expect((await patch(row.id, { tiktokPostMode: 'direct', extra: 1 })).status).toBe(400);
+
+      const direct = await patch(row.id, { tiktokPostMode: 'direct' });
+      expect(direct.status).toBe(200);
+      expect(direct.json.connection).toMatchObject({ id: row.id, tiktokPostMode: 'direct' });
+      expect(direct.json.connection).not.toHaveProperty('encryptedAccessToken');
+      expect(
+        (await db.platformConnection.findUniqueOrThrow({ where: { id: row.id } })).tiktokPostMode,
+      ).toBe('direct');
+      expect(api.audits.map((a) => a.action)).toContain('studio.connection.settings_update');
+
+      // The fake grant has no video.upload: drafts are stored but need a reconnect to work.
+      const drafts = await patch(row.id, { tiktokPostMode: 'drafts' });
+      expect(drafts.json).toMatchObject({
+        connection: { tiktokPostMode: 'drafts' },
+        uploadGranted: false,
+      });
+    });
+
+    it('PATCH refuses non-TikTok and revoked connections', async () => {
+      const x = await db.platformConnection.create({
+        data: {
+          organisationId: org,
+          platform: 'x',
+          platformAccountId: `x-${randomUUID()}`,
+          platformAccountName: 'x',
+          encryptedAccessToken: '',
+          scopes: [],
+          state: 'active',
+          connectedByUserId: 'u',
+        },
+      });
+      expect((await patch(x.id, { tiktokPostMode: 'drafts' })).status).toBe(400);
+      const revoked = await db.platformConnection.update({
+        where: { id: x.id },
+        data: { platform: 'tiktok', state: 'revoked' },
+      });
+      expect((await patch(revoked.id, { tiktokPostMode: 'drafts' })).status).toBe(404);
+    });
+  });
 });

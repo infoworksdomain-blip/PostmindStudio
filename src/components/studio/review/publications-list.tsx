@@ -7,6 +7,11 @@ import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { FailureReason } from '../failure-reason';
 import { StateBadge } from '../primitives';
+import {
+  TikTokPublicationNote,
+  tiktokInboxKind,
+  usePublicationBadge,
+} from '../publications/tiktok-draft';
 import { useAction } from './use-action';
 
 // This project's publications: cancel a scheduled one, retry a failed one (spec 8.4).
@@ -20,6 +25,8 @@ export function PublicationsList({
 }) {
   const t = useTranslations('review.publications');
   const f = useFormat();
+  const td = useTranslations('publications.tiktokDrafts');
+  const badgeFor = usePublicationBadge();
   const { pending, run, busy } = useAction();
   if (publications.length === 0)
     return <p className="text-sm text-muted-foreground">{t('empty')}</p>;
@@ -47,9 +54,11 @@ export function PublicationsList({
               <p className="truncate text-xs text-muted-foreground">
                 {p.state === 'SCHEDULED'
                   ? t('scheduledFor', { date: f.date(p.scheduledFor) })
-                  : p.publishedAt
-                    ? t('liveSince', { date: f.date(p.publishedAt) })
-                    : t('created', { date: f.date(p.createdAt) })}
+                  : p.publishedAt && tiktokInboxKind(p)
+                    ? td('sentOn', { date: f.date(p.publishedAt) })
+                    : p.publishedAt
+                      ? t('liveSince', { date: f.date(p.publishedAt) })
+                      : t('created', { date: f.date(p.createdAt) })}
                 {p.errorReason && (
                   <>
                     {' — '}
@@ -57,8 +66,9 @@ export function PublicationsList({
                   </>
                 )}
               </p>
+              <TikTokPublicationNote publication={p} />
             </div>
-            <StateBadge {...f.publicationState(p.state)} />
+            <StateBadge {...badgeFor(p)} />
             {platformUrl && (
               <Button asChild variant="ghost" size="sm">
                 <a href={platformUrl} target="_blank" rel="noopener noreferrer">

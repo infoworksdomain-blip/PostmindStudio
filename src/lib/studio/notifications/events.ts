@@ -105,6 +105,41 @@ async function publicationFailed(host: Host, input: PublicationFailure): Promise
   });
 }
 
+type DraftSent = { publicationId: string; organisationId: string; projectId: string };
+
+/** English body of the 22.7 notification (the app renders notifications.tiktokDraftSent). */
+export const TIKTOK_DRAFT_SENT_BODY =
+  'Open the TikTok app, add a trending sound, finish posting from the notification, and keep the "AI-generated content" label switched on.';
+
+/**
+ * 22.7: a TikTok post went to the creator's TikTok inbox (drafts chosen, or the 15.A2 fallback):
+ * it is not live until they finish it in the app, so say so, with the AI-label reminder.
+ */
+export function notifyTikTokDraftSent(host: Host, input: DraftSent): Promise<void> {
+  return safely(host, 'tiktok_draft', () => tiktokDraftSent(host, input));
+}
+
+async function tiktokDraftSent(host: Host, input: DraftSent): Promise<void> {
+  const publication = await host.db.videoPublication.findFirst({
+    where: { id: input.publicationId, organisationId: input.organisationId },
+    select: { project: { select: { name: true, createdByUserId: true } } },
+  });
+  if (!publication) return;
+  await notifySafely(host, {
+    organisationId: input.organisationId,
+    userId: publication.project.createdByUserId,
+    kind: 'tiktok_draft',
+    title: `“${projectLabel(publication.project.name)}” is in your TikTok drafts`,
+    body: TIKTOK_DRAFT_SENT_BODY,
+    link: `/projects/${input.projectId}`,
+    dedupeKey: `tiktok_draft:${input.publicationId}`,
+    message: {
+      key: 'tiktokDraftSent',
+      params: { name: projectNameParam(publication.project.name) },
+    },
+  });
+}
+
 /**
  * Scheduled check (every 15 minutes): projects waiting in READY_FOR_REVIEW for more than two
  * hours get one "approval required" notification per run.

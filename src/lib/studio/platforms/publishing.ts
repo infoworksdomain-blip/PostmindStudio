@@ -10,6 +10,7 @@ import type { MetaCredentialSource } from './meta';
 import type { OAuthClient, OAuthPlatform } from './oauth';
 import type { PublisherRegistry } from './registry';
 import { PLATFORM_RULES } from './rules';
+import { tiktokPostModeOf, type TikTokPostMode } from './tiktok';
 import { getAccessToken } from './tokens';
 
 // Shared by the publish worker and the publications API (takedown).
@@ -79,7 +80,13 @@ export function publicationMetadata(p: Pick<VideoPublication, 'metadata'>): Publ
 export async function resolveCredentials(
   deps: PublishingDeps,
   publication: VideoPublication,
-): Promise<{ accessToken: string; accountId: string; scopes?: string[] }> {
+): Promise<{
+  accessToken: string;
+  accountId: string;
+  scopes?: string[];
+  /** 22.7: TikTok connections only. */
+  tiktokPostMode?: TikTokPostMode;
+}> {
   const platform = publication.platform as Platform;
   const rules = PLATFORM_RULES[platform];
   if (rules.credentials === 'meta') {
@@ -107,7 +114,14 @@ export async function resolveCredentials(
     { db: deps.db, keys: deps.keys, oauth: deps.oauth, now: deps.now },
     connection,
   );
-  return { accessToken, accountId: connection.platformAccountId, scopes: connection.scopes };
+  return {
+    accessToken,
+    accountId: connection.platformAccountId,
+    scopes: connection.scopes,
+    ...(connection.platform === 'tiktok' && {
+      tiktokPostMode: tiktokPostModeOf(connection.tiktokPostMode),
+    }),
+  };
 }
 
 /**
