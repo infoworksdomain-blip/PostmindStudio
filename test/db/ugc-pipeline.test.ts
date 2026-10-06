@@ -295,7 +295,13 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
       planTier: 'STANDARD',
     });
     await drainInline(h.queue, h.deps);
-    expect(h.adapters.openai.requests.filter((r) => r.capability === 'text_to_image')).toEqual([]);
+    // No portrait is generated (the pinned one is used). The B-roll may generate its product shot:
+    // UGC stills use only the business's own library pictures (UPLOAD / SCRAPED), and the other
+    // tests' generated images in this organisation do not count.
+    const images = h.adapters.openai.requests.filter((r) => r.capability === 'text_to_image');
+    expect(
+      images.filter((r) => !String(r.prompt).startsWith('Vertical phone-camera photo of hands')),
+    ).toEqual([]);
     const requests = h.adapters.veo.requests as ActorVideoRequest[];
     expect(requests).toHaveLength(2);
     expect(new Set(requests.map((r) => r.actorImageUrl)).size).toBe(1);
