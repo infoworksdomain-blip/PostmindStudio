@@ -75,6 +75,13 @@ const actorImageSchema = z.discriminatedUnion('state', [
     runId: z.string(),
     reason: z.string(),
   }),
+  // 22.3: the project uses a reusable creator; its pinned portrait is never regenerated here.
+  z.object({
+    state: z.literal('creator'),
+    description: z.string(),
+    creatorId: z.string(),
+    portraitId: z.string(),
+  }),
 ]);
 
 export type ActorImageState = z.infer<typeof actorImageSchema>;
@@ -119,6 +126,10 @@ export function nextPortraitStep(
       return input.now - state.claimedAt < PORTRAIT_CLAIM_STALE_MS
         ? { kind: 'wait' }
         : { kind: 'claim' };
+    case 'creator':
+      // Only reached when the creator's portrait is gone (ensureActorPortrait reads it first):
+      // make a one-off portrait from the same description.
+      return { kind: 'claim' };
   }
 }
 
@@ -170,9 +181,12 @@ export function prismaPortraitStore(db: PortraitDb, organisationId: string): Por
 }
 
 export interface ActorPortrait {
+  /** The project's portrait asset (video_assets.id), or the creator's portrait (22.3). */
   assetId: string;
   /** Signed URL of the stored portrait (what the actor providers fetch). */
   url: string;
+  /** 22.3: set when the portrait is a reusable creator's. */
+  creatorId?: string;
 }
 
 export interface PortraitInput {
@@ -207,6 +221,27 @@ async function readyPortrait(
 }
 
 /**
+ * 22.3: the creator portrait a project pinned (still used when the creator has since been retired
+ * or given a new portrait), or null when it no longer exists.
+ */
+async function creatorPortrait(
+  deps: PipelineDeps,
+  organisationId: string,
+  creator: NonNullable<UgcStyle['creator']>,
+): Promise<ActorPortrait | null> {
+  const row = await deps.db.creatorPortrait.findFirst({
+    where: { id: creator.portraitId, organisationId, creatorId: creator.id },
+    select: { id: true, s3Bucket: true, s3Key: true },
+  });
+  if (!row) return null;
+  return {
+    assetId: row.id,
+    url: await deps.storage.signedUrl(row.s3Bucket, row.s3Key),
+    creatorId: creator.id,
+  };
+}
+
+/**
  * The project's actor portrait: the stored one, else made now (by the first shot to ask), else
  * null when none can be made for this run. Throws RateDeferredError while another shot makes it.
  */
@@ -214,6 +249,16 @@ export async function ensureActorPortrait(
   deps: PipelineDeps,
   input: PortraitInput,
 ): Promise<ActorPortrait | null> {
+  // 22.3: a reusable creator's pinned portrait: nothing is generated, every clip (and every
+  // regenerated clip) gets the same face.
+  if (input.style.creator) {
+    const portrait = await creatorPortrait(deps, input.organisationId, input.style.creator);
+    if (portrait) return portrait;
+    deps.logger.warn(
+      { projectId: input.projectId, creatorId: input.style.creator.id },
+      'the creator portrait is gone; making a one-off portrait from the same description',
+    );
+  }
   const store = input.store ?? prismaPortraitStore(deps.db, input.organisationId);
   const description = actorDescription(input.style);
   for (let attempt = 0; attempt < CAS_ATTEMPTS; attempt += 1) {

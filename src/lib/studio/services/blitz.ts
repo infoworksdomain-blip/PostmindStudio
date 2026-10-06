@@ -17,6 +17,7 @@ import { accountTargets } from '../blitz/targets';
 import { signThumbnail } from '../library/thumbnail-signing';
 import { toPlanTier } from './catalog';
 import { approveWithWorkflow } from './approval-workflows';
+import { withDefaultCreator } from './content-plan-run';
 import { latestRender } from './carousels';
 import { recordSignal } from './content-mix';
 import { blitzCaps, requestRefill, syncSuggestions, type BlitzCaps } from './blitz-refill';
@@ -529,7 +530,8 @@ async function keepPreview(
     orderBy: { createdAt: 'desc' },
     select: { language: true },
   });
-  const body = createProjectInput.parse({
+  // 22.3: a UGC card uses the business's default AI creator when it has one.
+  const parsed = createProjectInput.parse({
     ...projectBodyForCard(s.format, copy, {
       businessId: s.businessId,
       language: latest?.language ?? 'en-GB',
@@ -544,6 +546,7 @@ async function keepPreview(
         }
       : { reviewPolicy: 'REQUIRE_APPROVAL', publishPolicy: 'MANUAL' }),
   });
+  const body = await withDefaultCreator(deps.db, tenant.organisationId, parsed);
   const project = await createProject(deps.db, tenant, body, deps.now());
   await mergeMetadata(deps.db, project.id, {
     blitz: { suggestionId: s.id, state: 'kept' },

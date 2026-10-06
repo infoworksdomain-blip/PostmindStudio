@@ -547,6 +547,84 @@ model VoiceProfile {
   @@schema("studio")
 }
 
+// BACKLOG 22.3 — reusable AI creators (Fastlane-style): a business makes a UGC actor once and
+// reuses the same face across many videos. The portrait image lives in the assets bucket
+// (creator_portraits), never in the image library. A project that uses a creator pins the
+// portrait it was made with (metadata.ugc.actorImage state "creator"), so every clip and every
+// regenerated clip has the same face even after the creator gets a new portrait.
+model Creator {
+  id              String        @id @default(cuid())
+  organisationId  String
+  businessId      String
+  name            String
+  gender          String // ugc/style.ts UGC_GENDERS
+  ageRange        String // ugc/style.ts UGC_AGE_RANGES
+  setting         String // ugc/style.ts UGC_SETTINGS
+  /// The owner's look notes (hair, clothes, style); real-person checked.
+  appearance      String?
+  /// How they speak (e.g. "warm and upbeat"); real-person checked.
+  voiceTone       String?
+  /// The fixed text every clip prompt uses for this person (presets + look notes).
+  description     String
+  status          CreatorStatus @default(DRAFT)
+  /// The current portrait (creator_portraits.id), null until one is made or uploaded.
+  portraitId      String?
+  /// The business's default creator for month-plan UGC items (at most one per business).
+  isDefault       Boolean       @default(false)
+  /// Projects that chose this creator (the Create picker defaults to the most used).
+  useCount        Int           @default(0)
+  lastUsedAt      DateTime?
+  /// Why the last portrait attempt made nothing (content_policy, provider_unavailable, …).
+  portraitError   String?
+  createdByUserId String
+  retiredAt       DateTime?
+  retiredByUserId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([organisationId, businessId, status])
+  @@map("creators")
+  @@schema("studio")
+}
+
+enum CreatorStatus {
+  DRAFT
+  READY
+  RETIRED
+
+  @@schema("studio")
+}
+
+/// One portrait image of a creator (generated, or uploaded with a consent attestation). Rows are
+/// kept when a creator gets a new portrait: projects made earlier still point at theirs.
+model CreatorPortrait {
+  id                      String    @id @default(cuid())
+  organisationId          String
+  businessId              String
+  creatorId               String
+  source                  String // GENERATED | UPLOAD
+  s3Bucket                String
+  s3Key                   String
+  contentType             String
+  prompt                  String?
+  /// Extra instructions given to "Regenerate" (real-person checked).
+  instructions            String?
+  providerId              String?
+  providerJobId           String?
+  costPence               Int       @default(0)
+  /// UPLOAD only: the uploader attested they have the person's consent and the rights to use it.
+  consentAttestedByUserId String?
+  consentAttestedAt       DateTime?
+  consentStatement        String?
+  createdByUserId         String
+  createdAt               DateTime  @default(now())
+
+  @@index([creatorId, createdAt])
+  @@index([organisationId, source, createdAt])
+  @@map("creator_portraits")
+  @@schema("studio")
+}
+
 // DERIVED — spec 14.5 onboarding first-run (Phase 13.14): one row per (organisation, user).
 // step = where the /welcome wizard resumes; completed = the steps done so far.
 model OnboardingState {

@@ -157,6 +157,9 @@ export const PURGE_TABLE_STEPS: readonly PurgeTableStep[] = [
   org('style_memories', 'StyleMemory'),
   org('brand_kits', 'BrandKit'),
   org('voice_profiles', 'VoiceProfile'),
+  // 22.3: reusable creators and their portraits (objects sit under the orgs/<id>/ prefix).
+  org('creator_portraits', 'CreatorPortrait'),
+  org('creators', 'Creator'),
   org('templates', 'Template'),
   org('overlay_presets', 'OverlayPreset'),
   org('slideshow_templates', 'SlideshowTemplate'),

@@ -13,6 +13,7 @@ import { BusinessHashtagsPanel } from '../hashtags/business-hashtags-panel';
 import { AnglesPanel } from './angles-panel';
 import { BusinessDetailsCard } from './business-details-card';
 import { BrandKitsPanel } from './brand-kits-panel';
+import { CreatorsPanel } from './creators-panel';
 import { ImageLibraryPanel } from './image-library-panel';
 import { ProfilePanel } from './profile-panel';
 import { ScanPanel } from './scan-panel';
@@ -23,12 +24,14 @@ import { VoiceProfilesPanel } from './voice-profiles-panel';
 // that works that out, brand kits, and the image library built from all of it.
 // 20.13: the Hashtags tab (business hashtag + always-include hashtags); ?tab=<tab> opens a tab.
 
+// 22.3: the Creators tab (reusable AI creators for UGC videos; ?tab=creators from Create).
 // 22.4: the Angles tab (content angles and the content mix used by Blitz and automations).
 export const BUSINESS_TABS = [
   'profile',
   'scan',
   'brand',
   'angles',
+  'creators',
   'hashtags',
   'images',
   'learned',
@@ -94,6 +97,11 @@ export function BusinessScreen() {
           <TabsContent value="angles">
             <WriteGate>
               <AnglesPanel businessId={businessId} />
+            </WriteGate>
+          </TabsContent>
+          <TabsContent value="creators">
+            <WriteGate>
+              <CreatorsPanel businessId={businessId} />
             </WriteGate>
           </TabsContent>
           <TabsContent value="hashtags">

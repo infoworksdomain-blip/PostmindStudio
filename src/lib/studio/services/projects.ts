@@ -49,6 +49,8 @@ import { isBeyondScheduleWindow, MAX_SCHEDULE_AHEAD_DAYS } from '../schedule-win
 import { MAX_UGC_SEED, newUgcStyle, ugcInput, ugcStyleOf } from '../ugc/style';
 import { ugcProjectBudgetPence } from '../ugc/cost';
 import { assertNoRealPerson, assertUgcProductImage, assertUgcShape } from '../ugc/validate';
+import { ugcMetadata } from '../ugc/creator-ref';
+import { recordCreatorUse, resolveProjectCreator } from './creators';
 
 /** 22.4: sourceRef of a Blitz render project while its card waits for a swipe. */
 export const BLITZ_SOURCE_REF_PREFIX = 'blitz:';
@@ -310,6 +312,14 @@ export async function createProject(
       input.ugc,
     );
   }
+  // 22.3: a reusable creator of this business (READY, with a portrait) instead of a one-off actor.
+  const creator = input.ugc?.creatorId
+    ? await resolveProjectCreator(
+        db,
+        { organisationId: tenant.organisationId, businessId: input.businessId },
+        input.ugc.creatorId,
+      )
+    : undefined;
   if (input.sourceType === 'LIBRARY_REFERENCE' && input.referenceVideoId && input.referenceMode) {
     // 15.D2 / A10.3: INSPIRE is Standard and above, TEMPLATE Plus and above.
     assertTierGate(
@@ -426,14 +436,20 @@ export async function createProject(
           ...(template && { template: { id: template.templateId } }),
           ...(carousel && { carousel }),
           ...(input.ugc && {
-            ugc: newUgcStyle(
-              input.ugc,
-              randomInt(0, MAX_UGC_SEED),
+            ugc: ugcMetadata(
+              newUgcStyle(input.ugc, randomInt(0, MAX_UGC_SEED), creator),
             ) as unknown as Prisma.InputJsonObject,
           }),
         } as Prisma.InputJsonValue,
       },
     });
+    if (creator)
+      await recordCreatorUse(
+        tx,
+        { organisationId: tenant.organisationId, businessId: input.businessId },
+        creator.id,
+        now,
+      );
     if (slideshow) await insertSlides(tx, project.id, slideshow.drafts);
     if (input.sourceType === 'UPLOAD' && input.uploadId)
       await attachSourceUpload(tx, {
@@ -707,6 +723,7 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
   const hints = projectMetadata(source.metadata).briefHints;
   const stored = readCarousel(source.metadata);
   const carouselCopy = stored ? { ...stored, rewrites: 0 } : null;
+  const ugcCopy = ugcStyleOf(source.metadata);
   return db.videoProject.create({
     data: {
       organisationId: source.organisationId,
@@ -739,10 +756,8 @@ export async function duplicateProject(db: Db, tenant: TenantContext, id: string
         ...(hints ? { briefHints: hints as Prisma.InputJsonValue } : {}),
         // 21.6: a carousel's copy keeps its posts, pictures and look (rewrite count starts again).
         ...(carouselCopy && { carousel: carouselCopy as unknown as Prisma.InputJsonValue }),
-        // 21.4: a copy of a UGC video is a UGC video with the same actor.
-        ...(ugcStyleOf(source.metadata) && {
-          ugc: ugcStyleOf(source.metadata) as unknown as Prisma.InputJsonValue,
-        }),
+        // 21.4: a copy of a UGC video is a UGC video with the same actor (22.3: and creator).
+        ...(ugcCopy && { ugc: ugcMetadata(ugcCopy) as unknown as Prisma.InputJsonValue }),
       },
     },
   });

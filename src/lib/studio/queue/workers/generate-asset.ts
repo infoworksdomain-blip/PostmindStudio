@@ -290,7 +290,8 @@ async function generateActor(
     : undefined;
   // 21.4a: the project's one actor portrait (made by the first actor shot that asks, reused by
   // every other clip and every regenerated clip), so the actor stays the same person. Not made
-  // when no actor provider is configured at all (the shot degrades to narrated B-roll).
+  // when no actor provider is configured at all (the shot degrades to narrated B-roll). 22.3: a
+  // project with a reusable creator uses the creator's pinned portrait (nothing is generated).
   const portrait =
     deps.registry.getAdaptersByCapability('actor_video').length > 0
       ? await ensureActorPortrait(deps, {
@@ -349,6 +350,8 @@ async function generateActor(
       speech: 'clip',
       ...(product && { productImageId: product.id }),
       ...(portrait && { actorImageAssetId: portrait.assetId }),
+      // 22.3: the reusable creator whose portrait this clip used.
+      ...(portrait?.creatorId && { creatorId: portrait.creatorId }),
     },
   );
 }

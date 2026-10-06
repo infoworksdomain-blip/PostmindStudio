@@ -222,9 +222,14 @@ export async function hardDeleteBusiness(
     where: { organisationId, businessId, projectId: null },
     select: { s3Bucket: true, s3Key: true },
   });
+  // 22.3: the business's creator portraits (generated and uploaded).
+  const portraits = await db.creatorPortrait.findMany({
+    where: { organisationId, businessId },
+    select: { s3Bucket: true, s3Key: true },
+  });
   const objects = await deleteObjects(deps.storage, [
     ...(await projectObjects(db, projectIds)),
-    ...[...images, ...looseUploads]
+    ...[...images, ...looseUploads, ...portraits]
       .map((i) => ({ bucket: i.s3Bucket, key: i.s3Key }))
       .filter(isStored),
   ]);
@@ -249,6 +254,9 @@ export async function hardDeleteBusiness(
       .count,
     // 20.9: the business's month plans (their items cascade).
     content_plans: (await tx.contentPlan.deleteMany({ where: scope })).count,
+    // 22.3: reusable creators (portraits first).
+    creator_portraits: (await tx.creatorPortrait.deleteMany({ where: scope })).count,
+    creators: (await tx.creator.deleteMany({ where: scope })).count,
   }));
   return { projects: projectIds.length, rows: { ...rows, ...business }, objects };
 }

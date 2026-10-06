@@ -743,7 +743,12 @@
         "desk": "At a desk",
         "shop": "Shop counter"
       },
-      "disclosure": "Actors are AI-generated people, never real ones, and every UGC video carries the AI-generated label. A brief that asks for a real person or celebrity is refused."
+      "disclosure": "Actors are AI-generated people, never real ones, and every UGC video carries the AI-generated label. A brief that asks for a real person or celebrity is refused.",
+      "creator": "Creator",
+      "creatorOneOff": "New one-off actor",
+      "creatorHint": "Pick a creator to keep the same face across your videos.",
+      "creatorManage": "Manage creators",
+      "creatorPortraitAlt": "Portrait of {name}"
     },
     "carousel": {
       "legend": "Carousel",
@@ -1773,6 +1778,7 @@
         "images": "Image library",
         "learned": "What Studio has learned",
         "hashtags": "Hashtags",
+        "creators": "Creators",
         "angles": "Angles"
       },
       "readOnly": "You have view-only access to this business. Ask an owner or admin to make changes."
@@ -2231,6 +2237,95 @@
       "domainInvalid": "Use a host name such as example.co.uk.",
       "save": "Save details",
       "saved": "Business details saved"
+    },
+    "creators": {
+      "title": "Creators",
+      "intro": "Make an AI creator once and use the same face in every UGC video. Up to {max, number} per business.",
+      "create": "New creator",
+      "count": "{count, number} of {max, number}",
+      "full": "This business has the most creators it can have. Retire one to make another.",
+      "loading": "Loading creators",
+      "listAria": "Creators",
+      "empty": {
+        "title": "No creators yet",
+        "body": "Create a creator to keep the same face across your UGC videos."
+      },
+      "status": {
+        "DRAFT": "No portrait yet",
+        "READY": "Ready",
+        "RETIRED": "Retired"
+      },
+      "default": "Month-plan default",
+      "makeDefault": "Use for month plans",
+      "makeDefaultAria": "Use {name} for month plans",
+      "regenerate": "Regenerate",
+      "regenerateAria": "Regenerate the portrait of {name}",
+      "rename": "Rename",
+      "renameAria": "Rename {name}",
+      "retire": "Retire",
+      "retireAria": "Retire {name}",
+      "uses": "Videos: {count, number}",
+      "uploaded": "Uploaded photo (consent confirmed)",
+      "portraitAlt": "Portrait of {name}",
+      "portraitError": "No portrait could be made this time. Try Regenerate.",
+      "created": "{name} is ready",
+      "createdDraft": "{name} was saved, but no portrait could be made yet. Try Regenerate.",
+      "regenerated": "New portrait for {name}",
+      "renamed": "Renamed to {name}",
+      "defaultSet": "{name} is now used for month-plan UGC videos",
+      "retired": "{name} retired",
+      "retireConfirm": {
+        "title": "Retire {name}?",
+        "body": "They won’t be offered for new videos. Videos already made with them keep their face.",
+        "confirm": "Retire"
+      },
+      "dialog": {
+        "title": "New creator",
+        "description": "Studio makes a portrait from these choices and uses the same face in every video that picks this creator.",
+        "modeAria": "How to make the portrait",
+        "modeGenerate": "Generate a person",
+        "modeUpload": "Upload a photo",
+        "name": "Name",
+        "namePlaceholder": "e.g. Maya",
+        "appearance": "Look (optional)",
+        "appearancePlaceholder": "e.g. short curly hair, round glasses, denim jacket",
+        "voiceTone": "How they speak (optional)",
+        "voiceTonePlaceholder": "e.g. warm and upbeat",
+        "generateNote": "Generated people only: never a real person, celebrity or look-alike.",
+        "photo": "Photo (PNG or JPEG, up to 10 MB)",
+        "consent": "I confirm that the person in this photo has given their consent, and that I have the rights, for their likeness to be used to generate videos for this business.",
+        "problems": {
+          "name": "Give the creator a name.",
+          "photo": "Choose a photo to upload.",
+          "photoType": "The photo must be a PNG or JPEG image.",
+          "photoSize": "The photo must be 10 MB or smaller.",
+          "consent": "Tick the box to confirm you have the person’s consent and the rights."
+        },
+        "cancel": "Cancel",
+        "submitGenerate": "Create and generate portrait",
+        "submitUpload": "Create from photo"
+      },
+      "regenerateDialog": {
+        "title": "Regenerate {name}",
+        "description": "Make a new portrait. Videos already made keep the one they used.",
+        "label": "Changes (optional)",
+        "placeholder": "e.g. a bigger smile, a green jumper",
+        "cancel": "Cancel",
+        "submit": "Regenerate"
+      },
+      "renameDialog": {
+        "title": "Rename {name}",
+        "description": "The name is only shown to your team.",
+        "label": "Name",
+        "placeholder": "e.g. Maya",
+        "cancel": "Cancel",
+        "submit": "Save"
+      },
+      "errors": {
+        "limit": "This business already has {max, number} creators. Retire one first.",
+        "realPerson": "Creators are generated people. They can’t imitate, look like or sound like a real person or celebrity.",
+        "dailyCap": "You’ve made a lot of portraits today. Try again later."
+      }
     }
   },
   "connections": {
