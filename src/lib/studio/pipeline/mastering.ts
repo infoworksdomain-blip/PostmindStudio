@@ -65,6 +65,13 @@ export function codecCompliant(probe: MediaProbe): boolean {
   return probe.videoCodec === 'h264' && probe.formatName.split(',').includes('mp4');
 }
 
+/**
+ * Below this the track is silence (ebur128 reports about −70 LUFS for a silent stream). loudnorm
+ * then measures input_i "-inf" and pass 2 cannot run (production 2026-10-06: a slideshow without
+ * a music bed failed composition with "loudnorm reported no numeric input_i").
+ */
+export const SILENCE_LUFS = -60;
+
 export function planMastering(probe: MediaProbe, loudnessLufs: number | null): MasteringPlan {
   const reasons: string[] = [];
   const [min, max] = LUFS_RANGE;
@@ -72,6 +79,7 @@ export function planMastering(probe: MediaProbe, loudnessLufs: number | null): M
   const normaliseAudio =
     probe.audioCodec !== null &&
     loudnessLufs !== null &&
+    loudnessLufs > SILENCE_LUFS &&
     (loudnessLufs < min || loudnessLufs > max);
   if (normaliseAudio) {
     reasons.push(
