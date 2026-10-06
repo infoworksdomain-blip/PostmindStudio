@@ -67,6 +67,13 @@ describe('planMastering', () => {
   it('cannot normalise a render without audio', () => {
     expect(planMastering(probe({ audioCodec: null }), null).normaliseAudio).toBe(false);
   });
+
+  it('leaves a silent track alone (ebur128 ≈ −70 LUFS; loudnorm would measure -inf)', () => {
+    // Production 2026-10-06: a slideshow without a music bed failed composition in pass 1.
+    expect(planMastering(probe(), -70).normaliseAudio).toBe(false);
+    expect(masteringNeeded(planMastering(probe(), -70))).toBe(false);
+    expect(planMastering(probe(), -59).normaliseAudio).toBe(true);
+  });
 });
 
 describe('loudnorm helpers', () => {
