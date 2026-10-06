@@ -147,7 +147,8 @@
         "safety_review": "Revisiones de seguridad del contenido",
         "share_comment": "Comentarios en un enlace de vista previa",
         "plan_quota": "Alertas de uso del plan (80 % y 100 %)",
-        "connection_needs_reconnect": "Cuentas que hay que reconectar"
+        "connection_needs_reconnect": "Cuentas que hay que reconectar",
+        "tiktok_draft": "Borradores de TikTok por terminar en la app"
       },
       "limitKinds": {
         "cost_alert": "Avisos de límite de uso",
@@ -527,6 +528,10 @@
     "automationInsight": {
       "title": "Tu mejor publicación de la semana: {title}",
       "body": "Crea más como esta desde «{name}» para ver más de su formato y enfoque."
+    },
+    "tiktokDraftSent": {
+      "title": "«{name}» está en tus borradores de TikTok",
+      "body": "Abre la app de TikTok, añade un sonido en tendencia, termina la publicación desde la notificación y mantén activada la etiqueta «Contenido generado por IA»."
     }
   },
   "create": {
@@ -1697,6 +1702,13 @@
     },
     "confirmDialog": {
       "keep": "Mantener"
+    },
+    "tiktokDrafts": {
+      "badge": "Enviado a borradores de TikTok",
+      "sentOn": "Enviado a borradores de TikTok {date}",
+      "draftsNote": "Enviado a borradores de TikTok — termínalo en la app: añade un sonido en tendencia, publícalo y mantén activada la etiqueta «Contenido generado por IA».",
+      "inboxNote": "Enviado a tu bandeja de TikTok — termínalo en la app y mantén activada la etiqueta «Contenido generado por IA».",
+      "reconnectNote": "Vuelve a conectar TikTok para enviar borradores: esta cuenta no permitió subidas, así que se publicó directamente."
     }
   },
   "calendar": {
@@ -2465,6 +2477,17 @@
     "channelLimit": {
       "body": "{count, plural, one {Tu plan incluye # canal,} many {Tu plan incluye # canales,} other {Tu plan incluye # canales,}} así que {blockedCount, plural, one {{blocked} está conectado pero no publicará.} many {{blocked} están conectados pero no publicarán.} other {{blocked} están conectados pero no publicarán.}}",
       "action": "Añadir un canal"
+    },
+    "tiktokPostMode": {
+      "legend": "Cómo publica {account} en TikTok",
+      "drafts": "Enviar a borradores de TikTok",
+      "draftsHint": "Añade un sonido en tendencia en la app de TikTok y publica.",
+      "direct": "Publicar directamente",
+      "directHint": "Se publica en TikTok sin abrir la app.",
+      "note": "Los borradores de TikTok te permiten añadir un sonido en tendencia antes de publicar.",
+      "reconnect": "Vuelve a conectar TikTok para enviar borradores. Mientras tanto, se publica directamente.",
+      "saved": "Preferencia de publicación en TikTok guardada",
+      "goesToDrafts": "TikTok: va a tus borradores de TikTok. Añade un sonido en tendencia en la app y publica."
     }
   },
   "library": {

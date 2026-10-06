@@ -35,6 +35,7 @@ async function row(overrides: Partial<PlatformConnection> = {}): Promise<Platfor
     statusCheckOutcome: null,
     connectedVia: null,
     metaUserId: null,
+    tiktokPostMode: null,
     ...overrides,
   };
 }

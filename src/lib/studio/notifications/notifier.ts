@@ -39,6 +39,8 @@ export const NOTIFICATION_KINDS = [
   'connection_needs_reconnect',
   // Phase 20 (20.11): staff only — a provider account needs attention (key, credits, usage limit).
   'provider_alert',
+  // Phase 22 (22.7): a TikTok post was sent to the creator's TikTok drafts (finish it in the app).
+  'tiktok_draft',
 ] as const;
 
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];

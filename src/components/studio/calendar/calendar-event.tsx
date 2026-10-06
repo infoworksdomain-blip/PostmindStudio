@@ -10,6 +10,7 @@ import { eventTime, formatTime } from './month';
 import { canMove, DRAG_TYPE } from './reschedule';
 import { canRetry } from './retry';
 import { useProjectName } from '@/lib/client/use-project-name';
+import { usePublicationBadge } from '../publications/tiktok-draft';
 
 // One publication on the calendar: a thin state-coloured rule, time, platform and video name.
 // Links to the project. A scheduled one can be dragged to another day (13.9) or moved with its
@@ -42,7 +43,8 @@ export function CalendarEvent({
   const at = eventTime(publication);
   const time = at ? formatTime(at, f.locale) : null;
   const platform = f.platform(publication.platform);
-  const state = f.publicationState(publication.state).label;
+  const badgeFor = usePublicationBadge(); // 22.7: "Sent to TikTok drafts" for inbox uploads
+  const state = badgeFor(publication).label;
   const projectName = useProjectName();
   const name = projectName(publication.project?.name);
   const movable = Boolean(onMove) && canMove(publication);

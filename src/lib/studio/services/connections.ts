@@ -11,6 +11,12 @@ import {
 } from '../platforms/oauth';
 import type { OAuthPending, OAuthStateStore } from '../platforms/oauth-state';
 import { META_CHANNEL_PLATFORMS } from '../platforms/meta-credentials';
+import {
+  canSendDrafts,
+  DEFAULT_NEW_TIKTOK_POST_MODE,
+  TIKTOK_POST_MODES,
+  type TikTokPostMode,
+} from '../platforms/tiktok';
 import { sealTokens } from '../platforms/tokens';
 import {
   assertSameUser,
@@ -57,6 +63,8 @@ const PUBLIC_FIELDS = {
   statusCheckOutcome: true,
   // Phase 18: 'core' (PostMind pushed it) | 'studio' (Studio's own OAuth) | null (pre-Phase 18).
   connectedVia: true,
+  // 22.7: TikTok posting preference ('drafts' | 'direct' | null = direct).
+  tiktokPostMode: true,
 } as const;
 
 export function listConnections(db: PrismaClient, organisationId: string) {
@@ -213,6 +221,9 @@ export async function completeOAuth(
       platform: pending.platform,
       platformAccountId: account.id,
       ...data,
+      // 22.7: a NEW TikTok connection sends drafts (Fastlane's default). A reconnect (update)
+      // keeps whatever the account had, so connections from before 22.7 keep posting directly.
+      ...(pending.platform === 'tiktok' && { tiktokPostMode: DEFAULT_NEW_TIKTOK_POST_MODE }),
     },
     update: data,
   });
@@ -222,6 +233,39 @@ export async function completeOAuth(
     platform: pending.platform,
     accountName: connection.platformAccountName,
   };
+}
+
+export const connectionSettingsInput = z
+  .object({
+    /** 22.7: TikTok only — post directly, or send to the creator's TikTok drafts. */
+    tiktokPostMode: z.enum(TIKTOK_POST_MODES as [TikTokPostMode, ...TikTokPostMode[]]),
+  })
+  .strict();
+
+/**
+ * 22.7: change a connection's settings (today: the TikTok posting preference). Only active or
+ * needs-reconnect TikTok connections of the organisation take it. `uploadGranted` says whether
+ * drafts will work now; when false the UI asks for a reconnect (posts go out directly meanwhile).
+ */
+export async function updateConnectionSettings(
+  db: PrismaClient,
+  organisationId: string,
+  id: string,
+  input: z.infer<typeof connectionSettingsInput>,
+) {
+  const connection = await db.platformConnection.findFirst({
+    where: { id, organisationId, state: { not: 'revoked' } },
+    select: { id: true, platform: true, scopes: true },
+  });
+  if (!connection) throw new NotFoundError('Connection not found');
+  if (connection.platform !== 'tiktok')
+    throw new ValidationError('Only TikTok connections have a posting preference');
+  const updated = await db.platformConnection.update({
+    where: { id: connection.id },
+    data: { tiktokPostMode: input.tiktokPostMode },
+    select: PUBLIC_FIELDS,
+  });
+  return { connection: updated, uploadGranted: canSendDrafts(connection.scopes) };
 }
 
 /**

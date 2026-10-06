@@ -147,7 +147,8 @@
         "safety_review": "Prüfungen der Inhaltssicherheit",
         "share_comment": "Feedback zu einem Vorschau-Link",
         "plan_quota": "Warnungen zur Tarifnutzung (80 % und 100 %)",
-        "connection_needs_reconnect": "Konten, die neu verbunden werden müssen"
+        "connection_needs_reconnect": "Konten, die neu verbunden werden müssen",
+        "tiktok_draft": "TikTok-Entwürfe, die in der App abzuschließen sind"
       },
       "limitKinds": {
         "cost_alert": "Hinweise zu Nutzungslimits",
@@ -527,6 +528,10 @@
     "automationInsight": {
       "title": "Ihr bester Beitrag diese Woche: {title}",
       "body": "Erstellen Sie in „{name}“ mehr davon, um dieses Format und diesen Blickwinkel öfter zu sehen."
+    },
+    "tiktokDraftSent": {
+      "title": "„{name}“ liegt in deinen TikTok-Entwürfen",
+      "body": "Öffne die TikTok-App, füge einen Trend-Sound hinzu, schließe den Post über die Benachrichtigung ab und lass das Label „KI-generierte Inhalte“ eingeschaltet."
     }
   },
   "create": {
@@ -1697,6 +1702,13 @@
     },
     "confirmDialog": {
       "keep": "Behalten"
+    },
+    "tiktokDrafts": {
+      "badge": "An TikTok-Entwürfe gesendet",
+      "sentOn": "An TikTok-Entwürfe gesendet {date}",
+      "draftsNote": "An TikTok-Entwürfe gesendet — schließe es in der App ab: Trend-Sound hinzufügen, posten und das Label „KI-generierte Inhalte“ eingeschaltet lassen.",
+      "inboxNote": "An deinen TikTok-Posteingang gesendet — schließe es in der App ab und lass das Label „KI-generierte Inhalte“ eingeschaltet.",
+      "reconnectNote": "Verbinde TikTok neu, um Entwürfe zu senden: Dieses Konto hat keine Uploads erlaubt, daher wurde direkt gepostet."
     }
   },
   "calendar": {
@@ -2465,6 +2477,17 @@
     "channelLimit": {
       "body": "{count, plural, one {Ihr Tarif umfasst # Kanal,} other {Ihr Tarif umfasst # Kanäle,}} daher {blockedCount, plural, one {ist {blocked} verbunden, veröffentlicht aber nicht.} other {sind {blocked} verbunden, veröffentlichen aber nicht.}}",
       "action": "Kanal hinzufügen"
+    },
+    "tiktokPostMode": {
+      "legend": "Wie {account} auf TikTok postet",
+      "drafts": "An TikTok-Entwürfe senden",
+      "draftsHint": "Füge in der TikTok-App einen Trend-Sound hinzu und poste dann.",
+      "direct": "Direkt posten",
+      "directHint": "Geht auf TikTok live, ohne die App zu öffnen.",
+      "note": "Mit TikTok-Entwürfen kannst du vor dem Posten einen Trend-Sound hinzufügen.",
+      "reconnect": "Verbinde TikTok neu, um Entwürfe zu senden. Bis dahin wird direkt gepostet.",
+      "saved": "TikTok-Posting-Einstellung gespeichert",
+      "goesToDrafts": "TikTok: landet in deinen TikTok-Entwürfen. Füge in der App einen Trend-Sound hinzu und poste dann."
     }
   },
   "library": {

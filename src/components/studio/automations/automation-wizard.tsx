@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useShowCosts } from '../account/use-show-costs';
 import { buildTargets, connectionsFor } from '../automation/automation';
 import { useBusiness } from '../business-context';
+import { TikTokDraftsHint } from '../connections/tiktok-post-mode';
 import { PlatformChips } from '../create/create-options';
 import { defaultPlatforms } from '../create/formats';
 import { EmptyState, PageHeader } from '../primitives';
@@ -210,6 +211,8 @@ export function AutomationWizard() {
                   <li key={p}>{t('wizard.noAccount', { platform: f.platform(p) })}</li>
                 ))}
             </ul>
+            {/* 22.7: TikTok posts land in the creator's TikTok drafts when the account says so. */}
+            {state.platforms.includes('tiktok') && <TikTokDraftsHint businessId={businessId} />}
           </div>
         )}
 
@@ -391,6 +394,7 @@ export function AutomationWizard() {
                     ? t('wizard.paidPosts', { count: estimate.paidPosts })
                     : t('wizard.lowestCost')}
                 </p>
+                {state.platforms.includes('tiktok') && <TikTokDraftsHint businessId={businessId} />}
                 {showCosts && estimate.estimatePence !== undefined && (
                   <p className="text-xs text-muted-foreground">
                     {t('wizard.staffEstimate', { amount: f.pence(estimate.estimatePence) })}

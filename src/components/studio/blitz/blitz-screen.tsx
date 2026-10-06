@@ -29,6 +29,7 @@ import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
 import { cn } from '@/lib/utils';
 import { useBusiness } from '../business-context';
+import { TikTokDraftsHint } from '../connections/tiktok-post-mode';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
 import { useCan } from '../use-can';
 import { AutomationReviewDeck } from './automation-review-deck';
@@ -330,6 +331,8 @@ function BlitzDeckScreen() {
               );
             })}
           </div>
+          {/* 22.7: where the TikTok copy goes when the account sends drafts. */}
+          {mode !== 'edit' && <TikTokDraftsHint businessId={businessId} />}
           {keeping && keeping.tier === 'preview' && (
             <p className="text-xs text-muted-foreground">
               {t('keep.previewNote', { units: keeping.allowanceUnits })}

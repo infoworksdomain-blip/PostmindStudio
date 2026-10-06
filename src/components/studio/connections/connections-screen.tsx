@@ -199,6 +199,7 @@ export function ConnectionsScreen({
                 configured={data.configured?.[p.id] ?? true}
                 onConnect={() => void connect(p.id)}
                 onDisconnect={disconnect}
+                onSettingsChanged={() => mutate()}
               />
             ))}
             {META_PLATFORMS.map((p) => (
