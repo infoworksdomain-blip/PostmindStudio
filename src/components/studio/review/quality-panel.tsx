@@ -62,6 +62,7 @@ export const DETAIL_KEYS = [
   'brandKitPresent',
   'forceApproved',
   'allowedByReview',
+  'clipTextBurnedIn',
 ] as const;
 const SEVERITIES = ['block', 'error', 'warning', 'info'] as const;
 const oneOf = <T extends string>(list: readonly T[], value: string): value is T =>

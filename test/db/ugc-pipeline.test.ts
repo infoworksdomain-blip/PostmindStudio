@@ -14,6 +14,10 @@ import {
   actorPortraitPrompt,
 } from '../../src/lib/studio/ugc/portrait';
 import { actorDescription, newUgcStyle } from '../../src/lib/studio/ugc/style';
+import {
+  CLIP_TEXT_FRAME_POSITIONS,
+  CLIP_TEXT_SYSTEM,
+} from '../../src/lib/studio/ugc/clip-text-guard';
 import { createHarness, createProject, IDEATION_JSON } from '../helpers/pipeline-harness';
 
 // BACKLOG 21.4 — a UGC actor video through the real pipeline on real Postgres with scripted
@@ -386,6 +390,100 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     const edit = JSON.stringify(h.adapters.shotstack.requests[0]);
     expect(edit).toContain('"src":"');
     expect(edit).toMatch(/"type":"video","src":"[^"]+","volume":1/);
+  });
+
+  // 21.4c (production 2026-10-06): actor clips with burned-in subtitles.
+  const clipTextChecks = (h: Harness) =>
+    h.adapters.anthropic.requests.filter(
+      (r) => r.capability === 'text_generation' && r.system === CLIP_TEXT_SYSTEM,
+    );
+  const keptClip = (after: Awaited<ReturnType<typeof run>>['after'], i: number) =>
+    after.scripts[0]?.shots[i]?.assetId;
+
+  it('21.4c: no burned-in text → one check per actor clip, no regeneration', async () => {
+    const { h, after, assets } = await run({ actor: true });
+    expect(after.state).toBe('READY_FOR_REVIEW');
+    expect(h.adapters.veo.requests).toHaveLength(2);
+    const checks = clipTextChecks(h);
+    expect(checks).toHaveLength(2);
+    for (const c of checks)
+      expect((c as { images?: unknown[] }).images).toHaveLength(CLIP_TEXT_FRAME_POSITIONS.length);
+    const clips = assets.filter((a) => a.kind === 'VIDEO_CLIP');
+    for (const clip of clips)
+      expect(clip.metadata).toMatchObject({ clipText: { status: 'clean' } });
+    const quality = after.renders[0]?.qualityIssues as Array<{ code: string }>;
+    expect(quality.some((c) => c.code === 'clip_text')).toBe(false);
+  });
+
+  it('21.4c: text in a clip → exactly one regeneration with the same request; a clean retry is kept', async () => {
+    // The first check (shot 1's clip) finds text; the retry is clean.
+    const { h, after, assets } = await run({ actor: true, clipText: (n) => n === 1 });
+    expect(after.state).toBe('READY_FOR_REVIEW');
+    const requests = h.adapters.veo.requests as ActorVideoRequest[];
+    expect(requests).toHaveLength(3);
+    // The regeneration repeats the first clip's request exactly (prompt, line, references, seed).
+    expect(requests[1]).toEqual(requests[0]);
+    expect(clipTextChecks(h)).toHaveLength(3);
+    const kept = assets.find((a) => a.id === keptClip(after, 0));
+    expect(kept?.metadata).toMatchObject({
+      regenerateReason: 'burned_in_text',
+      clipText: { attempt: 2, status: 'clean' },
+    });
+    const first = assets.find(
+      (a) => a.id === (kept?.metadata as { regeneratedFrom?: string }).regeneratedFrom,
+    );
+    expect(first?.metadata).toMatchObject({ clipText: { attempt: 1, status: 'text' } });
+    // Both clips were paid for and tracked (provider_jobs + asset cost).
+    expect(first?.costPence).toBeGreaterThan(0);
+    expect(kept?.costPence).toBeGreaterThan(0);
+    expect(after.renders[0]?.qualityCheckState).toBe('PASSED');
+  });
+
+  it('21.4c: text again after the retry → kept with a clip_text warning for review, no third attempt', async () => {
+    const { h, after } = await run({ actor: true, clipText: (n) => n <= 2 });
+    const requests = h.adapters.veo.requests as ActorVideoRequest[];
+    // Shot 1: first clip + one retry; shot 3: one clip. Never a third attempt for shot 1.
+    expect(requests).toHaveLength(3);
+    expect(requests.filter((r) => r.shotId === after.scripts[0]?.shots[0]?.id)).toHaveLength(2);
+    // A warning does not fail the gate; the video waits for a person.
+    expect(after.state).toBe('READY_FOR_REVIEW');
+    const render = after.renders[0];
+    expect(render?.qualityCheckState).toBe('PASSED');
+    const check = (render?.qualityIssues as Array<Record<string, unknown>>).find(
+      (c) => c.code === 'clip_text',
+    );
+    expect(check).toMatchObject({
+      status: 'warning',
+      severity: 'info',
+      detailKey: 'clipTextBurnedIn',
+      detailParams: { count: 1, shots: '1' },
+    });
+  });
+
+  it('21.4c: the check switched off → no vision call and no regeneration', async () => {
+    const h = createHarness(db, {
+      script: UGC_SCRIPT,
+      ideation: { ...IDEATION_JSON, realPersonRequested: false },
+      probe: { durationSec: 24 },
+      actor: true,
+      clipText: () => true,
+    });
+    h.deps.config.clipTextGuard = false;
+    const { project, runId } = await createProject(db, {
+      organisationId: org,
+      description: 'A creator reviews our oat latte kit',
+      metadata: { ugc: style },
+      durationSec: 24,
+    });
+    await h.queue.add('plan-project', {
+      projectId: project.id,
+      organisationId: org,
+      runId,
+      planTier: 'STANDARD',
+    });
+    await drainInline(h.queue, h.deps);
+    expect(clipTextChecks(h)).toHaveLength(0);
+    expect(h.adapters.veo.requests).toHaveLength(2);
   });
 
   it('stops before the script when ideation says the brief asks for a real person', async () => {

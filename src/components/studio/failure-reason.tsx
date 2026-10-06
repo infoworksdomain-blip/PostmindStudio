@@ -30,6 +30,7 @@ export const QUALITY_CHECK_CODES = [
   'watermark',
   'brand_kit',
   'force_approved',
+  'clip_text',
 ] as const;
 
 export type QualityCheckCode = (typeof QUALITY_CHECK_CODES)[number];

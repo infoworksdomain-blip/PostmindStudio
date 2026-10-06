@@ -999,7 +999,8 @@
         "caption_sync": "Caption sync",
         "watermark": "Watermark",
         "brand_kit": "Brand kit",
-        "force_approved": "Force-approved"
+        "force_approved": "Force-approved",
+        "clip_text": "Text in generated clips"
       },
       "severity": {
         "block": "block",
@@ -1051,7 +1052,8 @@
         "brandKitMissing": "{count, plural, one {Review needed: # brand element is missing from the video.} other {Review needed: # brand elements are missing from the video.}}",
         "brandKitPresent": "Colors, fonts, and logo are present.",
         "forceApproved": "Approved despite failed checks: {note}",
-        "allowedByReview": "Allowed by PostMind’s Trust & Safety review: {note}"
+        "allowedByReview": "Allowed by PostMind’s Trust & Safety review: {note}",
+        "clipTextBurnedIn": "{count, plural, one {Review needed: the generated clip of shot {shots} has its own subtitles or text burned in, even after one retry.} other {Review needed: the generated clips of shots {shots} have their own subtitles or text burned in, even after one retry.}}"
       }
     },
     "saveTemplate": {

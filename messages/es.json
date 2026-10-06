@@ -999,7 +999,8 @@
         "caption_sync": "Sincronía de los subtítulos",
         "watermark": "Marca de agua",
         "brand_kit": "Kit de marca",
-        "force_approved": "Aprobado manualmente"
+        "force_approved": "Aprobado manualmente",
+        "clip_text": "Texto en clips generados"
       },
       "severity": {
         "block": "bloqueo",
@@ -1051,7 +1052,8 @@
         "brandKitMissing": "{count, plural, one {Requiere revisión: falta # elemento de marca en el vídeo.} many {Requiere revisión: faltan # de elementos de marca en el vídeo.} other {Requiere revisión: faltan # elementos de marca en el vídeo.}}",
         "brandKitPresent": "Colores, fuentes y logotipo presentes.",
         "forceApproved": "Aprobado a pesar de controles fallidos: {note}",
-        "allowedByReview": "Permitido por la revisión de Trust & Safety de PostMind: {note}"
+        "allowedByReview": "Permitido por la revisión de Trust & Safety de PostMind: {note}",
+        "clipTextBurnedIn": "{count, plural, one {Requiere revisión: el clip generado de la toma {shots} tiene subtítulos o texto incrustados, incluso tras un reintento.} many {Requiere revisión: los clips generados de las tomas {shots} tienen subtítulos o texto incrustados, incluso tras un reintento.} other {Requiere revisión: los clips generados de las tomas {shots} tienen subtítulos o texto incrustados, incluso tras un reintento.}}"
       }
     },
     "saveTemplate": {

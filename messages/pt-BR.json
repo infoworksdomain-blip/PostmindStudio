@@ -999,7 +999,8 @@
         "caption_sync": "Sincronia das legendas",
         "watermark": "Marca d’água",
         "brand_kit": "Kit de marca",
-        "force_approved": "Aprovado manualmente"
+        "force_approved": "Aprovado manualmente",
+        "clip_text": "Texto nos clipes gerados"
       },
       "severity": {
         "block": "bloqueio",
@@ -1051,7 +1052,8 @@
         "brandKitMissing": "{count, plural, one {Precisa de revisão: falta # elemento da marca no vídeo.} many {Precisa de revisão: faltam # de elementos da marca no vídeo.} other {Precisa de revisão: faltam # elementos da marca no vídeo.}}",
         "brandKitPresent": "Cores, fontes e logotipo presentes.",
         "forceApproved": "Aprovado apesar das verificações com falha: {note}",
-        "allowedByReview": "Permitido pela revisão de Trust & Safety do PostMind: {note}"
+        "allowedByReview": "Permitido pela revisão de Trust & Safety do PostMind: {note}",
+        "clipTextBurnedIn": "{count, plural, one {Precisa de revisão: o clipe gerado da cena {shots} tem legendas ou texto embutidos, mesmo após uma nova tentativa.} many {Precisa de revisão: os clipes gerados das cenas {shots} têm legendas ou texto embutidos, mesmo após uma nova tentativa.} other {Precisa de revisão: os clipes gerados das cenas {shots} têm legendas ou texto embutidos, mesmo após uma nova tentativa.}}"
       }
     },
     "saveTemplate": {

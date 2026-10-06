@@ -36,6 +36,7 @@ import {
 import { selectStockVoice } from '../../pipeline/voice-fit';
 import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
 import { timeClipSpeech } from '../../ugc/clip-speech';
+import { guardActorClip } from '../../ugc/clip-text-guard';
 import { ensureActorPortrait } from '../../ugc/portrait';
 import { actorClipPrompt, ugcStillPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
@@ -302,9 +303,10 @@ async function generateActor(
           shotId: shot.id,
         })
       : null;
-  let run: ProviderRunResult;
-  try {
-    run = await runProvider(
+  const spokenLine = shot.voiceoverText;
+  // The same request (prompt, line, references, seed) for the clip and for a 21.4c regeneration.
+  const makeClip = () =>
+    runProvider(
       {
         need: { kind: 'shot', visualTreatment: 'UGC_ACTOR', durationSec: shot.durationSec },
         planTier: data.planTier,
@@ -321,7 +323,7 @@ async function generateActor(
             productReference: Boolean(productImageUrl),
             actorReference: Boolean(portrait),
           }),
-          spokenLine: shot.voiceoverText,
+          spokenLine,
           languageCode: shot.script.language,
           durationSec: shot.durationSec,
           aspectRatio: shot.script.targetAspectRatio as AspectRatio,
@@ -332,25 +334,52 @@ async function generateActor(
       },
       deps,
     );
+  const record = (clip: ProviderRunResult, extra: Record<string, unknown> = {}) =>
+    recordAsset(
+      deps,
+      shot,
+      'VIDEO_CLIP',
+      clip,
+      { extension: 'mp4', contentType: 'video/mp4' },
+      undefined,
+      {
+        speech: 'clip',
+        ...(product && { productImageId: product.id }),
+        ...(portrait && { actorImageAssetId: portrait.assetId }),
+        ...extra,
+      },
+    );
+  let run: ProviderRunResult;
+  try {
+    run = await makeClip();
   } catch (err) {
     const reason = avatarUnavailableReason(err);
     if (!reason) throw err;
     await generateVoice(deps, shot, data);
     return generatePresenterlessClip(deps, shot, data, reason, DEGRADED_FROM_ACTOR);
   }
-  return recordAsset(
+  const stored = await record(run);
+  // 21.4c: a clip with burned-in subtitles is regenerated once (same request); see the guard.
+  const latest = { asset: stored };
+  const kept = await guardActorClip(
     deps,
-    shot,
-    'VIDEO_CLIP',
-    run,
-    { extension: 'mp4', contentType: 'video/mp4' },
-    undefined,
     {
-      speech: 'clip',
-      ...(product && { productImageId: product.id }),
-      ...(portrait && { actorImageAssetId: portrait.assetId }),
+      organisationId: data.organisationId,
+      projectId: data.projectId,
+      shotId: shot.id,
+      planTier: data.planTier,
+      durationSec: shot.durationSec,
+      assetId: stored.assetId,
+    },
+    async (reason) => {
+      latest.asset = await record(await makeClip(), {
+        regeneratedFrom: stored.assetId,
+        regenerateReason: reason,
+      });
+      return latest.asset.assetId;
     },
   );
+  return kept === latest.asset.assetId ? latest.asset : stored;
 }
 
 /**

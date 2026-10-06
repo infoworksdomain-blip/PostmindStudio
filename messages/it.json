@@ -999,7 +999,8 @@
         "caption_sync": "Sincronia dei sottotitoli",
         "watermark": "Filigrana",
         "brand_kit": "Brand kit",
-        "force_approved": "Approvato manualmente"
+        "force_approved": "Approvato manualmente",
+        "clip_text": "Testo nelle clip generate"
       },
       "severity": {
         "block": "blocco",
@@ -1051,7 +1052,8 @@
         "brandKitMissing": "{count, plural, one {Da rivedere: manca # elemento del brand nel video.} many {Da rivedere: mancano # di elementi del brand nel video.} other {Da rivedere: mancano # elementi del brand nel video.}}",
         "brandKitPresent": "Colori, font e logo presenti.",
         "forceApproved": "Approvato nonostante controlli non superati: {note}",
-        "allowedByReview": "Consentito dalla revisione Trust & Safety di PostMind: {note}"
+        "allowedByReview": "Consentito dalla revisione Trust & Safety di PostMind: {note}",
+        "clipTextBurnedIn": "{count, plural, one {Da rivedere: la clip generata dell’inquadratura {shots} ha sottotitoli o testo impressi, anche dopo un nuovo tentativo.} many {Da rivedere: le clip generate delle inquadrature {shots} hanno sottotitoli o testo impressi, anche dopo un nuovo tentativo.} other {Da rivedere: le clip generate delle inquadrature {shots} hanno sottotitoli o testo impressi, anche dopo un nuovo tentativo.}}"
       }
     },
     "saveTemplate": {
