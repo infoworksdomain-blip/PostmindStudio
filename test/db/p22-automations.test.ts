@@ -167,6 +167,45 @@ describe.skipIf(!hasDb)('22.5 automations', { timeout: 240_000 }, () => {
     );
   });
 
+  it('start: an unused draft month plan does not push the first period out; a scheduled one does (production 2026-10-06)', async () => {
+    const DAY = 86_400_000;
+    const plan = (status: 'DRAFT' | 'SCHEDULED', days: number) =>
+      db.contentPlan.create({
+        data: {
+          organisationId: org,
+          businessId: biz,
+          createdByUserId: 'user-1',
+          status,
+          startDate: new Date(Date.now() - DAY).toISOString().slice(0, 10),
+          days: days + 1,
+          timezone: 'Europe/London',
+          windowStart: new Date(Date.now() - DAY),
+          windowEnd: new Date(Date.now() + days * DAY),
+          postsPerDay: 1,
+          platforms: ['instagram_feed'],
+          targets: [],
+          language: 'en-GB',
+        },
+      });
+    await plan('DRAFT', 28);
+    const a = await create();
+    const { automation } = await startAutomation(deps(), owner, a.id);
+    const first = await db.contentPlan.findFirstOrThrow({
+      where: { id: automation.currentPlanId! },
+    });
+    expect(first.windowStart.getTime() - Date.now()).toBeLessThan(3 * DAY);
+
+    await db.automation.update({ where: { id: a.id }, data: { status: 'CANCELLED' } });
+    await db.contentPlan.deleteMany({ where: { id: first.id } });
+    const scheduled = await plan('SCHEDULED', 14);
+    const b = await create();
+    const started = await startAutomation(deps(), owner, b.id);
+    const next = await db.contentPlan.findFirstOrThrow({
+      where: { id: started.automation.currentPlanId! },
+    });
+    expect(next.windowStart.getTime()).toBeGreaterThanOrEqual(scheduled.windowEnd.getTime() - DAY);
+  });
+
   it('review mode: DRAFT → REVIEW (notified), slot review, approve → ACTIVE with format-aware projects', async () => {
     const a = await create();
     await startAutomation(deps(), owner, a.id);
