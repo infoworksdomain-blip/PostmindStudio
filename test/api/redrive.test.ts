@@ -372,7 +372,12 @@ describe.skipIf(!hasDb)('admin re-drive API', { timeout: 60_000 }, () => {
 
     await post({ scope: 'stuck', organisationId: orgA, stuckMinutes: 60, dryRun: false });
     const jobs = api.queue.pending;
-    expect(jobs).toHaveLength(2);
+    // 23.6: a RENDERING run also gets a fresh render poll chain (a no-op with nothing pending).
+    expect(jobs.map((j) => j.name).sort()).toEqual([
+      'compose-video',
+      'generate-asset',
+      'poll-render',
+    ]);
     expect(jobs.find((j) => j.name === 'compose-video')?.data).toMatchObject({
       projectId: rendering.project.id,
       runId: rendering.runId,
@@ -383,7 +388,7 @@ describe.skipIf(!hasDb)('admin re-drive API', { timeout: 60_000 }, () => {
     });
     // Same run, same job ids: a second apply adds nothing.
     await post({ scope: 'stuck', organisationId: orgA, stuckMinutes: 60, dryRun: false });
-    expect(api.queue.pending).toHaveLength(2);
+    expect(api.queue.pending).toHaveLength(3);
     expect(
       (await db.videoProject.findUniqueOrThrow({ where: { id: rendering.project.id } })).state,
     ).toBe('RENDERING');

@@ -95,6 +95,35 @@ describe('concurrency limits from env', () => {
   });
 });
 
+describe('23.6 slots released by lease id (asynchronous renders)', () => {
+  it('another job gives the slot back by its lease id', async () => {
+    const limiter = createMemoryProviderConcurrencyLimiter(
+      concurrencyLimitsFromEnv({ STUDIO_PROVIDER_CONCURRENCY_SHOTSTACK: '1' }),
+    );
+    const slot = await limiter.acquire({
+      providerId: 'shotstack',
+      organisationId: 'org-a',
+      leaseMs: LEASE,
+    });
+    expect(slot.acquired && slot.leaseId).toBeTruthy();
+    expect(
+      (await limiter.acquire({ providerId: 'shotstack', organisationId: 'org-b', leaseMs: LEASE }))
+        .acquired,
+    ).toBe(false);
+    await limiter.releaseLease?.({
+      providerId: 'shotstack',
+      organisationId: 'org-a',
+      leaseId: slot.acquired ? slot.leaseId! : '',
+    });
+    expect(limiter.inFlight('shotstack')).toBe(0);
+    await limiter.releaseLease?.({
+      providerId: 'shotstack',
+      organisationId: 'org-a',
+      leaseId: 'x',
+    });
+  });
+});
+
 describe('23.2 ElevenLabs account pool (speech + music)', () => {
   const limits = concurrencyLimitsFromEnv({});
 

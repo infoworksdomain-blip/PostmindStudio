@@ -14,6 +14,7 @@ import {
   verifyRenderCallbackToken,
   type RenderCallbackConfig,
 } from '../providers/render-callback';
+import { wakeRenderPoll } from '../pipeline/render-async';
 import { getApiDeps, type ApiDeps } from './context';
 import { clientAddress } from './public';
 import { jsonResponse } from './route';
@@ -24,7 +25,8 @@ import { jsonResponse } from './route';
 // time. Shotstack does not sign its payloads, so the payload only names the render: its status
 // is fetched from Shotstack's API with the platform key, and only a finished render (done or
 // failed) wakes the job waiting for it. The worker then polls once and records the outcome
-// exactly as before (provider_jobs, cost, retries), so a replayed callback is harmless:
+// exactly as before (provider_jobs, cost, retries), so a replayed callback is harmless (23.6: the
+// run's delayed poll-render job is promoted, or a one-off poll per provider job is added):
 //   - unknown render (no provider_jobs row)            404
 //   - render already recorded (row not RUNNING)        200, nothing fetched or woken
 //   - still running at Shotstack (early / forged)      200, not woken
@@ -42,7 +44,7 @@ const callbackPayload = z.object({
 
 export type ShotstackCallbackDeps = Pick<
   ApiDeps,
-  'db' | 'registry' | 'providerWake' | 'webhookRateLimiter' | 'logger'
+  'db' | 'registry' | 'providerWake' | 'webhookRateLimiter' | 'logger' | 'queue'
 >;
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -138,7 +140,13 @@ export async function handleShotstackCallback(
       return jsonResponse({ ok: true, ignored: 'still_running' }, { headers });
     }
     await deps.providerWake.signal(SHOTSTACK, payload.id);
-    jobLog.info({ state: status.state }, 'shotstack callback: render job woken');
+    // 23.6: an asynchronous render (no job waiting in-process) is finished by the run's poll
+    // chain: run its next poll now. Duplicate callbacks promote nothing new and the poll claim
+    // records the render once.
+    const resumed = job.projectId
+      ? await wakeRenderPoll(deps, { projectId: job.projectId, providerJobRowId: job.id })
+      : 'not_pending';
+    jobLog.info({ state: status.state, resumed }, 'shotstack callback: render job woken');
     return jsonResponse({ ok: true, woken: true }, { headers });
   } catch (err) {
     const response = toErrorResponse(err);

@@ -15,6 +15,12 @@ export const QUEUES = {
   library: 'studio-library',
   /** Phase 18 Track B: transactional and notification email (Resend), isolated from publishing. */
   email: 'studio-email',
+  /**
+   * 23.6: composition and rendering (compose-video submits, poll-render finishes, carousel
+   * slides), so planning, Blitz refills and the automation / month-plan ticks on orchestration are
+   * never queued behind renders.
+   */
+  render: 'studio-render',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
@@ -159,10 +165,23 @@ export interface BlitzRefillJobData {
   batch?: boolean;
 }
 
+/**
+ * 23.6: one look at a run's external renders (pipeline/render-async.ts). A chain of delayed polls
+ * (`chain` = the compose attempt, `poll` = its step) runs until every render is recorded; `wake`
+ * marks a one-off poll added by a render callback (it never schedules a successor).
+ */
+export interface PollRenderJobData extends ProjectJobData {
+  chain: string;
+  poll: number;
+  wake?: boolean;
+}
+
 export interface JobDataMap {
   'plan-project': ProjectJobData;
   'generate-asset': GenerateAssetJobData;
   'compose-video': ProjectJobData;
+  /** 23.6: finish a run's submitted renders (store, master, record) once they are done. */
+  'poll-render': PollRenderJobData;
   /** 15.A3: generated thumbnail candidates for a run's renders (after compose). */
   'generate-thumbnail': ProjectJobData;
   'run-quality-gate': ProjectJobData;
@@ -245,14 +264,16 @@ export type JobName = keyof JobDataMap;
 export const JOB_QUEUE: Record<JobName, QueueName> = {
   'plan-project': QUEUES.orchestration,
   'generate-asset': QUEUES.assets,
-  'compose-video': QUEUES.orchestration,
+  // 23.6: the render lane (compose submits, render polls, carousel slides).
+  'compose-video': QUEUES.render,
+  'poll-render': QUEUES.render,
   'generate-thumbnail': QUEUES.assets,
   'run-quality-gate': QUEUES.orchestration,
   'publish-video': QUEUES.publish,
   'fire-scheduled-publication': QUEUES.scheduled,
   'scan-website': QUEUES.assets,
   'populate-slideshow': QUEUES.orchestration,
-  'render-carousel': QUEUES.orchestration,
+  'render-carousel': QUEUES.render,
   'ingest-library-video': QUEUES.library,
   'reanalyse-library-video': QUEUES.library,
   'poll-publication-analytics': QUEUES.analytics,
@@ -300,17 +321,44 @@ export function retryDelayMs(attemptsMade: number): number {
   return Math.min(BACKOFF_BASE_MS * 2 ** exponent, BACKOFF_CAP_MS);
 }
 
+/**
+ * 23.6 Redis headroom (BullMQ "Auto-removal of jobs", https://docs.bullmq.io/guide/queues/auto-removal-of-jobs,
+ * read 2026-10-06: `removeOnComplete` / `removeOnFail` take { age (seconds), count } and keep at
+ * most that many jobs of each queue). Completed jobs are kept 6 h / 1 000 per queue (was 24 h /
+ * 5 000): long enough for the deterministic job ids to swallow duplicate fan-in adds of a run
+ * (seconds to minutes apart) and for the dead-letter / redrive tools, small enough that a month
+ * of automation posts fits in Redis. Failed jobs stay in the failed set for operator action
+ * (spec 11.5 dead-letter) but only the newest 5 000 per queue (was: all, unbounded).
+ */
+export const KEEP_COMPLETED_JOBS = { age: 6 * 60 * 60, count: 1_000 } as const;
+export const KEEP_FAILED_JOBS = { count: 5_000 } as const;
+
 export const DEFAULT_JOB_OPTIONS: JobsOptions = {
   attempts: MAX_RETRIES + 1,
   backoff: { type: 'studio' },
-  // Keep a bounded history of successes; never auto-drain failures (spec 11.5: dead-letter
-  // requires operator action).
-  removeOnComplete: { age: 24 * 60 * 60, count: 5_000 },
-  removeOnFail: false,
+  removeOnComplete: { ...KEEP_COMPLETED_JOBS },
+  removeOnFail: { ...KEEP_FAILED_JOBS },
 };
 
 /** BullMQ: lower number = higher priority (spec 11.2). */
 export const PRIORITY = { high: 1, normal: 5, low: 10 } as const;
+
+/**
+ * 23.6: the runners that start and advance work (month-plan runner, automation runner, Blitz
+ * refills) run ahead of the work they start, so a burst of a hundred month plans never delays
+ * them (load-test/capacity-model.ts: at NORMAL priority a tick waited up to 7 minutes behind the
+ * first posts of 100 plans; at HIGH, under 15 s).
+ */
+export const RUNNER_JOBS: ReadonlySet<JobName> = new Set<JobName>([
+  'advance-content-plans',
+  'advance-automations',
+  'refill-blitz-queue',
+]);
+
+/** The BullMQ priority of one job. */
+export function jobPriority(name: JobName, data: { planTier: PlanTier; batch?: boolean }): number {
+  return RUNNER_JOBS.has(name) ? PRIORITY.high : priorityFor(data.planTier, data.batch);
+}
 
 export function priorityFor(planTier: PlanTier, batch = false): number {
   if (batch) return PRIORITY.low;

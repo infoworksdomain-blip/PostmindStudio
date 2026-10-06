@@ -1,21 +1,9 @@
 import { reportError } from '../../observability/errors';
-import { isAccountErrorClass } from '../../providers/account-errors';
 import { getMetrics } from '../../observability/metrics';
 import { UnrecoverableError } from 'bullmq';
-import {
-  ConfigurationError,
-  CostCapPausedError,
-  KillSwitchTriggeredError,
-  NoProviderAvailableError,
-  ProvidersUnavailableError,
-  NotFoundError,
-  NotImplementedError,
-  PlatformError,
-  ProviderError,
-  RateDeferredError,
-  StudioError,
-  ValidationError,
-} from '../../../errors';
+import { CostCapPausedError, RateDeferredError } from '../../../errors';
+import { describeError, isRetryable } from './job-errors';
+
 import type { PipelineDeps } from '../../pipeline/deps';
 import { failProject } from '../../pipeline/project-state';
 import { noteProviderWait } from '../../pipeline/provider-wait';
@@ -24,7 +12,7 @@ import { recordCostPause } from '../../services/auto-resume';
 import { featureGateFor, type Feature } from '../../services/features';
 import { checkJobAccess } from '../../billing/job-access';
 import { retryDelayMs, type JobDataMap, type JobName } from '../queues';
-import type { InlineJobQueue } from '../enqueue';
+import { INLINE_DELAYED_JOBS, type InlineJobQueue } from '../enqueue';
 import { checkPendingApprovals, onCheckPendingApprovalsFailed } from './check-approvals';
 import { buildStyleMemoryJob, onBuildStyleMemoryFailed } from './build-style-memory';
 import { autoResumePaused, onAutoResumePausedFailed } from './auto-resume';
@@ -67,6 +55,7 @@ import { exportAccountData, onExportAccountDataFailed } from './export-account-d
 import { onRetentionSweepFailed, retentionSweep } from './retention-sweep';
 import { onSampleSafetyAuditFailed, sampleSafetyAuditJob } from './sample-safety-audit';
 import { composeVideo, onComposeVideoFailed } from './compose-video';
+import { onPollRenderFailed, pollRender } from './poll-render';
 import { generateThumbnails, onGenerateThumbnailsFailed } from './generate-thumbnail';
 import { generateAsset, onGenerateAssetFailed } from './generate-asset';
 import { onPlanProjectFailed, planProject } from './plan-project';
@@ -127,6 +116,7 @@ export const PROCESSORS: { [N in JobName]: Processor<N> } = {
   'plan-project': planProject,
   'generate-asset': generateAsset,
   'compose-video': composeVideo,
+  'poll-render': pollRender,
   'generate-thumbnail': generateThumbnails,
   'run-quality-gate': runQualityGate,
   'publish-video': publishVideo,
@@ -175,6 +165,7 @@ export const FAILURE_HANDLERS: { [N in JobName]: FailureHandler<N> } = {
   'plan-project': onPlanProjectFailed,
   'generate-asset': onGenerateAssetFailed,
   'compose-video': onComposeVideoFailed,
+  'poll-render': onPollRenderFailed,
   'generate-thumbnail': onGenerateThumbnailsFailed,
   'run-quality-gate': onRunQualityGateFailed,
   'publish-video': onPublishVideoFailed,
@@ -239,51 +230,8 @@ export const JOB_FEATURES: Partial<Record<JobName, Feature>> = {
   'render-carousel': 'carousels',
 };
 
-export function isRetryable(err: unknown): boolean {
-  if (err instanceof ProviderError || err instanceof PlatformError) return err.retryable;
-  // 20.11: every provider lost to an account problem; the operator must fix an account (alerted).
-  if (err instanceof ProvidersUnavailableError) return false;
-  // Breakers close and budgets reset; routing again later may succeed.
-  if (err instanceof NoProviderAvailableError) return true;
-  if (
-    err instanceof KillSwitchTriggeredError ||
-    err instanceof ValidationError ||
-    err instanceof NotFoundError ||
-    err instanceof NotImplementedError ||
-    err instanceof ConfigurationError
-  ) {
-    return false;
-  }
-  if (err instanceof StudioError) return false;
-  return true; // unexpected errors (DB blips, network) are worth retrying
-}
-
-/** A routing failure caused only by budgets (a customer's cap), not by provider availability. */
-function budgetOnly(err: NoProviderAvailableError): boolean {
-  const candidates = err.details?.candidates;
-  if (!Array.isArray(candidates)) return false;
-  const reasons = candidates
-    .map((c) => (c as { skipped?: string }).skipped)
-    .filter((r) => r !== undefined && r !== 'not_configured' && r !== 'capability_unsupported');
-  return reasons.length > 0 && reasons.every((r) => r === 'over_budget');
-}
-
-export function describeError(err: unknown): string {
-  if (err instanceof KillSwitchTriggeredError) return `kill_switch_${err.level}: ${err.message}`;
-  if (err instanceof CostCapPausedError) return `cost_cap_paused: ${err.message}`;
-  // 20.11: stored reasons are shown to customers (as a translated sentence by code); no provider
-  // text for account problems, which stays in logs and provider_jobs.
-  if (err instanceof NoProviderAvailableError && !budgetOnly(err)) {
-    return `service_unavailable: ${err.message}`;
-  }
-  if (err instanceof ProviderError) {
-    return isAccountErrorClass(err.errorClass)
-      ? `service_unavailable: ${err.providerId}/${err.errorClass}`
-      : `${err.providerId}/${err.errorClass}: ${err.message}`;
-  }
-  if (err instanceof PlatformError) return `${err.platform}/${err.errorClass}: ${err.message}`;
-  return err instanceof Error ? err.message : String(err);
-}
+// 23.6: shared with the asynchronous render finisher (pipeline/render-async.ts).
+export { describeError, isRetryable };
 
 export interface JobAttempt {
   /** Attempts already made before this one (BullMQ job.attemptsMade). */
@@ -393,6 +341,8 @@ export async function drainInline(
   let executed = 0;
   const failedJobs: string[] = [];
   for (let job = queue.take(); job; job = queue.take()) {
+    // 23.6: a delayed render poll (or render retry) waits out its delay first.
+    if (job.delayMs && INLINE_DELAYED_JOBS.has(job.name)) await deps.sleep(job.delayMs);
     let deferrals = 0;
     for (let attemptsMade = 0; ; attemptsMade += 1) {
       executed += 1;
