@@ -62,10 +62,25 @@ export const ugcInput = z
       })
       .strict()
       .optional(),
+    /**
+     * 22.3: a READY creator of the project's business (validated by the service). Its look and
+     * portrait replace the actor choices above; absent = a new one-off actor (21.4).
+     */
+    creatorId: z.string().trim().min(1).max(64).optional(),
   })
   .strict();
 
 export type UgcInput = z.infer<typeof ugcInput>;
+
+/** 22.3: the reusable creator a UGC project uses (metadata.ugc.creator). */
+export interface UgcCreatorRef {
+  id: string;
+  /** The portrait the project was made with (creator_portraits.id): pinned for every clip. */
+  portraitId: string;
+  /** The creator's fixed look text (creators.description). */
+  description: string;
+  voiceTone: string | null;
+}
 
 export interface UgcStyle {
   style: typeof UGC_STYLE;
@@ -73,6 +88,15 @@ export interface UgcStyle {
   actor: { ageRange: UgcAgeRange; gender: UgcGender; setting: UgcSetting };
   /** 0 … 2^31-1; fixed for the project. */
   seed: number;
+  /** 22.3: present when the project uses a reusable creator. */
+  creator?: UgcCreatorRef;
+}
+
+/** 22.3: what newUgcStyle needs from a chosen creator. */
+export interface UgcCreatorChoice extends UgcCreatorRef {
+  ageRange: UgcAgeRange;
+  gender: UgcGender;
+  setting: UgcSetting;
 }
 
 /** A Veo seed is an unsigned 32-bit integer; we stay inside the signed range for every provider. */
@@ -83,18 +107,31 @@ function pick<T>(list: readonly T[], seed: number, salt: number): T {
   return list[hash % list.length] as T;
 }
 
-/** The stored style for a new project: the owner's choices, the rest picked from the seed. */
-export function newUgcStyle(input: UgcInput, seed: number): UgcStyle {
+/**
+ * The stored style for a new project: the owner's choices, the rest picked from the seed. 22.3:
+ * with a creator, the creator's age, gender and setting (and its look text) are the actor's.
+ */
+export function newUgcStyle(input: UgcInput, seed: number, creator?: UgcCreatorChoice): UgcStyle {
   const s = Math.max(0, Math.min(MAX_UGC_SEED, Math.floor(seed)));
   return {
     style: UGC_STYLE,
     product: { name: input.product?.name ?? null, imageId: input.product?.imageId ?? null },
-    actor: {
-      ageRange: input.actor?.ageRange ?? pick(['25-34', '35-44'] as const, s, 1),
-      gender: input.actor?.gender ?? pick(UGC_GENDERS, s, 2),
-      setting: input.actor?.setting ?? pick(['kitchen', 'living_room', 'desk'] as const, s, 3),
-    },
+    actor: creator
+      ? { ageRange: creator.ageRange, gender: creator.gender, setting: creator.setting }
+      : {
+          ageRange: input.actor?.ageRange ?? pick(['25-34', '35-44'] as const, s, 1),
+          gender: input.actor?.gender ?? pick(UGC_GENDERS, s, 2),
+          setting: input.actor?.setting ?? pick(['kitchen', 'living_room', 'desk'] as const, s, 3),
+        },
     seed: s,
+    ...(creator && {
+      creator: {
+        id: creator.id,
+        portraitId: creator.portraitId,
+        description: creator.description,
+        voiceTone: creator.voiceTone,
+      },
+    }),
   };
 }
 
@@ -107,6 +144,14 @@ const ugcStored = z.object({
     setting: z.enum(UGC_SETTINGS),
   }),
   seed: z.number().int().min(0).max(MAX_UGC_SEED),
+  creator: z
+    .object({
+      id: z.string().min(1),
+      portraitId: z.string().min(1),
+      description: z.string().min(1),
+      voiceTone: z.string().nullable(),
+    })
+    .optional(),
 });
 
 /** metadata.ugc of a project, or null for every other video. */
@@ -160,6 +205,31 @@ export const SETTING_TEXT: Readonly<Record<UgcSetting, string>> = {
  * person, hair and clothes, so each clip describes the same generated person. Synthetic only.
  */
 export function actorDescription(style: UgcStyle): string {
+  // 22.3: a reusable creator's own look text (and how they speak), the same in every video.
+  if (style.creator) {
+    const voice = style.creator.voiceTone ? `, speaking in a ${style.creator.voiceTone} way` : '';
+    return `${style.creator.description}${voice}`;
+  }
   const person = PERSON[style.actor.gender];
   return `a ${person} ${AGE_TEXT[style.actor.ageRange]} with ${pick(HAIR, style.seed, 4)}, wearing ${pick(CLOTHES, style.seed, 5)}`;
+}
+
+/**
+ * 22.3: a creator's fixed look text, from the presets and the owner's look notes (or, with no
+ * notes, hair and clothes picked from the seed like a one-off actor). Synthetic people only: the
+ * notes are real-person checked before they get here.
+ */
+export function creatorDescription(input: {
+  gender: UgcGender;
+  ageRange: UgcAgeRange;
+  appearance: string | null;
+  seed: number;
+}): string {
+  const base = `a ${PERSON[input.gender]} ${AGE_TEXT[input.ageRange]}`;
+  const notes = input.appearance
+    ?.trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[.;,]+$/, '');
+  if (notes) return `${base}, ${notes}`;
+  return `${base} with ${pick(HAIR, input.seed, 4)}, wearing ${pick(CLOTHES, input.seed, 5)}`;
 }

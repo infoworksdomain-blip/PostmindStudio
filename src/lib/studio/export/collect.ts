@@ -138,6 +138,16 @@ async function collectBrand(db: Db, org: string, c: Collector) {
       take,
     }),
   );
+  // 22.3: reusable creators and their portrait records (consent attestations), no storage keys.
+  c.add('creators', await db.creator.findMany({ where: scope, take }));
+  c.add(
+    'creator_portraits',
+    await db.creatorPortrait.findMany({
+      where: scope,
+      omit: { s3Bucket: true, s3Key: true, providerJobId: true, costPence: true },
+      take,
+    }),
+  );
   c.add(
     'style_memories',
     await db.styleMemory.findMany({ where: { ...scope, deletedAt: null }, take }),
