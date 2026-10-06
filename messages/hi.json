@@ -2479,7 +2479,7 @@
       "action": "चैनल जोड़ें"
     },
     "tiktokPostMode": {
-      "legend": "{account} TikTok पर कैसे पोस्ट करता है",
+      "legend": "यह खाता TikTok पर कैसे पोस्ट करता है",
       "drafts": "TikTok ड्राफ़्ट में भेजें",
       "draftsHint": "TikTok ऐप में कोई ट्रेंडिंग साउंड जोड़ें, फिर पोस्ट करें।",
       "direct": "सीधे पोस्ट करें",

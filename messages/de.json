@@ -2479,7 +2479,7 @@
       "action": "Kanal hinzufügen"
     },
     "tiktokPostMode": {
-      "legend": "Wie {account} auf TikTok postet",
+      "legend": "Wie dieses Konto auf TikTok postet",
       "drafts": "An TikTok-Entwürfe senden",
       "draftsHint": "Füge in der TikTok-App einen Trend-Sound hinzu und poste dann.",
       "direct": "Direkt posten",

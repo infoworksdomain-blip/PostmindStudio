@@ -2479,7 +2479,7 @@
       "action": "إضافة قناة"
     },
     "tiktokPostMode": {
-      "legend": "طريقة نشر {account} على TikTok",
+      "legend": "طريقة نشر هذا الحساب على TikTok",
       "drafts": "الإرسال إلى مسودات TikTok",
       "draftsHint": "أضف صوتًا رائجًا في تطبيق TikTok، ثم انشر.",
       "direct": "النشر مباشرة",

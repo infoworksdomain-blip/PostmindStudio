@@ -2479,7 +2479,7 @@
       "action": "添加频道"
     },
     "tiktokPostMode": {
-      "legend": "{account} 如何发布到 TikTok",
+      "legend": "此账号如何发布到 TikTok",
       "drafts": "发送到 TikTok 草稿",
       "draftsHint": "在 TikTok 应用中添加热门音乐，然后发布。",
       "direct": "直接发布",

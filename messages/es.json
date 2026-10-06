@@ -2479,7 +2479,7 @@
       "action": "Añadir un canal"
     },
     "tiktokPostMode": {
-      "legend": "Cómo publica {account} en TikTok",
+      "legend": "Cómo publica esta cuenta en TikTok",
       "drafts": "Enviar a borradores de TikTok",
       "draftsHint": "Añade un sonido en tendencia en la app de TikTok y publica.",
       "direct": "Publicar directamente",

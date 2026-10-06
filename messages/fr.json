@@ -2479,7 +2479,7 @@
       "action": "Ajouter un canal"
     },
     "tiktokPostMode": {
-      "legend": "Comment {account} publie sur TikTok",
+      "legend": "Comment ce compte publie sur TikTok",
       "drafts": "Envoyer dans les brouillons TikTok",
       "draftsHint": "Ajoutez un son tendance dans l’app TikTok, puis publiez.",
       "direct": "Publier directement",

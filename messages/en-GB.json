@@ -2479,7 +2479,7 @@
       "action": "Add a channel"
     },
     "tiktokPostMode": {
-      "legend": "How {account} posts to TikTok",
+      "legend": "How this account posts to TikTok",
       "drafts": "Send to TikTok drafts",
       "draftsHint": "Add a trending sound in the TikTok app, then post.",
       "direct": "Post directly",

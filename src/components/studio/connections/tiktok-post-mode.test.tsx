@@ -88,6 +88,14 @@ describe('TikTok posting preference on the Connections screen', () => {
     expect(within(tiktok).getByRole('radio', { name: /Post directly/ })).toBeChecked();
   });
 
+  it('names the account once on the card (the setting has no second copy of it)', async () => {
+    mockFetch(() => ok({ data: [conn({ tiktokPostMode: 'drafts' })] }));
+    renderScreen(<ConnectionsScreen />);
+    const tiktok = await screen.findByRole('region', { name: 'TikTok' });
+    expect(within(tiktok).getAllByText('@bakery')).toHaveLength(1);
+    expect(within(tiktok).getByText('How this account posts to TikTok')).toBeInTheDocument();
+  });
+
   it('asks for a reconnect when drafts are chosen without the upload permission', async () => {
     mockFetch(() => ok({ data: [conn({ tiktokPostMode: 'drafts', scopes: ['video.publish'] })] }));
     renderScreen(<ConnectionsScreen />);

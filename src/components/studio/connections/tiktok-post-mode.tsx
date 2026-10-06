@@ -61,9 +61,7 @@ export function TikTokPostModeSetting({
 
   return (
     <fieldset className="mt-3 max-w-md" disabled={saving}>
-      <legend className="text-xs font-medium text-muted-foreground">
-        {t('legend', { account: connection.platformAccountName })}
-      </legend>
+      <legend className="text-xs font-medium text-muted-foreground">{t('legend')}</legend>
       <div className="mt-1.5 grid gap-1.5">
         {MODES.map((mode) => (
           <label
