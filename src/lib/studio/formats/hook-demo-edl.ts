@@ -1,5 +1,6 @@
 import type { EdlShot } from '../pipeline/edl';
-import { halfFrameCrop } from '../pipeline/edl-stacked';
+import { halfFrameCrop, type Crop } from '../pipeline/edl-stacked';
+import { combineCrop, visibleAspect } from '../pipeline/letterbox';
 import { AUDIO_MIX_LEVELS, effectiveLayout, type HookDemoDocument } from './hook-demo';
 
 // BACKLOG 22.1 — what composition does differently for a hook + demo script (compose-video.ts):
@@ -51,15 +52,21 @@ export function hookDemoEdl(
     silentHook.visualKind !== 'image';
   if (!stacked || !demoShot.visualSrc) return { ...base, shots: [silentHook, demoShot, ...rest] };
   const frameRatio = RATIO[input.aspectRatio] ?? input.frame.width / input.frame.height;
+  // 22.6: a half is cut from the picture inside any baked-in bars (pipeline/letterbox.ts).
+  const halfCrop = (aspect: number | null, bars: Crop | undefined) =>
+    combineCrop(
+      bars ?? null,
+      halfFrameCrop(visibleAspect(aspect ?? frameRatio, bars ?? null), input.frame),
+    );
   return {
     ...base,
     shots: [
       {
         ...silentHook,
         stackedTop: {
-          hookCrop: halfFrameCrop(input.hookAspect ?? frameRatio, input.frame),
+          hookCrop: halfCrop(input.hookAspect, silentHook.sourceCrop),
           bottomSrc: demoShot.visualSrc,
-          bottomCrop: halfFrameCrop(input.demoAspect ?? frameRatio, input.frame),
+          bottomCrop: halfCrop(input.demoAspect, demoShot.sourceCrop),
           bottomVolume: levels.demo,
         },
       },

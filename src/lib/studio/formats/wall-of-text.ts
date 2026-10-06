@@ -24,9 +24,13 @@ import { wordCount } from './hook-demo';
 //   1. a reference-library video in a matching category that is explicitly licensed for use as
 //      footage (licence allowedModes includes FOOTAGE; formats/footage.ts) — the library is a
 //      reference corpus, so nothing is reused as footage unless the operator licensed it so;
-//   2. stock footage through the existing STOCK_FOOTAGE route (Storyblocks video, then Pexels
-//      video; providers/router.ts), searched with the mood's query. Pixabay videos were not added:
-//      Studio's Pixabay adapter is images only, and no new provider request shape was needed.
+//   2. stock footage through the STOCK_FOOTAGE route, Pixabay videos first (providers/
+//      pixabay-video.ts), then Storyblocks / Pexels video; searched with the mood's query.
+//
+// 22.6 (production QA 2026-10-06: ~60 words in 8 s could not be read): a block Claude writes is at
+// most 35 words on 6 short lines (copy-prompt.ts WALL_WRITTEN_*), and the video is long enough to
+// read its block at WALL_READING_WORDS_PER_SEC, up to 12 s (wallShownSec). Owner text keeps the
+// 60-word limit; a long one gets more time, never a smaller font (caption-style.ts wallTextFontPct).
 
 export const WALL_BACKGROUNDS = ['calm', 'nature', 'city', 'abstract'] as const;
 export type WallBackground = (typeof WALL_BACKGROUNDS)[number];
@@ -34,6 +38,20 @@ export type WallBackground = (typeof WALL_BACKGROUNDS)[number];
 export const WALL_MIN_SEC = 6;
 export const WALL_MAX_SEC = 12;
 export const WALL_DEFAULT_SEC = 8;
+/** A comfortable on-screen reading speed for a short block (words per second). */
+export const WALL_READING_WORDS_PER_SEC = 3.5;
+
+/**
+ * How long the block is on screen: the chosen length, extended (never shortened) to read the
+ * block at WALL_READING_WORDS_PER_SEC, at most WALL_MAX_SEC. Whole seconds (the documents and
+ * targetFormats store integers).
+ */
+export function wallShownSec(chosenSec: number, text: string | null | undefined): number {
+  const chosen = Math.min(WALL_MAX_SEC, Math.max(WALL_MIN_SEC, Math.round(chosenSec)));
+  if (!text) return chosen;
+  const readSec = Math.ceil(wordCount(text) / WALL_READING_WORDS_PER_SEC);
+  return Math.min(WALL_MAX_SEC, Math.max(chosen, readSec));
+}
 /** 22.2: a wall-of-text video counts as one video of the allowance (allowanceUnitsOf → 1). */
 export const WALL_OF_TEXT_ALLOWANCE_UNITS = 1;
 

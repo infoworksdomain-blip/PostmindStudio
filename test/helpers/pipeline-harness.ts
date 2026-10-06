@@ -207,6 +207,8 @@ export interface HarnessOptions {
   /** 22.1: the hook line answer; 22.2: the wall-of-text answer. */
   hookLine?: unknown;
   wallText?: unknown;
+  /** 22.6: what cropdetect finds in every clip (default: the inspector has no cropdetect). */
+  cropBounds?: Awaited<ReturnType<NonNullable<MediaInspector['cropBounds']>>>;
   /** 22.2: register a scripted stock-footage adapter (Pixabay videos, the one production has). */
   stock?: boolean;
   /** 21.4c: whether the n-th (1-based) burned-in text check finds text (default: never). */
@@ -387,6 +389,9 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     sceneChanges: vi.fn(async () => options.sceneChanges ?? [2.5, 6]),
     frameJpeg: vi.fn(async () => new Uint8Array([0xff, 0xd8, 0xff, 0xd9])),
     previewClip: vi.fn(async () => new Uint8Array([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70])),
+    ...(options.cropBounds !== undefined && {
+      cropBounds: vi.fn(async () => options.cropBounds ?? null),
+    }),
   };
   const fetchImpl = vi.fn(
     async () =>

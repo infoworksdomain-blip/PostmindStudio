@@ -10,6 +10,7 @@ import {
 import type { AspectRatio } from '../../providers/interface';
 import { providerOutputKey } from '../../storage';
 import type { PipelineDeps } from '../../pipeline/deps';
+import { detectLetterbox } from '../../pipeline/letterbox';
 import { copyUrlToStorage } from '../../pipeline/persist';
 import { currentRunId, transitionProject } from '../../pipeline/project-state';
 import { runProvider, type ProviderRunResult } from '../../pipeline/provider-run';
@@ -136,6 +137,18 @@ async function recordAsset(
     bucket = copied.bucket;
     key = copied.key;
     bytes = copied.bytes;
+  }
+  // 22.6: black bars baked into a generated or stock clip are measured once, here, and cropped
+  // off by the composer (pipeline/letterbox.ts). A detection error never fails the shot.
+  if (kind === 'VIDEO_CLIP') {
+    const stored = { bucket, key };
+    const letterbox = await detectLetterbox(
+      deps.media,
+      () => deps.storage.signedUrl(stored.bucket, stored.key),
+      deps.logger,
+      { shotId: shot.id, providerId: run.decision.providerId },
+    );
+    if (letterbox) metadata.letterbox = letterbox;
   }
   const job = await deps.db.providerJob.findUnique({
     where: { id: run.providerJobRowId },

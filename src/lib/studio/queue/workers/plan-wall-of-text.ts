@@ -23,6 +23,7 @@ import {
   WALL_BACKGROUND_QUERIES,
   WALL_STOCK_PROVIDER,
   WALL_LIBRARY_CATEGORIES,
+  wallShownSec,
 } from '../../formats/wall-of-text';
 import type { ProjectJobData } from '../queues';
 import {
@@ -34,7 +35,8 @@ import {
 } from './format-plan-common';
 
 // BACKLOG 22.2 — the "plan" step of a WALL_OF_TEXT run (formats/wall-of-text.ts): the text block
-// is the owner's or one Claude call (≤ 60 words, line breaks, no emoji); it passes the same
+// is the owner's (≤ 60 words) or one Claude call (≤ 35 words on ≤ 6 lines, 22.6; no emoji), on
+// screen for as long as it takes to read (wallShownSec, 22.6); it passes the same
 // text-safety gate as every video; then each target format gets ONE shot for the whole video
 // (6–12 s): a FOOTAGE-licensed library background, or stock footage through the STOCK_FOOTAGE
 // route (generate-asset.ts) searched with the background mood. The block is ONE overlay for the
@@ -65,11 +67,13 @@ export async function planWallOfText(
       }),
     );
   if (!(await passesTextSafety(deps, data, project, text.split('\n'), log))) return;
+  // 22.6: on screen long enough to read the block (≤ 12 s), never shorter than the choice.
+  const shownSec = wallShownSec(doc.durationSec, text);
 
   const formats = parseTargetFormats(project.targetFormats);
   const clip = await findFootageClip(deps.db, {
     categories: WALL_LIBRARY_CATEGORIES[doc.background],
-    minSec: doc.durationSec,
+    minSec: shownSec,
     aspectRatio: formats[0]?.aspectRatio ?? '9:16',
     seed: project.id,
     now: new Date(deps.now()),
@@ -108,7 +112,7 @@ export async function planWallOfText(
           projectId: project.id,
           targetPlatform: format.platform,
           targetAspectRatio: format.aspectRatio,
-          targetDurationSec: doc.durationSec,
+          targetDurationSec: shownSec,
           language: project.language,
           fullText: text,
           scriptModel: 'wall_of_text',
@@ -118,7 +122,7 @@ export async function planWallOfText(
         data: {
           scriptId: script.id,
           sortOrder: 0,
-          durationSec: doc.durationSec,
+          durationSec: shownSec,
           visualTreatment: 'STOCK_FOOTAGE',
           // The stock search text (generate-asset.ts STOCK_FOOTAGE: the scene is the query).
           sceneDescription: WALL_BACKGROUND_QUERIES[doc.background],
@@ -143,7 +147,7 @@ export async function planWallOfText(
           shotId: shot.id,
           text,
           startAtSec: 0,
-          endAtSec: doc.durationSec,
+          endAtSec: shownSec,
           style: wallTextStyle(wordCount(text)),
           presetId: wallPresetId,
           lang: project.language,

@@ -12,6 +12,7 @@ import {
 } from './edl-brand';
 import { duckedMusicClips, type MusicSpan } from './edl-music';
 import { halfFrameClip, type Crop } from './edl-stacked';
+import { hasBars } from './letterbox';
 import { escapeHtml, HEX_COLOUR, roundSec, SAFE_FONT } from './edl-time';
 import { backdropColour, readableTextColour } from './edl-backdrop';
 import type { CompositionSummary } from './composition-summary';
@@ -134,6 +135,11 @@ export interface EdlShot {
    * `trimSec` in, so the demo runs on without a jump.
    */
   stackedTop?: { hookCrop: Crop; bottomSrc: string; bottomCrop: Crop; bottomVolume: number };
+  /**
+   * 22.6: black bars baked into the clip (pipeline/letterbox.ts), cut off with the VideoAsset
+   * `crop` so `fit: crop` fills the frame with picture only. Absent when the clip has none.
+   */
+  sourceCrop?: Crop;
 }
 
 /** 22.1: the clip's own audio is part of the mix (an uploaded demo at a level above 0). */
@@ -355,6 +361,10 @@ function visualClip(
         src: shot.visualSrc,
         volume,
         ...(shot.trimSec && shot.trimSec > 0 && { trim: roundSec(shot.trimSec) }),
+        // 22.6: VideoAsset `crop` ("Crop the sides of an asset by a relative amount", 0–1 per
+        // side; https://shotstack.io/docs/api/#tocs_crop, read 2026-10-06) removes baked-in bars;
+        // the clip's `fit: crop` (MEDIA_FIT) then scales what is left to fill the frame.
+        ...(hasBars(shot.sourceCrop) && { crop: shot.sourceCrop }),
       },
       start,
       length,

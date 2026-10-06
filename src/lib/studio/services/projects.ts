@@ -34,6 +34,7 @@ import {
   newWallOfTextDocument,
   readWallOfText,
   wallOfTextCreateInput,
+  wallShownSec,
 } from '../formats/wall-of-text';
 import { applyTemplate } from './templates';
 import { defaultReviewPolicyFor } from './org-policy';
@@ -399,7 +400,10 @@ export async function createProject(
       })
     : null;
   // These formats have a fixed length (the hook + demo target, the wall-of-text duration).
-  const fixedSec = hookDemo?.targetSec ?? wallOfText?.durationSec;
+  // 22.6: an owner's long block gets the time to read it (wallShownSec; plan-wall-of-text.ts too).
+  const fixedSec =
+    hookDemo?.targetSec ??
+    (wallOfText ? wallShownSec(wallOfText.durationSec, wallOfText.text) : undefined);
   const formats =
     input.sourceType === 'CAROUSEL'
       ? CAROUSEL_TARGET_FORMATS
