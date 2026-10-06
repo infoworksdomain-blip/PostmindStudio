@@ -64,6 +64,7 @@ export async function planWallOfText(
         system: WALL_TEXT_SYSTEM_PROMPT,
         prompt: buildWallTextPrompt(await formatCopyContext(deps, project, log)),
         schema: WALL_TEXT_OUTPUT_SCHEMA,
+        task: 'wall_text',
       }),
     );
   if (!(await passesTextSafety(deps, data, project, text.split('\n'), log))) return;

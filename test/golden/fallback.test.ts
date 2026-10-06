@@ -270,7 +270,8 @@ describe.skipIf(!hasDb)('provider fallback journeys (13.32)', { timeout: 120_000
     expect(avatar?.providerRouting).toMatchObject({
       visual: {
         providerId: 'heygen',
-        candidates: [{ providerId: 'd-id', skipped: 'not_configured' }, { providerId: 'heygen' }],
+        // 23.2: HeyGen is the back-up on every tier (no actor provider is configured here).
+        candidates: [{ providerId: 'heygen' }],
       },
       voice: { providerId: 'elevenlabs' },
     });

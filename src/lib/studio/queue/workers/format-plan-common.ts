@@ -18,6 +18,7 @@ import {
 } from '../../services/caption-suggestions';
 import type { FormatCopyContext } from '../../formats/copy-prompt';
 import type { ProjectJobData } from '../queues';
+import type { TextTask } from '../../providers/text-tasks';
 import { enqueueComposeIfReady } from './generate-asset';
 import { enqueueShots, loadBrandKit, textRequest } from './plan-project';
 
@@ -67,10 +68,11 @@ export async function formatCopyContext(
 export async function writeCopy(
   deps: PipelineDeps,
   data: ProjectJobData,
-  input: { system: string; prompt: string; schema: object },
+  /** 23.2: task = hook_line or wall_text (light tasks, providers/text-tasks.ts). */
+  input: { system: string; prompt: string; schema: object; task: TextTask },
 ): Promise<unknown> {
   const run = await runProvider(
-    textRequest(data, input.system, input.prompt, input.schema, FORMAT_COPY_MAX_TOKENS),
+    textRequest(data, input.system, input.prompt, input.schema, FORMAT_COPY_MAX_TOKENS, input.task),
     deps,
   );
   return jsonOutput(run.output);
@@ -91,6 +93,7 @@ export async function passesTextSafety(
       planTier: data.planTier,
       request: {
         capability: 'text_generation',
+        task: 'script_safety',
         organisationId: data.organisationId,
         projectId: data.projectId,
         system: SCRIPT_SAFETY_SYSTEM_PROMPT,

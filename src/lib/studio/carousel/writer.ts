@@ -41,6 +41,8 @@ export function projectTextGenerator(
         planTier: scope.planTier,
         request: {
           capability: 'text_generation',
+          // 23.2: thread writing and post rewrites stay on the planning model.
+          task: 'carousel_thread',
           organisationId: scope.organisationId,
           projectId: scope.projectId,
           system: request.system,

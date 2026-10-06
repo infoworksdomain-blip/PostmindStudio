@@ -17,6 +17,8 @@ import {
 } from './provider-errors';
 import { SyncJobStore } from './sync-jobs';
 import { elevenLabsLanguageCode } from '../pipeline/voice-language';
+import { alignmentToWords, parseCharacterAlignment } from '../pipeline/tts-alignment';
+import type { SpokenWord } from '../overlays/word-timing';
 
 // BACKLOG 2.7 — ElevenLabs TTS (Layer 4, spec 5.5). Contract from
 // elevenlabs.io/docs/api-reference/text-to-speech/convert (read 2026-09-27):
@@ -24,6 +26,15 @@ import { elevenLabsLanguageCode } from '../pipeline/voice-language';
 //   header xi-api-key; body { text, model_id, language_code? }; response = raw audio bytes;
 //   response header `character-cost` = characters billed.
 // Synchronous: submit() stores the audio in S3 and parks the result for poll().
+//
+// 23.2: by default the narration is made with "Create speech with timing"
+// (https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps, read 2026-10-06):
+//   POST /v1/text-to-speech/{voice_id}/with-timestamps?output_format=… with the same body; the
+//   200 response is JSON { audio_base64, alignment?, normalized_alignment? } where alignment is
+//   { characters[], character_start_times_seconds[], character_end_times_seconds[] } for the
+//   original text. The audio is stored as before, and the alignment becomes the narration's word
+//   timings (metadata.alignedWords, pipeline/tts-alignment.ts), so the narration no longer has to
+//   be transcribed for captions. ELEVENLABS_WORD_TIMINGS=off goes back to the plain endpoint.
 
 export const PROVIDER_ID = 'elevenlabs';
 export const BASE_URL = 'https://api.elevenlabs.io';
@@ -57,8 +68,23 @@ export interface ElevenLabsAdapterOptions {
   bucket: string;
   usdToGbpRate: number;
   model?: string;
+  /** 23.2: use /with-timestamps and return the narration's word timings (default true). */
+  wordTimings?: boolean;
   fetchImpl?: typeof fetch;
   now?: () => number;
+}
+
+/** ELEVENLABS_WORD_TIMINGS: on (default) | off. */
+export function wordTimingsFromEnv(env: Readonly<Record<string, string | undefined>>): boolean {
+  const raw = env.ELEVENLABS_WORD_TIMINGS?.trim().toLowerCase();
+  if (!raw || raw === 'on' || raw === 'true') return true;
+  if (raw === 'off' || raw === 'false') return false;
+  throw new ConfigurationError('ELEVENLABS_WORD_TIMINGS must be on or off');
+}
+
+interface TimestampedSpeech {
+  audio_base64?: unknown;
+  alignment?: unknown;
 }
 
 interface ElevenLabsErrorBody {
@@ -183,7 +209,9 @@ export class ElevenLabsAdapter implements ProviderAdapter {
         `Text must be 1–${maxChars} characters for ${this.model}`,
       );
     }
-    const url = `${BASE_URL}/v1/text-to-speech/${encodeURIComponent(request.voiceId)}?output_format=${OUTPUT_FORMAT}`;
+    const timed = this.options.wordTimings ?? true;
+    const path = timed ? '/with-timestamps' : '';
+    const url = `${BASE_URL}/v1/text-to-speech/${encodeURIComponent(request.voiceId)}${path}?output_format=${OUTPUT_FORMAT}`;
     let res: Response;
     try {
       res = await this.fetchImpl(url, {
@@ -191,7 +219,7 @@ export class ElevenLabsAdapter implements ProviderAdapter {
         headers: {
           'xi-api-key': this.options.apiKey,
           'Content-Type': 'application/json',
-          Accept: 'audio/mpeg',
+          Accept: timed ? 'application/json' : 'audio/mpeg',
         },
         body: JSON.stringify({
           text: request.text,
@@ -220,7 +248,9 @@ export class ElevenLabsAdapter implements ProviderAdapter {
       throw providerError(PROVIDER_ID, classification, message, { status: res.status });
     }
 
-    const audio = new Uint8Array(await res.arrayBuffer());
+    const { audio, alignedWords } = timed
+      ? await this.readTimestamped(res, request.text)
+      : { audio: new Uint8Array(await res.arrayBuffer()), alignedWords: null };
     if (audio.byteLength === 0) {
       throw providerError(
         PROVIDER_ID,
@@ -257,9 +287,34 @@ export class ElevenLabsAdapter implements ProviderAdapter {
           characters: chars,
           requestId: res.headers.get('request-id'),
           costPence,
+          // 23.2: word timings from the alignment (absent = transcribe as before).
+          ...(alignedWords && { alignedWords }),
         },
       },
     };
+  }
+
+  /** The /with-timestamps JSON: decoded audio and the words of a usable alignment (else null). */
+  private async readTimestamped(
+    res: Response,
+    text: string,
+  ): Promise<{ audio: Uint8Array; alignedWords: SpokenWord[] | null }> {
+    let body: TimestampedSpeech;
+    try {
+      body = (await res.json()) as TimestampedSpeech;
+    } catch {
+      throw providerError(
+        PROVIDER_ID,
+        { errorClass: 'unknown', retryable: true },
+        'Speech-with-timing response was not JSON',
+      );
+    }
+    const audio =
+      typeof body.audio_base64 === 'string'
+        ? new Uint8Array(Buffer.from(body.audio_base64, 'base64'))
+        : new Uint8Array();
+    const alignment = parseCharacterAlignment(body.alignment);
+    return { audio, alignedWords: alignment ? alignmentToWords(alignment, text) : null };
   }
 }
 

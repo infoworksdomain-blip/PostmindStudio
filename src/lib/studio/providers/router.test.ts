@@ -9,7 +9,13 @@ import { VeoAdapter } from './veo';
 import { SeedanceAdapter } from './seedance';
 import { KlingAdapter } from './kling';
 import { createProviderRegistry } from './registry';
-import { planCandidates, routeProvider, type BudgetChecker, type RouteInput } from './router';
+import {
+  planCandidates,
+  presenterRoute,
+  routeProvider,
+  type BudgetChecker,
+  type RouteInput,
+} from './router';
 import { StubAdapter } from './test-adapter';
 import type { ProviderAdapter } from './interface';
 
@@ -71,8 +77,9 @@ describe('planCandidates (spec 6.4 / 6.5)', () => {
   });
 
   it.each([
-    [false, 'BASIC', ['d-id', 'heygen']],
-    [false, 'STANDARD', ['d-id', 'heygen']],
+    // 23.2: HeyGen (then D-ID) is the avatar back-up on every tier, behind the actor route.
+    [false, 'BASIC', ['heygen', 'd-id']],
+    [false, 'STANDARD', ['heygen', 'd-id']],
     [false, 'PLUS', ['heygen', 'd-id']],
     [true, 'BASIC', ['heygen']],
   ] as const)('AI_AVATAR custom=%s tier=%s tries %o', (custom, tier, ids) => {
@@ -364,7 +371,7 @@ describe('Luma and HeyGen fallbacks', () => {
   });
 
   it.each([
-    ['STANDARD', [{ providerId: 'd-id', skipped: 'not_configured' }, { providerId: 'heygen' }]],
+    ['STANDARD', [{ providerId: 'heygen' }]],
     ['PLUS', [{ providerId: 'heygen' }]],
   ] as const)('AI_AVATAR on %s is served by HeyGen', async (tier, candidates) => {
     const decision = await routeProvider(
@@ -847,5 +854,36 @@ describe('Kling as the second AI_CLIP option (20.24)', () => {
       providerId: 'veo',
       capability: 'image_to_video',
     });
+  });
+});
+
+describe('23.2 presenter (AI_AVATAR) route: actor providers first, HeyGen / D-ID as the back-up', () => {
+  it('default: veo, kling (actor_video), then heygen, d-id (avatar_video)', () => {
+    expect(presenterRoute()).toEqual([
+      { capability: 'actor_video', providerIds: ['veo', 'kling'] },
+      { capability: 'avatar_video', providerIds: ['heygen', 'd-id'] },
+    ]);
+    expect(presenterRoute().flatMap((s) => s.providerIds)).toEqual([
+      'veo',
+      'kling',
+      'heygen',
+      'd-id',
+    ]);
+  });
+
+  it('a brand custom HeyGen avatar keeps HeyGen first (and only)', () => {
+    expect(presenterRoute(true)).toEqual([{ capability: 'avatar_video', providerIds: ['heygen'] }]);
+  });
+
+  it('the actor stage is the UGC_ACTOR candidate list; AI_CLIP keeps Seedance first', () => {
+    for (const tier of ['BASIC', 'STANDARD', 'PLUS', 'ENTERPRISE'] as const) {
+      expect(
+        planCandidates({ kind: 'shot', visualTreatment: 'UGC_ACTOR', durationSec: 6 }, tier),
+      ).toEqual(presenterRoute()[0]);
+      expect(
+        planCandidates({ kind: 'shot', visualTreatment: 'AI_CLIP', durationSec: 4 }, tier)
+          .providerIds[0],
+      ).toBe('seedance');
+    }
   });
 });

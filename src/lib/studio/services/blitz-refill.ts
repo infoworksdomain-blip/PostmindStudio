@@ -574,6 +574,7 @@ async function writeCards(
   for (const batch of batches) {
     try {
       const answer = await deps.generate({
+        task: 'blitz_cards',
         system: blitzSystemPrompt(),
         prompt: buildSuggestPrompt({
           facts: context.facts,

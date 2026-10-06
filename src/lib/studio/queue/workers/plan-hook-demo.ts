@@ -59,6 +59,7 @@ async function hookLineFor(
       system: HOOK_LINE_SYSTEM_PROMPT,
       prompt: buildHookLinePrompt({ ...context, demoName }),
       schema: HOOK_LINE_OUTPUT_SCHEMA,
+      task: 'hook_line',
     }),
   );
   log.info({ framework: answer.framework }, 'hook line written');

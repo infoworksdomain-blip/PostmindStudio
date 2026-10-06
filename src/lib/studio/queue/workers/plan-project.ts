@@ -3,10 +3,10 @@ import { NotFoundError, NotImplementedError, ValidationError } from '../../../er
 import type { PipelineDeps } from '../../pipeline/deps';
 import {
   buildIdeationPrompt,
-  IDEATION_SCHEMA,
+  IDEATION_BRIEF_SCHEMA,
   IDEATION_SYSTEM_PROMPT,
   parseIdeationResult,
-  UGC_IDEATION_SCHEMA,
+  UGC_IDEATION_BRIEF_SCHEMA,
   type IdeationContext,
   type IdeationResult,
 } from '../../pipeline/ideation';
@@ -34,6 +34,8 @@ import {
   parseScriptSafety,
   SCRIPT_SAFETY_SCHEMA,
   SCRIPT_SAFETY_SYSTEM_PROMPT,
+  scriptsWithSafety,
+  type ScriptSafetyResult,
 } from '../../pipeline/script-safety';
 import {
   buildScriptPrompt,
@@ -71,19 +73,31 @@ import { BUILT_IN_PRESETS } from '../../overlays/presets';
 import type { ProjectJobData } from '../queues';
 import { realProjectName } from '../../../project-name';
 import {
+  buildPrompt as buildCaptionPrompt,
   buildSuggestions,
   formatPlatforms,
   loadCopyContext,
+  OUTPUT_JSON_SCHEMA as CAPTION_OUTPUT_JSON_SCHEMA,
+  parseCaptionOutput,
+  POST_COPY_MAX_TOKENS,
   storeSuggestions,
   suggestionsKey,
+  SYSTEM_PROMPT as CAPTION_SYSTEM_PROMPT,
   type CopyContext,
 } from '../../services/caption-suggestions';
 import { hashtagPool } from '../../hashtags/pool';
+import type { SocialPost } from '../../hashtags/copy-prompt';
+import type { TextTask } from '../../providers/text-tasks';
 import type { Logger } from 'pino';
 
 // BACKLOG 3.4 — Layers 1 (ideation) and 2 (script + storyboard), then pre-generation script
 // safety (spec 13.2), persistence of briefs/scripts/shots, and fan-out of one generate-asset job
 // per shot (spec 4.5 step 3).
+// 23.2 (pipeline speed): the reads before ideation run together; ideation writes the brief only;
+// then the post copy (light call) runs alongside Layer 2, and each script's safety check (light
+// call) starts as soon as that script is written. Order is kept where data depends on it: brief →
+// scripts → their safety → persist. Retries re-run the whole job as before (nothing is persisted
+// before the combined verdict).
 
 // Planning output budgets live in a leaf module (pipeline/token-budgets.ts) so regenerate-script
 // can share them without a circular import; re-exported here for existing importers.
@@ -120,12 +134,15 @@ export function textRequest(
   prompt: string,
   schema: object,
   maxTokens: number,
+  /** 23.2: what the call is for (picks the Claude model, providers/text-tasks.ts). */
+  task: TextTask,
 ) {
   return {
     need: { kind: 'capability' as const, capability: 'text_generation' as const },
     planTier: data.planTier,
     request: {
       capability: 'text_generation' as const,
+      task,
       organisationId: data.organisationId,
       projectId: data.projectId,
       system,
@@ -253,7 +270,83 @@ async function copyContextFor(
 }
 
 /**
- * 20.13: store the captions and hashtags the ideation call wrote (fitted to each platform and
+ * 23.2: the post copy (captions + hashtags per platform, 20.13) written from the brief by a light
+ * post_copy call that runs while Layer 2 writes the scripts. Never rejects: without copy, Publish
+ * falls back to the hook and tops the hashtags up from the business and profile, as before.
+ */
+export function startPostCopy(
+  deps: PipelineDeps,
+  data: ProjectJobData,
+  project: VideoProject,
+  brief: IdeationResult,
+  copy: CopyContext | null,
+  log: Logger,
+): Promise<SocialPost[] | null> {
+  if (!copy) return Promise.resolve(null);
+  const platforms = formatPlatforms(project.targetFormats);
+  if (platforms.length === 0) return Promise.resolve(null);
+  const run = async (): Promise<SocialPost[] | null> => {
+    const result = await runProvider(
+      textRequest(
+        data,
+        CAPTION_SYSTEM_PROMPT,
+        buildCaptionPrompt({
+          language: project.language || 'en-GB',
+          platforms,
+          brief: {
+            hook: brief.hook,
+            keyMessage: brief.keyMessage,
+            targetAudience: brief.targetAudience,
+            tone: brief.tone,
+            callToAction: brief.callToAction || null,
+            keywords: brief.keywords,
+          },
+          social: copy,
+        }),
+        CAPTION_OUTPUT_JSON_SCHEMA,
+        POST_COPY_MAX_TOKENS,
+        'post_copy',
+      ),
+      deps,
+    );
+    return parseCaptionOutput(jsonOutput(result.output));
+  };
+  return run().catch((err: unknown) => {
+    log.warn({ err }, 'post copy could not be written; Publish falls back to the hook');
+    return null;
+  });
+}
+
+/** One script's pre-generation safety verdict (spec 13.2), a light script_safety call. */
+async function checkScriptSafety(
+  data: ProjectJobData,
+  script: { format: TargetFormat; language: string; plan: PlannedScript },
+  deps: PipelineDeps,
+): Promise<ScriptSafetyResult> {
+  const run = await runProvider(
+    textRequest(
+      data,
+      SCRIPT_SAFETY_SYSTEM_PROMPT,
+      buildScriptSafetyPrompt([
+        {
+          platform: `${script.format.platform} (${script.language})`,
+          fullText: script.plan.fullText,
+          onScreenText: script.plan.shots.flatMap((shot) =>
+            shot.onScreenText ? [shot.onScreenText] : [],
+          ),
+        },
+      ]),
+      SCRIPT_SAFETY_SCHEMA,
+      SAFETY_MAX_TOKENS,
+      'script_safety',
+    ),
+    deps,
+  );
+  return parseScriptSafety(jsonOutput(run.output));
+}
+
+/**
+ * 20.13: store the captions and hashtags written for the video (fitted to each platform and
  * the business's hashtag policy) as the project's caption suggestions — the copy Publish and
  * auto-publish use unless the owner edits it.
  */
@@ -261,6 +354,7 @@ async function storeIdeationCopy(
   deps: PipelineDeps,
   project: VideoProject,
   brief: IdeationResult,
+  posts: SocialPost[] | null,
   copy: CopyContext | null,
   log: Logger,
 ): Promise<void> {
@@ -273,7 +367,7 @@ async function storeIdeationCopy(
     if (!stored) return;
     const platforms = formatPlatforms(project.targetFormats);
     const language = project.language || 'en-GB';
-    const suggestions = buildSuggestions(platforms, brief.socialPosts ?? [], {
+    const suggestions = buildSuggestions(platforms, posts ?? brief.socialPosts ?? [], {
       policy: copy.policy,
       pool: (platform) =>
         hashtagPool(platform, {
@@ -397,9 +491,17 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     return refuseRealPerson(deps, data, log);
   // Feature A: a reference video's blueprint (TEMPLATE) or style (INSPIRE) shapes Layers 1–2;
   // a project template's shot blueprint shapes Layer 2 the same way (spec 7.12 / 8.6).
-  const reference =
-    (await loadReferenceGuide(deps.db, project, deps.now())) ??
-    (await loadTemplateGuide(deps.db, project));
+  // 23.2: the independent reads before ideation run together.
+  const [reference, brandKit, styleMemory, copy] = await Promise.all([
+    (async () =>
+      (await loadReferenceGuide(deps.db, project, deps.now())) ??
+      (await loadTemplateGuide(deps.db, project)))(),
+    loadBrandKit(deps, project),
+    // 13.29: learned preferences (style memory), fenced as data for Layers 1–2.
+    styleMemorySupplement(deps.db, project.organisationId, project.businessId),
+    // 20.13: hashtags, facts and moments for the post copy (and the facts for ideation).
+    copyContextFor(deps, project, log),
+  ]);
   const rawInput = [
     briefText,
     reference?.ideationSupplement,
@@ -408,17 +510,10 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     .filter(Boolean)
     .join('\n\n');
   const formats = parseTargetFormats(project.targetFormats);
-  const brandKit = await loadBrandKit(deps, project);
   const restrictedTopics = brandKit?.restrictedTopics ?? [];
-  // 13.29: learned preferences (style memory), fenced as data for Layers 1–2.
-  const styleMemory = await styleMemorySupplement(
-    deps.db,
-    project.organisationId,
-    project.businessId,
-  );
 
-  // Layer 1 — ideation (20.13: and the post copy, in the same call)
-  const copy = await copyContextFor(deps, project, log);
+  // Layer 1 — ideation. 23.2: the post copy (20.13) is no longer written by this call; a light
+  // post_copy call writes it from the brief, in parallel with Layer 2 (startPostCopy below).
   const metadata = projectMetadata(project.metadata);
   const hints = metadata.briefHints as IdeationHints | undefined;
   // 20.18: the owner chose a direction (or rewrote the brief) on the project page, or this run
@@ -440,9 +535,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
           language: project.language,
           directionChosen,
           ...(copy && {
-            social: {
-              platforms: formatPlatforms(project.targetFormats),
-              policy: copy.policy,
+            business: {
               facts: copy.facts,
               restrictedTopics: [...new Set([...restrictedTopics, ...copy.restrictedTopics])],
               moments: copy.moments,
@@ -460,8 +553,9 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
       ]
         .filter(Boolean)
         .join('\n\n'),
-      mode.ugc ? UGC_IDEATION_SCHEMA : IDEATION_SCHEMA,
+      mode.ugc ? UGC_IDEATION_BRIEF_SCHEMA : IDEATION_BRIEF_SCHEMA,
       ideationMaxTokens(formats.length),
+      'ideation',
     ),
     deps,
   );
@@ -521,13 +615,18 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     );
   }
 
+  // 23.2: the post copy needs only the brief, so it is written while Layer 2 runs (never rejects).
+  const postCopy = startPostCopy(deps, data, project, brief, copy, log);
+
   // Layer 2 — one script per target format and language (15.C5: extra languages each get a
-  // full variant set, written natively in that language).
+  // full variant set, written natively in that language). 23.2: each script's safety check runs
+  // as soon as that script is written (a light call), in parallel with the other scripts.
   const treatments = mode.treatments;
   const languages = projectLanguages(project.language, projectMetadata(project.metadata).languages);
   const variants = languages.flatMap((language) => formats.map((format) => ({ format, language })));
-  const scripts = await Promise.all(
-    variants.map(async ({ format, language }) => {
+  const { scripts, safety } = await scriptsWithSafety(
+    variants,
+    async ({ format, language }) => {
       // 20.25: the tier's AI clip budget for this length, stated in the prompt and enforced below
       // (21.4: actor clips for a UGC video).
       const budget = mode.budget(format.durationSec);
@@ -552,6 +651,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
             .join('\n\n'),
           scriptSchema(treatments),
           SCRIPT_MAX_TOKENS,
+          'script',
         ),
         deps,
       );
@@ -571,29 +671,11 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
           'AI clip budget: extra AI shots planned as images',
         );
       return { format, language, plan: budgeted.plan, model: modelLabel(run) };
-    }),
+    },
+    // Pre-generation safety gate — before any Layer 3 spend (spec 13.2)
+    (script) => checkScriptSafety(data, script, deps),
   );
-
-  // Pre-generation safety gate — before any Layer 3 spend
-  const safetyRun = await runProvider(
-    textRequest(
-      data,
-      SCRIPT_SAFETY_SYSTEM_PROMPT,
-      buildScriptSafetyPrompt(
-        scripts.map((s) => ({
-          platform: `${s.format.platform} (${s.language})`,
-          fullText: s.plan.fullText,
-          onScreenText: s.plan.shots.flatMap((shot) =>
-            shot.onScreenText ? [shot.onScreenText] : [],
-          ),
-        })),
-      ),
-      SCRIPT_SAFETY_SCHEMA,
-      SAFETY_MAX_TOKENS,
-    ),
-    deps,
-  );
-  const safety = parseScriptSafety(jsonOutput(safetyRun.output));
+  const posts = await postCopy;
   await mergeProjectMetadata(deps.db, {
     projectId: project.id,
     runId: data.runId,
@@ -603,7 +685,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
     // 13.17: pause for a Trust & Safety decision. The plan is stored (no shot is enqueued), so
     // ALLOW continues from here without paying for ideation and scripting again.
     await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit, reference);
-    await storeIdeationCopy(deps, project, brief, copy, log);
+    await storeIdeationCopy(deps, project, brief, posts, copy, log);
     await openSafetyReview(deps, {
       organisationId: data.organisationId,
       projectId: project.id,
@@ -625,7 +707,7 @@ export async function planProject(data: ProjectJobData, deps: PipelineDeps): Pro
   }
 
   await persistPlan(deps, project, brief, modelLabel(ideationRun), scripts, brandKit, reference);
-  await storeIdeationCopy(deps, project, brief, copy, log);
+  await storeIdeationCopy(deps, project, brief, posts, copy, log);
   await transitionProject(deps.db, {
     projectId: project.id,
     runId: data.runId,

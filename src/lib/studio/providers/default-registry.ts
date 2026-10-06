@@ -4,7 +4,9 @@ import { ConfigurationError } from '../../errors';
 import { logger } from '../../logger';
 import { assetsBucket, getAssetStorage } from '../storage';
 import { AnthropicAdapter } from './anthropic';
-import { ElevenLabsAdapter } from './elevenlabs';
+import { DEFAULT_MODEL } from './anthropic-models';
+import { textModelsFromEnv } from './text-tasks';
+import { ElevenLabsAdapter, wordTimingsFromEnv } from './elevenlabs';
 import { ElevenLabsMusicAdapter } from './elevenlabs-music';
 import type { ProviderAdapter } from './interface';
 import type { ByocProviderId, ProviderKeyMap } from './byoc-providers';
@@ -98,10 +100,15 @@ export function buildAdaptersFromKeys(
 
   const anthropicKey = keys.anthropic?.apiKey;
   if (anthropicKey) {
+    // 23.2: ANTHROPIC_MODEL for the planning tasks, ANTHROPIC_LIGHT_MODEL (Haiku 4.5 by default)
+    // for the light ones, ANTHROPIC_TASK_MODELS per-task overrides (providers/text-tasks.ts).
+    const models = textModelsFromEnv(env, DEFAULT_MODEL);
     adapters.push(
       new AnthropicAdapter({
         client: new Anthropic({ apiKey: anthropicKey, timeout: ANTHROPIC_TIMEOUT_MS }),
-        model: envValue('ANTHROPIC_MODEL'),
+        model: models.standard,
+        lightModel: models.light,
+        taskModels: models.overrides,
         usdToGbpRate,
       }),
     );
@@ -200,6 +207,8 @@ export function buildAdaptersFromKeys(
         storage: getAssetStorage(),
         bucket: assetsBucket(),
         model: envValue('ELEVENLABS_MODEL'),
+        // 23.2: narration with character timings (captions without transcription).
+        wordTimings: wordTimingsFromEnv(env),
         usdToGbpRate,
       }),
     );

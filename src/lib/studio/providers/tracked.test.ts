@@ -5,7 +5,7 @@ import {
   ProviderError,
   ValidationError,
 } from '../../errors';
-import { ACCOUNT_HOLD_MS } from './account-errors';
+import { ACCOUNT_CREDIT_HOLD_MS, ACCOUNT_HOLD_MS } from './account-errors';
 import { createCircuitBreaker, OPEN_DURATION_MS } from './circuit-breaker';
 import type { ProviderJobRecord, ProviderJobRepository, UsageDelta } from './job-repository';
 import { StubAdapter } from './test-adapter';
@@ -193,10 +193,23 @@ describe('submitTracked', () => {
   it('20.11: holds for the default 15 minutes when no resume time is stated', async () => {
     const ctx = setup();
     ctx.adapter.nextSubmit = async () => {
-      throw new ProviderError('runway', 'insufficient_credits', 'no credits', false);
+      throw new ProviderError('runway', 'auth', 'key revoked', false);
     };
     await submitTracked(ctx.adapter, request, ctx.d).catch(() => undefined);
     expect(ctx.breaker.accountHolds().runway?.until).toBe(T0 + ACCOUNT_HOLD_MS);
+  });
+
+  it('23.2: an out-of-credit account is held for an hour (submit or poll)', async () => {
+    const ctx = setup();
+    ctx.adapter.nextSubmit = async () => {
+      throw new ProviderError('runway', 'insufficient_credits', 'no credits', false);
+    };
+    await submitTracked(ctx.adapter, request, ctx.d).catch(() => undefined);
+    expect(ctx.breaker.accountHolds().runway).toMatchObject({
+      errorClass: 'insufficient_credits',
+      until: T0 + ACCOUNT_CREDIT_HOLD_MS,
+    });
+    expect(ctx.breaker.tryAcquire('runway')).toBe(false);
   });
 
   it('does not count client-side errors against provider health and frees a trial', async () => {

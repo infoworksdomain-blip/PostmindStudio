@@ -3,6 +3,7 @@ import type { Logger } from 'pino';
 import { jsonOutput, runProvider, type ProviderRunDeps } from '../pipeline/provider-run';
 import { projectMetadata } from '../pipeline/project-state';
 import type { PlanTier } from '../providers/router';
+import type { TextTask } from '../providers/text-tasks';
 import {
   buildPlanPrompt,
   parsePlanResult,
@@ -29,6 +30,8 @@ import { PLATFORMS, type Platform } from './catalog';
 
 /** One structured Claude call; resolves the JSON and the model label. */
 export type PlanGenerator = (request: {
+  /** 23.2: month_plan and blitz_cards (standard), blitz_angles (light); text-tasks.ts. */
+  task: TextTask;
   system: string;
   prompt: string;
   outputSchema: Record<string, unknown>;
@@ -47,6 +50,7 @@ export function routedPlanGenerator(
         planTier: scope.planTier,
         request: {
           capability: 'text_generation',
+          task: request.task,
           organisationId: scope.organisationId,
           system: request.system,
           prompt: request.prompt,
@@ -232,6 +236,7 @@ async function topicsFor(
     calendarDay: item.calendarDay,
   }));
   const result = await generate({
+    task: 'month_plan',
     system: planSystemPrompt(),
     prompt: buildPlanPrompt({
       facts: context.facts,

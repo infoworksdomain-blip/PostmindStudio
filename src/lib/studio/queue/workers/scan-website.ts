@@ -188,6 +188,7 @@ export async function scanWebsite(data: ScanJobData, deps: PipelineDeps): Promis
       planTier: data.planTier,
       request: {
         capability: 'text_generation',
+        task: 'business_profile',
         organisationId: data.organisationId,
         system: CLASSIFY_SYSTEM_PROMPT,
         prompt: buildClassifyPrompt({ siteUrl: scan.url, pages: crawl.pages }),

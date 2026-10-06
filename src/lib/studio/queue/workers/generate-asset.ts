@@ -36,9 +36,16 @@ import {
 } from '../../pipeline/still-image';
 import { selectStockVoice } from '../../pipeline/voice-fit';
 import { defaultVoiceIdFor, ttsLanguageCode } from '../../pipeline/voice-language';
-import { timeClipSpeech } from '../../ugc/clip-speech';
+import { clipSpeaks, timeClipSpeech } from '../../ugc/clip-speech';
 import { guardActorClip } from '../../ugc/clip-text-guard';
 import { ensureActorPortrait } from '../../ugc/portrait';
+import {
+  loadPresenterStyle,
+  presenterClipPrompt,
+  presenterSkipReason,
+  prismaPresenterPortraitStore,
+} from '../../ugc/presenter';
+import { ACTOR_CANDIDATES } from '../../providers/router';
 import { actorClipPrompt, ugcStillPrompt } from '../../ugc/prompt';
 import { ugcStyleOf, type UgcStyle } from '../../ugc/style';
 import { hookClipMarkerOf } from '../../formats/hook-clip';
@@ -257,6 +264,149 @@ async function generateAvatar(
     return generatePresenterlessClip(deps, shot, data, reason);
   }
   return recordAsset(deps, shot, 'VIDEO_CLIP', run, { extension: 'mp4', contentType: 'video/mp4' });
+}
+
+/**
+ * BACKLOG 23.2 — the AI_AVATAR route: the actor route first (a generated presenter speaks the
+ * line natively, ugc/presenter.ts), then HeyGen / D-ID lip-syncing to the brand narration (which
+ * is generated only then), which itself degrades to narrated B-roll (20.19). True when the shot's
+ * picture speaks its own line (no narration asset).
+ */
+async function generatePresenter(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+): Promise<boolean> {
+  // A retry after the avatar route already narrated the line stays on that route.
+  if (!shot.voiceAssetId && (await generatePresenterActor(deps, shot, data))) return true;
+  const voiceAssetId =
+    shot.voiceAssetId ?? (await generateVoice(deps, shot, data))?.assetId ?? null;
+  await generateAvatar(deps, shot, data, voiceAssetId);
+  return false;
+}
+
+/**
+ * 23.2: an AI_AVATAR shot as an actor clip (actor_video through the router: Veo, then Kling),
+ * the same request shape as a UGC_ACTOR shot with the presenter's portrait. Null when the route
+ * cannot make an equivalent shot (presenterSkipReason) or no actor provider is available (account
+ * problem / hold, breaker, kill switch, nothing configured) or the clip was refused: the caller
+ * then uses HeyGen. Cost caps and broader kill switches still stop the shot (rethrown).
+ */
+async function generatePresenterActor(
+  deps: PipelineDeps,
+  shot: ShotWithScript,
+  data: GenerateAssetJobData,
+): Promise<StoredAsset | null> {
+  const actorProviders = deps.registry.getAdaptersByCapability('actor_video');
+  const skip =
+    actorProviders.length === 0
+      ? 'not_configured'
+      : presenterSkipReason({
+          voiceoverText: shot.voiceoverText,
+          language: shot.script.language,
+          durationSec: shot.durationSec,
+          sceneDescription: shot.sceneDescription,
+          cameraDirection: shot.cameraDirection,
+          preferredProviderId: preferredProvider(shot)[0],
+          actorProviderIds: ACTOR_CANDIDATES,
+        });
+  if (skip) {
+    deps.logger.info({ shotId: shot.id, reason: skip }, 'presenter shot goes to the avatar route');
+    return null;
+  }
+  const style = await loadPresenterStyle(deps.db, {
+    id: data.projectId,
+    organisationId: data.organisationId,
+    businessId: shot.script.project.businessId,
+  });
+  const portrait = await ensureActorPortrait(deps, {
+    projectId: data.projectId,
+    organisationId: data.organisationId,
+    runId: data.runId,
+    planTier: data.planTier,
+    style,
+    shotId: shot.id,
+    store: prismaPresenterPortraitStore(deps.db, data.organisationId),
+  });
+  const aspectRatio = shot.script.targetAspectRatio as AspectRatio;
+  const makeClip = () =>
+    runProvider(
+      {
+        need: { kind: 'shot', visualTreatment: 'UGC_ACTOR', durationSec: shot.durationSec },
+        planTier: data.planTier,
+        preferredProviderId: preferredProvider(shot),
+        request: {
+          organisationId: data.organisationId,
+          projectId: data.projectId,
+          shotId: shot.id,
+          capability: 'actor_video',
+          prompt: presenterClipPrompt({
+            style,
+            sceneDescription: shot.sceneDescription,
+            cameraDirection: shot.cameraDirection,
+            actorReference: Boolean(portrait),
+            aspectRatio,
+          }),
+          spokenLine: shot.voiceoverText ?? '',
+          languageCode: shot.script.language,
+          durationSec: shot.durationSec,
+          aspectRatio,
+          ...(portrait && { actorImageUrl: portrait.url }),
+          seed: style.seed,
+        },
+      },
+      deps,
+    );
+  const record = (clip: ProviderRunResult, extra: Record<string, unknown> = {}) =>
+    recordAsset(
+      deps,
+      shot,
+      'VIDEO_CLIP',
+      clip,
+      { extension: 'mp4', contentType: 'video/mp4' },
+      undefined,
+      {
+        speech: 'clip',
+        presenter: 'actor',
+        ...(portrait && { actorImageAssetId: portrait.assetId }),
+        ...(portrait?.creatorId && { creatorId: portrait.creatorId }),
+        ...extra,
+      },
+    );
+  let run: ProviderRunResult;
+  try {
+    run = await makeClip();
+  } catch (err) {
+    const reason = isGenerationRefusal(err) ? 'content_policy' : avatarUnavailableReason(err);
+    if (!reason) throw err;
+    deps.logger.warn(
+      { projectId: data.projectId, shotId: shot.id, reason },
+      'no actor provider for the presenter; using the avatar providers (HeyGen / D-ID)',
+    );
+    return null;
+  }
+  const stored = await record(run);
+  // 21.4c: a clip with burned-in subtitles is regenerated once (same request), as for UGC.
+  const latest = { asset: stored };
+  const kept = await guardActorClip(
+    deps,
+    {
+      organisationId: data.organisationId,
+      projectId: data.projectId,
+      shotId: shot.id,
+      planTier: data.planTier,
+      durationSec: shot.durationSec,
+      assetId: stored.assetId,
+    },
+    async (reason) => {
+      latest.asset = await record(await makeClip(), {
+        regeneratedFrom: stored.assetId,
+        regenerateReason: reason,
+      });
+      return latest.asset.assetId;
+    },
+  );
+  return kept === latest.asset.assetId ? latest.asset : stored;
 }
 
 /** 21.4: the UGC product image (an image_library row of the project's business), if chosen. */
@@ -974,18 +1124,19 @@ export async function generateAsset(data: GenerateAssetJobData, deps: PipelineDe
 
   // A retry keeps an already-generated visual rather than paying for it twice.
   // Each generator records its asset and the shot pointer atomically (see recordAsset).
-  // Avatar shots need their narration first: the avatar lip-syncs to it.
-  const voiceFirst = shot.visualTreatment === 'AI_AVATAR';
-  let voiceAssetId = shot.voiceAssetId;
-  if (voiceFirst && !voiceAssetId) {
-    voiceAssetId = (await generateVoice(deps, shot, data))?.assetId ?? null;
+  // 23.2: a presenter (AI_AVATAR) shot tries the actor route first (the presenter speaks the line
+  // natively); only the HeyGen / D-ID fallback needs the narration first (it lip-syncs to it).
+  const presenter = shot.visualTreatment === 'AI_AVATAR';
+  let clipSpoken = clipSpeaks(shot);
+  if (!shot.assetId) {
+    if (presenter) clipSpoken = await generatePresenter(deps, shot, data);
+    else await generateVisual(deps, shot, data, shot.voiceAssetId);
   }
-  if (!shot.assetId) await generateVisual(deps, shot, data, voiceAssetId);
   // 21.4: an actor clip speaks its own line (a degraded one was narrated in generateActor).
   const actor = shot.visualTreatment === 'UGC_ACTOR';
-  if (!voiceFirst && !actor && !shot.voiceAssetId) await generateVoice(deps, shot, data);
+  if (!presenter && !actor && !shot.voiceAssetId) await generateVoice(deps, shot, data);
   await timeNarration(deps, shot.id, data);
-  if (actor)
+  if (actor || clipSpoken)
     await timeClipSpeech(deps, {
       shotId: shot.id,
       organisationId: data.organisationId,

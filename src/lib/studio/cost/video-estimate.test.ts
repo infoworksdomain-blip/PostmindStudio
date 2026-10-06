@@ -121,9 +121,10 @@ describe('estimateVideoCostPence', () => {
 });
 
 describe('21.3 typical 30 s short at list prices (full Seedance 2.0 at 720p HD on every tier)', () => {
-  it('STANDARD (the per-channel subscription) costs about £2.33 (£2.41 at 0.79)', () => {
-    expect(TIERS.map((t) => estimate(t, 0.75).totalPence)).toEqual([181, 233, 325]);
-    expect(TIERS.map((t) => estimate(t, 0.79).totalPence)).toEqual([187, 241, 337]);
+  it('STANDARD (the per-channel subscription) costs about £2.23 (£2.32 at 0.79)', () => {
+    // 23.2: 10p less than before (181 / 233 / 325): narration is no longer transcribed.
+    expect(TIERS.map((t) => estimate(t, 0.75).totalPence)).toEqual([171, 223, 315]);
+    expect(TIERS.map((t) => estimate(t, 0.79).totalPence)).toEqual([178, 232, 328]);
   });
 
   it('prices the parts as expected at 0.75 (the production rate)', () => {
@@ -131,8 +132,9 @@ describe('21.3 typical 30 s short at list prices (full Seedance 2.0 at 720p HD o
     expect(estimate('BASIC', 0.75).byProvider.seedance).toBe(3 * 46);
     expect(estimate('STANDARD', 0.75).byProvider.seedance).toBe(4 * 46);
     expect(estimate('PLUS', 0.75).byProvider.seedance).toBe(6 * 46);
-    // Everything else (script, voice, timing, music, one still, render) is 49p on STANDARD.
-    expect(estimate('STANDARD', 0.75).totalPence - 4 * 46).toBe(49);
+    // Everything else (script, voice, music, one still, render) is 39p on STANDARD (23.2: 49p with
+    // the narration transcription that the TTS alignment replaced).
+    expect(estimate('STANDARD', 0.75).totalPence - 4 * 46).toBe(39);
     // Shotstack: 30 s = 0.5 credit × $0.30 = $0.15 → 12p (was 60p at the spec's 2p a second).
     expect(estimate('STANDARD', 0.75).byProvider.shotstack).toBe(12);
     expect(estimate('BASIC', 0.75).byProvider['elevenlabs-music']).toBeUndefined();
@@ -155,8 +157,8 @@ describe('21.3 typical 30 s short at list prices (full Seedance 2.0 at 720p HD o
     }
   });
 
-  it('the Mini fallback costs what the tiers cost before 21.3 at 720p', () => {
-    expect(estimate('STANDARD', 0.75, 30, 'seedance-mini').totalPence).toBe(141);
+  it('the Mini fallback costs what the tiers cost before 21.3 at 720p, less 23.2 timing', () => {
+    expect(estimate('STANDARD', 0.75, 30, 'seedance-mini').totalPence).toBe(131);
   });
 
   it('a typical short stays under half of the tier default budget (never near the 90% pause)', () => {

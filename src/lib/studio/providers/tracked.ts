@@ -89,7 +89,7 @@ async function reportOutcome(
     await breaker.tripAccount(providerId, {
       errorClass: failure.errorClass,
       reason: failure.message.slice(0, ACCOUNT_REASON_MAX),
-      until: accountHoldUntil(now, failure.retryAt),
+      until: accountHoldUntil(now, failure.retryAt, failure.errorClass),
     });
     return;
   }

@@ -21,6 +21,7 @@ import {
   requiredKeys,
   stagingOverrides,
   type ParsedEnvFile,
+  VALIDATORS,
 } from './env-file';
 
 // Phase 19.2 — the go-live settings checker. The required list is derived from
@@ -559,5 +560,38 @@ describe('Kling settings (20.24)', () => {
     ['KLING_BASE_URL', 'http://api-singapore.klingai.com'],
   ])('%s=%s is malformed', (key, value) => {
     expect(statusOf(filledFile('production', { [key]: value }), key)).toEqual(['malformed']);
+  });
+});
+
+describe('23.2 pipeline speed settings', () => {
+  const check = (key: string, value: string) => VALIDATORS[key]?.(value, {}) ?? null;
+
+  it('checks the Claude models against the price table', () => {
+    expect(check('ANTHROPIC_MODEL', 'claude-sonnet-5')).toBeNull();
+    expect(check('ANTHROPIC_LIGHT_MODEL', 'claude-haiku-4-5-20251001')).toBeNull();
+    expect(check('ANTHROPIC_LIGHT_MODEL', 'off')).toBeNull();
+    expect(check('ANTHROPIC_LIGHT_MODEL', 'claude-haiku-3')).toContain('priced Claude model');
+    expect(check('ANTHROPIC_TASK_MODELS', 'script_safety=claude-sonnet-5')).toBeNull();
+    expect(check('ANTHROPIC_TASK_MODELS', 'script_safety=claude-x')).toContain('priced');
+    expect(check('ANTHROPIC_TASK_MODELS', 'nope=claude-sonnet-5')).toContain(
+      'ANTHROPIC_TASK_MODELS',
+    );
+  });
+
+  it('checks the word-timing switch and the provider concurrency caps', () => {
+    expect(check('ELEVENLABS_WORD_TIMINGS', 'off')).toBeNull();
+    expect(check('ELEVENLABS_WORD_TIMINGS', 'maybe')).toContain('on, off');
+    expect(check('STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS', '5')).toBeNull();
+    expect(check('STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS', '5,org=9')).toContain('<max>');
+  });
+
+  it('documents the new keys in the server env example', () => {
+    for (const key of [
+      'ANTHROPIC_LIGHT_MODEL',
+      'ANTHROPIC_TASK_MODELS',
+      'ELEVENLABS_WORD_TIMINGS',
+      'STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS',
+    ])
+      expect(EXAMPLE).toContain(`${key}=`);
   });
 });

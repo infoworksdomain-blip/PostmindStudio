@@ -169,7 +169,13 @@ async function clipTextCheck(
 ): Promise<QualityCheck | null> {
   const actorShots = shots
     .map((shot, index) => ({ shot, number: index + 1 }))
-    .filter(({ shot }) => shot.visualTreatment === 'UGC_ACTOR' && shot.assetId);
+    // 23.2: presenter (AI_AVATAR) clips from the actor route carry the same check; a HeyGen clip
+    // has no clipText record and is never flagged.
+    .filter(
+      ({ shot }) =>
+        (shot.visualTreatment === 'UGC_ACTOR' || shot.visualTreatment === 'AI_AVATAR') &&
+        shot.assetId,
+    );
   if (actorShots.length === 0) return null;
   const assets = new Map(
     (

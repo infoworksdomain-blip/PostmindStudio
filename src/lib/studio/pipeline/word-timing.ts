@@ -9,6 +9,10 @@ import { respellToScript } from '../overlays/script-spelling';
 import { parseSpokenWords, type SpokenWord } from '../overlays/word-timing';
 import type { PipelineDeps } from './deps';
 import { runProvider } from './provider-run';
+import { alignedWordsOf } from './tts-alignment';
+
+/** 23.2: word timings that came from the TTS alignment (no transcription call). */
+export const ALIGNMENT_PROVIDER_ID = 'elevenlabs-alignment';
 
 // Phase 13.6 — word-level caption timing. After Layer 4 records a shot's narration (or when an
 // uploaded video is planned), the audio is transcribed with the existing AssemblyAI adapter
@@ -130,14 +134,20 @@ export async function ensureWordTiming(
   if (!asset) return null;
   const existing = wordTimingOf(asset.metadata);
   if (existing) return existing;
-  const transcribed = await transcribeWords(deps, {
-    organisationId: input.organisationId,
-    projectId: asset.projectId,
-    planTier: input.planTier,
-    mediaUrl: await deps.storage.signedUrl(asset.s3Bucket, asset.s3Key),
-    durationSec: asset.durationSec ?? 1,
-    languageCode: await spokenLanguageOf(deps, asset),
-  });
+  // 23.2: narration made with ElevenLabs' character alignment already has its word timings
+  // (pipeline/tts-alignment.ts); only audio without them (actor clips' own speech, uploads, a
+  // missing or unusable alignment) is transcribed.
+  const aligned = alignedWordsOf(asset.metadata);
+  const transcribed: WordTiming = aligned
+    ? { status: 'ok', words: aligned, providerId: ALIGNMENT_PROVIDER_ID }
+    : await transcribeWords(deps, {
+        organisationId: input.organisationId,
+        projectId: asset.projectId,
+        planTier: input.planTier,
+        mediaUrl: await deps.storage.signedUrl(asset.s3Bucket, asset.s3Key),
+        durationSec: asset.durationSec ?? 1,
+        languageCode: await spokenLanguageOf(deps, asset),
+      });
   // Narration was generated from the shot's script line, so its words keep the script's spelling
   // (brand names the transcript splits, e.g. "a head AI" for "AheadAI"); overlays/script-spelling.ts.
   // 21.4a: a UGC actor clip speaks the shot's line too, so its transcript is re-spelt the same way.
@@ -150,6 +160,8 @@ export async function ensureWordTiming(
             OR: [
               { voiceAssetId: asset.id },
               { assetId: asset.id, visualTreatment: 'UGC_ACTOR', voiceAssetId: null },
+              // 23.2: a presenter shot made as an actor clip speaks its own line too.
+              { assetId: asset.id, visualTreatment: 'AI_AVATAR', voiceAssetId: null },
             ],
           },
           select: { voiceoverText: true },

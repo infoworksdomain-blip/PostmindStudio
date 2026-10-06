@@ -143,6 +143,8 @@ export async function detectBurnedInText(
         planTier: target.planTier,
         request: {
           capability: 'text_generation',
+          // 23.2: a yes/no vision check, a light task (Haiku 4.5 reads images too).
+          task: 'clip_text_check',
           organisationId: target.organisationId,
           projectId: target.projectId,
           shotId: target.shotId,

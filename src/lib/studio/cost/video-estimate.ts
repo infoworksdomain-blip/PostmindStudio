@@ -5,6 +5,8 @@ import { SCRIPT_SAFETY_SYSTEM_PROMPT } from '../pipeline/script-safety';
 import { SCRIPT_SYSTEM_PROMPT } from '../pipeline/scripting';
 import type { AspectRatio, ProviderRequest, VideoResolution } from '../providers/interface';
 import type { PlanTier } from '../providers/router';
+import type { TextTask } from '../providers/text-tasks';
+import { SYSTEM_PROMPT as CAPTION_SYSTEM_PROMPT } from '../services/caption-suggestions';
 
 // BACKLOG 20.25 — the expected provider cost of one video under the AI clip budget, as the list
 // of provider requests a typical run makes (the providers each request goes to first). The
@@ -19,10 +21,16 @@ export const TYPICAL_SHOT_SEC = 3;
 /** About 2.5 spoken words a second (SCRIPT_SYSTEM_PROMPT) at ~6 characters a word. */
 export const NARRATION_CHARS_PER_SEC = 15;
 /**
- * Typical Layer 1–2 output tokens (ideation with captions, one script, the safety verdict). The
+ * Typical Layer 1–2 output tokens (ideation, one script, the safety verdict, the post copy). The
  * router RESERVES the max-tokens ceiling and settles to the real usage; QA run 3 settled at 7p.
  */
-export const TYPICAL_TEXT_OUTPUT_TOKENS = { ideation: 3_000, script: 3_000, safety: 300 } as const;
+/** 23.2: the post copy is its own light call (it was part of the ideation output). */
+export const TYPICAL_TEXT_OUTPUT_TOKENS = {
+  ideation: 2_500,
+  script: 3_000,
+  safety: 300,
+  postCopy: 600,
+} as const;
 /** Brief, brand and format lines in a Layer 1–2 prompt. */
 export const TYPICAL_USER_PROMPT_CHARS = 1_200;
 /**
@@ -72,17 +80,31 @@ export function typicalVideoPlan(
 
 const IDS = { organisationId: 'estimate', projectId: 'estimate' } as const;
 
-function textCall(system: string, maxTokens: number): PricedCall {
+function textCall(system: string, maxTokens: number, task: TextTask): PricedCall {
   return {
     providerId: 'anthropic',
     request: {
       ...IDS,
       capability: 'text_generation',
+      task,
       system,
       prompt: 'x'.repeat(TYPICAL_USER_PROMPT_CHARS),
       maxTokens,
     },
   };
+}
+
+/**
+ * 23.2: the Layer 1–2 Claude calls of a one-format run, each with its task (and so its model:
+ * ideation and the script on the planning model, safety and post copy on the light one).
+ */
+export function typicalPlanningCalls(): PricedCall[] {
+  return [
+    textCall(IDEATION_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.ideation, 'ideation'),
+    textCall(SCRIPT_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.script, 'script'),
+    textCall(SCRIPT_SAFETY_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.safety, 'script_safety'),
+    textCall(CAPTION_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.postCopy, 'post_copy'),
+  ];
 }
 
 /**
@@ -95,11 +117,7 @@ export function typicalVideoCalls(
 ): PricedCall[] {
   const shotSec = plan.durationSec / plan.shots;
   const narration = 'x'.repeat(Math.round(shotSec * NARRATION_CHARS_PER_SEC));
-  const calls: PricedCall[] = [
-    textCall(IDEATION_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.ideation),
-    textCall(SCRIPT_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.script),
-    textCall(SCRIPT_SAFETY_SYSTEM_PROMPT, TYPICAL_TEXT_OUTPUT_TOKENS.safety),
-  ];
+  const calls: PricedCall[] = typicalPlanningCalls();
   for (let i = 0; i < plan.aiClips; i += 1) {
     calls.push({
       providerId: aiClipProvider,
@@ -125,20 +143,12 @@ export function typicalVideoCalls(
       },
     });
   }
-  // Layer 4 voices each shot, then 13.6 word timing transcribes that shot's narration.
+  // Layer 4 voices each shot. 23.2: the narration's word timings come with the speech (ElevenLabs
+  // character alignment), so it is no longer transcribed (13.6 used AssemblyAI per shot).
   for (let i = 0; i < plan.shots; i += 1) {
     calls.push({
       providerId: 'elevenlabs',
       request: { ...IDS, capability: 'tts', text: narration, voiceId: 'voice' },
-    });
-    calls.push({
-      providerId: 'assemblyai',
-      request: {
-        ...IDS,
-        capability: 'transcription',
-        mediaUrl: 'https://estimate.invalid/voice.mp3',
-        durationSec: Math.max(1, shotSec),
-      },
     });
   }
   if (plan.music) {

@@ -223,6 +223,12 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
       return textResult(options.ideation ?? IDEATION_JSON);
     if (request.system.includes('script and storyboard'))
       return textResult(options.script ?? SCRIPT_JSON);
+    // 23.2: the post copy is its own (light) call; it answers with the ideation fixture's posts.
+    if (request.system.includes('per-platform social captions'))
+      return textResult({
+        suggestions:
+          (options.ideation as { socialPosts?: unknown[] } | undefined)?.socialPosts ?? [],
+      });
     if (request.system.includes('social-media slideshow'))
       return textResult(options.slideshowText ?? SLIDESHOW_TEXT_JSON);
     if (request.system.includes('analyse short-form marketing videos'))

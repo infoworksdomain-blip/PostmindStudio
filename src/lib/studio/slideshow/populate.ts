@@ -132,6 +132,7 @@ async function writeText(
       planTier: scope.planTier,
       request: {
         capability: 'text_generation',
+        task: 'slideshow_text',
         organisationId: scope.organisationId,
         projectId: scope.projectId,
         system: SLIDESHOW_TEXT_SYSTEM_PROMPT,

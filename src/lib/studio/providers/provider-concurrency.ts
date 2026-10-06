@@ -33,6 +33,9 @@ import type { RateRedisClient } from './provider-rate';
 // Limits: STUDIO_PROVIDER_CONCURRENCY_<ID>="<max>[,org=<share>]" (the provider id upper-cased,
 // non-alphanumerics as "_"); 0 or "off" = no Studio-side cap. Defaults below; providers without a
 // default are not capped (their 429s still defer the job: queue/rate-deferral.ts).
+// 23.2: ElevenLabs (TTS + Music, one pool: CONCURRENCY_POOLS) defaults to the plan's 5, so a burst
+// of narration and music queues instead of failing with concurrent_limit_exceeded; any provider
+// can be capped the same way with its variable (e.g. STUDIO_PROVIDER_CONCURRENCY_HEYGEN=3).
 //
 // Fail-open, like 15.C3: if Redis errors the call goes ahead (warned at most once a minute).
 
@@ -52,7 +55,24 @@ export const SLOT_RETRY_MS = 10_000;
 export const DEFAULT_PROVIDER_CONCURRENCY: Readonly<Record<string, number>> = {
   seedance: 3,
   kling: 20,
+  // 23.2: the ElevenLabs plan allows 5 concurrent requests (production 2026-10-06: a TTS call
+  // failed with "rate_limited: concurrent_limit_exceeded … maximum of 5 concurrent").
+  elevenlabs: 5,
 };
+
+/**
+ * 23.2: providers that share ONE account's slots: ElevenLabs Music runs on the same key and plan
+ * as ElevenLabs TTS (default-registry.ts), so speech and music together hold at most the
+ * account's 5. A pooled provider uses its pool's limit, env variable and Redis keys.
+ */
+export const CONCURRENCY_POOLS: Readonly<Record<string, string>> = {
+  'elevenlabs-music': 'elevenlabs',
+};
+
+/** The provider id whose slots a provider uses (itself unless pooled). */
+export function concurrencyPoolOf(providerId: string): string {
+  return CONCURRENCY_POOLS[providerId] ?? providerId;
+}
 
 export interface ConcurrencyLimit {
   /** Slots on the account. */
@@ -258,7 +278,8 @@ export function createRedisProviderConcurrencyLimiter(deps: {
   };
   const open: ConcurrencySlot = { acquired: true, release: async () => undefined };
   return {
-    async acquire(input) {
+    async acquire(raw) {
+      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
       const limit = deps.limits(input.providerId);
       if (!limit) return open;
       const keys = slotKeys(input, limit);
@@ -324,7 +345,8 @@ export function createMemoryProviderConcurrencyLimiter(
   const remove = (key: string, id: string) =>
     sets.set(key, new Map([...(sets.get(key) ?? [])].filter(([k]) => k !== id)));
   return {
-    async acquire(input) {
+    async acquire(raw) {
+      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
       const limit = limits(input.providerId);
       if (!limit) return { acquired: true, release: async () => undefined };
       const keys = slotKeys(input, limit);
@@ -347,7 +369,7 @@ export function createMemoryProviderConcurrencyLimiter(
       };
     },
     inFlight(providerId, organisationId) {
-      const base = `${CONCURRENCY_KEY_PREFIX}${providerId}`;
+      const base = `${CONCURRENCY_KEY_PREFIX}${concurrencyPoolOf(providerId)}`;
       return live(organisationId ? `${base}:org:${organisationId}` : base).size;
     },
   };
