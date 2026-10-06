@@ -729,7 +729,12 @@
         "desk": "书桌前",
         "shop": "店铺柜台"
       },
-      "disclosure": "演员均为 AI 生成的人物，绝非真人，每个 UGC 视频都带有“AI 生成”标签。要求真人或名人的需求说明会被拒绝。"
+      "disclosure": "演员均为 AI 生成的人物，绝非真人，每个 UGC 视频都带有“AI 生成”标签。要求真人或名人的需求说明会被拒绝。",
+      "creator": "创作者",
+      "creatorOneOff": "新的一次性演员",
+      "creatorHint": "选择一个创作者，让你的视频始终使用同一张面孔。",
+      "creatorManage": "管理创作者",
+      "creatorPortraitAlt": "{name} 的肖像"
     },
     "carousel": {
       "legend": "轮播图",
@@ -1758,7 +1763,8 @@
         "brand": "品牌套件",
         "images": "图片库",
         "learned": "Studio 学到的内容",
-        "hashtags": "话题标签"
+        "hashtags": "话题标签",
+        "creators": "创作者"
       },
       "readOnly": "你对此业务只有查看权限。如需更改，请联系所有者或管理员。"
     },
@@ -2216,6 +2222,95 @@
       "domainInvalid": "请使用主机名，例如 example.co.uk。",
       "save": "保存详情",
       "saved": "业务详情已保存"
+    },
+    "creators": {
+      "title": "创作者",
+      "intro": "只需创建一次 AI 创作者，即可在每个 UGC 视频中使用同一张面孔。每个商家最多 {max, number} 个。",
+      "create": "新建创作者",
+      "count": "{count, number} / {max, number}",
+      "full": "该商家的创作者已达上限。停用一个后才能新建。",
+      "loading": "正在加载创作者",
+      "listAria": "创作者",
+      "empty": {
+        "title": "还没有创作者",
+        "body": "创建一个创作者，让你的 UGC 视频始终使用同一张面孔。"
+      },
+      "status": {
+        "DRAFT": "尚无肖像",
+        "READY": "就绪",
+        "RETIRED": "已停用"
+      },
+      "default": "月度计划默认",
+      "makeDefault": "用于月度计划",
+      "makeDefaultAria": "将 {name} 用于月度计划",
+      "regenerate": "重新生成",
+      "regenerateAria": "重新生成 {name} 的肖像",
+      "rename": "重命名",
+      "renameAria": "重命名 {name}",
+      "retire": "停用",
+      "retireAria": "停用 {name}",
+      "uses": "视频：{count, number}",
+      "uploaded": "已上传照片（已确认同意）",
+      "portraitAlt": "{name} 的肖像",
+      "portraitError": "这次未能生成肖像。请尝试重新生成。",
+      "created": "{name} 已就绪",
+      "createdDraft": "已保存 {name}，但暂时未能生成肖像。请尝试重新生成。",
+      "regenerated": "已为 {name} 生成新肖像",
+      "renamed": "已重命名为 {name}",
+      "defaultSet": "{name} 现已用于月度计划中的 UGC 视频",
+      "retired": "已停用 {name}",
+      "retireConfirm": {
+        "title": "停用 {name}？",
+        "body": "新视频将不再提供此创作者。已制作的视频保留其面孔。",
+        "confirm": "停用"
+      },
+      "dialog": {
+        "title": "新建创作者",
+        "description": "Studio 会根据这些选择生成肖像，并在每个选用该创作者的视频中使用同一张面孔。",
+        "modeAria": "肖像的生成方式",
+        "modeGenerate": "生成人物",
+        "modeUpload": "上传照片",
+        "name": "名称",
+        "namePlaceholder": "例如：Maya",
+        "appearance": "外观（可选）",
+        "appearancePlaceholder": "例如：短卷发、圆框眼镜、牛仔夹克",
+        "voiceTone": "说话方式（可选）",
+        "voiceTonePlaceholder": "例如：亲切、积极",
+        "generateNote": "仅限生成的人物：绝不使用真实人物、名人或长相相似者。",
+        "photo": "照片（PNG 或 JPEG，最大 10 MB）",
+        "consent": "我确认照片中的人已同意，且我拥有相关权利，可将其肖像用于为该商家生成视频。",
+        "problems": {
+          "name": "请为创作者命名。",
+          "photo": "请选择要上传的照片。",
+          "photoType": "照片必须是 PNG 或 JPEG 格式。",
+          "photoSize": "照片不得超过 10 MB。",
+          "consent": "请勾选此框，确认你已获得本人同意并拥有相关权利。"
+        },
+        "cancel": "取消",
+        "submitGenerate": "创建并生成肖像",
+        "submitUpload": "用照片创建"
+      },
+      "regenerateDialog": {
+        "title": "重新生成 {name}",
+        "description": "生成新的肖像。已制作的视频保留原来使用的肖像。",
+        "label": "修改（可选）",
+        "placeholder": "例如：笑容更灿烂、绿色毛衣",
+        "cancel": "取消",
+        "submit": "重新生成"
+      },
+      "renameDialog": {
+        "title": "重命名 {name}",
+        "description": "名称仅对你的团队显示。",
+        "label": "名称",
+        "placeholder": "例如：Maya",
+        "cancel": "取消",
+        "submit": "保存"
+      },
+      "errors": {
+        "limit": "该商家已有 {max, number} 个创作者。请先停用一个。",
+        "realPerson": "创作者是生成的人物，不能模仿真实人物或名人，也不能与其长相或声音相似。",
+        "dailyCap": "你今天已生成了很多肖像，请稍后再试。"
+      }
     }
   },
   "connections": {

@@ -8,6 +8,7 @@ import { UGC_VIDEO_ALLOWANCE_UNITS } from '@/lib/studio/ugc/allowance';
 import { Field, NativeSelect } from '../review/field';
 import type { BusinessProfile } from '../business/types';
 import { ImagePicker } from '../slideshow/image-picker';
+import { CreatorPicker } from '../creators/creator-picker';
 import type { UgcChoice } from './body';
 
 // BACKLOG 21.4 — the "UGC actor" choices on Create: an optional product (a name, suggested from
@@ -43,6 +44,7 @@ export function UgcOptions({
   );
   const products = profile.data?.profile?.products ?? [];
   const set = (next: Partial<UgcChoice>) => onChange({ ...value, ...next });
+  const setCreator = (creatorId: string | null) => set({ creatorId });
 
   return (
     <section
@@ -100,51 +102,58 @@ export function UgcOptions({
         </div>
       )}
 
-      <fieldset className="grid gap-3 sm:grid-cols-3">
-        <legend className="mb-1 text-xs font-medium text-muted-foreground">{t('look')}</legend>
-        <Field id="create-ugc-age" label={t('age')}>
-          <NativeSelect
-            id="create-ugc-age"
-            value={value.ageRange}
-            onChange={(e) => set({ ageRange: e.target.value as UgcChoice['ageRange'] })}
-          >
-            <option value="">{t('any')}</option>
-            {UGC_AGE_RANGES.map((a) => (
-              <option key={a} value={a}>
-                {t(`ages.${a}`)}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
-        <Field id="create-ugc-gender" label={t('gender')}>
-          <NativeSelect
-            id="create-ugc-gender"
-            value={value.gender}
-            onChange={(e) => set({ gender: e.target.value as UgcChoice['gender'] })}
-          >
-            <option value="">{t('any')}</option>
-            {UGC_GENDERS.map((g) => (
-              <option key={g} value={g}>
-                {t(`genders.${g}`)}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
-        <Field id="create-ugc-setting" label={t('setting')}>
-          <NativeSelect
-            id="create-ugc-setting"
-            value={value.setting}
-            onChange={(e) => set({ setting: e.target.value as UgcChoice['setting'] })}
-          >
-            <option value="">{t('any')}</option>
-            {UGC_SETTINGS.map((s) => (
-              <option key={s} value={s}>
-                {t(`settings.${s}`)}
-              </option>
-            ))}
-          </NativeSelect>
-        </Field>
-      </fieldset>
+      {businessId && (
+        <CreatorPicker businessId={businessId} value={value.creatorId} onChange={setCreator} />
+      )}
+
+      {/* 22.3: a chosen creator brings its own look; the presets are for a one-off actor. */}
+      {!value.creatorId && (
+        <fieldset className="grid gap-3 sm:grid-cols-3">
+          <legend className="mb-1 text-xs font-medium text-muted-foreground">{t('look')}</legend>
+          <Field id="create-ugc-age" label={t('age')}>
+            <NativeSelect
+              id="create-ugc-age"
+              value={value.ageRange}
+              onChange={(e) => set({ ageRange: e.target.value as UgcChoice['ageRange'] })}
+            >
+              <option value="">{t('any')}</option>
+              {UGC_AGE_RANGES.map((a) => (
+                <option key={a} value={a}>
+                  {t(`ages.${a}`)}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field id="create-ugc-gender" label={t('gender')}>
+            <NativeSelect
+              id="create-ugc-gender"
+              value={value.gender}
+              onChange={(e) => set({ gender: e.target.value as UgcChoice['gender'] })}
+            >
+              <option value="">{t('any')}</option>
+              {UGC_GENDERS.map((g) => (
+                <option key={g} value={g}>
+                  {t(`genders.${g}`)}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field id="create-ugc-setting" label={t('setting')}>
+            <NativeSelect
+              id="create-ugc-setting"
+              value={value.setting}
+              onChange={(e) => set({ setting: e.target.value as UgcChoice['setting'] })}
+            >
+              <option value="">{t('any')}</option>
+              {UGC_SETTINGS.map((s) => (
+                <option key={s} value={s}>
+                  {t(`settings.${s}`)}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </fieldset>
+      )}
 
       <p className="flex items-start gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" strokeWidth={1.5} aria-hidden />

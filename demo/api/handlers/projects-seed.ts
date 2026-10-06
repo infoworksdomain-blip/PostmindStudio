@@ -369,6 +369,19 @@ function ugcReview(): ProjectRec {
           product: { name: 'Weekly bread box', imageId: null },
           actor: { ageRange: '25-34', gender: 'woman', setting: 'kitchen' },
           seed: 1_048_576,
+          // 22.3: made with the business's reusable creator Maya (p22-creators.ts).
+          creator: {
+            id: 'cr-maya',
+            portraitId: 'crp-maya-1',
+            description: 'a woman around thirty, shoulder-length dark curls, a mustard knit jumper',
+            voiceTone: 'warm and upbeat',
+          },
+          actorImage: {
+            state: 'creator',
+            description: 'a woman around thirty, shoulder-length dark curls, a mustard knit jumper',
+            creatorId: 'cr-maya',
+            portraitId: 'crp-maya-1',
+          },
         },
         music: { status: 'generated', reused: false, durationSec: 30 },
       },
