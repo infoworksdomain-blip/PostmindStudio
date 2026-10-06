@@ -36,6 +36,7 @@ import {
   providerOverflowFromEnv,
 } from '../providers/provider-concurrency';
 import { providerRateLimiterFromEnv } from '../providers/provider-rate';
+import { providerWakeFromEnv } from '../providers/provider-wake';
 import { redisConnectionFromEnv } from '../queue/redis';
 import { getProviderRegistry } from '../providers/default-registry';
 import { createByocRegistryResolver } from '../providers/byoc-registry';
@@ -47,6 +48,7 @@ import { DEFAULT_PIPELINE_TIMING, type PipelineDeps } from './deps';
 import { createFfmpegInspector } from './media-probe';
 import { createFfmpegMastering } from './mastering';
 import { parseMusicMinTier } from './music';
+import { musicLibraryFromEnv } from './music-library';
 import { createProviderRatings, providerRatingsEnabled } from '../services/provider-ratings';
 import { parseCorpusBuckets } from '../library/corpus-source';
 import {
@@ -140,6 +142,12 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       logger,
     ),
     providerOverflow: providerOverflowFromEnv(process.env),
+    // 23.1: Shotstack render callbacks wake the waiting compose job (Redis flags).
+    providerWake: providerWakeFromEnv(
+      process.env,
+      () => createBreakerRedisClient(redisConnectionFromEnv()),
+      logger,
+    ),
     logger,
     config: {
       assetsBucket: assetsBucket(),
@@ -149,6 +157,7 @@ export function createPipelineDeps(input: { db: PrismaClient; queue: JobQueue })
       // 20.7: STUDIO_FONTS_BASE_URL, else the fonts this app serves itself at APP_URL/fonts.
       fontsBaseUrl: fontsBaseUrlFromEnv(process.env),
       musicMinTier: parseMusicMinTier(process.env.STUDIO_MUSIC_MIN_TIER),
+      musicLibrary: musicLibraryFromEnv(process.env),
       libraryBucket: process.env.S3_BUCKET_LIBRARY?.trim() || undefined,
       corpusS3Buckets: parseCorpusBuckets(process.env.STUDIO_CORPUS_S3_BUCKETS),
       ...DEFAULT_PIPELINE_TIMING,

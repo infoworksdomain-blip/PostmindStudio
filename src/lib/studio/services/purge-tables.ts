@@ -220,6 +220,8 @@ export const NOT_PURGED_MODELS: Readonly<Record<string, string>> = {
   VideoLibraryCategory: 'platform corpus taxonomy',
   VideoLibraryTag: 'platform corpus tags',
   VideoLibraryAnalysis: 'platform corpus analysis',
+  MusicLibraryTrack:
+    '23.1 platform music library: generated instrumental beds keyed by a closed-vocabulary prompt, no organisation data (objects under music-library/, kept by unsharedAssetObjects)',
   VideoLibraryEmbedding: 'platform corpus embeddings',
   VideoLibraryLicense: 'platform corpus licences',
   VideoLibraryIngestRun: 'platform corpus ingest runs (staff)',

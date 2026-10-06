@@ -10,6 +10,7 @@ import type {
 } from './interface';
 import { usdToPence } from './pricing';
 import { isOutOfCreditMessage, providerError } from './provider-errors';
+import { renderCallbackUrl, type RenderCallbackConfig } from './render-callback';
 
 // BACKLOG 2.8 — Shotstack composition (Layers 6–7). Studio builds the edit decision list
 // (Phase 3.6) and POSTs it; Shotstack renders. Contract from shotstack.io/docs/api (read
@@ -88,7 +89,20 @@ export interface ShotstackAdapterOptions {
   usdToGbpRate: number;
   fetchImpl?: typeof fetch;
   now?: () => number;
+  /**
+   * 23.1: send a per-render `callback` URL (render-callback.ts) so completion wakes the waiting
+   * job; absent = polling only. Only for the platform account (the callback route checks the
+   * render with the platform key).
+   */
+  callback?: RenderCallbackConfig;
 }
+
+/**
+ * 23.1: with callbacks on, polling is only the fallback for a lost callback. Before 23.1 every
+ * provider (Shotstack included) was polled every DEFAULT_PIPELINE_TIMING.providerPollIntervalMs
+ * (5 s, no backoff).
+ */
+export const CALLBACK_FALLBACK_POLL_MS = 20_000;
 
 function shotstackErrorMessage(body: unknown): string | undefined {
   if (body && typeof body === 'object') {
@@ -103,6 +117,7 @@ export class ShotstackAdapter implements ProviderAdapter {
   readonly providerId = PROVIDER_ID;
   readonly capabilities: readonly ProviderCapability[] = ['composition'];
   readonly typicalLatencySec = TYPICAL_LATENCY_SEC;
+  readonly callbackPollIntervalMs: number | undefined;
 
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
@@ -117,6 +132,7 @@ export class ShotstackAdapter implements ProviderAdapter {
     this.baseUrl = `https://api.shotstack.io/edit/${options.environment}`;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.now = options.now ?? Date.now;
+    this.callbackPollIntervalMs = options.callback ? CALLBACK_FALLBACK_POLL_MS : undefined;
   }
 
   private request<T>(path: string, init: RequestInit) {
@@ -154,9 +170,14 @@ export class ShotstackAdapter implements ProviderAdapter {
         `Shotstack adapter does not support ${request.capability}`,
       );
     }
+    // 23.1: Edit `callback` (https://shotstack.io/docs/api/, read 2026-10-06) — Shotstack POSTs
+    // the outcome there when the render is done or failed.
+    const edit = this.options.callback
+      ? { ...request.edit, callback: renderCallbackUrl(this.options.callback) }
+      : request.edit;
     const { body } = await this.request<{ id?: string; message?: string }>('/render', {
       method: 'POST',
-      body: JSON.stringify(request.edit),
+      body: JSON.stringify(edit),
     });
     const id = body.response?.id;
     if (!id) {

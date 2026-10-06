@@ -19,6 +19,7 @@ import { seedanceOptionsFromEnv, SeedanceAdapter } from './seedance';
 import { klingCredentialsFrom, klingOptionsFromEnv, KlingAdapter } from './kling';
 import { HeyGenAdapter } from './heygen';
 import { ShotstackAdapter } from './shotstack';
+import { renderCallbackFromEnv } from './render-callback';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
 import { StoryblocksMusicAdapter } from './storyblocks-music';
 import { StoryblocksVideoAdapter } from './storyblocks-video';
@@ -218,11 +219,16 @@ export function buildAdaptersFromKeys(
 
   const shotstackKey = keys.shotstack?.apiKey;
   if (shotstackKey) {
+    // 23.1: render callbacks only on the platform account (the callback route checks a render's
+    // status with the platform key; a BYOC organisation's renders keep polling).
+    const callback =
+      shotstackKey === envValue('SHOTSTACK_API_KEY') ? renderCallbackFromEnv(env) : undefined;
     adapters.push(
       new ShotstackAdapter({
         apiKey: shotstackKey,
         environment: envValue('SHOTSTACK_ENVIRONMENT') ?? 'stage',
         usdToGbpRate,
+        ...(callback && { callback }),
       }),
     );
   }

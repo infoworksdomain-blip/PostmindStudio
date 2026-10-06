@@ -11,6 +11,12 @@ describe('readMusic', () => {
       durationSec: 15,
       reused: true,
     });
+    // 23.1: a track from the music library reads as a reused track.
+    expect(readMusic({ music: { status: 'reused', durationSec: 30, reused: true } })).toEqual({
+      status: 'generated',
+      durationSec: 30,
+      reused: true,
+    });
     expect(readMusic({ music: { status: 'off_for_plan' } })).toEqual({ status: 'off_for_plan' });
     expect(readMusic({ music: { status: 'failed', reason: 'x' } })).toEqual({
       status: 'failed',

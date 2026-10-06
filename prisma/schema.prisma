@@ -254,6 +254,33 @@ model VideoAsset {
   @@schema("studio")
 }
 
+/// 23.1 music reuse: a platform-wide library of generated instrumental music beds. Keyed by the
+/// vocabulary-fenced prompt key of pipeline/music-prompt.ts (no customer text reaches the prompt)
+/// and a duration bucket. Each track is a copy under music-library/ in the assets bucket, owned
+/// by the library (never by a project or organisation), so retention and deletions keep it.
+model MusicLibraryTrack {
+  id                String    @id @default(cuid())
+  promptKey         String
+  /// Duration bucket in seconds (15, 30, 60, 120, 180, 300); the track is at least this long.
+  bucketSec         Int
+  durationSec       Float
+  s3Bucket          String
+  s3Key             String
+  /// e.g. 'elevenlabs-music:music_v1' (the asset source of the generation).
+  source            String
+  /// The provider_jobs row that paid for it.
+  providerJobId     String?
+  costPence         Int       @default(0)
+  useCount          Int       @default(0)
+  lastUsedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@unique([s3Bucket, s3Key])
+  @@index([promptKey, bucketSec])
+  @@map("music_library_tracks")
+  @@schema("studio")
+}
+
 enum AssetKind {
   VIDEO_CLIP
   IMAGE

@@ -14,7 +14,8 @@ import {
 } from '../providers/account-alerts';
 import { isAccountProviderError, retryAtOf } from '../providers/account-errors';
 import { LEASE_MARGIN_MS } from '../providers/provider-concurrency';
-import type { ProviderPollResult, ProviderRequest } from '../providers/interface';
+import type { ProviderAdapter, ProviderPollResult, ProviderRequest } from '../providers/interface';
+import { waitForNextPoll, type ProviderWake } from '../providers/provider-wake';
 import {
   routeProvider,
   type PlanTier,
@@ -52,6 +53,7 @@ export type ProviderRunDeps = Pick<
   | 'providerRates'
   | 'providerConcurrency'
   | 'providerOverflow'
+  | 'providerWake'
   | 'registryFor'
   | 'providerRatings'
   | 'notifier'
@@ -300,8 +302,26 @@ async function submitAndPoll(
         true,
       );
     }
-    await deps.sleep(deps.config.providerPollIntervalMs);
+    await waitForNextPoll(
+      { sleep: deps.sleep, wake: pollWake(adapter, deps) },
+      { providerId: adapter.providerId, providerJobId: submitted.providerJobId },
+      pollIntervalMs(adapter, deps),
+    );
   }
+}
+
+/** 23.1: a provider that calls back is woken by the callback; others poll as before. */
+function pollWake(adapter: ProviderAdapter, deps: ProviderRunDeps): ProviderWake | undefined {
+  return adapter.callbackPollIntervalMs ? deps.providerWake : undefined;
+}
+
+/**
+ * 23.1: the fallback interval of a provider that calls back (Shotstack 20 s) when this worker can
+ * be woken; otherwise the pipeline's poll cadence (5 s).
+ */
+export function pollIntervalMs(adapter: ProviderAdapter, deps: ProviderRunDeps): number {
+  const own = adapter.callbackPollIntervalMs;
+  return own && deps.providerWake ? own : deps.config.providerPollIntervalMs;
 }
 
 /** Parse the JSON produced by a text_generation provider with a schema. */
