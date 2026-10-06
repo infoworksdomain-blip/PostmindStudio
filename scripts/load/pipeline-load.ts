@@ -270,7 +270,8 @@ async function main(): Promise<void> {
     out(`${scenario}: ${jobs.length} projects across ${orgs.length} organisations enqueued`);
   }
 
-  const queues = [QUEUES.orchestration, QUEUES.assets];
+  // 23.6: compose / render jobs run on their own lane.
+  const queues = [QUEUES.orchestration, QUEUES.render, QUEUES.assets];
   const workers: Worker[] = startWorkers({ connection, deps, queues });
   const watch = queues.map((name) => new Queue(name, { connection, prefix: queuePrefix() }));
   out(

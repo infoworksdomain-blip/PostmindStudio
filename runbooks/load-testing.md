@@ -90,3 +90,31 @@ Flags: `--videos`, `--orgs`, `--heavy-share` (0–1, default 0.5), `--tier` (def
 
 Not run. See the results file for the proposed 5-video production burst, its exact command and
 its expected cost.
+
+## Queue capacity model (23.6)
+
+`npx tsx scripts/load-test/capacity-model.ts` runs a deterministic simulation of the BullMQ lanes
+(`src/lib/studio/load-test/capacity-model.ts`). It uses virtual time and needs no Redis, database or
+providers, so it runs anywhere (it also runs in the unit suite) and the same flags always give the
+same numbers. Scenario: 100 organisations each approve a 28-day plan at 3 posts a day (8,400 posts)
+at the same moment, with the production medians of 2026-10-06 (Claude 6 s, Shotstack 49 s, carousel
+26 s, AI clips 30-180 s; mix 40 % carousel, 30 % slideshow, 20 % wall of text, 10 % AI video).
+
+- **Before:** every post generates at once; compose-video holds an orchestration slot through the
+  render; orchestration 4, assets 8.
+- **After (23.6):** rolling generation (72 h window + first 3 posts), render lane 3 with
+  asynchronous renders, runners at HIGH priority.
+
+| Measure | before | after |
+| --- | --- | --- |
+| Initial backlog drain | 32.7 h (8,400 posts) | 55 min (600 posts due now) |
+| Time to first post per organisation p50 / p95 / max | 63 / 97 / 100 min | 9 / 17 / 17 min |
+| Late posts | 0 | 0 |
+| Runner (tick) wait on orchestration p95 / max | 24 s / 49 s | 0 s / 7 s |
+
+After 23.6 the rest of the month is generated 72 h ahead of each slot (about 300 posts a day for
+this load), so "every post ready" follows the posting schedule. Flags: `--orgs`,
+`--orchestration`, `--render`, `--assets`, `--window-hours`, `--immediate`,
+`--no-callbacks`; rerun after any change to lane sizes or latencies. It models queue capacity
+only: provider-side limits (Seedance / Kling concurrency, Shotstack account throughput) are not
+simulated.

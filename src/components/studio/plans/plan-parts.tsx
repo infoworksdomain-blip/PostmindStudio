@@ -10,6 +10,8 @@ import { StateBadge } from '../primitives';
 import {
   PLAN_ANGLES,
   REASON_KEYS,
+  waitingToCreate,
+  type CreatesAtFields,
   type ReasonKey,
   type ItemKind,
   type ItemStatus,
@@ -181,6 +183,37 @@ export function HoldNotice({ reason }: { reason: Plan['holdReason'] }) {
   return (
     <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
       {t(reason === 'cost_cap' ? 'monthLimit' : reason)}
+    </p>
+  );
+}
+
+/**
+ * 23.6 rolling generation: "Scheduled to be created on Thu 9 Oct, 09:00" for a queued post Studio
+ * starts making later, in the plan's time zone. Nothing once it is due or already being made.
+ */
+export function CreatesAtText({
+  item,
+  timezone,
+  now,
+}: {
+  item: CreatesAtFields;
+  timezone: string;
+  now: number;
+}) {
+  const t = useTranslations('plans.view');
+  const f = useFormat();
+  if (!waitingToCreate(item, now) || !item.createsAt) return null;
+  const date = f.date(item.createsAt, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timezone,
+  });
+  return (
+    <p className="text-xs text-muted-foreground">
+      <time dateTime={item.createsAt}>{t('createsAt', { date })}</time>
     </p>
   );
 }

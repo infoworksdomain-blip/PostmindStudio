@@ -79,6 +79,11 @@ export interface PlanItem {
   projectId: string | null;
   /** 20.13: caption + hashtags per platform (drafted, editable). */
   postCopy?: Record<string, { caption: string; hashtags: string[]; title?: string }> | null;
+  /**
+   * 23.6 rolling generation: when Studio starts creating this post (a QUEUED item that has not
+   * started yet); null otherwise. Older API responses omit it.
+   */
+  createsAt?: string | null;
 }
 
 export interface Plan {
@@ -189,6 +194,27 @@ const OPEN_STATUSES: ReadonlySet<ItemStatus> = new Set([
 
 export function canChangeScheduled(item: PlanItem, now: number): boolean {
   return OPEN_STATUSES.has(item.status) && Date.parse(item.slotAt) > now;
+}
+
+/**
+ * 23.6: a QUEUED post Studio will only start creating later (shortly before its slot), so the
+ * screens say "Scheduled to be created on …" rather than counting it as being made now.
+ */
+/** The fields the 23.6 helpers read (plan items and automation slots both have them). */
+export interface CreatesAtFields {
+  status: string;
+  createsAt?: string | null;
+}
+
+export function waitingToCreate(item: CreatesAtFields, now: number): boolean {
+  if (item.status !== 'QUEUED' || !item.createsAt) return false;
+  const at = Date.parse(item.createsAt);
+  return Number.isFinite(at) && at > now;
+}
+
+/** 23.6: how many posts are waiting for their creation time. */
+export function createsLaterCount(items: readonly CreatesAtFields[], now: number): number {
+  return items.filter((i) => waitingToCreate(i, now)).length;
 }
 
 export function isPlanActive(status: PlanStatus): boolean {

@@ -7,6 +7,7 @@ import { createMemoryProviderWake } from '../providers/provider-wake';
 import { createProviderRegistry } from '../providers/registry';
 import { renderCallbackFromEnv, renderCallbackUrl } from '../providers/render-callback';
 import { StubAdapter } from '../providers/test-adapter';
+import { InlineJobQueue } from '../queue/enqueue';
 import type { RateLimiter } from './rate-limit';
 import { handleShotstackCallback } from './shotstack-callback';
 
@@ -33,6 +34,8 @@ function setup(
     rows?: JobRow[];
     poll?: () => Promise<ProviderPollResult>;
     limiter?: RateLimiter;
+    /** 23.6: the project's metadata (a pending asynchronous render), when it has one. */
+    projectMetadata?: Record<string, unknown> | null;
   } = {},
 ) {
   const rows = options.rows ?? [
@@ -62,8 +65,15 @@ function setup(
   );
   shotstack.nextPoll = poll;
   const wake = createMemoryProviderWake();
+  const queue = new InlineJobQueue();
+  const findUnique = vi.fn(async () =>
+    options.projectMetadata
+      ? { organisationId: 'org-1', state: 'RENDERING', metadata: options.projectMetadata }
+      : null,
+  );
   const deps = {
-    db: { providerJob: { findFirst } } as unknown as PrismaClient,
+    db: { providerJob: { findFirst }, videoProject: { findUnique } } as unknown as PrismaClient,
+    queue,
     registry: createProviderRegistry([shotstack]),
     providerWake: wake,
     webhookRateLimiter: options.limiter,
@@ -82,7 +92,7 @@ function setup(
       async () => deps,
       ENV,
     );
-  return { call, wake, poll, findFirst };
+  return { call, wake, poll, findFirst, queue };
 }
 
 describe('POST /api/studio/webhooks/shotstack (23.1)', () => {
@@ -197,6 +207,7 @@ describe('POST /api/studio/webhooks/shotstack (23.1)', () => {
       new Request(renderCallbackUrl(config), { method: 'POST', body: '{}' }),
       async () => ({
         db: { providerJob: { findFirst } } as unknown as PrismaClient,
+        queue: new InlineJobQueue(),
         registry: createProviderRegistry([new StubAdapter('shotstack', ['composition'])]),
         providerWake: createMemoryProviderWake(),
         logger: pino({ level: 'silent' }),
@@ -204,5 +215,54 @@ describe('POST /api/studio/webhooks/shotstack (23.1)', () => {
       { ...ENV, APP_URL: 'http://localhost:3010' },
     );
     expect(res.status).toBe(404);
+  });
+});
+
+describe('render callback resumes an asynchronous render (23.6)', () => {
+  const pending = {
+    runId: 'run-1',
+    pendingRenders: {
+      's-1': {
+        providerId: 'shotstack',
+        providerJobRowId: 'pj-1',
+        providerJobId: RENDER_ID,
+        planTier: 'STANDARD',
+      },
+    },
+  };
+
+  it('promotes the delayed poll of the run', async () => {
+    const { call, queue } = setup({
+      projectMetadata: { ...pending, renderPollNext: 'poll-render__p-1__run-1__c1-2' },
+    });
+    await queue.add(
+      'poll-render',
+      {
+        projectId: 'p-1',
+        organisationId: 'org-1',
+        runId: 'run-1',
+        planTier: 'STANDARD',
+        chain: 'c1',
+        poll: 2,
+      },
+      { jobId: 'poll-render__p-1__run-1__c1-2', delayMs: 20_000 },
+    );
+    expect((await call(renderCallbackUrl(config))).status).toBe(200);
+    expect(queue.pending).toHaveLength(1);
+    expect(queue.pending[0]?.delayMs).toBeUndefined();
+  });
+
+  it('adds one wake poll when no delayed poll exists; a replay adds nothing more', async () => {
+    const { call, queue } = setup({ projectMetadata: pending });
+    await call(renderCallbackUrl(config));
+    await call(renderCallbackUrl(config));
+    expect(queue.history.map((j) => j.jobId)).toEqual(['poll-render__p-1__run-1__wake-pj-1']);
+    expect(queue.history[0]?.data).toMatchObject({ wake: true, runId: 'run-1' });
+  });
+
+  it('a render that is not pending on the run (synchronous, or recorded) adds nothing', async () => {
+    const { call, queue } = setup({ projectMetadata: { runId: 'run-1' } });
+    expect((await call(renderCallbackUrl(config))).status).toBe(200);
+    expect(queue.history).toEqual([]);
   });
 });

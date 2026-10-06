@@ -2,14 +2,14 @@ import { PrismaClient } from '@prisma/client';
 import { logger } from '../src/lib/logger';
 import { createPipelineDeps } from '../src/lib/studio/pipeline/create-deps';
 import { createBullJobQueue } from '../src/lib/studio/queue/enqueue';
-import { QUEUES, type QueueName } from '../src/lib/studio/queue/queues';
+import { PRIORITY, QUEUES, type QueueName } from '../src/lib/studio/queue/queues';
 import { redisConnectionFromEnv } from '../src/lib/studio/queue/redis';
 import { createServer } from 'node:http';
 import { Queue } from 'bullmq';
 import { getMetrics, metricsAuthorised } from '../src/lib/studio/observability/metrics';
 import { sampleBreakers } from '../src/lib/studio/observability/sample';
 import { getSharedCircuitBreaker } from '../src/lib/studio/providers/circuit-breaker-redis';
-import { PIPELINE_QUEUES, startWorkers } from '../src/lib/studio/queue/worker-host';
+import { PIPELINE_QUEUES, startWorkers, withRenderLane } from '../src/lib/studio/queue/worker-host';
 import { queuePrefix } from '../src/lib/studio/queue/redis';
 import { APPROVAL_CHECK_SCHEDULE } from '../src/lib/studio/queue/workers/check-approvals';
 import { STYLE_MEMORY_SCHEDULE } from '../src/lib/studio/queue/workers/build-style-memory';
@@ -65,7 +65,8 @@ async function main(): Promise<void> {
   const workers = startWorkers({
     connection,
     deps,
-    queues: requested.length ? requested : PIPELINE_QUEUES,
+    // 23.6: an orchestration worker also takes the render lane unless STUDIO_RENDER_LANE=separate.
+    queues: requested.length ? withRenderLane(requested) : PIPELINE_QUEUES,
   });
   logger.info({ queues: workers.map((w) => w.name) }, 'studio workers started');
 
@@ -261,6 +262,8 @@ async function main(): Promise<void> {
     {
       name: 'advance-content-plans',
       data: { organisationId: 'postmind-platform', runId: 'content-plans', planTier: 'STANDARD' },
+      // 23.6: runners go ahead of the work they start (queues.ts RUNNER_JOBS).
+      opts: { priority: PRIORITY.high },
     },
   );
   // 22.5 — the automation runner (review / activate / weekly rollover / insights), every 5 min.
@@ -270,6 +273,8 @@ async function main(): Promise<void> {
     {
       name: 'advance-automations',
       data: { organisationId: 'postmind-platform', runId: 'automations', planTier: 'STANDARD' },
+      // 23.6: runners go ahead of the work they start (queues.ts RUNNER_JOBS).
+      opts: { priority: PRIORITY.high },
     },
   );
   await publish.upsertJobScheduler(
