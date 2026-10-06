@@ -13,6 +13,7 @@ import {
   actorImageOf,
   actorPortraitPrompt,
 } from '../../src/lib/studio/ugc/portrait';
+import { ugcMetadata } from '../../src/lib/studio/ugc/creator-ref';
 import { actorDescription, newUgcStyle } from '../../src/lib/studio/ugc/style';
 import { createHarness, createProject, IDEATION_JSON } from '../helpers/pipeline-harness';
 
@@ -80,6 +81,8 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     await db.providerUsage.deleteMany({ where: { organisationId: org } });
     await db.imageLibraryItem.deleteMany({ where: { organisationId: org } });
     await db.videoProject.deleteMany({ where: { id: { in: ids } } });
+    await db.creatorPortrait.deleteMany({ where: { organisationId: org } });
+    await db.creator.deleteMany({ where: { organisationId: org } });
     await db.$disconnect();
   });
 
@@ -224,6 +227,106 @@ describe.skipIf(!hasDb)('UGC actor pipeline on real Postgres (21.4)', { timeout:
     const requests = h.adapters.veo.requests as ActorVideoRequest[];
     expect(requests).toHaveLength(3);
     expect(new Set(requests.map((r) => r.actorImageUrl)).size).toBe(1);
+  });
+
+  it('22.3: a project with a reusable creator sends its pinned portrait to every clip; nothing is generated', async () => {
+    const creator = await db.creator.create({
+      data: {
+        organisationId: org,
+        businessId: 'biz-1',
+        name: 'Maya',
+        gender: 'woman',
+        ageRange: '25-34',
+        setting: 'kitchen',
+        description: 'a woman around thirty, short curly hair',
+        status: 'READY',
+        createdByUserId: 'user-1',
+      },
+    });
+    const pinned = await db.creatorPortrait.create({
+      data: {
+        organisationId: org,
+        businessId: 'biz-1',
+        creatorId: creator.id,
+        source: 'GENERATED',
+        s3Bucket: 'assets',
+        s3Key: `orgs/${org}/creators/${creator.id}/pinned.png`,
+        contentType: 'image/png',
+        createdByUserId: 'user-1',
+      },
+    });
+    // The creator later gets a new portrait and is retired: the project keeps the pinned one.
+    const newer = await db.creatorPortrait.create({
+      data: { ...pinned, id: undefined, s3Key: `orgs/${org}/creators/${creator.id}/newer.png` },
+    });
+    await db.creator.update({
+      where: { id: creator.id },
+      data: { portraitId: newer.id, status: 'RETIRED' },
+    });
+    const withCreator = newUgcStyle({ product: { name: 'Oat latte kit' } }, 7, {
+      id: creator.id,
+      portraitId: pinned.id,
+      description: creator.description,
+      voiceTone: 'warm',
+      ageRange: '25-34',
+      gender: 'woman',
+      setting: 'kitchen',
+    });
+    const h = createHarness(db, {
+      script: UGC_SCRIPT,
+      ideation: { ...IDEATION_JSON, realPersonRequested: false },
+      probe: { durationSec: 24 },
+      actor: true,
+    });
+    const { project, runId } = await createProject(db, {
+      organisationId: org,
+      description: 'Maya reviews our oat latte kit',
+      metadata: { ugc: ugcMetadata(withCreator) },
+      durationSec: 24,
+    });
+    await h.queue.add('plan-project', {
+      projectId: project.id,
+      organisationId: org,
+      runId,
+      planTier: 'STANDARD',
+    });
+    await drainInline(h.queue, h.deps);
+    expect(h.adapters.openai.requests.filter((r) => r.capability === 'text_to_image')).toEqual([]);
+    const requests = h.adapters.veo.requests as ActorVideoRequest[];
+    expect(requests).toHaveLength(2);
+    expect(new Set(requests.map((r) => r.actorImageUrl)).size).toBe(1);
+    expect(requests[0]?.actorImageUrl).toContain('pinned.png');
+    for (const r of requests) {
+      expect(r.prompt).toContain('same person as in the reference portrait');
+      expect(r.prompt).toContain('a woman around thirty, short curly hair, speaking in a warm way');
+    }
+    const after = await db.videoProject.findUniqueOrThrow({
+      where: { id: project.id },
+      include: { scripts: { include: { shots: { orderBy: { sortOrder: 'asc' } } } } },
+    });
+    expect(actorImageOf(after.metadata).state).toEqual({
+      state: 'creator',
+      description: actorDescription(withCreator),
+      creatorId: creator.id,
+      portraitId: pinned.id,
+    });
+    const clips = await db.videoAsset.findMany({
+      where: { projectId: project.id, kind: 'VIDEO_CLIP' },
+    });
+    for (const clip of clips)
+      expect(clip.metadata).toMatchObject({ actorImageAssetId: pinned.id, creatorId: creator.id });
+    // Regenerating a clip keeps the creator's face.
+    const tenant = {
+      organisationId: org,
+      organisation: { planTier: 'STANDARD' },
+    } as unknown as TenantContext;
+    await regenerateShot({ db, queue: h.queue }, tenant, after.scripts[0]?.shots[2]?.id ?? '', {});
+    await drainInline(h.queue, h.deps);
+    const all = h.adapters.veo.requests as ActorVideoRequest[];
+    expect(all).toHaveLength(3);
+    expect(all[2]?.actorImageUrl).toBe(requests[0]?.actorImageUrl);
+    await db.creatorPortrait.deleteMany({ where: { organisationId: org } });
+    await db.creator.deleteMany({ where: { organisationId: org } });
   });
 
   it('21.4a: a refused portrait does not stop the video; clips go on without one', async () => {

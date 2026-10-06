@@ -5,6 +5,7 @@ import * as duplicateRoute from '../../src/app/api/studio/projects/[id]/duplicat
 import * as projectRoute from '../../src/app/api/studio/projects/[id]/route';
 import * as projectsRoute from '../../src/app/api/studio/projects/route';
 import { setApiDeps } from '../../src/lib/studio/api/context';
+import { actorImageOf } from '../../src/lib/studio/ugc/portrait';
 import { ugcStyleOf } from '../../src/lib/studio/ugc/style';
 import { call, installApi, tenant } from '../helpers/api-harness';
 
@@ -39,6 +40,7 @@ describe.skipIf(!hasDb)('UGC actor projects (21.4)', { timeout: 60_000 }, () => 
     setApiDeps(undefined);
     await db.imageLibraryItem.deleteMany({ where: { organisationId: org } });
     await db.videoProject.deleteMany({ where: { organisationId: org } });
+    await db.creator.deleteMany({ where: { organisationId: org } });
     await db.$disconnect();
   });
 
@@ -147,5 +149,71 @@ describe.skipIf(!hasDb)('UGC actor projects (21.4)', { timeout: 60_000 }, () => 
       body: { language: 'fr' },
     });
     expect(edit.status).toBe(400);
+  });
+
+  it('22.3: a READY creator of the business is recorded on the project (and its copy) and counted', async () => {
+    const make = (data: { businessId?: string; status?: 'READY' | 'DRAFT' } = {}) =>
+      db.creator.create({
+        data: {
+          organisationId: org,
+          businessId: data.businessId ?? 'biz-ugc',
+          name: 'Maya',
+          gender: 'man',
+          ageRange: '45-60',
+          setting: 'shop',
+          description: 'a man in their fifties, grey beard',
+          voiceTone: 'calm',
+          status: data.status ?? 'READY',
+          portraitId: data.status === 'DRAFT' ? null : 'crp-x',
+          createdByUserId: 'user-1',
+        },
+      });
+    const ready = await make();
+    const draft = await make({ status: 'DRAFT' });
+    const elsewhere = await make({ businessId: 'biz-other' });
+    for (const id of [draft.id, elsewhere.id, 'no-such-creator']) {
+      const refused = await call(projectsRoute.POST, {
+        method: 'POST',
+        token: 'owner',
+        body: body({ ugc: { creatorId: id } }),
+      });
+      expect(refused.status).toBe(400);
+    }
+    const res = await call(projectsRoute.POST, {
+      method: 'POST',
+      token: 'owner',
+      body: body({ ugc: { product: { name: 'Oat latte kit' }, creatorId: ready.id } }),
+    });
+    expect(res.status).toBe(201);
+    const project = res.json.project as { id: string; metadata: never };
+    const style = ugcStyleOf(project.metadata);
+    // The creator's presets replace the actor choices; its look and pinned portrait are kept.
+    expect(style).toMatchObject({
+      actor: { ageRange: '45-60', gender: 'man', setting: 'shop' },
+      creator: {
+        id: ready.id,
+        portraitId: 'crp-x',
+        description: 'a man in their fifties, grey beard',
+        voiceTone: 'calm',
+      },
+    });
+    expect(actorImageOf(project.metadata).state).toEqual({
+      state: 'creator',
+      description: 'a man in their fifties, grey beard, speaking in a calm way',
+      creatorId: ready.id,
+      portraitId: 'crp-x',
+    });
+    const counted = await db.creator.findUniqueOrThrow({ where: { id: ready.id } });
+    expect(counted.useCount).toBe(1);
+    expect(counted.lastUsedAt).toBeInstanceOf(Date);
+    const copy = await call(duplicateRoute.POST, {
+      method: 'POST',
+      token: 'owner',
+      params: { id: project.id },
+    });
+    const copied = (copy.json.project as { metadata: never }).metadata;
+    expect(ugcStyleOf(copied)?.creator?.id).toBe(ready.id);
+    expect(actorImageOf(copied).state).toMatchObject({ state: 'creator', portraitId: 'crp-x' });
+    await db.creator.deleteMany({ where: { organisationId: org } });
   });
 });

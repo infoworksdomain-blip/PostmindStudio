@@ -51,6 +51,8 @@ import './p20-captions-hashtags';
 import './p21-carousels';
 // Phase 22: Fastlane-style formats (hook + demo with a demo-video bank, wall of text).
 import './p22-formats';
+// Phase 22.3: reusable AI creators (two seeded creators, the Creators tab and the Create picker).
+import './p22-creators';
 // Phase 18 Track E: /me, organisation settings, members, audit, admin directory, legal readiness,
 // and sample data for Track C's billing contract.
 import './p18-org';

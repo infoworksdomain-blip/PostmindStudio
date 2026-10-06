@@ -42,6 +42,7 @@ import {
 } from './plan-quotas';
 import { cancelProject, createProject, createProjectInput, generateProject } from './projects';
 import { ugcForPlanItem } from '../ugc/plan-month';
+import { defaultCreatorId } from './creators';
 import { cancelPublication } from './publications';
 import { monthWindow } from './tier-gates';
 
@@ -237,6 +238,20 @@ export function projectBodyFor(
   };
 }
 
+/**
+ * 22.3: a month plan's UGC items use the business's default creator (else its most used one), so
+ * the plan's videos share one face; with no ready creator each item gets a one-off actor (21.4).
+ */
+export async function withDefaultCreator(
+  db: Pick<PrismaClient, 'creator'>,
+  organisationId: string,
+  input: z.infer<typeof createProjectInput>,
+): Promise<z.infer<typeof createProjectInput>> {
+  if (!input.ugc || input.ugc.creatorId) return input;
+  const creatorId = await defaultCreatorId(db, { organisationId, businessId: input.businessId });
+  return creatorId ? { ...input, ugc: { ...input.ugc, creatorId } } : input;
+}
+
 export interface PrepareDeps {
   db: PrismaClient;
   logger: Logger;
@@ -267,7 +282,8 @@ export async function prepareItem(
   if (!projectId) {
     const tier = toPlanTier(tenant.organisation.planTier);
     const quota = tierQuota(tier, deps.env);
-    const input = createProjectInput.parse(projectBodyFor(plan, item, quota.shortMaxSec));
+    const parsed = createProjectInput.parse(projectBodyFor(plan, item, quota.shortMaxSec));
+    const input = await withDefaultCreator(deps.db, tenant.organisationId, parsed);
     const project = await createProject(deps.db, tenant, input, now);
     await mergeMetadata(deps.db, project.id, {
       // Pre-approved (auto-posted at its time) only when the plan has an account to post to.

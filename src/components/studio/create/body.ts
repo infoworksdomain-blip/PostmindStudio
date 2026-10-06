@@ -64,6 +64,11 @@ export interface UgcChoice {
   ageRange: '' | '18-24' | '25-34' | '35-44' | '45-60';
   gender: '' | 'woman' | 'man';
   setting: '' | 'kitchen' | 'living_room' | 'car' | 'outdoors' | 'bathroom' | 'desk' | 'shop';
+  /**
+   * 22.3: a reusable creator of the business (its face in every clip), null for a new one-off
+   * actor, undefined until the picker has chosen its default (the business's most used creator).
+   */
+  creatorId?: string | null;
 }
 
 export const EMPTY_UGC: UgcChoice = {
@@ -78,6 +83,7 @@ export const EMPTY_UGC: UgcChoice = {
 export interface UgcBody {
   product?: { name?: string; imageId?: string };
   actor?: { ageRange?: string; gender?: string; setting?: string };
+  creatorId?: string;
 }
 export type ReferenceMode = 'TEMPLATE' | 'INSPIRE';
 export type ReviewPolicy = 'AUTO_APPROVE' | 'REQUIRE_APPROVAL';
@@ -462,13 +468,21 @@ export function buildCreateBody(
   return body;
 }
 
-/** 21.4: only the choices the owner made (the server picks the rest from the project's seed). */
+/**
+ * 21.4: only the choices the owner made (the server picks the rest from the project's seed).
+ * 22.3: a chosen creator replaces the actor look (its own presets and portrait are used).
+ */
 export function ugcBody(choice: UgcChoice): UgcBody {
   const name = choice.productName.trim().slice(0, 120);
   const product = {
     ...(name && { name }),
     ...(choice.productImageId && { imageId: choice.productImageId }),
   };
+  if (choice.creatorId)
+    return {
+      ...(Object.keys(product).length > 0 && { product }),
+      creatorId: choice.creatorId,
+    };
   const actor = {
     ...(choice.ageRange && { ageRange: choice.ageRange }),
     ...(choice.gender && { gender: choice.gender }),

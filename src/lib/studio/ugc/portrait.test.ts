@@ -333,3 +333,73 @@ describe('ensureActorPortrait (21.4a)', () => {
     expect(current()).toMatchObject({ state: 'unavailable', reason: 'unsupported_image_type' });
   });
 });
+
+describe('ensureActorPortrait with a reusable creator (22.3)', () => {
+  const creator = {
+    id: 'cr-1',
+    portraitId: 'crp-1',
+    description: 'a woman around thirty, short curly hair',
+    voiceTone: 'warm',
+    ageRange: '25-34' as const,
+    gender: 'woman' as const,
+    setting: 'kitchen' as const,
+  };
+  const withCreator = newUgcStyle({}, 42, creator);
+
+  function creatorDeps(found: boolean) {
+    const { d } = deps();
+    const findFirst = vi.fn(async () =>
+      found ? { id: 'crp-1', s3Bucket: 'assets', s3Key: 'orgs/org-1/creators/cr-1/a.png' } : null,
+    );
+    (d.db as unknown as Record<string, unknown>).creatorPortrait = { findFirst };
+    return { d, findFirst };
+  }
+
+  it('uses the pinned creator portrait for every clip and every regenerated clip: nothing is generated', async () => {
+    const { store } = memoryStore();
+    const { d, findFirst } = creatorDeps(true);
+    const clip = await ensureActorPortrait(d, { ...input(store), style: withCreator });
+    const again = await ensureActorPortrait(d, { ...input(store, 'run-2'), style: withCreator });
+    expect(runProvider).not.toHaveBeenCalled();
+    expect(clip).toEqual({
+      assetId: 'crp-1',
+      url: 'https://signed.test/assets/orgs/org-1/creators/cr-1/a.png',
+      creatorId: 'cr-1',
+    });
+    expect(again).toEqual(clip);
+    // Scoped by organisation, creator and the pinned portrait (a retired creator still works).
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'crp-1', organisationId: 'org-1', creatorId: 'cr-1' },
+      }),
+    );
+    expect(store.compareAndSet).not.toHaveBeenCalled();
+  });
+
+  it('describes the creator in clip prompts (look text and voice note), never the seed’s look', () => {
+    expect(actorDescription(withCreator)).toBe(
+      'a woman around thirty, short curly hair, speaking in a warm way',
+    );
+    expect(withCreator.actor).toEqual({ ageRange: '25-34', gender: 'woman', setting: 'kitchen' });
+  });
+
+  it('a creator portrait that is gone falls back to a one-off portrait of the same description', async () => {
+    const { store } = memoryStore();
+    const { d } = creatorDeps(false);
+    runProvider.mockResolvedValue(imageRun({ s3Bucket: 'assets', s3Key: 'fallback.png' }));
+    const portrait = await ensureActorPortrait(d, { ...input(store), style: withCreator });
+    expect(runProvider).toHaveBeenCalledTimes(1);
+    expect(portrait?.creatorId).toBeUndefined();
+  });
+
+  it('a stored "creator" actor image reads back and only ever means "claim" in the state machine', () => {
+    const state: ActorImageState = {
+      state: 'creator',
+      description,
+      creatorId: 'cr-1',
+      portraitId: 'crp-1',
+    };
+    expect(actorImageOf({ ugc: { actorImage: state } }).state).toEqual(state);
+    expect(nextPortraitStep(state, { description, runId: 'r', now: NOW }).kind).toBe('claim');
+  });
+});
