@@ -22,7 +22,7 @@ vi.mock('../pipeline/provider-run', async (importOriginal) => ({
   runProvider: vi.fn(),
 }));
 
-import { generateLibraryImage, storeStockHit } from '../images/library';
+import { generateLibraryImage, searchLibrary, storeStockHit } from '../images/library';
 import { runProvider } from '../pipeline/provider-run';
 import { MAX_RELEVANCE_CHECKS_PER_RUN } from './image-relevance';
 import {
@@ -35,6 +35,7 @@ import {
 const runProviderMock = runProvider as unknown as ReturnType<typeof vi.fn>;
 const generateMock = generateLibraryImage as unknown as ReturnType<typeof vi.fn>;
 const storeMock = storeStockHit as unknown as ReturnType<typeof vi.fn>;
+const searchMock = searchLibrary as unknown as ReturnType<typeof vi.fn>;
 
 const scope: PopulateScope = {
   organisationId: 'org-1',
@@ -85,13 +86,20 @@ function slide(id: string, text: string) {
   };
 }
 
-function fakeDb(generatedToday = 0) {
+type LibraryRow = { id: string; source: 'STOCK' | 'UPLOAD' | 'SCRAPED' | 'GENERATED' };
+
+function fakeDb(generatedToday = 0, library: LibraryRow[] = []) {
   const slideshowSlide = { update: vi.fn(async () => ({})) };
   const db = {
     slideshowSlide,
     businessProfile: { findFirst: vi.fn(async () => gym) },
     imageLibraryItem: {
       update: vi.fn(async ({ where }: { where: { id: string } }) => ({ id: where.id })),
+      findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+        library
+          .filter((r) => where.id.in.includes(r.id))
+          .map((r) => ({ ...r, s3Bucket: 'assets', s3Key: `lib/${r.id}.jpg`, publicUrl: null })),
+      ),
       count: vi.fn(async (args?: { where?: { businessId?: string } }) =>
         args?.where?.businessId ? 0 : generatedToday,
       ),
@@ -109,8 +117,13 @@ function deps(db: PrismaClient, hits: StockHit[]) {
   const fetchImpl = vi.fn(
     async () => new Response(jpeg, { status: 200, headers: { 'content-type': 'image/jpeg' } }),
   ) as unknown as typeof fetch;
+  const storage = {
+    size: vi.fn(async () => jpeg.byteLength),
+    readRange: vi.fn(async () => jpeg),
+  };
   const library = {
     db,
+    storage,
     fetchImpl,
     stock: () => ({ primary: [source], fallback: [] }),
     logger: { warn: vi.fn() },
@@ -121,13 +134,17 @@ function deps(db: PrismaClient, hits: StockHit[]) {
     providers: {} as unknown as ProviderRunDeps,
     reportStockUse: vi.fn(async () => undefined),
   };
-  return { populate, source, fetchImpl };
+  return { populate, source, fetchImpl, storage };
 }
 
 const ok = (json: unknown) => ({ providerJobRowId: 'job', output: { metadata: { json } } });
 
-/** Light-model stub: contextual queries, and the given yes/no answers for every photo check. */
-function model(answers: Array<'yes' | 'no'> | Error) {
+/**
+ * Light-model stub: contextual queries, and yes/no answers for every photo check — one list for
+ * all checks, or one list per check in call order (the last repeats).
+ */
+function model(answers: Array<'yes' | 'no'> | Array<Array<'yes' | 'no'>> | Error) {
+  let check = 0;
   runProviderMock.mockImplementation(
     async ({ request }: { request: { task: string; prompt: string; images?: unknown[] } }) => {
       if (request.task === 'slide_image_query') {
@@ -141,7 +158,13 @@ function model(answers: Array<'yes' | 'no'> | Error) {
       }
       if (answers instanceof Error) throw answers;
       const n = request.images?.length ?? 0;
-      return ok({ photos: answers.slice(0, n).map((answer, i) => ({ photo: i + 1, answer })) });
+      const list = (
+        Array.isArray(answers[0])
+          ? (answers as Array<Array<'yes' | 'no'>>)[Math.min(check, answers.length - 1)]
+          : answers
+      ) as Array<'yes' | 'no'>;
+      check += 1;
+      return ok({ photos: list.slice(0, n).map((answer, i) => ({ photo: i + 1, answer })) });
     },
   );
 }
@@ -153,6 +176,8 @@ beforeEach(() => {
   runProviderMock.mockReset();
   generateMock.mockReset();
   storeMock.mockReset();
+  searchMock.mockReset();
+  searchMock.mockResolvedValue([]);
   storeMock.mockImplementation(async (_d, _s, _src, h: StockHit) => ({
     status: 'created',
     id: `lib-${h.providerImageId}`,
@@ -259,5 +284,80 @@ describe('25.x relevance check in the slideshow image chain', () => {
     expect(
       runProviderMock.mock.calls.filter((c) => c[0].request.task === 'slide_image_query'),
     ).toHaveLength(1);
+  });
+});
+
+// 25.x follow-up (production re-run 2026-10-07: the gym's pre-fix puppies photo was stored in
+// its library and came back on every run, because the library is searched before stock).
+describe('25.x relevance check on library matches', () => {
+  const coachSlide = () => [slide('s1', 'Coaches who know your name')];
+
+  it('a library STOCK match that does not fit is rejected → a fitting stock photo is used', async () => {
+    const { db, slideshowSlide } = fakeDb(0, [{ id: 'old-puppies', source: 'STOCK' }]);
+    searchMock.mockResolvedValue([{ id: 'old-puppies', similarity: 0.6 }]);
+    const { populate, storage } = deps(db, [hit('coach')]);
+    model([['no'], ['yes']]);
+
+    const result = await fillSlideImages(populate, scope, coachSlide(), options);
+
+    expect(result).toMatchObject({ imagesMatched: 0, imagesStocked: 1 });
+    expect(storage.readRange).toHaveBeenCalledWith(
+      'assets',
+      'lib/old-puppies.jpg',
+      0,
+      jpeg.byteLength - 1,
+    );
+    expect(slideshowSlide.update).toHaveBeenCalledWith({
+      where: { id: 's1' },
+      data: { imageAssetId: 'lib-coach' },
+    });
+    expect(checkCalls()).toBe(2); // one library check, one stock check
+  });
+
+  it('the business’s own upload is used without a check', async () => {
+    const { db } = fakeDb(0, [{ id: 'own-coach', source: 'UPLOAD' }]);
+    searchMock.mockResolvedValue([{ id: 'own-coach', similarity: 0.5 }]);
+    const { populate, source } = deps(db, [hit('coach')]);
+    model(['no']);
+
+    const result = await fillSlideImages(populate, scope, coachSlide(), options);
+
+    expect(result.imagesMatched).toBe(1);
+    expect(checkCalls()).toBe(0);
+    expect(source.search).not.toHaveBeenCalled();
+  });
+
+  it('a check outage accepts the library match (as before the check)', async () => {
+    const { db } = fakeDb(0, [{ id: 'old-stock', source: 'STOCK' }]);
+    searchMock.mockResolvedValue([{ id: 'old-stock', similarity: 0.6 }]);
+    const { populate } = deps(db, [hit('coach')]);
+    model(new ProviderError('anthropic', 'server_error', 'overloaded', true));
+
+    const result = await fillSlideImages(populate, scope, coachSlide(), options);
+
+    expect(result).toMatchObject({ imagesMatched: 1, imagesStocked: 0 });
+  });
+
+  it('library and stock checks share one cap per slideshow', async () => {
+    const slides = Array.from({ length: MAX_RELEVANCE_CHECKS_PER_RUN }, (_, i) =>
+      slide(`s${i}`, `Point ${i}`),
+    );
+    const library = slides.map((_, i) => ({ id: `old-${i}`, source: 'STOCK' as const }));
+    const { db } = fakeDb(0, library);
+    let n = 0;
+    searchMock.mockImplementation(async () => [{ id: `old-${n++}`, similarity: 0.6 }]);
+    const { populate } = deps(db, [hit('a'), hit('b'), hit('c')]);
+    storeMock.mockImplementation(async () => ({
+      status: 'created',
+      id: `lib-${storeMock.mock.calls.length}`,
+    }));
+    model([['no'], ['yes', 'yes', 'yes']]); // library rejected, stock passes
+
+    const result = await fillSlideImages(populate, scope, slides, options);
+
+    expect(checkCalls()).toBe(MAX_RELEVANCE_CHECKS_PER_RUN);
+    // Once the cap is spent, the remaining library matches are accepted unchecked.
+    expect(result.imagesMatched + result.imagesStocked).toBe(slides.length);
+    expect(result.imagesMatched).toBeGreaterThan(0);
   });
 });

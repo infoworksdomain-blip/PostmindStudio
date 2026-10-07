@@ -195,7 +195,7 @@ describe('createStockScreen', () => {
     expect(await screen('q', input.hits)).toEqual([]);
     expect(await screen('q', input.hits)).toHaveLength(3);
     expect(runProviderMock).toHaveBeenCalledTimes(2);
-    expect(MAX_RELEVANCE_CHECKS_PER_RUN).toBeLessThanOrEqual(10);
+    expect(MAX_RELEVANCE_CHECKS_PER_RUN).toBeLessThanOrEqual(12);
   });
 
   it('no hits → no call', async () => {
