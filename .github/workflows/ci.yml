@@ -84,7 +84,16 @@ jobs:
           # + music_library_tracks (23.1 music reuse)
           test "$count" -eq 88
       - name: Install ffmpeg (Ubuntu repository)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+        # Ubuntu mirrors occasionally stall for the whole job (2026-10-07: 24 min, then cancelled):
+        # each attempt is time-boxed and retried, and the step fails fast if ffmpeg is still missing.
+        timeout-minutes: 8
+        run: |
+          for attempt in 1 2 3; do
+            timeout 150 sudo apt-get update -qq -o Acquire::Retries=3 &&
+              timeout 240 sudo apt-get install -y -qq -o Acquire::Retries=3 ffmpeg fonts-dejavu-core && break
+            echo "ffmpeg install attempt $attempt failed; retrying"; sleep 10
+          done
+          ffmpeg -version | head -1
       - name: Full suite with coverage on real Postgres, BullMQ (Redis 7) and ffmpeg
         # Coverage is enforced here, where the DB/queue/media suites run too.
         run: npm run test:coverage
@@ -154,7 +163,16 @@ jobs:
       - run: npm ci
       - run: npx prisma migrate deploy && npx prisma db seed
       - name: Install ffmpeg (Ubuntu repository)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+        # Ubuntu mirrors occasionally stall for the whole job (2026-10-07: 24 min, then cancelled):
+        # each attempt is time-boxed and retried, and the step fails fast if ffmpeg is still missing.
+        timeout-minutes: 8
+        run: |
+          for attempt in 1 2 3; do
+            timeout 150 sudo apt-get update -qq -o Acquire::Retries=3 &&
+              timeout 240 sudo apt-get install -y -qq -o Acquire::Retries=3 ffmpeg fonts-dejavu-core && break
+            echo "ffmpeg install attempt $attempt failed; retrying"; sleep 10
+          done
+          ffmpeg -version | head -1
       - name: Stubbed pipeline scenarios
         run: |
           mkdir -p ops/results/pipeline-e2e
