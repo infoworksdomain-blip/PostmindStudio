@@ -180,10 +180,8 @@ test.describe('Your plan', () => {
   const plan = (page: Page) => ({
     change: page.locator('#change'),
     packs: page.locator('#topups'),
-    cancel: page
-      .locator('section')
-      .filter({ has: page.getByRole('heading', { name: 'Cancel your plan', exact: true }) })
-      .last(),
+    // 25.12: the danger zone at the end of the page (and "Your plan is ending" while cancelling).
+    cancel: page.locator('#cancel-plan'),
     toast: (text: string | RegExp) => page.locator('[data-sonner-toast]').filter({ hasText: text }),
   });
 
@@ -216,7 +214,7 @@ test.describe('Your plan', () => {
     await expect(owner.getByText(/^(Basic|Standard|Plus|Enterprise) plan$/)).toHaveCount(0);
     await expect(owner.getByRole('button', { name: 'Manage billing' })).toHaveCount(0);
     await expect(owner.getByRole('radio', { name: 'Annual' })).toHaveCount(0);
-    // The settings tab is "Your plan" now.
+    // The settings sub-navigation calls it "Your plan" (25.12).
     await expect(owner.getByRole('link', { name: 'Your plan', exact: true }).first()).toBeVisible();
     expect(w.issues).toEqual([]);
   });
@@ -323,7 +321,7 @@ test.describe('Your plan', () => {
     const { cancel, change, toast } = plan(owner);
     const date = longDate(mock.periodEnd);
     await cancel.getByRole('button', { name: 'Cancel plan' }).click();
-    const dialog = owner.getByRole('dialog', { name: 'Cancel your plan?' });
+    const dialog = owner.getByRole('alertdialog', { name: 'Cancel your plan?' });
     await expect(dialog).toContainText(`Your plan will end on ${date}.`);
     // "Keep my plan" in the dialog changes nothing.
     await dialog.getByRole('button', { name: 'Keep my plan', exact: true }).click();
@@ -331,7 +329,7 @@ test.describe('Your plan', () => {
     expect(mock.sent('POST', '/billing/plan/cancel')).toHaveLength(0);
     await cancel.getByRole('button', { name: 'Cancel plan' }).click();
     await owner
-      .getByRole('dialog', { name: 'Cancel your plan?' })
+      .getByRole('alertdialog', { name: 'Cancel your plan?' })
       .getByRole('button', { name: 'Cancel plan' })
       .click();
     await expect(toast('Your plan will end at the end of this period.')).toBeVisible();

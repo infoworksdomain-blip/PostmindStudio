@@ -1,19 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { Download, ExternalLink } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
-import { useApi } from '@/lib/client/api';
-import { safeHttpUrl, useFormat } from '@/lib/client/format';
+import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
 import { MeterRow, type UsageResponse } from '../usage-meter';
-import { Section, StateBadge } from '../primitives';
+import { Section } from '../primitives';
+import { allowanceLeft } from './plan-summary';
 import { channelList } from './channel-labels';
 import { usePackName } from './channel-picker';
 import type { CheckoutIntent } from './use-billing-actions';
-import type { BillingResponse, InvoicesResponse, PricingView } from './types';
+import type { BillingResponse, PricingView } from './types';
 
 // Phase 18 §3 / 21.5 Your plan (/settings/billing) — videos used against the allowance, the
 // connected channels, seats / businesses / storage, the HD video packs and the Stripe invoices.
@@ -60,24 +58,39 @@ function countMeter(meter: { used: number; limit: number | null }) {
   };
 }
 
-/** 21.5: videos used against the plan's allowance this week / month, and pack videos left. */
-export function AllowanceSection({ billing }: { billing: Billing }) {
+/**
+ * 21.5: videos used against the plan's allowance this week / month, what is left (25.12: "0 left"
+ * is shown, never hidden) and pack videos left.
+ */
+export function AllowanceSection({
+  billing,
+  usage: u,
+}: {
+  billing: Billing;
+  usage: UsageResponse['usage'] | undefined;
+}) {
   const t = useTranslations('billing.yourPlan.videos');
   const tUsage = useTranslations('shell.usage');
   const f = useFormat();
-  const usage = useApi<UsageResponse>('/usage');
-  const u = usage.data?.usage;
   const period = u?.period ?? 'month';
+  const left = u ? allowanceLeft(u.videos.short) : null;
   return (
     <Section title={t('title', { period })} description={t('description')}>
-      <div className="grid gap-4 text-sm">
+      <div className="grid max-w-2xl gap-4 text-sm">
         {u ? (
           <>
             <MeterRow label={t('used', { period })} meter={u.videos.short} />
-            <p className="text-muted-foreground">
-              {t('moreFrom', {
-                date: f.date(u.resetsAt, { day: 'numeric', month: 'long', timeZone: 'UTC' }),
-              })}
+            <p className="flex flex-wrap gap-x-3 gap-y-1">
+              {left !== null && (
+                <span className="font-medium">
+                  {t('left', { left: f.number(left, { maximumFractionDigits: 2 }) })}
+                </span>
+              )}
+              <span className="text-muted-foreground">
+                {t('moreFrom', {
+                  date: f.date(u.resetsAt, { day: 'numeric', month: 'long', timeZone: 'UTC' }),
+                })}
+              </span>
             </p>
           </>
         ) : (
@@ -109,7 +122,7 @@ export function ChannelsSection({ billing }: { billing: Billing }) {
           <p>{t('publishing', { list: channelList(usage.allowed) })}</p>
         )}
         {usage.blocked.length > 0 && (
-          <p role="alert" className="rounded-md border border-warning/50 bg-warning/10 p-3">
+          <p role="alert" className="rounded-field bg-warning-soft p-3 text-warning-foreground">
             {t('blocked', { list: channelList(usage.blocked), count: usage.blocked.length })}{' '}
             <a className="font-medium underline underline-offset-4" href="#change">
               {t('addChannel')}
@@ -143,7 +156,9 @@ export function UsageSection({ billing }: { billing: Billing }) {
         <MeterRow label={t('businesses')} meter={countMeter(businesses)} />
         <Meter label={t('storage')} text={storageText} percent={storage.percent} />
         {storage.percent !== null && storage.percent >= 100 && (
-          <p className="rounded-md bg-warning/10 p-2 text-xs">{t('storageOver')}</p>
+          <p className="rounded-field bg-warning-soft p-2.5 text-xs text-warning-foreground">
+            {t('storageOver')}
+          </p>
         )}
       </div>
     </Section>
@@ -177,14 +192,11 @@ export function TopUpsSection({
           {packs.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('noPacks')}</p>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="grid max-w-2xl divide-y divide-border border-y border-border">
               {packs.map((pack) => {
                 const amount = pack.unitAmountPence === null ? null : f.pence(pack.unitAmountPence);
                 return (
-                  <li
-                    key={pack.lookupKey}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
-                  >
+                  <li key={pack.lookupKey} className="flex items-center justify-between gap-3 py-3">
                     <div className="grid gap-0.5 text-sm">
                       <span className="font-medium">{name(pack)}</span>
                       <span className="text-muted-foreground">
@@ -218,112 +230,5 @@ export function TopUpsSection({
         </div>
       </Section>
     </section>
-  );
-}
-const INVOICE_STATUSES = ['draft', 'open', 'paid', 'uncollectible', 'void'] as const;
-type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
-const isInvoiceStatus = (s: string): s is InvoiceStatus =>
-  (INVOICE_STATUSES as readonly string[]).includes(s);
-const INVOICE_TONE = {
-  draft: 'neutral',
-  open: 'warn',
-  paid: 'good',
-  uncollectible: 'bad',
-  void: 'neutral',
-} as const satisfies Record<InvoiceStatus, string>;
-
-type Invoice = InvoicesResponse['invoices'][number];
-
-export function InvoicesSection({ enabled }: { enabled: boolean }) {
-  const t = useTranslations('billing.invoices');
-  const f = useFormat();
-  const res = useApi<InvoicesResponse>(enabled ? '/billing/invoices' : null, { limit: 12 });
-  const invoices = res.data?.invoices ?? [];
-  const numberOf = (invoice: Invoice) => invoice.number ?? t('draft');
-  const columns: Array<DataTableColumn<Invoice>> = [
-    {
-      id: 'number',
-      header: t('number'),
-      className: 'font-medium',
-      cell: (invoice) => numberOf(invoice),
-    },
-    {
-      id: 'date',
-      header: t('date'),
-      cell: (invoice) => f.date(invoice.createdAt, { dateStyle: 'medium' }),
-    },
-    {
-      id: 'amount',
-      header: t('amount'),
-      align: 'end',
-      className: 'tabular-nums',
-      cell: (invoice) => f.pence(invoice.amountDuePence),
-    },
-    {
-      id: 'status',
-      header: t('status'),
-      cell: (invoice) =>
-        isInvoiceStatus(invoice.status) ? (
-          <StateBadge label={t(`statuses.${invoice.status}`)} tone={INVOICE_TONE[invoice.status]} />
-        ) : (
-          invoice.status
-        ),
-    },
-    {
-      id: 'links',
-      header: <span className="sr-only">{t('links')}</span>,
-      mobileLabel: t('links'),
-      align: 'end',
-      cell: (invoice) => <InvoiceLinks invoice={invoice} number={numberOf(invoice)} />,
-    },
-  ];
-  return (
-    <Section title={t('title')}>
-      {invoices.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t('empty')}</p>
-      ) : (
-        <DataTable
-          caption={t('caption')}
-          columns={columns}
-          rows={invoices}
-          getRowId={(invoice) => invoice.id}
-          responsive="stack"
-        />
-      )}
-    </Section>
-  );
-}
-
-function InvoiceLinks({ invoice, number }: { invoice: Invoice; number: string }) {
-  const t = useTranslations('billing.invoices');
-  const hosted = safeHttpUrl(invoice.hostedInvoiceUrl);
-  const pdf = safeHttpUrl(invoice.invoicePdfUrl);
-  return (
-    <div className="flex justify-end gap-1">
-      {hosted && (
-        <Button asChild size="sm" variant="ghost">
-          <a
-            href={hosted}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t('viewAria', { number })}
-          >
-            <ExternalLink aria-hidden /> {t('view')}
-          </a>
-        </Button>
-      )}
-      {pdf && (
-        <Button asChild size="sm" variant="ghost">
-          <a
-            href={pdf}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t('pdfAria', { number })}
-          >
-            <Download aria-hidden /> {t('pdf')}
-          </a>
-        </Button>
-      )}
-    </div>
   );
 }

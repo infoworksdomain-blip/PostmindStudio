@@ -126,7 +126,7 @@ test.describe('organisation settings', () => {
     await page.reload();
     await page.getByLabel('New owner').selectOption(heirMember);
     await page.getByRole('button', { name: 'Transfer ownership' }).first().click();
-    const dialog = page.getByRole('dialog', { name: 'Transfer ownership?' });
+    const dialog = page.getByRole('alertdialog', { name: 'Transfer ownership?' });
     await dialog.getByLabel('Your password').fill('definitely-wrong-password');
     await dialog.getByRole('button', { name: 'Transfer ownership' }).click();
     await expect(page.locator('[data-sonner-toast]').first()).toBeVisible();
@@ -153,7 +153,7 @@ test.describe('organisation settings', () => {
     const { org } = await ownerWithOrg(context, db, 'del');
     await page.goto('/settings/organisation');
     await page.getByRole('button', { name: 'Delete organisation…' }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('alertdialog');
     const confirm = dialog.getByRole('button', { name: 'Delete organisation' });
     await expect(confirm).toBeDisabled();
     await dialog.getByLabel(/Type .* to confirm/).fill(`${org.name} `.slice(0, -2));

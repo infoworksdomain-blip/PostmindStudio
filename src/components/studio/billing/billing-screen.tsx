@@ -2,23 +2,17 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CreditCard, Loader2, X } from 'lucide-react';
+import { CreditCard, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError, useApi } from '@/lib/client/api';
-import { useFormat, type Tone } from '@/lib/client/format';
-import { EmptyState, ErrorState, PageHeader, Section, StateBadge } from '../primitives';
-import { SettingsNav } from '../settings/settings-nav';
+import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import type { UsageResponse } from '../usage-meter';
-import {
-  AllowanceSection,
-  ChannelsSection,
-  InvoicesSection,
-  TopUpsSection,
-  UsageSection,
-} from './billing-sections';
+import { AllowanceSection, ChannelsSection, TopUpsSection, UsageSection } from './billing-sections';
+import { PaymentSection } from './payment-section';
+import { planStatus, PlanSummary, type PlanStatus } from './plan-summary';
 import { ChannelPicker, choiceFromParams, type ChannelChoice } from './channel-picker';
 import { CancelSection, ChangePlanSection } from './plan-change-section';
 import {
@@ -29,41 +23,15 @@ import {
 } from './types';
 import { useBillingActions, type CheckoutIntent } from './use-billing-actions';
 
-// Phase 18 §3 / 21.5 "Your plan" (/settings/billing) — one page for the per-channel plan: the
-// channels, how often you pay, the price, the renewal date, videos used against the allowance and
-// pack videos left; change channels or the period with a preview of the new price and when it
-// applies (upgrades now with proration, downgrades at the end of the period); buy HD video packs;
-// cancel and resume; the connected channels; seats, businesses and storage; and, through the
-// Stripe Customer Portal, the payment method and invoices only. Organisations without a plan
-// choose one here (Stripe Checkout). Owners manage it (studio:billing:manage); everyone else sees
-// it read-only with "ask an owner". Data: GET /billing, /billing/plans, /billing/invoices, /usage,
-// /billing/plan/preview. No generation cost is ever shown.
+// Phase 18 §3 / 21.5 "Your plan" (/settings/billing) — one page for the per-channel plan. 25.12
+// reads it top to bottom: what you have (plan-summary.tsx), what you have used this period,
+// payment method and invoices, changing the plan, video packs, the channels, team and storage, and
+// cancelling last. Organisations without a plan choose one here (Stripe Checkout). Owners manage
+// it (studio:billing:manage); everyone else sees it read-only with "ask an owner". Data: GET
+// /billing, /billing/plans, /billing/invoices, /usage, /billing/plan/preview. No generation cost is
+// ever shown, and no upgrade is pushed: the page answers questions, the upgrade dialog host stays.
 
 type Billing = BillingResponse['billing'];
-
-export type PlanStatus = 'trialing' | 'active' | 'past_due' | 'read_only' | 'cancelling' | 'none';
-
-const STATUS_TONE: Record<PlanStatus, Tone> = {
-  trialing: 'live',
-  active: 'good',
-  past_due: 'warn',
-  read_only: 'bad',
-  cancelling: 'warn',
-  none: 'neutral',
-};
-
-const DAY_MS = 86_400_000;
-
-export function planStatus(billing: Pick<Billing, 'entitlements' | 'subscription'>): PlanStatus {
-  const { entitlements: e, subscription: sub } = billing;
-  if (e.access === 'none') return 'none';
-  if (e.access === 'read_only') return 'read_only';
-  const status = sub?.status ?? e.subscriptionStatus;
-  if (status === 'past_due') return 'past_due';
-  if (sub?.cancelAtPeriodEnd) return 'cancelling';
-  if (status === 'trialing' || e.source === 'trial') return 'trialing';
-  return 'active';
-}
 
 const BANNERS = {
   checkout: { success: 'checkoutSuccess', cancelled: 'checkoutCancelled' },
@@ -89,124 +57,15 @@ function ReturnBanner() {
       role="status"
       className={
         good
-          ? 'mb-6 flex items-start gap-3 rounded-xl border border-success/40 bg-success/10 p-4 text-sm'
-          : 'mb-6 flex items-start gap-3 rounded-xl border border-border bg-muted/50 p-4 text-sm'
+          ? 'mb-6 flex items-start gap-2.5 rounded-field bg-success-soft py-2.5 ps-3.5 pe-2 text-sm text-success-foreground'
+          : 'mb-6 flex items-start gap-2.5 rounded-field bg-surface-raised py-2.5 ps-3.5 pe-2 text-sm text-foreground-secondary'
       }
     >
-      <p className="flex-1">{t(key)}</p>
-      <IconButton label={t('dismiss')} onClick={() => setDismissed(true)}>
+      <p className="flex-1 py-px leading-relaxed">{t(key)}</p>
+      <IconButton size="icon-xs" label={t('dismiss')} onClick={() => setDismissed(true)}>
         <X />
       </IconButton>
     </div>
-  );
-}
-
-function StatusDetail({ billing, status }: { billing: Billing; status: PlanStatus }) {
-  const t = useTranslations('billing.plan');
-  const f = useFormat();
-  const sub = billing.subscription;
-  const date = (iso: string | null | undefined) => f.date(iso, { dateStyle: 'long' });
-  switch (status) {
-    case 'trialing': {
-      const end = sub?.trialEnd ?? billing.entitlements.trial?.endsAt ?? null;
-      return end ? <p>{t('trialEnds', { date: date(end) })}</p> : null;
-    }
-    case 'active':
-      return sub?.currentPeriodEnd ? (
-        <p>{t('renews', { date: date(sub.currentPeriodEnd) })}</p>
-      ) : null;
-    case 'cancelling':
-      return sub?.currentPeriodEnd ? (
-        <p>{t('cancelsOn', { date: date(sub.currentPeriodEnd) })}</p>
-      ) : null;
-    case 'past_due': {
-      const grace = billing.entitlements.graceUntil;
-      if (!grace) return null;
-      const days = Math.max(0, Math.ceil((Date.parse(grace) - Date.now()) / DAY_MS));
-      return (
-        <p>
-          {t('pastDue', { date: date(grace) })}{' '}
-          <strong className="font-semibold">{t('graceLeft', { days })}</strong>
-        </p>
-      );
-    }
-    case 'read_only':
-      return <p>{t('readOnly')}</p>;
-    case 'none':
-      return <p>{t('none')}</p>;
-  }
-}
-
-function PlanSummary({
-  billing,
-  status,
-  pending,
-  onKeepCurrent,
-}: {
-  billing: Billing;
-  status: PlanStatus;
-  pending: string | null;
-  onKeepCurrent: () => void;
-}) {
-  const t = useTranslations('billing.plan');
-  const tYour = useTranslations('billing.yourPlan.summary');
-  const tPlan = useTranslations('channelPlan');
-  const f = useFormat();
-  const plan = billing.plan;
-  const scheduled = plan?.pending;
-  return (
-    <Section title={tYour('title')} variant="panel">
-      <div className="grid gap-4 text-sm">
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="font-display text-3xl leading-none">
-            {status === 'none' || !plan
-              ? t('noPlan')
-              : tYour('headline', { count: plan.channels, period: plan.interval })}
-          </p>
-          <StateBadge label={t(`status.${status}`)} tone={STATUS_TONE[status]} />
-        </div>
-        {plan && plan.pricePerPeriodPence !== null && status !== 'none' && (
-          <p className="text-base">
-            {tPlan(`total.${plan.interval}`, { amount: f.pence(plan.pricePerPeriodPence) })}{' '}
-            <span className="text-muted-foreground">· {tPlan('exclVat')}</span>
-          </p>
-        )}
-        <div className="grid gap-1 text-muted-foreground">
-          <StatusDetail billing={billing} status={status} />
-          {plan?.legacy && <p>{tYour('legacy')}</p>}
-          {billing.entitlements.source === 'admin' && <p>{t('adminSource')}</p>}
-        </div>
-        {scheduled && (
-          <div className="rounded-lg border border-border bg-muted/40 p-3">
-            <p>
-              {tYour('pending', {
-                date: f.date(scheduled.effectiveAt, { dateStyle: 'long' }),
-                count: scheduled.channels,
-                period: scheduled.interval ?? plan?.interval ?? 'month',
-              })}
-            </p>
-            {billing.canManage && (
-              <Button
-                className="mt-2"
-                size="sm"
-                variant="outline"
-                disabled={pending !== null}
-                onClick={onKeepCurrent}
-                loading={pending === 'keep'}
-              >
-                {tYour('keepCurrent')}
-              </Button>
-            )}
-          </div>
-        )}
-        {plan?.paymentPending && (
-          <p role="alert" className="rounded-lg border border-warning/50 bg-warning/10 p-3">
-            {tYour('paymentPending')}
-          </p>
-        )}
-        {!billing.canManage && <p className="text-muted-foreground">{t('askOwner')}</p>}
-      </div>
-    </Section>
   );
 }
 
@@ -266,31 +125,6 @@ function ChoosePlan({
   );
 }
 
-/** Payment method and invoices live in Stripe's portal (21.5: nothing else does). */
-function BillingDetails({
-  billing,
-  pending,
-  onPortal,
-}: {
-  billing: Billing;
-  pending: string | null;
-  onPortal: () => void;
-}) {
-  const t = useTranslations('billing.plan');
-  const canPortal = billing.canManage && billing.hasBillingAccount && billing.checkoutEnabled;
-  if (!canPortal) return null;
-  return (
-    <Section title={t('detailsTitle')} description={t('manageHelp')}>
-      <div>
-        <Button variant="outline" onClick={onPortal} disabled={pending !== null}>
-          {pending === 'portal' ? <Loader2 className="animate-spin" /> : <CreditCard />}
-          {t('manage')}
-        </Button>
-      </div>
-    </Section>
-  );
-}
-
 function changeBlockedReason(
   billing: Billing,
   status: PlanStatus,
@@ -304,6 +138,7 @@ function changeBlockedReason(
 
 export function BillingScreen() {
   const t = useTranslations('billing');
+  const tn = useTranslations('settingsNav');
   const tChange = useTranslations('billing.yourPlan.change');
   const res = useApi<BillingResponse>('/billing');
   const plans = useApi<PlansResponse>('/billing/plans');
@@ -317,16 +152,12 @@ export function BillingScreen() {
       onConflict: () => void res.mutate(),
       onChanged: refresh,
     });
-  // The settings tabs, like the organisation, members and audit screens.
   const header = (
-    <>
-      <PageHeader
-        eyebrow={t('header.eyebrow')}
-        title={t('header.title')}
-        description={t('header.description')}
-      />
-      <SettingsNav />
-    </>
+    <PageHeader
+      eyebrow={tn('title')}
+      title={t('header.title')}
+      description={t('header.description')}
+    />
   );
 
   if (res.error instanceof ApiError && res.error.status === 501)
@@ -370,6 +201,7 @@ export function BillingScreen() {
         <PlanSummary
           billing={billing}
           status={status}
+          usage={usage.data?.usage}
           pending={pending}
           onKeepCurrent={() => void keepCurrentPlan()}
         />
@@ -381,7 +213,10 @@ export function BillingScreen() {
             onChoose={(intent, key) => void checkout(intent, key)}
           />
         )}
-        {billing.plan && status !== 'none' && <AllowanceSection billing={billing} />}
+        {billing.plan && status !== 'none' && (
+          <AllowanceSection billing={billing} usage={usage.data?.usage} />
+        )}
+        <PaymentSection billing={billing} pending={pending} onPortal={() => void portal()} />
         {live && billing.canManage && billing.plan && plans.data && (
           <ChangePlanSection
             plan={billing.plan}
@@ -391,13 +226,14 @@ export function BillingScreen() {
             onChange={changePlan}
           />
         )}
-        <ChannelsSection billing={billing} />
         <TopUpsSection
           billing={billing}
           pricing={plans.data?.pricing}
           pending={pending}
           onBuy={(intent, key) => void checkout(intent, key)}
         />
+        <ChannelsSection billing={billing} />
+        <UsageSection billing={billing} />
         {live && billing.canManage && billing.plan?.source !== 'admin' && (
           <CancelSection
             cancelling={Boolean(billing.subscription?.cancelAtPeriodEnd)}
@@ -409,9 +245,6 @@ export function BillingScreen() {
             onResume={resumePlan}
           />
         )}
-        <UsageSection billing={billing} />
-        <BillingDetails billing={billing} pending={pending} onPortal={() => void portal()} />
-        <InvoicesSection enabled={billing.hasBillingAccount && billing.checkoutEnabled} />
       </div>
     </>
   );

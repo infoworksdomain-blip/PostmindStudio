@@ -2605,7 +2605,8 @@
       "guidance": "请在 PostMind 设置中连接 Instagram 和 Facebook。",
       "connectButton": "使用 Facebook 连接",
       "studioGuidance": "一次 Facebook 登录即可连接你选择的公共主页，以及与其关联的 Instagram 专业账号。",
-      "notConfigured": "Instagram 和 Facebook 暂不可用：Studio 的 Meta 应用尚未完成设置。请联系你的管理员。"
+      "notConfigured": "Instagram 和 Facebook 暂不可用：Studio 的 Meta 应用尚未完成设置。请联系你的管理员。",
+      "title": "Instagram 和 Facebook"
     },
     "descriptionStandalone": "Studio 发布内容的账号。请为所选商家逐一连接。",
     "connectedMetaNotice": "{count, plural, other {已连接 # 个 Facebook 和 Instagram 账号}}。现在即可向这些账号发布。",
@@ -2637,6 +2638,12 @@
       "reconnect": "重新连接 TikTok 才能发送草稿。在此之前，帖子将直接发布。",
       "saved": "TikTok 发布偏好已保存",
       "goesToDrafts": "TikTok：进入你的 TikTok 草稿。在应用中添加热门音乐，然后发布。"
+    },
+    "state": {
+      "connected": "已连接",
+      "needsReconnect": "需要重新连接",
+      "notConnected": "未连接",
+      "unavailable": "不可用"
     }
   },
   "library": {
@@ -4735,13 +4742,6 @@
       "membersTitle": "成员",
       "auditTitle": "审计日志"
     },
-    "nav": {
-      "aria": "设置",
-      "organisation": "组织",
-      "members": "成员",
-      "billing": "我的套餐",
-      "audit": "审计日志"
-    },
     "page": {
       "eyebrow": "设置",
       "title": "组织",
@@ -4899,7 +4899,8 @@
       "leave": "离开",
       "removeTitle": "移除 {name}？",
       "removeBody": "对方将立即失去此组织的访问权限，其视频将会保留。",
-      "removed": "{name} 已被移除。"
+      "removed": "{name} 已被移除。",
+      "caption": "成员"
     },
     "pending": {
       "none": "暂无待处理的邀请。",
@@ -5178,14 +5179,19 @@
         "legacy": "已从您之前的套餐迁移。",
         "pending": "自 {date} 起：{count, plural, other {# 个频道}}，{period, select, week {按周付费} month {按月付费} other {按年付费}}。",
         "keepCurrent": "保留当前套餐",
-        "paymentPending": "您的上一次更改正在等待付款。请更新付款方式以使其生效。"
+        "paymentPending": "您的上一次更改正在等待付款。请更新付款方式以使其生效。",
+        "price": "价格",
+        "videosLeft": "{period, select, week {本周剩余视频} other {本月剩余视频}}",
+        "leftOf": "{left} / {limit}",
+        "packVideos": "剩余套餐包视频"
       },
       "videos": {
         "title": "{period, select, week {本周视频} other {本月视频}}",
         "description": "您开始制作的每个视频都会计入，包括仍在制作中的视频。",
         "used": "{period, select, week {本周已用} other {本月已用}}",
         "moreFrom": "自 {date} 起将包含更多视频。",
-        "packsLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}"
+        "packsLeft": "{count, plural, =0 {视频包中没有剩余视频} other {视频包中剩余 # 个视频}}",
+        "left": "剩余 {left}"
       },
       "channels": {
         "title": "您的频道",
@@ -5229,7 +5235,8 @@
         "confirmBody": "您的套餐将在本周期结束时终止。您的作品仍可查看、导出和下载。未用完的周期不予退款。",
         "confirmBodyDate": "您的套餐将于 {date} 结束。在此之前一切不变。之后您的账户将变为只读：您的作品仍可查看、导出和下载。未用完的周期不予退款。",
         "keep": "保留我的套餐",
-        "confirm": "取消套餐"
+        "confirm": "取消套餐",
+        "resumeTitle": "你的套餐即将结束"
       },
       "toasts": {
         "applied": "您的套餐已更改。",
@@ -6458,5 +6465,33 @@
       "edit": "编辑提示词",
       "again": "再次生成"
     }
+  },
+  "settingsNav": {
+    "aria": "设置分区",
+    "title": "设置",
+    "groups": {
+      "account": "账户",
+      "workspace": "工作区",
+      "publishing": "发布",
+      "billing": "账单"
+    },
+    "items": {
+      "profile": "个人资料",
+      "security": "登录与安全",
+      "appearance": "外观",
+      "notifications": "通知",
+      "organisation": "组织",
+      "members": "成员",
+      "audit": "审计日志",
+      "approvals": "审批流程",
+      "export": "导出数据",
+      "business": "品牌与业务",
+      "connections": "社交账号",
+      "providerKeys": "服务商密钥",
+      "billing": "我的套餐"
+    },
+    "dangerZone": "永久性更改",
+    "dangerZoneHint": "这些更改会影响组织中的所有人，且无法撤销。",
+    "providerKeysOwners": "只有所有者和管理员可以管理服务商密钥。如需更改，请联系他们。"
   }
 }

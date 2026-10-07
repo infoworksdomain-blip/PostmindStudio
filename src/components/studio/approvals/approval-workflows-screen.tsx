@@ -73,7 +73,7 @@ function WorkflowCard({
   const removedNote = removedBusinessNote(workflow.appliesTo, businessNames);
   const [confirming, setConfirming] = useState(false);
   return (
-    <li className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
+    <li className="flex flex-col gap-3 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-medium">{workflow.name}</h3>
@@ -218,7 +218,10 @@ export function ApprovalWorkflowsScreen() {
             />
           )
         ) : (
-          <ul className="flex flex-col gap-3" aria-label={t('listAria')}>
+          <ul
+            className="flex flex-col divide-y divide-border border-y border-border"
+            aria-label={t('listAria')}
+          >
             {workflows.map((w) => (
               <WorkflowCard
                 businessNames={businessNames}

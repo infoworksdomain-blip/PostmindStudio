@@ -46,6 +46,8 @@ export const WORKSPACE_PAGES = [
   '/settings/members',
   '/settings/billing',
   '/settings/audit',
+  '/settings/provider-keys',
+  '/settings/notifications',
   '/account/profile',
   '/account/security',
   '/account/export',

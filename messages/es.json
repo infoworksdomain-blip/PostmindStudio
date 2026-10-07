@@ -2605,7 +2605,8 @@
       "guidance": "Conecta Instagram y Facebook en los ajustes de PostMind.",
       "connectButton": "Conectar con Facebook",
       "studioGuidance": "Un solo inicio de sesión en Facebook conecta las páginas que elijas y las cuentas profesionales de Instagram vinculadas a ellas.",
-      "notConfigured": "Instagram y Facebook aún no están disponibles: la aplicación de Meta de Studio todavía necesita su configuración. Consulta a tu administrador."
+      "notConfigured": "Instagram y Facebook aún no están disponibles: la aplicación de Meta de Studio todavía necesita su configuración. Consulta a tu administrador.",
+      "title": "Instagram y Facebook"
     },
     "descriptionStandalone": "Las cuentas en las que publica Studio. Conecta cada una para la empresa seleccionada.",
     "connectedMetaNotice": "{count, plural, one {# cuenta de Facebook o Instagram conectada} other {# cuentas de Facebook e Instagram conectadas}}. Ya puedes publicar en ellas.",
@@ -2637,6 +2638,12 @@
       "reconnect": "Vuelve a conectar TikTok para enviar borradores. Mientras tanto, se publica directamente.",
       "saved": "Preferencia de publicación en TikTok guardada",
       "goesToDrafts": "TikTok: va a tus borradores de TikTok. Añade un sonido en tendencia en la app y publica."
+    },
+    "state": {
+      "connected": "Conectado",
+      "needsReconnect": "Hay que reconectar",
+      "notConnected": "No conectado",
+      "unavailable": "No disponible"
     }
   },
   "library": {
@@ -4735,13 +4742,6 @@
       "membersTitle": "Miembros",
       "auditTitle": "Registro de auditoría"
     },
-    "nav": {
-      "aria": "Ajustes",
-      "organisation": "Organización",
-      "members": "Miembros",
-      "billing": "Tu plan",
-      "audit": "Registro de auditoría"
-    },
     "page": {
       "eyebrow": "Ajustes",
       "title": "Organización",
@@ -4899,7 +4899,8 @@
       "leave": "Salir",
       "removeTitle": "¿Eliminar a {name}?",
       "removeBody": "Pierde el acceso a esta organización de inmediato. Sus vídeos se conservan.",
-      "removed": "{name} ha sido eliminado."
+      "removed": "{name} ha sido eliminado.",
+      "caption": "Miembros"
     },
     "pending": {
       "none": "No hay invitaciones pendientes.",
@@ -5178,14 +5179,19 @@
         "legacy": "Traspasado desde tu plan anterior.",
         "pending": "Desde el {date}: {count, plural, one {# canal} many {# canales} other {# canales}}, {period, select, week {semanal} month {mensual} other {anual}}.",
         "keepCurrent": "Mantener mi plan actual",
-        "paymentPending": "Tu último cambio está pendiente de pago. Actualiza tu método de pago para aplicarlo."
+        "paymentPending": "Tu último cambio está pendiente de pago. Actualiza tu método de pago para aplicarlo.",
+        "price": "Precio",
+        "videosLeft": "{period, select, week {Vídeos restantes esta semana} other {Vídeos restantes este mes}}",
+        "leftOf": "{left} de {limit}",
+        "packVideos": "Vídeos de paquetes restantes"
       },
       "videos": {
         "title": "{period, select, week {Vídeos esta semana} other {Vídeos este mes}}",
         "description": "Cuenta cada vídeo que empiezas, incluidos los que aún se están creando.",
         "used": "{period, select, week {Usados esta semana} other {Usados este mes}}",
         "moreFrom": "Se incluyen más vídeos a partir del {date}.",
-        "packsLeft": "{count, plural, =0 {No te quedan vídeos de pack} one {Te queda # vídeo de pack} many {Te quedan # vídeos de pack} other {Te quedan # vídeos de pack}}"
+        "packsLeft": "{count, plural, =0 {No te quedan vídeos de pack} one {Te queda # vídeo de pack} many {Te quedan # vídeos de pack} other {Te quedan # vídeos de pack}}",
+        "left": "Quedan {left}"
       },
       "channels": {
         "title": "Tus canales",
@@ -5229,7 +5235,8 @@
         "confirmBody": "Tu plan finalizará al terminar este periodo. Tu trabajo seguirá disponible para ver, exportar y descargar. No reembolsamos periodos usados parcialmente.",
         "confirmBodyDate": "Tu plan finalizará el {date}. Hasta entonces no cambia nada. Después, tu cuenta pasará a ser de solo lectura: tu trabajo seguirá disponible para ver, exportar y descargar. No reembolsamos periodos usados parcialmente.",
         "keep": "Mantener mi plan",
-        "confirm": "Cancelar el plan"
+        "confirm": "Cancelar el plan",
+        "resumeTitle": "Tu plan va a terminar"
       },
       "toasts": {
         "applied": "Tu plan se ha cambiado.",
@@ -6458,5 +6465,33 @@
       "edit": "Editar descripción",
       "again": "Generar de nuevo"
     }
+  },
+  "settingsNav": {
+    "aria": "Secciones de ajustes",
+    "title": "Ajustes",
+    "groups": {
+      "account": "Cuenta",
+      "workspace": "Espacio de trabajo",
+      "publishing": "Publicación",
+      "billing": "Facturación"
+    },
+    "items": {
+      "profile": "Perfil",
+      "security": "Inicio de sesión y seguridad",
+      "appearance": "Apariencia",
+      "notifications": "Notificaciones",
+      "organisation": "Organización",
+      "members": "Miembros",
+      "audit": "Registro de auditoría",
+      "approvals": "Flujos de aprobación",
+      "export": "Exportar datos",
+      "business": "Marca y negocio",
+      "connections": "Cuentas sociales",
+      "providerKeys": "Claves de proveedor",
+      "billing": "Tu plan"
+    },
+    "dangerZone": "Cambios permanentes",
+    "dangerZoneHint": "Afectan a toda la organización y no se pueden deshacer.",
+    "providerKeysOwners": "Solo los propietarios y administradores pueden gestionar las claves de proveedor. Pídeselo a uno de ellos si necesitas un cambio."
   }
 }

@@ -25,7 +25,7 @@ export function SecurityScreen({ googleEnabled }: { googleEnabled: boolean }) {
   useEffect(refresh, [refresh]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <div className="space-y-10">
         <PasswordSection />

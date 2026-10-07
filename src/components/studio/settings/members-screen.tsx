@@ -11,20 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { api, ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { useSettingsError } from './settings-errors';
-import { SettingsNav } from './settings-nav';
 
 // Phase 18 §3 /settings/members — the members table (role select, remove), pending invitations
 // (resend, revoke), the seat meter and an upgrade prompt at the seat limit. Studio's rules are
@@ -241,71 +233,75 @@ function MembersTable({ data, onChanged }: { data: MembersResponse; onChanged: (
   const me = data.members.find((m) => m.isYou);
   const myRole = me && isRole(me.role) ? me.role : null;
 
+  const columns: Array<DataTableColumn<MemberRow>> = [
+    {
+      id: 'member',
+      header: t('member'),
+      sortValue: (m) => m.name,
+      cell: (m) => (
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 font-medium">
+            {m.name}
+            {m.isYou && (
+              <StatusPill size="sm" className="font-normal">
+                {t('you')}
+              </StatusPill>
+            )}
+            {m.twoFactorEnabled && (
+              <ShieldCheck aria-label={t('twoFactor')} className="size-3.5 text-success" />
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground" dir="ltr">
+            {m.email}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'role',
+      header: t('role'),
+      cell: (m) => (
+        <RoleCell member={m} myRole={myRole} canManage={data.canManage} onChanged={onChanged} />
+      ),
+    },
+    {
+      id: 'joined',
+      header: t('joined'),
+      sortValue: (m) => m.joinedAt,
+      className: 'text-muted-foreground whitespace-nowrap',
+      cell: (m) => f.date(m.joinedAt),
+    },
+    {
+      id: 'actions',
+      header: <span className="sr-only">{t('actions')}</span>,
+      mobileLabel: t('actions'),
+      align: 'end',
+      cell: (m) => {
+        const removable = data.canManage && (m.role !== 'owner' || myRole === 'owner');
+        if (!removable) return null;
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setRemoving(m)}
+            aria-label={m.isYou ? t('leave') : t('removeAria', { name: m.name })}
+          >
+            <X /> {m.isYou ? t('leave') : t('remove')}
+          </Button>
+        );
+      },
+    },
+  ];
+
   return (
     <>
-      <div className="relative overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('member')}</TableHead>
-              <TableHead>{t('role')}</TableHead>
-              <TableHead>{t('joined')}</TableHead>
-              <TableHead>
-                <span className="sr-only">{t('actions')}</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.members.map((m) => {
-              const removable = data.canManage && (m.role !== 'owner' || myRole === 'owner');
-              return (
-                <TableRow key={m.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2 font-medium">
-                      {m.name}
-                      {m.isYou && (
-                        <StatusPill size="sm" className="font-normal">
-                          {t('you')}
-                        </StatusPill>
-                      )}
-                      {m.twoFactorEnabled && (
-                        <ShieldCheck
-                          aria-label={t('twoFactor')}
-                          className="size-3.5 text-success"
-                        />
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground" dir="ltr">
-                      {m.email}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <RoleCell
-                      member={m}
-                      myRole={myRole}
-                      canManage={data.canManage}
-                      onChanged={onChanged}
-                    />
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{f.date(m.joinedAt)}</TableCell>
-                  <TableCell className="text-end">
-                    {removable && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setRemoving(m)}
-                        aria-label={m.isYou ? t('leave') : t('removeAria', { name: m.name })}
-                      >
-                        <X /> {m.isYou ? t('leave') : t('remove')}
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        caption={t('caption')}
+        columns={columns}
+        rows={data.members}
+        getRowId={(m) => m.id}
+        responsive="stack"
+      />
       <ConfirmDialog
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
@@ -359,7 +355,7 @@ function Invitations({
   }
 
   return (
-    <ul className="divide-y divide-border">
+    <ul className="divide-y divide-border border-y border-border">
       {invitations.map((inv) => (
         <li key={inv.id} className="flex flex-wrap items-center gap-3 py-3 text-sm">
           <Mail aria-hidden className="size-4 text-muted-foreground" />
@@ -403,10 +399,7 @@ export function MembersScreen() {
   const { data, error, mutate } = useApi<MembersResponse>('/members');
   const refresh = () => void mutate();
   const header = (
-    <>
-      <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <SettingsNav />
-    </>
+    <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
   );
   if (error)
     return (
@@ -426,7 +419,7 @@ export function MembersScreen() {
   return (
     <>
       {header}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-10">
           {data.canManage && (
             <Section title={t('inviteTitle')} description={t('inviteDescription')}>
@@ -446,7 +439,7 @@ export function MembersScreen() {
             </Section>
           )}
         </div>
-        <Section title={t('seatsTitle')} variant="panel" className="lg:sticky lg:top-20">
+        <Section title={t('seatsTitle')} variant="panel" className="xl:sticky xl:top-20">
           <SeatMeter used={data.seats.used} limit={data.seats.limit} />
         </Section>
       </div>

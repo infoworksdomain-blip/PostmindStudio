@@ -18,17 +18,16 @@ import { MetaPlatformCard } from './meta-platform-card';
 import { PlatformCard } from './platform-card';
 import { useCan } from '../use-can';
 import { WriteGate } from '../write-gate';
-import { ByocKeysPanel } from '../settings/byoc-keys-panel';
 import {
   belongsToBusiness,
   callbackErrorCode,
-  META_PLATFORMS,
+  isMetaPlatform,
   OAUTH_PLATFORMS,
   platformLabel,
   type ConnectPlatform,
 } from './platforms';
 
-// Connections (spec 8.6, 14.5): connect TikTok / YouTube / X / LinkedIn for the selected
+// Connections (spec 8.6, 14.5; 25.12 Settings → Social accounts): connect TikTok / YouTube / X / LinkedIn for the selected
 // business. Connect → POST oauth-init → browser goes to the platform → the OAuth callback
 // redirects back here with ?connected=<platform> or ?connection_error=<code>. Instagram and
 // Facebook: in core mode they are connected in PostMind settings and listed here read-only; in
@@ -88,7 +87,7 @@ export function ConnectionsScreen({
   navigate?: (url: string) => boolean | void;
 }) {
   const t = useTranslations('connections');
-  const tn = useTranslations('shell.nav.groups');
+  const tn = useTranslations('settingsNav');
   const errorMessage = useErrorMessage();
   const { businessId, ready } = useBusiness();
   const { data, error, isLoading, mutate } = useApi<{
@@ -142,8 +141,8 @@ export function ConnectionsScreen({
   return (
     <>
       <PageHeader
-        eyebrow={tn('settings')}
-        title={t('title')}
+        eyebrow={tn('title')}
+        title={tn('items.connections')}
         description={metaInfo?.connect === 'studio' ? t('descriptionStandalone') : t('description')}
       />
       <ChannelLimitNotice />
@@ -180,7 +179,7 @@ export function ConnectionsScreen({
       {businessId && isLoading && (
         <div className="flex flex-col gap-3" aria-label={t('loading')}>
           {OAUTH_PLATFORMS.map((p) => (
-            <Skeleton key={p.id} className="h-24 rounded-xl" />
+            <Skeleton key={p.id} className="h-16 rounded-field" />
           ))}
         </div>
       )}
@@ -191,7 +190,7 @@ export function ConnectionsScreen({
       )}
       {businessId && data && (
         <WriteGate capability={StudioCapability.ConnectionsManage}>
-          <div className="border-t border-border/70">
+          <div className="border-t border-border">
             {OAUTH_PLATFORMS.map((p) => (
               <PlatformCard
                 key={p.id}
@@ -205,21 +204,16 @@ export function ConnectionsScreen({
                 onSettingsChanged={mayManage ? () => mutate() : undefined}
               />
             ))}
-            {META_PLATFORMS.map((p) => (
-              <MetaPlatformCard
-                key={p.id}
-                platform={p}
-                info={metaInfo}
-                connections={mine.filter((c) => c.platform === p.id)}
-                connecting={connecting === 'meta'}
-                onConnect={() => void connect('meta')}
-                onDisconnect={disconnect}
-              />
-            ))}
+            <MetaPlatformCard
+              info={metaInfo}
+              connections={mine.filter((c) => isMetaPlatform(c.platform))}
+              connecting={connecting === 'meta'}
+              onConnect={() => void connect('meta')}
+              onDisconnect={disconnect}
+            />
           </div>
         </WriteGate>
       )}
-      <ByocKeysPanel />
     </>
   );
 }
