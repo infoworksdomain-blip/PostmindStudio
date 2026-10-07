@@ -222,7 +222,7 @@ export function FlowCarousel() {
                 </h3>
                 <p className="mt-4 text-muted-foreground">{t(`${s}.body`)}</p>
               </div>
-              <figure className="order-1 overflow-hidden rounded-xl border border-border bg-muted shadow-[0_40px_80px_-40px_rgb(40_20_10/0.45)] ring-1 ring-black/5 lg:order-2">
+              <figure className="order-1 overflow-hidden rounded-xl border border-border bg-muted shadow-[0_40px_80px_-40px_rgb(20_24_31/0.4)] ring-1 ring-border lg:order-2">
                 {/* Window chrome, so the screenshot reads as the product in a browser. */}
                 <div
                   aria-hidden

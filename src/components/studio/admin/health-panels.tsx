@@ -91,7 +91,7 @@ function Num({ value, warn }: { value: number; warn?: boolean }) {
     <td
       className={cn(
         'tabular py-1.5 text-end',
-        warn && value > 0 && 'font-medium text-amber-700 dark:text-amber-400',
+        warn && value > 0 && 'font-medium text-warning-foreground',
       )}
     >
       {f.number(value)}
@@ -152,7 +152,7 @@ export function QueuesPanel() {
                   className={cn(
                     'tabular py-1.5 text-end',
                     (q.oldestWaitingSec ?? 0) > SLOW_WAIT_SEC &&
-                      'font-medium text-amber-700 dark:text-amber-400',
+                      'font-medium text-warning-foreground',
                   )}
                 >
                   {waitText(q.oldestWaitingSec)}
@@ -175,8 +175,8 @@ function BreakerTag({ state }: { state: ProviderHealth['breaker'] }) {
         state === 'open'
           ? 'bg-destructive/10 text-destructive'
           : state === 'half_open'
-            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
-            : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+            ? 'bg-warning-soft text-warning-foreground'
+            : 'bg-success-soft text-success-foreground',
       )}
     >
       {t(state)}

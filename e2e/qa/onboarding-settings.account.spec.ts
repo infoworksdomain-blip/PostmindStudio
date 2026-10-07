@@ -426,11 +426,13 @@ test.describe('language, theme and phones', () => {
       expect(overflow, `${path} overflows at 375 px`).toBeLessThanOrEqual(0);
       await shot(page, `mobile${path.replace(/\//g, '-')}`);
     }
-    await page.getByRole('button', { name: 'Use dark theme' }).click();
+    await page.getByRole('button', { name: /^Appearance/ }).click();
+    await page.getByRole('menuitemradio', { name: 'Dark' }).click();
     await expect(page.locator('html')).toHaveClass(/dark/);
     await page.reload();
     await expect(page.locator('html')).toHaveClass(/dark/);
-    await page.getByRole('button', { name: 'Use light theme' }).click();
+    await page.getByRole('button', { name: /^Appearance/ }).click();
+    await page.getByRole('menuitemradio', { name: 'Light' }).click();
     await expect(page.locator('html')).not.toHaveClass(/dark/);
 
     await page.getByRole('combobox', { name: /Interface language/ }).click();

@@ -77,8 +77,11 @@
       }
     },
     "theme": {
-      "useLight": "使用浅色主题",
-      "useDark": "使用深色主题"
+      "label": "外观",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统",
+      "current": "外观：{theme}"
     },
     "language": {
       "label": "语言",
@@ -3980,7 +3983,9 @@
       "newEmail": "新邮箱地址",
       "emailHint": "我们会先请您当前的邮箱批准更改，再确认新邮箱。",
       "changeEmail": "更改邮箱",
-      "emailRequested": "请查收邮件以批准更改。"
+      "emailRequested": "请查收邮件以批准更改。",
+      "appearanceTitle": "外观",
+      "appearanceDescription": "选择 Studio 在此设备上的外观。“跟随系统”会按照设备的浅色或深色设置显示。"
     }
   },
   "approvals": {

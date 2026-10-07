@@ -119,7 +119,7 @@ export function RemixSource({ card }: { card: BlitzCard }) {
             className="size-full object-cover"
           />
         )}
-        <span className="absolute end-2 bottom-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
+        <span className="absolute end-2 bottom-2 rounded bg-scrim px-1.5 py-0.5 text-[10px] text-white">
           {t('remix.seconds', { seconds: Math.round(card.remix.durationSec) })}
         </span>
       </div>

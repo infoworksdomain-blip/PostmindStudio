@@ -4,7 +4,7 @@ import { sampleVideo, sceneImage, type Aspect, type SceneKind } from '../media';
 import { useLocation } from '../router';
 
 // Shared building blocks for the demo tour pages. They use the app's own tokens (globals.css) and
-// type scale (Instrument Serif display, Inter body) so the tour reads as part of the product.
+// type scale (Geist display and body, Geist Mono for data) so the tour reads as part of the product.
 
 export function TourHeader({
   eyebrow,

@@ -166,7 +166,8 @@ test.describe('Create /new with a plan', () => {
     );
     expect(overflow, 'horizontal overflow at 375px').toBe(false);
 
-    await page.getByRole('button', { name: 'Use dark theme' }).click();
+    await page.getByRole('button', { name: /^Appearance/ }).click();
+    await page.getByRole('menuitemradio', { name: 'Dark' }).click();
     await expect(page.locator('html')).toHaveClass(/dark/);
     await w.check('/new mobile dark');
 

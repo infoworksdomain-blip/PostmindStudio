@@ -638,7 +638,8 @@ test.describe('the /welcome wizard', () => {
     );
     expect(overflow).toBeLessThanOrEqual(0);
     await shot(page, 'welcome-mobile');
-    await page.getByRole('button', { name: 'Use dark theme' }).click();
+    await page.getByRole('button', { name: /^Appearance/ }).click();
+    await page.getByRole('menuitemradio', { name: 'Dark' }).click();
     await expect(page.locator('html')).toHaveClass(/dark/);
     await shot(page, 'welcome-dark');
     await page.getByRole('combobox', { name: /Interface language/ }).click();

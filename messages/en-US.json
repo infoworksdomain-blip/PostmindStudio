@@ -77,8 +77,11 @@
       }
     },
     "theme": {
-      "useLight": "Use light theme",
-      "useDark": "Use dark theme"
+      "label": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "current": "Appearance: {theme}"
     },
     "language": {
       "label": "Language",
@@ -3980,7 +3983,9 @@
       "newEmail": "New email address",
       "emailHint": "We’ll ask your current address to approve the change, then confirm the new one.",
       "changeEmail": "Change email",
-      "emailRequested": "Check your inbox to approve the change."
+      "emailRequested": "Check your inbox to approve the change.",
+      "appearanceTitle": "Appearance",
+      "appearanceDescription": "Choose how Studio looks on this device. System follows your device’s light or dark setting."
     }
   },
   "approvals": {

@@ -501,7 +501,8 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await page.getByRole('button', { name: 'Send feedback' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Use dark theme' }).click();
+  await page.getByRole('button', { name: /^Appearance/ }).click();
+  await page.getByRole('menuitemradio', { name: 'Dark' }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
   await w.check('/header dark');
   await page.getByRole('combobox', { name: /Interface language/ }).click();

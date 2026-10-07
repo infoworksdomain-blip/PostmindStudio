@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { hardNavigate } from '@/lib/client/navigate';
 import { useBusiness } from '../business-context';
+import { ThemeMenuRadioItems } from '../theme-switcher';
 import { setActiveOrganisation, signOut, useMe, type Me } from './use-me';
 
 // Phase 18 §3 — the AppShell header's organisation switcher and user menu (standalone mode).
@@ -167,12 +168,16 @@ export function UserMenu({ me }: { me: Me }) {
           </Link>
         </DropdownMenuItem>
         {me.identityMode === 'standalone' && (
+          <DropdownMenuItem asChild>
+            <Link href="/account/security">
+              <ShieldCheck aria-hidden /> {t('security')}
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <ThemeMenuRadioItems />
+        {me.identityMode === 'standalone' && (
           <>
-            <DropdownMenuItem asChild>
-              <Link href="/account/security">
-                <ShieldCheck aria-hidden /> {t('security')}
-              </Link>
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled={signingOut} onSelect={() => void onSignOut()}>
               <LogOut aria-hidden className="rtl:-scale-x-100" /> {t('signOut')}
