@@ -237,6 +237,11 @@ describe('AnalyticsDashboard localisation', () => {
 
   it('renders Arabic right-to-left, with Arabic plurals and RTL arrow keys', async () => {
     const user = userEvent.setup();
+    // jsdom has no UA stylesheet, so `dir="rtl"` does not set the computed direction the shared
+    // SegmentedControl reads (ui/roving); give the document the browser's rule for the test.
+    const ua = document.createElement('style');
+    ua.textContent = '[dir="rtl"], [dir="rtl"] * { direction: rtl; }';
+    document.head.append(ua);
     const ar = ALL_MESSAGES.ar.analytics;
     const { calls } = mockFetch(routes());
     renderWithSWR(withLocale('ar', <AnalyticsDashboard />));
@@ -260,6 +265,7 @@ describe('AnalyticsDashboard localisation', () => {
         calls.some((c) => c.url.includes('/analytics/cost') && c.url.includes('days=90')),
       ).toBe(true),
     );
+    ua.remove();
   });
 
   it('renders Simplified Chinese', async () => {

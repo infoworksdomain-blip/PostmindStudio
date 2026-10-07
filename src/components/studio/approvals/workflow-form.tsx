@@ -4,10 +4,10 @@ import { useId, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useFormat } from '@/lib/client/format';
-import { cn } from '@/lib/utils';
 import {
   parseList,
   SUGGESTED_ROLES,
@@ -195,10 +195,6 @@ export function WorkflowForm({ initial, businesses, saving, onSubmit, onCancel }
     if (!invalid) onSubmit(input);
   };
 
-  const toggleBusiness = (businessId: string) =>
-    setBusinessIds((cur) =>
-      cur.includes(businessId) ? cur.filter((x) => x !== businessId) : [...cur, businessId],
-    );
   // A saved id the list no longer holds (a deleted business) stays visible, as "a removed business"
   // (never its raw id), so it can be unselected.
   const knownIds = new Set(businesses.map((b) => b.id));
@@ -208,8 +204,6 @@ export function WorkflowForm({ initial, businesses, saving, onSubmit, onCancel }
       .filter((b) => !knownIds.has(b))
       .map((b) => ({ id: b, name: tApplies('removedBusiness') })),
   ];
-  const togglePlatform = (p: string) =>
-    setPlatforms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
 
   return (
     <form
@@ -266,31 +260,14 @@ export function WorkflowForm({ initial, businesses, saving, onSubmit, onCancel }
           {businessChoices.length === 0 ? (
             <p className="text-xs text-muted-foreground">{t('noBusinesses')}</p>
           ) : (
-            <div
-              role="group"
+            <ChoiceChips<string>
+              type="multiple"
+              size="sm"
               aria-labelledby={`${id}-businesses`}
-              className="flex flex-wrap gap-1.5"
-            >
-              {businessChoices.map((b) => {
-                const on = businessIds.includes(b.id);
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggleBusiness(b.id)}
-                    className={cn(
-                      'rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
-                      on
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
-                    )}
-                  >
-                    {b.name}
-                  </button>
-                );
-              })}
-            </div>
+              value={businessIds}
+              onChange={setBusinessIds}
+              options={businessChoices.map((b) => ({ value: b.id, label: b.name }))}
+            />
           )}
           <p className="text-xs text-muted-foreground">{t('businessesHelp')}</p>
         </div>
@@ -298,27 +275,14 @@ export function WorkflowForm({ initial, businesses, saving, onSubmit, onCancel }
           <span className="text-sm" id={`${id}-platforms`}>
             {t('platforms')}
           </span>
-          <div role="group" aria-labelledby={`${id}-platforms`} className="flex flex-wrap gap-1.5">
-            {WORKFLOW_PLATFORMS.map((p) => {
-              const on = platforms.includes(p);
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => togglePlatform(p)}
-                  className={cn(
-                    'rounded-full border px-2.5 py-1 text-xs transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
-                    on
-                      ? 'border-foreground bg-foreground text-background'
-                      : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
-                  )}
-                >
-                  {f.platform(p)}
-                </button>
-              );
-            })}
-          </div>
+          <ChoiceChips<string>
+            type="multiple"
+            size="sm"
+            aria-labelledby={`${id}-platforms`}
+            value={platforms}
+            onChange={setPlatforms}
+            options={WORKFLOW_PLATFORMS.map((p) => ({ value: p, label: f.platform(p) }))}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor={`${id}-tags`}>{t('projectTags')}</Label>

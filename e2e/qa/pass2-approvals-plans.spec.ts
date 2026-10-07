@@ -72,12 +72,12 @@ test.describe('approval workflows', () => {
     await expect(form.getByLabel(/Business ids/)).toHaveCount(0);
     await form.getByLabel('Name').fill('Bakery sign-off');
     const picker = form.getByRole('group', { name: 'Businesses' });
-    await picker.getByRole('button', { name: 'QA Bakery' }).click();
-    await expect(picker.getByRole('button', { name: 'QA Bakery' })).toHaveAttribute(
-      'aria-pressed',
+    await picker.getByRole('checkbox', { name: 'QA Bakery' }).click();
+    await expect(picker.getByRole('checkbox', { name: 'QA Bakery' })).toHaveAttribute(
+      'aria-checked',
       'true',
     );
-    await form.getByRole('button', { name: 'TikTok' }).click();
+    await form.getByRole('checkbox', { name: 'TikTok' }).click();
     await form.getByRole('button', { name: 'Create workflow' }).click();
     await expect(page.getByText('Workflow created.').first()).toBeVisible();
     await expect(page.getByText('Applies to business QA Bakery · TikTok')).toBeVisible();
@@ -94,11 +94,11 @@ test.describe('approval workflows', () => {
     await page.getByRole('button', { name: 'Edit' }).first().click();
     const edit = page.getByRole('form', { name: 'Edit Bakery sign-off' });
     const editPicker = edit.getByRole('group', { name: 'Businesses' });
-    await expect(editPicker.getByRole('button', { name: 'QA Bakery' })).toHaveAttribute(
-      'aria-pressed',
+    await expect(editPicker.getByRole('checkbox', { name: 'QA Bakery' })).toHaveAttribute(
+      'aria-checked',
       'true',
     );
-    await editPicker.getByRole('button', { name: 'QA Bakery' }).click();
+    await editPicker.getByRole('checkbox', { name: 'QA Bakery' }).click();
     await edit.getByRole('button', { name: 'Save workflow' }).click();
     await expect(page.getByText(/Workflow saved/).first()).toBeVisible();
     await expect(page.getByText('Applies to TikTok', { exact: true })).toBeVisible();
@@ -131,10 +131,10 @@ test.describe('approval workflows', () => {
     // Editing shows it as a removed business too, and unselecting it clears it.
     await page.getByRole('button', { name: 'Edit' }).first().click();
     const edit = page.getByRole('form', { name: 'Edit Wholesale sign-off' });
-    const stale = edit.getByRole('group', { name: 'Businesses' }).getByRole('button', {
+    const stale = edit.getByRole('group', { name: 'Businesses' }).getByRole('checkbox', {
       name: 'a removed business',
     });
-    await expect(stale).toHaveAttribute('aria-pressed', 'true');
+    await expect(stale).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByText(gone)).toHaveCount(0);
     await stale.click();
     await edit.getByRole('button', { name: 'Save workflow' }).click();

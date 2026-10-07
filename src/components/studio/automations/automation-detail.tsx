@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
@@ -197,7 +198,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
       {a.status === 'PAUSED' && reason && (
         <div
           role="status"
-          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm"
+          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warning-soft p-4 text-sm"
         >
           <span>{t(`detail.pauseReason.${reason}`)}</span>
           {reason === 'allowance' && (
@@ -313,15 +314,15 @@ function PeriodCalendar({
                         })}
                       </span>
                       {item.format && (
-                        <span className="rounded-full bg-primary/12 px-2 py-0.5 font-semibold text-primary">
+                        <StatusPill tone="info" size="sm">
                           {tb(`format.${item.format as FormatKey}`)}
-                        </span>
+                        </StatusPill>
                       )}
                       <span className="text-muted-foreground">
                         {tp(`itemStatus.${item.status as 'PLANNED'}`)}
                       </span>
                       {item.reviewed && (
-                        <span className="text-success">{t('detail.reviewed')}</span>
+                        <span className="text-success-foreground">{t('detail.reviewed')}</span>
                       )}
                     </div>
                     {item.projectId ? (

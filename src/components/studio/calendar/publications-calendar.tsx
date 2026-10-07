@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { CalendarRange, ChevronLeft, ChevronRight, List, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormat } from '@/lib/client/format';
 import { useHydrated } from '@/lib/client/use-hydrated';
@@ -161,25 +162,25 @@ export function PublicationsCalendar({ initialDate }: { initialDate?: Date }) {
           )}
         </h2>
         <div className="flex items-center gap-1">
-          <Button
+          <IconButton
             variant="outline"
             size="icon"
-            aria-label={t('previousMonth')}
+            label={t('previousMonth')}
             onClick={() => setMonth((m) => shiftMonth(m, -1))}
           >
             <ChevronLeft className="rtl:-scale-x-100" />
-          </Button>
+          </IconButton>
           <Button variant="outline" onClick={() => setMonth(monthOf(new Date()))}>
             {t('today')}
           </Button>
-          <Button
+          <IconButton
             variant="outline"
             size="icon"
-            aria-label={t('nextMonth')}
+            label={t('nextMonth')}
             onClick={() => setMonth((m) => shiftMonth(m, 1))}
           >
             <ChevronRight className="rtl:-scale-x-100" />
-          </Button>
+          </IconButton>
         </div>
       </div>
 

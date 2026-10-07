@@ -29,7 +29,9 @@ export function UseReferencePanel({ id, allowedModes }: { id: string; allowedMod
           <>
             <span className="min-w-0 flex-1">
               <span className="block font-medium">{t(`modes.${mode}.title`)}</span>
-              {mode === 'TEMPLATE' && <PlanLockBadge feature="libraryTemplate" className="mt-1" />}
+              {mode === 'TEMPLATE' && (
+                <PlanLockBadge feature="libraryTemplate" className="mt-1 flex" />
+              )}
               <span className="mt-0.5 block text-xs text-muted-foreground">
                 {allowed ? t(`modes.${mode}.body`) : t('locked')}
               </span>

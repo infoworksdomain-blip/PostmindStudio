@@ -3,18 +3,9 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import {
-  ArrowDown,
-  ArrowUp,
-  Hash,
-  Loader2,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Send,
-  Trash2,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, Hash, Pencil, Plus, RefreshCw, Send, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
@@ -256,32 +247,31 @@ function DraftItemRow({
             >
               <Hash /> {th('open')}
             </Button>
-            <Button
+            <IconButton
               size="icon"
-              variant="ghost"
-              aria-label={t('moveUp', { title })}
+              label={t('moveUp', { title })}
               disabled={first}
               onClick={() => onMove(-1)}
             >
               <ArrowUp />
-            </Button>
-            <Button
+            </IconButton>
+            <IconButton
               size="icon"
-              variant="ghost"
-              aria-label={t('moveDown', { title })}
+              label={t('moveDown', { title })}
               disabled={last}
               onClick={() => onMove(1)}
             >
               <ArrowDown />
-            </Button>
+            </IconButton>
             <Button
               size="sm"
               variant="ghost"
               aria-label={t('regenerateAria', { title })}
-              disabled={busy || !item.title}
+              loading={busy}
+              disabled={!item.title}
               onClick={() => void regenerate()}
             >
-              {busy ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('regenerate')}
+              {!busy && <RefreshCw />} {t('regenerate')}
             </Button>
             <Button
               size="sm"
@@ -412,8 +402,8 @@ export function ItemForm({
         </div>
       )}
       <div className="flex gap-2">
-        <Button type="submit" size="sm" disabled={saving}>
-          {saving && <Loader2 className="animate-spin" />} {saveLabel ?? t('save')}
+        <Button type="submit" size="sm" loading={saving}>
+          {saveLabel ?? t('save')}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={onCancel} disabled={saving}>
           {t('cancelEdit')}

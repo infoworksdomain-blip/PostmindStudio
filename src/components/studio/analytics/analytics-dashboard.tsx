@@ -8,7 +8,7 @@ import { PageHeader } from '../primitives';
 import { Leaderboard, PlatformBreakdown } from './breakdowns';
 import { CostSection } from './cost-section';
 import { OverviewStrip } from './overview-strip';
-import { Segmented } from './segmented';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { TrendSection } from './trend-section';
 import { RANGE_DAYS, type CostResponse, type OverviewResponse, type RangeDays } from './types';
 
@@ -31,7 +31,7 @@ export function AnalyticsDashboard() {
         title={t('title')}
         description={showCosts ? t('description') : t('descriptionNoCost')}
         actions={
-          <Segmented
+          <SegmentedControl
             label={t('rangeLabel')}
             value={days}
             onChange={setDays}
@@ -39,7 +39,7 @@ export function AnalyticsDashboard() {
           />
         }
       />
-      <div className="grid min-w-0 gap-6">
+      <div className="grid min-w-0 gap-10">
         <OverviewStrip
           overview={{
             data: overview.data,
@@ -50,7 +50,7 @@ export function AnalyticsDashboard() {
           cost={showCosts ? { data: cost.data, error: cost.error } : undefined}
         />
         <TrendSection days={days} />
-        <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr_1.4fr]">
+        <div className="grid min-w-0 gap-10 lg:grid-cols-[1fr_1.4fr]">
           <PlatformBreakdown overview={overview.data} />
           <Leaderboard days={days} />
         </div>

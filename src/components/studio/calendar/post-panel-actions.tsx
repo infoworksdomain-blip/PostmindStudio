@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { CalendarClock, Check, ExternalLink, Loader2, RotateCw } from 'lucide-react';
+import { CalendarClock, Check, ExternalLink, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Publication } from '@/lib/client/types';
 import { StudioCapability } from '@/lib/rbac';
@@ -59,8 +59,8 @@ export function PostPanelActions({
   return (
     <div className="flex flex-wrap gap-2" role="group" aria-label={t('aria')}>
       {canApprove && (
-        <Button onClick={approve} disabled={busy}>
-          {pending === 'approve' ? <Loader2 className="animate-spin" /> : <Check />}
+        <Button onClick={approve} disabled={busy} loading={pending === 'approve'}>
+          {pending !== 'approve' && <Check />}
           {t('approve')}
         </Button>
       )}
@@ -70,8 +70,13 @@ export function PostPanelActions({
         </Button>
       )}
       {canRegenerate && (
-        <Button variant="outline" onClick={regenerate} disabled={busy}>
-          {pending === 'regenerate' ? <Loader2 className="animate-spin" /> : <RotateCw />}
+        <Button
+          variant="outline"
+          onClick={regenerate}
+          disabled={busy}
+          loading={pending === 'regenerate'}
+        >
+          {pending !== 'regenerate' && <RotateCw />}
           {t('regenerate')}
         </Button>
       )}

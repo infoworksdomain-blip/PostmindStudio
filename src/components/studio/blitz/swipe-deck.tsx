@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Check, PencilLine, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
 import {
@@ -310,23 +310,23 @@ function RoundButton({
   small?: boolean;
 }) {
   return (
-    <Button
-      type="button"
+    <IconButton
       variant="outline"
-      aria-label={label}
-      title={label}
+      size="icon"
+      label={label}
       disabled={disabled}
       onClick={onClick}
       className={cn(
         'rounded-full border-2 shadow-sm transition-transform duration-150 hover:scale-105 active:scale-95 motion-reduce:transform-none',
         small ? 'size-12' : 'size-16',
-        tone === 'keep' && 'border-success/50 text-success hover:bg-success/10 hover:text-success',
+        tone === 'keep' &&
+          'border-success/50 text-success-foreground hover:bg-success-soft hover:text-success-foreground',
         tone === 'skip' &&
-          'border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive',
+          'border-destructive/40 text-destructive-foreground hover:bg-destructive-soft hover:text-destructive-foreground',
         tone === 'edit' && 'border-border text-muted-foreground hover:text-foreground',
       )}
     >
       {children}
-    </Button>
+    </IconButton>
   );
 }

@@ -27,7 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
-import { cn } from '@/lib/utils';
+import { OptionCards } from '../automations/option-cards';
 import { useBusiness } from '../business-context';
 import { TikTokDraftsHint } from '../connections/tiktok-post-mode';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
@@ -277,14 +277,15 @@ function BlitzDeckScreen() {
                       <p className="text-xs font-medium text-muted-foreground">{t('skip.title')}</p>
                       <div className="flex flex-wrap justify-center gap-2">
                         {SKIP_REASONS.map((reason) => (
-                          <button
+                          <Button
                             key={reason}
-                            type="button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => void commitSkip(pendingSkip, reason)}
-                            className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium shadow-xs transition hover:border-foreground/40 hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95"
+                            className="rounded-full bg-background"
                           >
                             {t(`skip.reasons.${reason}`)}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
@@ -305,43 +306,23 @@ function BlitzDeckScreen() {
             <DialogTitle>{t('keep.title')}</DialogTitle>
             <DialogDescription>{keeping?.title}</DialogDescription>
           </DialogHeader>
-          <div role="radiogroup" aria-label={t('keep.title')} className="grid gap-2">
-            {KEEP_MODES.map((m) => {
+          <OptionCards<KeepMode>
+            label={t('keep.title')}
+            className="gap-2"
+            value={mode}
+            onChange={setMode}
+            autoFocusChecked
+            options={KEEP_MODES.map((m) => {
               const Icon = MODE_ICON[m];
-              const disabled = m !== 'edit' && !mayPost;
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  role="radio"
-                  aria-checked={mode === m}
-                  disabled={disabled}
-                  autoFocus={mode === m}
-                  onClick={() => setMode(m)}
-                  className={cn(
-                    'flex items-start gap-3 rounded-xl border p-3 text-start transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50',
-                    mode === m
-                      ? 'border-primary bg-primary/6 shadow-sm'
-                      : 'border-border hover:bg-secondary/60',
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'mt-0.5 size-4',
-                      mode === m ? 'text-primary' : 'text-muted-foreground',
-                    )}
-                    aria-hidden
-                  />
-                  <span>
-                    <span className="block text-sm font-medium">{t(`keep.${m}`)}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {t(`keep.${m}Hint`)}
-                    </span>
-                  </span>
-                </button>
-              );
+              return {
+                value: m,
+                title: t(`keep.${m}`),
+                hint: t(`keep.${m}Hint`),
+                icon: <Icon aria-hidden />,
+                disabled: m !== 'edit' && !mayPost,
+              };
             })}
-          </div>
+          />
           {/* 22.7: where the TikTok copy goes when the account sends drafts. */}
           {mode !== 'edit' && <TikTokDraftsHint businessId={businessId} />}
           {keeping && keeping.tier === 'preview' && (
@@ -379,7 +360,7 @@ function EndOfDeck({ deck, onMore }: { deck: BlitzDeck; onMore: () => void }) {
     <div className="flex w-full max-w-[22rem] flex-col items-center gap-4 rounded-[1.75rem] border border-dashed border-border bg-card/60 px-6 py-14 text-center">
       <span
         aria-hidden
-        className="grid size-14 place-items-center rounded-full bg-primary/10 text-primary"
+        className="grid size-14 place-items-center rounded-full bg-signal-soft text-primary"
       >
         <Layers className="size-6" />
       </span>

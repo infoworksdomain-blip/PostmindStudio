@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { cn } from '@/lib/utils';
 import { DURATION_FILTERS, type CategoryOption } from './library-utils';
 
@@ -29,6 +30,10 @@ export const EMPTY_FILTERS: LibraryFilterState = {
   search: '',
 };
 
+/**
+ * BACKLOG 25.3: superseded by `NativeSelect` (ui/native-select); kept only while screens
+ * outside the library (admin, settings, onboarding) still import it.
+ */
 export const selectClass =
   'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30';
 
@@ -61,9 +66,9 @@ export function LibraryFilters({
     >
       <div className="grid gap-1.5">
         <Label htmlFor="library-category">{t('category')}</Label>
-        <select
+        <NativeSelect
           id="library-category"
-          className={selectClass}
+          size="sm"
           value={value.category}
           onChange={(e) => onChange({ ...value, category: e.target.value })}
         >
@@ -73,13 +78,13 @@ export function LibraryFilters({
               {`${'  '.repeat(c.depth)}${c.depth ? '└ ' : ''}${c.label}`}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="library-duration">{t('length')}</Label>
-        <select
+        <NativeSelect
           id="library-duration"
-          className={selectClass}
+          size="sm"
           value={value.duration}
           onChange={(e) => onChange({ ...value, duration: e.target.value })}
         >
@@ -88,7 +93,7 @@ export function LibraryFilters({
               {t(`duration.${d.key}`)}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="library-mood">{t('mood')}</Label>

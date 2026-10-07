@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { AlertTriangle, CalendarClock, RotateCw } from 'lucide-react';
+import { IconButton } from '@/components/ui/icon-button';
 import { useFormat } from '@/lib/client/format';
 import type { Publication } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
@@ -23,7 +24,7 @@ const RULE: Record<string, string> = {
   SCHEDULED: 'border-s-muted-foreground/60',
   PUBLISHING: 'border-s-primary',
   PUBLISHED: 'border-s-success',
-  FAILED: 'border-s-destructive bg-destructive/10',
+  FAILED: 'border-s-destructive bg-destructive-soft',
 };
 
 export function CalendarEvent({
@@ -113,16 +114,15 @@ export function CalendarEvent({
     return (
       <div className="flex min-w-0 items-stretch gap-0.5">
         {link}
-        <button
-          type="button"
-          aria-label={t('retryAria', { name })}
-          title={t('retryTitle')}
+        <IconButton
+          label={t('retryAria', { name })}
+          size={compact ? 'icon-xs' : 'icon-sm'}
           disabled={busy}
           onClick={() => onRetry(publication)}
-          className="grid shrink-0 place-items-center rounded-sm px-1 text-destructive hover:bg-destructive/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+          className="self-center rounded-sm text-destructive-foreground hover:bg-destructive-soft hover:text-destructive-foreground"
         >
-          <RotateCw className={compact ? 'size-3' : 'size-4'} />
-        </button>
+          <RotateCw />
+        </IconButton>
       </div>
     );
   }
@@ -137,16 +137,15 @@ export function CalendarEvent({
       }}
     >
       {link}
-      <button
-        type="button"
-        aria-label={t('moveAria', { name })}
-        title={t('moveTitle')}
+      <IconButton
+        label={t('moveAria', { name })}
+        size={compact ? 'icon-xs' : 'icon-sm'}
         disabled={busy}
         onClick={() => onMove?.(publication)}
-        className="grid shrink-0 place-items-center rounded-sm px-1 text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+        className="self-center rounded-sm"
       >
-        <CalendarClock className={compact ? 'size-3' : 'size-4'} />
-      </button>
+        <CalendarClock />
+      </IconButton>
     </div>
   );
 }

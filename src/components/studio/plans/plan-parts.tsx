@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { CalendarDays, Clapperboard, GalleryHorizontal, Layers } from 'lucide-react';
+import { StatusPill } from '@/components/ui/status-pill';
 import { useFormat, type Tone } from '@/lib/client/format';
 import { CALENDAR_DAY_IDS, type CalendarDayId } from '@/lib/studio/content-plans/calendar-days';
 import { useShowCosts } from '../account/use-show-costs';
@@ -97,10 +98,9 @@ export function CalendarDayBadge({ id }: { id: string }) {
   const t = useTranslations('plans.calendarDay');
   if (!isCalendarDay(id)) return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-      <CalendarDays className="size-3" aria-hidden />
+    <StatusPill tone="info" size="sm" icon={<CalendarDays aria-hidden />}>
       {t(id)}
-    </span>
+    </StatusPill>
   );
 }
 
@@ -163,7 +163,7 @@ export function CappedNotice({
   const key = plan.cappedReason === 'cost_cap' ? 'monthLimit' : 'allowancePack';
   const count = plan.items.filter((i) => i.status !== 'REMOVED' && i.status !== 'SKIPPED').length;
   return (
-    <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+    <p role="status" className="rounded-lg bg-warning-soft p-3 text-sm">
       {t.rich(key, {
         count,
         requested: plan.requestedCount,
@@ -181,7 +181,7 @@ export function HoldNotice({ reason }: { reason: Plan['holdReason'] }) {
   const t = useTranslations('plans.hold');
   if (!reason) return null;
   return (
-    <p role="status" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+    <p role="status" className="rounded-lg bg-warning-soft p-3 text-sm">
       {t(reason === 'cost_cap' ? 'monthLimit' : reason)}
     </p>
   );

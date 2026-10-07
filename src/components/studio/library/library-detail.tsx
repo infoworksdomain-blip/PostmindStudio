@@ -179,7 +179,10 @@ export function LibraryDetail({ id }: { id: string }) {
           {video.tags.length > 0 && (
             <ul aria-label={t('tagsAria')} className="mt-4 flex flex-wrap gap-1.5">
               {video.tags.map((t) => (
-                <li key={t} className="rounded-full bg-secondary px-2.5 py-0.5 text-xs">
+                <li
+                  key={t}
+                  className="rounded-full bg-surface-raised px-2.5 py-0.5 text-xs text-foreground-secondary"
+                >
                   {t}
                 </li>
               ))}

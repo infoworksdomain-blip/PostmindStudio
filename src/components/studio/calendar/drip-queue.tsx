@@ -1,11 +1,13 @@
 'use client';
 
-import { ChevronDown, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import {
@@ -172,8 +174,14 @@ export function DripQueuePanel({ onSaved }: { onSaved?: () => void } = {}) {
           )}
           <SchedulePreview schedule={current.schedule} slots={canSave ? resolved.slots : []} />
           {showSave && (
-            <Button size="sm" className="self-start" onClick={save} disabled={saving || !canSave}>
-              {saving && <Loader2 className="animate-spin" />} {ts('save')}
+            <Button
+              size="sm"
+              className="self-start"
+              onClick={save}
+              loading={saving}
+              disabled={!canSave}
+            >
+              {ts('save')}
             </Button>
           )}
         </div>
@@ -215,9 +223,9 @@ function AdvancedSlots({
         <ul className="flex flex-col gap-2">
           {slots.map((slot, i) => (
             <li key={i} className="flex flex-wrap items-center gap-2">
-              <select
+              <NativeSelect
                 aria-label={t('slotDay', { n: i + 1 })}
-                className="h-9 rounded-md border border-input bg-transparent px-2 text-sm"
+                wrapperClassName="w-auto min-w-36"
                 value={slot.weekday}
                 onChange={(e) => change(i, { weekday: Number(e.target.value) })}
               >
@@ -226,7 +234,7 @@ function AdvancedSlots({
                     {d}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
               <Input
                 aria-label={t('slotTime', { n: i + 1 })}
                 type="time"
@@ -235,14 +243,13 @@ function AdvancedSlots({
                 onChange={(e) => change(i, { time: e.target.value })}
               />
               <span className="text-xs text-muted-foreground">{slot.timezone}</span>
-              <Button
+              <IconButton
                 size="icon"
-                variant="ghost"
-                aria-label={t('removeSlot', { n: i + 1 })}
+                label={t('removeSlot', { n: i + 1 })}
                 onClick={() => onChange(slots.filter((_, j) => j !== i))}
               >
                 <Trash2 />
-              </Button>
+              </IconButton>
             </li>
           ))}
         </ul>
