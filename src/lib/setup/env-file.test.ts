@@ -585,8 +585,17 @@ describe('23.2 pipeline speed settings', () => {
     expect(check('STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS', '5,org=9')).toContain('<max>');
   });
 
+  it('24.1: checks the fal key shape and the opt-in model list', () => {
+    expect(check('FAL_KEY', 'fake-fal-key-0000:abcdef0123')).toBeNull();
+    expect(check('FAL_KEY', 'two words here in a key')).toContain('unbroken');
+    expect(check('STUDIO_FAL_VIDEO_MODELS', 'ltx-2.3-fast,minimax-h3-max')).toBeNull();
+    expect(check('STUDIO_FAL_VIDEO_MODELS', 'sora-2')).toContain('unknown fal model');
+  });
+
   it('documents the new keys in the server env example', () => {
     for (const key of [
+      'FAL_KEY',
+      'STUDIO_FAL_VIDEO_MODELS',
       'ANTHROPIC_LIGHT_MODEL',
       'ANTHROPIC_TASK_MODELS',
       'ELEVENLABS_WORD_TIMINGS',

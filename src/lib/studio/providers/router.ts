@@ -213,9 +213,12 @@ const CAPABILITY_CANDIDATES: Record<GeneralCapability, string[]> = {
 function aiClipCandidates(tier: PlanTier): string[] {
   // 6.4 defines BASIC only for shots ≤5s; longer BASIC shots use the same cheap tier. 20.25: the
   // cheap configured providers first (fal / replicate have no adapter).
+  // 24.1: `fal` is the fal.ai adapter (providers/fal.ts), registered only when the operator opts
+  // in with STUDIO_FAL_VIDEO_MODELS; unregistered it is skipped as not_configured.
   if (tier === 'BASIC') return ['seedance', 'kling', 'veo', 'fal', 'replicate'];
-  // 20.23 / 20.24: every paid tier tries the same order; Seedance picks its model by tier.
-  return ['seedance', 'kling', 'veo', 'runway', 'luma'];
+  // 20.23 / 20.24: every paid tier tries the same order; Seedance picks its model by tier. 24.1:
+  // the opt-in fal models are the last resort on paid tiers.
+  return ['seedance', 'kling', 'veo', 'runway', 'luma', 'fal'];
 }
 
 /**

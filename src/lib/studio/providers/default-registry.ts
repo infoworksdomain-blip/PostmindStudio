@@ -20,6 +20,7 @@ import { veoOptionsFromEnv, VeoAdapter } from './veo';
 import { seedanceOptionsFromEnv, SeedanceAdapter } from './seedance';
 import { klingCredentialsFrom, klingOptionsFromEnv, KlingAdapter } from './kling';
 import { HeyGenAdapter } from './heygen';
+import { FalAdapter, falOptionsFromEnv } from './fal';
 import { ShotstackAdapter } from './shotstack';
 import { renderCallbackFromEnv } from './render-callback';
 import { StoryblocksAudioAdapter } from './storyblocks-audio';
@@ -84,7 +85,18 @@ export function providerKeysFromEnv(env: Env = process.env): ProviderKeyMap {
 }
 
 export function buildAdaptersFromEnv(env: Env = process.env): ProviderAdapter[] {
-  return buildAdaptersFromKeys(providerKeysFromEnv(env), env);
+  return [...buildAdaptersFromKeys(providerKeysFromEnv(env), env), ...falAdaptersFromEnv(env)];
+}
+
+/**
+ * BACKLOG 24.1: fal.ai video models, OPT-IN. Registered only when STUDIO_FAL_VIDEO_MODELS names
+ * at least one model (and FAL_KEY is set), so default routing is unchanged. Platform key only:
+ * fal is not a BYOC provider, so it is not built in buildAdaptersFromKeys.
+ */
+function falAdaptersFromEnv(env: Env): ProviderAdapter[] {
+  const fal = falOptionsFromEnv(env);
+  if (!fal) return [];
+  return [new FalAdapter({ ...fal, usdToGbpRate: usdToGbpRateFromEnv() })];
 }
 
 /**
