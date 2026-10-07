@@ -43,7 +43,11 @@ export function UgcRefusedPanel({
       id={UGC_REFUSED_ANCHOR}
       panelRef={ref}
       icon={
-        <UserX className="mt-0.5 size-5 shrink-0 text-amber-600" strokeWidth={1.5} aria-hidden />
+        <UserX
+          className="mt-0.5 size-5 shrink-0 text-warning-foreground"
+          strokeWidth={1.5}
+          aria-hidden
+        />
       }
       title={t('title')}
       body={t('body')}

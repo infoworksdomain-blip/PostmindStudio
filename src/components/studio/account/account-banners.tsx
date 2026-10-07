@@ -19,7 +19,7 @@ const DAY_MS = 86_400_000;
 type Tone = 'info' | 'warn' | 'bad';
 
 const TONE: Record<Tone, string> = {
-  info: 'border-accent-foreground/15 bg-accent text-accent-foreground',
+  info: 'border-data/25 bg-data-soft text-foreground',
   warn: 'border-warning/40 bg-warning/15 text-foreground',
   bad: 'border-destructive/30 bg-destructive/8 text-foreground',
 };

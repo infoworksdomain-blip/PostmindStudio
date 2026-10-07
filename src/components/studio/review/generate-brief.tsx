@@ -129,7 +129,7 @@ export function NeedsInputPanel({
       ref={panelRef}
       id={id}
       aria-labelledby={headingId}
-      className="flex scroll-mt-20 flex-col gap-4 rounded-xl border border-amber-500/40 bg-amber-500/5 p-4 md:p-5"
+      className="flex scroll-mt-20 flex-col gap-4 rounded-xl border border-warning/40 bg-warning-soft p-4 md:p-5"
     >
       <div className="flex items-start gap-3">
         {icon}

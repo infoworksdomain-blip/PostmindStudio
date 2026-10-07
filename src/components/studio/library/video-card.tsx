@@ -110,11 +110,11 @@ export function VideoCard({
           <EmptyIllustration name="library" className="absolute inset-0 m-auto h-auto w-4/5" />
         )}
         {previewing && <HoverPreview id={video.id} />}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent p-2.5 pt-10 text-[0.7rem] font-medium text-white">
-          <span className="tabular rounded bg-black/40 px-1.5 py-0.5">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-scrim-strong to-transparent p-2.5 pt-10 text-[0.7rem] font-medium text-white">
+          <span className="tabular rounded bg-scrim/75 px-1.5 py-0.5">
             {f.duration(video.durationSec)}
           </span>
-          <span className="rounded bg-black/40 px-1.5 py-0.5">
+          <span className="rounded bg-scrim/75 px-1.5 py-0.5">
             {templateAllowed ? t('templateAndInspire') : t('inspireOnly')}
           </span>
         </div>

@@ -223,7 +223,7 @@ function ProjectRow({ project, onChanged }: { project: Project; onChanged: () =>
           {anchor && (
             <span
               data-testid="project-row-reason"
-              className="block truncate text-xs text-amber-700 dark:text-amber-400"
+              className="block truncate text-xs text-warning-foreground"
             >
               <FailureReason reason={project.errorReason} />
             </span>

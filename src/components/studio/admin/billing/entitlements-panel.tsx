@@ -459,7 +459,7 @@ function ClearOverride({
     <form onSubmit={clear} aria-label={t('title')} className="grid gap-3 text-sm">
       <p className="text-xs text-muted-foreground">{t('description')}</p>
       {view.trial?.state === 'overridden' && (
-        <p role="note" className="text-xs text-amber-700 dark:text-amber-400">
+        <p role="note" className="text-xs text-warning-foreground">
           {t('trialWarning')}
         </p>
       )}

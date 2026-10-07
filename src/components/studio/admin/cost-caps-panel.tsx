@@ -100,7 +100,7 @@ function SourceTag({ source }: { source: CapSource | undefined }) {
         source === 'env'
           ? 'bg-primary/10 text-primary'
           : source === 'disabled'
-            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+            ? 'bg-warning-soft text-warning-foreground'
             : 'bg-muted text-muted-foreground',
       )}
     >
@@ -163,7 +163,7 @@ function Meter({ percent, label }: { percent: number | null; label: string }) {
       <div
         className={cn(
           'h-full rounded-full',
-          percent >= 100 ? 'bg-destructive' : percent >= 80 ? 'bg-amber-500' : 'bg-primary',
+          percent >= 100 ? 'bg-destructive' : percent >= 80 ? 'bg-warning' : 'bg-primary',
         )}
         style={{ width: `${clamped}%` }}
       />

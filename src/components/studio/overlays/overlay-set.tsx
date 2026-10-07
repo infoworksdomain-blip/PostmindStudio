@@ -189,8 +189,8 @@ export function OverlaySet({
                 aria-hidden
                 className={
                   safeArea.official
-                    ? 'me-1 inline-block size-2 border border-emerald-500'
-                    : 'me-1 inline-block size-2 border border-dashed border-amber-500'
+                    ? 'me-1 inline-block size-2 border border-success'
+                    : 'me-1 inline-block size-2 border border-dashed border-warning'
                 }
               />
               {safeAreaLabel(safeArea)}

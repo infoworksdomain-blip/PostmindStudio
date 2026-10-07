@@ -85,6 +85,7 @@
 
   /* Scrim behind text and controls laid over video or images (both themes). */
   --scrim: oklch(0 0 0 / 55%);
+  --scrim-strong: oklch(0 0 0 / 72%);
 
   /* Charts: data teal first, signal second, then muted ochre, sage, slate-violet. */
   --chart-1: oklch(0.5 0.08 205);
@@ -215,6 +216,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-scrim: var(--scrim);
+  --color-scrim-strong: var(--scrim-strong);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

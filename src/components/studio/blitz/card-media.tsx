@@ -120,7 +120,7 @@ function VideoMedia({ card, active }: { card: BlitzCard; active: boolean }) {
         onClick={() => setMuted((m) => !m)}
         aria-pressed={!muted}
         aria-label={muted ? t('soundOn') : t('soundOff')}
-        className="absolute end-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white backdrop-blur transition hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+        className="absolute end-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-scrim px-3 py-1.5 text-xs font-medium text-white backdrop-blur transition hover:bg-scrim-strong focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
       >
         {muted ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
         {muted ? t('soundOn') : t('soundOff')}
@@ -148,7 +148,7 @@ function PreviewMedia({ card }: { card: BlitzCard }) {
       )}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/10 to-black/70"
+        className="absolute inset-0 bg-gradient-to-b from-scrim/60 via-scrim/20 to-scrim-strong"
       />
       <p
         className={cn(
@@ -158,7 +158,7 @@ function PreviewMedia({ card }: { card: BlitzCard }) {
       >
         {card.hook}
       </p>
-      <div className="absolute inset-x-4 bottom-4 rounded-xl bg-black/55 p-3 text-white backdrop-blur-sm">
+      <div className="absolute inset-x-4 bottom-4 rounded-xl bg-scrim p-3 text-white backdrop-blur-sm">
         <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
           <Sparkles className="size-3" aria-hidden />
           {t('beats')}

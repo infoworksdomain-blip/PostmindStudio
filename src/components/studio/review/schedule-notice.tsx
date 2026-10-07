@@ -55,10 +55,10 @@ export function ScheduleNotice({
   return (
     <div
       role="alert"
-      className="flex flex-col gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm"
+      className="flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-sm"
     >
       <p className="flex items-start gap-2">
-        <CalendarX2 className="mt-0.5 size-4 shrink-0 text-amber-600" strokeWidth={1.5} />
+        <CalendarX2 className="mt-0.5 size-4 shrink-0 text-warning-foreground" strokeWidth={1.5} />
         <span>{t(`reasons.${issue.reason}`, { weeks })}</span>
       </p>
       <div className="flex flex-wrap gap-2">
