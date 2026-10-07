@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import { NativeSelect } from '@/components/ui/native-select';
 import { api, newIdempotencyKey, useApi } from '@/lib/client/api';
 import type { BrandKit } from '@/lib/client/types';
 import { voiceProfilesKey } from './voice-profiles-panel';
@@ -50,10 +51,11 @@ export function VoiceKitSelect({
       <label htmlFor={id} className="text-muted-foreground">
         {t('label')}
       </label>
-      <select
+      <NativeSelect
         id={id}
         aria-label={t('aria', { name: kit.name })}
-        className="h-8 min-w-0 flex-1 rounded-md border border-input bg-transparent px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+        size="sm"
+        wrapperClassName="flex-1"
         value={current}
         disabled={busy}
         onChange={(e) => void change(e.target.value)}
@@ -69,7 +71,7 @@ export function VoiceKitSelect({
             {data ? t('unavailable') : t('cloned')}
           </option>
         )}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

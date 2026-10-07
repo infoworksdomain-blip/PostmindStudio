@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useId, useState, type FormEvent } from 'react';
-import { Loader2, MailCheck } from 'lucide-react';
+import { MailCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,8 +74,7 @@ export function VerifyEmailScreen({
             className="h-10"
           />
         </div>
-        <Button type="submit" variant="outline" className="h-10 w-full" disabled={busy}>
-          {busy && <Loader2 className="animate-spin" />}
+        <Button type="submit" variant="outline" className="h-10 w-full" loading={busy}>
           {t('resend')}
         </Button>
       </form>

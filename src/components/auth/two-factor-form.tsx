@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useId, useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -80,8 +79,7 @@ export function TwoFactorForm({ next }: { next: string }) {
             </Label>
           </div>
         )}
-        <Button type="submit" className="h-10 w-full" disabled={busy || code.trim() === ''}>
-          {busy && <Loader2 className="animate-spin" />}
+        <Button type="submit" className="h-10 w-full" disabled={code.trim() === ''} loading={busy}>
           {t('submit')}
         </Button>
       </form>

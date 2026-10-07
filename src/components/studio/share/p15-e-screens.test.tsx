@@ -178,12 +178,14 @@ describe('TemplatesScreen', () => {
     renderScreen(<TemplatesScreen />);
     await user.click(await screen.findByRole('button', { name: 'Delete My listicle' }));
     // Deleting asks first: cancelling leaves the template alone.
-    const dialog = await screen.findByRole('dialog', { name: 'Delete “My listicle”?' });
+    const dialog = await screen.findByRole('alertdialog', { name: 'Delete “My listicle”?' });
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(api.find('DELETE', '/slideshow-templates/st_1')).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Delete My listicle' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete template' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Delete template',
+      }),
     );
     await waitFor(() => expect(api.find('DELETE', '/slideshow-templates/st_1')).toHaveLength(1));
     expect(await screen.findByText(/Save a slideshow as a template/)).toBeInTheDocument();

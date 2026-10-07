@@ -194,7 +194,7 @@ export function ByocKeysPanel() {
 
   return (
     <Section
-      className="mt-8"
+      className="mt-10"
       title={t('title')}
       description={t('description')}
       actions={<PlanLockBadge feature="byocProviderKeys" />}

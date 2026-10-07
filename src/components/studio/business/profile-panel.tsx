@@ -209,8 +209,8 @@ export function ProfileReviewBanner({
             : t('body')}
         </p>
       </div>
-      <Button size="sm" disabled={busy} onClick={() => void confirm()}>
-        {busy && <Loader2 className="animate-spin" />} {t('confirm')}
+      <Button size="sm" onClick={() => void confirm()} loading={busy}>
+        {t('confirm')}
       </Button>
     </div>
   );

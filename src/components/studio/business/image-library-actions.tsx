@@ -209,8 +209,8 @@ export function GenerateImageButton({
           <Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>
             {t('cancel')}
           </Button>
-          <Button type="submit" form="generate-image-form" disabled={!valid || busy}>
-            {busy && <Loader2 className="animate-spin" />} {t('generate')}
+          <Button type="submit" form="generate-image-form" disabled={!valid} loading={busy}>
+            {t('generate')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -330,7 +330,7 @@ test('a user with no organisation is sent to the welcome wizard, then sets one u
   ).toBeVisible();
   await w.check('/welcome brand kit');
   await page.getByRole('radio', { name: 'Inter' }).click();
-  await page.getByRole('button', { name: 'Warm' }).click();
+  await page.getByRole('checkbox', { name: 'Warm' }).click();
   await page.getByRole('button', { name: 'Save brand kit' }).click();
   await w.settle();
   await w.check('/welcome brand kit saved');
@@ -441,9 +441,9 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await w.settle();
   await page.getByRole('button', { name: 'Previous month' }).click();
   await page.getByRole('button', { name: 'Today' }).click();
-  await page.getByRole('radio', { name: 'Times a week' }).check({ force: true }); // visually hidden native radio; its label takes the click
+  await page.getByRole('radio', { name: 'Times a week' }).click();
   await page.getByLabel('Posts a week').selectOption('3');
-  await page.getByRole('radio', { name: 'Pick times for me' }).check({ force: true });
+  await page.getByRole('radio', { name: 'Pick times for me' }).click();
   await page.getByRole('button', { name: /Save schedule/ }).click();
   await w.settle();
   await expect(page.getByText(/open slot/i).first()).toBeVisible();

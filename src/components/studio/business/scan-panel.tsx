@@ -261,8 +261,8 @@ export function ScanPanel({ businessId }: { businessId: string }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-      <div className="grid content-start gap-6">
+    <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid content-start gap-10">
         <Section title={t('title')} description={t('description')}>
           <div className="grid gap-4">
             <ScanForm

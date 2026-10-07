@@ -89,14 +89,16 @@ function Item({ n, onRead }: { n: StudioNotification; onRead: (id: string) => Pr
               {f.relative(n.createdAt)}
             </time>
             {unread && (
-              <button
+              <Button
                 type="button"
-                className="text-[0.7rem] text-primary hover:underline"
+                variant="link"
+                size="xs"
+                className="text-[0.7rem]"
                 onClick={() => void onRead(n.id)}
                 aria-label={t('markReadAria', { title })}
               >
                 {t('markRead')}
-              </button>
+              </Button>
             )}
           </div>
         </div>

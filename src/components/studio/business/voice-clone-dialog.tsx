@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -217,10 +216,10 @@ export function VoiceCloneDialog({
           <Button
             type="submit"
             form="voice-clone-form"
-            disabled={Boolean(problem) || busy}
+            disabled={Boolean(problem)}
             title={problemText}
+            loading={busy}
           >
-            {busy && <Loader2 className="animate-spin" />}
             {t('submit')}
           </Button>
         </DialogFooter>

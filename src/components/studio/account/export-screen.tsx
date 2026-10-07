@@ -122,7 +122,7 @@ export function ExportScreen() {
   return (
     <>
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
+      <div className="grid gap-10 lg:grid-cols-[2fr_3fr]">
         <Section title={t('newExport')}>
           <fieldset className="grid gap-3">
             <legend className="sr-only">{t('includeLegend')}</legend>

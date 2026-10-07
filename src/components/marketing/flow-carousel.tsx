@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } f
 import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { FLOW_SCREENS, FLOW_STEPS, imgProps } from '@/lib/marketing/media';
+import { IconButton } from '@/components/ui/icon-button';
 import { cn } from '@/lib/utils';
 
 // Phase 20.8 — the landing page's product flow as a tabbed carousel (WAI-ARIA APG "carousel with
@@ -117,36 +118,41 @@ export function FlowCarousel() {
           <p className="mt-4 max-w-xl text-muted-foreground">{t('body')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <IconButton
             type="button"
+            variant="outline"
+            size="icon-lg"
+            tooltip={false}
+            label={playing ? t('pause') : t('play')}
             onClick={() => setPlaying((p) => !p)}
-            aria-label={playing ? t('pause') : t('play')}
-            className="grid size-10 place-items-center rounded-full border border-border bg-background transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="rounded-full bg-background"
           >
-            {playing ? (
-              <Pause aria-hidden className="size-4" />
-            ) : (
-              <Play aria-hidden className="size-4" />
-            )}
-          </button>
-          <button
+            {playing ? <Pause aria-hidden /> : <Play aria-hidden />}
+          </IconButton>
+          <IconButton
             type="button"
+            variant="outline"
+            size="icon-lg"
+            tooltip={false}
+            label={t('previous')}
+            aria-controls={`${baseId}-slides`}
             onClick={() => choose(index - 1)}
-            aria-label={t('previous')}
-            aria-controls={`${baseId}-slides`}
-            className="grid size-10 place-items-center rounded-full border border-border bg-background transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="rounded-full bg-background"
           >
-            <ChevronLeft aria-hidden className="size-4 rtl:-scale-x-100" />
-          </button>
-          <button
+            <ChevronLeft aria-hidden className="rtl:-scale-x-100" />
+          </IconButton>
+          <IconButton
             type="button"
-            onClick={() => choose(index + 1)}
-            aria-label={t('next')}
+            variant="primary"
+            size="icon-lg"
+            tooltip={false}
+            label={t('next')}
             aria-controls={`${baseId}-slides`}
-            className="grid size-10 place-items-center rounded-full bg-foreground text-background transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95"
+            onClick={() => choose(index + 1)}
+            className="rounded-full"
           >
-            <ChevronRight aria-hidden className="size-4 rtl:-scale-x-100" />
-          </button>
+            <ChevronRight aria-hidden className="rtl:-scale-x-100" />
+          </IconButton>
         </div>
       </div>
 

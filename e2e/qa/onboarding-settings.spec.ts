@@ -561,8 +561,8 @@ test.describe('the /welcome wizard', () => {
     await expect(
       page.getByRole('link', { name: /plan and schedule your whole month/ }),
     ).toHaveAttribute('href', '/plans/new');
-    // 20.14: Every day / Times a week, then a count; the radios are visually hidden.
-    await page.getByRole('radio', { name: 'Times a week' }).check({ force: true });
+    // 20.14: Every day / Times a week (a segmented control), then a count.
+    await page.getByRole('radio', { name: 'Times a week' }).click();
     await page.getByLabel('Posts a week').selectOption('3');
     await page.getByRole('button', { name: 'Save posting plan' }).click();
     await expect(page.getByText(/Posting plan:/)).toBeVisible();

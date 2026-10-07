@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
@@ -68,8 +67,11 @@ function UpgradeActions({
       {isSeatLimit(event) && link('/settings/members', t('actions.manageMembers'))}
       {event.code === 'plan_tier' && link('/pricing', t('actions.viewPlan'), 'outline')}
       {event.code === 'billing_required' && owner && (
-        <Button onClick={() => void portal()} disabled={pending !== null}>
-          {pending === 'portal' && <Loader2 className="animate-spin" />}
+        <Button
+          onClick={() => void portal()}
+          disabled={pending !== null}
+          loading={pending === 'portal'}
+        >
           {t('actions.updatePayment')}
         </Button>
       )}

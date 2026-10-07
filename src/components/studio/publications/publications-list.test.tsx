@@ -67,7 +67,7 @@ describe('PublicationsList', () => {
     renderScreen(<PublicationsList />);
     await screen.findByRole('link', { name: 'Autumn launch' });
 
-    await user.click(screen.getByRole('tab', { name: 'Failed' }));
+    await user.click(screen.getByRole('radio', { name: 'Failed' }));
     await user.selectOptions(screen.getByLabelText('Platform'), 'youtube');
     await waitFor(() => {
       const last = api.requests.at(-1)!;
@@ -115,20 +115,20 @@ describe('PublicationsList', () => {
     const user = userEvent.setup();
     renderScreen(<PublicationsList />);
     await user.click(await screen.findByRole('button', { name: 'Take down' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(dialog).toHaveTextContent('Take this post down from TikTok?');
     expect(api.find('POST', '/publications/pub_1/takedown')).toHaveLength(0);
 
     await user.click(within(dialog).getByRole('button', { name: 'Keep it' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(api.find('POST', '/publications/pub_1/takedown')).toHaveLength(0);
 
     await user.click(screen.getByRole('button', { name: 'Take down' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Take down' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Take down' }),
     );
     await waitFor(() => expect(api.find('POST', '/publications/pub_1/takedown')).toHaveLength(1));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
   });
 
   it('cancels a scheduled publication after confirmation', async () => {
@@ -151,7 +151,7 @@ describe('PublicationsList', () => {
     renderScreen(<PublicationsList />);
     await user.click(await screen.findByRole('button', { name: 'Cancel' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel post' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Cancel post' }),
     );
     await waitFor(() => expect(api.find('POST', '/publications/pub_1/cancel')).toHaveLength(1));
   });
@@ -167,12 +167,12 @@ describe('PublicationsList', () => {
     renderScreen(<PublicationsList />);
     await user.click(await screen.findByRole('button', { name: 'Take down' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Take down' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Take down' }),
     );
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith('Only published posts can be taken down'),
     );
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 });
 

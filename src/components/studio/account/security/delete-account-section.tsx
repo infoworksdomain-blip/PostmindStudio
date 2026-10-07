@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { PasswordField } from '@/components/auth/password-field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -96,9 +95,9 @@ export function DeleteAccountSection() {
           type="submit"
           variant="destructive"
           className="justify-self-start"
-          disabled={busy || !confirmed || (hasPassword && !password)}
+          disabled={!confirmed || (hasPassword && !password)}
+          loading={busy}
         >
-          {busy && <Loader2 className="animate-spin" />}
           {t('submit')}
         </Button>
       </form>

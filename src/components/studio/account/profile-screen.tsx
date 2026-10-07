@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useId, useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AuthError } from '@/components/auth/auth-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { authApi, authFetch, type SessionPayload } from '@/lib/client/auth';
 import { LOCALES } from '@/lib/i18n/locales';
 import { PageHeader, Section } from '../primitives';
@@ -85,7 +85,7 @@ export function ProfileScreen() {
     <div className="mx-auto max-w-3xl">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
       <AuthError error={error} />
-      <div className="space-y-6">
+      <div className="space-y-10">
         <Section title={t('detailsTitle')}>
           <form onSubmit={(e) => void saveProfile(e)} className="grid max-w-md gap-4">
             <div className="space-y-2">
@@ -101,26 +101,26 @@ export function ProfileScreen() {
             </div>
             <div className="space-y-2">
               <Label htmlFor={localeId}>{t('emailLanguage')}</Label>
-              <select
+              <NativeSelect
                 id={localeId}
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm"
+                className="h-10"
               >
                 {LOCALES.map((l) => (
                   <option key={l} value={l} lang={l}>
                     {LANGUAGE_NAMES[l] ?? l}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
               <p className="text-xs text-muted-foreground">{t('emailLanguageHint')}</p>
             </div>
             <Button
               type="submit"
               className="justify-self-start"
               disabled={busy !== null || !name.trim()}
+              loading={busy === 'profile'}
             >
-              {busy === 'profile' && <Loader2 className="animate-spin" />}
               {t('save')}
             </Button>
           </form>
@@ -148,8 +148,8 @@ export function ProfileScreen() {
               variant="outline"
               className="justify-self-start"
               disabled={busy !== null || !newEmail.includes('@')}
+              loading={busy === 'email'}
             >
-              {busy === 'email' && <Loader2 className="animate-spin" />}
               {t('changeEmail')}
             </Button>
           </form>

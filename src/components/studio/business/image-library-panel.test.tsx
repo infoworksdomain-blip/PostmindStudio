@@ -43,15 +43,18 @@ describe('ImageLibraryPanel', () => {
     await user.selectOptions(screen.getByLabelText('Source'), 'generated');
     await user.type(screen.getByLabelText('Tag'), 'bread');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
+    // The last image-library request (the permission check may refetch /me in between).
+    const lastLibrary = () =>
+      api.requests.filter((r) => r.url.pathname.endsWith('/image-library')).at(-1)!;
     await waitFor(() => {
-      const q = api.requests.at(-1)!.url.searchParams;
+      const q = lastLibrary().url.searchParams;
       expect(q.get('businessId')).toBe('biz_1');
       expect(q.get('source')).toBe('generated');
       expect(q.get('tag')).toBe('bread');
     });
     await screen.findByRole('list', { name: 'Image library' });
     await user.click(screen.getByRole('button', { name: 'Older' }));
-    await waitFor(() => expect(api.requests.at(-1)!.url.searchParams.get('cursor')).toBe('img_1'));
+    await waitFor(() => expect(lastLibrary().url.searchParams.get('cursor')).toBe('img_1'));
   });
 
   it('shows empty and error states', async () => {
@@ -166,7 +169,7 @@ describe('ImageLibraryPanel', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete image: Fresh loaves' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete image' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete image' }),
     );
     await waitFor(() => expect(api.find('DELETE', '/image-library/img_1')).toHaveLength(1));
   });

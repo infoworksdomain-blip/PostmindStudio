@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Loader2, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { FormatKey } from '../blitz/blitz-model';
@@ -117,8 +117,8 @@ export function ContentMixPanel({ businessId }: { businessId: string }) {
               onChange={(v) => setDraft({ ...draft, mentionBusinessPercent: v })}
             />
             <div>
-              <Button disabled={saving} onClick={() => void put(draft)}>
-                {saving && <Loader2 className="animate-spin" />} {t('save')}
+              <Button onClick={() => void put(draft)} loading={saving}>
+                {t('save')}
               </Button>
             </div>
           </div>

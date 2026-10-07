@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AuthError } from '@/components/auth/auth-card';
@@ -84,15 +83,14 @@ export function SignInMethodsSection({ googleEnabled }: { googleEnabled: boolean
                 size="sm"
                 variant="ghost"
                 onClick={() => void unlink()}
-                disabled={busy || !hasPassword}
+                disabled={!hasPassword}
                 title={hasPassword ? undefined : t('unlinkNeedsPassword')}
+                loading={busy}
               >
-                {busy && <Loader2 className="animate-spin" />}
                 {t('unlink')}
               </Button>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => void link()} disabled={busy}>
-                {busy && <Loader2 className="animate-spin" />}
+              <Button size="sm" variant="outline" onClick={() => void link()} loading={busy}>
                 {t('link')}
               </Button>
             )}

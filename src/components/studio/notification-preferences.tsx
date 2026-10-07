@@ -14,6 +14,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 
 // BACKLOG 13.24 — notification preferences (GET|PATCH /notification-preferences): per kind,
@@ -89,22 +97,24 @@ function PreferencesTable() {
           {te('suppressed')}
         </p>
       )}
-      <table aria-label={t('tableAria')} className="w-full text-sm">
-        <thead>
-          <tr className="text-start text-xs text-muted-foreground">
-            <th scope="col" className="py-1 text-start font-normal">
+      <Table aria-label={t('tableAria')}>
+        <TableHeader>
+          <TableRow>
+            <TableHead scope="col" className="px-0">
               {t('notification')}
-            </th>
-            <th scope="col" className="py-1 text-center font-normal">
+            </TableHead>
+            <TableHead scope="col" className="text-center">
               {t('inApp')}
-            </th>
-            <th scope="col" className="py-1 text-center font-normal">
+            </TableHead>
+            <TableHead scope="col" className="text-center">
               {t('email')}
-              {pendingEmail && <span className="block text-[0.65rem]">{t('pendingSetup')}</span>}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+              {pendingEmail && (
+                <span className="block text-[0.65rem] font-normal">{t('pendingSetup')}</span>
+              )}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {PREFERENCE_KINDS.map((kind) => {
             // Operator decision 2026-10-04: cost notifications are worded as limits, not budgets.
             const label =
@@ -113,31 +123,34 @@ function PreferencesTable() {
                 : t(`kinds.${kind}`);
             const pref = res.data?.preferences[kind] ?? { inApp: true, email: false };
             return (
-              <tr key={kind} className="border-t border-border/60">
-                <th scope="row" className="py-2 pe-2 text-start font-normal">
+              <TableRow key={kind}>
+                <th
+                  scope="row"
+                  className="py-2 pe-2 text-start align-middle font-normal whitespace-normal"
+                >
                   {label}
                 </th>
-                <td className="py-2 text-center">
+                <TableCell className="text-center">
                   <Switch
                     aria-label={t('switchInApp', { label })}
                     checked={pref.inApp}
                     disabled={saving !== null}
                     onCheckedChange={(v) => void change(kind, 'inApp', v)}
                   />
-                </td>
-                <td className="py-2 text-center">
+                </TableCell>
+                <TableCell className="text-center">
                   <Switch
                     aria-label={t('switchEmail', { label })}
                     checked={pref.email}
                     disabled={saving !== null}
                     onCheckedChange={(v) => void change(kind, 'email', v)}
                   />
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </>
   );
 }

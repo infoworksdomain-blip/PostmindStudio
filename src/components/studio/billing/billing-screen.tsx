@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { CreditCard, Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ApiError, useApi } from '@/lib/client/api';
 import { useFormat, type Tone } from '@/lib/client/format';
@@ -93,14 +94,9 @@ function ReturnBanner() {
       }
     >
       <p className="flex-1">{t(key)}</p>
-      <Button
-        size="icon-sm"
-        variant="ghost"
-        aria-label={t('dismiss')}
-        onClick={() => setDismissed(true)}
-      >
+      <IconButton label={t('dismiss')} onClick={() => setDismissed(true)}>
         <X />
-      </Button>
+      </IconButton>
     </div>
   );
 }
@@ -159,7 +155,7 @@ function PlanSummary({
   const plan = billing.plan;
   const scheduled = plan?.pending;
   return (
-    <Section title={tYour('title')}>
+    <Section title={tYour('title')} variant="panel">
       <div className="grid gap-4 text-sm">
         <div className="flex flex-wrap items-center gap-3">
           <p className="font-display text-3xl leading-none">
@@ -196,8 +192,8 @@ function PlanSummary({
                 variant="outline"
                 disabled={pending !== null}
                 onClick={onKeepCurrent}
+                loading={pending === 'keep'}
               >
-                {pending === 'keep' && <Loader2 className="animate-spin" />}
                 {tYour('keepCurrent')}
               </Button>
             )}
@@ -254,8 +250,8 @@ function ChoosePlan({
               className="w-full sm:w-auto"
               disabled={pending !== null || !billing.checkoutEnabled || unit == null}
               onClick={() => onChoose({ kind: 'channels', ...choice }, 'plan')}
+              loading={pending === 'plan'}
             >
-              {pending === 'plan' && <Loader2 className="animate-spin" />}
               {trial ? t('trial') : t('subscribe')}
             </Button>
           </div>
@@ -370,7 +366,7 @@ export function BillingScreen() {
       <ReturnBanner />
       {/* minmax(0,1fr): the invoice table scrolls inside its section instead of widening the
           page on phones. */}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10">
         <PlanSummary
           billing={billing}
           status={status}

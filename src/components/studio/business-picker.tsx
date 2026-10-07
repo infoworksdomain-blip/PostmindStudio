@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { StudioCapability } from '@/lib/rbac';
 import { useBusiness } from './business-context';
@@ -32,9 +34,6 @@ export interface BusinessesResponse {
 /** en-GB text of shell.business.listPending (tests assert against it). */
 export const BUSINESS_LIST_PENDING_HINT =
   'The business list is waiting for PostMind Core: type the business id.';
-
-const SELECT_CLASS =
-  'h-8 w-36 lg:w-48 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 function AddBusinessForm({
   onAdded,
@@ -132,9 +131,10 @@ function BusinessSelect({
       >
         {t('label')}
       </label>
-      <select
+      <NativeSelect
         id="business-select"
-        className={SELECT_CLASS}
+        size="sm"
+        wrapperClassName="w-36 lg:w-48"
         value={known ? (businessId ?? '') : ''}
         onChange={(e) => setBusinessId(e.target.value || null)}
       >
@@ -146,18 +146,11 @@ function BusinessSelect({
             {b.domain ? `${b.name} · ${b.domain}` : b.name}
           </option>
         ))}
-      </select>
+      </NativeSelect>
       {onAdded && (
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          aria-label={t('add')}
-          title={t('add')}
-          onClick={() => setAdding(true)}
-        >
+        <IconButton type="button" size="icon-xs" label={t('add')} onClick={() => setAdding(true)}>
           <Plus />
-        </Button>
+        </IconButton>
       )}
     </div>
   );

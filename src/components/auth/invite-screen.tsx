@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -97,8 +96,7 @@ export function InviteScreen({
       ) : (
         <>
           <AuthError error={error} />
-          <Button className="h-10 w-full" onClick={() => void accept()} disabled={busy}>
-            {busy && <Loader2 className="animate-spin" />}
+          <Button className="h-10 w-full" onClick={() => void accept()} loading={busy}>
             {t('accept')}
           </Button>
         </>

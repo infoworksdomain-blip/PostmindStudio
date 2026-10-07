@@ -173,7 +173,7 @@ describe('MembersScreen', () => {
     renderWithSWR(<MembersScreen />);
     await user.click(await screen.findByRole('button', { name: 'Leave' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Remove' }),
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Remove' }),
     );
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith(

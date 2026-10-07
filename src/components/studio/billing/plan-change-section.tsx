@@ -163,8 +163,8 @@ export function ChangePlanSection({
                   setConfirming(false);
                   if (ok) setChoice(p.next);
                 }}
+                loading={pending === 'change'}
               >
-                {pending === 'change' && <Loader2 className="animate-spin" />}
                 {p.timing === 'now' && (p.dueNowPence ?? 0) > 0
                   ? t('confirmPay', { amount: f.pence(p.dueNowPence ?? 0) })
                   : t('confirm')}
@@ -201,8 +201,11 @@ export function CancelSection({
           <>
             <p>{date ? t('endsOn', { date }) : t('ends')}</p>
             <div>
-              <Button disabled={pending !== null} onClick={() => void onResume()}>
-                {pending === 'resume' && <Loader2 className="animate-spin" />}
+              <Button
+                disabled={pending !== null}
+                onClick={() => void onResume()}
+                loading={pending === 'resume'}
+              >
                 {t('resume')}
               </Button>
             </div>
@@ -242,8 +245,8 @@ export function CancelSection({
                   await onCancel();
                   setConfirming(false);
                 }}
+                loading={pending === 'cancel'}
               >
-                {pending === 'cancel' && <Loader2 className="animate-spin" />}
                 {t('confirm')}
               </Button>
             </DialogFooter>

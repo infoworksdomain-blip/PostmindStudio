@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AuthError } from '@/components/auth/auth-card';
@@ -57,9 +56,9 @@ export function PasswordSection() {
         <Button
           type="submit"
           className="justify-self-start"
-          disabled={busy || current === '' || next.length < PASSWORD_MIN}
+          disabled={current === '' || next.length < PASSWORD_MIN}
+          loading={busy}
         >
-          {busy && <Loader2 className="animate-spin" />}
           {t('submit')}
         </Button>
       </form>

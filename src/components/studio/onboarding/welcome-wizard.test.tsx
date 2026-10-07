@@ -151,9 +151,9 @@ describe('WelcomeWizard', () => {
     await user.click(within(palette).getByRole('button', { name: 'Remove #F3E7D3' }));
     await user.click(screen.getByRole('radio', { name: 'Fraunces' }));
     for (const tone of ['Warm', 'Playful', 'Bold']) {
-      await user.click(screen.getByRole('button', { name: tone }));
+      await user.click(screen.getByRole('checkbox', { name: tone }));
     }
-    expect(screen.getByRole('button', { name: 'Calm' })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: 'Calm' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Save brand kit' }));
 
     await waitFor(() => expect(api.find('POST', '/brand-kits')).toHaveLength(1));

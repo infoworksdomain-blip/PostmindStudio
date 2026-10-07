@@ -27,7 +27,7 @@ export function SecurityScreen({ googleEnabled }: { googleEnabled: boolean }) {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} description={t('description')} />
-      <div className="space-y-6">
+      <div className="space-y-10">
         <PasswordSection />
         <TwoFactorSection enabled={session?.user.twoFactorEnabled === true} onChanged={refresh} />
         <SessionsSection />

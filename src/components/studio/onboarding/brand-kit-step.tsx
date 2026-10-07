@@ -164,8 +164,8 @@ export function BrandKitStep({
         <ToneChips value={tones} onChange={setTones} />
       </fieldset>
       <div>
-        <Button onClick={() => void save()} disabled={saving || extracting}>
-          {saving && <Loader2 className="animate-spin" />} {t('save')}
+        <Button onClick={() => void save()} disabled={extracting} loading={saving}>
+          {t('save')}
         </Button>
       </div>
     </div>

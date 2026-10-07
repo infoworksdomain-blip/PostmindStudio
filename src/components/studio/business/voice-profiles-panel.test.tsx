@@ -155,7 +155,7 @@ describe('VoiceProfilesPanel', () => {
     const user = userEvent.setup();
     renderScreen(<VoiceProfilesPanel businessId="biz_1" />);
     await user.click(await screen.findByRole('button', { name: 'Delete Amara (owner)' }));
-    const confirm = await screen.findByRole('dialog');
+    const confirm = await screen.findByRole('alertdialog');
     expect(confirm).toHaveTextContent('revoked at ElevenLabs');
     expect(confirm).toHaveTextContent('go back to the stock voice');
     expect(api.find('DELETE', '/voice-profiles/vp_1')).toHaveLength(0);

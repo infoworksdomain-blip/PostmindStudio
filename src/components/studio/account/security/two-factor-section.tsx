@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { AuthError } from '@/components/auth/auth-card';
@@ -173,8 +173,7 @@ export function TwoFactorSection({
                 className="h-10 max-w-40 font-mono tracking-[0.3em]"
               />
             </div>
-            <Button type="submit" disabled={busy || code.trim().length < 6}>
-              {busy && <Loader2 className="animate-spin" />}
+            <Button type="submit" disabled={code.trim().length < 6} loading={busy}>
               {t('confirm')}
             </Button>
           </div>
@@ -219,9 +218,9 @@ export function TwoFactorSection({
             <Button
               type="submit"
               variant="destructive"
-              disabled={busy || !password || code.trim().length < 6}
+              disabled={!password || code.trim().length < 6}
+              loading={busy}
             >
-              {busy && <Loader2 className="animate-spin" />}
               {t('disable')}
             </Button>
           </div>
@@ -235,8 +234,7 @@ export function TwoFactorSection({
             onChange={setPassword}
             autoComplete="current-password"
           />
-          <Button type="submit" className="justify-self-start" disabled={busy || !password}>
-            {busy && <Loader2 className="animate-spin" />}
+          <Button type="submit" className="justify-self-start" disabled={!password} loading={busy}>
             {t('enable')}
           </Button>
         </form>

@@ -106,7 +106,7 @@ describe('BrandKitsPanel', () => {
     await waitFor(() => expect(api.find('POST', '/brand-kits/kit_2/set-default')).toHaveLength(1));
 
     await user.click(screen.getByRole('button', { name: 'Delete Summer' }));
-    const confirm = await screen.findByRole('dialog');
+    const confirm = await screen.findByRole('alertdialog');
     expect(api.find('DELETE', '/brand-kits/kit_2')).toHaveLength(0);
     await user.click(within(confirm).getByRole('button', { name: 'Delete kit' }));
     await waitFor(() => expect(api.find('DELETE', '/brand-kits/kit_2')).toHaveLength(1));

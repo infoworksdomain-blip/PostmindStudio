@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useId, useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,9 +103,9 @@ export function SignUpForm({ next, googleEnabled }: { next: string; googleEnable
         <Button
           type="submit"
           className="h-10 w-full"
-          disabled={busy || password.length < PASSWORD_MIN}
+          disabled={password.length < PASSWORD_MIN}
+          loading={busy}
         >
-          {busy && <Loader2 className="animate-spin" />}
           {t('submit')}
         </Button>
       </form>

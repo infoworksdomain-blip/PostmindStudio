@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { authApi } from '@/lib/client/auth';
@@ -74,9 +73,9 @@ export function ResetPasswordForm({ token, error }: { token?: string; error?: st
             <Button
               type="submit"
               className="h-10 w-full"
-              disabled={busy || password.length < PASSWORD_MIN}
+              disabled={password.length < PASSWORD_MIN}
+              loading={busy}
             >
-              {busy && <Loader2 className="animate-spin" />}
               {t('submit')}
             </Button>
           </form>
