@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
+import { PageSkeleton } from '@/components/studio/page-skeleton';
 import { ConnectionsScreen } from '@/components/studio/connections/connections-screen';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // Suspense boundary for static rendering.
 export default function ConnectionsPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<PageSkeleton />}>
       <ConnectionsScreen />
     </Suspense>
   );

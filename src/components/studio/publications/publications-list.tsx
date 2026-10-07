@@ -138,7 +138,7 @@ export function PublicationsList() {
   return (
     <>
       <PageHeader
-        eyebrow={tn('manage')}
+        eyebrow={tn('plan')}
         title={t('title')}
         description={t('description')}
         actions={

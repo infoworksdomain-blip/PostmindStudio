@@ -38,9 +38,11 @@ export const BUSINESS_LIST_PENDING_HINT =
 function AddBusinessForm({
   onAdded,
   onCancel,
+  ids = '',
 }: {
   onAdded: (business: BusinessSummary) => Promise<void> | void;
   onCancel?: () => void;
+  ids?: string;
 }) {
   const t = useTranslations('shell.business');
   const errorMessage = useErrorMessage();
@@ -71,13 +73,13 @@ function AddBusinessForm({
       }}
     >
       <label
-        htmlFor="business-new"
+        htmlFor={`business-new${ids}`}
         className="sr-only text-xs whitespace-nowrap text-muted-foreground xl:not-sr-only"
       >
         {t('addLabel')}
       </label>
       <Input
-        id="business-new"
+        id={`business-new${ids}`}
         className="h-8 w-36 lg:w-44"
         placeholder={t('addPlaceholder')}
         maxLength={120}
@@ -99,10 +101,14 @@ function AddBusinessForm({
 function BusinessSelect({
   businesses,
   onAdded,
+  ids = '',
+  wide = false,
 }: {
   businesses: BusinessSummary[];
   /** Absent = the list is PostMind Core's (no adding here). */
   onAdded?: (business: BusinessSummary) => Promise<void>;
+  ids?: string;
+  wide?: boolean;
 }) {
   const t = useTranslations('shell.business');
   const { businessId, setBusinessId } = useBusiness();
@@ -116,6 +122,7 @@ function BusinessSelect({
   if (adding && onAdded)
     return (
       <AddBusinessForm
+        ids={ids}
         onAdded={async (b) => {
           await onAdded(b);
           setAdding(false);
@@ -126,15 +133,15 @@ function BusinessSelect({
   return (
     <div className="flex items-center gap-2">
       <label
-        htmlFor="business-select"
+        htmlFor={`business-select${ids}`}
         className="sr-only text-xs whitespace-nowrap text-muted-foreground xl:not-sr-only"
       >
         {t('label')}
       </label>
       <NativeSelect
-        id="business-select"
+        id={`business-select${ids}`}
         size="sm"
-        wrapperClassName="w-36 lg:w-48"
+        wrapperClassName={wide ? 'min-w-0 flex-1' : 'w-28 sm:w-36 lg:w-48'}
         value={known ? (businessId ?? '') : ''}
         onChange={(e) => setBusinessId(e.target.value || null)}
       >
@@ -148,7 +155,13 @@ function BusinessSelect({
         ))}
       </NativeSelect>
       {onAdded && (
-        <IconButton type="button" size="icon-xs" label={t('add')} onClick={() => setAdding(true)}>
+        <IconButton
+          type="button"
+          size="icon-xs"
+          label={t('add')}
+          onClick={() => setAdding(true)}
+          className={wide ? undefined : 'max-sm:hidden'}
+        >
           <Plus />
         </IconButton>
       )}
@@ -156,7 +169,7 @@ function BusinessSelect({
   );
 }
 
-function BusinessIdForm({ hint }: { hint?: string }) {
+function BusinessIdForm({ hint, ids = '' }: { hint?: string; ids?: string }) {
   const t = useTranslations('shell.business');
   const tc = useTranslations('common.actions');
   const { businessId, setBusinessId } = useBusiness();
@@ -172,21 +185,21 @@ function BusinessIdForm({ hint }: { hint?: string }) {
       }}
     >
       <label
-        htmlFor="business-id"
+        htmlFor={`business-id${ids}`}
         className="sr-only text-xs whitespace-nowrap text-muted-foreground xl:not-sr-only"
       >
         {t('label')}
       </label>
       <Input
-        id="business-id"
+        id={`business-id${ids}`}
         className="h-8 w-36 lg:w-44"
         placeholder={businessId ?? t('idPlaceholder')}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        aria-describedby={hint ? 'business-id-hint' : undefined}
+        aria-describedby={hint ? `business-id-hint${ids}` : undefined}
       />
       {hint && (
-        <span id="business-id-hint" className="sr-only">
+        <span id={`business-id-hint${ids}`} className="sr-only">
           {hint}
         </span>
       )}
@@ -197,7 +210,14 @@ function BusinessIdForm({ hint }: { hint?: string }) {
   );
 }
 
-export function BusinessSwitcher() {
+/**
+ * The business picker. 25.4: it shows at every width (compact in the top bar on phones, full
+ * width in the navigation drawer, `placement="drawer"`, whose element ids stay apart from the
+ * top bar's).
+ */
+export function BusinessSwitcher({ placement = 'bar' }: { placement?: 'bar' | 'drawer' }) {
+  const ids = placement === 'drawer' ? '-drawer' : '';
+  const wide = placement === 'drawer';
   const t = useTranslations('shell.business');
   const { ready, setBusinessId } = useBusiness();
   const { data, error, mutate } = useApi<BusinessesResponse>(
@@ -220,13 +240,20 @@ export function BusinessSwitcher() {
   };
   const local = data?.local === true;
   if (data && data.data.length > 0)
-    return <BusinessSelect businesses={data.data} onAdded={local && mayAdd ? added : undefined} />;
+    return (
+      <BusinessSelect
+        businesses={data.data}
+        onAdded={local && mayAdd ? added : undefined}
+        ids={ids}
+        wide={wide}
+      />
+    );
   // Standalone with no business yet: the first one is added right here.
-  if (data && local) return mayAdd ? <AddBusinessForm onAdded={added} /> : null;
+  if (data && local) return mayAdd ? <AddBusinessForm onAdded={added} ids={ids} /> : null;
   // Core mode only: businesses live in PostMind (list 501 until Core ships it), so the id is typed.
   // Standalone before an organisation exists (403 no_organisation) has nothing to switch yet.
   if (error?.code === 'no_organisation') return null;
   // Still asking (or the list is not known yet): do not flash Core's typed-id box in standalone.
   if (!data && !error) return null;
-  return <BusinessIdForm hint={error?.status === 501 ? t('listPending') : undefined} />;
+  return <BusinessIdForm hint={error?.status === 501 ? t('listPending') : undefined} ids={ids} />;
 }

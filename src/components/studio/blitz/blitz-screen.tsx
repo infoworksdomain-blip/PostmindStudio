@@ -223,7 +223,7 @@ function BlitzDeckScreen() {
   return (
     <>
       <PageHeader
-        eyebrow={tn('make')}
+        eyebrow={tn('create')}
         title={t('page.title')}
         description={t('page.description')}
         actions={settings}

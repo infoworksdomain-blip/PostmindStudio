@@ -44,7 +44,7 @@ export function AutomationsList() {
   return (
     <>
       <PageHeader
-        eyebrow={tn('manage')}
+        eyebrow={tn('plan')}
         title={t('list.title')}
         description={t('list.description')}
         actions={create}

@@ -1,216 +1,96 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  BarChart3,
-  Building2,
-  CalendarDays,
-  Download,
-  Clapperboard,
-  Film,
-  Layers,
-  LayoutTemplate,
-  Library,
-  Link2,
-  ListChecks,
-  Menu,
-  Plus,
-  Repeat,
-  Send,
-  Settings,
-  ShieldAlert,
-} from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { directionOf } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
-import { AccountBanners } from './account/account-banners';
 import { AccountControls } from './account/account-menu';
-import { useMe } from './account/use-me';
 import { BusinessSwitcher } from './business-picker';
-import { FeedbackButton } from './feedback-dialog';
-import { LanguageSwitcher } from './i18n/language-switcher';
 import { useLocaleSwitch } from './i18n/intl-provider';
 import { ThemeMenuButton } from './theme-switcher';
 import { NotificationsBell } from './notifications-bell';
-import { UsageBanner } from './usage-meter';
 import { NoOrganisationRedirect } from './onboarding/no-organisation-redirect';
-import { WelcomeLink } from './onboarding/welcome-link';
 import { UpgradeDialogHost } from './billing/upgrade-dialog';
+import { CommandMenu } from './shell/command-menu';
+import { NoticeStrip } from './shell/notice-strip';
+import { PageContext, PageTransition } from './shell/page-context';
+import { NavList, Sidebar, useSidebarCollapsed, Wordmark } from './shell/sidebar';
 
-// Studio's three surfaces (spec 14: create, review, manage) plus Feature A/D and admin screens.
-// Labels come from the `shell` catalogue (BACKLOG 16.1); layout uses logical properties so the
-// sidebar and header mirror in RTL (16.2).
+// The signed-in app's frame (BACKLOG 25.4): a quiet sidebar (Create / Plan / Library / Insights /
+// Settings, an icon rail on desktop), a decluttered top bar (page context on the start side; the
+// business, the command menu, notifications and the account menu on the end side), one notice
+// strip under it, and the page. Labels come from the `shell` catalogue; layout uses logical
+// properties so everything mirrors in RTL (16.2).
 
-export const NAV = [
-  { href: '/new', key: 'create', icon: Plus, group: 'make' },
-  // 22.4: swipe through ready-made posts.
-  { href: '/blitz', key: 'blitz', icon: Layers, group: 'make' },
-  { href: '/projects', key: 'projects', icon: Clapperboard, group: 'make' },
-  { href: '/library', key: 'library', icon: Library, group: 'make' },
-  { href: '/templates', key: 'templates', icon: LayoutTemplate, group: 'make' },
-  { href: '/publications', key: 'publications', icon: Send, group: 'manage' },
-  // 22.5: weekly / monthly auto generation and posting.
-  { href: '/automations', key: 'automations', icon: Repeat, group: 'manage' },
-  { href: '/calendar', key: 'calendar', icon: CalendarDays, group: 'manage' },
-  { href: '/analytics', key: 'analytics', icon: BarChart3, group: 'manage' },
-  { href: '/business', key: 'business', icon: Building2, group: 'setup' },
-  { href: '/connections', key: 'connections', icon: Link2, group: 'setup' },
-  { href: '/approvals', key: 'approvals', icon: ListChecks, group: 'setup' },
-  // Phase 18: organisation settings, members and audit (active on every /settings/* page).
-  { href: '/settings/organisation', key: 'settings', icon: Settings, group: 'setup' },
-  { href: '/account/export', key: 'export', icon: Download, group: 'setup' },
-  { href: '/admin', key: 'admin', icon: ShieldAlert, group: 'staff' },
-] as const;
-
-function isActive(pathname: string, href: string) {
-  if (href.startsWith('/settings/')) return pathname.startsWith('/settings/');
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
-  const t = useTranslations('shell.nav');
-  const pathname = usePathname() ?? '';
-  const me = useMe();
-  // Standalone knows the platform role (Phase 18): the staff group shows only once /me confirms a
-  // staff or superadmin account, so it never flashes while /me loads or appears when /me fails (a
-  // user with no organisation yet, a lapsed plan). Core mode has no role here, so the group shows
-  // as before and the admin routes enforce staff access themselves.
-  const role = me.data?.me.user.platformRole;
-  const showStaff =
-    me.data?.me.identityMode === 'core' || role === 'staff' || role === 'superadmin';
-  const hideStaff = !showStaff;
-  const groups = [...new Set(NAV.map((n) => n.group))].filter((g) => !(g === 'staff' && hideStaff));
-  return (
-    <nav aria-label={t('ariaLabel')} className="flex flex-col gap-6">
-      <WelcomeLink onNavigate={onNavigate} />
-      {groups.map((group) => (
-        <div key={group}>
-          <p className="mb-2 px-3 text-[0.65rem] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-            {t(`groups.${group}`)}
-          </p>
-          <ul className="flex flex-col gap-0.5">
-            {NAV.filter((n) => n.group === group).map(({ href, key, icon: Icon }) => {
-              const active = isActive(pathname, href);
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    onClick={onNavigate}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
-                      'hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                      active
-                        ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/80',
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        'size-4',
-                        active
-                          ? 'text-primary'
-                          : 'text-muted-foreground group-hover:text-foreground',
-                      )}
-                      strokeWidth={1.75}
-                    />
-                    {t(`items.${key}`)}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ))}
-    </nav>
-  );
-}
-
-/** compact: on phones the header shows only the mark (the name stays for screen readers). */
-function Wordmark({ compact = false }: { compact?: boolean }) {
-  return (
-    <Link href="/projects" className={cn('flex items-center gap-2', compact ? 'sm:px-3' : 'px-3')}>
-      <span className="grid size-7 place-items-center rounded-md bg-foreground text-background">
-        <Film className="size-4" strokeWidth={2} />
-      </span>
-      <span
-        className={cn(
-          'font-display text-xl leading-none whitespace-nowrap',
-          compact && 'max-sm:sr-only',
-        )}
-      >
-        PostMind <em className="text-primary not-italic">Studio</em>
-      </span>
-    </Link>
-  );
-}
-
+export { NAV } from './shell/nav';
 export { BusinessSwitcher };
 
-/** 25.2: the top bar's compact appearance button (Light / Dark / System; theme-switcher.tsx). */
+/** 25.2: the compact appearance button (Light / Dark / System; theme-switcher.tsx). 25.4: the top
+ * bar no longer shows it (the account menu has the choice); kept for other screens and tests. */
 export const ThemeToggle = ThemeMenuButton;
 
-export function AppShell({ children }: { children: ReactNode }) {
+function MobileNav() {
   const t = useTranslations('shell.nav');
   const { locale } = useLocaleSwitch();
   const [open, setOpen] = useState(false);
   return (
-    <div className="relative z-10 min-h-dvh lg:grid lg:grid-cols-[15rem_1fr]">
-      <NoOrganisationRedirect />
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-8 border-e border-sidebar-border bg-sidebar py-6 lg:flex">
-        <Wordmark />
-        <div className="flex-1 overflow-y-auto px-3">
-          <NavList />
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="lg:hidden" aria-label={t('openNavigation')}>
+          <Menu />
+        </Button>
+      </SheetTrigger>
+      {/* The drawer opens from the start edge: left in LTR, right in RTL. */}
+      <SheetContent
+        side={directionOf(locale) === 'rtl' ? 'right' : 'left'}
+        className="flex w-72 flex-col gap-0 bg-sidebar p-0"
+      >
+        <SheetTitle className="sr-only">{t('navigationTitle')}</SheetTitle>
+        <div className="grid gap-4 border-b border-sidebar-border p-4 pe-12">
+          <Wordmark />
+          <BusinessSwitcher placement="drawer" />
         </div>
-      </aside>
+        <div className="flex-1 overflow-y-auto p-3">
+          <NavList onNavigate={() => setOpen(false)} />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const [collapsed, setCollapsed] = useSidebarCollapsed();
+  return (
+    <div
+      className={cn(
+        'relative z-10 min-h-dvh lg:grid',
+        collapsed ? 'lg:grid-cols-[3.5rem_1fr]' : 'lg:grid-cols-[15rem_1fr]',
+      )}
+    >
+      <NoOrganisationRedirect />
+      <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/70 bg-background/85 px-4 backdrop-blur md:px-8">
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden"
-                aria-label={t('openNavigation')}
-              >
-                <Menu />
-              </Button>
-            </SheetTrigger>
-            {/* The drawer opens from the start edge: left in LTR, right in RTL. */}
-            <SheetContent
-              side={directionOf(locale) === 'rtl' ? 'right' : 'left'}
-              className="w-72 bg-sidebar p-6"
-            >
-              <SheetTitle className="sr-only">{t('navigationTitle')}</SheetTitle>
-              <div className="mb-8">
-                <Wordmark />
-              </div>
-              <NavList onNavigate={() => setOpen(false)} />
-            </SheetContent>
-          </Sheet>
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border/70 bg-background/85 px-3 backdrop-blur sm:px-4 md:px-8">
+          <MobileNav />
           <div className="lg:hidden">
             <Wordmark compact />
           </div>
-          {/* Tighter gaps on phones: at 375 px the eight controls otherwise overflow the header. */}
+          <div className="min-w-0 flex-1 max-sm:hidden">
+            <PageContext />
+          </div>
           <div className="ms-auto flex min-w-0 items-center gap-1 sm:gap-2">
-            <div className="hidden md:block">
-              <BusinessSwitcher />
-            </div>
-            <FeedbackButton />
-            <LanguageSwitcher labelClassName="hidden xl:inline" />
+            <BusinessSwitcher />
+            <CommandMenu />
             <NotificationsBell />
-            <ThemeToggle />
             <AccountControls />
           </div>
         </header>
+        <NoticeStrip />
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-8 md:py-10">
-          <AccountBanners />
-          <UsageBanner />
-          {children}
+          <PageTransition>{children}</PageTransition>
           <UpgradeDialogHost />
         </main>
       </div>

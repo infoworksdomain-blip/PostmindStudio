@@ -20,6 +20,7 @@ import {
   waitForEmail,
   Watcher,
 } from './onboarding-settings.support';
+import { chooseLanguage, chooseTheme } from './shell.support';
 
 // QA agent 1 — /account/profile, /account/security, /account/export, the header's language switcher
 // and theme toggle, and every page of the area on a phone.
@@ -426,17 +427,14 @@ test.describe('language, theme and phones', () => {
       expect(overflow, `${path} overflows at 375 px`).toBeLessThanOrEqual(0);
       await shot(page, `mobile${path.replace(/\//g, '-')}`);
     }
-    await page.getByRole('button', { name: /^Appearance/ }).click();
-    await page.getByRole('menuitemradio', { name: 'Dark' }).click();
+    await chooseTheme(page, 'Dark');
     await expect(page.locator('html')).toHaveClass(/dark/);
     await page.reload();
     await expect(page.locator('html')).toHaveClass(/dark/);
-    await page.getByRole('button', { name: /^Appearance/ }).click();
-    await page.getByRole('menuitemradio', { name: 'Light' }).click();
+    await chooseTheme(page, 'Light');
     await expect(page.locator('html')).not.toHaveClass(/dark/);
 
-    await page.getByRole('combobox', { name: /Interface language/ }).click();
-    await page.getByRole('option', { name: /العربية/ }).click();
+    await chooseLanguage(page, /العربية/);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     for (const path of paths) {
       await w.visit(page, path);
@@ -446,8 +444,7 @@ test.describe('language, theme and phones', () => {
       expect(overflow, `${path} overflows in Arabic`).toBeLessThanOrEqual(0);
     }
     await shot(page, 'rtl-account-export');
-    await page.getByRole('combobox').filter({ hasText: 'العربية' }).first().click();
-    await page.getByRole('option', { name: /Deutsch/ }).click();
+    await chooseLanguage(page, /Deutsch/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
     for (const path of paths) await w.visit(page, path);
     await w.assertClean();

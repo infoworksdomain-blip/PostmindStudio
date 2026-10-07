@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import { expect, test, type BrowserContext, type Page, type Response } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
+import { chooseLanguage, chooseTheme } from './shell.support';
 
 // QA agent 4: the reference library (/library, /library/[id], "Picked for your business",
 // similar videos, licence rules, the staff Library tab) and templates (/templates, the template
@@ -790,18 +791,11 @@ test('mobile, dark mode and right-to-left render without overflow', async ({ pag
     );
     expect(overflow, `${path} overflows horizontally at 375 px`).toBeLessThanOrEqual(1);
   }
-  await page
-    .getByRole('button', { name: /^Appearance/ })
-    .click()
-    .catch(async () => {
-      await page.getByRole('button', { name: /Open (navigation|menu)/i }).click();
-      await page.getByRole('button', { name: /^Appearance/ }).click();
-    });
-  await page.getByRole('menuitemradio', { name: 'Dark' }).click();
+  // 25.4: appearance and language live in the account menu (top bar, every width).
+  await chooseTheme(page, 'Dark');
   await expect(page.locator('html')).toHaveClass(/dark/);
   await w.visit('/library');
-  await page.getByRole('combobox', { name: /Interface language/ }).click();
-  await page.getByRole('option', { name: /العربية/ }).click();
+  await chooseLanguage(page, /العربية/);
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   for (const path of ['/library', `/library/${ids.bakery}`, '/templates']) {
     await w.visit(path);
@@ -853,7 +847,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   const list = page.getByRole('list', { name: 'Corpus items' });
   // The filter box is debounced; filter to one title at a time (the corpus has 32 rows here).
   const find = async (title: string) => {
-    await page.getByLabel('Search').fill(title);
+    await page.getByLabel('Search', { exact: true }).fill(title);
     await expect(list.getByRole('listitem')).toHaveCount(1, { timeout: 60_000 });
   };
   await expect(list).toBeVisible();
@@ -864,7 +858,7 @@ test('staff: the Library tab lists, edits, bulk-reviews and retires; others are 
   await find(titles.expired);
   await expect(list).toContainText('Licence expired');
   // Retired rows are hidden by the default "Live" status filter.
-  await page.getByLabel('Search').fill(titles.retired);
+  await page.getByLabel('Search', { exact: true }).fill(titles.retired);
   await expect(page.getByText('No items match these filters.')).toBeVisible();
   await page.locator('#admin-library-retired').selectOption('true');
   await expect(list).toContainText(titles.retired);

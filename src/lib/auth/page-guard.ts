@@ -4,6 +4,9 @@
 // https://www.better-auth.com/docs/integrations/next#auth-protection, read 2026-09-29); every API
 // route still validates the session server-side.
 
+/** 25.4: where a signed-in visitor lands when nothing else is asked for (was /projects). */
+export const APP_HOME = '/home';
+
 /** The signed-in app's page prefixes (the (studio) route group). */
 export const PROTECTED_PAGE_PREFIXES = [
   '/account',
@@ -15,6 +18,7 @@ export const PROTECTED_PAGE_PREFIXES = [
   '/business',
   '/calendar',
   '/connections',
+  '/home',
   '/library',
   '/new',
   '/plans',
@@ -42,12 +46,12 @@ export function signInRedirectPath(pathname: string, search: string): string {
     }
   }
   const target = `${pathname}${search}`;
-  const safe = target.startsWith('/') && !target.startsWith('//') ? target : '/projects';
+  const safe = target.startsWith('/') && !target.startsWith('//') ? target : APP_HOME;
   return `/sign-in?next=${encodeURIComponent(safe)}`;
 }
 
 /** A `next` value from a query string, accepted only as a local path (no open redirect, §5.9). */
-export function safeNextPath(value: string | null | undefined, fallback = '/projects'): string {
+export function safeNextPath(value: string | null | undefined, fallback = APP_HOME): string {
   if (!value) return fallback;
   if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return fallback;
   try {

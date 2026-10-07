@@ -26,7 +26,7 @@ describe('page guard (Phase 18 §2.3)', () => {
     expect(signInRedirectPath('/projects/p1', '?tab=2')).toBe(
       '/sign-in?next=%2Fprojects%2Fp1%3Ftab%3D2',
     );
-    expect(signInRedirectPath('//evil.example', '')).toBe('/sign-in?next=%2Fprojects');
+    expect(signInRedirectPath('//evil.example', '')).toBe('/sign-in?next=%2Fhome');
   });
 
   it('sends a failed email-link redirect (/welcome?error=…) to the verify-email page, not a silent sign-in', () => {
@@ -51,7 +51,7 @@ describe('page guard (Phase 18 §2.3)', () => {
       '/\\evil.example',
       'javascript:x',
     ]) {
-      expect(safeNextPath(bad), bad).toBe('/projects');
+      expect(safeNextPath(bad), bad).toBe('/home');
     }
     expect(safeNextPath(null, '/welcome')).toBe('/welcome');
   });

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { APP_HOME } from '@/lib/auth/page-guard';
 import { authFetch } from '@/lib/client/auth';
 import { hardNavigate } from '@/lib/client/navigate';
 import { AuthCard, AuthError } from './auth-card';
@@ -53,7 +54,7 @@ export function InviteScreen({
     setError(undefined);
     try {
       await authFetch('/organization/accept-invitation', { body: { invitationId } });
-      hardNavigate('/projects');
+      hardNavigate(APP_HOME);
     } catch (err) {
       setError(err);
       setBusy(false);

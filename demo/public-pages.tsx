@@ -71,10 +71,10 @@ function verifyAndContinue(): void {
   navigate('/welcome?new=organisation');
 }
 
-/** A same-site `next` path (as the app's nextParam allows), else Projects. */
+/** A same-site `next` path (as the app's nextParam allows), else Home (25.4). */
 function nextPath(search: URLSearchParams): string {
   const next = search.get('next');
-  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/projects';
+  return next && next.startsWith('/') && !next.startsWith('//') ? next : '/home';
 }
 
 function authPage(pathname: string, search: URLSearchParams): ReactNode | null {

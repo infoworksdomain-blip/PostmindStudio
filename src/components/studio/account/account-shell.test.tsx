@@ -52,9 +52,13 @@ describe('AccountControls', () => {
     ]);
     const user = userEvent.setup();
     renderWithSWR(controls());
-    await user.click(await screen.findByRole('button', { name: /Organisation: Crumb & Co/ }));
-    await user.click(await screen.findByRole('menuitem', { name: 'Harbour Coffee' }));
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/projects'));
+    // 25.4: the organisation switcher lives in the account menu (a sub-menu).
+    await user.click(await screen.findByRole('button', { name: 'Account menu for Ada Baker' }));
+    await user.click(await screen.findByRole('menuitem', { name: /Organisation: Crumb & Co/ }));
+    // jsdom has no layout, so Radix's sub-menu pointer grace closes it on a click: use the keyboard.
+    (await screen.findByRole('menuitem', { name: 'Harbour Coffee' })).focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/home'));
     expect(api.calls.find((c) => c.url.includes('set-active'))?.body).toEqual({
       organizationId: 'org_2',
     });
@@ -83,9 +87,9 @@ describe('AccountControls', () => {
     mockFetch([{ match: '/api/studio/me', body: { ok: true, me: me({ identityMode: 'core' }) } }]);
     const user = userEvent.setup();
     renderWithSWR(controls());
+    await user.click(await screen.findByRole('button', { name: 'Account menu for Ada Baker' }));
     expect(await screen.findByText('Crumb & Co')).toBeVisible();
-    expect(screen.queryByRole('button', { name: /Organisation:/ })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Account menu for Ada Baker' }));
+    expect(screen.queryByRole('menuitem', { name: /Organisation:/ })).toBeNull();
     expect(screen.queryByRole('menuitem', { name: /Sign out/ })).toBeNull();
   });
 });

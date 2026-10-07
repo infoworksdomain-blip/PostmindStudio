@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { createAccount, queueWorks, removeAccount, signIn, Watcher, type Account } from './support';
+import { chooseLanguage, chooseTheme } from './shell.support';
 
 // QA agent 2: Create (/new) and "Plan my month" (/plans), through the real UI against the real
 // app. No provider is called: generation stops at the billing gate, or is queued and never run
@@ -166,13 +167,11 @@ test.describe('Create /new with a plan', () => {
     );
     expect(overflow, 'horizontal overflow at 375px').toBe(false);
 
-    await page.getByRole('button', { name: /^Appearance/ }).click();
-    await page.getByRole('menuitemradio', { name: 'Dark' }).click();
+    await chooseTheme(page, 'Dark');
     await expect(page.locator('html')).toHaveClass(/dark/);
     await w.check('/new mobile dark');
 
-    await page.getByRole('combobox', { name: /Interface language/ }).click();
-    await page.getByRole('option', { name: /العربية/ }).click();
+    await chooseLanguage(page, /العربية/);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await page.goto('/new');
     await expect(page.locator('#create-brief')).toBeVisible();
@@ -397,8 +396,7 @@ test.describe('Plan my month with a plan', () => {
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
       ),
     ).toBe(false);
-    await page.getByRole('combobox', { name: /Interface language/ }).click();
-    await page.getByRole('option', { name: /العربية/ }).click();
+    await chooseLanguage(page, /العربية/);
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await w.check('/plans/new rtl');
     w.assertClean();

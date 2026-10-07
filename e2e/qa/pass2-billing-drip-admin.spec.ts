@@ -512,7 +512,7 @@ test.describe('Admin Centre', () => {
     await w.visit('/admin');
     await staff.getByRole('tab', { name: 'Organisations' }).click();
     await staff.getByLabel('Search organisations').fill(`P2 Trial ${run}`);
-    await staff.getByRole('button', { name: 'Search' }).click();
+    await staff.getByRole('button', { name: 'Search', exact: true }).click();
     await staff.getByRole('button', { name: `Open P2 Trial ${run}` }).click();
     await expect(staff.getByText('Running: the trial’s caps apply now.')).toBeVisible();
     const form = staff.getByRole('form', { name: 'Set an override' });

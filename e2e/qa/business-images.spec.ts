@@ -693,7 +693,7 @@ test.describe('image library', () => {
       .or(page.getByLabel('Search images by meaning'))
       .first()
       .fill('golden sourdough loaf');
-    await page.getByRole('button', { name: 'Search' }).click();
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText(/image(s)? like/)).toBeVisible();
     const results = page.getByRole('list', { name: 'Search results' });
     await expect(results.getByRole('listitem').first()).toContainText('match');

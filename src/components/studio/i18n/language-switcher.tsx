@@ -2,6 +2,13 @@
 
 import { Languages } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import {
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { isLocale, LOCALE_INFO, LOCALES } from '@/lib/i18n/locales';
 import { cn } from '@/lib/utils';
@@ -52,5 +59,43 @@ export function LanguageSwitcher({
         })}
       </SelectContent>
     </Select>
+  );
+}
+
+/**
+ * 25.4: the same choice inside a dropdown (the account menu): a sub-menu whose trigger names the
+ * current language, with each language as a radio item in its own script and direction.
+ */
+export function LanguageMenuSub() {
+  const t = useTranslations('shell.language');
+  const { locale, setLocale } = useLocaleSwitch();
+  const current = LOCALE_INFO[locale];
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger data-shell="language-menu">
+        <Languages aria-hidden className="text-muted-foreground" />
+        <span>{t('label')}</span>
+        <span lang={current.code} className="ms-auto ps-3 text-xs text-muted-foreground">
+          {current.label}
+        </span>
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="max-h-80 w-48 overflow-y-auto">
+        <DropdownMenuRadioGroup
+          value={locale}
+          onValueChange={(value) => {
+            if (isLocale(value) && value !== locale) setLocale(value);
+          }}
+        >
+          {LOCALES.map((code) => {
+            const info = LOCALE_INFO[code];
+            return (
+              <DropdownMenuRadioItem key={code} value={code} lang={code} dir={info.dir}>
+                {info.label}
+              </DropdownMenuRadioItem>
+            );
+          })}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 }

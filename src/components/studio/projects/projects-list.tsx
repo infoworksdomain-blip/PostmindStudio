@@ -312,7 +312,7 @@ export function ProjectsList() {
   return (
     <>
       <PageHeader
-        eyebrow={tn('manage')}
+        eyebrow={tn('library')}
         title={t('title')}
         description={t('description')}
         actions={

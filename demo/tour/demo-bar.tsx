@@ -40,7 +40,7 @@ function resetDemo(): void {
 /** Skip the sign-in screen: straight into the sample organisation. */
 export function signBackIn(): void {
   setSignedIn(true);
-  navigate('/projects');
+  navigate('/home');
 }
 
 function SignedOutStrip() {

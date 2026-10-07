@@ -11,6 +11,7 @@ import {
   type World,
 } from './fixtures';
 import { baseURL, enableDarkTheme, noHorizontalScroll, watch } from './pass2.support';
+import { chooseTheme } from './shell.support';
 
 // 20.31 (QA pass 2) — the key flows (create, project review / approve, library search, business &
 // images, settings) at 375 px, in the dark theme, and with the keyboard only. Providers are never
@@ -269,8 +270,7 @@ test.describe('dark theme', () => {
       else await expectUsable(page, heading);
     }
     // The toggle goes back to light and remembers it.
-    await page.getByRole('button', { name: /^Appearance/ }).click();
-    await page.getByRole('menuitemradio', { name: 'Light' }).click();
+    await chooseTheme(page, 'Light');
     await expect(page.locator('html')).not.toHaveClass(/dark/);
     expect(w.issues).toEqual([]);
     await page.context().close();

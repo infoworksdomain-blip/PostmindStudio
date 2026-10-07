@@ -60,7 +60,7 @@ describe('ImageLibraryPanel', () => {
     await waitFor(
       () => {
         expect(api.requests.length).toBeGreaterThan(filteredRequests);
-        expect(api.requests.at(-1)!.url.searchParams.get('cursor')).toBe('img_1');
+        expect(lastLibrary().url.searchParams.get('cursor')).toBe('img_1');
       },
       { timeout: 5_000 },
     );

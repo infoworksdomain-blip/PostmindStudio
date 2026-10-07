@@ -53,10 +53,12 @@
       "navigationTitle": "Navigazione",
       "getStarted": "Inizia",
       "groups": {
-        "make": "Crea",
-        "manage": "Gestisci",
-        "setup": "Configura",
-        "staff": "Team PostMind"
+        "staff": "Team PostMind",
+        "create": "Crea",
+        "plan": "Pianifica",
+        "library": "Libreria",
+        "insights": "Statistiche",
+        "settings": "Impostazioni"
       },
       "items": {
         "create": "Crea",
@@ -73,8 +75,13 @@
         "admin": "Amministrazione",
         "settings": "Impostazioni",
         "blitz": "Blitz",
-        "automations": "Automazioni"
-      }
+        "automations": "Automazioni",
+        "home": "Home",
+        "plans": "Piani mensili"
+      },
+      "newPost": "Crea un nuovo post",
+      "collapse": "Comprimi la barra laterale",
+      "expand": "Espandi la barra laterale"
     },
     "theme": {
       "label": "Aspetto",
@@ -211,7 +218,9 @@
       "security": "Sicurezza e accesso",
       "signOut": "Esci",
       "signOutFailed": "Impossibile disconnetterti. Riprova.",
-      "billing": "Il tuo piano"
+      "billing": "Il tuo piano",
+      "feedback": "Invia un feedback",
+      "menuAria": "Menu dell’account"
     },
     "banners": {
       "readOnly": {
@@ -248,6 +257,47 @@
         "readOnly": "Il tuo account è in sola lettura. Aggiorna il pagamento per creare video.",
         "readOnlyAction": "Aggiorna il pagamento"
       }
+    },
+    "crumbs": {
+      "ariaLabel": "Percorso",
+      "project": "Progetto",
+      "plan": "Piano mensile",
+      "newPlan": "Nuovo piano mensile",
+      "automation": "Automazione",
+      "newAutomation": "Nuova automazione",
+      "libraryVideo": "Video di riferimento",
+      "publicationAnalytics": "Statistiche della pubblicazione"
+    },
+    "command": {
+      "triggerText": "Cerca o vai a…",
+      "title": "Menu dei comandi",
+      "description": "Cerca nei tuoi progetti, apri qualsiasi pagina o esegui un’azione. Usa le frecce per spostarti e Invio per scegliere.",
+      "inputLabel": "Cerca progetti, pagine e azioni",
+      "placeholder": "Cerca progetti, pagine e azioni…",
+      "listLabel": "Risultati",
+      "groups": {
+        "projects": "Progetti",
+        "navigate": "Vai a",
+        "create": "Crea",
+        "business": "Attività",
+        "appearance": "Aspetto"
+      },
+      "profile": "Il tuo profilo",
+      "createNew": "Crea un nuovo post",
+      "useTemplate": "Parti da un modello",
+      "planMonth": "Pianifica un mese",
+      "switchBusiness": "Passa a {name}",
+      "theme": "Aspetto: {theme}",
+      "searching": "Ricerca dei progetti…",
+      "searchFailed": "Impossibile cercare i progetti. Pagine e azioni funzionano comunque.",
+      "results": "{count, plural, =0 {Nessun risultato} one {# risultato} many {# risultati} other {# risultati}}",
+      "empty": "Nessun risultato per «{query}».",
+      "hint": "↑ ↓ per spostarti · Invio per aprire · Esc per chiudere"
+    },
+    "notices": {
+      "ariaLabel": "Avvisi dell’account",
+      "more": "Altri {count}",
+      "fewer": "Mostra meno"
     }
   },
   "errors": {
@@ -6212,5 +6262,38 @@
     "eta": "~{minutes} min",
     "finishing": "quasi pronto",
     "withEta": "{stage} · {eta}"
+  },
+  "home": {
+    "title": "Home",
+    "description": "Cosa ti aspetta, cosa arriva e cosa si sta creando.",
+    "monthPlans": "Piani mensili",
+    "needsYou": {
+      "title": "Da gestire",
+      "empty": "Al momento non c’è nulla da gestire. Qui compaiono i video pronti da rivedere e i post non riusciti.",
+      "reviewMeta": "Creato {when}",
+      "failedMeta": "Non pubblicato su {platform}"
+    },
+    "comingUp": {
+      "title": "In arrivo",
+      "calendar": "Calendario",
+      "empty": "Nulla di programmato nei prossimi 7 giorni."
+    },
+    "inProgress": {
+      "title": "In corso",
+      "all": "Tutto ciò che è in corso",
+      "empty": "Al momento non si sta creando nulla.",
+      "startedMeta": "Avviato {when}"
+    },
+    "quick": {
+      "title": "Inizia qualcosa",
+      "create": "Crea un post",
+      "createBody": "Un video, una presentazione o un carosello da un brief.",
+      "plan": "Pianifica un mese",
+      "planBody": "Un mese di post, pianificati e programmati.",
+      "blitz": "Blitz",
+      "blitzBody": "Scorri tra post già pronti.",
+      "templates": "Modelli",
+      "templatesBody": "Parti da un formato collaudato."
+    }
   }
 }

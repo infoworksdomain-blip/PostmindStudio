@@ -12,6 +12,8 @@ export const APP_PATHS = [
   '/tour/features',
   '/tour/workflows',
   '/tour/email/:template',
+  // 25.4: the signed-in home.
+  '/home',
   '/new',
   '/projects',
   '/projects/:id',

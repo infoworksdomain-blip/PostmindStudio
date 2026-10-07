@@ -159,14 +159,17 @@ export function UpgradeDialogHost() {
 }
 
 /** "Add a channel" and "Buy a video pack" on the usage banner (usage-meter.tsx). */
-export function UsageBannerActions() {
+export function UsageBannerActions({ compact = false }: { compact?: boolean }) {
   const t = useTranslations('upgrade.actions');
+  // compact: the app shell's one-line notice strip (25.4), smaller buttons and no top margin.
+  const size = compact ? 'xs' : 'sm';
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      <Button asChild size="sm">
+    <div className={compact ? 'flex flex-wrap gap-2' : 'mt-3 flex flex-wrap gap-2'}>
+      {/* In the calm strip both actions are quiet; the full banner keeps the primary one. */}
+      <Button asChild size={size} variant={compact ? 'outline' : 'default'}>
         <Link href="/settings/billing#change">{t('addChannel')}</Link>
       </Button>
-      <Button asChild size="sm" variant="outline">
+      <Button asChild size={size} variant="outline">
         <Link href="/settings/billing#topups">{t('buyPack')}</Link>
       </Button>
     </div>

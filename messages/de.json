@@ -53,10 +53,12 @@
       "navigationTitle": "Navigation",
       "getStarted": "Erste Schritte",
       "groups": {
-        "make": "Erstellen",
-        "manage": "Verwalten",
-        "setup": "Einrichten",
-        "staff": "PostMind-Team"
+        "staff": "PostMind-Team",
+        "create": "Erstellen",
+        "plan": "Planen",
+        "library": "Bibliothek",
+        "insights": "Auswertungen",
+        "settings": "Einstellungen"
       },
       "items": {
         "create": "Erstellen",
@@ -73,8 +75,13 @@
         "admin": "Administration",
         "settings": "Einstellungen",
         "blitz": "Blitz",
-        "automations": "Automatisierungen"
-      }
+        "automations": "Automatisierungen",
+        "home": "Start",
+        "plans": "Monatspläne"
+      },
+      "newPost": "Neuen Beitrag erstellen",
+      "collapse": "Seitenleiste einklappen",
+      "expand": "Seitenleiste ausklappen"
     },
     "theme": {
       "label": "Darstellung",
@@ -211,7 +218,9 @@
       "security": "Sicherheit und Anmeldung",
       "signOut": "Abmelden",
       "signOutFailed": "Sie konnten nicht abgemeldet werden. Bitte versuchen Sie es erneut.",
-      "billing": "Ihr Tarif"
+      "billing": "Ihr Tarif",
+      "feedback": "Feedback senden",
+      "menuAria": "Kontomenü"
     },
     "banners": {
       "readOnly": {
@@ -248,6 +257,47 @@
         "readOnly": "Ihr Konto ist schreibgeschützt. Aktualisieren Sie die Zahlung, um Videos zu erstellen.",
         "readOnlyAction": "Zahlung aktualisieren"
       }
+    },
+    "crumbs": {
+      "ariaLabel": "Brotkrumen",
+      "project": "Projekt",
+      "plan": "Monatsplan",
+      "newPlan": "Neuer Monatsplan",
+      "automation": "Automatisierung",
+      "newAutomation": "Neue Automatisierung",
+      "libraryVideo": "Referenzvideo",
+      "publicationAnalytics": "Analyse der Veröffentlichung"
+    },
+    "command": {
+      "triggerText": "Suchen oder springen zu …",
+      "title": "Befehlsmenü",
+      "description": "Durchsuchen Sie Ihre Projekte, öffnen Sie eine beliebige Seite oder führen Sie eine Aktion aus. Mit den Pfeiltasten bewegen, mit Enter auswählen.",
+      "inputLabel": "Projekte, Seiten und Aktionen suchen",
+      "placeholder": "Projekte, Seiten und Aktionen suchen …",
+      "listLabel": "Ergebnisse",
+      "groups": {
+        "projects": "Projekte",
+        "navigate": "Gehe zu",
+        "create": "Erstellen",
+        "business": "Unternehmen",
+        "appearance": "Darstellung"
+      },
+      "profile": "Ihr Profil",
+      "createNew": "Neuen Beitrag erstellen",
+      "useTemplate": "Mit einer Vorlage beginnen",
+      "planMonth": "Einen Monat planen",
+      "switchBusiness": "Zu {name} wechseln",
+      "theme": "Darstellung: {theme}",
+      "searching": "Projekte werden gesucht …",
+      "searchFailed": "Projekte konnten nicht durchsucht werden. Seiten und Aktionen funktionieren weiterhin.",
+      "results": "{count, plural, =0 {Keine Ergebnisse} one {# Ergebnis} other {# Ergebnisse}}",
+      "empty": "Nichts passt zu „{query}“.",
+      "hint": "↑ ↓ bewegen · Enter öffnen · Esc schließen"
+    },
+    "notices": {
+      "ariaLabel": "Kontohinweise",
+      "more": "{count} weitere",
+      "fewer": "Weniger anzeigen"
     }
   },
   "errors": {
@@ -6212,5 +6262,38 @@
     "eta": "~{minutes} Min.",
     "finishing": "gleich fertig",
     "withEta": "{stage} · {eta}"
+  },
+  "home": {
+    "title": "Start",
+    "description": "Was Sie braucht, was ansteht und was gerade entsteht.",
+    "monthPlans": "Monatspläne",
+    "needsYou": {
+      "title": "Braucht Sie",
+      "empty": "Gerade braucht Sie nichts. Videos zur Prüfung und fehlgeschlagene Beiträge erscheinen hier.",
+      "reviewMeta": "Erstellt {when}",
+      "failedMeta": "Nicht auf {platform} veröffentlicht"
+    },
+    "comingUp": {
+      "title": "Demnächst",
+      "calendar": "Kalender",
+      "empty": "Für die nächsten 7 Tage ist nichts geplant."
+    },
+    "inProgress": {
+      "title": "In Arbeit",
+      "all": "Alles in Arbeit",
+      "empty": "Gerade entsteht nichts.",
+      "startedMeta": "Gestartet {when}"
+    },
+    "quick": {
+      "title": "Etwas beginnen",
+      "create": "Beitrag erstellen",
+      "createBody": "Ein Video, eine Slideshow oder ein Karussell aus einem Briefing.",
+      "plan": "Einen Monat planen",
+      "planBody": "Einen Monat voller Beiträge, geplant und terminiert.",
+      "blitz": "Blitz",
+      "blitzBody": "Durch fertige Beiträge wischen.",
+      "templates": "Vorlagen",
+      "templatesBody": "Mit einem bewährten Format beginnen."
+    }
   }
 }

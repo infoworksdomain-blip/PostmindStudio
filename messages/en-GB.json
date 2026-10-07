@@ -53,10 +53,12 @@
       "navigationTitle": "Navigation",
       "getStarted": "Get started",
       "groups": {
-        "make": "Make",
-        "manage": "Manage",
-        "setup": "Set up",
-        "staff": "PostMind staff"
+        "staff": "PostMind staff",
+        "create": "Create",
+        "plan": "Plan",
+        "library": "Library",
+        "insights": "Insights",
+        "settings": "Settings"
       },
       "items": {
         "create": "Create",
@@ -73,8 +75,13 @@
         "admin": "Admin",
         "settings": "Settings",
         "blitz": "Blitz",
-        "automations": "Automations"
-      }
+        "automations": "Automations",
+        "home": "Home",
+        "plans": "Month plans"
+      },
+      "newPost": "Create a new post",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar"
     },
     "theme": {
       "label": "Appearance",
@@ -211,7 +218,9 @@
       "security": "Security and sign-in",
       "signOut": "Sign out",
       "signOutFailed": "Could not sign you out. Try again.",
-      "billing": "Your plan"
+      "billing": "Your plan",
+      "feedback": "Send feedback",
+      "menuAria": "Account menu"
     },
     "banners": {
       "readOnly": {
@@ -248,6 +257,47 @@
         "readOnly": "Your account is read-only. Update payment to create videos.",
         "readOnlyAction": "Update payment"
       }
+    },
+    "crumbs": {
+      "ariaLabel": "Breadcrumb",
+      "project": "Project",
+      "plan": "Month plan",
+      "newPlan": "New month plan",
+      "automation": "Automation",
+      "newAutomation": "New automation",
+      "libraryVideo": "Reference video",
+      "publicationAnalytics": "Publication analytics"
+    },
+    "command": {
+      "triggerText": "Search or jump to…",
+      "title": "Command menu",
+      "description": "Search your projects, go to any page or run an action. Use the arrow keys to move and Enter to choose.",
+      "inputLabel": "Search projects, pages and actions",
+      "placeholder": "Search projects, pages and actions…",
+      "listLabel": "Results",
+      "groups": {
+        "projects": "Projects",
+        "navigate": "Go to",
+        "create": "Create",
+        "business": "Business",
+        "appearance": "Appearance"
+      },
+      "profile": "Your profile",
+      "createNew": "Create a new post",
+      "useTemplate": "Start from a template",
+      "planMonth": "Plan a month",
+      "switchBusiness": "Switch to {name}",
+      "theme": "Appearance: {theme}",
+      "searching": "Searching projects…",
+      "searchFailed": "Couldn’t search projects. Pages and actions still work.",
+      "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+      "empty": "Nothing matches “{query}”.",
+      "hint": "↑ ↓ to move · Enter to open · Esc to close"
+    },
+    "notices": {
+      "ariaLabel": "Account notices",
+      "more": "{count} more",
+      "fewer": "Show less"
     }
   },
   "errors": {
@@ -6212,5 +6262,38 @@
     "eta": "~{minutes} min",
     "finishing": "almost done",
     "withEta": "{stage} · {eta}"
+  },
+  "home": {
+    "title": "Home",
+    "description": "What needs you, what’s coming up and what’s being made.",
+    "monthPlans": "Month plans",
+    "needsYou": {
+      "title": "Needs you",
+      "empty": "Nothing needs you right now. Videos ready for review and posts that failed show up here.",
+      "reviewMeta": "Made {when}",
+      "failedMeta": "Didn’t post to {platform}"
+    },
+    "comingUp": {
+      "title": "Coming up",
+      "calendar": "Calendar",
+      "empty": "Nothing is scheduled for the next 7 days."
+    },
+    "inProgress": {
+      "title": "In progress",
+      "all": "All in progress",
+      "empty": "Nothing is being made right now.",
+      "startedMeta": "Started {when}"
+    },
+    "quick": {
+      "title": "Start something",
+      "create": "Create a post",
+      "createBody": "A video, slideshow or carousel from a brief.",
+      "plan": "Plan a month",
+      "planBody": "A month of posts, planned and scheduled.",
+      "blitz": "Blitz",
+      "blitzBody": "Swipe through ready-made posts.",
+      "templates": "Templates",
+      "templatesBody": "Start from a proven format."
+    }
   }
 }

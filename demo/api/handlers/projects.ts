@@ -56,12 +56,18 @@ route('GET', '/projects', ({ query }) => {
   const states = query.get('state')?.split(',').filter(Boolean);
   const businessId = query.get('businessId');
   const days = Number(query.get('days') ?? 0);
+  // 25.4 (command menu): the same free-text search as the real list (name, description, brief).
+  const q = query.get('q')?.trim().toLocaleLowerCase();
   const limit = Math.min(100, Math.max(1, Number(query.get('limit') ?? 20) || 20));
   let rows = allProjects().filter(
     (p) =>
       (!states || states.includes(p.state)) &&
       (!businessId || p.businessId === businessId) &&
-      (!days || Date.now() - new Date(p.createdAt).getTime() <= days * DAY),
+      (!days || Date.now() - new Date(p.createdAt).getTime() <= days * DAY) &&
+      (!q ||
+        [p.name, p.description, p.brief?.hook, p.brief?.keyMessage]
+          .filter((v): v is string => typeof v === 'string')
+          .some((v) => v.toLocaleLowerCase().includes(q))),
   );
   const cursor = query.get('cursor');
   if (cursor) rows = rows.slice(rows.findIndex((p) => p.id === cursor) + 1);

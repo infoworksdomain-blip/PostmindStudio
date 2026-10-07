@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page, type Response } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
+import { chooseLanguage, chooseTheme, openFeedback } from './qa/shell.support';
 
 // Phase 20.10 — QA sweep: every page in the app shell, signed out, signed in without an
 // organisation, with an organisation, and as platform staff (superadmin with 2FA). On each page it
@@ -196,6 +197,8 @@ async function signUp(page: Page, as: string, name: string): Promise<void> {
 }
 
 const WORKSPACE_PAGES = [
+  // 25.4: the signed-in home.
+  '/home',
   '/new',
   '/projects',
   '/library',
@@ -496,28 +499,25 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   await w.check('/account/profile save');
   await w.visit('/account/export');
 
-  // Header: notifications, feedback dialog, dark theme, language (Arabic is right-to-left).
+  // Header: notifications; the account menu (25.4): feedback dialog, dark theme, language
+  // (Arabic is right-to-left).
   await page.getByRole('button', { name: 'Notifications' }).click();
   await w.settle();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Send feedback' }).click();
+  await openFeedback(page);
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: /^Appearance/ }).click();
-  await page.getByRole('menuitemradio', { name: 'Dark' }).click();
+  await chooseTheme(page, 'Dark');
   await expect(page.locator('html')).toHaveClass(/dark/);
   await w.check('/header dark');
-  await page.getByRole('combobox', { name: /Interface language/ }).click();
-  await page.getByRole('option', { name: /العربية/ }).click();
+  await chooseLanguage(page, /العربية/);
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await w.visit('/calendar');
   await w.visit('/projects');
-  await page.getByRole('combobox', { name: /./ }).filter({ hasText: 'العربية' }).first().click();
-  await page.getByRole('option', { name: /Deutsch/ }).click();
+  await chooseLanguage(page, /Deutsch/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   await w.visit('/settings/billing');
-  await page.getByRole('combobox', { name: /./ }).filter({ hasText: 'Deutsch' }).first().click();
-  await page.getByRole('option', { name: /English \(UK\)/ }).click();
+  await chooseLanguage(page, /English \(UK\)/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-GB');
   await report(w);
 });
@@ -531,7 +531,7 @@ test('an owner sends feedback, invites, scans, saves a brand kit and requests an
   await signIn(page);
 
   w.label('/feedback');
-  await page.getByRole('button', { name: 'Send feedback' }).click();
+  await openFeedback(page);
   const feedback = page.getByRole('dialog');
   await feedback.getByLabel('Message').fill('QA sweep: every page loads.');
   await feedback.getByRole('button', { name: 'Send' }).click();
@@ -638,7 +638,7 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
   w.label('/admin organisations: end trial');
   await page.getByRole('tab', { name: 'Organisations' }).click();
   await page.getByLabel('Search organisations').fill(`Sweep Trial ${run}`);
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByRole('button', { name: `Open Sweep Trial ${run}` }).click();
   await expect(page.getByText('Running: the trial’s caps apply now.')).toBeVisible();
   const form = page.getByRole('form', { name: 'Set an override' });
