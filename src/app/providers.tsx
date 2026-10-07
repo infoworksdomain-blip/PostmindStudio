@@ -29,7 +29,8 @@ export function Providers({
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <TooltipProvider delayDuration={200}>
           <BusinessProvider>{children}</BusinessProvider>
-          <Toaster position="bottom-right" />
+          {/* 25.3: top centre, below the top bar, so a toast never covers a page's own actions. */}
+          <Toaster position="top-center" offset={72} mobileOffset={64} />
         </TooltipProvider>
       </ThemeProvider>
     </StudioIntlProvider>
