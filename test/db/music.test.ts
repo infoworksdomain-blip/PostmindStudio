@@ -8,6 +8,7 @@ import type { ProjectJobData } from '../../src/lib/studio/queue/queues';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import { createHarness, createProject, SCRIPT_JSON } from '../helpers/pipeline-harness';
 import { musicDouble } from '../helpers/music-double';
+import { MAX_FALLBACK_PICKS } from '../../src/lib/studio/pipeline/music-fallback';
 
 // Layer 5 on real Postgres: one ElevenLabs Music track per run (scripted double with the real
 // adapter's output shape), reused on re-render, non-fatal on failure, off for BASIC.
@@ -310,6 +311,139 @@ describe.skipIf(!hasDb)('Layer 5 music on real Postgres', { timeout: 60_000 }, (
       expect(next.meta).toMatchObject({ status: 'generated' });
       expect(next.meta.libraryTrackId).toBeUndefined();
       expect(await db.musicLibraryTrack.count({ where: { promptKey: key } })).toBe(0);
+    });
+
+    it(
+      '25.x: ElevenLabs Music rate-limited → a library track is laid under the video, never silent',
+      { timeout: 240_000 },
+      async () => {
+        const lib = await libraryHarness(5);
+        const first = await lib.video(); // generates, and adds its track to the library
+        const key = String(first.meta.promptKey);
+        expect(first.meta.libraryTrackId).toBeTruthy();
+        // The production refusal (2026-10-07), for every music request from now on.
+        const limited = musicDouble(() => ({
+          state: 'failed',
+          error: {
+            class: 'rate_limited',
+            message: 'too_many_concurrent_requests: maximum of 2 concurrent requests for your plan',
+            retryable: true,
+          },
+        }));
+        lib.h.deps.registry = createProviderRegistry([
+          ...lib.h.deps.registry.list().filter((a) => a.providerId !== 'elevenlabs-music'),
+          limited,
+        ]);
+        const next = await lib.video();
+        expect(limited.requests).toHaveLength(1);
+        expect(next.meta).toMatchObject({
+          status: 'reused',
+          reused: true,
+          providerId: 'music-library',
+          libraryTrackId: first.meta.libraryTrackId,
+          costPence: 0,
+          promptKey: key,
+          fallbackFrom: expect.stringContaining('rate_limited'),
+        });
+        const asset = await db.videoAsset.findFirstOrThrow({
+          where: { projectId: next.project.id, kind: 'AUDIO_MUSIC' },
+        });
+        expect(asset).toMatchObject({ costPence: 0, providerJobId: null, fingerprint: key });
+        // No music cost for the refused request (only generated tracks are paid for).
+        const jobs = await db.providerJob.findMany({
+          where: { projectId: next.project.id, provider: 'elevenlabs-music' },
+        });
+        expect(jobs.reduce((t, j) => t + j.costPence, 0)).toBe(0);
+        // The render has its music bed (the library object), not narration alone.
+        const bed = lastEditTracks(lib.h).at(-1)?.clips[0]?.asset;
+        expect(bed?.type).toBe('audio');
+        expect(bed?.src).toContain(`music-library/${key}/`);
+
+        // A retry of the same run keeps that track: no second pick, no second asset.
+        await lib.h.queue.add('compose-video', next.job);
+        expect((await drainInline(lib.h.queue, lib.h.deps)).failedJobs).toEqual([]);
+        expect(
+          await db.videoAsset.count({ where: { projectId: next.project.id, kind: 'AUDIO_MUSIC' } }),
+        ).toBe(1);
+        expect(limited.requests).toHaveLength(1);
+      },
+    );
+
+    it('25.x: dead library rows of the same key are dropped until a live track is found', async () => {
+      const lib = await libraryHarness(5);
+      const first = await lib.video(); // its generated track is live in this harness's storage
+      const key = String(first.meta.promptKey);
+      const live = String(first.meta.libraryTrackId);
+      // Earlier tests' tracks for this key live in their own harnesses' storage: drop them.
+      await db.musicLibraryTrack.deleteMany({ where: { promptKey: key, id: { not: live } } });
+      // More dead rows than the old 3-pick limit, all preferred over the live one (same key,
+      // closest bucket, never used) — CI's pipeline-e2e left exactly this behind.
+      const dead = await Promise.all(
+        Array.from({ length: MAX_FALLBACK_PICKS - 2 }, () =>
+          db.musicLibraryTrack.create({
+            data: {
+              promptKey: key,
+              bucketSec: 15,
+              durationSec: 15,
+              s3Bucket: 'assets',
+              s3Key: `music-library/${key}/${randomUUID()}.mp3`, // never stored
+              source: 'elevenlabs-music:music_v2_5',
+            },
+          }),
+        ),
+      );
+      await db.musicLibraryTrack.update({ where: { id: live }, data: { lastUsedAt: new Date() } });
+      const limited = musicDouble(() => ({
+        state: 'failed',
+        error: {
+          class: 'rate_limited',
+          message: 'simulated: 429 Too Many Requests',
+          retryable: true,
+        },
+      }));
+      lib.h.deps.registry = createProviderRegistry([
+        ...lib.h.deps.registry.list().filter((a) => a.providerId !== 'elevenlabs-music'),
+        limited,
+      ]);
+      const next = await lib.video();
+      expect(next.meta).toMatchObject({ status: 'reused', libraryTrackId: live, costPence: 0 });
+      expect(
+        await db.musicLibraryTrack.count({ where: { id: { in: dead.map((d) => d.id) } } }),
+      ).toBe(0);
+    });
+
+    it('25.x: with an empty library a failed generation still renders without music', async () => {
+      const lib = await libraryHarness(5);
+      const first = await lib.video();
+      libraryKeys.add(String(first.meta.promptKey));
+      for (const key of libraryKeys) await lib.clear(key);
+      const empty = (await db.musicLibraryTrack.count()) === 0;
+      const refused = musicDouble(() => ({
+        state: 'failed',
+        error: { class: 'provider_unavailable', message: 'service down', retryable: true },
+      }));
+      lib.h.deps.registry = createProviderRegistry([
+        ...lib.h.deps.registry.list().filter((a) => a.providerId !== 'elevenlabs-music'),
+        refused,
+      ]);
+      // Only this suite adds library tracks; with them cleared the library is empty (unless the
+      // database holds tracks from elsewhere, which the relaxed pick would then use).
+      const next = await lib.video();
+      if (empty) {
+        expect(next.meta).toMatchObject({
+          status: 'failed',
+          reason: expect.stringContaining('provider_unavailable'),
+        });
+        const audio = lastEditTracks(lib.h)
+          .flatMap((t) => t.clips)
+          .filter((c) => c.asset.type === 'audio');
+        expect(audio.every((c) => c.asset.volume === 1)).toBe(true); // narration only
+      } else {
+        expect(next.meta).toMatchObject({
+          status: 'reused',
+          fallbackFrom: expect.stringContaining('provider_unavailable'),
+        });
+      }
     });
   });
 

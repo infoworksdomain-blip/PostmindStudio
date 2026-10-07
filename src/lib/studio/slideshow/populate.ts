@@ -8,7 +8,9 @@ import type { ProviderRunDeps } from '../pipeline/provider-run';
 import { runProvider } from '../pipeline/provider-run';
 import { imageGenerationUsage } from '../services/tier-gates';
 import { parseSlideContent, type SlideContent } from './planner';
+import { createStockScreen } from './image-relevance';
 import { embedNewImages, stockImageForSlide } from './slide-images';
+import { visualQueriesFor } from './visual-query';
 import { clampDuration, IMAGE_SLIDE_TYPES, OPTIONAL_IMAGE_SLIDE_TYPES } from './templates';
 
 // BACKLOG 7.5 / Addendum A5.5 — fill a slideshow's gaps:
@@ -22,6 +24,9 @@ import { clampDuration, IMAGE_SLIDE_TYPES, OPTIONAL_IMAGE_SLIDE_TYPES } from './
 //  4.  when the caller asks for it (generation, plan-slideshow.ts), an image slide that still
 //      has no image but has text becomes a TEXT_CARD on the brand backdrop (never black,
 //      slideshow/edl.ts) instead of failing the run with "needs an image".
+// BACKLOG 25.x: the query for 2, 2b and 3 is a contextual stock-photo phrase (topic + business +
+// caption, one light-model call per slideshow, visual-query.ts) instead of the bare caption, and
+// stock candidates must pass a yes/no vision check before one is used (image-relevance.ts).
 
 export const MIN_SIMILARITY = 0.3;
 export const MAX_GENERATIONS_PER_RUN = 5;
@@ -156,8 +161,8 @@ async function writeText(
     const content: SlideContent = {
       ...slide.content,
       pendingText: undefined,
+      // 25.x: no imageQuery copied from the text — fillSlideImages builds a contextual one.
       text: value?.slice(0, 300),
-      imageQuery: slide.content.imageQuery ?? value,
     };
     slide.content = content;
     await deps.db.slideshowSlide.update({
@@ -314,13 +319,23 @@ export async function fillSlideImages(
   const used = new Set(slides.map((s) => s.imageAssetId).filter((id): id is string => Boolean(id)));
   const profile = await deps.db.businessProfile.findFirst({
     where: { businessId: scope.businessId, organisationId: scope.organisationId },
-    select: { imageThemes: true },
+    select: { imageThemes: true, industry: true, subNiche: true, products: true, services: true },
   });
   const fallbackQuery = input.topic ?? profile?.imageThemes.slice(0, 3).join(' ') ?? '';
   const budget = await generationBudget(deps, scope);
+  const visual = await visualQueriesFor(
+    { providers: deps.providers, logger: deps.library.logger },
+    scope,
+    { topic: input.topic, profile, slides: pending },
+  );
+  const screen = createStockScreen(
+    { providers: deps.providers, fetchImpl: deps.library.fetchImpl, logger: deps.library.logger },
+    scope,
+    [profile?.subNiche, profile?.industry].filter(Boolean).join(' — '),
+  );
 
   for (const slide of pending) {
-    const query = slide.content.imageQuery ?? slide.content.text ?? fallbackQuery;
+    const query = visual.get(slide.id) ?? fallbackQuery;
     const required = IMAGE_SLIDE_TYPES.has(slide.slideType as SlideType);
     let chosen: string | undefined;
     if (query) {
@@ -333,6 +348,7 @@ export async function fillSlideImages(
           query,
           aspectRatio: input.aspectRatio,
           exclude: new Set(used),
+          screen,
         })
       )?.id;
       if (chosen) result.imagesStocked += 1;

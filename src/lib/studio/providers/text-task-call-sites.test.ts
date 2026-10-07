@@ -24,6 +24,8 @@ const CALL_SITES: ReadonlyArray<[file: string, tasks: TextTask[]]> = [
   ['ugc/clip-text-guard.ts', ['clip_text_check']],
   ['carousel/writer.ts', ['carousel_thread']],
   ['slideshow/populate.ts', ['slideshow_text']],
+  ['slideshow/visual-query.ts', ['slide_image_query']],
+  ['slideshow/image-relevance.ts', ['slide_image_check']],
   ['queue/workers/scan-website.ts', ['business_profile']],
   ['library/ingest.ts', ['library_analysis']],
 ];
@@ -46,6 +48,8 @@ describe('Claude call sites name their task (23.2)', () => {
         'hook_line',
         'post_copy',
         'script_safety',
+        'slide_image_check',
+        'slide_image_query',
         'wall_text',
       ].sort(),
     );

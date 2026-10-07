@@ -29,6 +29,8 @@ export const TEXT_TASKS = [
   'wall_text',
   'blitz_angles',
   'clip_text_check',
+  'slide_image_query',
+  'slide_image_check',
 ] as const;
 
 export type TextTask = (typeof TEXT_TASKS)[number];
@@ -56,6 +58,10 @@ export const TEXT_TASK_TIER: Readonly<Record<TextTask, TextTaskTier>> = {
   blitz_angles: 'light',
   // 21.4c: "is there burned-in text in these frames" yes/no per frame.
   clip_text_check: 'light',
+  // 25.x: stock-photo search phrases for a slideshow's photo slides (one call per slideshow)
+  // and the "does this photo fit" yes/no vision check of stock candidates.
+  slide_image_query: 'light',
+  slide_image_check: 'light',
 };
 
 /** Claude Haiku 4.5 (platform.claude.com/docs/en/about-claude/models/overview, read 2026-10-06). */
