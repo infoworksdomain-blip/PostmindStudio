@@ -504,7 +504,7 @@ Plan and audit: the "PostMind Studio Redesign Audit" (Daylight and Darkroom desi
 - [x] **25.3** Core components: one primitive per job (Button + IconButton, NativeSelect/Select, ConfirmDialog + useConfirm, ChoiceChips, SegmentedControl, StatusPill, Tooltip, DataTable, Dialog/Sheet/menus/toasts restyled, open Section, EmptyState/ErrorState/Skeleton), raw elements migrated. MediaTile moves to 25.10 (Library).
 - [x] **25.4** App shell and navigation: Create / Plan / Library / Insights / Settings, month plans in the nav, mobile business switcher, command menu, sign-in redirect for /blitz, /plans*, /automations*, a home screen.
 - [ ] **25.5** Homepage and public site: real renders, pricing and legal restyled, favicon, app icon, link-preview image, optimised media.
-- [ ] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
+- [x] **25.6** Sign-in and onboarding: branded auth flows, onboarding progress and skippable steps.
 - [ ] **25.7** Create workspace: format rail first, progressive options, live cost and allowance.
 - [ ] **25.8** Video Studio, Image Studio and project review: capability-driven model selector, real job states with measured ETA, player-first review, Image Studio page.
 - [ ] **25.9** Calendar, month planner, Blitz and automations.

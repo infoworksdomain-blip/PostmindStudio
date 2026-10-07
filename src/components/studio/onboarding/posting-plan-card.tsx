@@ -85,7 +85,7 @@ export function PostingPlanCard({ businessId }: { businessId: string }) {
       className="flex flex-col gap-3 rounded-xl border border-border p-4"
     >
       <h3 id="posting-plan-heading" className="flex items-center gap-2 font-display text-xl">
-        <CalendarRange className="size-5 text-primary" strokeWidth={1.5} />
+        <CalendarRange aria-hidden className="size-5 text-foreground-secondary" strokeWidth={1.5} />
         {t('title')}
       </h3>
       <p className="text-sm text-muted-foreground">{t('body')}</p>

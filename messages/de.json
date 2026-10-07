@@ -3668,21 +3668,22 @@
       "title": "Willkommen"
     },
     "steps": {
-      "connect": "Verbinden",
-      "brandKit": "Markenkit",
+      "connect": "Kanäle",
+      "brandKit": "Marke",
       "firstVideo": "Erstes Video",
-      "celebrate": "Feiern",
+      "celebrate": "Fertig",
       "organisation": "Organisation",
       "business": "Unternehmen"
     },
     "stepIndicator": {
       "aria": "Einrichtungsfortschritt",
-      "done": "(erledigt)"
+      "done": "(erledigt)",
+      "position": "Schritt {current} von {total}"
     },
     "wizard": {
       "eyebrow": "Willkommen",
       "title": "Erstellen wir Ihr erstes Video",
-      "description": "Ein paar schnelle Schritte: Ihre Organisation und Ihr Unternehmen, Ihre Marke, ein verbundenes Konto und dann Ihr erstes Video.",
+      "description": "Ein paar schnelle Schritte: Ihre Organisation und Ihr Unternehmen, Ihre Marke, Ihre Kanäle und dann Ihr erstes Video.",
       "skipSetup": "Einrichtung überspringen",
       "loading": "Einrichtung wird geladen",
       "skipped": {
@@ -3697,17 +3698,18 @@
       },
       "currentStep": "Aktueller Schritt",
       "saving": "Wird gespeichert",
-      "skipStep": "Diesen Schritt überspringen",
+      "skipStep": "Vorerst überspringen",
       "finish": "Abschließen"
     },
     "connect": {
       "title": "Verbinden Sie Ihre Kanäle",
       "description": "Studio veröffentlicht direkt auf TikTok, YouTube, Instagram, Facebook, X und LinkedIn. Verbinden Sie mindestens ein Konto, damit Ihr erstes Video online gehen kann.",
       "loading": "Konten werden geladen",
-      "connectedAria": "Verbundene Konten",
+      "connectedAria": "Ihre Kanäle",
       "none": "Noch keine Konten verbunden.",
       "connectAnother": "Weiteres Konto verbinden",
-      "openConnections": "Verbindungen öffnen"
+      "openConnections": "Verbindungen öffnen",
+      "notConnected": "Nicht verbunden"
     },
     "brandKit": {
       "title": "Ihre Marke in drei Klicks",
@@ -3740,6 +3742,14 @@
         "calm": "Ruhig",
         "witty": "Witzig",
         "premium": "Hochwertig"
+      },
+      "scanWebsite": "Sie haben eine Website? Scannen Sie sie, um Ihre Bildbibliothek zu füllen",
+      "preview": {
+        "label": "Vorschau",
+        "kicker": "Ihre Marke",
+        "headline": "So werden Ihre Videos aussehen",
+        "noFont": "Standardschrift",
+        "noTone": "Noch kein Ton gewählt"
       }
     },
     "firstVideo": {
@@ -3779,13 +3789,21 @@
         "body": "„{name}“ ist noch nicht veröffentlicht. Prüfen und genehmigen Sie es und veröffentlichen Sie es dann – wir feiern hier, sobald es online ist.",
         "action": "Ihr Video öffnen"
       },
-      "planMonth": "Oder lassen Sie Studio Ihren ganzen Monat planen und einplanen"
+      "planMonth": "Oder lassen Sie Studio Ihren ganzen Monat planen und einplanen",
+      "next": {
+        "title": "So geht es weiter",
+        "review": "Studio stellt Ihr Video fertig. Prüfen Sie es, sobald es bereit ist.",
+        "publish": "Geben Sie es frei, und Studio veröffentlicht es sofort oder nach Plan auf Ihren Kanälen.",
+        "insights": "Auswertungen zeigen, wie jedes Video ankommt, damit das nächste noch besser wird.",
+        "home": "Zu „Start“"
+      }
     },
     "finished": {
       "title": "Alles bereit",
       "description": "Studio ist bereit, Videos für Ihr Unternehmen zu erstellen und zu veröffentlichen.",
       "makeAnother": "Weiteres Video erstellen",
-      "goToProjects": "Zu den Projekten"
+      "goToProjects": "Zu den Projekten",
+      "goHome": "Zu „Start“"
     },
     "organisation": {
       "title": "Benennen Sie Ihre Organisation",
@@ -4457,7 +4475,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "Über PostMind Studio",
+      "valueStatement": "Kurze Videos für jeden Kanal, aus ein paar Zeilen über Ihr Unternehmen.",
+      "valueDetail": "Studio schreibt das Skript, erstellt das Video in Ihrem Markenauftritt und plant es für die Kanäle, die Sie verbinden.",
+      "panelAlt": "Ein TikTok-Video eines Sauerteigbrots in PostMind Studio mit bestandenen Qualitätsprüfungen."
     },
     "errors": {
       "invalidCredentials": "Diese E-Mail-Adresse und dieses Passwort passen zu keinem Konto.",
@@ -4495,7 +4517,8 @@
       "password": "Passwort",
       "submit": "Anmelden",
       "forgot": "Passwort vergessen?",
-      "noAccount": "Konto erstellen"
+      "noAccount": "Konto erstellen",
+      "newHere": "Neu bei PostMind Studio?"
     },
     "google": {
       "or": "oder",
@@ -4511,7 +4534,9 @@
       "submit": "Konto erstellen",
       "haveAccount": "Sie haben schon ein Konto? Anmelden",
       "closedTitle": "Nur auf Einladung",
-      "closedDescription": "Neue Konten gibt es derzeit nur auf Einladung. Bitten Sie jemanden aus Ihrem Team, Sie einzuladen."
+      "closedDescription": "Neue Konten gibt es derzeit nur auf Einladung. Bitten Sie jemanden aus Ihrem Team, Sie einzuladen.",
+      "closedNext": "Schon eingeladen? Öffnen Sie den Link in Ihrer Einladungs-E-Mail, um Ihr Konto einzurichten.",
+      "closedSignIn": "Anmelden"
     },
     "verify": {
       "title": "Prüfen Sie Ihre E-Mails",
@@ -4523,7 +4548,8 @@
       "resent": "Wenn diese Adresse noch bestätigt werden muss, haben wir einen neuen Link gesendet.",
       "email": "E-Mail",
       "resend": "Neuen Link senden",
-      "backToSignIn": "Zurück zur Anmeldung"
+      "backToSignIn": "Zurück zur Anmeldung",
+      "resendPrompt": "Noch nichts da? Sehen Sie im Spam-Ordner nach oder fordern Sie einen neuen Link an."
     },
     "forgot": {
       "title": "Passwort zurücksetzen",
@@ -4531,7 +4557,10 @@
       "email": "E-Mail",
       "submit": "Link senden",
       "sent": "Wenn ein Konto diese Adresse verwendet, ist ein Link zum Zurücksetzen unterwegs. Er gilt 1 Stunde.",
-      "backToSignIn": "Zurück zur Anmeldung"
+      "backToSignIn": "Zurück zur Anmeldung",
+      "sentTitle": "Sehen Sie in Ihr Postfach",
+      "sentNext": "Öffnen Sie den Link in der E-Mail, um ein neues Passwort zu wählen. Nach ein paar Minuten noch nichts da? Sehen Sie im Spam-Ordner nach oder versuchen Sie eine andere Adresse.",
+      "tryAnother": "Andere E-Mail-Adresse verwenden"
     },
     "reset": {
       "title": "Neues Passwort wählen",
@@ -4542,7 +4571,9 @@
       "signIn": "Anmelden",
       "invalidTitle": "Dieser Link hat nicht funktioniert",
       "invalidDescription": "Links zum Zurücksetzen funktionieren einmal, 1 Stunde lang. Fordern Sie einen neuen an.",
-      "requestNew": "Neuen Link anfordern"
+      "requestNew": "Neuen Link anfordern",
+      "backToSignIn": "Zurück zur Anmeldung",
+      "doneTitle": "Passwort geändert"
     },
     "twoFactor": {
       "title": "Bestätigung in zwei Schritten",
@@ -4565,7 +4596,10 @@
       "joinNamed": "Sie wurden eingeladen, {organisation} in PostMind Studio beizutreten.",
       "accept": "Einladung annehmen",
       "notNow": "Nicht jetzt",
-      "unavailable": "Diese Einladung ist abgelaufen, wurde zurückgezogen oder an eine andere E-Mail-Adresse gesendet."
+      "unavailable": "Diese Einladung ist abgelaufen, wurde zurückgezogen oder an eine andere E-Mail-Adresse gesendet.",
+      "unavailableTitle": "Diese Einladung kann nicht verwendet werden",
+      "unavailableNext": "Bitten Sie die Person, die Sie eingeladen hat, eine neue Einladung an die Adresse zu senden, mit der Sie sich anmelden.",
+      "goToStudio": "Zu Studio"
     },
     "support": {
       "noEmail": "Nach einigen Minuten immer noch keine E-Mail? Schreiben Sie an <link>{email}</link>."
@@ -5763,16 +5797,23 @@
   "errorPage": {
     "notFound": {
       "title": "Diese Seite wurde nicht gefunden",
-      "body": "Der Link ist vielleicht veraltet, oder die Seite wurde verschoben.",
+      "body": "Der Link ist vielleicht veraltet oder die Seite wurde verschoben. Prüfen Sie die Adresse oder machen Sie hier weiter.",
       "projects": "Zu den Projekten",
-      "home": "Zur Startseite"
+      "home": "Zur Startseite",
+      "label": "Fehler 404",
+      "goHome": "Zu „Start“",
+      "signIn": "Anmelden"
     },
     "boundary": {
       "title": "Auf dieser Seite ist ein Problem aufgetreten",
-      "body": "Wir haben es protokolliert. Versuchen Sie es erneut oder kehren Sie zu Ihren Projekten zurück.",
+      "body": "Das lag nicht an Ihnen, und wir haben es protokolliert. Versuchen Sie es noch einmal oder kehren Sie zur Startseite zurück.",
       "retry": "Erneut versuchen",
       "projects": "Zu den Projekten",
-      "reference": "Referenz: {digest}"
+      "reference": "Referenz: {digest}",
+      "label": "Etwas ist schiefgelaufen",
+      "goHome": "Zu „Start“",
+      "home": "Zur Startseite",
+      "feedback": "Sagen Sie uns, was passiert ist"
     }
   },
   "hashtags": {

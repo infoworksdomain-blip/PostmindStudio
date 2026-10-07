@@ -38,7 +38,7 @@ reset-password, organisation create (wizard 1), business create (wizard 2), orga
 invite member, change password, change email, profile details, request export.
 
 Wizard steps (6): organisation, business, brand kit, connect, first video, celebrate, plus
-finished and "setup skipped" states, step indicator, Back / Skip this step / Continue / Skip setup /
+finished and "setup skipped" states, step indicator, Back / Skip for now / Continue / Skip setup /
 Finish / Resume setup.
 
 Dialogs (7): transfer ownership (password), delete organisation (type name + password), remove

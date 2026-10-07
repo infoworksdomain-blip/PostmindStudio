@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowRight, Clapperboard, Loader2 } from 'lucide-react';
+import { ArrowRight, Clapperboard } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   CREATE_BLOCK_NOTICE_ID,
@@ -12,6 +12,7 @@ import {
 } from '../account/create-access';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { BrandKit, Project } from '@/lib/client/types';
 import type { ProjectTemplate } from '../automation/automation';
@@ -22,6 +23,7 @@ import { BriefHint, briefHintDescribedBy } from '../brief-hint';
 // Step 3 — the first video from the built-in "Introduce yourself and what you do" template
 // (spec 14.5). The request body matches what the Create screen sends for a TEMPLATE project
 // (create/body.ts buildCreateBody), then generation starts as it does there.
+// 25.6: restyled with the shared field and the Button's own pending state.
 
 const INTRO_PREFIX = 'introduce yourself';
 const BRIEF_MAX = 4_000;
@@ -54,8 +56,12 @@ export function FirstVideoStep({
   if (projectId) {
     return (
       <div className="flex flex-col gap-4">
-        <h2 className="font-display text-3xl">{t('started.title')}</h2>
-        <p className="text-sm text-muted-foreground">{t('started.body')}</p>
+        <h2 className="font-display text-2xl leading-tight sm:text-[1.75rem]">
+          {t('started.title')}
+        </h2>
+        <p className="text-[0.9375rem] leading-relaxed text-foreground-secondary">
+          {t('started.body')}
+        </p>
         <div>
           <Button asChild variant="outline">
             <Link href={`/projects/${projectId}`}>
@@ -113,14 +119,16 @@ export function FirstVideoStep({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h2 className="font-display text-3xl">{t('title')}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t('description')}</p>
+        <h2 className="font-display text-2xl leading-tight sm:text-[1.75rem]">{t('title')}</h2>
+        <p className="mt-2 text-[0.9375rem] leading-relaxed text-foreground-secondary">
+          {t('description')}
+        </p>
       </div>
       {templates.error && (
         <ErrorState error={templates.error} onRetry={() => void templates.mutate()} />
       )}
       {!templates.data && !templates.error && (
-        <Skeleton className="h-24 rounded-xl" aria-label={t('loadingTemplates')} />
+        <Skeleton className="h-24 rounded-panel" aria-label={t('loadingTemplates')} />
       )}
       {templates.data && !template && (
         <EmptyState
@@ -140,7 +148,7 @@ export function FirstVideoStep({
             <label htmlFor={briefId} className="text-sm font-medium">
               {t('briefLabel')}
             </label>
-            <textarea
+            <Textarea
               id={briefId}
               value={brief}
               maxLength={BRIEF_MAX}
@@ -148,7 +156,7 @@ export function FirstVideoStep({
               onChange={(e) => setBrief(e.target.value)}
               aria-describedby={briefHintDescribedBy(brief, `${briefId}-hint`)}
               placeholder={t('briefPlaceholder')}
-              className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="min-h-24"
             />
             {/* 20.18: a gentle nudge for a very short brief; Create still works. */}
             <BriefHint text={brief} id={`${briefId}-hint`} />
@@ -157,10 +165,11 @@ export function FirstVideoStep({
           <div>
             <Button
               onClick={() => void create()}
-              disabled={creating || block === 'read_only'}
+              disabled={block === 'read_only'}
+              loading={creating}
               aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
             >
-              {creating ? <Loader2 className="animate-spin" /> : <Clapperboard />}
+              {!creating && <Clapperboard aria-hidden />}
               {t('create')}
             </Button>
           </div>

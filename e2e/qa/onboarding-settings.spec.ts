@@ -538,7 +538,7 @@ test.describe('the /welcome wizard', () => {
     await expect(
       page.getByRole('heading', { name: 'Connect where you post' }).first(),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Skip this step' }).click();
+    await page.getByRole('button', { name: 'Skip for now' }).click();
 
     // First video: brief, plan gate, Not now, started state.
     await expect(

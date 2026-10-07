@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
+// The (auth) route group's frame (src/app/(auth)/layout.tsx renders the same component).
+import { AuthFrame } from '@/components/auth/auth-frame';
 import { InviteScreen } from '@/components/auth/invite-screen';
 import { SignInForm } from '@/components/auth/sign-in-form';
 import { SignUpForm } from '@/components/auth/sign-up-form';
@@ -40,15 +42,6 @@ const LEGAL: Record<string, string> = {
   subprocessors,
 };
 
-/** The (auth) route group's frame (src/app/(auth)/layout.tsx). */
-function AuthFrame({ children }: { children: ReactNode }) {
-  return (
-    <main className="flex min-h-dvh flex-col items-center justify-start gap-4 bg-muted/30 px-4 py-16 sm:justify-center">
-      {children}
-    </main>
-  );
-}
-
 /** A small note beside a real auth screen where the demo behaves differently. */
 function DemoNote({ children }: { children: ReactNode }) {
   return (
@@ -56,9 +49,9 @@ function DemoNote({ children }: { children: ReactNode }) {
       role="note"
       lang="en"
       dir="ltr"
-      className="w-full max-w-md rounded-lg border border-dashed border-primary/50 bg-primary/5 px-3 py-2 text-sm"
+      className="w-full rounded-field border border-dashed border-border-strong bg-surface-raised px-3 py-2 text-[0.8125rem] text-foreground-secondary"
     >
-      <span className="font-semibold">Demo: </span>
+      <span className="font-semibold text-foreground">Demo: </span>
       {children}
     </p>
   );

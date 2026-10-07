@@ -25,7 +25,7 @@ export const MAX_TONES = 3;
 export type Tone = (typeof TONES)[number];
 
 /** Catalogue key (onboarding.brandKit.tones.<key>) of each tone's label. */
-const TONE_KEY = {
+export const TONE_KEY = {
   Warm: 'warm',
   Friendly: 'friendly',
   Playful: 'playful',

@@ -3668,21 +3668,22 @@
       "title": "Boas-vindas"
     },
     "steps": {
-      "connect": "Conectar",
-      "brandKit": "Kit da marca",
+      "connect": "Canais",
+      "brandKit": "Marca",
       "firstVideo": "Primeiro vídeo",
-      "celebrate": "Comemorar",
+      "celebrate": "Pronto",
       "organisation": "Organização",
       "business": "Negócio"
     },
     "stepIndicator": {
       "aria": "Progresso da configuração",
-      "done": "(concluído)"
+      "done": "(concluído)",
+      "position": "Passo {current} de {total}"
     },
     "wizard": {
       "eyebrow": "Boas-vindas",
       "title": "Vamos criar seu primeiro vídeo",
-      "description": "Alguns passos rápidos: sua organização e seu negócio, sua marca, uma conta conectada e, por fim, seu primeiro vídeo.",
+      "description": "Alguns passos rápidos: sua organização e seu negócio, sua marca, seus canais e, por fim, seu primeiro vídeo.",
       "skipSetup": "Pular configuração",
       "loading": "Carregando a configuração",
       "skipped": {
@@ -3697,17 +3698,18 @@
       },
       "currentStep": "Passo atual",
       "saving": "Salvando",
-      "skipStep": "Pular este passo",
+      "skipStep": "Pular por enquanto",
       "finish": "Concluir"
     },
     "connect": {
       "title": "Conecte onde você publica",
       "description": "O Studio publica direto no TikTok, YouTube, Instagram, Facebook, X e LinkedIn. Conecte pelo menos uma conta para que seu primeiro vídeo possa ir ao ar.",
       "loading": "Carregando contas",
-      "connectedAria": "Contas conectadas",
+      "connectedAria": "Seus canais",
       "none": "Nenhuma conta conectada ainda.",
       "connectAnother": "Conectar outra conta",
-      "openConnections": "Abrir Conexões"
+      "openConnections": "Abrir Conexões",
+      "notConnected": "Não conectado"
     },
     "brandKit": {
       "title": "Sua marca em três cliques",
@@ -3740,6 +3742,14 @@
         "calm": "Tranquilo",
         "witty": "Espirituoso",
         "premium": "Premium"
+      },
+      "scanWebsite": "Tem um site? Escaneie para preencher sua biblioteca de imagens",
+      "preview": {
+        "label": "Prévia",
+        "kicker": "Sua marca",
+        "headline": "É assim que seus vídeos vão ficar",
+        "noFont": "Fonte padrão",
+        "noTone": "Nenhum tom escolhido ainda"
       }
     },
     "firstVideo": {
@@ -3779,13 +3789,21 @@
         "body": "“{name}” ainda não foi publicado. Revise, aprove e publique — vamos comemorar aqui assim que ele for ao ar.",
         "action": "Abrir seu vídeo"
       },
-      "planMonth": "Ou deixe o Studio planejar e agendar seu mês inteiro"
+      "planMonth": "Ou deixe o Studio planejar e agendar seu mês inteiro",
+      "next": {
+        "title": "O que acontece agora",
+        "review": "O Studio termina o seu vídeo. Revise quando estiver pronto.",
+        "publish": "Aprove e o Studio publica nos seus canais na hora ou na data agendada.",
+        "insights": "Análises mostra como cada vídeo se sai, para que o próximo funcione ainda melhor.",
+        "home": "Ir para o Início"
+      }
     },
     "finished": {
       "title": "Tudo pronto",
       "description": "O Studio está pronto para criar e publicar vídeos para sua empresa.",
       "makeAnother": "Criar outro vídeo",
-      "goToProjects": "Ir para projetos"
+      "goToProjects": "Ir para projetos",
+      "goHome": "Ir para o Início"
     },
     "organisation": {
       "title": "Dê um nome à sua organização",
@@ -4457,7 +4475,11 @@
   },
   "auth": {
     "shell": {
-      "brand": "PostMind Studio"
+      "brand": "PostMind Studio",
+      "panelLabel": "Sobre o PostMind Studio",
+      "valueStatement": "Vídeos curtos para cada canal, feitos a partir de algumas linhas sobre o seu negócio.",
+      "valueDetail": "O Studio escreve o roteiro, cria o vídeo com a sua marca e agenda nos canais que você conectar.",
+      "panelAlt": "Um vídeo do TikTok de um pão de fermentação natural no PostMind Studio, com as verificações de qualidade aprovadas."
     },
     "errors": {
       "invalidCredentials": "Esse e-mail e essa senha não correspondem a nenhuma conta.",
@@ -4495,7 +4517,8 @@
       "password": "Senha",
       "submit": "Entrar",
       "forgot": "Esqueceu a senha?",
-      "noAccount": "Criar uma conta"
+      "noAccount": "Criar uma conta",
+      "newHere": "Novo no PostMind Studio?"
     },
     "google": {
       "or": "ou",
@@ -4511,7 +4534,9 @@
       "submit": "Criar conta",
       "haveAccount": "Já tem uma conta? Entre",
       "closedTitle": "Somente por convite",
-      "closedDescription": "No momento, novas contas só por convite. Peça a alguém da sua equipe para convidar você."
+      "closedDescription": "No momento, novas contas só por convite. Peça a alguém da sua equipe para convidar você.",
+      "closedNext": "Já foi convidado? Abra o link do e-mail de convite para configurar sua conta.",
+      "closedSignIn": "Entrar"
     },
     "verify": {
       "title": "Confira seu e-mail",
@@ -4523,7 +4548,8 @@
       "resent": "Se esse endereço precisar de confirmação, enviamos um novo link.",
       "email": "E-mail",
       "resend": "Enviar um novo link",
-      "backToSignIn": "Voltar para entrar"
+      "backToSignIn": "Voltar para entrar",
+      "resendPrompt": "Nada ainda? Confira a pasta de spam ou peça um novo link."
     },
     "forgot": {
       "title": "Redefina sua senha",
@@ -4531,7 +4557,10 @@
       "email": "E-mail",
       "submit": "Enviar link",
       "sent": "Se alguma conta usar esse endereço, um link de redefinição está a caminho. Ele vale por 1 hora.",
-      "backToSignIn": "Voltar para entrar"
+      "backToSignIn": "Voltar para entrar",
+      "sentTitle": "Confira sua caixa de entrada",
+      "sentNext": "Abra o link do e-mail para escolher uma nova senha. Nada depois de alguns minutos? Confira a pasta de spam ou tente outro endereço.",
+      "tryAnother": "Usar outro e-mail"
     },
     "reset": {
       "title": "Escolha uma nova senha",
@@ -4542,7 +4571,9 @@
       "signIn": "Entrar",
       "invalidTitle": "Esse link não funcionou",
       "invalidDescription": "Links de redefinição funcionam uma vez, por 1 hora. Peça um novo.",
-      "requestNew": "Receber um novo link"
+      "requestNew": "Receber um novo link",
+      "backToSignIn": "Voltar para entrar",
+      "doneTitle": "Senha alterada"
     },
     "twoFactor": {
       "title": "Verificação em duas etapas",
@@ -4565,7 +4596,10 @@
       "joinNamed": "Você foi convidado para {organisation} no PostMind Studio.",
       "accept": "Aceitar convite",
       "notNow": "Agora não",
-      "unavailable": "Este convite expirou, foi cancelado ou foi enviado para outro e-mail."
+      "unavailable": "Este convite expirou, foi cancelado ou foi enviado para outro e-mail.",
+      "unavailableTitle": "Este convite não pode ser usado",
+      "unavailableNext": "Peça a quem convidou você que envie um novo convite para o endereço com que você entra.",
+      "goToStudio": "Ir para o Studio"
     },
     "support": {
       "noEmail": "Ainda sem e-mail depois de alguns minutos? Escreva para <link>{email}</link>."
@@ -5763,16 +5797,23 @@
   "errorPage": {
     "notFound": {
       "title": "Não encontramos essa página",
-      "body": "O link pode estar desatualizado ou a página foi movida.",
+      "body": "O link pode estar desatualizado ou a página mudou de lugar. Confira o endereço ou continue daqui.",
       "projects": "Ir para projetos",
-      "home": "Ir para a página inicial"
+      "home": "Ir para a página inicial",
+      "label": "Erro 404",
+      "goHome": "Ir para o Início",
+      "signIn": "Entrar"
     },
     "boundary": {
       "title": "Esta página teve um problema",
-      "body": "Registramos o erro. Tente de novo ou volte para seus projetos.",
+      "body": "Não foi nada que você fez, e já registramos o problema. Tente de novo ou volte para o início.",
       "retry": "Tentar de novo",
       "projects": "Ir para projetos",
-      "reference": "Referência: {digest}"
+      "reference": "Referência: {digest}",
+      "label": "Algo deu errado",
+      "goHome": "Ir para o Início",
+      "home": "Ir para a página inicial",
+      "feedback": "Conte para nós o que aconteceu"
     }
   },
   "hashtags": {

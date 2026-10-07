@@ -82,17 +82,19 @@ describe('WelcomeWizard', () => {
     const steps = within(screen.getByRole('list', { name: 'Setup progress' })).getAllByRole(
       'listitem',
     );
-    // Phase 18: Organisation, Business, Brand kit, Connect, First video, Celebrate.
+    // Phase 18: Organisation, Business, then (25.6 labels) Brand, Channels, First video, Done.
     expect(steps).toHaveLength(6);
     expect(steps.map((s) => s.textContent?.replace(/\(done\)|\d/g, '').trim())).toEqual([
       'Organisation',
       'Business',
-      'Brand kit',
-      'Connect',
+      'Brand',
+      'Channels',
       'First video',
-      'Celebrate',
+      'Done',
     ]);
     expect(steps[4]).toHaveAttribute('aria-current', 'step');
+    // 25.6: the position in words, too.
+    expect(screen.getByText('Step 5 of 6')).toBeInTheDocument();
     expect(steps[0]).toHaveTextContent('(done)');
     expect(steps[3]).toHaveTextContent('(done)');
     expect(steps[5]).not.toHaveTextContent('(done)');
@@ -118,8 +120,14 @@ describe('WelcomeWizard', () => {
     });
     const user = userEvent.setup();
     renderScreen(<WelcomeWizard />);
-    const list = await screen.findByRole('list', { name: 'Connected accounts' });
-    expect(list).toHaveTextContent('@leedssourdough');
+    const list = await screen.findByRole('list', { name: 'Your channels' });
+    // 25.6: every platform is listed with its state; the connected one names its account.
+    const tiktok = within(list)
+      .getAllByRole('listitem')
+      .find((row) => row.textContent?.includes('TikTok'));
+    expect(tiktok).toHaveTextContent('@leedssourdough');
+    expect(tiktok).toHaveTextContent('Connected');
+    expect(within(list).getAllByText('Not connected')).toHaveLength(5);
     await user.click(screen.getByRole('button', { name: /Continue/ }));
     await screen.findByRole('heading', { name: 'Make your first video' });
     expect(patches(api)).toEqual([{ step: 'first_video', completed: ['brand_kit', 'connect'] }]);
@@ -273,7 +281,7 @@ describe('WelcomeWizard', () => {
     renderScreen(<WelcomeWizard />);
     expect(await screen.findByText('No accounts connected yet.')).toBeVisible();
     expect(screen.getByRole('button', { name: /Continue/ })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'Skip this step' }));
+    await user.click(screen.getByRole('button', { name: 'Skip for now' }));
     await screen.findByRole('heading', { name: 'Make your first video' });
     await user.click(screen.getByRole('button', { name: /Back/ }));
     await screen.findByRole('heading', { name: 'Connect where you post' });
@@ -305,7 +313,7 @@ describe('WelcomeWizard', () => {
     });
     const user = userEvent.setup();
     renderScreen(<WelcomeWizard />);
-    await user.click(await screen.findByRole('button', { name: 'Skip this step' }));
+    await user.click(await screen.findByRole('button', { name: 'Skip for now' }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Nothing to update'));
     expect(screen.getByRole('heading', { name: 'Connect where you post' })).toBeVisible();
   });

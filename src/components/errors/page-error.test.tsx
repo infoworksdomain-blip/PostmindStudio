@@ -8,16 +8,23 @@ import StudioError from '@/app/(studio)/error';
 import { NotFoundView, PageErrorView } from './page-error';
 
 describe('NotFoundView', () => {
-  it('explains the missing page and links to projects and home', () => {
+  it('explains the missing page and offers the home page and sign-in when signed out', () => {
     render(<NotFoundView />);
     expect(
       screen.getByRole('heading', { level: 1, name: 'We couldn’t find that page' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Error 404')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to the home page' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in');
+  });
+
+  it('offers Home and projects when signed in', () => {
+    render(<NotFoundView signedIn />);
+    expect(screen.getByRole('link', { name: 'Go to Home' })).toHaveAttribute('href', '/home');
     expect(screen.getByRole('link', { name: 'Go to projects' })).toHaveAttribute(
       'href',
       '/projects',
     );
-    expect(screen.getByRole('link', { name: 'Go to the home page' })).toHaveAttribute('href', '/');
   });
 
   it('is translated (ar)', () => {
@@ -41,6 +48,19 @@ describe('PageErrorView', () => {
     expect(screen.getByText('Reference: abc123')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(reset).toHaveBeenCalledOnce();
+  });
+
+  it('goes Home and offers feedback inside the app', async () => {
+    render(<PageErrorView error={new Error('boom')} reset={() => undefined} signedIn feedback />);
+    expect(screen.getByRole('link', { name: 'Go to Home' })).toHaveAttribute('href', '/home');
+    await userEvent.click(screen.getByRole('button', { name: 'Tell us what happened' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('sends a signed-out visitor to the home page, without feedback', () => {
+    render(<PageErrorView error={new Error('boom')} reset={() => undefined} />);
+    expect(screen.getByRole('link', { name: 'Go to the home page' })).toHaveAttribute('href', '/');
+    expect(screen.queryByRole('button', { name: 'Tell us what happened' })).not.toBeInTheDocument();
   });
 
   it('omits the reference when there is no digest', () => {
