@@ -937,7 +937,10 @@ test.describe('connections', () => {
     await page.getByRole('button', { name: 'Keep it' }).click();
     await expect(page.getByText(names.active, { exact: true })).toBeVisible();
     await page.getByRole('button', { name: `Disconnect ${names.active}` }).click();
-    await page.getByRole('alertdialog').getByRole('button', { name: 'Disconnect', exact: true }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Disconnect', exact: true })
+      .click();
     await toast(page, `${names.active} disconnected`);
     await expect(page.getByText(names.active, { exact: true })).toHaveCount(0);
     const gone = await db.platformConnection.findFirstOrThrow({

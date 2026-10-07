@@ -288,7 +288,10 @@ test.describe('projects search and row actions', () => {
     await expect(row('QA Draft video (copy)')).toBeVisible();
     await menu('QA Draft video (copy)').click();
     await page.getByRole('menuitem', { name: 'Delete' }).click();
-    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Delete', exact: true })
+      .click();
     await expect(page.getByText('Deleted.').first()).toBeVisible();
     await expect(row('QA Draft video (copy)')).toHaveCount(0);
     expect(
