@@ -104,12 +104,20 @@ describe('HomeScreen', () => {
     const bread = await within(progress).findByRole('link', { name: /Bread week/ });
     expect(bread.querySelector('[data-live-stage]')).not.toBeNull();
 
-    // Quick create points only at pages that exist.
-    expect(screen.getByRole('link', { name: /Create a post/ })).toHaveAttribute('href', '/new');
-    expect(screen.getByRole('link', { name: /Plan a month/ })).toHaveAttribute(
-      'href',
-      '/plans/new',
-    );
+    // Quick create points only at pages that exist (jsdom has no CSS, so both layouts' copies
+    // are in the tree here; in a browser one of them is display:none).
+    const quick = screen.getAllByRole('region', { name: 'Start something' });
+    expect(quick).toHaveLength(2);
+    for (const tiles of quick) {
+      expect(within(tiles).getByRole('link', { name: /Create a post/ })).toHaveAttribute(
+        'href',
+        '/new',
+      );
+      expect(within(tiles).getByRole('link', { name: /Plan a month/ })).toHaveAttribute(
+        'href',
+        '/plans/new',
+      );
+    }
     expect(screen.getByRole('link', { name: 'Month plans' })).toHaveAttribute('href', '/plans');
 
     // The coming-up window is the next 7 days.
@@ -117,6 +125,26 @@ describe('HomeScreen', () => {
     const params = new URL(scheduled.url, 'https://x.test').searchParams;
     const span = Date.parse(params.get('to')!) - Date.parse(params.get('from')!);
     expect(span).toBe(7 * 86_400_000);
+  });
+
+  it('orders phones as Needs you, quick create, Coming up, In progress; tiles lead from sm up', () => {
+    stub({ empty: true });
+    renderWithSWR(withLocale('en-GB', <HomeScreen />));
+    const [wide, phone] = screen.getAllByRole('region', { name: 'Start something' });
+    expect(wide).toHaveClass('max-sm:hidden');
+    expect(phone).toHaveClass('sm:hidden');
+    const order = [
+      wide!,
+      section('Needs you'),
+      phone!,
+      section('Coming up'),
+      section('In progress'),
+    ];
+    for (let i = 1; i < order.length; i++) {
+      expect(
+        order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
   });
 
   it('has an empty state for every section', async () => {

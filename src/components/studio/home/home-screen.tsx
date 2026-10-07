@@ -312,7 +312,8 @@ function QuickAction({
     <Link
       href={href}
       className={cn(
-        'group grid gap-1 rounded-field border p-4 transition-colors',
+        // Phones: a compact tile (icon + title, one truncated line); sm and up: the full card.
+        'group grid min-w-0 content-start gap-0.5 rounded-field border p-3 transition-colors sm:gap-1 sm:p-4',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
         primary
           ? 'border-primary/30 bg-signal-soft hover:border-primary/50'
@@ -321,20 +322,23 @@ function QuickAction({
     >
       <Icon
         aria-hidden
-        className={cn('mb-2 size-5', primary ? 'text-primary' : 'text-muted-foreground')}
+        className={cn(
+          'mb-1.5 size-4 sm:mb-2 sm:size-5',
+          primary ? 'text-primary' : 'text-muted-foreground',
+        )}
         strokeWidth={1.75}
       />
-      <span className="text-sm font-semibold">{title}</span>
-      <span className="text-xs text-muted-foreground">{body}</span>
+      <span className="truncate text-sm font-semibold sm:whitespace-normal">{title}</span>
+      <span className="truncate text-xs text-muted-foreground sm:whitespace-normal">{body}</span>
     </Link>
   );
 }
 
-function QuickCreate() {
+function QuickCreate({ className, id }: { className?: string; id: string }) {
   const t = useTranslations('home.quick');
   return (
-    <section aria-labelledby="home-quick" className="grid gap-3">
-      <h2 id="home-quick" className="sr-only">
+    <section aria-labelledby={id} className={cn('grid gap-3', className)}>
+      <h2 id={id} className="sr-only">
         {t('title')}
       </h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -366,10 +370,14 @@ export function HomeScreen() {
         description={t('description')}
         actions={<SectionLink href="/plans">{t('monthPlans')}</SectionLink>}
       />
-      <div className="grid gap-10">
-        <QuickCreate />
-        <div className="grid gap-10 lg:grid-cols-2">
+      {/* Phones: Needs you first, then the compact create tiles, Coming up, In progress. From sm
+          up: the tiles lead. The tiles render once per layout (the other copy is display:none),
+          so the reading and focus order always match what is on screen. */}
+      <div className="grid gap-8 sm:gap-10">
+        <QuickCreate id="home-quick" className="max-sm:hidden" />
+        <div className="grid gap-8 sm:gap-10 lg:grid-cols-2">
           <NeedsYou />
+          <QuickCreate id="home-quick-phone" className="sm:hidden" />
           <ComingUp />
         </div>
         <InProgress />
