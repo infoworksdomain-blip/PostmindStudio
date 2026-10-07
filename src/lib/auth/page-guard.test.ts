@@ -1,3 +1,5 @@
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isProtectedPage, pageGuardEnabled, safeNextPath, signInRedirectPath } from './page-guard';
 
@@ -9,6 +11,15 @@ describe('page guard (Phase 18 §2.3)', () => {
     for (const path of ['/', '/pricing', '/sign-in', '/legal/terms', '/invite/x', '/projectsx']) {
       expect(isProtectedPage(path), path).toBe(false);
     }
+  });
+
+  it('protects every page of the signed-in app (25: /blitz, /plans and /automations were missed)', () => {
+    const studio = join(process.cwd(), 'src', 'app', '(studio)');
+    const sections = readdirSync(studio, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => `/${entry.name}`);
+    expect(sections.length).toBeGreaterThan(10);
+    for (const path of sections) expect(isProtectedPage(path), path).toBe(true);
   });
 
   it('sends a signed-out visitor to sign-in with a relative next', () => {
