@@ -5,8 +5,8 @@ import { STUDIO_CLIPS } from '@/lib/marketing/media';
 
 // 25.5 — the link-preview image for every public page (Open Graph and X cards), 1200×630: the
 // Daylight canvas, the PostMind mark, the headline and a real Studio poster frame in a phone.
-// Type: Inter from public/fonts (Geist ships only as WOFF2, which the image renderer cannot
-// read; Inter is its closest available relative). Rendered at build time from files in public/.
+// Type: the renderer's bundled Noto Sans (Geist ships only as WOFF2 and the variable TTFs in
+// public/fonts are not readable by the image renderer). Rendered at build time from public/.
 
 export const alt = 'PostMind Studio: create, plan and publish short videos from one brief';
 export const size = { width: 1200, height: 630 };
@@ -19,10 +19,9 @@ const SIGNAL = '#e2552f';
 
 export default async function OpengraphImage() {
   const root = process.cwd();
-  const [font, poster] = await Promise.all([
-    readFile(join(root, 'public', 'fonts', 'Inter.ttf')),
-    readFile(join(root, 'public', 'marketing', STUDIO_CLIPS.seedanceBread.poster.fallback.path)),
-  ]);
+  const poster = await readFile(
+    join(root, 'public', 'marketing', STUDIO_CLIPS.seedanceBread.poster.fallback.path),
+  );
   const posterSrc = `data:image/jpeg;base64,${poster.toString('base64')}`;
 
   return new ImageResponse(
@@ -32,7 +31,6 @@ export default async function OpengraphImage() {
         height: '100%',
         display: 'flex',
         background: CANVAS,
-        fontFamily: 'Inter',
         color: INK,
         padding: '64px 72px',
       }}
@@ -93,6 +91,6 @@ export default async function OpengraphImage() {
         />
       </div>
     </div>,
-    { ...size, fonts: [{ name: 'Inter', data: font, style: 'normal' }] },
+    size,
   );
 }
