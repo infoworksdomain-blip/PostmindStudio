@@ -1843,7 +1843,42 @@
       "aria": "Publicação do plano mensal às {time}: {title} ({status})",
       "legend": "As caixas marcadas com «Planeada» são publicações do plano mensal ainda em produção; depois de agendadas, aparecem como publicações."
     },
-    "timeZone": "As horas são apresentadas no seu fuso horário: {zone}."
+    "timeZone": "As horas são apresentadas no seu fuso horário: {zone}.",
+    "panel": {
+      "close": "Fechar",
+      "loading": "A carregar a publicação",
+      "caption": "Legenda",
+      "noCaption": "Ainda sem legenda.",
+      "platforms": "Redes",
+      "noPlatforms": "Ainda não escolhidas",
+      "scheduled": "Agendado para",
+      "notScheduled": "Ainda não agendado",
+      "status": "Estado",
+      "notMadeYet": "Esta publicação ainda não foi criada. Aparece aqui assim que o plano a começar a criar.",
+      "openPlan": "Abrir o plano",
+      "actions": {
+        "aria": "Ações da publicação",
+        "approve": "Aprovar",
+        "approved": "Aprovado.",
+        "reschedule": "Reagendar",
+        "regenerate": "Gerar novamente",
+        "regenerating": "A criar de novo.",
+        "open": "Abrir projeto"
+      },
+      "preview": {
+        "aria": "Pré-visualização da publicação ({kind})",
+        "nothingYet": "Ainda não há nada para pré-visualizar. A pré-visualização aparece assim que a publicação tiver diapositivos, texto ou planos.",
+        "storyboard": "STORYBOARD",
+        "shot": "Plano {n} de {total}",
+        "kind": {
+          "video": "vídeo concluído",
+          "slides": "diapositivos",
+          "text": "texto",
+          "storyboard": "storyboard",
+          "none": "vazia"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6154,5 +6189,19 @@
       "done": "Tudo revisado",
       "doneBody": "Aprove para criar as publicações e agendá-las nos horários."
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "A planear",
+      "making_clips": "A criar clipes",
+      "composing": "A montar",
+      "ready": "Pronto",
+      "scheduled": "Agendado",
+      "posted": "Publicado",
+      "failed": "Falhou"
+    },
+    "eta": "~{minutes} min",
+    "finishing": "quase pronto",
+    "withEta": "{stage} · {eta}"
   }
 }

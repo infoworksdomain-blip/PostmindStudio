@@ -32,10 +32,11 @@ export async function fetchWindow(from: string, to: string): Promise<CalendarDat
   return { publications, truncated: true };
 }
 
-export function useCalendarPublications(from: string, to: string) {
+/** @param refreshMs 24.2: refresh interval while live status is unavailable (0 = none). */
+export function useCalendarPublications(from: string, to: string, refreshMs = 0) {
   return useSWR<CalendarData, ApiError>(
     ['studio-calendar', from, to],
     ([, f, t]: [string, string, string]) => fetchWindow(f, t),
-    { revalidateOnFocus: false, keepPreviousData: true },
+    { revalidateOnFocus: false, keepPreviousData: true, refreshInterval: refreshMs },
   );
 }

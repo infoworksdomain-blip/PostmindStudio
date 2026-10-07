@@ -1843,7 +1843,42 @@
       "aria": "Publication du plan mensuel à {time} : {title} ({status})",
       "legend": "Les cases marquées « Planifiée » sont des publications du plan mensuel encore en production ; une fois programmées, elles apparaissent comme des publications."
     },
-    "timeZone": "Les heures sont affichées dans votre fuseau horaire : {zone}."
+    "timeZone": "Les heures sont affichées dans votre fuseau horaire : {zone}.",
+    "panel": {
+      "close": "Fermer",
+      "loading": "Chargement de la publication",
+      "caption": "Légende",
+      "noCaption": "Pas encore de légende.",
+      "platforms": "Réseaux",
+      "noPlatforms": "Pas encore choisis",
+      "scheduled": "Programmée pour",
+      "notScheduled": "Pas encore programmée",
+      "status": "Statut",
+      "notMadeYet": "Cette publication n’a pas encore été créée. Elle apparaît ici dès que son plan commence à la créer.",
+      "openPlan": "Ouvrir le plan",
+      "actions": {
+        "aria": "Actions de la publication",
+        "approve": "Approuver",
+        "approved": "Approuvée.",
+        "reschedule": "Reprogrammer",
+        "regenerate": "Régénérer",
+        "regenerating": "Nouvelle création en cours.",
+        "open": "Ouvrir le projet"
+      },
+      "preview": {
+        "aria": "Aperçu de la publication ({kind})",
+        "nothingYet": "Rien à prévisualiser pour l’instant. L’aperçu apparaît dès que la publication a des diapositives, du texte ou des plans.",
+        "storyboard": "STORYBOARD",
+        "shot": "Plan {n} sur {total}",
+        "kind": {
+          "video": "vidéo terminée",
+          "slides": "diapositives",
+          "text": "texte",
+          "storyboard": "storyboard",
+          "none": "vide"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6154,5 +6189,19 @@
       "done": "Tout est revu",
       "doneBody": "Approuvez pour créer les publications et les planifier à leur heure."
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "Planification",
+      "making_clips": "Création des plans",
+      "composing": "Montage",
+      "ready": "Prête",
+      "scheduled": "Programmée",
+      "posted": "Publiée",
+      "failed": "Échec"
+    },
+    "eta": "~{minutes} min",
+    "finishing": "presque terminé",
+    "withEta": "{stage} · {eta}"
   }
 }

@@ -70,7 +70,7 @@ describe('PublicationsCalendar', () => {
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
     const grid = await screen.findByRole('list', { name: 'Days of the month' });
     expect(
-      within(grid).getByRole('link', { name: /Video f1, YouTube Shorts, Failed/ }),
+      within(grid).getByRole('button', { name: /Video f1, YouTube Shorts, Failed/ }),
     ).toBeInTheDocument();
     await user.click(within(grid).getByRole('button', { name: 'Retry Video f1' }));
     await waitFor(() => expect(api.find('POST', '/publications/f1/retry')).toHaveLength(1));
@@ -88,7 +88,9 @@ describe('PublicationsCalendar', () => {
     renderScreen(<PublicationsCalendar initialDate={SEPT} />);
     const grid = await screen.findByRole('list', { name: 'Days of the month' });
     const cell = grid.querySelector('[data-day="2026-09-14"]') as HTMLElement;
-    expect(within(cell).getAllByRole('link')).toHaveLength(4);
+    expect(
+      within(cell).getAllByRole('button', { name: /^Video d\d, YouTube Shorts/ }),
+    ).toHaveLength(4);
     expect(within(cell).queryByText(/more/)).toBeNull();
   });
 
@@ -111,15 +113,18 @@ describe('PublicationsCalendar', () => {
     expect(screen.getByRole('heading', { name: /September 2026/ })).toBeInTheDocument();
 
     const grid = await screen.findByRole('list', { name: 'Days of the month' });
+    // 24.2: a post opens the side panel (a dialog) instead of navigating away.
     expect(
-      within(grid).getByRole('link', { name: /Video a, YouTube Shorts, Scheduled/ }),
-    ).toHaveAttribute('href', '/projects/prj_a');
+      within(grid).getByRole('button', { name: /Video a, YouTube Shorts, Scheduled/ }),
+    ).toHaveAttribute('aria-haspopup', 'dialog');
     expect(
-      within(grid).getByRole('link', { name: /Video b, YouTube Shorts, Live/ }),
+      within(grid).getByRole('button', { name: /Video b, YouTube Shorts, Live/ }),
     ).toBeInTheDocument();
     // the phone agenda lists the same two days
     const agenda = screen.getByRole('list', { name: 'Agenda' });
-    expect(within(agenda).getAllByRole('link')).toHaveLength(2);
+    expect(
+      within(agenda).getAllByRole('button', { name: /^Video [ab], YouTube Shorts/ }),
+    ).toHaveLength(2);
 
     const q = api.find('GET', '/publications')[0]!.url.searchParams;
     expect(q.get('state')).toBe('SCHEDULED,PUBLISHING,PUBLISHED,FAILED');
@@ -224,7 +229,7 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
     expect(spans.every((ms) => ms <= 62 * DAY)).toBe(true);
   });
 
-  it('20.9: shows month-plan posts still being made, linking to their plan', async () => {
+  it('20.9 / 24.2: shows month-plan posts still being made; one opens in the side panel', async () => {
     server(
       upcoming({
         openSlots: [],
@@ -240,12 +245,20 @@ describe('PublicationsCalendar — month ahead (20.3)', () => {
         ],
       }),
     );
+    const user = userEvent.setup();
     renderScreen(<PublicationsCalendar initialDate={new Date(Date.now() + 2 * DAY)} />);
     const grid = await screen.findByRole('list', { name: 'Days of the month' });
-    const marker = await within(grid).findByRole('link', {
+    const marker = await within(grid).findByRole('button', {
       name: /^Month-plan post at .+: Halloween loaves \(Being made\)$/,
     });
-    expect(marker).toHaveAttribute('href', '/plans/plan_1');
+    await user.click(marker);
+    const panel = await screen.findByRole('dialog', { name: 'Halloween loaves' });
+    expect(within(panel).getByRole('link', { name: /Open the plan/ })).toHaveAttribute(
+      'href',
+      '/plans/plan_1',
+    );
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.getByText(/Boxes marked “Planned” are month-plan posts/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Plan my month/ })).toHaveAttribute(
       'href',

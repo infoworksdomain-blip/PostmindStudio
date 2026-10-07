@@ -336,6 +336,12 @@ export class ConfigurationError extends StudioError {
   readonly code = 'configuration_error';
 }
 
+/** 24.2: live status (SSE) has no event bus in this process; the browser falls back to polling. */
+export class LiveEventsUnavailableError extends StudioError {
+  readonly status = 503;
+  readonly code = 'live_unavailable';
+}
+
 /** An integration point that is deliberately not built yet (CLAUDE.md rule 4). */
 export class NotImplementedError extends StudioError {
   readonly status = 501;

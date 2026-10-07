@@ -20,6 +20,9 @@ export interface MoveHandlers {
   /** Retry a failed publication. */
   onRetry?: (publication: Publication) => void;
   retryingId?: string | null;
+  /** 24.2: open a post in the side panel. */
+  onOpen?: (publication: Publication) => void;
+  onOpenPlanned?: (post: PlannedPost) => void;
 }
 
 // Desktop: a seven-column month grid. Phones: the same month as an agenda of days that have
@@ -131,6 +134,7 @@ export function MonthGrid({
                   compact
                   onMove={move?.onMove}
                   onRetry={move?.onRetry}
+                  onOpen={move?.onOpen}
                   busy={move?.pendingId === p.id || move?.retryingId === p.id}
                 />
               ))}
@@ -140,7 +144,7 @@ export function MonthGrid({
                 </span>
               )}
               {shownPlanned.map((post) => (
-                <PlannedSlot key={post.itemId} post={post} compact />
+                <PlannedSlot key={post.itemId} post={post} compact onOpen={move?.onOpenPlanned} />
               ))}
               {planned.length > shownPlanned.length && (
                 <span className="px-1.5 text-[0.7rem] text-muted-foreground">
@@ -225,11 +229,12 @@ export function AgendaList({
                   publication={p}
                   onMove={move?.onMove}
                   onRetry={move?.onRetry}
+                  onOpen={move?.onOpen}
                   busy={move?.pendingId === p.id || move?.retryingId === p.id}
                 />
               ))}
               {(plannedByDay.get(key) ?? []).map((post) => (
-                <PlannedSlot key={post.itemId} post={post} />
+                <PlannedSlot key={post.itemId} post={post} onOpen={move?.onOpenPlanned} />
               ))}
               {(openByDay.get(key) ?? []).map((at) => (
                 <OpenSlot key={at} at={at} />

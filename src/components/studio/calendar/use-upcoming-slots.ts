@@ -31,6 +31,8 @@ export interface PlannedPost {
   title: string;
   kind: 'VIDEO' | 'SLIDESHOW';
   status: 'QUEUED' | 'GENERATING' | 'READY' | 'HELD';
+  /** 24.2: the post's project once it has one (live status chip, side panel). */
+  projectId?: string | null;
 }
 
 export const SUMMARY_DAYS = 30;
@@ -55,10 +57,13 @@ export function useUpcomingSlots(
   businessId: string | null,
   window: { from: string; to: string },
   now: number,
+  /** 24.2: refresh interval while live status is unavailable (0 = none). */
+  refreshMs = 0,
 ) {
   const past = Date.parse(window.to) <= now;
   return useApi<{ upcoming: UpcomingSlots }>(
     businessId && !past ? upcomingPath(businessId) : null,
     { from: window.from, to: window.to },
+    refreshMs ? { refreshInterval: refreshMs } : undefined,
   );
 }

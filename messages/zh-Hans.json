@@ -1843,7 +1843,42 @@
       "aria": "{time} 的月度计划帖子：{title}（{status}）",
       "legend": "标有“已规划”的方框是仍在制作中的月度计划帖子；排期后会显示为帖子。"
     },
-    "timeZone": "时间按你所在的时区显示：{zone}。"
+    "timeZone": "时间按你所在的时区显示：{zone}。",
+    "panel": {
+      "close": "关闭",
+      "loading": "正在加载帖子",
+      "caption": "文案",
+      "noCaption": "暂无文案。",
+      "platforms": "平台",
+      "noPlatforms": "尚未选择",
+      "scheduled": "排期时间",
+      "notScheduled": "尚未排期",
+      "status": "状态",
+      "notMadeYet": "此帖子尚未制作。计划开始制作后，它会立即显示在这里。",
+      "openPlan": "打开计划",
+      "actions": {
+        "aria": "帖子操作",
+        "approve": "批准",
+        "approved": "已批准。",
+        "reschedule": "重新排期",
+        "regenerate": "重新生成",
+        "regenerating": "正在重新制作。",
+        "open": "打开项目"
+      },
+      "preview": {
+        "aria": "帖子预览（{kind}）",
+        "nothingYet": "暂无可预览的内容。帖子有了幻灯片、文字或镜头后，预览会立即出现。",
+        "storyboard": "分镜",
+        "shot": "第 {n} 个镜头，共 {total} 个",
+        "kind": {
+          "video": "成品视频",
+          "slides": "幻灯片",
+          "text": "文字",
+          "storyboard": "分镜",
+          "none": "空"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6154,5 +6189,19 @@
       "done": "全部审核完毕",
       "doneBody": "批准后即会制作帖子并按时排期。"
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "规划中",
+      "making_clips": "制作片段中",
+      "composing": "合成中",
+      "ready": "已就绪",
+      "scheduled": "已排期",
+      "posted": "已发布",
+      "failed": "失败"
+    },
+    "eta": "约 {minutes} 分钟",
+    "finishing": "即将完成",
+    "withEta": "{stage} · {eta}"
   }
 }

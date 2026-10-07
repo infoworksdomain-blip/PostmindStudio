@@ -1843,7 +1843,42 @@
       "aria": "Beitrag aus dem Monatsplan um {time}: {title} ({status})",
       "legend": "Mit „Geplant“ markierte Felder sind Beiträge aus dem Monatsplan, die noch erstellt werden; sobald sie eingeplant sind, erscheinen sie als Beiträge."
     },
-    "timeZone": "Die Zeiten werden in Ihrer Zeitzone angezeigt: {zone}."
+    "timeZone": "Die Zeiten werden in Ihrer Zeitzone angezeigt: {zone}.",
+    "panel": {
+      "close": "Schließen",
+      "loading": "Beitrag wird geladen",
+      "caption": "Beschriftung",
+      "noCaption": "Noch keine Beschriftung.",
+      "platforms": "Netzwerke",
+      "noPlatforms": "Noch nicht gewählt",
+      "scheduled": "Geplant für",
+      "notScheduled": "Noch nicht geplant",
+      "status": "Status",
+      "notMadeYet": "Dieser Beitrag wurde noch nicht erstellt. Er erscheint hier, sobald sein Plan mit der Erstellung beginnt.",
+      "openPlan": "Plan öffnen",
+      "actions": {
+        "aria": "Aktionen für den Beitrag",
+        "approve": "Freigeben",
+        "approved": "Freigegeben.",
+        "reschedule": "Neu planen",
+        "regenerate": "Neu erstellen",
+        "regenerating": "Wird neu erstellt.",
+        "open": "Projekt öffnen"
+      },
+      "preview": {
+        "aria": "Vorschau des Beitrags ({kind})",
+        "nothingYet": "Noch nichts für eine Vorschau. Sie erscheint, sobald der Beitrag Folien, Text oder Einstellungen hat.",
+        "storyboard": "STORYBOARD",
+        "shot": "Einstellung {n} von {total}",
+        "kind": {
+          "video": "fertiges Video",
+          "slides": "Folien",
+          "text": "Text",
+          "storyboard": "Storyboard",
+          "none": "leer"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6154,5 +6189,19 @@
       "done": "Alles geprüft",
       "doneBody": "Geben Sie frei, um die Beiträge zu erstellen und zu ihrer Zeit zu planen."
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "Planung",
+      "making_clips": "Clips entstehen",
+      "composing": "Schnitt",
+      "ready": "Fertig",
+      "scheduled": "Geplant",
+      "posted": "Gepostet",
+      "failed": "Fehlgeschlagen"
+    },
+    "eta": "~{minutes} Min.",
+    "finishing": "gleich fertig",
+    "withEta": "{stage} · {eta}"
   }
 }

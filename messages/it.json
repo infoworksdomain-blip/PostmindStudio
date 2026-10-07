@@ -1843,7 +1843,42 @@
       "aria": "Post del piano mensile alle {time}: {title} ({status})",
       "legend": "Le caselle con “Pianificato” sono post del piano mensile ancora in realizzazione; una volta programmati appaiono come post."
     },
-    "timeZone": "Gli orari sono mostrati nel tuo fuso orario: {zone}."
+    "timeZone": "Gli orari sono mostrati nel tuo fuso orario: {zone}.",
+    "panel": {
+      "close": "Chiudi",
+      "loading": "Caricamento del post",
+      "caption": "Didascalia",
+      "noCaption": "Ancora nessuna didascalia.",
+      "platforms": "Social",
+      "noPlatforms": "Non ancora scelti",
+      "scheduled": "Programmato per",
+      "notScheduled": "Non ancora programmato",
+      "status": "Stato",
+      "notMadeYet": "Questo post non è ancora stato creato. Comparirà qui non appena il suo piano inizierà a crearlo.",
+      "openPlan": "Apri il piano",
+      "actions": {
+        "aria": "Azioni del post",
+        "approve": "Approva",
+        "approved": "Approvato.",
+        "reschedule": "Riprogramma",
+        "regenerate": "Rigenera",
+        "regenerating": "Lo stiamo creando di nuovo.",
+        "open": "Apri progetto"
+      },
+      "preview": {
+        "aria": "Anteprima del post ({kind})",
+        "nothingYet": "Ancora niente da mostrare in anteprima. L’anteprima compare non appena il post ha slide, testo o inquadrature.",
+        "storyboard": "STORYBOARD",
+        "shot": "Inquadratura {n} di {total}",
+        "kind": {
+          "video": "video finito",
+          "slides": "slide",
+          "text": "testo",
+          "storyboard": "storyboard",
+          "none": "vuota"
+        }
+      }
+    }
   },
   "business": {
     "screen": {
@@ -6154,5 +6189,19 @@
       "done": "Tutto rivisto",
       "doneBody": "Approva per creare i post e programmarli ai loro orari."
     }
+  },
+  "live": {
+    "stage": {
+      "planning": "Pianificazione",
+      "making_clips": "Creazione clip",
+      "composing": "Montaggio",
+      "ready": "Pronto",
+      "scheduled": "Programmato",
+      "posted": "Pubblicato",
+      "failed": "Non riuscito"
+    },
+    "eta": "~{minutes} min",
+    "finishing": "quasi pronto",
+    "withEta": "{stage} · {eta}"
   }
 }
