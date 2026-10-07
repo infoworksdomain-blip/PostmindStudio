@@ -89,7 +89,7 @@ describe('CreateScreen', () => {
       name: 'Spring menu launch',
       businessId: 'biz_1',
       sourceType: 'BRIEF',
-      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 45 }],
+      targetFormats: [{ platform: 'youtube_short', aspectRatio: '9:16', durationSec: 30 }],
       brief: { rawInput: 'Spring menu launch' },
       brandKitId: 'kit_1',
       // 20.12: the business's only YouTube account is pre-selected and auto-publish is on.
