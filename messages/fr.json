@@ -4168,14 +4168,14 @@
       },
       "frames": {
         "one": "Tout juste sorti à 7 h",
-        "two": "Rencontrez les boulangers",
-        "three": "Trois pains, un week-end"
+        "two": "On se voit au marché",
+        "three": "Cottages avec vue sur la mer, de deux à six personnes"
       },
       "slate": {
         "scene": "Scène 01",
         "take": "Prise 1"
       },
-      "phoneAlt": "Exemple de vidéo verticale : un pain au levain entaillé sur du papier cuisson, avec la légende « Tout juste sorti à 7 h »"
+      "phoneAlt": "Exemple de vidéo verticale faite avec PostMind Studio : de la vapeur s’élève d’un pain tout juste cuit sur une planche en bois, avec la légende « Tout juste sorti à 7 h »"
     },
     "platforms": {
       "title": "Un seul brief, adapté à chaque flux"
@@ -4200,18 +4200,18 @@
       "eyebrow": "Planche contact",
       "title": "Tous les formats, à partir d’un seul brief.",
       "body": "Vertical pour TikTok, Reels et Shorts, carré et portrait pour les fils d’actualité, grand écran pour YouTube et LinkedIn.",
-      "note": "Photos d’illustration montrant les formats que Studio produit, pas des vidéos de clients.",
+      "note": "Fait avec PostMind Studio. Les entreprises présentées sont des exemples.",
       "captions": {
-        "market": "Marché du samedi, 8 h",
-        "studio": "Comment nous façonnons un pain au levain",
-        "salon": "Coupes du vendredi, réservez",
-        "gym": "Cours de 6 h, plus que trois places"
+        "wren": "Lin lavé rouille et sauge",
+        "harbour": "Espresso d’origine unique",
+        "greenleaf": "Dahlias, cosmos et roses tardives",
+        "pulse": "Cours de 45 minutes en petits groupes"
       },
       "alts": {
-        "market": "Un étal de pain sur un marché, des miches empilées sur une nappe à carreaux rouges",
-        "studio": "Des mains farinées façonnent une pâte sur un plan de travail en bois",
-        "salon": "Ciseaux, rasoir et peigne posés sur un tapis noir",
-        "gym": "Des rangées d’haltères sur un rack dans une salle de sport"
+        "wren": "Des plis de lin lavé couleur rouille et vert sauge",
+        "harbour": "Un espresso coule d’une machine dans une petite tasse blanche tenue d’une main",
+        "greenleaf": "Une rose rouge épanouie devant un jardin doucement flou",
+        "pulse": "Un homme s’entraîne avec des bandes élastiques, vu d’en haut sous une lumière tamisée"
       }
     },
     "features": {

@@ -1,4 +1,4 @@
-# Marketing images (BACKLOG 20.8)
+# Marketing images (BACKLOG 20.8, 25.5)
 
 Every file in `public/marketing/` is listed below with where it came from.
 `test/unit/marketing-media.test.ts` fails when a file here is missing from this list, when a file the
@@ -7,7 +7,8 @@ shim (`demo/shims/marketing-media-src.ts`) does not inline it.
 
 Next.js serves `public/` from the site root, so these are at `/marketing/…`. The single-file demo
 build inlines the same files as `data:` URLs, and its sample thumbnails and videos
-(`demo/media.ts`) are drawn from the photos.
+(`demo/media.ts`) are drawn from the photos. Since 2026-10-07 the landing page itself shows only
+real PostMind Studio output (`studio/`) and product screens; the photos stay for the demo.
 
 ## Photos (`photos/`)
 
@@ -38,8 +39,29 @@ encoded as WebP (quality 66) with `sharp`.
 | `photos/cake.webp` | [Py0PU5aOob4](https://unsplash.com/photos/Py0PU5aOob4) — cake slices on turquoise patterned plates | Shuvro Mojumder | none | 40,830 |
 | `photos/dough-balls.webp` | [lQfKoeq029A](https://unsplash.com/photos/lQfKoeq029A) — baker shaping dough balls on a counter | Martin Baron | none (hands only, motion-blurred) | 42,008 |
 | `photos/breakfast.webp` | [dQ9lqaL_1Dw](https://unsplash.com/photos/dQ9lqaL_1Dw) — a breakfast spread with coffee, croissant and avocado toast | Diego Marín | none | 30,774 |
-| `photos/gym.webp` | [8MCy6GeU490](https://unsplash.com/photos/8MCy6GeU490) — dumbbells neatly arranged on a rack in a gym | Palak Pitroda | none | 29,458 |
-| `photos/salon-tools.webp` | [Ehsvw7CEfb4](https://unsplash.com/photos/Ehsvw7CEfb4) — scissors beside a hair comb | Vitor Monthay | x 0–1240 of 1600×1067: removes a hair clipper with a maker's mark | 44,162 |
+
+## PostMind Studio output (`studio/`)
+
+Every file here was **made with PostMind Studio on 2026-10-07 (showcase businesses are fictional)**:
+generated on production by Studio's own pipeline from one-line briefs — the two AI video clips by
+Studio's video generation (Seedance), the slideshows by Studio's own renderer (23.5). The
+businesses (Atelier Wren, Pulse Studio, Coastline Stays, Greenleaf Florist, Harbour Coffee) are
+fictional; nothing here is a customer's work. Owned by the operator.
+
+Posters are the frame at 4.5 s, encoded with sharp (WebP quality 60 at 720 px, 64 at 360 px); the
+files are byte-identical to the ones the full landing redesign (PR #138) adds. Slideshow posters
+carry their own burnt-in caption at the bottom; the landing page crops that strip out and shows the
+same words in its caption chip (`src/components/marketing/scene-frame.tsx`).
+
+| File | What it is | Bytes |
+| --- | --- | --- |
+| `studio/seedance-bread-720.webp` | AI video (Seedance) from the brief “slow push-in on a golden sourdough loaf…”, 6 s, 9:16: poster, 720×1280 WebP (hero phone) | 27,076 |
+| `studio/seedance-market-360.webp` | AI video (Seedance) from the brief “a woman walking through a sunlit food market, smiling at a stallholder”, 6 s, 9:16: poster, 360×640 WebP (hero card) | 16,508 |
+| `studio/coastline-stays-slideshow-360.webp` | Slideshow for Coastline Stays (seaside cottages): poster, 360×640 WebP (hero card) | 40,338 |
+| `studio/atelier-wren-slideshow-720.webp` | Slideshow for Atelier Wren (linen boutique): poster, 720×1280 WebP (contact sheet 9:16) | 69,172 |
+| `studio/harbour-coffee-slideshow-720.webp` | Slideshow for Harbour Coffee (coffee shop): poster, 720×1280 WebP (contact sheet 16:9, cropped) | 27,600 |
+| `studio/greenleaf-florist-slideshow-720.webp` | Slideshow for Greenleaf Florist (florist): poster, 720×1280 WebP (contact sheet 1:1, cropped) | 21,774 |
+| `studio/pulse-studio-slideshow-720.webp` | Slideshow for Pulse Studio (fitness studio): poster, 720×1280 WebP (contact sheet 4:5, cropped) | 31,760 |
 
 ## Product screens (`screens/`)
 

@@ -4168,14 +4168,14 @@
       },
       "frames": {
         "one": "Recién salido a las 7 de la mañana",
-        "two": "Conoce a los panaderos",
-        "three": "Tres hogazas, un fin de semana"
+        "two": "Nos vemos en el mercado",
+        "three": "Casitas con vistas al mar para dos a seis personas"
       },
       "slate": {
         "scene": "Escena 01",
         "take": "Toma 1"
       },
-      "phoneAlt": "Vídeo vertical de ejemplo: una hogaza de masa madre con greña sobre papel de horno, con el texto «Recién salido a las 7»"
+      "phoneAlt": "Vídeo vertical de ejemplo hecho con PostMind Studio: vapor que sale de una hogaza recién horneada sobre una tabla de madera, con el texto «Recién salido a las 7»"
     },
     "platforms": {
       "title": "Una idea, adaptada a cada red"
@@ -4200,18 +4200,18 @@
       "eyebrow": "Hoja de contactos",
       "title": "Cada formato, a partir de una sola idea.",
       "body": "Vertical para TikTok, Reels y Shorts, cuadrado y vertical para el feed, panorámico para YouTube y LinkedIn.",
-      "note": "Fotos de archivo que muestran los formatos que crea Studio, no vídeos de clientes.",
+      "note": "Hecho con PostMind Studio. Los negocios que se muestran son ejemplos.",
       "captions": {
-        "market": "Mercado del sábado, 8 de la mañana",
-        "studio": "Cómo formamos una masa madre",
-        "salon": "Cortes del viernes, reserva ya",
-        "gym": "Clase de las 6, quedan tres plazas"
+        "wren": "Lino lavado en óxido y salvia",
+        "harbour": "Espresso de origen único",
+        "greenleaf": "Dalias, cosmos y rosas tardías",
+        "pulse": "Clases en grupos reducidos de 45 minutos"
       },
       "alts": {
-        "market": "Un puesto de pan en un mercado callejero, hogazas apiladas sobre un mantel de cuadros rojos",
-        "studio": "Manos enharinadas formando una masa sobre una mesa de madera",
-        "salon": "Tijeras, una navaja y un peine sobre una alfombrilla negra",
-        "gym": "Filas de mancuernas en un soporte de un gimnasio"
+        "wren": "Pliegues de lino lavado en color óxido y verde salvia",
+        "harbour": "Espresso cayendo de una cafetera en una tacita blanca sujeta con una mano",
+        "greenleaf": "Una sola rosa roja abierta ante un jardín suavemente desenfocado",
+        "pulse": "Un hombre entrenando con bandas elásticas, visto desde arriba con poca luz"
       }
     },
     "features": {
