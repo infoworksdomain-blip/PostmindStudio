@@ -1,22 +1,18 @@
 import { z } from 'zod';
-import {
-  ConfigurationError,
-  CostCapPausedError,
-  KillSwitchTriggeredError,
-  ProviderError,
-} from '../../errors';
+import { ConfigurationError, ProviderError } from '../../errors';
 import { MAX_MUSIC_SEC, MIN_MUSIC_SEC } from '../providers/elevenlabs-music';
 import { minTierFor, tierAtLeast } from '../billing/catalogue';
 import type { PlanTier } from '../providers/router';
 import type { PipelineDeps } from './deps';
 import { buildMusicPrompt, type MusicPromptInput } from './music-prompt';
+import { fallbackLibraryTrack, musicFailureHandling } from './music-fallback';
 import {
   addToLibrary,
-  dropLibraryTrack,
   LIBRARY_SOURCE_PROVIDERS,
   musicBucketSec,
   pickLibraryTrack,
 } from './music-library';
+import { libraryTrackAsset } from './music-library-asset';
 import { mergeProjectMetadata } from './project-state';
 import { runProvider } from './provider-run';
 
@@ -29,10 +25,16 @@ import { runProvider } from './provider-run';
 //     the planned Storyblocks library pick is not built, so STANDARD and above get a generated
 //     track. The minimum tier is STUDIO_MUSIC_MIN_TIER (default STANDARD).
 //   - Non-fatal: any music failure (no provider configured, provider error, over budget for
-//     this one call) leaves the video without music and records
-//     metadata.music = { status: 'failed', reason }. The video still renders.
+//     this one call) falls back to a music-library track (25.x, music-fallback.ts: status
+//     'reused' with fallbackFrom = the failure; not with STUDIO_MUSIC_LIBRARY=off); only with no
+//     usable library track does the video
+//     render without music, recording metadata.music = { status: 'failed', reason }.
 //     CostCapPausedError and KillSwitchTriggeredError are NOT swallowed: a paused budget or an
-//     engaged kill switch stops the whole run, as for any other provider call (spec 12.5).
+//     engaged kill switch stops the whole run, as for any other provider call (spec 12.5). Nor is
+//     RateDeferredError (25.x): a full ElevenLabs Music slot (2 concurrent, provider-
+//     concurrency.ts) delays the compose job until a slot frees, then the track is generated.
+//   - 25.x: a retry of the same run reuses the asset that run already recorded (generated,
+//     reused or fallback), so a retried job never picks or pays for a second track.
 //   - One track per run, sized to the longest variant; each variant's clip trims it
 //     (Shotstack AudioAsset: "The audio will play until the file ends or the Clip length is
 //     reached"). Reuse: a stored AUDIO_MUSIC asset of this project with the same prompt key
@@ -68,6 +70,8 @@ export interface MusicMetadata {
   descriptors?: ReturnType<typeof buildMusicPrompt>['descriptors'];
   planTier?: PlanTier;
   reason?: string;
+  /** 25.x: status 'reused' because generation failed with this reason (library fallback). */
+  fallbackFrom?: string;
 }
 
 export function parseMusicMinTier(raw: string | undefined): PlanTier {
@@ -161,6 +165,27 @@ async function record(deps: PipelineDeps, projectId: string, music: MusicMetadat
   await mergeProjectMetadata(deps.db, { projectId, runId: music.runId, patch: { music } });
 }
 
+/** 25.x: the track this run already recorded (a retried compose job), if its asset is there. */
+async function sameRunTrack(
+  deps: PipelineDeps,
+  project: MusicProject,
+  runId: string,
+): Promise<StoredTrack | null> {
+  const recorded = (project.metadata as { music?: Partial<MusicMetadata> } | null)?.music;
+  if (recorded?.runId !== runId || typeof recorded.assetId !== 'string') return null;
+  const asset = await deps.db.videoAsset.findFirst({
+    where: {
+      id: recorded.assetId,
+      projectId: project.id,
+      organisationId: project.organisationId,
+      kind: 'AUDIO_MUSIC',
+    },
+  });
+  if (!asset) return null;
+  const durationSec = asset.durationSec ?? recorded.durationSec ?? 0;
+  return { bucket: asset.s3Bucket, key: asset.s3Key, durationSec };
+}
+
 function reasonOf(err: unknown): string {
   if (err instanceof ProviderError) return `${err.providerId} ${err.errorClass}: ${err.message}`;
   return err instanceof Error ? err.message : String(err);
@@ -168,7 +193,8 @@ function reasonOf(err: unknown): string {
 
 /**
  * Produce (or reuse) the run's music track. Returns the asset to lay under the edit, or null
- * for no music. Never throws for music problems; CostCapPausedError propagates.
+ * for no music. Never throws for music problems (a failed generation falls back to the music
+ * library, 25.x); CostCapPausedError, KillSwitchTriggeredError and RateDeferredError propagate.
  */
 export async function produceMusic(
   deps: PipelineDeps,
@@ -190,6 +216,8 @@ export async function produceMusic(
   const requestSec = musicRequestSec(input.videoSec);
   let built: ReturnType<typeof buildMusicPrompt> | undefined;
   try {
+    const again = await sameRunTrack(deps, project, runId);
+    if (again) return again;
     built = buildMusicPrompt(await promptInput(deps, project, input.kit, input.videoSec));
     const existing = await deps.db.videoAsset.findFirst({
       where: {
@@ -234,10 +262,34 @@ export async function produceMusic(
     }
     return await generateTrack(deps, { project, runId, planTier, built, requestSec, bucketSec });
   } catch (err) {
-    // A paused budget or an engaged kill switch stops the whole run, like any provider call.
-    if (err instanceof CostCapPausedError || err instanceof KillSwitchTriggeredError) throw err;
+    // A paused budget or an engaged kill switch stops the whole run, like any provider call;
+    // a full provider slot or rate window delays the job (25.x).
+    if (musicFailureHandling(err) === 'rethrow') throw err;
     const reason = reasonOf(err).slice(0, REASON_MAX);
-    log.warn({ reason }, 'music failed; rendering without music');
+    // STUDIO_MUSIC_LIBRARY=off keeps the library out of every video, fallback included.
+    const fallback = deps.config.musicLibrary?.enabled
+      ? await fallbackLibraryTrack(deps, { project, built, requestSec, reason })
+      : null;
+    if (fallback) {
+      log.info({ reason, match: fallback.match }, 'music failed; library track used instead');
+      await record(deps, project.id, {
+        status: 'reused',
+        runId,
+        assetId: fallback.assetId,
+        providerId: 'music-library',
+        libraryTrackId: fallback.libraryTrackId,
+        costPence: 0,
+        durationSec: fallback.stored.durationSec,
+        reused: true,
+        fallbackFrom: reason,
+        ...(built && { promptKey: built.key, descriptors: built.descriptors }),
+      });
+      return fallback.stored;
+    }
+    log.warn(
+      { reason },
+      'music failed and the music library has no track; rendering without music',
+    );
     await record(deps, project.id, {
       status: 'failed',
       runId,
@@ -269,34 +321,8 @@ async function reuseLibraryTrack(
     size: input.size,
   });
   if (!track) return null;
-  try {
-    await deps.storage.size(track.s3Bucket, track.s3Key);
-  } catch (err) {
-    deps.logger.warn({ err, trackId: track.id }, 'music library track missing; dropped');
-    await dropLibraryTrack(deps.db, track.id);
-    return null;
-  }
-  const asset = await deps.db.videoAsset.create({
-    data: {
-      organisationId: project.organisationId,
-      projectId: project.id,
-      shotId: null,
-      kind: 'AUDIO_MUSIC',
-      source: `music-library:${track.id}`,
-      s3Bucket: track.s3Bucket,
-      s3Key: track.s3Key,
-      durationSec: track.durationSec,
-      fingerprint: built.key,
-      providerJobId: null,
-      costPence: 0,
-      metadata: {
-        prompt: built.prompt,
-        descriptors: built.descriptors,
-        libraryTrackId: track.id,
-        generatedBy: track.source,
-      },
-    },
-  });
+  const asset = await libraryTrackAsset(deps, { project, track, fingerprint: built.key, built });
+  if (!asset) return null;
   await record(deps, project.id, {
     status: 'reused',
     runId: input.runId,

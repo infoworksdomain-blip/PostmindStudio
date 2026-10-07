@@ -311,6 +311,96 @@ describe.skipIf(!hasDb)('Layer 5 music on real Postgres', { timeout: 60_000 }, (
       expect(next.meta.libraryTrackId).toBeUndefined();
       expect(await db.musicLibraryTrack.count({ where: { promptKey: key } })).toBe(0);
     });
+
+    it(
+      '25.x: ElevenLabs Music rate-limited → a library track is laid under the video, never silent',
+      { timeout: 240_000 },
+      async () => {
+        const lib = await libraryHarness(5);
+        const first = await lib.video(); // generates, and adds its track to the library
+        const key = String(first.meta.promptKey);
+        expect(first.meta.libraryTrackId).toBeTruthy();
+        // The production refusal (2026-10-07), for every music request from now on.
+        const limited = musicDouble(() => ({
+          state: 'failed',
+          error: {
+            class: 'rate_limited',
+            message: 'too_many_concurrent_requests: maximum of 2 concurrent requests for your plan',
+            retryable: true,
+          },
+        }));
+        lib.h.deps.registry = createProviderRegistry([
+          ...lib.h.deps.registry.list().filter((a) => a.providerId !== 'elevenlabs-music'),
+          limited,
+        ]);
+        const next = await lib.video();
+        expect(limited.requests).toHaveLength(1);
+        expect(next.meta).toMatchObject({
+          status: 'reused',
+          reused: true,
+          providerId: 'music-library',
+          libraryTrackId: first.meta.libraryTrackId,
+          costPence: 0,
+          promptKey: key,
+          fallbackFrom: expect.stringContaining('rate_limited'),
+        });
+        const asset = await db.videoAsset.findFirstOrThrow({
+          where: { projectId: next.project.id, kind: 'AUDIO_MUSIC' },
+        });
+        expect(asset).toMatchObject({ costPence: 0, providerJobId: null, fingerprint: key });
+        // No music cost for the refused request (only generated tracks are paid for).
+        const jobs = await db.providerJob.findMany({
+          where: { projectId: next.project.id, provider: 'elevenlabs-music' },
+        });
+        expect(jobs.reduce((t, j) => t + j.costPence, 0)).toBe(0);
+        // The render has its music bed (the library object), not narration alone.
+        const bed = lastEditTracks(lib.h).at(-1)?.clips[0]?.asset;
+        expect(bed?.type).toBe('audio');
+        expect(bed?.src).toContain(`music-library/${key}/`);
+
+        // A retry of the same run keeps that track: no second pick, no second asset.
+        await lib.h.queue.add('compose-video', next.job);
+        expect((await drainInline(lib.h.queue, lib.h.deps)).failedJobs).toEqual([]);
+        expect(
+          await db.videoAsset.count({ where: { projectId: next.project.id, kind: 'AUDIO_MUSIC' } }),
+        ).toBe(1);
+        expect(limited.requests).toHaveLength(1);
+      },
+    );
+
+    it('25.x: with an empty library a failed generation still renders without music', async () => {
+      const lib = await libraryHarness(5);
+      const first = await lib.video();
+      libraryKeys.add(String(first.meta.promptKey));
+      for (const key of libraryKeys) await lib.clear(key);
+      const empty = (await db.musicLibraryTrack.count()) === 0;
+      const refused = musicDouble(() => ({
+        state: 'failed',
+        error: { class: 'provider_unavailable', message: 'service down', retryable: true },
+      }));
+      lib.h.deps.registry = createProviderRegistry([
+        ...lib.h.deps.registry.list().filter((a) => a.providerId !== 'elevenlabs-music'),
+        refused,
+      ]);
+      // Only this suite adds library tracks; with them cleared the library is empty (unless the
+      // database holds tracks from elsewhere, which the relaxed pick would then use).
+      const next = await lib.video();
+      if (empty) {
+        expect(next.meta).toMatchObject({
+          status: 'failed',
+          reason: expect.stringContaining('provider_unavailable'),
+        });
+        const audio = lastEditTracks(lib.h)
+          .flatMap((t) => t.clips)
+          .filter((c) => c.asset.type === 'audio');
+        expect(audio.every((c) => c.asset.volume === 1)).toBe(true); // narration only
+      } else {
+        expect(next.meta).toMatchObject({
+          status: 'reused',
+          fallbackFrom: expect.stringContaining('provider_unavailable'),
+        });
+      }
+    });
   });
 
   it('BASIC plans stay narration-only (spec 12.4) and never call the provider', async () => {
