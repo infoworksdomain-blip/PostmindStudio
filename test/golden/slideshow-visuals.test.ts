@@ -260,7 +260,15 @@ describe.skipIf(!hasDb)(
       });
       await expectAllFormatsReady(j, id);
 
-      expect(pixabay.calls).toEqual(POINTS);
+      // 25.x: photos are searched by a contextual query, not the bare caption. The harness has no
+      // light-model answer for slide_image_query, so the deterministic fallback is used: topic +
+      // caption, words de-duplicated case-insensitively ("opener" is already in the topic).
+      expect(pixabay.calls).toEqual([
+        '3 Steps to Nail Your Meeting Opener Open with the outcome you want',
+        '3 Steps to Nail Your Meeting Opener Name the one decision needed today',
+        '3 Steps to Nail Your Meeting Opener Ask a question in the first minute',
+        '3 Steps to Nail Your Meeting Opener Keep the under 60 seconds',
+      ]);
       const slides = await db.slideshowSlide.findMany({
         where: { projectId: id },
         orderBy: { sortOrder: 'asc' },
