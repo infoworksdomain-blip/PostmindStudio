@@ -522,7 +522,7 @@ test.describe('Admin Centre', () => {
     await expect(form.getByRole('button', { name: 'Save override' })).toBeDisabled();
     await form.getByLabel('Reason (required)').fill('QA pass 2: end the trial');
     await form.getByRole('button', { name: 'Save override' }).click();
-    await staff.getByRole('dialog').getByRole('button', { name: 'Yes, save' }).click();
+    await staff.getByRole('alertdialog').getByRole('button', { name: 'Yes, save' }).click();
     await expect(staff.getByText(/Ended by staff on/)).toBeVisible();
     await expect
       .poll(

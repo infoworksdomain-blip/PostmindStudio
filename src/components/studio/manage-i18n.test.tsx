@@ -67,8 +67,8 @@ describe.each(LOCALES)('Manage screens in %s', (locale) => {
     renderScreen(withLocale(locale, <ProjectsList />));
     expect(await screen.findByText('Autumn launch')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(m.projects.list.title);
-    const tabs = screen.getByRole('tablist', { name: m.projects.list.filtersAria });
-    expect(within(tabs).getByRole('tab', { name: m.projects.list.filters.review })).toBeVisible();
+    const tabs = screen.getByRole('radiogroup', { name: m.projects.list.filtersAria });
+    expect(within(tabs).getByRole('radio', { name: m.projects.list.filters.review })).toBeVisible();
     expect(screen.getAllByText(m.format.projectState.READY_FOR_REVIEW).length).toBeGreaterThan(0);
     expect(document.documentElement).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
   });

@@ -646,7 +646,7 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
   await form.getByRole('checkbox', { name: 'End the trial now' }).check();
   await form.getByLabel('Reason (required)').fill('Sweep: end the trial');
   await form.getByRole('button', { name: 'Save override' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Yes, save' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Yes, save' }).click();
   await expect(page.getByText(/Ended by staff on/)).toBeVisible();
   await w.settle();
   await w.check();

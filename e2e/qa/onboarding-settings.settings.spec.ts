@@ -339,7 +339,7 @@ test.describe('members', () => {
     );
     expect(res.status()).toBe(409);
     await page.getByRole('button', { name: 'Leave' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
     await expect(page.locator('[data-sonner-toast]').first()).toBeVisible();
     expect(await db.member.count({ where: { organizationId: org.id, role: 'owner' } })).toBe(1);
 
@@ -377,7 +377,7 @@ test.describe('members', () => {
     // The owner removes bob (confirm dialog), who then has no organisation.
     await page.reload();
     await page.getByRole('button', { name: `Remove ${bob.name}` }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Remove' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
     await toast(page, `${bob.name} was removed.`);
     expect(await db.member.count({ where: { id: bobMember } })).toBe(0);
     await w.assertClean();

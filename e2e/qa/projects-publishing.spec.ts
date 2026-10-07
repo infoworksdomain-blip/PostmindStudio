@@ -282,13 +282,13 @@ test.describe('projects search and row actions', () => {
     // Delete asks first; keeping it changes nothing, confirming removes it from every list.
     await menu('QA Draft video (copy)').click();
     await page.getByRole('menuitem', { name: 'Delete' }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('alertdialog');
     await expect(dialog).toContainText('Delete this video?');
     await dialog.getByRole('button', { name: 'Keep it' }).click();
     await expect(row('QA Draft video (copy)')).toBeVisible();
     await menu('QA Draft video (copy)').click();
     await page.getByRole('menuitem', { name: 'Delete' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(page.getByText('Deleted.').first()).toBeVisible();
     await expect(row('QA Draft video (copy)')).toHaveCount(0);
     expect(
@@ -850,9 +850,9 @@ test.describe('publications page', () => {
     await page.getByRole('radio', { name: 'Scheduled' }).click();
     const cancel = page.getByRole('button', { name: 'Cancel' }).first();
     await cancel.click();
-    await expect(page.getByRole('dialog')).toContainText('Cancel this scheduled post?');
+    await expect(page.getByRole('alertdialog')).toContainText('Cancel this scheduled post?');
     await page.getByRole('button', { name: 'Keep it' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     expect(
       (
         await db.videoPublication.findUniqueOrThrow({
@@ -865,7 +865,7 @@ test.describe('publications page', () => {
       .filter({ hasText: 'QA Published video' })
       .getByRole('button', { name: 'Cancel' })
       .click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel post' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel post' }).click();
     await expect(page.getByText('Scheduled post cancelled').first()).toBeVisible();
     await expect
       .poll(
@@ -916,9 +916,9 @@ test.describe('publications page', () => {
     await w.visit('/publications');
     await page.getByRole('radio', { name: 'Live' }).click();
     await page.getByRole('button', { name: 'Take down' }).first().click();
-    await expect(page.getByRole('dialog')).toContainText('cannot be undone');
+    await expect(page.getByRole('alertdialog')).toContainText('cannot be undone');
     await page.getByRole('button', { name: 'Keep it' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     await report(w);
   });
 
