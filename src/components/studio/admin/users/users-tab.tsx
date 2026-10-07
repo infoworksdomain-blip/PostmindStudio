@@ -288,7 +288,7 @@ export function UsersTab() {
   ];
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(e: FormEvent) => {

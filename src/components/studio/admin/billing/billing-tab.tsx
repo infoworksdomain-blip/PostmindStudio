@@ -32,7 +32,7 @@ export function AdminBillingTab({
         options={BILLING_VIEWS.map((v) => ({ value: v, label: t(v) }))}
         value={view}
         onChange={onViewChange}
-        className="max-w-full flex-wrap"
+        className="w-fit max-w-full flex-wrap"
       />
       {view === 'overview' && <SubscriptionsPanel />}
       {view === 'records' && <SubscriptionRecords />}
