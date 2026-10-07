@@ -1,14 +1,15 @@
-# Marketing images (BACKLOG 20.8, 25.5)
+# Marketing media (BACKLOG 20.8, 25.5)
 
 Every file in `public/marketing/` is listed below with where it came from.
 `test/unit/marketing-media.test.ts` fails when a file here is missing from this list, when a file the
-pages use (`src/lib/marketing/media.ts`) is missing or has a different pixel size, or when the demo
-shim (`demo/shims/marketing-media-src.ts`) does not inline it.
+pages use (`src/lib/marketing/media.ts`) is missing, has a different pixel size or is over its size
+budget, or when the demo shim (`demo/shims/marketing-media-src.ts`) does not inline an image (the
+demo shows Studio posters only, never the videos).
 
 Next.js serves `public/` from the site root, so these are at `/marketing/…`. The single-file demo
-build inlines the same files as `data:` URLs, and its sample thumbnails and videos
-(`demo/media.ts`) are drawn from the photos. Since 2026-10-07 the landing page itself shows only
-real PostMind Studio output (`studio/`) and product screens; the photos stay for the demo.
+build inlines the images as `data:` URLs, and its sample thumbnails and videos
+(`demo/media.ts`) are drawn from the photos. Since 25.5 the landing page itself shows only real
+PostMind Studio output (`studio/`) and product screens; the photos stay for the demo.
 
 ## Photos (`photos/`)
 
@@ -44,46 +45,79 @@ encoded as WebP (quality 66) with `sharp`.
 
 Every file here was **made with PostMind Studio on 2026-10-07 (showcase businesses are fictional)**:
 generated on production by Studio's own pipeline from one-line briefs — the two AI video clips by
-Studio's video generation (Seedance), the slideshows by Studio's own renderer (23.5). The
-businesses (Atelier Wren, Pulse Studio, Coastline Stays, Greenleaf Florist, Harbour Coffee) are
-fictional; nothing here is a customer's work. Owned by the operator.
+Studio's video generation (Seedance), the slideshows and walls of text by Studio's own renderer
+(23.5). The six businesses (Northside Bakery, Atelier Wren, Pulse Studio, Coastline Stays,
+Greenleaf Florist, Harbour Coffee) are fictional; nothing here is a customer's work. Owned by the
+operator.
 
-Posters are the frame at 4.5 s, encoded with sharp (WebP quality 60 at 720 px, 64 at 360 px); the
-files are byte-identical to the ones the full landing redesign (PR #138) adds. Slideshow posters
-carry their own burnt-in caption at the bottom; the landing page crops that strip out and shows the
-same words in its caption chip (`src/components/marketing/scene-frame.tsx`).
+Posters are the frame at 4.5 s (AI video: the operator's export), encoded by
+`node scripts/marketing/encode-studio-media.mjs <export-folder>` (sharp: WebP quality 60 at 720 px,
+64 at 360 px, JPEG quality 70 mozjpeg at 540 px); the MP4s are copied as exported. The landing page
+plays them muted, only on screens 768 px and wider, without reduced motion or Save-Data, and only
+while on screen; phones get the posters.
 
 | File | What it is | Bytes |
 | --- | --- | --- |
-| `studio/seedance-bread-720.webp` | AI video (Seedance) from the brief “slow push-in on a golden sourdough loaf…”, 6 s, 9:16: poster, 720×1280 WebP (hero phone) | 27,076 |
-| `studio/seedance-market-360.webp` | AI video (Seedance) from the brief “a woman walking through a sunlit food market, smiling at a stallholder”, 6 s, 9:16: poster, 360×640 WebP (hero card) | 16,508 |
-| `studio/coastline-stays-slideshow-360.webp` | Slideshow for Coastline Stays (seaside cottages): poster, 360×640 WebP (hero card) | 40,338 |
-| `studio/atelier-wren-slideshow-720.webp` | Slideshow for Atelier Wren (linen boutique): poster, 720×1280 WebP (contact sheet 9:16) | 69,172 |
-| `studio/harbour-coffee-slideshow-720.webp` | Slideshow for Harbour Coffee (coffee shop): poster, 720×1280 WebP (contact sheet 16:9, cropped) | 27,600 |
-| `studio/greenleaf-florist-slideshow-720.webp` | Slideshow for Greenleaf Florist (florist): poster, 720×1280 WebP (contact sheet 1:1, cropped) | 21,774 |
-| `studio/pulse-studio-slideshow-720.webp` | Slideshow for Pulse Studio (fitness studio): poster, 720×1280 WebP (contact sheet 4:5, cropped) | 31,760 |
+| `studio/seedance-bread-720.webp` | AI video (Seedance) from the brief “slow push-in on a golden sourdough loaf…”, 6 s, 9:16: poster, 720×1280 WebP | 27,076 |
+| `studio/seedance-bread-360.webp` | AI video (Seedance) from the brief “slow push-in on a golden sourdough loaf…”, 6 s, 9:16: poster, 360×640 WebP | 11,632 |
+| `studio/seedance-bread.jpg` | AI video (Seedance) from the brief “slow push-in on a golden sourdough loaf…”, 6 s, 9:16: poster fallback, 540×960 JPEG | 28,707 |
+| `studio/seedance-bread.mp4` | AI video (Seedance) from the brief “slow push-in on a golden sourdough loaf…”, 6 s, 9:16: muted clip as generated, 720×1280 H.264 MP4 | 805,405 |
+| `studio/seedance-market-720.webp` | AI video (Seedance) from the brief “a woman walking through a sunlit food market, smiling at a stallholder”, 6 s, 9:16: poster, 720×1280 WebP | 39,478 |
+| `studio/seedance-market-360.webp` | AI video (Seedance) from the brief “a woman walking through a sunlit food market, smiling at a stallholder”, 6 s, 9:16: poster, 360×640 WebP | 16,508 |
+| `studio/seedance-market.jpg` | AI video (Seedance) from the brief “a woman walking through a sunlit food market, smiling at a stallholder”, 6 s, 9:16: poster fallback, 540×960 JPEG | 39,104 |
+| `studio/seedance-market.mp4` | AI video (Seedance) from the brief “a woman walking through a sunlit food market, smiling at a stallholder”, 6 s, 9:16: muted clip as generated, 720×1280 H.264 MP4 | 1,557,898 |
+| `studio/northside-bakery-slideshow-720.webp` | Slideshow for Northside Bakery (sourdough bakery): poster, 720×1280 WebP | 42,834 |
+| `studio/northside-bakery-slideshow-360.webp` | Slideshow for Northside Bakery (sourdough bakery): poster, 360×640 WebP | 15,024 |
+| `studio/northside-bakery-slideshow.jpg` | Slideshow for Northside Bakery (sourdough bakery): poster fallback, 540×960 JPEG | 38,961 |
+| `studio/northside-bakery-slideshow.mp4` | Slideshow for Northside Bakery (sourdough bakery): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 339,228 |
+| `studio/atelier-wren-slideshow-720.webp` | Slideshow for Atelier Wren (linen boutique): poster, 720×1280 WebP | 69,172 |
+| `studio/atelier-wren-slideshow-360.webp` | Slideshow for Atelier Wren (linen boutique): poster, 360×640 WebP | 16,384 |
+| `studio/atelier-wren-slideshow.jpg` | Slideshow for Atelier Wren (linen boutique): poster fallback, 540×960 JPEG | 46,839 |
+| `studio/atelier-wren-slideshow.mp4` | Slideshow for Atelier Wren (linen boutique): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 257,234 |
+| `studio/pulse-studio-slideshow-720.webp` | Slideshow for Pulse Studio (fitness studio): poster, 720×1280 WebP | 31,760 |
+| `studio/pulse-studio-slideshow-360.webp` | Slideshow for Pulse Studio (fitness studio): poster, 360×640 WebP | 13,190 |
+| `studio/pulse-studio-slideshow.jpg` | Slideshow for Pulse Studio (fitness studio): poster fallback, 540×960 JPEG | 33,949 |
+| `studio/pulse-studio-slideshow.mp4` | Slideshow for Pulse Studio (fitness studio): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 179,322 |
+| `studio/coastline-stays-slideshow-720.webp` | Slideshow for Coastline Stays (seaside cottages): poster, 720×1280 WebP | 100,482 |
+| `studio/coastline-stays-slideshow-360.webp` | Slideshow for Coastline Stays (seaside cottages): poster, 360×640 WebP | 40,338 |
+| `studio/coastline-stays-slideshow.jpg` | Slideshow for Coastline Stays (seaside cottages): poster fallback, 540×960 JPEG | 82,352 |
+| `studio/coastline-stays-slideshow.mp4` | Slideshow for Coastline Stays (seaside cottages): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 359,591 |
+| `studio/greenleaf-florist-slideshow-720.webp` | Slideshow for Greenleaf Florist: poster, 720×1280 WebP | 21,774 |
+| `studio/greenleaf-florist-slideshow-360.webp` | Slideshow for Greenleaf Florist: poster, 360×640 WebP | 10,174 |
+| `studio/greenleaf-florist-slideshow.jpg` | Slideshow for Greenleaf Florist: poster fallback, 540×960 JPEG | 27,365 |
+| `studio/greenleaf-florist-slideshow.mp4` | Slideshow for Greenleaf Florist: muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 196,099 |
+| `studio/harbour-coffee-slideshow-720.webp` | Slideshow for Harbour Coffee (coffee shop): poster, 720×1280 WebP | 27,600 |
+| `studio/harbour-coffee-slideshow-360.webp` | Slideshow for Harbour Coffee (coffee shop): poster, 360×640 WebP | 12,524 |
+| `studio/harbour-coffee-slideshow.jpg` | Slideshow for Harbour Coffee (coffee shop): poster fallback, 540×960 JPEG | 30,766 |
+| `studio/harbour-coffee-slideshow.mp4` | Slideshow for Harbour Coffee (coffee shop): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 184,223 |
+| `studio/pulse-studio-wall-of-text-720.webp` | Wall-of-text post for Pulse Studio (fitness studio): poster, 720×1280 WebP | 34,002 |
+| `studio/pulse-studio-wall-of-text-360.webp` | Wall-of-text post for Pulse Studio (fitness studio): poster, 360×640 WebP | 16,004 |
+| `studio/pulse-studio-wall-of-text.jpg` | Wall-of-text post for Pulse Studio (fitness studio): poster fallback, 540×960 JPEG | 34,921 |
+| `studio/pulse-studio-wall-of-text.mp4` | Wall-of-text post for Pulse Studio (fitness studio): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 237,494 |
+| `studio/coastline-stays-wall-of-text-720.webp` | Wall-of-text post for Coastline Stays (seaside cottages): poster, 720×1280 WebP | 39,066 |
+| `studio/coastline-stays-wall-of-text-360.webp` | Wall-of-text post for Coastline Stays (seaside cottages): poster, 360×640 WebP | 19,220 |
+| `studio/coastline-stays-wall-of-text.jpg` | Wall-of-text post for Coastline Stays (seaside cottages): poster fallback, 540×960 JPEG | 40,557 |
+| `studio/coastline-stays-wall-of-text.mp4` | Wall-of-text post for Coastline Stays (seaside cottages): muted loop (first 6 s of the 12.5 s render), 540×960 H.264 MP4 | 262,421 |
 
 ## Product screens (`screens/`)
 
 Original screenshots of PostMind Studio's own screens, captured from the demo build (sample data for
-Leeds Sourdough, a fictional bakery) by `scripts/marketing/capture-screens.mjs` on 2026-09-30 at
-1200×750 in the light and dark themes, WebP quality 72. No third-party material except the photos
-above, which appear as the demo's sample thumbnails (generate, review). Owned by the operator.
+Leeds Sourdough, a fictional bakery) by `scripts/marketing/capture-screens.mjs`, recaptured on
+2026-10-07 in the 25.4 app shell, at 1200×750 in the light and dark themes, WebP quality 72. No third-party material except the photos
+above, which appear as the demo's sample thumbnails (generate). Owned by the operator. 25.5 dropped
+the Brief and Review captures: the landing page no longer uses the brief screen, and the review
+capture showed a "Content safety" check that Studio no longer runs (Hive was removed in 20.21).
 
 | File | Screen | Bytes |
 | --- | --- | --- |
-| `screens/brief-light.webp` | Create, with a brief typed in | 24,788 |
-| `screens/brief-dark.webp` | Create, with a brief typed in (dark) | 25,766 |
-| `screens/script-light.webp` | Project → Script tab | 29,878 |
-| `screens/script-dark.webp` | Project → Script tab (dark) | 31,760 |
-| `screens/generate-light.webp` | Business & images → Image library | 82,346 |
-| `screens/generate-dark.webp` | Business & images → Image library (dark) | 82,380 |
-| `screens/review-light.webp` | Project → Variants with quality checks | 37,696 |
-| `screens/review-dark.webp` | Project → Variants with quality checks (dark) | 36,448 |
-| `screens/calendar-light.webp` | Calendar | 25,452 |
-| `screens/calendar-dark.webp` | Calendar (dark) | 26,584 |
-| `screens/analytics-light.webp` | Analytics | 29,988 |
-| `screens/analytics-dark.webp` | Analytics (dark) | 30,338 |
+| `screens/script-light.webp` | Project → Script tab | 35,330 |
+| `screens/script-dark.webp` | Project → Script tab (dark) | 35,438 |
+| `screens/generate-light.webp` | Business & images → Image library | 80,326 |
+| `screens/generate-dark.webp` | Business & images → Image library (dark) | 78,734 |
+| `screens/calendar-light.webp` | Calendar | 44,746 |
+| `screens/calendar-dark.webp` | Calendar (dark) | 43,718 |
+| `screens/analytics-light.webp` | Analytics | 29,292 |
+| `screens/analytics-dark.webp` | Analytics (dark) | 28,312 |
 
 To refresh the screens after a UI change: `node scripts/demo/build.mjs`, serve it with
 `node scripts/demo/serve.mjs 3021 demo/dist/postmind-studio-demo.html`, run

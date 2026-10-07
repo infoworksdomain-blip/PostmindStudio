@@ -1,13 +1,15 @@
-// Phase 20.8 — captures the landing page's product-flow slides from the demo build, in the light
-// and the dark theme, and writes them as WebP to public/marketing/screens/<step>-<theme>.webp
-// (1200×750, the size src/lib/marketing/media.ts declares).
+// Phase 20.8 / 25.5 — captures the landing page's product screens (script, image library,
+// calendar, analytics) from the demo build, in the light and the dark theme, and writes them as
+// WebP to public/marketing/screens/<screen>-<theme>.webp (1200×750, the size
+// src/lib/marketing/media.ts declares). 25.5 dropped the brief and review captures (the review
+// screen listed a "Content safety" check Studio no longer runs).
 //
 //   node scripts/demo/build.mjs
 //   node scripts/demo/serve.mjs 3021 demo/dist/postmind-studio-demo.html   (in another shell)
 //   node scripts/marketing/capture-screens.mjs [http://127.0.0.1:3021/] [--out <dir>]
 //
 // The screens show the demo's sample business (Leeds Sourdough) and its sample data. The demo bar
-// and the plan-usage banner are hidden so the product screen fills the frame.
+// and the plan-usage banner and account notices are hidden so the product screen fills the frame.
 
 import { mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -25,7 +27,7 @@ const base =
 
 const WIDTH = 1200;
 const HEIGHT = 750;
-const HIDE = `[aria-label="Demo build"], section[aria-label="Plan usage"] { display: none !important; }
+const HIDE = `[aria-label="Demo build"], section[aria-label="Plan usage"], section[aria-label="Account notices"] { display: none !important; }
 *, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }`;
 
 const wait = (page, ms) => page.waitForTimeout(ms);
@@ -44,18 +46,6 @@ async function scrollTo(page, locator, offset = 76) {
 
 /** Each step: the hash route, then what to do before the screenshot. */
 const STEPS = {
-  brief: {
-    route: '/new',
-    async act(page) {
-      await page
-        .getByRole('textbox')
-        .first()
-        .fill(
-          'Our rye and caraway loaf is back on Saturday. Show it coming out of the oven, the crumb, and the market stall. 20% off for regulars before 10am.',
-        );
-      await wait(page, 500);
-    },
-  },
   script: {
     route: '/projects/prj-untitled-rye',
     async act(page) {
@@ -68,26 +58,6 @@ const STEPS = {
     async act(page) {
       await openTab(page, 'Image library');
       await wait(page, 1500);
-      await scrollTo(page, page.getByRole('tablist'));
-    },
-  },
-  review: {
-    route: '/projects/prj-untitled-rye',
-    async act(page) {
-      await openTab(page, 'Variants');
-      await wait(page, 4000); // the sample variant videos are recorded in the browser
-      await page.evaluate(() =>
-        Promise.all(
-          [...document.querySelectorAll('video')].map(
-            (v) =>
-              new Promise((done) => {
-                v.addEventListener('seeked', done, { once: true });
-                setTimeout(done, 1500);
-                v.currentTime = 1.5;
-              }),
-          ),
-        ),
-      );
       await scrollTo(page, page.getByRole('tablist'));
     },
   },

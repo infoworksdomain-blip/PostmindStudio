@@ -4264,8 +4264,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · Video brevi con IA per piccole imprese",
-      "description": "Trasforma un’idea in poche parole in video brevi con il tuo brand per TikTok, Reels, Shorts, Facebook, LinkedIn e X. Rivedi, approva e pubblica da un unico posto."
+      "title": "PostMind Studio · Video brevi e post per piccole imprese",
+      "description": "Crea, pianifica e pubblica video brevi e post per la tua piccola impresa partendo da un solo brief: script, video, voce, musica e sottotitoli con il tuo brand, programmati su TikTok, Instagram, YouTube, Facebook, LinkedIn e X.",
+      "ogAlt": "PostMind Studio: crea, pianifica e pubblica video brevi da un solo brief"
     },
     "nav": {
       "home": "Home di PostMind Studio",
@@ -4275,9 +4276,9 @@
       "startTrial": "Inizia la prova gratuita"
     },
     "hero": {
-      "eyebrow": "Studio di video con IA per piccole imprese",
-      "title": "Un mese di video brevi, <em>pronti prima che il tuo caffè si freddi.</em>",
-      "lede": "Racconta a Studio cosa vuoi dire. Lui scrive il copione, filma o reperisce ogni scena, aggiunge la tua voce, la musica e i sottotitoli nel tuo stile, e lo monta per ogni piattaforma. Tu approvi; lui pubblica.",
+      "eyebrow": "Studio video per piccole imprese",
+      "title": "Crea, pianifica e pubblica i tuoi video social <em>da un solo brief.</em>",
+      "lede": "Di’ a Studio cosa vuoi comunicare. Scrive lo script, realizza il video, aggiunge voce, musica e sottotitoli con il tuo brand e programma ogni post sulle piattaforme che usi. Tu approvi; Studio pubblica.",
       "primaryCta": "Inizia la prova gratuita",
       "secondaryCta": "Vedi i prezzi",
       "assurances": {
@@ -4285,146 +4286,171 @@
         "yourBrand": "I tuoi colori, i tuoi font e la tua voce",
         "cancelAnytime": "Annulla quando vuoi"
       },
-      "frames": {
-        "one": "Appena sfornato alle 7 del mattino",
-        "two": "Ci vediamo al mercato",
-        "three": "Cottage vista mare da due a sei persone"
-      },
-      "slate": {
-        "scene": "Scena 01",
-        "take": "Ciak 1"
-      },
-      "phoneAlt": "Video verticale di esempio realizzato con PostMind Studio: vapore che sale da una pagnotta appena sfornata su un tagliere di legno, con la didascalia «Appena sfornato alle 7»"
-    },
-    "platforms": {
-      "title": "Un’idea, adattata a ogni piattaforma"
-    },
-    "steps": {
-      "eyebrow": "Come funziona",
-      "title": "Scrivi. Rivedi. Pubblica.",
-      "brief": {
-        "title": "Scrivi una riga",
-        "body": "Descrivi il video, incolla una pagina web o scegli un modello. Studio prepara il copione e la scaletta delle scene in pochi secondi."
-      },
-      "review": {
-        "title": "Controlla il montaggio",
-        "body": "Guarda ogni formato uno accanto all’altro, sostituisci una scena, modifica un sottotitolo o chiedi un altro ciak. Niente viene pubblicato finché non approvi."
-      },
-      "publish": {
-        "title": "Pubblica secondo il calendario",
-        "body": "Pubblica subito o pianifica il mese a venire. Studio pubblica su ogni account e riporta visualizzazioni, mi piace e commenti in un’unica dashboard."
+      "reelLabel": "Tre post realizzati con PostMind Studio",
+      "madeWith": "Realizzato con PostMind Studio. Le attività mostrate sono esempi.",
+      "alts": {
+        "bread": "Video IA realizzato con Studio: una pagnotta di lievito madre dorata su un tagliere di legno, fumante, con la camera che si avvicina lentamente",
+        "market": "Video IA realizzato con Studio: una donna attraversa un mercato soleggiato e sorride a un venditore",
+        "coastline": "Slideshow realizzato con Studio per dei cottage sul mare, con la didascalia «Cottage vista mare da due a sei persone»"
       }
     },
-    "samples": {
-      "eyebrow": "Provino",
-      "title": "Ogni formato, da un’unica idea.",
-      "body": "Verticale per TikTok, Reels e Shorts, quadrato e verticale per i feed, panoramico per YouTube e LinkedIn.",
-      "note": "Realizzato con PostMind Studio. Le attività mostrate sono esempi.",
-      "captions": {
-        "wren": "Lino lavato ruggine e salvia",
-        "harbour": "Espresso monorigine",
-        "greenleaf": "Dalie, cosmos e rose tardive",
-        "pulse": "Lezioni di 45 minuti in piccoli gruppi"
+    "motion": {
+      "pause": "Metti in pausa i video",
+      "play": "Riproduci i video"
+    },
+    "formats": {
+      "eyebrow": "Un brief, ogni formato",
+      "title": "Ogni tipo di post di cui ha bisogno una piccola impresa.",
+      "body": "Video IA, slideshow e post muro di testo, ognuno pensato per i feed verticali. Studio ha realizzato tutto questo da brief di una riga.",
+      "note": "Risultati reali di Studio per attività di esempio.",
+      "stripLabel": "Post di esempio realizzati con Studio",
+      "kinds": {
+        "aiVideo": "Video IA",
+        "slideshow": "Slideshow",
+        "wallOfText": "Muro di testo"
+      },
+      "types": {
+        "bakery": "Panetteria a lievito madre",
+        "boutique": "Boutique di lino",
+        "gym": "Studio fitness",
+        "cottages": "Cottage sul mare",
+        "florist": "Fiorista",
+        "coffee": "Caffetteria"
       },
       "alts": {
-        "wren": "Pieghe di lino lavato color ruggine e verde salvia",
-        "harbour": "Un espresso scende dalla macchina in una tazzina bianca tenuta in mano",
-        "greenleaf": "Una sola rosa rossa sbocciata davanti a un giardino sfocato",
-        "pulse": "Un uomo si allena con elastici di resistenza, visto dall’alto in luce soffusa"
+        "seedanceBread": "Una pagnotta di lievito madre dorata su un tagliere di legno, fumante",
+        "pulseStudioText": "Post muro di testo per uno studio fitness: tre brevi sessioni di forza battono una lunga fatica, e la prima lezione è gratis",
+        "atelierWren": "Pieghe di lino lavato color ruggine e salvia, con la didascalia «Lino lavato ruggine e salvia»",
+        "greenleafFlorist": "Una rosa rossa, con la didascalia «Dalie, cosmee e rose tardive»",
+        "coastlineStaysText": "Post muro di testo per cottage sul mare: autunno sulla costa, spiagge vuote, cani benvenuti",
+        "harbourCoffee": "Un espresso che scende in una tazzina bianca, con la didascalia «Espresso monorigine»",
+        "northsideBakery": "Un pane casereccio su sfondo arancione, con la didascalia «Pane casereccio, sfornato alle 6»",
+        "pulseStudio": "Un uomo si allena con un elastico, con la didascalia «Lezioni di 45 minuti in piccoli gruppi»",
+        "coastlineStays": "Cottage sopra una costa rocciosa, con la didascalia «Cottage vista mare da due a sei persone»"
       }
     },
-    "features": {
-      "eyebrow": "Pensato per piccoli team",
-      "title": "Tutto ciò che serve a un team di marketing di una sola persona.",
-      "body": "Studio si occupa della produzione, così tu dedichi il tuo tempo all’attività, non al montaggio.",
-      "brand": {
-        "title": "Il tuo brand, ogni volta",
-        "body": "Logo, colori, font e tono di voce vivono in un kit del brand seguito da ogni video."
+    "video": {
+      "eyebrow": "Generazione video",
+      "title": "Un video finito da una sola frase.",
+      "body": "Studio trasforma il tuo brief in uno script e in una lista di inquadrature, genera ogni inquadratura con i migliori modelli video, poi aggiunge voce fuori campo, musica e sottotitoli con il tuo brand e adatta il risultato a ogni piattaforma.",
+      "briefLabel": "Il brief",
+      "brief": "«Una donna che attraversa un mercato soleggiato, sorridendo a un venditore.»",
+      "alt": "Video IA realizzato con Studio da quel brief: una donna attraversa un mercato soleggiato e sorride a un venditore",
+      "steps": {
+        "script": {
+          "title": "Script",
+          "body": "Un gancio, un messaggio chiave e le inquadrature giuste, scritti per il tuo pubblico e per ogni piattaforma."
+        },
+        "shots": {
+          "title": "Inquadrature",
+          "body": "Ogni scena generata dallo script o realizzata con le tue foto e i tuoi filmati."
+        },
+        "sound": {
+          "title": "Voce e musica",
+          "body": "Una voce fuori campo naturale e una base musicale, con i livelli giusti per gli altoparlanti dei telefoni."
+        },
+        "captions": {
+          "title": "Sottotitoli",
+          "body": "Sottotitoli sincronizzati parola per parola, con i tuoi font e colori, così il video funziona anche senza audio."
+        }
       },
-      "approvals": {
-        "title": "Approvazioni su misura per il tuo team",
-        "body": "Invita i colleghi con il ruolo giusto. I creator abbozzano, i titolari approvano, e nulla viene pubblicato per errore."
-      },
-      "calendar": {
-        "title": "Un calendario che pubblica per te",
-        "body": "Pianifica il mese a venire, sposta i post in nuovi orari e lascia che Studio pubblichi al momento giusto per ogni piattaforma."
-      },
-      "languages": {
-        "title": "Undici lingue",
-        "body": "Lavora in inglese, francese, spagnolo, arabo, tedesco, italiano, portoghese, hindi o cinese, e crea video per i tuoi clienti nella loro lingua."
-      },
-      "library": {
-        "title": "Idee quando ti servono",
-        "body": "Sfoglia una libreria di video brevi che hanno già funzionato e usane uno come punto di partenza per il tuo."
-      },
-      "pricing": {
-        "title": "Un prezzo semplice per canale",
-        "body": "Paghi un prezzo fisso per ogni canale social che colleghi, video inclusi. Nessun contatore da tenere d’occhio e nessuna fattura a sorpresa."
+      "scriptAlt": "La scheda Script di un progetto: gancio, pubblico, tono e gli script per TikTok e YouTube Shorts",
+      "scriptCaption": "Ogni script e lista di inquadrature si può leggere e modificare."
+    },
+    "plan": {
+      "eyebrow": "Pianifica e programma",
+      "title": "Il tuo mese, in un solo calendario.",
+      "body": "I post approvati occupano gli slot liberi e vengono pubblicati su ogni account al momento giusto. Apri un post per vederne l’anteprima, cambiare l’orario, approvarlo o rifarlo.",
+      "alt": "Il calendario di ottobre, con post programmati e pubblicati per tutto il mese"
+    },
+    "publish": {
+      "eyebrow": "Pubblica ovunque",
+      "title": "Un post, tutte le tue piattaforme.",
+      "body": "Collega i tuoi account una volta. Studio adatta ogni post al formato giusto e lo pubblica come programmato.",
+      "platformsLabel": "Piattaforme su cui pubblica Studio",
+      "points": {
+        "auto": {
+          "title": "Pubblicazione automatica",
+          "body": "I post escono all’orario scelto su ogni piattaforma, e visualizzazioni e interazioni tornano in Studio."
+        },
+        "drafts": {
+          "title": "Bozze quando vuoi",
+          "body": "Invia i post di TikTok alle tue bozze, per aggiungere un suono di tendenza nell’app prima di pubblicare."
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "Pianificatore mensile, Blitz e automazioni",
+      "title": "Un prompt, un mese di post.",
+      "body": "Descrivi la tua attività e i tuoi obiettivi. Studio pianifica il mese, scrive ogni post e realizza ciascuno prima della sua data.",
+      "gridCaption": "Un mese di post per attività di esempio, tutti realizzati da Studio.",
+      "items": {
+        "planner": {
+          "title": "Pianifica il mio mese",
+          "body": "Un calendario completo di idee, didascalie e formati da un solo prompt. Cambia ciò che vuoi prima di approvare."
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "Scorri idee di post già pronte: tieni quelle che ti piacciono e salta le altre."
+        },
+        "automations": {
+          "title": "Automazioni",
+          "body": "Pubblicazione settimanale o mensile che va avanti da sola, entro quanto incluso nel tuo piano."
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "Statistiche",
+      "title": "Scopri cosa funziona e fanne di più.",
+      "body": "Visualizzazioni, tempo di visione e interazioni per ogni post, da ogni piattaforma, in un unico posto, così ogni brief è migliore del precedente.",
+      "alt": "La pagina Analisi: visualizzazioni in 30 giorni, tempo di visione, interazioni e un grafico dell’attività giornaliera"
+    },
+    "brand": {
+      "eyebrow": "Brand kit e approvazioni",
+      "title": "I tuoi colori, la tua voce, la tua approvazione.",
+      "alt": "La libreria di immagini di un forno: pane, dolci, caffè e un logo",
+      "items": {
+        "brand": {
+          "title": "Il tuo brand in ogni post",
+          "body": "Logo, colori, font e tono di voce stanno in un brand kit che ogni post rispetta, con le tue foto nella libreria immagini."
+        },
+        "approvals": {
+          "title": "Approvazioni su misura per il tuo team",
+          "body": "Invita i colleghi con il ruolo giusto. I creator abbozzano, i titolari approvano, e nulla viene pubblicato per errore."
+        },
+        "languages": {
+          "title": "Undici lingue",
+          "body": "Lavora in inglese, francese, spagnolo, arabo, tedesco, italiano, portoghese, hindi o cinese, e crea video per i tuoi clienti nella loro lingua."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Prezzi",
+      "title": "Un prezzo semplice per canale",
+      "per": "per canale al mese",
+      "body": "Ogni canale include {videos} video HD brevi al mese, oppure fino a {quick} post rapidi: caroselli, slideshow e video di testo contano come ¼ di video.",
+      "points": {
+        "billing": "Paga ogni settimana, mese o anno",
+        "vat": "Prezzi IVA esclusa",
+        "cancel": "Annulli quando vuoi"
+      },
+      "cta": "Vedi i prezzi"
     },
     "closing": {
       "eyebrow": "Pronto quando lo sei tu",
-      "title": "Il tuo primo video è a dieci minuti da qui.",
+      "title": "Crea il tuo primo post oggi.",
       "body": "Crea il tuo account, aggiungi la tua attività e il tuo brand, collega una piattaforma e realizza il tuo primo video. La configurazione guidata ti accompagna passo dopo passo.",
       "primaryCta": "Inizia la prova gratuita",
-      "secondaryCta": "Confronta i piani",
+      "secondaryCta": "Vedi i prezzi",
       "fineprint": "I prezzi non includono l’IVA. Puoi annullare in qualsiasi momento dalle impostazioni di fatturazione."
     },
     "footer": {
-      "tagline": "Video brevi con IA e pubblicazione per piccole imprese.",
+      "tagline": "Video brevi e post per piccole imprese: creati, pianificati e pubblicati in un unico posto.",
+      "productAria": "Prodotto",
+      "productTitle": "Prodotto",
       "copyright": "© {year} {entity}",
       "legalAria": "Legale",
       "legalTitle": "Legale"
-    },
-    "flow": {
-      "eyebrow": "Dal brief alla pubblicazione",
-      "title": "Guarda come nasce un video.",
-      "body": "Sei passaggi, una schermata alla volta. Sono le vere schermate di Studio, con i dati di un forno di esempio.",
-      "note": "Schermate della demo di Studio, con dati di esempio di Leeds Sourdough, un forno immaginario.",
-      "roleCarousel": "carosello",
-      "roleSlide": "diapositiva",
-      "stepsLabel": "Passaggi",
-      "slideLabel": "{current} di {total}",
-      "previous": "Passaggio precedente",
-      "next": "Passaggio successivo",
-      "pause": "Metti in pausa la presentazione",
-      "play": "Avvia la presentazione",
-      "brief": {
-        "tab": "Brief",
-        "title": "Scrivi una riga",
-        "body": "Di’ di cosa parla il video o incolla una pagina web. Studio sceglie piattaforme, durata e brand kit, e puoi cambiare tutto.",
-        "alt": "La schermata Crea con un brief su un pane di segale e un pulsante Genera"
-      },
-      "script": {
-        "tab": "Script",
-        "title": "Leggi lo script e la lista delle inquadrature",
-        "body": "Studio scrive un gancio, un messaggio chiave e uno script per ogni formato, con le inquadrature adatte. Riscrivi una riga o chiedi un’altra versione.",
-        "alt": "La scheda Script di un progetto: gancio, pubblico, tono e gli script per TikTok e YouTube Shorts"
-      },
-      "generate": {
-        "tab": "Genera",
-        "title": "Immagini, voce e musica",
-        "body": "Studio genera ogni inquadratura con modelli di IA per video e immagini, oppure usa le tue foto e materiale d’archivio, poi aggiunge voce, musica e sottotitoli con il tuo stile.",
-        "alt": "La libreria di immagini di un forno: pane, dolci, caffè e un logo"
-      },
-      "review": {
-        "tab": "Revisione",
-        "title": "Controlla ogni versione prima che esca",
-        "body": "Guarda ogni formato uno accanto all’altro. I controlli automatici, tra cui sicurezza dei contenuti e brand kit, vengono eseguiti prima della tua approvazione.",
-        "alt": "Una variante TikTok pronta per la revisione, con i controlli di qualità superati, compresa la sicurezza dei contenuti"
-      },
-      "calendar": {
-        "tab": "Calendario",
-        "title": "Pianifica il mese successivo",
-        "body": "I video approvati occupano gli spazi liberi del calendario e vengono pubblicati su ogni account al momento giusto.",
-        "alt": "Il calendario di settembre con post programmati al mattino e alla sera"
-      },
-      "analytics": {
-        "tab": "Analisi",
-        "title": "Scopri cosa ha funzionato",
-        "body": "Visualizzazioni, tempo di visione e interazioni di ogni video in un solo posto, per un brief migliore la prossima volta.",
-        "alt": "La pagina Analisi: visualizzazioni in 30 giorni, tempo di visione, interazioni e un grafico dell’attività giornaliera"
-      }
     }
   },
   "pricing": {
@@ -4530,7 +4556,7 @@
       "panelLabel": "Informazioni su PostMind Studio",
       "valueStatement": "Video brevi per ogni canale, partendo da poche righe sulla tua attività.",
       "valueDetail": "Studio scrive il copione, crea il video con il tuo brand e lo programma sui canali che colleghi.",
-      "panelAlt": "Un video TikTok di una pagnotta a lievitazione naturale in PostMind Studio, con i controlli di qualità superati."
+      "panelAlt": "Due post creati con PostMind Studio: un video IA di una pagnotta a lievito madre e uno slideshow di cottage sul mare."
     },
     "errors": {
       "invalidCredentials": "Questa email e questa password non corrispondono a nessun account.",

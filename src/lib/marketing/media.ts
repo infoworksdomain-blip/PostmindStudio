@@ -1,18 +1,27 @@
 import { marketingSrc } from './media-src';
 
-// Phase 20.8 — every file under public/marketing/ that a page shows, with its pixel size (for the
-// img width/height attributes, so nothing shifts while it loads). Photos are Unsplash-licensed
-// (public/marketing/SOURCES.md records each one) and only the demo's sample media use them now;
-// screens are captured from the demo build by scripts/marketing/capture-screens.mjs; studio/ is
-// real PostMind Studio output (made on production on 2026-10-07; the businesses are fictional),
-// the posters the landing page shows. test/unit/marketing-media.test.ts checks that each file
-// exists with this size, is listed in SOURCES.md and is inlined by the demo shim.
+// Every file under public/marketing/ that a page shows, with its pixel size (for the img and video
+// width/height attributes, so nothing shifts while it loads). test/unit/marketing-media.test.ts
+// checks that each file exists at this size, is listed in public/marketing/SOURCES.md and is
+// inlined (or deliberately left out) by the demo shim.
+//
+//   photos/   Unsplash-licensed stills (Phase 20.8); since 25.5 only the demo's sample thumbnails
+//             and canvas videos use them (demo/media.ts).
+//   screens/  product screenshots captured from the demo build (scripts/marketing/capture-screens.mjs).
+//   studio/   25.5: real PostMind Studio output made on production on 2026-10-07 (showcase
+//             businesses are fictional): AI video clips and slideshow / wall-of-text loops, each
+//             with a 360 px and a 720 px WebP poster and a JPEG fallback
+//             (scripts/marketing/encode-studio-media.mjs).
 
 export interface MarketingImage {
   /** Path under public/marketing/. */
   readonly path: string;
   readonly width: number;
   readonly height: number;
+}
+
+export interface MarketingVideo extends MarketingImage {
+  readonly type: 'video/mp4';
 }
 
 export const MARKETING_PHOTOS = {
@@ -30,52 +39,85 @@ export const MARKETING_PHOTOS = {
 
 export type MarketingPhoto = keyof typeof MARKETING_PHOTOS;
 
-/** Posters (9:16) of real PostMind Studio output; the hero cards use the 360 px ones. */
-export const MARKETING_STUDIO = {
-  seedanceBread: { path: 'studio/seedance-bread-720.webp', width: 720, height: 1280 },
-  seedanceMarket: { path: 'studio/seedance-market-360.webp', width: 360, height: 640 },
-  coastlineStays: { path: 'studio/coastline-stays-slideshow-360.webp', width: 360, height: 640 },
-  atelierWren: { path: 'studio/atelier-wren-slideshow-720.webp', width: 720, height: 1280 },
-  harbourCoffee: { path: 'studio/harbour-coffee-slideshow-720.webp', width: 720, height: 1280 },
-  greenleafFlorist: {
-    path: 'studio/greenleaf-florist-slideshow-720.webp',
-    width: 720,
-    height: 1280,
-  },
-  pulseStudio: { path: 'studio/pulse-studio-slideshow-720.webp', width: 720, height: 1280 },
-} as const satisfies Record<string, MarketingImage>;
-
-/** The product flow the landing page's slides walk through, in order. */
-export const FLOW_STEPS = [
-  'brief',
-  'script',
-  'generate',
-  'review',
-  'calendar',
-  'analytics',
-] as const;
-export type FlowStep = (typeof FLOW_STEPS)[number];
+/** The product screens the landing page shows, each in the light and the dark theme. */
+export const PRODUCT_SCREEN_NAMES = ['script', 'generate', 'calendar', 'analytics'] as const;
+export type ProductScreen = (typeof PRODUCT_SCREEN_NAMES)[number];
 
 const SCREEN_SIZE = { width: 1200, height: 750 } as const;
 
-/** One demo screenshot per step, in the light and the dark theme. */
-export const FLOW_SCREENS: Record<FlowStep, { light: MarketingImage; dark: MarketingImage }> =
-  Object.fromEntries(
-    FLOW_STEPS.map((step) => [
-      step,
-      {
-        light: { path: `screens/${step}-light.webp`, ...SCREEN_SIZE },
-        dark: { path: `screens/${step}-dark.webp`, ...SCREEN_SIZE },
-      },
-    ]),
-  ) as Record<FlowStep, { light: MarketingImage; dark: MarketingImage }>;
+export const PRODUCT_SCREENS: Record<
+  ProductScreen,
+  { light: MarketingImage; dark: MarketingImage }
+> = Object.fromEntries(
+  PRODUCT_SCREEN_NAMES.map((name) => [
+    name,
+    {
+      light: { path: `screens/${name}-light.webp`, ...SCREEN_SIZE },
+      dark: { path: `screens/${name}-dark.webp`, ...SCREEN_SIZE },
+    },
+  ]),
+) as Record<ProductScreen, { light: MarketingImage; dark: MarketingImage }>;
+
+/** A Studio-made clip: posters for the <picture> and the muted loop. All are 9:16. */
+export interface StudioClip {
+  readonly id: string;
+  readonly poster: {
+    /** 360×640 WebP. */
+    readonly small: MarketingImage;
+    /** 720×1280 WebP. */
+    readonly large: MarketingImage;
+    /** 540×960 JPEG for browsers without WebP. */
+    readonly fallback: MarketingImage;
+  };
+  readonly video: MarketingVideo;
+}
+
+function clip(id: string, video: { width: number; height: number }): StudioClip {
+  return {
+    id,
+    poster: {
+      small: { path: `studio/${id}-360.webp`, width: 360, height: 640 },
+      large: { path: `studio/${id}-720.webp`, width: 720, height: 1280 },
+      fallback: { path: `studio/${id}.jpg`, width: 540, height: 960 },
+    },
+    video: { path: `studio/${id}.mp4`, type: 'video/mp4', ...video },
+  };
+}
+
+/** Seedance clips are 720×1280; the renderer's loops are the first 6 s at 540×960. */
+const AI_VIDEO = { width: 720, height: 1280 } as const;
+const LOOP = { width: 540, height: 960 } as const;
+
+export const STUDIO_CLIPS = {
+  seedanceBread: clip('seedance-bread', AI_VIDEO),
+  seedanceMarket: clip('seedance-market', AI_VIDEO),
+  northsideBakery: clip('northside-bakery-slideshow', LOOP),
+  atelierWren: clip('atelier-wren-slideshow', LOOP),
+  pulseStudio: clip('pulse-studio-slideshow', LOOP),
+  coastlineStays: clip('coastline-stays-slideshow', LOOP),
+  greenleafFlorist: clip('greenleaf-florist-slideshow', LOOP),
+  harbourCoffee: clip('harbour-coffee-slideshow', LOOP),
+  pulseStudioText: clip('pulse-studio-wall-of-text', LOOP),
+  coastlineStaysText: clip('coastline-stays-wall-of-text', LOOP),
+} as const satisfies Record<string, StudioClip>;
+
+export type StudioClipName = keyof typeof STUDIO_CLIPS;
 
 /** Every image the pages use (the test walks this list). */
 export const ALL_MARKETING_IMAGES: readonly MarketingImage[] = [
   ...Object.values(MARKETING_PHOTOS),
-  ...Object.values(MARKETING_STUDIO),
-  ...FLOW_STEPS.flatMap((s) => [FLOW_SCREENS[s].light, FLOW_SCREENS[s].dark]),
+  ...PRODUCT_SCREEN_NAMES.flatMap((s) => [PRODUCT_SCREENS[s].light, PRODUCT_SCREENS[s].dark]),
+  ...Object.values(STUDIO_CLIPS).flatMap((c) => [
+    c.poster.small,
+    c.poster.large,
+    c.poster.fallback,
+  ]),
 ];
+
+/** Every video the pages use. */
+export const ALL_MARKETING_VIDEOS: readonly MarketingVideo[] = Object.values(STUDIO_CLIPS).map(
+  (c) => c.video,
+);
 
 /** Props for an <img>: src, width and height. */
 export function imgProps(image: MarketingImage): { src: string; width: number; height: number } {
