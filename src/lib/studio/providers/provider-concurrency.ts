@@ -36,6 +36,10 @@ import type { RateRedisClient } from './provider-rate';
 // 23.2: ElevenLabs (TTS + Music, one pool: CONCURRENCY_POOLS) defaults to the plan's 5, so a burst
 // of narration and music queues instead of failing with concurrent_limit_exceeded; any provider
 // can be capped the same way with its variable (e.g. STUDIO_PROVIDER_CONCURRENCY_HEYGEN=3).
+// 25.x: a pooled provider may ALSO have its own, smaller cap inside the pool: ElevenLabs Music
+// allows only 2 concurrent requests (production 2026-10-07: "too_many_concurrent_requests …
+// maximum of 2"), so a music call holds a slot of 'elevenlabs-music' (2) AND of the 'elevenlabs'
+// account pool (5). STUDIO_PROVIDER_CONCURRENCY_ELEVENLABS_MUSIC overrides the 2.
 //
 // Fail-open, like 15.C3: if Redis errors the call goes ahead (warned at most once a minute).
 
@@ -58,6 +62,8 @@ export const DEFAULT_PROVIDER_CONCURRENCY: Readonly<Record<string, number>> = {
   // 23.2: the ElevenLabs plan allows 5 concurrent requests (production 2026-10-06: a TTS call
   // failed with "rate_limited: concurrent_limit_exceeded … maximum of 5 concurrent").
   elevenlabs: 5,
+  // 25.x: the ElevenLabs Music endpoint's own limit inside that pool (2 concurrent requests).
+  'elevenlabs-music': 2,
 };
 
 /**
@@ -72,6 +78,15 @@ export const CONCURRENCY_POOLS: Readonly<Record<string, string>> = {
 /** The provider id whose slots a provider uses (itself unless pooled). */
 export function concurrencyPoolOf(providerId: string): string {
   return CONCURRENCY_POOLS[providerId] ?? providerId;
+}
+
+/**
+ * 25.x: every slot set a call must hold, narrowest first: the provider's own (when it has a cap)
+ * then its account pool. A scope without a limit is skipped by the limiters.
+ */
+export function concurrencyScopesOf(providerId: string): readonly string[] {
+  const pool = concurrencyPoolOf(providerId);
+  return pool === providerId ? [providerId] : [providerId, pool];
 }
 
 export interface ConcurrencyLimit {
@@ -117,6 +132,35 @@ export interface ProviderConcurrencyLimiter {
     leaseId: string;
   }): Promise<void>;
 }
+
+const UNCAPPED: ConcurrencySlot = { acquired: true, release: async () => undefined };
+
+/**
+ * 25.x: take a slot in every scope under one lease id, or none: a refusal in a later scope gives
+ * the earlier ones back. `acquireOne` returns undefined for a scope with no cap.
+ */
+async function acquireAcross(
+  scopes: readonly string[],
+  lease: string,
+  acquireOne: (scopeId: string) => Promise<ConcurrencySlot | undefined>,
+): Promise<ConcurrencySlot> {
+  const held: Array<() => Promise<void>> = [];
+  const releaseAll = async () => {
+    for (const release of [...held].reverse()) await release();
+  };
+  for (const scope of scopes) {
+    const slot = await acquireOne(scope);
+    if (!slot) continue;
+    if (!slot.acquired) {
+      await releaseAll();
+      return slot;
+    }
+    held.push(slot.release);
+  }
+  return held.length === 0 ? UNCAPPED : { acquired: true, leaseId: lease, release: releaseAll };
+}
+
+type AcquireInput = Parameters<ProviderConcurrencyLimiter['acquire']>[0];
 
 export function concurrencyEnvName(providerId: string): string {
   return `${CONCURRENCY_ENV_PREFIX}${providerId.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
@@ -294,61 +338,75 @@ export function createRedisProviderConcurrencyLimiter(deps: {
     lastWarnAt = t;
     deps.logger.warn({ err, providerId }, `provider concurrency limiter unavailable (${what})`);
   };
-  const open: ConcurrencySlot = { acquired: true, release: async () => undefined };
+  /** One scope's slot: undefined = no cap there (or Redis is down: fail-open). */
+  const acquireOne = async (
+    scopeId: string,
+    input: AcquireInput,
+    lease: string,
+  ): Promise<ConcurrencySlot | undefined> => {
+    const limit = deps.limits(scopeId);
+    if (!limit) return undefined;
+    const keys = slotKeys({ ...input, providerId: scopeId }, limit);
+    const t = now();
+    const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
+    try {
+      const { code, waiters } = parseAcquireReply(
+        await deps.client.eval(
+          ACQUIRE_SLOT_SCRIPT,
+          leaseKeys.length + 1,
+          keys.account,
+          keys.waiting,
+          ...(keys.organisation ? [keys.organisation] : []),
+          String(t),
+          lease,
+          String(keys.max),
+          String(keys.share),
+          String(t + input.leaseMs),
+          input.waiterId ?? lease,
+          String(t + WAITER_TTL_MS),
+        ),
+      );
+      if (code !== 1) return refused(code, waiters, keys.max, base, deps.random);
+    } catch (err) {
+      warn(err, scopeId, 'acquire');
+      return undefined;
+    }
+    return {
+      acquired: true,
+      leaseId: lease,
+      release: async () => {
+        try {
+          await deps.client.eval(RELEASE_SLOT_SCRIPT, leaseKeys.length, ...leaseKeys, lease);
+        } catch (err) {
+          // The lease expires on its own; a failed release only delays the next job.
+          warn(err, scopeId, 'release');
+        }
+      },
+    };
+  };
   return {
-    async acquire(raw) {
-      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
-      const limit = deps.limits(input.providerId);
-      if (!limit) return open;
-      const keys = slotKeys(input, limit);
+    async acquire(input) {
       const lease = randomUUID();
-      const t = now();
-      const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
-      try {
-        const { code, waiters } = parseAcquireReply(
-          await deps.client.eval(
-            ACQUIRE_SLOT_SCRIPT,
-            leaseKeys.length + 1,
-            keys.account,
-            keys.waiting,
-            ...(keys.organisation ? [keys.organisation] : []),
-            String(t),
-            lease,
-            String(keys.max),
-            String(keys.share),
-            String(t + input.leaseMs),
-            input.waiterId ?? lease,
-            String(t + WAITER_TTL_MS),
-          ),
-        );
-        if (code !== 1) return refused(code, waiters, keys.max, base, deps.random);
-      } catch (err) {
-        warn(err, input.providerId, 'acquire');
-        return open;
-      }
-      return {
-        acquired: true,
-        leaseId: lease,
-        release: async () => {
-          try {
-            await deps.client.eval(RELEASE_SLOT_SCRIPT, leaseKeys.length, ...leaseKeys, lease);
-          } catch (err) {
-            // The lease expires on its own; a failed release only delays the next job.
-            warn(err, input.providerId, 'release');
-          }
-        },
-      };
+      return acquireAcross(concurrencyScopesOf(input.providerId), lease, (scopeId) =>
+        acquireOne(scopeId, input, lease),
+      );
     },
-    async releaseLease(raw) {
-      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
-      const limit = deps.limits(input.providerId);
-      if (!limit) return;
-      const keys = slotKeys(input, limit);
-      const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
-      try {
-        await deps.client.eval(RELEASE_SLOT_SCRIPT, leaseKeys.length, ...leaseKeys, raw.leaseId);
-      } catch (err) {
-        warn(err, input.providerId, 'release');
+    async releaseLease(input) {
+      for (const scopeId of concurrencyScopesOf(input.providerId)) {
+        const limit = deps.limits(scopeId);
+        if (!limit) continue;
+        const keys = slotKeys({ ...input, providerId: scopeId }, limit);
+        const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
+        try {
+          await deps.client.eval(
+            RELEASE_SLOT_SCRIPT,
+            leaseKeys.length,
+            ...leaseKeys,
+            input.leaseId,
+          );
+        } catch (err) {
+          warn(err, scopeId, 'release');
+        }
       }
     },
   };
@@ -375,41 +433,51 @@ export function createMemoryProviderConcurrencyLimiter(
     sets.set(key, new Map([...live(key), [id, expiry]]));
   const remove = (key: string, id: string) =>
     sets.set(key, new Map([...(sets.get(key) ?? [])].filter(([k]) => k !== id)));
+  const acquireOne = (
+    scopeId: string,
+    input: AcquireInput,
+    lease: string,
+  ): ConcurrencySlot | undefined => {
+    const limit = limits(scopeId);
+    if (!limit) return undefined;
+    const keys = slotKeys({ ...input, providerId: scopeId }, limit);
+    const waiter = input.waiterId ?? lease;
+    const full = live(keys.account).size >= keys.max;
+    const shareFull = !full && keys.organisation && live(keys.organisation).size >= keys.share;
+    if (full || shareFull) {
+      add(keys.waiting, waiter, now() + WAITER_TTL_MS);
+      return refused(full ? 0 : -1, live(keys.waiting).size, keys.max, SLOT_RETRY_MS, random);
+    }
+    remove(keys.waiting, waiter);
+    const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
+    for (const key of leaseKeys) add(key, lease, now() + input.leaseMs);
+    return {
+      acquired: true,
+      leaseId: lease,
+      release: async () => {
+        for (const key of leaseKeys) remove(key, lease);
+      },
+    };
+  };
   return {
-    async acquire(raw) {
-      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
-      const limit = limits(input.providerId);
-      if (!limit) return { acquired: true, release: async () => undefined };
-      const keys = slotKeys(input, limit);
+    async acquire(input) {
       const lease = randomUUID();
-      const waiter = input.waiterId ?? lease;
-      const full = live(keys.account).size >= keys.max;
-      const shareFull = !full && keys.organisation && live(keys.organisation).size >= keys.share;
-      if (full || shareFull) {
-        add(keys.waiting, waiter, now() + WAITER_TTL_MS);
-        return refused(full ? 0 : -1, live(keys.waiting).size, keys.max, SLOT_RETRY_MS, random);
+      return acquireAcross(concurrencyScopesOf(input.providerId), lease, async (scopeId) =>
+        acquireOne(scopeId, input, lease),
+      );
+    },
+    async releaseLease(input) {
+      for (const scopeId of concurrencyScopesOf(input.providerId)) {
+        const limit = limits(scopeId);
+        if (!limit) continue;
+        const keys = slotKeys({ ...input, providerId: scopeId }, limit);
+        for (const key of keys.organisation ? [keys.account, keys.organisation] : [keys.account])
+          remove(key, input.leaseId);
       }
-      remove(keys.waiting, waiter);
-      const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
-      for (const key of leaseKeys) add(key, lease, now() + input.leaseMs);
-      return {
-        acquired: true,
-        leaseId: lease,
-        release: async () => {
-          for (const key of leaseKeys) remove(key, lease);
-        },
-      };
     },
-    async releaseLease(raw) {
-      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
-      const limit = limits(input.providerId);
-      if (!limit) return;
-      const keys = slotKeys(input, limit);
-      for (const key of keys.organisation ? [keys.account, keys.organisation] : [keys.account])
-        remove(key, raw.leaseId);
-    },
-    inFlight(providerId, organisationId) {
-      const base = `${CONCURRENCY_KEY_PREFIX}${concurrencyPoolOf(providerId)}`;
+    // 25.x: one slot scope's count (a pooled provider's own cap, or the pool by its id).
+    inFlight(scopeId, organisationId) {
+      const base = `${CONCURRENCY_KEY_PREFIX}${scopeId}`;
       return live(organisationId ? `${base}:org:${organisationId}` : base).size;
     },
   };

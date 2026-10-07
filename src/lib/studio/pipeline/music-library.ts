@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { Logger } from 'pino';
 import { ConfigurationError } from '../../errors';
 import { MAX_MUSIC_SEC } from '../providers/elevenlabs-music';
@@ -95,6 +95,65 @@ export async function pickLibraryTrack(
     s3Key: pick.s3Key,
     durationSec: pick.durationSec,
     source: pick.source,
+  };
+}
+
+/** 25.x: how a fallback track matched the video: its own prompt key, any key, or looped. */
+export type FallbackMatch = 'prompt' | 'any' | 'loop';
+
+/**
+ * 25.x — a library track for a video whose music generation failed (provider busy, down, out of
+ * credits…), so the video is never silent while the library holds a usable track. Ignores the
+ * rotation size (any one track will do). Best match first:
+ *   1. the video's own prompt key (same moods / genre / energy / tempo), at least `minSec` long;
+ *   2. any key, at least `minSec` long;
+ *   3. the longest track of all (shorter than the video: the edit loops it, edl-music.ts).
+ * Within a tier: the closest bucket, then the least recently used. The pick is marked used.
+ */
+export async function pickFallbackTrack(
+  deps: { db: LibraryDb; now: () => number },
+  input: { promptKey?: string; minSec: number; excludeIds?: readonly string[] },
+): Promise<(LibraryTrack & { match: FallbackMatch }) | null> {
+  const notExcluded = input.excludeIds?.length ? { id: { notIn: [...input.excludeIds] } } : {};
+  const closestThenLru = [
+    { bucketSec: 'asc' as const },
+    { lastUsedAt: { sort: 'asc' as const, nulls: 'first' as const } },
+    { createdAt: 'asc' as const },
+  ];
+  const tiers: Array<{ match: FallbackMatch; where: Prisma.MusicLibraryTrackWhereInput }> = [
+    ...(input.promptKey
+      ? [{ match: 'prompt' as const, where: { promptKey: input.promptKey } }]
+      : []),
+    { match: 'any', where: {} },
+  ];
+  for (const tier of tiers) {
+    const row = await deps.db.musicLibraryTrack.findFirst({
+      where: { ...tier.where, ...notExcluded, durationSec: { gte: input.minSec } },
+      orderBy: closestThenLru,
+    });
+    if (row) return { ...(await markUsed(deps, row)), match: tier.match };
+  }
+  const longest = await deps.db.musicLibraryTrack.findFirst({
+    where: { ...notExcluded, durationSec: { gt: 0 } },
+    orderBy: [{ durationSec: 'desc' }, { createdAt: 'asc' }],
+  });
+  return longest ? { ...(await markUsed(deps, longest)), match: 'loop' } : null;
+}
+
+async function markUsed(
+  deps: { db: LibraryDb; now: () => number },
+  row: LibraryTrack,
+): Promise<LibraryTrack> {
+  await deps.db.musicLibraryTrack.update({
+    where: { id: row.id },
+    data: { lastUsedAt: new Date(deps.now()), useCount: { increment: 1 } },
+  });
+  return {
+    id: row.id,
+    s3Bucket: row.s3Bucket,
+    s3Key: row.s3Key,
+    durationSec: row.durationSec,
+    source: row.source,
   };
 }
 

@@ -63,6 +63,9 @@ import {
 //   hook-demo         22.1: a hook + demo video from the business's demo bank: one silent Veo
 //                     reaction clip, Claude's hook line as the one caption, the demo, AI label, gate
 //   wall-of-text      22.2: Claude's text block over stock footage with music; no AI clip, no voice
+//   music-rate-limit  25.x: ElevenLabs Music answers rate_limited (production 2026-10-07); the
+//                     slideshow takes a music-library track instead and passes the quality gate
+//                     with its music bed (never silent)
 
 const TERMINAL = new Set([
   'READY_FOR_REVIEW',
@@ -83,6 +86,7 @@ const SCENARIOS = [
   'ugc-actor',
   'hook-demo',
   'wall-of-text',
+  'music-rate-limit',
 ] as const;
 type ScenarioName = (typeof SCENARIOS)[number];
 
@@ -111,6 +115,8 @@ interface Ctx {
   platformCalls: string[];
   timeoutMs: number;
   tag: string;
+  /** The 30 s sample music bed (25.x seeds the music library with it). */
+  musicSample: Uint8Array;
 }
 
 async function createWorld(ctx: Ctx, label: string): Promise<World> {
@@ -739,6 +745,70 @@ async function wallOfText(ctx: Ctx): Promise<Check[]> {
   ];
 }
 
+/**
+ * 25.x: every ElevenLabs Music submit is refused with rate_limited. The music library holds one
+ * track (another prompt key, so the relaxed pick is exercised); the slideshow must render with it.
+ */
+async function musicRateLimit(ctx: Ctx): Promise<Check[]> {
+  // Library rows left by the earlier scenarios point into THEIR processes' temporary storage
+  // (one directory per run), so here they are dead objects: start from a library of one track.
+  await ctx.db.musicLibraryTrack.deleteMany({});
+  const promptKey = randomBytes(16).toString('hex');
+  const stored = await ctx.deps.storage.put({
+    bucket: ctx.deps.config.assetsBucket,
+    key: `music-library/${promptKey}/${randomUUID()}.mp3`,
+    body: ctx.musicSample,
+    contentType: 'audio/mpeg',
+  });
+  const track = await ctx.db.musicLibraryTrack.create({
+    data: {
+      promptKey,
+      bucketSec: 30,
+      durationSec: 30,
+      s3Bucket: stored.bucket,
+      s3Key: stored.key,
+      source: 'elevenlabs-music:qa-sample',
+    },
+  });
+  const world = await createWorld(ctx, 'music429');
+  const projectId = await startProject(ctx, world, {
+    name: 'QA music rate limit',
+    sourceType: 'SLIDESHOW',
+    slideshow: { topic: 'Five reasons people love our sourdough', slides: slideshowSlides() },
+  });
+  const run = await waitFor(ctx, projectId, (p) => TERMINAL.has(p.state));
+  const music = (run.project.metadata as { music?: Record<string, unknown> } | null)?.music ?? {};
+  const refused = ctx.faulty['elevenlabs-music']?.refused ?? 0;
+  const asset = await ctx.db.videoAsset.findFirst({ where: { projectId, kind: 'AUDIO_MUSIC' } });
+  const renders = await ctx.db.videoRender.findMany({ where: { projectId } });
+  await ctx.db.musicLibraryTrack.deleteMany({ where: { id: track.id } });
+  return [
+    verify('ElevenLabs Music refused (rate_limited)', refused > 0, `${refused} refusal(s)`),
+    verify(
+      'run reached review',
+      run.project.state === 'READY_FOR_REVIEW',
+      `trail ${run.trail.join(' > ')}; ${run.project.errorReason ?? ''}`,
+    ),
+    verify(
+      'music fell back to the library track',
+      music.status === 'reused' &&
+        music.libraryTrackId === track.id &&
+        String(music.fallbackFrom ?? '').includes('rate_limited'),
+      JSON.stringify(music),
+    ),
+    verify(
+      'the fallback cost nothing',
+      asset?.costPence === 0 && asset.providerJobId === null && music.costPence === 0,
+      `asset ${asset?.costPence ?? 'none'}p, metadata ${String(music.costPence)}p`,
+    ),
+    verify(
+      'rendered with music and passed the quality gate (loudness, real FFmpeg)',
+      renders.length > 0 && renders.every((r) => r.qualityCheckState === 'PASSED'),
+      renders.map((r) => r.qualityCheckState).join(' '),
+    ),
+  ];
+}
+
 async function costCap(ctx: Ctx, kind: 'project' | 'org'): Promise<Check[]> {
   const world = await createWorld(ctx, kind === 'project' ? 'cap-p' : 'cap-o');
   const projectId = await startProject(ctx, world, {
@@ -797,15 +867,17 @@ function adaptersFor(
   faulty: Ctx['faulty'],
 ): ProviderAdapter[] {
   const fault: ProviderFault | undefined =
-    scenario === 'failover-429'
+    scenario === 'failover-429' || scenario === 'music-rate-limit'
       ? 'rate_limited'
       : scenario === 'failover-credits'
         ? 'insufficient_credits'
         : undefined;
+  // 25.x: the music scenario breaks ElevenLabs Music; the failover scenarios break Seedance.
+  const target = scenario === 'music-rate-limit' ? 'elevenlabs-music' : 'seedance';
   return adapters.map((adapter) => {
-    if (!fault || adapter.providerId !== 'seedance') return adapter;
+    if (!fault || adapter.providerId !== target) return adapter;
     const wrapped = withFault(adapter, fault);
-    faulty.seedance = wrapped.counters;
+    faulty[target] = wrapped.counters;
     return wrapped.adapter;
   });
 }
@@ -864,6 +936,7 @@ async function main(): Promise<void> {
   for (const [sec, path] of Object.entries(media.shortRenders))
     shortRenderUrls[Number(sec)] = await put(path, `render-${sec}.mp4`, 'video/mp4');
 
+  const musicSample = await readSample(media.music);
   const db = new PrismaClient();
   const connection = redisConnectionFromEnv();
   const queue = createBullJobQueue(connection);
@@ -883,7 +956,7 @@ async function main(): Promise<void> {
       renderUrl,
       shortRenderUrls,
       voice: await readSample(media.voice),
-      music: await readSample(media.music),
+      music: musicSample,
       png: await readSample(media.still),
     },
     storage: local.storage,
@@ -934,6 +1007,7 @@ async function main(): Promise<void> {
     platformCalls,
     timeoutMs: Number(args['timeout-min']) * 60_000,
     tag,
+    musicSample,
   };
 
   let checks: Check[];
@@ -948,6 +1022,7 @@ async function main(): Promise<void> {
       'ugc-actor': ugcActor,
       'hook-demo': hookDemo,
       'wall-of-text': wallOfText,
+      'music-rate-limit': musicRateLimit,
     };
     checks = await runner[scenario](ctx);
   } catch (err) {
