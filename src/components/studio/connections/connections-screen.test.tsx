@@ -189,7 +189,7 @@ describe('ConnectionsScreen', () => {
     const user = userEvent.setup();
     renderScreen(<ConnectionsScreen />);
     await user.click(await screen.findByRole('button', { name: 'Disconnect @bakery' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(api.find('DELETE', '/platform-connections/con_1')).toHaveLength(0);
     await user.click(within(dialog).getByRole('button', { name: 'Disconnect' }));
     await waitFor(() => expect(api.find('DELETE', '/platform-connections/con_1')).toHaveLength(1));
@@ -269,7 +269,7 @@ describe('ConnectionsScreen — Meta connect in standalone mode', () => {
     const user = userEvent.setup();
     renderScreen(<ConnectionsScreen />);
     await user.click(await screen.findByRole('button', { name: 'Disconnect Bakery Page' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Disconnect' }));
     await waitFor(() => expect(api.find('DELETE', '/platform-connections/con_fb')).toHaveLength(1));
   });

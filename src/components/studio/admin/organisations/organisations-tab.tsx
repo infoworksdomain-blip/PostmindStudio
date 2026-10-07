@@ -152,7 +152,7 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
     `/admin/organisations/${encodeURIComponent(id)}`,
   );
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-10">
       <div>
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="rtl:-scale-x-100" /> {t('back')}
@@ -165,6 +165,7 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
       ) : (
         <>
           <Section
+            variant="panel"
             title={data.organisation.name}
             description={t('meta', {
               id: data.organisation.id,
@@ -214,12 +215,12 @@ function OrganisationDetail({ id, onBack }: { id: string; onBack: () => void }) 
             )}
           </Section>
           {/* 20.27: the plan override beside the cost caps (same card pattern), policy below. */}
-          <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
+          <div className="grid min-w-0 items-start gap-x-8 gap-y-10 lg:grid-cols-2">
             <PlanOverrideSection orgId={data.organisation.id} />
             <CostCapsSection orgId={data.organisation.id} />
           </div>
           <PolicySection orgId={data.organisation.id} />
-          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+          <div className="grid min-w-0 gap-x-8 gap-y-10 lg:grid-cols-2">
             <Section title={t('membersTitle')}>
               <ul className="divide-y divide-border text-sm">
                 {data.members.map((m) => (
@@ -399,7 +400,7 @@ export function OrganisationsTab() {
   if (open) return <OrganisationDetail id={open} onBack={() => setOpen(null)} />;
 
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="grid min-w-0 gap-10">
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(e: FormEvent) => {

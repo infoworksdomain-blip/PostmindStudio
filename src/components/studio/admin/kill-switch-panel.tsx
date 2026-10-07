@@ -96,7 +96,7 @@ export function KillSwitchPanel() {
   const pendingGlobal = data.pendingGlobal;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-10">
       {pendingGlobal && (
         <PendingGlobalKillBanner
           pending={pendingGlobal}
@@ -147,7 +147,7 @@ export function KillSwitchPanel() {
         </Button>
       </section>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-4">
         {SCOPED.map((s) => (
           <Section
             key={s.level}

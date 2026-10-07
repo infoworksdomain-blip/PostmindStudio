@@ -2,11 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { ImagePicker } from './image-picker';
 import { SLIDE_TYPES, TRANSITIONS, type Slide, type SlideContent, type SlideType } from './types';
@@ -264,8 +265,13 @@ export function SlideEditor({
         </div>
       )}
       <div className="sm:col-span-2">
-        <Button type="submit" size="sm" disabled={saving || Object.keys(patch).length === 0}>
-          {saving ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
+        <Button
+          loading={saving}
+          type="submit"
+          size="sm"
+          disabled={saving || Object.keys(patch).length === 0}
+        >
+          {!saving && <Save />} {t('save')}
         </Button>
       </div>
     </form>

@@ -3,14 +3,14 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { ReasonDialog } from './reason-dialog';
 
 // BACKLOG 15.D1 / Addendum A12.4 — "Any feature can be disabled per-org or globally within 60
@@ -94,7 +94,7 @@ export function FeaturesPanel() {
   if (isLoading || !data) return <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-10">
       <Section title={t('title')} description={t('description', { seconds: data.propagationSec })}>
         <ul className="grid gap-3">
           {FEATURE_NAMES.map((feature) => {
@@ -105,10 +105,14 @@ export function FeaturesPanel() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{label(feature)}</span>
-                    <Badge variant={on ? 'secondary' : 'destructive'}>
+                    <StatusPill tone={on ? 'good' : 'bad'} size="sm">
                       {on ? tc('on') : tc('off')}
-                    </Badge>
-                    {!state.environment && <Badge variant="outline">{t('offByEnvironment')}</Badge>}
+                    </StatusPill>
+                    {!state.environment && (
+                      <StatusPill tone="warn" size="sm">
+                        {t('offByEnvironment')}
+                      </StatusPill>
+                    )}
                   </div>
                   <Button
                     size="sm"
@@ -153,9 +157,8 @@ export function FeaturesPanel() {
         <form onSubmit={disableForOrg} className="flex flex-wrap items-end gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor="feature-org-feature">{t('featureLabel')}</Label>
-            <select
+            <NativeSelect
               id="feature-org-feature"
-              className={selectClass}
               value={orgFeature}
               onChange={(e) => setOrgFeature(e.target.value as FeatureName)}
             >
@@ -164,7 +167,7 @@ export function FeaturesPanel() {
                   {label(f)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="feature-org-id">{t('organisationId')}</Label>

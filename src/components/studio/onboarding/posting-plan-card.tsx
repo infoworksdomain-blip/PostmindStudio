@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useId, useMemo, useState } from 'react';
-import { CalendarRange, Loader2 } from 'lucide-react';
+import { CalendarRange } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import {
@@ -16,7 +18,6 @@ import {
   scheduleProblems,
   type PostingSchedule,
 } from '@/lib/studio/posting-schedule';
-import { cn } from '@/lib/utils';
 import type { DripQueueView } from '../calendar/drip-queue';
 import {
   initialSchedule,
@@ -33,9 +34,6 @@ import { useScheduleSummary } from '../calendar/schedule-preview';
 // the month. 20.14: the same simple choices as the calendar's schedule editor — Every day (1–4
 // posts a day) or N posts a week — with the system's times (kept if the owner chose their own
 // in the calendar); everything else is changed in the calendar.
-
-const SELECT =
-  'h-9 w-24 rounded-md border border-input bg-transparent px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
 
 export function PostingPlanCard({ businessId }: { businessId: string }) {
   const t = useTranslations('onboarding.plan');
@@ -81,14 +79,6 @@ export function PostingPlanCard({ businessId }: { businessId: string }) {
     }
   }
 
-  const pill = (checked: boolean) =>
-    cn(
-      'cursor-pointer rounded-lg border px-3 py-1.5 text-sm transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring',
-      checked
-        ? 'border-foreground bg-secondary'
-        : 'border-border text-muted-foreground hover:text-foreground',
-    );
-
   return (
     <section
       aria-labelledby="posting-plan-heading"
@@ -100,30 +90,29 @@ export function PostingPlanCard({ businessId }: { businessId: string }) {
       </h3>
       <p className="text-sm text-muted-foreground">{t('body')}</p>
       <fieldset disabled={saving} className="flex flex-col gap-3">
-        <legend className="sr-only">{ts('howOften')}</legend>
-        <div className="flex flex-wrap gap-2">
-          {(['daily', 'weekly'] as const).map((mode) => (
-            <label key={mode} className={pill(s.mode === mode)}>
-              <input
-                type="radio"
-                name={`${id}-mode`}
-                className="sr-only"
-                checked={s.mode === mode}
-                onChange={() =>
-                  setDraft(mode === 'weekly' ? withDefaultDays(setMode(s, mode)) : setMode(s, mode))
-                }
-              />
-              {mode === 'daily' ? ts('modeDaily') : ts('modeWeekly')}
-            </label>
-          ))}
-        </div>
+        <legend id={`${id}-mode-legend`} className="sr-only">
+          {ts('howOften')}
+        </legend>
+        <SegmentedControl<PostingSchedule['mode']>
+          aria-labelledby={`${id}-mode-legend`}
+          className="self-start"
+          options={[
+            { value: 'daily', label: ts('modeDaily') },
+            { value: 'weekly', label: ts('modeWeekly') },
+          ]}
+          value={s.mode}
+          onChange={(mode) => {
+            if (mode === 'custom') return;
+            setDraft(mode === 'weekly' ? withDefaultDays(setMode(s, mode)) : setMode(s, mode));
+          }}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor={`${id}-count`} className="text-sm font-medium">
             {s.mode === 'weekly' ? ts('postsPerWeek') : ts('postsPerDay')}
           </label>
-          <select
+          <NativeSelect
             id={`${id}-count`}
-            className={SELECT}
+            wrapperClassName="w-24"
             value={s.mode === 'weekly' ? s.postsPerWeek : s.postsPerDay}
             onChange={(e) => {
               const n = Number(e.target.value);
@@ -140,13 +129,13 @@ export function PostingPlanCard({ businessId }: { businessId: string }) {
                 {f.count(n)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <p className="text-xs text-muted-foreground">
           {valid ? summary(s, resolveSchedule(s)) : null}
         </p>
-        <Button size="sm" className="self-start" onClick={save} disabled={saving || !valid}>
-          {saving && <Loader2 className="animate-spin" />} {t('save')}
+        <Button size="sm" className="self-start" onClick={save} disabled={!valid} loading={saving}>
+          {t('save')}
         </Button>
       </fieldset>
       <p aria-live="polite" className="text-sm">

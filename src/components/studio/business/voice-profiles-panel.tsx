@@ -75,7 +75,7 @@ export function VoiceProfilesPanel({
       {error && <ErrorState error={error} onRetry={refresh} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-40 rounded-xl" />}
       {data && profiles.length === 0 && (
-        <EmptyState illustration="voice" title={t('empty.title')} description={t('empty.body')} />
+        <EmptyState media="voice" title={t('empty.title')} description={t('empty.body')} />
       )}
       {profiles.length > 0 && (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label={t('listAria')}>

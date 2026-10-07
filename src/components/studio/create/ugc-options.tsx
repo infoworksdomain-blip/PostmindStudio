@@ -1,11 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { StatusPill } from '@/components/ui/status-pill';
 import { ShieldCheck, UserRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useApi } from '@/lib/client/api';
 import { UGC_VIDEO_ALLOWANCE_UNITS } from '@/lib/studio/ugc/allowance';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import type { BusinessProfile } from '../business/types';
 import { ImagePicker } from '../slideshow/image-picker';
 import { CreatorPicker } from '../creators/creator-picker';
@@ -61,12 +63,9 @@ export function UgcOptions({
             <p className="text-xs text-muted-foreground">{t('intro')}</p>
           </div>
         </div>
-        <p
-          className="rounded-full border border-border px-2.5 py-0.5 text-xs"
-          data-testid="ugc-allowance"
-        >
+        <StatusPill tone="neutral" data-testid="ugc-allowance">
           {t('allowance', { count: UGC_VIDEO_ALLOWANCE_UNITS })}
-        </p>
+        </StatusPill>
       </div>
 
       <Field id="create-ugc-product" label={t('product')}>

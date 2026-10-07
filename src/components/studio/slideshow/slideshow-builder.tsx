@@ -8,12 +8,12 @@ import {
   ArrowUp,
   BookmarkPlus,
   ChevronDown,
-  Loader2,
+  Images,
   Plus,
   Trash2,
-  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
@@ -22,7 +22,8 @@ import type { ProjectDetail } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
 import { PlanLockBadge } from '../billing/plan-lock-badge';
 import { ErrorState } from '../primitives';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { useAction } from '../review/use-action';
 import { SlideEditor, type SlidePatch } from './slide-editor';
 import { SlideOverlays } from './slide-overlays';
@@ -161,8 +162,13 @@ export function SlideshowBuilder({
             <span className="text-foreground"> · {t('needAttention', { count: needing })}</span>
           )}
         </p>
-        <Button variant="outline" onClick={autoPopulate} disabled={!editable || busy || populating}>
-          {pending === 'populate' || populating ? <Loader2 className="animate-spin" /> : <Wand2 />}
+        <Button
+          loading={pending === 'populate' || populating}
+          variant="outline"
+          onClick={autoPopulate}
+          disabled={!editable || busy || populating}
+        >
+          {!(pending === 'populate' || populating) && <Images />}
           {populating ? t('autoPopulating') : t('autoPopulate')}
         </Button>
       </div>
@@ -206,33 +212,27 @@ export function SlideshowBuilder({
                     open && 'rotate-180',
                   )}
                 />
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t('moveUp', { n: i + 1 })}
+                <IconButton
+                  label={t('moveUp', { n: i + 1 })}
                   disabled={!editable || busy || i === 0}
                   onClick={() => reorder(slide, i - 1)}
                 >
                   <ArrowUp />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t('moveDown', { n: i + 1 })}
+                </IconButton>
+                <IconButton
+                  label={t('moveDown', { n: i + 1 })}
                   disabled={!editable || busy || i === slides.length - 1}
                   onClick={() => reorder(slide, i + 1)}
                 >
                   <ArrowDown />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t('delete', { n: i + 1 })}
+                </IconButton>
+                <IconButton
+                  label={t('delete', { n: i + 1 })}
                   disabled={!editable || busy}
                   onClick={() => remove(slide)}
                 >
                   <Trash2 />
-                </Button>
+                </IconButton>
               </div>
               {open && editable && (
                 <div className="px-2 pb-2 sm:px-3 sm:pb-3">
@@ -274,8 +274,13 @@ export function SlideshowBuilder({
                 ))}
               </NativeSelect>
             </Field>
-            <Button variant="outline" onClick={add} disabled={busy || slides.length >= 40}>
-              {pending === 'add' ? <Loader2 className="animate-spin" /> : <Plus />} {t('add')}
+            <Button
+              loading={pending === 'add'}
+              variant="outline"
+              onClick={add}
+              disabled={busy || slides.length >= 40}
+            >
+              {pending !== 'add' && <Plus />} {t('add')}
             </Button>
           </div>
           <form onSubmit={saveTemplate} className="flex items-end gap-2">
@@ -289,12 +294,12 @@ export function SlideshowBuilder({
               />
             </Field>
             <Button
+              loading={pending === 'template'}
               type="submit"
               variant="outline"
               disabled={busy || !templateName.trim() || slides.length === 0}
             >
-              {pending === 'template' ? <Loader2 className="animate-spin" /> : <BookmarkPlus />}{' '}
-              {t('save')}
+              {pending !== 'template' && <BookmarkPlus />} {t('save')}
             </Button>
             <PlanLockBadge feature="customPresets" className="mb-2" />
           </form>

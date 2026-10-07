@@ -3,12 +3,13 @@
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
-import { Clapperboard, Layers, Loader2 } from 'lucide-react';
+import { Clapperboard, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFormat } from '@/lib/client/format';
 import type { ProjectDetail } from '@/lib/client/types';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { useAction } from '../review/use-action';
 import { PresetSelect } from './preset-controls';
 import { RERENDERABLE, type OverlayPreset } from './types';
@@ -183,8 +184,8 @@ export function BulkApply({
           )}
         </fieldset>
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-          <Button type="submit" disabled={!editable || !valid || busy}>
-            {pending === 'bulk' ? <Loader2 className="animate-spin" /> : <Layers />} {t('apply')}
+          <Button loading={pending === 'bulk'} type="submit" disabled={!editable || !valid || busy}>
+            {pending !== 'bulk' && <Layers />} {t('apply')}
           </Button>
           <p className="text-xs text-muted-foreground">{t('wholeVideoNote')}</p>
         </div>
@@ -192,12 +193,13 @@ export function BulkApply({
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <p className="text-sm text-muted-foreground">{t('rerenderNote')}</p>
         <Button
+          loading={pending === 'rerender'}
           variant="outline"
           onClick={rerender}
           disabled={!RERENDERABLE.has(project.state) || busy}
           title={RERENDERABLE.has(project.state) ? undefined : t('rerenderUnavailable')}
         >
-          {pending === 'rerender' ? <Loader2 className="animate-spin" /> : <Clapperboard />}
+          {pending !== 'rerender' && <Clapperboard />}
           {t('rerender')}
         </Button>
       </div>

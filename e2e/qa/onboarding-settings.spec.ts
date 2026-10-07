@@ -497,10 +497,10 @@ test.describe('the /welcome wizard', () => {
 
     // Tone chips: at most three.
     for (const tone of ['Warm', 'Friendly', 'Bold'])
-      await page.getByRole('button', { name: tone, exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Premium', exact: true })).toBeDisabled();
-    await page.getByRole('button', { name: 'Bold', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Premium', exact: true })).toBeEnabled();
+      await page.getByRole('checkbox', { name: tone, exact: true }).click();
+    await expect(page.getByRole('checkbox', { name: 'Premium', exact: true })).toBeDisabled();
+    await page.getByRole('checkbox', { name: 'Bold', exact: true }).click();
+    await expect(page.getByRole('checkbox', { name: 'Premium', exact: true })).toBeEnabled();
     await page.getByRole('radio', { name: 'Inter' }).click();
     await page.getByRole('button', { name: 'Save brand kit' }).click();
     await expect(page.getByText('Main brand kit is ready')).toBeVisible();
@@ -561,8 +561,8 @@ test.describe('the /welcome wizard', () => {
     await expect(
       page.getByRole('link', { name: /plan and schedule your whole month/ }),
     ).toHaveAttribute('href', '/plans/new');
-    // 20.14: Every day / Times a week, then a count; the radios are visually hidden.
-    await page.getByRole('radio', { name: 'Times a week' }).check({ force: true });
+    // 20.14: Every day / Times a week (a segmented control), then a count.
+    await page.getByRole('radio', { name: 'Times a week' }).click();
     await page.getByLabel('Posts a week').selectOption('3');
     await page.getByRole('button', { name: 'Save posting plan' }).click();
     await expect(page.getByText(/Posting plan:/)).toBeVisible();

@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Check, Leaf, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
@@ -28,6 +29,7 @@ import {
   type Cadence,
   type Duration,
 } from './automation-model';
+import { OptionCards } from './option-cards';
 
 // 22.5 — /automations/new: channels → cadence → mix → approval → summary. The summary shows how
 // many posts a period makes and the format split (cheapest first); customers never see pence —
@@ -98,11 +100,7 @@ export function AutomationWizard() {
 
   if (ready && !businessId)
     return (
-      <EmptyState
-        illustration="business"
-        title={t('list.pickTitle')}
-        description={t('list.pickBody')}
-      />
+      <EmptyState media="business" title={t('list.pickTitle')} description={t('list.pickBody')} />
     );
 
   const header = (
@@ -218,37 +216,22 @@ export function AutomationWizard() {
 
         {step === 'cadence' && (
           <div className="grid gap-6">
-            <div
-              role="radiogroup"
-              aria-label={t('wizard.cadenceTitle')}
-              className="grid gap-3 sm:grid-cols-2"
-            >
-              {(['per_day', 'per_week'] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  role="radio"
-                  aria-checked={state.cadence.mode === mode}
-                  onClick={() =>
-                    patch({
-                      cadence:
-                        mode === 'per_day' ? { mode, postsPerDay: 1 } : { mode, postsPerWeek: 3 },
-                    })
-                  }
-                  className={cn(
-                    'rounded-xl border p-4 text-start transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                    state.cadence.mode === mode
-                      ? 'border-primary bg-primary/6'
-                      : 'border-border hover:bg-secondary/60',
-                  )}
-                >
-                  <span className="block font-medium">{t(`wizard.mode.${mode}`)}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {t(`wizard.mode.${mode}Hint`)}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <OptionCards<Cadence['mode']>
+              label={t('wizard.cadenceTitle')}
+              className="sm:grid-cols-2"
+              value={state.cadence.mode}
+              onChange={(mode) =>
+                patch({
+                  cadence:
+                    mode === 'per_day' ? { mode, postsPerDay: 1 } : { mode, postsPerWeek: 3 },
+                })
+              }
+              options={(['per_day', 'per_week'] as const).map((mode) => ({
+                value: mode,
+                title: t(`wizard.mode.${mode}`),
+                hint: t(`wizard.mode.${mode}Hint`),
+              }))}
+            />
             <Field
               id="automation-count"
               label={
@@ -286,27 +269,19 @@ export function AutomationWizard() {
               />
             </Field>
             <fieldset>
-              <legend className="mb-2 text-xs font-medium text-muted-foreground">
+              <legend
+                id="automation-duration"
+                className="mb-2 text-xs font-medium text-muted-foreground"
+              >
                 {t('wizard.durationTitle')}
               </legend>
-              <div className="flex flex-wrap gap-2">
-                {DURATIONS.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    aria-pressed={state.duration === d}
-                    onClick={() => patch({ duration: d })}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-sm transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                      state.duration === d
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border hover:bg-secondary',
-                    )}
-                  >
-                    {t(`duration.${d}`)}
-                  </button>
-                ))}
-              </div>
+              <ChoiceChips<Duration>
+                type="single"
+                aria-labelledby="automation-duration"
+                value={state.duration}
+                onChange={(duration) => patch({ duration })}
+                options={DURATIONS.map((d) => ({ value: d, label: t(`duration.${d}`) }))}
+              />
             </fieldset>
           </div>
         )}
@@ -314,7 +289,7 @@ export function AutomationWizard() {
         {step === 'mix' && (
           <div className="space-y-3 text-sm">
             <p className="text-muted-foreground">{t('wizard.mixHint')}</p>
-            <p className="flex items-start gap-2 rounded-xl border border-success/30 bg-success/8 p-3">
+            <p className="flex items-start gap-2 rounded-xl bg-success-soft p-3">
               <Leaf className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
               {t('wizard.lowestCost')}
             </p>
@@ -325,28 +300,16 @@ export function AutomationWizard() {
         )}
 
         {step === 'approval' && (
-          <div role="radiogroup" aria-label={t('wizard.approvalTitle')} className="grid gap-3">
-            {(['review', 'auto'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                role="radio"
-                aria-checked={state.approvalMode === mode}
-                onClick={() => patch({ approvalMode: mode })}
-                className={cn(
-                  'rounded-xl border p-4 text-start transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                  state.approvalMode === mode
-                    ? 'border-primary bg-primary/6'
-                    : 'border-border hover:bg-secondary/60',
-                )}
-              >
-                <span className="block font-medium">{t(`approval.${mode}`)}</span>
-                <span className="block text-xs text-muted-foreground">
-                  {t(`approval.${mode}Hint`)}
-                </span>
-              </button>
-            ))}
-          </div>
+          <OptionCards<WizardState['approvalMode']>
+            label={t('wizard.approvalTitle')}
+            value={state.approvalMode}
+            onChange={(approvalMode) => patch({ approvalMode })}
+            options={(['review', 'auto'] as const).map((mode) => ({
+              value: mode,
+              title: t(`approval.${mode}`),
+              hint: t(`approval.${mode}Hint`),
+            }))}
+          />
         )}
 
         {step === 'summary' && (
@@ -415,10 +378,11 @@ export function AutomationWizard() {
             </Button>
           ) : (
             <Button
-              disabled={submitting || !estimate || estimate.posts === 0}
+              loading={submitting}
+              disabled={!estimate || estimate.posts === 0}
               onClick={() => void submit()}
             >
-              {submitting ? <Loader2 className="animate-spin" /> : <Check />} {t('wizard.create')}
+              {!submitting && <Check />} {t('wizard.create')}
             </Button>
           )}
         </div>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { UGC_VIDEO_ALLOWANCE_UNITS } from '@/lib/studio/ugc/allowance';
 import {
@@ -13,11 +13,11 @@ import {
 import { toast } from 'sonner';
 import { Building2, CalendarRange, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
-import { cn } from '@/lib/utils';
 import { connectionsFor, publishablePlatforms } from '../automation/automation';
 import { useShowCosts } from '../account/use-show-costs';
 import { useBusiness } from '../business-context';
@@ -26,7 +26,8 @@ import { defaultZone } from '../calendar/drip-queue';
 import { PlatformChips } from '../create/create-options';
 import { defaultPlatforms } from '../create/formats';
 import { EmptyState, ErrorState, PageHeader } from '../primitives';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { AllowancePanel } from './plan-parts';
 import {
   buildPlanBody,
@@ -44,6 +45,8 @@ import {
 // the topics in the background and the editor opens on /plans/:id.
 
 const POSTS_PER_DAY = [1, 2, 3, 4] as const;
+/** A posts-a-day count, or 'drip' for the business's own posting times. */
+type PostsPerDayChoice = number | 'drip';
 
 export function PlanMonthForm() {
   const t = useTranslations('plans.new');
@@ -90,7 +93,7 @@ export function PlanMonthForm() {
   if (ready && !businessId)
     return (
       <EmptyState
-        icon={<Building2 className="size-8" strokeWidth={1.5} />}
+        media={<Building2 className="size-8" strokeWidth={1.5} />}
         title={t('noBusiness.title')}
         description={t('noBusiness.description')}
         action={
@@ -200,27 +203,29 @@ export function PlanMonthForm() {
           </div>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-xs font-medium text-muted-foreground">
+            <legend
+              id="plan-posts-per-day"
+              className="mb-1 text-xs font-medium text-muted-foreground"
+            >
               {t('postsPerDay')}
             </legend>
-            <div role="radiogroup" aria-label={t('postsPerDay')} className="flex flex-wrap gap-1.5">
-              {POSTS_PER_DAY.map((n) => (
-                <Choice
-                  key={n}
-                  checked={!form.useDripSlots && form.postsPerDay === n}
-                  onSelect={() => patch({ postsPerDay: n, useDripSlots: false })}
-                >
-                  {t('postsPerDayOption', { count: n })}
-                </Choice>
-              ))}
-              <Choice
-                checked={form.useDripSlots}
-                disabled={!d.hasPostingTimes}
-                onSelect={() => patch({ useDripSlots: true })}
-              >
-                {t('useMyTimes')}
-              </Choice>
-            </div>
+            <ChoiceChips<PostsPerDayChoice>
+              type="single"
+              aria-labelledby="plan-posts-per-day"
+              value={form.useDripSlots ? 'drip' : form.postsPerDay}
+              onChange={(v) =>
+                patch(
+                  v === 'drip' ? { useDripSlots: true } : { postsPerDay: v, useDripSlots: false },
+                )
+              }
+              options={[
+                ...POSTS_PER_DAY.map((n) => ({
+                  value: n,
+                  label: t('postsPerDayOption', { count: n }),
+                })),
+                { value: 'drip', label: t('useMyTimes'), disabled: !d.hasPostingTimes },
+              ]}
+            />
             <p className="text-xs text-muted-foreground">
               {d.hasPostingTimes
                 ? t('useMyTimesHint', { count: d.postingTimesPerWeek })
@@ -319,10 +324,11 @@ export function PlanMonthForm() {
             <Button
               type="submit"
               size="lg"
-              disabled={submitting || block === 'read_only'}
+              loading={submitting}
+              disabled={block === 'read_only'}
               aria-describedby={block ? CREATE_BLOCK_NOTICE_ID : undefined}
             >
-              {submitting ? <Loader2 className="animate-spin" /> : <CalendarRange />}
+              {!submitting && <CalendarRange />}
               {submitting ? t('submitting') : t('submit')}
             </Button>
             <p id="plan-estimate" className="text-sm text-muted-foreground" aria-live="polite">
@@ -374,35 +380,5 @@ function PlanAccountsNotice({
         {t('connectAccount')}
       </Link>
     </p>
-  );
-}
-
-function Choice({
-  checked,
-  disabled = false,
-  onSelect,
-  children,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  onSelect: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={onSelect}
-      className={cn(
-        'rounded-lg border px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        checked
-          ? 'border-foreground bg-secondary'
-          : 'border-border text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {children}
-    </button>
   );
 }

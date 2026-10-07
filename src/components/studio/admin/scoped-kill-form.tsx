@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { MIN_REASON } from './reason-dialog';
 import { PROVIDER_IDS, PUBLISH_PLATFORMS, type KillLevel, type SetKillSwitchBody } from './types';
 
@@ -63,9 +62,8 @@ export function ScopedKillForm({
       >
         <div className="grid gap-1.5">
           <Label htmlFor="kill-level">{t('level')}</Label>
-          <select
+          <NativeSelect
             id="kill-level"
-            className={selectClass}
             value={level}
             onChange={(e) => {
               setLevel(e.target.value as ScopedLevel);
@@ -77,14 +75,13 @@ export function ScopedKillForm({
                 {t(`levels.${l}`)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="kill-target">{t(`targets.${level}`)}</Label>
           {options ? (
-            <select
+            <NativeSelect
               id="kill-target"
-              className={selectClass}
               value={target}
               onChange={(e) => setTarget(e.target.value)}
             >
@@ -96,7 +93,7 @@ export function ScopedKillForm({
                   {p}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           ) : (
             <Input
               id="kill-target"
@@ -118,8 +115,7 @@ export function ScopedKillForm({
             placeholder={t('reasonPlaceholder')}
           />
         </div>
-        <Button type="submit" variant="destructive" disabled={!valid || pending}>
-          {pending && <Loader2 className="animate-spin" />}
+        <Button type="submit" variant="destructive" disabled={!valid} loading={pending}>
           {t('engage')}
         </Button>
       </form>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { CalendarX2, Loader2, RotateCw } from 'lucide-react';
+import { CalendarX2, RotateCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -65,8 +65,14 @@ export function ScheduleNotice({
         <Button asChild size="sm" variant="outline">
           <Link href="/calendar">{t('openCalendar')}</Link>
         </Button>
-        <Button size="sm" variant="outline" disabled={pending} onClick={() => void retry()}>
-          {pending ? <Loader2 className="animate-spin" /> : <RotateCw />}
+        <Button
+          loading={pending}
+          size="sm"
+          variant="outline"
+          disabled={pending}
+          onClick={() => void retry()}
+        >
+          {!pending && <RotateCw />}
           {t('retry')}
         </Button>
       </div>

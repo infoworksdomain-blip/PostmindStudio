@@ -1,19 +1,19 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
-import { Building2, Globe2, Loader2 } from 'lucide-react';
+import { Building2, Globe2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, ApiError, useApi, useErrorMessage } from '@/lib/client/api';
 import { isLocale, LOCALE_INFO, LOCALES } from '@/lib/i18n/locales';
 import { hardNavigate } from '@/lib/client/navigate';
 import { useBusiness } from '../business-context';
-import { selectClass } from '../library/library-filters';
 import { EmptyState } from '../primitives';
 import { countryOptions } from '../settings/countries';
 
@@ -94,9 +94,8 @@ export function CreateOrganisationStep() {
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <Label htmlFor="onb-org-country">{t('country')}</Label>
-            <select
+            <NativeSelect
               id="onb-org-country"
-              className={selectClass}
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               required
@@ -107,14 +106,13 @@ export function CreateOrganisationStep() {
                   {c.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
             <p className="text-xs text-muted-foreground">{t('countryHint')}</p>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="onb-org-locale">{t('language')}</Label>
-            <select
+            <NativeSelect
               id="onb-org-locale"
-              className={selectClass}
               value={defaultLocale}
               onChange={(e) => setDefaultLocale(e.target.value as typeof defaultLocale)}
             >
@@ -123,12 +121,11 @@ export function CreateOrganisationStep() {
                   {LOCALE_INFO[code].label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         </div>
         <div>
-          <Button type="submit" disabled={saving || name.trim().length < 2 || !country}>
-            {saving && <Loader2 className="animate-spin" />}
+          <Button type="submit" disabled={name.trim().length < 2 || !country} loading={saving}>
             {t('submit')}
           </Button>
         </div>
@@ -188,8 +185,7 @@ function NewBusinessForm() {
         <p className="text-xs text-muted-foreground">{t('websiteHint')}</p>
       </div>
       <div>
-        <Button type="submit" disabled={saving || !name.trim()}>
-          {saving && <Loader2 className="animate-spin" />}
+        <Button type="submit" disabled={!name.trim()} loading={saving}>
           {t('submit')}
         </Button>
       </div>
@@ -207,7 +203,7 @@ export function FirstBusinessStep() {
   if (error instanceof ApiError && error.status === 501)
     return (
       <EmptyState
-        icon={<Building2 className="size-8" strokeWidth={1.5} />}
+        media={<Building2 className="size-8" strokeWidth={1.5} />}
         title={t('coreTitle')}
         description={t('coreDescription')}
         action={

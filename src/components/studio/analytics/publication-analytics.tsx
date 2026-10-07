@@ -193,7 +193,7 @@ export function PublicationAnalytics({ publicationId }: { publicationId: string 
       {isLoading && <Skeleton aria-label={t('loadingAria')} className="h-64 rounded-xl" />}
       {data && !latest && <EmptyState title={t('empty.title')} description={t('empty.body')} />}
       {data && latest && (
-        <div className="grid min-w-0 gap-6">
+        <div className="grid min-w-0 gap-10">
           <div className="grid grid-cols-2 gap-x-6 gap-y-5 border-y border-border/70 py-6 sm:grid-cols-5">
             <Stat label={t('stats.views')} value={f.count(latest.views)} />
             <Stat label={t('stats.watchTime')} value={f.duration(latest.watchTimeSec)} />
@@ -225,7 +225,7 @@ export function PublicationAnalytics({ publicationId }: { publicationId: string 
               <p className="py-6 text-sm text-muted-foreground">{t('viewsOverTime.tooFew')}</p>
             )}
           </Section>
-          <div className="grid min-w-0 gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div className="grid min-w-0 gap-10 lg:grid-cols-[1.4fr_1fr]">
             <RetentionSection data={data} />
             <AudienceSection data={data} />
           </div>

@@ -37,10 +37,10 @@ function StepChain({ workflow }: { workflow: ApprovalWorkflow }) {
               strokeWidth={2}
             />
           )}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-raised px-2.5 py-1 text-xs">
             <span
               aria-hidden
-              className="inline-flex size-4 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground tabular"
+              className="inline-flex size-4 items-center justify-center rounded-full bg-background text-[10px] font-medium text-muted-foreground tabular"
             >
               {f.number(index + 1)}
             </span>
@@ -180,6 +180,7 @@ export function ApprovalWorkflowsScreen() {
       <div className="flex flex-col gap-6">
         {editing && (
           <Section
+            variant="panel"
             title={
               editing.mode === 'edit'
                 ? t('editTitle', { name: editing.workflow.name })
@@ -206,7 +207,7 @@ export function ApprovalWorkflowsScreen() {
         ) : workflows.length === 0 ? (
           !editing && (
             <EmptyState
-              illustration="approvals"
+              media="approvals"
               title={t('emptyTitle')}
               description={t('emptyBody')}
               action={

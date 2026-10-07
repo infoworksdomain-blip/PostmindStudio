@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Hash, Loader2, Save } from 'lucide-react';
+import { Hash, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { businessHashtagsPath, type BusinessHashtags } from '../hashtags/business-hashtags-panel';
 import { withLocked } from '../hashtags/model';
 import {
@@ -118,9 +119,10 @@ export function ItemCopyEditor({
         <Button
           size="sm"
           onClick={() => void save()}
-          disabled={saving || problems.short || problems.over || problems.tooLong}
+          loading={saving}
+          disabled={problems.short || problems.over || problems.tooLong}
         >
-          {saving ? <Loader2 className="animate-spin" /> : <Save />}
+          {!saving && <Save />}
           {tc('save')}
         </Button>
         <Button size="sm" variant="ghost" onClick={onDone}>

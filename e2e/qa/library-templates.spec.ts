@@ -28,6 +28,8 @@ const PIXEL = Buffer.from(
 const ERROR_TEXT = [
   /Couldn[’']t load this/,
   /Something went wrong/,
+  /That didn[’']t go through/,
+  /We couldn[’']t finish that on our side/,
   /You don[’']t have permission/,
   /Application error/,
   /Internal Server Error/,
@@ -751,13 +753,13 @@ test('templates: list, delete, empty states, error retry and the Create picker',
 
   // Delete asks first: cancelling keeps the template; confirming deletes both.
   await page.getByRole('button', { name: `Delete QA project template ${run}` }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }).click();
   expect(await db.template.count({ where: { organisationId: orgId } })).toBe(1);
   await page.getByRole('button', { name: `Delete QA project template ${run}` }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Delete template' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete template' }).click();
   await expect(page.getByText(`Deleted “QA project template ${run}”`).first()).toBeVisible();
   await page.getByRole('button', { name: `Delete QA slideshow template ${run}` }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Delete template' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete template' }).click();
   await expect(page.getByText(`Deleted “QA slideshow template ${run}”`).first()).toBeVisible();
   await expect(page.getByText(/Save a project as a template/)).toBeVisible();
   expect(await db.template.count({ where: { organisationId: orgId } })).toBe(0);

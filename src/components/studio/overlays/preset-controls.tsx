@@ -2,11 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
-import { BookmarkPlus, Loader2, Plus, RefreshCw, Save } from 'lucide-react';
+import { BookmarkPlus, Plus, RefreshCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlanLockBadge } from '../billing/plan-lock-badge';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { useAction } from '../review/use-action';
 import { styleOf } from './overlay-math';
 import { PRESET_GROUPS, type Overlay, type OverlayPreset, type PresetGroup } from './types';
@@ -98,8 +99,8 @@ export function AddOverlay({
           onChange={setPresetId}
         />
       </Field>
-      <Button type="submit" disabled={disabled || adding || !text.trim()}>
-        {adding ? <Loader2 className="animate-spin" /> : <Plus />} {t('addAtPlayhead')}
+      <Button loading={adding} type="submit" disabled={disabled || adding || !text.trim()}>
+        {!adding && <Plus />} {t('addAtPlayhead')}
       </Button>
     </form>
   );
@@ -167,12 +168,13 @@ export function SavePreset({
         </NativeSelect>
       </Field>
       <Button
+        loading={pending !== null}
         type="submit"
         variant="outline"
         className="col-span-2 sm:col-span-1"
         disabled={!name.trim() || pending !== null}
       >
-        {pending ? <Loader2 className="animate-spin" /> : <BookmarkPlus />} {t('savePreset')}
+        {!pending && <BookmarkPlus />} {t('savePreset')}
       </Button>
       <PlanLockBadge
         feature="customPresets"
@@ -274,12 +276,13 @@ export function ManagePresets({
             </Field>
             <div className="flex flex-wrap gap-2 sm:col-span-2">
               <Button
+                loading={pending !== null}
                 size="sm"
                 variant="outline"
                 disabled={disabled || !renamed || !name.trim() || pending !== null}
                 onClick={() => void update({ name: name.trim(), group }, t('renamed'))}
               >
-                {pending ? <Loader2 className="animate-spin" /> : <Save />} {t('saveName')}
+                {!pending && <Save />} {t('saveName')}
               </Button>
               <Button
                 size="sm"

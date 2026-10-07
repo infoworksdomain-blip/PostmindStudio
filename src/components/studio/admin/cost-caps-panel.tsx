@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
@@ -90,61 +92,64 @@ function useCapText(): (pence: number | null | undefined) => string {
   return (pence) => (pence === null || pence === undefined ? t('noCap') : f.pence(pence));
 }
 
+const SOURCE_TONE: Record<CapSource, StatusTone> = {
+  default: 'neutral',
+  custom: 'neutral',
+  env: 'info',
+  disabled: 'warn',
+};
+
 function SourceTag({ source }: { source: CapSource | undefined }) {
   const t = useTranslations('admin.cost.caps.source');
   if (!source) return null;
   return (
-    <span
-      className={cn(
-        'ms-1.5 rounded px-1 py-px text-[10px] font-normal tracking-wide uppercase',
-        source === 'env'
-          ? 'bg-primary/10 text-primary'
-          : source === 'disabled'
-            ? 'bg-warning-soft text-warning-foreground'
-            : 'bg-muted text-muted-foreground',
-      )}
-    >
+    <StatusPill tone={SOURCE_TONE[source]} size="sm" className="ms-1.5 align-middle">
       {t(source)}
-    </span>
+    </StatusPill>
   );
 }
 
 function TierCaps({ caps }: { caps: CostCapsResponse['caps'] }) {
   const t = useTranslations('admin.cost.caps');
   const capText = useCapText();
+  const columns: DataTableColumn<string>[] = [
+    {
+      id: 'tier',
+      header: t('tierCol'),
+      className: 'font-medium capitalize',
+      cell: (tier) => tier.toLowerCase(),
+    },
+    {
+      id: 'daily',
+      header: t('dailyCol'),
+      className: 'tabular-nums',
+      cell: (tier) => (
+        <>
+          {capText(caps.orgDailyByTier[tier])}
+          <SourceTag source={caps.sources.orgDailyByTier[tier]} />
+        </>
+      ),
+    },
+    {
+      id: 'monthly',
+      header: t('monthlyCol'),
+      className: 'tabular-nums',
+      cell: (tier) => (
+        <>
+          {capText(caps.orgMonthlyByTier[tier])}
+          <SourceTag source={caps.sources.orgMonthlyByTier[tier]} />
+        </>
+      ),
+    },
+  ];
   return (
-    <table aria-label={t('tierTableAria')} className="w-full text-sm">
-      <thead>
-        <tr className="text-start text-xs text-muted-foreground">
-          <th scope="col" className="py-1 font-normal">
-            {t('tierCol')}
-          </th>
-          <th scope="col" className="py-1 font-normal">
-            {t('dailyCol')}
-          </th>
-          <th scope="col" className="py-1 font-normal">
-            {t('monthlyCol')}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {Object.keys(caps.orgDailyByTier).map((tier) => (
-          <tr key={tier} className="border-t border-border/60">
-            <th scope="row" className="py-1.5 text-start font-medium capitalize">
-              {tier.toLowerCase()}
-            </th>
-            <td className="py-1.5 tabular-nums">
-              {capText(caps.orgDailyByTier[tier])}
-              <SourceTag source={caps.sources.orgDailyByTier[tier]} />
-            </td>
-            <td className="py-1.5 tabular-nums">
-              {capText(caps.orgMonthlyByTier[tier])}
-              <SourceTag source={caps.sources.orgMonthlyByTier[tier]} />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <DataTable
+      dense
+      caption={t('tierTableAria')}
+      columns={columns}
+      rows={Object.keys(caps.orgDailyByTier)}
+      getRowId={(tier) => tier}
+    />
   );
 }
 
@@ -285,9 +290,9 @@ export function CostCapsPanel() {
                 <li key={o.organisationId} className="flex flex-wrap justify-between gap-2">
                   <span>
                     <span className="font-mono text-xs">{o.organisationId}</span>
-                    <span className="ms-1.5 rounded bg-primary/10 px-1 py-px text-[10px] tracking-wide text-primary uppercase">
+                    <StatusPill tone="info" size="sm" className="ms-1.5 align-middle">
                       {t('overrideTag')}
-                    </span>
+                    </StatusPill>
                   </span>
                   <span className="text-muted-foreground">
                     {t('overrideDetail', {

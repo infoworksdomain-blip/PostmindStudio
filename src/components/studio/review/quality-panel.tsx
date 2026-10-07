@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, CircleSlash, Loader2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleSlash, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { QualityIssue, Render } from '@/lib/client/types';
@@ -192,11 +192,11 @@ export function QualityPanel({ render, onChanged }: { render: Render; onChanged:
               onChange={(e) => setNote(e.target.value)}
             />
             <Button
+              loading={pending === 'force'}
               variant="outline"
               onClick={forceApprove}
               disabled={!note.trim() || pending !== null}
             >
-              {pending === 'force' && <Loader2 className="animate-spin" />}
               {t('forceApprove')}
             </Button>
           </div>

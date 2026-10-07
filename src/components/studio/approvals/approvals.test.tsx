@@ -172,12 +172,12 @@ describe('ApprovalWorkflowsScreen', () => {
     await user.type(approvers[1] as HTMLElement, '2');
     const picker = within(form).getByRole('group', { name: 'Businesses' });
     expect(within(form).queryByLabelText(/Business ids/)).not.toBeInTheDocument();
-    await user.click(await within(picker).findByRole('button', { name: 'Leeds Sourdough' }));
-    expect(within(picker).getByRole('button', { name: 'Leeds Sourdough' })).toHaveAttribute(
-      'aria-pressed',
+    await user.click(await within(picker).findByRole('checkbox', { name: 'Leeds Sourdough' }));
+    expect(within(picker).getByRole('checkbox', { name: 'Leeds Sourdough' })).toHaveAttribute(
+      'aria-checked',
       'true',
     );
-    await user.click(within(form).getByRole('button', { name: 'TikTok' }));
+    await user.click(within(form).getByRole('checkbox', { name: 'TikTok' }));
     await user.click(within(form).getByRole('button', { name: 'Create workflow' }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'POST')?.body).toEqual({
@@ -203,13 +203,13 @@ describe('ApprovalWorkflowsScreen', () => {
       'group',
       { name: 'Businesses' },
     );
-    const stale = within(picker).getByRole('button', { name: 'a removed business' });
-    expect(stale).toHaveAttribute('aria-pressed', 'true');
+    const stale = within(picker).getByRole('checkbox', { name: 'a removed business' });
+    expect(stale).toHaveAttribute('aria-checked', 'true');
     await user.click(stale);
     // Unselected, the removed business drops out of the choices.
-    expect(within(picker).queryByRole('button', { name: 'a removed business' })).toBeNull();
-    expect(within(picker).getByRole('button', { name: 'Other Bakery' })).toHaveAttribute(
-      'aria-pressed',
+    expect(within(picker).queryByRole('checkbox', { name: 'a removed business' })).toBeNull();
+    expect(within(picker).getByRole('checkbox', { name: 'Other Bakery' })).toHaveAttribute(
+      'aria-checked',
       'false',
     );
   });

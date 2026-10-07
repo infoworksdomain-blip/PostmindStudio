@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useApi } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
@@ -27,8 +27,12 @@ export function WelcomeLink({ onNavigate }: { onNavigate?: () => void }) {
         'hover:bg-primary/12 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
       )}
     >
-      <Sparkles className="size-4 text-primary" strokeWidth={1.75} />
       {t('getStarted')}
+      <ArrowRight
+        aria-hidden
+        className="ms-auto size-4 text-primary rtl:-scale-x-100"
+        strokeWidth={1.75}
+      />
     </Link>
   );
 }

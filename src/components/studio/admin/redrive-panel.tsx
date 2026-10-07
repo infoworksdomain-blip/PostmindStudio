@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, type FormEvent, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { api, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
-import { ConfirmDialog } from './confirm-dialog';
 import { RedriveResults } from './redrive-results';
 import type { KillLevel, RedriveBody, RedriveResponse } from './types';
 
@@ -106,7 +105,7 @@ export function RedrivePanel() {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-10">
       <Section title={t('title')} description={t('description')}>
         <form
           onSubmit={preview}
@@ -114,22 +113,20 @@ export function RedrivePanel() {
           className="grid gap-3 md:grid-cols-3 lg:grid-cols-6 md:items-end"
         >
           <Field id="redrive-scope" label={t('scope')}>
-            <select
+            <NativeSelect
               id="redrive-scope"
-              className={selectClass}
               value={filters.scope}
               onChange={(e) => set({ scope: e.target.value as Filters['scope'] })}
             >
               <option value="kill_switch">{t('scopes.killSwitch')}</option>
               <option value="stuck">{t('scopes.stuck')}</option>
-            </select>
+            </NativeSelect>
           </Field>
           {filters.scope === 'kill_switch' ? (
             <>
               <Field id="redrive-level" label={t('level')}>
-                <select
+                <NativeSelect
                   id="redrive-level"
-                  className={selectClass}
                   value={filters.level}
                   onChange={(e) => set({ level: e.target.value as Filters['level'] })}
                 >
@@ -139,7 +136,7 @@ export function RedrivePanel() {
                       {t(`levels.${l}`)}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </Field>
               <Field id="redrive-since" label={t('since')}>
                 <Input
@@ -182,8 +179,7 @@ export function RedrivePanel() {
             />
           </Field>
           <div className="flex gap-2">
-            <Button type="submit" variant="outline" disabled={!validSince || pending}>
-              {pending && <Loader2 className="animate-spin" />}
+            <Button type="submit" variant="outline" disabled={!validSince} loading={pending}>
               {t('preview')}
             </Button>
             <Button

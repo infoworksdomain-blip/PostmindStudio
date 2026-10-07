@@ -124,7 +124,7 @@ export function FirstVideoStep({
       )}
       {templates.data && !template && (
         <EmptyState
-          illustration="projects"
+          media="projects"
           title={t('noTemplate.title')}
           description={t('noTemplate.description')}
           action={

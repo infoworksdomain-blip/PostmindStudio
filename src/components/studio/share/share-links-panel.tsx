@@ -6,6 +6,7 @@ import { Copy, Link2, Loader2, MessageSquare, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFormat } from '@/lib/client/format';
 import { Section, StateBadge } from '../primitives';
 
@@ -101,9 +102,10 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
           <label className="sr-only" htmlFor="share-expiry">
             {t('expiryLabel')}
           </label>
-          <select
+          <NativeSelect
             id="share-expiry"
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            size="sm"
+            wrapperClassName="w-auto"
             value={hours}
             onChange={(e) => setHours(Number(e.target.value))}
           >
@@ -112,7 +114,7 @@ export function ShareLinksPanel({ projectId }: { projectId: string }) {
                 {t('expiryDays', { count: h / 24 })}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <Button size="sm" onClick={() => void create()} disabled={busy}>
             {busy ? <Loader2 className="animate-spin" /> : <Link2 />}
             {t('create')}

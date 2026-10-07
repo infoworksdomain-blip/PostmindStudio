@@ -56,7 +56,7 @@ export function BusinessScreen() {
       <PageHeader eyebrow={tn('setup')} title={t('title')} description={t('description')} />
       {ready && !businessId && (
         <EmptyState
-          illustration="business"
+          media="business"
           title={t('pickFirst.title')}
           description={t('pickFirst.body')}
         />

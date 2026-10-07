@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, Sparkles, Volume2, VolumeX } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ListOrdered, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { BlitzCard } from './blitz-model';
 
@@ -160,7 +160,7 @@ function PreviewMedia({ card }: { card: BlitzCard }) {
       </p>
       <div className="absolute inset-x-4 bottom-4 rounded-xl bg-scrim p-3 text-white backdrop-blur-sm">
         <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.14em] uppercase">
-          <Sparkles className="size-3" aria-hidden />
+          <ListOrdered className="size-3" aria-hidden />
           {t('beats')}
         </p>
         <ol className="list-decimal space-y-1 ps-4 text-sm leading-snug">

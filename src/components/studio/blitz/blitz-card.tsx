@@ -2,6 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { Lightbulb, Repeat2, Store } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { cn } from '@/lib/utils';
 import { CardMedia } from './card-media';
 import type { BlitzCard } from './blitz-model';
@@ -13,16 +15,9 @@ import type { BlitzCard } from './blitz-model';
 export function FormatChip({ card }: { card: Pick<BlitzCard, 'format' | 'tier'> }) {
   const t = useTranslations('blitz.deck');
   return (
-    <span
-      className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide',
-        card.tier === 'premade'
-          ? 'bg-primary/12 text-primary'
-          : 'bg-warning/20 text-foreground ring-1 ring-warning/40',
-      )}
-    >
+    <StatusPill tone={card.tier === 'premade' ? 'info' : 'warn'} size="sm">
       {t(`format.${card.format}`)}
-    </span>
+    </StatusPill>
   );
 }
 
@@ -56,7 +51,7 @@ export function BlitzCardView({
         <div className="flex flex-wrap items-center gap-1.5">
           <FormatChip card={card} />
           {card.angle && (
-            <span className="inline-flex max-w-full items-center truncate rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground">
+            <span className="inline-flex max-w-full items-center truncate rounded-full bg-surface-raised px-2 py-0.5 text-[11px] font-medium text-foreground-secondary">
               {card.angle.title}
             </span>
           )}
@@ -85,15 +80,16 @@ export function BlitzCardView({
               : t('allowance', { units: card.allowanceUnits })}
           </span>
           {card.remix && onShowRemix && (
-            <button
-              type="button"
+            <Button
+              variant="link"
+              size="xs"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={onShowRemix}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium text-primary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
+              className="text-[11px] lg:hidden"
             >
-              <Repeat2 className="size-3" aria-hidden />
+              <Repeat2 aria-hidden />
               {t('remix.show')}
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -3,8 +3,9 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Archive, ArchiveRestore, Loader2, PencilLine, Plus, Sparkles } from 'lucide-react';
+import { Archive, ArchiveRestore, Lightbulb, Loader2, PencilLine, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -143,8 +144,8 @@ function AnglesList({ businessId }: { businessId: string }) {
         onChange={(weight) => setDraft({ ...draft, weight })}
       />
       <div className="flex gap-2">
-        <Button type="submit" disabled={saving}>
-          {saving && <Loader2 className="animate-spin" />} {t('save')}
+        <Button type="submit" loading={saving}>
+          {t('save')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => setEditing(null)}>
           {t('cancel')}
@@ -169,7 +170,7 @@ function AnglesList({ businessId }: { businessId: string }) {
             </span>
           )}
           <Button variant="outline" disabled={suggesting} onClick={() => void suggest()}>
-            {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}{' '}
+            {suggesting ? <Loader2 className="animate-spin" /> : <Lightbulb />}{' '}
             {suggesting ? t('suggesting') : t('suggest')}
           </Button>
           <Button
@@ -211,9 +212,9 @@ function AnglesList({ businessId }: { businessId: string }) {
                   )}
                 </div>
                 {angle.source === 'ai' && (
-                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                  <StatusPill tone="info" size="sm">
                     {t('ai')}
-                  </span>
+                  </StatusPill>
                 )}
               </div>
               <WeightSlider

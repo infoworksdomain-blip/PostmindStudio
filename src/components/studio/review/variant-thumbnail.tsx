@@ -1,6 +1,6 @@
 'use client';
 
-import { ImageIcon, Loader2, RefreshCw, Upload } from 'lucide-react';
+import { ImageIcon, RefreshCw, Upload } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -92,8 +92,8 @@ export function VariantThumbnail({ render }: { render: Pick<Render, 'id' | 'dura
             <Input value={text} maxLength={120} onChange={(e) => setText(e.target.value)} />
           </label>
           <div className="flex flex-wrap gap-2 sm:col-span-2">
-            <Button size="sm" onClick={frame} disabled={busy}>
-              {busy ? <Loader2 className="animate-spin" /> : <ImageIcon />} {t('useFrame')}
+            <Button loading={busy} size="sm" onClick={frame} disabled={busy}>
+              {!busy && <ImageIcon />} {t('useFrame')}
             </Button>
             <Button size="sm" variant="outline" onClick={regenerate} disabled={busy}>
               <RefreshCw /> {t('regenerate')}

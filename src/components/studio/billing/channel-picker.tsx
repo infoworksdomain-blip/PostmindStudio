@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useFormat } from '@/lib/client/format';
 import { videosToQuarters } from '@/lib/studio/billing/allowance-units';
-import { cn } from '@/lib/utils';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import type { ChannelInterval, PricingView } from './types';
 
 // Phase 21.5 — the one plan control, shared by /pricing, sign-up and "Your plan": how many
@@ -32,30 +32,15 @@ export function IntervalSwitch({
 }) {
   const t = useTranslations('channelPlan.interval');
   return (
-    <div
-      role="radiogroup"
-      aria-label={t('label')}
-      className="inline-flex w-full rounded-full border border-border bg-card p-1 text-sm sm:w-auto"
-    >
-      {INTERVALS.map((option) => (
-        <button
-          key={option}
-          type="button"
-          role="radio"
-          aria-checked={value === option}
-          disabled={disabled}
-          onClick={() => onChange(option)}
-          className={cn(
-            'min-h-10 flex-1 rounded-full px-4 py-1.5 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50 sm:flex-none',
-            value === option
-              ? 'bg-foreground text-background'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          {t(option)}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      label={t('label')}
+      fullWidth
+      className="sm:inline-flex sm:w-auto"
+      disabled={disabled}
+      value={value}
+      onChange={onChange}
+      options={INTERVALS.map((option) => ({ value: option, label: t(option) }))}
+    />
   );
 }
 

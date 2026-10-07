@@ -1,10 +1,10 @@
 'use client';
 
-import { Sparkles, X } from 'lucide-react';
+import { Clapperboard, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { useApi } from '@/lib/client/api';
-import { cn } from '@/lib/utils';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import type { Reference, ReferenceMode } from './body';
 
 // A3.9 — shown when Create is opened from the reference library (?reference=<id>&mode=).
@@ -34,40 +34,33 @@ export function ReferenceBanner({
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:flex-row sm:items-center">
-      <Sparkles className="size-5 shrink-0 text-primary" strokeWidth={1.5} />
+      <Clapperboard className="size-5 shrink-0 text-primary" strokeWidth={1.5} />
       <div className="min-w-0 flex-1">
         <p className="text-xs tracking-[0.14em] text-muted-foreground uppercase">{t('eyebrow')}</p>
         <p className="truncate text-sm font-medium">
           {error ? t('unavailable') : (video?.title ?? t('loading'))}
         </p>
       </div>
-      <div role="radiogroup" aria-label={t('modesAria')} className="flex gap-1.5">
-        {MODES.map((mode) => {
+      <ChoiceChips
+        type="single"
+        label={t('modesAria')}
+        className="flex-nowrap"
+        value={reference.mode}
+        onChange={onModeChange}
+        options={MODES.map((mode) => {
           const disabled = Boolean(allowed && !allowed.includes(mode));
-          return (
-            <button
-              key={mode}
-              type="button"
-              role="radio"
-              aria-checked={reference.mode === mode}
-              disabled={disabled}
-              title={disabled ? t('modeNotAllowed') : t(`modes.${mode}.hint`)}
-              onClick={() => onModeChange(mode)}
-              className={cn(
-                'rounded-full border px-3 py-1 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40',
-                reference.mode === mode
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {t(`modes.${mode}.label`)}
-            </button>
-          );
+          const hint = disabled ? t('modeNotAllowed') : t(`modes.${mode}.hint`);
+          return {
+            value: mode,
+            disabled,
+            description: hint,
+            label: <span title={hint}>{t(`modes.${mode}.label`)}</span>,
+          };
         })}
-      </div>
-      <Button variant="ghost" size="icon-sm" aria-label={t('clear')} onClick={onClear}>
+      />
+      <IconButton label={t('clear')} onClick={onClear}>
         <X />
-      </Button>
+      </IconButton>
     </div>
   );
 }

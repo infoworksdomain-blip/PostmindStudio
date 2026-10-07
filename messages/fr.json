@@ -251,7 +251,7 @@
     }
   },
   "errors": {
-    "generic": "Une erreur s’est produite.",
+    "generic": "Cela n’a pas abouti. Vérifiez votre connexion et réessayez.",
     "sessionExpired": "Votre session PostMind a expiré. Reconnectez-vous.",
     "forbidden": "Vous n’avez pas l’autorisation d’effectuer cette action.",
     "rateLimited": "Trop de requêtes — réessayez dans un instant.",
@@ -278,12 +278,12 @@
       "upstream_error": "Un service connecté a rencontré un problème. Réessayez dans un instant.",
       "configuration_error": "Studio n’est pas encore entièrement configuré pour cela. Contactez l’assistance PostMind.",
       "not_implemented": "Cette fonctionnalité n’est pas encore disponible.",
-      "internal_error": "Une erreur s’est produite de notre côté. Réessayez dans un instant.",
+      "internal_error": "Nous n’avons pas pu terminer de notre côté. Réessayez dans un instant.",
       "upload_failed": "Le téléversement a échoué. Réessayez.",
       "plan_required": "Votre organisation n’a pas encore de formule. Choisissez une formule pour commencer à créer.",
       "billing_required": "Votre compte est en lecture seule en raison d’un problème de facturation. Mettez à jour vos informations de paiement pour continuer.",
       "no_organisation": "Créez une organisation ou rejoignez-en une pour continuer.",
-      "service_unavailable": "Notre service d’IA est temporairement indisponible. Veuillez réessayer plus tard : notre équipe a été prévenue.",
+      "service_unavailable": "La génération est indisponible pour le moment. Réessayez dans quelques minutes.",
       "auto_publish_account_required": "Choisissez un compte connecté sur lequel publier, ou désactivez la publication automatique et la programmation.",
       "auto_publish_account_unavailable": "Un compte choisi n’est plus connecté. Reconnectez-le ou choisissez un autre compte.",
       "queue_unavailable": "La publication est temporairement indisponible. Rien n’a été publié ni conservé ; réessayez dans un instant.",
@@ -293,7 +293,16 @@
   },
   "primitives": {
     "errorTitle": "Impossible de charger ce contenu",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "table": {
+      "bulkBar": "Actions sur les lignes sélectionnées",
+      "selected": "{count, plural, one {# sélectionnée} many {# sélectionnées} other {# sélectionnées}}",
+      "clearSelection": "Effacer la sélection",
+      "selectAll": "Sélectionner toutes les lignes",
+      "selectRow": "Sélectionner {name}",
+      "selectThisRow": "Sélectionner cette ligne",
+      "empty": "Rien à afficher pour l’instant."
+    }
   },
   "format": {
     "none": "—",
@@ -348,7 +357,7 @@
       "body": "Toutes les variantes ont passé les contrôles qualité. Examinez la vidéo, puis validez-la ou publiez-la."
     },
     "generationAutoApproved": {
-      "title": "« {name} » a été généré et validé automatiquement",
+      "title": "« {name} » est prêt et a été approuvé automatiquement",
       "body": "La vidéo a passé tous les contrôles qualité et votre politique de validation l’a approuvée automatiquement."
     },
     "publicationFailed": {
@@ -994,10 +1003,10 @@
     },
     "music": {
       "aria": "Musique",
-      "generated": "Musique de fond générée.",
-      "generatedReused": "Musique de fond générée — reprise d’un rendu précédent.",
-      "generatedTrack": "Musique de fond générée (piste de {seconds, number} s).",
-      "generatedTrackReused": "Musique de fond générée (piste de {seconds, number} s) — reprise d’un rendu précédent.",
+      "generated": "Votre musique de fond est prête.",
+      "generatedReused": "Votre musique de fond est prête — reprise d’un rendu précédent.",
+      "generatedTrack": "Votre musique de fond est prête (piste de {seconds, number} s).",
+      "generatedTrackReused": "Votre musique de fond est prête (piste de {seconds, number} s) — reprise d’un rendu précédent.",
       "offForPlan": "Pas de musique de fond avec cette formule — narration uniquement.",
       "failed": "La musique de fond n’a pas pu être créée : cette vidéo ne comporte que la narration.",
       "none": "Rendu effectué avant la disponibilité de la musique de fond — narration uniquement."
@@ -2069,7 +2078,7 @@
       "refreshStarted": "{count, plural, one {Recherche dans les banques d’images pour # requête — les nouvelles images apparaîtront d’ici quelques minutes} other {Recherche dans les banques d’images pour # requêtes — les nouvelles images apparaîtront d’ici quelques minutes}}",
       "refresh": "Actualiser la banque",
       "generate": "Générer",
-      "generated": "Image générée et ajoutée à votre bibliothèque",
+      "generated": "Votre image est prête — elle est dans votre bibliothèque.",
       "generateTitle": "Générer une image",
       "generateDescription": "Décrivez l’image. Elle sera enregistrée dans la bibliothèque de cette entreprise. La génération peut prendre jusqu’à une minute.",
       "prompt": "Consigne",
@@ -2453,7 +2462,7 @@
       "validation_error": "La plateforme n’a pas accordé l’accès (la demande a été refusée ou a renvoyé une erreur). Réessayez de vous connecter.",
       "platform_error": "La plateforme a rencontré un problème pour finaliser la connexion. Réessayez dans un instant.",
       "upstream_error": "La plateforme a rencontré un problème pour finaliser la connexion. Réessayez dans un instant.",
-      "internal_error": "Une erreur s’est produite lors de la finalisation de la connexion. Réessayez.",
+      "internal_error": "Nous n’avons pas pu terminer la connexion du compte. Relancez la connexion.",
       "unknown": "La connexion n’a pas abouti ({code}). Réessayez.",
       "meta_no_accounts": "Meta n’a partagé aucune Page Facebook sur laquelle vous pouvez publier. Reconnectez-vous et choisissez au moins une Page (et son compte Instagram) dans la fenêtre Meta.",
       "wrong_user": "Cette connexion a été lancée par un autre utilisateur de Studio. Recommencez en étant connecté avec votre propre compte.",
@@ -4097,7 +4106,7 @@
       "scan_images_capped": "L’analyse a atteint son plafond de coût ({amount}) : certaines images n’ont pas été indexées pour la recherche.",
       "ownership_disputed": "Arrêté : la propriété du site a été contestée.",
       "provider_failure": "{source} a signalé un problème : {problem}.",
-      "service_unavailable": "Notre service d’IA est temporairement indisponible, cette opération n’a donc pas pu aboutir. Veuillez réessayer plus tard : notre équipe a été prévenue.",
+      "service_unavailable": "La génération était indisponible, cela n’a donc pas pu être terminé. Réessayez dans quelques minutes.",
       "scan_pages_skipped": "{count, plural, one {# page n’a pas pu être lue et a été ignorée.} many {# pages n’ont pas pu être lues et ont été ignorées.} other {# pages n’ont pas pu être lues et ont été ignorées.}}",
       "scan_images_skipped": "{count, plural, one {# image de votre site n’a pas pu être téléchargée et a été ignorée.} many {# images de votre site n’ont pas pu être téléchargées et ont été ignorées.} other {# images de votre site n’ont pas pu être téléchargées et ont été ignorées.}}",
       "stock_not_configured": "Les photos de banque d’images n’ont pas pu être ajoutées : aucun service de photos n’est encore configuré.",
@@ -4413,7 +4422,7 @@
       "signupsClosed": "Les nouveaux comptes sont pour l’instant sur invitation uniquement.",
       "invalidEmail": "Saisissez une adresse e-mail valide.",
       "network": "Impossible de joindre Studio. Vérifiez votre connexion et réessayez.",
-      "generic": "Une erreur s’est produite. Réessayez.",
+      "generic": "Cela n’a pas abouti. Réessayez dans un instant.",
       "seatLimit": "Cette organisation n’a plus de place libre. Demandez à un administrateur de changer de formule.",
       "inviteNotForYou": "Cette invitation a été envoyée à une autre adresse e-mail. Connectez-vous avec cette adresse pour l’accepter."
     },

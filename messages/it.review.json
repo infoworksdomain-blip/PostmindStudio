@@ -4715,7 +4715,14 @@
     "shell.theme.system",
     "shell.theme.current",
     "account.profile.appearanceTitle",
-    "account.profile.appearanceDescription"
+    "account.profile.appearanceDescription",
+    "primitives.table.bulkBar",
+    "primitives.table.selected",
+    "primitives.table.clearSelection",
+    "primitives.table.selectAll",
+    "primitives.table.selectRow",
+    "primitives.table.selectThisRow",
+    "primitives.table.empty"
   ],
   "reviewed": []
 }

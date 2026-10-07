@@ -6,8 +6,10 @@ import { Loader2, Mail, RotateCw, ShieldCheck, UserPlus, X } from 'lucide-react'
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -19,8 +21,7 @@ import {
 } from '@/components/ui/table';
 import { api, ApiError, useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { ConfirmDialog } from '../admin/confirm-dialog';
-import { selectClass } from '../library/library-filters';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { useSettingsError } from './settings-errors';
 import { SettingsNav } from './settings-nav';
@@ -157,9 +158,8 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="invite-role">{t('role')}</Label>
-          <select
+          <NativeSelect
             id="invite-role"
-            className={selectClass}
             value={role}
             onChange={(e) => setRole(e.target.value as (typeof INVITE_ROLES)[number])}
             disabled={disabled}
@@ -169,7 +169,7 @@ function InviteForm({ disabled, onInvited }: { disabled: boolean; onInvited: () 
                 {tr(r)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <Button type="submit" disabled={disabled || sending || !email.trim()}>
           {sending ? <Loader2 className="animate-spin" /> : <UserPlus />}
@@ -216,9 +216,10 @@ function RoleCell({
   }
 
   return (
-    <select
+    <NativeSelect
+      size="sm"
+      wrapperClassName="w-auto"
       aria-label={t('roleFor', { name: member.name })}
-      className={selectClass}
       value={member.role}
       disabled={saving}
       onChange={(e) => void change(e.target.value)}
@@ -228,7 +229,7 @@ function RoleCell({
           {tr(r)}
         </option>
       ))}
-    </select>
+    </NativeSelect>
   );
 }
 
@@ -263,9 +264,9 @@ function MembersTable({ data, onChanged }: { data: MembersResponse; onChanged: (
                     <div className="flex items-center gap-2 font-medium">
                       {m.name}
                       {m.isYou && (
-                        <span className="rounded-full bg-secondary px-2 py-0.5 text-[0.7rem] font-normal">
+                        <StatusPill size="sm" className="font-normal">
                           {t('you')}
-                        </span>
+                        </StatusPill>
                       )}
                       {m.twoFactorEnabled && (
                         <ShieldCheck
@@ -425,8 +426,8 @@ export function MembersScreen() {
   return (
     <>
       {header}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-10">
           {data.canManage && (
             <Section title={t('inviteTitle')} description={t('inviteDescription')}>
               <InviteForm disabled={full} onInvited={refresh} />
@@ -445,7 +446,7 @@ export function MembersScreen() {
             </Section>
           )}
         </div>
-        <Section title={t('seatsTitle')} className="lg:sticky lg:top-20">
+        <Section title={t('seatsTitle')} variant="panel" className="lg:sticky lg:top-20">
           <SeatMeter used={data.seats.used} limit={data.seats.limit} />
         </Section>
       </div>

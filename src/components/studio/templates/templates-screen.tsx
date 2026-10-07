@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { ArrowRight, Eye, Loader2, Trash2 } from 'lucide-react';
+import { ArrowRight, Eye, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { ConfirmDialog } from '../admin/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { useTemplateCategory } from './category';
 import {
@@ -119,14 +119,14 @@ function TemplateList({
             <span className="flex flex-wrap items-center gap-1.5">
               <RowActions kind={kind} row={row} onPreview={() => setPreviewing(row)} />
               <Button
+                loading={deleting === row.id}
                 size="sm"
                 variant="outline"
                 aria-label={t('list.deleteAria', { name: row.name })}
                 disabled={deleting === row.id}
                 onClick={() => setConfirming(row)}
               >
-                {deleting === row.id ? <Loader2 className="animate-spin" /> : <Trash2 />}{' '}
-                {tc('delete')}
+                {deleting !== row.id && <Trash2 />} {tc('delete')}
               </Button>
             </span>
           </li>
@@ -204,7 +204,7 @@ export function TemplatesScreen() {
       {error && <ErrorState error={error} onRetry={retry} />}
       {loading && <Skeleton aria-label={t('loading')} className="h-48 rounded-xl" />}
       {!loading && !error && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-10 lg:grid-cols-2">
           <Section title={t('slideshowTitle')}>
             <TemplateList
               kind="slideshow"
@@ -221,7 +221,7 @@ export function TemplatesScreen() {
           </Section>
           <Section title={t('builtInTitle')} className="lg:col-span-2">
             {builtIns.length === 0 ? (
-              <EmptyState illustration="templates" title={t('noBuiltIns')} />
+              <EmptyState media="templates" title={t('noBuiltIns')} />
             ) : (
               <BuiltInList rows={builtIns} />
             )}

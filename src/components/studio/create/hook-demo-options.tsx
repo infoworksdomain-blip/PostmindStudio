@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { VideoUploadField } from '../uploads/video-upload-field';
 import { countWords, HOOK_LINE_MAX_CHARS, HOOK_LINE_MAX_WORDS, type HookDemoChoice } from './body';
 

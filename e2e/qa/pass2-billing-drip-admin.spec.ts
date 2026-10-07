@@ -398,7 +398,7 @@ test.describe('calendar drip queue', () => {
     await w.visit('/calendar');
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     await expect(drip).toBeVisible();
-    await drip.getByRole('radio', { name: 'Times a week' }).check({ force: true });
+    await drip.getByRole('radio', { name: 'Times a week' }).click();
     await drip.getByLabel('Posts a week').selectOption('3');
     await drip.getByRole('button', { name: 'Save schedule' }).click();
     await expect(owner.getByText('Drip queue saved.').first()).toBeVisible();
@@ -417,9 +417,9 @@ test.describe('calendar drip queue', () => {
     const drip = owner.getByRole('region', { name: 'Drip queue' });
     // Wait for the saved schedule to load (weekly, from the test above) before changing it.
     await expect(drip.getByRole('radio', { name: 'Times a week' })).toBeChecked();
-    await drip.getByRole('radio', { name: 'Every day' }).check({ force: true });
+    await drip.getByRole('radio', { name: 'Every day' }).click();
     await drip.getByLabel('Posts a day').selectOption('2');
-    await drip.getByRole('checkbox', { name: 'Sunday' }).uncheck({ force: true });
+    await drip.getByRole('checkbox', { name: 'Sunday' }).click();
     await expect(drip.getByRole('checkbox', { name: 'Sunday' })).not.toBeChecked();
     await drip.getByRole('button', { name: 'Save schedule' }).click();
     await expect(owner.getByText('Drip queue saved.').first()).toBeVisible();
@@ -522,7 +522,7 @@ test.describe('Admin Centre', () => {
     await expect(form.getByRole('button', { name: 'Save override' })).toBeDisabled();
     await form.getByLabel('Reason (required)').fill('QA pass 2: end the trial');
     await form.getByRole('button', { name: 'Save override' }).click();
-    await staff.getByRole('dialog').getByRole('button', { name: 'Yes, save' }).click();
+    await staff.getByRole('alertdialog').getByRole('button', { name: 'Yes, save' }).click();
     await expect(staff.getByText(/Ended by staff on/)).toBeVisible();
     await expect
       .poll(

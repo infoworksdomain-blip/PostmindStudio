@@ -251,7 +251,7 @@
     }
   },
   "errors": {
-    "generic": "Algo ha salido mal.",
+    "generic": "No se ha podido completar. Comprueba tu conexión y vuelve a intentarlo.",
     "sessionExpired": "Tu sesión de PostMind ha caducado. Vuelve a iniciar sesión.",
     "forbidden": "No tienes permiso para hacer eso.",
     "rateLimited": "Demasiadas solicitudes — vuelve a intentarlo en un momento.",
@@ -278,12 +278,12 @@
       "upstream_error": "Un servicio conectado ha tenido un problema. Vuelve a intentarlo en un momento.",
       "configuration_error": "Studio aún no está totalmente configurado para esto. Ponte en contacto con el soporte de PostMind.",
       "not_implemented": "Esto aún no está disponible.",
-      "internal_error": "Algo ha salido mal por nuestra parte. Vuelve a intentarlo en un momento.",
+      "internal_error": "No hemos podido terminarlo por un problema nuestro. Vuelve a intentarlo en un momento.",
       "upload_failed": "No se ha podido subir el archivo. Vuelve a intentarlo.",
       "plan_required": "Tu organización todavía no tiene un plan. Elige un plan para empezar a crear.",
       "billing_required": "Tu cuenta está en modo de solo lectura por un problema de facturación. Actualiza tus datos de pago para continuar.",
       "no_organisation": "Crea una organización o únete a una para continuar.",
-      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado.",
+      "service_unavailable": "La generación no está disponible en este momento. Vuelve a intentarlo en unos minutos.",
       "auto_publish_account_required": "Elige una cuenta conectada donde publicar, o desactiva la publicación automática y la programación.",
       "auto_publish_account_unavailable": "Una de las cuentas elegidas ya no está conectada. Vuelve a conectarla o elige otra cuenta.",
       "queue_unavailable": "La publicación no está disponible temporalmente. No se publicó ni se guardó nada; inténtalo de nuevo en un momento.",
@@ -293,7 +293,16 @@
   },
   "primitives": {
     "errorTitle": "No se ha podido cargar",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "table": {
+      "bulkBar": "Acciones para las filas seleccionadas",
+      "selected": "{count, plural, one {# seleccionada} many {# seleccionadas} other {# seleccionadas}}",
+      "clearSelection": "Borrar selección",
+      "selectAll": "Seleccionar todas las filas",
+      "selectRow": "Seleccionar {name}",
+      "selectThisRow": "Seleccionar esta fila",
+      "empty": "Todavía no hay nada que mostrar."
+    }
   },
   "format": {
     "none": "—",
@@ -348,7 +357,7 @@
       "body": "Todas las variantes han superado los controles de calidad. Revísalo y apruébalo o publícalo."
     },
     "generationAutoApproved": {
-      "title": "«{name}» se ha generado y se ha aprobado automáticamente",
+      "title": "«{name}» está listo y se aprobó automáticamente",
       "body": "El vídeo ha superado todos los controles de calidad y tu política de revisión lo ha aprobado automáticamente."
     },
     "publicationFailed": {
@@ -994,10 +1003,10 @@
     },
     "music": {
       "aria": "Música",
-      "generated": "Música de fondo generada.",
-      "generatedReused": "Música de fondo generada: reutilizada de un renderizado anterior.",
-      "generatedTrack": "Música de fondo generada (pista de {seconds, number} s).",
-      "generatedTrackReused": "Música de fondo generada (pista de {seconds, number} s): reutilizada de un renderizado anterior.",
+      "generated": "Tu música de fondo está lista.",
+      "generatedReused": "Tu música de fondo está lista: se ha reutilizado de un render anterior.",
+      "generatedTrack": "Tu música de fondo está lista (pista de {seconds, number} s).",
+      "generatedTrackReused": "Tu música de fondo está lista (pista de {seconds, number} s): se ha reutilizado de un render anterior.",
       "offForPlan": "Este plan no incluye música de fondo: solo narración.",
       "failed": "No se ha podido crear la música de fondo, así que este vídeo solo tiene narración.",
       "none": "Renderizado antes de que existiera la música de fondo: solo narración."
@@ -2069,7 +2078,7 @@
       "refreshStarted": "{count, plural, one {Buscando en bancos de imágenes para # consulta — las imágenes nuevas aparecerán en unos minutos} other {Buscando en bancos de imágenes para # consultas — las imágenes nuevas aparecerán en unos minutos}}",
       "refresh": "Actualizar stock",
       "generate": "Generar",
-      "generated": "Imagen generada y añadida a tu biblioteca",
+      "generated": "Tu imagen está lista: ya está en tu biblioteca.",
       "generateTitle": "Generar una imagen",
       "generateDescription": "Describe la imagen. Se guarda en la biblioteca de este negocio. La generación puede tardar hasta un minuto.",
       "prompt": "Descripción",
@@ -2453,7 +2462,7 @@
       "validation_error": "La plataforma no concedió el acceso (se rechazó la solicitud o devolvió un error). Vuelve a conectar.",
       "platform_error": "La plataforma tuvo un problema al completar la conexión. Vuelve a intentarlo en breve.",
       "upstream_error": "La plataforma tuvo un problema al completar la conexión. Vuelve a intentarlo en breve.",
-      "internal_error": "Algo ha fallado al terminar la conexión. Vuelve a intentarlo.",
+      "internal_error": "No hemos podido terminar de conectar la cuenta. Vuelve a iniciar la conexión.",
       "unknown": "La conexión no se completó ({code}). Vuelve a intentarlo.",
       "meta_no_accounts": "Meta no compartió ninguna página de Facebook en la que puedas publicar. Vuelve a conectar y elige al menos una página (y su cuenta de Instagram) en la ventana de Meta.",
       "wrong_user": "Otro usuario de Studio inició esta conexión. Vuelve a empezar con tu propia sesión iniciada.",
@@ -4097,7 +4106,7 @@
       "scan_images_capped": "El análisis alcanzó su límite de coste ({amount}): algunas imágenes no se indexaron para la búsqueda.",
       "ownership_disputed": "Detenido: se ha disputado la propiedad del sitio web.",
       "provider_failure": "{source} ha informado de un problema: {problem}.",
-      "service_unavailable": "Nuestro servicio de IA no está disponible temporalmente, así que no se pudo completar. Inténtalo de nuevo más tarde: nuestro equipo ya ha sido avisado.",
+      "service_unavailable": "La generación no estaba disponible, así que no se ha podido terminar. Vuelve a intentarlo en unos minutos.",
       "scan_pages_skipped": "{count, plural, one {No se pudo leer # página y se omitió.} many {No se pudieron leer # páginas y se omitieron.} other {No se pudieron leer # páginas y se omitieron.}}",
       "scan_images_skipped": "{count, plural, one {No se pudo descargar # imagen de tu web y se omitió.} many {No se pudieron descargar # imágenes de tu web y se omitieron.} other {No se pudieron descargar # imágenes de tu web y se omitieron.}}",
       "stock_not_configured": "No se pudieron añadir fotos de archivo: todavía no hay ningún servicio de fotos configurado.",
@@ -4413,7 +4422,7 @@
       "signupsClosed": "Por ahora solo se pueden crear cuentas por invitación.",
       "invalidEmail": "Escribe un correo válido.",
       "network": "No hemos podido conectar con Studio. Revisa tu conexión y vuelve a intentarlo.",
-      "generic": "Algo ha fallado. Vuelve a intentarlo.",
+      "generic": "No se ha podido completar. Vuelve a intentarlo en un momento.",
       "seatLimit": "Esta organización no tiene plazas libres. Pide a un administrador que mejore el plan.",
       "inviteNotForYou": "Esta invitación se envió a otro correo. Inicia sesión con esa dirección para aceptarla."
     },

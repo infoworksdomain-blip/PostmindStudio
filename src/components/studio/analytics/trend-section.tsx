@@ -7,7 +7,7 @@ import { useApi } from '@/lib/client/api';
 import { useFormat, type StudioFormat } from '@/lib/client/format';
 import { ErrorState, Section } from '../primitives';
 import { AreaChart, useShortDay } from './area-chart';
-import { Segmented } from './segmented';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import type { Metric, TimeseriesResponse } from './types';
 
 // Daily activity (GET /analytics/timeseries?days&metric) — the difference between each
@@ -41,7 +41,7 @@ export function TrendSection({ days }: { days: number }) {
         data ? t(`total.${metric}`, { value: formatMetric(f, metric, total), count: total }) : ' '
       }
       actions={
-        <Segmented
+        <SegmentedControl
           label={t('metricLabel')}
           value={metric}
           onChange={setMetric}

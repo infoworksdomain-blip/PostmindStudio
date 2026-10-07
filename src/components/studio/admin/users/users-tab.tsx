@@ -97,7 +97,7 @@ function UserDetail({ id, onBack }: { id: string; onBack: () => void }) {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-10">
       <div>
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="rtl:-scale-x-100" /> {t('back')}
@@ -110,6 +110,7 @@ function UserDetail({ id, onBack }: { id: string; onBack: () => void }) {
       ) : (
         <>
           <Section
+            variant="panel"
             title={data.user.name}
             description={data.user.email}
             actions={

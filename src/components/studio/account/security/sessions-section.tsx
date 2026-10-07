@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Monitor } from 'lucide-react';
+import { Monitor } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -83,8 +83,8 @@ export function SessionsSection() {
             variant="outline"
             onClick={() => void revoke('others')}
             disabled={busy !== null}
+            loading={busy === 'others'}
           >
-            {busy === 'others' && <Loader2 className="animate-spin" />}
             {t('revokeOthers')}
           </Button>
         )
@@ -122,8 +122,8 @@ export function SessionsSection() {
                     onClick={() => void revoke(s.id)}
                     disabled={busy !== null}
                     aria-label={t('revokeAria', { device: name })}
+                    loading={busy === s.id}
                   >
-                    {busy === s.id && <Loader2 className="animate-spin" />}
                     {t('revoke')}
                   </Button>
                 )}

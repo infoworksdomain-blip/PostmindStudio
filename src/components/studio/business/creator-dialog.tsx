@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -16,9 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { api, newIdempotencyKey } from '@/lib/client/api';
 import { UGC_AGE_RANGES, UGC_GENDERS, UGC_SETTINGS } from '../create/ugc-options';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import {
   creatorsPath,
   MAX_PHOTO_BYTES,
@@ -143,24 +145,16 @@ export function CreatorDialog({
             void submit();
           }}
         >
-          <div role="radiogroup" aria-label={t('modeAria')} className="grid grid-cols-2 gap-2">
-            {(['generate', 'upload'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                role="radio"
-                aria-checked={draft.mode === mode}
-                onClick={() => set({ mode })}
-                className={`rounded-xl border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                  draft.mode === mode
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-border hover:bg-muted'
-                }`}
-              >
-                {mode === 'generate' ? t('modeGenerate') : t('modeUpload')}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            label={t('modeAria')}
+            fullWidth
+            value={draft.mode}
+            onChange={(mode) => set({ mode })}
+            options={(['generate', 'upload'] as const).map((mode) => ({
+              value: mode,
+              label: mode === 'generate' ? t('modeGenerate') : t('modeUpload'),
+            }))}
+          />
           <div className="grid gap-1.5">
             <Label htmlFor="creator-name">{t('name')}</Label>
             <Input
@@ -277,10 +271,10 @@ export function CreatorDialog({
           <Button
             type="submit"
             form="creator-form"
-            disabled={Boolean(problem) || busy}
+            disabled={Boolean(problem)}
+            loading={busy}
             title={problem ? t(`problems.${problem}`) : undefined}
           >
-            {busy && <Loader2 className="animate-spin" />}
             {draft.mode === 'generate' ? t('submitGenerate') : t('submitUpload')}
           </Button>
         </DialogFooter>

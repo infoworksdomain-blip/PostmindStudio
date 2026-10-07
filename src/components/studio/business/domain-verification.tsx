@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Copy, Globe, Loader2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api, ApiError, useApi, useErrorMessage } from '@/lib/client/api';
@@ -56,11 +57,10 @@ function CopyField({
       <span className="text-xs text-muted-foreground">{label}</span>
       <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2">
         <code className="min-w-0 flex-1 truncate text-sm">{value}</code>
-        <Button
+        <IconButton
           type="button"
           size="icon"
-          variant="ghost"
-          aria-label={copyLabel}
+          label={copyLabel}
           onClick={() =>
             void navigator.clipboard
               ?.writeText(value)
@@ -69,7 +69,7 @@ function CopyField({
           }
         >
           <Copy />
-        </Button>
+        </IconButton>
       </div>
     </div>
   );

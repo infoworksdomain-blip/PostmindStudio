@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Loader2, TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi } from '@/lib/client/api';
 import { LOCALE_INFO, LOCALES } from '@/lib/i18n/locales';
 import { hardNavigate, hardReload } from '@/lib/client/navigate';
 import { ErrorState, PageHeader, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { countryOptions } from './countries';
 import type { MembersResponse } from './members-screen';
 import { useSettingsError } from './settings-errors';
@@ -121,9 +121,8 @@ function DetailsForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <Label htmlFor="org-country">{t('country')}</Label>
-            <select
+            <NativeSelect
               id="org-country"
-              className={selectClass}
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               disabled={!editable}
@@ -134,14 +133,13 @@ function DetailsForm({
                   {c.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
             <p className="text-xs text-muted-foreground">{t('countryHint')}</p>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="org-locale">{t('defaultLocale')}</Label>
-            <select
+            <NativeSelect
               id="org-locale"
-              className={selectClass}
               value={defaultLocale}
               onChange={(e) => setDefaultLocale(e.target.value)}
               disabled={!editable}
@@ -152,13 +150,12 @@ function DetailsForm({
                   {LOCALE_INFO[code].label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         </div>
         {editable && (
           <div>
-            <Button type="submit" disabled={saving || name.trim().length < 2}>
-              {saving && <Loader2 className="animate-spin" />}
+            <Button type="submit" disabled={name.trim().length < 2} loading={saving}>
               {tc('save')}
             </Button>
           </div>
@@ -240,9 +237,8 @@ function TransferOwnership() {
         <div className="flex flex-wrap items-end gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor="transfer-to">{t('to')}</Label>
-            <select
+            <NativeSelect
               id="transfer-to"
-              className={selectClass}
               value={memberId}
               onChange={(e) => setMemberId(e.target.value)}
             >
@@ -252,7 +248,7 @@ function TransferOwnership() {
                   {m.name} · {m.email}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <Button variant="outline" disabled={!chosen} onClick={() => setOpen(true)}>
             {t('action')}
@@ -276,8 +272,7 @@ function TransferOwnership() {
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {tc('cancel')}
             </Button>
-            <Button disabled={pending} onClick={() => void transfer()}>
-              {pending && <Loader2 className="animate-spin" />}
+            <Button onClick={() => void transfer()} loading={pending}>
               {t('action')}
             </Button>
           </DialogFooter>
@@ -354,10 +349,10 @@ function DeleteOrganisation({ org }: { org: OrganisationSettings }) {
             </Button>
             <Button
               variant="destructive"
-              disabled={pending || typed.trim() !== org.name}
+              disabled={typed.trim() !== org.name}
               onClick={() => void remove()}
+              loading={pending}
             >
-              {pending && <Loader2 className="animate-spin" />}
               {t('confirm')}
             </Button>
           </DialogFooter>
@@ -384,7 +379,7 @@ export function OrganisationSettingsScreen() {
       ) : !org ? (
         <Skeleton className="h-72 rounded-xl" aria-label={t('loading')} />
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-10">
           <DetailsForm key={org.id} org={org} onSaved={setOrg} />
           {org.yourRole === 'owner' && (
             <>

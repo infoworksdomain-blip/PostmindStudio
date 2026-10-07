@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CalendarClock, Loader2, Save, Send, Sparkles } from 'lucide-react';
+import { CalendarClock, Save, Send, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
@@ -18,7 +18,8 @@ import type {
 import { MAX_SCHEDULE_AHEAD_DAYS } from '@/lib/studio/schedule-window';
 import { scheduleInputBounds, scheduleProblem } from '../automation/schedule-bounds';
 import { belongsToBusiness, isMetaPlatform } from '../connections/platforms';
-import { Field, NativeSelect } from './field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from './field';
 import { RENDER_CONNECTION, RENDER_PUBLISHABLE } from './types';
 import { BusinessHashtagsNote } from '../hashtags/business-hashtags-panel';
 import {
@@ -319,8 +320,14 @@ export function PublishPanel({
       )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <BusinessHashtagsNote businessId={businessId} />
-        <Button variant="outline" size="sm" onClick={suggest} disabled={suggesting}>
-          {suggesting ? <Loader2 className="animate-spin" /> : <Sparkles />}
+        <Button
+          loading={suggesting}
+          variant="outline"
+          size="sm"
+          onClick={suggest}
+          disabled={suggesting}
+        >
+          {!suggesting && <Type />}
           {t('suggest')}
         </Button>
       </div>
@@ -385,12 +392,13 @@ export function PublishPanel({
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-xs text-muted-foreground">{th('suggestedNote')}</p>
                       <Button
+                        loading={savingCopy === render.id}
                         variant="outline"
                         size="sm"
                         onClick={() => void saveCopy(render)}
                         disabled={savingCopy !== null || blocked(render)}
                       >
-                        {savingCopy === render.id ? <Loader2 className="animate-spin" /> : <Save />}
+                        {savingCopy !== render.id && <Save />}
                         {th('save')}
                       </Button>
                     </div>
@@ -424,15 +432,10 @@ export function PublishPanel({
         </Field>
         <Button
           onClick={publish}
+          loading={submitting}
           disabled={submitting || selected.length === 0 || scheduleError !== null || anyBlocked}
         >
-          {submitting ? (
-            <Loader2 className="animate-spin" />
-          ) : scheduleAt ? (
-            <CalendarClock />
-          ) : (
-            <Send />
-          )}
+          {!submitting && (scheduleAt ? <CalendarClock /> : <Send />)}
           {scheduleAt
             ? t('scheduleCount', { count: selected.length })
             : t('publishNowCount', { count: selected.length })}

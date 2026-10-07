@@ -2,6 +2,7 @@
 
 import { Check, CircleDashed, CircleX, Hourglass } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { StatusPill, type StatusTone } from '@/components/ui/status-pill';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
@@ -33,6 +34,13 @@ const ICON: Record<StepState, typeof Check> = {
   todo: CircleDashed,
 };
 
+const TONE: Record<StepState, StatusTone> = {
+  done: 'good',
+  current: 'warn',
+  rejected: 'bad',
+  todo: 'neutral',
+};
+
 export function ApprovalStepIndicator({ project }: Props) {
   const t = useTranslations('approvals.indicator');
   const f = useFormat();
@@ -51,7 +59,7 @@ export function ApprovalStepIndicator({ project }: Props) {
   return (
     <section
       aria-label={t('regionAria')}
-      className="flex flex-col gap-3 rounded-xl border border-foreground/15 bg-card p-4"
+      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-medium" role="status">
@@ -68,19 +76,16 @@ export function ApprovalStepIndicator({ project }: Props) {
               key={`${index}-${step.role}`}
               data-state={state}
               aria-current={state === 'current' ? 'step' : undefined}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs',
-                state === 'done' && 'border-primary/30 bg-primary/10 text-foreground',
-                state === 'current' && 'border-foreground/40 bg-background font-medium',
-                state === 'rejected' && 'border-destructive/40 bg-destructive/10 text-destructive',
-                state === 'todo' && 'border-dashed border-border text-muted-foreground',
-              )}
+              className="inline-flex"
             >
-              <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
-              <span className="tabular">
-                {t('stepNumber', { number: f.number(index + 1) })}
-              </span>{' '}
-              {describeStep(step)}
+              <StatusPill
+                tone={TONE[state]}
+                icon={<Icon strokeWidth={1.75} aria-hidden />}
+                className={cn(state === 'current' && 'font-semibold')}
+              >
+                <span className="tabular">{t('stepNumber', { number: f.number(index + 1) })}</span>{' '}
+                {describeStep(step)}
+              </StatusPill>
             </li>
           );
         })}

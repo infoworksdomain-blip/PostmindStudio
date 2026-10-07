@@ -20,9 +20,9 @@ import { PLATFORM_LABEL, useFormat } from '@/lib/client/format';
 import type { Page, Publication } from '@/lib/client/types';
 import { FailureReason } from '../failure-reason';
 import { DEFAULT_LOCALE } from '@/lib/i18n/locales';
-import { cn } from '@/lib/utils';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 import { EmptyState, ErrorState, PageHeader, StateBadge } from '../primitives';
-import { NativeSelect } from './native-select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { PublicationActions } from './publication-actions';
 import { TikTokPublicationNote, usePublicationBadge } from './tiktok-draft';
 import { useProjectName } from '@/lib/client/use-project-name';
@@ -150,32 +150,25 @@ export function PublicationsList() {
         }
       />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label={t('filtersAria')} className="flex flex-wrap gap-1.5">
-          {PUBLICATION_FILTERS.map((pf) => (
-            <button
-              key={pf.key}
-              role="tab"
-              aria-selected={filter === pf.key}
-              onClick={() => {
-                setFilter(pf.key);
-                setCursors([]);
-              }}
-              className={cn(
-                'rounded-full border px-3.5 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                filter === pf.key
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
-              )}
-            >
-              {t(`filters.${pf.key}`)}
-            </button>
-          ))}
-        </div>
+        <ChoiceChips
+          type="single"
+          label={t('filtersAria')}
+          value={filter}
+          onChange={(next) => {
+            setFilter(next);
+            setCursors([]);
+          }}
+          options={PUBLICATION_FILTERS.map((pf) => ({
+            value: pf.key,
+            label: t(`filters.${pf.key}`),
+          }))}
+        />
         <div className="flex items-center gap-2">
           <Label htmlFor="publication-platform" className="text-xs text-muted-foreground">
             {t('platform')}
           </Label>
           <NativeSelect
+            wrapperClassName="w-auto"
             id="publication-platform"
             value={platform}
             onChange={(e) => {
@@ -203,7 +196,7 @@ export function PublicationsList() {
       )}
       {data && data.data.length === 0 && (
         <EmptyState
-          illustration="publications"
+          media="publications"
           title={unfiltered ? t('empty.title') : t('emptyFiltered.title')}
           description={unfiltered ? t('empty.body') : t('emptyFiltered.body')}
           action={

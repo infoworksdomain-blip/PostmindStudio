@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CalendarRange, ExternalLink, PartyPopper, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarRange, CircleCheck, ExternalLink, PartyPopper } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -110,7 +110,7 @@ function CelebrateContent({ projectId }: { projectId: string | null }) {
   }
   return (
     <div className="flex flex-col gap-4">
-      <Sparkles className="size-10 text-primary" strokeWidth={1.5} />
+      <CircleCheck className="size-10 text-primary" strokeWidth={1.5} />
       <h2 className="font-display text-3xl">{t('nearly.title')}</h2>
       <p className="text-sm text-muted-foreground">
         {t('nearly.body', { name: projectName(data.project.name) })}
@@ -131,7 +131,7 @@ export function SetupFinished() {
   const t = useTranslations('onboarding.finished');
   return (
     <EmptyState
-      icon={<PartyPopper className="size-8" strokeWidth={1.5} />}
+      media={<PartyPopper className="size-8" strokeWidth={1.5} />}
       title={t('title')}
       description={t('description')}
       action={

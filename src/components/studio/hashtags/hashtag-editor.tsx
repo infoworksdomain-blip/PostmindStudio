@@ -4,6 +4,7 @@ import { useState, type KeyboardEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight, Lock, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
@@ -92,7 +93,9 @@ export function HashtagEditor({
               key={tag.toLowerCase()}
               className={cn(
                 'inline-flex max-w-full items-center gap-0.5 rounded-full border py-0.5 ps-2 pe-1 text-xs',
-                isLocked(tag) ? 'border-primary/40 bg-primary/5' : 'border-border bg-muted/40',
+                isLocked(tag)
+                  ? 'border-primary/40 bg-primary/5'
+                  : 'border-border bg-surface-raised',
               )}
             >
               {isLocked(tag) && (
@@ -101,40 +104,37 @@ export function HashtagEditor({
               <span className="truncate" dir="auto">
                 #{tag}
               </span>
-              <Button
+              <IconButton
                 type="button"
-                variant="ghost"
                 size="icon-xs"
                 className="size-5"
                 disabled={disabled || index === 0}
-                aria-label={t('moveEarlier', { tag })}
+                label={t('moveEarlier', { tag })}
                 onClick={() => onChange(moveTag(value, index, -1))}
               >
                 <ChevronLeft className="rtl:rotate-180" />
-              </Button>
-              <Button
+              </IconButton>
+              <IconButton
                 type="button"
-                variant="ghost"
                 size="icon-xs"
                 className="size-5"
                 disabled={disabled || index === value.length - 1}
-                aria-label={t('moveLater', { tag })}
+                label={t('moveLater', { tag })}
                 onClick={() => onChange(moveTag(value, index, 1))}
               >
                 <ChevronRight className="rtl:rotate-180" />
-              </Button>
+              </IconButton>
               {!isLocked(tag) && (
-                <Button
+                <IconButton
                   type="button"
-                  variant="ghost"
                   size="icon-xs"
                   className="size-5"
                   disabled={disabled}
-                  aria-label={t('remove', { tag })}
+                  label={t('remove', { tag })}
                   onClick={() => onChange(value.filter((_, i) => i !== index))}
                 >
                   <X />
-                </Button>
+                </IconButton>
               )}
             </li>
           ))}

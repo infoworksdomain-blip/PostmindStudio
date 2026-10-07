@@ -1,26 +1,25 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import type { CustomLimits } from '@/lib/studio/billing/entitlements';
 import { ErrorState, Section } from '../../primitives';
-import { selectClass } from '../../library/library-filters';
 import {
   PLAN_TIERS,
   type AdminEntitlementsResponse,
   type ChannelInterval,
   type PlanTier,
 } from '../../billing/types';
-import { ConfirmDialog } from '../confirm-dialog';
 import {
   ACCESS,
   CHANNEL_INTERVALS,
@@ -156,9 +155,8 @@ function ChannelPlanFields({
       <div className="flex flex-wrap gap-4">
         <div className="grid gap-1.5">
           <Label htmlFor="ent-channels">{t('channels')}</Label>
-          <select
+          <NativeSelect
             id="ent-channels"
-            className={selectClass}
             value={channels}
             aria-describedby="ent-channel-plan-help"
             onChange={(e) => onChannels(e.target.value)}
@@ -169,13 +167,12 @@ function ChannelPlanFields({
                 {t('channelsOption', { count: n })}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="ent-interval">{t('interval')}</Label>
-          <select
+          <NativeSelect
             id="ent-interval"
-            className={selectClass}
             value={interval}
             aria-describedby="ent-channel-plan-help"
             onChange={(e) => onInterval(isChannelInterval(e.target.value) ? e.target.value : '')}
@@ -186,7 +183,7 @@ function ChannelPlanFields({
                 {ta(`intervalValues.${i}`)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
     </fieldset>
@@ -297,9 +294,8 @@ function OverrideForm({
         <div className="flex flex-wrap gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="ent-tier">{t('tier')}</Label>
-            <select
+            <NativeSelect
               id="ent-tier"
-              className={selectClass}
               value={tier}
               onChange={(e) => setTier(e.target.value as PlanTier | '')}
             >
@@ -309,13 +305,12 @@ function OverrideForm({
                   {tTier(p)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="ent-access">{t('access')}</Label>
-            <select
+            <NativeSelect
               id="ent-access"
-              className={selectClass}
               value={access}
               onChange={(e) => setAccess(e.target.value as Access | '')}
             >
@@ -325,7 +320,7 @@ function OverrideForm({
                   {ta(`accessValues.${a}`)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         </div>
         {!enterprise && (
@@ -407,8 +402,7 @@ function OverrideForm({
           />
         </div>
         <div>
-          <Button type="submit" disabled={pending || !valid}>
-            {pending && <Loader2 className="animate-spin" />}
+          <Button type="submit" disabled={!valid} loading={pending}>
             {t('save')}
           </Button>
         </div>
@@ -476,9 +470,9 @@ function ClearOverride({
         <Button
           type="submit"
           variant="destructive"
-          disabled={pending || reason.trim().length < MIN_REASON}
+          disabled={reason.trim().length < MIN_REASON}
+          loading={pending}
         >
-          {pending && <Loader2 className="animate-spin" />}
           {t('button')}
         </Button>
       </div>
@@ -504,11 +498,11 @@ export function EntitlementsDetail({ orgId }: { orgId: string }) {
   if (!res.data) return <Skeleton aria-label={t('loading')} className="h-48" />;
   const view = res.data.entitlements;
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+    <div className="grid min-w-0 gap-x-8 gap-y-10 lg:grid-cols-2">
       <Section title={t('effective')}>
         <EntitlementsSummary view={view} />
       </Section>
-      <div className="grid min-w-0 gap-6">
+      <div className="grid min-w-0 gap-10">
         <Section title={t('form.title')}>
           <OverrideForm key={formKey(view)} view={view} path={path} onSaved={update} />
         </Section>

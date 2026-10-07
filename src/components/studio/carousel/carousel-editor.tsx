@@ -2,12 +2,12 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Loader2, Plus, RefreshCw, Save, Sparkles } from 'lucide-react';
+import { Download, PenLine, Plus, RefreshCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
-import { cn } from '@/lib/utils';
 import { ErrorState, Section } from '../primitives';
 import { useAction } from '../review/use-action';
 import {
@@ -152,7 +152,7 @@ export function CarouselEditor({
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
+    <div className="grid gap-10 xl:grid-cols-[3fr_2fr]">
       <Section title={t('postsTitle')} description={t('postsDescription')}>
         {!editable && (
           <p className="mb-3 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
@@ -191,26 +191,14 @@ export function CarouselEditor({
           <span id="carousel-editor-theme" className="text-sm">
             {t('theme')}
           </span>
-          <div role="radiogroup" aria-labelledby="carousel-editor-theme" className="flex gap-1.5">
-            {THEMES.map((key) => (
-              <button
-                key={key}
-                type="button"
-                role="radio"
-                aria-checked={draft.theme === key}
-                disabled={!editable}
-                onClick={() => change({ ...draft, theme: key })}
-                className={cn(
-                  'rounded-lg border px-3 py-1 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                  draft.theme === key
-                    ? 'border-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {t(`themes.${key}`)}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            aria-labelledby="carousel-editor-theme"
+            size="sm"
+            disabled={!editable}
+            value={draft.theme}
+            onChange={(key) => change({ ...draft, theme: key })}
+            options={THEMES.map((key) => ({ value: key, label: t(`themes.${key}`) }))}
+          />
         </div>
         {draft.posts.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('noPosts')}</p>
@@ -247,13 +235,14 @@ export function CarouselEditor({
             <Plus /> {t('addPost')}
           </Button>
           <Button
+            loading={pending === 'rewrite'}
             type="button"
             variant="outline"
             size="sm"
             disabled={!editable || busy || view.rewritesLeft === 0}
             onClick={() => void rewrite()}
           >
-            {pending === 'rewrite' ? <Loader2 className="animate-spin" /> : <Sparkles />}
+            {pending !== 'rewrite' && <PenLine />}
             {t('rewriteThread')}
           </Button>
           <span className="self-center text-xs text-muted-foreground">
@@ -261,17 +250,23 @@ export function CarouselEditor({
           </span>
         </div>
         <div className="mt-6 flex flex-wrap gap-2 border-t border-border pt-4">
-          <Button type="button" disabled={!editable || busy || !dirty} onClick={() => void save()}>
-            {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
+          <Button
+            loading={pending === 'save'}
+            type="button"
+            disabled={!editable || busy || !dirty}
+            onClick={() => void save()}
+          >
+            {pending !== 'save' && <Save />} {t('save')}
           </Button>
           {view.canRerender && (
             <Button
+              loading={pending === 'render'}
               type="button"
               variant="outline"
               disabled={busy}
               onClick={() => void saveAndRender()}
             >
-              {pending === 'render' ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+              {pending !== 'render' && <RefreshCw />}
               {dirty ? t('saveAndRender') : t('renderAgain')}
             </Button>
           )}

@@ -11,13 +11,14 @@ import {
   Pause,
   Play,
   RefreshCw,
-  Sparkles,
   Trash2,
   TrendingUp,
   XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { StudioCapability } from '@/lib/rbac';
@@ -64,9 +65,14 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
     },
   );
   const [busy, setBusy] = useState(false);
+  const [confirm, confirmDialog] = useConfirm();
 
   const run = async (action: string, done?: string) => {
-    if (action === 'cancel' && !window.confirm(t('detail.cancelConfirm'))) return;
+    if (
+      action === 'cancel' &&
+      !(await confirm({ title: t('detail.cancelConfirm'), confirmLabel: t('detail.cancel') }))
+    )
+      return;
     setBusy(true);
     try {
       await api(`/automations/${automationId}/${action}`, {
@@ -139,6 +145,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
         }
         actions={back}
       />
+      {confirmDialog}
       <WriteGate>
         <div className="mb-6 flex flex-wrap gap-2">
           {a.status === 'DRAFT' && (
@@ -191,7 +198,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
       {a.status === 'PAUSED' && reason && (
         <div
           role="status"
-          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4 text-sm"
+          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warning-soft p-4 text-sm"
         >
           <span>{t(`detail.pauseReason.${reason}`)}</span>
           {reason === 'allowance' && (
@@ -221,7 +228,7 @@ export function AutomationDetailScreen({ automationId }: { automationId: string 
               disabled={busy}
               onClick={() => void run('more-like-this', t('detail.moreDone'))}
             >
-              <Sparkles /> {t('detail.moreLikeThis')}
+              <TrendingUp /> {t('detail.moreLikeThis')}
             </Button>
           </WriteGate>
         </section>
@@ -307,15 +314,15 @@ function PeriodCalendar({
                         })}
                       </span>
                       {item.format && (
-                        <span className="rounded-full bg-primary/12 px-2 py-0.5 font-semibold text-primary">
+                        <StatusPill tone="info" size="sm">
                           {tb(`format.${item.format as FormatKey}`)}
-                        </span>
+                        </StatusPill>
                       )}
                       <span className="text-muted-foreground">
                         {tp(`itemStatus.${item.status as 'PLANNED'}`)}
                       </span>
                       {item.reviewed && (
-                        <span className="text-success">{t('detail.reviewed')}</span>
+                        <span className="text-success-foreground">{t('detail.reviewed')}</span>
                       )}
                     </div>
                     {item.projectId ? (

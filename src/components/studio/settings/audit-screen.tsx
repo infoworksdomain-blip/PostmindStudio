@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { StatusPill } from '@/components/ui/status-pill';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/table';
 import { api, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
-import { selectClass } from '../library/library-filters';
 import { EmptyState, ErrorState, PageHeader, Section } from '../primitives';
 import { SettingsNav } from './settings-nav';
 
@@ -186,9 +186,10 @@ export function AuditScreen() {
             <Label htmlFor="audit-category" className="text-xs text-muted-foreground">
               {t('filter')}
             </Label>
-            <select
+            <NativeSelect
               id="audit-category"
-              className={selectClass}
+              size="sm"
+              wrapperClassName="w-auto"
               value={category}
               onChange={(e) => setCategory(e.target.value as Category)}
             >
@@ -197,7 +198,7 @@ export function AuditScreen() {
                   {t(`categories.${CATEGORY_KEY[c]}`)}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
         }
       >
@@ -236,9 +237,9 @@ export function AuditScreen() {
                       <TableCell>
                         {row.actorName ?? t(`actors.${actorKey(row.actorType)}`)}
                         {row.impersonatorUserId && (
-                          <span className="ms-2 rounded-full bg-destructive/10 px-2 py-0.5 text-[0.7rem] text-destructive">
+                          <StatusPill tone="warn" size="sm" className="ms-2">
                             {t('viaStaff')}
-                          </span>
+                          </StatusPill>
                         )}
                       </TableCell>
                       <TableCell>
@@ -257,8 +258,7 @@ export function AuditScreen() {
             {moreError && <p className="mt-3 text-sm text-destructive">{moreError}</p>}
             {cursor && (
               <div className="mt-4">
-                <Button variant="outline" disabled={loadingMore} onClick={() => void loadMore()}>
-                  {loadingMore && <Loader2 className="animate-spin" />}
+                <Button variant="outline" onClick={() => void loadMore()} loading={loadingMore}>
                   {t('loadMore')}
                 </Button>
               </div>

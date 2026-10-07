@@ -76,7 +76,7 @@ describe('ProjectsList search and filters', () => {
     expect(last.url.searchParams.get('q')).toBe('bread');
     expect(last.url.searchParams.get('state')).toBe('ARCHIVED');
     expect(screen.getByRole('searchbox', { name: 'Search projects' })).toHaveValue('bread');
-    expect(screen.getByRole('tab', { name: 'Archived' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('radio', { name: 'Archived' })).toHaveAttribute('aria-checked', 'true');
   });
 
   it('says nothing matched the search (not "no videos yet")', async () => {
@@ -88,12 +88,12 @@ describe('ProjectsList search and filters', () => {
     expect(screen.queryByText('No videos yet')).not.toBeInTheDocument();
   });
 
-  it('the Archived tab goes into the URL', async () => {
+  it('the Archived filter goes into the URL', async () => {
     serve([project()]);
     const user = userEvent.setup();
     renderScreen(<ProjectsList />);
     await screen.findByText('Sourdough launch');
-    await user.click(screen.getByRole('tab', { name: 'Archived' }));
+    await user.click(screen.getByRole('radio', { name: 'Archived' }));
     expect(nav.replace).toHaveBeenCalledWith('/projects?filter=archived', { scroll: false });
   });
 });
@@ -152,7 +152,7 @@ describe('ProjectsList row actions', () => {
     renderScreen(<ProjectsList />);
     await openMenu(user);
     await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText('Delete this video?')).toBeInTheDocument();
     expect(api.find('DELETE', '/projects/prj_1')).toHaveLength(0);
     await user.click(within(dialog).getByRole('button', { name: 'Delete' }));

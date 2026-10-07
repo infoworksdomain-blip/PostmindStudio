@@ -124,8 +124,9 @@ const submitName = (tab: Tab) => (tab === 'Slideshow' ? 'Create slideshow' : 'Ge
 
 async function choosePlatforms(labels: string[]) {
   for (const label of NINE) {
-    const chip = screen.getByLabelText(label) as HTMLInputElement;
-    if (chip.checked !== labels.includes(label)) await userEvent.click(chip);
+    const chip = screen.getByRole('checkbox', { name: label });
+    const checked = chip.getAttribute('aria-checked') === 'true';
+    if (checked !== labels.includes(label)) await userEvent.click(chip);
   }
 }
 

@@ -42,7 +42,7 @@ export function SlidePreview({
 }) {
   const t = useTranslations('carousel.preview');
   return (
-    <Section title={t('title')} description={t('description')}>
+    <Section variant="panel" title={t('title')} description={t('description')}>
       <div className="flex flex-col gap-3" aria-busy={previewing}>
         {previewError && (
           <p role="alert" className="text-sm text-destructive">

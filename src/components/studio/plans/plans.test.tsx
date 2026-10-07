@@ -192,7 +192,7 @@ describe('PlanMonthForm', () => {
     renderScreen(<PlanMonthForm />);
     const select = await screen.findByLabelText('TikTok account');
     expect(select).toHaveValue('');
-    await user.click(screen.getByLabelText('X'));
+    await user.click(screen.getByRole('checkbox', { name: 'X' }));
     expect(
       screen.getByText('Made but not posted automatically (no connected account): X.'),
     ).toBeInTheDocument();
@@ -261,7 +261,7 @@ describe('PlanScreen', () => {
     );
 
     await user.click(screen.getByRole('button', { name: /Generate and schedule/ }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText('Generate and schedule 4 posts?')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Generate and schedule' }));
     await waitFor(() => expect(api.find('POST', '/content-plans/plan_1/generate')).toHaveLength(1));
@@ -275,7 +275,7 @@ describe('PlanScreen', () => {
       await screen.findByText(/This plan has no connected account, so each post is made and saved/),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Generate and schedule/ }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     expect(
       within(dialog).getByText(/Nothing is posted automatically because the plan has no connected/),
     ).toBeInTheDocument();
@@ -308,13 +308,13 @@ describe('PlanScreen', () => {
     // A posted item can no longer be removed.
     expect(screen.queryByRole('button', { name: 'Remove “Topic 2”' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Remove “Topic 0”' }));
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Remove' }));
     await waitFor(() =>
       expect(api.find('DELETE', '/content-plans/plan_1/items/item_0')).toHaveLength(1),
     );
     await user.click(screen.getByRole('button', { name: 'Cancel plan' }));
-    const cancel = await screen.findByRole('dialog');
+    const cancel = await screen.findByRole('alertdialog');
     await user.click(within(cancel).getByRole('button', { name: 'Cancel plan' }));
     await waitFor(() => expect(api.find('POST', '/content-plans/plan_1/cancel')).toHaveLength(1));
   });

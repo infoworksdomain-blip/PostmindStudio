@@ -78,7 +78,7 @@ describe('CreateScreen — templates and auto-publish', () => {
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /Introduce yourself/ }));
     expect(screen.getByText(/Platforms and length come from the template/)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Long')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Long' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Generate' }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith('/projects/p1'));

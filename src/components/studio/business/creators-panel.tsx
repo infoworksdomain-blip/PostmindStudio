@@ -99,11 +99,7 @@ export function CreatorsPanel({ businessId }: { businessId: string }) {
       {error && <ErrorState error={error} onRetry={refresh} />}
       {isLoading && <Skeleton aria-label={t('loading')} className="h-72 rounded-2xl" />}
       {data && creators.length === 0 && (
-        <EmptyState
-          illustration="business"
-          title={t('empty.title')}
-          description={t('empty.body')}
-        />
+        <EmptyState media="business" title={t('empty.title')} description={t('empty.body')} />
       )}
       {creators.length > 0 && (
         <ul

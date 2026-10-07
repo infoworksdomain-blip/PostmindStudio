@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { CheckCircle2, TriangleAlert, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import type { MetaConnectInfo, PlatformConnection } from '@/lib/client/types';
@@ -162,14 +162,14 @@ export function ConnectionsScreen({
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
           )}
           <p className="flex-1">{notice.text}</p>
-          <Button variant="ghost" size="icon-xs" aria-label={t('dismiss')} onClick={dismiss}>
+          <IconButton size="icon-xs" label={t('dismiss')} onClick={dismiss}>
             <X />
-          </Button>
+          </IconButton>
         </div>
       )}
       {ready && !businessId && (
         <EmptyState
-          illustration="connections"
+          media="connections"
           title={t('pickFirst.title')}
           description={t('pickFirst.body')}
         />

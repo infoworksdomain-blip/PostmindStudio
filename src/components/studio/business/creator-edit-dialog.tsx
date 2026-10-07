@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -107,8 +106,7 @@ export function CreatorEditDialog({
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
-          <Button type="submit" form={`${inputId}-form`} disabled={invalid || busy}>
-            {busy && <Loader2 className="animate-spin" />}
+          <Button type="submit" form={`${inputId}-form`} disabled={invalid} loading={busy}>
             {t('submit')}
           </Button>
         </DialogFooter>

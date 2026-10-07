@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusPill } from '@/components/ui/status-pill';
 import { api, newIdempotencyKey, useApi, useErrorMessage } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { ErrorState, PageHeader } from '../primitives';
@@ -116,9 +117,9 @@ export function AutomationReviewDeck({ automationId }: { automationId: string })
                         minute: '2-digit',
                       })}
                     </p>
-                    <span className="inline-flex rounded-full bg-primary/12 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                    <StatusPill tone="info" size="sm">
                       {tb(`format.${(slot.format ?? 'carousel') as FormatKey}`)}
-                    </span>
+                    </StatusPill>
                     <h2 className="font-display text-3xl leading-tight">{slot.title}</h2>
                     {slot.slides?.hook && (
                       <p className="text-lg font-semibold leading-snug">{slot.slides.hook}</p>

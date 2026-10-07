@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { useFormat } from '@/lib/client/format';
 import { WriteGate } from '../write-gate';
 import { ConfirmDialog } from '../publications/confirm-dialog';
@@ -88,14 +88,14 @@ function ImageTile({
           {image.tags.length > 0 && <p className="truncate opacity-80">{image.tags.join(', ')}</p>}
         </div>
         <WriteGate>
-          <Button
+          <IconButton
             variant="secondary"
             size="icon-xs"
-            aria-label={t('deleteAria', { alt })}
+            label={t('deleteAria', { alt })}
             onClick={() => setConfirming(true)}
           >
             <Trash2 />
-          </Button>
+          </IconButton>
         </WriteGate>
       </div>
       <ConfirmDialog

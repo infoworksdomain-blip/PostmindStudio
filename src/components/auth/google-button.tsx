@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -39,9 +38,8 @@ export function GoogleButton({ next }: { next: string }) {
         variant="outline"
         className="h-10 w-full"
         onClick={() => void start()}
-        disabled={busy}
+        loading={busy}
       >
-        {busy && <Loader2 className="animate-spin" />}
         {t('google.continue')}
       </Button>
     </>

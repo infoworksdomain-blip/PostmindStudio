@@ -1,6 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { NativeSelect } from '@/components/ui/native-select';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { cn } from '@/lib/utils';
 import {
   CAROUSEL_POSTS_DEFAULT,
@@ -41,50 +43,44 @@ export function CarouselOptions({
           <span id="carousel-theme-label" className="text-sm">
             {t('theme')}
           </span>
-          <div role="radiogroup" aria-labelledby="carousel-theme-label" className="flex gap-1.5">
-            {THEMES.map((key) => (
-              <button
-                key={key}
-                type="button"
-                role="radio"
-                aria-checked={theme === key}
-                onClick={() => onChange({ carouselTheme: key })}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                  theme === key
-                    ? 'border-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    'size-3.5 rounded-full border border-border',
-                    key === 'light' ? 'bg-white' : 'bg-black',
-                  )}
-                />
-                {t(`themes.${key}`)}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            aria-labelledby="carousel-theme-label"
+            className="self-start"
+            value={theme}
+            onChange={(key) => onChange({ carouselTheme: key })}
+            options={THEMES.map((key) => ({
+              value: key,
+              label: (
+                <>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'size-3.5 rounded-full border border-border',
+                      key === 'light' ? 'bg-white' : 'bg-black',
+                    )}
+                  />
+                  {t(`themes.${key}`)}
+                </>
+              ),
+            }))}
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="carousel-posts" className="text-sm">
             {t('posts')}
           </label>
-          <select
+          <NativeSelect
             id="carousel-posts"
             value={posts}
             disabled={Boolean(state.carouselThread?.trim())}
             onChange={(e) => onChange({ carouselPosts: Number(e.target.value) })}
-            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
           >
             {counts.map((n) => (
               <option key={n} value={n}>
                 {t('postsValue', { count: n })}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       </div>
       <div className="flex flex-col gap-1.5">

@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -240,8 +239,7 @@ export function BrandKitDialog({
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
-          <Button type="submit" form="brand-kit-form" disabled={!payload || busy}>
-            {busy && <Loader2 className="animate-spin" />}
+          <Button type="submit" form="brand-kit-form" disabled={!payload} loading={busy}>
             {kit ? t('save') : t('create')}
           </Button>
         </DialogFooter>

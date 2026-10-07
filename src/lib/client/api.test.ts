@@ -185,6 +185,8 @@ describe('errorMessage', () => {
   });
 
   it('handles a non-Error thrown value', () => {
-    expect(errorMessage('a string was thrown')).toBe('Something went wrong.');
+    expect(errorMessage('a string was thrown')).toBe(
+      'That didn’t go through. Check your connection and try again.',
+    );
   });
 });

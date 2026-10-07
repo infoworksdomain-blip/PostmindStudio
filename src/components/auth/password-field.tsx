@@ -5,6 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { IconButton } from '@/components/ui/icon-button';
 import { cn } from '@/lib/utils';
 
 // Phase 18 §5.1: passwords are 12–128 characters. The meter is guidance only; the server rejects
@@ -63,14 +64,15 @@ export function PasswordField({
           aria-describedby={showStrength ? hintId : undefined}
           className="h-10 pe-10"
         />
-        <button
+        <IconButton
           type="button"
+          label={visible ? t('hide') : t('show')}
+          tooltip={false}
           onClick={() => setVisible((v) => !v)}
-          aria-label={visible ? t('hide') : t('show')}
-          className="absolute inset-y-0 end-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
+          className="absolute inset-y-0 end-1 my-auto"
         >
-          {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </button>
+          {visible ? <EyeOff /> : <Eye />}
+        </IconButton>
       </div>
       {showStrength && (
         <div id={hintId} aria-live="polite">

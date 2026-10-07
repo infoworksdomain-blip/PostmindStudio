@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Field } from '../review/field';
 import { ColourField } from './colour-field';
 import { snapAnchor } from './overlay-math';
 import { ALIGNMENTS, ANIMATIONS, BACKGROUND_TYPES, type Overlay, type OverlayDraft } from './types';

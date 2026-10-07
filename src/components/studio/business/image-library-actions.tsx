@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Upload, Wand2 } from 'lucide-react';
+import { ImagePlus, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError, newIdempotencyKey, useErrorMessage } from '@/lib/client/api';
 import { PlanLockBadge } from '../billing/plan-lock-badge';
-import { NativeSelect } from '../publications/native-select';
+import { NativeSelect } from '@/components/ui/native-select';
 
 // A6.3 / A6.6 / A6.8 — add to the library: upload a file (multipart), generate one from a
 // prompt, or re-run the stock searches from the business profile.
@@ -153,7 +153,7 @@ export function GenerateImageButton({
   return (
     <Dialog open={open} onOpenChange={(next) => !busy && setOpen(next)}>
       <Button variant="outline" onClick={() => setOpen(true)}>
-        <Wand2 /> {t('generate')}
+        <ImagePlus /> {t('generate')}
       </Button>
       <PlanLockBadge feature="imageGeneration" />
       <DialogContent>
@@ -209,8 +209,8 @@ export function GenerateImageButton({
           <Button variant="outline" disabled={busy} onClick={() => setOpen(false)}>
             {t('cancel')}
           </Button>
-          <Button type="submit" form="generate-image-form" disabled={!valid || busy}>
-            {busy && <Loader2 className="animate-spin" />} {t('generate')}
+          <Button type="submit" form="generate-image-form" disabled={!valid} loading={busy}>
+            {t('generate')}
           </Button>
         </DialogFooter>
       </DialogContent>

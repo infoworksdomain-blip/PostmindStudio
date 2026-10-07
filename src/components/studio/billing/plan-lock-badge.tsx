@@ -10,6 +10,7 @@ import {
   tierAtLeast,
   type PlanFeatureFlag,
 } from '@/lib/studio/billing/catalogue';
+import { StatusPill } from '@/components/ui/status-pill';
 import { cn } from '@/lib/utils';
 import type { UsageResponse } from '../usage-meter';
 import { isPlanTier, type PlanTier } from './types';
@@ -54,17 +55,16 @@ export function PlanLockBadge({
   if (!required || !current || tierAtLeast(current, required)) return null;
   // 21.5: one per-channel plan for customers, so no tier name: "Not in your plan".
   return (
-    <span
+    <StatusPill
       data-slot="plan-lock-badge"
+      tone="neutral"
+      size="sm"
+      icon={<Lock strokeWidth={2} aria-hidden />}
       title={t('notIncludedAria')}
-      className={cn(
-        'inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 align-middle text-[0.7rem] font-medium text-primary',
-        className,
-      )}
+      className={cn('align-middle', className)}
     >
-      <Lock className="size-3" strokeWidth={2} aria-hidden />
       <span aria-hidden>{t('notIncluded')}</span>
       <span className="sr-only">{t('notIncludedAria')}</span>
-    </span>
+    </StatusPill>
   );
 }

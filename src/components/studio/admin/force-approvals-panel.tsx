@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { BadgeCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApi } from '@/lib/client/api';
 import { useFormat } from '@/lib/client/format';
 import { EmptyState, ErrorState, Section } from '../primitives';
-import { selectClass } from '../library/library-filters';
 import { useProjectName } from '@/lib/client/use-project-name';
 
 // BACKLOG 15.D5 / spec 13.5 — "Every force-approve is audited and reviewable in the Admin
@@ -49,9 +49,10 @@ export function ForceApprovalsPanel() {
       title={t('title')}
       description={t('description')}
       actions={
-        <select
+        <NativeSelect
+          size="sm"
+          wrapperClassName="w-auto"
           aria-label={t('windowAria')}
-          className={selectClass}
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
         >
@@ -60,7 +61,7 @@ export function ForceApprovalsPanel() {
               {t('window', { days: d })}
             </option>
           ))}
-        </select>
+        </NativeSelect>
       }
     >
       {res.error ? (
@@ -69,7 +70,7 @@ export function ForceApprovalsPanel() {
         <Skeleton aria-label={t('loadingAria')} className="h-40" />
       ) : res.data.items.length === 0 ? (
         <EmptyState
-          icon={<BadgeCheck className="size-8" strokeWidth={1.5} />}
+          media={<BadgeCheck className="size-8" strokeWidth={1.5} />}
           title={t('emptyTitle')}
           description={t('emptyBody', { days })}
         />

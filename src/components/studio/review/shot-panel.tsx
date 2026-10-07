@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Loader2, RotateCw, Save } from 'lucide-react';
+import { RotateCw, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
@@ -131,12 +131,13 @@ export function ShotPanel({
           />
           <div>
             <Button
+              loading={pending === 'regenerate'}
               variant="outline"
               onClick={regenerate}
               disabled={!editable || busy || shot.visualTreatment === 'USER_UPLOAD'}
               title={shot.visualTreatment === 'USER_UPLOAD' ? t('uploadedNoRegenerate') : undefined}
             >
-              {pending === 'regenerate' ? <Loader2 className="animate-spin" /> : <RotateCw />}
+              {pending !== 'regenerate' && <RotateCw />}
               {t('regenerate')}
             </Button>
           </div>
@@ -168,8 +169,12 @@ export function ShotPanel({
           />
         </div>
         <div>
-          <Button onClick={saveText} disabled={!editable || !textChanged || busy}>
-            {pending === 'text' ? <Loader2 className="animate-spin" /> : <Save />} {t('saveText')}
+          <Button
+            loading={pending === 'text'}
+            onClick={saveText}
+            disabled={!editable || !textChanged || busy}
+          >
+            {pending !== 'text' && <Save />} {t('saveText')}
           </Button>
         </div>
       </div>

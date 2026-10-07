@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { Loader2, PencilLine, Save, Sparkles, X } from 'lucide-react';
+import { PencilLine, PenLine, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -151,8 +151,8 @@ function ScriptEditor({
         {revoices ? t('revoiceNote', { count: revoices }) : t('textNote')}
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button onClick={save} disabled={!patch || busy}>
-          {pending === 'save' ? <Loader2 className="animate-spin" /> : <Save />} {t('save')}
+        <Button loading={pending === 'save'} onClick={save} disabled={!patch || busy}>
+          {pending !== 'save' && <Save />} {t('save')}
         </Button>
         <Button variant="ghost" onClick={onDone}>
           <X /> {t('cancel')}
@@ -198,8 +198,13 @@ function RegenerateScript({
           onChange={(e) => setInstruction(e.target.value)}
         />
       </label>
-      <Button variant="outline" onClick={regenerate} disabled={disabled || pending !== null}>
-        {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} {t('button')}
+      <Button
+        loading={pending !== null}
+        variant="outline"
+        onClick={regenerate}
+        disabled={disabled || pending !== null}
+      >
+        {!pending && <PenLine />} {t('button')}
       </Button>
     </div>
   );

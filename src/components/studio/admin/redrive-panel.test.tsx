@@ -107,7 +107,7 @@ describe('RedrivePanel', () => {
     mockFetch([{ match: '/admin/redrive', method: 'POST', body: applied }]);
     await waitFor(() => expect(apply).toBeEnabled());
     await user.click(apply);
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('alertdialog');
     await user.click(within(dialog).getByRole('button', { name: 'Re-drive' }));
     expect(await screen.findByText('Re-drive applied')).toBeInTheDocument();
     const { toast } = await import('sonner');

@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Download, ExternalLink, Loader2 } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { DataTable, type DataTableColumn } from '@/components/ui/data-table';
 import { useApi } from '@/lib/client/api';
 import { safeHttpUrl, useFormat } from '@/lib/client/format';
 import { cn } from '@/lib/utils';
@@ -201,11 +202,11 @@ export function TopUpsSection({
                         aria-label={
                           amount === null ? undefined : t('buyAria', { pack: name(pack), amount })
                         }
+                        loading={pending === pack.lookupKey}
                         onClick={() =>
                           onBuy({ kind: 'topup', lookupKey: pack.lookupKey }, pack.lookupKey)
                         }
                       >
-                        {pending === pack.lookupKey && <Loader2 className="animate-spin" />}
                         {t('buy')}
                       </Button>
                     )}
@@ -231,99 +232,98 @@ const INVOICE_TONE = {
   void: 'neutral',
 } as const satisfies Record<InvoiceStatus, string>;
 
+type Invoice = InvoicesResponse['invoices'][number];
+
 export function InvoicesSection({ enabled }: { enabled: boolean }) {
   const t = useTranslations('billing.invoices');
   const f = useFormat();
   const res = useApi<InvoicesResponse>(enabled ? '/billing/invoices' : null, { limit: 12 });
   const invoices = res.data?.invoices ?? [];
+  const numberOf = (invoice: Invoice) => invoice.number ?? t('draft');
+  const columns: Array<DataTableColumn<Invoice>> = [
+    {
+      id: 'number',
+      header: t('number'),
+      className: 'font-medium',
+      cell: (invoice) => numberOf(invoice),
+    },
+    {
+      id: 'date',
+      header: t('date'),
+      cell: (invoice) => f.date(invoice.createdAt, { dateStyle: 'medium' }),
+    },
+    {
+      id: 'amount',
+      header: t('amount'),
+      align: 'end',
+      className: 'tabular-nums',
+      cell: (invoice) => f.pence(invoice.amountDuePence),
+    },
+    {
+      id: 'status',
+      header: t('status'),
+      cell: (invoice) =>
+        isInvoiceStatus(invoice.status) ? (
+          <StateBadge label={t(`statuses.${invoice.status}`)} tone={INVOICE_TONE[invoice.status]} />
+        ) : (
+          invoice.status
+        ),
+    },
+    {
+      id: 'links',
+      header: <span className="sr-only">{t('links')}</span>,
+      mobileLabel: t('links'),
+      align: 'end',
+      cell: (invoice) => <InvoiceLinks invoice={invoice} number={numberOf(invoice)} />,
+    },
+  ];
   return (
     <Section title={t('title')}>
       {invoices.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('empty')}</p>
       ) : (
-        // relative: the sr-only caption and labels (absolutely positioned) stay inside the scroll
-        // box; otherwise they widen right-to-left pages on phones.
-        <div className="relative overflow-x-auto">
-          <table className="w-full min-w-[32rem] text-sm">
-            <caption className="sr-only">{t('caption')}</caption>
-            <thead>
-              <tr className="text-muted-foreground">
-                <th scope="col" className="py-2 pe-3 text-start font-medium">
-                  {t('number')}
-                </th>
-                <th scope="col" className="py-2 pe-3 text-start font-medium">
-                  {t('date')}
-                </th>
-                <th scope="col" className="py-2 pe-3 text-end font-medium">
-                  {t('amount')}
-                </th>
-                <th scope="col" className="py-2 pe-3 text-start font-medium">
-                  {t('status')}
-                </th>
-                <th scope="col" className="py-2 text-end font-medium">
-                  <span className="sr-only">{t('links')}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((invoice) => {
-                const number = invoice.number ?? t('draft');
-                const hosted = safeHttpUrl(invoice.hostedInvoiceUrl);
-                const pdf = safeHttpUrl(invoice.invoicePdfUrl);
-                return (
-                  <tr key={invoice.id} className="border-t border-border">
-                    <td className="py-2 pe-3 font-medium">{number}</td>
-                    <td className="py-2 pe-3">
-                      {f.date(invoice.createdAt, { dateStyle: 'medium' })}
-                    </td>
-                    <td className="py-2 pe-3 text-end tabular-nums">
-                      {f.pence(invoice.amountDuePence)}
-                    </td>
-                    <td className="py-2 pe-3">
-                      {isInvoiceStatus(invoice.status) ? (
-                        <StateBadge
-                          label={t(`statuses.${invoice.status}`)}
-                          tone={INVOICE_TONE[invoice.status]}
-                        />
-                      ) : (
-                        invoice.status
-                      )}
-                    </td>
-                    <td className="py-2">
-                      <div className="flex justify-end gap-1">
-                        {hosted && (
-                          <Button asChild size="sm" variant="ghost">
-                            <a
-                              href={hosted}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={t('viewAria', { number })}
-                            >
-                              <ExternalLink aria-hidden /> {t('view')}
-                            </a>
-                          </Button>
-                        )}
-                        {pdf && (
-                          <Button asChild size="sm" variant="ghost">
-                            <a
-                              href={pdf}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={t('pdfAria', { number })}
-                            >
-                              <Download aria-hidden /> {t('pdf')}
-                            </a>
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          caption={t('caption')}
+          columns={columns}
+          rows={invoices}
+          getRowId={(invoice) => invoice.id}
+          responsive="stack"
+        />
       )}
     </Section>
+  );
+}
+
+function InvoiceLinks({ invoice, number }: { invoice: Invoice; number: string }) {
+  const t = useTranslations('billing.invoices');
+  const hosted = safeHttpUrl(invoice.hostedInvoiceUrl);
+  const pdf = safeHttpUrl(invoice.invoicePdfUrl);
+  return (
+    <div className="flex justify-end gap-1">
+      {hosted && (
+        <Button asChild size="sm" variant="ghost">
+          <a
+            href={hosted}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t('viewAria', { number })}
+          >
+            <ExternalLink aria-hidden /> {t('view')}
+          </a>
+        </Button>
+      )}
+      {pdf && (
+        <Button asChild size="sm" variant="ghost">
+          <a
+            href={pdf}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t('pdfAria', { number })}
+          >
+            <Download aria-hidden /> {t('pdf')}
+          </a>
+        </Button>
+      )}
+    </div>
   );
 }

@@ -66,7 +66,7 @@ describe('Create — planning options', () => {
     await userEvent.type(await screen.findByLabelText('What’s the video about?'), 'Launch');
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     await userEvent.selectOptions(screen.getByLabelText('Language'), 'fr');
-    await userEvent.click(screen.getByLabelText('العربية'));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'العربية' }));
     await userEvent.click(screen.getByRole('button', { name: 'Advanced options' }));
     await waitFor(() => expect(screen.getByLabelText('Quality tier')).not.toBeDisabled());
     // never above the plan

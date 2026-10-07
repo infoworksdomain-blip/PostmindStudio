@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { usePathname } from 'next/navigation';
-import { Loader2, MessageSquarePlus } from 'lucide-react';
+import { MessageSquarePlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { api, useErrorMessage } from '@/lib/client/api';
-import { cn } from '@/lib/utils';
+import { ChoiceChips } from '@/components/ui/choice-chips';
 
 // BACKLOG 14.11 — the app shell's Feedback button: POST /api/studio/feedback
 // { kind, message ≤ 2000, projectId?, screen }. The screen is the current path; on a project page
@@ -91,25 +91,13 @@ export function FeedbackButton() {
           </DialogHeader>
           <fieldset className="grid gap-2">
             <legend className="mb-1 text-sm font-medium">{t('kindLegend')}</legend>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('kindAria')}>
-              {KINDS.map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  role="radio"
-                  aria-checked={kind === k}
-                  onClick={() => setKind(k)}
-                  className={cn(
-                    'rounded-full border px-3 py-1 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                    kind === k
-                      ? 'border-primary bg-primary/10 text-foreground'
-                      : 'border-border text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t(`kinds.${k}`)}
-                </button>
-              ))}
-            </div>
+            <ChoiceChips
+              type="single"
+              label={t('kindAria')}
+              value={kind}
+              onChange={setKind}
+              options={KINDS.map((k) => ({ value: k, label: t(`kinds.${k}`) }))}
+            />
           </fieldset>
           <div className="grid gap-1.5">
             <Label htmlFor="feedback-message">{t('message')}</Label>
@@ -141,8 +129,7 @@ export function FeedbackButton() {
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               {tc('cancel')}
             </Button>
-            <Button type="submit" disabled={!trimmed || pending}>
-              {pending && <Loader2 className="animate-spin" />}
+            <Button type="submit" disabled={!trimmed} loading={pending}>
               {tc('send')}
             </Button>
           </DialogFooter>

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useId, useState, type FormEvent } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,8 +96,7 @@ export function SignInForm({
           onChange={setPassword}
           autoComplete="current-password"
         />
-        <Button type="submit" className="h-10 w-full" disabled={busy}>
-          {busy && <Loader2 className="animate-spin" />}
+        <Button type="submit" className="h-10 w-full" loading={busy}>
           {t('submit')}
         </Button>
       </form>

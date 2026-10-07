@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { LayoutTemplate, Loader2 } from 'lucide-react';
+import { LayoutTemplate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from './field';
@@ -70,8 +70,12 @@ export function SaveTemplate({
         <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
           {t('cancel')}
         </Button>
-        <Button onClick={save} disabled={busy || !name.trim() || !categoryOk}>
-          {pending && <Loader2 className="animate-spin" />} {t('save')}
+        <Button
+          loading={pending !== null}
+          onClick={save}
+          disabled={busy || !name.trim() || !categoryOk}
+        >
+          {t('save')}
         </Button>
       </div>
     </div>

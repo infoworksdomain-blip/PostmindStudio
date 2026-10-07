@@ -86,17 +86,17 @@ describe('FailureReason', () => {
 
   it('20.11: account problems read as a friendly unavailable sentence in every locale', () => {
     expect(reason('en-GB', 'service_unavailable: anthropic/account_limit')).toBe(
-      'Our AI service is temporarily unavailable, so this could not be finished. Please try again later — our team has been alerted.',
+      'Generation was unavailable, so this couldn’t be finished. Try again in a few minutes.',
     );
     expect(
       reason('ar', 'planning_failed: service_unavailable: Every text_generation provider'),
     ).toBe(
-      'فشل تخطيط الفيديو. خدمة الذكاء الاصطناعي لدينا غير متاحة مؤقتًا، لذا تعذّر إكمال هذا. يُرجى المحاولة لاحقًا، فقد تم إبلاغ فريقنا.',
+      'فشل تخطيط الفيديو. كان الإنشاء غير متاح، لذا تعذّر إكمال هذا. حاول مرة أخرى بعد بضع دقائق.',
     );
     // Rows stored before 20.11 as <provider>/<account class>: <provider text>.
     expect(
       reason('zh-Hans', 'openai/insufficient_credits: 429 You have no credits remaining.'),
-    ).toBe('我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。');
+    ).toBe('生成功能当时不可用，因此未能完成。请几分钟后再试。');
     // QA 3: a social platform's own text is staff-only too; customers read the class sentence.
     const refused = reason('en-GB', 'tiktok/content_policy: Video violates community guidelines');
     expect(refused).toContain('TikTok reported a problem');

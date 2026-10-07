@@ -329,7 +329,7 @@ export class ProvidersUnavailableError extends NoProviderAvailableError {
 export const PROVIDER_ERROR_SENTENCE =
   'A generation provider had a problem. Try again in a moment.';
 export const SERVICE_UNAVAILABLE_SENTENCE =
-  'Our AI service is temporarily unavailable. Please try again later. Our team has been alerted.';
+  'Generation is unavailable right now. Try again in a few minutes.';
 
 export class ConfigurationError extends StudioError {
   readonly status = 500;

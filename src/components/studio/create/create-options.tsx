@@ -1,12 +1,16 @@
 'use client';
 
+import { useId } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/input';
 import { useFormat, type StudioFormat } from '@/lib/client/format';
 import type { BrandKit } from '@/lib/client/types';
 import { cn } from '@/lib/utils';
-import { Field, NativeSelect } from '../review/field';
+import { NativeSelect } from '@/components/ui/native-select';
+import { ChoiceChips } from '@/components/ui/choice-chips';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Field } from '../review/field';
 import type { CreateState, QualityTier, ReviewPolicy } from './body';
 import { PlanningAdvancedOptions, type WorkflowOption } from './create-planning-options';
 import {
@@ -43,69 +47,43 @@ function budgetPlaceholder(
   });
 }
 
-function Chip({
-  checked,
-  onToggle,
-  children,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-  children: string;
-}) {
-  return (
-    <label
-      className={cn(
-        'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors has-focus-visible:ring-2 has-focus-visible:ring-ring',
-        checked
-          ? 'border-foreground bg-foreground text-background'
-          : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground',
-      )}
-    >
-      <input type="checkbox" className="sr-only" checked={checked} onChange={onToggle} />
-      {children}
-    </label>
-  );
-}
-
 export function PlatformChips({ value, onChange }: { value: string[]; onChange: Patch }) {
   const t = useTranslations('create.options');
   const f = useFormat();
-  const toggle = (platform: string) =>
-    onChange({
-      platforms: value.includes(platform)
-        ? value.filter((p) => p !== platform)
-        : [...value, platform],
-    });
+  const legendId = useId();
   return (
     <fieldset>
-      <legend className="mb-2 text-xs font-medium text-muted-foreground">{t('platforms')}</legend>
-      <div className="flex flex-wrap gap-1.5">
-        {PLATFORM_OPTIONS.map((o) => (
-          <Chip
-            key={o.platform}
-            checked={value.includes(o.platform)}
-            onToggle={() => toggle(o.platform)}
-          >
-            {f.platform(o.platform)}
-          </Chip>
-        ))}
-      </div>
+      <legend id={legendId} className="mb-2 text-xs font-medium text-muted-foreground">
+        {t('platforms')}
+      </legend>
+      <ChoiceChips
+        type="multiple"
+        aria-labelledby={legendId}
+        value={value}
+        onChange={(platforms) => onChange({ platforms })}
+        options={PLATFORM_OPTIONS.map((o) => ({
+          value: o.platform,
+          label: f.platform(o.platform),
+        }))}
+      />
     </fieldset>
   );
 }
 
 export function LengthToggle({ value, onChange }: { value: Length; onChange: Patch }) {
   const t = useTranslations('create.options');
+  const legendId = useId();
   return (
     <fieldset>
-      <legend className="mb-2 text-xs font-medium text-muted-foreground">{t('length')}</legend>
-      <div className="flex gap-1.5">
-        {(['short', 'long'] as const).map((l) => (
-          <Chip key={l} checked={value === l} onToggle={() => onChange({ length: l })}>
-            {t(`lengths.${l}`)}
-          </Chip>
-        ))}
-      </div>
+      <legend id={legendId} className="mb-2 text-xs font-medium text-muted-foreground">
+        {t('length')}
+      </legend>
+      <SegmentedControl
+        aria-labelledby={legendId}
+        value={value}
+        onChange={(length) => onChange({ length })}
+        options={(['short', 'long'] as const).map((l) => ({ value: l, label: t(`lengths.${l}`) }))}
+      />
     </fieldset>
   );
 }
