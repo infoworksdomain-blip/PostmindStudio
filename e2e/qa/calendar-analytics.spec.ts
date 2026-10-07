@@ -13,6 +13,8 @@ const email = `qa5-${run}@example.test`;
 const password = `Qa5-${randomUUID()}`;
 const DAY_MS = 86_400_000;
 const NOW = new Date('2026-10-01T09:00:00Z');
+// 24.2: a calendar post is a button that opens the post panel.
+const POST = 'button[aria-haspopup="dialog"]';
 
 test.skip(!hasDb, 'DATABASE_URL is not set: needs the app’s database');
 test.describe.configure({ mode: 'serial' });
@@ -210,14 +212,14 @@ test.describe('calendar', () => {
     const london = await newPage(browser, { now: NOW, timezoneId: 'Europe/London' });
     await london.goto('/calendar');
     const cell = london.locator('[data-day="2026-10-25"]');
-    await expect(cell.getByRole('link', { name: new RegExp(`Tz ${run}`) })).toBeVisible();
-    await expect(cell.getByRole('link')).toHaveCount(3);
+    await expect(cell.locator(POST, { hasText: new RegExp(`Tz ${run}`) })).toBeVisible();
+    await expect(cell.locator(POST)).toHaveCount(3);
     await expect(cell.getByText('01:30')).toHaveCount(2);
     await london.close();
     const la = await newPage(browser, { now: NOW, timezoneId: 'America/Los_Angeles' });
     await la.goto('/calendar');
     await expect(
-      la.locator('[data-day="2026-10-24"]').getByRole('link', { name: new RegExp(`Tz ${run}`) }),
+      la.locator('[data-day="2026-10-24"]').locator(POST, { hasText: new RegExp(`Tz ${run}`) }),
     ).toBeVisible();
     await la.close();
   });
@@ -267,7 +269,7 @@ test.describe('calendar', () => {
     const page = await newPage(browser, { now: NOW });
     await page.goto('/calendar');
     const cell = page.locator('[data-day="2026-10-14"]');
-    await expect(cell.getByRole('link')).toHaveCount(4);
+    await expect(cell.locator(POST)).toHaveCount(4);
     await expect(cell.getByText(/\+\d+ more/)).toHaveCount(0);
     await page.close();
   });
@@ -286,7 +288,7 @@ test.describe('calendar', () => {
     await expect(page.getByText(/Next 30 days/)).toBeVisible();
     const link = page
       .locator('[data-day="2026-10-23"]')
-      .getByRole('link', { name: new RegExp(`Drag ${run}`) });
+      .locator(POST, { hasText: new RegExp(`Drag ${run}`) });
     // Chromium's native drag does not deliver 'drop' under automation here (dragstart and
     // dragover fire and are accepted, then no drop), so replay the same three events with one
     // shared DataTransfer, exactly what the browser would send.
