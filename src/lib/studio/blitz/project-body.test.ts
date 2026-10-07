@@ -52,6 +52,27 @@ describe('card → project body', () => {
     expect(body.targetFormats?.every((f) => f.durationSec === 15)).toBe(true);
   });
 
+  // 25.x: the caption (or the title) is never copied into imageQuery — populate builds a
+  // contextual query from the topic, business and line; the writer's visual hints are kept.
+  it('slideshow: no imageQuery without a visual hint; the hook never searches by the title', () => {
+    const hinted = createProjectInput.parse(
+      projectBodyForCard('slideshow', copy, { ...options, platforms: [...options.platforms] }),
+    );
+    const hintedSlides = hinted.slideshow?.slides ?? [];
+    expect(hintedSlides[0]?.content).not.toHaveProperty('imageQuery');
+    expect(hintedSlides.at(-1)?.content).toMatchObject({ imageQuery: 'wet dough' });
+
+    const { imageQueries: _hints, ...plain } = copy;
+    void _hints;
+    const body = createProjectInput.parse(
+      projectBodyForCard('slideshow', plain, { ...options, platforms: [...options.platforms] }),
+    );
+    const slides = body.slideshow?.slides ?? [];
+    expect(slides).toHaveLength(5);
+    for (const s of slides) expect(s.content).not.toHaveProperty('imageQuery');
+    expect(slides[1]?.content).toMatchObject({ text: 'Under-proved dough' });
+  });
+
   it('ai_video and ugc: a 15 s brief; ugc carries the actor style', () => {
     const video = createProjectInput.parse(
       projectBodyForCard('ai_video', copy, { ...options, platforms: [...options.platforms] }),

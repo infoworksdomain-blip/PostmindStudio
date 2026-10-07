@@ -64,7 +64,7 @@ const WITH_PHOTOS = [
     durationSec: 2.5,
     transitionIn: 'fade',
     kenBurnsSpec: { effect: 'zoomIn' },
-    content: { role: 'body', text, imageQuery: text },
+    content: { role: 'body', text },
   })),
   { slideType: 'TEXT_CARD', durationSec: 2.5, content: { role: 'cta', text: CTA } },
 ];

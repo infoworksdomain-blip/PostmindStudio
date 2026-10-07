@@ -210,6 +210,8 @@ export function projectBodyFor(
     // 20.26: each point is a photo slide (its text as the caption) with a Ken Burns move; the
     // image is found when the slideshow is generated (plan-slideshow.ts: library, then stock,
     // then a generated image), and a point with no image left becomes a text card.
+    // 25.x: no imageQuery — the caption alone found unrelated photos; populate builds a query
+    // from the topic, the business profile and the caption (slideshow/visual-query.ts).
     const photo = (value: string, index: number) => ({
       slideType: 'IMAGE_KENBURNS' as const,
       durationSec: PLAN_PHOTO_SLIDE_SEC,
@@ -218,7 +220,6 @@ export function projectBodyFor(
       content: {
         role: 'body' as const,
         text: value.slice(0, 300),
-        imageQuery: value.slice(0, 300),
       },
     });
     return {
