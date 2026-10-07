@@ -750,6 +750,9 @@ async function wallOfText(ctx: Ctx): Promise<Check[]> {
  * track (another prompt key, so the relaxed pick is exercised); the slideshow must render with it.
  */
 async function musicRateLimit(ctx: Ctx): Promise<Check[]> {
+  // Library rows left by the earlier scenarios point into THEIR processes' temporary storage
+  // (one directory per run), so here they are dead objects: start from a library of one track.
+  await ctx.db.musicLibraryTrack.deleteMany({});
   const promptKey = randomBytes(16).toString('hex');
   const stored = await ctx.deps.storage.put({
     bucket: ctx.deps.config.assetsBucket,

@@ -21,8 +21,12 @@ import type { buildMusicPrompt } from './music-prompt';
 // job waits for a slot, 20.29, and generates then), a paused budget or an engaged kill switch
 // (they stop the whole run, spec 12.5).
 
-/** Fallback attempts when picked tracks turn out to have lost their object. */
-const MAX_FALLBACK_PICKS = 3;
+/**
+ * Fallback picks when tracks turn out to have lost their object (each is dropped, so the next
+ * video does not meet it again). CI 2026-10-07: 3 was too few — several dead rows of the same
+ * prompt key were picked before the live track of another key, and the video went silent.
+ */
+export const MAX_FALLBACK_PICKS = 12;
 
 type BuiltPrompt = ReturnType<typeof buildMusicPrompt>;
 

@@ -8,6 +8,7 @@ import type { ProjectJobData } from '../../src/lib/studio/queue/queues';
 import { drainInline } from '../../src/lib/studio/queue/workers/runtime';
 import { createHarness, createProject, SCRIPT_JSON } from '../helpers/pipeline-harness';
 import { musicDouble } from '../helpers/music-double';
+import { MAX_FALLBACK_PICKS } from '../../src/lib/studio/pipeline/music-fallback';
 
 // Layer 5 on real Postgres: one ElevenLabs Music track per run (scripted double with the real
 // adapter's output shape), reused on re-render, non-fatal on failure, off for BASIC.
@@ -367,6 +368,49 @@ describe.skipIf(!hasDb)('Layer 5 music on real Postgres', { timeout: 60_000 }, (
         expect(limited.requests).toHaveLength(1);
       },
     );
+
+    it('25.x: dead library rows of the same key are dropped until a live track is found', async () => {
+      const lib = await libraryHarness(5);
+      const first = await lib.video(); // its generated track is live in this harness's storage
+      const key = String(first.meta.promptKey);
+      const live = String(first.meta.libraryTrackId);
+      // Earlier tests' tracks for this key live in their own harnesses' storage: drop them.
+      await db.musicLibraryTrack.deleteMany({ where: { promptKey: key, id: { not: live } } });
+      // More dead rows than the old 3-pick limit, all preferred over the live one (same key,
+      // closest bucket, never used) — CI's pipeline-e2e left exactly this behind.
+      const dead = await Promise.all(
+        Array.from({ length: MAX_FALLBACK_PICKS - 2 }, () =>
+          db.musicLibraryTrack.create({
+            data: {
+              promptKey: key,
+              bucketSec: 15,
+              durationSec: 15,
+              s3Bucket: 'assets',
+              s3Key: `music-library/${key}/${randomUUID()}.mp3`, // never stored
+              source: 'elevenlabs-music:music_v2_5',
+            },
+          }),
+        ),
+      );
+      await db.musicLibraryTrack.update({ where: { id: live }, data: { lastUsedAt: new Date() } });
+      const limited = musicDouble(() => ({
+        state: 'failed',
+        error: {
+          class: 'rate_limited',
+          message: 'simulated: 429 Too Many Requests',
+          retryable: true,
+        },
+      }));
+      lib.h.deps.registry = createProviderRegistry([
+        ...lib.h.deps.registry.list().filter((a) => a.providerId !== 'elevenlabs-music'),
+        limited,
+      ]);
+      const next = await lib.video();
+      expect(next.meta).toMatchObject({ status: 'reused', libraryTrackId: live, costPence: 0 });
+      expect(
+        await db.musicLibraryTrack.count({ where: { id: { in: dead.map((d) => d.id) } } }),
+      ).toBe(0);
+    });
 
     it('25.x: with an empty library a failed generation still renders without music', async () => {
       const lib = await libraryHarness(5);
