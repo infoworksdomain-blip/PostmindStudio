@@ -79,9 +79,8 @@ export function Formats() {
                 <figcaption className="mt-4 grid gap-0.5">
                   <span className="font-medium">{NAMES[business]}</span>
                   <span className="text-sm text-muted-foreground">
-                    {t(`types.${business}`)}
-                    <span aria-hidden> · </span>
-                    <span className="sr-only">, </span>
+                    {/* One line, one text run: "Sourdough bakery · AI video". */}
+                    {t(`types.${business}`)} ·{' '}
                     <span className="text-foreground">{t(`kinds.${kind}`)}</span>
                   </span>
                 </figcaption>

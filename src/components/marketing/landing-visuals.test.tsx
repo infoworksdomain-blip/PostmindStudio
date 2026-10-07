@@ -2,6 +2,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { STUDIO_CLIPS } from '@/lib/marketing/media';
+import { withLocale } from '../../../test/i18n-wrapper';
 import { LandingPage } from './landing-page';
 import {
   ClipMedia,
@@ -79,17 +80,27 @@ describe('LandingPage media', () => {
     expect(container.innerHTML).not.toContain('/marketing/photos/');
   });
 
-  it('loads only the hero poster eagerly with high priority (the LCP image); the rest are lazy', () => {
+  it('loads the three hero posters eagerly, only the LCP bread poster at high priority; the rest are lazy', () => {
     const { container } = render(<LandingPage />);
     const eager = [...container.querySelectorAll('img')].filter(
       (img) => img.getAttribute('loading') !== 'lazy',
     );
-    expect(eager).toHaveLength(1);
-    expect(eager[0]).toHaveAttribute('fetchpriority', 'high');
-    expect(eager[0]).toHaveAttribute('src', '/marketing/studio/seedance-bread.jpg');
-    expect(eager[0]).toHaveAttribute('width', '720');
-    expect(eager[0]).toHaveAttribute('height', '1280');
-    const source = eager[0]!.parentElement!.querySelector('source')!;
+    expect(eager.map((img) => img.getAttribute('src'))).toEqual([
+      '/marketing/studio/seedance-market.jpg',
+      '/marketing/studio/seedance-bread.jpg',
+      '/marketing/studio/coastline-stays-slideshow.jpg',
+    ]);
+    for (const img of eager) {
+      expect(img).toHaveAttribute('loading', 'eager');
+      expect(img).toHaveAttribute('width', '720');
+      expect(img).toHaveAttribute('height', '1280');
+    }
+    const high = [...container.querySelectorAll('img[fetchpriority]')];
+    expect(high).toHaveLength(1);
+    const lcp = high[0]!;
+    expect(lcp).toHaveAttribute('fetchpriority', 'high');
+    expect(lcp).toHaveAttribute('src', '/marketing/studio/seedance-bread.jpg');
+    const source = lcp.parentElement!.querySelector('source')!;
     expect(source).toHaveAttribute('type', 'image/webp');
     expect(source.getAttribute('srcset')).toBe(
       '/marketing/studio/seedance-bread-360.webp 360w, /marketing/studio/seedance-bread-720.webp 720w',
@@ -98,18 +109,38 @@ describe('LandingPage media', () => {
       screen.getByRole('img', {
         name: /golden sourdough loaf on a wooden board, steam rising, the camera/,
       }),
-    ).toBe(eager[0]);
+    ).toBe(lcp);
   });
 
-  it('labels the showcase strip with each business type and format', () => {
+  it('labels each post "<business type> · <format>" in one run, with no stray punctuation', () => {
     render(<LandingPage />);
     const strip = screen.getByRole('region', { name: 'Example posts made with Studio' });
     expect(strip).toHaveAttribute('tabindex', '0');
-    expect(strip).toHaveTextContent('Northside BakerySourdough bakery · , AI video');
-    expect(strip).toHaveTextContent('Pulse StudioFitness studio · , Wall of text');
-    expect(strip).toHaveTextContent('Atelier WrenLinen boutique · , Slideshow');
-    expect(strip.querySelectorAll('li')).toHaveLength(9);
+    const labels = [...strip.querySelectorAll('figcaption')].map((fc) =>
+      [...fc.children].map((c) => c.textContent),
+    );
+    expect(labels).toHaveLength(9);
+    expect(labels.slice(0, 3)).toEqual([
+      ['Northside Bakery', 'Sourdough bakery · AI video'],
+      ['Pulse Studio', 'Fitness studio · Wall of text'],
+      ['Atelier Wren', 'Linen boutique · Slideshow'],
+    ]);
+    for (const [, label] of labels) expect(label).toMatch(/^[^,·]+ · [^,·]+$/);
   });
+
+  it.each(['fr', 'ar', 'zh-Hans'] as const)(
+    'labels the strip without stray punctuation in %s',
+    (locale) => {
+      render(withLocale(locale, <LandingPage />));
+      const captions = [...document.querySelectorAll('figcaption')].filter((fc) =>
+        fc.closest('[role=region]'),
+      );
+      expect(captions).toHaveLength(9);
+      for (const fc of captions) {
+        expect(fc.lastElementChild?.textContent).toMatch(/^[^,،、·]+ · [^,،、·]+$/);
+      }
+    },
+  );
 
   it('renders no video on the server or on phones, and no pause control', () => {
     stubMatchMedia({ wide: false });

@@ -84,11 +84,20 @@ export interface ClipPosterProps {
   sizes: string;
   /** The hero's first poster: the LCP element (eager, fetchpriority high). */
   priority?: boolean;
+  /** Above the fold but not the LCP (the hero's side phones): eager, default priority. */
+  eager?: boolean;
   className?: string;
 }
 
 /** The poster frame: WebP at two widths, JPEG fallback, explicit 9:16 size. */
-export function ClipPoster({ clip, alt, sizes, priority = false, className }: ClipPosterProps) {
+export function ClipPoster({
+  clip,
+  alt,
+  sizes,
+  priority = false,
+  eager = false,
+  className,
+}: ClipPosterProps) {
   const { small, large, fallback } = clip.poster;
   return (
     <picture>
@@ -102,7 +111,7 @@ export function ClipPoster({ clip, alt, sizes, priority = false, className }: Cl
         width={large.width}
         height={large.height}
         alt={alt}
-        loading={priority ? 'eager' : 'lazy'}
+        loading={priority || eager ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : undefined}
         decoding={priority ? 'sync' : 'async'}
         className={cn('block size-full object-cover', className)}

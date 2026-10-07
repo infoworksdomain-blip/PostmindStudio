@@ -10,7 +10,8 @@ import { Container, Eyebrow } from './primitives';
 
 // 25.5 §1 — the hero: what Studio does in one line, the two calls to action, and three real
 // Studio renders in phone frames (two AI video clips and a slideshow). The front phone's poster is
-// the LCP element (eager, fetchpriority high, explicit size); the clips play muted while in view
+// the LCP element (eager, fetchpriority high, explicit size); the side posters are eager too
+// (above the fold, default priority); the clips play muted while in view
 // on wide screens only.
 
 /** A phone-shaped frame around a 9:16 clip, with an optional format tag under it. */
@@ -43,7 +44,7 @@ function HeroReel() {
   const t = useTranslations('marketing.hero');
   const tk = useTranslations('marketing.formats.kinds');
   const side = (clip: StudioClip, alt: string, sizes = '(min-width: 1024px) 12rem, 30vw') => (
-    <ClipMedia clip={clip} alt={alt} sizes={sizes} />
+    <ClipMedia clip={clip} alt={alt} sizes={sizes} eager />
   );
   return (
     <div className="relative">
