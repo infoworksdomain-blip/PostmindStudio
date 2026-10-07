@@ -182,7 +182,7 @@ function Providers({ children }: { children: ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <TooltipProvider delayDuration={200}>
         {children}
-        <Toaster richColors position="bottom-right" />
+        <Toaster position="top-center" offset={72} mobileOffset={64} />
       </TooltipProvider>
     </ThemeProvider>
   );

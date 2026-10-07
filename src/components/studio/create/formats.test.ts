@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PlatformConnection } from '@/lib/client/types';
-import { buildFormats, defaultPlatforms, nameFromBrief } from './formats';
+import { SHORT_VIDEO_MAX_SEC } from '@/lib/studio/billing/catalogue';
+import { buildFormats, defaultPlatforms, nameFromBrief, PLATFORM_OPTIONS } from './formats';
 
 const conn = (over: Partial<PlatformConnection>): PlatformConnection => ({
   id: 'c1',
@@ -19,9 +20,17 @@ describe('buildFormats', () => {
   it('maps platforms to aspect ratio and short/long seconds', () => {
     expect(buildFormats(['tiktok', 'youtube'], 'short')).toEqual([
       { platform: 'tiktok', aspectRatio: '9:16', durationSec: 30 },
-      { platform: 'youtube', aspectRatio: '16:9', durationSec: 60 },
+      { platform: 'youtube', aspectRatio: '16:9', durationSec: 30 },
     ]);
     expect(buildFormats(['youtube'], 'long')[0]?.durationSec).toBe(300);
+  });
+
+  it('keeps every default Short within the plans’ short-video limit (30 s)', () => {
+    const all = PLATFORM_OPTIONS.map((o) => o.platform);
+    for (const f of buildFormats(all, 'short'))
+      expect(f.durationSec, f.platform).toBeLessThanOrEqual(SHORT_VIDEO_MAX_SEC);
+    // Connecting YouTube pre-selects Shorts: 30 s, not the old 45 s.
+    expect(buildFormats(['youtube_short'], 'short')[0]?.durationSec).toBe(30);
   });
 
   it('ignores unknown platforms', () => {

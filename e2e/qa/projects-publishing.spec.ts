@@ -140,8 +140,8 @@ test.describe('projects list', () => {
       Failed: { present: ['QA Failed video', 'QA Rejected video'], absent: ['QA Published video'] },
     };
     for (const [tab, { present, absent }] of Object.entries(expectations)) {
-      await page.getByRole('tab', { name: tab }).click();
-      await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
+      await page.getByRole('radio', { name: tab }).click();
+      await expect(page.getByRole('radio', { name: tab })).toHaveAttribute('aria-checked', 'true');
       for (const name of present)
         await expect(page.getByRole('link', { name: new RegExp(name) })).toBeVisible();
       for (const name of absent)
@@ -149,7 +149,7 @@ test.describe('projects list', () => {
     }
 
     // Pagination: drafts exceed one page of 20; "Older" then "Newer" return to the first page.
-    await page.getByRole('tab', { name: 'Drafts' }).click();
+    await page.getByRole('radio', { name: 'Drafts' }).click();
     const rows = page
       .getByRole('listitem')
       .filter({ has: page.getByRole('link', { name: /QA / }) });
@@ -169,7 +169,7 @@ test.describe('projects list', () => {
     await w.visit('/projects');
     await expect(page.getByText('No videos yet')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Make your first video' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Failed' }).click();
+    await page.getByRole('radio', { name: 'Failed' }).click();
     await expect(page.getByText('No projects match this filter.')).toBeVisible();
     await w.shot('projects-empty');
     await report(w);
