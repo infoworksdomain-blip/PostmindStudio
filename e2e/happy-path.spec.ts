@@ -52,7 +52,7 @@ test.skip(!hasDb, 'DATABASE_URL is not set: the happy path needs the app’s dat
 test('a new visitor goes from the landing page to their first project', async ({ page }) => {
   // Landing: the value proposition, then pricing.
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('A month of short videos');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('from one brief');
   await page.getByRole('link', { name: 'See pricing' }).first().click();
   await expect(page).toHaveURL(/\/pricing$/);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

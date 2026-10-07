@@ -4195,8 +4195,9 @@
   },
   "marketing": {
     "meta": {
-      "title": "PostMind Studio · KI-Kurzvideos für kleine Unternehmen",
-      "description": "Verwandeln Sie eine kurze Vorgabe in markengerechte Kurzvideos für TikTok, Reels, Shorts, Facebook, LinkedIn und X. Prüfen, freigeben und veröffentlichen Sie alles an einem Ort."
+      "title": "PostMind Studio · Kurzvideos und Beiträge für kleine Unternehmen",
+      "description": "Erstellen, planen und veröffentlichen Sie Kurzvideos und Beiträge für Ihr kleines Unternehmen aus einem einzigen Briefing: Skript, Video, Stimme, Musik und Untertitel in Ihrer Marke, geplant für TikTok, Instagram, YouTube, Facebook, LinkedIn und X.",
+      "ogAlt": "PostMind Studio: Kurzvideos aus einem Briefing erstellen, planen und veröffentlichen"
     },
     "nav": {
       "home": "PostMind Studio Startseite",
@@ -4206,9 +4207,9 @@
       "startTrial": "Kostenlose Testversion starten"
     },
     "hero": {
-      "eyebrow": "KI-Videostudio für kleine Unternehmen",
-      "title": "Ein Monat Kurzvideos, <em>fertig, bevor Ihr Kaffee kalt wird.</em>",
-      "lede": "Sagen Sie Studio, was Sie mitteilen möchten. Es schreibt das Skript, dreht oder beschafft jede Szene, fügt Ihre Stimme, Musik und Untertitel im Stil Ihrer Marke hinzu und schneidet das Video für jede Plattform. Sie geben frei, es veröffentlicht.",
+      "eyebrow": "Videostudio für kleine Unternehmen",
+      "title": "Social-Videos erstellen, planen und veröffentlichen – <em>aus einem einzigen Briefing.</em>",
+      "lede": "Sagen Sie Studio, was Sie sagen möchten. Es schreibt das Skript, erstellt das Video, fügt Stimme, Musik und Untertitel in Ihrer Marke hinzu und plant jeden Beitrag für die Plattformen, die Sie nutzen. Sie geben frei; Studio veröffentlicht.",
       "primaryCta": "Kostenlose Testversion starten",
       "secondaryCta": "Preise ansehen",
       "assurances": {
@@ -4216,146 +4217,171 @@
         "yourBrand": "Ihre Farben, Schriften und Stimme",
         "cancelAnytime": "Jederzeit kündbar"
       },
-      "frames": {
-        "one": "Frisch um 7 Uhr",
-        "two": "Lernen Sie die Bäcker kennen",
-        "three": "Drei Laibe, ein Wochenende"
-      },
-      "slate": {
-        "scene": "Szene 01",
-        "take": "Take 1"
-      },
-      "phoneAlt": "Beispiel für ein Hochformat-Video: ein eingeschnittenes Sauerteigbrot auf Backpapier, mit der Einblendung „Frisch aus dem Ofen um 7“"
-    },
-    "platforms": {
-      "title": "Ein Briefing, für jeden Feed geschnitten"
-    },
-    "steps": {
-      "eyebrow": "So funktioniert’s",
-      "title": "Briefen. Prüfen. Veröffentlichen.",
-      "brief": {
-        "title": "Schreiben Sie ein paar Zeilen",
-        "body": "Beschreiben Sie das Video, fügen Sie eine Webseite ein oder wählen Sie eine Vorlage. Studio erstellt Skript und Drehplan in Sekunden."
-      },
-      "review": {
-        "title": "Schnitt prüfen",
-        "body": "Sehen Sie sich alle Formate nebeneinander an, tauschen Sie eine Einstellung aus, ändern Sie einen Untertitel oder fordern Sie eine weitere Aufnahme an. Nichts wird veröffentlicht, bevor Sie es freigeben."
-      },
-      "publish": {
-        "title": "Nach Zeitplan veröffentlichen",
-        "body": "Veröffentlichen Sie sofort oder planen Sie den kommenden Monat. Studio veröffentlicht auf jedem Konto und bringt Aufrufe, Likes und Kommentare in ein einziges Dashboard zurück."
+      "reelLabel": "Drei Beiträge, erstellt mit PostMind Studio",
+      "madeWith": "Erstellt mit PostMind Studio. Die gezeigten Unternehmen sind Beispiele.",
+      "alts": {
+        "bread": "KI-Video, erstellt mit Studio: ein goldenes Sauerteigbrot auf einem Holzbrett, Dampf steigt auf, die Kamera fährt langsam heran",
+        "market": "KI-Video, erstellt mit Studio: eine Frau geht über einen sonnigen Lebensmittelmarkt und lächelt einem Standbesitzer zu",
+        "coastline": "Diashow, erstellt mit Studio für Ferienhäuser am Meer, mit der Unterschrift „Cottages mit Meerblick für zwei bis sechs“"
       }
     },
-    "samples": {
-      "eyebrow": "Kontaktbogen",
-      "title": "Jedes Format, aus einem Briefing.",
-      "body": "Hochformat für TikTok, Reels und Shorts, quadratisch und Hochformat für Feeds, Breitbild für YouTube und LinkedIn.",
-      "note": "Stockfotos, die die Formate von Studio zeigen, keine Kundenvideos.",
-      "captions": {
-        "market": "Samstagsmarkt, 8 Uhr",
-        "studio": "So formen wir ein Sauerteigbrot",
-        "salon": "Freitagsschnitte, jetzt buchen",
-        "gym": "Kurs um 6 Uhr, noch drei Plätze frei"
+    "motion": {
+      "pause": "Videos pausieren",
+      "play": "Videos abspielen"
+    },
+    "formats": {
+      "eyebrow": "Ein Briefing, jedes Format",
+      "title": "Jede Art von Beitrag, die ein kleines Unternehmen braucht.",
+      "body": "KI-Video, Diashows und Textwand-Beiträge, jeweils für vertikale Feeds gemacht. Studio hat all das aus einzeiligen Briefings erstellt.",
+      "note": "Echte Studio-Ergebnisse für Beispielunternehmen.",
+      "stripLabel": "Beispielbeiträge, erstellt mit Studio",
+      "kinds": {
+        "aiVideo": "KI-Video",
+        "slideshow": "Diashow",
+        "wallOfText": "Textwand"
+      },
+      "types": {
+        "bakery": "Sauerteigbäckerei",
+        "boutique": "Leinenboutique",
+        "gym": "Fitnessstudio",
+        "cottages": "Ferienhäuser am Meer",
+        "florist": "Blumenladen",
+        "coffee": "Café"
       },
       "alts": {
-        "market": "Ein Brotstand auf einem Straßenmarkt, Laibe auf einer rot karierten Decke gestapelt",
-        "studio": "Bemehlte Hände formen Teig auf einer Holzplatte",
-        "salon": "Scheren, ein Rasiermesser und ein Kamm auf einer schwarzen Matte",
-        "gym": "Reihen von Kurzhanteln in einem Ständer im Fitnessstudio"
+        "seedanceBread": "Ein goldenes Sauerteigbrot auf einem Holzbrett, Dampf steigt auf",
+        "pulseStudioText": "Textwand-Beitrag für ein Fitnessstudio: drei kurze Krafteinheiten schlagen eine lange Quälerei, und die erste Stunde ist gratis",
+        "atelierWren": "Falten aus gewaschenem Leinen in Rost und Salbei, mit der Unterschrift „Gewaschenes Leinen in Rost und Salbei“",
+        "greenleafFlorist": "Eine einzelne rote Rose, mit der Unterschrift „Dahlien, Schmuckkörbchen und späte Rosen“",
+        "coastlineStaysText": "Textwand-Beitrag für Ferienhäuser am Meer: Herbst an der Küste, leere Strände, Hunde willkommen",
+        "harbourCoffee": "Espresso läuft in eine weiße Tasse, mit der Unterschrift „Single-Origin-Espresso“",
+        "northsideBakery": "Ein Landbrot vor orangem Hintergrund, mit der Unterschrift „Landbrot, gebacken um 6 Uhr“",
+        "pulseStudio": "Ein Mann trainiert mit einem Widerstandsband, mit der Unterschrift „45-minütige Kurse in kleinen Gruppen“",
+        "coastlineStays": "Cottages über einer felsigen Küste, mit der Unterschrift „Cottages mit Meerblick für zwei bis sechs“"
       }
     },
-    "features": {
-      "eyebrow": "Für kleine Teams gemacht",
-      "title": "Alles, was ein einzelner Marketingverantwortlicher braucht.",
-      "body": "Studio übernimmt die Produktion, damit Sie Ihre Zeit dem Geschäft widmen können, nicht dem Videoschnitt.",
-      "brand": {
-        "title": "Ihre Marke, jedes Mal",
-        "body": "Logo, Farben, Schriften und Tonfall leben in einem Markenkit, an das sich jedes Video hält."
+    "video": {
+      "eyebrow": "Videogenerierung",
+      "title": "Ein fertiges Video aus einem Satz.",
+      "body": "Studio macht aus Ihrem Briefing ein Skript und eine Shotliste, generiert jede Einstellung mit führenden Videomodellen, fügt dann Sprecherstimme, Musik und Untertitel in Ihrer Marke hinzu und schneidet das Ergebnis für jede Plattform.",
+      "briefLabel": "Das Briefing",
+      "brief": "„Eine Frau geht über einen sonnigen Lebensmittelmarkt und lächelt einem Standbesitzer zu.“",
+      "alt": "KI-Video, mit Studio aus diesem Briefing erstellt: eine Frau geht über einen sonnigen Lebensmittelmarkt und lächelt einem Standbesitzer zu",
+      "steps": {
+        "script": {
+          "title": "Skript",
+          "body": "Ein Hook, eine Kernbotschaft und die passenden Einstellungen, geschrieben für Ihr Publikum und jede Plattform."
+        },
+        "shots": {
+          "title": "Einstellungen",
+          "body": "Jede Szene aus dem Skript generiert oder aus Ihren eigenen Fotos und Aufnahmen erstellt."
+        },
+        "sound": {
+          "title": "Stimme und Musik",
+          "body": "Eine natürliche Sprecherstimme und ein Musikbett, ausgepegelt für Smartphone-Lautsprecher."
+        },
+        "captions": {
+          "title": "Untertitel",
+          "body": "Wortgenaue Untertitel in Ihren Schriften und Farben, damit das Video auch ohne Ton funktioniert."
+        }
       },
-      "approvals": {
-        "title": "Freigaben, die zu Ihrem Team passen",
-        "body": "Laden Sie Kollegen mit der passenden Rolle ein. Ersteller entwerfen, Inhaber geben frei, und nichts wird versehentlich veröffentlicht."
-      },
-      "calendar": {
-        "title": "Ein Kalender, der für Sie veröffentlicht",
-        "body": "Planen Sie den kommenden Monat, ziehen Sie Beiträge auf neue Zeitfenster und lassen Sie Studio zur richtigen Zeit für jede Plattform veröffentlichen."
-      },
-      "languages": {
-        "title": "Elf Sprachen",
-        "body": "Arbeiten Sie auf Englisch, Französisch, Spanisch, Arabisch, Deutsch, Italienisch, Portugiesisch, Hindi oder Chinesisch und erstellen Sie Videos für Ihre Kunden in ihrer Sprache."
-      },
-      "library": {
-        "title": "Ideen, wenn Sie sie brauchen",
-        "body": "Durchsuchen Sie eine Bibliothek bewährter Kurzvideos und nutzen Sie eines als Ausgangspunkt für Ihr eigenes."
-      },
-      "pricing": {
-        "title": "Ein einfacher Preis pro Kanal",
-        "body": "Zahlen Sie einen festen Preis für jeden verbundenen Social-Media-Kanal, Videos inklusive. Keine Zähler im Blick behalten, keine überraschenden Rechnungen."
+      "scriptAlt": "Der Skript-Tab eines Projekts: Aufhänger, Zielgruppe, Tonfall und die Skripte für TikTok und YouTube Shorts",
+      "scriptCaption": "Jedes Skript und jede Shotliste können Sie lesen und ändern."
+    },
+    "plan": {
+      "eyebrow": "Planen und terminieren",
+      "title": "Ihr Monat in einem Kalender.",
+      "body": "Freigegebene Beiträge füllen freie Termine und werden zur richtigen Zeit auf jedem Konto veröffentlicht. Öffnen Sie einen Beitrag, um ihn anzusehen, die Uhrzeit zu ändern, ihn freizugeben oder neu zu erstellen.",
+      "alt": "Der Kalender für Oktober mit geplanten und veröffentlichten Beiträgen über den ganzen Monat"
+    },
+    "publish": {
+      "eyebrow": "Überall veröffentlichen",
+      "title": "Ein Beitrag, alle Ihre Plattformen.",
+      "body": "Verbinden Sie Ihre Konten einmal. Studio bringt jeden Beitrag ins richtige Format und veröffentlicht ihn nach Plan.",
+      "platformsLabel": "Plattformen, auf denen Studio veröffentlicht",
+      "points": {
+        "auto": {
+          "title": "Automatisch veröffentlichen",
+          "body": "Beiträge gehen zur gewählten Zeit auf jeder Plattform online, und ihre Aufrufe und Interaktionen kommen zurück in Studio."
+        },
+        "drafts": {
+          "title": "Entwürfe, wenn Sie möchten",
+          "body": "Senden Sie TikTok-Beiträge stattdessen in Ihre Entwürfe, um in der App vor dem Posten einen Trend-Sound hinzuzufügen."
+        }
       }
+    },
+    "autopilot": {
+      "eyebrow": "Monatsplaner, Blitz und Automatisierungen",
+      "title": "Ein Prompt, ein Monat voller Beiträge.",
+      "body": "Beschreiben Sie Ihr Unternehmen und Ihre Ziele. Studio plant den Monat, schreibt jeden Beitrag und erstellt jeden rechtzeitig vor seinem Termin.",
+      "gridCaption": "Ein Monat voller Beiträge für Beispielunternehmen, alle von Studio erstellt.",
+      "items": {
+        "planner": {
+          "title": "Meinen Monat planen",
+          "body": "Ein ganzer Kalender mit Ideen, Texten und Formaten aus einem Prompt. Ändern Sie alles, bevor Sie freigeben."
+        },
+        "blitz": {
+          "title": "Blitz",
+          "body": "Wischen Sie durch fertige Beitragsideen: Behalten Sie, was Ihnen gefällt, und überspringen Sie den Rest."
+        },
+        "automations": {
+          "title": "Automatisierungen",
+          "body": "Wöchentliches oder monatliches Posten, das von selbst weiterläuft, im Rahmen Ihres Kontingents."
+        }
+      }
+    },
+    "insights": {
+      "eyebrow": "Analysen",
+      "title": "Sehen, was funktioniert, und mehr davon machen.",
+      "body": "Aufrufe, Wiedergabezeit und Interaktionen für jeden Beitrag, von jeder Plattform, an einem Ort, damit jedes Briefing besser wird als das letzte.",
+      "alt": "Die Analyseseite: Aufrufe in 30 Tagen, Wiedergabezeit, Interaktionen und ein Diagramm der täglichen Aktivität"
+    },
+    "brand": {
+      "eyebrow": "Brand Kit und Freigaben",
+      "title": "Ihre Farben, Ihre Stimme, Ihre Freigabe.",
+      "alt": "Die Bildbibliothek einer Bäckerei: Brote, Gebäck, Kaffee und ein Logo",
+      "items": {
+        "brand": {
+          "title": "Ihre Marke in jedem Beitrag",
+          "body": "Logo, Farben, Schriften und Tonalität liegen in einem Brand Kit, an das sich jeder Beitrag hält, mit Ihren eigenen Fotos in der Bildbibliothek."
+        },
+        "approvals": {
+          "title": "Freigaben, die zu Ihrem Team passen",
+          "body": "Laden Sie Kollegen mit der passenden Rolle ein. Ersteller entwerfen, Inhaber geben frei, und nichts wird versehentlich veröffentlicht."
+        },
+        "languages": {
+          "title": "Elf Sprachen",
+          "body": "Arbeiten Sie auf Englisch, Französisch, Spanisch, Arabisch, Deutsch, Italienisch, Portugiesisch, Hindi oder Chinesisch und erstellen Sie Videos für Ihre Kunden in ihrer Sprache."
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Preise",
+      "title": "Ein einfacher Preis pro Kanal",
+      "per": "pro Kanal und Monat",
+      "body": "Jeder Kanal enthält {videos} kurze HD-Videos pro Monat oder bis zu {quick} schnelle Beiträge: Karussells, Diashows und Textvideos zählen als ¼ Video.",
+      "points": {
+        "billing": "Wöchentlich, monatlich oder jährlich zahlen",
+        "vat": "Preise zzgl. MwSt.",
+        "cancel": "Jederzeit kündbar"
+      },
+      "cta": "Preise ansehen"
     },
     "closing": {
       "eyebrow": "Bereit, wenn Sie es sind",
-      "title": "Ihr erstes Video ist zehn Minuten entfernt.",
+      "title": "Erstellen Sie heute Ihren ersten Beitrag.",
       "body": "Erstellen Sie Ihr Konto, fügen Sie Ihr Unternehmen und Ihre Marke hinzu, verbinden Sie eine Plattform und erstellen Sie Ihr erstes Video. Die geführte Einrichtung begleitet Sie durch jeden Schritt.",
       "primaryCta": "Kostenlose Testversion starten",
-      "secondaryCta": "Pläne vergleichen",
+      "secondaryCta": "Preise ansehen",
       "fineprint": "Preise verstehen sich zzgl. MwSt. Sie können jederzeit in Ihren Abrechnungseinstellungen kündigen."
     },
     "footer": {
-      "tagline": "KI-Kurzvideos und Veröffentlichung für kleine Unternehmen.",
+      "tagline": "Kurzvideos und Beiträge für kleine Unternehmen: erstellt, geplant und veröffentlicht an einem Ort.",
+      "productAria": "Produkt",
+      "productTitle": "Produkt",
       "copyright": "© {year} {entity}",
       "legalAria": "Rechtliches",
       "legalTitle": "Rechtliches"
-    },
-    "flow": {
-      "eyebrow": "Vom Briefing bis zum Posting",
-      "title": "So entsteht ein Video.",
-      "body": "Sechs Schritte, ein Bildschirm nach dem anderen. Das sind echte Studio-Bildschirme mit den Daten einer Beispielbäckerei.",
-      "note": "Bildschirme aus der Studio-Demo mit Beispieldaten von Leeds Sourdough, einer fiktiven Bäckerei.",
-      "roleCarousel": "Karussell",
-      "roleSlide": "Folie",
-      "stepsLabel": "Schritte",
-      "slideLabel": "{current} von {total}",
-      "previous": "Vorheriger Schritt",
-      "next": "Nächster Schritt",
-      "pause": "Diashow anhalten",
-      "play": "Diashow abspielen",
-      "brief": {
-        "tab": "Briefing",
-        "title": "Eine Zeile schreiben",
-        "body": "Sagen Sie, worum es im Video geht, oder fügen Sie eine Webseite ein. Studio wählt Plattformen, Länge und Brand Kit, und Sie können alles ändern.",
-        "alt": "Der Bildschirm „Erstellen“ mit einem Briefing zu einem Roggenbrot und einer Schaltfläche „Generieren“"
-      },
-      "script": {
-        "tab": "Skript",
-        "title": "Skript und Shotliste lesen",
-        "body": "Studio schreibt einen Aufhänger, eine Kernbotschaft und ein Skript für jedes Format, samt passenden Einstellungen. Ändern Sie eine Zeile oder fordern Sie eine neue Version an.",
-        "alt": "Der Skript-Tab eines Projekts: Aufhänger, Zielgruppe, Tonfall und die Skripte für TikTok und YouTube Shorts"
-      },
-      "generate": {
-        "tab": "Generieren",
-        "title": "Bilder, Stimme und Musik",
-        "body": "Studio erzeugt jede Einstellung mit KI-Video- und Bildmodellen oder nutzt Ihre Fotos und Stockmaterial und ergänzt Stimme, Musik und Untertitel in Ihrem Markenauftritt.",
-        "alt": "Die Bildbibliothek einer Bäckerei: Brote, Gebäck, Kaffee und ein Logo"
-      },
-      "review": {
-        "tab": "Prüfung",
-        "title": "Jede Fassung vor der Veröffentlichung prüfen",
-        "body": "Sehen Sie alle Formate nebeneinander. Automatische Prüfungen, darunter Inhaltssicherheit und Ihr Brand Kit, laufen vor Ihrer Freigabe.",
-        "alt": "Eine TikTok-Variante zur Prüfung, mit bestandenen Qualitätsprüfungen einschließlich Inhaltssicherheit"
-      },
-      "calendar": {
-        "tab": "Kalender",
-        "title": "Den nächsten Monat planen",
-        "body": "Freigegebene Videos landen in freien Kalenderplätzen und werden zur richtigen Zeit auf jedem Konto veröffentlicht.",
-        "alt": "Der Kalender für September mit geplanten Beiträgen morgens und abends"
-      },
-      "analytics": {
-        "tab": "Analysen",
-        "title": "Sehen, was funktioniert hat",
-        "body": "Aufrufe, Wiedergabezeit und Interaktionen jedes Videos an einem Ort, damit das nächste Briefing besser wird.",
-        "alt": "Die Analyseseite: Aufrufe in 30 Tagen, Wiedergabezeit, Interaktionen und ein Diagramm der täglichen Aktivität"
-      }
     }
   },
   "pricing": {
