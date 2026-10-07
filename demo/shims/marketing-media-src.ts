@@ -14,8 +14,13 @@ import photosCoffee from '../../public/marketing/photos/coffee.webp';
 import photosCake from '../../public/marketing/photos/cake.webp';
 import photosDoughBalls from '../../public/marketing/photos/dough-balls.webp';
 import photosBreakfast from '../../public/marketing/photos/breakfast.webp';
-import photosGym from '../../public/marketing/photos/gym.webp';
-import photosSalonTools from '../../public/marketing/photos/salon-tools.webp';
+import studioSeedanceBread720 from '../../public/marketing/studio/seedance-bread-720.webp';
+import studioSeedanceMarket360 from '../../public/marketing/studio/seedance-market-360.webp';
+import studioCoastlineStaysSlideshow360 from '../../public/marketing/studio/coastline-stays-slideshow-360.webp';
+import studioAtelierWrenSlideshow720 from '../../public/marketing/studio/atelier-wren-slideshow-720.webp';
+import studioHarbourCoffeeSlideshow720 from '../../public/marketing/studio/harbour-coffee-slideshow-720.webp';
+import studioGreenleafFloristSlideshow720 from '../../public/marketing/studio/greenleaf-florist-slideshow-720.webp';
+import studioPulseStudioSlideshow720 from '../../public/marketing/studio/pulse-studio-slideshow-720.webp';
 import screensBriefLight from '../../public/marketing/screens/brief-light.webp';
 import screensBriefDark from '../../public/marketing/screens/brief-dark.webp';
 import screensScriptLight from '../../public/marketing/screens/script-light.webp';
@@ -40,8 +45,13 @@ const FILES: Record<string, unknown> = {
   'photos/cake.webp': photosCake,
   'photos/dough-balls.webp': photosDoughBalls,
   'photos/breakfast.webp': photosBreakfast,
-  'photos/gym.webp': photosGym,
-  'photos/salon-tools.webp': photosSalonTools,
+  'studio/seedance-bread-720.webp': studioSeedanceBread720,
+  'studio/seedance-market-360.webp': studioSeedanceMarket360,
+  'studio/coastline-stays-slideshow-360.webp': studioCoastlineStaysSlideshow360,
+  'studio/atelier-wren-slideshow-720.webp': studioAtelierWrenSlideshow720,
+  'studio/harbour-coffee-slideshow-720.webp': studioHarbourCoffeeSlideshow720,
+  'studio/greenleaf-florist-slideshow-720.webp': studioGreenleafFloristSlideshow720,
+  'studio/pulse-studio-slideshow-720.webp': studioPulseStudioSlideshow720,
   'screens/brief-light.webp': screensBriefLight,
   'screens/brief-dark.webp': screensBriefDark,
   'screens/script-light.webp': screensScriptLight,

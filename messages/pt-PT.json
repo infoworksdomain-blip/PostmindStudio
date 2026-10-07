@@ -4236,14 +4236,14 @@
       },
       "frames": {
         "one": "Acabado de sair do forno às 7h",
-        "two": "Conheça os padeiros",
-        "three": "Três pães, um fim de semana"
+        "two": "Vemo-nos no mercado",
+        "three": "Casas com vista mar para duas a seis pessoas"
       },
       "slate": {
         "scene": "Cena 01",
         "take": "Take 1"
       },
-      "phoneAlt": "Vídeo vertical de exemplo: um pão de massa-mãe com cortes, em papel vegetal, com a legenda “Acabado de sair às 7h”"
+      "phoneAlt": "Vídeo vertical de exemplo feito com o PostMind Studio: vapor a sair de um pão acabado de cozer numa tábua de madeira, com a legenda “Acabado de sair às 7h”"
     },
     "platforms": {
       "title": "Um briefing, cortado para cada feed"
@@ -4268,18 +4268,18 @@
       "eyebrow": "Contact sheet",
       "title": "Todos os formatos, a partir de um briefing.",
       "body": "Vertical para TikTok, Reels e Shorts, quadrado e retrato para feeds, panorâmico para YouTube e LinkedIn.",
-      "note": "Fotografias de arquivo que mostram os formatos que o Studio cria, não vídeos de clientes.",
+      "note": "Feito com o PostMind Studio. Os negócios apresentados são exemplos.",
       "captions": {
-        "market": "Mercado de sábado, 8h",
-        "studio": "Como moldamos um pão de fermentação natural",
-        "salon": "Cortes de sexta, marque já",
-        "gym": "Aula das 6h, restam três lugares"
+        "wren": "Linho lavado em ferrugem e salva",
+        "harbour": "Espresso de origem única",
+        "greenleaf": "Dálias, cosmos e rosas tardias",
+        "pulse": "Aulas de 45 minutos em grupos pequenos"
       },
       "alts": {
-        "market": "Uma banca de pão num mercado de rua, pães empilhados sobre uma toalha aos quadrados vermelhos",
-        "studio": "Mãos enfarinhadas a moldar a massa numa bancada de madeira",
-        "salon": "Tesouras, uma navalha e um pente sobre um tapete preto",
-        "gym": "Filas de halteres num suporte de um ginásio"
+        "wren": "Dobras de linho lavado em cor de ferrugem e verde-salva",
+        "harbour": "Um expresso a cair da máquina numa pequena chávena branca segura por uma mão",
+        "greenleaf": "Uma única rosa vermelha aberta diante de um jardim desfocado",
+        "pulse": "Um homem a treinar com elásticos, visto de cima com pouca luz"
       }
     },
     "features": {

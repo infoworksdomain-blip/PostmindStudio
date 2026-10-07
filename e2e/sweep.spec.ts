@@ -391,7 +391,7 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   // Projects: every filter tab; a project's panels.
   await w.visit('/projects');
   for (const tab of ['In progress', 'To review', 'Drafts', 'Published', 'Failed', 'All']) {
-    await page.getByRole('tab', { name: tab }).click();
+    await page.getByRole('radio', { name: tab }).click();
     await w.settle();
   }
   await w.check('/projects tabs');
@@ -424,7 +424,7 @@ test('an organisation owner can use every workflow that needs no provider', asyn
   // Publications filters, analytics ranges.
   await w.visit('/publications');
   for (const tab of ['Scheduled', 'Live', 'Failed', 'Cancelled & taken down', 'All']) {
-    await page.getByRole('tab', { name: tab }).click();
+    await page.getByRole('radio', { name: tab }).click();
     await w.settle();
   }
   await w.check('/publications tabs');
@@ -638,7 +638,7 @@ test('a superadmin with no organisation reaches every admin tab', async ({ page 
   w.label('/admin organisations: end trial');
   await page.getByRole('tab', { name: 'Organisations' }).click();
   await page.getByLabel('Search organisations').fill(`Sweep Trial ${run}`);
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.getByRole('button', { name: `Open Sweep Trial ${run}` }).click();
   await expect(page.getByText('Running: the trial’s caps apply now.')).toBeVisible();
   const form = page.getByRole('form', { name: 'Set an override' });
