@@ -13,7 +13,7 @@ import {
   type AccountAlertDeps,
 } from '../providers/account-alerts';
 import { isAccountProviderError, retryAtOf } from '../providers/account-errors';
-import { LEASE_MARGIN_MS } from '../providers/provider-concurrency';
+import { LEASE_MARGIN_MS, type ConcurrencySlot } from '../providers/provider-concurrency';
 import type { ProviderAdapter, ProviderPollResult, ProviderRequest } from '../providers/interface';
 import { waitForNextPoll, type ProviderWake } from '../providers/provider-wake';
 import {
@@ -22,7 +22,12 @@ import {
   type RouteDecision,
   type RouteNeed,
 } from '../providers/router';
-import { cancelTracked, pollTracked, submitTracked } from '../providers/tracked';
+import {
+  cancelTracked,
+  pollTracked,
+  submitTracked,
+  type TrackedSubmission,
+} from '../providers/tracked';
 import type { PipelineDeps } from './deps';
 
 // One provider operation, end to end: route → tracked submit → poll until terminal. Failures
@@ -82,6 +87,66 @@ export async function runProvider(
   rawInput: RunProviderInput,
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  return withFailover(rawInput, deps, (decision, input) => runDecided(decision, input, deps));
+}
+
+/**
+ * 23.6: a provider job submitted by one queue job and finished by another (asynchronous renders,
+ * pipeline/render-async.ts). The 20.29 in-flight slot stays taken until the provider job ends:
+ * `lease` names it so the finishing job can give it back (releaseSubmissionSlot).
+ */
+export interface ProviderSubmission {
+  decision: RouteDecision;
+  /** studio.provider_jobs.id (tracked: the estimate is reserved, settled when polled). */
+  providerJobRowId: string;
+  providerJobId: string;
+  lease?: { leaseId: string; byoc: boolean };
+}
+
+/**
+ * 23.6: route → (rate window, in-flight slot) → tracked submit, and return without waiting for the
+ * result. Same failover, deferral, kill-switch and cost reservation as runProvider; the caller
+ * polls the returned job later (pipeline/render-async.ts) with pollTracked, which settles the cost.
+ */
+export async function submitProvider(
+  rawInput: RunProviderInput,
+  deps: ProviderRunDeps,
+): Promise<ProviderSubmission> {
+  return withFailover(rawInput, deps, (decision, input) => submitDecided(decision, input, deps));
+}
+
+/** Give back the in-flight slot of a submission whose provider job has ended. */
+export async function releaseSubmissionSlot(
+  deps: Pick<ProviderRunDeps, 'providerConcurrency' | 'logger'>,
+  input: { providerId: string; organisationId: string; lease?: ProviderSubmission['lease'] },
+): Promise<void> {
+  if (!input.lease || !deps.providerConcurrency?.releaseLease) return;
+  try {
+    await deps.providerConcurrency.releaseLease({
+      providerId: input.providerId,
+      organisationId: input.organisationId,
+      byoc: input.lease.byoc,
+      leaseId: input.lease.leaseId,
+    });
+  } catch (err) {
+    // The lease expires on its own (provider timeout + LEASE_MARGIN_MS).
+    deps.logger?.warn({ err, providerId: input.providerId }, 'provider slot release failed');
+  }
+}
+
+/** Spec 12.5 spend alerts, after a reservation (submit) or a settlement (terminal poll). */
+export function recordProviderSpend(
+  deps: Pick<ProviderRunDeps, 'budget'>,
+  input: { organisationId: string; projectId?: string; planTier: PlanTier; providerId: string },
+): Promise<void> {
+  return deps.budget.recordSpend?.(input) ?? Promise.resolve();
+}
+
+async function withFailover<T>(
+  rawInput: RunProviderInput,
+  deps: ProviderRunDeps,
+  run: (decision: RoutedDecision, input: RunProviderInput) => Promise<T>,
+): Promise<T> {
   // 20.23: adapters see the plan tier (Seedance picks its model by it); routing, cost estimates
   // and the submit all use the same request.
   const input: RunProviderInput = {
@@ -109,7 +174,7 @@ export async function runProvider(
       throw err;
     }
     try {
-      return await runDecided(decision, input, deps);
+      return await run(decision, input);
     } catch (err) {
       if (deps.providerOverflow === 'failover' && isProviderFull(err)) {
         busy.push(decision.providerId);
@@ -206,8 +271,63 @@ async function runDecided(
   input: RunProviderInput,
   deps: ProviderRunDeps,
 ): Promise<ProviderRunResult> {
+  const decision = withoutScope(routed);
+  const slot = await acquireSlots(routed, input, deps);
+  try {
+    return await submitAndPoll(decision, input, deps);
+  } finally {
+    await slot?.release();
+  }
+}
+
+/** 23.6: submit only; the slot stays taken (named by its lease) unless the submit fails. */
+async function submitDecided(
+  routed: RoutedDecision,
+  input: RunProviderInput,
+  deps: ProviderRunDeps,
+): Promise<ProviderSubmission> {
+  const decision = withoutScope(routed);
+  const slot = await acquireSlots(routed, input, deps);
+  let submitted: TrackedSubmission;
+  try {
+    submitted = await submitTracked(decision.adapter, input.request, deps.tracking);
+  } catch (err) {
+    await slot?.release();
+    throw err;
+  }
+  await recordProviderSpend(deps, {
+    organisationId: input.request.organisationId,
+    projectId: input.request.projectId,
+    planTier: input.planTier,
+    providerId: decision.adapter.providerId,
+  });
+  return {
+    decision,
+    providerJobRowId: submitted.jobId,
+    providerJobId: submitted.providerJobId,
+    ...(slot?.acquired &&
+      slot.leaseId && {
+        lease: { leaseId: slot.leaseId, byoc: routed.accountScope !== 'platform' },
+      }),
+  };
+}
+
+function withoutScope(routed: RoutedDecision): RouteDecision {
   const { accountScope, ...decision } = routed;
-  const { adapter } = decision;
+  void accountScope;
+  return decision;
+}
+
+/**
+ * The 15.C3 rate window and the 20.29 in-flight slot for one provider call. Throws
+ * RateDeferredError (the job is delayed, no attempt spent) when either is full.
+ */
+async function acquireSlots(
+  routed: RoutedDecision,
+  input: RunProviderInput,
+  deps: ProviderRunDeps,
+): Promise<Extract<ConcurrencySlot, { acquired: true }> | undefined> {
+  const { accountScope, adapter } = routed;
   // 15.C3 (spec 11.4): a full rate window delays the job (worker-host moveToDelayed) instead of
   // failing it or spending an attempt.
   if (deps.providerRates) {
@@ -232,11 +352,7 @@ async function runDecided(
     await deps.breaker.releaseTrial(adapter.providerId);
     throw new RateDeferredError(adapter.providerId, slot.retryAfterMs, { reason: slot.reason });
   }
-  try {
-    return await submitAndPoll(decision, input, deps);
-  } finally {
-    await slot?.release();
-  }
+  return slot;
 }
 
 async function submitAndPoll(

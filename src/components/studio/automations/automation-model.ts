@@ -42,6 +42,8 @@ export interface AutomationSlot {
   projectId: string | null;
   reviewed: boolean;
   downloadOnly: string[];
+  /** 23.6: when Studio starts creating this queued post (null once due or started). */
+  createsAt?: string | null;
 }
 
 export interface AutomationPeriod {

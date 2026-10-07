@@ -26,6 +26,7 @@ import type { AssetStorage } from '../storage';
 import type { Notifier } from '../notifications/notifier';
 import type { MediaInspector } from './media-probe';
 import type { RenderMastering } from './mastering';
+import type { LocalRenderer } from '../render/local/renderer';
 import type { MusicLibrarySettings } from './music-library';
 import type { AllowedCorpusBucket } from '../library/corpus-source';
 import type { LibraryCache } from '../library/cache';
@@ -103,6 +104,11 @@ export interface PipelineDeps {
   thumbnails?: ThumbnailComposer;
   /** 13.26 loudness normalisation + H.264 re-encode after compose; absent = not mastered. */
   mastering?: RenderMastering;
+  /**
+   * 23.5 Studio's own ffmpeg renderer for slideshows and walls of text (render/local);
+   * absent = off (STUDIO_LOCAL_RENDER=off, or tests): every render goes to the composer.
+   */
+  localRenderer?: LocalRenderer;
   /**
    * 20.15: the shared library read cache; corpus workers bump its version when the catalogue
    * changes. Absent = no cache (nothing to invalidate).

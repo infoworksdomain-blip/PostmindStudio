@@ -82,7 +82,15 @@ export interface ConcurrencyLimit {
 }
 
 export type ConcurrencySlot =
-  | { acquired: true; release(): Promise<void> }
+  | {
+      acquired: true;
+      release(): Promise<void>;
+      /**
+       * 23.6: the lease id, so another job can give the slot back later (releaseLease) when the
+       * provider job outlives the job that submitted it (asynchronous renders). Absent = no cap.
+       */
+      leaseId?: string;
+    }
   | { acquired: false; retryAfterMs: number; reason: 'provider_full' | 'organisation_share' };
 
 export interface ProviderConcurrencyLimiter {
@@ -98,6 +106,16 @@ export interface ProviderConcurrencyLimiter {
     /** Who is waiting (e.g. the shot): counted once while refused, to pace the retries. */
     waiterId?: string;
   }): Promise<ConcurrencySlot>;
+  /**
+   * 23.6: release a slot by its lease id (the job that took it has ended; the provider job it
+   * submitted finished later). Unknown or expired leases are ignored.
+   */
+  releaseLease?(input: {
+    providerId: string;
+    organisationId: string;
+    byoc?: boolean;
+    leaseId: string;
+  }): Promise<void>;
 }
 
 export function concurrencyEnvName(providerId: string): string {
@@ -310,6 +328,7 @@ export function createRedisProviderConcurrencyLimiter(deps: {
       }
       return {
         acquired: true,
+        leaseId: lease,
         release: async () => {
           try {
             await deps.client.eval(RELEASE_SLOT_SCRIPT, leaseKeys.length, ...leaseKeys, lease);
@@ -319,6 +338,18 @@ export function createRedisProviderConcurrencyLimiter(deps: {
           }
         },
       };
+    },
+    async releaseLease(raw) {
+      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
+      const limit = deps.limits(input.providerId);
+      if (!limit) return;
+      const keys = slotKeys(input, limit);
+      const leaseKeys = keys.organisation ? [keys.account, keys.organisation] : [keys.account];
+      try {
+        await deps.client.eval(RELEASE_SLOT_SCRIPT, leaseKeys.length, ...leaseKeys, raw.leaseId);
+      } catch (err) {
+        warn(err, input.providerId, 'release');
+      }
     },
   };
 }
@@ -363,10 +394,19 @@ export function createMemoryProviderConcurrencyLimiter(
       for (const key of leaseKeys) add(key, lease, now() + input.leaseMs);
       return {
         acquired: true,
+        leaseId: lease,
         release: async () => {
           for (const key of leaseKeys) remove(key, lease);
         },
       };
+    },
+    async releaseLease(raw) {
+      const input = { ...raw, providerId: concurrencyPoolOf(raw.providerId) };
+      const limit = limits(input.providerId);
+      if (!limit) return;
+      const keys = slotKeys(input, limit);
+      for (const key of keys.organisation ? [keys.account, keys.organisation] : [keys.account])
+        remove(key, raw.leaseId);
     },
     inFlight(providerId, organisationId) {
       const base = `${CONCURRENCY_KEY_PREFIX}${concurrencyPoolOf(providerId)}`;

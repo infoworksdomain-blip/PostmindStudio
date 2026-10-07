@@ -10,6 +10,7 @@ import {
 import { flagKeys } from '../../src/lib/studio/system-flags';
 import type { PipelineDeps } from '../../src/lib/studio/pipeline/deps';
 import type { MediaInspector, MediaProbe } from '../../src/lib/studio/pipeline/media-probe';
+import type { LocalRenderer } from '../../src/lib/studio/render/local/renderer';
 import { createPrismaBudgetChecker } from '../../src/lib/studio/providers/budget';
 import { createCircuitBreaker } from '../../src/lib/studio/providers/circuit-breaker';
 import type { ProviderPollResult, ProviderRequest } from '../../src/lib/studio/providers/interface';
@@ -215,6 +216,8 @@ export interface HarnessOptions {
   stock?: boolean;
   /** 21.4c: whether the n-th (1-based) burned-in text check finds text (default: never). */
   clipText?: (call: number) => boolean;
+  /** 23.5: the local ffmpeg renderer (default: off, every render goes to the scripted Shotstack). */
+  localRenderer?: LocalRenderer;
 }
 
 export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
@@ -441,6 +444,7 @@ export function createHarness(db: PrismaClient, options: HarnessOptions = {}) {
     media,
     // 15.A3: a JPEG-magic stand-in for FFmpeg thumbnail rendering.
     thumbnails: { compose: async () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]) },
+    ...(options.localRenderer && { localRenderer: options.localRenderer }),
     logger: pino({ level: 'silent' }),
     config: {
       assetsBucket: 'assets',

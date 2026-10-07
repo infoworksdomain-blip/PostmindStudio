@@ -62,13 +62,14 @@ function escapeMarkup(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-interface TextImage {
+export interface TextImage {
   readonly buffer: Buffer;
   readonly width: number;
   readonly height: number;
 }
 
-class TextSetter {
+/** Sets one line of text per call (also the 23.5 local video renderer's text, render/local). */
+export class TextSetter {
   private readonly strutWidths = new Map<string, number>();
   private registered = false;
 

@@ -482,9 +482,11 @@ async function slideshow(ctx: Ctx): Promise<Check[]> {
       describeJobs(rows),
     ),
     verify(
-      'composition (Shotstack stub)',
-      countOf(rows, { provider: 'shotstack', state: 'SUCCEEDED' }) > 0,
-      describeJobs(rows.filter((r) => r.provider === 'shotstack')),
+      // 23.5: slideshows render with Studio's own ffmpeg renderer (real FFmpeg here), 0p.
+      'composition (local ffmpeg renderer, no Shotstack)',
+      countOf(rows, { provider: 'local-ffmpeg', state: 'SUCCEEDED' }) > 0 &&
+        countOf(rows, { provider: 'shotstack' }) === 0,
+      describeJobs(rows.filter((r) => r.provider === 'local-ffmpeg' || r.provider === 'shotstack')),
     ),
     verify(
       'rendered and passed the quality gate',
@@ -913,7 +915,14 @@ async function main(): Promise<void> {
     },
   };
 
-  const queues = [QUEUES.orchestration, QUEUES.assets, QUEUES.publish, QUEUES.analytics];
+  // 23.6: compose / render jobs run on their own lane.
+  const queues = [
+    QUEUES.orchestration,
+    QUEUES.render,
+    QUEUES.assets,
+    QUEUES.publish,
+    QUEUES.analytics,
+  ];
   const workers: Worker[] = startWorkers({ connection, deps, queues });
   const watch = queues.map((name) => new Queue(name, { connection, prefix: queuePrefix() }));
   const ctx: Ctx = {
