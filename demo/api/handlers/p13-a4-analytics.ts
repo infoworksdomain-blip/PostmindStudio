@@ -56,6 +56,9 @@ route('GET', '/analytics/publications/:id', ({ params }) => {
   return {
     publication: {
       id: post.pub.id,
+      projectId: post.pub.projectId,
+      renderId: post.pub.renderId,
+      caption: post.pub.caption,
       platform: post.pub.platform,
       platformUrl: post.pub.platformUrl,
       publishedAt: post.pub.publishedAt,

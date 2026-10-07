@@ -2781,44 +2781,55 @@
     "dashboard": {
       "eyebrow": "Gestión",
       "title": "Analíticas",
-      "description": "Cómo les va a tus vídeos publicados y cuánto cuesta hacerlos.",
       "rangeLabel": "Periodo",
       "rangeOption": "{days, plural, one {# día} other {# días}}",
-      "descriptionNoCost": "Cómo les va a tus vídeos publicados."
+      "scopeAll": "Todos los negocios",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Negocio seleccionado",
+      "window": "{days, plural, one {último día} other {últimos # días}}",
+      "costScope": "El gasto incluye todos los negocios de tu organización.",
+      "loadingAria": "Cargando estadísticas"
     },
     "metrics": {
       "views": "Visualizaciones",
-      "watchTime": "Tiempo de visualización",
-      "engagement": "Interacción"
+      "watchTime": "Tiempo de visualización"
     },
     "overview": {
       "loadingAria": "Cargando resumen",
-      "viewsHeading": "Visualizaciones · {days, plural, one {último día} other {últimos # días}}",
-      "summary": "en {publications, plural, one {# publicación} other {# publicaciones}} · {projects, plural, one {# proyecto iniciado} other {# proyectos iniciados}}",
+      "summary": "Tus {posts, plural, one {# publicación} other {# publicaciones}} de {days, plural, one {el último día} other {los últimos # días}} alcanzaron {count, plural, one {{views} visualización} other {{views} visualizaciones}}, con {rate} de interacción.",
       "watchTime": "Tiempo de visualización",
-      "engagement": "Interacción",
-      "engagementHint": "{rate} de las visualizaciones",
-      "shares": "Compartidos",
-      "savesHint": "{saves, plural, one {{formatted} guardado} other {{formatted} guardados}}",
-      "spend": "Gasto",
-      "spendHint": "costes de proveedores",
-      "pending": "…"
+      "engagementHint": "{count} me gusta, comentarios, compartidos y guardados",
+      "regionLabel": "Resumen",
+      "summaryNoViews": "{posts, plural, one {Salió # publicación} other {Salieron # publicaciones}} en {days, plural, one {el último día} other {los últimos # días}}. Las visualizaciones suelen aparecer un día después de publicar.",
+      "summaryLead": "{platform} aportó {share} de las visualizaciones.",
+      "views": "Visualizaciones",
+      "viewsHint": "{publications, plural, one {# publicación} other {# publicaciones}} · {projects, plural, one {# proyecto iniciado} other {# proyectos iniciados}}",
+      "watchTimeHint": "{avg} por visualización de media",
+      "engagementRate": "Tasa de interacción",
+      "sharesSaves": "Compartidos y guardados",
+      "sharesSavesHint": "{shares} compartidos · {saves} guardados",
+      "empty": {
+        "title": "No hay publicaciones en {days, plural, one {el último día} other {los últimos # días}}",
+        "body": "Las estadísticas aparecen un día después de que salga una publicación. Prueba un periodo más largo o publica un vídeo desde uno de tus proyectos.",
+        "action": "Ir a proyectos"
+      },
+      "windowNote": "Totales de las publicaciones de este periodo, contados hasta ahora."
     },
     "trend": {
-      "title": "Actividad diaria",
+      "title": "Crecimiento y alcance",
       "metricLabel": "Métrica",
       "loadingAria": "Cargando gráfico",
       "total": {
-        "views": "{count, plural, one {{value} visualización} other {{value} visualizaciones}} en el periodo",
-        "watchTime": "{value} de tiempo de visualización en el periodo",
-        "engagement": "{value} interacciones en el periodo"
+        "views": "{count, plural, one {{value} visualización ganada} other {{value} visualizaciones ganadas}} en este periodo",
+        "watchTime": "{value} de tiempo de visualización ganado en este periodo"
       },
       "chartLabel": {
         "views": "Visualizaciones por día, {days, plural, one {último día} other {últimos # días}}",
-        "watchTime": "Tiempo de visualización por día, {days, plural, one {último día} other {últimos # días}}",
-        "engagement": "Interacción por día, {days, plural, one {último día} other {últimos # días}}"
+        "watchTime": "Tiempo de visualización por día, {days, plural, one {último día} other {últimos # días}}"
       },
-      "estimated": "Algunos días son estimaciones: faltaban datos, así que el crecimiento se reparte por igual durante el intervalo."
+      "estimated": "Algunos días son estimaciones: faltaban datos, así que el crecimiento se reparte por igual durante el intervalo.",
+      "description": "Visualizaciones ganadas por día en todas tus publicaciones",
+      "quiet": "Aún no hay nada nuevo en este periodo. El gráfico se llenará cuando vean tus publicaciones."
     },
     "platforms": {
       "title": "Por plataforma",
@@ -2828,15 +2839,16 @@
       "hint": "{posts, plural, one {# publicación} other {# publicaciones}} · {engagement} interacciones"
     },
     "leaderboard": {
-      "title": "Vídeos destacados",
-      "description": "Publicaciones ordenadas por visualizaciones",
+      "title": "Publicaciones destacadas",
+      "description": "Las publicaciones de este periodo con más visualizaciones",
       "empty": "No se publicó nada en este periodo.",
       "listLabel": "Publicaciones destacadas",
       "untitled": "Publicación sin título",
       "meta": "{platform} · {date}",
       "openOn": "Abrir en {platform}",
       "analyticsFor": "Analíticas de «{caption}»",
-      "analyticsForUntitled": "Analíticas de la publicación sin título"
+      "analyticsForUntitled": "Analíticas de la publicación sin título",
+      "views": "visualizaciones"
     },
     "cost": {
       "title": "Gasto",
@@ -2885,7 +2897,8 @@
         "avgWatched": "Visto de media",
         "likes": "Me gusta",
         "commentsShares": "Comentarios · compartidos",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Guardados"
       },
       "viewsOverTime": {
         "title": "Visualizaciones a lo largo del tiempo",
@@ -2921,6 +2934,39 @@
         "body": "Puede que se haya quitado o que el enlace sea incorrecto.",
         "action": "Volver a analíticas"
       }
+    },
+    "change": {
+      "up": "<n>{pct}</n> más que en el periodo anterior",
+      "down": "<n>{pct}</n> menos que en el periodo anterior",
+      "flat": "Igual que en el periodo anterior"
+    },
+    "engagement": {
+      "title": "Interacción",
+      "description": "Me gusta, comentarios, compartidos y guardados ganados por día",
+      "total": "Interacciones ganadas en este periodo: {value}",
+      "chartLabel": "Interacciones por día, {days, plural, one {último día} other {últimos # días}}",
+      "quiet": "Aún no hay me gusta, comentarios, compartidos ni guardados en este periodo.",
+      "mixTitle": "De qué se compone",
+      "mixRate": "{rate} de las visualizaciones de las publicaciones de este periodo",
+      "mixNoViews": "Las publicaciones de este periodo aún no tienen visualizaciones.",
+      "mixLabel": "Interacción por tipo",
+      "mixEmpty": "Las publicaciones de este periodo aún no tienen interacciones.",
+      "parts": {
+        "likes": "Me gusta",
+        "comments": "Comentarios",
+        "shares": "Compartidos",
+        "saves": "Guardados"
+      }
+    },
+    "bestTimes": {
+      "title": "Mejores momentos para publicar",
+      "description": "Cuándo tus publicaciones han logrado más visualizaciones, comparado con la mejor franja",
+      "listLabel": "Mejores horas de publicación",
+      "slot": "{day}, {time}",
+      "empty": "Aún no hay publicaciones de los últimos 180 días de las que aprender.",
+      "basis": "Según {videos, plural, one {# publicación} other {# publicaciones}} de los últimos 180 días. Horas en {timezone}. Una guía, no una regla.",
+      "fromMemory": "Aún hay pocas publicaciones, así que esta es la hora habitual de publicación de tu negocio. Horas en {timezone}.",
+      "littleData": "Solo {videos, plural, one {# publicación} other {# publicaciones}} por ahora: tómalo como primeras pistas; serán más fiables a partir de {min}. Horas en {timezone}."
     }
   },
   "admin": {

@@ -2781,44 +2781,55 @@
     "dashboard": {
       "eyebrow": "Gestion",
       "title": "Statistiques",
-      "description": "Les performances de vos vidéos publiées et leur coût de production.",
       "rangeLabel": "Période",
       "rangeOption": "{days, plural, one {# jour} other {# jours}}",
-      "descriptionNoCost": "Les performances de vos vidéos publiées."
+      "scopeAll": "Toutes les entreprises",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Entreprise sélectionnée",
+      "window": "{days, plural, one {dernier jour} other {# derniers jours}}",
+      "costScope": "Les dépenses couvrent toutes les entreprises de votre organisation.",
+      "loadingAria": "Chargement des statistiques"
     },
     "metrics": {
       "views": "Vues",
-      "watchTime": "Durée de visionnage",
-      "engagement": "Engagement"
+      "watchTime": "Durée de visionnage"
     },
     "overview": {
       "loadingAria": "Chargement de la vue d’ensemble",
-      "viewsHeading": "Vues · {days, plural, one {dernier jour} other {# derniers jours}}",
-      "summary": "sur {publications, plural, one {# publication} other {# publications}} · {projects, plural, one {# projet lancé} other {# projets lancés}}",
+      "summary": "Vos {posts, plural, one {# publication} other {# publications}} des {days, plural, one {# dernier jour} other {# derniers jours}} ont atteint {count, plural, one {{views} vue} other {{views} vues}}, avec {rate} d’engagement.",
       "watchTime": "Durée de visionnage",
-      "engagement": "Engagement",
-      "engagementHint": "{rate} des vues",
-      "shares": "Partages",
-      "savesHint": "{saves, plural, one {{formatted} enregistrement} other {{formatted} enregistrements}}",
-      "spend": "Dépenses",
-      "spendHint": "coûts des fournisseurs",
-      "pending": "…"
+      "engagementHint": "{count} mentions J’aime, commentaires, partages et enregistrements",
+      "regionLabel": "Résumé",
+      "summaryNoViews": "{posts, plural, one {# publication est parue} other {# publications sont parues}} au cours des {days, plural, one {# dernier jour} other {# derniers jours}}. Les vues apparaissent généralement environ un jour après la mise en ligne.",
+      "summaryLead": "{platform} a apporté {share} des vues.",
+      "views": "Vues",
+      "viewsHint": "{publications, plural, one {# publication} other {# publications}} · {projects, plural, one {# projet lancé} other {# projets lancés}}",
+      "watchTimeHint": "{avg} par vue en moyenne",
+      "engagementRate": "Taux d’engagement",
+      "sharesSaves": "Partages et enregistrements",
+      "sharesSavesHint": "{shares} partages · {saves} enregistrements",
+      "empty": {
+        "title": "Aucune publication au cours des {days, plural, one {# dernier jour} other {# derniers jours}}",
+        "body": "Les statistiques apparaissent environ un jour après la mise en ligne d’une publication. Essayez une période plus longue ou publiez une vidéo depuis l’un de vos projets.",
+        "action": "Voir les projets"
+      },
+      "windowNote": "Totaux des publications parues pendant cette période, comptés jusqu’à maintenant."
     },
     "trend": {
-      "title": "Activité quotidienne",
+      "title": "Croissance et portée",
       "metricLabel": "Indicateur",
       "loadingAria": "Chargement du graphique",
       "total": {
-        "views": "{count, plural, one {{value} vue} other {{value} vues}} sur la période",
-        "watchTime": "{value} de visionnage sur la période",
-        "engagement": "{value} interactions sur la période"
+        "views": "{count, plural, one {{value} vue gagnée} other {{value} vues gagnées}} sur cette période",
+        "watchTime": "{value} de visionnage gagnées sur cette période"
       },
       "chartLabel": {
         "views": "Vues par jour, {days, plural, one {dernier jour} other {# derniers jours}}",
-        "watchTime": "Durée de visionnage par jour, {days, plural, one {dernier jour} other {# derniers jours}}",
-        "engagement": "Engagement par jour, {days, plural, one {dernier jour} other {# derniers jours}}"
+        "watchTime": "Durée de visionnage par jour, {days, plural, one {dernier jour} other {# derniers jours}}"
       },
-      "estimated": "Certains jours sont estimés : des relevés manquaient, la croissance est donc répartie à parts égales sur la période."
+      "estimated": "Certains jours sont estimés : des relevés manquaient, la croissance est donc répartie à parts égales sur la période.",
+      "description": "Vues gagnées par jour sur l’ensemble de vos publications",
+      "quiet": "Rien de nouveau sur cette période pour l’instant. Le graphique se remplit à mesure que vos publications sont vues."
     },
     "platforms": {
       "title": "Par plateforme",
@@ -2828,15 +2839,16 @@
       "hint": "{posts, plural, one {# publication} other {# publications}} · {engagement} interactions"
     },
     "leaderboard": {
-      "title": "Meilleures vidéos",
-      "description": "Publications classées par nombre de vues",
+      "title": "Meilleures publications",
+      "description": "Les publications de cette période les plus vues",
       "empty": "Rien n’a été publié sur cette période.",
       "listLabel": "Meilleures publications",
       "untitled": "Publication sans titre",
       "meta": "{platform} · {date}",
       "openOn": "Ouvrir sur {platform}",
       "analyticsFor": "Statistiques de « {caption} »",
-      "analyticsForUntitled": "Statistiques de la publication sans titre"
+      "analyticsForUntitled": "Statistiques de la publication sans titre",
+      "views": "vues"
     },
     "cost": {
       "title": "Dépenses",
@@ -2885,7 +2897,8 @@
         "avgWatched": "Visionnage moyen",
         "likes": "J’aime",
         "commentsShares": "Commentaires · partages",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Enregistrements"
       },
       "viewsOverTime": {
         "title": "Vues dans le temps",
@@ -2921,6 +2934,39 @@
         "body": "Elle a peut-être été retirée, ou le lien est incorrect.",
         "action": "Retour aux statistiques"
       }
+    },
+    "change": {
+      "up": "En hausse de <n>{pct}</n> par rapport à la période précédente",
+      "down": "En baisse de <n>{pct}</n> par rapport à la période précédente",
+      "flat": "Stable par rapport à la période précédente"
+    },
+    "engagement": {
+      "title": "Engagement",
+      "description": "Mentions J’aime, commentaires, partages et enregistrements gagnés par jour",
+      "total": "Interactions gagnées sur cette période : {value}",
+      "chartLabel": "Interactions par jour, {days, plural, one {dernier jour} other {# derniers jours}}",
+      "quiet": "Aucune mention J’aime, aucun commentaire, partage ni enregistrement sur cette période pour l’instant.",
+      "mixTitle": "Ce qui le compose",
+      "mixRate": "{rate} des vues des publications de cette période",
+      "mixNoViews": "Les publications de cette période n’ont pas encore de vues.",
+      "mixLabel": "Engagement par type",
+      "mixEmpty": "Les publications de cette période n’ont pas encore d’interactions.",
+      "parts": {
+        "likes": "J’aime",
+        "comments": "Commentaires",
+        "shares": "Partages",
+        "saves": "Enregistrements"
+      }
+    },
+    "bestTimes": {
+      "title": "Meilleurs moments pour publier",
+      "description": "Quand vos publications ont obtenu le plus de vues, par rapport au meilleur créneau",
+      "listLabel": "Meilleurs horaires de publication",
+      "slot": "{day}, {time}",
+      "empty": "Aucune publication des 180 derniers jours dont s’inspirer pour l’instant.",
+      "basis": "D’après {videos, plural, one {# publication} other {# publications}} des 180 derniers jours. Heures en {timezone}. Un repère, pas une règle.",
+      "fromMemory": "Encore trop peu de publications : voici l’heure de publication habituelle de votre entreprise. Heures en {timezone}.",
+      "littleData": "Seulement {videos, plural, one {# publication} other {# publications}} pour l’instant : ce sont de premières indications, plus fiables à partir de {min}. Heures en {timezone}."
     }
   },
   "admin": {

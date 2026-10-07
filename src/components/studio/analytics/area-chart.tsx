@@ -5,10 +5,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { nearestIndex, plot, shortDay } from './chart-utils';
 import type { SeriesPoint } from './types';
 
-// Small accessible area chart in plain SVG, coloured with the teal chart tokens. The plot
-// stretches to its container (non-scaling strokes); axis labels are HTML so text never
-// distorts. Keyboard: focus the chart and use ←/→/Home/End to read each point aloud. A hidden
-// data table carries the full series for screen readers.
+// Small accessible area chart in plain SVG, coloured with the 25.2 chart tokens (data teal by
+// default). The plot stretches to its container (non-scaling strokes); axis labels are HTML in
+// Geist Mono so text never distorts. Marks follow the dataviz specs: a 2px line, a ~10% area wash,
+// solid hairline gridlines, an 8px+ end dot with a surface ring. Hover or the keyboard (focus the
+// chart, ←/→/Home/End) shows a crosshair and a tooltip in the shared Tooltip style, and a live
+// region reads the point; a hidden data table carries the full series for screen readers.
 //
 // BACKLOG 16.2: the plot runs left to right in every locale (time reads left to right, as in
 // video tools), so the chart grid is pinned to dir="ltr"; its labels come from the catalogue and
@@ -36,6 +38,56 @@ export interface AreaChartProps {
   pointKind?: ChartPointKind;
 }
 
+const TOOLTIP_CLASS =
+  'pointer-events-none absolute -top-2 z-(--z-raised) -translate-x-1/2 -translate-y-full rounded-control bg-foreground px-2 py-1 text-xs font-medium whitespace-nowrap text-background shadow-overlay';
+
+function useKeyboardReading(count: number) {
+  const [active, setActive] = useState<number | null>(null);
+  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (count === 0) return;
+    const last = count - 1;
+    const moves: Record<string, number> = {
+      ArrowRight: Math.min(last, (active ?? -1) + 1),
+      ArrowLeft: Math.max(0, (active ?? last + 1) - 1),
+      Home: 0,
+      End: last,
+    };
+    if (e.key in moves) {
+      e.preventDefault();
+      setActive(moves[e.key] ?? 0);
+    }
+  };
+  return { active, setActive, onKey };
+}
+
+function Gridlines() {
+  return (
+    <>
+      {[0, 50, 100].map((y) => (
+        <line
+          key={y}
+          x1="0"
+          x2="100"
+          y1={y}
+          y2={y}
+          stroke={y === 100 ? 'var(--border-strong)' : 'var(--border)'}
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </>
+  );
+}
+
+function Dot({ x, y, color }: { x: number; y: number; color: string }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
+      style={{ left: `${x}%`, top: `${y}%`, background: color }}
+    />
+  );
+}
+
 export function AreaChart({
   points,
   label,
@@ -48,29 +100,16 @@ export function AreaChart({
   const t = useTranslations('analytics.chart');
   const gradientId = useId();
   const plotRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState<number | null>(null);
+  const { active, setActive, onKey } = useKeyboardReading(points.length);
   const { max, coords, line, area } = plot(points, minMax);
   const current = active !== null ? points[active] : undefined;
   const currentCoord = active !== null ? coords[active] : undefined;
+  const endCoord = coords.at(-1);
 
   const onPointer = (e: PointerEvent<HTMLDivElement>) => {
     const rect = plotRef.current?.getBoundingClientRect();
     if (!rect || rect.width === 0) return;
     setActive(nearestIndex((e.clientX - rect.left) / rect.width, points.length));
-  };
-  const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (points.length === 0) return;
-    const last = points.length - 1;
-    const moves: Record<string, number> = {
-      ArrowRight: Math.min(last, (active ?? -1) + 1),
-      ArrowLeft: Math.max(0, (active ?? last + 1) - 1),
-      Home: 0,
-      End: last,
-    };
-    if (e.key in moves) {
-      e.preventDefault();
-      setActive(moves[e.key] ?? 0);
-    }
   };
 
   const first = points[0];
@@ -82,12 +121,12 @@ export function AreaChart({
       <div dir="ltr" className="grid grid-cols-[auto_1fr] gap-x-3">
         <div
           aria-hidden
-          className="tabular flex flex-col justify-between text-end text-[0.7rem] text-muted-foreground"
+          className="flex flex-col justify-between text-end font-mono text-[0.6875rem] text-muted-foreground"
           style={{ height }}
         >
-          <span>{formatValue(max)}</span>
+          <span className="-translate-y-1/2">{formatValue(max)}</span>
           <span>{formatValue(max / 2)}</span>
-          <span>{formatValue(0)}</span>
+          <span className="translate-y-1/2">{formatValue(0)}</span>
         </div>
         <div
           ref={plotRef}
@@ -98,7 +137,7 @@ export function AreaChart({
           onPointerLeave={() => setActive(null)}
           onKeyDown={onKey}
           onBlur={() => setActive(null)}
-          className="relative rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="relative cursor-crosshair rounded-control focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background focus-visible:outline-none"
           style={{ height }}
         >
           <svg
@@ -109,22 +148,11 @@ export function AreaChart({
           >
             <defs>
               <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-                <stop offset="100%" stopColor={color} stopOpacity="0" />
+                <stop offset="0%" stopColor={color} stopOpacity="0.16" />
+                <stop offset="100%" stopColor={color} stopOpacity="0.02" />
               </linearGradient>
             </defs>
-            {[0, 50, 100].map((y) => (
-              <line
-                key={y}
-                x1="0"
-                x2="100"
-                y1={y}
-                y2={y}
-                stroke="var(--border)"
-                strokeDasharray={y === 100 ? undefined : '2 3'}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
+            <Gridlines />
             {area && <path d={area} fill={`url(#${gradientId})`} />}
             {line && (
               <path
@@ -144,38 +172,34 @@ export function AreaChart({
                 y1="0"
                 y2="100"
                 stroke="var(--foreground)"
-                strokeOpacity="0.35"
+                strokeOpacity="0.4"
                 vectorEffect="non-scaling-stroke"
               />
             )}
           </svg>
+          {!current && endCoord && <Dot x={endCoord.x} y={endCoord.y} color={color} />}
           {current && currentCoord && (
             <>
-              <span
-                aria-hidden
-                className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background"
-                style={{
-                  left: `${currentCoord.x}%`,
-                  top: `${currentCoord.y}%`,
-                  background: color,
-                }}
-              />
+              <Dot x={currentCoord.x} y={currentCoord.y} color={color} />
               <span
                 dir="auto"
-                className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-md bg-foreground px-2 py-1 text-xs whitespace-nowrap text-background shadow"
+                className={TOOLTIP_CLASS}
                 style={{ left: `${Math.min(88, Math.max(12, currentCoord.x))}%` }}
               >
                 {t.rich('point', {
                   label: current.label,
                   value: formatValue(current.value),
-                  b: (chunks) => <strong className="tabular">{chunks}</strong>,
+                  b: (chunks) => <strong className="font-mono font-semibold">{chunks}</strong>,
                 })}
               </span>
             </>
           )}
         </div>
         <span />
-        <div aria-hidden className="mt-2 flex justify-between text-[0.7rem] text-muted-foreground">
+        <div
+          aria-hidden
+          className="mt-2 flex justify-between font-mono text-[0.6875rem] text-muted-foreground"
+        >
           <span>{first?.label}</span>
           {points.length > 2 && <span>{middle?.label}</span>}
           {points.length > 1 && <span>{final?.label}</span>}
@@ -199,8 +223,8 @@ export function AreaChart({
           </tr>
         </thead>
         <tbody>
-          {points.map((p) => (
-            <tr key={p.label}>
+          {points.map((p, i) => (
+            <tr key={`${p.label}-${i}`}>
               <td>{p.label}</td>
               <td>{formatValue(p.value)}</td>
             </tr>

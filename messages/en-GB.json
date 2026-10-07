@@ -2781,44 +2781,55 @@
     "dashboard": {
       "eyebrow": "Manage",
       "title": "Analytics",
-      "description": "How your published videos are doing, and what they cost to make.",
       "rangeLabel": "Date range",
       "rangeOption": "{days, plural, one {# day} other {# days}}",
-      "descriptionNoCost": "How your published videos are doing."
+      "scopeAll": "All businesses",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Selected business",
+      "window": "last {days, plural, one {day} other {# days}}",
+      "costScope": "Spend covers every business in your organisation.",
+      "loadingAria": "Loading analytics"
     },
     "metrics": {
       "views": "Views",
-      "watchTime": "Watch time",
-      "engagement": "Engagement"
+      "watchTime": "Watch time"
     },
     "overview": {
       "loadingAria": "Loading overview",
-      "viewsHeading": "Views · last {days, plural, one {day} other {# days}}",
-      "summary": "across {publications, plural, one {# publication} other {# publications}} · {projects, plural, one {# project} other {# projects}} started",
+      "summary": "Your {posts, plural, one {# post} other {# posts}} from the last {days, plural, one {day} other {# days}} reached {count, plural, one {{views} view} other {{views} views}}, with {rate} engagement.",
       "watchTime": "Watch time",
-      "engagement": "Engagement",
-      "engagementHint": "{rate} of views",
-      "shares": "Shares",
-      "savesHint": "{saves, plural, one {{formatted} save} other {{formatted} saves}}",
-      "spend": "Spend",
-      "spendHint": "provider costs",
-      "pending": "…"
+      "engagementHint": "{count} likes, comments, shares and saves",
+      "regionLabel": "Summary",
+      "summaryNoViews": "{posts, plural, one {# post} other {# posts}} went out in the last {days, plural, one {day} other {# days}}. Views usually appear about a day after a post goes live.",
+      "summaryLead": "{platform} brought in {share} of the views.",
+      "views": "Views",
+      "viewsHint": "{publications, plural, one {# post} other {# posts}} · {projects, plural, one {# project} other {# projects}} started",
+      "watchTimeHint": "{avg} per view on average",
+      "engagementRate": "Engagement rate",
+      "sharesSaves": "Shares and saves",
+      "sharesSavesHint": "{shares} shares · {saves} saves",
+      "empty": {
+        "title": "No posts published in the last {days, plural, one {day} other {# days}}",
+        "body": "Analytics appear about a day after a post goes out. Try a longer period, or publish a video from one of your projects.",
+        "action": "Go to projects"
+      },
+      "windowNote": "Totals for the posts published in this period, counted up to now."
     },
     "trend": {
-      "title": "Daily activity",
+      "title": "Growth and reach",
       "metricLabel": "Metric",
       "loadingAria": "Loading chart",
       "total": {
-        "views": "{count, plural, one {{value} view} other {{value} views}} in the window",
-        "watchTime": "{value} watch time in the window",
-        "engagement": "{value} engagement in the window"
+        "views": "{count, plural, one {{value} view} other {{value} views}} gained in this period",
+        "watchTime": "{value} of watch time gained in this period"
       },
       "chartLabel": {
         "views": "Views per day, last {days, plural, one {day} other {# days}}",
-        "watchTime": "Watch time per day, last {days, plural, one {day} other {# days}}",
-        "engagement": "Engagement per day, last {days, plural, one {day} other {# days}}"
+        "watchTime": "Watch time per day, last {days, plural, one {day} other {# days}}"
       },
-      "estimated": "Some days are estimates: snapshots were missing, so growth is spread evenly over the gap."
+      "estimated": "Some days are estimates: snapshots were missing, so growth is spread evenly over the gap.",
+      "description": "Views gained per day across your posts",
+      "quiet": "Nothing new in this period yet. The chart fills in as people watch your posts."
     },
     "platforms": {
       "title": "By platform",
@@ -2828,15 +2839,16 @@
       "hint": "{posts, plural, one {# post} other {# posts}} · {engagement} eng."
     },
     "leaderboard": {
-      "title": "Top videos",
-      "description": "Publications ranked by views",
+      "title": "Top posts",
+      "description": "This period’s posts with the most views",
       "empty": "Nothing published in this window.",
       "listLabel": "Top publications",
       "untitled": "Untitled post",
       "meta": "{platform} · {date}",
       "openOn": "Open on {platform}",
       "analyticsFor": "Analytics for {caption}",
-      "analyticsForUntitled": "Analytics for untitled post"
+      "analyticsForUntitled": "Analytics for untitled post",
+      "views": "views"
     },
     "cost": {
       "title": "Spend",
@@ -2885,7 +2897,8 @@
         "avgWatched": "Avg. watched",
         "likes": "Likes",
         "commentsShares": "Comments · shares",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Saves"
       },
       "viewsOverTime": {
         "title": "Views over time",
@@ -2921,6 +2934,39 @@
         "body": "It may have been removed, or the link may be wrong.",
         "action": "Back to analytics"
       }
+    },
+    "change": {
+      "up": "Up <n>{pct}</n> on the previous period",
+      "down": "Down <n>{pct}</n> on the previous period",
+      "flat": "Level with the previous period"
+    },
+    "engagement": {
+      "title": "Engagement",
+      "description": "Likes, comments, shares and saves gained per day",
+      "total": "Interactions gained in this period: {value}",
+      "chartLabel": "Interactions per day, last {days, plural, one {day} other {# days}}",
+      "quiet": "No likes, comments, shares or saves in this period yet.",
+      "mixTitle": "What it was made of",
+      "mixRate": "{rate} of views on this period’s posts",
+      "mixNoViews": "No views on this period’s posts yet.",
+      "mixLabel": "Engagement by type",
+      "mixEmpty": "No interactions on this period’s posts yet.",
+      "parts": {
+        "likes": "Likes",
+        "comments": "Comments",
+        "shares": "Shares",
+        "saves": "Saves"
+      }
+    },
+    "bestTimes": {
+      "title": "Best times to post",
+      "description": "When your posts have drawn the most views, compared with the best slot",
+      "listLabel": "Best posting times",
+      "slot": "{day}, {time}",
+      "empty": "No posts from the last 180 days to learn from yet.",
+      "basis": "Based on {videos, plural, one {# post} other {# posts}} from the last 180 days. Times in {timezone}. A guide, not a rule.",
+      "fromMemory": "Too few posts yet, so this is your business’s usual posting time. Times in {timezone}.",
+      "littleData": "Only {videos, plural, one {# post} other {# posts}} so far, so treat these as early hints; they firm up after {min}. Times in {timezone}."
     }
   },
   "admin": {

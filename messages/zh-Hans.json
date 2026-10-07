@@ -2781,44 +2781,55 @@
     "dashboard": {
       "eyebrow": "管理",
       "title": "数据分析",
-      "description": "查看已发布视频的表现及制作成本。",
       "rangeLabel": "日期范围",
       "rangeOption": "{days, plural, other {# 天}}",
-      "descriptionNoCost": "查看已发布视频的表现。"
+      "scopeAll": "所有商家",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "所选商家",
+      "window": "最近 {days, plural, other {# 天}}",
+      "costScope": "支出涵盖您组织中的所有商家。",
+      "loadingAria": "正在加载分析数据"
     },
     "metrics": {
       "views": "播放量",
-      "watchTime": "观看时长",
-      "engagement": "互动"
+      "watchTime": "观看时长"
     },
     "overview": {
       "loadingAria": "正在加载概览",
-      "viewsHeading": "播放量 · 最近 {days, plural, other {# 天}}",
-      "summary": "共 {publications, plural, other {# 条发布}} · 新建 {projects, plural, other {# 个项目}}",
+      "summary": "最近 {days, plural, other {# 天}}内您的 {posts, plural, other {# 条帖子}}获得了 {count, plural, other {{views} 次观看}}，互动率为 {rate}。",
       "watchTime": "观看时长",
-      "engagement": "互动",
-      "engagementHint": "占播放量的 {rate}",
-      "shares": "分享",
-      "savesHint": "{saves, plural, other {{formatted} 次收藏}}",
-      "spend": "支出",
-      "spendHint": "服务商费用",
-      "pending": "…"
+      "engagementHint": "{count} 次点赞、评论、分享和收藏",
+      "regionLabel": "摘要",
+      "summaryNoViews": "最近 {days, plural, other {# 天}}内发布了 {posts, plural, other {# 条帖子}}。观看数据通常在帖子上线约一天后出现。",
+      "summaryLead": "其中 {share} 的观看来自 {platform}。",
+      "views": "观看次数",
+      "viewsHint": "{publications, plural, other {# 条帖子}} · 新建 {projects, plural, other {# 个项目}}",
+      "watchTimeHint": "平均每次观看 {avg}",
+      "engagementRate": "互动率",
+      "sharesSaves": "分享和收藏",
+      "sharesSavesHint": "{shares} 次分享 · {saves} 次收藏",
+      "empty": {
+        "title": "最近 {days, plural, other {# 天}}没有发布帖子",
+        "body": "帖子发布约一天后会出现分析数据。可以选择更长的时间段，或从您的项目中发布一个视频。",
+        "action": "前往项目"
+      },
+      "windowNote": "本周期内发布的帖子的累计数据，统计至当前。"
     },
     "trend": {
-      "title": "每日活动",
+      "title": "增长与覆盖",
       "metricLabel": "指标",
       "loadingAria": "正在加载图表",
       "total": {
-        "views": "该时段内共 {count, plural, other {{value} 次播放}}",
-        "watchTime": "该时段内观看时长 {value}",
-        "engagement": "该时段内共 {value} 次互动"
+        "views": "本周期新增 {count, plural, other {{value} 次观看}}",
+        "watchTime": "本周期新增观看时长 {value}"
       },
       "chartLabel": {
         "views": "每日播放量，最近 {days, plural, other {# 天}}",
-        "watchTime": "每日观看时长，最近 {days, plural, other {# 天}}",
-        "engagement": "每日互动，最近 {days, plural, other {# 天}}"
+        "watchTime": "每日观看时长，最近 {days, plural, other {# 天}}"
       },
-      "estimated": "部分日期为估算值：缺少数据快照，增长量已在空缺期间平均分摊。"
+      "estimated": "部分日期为估算值：缺少数据快照，增长量已在空缺期间平均分摊。",
+      "description": "您所有帖子每天新增的观看次数",
+      "quiet": "本周期暂无新增。随着您的帖子被观看，图表会逐渐填充。"
     },
     "platforms": {
       "title": "按平台",
@@ -2828,15 +2839,16 @@
       "hint": "{posts, plural, other {# 条帖子}} · {engagement} 次互动"
     },
     "leaderboard": {
-      "title": "热门视频",
-      "description": "按播放量排序的发布",
+      "title": "热门帖子",
+      "description": "本周期观看次数最多的帖子",
       "empty": "此时段内没有发布内容。",
       "listLabel": "热门发布",
       "untitled": "无标题帖子",
       "meta": "{platform} · {date}",
       "openOn": "在 {platform} 上打开",
       "analyticsFor": "“{caption}”的数据分析",
-      "analyticsForUntitled": "无标题帖子的数据分析"
+      "analyticsForUntitled": "无标题帖子的数据分析",
+      "views": "次观看"
     },
     "cost": {
       "title": "支出",
@@ -2885,7 +2897,8 @@
         "avgWatched": "平均观看比例",
         "likes": "点赞",
         "commentsShares": "评论 · 分享",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "收藏"
       },
       "viewsOverTime": {
         "title": "播放量趋势",
@@ -2921,6 +2934,39 @@
         "body": "它可能已被移除，或链接有误。",
         "action": "返回分析"
       }
+    },
+    "change": {
+      "up": "比上一周期增长 <n>{pct}</n>",
+      "down": "比上一周期下降 <n>{pct}</n>",
+      "flat": "与上一周期持平"
+    },
+    "engagement": {
+      "title": "互动",
+      "description": "每天新增的点赞、评论、分享和收藏",
+      "total": "本周期新增互动：{value}",
+      "chartLabel": "每日互动，最近 {days, plural, other {# 天}}",
+      "quiet": "本周期暂无点赞、评论、分享或收藏。",
+      "mixTitle": "互动构成",
+      "mixRate": "占本周期帖子观看次数的 {rate}",
+      "mixNoViews": "本周期的帖子暂无观看。",
+      "mixLabel": "按类型划分的互动",
+      "mixEmpty": "本周期的帖子暂无互动。",
+      "parts": {
+        "likes": "点赞",
+        "comments": "评论",
+        "shares": "分享",
+        "saves": "收藏"
+      }
+    },
+    "bestTimes": {
+      "title": "最佳发布时间",
+      "description": "您的帖子在哪些时段获得最多观看（与最佳时段相比）",
+      "listLabel": "最佳发布时间",
+      "slot": "{day} {time}",
+      "empty": "最近 180 天内还没有可供参考的帖子。",
+      "basis": "基于最近 180 天的 {videos, plural, other {# 条帖子}}。时间为 {timezone}。仅供参考，并非规则。",
+      "fromMemory": "帖子还太少，因此这是您商家的常用发布时间。时间为 {timezone}。",
+      "littleData": "目前只有 {videos, plural, other {# 条帖子}}，请将其视为初步参考；达到 {min} 条后会更可靠。时间为 {timezone}。"
     }
   },
   "admin": {

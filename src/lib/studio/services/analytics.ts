@@ -18,15 +18,23 @@ export const windowQuery = z.object({
     .default(30),
 });
 
+/** Optional business filter (25.11): narrows to publications of that business's projects. The
+ * organisation filter always applies too, so another organisation's business id matches nothing. */
+const businessFilter = z.string().trim().min(1).max(128).optional();
+
+/** Window + optional business, for the overview (the cost window stays organisation-wide). */
+export const scopedWindowQuery = windowQuery.extend({ businessId: businessFilter });
+
 export const METRICS = ['views', 'watchTime', 'engagement', 'likes', 'comments', 'shares'] as const;
 export type Metric = (typeof METRICS)[number];
 
 export const timeseriesQuery = z.object({
   days: z.coerce.number().int().min(1).max(365).default(30),
   metric: z.enum(METRICS).default('views'),
+  businessId: businessFilter,
 });
 
-export const leaderboardQuery = windowQuery.extend({
+export const leaderboardQuery = scopedWindowQuery.extend({
   metric: z.enum(METRICS).default('views'),
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
@@ -64,15 +72,17 @@ async function latestSnapshots(db: Db, publicationIds: string[]) {
   return new Map(full.map((r) => [r.publicationId, r]));
 }
 
-async function publishedIn(db: Db, organisationId: string, since: Date) {
+async function publishedIn(db: Db, organisationId: string, since: Date, businessId?: string) {
   return db.videoPublication.findMany({
     where: {
       organisationId,
       state: { in: ['PUBLISHED', 'TAKEN_DOWN'] },
       publishedAt: { gte: since },
+      ...(businessId && { project: { businessId } }),
     },
     select: {
       id: true,
+      renderId: true,
       platform: true,
       platformUrl: true,
       publishedAt: true,
@@ -82,9 +92,15 @@ async function publishedIn(db: Db, organisationId: string, since: Date) {
   });
 }
 
-export async function analyticsOverview(db: Db, organisationId: string, days: number, now: number) {
+export async function analyticsOverview(
+  db: Db,
+  organisationId: string,
+  days: number,
+  now: number,
+  businessId?: string,
+) {
   const since = new Date(now - days * DAY_MS);
-  const pubs = await publishedIn(db, organisationId, since);
+  const pubs = await publishedIn(db, organisationId, since, businessId);
   const latest = await latestSnapshots(
     db,
     pubs.map((p) => p.id),
@@ -107,15 +123,36 @@ export async function analyticsOverview(db: Db, organisationId: string, days: nu
     platform.engagement += metricValue(s, 'engagement');
   }
   const projects = await db.videoProject.count({
-    where: { organisationId, deletedAt: null, createdAt: { gte: since } },
+    where: {
+      organisationId,
+      deletedAt: null,
+      createdAt: { gte: since },
+      ...(businessId && { businessId }),
+    },
   });
-  return { days, publications: pubs.length, projectsCreated: projects, totals, byPlatform };
+  return {
+    days,
+    businessId: businessId ?? null,
+    publications: pubs.length,
+    projectsCreated: projects,
+    totals,
+    byPlatform,
+  };
 }
 
 export async function publicationAnalytics(db: Db, organisationId: string, id: string) {
   const publication = await db.videoPublication.findFirst({
     where: { id, organisationId },
-    select: { id: true, platform: true, platformUrl: true, publishedAt: true, state: true },
+    select: {
+      id: true,
+      projectId: true,
+      renderId: true,
+      platform: true,
+      platformUrl: true,
+      publishedAt: true,
+      state: true,
+      caption: true,
+    },
   });
   if (!publication) throw new NotFoundError('Publication not found');
   const rows = await db.videoAnalytic.findMany({
@@ -234,13 +271,17 @@ export async function analyticsTimeseries(
   now: number,
 ) {
   const start = bucketStart(new Date(now - (query.days - 1) * DAY_MS), 'day');
+  const publication = {
+    organisationId,
+    ...(query.businessId && { project: { businessId: query.businessId } }),
+  };
   const [rows, base] = await Promise.all([
     db.videoAnalytic.findMany({
-      where: { bucketSize: 'day', bucketAt: { gte: start }, publication: { organisationId } },
+      where: { bucketSize: 'day', bucketAt: { gte: start }, publication },
       orderBy: [{ publicationId: 'asc' }, { bucketAt: 'asc' }],
     }),
     db.videoAnalytic.findMany({
-      where: { bucketSize: 'day', bucketAt: { lt: start }, publication: { organisationId } },
+      where: { bucketSize: 'day', bucketAt: { lt: start }, publication },
       orderBy: [{ publicationId: 'asc' }, { bucketAt: 'desc' }],
       distinct: ['publicationId'],
     }),
@@ -254,7 +295,12 @@ export async function analyticsLeaderboard(
   query: z.infer<typeof leaderboardQuery>,
   now: number,
 ) {
-  const pubs = await publishedIn(db, organisationId, new Date(now - query.days * DAY_MS));
+  const pubs = await publishedIn(
+    db,
+    organisationId,
+    new Date(now - query.days * DAY_MS),
+    query.businessId,
+  );
   const latest = await latestSnapshots(
     db,
     pubs.map((p) => p.id),

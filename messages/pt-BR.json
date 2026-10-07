@@ -2781,44 +2781,55 @@
     "dashboard": {
       "eyebrow": "Gerenciar",
       "title": "Análises",
-      "description": "Como seus vídeos publicados estão se saindo e quanto custou produzi-los.",
       "rangeLabel": "Período",
       "rangeOption": "{days, plural, one {# dia} other {# dias}}",
-      "descriptionNoCost": "Como seus vídeos publicados estão se saindo."
+      "scopeAll": "Todos os negócios",
+      "scopeBusiness": "{name}",
+      "scopeSelected": "Negócio selecionado",
+      "window": "{days, plural, one {último dia} other {últimos # dias}}",
+      "costScope": "Os gastos incluem todos os negócios da sua organização.",
+      "loadingAria": "Carregando as estatísticas"
     },
     "metrics": {
       "views": "Visualizações",
-      "watchTime": "Tempo de exibição",
-      "engagement": "Engajamento"
+      "watchTime": "Tempo de exibição"
     },
     "overview": {
       "loadingAria": "Carregando visão geral",
-      "viewsHeading": "Visualizações · {days, plural, one {último dia} other {últimos # dias}}",
-      "summary": "em {publications, plural, one {# publicação} other {# publicações}} · {projects, plural, one {# projeto iniciado} other {# projetos iniciados}}",
+      "summary": "Seus {posts, plural, one {# post} other {# posts}} {days, plural, one {do último dia} other {dos últimos # dias}} alcançaram {count, plural, one {{views} visualização} other {{views} visualizações}}, com {rate} de engajamento.",
       "watchTime": "Tempo de exibição",
-      "engagement": "Engajamento",
-      "engagementHint": "{rate} das visualizações",
-      "shares": "Compartilhamentos",
-      "savesHint": "{saves, plural, one {{formatted} salvamento} other {{formatted} salvamentos}}",
-      "spend": "Gastos",
-      "spendHint": "custos de provedores",
-      "pending": "…"
+      "engagementHint": "{count} curtidas, comentários, compartilhamentos e salvamentos",
+      "regionLabel": "Resumo",
+      "summaryNoViews": "{posts, plural, one {Saiu # post} other {Saíram # posts}} {days, plural, one {no último dia} other {nos últimos # dias}}. As visualizações costumam aparecer cerca de um dia depois da publicação.",
+      "summaryLead": "{platform} trouxe {share} das visualizações.",
+      "views": "Visualizações",
+      "viewsHint": "{publications, plural, one {# post} other {# posts}} · {projects, plural, one {# projeto iniciado} other {# projetos iniciados}}",
+      "watchTimeHint": "{avg} por visualização, em média",
+      "engagementRate": "Taxa de engajamento",
+      "sharesSaves": "Compartilhamentos e salvamentos",
+      "sharesSavesHint": "{shares} compartilhamentos · {saves} salvamentos",
+      "empty": {
+        "title": "Nenhum post publicado {days, plural, one {no último dia} other {nos últimos # dias}}",
+        "body": "As estatísticas aparecem cerca de um dia depois que um post sai. Tente um período maior ou publique um vídeo de um dos seus projetos.",
+        "action": "Ir para os projetos"
+      },
+      "windowNote": "Totais dos posts publicados neste período, contados até agora."
     },
     "trend": {
-      "title": "Atividade diária",
+      "title": "Crescimento e alcance",
       "metricLabel": "Métrica",
       "loadingAria": "Carregando gráfico",
       "total": {
-        "views": "{count, plural, one {{value} visualização} other {{value} visualizações}} no período",
-        "watchTime": "{value} de tempo de exibição no período",
-        "engagement": "{value} de engajamento no período"
+        "views": "{count, plural, one {{value} visualização ganha} other {{value} visualizações ganhas}} neste período",
+        "watchTime": "{value} de tempo de exibição ganho neste período"
       },
       "chartLabel": {
         "views": "Visualizações por dia, {days, plural, one {último dia} other {últimos # dias}}",
-        "watchTime": "Tempo de exibição por dia, {days, plural, one {último dia} other {últimos # dias}}",
-        "engagement": "Engajamento por dia, {days, plural, one {último dia} other {últimos # dias}}"
+        "watchTime": "Tempo de exibição por dia, {days, plural, one {último dia} other {últimos # dias}}"
       },
-      "estimated": "Alguns dias são estimativas: faltaram medições, então o crescimento foi distribuído igualmente pelo intervalo."
+      "estimated": "Alguns dias são estimativas: faltaram medições, então o crescimento foi distribuído igualmente pelo intervalo.",
+      "description": "Visualizações ganhas por dia em todos os seus posts",
+      "quiet": "Ainda nada de novo neste período. O gráfico vai sendo preenchido conforme seus posts são vistos."
     },
     "platforms": {
       "title": "Por plataforma",
@@ -2828,15 +2839,16 @@
       "hint": "{posts, plural, one {# post} other {# posts}} · {engagement} de engajamento"
     },
     "leaderboard": {
-      "title": "Principais vídeos",
-      "description": "Publicações classificadas por visualizações",
+      "title": "Principais posts",
+      "description": "Os posts deste período com mais visualizações",
       "empty": "Nada foi publicado neste período.",
       "listLabel": "Principais publicações",
       "untitled": "Post sem título",
       "meta": "{platform} · {date}",
       "openOn": "Abrir no {platform}",
       "analyticsFor": "Análises de “{caption}”",
-      "analyticsForUntitled": "Análises do post sem título"
+      "analyticsForUntitled": "Análises do post sem título",
+      "views": "visualizações"
     },
     "cost": {
       "title": "Gastos",
@@ -2885,7 +2897,8 @@
         "avgWatched": "Média assistida",
         "likes": "Curtidas",
         "commentsShares": "Comentários · compartilhamentos",
-        "commentsSharesValue": "{comments} · {shares}"
+        "commentsSharesValue": "{comments} · {shares}",
+        "saves": "Salvamentos"
       },
       "viewsOverTime": {
         "title": "Visualizações ao longo do tempo",
@@ -2921,6 +2934,39 @@
         "body": "Ela pode ter sido removida ou o link está errado.",
         "action": "Voltar às análises"
       }
+    },
+    "change": {
+      "up": "Mais <n>{pct}</n> do que no período anterior",
+      "down": "Menos <n>{pct}</n> do que no período anterior",
+      "flat": "Igual ao período anterior"
+    },
+    "engagement": {
+      "title": "Engajamento",
+      "description": "Curtidas, comentários, compartilhamentos e salvamentos ganhos por dia",
+      "total": "Interações ganhas neste período: {value}",
+      "chartLabel": "Interações por dia, {days, plural, one {último dia} other {últimos # dias}}",
+      "quiet": "Ainda sem curtidas, comentários, compartilhamentos ou salvamentos neste período.",
+      "mixTitle": "Do que foi feito",
+      "mixRate": "{rate} das visualizações dos posts deste período",
+      "mixNoViews": "Os posts deste período ainda não têm visualizações.",
+      "mixLabel": "Engajamento por tipo",
+      "mixEmpty": "Os posts deste período ainda não têm interações.",
+      "parts": {
+        "likes": "Curtidas",
+        "comments": "Comentários",
+        "shares": "Compartilhamentos",
+        "saves": "Salvamentos"
+      }
+    },
+    "bestTimes": {
+      "title": "Melhores horários para publicar",
+      "description": "Quando seus posts tiveram mais visualizações, em comparação com o melhor horário",
+      "listLabel": "Melhores horários de publicação",
+      "slot": "{day}, {time}",
+      "empty": "Ainda não há posts dos últimos 180 dias para aprender.",
+      "basis": "Com base em {videos, plural, one {# post} other {# posts}} dos últimos 180 dias. Horários em {timezone}. Uma orientação, não uma regra.",
+      "fromMemory": "Ainda há poucos posts, então este é o horário de publicação habitual do seu negócio. Horários em {timezone}.",
+      "littleData": "Por enquanto, só {videos, plural, one {# post} other {# posts}}: são primeiras pistas, mais confiáveis a partir de {min}. Horários em {timezone}."
     }
   },
   "admin": {
