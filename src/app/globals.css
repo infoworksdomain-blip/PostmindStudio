@@ -252,6 +252,16 @@
   --spacing-rhythm-page: 5rem;
 
   --animate-rec: rec 1.6s ease-in-out infinite;
+  /* 25.3 Skeleton: a light band sweeps across (transform only; reduced motion hides it). */
+  --animate-shimmer: shimmer 1.6s cubic-bezier(0.2, 0, 0, 1) infinite;
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
   /* Phase 18 landing page: the sample frames drift gently (transform only). */
   --animate-drift: drift 9s ease-in-out infinite;
   @keyframes drift {

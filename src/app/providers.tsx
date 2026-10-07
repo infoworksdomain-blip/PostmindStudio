@@ -29,7 +29,7 @@ export function Providers({
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         <TooltipProvider delayDuration={200}>
           <BusinessProvider>{children}</BusinessProvider>
-          <Toaster richColors position="bottom-right" />
+          <Toaster position="bottom-right" />
         </TooltipProvider>
       </ThemeProvider>
     </StudioIntlProvider>
