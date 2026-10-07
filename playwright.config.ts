@@ -15,7 +15,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  // CI also prints each test with its duration (list), so a slow page shows up by name.
+  reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL,
     // The spec asserts en-GB copy; the app picks the language from Accept-Language (Phase 16).
