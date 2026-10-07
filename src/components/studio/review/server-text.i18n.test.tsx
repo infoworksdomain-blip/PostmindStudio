@@ -96,7 +96,7 @@ describe('FailureReason', () => {
     // Rows stored before 20.11 as <provider>/<account class>: <provider text>.
     expect(
       reason('zh-Hans', 'openai/insufficient_credits: 429 You have no credits remaining.'),
-    ).toBe('我们的 AI 服务暂时不可用，因此未能完成。请稍后再试——我们的团队已收到通知。');
+    ).toBe('生成功能当时不可用，因此未能完成。请几分钟后再试。');
     // QA 3: a social platform's own text is staff-only too; customers read the class sentence.
     const refused = reason('en-GB', 'tiktok/content_policy: Video violates community guidelines');
     expect(refused).toContain('TikTok reported a problem');
